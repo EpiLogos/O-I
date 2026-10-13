@@ -257,8 +257,14 @@ export const TECHNE_INSTRUMENTS: readonly HolderDeclaration[] = [
   {id: 'techne:m5', title: 'Palace', provenance: 'M5′', liveSemantic: 'device-instrument'},
 ]
 
-/** Every known holder: the Studio sections, the Clip detail, the Technē instruments. */
-export const HOLDERS: readonly HolderDeclaration[] = [...STUDIO_SECTIONS, DETAIL_CLIP_HOLDER, ...TECHNE_INSTRUMENTS]
+/** The standalone instruments any pane can hold in any mode (owner ruling, 13 Oct 2026; lock §8.1): the knowledge graph —
+ * the wiki constellation — is its own instrument, not one of Technē's six. */
+export const STANDALONE_INSTRUMENTS: readonly HolderDeclaration[] = [
+  {id: 'knowledge-graph', title: 'Knowledge graph', liveSemantic: 'device-instrument'},
+]
+
+/** Every known holder: the Studio sections, the Clip detail, the Technē instruments, the standalone instruments. */
+export const HOLDERS: readonly HolderDeclaration[] = [...STUDIO_SECTIONS, DETAIL_CLIP_HOLDER, ...TECHNE_INSTRUMENTS, ...STANDALONE_INSTRUMENTS]
 
 export function isHolder(candidate: unknown): boolean {
   return typeof candidate === 'string' && HOLDERS.some(holder => holder.id === candidate)

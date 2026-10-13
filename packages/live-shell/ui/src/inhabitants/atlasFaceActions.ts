@@ -31,15 +31,16 @@ export interface AtlasGraphSurface {
   reframe(): void
 }
 
-/** The deep-time clock's surface: the TimeModel the pane's time control reads. */
+/** The deep-time clock's surface: the TimeModel the pane's time control reads. The moves that the shared window binds
+ * (T-ATLAS-TIME) return the refusal, named, when the window refuses the move; null is a move that stands. */
 export interface AtlasClockSurface {
   readonly mode: 'all' | 'cursor'
   readonly cursorU: number
   readonly playing: boolean
   readonly cumulative: boolean
-  scrub(u: number): void
-  setAll(): void
-  play(): void
+  scrub(u: number): string | null
+  setAll(): string | null
+  play(): string | null
   pause(): void
   setCumulative(on: boolean): void
 }
@@ -81,20 +82,25 @@ export function toggleSky(graph: AtlasGraphSurface): void {
   graph.setSkyAnchors(sky === 'off' || sky === 'unavailable')
 }
 
-export function scrubClock(ctl: AtlasUserTimeSurface, clock: AtlasClockSurface, u: number): void {
+/** A scrub of the Earth: the one move the shared window writes (the pane, the face body and shell.setAtlasCursor all come here). */
+export function scrubClock(ctl: AtlasUserTimeSurface, clock: AtlasClockSurface, u: number): string | null {
   ctl.onUserTime()
-  clock.scrub(u)
+  return clock.scrub(u)
 }
 
-export function allTime(ctl: AtlasUserTimeSurface, clock: AtlasClockSurface): void {
+export function allTime(ctl: AtlasUserTimeSurface, clock: AtlasClockSurface): string | null {
   ctl.onUserTime()
-  clock.setAll()
+  return clock.setAll()
 }
 
-export function playOrPause(ctl: AtlasUserTimeSurface, clock: AtlasClockSurface): void {
+/** Play or pause. Play advances the shared window through the clock's own commit, at most one write per frame. */
+export function playOrPause(ctl: AtlasUserTimeSurface, clock: AtlasClockSurface): string | null {
   ctl.onUserTime()
-  if (clock.playing) clock.pause()
-  else clock.play()
+  if (clock.playing) {
+    clock.pause()
+    return null
+  }
+  return clock.play()
 }
 
 export function toggleCumulative(clock: AtlasClockSurface): void {

@@ -18,6 +18,8 @@ import {useWorkspace} from '../../shell/workspace'
 import type {AionEpochJump} from './aionTimeline'
 import type {History} from './src/types/history'
 import type {AtlasHandle} from './mount'
+import {disclosureSession} from '../../../../../../desktop/cradle/src/techne/session'
+import {bindSharedTimeClock} from './sharedClock'
 import './atlasHost.css'
 
 export type AtlasView = 'earth' | 'graph'
@@ -237,7 +239,9 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {controllerS
   const bundle = await provider.load()
   registerCorpusProvider({...provider, load: async () => bundle}, {asDefault: true})
   progress.controllerStarted = true
-  const mounted: AtlasHandle = await mountAtlas({globe, app, provider: ARCHETYPAL_EARTH_PROVIDER_ID})
+  // T-ATLAS-TIME: the clock is a face of the shell's one shared time window (the session the native owner also writes).
+  const mounted: AtlasHandle = await mountAtlas({globe, app, provider: ARCHETYPAL_EARTH_PROVIDER_ID,
+    clock: (time, scale) => bindSharedTimeClock({store: disclosureSession, time, scale})})
   publishAtlasHandle(mounted)
   // The reading the atlas holds is the World's Aion source, by reference, from the moment it stands.
   publishAtlasAionReading(bundle.history ? {providerId: ARCHETYPAL_EARTH_PROVIDER_ID, history: bundle.history} : null)

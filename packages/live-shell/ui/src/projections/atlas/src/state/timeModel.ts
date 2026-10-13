@@ -11,6 +11,13 @@ export interface TimeSnapshot {
 const CUMULATIVE_TRAIL = 3;
 export const PLAY_SECONDS = 42;
 
+/** The shared time window as the clock sees it (T-ATLAS-TIME). A move the clock makes is committed through the link before
+ * the clock moves: null means the move may stand (written, already standing, or no window to bind); a string is the refusal,
+ * named, and the clock does not move. `u` is a slider-position, or null for all time. */
+export interface SharedClockLink {
+  commit(u: number | null): string | null;
+}
+
 /** A range on the shared scale, in slider-positions. */
 export interface TimeSpan {
   fromU: number;
@@ -96,24 +103,41 @@ export class TimeModel {
 
   private clampU(u: number) { return Math.max(this.fromU, Math.min(this.toU, u)); }
 
-  /** Immediate move (dragging the handle). */
-  scrub(u: number) {
+  /** The shared window this clock is bound to (T-ATLAS-TIME, projections/atlas/sharedClock.ts). Null: the clock is its own
+   * presentation. Bound, a move the clock makes is committed through the link before the clock moves. */
+  link: SharedClockLink | null = null;
+
+  /** Commit a move to slider-position `u` (null: all time) through the bound window. Null means the move may stand. */
+  private commit(u: number | null): string | null {
+    return this.link ? this.link.commit(u) : null;
+  }
+
+  /** Immediate move (dragging the handle). Returns the refusal when the shared window refuses the move, else null. */
+  scrub(u: number): string | null {
+    const to = this.clampU(u);
+    const refusal = this.commit(to);
+    if (refusal) return refusal;
     this.mode = 'cursor';
-    this.cursorU = this.targetU = this.clampU(u);
+    this.cursorU = this.targetU = to;
     this.direct = true;
     this.emit();
+    return null;
   }
 
   /** Smoothed move (tour, search results). */
-  glideTo(u: number, trail?: number) {
+  glideTo(u: number, trail?: number): string | null {
+    const to = this.clampU(u);
+    const refusal = this.commit(to);
+    if (refusal) return refusal;
     if (this.mode === 'all') {
-      this.cursorU = this.clampU(u); // start where the new window belongs, avoiding a sweep across all history
+      this.cursorU = to; // start where the new window belongs, avoiding a sweep across all history
     }
     this.mode = 'cursor';
-    this.targetU = this.clampU(u);
+    this.targetU = to;
     if (trail !== undefined) this.trailTarget = trail;
     this.direct = false;
     this.emit();
+    return null;
   }
 
   setCumulative(on: boolean) {
@@ -122,7 +146,15 @@ export class TimeModel {
     this.emit();
   }
 
-  setAll() {
+  /** All time: the resting state, committed as no window. */
+  setAll(): string | null {
+    const refusal = this.commit(null);
+    if (refusal) return refusal;
+    this.rest();
+    return null;
+  }
+
+  private rest() {
     this.mode = 'all';
     this.playing = false;
     this.cumulative = false;
@@ -130,14 +162,31 @@ export class TimeModel {
     this.emit();
   }
 
-  play(startU?: number) {
-    if (startU !== undefined || this.mode === 'all' || this.cursorU >= this.toU - (this.toU - this.fromU) * 0.005) {
-      this.cursorU = this.targetU = this.clampU(startU ?? this.fromU);
+  /** The shared window moved outside this clock (T-ATLAS-TIME): take its place at once, without writing it back. A null u
+   * is all time. An outside move takes the cursor, so play stops. */
+  follow(u: number | null): void {
+    if (u === null) {
+      this.rest();
+      return;
     }
+    this.playing = false;
+    this.mode = 'cursor';
+    this.cursorU = this.targetU = this.clampU(u);
+    this.direct = true;
+    this.emit();
+  }
+
+  play(startU?: number): string | null {
+    const restart = startU !== undefined || this.mode === 'all' || this.cursorU >= this.toU - (this.toU - this.fromU) * 0.005;
+    const from = restart ? this.clampU(startU ?? this.fromU) : this.cursorU;
+    const refusal = this.commit(from);
+    if (refusal) return refusal;
+    if (restart) this.cursorU = this.targetU = from;
     this.mode = 'cursor';
     this.playing = true;
     this.direct = true;
     this.emit();
+    return null;
   }
 
   pause() {
@@ -149,32 +198,40 @@ export class TimeModel {
     return { mode: this.mode, cursorU: this.cursorU, trail: this.trailTarget, cumulative: this.cumulative };
   }
 
-  restore(s: TimeSnapshot) {
+  restore(s: TimeSnapshot): string | null {
+    const to = s.mode === 'all' ? null : this.clampU(s.cursorU);
+    const refusal = this.commit(to);
+    if (refusal) return refusal;
     this.playing = false;
-    this.cumulative = s.cumulative;
     if (s.mode === 'all') {
-      this.setAll();
+      this.rest();
     } else {
+      this.cumulative = s.cumulative;
       this.mode = 'cursor';
       this.targetU = this.clampU(s.cursorU);
       this.trailTarget = s.cumulative ? CUMULATIVE_TRAIL : DEFAULT_TRAIL;
       this.direct = false;
       this.emit();
     }
+    return null;
   }
 
   update(dt: number) {
     let changed = false;
     if (this.playing) {
       const span = this.toU - this.fromU;
-      this.cursorU = this.targetU = this.cursorU + dt * span / PLAY_SECONDS;
+      const next = this.cursorU + dt * span / PLAY_SECONDS;
       changed = true;
-      if (this.cursorU >= this.toU + 0.04 * span) {
+      if (next >= this.toU + 0.04 * span) {
         this.cursorU = this.targetU = this.toU;
         this.playing = false;
         this.setAll();
         return;
       }
+      // one commit per frame at most: the shared window takes a whole year, so a frame that keeps the year writes nothing
+      const refusal = this.commit(this.clampU(next));
+      if (refusal) this.playing = false; // the shared window refused the step: play stops where the window stands
+      else this.cursorU = this.targetU = next;
     } else if (!this.direct && this.cursorU !== this.targetU) {
       // a glide eases, then lands exactly on its target (a stop short of it reads a year off, and a restore must return the clock exactly)
       if (Math.abs(this.targetU - this.cursorU) > 1e-4) this.cursorU += (this.targetU - this.cursorU) * (1 - Math.exp(-dt * 2.4));

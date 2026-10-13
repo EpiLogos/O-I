@@ -49,6 +49,12 @@ import {admitFamilyManifest, familyManifest, onFamilyManifestReset} from './fami
 import {atlasFamilyManifest} from '../projections/atlas/atlasFamilyManifest.ts'
 import {FORCE_ROWS, type Forces} from '../projections/atlas/src/graph/forces.ts'
 import {CLOCK_DOMAIN, DEPTH_RANGE, KIND_NAMES, TIE_BASE_IDS} from './atlasFaceActions.ts'
+// [T-KNOWLEDGE-GRAPH-DEVICE] the knowledge graph's own domains (the cradle's vocabularies and clamps, knowledgeGraphFaceActions.ts).
+import {
+  DEPTH_RANGE as DEPTH_RANGE_KNOWLEDGE, KNOWLEDGE_CONTEXTS, KNOWLEDGE_DIRECTIONS, KNOWLEDGE_KINDS, KNOWLEDGE_LABELS,
+  KNOWLEDGE_RELATIONS, KNOWLEDGE_SCOPES, ZOOM_RANGE as ZOOM_RANGE_KNOWLEDGE,
+} from './knowledgeGraphFaceActions.ts'
+import {knowledgeGraphFamilyManifest} from './knowledgeGraphFamilyManifest.ts'
 
 /** Who commissions this batch's self-armed writers (the writers law: a
  * fixture names itself; a lane names its commission). */
@@ -91,6 +97,7 @@ function familyOwner(family: string): string {
     'software-factory': 'Software Factory',
     workcell: 'Workcell',
     'atlas-earth': 'Atlas Earth (the ported globe)',
+    'knowledge-graph': 'Knowledge graph (the wiki constellation)',
   }
   return OWNERS[family] ?? family
 }
@@ -265,6 +272,107 @@ const P0_ROWS: AdoptedArtifacts[] = [
 ]
 
 // ---------------------------------------------------------------------------
+// the knowledge graph's rows (T-KNOWLEDGE-GRAPH-DEVICE) — the wiki constellation's own controls, each on the domain the
+// cradle gives it (knowledgeGraphFaceActions.ts). Each writer is registered by the shell's setter bridge and calls the
+// same act the face body calls, on the open graph's handle. With no graph open, dispatch refuses naming the writer.
+// Fit to view is an act of the surface, not a parameter; the view list, budget and standing floor are not declared (OPEN).
+
+const KNOWLEDGE_FAMILY = 'knowledge-graph'
+
+const KNOWLEDGE_FACE_TITLES: Readonly<Record<string, string>> = {
+  'knowledge-scope': 'Knowledge scope',
+  'knowledge-filters': 'Knowledge filters',
+  'knowledge-display': 'Knowledge display',
+}
+
+function knowledgeFace(faceId: string, rows: AdoptedArtifacts['rows'], writers: readonly string[]): AdoptedArtifacts {
+  return row({
+    family: KNOWLEDGE_FAMILY, deviceInstance: faceId, faceId, title: KNOWLEDGE_FACE_TITLES[faceId], icon: 'search', rows,
+    writers, writerAuthority: P0_AUTHORITY,
+  })
+}
+
+const KNOWLEDGE_ROWS: readonly AdoptedArtifacts[] = [
+  knowledgeFace('knowledge-scope', [
+    {
+      family: KNOWLEDGE_FAMILY, deviceInstance: 'knowledge-scope', key: 'scope', title: 'Scope', type: 'enumerated',
+      values: [...KNOWLEDGE_SCOPES], writePath: 'shell.setKnowledgeScope',
+      disclosure: 'The available field, or the selected subject’s local graph. The panel’s own Scope control.',
+    },
+    {
+      family: KNOWLEDGE_FAMILY, deviceInstance: 'knowledge-scope', key: 'depth', title: 'Depth', type: 'number',
+      range: {min: DEPTH_RANGE_KNOWLEDGE.min, max: DEPTH_RANGE_KNOWLEDGE.max, unit: 'steps'}, writePath: 'shell.setKnowledgeDepth',
+      disclosure: 'Steps out from the selected subject in a local view, zero to eight, as the depth input clamps. The writer refuses it in the available field, where the input is disabled.',
+    },
+    {
+      family: KNOWLEDGE_FAMILY, deviceInstance: 'knowledge-scope', key: 'direction', title: 'Follow relations', type: 'enumerated',
+      values: [...KNOWLEDGE_DIRECTIONS], writePath: 'shell.setKnowledgeDirection',
+      disclosure: 'Which way relations are followed: both directions, outgoing, or incoming (backlinks).',
+    },
+    {
+      family: KNOWLEDGE_FAMILY, deviceInstance: 'knowledge-scope', key: 'shared', title: 'Shared Field', type: 'boolean',
+      writePath: 'shell.setKnowledgeShared',
+      disclosure: 'Includes my available Shared Field in the reading. The graph reloads its reading when this changes.',
+    },
+    {
+      family: KNOWLEDGE_FAMILY, deviceInstance: 'knowledge-scope', key: 'ghosts', title: 'Unresolved link markers', type: 'boolean',
+      writePath: 'shell.setKnowledgeGhosts',
+      disclosure: 'Shows the markers for links the vault does not resolve. They are view-only: a marker never acquires a source edge.',
+    },
+  ], [
+    'shell.setKnowledgeScope', 'shell.setKnowledgeDepth', 'shell.setKnowledgeDirection', 'shell.setKnowledgeShared', 'shell.setKnowledgeGhosts',
+  ]),
+  knowledgeFace('knowledge-filters', [
+    {
+      family: KNOWLEDGE_FAMILY, deviceInstance: 'knowledge-filters', key: 'text', title: 'Find', type: 'string',
+      writePath: 'shell.setKnowledgeText',
+      disclosure: 'Finds subjects in the reading by name, alias or reference, up to 1024 characters. Empty clears it.',
+    },
+    {
+      family: KNOWLEDGE_FAMILY, deviceInstance: 'knowledge-filters', key: 'kinds', title: 'Subject kinds', type: 'enumerated',
+      values: [...KNOWLEDGE_KINDS], writePath: 'shell.setKnowledgeKinds',
+      disclosure: 'Which subject kinds are shown, from the kinds the graph’s types name. Write the full set. The open reading must hold each kind named, or the write is refused by name. An empty set shows every kind.',
+    },
+    {
+      family: KNOWLEDGE_FAMILY, deviceInstance: 'knowledge-filters', key: 'relations', title: 'Relation types', type: 'enumerated',
+      values: [...KNOWLEDGE_RELATIONS], writePath: 'shell.setKnowledgeRelations',
+      disclosure: 'Which relation types are shown: the four native spellings. Hosted relations arrive verbatim and are not declared here. The open reading must hold each one named. An empty set shows every relation.',
+    },
+    {
+      family: KNOWLEDGE_FAMILY, deviceInstance: 'knowledge-filters', key: 'isolated', title: 'Subjects with no relations', type: 'boolean',
+      writePath: 'shell.setKnowledgeIsolated',
+      disclosure: 'Whether subjects with no disclosed relations are kept. Off hides them; a subject with a hidden neighbour is not labelled unrelated.',
+    },
+    {
+      family: KNOWLEDGE_FAMILY, deviceInstance: 'knowledge-filters', key: 'context', title: 'Constellation context', type: 'enumerated',
+      values: [...KNOWLEDGE_CONTEXTS], writePath: 'shell.setKnowledgeContext',
+      disclosure: 'Keep the disclosed structure around the matches, or show the matches only (partial formations). Membership does not change either way.',
+    },
+  ], [
+    'shell.setKnowledgeText', 'shell.setKnowledgeKinds', 'shell.setKnowledgeRelations', 'shell.setKnowledgeIsolated', 'shell.setKnowledgeContext',
+  ]),
+  knowledgeFace('knowledge-display', [
+    {
+      family: KNOWLEDGE_FAMILY, deviceInstance: 'knowledge-display', key: 'labels', title: 'Labels', type: 'enumerated',
+      values: [...KNOWLEDGE_LABELS], writePath: 'shell.setKnowledgeLabels',
+      disclosure: 'Which labels are drawn: at a useful zoom, on every visible subject, or on the focused subjects.',
+    },
+    {
+      family: KNOWLEDGE_FAMILY, deviceInstance: 'knowledge-display', key: 'arrows', title: 'Relation arrows', type: 'boolean',
+      writePath: 'shell.setKnowledgeArrows',
+      disclosure: 'Shows the direction of each relation.',
+    },
+    {
+      family: KNOWLEDGE_FAMILY, deviceInstance: 'knowledge-display', key: 'zoom', title: 'Zoom', type: 'number',
+      range: {min: ZOOM_RANGE_KNOWLEDGE.min, max: ZOOM_RANGE_KNOWLEDGE.max, unit: '×'}, writePath: 'shell.setKnowledgeZoom',
+      disclosure: 'The graph’s zoom, from fifteen hundredths to four times, as the zoom buttons clamp it.',
+    },
+  ], [
+    'shell.setKnowledgeLabels', 'shell.setKnowledgeArrows', 'shell.setKnowledgeZoom',
+  ]),
+]
+
+// ---------------------------------------------------------------------------
 // the transport bindings (ligament 1) — the audited slots, addressed
 
 /** Factory tempo → effort: where Live has tempo, the armed session thinks
@@ -299,11 +407,12 @@ let loaded = false
 export function loadAgentNativeP0(): void {
   if (loaded) return
   if (!familyManifest('atlas-earth')) admitFamilyManifest(atlasFamilyManifest)
-  const missing = ['actuation', 'software-factory', 'atlas-earth', 'central'].filter(family => !familyManifest(family as never))
+  if (!familyManifest('knowledge-graph')) admitFamilyManifest(knowledgeGraphFamilyManifest)
+  const missing = ['actuation', 'software-factory', 'atlas-earth', 'central', 'knowledge-graph'].filter(family => !familyManifest(family as never))
   if (missing.length) {
     throw new Error(`loadAgentNativeP0 refuses — families not yet admitted: ${missing.join(', ')} (load the families first; the door is theirs)`)
   }
-  registerAdoptedArtifacts(P0_ROWS.map(artifact => ({
+  registerAdoptedArtifacts([...P0_ROWS, ...KNOWLEDGE_ROWS].map(artifact => ({
     ...artifact,
     ...(BINDINGS_BY_FAMILY[artifact.family] ? {transport: BINDINGS_BY_FAMILY[artifact.family]} : {}),
   })))

@@ -1,0 +1,52 @@
+/* The knowledge graph face bodies (knowledgeGraphFaceBodies.tsx): the wiki constellation's own controls on the rack. The
+ * colours are the shell's tokens; the body keeps to the rack's card density. */
+.knowledge-face {
+  display: grid;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--oi-foreground, inherit);
+}
+
+.knowledge-face-group {
+  display: grid;
+  gap: 6px;
+}
+
+.knowledge-face-group > label {
+  display: grid;
+  gap: 3px;
+  color: var(--oi-muted, inherit);
+}
+
+.knowledge-face-check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.knowledge-face-note {
+  margin: 0;
+  color: var(--oi-muted, inherit);
+  line-height: 1.4;
+}
+
+.knowledge-face details {
+  display: grid;
+  gap: 4px;
+}
+
+.knowledge-face summary {
+  cursor: pointer;
+  color: var(--oi-muted, inherit);
+}
+
+.knowledge-face-action {
+  justify-self: start;
+  padding: 3px 8px;
+  border: 1px solid var(--oi-line, currentColor);
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}

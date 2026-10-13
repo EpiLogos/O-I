@@ -41,6 +41,7 @@ import {ChevronFold, PopOut} from '../inhabitants/sdk/marks.tsx'
 import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
 import type {WorldTimelineView} from '../projections/useWorldTemporalReading'
 import {ATLAS_FAMILY_ID} from '../projections/atlas/atlasFamilyManifest'
+import {admitKnowledgeGraphFamily} from '../inhabitants/knowledgeGraphFamilyManifest'
 import type {PaneInstrumentId} from './paneInstrument'
 import './modeSurface.css'
 
@@ -336,10 +337,10 @@ export function TechneClipDetail({world}: {world: WorldTimelineView | null}) {
 }
 
 /** The instrument device side for a focused pane's instrument (owner ruling,
- * 13 Oct 2026). A Technē holder stands its instrument rack; the knowledge
- * graph is a standalone instrument with no device face declared yet, so its
- * Device side says its controls are not declared and never shows the 0
- * instrument's rack. */
+ * 13 Oct 2026). A Technē holder stands its instrument rack. The knowledge
+ * graph is a standalone instrument (T-KNOWLEDGE-GRAPH-DEVICE): its own family's
+ * rack stands here, its faces driving the open graph's own controls, and the
+ * 0 instrument's rack is never shown for it. */
 export function InstrumentDeviceDetail({transport, instrument, centralDevices = false}: {
   transport: KernelTransportStatus
   instrument: PaneInstrumentId
@@ -351,18 +352,7 @@ export function InstrumentDeviceDetail({transport, instrument, centralDevices = 
     return (
       <div className="mode-detail" data-mode-detail="knowledge-graph-device">
         {centralDevices && <InhabitantRack manifests={centralManifests()} transport={transport} />}
-        <section className="mode-detail-frame mode-detail-frame-wide" data-detail="knowledge-graph" role="status">
-          <header className="mode-detail-frame-head">
-            <span className="mode-detail-frame-mark"><Icon name="lib" size={14} /></span>
-            <strong>Knowledge graph</strong>
-            <span className="mode-detail-frame-sub">the wiki-constellation knowledge graph</span>
-            <span className="mode-detail-frame-state">controls not yet declared</span>
-          </header>
-          <p className="mode-detail-frame-note">
-            The knowledge graph is its own instrument. Its device controls are not yet declared, so no
-            device face docks here. The Earth atlas's rack is not shown for it.
-          </p>
-        </section>
+        <InhabitantRack manifests={[admitKnowledgeGraphFamily()]} transport={transport} focusInstrument="knowledge-graph" />
       </div>
     )
   }

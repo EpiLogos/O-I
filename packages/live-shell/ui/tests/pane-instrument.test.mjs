@@ -132,10 +132,13 @@ test('without a focus the Technē rack stands as it did: the QL faces, all folde
   assert.doesNotMatch(out, /data-face-id="graph-tools"/, 'the atlas faces are not in the unfocused Technē rack')
 })
 
-test('the knowledge graph Device side states its controls are not declared and never shows the 0 rack', () => {
+test('the knowledge graph Device side draws its own family rack, never the 0 rack and never the placeholder', () => {
   const out = html(createElement(InstrumentDeviceDetail, {transport, instrument: 'knowledge-graph'}))
-  assert.match(out, /controls not yet declared/)
-  assert.doesNotMatch(out, /data-face-id=/, 'no device face is drawn for the knowledge graph')
+  assert.doesNotMatch(out, /controls not yet declared/, 'the knowledge graph’s controls are declared (T-KNOWLEDGE-GRAPH-DEVICE)')
+  assert.match(out, /data-family="knowledge-graph"/)
+  for (const face of ['knowledge-scope', 'knowledge-filters', 'knowledge-display']) {
+    assert.match(out, new RegExp(`data-face-id="${face}"`), `${face} docks on the knowledge graph's rack`)
+  }
   assert.doesNotMatch(out, /data-mode-detail="techne-instruments"/)
   assert.doesNotMatch(out, /graph-tools/)
 })
@@ -161,6 +164,14 @@ test('Central keeps its own devices: they lead the chain, then the focused instr
   assert.equal(expandedOf(out, 'time-control'), 'true')
   const knowledge = html(createElement(InstrumentDeviceDetail, {transport, instrument: 'knowledge-graph', centralDevices: true}))
   assert.match(knowledge, new RegExp(`data-face-id="${centralFaces[0]}"`))
-  assert.match(knowledge, /controls not yet declared/)
+  assert.match(knowledge, /data-family="knowledge-graph"/, 'the knowledge graph’s rack follows Central’s devices')
+  assert.doesNotMatch(knowledge, /controls not yet declared/)
   assert.doesNotMatch(knowledge, /graph-tools/)
+})
+
+test('focused, the knowledge graph opens its own faces on the rack, named as the panel names them', () => {
+  const out = html(createElement(InstrumentDeviceDetail, {transport, instrument: 'knowledge-graph'}))
+  for (const face of ['knowledge-scope', 'knowledge-filters', 'knowledge-display']) assert.equal(expandedOf(out, face), 'true', `${face} docks expanded`)
+  for (const title of ['Scope', 'Filters', 'Display']) assert.match(out, new RegExp(`>${title}<`))
+  assert.doesNotMatch(out, />knowledge-scope</, 'no raw face id stands as a title')
 })

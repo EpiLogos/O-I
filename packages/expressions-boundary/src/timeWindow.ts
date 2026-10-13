@@ -238,3 +238,22 @@ export function createNativeTimeWindowOwner({store}: {store: DisclosureSessionSt
     },
   };
 }
+
+/** The session's window as a shell face captured it (T-ATLAS-TIME): the session, its actual selection and the window in force. */
+export interface CapturedSharedWindow {session_ref: string; selection: DisclosureSelection; window: SharedTimeWindow | null}
+
+/** The shell's compare-and-set write of the shared window, for a shell face that is not an admitted Expression (the Earth).
+ * It is the owner's `set` predicate over the same session store: the captured session, window and actual selection must
+ * still stand, or the write is refused by name and nothing changes. The window then moves through the session's own
+ * setter, once. Admission and source qualification stay the owner's; this writer claims neither. */
+export function writeSharedWindowCompareAndSet(store: DisclosureSessionStore, captured: CapturedSharedWindow,
+  window: SharedTimeWindow | null): DisclosureSession {
+  const before = store.get();
+  if (!before) throw Error('No shared session stands, so the shared time window has nowhere to be written');
+  checkedSession(before);
+  if (before.session_ref !== captured.session_ref || !sameWindow(before.time_window ?? null, captured.window)
+    || canonical(before.selection) !== canonical(captured.selection))
+    throw Error('The shared session, window or actual selection changed; read it before setting time');
+  declaredWindow(window);
+  return store.setTimeWindow(window);
+}
