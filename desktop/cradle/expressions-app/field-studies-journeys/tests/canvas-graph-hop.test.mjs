@@ -59,9 +59,10 @@ test('the canvas inspector shows the act only when the host declares it and the 
 
 test('the app posts a kind-graph summon through the existing host-request envelope, never a source summon', async()=>{
  const app=await readFile(join(engine,'src','app.ts'),'utf8');
- const start=app.indexOf('showInGraph:(subjectRef,nativeOwner)');
- assert.ok(start>=0,'the host method is wired in app.ts');
- const line=app.slice(start,app.indexOf('nativeView:()=>nativeWorkspace',start));
+ assert.match(app,/showInGraph:\(subjectRef,nativeOwner\)=>summonGraph\(subjectRef,nativeOwner\),/,'the host method is wired in app.ts through the one graph summon (E21 shares it)');
+ const start=app.indexOf('function summonGraph(');
+ assert.ok(start>=0,'summonGraph is the one graph summon');
+ const line=app.slice(start,app.indexOf('\n',start));
  assert.match(line,/hostRequest\(\{request:'summon',detail:\{kind:'graph',subject:\{ref:subjectRef,nativeOwner,/);
  assert.doesNotMatch(line,/kind:'source'/);
 });

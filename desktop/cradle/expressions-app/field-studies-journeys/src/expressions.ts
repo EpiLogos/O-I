@@ -89,7 +89,74 @@ const button=(action:string,glyph:string,label:string,extra='')=>`<button class=
  * the gallery, the sections and the kernel/native reads. */
 /** T-REVIEW-6: the quarantined drafts the Library lists. `when` is already the owner's local clock text. */
 export interface LibraryQuarantine{rows:{id:string;key:string;name:string;reason:string;when:string}[];unreadable:string[];message?:string}
-export interface LibraryContext {current?:Expression;saved:Expression[];featured:Expression[];starters:StartingPoint[];section:string;errors:string[];legacy:boolean;cover:(expression:Expression)=>string|undefined;standalone?:boolean;quarantine?:LibraryQuarantine}
+/** E21: where the selected occurrence's subject stands. A native row jumps through the bindings in this frame; a
+ * projection row names a wiki register the host reads from the one projection state. */
+export type StandingRow=
+ |{kind:'scene';title:string;detail:string;scene_ref:string;entity_ref:string;view_entity_id:string;subject_ref:string}
+ |{kind:'projection';title:string;detail:string;register_key:string;scene_ref:string;entity_ref:string;subject_ref:string};
+export interface LibraryStanding{subject:string;projection:'read'|'unread';rows:StandingRow[]}
+/** E26: the kernel's collections index as bins. `uncollected` is every Expression in no collection, never hidden. */
+export interface CollectionMember{ref:string;title:string;current:boolean}
+export interface CollectionBin{name:string;members:CollectionMember[]}
+export interface CollectionBins{bins:CollectionBin[];uncollected:CollectionMember[];current:{ref:string;collections:string[]}|null}
+export interface LibraryContext {current?:Expression;saved:Expression[];featured:Expression[];starters:StartingPoint[];section:string;errors:string[];legacy:boolean;cover:(expression:Expression)=>string|undefined;standalone?:boolean;quarantine?:LibraryQuarantine;standing?:LibraryStanding;bins?:CollectionBins|null}
+
+/** E26: the kernel's own `index` reading (its `collections` map and each row's collections) as Library bins.
+ * Pure and defensive: a malformed reading is null, an unlisted title keeps its ref, nothing is invented. */
+export function collectionBinsOf(index:unknown,currentRef?:string):CollectionBins|null{
+ if(!index||typeof index!=='object')return null;
+ const {expressions,collections}=index as {expressions?:unknown;collections?:unknown};
+ if(!Array.isArray(expressions)||!collections||typeof collections!=='object'||Array.isArray(collections))return null;
+ const rows=expressions.flatMap((row:unknown)=>{
+  if(!row||typeof row!=='object')return [];
+  const r=row as {expression_ref?:unknown;title?:unknown;collections?:unknown};
+  if(typeof r.expression_ref!=='string')return [];
+  const own=Array.isArray(r.collections)?r.collections.filter((c:unknown):c is string=>typeof c==='string'&&c!==''):[];
+  return [{ref:r.expression_ref,title:typeof r.title==='string'&&r.title!==''?r.title:r.expression_ref,collections:own}];
+ });
+ const titleOf=new Map(rows.map(r=>[r.ref,r.title]));
+ const member=(ref:string):CollectionMember=>({ref,title:titleOf.get(ref)??ref,current:ref===currentRef});
+ const byTitle=(a:CollectionMember,b:CollectionMember)=>a.title.localeCompare(b.title);
+ const bins=Object.entries(collections as Record<string,unknown>).flatMap(([name,refs])=>Array.isArray(refs)
+  ?[{name,members:refs.filter((ref:unknown):ref is string=>typeof ref==='string').map(member).sort(byTitle)}]:[])
+  .sort((a,b)=>a.name.localeCompare(b.name));
+ const uncollected=rows.filter(r=>!r.collections.length).map(r=>member(r.ref)).sort(byTitle);
+ const current=currentRef?{ref:currentRef,collections:rows.find(r=>r.ref===currentRef)?.collections??[]}:null;
+ return {bins,uncollected,current};
+}
+/** E26: the names an Expression is assigned, normalised before they are written as one collections_set. */
+export function collectionsWith(selected:string[],extra:string):string[]{
+ const names=[...selected,extra].map(name=>name.replace(/\s+/g,' ').trim()).filter(Boolean);
+ return [...new Set(names)].sort((a,b)=>a.localeCompare(b));
+}
+function standingRowHTML(subject:string,row:StandingRow):string{
+ const target=row.kind==='scene'
+  ?`data-kind="scene" data-scene="${esc(row.scene_ref)}" data-entity="${esc(row.entity_ref)}" data-view-entity="${esc(row.view_entity_id)}"`
+  :`data-kind="projection" data-register="${esc(row.register_key)}" data-scene="${esc(row.scene_ref)}" data-entity="${esc(row.entity_ref)}"`;
+ return `<li class="standing-row"><button type="button" class="standing-jump" data-action="jump-standing" ${target} data-subject="${esc(subject)}"><strong>${esc(row.title)}</strong><span>${esc(row.detail)}</span></button></li>`;
+}
+/** E21: the back-reference section. Empty is stated, and an unread projection is named, never shown as an empty wiki. */
+function standingHTML(s:LibraryStanding|undefined):string{
+ if(!s)return '';
+ const rows=s.rows.map(row=>standingRowHTML(s.subject,row)).join('');
+ const note=s.projection==='unread'?`<p class="oi-lib-note">The wiki projection standing is read by the host that carries the wiki; this frame shows the opened Expression only.<small>projection standing · not read here</small></p>`:'';
+ const empty=s.projection==='read'?'Nothing on stage carries this subject.':'Nothing in the opened Expression carries this subject.';
+ return `<section class="library-section" data-scope="back-references"><header><h2>Where this stands</h2><span>${esc(s.subject)}</span></header>${note}${rows?`<ul class="standing-list">${rows}</ul>`:`<p class="oi-lib-note">${empty}</p>`}<div class="standing-actions"><button type="button" data-action="reveal-subject" data-subject="${esc(s.subject)}">Show in graph</button></div></section>`;
+}
+function collectionMemberHTML(member:CollectionMember,bin:string):string{
+ return `<li class="collection-member${member.current?' is-current':''}" data-starting-card data-search="${esc(`${member.title} ${member.ref} ${bin}`.toLowerCase())}"><span>${esc(member.title)}</span>${member.current?'<small>current</small>':''}</li>`;
+}
+/** E26: the bins section. The assignment picker appears only where the open Expression can be written (the instrument). */
+function collectionBinsHTML(b:CollectionBins|null|undefined,picker:boolean):string{
+ if(!b)return '';
+ if(!b.bins.length&&!b.uncollected.length)return `<section class="library-section" data-scope="collection-bins"><header><h2>Collections</h2><span>Read live from this instance</span></header><p class="oi-lib-note">No Expressions are reachable from this instance yet.</p></section>`;
+ const bins=b.bins.map(bin=>`<details class="collection-bin" open><summary><strong>${esc(bin.name)}</strong><span>${bin.members.length}</span></summary><ul>${bin.members.map(m=>collectionMemberHTML(m,bin.name)).join('')}</ul></details>`).join('');
+ const uncollected=b.uncollected.length?`<details class="collection-bin is-uncollected" open><summary><strong>Uncollected</strong><span>${b.uncollected.length}</span></summary><ul>${b.uncollected.map(m=>collectionMemberHTML(m,'uncollected')).join('')}</ul></details>`:'';
+ const cur=b.current;
+ const names=b.bins.map(bin=>bin.name);
+ const form=picker&&cur?`<div class="collection-picker" data-scope="collection-picker" data-expression="${esc(cur.ref)}">${names.map(name=>`<label class="collection-option"><input type="checkbox" name="collection" value="${esc(name)}"${cur.collections.includes(name)?' checked':''}> ${esc(name)}</label>`).join('')}<input name="new-collection" aria-label="New collection name" placeholder="New collection" maxlength="80"><button type="button" data-action="set-collections">Save collections</button></div>`:'';
+ return `<section class="library-section" data-scope="collection-bins"><header><h2>Collections</h2><span>Read live from this instance · each Expression sits in its bins</span></header>${bins}${uncollected}${form}</section>`;
+}
 /** T-REVIEW-6: each quarantined draft with its name, reason and time, and the two actions. Damaged material is shown, never loaded on its own. */
 function quarantineHTML(q:LibraryQuarantine|undefined):string{
   if(!q||(!q.rows.length&&!q.unreadable.length&&!q.message))return '';
@@ -120,6 +187,7 @@ export function libraryHTML(c:LibraryContext):string{
   ${c.errors.length?`<p class="library-error" role="status">${esc(c.errors.join(' · '))} Original entries are untouched.</p>`:''}
   <section class="library-section" data-scope="current-project"><header><h2>${c.standalone?'Saved copies':'Current project / world'}</h2><span>${c.standalone?'Your saved expressions, kept in this application':'Your work in this world'}</span></header><div class="expression-grid">${saved.map(j=>card(j,'saved')).join('')}</div></section>
   ${quarantineHTML(c.quarantine)}
+  ${standingHTML(c.standing)}${collectionBinsHTML(c.bins,!c.standalone)}
   ${featured.length?`<section class="library-section" data-scope="project-collections"><header><h2>Project collections</h2><span>Collected studies & featured compositions</span></header><div class="expression-grid">${featured.map(j=>card(j,'featured')).join('')}</div></section>`:''}
   <section class="library-section" data-scope="personal-collections"><header><h2>Personal collections</h2><label class="library-search">${icon('search')}<input id="library-search" placeholder="Find a mode or material" aria-label="Find a starting composition"></label></header><div class="expression-grid starting-grid">${starterGrid(personal)}</div><p id="library-empty" hidden>No compositions match that search.</p></section>
   ${libraryNativeSectionHTML()}
