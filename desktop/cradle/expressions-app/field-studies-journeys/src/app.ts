@@ -1,6 +1,8 @@
 import {installBlueprintHUD} from './blueprintHUD.js';
 import {blueprintMember} from './blueprintGeometry.js';
 import {installNativeField} from "./nativeField";
+import {announceInstrument} from "./native-field/ql/instrumentAnnouncement.mjs";
+import "./native-field/liveCut.css";
 import {SESSION_KEY,SessionState,validateSession,writeDraft,readDraft,readDrafts,removeDraft,applyRecoveryPlan,quarantineView,restoreQuarantinedDraft} from './recovery';
 // lane-3 E17-E19: one draft scheduler, the draft/saved offer and the session mark.
 import {DraftSchedule,draftStatusLine} from './draftSchedule';
@@ -1894,7 +1896,7 @@ window.addEventListener('resize',()=>{if(recorder.active){recorder.stop();toast(
 // drives the rail's primary direct modes through {v:1,kind:'host-command'}.
 // Every host-mode message is answered with a fresh oi-app-state announcement
 // (hostedApp.trackHostedAppState), which is also the race-free initial read.
-let hostMode:'expressions'|'techne'=new URLSearchParams(location.search).get('mode')==='techne'?'techne':'expressions';
+let hostMode:'expressions'|'techne'|'live'=new URLSearchParams(location.search).get('mode')==='techne'?'techne':new URLSearchParams(location.search).get('mode')==='live'?'live':'expressions';
 // The world lens the host stands in (workspace.current.context.world). Read
 // from ?world= or an optional host-mode `world`; the Epi-Logos world opens the
 // Studio on the live instrument the first time, never overriding a choice.
@@ -1913,19 +1915,28 @@ function announceHostState(){
   const s=scene(),view=nativeWorkspace?.nativeView(),binding=view?.bindings[s.id];
   // The Technē lens the frame stands in (the masthead chooser). Read here, not in the literal: a call before the chooser exists omits it rather than throwing out of the announcement.
   let lens:LensId|undefined;try{lens=lensStudio.active();}catch{lens=undefined;}
-  const state={...(lens?{lens}:{}),nativeScene:view&&binding?{expression_ref:view.document.expression_ref,revision:view.document.revision,scene_ref:binding.scene_ref}:undefined,document:awaitingNativeBoot&&!nativeWorkspace?.nativeView()?undefined:{id:nativeWorkspace?.nativeView()?.document.expression_ref??store.document.id,name:store.document.name},sceneIndex,sceneCount:store.document.scenes.length,sceneName:s.name,sceneState:sceneSaveState(store.document,s),
+  const instrument=announcedInstrument();
+  const state={...(lens?{lens}:{}),...(instrument?{instrument}:{}),nativeScene:view&&binding?{expression_ref:view.document.expression_ref,revision:view.document.revision,scene_ref:binding.scene_ref}:undefined,document:awaitingNativeBoot&&!nativeWorkspace?.nativeView()?undefined:{id:nativeWorkspace?.nativeView()?.document.expression_ref??store.document.id,name:store.document.name},sceneIndex,sceneCount:store.document.scenes.length,sceneName:s.name,sceneState:sceneSaveState(store.document,s),
    selection:selected.map(id=>{const e=scene().entities.find(v=>v.id===id);return {id,name:e?e.name:undefined};}),tool,playing:scenePlaying,journeyPlaying,fieldPaused,libraryOpen,hostMode,recording:recorder.active,presenting,automationLoop,propertyRecording:!!propertyTake,propertyPreview:trackPreview,automationHeld:liveOverrides.heldCount(),takeMode:appendTake?'append':'replace',stage:{mode:camera.mode,grid:camera.grid,snap:camera.snap,guides:guidesVisible,tool,repeatPins:pinRepeat,videoTake:!!currentVideo}};
   window.parent.postMessage({v:1,kind:'oi-app-state',state},'*');
   nativeEditorEndpoint?.publish();
  }catch{/* nothing is announced rather than a wrong position */}
 }
-function setHostMode(mode:'expressions'|'techne'){
+/** The native instrument as the frame announces it (ticket T-LIVE-TORUS-INSTRUMENT). Read here, never from a stale copy; absent while no session is open, and never a throw out of the announcement. */
+function announcedInstrument(){
+ try{return nativeField?announceInstrument(nativeField.controller.reading):undefined;}catch{return undefined;}
+}
+// The Live cut (mode 'live'): the native M1 body presented full-stage, through the same NativeFieldController the Studio's Live instrument runs.
+// Chrome that belongs to the Expressions and Technē cuts is concealed by the body class; the Studio opens on the native section.
+function setHostMode(mode:'expressions'|'techne'|'live'){
  if(hostMode===mode)return;
  hostMode=mode;
  document.body.classList.toggle('oi-host-techne',mode==='techne');
+ document.body.classList.toggle('oi-host-live',mode==='live');
  renderRail();
- lensStudio.setMode(mode);
- if(mode==='expressions'){researchInstruments?.close();palaceInstrument.close();journeyInstrument?.close();journeyHome.hidden=true;setInstrumentSurface(null);}else activateInstrument(lensStudio.active());
+ lensStudio.setMode(mode==='techne'?'techne':'expressions');
+ if(mode!=='techne'){researchInstruments?.close();palaceInstrument.close();journeyInstrument?.close();journeyHome.hidden=true;setInstrumentSurface(null);}else activateInstrument(lensStudio.active());
+ if(mode==='live'&&nativeField){studioSection='native';tab='field';setStudio(true);}
  renderAll();
 }
 // Open an existing native Expression the host asked for at runtime — a
@@ -2060,7 +2071,7 @@ window.addEventListener('message',ev=>{if(ev.source!==window.parent)return;const
   document.documentElement.style.setProperty('--shell-covered-right',(Number.isFinite(d.coveredRight)?Math.max(0,d.coveredRight!):0)+'px');
   return;
  }
- if(d&&d.v===1&&d.kind==='host-mode'&&(d.mode==='expressions'||d.mode==='techne')){const world=(d as {world?:unknown}).world;if(typeof world==='string'&&world.length<=64)worldLens=world;setHostMode(d.mode);announceHostState();return;}
+ if(d&&d.v===1&&d.kind==='host-mode'&&(d.mode==='expressions'||d.mode==='techne'||d.mode==='live')){const world=(d as {world?:unknown}).world;if(typeof world==='string'&&world.length<=64)worldLens=world;setHostMode(d.mode);announceHostState();return;}
  if(d&&d.v===1&&d.kind==='host-command'){
   if(d.command==='interact'||d.command==='select')activateRail(d.command);
   else if(d.command==='open-expression'&&typeof d.ref==='string'){if((d as {refresh?:unknown}).refresh===true&&kernelExpressionsAvailable())void nativeWorkspace?.refreshReference(d.ref,d.recovery);else openHostExpression(d.ref,d.recovery);}
@@ -2514,7 +2525,7 @@ async function composeJourneyScene(title:string):Promise<void>{
  await nativeWorkspace?.refreshReference(routed.request.expression_ref);
  void journeyInstrument?.refresh();
 }
-lensStudio.setMode(hostMode);
+lensStudio.setMode(hostMode==='techne'?'techne':'expressions');
 (document.querySelector('#workspace-menu') as HTMLElement)?.insertAdjacentHTML('beforeend',ib('deep-home','home','Epii home','data-techne-only')+ib('deep-verso','wiki','Verso — the subject\u2019s account and sources','data-techne-only'));
 // Save is the primary act: it stays in the masthead at every width, outside
 // the history/capture overflow menu.
@@ -2667,7 +2678,7 @@ async function startWorkspace(){
  else if(draft&&(!initial.updatedAt||draft.id!==initial.id||draft.updatedAt>=initial.updatedAt)){store.document=initialiseSceneSaves(initialiseBelts(draft));store.touch();}recovered=validateSession(JSON.parse(localStorage.getItem(SESSION_KEY)??'null'),store.document);showEntry=!startsInTechne;}catch(e){console.warn('Draft recovery unavailable',e);showEntry=!startsInTechne;}}
  const linkedScene=deepLinkPending?.address.scene;
  if(recovered&&(linkedScene===undefined||linkedScene===recovered.sceneId)){sceneIndex=store.document.scenes.findIndex(s=>s.id===recovered!.sceneId);selected=recovered.selected;stepIndex=recovered.stepIndex;sceneElapsed=recovered.sceneElapsed;simTime=recovered.simTime;scenePlaying=recovered.scenePlaying??recovered.playing;workingTransport=recovered.workingTransport??STOPPED_TRANSPORT;journeyPlaying=recovered.journeyPlaying;if(recovered.fieldPaused!==undefined)fieldPaused=recovered.fieldPaused;if(qs.has('still'))fieldPaused=true;camera=recovered.camera;}else applySceneView();
- document.body.classList.toggle('oi-host-techne',hostMode==='techne');renderRail();
+ document.body.classList.toggle('oi-host-techne',hostMode==='techne');document.body.classList.toggle('oi-host-live',hostMode==='live');if(hostMode==='live'&&nativeField){studioSection='native';tab='field';setStudio(true);}renderRail();
  if(!qsExpression?.startsWith('expression:'))await nativeWorkspace?.changed(store.document);
  resize();engine.render(frameData(0));if(recovered?.transport)engine.restoreTransport?.(recovered.transport);
  trackPreview=!!scene().propertyTracks?.length;resize();renderAll();if(location.hash.startsWith('#library'))openLibrary(location.hash.includes('about')?'about':'collection',false);rafId=requestAnimationFrame(tick);

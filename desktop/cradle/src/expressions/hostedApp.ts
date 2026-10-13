@@ -1,4 +1,6 @@
 import type {LibraryItem} from "../library/scope";
+// Type-only: the QL instrument reading the shell parses (its owner shape, ql.instrument-reading/v1).
+import type {QlInstrumentReading} from "../../../../packages/live-shell/ui/src/inhabitants/ql/qlInstrumentReading";
 import type {NativeInsertionTarget,VerifiedInsertionSource} from "./sourceInsertion";
 import {hostedCompositionFile} from "./hostedComposition";
 import {relayNativeChannel} from "./nativeChannel";
@@ -461,10 +463,26 @@ export function relayKernelChannel(frame: HTMLIFrameElement, transport: KernelTr
 //       instrument ids below; `expressions` is the conjugate 3:3 reading,
 //       never a deep instrument, and is refused here by never matching.
 
-/** The cut a hosting surface stands the application in. */
-export type HostedAppMode = "expressions" | "techne";
+/** The cut a hosting surface stands the application in. `live` presents the
+ * native M1 body full-stage for Live mode (ticket T-LIVE-TORUS-INSTRUMENT): the same
+ * NativeFieldController and InstrumentSession the Studio's Live instrument runs. */
+export type HostedAppMode = "expressions" | "techne" | "live";
 
-const isHostedAppMode = (value: unknown): value is HostedAppMode => value === "expressions" || value === "techne";
+const isHostedAppMode = (value: unknown): value is HostedAppMode => value === "expressions" || value === "techne" || value === "live";
+
+/** The owner's determinants as the native M1 scene discloses them (scene.ts SceneActing). Values, never invented:
+ * the lens label is the owner's `m1.lens`; the harmonic basis is the owner's `harmonic.source`. */
+export interface HostedInstrumentDeterminants {
+  readonly lens: {readonly lens12: number; readonly label: string};
+  readonly contextFrame: number;
+  readonly harmonic: {readonly selection: "canonical-basis"; readonly index: number} | {readonly selection: "selected-source-row"};
+  readonly rna: boolean;
+}
+
+/** The owner's instrument reading as the boundary validated it: the QL reading parser's value, or the fault it named. */
+export type HostedInstrument =
+  | {readonly ok: true; readonly reading: QlInstrumentReading; readonly determinants: HostedInstrumentDeterminants | null}
+  | {readonly ok: false; readonly fault: string};
 
 /** The six deep instruments the hosted Lens Studio may summon, as the wire
  * carries them (the application's chooser vocabulary). This is the hostedApp
@@ -499,6 +517,8 @@ export interface HostedAppState {
   /** The Technē lens the frame stands in (its masthead chooser), one of the six holders. Absent before the frame reports one. */
   lens?: HostedTechneLens;
   nativeScene?:{expression_ref:string;revision:number;scene_ref:string};
+  /** The native instrument the frame announces (Live's torus reads it): present only while the owner's instrument is open. */
+  instrument?: HostedInstrument;
   document?: {id?: string; name?: string};
   sceneIndex?: number;
   sceneCount?: number;

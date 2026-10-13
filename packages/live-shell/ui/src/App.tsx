@@ -42,6 +42,7 @@ import type {CentralSubjectSelection} from './inhabitants/CentralSubjectDetail'
 import {NATIVE_PRESENT_EXPRESSIONS} from './native/openStudio'
 import {sameEditorBasis,type NativeEditorBasis,type NativeEditorController} from '@epilogos/expressions-boundary/editor'
 import './NativeCompositionResidence.css'
+import './live/liveCentre.css'
 import {registerAtlasHost} from './projections/atlas/registerAtlasHost'
 import {registerTimelineHost} from './projections/timelinePane'
 import {setTimelinePanePresentation, useTimelinePanePresentation, usePublishTimelineReading} from './projections/timelinePaneHost'
@@ -259,7 +260,8 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
     // `world.ground` identity; Factory drives the agency centre's own view.
     // Neither presentation rewrites the application-view identity of another.
     presentSettings(false); setTab(view)
-    if (frameMode === 'live') return
+    // Live's centre: the instrument (world.expressions, the torus) or the Timeline. A view press shows the Timeline; Live's mode press returns to the instrument.
+    if (frameMode === 'live') { setCenterPanel(`native.${view}`); return }
     if (frameMode === 'factory') { shellCtx.setCentreView(view); return }
     if (frameMode === 'base' || frameMode === 'techne') { if (centerPanel !== 'world.ground') setCenterPanel('world.ground'); return }
     setCenterPanel(`native.${view}`)
@@ -476,7 +478,7 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
       <div className="mode-centre-residence" hidden={!centreFrameUp} data-mode-centre-residence={frameMode}>
         {(frameMode === 'base' || frameMode === 'techne') && <ModeCentreFrame mode={frameMode} presentation={presented ?? 'session'} world={worldView} />}
       </div>
-      {panels.map(panel => { const Panel = panel.component; return <div className={`inhabitant${panel.id === 'world.expressions' ? ' native-stage-residence' : ''}`} hidden={panel.id === 'world.settings' ? !settingsPresented : settingsPresented || workspace.mode === 'audio' && panel.id !== 'world.knowledge' || (centerPanel !== panel.id && !(nativeComposition && panel.id === 'world.expressions'))} key={panel.id}><Panel {...ctx} /></div> })}
+      {panels.map(panel => { const Panel = panel.component; return <div className={`inhabitant${panel.id === 'world.expressions' ? ' native-stage-residence' : ''}${frameMode === 'live' && panel.id === 'world.expressions' ? ' live-centre-torus' : ''}`} hidden={panel.id === 'world.settings' ? !settingsPresented : settingsPresented || workspace.mode === 'audio' && panel.id !== 'world.knowledge' && panel.id !== 'world.expressions' || (centerPanel !== panel.id && !(nativeComposition && panel.id === 'world.expressions'))} key={panel.id}><Panel {...ctx} /></div> })}
     </div></main>
     {/* Rev 4's dock per mode: the mode context dock (tiles above, launcher
       below, the wedge that dies with the toggle) carries the non-agency
