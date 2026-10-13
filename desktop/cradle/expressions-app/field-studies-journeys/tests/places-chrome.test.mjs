@@ -120,8 +120,20 @@ test('T29: only a place flight pulses, and only its own marker', ()=>{
   assert.equal(api.pulseTarget({flight:{graphNodeId:null},easing:true}),null,'a lane flight pulses nothing');
 });
 
+// Lead ruling (13 Oct 2026, lane-4 T15): stillness forbids motion the reader did not start. Playback is the one
+// frame clock the law admits — begun by the reader's Play, running only while `playing`, cancelled on pause, end,
+// unmount and reduced motion. It is cut out by its markers below; nothing else in the tree may request frames.
+const PLAYBACK_CLOCK=/\/\/ Playback animates the window[\s\S]*?return \(\) => cancelAnimationFrame\(frame\);/;
 test('T29: the psychogeographic tree has no frame loop, timer loop or keyframed animation of its own', ()=>{
-  for(const {name,text} of psychogeographicSources()){
+  for(const {name,text:source} of psychogeographicSources()){
+    let text=source;
+    if(name.endsWith('PsychogeographicMap.tsx')){
+      const clock=source.match(PLAYBACK_CLOCK);
+      assert.ok(clock,'the playback clock is where the ruling names it');
+      assert.match(clock[0],/if \(!playing \|\|/,'the clock runs only while the reader plays');
+      assert.equal((clock[0].match(/requestAnimationFrame/g)??[]).length,2,'one clock: the first frame and its re-request');
+      text=source.replace(PLAYBACK_CLOCK,'');
+    }
     assert.doesNotMatch(text,/requestAnimationFrame/,`${name} requests animation frames`);
     assert.doesNotMatch(text,/setInterval\(/,`${name} runs an interval`);
     assert.doesNotMatch(text,/@keyframes/,`${name} declares keyframes`);

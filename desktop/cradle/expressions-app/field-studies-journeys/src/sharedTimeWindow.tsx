@@ -30,6 +30,17 @@ export function qualifyTimeWindowReply(raw:unknown,basis:NativeTimeWindowBasis,r
  return structuredClone(value);
 }
 
+/** Lane-4 T14: the setter the docked Places time control shares with the popover. It writes the acknowledged session's window against that session (compare-and-set), and returns the qualified reply. */
+export async function writeSharedTimeWindow(basis:NativeTimeWindowBasis,reading:TechneReading,instrument:'timeline'|'place',acknowledged:NativeTimeWindowReply,window:SharedTimeWindow|null):Promise<NativeTimeWindowReply> {
+ if(acknowledged.basis.expression_ref!==basis.expression_ref||acknowledged.basis.scene_ref!==basis.scene_ref
+  ||acknowledged.basis.revision!==basis.revision||acknowledged.reading_ref!==reading.reading_ref) {
+  throw Error('This time window belongs to an earlier native source or Scene; it was not changed');
+ }
+ const request:NativeTimeWindowRequest={...basis,operation:'set',reading_ref:reading.reading_ref,instrument,
+  expected_session_ref:acknowledged.session.session_ref,expected_selection:acknowledged.session.selection,expected_window:acknowledged.axis.window,window};
+ return qualifyTimeWindowReply(await techneTimeWindowRequest(request),basis,reading,instrument);
+}
+
 export async function readSharedTimeWindow(basis:NativeTimeWindowBasis,reading:TechneReading,instrument:'timeline'|'place',current:()=>boolean):Promise<NativeTimeWindowReply> {
  if(!current())throw Error('The originating time instrument is no longer presented');
  const reply=await techneTimeWindowRequest({...basis,reading_ref:reading.reading_ref,instrument,operation:'read'});

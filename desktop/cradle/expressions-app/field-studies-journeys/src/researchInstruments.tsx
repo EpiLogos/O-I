@@ -2,7 +2,7 @@
 import React,{Component,useEffect,useRef,useState,type ReactNode} from 'react';
 import {createPortal} from 'react-dom';
 import {clone,type Scene} from './model.js';
-import {type ResearchMaterialAction,type ResearchStroke} from './researchMaterial.js';
+import {type ResearchCard,type ResearchMaterialAction,type ResearchStroke} from './researchMaterial.js';
 import {createRoot,type Root} from 'react-dom/client';
 import {CanvasView,TimelineSurface,PsychogeographicMap,StreetViewSurface,loadBundledGeographyPack,createLiveServicePolicy,type LiveServicePolicy,type TimelineViewState} from '../../vendor/research-canvas/components';
 import {placeRecordFromViewState,viewStateFromPlaceRecord} from '../../vendor/research-canvas/packages/canvas/src/psychogeographic/placeNavigation';
@@ -19,13 +19,14 @@ import {RelationFieldView} from './relationFieldView.js';
 import {PlaceFacetsPanel} from './placeFacetsPanel.js';
 import {OPEN_PLACE_FILTER,filteredPlacesRepository,subjectEntityRef,type PlaceFilterState} from './placeReading.js';
 import type {TechneReading} from '../../../src/techne/contract';
-import {readSharedTimeWindow,SharedTimeWindowControls,type SharedTimeDraft} from './sharedTimeWindow.js';
+import {readSharedTimeWindow,writeSharedTimeWindow,SharedTimeWindowControls,type SharedTimeDraft} from './sharedTimeWindow.js';
 import {sharedTimelinePresentation} from './sharedTimeProjection.js';
 import {timeAxisProjection,relativeTimeAxisProjection} from '../../../src/techne/m0m5/timeline/timeAxis';
 import type {NativeTimeWindowReply} from '../../../../../packages/expressions-boundary/src/timeWindow';
 import {blueprintMember,type SceneBlueprint,type BlueprintTransform} from './blueprintGeometry.js';
 import {icon} from './icons.js';
-import {addRouteNotice,moveRouteNotice,placeDraftForAdd,placeDraftForMove,constellationResultNotice,type PlaceAuthoringHost,type PlaceDraft} from '../../vendor/research-canvas/packages/canvas/src/psychogeographic/placeAuthoring';
+import {addRouteNotice,moveRouteNotice,placeDraftForAdd,placeDraftForMove,constellationResultNotice,type PlaceAuthoringHost,type PlaceDraft,type PlaceRouteResult} from '../../vendor/research-canvas/packages/canvas/src/psychogeographic/placeAuthoring';
+import {extentOf,type PlaceTimeHost} from '../../vendor/research-canvas/packages/canvas/src/psychogeographic/placeTimeControl';
 import './researchInstrumentStyles.css';
 import './researchInstruments.css';
 import {CanvasNavigationOverview} from './canvasNavigationOverview';
@@ -35,6 +36,7 @@ import type {NavigationMinimapController} from '../../../src/shared/NavigationMi
 import {fitViewport,zoomTo,keepGuidedAxes,snapDraggedBox,guideSegments,CANVAS_ZOOM_LIMITS,ZOOM_STEP,type Box,type GuideLine} from '../../vendor/research-canvas/packages/canvas/src/canvas/navigationGeometry';
 import {CanvasGuides} from '../../vendor/research-canvas/packages/canvas/src/canvas/CanvasGuides';
 import {ZoomReadout} from '../../vendor/research-canvas/packages/canvas/src/canvas/ZoomReadout';
+import {CANVAS_TOOL_CHOICES,CANVAS_TOOL_GLYPHS,CANVAS_TOOL_SPEC,PALETTE_KEYS,PALETTE_LABEL,SHAPE_FILLS,STICKY_DEFAULT_PALETTE,canvasObjectNodes,isCanvasObjectKind,type CanvasObjectKind,type CanvasToolChoice,type PaletteKey,type ShapeFill} from './canvasShapes.js';
 
 /** D3 — the canvas tool row is icon-led, in the app's existing 24×24
  * thin-stroke icon language (icons.ts), not text-led. Every button below
@@ -42,12 +44,46 @@ import {ZoomReadout} from '../../vendor/research-canvas/packages/canvas/src/canv
  * so nothing here changes for assistive tech or hover discovery — only the
  * always-visible label becomes a glyph. */
 function ToolIcon({name}:{name:string}){return <span className="research-tool-icon" aria-hidden="true" dangerouslySetInnerHTML={{__html:icon(name)}}/>;}
+/** A2 — the same 24×24 stroke grammar as ToolIcon, for the object glyphs drawn in canvasShapes.ts. */
+function GlyphIcon({glyph}:{glyph:string}){return <span className="research-tool-icon" aria-hidden="true" dangerouslySetInnerHTML={{__html:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${glyph}"/></svg>`}}/>;}
+/** A2 — the one canvas object picker: a single icon button that opens the five
+ * choices (sticky, rectangle, ellipse, diamond, text). Each choice is named by
+ * its aria-label and title; the trigger shows the last choice made. */
+function CanvasObjectPicker({choice,onPick}:{choice?:CanvasToolChoice;onPick:(choice:CanvasToolChoice)=>void}){
+ const [open,setOpen]=useState(false);
+ const shown=choice??'sticky';
+ return <span className="research-object-picker" onKeyDown={event=>{if(event.key==='Escape'){event.stopPropagation();setOpen(false);}}}>
+  <button type="button" aria-label="Add sticky, shape or text" title="Add sticky, shape or text" aria-haspopup="menu" aria-expanded={open} onClick={()=>setOpen(value=>!value)}><GlyphIcon glyph={CANVAS_TOOL_GLYPHS[shown]}/></button>
+  {open&&<span role="menu" className="research-object-picker__menu" aria-label="Sticky, shape or text">
+   {CANVAS_TOOL_CHOICES.map(name=><button key={name} type="button" role="menuitem" aria-label={CANVAS_TOOL_SPEC[name].label} title={CANVAS_TOOL_SPEC[name].label} onClick={()=>{setOpen(false);onPick(name);}}><GlyphIcon glyph={CANVAS_TOOL_GLYPHS[name]}/></button>)}
+  </span>}
+ </span>;
+}
+/** A2 — palette keys as swatches. A swatch names its key; its fill is a token (CSS), never a colour value here. */
+function ObjectSwatches({label,value,options,onPick}:{label:string;value:string;options:readonly string[];onPick:(key:string)=>void}){
+ return <div className="research-object-swatches" role="group" aria-label={label}>
+  {options.map(key=><button key={key} type="button" className="research-object-swatch" data-palette={key} aria-label={key==='none'?'No fill':PALETTE_LABEL[key as PaletteKey]} title={key==='none'?'No fill':PALETTE_LABEL[key as PaletteKey]} aria-pressed={value===key} onClick={()=>onPick(key)}/>)}
+ </div>;
+}
+/** A2 — the inspector's controls for one canvas object: its label (the occurrence name) and its palette key or fill key. */
+function CanvasObjectControls({kind,card,onLabel,onStyle}:{kind:CanvasObjectKind;card:ResearchCard;onLabel:(label:string)=>void;onStyle:(patch:Partial<Pick<ResearchCard,'palette'|'fill'>>)=>void}){
+ const label=card.caption??'';
+ return <>
+  <label>Label<input key={label} defaultValue={label} maxLength={160} onBlur={event=>{const next=event.target.value.trim();if(next!==label)onLabel(next);}}/></label>
+  {kind==='sticky'&&<ObjectSwatches label="Sticky colour" value={card.palette??STICKY_DEFAULT_PALETTE} options={PALETTE_KEYS} onPick={key=>onStyle({palette:key as PaletteKey})}/>}
+  {kind==='shape'&&<ObjectSwatches label="Shape fill" value={card.fill??'none'} options={SHAPE_FILLS} onPick={key=>onStyle({fill:key as ShapeFill})}/>}
+ </>;
+}
 
 /** Lane-4 T17b: the owner's constellation routes this instrument opened, by frame ref, each with the marker it may move. */
 const placeRoutes=new Map<string,{graphNodeId?:string}>();
 /** The live places host's answer handler; the latest reading of the Places instrument replaces it. */
 let placeRouteHandler:((frameRef:string,outcome:{kind:'saved'}|{kind:'refused';reason?:string})=>void)|undefined;
 let placeRouteListening=false;
+/** Lane-4 T17c: the Places maps that asked for the owner's answers. Each receives every answer to a route this instrument opened. */
+const placeRouteListeners=new Set<(result:PlaceRouteResult)=>void>();
+/** The stable subscription a Places map is given. It returns the unsubscribe. */
+function subscribePlaceRouteResults(listener:(result:PlaceRouteResult)=>void){placeRouteListeners.add(listener);return()=>{placeRouteListeners.delete(listener)};}
 /** Listens once for the cradle's answer to a route this instrument opened. Only the parent host may answer. */
 function listenForPlaceRouteResults(){
  if(placeRouteListening||typeof window==='undefined')return;placeRouteListening=true;
@@ -254,6 +290,8 @@ interface ViewState {
  erasing?:boolean;
  strokeColour?:string;
  zoomLevel?:'constellation'|'named'|'detailed';
+ /** A2 — the last canvas object choice made from the picker (session-local, shown on its trigger). */
+ objectTool?:CanvasToolChoice;
 }
 class InstrumentBoundary extends Component<{children:ReactNode},{error:string|null}> {
  state={error:null as string|null};
@@ -404,7 +442,10 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
    onChange:()=>state.resizeAdapter!.onChange(),
   });
   state.canvasMinimap??={current:null};
-  const previewNodes=withGesturePreviews(canvas.nodes,id=>state.groupPreview?.get(id)??state.moveGesture?.previewValue(id),id=>state.resizeGesture?.previewValue(id));
+  // A2 — a sticky, shape or text card renders as its own node type; the native
+  // occurrence (position, size, name) is unchanged, only its presentation is.
+  const objectCardOf=(id:string)=>{const local=canvas.occurrences.get(id);return local?material?.cards[local]:undefined;};
+  const previewNodes=withGesturePreviews(canvasObjectNodes(canvas.nodes,objectCardOf),id=>state.groupPreview?.get(id)??state.moveGesture?.previewValue(id),id=>state.resizeGesture?.previewValue(id));
   const previewEdges=canvas.edges.map(edge=>state.sequencedEdges?.has(edge.id)?{...edge,sequencing:true}:edge);
   // R1 — shift/ctrl-click extends the multi-select; a plain click replaces
   // it. The vendored Canvas reports no modifier state itself (trackModifiers
@@ -484,6 +525,15 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
   const nativeView=host.nativeView(),nativeScene=canvas.sceneId?nativeView?.bindings[canvas.sceneId]?.scene_ref:undefined;
   const subject=current?nativeView?.document.entities[current.id]?.subject:undefined;
   const constellationRequest=nativeView&&nativeScene&&current&&subject&&Array.isArray(subject.readings)&&subject.readings.length>1?{expression_ref:nativeView.document.expression_ref,revision:nativeView.document.revision,scene_ref:nativeScene,entity_ref:current.id}:undefined;
+  // A2 — a picker choice creates its object at the centre of the pane, so the
+  // act needs no pointer position: the new object is then moved like any card.
+  const createObject=(choice:CanvasToolChoice)=>{
+   if(!canvas.sceneId)return;
+   const spec=CANVAS_TOOL_SPEC[choice],pane=paneSize(),viewport=currentViewport();
+   const centreX=(pane.width/2-viewport.x)/viewport.zoom,centreY=(pane.height/2-viewport.y)/viewport.zoom;
+   state.objectTool=choice;redraw();
+   act({type:'create-card',kind:spec.kind,geometry:spec.geometry,title:spec.label,position:{x:(centreX-spec.size.width/2)/CANVAS_UNITS,y:-(centreY-spec.size.height/2)/CANVAS_UNITS}});
+  };
   const imageImport=()=>{const input=document.createElement('input');input.type='file';input.accept='image/png,image/jpeg,image/webp';input.onchange=async()=>{const file=input.files?.[0];if(!file)return;try{if(file.size>196608)throw new Error('Choose an image smaller than 192 KiB for this native document.');const dataUrl=await new Promise<string>((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result));reader.onerror=()=>reject(reader.error);reader.readAsDataURL(file);});act({type:'create-card',kind:'image',title:file.name.slice(0,160),dataUrl,position:{x:0,y:0}});}catch(error){message(String(error));}};input.click();};
   const annotations=(material?.strokes??[]).map(stroke=>({id:stroke.id,canvasId:canvas.key,annotationType:'stroke' as const,points:stroke.points,style:{color:stroke.color,width:stroke.width,opacity:stroke.opacity},bounds:{position:{x:Math.min(...stroke.points.map(p=>p.x)),y:Math.min(...stroke.points.map(p=>p.y))},size:{width:Math.max(1,Math.max(...stroke.points.map(p=>p.x))-Math.min(...stroke.points.map(p=>p.x))),height:Math.max(1,Math.max(...stroke.points.map(p=>p.y))-Math.min(...stroke.points.map(p=>p.y)))}},createdAt:stroke.createdAt,updatedAt:stroke.createdAt}));
   // The card follows the selection: selecting a node or connection shows it,
@@ -492,7 +542,8 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
   const inspecting=!!cardFor&&cardFor!==dismissedCard;
   host.inspector.hidden=!inspecting;
   const closeInspector=()=>{dismissedCard=cardFor;host.inspector.hidden=true;redraw();};
-  const findTargets=editable?canvasFindTargets(canvas,material?.frames):[];
+  // A2 — Find matches what the stage shows: an object's caption, not its kind name.
+  const findTargets=editable?canvasFindTargets({...canvas,nodes:canvasObjectNodes(canvas.nodes,objectCardOf)},material?.frames):[];
   const findView=host.nativeView(),findBasis=findView&&canvas.sceneId?{expression_ref:findView.document.expression_ref,revision:findView.document.revision,scene_ref:findView.bindings[canvas.sceneId]?.scene_ref}:undefined;
   const chooseFound=(target:CanvasFindTarget)=>{
    const now=host.nativeView();
@@ -508,6 +559,7 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
   };
   const controls=<div className="research-tool-actions" aria-label="Canvas tools">
    {editable&&<><button aria-label="Note" title="Note" onClick={()=>act({type:'create-card',kind:'note',position:{x:0,y:0}})}><ToolIcon name="text"/></button><button aria-label="Image" title="Image" onClick={imageImport}><ToolIcon name="upload"/></button>
+   <CanvasObjectPicker choice={state.objectTool} onPick={createObject}/>
    <button aria-label="Draw" title="Draw" aria-pressed={!!state.drawing} onClick={()=>{state.drawing=!state.drawing;if(state.drawing)state.erasing=false;redraw();}}><ToolIcon name="pen"/></button>
    <button aria-label="Erase" title="Erase — click a stroke to remove it" aria-pressed={!!state.erasing} onClick={()=>{state.erasing=!state.erasing;if(state.erasing)state.drawing=false;redraw();}}><ToolIcon name="eraser"/></button>
    {(state.drawing||state.erasing)&&<input type="color" aria-label="Stroke colour" value={state.strokeColour??'#808080'} onInput={e=>{state.strokeColour=(e.target as HTMLInputElement).value;redraw();}} onChange={e=>{state.strokeColour=e.target.value;redraw();}}/>}
@@ -549,13 +601,17 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
    from:host.nativeView()?.document.entities[selectedEdgeObj.sourceNodeId]?.subject?selectedEdgeObj.sourceNodeId:undefined,
    to:host.nativeView()?.document.entities[selectedEdgeObj.targetNodeId]?.subject?selectedEdgeObj.targetNodeId:undefined,
   }:undefined;
+  // A2 — the selected card's own record, when it is a sticky, shape or text.
+  const objectCard=localId?material?.cards[localId]:undefined;
+  const objectKind=objectCard&&isCanvasObjectKind(objectCard.type)?objectCard.type:undefined;
   const inspector=<div className="research-inspector-content" onKeyDown={event=>{if(event.key==='Escape'){event.preventDefault();event.stopPropagation();closeInspector();}}}><header><h3>{current?.title??(state.selectedEdge?'Connection':'Canvas')}</h3><button className="card-close" onClick={closeInspector} aria-label="Close" title="Close"><ToolIcon name="close"/></button></header>
    {current&&<button onClick={()=>{const ref=current.type==='resource'?current.absolutePath:host.nativeView()?.document.entities[current.id]?.subject?.subject_ref;if(ref)host.inspectSubject(ref);}}>Open source</button>}
    {editable&&current&&localId&&host.editObject&&<button aria-label="Edit object" onClick={()=>host.editObject!(canvas.sceneId!,localId)}>Edit object</button>}
    {constellationRequest&&<ConstellationAction request={constellationRequest} onError={message}/>}
    {editable&&localId&&current&&<><label>Width<input type="number" defaultValue={Math.round(current.size.width)} onBlur={e=>act({type:'resize',id:localId,width:Number(e.target.value),height:current.size.height})}/></label><label>Height<input type="number" defaultValue={Math.round(current.size.height)} onBlur={e=>act({type:'resize',id:localId,width:current.size.width,height:Number(e.target.value)})}/></label>
    {<button disabled={!!subject&&!host.duplicateOccurrence} onClick={()=>subject?apply(()=>host.duplicateOccurrence!(canvas.sceneId!,localId)):act({type:'duplicate',id:localId})}>Duplicate</button>}
-   {(['dotColour','bgColour','textColour'] as const).map(key=><label key={key}>{key==='dotColour'?'Dot colour':key==='bgColour'?'Background':'Text colour'}<input type="color" value={material?.cards[localId]?.[key]??'#808080'} onChange={e=>act({type:'card-style',id:localId,patch:{[key]:e.target.value}})}/></label>)}
+   {objectKind&&objectCard&&<CanvasObjectControls kind={objectKind} card={objectCard} onLabel={caption=>act({type:'card-caption',id:localId,caption},false)} onStyle={patch=>act({type:'card-style',id:localId,patch})}/>}
+   {!objectKind&&(['dotColour','bgColour','textColour'] as const).map(key=><label key={key}>{key==='dotColour'?'Dot colour':key==='bgColour'?'Background':'Text colour'}<input type="color" value={material?.cards[localId]?.[key]??'#808080'} onChange={e=>act({type:'card-style',id:localId,patch:{[key]:e.target.value}})}/></label>)}
    </>}
    {editable&&current&&host.transformBlueprint&&scene?.composition.blueprint&&blueprintMember(scene,current.id)&&<BlueprintWholeControls
      binding={scene.composition.blueprint}
@@ -811,11 +867,18 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
     void techneConstellationRequest({...placeEditRequest,operation:'open',...(draft?{placeDraft:draft}:{})}).then(target=>{placeRoutes.set(target.frame_ref,{graphNodeId});if(notice)message(notice);},error=>message(error instanceof Error?error.message:String(error)));
    };
    placeRouteHandler=(frameRef,outcome)=>{
-    const notice=constellationResultNotice(outcome.kind==='saved'?{kind:'saved'}:{kind:'refused',reason:outcome.reason});
-    // A save re-reads the reading, so the new or moved marker renders from the owner's saved facts; the owner's
-    // words are shown after the re-read, which would otherwise replace the notice.
-    if(notice.reload)void load('m4').then(()=>message(notice.text));
-    else message(notice.text);
+    // Lane-4 T17c: the owner's answer goes to the map that opened the route, so its marker returns and its notice shows
+    // the owner's words there. Without a mounted map the words are shown here. A save re-reads the reading first, so the
+    // new or moved marker renders from the owner's saved facts, and the words are delivered after that re-read.
+    const result:PlaceRouteResult={graphNodeId:placeRoutes.get(frameRef)?.graphNodeId??null,outcome:outcome.kind==='saved'?{kind:'saved'}:{kind:'refused',reason:outcome.reason}};
+    const deliver=()=>{
+     if(placeRouteListeners.size)placeRouteListeners.forEach(listener=>listener(result));
+     else message(constellationResultNotice(result.outcome).text);
+    };
+    // A closed or destroyed instrument, or one on another lens, is not reopened by a late answer: only the words are kept.
+    if(destroyed||lens!=='m4'){if(!destroyed)message(constellationResultNotice(result.outcome).text);return;}
+    if(outcome.kind==='saved')void load('m4').then(deliver);
+    else deliver();
    };
    listenForPlaceRouteResults();
    const placeAuthoring:PlaceAuthoringHost={
@@ -824,6 +887,7 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
     onAddPlace:prefill=>openPlaceRoute(addRouteNotice(prefill),placeDraftForAdd(prefill)),
     onEditPlace:graphNodeId=>openPlaceRoute(undefined,undefined,graphNodeId),
     onProposeMove:proposal=>openPlaceRoute(moveRouteNotice(proposal),placeDraftForMove(proposal),proposal.graphNodeId),
+    subscribeRouteResults:subscribePlaceRouteResults,
    };
    // W2 — the SAME filter state drives both the map's own repository
    // (presentation-only: `filteredPlacesRepository` never rewrites the
@@ -831,12 +895,29 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
    // and the panel always agree.
    const renderPlaces=():ReactNode=>{
     const filter={...state.placeFilter!,window:sharedTime?.axis.window??null};
-    const filteredRepository=filteredPlacesRepository(data.places,nativeReading,filter);
+    // The window is not applied to the repository: the map applies it to every frame from the same filter (T14–T16), so a
+    // live window never needs a repository reload. The relation and standing filters still narrow here.
+    const filteredRepository=filteredPlacesRepository(data.places,nativeReading,{...filter,window:null});
+    // Lane-4 T14–T16: the docked time control spans the reading's own dated events (the T6 projection) and writes the
+    // shared window through the same setter as the popover.
+    // A reading the projection refuses names its reason on the control; the Places lens itself still renders.
+    const placeExtent=(()=>{try{return extentOf(timeAxisProjection(nativeReading,sharedTime?.session??null).events);}catch(error){return {extent:null,reason:error instanceof Error?error.message:String(error)};}})();
+    const placeTime:PlaceTimeHost={extent:placeExtent.extent,extentReason:placeExtent.reason,
+     unavailableReason:sharedTime?null:(timeReason??'Shared time is not available for this reading, so the window cannot be changed here.'),
+     window:sharedTime?.axis.window??null,
+     onWindowCommit:async next=>{
+      if(!sharedTime||!timeCurrent())throw Error('The shared time window is no longer presented, so it was not changed.');
+      const reply=await writeSharedTimeWindow(request,nativeReading,'place',sharedTime,next);
+      sharedTime=reply;
+      const draft=state.timeDraft;if(draft){draft.captured=null;draft.from=reply.axis.window?.from??'';draft.to=reply.axis.window?.to??'';}
+      if(timeCurrent())render(renderPlaces());
+     },
+    };
     const facets=<PlaceFacetsPanel reading={nativeReading} selectedRef={state.selectedPlace??null} filter={filter} onOpenSource={ref=>host.inspectSubject(ref)} sharedTime
       onFilterChange={next=>{state.placeFilter={...next,window:null};render(renderPlaces());}}
       editRequest={placeEditRequest} onError={message}/>;
     return <>{createPortal(<div className="research-tool-actions"><button aria-label="Refresh geography" title="Refresh geography" onClick={()=>void load('m4')}><ToolIcon name="history"/></button>{scene&&<button aria-label="Save map view" title="Save map view" onClick={()=>{if(state.place)void host.material(sceneId,{type:'viewport',key:'place',value:placeRecordFromViewState(state.place)}).then(()=>message('View saved'),error=>message(String(error)));}}><ToolIcon name="save"/></button>}{timeControls(()=>render(renderPlaces()))}</div>,host.tools)}
-    <div className="research-places"><PsychogeographicMap inspectorContainer={host.inspector} toolbarContainer={host.placesHome??host.tools} repository={filteredRepository} projectId={data.reading.subject.subject_ref} tileSource={tileSource} offlineOnly={!state.livePlaces!.allowed} policy={state.livePlaces!.policy} basemapStack={state.livePlaces!.stack} onBasemapStackChange={next=>{state.livePlaces!.stack=next;}} onLiveSourcesAllowedChange={allowed=>{const live=state.livePlaces!;if(allowed)live.policy.optIn('tile_refresh','show live basemap sources the owner allowed in Places');else live.policy.optOut('tile_refresh');live.allowed=allowed;render(renderPlaces());}} placeFacets={nativeReading.spatial} placeAuthoring={placeAuthoring} layerFilter={filter} onLayerFilterChange={next=>{state.placeFilter={...next,window:null};render(renderPlaces());}} sourceAttributions={pack.manifest.sources.map(source=>`${source.name} (${source.license})`)}
+    <div className="research-places"><PsychogeographicMap inspectorContainer={host.inspector} toolbarContainer={host.placesHome??host.tools} repository={filteredRepository} projectId={data.reading.subject.subject_ref} tileSource={tileSource} offlineOnly={!state.livePlaces!.allowed} policy={state.livePlaces!.policy} basemapStack={state.livePlaces!.stack} onBasemapStackChange={next=>{state.livePlaces!.stack=next;}} onLiveSourcesAllowedChange={allowed=>{const live=state.livePlaces!;if(allowed)live.policy.optIn('tile_refresh','show live basemap sources the owner allowed in Places');else live.policy.optOut('tile_refresh');live.allowed=allowed;render(renderPlaces());}} placeFacets={nativeReading.spatial} placeAuthoring={placeAuthoring} placeTime={placeTime} layerFilter={filter} onLayerFilterChange={next=>{state.placeFilter={...next,window:null};render(renderPlaces());}} sourceAttributions={pack.manifest.sources.map(source=>`${source.name} (${source.license})`)}
      initialViewState={state.place} initialSelectedGraphNodeId={state.selectedPlace}
      onViewStateChange={value=>{state.place=value;}} onSelectedGraphNodeIdChange={value=>{state.selectedPlace=value;render(renderPlaces());}}
      onOpenCanvasNode={ref=>{const node=data.bundle.nodes.find(node=>node.graphNodeId===ref&&node.place);if(node)host.inspectSubject(ref,{node});}}/>

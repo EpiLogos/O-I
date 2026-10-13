@@ -1,16 +1,25 @@
 /** Local research presentation of the SAME native Scene. Canonical source
  * bodies/relations are never edited by these material actions. */
 import {clone,entity,uid,type Scene} from './model.js';
+import {CANVAS_OBJECT_KINDS,CANVAS_TOOL_SPEC,STICKY_DEFAULT_PALETTE,isCanvasObjectKind,isPaletteKey,isShapeFill,isShapeGeometry,type CanvasObjectKind,type CanvasToolChoice,type PaletteKey,type ShapeFill,type ShapeGeometry} from './canvasShapes.js';
 
+/** Card kinds the material admits: the image/note cards plus the lane-1 A2
+ * canvas objects (sticky, shape, text). */
+export type ResearchCardKind='note'|'image'|CanvasObjectKind;
 export interface ResearchCard {
- type:'note'|'image';
+ type:ResearchCardKind;
  importedAt?:string; content?:string; caption?:string;
  color?:string; dotColour?:string; bgColour?:string; textColour?:string;
  /** Canvas display size only — never the Expression's own size. A
   * source-bound occurrence keeps its own expressive body regardless of how
   * large or small its card renders on this presentation Canvas. */
  size?:{width:number;height:number};
-
+ /** lane-1 A2 — a sticky's colour KEY (`type:'sticky'` only). */
+ palette?:PaletteKey;
+ /** lane-1 A2 — a shape's geometry (`type:'shape'` only, required there). */
+ shape?:ShapeGeometry;
+ /** lane-1 A2 — a shape's fill: 'none' (stroke only, the quiet default) or a palette key (`type:'shape'` only). */
+ fill?:ShapeFill;
 }
 export interface ResearchViewport {x:number;y:number;zoom:number;/** lane-4 T1: a tilted, rotated Places view (absent = untilted, north-up) */pitch?:number;bearing?:number}
 export interface ResearchStroke {id:string;points:{x:number;y:number;pressure?:number}[];color:string;width:number;opacity:number;createdAt:string}
@@ -31,10 +40,10 @@ export interface ResearchMaterial {
 export type ResearchMaterialAction =
  | {type:'resize';id:string;width:number;height:number}
  | {type:'duplicate';id:string}
- | {type:'create-card';kind:ResearchCard['type'];position:{x:number;y:number};title?:string;dataUrl?:string}
+ | {type:'create-card';kind:ResearchCard['type'];position:{x:number;y:number};title?:string;dataUrl?:string;geometry?:ShapeGeometry}
  | {type:'card-content';id:string;content:string}
  | {type:'card-caption';id:string;caption:string}
- | {type:'card-style';id:string;patch:Partial<Pick<ResearchCard,'color'|'dotColour'|'bgColour'|'textColour'>>}
+ | {type:'card-style';id:string;patch:Partial<Pick<ResearchCard,'color'|'dotColour'|'bgColour'|'textColour'|'palette'|'fill'>>}
  | {type:'annotation-add';stroke:ResearchStroke}
  | {type:'annotation-remove';id:string}
  | {type:'viewport';key:string;value:ResearchViewport}
@@ -101,8 +110,13 @@ export function validateResearchMaterial(value:unknown,ids:ReadonlySet<string>):
  }
  for(const [id,card] of Object.entries(value.cards) as [string,ResearchCard][]){
   require(ids.has(id)&&object(card),'Research card must address an existing occurrence');
-  keys(card,['type','importedAt','content','caption','color','dotColour','bgColour','textColour','size']);
-  require(['note','image'].includes(card.type),'Unknown research card kind');
+  keys(card,['type','importedAt','content','caption','color','dotColour','bgColour','textColour','size','palette','shape','fill']);
+  require(['note','image',...CANVAS_OBJECT_KINDS].includes(card.type),'Unknown research card kind');
+  // lane-1 A2: a sticky carries a palette KEY (never a colour), a shape a
+  // geometry and a fill key; each field is admitted only on its own kind.
+  if(card.palette!==undefined)require(card.type==='sticky'&&isPaletteKey(card.palette),'Invalid sticky colour');
+  if(card.type==='shape')require(isShapeGeometry(card.shape)&&(card.fill===undefined||isShapeFill(card.fill)),'Invalid shape');
+  else require(card.shape===undefined&&card.fill===undefined,'Only shape cards carry a geometry or fill');
   if(card.importedAt!==undefined)require(card.type==='image'&&text(card.importedAt,64)&&Number.isFinite(Date.parse(card.importedAt)),'Invalid image import time');
   if(card.content!==undefined){require(card.type==='note','Only note cards carry note content');validateResearchContent(card.content);}
   for(const key of ['caption'] as const)if(card[key]!==undefined)require(text(card[key]),'Research caption exceeds its bound');
@@ -126,6 +140,13 @@ function notePlainText(content:string):string{
   }).join('\n').replace(/\n{3,}/g,'\n\n').trim();
  }catch{return '';}
 }
+/** lane-1 A2: the tool choice a canvas object kind is created from (a shape is named by its geometry). */
+function canvasObjectChoice(kind:CanvasObjectKind,geometry:unknown):CanvasToolChoice{
+ if(kind==='sticky')return 'sticky';
+ if(kind==='text')return 'text';
+ require(isShapeGeometry(geometry),'A shape needs a geometry');
+ return geometry;
+}
 /** Mutate only the supplied working Scene; caller persists through the existing
  * composition CAS. Validate before replacing so a refusal leaves it intact. */
 export function applyResearchMaterial(scene:Scene,action:ResearchMaterialAction):void {
@@ -144,7 +165,10 @@ export function applyResearchMaterial(scene:Scene,action:ResearchMaterialAction)
  // body — resizing a card on this Canvas is not editing the source.
  case 'resize':{require(finite(action.width,40,40000)&&finite(action.height,40,40000),'Invalid card size');card(action.id).size={width:action.width,height:action.height};break;}
  case 'duplicate':{const original=target(action.id),copy=clone(original);copy.id=uid('research');copy.name=original.name+' copy';copy.position.x+=.1;copy.position.y-=.1;delete copy.native;next.entities.push(copy);if(research.cards[action.id])research.cards[copy.id]=clone(research.cards[action.id]);break;}
- case 'create-card':{require(finite(action.position.x,-100,100)&&finite(action.position.y,-100,100),'Invalid card position');const title=action.title??(action.kind==='image'?'Image':'Note');require(text(title,160)&&!!title,'Invalid card title');const e=entity(title,title.slice(0,120),{...action.position,z:0});e.id=uid('research');e.size={x:.6,y:.4};const c:ResearchCard={type:action.kind};if(action.kind==='note'){c.content='[]';e.shape='disc';e.text='';for(const step of e.sequence.steps){step.shape='disc';step.text='';}}if(action.kind==='image'){require(typeof action.dataUrl==='string'&&/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(action.dataUrl),'Choose a PNG/JPEG/WebP image');require(action.dataUrl.length<=262144,'Image exceeds native document budget; select a smaller image');c.importedAt=new Date().toISOString();e.source={kind:'image',image:{dataUrl:action.dataUrl,mode:'luminance',threshold:.5,invert:false,scale:1,name:title}};}next.entities.push(e);research.cards[e.id]=c;break;}
+ case 'create-card':{require(finite(action.position.x,-100,100)&&finite(action.position.y,-100,100),'Invalid card position');
+  // lane-1 A2: a canvas object is named by its tool choice (a shape by its geometry); its label is the occurrence name.
+  const choice=isCanvasObjectKind(action.kind)?canvasObjectChoice(action.kind,action.geometry):undefined;
+  const title=action.title??(choice?CANVAS_TOOL_SPEC[choice].label:action.kind==='image'?'Image':'Note');require(text(title,160)&&!!title,'Invalid card title');const e=entity(title,title.slice(0,120),{...action.position,z:0});e.id=uid('research');e.size={x:.6,y:.4};const c:ResearchCard={type:action.kind};if(action.kind==='note'){c.content='[]';e.shape='disc';e.text='';for(const step of e.sequence.steps){step.shape='disc';step.text='';}}if(action.kind==='image'){require(typeof action.dataUrl==='string'&&/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(action.dataUrl),'Choose a PNG/JPEG/WebP image');require(action.dataUrl.length<=262144,'Image exceeds native document budget; select a smaller image');c.importedAt=new Date().toISOString();e.source={kind:'image',image:{dataUrl:action.dataUrl,mode:'luminance',threshold:.5,invert:false,scale:1,name:title}};}if(choice){const spec=CANVAS_TOOL_SPEC[choice];c.size={...spec.size};e.text=title;if(action.kind==='sticky')c.palette=STICKY_DEFAULT_PALETTE;if(action.kind==='shape'){c.shape=spec.geometry;c.fill='none';}}next.entities.push(e);research.cards[e.id]=c;break;}
  case 'card-content':{const c=card(action.id);require(c.type==='note','Only note cards own rich note content');validateResearchContent(action.content);c.content=action.content;
   // The note's readable text is mirrored onto the occurrence, so the
   // Expression's own views (verso, tree, readers) show the note as text,
