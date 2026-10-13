@@ -96,12 +96,80 @@ test('a move for a place this constellation does not hold drafts nothing', ()=>{
  assert.match(seeded.notice,/not in this constellation/);
 });
 
-test('a constellation route carries the map draft once, and a plain open carries no draft', ()=>{
- const draft={lat:LONDON.lat,lon:LONDON.lon,precision:'approximate'};
- api.offerConstellationRoute('wiki:frame:one',draft);
- assert.deepEqual(api.takeConstellationRoute('wiki:frame:one'),{draft});
- assert.equal(api.takeConstellationRoute('wiki:frame:one'),undefined);
- api.offerConstellationRoute('wiki:frame:two');
- assert.deepEqual(api.takeConstellationRoute('wiki:frame:two'),{draft:undefined});
- assert.equal(api.takeConstellationRoute('wiki:frame:two'),undefined);
+// Lane-4 T17c: the route is keyed by its subject, expires, and is consumed only after the owner's read of that subject.
+// Every clock is passed explicitly so the proof does not depend on wall time.
+const T0=1_000_000;
+const TTL=10*60*1000;
+const DRAFT={lat:LONDON.lat,lon:LONDON.lon,precision:'approximate'};
+
+test('a route is offered for one subject; a plain open carries no draft', ()=>{
+ api.offerConstellationRoute('wiki:frame:one',DRAFT,T0);
+ assert.deepEqual(api.peekConstellationRoute('wiki:frame:one',T0).draft,DRAFT);
+ api.offerConstellationRoute('wiki:frame:two',undefined,T0);
+ assert.equal(api.peekConstellationRoute('wiki:frame:two',T0).draft,undefined);
+ api.dropConstellationRoute('wiki:frame:one');
+ api.dropConstellationRoute('wiki:frame:two');
+});
+
+test('a route expires ten minutes after it was offered and an expired route is released, not revived', ()=>{
+ assert.equal(api.CONSTELLATION_ROUTE_TTL_MS,TTL);
+ api.offerConstellationRoute('wiki:frame:expiry',DRAFT,T0);
+ assert.ok(api.peekConstellationRoute('wiki:frame:expiry',T0+TTL));
+ assert.equal(api.peekConstellationRoute('wiki:frame:expiry',T0+TTL+1),undefined);
+ // Once released, an earlier clock cannot bring the draft back.
+ assert.equal(api.peekConstellationRoute('wiki:frame:expiry',T0),undefined);
+ assert.equal(api.routeReadFor('wiki:frame:expiry','wiki:frame:expiry',T0),undefined);
+});
+
+test('a failed read keeps the route and its draft for the retry; only a successful read consumes it', ()=>{
+ const subject='wiki:frame:retry';
+ api.offerConstellationRoute(subject,DRAFT,T0);
+ // The first read fails: the editor reaches no consume, so the route is untouched.
+ assert.deepEqual(api.routeReadFor(subject,subject,T0+1000).draft,DRAFT);
+ // The retry reads the same subject and still finds the draft.
+ assert.deepEqual(api.routeReadFor(subject,subject,T0+2000).draft,DRAFT);
+ api.consumeConstellationRoute(subject);
+ assert.equal(api.routeReadFor(subject,subject,T0+3000),undefined);
+});
+
+test('a draft never applies to a different subject than the one it was opened for', ()=>{
+ api.offerConstellationRoute('wiki:frame:mine',DRAFT,T0);
+ // A read of another constellation, or of a node, takes nothing and consumes nothing.
+ assert.equal(api.routeReadFor('wiki:frame:mine','wiki:frame:other',T0),undefined);
+ assert.equal(api.peekConstellationRoute('wiki:frame:other',T0),undefined);
+ assert.deepEqual(api.peekConstellationRoute('wiki:frame:mine',T0).draft,DRAFT);
+ assert.deepEqual(api.routeReadFor('wiki:frame:mine','wiki:frame:mine',T0).draft,DRAFT);
+ api.dropConstellationRoute('wiki:frame:mine');
+});
+
+test('a subject that leaves releases its unconsumed route', ()=>{
+ api.offerConstellationRoute('wiki:frame:leave',DRAFT,T0);
+ api.dropConstellationRoute('wiki:frame:leave');
+ assert.equal(api.routeReadFor('wiki:frame:leave','wiki:frame:leave',T0),undefined);
+});
+
+test('a routed save answers the map exactly once, whatever the owner or the local confirm does', async()=>{
+ const answers=[],failures=[];
+ const realWindow=globalThis.window;
+ globalThis.window={dispatchEvent:event=>{if(event.type==='oi:constellation-result')answers.push(event.detail);return true;}};
+ const route={frame_ref:'wiki:frame:save',place_ref:PLACE};
+ const basis={target:{ref:'wiki:frame:save'}};
+ try{
+  // The owner saves.
+  await api.settleRoutedSave(route,async()=>basis,()=>{},reason=>failures.push(reason));
+  // The owner refuses (for example, no source basis).
+  await api.settleRoutedSave(route,async()=>{throw new Error('Choose and read an evidence source');},()=>{},reason=>failures.push(reason));
+  // The owner saves, then the local confirm fails: one saved answer, and the failure stays local.
+  await api.settleRoutedSave(route,async()=>basis,()=>{throw new Error('confirm failed');},reason=>failures.push(reason));
+  // No route was offered: nothing is answered.
+  await api.settleRoutedSave(undefined,async()=>basis,()=>{},()=>{});
+ } finally {
+  if(realWindow===undefined)delete globalThis.window;else globalThis.window=realWindow;
+ }
+ assert.deepEqual(answers,[
+  {target:route,kind:'saved'},
+  {target:route,kind:'refused',reason:'Choose and read an evidence source'},
+  {target:route,kind:'saved'},
+ ]);
+ assert.deepEqual(failures,['Choose and read an evidence source','confirm failed']);
 });

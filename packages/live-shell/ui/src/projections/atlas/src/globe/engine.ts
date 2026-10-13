@@ -16,6 +16,7 @@ import { depthPlanes, stageDistance, sunWeight, surfaceWeight } from '../sky/sta
 import type { SkyLayer } from '../sky/layer';
 import type { BodyKey } from '../types/sky';
 import { wrapLon } from '../data/geo';
+import { hostSize } from '../ui/hostSize';
 
 export interface ScreenPoint {
   x: number;
@@ -281,8 +282,8 @@ export class GlobeEngine {
   }
 
   private onResize = () => {
-    const w = this.parent.clientWidth || window.innerWidth;
-    const h = this.parent.clientHeight || window.innerHeight;
+    const w = this.parent.clientWidth || hostSize(this.parent).w;
+    const h = this.parent.clientHeight || hostSize(this.parent).h;
     this.width = w;
     this.height = h;
     this.pr = Math.min(window.devicePixelRatio || 1, 2);

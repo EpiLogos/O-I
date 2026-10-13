@@ -25,6 +25,7 @@ import { FocusLabel, type LabelContent } from '../ui/focus-label';
 import { DeepSheet, type DeepTarget } from '../ui/deep';
 import { Floats, type FloatItem, type FloatTarget } from '../ui/floats';
 import { HoverLabel } from '../ui/hover-label';
+import { hostOrigin, hostSize } from '../ui/hostSize';
 import { Reveal } from '../ui/reveal';
 import { SearchUI } from '../ui/search';
 import { Strip } from '../ui/strip';
@@ -112,6 +113,9 @@ export class Controller {
   private loading = new Map<string, Promise<void>>();
   private navTok = 0;
   private root: HTMLElement;
+  /** [§8.4] Where the atlas's own overlays mount: the root's parent — document.body when the atlas stands alone (AE), the
+   * shell's `.atlas-host` pane when hosted, so they stay inside the pane's containment. */
+  private overlayParent(): HTMLElement { return this.root.parentElement ?? document.body; }
   private passages: ReturnType<PassageSheet['bridge']>;
   private modeSwitch: ModeSwitch;
   /** true while the graph mode (not the globe) is the main view */
@@ -242,7 +246,7 @@ export class Controller {
     this.panel.onChange(() => this.syncSheet());
 
     // the graph: a second view of the same field, between the globe and the quiet overlay
-    this.modeSwitch = new ModeSwitch(document.body, () => this.toggleMode());
+    this.modeSwitch = new ModeSwitch(this.overlayParent(), () => this.toggleMode());
 
     const redbook = redbookData;
     if (redbook) for (const stop of redbook.stops) this.redbookStops.add(stop.id);
@@ -372,7 +376,7 @@ export class Controller {
       // the Field's default seat is the Self — blank world only under the first-visit landing
       const plain = stateEq(parsed.state, WORLD) && isEmpty(parsed.filter);
       const self = focusOn(WORLD, selfSubject(this.m));
-      if (plain && this.landing.maybeShow(document.body, () => this.navigate(self))) {
+      if (plain && this.landing.maybeShow(this.overlayParent(), () => this.navigate(self))) {
         this.apply(parsed.state);
         this.started = true;
         this.syncHash(parsed.state, true);
@@ -447,7 +451,7 @@ export class Controller {
   private needs(next: AppState): Promise<void> | null {
     const jobs: Promise<void>[] = [];
     if (next.graph && !this.graph) jobs.push(this.ensure('graph', () => import('../graph/view').then(({ GraphView }) => {
-      this.graph = new GraphView(document.body, this.m, this.time, {
+      this.graph = new GraphView(this.overlayParent(), this.m, this.time, {
         onSelect: (key) => this.onGraphSelect(key),
         onEarth: (key) => this.onGraphEarth(key),
         loadSky: () => this.skyAnchors(),
@@ -1911,8 +1915,7 @@ export class Controller {
   private graphInsets(): Insets {
     const s = this.state;
     const narrow = isNarrow();
-    const W = window.innerWidth;
-    const H = window.innerHeight;
+    const { w: W, h: H } = hostSize(this.root);
     const ins: Insets = { l: 0, t: narrow ? 84 : 64, r: 0, b: narrow ? 136 : 92 };
     if (s.deep && s.view.kind !== 'world') {
       if (!narrow) ins.r = Math.min(W * 0.58, 780) + 10;
@@ -1966,7 +1969,8 @@ export class Controller {
 
   private measureLabel() {
     const r = this.label.root.getBoundingClientRect();
-    this.labelRect = { x: 0, y: 0, w: Math.max(300, r.right + 24), h: Math.max(150, r.bottom + 24) };
+    const o = hostOrigin(this.label.root);
+    this.labelRect = { x: 0, y: 0, w: Math.max(300, r.right - o.x + 24), h: Math.max(150, r.bottom - o.y + 24) };
   }
 
   private syncDeep(s: AppState, defer = false) {

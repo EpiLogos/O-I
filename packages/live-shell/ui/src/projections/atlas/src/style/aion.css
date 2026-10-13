@@ -13,7 +13,7 @@
 /* the popover: the shell menu's surface, radius, border and shadow; anchored under the Options icon, left-aligned with the title */
 .mode-options-body, .aion-choices {
   position: absolute; top: calc(100% + 8px); left: 0; z-index: 30;
-  width: min(320px, calc(100vw - 2 * var(--shell-x, 22px))); max-height: min(70vh, 520px); overflow-y: auto; overscroll-behavior: contain;
+  width: min(320px, calc(100cqw - 2 * var(--shell-x, 22px))); max-height: min(70cqh, 520px); overflow-y: auto; overscroll-behavior: contain;
   display: grid; align-content: start; gap: 2px; padding: 8px 8px 12px;
   font: 13px var(--sans); letter-spacing: .01em; color: var(--ink-2);
   border: 1px solid var(--hair); border-radius: 16px; background: var(--glass); background-color: rgb(var(--deep-rgb) / 0.86);
@@ -63,7 +63,7 @@
 /* a phone: the same popover as a bottom sheet (the shell menu's sheet), rows at 48px */
 @media (max-width: 720px) {
   .mode-options-body, .aion-choices {
-    position: fixed; top: auto; left: 0; right: 0; bottom: 0; width: auto; max-width: none; max-height: 70vh;
+    position: fixed; top: auto; left: 0; right: 0; bottom: 0; width: auto; max-width: none; max-height: 70cqh;
     border-radius: 20px 20px 0 0; border-bottom: 0; padding: 8px 10px calc(16px + env(safe-area-inset-bottom));
     z-index: 45; background-color: rgb(var(--deep-rgb) / 0.9); box-shadow: 0 -20px 60px rgb(0 0 0 / 0.5);
     animation: sm-up .32s var(--ease);
@@ -71,13 +71,13 @@
   .mode-opt-grab { display: block; width: 40px; height: 4px; border-radius: 2px; background: rgb(var(--core-rgb) / .3); margin: 4px auto 8px; }
   .mode-opt-row { min-height: 48px; }
 }
-.aion-epochs { position: absolute; bottom: 89px; left: 50%; transform: translateX(-50%); z-index: 12; display: flex; justify-content: center; flex-wrap: wrap; gap: 18px 32px; max-width: min(920px, 94vw); pointer-events: auto; }
+.aion-epochs { position: absolute; bottom: 89px; left: 50%; transform: translateX(-50%); z-index: 12; display: flex; justify-content: center; flex-wrap: wrap; gap: 18px 32px; max-width: min(920px, 94cqw); pointer-events: auto; }
 .aion-epochs[hidden] { display: none; }
 .aion-epochs button { color: var(--ink-3); font: 11.5px var(--sans); letter-spacing: .04em; padding: 6px 0; border-bottom: 1px solid transparent; white-space: nowrap; transition: color .4s, border-color .4s; }
 .aion-epochs button[aria-pressed=true] { color: var(--core); border-color: var(--core); }
-.aion-card { bottom: 126px; max-height: calc(100vh - 210px); }
+.aion-card { bottom: 126px; max-height: calc(100cqh - 210px); }
 /* the walk strip (chapter or thread) is taller than the old arrows: the card stands above it */
-.aion:has(.rb-rail:not([hidden])) .aion-card { bottom: 190px; max-height: calc(100vh - 270px); }
+.aion:has(.rb-rail:not([hidden])) .aion-card { bottom: 190px; max-height: calc(100cqh - 270px); }
 .aion-card .aion-date { margin: 0 22px 9px 0; }
 .aion-card .aion-lede { color: var(--ink); }
 .aion-card .dp-def { margin: 22px 0 0; }
@@ -107,11 +107,11 @@ body.aion-card-open .sh-scope { display: none; }
 body.thread-inspecting .strip { opacity: 0; pointer-events: none; }
 @media (max-width: 760px) {
   .aion-context { font-size: 10.5px; }
-  .aion-card { bottom: 100px; max-height: 48vh; }
+  .aion-card { bottom: 100px; max-height: 48cqh; }
   .aion-epochs { bottom: 56px; gap: 16px 20px; }
   .aion-epochs button { font-size: 11px; }
   /* the walk strip sits under the card; keep a clear gap */
-  .aion:has(.rb-rail:not([hidden])) .aion-card { bottom: 150px; max-height: 42vh; }
+  .aion:has(.rb-rail:not([hidden])) .aion-card { bottom: 150px; max-height: 42cqh; }
 }
 .symbol-reading { margin-top: 22px; }
 .symbol-compact { border-top: 1px solid var(--hair); padding-top: 14px; }
