@@ -18,7 +18,9 @@ import {PropertyTrack,sampleTrack,evaluateTracks,readTrackValue,mergeTake,expres
 import {curveHit,laneFrame,fromPixel,insertKey,removeKey,moveKey,moveHandle,setSegmentType,channelName,channelStateFor,channelPanelHTML,previewScene,type ChannelView,type HandleEnd,type LaneFrame,type Points} from './curveLane';
 import {transitionKindOf,transitionSpecFor,transitionLabel,dipWeights,wipeHoldRect,seamGlyphHTML,seamChooserHTML,writeSeamTransition,type TransitionKind,type TransitionParams,type TransitionSpec,type WipeDirection} from './transitions';
 import {journeyTimelineLayout} from './journeyTimelineLayout';
-import {MARKER_COLOURS,MARKER_LIMIT,MARKER_NAME_MAX,sceneBoundaries,sceneAtJourneyTime,snapToBoundary,markerNamed,markerAdd,markerRename,markerMove,markerRemove,nextMarkerTime,prevMarkerTime,setLoopEdge,dragLoopEdge,moveLoopRegion,playDurations,toPlayClock,loopPlayNotice,type LoopEdge,type LoopRegion} from './journeyMarkers';
+import {MARKER_COLOURS,MARKER_LIMIT,MARKER_NAME_MAX,sceneBoundaries,sceneAtJourneyTime,markerNamed,markerAdd,markerRename,markerMove,markerRemove,nextMarkerTime,prevMarkerTime,setLoopEdge,dragLoopEdge,moveLoopRegion,playDurations,toPlayClock,loopPlayNotice,type LoopEdge,type LoopRegion} from './journeyMarkers';
+import {snapCandidates,snapTime,closestSnap,nextSnapPoint,prevSnapPoint,type SnapPoint} from './snapModel';
+import {shuttle,pauseTransport,beginScrub,endScrub,stepFrame,transportRate,transportPlaying,transportReadout,STOPPED_TRANSPORT,type WorkingTransport} from './transport';
 import {durationFromEdgeDrag,sceneAtTime,secondsFromDrag,slipOffsetFromDrag,insertBeforeFor,dragPreviewStep,SCENE_DURATION_MIN,SCENE_DURATION_MAX,type TimelineLayout} from './journeyTimelineLayout';
 import {entityTargets} from './nativeParameters';
 import {recordRecent,recentJourneys} from './recentWork';
@@ -157,7 +159,9 @@ let timelineTrack=true;let sceneIndex=0;let selected:string[]=[];let textId:stri
 let propertyTake:null|{sceneId:string;armed:number;start:number;elapsed:number;tracks:PropertyTrack[];lastSample:number;limit?:number}=null;let appendTake=false,trackPreview=false;const takeWindows=new Map<string,{start:number;end:number}>();
 let width=innerWidth,height=innerHeight;let simTime=0,sceneElapsed=0;let fieldPaused=matchMedia('(prefers-reduced-motion: reduce)').matches,scenePlaying=false,journeyPlaying=false;let lastTime=performance.now(),lastUI=0;let toastTimeout=0,saveTimeout=0,lastLibraryWrite=0;let transitionStart=0,transitionDuration=0;let transitionBackground='#f4f2eb',transitionSceneId='';let transitionEasing:ChainEasing='linear';let autosaveErrorShown=false;let captureSettings=defaultCapture();let recordPerformanceWarned=false;let currentVideo:{blob:Blob;mime:string;url:string;source:DesktopScene;settings:CaptureSettings}|null=null;let recordingSource:DesktopScene|null=null;let recordingSettings:CaptureSettings|null=null;const recorder=new LiveRecorder();
 let pointer={active:false,world:{x:0,y:0,z:0}};let drag:null|{kind:'entity'|'radius'|'camera'|'text';id:string;startX:number;startY:number;startWorld:Vec3;positions:Map<string,Vec3>;initialRadius:number;cam:Camera;layer:TextLayer|null;pan:boolean}=null;
-let guidesVisible=true;let sourceUploadEntityId:{sceneId:string;entityId:string;stepId?:string;layerId?:string;append?:boolean}|null=null;let overlayDirty=true,needsFrame=true;const detailState=new Map<string,boolean>();
+let guidesVisible=true;let sourceUploadEntityId:{sceneId:string;entityId:string;stepId?:string;layerId?:string;append?:boolean}|null=null;let overlayDirty=true,needsFrame=true;
+// lane-3 E24/E25: the working-view transport (transport.ts), the J/K-held state, the timeline's snap toggle and the snap indicator's screen x.
+let workingTransport:WorkingTransport=STOPPED_TRANSPORT,transportKeyHeld=false,timelineSnap=true,snapGuideX:number|null=null;const detailState=new Map<string,boolean>();
 // The studio remembers where you were: content scroll survives close/reopen, and
 // the automation transport keeps its own run state, independent of the physics clock.
 interface LocatorDrag {kind:'marker'|'loop';id:string;name:string;edge:LoopEdge|'body';base:number;region:LoopRegion|null;startX:number;secondsPerPx:number;boundaries:number[];total:number;moved:boolean}
@@ -182,7 +186,7 @@ function toast(message:string,duration=4200){$('toast').textContent=message;$('t
 function firePointerClick(p:Vec3){const s=effectiveScene(store.document,scene()),kind=s.engine.pointerClick??'pulse';if(kind==='off')return;try{engine.command?.({type:'pointer-effect',kind,strength:engine.telemetry?.()?.params?.pointerClickStrength??s.engine.pointerClickStrength??2.2,radius:(engine.telemetry?.()?.params?.pointerClickRadius??s.engine.pointerClickRadius??.45)*WORLD_SCALE,x:p.x*WORLD_SCALE,y:p.y*WORLD_SCALE,z:p.z*WORLD_SCALE});needsFrame=true;}catch(err){error(err);}}
 function error(err:unknown){console.error(err);toast(err instanceof Error?err.message:String(err),6500);}
 const deletedLibraryIds=new Set<string>();
-function saveSession(){try{const session:SessionState={version:1,journeyId:store.document.id,sceneId:scene().id,selected,stepIndex,sceneElapsed,simTime,playing:scenePlaying,scenePlaying,journeyPlaying,fieldPaused,camera:{...camera},transport:engine.transportState?.()};localStorage.setItem(SESSION_KEY,JSON.stringify(session));localStorage.setItem('oi.field-studies.last',store.document.id);}catch{}}
+function saveSession(){try{const session:SessionState={version:1,journeyId:store.document.id,sceneId:scene().id,selected,stepIndex,sceneElapsed,simTime,playing:scenePlaying,scenePlaying,journeyPlaying,fieldPaused,camera:{...camera},transport:engine.transportState?.(),workingTransport};localStorage.setItem(SESSION_KEY,JSON.stringify(session));localStorage.setItem('oi.field-studies.last',store.document.id);}catch{}}
 let draftBackupBusy=false;
 async function flushDraft(){
  clearTimeout(saveTimeout);saveTimeout=0;
@@ -354,16 +358,26 @@ function moveLocatorDrag(ev:PointerEvent){
  const d=locatorDrag;if(!d)return;
  const dx=ev.clientX-d.startX;if(!d.moved&&Math.abs(dx)<3)return;d.moved=true;
  const delta=dx*d.secondsPerPx;
- if(d.kind==='marker')previewMarker={id:d.id,time:clamp(snapToBoundary(d.base+delta,d.boundaries,d.secondsPerPx),0,d.total)};
- else if(d.edge==='body')previewRegion=moveLoopRegion(d.region!,delta,d.total);
- else{const edge=d.edge as LoopEdge,raw=(edge==='from'?d.region!.from:d.region!.to)+delta;previewRegion=dragLoopEdge(d.region!,edge,snapToBoundary(raw,d.boundaries,d.secondsPerPx),d.total);}
+ // lane-3 E25: markers and loop edges snap to the snap model's points. The drag's own point is excluded; Alt bypasses.
+ const snapping=timelineSnap&&!ev.altKey,points=snapping?snapPoints(store.document):[];
+ const pick=(raw:number,exclude:string[])=>{const hit=snapping?closestSnap(points,raw,d.secondsPerPx,{exclude}):null;setSnapGuide(hit?hit.time:null,d.total);return hit?hit.time:raw;};
+ if(d.kind==='marker')previewMarker={id:d.id,time:clamp(pick(d.base+delta,[`marker:${d.id}`]),0,d.total)};
+ else if(d.edge==='body'){
+  // The body moves as a whole. Whichever of its two edges lands nearer a point sets the snap.
+  const region=d.region!,exclude=['loop:from','loop:to'];
+  const a=snapping?closestSnap(points,region.from+delta,d.secondsPerPx,{exclude}):null,b=snapping?closestSnap(points,region.to+delta,d.secondsPerPx,{exclude}):null;
+  const useA=!!a&&(!b||Math.abs(a.time-(region.from+delta))<=Math.abs(b.time-(region.to+delta)));
+  const hit=useA?a:b;setSnapGuide(hit?hit.time:null,d.total);
+  previewRegion=moveLoopRegion(region,hit?(useA?a!.time-region.from:b!.time-region.to):delta,d.total);
+ }
+ else{const edge=d.edge as LoopEdge,raw=(edge==='from'?d.region!.from:d.region!.to)+delta;previewRegion=dragLoopEdge(d.region!,edge,pick(raw,[`loop:${edge}`]),d.total);}
  if(!locatorFrame)locatorFrame=requestAnimationFrame(()=>{locatorFrame=0;renderTimeline();});
 }
 /** Marks the selected locator in place. The DOM is not rebuilt, so the second click of a double-click still reaches its rename. */
 function paintLocatorSelection(){document.querySelectorAll<HTMLElement>('[data-marker-id]').forEach(el=>{const on=el.dataset.markerId===selectedMarkerId;el.classList.toggle('selected',on);el.setAttribute('aria-pressed',String(on));});}
 function endLocatorDrag(commit:boolean){
  const d=locatorDrag,pm=previewMarker,pr=previewRegion;
- locatorDrag=null;previewMarker=null;previewRegion=null;
+ locatorDrag=null;previewMarker=null;previewRegion=null;setSnapGuide(null,0);
  if(!d)return;
  if(!commit||!d.moved){
   if(d.kind==='marker'&&!d.moved&&commit){selectedMarkerId=d.id;paintLocatorSelection();const m=markerNamed(store.document.markers??[],d.id);if(m)jumpToJourneyTime(m.time);return;}
@@ -388,7 +402,7 @@ function renderTimeline(){if(!timelineOpen)return;const s=scene(),doc=timelineDo
  // E09/E10: the channel rows and the selected channel's curve lane, under the clips in track mode only.
  const curveHTML=track?channelPanelHTML({scene:doc.scenes.find(v=>v.id===s.id)??s,selected:curveSel?.sceneId===s.id?{trackId:curveSel.trackId,index:curveSel.index}:null,views:viewsFor(s.id)}):'';
  const seamScene=track&&seamSceneId?scenes.find(v=>v.id===seamSceneId):undefined;const seamHTML=seamScene?seamChooserHTML(seamScene,{min:SCENE_TRANSITION_MIN,max:SCENE_TRANSITION_MAX}):'';
- $('timeline-panel').innerHTML=`${body}${curveHTML}${seamHTML}<div class="scene-save-row"><label>Scene name<input id="scene-save-name" value="${esc(sceneNames.get(s.id)??s.name)}" maxlength="160"></label><label>Hold · seconds<input type="number" data-bind="duration" value="${sceneTrim?.moved&&sceneTrim.sceneId===s.id?sceneTrim.duration:s.duration}" min="${SCENE_DURATION_MIN}" max="${SCENE_DURATION_MAX}" step=".1"></label><label>Transition<input type="number" aria-label="Transition seconds" data-bind="transition" value="${s.transition}" min="0" max="30" step=".1"></label><button class="primary" data-action="save-scene">Save scene</button><button data-action="save-next">Save & next</button><button data-action="restore-scene" ${!store.document.savedScenes?.[s.id]?'disabled':''}>Restore</button><button data-action="split-scene" title="Cut this scene in two at the playhead · S">Split</button><button data-action="still-scene" title="Add a still scene after this one: a held frame for a timed void, with no motion">Still scene</button>${ib('move-scene-left','arrowLeft','Move scene earlier',`data-scene-id="${esc(s.id)}"`)}${ib('move-scene-right','arrowRight','Move scene later',`data-scene-id="${esc(s.id)}"`)}${ib('delete-scene','trash','Delete scene',`data-scene-id="${esc(s.id)}"`)}${toggle}${ib('close-timeline','chevronDown','Collapse scenes')}</div><p class="scene-caption">${sceneSaveState(store.document,s)} · ${s.propertyTracks?.length??0} recorded properties · Scrubbing evaluates settings; particle motion continues from its current state.</p>${track?'<p class="scene-gesture-hint">Edge: trim · Shift+edge: roll the seam · Drag a clip: slide or insert (Alt+Shift: overwrite) · Alt+drag a clip: slip</p>':''}`;}
+ $('timeline-panel').innerHTML=`${transportBarHTML()}${body}${curveHTML}${seamHTML}<div class="scene-save-row"><label>Scene name<input id="scene-save-name" value="${esc(sceneNames.get(s.id)??s.name)}" maxlength="160"></label><label>Hold · seconds<input type="number" data-bind="duration" value="${sceneTrim?.moved&&sceneTrim.sceneId===s.id?sceneTrim.duration:s.duration}" min="${SCENE_DURATION_MIN}" max="${SCENE_DURATION_MAX}" step=".1"></label><label>Transition<input type="number" aria-label="Transition seconds" data-bind="transition" value="${s.transition}" min="0" max="30" step=".1"></label><button class="primary" data-action="save-scene">Save scene</button><button data-action="save-next">Save & next</button><button data-action="restore-scene" ${!store.document.savedScenes?.[s.id]?'disabled':''}>Restore</button><button data-action="split-scene" title="Cut this scene in two at the playhead · S">Split</button><button data-action="still-scene" title="Add a still scene after this one: a held frame for a timed void, with no motion">Still scene</button>${ib('move-scene-left','arrowLeft','Move scene earlier',`data-scene-id="${esc(s.id)}"`)}${ib('move-scene-right','arrowRight','Move scene later',`data-scene-id="${esc(s.id)}"`)}${ib('delete-scene','trash','Delete scene',`data-scene-id="${esc(s.id)}"`)}${toggle}${ib('close-timeline','chevronDown','Collapse scenes')}</div><p class="scene-caption">${sceneSaveState(store.document,s)} · ${s.propertyTracks?.length??0} recorded properties · Scrubbing evaluates settings; particle motion continues from its current state.</p>${track?'<p class="scene-gesture-hint">Edge: trim · Shift+edge: roll the seam · Drag a clip: slide or insert (Alt+Shift: overwrite) · Alt+drag a clip: slip</p>':''}`;}
 // E05 · trim: a clip's right edge changes that scene's duration. The drag previews
 // on the timeline only: timelineDocument() reads a shallow copy with the one new
 // duration, so the layout still runs on the single Expression clock. Pointer-up
@@ -433,13 +447,22 @@ function moveSceneTrim(ev:PointerEvent){
  const t=sceneTrim;if(!t)return;
  let next:ReturnType<typeof durationFromEdgeDrag>;
  try{next=durationFromEdgeDrag(t.base,t.sceneId,ev.clientX-t.startX,t.trackPx);}catch(err){endSceneTrim(false);error(err);return;}
- if(next.clamped&&next.clamped!==t.clamped)trimLimitToast(next.clamped);
- t.clamped=next.clamped;t.duration=next.duration;t.moved=next.duration!==t.from;
+ // lane-3 E25: the trimmed end snaps to points this trim does not move: the scene starts up to this scene, markers, the loop and the playhead.
+ // Later scene starts shift with the ripple, so they are not candidates. Alt bypasses.
+ let snapped=next,hitTime:number|null=null;
+ const index=store.document.scenes.findIndex(v=>v.id===t.sceneId),clip=t.base.clips.find(c=>c.sceneId===t.sceneId);
+ if(index>=0&&clip&&timelineSnap&&!ev.altKey){
+  const hit=closestSnap(snapPoints(store.document,{boundaries:sceneBoundaries(journeyDurations(store.document)).slice(0,index+1)}),clip.start+next.duration,t.base.total/t.trackPx,{exclude:[`scene:${index}`]});
+  if(hit){const want=hit.time-clip.start;hitTime=hit.time;snapped={duration:clamp(want,SCENE_DURATION_MIN,SCENE_DURATION_MAX),clamped:want<SCENE_DURATION_MIN?'min':want>SCENE_DURATION_MAX?'max':null};}
+ }
+ setSnapGuide(hitTime,t.base.total+(snapped.duration-(clip?.duration??snapped.duration)));
+ if(snapped.clamped&&snapped.clamped!==t.clamped)trimLimitToast(snapped.clamped);
+ t.clamped=snapped.clamped;t.duration=snapped.duration;t.moved=snapped.duration!==t.from;
  if(!t.frame)t.frame=requestAnimationFrame(()=>{t.frame=0;renderTimeline();});
 }
 function endSceneTrim(commit:boolean){
  const t=sceneTrim;if(!t)return;
- sceneTrim=null;if(t.frame)cancelAnimationFrame(t.frame);
+ sceneTrim=null;if(t.frame)cancelAnimationFrame(t.frame);setSnapGuide(null,0);
  document.removeEventListener('pointermove',moveSceneTrim);document.removeEventListener('pointerup',upSceneTrim);document.removeEventListener('pointercancel',cancelSceneTrim);
  document.body.classList.remove('trimming-scene');
  const target=store.document.scenes.find(v=>v.id===t.sceneId);
@@ -481,8 +504,17 @@ function beginCurveDrag(ev:PointerEvent,lane:HTMLElement){
 }
 function moveCurveDrag(ev:PointerEvent){
  const d=curveDrag;if(!d)return;
- const p=fromPixel(d.frame,ev.clientX-d.left,ev.clientY-d.top),time=Math.min(3600,Math.max(0,p.time));
+ const p=fromPixel(d.frame,ev.clientX-d.left,ev.clientY-d.top);let time=Math.min(3600,Math.max(0,p.time));
  d.moved=true;
+ // lane-3 E25: a keyframe's time snaps to the timeline's points, its own keyframe excluded; handles do not snap. Alt bypasses.
+ if(d.kind==='key'){
+  const s=store.document.scenes.findIndex(v=>v.id===d.sceneId),trackPx=document.querySelector<HTMLElement>('.scene-track-lane')?.getBoundingClientRect().width??0,total=expressionTiming(store.document,0,0).total;
+  const start=s>=0?(sceneBoundaries(journeyDurations(store.document))[s]??0):0;
+  const keyframes=s>=0?(store.document.scenes[s].propertyTracks??[]).flatMap(tr=>tr.points.map((pt,i)=>({id:`key:${tr.id}:${i}`,time:start+pt.time}))):[];
+  const hit=timelineSnap&&!ev.altKey&&s>=0&&trackPx>0?closestSnap(snapPoints(store.document,{keyframes}),start+time,total/trackPx,{exclude:[`key:${d.trackId}:${d.index}`]}):null;
+  setSnapGuide(hit?hit.time:null,total);
+  if(hit)time=clamp(hit.time-start,0,3600);
+ }
  let next:Points|null=null,message='';
  try{const candidate=d.kind==='key'?moveKey(d.base,d.index,time,p.value):moveHandle(d.base,d.index,d.end,time,p.value);validateCurveEdit(candidate,d.range,curveTouches(candidate,d));next=candidate;}
  catch(err){message=err instanceof Error?err.message:String(err);}
@@ -497,7 +529,7 @@ function moveCurveDrag(ev:PointerEvent){
 }
 function endCurveDrag(commit:boolean){
  const d=curveDrag;if(!d)return;
- curveDrag=null;if(d.raf)cancelAnimationFrame(d.raf);
+ curveDrag=null;if(d.raf)cancelAnimationFrame(d.raf);setSnapGuide(null,0);
  document.removeEventListener('pointermove',moveCurveDrag);document.removeEventListener('pointerup',upCurveDrag);document.removeEventListener('pointercancel',cancelCurveDrag);
  const next=d.preview;
  // A release over a refused position commits nothing, as before: the kept preview is not the pointer's position.
@@ -617,7 +649,13 @@ function beginSceneRoll(ev:PointerEvent,handle:HTMLElement){
 }
 function moveSceneRoll(ev:PointerEvent){
  const r=sceneRoll;if(!r)return;
- const range=seamRollRange(r.left,r.right),want=secondsFromDrag(ev.clientX-r.startX,r.trackPx,r.total);
+ const range=seamRollRange(r.left,r.right);let want=secondsFromDrag(ev.clientX-r.startX,r.trackPx,r.total);
+ // lane-3 E25: the seam snaps to points a roll does not move: every scene start but its own, markers, the loop and the playhead.
+ // A roll conserves the journey's length, so no other scene start moves. Alt bypasses; a still pointer never snaps.
+ const index=store.document.scenes.findIndex(v=>v.id===r.leftId),bounds=sceneBoundaries(journeyDurations(store.document));
+ const seam=bounds[index+1]??r.total;let hitTime:number|null=null;
+ if(index>=0&&want!==0&&timelineSnap&&!ev.altKey){const hit=closestSnap(snapPoints(store.document,{boundaries:bounds}),seam+want,r.total/r.trackPx,{exclude:[`scene:${index+1}`]});if(hit){want=hit.time-seam;hitTime=hit.time;}}
+ setSnapGuide(hitTime,r.total);
  const seconds=Math.min(range.max,Math.max(range.min,want)),clamped=want<range.min?'min':want>range.max?'max':null;
  if(clamped&&clamped!==r.clamped)toast(`The seam stops at its limit: a scene lasts ${SCENE_DURATION_MIN} to ${SCENE_DURATION_MAX} seconds.`);
  r.clamped=clamped;r.seconds=seconds;r.moved=seconds!==0;
@@ -625,7 +663,7 @@ function moveSceneRoll(ev:PointerEvent){
 }
 function endSceneRoll(commit:boolean){
  const r=sceneRoll;if(!r)return;
- sceneRoll=null;if(r.frame)cancelAnimationFrame(r.frame);
+ sceneRoll=null;if(r.frame)cancelAnimationFrame(r.frame);setSnapGuide(null,0);
  document.removeEventListener('pointermove',moveSceneRoll);document.removeEventListener('pointerup',upSceneRoll);document.removeEventListener('pointercancel',cancelSceneRoll);
  document.body.classList.remove('trimming-scene');
  if(!commit||!r.moved){renderTimeline();return;}
@@ -799,6 +837,76 @@ function toggleScenePlay(){sceneIntentEpoch++;if(scenePlaying){scenePlaying=fals
  // Starting from the top plays ALL of the scene's automations; resuming mid-scene holds what has run.
  if(fromTop)fireAutomations(true);
  scenePlaying=true;needsFrame=true;transportUI();}
+// lane-3 E24 · transport. The working-view transport (transport.ts) says how the playhead moves; scenePlaying and journeyPlaying remain
+// the flags the existing playback reads, and syncWorkingTransport keeps the two in step on every frame.
+function syncWorkingTransport(){
+ if(workingTransport.mode==='scrub')return;
+ if(scenePlaying){if(!transportPlaying(workingTransport))workingTransport={mode:'play',rate:1,resume:'play'};}
+ else if(transportPlaying(workingTransport))workingTransport=STOPPED_TRANSPORT;
+}
+/** J or L. From a held playhead, forward starts playback as Space does; reverse holds the Scene's own clock and runs it back. */
+function transportShuttle(direction:1|-1){
+ sceneIntentEpoch++;
+ if(!scenePlaying){
+  if(direction>0)toggleScenePlay();
+  else{fieldPaused=false;if(journeyPlaying){journeyPlaying=false;applySceneView();}if(scene().propertyTracks?.length)trackPreview=true;scenePlaying=true;}
+ }
+ workingTransport=shuttle(workingTransport,direction);
+ needsFrame=true;transportUI();
+}
+/** K: ends a shuttle and returns to the state it began from; otherwise it pauses. */
+function transportPause(){
+ sceneIntentEpoch++;
+ workingTransport=pauseTransport(workingTransport);
+ if(transportPlaying(workingTransport))scenePlaying=true;
+ else{scenePlaying=false;if(journeyPlaying){journeyPlaying=false;applySceneView();}}
+ needsFrame=true;transportUI();
+}
+/** K held with J or L: the playhead seeks exactly one frame and the transport holds. The seek evaluates the tracks once. */
+function transportFrame(direction:1|-1){
+ const step=stepFrame(workingTransport,direction);
+ sceneIntentEpoch++;workingTransport=step.transport;scenePlaying=false;
+ if(journeyPlaying){journeyPlaying=false;applySceneView();}
+ const doc=store.document,total=expressionTiming(doc,0,0).total,now=expressionTiming(doc,sceneIndex,sceneElapsed).time;
+ jumpToJourneyTime(clamp(now+step.seconds,0,total));
+ needsFrame=true;transportUI();
+}
+/** ',' and '.': the playhead jumps to the previous or next snap point (a scene start, a marker or a loop edge). */
+function jumpSnap(direction:1|-1){
+ const doc=store.document,now=expressionTiming(doc,sceneIndex,sceneElapsed).time;
+ const points=snapCandidates({boundaries:sceneBoundaries(journeyDurations(doc)),markers:doc.markers??[],loop:doc.loopRegion});
+ const target=direction>0?nextSnapPoint(points,now):prevSnapPoint(points,now);
+ if(!target){toast(direction>0?'No snap point after the playhead.':'No snap point before the playhead.');return;}
+ jumpToJourneyTime(target.time);renderTimeline();
+}
+// lane-3 E25 · the snap model. Candidates come from the document as it stands; each drag excludes the point(s) it moves.
+function toggleTimelineSnap(){
+ timelineSnap=!timelineSnap;if(!timelineSnap)setSnapGuide(null,0);
+ toast(timelineSnap?'Timeline snapping on · Alt drags freely':'Timeline snapping off',1800);renderTimeline();
+}
+function snapPoints(doc:Journey,parts:{boundaries?:number[];keyframes?:{id:string;time:number}[]}={}):SnapPoint[]{
+ return snapCandidates({boundaries:parts.boundaries??sceneBoundaries(journeyDurations(doc)),markers:doc.markers??[],
+  playhead:expressionTiming(doc,sceneIndex,sceneElapsed).time,loop:doc.loopRegion,keyframes:parts.keyframes});
+}
+/** The snap indicator: a line at the snapped time on the timeline's own scale, drawn in the guides layer (drawGuides). */
+function setSnapGuide(time:number|null,total:number){
+ const rect=document.querySelector<HTMLElement>('.scene-track-lane')?.getBoundingClientRect();
+ const x=time===null||!rect||!(rect.width>0)||!(total>0)?null:rect.left+time/total*rect.width;
+ if(x===snapGuideX)return;snapGuideX=x;overlayDirty=true;needsFrame=true;
+}
+/** The timeline's transport and snap controls. The keys J, K, L, ',' and '.' do the same; Cmd/Ctrl+4 toggles snapping. */
+function transportBarHTML(){
+ const magnet=`<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 3v8a7 7 0 0 0 14 0V3h-4v8a3 3 0 0 1-6 0V3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M5 7h4M15 7h4" stroke="currentColor" stroke-width="2"/></svg>`;
+ return `<div class="timeline-toolbar" role="toolbar" aria-label="Transport and snapping">`
+  +`<button type="button" data-action="transport-frame-back" aria-label="Step back one frame" title="Step back one frame · K+J">◂ frame</button>`
+  +`<button type="button" data-action="transport-shuttle-back" aria-label="Shuttle back" title="Shuttle back: ×1, ×2, ×4 · J">J</button>`
+  +`<button type="button" data-action="transport-pause" aria-label="Pause, or return from shuttle" title="Pause, or return from shuttle · K">K</button>`
+  +`<button type="button" data-action="transport-shuttle-forward" aria-label="Shuttle forward" title="Shuttle forward: ×1, ×2, ×4 · L">L</button>`
+  +`<button type="button" data-action="transport-frame-forward" aria-label="Step forward one frame" title="Step forward one frame · K+L">frame ▸</button>`
+  +`<span class="transport-readout" data-transport-readout>${transportReadout(workingTransport)}</span>`
+  +`<button type="button" class="snap-toggle" data-action="timeline-snap" aria-pressed="${timelineSnap}" aria-label="Snap to points" title="Snap to scenes, markers, the playhead, loop and keys · Cmd/Ctrl+4. Hold Alt to drag freely.">${magnet}<span>Snap</span></button>`
+  +`</div>`;
+}
 function transportUI(){$('property-record').setAttribute('aria-pressed',String(!!propertyTake));$('property-record').setAttribute('aria-label',propertyTake?'Stop property recording':'Record property keyframes');$('take-mode').setAttribute('aria-label','Recording mode: '+(appendTake?'next section':'replace last take'));$('take-mode').setAttribute('title',appendTake?'Next section':'Replace last take');if(!propertyTake)$('take-status').hidden=true;
  const b=$('play-button');b.innerHTML=icon(scenePlaying?'pause':'play');b.setAttribute('aria-label',scenePlaying?'Pause scene (Space)':'Play scene (Space)');b.title=scenePlaying?'Pause scene (Space) · the field keeps breathing':'Play scene (Space) · runs this scene and fires every automation it carries';
  $('journey-play').classList.toggle('active',journeyPlaying);$('journey-play').setAttribute('aria-pressed',String(journeyPlaying));$('journey-play').title=journeyPlaying?'Stop saved scenes':'Play saved scenes';$('journey-play').setAttribute('aria-label',$('journey-play').title);
@@ -1090,6 +1198,12 @@ async function action(name:string,el:HTMLElement,event?:Event){const s=scene(),s
  case 'guides':guidesVisible=!guidesVisible;renderAll();break;
  case 'grid':camera.grid=!camera.grid;renderAll();break;
  case 'snap':camera.snap=!camera.snap;renderAll();break;
+ case 'timeline-snap':toggleTimelineSnap();break;
+ case 'transport-shuttle-back':transportShuttle(-1);break;
+ case 'transport-pause':transportPause();break;
+ case 'transport-shuttle-forward':transportShuttle(1);break;
+ case 'transport-frame-back':transportFrame(-1);break;
+ case 'transport-frame-forward':transportFrame(1);break;
  case 'face-plane':facePlane(camera);renderAll();break;
  case 'keep-view':changed(()=>{scene().view={...scene().view,mode:camera.mode,yaw:camera.yaw,pitch:camera.pitch,zoom:camera.zoom,panX:camera.panX/width,panY:camera.panY/height};},true,'Keep camera view');toast('This camera framing is now part of the scene.');break;
  case 'restore-view':applySceneView();renderAll();break;
@@ -1307,6 +1421,8 @@ document.addEventListener('focusout',ev=>{const el=ev.target;if((el instanceof H
 document.addEventListener('focusin',ev=>{const el=ev.target;if((el instanceof HTMLInputElement||el instanceof HTMLTextAreaElement)&&el.dataset.bind){el.dataset.originalValue=el.value;delete el.dataset.liveEditValue;delete el.dataset.cancelCommit;}});
 document.addEventListener('keydown',ev=>{if(ev.defaultPrevented)return;const el=ev.target as HTMLElement;const typing=el.closest('input,textarea,select,[contenteditable="true"]');if(researchInstruments?.active()){if(libraryOpen){if(ev.key==='Escape'&&!document.querySelector('dialog[open]')){ev.preventDefault();if(assignmentTarget||assignmentGroup){assignmentTarget='';assignmentGroup='';renderAll();}else closeLibrary();}return;}if(!typing&&!document.querySelector('dialog[open]')&&(ev.metaKey||ev.ctrlKey)&&ev.key.toLowerCase()==='z'){ev.preventDefault();void action(ev.shiftKey?'redo':'undo',el);}return;}if(typing){if(ev.key==='Escape'){if(assignmentTarget||assignmentGroup){assignmentTarget='';assignmentGroup='';renderAll();return;}if(el instanceof HTMLInputElement&&el.dataset.originalValue!==undefined){el.value=el.dataset.originalValue;el.dataset.cancelCommit='true';}el.blur();return;}if(ev.key==='Enter'&&!(el instanceof HTMLTextAreaElement)){ev.preventDefault();if(el instanceof HTMLInputElement&&el.dataset.bind)applyBinding(el);else el.blur();}return;}if(document.querySelector('dialog[open]'))return;if(libraryOpen){if(ev.key==='Escape'){if(assignmentTarget||assignmentGroup){assignmentTarget='';assignmentGroup='';renderAll();return;}ev.preventDefault();closeLibrary();}return;}if(ev.key==='Escape'&&(modesOpen||captureOpen)){ev.preventDefault();readCapture();modesOpen=false;captureOpen=false;renderAll();return;}
  if((ev.metaKey||ev.ctrlKey)&&ev.key.toLowerCase()==='z'){ev.preventDefault();void action(ev.shiftKey?'redo':'undo',el);return;}
+ // lane-3 E25: Cmd/Ctrl+4 toggles timeline snapping, as Live's snap toggle does. It answers before the modifier early return below.
+ if((ev.metaKey||ev.ctrlKey)&&ev.key==='4'&&!presenting){ev.preventDefault();toggleTimelineSnap();return;}
  if((ev.metaKey||ev.ctrlKey)&&ev.key.toLowerCase()==='s'){ev.preventDefault();void action('native-save',el);return;}
  if(ev.metaKey||ev.ctrlKey||ev.altKey)return;
  if(ev.key==='Escape'){if(assignmentTarget||assignmentGroup){assignmentTarget='';assignmentGroup='';renderAll();return;}if(propertyTake){finishPropertyTake();return;}if(beltPickerOpen){beltPickerOpen=false;renderAll();return;}if(contextKind){contextKind='';renderAll();return;}if(studioOpen){setStudio(false);return;}if(presenting){presenting=false;renderAll();}else if(placementStep||shapePickerOpen){placementStep=false;shapePickerOpen=false;cursorTool='select';tool='select';renderAll();}else if(timelineOpen){timelineOpen=false;renderAll();}else if(inspectorOpen){inspectorOpen=false;railExpanded=false;renderAll();}else if(editing)edit(false);return;}
@@ -1314,6 +1430,13 @@ document.addEventListener('keydown',ev=>{if(ev.defaultPrevented)return;const el=
  if(ev.key.toLowerCase()==='s'&&!typing&&timelineOpen&&!presenting){ev.preventDefault();void action('split-scene',el);return;}
  // E12/E13: locators and the loop brace answer while the timeline is open; the tool keys (I, O) take over only when it is closed.
  if(!typing&&timelineOpen&&!presenting){const k=ev.key.toLowerCase();if(ev.repeat&&(k==='m'||k==='i'||k==='o')){ev.preventDefault();return;}if(k==='m'){ev.preventDefault();addMarkerAtPlayhead();return;}if(k==='['||k===']'){ev.preventDefault();jumpMarker(k===']'?1:-1);return;}if(k==='i'||k==='o'){ev.preventDefault();setLoopAtPlayhead(k==='i'?'from':'to');return;}if(ev.key==='\\'){ev.preventDefault();clearLoopRegion();return;}}
+ // lane-3 E24/E25: J and L shuttle back and forward, K pauses (and returns from a shuttle); K held with J or L steps one frame.
+ // ',' and '.' jump to the previous and next snap point from the playhead. None of these keys has another binding.
+ if(!presenting){const k=ev.key.toLowerCase();
+  if(k==='k'){ev.preventDefault();if(!ev.repeat){transportKeyHeld=true;transportPause();}return;}
+  if(k==='j'||k==='l'){ev.preventDefault();const direction:1|-1=k==='l'?1:-1;if(transportKeyHeld)transportFrame(direction);else if(!ev.repeat)transportShuttle(direction);return;}
+  if(k===','||k==='.'){ev.preventDefault();jumpSnap(k==='.'?1:-1);return;}
+ }
  const shortcuts:Record<string,string>={e:'edit',p:'tool-pin',v:'tool-select',i:'tool-interact',a:'tool-formation',t:'tool-text',o:'tool-orbit',g:'grid',f:presenting?'exit-present':'present'};
  if(shortcuts[ev.key.toLowerCase()]){ev.preventDefault();void action(shortcuts[ev.key.toLowerCase()],el);return;}
  if(ev.key.startsWith('Arrow')){ev.preventDefault();if(editing&&selected.length){if(selected.some(id=>blueprintMember(scene(),id))){toast('Use Blueprint to move the whole shape.');return;}const amount=ev.shiftKey?.1:.01;if(placementStep){const entity=selectedEntity(),step=entity?.sequence.steps[stepIndex];if(!entity||!step||entity.locked)return;const view=nativeWorkspace?.nativeView(),occurrence=view?.bindings[scene().id]?.occurrences.find(row=>row.view_entity_id===entity.id);if(view&&!occurrence){toast('The selected formation has no current native occurrence');return;}if(occurrence&&(view!.document.entities[occurrence.entity_ref] as {pinned?:boolean})?.pinned){toast('Unpin the native occurrence before moving it');return;}const position=formationStateNudge(entity,step.id,ev.key,amount);if(position)changed(()=>{const current=scene().entities.find(row=>row.id===entity.id)?.sequence.steps.find(row=>row.id===step.id);if(current)current.position=position;},true,'Move keyframe');return;}changed(()=>scene().entities.filter(e=>selected.includes(e.id)&&!e.locked).forEach(e=>{if(ev.key==='ArrowLeft')e.position.x-=amount;if(ev.key==='ArrowRight')e.position.x+=amount;if(ev.key==='ArrowUp')e.position.y+=amount;if(ev.key==='ArrowDown')e.position.y-=amount;e.position.x=clamp(e.position.x,-50,50);e.position.y=clamp(e.position.y,-50,50);}),true,'Move objects');}else if(ev.key==='ArrowLeft')setSceneRef(sceneRefAt(sceneIndex-1));else if(ev.key==='ArrowRight')setSceneRef(sceneRefAt(sceneIndex+1));}
@@ -1325,6 +1448,13 @@ document.addEventListener('keydown',ev=>{if(ev.defaultPrevented)return;const el=
  if((ev.key==='Delete'||ev.key==='Backspace')&&!typing&&timelineOpen&&selectedMarkerId&&!(editing&&selected.length)){ev.preventDefault();deleteSelectedMarker();return;}
  if((ev.key==='Delete'||ev.key==='Backspace')&&editing&&selected.length){ev.preventDefault();deleteEntities();}
 });
+// lane-3 E24: a pointer held on the timeline playhead is a scrub until it lets go. The playhead's own seek already evaluates
+// the tracks at the pointer and stops playback, so the scrub adds nothing to the physics clock. K-held state is released on keyup.
+$('timeline-panel').addEventListener('pointerdown',ev=>{if(ev.button!==0)return;if((ev.target as Element).closest('#expression-playhead,.scene-track-playhead'))workingTransport=beginScrub(workingTransport);});
+document.addEventListener('pointerup',()=>{workingTransport=endScrub(workingTransport);});
+document.addEventListener('pointercancel',()=>{workingTransport=endScrub(workingTransport);});
+document.addEventListener('keyup',ev=>{if(ev.key.toLowerCase()==='k')transportKeyHeld=false;});
+window.addEventListener('blur',()=>{transportKeyHeld=false;});
 $<HTMLInputElement>('source-file').addEventListener('change',async ev=>{const input=ev.target as HTMLInputElement,file=input.files?.[0],id=sourceUploadEntityId;if(!file||!id)return;try{if(!['image/png','image/jpeg','image/webp'].includes(file.type)||file.size>8_000_000)throw new Error('Use a PNG, JPEG or WebP smaller than 8 MB.');const url=await new Promise<string>((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(String(r.result));r.onerror=()=>reject(new Error('Image file could not be read'));r.readAsDataURL(file);});const s=store.document.scenes.find(s=>s.id===id.sceneId),e=s?.entities.find(e=>e.id===id.entityId);if(!s||!e||e.locked)return;
   if(id.layerId){const layerIndex=e.sequence.steps.findIndex(k=>k.id===id.stepId);if(layerIndex<0||!(e.sequence.steps[layerIndex].layers??e.layers)?.some(l=>l.id===id.layerId))return;changed(()=>editStateLayers(e,layerIndex,()=>{e.layers=(e.layers??[]).map(l=>l.id===id.layerId?{...l,source:{kind:'image',image:{mode:'luminance',threshold:DEFAULT_SOURCE_THRESHOLD,invert:false,scale:1,dataUrl:url,name:file.name}}}:l);}),true,'Set layer image');toast('Layer sampled: '+file.name,5000);return;}
   let index=id.append?e.sequence.steps.length:e.sequence.steps.findIndex(k=>k.id===id.stepId);if(index<0||id.append&&index>=32)return;
@@ -1401,7 +1531,10 @@ function endDrag(ev:PointerEvent){if(drag){if(drag.kind!=='camera'){store.finish
 $('stage').addEventListener('pointerup',endDrag);$('stage').addEventListener('pointercancel',endDrag);$('stage').addEventListener('pointerleave',()=>{if(!drag){pointer.active=false;needsFrame=true;}});$('stage').addEventListener('contextmenu',ev=>{if(!presenting)ev.preventDefault();});
 $('stage').addEventListener('wheel',ev=>{if(ev.ctrlKey||ev.metaKey||(!editing&&cursorTool!=='interact'))return;ev.preventDefault();pointer.active=false;camera.zoom=clamp(camera.zoom*Math.exp(-ev.deltaY*.001),.2,4);overlayDirty=true;needsFrame=true;},{passive:false});
 function poly(points:{x:number;y:number}[]){return points.map(p=>p.x.toFixed(1)+','+p.y.toFixed(1)).join(' ');}
-function drawGuides(){const svg=$('guides');svg.setAttribute('viewBox',`0 0 ${width} ${height}`);if(!editing||presenting||!guidesVisible){svg.innerHTML='';return;}let markup='';
+function drawGuides(){const svg=$('guides');svg.setAttribute('viewBox',`0 0 ${width} ${height}`);
+ // lane-3 E25: the snap indicator shows during a timeline drag, so it draws whether or not the stage guides are on.
+ const snapLine=snapGuideX!==null&&!presenting?`<line class="snap-guide" x1="${snapGuideX}" x2="${snapGuideX}" y1="0" y2="${height}" stroke="var(--accent)" stroke-width="1" stroke-dasharray="2 3"/>`:'';
+ if(!editing||presenting||!guidesVisible){svg.innerHTML=snapLine;return;}let markup='';
  if(camera.grid){for(let i=-15;i<=15;i++){const v=i/10;const mk=(a:number,b:number):Vec3=>camera.plane==='XY'?{x:a,y:b,z:camera.depth}:camera.plane==='XZ'?{x:a,y:camera.depth,z:b}:{x:camera.depth,y:a,z:b};const a=project(mk(v,-1.5),camera,width,height),b=project(mk(v,1.5),camera,width,height),c=project(mk(-1.5,v),camera,width,height),d=project(mk(1.5,v),camera,width,height);markup+=`<path d="M${a.x},${a.y}L${b.x},${b.y}M${c.x},${c.y}L${d.x},${d.y}" fill="none" stroke="var(--ink)" opacity="${i===0?.25:.075}" stroke-width="${i===0?1:.6}"/>`;}}
  const forms=scene().entities.filter(e=>e.kind==='formation');if(tab==='motion'&&motionTab==='focus'&&scene().composition.focus==='travelling'){const ps=forms.map(e=>project(e.position,camera,width,height));markup+=`<polyline points="${poly(ps)}" fill="none" stroke="var(--accent)" stroke-width="1" stroke-dasharray="3 5" opacity=".6"/>`;}
  for(const e of scene().entities){const p=project(e.position,camera,width,height),isSelected=selected.includes(e.id),r=e.kind==='pin'?7:5,color=isSelected?'var(--accent)':'var(--muted)';
@@ -1410,7 +1543,7 @@ function drawGuides(){const svg=$('guides');svg.setAttribute('viewBox',`0 0 ${wi
  if(isSelected&&e.sequence.enabled){const path=e.sequence.steps.map(k=>k.position?project({x:e.position.x+k.position.x,y:e.position.y+k.position.y,z:e.position.z+k.position.z},camera,width,height):p);markup+=`<polyline points="${poly(path)}" fill="none" stroke="var(--accent)" stroke-dasharray="2 6" stroke-width=".8"/>`;path.forEach((pt,i)=>{if(e.sequence.steps[i].position)markup+=`<rect x="${pt.x-3}" y="${pt.y-3}" width="6" height="6" fill="var(--paper)" stroke="var(--accent)"/><text x="${pt.x+7}" y="${pt.y-6}" fill="var(--accent)" font-size="8" font-family="Arial">${i+1}</text>`;});}
  markup+=`<g data-world-marker="${e.id}" data-screen-x="${p.x.toFixed(2)}" data-screen-y="${p.y.toFixed(2)}" transform="translate(${p.x},${p.y})"><circle r="${r+5}" fill="var(--paper)" opacity=".75"/><path d="M-12 0H-5M5 0H12M0-12V-5M0 5V12" fill="none" stroke="${color}" stroke-width=".9"/><circle r="${r}" fill="none" stroke="${color}" stroke-width=".9"/>${e.kind==='pin'?`<text y="3" text-anchor="middle" font-size="9" fill="${color}">${e.force.kind==='repel'?'+':e.force.kind==='vortex'?'↻':'−'}</text>`:''}${isSelected?`<text x="17" y="-13" fill="${color}" font-size="9" font-family="Arial">${esc(e.name)}${e.locked?' · locked':''}</text>`:''}</g>`;
  }
- svg.innerHTML=markup;overlayDirty=false;
+ svg.innerHTML=markup+snapLine;overlayDirty=false;
 }
 function resize(){width=innerWidth;height=innerHeight;engine.resize(width,height,physisPixelRatio??(devicePixelRatio||1));renderText();renderLive();overlayDirty=true;needsFrame=true;}
 // Live parameter channel (stageCommands.ts 'live'): transient drag values and automation holds, runtime only. A Scene change ends both.
@@ -1439,8 +1572,12 @@ function tick(now:number){if(sceneEditHeld||researchInstruments?.active()&&!rese
  // A finished property preview holds its recorded end values; the field itself
  // keeps breathing. The playhead runs only while the scene plays, and reaching
  // the scene's end stops it — the transport returns to Play.
- const transportFrame=advanceSceneTransport(store.document,sceneIndex,sceneElapsed,rawDelta,{playing:scenePlaying,savedSequence:journeyPlaying,hidden:document.hidden,libraryOpen,propertyRecording:!!propertyTake,editing,authoredSceneIds:nativeSceneTransportMaterial(nativeWorkspace?.nativeView()),loopRegion:store.document.loopRegion});
+ // lane-3 E24: the auto-advance clock runs at the working transport's rate (play 1, shuttle its signed ×1/×2/×4). Scrubbing and stop are rate 0.
+ syncWorkingTransport();const rate=transportRate(workingTransport),reverse=rate<0;
+ const transportFrame=advanceSceneTransport(store.document,sceneIndex,sceneElapsed,reverse?0:rawDelta*Math.max(0,rate),{playing:scenePlaying,savedSequence:journeyPlaying,hidden:document.hidden,libraryOpen,propertyRecording:!!propertyTake,editing,authoredSceneIds:nativeSceneTransportMaterial(nativeWorkspace?.nativeView()),loopRegion:store.document.loopRegion});
  sceneElapsed=transportFrame.elapsed_seconds;scenePlaying=transportFrame.scene_playing;
+ // A reverse shuttle runs the Scene's playhead back, floored at its start (reverse through a saved sequence is not yet supported).
+ if(reverse&&scenePlaying)sceneElapsed=Math.max(0,sceneElapsed+rate*Math.min(rawDelta,.25));
  const wasSequence=journeyPlaying;journeyPlaying=transportFrame.saved_sequence_playing;
  if(transportFrame.advance_to_scene_index!==null)void advanceSavedScene(transportFrame.advance_to_scene_index,transportFrame.seek_local_seconds??0);
  else if(transportFrame.unavailable_reason){if(wasSequence)applySceneView();toast(transportFrame.unavailable_reason);renderAll();}
@@ -1448,7 +1585,7 @@ function tick(now:number){if(sceneEditHeld||researchInstruments?.active()&&!rese
  if(transitionDuration>0){const f=clamp((simTime-transitionStart)/Math.max(.01,transitionDuration),0,1);paintTransition(f);if(f>=1){transitionDuration=0;transitionSnapshot=null;$('transition-canvas').hidden=true;}}
  if(overlayDirty&&!libraryOpen)drawGuides();if(recorder.active){const paperScene={...activeScene(),field:{...activeScene().field,background:native?.background??scene().field.background,palette:native?.palette??scene().field.palette,params:{...scene().field.params,...native?.params}}};const copy=()=>recorder.frame(engine.canvas,paperScene,width,height,captureTransition());try{if(engine.withCleanFrame)engine.withCleanFrame(copy);else copy();}catch(err){recorder.stop();error(err);}}frames++;
  if(now-lastFpsTime>1000){fps=Math.round(frames*1000/(now-lastFpsTime));frames=0;lastFpsTime=now;}
- if(now-lastUI>33){const s=activeScene(),timing=expressionTiming(store.document,sceneIndex,sceneElapsed,journeyPlaying),fraction=clamp(timing.time/timing.total,0,1);$('global-time').textContent=timing.time.toFixed(1)+' / '+timing.total.toFixed(1)+'s';const playhead=$<HTMLInputElement>('expression-playhead');if(playhead&&document.activeElement!==playhead)playhead.value=String(timing.time);$('journey-progress').style.width=fraction*100+'%';document.querySelectorAll<HTMLElement>('[data-scene-progress]').forEach(e=>e.style.width=(Number(e.dataset.sceneProgress)===sceneIndex?fraction*100:0)+'%');
+ if(now-lastUI>33){document.querySelectorAll<HTMLElement>('[data-transport-readout]').forEach(el=>{el.textContent=transportReadout(workingTransport);});const s=activeScene(),timing=expressionTiming(store.document,sceneIndex,sceneElapsed,journeyPlaying),fraction=clamp(timing.time/timing.total,0,1);$('global-time').textContent=timing.time.toFixed(1)+' / '+timing.total.toFixed(1)+'s';const playhead=$<HTMLInputElement>('expression-playhead');if(playhead&&document.activeElement!==playhead)playhead.value=String(timing.time);$('journey-progress').style.width=fraction*100+'%';document.querySelectorAll<HTMLElement>('[data-scene-progress]').forEach(e=>e.style.width=(Number(e.dataset.sceneProgress)===sceneIndex?fraction*100:0)+'%');
  const nd=engine.telemetry?.()?.drive;const ph=nd?{theta:nd.theta,phi:nd.phi,drive:nd.progress}:phases(s,simTime);document.querySelectorAll<SVGLineElement>('[data-phase]').forEach(e=>e.setAttribute('transform',`rotate(${(e.dataset.phase==='theta'?ph.theta:ph.phi)*180/Math.PI} 50 50)`));if($('drive-value'))$('drive-value').style.width=ph.drive*100+'%';
  const telemetry=engine.telemetry?.();updateAutomationRuntime(telemetry);document.querySelectorAll<HTMLElement>('[data-formation-live]').forEach(el=>{const entity=s.entities.find(v=>v.id===el.dataset.formationLive),state=telemetry?.sequences?.find((v:any)=>v.entityId===entity?.id);if(!entity||!state)return;const a=entity.sequence.steps[state.linkIndex],b=entity.sequence.steps[state.nextIndex];el.textContent=state.linkCount>1?`${a?stateLabel({...a,source:stateSource(entity,state.linkIndex)}):'State'} → ${b?stateLabel({...b,source:stateSource(entity,state.nextIndex)}):'State'} · ${Math.round(state.progress*100)}%`:'Single target';});const effectivePaper={...s,field:{...s.field,background:telemetry?.background??s.field.background,palette:telemetry?.palette??s.field.palette,params:{...s.field.params,...telemetry?.params}}};paintLivePaper(effectivePaper);const params=telemetry?.params??evaluateParameters(s,simTime);for(const panel of [$('belt-content'),$('inspector-content'),$('automation-monitor'),$('context-panel').querySelector<HTMLElement>('.context-content')??$('context-panel')])updateToolbeltValues(panel,s,params,telemetry?.config);const monitored=s.automation.find(l=>l.id===monitoredLane),live=monitored?telemetry?.live?.find((v:any)=>v.id===(monitored.nativeId??monitored.id)):undefined;if(monitored){const monitor=$('automation-monitor'),target=automationTarget(s,monitored!.target),value=target?(target.target.startsWith('field.')?params[target.key]:Number(readPath(telemetry?.config,target.path))/target.factor):live?.value;monitor.querySelector('[data-cycle-hand]')?.setAttribute('transform',`rotate(${(live?.phase??0)*360} 32 32)`);monitor.querySelector('.cycle-progress')?.setAttribute('stroke-dasharray',`${(live?.phase??0)*100} 100`);const label=monitor.querySelector('[data-cycle-value]');if(label)label.textContent=Number(value).toFixed(3);const phase=monitor.querySelector('[data-cycle-phase]');if(phase)phase.textContent=!live?'Paused':live.done?'Done':Math.round(live.phase*100)+'%';}document.querySelectorAll<HTMLElement>('[data-source-status]').forEach(el=>el.textContent=telemetry?.sourceStatus?.[el.dataset.sourceStatus!]??'');const contribution=document.querySelector<HTMLElement>('[data-focus-contribution]');if(contribution){const col=telemetry?.config?.composition;contribution.textContent=`Palette → stored entity tint (${Math.round((selectedEntity()?.tintWeight??0)*(col?.entityTintWeight??1)*100)}%) → ${telemetry?.focus?'travelling focus ('+Math.round((col?.orchestration?.focusTintWeight??0)*100)+'%)':'no focus tint'}. Selection does not retune the field.`;}document.querySelectorAll<HTMLElement>('[data-live-target]').forEach(el=>{const target=automationTarget(s,el.dataset.liveTarget!);if(!target)return;const value=target.target.startsWith('field.')?params[target.key]:readPath(telemetry?.config,target.path);el.textContent=typeof value==='number'?(target.target.startsWith('field.')?value:value/target.factor).toFixed(3):target.value.toFixed(3);});document.querySelectorAll<HTMLElement>('[data-live-param]').forEach(e=>e.textContent=(params[e.dataset.liveParam!]??0).toFixed(2));const ent=selectedEntity();if(ent){const nt=engine.telemetry?.()?.sequences.find((v:any)=>v.entityId===ent.id);const seq=nt?{from:nt.linkIndex}:sequenceAt(ent,s,simTime);document.querySelectorAll<HTMLElement>('[data-step-live]').forEach(e=>e.classList.toggle('is-playing',ent.sequence.enabled&&Number(e.dataset.stepLive)===seq.from));}
  const nf=engine.telemetry?.()?.focus;const focus=nf?{entity:{id:nf.entityId}}:engine.capabilities.kind==='production'?null:focusAt(s,simTime);document.querySelectorAll<HTMLElement>('[data-focus-entity]').forEach(e=>e.classList.toggle('is-playing',e.dataset.focusEntity===focus?.entity.id));if(recorder.active){const t=Math.floor(recorder.elapsed);$('record-time').textContent=String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0');$('record-size').textContent=`${captureSettings.width}px · ${fps} render fps`;if(t>=4&&fps>0&&fps<20&&!recordPerformanceWarned){recordPerformanceWarned=true;toast('Recording is below its 30 fps target. Reduce particle allocation or output size for this device.',7000);}}nativeEditorEndpoint?.publish();lastUI=now;
@@ -2106,7 +2243,7 @@ async function startWorkspace(){
  let recovered:SessionState|undefined;
  let showEntry=false;
  if(!window.__JOURNEY__&&!qs.has('journey')&&!qsExpression){try{for(const draft of await readDrafts())sessionExpressions.set(draft.id,draft);const id=localStorage.getItem('oi.field-studies.last'),draft=id?await readDraft(id):undefined;if(draft&&(!initial.updatedAt||draft.id!==initial.id||draft.updatedAt>=initial.updatedAt)){store.document=initialiseSceneSaves(initialiseBelts(draft));store.touch();}recovered=validateSession(JSON.parse(localStorage.getItem(SESSION_KEY)??'null'),store.document);showEntry=!startsInTechne;}catch(e){console.warn('Draft recovery unavailable',e);showEntry=!startsInTechne;}}
- if(recovered&&!qs.has('scene')){sceneIndex=store.document.scenes.findIndex(s=>s.id===recovered!.sceneId);selected=recovered.selected;stepIndex=recovered.stepIndex;sceneElapsed=recovered.sceneElapsed;simTime=recovered.simTime;scenePlaying=recovered.scenePlaying??recovered.playing;journeyPlaying=recovered.journeyPlaying;if(recovered.fieldPaused!==undefined)fieldPaused=recovered.fieldPaused;if(qs.has('still'))fieldPaused=true;camera=recovered.camera;}else applySceneView();
+ if(recovered&&!qs.has('scene')){sceneIndex=store.document.scenes.findIndex(s=>s.id===recovered!.sceneId);selected=recovered.selected;stepIndex=recovered.stepIndex;sceneElapsed=recovered.sceneElapsed;simTime=recovered.simTime;scenePlaying=recovered.scenePlaying??recovered.playing;workingTransport=recovered.workingTransport??STOPPED_TRANSPORT;journeyPlaying=recovered.journeyPlaying;if(recovered.fieldPaused!==undefined)fieldPaused=recovered.fieldPaused;if(qs.has('still'))fieldPaused=true;camera=recovered.camera;}else applySceneView();
  document.body.classList.toggle('oi-host-techne',hostMode==='techne');renderRail();
  if(!qsExpression?.startsWith('expression:'))await nativeWorkspace?.changed(store.document);
  resize();engine.render(frameData(0));if(recovered?.transport)engine.restoreTransport?.(recovered.transport);

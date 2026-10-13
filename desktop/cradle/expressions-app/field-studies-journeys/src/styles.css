@@ -295,3 +295,13 @@ body{
 .journey-compose button{flex:none;height:26px;padding:0 10px;font:inherit;font-size:11px;color:var(--ui-ink,var(--ink));background:var(--ui-wash,transparent);border:1px solid var(--ui-line,var(--line));border-radius:4px;cursor:pointer}
 .journey-compose button:disabled{color:var(--ui-muted,var(--muted));cursor:default}
 @media(max-width:620px){.journey-compose input{height:34px}.journey-compose button{height:34px}}
+
+/* lane-3 E24/E25: the timeline's transport and snap toolbar, and the snap indicator. Tokens only. */
+.timeline-toolbar{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin:0 0 8px;font-family:var(--sans);font-size:12px;color:var(--muted)}
+.timeline-toolbar button{min-height:26px;padding:2px 9px;border:1px solid var(--line);border-radius:5px;background:var(--panel);color:var(--ink);font:inherit;cursor:pointer}
+.timeline-toolbar button:hover{background:var(--wash)}
+.timeline-toolbar button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.timeline-toolbar .snap-toggle{display:inline-flex;align-items:center;gap:5px;margin-left:auto}
+.timeline-toolbar .snap-toggle svg{width:14px;height:14px}
+.timeline-toolbar .snap-toggle[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent)}
+.transport-readout{min-width:84px;font-variant-numeric:tabular-nums;color:var(--ink)}
