@@ -194,7 +194,7 @@ test('the Timeline and Places lenses follow the nudge through their own render p
   assert.match(source, /if\(sharedTime\)followSharedTime\(\(\)=>render\(canvasNode2\(\)\)\);\s*render\(canvasNode2\(\)\);return;/, 'the Timeline follows, re-rendering through canvasNode2');
   assert.match(source, /if\(sharedTime\)followSharedTime\(\(\)=>render\(renderPlaces\(\)\)\);\s*render\(renderPlaces\(\)\);/, 'Places follows, re-rendering through renderPlaces');
   assert.match(source, /offSharedTimeNudges\?\.\(\);\s*offSharedTimeNudges=followSharedTimeNudges\(/, 'one follower at a time');
-  assert.match(source, /destroy\(\)\{offSharedTimeNudges\?\.\(\);offSharedTimeNudges=null;/, 'destroy tears it down');
+  assert.match(source, /destroy\(\)\{flushPlaceLayers\(\);\+\+epoch;offSharedTimeNudges\?\.\(\);offSharedTimeNudges=null;/, 'destroy tears it down, after the pending layers write is flushed');
   assert.match(source, /return trackOwnSharedTimeWrite\(writeSharedSpatialFocusNow\(/, 'a spatial write is the frame’s own write');
   assert.match(source, /if\(draft&&!draft\.captured\)/, 'a draft the person is composing is never overwritten');
 });
