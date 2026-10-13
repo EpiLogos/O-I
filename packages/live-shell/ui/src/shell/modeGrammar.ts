@@ -446,7 +446,7 @@ const techne: SurfModeGrammar = {
     {id: 'techne-palaces', label: 'Palaces', group: 'World', mark: 'palace', kindMark: 'palace', family: 'quaternal-logic', state: 'waiting',
       hint: 'Palaces — M5′ as locations you enter. Waits for the Palace owner — designed empty, named.'},
     {id: 'techne-journeys', label: 'Journeys', group: 'World', mark: 'journey', kindMark: 'journey', family: 'quaternal-logic', state: 'waiting',
-      hint: 'Journeys — the walk stops (place · occasion · artefact · narration). Waits for the journey owner — designed empty, named.'},
+      hint: 'Journeys — the walk stops (place · occasion · artefact · narration), read from the World\'s walks; when no walk is carried the stops hold their places, named.'},
   ],
   centre: {
     session: {label: 'Journey', meaning: 'walk stops — place · occasion · artefact · narration', provenance: 'M3′ Journey'},
