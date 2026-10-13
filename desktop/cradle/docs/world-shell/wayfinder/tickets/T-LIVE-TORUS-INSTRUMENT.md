@@ -42,3 +42,15 @@ repo the feature needs).
   capacity's home exists.
 - Native: play the torus in Live mode; open an Expression with an M1 body and
   hear/see the same instrument state.
+
+## Progress (13 Oct 2026)
+
+- Legs 1–6 landed on `dlw/build`:
+  - Live's centre is the hosted frame's own M1 body (a `live` cut).
+  - The owner's reading reaches a compact rack widget and an expanded Instruments section.
+  - Macros write through the owner's own edits, including while the torus is concealed.
+  - Live opens the instrument muted, with one retry when the GPU field comes up.
+  - The browser reads Presets · Instruments · Chain devices · Samples · Views, and the chain puts the torus first.
+  - The ported generators stay reachable under "Legacy generators".
+- **Presets:** listed and recalled through the kernel's performance basis (`oi.expression-performance-basis/v1`). **Saving waits** on the native performance readings that a basis requires: M2 plan, audio determination, M3 score and replay, prepared body, tuning, force state and form state. No producer serves these yet; they are the M′ physical-music packets (QL-MEF #281 / work packets B, A and P). The kernel also needs to seal a basis it builds, and a name for a preset needs a place on the record (owner's schema call).
+- **Chain:** add, remove and reorder wait on an owner operation for the device lane.
