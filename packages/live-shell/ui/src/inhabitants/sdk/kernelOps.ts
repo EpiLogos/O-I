@@ -53,6 +53,7 @@ export const KERNEL_OPS = [
   'ground',
   'composition_read',
   'system_composition_read',
+  'music_modes_read',
   'config_registry_read',
   'config_capabilities_read',
   'config_reset',

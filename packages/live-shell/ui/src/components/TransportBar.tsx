@@ -6,11 +6,43 @@ import { ModeTransportBar, type ModeTransportReadouts } from '../shell/ModeTrans
 import { ModeModeRail } from '../shell/ModeModeRail'
 import type { PanelRegistration } from '../shell/panels'
 import type { NativeCompositionViewSource } from '../shell/compositionViews'
-import { waitingModeInForce } from '../live/modes'
+import { LIVE_MODE_SEAM, catalogueStatusLine, resolveModeInForce, scalesOnRoot, waitingModeInForce, type ModeInForce } from '../live/modes'
+import { setLiveModeHold, useLiveModeCatalogue, useLiveModeHold } from '../native/liveModeCatalogue'
 
-/** The Live transport's mode in force: no kernel catalogue is served to the shell yet,
- * so the key / root / scale slots wait and name the seam (T-LIVE-MODE-SCALES leg 1). */
-const LIVE_MODE_IN_FORCE = waitingModeInForce()
+const PITCH_NAMES = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B']
+
+/** The Live transport's key / root / scale slots over the owner's ql.music-modes/v1
+ * catalogue (T-LIVE-MODE-SCALES leg 2). Key keeps its established control; Root is
+ * the tonic; Scale lists the catalogued modes on that tonic, grouped by basis
+ * (scalesOnRoot). Its own component so the catalogue read and the held choice are hooks. */
+function LiveModeSlots() {
+  const { reading, refresh } = useLiveModeCatalogue()
+  const hold = useLiveModeHold()
+  const ready = reading.state === 'ready' ? reading.catalogue : null
+  const groups = ready ? scalesOnRoot(ready, hold.root) : []
+  const choice = hold.key && groups.some(group => group.scales.some(scale => scale.key === hold.key)) ? { key: hold.key, root: hold.root } : null
+  const mode: ModeInForce = !ready
+    ? waitingModeInForce(reading.state === 'refused' ? reading.reason : LIVE_MODE_SEAM)
+    : resolveModeInForce(ready.scales, choice)
+  const line = ready ? catalogueStatusLine(ready, mode) : mode.line
+  return <>
+    <NativeControl label="Scale" slot="key">♯</NativeControl>
+    <select aria-label="Root note" data-i={slotDataI(slotMeaning('live', 'root'))} title={`Root — the mode in force's root. ${line}`}
+      disabled={!ready} value={ready ? String(hold.root) : ''} onChange={event => setLiveModeHold({ root: Number(event.target.value) })}>
+      {ready ? PITCH_NAMES.map((name, pitch) => <option key={pitch} value={pitch}>{name}</option>) : <option>—</option>}
+    </select>
+    <select aria-label="Scale mode" data-i={slotDataI(slotMeaning('live', 'scale'))} title={`Scale — the mode in force, one of the kernel's scales. ${line}`}
+      disabled={!ready || groups.length === 0} value={choice?.key ?? ''} onChange={event => setLiveModeHold({ key: event.target.value || null })}>
+      <option value="">{!ready ? '—' : groups.length ? 'none chosen' : 'no catalogued mode on this root'}</option>
+      {groups.map(group => <optgroup key={group.label} label={group.label}>
+        {group.scales.map(scale => <option key={scale.key} value={scale.key}>{scale.label}</option>)}
+      </optgroup>)}
+    </select>
+    <output className="transport-mode-line" aria-label="Mode in force" data-i={slotDataI(slotMeaning('live', 'scale'))} title={line}>{line}</output>
+    <button type="button" className="native-control" aria-label="Re-read the mode catalogue" title="Re-read the owner's mode catalogue through the kernel"
+      disabled={reading.state === 'loading'} onClick={refresh}>↻</button>
+  </>
+}
 
 /** A waiting audio control: the Live meaning (from the grammar) with the
  * standing honesty that the audio engine's transport is read-only until its
@@ -57,7 +89,7 @@ export function TransportBar({ tempoBpm, name, mode, setView, chooseMode, presen
       texts are the data-i strings. The drawn marks are the icon-cut's, the
       same mark per control in every mode. */}
     {mode === 'live' ? <><div className="transport-group transport-tempo"><NativeControl label="Link" slot="link">Link</NativeControl><NativeControl label="Tap tempo" slot="tap">Tap</NativeControl><input className="tempo-field" aria-label="Tempo" data-i={slotDataI(slotMeaning('live', 'tempo'))} title="Tempo — the set's tempo · document read-only until editing owner lands" value={tempoBpm?.toFixed(2) ?? '—'} readOnly /><NativeControl label="Tempo nudge down" slot="tempo">‹</NativeControl><NativeControl label="Tempo nudge up" slot="tempo">›</NativeControl><output className="meter-field" data-i={slotDataI(slotMeaning('live', 'signature'))} title="Signature — the set's time signature · not disclosed by the document">— / —</output><NativeControl label="Metronome" slot="metro"><CutIcon name="metro" size={14} /></NativeControl><select aria-label="Global quantization" data-i={slotDataI(slotMeaning('live', 'quantize'))} disabled title="Quantize — global launch quantization · requires native transport"><option>—</option></select></div>
-    <div className="transport-scale"><NativeControl label="Scale" slot="key">♯</NativeControl><select disabled aria-label="Root note" data-i={slotDataI(slotMeaning('live', 'root'))} title={`Root — the mode in force's root. ${LIVE_MODE_IN_FORCE.line}`}><option>—</option></select><select disabled aria-label="Scale mode" data-i={slotDataI(slotMeaning('live', 'scale'))} title={`Scale — the mode in force, one of the kernel's scales. ${LIVE_MODE_IN_FORCE.line}`}><option>—</option></select></div>
+    <div className="transport-scale"><LiveModeSlots /></div>
     <div className="transport-spacer" />
     <div className="transport-group transport-playback"><NativeControl label="Follow arrangement" slot="follow"><CutIcon name="follow" size={14} /></NativeControl><output className="position-field" data-i={slotDataI(slotMeaning('live', 'position'))} title="Position — bars . beats . sixteenths · native transport position unavailable">— . — . —</output>{([['play', 'play'], ['stop', 'stop'], ['record', 'rec']] as const).map(([slot, mark]) => <NativeControl key={slot} label={slot[0].toUpperCase() + slot.slice(1)} slot={slot} className={'transport-btn transport-' + slot}><CutIcon name={mark} size={15} /></NativeControl>)}<NativeControl label="MIDI overdub" slot="overdub"><CutIcon name="plus" size={13} /></NativeControl><NativeControl label="Automation arm" slot="arm"><CutIcon name="arm" size={14} /></NativeControl><NativeControl label="Re-enable automation" slot="re-enable"><CutIcon name="back" size={14} /></NativeControl><NativeControl label="Session record" slot="capture"><CutIcon name="cap" size={14} /></NativeControl></div>
     <div className="transport-loop transport-group"><output className="position-field" data-i={slotDataI(slotMeaning('live', 'punch-in'))} title="Punch in — record between the in and out points · requires native transport">— . — . —</output><NativeControl label="Punch in" slot="punch-in"><CutIcon name="punchIn" size={14} /></NativeControl><NativeControl label="Loop" slot="loop"><CutIcon name="loop" size={13} /></NativeControl><NativeControl label="Punch out" slot="punch-out"><CutIcon name="punchOut" size={14} /></NativeControl><output className="position-field" data-i={slotDataI(slotMeaning('live', 'loop-length'))} title="Loop length — the loop brace's length · requires native transport">— . — . —</output></div>

@@ -29,3 +29,18 @@ errors retained.
   figure come from one state; pointer/touch/keyboard/MIDI reach the same path.
 - Native: play a chord from the Jankó surface; the torus lights the chord's
   figure and sounds it.
+
+## Progress
+
+- Leg 1 (aa364d2c1): the keyboard is a device in Live's chain (after the
+  torus, before the effects, mounted once a reading is published). It
+  validates `ql.janko-surface/v1` exactly, proves fingering invariance and
+  the one-semitone row step on the owner's real output, and offers the
+  piano layout as the alternative. Pointer, touch and keyboard share one
+  path; a chord is one act; editing text never plays. Each key goes
+  through the `janko` stage command to the owner's own strike.
+- Owner seams: nothing serves `ql music janko window --json` to the shell
+  yet; it follows the kernel `ql_music.rs` pattern. Nothing produces
+  `influence.played_addresses`, so the owner refuses each strike by name
+  (the Studio's own Jankó keys are silent for the same reason). Packet K's
+  placement is not published. MIDI is T-LIVE-MIDI.

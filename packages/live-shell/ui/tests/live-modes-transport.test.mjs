@@ -51,7 +51,7 @@ test('the Live root and scale slots name the mode in force and its kernel seam, 
     const title = selectTitle(markup, label)
     assert.doesNotMatch(title, /not disclosed/, `${label} no longer reads as an undisclosed field`)
     assert.match(title, /Mode in force — waiting:/, `${label} says the mode in force is waiting`)
-    assert.ok(title.includes('the kernel serves no mode catalogue to the shell'), `${label} names the seam`)
+    assert.ok(title.includes('the kernel has not served the ql-mef mode_tonic_landscape catalogue yet'), `${label} names the seam`)
   }
   assert.match(selectTitle(markup, 'Root note'), /^Root — /, 'the root slot keeps its meaning')
   assert.match(selectTitle(markup, 'Scale mode'), /^Scale — /, 'the scale slot keeps its meaning')

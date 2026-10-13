@@ -29,3 +29,26 @@ re-read in `shell/modeGrammar.ts` / `inhabitants/sdk/modes.ts` (13 Oct).
   coercion.
 - Native: set a Ficino planetary scale in the transport; the Jankó surface
   recolours, the roll folds, and played notes land on the scale.
+
+## Progress
+
+- Leg 1 (8c4293b08): `live/modes.ts` resolves the mode in force, a clip's
+  own mode, the pitch mask and fold/highlight rows from a served catalogue
+  only; the transport names the seam while none is served.
+- Leg 2: the owner serves the catalogue. QL-MEF #330 adds
+  `ql music modes --json` (`ql.music-modes/v1`: 168 lens/CF tonic instances
+  over the chromatic and fifths bases, 72 maqām rows in quarter-tone steps and
+  cents, Shem and Ficino named as absent sources). The kernel reads it through
+  one op, `music_modes_read` (`kernel/src/ql_music.rs`, stdin closed, bounded,
+  refused by name: `ql-music.unavailable` / `.unsupported` / `.refused`). The
+  shell parses it strictly (`parseQlMusicModes`) and the transport's Root
+  picks the tonic. Scale lists the catalogued instances on that tonic,
+  grouped by basis, plus the maqāmāt stated from the root. A lens instance
+  is never transposed (its pitches are absolute); the key control keeps its
+  established place.
+- Open: the installed quaternal-logic predates #330, so the live transport
+  refuses by name until it is rebuilt into O:I. The choice is held for the
+  session only, because the Live set document has no owner write for a
+  set-level mode. Ficino and Shem wait on their sources. Next: clip mode
+  through `modeForClip`, the roll's fold and highlight, the note devices,
+  and the Jankó recolour.

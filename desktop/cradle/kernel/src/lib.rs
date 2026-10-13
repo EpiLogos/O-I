@@ -103,6 +103,7 @@ mod native_wire;
 pub mod owner_read;
 pub mod presentation;
 pub mod protocol;
+pub mod ql_music;
 /// Short-horizon read-through cache for the owner readings the UI re-reads
 /// (see the module's own law). Private to the kernel's apply path.
 mod read_cache;
@@ -906,6 +907,11 @@ pub enum KernelOp {
     /// honest availability. Distinct from `CompositionRead`, which reads
     /// the `oi` composition layer's own census.
     SystemCompositionRead,
+    /// The installed quaternal-logic's mode catalogue (`ql music modes --json`,
+    /// `ql.music-modes/v1`), passed through verbatim. An owner read: a refusal
+    /// names what is missing (ql absent, an older ql without the subcommand, a
+    /// reading that is not the schema). See `ql_music.rs`.
+    MusicModesRead,
     /// `fresh` bypasses the cached listing for this one read — the explicit
     /// tree refresh, not an ordinary expansion.
     FileResolve {
@@ -1381,6 +1387,10 @@ pub enum KernelOpResult {
     },
     CompositionReading {
         reading: composition::Reading,
+    },
+    /// The owner's `ql.music-modes/v1` document, verbatim.
+    MusicModesReading {
+        document: serde_json::Value,
     },
     SystemCompositionReading {
         reading: system_composition::Reading,
@@ -2483,6 +2493,7 @@ impl Kernel {
             KernelOp::ConfigDiff
             | KernelOp::CompositionRead { .. }
             | KernelOp::SystemCompositionRead
+            | KernelOp::MusicModesRead
             | KernelOp::ConfigRegistryRead
             | KernelOp::ConfigCapabilitiesRead
             | KernelOp::ConfigResolutionsRead { .. } => self
