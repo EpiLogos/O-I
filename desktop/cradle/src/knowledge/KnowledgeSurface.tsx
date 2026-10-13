@@ -96,7 +96,11 @@ export function KnowledgeSurface({binding,onOpen,nativeContext}: {binding:Surfac
   const [nativeFocusError,setNativeFocusError]=useState<string>();
   // A retained travel already has the person's focus and camera. Receiving
   // the origin again on remount must not overwrite their subsequent travel.
-  const nativeFocusApplied=useRef<string|undefined>(visit.selected&&nativeContext?.subject_ref?JSON.stringify([binding.id,nativeContext.subject_ref,nativeContext.native_owner]):undefined);
+  // Keyed on the native context object itself: a remount carries the same object (the person's travel is kept), while a
+  // fresh hop ("Show in graph" again, even for the same subject) carries a new one and focuses again (lane-1 C3).
+  const nativeFocusApplied=useRef<NativeKnowledgeContext|undefined>(visit.selected&&nativeContext?.subject_ref?nativeContext:undefined);
+  // The ref a hop asked to centre on, applied once the layout holds its position.
+  const pendingCentre=useRef<string|undefined>(undefined);
   const grouped=useMemo(()=>subjects(model),[model]);
   const visibleModel=useMemo(()=>model?projectUnresolvedGraph({...model,nodes:grouped.map(s=>s.node)}):undefined,[model,grouped]);
   const nodes=useMemo(()=>visibleModel?.nodes??[],[visibleModel]);
@@ -110,13 +114,12 @@ export function KnowledgeSurface({binding,onOpen,nativeContext}: {binding:Surfac
   const positions=layout.points;
   useEffect(()=>{
     if(!isGraph||!model||busy||!nativeContext?.subject_ref)return;
-    const identity=JSON.stringify([binding.id,nativeContext.subject_ref,nativeContext.native_owner]);
-    if(nativeFocusApplied.current===identity)return;
+    if(nativeFocusApplied.current===nativeContext)return;
     const focus=resolveNativeGraphFocus(model,nativeContext);
     if(focus.state!=='found'){setNativeFocusError(focus.detail);return;}
-    setNativeFocusError(undefined);nativeFocusApplied.current=identity;setDetailNode(undefined);
+    setNativeFocusError(undefined);nativeFocusApplied.current=nativeContext;setDetailNode(undefined);pendingCentre.current=focus.node.ref;
     setTravel(current=>appendGraphVisit(current,selectGraphVisit(current.visits[current.index],focus.node.ref)));
-  },[isGraph,model,busy,binding.id,nativeContext?.subject_ref,nativeContext?.native_owner]);
+  },[isGraph,model,busy,binding.id,nativeContext]);
   const [techne,setTechne]=useState<{ref:string;pending:boolean;failure?:string}>();
   const openTechne=useCallback(async(node:GraphNode)=>{
     setTechne({ref:node.ref,pending:true});
@@ -214,6 +217,14 @@ export function KnowledgeSurface({binding,onOpen,nativeContext}: {binding:Surfac
   const related=detailNode?model?.edges.filter(e=>e.from_ref===detailNode.ref||e.to_ref===detailNode.ref)??[]:[];
   const commitCamera=(next:{zoom:number;x:number;y:number})=>{const camera=region?unaccommodate(next,anchor,region,extent):next;const current=latestTravel.current;const updated={...current,visits:current.visits.map((v,i)=>i===current.index?{...v,camera}:v)};latestTravel.current=updated;setTravel(updated);persist();};
 
+  // Lane-1 C3: a hop centres the camera on its subject, at the current zoom, once the layout holds the node's position.
+  useEffect(()=>{
+    const ref=pendingCentre.current;if(!ref||visit.selected!==ref)return;
+    const point=positions[nodes.findIndex(node=>node.ref===ref)];if(!point||!Number.isFinite(point.x)||!Number.isFinite(point.y))return;
+    pendingCentre.current=undefined;
+    setCamera(c=>{const centred={zoom:c.zoom,x:-(point.x-400)*c.zoom,y:-(point.y-260)*c.zoom};return unaccommodate(centred,point,{x:0,y:0,...extent},extent);});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[positions,nodes,visit.selected]);
   const fitView=()=>{
     if(!displayedPositions.length)return;
     let left=Infinity,right=-Infinity,top=Infinity,bottom=-Infinity;
