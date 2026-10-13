@@ -15,7 +15,11 @@ import {defaultPlaceView,placeRecordFromViewState,viewStateFromPlaceRecord} from
 import type {PlaceViewRestoreTarget} from '../../vendor/research-canvas/packages/canvas/src/psychogeographic/PsychogeographicMap';
 import {defaultBasemapStack,type BasemapStack} from '../../vendor/research-canvas/packages/canvas/src/psychogeographic/basemapLayers';
 import type {KernelConversion} from './kernelDocumentBridge.js';
-import {techneConstellationRequest,techneTimeWindowRequest,openExternalLink,type TechneSceneReadingRequest,type TechneConstellationRequest} from './kernelExpressions.js';
+import {techneConstellationRequest,techneTimeWindowRequest,naraInstrumentRequest,openExternalLink,type TechneSceneReadingRequest,type TechneConstellationRequest} from './kernelExpressions.js';
+import {daylightFromSky,skyRequestEpoch,type DaylightAnswer,type DaylightHost} from '../../vendor/research-canvas/packages/canvas/src/psychogeographic/terminator';
+import type {NaraIdentityResult} from '../../../src/nara/identity/types';
+import type {SkyRequest} from '../../../src/nara/identity/types';
+import {ladderRungSummaries,referenceFrameLadder} from '../../../src/techne/m0m5/place/world';
 import {nativeInstrumentCanvas,nativeInstrumentTitles,nativeInstrumentPreviews,nativeInstrumentNodeTags,nativeInstrumentSourceRelations,readingInstruments,CANVAS_UNITS,assertInstrumentReadingScope,expressionTextFromNote,type InstrumentCanvas,type NativeRelationDirectionReading} from './researchInstrumentsData.js';
 import {createGestureTransaction,withGesturePreviews,type GestureTransaction} from './canvasGesture.js';
 import {
@@ -235,6 +239,18 @@ function ImageryPanel(props:React.ComponentProps<typeof StreetViewSurface>&{tool
    <StreetViewSurface {...props}/>
   </aside></>;
 }
+/** Lane-4 T27: the day/night reading, asked through the native instrument route the dated sky uses (NaraCurrentSky), in its
+ * identity-free transit form. An open window asks for now (`current`); a bounded one asks for its instant (`historical`).
+ * Nothing here computes the sun: the answer is the reading's own stated subsolar point, or the reading's own reason. */
+async function readPlacesDaylight(instant:string|null):Promise<DaylightAnswer> {
+ const request:SkyRequest={schema:'ql.sky-request/v1',epoch:skyRequestEpoch(instant)+'Z',timezone:'UTC',mode:instant===null?'current':'historical',perspective:'Apparent Geocentric',zodiac:'Tropical',ayanamsha:null,observer:null,max_age_seconds:300,backend_policy:'allow-moshier'};
+ const reply=await naraInstrumentRequest({operation:'identity',request:{operation:'transit',request}}) as NaraIdentityResult;
+ if(reply.error)return {status:'unavailable',reason:reply.error};
+ if(!reply.transit)return {status:'unavailable',reason:'the native sky reading returned no transit reading'};
+ if(!reply.transit.sky)return {status:'unavailable',reason:`the dated sky is unavailable (transit status: ${reply.transit.status})`};
+ return daylightFromSky(reply.transit.sky);
+}
+const PLACES_DAYLIGHT:DaylightHost={read:readPlacesDaylight};
 /** Lane-4 T23: the Places facet's place becomes the shared session's spatial focus through the owner's compare-and-set write
  * (null clears it). Same discipline as writeSharedTimeWindow: the acknowledged reply must still address this source and Scene. */
 async function writeSharedSpatialFocus(basis:NativeTimeWindowBasis,reading:TechneReading,instrument:'timeline'|'place',acknowledged:NativeTimeWindowReply,placeRef:string|null):Promise<NativeTimeWindowReply> {
@@ -1268,7 +1284,7 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
       onFilterChange={next=>{state.placeFilter={...next,window:null};scheduleLayersSave();render(renderPlaces());}}
       editRequest={placeEditRequest} onError={message}/>;
     return <>{createPortal(<div className="research-tool-actions"><button aria-label="Refresh geography" title="Refresh geography" onClick={()=>void load('m4')}><ToolIcon name="history"/></button>{scene&&<button aria-label="Save map view" title="Save map view" onClick={()=>{if(state.place)void host.material(sceneId,{type:'viewport',key:'place',value:placeRecordFromViewState(state.place)}).then(()=>message('View saved'),error=>message(String(error)));}}><ToolIcon name="save"/></button>}{scene&&<button type="button" className="research-places-view-save" aria-label="Save view…" title="Save this place view: camera, layers, basemap and time window" onClick={savePlaceView}>Save view…</button>}{scene&&Object.keys(placeViewsNow).length>0&&<select className="research-places-view-select" aria-label="Saved place views" value="" onChange={event=>{const [op,name]=event.target.value.split('\u0000');if(op==='apply')void applyPlaceView(name);if(op==='remove')removePlaceView(name);event.target.value='';}}><option value="">Views…</option>{Object.keys(placeViewsNow).map(name=><optgroup key={name} label={name}><option value={`apply\u0000${name}`}>Go to</option><option value={`remove\u0000${name}`}>Remove</option></optgroup>)}</select>}{timeControls(()=>render(renderPlaces()))}</div>,host.tools)}
-    <div className="research-places"><PsychogeographicMap inspectorContainer={host.inspector} toolbarContainer={host.placesHome??host.tools} repository={filteredRepository} projectId={data.reading.subject.subject_ref} tileSource={tileSource} offlineOnly={!state.livePlaces!.allowed} policy={state.livePlaces!.policy} basemapStack={state.livePlaces!.stack} onBasemapStackChange={next=>{state.livePlaces!.stack=next;scheduleLayersSave();}} onLiveSourcesAllowedChange={allowed=>{const live=state.livePlaces!;if(allowed)live.policy.optIn('tile_refresh','show live basemap sources the owner allowed in Places');else live.policy.optOut('tile_refresh');live.allowed=allowed;render(renderPlaces());}} placeFacets={nativeReading.spatial} placeAuthoring={placeAuthoring} placeTime={placeTime} onRegisterPlaceViewRestore={restore=>{restoreViewOnMap=restore;}} layerFilter={filter} onLayerFilterChange={next=>{state.placeFilter={...next,window:null};scheduleLayersSave();render(renderPlaces());}} sourceAttributions={pack.manifest.sources.map(source=>`${source.name} (${source.license})`)}
+    <div className="research-places"><PsychogeographicMap inspectorContainer={host.inspector} toolbarContainer={host.placesHome??host.tools} repository={filteredRepository} projectId={data.reading.subject.subject_ref} tileSource={tileSource} offlineOnly={!state.livePlaces!.allowed} policy={state.livePlaces!.policy} basemapStack={state.livePlaces!.stack} onBasemapStackChange={next=>{state.livePlaces!.stack=next;scheduleLayersSave();}} onLiveSourcesAllowedChange={allowed=>{const live=state.livePlaces!;if(allowed)live.policy.optIn('tile_refresh','show live basemap sources the owner allowed in Places');else live.policy.optOut('tile_refresh');live.allowed=allowed;render(renderPlaces());}} placeFacets={nativeReading.spatial} placeAuthoring={placeAuthoring} placeTime={placeTime} daylight={PLACES_DAYLIGHT} ladder={ladderRungSummaries(referenceFrameLadder(nativeReading))} onRegisterPlaceViewRestore={restore=>{restoreViewOnMap=restore;}} layerFilter={filter} onLayerFilterChange={next=>{state.placeFilter={...next,window:null};scheduleLayersSave();render(renderPlaces());}} sourceAttributions={pack.manifest.sources.map(source=>`${source.name} (${source.license})`)}
      initialViewState={state.place} initialSelectedGraphNodeId={openingPlaceSelection(sharedTime?.session??null,nativeReading.spatial??[],state.selectedPlace??null)} initialFocusGraphNodeId={sessionFocus}
      onOpenInTimeline={facet=>{void openInTimeline(facet).catch(error=>message(error instanceof Error?error.message:String(error)));}} onOpenSource={ref=>host.inspectSubject(ref)}
      onViewStateChange={value=>{state.place=value;}} onSelectedGraphNodeIdChange={value=>{state.selectedPlace=value;render(renderPlaces());}}

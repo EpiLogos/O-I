@@ -195,7 +195,8 @@
     "packages/canvas/src/timeline/nesting.ts",
     "packages/canvas/src/timeline/participantSpans.ts",
     "packages/canvas/src/timeline/TimelineNesting.tsx",
-    "packages/canvas/src/timeline/TimelineParticipants.tsx"
+    "packages/canvas/src/timeline/TimelineParticipants.tsx",
+    "packages/canvas/src/psychogeographic/terminator.ts"
   ],
   "patches": {
     "packages/canvas/src/CanvasView.tsx": {
@@ -250,8 +251,8 @@
     },
     "packages/canvas/src/psychogeographic/PsychogeographicMap.tsx": {
       "upstream_sha256": "55b9856e3106912eb7b6f8f6a9fb60e6b40e8852ef8126c0eb82f75a6bc25af7",
-      "adapted_sha256": "f47b9adeb7d1bd1ad14839091b1042313128218230e11813781b3e5525361647",
-      "reason": "Expose rejected owner/context reads with retry; hosted offlineOnly capability omits live-network controls and refuses browser-policy activation. Optional host toolbar portal exposes the same Globe/Flat/Zoom to fit actions above the host HUD without another renderer or state store. Hosted selected-place context uses the existing native inspector with explicit close and selection clear. Hosted location details are explicitly toggled in native HUD; selection remains available when the inspector closes. | lane-4 T1+T2+T10: pitch/bearing viewport, fly-to by facet precision, the precision marker grammar | lane-4 T3/T6/T7/T29: map chrome \u2014 reset, atmosphere, attribution, stillness | lane-4 T8+T9: relation layers + legend, regions as polygons | lane-4 T11-T13: routes, hierarchy edges, provenance | lane-4 T4/T5: basemap stack + terrain | lane-4 T4b copy: the offline stance reads as the owner's switch | lane-4 T17-T19: placemark authoring | lane review fixes 13 Oct | lane-4 T14-T16: time on the globe | lane-4 T20-T21: place views, layer persistence | lane-4 T22-T24: navigation identity"
+      "adapted_sha256": "88924f1bafa0296243219c95bdbdb9db061eabf25c9c56c4c6b738c4c6bcef35",
+      "reason": "Expose rejected owner/context reads with retry; hosted offlineOnly capability omits live-network controls and refuses browser-policy activation. Optional host toolbar portal exposes the same Globe/Flat/Zoom to fit actions above the host HUD without another renderer or state store. Hosted selected-place context uses the existing native inspector with explicit close and selection clear. Hosted location details are explicitly toggled in native HUD; selection remains available when the inspector closes. | lane-4 T1+T2+T10: pitch/bearing viewport, fly-to by facet precision, the precision marker grammar | lane-4 T3/T6/T7/T29: map chrome \u2014 reset, atmosphere, attribution, stillness | lane-4 T8+T9: relation layers + legend, regions as polygons | lane-4 T11-T13: routes, hierarchy edges, provenance | lane-4 T4/T5: basemap stack + terrain | lane-4 T4b copy: the offline stance reads as the owner's switch | lane-4 T17-T19: placemark authoring | lane review fixes 13 Oct | lane-4 T14-T16: time on the globe | lane-4 T20-T21: place views, layer persistence | lane-4 T22-T24: navigation identity | lane-4 T27-T28: terminator, ladder"
     },
     "packages/canvas/src/streetview/StreetViewSurface.tsx": {
       "upstream_sha256": "0c77fb9bfb11a49f5683ddc38c5ee6f152a5e08c859a21c712064f8dd077a7d2",
@@ -364,8 +365,8 @@
       "reason": "lane-4 T3/T6/T7/T29: map chrome \u2014 reset, atmosphere, attribution, stillness | lane-4 T11-T13: routes, hierarchy edges, provenance"
     },
     "packages/canvas/src/psychogeographic/renderer.ts": {
-      "adapted_sha256": "3498c2ec0057b5497fcf30fb161462352e4d8c2c7df9130dfc4cf006ace63fdc",
-      "reason": "lane-4 T1+T2+T10: pitch/bearing viewport, fly-to by facet precision, the precision marker grammar | lane-4 T3/T6/T7/T29: map chrome \u2014 reset, atmosphere, attribution, stillness | lane-4 T8+T9: relation layers + legend, regions as polygons | lane-4 T11-T13: routes, hierarchy edges, provenance | lane-4 T4/T5: basemap stack + terrain | lane-4 T17-T19: placemark authoring | lane review fixes 13 Oct"
+      "adapted_sha256": "1718da47e3cef5dedde6633669b779415429915d43ae6bb7889094c2729a6bfb",
+      "reason": "lane-4 T1+T2+T10: pitch/bearing viewport, fly-to by facet precision, the precision marker grammar | lane-4 T3/T6/T7/T29: map chrome \u2014 reset, atmosphere, attribution, stillness | lane-4 T8+T9: relation layers + legend, regions as polygons | lane-4 T11-T13: routes, hierarchy edges, provenance | lane-4 T4/T5: basemap stack + terrain | lane-4 T17-T19: placemark authoring | lane review fixes 13 Oct | lane-4 T27-T28: terminator, ladder"
     },
     "packages/schema/src/time.ts": {
       "upstream_sha256": "9107194ab14fcfaeca85499e7a88f71c06661cad824ed4ec89e28c87d7f9a9ea",
