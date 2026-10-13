@@ -76,3 +76,11 @@ test('the importer refuses every connection when any end lacks a native occurren
  assert.match(importerText,/missing\s*=|\.some\(|\.filter\(/,'the ends are checked before the act');
  assert.match(importerText,/an end has no native occurrence/,'the refusal names the missing end');
 });
+
+test('B2: a drag-made connection takes the same one-write path as an import, and refuses as the single connect act does', () => {
+ const drag=researchSource.slice(researchSource.indexOf('onConnectNodes='),researchSource.indexOf('onReconnectEdge='));
+ assert.match(drag,/host\.connectMany\(sceneId,\[/, 'the drag connects through connectMany when the host offers it');
+ assert.ok(drag.indexOf('host.connectMany')<drag.indexOf('host.connect!('), 'the per-call connect is only the fallback');
+ const many=appSource.slice(appSource.indexOf('connectMany:async'),appSource.indexOf('connectMany:async')+1200);
+ assert.match(many,/if\(!input\.label\?\.trim\(\)\)\{assertConnectionMembers\(/, 'an unlabelled (drag) input refuses through assertConnectionMembers');
+});
