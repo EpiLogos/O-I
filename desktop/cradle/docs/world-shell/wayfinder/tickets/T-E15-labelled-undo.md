@@ -52,3 +52,24 @@ compensation (today `connectionEdit` admits only bind/remove/body/trigger/
 reuse kinds, `nativeWorking.ts:51,94`); `markKernelSaved` after each save.
 Also: `hostEditor.ts:387,413` pass their own labels (selection sync is
 mislabelled "Apply native edit").
+
+## Resolution — E15c (the kernel half)
+
+**Landed (13 Oct 2026; builder haiku + a lead fix).** A Save records a
+checkpoint on the step it began from (`nativeWorkspace.commitRecorded` /
+`nativeWorking` return the submitted changes and the kernel documents
+either side; normal commits submit exactly what they did); undo past a
+checkpoint submits exactly one compensating edit at the saved revision
+(digest equals the pre-save document); redo replays the forward edit once;
+a revision conflict refuses as `revision_conflict` with the owner document,
+local history and pending record untouched. Lead fix: `acknowledge()` sets
+the kernel depth to the stack height (the adopted document is the kernel's)
+so redo after a first Save reaches the kernel. Scripted: kernel-undo 5 new,
+undo suites 58/58, field-studies 405 pass / 0 fail; tsc 0. Unverified: the
+app wiring in the native app; the real owner's conflict reply shape.
+
+**E15d (claimable, app.ts + hostEditor.ts):** the host commit
+(`app.ts:1278`), flush (`:1365`) and research commit (`:1410`) record
+checkpoints through `commitRecorded`; `hostEditor.ts:193` types `change`
+with a label and passes its own at `:387` / `:413` (selection sync is not
+"Apply native edit").

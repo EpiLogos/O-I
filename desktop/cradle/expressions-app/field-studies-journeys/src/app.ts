@@ -809,8 +809,8 @@ case 'timeline-track':timelineTrack=!timelineTrack;renderAll();break;
  case 'lane-up':case 'lane-down':{const index=s.automation.findIndex(l=>l.id===el.dataset.id),next=index+(name==='lane-up'?-1:1);if(index>=0&&next>=0&&next<s.automation.length)changed(()=>{[s.automation[index],s.automation[next]]=[s.automation[next],s.automation[index]];},true,'Reorder automation lanes');break;}
  case 'step-earlier':case 'step-later':{const next=stepIndex+(name==='step-earlier'?-1:1);if(e&&next>=0&&next<e.sequence.steps.length&&!e.locked)changed(()=>{[e.sequence.steps[stepIndex],e.sequence.steps[next]]=[e.sequence.steps[next],e.sequence.steps[stepIndex]];stepIndex=next;syncHeldState(e,stepIndex);},true,'Reorder links');break;}
  case 'duplicate-step':if(e&&!e.locked&&e.sequence.steps.length<32)changed(()=>{const k=clone(e.sequence.steps[stepIndex]);k.id=uid('step');if(k.layers)k.layers=k.layers.map(l=>({...l,id:uid('layer')}));e.sequence.steps.splice(++stepIndex,0,k);syncHeldState(e,stepIndex);},true,'Duplicate link');break;
- case 'undo':{const label=store.undoLabel();if(store.undo()){markSaved();renderAll();if(researchInstruments?.active()){await commitResearch();await researchInstruments.refresh();}toast(`${historyToast('undo',label)} Simulation time has not been rewound.`,2200);}break;}
- case 'redo':{const label=store.redoLabel();if(store.redo()){markSaved();renderAll();if(researchInstruments?.active()){await commitResearch();await researchInstruments.refresh();}toast(historyToast('redo',label),2200);}break;}
+ case 'undo':{await stepHistory('undo');break;}
+ case 'redo':{await stepHistory('redo');break;}
  case 'save-browser':deletedLibraryIds.delete(store.document.id);saveToLibrary(store.document);if(libraryOpen)renderLibrary();toast('Saved in this browser.');break;
  case 'export-json':download(new Blob([JSON.stringify(store.document,null,2)],{type:'application/json'}),slug(store.document.name)+'.expression.json');toast('Expression configuration exported.');break;
  case 'export-native':download(new Blob([JSON.stringify(nativeExport(s),null,2)],{type:'application/json'}),slug(s.name)+'.native-scene.json');break;
@@ -1503,8 +1503,49 @@ if(window.__START_PRESENTATION__||qs.has('present')){presenting=true;fieldPaused
 // composition to its native Expression (the same owner operation the former
 // native panel used); otherwise it keeps the draft in this browser.
 async function saveNative(){
- if(kernelExpressionsAvailable()&&nativeWorkspace){if(propertyTake)finishPropertyTake();const ok=await nativeWorkspace.commit();if(ok){closeEntryGate();toast('Saved.');}return;}
+ if(kernelExpressionsAvailable()&&nativeWorkspace){
+  if(propertyTake)finishPropertyTake();
+  // The Save is recorded on the undo step it began from. That step is read in the
+  // same breath as the snapshot the workspace submits, so both describe one document.
+  const anchor=store.kernelSaveAnchor(),saved=await nativeWorkspace.commitRecorded();
+  if(saved){
+   const recorded=store.attachKernelCheckpoint(anchor,saved.checkpoint);
+   closeEntryGate();
+   toast(recorded?'Saved.':'Saved. Undo cannot reverse this Save on the native owner, because the step it began from has moved.',recorded?undefined:7000);
+  }
+  return;
+ }
  deletedLibraryIds.delete(store.document.id);saveToLibrary(store.document);if(libraryOpen)renderLibrary();toast('Saved in this browser.');
+}
+/** One Undo or Redo step. A step that crosses a recorded Save replays that Save's
+ * kernel edit through its native owner first, and the local step follows only when
+ * the owner acknowledges it. A refusal is named by the workspace; the history stays
+ * as it was. Steps the kernel never held are undone locally, as before. */
+let historyStepping=false;
+async function stepHistory(direction:'undo'|'redo'):Promise<void>{
+ if(historyStepping)return;
+ if(store.transactionOpen)store.finish();
+ const plan=direction==='undo'?store.undoPlan():store.redoPlan();
+ if(!plan)return;
+ const label=plan.label,kernel=plan.kernel,entry=direction==='undo'?store.undoStack.at(-1):store.redoStack.at(-1);
+ if(kernel&&'refused' in kernel){toast(`Cannot ${direction} ${label}: ${kernel.reason} Nothing was changed.`,7000);return;}
+ let stepped:boolean;
+ if(kernel&&'changes' in kernel&&kernel.changes.length){
+  const expected=store.checkpointAt(direction);
+  if(!expected||!nativeWorkspace){toast(`Cannot ${direction} ${label}: its recorded native state is not held. Nothing was changed.`,7000);return;}
+  historyStepping=true;
+  try{
+   if(!await nativeWorkspace.replayCheckpoint(kernel.changes,direction==='undo'?expected.before:expected.after))return;
+   if((direction==='undo'?store.undoStack.at(-1):store.redoStack.at(-1))!==entry){toast('The history changed while the native owner answered. The saved edit was reversed there; save to reconcile this draft.',7000);return;}
+   stepped=direction==='undo'?store.undoAccepted():store.redo({compensated:true});
+  }finally{historyStepping=false;}
+ }else{
+  stepped=direction==='undo'?(kernel?store.undoAccepted():store.undo()):store.redo(kernel?{compensated:true}:undefined);
+ }
+ if(!stepped)return;
+ markSaved();renderAll();
+ if(researchInstruments?.active()){await commitResearch();await researchInstruments.refresh();}
+ toast(direction==='undo'?`${historyToast('undo',label)} Simulation time has not been rewound.`:historyToast('redo',label),2200);
 }
 let nativeState:import('./nativeWorkspace.js').NativeStatus|null=null;
 function showNativeStatus(state:import('./nativeWorkspace.js').NativeStatus){

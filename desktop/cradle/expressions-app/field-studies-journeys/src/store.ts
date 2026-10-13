@@ -1,11 +1,19 @@
 import {Journey,clone,validateJourney} from './model.js';
-import type {KernelChange,KernelCompensation} from './kernelExpressions.js';
+import {invertEdit,type KernelChange,type KernelCompensation} from './kernelExpressions.js';
 export const STORAGE_KEY='oi.field-studies.journey-library.v1';
+/** E15c: one Save is one kernel checkpoint. `changes` is the kernel edit the Save
+ * acknowledged; `before` and `after` are the kernel documents either side of it. */
+export interface KernelCheckpoint {changes:KernelChange[];before:unknown;after:unknown}
+/** Where a Save begins: the newest step it covers, the undo depth at that moment,
+ * and the kernel depth before the Save. Read in the same step as the snapshot it submits. */
+export interface KernelSaveAnchor {entry:HistoryEntry|null;length:number;base:number|null}
+/** A compensation that carries its Save's documents and the kernel depth it returns to. */
+type Checkpointed=KernelCompensation&{checkpoint?:{before:unknown;after:unknown;base:number|null}};
 /** One labelled undo step, in the one store. `snapshot` is the document the step
  * returns to. `changes` and `inverse` are the kernel edit the step produced and
  * its compensation (invertEdit), when the caller recorded them with
- * attachKernelEdit; a step without them is undone locally only. */
-export interface HistoryEntry {label:string;snapshot:Journey;changes?:KernelChange[];inverse?:KernelCompensation;gesture?:string}
+ * attachKernelEdit or attachKernelCheckpoint; a step without them is undone locally only. */
+export interface HistoryEntry {label:string;snapshot:Journey;changes?:KernelChange[];inverse?:Checkpointed;gesture?:string}
 /** What the next undo or redo asks of the kernel: nothing (local only), one
  * kernel edit to submit first, or a refusal by name. */
 export interface HistoryPlan {label:string;kernel:null|{changes:KernelChange[]}|{refused:string;reason:string}}
@@ -92,6 +100,37 @@ export class DocumentStore {
  }
  /** The kernel now holds the document at the head of the stack (after a save). */
  markKernelSaved(){if(this.transactionOpen)throw new Error('Finish the current gesture before recording a kernel save.');this.kernelDepth=this.undoStack.length;}
+ /** E15c: where the Save about to be submitted begins. Read it in the same step as the snapshot the Save submits. */
+ kernelSaveAnchor():KernelSaveAnchor{
+  return {entry:this.transactionOpen?null:(this.undoStack.at(-1)??null),length:this.undoStack.length,base:this.kernelDepth};
+ }
+ /** E15c: record an acknowledged Save as one checkpoint on the step it began at. The
+  * kernel now holds that step's depth. Steps the Save covers carry no kernel edit of
+  * their own: the anchor's edit is the Save's, so they are undone and redone locally.
+  * Returns false, and records nothing, when the anchor is no longer where the Save began. */
+ attachKernelCheckpoint(anchor:KernelSaveAnchor,checkpoint:KernelCheckpoint):boolean{
+  if(!anchor.entry||this.undoStack[anchor.length-1]!==anchor.entry)return false;
+  const inverse:Checkpointed=Object.assign(invertEdit(checkpoint.before,checkpoint.after),{checkpoint:{before:clone(checkpoint.before),after:clone(checkpoint.after),base:anchor.base}});
+  anchor.entry.changes=clone(checkpoint.changes);anchor.entry.inverse=inverse;
+  if(anchor.base!==null)for(let index=anchor.base;index<anchor.length-1;index++){const covered=this.undoStack[index];covered.changes=[];covered.inverse={changes:[]};}
+  this.kernelDepth=anchor.length;
+  return true;
+ }
+ /** E15c: undo one step whose kernel compensation was accepted. A checkpoint compensates its whole Save, so the kernel returns to the depth the Save began at. */
+ undoAccepted():boolean{
+  this.finish();
+  const top=this.undoStack.at(-1);
+  if(!this.undo({compensated:true}))return false;
+  const checkpoint=top?.inverse?.checkpoint;
+  if(checkpoint)this.kernelDepth=checkpoint.base===null?null:Math.min(checkpoint.base,this.undoStack.length);
+  return true;
+ }
+ /** E15c: the kernel documents the next undo (`before`) or redo (`after`) of a checkpointed step moves between; null when the step is not a checkpoint. */
+ checkpointAt(direction:'undo'|'redo'):{before:unknown;after:unknown}|null{
+  const entry=direction==='undo'?this.undoStack.at(-1):this.redoStack.at(-1);
+  const checkpoint=entry?.inverse?.checkpoint;
+  return checkpoint?{before:checkpoint.before,after:checkpoint.after}:null;
+ }
  /** Undo one labelled step. Pass compensated:true only after the kernel edit from
   * undoPlan() was accepted; a plain undo across a kernel save leaves the kernel to
   * the next diff save. */
@@ -132,8 +171,9 @@ export class DocumentStore {
   if(this.transactionOpen)throw new Error('Uncommitted authoring is retained; finish the gesture before adopting native state.');
   if(doc.id!==this.document.id)throw new Error('The acknowledgement belongs to another document.');
   this.document=clone(doc);if(history==='retire'){this.undoStack=[];this.redoStack=[];}this.touch();
-  // The kernel's own projection is adopted, so its relation to earlier steps is unknown until the next save.
-  this.kernelDepth=null;
+  // The kernel's own projection is adopted: the document now IS the kernel's, so the kernel
+  // reflects every step on the stack (lead fix, E15c OPEN 2 — redo after the first Save reaches the kernel).
+  this.kernelDepth=this.undoStack.length;
  }
  replace(doc:Journey){this.change('Replace document',()=>{this.document=clone(doc);});}
 }

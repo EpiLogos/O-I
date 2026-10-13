@@ -4,8 +4,8 @@ import type {BlueprintIntent} from './nativeBlueprint.js';
  * recover and file-save through the owner. It has no panel of its own; its
  * standing reaches the app's Save control and Studio footer via host.status. */
 import {clone,type Journey} from './model.js';
-import {NativeWorking,type NativeFile,type WorkingSnapshot} from './nativeWorking.js';
-import {kernelExpressionsAvailable,listKernelExpressions,readKernelExpression,nativeExpressionRequest,nativeFileRequest} from './kernelExpressions.js';
+import {NativeWorking,type NativeCheckpoint,type NativeFile,type WorkingSnapshot} from './nativeWorking.js';
+import {kernelExpressionsAvailable,listKernelExpressions,readKernelExpression,nativeExpressionRequest,nativeFileRequest,type KernelChange} from './kernelExpressions.js';
 import {readWorkingCheckpoint,readWorkingDraft,readBoundWorkingDraft,acceptWorkingRecoveryBasis,writeWorkingCheckpoint,writeDraft} from './recovery.js';
 import {hostedRecovery,hostedScope,recoveryBinding,selectedRecovery,draftRecoveryAddress,selectNativeRecovery} from './nativeRecovery.js';
 import {kernelDocumentToJourney,type KernelConversion,type KernelExpressionDocument} from './kernelDocumentBridge.js';
@@ -48,6 +48,8 @@ export interface NativeWorkspaceHost {
  /** A followed Expression was adopted; `readThrough` when an act performs it. */
  followed?:(reference:string,readThrough:boolean)=>void;
 }
+/** E15c: a Save that the owner acknowledged, with its checkpoint for the one undo history. */
+export interface NativeSave {checkpoint:NativeCheckpoint}
 export interface NativeStatus {
  text:string;failed:boolean;busy:boolean;
  identity:{ref:string;title:string;revision:number}|null;
@@ -280,6 +282,35 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
   }
   status(result);
  });
+ /** The Save, with what the owner acknowledged. It reads the snapshot at the call:
+  * a caller that also reads its undo anchor must do so in the same step. Returns
+  * false when the Save was refused or failed (named in the status and toast). */
+ const commitRecorded=async():Promise<false|NativeSave>=>{
+  const snapshot=clone(host.snapshot()),version=host.version();
+  const outcome:{saved?:NativeSave}={};
+  const ok=await mutate(async()=>{
+   await retainSubmitted(snapshot);
+   let destination=work.state?.file;
+   // Following a native tree entry can have no local file checkpoint. The
+   // owner still knows its file; keep Save on that exact existing binding.
+   const reference=work.state?.view?.document.expression_ref;
+   if(!destination&&reference){
+    const inspected=await nativeExpressionRequest({operation:'inspect',expression_ref:reference}) as {document?:KernelExpressionDocument;file?:Omit<NativeFile,'expression_ref'>|null};
+    if(inspected.document?.expression_ref!==reference)throw Error('The owner returned a different Expression before saving.');
+    if(inspected.file)destination={...inspected.file,expression_ref:reference};
+   }
+   if(destination){
+    const {file,checkpoint}=await work.saveFileRecorded(snapshot,{location:destination.location,revision:destination.revision});
+    outcome.saved={checkpoint};
+    status(`Saved and read back ${file.location.path}.${host.version()!==version?' Newer local edits remain a separate draft.':''}`);
+   }else{
+    const {document:doc,checkpoint}=await work.commitRecorded(snapshot);
+    outcome.saved={checkpoint};
+    status(`Saved · native revision ${doc.revision} — ${doc.scenes.length} scene${doc.scenes.length===1?'':'s'}, ${Object.keys(doc.entities).length} member${Object.keys(doc.entities).length===1?'':'s'} in the native Expression.${host.version()!==version?' Newer local edits remain a separate draft.':''}`);
+   }
+  });
+  return ok&&outcome.saved?outcome.saved:false;
+ };
  return {
   /** Retry the last native open that failed (e.g. a revision conflict). */
   retryOpen:()=>opens.retry(),
@@ -429,30 +460,18 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
   // to the native Expression through the owner (kernel scene_create/edit with
   // the expected-revision basis check; a stale reply is refused, never
   // retried). This is the native scene act M3′ commits to, not a browser save.
-  commit:async()=>{
-   // A focus write may still be acknowledging the click that began editing.
-   // Keep this submitted draft and wait for that owner operation; busy is not
-   // a failed save. Navigation still invalidates work addressed to the old doc.
-   const snapshot=clone(host.snapshot()),version=host.version();
-   return mutate(async()=>{
-    await retainSubmitted(snapshot);
-    let destination=work.state?.file;
-    // Following a native tree entry can have no local file checkpoint. The
-    // owner still knows its file; keep Save on that exact existing binding.
-    const reference=work.state?.view?.document.expression_ref;
-    if(!destination&&reference){
-     const inspected=await nativeExpressionRequest({operation:'inspect',expression_ref:reference}) as {document?:KernelExpressionDocument;file?:Omit<NativeFile,'expression_ref'>|null};
-     if(inspected.document?.expression_ref!==reference)throw Error('The owner returned a different Expression before saving.');
-     if(inspected.file)destination={...inspected.file,expression_ref:reference};
-    }
-    if(destination){
-     const file=await work.saveFile(snapshot,{location:destination.location,revision:destination.revision});
-     status(`Saved and read back ${file.location.path}.${host.version()!==version?' Newer local edits remain a separate draft.':''}`);
-    }else{
-     const doc=await work.commit(snapshot);
-     status(`Saved · native revision ${doc.revision} — ${doc.scenes.length} scene${doc.scenes.length===1?'':'s'}, ${Object.keys(doc.entities).length} member${Object.keys(doc.entities).length===1?'':'s'} in the native Expression.${host.version()!==version?' Newer local edits remain a separate draft.':''}`);
-    }
-   });
-  },
+  // A focus write may still be acknowledging the click that began editing.
+  // Keep this submitted draft and wait for that owner operation; busy is not
+  // a failed save. Navigation still invalidates work addressed to the old doc.
+  commit:async()=>(await commitRecorded())!==false,
+  commitRecorded,
+  /** E15c: replay one recorded Save's kernel edit — an Undo's compensation
+   * (`expected` = the document before the Save) or a Redo's forward edit
+   * (`expected` = the document after it) — at the acknowledged basis. A refusal,
+   * such as a revision conflict, is named in the status and toast; it returns false. */
+  replayCheckpoint:(changes:KernelChange[],expected:unknown)=>mutate(async()=>{
+   await work.replayKernelEdit(changes,expected as KernelExpressionDocument);
+   status('Recorded Save acknowledged by its native owner.');
+  }),
  };
 }
