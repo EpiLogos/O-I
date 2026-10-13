@@ -57,6 +57,17 @@ import {
   type MapViewState,
   type PlaceRenderMarker,
 } from "./renderer";
+import {
+  moveProposal,
+  placeMenuItems,
+  prefillFromClick,
+  proposalSummary,
+  type PlaceAuthoringHost,
+  type PlaceContextEvent,
+  type PlaceCoordinate,
+  type PlaceMenuItem,
+  type PlaceMoveProposal,
+} from "./placeAuthoring";
 
 const NO_FACETS: readonly TechnePlaceFacet[] = [];
 
@@ -115,6 +126,8 @@ export interface PsychogeographicMapProps {
   onBasemapStackChange?: (next: BasemapStack) => void;
   /** The owner's native switch for live sources. The host passes `offlineOnly` from the same choice. Absent, the switch is not drawn. */
   onLiveSourcesAllowedChange?: (allowed: boolean) => void;
+  /** Lane-4 T17/T19: the owner's authoring route for this reading. Absent: no menu, and a drag proposes nothing. */
+  placeAuthoring?: PlaceAuthoringHost;
 }
 
 /**
@@ -147,12 +160,19 @@ export function PsychogeographicMap({
   basemapStack,
   onBasemapStackChange,
   onLiveSourcesAllowedChange,
+  placeAuthoring,
 }: PsychogeographicMapProps): JSX.Element {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mountedRenderer = useRef<MapSurfaceRenderer | null>(null);
   const placeClickRef = useRef<(graphNodeId: string) => void>(() => {});
   const placeDoubleClickRef = useRef<(graphNodeId: string) => void>(() => {});
   const laneClickRef = useRef<(laneId: string) => void>(() => {});
+  // Lane-4 T17/T19: the renderer's menu and drag events reach the current closures through these.
+  const placeContextRef = useRef<(event: PlaceContextEvent) => void>(() => {});
+  const placeDragRef = useRef<(graphNodeId: string, from: PlaceCoordinate, to: PlaceCoordinate) => void>(() => {});
+  const placeAuthoringRef = useRef<PlaceAuthoringHost | undefined>(placeAuthoring);
+  placeAuthoringRef.current = placeAuthoring;
+  const placeMenuRef = useRef<HTMLDivElement | null>(null);
   const initialViewStateRef = useRef<MapViewState | undefined>(initialViewState);
   const onViewStateChangeRef = useRef(onViewStateChange);
   const onSelectedGraphNodeIdChangeRef = useRef(onSelectedGraphNodeIdChange);
@@ -202,6 +222,10 @@ export function PsychogeographicMap({
   const [elevation, setElevation] = useState<number | null>(null);
   const [activeLaneYear, setActiveLaneYear] = useState<number | null>(null);
   const [selectedLaneId, setSelectedLaneId] = useState<string | null>(null);
+  // Lane-4 T17: the open menu, at the point it was asked for. Lane-4 T19: the one pending proposal.
+  const [placeMenu, setPlaceMenu] = useState<{ graphNodeId: string | null; at: PlaceCoordinate; x: number; y: number } | null>(null);
+  const [pendingMove, setPendingMove] = useState<PlaceMoveProposal | null>(null);
+  const [authoringNotice, setAuthoringNotice] = useState<string | null>(null);
 
   const tileRefreshOptedIn = !offlineOnly && !!policy?.isOptedIn("tile_refresh");
   // Lane-4 T4/T5: the plan the renderer holds for this stack under the live gate. A live row draws only through it.
@@ -422,6 +446,108 @@ export function PsychogeographicMap({
   }, [lanes]);
   laneClickRef.current = selectLane;
 
+  // Lane-4 T17: the menu opens only where the host offers an authoring surface. It asks the
+  // host for the owner's route and never writes a coordinate itself.
+  const openPlaceMenu = (event: PlaceContextEvent) => {
+    if (!placeAuthoringRef.current) return;
+    const graphNodeId = event.graphNodeId !== null && nodes.some((node) => node.graphNodeId === event.graphNodeId)
+      ? event.graphNodeId
+      : null;
+    setAuthoringNotice(null);
+    setPlaceMenu({ graphNodeId, at: { latitude: event.latitude, longitude: event.longitude }, x: event.x, y: event.y });
+  };
+  placeContextRef.current = openPlaceMenu;
+
+  // Lane-4 T19: a drop is a proposal, never a write. The precision is the reading's own, and a
+  // move without a disclosed source basis is refused here, before any route is offered.
+  const proposeMove = (graphNodeId: string, from: PlaceCoordinate, to: PlaceCoordinate) => {
+    const returnMarker = () => mountedRenderer.current?.returnPlaceMarker?.(graphNodeId);
+    const host = placeAuthoringRef.current;
+    if (!host) {
+      returnMarker();
+      setAuthoringNotice("This map has no native authoring route, so the move was not proposed.");
+      return;
+    }
+    if (!host.canAuthor) {
+      returnMarker();
+      setAuthoringNotice(host.unavailableReason ?? "This reading has no native authoring route, so the move was not proposed.");
+      return;
+    }
+    const node = nodes.find((candidate) => candidate.graphNodeId === graphNodeId);
+    const facet = placeFacets.find((candidate) => candidate.place_ref === graphNodeId);
+    const result = moveProposal({
+      graphNodeId,
+      title: node?.title ?? graphNodeId,
+      precision: node?.place.coordinate.precision ?? "",
+      geometry: facet?.geometry?.type === "polygon" ? "polygon" : "point",
+      from,
+      to,
+      source_ref: facet?.source_ref,
+    });
+    if (!result.ok) {
+      returnMarker();
+      setAuthoringNotice(result.reason);
+      return;
+    }
+    setAuthoringNotice(null);
+    setPendingMove(result.proposal);
+  };
+  placeDragRef.current = proposeMove;
+
+  const runPlaceMenuItem = (item: PlaceMenuItem) => {
+    const menu = placeMenu;
+    setPlaceMenu(null);
+    const host = placeAuthoringRef.current;
+    if (!menu || !host || !item.enabled) return;
+    if (item.action === "add") {
+      const prefill = prefillFromClick(menu.at);
+      if (!prefill.ok) {
+        setAuthoringNotice(prefill.reason);
+        return;
+      }
+      host.onAddPlace(prefill);
+      return;
+    }
+    if (menu.graphNodeId) host.onEditPlace(menu.graphNodeId);
+  };
+
+  // Apply hands the proposal to the owner's route. The marker goes back to the reading now: the
+  // map does not keep a position the owner has not saved.
+  const applyMove = () => {
+    const proposal = pendingMove;
+    if (!proposal) return;
+    mountedRenderer.current?.returnPlaceMarker?.(proposal.graphNodeId);
+    setPendingMove(null);
+    const host = placeAuthoringRef.current;
+    if (!host) return;
+    void Promise.resolve()
+      .then(() => host.onProposeMove(proposal))
+      .catch((cause: unknown) => setAuthoringNotice(messageOf(cause)));
+  };
+
+  const cancelMove = () => {
+    if (pendingMove) mountedRenderer.current?.returnPlaceMarker?.(pendingMove.graphNodeId);
+    setPendingMove(null);
+  };
+
+  // The menu closes on Escape and on any press outside it; a press on the map still reaches the map.
+  useEffect(() => {
+    if (!placeMenu) return;
+    const close = (event: Event) => {
+      if (event instanceof KeyboardEvent) {
+        if (event.key === "Escape") setPlaceMenu(null);
+        return;
+      }
+      if (!placeMenuRef.current?.contains(event.target as Node | null)) setPlaceMenu(null);
+    };
+    window.addEventListener("keydown", close);
+    window.addEventListener("pointerdown", close, true);
+    return () => {
+      window.removeEventListener("keydown", close);
+      window.removeEventListener("pointerdown", close, true);
+    };
+  }, [placeMenu]);
+
   useEffect(() => {
     let cancelled = false;
     if (rendererProp) {
@@ -452,6 +578,8 @@ export function PsychogeographicMap({
         renderer.setPlaceClickHandler?.((graphNodeId) => placeClickRef.current(graphNodeId));
         renderer.setPlaceDoubleClickHandler?.((graphNodeId) => placeDoubleClickRef.current(graphNodeId));
         renderer.setLaneClickHandler?.((laneId) => laneClickRef.current(laneId));
+        renderer.setPlaceContextHandler?.((event) => placeContextRef.current(event));
+        renderer.setPlaceDragHandler?.((graphNodeId, from, to) => placeDragRef.current(graphNodeId, from, to));
         renderer.onViewChange?.((nextViewState) => {
           if (cancelled) return;
           setViewState(nextViewState);
@@ -767,6 +895,114 @@ export function PsychogeographicMap({
           }}
         >
           {flightNotice}
+        </div>
+      )}
+
+      {placeMenu && placeAuthoring && (() => {
+        const items = placeMenuItems({ graphNodeId: placeMenu.graphNodeId, at: placeMenu.at }, placeAuthoring);
+        const blocked = items.find((item) => !item.enabled && item.reason)?.reason ?? null;
+        return (
+          <div
+            ref={placeMenuRef}
+            role="menu"
+            aria-label="Place actions"
+            data-testid="places-context-menu"
+            style={{
+              position: "absolute",
+              left: placeMenu.x,
+              top: placeMenu.y,
+              zIndex: 12,
+              minWidth: 180,
+              maxWidth: 260,
+              padding: 4,
+              borderRadius: 9,
+              background: "rgba(9,13,19,.94)",
+              border: "1px solid var(--ob-line-3, #3a4e64)",
+              boxShadow: "0 8px 24px rgba(0,0,0,.5)",
+              fontSize: 12,
+            }}
+          >
+            {items.map((item) => (
+              <button
+                key={item.action}
+                type="button"
+                role="menuitem"
+                aria-disabled={!item.enabled}
+                title={item.reason ?? undefined}
+                data-testid={`places-menu-${item.action}`}
+                onClick={() => runPlaceMenuItem(item)}
+                style={{
+                  display: "block",
+                  width: "100%",
+                  textAlign: "left",
+                  padding: "7px 9px",
+                  borderRadius: 6,
+                  border: 0,
+                  background: "transparent",
+                  color: item.enabled ? "var(--ob-ink, #e6edf6)" : "var(--ob-dim, #8797ab)",
+                  cursor: item.enabled ? "pointer" : "not-allowed",
+                  font: "inherit",
+                }}
+              >
+                {item.label}
+              </button>
+            ))}
+            {blocked && (
+              <p role="note" style={{ margin: "4px 9px 6px", color: "var(--ob-dim, #8797ab)", fontSize: 11, lineHeight: "15px" }}>
+                {blocked}
+              </p>
+            )}
+          </div>
+        );
+      })()}
+
+      {pendingMove && (
+        <div
+          role="group"
+          aria-label="Proposed place move"
+          data-testid="places-move-proposal"
+          style={{
+            position: "absolute",
+            left: 12,
+            bottom: 74,
+            zIndex: 9,
+            maxWidth: 560,
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            padding: "6px 10px",
+            borderRadius: 9,
+            background: "rgba(9,13,19,.92)",
+            border: "1px solid var(--ob-line-3, #3a4e64)",
+            color: "var(--ob-ink, #e6edf6)",
+            fontSize: 11,
+          }}
+        >
+          <span>{proposalSummary(pendingMove)}</span>
+          <button type="button" onClick={applyMove} style={{ font: "inherit", color: "#c9b68a", background: "transparent", border: 0, cursor: "pointer" }}>Apply</button>
+          <button type="button" onClick={cancelMove} style={{ font: "inherit", color: "var(--ob-dim, #8797ab)", background: "transparent", border: 0, cursor: "pointer" }}>Cancel</button>
+        </div>
+      )}
+
+      {authoringNotice && (
+        <div
+          role="status"
+          aria-live="polite"
+          data-testid="places-authoring-notice"
+          style={{
+            position: "absolute",
+            left: 12,
+            top: 12,
+            zIndex: 9,
+            maxWidth: 420,
+            padding: "5px 9px",
+            borderRadius: 9,
+            background: "rgba(9,13,19,.9)",
+            color: "#c9b68a",
+            fontSize: 11,
+          }}
+        >
+          {authoringNotice}
         </div>
       )}
 
