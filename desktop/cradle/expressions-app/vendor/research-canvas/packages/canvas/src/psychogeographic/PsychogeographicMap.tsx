@@ -89,7 +89,7 @@ export interface PsychogeographicMapProps {
   projectId: string;
   tileSource: MapTileSource;
   policy?: LiveServicePolicy;
-  /** Hosted native applications do not delegate network authority to this UI. */
+  /** Live sources stay off until you allow them. The host lifts this when its owner allows live sources (T4). */
   offlineOnly?: boolean;
   /** Attribution lines of the other sources behind this surface's data (the geography pack's providers). */
   sourceAttributions?: readonly string[];

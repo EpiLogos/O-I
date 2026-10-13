@@ -24,7 +24,7 @@ export interface SourceDisclosure {
 
 /** The owner's statement for a hosted surface (PsychogeographicMap's `offlineOnly` prop). */
 export const HOSTED_NETWORK_REASON =
-  "Hosted native applications do not delegate network authority to this UI.";
+  "Live sources stay off until you allow them.";
 
 /** The live-service policy's own statement (geography policy.ts, its module header). */
 export const OPT_IN_REASON =
