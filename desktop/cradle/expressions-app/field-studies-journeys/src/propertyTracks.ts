@@ -18,17 +18,31 @@ function segmentValue(a:KeyPoint,b:KeyPoint,time:number):number{
     default:return a.value+(b.value-a.value)*(time-a.time)/(b.time-a.time);
   }
 }
-/** Cubic Bezier in (time, value). Absent handles sit at the thirds, so a handle-less bezier is linear. Control times are clamped inside the segment and the time column is kept non-decreasing, so time is monotone in the parameter; time is solved by bisection. */
-function bezierValue(a:KeyPoint,b:KeyPoint,time:number):number{
+/** A control point of a segment's cubic in (time, value). */
+export type CurvePoint={x:number;y:number};
+/** The four control points of segment a→b. Absent handles sit at the thirds (a handle-less bezier is linear); a smooth
+ * segment is the bezier with flat handles at the thirds (x linear, y smoothstep). Control times are clamped inside the
+ * segment and kept non-decreasing, so time is monotone in the parameter. One definition, used by evaluation and by the
+ * E07 split (which subdivides on the same curve). */
+export function segmentControls(a:KeyPoint,b:KeyPoint,smooth=false):[CurvePoint,CurvePoint,CurvePoint,CurvePoint]{
   const span=b.time-a.time,rise=b.value-a.value;
-  const o=a.out??{dt:span/3,dv:rise/3},n=b.in??{dt:-span/3,dv:-rise/3};
-  const x0=a.time,x3=b.time,x1=x0+Math.min(span,Math.max(0,o.dt)),x2=Math.max(x1,x3+Math.max(-span,Math.min(0,n.dt)));
-  const y0=a.value,y1=y0+o.dv,y3=b.value,y2=y3+n.dv;
-  const at=(p0:number,p1:number,p2:number,p3:number,u:number)=>{const v=1-u;return v*v*v*p0+3*v*v*u*p1+3*v*u*u*p2+u*u*u*p3;};
-  if(time<=x0)return y0;
+  const o=smooth?{dt:span/3,dv:0}:(a.out??{dt:span/3,dv:rise/3});
+  const n=smooth?{dt:-span/3,dv:0}:(b.in??{dt:-span/3,dv:-rise/3});
+  const x1=a.time+Math.min(span,Math.max(0,o.dt)),x2=Math.max(x1,b.time+Math.max(-span,Math.min(0,n.dt)));
+  return [{x:a.time,y:a.value},{x:x1,y:a.value+o.dv},{x:x2,y:b.value+n.dv},{x:b.time,y:b.value}];
+}
+const cubic=(p0:number,p1:number,p2:number,p3:number,u:number)=>{const v=1-u;return v*v*v*p0+3*v*v*u*p1+3*v*u*u*p2+u*u*u*p3;};
+/** The curve parameter at which the time column reaches t (64-step bisection). */
+export function curveParameter(c:readonly [CurvePoint,CurvePoint,CurvePoint,CurvePoint],t:number):number{
   let lo=0,hi=1;
-  for(let k=0;k<64;k++){const mid=(lo+hi)/2;if(at(x0,x1,x2,x3,mid)<time)lo=mid;else hi=mid;}
-  return at(y0,y1,y2,y3,(lo+hi)/2);
+  for(let k=0;k<64;k++){const mid=(lo+hi)/2;if(cubic(c[0].x,c[1].x,c[2].x,c[3].x,mid)<t)lo=mid;else hi=mid;}
+  return (lo+hi)/2;
+}
+/** Cubic Bezier in (time, value), solved for time by bisection. */
+function bezierValue(a:KeyPoint,b:KeyPoint,time:number):number{
+  if(time<=a.time)return a.value;
+  const c=segmentControls(a,b);
+  return cubic(c[0].y,c[1].y,c[2].y,c[3].y,curveParameter(c,time));
 }
 export function valueAt(points:PropertyTrack['points'],time:number):number|undefined{if(!points.length||time<points[0].time)return undefined;let i=points.findIndex(p=>p.time>time);if(i<0)return points.at(-1)!.value;return segmentValue(points[i-1],points[i],time);}
 export function readTrackValue(s:Scene,t:Pick<PropertyTrack,'bind'|'entityId'>):number|undefined{if(t.bind.startsWith('field.params.')){const key=t.bind.slice(13);if(nativeBinding(key))return baseValue(s,key);}if(t.bind.startsWith('entity.')){const target=entityTargets(s).find(v=>v.entityId===t.entityId&&v.bind===t.bind);if(target)return target.value;}const root=t.bind.startsWith('entity.')?s.entities.find(e=>e.id===t.entityId):s;const path=t.bind.startsWith('entity.')?t.bind.slice(7):t.bind;let value:any=root;for(const key of path.split('.'))value=value?.[key];return typeof value==='number'&&Number.isFinite(value)?value:undefined;}
