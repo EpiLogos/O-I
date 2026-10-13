@@ -10,7 +10,8 @@ import {kernelOp} from "../../../kernel/bridge";
 import type {KernelTransportStatus} from "../../../kernel/types";
 import {developmentRead, ownerRefusalText} from "../development";
 import type {Scope} from "../../../workspace/scope";
-import type {DeskSourceRef, JourneyReading, ProjectLocation, ProjectReading, RunReading} from "./runModel";
+import type {DeskSourceRef, JourneyReading, ProjectLocation, ProjectReading, RunCloseReceipt, RunReading} from "./runModel";
+import {readRunClose} from "./runModel";
 import {followInspection, type InspectionPage, type WholeInspection} from "./inspectionPages";
 import {ownerReadFailure, snakeKeys, type FactoryCurrentWork, type FactoryInhabitationReading, type OwnerRead} from "../inhabitation/model";
 
@@ -29,6 +30,7 @@ export type FactoryOwnerRequest =
   | {kind: "action-list"; state_path: string; project_ref: string; run_ref: string}
   | {kind: "action-invoke"; state_path: string; project_ref: string; run_ref: string; request: unknown}
   | {kind: "recognise"; state_path: string; journey_ref: string; subject_ref: string; basis_refs?: string[]}
+  | {kind: "run-close"; state_path: string; run_ref: string; recognition_ref: string; next_unit?: unknown; authority_grant?: string}
   | {kind: "development-commission"; state_path: string; request: unknown}
   | {kind: "inhabitation"; state_path: string; run_ref?: string; position_ref?: string}
   | {kind: "current-work"; state_path: string; position_ref: string};
@@ -133,6 +135,15 @@ export const attemptReturn = (transport: KernelTransportStatus, statePath: strin
 
 export const recognise = (transport: KernelTransportStatus, statePath: string, journeyRef: string, subjectRef: string, basisRefs: string[] = []) =>
   factoryOwner<{contract?: string; status?: string; record?: unknown}>(transport, {kind: "recognise", state_path: statePath, journey_ref: journeyRef, subject_ref: subjectRef, basis_refs: basisRefs});
+
+/** Close a Run's own lifecycle after the person's Recognition (T-FACTORY-2b).
+ * The owner's receipt or refusal comes back as the owner wrote it; the document
+ * is checked against this Run and this Recognition before the Desk shows it. */
+export interface RunCloseTarget {statePath: string; runRef: string; recognitionRef: string; authorityGrant?: string}
+export async function closeRun(transport: KernelTransportStatus, target: RunCloseTarget): Promise<RunCloseReceipt> {
+  const answer = await factoryOwner(transport, {kind: "run-close", state_path: target.statePath, run_ref: target.runRef, recognition_ref: target.recognitionRef, ...(target.authorityGrant ? {authority_grant: target.authorityGrant} : {})});
+  return readRunClose(answer, {runRef: target.runRef, recognitionRef: target.recognitionRef});
+}
 
 /** The owner's receipt for one commission (`factory.commission-receipt/v1`):
  * `applied` for a new Run, `already-applied` for an exact replay. */

@@ -337,6 +337,24 @@ pub enum OwnerRequest {
         #[serde(default)]
         request: Value,
     },
+    /// The close of a Run's own lifecycle after the person's Recognition
+    /// (T-FACTORY-2b): the owner's lifecycle moves in their legal order, each
+    /// receipt or refusal returned verbatim. `recognition_ref` names the
+    /// Recognition the close follows; `next_unit` is the owner's own
+    /// start-serial document, carried verbatim, which when present is the only
+    /// move made (the owner refuses Finishing while a serial unit remains).
+    RunClose {
+        state_path: PathBuf,
+        run_ref: String,
+        recognition_ref: String,
+        #[serde(default)]
+        next_unit: Option<Value>,
+        /// The host's native action authority grant ref for this close
+        /// (Control/user/native-action-authority.json). Absent, the close is
+        /// refused before any owner call: the desk never asserts a grant.
+        #[serde(default)]
+        authority_grant: Option<String>,
+    },
 }
 
 impl OwnerRequest {
@@ -1191,7 +1209,430 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
                 &["factory.commission-receipt/v1"],
             )
         }
+        OwnerRequest::RunClose {
+            state_path,
+            run_ref,
+            recognition_ref,
+            next_unit,
+            authority_grant,
+        } => {
+            let mut call =
+                |args: &[std::ffi::OsString], input: Option<&[u8]>| owner_call(args, input);
+            Ok(run_close(
+                &mut call,
+                &state_path,
+                &run_ref,
+                &recognition_ref,
+                next_unit,
+                authority_grant,
+            ))
+        }
     }
+}
+
+// ---------------------------------------------------------------------------
+// T-FACTORY-2b: the Run's own lifecycle close. The owner's lifecycle moves
+// (TransitionRun, attempt_runtime.rs) are reached through the owner's attempt
+// action path, `factory attempt action <state> -`. The driver sequences them in
+// the owner's legal order, each with a deterministic command id and projection
+// (an exact replay is the owner's AlreadyApplied, never a second transition),
+// stops at the first refusal, and returns every owner receipt or refusal
+// verbatim. The owner decides; this driver only sequences and reads.
+// ---------------------------------------------------------------------------
+
+pub const RUN_CLOSE_CONTRACT: &str = "oi.factory-run-close/v1";
+const ATTEMPT_ACTION_CONTRACT: &str = "factory.attempt-action/v1";
+const ATTEMPT_CAPABILITY_REF: &str = "capability/factory/operate-attempt";
+const DESK_CALLER_REF: &str = "oi:desk-run-close";
+/// The refusal the desk shows when no native action authority grants the close.
+const NO_GRANT_REFUSAL: &str = "No native action authority grants the Factory Run close to this desk; the close waits for that grant (Control/user/native-action-authority.json).";
+/// Bounds the lifecycle walk: the longest legal path is three moves.
+const CLOSE_MAX_STEPS: usize = 4;
+
+/// One owner call behind a seam: the owner CLI in production, a scripted owner
+/// in the tests.
+pub type OwnerCall<'a> =
+    dyn FnMut(&[std::ffi::OsString], Option<&[u8]>) -> Result<Value, Error> + 'a;
+
+/// The owner's write authority over one Run (its `RunMutationAuthority`): the
+/// owner and epoch a TransitionRun must name.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct RunWriteAuthority {
+    pub owner: String,
+    pub epoch: u64,
+}
+
+/// The lifecycle moves still required on the way to Finished, in the owner's
+/// legal order (core/run/model.rs legal_lifecycle_transition): Seeded → Active →
+/// Finishing → Finished; Finishing is entered only from Active.
+pub fn finish_path(lifecycle: &str) -> Result<&'static [&'static str], String> {
+    match lifecycle {
+        "seeded" => Ok(&["active", "finishing", "finished"]),
+        "active" => Ok(&["finishing", "finished"]),
+        "finishing" => Ok(&["finished"]),
+        "finished" | "archived" => Ok(&[]),
+        other => Err(format!(
+            "The Run is {other}; it can be closed only from seeded, active or finishing."
+        )),
+    }
+}
+
+/// The owner's TransitionRun document for the attempt action path. Every ref is
+/// derived from the Run, the target and the revisions read, so an exact replay
+/// is the same document and the owner answers it from its stored receipt.
+pub fn transition_request(
+    run_ref: &str,
+    target: &str,
+    attempt_revision: u64,
+    run_revision: u64,
+    authority: &RunWriteAuthority,
+    closure: Option<Value>,
+    grant: &str,
+) -> Value {
+    let command_id = format!("command:run-close:{run_ref}:{target}:r{run_revision}");
+    let mut operation = serde_json::json!({
+        "operation": "transition-run",
+        "command": {"commandId": command_id, "expectedRevision": run_revision, "lifecycle": target},
+        "authority": {"runRef": run_ref, "owner": authority.owner, "epoch": authority.epoch},
+    });
+    if let Some(closure) = closure {
+        operation["closure"] = closure;
+    }
+    // The grant is the host's native action authority ref, never asserted by
+    // this desk: capabilityGranted / actionAuthorised are true only on the
+    // path where `grant` was supplied (run_close refuses otherwise).
+    serde_json::json!({
+        "contract": ATTEMPT_ACTION_CONTRACT,
+        "projectionRef": format!("projection:run-close:{run_ref}:{target}:r{run_revision}"),
+        "caller": {"callerRef": DESK_CALLER_REF, "projectionKind": "desktop-human", "lineage": [DESK_CALLER_REF]},
+        "runRef": run_ref,
+        "expectedRevision": attempt_revision,
+        "authority": {
+            "authorityRef": grant,
+            "nativeOwner": "factory",
+            "capabilityRef": ATTEMPT_CAPABILITY_REF,
+            "capabilityGranted": true,
+            "actionAuthorised": true,
+        },
+        "operation": operation,
+    })
+}
+
+/// The owner's Run write authority, when the Run reading names it.
+fn write_authority(run: &Value) -> Option<RunWriteAuthority> {
+    let authority = run.get("writeAuthority")?;
+    Some(RunWriteAuthority {
+        owner: authority["owner"].as_str()?.to_owned(),
+        epoch: authority["epoch"].as_u64()?,
+    })
+}
+
+/// The closure basis for Finished: the attempt whose Return is linked to a
+/// Central receiving receipt. Reviewer attempts are not derived here; the owner
+/// refuses a closure that needs them, and that refusal is returned verbatim.
+fn finished_closure(attempt: &Value) -> Option<Value> {
+    let record = attempt["attempts"]
+        .as_array()?
+        .iter()
+        .rev()
+        .find(|record| {
+            record["readableReturn"]["receivingRef"]
+                .as_str()
+                .is_some_and(|receiving| !receiving.trim().is_empty())
+        })?;
+    Some(serde_json::json!({
+        "finalAttemptRef": record["attemptRef"].as_str()?,
+        "reviewerAttemptRefs": [],
+        "receivingRef": record["readableReturn"]["receivingRef"].as_str()?,
+    }))
+}
+
+/// The owner's receipt names the revision it moved from. A receipt whose
+/// previous revision is not the one this step read is an earlier application
+/// that the owner answered from its stored receipt.
+fn step_status(receipt: &Value, read_revision: u64) -> &'static str {
+    if receipt["previousRevision"].as_u64() == Some(read_revision) {
+        "applied"
+    } else {
+        "already-applied"
+    }
+}
+
+fn refusal(source: &str, step: Option<&str>, message: impl ToString) -> Value {
+    serde_json::json!({"source": source, "step": step, "message": message.to_string()})
+}
+
+fn read_owner(
+    call: &mut OwnerCall<'_>,
+    verb: [&str; 2],
+    state_path: &Path,
+    run_ref: &str,
+) -> Result<Value, Error> {
+    let args: Vec<std::ffi::OsString> = verb
+        .iter()
+        .map(|word| std::ffi::OsString::from(*word))
+        .chain([
+            path_arg(state_path),
+            std::ffi::OsString::from(run_ref),
+            std::ffi::OsString::from("--json"),
+        ])
+        .collect();
+    call(&args, None)
+}
+
+/// The Run's reading and the attempt reading, read together: the owner's
+/// lifecycle and revision, and the attempts' Return links.
+fn read_state(
+    call: &mut OwnerCall<'_>,
+    state_path: &Path,
+    run_ref: &str,
+) -> Result<(Value, Value), Error> {
+    let run = read_owner(call, ["development", "run"], state_path, run_ref)?;
+    let attempt = read_owner(call, ["attempt", "read"], state_path, run_ref)?;
+    Ok((run, attempt))
+}
+
+/// One attempt action through the owner, with the document carried verbatim.
+fn action_call(call: &mut OwnerCall<'_>, state_path: &Path, body: &Value) -> Result<Value, Error> {
+    let bytes = serde_json::to_vec(body).map_err(|e| incompatible(e.to_string()))?;
+    let args: Vec<std::ffi::OsString> = vec![
+        "attempt".into(),
+        "action".into(),
+        path_arg(state_path),
+        "-".into(),
+        "--json".into(),
+    ];
+    let receipt = call(&args, Some(&bytes))?;
+    if receipt["contract"] != ATTEMPT_ACTION_CONTRACT {
+        return Err(incompatible(
+            "Factory answered an unexpected attempt action receipt",
+        ));
+    }
+    Ok(receipt)
+}
+
+/// Close a Run's own lifecycle after the person's Recognition. Returns the
+/// close document: `finished` (moves made to Finished), `already-finished` (no
+/// move needed), `next-unit-started`, or `refused` with the owner's (or the
+/// driver's own, named as such) refusal verbatim. A refusal leaves the Run where
+/// the owner says it is.
+pub fn run_close(
+    call: &mut OwnerCall<'_>,
+    state_path: &Path,
+    run_ref: &str,
+    recognition_ref: &str,
+    next_unit: Option<Value>,
+    authority_grant: Option<String>,
+) -> Value {
+    let envelope = |status: &str, lifecycle: Value, steps: Vec<Value>, refusal: Value| {
+        serde_json::json!({
+            "contract": RUN_CLOSE_CONTRACT,
+            "runRef": run_ref,
+            "recognitionRef": recognition_ref,
+            "status": status,
+            "lifecycle": lifecycle,
+            "steps": steps,
+            "refusal": refusal,
+        })
+    };
+    if run_ref.trim().is_empty() || recognition_ref.trim().is_empty() {
+        return envelope(
+            "refused",
+            Value::Null,
+            vec![],
+            refusal(
+                "driver",
+                None,
+                "A close names the exact Run and the Recognition it follows.",
+            ),
+        );
+    }
+    // The grant gate comes before any owner call: no grant, no move.
+    let grant = match authority_grant.filter(|grant| !grant.trim().is_empty()) {
+        Some(grant) => grant,
+        None => {
+            return envelope(
+                "refused",
+                Value::Null,
+                vec![],
+                refusal("driver", None, NO_GRANT_REFUSAL),
+            )
+        }
+    };
+    let mut steps: Vec<Value> = Vec::new();
+
+    if let Some(unit) = next_unit {
+        if unit["authority"]["authorityRef"] != grant.as_str() {
+            return envelope(
+                "refused",
+                Value::Null,
+                steps,
+                refusal(
+                    "driver",
+                    None,
+                    "The next serial unit names another authority grant than this close.",
+                ),
+            );
+        }
+        if unit["contract"] != ATTEMPT_ACTION_CONTRACT
+            || unit["operation"]["operation"] != "start-serial"
+        {
+            return envelope(
+                "refused",
+                Value::Null,
+                steps,
+                refusal(
+                    "driver",
+                    None,
+                    "A next serial unit is the owner's start-serial document; no other move is carried here.",
+                ),
+            );
+        }
+        let (run, attempt) = match read_state(call, state_path, run_ref) {
+            Ok(pair) => pair,
+            Err(error) => {
+                return envelope(
+                    "refused",
+                    Value::Null,
+                    steps,
+                    refusal("owner", None, error.message),
+                )
+            }
+        };
+        let lifecycle = run["lifecycle"].clone();
+        let read_revision = attempt["revision"].as_u64().unwrap_or_default();
+        return match action_call(call, state_path, &unit) {
+            Ok(receipt) => {
+                steps.push(serde_json::json!({
+                    "target": "start-serial",
+                    "status": step_status(&receipt, read_revision),
+                    "receipt": receipt,
+                }));
+                envelope("next-unit-started", lifecycle, steps, Value::Null)
+            }
+            Err(error) => envelope(
+                "refused",
+                lifecycle,
+                steps,
+                refusal("owner", Some("start-serial"), error.message),
+            ),
+        };
+    }
+
+    for _ in 0..CLOSE_MAX_STEPS {
+        let (run, attempt) = match read_state(call, state_path, run_ref) {
+            Ok(pair) => pair,
+            Err(error) => {
+                return envelope(
+                    "refused",
+                    Value::Null,
+                    steps,
+                    refusal("owner", None, error.message),
+                )
+            }
+        };
+        let lifecycle = run["lifecycle"].as_str().unwrap_or_default().to_owned();
+        let path = match finish_path(&lifecycle) {
+            Ok(path) => path,
+            Err(message) => {
+                return envelope(
+                    "refused",
+                    Value::String(lifecycle),
+                    steps,
+                    refusal("driver", None, message),
+                )
+            }
+        };
+        let Some(target) = path.first().copied() else {
+            break;
+        };
+        // Owner change required (recorded here; factory/src is under another
+        // agent's zone claim and is not edited): factory.run-reading/v1
+        // (FactoryRunReading, developmental_read.rs run_reading) must carry
+        // writeAuthority {runRef, owner, epoch} from the Run's write_authority
+        // (core/run/model.rs, Run::write_authority). The TransitionRun authority
+        // is addressed from that field and from nothing else.
+        let Some(authority) = write_authority(&run) else {
+            return envelope(
+                "refused",
+                Value::String(lifecycle),
+                steps,
+                refusal(
+                    "driver",
+                    Some(target),
+                    "Factory's Run reading names no write authority (owner, epoch), so the owner's transition cannot be addressed.",
+                ),
+            );
+        };
+        let (Some(run_revision), Some(attempt_revision)) =
+            (run["revision"].as_u64(), attempt["revision"].as_u64())
+        else {
+            return envelope(
+                "refused",
+                Value::String(lifecycle),
+                steps,
+                refusal(
+                    "driver",
+                    Some(target),
+                    "Factory's readings carry no revision.",
+                ),
+            );
+        };
+        let closure = if target == "finished" {
+            match finished_closure(&attempt) {
+                Some(closure) => Some(closure),
+                None => {
+                    return envelope(
+                        "refused",
+                        Value::String(lifecycle),
+                        steps,
+                        refusal(
+                            "driver",
+                            Some(target),
+                            "The Run's final Return has no receiving linked. Submit the Return to Central receiving, then close the Run.",
+                        ),
+                    )
+                }
+            }
+        } else {
+            None
+        };
+        let body = transition_request(
+            run_ref,
+            target,
+            attempt_revision,
+            run_revision,
+            &authority,
+            closure,
+            &grant,
+        );
+        match action_call(call, state_path, &body) {
+            Ok(receipt) => steps.push(serde_json::json!({
+                "target": target,
+                "status": step_status(&receipt, attempt_revision),
+                "commandId": body["operation"]["command"]["commandId"],
+                "receipt": receipt,
+            })),
+            Err(error) => {
+                return envelope(
+                    "refused",
+                    Value::String(lifecycle),
+                    steps,
+                    refusal("owner", Some(target), error.message),
+                )
+            }
+        }
+    }
+
+    let lifecycle = read_state(call, state_path, run_ref)
+        .map(|(run, _)| run["lifecycle"].clone())
+        .unwrap_or(Value::Null);
+    let status = if steps.is_empty() {
+        "already-finished"
+    } else {
+        "finished"
+    };
+    envelope(status, lifecycle, steps, Value::Null)
 }
 
 #[cfg(test)]
@@ -1431,6 +1872,380 @@ mod owner_tests {
         assert!(matches!(
             request,
             OwnerRequest::DevelopmentCommission { .. }
+        ));
+    }
+}
+
+/// T-FACTORY-2b: the close driver over a scripted owner. The fake reads the
+/// same shapes the owner's readings carry, applies TransitionRun / start-serial
+/// in the owner's legal order with its revision rules, and answers an exact
+/// replay from its stored receipt (the owner's AlreadyApplied).
+#[cfg(test)]
+mod run_close_tests {
+    use super::*;
+    use std::collections::BTreeMap;
+
+    struct Fake {
+        lifecycle: String,
+        run_rev: u64,
+        state_rev: u64,
+        receiving: bool,
+        authority: bool,
+        refuse: Option<(String, String)>,
+        applied: BTreeMap<String, Value>,
+        actions: Vec<Value>,
+        calls: usize,
+    }
+
+    impl Fake {
+        fn new(lifecycle: &str) -> Self {
+            Self {
+                lifecycle: lifecycle.into(),
+                run_rev: 7,
+                state_rev: 40,
+                receiving: true,
+                authority: true,
+                refuse: None,
+                applied: BTreeMap::new(),
+                actions: Vec::new(),
+                calls: 0,
+            }
+        }
+
+        fn call(
+            &mut self,
+            args: &[std::ffi::OsString],
+            input: Option<&[u8]>,
+        ) -> Result<Value, Error> {
+            self.calls += 1;
+            let words: Vec<String> = args
+                .iter()
+                .map(|a| a.to_string_lossy().into_owned())
+                .collect();
+            match (words[0].as_str(), words[1].as_str()) {
+                ("development", "run") => Ok(serde_json::json!({
+                    "lifecycle": self.lifecycle,
+                    "revision": self.run_rev,
+                    "writeAuthority": if self.authority {
+                        serde_json::json!({"owner": "factory", "epoch": 1})
+                    } else {
+                        Value::Null
+                    },
+                })),
+                ("attempt", "read") => Ok(serde_json::json!({
+                    "revision": self.state_rev,
+                    "attempts": [{
+                        "attemptRef": "attempt:A1",
+                        "readableReturn": {"receivingRef": if self.receiving { Value::from("receiving:R1") } else { Value::Null }},
+                    }],
+                })),
+                ("attempt", "action") => {
+                    let body: Value = serde_json::from_slice(input.unwrap()).unwrap();
+                    self.act(body)
+                }
+                _ => Err(incompatible(format!("unscripted call {words:?}"))),
+            }
+        }
+
+        fn act(&mut self, body: Value) -> Result<Value, Error> {
+            self.actions.push(body.clone());
+            let command_id = body["operation"]["command"]["commandId"]
+                .as_str()
+                .unwrap_or_default()
+                .to_owned();
+            if let Some(stored) = self.applied.get(&command_id) {
+                return Ok(stored.clone());
+            }
+            let refused = |message: &str| Error {
+                kind: "owner-refused-or-failed".into(),
+                message: message.into(),
+                operation_may_have_run: true,
+            };
+            if body["expectedRevision"].as_u64() != Some(self.state_rev) {
+                return Err(refused("RevisionConflict: the attempt state moved"));
+            }
+            if body["operation"]["operation"] == "start-serial" {
+                let previous = self.state_rev;
+                self.state_rev += 1;
+                return Ok(
+                    serde_json::json!({"contract": ATTEMPT_ACTION_CONTRACT, "previousRevision": previous, "nextRevision": self.state_rev, "operation": "start-serial"}),
+                );
+            }
+            let target = body["operation"]["command"]["lifecycle"]
+                .as_str()
+                .unwrap_or_default()
+                .to_owned();
+            if let Some((at, message)) = &self.refuse {
+                if at == &target {
+                    return Err(refused(message));
+                }
+            }
+            if target == "finished" && !self.receiving {
+                return Err(refused("Finished requires live native receiving admission; a public receiving label or observation is not proof"));
+            }
+            let legal = matches!(
+                (self.lifecycle.as_str(), target.as_str()),
+                ("seeded", "active") | ("active", "finishing") | ("finishing", "finished")
+            );
+            if !legal {
+                return Err(refused(&format!(
+                    "InvalidLifecycleTransition: {} -> {target}",
+                    self.lifecycle
+                )));
+            }
+            let previous = self.state_rev;
+            self.lifecycle = target.clone();
+            self.run_rev += 1;
+            self.state_rev += 1;
+            let receipt = serde_json::json!({
+                "contract": ATTEMPT_ACTION_CONTRACT,
+                "runRef": body["runRef"],
+                "previousRevision": previous,
+                "nextRevision": self.state_rev,
+                "operation": "transition-run",
+                "attemptRefs": [],
+                "standing": "scripted owner",
+            });
+            self.applied.insert(command_id, receipt.clone());
+            Ok(receipt)
+        }
+    }
+
+    /// The host's grant ref for the desk's close; the fake owner validates the
+    /// shape only, so the grant is simply carried into the authority block.
+    const GRANT: &str = "grant:factory-run-close:test";
+
+    fn close(fake: &mut Fake, next: Option<Value>) -> Value {
+        run_close(
+            &mut |args: &[std::ffi::OsString], input: Option<&[u8]>| fake.call(args, input),
+            Path::new("/s.json"),
+            "run:A",
+            "recognition:R1",
+            next,
+            Some(GRANT.into()),
+        )
+    }
+
+    fn targets(close: &Value) -> Vec<String> {
+        close["steps"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|step| {
+                format!(
+                    "{}:{}",
+                    step["target"].as_str().unwrap(),
+                    step["status"].as_str().unwrap()
+                )
+            })
+            .collect()
+    }
+
+    #[test]
+    fn an_active_run_finishes_once_through_finishing() {
+        let mut fake = Fake::new("active");
+        let result = close(&mut fake, None);
+        assert_eq!(result["status"], "finished", "{result}");
+        assert_eq!(targets(&result), ["finishing:applied", "finished:applied"]);
+        assert_eq!(result["lifecycle"], "finished");
+        assert_eq!(fake.actions.len(), 2);
+        let finished = &fake.actions[1];
+        assert_eq!(
+            finished["operation"]["closure"]["receivingRef"],
+            "receiving:R1"
+        );
+        assert_eq!(
+            finished["operation"]["closure"]["finalAttemptRef"],
+            "attempt:A1"
+        );
+        assert_eq!(finished["operation"]["command"]["expectedRevision"], 8);
+        assert_eq!(
+            finished["operation"]["command"]["commandId"],
+            "command:run-close:run:A:finished:r8"
+        );
+        assert_eq!(
+            finished["authority"]["capabilityRef"],
+            ATTEMPT_CAPABILITY_REF
+        );
+    }
+
+    #[test]
+    fn a_seeded_run_walks_active_first_because_the_owner_requires_it() {
+        let mut fake = Fake::new("seeded");
+        let result = close(&mut fake, None);
+        assert_eq!(result["status"], "finished", "{result}");
+        assert_eq!(
+            targets(&result),
+            ["active:applied", "finishing:applied", "finished:applied"]
+        );
+    }
+
+    #[test]
+    fn an_owner_refusal_is_verbatim_and_leaves_the_run_where_the_owner_says() {
+        let mut fake = Fake::new("active");
+        let message = "Finished requires exact native review and receiving closure basis";
+        fake.refuse = Some(("finished".into(), message.into()));
+        let result = close(&mut fake, None);
+        assert_eq!(result["status"], "refused");
+        assert_eq!(result["refusal"]["source"], "owner");
+        assert_eq!(result["refusal"]["step"], "finished");
+        assert_eq!(result["refusal"]["message"], message);
+        assert_eq!(result["lifecycle"], "finishing");
+        assert_eq!(fake.lifecycle, "finishing");
+        assert_eq!(fake.actions.len(), 2, "no move after the refusal");
+    }
+
+    #[test]
+    fn a_missing_receiving_is_the_drivers_own_refusal_and_no_finish_is_sent() {
+        let mut fake = Fake::new("finishing");
+        fake.receiving = false;
+        let result = close(&mut fake, None);
+        assert_eq!(result["status"], "refused");
+        assert_eq!(result["refusal"]["source"], "driver");
+        assert_eq!(
+            fake.actions.len(),
+            0,
+            "a finish without a receiving is never sent"
+        );
+        assert_eq!(fake.lifecycle, "finishing");
+    }
+
+    #[test]
+    fn a_repeat_close_is_no_second_transition() {
+        let mut fake = Fake::new("active");
+        close(&mut fake, None);
+        let before = fake.actions.len();
+        let again = close(&mut fake, None);
+        assert_eq!(again["status"], "already-finished", "{again}");
+        assert!(again["steps"].as_array().unwrap().is_empty());
+        assert_eq!(fake.actions.len(), before, "no owner move on a repeat");
+    }
+
+    #[test]
+    fn an_exact_replay_is_the_owners_already_applied_with_its_receipt() {
+        let mut fake = Fake::new("finishing");
+        let first = close(&mut fake, None);
+        assert_eq!(targets(&first), ["finished:applied"]);
+        let body = fake.actions[0].clone();
+        let stored = fake
+            .call(
+                &[
+                    std::ffi::OsString::from("attempt"),
+                    std::ffi::OsString::from("action"),
+                ],
+                Some(&serde_json::to_vec(&body).unwrap()),
+            )
+            .unwrap();
+        assert_eq!(
+            stored["previousRevision"], 40,
+            "the stored receipt, not a new move"
+        );
+        assert_eq!(fake.state_rev, 41, "the replay moved nothing");
+        assert_eq!(step_status(&stored, 41), "already-applied");
+        assert_eq!(step_status(&stored, 40), "applied");
+    }
+
+    #[test]
+    fn a_run_without_a_write_authority_is_refused_before_any_move() {
+        let mut fake = Fake::new("active");
+        fake.authority = false;
+        let result = close(&mut fake, None);
+        assert_eq!(result["status"], "refused");
+        assert_eq!(result["refusal"]["source"], "driver");
+        assert!(fake.actions.is_empty());
+    }
+
+    #[test]
+    fn a_next_serial_unit_is_carried_verbatim_and_never_finishes_the_run() {
+        let mut fake = Fake::new("active");
+        let unit = serde_json::json!({
+            "contract": ATTEMPT_ACTION_CONTRACT,
+            "runRef": "run:A",
+            "expectedRevision": 40,
+            "authority": {"authorityRef": GRANT},
+            "operation": {"operation": "start-serial", "attemptRef": "attempt:A2"},
+        });
+        let result = close(&mut fake, Some(unit.clone()));
+        assert_eq!(result["status"], "next-unit-started", "{result}");
+        assert_eq!(fake.actions, vec![unit]);
+        assert_eq!(fake.lifecycle, "active");
+    }
+
+    #[test]
+    fn the_request_carries_only_the_host_grant_and_is_deterministic() {
+        let authority = RunWriteAuthority {
+            owner: "factory".into(),
+            epoch: 1,
+        };
+        let a = transition_request("run:A", "finishing", 40, 7, &authority, None, GRANT);
+        let b = transition_request("run:A", "finishing", 40, 7, &authority, None, GRANT);
+        assert_eq!(a, b, "the same move is the same document");
+        assert_eq!(
+            a["operation"]["command"]["commandId"],
+            "command:run-close:run:A:finishing:r7"
+        );
+        assert_eq!(
+            a["operation"]["authority"],
+            serde_json::json!({"runRef": "run:A", "owner": "factory", "epoch": 1})
+        );
+        assert_eq!(
+            a["authority"]["authorityRef"], GRANT,
+            "the authority names the host's grant"
+        );
+        assert_eq!(a["authority"]["capabilityGranted"], true);
+        assert_eq!(a["authority"]["actionAuthorised"], true);
+        assert!(a["operation"].get("closure").is_none());
+    }
+
+    #[test]
+    fn no_grant_is_refused_before_any_owner_call() {
+        let mut fake = Fake::new("active");
+        for grant in [None, Some("  ".to_owned())] {
+            let result = run_close(
+                &mut |args: &[std::ffi::OsString], input: Option<&[u8]>| fake.call(args, input),
+                Path::new("/s.json"),
+                "run:A",
+                "recognition:R1",
+                None,
+                grant,
+            );
+            assert_eq!(result["status"], "refused", "{result}");
+            assert_eq!(result["refusal"]["source"], "driver");
+            assert_eq!(
+                result["refusal"]["message"],
+                "No native action authority grants the Factory Run close to this desk; the close waits for that grant (Control/user/native-action-authority.json)."
+            );
+        }
+        assert_eq!(fake.calls, 0, "no owner call without a grant");
+        assert!(fake.actions.is_empty());
+        assert_eq!(fake.lifecycle, "active");
+    }
+
+    #[test]
+    fn the_walk_names_each_legal_path_and_refuses_the_rest() {
+        assert_eq!(
+            finish_path("seeded").unwrap(),
+            ["active", "finishing", "finished"]
+        );
+        assert_eq!(finish_path("active").unwrap(), ["finishing", "finished"]);
+        assert_eq!(finish_path("finishing").unwrap(), ["finished"]);
+        assert!(finish_path("finished").unwrap().is_empty());
+        assert!(finish_path("aborted").is_err());
+        assert!(finish_path("waiting_human").is_err());
+    }
+
+    #[test]
+    fn the_desk_wire_names_a_run_close() {
+        let wire: OwnerRequest = serde_json::from_value(serde_json::json!({
+            "kind": "run-close", "state_path": "/s.json", "run_ref": "run:A", "recognition_ref": "recognition:R1",
+        }))
+        .unwrap();
+        assert!(matches!(
+            wire,
+            OwnerRequest::RunClose {
+                next_unit: None,
+                ..
+            }
         ));
     }
 }

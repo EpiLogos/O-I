@@ -403,3 +403,74 @@ export function splitActions(actions: RunAction[] | undefined): {primary?: RunAc
   const applicable = (actions ?? []).filter(action => action.currentlyApplicable);
   return {primary: applicable[0], others: applicable.slice(1)};
 }
+
+// ---------------------------------------------------------------------------
+// The Run's own lifecycle close (T-FACTORY-2b): the owner's receipt or refusal
+// after the person's Recognition, read as the kernel returned it. The desk
+// shows these words; it never decides a lifecycle itself.
+// ---------------------------------------------------------------------------
+
+export const RUN_CLOSE_CONTRACT = "oi.factory-run-close/v1";
+export type RunCloseStatus = "finished" | "already-finished" | "next-unit-started" | "refused";
+export interface RunCloseStep {target: string; status: "applied" | "already-applied"; commandId?: string; receipt: Record<string, unknown>}
+export interface RunCloseRefusal {source: "owner" | "driver"; step: string | null; message: string}
+export interface RunCloseReceipt {
+  contract: typeof RUN_CLOSE_CONTRACT; runRef: string; recognitionRef: string; status: RunCloseStatus;
+  lifecycle: string | null; steps: RunCloseStep[]; refusal: RunCloseRefusal | null;
+}
+
+const objectOf = (value: unknown): Record<string, unknown> | undefined =>
+  value !== null && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : undefined;
+
+/** The Recognition ref the owner recorded for a Recognition receipt, so the
+ * close can name the exact Recognition it follows. */
+export function recognitionRefOf(receipt: {record: Record<string, unknown>}): string | undefined {
+  const mutation = objectOf(objectOf(receipt.record.request)?.mutation);
+  const ref = objectOf(mutation?.recognition)?.recognition_ref;
+  return typeof ref === "string" && ref.trim() ? ref : undefined;
+}
+
+/** The close document, checked against the Run and Recognition the desk asked
+ * about: another Run's close is never shown as this one's. */
+export function readRunClose(value: unknown, expect: {runRef: string; recognitionRef: string}): RunCloseReceipt {
+  const row = objectOf(value);
+  const statuses = ["finished", "already-finished", "next-unit-started", "refused"];
+  const steps = Array.isArray(row?.steps) ? row.steps : undefined;
+  const refusal = objectOf(row?.refusal);
+  if (row?.contract !== RUN_CLOSE_CONTRACT || row.runRef !== expect.runRef || row.recognitionRef !== expect.recognitionRef
+    || !statuses.includes(row.status as string) || !steps
+    || !steps.every(step => {
+      const entry = objectOf(step);
+      return !!entry && typeof entry.target === "string" && ["applied", "already-applied"].includes(entry.status as string) && !!objectOf(entry.receipt);
+    })
+    || (row.status === "refused") !== (refusal !== undefined)
+    || (refusal !== undefined && (!["owner", "driver"].includes(refusal.source as string) || typeof refusal.message !== "string" || !refusal.message.trim())))
+    throw Error("Factory did not answer this Run's close.");
+  return value as RunCloseReceipt;
+}
+
+/** Whether a close leaves the Run's live production stopped: the owner moved
+ * the Run to Finished now, or reported it had already been Finished. */
+export const closeStopsLive = (receipt: RunCloseReceipt): boolean =>
+  receipt.status === "finished" || receipt.status === "already-finished";
+
+/** The Desk's state and words for a close. A refusal shows the owner's (or the
+ * driver's) own message verbatim and the Run keeps the state the owner gave. */
+export function closeWords(receipt: RunCloseReceipt): {state: RunState; line: string} {
+  if (receipt.status === "finished") return {state: "success", line: "Finished: the owner applied the close."};
+  if (receipt.status === "already-finished") return {state: "success", line: "Finished: the owner had already closed this Run."};
+  if (receipt.status === "next-unit-started") return {state: "running", line: "The next serial unit started; the Run stays open."};
+  // A driver refusal is the desk's own held move, shown in its words alone; an
+  // owner refusal is the owner's message, verbatim, after the source.
+  const message = receipt.refusal?.message ?? "no reason given";
+  const line = receipt.refusal?.source === "driver" ? message : `The owner refused the close: ${message}`;
+  return {state: runState(receipt.lifecycle ?? undefined), line};
+}
+
+/** Stop the Run's live production when its close leaves it Finished. A refused
+ * close leaves the production as it is. Returns whether it stopped the Run. */
+export function settleRunClose(receipt: RunCloseReceipt, runKey: string, stopLive: (runKey: string) => unknown): boolean {
+  if (!closeStopsLive(receipt)) return false;
+  void Promise.resolve(stopLive(runKey)).catch(() => undefined);
+  return true;
+}
