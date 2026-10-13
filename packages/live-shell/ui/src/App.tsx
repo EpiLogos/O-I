@@ -42,7 +42,10 @@ import type {CentralSubjectSelection} from './inhabitants/CentralSubjectDetail'
 import {NATIVE_PRESENT_EXPRESSIONS} from './native/openStudio'
 import {sameEditorBasis,type NativeEditorBasis,type NativeEditorController} from '@epilogos/expressions-boundary/editor'
 import './NativeCompositionResidence.css'
-const PALETTE = ['#79b6ce', '#779dcc', '#9885bc', '#8baf9c', '#b096b2', '#6caaa9']
+import {registerAtlasHost} from './projections/atlas/registerAtlasHost'
+import {presentAtlasView} from './projections/atlas/AtlasProjectionPanel'
+registerAtlasHost()
+const PALETTE =['#79b6ce', '#779dcc', '#9885bc', '#8baf9c', '#b096b2', '#6caaa9']
 export function App() {
   const frameRef = useRef<HTMLDivElement>(null)
   return <AgentShellProvider frameRef={frameRef}><AgentShellFrameInner frameRef={frameRef} /></AgentShellProvider>
@@ -381,12 +384,16 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
     </div>
     <div className="browser-residence" hidden={!browser || !agentShell}><AgentShellBrowser rows={agency.rows} error={agency.error} loading={agency.loading} /></div>
     {browser && <div className="browser-resizer" role="separator" aria-label="Resize browser" aria-orientation="vertical" tabIndex={0} onKeyDown={event => { if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {event.preventDefault(); resizeBrowser(Math.max(120, Math.min(viewport[0] - 320, (browserWidth ?? document.querySelector('.browser-residence:not([hidden]) .browser,.browser-residence:not([hidden]) .world-browser')?.getBoundingClientRect().width ?? 430) + (event.key === 'ArrowRight' ? 10 : -10))))} }} onPointerDown={event => event.currentTarget.setPointerCapture(event.pointerId)} onPointerMove={event => { if (event.currentTarget.hasPointerCapture(event.pointerId)) resizeBrowser(Math.max(120, Math.min(viewport[0] - 320, event.clientX))) }} />}
-    <main className="center"><div className={`center-body${nativeComposition && !settingsPresented ? ' native-composition-residence' : ''}${nativeEditorReturn&&centerPanel==='world.expressions'&&!settingsPresented?' native-editor-residence':''}`} data-lens-bar={frameMode === 'techne' && centerPanel === 'world.ground' && !settingsPresented ? 'true' : undefined}>
+    <main className="center"><div className={`center-body${nativeComposition && !settingsPresented ? ' native-composition-residence' : ''}${nativeEditorReturn&&centerPanel==='world.expressions'&&!settingsPresented?' native-editor-residence':''}`} data-lens-bar={frameMode === 'techne' && (centerPanel === 'world.ground' || centerPanel === 'projection.earth') && !settingsPresented ? 'true' : undefined}>
       {/* The Technē lens bar (Rev 3): its own axis above the centre — the
-        six lenses by their plain names; the landed ones drive the World
-        cut's two presentations, the rest hold their places, named. */}
-      {frameMode === 'techne' && centerPanel === 'world.ground' && !settingsPresented && <TechneLensBar presentation={presented ?? 'session'} onLens={lens => {
-        if (lens.state === 'cut') { presentSettings(false); setTab(lens.presentation); setCenterPanel('world.ground') }
+        six lenses by their plain names; the World cut's two presentations
+        and the Earth atlas's two views are the cut lenses, the rest hold
+        their places, named. */}
+      {frameMode === 'techne' && (centerPanel === 'world.ground' || centerPanel === 'projection.earth') && !settingsPresented && <TechneLensBar presentation={presented ?? 'session'} atlasOpen={centerPanel === 'projection.earth'} onLens={lens => {
+        if (lens.state !== 'cut') return
+        presentSettings(false)
+        if (lens.atlas) { presentAtlasView(lens.atlas); setCenterPanel('projection.earth'); return }
+        if (lens.presentation) { setTab(lens.presentation); setCenterPanel('world.ground') }
       }} />}
       {nativeEditorReturn&&centerPanel==='world.expressions'&&!settingsPresented&&<div className="native-editor-return"><span>{nativeEditorReturn.editor==='source'?'Source':nativeEditorReturn.editor==='layers'?'Layers':'State placement'}</span><button onClick={returnNativeEditor}>Return to {nativeEditorReturn.centerPanel==='native.arrangement'?'Arrangement':nativeEditorReturn.centerPanel==='native.session'?'Session':'Glyph editor'}</button></div>}
       {nativeComposition && !settingsPresented && nativeProjection.error && <div className="native-composition-fault" role="alert">{nativeProjection.error}</div>}

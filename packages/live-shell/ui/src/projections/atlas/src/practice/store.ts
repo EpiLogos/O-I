@@ -33,10 +33,17 @@ export function setPracticeStorage(storage: Storage | null): void {
 /** The host's personal store (was localStorage), with an in-memory fallback when storage is unavailable (the lens then says nothing will be kept). */
 export class LocalBackend implements PracticeBackend {
   private memory = new Map<Collection, unknown[]>();
-  readonly persistent: boolean;
 
-  constructor(private storage: Storage | null = LocalBackend.probe()) {
-    this.persistent = !!storage;
+  // [§8.4 host adaptation] the store follows the host's binding: the page's one store is built at import, before the
+  // host binds its personal store, so the default is probed on use, not at construction (an explicit store still wins).
+  constructor(private bound?: Storage | null) {}
+
+  private get storage(): Storage | null {
+    return this.bound !== undefined ? this.bound : LocalBackend.probe();
+  }
+
+  get persistent(): boolean {
+    return !!this.storage;
   }
 
   static probe(): Storage | null {

@@ -30,6 +30,7 @@ import {inhabitantManifest, type InhabitantManifest} from '../inhabitants/manife
 import {InhabitantRack} from '../inhabitants/inhabitantRack'
 import {CentralSubjectDetail, type CentralSubjectSelection} from '../inhabitants/CentralSubjectDetail'
 import {Icon, type IconName} from '../inhabitants/sdk/Icon'
+import {useAtlasView, type AtlasView} from '../projections/atlas/AtlasProjectionPanel'
 import {ChevronFold, PopOut} from '../inhabitants/sdk/marks.tsx'
 import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
 import type {WorldTimelineView} from '../projections/useWorldTemporalReading'
@@ -315,28 +316,44 @@ export function TechneClipDetail({world}: {world: WorldTimelineView | null}) {
 // The Technē lens bar (Revision 3: lens navigation is its own axis — never
 // the transport's, never the surf's).
 
-/** The six lenses by their plain actual names, with the declared mark each
- * would wear. `cut` lenses drive the landed World cut; `waiting` lenses hold
- * their places and name their owners. */
-const LENSES = [
-  {id: 'project-graph', name: 'Project / graph', mark: 'lib', state: 'waiting', owner: 'the graph owner (the constellation module)'},
-  {id: 'canvas', name: 'Canvas', mark: 'pane', state: 'waiting', owner: 'the canvas owner (the instrument-editors packet)'},
-  {id: 'timeline', name: 'Timeline', mark: 'arrangement', state: 'cut', presentation: 'arrangement' as const, owner: 'the World cut — the Timeline (M2′)'},
-  {id: 'journey', name: 'Journey', mark: 'journey', state: 'cut', presentation: 'session' as const, owner: 'the World cut — the Journey (M3′)'},
-  {id: 'places', name: 'Places', mark: 'placed', state: 'waiting', owner: 'the Places owner (the Atlas port)'},
-  {id: 'palace', name: 'Palace', mark: 'palace', state: 'waiting', owner: 'the Palace owner (the integral composition)'},
-] as const
+/** One lens: a `cut` opens the World cut's presentation (`presentation`) or the Earth atlas in one of its views (`atlas`);
+ * a `waiting` lens holds its place and names its owner. */
+export interface TechneLens {
+  id: string
+  name: string
+  mark: string
+  state: 'cut' | 'waiting'
+  presentation?: 'session' | 'arrangement'
+  atlas?: AtlasView
+  owner: string
+}
 
-export function TechneLensBar({presentation, onLens}: {
+/** The six lenses by their plain actual names, with the declared mark each would wear. */
+const LENSES: readonly TechneLens[] = [
+  {id: 'project-graph', name: 'Project / graph', mark: 'lib', state: 'cut', atlas: 'graph', owner: 'the Earth atlas — its Graph view (the constellation, lock §8.1)'},
+  {id: 'canvas', name: 'Canvas', mark: 'pane', state: 'waiting', owner: 'the canvas owner (the instrument-editors packet)'},
+  {id: 'timeline', name: 'Timeline', mark: 'arrangement', state: 'cut', presentation: 'arrangement', owner: 'the World cut — the Timeline (M2′)'},
+  {id: 'journey', name: 'Journey', mark: 'journey', state: 'cut', presentation: 'session', owner: 'the World cut — the Journey (M3′)'},
+  {id: 'places', name: 'Places', mark: 'placed', state: 'cut', atlas: 'earth', owner: 'the Earth atlas — the globe (Places, M4′)'},
+  {id: 'palace', name: 'Palace', mark: 'palace', state: 'waiting', owner: 'the Palace owner (the integral composition)'},
+]
+
+export function TechneLensBar({presentation, atlasOpen, onLens}: {
   presentation: 'session' | 'arrangement'
-  onLens: (lens: (typeof LENSES)[number]) => void
+  /** the Earth atlas is the open centre pane: the World cut's lenses are not pressed while it is */
+  atlasOpen: boolean
+  onLens: (lens: TechneLens) => void
 }) {
-  const focused = LENSES.find(lens => lens.state === 'cut' && lens.presentation === presentation)
+  const atlasView = useAtlasView()
+  const pressed = (lens: TechneLens) => lens.atlas
+    ? atlasOpen && atlasView === lens.atlas
+    : !atlasOpen && lens.presentation === presentation
+  const focused = LENSES.find(lens => lens.state === 'cut' && pressed(lens))
   return <nav className="techne-lens-bar" data-lens={focused?.id ?? null} aria-label="Technē lenses">
     <span className="techne-lens-title">Lenses</span>
     {LENSES.map(lens => (
       <button key={lens.id} type="button" className="techne-lens" data-lens-state={lens.state}
-        aria-pressed={lens.state === 'cut' && lens.presentation === presentation}
+        aria-pressed={lens.state === 'cut' && pressed(lens)}
         disabled={lens.state !== 'cut'}
         title={lens.state === 'cut'
           ? `${lens.name} — ${lens.owner}`

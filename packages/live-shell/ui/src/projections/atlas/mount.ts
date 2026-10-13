@@ -36,8 +36,11 @@ export { registerFixtureProvider, FIXTURE_PROVIDER_ID } from './provider/fixture
 export { setSkyProvider } from './provider/skyProvider';
 export type { CorpusBundle } from './provider/corpusProvider';
 
+// [§8.4 host] the atmosphere's custom properties land on the atlas pane (`.atlas-host`, where the atlas's tokens are
+// scoped), never on the document — the O:I shell owns the document. Falls back to the document root outside a host.
+let paletteHost: HTMLElement | null = null;
 function setPaletteVars(p: RGBPalette) {
-  const s = document.documentElement.style;
+  const s = (paletteHost ?? document.documentElement).style;
   const set = (k: string, c: [number, number, number]) => {
     s.setProperty(`--${k}`, rgbToHex(c));
     s.setProperty(`--${k}-rgb`, `${Math.round(c[0] * 255)} ${Math.round(c[1] * 255)} ${Math.round(c[2] * 255)}`);
@@ -73,6 +76,7 @@ export interface AtlasHandle {
  * boot's own messages when the bundle is missing or WebGL is unavailable. */
 export async function mountAtlas(options: AtlasMountOptions): Promise<AtlasHandle> {
   const { globe, app, loading } = options;
+  paletteHost = globe.closest<HTMLElement>('.atlas-host');
   try {
     // [C2-a1] the provider registry composes the boot bundle (was four fixed
     // fetches). History/symbols ride the bundle (a5/a4); a URL-shaped provider
