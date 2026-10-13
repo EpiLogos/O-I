@@ -1680,15 +1680,39 @@ mod update_flow_tests {
         git(root, &["rev-parse", "HEAD"])
     }
 
+    /// Write an executable fixture without exposing a half-written or still-open file at its
+    /// final name (write a sibling, set permissions, rename into place), then wait out the
+    /// transient ETXTBSY a loaded, parallel `cargo test` can raise when another thread's
+    /// fork briefly holds the write descriptor — the same discipline as the kernel's
+    /// `agent_card::write_executable_fixture`. Without it, the first exec of the fixture can
+    /// fail and a test reads a refusal it never meant to test.
     fn script_executable(path: &Path, body: &str) -> PathBuf {
         fs::create_dir_all(path.parent().unwrap()).unwrap();
-        fs::write(path, body).unwrap();
+        let staging = path.with_extension(format!("staging-{}", std::process::id()));
+        fs::write(&staging, body).unwrap();
         #[cfg(unix)]
         {
             use std::os::unix::fs::PermissionsExt;
-            let mut permissions = fs::metadata(path).unwrap().permissions();
+            let mut permissions = fs::metadata(&staging).unwrap().permissions();
             permissions.set_mode(0o755);
-            fs::set_permissions(path, permissions).unwrap();
+            fs::set_permissions(&staging, permissions).unwrap();
+        }
+        fs::rename(&staging, path).unwrap();
+        #[cfg(unix)]
+        for attempt in 0..50 {
+            match std::process::Command::new(path)
+                .stdin(std::process::Stdio::null())
+                .stdout(std::process::Stdio::null())
+                .stderr(std::process::Stdio::null())
+                .status()
+            {
+                Err(error)
+                    if error.kind() == std::io::ErrorKind::ExecutableFileBusy && attempt < 49 =>
+                {
+                    std::thread::sleep(std::time::Duration::from_millis(10));
+                }
+                _ => break,
+            }
         }
         path.to_path_buf()
     }
