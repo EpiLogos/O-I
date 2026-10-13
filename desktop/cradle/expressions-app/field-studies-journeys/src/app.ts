@@ -20,7 +20,7 @@ import {durationFromEdgeDrag,SCENE_DURATION_MIN,SCENE_DURATION_MAX,type Timeline
 import {entityTargets} from './nativeParameters';
 import {recordRecent,recentJourneys} from './recentWork';
 import {installPanelResize} from './panelResize';
-import {initialiseSceneSaves,sceneSaveState,saveScene,nextSceneFrom,restoreScene,savedSceneIndices,sceneParameterChanges} from './sceneWorkflow';
+import {initialiseSceneSaves,sceneSaveState,saveScene,nextSceneFrom,moveScene,retimeScene,removeScene,applyTimelineMove,restoreScene,savedSceneIndices,sceneParameterChanges} from './sceneWorkflow';
 import {advanceSceneTransport,nativeSceneTransportMaterial} from './sceneTransport';
 import {liveWorkspaceHTML} from './liveWorkspace';
 import {defaultWorkspace,validateWorkspace,WORKSPACE_KEY,moveBeltEntry,syncHeldState} from './workspacePreferences';
@@ -253,7 +253,7 @@ function renderTimeline(){if(!timelineOpen)return;const s=scene(),doc=timelineDo
   ?`<div class="scene-track" aria-label="Expression track"><div class="scene-track-ruler">${[0,.25,.5,.75,1].map(f=>`<span style="left:${f*100}%">${(f*layout.total).toFixed(f===1?1:0)}s</span>`).join('')}</div><div class="scene-track-lane">${scenes.map((v,i)=>sceneButton(v,i,` style="left:${layout.clips[i].x}%;width:${layout.clips[i].w}%"`)).join('')}<input class="scene-track-playhead" type="range" ${playhead}></div></div>`
   :`<div class="scene-strip">${scenes.map((v,i)=>sceneButton(v,i,'')).join('')}<button class="scene-image scene-add" data-action="save-next" aria-label="Save and add next scene">${icon('plus')}</button></div><label class="expression-scrub"><span>Expression time</span><input type="range" ${playhead}></label>`;
  const toggle=`<button data-action="timeline-track" aria-pressed="${track}" title="${track?'Show the scenes as a compact strip':'Show the scenes on the time track'}">${track?'Collapse to strip':'Show track'}</button>`;
- $('timeline-panel').innerHTML=`${body}<div class="scene-save-row"><label>Scene name<input id="scene-save-name" value="${esc(sceneNames.get(s.id)??s.name)}" maxlength="160"></label><label>Hold · seconds<input type="number" data-bind="duration" value="${sceneTrim?.moved&&sceneTrim.sceneId===s.id?sceneTrim.duration:s.duration}" min="${SCENE_DURATION_MIN}" max="${SCENE_DURATION_MAX}" step=".1"></label><label>Transition<input type="number" aria-label="Transition seconds" data-bind="transition" value="${s.transition}" min="0" max="30" step=".1"></label><button class="primary" data-action="save-scene">Save scene</button><button data-action="save-next">Save & next</button><button data-action="restore-scene" ${!store.document.savedScenes?.[s.id]?'disabled':''}>Restore</button>${ib('move-scene-left','arrowLeft','Move scene earlier',`data-index="${sceneIndex}"`)}${ib('move-scene-right','arrowRight','Move scene later',`data-index="${sceneIndex}"`)}${ib('delete-scene','trash','Delete scene',`data-index="${sceneIndex}"`)}${toggle}${ib('close-timeline','chevronDown','Collapse scenes')}</div><p class="scene-caption">${sceneSaveState(store.document,s)} · ${s.propertyTracks?.length??0} recorded properties · Scrubbing evaluates settings; particle motion continues from its current state.</p>`;}
+ $('timeline-panel').innerHTML=`${body}<div class="scene-save-row"><label>Scene name<input id="scene-save-name" value="${esc(sceneNames.get(s.id)??s.name)}" maxlength="160"></label><label>Hold · seconds<input type="number" data-bind="duration" value="${sceneTrim?.moved&&sceneTrim.sceneId===s.id?sceneTrim.duration:s.duration}" min="${SCENE_DURATION_MIN}" max="${SCENE_DURATION_MAX}" step=".1"></label><label>Transition<input type="number" aria-label="Transition seconds" data-bind="transition" value="${s.transition}" min="0" max="30" step=".1"></label><button class="primary" data-action="save-scene">Save scene</button><button data-action="save-next">Save & next</button><button data-action="restore-scene" ${!store.document.savedScenes?.[s.id]?'disabled':''}>Restore</button>${ib('move-scene-left','arrowLeft','Move scene earlier',`data-scene-id="${esc(s.id)}"`)}${ib('move-scene-right','arrowRight','Move scene later',`data-scene-id="${esc(s.id)}"`)}${ib('delete-scene','trash','Delete scene',`data-scene-id="${esc(s.id)}"`)}${toggle}${ib('close-timeline','chevronDown','Collapse scenes')}</div><p class="scene-caption">${sceneSaveState(store.document,s)} · ${s.propertyTracks?.length??0} recorded properties · Scrubbing evaluates settings; particle motion continues from its current state.</p>`;}
 // E05 · trim: a clip's right edge changes that scene's duration. The drag previews
 // on the timeline only: timelineDocument() reads a shallow copy with the one new
 // duration, so the layout still runs on the single Expression clock. Pointer-up
@@ -305,7 +305,7 @@ function endSceneTrim(commit:boolean){
  trimClickGuardUntil=performance.now()+400;
  try{
   if(target===scene()&&sceneElapsed>t.duration)sceneElapsed=t.duration;
-  changed(()=>{target.duration=t.duration;},true,`Trim scene ${target.name}`);
+  changed(()=>{retimeScene(store.document,t.sceneId,{duration:t.duration});},true,`Trim scene ${target.name}`);
  }catch(err){error(err);}
 }
 function upSceneTrim(){endSceneTrim(true);}
@@ -449,6 +449,8 @@ function refitFormationsForFont(prev:FontRef,next:FontRef){
  const s=scene();if(s.engine.autoFitSizes===false)return;
  for(const fe of s.entities)if(fe.kind==='formation'&&!fe.locked)refitFormationForFont(fe,prev,next);
 }
+/** The Hold and Transition inputs of the timeline panel set the scene's own timeline facts; they are named as such in Undo. */
+function sceneTimingLabel(path:string):string|undefined{return path==='duration'?'Hold':path==='transition'?'Transition':undefined;}
 function applyBinding(el:HTMLInputElement|HTMLSelectElement|HTMLTextAreaElement,continuous=false){
  if(el.dataset.cancelCommit)return;trackPreview=false;if(journeyPlaying){journeyPlaying=false;applySceneView();}const path=el.dataset.bind;if(!path)return;const subjectId=el.closest<HTMLElement>('[data-entity-id]')?.dataset.entityId;const subject=subjectId?scene().entities.find(e=>e.id===subjectId):selectedEntity();if(subjectId&&path.startsWith('step.'))selected=[subjectId];const {root,keys}=path.startsWith('entity.')?{root:subject,keys:path.slice(7).split('.')}:path.startsWith('step.')?{root:subject?.sequence.steps[stepIndex],keys:path.slice(5).split('.')}:pathTarget(path);if(!root||keys.some(k=>['__proto__','constructor','prototype'].includes(k)))return;
  if(subject&&blueprintMember(scene(),subject.id)&&(path.startsWith('entity.position')||path.startsWith('step.position'))){toast('Use Blueprint to move the whole shape, or release it to edit individual positions.');renderInspector();return;}
@@ -464,7 +466,7 @@ function applyBinding(el:HTMLInputElement|HTMLSelectElement|HTMLTextAreaElement,
  if(path==='entity.station')value=value==='none'?null:Number(value);
  if(path==='entity.text'||path==='step.text')value=value.trim()||'O';
  if(el instanceof HTMLInputElement&&el.type==='color'&&!/^#[\da-f]{6}$/i.test(String(value)))return;
- if(path.startsWith('lane.')&&key==='syncWith'){changed(()=>linkAutomation(scene().automation,root.id,String(value)),true,'Link automation');return;}store.begin(bindingEditLabel(PARAMETERS.find(p=>p.bind===path)?.label));store.touch();const fieldBinding=NATIVE_BINDINGS.find(b=>b.bind===path);const automationPath=fieldBinding?'field.'+fieldBinding.key:path.startsWith('field.params.')?'field.'+path.slice(13):path.startsWith('entity.')?entityTargets(scene()).find(t=>t.entityId===subject?.id&&t.bind===path)?.target:undefined;const evaluated=engine.telemetry?.();const previous=Number(el.dataset.liveEditValue??liveValue(scene(),path,subject?.id,evaluated?.params??scene().field.params,evaluated?.config)??el.dataset.originalValue);const shifted=!isShared(store.document,scene(),path)&&automationPath&&Number.isFinite(previous)&&offsetAutomatedTarget(scene().automation,automationPath,Number(value)-previous);if(shifted)el.dataset.liveEditValue=String(value);else if(!writeShared(store.document,scene(),path,value))target[key]=value;if(subject&&path.startsWith('entity.')&&!shifted)transformObjectStates(subject,path,priorValue,value);el.dataset.originalValue=el.value;if(path==='field.params.native_composition__orchestration__focusTintWeight'&&Number(value)>0)scene().composition.carryTint=true;
+ if(path.startsWith('lane.')&&key==='syncWith'){changed(()=>linkAutomation(scene().automation,root.id,String(value)),true,'Link automation');return;}store.begin(bindingEditLabel(sceneTimingLabel(path)??PARAMETERS.find(p=>p.bind===path)?.label));store.touch();const fieldBinding=NATIVE_BINDINGS.find(b=>b.bind===path);const automationPath=fieldBinding?'field.'+fieldBinding.key:path.startsWith('field.params.')?'field.'+path.slice(13):path.startsWith('entity.')?entityTargets(scene()).find(t=>t.entityId===subject?.id&&t.bind===path)?.target:undefined;const evaluated=engine.telemetry?.();const previous=Number(el.dataset.liveEditValue??liveValue(scene(),path,subject?.id,evaluated?.params??scene().field.params,evaluated?.config)??el.dataset.originalValue);const shifted=!isShared(store.document,scene(),path)&&automationPath&&Number.isFinite(previous)&&offsetAutomatedTarget(scene().automation,automationPath,Number(value)-previous);if(shifted)el.dataset.liveEditValue=String(value);else if(path==='duration'||path==='transition')retimeScene(store.document,scene().id,path==='duration'?{duration:value}:{transition:value});else if(!writeShared(store.document,scene(),path,value))target[key]=value;if(subject&&path.startsWith('entity.')&&!shifted)transformObjectStates(subject,path,priorValue,value);el.dataset.originalValue=el.value;if(path==='field.params.native_composition__orchestration__focusTintWeight'&&Number(value)>0)scene().composition.carryTint=true;
  // Text inputs commit once per editing session (change/Enter/focusout), so the pre-write value is the session-start snapshot the refit measures against.
  if((path==='step.shape'||path==='step.text')&&subject)useStateShape(subject,stepIndex);
  if(path==='step.text'&&subject){setStateSource(subject,stepIndex,undefined);if(scene().engine.autoFitSizes!==false)refitStepForText(subject,stepIndex,String(priorValue??''),value,{fontFamily:scene().engine.fontFamily,fontWeight:scene().engine.fontWeight});}
@@ -583,7 +585,8 @@ function addLane(target='field.dispersion',syncWith?:string){if(!target.startsWi
  changed(()=>{scene().automation.push({id:newId,...(syncWith?{syncWith}:{}),enabled:true,target,type:'lfo',wave:'sine',min:low,max:high,rate:.08,phase:0,blend:'replace',duration:4,delay:0,loop:'once',firedAt:null});if(target==='field.frequency')scene().composition.frequencyDriver='automation';},true,'Add automation lane');}
 function duplicateEntity(){const list=scene().entities.filter(e=>selected.includes(e.id));if(!list.length)return;changed(()=>{selected=list.map(e=>{const n=clone(e);n.id=uid('entity');n.name+=' copy';n.position.x+=.12;n.position.y-=.12;n.locked=false;n.sequence.steps.forEach(k=>k.id=uid('step'));scene().entities.push(n);return n.id;});},true,'Duplicate objects');}
 function deleteEntities(){if(selected.some(id=>blueprintMember(scene(),id))){toast('Release the blueprint before removing one of its members.');return;}const ids=selected.filter(id=>!scene().entities.find(e=>e.id===id)?.locked);if(!ids.length){toast('Unlock a selected entity before removing it.');return;}let prunedLanes=false;changed(()=>{scene().entities=scene().entities.filter(e=>!ids.includes(e.id));selected=[];prunedLanes=pruneAutomation(scene());},true,'Delete objects');toast('Removed. Undo restores the configuration.'+(prunedLanes?' Its automation lanes without a remaining target were removed with it.':''));}
-function reorderScene(from:number,to:number){if(to<0||to>=store.document.scenes.length)return;const currentId=scene().id;changed(()=>{const [item]=store.document.scenes.splice(from,1);store.document.scenes.splice(to,0,item);sceneIndex=store.document.scenes.findIndex(s=>s.id===currentId);},true,'Reorder scenes');}
+/** E02b/E03: a scene is moved by its ref; the guarded model op refuses any move that would change a Scene's content. */
+function reorderScene(sceneId:string,to:number){if(to<0||to>=store.document.scenes.length)return;const currentId=scene().id;changed(()=>{moveScene(store.document,sceneId,to);sceneIndex=store.document.scenes.findIndex(s=>s.id===currentId);},true,'Reorder scenes');}
 async function action(name:string,el:HTMLElement,event?:Event){const s=scene(),subjectId=el.closest<HTMLElement>('[data-entity-id]')?.dataset.entityId,e=subjectId?s.entities.find(v=>v.id===subjectId):selectedEntity();if(e&&el.closest('.live-sequence'))selected=[e.id];switch(name){
  case 'record-properties':if(propertyTake){finishPropertyTake();break;}else{const tracks=recordableTracks();if(!tracks.length){toast('Add local numeric properties to the toolbelt. Shared overrides must be made local before recording.');break;}const previous=s.propertyTakeRange??takeWindows.get(s.id),start=appendTake?(previous?.end??sceneElapsed):(previous?.start??sceneElapsed);if(start>=3600){toast('This scene has reached its one-hour duration limit.');break;}journeyPlaying=false;trackPreview=false;fieldPaused=false;propertyTake={sceneId:s.id,armed:performance.now()+2000,start,elapsed:0,tracks,lastSample:-1,limit:!appendTake&&previous?previous.end-previous.start:undefined};renderAll();}break;
  case 'take-mode':appendTake=!appendTake;renderAll();break;
@@ -730,11 +733,11 @@ case 'timeline-track':timelineTrack=!timelineTrack;renderAll();break;
  case 'entry-open-native':closeEntryGate();openLibrary('collection');break;
  case 'entry-starter-mark':await loadJourney(forkExpression(oiMark()));edit(true,'scene');closeEntryGate();break;
  case 'entry-dismiss':closeEntryGate();break;
- case 'new-scene':changed(()=>{store.document.scenes.splice(sceneIndex+1,0,blankScene());sceneIndex++;selected=[];textId=scene().text[0]?.id??null;sceneElapsed=0;journeyPlaying=false;},true,'Add scene');edit(true,'scene');timelineOpen=true;renderAll();break;
- case 'duplicate-scene':{const idx=Number(el.dataset.index??sceneIndex);changed(()=>{const n=clone(store.document.scenes[idx]);n.id=uid('scene');n.name+=' / variation';store.document.scenes.splice(idx+1,0,n);sceneIndex=idx+1;sceneElapsed=0;journeyPlaying=false;},true,'Duplicate scene');break;}
- case 'delete-scene':{if(store.document.scenes.length===1){toast('Keep at least one scene in the expression.');break;}const idx=Number(el.dataset.index);confirmChange('Remove this scene?',`“${store.document.scenes[idx].name}” will be removed from this expression. Undo can restore it.`,()=>changed(()=>{delete store.document.savedScenes?.[store.document.scenes[idx].id];store.document.scenes.splice(idx,1);if(sceneIndex>=idx)sceneIndex=Math.max(0,sceneIndex-1);sceneElapsed=0;},true,'Delete scene'));break;}
- case 'move-scene-left':reorderScene(Number(el.dataset.index),Number(el.dataset.index)-1);break;
- case 'move-scene-right':reorderScene(Number(el.dataset.index),Number(el.dataset.index)+1);break;
+ case 'new-scene':changed(()=>{const fresh=blankScene();applyTimelineMove(store.document,scenes=>{scenes.splice(sceneIndex+1,0,fresh);});sceneIndex++;selected=[];textId=scene().text[0]?.id??null;sceneElapsed=0;journeyPlaying=false;},true,'Add scene');edit(true,'scene');timelineOpen=true;renderAll();break;
+ case 'duplicate-scene':{const id=el.dataset.sceneId??scene().id;changed(()=>{const source=store.document.scenes[sceneIndexOf(id)];const next=nextSceneFrom(store.document,source);next.name=(source.name+' / variation').slice(0,160);sceneIndex=store.document.scenes.indexOf(next);sceneElapsed=0;journeyPlaying=false;},true,'Duplicate scene');break;}
+ case 'delete-scene':{const id=el.dataset.sceneId??'';if(store.document.scenes.length===1){toast('Keep at least one scene in the expression.');break;}const name=store.document.scenes[sceneIndexOf(id)].name;confirmChange('Remove this scene?',`“${name}” will be removed from this expression. Undo can restore it.`,()=>changed(()=>{const at=sceneIndexOf(id);removeScene(store.document,id);if(sceneIndex>=at)sceneIndex=Math.max(0,sceneIndex-1);sceneElapsed=0;},true,'Delete scene'));break;}
+ case 'move-scene-left':{const id=el.dataset.sceneId??'';reorderScene(id,sceneIndexOf(id)-1);break;}
+ case 'move-scene-right':{const id=el.dataset.sceneId??'';reorderScene(id,sceneIndexOf(id)+1);break;}
  case 'journey-settings':openLibrary();break;
  case 'material':changed(()=>{s.field.material=el.dataset.value as Scene['field']['material'];},true,'Set scene material');break;
  case 'select-entity':selectEntity(el.dataset.id!,event instanceof MouseEvent&&event.shiftKey);break;
@@ -880,13 +883,14 @@ $<HTMLInputElement>('source-file').addEventListener('change',async ev=>{const in
  }catch(err){error(err);}finally{input.value='';sourceUploadEntityId=null;}});
 $<HTMLInputElement>('import-file').addEventListener('change',async ev=>{const input=ev.target as HTMLInputElement,file=input.files?.[0];if(!file)return;try{if(file.size>32_000_000)throw new Error('Choose a configuration smaller than 32 MB.');const result=importDocuments(JSON.parse(await file.text()));collectImported(result.journeys);if(!libraryOpen)openLibrary();else renderLibrary();toast(`${result.journeys.length} document(s) imported. ${result.errors.length?result.errors.map(e=>`Entry ${e.index+1}: ${e.message}`).join(' · '):'All accepted; original input is unchanged.'}`,10000);}catch(err){error(err);}finally{input.value='';}});
 document.querySelectorAll<HTMLDialogElement>('dialog').forEach(d=>d.addEventListener('click',ev=>{if(ev.target!==d)return;const r=d.getBoundingClientRect();if(ev.clientX<r.left||ev.clientX>r.right||ev.clientY<r.top||ev.clientY>r.bottom)d.close();}));
-let sceneDragIndex=-1;
+/** The Scene ref being dragged; a drop reorders by ref, never by the index the card stood at. */
+let sceneDragId='';
 // E05: the trim edge is delegated on the panel, which survives the re-renders a drag causes.
 $('timeline-panel').addEventListener('pointerdown',ev=>{const handle=(ev.target as Element).closest<HTMLElement>('.scene-trim-edge');if(handle&&ev.button===0)beginSceneTrim(ev,handle);});
 $('timeline-panel').addEventListener('dblclick',ev=>{const handle=(ev.target as Element).closest<HTMLElement>('.scene-trim-edge');if(handle){ev.preventDefault();openExactDuration(handle.dataset.sceneId??'');}});
-$('timeline-panel').addEventListener('dragstart',ev=>{const card=(ev.target as Element).closest<HTMLElement>('[data-scene-index]');if(!editing||!card)return;sceneDragIndex=Number(card.dataset.sceneIndex);ev.dataTransfer?.setData('text/plain',String(sceneDragIndex));if(ev.dataTransfer)ev.dataTransfer.effectAllowed='move';});
-$('timeline-panel').addEventListener('dragover',ev=>{if(editing&&(ev.target as Element).closest('[data-scene-index]'))ev.preventDefault();});
-$('timeline-panel').addEventListener('drop',ev=>{const card=(ev.target as Element).closest<HTMLElement>('[data-scene-index]');if(card&&sceneDragIndex>=0){ev.preventDefault();reorderScene(sceneDragIndex,Number(card.dataset.sceneIndex));sceneDragIndex=-1;}});
+$('timeline-panel').addEventListener('dragstart',ev=>{const card=(ev.target as Element).closest<HTMLElement>('[data-scene-id]');if(!editing||!card)return;sceneDragId=card.dataset.sceneId??'';ev.dataTransfer?.setData('text/plain',sceneDragId);if(ev.dataTransfer)ev.dataTransfer.effectAllowed='move';});
+$('timeline-panel').addEventListener('dragover',ev=>{if(editing&&sceneDragId&&(ev.target as Element).closest('[data-scene-id]'))ev.preventDefault();});
+$('timeline-panel').addEventListener('drop',ev=>{const card=(ev.target as Element).closest<HTMLElement>('[data-scene-id]');if(card&&sceneDragId){ev.preventDefault();const to=store.document.scenes.findIndex(s=>s.id===card.dataset.sceneId);reorderScene(sceneDragId,to);sceneDragId='';}});
 function hitEntity(x:number,y:number){if(engine.hitEntity){const id=engine.hitEntity(x,y);return scene().entities.find(e=>e.id===id);}let winner:Entity|undefined,best=25;for(const e of [...scene().entities].reverse()){const p=project(e.position,camera,width,height),d=Math.hypot(x-p.x,y-p.y);if(d<best){best=d;winner=e;}}return winner;}
 function positionAt(ev:PointerEvent,plane=camera.plane,depth=camera.depth){return unproject(ev.clientX,ev.clientY,camera,width,height,plane,depth);}
 function showCoordinates(v:Vec3){const number=(n:number)=>(Math.abs(n)<.0005?0:n).toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3,signDisplay:'always',useGrouping:false});
@@ -1275,7 +1279,7 @@ const retainedEditor=createRetainedNativeEditor({
  store,sceneId:()=>scene().id,nativeView:()=>nativeWorkspace?.nativeView(),
  selection:()=>({entity_ids:[...selected],step_id:scene().entities.find(e=>e.id===selected[0])?.sequence.steps[stepIndex]?.id??null}),
  nativeSelect:async(sceneId,entityId)=>await nativeWorkspace!.select(sceneId,entityId),
- commit:async()=>await nativeWorkspace?.commit(),change:mutate=>changed(mutate,true,'Apply native edit'),
+ commit:async()=>await commitNativeRecorded(),change:(label,mutate)=>changed(mutate,true,label),
  afterHistory:()=>{applySceneView();markSaved();overlayDirty=true;needsFrame=true;renderAll();},
  selectLocal:(entityId,index)=>{selected=entityId===null?[]:[entityId];stepIndex=index;overlayDirty=true;needsFrame=true;renderAll();},
  openEditor:(editor,entityId,index)=>{
@@ -1362,7 +1366,7 @@ async function selectSourceState(el:HTMLSelectElement){
 }
 const materialEditor=createNativeMaterialController({
  reading:retainedEditor.read,journey:()=>store.document,nativeView:()=>nativeWorkspace?.nativeView(),
- flush:async()=>{if(!await nativeWorkspace?.commit())throw Error(nativeState?.text??'The native material destination could not be committed');},
+ flush:async()=>{if(!await commitNativeRecorded())throw Error(nativeState?.text??'The native material destination could not be committed');},
  expressionRequest:nativeExpressionRequest,worldRequest:request=>worldRequest({...request}),
  advance:basis=>{
   if(!sameEditorBasis(retainedEditor.read().basis,basis))return Promise.resolve(false);
@@ -1407,7 +1411,7 @@ document.body.append(researchInspector);
 /** Native world-position pin for a view occurrence (read from the native document). */
 function pinnedOccurrence(sceneId:string,viewEntityId:string):boolean{const view=nativeWorkspace?.nativeView(),occurrence=view?.bindings[sceneId]?.occurrences.find(o=>o.view_entity_id===viewEntityId);return !!(occurrence&&(view!.document.entities[occurrence.entity_ref] as {pinned?:boolean}|undefined)?.pinned);}
 function researchScene(id:string){const value=store.document.scenes.find(item=>item.id===id);if(!value||value.id!==scene().id)throw new Error('The active Scene changed; return to that Scene before editing.');return value;}
-async function commitResearch(){if(!await nativeWorkspace?.commit())throw new Error('The native owner did not acknowledge this edit. Your working draft is retained.');}
+async function commitResearch(){if(!await commitNativeRecorded())throw new Error('The native owner did not acknowledge this edit. Your working draft is retained.');}
 function ownResearchConnection(ref:string){const value=nativeWorkspace?.nativeView()?.document.relations?.[ref];if(!value||value.native_owner!=='oi')throw new Error('Source relations must be changed through their source owner.');return value;}
 function connectionKind(kind:string){if(!kind.trim()||kind.length>120)throw new Error('Choose a connection type of 1–120 characters.');return encodeURIComponent(kind.trim());}
 function assertConnectionMembers(sceneId:string,source:string,target:string){researchScene(sceneId);const members=nativeWorkspace?.nativeView()?.bindings[sceneId]?.member_refs;if(!members?.includes(source)||!members.includes(target))throw new Error('Both connection endpoints must belong to the current native Scene.');}
@@ -1516,6 +1520,13 @@ async function saveNative(){
   return;
  }
  deletedLibraryIds.delete(store.document.id);saveToLibrary(store.document);if(libraryOpen)renderLibrary();toast('Saved in this browser.');
+}
+/** E15d: a host commit, flush or research commit is a Save too. It records its checkpoint on the step it began from, as saveNative does. */
+async function commitNativeRecorded():Promise<boolean|undefined>{
+ if(!nativeWorkspace)return undefined;
+ const anchor=store.kernelSaveAnchor(),saved=await nativeWorkspace.commitRecorded();
+ if(saved)store.attachKernelCheckpoint(anchor,saved.checkpoint);
+ return !!saved;
 }
 /** One Undo or Redo step. A step that crosses a recorded Save replays that Save's
  * kernel edit through its native owner first, and the local step follows only when

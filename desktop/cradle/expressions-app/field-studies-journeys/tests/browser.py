@@ -83,7 +83,7 @@ try:
     check('Scene framing is stored and restored deliberately',lambda:require(savedview['mode']=='3d' and state(p)['camera']['mode']=='3d'))
     act(p,'open-timeline') if p.locator('[data-action="open-timeline"]').is_visible() else act(p,'timeline')
     screenshot(p,'journey-editor.png')
-    n=len(doc(p)['scenes']);act(p,'duplicate-scene','[data-index="0"]');check('Duplicate scene makes a separately named full state',lambda:require(len(doc(p)['scenes'])==n+1 and current(p)['name'].endswith('variation')))
+    n=len(doc(p)['scenes']);act(p,'duplicate-scene',f'[data-scene-id="{doc(p)["scenes"][0]["id"]}"]');check('Duplicate scene makes a separately named full state',lambda:require(len(doc(p)['scenes'])==n+1 and current(p)['name'].endswith('variation')))
     act(p,'undo');check('Undo duplicate restores the scene list',lambda:require(len(doc(p)['scenes'])==n))
     # Capabilities are honest.
     act(p,'tab','[data-value="field"]');p.locator('details[data-detail="Continuous resonance"] summary').click()
