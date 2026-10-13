@@ -51,6 +51,10 @@ export const CAPABILITY_HOMES: readonly CapabilityHome[] = [
   {ref: 'cap.software-factory.agent-agency-contract', family: SOFTWARE_FACTORY, semantic: "the Agent device's custody (agent-custody)"},
   {ref: 'cap.suite.workcell-placement-intent', family: WORKCELL, semantic: "the Factory World device's placement (seat)"},
   {ref: 'cap.suite.explicit-co-internality', family: ACTUATION, semantic: 'the agency ontology (gateway → agent chain)'},
+  // the landed refs without a family scope (`devices:gaps --all`; lead, 13 Oct 2026, T-CAPABILITY-HOMES-LANDED)
+  {ref: 'cap.suite.suite-skills-composition', family: AI_KIT, semantic: 'the Skillset rack (suite SkillSets as chains)'},
+  {ref: 'cap.suite.authored-relation-surface', family: CENTRAL, semantic: 'the Text document device over the Wiki category (authored wikilinks)'},
+  {ref: 'cap.suite.git-provider', family: WORKCELL, semantic: 'the Git device (git-seat): the repository facts as readings'},
 ]
 
 /** Shell-homed capabilities: ref → the shell surface it is. No device. */
@@ -65,6 +69,18 @@ export const SHELL_CAPABILITIES: Readonly<Record<string, string>> = {
   'cap.o-i.cradle-verification': "the shell's verification harness",
   'cap.o-i.desktop-embodiment': 'the native window (embodiment)',
   'cap.o-i.desktop-surface-host': 'the shell surface host',
+  // landed refs (T-CAPABILITY-HOMES-LANDED): the Link semantic — the shared field (lock §1, §3)
+  'cap.suite.shared-field-grammar': 'the shared field (Link): identity, participant, projection, presence',
+  'cap.suite.shared-field-projection-contract': 'the shared field (Link): projection and participation contract',
+  'cap.o-i.shared-field-front-door': 'the shared field (Link): the front door a player projects through',
+  'cap.suite.research-commons': 'the shared field (Link): the research commons',
+  // the World as the shell reads it (status bar run context, Info view, the neutral door)
+  'cap.suite.existing-world-adoption': 'the status bar run context: the World as adopted',
+  'cap.o-i.inhabitation-reading': 'the status bar run context: which World, constituted how',
+  'cap.suite.explain-chain': 'the Info view: provenance explained in place',
+  'cap.suite.composable-agentic-freedom': 'the neutral door: Browser → chain admission, staged and observed',
+  'cap.o-i.omarchy-integration': 'the native window (embodiment) on an Omarchy host',
+  'cap.suite.physical-reference-world': "the shell's verification harness (the reference-world acceptance)",
 }
 
 /** Declare each family's homes as one additive extension per family:
