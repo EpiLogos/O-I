@@ -99,3 +99,17 @@ test('a resource is classified before it is copied: inline, same origin, or cros
  assert.equal(api.resourceKind('/fonts/inter.woff2',origin),'same-origin');
  assert.equal(api.resourceKind('https://cdn.example/font.woff2',origin),'cross-origin');
 });
+
+test('lane-1 B3: the paper is the stage’s own opaque background, read from the flow up; transparent layers are skipped', () => {
+  for (const colour of ['transparent', 'rgba(0, 0, 0, 0)', 'rgba(12,34,56,0)', 'rgb(1 2 3 / 0)', 'rgb(1 2 3 / 0%)']) assert.equal(api.isTransparent(colour), true, colour);
+  for (const colour of ['rgb(250, 249, 245)', 'rgba(20, 20, 20, 1)', 'rgba(20,20,20,0.5)', 'rgb(1 2 3 / 50%)']) assert.equal(api.isTransparent(colour), false, colour);
+  const styles = new Map();
+  const node = (bg, parent = null) => { const el = {parentElement: parent}; styles.set(el, bg); return el; };
+  const page = node('rgb(18, 18, 20)'), pane = node('rgba(0, 0, 0, 0)', page), flow = node('transparent', pane);
+  const previous = globalThis.getComputedStyle;
+  globalThis.getComputedStyle = el => ({backgroundColor: styles.get(el)});
+  try {
+    assert.equal(api.stagePaper(flow), 'rgb(18, 18, 20)', 'a dark theme exports on its dark paper');
+    assert.equal(api.stagePaper(node('transparent')), '#ffffff', 'white only when nothing paints');
+  } finally { globalThis.getComputedStyle = previous; }
+});
