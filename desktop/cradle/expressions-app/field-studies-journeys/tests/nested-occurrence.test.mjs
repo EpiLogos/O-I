@@ -90,7 +90,7 @@ test('the placement and the bridge agree: a body the app places reads ready in t
 
 // ——— playback (E14): host time -> nested time, clipping, the depth gate and the live verdict ———
 const READY={subject_ref:SUB,max_depth:1,state:'ready',depth:1,members:0};
-const nestsDoc=(ref,child)=>({expression_ref:ref,entities:{},scenes:[{scene_ref:ref+':scene:main',entity_refs:[],body:{carrier:'expression_ref',subject_ref:child,reading:{ref:child,revision:'1',availability:'available'},recursion:{host_expression_ref:ref,max_depth:1}}}]});
+const nestsDoc=(ref,child)=>({expression_ref:ref,revision:1,entities:{},scenes:[{scene_ref:ref+':scene:main',entity_refs:[],body:{carrier:'expression_ref',subject_ref:child,reading:{ref:child,revision:'1',availability:'available'},recursion:{host_expression_ref:ref,max_depth:1}}}]});
 
 test('host time maps onto the nested Expression exactly as the journey clock maps it (sceneAtJourneyTime)', () => {
  const durations=[2,0,1.5,3],total=6.5;
@@ -139,25 +139,35 @@ test('an unread document is an honest notice, never a guess; a refused occurrenc
 test('the read plan never reads a document deeper than the placement bound', () => {
  const A='expression:a',B='expression:b',C='expression:c';
  const g=new Map([[A,nestsDoc(A,B)]]);
- const req=new Map([[A,'rev:7']]);
- const root={ref:A,key:'rev:7'};
- assert.deepEqual(nested.nestedReadPlan(g,req,root,1),[],'bound 1: B would be level 2, so it is not read');
- assert.deepEqual(nested.nestedReadPlan(g,req,root,2),[{ref:B,key:'rev:1'}],'bound 2 reads B under the key its body records');
- g.set(B,nestsDoc(B,C));req.set(B,'rev:1');
- assert.deepEqual(nested.nestedReadPlan(g,req,root,2),[],'bound 2 never reads C (level 3)');
- assert.deepEqual(nested.nestedReadPlan(g,req,root,3),[{ref:C,key:'rev:1'}],'bound 3 reads C');
- assert.deepEqual(nested.nestedReadPlan(new Map(),new Map(),root,4),[root],'an empty graph asks for the subject first');
- assert.deepEqual(nested.nestedReadPlan(new Map(),new Map(),root,4,new Set([A])),[],'a document that failed to read is not retried in the same pass');
+ const listed=new Map([[A,1],[B,1],[C,1]]);
+ assert.deepEqual(nested.nestedReadPlan(g,listed,A,1),[],'bound 1: B would be level 2, so it is not read');
+ assert.deepEqual(nested.nestedReadPlan(g,listed,A,2),[B],'bound 2: B is missing and is asked for');
+ g.set(B,nestsDoc(B,C));
+ assert.deepEqual(nested.nestedReadPlan(g,listed,A,2),[],'bound 2 never reads C (level 3)');
+ assert.deepEqual(nested.nestedReadPlan(g,listed,A,3),[C],'bound 3 reads C');
+ assert.deepEqual(nested.nestedReadPlan(new Map(),listed,A,4),[A],'an empty graph asks for the subject first');
 });
-
-test('a document is current only under the key its occurrence requests it by; a moved recorded revision reads again', () => {
+test('a document is current only at the revision the library lists it at; a stale one is asked for, and keeps playing until then', () => {
  const A='expression:a',B='expression:b';
- const g=new Map([[A,nestsDoc(A,B)],[B,savedDoc(B,1)]]);
- const req=new Map([[A,'rev:7'],[B,'rev:0']]);
- assert.deepEqual(nested.nestedReadPlan(g,req,{ref:A,key:'rev:7'},2),[{ref:B,key:'rev:1'}],'B was requested under an older revision: read again');
- req.set(B,'rev:1');
- assert.deepEqual(nested.nestedReadPlan(g,req,{ref:A,key:'rev:7'},2),[],'B is current under its recorded revision: kept');
- assert.deepEqual(nested.nestedReadPlan(g,req,{ref:A,key:'rev:9'},2),[{ref:A,key:'rev:9'}],'a moved revision of the subject reads the subject again');
+ const g=new Map([[A,nestsDoc(A,B)],[B,nestsDoc(B,'expression:c')]]);
+ assert.deepEqual(nested.nestedReadPlan(g,new Map([[A,2],[B,1]]),A,1),[A],'A moved to revision 2: the root is asked for');
+ assert.deepEqual(nested.nestedReadPlan(g,new Map([[A,1],[B,2]]),A,2),[B],'B moved: it is asked for, and A still names it at the bound');
+ assert.deepEqual(nested.nestedReadPlan(g,new Map([[A,2],[B,1]]),A,2,ref=>ref!==A),[],'a stale A held back by its wait still names its Scenes: B is current, so nothing new is asked');
+ assert.deepEqual(nested.nestedReadPlan(g,new Map([[A,1],[B,1]]),A,2),[],'both current: nothing is asked for');
+});
+test('a missing document is held back by its wait; the wait grows 1 s, 2 s, 4 s, up to five minutes', () => {
+ assert.equal(nested.nestedBackoffMs(0),0);
+ assert.equal(nested.nestedBackoffMs(1),1000);
+ assert.equal(nested.nestedBackoffMs(2),2000);
+ assert.equal(nested.nestedBackoffMs(3),4000);
+ assert.equal(nested.nestedBackoffMs(20),300000);
+ assert.deepEqual(nested.nestedReadPlan(new Map(),new Map([['expression:a',1]]),'expression:a',1,()=>false),[],'held back: not asked');
+});
+test('the changed note says a placed occurrence records another revision than the Expression\'s current one', () => {
+ assert.equal(nested.nestedChangedSincePlaced('7',8),true);
+ assert.equal(nested.nestedChangedSincePlaced('7',7),false);
+ assert.equal(nested.nestedChangedSincePlaced('7',undefined),false,'not listed: nothing to compare');
+ assert.equal(nested.nestedChangedSincePlaced(' 7 ',7),false);
 });
 
 test('the live verdict re-derives from the workspace graph: unread becomes ready once read, and a refusal appears live', () => {
@@ -180,33 +190,141 @@ test('the live verdict re-derives from the workspace graph: unread becomes ready
 
 // ——— the workspace's live verdict: the same factory nativeWorkspace installs ———
 const settle=()=>new Promise(resolve=>setTimeout(resolve,10));
+/** A workspace harness: the kernel read, the kernel list (mutable rows), and a clock the test moves. */
+function harness({docs=new Map([[SUB,savedDoc(SUB,2)]]),rows=[{expression_ref:SUB,revision:7}]}={}){
+ const h={reads:[],lists:0,refreshes:0,t:0,rows,docs,listFails:false};
+ h.readers=reads.nestedDocumentReads(
+  async ref=>{h.reads.push(ref);const d=h.docs.get(ref);if(!d)throw new Error('absent '+ref);return d;},
+  ()=>{h.refreshes++;},
+  async()=>{h.lists++;if(h.listFails)throw new Error('list failed');return h.rows;},
+  ()=>h.t);
+ return h;
+}
 test('the workspace reads the nested documents its open view names, re-derives the verdict live, and refreshes the host', async () => {
- const requested=[];let refreshed=0;
- const docs=new Map([[SUB,savedDoc(SUB,2)]]);
- const readers=reads.nestedDocumentReads(async ref=>{requested.push(ref);if(!docs.has(ref))throw new Error('absent '+ref);return docs.get(ref);},()=>refreshed++);
+ const h=harness();
  const view=bridge.kernelDocumentToJourney(host(bound(1)));
- const sceneId=view.startSceneId;
- assert.equal(readers.view(view).bindings[sceneId].nested.state,'unread','before the read lands the verdict is unread, not guessed');
+ assert.equal(h.readers.view(view).bindings[view.startSceneId].nested.state,'unread','before the list and read land, the verdict is unread');
  await settle();
- assert.equal(refreshed,1,'the host is refreshed once the nested document arrives');
- assert.equal(readers.view(view).bindings[sceneId].nested.state,'ready');
- assert.deepEqual(requested,[SUB],'bound 1 reads the subject only');
- assert.equal(readers.document(SUB).expression_ref,SUB);
+ assert.equal(h.refreshes,1,'the host is refreshed once the list and the read land');
+ assert.equal(h.readers.view(view).bindings[view.startSceneId].nested.state,'ready');
+ assert.deepEqual(h.reads,[SUB],'bound 1 reads the subject only');
 });
-
-test('the workspace reads no deeper than the bound, and the refusal of a deeper chain appears live', async () => {
- const requested=[];
+test('the workspace reads no deeper than the bound, and a deeper chain is refused live', async () => {
  const mid='expression:mid-d',deep='expression:deep-d';
- const docs=new Map([[SUB,nestsDoc(SUB,mid)],[mid,nestsDoc(mid,deep)],[deep,savedDoc(deep,1)]]);
- const readers=reads.nestedDocumentReads(async ref=>{requested.push(ref);if(!docs.has(ref))throw new Error('absent '+ref);return docs.get(ref);},()=>{});
+ const h=harness({docs:new Map([[SUB,nestsDoc(SUB,mid)],[mid,nestsDoc(mid,deep)],[deep,savedDoc(deep,1)]]),rows:[{expression_ref:SUB,revision:1},{expression_ref:mid,revision:1}]});
  const view=bridge.kernelDocumentToJourney(host(bound(2)));
- readers.view(view);
+ h.readers.view(view);
  await settle();
- const live=readers.view(view);
- assert.deepEqual(requested,[SUB,mid],'bound 2 reads two levels; the third is never requested');
+ const live=h.readers.view(view);
+ assert.deepEqual(h.reads,[SUB,mid],'bound 2 reads two levels; the third is never requested');
  assert.equal(live.bindings[view.startSceneId].nested.state,'refused');
  assert.match(live.bindings[view.startSceneId].nested.reason,/nests 3 levels deep; this placement admits 2/);
 });
+test('the list is one call per host view, and a view that is seen again makes no second call', async () => {
+ const h=harness();
+ for(let i=0;i<3;i++){h.readers.view(bridge.kernelDocumentToJourney(host(bound(1))));await settle();}
+ assert.equal(h.lists,3);
+ const view=bridge.kernelDocumentToJourney(host(bound(1)));
+ h.readers.view(view);h.readers.view(view);h.readers.view(view);
+ await settle();
+ assert.equal(h.lists,4,'the same view object is scanned once');
+});
+test('a document the library lists at the same revision is kept across host views: no re-read, and no unread flicker', async () => {
+ const h=harness();
+ h.readers.view(bridge.kernelDocumentToJourney(host(bound(1))));
+ await settle();
+ const view=bridge.kernelDocumentToJourney(host(bound(1)));
+ assert.equal(h.readers.view(view).bindings[view.startSceneId].nested.state,'ready','ready at once: an unrelated host edit clears nothing');
+ await settle();
+ assert.deepEqual(h.reads,[SUB],'no re-read');
+});
+test('an edit elsewhere is picked up with no re-record: the list moves, the document is read again, and the occurrence is marked changed', async () => {
+ const h=harness();
+ h.readers.view(bridge.kernelDocumentToJourney(host(bound(1),'7')));
+ await settle();
+ h.docs.set(SUB,{...savedDoc(SUB,3),revision:8});
+ h.rows=[{expression_ref:SUB,revision:8}];
+ const view=bridge.kernelDocumentToJourney(host(bound(1),'7'));
+ const pending=h.readers.view(view).bindings[view.startSceneId].nested;
+ assert.equal(pending.state,'ready','until the new revision is read, the current content it holds still plays');
+ await settle();
+ assert.deepEqual(h.reads,[SUB,SUB]);
+ assert.equal(h.readers.document(SUB).revision,8);
+ const live=h.readers.view(view).bindings[view.startSceneId].nested;
+ assert.equal(live.state,'ready');
+ assert.equal(live.changed,true,'the occurrence records revision 7; the library lists 8: changed, and it still plays');
+});
+test('placing again at the current revision clears the changed note; nothing is re-recorded by the library moving', async () => {
+ const h=harness();
+ h.readers.view(bridge.kernelDocumentToJourney(host(bound(1),'7')));
+ await settle();
+ h.rows=[{expression_ref:SUB,revision:8}];
+ h.docs.set(SUB,{...savedDoc(SUB,2),revision:8});
+ const stale=bridge.kernelDocumentToJourney(host(bound(1),'7'));
+ h.readers.view(stale);await settle();
+ assert.equal(h.readers.view(stale).bindings[stale.startSceneId].nested.changed,true,'the recorded revision is still 7');
+ const placed=bridge.kernelDocumentToJourney(host(bound(1),'8'));
+ h.readers.view(placed);await settle();
+ assert.equal(h.readers.view(placed).bindings[placed.startSceneId].nested.changed,undefined,'recorded 8, current 8: no note');
+});
+test('a missing document backs off on a growing wait, and the wait resets once the list shows it again', async () => {
+ const h=harness({rows:[]});
+ const at=t=>{h.t=t;const v=bridge.kernelDocumentToJourney(host(bound(1)));h.readers.view(v);return settle();};
+ await at(0);
+ assert.deepEqual(h.reads,[SUB],'the first ask is made at once');
+ await at(500);assert.equal(h.reads.length,1,'held back inside the first second');
+ await at(1000);assert.equal(h.reads.length,2,'asked again once 1 s has passed');
+ await at(2000);assert.equal(h.reads.length,2,'the second wait is 2 s');
+ await at(3000);assert.equal(h.reads.length,3,'asked again at 3 s');
+ await at(6999);assert.equal(h.reads.length,3,'the third wait is 4 s');
+ h.rows=[{expression_ref:SUB,revision:7}];
+ await at(7000);
+ assert.equal(h.reads.length,3,'listed at its current revision: nothing to read, and the wait is reset');
+ h.rows=[];
+ await at(7000);assert.equal(h.reads.length,4,'unlisted again: asked at once, at the first wait, not the fourth');
+ await at(7999);assert.equal(h.reads.length,4,'the reset wait is 1 s');
+ await at(8000);assert.equal(h.reads.length,5);
+});
+test('a failed read is held back the same way, and not asked again within the same view', async () => {
+ const h=harness({docs:new Map()});
+ const at=t=>{h.t=t;h.readers.view(bridge.kernelDocumentToJourney(host(bound(1))));return settle();};
+ await at(0);
+ assert.equal(h.reads.length,1);
+ await at(500);
+ assert.equal(h.reads.length,1,'held back');
+ await at(1000);
+ assert.equal(h.reads.length,2,'asked again after 1 s');
+});
+test('a failed list makes no reads and keeps the cache as it stands', async () => {
+ const h=harness();
+ h.listFails=true;
+ const view=bridge.kernelDocumentToJourney(host(bound(1)));
+ assert.equal(h.readers.view(view).bindings[view.startSceneId].nested.state,'unread');
+ await settle();
+ assert.deepEqual(h.reads,[],'no listing, no asks');
+ assert.equal(h.refreshes,0);
+});
+test('the cache keeps exactly what the open view names', async () => {
+ const orphan='expression:orphan';
+ const h=harness({docs:new Map([[SUB,savedDoc(SUB,1)],[orphan,savedDoc(orphan,1)]]),rows:[{expression_ref:SUB,revision:7},{expression_ref:orphan,revision:7}]});
+ await h.readers.readNested(orphan,7,1);
+ assert.ok(h.readers.document(orphan));
+ h.readers.view(bridge.kernelDocumentToJourney(host(bound(1))));
+ await settle();
+ assert.equal(h.readers.document(orphan),undefined,'a document no open occurrence names is dropped');
+ assert.ok(h.readers.document(SUB));
+});
+test('a placement reads under the revision it places, once, and the placed occurrence is not marked changed', async () => {
+ const h=harness();
+ await h.readers.readNested(SUB,7,1);
+ assert.deepEqual(h.reads,[SUB]);
+ const view=bridge.kernelDocumentToJourney(host(bound(1),'7'));
+ assert.equal(h.readers.view(view).bindings[view.startSceneId].nested.state,'ready');
+ await settle();
+ assert.deepEqual(h.reads,[SUB],'no second read');
+ assert.equal(h.readers.view(view).bindings[view.startSceneId].nested.changed,undefined);
+});
+
 
 // ——— seams between nested Scenes: the app\'s own seam rule, over the nested Expression\'s own Scenes ———
 const SEAM_SCENES=[{duration:2,transition:0,kind:'crossfade'},{duration:3,transition:1.5,kind:'dip-to-colour'},{duration:1,transition:0.5,kind:'cut'},{duration:2,transition:1,kind:'wipe'}];
@@ -254,86 +372,8 @@ test('of seams in flight at several levels, the one that began latest is taken',
  assert.equal(nested.latestNestedSeam([],x=>x.elapsed),null);
 });
 
-// ——— freshness: the cache is keyed by ref and by the revision each occurrence records ———
-test('the key is the recorded revision, and an occurrence that records none is keyed by its structure', () => {
- assert.equal(nested.nestedKeyOf(SUB,'7',1),'rev:7');
- assert.equal(nested.nestedKeyOf(SUB,7,1),'rev:7');
- assert.equal(nested.nestedKeyOf(SUB,'',2),`structure:${SUB}:2`);
- assert.equal(nested.nestedBodyKey({subject_ref:SUB,reading:{revision:'7'},recursion:{max_depth:3}}),'rev:7');
-});
-test('a document is kept across host views while its recorded revision is unchanged: no re-read, and no unread flicker', async () => {
- const requested=[];let refreshed=0;
- const docs=new Map([[SUB,savedDoc(SUB,2)]]);
- const readers=reads.nestedDocumentReads(async ref=>{requested.push(ref);if(!docs.has(ref))throw new Error('absent');return docs.get(ref);},()=>refreshed++);
- readers.view(bridge.kernelDocumentToJourney(host(bound(1))));
- await settle();
- assert.deepEqual(requested,[SUB]);
- const view=bridge.kernelDocumentToJourney(host(bound(1)));
- assert.equal(readers.view(view).bindings[view.startSceneId].nested.state,'ready','ready at once: an unrelated host edit clears nothing');
- await settle();
- assert.deepEqual(requested,[SUB],'no re-read');
- assert.equal(refreshed,1,'no refresh for an unchanged document');
-});
-test('a nested document edited elsewhere is picked up when the recorded revision moves, and not before', async () => {
- const requested=[];
- const docs=new Map([[SUB,savedDoc(SUB,2)]]);
- const readers=reads.nestedDocumentReads(async ref=>{requested.push(ref);if(!docs.has(ref))throw new Error('absent');return docs.get(ref);},()=>{});
- readers.view(bridge.kernelDocumentToJourney(host(bound(1),'7')));
- await settle();
- docs.set(SUB,{...savedDoc(SUB,3),revision:8});
- readers.view(bridge.kernelDocumentToJourney(host(bound(1),'7')));
- await settle();
- assert.deepEqual(requested,[SUB],'the occurrence still records revision 7: the document is kept');
- assert.equal(readers.document(SUB).revision,7);
- const moved=bridge.kernelDocumentToJourney(host(bound(1),'8'));
- const pending=readers.view(moved);
- assert.equal(pending.bindings[moved.startSceneId].nested.state,'unread','the recorded revision moved: unread until it is read, not the old content');
- await settle();
- assert.deepEqual(requested,[SUB,SUB]);
- assert.equal(readers.document(SUB).revision,8);
- assert.equal(readers.view(moved).bindings[moved.startSceneId].nested.state,'ready');
-});
-test('an occurrence that records no revision is re-read only when its structure changes, never on every view', async () => {
- const requested=[];
- const docs=new Map([[SUB,savedDoc(SUB,1)]]);
- const readers=reads.nestedDocumentReads(async ref=>{requested.push(ref);return docs.get(ref);},()=>{});
- readers.view(bridge.kernelDocumentToJourney(host(bound(1),'')));
- await settle();
- readers.view(bridge.kernelDocumentToJourney(host(bound(1),'')));
- await settle();
- assert.deepEqual(requested,[SUB],'a new view of the same structure reads nothing');
- readers.view(bridge.kernelDocumentToJourney(host(bound(2),'')));
- await settle();
- assert.deepEqual(requested,[SUB,SUB],'a different depth is a structural change: read again');
-});
-test('a missing document reads unread, and is asked for again on the next view', async () => {
- const requested=[];
- const readers=reads.nestedDocumentReads(async ref=>{requested.push(ref);throw new Error('absent');},()=>{});
- const v1=bridge.kernelDocumentToJourney(host(bound(1)));
- assert.equal(readers.view(v1).bindings[v1.startSceneId].nested.state,'unread');
- await settle();
- readers.view(bridge.kernelDocumentToJourney(host(bound(1))));
- await settle();
- assert.deepEqual(requested,[SUB,SUB]);
-});
-test('the cache keeps exactly what the open view names', async () => {
- const orphan='expression:orphan';
- const docs=new Map([[SUB,savedDoc(SUB,1)],[orphan,savedDoc(orphan,1)]]);
- const readers=reads.nestedDocumentReads(async ref=>docs.get(ref),()=>{});
- await readers.readNested(orphan,'1',1);
- assert.ok(readers.document(orphan));
- readers.view(bridge.kernelDocumentToJourney(host(bound(1))));
- await settle();
- assert.equal(readers.document(orphan),undefined,'a document no open occurrence names is dropped');
- assert.ok(readers.document(SUB));
-});
-test('a placement reads the document under the revision it records, so the placed occurrence reads ready with no second read', async () => {
- const requested=[];
- const docs=new Map([[SUB,savedDoc(SUB,2)]]);
- const readers=reads.nestedDocumentReads(async ref=>{requested.push(ref);return docs.get(ref);},()=>{});
- await readers.readNested(SUB,7,1);
- const view=bridge.kernelDocumentToJourney(host(bound(1),'7'));
- assert.equal(readers.view(view).bindings[view.startSceneId].nested.state,'ready');
- await settle();
- assert.deepEqual(requested,[SUB],'one read, under the placement\'s recorded revision');
+// ——— freshness: the list is the source of revisions; waits and changed-since-placed are pure ———
+test('the cache is keyed by the revision the library lists, and the occurrence\'s recorded revision is only compared', () => {
+ assert.equal(nested.nestedChangedSincePlaced(7,8),true);
+ assert.equal(nested.nestedChangedSincePlaced('7',7),false);
 });

@@ -34,7 +34,9 @@ export interface NestedBody {
  recursion:{host_expression_ref:string;max_depth:number};
 }
 /** What the bridge reports for a Scene whose body is a nested occurrence. */
-export interface NestedBinding {subject_ref:string;max_depth:number;state:'ready'|'refused'|'unread';depth?:number;members?:number;reason?:string}
+export interface NestedBinding {subject_ref:string;max_depth:number;state:'ready'|'refused'|'unread';depth?:number;members?:number;reason?:string;
+ /** The Expression has changed since the occurrence was placed (its recorded revision differs from the current one). */
+ changed?:boolean}
 
 /** A kernel document as far as nesting needs it. */
 export interface NestedDocumentLike {
@@ -86,39 +88,41 @@ export function setNestingDepthChange<B extends {subject_ref:string;recursion:{h
  return {change:'scene_body_set',scene_ref:sceneRef,body:{...current,recursion:{...current.recursion,max_depth:maxDepth}}};
 }
 
-/** The key a nested document is requested under: the revision the occurrence records for its subject, the kernel
- * SceneBody's `reading.revision`. An occurrence that records no revision is keyed by its structure (subject and
- * depth): it is re-read only when it changes shape, never on every view. */
-export function nestedKeyOf(subjectRef:string,revision:unknown,maxDepth:number):string{
- if(typeof revision==='string'&&revision.trim())return `rev:${revision.trim()}`;
- if(typeof revision==='number'&&Number.isFinite(revision))return `rev:${revision}`;
- return `structure:${subjectRef}:${maxDepth}`;
+/** The longest a document's wait between asks grows to, and the first wait. */
+export const NESTED_BACKOFF_BASE_MS=1000;
+export const NESTED_BACKOFF_MAX_MS=300000;
+/** The wait before the next ask for a document that is missing or failed, after `misses` asks: 1 s, 2 s, 4 s, and so on,
+ * up to five minutes. A document the library lists again is asked for at once (the caller resets its count). */
+export function nestedBackoffMs(misses:number):number{
+ if(!Number.isInteger(misses)||misses<1)return 0;
+ return Math.min(NESTED_BACKOFF_BASE_MS*2**(misses-1),NESTED_BACKOFF_MAX_MS);
 }
-/** The request key of an occurrence body, from the kernel SceneBody shape. */
-export function nestedBodyKey(body:{subject_ref:string;reading?:{revision?:unknown}|null;recursion?:{max_depth:number}|null}):string{
- return nestedKeyOf(body.subject_ref,body.reading?.revision,body.recursion?.max_depth??0);
+/** Whether a placed occurrence records a revision other than the Expression's current one, as the library lists it. The
+ * occurrence is never re-recorded by this check: a changed Expression still plays its current revision, and the note only
+ * says it has changed since it was placed. */
+export function nestedChangedSincePlaced(recorded:unknown,current:number|undefined):boolean{
+ if(current===undefined||!Number.isFinite(current))return false;
+ return String(recorded??'').trim()!==String(current);
 }
-export interface NestedRead {ref:string;key:string}
-/** The documents still to read for the occurrence rooted at `root`, no deeper than its bound. A document is current when
- * it is in the graph under the key its occurrence requests it by; any other document is read. Level 1 is the subject; the
- * Scene bodies of a current document name the next level, each under the key its own body records. */
-export function nestedReadPlan(graph:NestedGraph,requested:ReadonlyMap<string,string>,root:NestedRead,maxDepth:number,skip:ReadonlySet<string>=new Set()):NestedRead[]{
- const plan:NestedRead[]=[],seen=new Set<string>();
- let frontier:NestedRead[]=[root];
+/** The documents still to read for the occurrence rooted at `root`, no deeper than its bound. A document is current when it is
+ * in the graph at the revision the library lists it at. A document that is not current is asked for when `mayAsk` allows it.
+ * A document not yet read names nothing; a document read at an older revision still names its own Scenes, so the occurrence
+ * keeps playing until the current one arrives. Level 1 is the subject. */
+export function nestedReadPlan(graph:NestedGraph,listed:ReadonlyMap<string,number>,root:string,maxDepth:number,mayAsk:(ref:string)=>boolean=()=>true):string[]{
+ const plan:string[]=[],seen=new Set<string>();
+ let frontier=[root];
  for(let level=1;level<=maxDepth&&frontier.length;level++){
-  const next:NestedRead[]=[];
-  for(const node of frontier){
-   if(seen.has(node.ref))continue;
-   seen.add(node.ref);
-   const doc=graph.get(node.ref);
-   if(!doc||requested.get(node.ref)!==node.key){
-    if(!skip.has(node.ref)&&plan.length+graph.size<NESTED_GRAPH_LIMIT)plan.push(node);
-    continue;
-   }
+  const next:string[]=[];
+  for(const ref of frontier){
+   if(seen.has(ref))continue;
+   seen.add(ref);
+   const doc=graph.get(ref);
+   if(!doc){if(mayAsk(ref)&&plan.length+graph.size<NESTED_GRAPH_LIMIT)plan.push(ref);continue;}
+   const current=listed.has(ref)&&Number(doc.revision)===listed.get(ref);
+   if(!current&&mayAsk(ref)&&plan.length+graph.size<NESTED_GRAPH_LIMIT)plan.push(ref);
    for(const scene of doc.scenes??[]){
     const inner=scene?.body;
-    if(inner&&inner.carrier==='expression_ref'&&typeof inner.subject_ref==='string')
-     next.push({ref:inner.subject_ref,key:nestedKeyOf(inner.subject_ref,inner.reading?.revision,Number(inner.recursion?.max_depth??0))});
+    if(inner&&inner.carrier==='expression_ref'&&typeof inner.subject_ref==='string')next.push(inner.subject_ref);
    }
   }
   frontier=next;
@@ -294,7 +298,7 @@ export function nestedControlsHTML(body:unknown,binding?:NestedBinding|null):str
  const depth=body.recursion.max_depth;
  // Only a refusal is shown. An unread verdict is the live state of the page
  // (the Library graph is read at placement) and is not a fault to display.
- const state=binding?.state==='refused'?`<p class="nested-refusal" role="status">${esc(binding.reason??'Refused.')}</p>`:'';
+ const state=binding?.state==='refused'?`<p class="nested-refusal" role="status">${esc(binding.reason??'Refused.')}</p>`:binding?.changed?'<p class="nested-note">Changed since it was placed; this plays its current revision.</p>':'';
  return `${place}<div class="nested-controls" role="group" aria-label="Nested expression occurrence"><span class="nested-chip"><span class="nested-mark" aria-hidden="true"></span>Nested · ${title}</span><button data-action="nesting-depth" aria-label="Nesting depth ${depth}; choose the next admitted depth">Nesting depth ${depth}</button><button data-action="remove-nested" aria-label="Remove nested occurrence">Remove</button>${state}</div>`;
 }
 
