@@ -6,7 +6,9 @@ import json,base64,traceback,struct
 from harness import browser_session
 ROOT=Path(__file__).resolve().parents[1];E=ROOT/'evidence-native';E.mkdir(exist_ok=True)
 HTML=(ROOT/'public/index.html').read_text()
-STORAGE="<script>window.__TEST_STORAGE__={};Object.defineProperty(window,'localStorage',{value:{getItem:k=>window.__TEST_STORAGE__[k]??null,setItem:(k,v)=>window.__TEST_STORAGE__[k]=String(v),removeItem:k=>delete window.__TEST_STORAGE__[k]},configurable:true});</script>"
+# lane-3 E18: the Library is one record per document; this reads the newest complete copy of each (the two slots are #a and #b).
+LIBRARY_RECORDS='(()=>{const m={};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(!k.startsWith("oi.field-studies.journey-library.v2.doc."))continue;const e=JSON.parse(localStorage.getItem(k));const id=k.replace(/#[ab]$/,"");if(!m[id]||e.seq>m[id].seq)m[id]=e;}return Object.values(m).map(e=>JSON.parse(e.body));})()'
+STORAGE="<script>window.__TEST_STORAGE__={};Object.defineProperty(window,'localStorage',{value:{getItem:k=>window.__TEST_STORAGE__[k]??null,setItem:(k,v)=>window.__TEST_STORAGE__[k]=String(v),removeItem:k=>delete window.__TEST_STORAGE__[k],key:i=>Object.keys(window.__TEST_STORAGE__)[i]??null,get length(){return Object.keys(window.__TEST_STORAGE__).length}},configurable:true});</script>"
 results=[];errors=[]
 def require(v,message='Assertion failed'):
  if not v:raise AssertionError(message)
@@ -104,7 +106,7 @@ try:
   act(p,'close-dialog');
   # File import and original retention, then origin-local save / reload.
   p.locator('#import-file').set_input_files(str(jpath));p.wait_for_timeout(400);require(doc(p)==exported)
-  storage=p.evaluate('window.__TEST_STORAGE__');saved=p.evaluate('JSON.parse(localStorage.getItem("oi.field-studies.journey-library.v1"))');require(any(j['id']==exported['id'] for j in saved))
+  storage=p.evaluate('window.__TEST_STORAGE__');saved=p.evaluate(LIBRARY_RECORDS);require(any(j['id']==exported['id'] for j in saved))
   reloadStart=STORAGE+'<script>delete window.__JOURNEY__;Object.assign(window.__TEST_STORAGE__,'+json.dumps(storage).replace('</','<\\/')+');</script>'
   p.evaluate('window.__FIELD_STUDIES__.dispose()');p.set_content(HTML.replace('<head>','<head>'+reloadStart,1),wait_until='load');p.wait_for_function('!!window.__FIELD_STUDIES__?.inspect()')
   check('Browser-save reload and file import restore editable configuration without changing source file',lambda:require(doc(p)==exported and json.loads(jpath.read_text())==exported))
