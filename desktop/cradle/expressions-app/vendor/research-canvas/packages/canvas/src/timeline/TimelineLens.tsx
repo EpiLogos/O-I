@@ -23,6 +23,26 @@ import { TimelineWalk } from "./TimelineWalk";
 import { TimelineWorkingSet } from "./TimelineWorkingSet";
 import { categoryDefinition, deriveTimelineCategory, TIMELINE_CATEGORIES, type TimelineCategory } from "./categories";
 import { assembleTimelineWalk } from "./walk";
+import { frameStateForNode } from "./frames";
+
+/** lane-2 T15–T18: the lens's presentation as a named view keeps it. Refs and presentation only. */
+export interface TimelinePresentationSnapshot {
+  camera: { centerYear: number; pixelsPerYear: number };
+  hiddenCategories: string[];
+  relationTypes: string[] | null;
+  tags: string[];
+  relationLinks: boolean;
+  chainId: string | null;
+  frameNodeId: string | null;
+  workingSetRefs: string[];
+}
+
+/** lane-2 T15–T18: a host's hold on a mounted lens. `capture` reads the lens as it is; `restore` applies a snapshot,
+ * re-reading each working-set ref through `expandNode` and reporting every ref it could not resolve. */
+export interface TimelinePresentationHandle {
+  capture(): TimelinePresentationSnapshot;
+  restore(snapshot: TimelinePresentationSnapshot): Promise<{ unresolved: string[] }>;
+}
 
 export interface TimelineDataSource {
   styleCapability?: {available:boolean;reason?:string};
@@ -39,6 +59,9 @@ export interface TimelineDataSource {
     graphNodeId: string; lane: string; offsetY: number; width: number; height: number;
     style: Record<string, unknown>; expectedRevision: number | null;
   }): Promise<TimelineLayoutMutationResult>;
+  /** lane-2 T15–T18: the host holds the lens's presentation through this hook (bound on mount, `null` on unmount), so a
+   * named timeline view can capture and restore filters, relation links, the walk chain, the frame and the working set. */
+  bindPresentation?(handle: TimelinePresentationHandle | null): void;
 }
 
 export interface TimelineLensProps {
@@ -492,6 +515,73 @@ export function TimelineLens({
     });
   };
 
+  // lane-2 T15–T18: the presentation the host may capture or restore. The refs hold the latest render's local state, so a
+  // capture made later reads the lens as it is now, never a closure from the mount.
+  const presentationState = useRef({ visibleCategories, relationTypeFilter, tagFilter, showRelations, chainId });
+  presentationState.current = { visibleCategories, relationTypeFilter, tagFilter, showRelations, chainId };
+  useEffect(() => {
+    if (!dataSource.bindPresentation) return;
+    const waitForFrame = (frameNodeId: string, timeoutMs: number) => new Promise<boolean>((resolve) => {
+      const ready = () => frameStateForNode(store.getState().nodes, frameNodeId) !== null;
+      if (ready()) { resolve(true); return; }
+      let unsubscribe: () => void = () => undefined;
+      const timer = window.setTimeout(() => { unsubscribe(); resolve(false); }, timeoutMs);
+      unsubscribe = store.subscribe(() => {
+        if (!ready()) return;
+        window.clearTimeout(timer);
+        unsubscribe();
+        resolve(true);
+      });
+    });
+    const handle: TimelinePresentationHandle = {
+      capture: () => {
+        const current = store.getState();
+        const local = presentationState.current;
+        return {
+          camera: { centerYear: current.centerYear, pixelsPerYear: current.pixelsPerYear },
+          hiddenCategories: TIMELINE_CATEGORIES.filter((category) => !local.visibleCategories[category.id]).map((category) => category.id),
+          relationTypes: local.relationTypeFilter === null ? null : [...local.relationTypeFilter],
+          tags: [...local.tagFilter],
+          relationLinks: local.showRelations,
+          chainId: local.chainId,
+          frameNodeId: current.frame?.frameNodeId ?? null,
+          workingSetRefs: current.workingSet.map((entry) => entry.graphNodeId),
+        };
+      },
+      restore: async (snapshot) => {
+        const unresolved: string[] = [];
+        setVisibleCategories(Object.fromEntries(
+          TIMELINE_CATEGORIES.map((category) => [category.id, !snapshot.hiddenCategories.includes(category.id)]),
+        ) as Record<TimelineCategory, boolean>);
+        setRelationTypeFilter(snapshot.relationTypes === null ? null : [...snapshot.relationTypes]);
+        setTagFilter([...snapshot.tags]);
+        setShowRelations(snapshot.relationLinks);
+        setChainId(snapshot.chainId);
+        // The stack is rebuilt in its stored order from fresh reads: a ref whose node changed re-reads at its current revision.
+        store.getState().clearWorkingSet();
+        for (const ref of snapshot.workingSetRefs) {
+          try {
+            if (!dataSource.expandNode) throw new Error("no expansion source");
+            store.getState().expandNode(await dataSource.expandNode(ref));
+          } catch {
+            unresolved.push(ref);
+          }
+        }
+        if (snapshot.frameNodeId === null) {
+          store.getState().setFrameForNode(null);
+        } else {
+          const frameNodeId = snapshot.frameNodeId;
+          if (await waitForFrame(frameNodeId, 8_000)) store.getState().setFrameForNode(frameNodeId);
+          if (store.getState().frame?.frameNodeId !== frameNodeId) unresolved.push(frameNodeId);
+        }
+        // Setting a frame recentres the camera on it; the view's own camera is the one the person saved.
+        store.getState().setView(snapshot.camera.centerYear, snapshot.camera.pixelsPerYear);
+        return { unresolved };
+      },
+    };
+    dataSource.bindPresentation(handle);
+    return () => dataSource.bindPresentation?.(null);
+  }, [dataSource, store]);
   const handleResizeNode = (graphNodeId: string, size: TimelineCardGeometryUpdate) => {
     if (!dataSource.saveTimelineLayout) return;
     store.getState().updateCardSize(graphNodeId, size);

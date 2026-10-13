@@ -2,8 +2,10 @@
 import React,{Component,useEffect,useRef,useState,type ReactNode} from 'react';
 import {createPortal} from 'react-dom';
 import {clone,type Scene} from './model.js';
-import {type PlaceViewRecord,type ResearchCard,type ResearchMaterialAction,type ResearchStroke} from './researchMaterial.js';
+import {type PlaceViewRecord,type ResearchCard,type ResearchMaterialAction,type ResearchStroke,type TimelineViewRecord} from './researchMaterial.js';
 import {capturePlaceView,placeViewNameProblem,restorePlaceView,sameTimeWindow} from './placeViews.js';
+import {openTimelinePresentation,timelineRestoreNote,timelineStyleLoaded,timelineStyleOf,timelineViewNameProblem,timelineViewOf,timelineViewRestorePlan,type TimelinePresentation} from './timelineViews.js';
+import type {TimelinePresentationHandle} from '../../vendor/research-canvas/packages/canvas/src/timeline/TimelineLens';
 import {CONNECTOR_KINDS,connectorPresentation,connectorRecord,connectorWithSides,sideFromHandleId,type ConnectorKind,type ResearchConnector} from './canvasConnectors.js';
 import {createRoot,type Root} from 'react-dom/client';
 import {CanvasView,TimelineSurface,PsychogeographicMap,StreetViewSurface,loadBundledGeographyPack,createLiveServicePolicy,type LiveServicePolicy,type TimelineViewState} from '../../vendor/research-canvas/components';
@@ -35,6 +37,7 @@ import './researchInstruments.css';
 import {CanvasNavigationOverview} from './canvasNavigationOverview';
 import {CanvasFindOverlay} from './canvasFindOverlay';
 import {canvasFindTargets,resolveCanvasFindTarget,canvasFindCamera,type CanvasFindTarget} from './canvasFind';
+import {presentFrames,presentStep,presentViewport,PRESENT_GLYPH,type PresentFrame} from './canvasPresent';
 import type {NavigationMinimapController} from '../../../src/shared/NavigationMinimap';
 import {fitViewport,zoomTo,keepGuidedAxes,snapDraggedBox,guideSegments,CANVAS_ZOOM_LIMITS,ZOOM_STEP,type Box,type GuideLine} from '../../vendor/research-canvas/packages/canvas/src/canvas/navigationGeometry';
 import {CanvasGuides} from '../../vendor/research-canvas/packages/canvas/src/canvas/CanvasGuides';
@@ -276,6 +279,11 @@ interface ViewState {
   * projections (relationFieldView.tsx) — session-local presentation state,
   * never a second store. */
  m2Projection?:'chronology'|'field'|'relative';
+ /** lane-2 T15–T18: the mounted chronology's presentation hold (null while it is unmounted), the presentation last captured
+  * when the person leaves chronology (what a relation-mode save names), and a view waiting to be applied on mount. */
+ timelineHandle?:TimelinePresentationHandle|null;timelinePresentation?:TimelinePresentation;timelinePending?:{name:string;presentation:TimelinePresentation};
+ /** Remounts the chronology surface when a named view moves its camera (its camera is read once, at mount). */
+ timelineKey?:number;
  timeDraft?:SharedTimeDraft;
  /** Gesture transactions live on the ViewState, not inside canvasNode's
   * per-render closures, so one gesture survives the many re-renders a drag
@@ -327,6 +335,12 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
  let materialInFlight=0,deferredRefresh=false;
  let dismissedCard:string|null=null;let flyToNode:((id:string,viewport?:{x:number;y:number;zoom:number})=>void)|null=null;
  let flyToEdge:((id:string,viewport?:{x:number;y:number;zoom:number})=>void)|null=null;
+ // A8 — presentation is session-local: its step lives only in this closure, and
+ // leaving restores the editor from the snapshot taken on entry.
+ type Presentation={key:string;state:ViewState;frames:PresentFrame[];index:number;fullscreen:boolean;snapshot:{viewport?:{x:number;y:number;zoom:number};multiSelect?:Set<string>;selectedNode?:string|null;selectedEdge?:string|null;dismissedCard:string|null;panels:[HTMLElement,string][]}};
+ let presentation:Presentation|null=null;
+ // The Canvas last rendered as editable, with its find targets: what the Present act and P key start from.
+ let presentable:{canvas:InstrumentCanvas;state:ViewState;targets:CanvasFindTarget[]}|null=null;
 
  const mount=document.createElement('div');mount.className='research-instrument';mount.hidden=true;host.container.append(mount);
  const status=document.createElement('div');status.className='research-instrument-status';status.setAttribute('role','status');
@@ -334,7 +348,7 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
  const message=(text:string)=>{status.textContent=text;};
  function retain(){if(currentKey&&captureCanvas){const state=views.get(currentKey);if(state)state.canvas=captureCanvas();}captureCanvas=null;}
  function disposeGestures(){for(const state of views.values()){state.moveGesture?.dispose();state.resizeGesture?.dispose();state.groupMoveGesture?.dispose();}}
- function unmount(){retain();disposeGestures();root?.unmount();root=null;body.replaceChildren();}
+ function unmount(){retain();endPresentation(false);presentable=null;disposeGestures();root?.unmount();root=null;body.replaceChildren();}
  // Multi-select repertoire (R1/R2, Wayfinder §6, §13). The vendored Canvas
  // reports neither modifier keys on a node click nor a batched multi-node
  // drag, so shift/ctrl-extend is tracked independently here, and a group
@@ -390,6 +404,80 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
   else if(event.shiftKey&&event.code==='Digit2'){const chosen=canvas.nodes.filter(node=>selection.has(node.id)).map(boxOfNode);if(chosen.length){event.preventDefault();fitBoxes(chosen);}}
  };
  window.addEventListener('keydown',onZoomKeydown);
+ // A8 — present over saved frames. Every move is the Canvas's own viewport move
+ // (flyToNode: eased, zero duration under reduced motion). Entering hides every
+ // panel the host owns and fullscreens the Canvas; a refused fullscreen presents
+ // in place with the same panels hidden. Presenting never writes the native
+ // document and never changes the selection, so leaving restores what was there.
+ const presentPanels=():HTMLElement[]=>[host.tools,host.inspector,host.canvasHome].filter((el):el is HTMLElement=>!!el);
+ const canvasElement=()=>body.querySelector<HTMLElement>('.research-canvas');
+ function presentCamera(index:number){
+  const current=presentation;if(!current)return;
+  const viewport=presentViewport(current.frames[index].boxes,paneSize());
+  if(viewport)flyToNode?.('',viewport);
+ }
+ function stepPresentation(direction:1|-1){
+  const current=presentation;if(!current)return;
+  const next=presentStep(current.index,current.frames.length,direction);
+  if(next===current.index)return;
+  current.index=next;presentCamera(next);
+ }
+ function endPresentation(restoreCamera=true){
+  const current=presentation;if(!current)return;
+  presentation=null;
+  window.removeEventListener('keydown',onPresentKeydown,true);
+  document.removeEventListener('fullscreenchange',onFullscreenChange);
+  if(document.fullscreenElement)void document.exitFullscreen?.().catch(()=>{});
+  canvasElement()?.classList.remove('research-canvas--presenting');
+  for(const [el,display] of current.snapshot.panels)el.style.display=display;
+  const {state,snapshot}=current;
+  state.selectedNode=snapshot.selectedNode;state.selectedEdge=snapshot.selectedEdge;state.multiSelect=snapshot.multiSelect;dismissedCard=snapshot.dismissedCard;
+  if(snapshot.viewport){
+   if(restoreCamera&&currentKey===current.key&&views.get(current.key)===state)flyToNode?.('',snapshot.viewport);
+   else state.canvas=snapshot.viewport;
+  }
+ }
+ function onPresentKeydown(event:KeyboardEvent){
+  if(!presentation)return;
+  if(event.key==='Tab')return;
+  // While presenting, every other key is swallowed here: no card nudges, no selection, no editing.
+  event.preventDefault();event.stopImmediatePropagation();
+  if(event.key==='Escape')endPresentation();
+  else if(event.key==='ArrowRight'||event.code==='Space')stepPresentation(1);
+  else if(event.key==='ArrowLeft')stepPresentation(-1);
+ }
+ function onFullscreenChange(){if(presentation?.fullscreen&&!document.fullscreenElement)endPresentation();}
+ function startPresentation(canvas:InstrumentCanvas,state:ViewState,targets:readonly CanvasFindTarget[]){
+  if(presentation)return;
+  const boxes=new Map(canvas.nodes.map(node=>[node.id,boxOfNode(node)] as const));
+  const frames=presentFrames(targets,id=>boxes.get(id));
+  if(!frames.length){message('Save two or more cards as a frame to present.');return;}
+  const element=canvasElement();if(!element)return;
+  presentation={key:canvas.key,state,frames,index:0,fullscreen:false,snapshot:{
+   viewport:captureCanvas?.()??state.canvas,multiSelect:state.multiSelect,selectedNode:state.selectedNode,selectedEdge:state.selectedEdge,dismissedCard,
+   panels:presentPanels().map((el):[HTMLElement,string]=>[el,el.style.display])}};
+  const started=presentation;
+  document.addEventListener('fullscreenchange',onFullscreenChange);
+  window.addEventListener('keydown',onPresentKeydown,true);
+  for(const el of presentPanels())el.style.display='none';
+  element.classList.add('research-canvas--presenting');
+  // The first frame is reached once the pane has its presented size: after the
+  // fullscreen request settles either way. A refusal presents in place.
+  void Promise.resolve().then(()=>element.requestFullscreen()).then(()=>{
+   if(presentation!==started){if(document.fullscreenElement)void document.exitFullscreen?.().catch(()=>{});return;}
+   started.fullscreen=true;
+  },()=>{}).then(()=>{requestAnimationFrame(()=>{if(presentation===started)presentCamera(started.index);});});
+ }
+ function onPresentStartKey(event:KeyboardEvent){
+  // Shift+P: the plain P key already plays a Canvas's marked sequence (CanvasView).
+  if(destroyed||lens!=='m1'||presentation||!presentable||event.key!=='P'||!event.shiftKey||event.metaKey||event.ctrlKey||event.altKey)return;
+  const target=event.target as HTMLElement|null;
+  if(target?.isContentEditable||target?.tagName==='INPUT'||target?.tagName==='TEXTAREA'||target?.tagName==='SELECT')return;
+  if(!target?.closest?.('.research-canvas'))return;
+  event.preventDefault();
+  startPresentation(presentable.canvas,presentable.state,presentable.targets);
+ }
+ window.addEventListener('keydown',onPresentStartKey);
  /** Preview every override immediately (one redraw) and batch the whole
   * selection into ONE gesture-transaction id, so N nudges/drags/aligns in a
   * row still land as exactly one native write when the gesture settles. */
@@ -578,6 +666,7 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
   const closeInspector=()=>{dismissedCard=cardFor;host.inspector.hidden=true;redraw();};
   // A2 — Find matches what the stage shows: an object's caption, not its kind name.
   const findTargets=editable?canvasFindTargets({...canvas,nodes:canvasObjectNodes(canvas.nodes,objectCardOf)},material?.frames):[];
+  presentable=editable?{canvas,state,targets:findTargets}:null;
   const findView=host.nativeView(),findBasis=findView&&canvas.sceneId?{expression_ref:findView.document.expression_ref,revision:findView.document.revision,scene_ref:findView.bindings[canvas.sceneId]?.scene_ref}:undefined;
   const chooseFound=(target:CanvasFindTarget)=>{
    const now=host.nativeView();
@@ -603,6 +692,7 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
    <button aria-label="Snap" title="Snap" aria-pressed={!!state.snapToGrid} onClick={()=>{state.snapToGrid=!state.snapToGrid;redraw();}}><ToolIcon name="grid"/></button>
    <button aria-label="Lasso" title="Lasso" aria-pressed={!!state.lassoOn} onClick={()=>{state.lassoOn=!state.lassoOn;redraw();}}><ToolIcon name="lasso"/></button>
    {selection.size>=2&&<button aria-label="Frame selection" title="Frame selection" onClick={saveFrame}><ToolIcon name="frame"/></button>}
+   {framesOrdered.length>0&&<button aria-label="Present frames" title="Present frames (Shift+P)" onClick={()=>startPresentation(canvas,state,findTargets)}><GlyphIcon glyph={PRESENT_GLYPH}/></button>}
 </>}
    {(()=>{const binding=canvas.sceneId?host.nativeView()?.bindings[canvas.sceneId]:undefined;if(!binding||binding.page_count<=1||!host.pageMembers)return null;
     return <><button aria-label="Previous members" title="Previous members" disabled={binding.page<=0} onClick={()=>void host.pageMembers!(-1)}><ToolIcon name="arrowLeft"/></button>
@@ -822,13 +912,24 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
     acknowledged={sharedTime} draft={state.timeDraft!} current={timeCurrent} unavailableReason={timeReason} onError={message} onAcknowledged={reply=>{if(timeCurrent()){sharedTime=reply;redraw();}}}/>;
    if(view){
     const loadTimeline=data.dataSource.loadTimelineView;
-    data.dataSource.loadTimelineView=async(range,filters)=>{const returned=await loadTimeline(range,filters),material=host.sceneMaterial(sceneId).research;return {...returned,nodes:returned.nodes.map(node=>{const layout=material?.timeline[node.node.graphNodeId];return layout?{...node,layoutOverride:{lane:layout.lane??'default',offsetY:layout.offsetY,width:layout.width??240,height:layout.height??160,style:{},layoutRevision:layout.layoutRevision??0}}:node;})};};
+    data.dataSource.loadTimelineView=async(range,filters)=>{const returned=await loadTimeline(range,filters),material=host.sceneMaterial(sceneId).research;return {...returned,nodes:returned.nodes.map(node=>{const layout=material?.timeline[node.node.graphNodeId];return layout?{...node,layoutOverride:{lane:layout.lane??'default',offsetY:layout.offsetY,width:layout.width??240,height:layout.height??160,style:timelineStyleLoaded(layout.style),layoutRevision:layout.layoutRevision??0}}:node;})};};
+    // lane-2 T16: a card's colours persist in the Scene's timeline layout record. A colour the card-style grammar refuses is
+    // thrown here, so the lens keeps its optimistic colour and shows the reason in its save-error slot with Retry.
     data.dataSource.saveTimelineLayout=async(input)=>{
      if(!data.bundle.nodes.some(n=>n.graphNodeId===input.graphNodeId))throw new Error('Timeline node is outside the current reading');
-     if(Object.keys(input.style).length)throw new Error('Timeline style has no native material mapping yet; layout was not changed');
-     await host.material(sceneId,{type:'timeline-layout',id:input.graphNodeId,expectedRevision:input.expectedRevision,value:{offsetY:input.offsetY,width:input.width,height:input.height,lane:input.lane}});
+     const style=timelineStyleOf(input.style);
+     await host.material(sceneId,{type:'timeline-layout',id:input.graphNodeId,expectedRevision:input.expectedRevision,value:{offsetY:input.offsetY,width:input.width,height:input.height,lane:input.lane,...(Object.keys(style).length?{style}:{})}});
      const stored=host.sceneMaterial(sceneId).research?.timeline[input.graphNodeId];if(!stored)throw new Error('Native owner did not return the timeline layout');
-     return {status:input.expectedRevision===null?'created':'updated',layout:{lane:stored.lane??input.lane,offsetY:stored.offsetY,width:stored.width??input.width,height:stored.height??input.height,style:{},layoutRevision:stored.layoutRevision!}};
+     return {status:input.expectedRevision===null?'created':'updated',layout:{lane:stored.lane??input.lane,offsetY:stored.offsetY,width:stored.width??input.width,height:stored.height??input.height,style:timelineStyleLoaded(stored.style),layoutRevision:stored.layoutRevision!}};
+    };
+    // lane-2 T15–T18: the mounted chronology holds its presentation here. A view waiting to be applied is restored on mount.
+    data.dataSource.bindPresentation=handle=>{
+     state.timelineHandle=handle;
+     const pending=state.timelinePending;
+     if(handle&&pending){
+      state.timelinePending=undefined;
+      void handle.restore(pending.presentation).then(({unresolved})=>message(timelineRestoreNote(pending.name,unresolved)),error=>message(error instanceof Error?error.message:String(error)));
+     }
     };
    }
 
@@ -846,7 +947,45 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
     // switch over the SAME reading/repository — never a second app, tab or
     // store (Wayfinder §16). Session-local only, like the timeline camera.
     state.m2Projection??='chronology';
-    const setProjection=(next:'chronology'|'field'|'relative')=>{state.m2Projection=next;render(canvasNode2());};
+    const setProjection=(next:'chronology'|'field'|'relative')=>{
+     // Leaving the chronology keeps what it held, so a view saved from the relation field names the chronology's own filters.
+     if(state.timelineHandle&&state.m2Projection==='chronology'&&next!=='chronology')state.timelinePresentation=state.timelineHandle.capture();
+     state.m2Projection=next;render(canvasNode2());
+    };
+    // lane-2 T15–T18: named timeline views, in the Places grammar ("Save view…" names it, "Views…" goes to or removes one). A
+    // view is the camera, the projection and relation mode, the filters, the walk chain, the open frame and the working set.
+    const savedTimelineViews=():Record<string,TimelineViewRecord>=>{try{return host.sceneMaterial(sceneId).research?.timelineViews??{};}catch{return {};}};
+    const saveTimelineView=()=>{
+     if(!view||!state.timeline)return;
+     const entered=window.prompt('Name this timeline view');
+     if(entered===null)return;
+     const problem=timelineViewNameProblem(entered,savedTimelineViews());
+     if(problem){message(problem);return;}
+     const name=entered.trim();
+     // The mounted lens reads its own filters, chain, frame and stack; in the relation field the last chronology capture stands.
+     const camera={centerYear:state.timeline.centerYear,pixelsPerYear:state.timeline.pixelsPerYear};
+     const presentation:TimelinePresentation=state.timelineHandle?.capture()??{...openTimelinePresentation(camera),...state.timelinePresentation,camera};
+     let record:TimelineViewRecord;
+     try{record=timelineViewOf({projection:state.m2Projection==='field'?'relations':'chronology',presentation});}
+     catch(error){message(error instanceof Error?error.message:String(error));return;}
+     void host.material(sceneId,{type:'timeline-view-save',name,view:record}).then(()=>{message(`Timeline view "${name}" saved`);render(canvasNode2());},error=>message(error instanceof Error?error.message:String(error)));
+    };
+    // Going to a view sets its camera and projection now; its filters, chain, frame and stack are applied when the chronology
+    // mounts (its refs re-read through the native owner), so a restore never reads a stale copy.
+    const applyTimelineView=(name:string)=>{
+     const saved=savedTimelineViews()[name];
+     if(!saved){message(`No timeline view named "${name}"`);return;}
+     const plan=timelineViewRestorePlan(saved);
+     state.timeline={centerYear:plan.presentation.camera.centerYear,pixelsPerYear:plan.presentation.camera.pixelsPerYear,selectedNodeId:null};
+     state.m2Projection=plan.projection==='relations'?'field':'chronology';
+     state.timelinePresentation=plan.presentation;
+     state.timelinePending={name,presentation:plan.presentation};
+     state.timelineKey=(state.timelineKey??0)+1;
+     render(canvasNode2());
+     // A relation-field view names its chronology filters, frame and stack too: they apply when the chronology next opens.
+     if(plan.projection==='relations')message(`View "${name}" restored; its chronology filters, frame and stack apply when the chronology opens.`);
+    };
+    const removeTimelineView=(name:string)=>{void host.material(sceneId,{type:'timeline-view-remove',name}).then(()=>{message(`Timeline view "${name}" removed`);render(canvasNode2());},error=>message(error instanceof Error?error.message:String(error)));};
     const canvasNode2=():ReactNode=>{
      // Lane-2 T5: relative mode exists only when the acknowledged session names a
      // zero this reading warrants; otherwise the segment is absent, never disabled.
@@ -858,6 +997,9 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
       {relativeAxis&&<button role="tab" aria-selected={state.m2Projection==='relative'} aria-pressed={state.m2Projection==='relative'} onClick={()=>setProjection('relative')}>Relative</button>}
       <button aria-label="Refresh timeline" title="Refresh timeline" onClick={()=>void load('m2')}><ToolIcon name="history"/></button>
       {view&&state.m2Projection==='chronology'&&<button aria-label="Save timeline view" title="Save timeline view" onClick={()=>{if(state.timeline)void host.material(sceneId,{type:'viewport',key:'timeline',value:{x:state.timeline.centerYear,y:0,zoom:state.timeline.pixelsPerYear}}).then(()=>message('View saved'),error=>message(String(error)));}}><ToolIcon name="save"/></button>}
+      {view&&<button type="button" className="research-timeline-view-save" aria-label="Save view…" title="Save this timeline view: camera, projection, relation mode, filters, walk, frame and working set" onClick={saveTimelineView}>Save view…</button>}
+      {view&&Object.keys(savedTimelineViews()).length>0&&<select className="research-timeline-view-select" aria-label="Saved timeline views" value="" onChange={event=>{const [op,name]=event.target.value.split('\u0000');if(op==='apply')applyTimelineView(name);if(op==='remove')removeTimelineView(name);event.target.value='';}}>
+       <option value="">Views…</option>{Object.keys(savedTimelineViews()).map(name=><optgroup key={name} label={name}><option value={`apply\u0000${name}`}>Go to</option><option value={`remove\u0000${name}`}>Remove</option></optgroup>)}</select>}
       {(tagReason||relationReason)&&<button onClick={()=>message([tagReason&&`Tags: ${tagReason}`,relationReason&&`Relations: ${relationReason}`].filter(Boolean).join(' · '))}>Reading incomplete</button>}
       {timeControls(()=>render(canvasNode2()))}
      </div>;
@@ -878,7 +1020,7 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
      // Lane-2 T6: the chronology reads the shared time-axis projection of the
      // session the host acknowledged — the same function lane 4 reads.
      const timed=sharedTimelinePresentation(data.dataSource,data.timeline,nativeReading,sharedTime?timeAxisProjection(nativeReading,sharedTime.session):null);
-     return <>{createPortal(toggle,host.tools)}<TimelineSurface timeExtent={years.length?{startYear:first,endYear:last}:undefined} toolbarContainer={host.tools} repository={timed.repository} constellationId={data.reading.subject.subject_ref} dataSource={timed.dataSource}
+     return <>{createPortal(toggle,host.tools)}<TimelineSurface key={state.timelineKey??0} timeExtent={years.length?{startYear:first,endYear:last}:undefined} toolbarContainer={host.tools} repository={timed.repository} constellationId={data.reading.subject.subject_ref} dataSource={timed.dataSource}
       initialState={state.timeline!} onViewStateChange={value=>{state.timeline=value;}}
       onOpenCanvasNode={ref=>{const node=data.bundle.nodes.find(node=>node.graphNodeId===ref);if(node)host.inspectSubject(ref,{node});}} onOpenNode={(ref,node,relationField)=>host.inspectSubject(ref,{node,relationField})}/></>;
     };
@@ -1028,7 +1170,7 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
    }
    await load(lens);
   },
-  destroy(){++epoch;lens=null;destroyed=true;unmount();mount.remove();status.remove();views.clear();window.removeEventListener('keydown',onWindowKeydown);window.removeEventListener('keydown',onZoomKeydown);readoutRoot.unmount();readoutHost.remove();modifiers.dispose();},
+  destroy(){++epoch;lens=null;destroyed=true;unmount();mount.remove();status.remove();views.clear();window.removeEventListener('keydown',onWindowKeydown);window.removeEventListener('keydown',onZoomKeydown);window.removeEventListener('keydown',onPresentStartKey);readoutRoot.unmount();readoutHost.remove();modifiers.dispose();},
   active(){return lens;},
  };
 }

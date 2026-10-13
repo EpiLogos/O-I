@@ -1,6 +1,7 @@
 import type {InstrumentCanvas} from './researchInstrumentsData';
 import {blockNoteSummary} from '../../vendor/research-canvas/packages/node-document/src/summary';
 import type {ResearchFrame} from './researchMaterial';
+import {FIT_MARGIN_PX} from '../../vendor/research-canvas/packages/canvas/src/canvas/navigationGeometry';
 export interface CanvasFindTarget {key:string;canvas_key:string;kind:'occurrence'|'frame';ref:string;label:string;text:string;node_ids:string[]}
 const normalized=(text:string)=>text.normalize('NFKC').toLocaleLowerCase();
 function noteText(content:string):string {
@@ -43,6 +44,6 @@ export function canvasFindCamera(target:CanvasFindTarget,canvas:InstrumentCanvas
  const members=target.node_ids.map(id=>canvas.nodes.find(node=>node.id===id));if(!members.length||members.some(node=>!node))throw Error('The searched native members changed');
  const left=Math.min(...members.map(node=>node!.position.x)),top=Math.min(...members.map(node=>node!.position.y)),right=Math.max(...members.map(node=>node!.position.x+node!.size.width)),bottom=Math.max(...members.map(node=>node!.position.y+node!.size.height));
  if(![left,top,right,bottom].every(Number.isFinite))throw Error('The searched native geometry is unavailable');
- const nextZoom=target.kind==='frame'?Math.min(zoom,Math.max(1,extent.width-48)/Math.max(1,right-left),Math.max(1,extent.height-48)/Math.max(1,bottom-top)):zoom;
+ const nextZoom=target.kind==='frame'?Math.min(zoom,Math.max(1,extent.width-2*FIT_MARGIN_PX)/Math.max(1,right-left),Math.max(1,extent.height-2*FIT_MARGIN_PX)/Math.max(1,bottom-top)):zoom;
  return {zoom:nextZoom,x:extent.width/2-(left+right)/2*nextZoom,y:extent.height/2-(top+bottom)/2*nextZoom};
 }

@@ -23,12 +23,14 @@ const RESEARCH_MATERIAL_LABELS:Record<ResearchMaterialAction['type'],string>={
  'annotation-add':'Add annotation',
  'annotation-remove':'Remove annotation',
  'viewport':'Move view',
- 'timeline-layout':'Arrange timeline',
+ 'timeline-layout':'Arrange or style timeline card',
  'frame-save':'Save frame',
  'frame-remove':'Remove frame',
  'frame-order':'Reorder frames',
  'view-save':'Save view',
  'view-remove':'Remove view',
+ 'timeline-view-save':'Save timeline view',
+ 'timeline-view-remove':'Remove timeline view',
 };
 export function researchMaterialLabel(action:Pick<ResearchMaterialAction,'type'>):string{return RESEARCH_MATERIAL_LABELS[action.type];}
 

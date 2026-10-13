@@ -458,6 +458,7 @@ fn validate_research(value: &Value, ids: &BTreeSet<&str>) -> Result<(), String> 
                 "namedViews",
                 "connectors",
                 "placeViews",
+                "timelineViews",
             ]
             .contains(&key.as_str())
         })
@@ -634,9 +635,26 @@ fn validate_research(value: &Value, ids: &BTreeSet<&str>) -> Result<(), String> 
     for layout in value["timeline"].as_object().unwrap().values() {
         let m = object(layout, "Timeline layout")?;
         if m.keys().any(|k| {
-            !["offsetY", "width", "height", "lane", "layoutRevision"].contains(&k.as_str())
+            ![
+                "offsetY",
+                "width",
+                "height",
+                "lane",
+                "layoutRevision",
+                "style",
+            ]
+            .contains(&k.as_str())
         }) {
             return Err("Unknown timeline layout field".into());
+        }
+        // lane-2 T16: a card's colours, in the card-style colour grammar. Closed: dotColour, bgColour, textColour only.
+        if let Some(style) = m.get("style") {
+            let style = object(style, "Timeline style")?;
+            if style.iter().any(|(k, c)| {
+                !["dotColour", "bgColour", "textColour"].contains(&k.as_str()) || !colour(c)
+            }) {
+                return Err("Invalid timeline style".into());
+            }
         }
         if let Some(v) = m.get("lane") {
             if !bounded(v, 1024) {
@@ -776,6 +794,162 @@ fn validate_research(value: &Value, ids: &BTreeSet<&str>) -> Result<(), String> 
             }
             place_view(view)?;
         }
+    }
+    // lane-2 T15: named timeline views, kept beside the canvas and Places views. Each is closed and bounded (see timeline_view).
+    if let Some(views) = r.get("timelineViews") {
+        let views = object(views, "Research timeline views")?;
+        if views.len() > 32 {
+            return Err("Research timeline view count exceeds its bound".into());
+        }
+        for (name, view) in views {
+            if name.trim().is_empty() || utf16_len(name) > 160 {
+                return Err("Invalid timeline view name".into());
+            }
+            timeline_view(view)?;
+        }
+    }
+    Ok(())
+}
+/// lane-2 T15: the timeline categories the lens filters by (categories.ts). The app and this kernel hold one list.
+const TIMELINE_CATEGORY_IDS: &[&str] = &[
+    "historical-event",
+    "claim",
+    "interpretation",
+    "archetype",
+    "myth-in-time",
+    "myth",
+    "speculation-contested",
+    "source",
+    "book-writing",
+    "constellation",
+    "institution-network-figure",
+];
+/// lane-2 T15: the camera's bounds (researchMaterial.ts): years either side of zero, and the zoom range (the lens floor up to a ceiling above its maximum).
+const TIMELINE_CENTER_YEAR_LIMIT: f64 = 1e10;
+const TIMELINE_PIXELS_PER_YEAR_LOW: f64 = 1e-9;
+const TIMELINE_PIXELS_PER_YEAR_HIGH: f64 = 1e14;
+/// lane-2 T15–T18: a ref a view names (a graph node or a cause-chain id): a non-empty string of at most 512 UTF-16 units.
+fn timeline_ref(value: &Value) -> bool {
+    value
+        .as_str()
+        .is_some_and(|s| !s.is_empty() && utf16_len(s) <= 512)
+}
+/// lane-2 T15–T18: one named timeline view, admitted closed and bounded. The camera, the projection and relation links, the
+/// filters, the walk chain, the optional frame and the working set (at most 64, unique). Refs are bounded strings; the native
+/// owner resolves them on restore, so no ref is checked against the Scene.
+fn timeline_view(value: &Value) -> Result<(), String> {
+    let view = object(value, "Timeline view")?;
+    let allowed = [
+        "camera",
+        "projection",
+        "relationLinks",
+        "filters",
+        "chainId",
+        "frameNodeId",
+        "workingSetRefs",
+    ];
+    if view.keys().any(|k| !allowed.contains(&k.as_str()))
+        || ![
+            "camera",
+            "projection",
+            "relationLinks",
+            "filters",
+            "chainId",
+            "workingSetRefs",
+        ]
+        .iter()
+        .all(|k| view.contains_key(*k))
+    {
+        return Err("Invalid timeline view".into());
+    }
+    let camera = object(&value["camera"], "Timeline view camera")?;
+    if camera
+        .keys()
+        .any(|k| !["centerYear", "pixelsPerYear"].contains(&k.as_str()))
+        || !camera.contains_key("centerYear")
+        || !camera.contains_key("pixelsPerYear")
+    {
+        return Err("Timeline view camera exceeds its bound".into());
+    }
+    number(
+        &value["camera"]["centerYear"],
+        -TIMELINE_CENTER_YEAR_LIMIT,
+        TIMELINE_CENTER_YEAR_LIMIT,
+        "Timeline view centre",
+    )?;
+    number(
+        &value["camera"]["pixelsPerYear"],
+        TIMELINE_PIXELS_PER_YEAR_LOW,
+        TIMELINE_PIXELS_PER_YEAR_HIGH,
+        "Timeline view zoom",
+    )?;
+    if !matches!(
+        value["projection"].as_str(),
+        Some("chronology") | Some("relations")
+    ) {
+        return Err("Invalid timeline view projection".into());
+    }
+    if !value["relationLinks"].is_boolean() {
+        return Err("Invalid timeline view relation links".into());
+    }
+    let filters = object(&value["filters"], "Timeline view filters")?;
+    if filters
+        .keys()
+        .any(|k| !["hiddenCategories", "relationTypes", "tags"].contains(&k.as_str()))
+        || !["hiddenCategories", "relationTypes", "tags"]
+            .iter()
+            .all(|k| filters.contains_key(*k))
+    {
+        return Err("Invalid timeline view filters".into());
+    }
+    let hidden = value["filters"]["hiddenCategories"]
+        .as_array()
+        .ok_or("Invalid timeline view category filter")?;
+    if hidden.len() > TIMELINE_CATEGORY_IDS.len()
+        || !hidden.iter().all(|c| {
+            c.as_str()
+                .is_some_and(|s| TIMELINE_CATEGORY_IDS.contains(&s))
+        })
+    {
+        return Err("Invalid timeline view category filter".into());
+    }
+    let named = |v: &Value| {
+        v.as_str()
+            .is_some_and(|s| !s.is_empty() && utf16_len(s) <= 160)
+    };
+    match &value["filters"]["relationTypes"] {
+        Value::Null => {}
+        Value::Array(rows) => {
+            if rows.len() > 256 || !rows.iter().all(named) {
+                return Err("Invalid timeline view relation filter".into());
+            }
+        }
+        _ => return Err("Invalid timeline view relation filter".into()),
+    }
+    let tags = value["filters"]["tags"]
+        .as_array()
+        .ok_or("Invalid timeline view tag filter")?;
+    if tags.len() > 256 || !tags.iter().all(named) {
+        return Err("Invalid timeline view tag filter".into());
+    }
+    if !(value["chainId"].is_null() || timeline_ref(&value["chainId"])) {
+        return Err("Invalid timeline view walk".into());
+    }
+    if let Some(frame) = view.get("frameNodeId") {
+        if !timeline_ref(frame) {
+            return Err("Invalid timeline view frame".into());
+        }
+    }
+    let refs = value["workingSetRefs"]
+        .as_array()
+        .ok_or("Invalid timeline view working set")?;
+    let mut unique = BTreeSet::new();
+    if refs.len() > 64
+        || !refs
+            .iter()
+            .all(|r| timeline_ref(r) && unique.insert(r.as_str().unwrap_or_default()))
+    {
+        return Err("Invalid timeline view working set".into());
     }
     Ok(())
 }
@@ -1412,6 +1586,170 @@ mod tests {
             assert!(
                 validate_research(&with(refused.clone()), &ids).is_err(),
                 "{refused}"
+            );
+        }
+    }
+
+    #[test]
+    fn timeline_views_and_card_style_are_admitted_bounded_and_closed() {
+        use super::validate_research;
+        use serde_json::{json, Value};
+        use std::collections::BTreeSet;
+        let ids: BTreeSet<&str> = BTreeSet::new();
+        // one material with the given named timeline views and timeline layout records
+        let material = |views: Value, timeline: Value| {
+            json!({"schema": "oi.research-scene/v1", "cards": {}, "strokes": [],
+                "views": {}, "timeline": timeline, "timelineViews": views})
+        };
+        let full = json!({
+            "camera": {"centerYear": 1850.5, "pixelsPerYear": 4.0},
+            "projection": "chronology",
+            "relationLinks": false,
+            "filters": {"hiddenCategories": ["claim", "myth"], "relationTypes": ["caused by"], "tags": ["war"]},
+            "chainId": "hop-1",
+            "frameNodeId": "node-a",
+            "workingSetRefs": ["node-a", "node-b", "node-c"]
+        });
+        let bare = json!({
+            "camera": {"centerYear": 0, "pixelsPerYear": 1e-9},
+            "projection": "relations",
+            "relationLinks": true,
+            "filters": {"hiddenCategories": [], "relationTypes": null, "tags": []},
+            "chainId": null,
+            "workingSetRefs": []
+        });
+        // admitted: the full view, the bare view, the 160-unit name, a 64-node stack and 32 views
+        assert!(
+            validate_research(&material(json!({"Paris": full.clone()}), json!({})), &ids).is_ok()
+        );
+        assert!(
+            validate_research(&material(json!({"bare": bare.clone()}), json!({})), &ids).is_ok()
+        );
+        assert!(validate_research(
+            &material(json!({"\u{1F600}".repeat(80): bare.clone()}), json!({})),
+            &ids
+        )
+        .is_ok());
+        let mut wide = full.clone();
+        wide["workingSetRefs"] =
+            Value::Array((0..64).map(|i| json!(format!("node-{i}"))).collect());
+        assert!(validate_research(&material(json!({"wide": wide}), json!({})), &ids).is_ok());
+        let thirty_two: serde_json::Map<String, Value> =
+            (0..32).map(|i| (format!("v{i}"), bare.clone())).collect();
+        assert!(validate_research(
+            &material(Value::Object(thirty_two.clone()), json!({})),
+            &ids
+        )
+        .is_ok());
+        let mut thirty_three = thirty_two;
+        thirty_three.insert("v32".into(), bare.clone());
+        assert!(
+            validate_research(&material(Value::Object(thirty_three), json!({})), &ids).is_err()
+        );
+        // a card's colours: the card-style grammar, closed to the three colour keys
+        let styled = |style: Value| {
+            material(
+                json!({}),
+                json!({"event-1": {"offsetY": 0, "style": style}}),
+            )
+        };
+        assert!(validate_research(
+            &styled(json!({"dotColour": "#79c0d4", "bgColour": "#102633aa"})),
+            &ids
+        )
+        .is_ok());
+        assert!(validate_research(&styled(json!({})), &ids).is_ok());
+        for style in [
+            json!({"dotColour": "red"}),
+            json!({"textColour": "#fff"}),
+            json!({"borderColour": "#79c0d4"}),
+            json!({"dotColour": 7}),
+        ] {
+            assert!(
+                validate_research(&styled(style.clone()), &ids).is_err(),
+                "accepted style {style}"
+            );
+        }
+        // refused: the name, the closed keys, the camera and projection bounds, the filters, the walk, the frame and the stack
+        let edited = |edit: &dyn Fn(&mut Value)| {
+            let mut view = bare.clone();
+            edit(&mut view);
+            view
+        };
+        let refused: Vec<(String, Value)> = vec![
+            ("".into(), bare.clone()),
+            ("   ".into(), bare.clone()),
+            ("\u{1F600}".repeat(81), bare.clone()),
+            ("extra key".into(), edited(&|v| v["extra"] = json!(1))),
+            (
+                "no camera".into(),
+                edited(&|v| {
+                    v.as_object_mut().unwrap().remove("camera");
+                }),
+            ),
+            (
+                "camera key".into(),
+                edited(&|v| v["camera"]["roll"] = json!(1)),
+            ),
+            (
+                "centre".into(),
+                edited(&|v| v["camera"]["centerYear"] = json!(2e10)),
+            ),
+            (
+                "zoom".into(),
+                edited(&|v| v["camera"]["pixelsPerYear"] = json!(0)),
+            ),
+            (
+                "projection".into(),
+                edited(&|v| v["projection"] = json!("field")),
+            ),
+            (
+                "relation links".into(),
+                edited(&|v| v["relationLinks"] = json!("yes")),
+            ),
+            (
+                "filter key".into(),
+                edited(&|v| v["filters"]["source"] = json!(true)),
+            ),
+            (
+                "category".into(),
+                edited(&|v| v["filters"]["hiddenCategories"] = json!(["not-a-category"])),
+            ),
+            (
+                "relation type".into(),
+                edited(&|v| v["filters"]["relationTypes"] = json!("born in")),
+            ),
+            (
+                "relation name".into(),
+                edited(&|v| v["filters"]["relationTypes"] = json!(["x".repeat(161)])),
+            ),
+            (
+                "tags".into(),
+                edited(&|v| v["filters"]["tags"] = Value::Array(vec![json!("t"); 257])),
+            ),
+            ("walk".into(), edited(&|v| v["chainId"] = json!(""))),
+            ("frame".into(), edited(&|v| v["frameNodeId"] = json!(""))),
+            (
+                "stack size".into(),
+                edited(&|v| {
+                    v["workingSetRefs"] =
+                        Value::Array((0..65).map(|i| json!(format!("n{i}"))).collect())
+                }),
+            ),
+            (
+                "stack duplicate".into(),
+                edited(&|v| v["workingSetRefs"] = json!(["a", "a"])),
+            ),
+            (
+                "ref length".into(),
+                edited(&|v| v["workingSetRefs"] = json!(["x".repeat(513)])),
+            ),
+        ];
+        for (name, view) in refused {
+            assert!(
+                validate_research(&material(json!({ name.clone(): view }), json!({})), &ids)
+                    .is_err(),
+                "accepted timeline view {name}"
             );
         }
     }

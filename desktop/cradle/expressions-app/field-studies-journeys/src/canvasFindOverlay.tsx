@@ -16,7 +16,11 @@ export function CanvasFindOverlay({canvasKey,targets,tools,onChoose}:{canvasKey:
   {open&&<dialog ref={dialog} className="canvas-find-overlay" aria-label="Find on Canvas" onCancel={event=>{event.preventDefault();close();}} onKeyDown={event=>{
    if(event.nativeEvent.isComposing)return;
    if(event.key==='Escape'){event.preventDefault();event.stopPropagation();close();}
-   if(event.key==='Enter'||event.key==='ArrowDown'||event.key==='ArrowUp'){event.preventDefault();event.stopPropagation();const next=event.key==='Enter'&&!selected?current:cycleCanvasFindTarget(hits,current?.key,event.key==='ArrowUp'||event.shiftKey?-1:1);if(next)choose(next);}
+   if(event.key==='Enter'||event.key==='ArrowDown'||event.key==='ArrowUp'){event.preventDefault();event.stopPropagation();
+    // Enter moves forward and Shift+Enter backward; with no match yet chosen, the first press lands on the first (or, backward, the last) match.
+    const back=event.key==='ArrowUp'||(event.key==='Enter'&&event.shiftKey);
+    const next=selected?cycleCanvasFindTarget(hits,selected,back?-1:1):hits[back?hits.length-1:0];
+    if(next)choose(next);}
   }}><header><strong>Find on Canvas</strong><button type="button" aria-label="Close Find" onClick={close}>×</button></header>
    <input ref={input} aria-label="Find card text or frame title" placeholder="Card text or frame title" value={query} onChange={event=>{setQuery(event.target.value);setSelected(undefined);setError('');}}/>
    <p role="status">{query.trim()?hits.length?`${hits.length} ${hits.length===1?'match':'matches'} · Enter for next, Shift Enter for previous`:'No matches':'Find within the disclosed cards and frames'}</p>
