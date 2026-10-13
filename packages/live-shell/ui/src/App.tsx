@@ -35,7 +35,7 @@ import {TimelineProjectionResidence, timelinePresentation} from './projections/t
 import {useWorldTemporalReading} from './projections/useWorldTemporalReading'
 import {surfModeOf, type SurfMode} from './shell/modeGrammar'
 import type {ModeTransportReadouts} from './shell/ModeTransportBar'
-import {BaseDevicesDetail, BaseDocumentDetail, TechneInstrumentsDetail, InstrumentDeviceDetail, TechneClipDetail, FactoryTaskLogDetail, TechneLensBar, worldNowReadout} from './shell/ModeDetail'
+import {BaseDevicesDetail, BaseDocumentDetail, TechneInstrumentsDetail, InstrumentDeviceDetail, TechneClipDetail, FactoryTaskLogDetail, TechneLensBar, factoryLensPane, worldNowReadout} from './shell/ModeDetail'
 import {ModeBrowser} from './shell/ModeBrowser'
 import {ModeCentreFrame} from './shell/ModeCentre'
 import type {CentralSubjectSelection} from './inhabitants/CentralSubjectDetail'
@@ -44,7 +44,8 @@ import {sameEditorBasis,type NativeEditorBasis,type NativeEditorController} from
 import './NativeCompositionResidence.css'
 import {registerAtlasHost} from './projections/atlas/registerAtlasHost'
 import {presentAtlasView, useAtlasView} from './projections/atlas/AtlasProjectionPanel'
-import {deviceInstrumentFor, hostedLensOfBarId, showsLensBar, type HostedLens} from './shell/paneInstrument'
+import {deviceInstrumentFor, factoryFocusedPane, hostedLensOfBarId, showsLensBar, type HostedLens} from './shell/paneInstrument'
+import {focusedSurfaceKind, isFactoryMode, openFactoryInstrumentPane} from './agent/factoryCentre'
 import {captureTechneInstrumentOpen, TECHNE_INSTRUMENT_OPEN, type TechneInstrumentEvent} from './native/techneInstrumentOpen'
 registerAtlasHost()
 const PALETTE =['#79b6ce', '#779dcc', '#9885bc', '#8baf9c', '#b096b2', '#6caaa9']
@@ -89,7 +90,10 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   const [tab, setTab] = useState(restored?.tab ?? 'session')
   // A refusal of the hosted lens press, named in one status sentence under the lens bar (the hosted pane only).
   const [lensFault, setLensFault] = useState<string | null>(null)
-  const [centerPanel, setCenterPanel] = useState((restored?.centerPanel === 'world.knowledge' ? 'native.workbench' : restored?.centerPanel) ?? 'world.expressions')
+  // The Factory centre is the Workbench's pane tree (agent/factoryCentre.ts); the retired agent centre and the knowledge
+  // centre both restore to the Workbench, so no saved centre names a panel the mode does not stand.
+  const workbenchCentre = (panel: string | undefined): string | undefined => frameMode === 'factory' || panel === 'native.agent' || panel === 'world.knowledge' ? 'native.workbench' : panel
+  const [centerPanel, setCenterPanel] = useState(workbenchCentre(restored?.centerPanel) ?? 'world.expressions')
   const [knowledgeIntent, setKnowledgeIntent] = useState<{workspaceId: string; bindingId: string} | null>(null)
   useEffect(() => {
     const presentKnowledge = (event: Event) => {
@@ -268,7 +272,7 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
     continuity.setMode(next === 'live' ? 'audio' : next)
     if (next === 'live' || next === 'expressions') { setCenterPanel('world.expressions'); return }
     if (next === 'base' || next === 'techne') { setCenterPanel('world.ground'); setDock(true); return }
-    setCenterPanel('native.agent'); setDock(true)
+    setCenterPanel('native.workbench'); setDock(true)
   }
   const [dock, setDock] = useState(restored?.dock ?? false)
   const [selection, select] = useState<SetSelection>(restored?.selection ?? { track: 0, scene: null })
@@ -290,7 +294,7 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
     if (frameWorkspace === workspace.workspaceId) return
     const view = continuity.applicationView
     restorePath({workspaceId: workspace.workspaceId, path: view?.alsPath})
-    setTab(view?.tab ?? 'session'); setCenterPanel((view?.centerPanel === 'world.knowledge' ? 'native.workbench' : view?.centerPanel) ?? 'world.expressions')
+    setTab(view?.tab ?? 'session'); setCenterPanel(workbenchCentre(view?.centerPanel) ?? 'world.expressions')
     changeDetailMode(view?.detailMode ?? 'clip'); resizeBrowser(view?.browserWidth ?? null); resizeDetail(view?.detailHeight ?? null)
     setBrowser(view?.browser ?? true); setDetail(view?.detail ?? true); setDock(view?.dock ?? false)
     select(view?.selection ?? {track: 0, scene: null}); presentSettings(view?.settingsPresented ?? false)
@@ -313,7 +317,7 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
       const target = event.target as HTMLElement
       if (target.closest('input,textarea,select,[contenteditable="true"]')) return
       if (event.key === 'Tab' && !event.ctrlKey && !event.altKey && !event.metaKey && !event.shiftKey && !settingsPresented
-        && (frameMode === 'live' || centerPanel === 'world.expressions' || centerPanel === 'world.ground' || centerPanel === 'native.session' || centerPanel === 'native.arrangement' || centerPanel === 'native.agent')) {
+        && (frameMode === 'live' || centerPanel === 'world.expressions' || centerPanel === 'world.ground' || centerPanel === 'native.session' || centerPanel === 'native.arrangement' || frameMode === 'factory')) {
         event.preventDefault(); chooseView(tab === 'session' ? 'arrangement' : 'session')
       }
       if (event.key.toLowerCase() === 'l' && event.metaKey && event.altKey) { event.preventDefault(); setDetail(current => !current) }
@@ -338,8 +342,8 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
       presentSettings(true)
     } else {
       presentSettings(false)
+      if (id === 'native.agent') { setCenterPanel('native.workbench'); setDock(true); continuity.setMode('factory'); return }
       setCenterPanel(id)
-      if (id === 'native.agent') { setDock(true); continuity.setMode('factory'); return }
       // The other centre panels belong to the Expressions side: the
       // workspace leaves the audio surface, or the centre residence stays
       // hidden in mode audio.
@@ -349,7 +353,9 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   // The mode system's frame readings (Rev 5): which presentation stands
   // (the encounter's, never a second store), what the World cut shows, and
   // the real readings the mode transport may wear.
-  const agentShell = centerPanel === 'native.agent' && !settingsPresented
+  // Factory is the agent shell's mode: its chrome (dock, status, transport, task log, agent Device side) stands over the Workbench
+  // tree whose default tab is the agent surface (agent/factoryCentre.ts). The centre is that tree, not a separate panel.
+  const agentShell = isFactoryMode(frameMode) && !settingsPresented
   // The World cut is the ground pane itself: it stands only while the centre
   // holds world.ground (in Central as in Technē), so the Earth atlas focused
   // from the lens bar is not drawn over by the Timeline.
@@ -360,10 +366,13 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   // Device side follows it in every mode but Live; the lens bar stands over
   // the centre whenever it holds an instrument pane (paneInstrument.ts).
   const atlasView = useAtlasView()
-  const focusedPane = settingsPresented ? 'world.settings' : centerPanel
+  // A Factory tree's focused tab names its pane (factoryFocusedPane): the agent tab keeps its own Device side, an instrument tab
+  // takes its instrument through the same deviceInstrumentFor every mode uses.
+  const factoryFocus = frameMode === 'factory' ? factoryFocusedPane(focusedSurfaceKind(continuity.current.layout)) : null
+  const focusedPane = settingsPresented ? 'world.settings' : factoryFocus ? factoryFocus.pane : centerPanel
   // The hosted Expressions lens the frame reports (publishReading, via the panel's onState). Null until it reports one.
   const hostedLens = workspace.reading?.lens ?? null
-  const focusedInstrument = deviceInstrumentFor(frameMode, focusedPane, presented, atlasView, hostedLens)
+  const focusedInstrument = deviceInstrumentFor(frameMode, focusedPane, factoryFocus ? factoryFocus.presentation : presented, atlasView, hostedLens)
   const instrumentLensBar = showsLensBar(frameMode, focusedPane)
   // The hosted pane's lens press: the retained-instrument event the Technē browser already sends. The expressions panel's receiver
   // validates it against the current native Scene and calls the hosted host's selectInstrument; nothing here holds the host.
@@ -419,11 +428,18 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
         instrument pane, in every mode but Live (owner ruling, 13 Oct 2026).
         A World cut lens reached from a mode without the cut enters Technē's
         ground, as the mode transport does. */}
-      {instrumentLensBar && <TechneLensBar presentation={presented ?? 'session'} atlasOpen={centerPanel === 'projection.earth'} hosted={focusedPane === 'world.expressions' ? {lens: hostedLens} : null} onLens={lens => {
+      {instrumentLensBar && <TechneLensBar presentation={presented ?? 'session'} atlasOpen={centerPanel === 'projection.earth' || factoryFocus?.pane === 'projection.earth'} factory={isFactoryMode(frameMode)} hosted={focusedPane === 'world.expressions' ? {lens: hostedLens} : null} onLens={lens => {
         // The hosted pane's lens: a press drives the hosted application's lens through its retained-instrument receiver.
         if (focusedPane === 'world.expressions') {const hosted = hostedLensOfBarId(lens.id); if (hosted) driveHostedLens(hosted); return}
         if (lens.state !== 'cut') return
         presentSettings(false)
+        // In Factory the lens opens its instrument pane inside the Workbench tree beside the agent tab, never by leaving the centre.
+        if (agentShell) {
+          // Only the admitted Earth atlas panes open here; a disabled lens (Timeline, Journey, the rest) opens nothing.
+          const paneKind = factoryLensPane(lens)
+          if (paneKind) continuity.setLayout(layout => openFactoryInstrumentPane(layout, paneKind))
+          return
+        }
         if (lens.atlas) { presentAtlasView(lens.atlas); setCenterPanel('projection.earth'); return }
         if (lens.presentation) { if (frameMode !== 'base' && frameMode !== 'techne') chooseMode('techne'); setTab(lens.presentation); setCenterPanel('world.ground') }
       }} />}
@@ -475,7 +491,7 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
     {/* The instrument residence: the focused pane's instrument as the Device side, in any mode but Live. */}
     <div className="detail-residence" hidden={!detail || focusedInstrument === null || detailMode !== 'device'} data-instrument-device={focusedInstrument ?? undefined}>{focusedInstrument !== null && <InstrumentDeviceDetail transport={workspace.transport} instrument={focusedInstrument} centralDevices={frameMode === 'base'} />}</div>
     <div className="detail-residence" hidden={!detail || !agentShell || detailMode !== 'clip'}><FactoryTaskLogDetail taskLabel={factoryTask?.purpose ?? null} task={factoryTask ? {sessionRef: factoryTask.sessionRef, purpose: factoryTask.purpose, agentName: factoryTask.agentName, needleState: factoryTask.needle?.state ?? null, tasks: factoryTask.tasks, budget: factoryTask.budget} : null} /></div>
-    <div className="detail-residence" hidden={!detail || !agentShell || detailMode !== 'device'}><AgentShellDeviceDetail tracks={agency.tracks} /></div></NativeInputRetentionProvider>
+    <div className="detail-residence" hidden={!detail || !agentShell || detailMode !== 'device' || focusedInstrument !== null}><AgentShellDeviceDetail tracks={agency.tracks} /></div></NativeInputRetentionProvider>
     {agentShell ? <AgentStatusBarBridge detailMode={detailMode} changeDetailMode={mode => {changeDetailMode(mode); setDetail(true)}} audio={frameMode === 'live'} mode={frameMode} reading={workspace.reading} state={state} documentError={deep.error} viewport={viewport} selectedTrack={agency.tracks[0]?.purpose ?? undefined} presentedView={presentedView} subjectLabel={frameMode === 'base' && centralSubject ? centralSubject.path : undefined} /> : <StatusBar detailMode={detailMode} changeDetailMode={mode => {changeDetailMode(mode); setDetail(true)}} audio={frameMode === 'live'} mode={frameMode} reading={workspace.reading} state={state} documentError={deep.error} viewport={viewport} selectedTrack={state.set?.tracks[selection.track]?.name} presentedView={presentedView} subjectLabel={frameMode === 'base' && centralSubject ? centralSubject.path : undefined} />}
   </>)
   return <div ref={frameRef} style={{ ...(browserWidth === null ? {} : { '--browser-w': `${browserWidth}px` }), ...(detailHeight === null ? {} : { '--detail-h': `${detailHeight}px` }), ...(agentShell ? {'--dock-w': `${shellCtx.dockWidth}px`} : {}) } as CSSProperties} className={`frame mode-${workspace.mode}${browser ? '' : ' browser-hidden'}${detail ? '' : ' detail-hidden'}${dock ? ' dock-open' : agentShell ? ' no-dock' : ''}${agentShell ? ' agent-shell-frame' : ''}`} data-agent-shell={agentShell ? 'true' : undefined}>{frameBody}</div>

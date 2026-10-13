@@ -38,13 +38,16 @@ import {createKnowledgeBinding,sameKnowledgeDestination,type KnowledgeBinding} f
 import {NativeAgencyParticipation} from '../components/NativeAgencyParticipation'
 import {preparedContextScopeKey,type NativePreparedContextScope} from './preparedContextBinding'
 import {workbenchContextScope} from './workbenchContext'
+import {AgentShellCentre} from '../agent/AgentShellRoot'
+import {AGENT_SHELL_KIND, hasFactoryCentre, seedFactoryCentre} from '../agent/factoryCentre'
 import type {AgentSubject,AgentAccompanying} from '../../../../../desktop/cradle/src/agent/AgentLayer'
 import {isRetainedCentreKind, WARM_WORKSPACES, type WarmTreeRef} from '../../../../../desktop/cradle/src/surface/warmTrees'
 import {RETAINED_VIEW_BUDGET} from '../../../../../desktop/cradle/src/surface/runtime'
 import './workbench.css'
 
 const OMIT_BODY_KINDS = ['expressions'] as const
-const unowned = new Set(['draft', 'blank'])
+// The agent tab is the shell's own body, not a kernel-owned surface: it is never admitted to the native owner.
+const unowned = new Set(['draft', 'blank', AGENT_SHELL_KIND])
 const identity = (binding: SurfaceBinding) => JSON.stringify([binding.kind, binding.ref, binding.project, binding.location, binding.address, binding.encounter, binding.hosted, binding.view?.nativeKnowledge, worldView(binding)?.sourceWorldRef])
 const worldView = (binding: SurfaceBinding) => binding.view as (NonNullable<SurfaceBinding['view']> & {sourceWorldRef?: string}) | undefined
 const hostedWorld = (binding: SurfaceBinding) => worldView(binding)?.sourceWorldRef
@@ -118,6 +121,11 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
     return () => observer.disconnect()
   }, [])
   useEffect(() => {restore.current = checkpoint(book.current.layout); setMenu(null)}, [book.current.id, book.current.layout.mode])
+  // Factory's centre is the Workbench tree: entering Factory seeds its default agent tab once (pinned, so it cannot be closed).
+  useEffect(() => {
+    if (book.current.layout.mode !== 'factory') return
+    if (!hasFactoryCentre(book.current.layout)) book.setLayout(layout => seedFactoryCentre(layout))
+  }, [book.current.id, book.current.layout])
   useEffect(() => {
     let live = true
     const epoch = workspace.accessEpoch
@@ -709,7 +717,7 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
         execute: dispatch, openBindingMenu: (id, x, y) => {if (allowed()) menuFor(id, x, y)}, openFrameMenu: (x, y) => {if (allowed()) menuFor(undefined, x, y)}, menuOpen: !!menu,
         nativeWindows: kernel.transport.kind === 'tauri', openSource: source => {if (allowed()) openSource(source)}, openKnowledge, openExplore, openPresentation,
         openEncounter: row => allowed() ? openEncounter(row) : Promise.reject(Error('The originating Workbench tree is concealed.')),
-        conversation: <FactoryChat layout={tree.layout} project={owner.project} sourceWorldRef={sourceWorldRef} workspaceId={tree.workspaceId} accessEpoch={receivingEpoch}
+        conversation: tree.layout.mode === 'factory' ? <AgentShellCentre/> : <FactoryChat layout={tree.layout} project={owner.project} sourceWorldRef={sourceWorldRef} workspaceId={tree.workspaceId} accessEpoch={receivingEpoch}
           current={scope=>{
             if(!allowed()||!latest.current.workspace.nativeAccessCurrent(receivingEpoch)||host.current?.closest<HTMLElement>('.inhabitant')?.hidden)return false
             try{return preparedContextScopeKey(scope)===preparedContextScopeKey(workbenchContextScope(latest.current.book.current.layout,tree.workspaceId,receivingEpoch,latest.current.book.current.project,sourceWorldRef))}catch{return false}

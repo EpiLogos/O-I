@@ -532,6 +532,9 @@ function SurfaceBodyImpl({
   const unavailable = bodyUnavailable?.(binding);
   if (unavailable) return <p role="status" className="source-note">{unavailable}</p>;
   if (binding.pending) return <Loading label={`Opening ${binding.title}…`} scope="surface"/>;
+  // The agent surface (live shell Factory centre, agent/factoryCentre.ts): its body is the
+  // tree's own conversation node, mounted in place. Additive arm: no other kind changes.
+  if (binding.kind === "agent-shell") return <>{conversation}</>;
   // Retained centre kinds (expressions/techne/epi-logos/system/factory —
   // surface/retention.tsx) mount their ONE body directly, in place, inside
   // this pane's own `.surface-retained` wrapper — mounted-concealed by the

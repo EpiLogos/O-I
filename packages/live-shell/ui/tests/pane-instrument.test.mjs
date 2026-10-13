@@ -97,6 +97,7 @@ test('the lens bar stands over an instrument pane in every mode but Live', () =>
   assert.equal(showsLensBar('techne', 'projection.earth'), true, 'Technē')
   assert.equal(showsLensBar('expressions', 'projection.earth'), true, 'Expressions')
   assert.equal(showsLensBar('factory', 'projection.earth'), true, 'Factory')
+  assert.equal(showsLensBar('factory', 'native.agent'), true, 'Factory: the bar stands over the agent tab — it is how an instrument pane opens there')
   assert.equal(showsLensBar('live', 'world.ground'), false, 'Live shows the audio cut, no instrument pane')
   assert.equal(showsLensBar('base', 'native.agent'), false)
   assert.equal(showsLensBar('base', 'world.settings'), false)
