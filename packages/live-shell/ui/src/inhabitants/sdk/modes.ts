@@ -150,11 +150,11 @@ export const SDK_MODE_DECLARATIONS: readonly SdkMode[] = [
       {row: 'link-tap', meaning: 'Link · Tap'},
       {row: 'tempo-signature', meaning: 'tempo ‹ › · signature'},
       {row: 'metronome-quantize', meaning: 'metronome · quantize'},
-      {row: 'key-scale', meaning: 'key / scale'},
+      {row: 'key-scale', meaning: 'the mode in force — root / mode / tuning'},
       {row: 'transport', meaning: '▶ ■ ● +'},
       {row: 'arm-capture', meaning: 'arm · re-enable · capture'},
       {row: 'punch-loop', meaning: 'punch · loop · punch'},
-      {row: 'draw-keys', meaning: 'draw · keys · MIDI · kHz · CPU'},
+      {row: 'draw-keys', meaning: 'draw · keys (the Jankó surface) · MIDI · kHz · CPU'},
     ],
   },
   {

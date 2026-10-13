@@ -27,11 +27,13 @@ Mockup values (names, hours, counts, sample data) are illustrative. Their
    same views, same chain, same browser — five meanings (Rev 5). That is the
    Glass Bead Game's one language over every discipline, made literal: Live
    is the organ; the modes are the disciplines played on it (05 §1).
-3. **Live mode is the measured basis.** Its devices are ported from the RE
-   corpus, not approximated; every other mode's reading of a semantic is
-   checked against Live mode's real behaviour. Live later joins Expressions'
-   audio+video timeline (owner ruling, `CONTEMPLATION-DLW-INSTRUMENT.md`
-   232–252); until then it stays the clean basis.
+3. **Live mode is one instrument; the RE corpus is the engine's measured
+   reference** (owner ruling, 13 Oct 2026, §0.2 — replacing "devices ported
+   from the RE corpus"). The corpus's measured dynamics stay the engine's
+   reference and every other mode's reading of a semantic is still checked
+   against it; what Live mode exposes is the one instrument and its chain,
+   never a ported catalogue. Live later joins Expressions' audio+video
+   timeline (owner ruling, `CONTEMPLATION-DLW-INSTRUMENT.md` 232–252).
 4. **Owners write; faces read.** A device's write rows carry a write path
    (`kernel:` / `shell.` / `<tool>:`); a row without one is a reading
    (`DEVICE-SDK.md`, the writers law). Nothing moves without a visible cause
@@ -84,6 +86,41 @@ stated it.
    M0) can each be live, moved into creative composition, and recorded and
    played back (and so shared).
 
+### 0.2 Live mode is one instrument — the M1 torus (owner ruling, 13 Oct 2026)
+
+Recorded in QL-MEF PR #329 (`docs/M-PRIME-PHYSICAL-MUSIC-WAYFINDER.md` §0.4,
+`docs/music/JANKO-QL-INSTRUMENT-FIGURE.md` §4a, work packets K/P/U) and O:I
+PR #655 (`docs/dlw/DLW.md` §9).
+
+1. **One instrument.** Live mode exposes a single instrument, the M1 torus,
+   driven by the bi-phasal dual oscillator (3:3 / 4:2) as the only generator
+   (D13 stands: M2 tunes and modulates only). Fully sound-designable; its
+   states save as presets that appear in the browser. The capacities derived
+   from the Live corpus stay in the engine and appear as chain devices —
+   filters, dynamics, delays, reverbs, envelopes, LFOs, racks, macros —
+   never as Ableton's catalogue.
+2. **The visible torus is the full oscillation state**: a real, cymatic,
+   directly playable simulation in the Expressions engine; sound and picture
+   from one state. Live mode and every Expression share this one simulation —
+   never two builds.
+3. **Three presentations**: the compact rack widget (mini torus + ≤4
+   macros), the expanded instrument in the browser pool, the full torus in
+   the centre pane.
+4. **The keyboard is the torus unwound**: each Jankó key is an excitation
+   point on its helix (WT₀ the bimba arc, WT₁ the pratibimba Klein-extension
+   arc; musical V3 §0); a semitone is a cross-helix step; a chord excites
+   several points and the figure they draw is the chord's symbol. The exact
+   angular placement is a kernel derivation (QL-MEF packet K, published in
+   I1) — never laid out by eye.
+5. **Scales use Live's grammar**: transport key/root/scale set the mode in
+   force (one of the 84 lens/CF modes, or a source scale — Ficino planetary,
+   Shem, maqām — with tuning); each clip may carry its own mode and the piano
+   roll folds to or highlights it; note devices before the torus (scale
+   mapping, exact-ratio tuning, sky modulation); the Jankó surface recolours
+   to the mode in force.
+6. **To build**: tickets T-LIVE-TORUS-INSTRUMENT, T-LIVE-JANKO-DEVICE,
+   T-LIVE-MODE-SCALES, T-LIVE-MIDI (wayfinder `tickets/`).
+
 ---
 
 ## 1. The ontology — Live semantic → DLW meaning → the Game
@@ -125,17 +162,20 @@ Each table is the mockup's own placement (`world-shell-mockup.html`: VIEWMAP,
 VIEWTIP, DVN, BCATS, CTABS/WID, deviceDetail/formDevice/liveDetail, TPM;
 `modes.ts`). **Built** names code; **designed** names the mockup only.
 
-### 2.1 Live — the measured basis
+### 2.1 Live — the one instrument (§0.2)
 
 | Semantic | Element | State |
 |---|---|---|
-| Session / Arrangement | clips and scenes / the song over time | built (`shell/modeGrammar.ts`; Live surfaces) |
-| Tracks · clips | Drums, Bass, Keys, Pad, Voice (mockup sample set) over the real `.als` (`live-set`) | built: set read/write over the `.als` |
-| Browser | Sounds · Drums · Instruments · Audio effects · Samples · Views | designed (mockup `BCATS.live`) |
-| Instruments | Operator, Wavetable, Drift; Drum Rack (`kit`) as rack | built faces: `panels/devices-pro/operator`, `wavetable`; `devices-b2/drift`, `kit` |
-| Audio effects | Glue Compressor, Reverb, Echo, Auto Filter, Saturator, Auto Pan, Drum Buss, Chorus-Ensemble, EQ Eight, Multiband Dynamics, Utility, Delay, Hybrid Reverb; Compressor, Overdrive, Redux, Gate, Erosion, Limiter, Filter Delay, Beat Repeat, Channel EQ, EQ Three, Grain Delay, Phaser-Flanger (generic `DevicePanel` over `live-dynamics` parameter tables) | built faces; DSP gated per device in `live-dynamics` |
-| Detail | Clip (piano roll) \| Device (Drum Rack → Glue → Reverb) | designed (`liveDetail`); device faces built |
-| Transport | the real Live meanings (Link, tap, tempo, …, CPU) | built (`modeGrammar.ts`) |
+| Session / Arrangement | clips and scenes / the piece over time | built (`shell/modeGrammar.ts`; Live surfaces) |
+| Tracks · clips | the set's tracks and clips, played on the one instrument; each clip may carry its own mode | built: set read/write over the `.als` (`live-set`); per-clip mode — `T-LIVE-MODE-SCALES` |
+| Browser | the instrument's saved states (presets) · its chain devices · samples · views | to build (`T-LIVE-TORUS-INSTRUMENT`); was Sounds · Drums · Instruments · Audio effects · Samples (mockup `BCATS.live`) |
+| Instrument | **the M1 torus** — the only generator (3:3 / 4:2 dual oscillator); compact rack widget · expanded pool · full torus centre | to build (`T-LIVE-TORUS-INSTRUMENT`); the shared Expressions simulation |
+| Chain devices | note devices before the torus (scale mapping · exact-ratio tuning · sky modulation); effects after (filters, dynamics, delays, reverbs; envelopes, LFOs, racks, macros) — the Live corpus's capacities | effect faces built over `live-dynamics` (`DevicePanel`); re-presented as the instrument's chain, not a catalogue (`T-LIVE-TORUS-INSTRUMENT`); note devices `T-LIVE-MODE-SCALES` |
+| Ported generators | Operator, Wavetable, Drift, Drum Rack faces (`panels/devices-pro`, `devices-b2`) | built; leave the exposed surface only as their capacities are carried by the torus or its chain (`T-LIVE-TORUS-INSTRUMENT`) — never removed before |
+| Keyboard | the Jankó surface — the torus unwound; piano layout as alternative | to build (`T-LIVE-JANKO-DEVICE`; placement from QL-MEF packet K) |
+| Detail | Clip (mode-aware piano roll) \| Device (the instrument's chain) | piano roll built; mode-awareness `T-LIVE-MODE-SCALES` |
+| Transport | key/root/scale = the mode in force (root, mode, tuning); the rest Live's meanings, read to the instrument | built (`modeGrammar.ts`, re-read 13 Oct) |
+| MIDI | in/out, key and MIDI mapping, the low-latency playing path | to build (`T-LIVE-MIDI`) |
 | Destination | joins Expressions' audio+video timeline | owner-timed (`tickets/T-LIVE-INTO-EXPRESSIONS-joined-timeline.md`) |
 
 ### 2.2 Central — the ground
