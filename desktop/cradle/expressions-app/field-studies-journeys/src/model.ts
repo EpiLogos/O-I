@@ -58,6 +58,23 @@ export interface Scene {research?:ResearchMaterial;pointerScope?:'local'|'global
  automation:AutomationLane[];
 }
 export interface Journey {shared?:SharedSettings;savedScenes?:Record<string,Scene>;schema:'oi.journey';version:1;id:string;name:string;description:string;loop:boolean;scenes:Scene[];updatedAt:string}
+/** The scene timing rule, in seconds. validateJourney reads these; the timeline's trim and the scene workflow read them too. */
+export const SCENE_DURATION_MIN=1;
+export const SCENE_DURATION_MAX=3600;
+export const SCENE_TRANSITION_MIN=0;
+export const SCENE_TRANSITION_MAX=30;
+/** A scene's timeline facts: the only fields a timeline move may change. Its content identity is every other field, its `id` (scene_ref) included. */
+export const SCENE_TIMELINE_FACTS=['duration','transition'] as const;
+/** Canonical JSON: object keys sorted and undefined dropped, so equal content always yields the same text. */
+function canonicalJson(v:unknown):string{
+ if(Array.isArray(v))return '['+v.map(x=>canonicalJson(x)).join(',')+']';
+ if(v&&typeof v==='object'){const o=v as Record<string,unknown>;return '{'+Object.keys(o).filter(k=>o[k]!==undefined).sort().map(k=>JSON.stringify(k)+':'+canonicalJson(o[k])).join(',')+'}';}
+ return JSON.stringify(v)??'null';
+}
+/** Digest of a scene's content identity: its ref and every field except its timeline facts. A timeline move must leave it unchanged. */
+export function sceneContentDigest(scene:Scene):string{
+ return canonicalJson(Object.fromEntries(Object.entries(scene).filter(([key])=>!(SCENE_TIMELINE_FACTS as readonly string[]).includes(key))));
+}
 /** structuredClone is several times cheaper than a JSON round-trip on source-heavy documents. */
 export const clone=<T>(v:T):T=>typeof structuredClone==='function'?structuredClone(v):JSON.parse(JSON.stringify(v));
 /** Depth lamination default span, stage units (×400 = native world px). ~half the stage: a clear front/back separation. */
@@ -161,7 +178,7 @@ export function validateJourney(value:unknown):Journey {
  const validateSource=(source:Entity['source'])=>{if(!source)return;if(!['ascii','image'].includes(source.kind))throw new Error('Invalid formation source');if(source.kind==='ascii'){const a=source.ascii;if(!a||!str(a.text,50000)||a.fontFamily!==undefined&&!str(a.fontFamily,200)||a.fontSize!==undefined&&!finite(a.fontSize,1,1024)||a.invert!==undefined&&typeof a.invert!=='boolean')throw new Error('Invalid ASCII source');}else{const a=source.image;if(!a||!['luminance','edgeSobel','silhouette'].includes(a.mode)||!finite(a.threshold,0,1)||!finite(a.scale,.01,100)||a.invert!==undefined&&typeof a.invert!=='boolean'||a.name!==undefined&&!str(a.name,500)||a.dataUrl!==undefined&&(!str(a.dataUrl,12000000)||!/^data:image\/(png|jpeg|webp);base64,[a-zA-Z0-9+/=]+$/.test(a.dataUrl)))throw new Error('Invalid image source');}};
  if(j.shared){j.shared.toolbelt=validateWorkspace({version:1,appearance:'scene',entries:j.shared.toolbelt}).entries;if(j.shared.devices!==undefined)j.shared.devices=validateDeviceWidgets(j.shared.devices);for(const bucket of ['values','pointer'] as const){const values=j.shared[bucket];if(!values||typeof values!=='object'||Array.isArray(values)||Object.keys(values).length>1024)throw new Error('Invalid expression properties');for(const [path,value] of Object.entries(values)){if(!globalPath(path)||bucket==='pointer'&&!POINTER_PATHS.includes(path)||!(typeof value==='number'&&finite(value,-1e8,1e8)||typeof value==='boolean'||str(value,300)))throw new Error('Invalid shared property: '+path);}}}
  const ids=new Set<string>();
- for(const s of j.scenes){if(s.pointerScope!==undefined&&!['local','global'].includes(s.pointerScope))throw new Error('Invalid pointer scope.');if(s.propertyTakeRange&&(!Number.isFinite(s.propertyTakeRange.start)||!Number.isFinite(s.propertyTakeRange.end)||s.propertyTakeRange.start<0||s.propertyTakeRange.end<=s.propertyTakeRange.start||s.propertyTakeRange.end>3600))throw new Error('Invalid property take interval');if(s.toolbelt!==undefined)s.toolbelt=validateWorkspace({version:1,appearance:'scene',entries:s.toolbelt}).entries;if(s.propertyTracks!==undefined)s.propertyTracks=validateTracks(s.propertyTracks);s.engine={...DEFAULT_ENGINE_SETTINGS,...s.engine};if(!safeId(s.id)||ids.has(s.id)||!str(s.name,160)||!str(s.character)||!finite(s.duration,1,3600)||!finite(s.transition,0,30))throw new Error('Invalid or duplicate scene.');ids.add(s.id);
+ for(const s of j.scenes){if(s.pointerScope!==undefined&&!['local','global'].includes(s.pointerScope))throw new Error('Invalid pointer scope.');if(s.propertyTakeRange&&(!Number.isFinite(s.propertyTakeRange.start)||!Number.isFinite(s.propertyTakeRange.end)||s.propertyTakeRange.start<0||s.propertyTakeRange.end<=s.propertyTakeRange.start||s.propertyTakeRange.end>3600))throw new Error('Invalid property take interval');if(s.toolbelt!==undefined)s.toolbelt=validateWorkspace({version:1,appearance:'scene',entries:s.toolbelt}).entries;if(s.propertyTracks!==undefined)s.propertyTracks=validateTracks(s.propertyTracks);s.engine={...DEFAULT_ENGINE_SETTINGS,...s.engine};if(!safeId(s.id)||ids.has(s.id)||!str(s.name,160)||!str(s.character)||!finite(s.duration,SCENE_DURATION_MIN,SCENE_DURATION_MAX)||!finite(s.transition,SCENE_TRANSITION_MIN,SCENE_TRANSITION_MAX))throw new Error('Invalid or duplicate scene.');ids.add(s.id);
   if(!s.view)s.view={mode:'2d',yaw:0,pitch:0,zoom:1,panX:0,panY:0};
   if(s.view.nativeScaffold!==undefined&&!['off','axis','grid'].includes(s.view.nativeScaffold))throw new Error('Invalid native scaffold.');
   if(!['2d','3d'].includes(s.view.mode)||!finite(s.view.yaw,-1000,1000)||!finite(s.view.pitch,-1000,1000)||!finite(s.view.zoom,.01,100)||!finite(s.view.panX,-10,10)||!finite(s.view.panY,-10,10))throw new Error('Invalid scene framing.');
