@@ -7,6 +7,7 @@ import type { LiveServicePolicy } from "@research-canvas/geography";
 
 import { LocationPanel, pointForPlace } from "./LocationPanel";
 import type { MapTileSource } from "./mapStyle";
+import { planPlaceFlight, placeMarkerPlan, withCameraDefaults, type PlaceFlightPlan } from "./placeNavigation";
 import {
   createMaplibreRenderer,
   type ArchetypeExpressionRenderMarker,
@@ -33,6 +34,8 @@ export interface PsychogeographicMapProps {
   onViewStateChange?: (viewState: MapViewState) => void;
   onSelectedGraphNodeIdChange?: (graphNodeId: string | null) => void;
   onOpenCanvasNode?: (graphNodeId: string) => void | Promise<void>;
+  /** Hands the host the fly-to choreography (`flyToPlace`), as the Canvas hands `flyToNode`. */
+  onRegisterFlyToPlace?: (flyToPlace: (graphNodeId: string) => PlaceFlightPlan | null) => void;
 }
 
 /**
@@ -57,6 +60,7 @@ export function PsychogeographicMap({
   onViewStateChange,
   onSelectedGraphNodeIdChange,
   onOpenCanvasNode,
+  onRegisterFlyToPlace,
 }: PsychogeographicMapProps): JSX.Element {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mountedRenderer = useRef<MapSurfaceRenderer | null>(null);
@@ -73,8 +77,10 @@ export function PsychogeographicMap({
   const [readyRenderer, setReadyRenderer] = useState<MapSurfaceRenderer | null>(null);
   const [view, setView] = useState<"globe" | "flat">("globe");
   const [viewState, setViewState] = useState<MapViewState>(() =>
-    initialViewState ?? { latitude: 20, longitude: 0, zoom: 1 },
+    withCameraDefaults(initialViewState ?? { latitude: 20, longitude: 0, zoom: 1 }),
   );
+  // Why the last fly-to did not fly (an unlocated place, say), named for the reader.
+  const [flightNotice, setFlightNotice] = useState<string | null>(null);
   const [nodes, setNodes] = useState<LocatedGraphNode[]>([]);
   const [lanes, setLanes] = useState<GeographyEdge[]>([]);
   const [expressionsByPlace, setExpressionsByPlace] = useState<Map<string, ArchetypalExpression[]>>(new Map());
@@ -145,6 +151,9 @@ export function PsychogeographicMap({
   const placeMarkers = useMemo<PlaceRenderMarker[]>(() => nodes.flatMap((node) => {
     const point = pointForPlace(node);
     if (!point) return [];
+    // The precision grammar decides whether a place is drawn at all: an
+    // unlocated place has no marker plan and stays in the register, never at (0,0).
+    if (!placeMarkerPlan({ precision: node.place.coordinate.precision, ...point })) return [];
     return [{
       graphNodeId: node.graphNodeId,
       title: node.title,
@@ -232,15 +241,41 @@ export function PsychogeographicMap({
   const renderDataRef = useRef({ placeMarkers, expressionMarkers, filteredLanes });
   renderDataRef.current = { placeMarkers, expressionMarkers, filteredLanes };
 
+  // T2: the flight to a place. The zoom and the marker both come from the
+  // place's own precision; an unlocated place does not fly and is named instead.
+  const flyToPlace = useCallback((graphNodeId: string): PlaceFlightPlan | null => {
+    const node = nodes.find((candidate) => candidate.graphNodeId === graphNodeId);
+    if (!node) return null;
+    const plan = planPlaceFlight({
+      precision: node.place.coordinate.precision,
+      title: node.title,
+      point: pointForPlace(node),
+      from: { latitude: viewState.latitude, longitude: viewState.longitude },
+    });
+    if (!plan.flies) {
+      setFlightNotice(plan.note);
+      return plan;
+    }
+    setFlightNotice(null);
+    void mountedRenderer.current?.flyTo?.(plan.latitude, plan.longitude, plan.zoom, {
+      durationMs: plan.durationMs,
+      easing: plan.easing,
+    });
+    return plan;
+  }, [nodes, viewState.latitude, viewState.longitude]);
+
   const selectPlace = useCallback((graphNodeId: string) => {
     const node = nodes.find((candidate) => candidate.graphNodeId === graphNodeId);
     if (!node) return;
     setSelectedNodeId(graphNodeId);
     onSelectedGraphNodeIdChangeRef.current?.(graphNodeId);
-    const point = pointForPlace(node);
-    if (point) void mountedRenderer.current?.flyTo?.(point.latitude, point.longitude, Math.max(3, viewState.zoom));
-  }, [nodes, viewState.zoom]);
+    flyToPlace(graphNodeId);
+  }, [flyToPlace, nodes]);
   placeClickRef.current = selectPlace;
+
+  useEffect(() => {
+    onRegisterFlyToPlace?.(flyToPlace);
+  }, [flyToPlace, onRegisterFlyToPlace]);
 
   const openPlaceOnCanvas = useCallback((graphNodeId: string) => {
     selectPlace(graphNodeId);
@@ -297,10 +332,13 @@ export function PsychogeographicMap({
         });
         const restoredViewState = initialViewStateRef.current;
         if (restoredViewState) {
+          // Records saved before T1 carry no pitch or bearing: they restore untilted.
+          const restored = withCameraDefaults(restoredViewState);
           await renderer.flyTo?.(
-            restoredViewState.latitude,
-            restoredViewState.longitude,
-            restoredViewState.zoom,
+            restored.latitude,
+            restored.longitude,
+            restored.zoom,
+            { pitch: restored.pitch, bearing: restored.bearing },
           );
         }
         if (cancelled) return;
@@ -406,6 +444,9 @@ export function PsychogeographicMap({
         <button type="button" data-testid="places-globe-toggle" disabled={!readyRenderer} data-active={view === "globe"} onClick={() => setProjection("globe")}>Globe</button>
         <button type="button" data-testid="places-flat-toggle" disabled={!readyRenderer} data-active={view === "flat"} onClick={() => setProjection("flat")}>Flat</button>
         <button type="button" data-testid="places-zoom-fit" disabled={!readyRenderer || placeMarkers.length === 0} onClick={() => void mountedRenderer.current?.fitToPlaces?.(placeMarkers)}>Zoom to fit</button>
+        <span data-testid="places-camera-readout" aria-label="Globe tilt and rotation" style={{ fontSize: 11, color: "var(--ob-dim, #8797ab)", whiteSpace: "nowrap" }}>
+          Pitch {Math.round(viewState.pitch ?? 0)}° · Bearing {Math.round(viewState.bearing ?? 0)}°
+        </span>
         {inspectorContainer && <button type="button" disabled={!selectedNodeId} aria-expanded={detailsOpen} onClick={() => setDetailsOpen(value => !value)}>Location details</button>}
         {!offlineOnly && policy && (!tileRefreshOptedIn ? (
           <button
@@ -446,8 +487,32 @@ export function PsychogeographicMap({
         data-testid={view === "globe" ? "places-globe" : "places-flat-map"}
         data-ready={readyRenderer !== null}
         data-center={`${viewState.longitude.toFixed(4)},${viewState.latitude.toFixed(4)}`}
+        data-pitch={viewState.pitch ?? 0}
+        data-bearing={viewState.bearing ?? 0}
         style={{ position: "absolute", inset: 0 }}
       />
+
+      {flightNotice && (
+        <div
+          role="status"
+          aria-live="polite"
+          data-testid="places-flight-notice"
+          style={{
+            position: "absolute",
+            left: 12,
+            bottom: 42,
+            zIndex: 9,
+            maxWidth: 360,
+            padding: "5px 9px",
+            borderRadius: 9,
+            background: "rgba(9,13,19,.82)",
+            color: "#c9b68a",
+            fontSize: 11,
+          }}
+        >
+          {flightNotice}
+        </div>
+      )}
 
       <div
         className="psychogeographic-connection"

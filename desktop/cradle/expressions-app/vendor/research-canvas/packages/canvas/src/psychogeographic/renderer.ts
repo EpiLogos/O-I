@@ -20,11 +20,25 @@ import {
   type MapSurfaceProjection,
   type MapTileSource,
 } from "./mapStyle";
+import { clampPitch, normalizeBearing, PITCH_MAX, placeMarkerPlan } from "./placeNavigation";
 
+/** The camera as the map reports it. `pitch` and `bearing` are degrees and are
+ * absent in records saved before T1; they read as 0. */
 export interface MapViewState {
   latitude: number;
   longitude: number;
   zoom: number;
+  pitch?: number;
+  bearing?: number;
+}
+
+/** Optional camera terms for a flight. A pitch request is ignored in flat mode
+ * (no error); a bearing applies in both projections. */
+export interface MapCameraFlight {
+  pitch?: number;
+  bearing?: number;
+  durationMs?: number;
+  easing?: (t: number) => number;
 }
 
 export interface PlaceRenderMarker {
@@ -63,7 +77,7 @@ export interface MapSurfaceRenderer {
   drawLanes?(edges: GeographyEdge[]): Promise<void>;
   setLiveTileSource(tileSource: MapTileSource): Promise<void>;
   centerOn(latitude: number, longitude: number, zoom?: number): Promise<void>;
-  flyTo?(latitude: number, longitude: number, zoom?: number): Promise<void>;
+  flyTo?(latitude: number, longitude: number, zoom?: number, camera?: MapCameraFlight): Promise<void>;
   fitToPlaces?(places: PlaceRenderMarker[]): Promise<void>;
   setProjection?(projection: MapSurfaceProjection): Promise<void>;
   setStopClickHandler?(handler: (sceneId: string) => void): void;
@@ -87,6 +101,9 @@ export async function createMaplibreRenderer(): Promise<MapSurfaceRenderer> {
   let laneClickHandler: ((laneId: string) => void) | null = null;
   let viewChangeHandler: ((view: MapViewState) => void) | null = null;
   let htmlMarkers: Array<{ remove(): void }> = [];
+  let projection: MapSurfaceProjection = "globe";
+  // The globe's own tilt, kept while the flat projection holds the camera top-down.
+  let globeTilt: number | null = null;
 
   function emitViewChange(): void {
     if (!map || !viewChangeHandler) return;
@@ -95,6 +112,8 @@ export async function createMaplibreRenderer(): Promise<MapSurfaceRenderer> {
       latitude: center.lat,
       longitude: center.lng,
       zoom: map.getZoom(),
+      pitch: map.getPitch(),
+      bearing: map.getBearing(),
     });
   }
 
@@ -105,7 +124,7 @@ export async function createMaplibreRenderer(): Promise<MapSurfaceRenderer> {
 
   return {
     async create(el, tileSource, options) {
-      const projection: MapSurfaceProjection = options?.projection ?? "globe";
+      projection = options?.projection ?? "globe";
       map = new maplibre.Map({
         container: el,
         style: createOfflineMapStyle(tileSource, { projection }) as StyleSpecification,
@@ -118,6 +137,11 @@ export async function createMaplibreRenderer(): Promise<MapSurfaceRenderer> {
         zoom: 1,
       });
       map.on("moveend", emitViewChange);
+      // Full navigation: right-drag or Ctrl-drag rotates and tilts the globe;
+      // two fingers rotate (touchZoomRotate) and tilt (touchPitch).
+      map.dragRotate.enable();
+      map.touchZoomRotate.enableRotation();
+      map.touchPitch.enable();
       map.on("click", "psychogeographic-marker-layer", (event) => {
         const feature = event.features?.[0];
         const sceneId = feature?.properties?.id as string | undefined;
@@ -167,24 +191,66 @@ export async function createMaplibreRenderer(): Promise<MapSurfaceRenderer> {
       clearHtmlMarkers();
 
       for (const place of places) {
+        // Precision is data: the kind comes from precisionMarker through
+        // placeMarkerPlan. A no-coordinate place has no plan and is never drawn,
+        // so it cannot appear at (0,0) or anywhere else on the globe.
+        const plan = placeMarkerPlan({
+          precision: place.precision,
+          latitude: place.latitude,
+          longitude: place.longitude,
+        });
+        if (!plan) continue;
+        const { style } = plan;
+
+        // A zero-size anchor sits exactly on the coordinate; the disc and the
+        // uncertainty note are positioned from it, so the note never moves the fix.
+        const anchor = document.createElement("div");
+        anchor.className = "places-globe-marker-anchor";
+        Object.assign(anchor.style, { position: "relative", width: "0", height: "0" });
+
         const element = document.createElement("button");
         element.type = "button";
         element.className = "places-globe-marker";
         element.dataset.testid = `globe-marker-${place.graphNodeId}`;
         element.dataset.precision = place.precision;
+        element.dataset.markerKind = style.kind;
         element.dataset.entityType = place.entityType;
-        element.title = place.title;
+        element.title = style.uncertainty ? `${place.title} — ${style.note}` : place.title;
         element.setAttribute("aria-label", `Open ${place.title}`);
         Object.assign(element.style, {
-          width: "16px",
-          height: "16px",
+          position: "absolute",
+          left: `${-style.diameterPx / 2}px`,
+          top: `${-style.diameterPx / 2}px`,
+          width: `${style.diameterPx}px`,
+          height: `${style.diameterPx}px`,
           borderRadius: "50%",
-          border: "2px solid #17171d",
-          background: GLOBE.marker,
-          boxShadow: "0 0 0 3px rgba(208,162,74,.18), 0 2px 10px rgba(0,0,0,.6)",
+          border: style.border,
+          background: style.background,
+          boxShadow: style.boxShadow,
           cursor: "pointer",
           padding: "0",
         });
+        anchor.append(element);
+
+        if (style.uncertainty) {
+          const note = document.createElement("span");
+          note.className = "places-precision-note";
+          note.dataset.testid = `globe-marker-note-${place.graphNodeId}`;
+          note.textContent = style.note;
+          Object.assign(note.style, {
+            position: "absolute",
+            left: `${style.diameterPx / 2 + 6}px`,
+            top: "-7px",
+            whiteSpace: "nowrap",
+            pointerEvents: "none",
+            fontSize: "10px",
+            lineHeight: "14px",
+            color: "#c9b68a",
+            textShadow: "0 1px 2px rgba(0,0,0,.85)",
+          });
+          anchor.append(note);
+        }
+
         element.addEventListener("click", (event) => {
           event.stopPropagation();
           placeClickHandler?.(place.graphNodeId);
@@ -195,8 +261,8 @@ export async function createMaplibreRenderer(): Promise<MapSurfaceRenderer> {
           placeDoubleClickHandler?.(place.graphNodeId);
         });
         htmlMarkers.push(
-          new maplibre.Marker({ element, anchor: "center" })
-            .setLngLat([place.longitude, place.latitude])
+          new maplibre.Marker({ element: anchor, anchor: "center" })
+            .setLngLat([plan.longitude, plan.latitude])
             .addTo(map),
         );
       }
@@ -268,12 +334,18 @@ export async function createMaplibreRenderer(): Promise<MapSurfaceRenderer> {
       if (!map) return;
       map.jumpTo({ center: [longitude, latitude], zoom: zoom ?? 5 });
     },
-    async flyTo(latitude, longitude, zoom) {
+    async flyTo(latitude, longitude, zoom, camera) {
       if (!map) return;
       map.flyTo({
         center: [longitude, latitude],
         zoom: zoom ?? 4,
-        duration: 900,
+        duration: camera?.durationMs ?? 900,
+        ...(camera?.easing ? { easing: camera.easing } : {}),
+        ...(camera?.bearing !== undefined ? { bearing: normalizeBearing(camera.bearing) } : {}),
+        // Flat is top-down: a pitch request is ignored there, never an error.
+        ...(projection === "globe" && camera?.pitch !== undefined
+          ? { pitch: clampPitch(camera.pitch) }
+          : {}),
       });
     },
     async fitToPlaces(places) {
@@ -290,13 +362,26 @@ export async function createMaplibreRenderer(): Promise<MapSurfaceRenderer> {
       for (const place of places) bounds.extend([place.longitude, place.latitude]);
       map.fitBounds(bounds, { padding: 72, maxZoom: 6, duration: 700 });
     },
-    async setProjection(projection) {
+    async setProjection(next) {
       if (!map) return;
-      map.setProjection({ type: projection === "globe" ? "globe" : "mercator" });
-      if (projection === "globe") {
+      if (next === "flat") {
+        // Flat holds the camera top-down: the ceiling makes every pitch source
+        // (gesture, flyTo, restore) read as 0. The globe's tilt is kept for return.
+        if (projection === "globe") globeTilt = map.getPitch();
+        map.setMaxPitch(0);
+        map.setPitch(0);
+      }
+      projection = next;
+      map.setProjection({ type: next === "globe" ? "globe" : "mercator" });
+      if (next === "globe") {
+        map.setMaxPitch(PITCH_MAX);
+        if (globeTilt !== null) {
+          map.setPitch(globeTilt);
+          globeTilt = null;
+        }
         map.setSky({ "sky-color": GLOBE.space, "sky-horizon-blend": 0.4 });
       }
-      const globeOnly = projection === "globe";
+      const globeOnly = next === "globe";
       if (map.getLayer("graticule-lines")) {
         map.setLayoutProperty("graticule-lines", "visibility", globeOnly ? "visible" : "none");
       }
