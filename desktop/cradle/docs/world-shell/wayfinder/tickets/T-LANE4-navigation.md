@@ -55,3 +55,22 @@ during its own flight (`isIdle`, `pulseTarget` pure + tested). Scripted:
 47/47; verify-source green; tsc 0. Unverified: the look and a 60 s idle
 watch (native pass). Text labels stand in for compass/home icons (the
 icon set is the host's).
+
+## Resolution — T8 + T9 (relation layers, regions as regions)
+
+**Landed (13 Oct 2026; builder haiku + lead host wiring).** `placeLayers.ts`:
+one map layer per `placeRelations` relation with the authority's standing
+class (a layer reads "sourced" only when every facet has a source ref;
+mythic reads mythic; else "standing unknown" — nothing upgraded); an
+on-map layers panel + legend in the chronology's standing vocabulary
+(`STANDING_DRAWING`); toggles narrow visibility only and drive the SAME
+filter state as the side panel (lead wiring in `researchInstruments.tsx`:
+full `nativeReading.spatial`, `layerFilter={filter}`, `onLayerFilterChange`
+mirroring the side panel). Polygon facets draw as fill + constant 2 px
+outline with the label at the authority centroid and never also as a point.
+Scripted: places suites 63/63; verify-source green; tsc 0. Unverified: the
+look, panel placement, region click (native pass); the bundled offline pack
+is points only, so polygons appear only from readings with polygon geometry.
+Debt noted: the vendor imports `placeReading.ts` helpers from the app and
+inverts the cradle's private `polygonRings` through `projectPlaces` (round-trip
+tested) — move the helpers to cradle src and export `polygonRings` in a tidy pass.
