@@ -6,8 +6,18 @@ import type { LocatedGraphNode, PlacesRepository } from "@research-canvas/domain
 import type { LiveServicePolicy } from "@research-canvas/geography";
 
 import { LocationPanel, pointForPlace } from "./LocationPanel";
+import { attributionReadout, imageryReadout, liveTileDisclosure } from "./disclosure";
 import type { MapTileSource } from "./mapStyle";
-import { planPlaceFlight, placeMarkerPlan, withCameraDefaults, type PlaceFlightPlan } from "./placeNavigation";
+import {
+  defaultPlaceView,
+  flightEase,
+  northResetView,
+  planPlaceFlight,
+  placeMarkerPlan,
+  RESET_DURATION_MS,
+  withCameraDefaults,
+  type PlaceFlightPlan,
+} from "./placeNavigation";
 import {
   createMaplibreRenderer,
   type ArchetypeExpressionRenderMarker,
@@ -15,6 +25,19 @@ import {
   type MapViewState,
   type PlaceRenderMarker,
 } from "./renderer";
+
+/** The chrome's small pills share one ground, so the disclosure reads as one line. */
+const DISCLOSURE_PILL = {
+  padding: "5px 9px",
+  borderRadius: 999,
+  background: "rgba(9,13,19,.82)",
+  color: "var(--ob-dim, #8797ab)",
+  fontSize: 11,
+} as const;
+
+function messageOf(cause: unknown): string {
+  return cause instanceof Error ? cause.message : String(cause);
+}
 
 export interface PsychogeographicMapProps {
   /** Put genuine map controls in the host toolbar instead of beneath it. */
@@ -26,6 +49,8 @@ export interface PsychogeographicMapProps {
   policy?: LiveServicePolicy;
   /** Hosted native applications do not delegate network authority to this UI. */
   offlineOnly?: boolean;
+  /** Attribution lines of the other sources behind this surface's data (the geography pack's providers). */
+  sourceAttributions?: readonly string[];
   renderer?: MapSurfaceRenderer;
   /** Invalidates repository reads without recreating the map or its camera. */
   refreshVersion?: number;
@@ -53,6 +78,7 @@ export function PsychogeographicMap({
   tileSource,
   policy,
   offlineOnly = false,
+  sourceAttributions = [],
   renderer: rendererProp,
   refreshVersion = 0,
   initialViewState,
@@ -77,7 +103,7 @@ export function PsychogeographicMap({
   const [readyRenderer, setReadyRenderer] = useState<MapSurfaceRenderer | null>(null);
   const [view, setView] = useState<"globe" | "flat">("globe");
   const [viewState, setViewState] = useState<MapViewState>(() =>
-    withCameraDefaults(initialViewState ?? { latitude: 20, longitude: 0, zoom: 1 }),
+    withCameraDefaults(initialViewState ?? defaultPlaceView()),
   );
   // Why the last fly-to did not fly (an unlocated place, say), named for the reader.
   const [flightNotice, setFlightNotice] = useState<string | null>(null);
@@ -111,6 +137,9 @@ export function PsychogeographicMap({
   const [policyRevision, setPolicyRevision] = useState(0);
   const [liveTilesActive, setLiveTilesActive] = useState(false);
   const [liveFallback, setLiveFallback] = useState(false);
+  // The live source on screen (null when none), and the owner's reason it failed, verbatim.
+  const [activeLiveSource, setActiveLiveSource] = useState<MapTileSource | null>(null);
+  const [liveFailure, setLiveFailure] = useState<string | null>(null);
   const [activeLaneYear, setActiveLaneYear] = useState<number | null>(null);
   const [selectedLaneId, setSelectedLaneId] = useState<string | null>(null);
 
@@ -260,6 +289,7 @@ export function PsychogeographicMap({
     void mountedRenderer.current?.flyTo?.(plan.latitude, plan.longitude, plan.zoom, {
       durationMs: plan.durationMs,
       easing: plan.easing,
+      pulseGraphNodeId: graphNodeId,
     });
     return plan;
   }, [nodes, viewState.latitude, viewState.longitude]);
@@ -403,10 +433,14 @@ export function PsychogeographicMap({
       if (mountedRenderer.current !== currentRenderer) return;
       setLiveTilesActive(true);
       setLiveFallback(false);
-    } catch {
+      setActiveLiveSource(liveSource);
+      setLiveFailure(null);
+    } catch (cause) {
       if (mountedRenderer.current !== currentRenderer) return;
       setLiveTilesActive(false);
       setLiveFallback(true);
+      setActiveLiveSource(null);
+      setLiveFailure(messageOf(cause));
       try {
         await currentRenderer.setLiveTileSource(tileSource);
       } catch {
@@ -415,6 +449,43 @@ export function PsychogeographicMap({
       }
     }
   }, [policy, tileSource, offlineOnly]);
+
+  // T3: the compass returns bearing and tilt to north in place; globe home flies
+  // to the default view. Both are eased and finish by their own clock.
+  const returnToNorth = () => {
+    const current = mountedRenderer.current;
+    if (!current?.easeCamera) return;
+    const target = northResetView(viewState);
+    void current.easeCamera({ pitch: target.pitch, bearing: target.bearing, durationMs: RESET_DURATION_MS, easing: flightEase });
+  };
+  const goGlobeHome = () => {
+    const current = mountedRenderer.current;
+    if (!current?.flyTo) return;
+    const home = defaultPlaceView();
+    setFlightNotice(null);
+    void current.flyTo(home.latitude, home.longitude, home.zoom, {
+      pitch: home.pitch,
+      bearing: home.bearing,
+      durationMs: RESET_DURATION_MS,
+      easing: flightEase,
+    });
+  };
+
+  // T7: every network-loaded pixel is attributed here, and an unavailable source
+  // names its owner's reason verbatim.
+  const liveDisclosure = liveTileDisclosure({
+    offlineOnly,
+    hasPolicy: !!policy,
+    optedIn: tileRefreshOptedIn,
+    liveSource: activeLiveSource,
+    failure: liveFallback ? liveFailure : null,
+  });
+  const imageryText = imageryReadout(tileSource, activeLiveSource);
+  const attributionText = attributionReadout([
+    tileSource.attribution,
+    activeLiveSource?.attribution,
+    ...sourceAttributions,
+  ]);
 
   const connectionLabel = liveFallback
     ? "Live tiles (offline fallback)"
@@ -447,6 +518,8 @@ export function PsychogeographicMap({
         <span data-testid="places-camera-readout" aria-label="Globe tilt and rotation" style={{ fontSize: 11, color: "var(--ob-dim, #8797ab)", whiteSpace: "nowrap" }}>
           Pitch {Math.round(viewState.pitch ?? 0)}° · Bearing {Math.round(viewState.bearing ?? 0)}°
         </span>
+        <button type="button" data-testid="places-compass-reset" title="Return to north: bearing and tilt to zero" aria-label="Return to north" disabled={!readyRenderer} onClick={returnToNorth}>North</button>
+        <button type="button" data-testid="places-globe-home" title="Globe home: the default view" aria-label="Globe home" disabled={!readyRenderer} onClick={goGlobeHome}>Globe home</button>
         {inspectorContainer && <button type="button" disabled={!selectedNodeId} aria-expanded={detailsOpen} onClick={() => setDetailsOpen(value => !value)}>Location details</button>}
         {!offlineOnly && policy && (!tileRefreshOptedIn ? (
           <button
@@ -515,23 +588,41 @@ export function PsychogeographicMap({
       )}
 
       <div
-        className="psychogeographic-connection"
-        data-testid="places-connection-status"
-        data-state={liveFallback ? "fallback" : liveTilesActive ? "live" : "offline"}
-        aria-live="polite"
+        className="psychogeographic-disclosure"
+        data-testid="places-disclosure"
         style={{
           position: "absolute",
           left: 12,
           bottom: 12,
           zIndex: 9,
-          padding: "5px 9px",
-          borderRadius: 999,
-          background: "rgba(9,13,19,.82)",
-          color: "var(--ob-dim, #8797ab)",
-          fontSize: 11,
+          maxWidth: "calc(100% - 200px)",
+          display: "flex",
+          flexWrap: "wrap",
+          alignItems: "center",
+          gap: "4px 8px",
+          pointerEvents: "none",
         }}
       >
-        {connectionLabel}
+        <div
+          className="psychogeographic-connection"
+          data-testid="places-connection-status"
+          data-state={liveFallback ? "fallback" : liveTilesActive ? "live" : "offline"}
+          aria-live="polite"
+          style={DISCLOSURE_PILL}
+        >
+          {connectionLabel}
+        </div>
+        <span data-testid="places-imagery-readout" style={DISCLOSURE_PILL}>{imageryText}</span>
+        <span data-testid="places-attribution" style={DISCLOSURE_PILL}>{attributionText}</span>
+        {liveDisclosure.reason !== null ? (
+          <span data-testid="places-live-unavailable" style={DISCLOSURE_PILL}>
+            Live tiles unavailable: {liveDisclosure.reason}
+          </span>
+        ) : (
+          <span data-testid="places-live-state" style={DISCLOSURE_PILL}>
+            {liveDisclosure.disclosed.join(" · ")}
+          </span>
+        )}
       </div>
 
       {loading && (

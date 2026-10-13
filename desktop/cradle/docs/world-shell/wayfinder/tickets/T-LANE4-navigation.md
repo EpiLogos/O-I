@@ -39,3 +39,19 @@ other unknown field admitted (unit test); the app's `validateViewport` and
 untilted view still writes the legacy `{x,y,zoom}`). Scripted: kernel
 `expression_scene` 2/2; places 28/28; tsc 0; build clean. Unverified: a
 tilted view saved and restored in the native app.
+
+## Resolution — T3 + T6 + T7 + T29 (the map's chrome)
+
+**Landed (13 Oct 2026; builder haiku + lead wiring).** "North" eases bearing
+and pitch to 0; "Globe home" flies to `defaultPlaceView()` (exact state,
+tested); the globe's limb atmosphere (`setSky` horizon colour from
+`--oi-mark-blue`, parity-tested against tokens.css; flat unchanged); an
+attribution line names every live source — tiles, live source, and (lead
+wiring in `researchInstruments.tsx`) the geography pack's gazetteers
+(Pleiades, Wikidata, GeoNames with licence) — with the imagery readout and
+the owner's reason verbatim for any unavailable source (`disclosure.ts`);
+stillness: no rAF/interval/CSS animation in the map, a marker pulses only
+during its own flight (`isIdle`, `pulseTarget` pure + tested). Scripted:
+47/47; verify-source green; tsc 0. Unverified: the look and a 60 s idle
+watch (native pass). Text labels stand in for compass/home icons (the
+icon set is the host's).
