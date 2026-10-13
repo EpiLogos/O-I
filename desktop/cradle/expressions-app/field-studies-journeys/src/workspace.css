@@ -587,3 +587,10 @@ body:not(.research-active) #tool-rail [data-research-only]{display:none!importan
 .scene-track-playhead::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:12px;height:60px;border:0;border-radius:0;background:linear-gradient(var(--ui-ink),var(--ui-ink)) center/2px 100% no-repeat;pointer-events:auto;cursor:ew-resize}
 .scene-track-playhead::-moz-range-track{height:60px;background:transparent;border:0}
 .scene-track-playhead::-moz-range-thumb{width:12px;height:60px;border:0;border-radius:0;background:linear-gradient(var(--ui-ink),var(--ui-ink)) center/2px 100% no-repeat;pointer-events:auto;cursor:ew-resize}
+/* E05 · trim: a clip's right edge (6px) drags its scene's duration; Alt-click or double-click gives exact seconds. */
+.scene-track{user-select:none;-webkit-user-select:none}
+.scene-track .scene-trim-edge{position:absolute;top:0;bottom:0;right:0;width:6px;cursor:ew-resize;z-index:1;touch-action:none}
+.scene-track .scene-trim-edge::after{content:"";position:absolute;top:8px;bottom:8px;right:2px;width:2px;border-radius:1px;background:var(--ui-ink);opacity:0;transition:opacity .15s}
+.scene-track .scene-trim-edge:hover::after{opacity:.7}
+.scene-track .scene-save-dot{right:9px}
+body.trimming-scene,body.trimming-scene *{cursor:ew-resize!important;user-select:none!important}

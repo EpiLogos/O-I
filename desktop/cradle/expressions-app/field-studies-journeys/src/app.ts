@@ -16,6 +16,7 @@ import {updateToolbeltValues,liveValue} from './liveValues';
 import {beltCandidates,pickerHTML} from './beltPicker';
 import {PropertyTrack,sampleTrack,evaluateTracks,readTrackValue,mergeTake,expressionTiming} from './propertyTracks';
 import {journeyTimelineLayout} from './journeyTimelineLayout';
+import {durationFromEdgeDrag,SCENE_DURATION_MIN,SCENE_DURATION_MAX,type TimelineLayout} from './journeyTimelineLayout';
 import {entityTargets} from './nativeParameters';
 import {recordRecent,recentJourneys} from './recentWork';
 import {installPanelResize} from './panelResize';
@@ -98,6 +99,9 @@ function actTransition(seconds:number,easing?:string){
  needsFrame=true;
 }
 import {mountSoundControls} from './soundControls.js';
+// E05 trim state, declared before any top-level code can render the timeline.
+let sceneTrim:null|{sceneId:string;startX:number;trackPx:number;base:TimelineLayout;from:number;duration:number;clamped:'min'|'max'|null;moved:boolean;frame:number}=null;
+let trimClickGuardUntil=0;
 mountShell();installPanelResize();installKernelExpressions();
 const recovery=document.createElement('section');recovery.id='engine-recovery';recovery.hidden=true;recovery.className='engine-recovery';recovery.setAttribute('role','alert');recovery.innerHTML='<h3>GPU context interrupted</h3><p>The expression is intact. Recovering recreates lost particle state, not a runtime checkpoint.</p><button class="secondary" data-action="native-recover">Recover field</button>';document.body.append(recovery);
 
@@ -189,7 +193,7 @@ async function flushDraft(){
 
 let sessionSaveTimeout=0;
 function markSaved(){clearTimeout(sessionSaveTimeout);sessionSaveTimeout=window.setTimeout(saveSession,150);if(deletedLibraryIds.has(store.document.id)){$('save-status').textContent='Saved copy removed · use Save to keep again';return;}$('save-status').textContent=hostedRecovery()?'Backing up working copy…':'Saving in this browser…';if(!saveTimeout)saveTimeout=window.setTimeout(()=>void flushDraft(),350);}
-function changed(fn:()=>void,render=true){trackPreview=false;if(journeyPlaying){journeyPlaying=false;applySceneView();}store.change(fn);awaitingNativeBoot=false;nativeWorkspace?.cancelOpen();markSaved();overlayDirty=true;needsFrame=true;if(render)renderAll();}
+function changed(fn:()=>void,render=true,label?:string){trackPreview=false;if(journeyPlaying){journeyPlaying=false;applySceneView();}if(label)store.change(label,fn);else store.change(fn);awaitingNativeBoot=false;nativeWorkspace?.cancelOpen();markSaved();overlayDirty=true;needsFrame=true;if(render)renderAll();}
 function sanitiseSelection(){sceneIndex=clamp(sceneIndex,0,store.document.scenes.length-1);selected=selected.filter(id=>scene().entities.some(e=>e.id===id));if(!scene().text.some(t=>t.id===textId))textId=scene().text[0]?.id??null;const e=selectedEntity();stepIndex=clamp(stepIndex,0,Math.max(0,(e?.sequence.steps.length??1)-1));}
 let paperSignature='';
 let hostedAppearance:'dark'|'light'|undefined;
@@ -237,16 +241,73 @@ $('inspector-title').textContent=document.querySelector<HTMLElement>('[data-acti
  $('control-search').setAttribute('value',search);
  void refreshSourcePreviews(content);
 }
-function renderTimeline(){if(!timelineOpen)return;const s=scene(),timing=expressionTiming(store.document,sceneIndex,sceneElapsed),scenes=store.document.scenes,track=timelineTrack;
+function renderTimeline(){if(!timelineOpen)return;const s=scene(),doc=timelineDocument(),timing=expressionTiming(doc,sceneIndex,sceneElapsed),scenes=doc.scenes,track=timelineTrack;
  // E01: clip extents come only from expressionTiming, via journeyTimelineLayout; widths are percent of the track so it stays fluid.
- const layout=journeyTimelineLayout(scenes,(index,local)=>expressionTiming(store.document,index,local),100);
- const sceneButton=(v:(typeof scenes)[number],i:number,placement:string)=>`<button class="scene-image ${i===sceneIndex?'active':''}${track?' scene-clip':''}"${placement} data-action="choose-scene" data-index="${i}" data-scene-id="${esc(v.id)}" aria-label="Open scene ${i+1}: ${esc(v.name)}" title="${esc(v.name)} · ${sceneSaveState(store.document,v)}"><img src="${compositionCover(v)}" alt="${esc(v.name)}"><small>${i+1}</small><span class="scene-save-dot" data-status="${sceneSaveState(store.document,v)}"></span></button>`;
+ // E05: during a trim drag `doc` is the previewed document, so the same clock lays out the preview.
+ const layout=journeyTimelineLayout(scenes,(index,local)=>expressionTiming(doc,index,local),100);
+ const sceneButton=(v:(typeof scenes)[number],i:number,placement:string)=>`<button class="scene-image ${i===sceneIndex?'active':''}${track?' scene-clip':''}"${placement} data-action="choose-scene" data-index="${i}" data-scene-id="${esc(v.id)}" aria-label="Open scene ${i+1}: ${esc(v.name)}" title="${esc(v.name)} · ${sceneSaveState(store.document,v)}"><img src="${compositionCover(v)}" alt="${esc(v.name)}"><small>${i+1}</small>${track?trimEdgeHTML(v):''}<span class="scene-save-dot" data-status="${sceneSaveState(store.document,v)}"></span></button>`;
  const playhead=`id="expression-playhead" aria-label="Expression playhead" type="range" min="0" max="${timing.total}" step="0.05" value="${timing.time}"`;
  const body=track
   ?`<div class="scene-track" aria-label="Expression track"><div class="scene-track-ruler">${[0,.25,.5,.75,1].map(f=>`<span style="left:${f*100}%">${(f*layout.total).toFixed(f===1?1:0)}s</span>`).join('')}</div><div class="scene-track-lane">${scenes.map((v,i)=>sceneButton(v,i,` style="left:${layout.clips[i].x}%;width:${layout.clips[i].w}%"`)).join('')}<input class="scene-track-playhead" type="range" ${playhead}></div></div>`
   :`<div class="scene-strip">${scenes.map((v,i)=>sceneButton(v,i,'')).join('')}<button class="scene-image scene-add" data-action="save-next" aria-label="Save and add next scene">${icon('plus')}</button></div><label class="expression-scrub"><span>Expression time</span><input type="range" ${playhead}></label>`;
  const toggle=`<button data-action="timeline-track" aria-pressed="${track}" title="${track?'Show the scenes as a compact strip':'Show the scenes on the time track'}">${track?'Collapse to strip':'Show track'}</button>`;
- $('timeline-panel').innerHTML=`${body}<div class="scene-save-row"><label>Scene name<input id="scene-save-name" value="${esc(sceneNames.get(s.id)??s.name)}" maxlength="160"></label><label>Hold · seconds<input type="number" data-bind="duration" value="${s.duration}" min="1" max="3600" step=".1"></label><label>Transition<input type="number" aria-label="Transition seconds" data-bind="transition" value="${s.transition}" min="0" max="30" step=".1"></label><button class="primary" data-action="save-scene">Save scene</button><button data-action="save-next">Save & next</button><button data-action="restore-scene" ${!store.document.savedScenes?.[s.id]?'disabled':''}>Restore</button>${ib('move-scene-left','arrowLeft','Move scene earlier',`data-index="${sceneIndex}"`)}${ib('move-scene-right','arrowRight','Move scene later',`data-index="${sceneIndex}"`)}${ib('delete-scene','trash','Delete scene',`data-index="${sceneIndex}"`)}${toggle}${ib('close-timeline','chevronDown','Collapse scenes')}</div><p class="scene-caption">${sceneSaveState(store.document,s)} · ${s.propertyTracks?.length??0} recorded properties · Scrubbing evaluates settings; particle motion continues from its current state.</p>`;}
+ $('timeline-panel').innerHTML=`${body}<div class="scene-save-row"><label>Scene name<input id="scene-save-name" value="${esc(sceneNames.get(s.id)??s.name)}" maxlength="160"></label><label>Hold · seconds<input type="number" data-bind="duration" value="${sceneTrim?.moved&&sceneTrim.sceneId===s.id?sceneTrim.duration:s.duration}" min="${SCENE_DURATION_MIN}" max="${SCENE_DURATION_MAX}" step=".1"></label><label>Transition<input type="number" aria-label="Transition seconds" data-bind="transition" value="${s.transition}" min="0" max="30" step=".1"></label><button class="primary" data-action="save-scene">Save scene</button><button data-action="save-next">Save & next</button><button data-action="restore-scene" ${!store.document.savedScenes?.[s.id]?'disabled':''}>Restore</button>${ib('move-scene-left','arrowLeft','Move scene earlier',`data-index="${sceneIndex}"`)}${ib('move-scene-right','arrowRight','Move scene later',`data-index="${sceneIndex}"`)}${ib('delete-scene','trash','Delete scene',`data-index="${sceneIndex}"`)}${toggle}${ib('close-timeline','chevronDown','Collapse scenes')}</div><p class="scene-caption">${sceneSaveState(store.document,s)} · ${s.propertyTracks?.length??0} recorded properties · Scrubbing evaluates settings; particle motion continues from its current state.</p>`;}
+// E05 · trim: a clip's right edge changes that scene's duration. The drag previews
+// on the timeline only: timelineDocument() reads a shallow copy with the one new
+// duration, so the layout still runs on the single Expression clock. Pointer-up
+// makes ONE labelled store.change ("Trim scene <name>") through changed(), so Undo
+// gets one entry. The save then rides the existing kernel path: the duration is part
+// of the scene material that the save emits as scene_material_set.
+function trimEdgeHTML(v:Scene){return `<span class="scene-trim-edge" data-scene-id="${esc(v.id)}" title="${esc(`${v.duration.toFixed(1)} s · drag to trim · double-click or Alt-click for exact seconds`)}" aria-hidden="true"></span>`;}
+function timelineDocument():Journey{const t=sceneTrim;if(!t?.moved)return store.document;return {...store.document,scenes:store.document.scenes.map(v=>v.id===t.sceneId?{...v,duration:t.duration}:v)};}
+function trimLimitToast(limit:'min'|'max'){toast(limit==='min'?`Scene duration stops at ${SCENE_DURATION_MIN} second, the shortest a scene can hold.`:`Scene duration stops at ${SCENE_DURATION_MAX} seconds, one hour, the longest a scene can hold.`);}
+/** Exact entry: select the scene, then focus its Hold · seconds input, the numeric the timeline already commits. */
+function openExactDuration(sceneId:string){
+ if(propertyTake){toast('Finish the property take before changing this scene\'s length.');return;}
+ if(sceneId!==scene().id)setSceneRef(sceneId);
+ setTimeout(()=>{const input=$('timeline-panel').querySelector<HTMLInputElement>('input[data-bind="duration"]');input?.focus();input?.select();},0);
+}
+function beginSceneTrim(ev:PointerEvent,handle:HTMLElement){
+ const sceneId=handle.dataset.sceneId??'',lane=handle.closest<HTMLElement>('.scene-track-lane');
+ if(!sceneId||!lane)return;
+ if(sceneTrim)endSceneTrim(false);
+ ev.preventDefault();
+ if(ev.altKey){trimClickGuardUntil=performance.now()+400;openExactDuration(sceneId);return;}
+ if(ev.detail>1)return;
+ if(propertyTake){toast('Finish the property take before changing this scene\'s length.');return;}
+ const trackPx=lane.getBoundingClientRect().width;
+ const base=journeyTimelineLayout(store.document.scenes,(index,local)=>expressionTiming(store.document,index,local),100);
+ const clip=base.clips.find(c=>c.sceneId===sceneId);
+ if(!clip||!(trackPx>0))return;
+ sceneTrim={sceneId,startX:ev.clientX,trackPx,base,from:clip.duration,duration:clip.duration,clamped:null,moved:false,frame:0};
+ document.body.classList.add('trimming-scene');
+ document.addEventListener('pointermove',moveSceneTrim);
+ document.addEventListener('pointerup',upSceneTrim);
+ document.addEventListener('pointercancel',cancelSceneTrim);
+}
+function moveSceneTrim(ev:PointerEvent){
+ const t=sceneTrim;if(!t)return;
+ let next:ReturnType<typeof durationFromEdgeDrag>;
+ try{next=durationFromEdgeDrag(t.base,t.sceneId,ev.clientX-t.startX,t.trackPx);}catch(err){endSceneTrim(false);error(err);return;}
+ if(next.clamped&&next.clamped!==t.clamped)trimLimitToast(next.clamped);
+ t.clamped=next.clamped;t.duration=next.duration;t.moved=next.duration!==t.from;
+ if(!t.frame)t.frame=requestAnimationFrame(()=>{t.frame=0;renderTimeline();});
+}
+function endSceneTrim(commit:boolean){
+ const t=sceneTrim;if(!t)return;
+ sceneTrim=null;if(t.frame)cancelAnimationFrame(t.frame);
+ document.removeEventListener('pointermove',moveSceneTrim);document.removeEventListener('pointerup',upSceneTrim);document.removeEventListener('pointercancel',cancelSceneTrim);
+ document.body.classList.remove('trimming-scene');
+ const target=store.document.scenes.find(v=>v.id===t.sceneId);
+ if(!commit||!t.moved||!target||target.duration===t.duration){renderTimeline();return;}
+ trimClickGuardUntil=performance.now()+400;
+ try{
+  if(target===scene()&&sceneElapsed>t.duration)sceneElapsed=t.duration;
+  changed(()=>{target.duration=t.duration;},true,`Trim scene ${target.name}`);
+ }catch(err){error(err);}
+}
+function upSceneTrim(){endSceneTrim(true);}
+function cancelSceneTrim(){endSceneTrim(false);}
 function renderShapePicker(){if(!shapePickerOpen)return;$('shape-picker').innerHTML=`<h3>Choose a form</h3><div class="shape-choices">${[['text','O','Glyph'],['ring','◯','Ring'],['disc','●','Disc'],['triangle','△','Triangle'],['square','□','Plane'],['text','&','Character']].map(([s,g,l])=>`<button data-action="choose-shape" data-value="${s}" data-glyph="${esc(g)}" class="${shapeChoice===s&&((s==='text'&&glyphChoice===g)||s!=='text')?'active':''}">${esc(g)}<small>${l}</small></button>`).join('')}</div>${shapeChoice==='text'?`<label class="control"><span>Your glyph or word</span><input id="placement-glyph" value="${esc(glyphChoice)}" maxlength="120" aria-label="Formation to place"></label>`:''}<p>Pick a point and set the form anchor. The working plane keeps your depth consistent.</p><label class="toggle-row" style="margin-top:15px;margin-bottom:0"><span>Keep placing</span><input id="keep-placing" type="checkbox" ${keepPlacing?'checked':''}><i></i></label>`;}
 function setHint(){let h='';if(placementStep)h=`Place link ${stepIndex+1} on the working plane.<button data-action="cancel-placement">Cancel</button>`;else if(tool==='pin')h=`Click to place one attractor.<button data-action="repeat-pins" aria-pressed="${pinRepeat}">${pinRepeat?'✓ Keep placing':'Keep placing'}</button>`;else if(tool==='formation')h='Choose a form, then click where it belongs.';else if(tool==='text')h='Drag text blocks and adjust wording in Scene settings.';
  $('tool-hint').innerHTML=h;$('tool-hint').hidden=!h||!editing||!railExpanded;$('stage').style.cursor=tool==='select'?'default':tool==='orbit'?'grab':'crosshair';}
@@ -758,7 +819,7 @@ case 'timeline-track':timelineTrack=!timelineTrack;renderAll();break;
  case 'stop-record':recorder.stop();break;
  case 'save-video':if(currentVideo){const video=currentVideo,name=slug(video.source.expression.name)+'-performance.'+(video.mime.includes('mp4')?'mp4':'webm');if(await saveDesktopCapture(video.blob,name,video.source,video.settings))toast('Video saved to the Physis library.');else download(video.blob,name);}break;
  }}
-document.addEventListener('click',ev=>{const target=(ev.target as Element).closest<HTMLElement>('[data-action]');if(!target||target instanceof HTMLSelectElement||target instanceof HTMLButtonElement&&target.disabled)return;const name=target.dataset.action!;void action(name,target,ev).catch(error);});
+document.addEventListener('click',ev=>{if(performance.now()<trimClickGuardUntil&&(ev.target as Element).closest('.scene-track'))return;const target=(ev.target as Element).closest<HTMLElement>('[data-action]');if(!target||target instanceof HTMLSelectElement||target instanceof HTMLButtonElement&&target.disabled)return;const name=target.dataset.action!;void action(name,target,ev).catch(error);});
 document.addEventListener('pointerover',ev=>{if(!(ev.target as Element).closest('#stage'))pointer.active=false;});
 document.addEventListener('pointerdown',ev=>{const target=ev.target as Element;if((assignmentTarget||assignmentGroup)&&!target.closest('#automation-assignment,[data-action="automate"],[data-action="choose-group-target"],[data-action="add-lane"]')){assignmentTarget='';assignmentGroup='';$('automation-assignment').hidden=true;}if(modesOpen&&!target.closest('#modes-panel,[data-action="modes"]')){modesOpen=false;$('modes-panel').hidden=true;document.querySelector('[data-action="modes"]')?.setAttribute('aria-expanded','false');}if(captureOpen&&!target.closest('#capture-panel,[data-action="capture-options"]')){readCapture();captureOpen=false;$('capture-panel').hidden=true;document.querySelector('[data-action="capture-options"]')?.setAttribute('aria-expanded','false');}const el=ev.target as HTMLInputElement;if(!el.closest('#stage'))pointer.active=false;if(el instanceof HTMLInputElement&&el.type==='range'&&el.dataset.bind)store.begin();});
 // Release any gesture baseline even when the input never fires a change event.
@@ -818,6 +879,9 @@ $<HTMLInputElement>('source-file').addEventListener('change',async ev=>{const in
 $<HTMLInputElement>('import-file').addEventListener('change',async ev=>{const input=ev.target as HTMLInputElement,file=input.files?.[0];if(!file)return;try{if(file.size>32_000_000)throw new Error('Choose a configuration smaller than 32 MB.');const result=importDocuments(JSON.parse(await file.text()));collectImported(result.journeys);if(!libraryOpen)openLibrary();else renderLibrary();toast(`${result.journeys.length} document(s) imported. ${result.errors.length?result.errors.map(e=>`Entry ${e.index+1}: ${e.message}`).join(' · '):'All accepted; original input is unchanged.'}`,10000);}catch(err){error(err);}finally{input.value='';}});
 document.querySelectorAll<HTMLDialogElement>('dialog').forEach(d=>d.addEventListener('click',ev=>{if(ev.target!==d)return;const r=d.getBoundingClientRect();if(ev.clientX<r.left||ev.clientX>r.right||ev.clientY<r.top||ev.clientY>r.bottom)d.close();}));
 let sceneDragIndex=-1;
+// E05: the trim edge is delegated on the panel, which survives the re-renders a drag causes.
+$('timeline-panel').addEventListener('pointerdown',ev=>{const handle=(ev.target as Element).closest<HTMLElement>('.scene-trim-edge');if(handle&&ev.button===0)beginSceneTrim(ev,handle);});
+$('timeline-panel').addEventListener('dblclick',ev=>{const handle=(ev.target as Element).closest<HTMLElement>('.scene-trim-edge');if(handle){ev.preventDefault();openExactDuration(handle.dataset.sceneId??'');}});
 $('timeline-panel').addEventListener('dragstart',ev=>{const card=(ev.target as Element).closest<HTMLElement>('[data-scene-index]');if(!editing||!card)return;sceneDragIndex=Number(card.dataset.sceneIndex);ev.dataTransfer?.setData('text/plain',String(sceneDragIndex));if(ev.dataTransfer)ev.dataTransfer.effectAllowed='move';});
 $('timeline-panel').addEventListener('dragover',ev=>{if(editing&&(ev.target as Element).closest('[data-scene-index]'))ev.preventDefault();});
 $('timeline-panel').addEventListener('drop',ev=>{const card=(ev.target as Element).closest<HTMLElement>('[data-scene-index]');if(card&&sceneDragIndex>=0){ev.preventDefault();reorderScene(sceneDragIndex,Number(card.dataset.sceneIndex));sceneDragIndex=-1;}});
