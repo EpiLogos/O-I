@@ -33,6 +33,12 @@ differ from the lock, the lock stands.
   then `readback` (builds the `native_shell` Tauri host from a clean commit;
   the marker must read `source_dirty: false`).
 - Baseline at `4be97cc79`: tsc 0; lane suites 174/174; `cargo test --features native_shell` 36 pass.
+- Baseline at `cc69e19fa` (13 Oct, plain `node --test tests/*.test.mjs` in
+  `packages/live-shell/ui`): 1195 tests, 1185 pass, 10 fail in 10 files — 8
+  WebStorage suites that need `--experimental-webstorage
+  --localstorage-file=<tmp>` (by design), and 2 extensionless-import reds
+  (fixed in `864643e2e`). Phase-1 lane `dlw/phase1-semantics-20261013`: tsc 0;
+  devices:validate PASS; the touched suites green (see each ticket).
 - Running services that are not the lane's — never stop them: Vite 5176,
   walk-bridge 4179.
 
@@ -73,24 +79,25 @@ Phase chain: 0 native + disclosure → 1 semantics gate + craft →
 
 ## 5. Claimable now (in order)
 
-1. **T-SEMANTICS-GATE** — every face declares its Live semantic; the gate
-   refuses otherwise (lock §5). No UI leg. Builder ×1 (zone: `inhabitants/`).
-2. **T-LABELS** code legs — "Central" title; no hard-coded day hours (lock
-   §4.6–4.7). Builder ×1 — after 1, since both touch `modes.ts`.
-3. **T-AE-REPORT** — re-port Archetypal-Earth at HEAD, pinned, with a drift
-   check (lock §7.4.1). Lead-led (judgment), builders only for copy batches.
-   No UI leg for the copy itself.
-4. **T-TIMELINE-WALKS** — sections and walks in the Timeline; the Journey
-   reads them (lock §7). After T-AE-REPORT. Builder ×1–2 on disjoint zones.
-5. **T-EXPRESSION-TRACKS** — Expressions are tracks and scenes their clips
-   at the Timeline level, each with visual and audio lanes; the entity × step
-   projection moves into the scene's Clip detail as the sequence editor
-   (lock §9). Builder ×1, zone `timeline/` + the Expressions Clip detail.
-6. **Screen pass (lead, when the gate clears):** rebuild, launch, see and
-   capture P0-R1/R4/R5/R5b/R5c/R6 at both viewports; then R0 review.
-7. Then, ticketed by the lead from lock §4 as they are claimed: Expressions
-   Studio sections as devices (§4.8); Technē instruments hold the QL faces
-   (§4.9); the 25 suite capabilities' homes (§4.2); T-TRAIL.
+Phase 1's no-UI work landed on `dlw/phase1-semantics-20261013` (13 Oct):
+T-SEMANTICS-GATE, T-LABELS (code legs), T-AE-REPORT, T-TIMELINE-WALKS leg 1,
+T-EXPRESSION-TRACKS (code legs), T-CAPABILITY-HOMES (lock §4.2), T-HOLDERS
+(lock §4.8–4.9). What stands:
+
+1. **Screen pass (lead, when the gate clears):** rebuild, launch, see and
+   capture P0-R1/R4/R5/R5b/R5c/R6 and Phase 1's UI legs (T-LABELS acc. 4;
+   the Timeline's walk lanes and sections; the Expressions two-lane tracks)
+   at both viewports; then R0, then R1.
+2. No-UI, claimable while the gate is red: **T-AE-C2-WORDING** (the
+   founding corpus's name in AE UI copy → provider labels, C2-b8; ticket to
+   write from T-AE-REPORT's resolution); **T-CAPABILITY-HOMES-LANDED** (13
+   landed O-I/Suite refs without a family scope); a `test:webstorage`
+   script that runs the 8 WebStorage suites with an owned tmp file.
+3. After R0 (Phase 2 — seams; UI legs): **T-ATLAS-HOST** (the atlas mounts
+   as `projection.earth` / `projection.constellation`; the World's corpus
+   provider; host stores in the workspace) → **T-TIMELINE-WALKS leg 2** (the
+   Journey reads the walks) · **T-SEQUENCE-EDITOR-MOUNT** (the scene's Clip
+   detail) · **T-TRAIL**.
 
 Deferred, owner-timed: T-LIVE-INTO-EXPRESSIONS.
 
@@ -105,8 +112,8 @@ bullet twice gets one Sonnet diagnostic; never a third builder attempt.
 
 | Ticket | Who | Zone | Since |
 |---|---|---|---|
-| T-SEMANTICS-GATE | haiku builder (lead: claude-code:dlw-lead) | `packages/live-shell/ui/src/inhabitants/`, `src/projections/atlas/atlasFamilyManifest.ts`, `scripts/validate-devices.mjs`, `scripts/scaffold-device.mjs`, the admitting tests | 2026-10-13 |
-| T-AE-REPORT | claude-code:dlw-lead | `packages/live-shell/ui/src/projections/atlas/` (not `atlasFamilyManifest.ts`), `scripts/atlas-port-pin.mjs`, `tests/atlas-port-pin.test.mjs`, `package.json` | 2026-10-13 — landed, see ticket |
+| T-HOLDERS (§4.8 + §4.9) | haiku builder | `src/inhabitants/sdk/semantics.ts`, `src/inhabitants/familyManifest.ts`, `src/inhabitants/sdk/define.ts`, `src/inhabitants/sdk/validate.ts`, `src/inhabitants/sdk/semantic-registry.json`, `src/inhabitants/quaternalLogicFamilyManifest.ts`, `src/inhabitants/qlMusicalExtension.ts`, `src/projections/atlas/atlasFamilyManifest.ts`, `src/expressions/expressionsFamilyManifest.ts`, `scripts/validate-devices.mjs`, `tests/live-semantics.test.mjs`, `tests/holders.test.mjs` (new) | 2026-10-13 |
+| T-TIMELINE-WALKS leg 2 | claude-code:dlw-lead | the Journey in `src/shell/ModeCentre.tsx` | after T-ATLAS-HOST |
 
 ## 8. Foreign lanes — never touch
 
@@ -117,6 +124,7 @@ walk-bridge 4179.
 
 ## 9. Carries
 
+- Native run at the lane's HEAD: see §10 (R1 code leg).
 - The target register refuses verify: `PROGRAMME.md` was edited (8 Oct) after the
   register recorded its hash — true before the move too. Re-record the basis
   (`python3 acceptance.py`) only with a dated note of what changed; the 0/126
@@ -128,3 +136,4 @@ walk-bridge 4179.
 |---|---|---|---|
 | W0–W0e | P0-R1, R4, R5, R5b, R5c, R6, R6b, V1, V2, BIMBA-LIVE | `24e7d8f7f` … `760fa4916` | R0 FAIL (screen evidence owed) |
 | lock | DEVICE-SEMANTICS-LOCK; plans conformed | `4be97cc79` + the conformance commit | — |
+| P1 (no-UI) | T-AE-REPORT, T-SEMANTICS-GATE, T-TIMELINE-WALKS leg 1, T-LABELS, T-EXPRESSION-TRACKS, T-CAPABILITY-HOMES, T-HOLDERS | `68e0b8ba5` … `9a16b2579` (lane `dlw/phase1-semantics-20261013`) | R1 owed after the screen pass; UI legs unverified |
