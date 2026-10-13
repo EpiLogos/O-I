@@ -31,7 +31,8 @@ const {projectRunTracks, runClipEventIndex, isRunSubject} = await import('../src
 const {projectConversationTracks, conversationClipEventIndex} = await import('../src/timeline/conversationTrackAdapter.ts');
 const {registeredWorldTrackAdapterIds, manifestDeclaredProjections, isManifestDeclared, projectWorldTracks, projectLaneWorldTracks} = await import('../src/timeline/registerWorldTrackAdapters.ts');
 const {admitFamilyManifest, resetFamilyManifestsForTest} = await import('../src/inhabitants/familyManifest.ts');
-const {expressionsTrackAdapter, projectExpressionsTracks} = await import('../src/timeline/expressionsTrackAdapter.ts');
+const {expressionsTrackAdapter} = await import('../src/timeline/expressionsTrackAdapter.ts');
+const {sceneSequenceAsTracks} = await import('../src/timeline/expressionsSequenceEditor.ts');
 const {WorldTimelinePresentation} = await import('../src/projections/worldTimelinePresentation.tsx');
 const React = await import('react');
 const {renderToStaticMarkup} = await import('react-dom/server');
@@ -127,7 +128,7 @@ test('the found Expressions adapter composes unchanged under the same contract',
     presentedSceneId: 'sc-1',
     presented: {entities: [{id: 'e1', name: 'Stone', glyph: {text: '◆'}, sequence: [{id: 's1', hold: 2, transition: 1}]}], automationLanes: [], propertyTracks: []},
   };
-  const set = projectExpressionsTracks(reading);
+  const set = sceneSequenceAsTracks(reading);
   assert.equal(expressionsTrackAdapter.id, 'expressions-track-adapter');
   assert.equal(set.clips.length, 1);
   assert.deepEqual(set.clips[0].span, {start: 0, end: 3}, 'span is hold + transition in the family’s own seconds');
