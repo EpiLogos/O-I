@@ -27,9 +27,11 @@
  *   authority). The ~23 owner-op items are NOT declared here; they stay in
  *   the updated work order, owner-named.
  * - The atlas rows (WO-AT1): the four real atlas devices' address layer —
- *   the controls are real, the setters are self-armed with the atlas port's
- *   adopt-the-kit refactor named as the wiring moment. Until that wiring
- *   registers the setters, dispatch refuses naming the setter — honest.
+ *   every row is a parameter the atlas exposes, on the atlas's own domain
+ *   (FORCE_ROWS, the graph's clamp and tiers, the clock's bounds). Their
+ *   writers are registered by the shell's setter bridge
+ *   (src/agent/shellSetterBridge.ts) and drive the atlas face actions the
+ *   bodies call; with no atlas mounted, dispatch refuses naming the writer.
  * - The central tenders (WO-C1): declared WITHOUT device write paths — the
  *   law is the owner arms, never the device; each row's disclosure names
  *   the owner surface (ctrl Actions / the seat instrument).
@@ -45,6 +47,8 @@ import {admitFamilyManifest, familyManifest, onFamilyManifestReset} from './fami
 // the door lacks it, so the batch is declarable in tests and unchanged in
 // production (where import order already admits it).
 import {atlasFamilyManifest} from '../projections/atlas/atlasFamilyManifest.ts'
+import {FORCE_ROWS, type Forces} from '../projections/atlas/src/graph/forces.ts'
+import {CLOCK_DOMAIN, DEPTH_RANGE, KIND_NAMES, TIE_BASE_IDS} from './atlasFaceActions.ts'
 
 /** Who commissions this batch's self-armed writers (the writers law: a
  * fixture names itself; a lane names its commission). */
@@ -91,6 +95,19 @@ function familyOwner(family: string): string {
   return OWNERS[family] ?? family
 }
 
+/** One of the graph's four forces, as its own slider declares it: the label, the tip and the domain come from the atlas's
+ * FORCE_ROWS, so the row cannot drift from the slider. The stored value is the slider's own; the face reads it as a
+ * multiple of the arrangement as drawn. */
+function atlasForceRow(key: keyof Forces, writePath: string): AdoptedArtifacts['rows'][number] {
+  const spec = FORCE_ROWS.find(force => force.key === key)
+  if (!spec) throw new Error(`the atlas has no force "${key}"`)
+  return {
+    family: 'atlas-earth', deviceInstance: 'graph-tools', key, title: spec.label, type: 'number',
+    range: {min: spec.min, max: spec.max}, writePath,
+    disclosure: `${spec.tip} The value is the stored force on the graph’s own slider domain (${spec.min} to ${spec.max}); the face reads it as a multiple of the arrangement as drawn, where 1.00× is rest.`,
+  }
+}
+
 // ---------------------------------------------------------------------------
 // the §14 rows this batch adds (the same-day declarations)
 
@@ -132,38 +149,46 @@ const P0_ROWS: AdoptedArtifacts[] = [
       },
     ],
   }),
-  // Atlas Earth (WO-AT1) — the four real devices' address layer. The
-  // setters are self-armed; the atlas port's adopt-the-kit refactor is the
-  // named wiring moment (DEVICE-SDK.md honest limits).
+  // Atlas Earth (WO-AT1, wired) — the four real devices' address layer. Every row is a parameter the atlas exposes, on
+  // the atlas's own domain: FORCE_ROWS for the four forces, the GraphView's clamp for the steps, its tiers and its tie
+  // bases, the TimeModel's bounds for the cursor. Each writer is registered by the shell's setter bridge and drives the
+  // same atlas face action its face body calls, on the one mounted atlas.
   row({
     family: 'atlas-earth', deviceInstance: 'graph-tools', faceId: 'graph-tools', title: 'Graph Tools', icon: 'map',
-    writers: ['shell.setAtlasDepth', 'shell.setAtlasSpread', 'shell.setAtlasGravity', 'shell.setAtlasTies', 'shell.setAtlasSkyAnchors'],
+    writers: [
+      'shell.setAtlasDepth', 'shell.setAtlasCentre', 'shell.setAtlasRepel', 'shell.setAtlasLink', 'shell.setAtlasDistance',
+      'shell.setAtlasTies', 'shell.setAtlasKinds', 'shell.setAtlasOccurrences', 'shell.setAtlasSkyAnchors',
+    ],
     writerAuthority: P0_AUTHORITY,
     rows: [
       {
         family: 'atlas-earth', deviceInstance: 'graph-tools', key: 'depth', title: 'Steps from subject', type: 'number',
-        range: {min: 1, max: 3, unit: 'steps'}, writePath: 'shell.setAtlasDepth',
-        disclosure: 'The atlas control is real (graph/tools.ts GraphTools.onDepth); the setter registration lands with the atlas owner\'s adopt-the-kit refactor — dispatch refuses naming the setter until then.',
+        range: {min: DEPTH_RANGE.min, max: DEPTH_RANGE.max, unit: 'steps'}, writePath: 'shell.setAtlasDepth',
+        disclosure: 'The graph’s own steps from its subject, one to three (the graph clamps to that range). Shown in a local graph. The writer steps the same control the face’s + and − use, and refuses a value outside the range by name.',
+      },
+      atlasForceRow('centre', 'shell.setAtlasCentre'),
+      atlasForceRow('repel', 'shell.setAtlasRepel'),
+      atlasForceRow('link', 'shell.setAtlasLink'),
+      atlasForceRow('distance', 'shell.setAtlasDistance'),
+      {
+        family: 'atlas-earth', deviceInstance: 'graph-tools', key: 'ties', title: 'Relations', type: 'enumerated',
+        values: [...TIE_BASE_IDS], writePath: 'shell.setAtlasTies',
+        disclosure: 'Which relations are drawn between families and archetypes, by basis, strongest first (Jung, Inferred, Site, as the graph declares them). Write the full set you want on; the graph toggles only the bases that differ. A basis the live graph does not declare is refused by name.',
       },
       {
-        family: 'atlas-earth', deviceInstance: 'graph-tools', key: 'spread', title: 'Link space', type: 'number',
-        range: {min: 0.7, max: 1.8, unit: '×'}, writePath: 'shell.setAtlasSpread',
-        disclosure: 'The atlas range slider\'s own domain (min 0.7, max 1.8, step 0.05); same wiring moment as depth.',
+        family: 'atlas-earth', deviceInstance: 'graph-tools', key: 'kinds', title: 'Kinds drawn', type: 'enumerated',
+        values: [...KIND_NAMES], writePath: 'shell.setAtlasKinds',
+        disclosure: 'Which node tiers are drawn: archetypes, theoretics, families. Write the full set you want on; a tier switched off leaves the drawing with its ties. Occurrences are a row of their own.',
       },
       {
-        family: 'atlas-earth', deviceInstance: 'graph-tools', key: 'gravity', title: 'Gravity', type: 'number',
-        range: {min: 0.55, max: 1.5, unit: '×'}, writePath: 'shell.setAtlasGravity',
-        disclosure: 'The atlas gravity slider\'s own domain (min 0.55, max 1.5); same wiring moment.',
-      },
-      {
-        family: 'atlas-earth', deviceInstance: 'graph-tools', key: 'ties', title: 'Tie bases', type: 'enumerated',
-        values: ['jung', 'inferred', 'site'], writePath: 'shell.setAtlasTies',
-        disclosure: 'The provider-declared tie bases (DEFAULT_TIE_BASES, strongest first); the atlas filters its edges by them today.',
+        family: 'atlas-earth', deviceInstance: 'graph-tools', key: 'occurrences', title: 'Occurrences', type: 'boolean',
+        writePath: 'shell.setAtlasOccurrences',
+        disclosure: 'Whether occurrences (the dust) are drawn: the graph’s own Occurrences toggle, set to the value written. The graph re-lays the picture when it changes.',
       },
       {
         family: 'atlas-earth', deviceInstance: 'graph-tools', key: 'sky-anchors', title: 'Sky anchors', type: 'boolean',
         writePath: 'shell.setAtlasSkyAnchors',
-        disclosure: 'The atlas hangs the sky\'s bodies from the graph (onSky); the sky reading itself is the QL owner\'s — anchors render its status, honestly.',
+        disclosure: 'Hangs the sky’s bodies from the graph. The atlas loads the sky the first time it is asked and reports loading, on, or unavailable, as the face does. The sky reading itself belongs to the QL owner; the anchors render its status.',
       },
     ],
   }),
@@ -175,19 +200,46 @@ const P0_ROWS: AdoptedArtifacts[] = [
       {
         family: 'atlas-earth', deviceInstance: 'mode-switch', key: 'view', title: 'View', type: 'enumerated',
         values: ['earth', 'graph'], writePath: 'shell.setAtlasView',
-        disclosure: 'Earth ⇄ Graph, the atlas\'s own one-control switch; same wiring moment as the graph tools.',
+        disclosure: 'Earth or Graph, the atlas’s own one-control switch: the view the lens bar presents, which the Earth follows. The choice stands whether or not the Earth has mounted yet, as the face body’s does.',
+      },
+    ],
+  }),
+  row({
+    family: 'atlas-earth', deviceInstance: 'globe-engine', faceId: 'globe-engine', title: 'Globe', icon: 'map',
+    writers: ['shell.setAtlasWholeField'],
+    writerAuthority: P0_AUTHORITY,
+    rows: [
+      {
+        family: 'atlas-earth', deviceInstance: 'globe-engine', key: 'whole-field', title: 'Whole field', type: 'boolean',
+        writePath: 'shell.setAtlasWholeField',
+        disclosure: 'The globe’s one exposed parameter: while a mode’s own set stands aside on the globe, show the whole field instead. With no set aside there is no choice to make, and the writer says so. The base texture is a reading, not a parameter.',
       },
     ],
   }),
   row({
     family: 'atlas-earth', deviceInstance: 'time-control', faceId: 'time-control', title: 'Time Control', icon: 'metroDots',
-    writers: ['shell.setAtlasOccasionWindow'],
+    writers: ['shell.setAtlasCursor', 'shell.setAtlasAllTime', 'shell.setAtlasPlay', 'shell.setAtlasCumulative'],
     writerAuthority: P0_AUTHORITY,
     rows: [
       {
-        family: 'atlas-earth', deviceInstance: 'time-control', key: 'occasion-window', title: 'Occasion window', type: 'duration',
-        range: {min: 0, max: 86400000, unit: 'ms'}, writePath: 'shell.setAtlasOccasionWindow',
-        disclosure: 'The occasion stratum\'s window (§15.5): a saved occasion keeps its snapshot and separately qualifies its admission; the atlas time model reads the window it is given.',
+        family: 'atlas-earth', deviceInstance: 'time-control', key: 'cursor', title: 'Deep time', type: 'number',
+        range: {min: CLOCK_DOMAIN.min, max: CLOCK_DOMAIN.max}, writePath: 'shell.setAtlasCursor',
+        disclosure: 'The deep-time cursor on the atlas’s own clock, over the clock’s bounds (zero to one, the scale’s own units). Writing it scrubs the clock the Earth pane reads and leaves all time. A value outside the clock’s current bounds is refused by name.',
+      },
+      {
+        family: 'atlas-earth', deviceInstance: 'time-control', key: 'all-time', title: 'All time', type: 'boolean',
+        writePath: 'shell.setAtlasAllTime',
+        disclosure: 'All time, the clock’s resting state: true sets it. The cursor leaves all time by being scrubbed, so false is refused by name.',
+      },
+      {
+        family: 'atlas-earth', deviceInstance: 'time-control', key: 'play', title: 'Play', type: 'boolean',
+        writePath: 'shell.setAtlasPlay',
+        disclosure: 'Plays the cursor forward on the atlas’s own clock from where it stands, or pauses it: true plays, false pauses.',
+      },
+      {
+        family: 'atlas-earth', deviceInstance: 'time-control', key: 'cumulative', title: 'Cumulative', type: 'boolean',
+        writePath: 'shell.setAtlasCumulative',
+        disclosure: 'Whether the clock’s trail accumulates behind the cursor: the clock’s own cumulative flag, set to the value written.',
       },
     ],
   }),

@@ -42,7 +42,9 @@ export const atlasFamilyManifest: InhabitantManifest = {
   ],
   inspectors: [],
   time: {
-    consumes: ['occasion'], // the atlas reads its Occasion window; chronos arrives via the QL sky binding
+    // The atlas binds no shared stratum yet: its deep-time clock (state/timeModel.ts) is its own. Binding it to the shell's
+    // occasion window is T-ATLAS-TIME (wayfinder tickets); until then nothing here claims to read one.
+    consumes: [],
     contributes: ['aion-epochs'], // epoch spans, as the reading gives them
   },
   telemetry: null, // nothing observable is exposed yet — honestly null

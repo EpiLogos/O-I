@@ -9,7 +9,15 @@ import type {GraphControls} from '../projections/atlas/src/graph/view'
 import type {Forces} from '../projections/atlas/src/graph/forces'
 import {DEFAULT_FORCES} from '../projections/atlas/src/graph/forces'
 import type {KindFlags} from '../projections/atlas/src/graph/settings'
-import type {TieBasis} from '../projections/atlas/src/types/field'
+import {DEFAULT_TIE_BASES, type TieBasis} from '../projections/atlas/src/types/field'
+
+/** The atlas's own domains, as the declared parameter rows (agentNativeP0.ts) and the shell's writers (shellSetterBridge.ts)
+ * both carry them. The graph's depth is clamped to these three by GraphView.setDepth; the clock's are the TimeModel's
+ * own bounds before any range is set; the tiers and the tie bases are the graph's own. */
+export const DEPTH_RANGE = {min: 1, max: 3} as const
+export const CLOCK_DOMAIN = {min: 0, max: 1} as const
+export const KIND_NAMES: readonly (keyof KindFlags)[] = ['archetype', 'theoretic', 'family']
+export const TIE_BASE_IDS: readonly TieBasis[] = DEFAULT_TIE_BASES.map(basis => basis.id)
 
 /** The graph's surface the bodies drive: the controls it reports and the setters the pane's GraphTools calls. */
 export interface AtlasGraphSurface {

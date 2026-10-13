@@ -28,6 +28,8 @@ export async function resolve(s, c, n) {
     if (!s.startsWith('.')) throw e;
     if (s.endsWith('.js')) { try { return await n(s.slice(0, -3) + '.ts', c) } catch {} }
     for (const x of ['.ts', '.tsx']) { try { return await n(s + x, c) } catch {} }
+    // a directory import (the atlas panel's shell workspace reads ../continuity): its index, as the bundler resolves it
+    for (const x of ['/index.ts', '/index.tsx']) { try { return await n(s + x, c) } catch {} }
     throw e;
   }
 }
@@ -308,11 +310,17 @@ test('same-day declarations — the new rows stand and the gate stays green over
   assert.ok(rows('actuation').includes('agent/interrupt-quantize'))
   assert.ok(rows('software-factory').includes('agent/task-control'))
   assert.ok(rows('software-factory').includes('agent/new-task'))
-  // The atlas address layer (WO-AT1): the real controls' rows.
+  // The atlas address layer (WO-AT1, wired): the atlas's own exposed parameters, one row each.
   const atlas = rows('atlas-earth')
-  for (const address of ['graph-tools/depth', 'graph-tools/spread', 'graph-tools/gravity', 'graph-tools/ties', 'graph-tools/sky-anchors', 'mode-switch/view', 'time-control/occasion-window']) {
+  for (const address of [
+    'graph-tools/depth', 'graph-tools/centre', 'graph-tools/repel', 'graph-tools/link', 'graph-tools/distance',
+    'graph-tools/ties', 'graph-tools/kinds', 'graph-tools/occurrences', 'graph-tools/sky-anchors',
+    'mode-switch/view', 'globe-engine/whole-field',
+    'time-control/cursor', 'time-control/all-time', 'time-control/play', 'time-control/cumulative',
+  ]) {
     assert.ok(atlas.includes(address), `atlas row ${address} stands`)
   }
+  assert.equal(atlas.includes('time-control/occasion-window'), false, 'the clock takes no occasion window')
   // The central tenders: declared WITHOUT device write paths (the owner
   // arms, never the device), each disclosure naming the owner surface.
   const central = sdkDefine.sdkParamRows('central')
@@ -336,11 +344,20 @@ test('same-day declarations — the world gate passes with the batch standing', 
   assert.deepEqual(world.cross, [])
 })
 
-test('same-day declarations — the atlas rows\u2019 honest pre-wiring state: dispatch refuses naming the setter', async () => {
+test('same-day declarations — the atlas rows\u2019 writers are wired: unregistered they refuse naming the setter; registered, with no atlas mounted, they refuse naming the writer', async () => {
   standWorld()
   const depth = sdkDefine.sdkParamRows('atlas-earth').find(row => row.key === 'depth')
+  // Cut test: the standing world carries no atlas setters until the shell's transport registers them.
+  const cut = await dispatch.fireWritePath(depth, 2, {transport: TRANSPORT, binding: BINDING})
+  assert.equal(cut.kind, 'refused')
+  assert.equal(cut.missingOp, 'shell.setAtlasDepth')
+  assert.match(cut.reason, /has not registered/)
+  // Wired: the writer answers, and with no atlas mounted it refuses by name, never a silent drop.
+  const shellBridge = await import('../src/agent/shellSetterBridge.ts')
+  shellBridge.registerAtlasShellSetters()
   const receipt = await dispatch.fireWritePath(depth, 2, {transport: TRANSPORT, binding: BINDING})
   assert.equal(receipt.kind, 'refused')
-  assert.equal(receipt.missingOp, 'shell.setAtlasDepth')
-  assert.match(receipt.reason, /adopt-the-kit|has not registered/)
+  assert.equal(receipt.writePath, 'shell.setAtlasDepth')
+  assert.equal(receipt.missingOp, undefined)
+  assert.match(receipt.reason, /shell\.setAtlasDepth refuses.*not mounted/)
 })
