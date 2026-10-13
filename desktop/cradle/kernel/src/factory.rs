@@ -354,17 +354,13 @@ pub enum OwnerRequest {
         /// close is refused before any owner call: the desk never asserts a grant.
         #[serde(default)]
         authority_grant: Option<String>,
-        /// The token the host holds for that grant. The kernel verifies its
-        /// sha256 against the grant's `token_sha256` and never records it.
-        #[serde(default)]
-        authority_token: Option<AuthorityToken>,
     },
 }
 
-/// The host's native action token. Serialised as the bare string, but its
-/// Debug output is redacted so a logged request never carries it.
-#[derive(Clone, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
-#[serde(transparent)]
+/// The host's native action token. It never crosses the webview: the native
+/// host reads it itself (`host_native_token`), and its Debug output is
+/// redacted so nothing logged carries it.
+#[derive(Clone, PartialEq, Eq)]
 pub struct AuthorityToken(String);
 
 impl AuthorityToken {
@@ -1237,14 +1233,13 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
             recognition_ref,
             next_unit,
             authority_grant,
-            authority_token,
         } => {
             let mut call =
                 |args: &[std::ffi::OsString], input: Option<&[u8]>| owner_call(args, input);
             let contract = authority_contract_for(&state_path);
             let authority = CloseAuthority {
                 grant: authority_grant,
-                token: authority_token,
+                token: host_native_token(),
                 contract: contract.as_deref(),
                 now_unix_seconds: now_unix_seconds(),
             };
@@ -1479,6 +1474,24 @@ fn authority_under(state_path: &Path, central_root: Option<PathBuf>) -> Option<P
         .ancestors()
         .map(|dir| dir.join(AUTHORITY_CONTRACT_REL))
         .find(|path| path.is_file())
+}
+
+/// The token the native host holds for Central's native actions: the host's
+/// `CENTRAL_NATIVE_TOKEN`, else `~/.central/native-token` (owner-rotatable).
+/// Read here, in the native process — never supplied by the desk.
+fn host_native_token() -> Option<AuthorityToken> {
+    host_native_token_from(
+        std::env::var("CENTRAL_NATIVE_TOKEN").ok(),
+        std::env::var_os("HOME").map(PathBuf::from),
+    )
+}
+
+fn host_native_token_from(env: Option<String>, home: Option<PathBuf>) -> Option<AuthorityToken> {
+    let token = env
+        .filter(|token| !token.trim().is_empty())
+        .or_else(|| std::fs::read_to_string(home?.join(".central/native-token")).ok())?;
+    let token = token.trim();
+    (!token.is_empty()).then(|| AuthorityToken(token.to_owned()))
 }
 
 fn now_unix_seconds() -> u64 {
@@ -2696,7 +2709,50 @@ mod run_close_tests {
             !format!("{wire:?}").contains(TOKEN),
             "the token's Debug is redacted"
         );
-        assert_eq!(serde_json::to_value(&wire).unwrap(), Value::from(TOKEN));
+    }
+
+    #[test]
+    fn the_host_reads_its_own_token_and_the_desk_cannot_supply_one() {
+        let base =
+            std::env::temp_dir().join(format!("factory-run-close-token-{}", std::process::id()));
+        std::fs::create_dir_all(base.join(".central")).unwrap();
+        std::fs::write(base.join(".central/native-token"), "file-token\n").unwrap();
+        let read = |env: Option<&str>, home: Option<PathBuf>| {
+            host_native_token_from(env.map(str::to_owned), home).map(|token| token.0)
+        };
+        assert_eq!(
+            read(Some("env-token"), Some(base.clone())).as_deref(),
+            Some("env-token"),
+            "the host's environment wins"
+        );
+        assert_eq!(
+            read(None, Some(base.clone())).as_deref(),
+            Some("file-token"),
+            "else the owner's token file, trimmed"
+        );
+        assert_eq!(
+            read(Some("  "), Some(base.clone())).as_deref(),
+            Some("file-token"),
+            "a blank environment value is no token"
+        );
+        assert_eq!(read(None, Some(base.join("absent"))), None);
+        assert_eq!(read(None, None), None);
+        std::fs::write(base.join(".central/native-token"), "\n").unwrap();
+        assert_eq!(
+            read(None, Some(base.clone())),
+            None,
+            "an empty file is no token"
+        );
+        let request: OwnerRequest = serde_json::from_value(serde_json::json!({
+            "kind": "run-close", "state_path": "/s.json", "run_ref": "run:A",
+            "recognition_ref": "recognition:R1", "authority_grant": GRANT, "authority_token": TOKEN
+        }))
+        .unwrap();
+        assert!(
+            !format!("{request:?}").contains(TOKEN),
+            "a token on the wire is not read into the request"
+        );
+        let _ = std::fs::remove_dir_all(&base);
     }
 
     #[test]
