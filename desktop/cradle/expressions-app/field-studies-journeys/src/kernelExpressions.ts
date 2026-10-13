@@ -49,7 +49,7 @@ export function openExternalLink(url:string):boolean{
   if(typeof url!=='string'||url.length>2048||window.parent===window)return false;
   let parsed:URL;
   try{parsed=new URL(url);}catch{return false;}
-  if(parsed.protocol!=='https:')return false;
+  if(parsed.protocol!=='https:'||parsed.username!==''||parsed.password!=='')return false;
   post({kind:'host-request',request:'open-external',url:parsed.href});
   return true;
 }

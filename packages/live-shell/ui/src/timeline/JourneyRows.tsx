@@ -14,6 +14,10 @@ import type {WorldWalk, WorldWalkStop} from './worldTrackAdapter';
 import './JourneyRows.css';
 
 /** The shell's door to an Expression — the workspace's request, the one the Sources rows use. */
+/** A stop launches only what the Expression door opens: an expression: ref. Any other carried ref (a scene of the family's
+ * own) is named, never handed to the door as if it were an Expression. */
+const isExpressionRef = (ref: string) => ref.startsWith('expression:')
+
 export interface JourneyPresentation {
   openExpression: (ref: string) => void;
 }
@@ -53,9 +57,9 @@ export function JourneyRows({walks, eventByClipId, selectOccasion, journey}: {
               </button>
               <span className="journey-stop-artefact" title={stop.label}>{cells.artefact}</span>
               {meta && <span className="journey-stop-meta" title={meta}>{meta}</span>}
-              {cells.expression && journey && <button type="button" className="journey-stop-expression" title={`Open ${cells.expression} in the instrument`}
+              {cells.expression && journey && isExpressionRef(cells.expression) && <button type="button" className="journey-stop-expression" title={`Open ${cells.expression} in the instrument`}
                 onClick={() => journey.openExpression(cells.expression!)}>▷ Expression</button>}
-              {cells.expression && !journey && <span className="journey-stop-meta" title="Launching an Expression is offered where the instrument is open">{cells.expression}</span>}
+              {cells.expression && !(journey && isExpressionRef(cells.expression)) && <span className="journey-stop-meta" title="Launching an Expression is offered where the instrument is open">{cells.expression}</span>}
             </div>;
           })}
         </div>

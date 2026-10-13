@@ -122,7 +122,7 @@ export function SearchOverlay({ project, onClose, onOpen, leader, onLeaderChange
   const placeSubjects: {subject: PlaceSubject; address: KnowledgeAddress | null}[] = tab === "actions" && query.trim() && typed?.placesOf ? [
     ...hits.filter(hit => hit.resource).map(hit => ({subject: {ref: hit.resource, kind: hit.kind, title: hit.label || hit.resource, project}, address: hit.address})),
     ...rows.filter(row => row.reference).map(row => ({subject: {ref: row.reference, kind: row.kind, title: subjectLabel(row, "Unnamed resource"), project}, address: addressOfRowOrNull(row)})),
-  ].slice(0, 8) : [];
+  ].filter((entry, index, all) => all.findIndex(other => other.subject.ref === entry.subject.ref) === index).slice(0, 8) : [];
   const placeKey = tab === "actions" && query.trim() && typed?.placesOf ? placeSubjects.map(entry => entry.subject.ref).join("\n") : "";
   useEffect(() => {
     const placesOf = typed?.placesOf;

@@ -155,3 +155,13 @@ test('a reading that states no containment hands the lens no pairs, so nothing n
  assert.deepEqual(pairs,[]);
  assert.deepEqual(nesting.nestingAt(pairs,ITEMS,camera(MARKER),'marker'),{collapsed:[],hidden:new Set()});
 });
+
+// Review-5 #8: children that share a start stack; they do not hold their parent collapsed at every zoom.
+test('same-start children do not keep their parent collapsed once the view is past the marker tier', ()=>{
+ const parent={id:'day',fromMs:Y(1916),toMs:Y(1916)+DAY};
+ const kids=[{id:'k1',fromMs:Y(1916),toMs:Y(1916)+DAY},{id:'k2',fromMs:Y(1916),toMs:Y(1916)+DAY}];
+ const pairs=kids.map((kid)=>({parent:'day',child:kid.id}));
+ const state=nesting.nestingAt(pairs,[parent,...kids],camera(DETAIL),'detail');
+ assert.deepEqual(state.collapsed,[],'two children at the same instant do not hold their parent closed');
+ assert.equal(nesting.nestingAt(pairs,[parent,...kids],camera(MARKER),'marker').collapsed.length,1,'the marker tier still collapses');
+});
