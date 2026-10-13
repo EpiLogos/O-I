@@ -4,7 +4,10 @@ import type {KernelTransportStatus,KnowledgeAddress,CentralLocation} from '../ke
 import {inspectWikiScene,resolveWikiSceneSource} from '../techne/wikiReadingProvider';
 import {resolveFileLocation,readFileBytes} from '../files/client';
 import {CONSTRUCTION,PARTICIPATION} from '../knowledge/construction';
-export interface HostedSourceTarget {address?:KnowledgeAddress;location?:CentralLocation;title:string;project?:string;returnTo:{place:{ref:string;title:string};passageId:string}}
+import {isLocatableSelector,type LocatableSelector} from '../techne/m0m5/timeline/navigationIdentity';
+/** A disclosed passage the resolver carried: only for a file-location target, with the revision it proved. */
+export interface PassageAnchor {source_ref:string;selector:LocatableSelector;revision:string}
+export interface HostedSourceTarget {address?:KnowledgeAddress;location?:CentralLocation;title:string;project?:string;returnTo:{place:{ref:string;title:string};passageId:string};anchor?:PassageAnchor;anchorRefusal?:string}
 const object=(value:unknown):Record<string,unknown>|undefined=>value&&typeof value==='object'&&!Array.isArray(value)?value as Record<string,unknown>:undefined;
 const reference=(value:unknown):value is string=>typeof value==='string'&&value.length>0&&value.length<=2048&&!/[\u0000-\u001f]/.test(value);
 export async function resolveHostedSource(transport:KernelTransportStatus,value:unknown):Promise<HostedSourceTarget>{
@@ -24,7 +27,7 @@ export async function resolveHostedSource(transport:KernelTransportStatus,value:
   const location=await resolveFileLocation(transport,requested),reading=await readFileBytes(transport,location);
   if(reading.location.ref!==requested||reading.revision!==body.reading.revision)throw Error('The scene body source changed; review its current revision before opening it.');
   await inspectWikiScene(transport,request);
-  return {location:reading.location,title:scene.title,returnTo:{place:{ref:document.expression_ref,title:scene.title},passageId:scene.scene_ref}};
+  return {location:reading.location,title:scene.title,returnTo:{place:{ref:document.expression_ref,title:scene.title},passageId:scene.scene_ref},...passageForSource(context?.anchor,{kind:'file',ref:reading.location.ref,revision:reading.revision})};
  }
  const members=scene.entity_refs.flatMap(ref=>document.entities[ref]?.subject?[document.entities[ref]]:[]);
  const memberRefs=new Set(members.map(entity=>entity.subject!.subject_ref));
@@ -55,7 +58,7 @@ export async function resolveHostedSource(transport:KernelTransportStatus,value:
   const reading=await readFileBytes(transport,location);
   if(reading.location.ref!==ref||reading.revision!==basis[0].revision)throw Error('The file source changed; refresh its Scene binding before opening it.');
   await inspectWikiScene(transport,request);
-  return {location:reading.location,title:entity.title,returnTo};
+  return {location:reading.location,title:entity.title,returnTo,...passageForSource(context?.anchor,{kind:'file',ref:reading.location.ref,revision:reading.revision})};
  }
  const wholeMember=!entity&&!relation?members.find(row=>row.subject!.readings.some(reading=>reading.ref===ref)):undefined;
  const {register,current}=await resolveWikiSceneSource(transport,entity||wholeMember?{...request,subject_ref:(entity??wholeMember)!.subject!.subject_ref}:request);
@@ -72,11 +75,59 @@ export async function resolveHostedSource(transport:KernelTransportStatus,value:
   // redirect this acknowledged navigation to a different Scene.
   await inspectWikiScene(transport,request);
   const title=object(frame[CONSTRUCTION])?.title??frame.title;
-  return {address:{kind:'wiki',value:ref},title:typeof title==='string'?title:'Whole',project:register.project,returnTo};
+  return {address:{kind:'wiki',value:ref},title:typeof title==='string'?title:'Whole',project:register.project,returnTo,...passageForSource(context?.anchor,{kind:'knowledge'})};
  }
 
  if(relation&&!current.relations.some(row=>row.ref===relation.relation.ref&&String(row.revision)===relation.relation.revision))throw Error('The source relation changed; refresh its Scene binding before opening it.');
  const sources=current.frames.flatMap(frame=>frame.constellations[0].members).filter(member=>member.ref===ref).flatMap(member=>member[PARTICIPATION].sources);
  const kind:KnowledgeAddress['kind']=relation||!sources.some(source=>source.source_ref===ref)?'wiki':'source';
- return {address:{kind,value:ref},title:entity?.title??current.relations.find(row=>row.ref===ref)?.relation??'Source',project:register.project,returnTo};
+ return {address:{kind,value:ref},title:entity?.title??current.relations.find(row=>row.ref===ref)?.relation??'Source',project:register.project,returnTo,...passageForSource(context?.anchor,{kind:'knowledge'})};
+}
+
+/** The reveal a passage-carrying open queues for its editor, keyed by the binding that opened the source. */
+export interface SourcePassageReveal {kind:'source-passage';bindingId:string;sourceRef:string;start:number;end:number;revision:string}
+
+/** What one Timeline event carries to its source. A passage is carried only for a file-location target whose revision the
+ * resolver just proved, and only when the reading disclosed it as a text span; everything else opens at the top, with the reason
+ * named. Nothing here invents an anchor or re-targets a passage onto another source. */
+export function passageForSource(anchor:unknown,source:{kind:'file';ref:string;revision:string}|{kind:'knowledge'}):{anchor?:PassageAnchor;anchorRefusal?:string}{
+ if(anchor===undefined)return {};
+ const malformed='The Timeline passage is malformed; the source opens at its top.';
+ if(source.kind==='knowledge')return {anchorRefusal:'This source opens as a knowledge reading, which has no passage addressing; it opens at its top.'};
+ const row=object(anchor);
+ if(!row)return {anchorRefusal:malformed};
+ const state=row.state,reason=row.reason;
+ if(state==='top'||state==='absent')return {anchorRefusal:reference(reason)?reason:'No passage is disclosed for this event; its source opens at the top.'};
+ const sourceRef=row.source_ref,selector=row.selector;
+ if(state!=='passage'||!reference(sourceRef)||!isLocatableSelector(selector))return {anchorRefusal:malformed};
+ if(sourceRef!==source.ref)return {anchorRefusal:'The passage belongs to another source; the source opens at its top.'};
+ if(selector.unit!=='text_span')return {anchorRefusal:`${selector.unit==='timestamp_range'?'A timestamp passage':'An image passage'} has no reader that positions it; the source opens at its top.`};
+ return {anchor:{source_ref:sourceRef,selector:{...selector},revision:source.revision}};
+}
+
+/** The editor's half of the reveal. A span lands only when the binding, the source and the editor's revision are the ones the
+ * resolver proved, and the span is non-empty and inside the document. A mismatch reveals nothing; it never searches for the text. */
+export function passageRevealDecision(reveal:unknown,editor:{bindingId:string;sourceRef:string|undefined;revision:string|undefined;docLength:number;workingCopy?:boolean}):{start:number;end:number}|null{
+ const row=object(reveal);
+ if(!row||row.kind!=='source-passage')return null;
+ // An unsaved working copy is not the proved revision: its offsets may have moved, so the passage is never guessed into it.
+ if(editor.workingCopy)return null;
+ if(row.bindingId!==editor.bindingId||row.sourceRef!==editor.sourceRef)return null;
+ if(!editor.revision||row.revision!==editor.revision)return null;
+ const start=row.start,end=row.end;
+ if(typeof start!=='number'||typeof end!=='number'||!Number.isSafeInteger(start)||!Number.isSafeInteger(end)||start<0||end<=start||end>editor.docLength)return null;
+ return {start,end};
+}
+
+const pendingPassageReveals=new Map<string,SourcePassageReveal>();
+/** Queue a reveal for its editor, which may not be mounted yet, then announce it to any editor that already is. */
+export function queueSourcePassageReveal(reveal:SourcePassageReveal):void{
+ pendingPassageReveals.set(reveal.bindingId,reveal);
+ if(typeof window!=='undefined')window.dispatchEvent(new CustomEvent('oi:context-reveal',{detail:reveal}));
+}
+/** Take the queued reveal for one binding, once. */
+export function takeSourcePassageReveal(bindingId:string):SourcePassageReveal|undefined{
+ const reveal=pendingPassageReveals.get(bindingId);
+ pendingPassageReveals.delete(bindingId);
+ return reveal;
 }

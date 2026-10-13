@@ -1,4 +1,5 @@
 import {associateScenePortal,type SceneSourceOpen} from "./expressions/scenePortal";
+import {queueSourcePassageReveal} from "./expressions/sourceHandoff";
 import {worldOp} from "./expression/world";
 import {SceneSourcePortal} from "./expressions/SceneSourcePortal";
 import {hostedSurfaceFor, withHostedDescriptor} from "./contributions/registry";
@@ -1112,7 +1113,11 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
           await associateScenePortal(kernel.transport,portal,binding);
           if(temporary)setSourcePortalSlot({binding,portal,workspaceId,mode:originMode});
         };
-        if(target.location)await openFileRef.current(target.location,{current,into:temporary?'portal':beside?'side':'tree',onOpened:portal?onOpened:undefined});
+        // lane-2 T19b: a disclosed text span opens its source at its passage. The reveal is queued for the binding this file opened in,
+        // and the editor admits it only when its own revision is the one the resolver proved (never by searching for the text).
+        const passage=target.anchor,span=passage&&passage.selector.unit==='text_span'?passage.selector:undefined;
+        const passageOpened=passage&&span&&target.location?(binding:SurfaceBinding)=>{if(binding.location?.ref===target.location?.ref)queueSourcePassageReveal({kind:'source-passage',bindingId:binding.id,sourceRef:passage.source_ref,start:span.start,end:span.end,revision:passage.revision});}:undefined;
+        if(target.location)await openFileRef.current(target.location,{current,into:temporary?'portal':beside?'side':'tree',onOpened:portal||passageOpened?async(binding:SurfaceBinding)=>{passageOpened?.(binding);if(portal)await onOpened(binding);}:undefined});
         else if(target.address)await openKnowledgeRef.current(target.address,target.title,target.project,"tab",undefined,temporary?'portal':beside?'side':'tree',current,portal?onOpened:undefined);
         // A beside portal lands in the side pane, and the side pane lives in
         // the panel's Context plane — surface that plane at panel depth, as
