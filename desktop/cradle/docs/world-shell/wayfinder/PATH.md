@@ -111,10 +111,15 @@ bullet twice gets one Sonnet diagnostic; never a third builder attempt.
 
 ## 7. Open claims
 
+One branch, one run (`dlw/build`, PR #654). Builders are Haiku, three at a
+time, each with an exclusive zone; the lead converges, commits and keeps
+this table true. Tickets and resolutions live in `tickets/`.
+
 | Ticket | Who | Zone | Since |
 |---|---|---|---|
-| T-HOLDERS (§4.8 + §4.9) | haiku builder | `src/inhabitants/sdk/semantics.ts`, `src/inhabitants/familyManifest.ts`, `src/inhabitants/sdk/define.ts`, `src/inhabitants/sdk/validate.ts`, `src/inhabitants/sdk/semantic-registry.json`, `src/inhabitants/quaternalLogicFamilyManifest.ts`, `src/inhabitants/qlMusicalExtension.ts`, `src/projections/atlas/atlasFamilyManifest.ts`, `src/expressions/expressionsFamilyManifest.ts`, `scripts/validate-devices.mjs`, `tests/live-semantics.test.mjs`, `tests/holders.test.mjs` (new) | 2026-10-13 |
-| T-TIMELINE-WALKS leg 2 | claude-code:dlw-lead | the Journey in `src/shell/ModeCentre.tsx` | after T-ATLAS-HOST |
+| lane-3 E22/E23 (deep links, fullscreen/focus) | haiku builder | `field-studies-journeys/src/{app.ts (boot URL, focus), deepLinks.ts, focusMode.ts}` | 2026-10-13 |
+| T-TIMELINE-WALKS leg 2 (the Journey reads the walks) | haiku builder | `packages/live-shell/ui/src/shell/ModeCentre.tsx` (Journey), walk modules | 2026-10-13 |
+| lane-4 T21 (layers + basemap persist per Scene) | haiku builder | `researchMaterial.ts`, `undoLabels.ts`, `placeViews.ts`, Places wiring, kernel `validate_research` | 2026-10-13 |
 
 ## 8. Foreign lanes — never touch
 
@@ -144,3 +149,4 @@ walk-bridge 4179.
 | W0–W0e | P0-R1, R4, R5, R5b, R5c, R6, R6b, V1, V2, BIMBA-LIVE | `24e7d8f7f` … `760fa4916` | R0 FAIL (screen evidence owed) |
 | lock | DEVICE-SEMANTICS-LOCK; plans conformed | `4be97cc79` + the conformance commit | — |
 | P1 (no-UI) | T-AE-REPORT, T-SEMANTICS-GATE, T-TIMELINE-WALKS leg 1, T-LABELS, T-EXPRESSION-TRACKS, T-CAPABILITY-HOMES, T-HOLDERS | `68e0b8ba5` … `9a16b2579` (lane `dlw/phase1-semantics-20261013`) | R1 owed after the screen pass; UI legs unverified |
+| P2–P4 (one run) | Atlas host + provider, sequence-editor mount; lane 3 E01–E16, E20, E24, E25, E09–E13; lane 2 T1–T8, T10–T13, T15–T18; lane 4 T1–T21 (T21 in flight); lane 1 A1–A8; lane 5 T1–T3 (glue + live surface); three Sonnet reviews and their fixes (T-REVIEW-1..3) | `77e7df56f` … `6d0cbae3d` on `dlw/build` (PR #654) | R2/R5 as T-REVIEW-1..3; native screen pass owed (computer-use access refused twice) |
