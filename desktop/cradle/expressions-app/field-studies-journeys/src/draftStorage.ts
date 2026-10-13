@@ -165,15 +165,47 @@ export function planRecoveryChoice(choice:RecoveryChoice,draft:Journey,saved:Jou
  return {open:clone(saved),copy:draftCopy(draft,at),quarantineDraft:false,removeDraft:true};
 }
 export const SESSION_MARK_KEY='oi.field-studies.session.v1';
-export interface SessionMarkStore{getItem(key:string):string|null;setItem(key:string,value:string):void}
-/** True when the previous page never reached its quit flush. A marker that cannot be read counts as unclean. */
-export function readUncleanExit(store:SessionMarkStore):boolean{
- const raw=store.getItem(SESSION_MARK_KEY);
- if(raw===null)return false;
- try{return (JSON.parse(raw) as {state?:unknown}).state!=='closed';}catch{return true;}
+export const TAB_INSTANCE_KEY='oi.field-studies.tab.v1';
+export interface SessionMarkStore{getItem(key:string):string|null;setItem(key:string,value:string):void;removeItem?(key:string):void}
+function browserTabStore():SessionMarkStore|undefined{try{return (globalThis as {sessionStorage?:SessionMarkStore}).sessionStorage;}catch{return undefined;}}
+/** lane-3 E19b: one session mark per browser tab. The tab's id lives in its own sessionStorage: a reload of this tab keeps it,
+ * and no other tab reads it. Where no tab store exists, every page shares one fixed id (the earlier origin-wide behaviour). */
+export function tabInstance(tabStore:SessionMarkStore|undefined=browserTabStore()):string{
+ try{
+  const known=tabStore?.getItem(TAB_INSTANCE_KEY);
+  if(known&&/^[A-Za-z0-9-]{8,64}$/.test(known))return known;
+  if(!tabStore)return 'shared';
+  const fresh=globalThis.crypto?.randomUUID?.()??`t${Date.now().toString(36)}${Math.random().toString(36).slice(2,12)}`;
+  tabStore.setItem(TAB_INSTANCE_KEY,fresh);
+  return fresh;
+ }catch{return 'shared';}
 }
-export function markSessionOpen(store:SessionMarkStore,at:Date):void{store.setItem(SESSION_MARK_KEY,JSON.stringify({state:'open',at:at.toISOString()}));}
-export function markSessionClosed(store:SessionMarkStore,at:Date):void{store.setItem(SESSION_MARK_KEY,JSON.stringify({state:'closed',at:at.toISOString()}));}
+const sessionMarkKey=(instance:string)=>`${SESSION_MARK_KEY}.${instance}`;
+function markIsUnclean(raw:string):boolean{try{return (JSON.parse(raw) as {state?:unknown}).state!=='closed';}catch{return true;}}
+/** True when this tab's previous page never reached its quit flush. A marker that cannot be read counts as unclean.
+ * Another tab's mark is never read: a tab with no mark of its own is clean, except for one origin-wide mark left by an
+ * earlier build, which the first tab to boot adopts (markSessionOpen retires it). */
+export function readUncleanExit(store:SessionMarkStore,instance:string=tabInstance()):boolean{
+ const own=store.getItem(sessionMarkKey(instance));
+ if(own!==null)return markIsUnclean(own);
+ const legacy=store.getItem(SESSION_MARK_KEY);
+ return legacy!==null&&markIsUnclean(legacy);
+}
+export function markSessionOpen(store:SessionMarkStore,at:Date,instance:string=tabInstance()):void{
+ store.setItem(sessionMarkKey(instance),JSON.stringify({state:'open',at:at.toISOString()}));
+ // The earlier origin-wide mark is retired as soon as a tab owns its own, so no later tab adopts it.
+ if(store.getItem(SESSION_MARK_KEY)!==null)store.setItem(SESSION_MARK_KEY,JSON.stringify({state:'closed',at:at.toISOString()}));
+}
+/** A clean exit removes this tab's mark, so closed tabs leave nothing behind. A store without removal keeps an explicit closed mark. */
+export function markSessionClosed(store:SessionMarkStore,at:Date,instance:string=tabInstance()):void{
+ if(store.removeItem)store.removeItem(sessionMarkKey(instance));
+ else store.setItem(sessionMarkKey(instance),JSON.stringify({state:'closed',at:at.toISOString()}));
+}
+// lane-3 E19b: the boot's own reading of the session mark, taken before this page marks itself open. A hosted open
+// after an unclean boot may offer the recovery choice; a clean boot never does.
+let bootUnclean=false;
+export function recordBootExit(unclean:boolean):void{bootUnclean=unclean;}
+export function bootWasUnclean():boolean{return bootUnclean;}
 /** Clock text for the offer: local hh:mm:ss, with the date when it is not today. */
 export function offerClock(iso:string,now:Date):string{
  const at=new Date(iso);if(Number.isNaN(at.getTime()))return 'unknown time';

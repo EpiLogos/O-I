@@ -4,9 +4,12 @@ import type {BlueprintIntent} from './nativeBlueprint.js';
  * recover and file-save through the owner. It has no panel of its own; its
  * standing reaches the app's Save control and Studio footer via host.status. */
 import {clone,type Journey} from './model.js';
-import {NativeWorking,type NativeCheckpoint,type NativeFile,type WorkingSnapshot} from './nativeWorking.js';
+import {NativeWorking,type NativeCheckpoint,type NativeFile,type NativeWorkingRecord,type WorkingSnapshot} from './nativeWorking.js';
 import {kernelExpressionsAvailable,listKernelExpressions,readKernelExpression,nativeExpressionRequest,nativeFileRequest,type KernelChange} from './kernelExpressions.js';
-import {readWorkingCheckpoint,readWorkingDraft,readBoundWorkingDraft,acceptWorkingRecoveryBasis,writeWorkingCheckpoint,writeDraft} from './recovery.js';
+import {readWorkingCheckpoint,readWorkingDraft,readBoundWorkingDraft,acceptWorkingRecoveryBasis,writeWorkingCheckpoint,writeDraft,applyRecoveryPlan,removeDraft} from './recovery.js';
+// lane-3 E19b: the hosted recovery choice uses the same offer and plan as the browser boot.
+import {recoveryOffer,planRecoveryChoice,bootWasUnclean,type RecoveryChoice} from './draftStorage.js';
+import type {RecoveryRecord} from '../../../src/expressions/recoveryTypes';
 import {hostedRecovery,hostedScope,recoveryBinding,selectedRecovery,draftRecoveryAddress,selectNativeRecovery} from './nativeRecovery.js';
 import {kernelDocumentToJourney,type KernelConversion,type KernelExpressionDocument} from './kernelDocumentBridge.js';
 import {nativeConnections} from './nativeCorrespondence.js';
@@ -47,6 +50,8 @@ export interface NativeWorkspaceHost {
  status?:(state:NativeStatus)=>void;
  /** A followed Expression was adopted; `readThrough` when an act performs it. */
  followed?:(reference:string,readThrough:boolean)=>void;
+ /** lane-3 E19b: the owner's choice when a hosted draft is newer than its checkpoint's acknowledged basis after an unclean exit. */
+ chooseRecovery?:(request:{draft:Journey;saved:Journey;offer:{draftAt:string;savedAt:string};revision:number})=>Promise<RecoveryChoice>;
 }
 /** E15c: a Save that the owner acknowledged, with its checkpoint for the one undo history. */
 export interface NativeSave {checkpoint:NativeCheckpoint}
@@ -137,6 +142,25 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
   if(generation!==restoreGeneration||host.snapshot().journey.id!==snapshot.journey.id)throw new Error('The selected work changed while its draft was being retained. No composition was committed.');
  };
  const requireAdoption=(current:()=>boolean)=>{if(!current())throw new Error('The working draft changed while opening. It and its native basis were retained; choose Open again when ready.');};
+// lane-3 E19b: a hosted draft newer than its checkpoint's acknowledged basis is not adopted silently after an unclean exit. The owner
+// chooses once per expression. Each choice keeps both sides: the draft is quarantined or copied to the Library, read back, and only
+// then does its native copy leave the owner. The checkpoint's view is the saved basis; the kernel revision is named in the choice.
+const recoveryOffered=new Set<string>();
+const settleRecovery=async(found:{record:NativeWorkingRecord;journey:Journey;recoveryRecords?:RecoveryRecord[]},current:()=>boolean)=>{
+ const saved=found.record.view?.journey,draftId=found.record.draft_id;
+ if(!hostedRecovery()||!saved||!bootWasUnclean()||recoveryOffered.has(draftId))return found;
+ const offer=recoveryOffer({draft:found.journey,saved,uncleanExit:true});
+ if(!offer.offer)return found;
+ const choice:RecoveryChoice=host.chooseRecovery?await host.chooseRecovery({draft:found.journey,saved,offer,revision:found.record.view!.document.revision}):'keep-both';
+ requireAdoption(current);
+ if(choice==='restore-draft'){recoveryOffered.add(draftId);return found;}
+ const plan=planRecoveryChoice(choice,found.journey,saved,new Date());
+ await applyRecoveryPlan(plan,found.journey);
+ requireAdoption(current);
+ if(plan.removeDraft)await removeDraft(draftId,found.recoveryRecords?.find(row=>row.kind==='draft')?.scope);
+ recoveryOffered.add(draftId);
+ return {...found,journey:saved,recoveryRecords:found.recoveryRecords?.filter(row=>row.kind==='checkpoint')};
+};
  const adopt=async(raw:KernelExpressionDocument,current:()=>boolean,file?:NativeFile)=>{
   requireAdoption(current);
   const old=clone(host.snapshot());
@@ -171,7 +195,9 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
   // A refusal leaves both copies in place and cannot accept a newer CAS basis.
   if(host.shouldRetainDraft?.()!==false)await writeDraft(clone(host.snapshot().journey));
   requireAdoption(current);
-  const recovered=address?await readBoundWorkingDraft(address):await readWorkingDraft(reference,hostedRecovery()?hostedScope():'expressions');
+  const found=address?await readBoundWorkingDraft(address):await readWorkingDraft(reference,hostedRecovery()?hostedScope():'expressions');
+  requireAdoption(current);
+  const recovered=found?await settleRecovery(found,current):found;
   requireAdoption(current);
   // Whether an act performs this Expression is read BEFORE the basis moves:
   // adopting the native basis and loading it into the field are one step, as
@@ -196,7 +222,8 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
   // A live native document may already belong to an authored Journey with
   // its own identity, unsaved material or interrupted operation. Consult that
   // exact checkpoint before deriving a new rendering identity from the ref.
-  const address=hostedRecovery()?selectedRecovery(reference):null,recovered=address?await readBoundWorkingDraft(address):await readWorkingDraft(reference,hostedRecovery()?hostedScope():'expressions');requireAdoption(current);
+  const address=hostedRecovery()?selectedRecovery(reference):null,found=address?await readBoundWorkingDraft(address):await readWorkingDraft(reference,hostedRecovery()?hostedScope():'expressions');requireAdoption(current);
+  const recovered=found?await settleRecovery(found,current):found;requireAdoption(current);
   if(recovered){
    if(host.shouldRetainDraft?.()!==false)await writeDraft(clone(host.snapshot().journey));requireAdoption(current);
    acceptWorkingRecoveryBasis(recovered,current);

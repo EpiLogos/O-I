@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {blankJourney,blankScene,clone,validateJourney} from '../build/model.js';
-import {recoveryOffer,planRecoveryChoice,draftCopy,readUncleanExit,markSessionOpen,markSessionClosed,offerClock,SESSION_MARK_KEY,writeRecord,loadRecord,removeRecord,listQuarantine,quarantine} from '../build/draftStorage.js';
+import {recoveryOffer,planRecoveryChoice,draftCopy,readUncleanExit,markSessionOpen,markSessionClosed,offerClock,SESSION_MARK_KEY,TAB_INSTANCE_KEY,tabInstance,recordBootExit,bootWasUnclean,writeRecord,loadRecord,removeRecord,listQuarantine,quarantine} from '../build/draftStorage.js';
 
 // lane-3 E19: after an unclean exit, the draft and the last saved copy are both kept and the owner chooses.
 const T0='2026-10-13T09:00:00.000Z',T1='2026-10-13T09:05:00.000Z',T2='2026-10-13T09:07:30.000Z';
@@ -81,7 +81,7 @@ test('the session mark: absent is clean, open is unclean, closed is clean, and a
  assert.equal(readUncleanExit(s),true,'a page that opened and never closed');
  markSessionClosed(s,new Date());
  assert.equal(readUncleanExit(s),false,'a page that quit cleanly');
- s.setItem(SESSION_MARK_KEY,'{broken');
+ s.setItem(SESSION_MARK_KEY+'.shared','{broken');
  assert.equal(readUncleanExit(s),true,'an unreadable mark cannot prove a clean exit');
 });
 
@@ -142,4 +142,92 @@ test('the boot path is wired to the choice and the session mark, and offers noth
  assert.ok(/markSessionClosed\(localStorage/.test(source),'quit marks a clean exit only after the flush settles');
  assert.ok(/pending\(\)===0/.test(source),'the mark waits for pending writes to reach zero');
  assert.ok(/markClean&&draftSchedule\.pending\(\)===0/.test(source),'only pagehide marks the exit clean');
+});
+
+// lane-3 E19b: the session mark is per tab. The origin store is shared by every tab; a tab's own id lives in its sessionStorage.
+function markStore(){const map=new Map();return {map,getItem:k=>map.has(k)?map.get(k):null,setItem:(k,v)=>{map.set(k,v);},removeItem:k=>{map.delete(k);}};}
+test('E19b: each tab has its own id, kept across a reload of that tab; a page with no tab store shares one fixed id', ()=>{
+ const a=markStore(),b=markStore();
+ const idA=tabInstance(a),idB=tabInstance(b);
+ assert.notEqual(idA,idB,'two tabs have two ids');
+ assert.match(idA,/^[A-Za-z0-9-]{8,64}$/,'the id is a bounded token');
+ assert.equal(tabInstance(a),idA,'a reload of the same tab keeps its id');
+ assert.equal(a.map.get(TAB_INSTANCE_KEY),idA,'the id is kept in the tab store');
+ assert.equal(tabInstance(undefined),'shared','no tab store means the one shared id');
+ const denied={getItem:()=>{throw new Error('denied');},setItem:()=>{throw new Error('denied');}};
+ assert.equal(tabInstance(denied),'shared','a denied tab store never throws');
+});
+test('E19b: a second tab never reads the first tab\'s open mark, and a clean exit of one tab leaves the other\'s mark standing', ()=>{
+ const origin=markStore(),a=markStore(),b=markStore();
+ const idA=tabInstance(a),idB=tabInstance(b);
+ markSessionOpen(origin,new Date(),idA);
+ assert.equal(readUncleanExit(origin,idB),false,'tab B is not offered tab A\'s draft');
+ assert.equal(readUncleanExit(origin,idA),true,'tab A still reads its own open mark');
+ markSessionOpen(origin,new Date(),idB);
+ markSessionClosed(origin,new Date(),idB);
+ assert.equal(readUncleanExit(origin,idA),true,'closing tab B never clears tab A\'s mark');
+ assert.equal(readUncleanExit(origin,idB),false,'tab B closed cleanly');
+});
+test('E19b: a reload of the same tab after a crash is still offered the choice', ()=>{
+ const origin=markStore(),a=markStore();
+ markSessionOpen(origin,new Date(),tabInstance(a));
+ // The page dies with no quit flush; the tab reloads and keeps its id.
+ assert.equal(readUncleanExit(origin,tabInstance(a)),true);
+});
+test('E19b: a clean exit removes the tab mark, so a closed tab leaves nothing behind', ()=>{
+ const origin=markStore(),a=markStore(),id=tabInstance(a);
+ markSessionOpen(origin,new Date(),id);markSessionClosed(origin,new Date(),id);
+ assert.equal(origin.map.size,0,'no mark is left for a closed tab');
+ assert.equal(readUncleanExit(origin,id),false);
+});
+test('E19b: one origin-wide mark from an earlier build is adopted by the first tab to boot only', ()=>{
+ const origin=markStore();
+ origin.setItem(SESSION_MARK_KEY,JSON.stringify({state:'open',at:new Date().toISOString()}));
+ const a=markStore(),b=markStore();
+ assert.equal(readUncleanExit(origin,tabInstance(a)),true,'the first tab adopts the earlier unclean mark');
+ markSessionOpen(origin,new Date(),tabInstance(a));
+ assert.equal(readUncleanExit(origin,tabInstance(b)),false,'a later tab is not offered it once the first tab has retired it');
+});
+test('E19b: the boot records its own reading of the mark for the hosted open', ()=>{
+ recordBootExit(true);assert.equal(bootWasUnclean(),true);
+ recordBootExit(false);assert.equal(bootWasUnclean(),false);
+});
+// The hosted open (E19b-a): after an unclean boot, a draft newer than the checkpoint's acknowledged basis is offered, and each choice keeps both sides.
+for(const choice of ['restore-draft','keep-saved','keep-both']){
+ test(`E19b-a: after an unclean boot, a hosted draft newer than its checkpoint is offered; choosing ${choice} keeps both sides`, ()=>{
+  const saved=expression('e2','Checkpoint basis',T0),draft=expression('e2','Checkpoint basis',T1,2);
+  recordBootExit(true);
+  const offer=recoveryOffer({draft,saved,uncleanExit:bootWasUnclean()});
+  assert.equal(offer.offer,true,'the newer draft is offered, not adopted silently');
+  assert.equal(offer.draftAt,T1);assert.equal(offer.savedAt,T0);
+  const plan=planRecoveryChoice(choice,draft,saved,new Date(2026,9,13,9,8));
+  if(choice==='restore-draft'){
+   assert.equal(material(plan.open),material(draft),'restore opens the draft');
+   assert.equal(plan.removeDraft,false);assert.equal(plan.quarantineDraft,false);
+  }else{
+   assert.equal(material(plan.open),material(saved),'the checkpoint basis is opened');
+   assert.equal(plan.removeDraft,true,'the native draft leaves only after its copy is kept');
+  }
+  if(choice==='keep-saved')assert.equal(plan.quarantineDraft,true,'the draft is kept verbatim in quarantine');
+  if(choice==='keep-both'){assert.ok(plan.copy,'the draft becomes a Library copy');assert.notEqual(plan.copy.id,draft.id);assert.equal(plan.copy.scenes.length,draft.scenes.length);}
+  recordBootExit(false);
+ });
+}
+test('E19b-a: a hosted draft that matches its checkpoint, or a clean boot, is never offered', ()=>{
+ const saved=expression('e3','Same',T0),draft=validateJourney({...clone(saved),updatedAt:T1});
+ assert.equal(recoveryOffer({draft,saved,uncleanExit:true}).offer,false,'a draft with the same material is not an offer');
+ const newer=expression('e3','Changed',T1,2);
+ assert.equal(recoveryOffer({draft:newer,saved,uncleanExit:false}).offer,false,'a clean boot offers nothing');
+});
+test('E19b: the native open settles its recovery through the same plan, before adoption, and the boot takes its mark before the hosted gate', ()=>{
+ const nw=fs.readFileSync(new URL('../src/nativeWorkspace.ts',import.meta.url),'utf8');
+ const app=fs.readFileSync(new URL('../src/app.ts',import.meta.url),'utf8');
+ assert.equal(nw.match(/await settleRecovery\(found,current\)/g)?.length,2,'follow and open both settle the recovery');
+ const settle=nw.slice(nw.indexOf('const settleRecovery='),nw.indexOf('// Following (host open-expression'));
+ assert.match(settle,/if\(!hostedRecovery\(\)\|\|!saved\|\|!bootWasUnclean\(\)\|\|recoveryOffered\.has\(draftId\)\)return found;/,'only a hosted, unclean, not-yet-offered draft is offered');
+ assert.ok(settle.indexOf('await applyRecoveryPlan(plan,found.journey)')<settle.indexOf('removeDraft(draftId'),'the draft is kept before its native copy leaves');
+ assert.ok(settle.indexOf('requireAdoption(current)')>0,'a superseded choice retains everything');
+ assert.ok(app.includes('chooseRecovery:request=>askRecoveryChoice(request.draft,{...request.offer,revision:request.revision})'),'the owner is asked with the kernel revision named');
+ assert.ok(app.indexOf('recordBootExit(uncleanExit)')<app.indexOf("if(!window.__JOURNEY__&&!qs.has('journey')&&!qsExpression)"),'a hosted boot records its mark too');
+ assert.ok(app.includes('let uncleanExit=false;try{uncleanExit=readUncleanExit(localStorage);markSessionOpen(localStorage,new Date());}catch'),'one reading of the tab mark, before this page marks itself open');
 });

@@ -4,7 +4,7 @@ import {installNativeField} from "./nativeField";
 import {SESSION_KEY,SessionState,validateSession,writeDraft,readDraft,readDrafts,removeDraft,applyRecoveryPlan} from './recovery';
 // lane-3 E17-E19: one draft scheduler, the draft/saved offer and the session mark.
 import {DraftSchedule,draftStatusLine} from './draftSchedule';
-import {recoveryOffer,planRecoveryChoice,readUncleanExit,markSessionOpen,markSessionClosed,offerClock,type RecoveryChoice} from './draftStorage';
+import {recoveryOffer,planRecoveryChoice,readUncleanExit,markSessionOpen,markSessionClosed,offerClock,recordBootExit,type RecoveryChoice} from './draftStorage';
 import {foldObjectState} from './foldState';
 import {imageSuiteHTML} from './imageSuite';
 import {initialiseShared,effectiveScene,isShared,writeShared,toggleShared,useLocalPointer,POINTER_PATHS} from './sharedSettings';
@@ -27,7 +27,7 @@ import {parseDeepLink,formatDeepLink,resolveSceneRef,resolveMarker,clampJourneyT
 import {NOT_FOCUSED,beginFocus,endFocus,focusedLayout,type FocusLayout,type FocusSession} from './focusMode';
 import {shuttle,pauseTransport,beginScrub,endScrub,stepFrame,transportRate,transportPlaying,transportReadout,STOPPED_TRANSPORT,type WorkingTransport} from './transport';
 import {durationFromEdgeDrag,sceneAtTime,secondsFromDrag,slipOffsetFromDrag,insertBeforeFor,dragPreviewStep,overlapFromDrag,SCENE_DURATION_MIN,SCENE_DURATION_MAX,type TimelineLayout} from './journeyTimelineLayout';
-import {seamStates,seamCaption,seamBlendHTML,blendLimit,blendLimitMessage,walkJourney} from './journeyPath';
+import {seamStates,seamCaption,seamBlendHTML,blendLimit,blendLimitMessage} from './journeyPath';
 import {entityTargets} from './nativeParameters';
 import {recordRecent,recentJourneys} from './recentWork';
 import {installPanelResize} from './panelResize';
@@ -184,6 +184,11 @@ let railKey:RailItem='interact',railExpanded=false;let cursorTool:'interact'|'se
 // The link is read here, before any render can write the address, and it is held until the Expression settles.
 const bootLink=parseDeepLink(location.search);
 let deepLinkPending:{address:DeepLinkAddress;notes:string[]}|null={address:bootLink.address,notes:[...bootLink.refused]},addressKeepsExpression=false;
+// review-5 #6: declared with the link state above, because syncDeepLinkAddress can run while the module is still evaluating.
+// Scrubbing calls the address sync on every pointer move. One write per interval reads the state as it stands when it lands, so the
+// address is never written faster than WKWebView's replaceState throttle allows, and the last position is always written.
+const DEEP_LINK_WRITE_MS=400;
+let deepLinkWriteTimer=0;
 let focusSession:FocusSession=NOT_FOCUSED,fullscreenGranted=false,focusExitedAt=Number.NEGATIVE_INFINITY;
 const featured=featuredExpressions(),starters=startingPoints();
 const covers=new Map<string,string>();
@@ -627,10 +632,11 @@ function endSeamBlend(commit:boolean){
 function upSeamBlend(){endSeamBlend(true);}
 function cancelSeamBlend(){endSeamBlend(false);}
 // Lane-5 T7 · the live edge: each blend's fill and caption follow the expression clock, while playing and while scrubbing.
-function paintSeamBlends(time:number){
+// review-5 #2: the seam starts and the playhead are read on one clock, chosen by the caller: the saved clock while a saved sequence plays.
+function paintSeamBlends(saved:boolean){
  const lane=document.querySelector<HTMLElement>('.scene-track-lane');if(!lane)return;
- const doc=store.document;
- for(const seam of seamStates(doc.scenes,(index,local)=>expressionTiming(doc,index,local),time)){
+ const doc=store.document,timing=(index:number,local:number)=>expressionTiming(doc,index,local,saved),time=timing(sceneIndex,sceneElapsed).time;
+ for(const seam of seamStates(doc.scenes,timing,time)){
   const scene=doc.scenes[seam.index],id=CSS.escape(seam.sceneId);
   const band=lane.querySelector<HTMLElement>(`[data-seam-band][data-scene-id="${id}"]`);
   if(band){band.style.setProperty('--blend-progress',(seam.fraction??0).toFixed(4));band.dataset.blending=String(seam.fraction!==null);}
@@ -1675,7 +1681,7 @@ function tick(now:number){if(sceneEditHeld||researchInstruments?.active()&&!rese
  if(transitionDuration>0){const f=clamp((simTime-transitionStart)/Math.max(.01,transitionDuration),0,1);paintTransition(f);if(f>=1){transitionDuration=0;transitionSnapshot=null;$('transition-canvas').hidden=true;}}
  if(overlayDirty&&!libraryOpen)drawGuides();if(recorder.active){const paperScene={...activeScene(),field:{...activeScene().field,background:native?.background??scene().field.background,palette:native?.palette??scene().field.palette,params:{...scene().field.params,...native?.params}}};const copy=()=>recorder.frame(engine.canvas,paperScene,width,height,captureTransition());try{if(engine.withCleanFrame)engine.withCleanFrame(copy);else copy();}catch(err){recorder.stop();error(err);}}frames++;
  if(now-lastFpsTime>1000){fps=Math.round(frames*1000/(now-lastFpsTime));frames=0;lastFpsTime=now;}
- if(now-lastUI>33){paintSeamBlends(expressionTiming(store.document,sceneIndex,sceneElapsed,journeyPlaying).time);document.querySelectorAll<HTMLElement>('[data-transport-readout]').forEach(el=>{el.textContent=transportReadout(workingTransport);});const s=activeScene(),timing=expressionTiming(store.document,sceneIndex,sceneElapsed,journeyPlaying),fraction=clamp(timing.time/timing.total,0,1);$('global-time').textContent=timing.time.toFixed(1)+' / '+timing.total.toFixed(1)+'s';const playhead=$<HTMLInputElement>('expression-playhead');if(playhead&&document.activeElement!==playhead)playhead.value=String(timing.time);$('journey-progress').style.width=fraction*100+'%';document.querySelectorAll<HTMLElement>('[data-scene-progress]').forEach(e=>e.style.width=(Number(e.dataset.sceneProgress)===sceneIndex?fraction*100:0)+'%');
+ if(now-lastUI>33){paintSeamBlends(journeyPlaying);document.querySelectorAll<HTMLElement>('[data-transport-readout]').forEach(el=>{el.textContent=transportReadout(workingTransport);});const s=activeScene(),timing=expressionTiming(store.document,sceneIndex,sceneElapsed,journeyPlaying),fraction=clamp(timing.time/timing.total,0,1);$('global-time').textContent=timing.time.toFixed(1)+' / '+timing.total.toFixed(1)+'s';const playhead=$<HTMLInputElement>('expression-playhead');if(playhead&&document.activeElement!==playhead)playhead.value=String(timing.time);$('journey-progress').style.width=fraction*100+'%';document.querySelectorAll<HTMLElement>('[data-scene-progress]').forEach(e=>e.style.width=(Number(e.dataset.sceneProgress)===sceneIndex?fraction*100:0)+'%');
  const nd=engine.telemetry?.()?.drive;const ph=nd?{theta:nd.theta,phi:nd.phi,drive:nd.progress}:phases(s,simTime);document.querySelectorAll<SVGLineElement>('[data-phase]').forEach(e=>e.setAttribute('transform',`rotate(${(e.dataset.phase==='theta'?ph.theta:ph.phi)*180/Math.PI} 50 50)`));if($('drive-value'))$('drive-value').style.width=ph.drive*100+'%';
  const telemetry=engine.telemetry?.();updateAutomationRuntime(telemetry);document.querySelectorAll<HTMLElement>('[data-formation-live]').forEach(el=>{const entity=s.entities.find(v=>v.id===el.dataset.formationLive),state=telemetry?.sequences?.find((v:any)=>v.entityId===entity?.id);if(!entity||!state)return;const a=entity.sequence.steps[state.linkIndex],b=entity.sequence.steps[state.nextIndex];el.textContent=state.linkCount>1?`${a?stateLabel({...a,source:stateSource(entity,state.linkIndex)}):'State'} → ${b?stateLabel({...b,source:stateSource(entity,state.nextIndex)}):'State'} · ${Math.round(state.progress*100)}%`:'Single target';});const effectivePaper={...s,field:{...s.field,background:telemetry?.background??s.field.background,palette:telemetry?.palette??s.field.palette,params:{...s.field.params,...telemetry?.params}}};paintLivePaper(effectivePaper);const params=telemetry?.params??evaluateParameters(s,simTime);for(const panel of [$('belt-content'),$('inspector-content'),$('automation-monitor'),$('context-panel').querySelector<HTMLElement>('.context-content')??$('context-panel')])updateToolbeltValues(panel,s,params,telemetry?.config);const monitored=s.automation.find(l=>l.id===monitoredLane),live=monitored?telemetry?.live?.find((v:any)=>v.id===(monitored.nativeId??monitored.id)):undefined;if(monitored){const monitor=$('automation-monitor'),target=automationTarget(s,monitored!.target),value=target?(target.target.startsWith('field.')?params[target.key]:Number(readPath(telemetry?.config,target.path))/target.factor):live?.value;monitor.querySelector('[data-cycle-hand]')?.setAttribute('transform',`rotate(${(live?.phase??0)*360} 32 32)`);monitor.querySelector('.cycle-progress')?.setAttribute('stroke-dasharray',`${(live?.phase??0)*100} 100`);const label=monitor.querySelector('[data-cycle-value]');if(label)label.textContent=Number(value).toFixed(3);const phase=monitor.querySelector('[data-cycle-phase]');if(phase)phase.textContent=!live?'Paused':live.done?'Done':Math.round(live.phase*100)+'%';}document.querySelectorAll<HTMLElement>('[data-source-status]').forEach(el=>el.textContent=telemetry?.sourceStatus?.[el.dataset.sourceStatus!]??'');const contribution=document.querySelector<HTMLElement>('[data-focus-contribution]');if(contribution){const col=telemetry?.config?.composition;contribution.textContent=`Palette → stored entity tint (${Math.round((selectedEntity()?.tintWeight??0)*(col?.entityTintWeight??1)*100)}%) → ${telemetry?.focus?'travelling focus ('+Math.round((col?.orchestration?.focusTintWeight??0)*100)+'%)':'no focus tint'}. Selection does not retune the field.`;}document.querySelectorAll<HTMLElement>('[data-live-target]').forEach(el=>{const target=automationTarget(s,el.dataset.liveTarget!);if(!target)return;const value=target.target.startsWith('field.')?params[target.key]:readPath(telemetry?.config,target.path);el.textContent=typeof value==='number'?(target.target.startsWith('field.')?value:value/target.factor).toFixed(3):target.value.toFixed(3);});document.querySelectorAll<HTMLElement>('[data-live-param]').forEach(e=>e.textContent=(params[e.dataset.liveParam!]??0).toFixed(2));const ent=selectedEntity();if(ent){const nt=engine.telemetry?.()?.sequences.find((v:any)=>v.entityId===ent.id);const seq=nt?{from:nt.linkIndex}:sequenceAt(ent,s,simTime);document.querySelectorAll<HTMLElement>('[data-step-live]').forEach(e=>e.classList.toggle('is-playing',ent.sequence.enabled&&Number(e.dataset.stepLive)===seq.from));}
  const nf=engine.telemetry?.()?.focus;const focus=nf?{entity:{id:nf.entityId}}:engine.capabilities.kind==='production'?null:focusAt(s,simTime);document.querySelectorAll<HTMLElement>('[data-focus-entity]').forEach(e=>e.classList.toggle('is-playing',e.dataset.focusEntity===focus?.entity.id));if(recorder.active){const t=Math.floor(recorder.elapsed);$('record-time').textContent=String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0');$('record-size').textContent=`${captureSettings.width}px · ${fps} render fps`;if(t>=4&&fps>0&&fps<20&&!recordPerformanceWarned){recordPerformanceWarned=true;toast('Recording is below its 30 fps target. Reduce particle allocation or output size for this device.',7000);}}nativeEditorEndpoint?.publish();lastUI=now;
@@ -1981,7 +1987,7 @@ const mastheadCentre=document.createElement('div');mastheadCentre.className='mas
 const workspaceCluster=masthead.querySelector('.workspace-cluster')!;workspaceCluster.replaceWith(mastheadCentre);
 const lensStudio=installLensStudio({activate:activateInstrument},mastheadCentre);
 mastheadCentre.append(workspaceCluster);
-nativeWorkspace=installNativeWorkspace({shouldRetainDraft:()=>!awaitingNativeBoot||store.revision!==0,snapshot:()=>({journey:clone(store.document),sceneId:scene().id,entityId:selected[0]??null}),version:()=>store.revision,load:applyNativeView,toast,summon:(kind,subject)=>hostRequest({request:'summon',detail:{kind,subject}}),correspondence:(rows,selection)=>{nativeConnectionRows=rows;nativeSelectedRelation=selection;needsFrame=true;},status:showNativeStatus,followed:(_ref,readThrough)=>{const panels=followedPanels(readThrough);if(panels.sequence!==null)sequenceOpen=panels.sequence;if(panels.inspector!==null)inspectorOpen=panels.inspector;renderAll();}});
+nativeWorkspace=installNativeWorkspace({shouldRetainDraft:()=>!awaitingNativeBoot||store.revision!==0,snapshot:()=>({journey:clone(store.document),sceneId:scene().id,entityId:selected[0]??null}),version:()=>store.revision,load:applyNativeView,toast,summon:(kind,subject)=>hostRequest({request:'summon',detail:{kind,subject}}),correspondence:(rows,selection)=>{nativeConnectionRows=rows;nativeSelectedRelation=selection;needsFrame=true;},status:showNativeStatus,chooseRecovery:request=>askRecoveryChoice(request.draft,{...request.offer,revision:request.revision}),followed:(_ref,readThrough)=>{const panels=followedPanels(readThrough);if(panels.sequence!==null)sequenceOpen=panels.sequence;if(panels.inspector!==null)inspectorOpen=panels.inspector;renderAll();}});
 const retainedEditor=createRetainedNativeEditor({
  store,sceneId:()=>scene().id,nativeView:()=>nativeWorkspace?.nativeView(),
  selection:()=>({entity_ids:[...selected],step_id:scene().entities.find(e=>e.id===selected[0])?.sequence.steps[stepIndex]?.id??null}),
@@ -2195,9 +2201,13 @@ journeyInstrument=installJourneyInstrument({nativeView:()=>nativeWorkspace?.nati
  // lane-5 T8: the playback-path panel. The clock is the journey as the expression clock runs it, and seek takes the same clock's seconds.
  playback:()=>{const journey=playbackJourney();return {journey,time:expressionTiming(store.document,sceneIndex,sceneElapsed,journeyPlaying).time};},
  seek:seconds=>{
-  const journey=playbackJourney(),path=walkJourney(journey,(index,local)=>expressionTiming(journey,index,local),seconds);
-  if(!path.position)return;
-  const index=path.position.index,local=path.position.time-path.steps[index].start;
+  // review-5 #7: the saved clock places the seek. The Scene it lands in is the last one that starts at or before it; a Scene with
+  // no saved entry has no span on this clock, so a seek landing on it is at its working start. The local time is clamped to that
+  // working Scene's own duration, which can be shorter than its saved span.
+  const journey=playbackJourney(),total=expressionTiming(journey,0,0).total,t=clamp(seconds,0,total);
+  let index=-1;journey.scenes.forEach((_,i)=>{if(expressionTiming(journey,i,0).time<=t)index=i;});
+  if(index<0)return;
+  const local=clamp(t-expressionTiming(journey,index,0).time,0,store.document.scenes[index].duration);
   // The same path as the playhead's scrub: the Scene is adopted, then the playhead seeks to its local time and holds.
   if(index!==sceneIndex)setSceneRef(store.document.scenes[index].id);
   seekWorkingScene(local);
@@ -2368,12 +2378,12 @@ function openNativeFileDialog(){
  dialog.showModal();
 }
 /** lane-3 E19: the boot choice between the draft and the saved copy. Both timestamps and the revision are named. Dismissing it (Escape) keeps both, so nothing is lost. */
-function askRecoveryChoice(draft:Journey,offer:{draftAt:string;savedAt:string}):Promise<RecoveryChoice>{
+function askRecoveryChoice(draft:Journey,offer:{draftAt:string;savedAt:string;revision?:number}):Promise<RecoveryChoice>{
  return new Promise<RecoveryChoice>(resolve=>{
   const dialog=document.createElement('dialog');
   dialog.className='confirm-dialog recovery-dialog';dialog.setAttribute('aria-labelledby','recovery-title');
-  const now=new Date();
-  dialog.innerHTML=`<p class="eyebrow">THE LAST SESSION DID NOT CLOSE CLEANLY</p><h2 id="recovery-title">Unsaved edits in “${esc(draft.name)}”</h2><p class="intro">The draft has changes that the saved copy does not have. Whichever you choose, both versions are kept.</p><dl class="recovery-basis"><dt>Draft</dt><dd>${esc(offerClock(offer.draftAt,now))}</dd><dt>Saved copy</dt><dd>${esc(offerClock(offer.savedAt,now))}</dd><dt>Revision</dt><dd>Browser copy (no kernel revision)</dd></dl><div class="recovery-choices"><button class="secondary" data-choice="keep-saved">Keep saved version</button><button class="secondary" data-choice="keep-both">Keep both</button><button class="primary" data-choice="restore-draft">Restore draft</button></div>`;
+  const now=new Date(),basis=offer.revision===undefined?'Browser copy (no kernel revision)':`Kernel revision ${offer.revision}`;
+  dialog.innerHTML=`<p class="eyebrow">THE LAST SESSION DID NOT CLOSE CLEANLY</p><h2 id="recovery-title">Unsaved edits in “${esc(draft.name)}”</h2><p class="intro">The draft has changes that the saved copy does not have. Whichever you choose, both versions are kept.</p><dl class="recovery-basis"><dt>Draft</dt><dd>${esc(offerClock(offer.draftAt,now))}</dd><dt>Saved copy</dt><dd>${esc(offerClock(offer.savedAt,now))}</dd><dt>Revision</dt><dd>${esc(basis)}</dd></dl><div class="recovery-choices"><button class="secondary" data-choice="keep-saved">Keep saved version</button><button class="secondary" data-choice="keep-both">Keep both</button><button class="primary" data-choice="restore-draft">Restore draft</button></div>`;
   dialog.addEventListener('click',ev=>{const button=(ev.target as Element).closest<HTMLButtonElement>('button[data-choice]');if(button)dialog.close(button.dataset.choice);});
   dialog.addEventListener('cancel',()=>{dialog.returnValue='keep-both';});
   dialog.addEventListener('close',()=>{const choice=dialog.returnValue as RecoveryChoice;dialog.remove();resolve(choice==='restore-draft'||choice==='keep-saved'||choice==='keep-both'?choice:'keep-both');});
@@ -2383,9 +2393,11 @@ function askRecoveryChoice(draft:Journey,offer:{draftAt:string;savedAt:string}):
 async function startWorkspace(){
  let recovered:SessionState|undefined;
  let showEntry=false;
+ // lane-3 E19 and E19b: one reading of this tab's session mark, taken before this page marks itself open. A hosted boot takes it too.
+ let uncleanExit=false;try{uncleanExit=readUncleanExit(localStorage);markSessionOpen(localStorage,new Date());}catch{/* Unavailable storage: no mark, so no prompt can be compared. */}
+ recordBootExit(uncleanExit);
  if(!window.__JOURNEY__&&!qs.has('journey')&&!qsExpression){try{for(const draft of await readDrafts())sessionExpressions.set(draft.id,draft);const id=localStorage.getItem('oi.field-studies.last'),draft=id?await readDraft(id):undefined;
  // lane-3 E19: after an unclean exit, a draft that differs from its saved copy is offered as a choice; a clean exit adopts nothing silently either way.
- let uncleanExit=false;try{uncleanExit=readUncleanExit(localStorage);markSessionOpen(localStorage,new Date());}catch{/* Unavailable storage: no mark, so no prompt can be compared. */}
  const saved=draft?readLibrary().find(j=>j.id===draft.id):undefined;
  const offer=draft&&saved&&!hostedRecovery()?recoveryOffer({draft,saved,uncleanExit}):{offer:false as const,reason:''};
  if(draft&&saved&&offer.offer){const choice=await askRecoveryChoice(draft,offer);const plan=planRecoveryChoice(choice,draft,saved,new Date());await applyRecoveryPlan(plan,draft);if(plan.removeDraft)sessionExpressions.delete(draft.id);if(plan.copy)sessionExpressions.set(plan.copy.id,plan.copy);store.document=initialiseSceneSaves(initialiseBelts(plan.open));store.touch();}
@@ -2402,7 +2414,9 @@ if(fieldPaused&&!recovered&&!qs.has('still'))toast('A still field, following you
 if(qs.has('edit'))edit(true,(['scene','objects','field','motion'].includes(qs.get('edit')!)?qs.get('edit'):'scene')as InspectorContext['tab']);
 if(showEntry)openEntryGate(!!recovered||!!localStorage.getItem('oi.field-studies.last'),store.document.name);
 
-if(qsExpression?.startsWith('expression:')){const open=()=>void nativeWorkspace?.follow(qsExpression).then(applied=>settleDeepLink(applied));if(kernelExpressionsAvailable())open();else window.addEventListener('message',function ready(event){if(event.source===window.parent&&event.data?.v===1&&event.data?.kind==='oi-kernel-channel'){window.removeEventListener('message',ready);open();}});}
+if(qsExpression?.startsWith('expression:')){
+ // review-5 #6: a refused or missing open still settles the link, so the address is written again instead of staying pending.
+ const open=()=>void Promise.resolve(nativeWorkspace?.follow(qsExpression)).then(applied=>settleDeepLink(applied===true),()=>settleDeepLink(false));if(kernelExpressionsAvailable())open();else window.addEventListener('message',function ready(event){if(event.source===window.parent&&event.data?.v===1&&event.data?.kind==='oi-kernel-channel'){window.removeEventListener('message',ready);open();}});}
 setInterval(()=>{saveSession();if(propertyTake&&propertyTake.elapsed>0)void flushDraft();},1000);}
 /** E22: the Scene's native ref, when the Expression is hosted natively; the address prefers it because the kernel is the owner. */
 function nativeSceneRef(sceneId:string):string|undefined{return nativeWorkspace?.nativeView()?.bindings[sceneId]?.scene_ref;}
@@ -2440,7 +2454,11 @@ function applyDeepLinkAddress(address:DeepLinkAddress):string[]{
  * Only replaceState, so Back and history stay as they were. */
 function syncDeepLinkAddress(){
  if(deepLinkPending)return;
- try{
+ if(deepLinkWriteTimer)return;
+ deepLinkWriteTimer=window.setTimeout(()=>{
+  deepLinkWriteTimer=0;
+  if(deepLinkPending)return;
+  try{
   const view=nativeWorkspace?.nativeView(),doc=store.document;
   const timing=expressionTiming(doc,sceneIndex,sceneElapsed),still=!journeyPlaying&&!scenePlaying;
   const expression=view?.document.expression_ref??(addressKeepsExpression?doc.id:undefined);
@@ -2451,7 +2469,8 @@ function syncDeepLinkAddress(){
    marker:still?markerAtTime(doc.markers??[],timing.time):undefined,
   });
   if(next!==location.search)history.replaceState(history.state,'',location.pathname+next+location.hash);
- }catch{/* a refused history write leaves the address as it was; the page keeps working */}
+  }catch{/* a refused history write leaves the address as it was; the page keeps working */}
+ },DEEP_LINK_WRITE_MS);
 }
 /** E23: the layout focus hides and restores. Read and written as one record; the pure model is focusMode.ts. */
 function readFocusLayout():FocusLayout{return {sequenceOpen,beltOpen,timelineOpen,inspectorOpen,editing,contextKind,beltPickerOpen,shapePickerOpen,modesOpen,captureOpen,tool,cursorTool,selected:[...selected]};}

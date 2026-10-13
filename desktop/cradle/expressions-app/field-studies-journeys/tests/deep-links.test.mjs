@@ -165,3 +165,21 @@ test('an applied link never navigates by index, and each refusal is named in a t
 test('the address is not written before the link has settled', () => {
   assert.match(functionBody('syncDeepLinkAddress'), /if\(deepLinkPending\)return;/);
 });
+
+// review-5 #6: scrubbing writes the address at most once per interval, and a link whose open rejects still settles.
+test('review-5 #6: the address write is one coalesced timer, spaced beyond the WebKit replaceState budget', () => {
+  const sync = functionBody('syncDeepLinkAddress');
+  assert.match(sync, /if\(deepLinkWriteTimer\)return;/, 'a write already scheduled is not scheduled again');
+  assert.match(sync, /window\.setTimeout\(/);
+  assert.match(sync, /\},DEEP_LINK_WRITE_MS\);/);
+  assert.match(sync, /if\(deepLinkPending\)return;[\s\S]*?history\.replaceState\(/, 'a pending link is still never written');
+  const ms = Number(appSource.match(/const DEEP_LINK_WRITE_MS=(\d+);/)?.[1]);
+  // WebKit allows about 100 replaceState calls per 30 s, one per 300 ms sustained; the interval keeps clear of it.
+  assert.ok(ms >= 300, `the interval (${ms} ms) stays under the replaceState budget`);
+});
+
+test('review-5 #6: a rejected or missing native open still settles the deep link, so its address is written again', () => {
+  assert.match(appSource, /const open=\(\)=>void Promise\.resolve\(nativeWorkspace\?\.follow\(qsExpression\)\)\.then\(applied=>settleDeepLink\(applied===true\),\(\)=>settleDeepLink\(false\)\);/,
+    'the open settles on success, on rejection and when no native workspace exists');
+  assert.match(functionBody('settleDeepLink'), /if\(carried\)syncDeepLinkAddress\(\);/, 'a carried link is corrected to where it opened');
+});
