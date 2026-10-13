@@ -3,7 +3,7 @@ import { createStore, type StoreApi } from "zustand/vanilla";
 import type { ArchetypalLighting, ExpandedTimelineNode, GraphNode, GraphRelationship, TimelineDiagnostic, TimelineLane, TimelineLayoutOverride, TimelineView, TimelineViewNode } from "./contracts";
 import { MS_PER_YEAR } from "./scale";
 import { msToYear, yearToMs } from "./instant";
-import { projectNodes, type TimelineItem, type TimelinePresentation } from "./projection";
+import { bandExtent, projectNodes, type TimelineItem, type TimelinePresentation } from "./projection";
 import {
   frameStateForNode,
   projectSubTimeline,
@@ -314,7 +314,7 @@ function isCameraNearTimeline(items: TimelineItem[], centerYear: number): boolea
   let maxMs = Number.NEGATIVE_INFINITY;
   for (const item of items) {
     minMs = Math.min(minMs, item.startMs);
-    maxMs = Math.max(maxMs, item.endMs ?? item.startMs);
+    maxMs = Math.max(maxMs, bandExtent(item).toMs);
   }
 
   if (!Number.isFinite(minMs) || !Number.isFinite(maxMs)) return false;
@@ -334,7 +334,7 @@ function fitViewportToItems(
   let maxMs = Number.NEGATIVE_INFINITY;
   for (const item of items) {
     minMs = Math.min(minMs, item.startMs);
-    maxMs = Math.max(maxMs, item.endMs ?? item.startMs);
+    maxMs = Math.max(maxMs, bandExtent(item).toMs);
   }
 
   if (!Number.isFinite(minMs) || !Number.isFinite(maxMs)) {

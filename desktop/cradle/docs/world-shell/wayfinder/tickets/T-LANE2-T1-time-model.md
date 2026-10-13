@@ -50,3 +50,21 @@ must read 501 BCE; "1850 CE"); **T1c** — the camera's year boundary
 epoch-ms; anchors the authority grammar rejects (e.g. "2024-05-06 12:00",
 no `T`) surface as transport diagnostics rather than vanish; an interval's
 end keeps its own precision (needs `desktop-api` to carry two precisions).
+
+## Resolution — T2 + T7 (bands, two-row axis)
+
+**Landed (13 Oct 2026; builder haiku).** A coarse fact draws as its band
+(`bandExtent` = the authority's `expandInstant`, all ten precisions), labelled
+at its precision verbatim ("2nd millennium", "1850", "4 Mar 1850"), inclusive
+ends ("1850 – 2016"), BCE explicit ("501 BCE") in one `labels.ts` used by axis
+and cards; the axis has two rows — minor = `ticksForDomain` at the window,
+major = the next coarser unit the authority names (found by widening the
+window, no second ladder); labels keyed by mark, tabular figures, never
+reflow. Scripted: 10 new tests, timeline suites 25 pass + 1 env-skip; tsc 0.
+
+**Carried — T-LANE2-CRAFT:** the new classes (`timeline-node-band`,
+`timeline-axis-tick--major/minor`) have no rules: style the band fill and
+the major row's weight in the timeline stylesheet
+(`vendor/research-canvas/apps/desktop/src/layout/timeline.css` and its
+generated copy `field-studies-journeys/src/researchInstrumentStyles.css` —
+regenerate, never hand-edit the copy), with the craft check on screen.

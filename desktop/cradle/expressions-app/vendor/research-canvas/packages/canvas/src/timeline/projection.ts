@@ -13,6 +13,8 @@ export interface TimelineItem {
   startMs: number;
   /** null = ongoing / open-ended (no validTo). */
   endMs: number | null;
+  /** The authority's expansion of the start instant at its own precision: the end of that unit. */
+  precisionEndMs: number;
   /** UTC offset the anchor's own start declares, in ms. */
   offsetMs: number;
   /** Integer calendar years of the extent, for labels only. Never a coordinate. */
@@ -90,6 +92,7 @@ export function projectNodes(records: TimelineViewNode[]): TimelineItem[] {
       },
       startMs: extent.fromMs,
       endMs: extent.toMs,
+      precisionEndMs: extent.instantToMs,
       offsetMs: anchorOffsetMs(anchor.validFrom),
       startYear: calendarYear(extent.fromMs),
       endYear: extent.toMs === null ? null : calendarYear(extent.toMs - 1),
@@ -98,6 +101,19 @@ export function projectNodes(records: TimelineViewNode[]): TimelineItem[] {
   }
   items.sort((a, b) => a.startMs - b.startMs);
   return items;
+}
+
+/**
+ * The honest band of an item: from its extent start to its extent end. An
+ * interval ends at its own expanded end; a point is the authority's expansion
+ * of its instant at that instant's own precision. A band wider than a point is
+ * drawn as a band; the label states the precision (labels.ts). Equal to
+ * `expandInstant` output (timeline-bands-axis.test.mjs).
+ */
+export function bandExtent(
+  item: Pick<TimelineItem, "startMs" | "endMs" | "precisionEndMs">,
+): { fromMs: number; toMs: number } {
+  return { fromMs: item.startMs, toMs: item.endMs ?? item.precisionEndMs };
 }
 
 export function placeItems(
@@ -118,7 +134,7 @@ export function placeItems(
   const occupied: ReturnType<typeof timelineCardBounds>[] = [];
   return items.map((item) => {
     const startPx = msToPixel(camera, item.startMs);
-    const endPx = item.endMs === null ? startPx : msToPixel(camera, item.endMs);
+    const endPx = msToPixel(camera, bandExtent(item).toMs);
     const explicitSlot = item.presentation.lane !== null && isExplicitPlacementLane(item.presentation.lane)
       ? explicitSlots.get(item.presentation.lane)
       : undefined;

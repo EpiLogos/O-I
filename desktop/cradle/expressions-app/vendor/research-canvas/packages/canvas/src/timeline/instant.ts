@@ -26,7 +26,10 @@ export { expandInstant, parseTimestamp, ticksForDomain, type Tick, type TimeRang
  * point-only anchor; a bounded `toMs` is the authority's inclusive end. */
 export interface AnchorExtent {
   fromMs: number;
+  /** An interval's end: the expanded end of `validTo`, an exclusive ms bound for the inclusive calendar end; null for a point-only anchor. */
   toMs: number | null;
+  /** The end of the start instant's own precision unit: the authority's expansion of `validFrom`. */
+  instantToMs: number;
 }
 
 const LEGACY_YEAR = /^([+-]?)(\d{1,6})((?:-\d{2}.*)?)$/u;
@@ -51,9 +54,9 @@ export function anchorExtent(
   validTo: string | null,
   precision: TemporalPrecision,
 ): AnchorExtent | null {
-  let fromMs: number;
+  let fromRange: { fromMs: number; toMs: number };
   try {
-    fromMs = expandInstant(canonicalInstant(validFrom), precision).fromMs;
+    fromRange = expandInstant(canonicalInstant(validFrom), precision);
   } catch {
     return null;
   }
@@ -65,7 +68,7 @@ export function anchorExtent(
       toMs = null;
     }
   }
-  return { fromMs, toMs };
+  return { fromMs: fromRange.fromMs, toMs, instantToMs: fromRange.toMs };
 }
 
 /** The UTC offset the anchor's own start declares, in ms (0 when none). */
