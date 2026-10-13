@@ -2323,6 +2323,8 @@ researchInstruments=installResearchInstruments({
   if(!inputs.length)return [];
   const members=new Set(binding.member_refs);
   inputs.forEach((input,index)=>{
+   // A drag-made connection carries no label: it refuses exactly as the single connect act does.
+   if(!input.label?.trim()){assertConnectionMembers(sceneId,input.sourceEntityRef,input.targetEntityRef);}
    const label=input.label?.trim()||`connection ${index+1}`;
    if(!members.has(input.sourceEntityRef))throw new Error(`Import refused: the source of ${label} has no native occurrence in this Scene. Nothing was connected.`);
    if(!members.has(input.targetEntityRef))throw new Error(`Import refused: the target of ${label} has no native occurrence in this Scene. Nothing was connected.`);

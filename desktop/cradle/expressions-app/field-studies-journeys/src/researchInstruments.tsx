@@ -1015,8 +1015,11 @@ host.tools.append(saveGlyph);
      const sides={fromSide:sideFromHandleId(input.sourceHandleId,'source'),toSide:sideFromHandleId(input.targetHandleId,'target')};
      const bound=(): Set<string> => new Set((host.nativeView()?.bindings[sceneId]?.relations??[]).map(relation=>relation.binding_ref));
      apply(async()=>{
+      const relation={sourceEntityRef:input.sourceNodeId,targetEntityRef:input.targetNodeId,relationKind:input.relationKind,directionality:input.directionality};
+      // B2: where the host offers it, the relation and its drag sides land as one write — the same path an import takes.
+      if(host.connectMany){const record=sides.fromSide||sides.toSide?connectorRecord({kind:'curved',...sides}):null;await host.connectMany(sceneId,[{...relation,...(record?{connector:record}:{})}]);return;}
       const known=bound();
-      await host.connect!(sceneId,{sourceEntityRef:input.sourceNodeId,targetEntityRef:input.targetNodeId,relationKind:input.relationKind,directionality:input.directionality});
+      await host.connect!(sceneId,relation);
       const created=(host.nativeView()?.bindings[sceneId]?.relations??[]).find(relation=>!known.has(relation.binding_ref));
       if(created&&host.connector&&(sides.fromSide||sides.toSide))await host.connector(sceneId,created.binding_ref,connectorRecord({kind:'curved',...sides}));
      });
