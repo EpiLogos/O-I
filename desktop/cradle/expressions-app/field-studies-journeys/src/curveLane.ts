@@ -146,6 +146,14 @@ export function samplePath(points:Points,frame:LaneFrame):string{
  return parts.join(' ');
 }
 
+/** E09b: the scene the field evaluates while a curve drag previews. The dragged channel carries the preview points, so the
+ * field moves with the lane; the document is untouched. With no preview for this scene the scene is returned as it is. */
+export function previewScene(scene:Scene,drag:{sceneId:string;trackId:string;preview:Points|null}|null|undefined):Scene{
+ if(!drag?.preview||drag.sceneId!==scene.id||!scene.propertyTracks?.some(t=>t.id===drag.trackId))return scene;
+ const preview=drag.preview.map(copyKey);
+ return {...scene,propertyTracks:scene.propertyTracks!.map(t=>t.id===drag.trackId?{...t,points:preview}:t)};
+}
+
 /** The channel state evaluateTracks takes for one scene, built from the working views. Undefined when no channel is
  * soloed or muted, so evaluation is the unfiltered one. */
 export function channelStateFor(scene:Scene,views:(trackId:string)=>ChannelView|undefined):ChannelState|undefined{

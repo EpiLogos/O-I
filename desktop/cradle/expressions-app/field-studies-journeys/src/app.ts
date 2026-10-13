@@ -14,8 +14,9 @@ import {automationLeader,automationGroups,linkAutomation,removeAutomation,remove
 import {monitorHTML,MonitorMode} from './automationMonitor';
 import {updateToolbeltValues,liveValue} from './liveValues';
 import {beltCandidates,pickerHTML} from './beltPicker';
-import {PropertyTrack,sampleTrack,evaluateTracks,readTrackValue,mergeTake,expressionTiming,channelRange,validateCurveEdit,type ChannelRange,type Interpolation} from './propertyTracks';
-import {curveHit,laneFrame,fromPixel,insertKey,removeKey,moveKey,moveHandle,setSegmentType,channelName,channelStateFor,channelPanelHTML,type ChannelView,type HandleEnd,type LaneFrame,type Points} from './curveLane';
+import {PropertyTrack,sampleTrack,evaluateTracks,readTrackValue,mergeTake,expressionTiming,channelRange,validateCurveEdit,touchesOfKey,type CurveTouch,type ChannelRange,type Interpolation} from './propertyTracks';
+import {curveHit,laneFrame,fromPixel,insertKey,removeKey,moveKey,moveHandle,setSegmentType,channelName,channelStateFor,channelPanelHTML,previewScene,type ChannelView,type HandleEnd,type LaneFrame,type Points} from './curveLane';
+import {transitionKindOf,transitionSpecFor,transitionLabel,dipWeights,wipeHoldRect,seamGlyphHTML,seamChooserHTML,writeSeamTransition,type TransitionKind,type TransitionParams,type TransitionSpec,type WipeDirection} from './transitions';
 import {journeyTimelineLayout} from './journeyTimelineLayout';
 import {durationFromEdgeDrag,sceneAtTime,secondsFromDrag,slipOffsetFromDrag,insertBeforeFor,SCENE_DURATION_MIN,SCENE_DURATION_MAX,type TimelineLayout} from './journeyTimelineLayout';
 import {entityTargets} from './nativeParameters';
@@ -30,7 +31,7 @@ import {applyPalette,applyBackground,invertPalette,applyChain,applyGlyph,applyKu
 import {COLOR_PALETTES,hexToRgb,isLightHex} from '../../src/engine/colorPalettes';
 import {CHAKRA_PROFILE_ID} from '../../src/engine/semantics/chakraProfile';
 import type {SemanticBinding,SemanticColorCoupling,SemanticFieldConfig} from '../../src/engine/semantics/semanticTypes';
-import {Journey,Scene,Entity,EntityLayer,TextLayer,Tool,Shape,Vec3,clone,uid,clamp,fieldStudies,oiMark,rethemeMark,sevenCentres,smallLanguage,blankJourney,blankScene,entity,pin,chakraEntities,validateJourney,AutomationLane,type MarkThemeReading} from './model.js';
+import {Journey,Scene,Entity,EntityLayer,TextLayer,Tool,Shape,Vec3,clone,uid,clamp,fieldStudies,oiMark,rethemeMark,sevenCentres,smallLanguage,blankJourney,blankScene,entity,pin,chakraEntities,validateJourney,AutomationLane,SCENE_TRANSITION_MIN,SCENE_TRANSITION_MAX,type MarkThemeReading} from './model.js';
 import {DocumentStore,readLibrary,readLibraryDetailed,saveToLibrary,removeFromLibrary} from './store.js';
 import {bindingEditLabel,historyTitle,historyToast,researchMaterialLabel} from './undoLabels.js';
 import {defaultCamera,cameraForSceneView,project,unproject,facePlane,stageScale,stageCentre,basis,Camera} from './camera.js';
@@ -96,7 +97,7 @@ function actTransition(seconds:number,easing?:string){
  if(!(seconds>0)||engine.capabilities.kind!=='preview'){return;}
  const c=$<HTMLCanvasElement>('transition-canvas');c.width=engine.canvas.width;c.height=engine.canvas.height;c.getContext('2d')!.drawImage(engine.canvas,0,0);
  transitionBackground=scene().field.background;c.style.background=transitionBackground;c.style.opacity='1';c.hidden=false;
- transitionStart=simTime;transitionDuration=seconds;transitionSceneId=scene().id;
+ transitionKind='crossfade';transitionSnapshot=null;transitionStart=simTime;transitionDuration=seconds;transitionSceneId=scene().id;
  transitionEasing=(['smoothstep','linear','kineticSnap','whip'] as const).includes(easing as ChainEasing)?easing as ChainEasing:'smoothstep';
  needsFrame=true;
 }
@@ -114,6 +115,9 @@ let sceneBody:null|{sceneId:string;clip:HTMLElement;startX:number;trackPx:number
 // show). Declared with the other gesture state, before any top-level code can render the timeline. None of it is saved.
 let curveSel:null|{sceneId:string;trackId:string;index:number|null}=null;
 let curveDrag:null|{sceneId:string;trackId:string;kind:'key'|'handle';index:number;end:HandleEnd;left:number;top:number;frame:LaneFrame;base:Points;range:ChannelRange|undefined;label:string;preview:Points|null;message:string;moved:boolean;raf:number}=null;
+// E11: the seam transition in flight, and the seam whose chooser is open. 'crossfade' is the overlay the app always had; a
+// painted kind (dip to colour, wipe) keeps a snapshot of the outgoing frame and paints its blend each frame.
+let transitionKind:TransitionKind='crossfade';let transitionSpecNow:TransitionSpec|undefined;let transitionSnapshot:HTMLCanvasElement|null=null;let seamSceneId:string|null=null;
 const channelViews=new Map<string,ChannelView>();
 mountShell();installPanelResize();installKernelExpressions();
 const recovery=document.createElement('section');recovery.id='engine-recovery';recovery.hidden=true;recovery.className='engine-recovery';recovery.setAttribute('role','alert');recovery.innerHTML='<h3>GPU context interrupted</h3><p>The expression is intact. Recovering recreates lost particle state, not a runtime checkpoint.</p><button class="secondary" data-action="native-recover">Recover field</button>';document.body.append(recovery);
@@ -262,12 +266,13 @@ function renderTimeline(){if(!timelineOpen)return;const s=scene(),doc=timelineDo
  const sceneButton=(v:(typeof scenes)[number],i:number,placement:string)=>`<button class="scene-image ${i===sceneIndex?'active':''}${track?' scene-clip':''}"${placement} data-action="choose-scene" data-index="${i}" data-scene-id="${esc(v.id)}" aria-label="Open scene ${i+1}: ${esc(v.name)}" title="${esc(v.name)} · ${sceneSaveState(store.document,v)}"><img src="${compositionCover(v)}" alt="${esc(v.name)}"><small>${i+1}</small>${track?trimEdgeHTML(v):''}<span class="scene-save-dot" data-status="${sceneSaveState(store.document,v)}"></span></button>`;
  const playhead=`id="expression-playhead" aria-label="Expression playhead" type="range" min="0" max="${timing.total}" step="0.05" value="${timing.time}"`;
  const body=track
-  ?`<div class="scene-track" aria-label="Expression track"><div class="scene-track-ruler">${[0,.25,.5,.75,1].map(f=>`<span style="left:${f*100}%">${(f*layout.total).toFixed(f===1?1:0)}s</span>`).join('')}</div><div class="scene-track-lane">${scenes.map((v,i)=>sceneButton(v,i,` style="left:${layout.clips[i].x}%;width:${layout.clips[i].w}%"`)).join('')}<input class="scene-track-playhead" type="range" ${playhead}></div></div>`
+  ?`<div class="scene-track" aria-label="Expression track"><div class="scene-track-ruler">${[0,.25,.5,.75,1].map(f=>`<span style="left:${f*100}%">${(f*layout.total).toFixed(f===1?1:0)}s</span>`).join('')}</div><div class="scene-track-lane">${scenes.map((v,i)=>sceneButton(v,i,` style="left:${layout.clips[i].x}%;width:${layout.clips[i].w}%"`)).join('')}${scenes.slice(1).map((v,k)=>seamGlyphHTML(v,layout.clips[k+1].x)).join('')}<input class="scene-track-playhead" type="range" ${playhead}></div></div>`
   :`<div class="scene-strip">${scenes.map((v,i)=>sceneButton(v,i,'')).join('')}<button class="scene-image scene-add" data-action="save-next" aria-label="Save and add next scene">${icon('plus')}</button></div><label class="expression-scrub"><span>Expression time</span><input type="range" ${playhead}></label>`;
  const toggle=`<button data-action="timeline-track" aria-pressed="${track}" title="${track?'Show the scenes as a compact strip':'Show the scenes on the time track'}">${track?'Collapse to strip':'Show track'}</button>`;
  // E09/E10: the channel rows and the selected channel's curve lane, under the clips in track mode only.
  const curveHTML=track?channelPanelHTML({scene:doc.scenes.find(v=>v.id===s.id)??s,selected:curveSel?.sceneId===s.id?{trackId:curveSel.trackId,index:curveSel.index}:null,views:viewsFor(s.id)}):'';
- $('timeline-panel').innerHTML=`${body}${curveHTML}<div class="scene-save-row"><label>Scene name<input id="scene-save-name" value="${esc(sceneNames.get(s.id)??s.name)}" maxlength="160"></label><label>Hold · seconds<input type="number" data-bind="duration" value="${sceneTrim?.moved&&sceneTrim.sceneId===s.id?sceneTrim.duration:s.duration}" min="${SCENE_DURATION_MIN}" max="${SCENE_DURATION_MAX}" step=".1"></label><label>Transition<input type="number" aria-label="Transition seconds" data-bind="transition" value="${s.transition}" min="0" max="30" step=".1"></label><button class="primary" data-action="save-scene">Save scene</button><button data-action="save-next">Save & next</button><button data-action="restore-scene" ${!store.document.savedScenes?.[s.id]?'disabled':''}>Restore</button><button data-action="split-scene" title="Cut this scene in two at the playhead · S">Split</button><button data-action="still-scene" title="Add a still scene after this one: a held frame for a timed void, with no motion">Still scene</button>${ib('move-scene-left','arrowLeft','Move scene earlier',`data-scene-id="${esc(s.id)}"`)}${ib('move-scene-right','arrowRight','Move scene later',`data-scene-id="${esc(s.id)}"`)}${ib('delete-scene','trash','Delete scene',`data-scene-id="${esc(s.id)}"`)}${toggle}${ib('close-timeline','chevronDown','Collapse scenes')}</div><p class="scene-caption">${sceneSaveState(store.document,s)} · ${s.propertyTracks?.length??0} recorded properties · Scrubbing evaluates settings; particle motion continues from its current state.</p>${track?'<p class="scene-gesture-hint">Edge: trim · Shift+edge: roll the seam · Drag a clip: slide or insert (Alt+Shift: overwrite) · Alt+drag a clip: slip</p>':''}`;}
+ const seamScene=track&&seamSceneId?scenes.find(v=>v.id===seamSceneId):undefined;const seamHTML=seamScene?seamChooserHTML(seamScene,{min:SCENE_TRANSITION_MIN,max:SCENE_TRANSITION_MAX}):'';
+ $('timeline-panel').innerHTML=`${body}${curveHTML}${seamHTML}<div class="scene-save-row"><label>Scene name<input id="scene-save-name" value="${esc(sceneNames.get(s.id)??s.name)}" maxlength="160"></label><label>Hold · seconds<input type="number" data-bind="duration" value="${sceneTrim?.moved&&sceneTrim.sceneId===s.id?sceneTrim.duration:s.duration}" min="${SCENE_DURATION_MIN}" max="${SCENE_DURATION_MAX}" step=".1"></label><label>Transition<input type="number" aria-label="Transition seconds" data-bind="transition" value="${s.transition}" min="0" max="30" step=".1"></label><button class="primary" data-action="save-scene">Save scene</button><button data-action="save-next">Save & next</button><button data-action="restore-scene" ${!store.document.savedScenes?.[s.id]?'disabled':''}>Restore</button><button data-action="split-scene" title="Cut this scene in two at the playhead · S">Split</button><button data-action="still-scene" title="Add a still scene after this one: a held frame for a timed void, with no motion">Still scene</button>${ib('move-scene-left','arrowLeft','Move scene earlier',`data-scene-id="${esc(s.id)}"`)}${ib('move-scene-right','arrowRight','Move scene later',`data-scene-id="${esc(s.id)}"`)}${ib('delete-scene','trash','Delete scene',`data-scene-id="${esc(s.id)}"`)}${toggle}${ib('close-timeline','chevronDown','Collapse scenes')}</div><p class="scene-caption">${sceneSaveState(store.document,s)} · ${s.propertyTracks?.length??0} recorded properties · Scrubbing evaluates settings; particle motion continues from its current state.</p>${track?'<p class="scene-gesture-hint">Edge: trim · Shift+edge: roll the seam · Drag a clip: slide or insert (Alt+Shift: overwrite) · Alt+drag a clip: slip</p>':''}`;}
 // E05 · trim: a clip's right edge changes that scene's duration. The drag previews
 // on the timeline only: timelineDocument() reads a shallow copy with the one new
 // duration, so the layout still runs on the single Expression clock. Pointer-up
@@ -363,9 +368,9 @@ function moveCurveDrag(ev:PointerEvent){
  const p=fromPixel(d.frame,ev.clientX-d.left,ev.clientY-d.top),time=Math.min(3600,Math.max(0,p.time));
  d.moved=true;
  let next:Points|null=null,message='';
- try{const candidate=d.kind==='key'?moveKey(d.base,d.index,time,p.value):moveHandle(d.base,d.index,d.end,time,p.value);validateCurveEdit(candidate,d.range);next=candidate;}
+ try{const candidate=d.kind==='key'?moveKey(d.base,d.index,time,p.value):moveHandle(d.base,d.index,d.end,time,p.value);validateCurveEdit(candidate,d.range,curveTouches(candidate,d));next=candidate;}
  catch(err){message=err instanceof Error?err.message:String(err);}
- d.preview=next;
+ d.preview=next;needsFrame=true;
  if(message&&message!==d.message)toast(message);
  d.message=message;
  if(!d.raf)d.raf=requestAnimationFrame(()=>{d.raf=0;renderTimeline();});
@@ -377,11 +382,66 @@ function endCurveDrag(commit:boolean){
  const next=d.preview;
  if(!commit||!d.moved||!next||JSON.stringify(next)===JSON.stringify(d.base)){renderTimeline();return;}
  const range=d.range;
- try{changed(()=>{const t=trackInStore(d.sceneId,d.trackId);if(!t)throw new Error('That channel is no longer in this scene.');validateCurveEdit(next,range);t.points=next;},true,`Edit curve ${d.label}`);}
+ try{commitCurve(d.sceneId,d.trackId,next,curveTouches(next,d),`Edit curve ${d.label}`,range);}
  catch(err){error(err);renderTimeline();}
 }
 function upCurveDrag(){endCurveDrag(true);}
 function cancelCurveDrag(){endCurveDrag(false);}
+/** E09b: the touches of a curve drag. A keyframe carries its own value and the handles that move with it; a handle is itself. */
+function curveTouches(points:Points,d:{kind:'key'|'handle';index:number;end:HandleEnd}):CurveTouch[]{return d.kind==='key'?touchesOfKey(points,d.index):[{handle:d.index,end:d.end}];}
+/** The handles a segment's interpolation can shape: the out of its start keyframe and the in of its end keyframe. */
+function segmentTouches(index:number):CurveTouch[]{return [{handle:index,end:'out'},{handle:index+1,end:'in'}];}
+/** E09b: one curve edit is one labelled change. The field then keeps the curve it shows, as a finished take does, so the
+ * pointer-up does not snap it back to the static parameters. */
+function commitCurve(sceneId:string,trackId:string,points:Points,touched:readonly CurveTouch[],label:string,range:ChannelRange|undefined){
+ changed(()=>{const t=trackInStore(sceneId,trackId);if(!t)throw new Error('That channel is no longer in this scene.');validateCurveEdit(points,range,touched);t.points=points;},true,label);
+ trackPreview=true;
+}
+// E11 · seams. The boundary between two clips carries the transition of the scene it enters: its kind and parameters ride on
+// that Scene beside its duration (the number `transition`). A change to the seam is one labelled edit.
+function toggleSeam(sceneId:string){seamSceneId=seamSceneId===sceneId?null:sceneId;renderTimeline();}
+function setSeamTransition(sceneId:string,kind:TransitionKind,params:TransitionParams={},seconds?:number){
+ const target=store.document.scenes.find(v=>v.id===sceneId);if(!target){toast('That scene is no longer in this expression.');return;}
+ const nextSeconds=seconds??target.transition;
+ if(!(nextSeconds>=SCENE_TRANSITION_MIN&&nextSeconds<=SCENE_TRANSITION_MAX)){toast(`A transition lasts ${SCENE_TRANSITION_MIN}–${SCENE_TRANSITION_MAX} seconds.`);renderTimeline();return;}
+ try{
+  const spec=transitionSpecFor(kind,params);
+  if(JSON.stringify(spec)===JSON.stringify(target.transitionSpec)&&nextSeconds===target.transition)return;
+  changed(()=>{applyTimelineMove(store.document,scenes=>writeSeamTransition(scenes,sceneId,spec,nextSeconds));},true,transitionLabel(kind));
+ }catch(err){error(err);renderTimeline();}
+}
+/** Choosing a kind keeps only the parameters that kind takes. */
+function setSeamKind(sceneId:string,kind:TransitionKind){
+ const prior=store.document.scenes.find(v=>v.id===sceneId)?.transitionSpec;
+ setSeamTransition(sceneId,kind,kind==='wipe'?{direction:prior?.direction}:kind==='dip-to-colour'?{at:prior?.at}:{});
+}
+/** E11: paints the transition in flight at fraction f. The crossfade keeps its overlay opacity exactly. A painted kind
+ * composes its blend on the transition canvas over the live field: dip to colour fades the outgoing frame into the incoming
+ * scene's own background and out again; a wipe holds the outgoing frame only where the mask has not reached. */
+function paintTransition(f:number){
+ const c=$<HTMLCanvasElement>('transition-canvas'),snapshot=transitionSnapshot;
+ if(transitionKind==='crossfade'||!snapshot){c.style.opacity=String(1-applyEasing(f,transitionEasing));return;}
+ const ctx=c.getContext('2d')!,e=applyEasing(f,transitionEasing),w=c.width,h=c.height;
+ ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=1;ctx.clearRect(0,0,w,h);
+ if(transitionKind==='dip-to-colour'){
+  const d=dipWeights(e,transitionSpecNow?.at);
+  if(d.outgoing>0){ctx.fillStyle=transitionBackground;ctx.fillRect(0,0,w,h);ctx.globalAlpha=d.outgoing;ctx.drawImage(snapshot,0,0,w,h);}
+  else if(d.colour>0){ctx.fillStyle=transitionBackground;ctx.globalAlpha=d.colour;ctx.fillRect(0,0,w,h);}
+ }else{
+  const r=wipeHoldRect(transitionSpecNow?.direction??'left',e,w,h);
+  if(r.width>0&&r.height>0)ctx.drawImage(snapshot,r.x,r.y,r.width,r.height,r.x,r.y,r.width,r.height);
+ }
+ ctx.globalAlpha=1;
+}
+/** E11: a painted seam (dip to colour, wipe) keeps a snapshot of the outgoing frame and paints its blend each frame. */
+function startPaintedSeam(target:Scene){
+ const snapshot=document.createElement('canvas');snapshot.width=engine.canvas.width;snapshot.height=engine.canvas.height;snapshot.getContext('2d')!.drawImage(engine.canvas,0,0);
+ const c=$<HTMLCanvasElement>('transition-canvas');c.width=engine.canvas.width;c.height=engine.canvas.height;
+ transitionKind=transitionKindOf(target.transitionSpec);transitionSpecNow=target.transitionSpec;transitionSnapshot=snapshot;
+ transitionBackground=target.field.background;c.style.background='none';c.style.opacity='1';c.hidden=false;
+ transitionStart=simTime;transitionDuration=target.transition;transitionEasing='linear';transitionSceneId=target.id;
+ needsFrame=true;paintTransition(0);
+}
 /** Double-click on empty lane: a keyframe at that time, holding the curve's own value there. */
 function curveDoubleClick(ev:MouseEvent,lane:HTMLElement){
  const at=curveLaneAt(ev,lane);if(!at||at.hit)return;
@@ -389,9 +449,9 @@ function curveDoubleClick(ev:MouseEvent,lane:HTMLElement){
  const time=Math.min(3600,Math.max(0,Math.round(fromPixel(at.frame,at.x,at.y).time*1000)/1000));
  const {s,track,range}=at,sceneId=s.id,trackId=track.id,label=channelName(s,track);
  try{
-  const next=insertKey(track.points,time);validateCurveEdit(next,range);
-  curveSel={sceneId,trackId,index:next.findIndex(p=>p.time===time)};
-  changed(()=>{const t=trackInStore(sceneId,trackId);if(!t)throw new Error('That channel is no longer in this scene.');validateCurveEdit(next,range);t.points=next;},true,`Add keyframe ${label}`);
+  const next=insertKey(track.points,time),added=next.findIndex(p=>p.time===time);validateCurveEdit(next,range,touchesOfKey(next,added));
+  curveSel={sceneId,trackId,index:added};
+  commitCurve(sceneId,trackId,next,touchesOfKey(next,added),`Add keyframe ${label}`,range);
  }catch(err){error(err);}
 }
 /** Delete removes the selected keyframe; a channel keeps at least two. */
@@ -399,9 +459,9 @@ function deleteCurveKey(){
  const c=selectedCurve();if(!c||c.index===null)return;
  const {s,track}=c,index=c.index,range=channelRange(s,track),sceneId=s.id,trackId=track.id,label=channelName(s,track);
  try{
-  const next=removeKey(track.points,index);validateCurveEdit(next,range);
+  const next=removeKey(track.points,index);validateCurveEdit(next,range,[]);
   curveSel={sceneId,trackId,index:Math.min(index,next.length-1)};
-  changed(()=>{const t=trackInStore(sceneId,trackId);if(!t)throw new Error('That channel is no longer in this scene.');t.points=next;},true,`Delete keyframe ${label}`);
+  commitCurve(sceneId,trackId,next,[],`Delete keyframe ${label}`,range);
  }catch(err){error(err);}
 }
 /** The interpolation of the segment that starts at a keyframe. */
@@ -411,9 +471,9 @@ function setCurveSegment(trackId:string,index:number,type:Interpolation){
  try{
   const next=setSegmentType(track.points,index,type);
   if(JSON.stringify(next)===JSON.stringify(track.points))return;
-  validateCurveEdit(next,range);
+  validateCurveEdit(next,range,segmentTouches(index));
   curveSel={sceneId,trackId,index};
-  changed(()=>{const t=trackInStore(sceneId,trackId);if(!t)throw new Error('That channel is no longer in this scene.');t.points=next;},true,`Edit curve ${label}`);
+  commitCurve(sceneId,trackId,next,segmentTouches(index),`Edit curve ${label}`,range);
  }catch(err){error(err);}
 }
 // E06 · roll: Shift-drag on a clip's edge. The seam moves with the next scene: the left lasts +d, the right −d,
@@ -643,7 +703,7 @@ function applySceneView(){const v=activeScene().view;if(v)Object.assign(camera,c
 function sceneRefAt(index:number){const n=store.document.scenes.length;if(index<0)index=n-1;if(index>=n)index=0;return store.document.scenes[index].id;}
 function sceneIndexOf(sceneId:string){const index=store.document.scenes.findIndex(s=>s.id===sceneId);if(index<0)throw Error('The Scene is no longer present in this Expression');return index;}
 function setSceneRef(sceneId:string,automatic=false){const index=sceneIndexOf(sceneId);if(!automatic)sceneIntentEpoch++;if(propertyTake)finishPropertyTake();trackPreview=false;pointer.active=false;if(index===sceneIndex&&!automatic)return;
- if(scenePlaying&&store.document.scenes[index].transition>0&&engine.capabilities.kind==='preview'){const c=$<HTMLCanvasElement>('transition-canvas');c.width=engine.canvas.width;c.height=engine.canvas.height;c.getContext('2d')!.drawImage(engine.canvas,0,0);transitionBackground=scene().field.background;c.style.background=transitionBackground;c.style.opacity='1';c.hidden=false;transitionStart=simTime;transitionDuration=store.document.scenes[index].transition;transitionEasing='linear';transitionSceneId=store.document.scenes[index].id;}else{transitionDuration=0;$('transition-canvas').hidden=true;}
+ if(scenePlaying&&store.document.scenes[index].transition>0&&engine.capabilities.kind==='preview'&&transitionKindOf(store.document.scenes[index].transitionSpec)==='crossfade'){const c=$<HTMLCanvasElement>('transition-canvas');c.width=engine.canvas.width;c.height=engine.canvas.height;c.getContext('2d')!.drawImage(engine.canvas,0,0);transitionBackground=scene().field.background;c.style.background=transitionBackground;c.style.opacity='1';c.hidden=false;transitionStart=simTime;transitionDuration=store.document.scenes[index].transition;transitionEasing='linear';transitionKind='crossfade';transitionSnapshot=null;transitionSceneId=store.document.scenes[index].id;}else if(scenePlaying&&store.document.scenes[index].transition>0&&engine.capabilities.kind==='preview'&&transitionKindOf(store.document.scenes[index].transitionSpec)!=='cut'){startPaintedSeam(store.document.scenes[index]);}else{transitionDuration=0;transitionSnapshot=null;$('transition-canvas').hidden=true;}
 
  sceneIndex=index;if(!automatic)journeyPlaying=false;applySceneView();sceneElapsed=0;selected=[];textId=scene().text[0]?.id??null;saveSession();placementStep=false;shapePickerOpen=false;if(!automatic)journeyPlaying=false;renderAll();void researchInstruments?.refresh();}
 /** Saved playback uses the existing frame playhead; native location changes
@@ -823,7 +883,10 @@ async function exportArtifact(){let style=document.getElementById('shell-style')
  if(!style||!bundle)throw new Error('The portable engine bundle was invalid; no incomplete artifact was exported.');
  const j=JSON.stringify(store.document).replace(/</g,'\\u003c');const html=`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="A living, editable O:I expression."><title>${esc(store.document.name)} · O:I Expressions</title><style id="shell-style">${style}</style></head><body><div id="app"></div><script>window.__JOURNEY__=${j};window.__START_PRESENTATION__=true;<\/script><script id="app-bundle">${bundle.replace(/<\/script/gi,'<\\/script')}<\/script></body></html>`;
  download(new Blob([html],{type:'text/html'}),slug(store.document.name)+'.html');toast('A self-contained expression: open the HTML file in a browser.');}
-function captureTransition():CaptureTransition|undefined{if(engine.capabilities.kind==='production')return undefined;return transitionDuration>0?{canvas:$<HTMLCanvasElement>('transition-canvas'),alpha:1-clamp((simTime-transitionStart)/Math.max(.01,transitionDuration),0,1),background:transitionBackground}:undefined;}
+function captureTransition():CaptureTransition|undefined{if(engine.capabilities.kind==='production')return undefined;if(!(transitionDuration>0))return undefined;
+ // E11: a painted seam already holds its whole blend on the transition canvas, so the recorder composites it at full alpha.
+ if(transitionKind!=='crossfade')return {canvas:$<HTMLCanvasElement>('transition-canvas'),alpha:1,background:transitionBackground,painted:true};
+ return {canvas:$<HTMLCanvasElement>('transition-canvas'),alpha:1-clamp((simTime-transitionStart)/Math.max(.01,transitionDuration),0,1),background:transitionBackground};}
 async function captureImage(){readCapture();engine.render(frameData(0));const out=createOutput(captureSettings,width,height);if(!engine.capture)throw new Error('This renderer does not support native-resolution capture.');const pixels=engine.capture(out.width,out.height);paintNativeCapture(out,pixels,{...scene(),field:{...scene().field,background:engine.telemetry?.()?.background??scene().field.background,palette:engine.telemetry?.()?.palette??scene().field.palette,params:{...scene().field.params,...engine.telemetry?.()?.params}}},captureSettings,width,height);const blob=await png(out),name=slug(scene().name)+'.png';if(await saveDesktopCapture(blob,name,desktopSource(),{...captureSettings,width:out.width,height:out.height}))toast('Image saved to the Physis library.');else{download(blob,name);toast(`Captured ${out.width} × ${out.height} native pixels, without resetting the field.`);}}
 function startRecording(){if(recorder.active){recorder.stop();return;}recordingSource=desktopSource();readCapture();captureSettings.width=Math.min(captureSettings.width,engine.canvas.width,1920);recordingSettings={...captureSettings};recordPerformanceWarned=false;if(fieldPaused){fieldPaused=false;renderAll();}const start=()=>recorder.start(engine.canvas,scene(),captureSettings,width,height,captureTransition());if(engine.withCleanFrame)engine.withCleanFrame(start);else start();closeDialogs();captureOpen=false;renderAll();$('recording-badge').hidden=false;$('record-size').textContent=`${captureSettings.width}px · 30 fps target`;toast('Recording the clean scene. Perform, play the expression, then stop.',3300);}
 recorder.onStop=(blob,mime)=>{transportUI();announceHostState();$('recording-badge').hidden=true;if(currentVideo)URL.revokeObjectURL(currentVideo.url);currentVideo={blob,mime,url:URL.createObjectURL(blob),source:recordingSource??desktopSource(),settings:recordingSettings??captureSettings};$('video-dialog').innerHTML=`${modalCloseButton()}<p class="eyebrow">A PERFORMANCE, KEPT</p><h2>Let it play<br><em>once more.</em></h2><video id="recording-review" preload="auto" controls playsinline style="width:100%;border-radius:8px" src="${currentVideo.url}"></video><p class="capture-footnote">${mime.split(';')[0]} · ${(blob.size/1024/1024).toFixed(1)} MB · silent live capture</p><div class="button-row"><button class="primary" data-action="save-video">${icon('download')} Save recording</button><button class="secondary" data-action="close-dialog">Return to the field</button></div>`;$<HTMLDialogElement>('video-dialog').showModal();};recorder.onError=err=>{transportUI();announceHostState();$('recording-badge').hidden=true;error(err);};recorder.onLimit=m=>toast(m,6500);
@@ -843,6 +906,9 @@ async function action(name:string,el:HTMLElement,event?:Event){const s=scene(),s
  case 'curve-show':toggleChannelView('shown',el.dataset.trackId??'');break;
  case 'curve-segment':setCurveSegment(el.dataset.trackId??'',Number(el.dataset.index),el.dataset.type as Interpolation);break;
  case 'curve-delete-key':deleteCurveKey();break;
+  case 'seam-transition':toggleSeam(el.dataset.sceneId??'');break;
+  case 'set-transition-kind':setSeamKind(el.dataset.sceneId??'',el.dataset.kind as TransitionKind);break;
+  case 'set-transition-direction':setSeamTransition(el.dataset.sceneId??'','wipe',{direction:el.dataset.direction as WipeDirection});break;
  case 'delete-property-track':changed(()=>{s.propertyTracks=s.propertyTracks?.filter(t=>t.id!==el.dataset.id);},true,'Delete property track');break;
  case 'preview-tracks':trackPreview=!trackPreview;sceneElapsed=0;scenePlaying=trackPreview;if(trackPreview)fieldPaused=false;renderAll();break;
  case 'studio':contextKind='';beltPickerOpen=false;timelineOpen=false;modesOpen=false;captureOpen=false;if(!studioOpen&&worldLens==='epi-logos'&&nativeField&&!instrumentOffered){instrumentOffered=true;studioSection='native';tab='field';}setStudio(!studioOpen);break;
@@ -1148,6 +1214,10 @@ $('timeline-panel').addEventListener('dblclick',ev=>{const handle=(ev.target as 
 // E09: the channel lane's gestures are delegated on the panel too; its keyframes and handles are drawn, not hit.
 $('timeline-panel').addEventListener('pointerdown',ev=>{if(ev.button!==0)return;const lane=(ev.target as Element).closest<HTMLElement>('.curve-lane');if(lane)beginCurveDrag(ev,lane);});
 $('timeline-panel').addEventListener('dblclick',ev=>{const lane=(ev.target as Element).closest<HTMLElement>('.curve-lane');if(lane)curveDoubleClick(ev,lane);});
+// E11 · the seam chooser's controls commit on change (one labelled edit per release), never on every drag tick.
+document.addEventListener('change',ev=>{const el=ev.target as HTMLElement;if(!(el instanceof HTMLInputElement))return;const id=el.dataset.sceneId??'';
+ if(el.hasAttribute('data-transition-at')){setSeamTransition(id,'dip-to-colour',{at:Number(el.value)});return;}
+ if(el.hasAttribute('data-transition-seconds')){if(el.value.trim()===''||!Number.isFinite(Number(el.value))){toast('Enter a finite number; the previous value is unchanged.');renderTimeline();return;}const spec=store.document.scenes.find(v=>v.id===id)?.transitionSpec;setSeamTransition(id,transitionKindOf(spec),{at:spec?.at,direction:spec?.direction},Number(el.value));}});
 function hitEntity(x:number,y:number){if(engine.hitEntity){const id=engine.hitEntity(x,y);return scene().entities.find(e=>e.id===id);}let winner:Entity|undefined,best=25;for(const e of [...scene().entities].reverse()){const p=project(e.position,camera,width,height),d=Math.hypot(x-p.x,y-p.y);if(d<best){best=d;winner=e;}}return winner;}
 function positionAt(ev:PointerEvent,plane=camera.plane,depth=camera.depth){return unproject(ev.clientX,ev.clientY,camera,width,height,plane,depth);}
 function showCoordinates(v:Vec3){const number=(n:number)=>(Math.abs(n)<.0005?0:n).toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3,signDisplay:'always',useGrouping:false});
@@ -1208,12 +1278,15 @@ function frameData(delta:number):EngineFrame{const base=activeScene();syncLiveSc
  // Recorded takes override base values while the playhead moves; the revision
  // term follows the playhead so the engine rebuilds only when authored content
  // actually changes instead of hashing the whole document every frame.
- const tracksActive=(journeyPlaying||trackPreview)&&!propertyTake&&!!base.propertyTracks?.length;
- const current=liveOverrides.apply(effectiveScene(store.document,tracksActive?evaluateTracks(base,sceneElapsed,channelStateFor(base,viewsFor(base.id))):base));
+ // E09b: a curve drag previews on the field through the same evaluator, so the field moves with the lane while the document is untouched.
+ const dragging=!!curveDrag?.preview&&curveDrag.sceneId===base.id;
+ const tracksActive=(journeyPlaying||trackPreview||dragging)&&!propertyTake&&!!base.propertyTracks?.length;
+ const previewed=previewScene(base,curveDrag);
+ const current=liveOverrides.apply(effectiveScene(store.document,tracksActive?evaluateTracks(previewed,sceneElapsed,channelStateFor(previewed,viewsFor(base.id))):base));
  const evidenceProjection=privateEvidenceField?.project(nativeWorkspace?.nativeView(),base.id)??null;
  let formationGeometryProjection:import('../../src/engine/formationGeometryProjection').FormationGeometryProjection|null=null;
  if(privateFormReading){try{formationGeometryProjection=naraFormGeometry(privateFormReading,nativeWorkspace?.nativeView(),base.id);}catch{privateFormReading=null;}}
- return {formationGeometryProjection,localizedResonanceProjection:evidenceProjection?privateEvidenceField?.resonance:null,forceEmitterProjection:evidenceProjection,entitySoundProjection:evidenceProjection?privateEvidenceField?.sound:undefined,connections:nativeConnectionRows[base.id],selectedConnection:nativeSelectedRelation,scene:current,scaffold:editing&&!presenting&&guidesVisible?current.view.nativeScaffold??'off':'off',simTime,delta,params:(()=>{const p=engine.capabilities.kind==='production'?current.field.params:evaluateParameters(current,simTime);return physisParticleCap&&p.count>physisParticleCap?{...p,count:physisParticleCap}:p;})(),camera,pointer,selectedIds:editing&&!presenting&&guidesVisible?selected:[],authoringRevision:store.revision*1e7+(tracksActive?1+Math.floor(sceneElapsed*60):0),liveRevision:liveOverrides.version};}
+ return {formationGeometryProjection,localizedResonanceProjection:evidenceProjection?privateEvidenceField?.resonance:null,forceEmitterProjection:evidenceProjection,entitySoundProjection:evidenceProjection?privateEvidenceField?.sound:undefined,connections:nativeConnectionRows[base.id],selectedConnection:nativeSelectedRelation,scene:current,scaffold:editing&&!presenting&&guidesVisible?current.view.nativeScaffold??'off':'off',simTime,delta,params:(()=>{const p=engine.capabilities.kind==='production'?current.field.params:evaluateParameters(current,simTime);return physisParticleCap&&p.count>physisParticleCap?{...p,count:physisParticleCap}:p;})(),camera,pointer,selectedIds:editing&&!presenting&&guidesVisible?selected:[],authoringRevision:dragging?undefined:store.revision*1e7+(tracksActive?1+Math.floor(sceneElapsed*60):0),liveRevision:liveOverrides.version};}
 function recordableTracks(){return workspace.entries.flatMap(entry=>{const subject=entry.scope==='selected'?(selectedEntity()??scene().entities.find(e=>e.kind==='formation')):scene().entities.find(e=>e.id===entry.entityId);const bind=entry.scope==='field'?PARAMETERS.find(p=>p.key===entry.key)?.bind:subject?entityTargets(scene()).find(t=>t.entityId===subject.id&&t.key===entry.key)?.bind:undefined;if(!bind)return [];const track:PropertyTrack={id:uid('track'),bind,entityId:entry.scope==='field'?undefined:subject?.id,points:[]};return isShared(store.document,scene(),bind)||readTrackValue(scene(),track)===undefined?[]:[track];});}
 function finishPropertyTake(){if(!propertyTake)return;const take=propertyTake;propertyTake=null;if(take.elapsed>0){const end=Math.min(3600,take.start+take.elapsed);for(const t of take.tracks){const value=liveOverrides.valueForBind(t.bind)??readTrackValue(scene(),t);if(value!==undefined&&t.points.at(-1)?.time!==end)t.points.push({time:end,value});}changed(()=>{scene().propertyTakeRange={start:take.start,end};scene().propertyTracks=mergeTake(scene().propertyTracks??[],take.tracks,take.start,end);scene().duration=Math.max(scene().duration,end);},true,'Record property take');takeWindows.set(scene().id,{start:take.start,end});sceneElapsed=take.start;trackPreview=true;scenePlaying=false;toast('Property take recorded · save the scene to keep this version.');}renderAll();announceHostState();}
 function updatePropertyTake(now:number){const t=propertyTake;if(!t)return;if(t.sceneId!==scene().id){finishPropertyTake();return;}const remaining=Math.max(0,Math.ceil((t.armed-now)/1000));$('take-status').hidden=false;$('take-status').textContent=remaining?'Recording in '+remaining+'…':'Recording '+t.elapsed.toFixed(1)+'s · click record to stop';if(remaining)return;const elapsed=Math.min((now-t.armed)/1000,3600-t.start,t.limit??Infinity);t.elapsed=elapsed;sceneElapsed=t.start+elapsed;scenePlaying=true;if(elapsed-t.lastSample>=.05||t.lastSample<0){for(const track of t.tracks){const value=liveOverrides.valueForBind(track.bind)??readTrackValue(scene(),track);if(value===undefined)continue;sampleTrack(track,t.start+elapsed,value,t.start+Math.max(0,t.lastSample));}t.lastSample=elapsed;}if(t.start+elapsed>=3600||t.limit!==undefined&&elapsed>=t.limit)finishPropertyTake();}
@@ -1230,7 +1303,7 @@ function tick(now:number){if(sceneEditHeld||researchInstruments?.active()&&!rese
  if(transportFrame.advance_to_scene_index!==null)void advanceSavedScene(transportFrame.advance_to_scene_index);
  else if(transportFrame.unavailable_reason){if(wasSequence)applySceneView();toast(transportFrame.unavailable_reason);renderAll();}
  else if(transportFrame.completed){if(wasSequence){applySceneView();renderAll();}else transportUI();}
- if(transitionDuration>0){const f=clamp((simTime-transitionStart)/Math.max(.01,transitionDuration),0,1);$<HTMLCanvasElement>('transition-canvas').style.opacity=String(1-applyEasing(f,transitionEasing));if(f>=1){transitionDuration=0;$('transition-canvas').hidden=true;}}
+ if(transitionDuration>0){const f=clamp((simTime-transitionStart)/Math.max(.01,transitionDuration),0,1);paintTransition(f);if(f>=1){transitionDuration=0;transitionSnapshot=null;$('transition-canvas').hidden=true;}}
  if(overlayDirty&&!libraryOpen)drawGuides();if(recorder.active){const paperScene={...activeScene(),field:{...activeScene().field,background:native?.background??scene().field.background,palette:native?.palette??scene().field.palette,params:{...scene().field.params,...native?.params}}};const copy=()=>recorder.frame(engine.canvas,paperScene,width,height,captureTransition());try{if(engine.withCleanFrame)engine.withCleanFrame(copy);else copy();}catch(err){recorder.stop();error(err);}}frames++;
  if(now-lastFpsTime>1000){fps=Math.round(frames*1000/(now-lastFpsTime));frames=0;lastFpsTime=now;}
  if(now-lastUI>33){const s=activeScene(),timing=expressionTiming(store.document,sceneIndex,sceneElapsed,journeyPlaying),fraction=clamp(timing.time/timing.total,0,1);$('global-time').textContent=timing.time.toFixed(1)+' / '+timing.total.toFixed(1)+'s';const playhead=$<HTMLInputElement>('expression-playhead');if(playhead&&document.activeElement!==playhead)playhead.value=String(timing.time);$('journey-progress').style.width=fraction*100+'%';document.querySelectorAll<HTMLElement>('[data-scene-progress]').forEach(e=>e.style.width=(Number(e.dataset.sceneProgress)===sceneIndex?fraction*100:0)+'%');

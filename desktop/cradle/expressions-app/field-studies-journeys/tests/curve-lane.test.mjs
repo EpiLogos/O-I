@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {fieldStudies,clone,sceneContentDigest} from '../build/model.js';
-import {valueAt,validateCurveEdit,channelRange,channelApplies,evaluateTracks} from '../build/propertyTracks.js';
+import {valueAt,validateCurveEdit,channelRange,channelApplies,evaluateTracks,validateTracks,touchesOfKey} from '../build/propertyTracks.js';
 import {NATIVE_BINDINGS} from '../build/nativeParameters.js';
 import {DocumentStore} from '../build/store.js';
-import {laneFrame,toPixel,fromPixel,curveHit,shownHandles,handlePosition,moveKey,moveHandle,insertKey,removeKey,setSegmentType,samplePath,channelStateFor,channelPanelHTML,channelName} from '../build/curveLane.js';
+import {laneFrame,toPixel,fromPixel,curveHit,shownHandles,handlePosition,moveKey,moveHandle,insertKey,removeKey,setSegmentType,samplePath,channelStateFor,channelPanelHTML,channelName,previewScene} from '../build/curveLane.js';
 
 // Lane-3 E09/E10. The pure logic lives in curveLane.ts; the curve is read through valueAt (one evaluator). Two native
 // parameters with finite hard limits stand in for two channels.
@@ -70,8 +70,8 @@ test('a dragged handle is stored relative to the point it belongs to', ()=>{
 
 test('a keyframe dragged across its neighbour is refused by name', ()=>{
  const points=[{time:0,value:0},{time:4,value:8}];
- assert.throws(()=>validateCurveEdit(moveKey(points,1,0,8)),/Invalid property keyframe/);
- assert.throws(()=>validateCurveEdit(moveKey(points,1,-1,8)),/Invalid property keyframe/);
+ assert.throws(()=>validateCurveEdit(moveKey(points,1,0,8)),{message:'Keyframes stay in time order.'});
+ assert.throws(()=>validateCurveEdit(moveKey(points,1,-1,8)),{message:'Keyframes stay in time order.'});
 });
 
 test('a handle dragged outside its segment in time is refused by name', ()=>{
@@ -212,4 +212,45 @@ test('the channel panel carries the solo, mute and show toggles, and a lane only
  assert.equal(/#[0-9a-fA-F]{3,6}\b|rgb\(/.test(html),false,'the lane uses tokens only, no raw colour');
  const hidden=channelPanelHTML({scene:s,selected:{trackId:'a',index:null},views:id=>id==='a'?{solo:false,mute:false,shown:false}:undefined});
  assert.equal(hidden.includes('class="curve-lane"'),false,'a hidden channel draws no lane');
+});
+
+// Lane-3 E09b: the live preview through the evaluator, the touch-scoped range law, and the named time-order refusal.
+test('E09b: a curve drag previews on the field through the evaluator, and the document is not touched', ()=>{
+ const {j,s}=sceneWith([{id:'a',bind:bindA,points:[{time:0,value:inside(A,.2)},{time:6,value:inside(A,.2)}]}]);
+ const before=JSON.stringify(j.scenes[0].propertyTracks);
+ const dragged=moveKey(s.propertyTracks[0].points,1,6,inside(A,.9));
+ const previewed=previewScene(s,{sceneId:s.id,trackId:'a',preview:dragged});
+ assert.notEqual(previewed,s);
+ assert.equal(JSON.stringify(j.scenes[0].propertyTracks),before,'the document is untouched while previewing');
+ const baseAt=evaluateTracks(s,3).field.params[A.key],previewAt=evaluateTracks(previewed,3).field.params[A.key];
+ assert.ok(previewAt>baseAt,'the field at 3 s follows the previewed curve, not the stored one');
+ assert.equal(previewScene(s,null),s,'with no drag the scene is returned as it is');
+ assert.equal(previewScene(s,{sceneId:'other',trackId:'a',preview:dragged}),s,'a preview for another scene does not apply');
+});
+
+test('E09b: a legacy out-of-range key elsewhere on the channel does not block editing its channel', ()=>{
+ const range={min:A.hardMin,max:A.hardMax};
+ const legacy=A.hardMax+5;
+ const points=[{time:0,value:inside(A,.2)},{time:2,value:legacy},{time:4,value:inside(A,.4)}];
+ assert.throws(()=>validateCurveEdit(points,range),/outside the channel range/,'the whole-channel law still names the legacy point');
+ const moved=moveKey(points,0,.5,inside(A,.3));
+ assert.doesNotThrow(()=>validateCurveEdit(moved,range,touchesOfKey(moved,0)),'editing an in-range key is not blocked by the legacy key');
+ const again=moveKey(points,1,2.5,legacy);
+ assert.throws(()=>validateCurveEdit(again,range,touchesOfKey(again,1)),/outside the channel range/,'editing the legacy key itself is still refused by name');
+});
+
+test('E09b: a keyframe moved out of range takes the handles that travel with it into the check', ()=>{
+ const range={min:A.hardMin,max:A.hardMax};
+ const points=[{time:0,value:inside(A,.2),out:{dt:1,dv:0}},{time:4,value:inside(A,.5)}];
+ const lifted=moveKey(points,0,0,inside(A,.2));
+ assert.doesNotThrow(()=>validateCurveEdit(lifted,range,touchesOfKey(lifted,0)));
+ const high=moveKey(points,0,0,A.hardMax);
+ high[0].out={dt:1,dv:A.hardMax-A.hardMin};
+ assert.throws(()=>validateCurveEdit(high,range,touchesOfKey(high,0)),/Handle value is outside the channel range/);
+});
+
+test('E09b: a curve gesture that breaks time order is refused as "Keyframes stay in time order."; load validation keeps its own message', ()=>{
+ const points=[{time:0,value:1},{time:2,value:2},{time:4,value:3}];
+ assert.throws(()=>validateCurveEdit(moveKey(points,1,0,2)),{message:'Keyframes stay in time order.'});
+ assert.throws(()=>validateTracks([{id:'x',bind:bindA,points:[{time:2,value:1},{time:0,value:2}]}]),/Invalid property keyframe/);
 });
