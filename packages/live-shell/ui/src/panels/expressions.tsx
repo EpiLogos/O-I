@@ -27,6 +27,7 @@ import type {HostedAppState, StageCommand, StageResult} from '@epilogos/expressi
 import {NativeStageTools} from '../components/NativeStageTools'
 import {publishFrameTakeLink} from '../native/frameTakes'
 import {liveTorusFromHost, publishLiveTorusState, setLiveInstrumentCommander} from '../live/torusInstrument'
+import {setLivePerformanceChannel} from '../live/LivePresets'
 
 interface NativeWork {expression_ref: string; title: string; revision: number}
 const expressionDescriptor = registeredHostedSurfaces.find(row => row.descriptor.kind === 'expressions')?.descriptor
@@ -82,6 +83,8 @@ export function ExpressionsPanel() {
   }
   // The Live instrument's writes reach the owner only through this mounted stage channel (torusInstrument.ts commitLiveInstrumentEdit).
   useEffect(() => {setLiveInstrumentCommander(command => stageRun(command)); return () => setLiveInstrumentCommander(null)}, [])
+  // The presets' owner path (T-LIVE-TORUS-INSTRUMENT leg 6): one performance action on the presented Scene, through the host.
+  useEffect(() => {setLivePerformanceChannel(action => host.current ? host.current.performance(action) : Promise.reject(new Error('No Expressions application is mounted'))); return () => setLivePerformanceChannel(null)}, [])
   // The shell's transport and Clip Takes tab reach the frame only through this link (native/frameTakes.ts).
   useEffect(() => {publishFrameTakeLink({state: stage, run: host.current ? stageRun : null})}, [stage])
   useEffect(() => () => publishFrameTakeLink({state: null, run: null}), [])

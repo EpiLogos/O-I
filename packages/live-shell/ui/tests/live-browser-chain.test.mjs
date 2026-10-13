@@ -75,15 +75,12 @@ test('the Presets and Instruments sections are the browser sections of their cat
 
 // ── 2 — Presets: the owner's seam, named; no shell store ───────────────────
 
-test('Presets name the owner seam and store nothing in the shell or the browser', async () => {
+test('Presets list through the owner route and store nothing in the shell or the browser', async () => {
   const markup = renderToStaticMarkup(React.createElement(presets.LivePresetsSection))
-  assert.match(markup, /data-live-presets="seam"/)
-  assert.match(markup, /oi\.expression-performance-basis\/v1/)
-  assert.match(markup, /oi\.expression-performance\/v3/)
-  assert.match(markup, /PerformanceOperation::AdmitBasis/)
-  assert.match(markup, /wait at that seam/)
+  assert.match(markup, /data-live-presets="listing"/, 'the section asks the owner for its bases; it keeps none')
   const source = await readFile(new URL('live/LivePresets.tsx', here), 'utf8')
   assert.doesNotMatch(source, /localStorage|sessionStorage|indexedDB|IndexedDB/)
+  assert.match(source, /commitLivePerformance\(\{action: 'list'\}\)/)
 })
 
 // ── 3 — the chain: the torus first, then the effect faces in order ───────
