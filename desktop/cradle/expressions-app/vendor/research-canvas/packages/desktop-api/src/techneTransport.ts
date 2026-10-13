@@ -49,6 +49,8 @@ import type {
   JoinedCanvasNode,
   LitInstance,
   NodeLayout,
+  TemporalPrecision,
+  TimelineBandRecord,
   TimelineDiagnostic,
   TimelineLayoutOverride,
   TimelineLayoutMutationResult,
@@ -90,6 +92,14 @@ function defaultLayoutFor(graphNodeId: string, canvasId: string): NodeLayout {
     height: 160,
     style: {},
   };
+}
+
+const TEMPORAL_PRECISION_RUNGS: readonly string[] = [
+  "millennium", "century", "decade", "year", "month", "day", "hour", "minute", "second", "subsecond",
+];
+
+function precisionRung(value: unknown): TemporalPrecision | null {
+  return typeof value === "string" && TEMPORAL_PRECISION_RUNGS.includes(value) ? value as TemporalPrecision : null;
 }
 
 function matchesFilter<T>(value: T | null, filter?: { include?: T[]; exclude?: T[] }): boolean {
@@ -202,6 +212,29 @@ export function createTechneTransport(bundle: TechneFieldBundle): TechneWorkspac
       nodeById.get(relationship.sourceGraphNodeId)?.isTemporal === true
       && nodeById.get(relationship.targetGraphNodeId)?.isTemporal === true,
     );
+
+  // lane-2 T8: every validity facet, as its disclosed band facts. A facet with
+  // no dated anchor (a continuity ref only) keeps a null position, so the canvas
+  // lists it as absent rather than drawing it. Nothing is computed here.
+  const bandRecords = (): TimelineBandRecord[] => bundle.relationships.flatMap((relationship): TimelineBandRecord[] => {
+    const props = relationship.properties;
+    if (props.temporal_kind !== "valid") return [];
+    const anchor = nodeById.get(relationship.targetGraphNodeId);
+    const positioned = anchor?.isTemporal === true && typeof anchor.validFrom === "string";
+    const instantShape = props.temporal_shape === "instant";
+    const earliest = positioned ? anchor!.validFrom : null;
+    const latest = !positioned ? null : instantShape ? anchor!.validFrom : anchor!.validTo ?? null;
+    return [{
+      band_ref: typeof props.temporal_facet_ref === "string" ? props.temporal_facet_ref : relationship.targetGraphNodeId,
+      label_verbatim: typeof props.temporal_label === "string" ? props.temporal_label : null,
+      earliest,
+      latest,
+      earliest_precision: precisionRung(props.temporal_from_precision),
+      latest_precision: precisionRung(props.temporal_to_precision),
+      uncertainty: typeof props.temporal_uncertainty === "string" ? props.temporal_uncertainty : null,
+      source_ref: typeof props.temporal_source_ref === "string" ? props.temporal_source_ref : null,
+    }];
+  });
 
   const rangeIntersects = (node: GraphNode, range: { startYear: number; endYear: number }) => {
     const fromYear = techneTimelineYear(node.validFrom);
@@ -360,6 +393,7 @@ export function createTechneTransport(bundle: TechneFieldBundle): TechneWorkspac
         relationships: temporalRelationships().filter(row => visible.has(row.sourceGraphNodeId) && visible.has(row.targetGraphNodeId) && matchesFilter(row.relType, filters?.relationTypes)),
         lanes: [],
         diagnostics,
+        bands: bandRecords(),
       };
     },
 

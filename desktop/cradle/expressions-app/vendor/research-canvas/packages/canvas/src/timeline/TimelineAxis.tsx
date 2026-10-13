@@ -1,5 +1,6 @@
 import type { CSSProperties, JSX } from "react";
 import type { AxisTick } from "./ticks";
+import type { BandMark } from "./bands";
 
 export interface TimelineAxisProps {
   /** The coarser row, labelled with its context ("Mar 1850", "1850"). */
@@ -7,6 +8,8 @@ export interface TimelineAxisProps {
   /** The finer row, short labels at the authority's unit ("Mar", "4", "10:00"). */
   minor: AxisTick[];
   height: number;
+  /** Period bands on the axis edge: a stripe and one label each (lane-2 T8). */
+  bands?: readonly BandMark[];
 }
 
 /**
@@ -18,8 +21,11 @@ const MAJOR_LABEL_COLOUR = "#aab4c6";
 const MINOR_ROW_TOP_PX = 22;
 const MINOR_ROW_LINE_PX = 10;
 const TABULAR: CSSProperties = { fontVariantNumeric: "tabular-nums" };
+/** Band labels sit below the minor row, on the axis edge; nested stripes step up by this much. */
+const BAND_LABEL_TOP_PX = 34;
+const BAND_STRIPE_STEP_PX = 4;
 
-export function TimelineAxis({ major, minor, height }: TimelineAxisProps): JSX.Element {
+export function TimelineAxis({ major, minor, height, bands = [] }: TimelineAxisProps): JSX.Element {
   return (
     <div
       className="timeline-axis"
@@ -43,6 +49,27 @@ export function TimelineAxis({ major, minor, height }: TimelineAxisProps): JSX.E
             style={{ position: "absolute", left: "0px", top: "2px", fontSize: "11px", color: MAJOR_LABEL_COLOUR, ...TABULAR }}
           >
             {tick.label}
+          </span>
+        </div>
+      ))}
+      {bands.map((band) => (
+        <div
+          key={`band-${band.id}`}
+          data-testid={`axis-band-${band.id}`}
+          data-standing={band.visual}
+          className="timeline-band"
+          style={{ position: "absolute", left: `${band.leftPx}px`, top: "0px", width: `${band.widthPx}px`, height: `${height}px`, "--band-tone": band.tone } as CSSProperties}
+        >
+          <span
+            className="timeline-band-stripe"
+            style={{ position: "absolute", left: "0px", right: "0px", bottom: `${band.depth * BAND_STRIPE_STEP_PX}px` }}
+          />
+          <span
+            className="timeline-band-label"
+            title={band.title}
+            style={{ position: "absolute", left: "4px", top: `${BAND_LABEL_TOP_PX}px` }}
+          >
+            {band.label}
           </span>
         </div>
       ))}

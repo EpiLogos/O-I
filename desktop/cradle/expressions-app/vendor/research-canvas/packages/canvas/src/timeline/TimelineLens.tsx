@@ -10,6 +10,8 @@ import { axisRows, commonOffsetMs } from "./ticks";
 import { densityBandForPixelsPerYear } from "./scale";
 import { pixelToMs, timeCamera } from "./viewport";
 import { TimelineAxis } from "./TimelineAxis";
+import { TimelineBandLanes } from "./TimelineBands";
+import { bandMarks, bandsFromReading } from "./bands";
 import { TimelineNode } from "./TimelineNode";
 import { TimelineRelationshipLayer } from "./TimelineRelationshipLayer";
 import { TimelineRelationField } from "./TimelineRelationField";
@@ -254,6 +256,9 @@ export function TimelineLens({
   const categoryPlaced = allPlaced.filter((p) => visibleCategories[deriveTimelineCategory(p.item.node)]);
   const placed = categoryPlaced.filter((placement) => isInsideTimelineRenderBand(placement, viewport.widthPx));
   const axis = axisRows(renderCamera, commonOffsetMs(state.items));
+  // Period bands (lane-2 T8): the reading's bands, through the authority's extent, on this camera.
+  const bandReading = useMemo(() => bandsFromReading(state.bandRecords), [state.bandRecords]);
+  const bandMarkList = bandMarks(bandReading.bands, renderCamera);
   const axisUnit = axis.minor[0]?.unit ?? null;
   const lighting = state.litMap;
   const lightingActive = state.lightingOperatorId !== null;
@@ -809,6 +814,16 @@ export function TimelineLens({
             </ul>
           </aside>
         )}
+        {bandReading.absent.length > 0 && (
+          <aside className="timeline-band-absent" data-testid="timeline-band-absent" aria-label="Periods not drawn on the axis">
+            <strong>{bandReading.absent.length} {bandReading.absent.length === 1 ? "period" : "periods"} not drawn</strong>
+            <ul>
+              {bandReading.absent.map((entry) => (
+                <li key={entry.id}>{entry.label ?? entry.id}: {entry.reason}</li>
+              ))}
+            </ul>
+          </aside>
+        )}
         {state.hovering.length > 0 && (
           <div
             className="timeline-hover-lane"
@@ -832,12 +847,13 @@ export function TimelineLens({
             No temporal nodes loaded
           </div>
         )}
+        <TimelineBandLanes marks={bandMarkList} />
         <div
           className="timeline-scene"
           data-testid="timeline-scene"
           style={{ transform: `translateY(${state.verticalOffset}px)` }}
         >
-          <TimelineAxis major={axis.major} minor={axis.minor} height={AXIS_HEIGHT} />
+          <TimelineAxis major={axis.major} minor={axis.minor} height={AXIS_HEIGHT} bands={bandMarkList} />
           <TimelineRelationshipLayer
             relationships={renderedRelationships}
             placed={placed}

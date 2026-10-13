@@ -55,6 +55,8 @@ export interface TimelineStoreState {
   relationships: GraphRelationship[];
   lanes: TimelineLane[];
   diagnostics: TimelineDiagnostic[];
+  /** The reading's period bands, verbatim; drawn by the lens through bands.ts (lane-2 T8). */
+  bandRecords: NonNullable<TimelineView["bands"]>;
   litMap: LitMap;
   selectedNodeId: string | null;
   lightingOperatorId: string | null;
@@ -118,6 +120,7 @@ export function createTimelineStore(
     relationships: [],
     lanes: [],
     diagnostics: [],
+    bandRecords: [],
     litMap: new Map(),
     selectedNodeId: null,
     lightingOperatorId: null,
@@ -177,6 +180,7 @@ export function createTimelineStore(
         relationships,
         lanes: view.lanes,
         diagnostics: view.diagnostics,
+        bandRecords: view.bands ?? [],
         manualViewport: keepCamera,
         ...(!keepCamera && items.length > 0
           ? fitViewportToItems(items, get().widthPx)

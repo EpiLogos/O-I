@@ -150,6 +150,9 @@ export interface TechneTemporalFacetLite {
   timezone_policy_ref?: string | null;
   uncertainty?: string | null;
   source_ref?: string | null;
+  /** lane-2 T8: a validity facet's own label, verbatim. The ql.techne/v1 facet
+   * carries no label field yet, so a validated reading supplies none. */
+  label?: string | null;
 }
 
 export interface TechnePlaceFacetLite {
@@ -491,6 +494,14 @@ export function bundleFromTechneReadings(readings: TechneReadingLite[]): TechneF
         temporal_now_ref: facet.now_ref ?? null,
         temporal_session_ref: facet.session_ref ?? null,
         temporal_run_ref: facet.run_ref ?? null,
+        // lane-2 T8: the band facts, carried as disclosed. The precisions follow
+        // the authority's own rule (scale.ts facetRange): an instant takes its
+        // one precision at both ends, an interval takes each end's own.
+        temporal_facet_ref: facet.facet_ref ?? null,
+        temporal_label: facet.label ?? null,
+        temporal_shape: facet.instant != null ? "instant" : facet.interval != null ? "interval" : null,
+        temporal_from_precision: facet.instant != null ? (facet.precision ?? null) : (facet.interval?.from_precision ?? null),
+        temporal_to_precision: facet.instant != null ? (facet.precision ?? null) : (facet.interval?.to_precision ?? null),
       };
       const instant = facet.instant ?? null;
       const intervalFrom = facet.interval?.from ?? null;
