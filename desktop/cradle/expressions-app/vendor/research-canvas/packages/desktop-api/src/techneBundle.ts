@@ -150,8 +150,8 @@ export interface TechneTemporalFacetLite {
   timezone_policy_ref?: string | null;
   uncertainty?: string | null;
   source_ref?: string | null;
-  /** lane-2 T8: a validity facet's own label, verbatim. The ql.techne/v1 facet
-   * carries no label field yet, so a validated reading supplies none. */
+  /** lane-2 T8b: a validity facet's own period name, verbatim. The contract
+   * carries it as an optional label; a reading that names no period omits it. */
   label?: string | null;
 }
 

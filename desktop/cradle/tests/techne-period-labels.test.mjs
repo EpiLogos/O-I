@@ -7,6 +7,14 @@ import {validateTemporalFacet,validateReading} from '../src/techne/contract.ts';
 import {timeAxis} from '../src/techne/m0m5/timeline/timeAxis.ts';
 import {provingReading} from '../src/techne/m0m5/journey/proving-reading.ts';
 import {readWikiTemporal} from '../src/techne/temporalFacets.ts';
+import {phasesFromFacets} from '../src/techne/m0m5/timeline/relations.ts';
+import {bandsFromReading} from '../expressions-app/vendor/research-canvas/packages/canvas/src/timeline/bands.ts';
+import {build} from 'esbuild';
+import {mkdtemp,writeFile,rm} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {createRequire} from 'node:module';
+import {fileURLToPath} from 'node:url';
 
 const VALID_REF='ql.techne:facet:tb0:valid';
 const LABEL='Reign of Ramesses II — co-regency, Ḥ-variant “as attested”';
@@ -70,4 +78,36 @@ test('an over-long native label fails the whole declaration loudly rather than b
  const wiki=readWikiTemporal(JSON.stringify([row]));
  assert.equal(wiki.state,'unavailable');
  assert.match(wiki.reason,/label/);
+});
+
+test('a phase band carries its period name verbatim; a blank or absent label reads as null', ()=>{
+ const base={facet_ref:'f:phase',kind:'valid',interval:{from:RFC,to:null,from_precision:'day'},source_ref:'src:chronicle'};
+ const [named]=phasesFromFacets([{...base,label:LABEL}]);
+ assert.equal(named.label,LABEL);
+ assert.equal(named.facet_ref,'f:phase');
+ for(const label of [undefined,null,'','   ','\t'])assert.equal(phasesFromFacets([{...base,label}])[0].label,null,JSON.stringify(label));
+});
+
+test('a band whose label is empty or blank is listed as absent, never drawn as a blank band', ()=>{
+ const record=(band_ref,label_verbatim)=>({band_ref,label_verbatim,earliest:'1213',latest:'1279',earliest_precision:'year',latest_precision:'year',uncertainty:null,source_ref:'src:chronicle'});
+ const reading=bandsFromReading([record('band:named',LABEL),record('band:empty',''),record('band:blank','   ')]);
+ assert.deepEqual(reading.bands.map(band=>band.id),['band:named']);
+ assert.equal(reading.bands[0].label,LABEL);
+ assert.deepEqual(reading.absent.map(band=>band.id).sort(),['band:blank','band:empty']);
+});
+
+test('the participation form writes a period name verbatim, and an empty input removes the label key', async()=>{
+ const compiled=await build({stdin:{contents:"export {periodNamed} from './ParticipationFacts.tsx';",resolveDir:fileURLToPath(new URL('../src/knowledge/',import.meta.url)),loader:'ts'},bundle:true,platform:'node',format:'cjs',jsx:'automatic',write:false,logLevel:'silent'});
+ const scratch=await mkdtemp(join(tmpdir(),'period-named-'));
+ try{
+  const file=join(scratch,'period-named.cjs');await writeFile(file,compiled.outputFiles[0].text);
+  const {periodNamed}=createRequire(import.meta.url)(file);
+  const row={facet_ref:'wiki:temporal:reign',kind:'valid',interval:{from:RFC,to:null,from_precision:'day'},source_ref:'src:chronicle'};
+  const named=periodNamed(row,LABEL);
+  assert.equal(named.label,LABEL);
+  assert.equal(row.label,undefined,'the saved row is never mutated');
+  const cleared=periodNamed(named,'');
+  assert.equal(Object.prototype.hasOwnProperty.call(cleared,'label'),false,'empty input removes the key, not a blank label');
+  assert.deepEqual(cleared,row);
+ }finally{await rm(scratch,{recursive:true,force:true});}
 });
