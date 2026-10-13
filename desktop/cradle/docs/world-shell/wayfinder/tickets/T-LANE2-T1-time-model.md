@@ -181,3 +181,22 @@ floor the year in the deep branch of `calendarFields`; export the contract's
 `TEMPORAL_PRECISIONS`; route the last private year regexes
 (`repositories.ts`, `TimelineSurface.tsx`, `instant.ts`) through the
 authority. `PsychogeographicMap.tsx:959` waits for lane 4.
+
+**T4c (landed `9a520eff2`).**
+- A minor row steps down, first within its rung and then to the finer rung,
+  until it holds two marks at least 88 px apart.
+- `calendarFields` finds a deep year against `yearStartMs`, which stays exact
+  past 2^53 ms.
+- The contract exports `TEMPORAL_PRECISIONS`, and the schema re-exports that
+  same list.
+- The last private year regexes now read through the authority.
+- Scripted: 57/57 with no todos left. The authority's human-scale digest is
+  unchanged. Every changed axis row had fewer than two marks before.
+
+Lead ruling: 147 human-scale minor rows at 240/320 px have no 1-2-5 step
+that gives two marks at 88 px. Spacing wins there and the major row carries
+the time.
+
+**T5 + T6 (dispatched):** a relative axis from a disclosed zero ref, and the
+shared `techne:time-axis/v1` projection that both the chronology and Places
+consume.
