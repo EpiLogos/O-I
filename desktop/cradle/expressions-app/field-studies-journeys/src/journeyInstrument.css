@@ -25,6 +25,8 @@
 .journey-beat-chip{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:2px 5px;border:1px solid color-mix(in srgb,var(--knowledge-accent,#79c0d4) 45%,transparent);border-radius:999px;background:color-mix(in srgb,var(--knowledge-accent,#79c0d4) 14%,transparent);font-size:10px;line-height:1.4}
 .journey-beat-reason{grid-column:1/-1;font-size:10px;line-height:1.4;opacity:.65;overflow-wrap:anywhere}
 .journey-reading-source{font-size:10px;opacity:.65;overflow-wrap:anywhere}
+/* lane-5 T9 — the presence disclosure: one plain sentence in the reason style, never a modal. */
+.journey-presence-notice{margin:6px 10px 0;font-size:10px;line-height:1.4;opacity:.75;overflow-wrap:anywhere}
 /* lane-5 T8 — the walked journey path: scenes in order with their seams, the position, the blend in force, the next scene. */
 .journey-playback-path{padding:10px;border-top:1px solid var(--ui-line,var(--line));min-width:0}
 .journey-playback-path>header{display:flex;align-items:baseline;justify-content:space-between;gap:8px;flex-wrap:wrap}
