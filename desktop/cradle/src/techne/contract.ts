@@ -449,6 +449,10 @@ export interface DisclosureSession {
   return_target_ref?: string;
   reading_ref: string;
   time_window?: { from: string | null; to: string | null };
+  /** Lane-2 T5: the disclosed zero of a relative axis — the temporal facet_ref
+   * of an undated continuity facet (day/now/session/run) the person declared as
+   * T0. Absent until declared; never inferred from the reading. */
+  time_zero_ref?: string;
   spatial_focus_ref?: string;
   /** TB0-1: the wider situated reference frame in focus (solar/Earth/
    * geography scale chain), distinct from any single place. */
@@ -867,7 +871,7 @@ export function validateSelection(value: unknown): TechneValidation {
 export function validateSession(value: unknown): TechneValidation {
   const errors: string[] = [];
   if (!isObject(value)) return invalid(["session: must be an object"]);
-  keysAllowed(value, ["contract", "session_ref", "subject_ref", "selection", "instrument", "application_cut", "whole_ref", "project_ref", "world_ref", "context_frame_ref", "occasion_ref", "return_target_ref", "reading_ref", "time_window", "spatial_focus_ref", "reference_frame_ref", "expression_focus_ref", "scene_focus_ref", "navigation"], "session", errors);
+  keysAllowed(value, ["contract", "session_ref", "subject_ref", "selection", "instrument", "application_cut", "whole_ref", "project_ref", "world_ref", "context_frame_ref", "occasion_ref", "return_target_ref", "reading_ref", "time_window", "time_zero_ref", "spatial_focus_ref", "reference_frame_ref", "expression_focus_ref", "scene_focus_ref", "navigation"], "session", errors);
   if (value.contract !== TECHNE_CONTRACT) errors.push(`session.contract: must be "${TECHNE_CONTRACT}"`);
   if (!ref(value.session_ref)) errors.push("session.session_ref: required");
   if (!ref(value.subject_ref)) errors.push("session.subject_ref: required");
@@ -892,6 +896,7 @@ export function validateSession(value: unknown): TechneValidation {
       for (const key of ["from", "to"]) if (window[key] !== undefined && !stringOrNull(window[key])) errors.push(`session.time_window.${key}: must be a timestamp or null`);
     }
   }
+  if (value.time_zero_ref !== undefined && !ref(value.time_zero_ref)) errors.push("session.time_zero_ref: must be a facet ref");
   if (value.selection === undefined) errors.push("session.selection: required");
   else errors.push(...validateSelection(value.selection).errors);
   if (value.navigation !== undefined) {

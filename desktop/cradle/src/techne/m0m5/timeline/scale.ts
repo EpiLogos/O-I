@@ -497,3 +497,79 @@ export function project(ms: number, view: TimeRange, width: number): number {
   if (span <= 0) return 0;
   return ((ms - view.fromMs) / span) * width;
 }
+
+// ---------------------------------------------------------------------------
+// Relative axis (lane-2 T5) — undated but ordered material, from a disclosed zero
+// ---------------------------------------------------------------------------
+
+/** The continuity carriers a relative zero may name: the reading's own DAY,
+ * NOW, session and run facets. A zero is never a dated fact. */
+const RELATIVE_ZERO_KINDS: ReadonlySet<string> = new Set(["day", "now", "session", "run"]);
+
+export interface RelativeMark {
+  /** The facet's own ref, or the reading's derived position id when it has none. */
+  ref: string;
+  facet_ref: string | null;
+  /** Steps from the zero in the reading's declared order; negative is before it. */
+  offset: number;
+  /** "T0", "T+n" or "T-n". A count of steps: the contract discloses order, not
+   * duration, so no day, week or calendar year is named here. */
+  label: string;
+}
+
+export interface RelativeAxis {
+  zero_ref: string;
+  marks: RelativeMark[];
+}
+
+interface UndatedFacet {
+  ref: string;
+  facet_ref: string | null;
+  kind: string;
+}
+
+/** The undated facets in the reading's own declared order (the only order the
+ * contract discloses; phase and activity projections use it the same way). A
+ * facet whose carriers do not parse is not undated and is left to the calendar
+ * axis, which reports it as unresolved. */
+function undatedInOrder(facets: readonly TechneTemporalFacet[]): UndatedFacet[] {
+  const out: UndatedFacet[] = [];
+  facets.forEach((facet, index) => {
+    let span: FacetSpan;
+    try {span = facetRange(facet);} catch {return;}
+    if (span.positioned) return;
+    out.push({ref: facet.facet_ref ?? `derived:techne:timeline:temporal[${index}]`, facet_ref: facet.facet_ref ?? null, kind: facet.kind});
+  });
+  return out;
+}
+
+function stepLabel(offset: number): string {
+  return offset === 0 ? "T0" : offset > 0 ? `T+${offset}` : `T-${-offset}`;
+}
+
+/** The facet refs a reading warrants as a relative zero: undated continuity
+ * facets that carry their own ref. Empty when the reading discloses none. */
+export function relativeZeroCandidates(facets: readonly TechneTemporalFacet[] | null | undefined): string[] {
+  return undatedInOrder(facets ?? [])
+    .filter((row) => row.facet_ref !== null && RELATIVE_ZERO_KINDS.has(row.kind))
+    .map((row) => row.facet_ref as string);
+}
+
+/**
+ * The relative axis from a disclosed zero. Warranted only when the zero names
+ * an undated continuity facet of this reading AND the reading holds at least
+ * one other undated facet to place: a lone zero is not an axis. Otherwise null,
+ * and the caller renders no relative mode at all. Pure and deterministic.
+ */
+export function relativeAxisFromFacets(facets: readonly TechneTemporalFacet[] | null | undefined, zeroRef: string): RelativeAxis | null {
+  const undated = undatedInOrder(facets ?? []);
+  const zeroAt = undated.findIndex((row) => row.facet_ref === zeroRef);
+  if (zeroAt < 0 || !RELATIVE_ZERO_KINDS.has(undated[zeroAt].kind) || undated.length < 2) return null;
+  return {
+    zero_ref: zeroRef,
+    marks: undated.map((row, rank) => {
+      const offset = rank - zeroAt;
+      return {ref: row.ref, facet_ref: row.facet_ref, offset, label: stepLabel(offset)};
+    }),
+  };
+}

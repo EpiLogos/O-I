@@ -19,6 +19,7 @@
  * listener up; it is not part of the consumed API. */
 import {validateJourney} from './model.js';
 import {kernelDocumentToJourney,KernelExpressionDocument,KernelEntity,KernelParameter,KernelSubject} from './kernelDocumentBridge.js';
+import {validatePlaceDraft,type PlaceDraft} from '../../vendor/research-canvas/packages/canvas/src/psychogeographic/placeAuthoring';
 
 const VERSION=1;
 type Pending={kind:string;resolve:(value:any)=>void;reject:(cause:Error)=>void;timer:number};
@@ -481,8 +482,16 @@ export const techneTimeWindowRequest = (request:import('../../../../../packages/
 
 export const techneWorldRequest = (request: {operation:'list'}|{operation:'open';register:string}): Promise<unknown> => call('techne-world', {request}, 120000);
 
-export interface TechneConstellationRequest extends TechneSceneReadingRequest {entity_ref:string;operation:'inspect'|'open'}
-export const techneConstellationRequest = (request:TechneConstellationRequest):Promise<{frame_ref:string;frame_revision:number;title:string;project?:string}> => call('techne-constellation',{request},30000);
+/** Lane-4 T17b: a draft position the map offers the owner's editor when it opens. It is a draft, never a write: the editor still requires a source basis. */
+export interface TechneConstellationRequest extends TechneSceneReadingRequest {entity_ref:string;operation:'inspect'|'open';placeDraft?:PlaceDraft}
+export const techneConstellationRequest = (request:TechneConstellationRequest):Promise<{frame_ref:string;frame_revision:number;title:string;project?:string}> => {
+ if(request.placeDraft!==undefined){
+  if(request.operation!=='open')return Promise.reject(new Error('A place draft is offered only when the editor opens.'));
+  const checked=validatePlaceDraft(request.placeDraft);
+  if(!checked.ok)return Promise.reject(new Error(checked.reason));
+ }
+ return call('techne-constellation',{request},30000);
+};
 /** Deliberate typed relationship between two occurrences' exact constellation participations. */
 export interface TechneConstellationRelation extends TechneSceneReadingRequest {operation:'relate';from_entity_ref:string;to_entity_ref:string;relation:string;direction:'directed'|'undirected'|'bidirectional'}
 export interface TechneConstellationRelationReceipt {frame_ref:string;frame_revision:number;relation_ref:string;state:'saved'|'unchanged';expression:{state:'ready';expression_ref:string;revision:number}|{state:'pending';detail:string}}

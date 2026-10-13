@@ -89,6 +89,10 @@ export interface DisclosureSessionStore {
    * occupies is refused. */
   crossCut(target: TechneInstrument): { session: DisclosureSession; cut: TechneReadingKind };
   setTimeWindow(window: NonNullable<DisclosureSession["time_window"]> | null): DisclosureSession;
+  /** Lane-2 T5: declare (or, with null, remove) the relative axis's zero — the
+   * temporal facet_ref the person disclosed as T0. Checked against the reading
+   * by the consumer, never inferred here. */
+  setTimeZero(ref: string | null): DisclosureSession;
   /** End the session (austere rest). */
   clear(): void;
 }
@@ -173,6 +177,16 @@ export function createDisclosureSessionStore(): DisclosureSessionStore {
       const next = {...current};
       if (window === null) delete next.time_window;
       else next.time_window = declaredWindow(window);
+      const session = checkedSession(next);
+      current = session;
+      notify(listeners);
+      return session;
+    },
+    setTimeZero(ref) {
+      if (!current) throw new Error("No DisclosureSession is open — select a subject first");
+      const next = {...current};
+      if (ref === null) delete next.time_zero_ref;
+      else next.time_zero_ref = ref;
       const session = checkedSession(next);
       current = session;
       notify(listeners);

@@ -21,10 +21,11 @@ import {OPEN_PLACE_FILTER,filteredPlacesRepository,subjectEntityRef,type PlaceFi
 import type {TechneReading} from '../../../src/techne/contract';
 import {readSharedTimeWindow,SharedTimeWindowControls,type SharedTimeDraft} from './sharedTimeWindow.js';
 import {sharedTimelinePresentation} from './sharedTimeProjection.js';
+import {timeAxisProjection,relativeTimeAxisProjection} from '../../../src/techne/m0m5/timeline/timeAxis';
 import type {NativeTimeWindowReply} from '../../../../../packages/expressions-boundary/src/timeWindow';
 import {blueprintMember,type SceneBlueprint,type BlueprintTransform} from './blueprintGeometry.js';
 import {icon} from './icons.js';
-import {addRouteNotice,moveRouteNotice,type PlaceAuthoringHost} from '../../vendor/research-canvas/packages/canvas/src/psychogeographic/placeAuthoring';
+import {addRouteNotice,moveRouteNotice,placeDraftForAdd,placeDraftForMove,constellationResultNotice,type PlaceAuthoringHost,type PlaceDraft} from '../../vendor/research-canvas/packages/canvas/src/psychogeographic/placeAuthoring';
 import './researchInstrumentStyles.css';
 import './researchInstruments.css';
 import {CanvasNavigationOverview} from './canvasNavigationOverview';
@@ -41,6 +42,24 @@ import {ZoomReadout} from '../../vendor/research-canvas/packages/canvas/src/canv
  * so nothing here changes for assistive tech or hover discovery — only the
  * always-visible label becomes a glyph. */
 function ToolIcon({name}:{name:string}){return <span className="research-tool-icon" aria-hidden="true" dangerouslySetInnerHTML={{__html:icon(name)}}/>;}
+
+/** Lane-4 T17b: the owner's constellation routes this instrument opened, by frame ref, each with the marker it may move. */
+const placeRoutes=new Map<string,{graphNodeId?:string}>();
+/** The live places host's answer handler; the latest reading of the Places instrument replaces it. */
+let placeRouteHandler:((frameRef:string,outcome:{kind:'saved'}|{kind:'refused';reason?:string})=>void)|undefined;
+let placeRouteListening=false;
+/** Listens once for the cradle's answer to a route this instrument opened. Only the parent host may answer. */
+function listenForPlaceRouteResults(){
+ if(placeRouteListening||typeof window==='undefined')return;placeRouteListening=true;
+ window.addEventListener('message',event=>{
+  const data=event.data as {v?:unknown;kind?:unknown;target?:{frame_ref?:unknown};result?:unknown;reason?:unknown}|null;
+  if(event.source!==window.parent||!data||data.v!==1||data.kind!=='constellation-result')return;
+  const frameRef=data.target?.frame_ref;
+  if(typeof frameRef!=='string'||!placeRoutes.has(frameRef))return;
+  if(data.result==='saved')placeRouteHandler?.(frameRef,{kind:'saved'});
+  else if(data.result==='refused')placeRouteHandler?.(frameRef,{kind:'refused',reason:typeof data.reason==='string'?data.reason:undefined});
+ });
+}
 
 /** Visibility comes from the current native frame binding, not a card title. */
 function ConstellationAction({request,onError}:{request:Omit<TechneConstellationRequest,'operation'>;onError:(message:string)=>void}) {
@@ -199,7 +218,7 @@ interface ViewState {
  /** M2′: chronology (the vendored TimelineSurface) vs. the relation-field
   * projections (relationFieldView.tsx) — session-local presentation state,
   * never a second store. */
- m2Projection?:'chronology'|'field';
+ m2Projection?:'chronology'|'field'|'relative';
  timeDraft?:SharedTimeDraft;
  /** Gesture transactions live on the ViewState, not inside canvasNode's
   * per-render closures, so one gesture survives the many re-renders a drag
@@ -723,11 +742,16 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
     // switch over the SAME reading/repository — never a second app, tab or
     // store (Wayfinder §16). Session-local only, like the timeline camera.
     state.m2Projection??='chronology';
-    const setProjection=(next:'chronology'|'field')=>{state.m2Projection=next;render(canvasNode2());};
+    const setProjection=(next:'chronology'|'field'|'relative')=>{state.m2Projection=next;render(canvasNode2());};
     const canvasNode2=():ReactNode=>{
+     // Lane-2 T5: relative mode exists only when the acknowledged session names a
+     // zero this reading warrants; otherwise the segment is absent, never disabled.
+     const relativeAxis=sharedTime?relativeTimeAxisProjection(nativeReading,sharedTime.session):null;
+     if(state.m2Projection==='relative'&&!relativeAxis)state.m2Projection='chronology';
      const toggle=<div className="research-tool-actions" role="tablist" aria-label="Timeline projection">
       <button role="tab" aria-selected={state.m2Projection==='chronology'} aria-pressed={state.m2Projection==='chronology'} onClick={()=>setProjection('chronology')}>Chronology</button>
       <button role="tab" aria-selected={state.m2Projection==='field'} aria-pressed={state.m2Projection==='field'} onClick={()=>setProjection('field')}>Relations</button>
+      {relativeAxis&&<button role="tab" aria-selected={state.m2Projection==='relative'} aria-pressed={state.m2Projection==='relative'} onClick={()=>setProjection('relative')}>Relative</button>}
       <button aria-label="Refresh timeline" title="Refresh timeline" onClick={()=>void load('m2')}><ToolIcon name="history"/></button>
       {view&&state.m2Projection==='chronology'&&<button aria-label="Save timeline view" title="Save timeline view" onClick={()=>{if(state.timeline)void host.material(sceneId,{type:'viewport',key:'timeline',value:{x:state.timeline.centerYear,y:0,zoom:state.timeline.pixelsPerYear}}).then(()=>message('View saved'),error=>message(String(error)));}}><ToolIcon name="save"/></button>}
       {(tagReason||relationReason)&&<button onClick={()=>message([tagReason&&`Tags: ${tagReason}`,relationReason&&`Relations: ${relationReason}`].filter(Boolean).join(' · '))}>Reading incomplete</button>}
@@ -738,7 +762,18 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
        onSelectRelation={edge=>{if(!edge.derived_id)host.select(sceneId,null,edge.id);}}
        onOpenMember={ref=>host.inspectSubject(ref)}/></>;
      }
-     const timed=sharedTimelinePresentation(data.dataSource,data.timeline,nativeReading,sharedTime?.axis??null);
+     if(state.m2Projection==='relative'&&relativeAxis){
+      // Steps from the disclosed zero, in the reading's own declared order. Only
+      // the step label and the facet kind are shown: no calendar year or date.
+      return <>{createPortal(toggle,host.tools)}<ol className="research-relative-axis" aria-label="Relative axis: steps from the disclosed zero" data-testid="timeline-relative-axis" style={{display:'flex',flexWrap:'wrap',gap:12,listStyle:'none',margin:0,padding:12}}>
+       {relativeAxis.marks.map(mark=><li key={mark.ref} data-offset={mark.offset} aria-current={mark.offset===0?'step':undefined} style={{fontVariantNumeric:'tabular-nums'}}>
+        <strong>{mark.label}</strong>{' '}<span>{nativeReading.temporal?.find(facet=>facet.facet_ref===mark.facet_ref)?.kind??'undated'}</span>
+       </li>)}
+      </ol></>;
+     }
+     // Lane-2 T6: the chronology reads the shared time-axis projection of the
+     // session the host acknowledged — the same function lane 4 reads.
+     const timed=sharedTimelinePresentation(data.dataSource,data.timeline,nativeReading,sharedTime?timeAxisProjection(nativeReading,sharedTime.session):null);
      return <>{createPortal(toggle,host.tools)}<TimelineSurface timeExtent={years.length?{startYear:first,endYear:last}:undefined} toolbarContainer={host.tools} repository={timed.repository} constellationId={data.reading.subject.subject_ref} dataSource={timed.dataSource}
       initialState={state.timeline!} onViewStateChange={value=>{state.timeline=value;}}
       onOpenCanvasNode={ref=>{const node=data.bundle.nodes.find(node=>node.graphNodeId===ref);if(node)host.inspectSubject(ref,{node});}} onOpenNode={(ref,node,relationField)=>host.inspectSubject(ref,{node,relationField})}/></>;
@@ -769,16 +804,26 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
    // Lane-4 T17–T19: the map's authoring surface asks this host for the owner's route. "Edit place/time" opens
    // the same constellation editor, and the map never writes a coordinate: the save, its basis check and its
    // refusals all happen in that editor, and their own message is the one shown here.
-   const openPlaceRoute=(notice?:string)=>{
+   // T17b: the route carries the map's draft (a draft only, never a write) and registers the constellation it opened,
+   // so the owner's save or refusal comes back to this instrument.
+   const openPlaceRoute=(notice?:string,draft?:PlaceDraft,graphNodeId?:string)=>{
     if(!placeEditRequest)return;
-    void techneConstellationRequest({...placeEditRequest,operation:'open'}).then(()=>{if(notice)message(notice);},error=>message(error instanceof Error?error.message:String(error)));
+    void techneConstellationRequest({...placeEditRequest,operation:'open',...(draft?{placeDraft:draft}:{})}).then(target=>{placeRoutes.set(target.frame_ref,{graphNodeId});if(notice)message(notice);},error=>message(error instanceof Error?error.message:String(error)));
    };
+   placeRouteHandler=(frameRef,outcome)=>{
+    const notice=constellationResultNotice(outcome.kind==='saved'?{kind:'saved'}:{kind:'refused',reason:outcome.reason});
+    // A save re-reads the reading, so the new or moved marker renders from the owner's saved facts; the owner's
+    // words are shown after the re-read, which would otherwise replace the notice.
+    if(notice.reload)void load('m4').then(()=>message(notice.text));
+    else message(notice.text);
+   };
+   listenForPlaceRouteResults();
    const placeAuthoring:PlaceAuthoringHost={
     canAuthor:!!placeEditRequest,
     unavailableReason:placeEditRequest?null:'This reading has no native Scene entity bound, so there is no authoring route here.',
-    onAddPlace:prefill=>openPlaceRoute(addRouteNotice(prefill)),
-    onEditPlace:()=>openPlaceRoute(),
-    onProposeMove:proposal=>openPlaceRoute(moveRouteNotice(proposal)),
+    onAddPlace:prefill=>openPlaceRoute(addRouteNotice(prefill),placeDraftForAdd(prefill)),
+    onEditPlace:graphNodeId=>openPlaceRoute(undefined,undefined,graphNodeId),
+    onProposeMove:proposal=>openPlaceRoute(moveRouteNotice(proposal),placeDraftForMove(proposal),proposal.graphNodeId),
    };
    // W2 — the SAME filter state drives both the map's own repository
    // (presentation-only: `filteredPlacesRepository` never rewrites the

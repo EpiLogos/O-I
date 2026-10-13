@@ -116,11 +116,12 @@ test('a point outside the coordinate ranges prefills nothing and says why', ()=>
  }
 });
 
-test('the add notice names the clicked point as approximate and says it is not yet carried in', ()=>{
+test('the add notice names the clicked point as approximate and says it opens as a draft', ()=>{
  const notice=api.addRouteNotice(api.prefillFromClick(LONDON));
  assert.match(notice,/51\.50740, -0\.12780/);
  assert.match(notice,/as an approximate point/);
- assert.match(notice,/opens without this point carried in/);
+ assert.match(notice,/opened as a draft/);
+ assert.match(notice,/nothing is written until you save/);
 });
 
 // ---------------------------------------------------------------------------
@@ -229,12 +230,94 @@ test('a refusal is shown with the owner’s message unchanged', ()=>{
 
 test('the move notice carries the proposal and the honest gap, and does not claim a save', ()=>{
  const notice=api.moveRouteNotice(proposal().proposal);
- assert.match(notice,/Proposed move: London survey point/);
- assert.match(notice,/opens without this proposal carried in/);
- assert.match(notice,/the owner checks the basis when you save/);
- assert.doesNotMatch(notice,/saved|written|persisted/i);
+ assert.match(notice,/Proposed move opened as a draft: London survey point/);
+ assert.match(notice,/opened as a draft/);
+ assert.match(notice,/the owner checks the basis and the source revision when you save/);
+ assert.doesNotMatch(notice,/has been saved|was written|persisted/i);
 });
 
 test('the coordinate format is fixed to five decimals, latitude first', ()=>{
  assert.equal(api.formatCoordinate({latitude:1,longitude:-2.5}),'1.00000, -2.50000');
+});
+
+// ---------------------------------------------------------------------------
+// T17b — the draft a map hands the owner's route, and the owner's answer back
+// ---------------------------------------------------------------------------
+
+test('a draft is validated: finite in-range coordinates, approximate or region, bounded fields only', ()=>{
+ const ok=api.validatePlaceDraft({lat:LONDON.latitude,lon:LONDON.longitude,precision:'approximate'});
+ assert.equal(ok.ok,true);
+ assert.deepEqual(ok.draft,{lat:LONDON.latitude,lon:LONDON.longitude,precision:'approximate'});
+ const region=api.validatePlaceDraft({lat:0,lon:0,precision:'region',from:{lat:1,lon:1},place_ref:'wiki:place:x'});
+ assert.equal(region.ok,true);
+ assert.deepEqual(region.draft.from,{lat:1,lon:1});
+ assert.equal(region.draft.place_ref,'wiki:place:x');
+});
+
+test('a draft refuses exact precision and any precision the map does not offer', ()=>{
+ const exact=api.validatePlaceDraft({lat:1,lon:1,precision:'exact'});
+ assert.equal(exact.ok,false);
+ assert.match(exact.reason,/never exact/);
+ for (const precision of ['unlocated','', undefined, 'day']) {
+  assert.equal(api.validatePlaceDraft({lat:1,lon:1,precision}).ok,false,String(precision));
+ }
+});
+
+test('a draft refuses out-of-range, non-finite and non-numeric coordinates', ()=>{
+ const bad=[
+  {lat:91,lon:0},{lat:-90.5,lon:0},{lat:0,lon:181},{lat:0,lon:-180.5},
+  {lat:Number.NaN,lon:0},{lat:0,lon:Number.POSITIVE_INFINITY},{lat:'51.5',lon:0},{lon:0},
+ ];
+ for (const coordinates of bad) {
+  assert.equal(api.validatePlaceDraft({...coordinates,precision:'approximate'}).ok,false,JSON.stringify(coordinates));
+ }
+ assert.equal(api.validatePlaceDraft({lat:90,lon:180,precision:'approximate'}).ok,true);
+ assert.equal(api.validatePlaceDraft({lat:-90,lon:-180,precision:'approximate'}).ok,true);
+});
+
+test('a draft refuses unknown fields, a malformed origin, and an oversized marker ref', ()=>{
+ assert.match(api.validatePlaceDraft({lat:1,lon:1,precision:'approximate',source_ref:'x'}).reason,/unknown field: source_ref/);
+ assert.equal(api.validatePlaceDraft({lat:1,lon:1,precision:'approximate',from:'here'}).ok,false);
+ assert.equal(api.validatePlaceDraft({lat:1,lon:1,precision:'approximate',from:{lat:200,lon:0}}).ok,false);
+ assert.equal(api.validatePlaceDraft({lat:1,lon:1,precision:'approximate',place_ref:''}).ok,false);
+ assert.equal(api.validatePlaceDraft({lat:1,lon:1,precision:'approximate',place_ref:'x'.repeat(257)}).ok,false);
+ assert.equal(api.validatePlaceDraft(null).ok,false);
+ assert.equal(api.validatePlaceDraft([]).ok,false);
+});
+
+test('the draft for an add is the clicked point, approximate, with no origin or marker', ()=>{
+ const draft=api.placeDraftForAdd(api.prefillFromClick(LONDON));
+ assert.deepEqual(draft,{lat:51.5074,lon:-0.1278,precision:'approximate'});
+ assert.equal(api.validatePlaceDraft(draft).ok,true);
+});
+
+test('the draft for a move names the new point, the origin, the reading precision and the marker', ()=>{
+ const draft=api.placeDraftForMove(proposal().proposal);
+ assert.deepEqual(draft,{lat:MOVED.latitude,lon:MOVED.longitude,precision:'approximate',from:{lat:LONDON.latitude,lon:LONDON.longitude},place_ref:'wiki:place:london'});
+ assert.equal(api.validatePlaceDraft(draft).ok,true);
+});
+
+test('a save reports that the reading is refreshed and asks the map to read again', ()=>{
+ const notice=api.constellationResultNotice({kind:'saved'});
+ assert.equal(notice.kind,'saved');
+ assert.equal(notice.reload,true);
+ assert.match(notice.text,/refreshed from the owner/);
+});
+
+test('a refusal is shown with the owner\'s own words, unchanged, and does not ask for a reading', ()=>{
+ const notice=api.constellationResultNotice({kind:'refused',reason:NATIVE_STALE_REFUSAL});
+ assert.equal(notice.text,NATIVE_STALE_REFUSAL);
+ assert.equal(notice.kind,'stale-source');
+ assert.equal(notice.reload,false);
+ const basis=api.constellationResultNotice({kind:'refused',reason:NATIVE_BASIS_REFUSAL});
+ assert.equal(basis.text,NATIVE_BASIS_REFUSAL);
+ assert.equal(basis.kind,'source-basis');
+});
+
+test('a refusal without words still says that nothing changed', ()=>{
+ for (const reason of [undefined,null,'','   ']) {
+  const notice=api.constellationResultNotice({kind:'refused',reason});
+  assert.equal(notice.text,'The owner refused this save; no change was made.');
+  assert.equal(notice.reload,false);
+ }
 });
