@@ -422,7 +422,7 @@ export interface DisclosureInstrumentHop {
 }
 
 /** The steps of a Timeline trail (lane-2 T20): the model's event, relation and endpoint kinds, and the back step. */
-export type DisclosureTraversalStep = "event" | "relation" | "endpoint" | "back";
+export type DisclosureTraversalStep = "event" | "relation" | "endpoint" | "back" | "scene" | "return";
 
 /** A traversal hop: one step of a trail within an instrument. Its subject and selection are the session's, carried byte-equal. */
 export interface DisclosureTraversalHop {
@@ -544,7 +544,7 @@ function keysAllowed(value: Record<string, unknown>, allowed: readonly string[],
   }
 }
 
-const TRAVERSAL_STEPS: readonly string[] = ["event", "relation", "endpoint", "back"];
+const TRAVERSAL_STEPS: readonly string[] = ["event", "relation", "endpoint", "back", "scene", "return"];
 
 function isInstrument(value: unknown): value is TechneInstrument {
   return typeof value === "string" && (TECHNE_INSTRUMENTS as readonly string[]).includes(value);
@@ -930,7 +930,7 @@ export function validateSession(value: unknown): TechneValidation {
       } else if (hop.kind === "traversal") {
         keysAllowed(hop, ["kind", "instrument", "step", "ref", "subject_ref", "selection_ref"], label, errors);
         if (!isInstrument(hop.instrument)) errors.push(`${label}.instrument: not an instrument`);
-        if (!TRAVERSAL_STEPS.includes(hop.step as string)) errors.push(`${label}.step: event, relation, endpoint or back`);
+        if (!TRAVERSAL_STEPS.includes(hop.step as string)) errors.push(`${label}.step: event, relation, endpoint, back, scene or return`);
         for (const key of ["ref", "subject_ref", "selection_ref"]) if (!ref(hop[key])) errors.push(`${label}.${key}: required`);
         // One subject per session: a traversal hop is never a foreign subject's. Its selection is checked where it is recorded.
         if (ref(hop.subject_ref) && ref(value.subject_ref) && hop.subject_ref !== value.subject_ref) errors.push(`${label}.subject_ref: must be the session's subject`);

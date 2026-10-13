@@ -7,10 +7,13 @@ import {validateReading, validateSelection, validateSession,
 import type {DisclosureSessionStore} from '../../../desktop/cradle/src/techne/session.ts';
 import {groundSelection, ensureSession} from '../../../desktop/cradle/src/techne/m0m5/reading.ts';
 import {timeAxis, type SharedTimeWindow, type TechneTimeAxis} from '../../../desktop/cradle/src/techne/m0m5/timeline/timeAxis.ts';
+import {beats} from '../../../desktop/cradle/src/techne/m0m5/journey/beats.ts';
+import {crossToExpression, lostCrossingScene, returnPosition} from '../../../desktop/cradle/src/techne/m0m5/journey/crossing.ts';
 import {boundedText, expressionRef, object, positiveInteger, type ChannelContext} from './protocol.ts';
 
 export interface NativeTimeWindowBasis {expression_ref: string; revision: number; scene_ref: string}
-export type NativeTimeWindowInstrument = 'timeline' | 'place';
+/** `journey` is the crossing's own instrument (refresh and cross); `expressions` is the conjugate reading a return leaves. */
+export type NativeTimeWindowInstrument = 'timeline' | 'place' | 'journey' | 'expressions';
 export type NativeTimeWindowRequest = NativeTimeWindowBasis & {reading_ref: string; instrument: NativeTimeWindowInstrument} & (
   | {operation: 'read'}
   | {operation: 'refresh'}
@@ -23,7 +26,16 @@ export type NativeTimeWindowRequest = NativeTimeWindowBasis & {reading_ref: stri
   // selection are the session's, byte-equal, and the recorder refuses any other.
   | {operation: 'traversal'; expected_session_ref: string; expected_selection: DisclosureSelection;
       expected_window: SharedTimeWindow | null; hop: DisclosureTraversalHop}
+  // Lane-5 T10: enter a beat's Scene from the Journey. The captured session must still stand on the journey instrument;
+  // the target must be a beat of the admitted Journey. The crossing records its scene hop and the cut crossing on the one history.
+  | {operation: 'cross'; expected_session_ref: string; expected_selection: DisclosureSelection;
+      expected_window: SharedTimeWindow | null; target_scene_ref: string}
+  // Lane-5 T11: leave the Expression reading and restore the beat the crossing entered, by ref equality (never an index).
+  | {operation: 'return'; expected_session_ref: string; expected_selection: DisclosureSelection; expected_window: SharedTimeWindow | null}
 );
+/** What a crossing or a return did: the beat it entered, or the beat a return restored or lost (named by ref). */
+export type NativeTimeWindowCrossing = {operation: 'cross'; scene_ref: string}
+  | {operation: 'return'; scene_ref: string | null; lost_ref: string | null};
 export interface NativeTimeWindowReply {
   schema: 'oi.native-time-window/v1';
   basis: NativeTimeWindowBasis;
@@ -31,6 +43,7 @@ export interface NativeTimeWindowReply {
   instrument: NativeTimeWindowInstrument;
   session: DisclosureSession;
   axis: TechneTimeAxis;
+  crossing?: NativeTimeWindowCrossing;
 }
 type Admission = {basis: NativeTimeWindowBasis; reading: TechneReading; bindingId: string; epoch: number};
 const copy = <T>(value: T): T => structuredClone(value);
@@ -95,12 +108,33 @@ function qualifySameSource(session: DisclosureSession, admission: Admission): vo
     throw Error('The session addresses another native Expression or Scene; explicitly refresh its ground');
 }
 
+/** One admission: the exact native basis, the validated reading, and the presenting binding. The Scene reading requires its
+ * declared bindings to include this basis when it declares any; the Journey reading must declare this Scene's binding. */
+function admission(request: NativeTimeWindowBasis, reading: TechneReading, context: ChannelContext, requireBinding: boolean): Admission {
+  const native = basis(request);
+  if (Object.keys(request).some(key => !['expression_ref', 'revision', 'scene_ref'].includes(key)))
+    throw Error('Admission carries only its exact native basis');
+  current(context, native);
+  const checked = validateReading(reading);
+  if (!checked.valid) throw Error(`Cannot admit a drifted native Technē reading: ${checked.errors.join('; ')}`);
+  const bound = (reading.expressions ?? []).some(binding => binding.expression_ref === native.expression_ref
+    && binding.scene_ref === native.scene_ref && binding.revision === String(native.revision));
+  if (requireBinding ? !bound : reading.expressions !== undefined && !bound)
+    throw Error('The reading declares no exact current native Expression/Scene binding');
+  const next = {basis: native, reading: copy(reading), bindingId: context.bindingId, epoch: context.epoch};
+  current(context, native);
+  return next;
+}
+
 /** Root must admit only its primary native reading route, after that route's
  * real source/revision guards. Contract validity alone cannot manufacture a
  * source receipt. When a reading declares Expression bindings, those bindings
  * must include this exact owner basis; undeclared bindings stay undeclared. */
 export function createNativeTimeWindowOwner({store}: {store: DisclosureSessionStore}) {
   let admitted: Admission | null = null;
+  // Lane-5 T10/T11: the Expression-wide reading the Journey presents at the same native basis. Its beats are the only
+  // authority a crossing targets and a return restores by ref; it is never the Scene reading that `admitted` holds.
+  let journeyAdmitted: Admission | null = null;
   const align = (entry: Admission, instrument: NativeTimeWindowInstrument, context: ChannelContext): DisclosureSession => {
     current(context, entry.basis, entry);
     const prior = store.get(), sameSource = prior?.subject_ref === entry.reading.subject.subject_ref && prior.reading_ref === entry.reading.reading_ref;
@@ -123,26 +157,27 @@ export function createNativeTimeWindowOwner({store}: {store: DisclosureSessionSt
   };
   return {
     admit(request: NativeTimeWindowBasis, reading: TechneReading, context: ChannelContext): void {
-      const native = basis(request);
-      if (Object.keys(request).some(key => !['expression_ref', 'revision', 'scene_ref'].includes(key)))
-        throw Error('Admission carries only its exact native basis');
-      current(context, native);
-      const checked = validateReading(reading);
-      if (!checked.valid) throw Error(`Cannot admit a drifted native Technē reading: ${checked.errors.join('; ')}`);
-      if (reading.expressions !== undefined && !reading.expressions.some(binding => binding.expression_ref === native.expression_ref
-        && binding.scene_ref === native.scene_ref && binding.revision === String(native.revision)))
-        throw Error('The reading declares no exact current native Expression/Scene binding');
-      const next = {basis: native, reading: copy(reading), bindingId: context.bindingId, epoch: context.epoch};
-      current(context, native);
+      const next = admission(request, reading, context, false);
       admitted = next; // No session operation or domain write during admission.
+    },
+    /** Admit the Expression-wide reading the Journey presents at this exact basis (lane-5 T10/T11). It must declare this Scene's own binding. */
+    admitJourney(request: NativeTimeWindowBasis, reading: TechneReading, context: ChannelContext): void {
+      const next = admission(request, reading, context, true);
+      journeyAdmitted = next; // No session operation or domain write during admission.
     },
     handle(raw: unknown, context: ChannelContext): NativeTimeWindowReply {
       const native = basis(raw);
-      if (!object(raw) || !['read', 'set', 'refresh', 'spatial', 'traversal'].includes(String(raw.operation)) || !['timeline', 'place'].includes(String(raw.instrument))
-        || !boundedText(raw.reading_ref)) throw Error('Shared time supports only exact read/set/refresh/spatial operations for Timeline or Places');
+      // Each operation names the instrument it may address: time writes are Timeline/Place; the crossing's refresh and cross
+      // are the Journey's; a return leaves the Expression reading.
+      const instrumentFor: Record<string, readonly string[]> = {read: ['timeline', 'place'], set: ['timeline', 'place'], spatial: ['timeline', 'place'],
+        traversal: ['timeline', 'place'], refresh: ['timeline', 'place', 'journey'], cross: ['journey'], return: ['expressions']};
+      if (!object(raw) || !Object.prototype.hasOwnProperty.call(instrumentFor, String(raw.operation)) || !instrumentFor[String(raw.operation)].includes(String(raw.instrument))
+        || !boundedText(raw.reading_ref)) throw Error('Shared time supports only exact read/set/refresh/spatial/traversal operations for Timeline or Places, and cross/return for the Journey');
       const extra = raw.operation === 'set' ? ['expected_session_ref', 'expected_selection', 'expected_window', 'window']
         : raw.operation === 'spatial' ? ['expected_session_ref', 'expected_selection', 'expected_window', 'expected_spatial_focus_ref', 'spatial_focus_ref']
-        : raw.operation === 'traversal' ? ['expected_session_ref', 'expected_selection', 'expected_window', 'hop'] : [];
+        : raw.operation === 'traversal' ? ['expected_session_ref', 'expected_selection', 'expected_window', 'hop']
+        : raw.operation === 'cross' ? ['expected_session_ref', 'expected_selection', 'expected_window', 'target_scene_ref']
+        : raw.operation === 'return' ? ['expected_session_ref', 'expected_selection', 'expected_window'] : [];
       if (Object.keys(raw).some(key => !['expression_ref', 'revision', 'scene_ref', 'operation', 'instrument', 'reading_ref', ...extra].includes(key)))
         throw Error('Unsupported shared-time operands; presentation internals do not cross this boundary');
       const entry = admitted;
@@ -192,6 +227,36 @@ export function createNativeTimeWindowOwner({store}: {store: DisclosureSessionSt
           || canonical(before.selection) !== canonical(raw.expected_selection))
           throw Error('The shared session, window or actual selection/instrument changed; read it before setting time');
       }
+      // Lane-5 T10/T11: the crossing and its return are the Journey's own compare-and-set. The Journey's beats come from its own
+      // admitted Expression-wide reading at this exact basis; the captured session must still stand before anything moves.
+      let journey: Admission | null = null;
+      if (raw.operation === 'cross' || raw.operation === 'return') {
+        if (!journeyAdmitted || !sameBasis(journeyAdmitted.basis, native) || journeyAdmitted.reading.subject.subject_ref !== entry.reading.subject.subject_ref)
+          throw Error('The Journey is not admitted at this native Scene; present the Journey before crossing or returning');
+        journey = journeyAdmitted;
+        if (!boundedText(raw.expected_session_ref) || !validateSelection(raw.expected_selection).valid)
+          throw Error(`Journey ${raw.operation} requires the exact captured session and source-qualified selection`);
+        expectedWindow = declaredWindow(raw.expected_window);
+        const before = store.get();
+        if (!before) throw Error(`Read the native shared session before ${raw.operation === 'cross' ? 'crossing' : 'returning'}`);
+        checkedSession(before);
+        if (raw.operation === 'cross') {
+          const target = raw.target_scene_ref;
+          if (!boundedText(target) || !beats(journey.reading).beats.some(beat => beat.scene_ref === target))
+            throw Error('Journey crossing refused: that Scene is not a beat of this journey');
+          qualifySameSource(before, entry);
+          if (before.session_ref !== raw.expected_session_ref || !sameWindow(before.time_window ?? null, expectedWindow)
+            || canonical(before.selection) !== canonical(raw.expected_selection))
+            throw Error('The shared session, window or actual selection changed; read it before crossing');
+        } else {
+          if (before.subject_ref !== entry.reading.subject.subject_ref || before.reading_ref !== entry.reading.reading_ref)
+            throw Error('The shared session belongs to another source; the crossing was not returned');
+          if (before.instrument !== 'expressions') throw Error('Journey return refused: the session is not on the Expression reading');
+          if (before.session_ref !== raw.expected_session_ref || !sameWindow(before.time_window ?? null, expectedWindow)
+            || canonical(before.selection) !== canonical(raw.expected_selection))
+            throw Error('The shared session, window or actual selection changed; the crossing was not returned');
+        }
+      }
       let session: DisclosureSession;
       if (raw.operation === 'refresh') {
         // Explicitly choose the admitted primary reading's native ground.
@@ -203,7 +268,35 @@ export function createNativeTimeWindowOwner({store}: {store: DisclosureSessionSt
         session = store.setSelection(groundSelection(entry.reading, instrument), {
           expression_focus_ref: entry.basis.expression_ref, scene_focus_ref: entry.basis.scene_ref,
         });
+      } else if (raw.operation === 'cross' || raw.operation === 'return') {
+        // Pre-checked above: the session already stands on the instrument it crosses from. Nothing is aligned here.
+        session = store.get()!;
       } else session = align(entry, instrument, context);
+      let crossing: NativeTimeWindowCrossing | undefined;
+      if (raw.operation === 'cross') {
+        // The crossing law: the scene ref rides the selection's focus, identity is carried byte-exact. Then the one history
+        // records the scene hop (on the journey) and the cut crossing into the Expression reading.
+        const target = raw.target_scene_ref as string;
+        const crossed = crossToExpression(session, target);
+        current(context, native, entry);
+        store.setSelection(crossed.selection);
+        store.recordTraversal({kind: 'traversal', instrument: 'journey', step: 'scene', ref: target,
+          subject_ref: session.subject_ref, selection_ref: session.selection.selection_ref});
+        session = store.crossCut(crossed.target).session;
+        crossing = {operation: 'cross', scene_ref: target};
+      }
+      if (raw.operation === 'return') {
+        // Restore by ref equality: the beat the focus names, or the honest miss. The session always returns to the journey,
+        // and the return is recorded on the same history naming the beat it restored or lost.
+        const found = returnPosition(session, beats(journey!.reading).beats);
+        const lost = found.beat ? null : lostCrossingScene(session.navigation);
+        current(context, native, entry);
+        session = store.crossCut('journey').session;
+        const ref = found.beat?.scene_ref ?? lost;
+        if (ref) session = store.recordTraversal({kind: 'traversal', instrument: 'journey', step: 'return', ref,
+          subject_ref: session.subject_ref, selection_ref: session.selection.selection_ref});
+        crossing = {operation: 'return', scene_ref: found.beat?.scene_ref ?? null, lost_ref: lost};
+      }
       if (raw.operation === 'set') {
         // Alignment may record the requested instrument hop; every other
         // actual selection field and the CAS window must still be unchanged.
@@ -232,9 +325,13 @@ export function createNativeTimeWindowOwner({store}: {store: DisclosureSessionSt
       }
       current(context, native, entry);
       if (store.get() !== session) throw Error('The native session advanced before its shared-time reply');
-      qualifySameSource(session, entry);
+      // A return leaves the Scene ground to the Expression reading, which may have moved: only the subject is held to it.
+      if (raw.operation === 'return') {
+        if (session.subject_ref !== entry.reading.subject.subject_ref) throw Error('The native session advanced to another subject during the return');
+      } else qualifySameSource(session, entry);
       return {schema: 'oi.native-time-window/v1', basis: copy(entry.basis), reading_ref: entry.reading.reading_ref,
-        instrument, session: copy(checkedSession(session)), axis: copy(timeAxis(entry.reading, session.time_window ?? null))};
+        instrument, session: copy(checkedSession(session)), axis: copy(timeAxis(entry.reading, session.time_window ?? null)),
+        ...(crossing ? {crossing} : {})};
     },
   };
 }

@@ -84,6 +84,7 @@ import {installLensStudio,type LensId} from './lensStudio.js';
 import {installResearchInstruments} from './researchInstruments.js';
 import {installPalaceInstrument} from './palaceInstrument.js';
 import {installJourneyInstrument} from './journeyInstrument.js';
+import {writeJourneyCrossing,writeJourneyReturn} from './sharedTimeWindow.js';
 import {composeSceneRequest} from './journeyBeats.js';
 import {readJourneyInstrument} from './journeyInstrumentModel.js';
 import {installNaraInstrument} from './naraInstrument.js';
@@ -2129,7 +2130,8 @@ function activateInstrument(lens:LensId){
  if(lens==='project'){sequenceOpen=false;timelineOpen=false;inspectorOpen=false;contextKind='';beltPickerOpen=false;}
  if(lens==='journey'){sequenceOpen=false;timelineOpen=true;inspectorOpen=false;contextKind='';beltPickerOpen=false;}
  journeyHome.hidden=lens!=='journey';
- if(lens==='journey')void journeyInstrument?.open();else journeyInstrument?.close();
+ if(lens==='journey')void journeyInstrument?.open().then(()=>journeyInstrument?.returnFromCrossing()); // T11: a crossed beat returns by ref, through the owner.
+ else journeyInstrument?.close();
  if(lens==='place'){editing=true;inspectorOpen=true;contextKind='';tab='field';studioSection='places';}
  if(lens==='palace'){if(propertyTake)finishPropertyTake();editing=true;inspectorOpen=true;contextKind='';tab='field';studioSection='palace';void palaceInstrument.open();}
  else palaceInstrument.close();
@@ -2383,6 +2385,10 @@ function playbackJourney():Journey{
 }
 journeyInstrument=installJourneyInstrument({nativeView:()=>nativeWorkspace?.nativeView(),sceneId:()=>scene().id,portal:(trigger,basis)=>openScenePortal(trigger.trigger_ref,basis), // T12: the beat's own source portal is the scene-body portal path.
  read:(basis,scope)=>readTechneReading({expression_ref:basis.expression_ref,revision:basis.revision,scene_ref:basis.scene_ref,...(scope?{scope}:{})}),
+ // T10/T11: the crossing and its return are the owner's compare-and-set (the one session history); the Expression reading is the host's own mode.
+ crossing:(basis,scene,sceneRef)=>writeJourneyCrossing(basis,scene,sceneRef),
+ returning:(basis,scene,crossed)=>writeJourneyReturn(basis,scene,crossed),
+ entered:()=>setHostMode('expressions'),
  focusScene:async input=>{
   const view=nativeWorkspace?.nativeView(),reading=retainedEditor.read();
   if(!view||view.document.expression_ref!==input.expression_ref||view.document.revision!==input.revision

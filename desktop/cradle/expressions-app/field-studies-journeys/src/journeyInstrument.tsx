@@ -4,7 +4,9 @@ import {createRoot,type Root} from 'react-dom/client';
 import type {KernelConversion,KernelSceneTrigger} from './kernelDocumentBridge';
 import type {TechneReading} from '../../../src/techne/contract';
 import {draftFromBeats,moveBeat} from '../../../src/techne/m0m5/journey/sequence';
-import {beats} from '../../../src/techne/m0m5/journey/beats';
+import {beats,sceneTitle} from '../../../src/techne/m0m5/journey/beats';
+import type {NativeTimeWindowReply} from '../../../../../packages/expressions-boundary/src/timeWindow';
+import {journeyReturnNotice} from './sharedTimeWindow.js';
 import {journeyBeatView,reorderSceneRequest,type JourneyBeatCard,type JourneyBeatView,type JourneyEditRequest} from './journeyBeats';
 import type {Journey} from './model';
 import {expressionTiming} from './propertyTracks';
@@ -48,6 +50,12 @@ export interface JourneyInstrumentHost {
  /** The native edit channel the compose form also uses. Resolves with the
   * owner's reply, unchanged; nothing is persisted by the instrument. */
  editExpression:(request:JourneyEditRequest)=>Promise<unknown>;
+ /** T10: enter the presented beat's Scene from the Journey through the owner's crossing (the session's one history). Absent: no crossing affordance. */
+ crossing?:(basis:JourneyInstrumentBasis,scene:TechneReading,sceneRef:string)=>Promise<NativeTimeWindowReply>;
+ /** T11: return from the Expression reading to the beat the crossing entered, by ref, through the owner's return. */
+ returning?:(basis:JourneyInstrumentBasis,scene:TechneReading,crossed:NativeTimeWindowReply)=>Promise<NativeTimeWindowReply>;
+ /** T10: the Journey has crossed into the Expression reading; the host presents it. */
+ entered?:()=>void;
 }
 
 /** Beat-card drag: the same grammar as the timeline strip's scene clip drag
@@ -124,7 +132,7 @@ function JourneyPlaybackPath({read,seek}:{read:()=>JourneyPlaybackClock|undefine
  </section>;
 }
 
-export function JourneyBeatPanel({reading,beatView,native,basis,busy,onFocus,onMove,onRefresh,playback,notice,onPortal}:{
+export function JourneyBeatPanel({reading,beatView,native,basis,busy,onFocus,onMove,onRefresh,playback,notice,onPortal,onEnter}:{
  reading:TechneReading;beatView:JourneyBeatView;native:KernelConversion;basis:JourneyInstrumentBasis;busy:boolean;
  onFocus:(card:JourneyBeatCard)=>void;onMove:(sceneRef:string,toIndex:number)=>void;onRefresh:()=>void;
  playback?:{read:()=>JourneyPlaybackClock|undefined;seek:(seconds:number)=>void};
@@ -132,6 +140,8 @@ export function JourneyBeatPanel({reading,beatView,native,basis,busy,onFocus,onM
  onPortal?:(trigger:KernelSceneTrigger,card:JourneyBeatCard)=>void;
  /** T9: the presence disclosure for this load (field moved / stale), one plain sentence. */
  notice?:string;
+ /** T10: enter this beat's Scene in the Expression reading. Absent: no crossing affordance. */
+ onEnter?:(card:JourneyBeatCard)=>void;
 }):ReactElement{
  const cards=beatView.cards;
  return <section className="journey-beat-panel" aria-label="Reading-derived Journey">
@@ -150,6 +160,9 @@ export function JourneyBeatPanel({reading,beatView,native,basis,busy,onFocus,onM
       <span className="journey-beat-chips">{card.chips.map((chip,i)=><span key={`${chip.kind}:${i}`} className={`journey-beat-chip journey-beat-chip-${chip.kind}`} data-facet={chip.kind} title={chip.ref??undefined}>{chip.label}</span>)}</span>
       {card.chipsReason?<span className="journey-beat-reason">{card.chipsReason}</span>:null}
      </button>
+     {onEnter?<button type="button" className="journey-beat-enter" data-journey-enter={card.scene_ref} disabled={busy||!card.onBasis||basis.scene_ref!==card.scene_ref}
+      title={card.onBasis&&basis.scene_ref===card.scene_ref?'Enter this Scene in the Expression reading; Return to journey brings you back to this beat':'Open this Scene first to enter it'}
+      onClick={()=>onEnter(card)}>Enter in Expression</button>:null}
      {onPortal?journeyPortalTriggers(native,card.scene_ref).map(trigger=>{
       const current=card.onBasis&&basis.scene_ref===card.scene_ref;
       return <button key={trigger.trigger_ref} type="button" className="journey-beat-portal" data-journey-portal={trigger.trigger_ref} disabled={!current}
@@ -177,6 +190,8 @@ export function installJourneyInstrument(host:JourneyInstrumentHost,home:HTMLEle
  /** T9: the Expression-wide reading last held, by its native basis. The strip records a Scene change against it without a read. */
  let held:{expression_ref:string;revision:number;reading:TechneReading}|undefined;
  let restoring:Promise<boolean>|undefined;
+ /** T10: the crossing this instrument made and has not yet returned from: the owner's acknowledged reply is the compare-and-set of its return. */
+ let crossed:NativeTimeWindowReply|undefined;
  const playback=host.playback&&host.seek?{read:host.playback,seek:host.seek}:undefined;
  const current=(basis:JourneyInstrumentBasis,generation:number)=>!destroyed&&open&&epoch===generation&&sameJourneyInstrumentBasis(basis,host.nativeView(),host.sceneId());
  const message=(text:string)=>{status.textContent=text;};
@@ -211,7 +226,23 @@ export function installJourneyInstrument(host:JourneyInstrumentHost,home:HTMLEle
    root??=createRoot(mount);
    let busy=false;
    const portal=host.portal;
-   const draw=()=>{if(!current(basis,generation))return;root!.render(<JourneyBeatPanel reading={reading} beatView={beatView} native={view!} basis={basis} busy={busy} onRefresh={()=>void reuseOrLoad()} playback={playback} notice={presence.notice}
+   /** T10: enter the presented beat's Scene. Only the beat the native Scene already presents can be entered, so the owner's basis is this one. */
+   const enter=(card:JourneyBeatCard)=>{
+    const cross=host.crossing;
+    if(!cross||busy||!current(basis,generation)||!card.onBasis||card.scene_ref!==basis.scene_ref)return;
+    busy=true;draw();
+    let scene:TechneReading|undefined;
+    void host.read(basis).then(raw=>{
+     if(!current(basis,generation))throw Error('The presented Scene changed while it was entered');
+     scene=raw as TechneReading;
+     return cross(basis,scene,card.scene_ref);
+    }).then(reply=>{
+     if(destroyed||!open||generation!==epoch)return;
+     crossed=reply;busy=false;
+     host.entered?.();
+    }).catch(error=>{if(!destroyed&&open&&generation===epoch){busy=false;draw();message(failure(error));}});
+   };
+   const draw=()=>{if(!current(basis,generation))return;root!.render(<JourneyBeatPanel reading={reading} beatView={beatView} native={view!} basis={basis} busy={busy} onRefresh={()=>void reuseOrLoad()} playback={playback} notice={presence.notice} onEnter={host.crossing?enter:undefined}
     onPortal={portal?(trigger,card)=>{
      // T12: the source is placed by the host; its own return closes it, and this journey position is not changed.
      void portal(trigger,{expression_ref:basis.expression_ref,revision:basis.revision,scene_ref:card.scene_ref}).then(()=>{
@@ -308,7 +339,30 @@ export function installJourneyInstrument(host:JourneyInstrumentHost,home:HTMLEle
   },
   async open(){if(destroyed)throw Error('Journey instrument is closed');open=true;mount.hidden=false;status.hidden=false;await load();},
   close(){epoch++;open=false;inFlight=undefined;mount.hidden=true;status.hidden=true;root?.unmount();root=null;},
-  async refresh(){if(open)await reuseOrLoad();},
+  /** T11: the journey re-opened after a crossing. The crossed beat is restored by ref through the owner; a beat no longer in the Journey
+  * is named in one status line, and no neighbour is restored in its place. */
+  async returnFromCrossing(){
+   const state=crossed;
+   const returning=host.returning;
+   if(!state||destroyed||!returning)return;
+   crossed=undefined;
+   let view:KernelConversion|undefined,basis:JourneyInstrumentBasis;
+   try{view=host.nativeView();basis=journeyInstrumentBasis(view,host.sceneId());}catch(error){message(failure(error));return;}
+   try{
+    const scene=await host.read(basis) as TechneReading;
+    const reply=await returning(basis,scene,state);
+    if(destroyed||!open)return;
+    const restoredRef=reply.crossing?.operation==='return'?reply.crossing.scene_ref:null;
+    let moved=false;
+    if(restoredRef&&restoredRef!==basis.scene_ref&&held){
+     const card=journeyBeatView(held.reading,view!.document).cards.find(card=>card.scene_ref===restoredRef);
+     if(card?.onBasis){await host.focusScene(prepareJourneyBeatFocus(card,basis,view!,host.sceneId()));moved=true;}
+    }
+    if(moved)await load();
+    message(journeyReturnNotice(reply)??`Back in this Journey at "${sceneTitle(restoredRef??basis.scene_ref)}".`);
+   }catch(error){if(!destroyed&&open)message(failure(error));}
+  },
+ async refresh(){if(open)await reuseOrLoad();},
   destroy(){epoch++;open=false;destroyed=true;inFlight=undefined;root?.unmount();root=null;mount.remove();status.remove();},
   active(){return open;},
  };

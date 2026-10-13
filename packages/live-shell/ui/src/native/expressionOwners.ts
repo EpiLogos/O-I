@@ -39,8 +39,12 @@ export function qualifiedExpressionOwners(initial: ShellConfig, current: () => W
       const result = await access.owners.channels[channel](request, access.context)
       if (!access.isCurrent()) throw Error('The owner reply belongs to a retired native access; reread this work')
       // The shared-time slot holds the presented Scene's own reading: admit only an unscoped, facet-less read of exactly
-      // that Scene. A Journey's per-card scene reads and its whole-Expression read (scope) are not the presented reading.
+      // that Scene. A Journey's per-card scene reads are not the presented reading.
       if(channel==='techne-reading'&&object(request)&&request.facet===undefined&&request.scope===undefined&&presentsBasis(access.context,request))time.admit(request as unknown as NativeTimeWindowBasis,result as TechneReading,access.context)
+      // Lane-5 T10/T11: the Journey's whole-Expression reading at the presented Scene is its own admission, the only authority
+      // a crossing targets and a return restores by ref. An admission it cannot take is simply not admitted: the crossing refuses by name.
+      if(channel==='techne-reading'&&object(request)&&request.facet===undefined&&request.scope==='expression'&&presentsBasis(access.context,request))
+       try{time.admitJourney({expression_ref:request.expression_ref,revision:request.revision,scene_ref:request.scene_ref} as unknown as NativeTimeWindowBasis,result as TechneReading,access.context)}catch{/* not admitted */}
       return result
     }])), 'techne-time-window':async(request,context)=>{
       const access=await qualify(context)
