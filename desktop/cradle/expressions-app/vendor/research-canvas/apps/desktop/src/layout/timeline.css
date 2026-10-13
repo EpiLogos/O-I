@@ -170,6 +170,16 @@
   transform: translateX(4px);
 }
 
+/* T-LANE2-CRAFT: the major row carries the weight, the minor row is muted.
+ * Opacity and weight only; the labels keep their tabular figures and never move. */
+.timeline-axis-tick--major .timeline-axis-tick-label {
+  font-weight: 600;
+}
+
+.timeline-axis-tick--minor .timeline-axis-tick-label {
+  opacity: 0.6;
+}
+
 .timeline-nodes {
   position: absolute;
   inset: 0;
@@ -193,6 +203,29 @@
   height: 2px;
   background: rgba(121, 192, 212, 0.38);
   pointer-events: none;
+}
+
+/* T3 + T-LANE2-CRAFT: a band keeps its inline family fill and hairline edge
+ * (per item); these rules add the soft edge, the hatch for an approximate fact
+ * (circa, uncertain), and the standing badge. Tokens only; no transition. */
+.timeline-node-band {
+  border-radius: 3px;
+}
+
+.timeline-node-band--uncertain {
+  background-image: repeating-linear-gradient(135deg, var(--band-hatch, transparent) 0 2px, transparent 2px 6px);
+}
+
+.timeline-node-standing {
+  display: inline-block;
+  margin-left: 0.35rem;
+  padding: 0 0.3rem;
+  border: 1px solid currentColor;
+  border-radius: 3px;
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .timeline-node-dot {

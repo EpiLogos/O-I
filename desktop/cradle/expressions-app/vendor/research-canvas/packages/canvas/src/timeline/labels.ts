@@ -6,8 +6,10 @@
  * off them, in the reading's own frame (epoch ms shifted by the offset the
  * anchor declares, as scale.ts does).
  *
- * T3 seam: an uncertainty qualifier (circa, disputed, mythic) attaches to
- * precisionLabel here, and nowhere else.
+ * The uncertainty string is not part of any label here. It is the source's own
+ * verbatim text, carried on the item (TimelineItem.uncertainty) and shown in the
+ * hover title by TimelineNode, so the stated precision above stays exactly the
+ * precision and never a rewording of the source.
  */
 import type { TemporalPrecision } from "./contracts";
 import type { TimelineItem } from "./projection";
