@@ -17,7 +17,7 @@
  *
  * Erasable-TypeScript-compatible logic, JSX component on top.
  */
-import React,{useMemo,useState} from 'react';
+import React,{useMemo,useState,type CSSProperties} from 'react';
 import type {TechneReading} from '../../../src/techne/contract';
 import {
  relationField,edgesForProjection,projectionAvailability,arcLayout,transformationCycles,phasesFromFacets,
@@ -29,10 +29,15 @@ import type {TechneTimeAxis,TimeAxisScope} from '../../../src/techne/m0m5/timeli
 import {relationFieldState} from '../../../src/techne/m0m5/timeline/state';
 import {causeChains,relationFieldCauseSource,NO_DATE_DISCLOSED,type CauseChain} from '../../vendor/research-canvas/packages/canvas/src/timeline/causeChain';
 import {StandingLegend} from '../../vendor/research-canvas/packages/canvas/src/timeline/TimelineRelationshipLayer';
+import {modeVoice} from '../../vendor/research-canvas/packages/canvas/src/timeline/availabilityVoice';
+import {STANDING_COLOUR} from '../../vendor/research-canvas/packages/canvas/src/timeline/palette';
 import './relationFieldView.css';
 
 /** The one standing legend, shared with the chronology (lane-2 T11): the same entries and swatches in both projections. */
 export {StandingLegend};
+
+/** The standing colours, as custom properties (`--standing-<class>`), drawn from the one palette: the CSS reads these, never a literal. */
+const STANDING_TOKENS=Object.fromEntries(Object.entries(STANDING_COLOUR).map(([visual,colour])=>[`--standing-${visual}`,colour])) as CSSProperties;
 
 // ---------------------------------------------------------------------------
 // Pure layout/filter engine — no React, no DOM. Tested directly.
@@ -191,12 +196,13 @@ export function RelationFieldView({reading,width=720,initialMode='relations',tim
   </>;
  })();
 
- return <div className="relation-field-view">
+ return <div className="relation-field-view" style={STANDING_TOKENS}>
   <div className="relation-field-modes" role="tablist" aria-label="Relation projection">
    {RELATION_FIELD_MODES.map(m=>{
     const a=availabilityFor(m);
+    const voice=modeVoice(availability,m);
     return <button key={m} type="button" role="tab" aria-selected={mode===m} aria-pressed={mode===m}
-     disabled={a?!a.available:false} title={a?.reason??(a?.window_scope?`${a.window_scope.out_of_scope} outside the shared window · ${a.window_scope.unresolved} unresolved · ${a.window_scope.unpositioned} unpositioned`:undefined)}
+     disabled={!voice.available} title={voice.reason??(a?.window_scope?`${a.window_scope.out_of_scope} outside the shared window · ${a.window_scope.unresolved} unresolved · ${a.window_scope.unpositioned} unpositioned`:undefined)}
      onClick={()=>{setMode(m);setSelected(null);setChainId(null);}}>{MODE_LABEL[m]}{a?.count?` · ${a.count}`:''}{a?.window_scope?.out_of_scope?` (${a.window_scope.out_of_scope} outside)`:''}</button>;
    })}
   </div>
@@ -273,7 +279,7 @@ function CauseWalk({chains,activeId,edges,onToggle,onSelectEdge}:{chains:readonl
     </li>;
    })}</ol>}
   </div>;})}
-  <StandingLegend/>
+  <StandingLegend visuals={edges.map(edge=>edge.standing_visual)}/>
  </div>;
 }
 

@@ -127,3 +127,35 @@ test('a Relations projection with nothing to draw falls back to the chronology, 
  assert.match(instruments,/if\(state\.m2Projection==='field'&&!voice\.relations\.available\)state\.m2Projection='chronology';/);
  assert.match(instruments,/if\(temporal\.length===0\)return .*data-testid="chronology-honest-empty" role="note">\{NO_DATES_SENTENCE\}\{voice\.timeline\.reason\?`: \$\{voice\.timeline\.reason\}`:''\}<\/p>/);
 });
+
+// lane-2 T23–T25 seams: one voice for every projection. The authority (src/techne/m0m5/timeline/relations.ts) takes its
+// reason sentences from the vendored availabilityVoice; the Relations mode bar reads the same voice as the chronology.
+const relationsSource=await readFile(resolve(engine,'../../src/techne/m0m5/timeline/relations.ts'),'utf8');
+const relationFieldSource=await readFile(resolve(engine,'src/relationFieldView.tsx'),'utf8');
+
+test('the authority takes its projection reasons from availabilityVoice: no second copy of a sentence in relations.ts',()=>{
+ assert.match(relationsSource,/from ["']\.\.\/\.\.\/\.\.\/\.\.\/expressions-app\/vendor\/research-canvas\/packages\/canvas\/src\/timeline\/availabilityVoice\.ts["']/);
+ for(const reason of Object.values(api.PROJECTION_REASONS)){
+  assert.equal(relationsSource.includes(reason),false,`the sentence "${reason.slice(0,40)}…" lives in availabilityVoice only`);
+ }
+});
+
+test('every projection reason is the voice\'s own, and an absent projection is unavailable with a reason, never available',()=>{
+ for(const fixture of [NO_TEMPORAL,TEMPORAL_NO_RELATIONS,RELATIONS_NO_DATES]){
+  const availability=api.projectionAvailability(fixture);
+  for(const fact of availability){
+   const voiced=api.modeVoice(availability,fact.mode);
+   assert.equal(voiced.available,fact.available,fact.mode);
+   assert.equal(voiced.reason,fact.available?null:fact.reason,`${fact.mode} reason is the authority's own`);
+  }
+ }
+ const absent=api.modeVoice([],'cause');
+ assert.equal(absent.available,false);
+ assert.equal(absent.reason,api.NO_PROJECTION_REASON);
+});
+
+test('the Relations mode bar reads the one voice: each mode is disabled by, and titled with, its voiced reason',()=>{
+ assert.match(relationFieldSource,/import \{[^}]*\bmodeVoice\b[^}]*\} from '\.\.\/\.\.\/vendor\/research-canvas\/packages\/canvas\/src\/timeline\/availabilityVoice'/);
+ assert.match(relationFieldSource,/const voice=modeVoice\(availability,m\);/);
+ assert.match(relationFieldSource,/disabled=\{!voice\.available\} title=\{voice\.reason\?\?/);
+});

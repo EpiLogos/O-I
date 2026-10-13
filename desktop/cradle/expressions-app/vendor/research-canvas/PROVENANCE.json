@@ -335,9 +335,13 @@
       "adapted_sha256": "47f82929825ed6c66ccc2a8a6b4f4af41e4de21d023f416b02fbf95baa4e3ec0",
       "reason": "lane-2 T1b: chronology on the authority's epoch-ms extents | lane-2 T2+T7: precision bands, two-row axis, BCE/CE labels | lane-2 T8: periodisation bands"
     },
+    "packages/canvas/src/timeline/availabilityVoice.ts": {
+      "adapted_sha256": "dc179719045483b154c310dd60e17936ff7b6f9902a486709b485ecccf8daaba",
+      "reason": "lane-2 T23–T25 seams: the one availability voice; PROJECTION_REASONS holds every projection's authority reason (read by src/techne/m0m5/timeline/relations.ts, which imports this import-free module), and modeVoice gives the Relations mode bar its availability and reason"
+    },
     "packages/canvas/src/timeline/TimelineRelationshipLayer.tsx": {
-      "adapted_sha256": "3091f215df0cdaf47d89a18cd5f636384370278280419dd9a83f06685e978256",
-      "reason": "lane-2 T3: standing presentation + band/axis craft | lane-2 T10-T11: cause chains, standing edges | lane-2 T20 glue: onOpenRelation on the cause-family hit path (click and Enter), beside onSelectChain; CauseChainPanel's relation text and endpoint titles become selectable only when the host declares onOpenRelation or onOpenEndpoint."
+      "adapted_sha256": "921e642735dde0101db4484534724c323cad0a04407fb7fe0e3efc74f2a26342",
+      "reason": "lane-2 T3: standing presentation + band/axis craft | lane-2 T10-T11: cause chains, standing edges | lane-2 T20 glue: onOpenRelation on the cause-family hit path (click and Enter), beside onSelectChain; CauseChainPanel's relation text and endpoint titles become selectable only when the host declares onOpenRelation or onOpenEndpoint. | lane-2 T23–T25 seams: the standing legend draws only the classes the loaded reading discloses (disclosedStandings over the layer's relationships); omitted visuals keep the authority's full list"
     },
     "packages/canvas/src/timeline/frames.ts": {
       "adapted_sha256": "6ac53ce33f59a98dbfe22e83e08fa3585fc6e48c9244332714cf67f5c50b2237",

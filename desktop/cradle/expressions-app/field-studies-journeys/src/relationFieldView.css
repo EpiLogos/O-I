@@ -20,13 +20,13 @@
 .relation-field-node circle{fill:var(--paper);stroke:currentColor;stroke-width:1.4;cursor:pointer}
 .relation-field-node circle:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
-/* Standing visual grammar (mechanical mapping — see standing.ts). */
-.relation-field-standing-sourced{stroke:#2e7d32;color:#2e7d32}
-.relation-field-standing-derived{stroke:#6a4bd6;color:#6a4bd6;stroke-dasharray:5 3}
-.relation-field-standing-authored{stroke:#0d6efd;color:#0d6efd}
-.relation-field-standing-disputed{stroke:#c62828;color:#c62828;stroke-dasharray:2 3}
-.relation-field-standing-mythic{stroke:#b8860b;color:#b8860b;stroke-dasharray:1 4}
-.relation-field-standing-unavailable{stroke:var(--muted);color:var(--muted);stroke-dasharray:3 5}
+/* Standing visual grammar (mechanical mapping — see standing.ts). Colours are the one palette's (palette.ts), set on the view as --standing-<class>. */
+.relation-field-standing-sourced{stroke:var(--standing-sourced);color:var(--standing-sourced)}
+.relation-field-standing-derived{stroke:var(--standing-derived);color:var(--standing-derived);stroke-dasharray:5 3}
+.relation-field-standing-authored{stroke:var(--standing-authored);color:var(--standing-authored)}
+.relation-field-standing-disputed{stroke:var(--standing-disputed);color:var(--standing-disputed);stroke-dasharray:2 3}
+.relation-field-standing-mythic{stroke:var(--standing-mythic);color:var(--standing-mythic);stroke-dasharray:1 4}
+.relation-field-standing-unavailable{stroke:var(--standing-unavailable);color:var(--standing-unavailable);stroke-dasharray:3 5}
 
 .relation-field-phase{display:flex;flex-direction:column;gap:14px}
 .relation-field-phase-bands{display:flex;flex-direction:column;gap:6px}
