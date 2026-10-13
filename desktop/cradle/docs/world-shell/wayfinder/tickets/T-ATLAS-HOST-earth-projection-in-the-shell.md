@@ -1,7 +1,7 @@
 # T-ATLAS-HOST — the atlas mounts in the shell's Earth / Graph panes
 
 Label: wayfinder:task (Phase 2 — seams; has a UI leg)
-Claimed-by: —
+Claimed-by: claude-code:dlw-lead (13 Oct 2026; split: provider leg = T-ATLAS-PROVIDER, host leg = this ticket; builders haiku ×2)
 Blocked-by: — (code); the UI leg needs the screen gate (PATH §3)
 Found by: the lead, 13 Oct 2026, while designing T-TIMELINE-WALKS leg 2.
 
@@ -46,6 +46,51 @@ landing flag — `setGraphSettingsStore`, `setPracticeStorage`,
 
 Then: T-TIMELINE-WALKS leg 2 (the Journey reads the walks of the mounted
 atlas) and T-ATLAS-WORKSPACE-STORES (folded in here).
+
+## Lead's design (13 Oct 2026) — the host leg
+
+The provider leg is T-ATLAS-PROVIDER (`provider/archetypalEarthProvider.ts`
+exports `archetypalEarthProvider(transport: KernelTransportStatus): CorpusProvider`
+and `ARCHETYPAL_EARTH_PROVIDER_ID = 'archetypal-earth'`). Code against that
+signature; until it lands, the fixture provider stands in (tests).
+
+1. `src/projections/atlas/AtlasProjectionPanel.tsx` (new) — a React
+   component that owns one atlas instance: a globe element + an app
+   element; on mount `registerCorpusProvider(archetypalEarthProvider(transport),
+   {asDefault: true})` (once per transport), binds the host stores
+   (step 3), calls `mountAtlas({globe, app, provider: ARCHETYPAL_EARTH_PROVIDER_ID})`,
+   and shows the honest refusal text in the pane when mount rejects; on
+   unmount `handle.destroy()`. A `view: 'earth' | 'graph'` prop drives the
+   atlas's own Earth ⇄ Graph switch through the controller (read
+   `src/app/controller.ts` for the existing graph toggle — call it, never
+   reimplement). Hidden-inhabitant law: hidden (`display:none`) keeps the
+   instance; `setVisible(false)` pauses the engine if the engine exposes a
+   pause (read `globe/engine.ts`), else leave it.
+2. Registration (`src/projections/atlas/registerAtlasHost.ts`, new, called
+   once from `App.tsx` where other panels register — find `registerPanel`
+   callers): `registerPanel({id: 'projection.earth', slot: 'center', …})`
+   rendering the panel with `view="earth"`, and `registerProjectionModule`
+   for `projection.earth` and `projection.constellation` (cradle door,
+   `desktop/cradle/src/surface/projectionModules.ts`) whose `create` mounts
+   the same way into the pane element (view earth / graph).
+3. Host stores (lock §8.4: settings in the workspace, never browser
+   storage): bind `setGraphSettingsStore`, `setPracticeStorage`,
+   `setLandingStore` to the shell's workspace-scoped store — read
+   `src/continuity/workspace.tsx` / `continuity/residency.ts` for the
+   workspace's own storage namespace and use it (one namespace per
+   workspace id); never `localStorage` directly in the atlas.
+4. The Technē lens bar (`src/shell/ModeDetail.tsx` LENSES +
+   `src/App.tsx` onLens): **Places** becomes `cut`, opening the centre
+   panel `projection.earth` (Earth view); **Project / graph** becomes `cut`,
+   opening it in the Graph view. Timeline and Journey keep their World-cut
+   behaviour. `aria-pressed` follows the open lens.
+5. Tests (`tests/atlas-host.test.mjs`, headless, jsdom-free like the other
+   SSR tests — render the lens bar and assert cut/waiting states; unit-test
+   the store binding and the registration doors with fakes;
+   `registerProjectionModule` refuses a second different module).
+
+UI legs (the globe and graph visible in Technē, both viewports): verified
+by the lead's computer-use / headless-Playwright pass.
 
 ## Resolution
 
