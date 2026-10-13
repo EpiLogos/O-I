@@ -1,7 +1,7 @@
 /** Lane-4 T25 — the tour being recorded, held per open Scene for this session only. It is presentation state, like the
  * layer filter: it is not a second store of the tour. Saving a tour to the Scene is OPEN (the native `placeTours` material
  * key, with its write action and kernel validation); until it lands a recorded tour lives here and nowhere else. */
-import type {PlaceTourRecord} from './placeTours.js';
+import type {PlaceTourRecord} from './placeTourRecord.js';
 
 export interface PlaceTourSession {recording:boolean;record:PlaceTourRecord}
 

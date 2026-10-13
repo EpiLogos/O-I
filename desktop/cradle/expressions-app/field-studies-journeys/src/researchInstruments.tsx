@@ -7,7 +7,7 @@ import {exportObsidianCanvas,noteBlocksFromText,parseObsidianCanvas,planObsidian
 import {frameBounds,renderFrameStage,type StageEdge} from './frameImage.js';
 import {download} from './capture';
 import {capturePlaceView,layersKey,layersRecordOf,placeViewNameProblem,restoreLayers,restorePlaceView,sameTimeWindow} from './placeViews.js';
-import {appendTourStop,captureTourStop,removeTourStop,resolveTourBindings} from './placeTours.js';
+import {appendTourStop,captureTourStop,placeTourNameProblem,removeTourStop,withStopBinding,type PlaceTourRecord} from './placeTours.js';
 import {placeTourSessionOf} from './placeTourSession.js';
 import {playPlaceTour,type PlaceTourPlayback} from './placeTourPlayback.js';
 import {PlaceTourPanel} from './placeTourPanel.js';
@@ -1487,19 +1487,22 @@ host.tools.append(saveGlyph);
     state.placeLayersSave={timer:setTimeout(write,600),write};
    };
    const removePlaceView=(name:string)=>{void host.material(sceneId,{type:'place-view-remove',name}).then(()=>{message(`View "${name}" removed`);render(renderPlaces());},error=>message(error instanceof Error?error.message:String(error)));};
-   // Lane-4 T25–T26: a tour is recorded from the camera the map shows and played as flights. It is not written to the Scene yet
-   // (OPEN: the native placeTours key); until then it lives in this session only. A stop's journey binding is read from the
-   // journey's own beats on every render, never copied here.
+   // Lane-4 T25–T26: a tour is recorded from the camera the map shows, saved to the Scene through the material path (as named views
+   // are), and played as flights. Only the recording in progress lives in this session, and it is discarded when recording stops
+   // unsaved. A stop's journey binding is written as withStopBinding plus a save; the journey's own beats are read on every render.
    let flyOnMap:((camera:PlaceViewState,durationMs:number)=>void)|null=null;
    let tourPlayback:PlaceTourPlayback|null=null;
+   let playingTour:string|null=null;
    const tourSession=()=>placeTourSessionOf(sceneId);
+   const savedPlaceTours=():Record<string,PlaceTourRecord>=>{try{return host.sceneMaterial(sceneId).research?.placeTours??{};}catch{return {};}};
    const reducedMotionNow=()=>{try{return window.matchMedia('(prefers-reduced-motion: reduce)').matches;}catch{return false;}};
-   const stopTour=()=>{tourPlayback?.stop();tourPlayback=null;};
+   const stopTour=()=>{tourPlayback?.stop();tourPlayback=null;playingTour=null;};
+   const refusal=(error:unknown)=>message(error instanceof Error?error.message:String(error));
    const toggleTourRecording=()=>{
     if(!scene){message('Open a Scene to record a tour.');return;}
     const session=tourSession();
-    if(session.recording){session.recording=false;message('Recording stopped. The tour is kept for this session only; saving tours to the Scene is still open.');}
-    else{stopTour();session.recording=true;message('Recording: each stop is the camera the map shows. Saving tours to the Scene is still open.');}
+    if(session.recording){session.recording=false;session.record={stops:[]};message('Recording stopped; the unsaved tour was discarded.');}
+    else{session.recording=true;session.record={stops:[]};message('Recording: each stop is the camera the map shows.');}
     render(renderPlaces());
    };
    const addTourStop=(caption:string,holdSeconds:number)=>{
@@ -1516,21 +1519,42 @@ host.tools.append(saveGlyph);
     render(renderPlaces());
    };
    const removeTourStopAt=(index:number)=>{const session=tourSession();session.record=removeTourStop(session.record,index);render(renderPlaces());};
-   const playTour=()=>{
+   // Save writes the recording to the Scene under its trimmed name; a refusal names the reason and keeps the recording.
+   const saveTour=(entered:string)=>{
+    if(!scene)return;
     const session=tourSession();
-    if(!scene||session.record.stops.length===0)return;
+    const problem=placeTourNameProblem(entered,savedPlaceTours());
+    if(problem){message(problem);return;}
+    if(session.record.stops.length===0){message('Record at least one stop before saving the tour.');return;}
+    const name=entered.trim();
+    const tour=session.record;
+    void host.material(sceneId,{type:'place-tour-save',name,tour}).then(()=>{session.recording=false;session.record={stops:[]};message(`Tour "${name}" saved`);render(renderPlaces());},refusal);
+   };
+   const playSavedTour=(name:string)=>{
+    const tour=savedPlaceTours()[name];
+    if(!scene||!tour)return;
     stopTour();
-    session.recording=false;
-    tourPlayback=playPlaceTour(session.record,{
+    playingTour=name;
+    tourPlayback=playPlaceTour(tour,{
      reducedMotion:reducedMotionNow(),
      fly:(camera,durationMs)=>{if(destroyed||lens!=='m4'){stopTour();return;}flyOnMap?.(camera,durationMs);},
-     onArrive:(caption,index)=>{if(destroyed||lens!=='m4')return;message(caption??`Stop ${index+1} of ${session.record.stops.length}`);},
-     onDone:()=>{tourPlayback=null;if(!destroyed&&lens==='m4'){message('Tour finished');render(renderPlaces());}},
+     onArrive:(caption,index)=>{if(destroyed||lens!=='m4')return;message(caption??`Stop ${index+1} of ${tour.stops.length}`);},
+     onDone:()=>{tourPlayback=null;playingTour=null;if(!destroyed&&lens==='m4'){message('Tour finished');render(renderPlaces());}},
     });
     render(renderPlaces());
    };
    const stopPlayingTour=()=>{stopTour();message('Tour stopped');render(renderPlaces());};
-   const clearTour=()=>{stopTour();const session=tourSession();session.record={stops:[]};session.recording=false;message('Tour cleared');render(renderPlaces());};
+   const removeSavedTour=(name:string)=>{
+    if(playingTour===name)stopTour();
+    void host.material(sceneId,{type:'place-tour-remove',name}).then(()=>{message(`Tour "${name}" removed`);render(renderPlaces());},refusal);
+   };
+   // A binding is a pair of refs from the journey's own beat; the saved tour is rewritten through the same save.
+   const bindTourStop=(name:string,index:number,beat:{expression_ref:string;scene_ref:string}|null)=>{
+    const saved=savedPlaceTours()[name];
+    if(!scene||!saved)return;
+    const tour=withStopBinding(saved,index,beat);
+    void host.material(sceneId,{type:'place-tour-save',name,tour}).then(()=>{message(beat?`Stop ${index+1} bound to ${beat.scene_ref}`:`Stop ${index+1} unbound`);render(renderPlaces());},refusal);
+   };
    const renderPlaces=():ReactNode=>{
     const filter={...state.placeFilter!,window:sharedTime?.axis.window??null};
     const placeViewsNow=savedPlaceViews();
@@ -1583,7 +1607,7 @@ host.tools.append(saveGlyph);
      onViewStateChange={value=>{state.place=value;}} onSelectedGraphNodeIdChange={value=>{state.selectedPlace=value;render(renderPlaces());}}
      onOpenCanvasNode={ref=>{const node=data.bundle.nodes.find(node=>node.graphNodeId===ref&&node.place);if(node)host.inspectSubject(ref,{node});}}/>
      <ImageryPanel tools={host.placesHome??host.tools} toolbarContainer={host.placesHome??host.tools} images={images} offlineOnly imageTitle={image=>scene?.entities.find(entity=>entity.id===image.id)?.name??'Scene image'} resolveAsset={path=>{const value=assets.get(path);if(!value)throw new Error('Image is not bound to this native Scene');return value;}} onImport={importImagery}/>
-     <PlaceTourPanel sceneOpen={!!scene} session={tourSession()} playing={!!tourPlayback} bindings={resolveTourBindings(tourSession().record,journeyBeatsOf(nativeReading).beats)} onToggleRecording={toggleTourRecording} onAddStop={addTourStop} onRemoveStop={removeTourStopAt} onPlay={playTour} onStop={stopPlayingTour} onClear={clearTour}/>
+     <PlaceTourPanel sceneOpen={!!scene} recording={tourSession().recording} draft={tourSession().record} saved={savedPlaceTours()} beats={journeyBeatsOf(nativeReading).beats} playingName={playingTour} onToggleRecording={toggleTourRecording} onAddStop={addTourStop} onRemoveStop={removeTourStopAt} onSave={saveTour} onPlaySaved={playSavedTour} onStopPlaying={stopPlayingTour} onRemoveSaved={removeSavedTour} onBind={bindTourStop}/>
      {!host.placesHome&&facets}
     </div>{host.placesHome&&createPortal(facets,host.placesHome)}</>;
    };

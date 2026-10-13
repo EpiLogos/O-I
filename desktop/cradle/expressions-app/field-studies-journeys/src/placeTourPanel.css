@@ -8,3 +8,7 @@
 .place-tour-stops li{display:grid;gap:.1rem}
 .place-tour-stop-title{font-weight:600}
 .place-tour-stop-meta,.place-tour-stop-place,.place-tour-stop-binding,.place-tour-empty{font-size:.8rem;opacity:.85}
+.place-tour-save{display:flex;flex-wrap:wrap;gap:.5rem;align-items:flex-end}
+.place-tour-save label,.place-tour-bind{display:grid;gap:.2rem;font-size:.8rem}
+.place-tour-saved{display:grid;gap:.75rem;margin:0;padding:0;list-style:none}
+.place-tour-saved-head{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem}

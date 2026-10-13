@@ -493,6 +493,7 @@ fn validate_research(value: &Value, ids: &BTreeSet<&str>) -> Result<(), String> 
                 "placeViews",
                 "placeLayers",
                 "timelineViews",
+                "placeTours",
             ]
             .contains(&key.as_str())
         })
@@ -878,6 +879,19 @@ fn validate_research(value: &Value, ids: &BTreeSet<&str>) -> Result<(), String> 
     if let Some(layers) = r.get("placeLayers") {
         place_layers(layers)?;
     }
+    // lane-4 T25: named Places tours, kept beside the Places views. Each is closed and bounded (see place_tour).
+    if let Some(tours) = r.get("placeTours") {
+        let tours = object(tours, "Research place tours")?;
+        if tours.len() > TOUR_LIMIT {
+            return Err("Research place tour count exceeds its bound".into());
+        }
+        for (name, tour) in tours {
+            if name.trim().is_empty() || utf16_len(name) > 160 {
+                return Err("Invalid place tour name".into());
+            }
+            place_tour(tour)?;
+        }
+    }
     // lane-2 T15: named timeline views, kept beside the canvas and Places views. Each is closed and bounded (see timeline_view).
     if let Some(views) = r.get("timelineViews") {
         let views = object(views, "Research timeline views")?;
@@ -892,6 +906,94 @@ fn validate_research(value: &Value, ids: &BTreeSet<&str>) -> Result<(), String> 
         }
     }
     Ok(())
+}
+/// lane-4 T25: the bounds a tour admits. The app's placeTours.ts holds the same numbers.
+const TOUR_LIMIT: usize = 16;
+const TOUR_STOP_LIMIT: usize = 32;
+const TOUR_CAPTION_MAX: usize = 280;
+const TOUR_HOLD_MAX_MS: f64 = 60000.0;
+const TOUR_REF_MAX: usize = 1024;
+/// lane-4 T25–T26: one named tour, admitted closed. A tour is an ordered list of camera stops; a stop carries no temporal,
+/// route or dated-place field. The optional journey binding is a pair of refs and nothing else.
+fn place_tour(value: &Value) -> Result<(), String> {
+    let tour = object(value, "Place tour")?;
+    if tour.keys().any(|k| k != "stops") || !tour.contains_key("stops") {
+        return Err("Invalid place tour".into());
+    }
+    let stops = value["stops"]
+        .as_array()
+        .ok_or("Invalid place tour stops")?;
+    if stops.is_empty() || stops.len() > TOUR_STOP_LIMIT {
+        return Err("A place tour holds one to 32 stops".into());
+    }
+    stops.iter().try_for_each(place_tour_stop)
+}
+/// lane-4 T25–T26: one stop, admitted closed. Every field but the binding is required; the binding is a pair of refs.
+fn place_tour_stop(value: &Value) -> Result<(), String> {
+    const FIELDS: [&str; 4] = ["place_ref", "viewport", "caption", "hold_ms"];
+    let stop = object(value, "Place tour stop")?;
+    if stop
+        .keys()
+        .any(|k| !FIELDS.contains(&k.as_str()) && k != "binding")
+        || !FIELDS.iter().all(|k| stop.contains_key(*k))
+    {
+        return Err("Invalid place tour stop".into());
+    }
+    let place_ref = &value["place_ref"];
+    if !place_ref.is_null() && !tour_ref(place_ref) {
+        return Err("Invalid place tour place ref".into());
+    }
+    let camera = object(&value["viewport"], "Place tour camera")?;
+    if camera
+        .keys()
+        .any(|k| !["x", "y", "zoom", "pitch", "bearing"].contains(&k.as_str()))
+    {
+        return Err("Unknown viewport field".into());
+    }
+    number(&value["viewport"]["x"], -180.0, 180.0, "Viewport longitude")?;
+    number(&value["viewport"]["y"], -90.0, 90.0, "Viewport latitude")?;
+    number(&value["viewport"]["zoom"], 0.001, 1e5, "Viewport zoom")?;
+    if camera.contains_key("pitch") {
+        number(&value["viewport"]["pitch"], 0.0, 85.0, "Viewport pitch")?;
+    }
+    if camera.contains_key("bearing") {
+        number(
+            &value["viewport"]["bearing"],
+            -180.0,
+            180.0,
+            "Viewport bearing",
+        )?;
+    }
+    match &value["caption"] {
+        Value::Null => {}
+        Value::String(text) if utf16_len(text) <= TOUR_CAPTION_MAX => {}
+        _ => return Err("Place tour caption exceeds its bound".into()),
+    }
+    if !value["hold_ms"]
+        .as_u64()
+        .is_some_and(|hold| hold as f64 <= TOUR_HOLD_MAX_MS)
+    {
+        return Err("Place tour hold is outside its bound".into());
+    }
+    if let Some(binding) = stop.get("binding") {
+        let pair = object(binding, "Place tour binding")?;
+        if pair
+            .keys()
+            .any(|k| !["expression_ref", "scene_ref"].contains(&k.as_str()))
+            || !["expression_ref", "scene_ref"]
+                .iter()
+                .all(|k| tour_ref(&binding[*k]))
+        {
+            return Err("Invalid place tour binding".into());
+        }
+    }
+    Ok(())
+}
+/// A tour ref: a non-empty string of at most 1024 UTF-16 units, the same grammar the app's tours hold.
+fn tour_ref(value: &Value) -> bool {
+    value
+        .as_str()
+        .is_some_and(|s| !s.is_empty() && utf16_len(s) <= TOUR_REF_MAX)
 }
 /// lane-2 T15: the timeline categories the lens filters by (categories.ts). The app and this kernel hold one list.
 const TIMELINE_CATEGORY_IDS: &[&str] = &[
@@ -2391,5 +2493,105 @@ mod tests {
         let mut unknown = with_devices(json!([]));
         unknown["authority"] = json!("write-anywhere");
         assert!(composition(unknown).validate().is_err());
+    }
+
+    #[test]
+    fn place_tours_are_admitted_bounded_and_closed() {
+        use super::validate_research;
+        use serde_json::{json, Value};
+        use std::collections::BTreeSet;
+        let ids: BTreeSet<&str> = BTreeSet::new();
+        let with_tours = |tours: Value| {
+            json!({"schema": "oi.research-scene/v1", "cards": {}, "strokes": [],
+                "views": {}, "timeline": {}, "placeTours": tours})
+        };
+        // one stop, with the fields a recording carries, then overridden by `extra`
+        let stop = |extra: Value| {
+            let mut s = json!({"place_ref": "place:paris",
+                "viewport": {"x": 2.35, "y": 48.85, "zoom": 11.0, "pitch": 40.0, "bearing": -20.0},
+                "caption": "Arrive by the river", "hold_ms": 4000});
+            for (k, v) in extra.as_object().unwrap() {
+                s[k] = v.clone();
+            }
+            s
+        };
+        let bound =
+            json!({"expression_ref": "expr:1", "scene_ref": "oi.expression:expr:1:scene:arrival"});
+        let three = json!({"stops": [
+            stop(json!({})),
+            stop(json!({"place_ref": null, "caption": null, "hold_ms": 0})),
+            stop(json!({"viewport": {"x": 12.5, "y": 41.9, "zoom": 9.0}, "binding": bound.clone()})),
+        ]});
+        // accepted: a valid three-stop tour, and material saved before tours existed (no key)
+        assert!(validate_research(&with_tours(json!({"Paris": three.clone()})), &ids).is_ok());
+        assert!(validate_research(
+            &json!({"schema": "oi.research-scene/v1", "cards": {}, "strokes": [], "views": {}, "timeline": {}}),
+            &ids
+        )
+        .is_ok());
+        // refused: an unknown key on the tour, on a stop, on the viewport and on the binding
+        let mut tour_key = three.clone();
+        tour_key["name"] = json!("Paris");
+        let mut viewport_key = three.clone();
+        viewport_key["stops"][0]["viewport"]["heading"] = json!(1.0);
+        let mut binding_key = three.clone();
+        binding_key["stops"][2]["binding"]["revision"] = json!(3);
+        let refused_shapes = [
+            ("unknown tour key", tour_key),
+            ("unknown viewport key", viewport_key),
+            ("unknown binding key", binding_key),
+            (
+                "unknown stop key",
+                json!({"stops": [stop(json!({"route_id": "r1"}))]}),
+            ),
+            ("no stops", json!({"stops": []})),
+            ("stops not a list", json!({"stops": "three"})),
+        ];
+        for (what, tour) in refused_shapes {
+            assert!(
+                validate_research(&with_tours(json!({"Paris": tour})), &ids).is_err(),
+                "accepted: {what}"
+            );
+        }
+        // refused: a 33rd stop (the bound is 32)
+        let full: Vec<Value> = vec![stop(json!({})); 32];
+        assert!(
+            validate_research(&with_tours(json!({"Paris": {"stops": full.clone()}})), &ids).is_ok()
+        );
+        let mut too_many = full.clone();
+        too_many.push(stop(json!({})));
+        assert!(
+            validate_research(&with_tours(json!({"Paris": {"stops": too_many}})), &ids).is_err(),
+            "accepted a 33rd stop"
+        );
+        // refused: a forbidden temporal key on a stop: a recorded stop carries no time and no route
+        for forbidden in ["window", "time_window", "temporal", "validity", "route_id"] {
+            let mut extra = serde_json::Map::new();
+            extra.insert(forbidden.into(), json!({"from": "1900", "to": null}));
+            let tour = json!({"stops": [stop(Value::Object(extra))]});
+            assert!(
+                validate_research(&with_tours(json!({"Paris": tour})), &ids).is_err(),
+                "accepted a stop carrying {forbidden}"
+            );
+        }
+        // refused: bounds on the caption, the hold, the zoom, the refs and the tour count
+        for bad in [
+            stop(json!({"caption": "x".repeat(281)})),
+            stop(json!({"hold_ms": 60001})),
+            stop(json!({"hold_ms": -1})),
+            stop(json!({"place_ref": ""})),
+            stop(json!({"viewport": {"x": 2.35, "y": 48.85, "zoom": 0.0}})),
+        ] {
+            assert!(
+                validate_research(&with_tours(json!({"Paris": {"stops": [bad]}})), &ids).is_err(),
+                "accepted an out-of-bounds stop"
+            );
+        }
+        let mut seventeen = serde_json::Map::new();
+        for i in 0..17 {
+            seventeen.insert(format!("t{i}"), three.clone());
+        }
+        assert!(validate_research(&with_tours(Value::Object(seventeen)), &ids).is_err());
+        assert!(validate_research(&with_tours(json!({"   ": three.clone()})), &ids).is_err());
     }
 }
