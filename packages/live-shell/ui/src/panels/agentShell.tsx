@@ -1,13 +1,15 @@
 import {registerPanel} from '../shell/panels'
-import {AgentShellCentre} from '../agent/AgentShellRoot'
 
+// The agent surface is the Factory Workbench tree's default tab (agent/factoryCentre.ts): its body is mounted by the tree's
+// conversation node (native/Workbench.tsx). This registration keeps the `native.agent` id valid for saved views and mounts no
+// second agent body, so the sessions poll has one owner.
 registerPanel({
   id: 'native.agent',
   title: 'Agent',
   icon: 'agents',
   slot: 'center',
-  component: () => <AgentShellCentre />,
+  component: () => null,
   order: 12,
-  navigation: true,
-  note: 'Agent-native session grid, arrangement needles, and threads over real agency_read sessions',
+  navigation: false,
+  note: 'Retired centre id: the agent surface is the Factory Workbench tree\'s default tab',
 })

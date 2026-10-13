@@ -383,7 +383,7 @@ export interface TechneLens {
 }
 
 /** The six lenses by their plain actual names, with the declared mark each would wear. */
-const LENSES: readonly TechneLens[] = [
+export const LENSES: readonly TechneLens[] = [
   {id: 'project-graph', name: 'Project / graph', mark: 'lib', state: 'cut', atlas: 'graph', owner: 'the Earth atlas — its Graph view (the constellation, lock §8.1)'},
   {id: 'canvas', name: 'Canvas', mark: 'pane', state: 'waiting', owner: 'the canvas owner (the instrument-editors packet)'},
   {id: 'timeline', name: 'Timeline', mark: 'arrangement', state: 'cut', presentation: 'arrangement', owner: 'the World cut — the Timeline (M2′)'},
@@ -392,17 +392,35 @@ const LENSES: readonly TechneLens[] = [
   {id: 'palace', name: 'Palace', mark: 'palace', state: 'waiting', owner: 'the Palace owner (the integral composition)'},
 ]
 
-export function TechneLensBar({presentation, atlasOpen, onLens, hosted = null}: {
+/** The plain reason a lens cannot open as a pane in the Factory centre, or null when it can. Factory's Workbench tree admits only
+ * the Earth atlas as a pane body: its Graph view (Project / graph) and its Earth view (Places). Timeline and Journey (Session) are
+ * held by the World view; every other waiting lens names its owner. */
+export function factoryLensReason(lens: TechneLens): string | null {
+  if (lens.id === 'project-graph' || lens.id === 'places') return null
+  if (lens.id === 'timeline' || lens.id === 'journey') return `The ${lens.name} isn't available as a pane in Factory yet — its body is held by the World view.`
+  return `${lens.name} (planned) — the button holds its place; ${lens.owner} is still to be mounted here`
+}
+
+/** The instrument pane a Factory lens press opens inside the Workbench tree, or null when the press opens nothing. Session (Journey)
+ * never maps to the Timeline: a Factory press reaches only the admitted Earth atlas panes. */
+export function factoryLensPane(lens: TechneLens): 'projection.earth' | 'projection.constellation' | null {
+  if (factoryLensReason(lens) !== null) return null
+  return lens.atlas === 'graph' ? 'projection.constellation' : 'projection.earth'
+}
+
+export function TechneLensBar({presentation, atlasOpen, onLens, hosted = null, factory = false}: {
   presentation: 'session' | 'arrangement'
   /** the Earth atlas is the open centre pane: the World cut's lenses are not pressed while it is */
   atlasOpen: boolean
   onLens: (lens: TechneLens) => void
   /** The hosted Expressions pane stands focused: the bar reads and drives its lens (null lens = none reported yet). Absent = the World cut / Earth bar. */
   hosted?: {lens: HostedLens | null} | null
+  /** The Factory centre: a lens is reachable only when its pane is admitted (factoryLensReason); the rest stay visible, disabled, titled with their reason. */
+  factory?: boolean
 }) {
   const atlasView = useAtlasView()
   // Hosted focus: the bar's entries are the hosted lenses (paneInstrument's one table); every entry with a hosted lens is reachable.
-  const reachable = (lens: TechneLens) => hosted ? hostedLensOfBarId(lens.id) !== null : lens.state === 'cut'
+  const reachable = (lens: TechneLens) => factory ? factoryLensReason(lens) === null : hosted ? hostedLensOfBarId(lens.id) !== null : lens.state === 'cut'
   const pressed = (lens: TechneLens) => hosted
     ? hostedLensOfBarId(lens.id) === hosted.lens
     : lens.atlas
@@ -412,10 +430,12 @@ export function TechneLensBar({presentation, atlasOpen, onLens, hosted = null}: 
   return <nav className="techne-lens-bar" data-lens={focused?.id ?? null} data-hosted={hosted ? 'true' : undefined} aria-label="Technē lenses">
     <span className="techne-lens-title">Lenses</span>
     {LENSES.map(lens => (
-      <button key={lens.id} type="button" className="techne-lens" data-lens-state={hosted && hostedLensOfBarId(lens.id) ? 'cut' : lens.state}
+      <button key={lens.id} type="button" className="techne-lens" data-lens-state={factory ? (reachable(lens) ? 'cut' : 'waiting') : hosted && hostedLensOfBarId(lens.id) ? 'cut' : lens.state}
         aria-pressed={reachable(lens) && pressed(lens)}
         disabled={!reachable(lens)}
-        title={hosted
+        title={factory
+          ? (factoryLensReason(lens) ?? `${lens.name} — ${lens.owner}`)
+          : hosted
           ? (hostedLensOfBarId(lens.id) ? `${lens.name} — the hosted Expressions lens` : `${lens.name} — not a hosted Expressions lens`)
           : lens.state === 'cut'
             ? `${lens.name} — ${lens.owner}`

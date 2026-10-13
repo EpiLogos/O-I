@@ -143,7 +143,22 @@ export function deviceInstrumentFor(
  * pane), in any mode but Live. */
 export function showsLensBar(frameMode: FrameModeName, centerPanel: string): boolean {
   if (frameMode === 'live') return false
+  // Factory's centre is the pane tree, and the lens bar is how an instrument pane opens there: it stands over the agent tab
+  // as over any instrument pane (its un-admitted lenses disabled with their reason).
+  if (frameMode === 'factory') return true
   // The hosted Expressions pane carries the lens bar outside Expressions mode; in it, the pane's own studio is its chrome.
   if (centerPanel === 'world.expressions') return frameMode !== 'expressions'
   return centerPanel === 'world.ground' || centerPanel === 'projection.earth'
+}
+
+/** The centre pane a focused Factory tab stands for, so the existing `deviceInstrumentFor` reads its instrument (owner ruling,
+ * 13 Oct 2026: a pane instrument works in Factory at full capability). The agent tab stands for AgentShellDeviceDetail: it
+ * names `native.agent`, which holds no instrument. An Earth or Graph pane holds the 0 instrument; a Timeline pane holds the
+ * Timeline lens (techne:m2); a knowledge pane is the standalone knowledge graph. Any other tab holds none. */
+export function factoryFocusedPane(surfaceKind: string | undefined): {pane: string; presentation: TimelinePresentation | null} {
+  if (surfaceKind === 'projection.earth' || surfaceKind === 'projection.constellation') return {pane: 'projection.earth', presentation: null}
+  if (surfaceKind === 'projection.timeline') return {pane: 'world.ground', presentation: 'arrangement'}
+  if (surfaceKind === 'knowledge') return {pane: 'world.knowledge', presentation: null}
+  if (surfaceKind === undefined || surfaceKind === 'agent-shell') return {pane: 'native.agent', presentation: null}
+  return {pane: 'native.workbench', presentation: null}
 }
