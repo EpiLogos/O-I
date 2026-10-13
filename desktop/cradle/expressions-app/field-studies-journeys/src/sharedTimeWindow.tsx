@@ -3,6 +3,7 @@
 import React,{useEffect,useRef,useState} from 'react';
 import {validateSession,type DisclosureTraversalHop,type TechneReading} from '../../../src/techne/contract';
 import {timeAxis,type SharedTimeWindow} from '../../../src/techne/m0m5/timeline/timeAxis';
+import {sceneTitle} from '../../../src/techne/m0m5/journey/beats';
 import type {NativeTimeWindowBasis,NativeTimeWindowReply,NativeTimeWindowRequest} from '../../../../../packages/expressions-boundary/src/timeWindow';
 import {techneTimeWindowRequest} from './kernelExpressions.js';
 import {SHARED_TIME_NUDGE} from '../../../src/techne/session';
@@ -110,6 +111,64 @@ export async function writeSharedTimeWindow(basis:NativeTimeWindowBasis,reading:
  const request:NativeTimeWindowRequest={...basis,operation:'set',reading_ref:reading.reading_ref,instrument,
   expected_session_ref:acknowledged.session.session_ref,expected_selection:acknowledged.session.selection,expected_window:acknowledged.axis.window,window};
  return qualifyTimeWindowReply(await trackOwnSharedTimeWrite(techneTimeWindowRequest(request)),basis,reading,instrument);
+}
+
+/** Lane-5 T10/T11: the Journey's crossing rides the same owner compare-and-set as the time writes. Every request carries the
+ * acknowledged session's identity whole, never a partial one, and is refused by name when the acknowledged reply belongs to
+ * another native Scene or source. Pure: no channel, so the request shapes are testable as they are sent. */
+const sameAcknowledgedSource=(basis:NativeTimeWindowBasis,reading:TechneReading,acknowledged:NativeTimeWindowReply)=>{
+ if(acknowledged.basis.expression_ref!==basis.expression_ref||acknowledged.basis.scene_ref!==basis.scene_ref
+  ||acknowledged.basis.revision!==basis.revision||acknowledged.reading_ref!==reading.reading_ref) {
+  throw Error('This Journey belongs to an earlier native source or Scene; it was not changed');
+ }
+};
+/** The refresh that places the presented Scene as the Journey's explicit ground before a crossing. It keeps the session's trail. */
+export function journeyRefreshRequest(basis:NativeTimeWindowBasis,reading:TechneReading):NativeTimeWindowRequest {
+ return {...basis,operation:'refresh',reading_ref:reading.reading_ref,instrument:'journey'};
+}
+export function journeyCrossingRequest(basis:NativeTimeWindowBasis,reading:TechneReading,acknowledged:NativeTimeWindowReply,sceneRef:string):NativeTimeWindowRequest {
+ sameAcknowledgedSource(basis,reading,acknowledged);
+ return {...basis,operation:'cross',reading_ref:reading.reading_ref,instrument:'journey',
+  expected_session_ref:acknowledged.session.session_ref,expected_selection:acknowledged.session.selection,expected_window:acknowledged.axis.window,target_scene_ref:sceneRef};
+}
+export function journeyReturnRequest(basis:NativeTimeWindowBasis,reading:TechneReading,acknowledged:NativeTimeWindowReply):NativeTimeWindowRequest {
+ sameAcknowledgedSource(basis,reading,acknowledged);
+ return {...basis,operation:'return',reading_ref:reading.reading_ref,instrument:'expressions',
+  expected_session_ref:acknowledged.session.session_ref,expected_selection:acknowledged.session.selection,expected_window:acknowledged.axis.window};
+}
+/** A crossing reply addresses this Journey's source and Scene. Its session rests on the journey or on the Expression reading. */
+export function qualifyJourneyReply(raw:unknown,basis:NativeTimeWindowBasis,reading:TechneReading):NativeTimeWindowReply{
+ const value=raw as NativeTimeWindowReply;
+ if(!value||value.schema!=='oi.native-time-window/v1'
+  ||value.basis?.expression_ref!==basis.expression_ref||value.basis?.revision!==basis.revision||value.basis?.scene_ref!==basis.scene_ref
+  ||value.reading_ref!==reading.reading_ref||!validateSession(value.session).valid
+  ||value.session.subject_ref!==reading.subject.subject_ref||value.session.reading_ref!==reading.reading_ref
+  ||(value.session.instrument!=='journey'&&value.session.instrument!=='expressions')||value.session.selection.instrument!==value.session.instrument
+  ||JSON.stringify(value.axis)!==JSON.stringify(timeAxis(reading,value.session.time_window))) {
+  throw Error('The host time reading does not address this source and Scene; retained bounds were not changed');
+ }
+ return structuredClone(value);
+}
+/** One plain status line for a return: nothing when the beat was restored; the lost beat named by its title otherwise. Never an index. */
+export function journeyReturnNotice(reply:{crossing?:NativeTimeWindowReply['crossing']}):string|null{
+ const crossing=reply.crossing;
+ if(!crossing||crossing.operation!=='return'||crossing.scene_ref)return null;
+ if(crossing.lost_ref)return `The beat "${sceneTitle(crossing.lost_ref)}" is no longer in this Journey, so nothing was restored.`;
+ return 'Nothing was crossed from this Journey, so no beat was restored.';
+}
+/** Lane-5 T10: enter the presented beat's Scene from the Journey. The explicit ground is placed first, then the crossing is written
+ * against that acknowledged session. The reply names the Scene the owner entered. */
+export async function writeJourneyCrossing(basis:NativeTimeWindowBasis,reading:TechneReading,sceneRef:string):Promise<NativeTimeWindowReply>{
+ const ground=qualifyJourneyReply(await trackOwnSharedTimeWrite(techneTimeWindowRequest(journeyRefreshRequest(basis,reading))),basis,reading);
+ const reply=qualifyJourneyReply(await trackOwnSharedTimeWrite(techneTimeWindowRequest(journeyCrossingRequest(basis,reading,ground,sceneRef))),basis,reading);
+ if(reply.crossing?.operation!=='cross'||reply.crossing.scene_ref!==sceneRef)throw Error('The Journey crossing did not enter the Scene it named; nothing was changed');
+ return reply;
+}
+/** Lane-5 T11: return from the Expression reading to the beat the crossing entered, by ref. The acknowledged crossing reply is the compare-and-set. */
+export async function writeJourneyReturn(basis:NativeTimeWindowBasis,reading:TechneReading,acknowledged:NativeTimeWindowReply):Promise<NativeTimeWindowReply>{
+ const reply=qualifyJourneyReply(await trackOwnSharedTimeWrite(techneTimeWindowRequest(journeyReturnRequest(basis,reading,acknowledged))),basis,reading);
+ if(reply.crossing?.operation!=='return')throw Error('The Journey return did not come back from a crossing; nothing was changed');
+ return reply;
 }
 
 /** Lane-2 T20: one trail step recorded on the shared session through the owner's compare-and-set, the same route as the time

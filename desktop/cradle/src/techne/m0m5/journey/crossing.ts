@@ -26,6 +26,7 @@
  * Erasable TypeScript: loadable by the renderer, Vite, and `node --test`.
  */
 import type {
+  DisclosureNavigationHop,
   DisclosureSelection,
   DisclosureSession,
   TechneInstrument,
@@ -105,4 +106,18 @@ export function crossToExpression(session: DisclosureSession, sceneRef: string):
 export function returnPosition(session: DisclosureSession, beats: readonly JourneyBeat[]): { beat: JourneyBeat | null; focus_ref: string | null } {
   const focus = sceneFocusOf(session.selection, beats);
   return { beat: beatForSceneFocus(beats, focus), focus_ref: focus };
+}
+
+/** The scene a crossing entered and has not yet returned from: the ref of the latest `scene` hop on the session's own
+ * navigation, unless a `return` hop was recorded after it. Read from the one history, never from a position; null when
+ * no crossing stands. A Return that finds no beat names this ref as the lost one. */
+export function lostCrossingScene(navigation: readonly DisclosureNavigationHop[] | undefined): string | null {
+  const hops = navigation ?? [];
+  for (let index = hops.length - 1; index >= 0; index -= 1) {
+    const hop = hops[index];
+    if (!("kind" in hop) || hop.kind !== "traversal") continue;
+    if (hop.step === "return") return null;
+    if (hop.step === "scene") return hop.ref;
+  }
+  return null;
 }
