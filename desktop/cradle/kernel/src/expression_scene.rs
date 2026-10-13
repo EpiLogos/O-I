@@ -94,6 +94,34 @@ pub fn data(value: &Value, depth: usize) -> Result<(), String> {
     Ok(())
 }
 
+/// A Scene's painted transition (lane-3 E11): `cut`, `dip-to-colour` (optional `at` in [0.2, 0.8]) or `wipe`
+/// (optional `direction`). Crossfade is the default and is carried by absence, so it is not admitted here.
+fn transition_spec(value: &Value) -> Result<(), String> {
+    let spec = object(value, "Scene transition kind")?;
+    let kind = spec.get("kind").and_then(Value::as_str).unwrap_or("");
+    let params: &[&str] = match kind {
+        "cut" => &[],
+        "dip-to-colour" => &["at"],
+        "wipe" => &["direction"],
+        _ => return Err("Unknown Scene transition kind".into()),
+    };
+    if spec
+        .keys()
+        .any(|key| key != "kind" && !params.contains(&key.as_str()))
+    {
+        return Err("Unknown Scene transition parameter".into());
+    }
+    if let Some(at) = spec.get("at") {
+        number(at, 0.2, 0.8, "Dip to colour point")?;
+    }
+    if let Some(direction) = spec.get("direction") {
+        if !matches!(direction.as_str(), Some("left" | "right" | "up" | "down")) {
+            return Err("Invalid wipe direction".into());
+        }
+    }
+    Ok(())
+}
+
 pub fn validate(
     presentation: &Presentation,
     scene: &Scene,
@@ -130,6 +158,8 @@ pub fn validate(
         "pointerScope",
         "research",
         "epiWorld",
+        "transitionSpec",
+        "entryOffset",
     ];
     if material.keys().any(|key| !KEYS.contains(&key.as_str())) {
         return Err("Unsupported authoring Scene field; original input was not rewritten".into());
@@ -155,6 +185,13 @@ pub fn validate(
         30.0,
         "Scene transition",
     )?;
+    // E06 slip and E11 typed transitions: timeline facts the editor writes inside the Scene material.
+    if let Some(offset) = material.get("entryOffset") {
+        number(offset, 0.0, 3600.0, "Scene entry offset")?;
+    }
+    if let Some(spec) = material.get("transitionSpec") {
+        transition_spec(spec)?;
+    }
     for key in ["view", "field", "composition", "morph", "engine"] {
         object(&presentation.scene[key], key)?;
     }
@@ -405,8 +442,18 @@ fn validate_research(value: &Value, ids: &BTreeSet<&str>) -> Result<(), String> 
     let r = object(value, "Research material")?;
     if value["schema"] != "oi.research-scene/v1"
         || serde_json::to_vec(value).map_err(|e| e.to_string())?.len() > 262144
-        || r.keys()
-            .any(|key| !["schema", "cards", "strokes", "views", "timeline"].contains(&key.as_str()))
+        || r.keys().any(|key| {
+            ![
+                "schema",
+                "cards",
+                "strokes",
+                "views",
+                "timeline",
+                "frames",
+                "namedViews",
+            ]
+            .contains(&key.as_str())
+        })
     {
         return Err("Invalid or unbounded research Scene material".into());
     }
@@ -447,8 +494,9 @@ fn validate_research(value: &Value, ids: &BTreeSet<&str>) -> Result<(), String> 
     };
     for (id, card) in value["cards"].as_object().unwrap() {
         let c = object(card, "Research card")?;
+        let kind = card["type"].as_str();
         if !ids.contains(id.as_str())
-            || !matches!(card["type"].as_str(), Some("note" | "image"))
+            || !matches!(kind, Some("note" | "image" | "sticky" | "shape" | "text"))
             || c.keys().any(|k| {
                 ![
                     "type",
@@ -459,6 +507,10 @@ fn validate_research(value: &Value, ids: &BTreeSet<&str>) -> Result<(), String> 
                     "dotColour",
                     "bgColour",
                     "textColour",
+                    "size",
+                    "palette",
+                    "shape",
+                    "fill",
                 ]
                 .contains(&k.as_str())
             })
@@ -466,6 +518,42 @@ fn validate_research(value: &Value, ids: &BTreeSet<&str>) -> Result<(), String> 
             return Err(
                 "Research card must address a disclosed occurrence with an admitted kind".into(),
             );
+        }
+        // lane-1 A2: a card's display size is bounded like the presentation
+        // record it is (the same width/height law as the JS material); a
+        // sticky's colour is a palette KEY, a shape carries its geometry and
+        // a fill key, and each field is admitted only on its own kind.
+        const PALETTE: &[&str] = &["amber", "sage", "sky", "rose", "stone"];
+        if let Some(size) = c.get("size") {
+            let m = object(size, "Research card display size")?;
+            if m.keys().any(|k| k != "width" && k != "height") {
+                return Err("Invalid card display size".into());
+            }
+            number(&size["width"], 40., 40000., "Card width")?;
+            number(&size["height"], 40., 40000., "Card height")?;
+        }
+        if let Some(palette) = c.get("palette") {
+            if kind != Some("sticky") || !palette.as_str().is_some_and(|s| PALETTE.contains(&s)) {
+                return Err("Invalid sticky colour".into());
+            }
+        }
+        if kind == Some("shape") {
+            if !card["shape"]
+                .as_str()
+                .is_some_and(|s| ["rectangle", "ellipse", "diamond"].contains(&s))
+            {
+                return Err("Invalid shape".into());
+            }
+            if let Some(fill) = c.get("fill") {
+                if !fill
+                    .as_str()
+                    .is_some_and(|s| s == "none" || PALETTE.contains(&s))
+                {
+                    return Err("Invalid shape".into());
+                }
+            }
+        } else if c.contains_key("shape") || c.contains_key("fill") {
+            return Err("Only shape cards carry a geometry or fill".into());
         }
         if let Some(v) = c.get("importedAt") {
             if card["type"] != "image" || !bounded(v, 64) {
@@ -559,6 +647,68 @@ fn validate_research(value: &Value, ids: &BTreeSet<&str>) -> Result<(), String> 
         for key in ["width", "height"] {
             if let Some(v) = m.get(key) {
                 number(v, 40., 40000., "Timeline card size")?;
+            }
+        }
+    }
+    // Frames and named views (lane-1, researchMaterial.ts): absent in material saved before they existed; present,
+    // they are bounded and closed exactly as the app validates them.
+    let refs = |v: &Value, min: usize, members: bool| {
+        v.as_array().is_some_and(|rows| {
+            rows.len() >= min
+                && rows.len() <= 64
+                && rows.iter().all(|row| {
+                    row.as_str()
+                        .is_some_and(|r| r.len() <= 1024 && (!members || ids.contains(r)))
+                })
+        })
+    };
+    if let Some(frames) = r.get("frames") {
+        let frames = object(frames, "Research frames")?;
+        if frames.len() > 64 {
+            return Err("Research frame count exceeds its bound".into());
+        }
+        for (id, frame) in frames {
+            let f = object(frame, "Research frame")?;
+            if id.len() > 1024
+                || f.keys()
+                    .any(|k| !["label", "memberRefs", "z"].contains(&k.as_str()))
+            {
+                return Err("Invalid frame".into());
+            }
+            if !f["label"]
+                .as_str()
+                .is_some_and(|l| !l.trim().is_empty() && l.chars().count() <= 160)
+            {
+                return Err("Invalid frame label".into());
+            }
+            if !refs(&f["memberRefs"], 1, true) {
+                return Err("Invalid frame membership".into());
+            }
+            if !f["z"].is_i64() && !f["z"].is_u64() {
+                return Err("Invalid frame order".into());
+            }
+        }
+    }
+    if let Some(named) = r.get("namedViews") {
+        let named = object(named, "Research named views")?;
+        if named.len() > 32 {
+            return Err("Research named view count exceeds its bound".into());
+        }
+        for (name, view) in named {
+            let v = object(view, "Research named view")?;
+            if name.trim().is_empty()
+                || name.chars().count() > 160
+                || v.keys()
+                    .any(|k| !["viewport", "selectedRefs", "frameOrder"].contains(&k.as_str()))
+            {
+                return Err("Invalid named view".into());
+            }
+            viewport(&v["viewport"])?;
+            if !refs(&v["selectedRefs"], 0, false) {
+                return Err("Invalid view selection".into());
+            }
+            if !refs(&v["frameOrder"], 0, false) {
+                return Err("Invalid view frame order".into());
             }
         }
     }
@@ -855,12 +1005,93 @@ pub struct Composition {
     pub loop_playback: bool,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub shared: Option<Value>,
+    /// E12 journey markers: named, coloured time points on the journey clock. Authoring furniture.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub markers: Option<Vec<Value>>,
+    /// E13 loop region {from, to} on the journey clock; absent means no region.
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        rename = "loopRegion"
+    )]
+    pub loop_region: Option<Value>,
+}
+
+/// Upper bound for any journey time: 64 scenes of at most 3600 seconds each.
+const JOURNEY_TIME_MAX: f64 = 64.0 * 3600.0;
+const MARKER_COLOURS: [&str; 5] = ["amber", "rose", "sage", "sky", "violet"];
+
+fn markers(rows: &[Value]) -> Result<(), String> {
+    if rows.len() > 64 {
+        return Err("Journey markers are bounded to 64".into());
+    }
+    let mut ids = BTreeSet::new();
+    for row in rows {
+        let fields = object(row, "Journey marker")?;
+        if fields
+            .keys()
+            .any(|key| !["id", "name", "time", "colour"].contains(&key.as_str()))
+        {
+            return Err("Unknown journey marker field".into());
+        }
+        let id = fields.get("id").and_then(Value::as_str).unwrap_or_default();
+        if !(1..=160).contains(&id.len())
+            || !id
+                .bytes()
+                .all(|b| b.is_ascii_alphanumeric() || b"_.:-".contains(&b))
+            || !ids.insert(id)
+        {
+            return Err("Journey marker identities must be unique and safe".into());
+        }
+        let name = fields
+            .get("name")
+            .and_then(Value::as_str)
+            .unwrap_or_default();
+        if !(1..=80).contains(&name.chars().count()) {
+            return Err("Journey marker names are 1 to 80 characters".into());
+        }
+        number(
+            fields.get("time").unwrap_or(&Value::Null),
+            0.0,
+            JOURNEY_TIME_MAX,
+            "Journey marker time",
+        )?;
+        let colour = fields
+            .get("colour")
+            .and_then(Value::as_str)
+            .unwrap_or_default();
+        if !MARKER_COLOURS.contains(&colour) {
+            return Err("Journey marker colour must be a palette key".into());
+        }
+    }
+    Ok(())
+}
+
+fn loop_region(value: &Value) -> Result<(), String> {
+    let fields = object(value, "Loop region")?;
+    if fields.len() != 2 || !fields.contains_key("from") || !fields.contains_key("to") {
+        return Err("Loop region carries exactly from and to".into());
+    }
+    number(&fields["from"], 0.0, JOURNEY_TIME_MAX, "Loop region in")?;
+    number(&fields["to"], 0.0, JOURNEY_TIME_MAX, "Loop region out")?;
+    let from = fields["from"].as_f64().unwrap_or_default();
+    let to = fields["to"].as_f64().unwrap_or_default();
+    if to - from < 0.05 {
+        return Err("Loop region out must follow its in by at least 0.05 seconds".into());
+    }
+    Ok(())
 }
 
 impl Composition {
     pub fn validate(&self) -> Result<(), String> {
         if self.schema != "oi.journey-properties/v1" || self.description.len() > 20_000 {
             return Err("Unsupported or unbounded Expression presentation".into());
+        }
+        if let Some(rows) = &self.markers {
+            markers(rows)?;
+        }
+        if let Some(region) = &self.loop_region {
+            loop_region(region)?;
         }
         if let Some(shared) = &self.shared {
             data(shared, 0)?;
@@ -915,6 +1146,67 @@ impl Composition {
 #[cfg(test)]
 mod tests {
     #[test]
+    fn research_frames_and_named_views_are_admitted_bounded_and_closed() {
+        use super::validate_research;
+        use serde_json::{json, Value};
+        use std::collections::BTreeSet;
+        let ids: BTreeSet<&str> = ["a", "b"].into_iter().collect();
+        let with = |extra: Value| {
+            let mut m = json!({"schema": "oi.research-scene/v1", "cards": {}, "strokes": [],
+                "views": {}, "timeline": {}});
+            for (k, v) in extra.as_object().unwrap() {
+                m[k] = v.clone();
+            }
+            m
+        };
+        // material saved before frames existed, and material that carries them
+        assert!(validate_research(&with(json!({})), &ids).is_ok());
+        assert!(validate_research(&with(json!({
+            "frames": {"f1": {"label": "Évora — the walls", "memberRefs": ["a", "b"], "z": 0}},
+            "namedViews": {"Overview": {"viewport": {"x": 0, "y": 0, "zoom": 1}, "selectedRefs": ["a"], "frameOrder": ["f1"]}}
+        })), &ids).is_ok());
+        for refused in [
+            json!({"frames": {"f1": {"label": "", "memberRefs": ["a"], "z": 0}}}),
+            json!({"frames": {"f1": {"label": "x", "memberRefs": [], "z": 0}}}),
+            json!({"frames": {"f1": {"label": "x", "memberRefs": ["missing"], "z": 0}}}),
+            json!({"frames": {"f1": {"label": "x", "memberRefs": ["a"], "z": 0.5}}}),
+            json!({"frames": {"f1": {"label": "x", "memberRefs": ["a"], "z": 0, "colour": "red"}}}),
+            json!({"namedViews": {"v": {"viewport": {"x": 0, "y": 0, "zoom": 1, "roll": 1}, "selectedRefs": [], "frameOrder": []}}}),
+            json!({"namedViews": {"v": {"viewport": {"x": 0, "y": 0, "zoom": 1}, "selectedRefs": [], "frameOrder": [], "extra": 1}}}),
+            json!({"layers": {}}),
+        ] {
+            assert!(
+                validate_research(&with(refused.clone()), &ids).is_err(),
+                "{refused}"
+            );
+        }
+    }
+
+    #[test]
+    fn a_scene_transition_kind_is_admitted_only_in_its_own_shape() {
+        use super::transition_spec;
+        use serde_json::json;
+        for ok in [
+            json!({"kind": "cut"}),
+            json!({"kind": "dip-to-colour"}),
+            json!({"kind": "dip-to-colour", "at": 0.5}),
+            json!({"kind": "wipe", "direction": "up"}),
+        ] {
+            assert!(transition_spec(&ok).is_ok(), "{ok}");
+        }
+        for refused in [
+            json!({"kind": "crossfade"}),
+            json!({"kind": "spin"}),
+            json!({"kind": "cut", "at": 0.5}),
+            json!({"kind": "dip-to-colour", "at": 0.9}),
+            json!({"kind": "wipe", "direction": "diagonal"}),
+            json!("cut"),
+        ] {
+            assert!(transition_spec(&refused).is_err(), "{refused}");
+        }
+    }
+
+    #[test]
     fn a_places_view_may_carry_pitch_and_bearing_within_bounds() {
         use super::validate_research;
         use serde_json::Value;
@@ -951,6 +1243,47 @@ mod tests {
         .is_err());
     }
 
+    #[test]
+    fn canvas_objects_admit_only_their_closed_fields() {
+        use super::validate_research;
+        use serde_json::{json, Value};
+        use std::collections::BTreeSet;
+        let ids: BTreeSet<&str> = ["s", "r", "t", "n"].into_iter().collect();
+        let with = |cards: Value| {
+            json!({"schema": "oi.research-scene/v1", "cards": cards, "strokes": [],
+                "views": {}, "timeline": {}})
+        };
+        // every admitted object kind with its own fields, and a bounded display size
+        assert!(validate_research(
+            &with(json!({
+                "s": {"type": "sticky", "palette": "sage", "size": {"width": 220, "height": 180}},
+                "r": {"type": "shape", "shape": "rectangle", "fill": "none"},
+                "t": {"type": "shape", "shape": "diamond", "fill": "amber"},
+                "n": {"type": "text", "size": {"width": 220, "height": 48}}
+            })),
+            &ids
+        )
+        .is_ok());
+        let refused = [
+            json!({"s": {"type": "frame"}}),
+            json!({"s": {"type": "sticky", "palette": "#ffaa00"}}),
+            json!({"s": {"type": "image", "palette": "sage"}}),
+            json!({"r": {"type": "shape"}}),
+            json!({"r": {"type": "shape", "shape": "hexagon"}}),
+            json!({"r": {"type": "shape", "shape": "rectangle", "fill": "#ffaa00"}}),
+            json!({"n": {"type": "text", "shape": "rectangle"}}),
+            json!({"s": {"type": "sticky", "roll": 1}}),
+            json!({"s": {"type": "sticky", "size": {"width": 10, "height": 180}}}),
+            json!({"s": {"type": "sticky", "size": {"width": 220, "height": 180, "depth": 1}}}),
+        ];
+        for cards in refused {
+            assert!(
+                validate_research(&with(cards.clone()), &ids).is_err(),
+                "accepted {cards}"
+            );
+        }
+    }
+
     use super::Composition;
     use serde_json::{json, Value};
 
@@ -960,7 +1293,73 @@ mod tests {
             description: String::new(),
             loop_playback: true,
             shared: Some(shared),
+            markers: None,
+            loop_region: None,
         }
+    }
+
+    #[test]
+    fn journey_markers_and_loop_region_admit_only_their_bounded_shapes() {
+        let with = |markers: Option<Vec<Value>>, region: Option<Value>| Composition {
+            schema: "oi.journey-properties/v1".into(),
+            description: String::new(),
+            loop_playback: true,
+            shared: None,
+            markers,
+            loop_region: region,
+        };
+        let marker = |id: &str, name: &str, time: f64, colour: &str| json!({"id": id, "name": name, "time": time, "colour": colour});
+        // absent and well-formed both admit; an empty list is a real state (all markers deleted)
+        assert!(with(None, None).validate().is_ok());
+        assert!(with(Some(vec![]), None).validate().is_ok());
+        assert!(with(
+            Some(vec![
+                marker("m-1", "Intro", 0.0, "amber"),
+                marker("m_2", "Drop", 42.5, "sky")
+            ]),
+            Some(json!({"from": 4.0, "to": 12.5}))
+        )
+        .validate()
+        .is_ok());
+        // refusals: raw colour, unsafe identity, empty or long name, negative or non-finite time
+        let refused = [
+            vec![marker("m1", "A", 1.0, "#ff0000")],
+            vec![marker("bad id", "A", 1.0, "amber")],
+            vec![marker("m1", "", 1.0, "amber")],
+            vec![marker("m1", &"x".repeat(81), 1.0, "amber")],
+            vec![marker("m1", "A", -1.0, "amber")],
+            vec![
+                marker("m1", "A", 1.0, "amber"),
+                marker("m1", "B", 2.0, "rose"),
+            ],
+            vec![json!({"id": "m1", "name": "A", "time": 1.0, "colour": "amber", "extra": true})],
+        ];
+        for rows in refused {
+            assert!(with(Some(rows), None).validate().is_err());
+        }
+        assert!(with(
+            Some(
+                (0..65)
+                    .map(|i| marker(&format!("m{i}"), "A", 1.0, "amber"))
+                    .collect()
+            ),
+            None
+        )
+        .validate()
+        .is_err());
+        // region: exactly from and to, ordered, at least 0.05 s, non-negative
+        assert!(with(None, Some(json!({"from": 5.0}))).validate().is_err());
+        assert!(with(None, Some(json!({"from": 5.0, "to": 5.0})))
+            .validate()
+            .is_err());
+        assert!(with(None, Some(json!({"from": -1.0, "to": 5.0})))
+            .validate()
+            .is_err());
+        assert!(
+            with(None, Some(json!({"from": 5.0, "to": 5.0, "extra": 1})))
+                .validate()
+                .is_err()
+        );
     }
 
     #[test]

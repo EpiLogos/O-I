@@ -1,6 +1,7 @@
 import type {Journey} from './model';
 import {savedSceneIndices} from './sceneWorkflow';
 import type {KernelConversion} from './kernelDocumentBridge';
+import {regionWrap,type LoopRegion} from './journeyMarkers';
 
 export interface SceneTransportFrame {
   elapsed_seconds: number;
@@ -9,6 +10,8 @@ export interface SceneTransportFrame {
   advance_to_scene_index: number | null;
   completed: boolean;
   unavailable_reason: string | null;
+  /** E13: where a region wrap continues inside `advance_to_scene_index`; null otherwise. */
+  seek_local_seconds?: number | null;
 }
 
 /** Compatibility conversion supplies visual defaults for old native Scenes.
@@ -29,7 +32,7 @@ export function nativeSceneTransportMaterial(view: KernelConversion | undefined)
 export function advanceSceneTransport(journey: Journey, sceneIndex: number, elapsed: number,
   rawDelta: number, state: {playing: boolean; savedSequence: boolean; hidden: boolean;
     libraryOpen: boolean; propertyRecording: boolean; editing: boolean;
-    authoredSceneIds?: readonly string[]}): SceneTransportFrame {
+    authoredSceneIds?: readonly string[]; loopRegion?: LoopRegion}): SceneTransportFrame {
   const held: SceneTransportFrame = {elapsed_seconds: elapsed, scene_playing: state.playing,
     saved_sequence_playing: state.savedSequence, advance_to_scene_index: null, completed: false, unavailable_reason: null};
   if (!state.playing || state.hidden || state.libraryOpen || state.propertyRecording
@@ -45,6 +48,12 @@ export function advanceSceneTransport(journey: Journey, sceneIndex: number, elap
   if (!active || !Number.isFinite(active.duration) || active.duration < 1 || active.duration > 3600
     || !Number.isFinite(elapsed) || elapsed < 0) return held;
   const nextElapsed = elapsed + Math.min(rawDelta, .25);
+  if (state.savedSequence && state.loopRegion) {
+    // E13: journey playback wraps at the region's out point, to its in point, exactly to the frame.
+    const wrap = regionWrap(journey.scenes.map(s => s.duration), sceneIndex, elapsed, nextElapsed - elapsed, state.loopRegion);
+    if (wrap) return {...held, elapsed_seconds: wrap.sceneIndex === sceneIndex ? wrap.local : elapsed,
+      advance_to_scene_index: wrap.sceneIndex === sceneIndex ? null : wrap.sceneIndex, seek_local_seconds: wrap.local};
+  }
   if (!state.savedSequence) {
     const ended = nextElapsed >= active.duration - .001;
     return {...held, elapsed_seconds: Math.min(active.duration, nextElapsed), scene_playing: !ended, completed: ended};

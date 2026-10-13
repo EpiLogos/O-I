@@ -8,6 +8,7 @@ import {generatedWikiAppearance, wikiDisplayName} from '../../../../../packages/
  * from glyph text or layout. This adapter performs no I/O or publication.
  */
 import {Journey,Scene,Entity,blankScene,entity,clone,validateJourney} from './model.js';
+import {validateMarkers,validateLoopRegion} from './journeyMarkers.js';
 import {WORLD_SCALE} from './nativeParameters.js';
 import {mapSceneOccurrences,assertMaterialOccurrences} from './sceneCorrespondence.js';
 import {MAX_FORMATIONS,MAX_PINS} from '../../src/engine/fieldModel.js';
@@ -112,7 +113,7 @@ export function validateSceneTriggers(value:unknown):KernelSceneTrigger[]{
 
 export interface KernelScene {presentation?:{schema:'oi.journey-scene/v1';scene:Scene;saved?:Scene|null}|null;scene_ref:string;title:string;entity_refs:string[];body?:Record<string,unknown>|null;triggers?:unknown[];[key:string]:unknown}
 export interface KernelRelation {binding_ref:string;relation:{ref:string;revision:string;[key:string]:unknown};from_entity_ref:string;to_entity_ref:string;[key:string]:unknown}
-export interface KernelExpressionDocument {presentation?:{schema:'oi.journey-properties/v1';description:string;loop:boolean;shared?:Journey['shared']}|null;schema:string;expression_ref:string;revision:number;title:string;scenes:KernelScene[];entities:Record<string,KernelEntity>;relations?:Record<string,KernelRelation>;selection?:{scene_ref:string;entity_ref:string|null;relation_ref?:string|null};representations?:unknown[];refinements?:unknown[];collections?:string[];profiles?:unknown[];[key:string]:unknown}
+export interface KernelExpressionDocument {presentation?:{schema:'oi.journey-properties/v1';description:string;loop:boolean;shared?:Journey['shared'];markers?:unknown[];loopRegion?:{from:number;to:number}}|null;schema:string;expression_ref:string;revision:number;title:string;scenes:KernelScene[];entities:Record<string,KernelEntity>;relations?:Record<string,KernelRelation>;selection?:{scene_ref:string;entity_ref:string|null;relation_ref?:string|null};representations?:unknown[];refinements?:unknown[];collections?:string[];profiles?:unknown[];[key:string]:unknown}
 export interface OccurrenceBinding {expression_ref:string;scene_ref:string;entity_ref:string;view_entity_id:string;subject:KernelSubject|null}
 export interface SceneBinding {scene_ref:string;member_refs:string[];loaded_refs:string[];page:number;page_count:number;hidden_refs:string[];focused_relation:string|null;occurrences:OccurrenceBinding[];relations:KernelRelation[];body:KernelSceneBody|null;triggers:KernelSceneTrigger[]}
 export interface KernelConversion {journey:Journey;notes:string[];startSceneId:string|null;document:KernelExpressionDocument;bindings:Record<string,SceneBinding>;entity_ids:Record<string,string>}
@@ -249,7 +250,10 @@ export function kernelDocumentToJourney(raw:unknown,options:ViewOptions={}):Kern
   return scene;
  });
  if(doc.presentation && doc.presentation.schema!=='oi.journey-properties/v1')throw new Error('Unsupported native Expression presentation');
- const journey:Journey={schema:'oi.journey',version:1,id:idFor(doc.expression_ref,'expression',ids,options.identity?.expression),name:doc.title.slice(0,160),description:doc.presentation?.description??'',loop:doc.presentation?.loop??true,scenes,savedScenes,updatedAt:new Date().toISOString(),...(doc.presentation?.shared?{shared:clone(doc.presentation.shared)}:{})};
+ const duration=scenes.reduce((n,s)=>n+s.duration,0),loopRegion=doc.presentation?.loopRegion!==undefined?validateLoopRegion(doc.presentation.loopRegion,duration):undefined;
+ const journey:Journey={schema:'oi.journey',version:1,id:idFor(doc.expression_ref,'expression',ids,options.identity?.expression),name:doc.title.slice(0,160),description:doc.presentation?.description??'',loop:doc.presentation?.loop??true,scenes,savedScenes,updatedAt:new Date().toISOString(),...(doc.presentation?.shared?{shared:clone(doc.presentation.shared)}:{}),
+  ...(doc.presentation?.markers!==undefined?{markers:validateMarkers(doc.presentation.markers,duration)}:{}),
+  ...(loopRegion?{loopRegion}:{})};
  if(journey.shared)journey.shared.toolbelt=journey.shared.toolbelt.map(entry=>entry.entityId?{...entry,entityId:converted.get(entry.entityId)?.id??entry.entityId}:entry);
  return{journey:validateJourney(journey),document:doc,notes,bindings,entity_ids:Object.fromEntries([...converted].map(([ref,e])=>[ref,e.id])),startSceneId:scenes.find(s=>bindings[s.id].scene_ref===doc.selection?.scene_ref)?.id??scenes[0].id};
 }
