@@ -406,7 +406,8 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
       <TimelineProjectionResidence set={state.set} document={deep.document} selection={selection} select={choose} colors={colors} setColor={setColor}
         session={worldCut ? undefined : nativeView('session')} arrangement={worldCut ? undefined : nativeView('arrangement')} compactTransport={frameMode === 'expressions'}
         presented={settingsPresented || centreFrameUp ? null : presented}
-        world={worldCut ? worldView : undefined} />
+        world={worldCut ? worldView : undefined}
+        journey={worldCut && frameMode === 'techne' ? {openExpression: workspace.requestExpression} : undefined} />
       {/* The centre's designed frame while the civil reading is absent or in
         flight (the empty-state law): the mode's day-as-clips / Relation
         Field / Journey surface with the disclosure INSIDE it — the L4

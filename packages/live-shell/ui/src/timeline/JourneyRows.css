@@ -1,0 +1,18 @@
+/* The Journey's walk rows (T-TIMELINE-WALKS leg 4): one walk is one row of stop cells, Live Session-view style. Tokens only:
+   the surface tokens come from the hosting frame (.world-timeline or .mode-centre), with the shell's own names as fallback. */
+
+.journey-rows { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px }
+.journey-walk { display: flex; flex-direction: column; gap: 4px }
+.journey-walk-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; font-size: 10px; color: var(--text-dim, #9aa1a8) }
+.journey-walk-head strong { color: var(--text, #d4d7da); font-weight: 600 }
+.journey-walk-row { display: flex; gap: 4px; align-items: stretch; overflow-x: auto; padding-bottom: 2px }
+.journey-stop-cell { flex: 0 0 150px; min-width: 0; display: flex; flex-direction: column; gap: 2px; padding: 4px 6px;
+  background: var(--bg-1, #1f2327); border: 1px solid var(--line, #3a3f45) }
+.journey-stop-index { align-self: flex-start; font: inherit; font-size: 10px; color: var(--text-dim, #9aa1a8); background: none; border: 0; padding: 0; cursor: pointer }
+.journey-stop-index:hover { color: var(--text, #d4d7da) }
+.journey-stop-artefact { font-size: 11px; color: var(--text, #d4d7da); overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.journey-stop-meta { font-size: 10px; color: var(--text-faint, #7d848b); overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.journey-stop-expression { align-self: flex-start; font: inherit; font-size: 10px; color: var(--text-dim, #9aa1a8); background: none;
+  border: 1px solid var(--line, #3a3f45); padding: 0 5px; cursor: pointer }
+.journey-stop-expression:hover { color: var(--text, #d4d7da) }
+.journey-named { margin: 4px 0 0; font-size: 10px; color: var(--text-dim, #9aa1a8) }

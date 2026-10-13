@@ -9,10 +9,11 @@ import {playingState, sceneDuration, stopRequest} from './nativeScenePlayback'
 import {sceneStanding} from './nativeSceneList'
 import {WorldTimelinePresentation} from '../projections/worldTimelinePresentation'
 import type {WorldTimelineView} from '../projections/useWorldTemporalReading'
+import type {JourneyPresentation} from '../timeline/JourneyRows'
 import {LiveSessionEmpty} from '../shell/live/LiveEmptyStates'
 import './NativeCompositionViews.css'
 export type SetSelection = { track: number; scene: number | null; clip?: number }
-export function SessionView({ set, document, selection, select, colors, setColor, native, compactTransport, world }: {
+export function SessionView({ set, document, selection, select, colors, setColor, native, compactTransport, world, journey }: {
   set: SetSummary | null; document: SetDocument | null; selection: SetSelection; select: (value: SetSelection) => void
   colors: string[]; setColor: (track: number, value: string) => void
   native?: NativeCompositionViewSource
@@ -23,10 +24,12 @@ export function SessionView({ set, document, selection, select, colors, setColor
    * read. Additive on the L1 pattern; the native cut keeps absolute
    * precedence and the audio props are untouched. */
   world?: WorldTimelineView
+  /** Technē's Session presents the Journey above the session cells (leg 4); absent elsewhere. */
+  journey?: JourneyPresentation
 }) {
   const source: CompositionViewSource = native ?? {owner: 'live-set', set, document}
   if (source.owner === 'expressions') return <NativeSessionContent source={source} compactTransport={compactTransport}/>
-  if (world) return <WorldTimelinePresentation view={world} presentation="session" />
+  if (world) return <WorldTimelinePresentation view={world} presentation="session" journey={journey} />
   if (!set) return <LiveSessionEmpty />
   const indexed = set.tracks.map((track, index) => ({ track, index }))
   const master = indexed.find(({ track }) => track.kind === 'master')

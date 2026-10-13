@@ -186,3 +186,18 @@ test('the browser: results header, the New affordance on the Project group, the 
   }
   assert.ok(out.includes('not selected'), 'the subject line honest when nothing is selected')
 })
+
+// T-TIMELINE-WALKS leg 4: the centre's Technē Session draws the carried walks through the shared JourneyRows; the eight
+// designed slots stand only when no walk is carried.
+test('techne journey with a walk carried: the walk is one row of stop cells and the eight designed slots give way', () => {
+  const walk = {id: 'walk-one', name: 'The walk', kind: 'curated', derived: false, stops: [
+    {id: 'stop-a', label: 'First', also: [], year: 1}, {id: 'stop-b', label: 'Second', also: []}]}
+  const world = {source: {status: 'live', error: null, now: null, events: [], sets: [{columns: [], tracks: [], clips: [], walks: [walk]}],
+    eventByClipId: new Map(), admittedRuns: null, admittedRunsError: null, readAtUnixMs: null, readCadence: null},
+    spine: {}, selectOccasion() {}}
+  const out = html(createElement(ModeCentreFrame, {mode: 'techne', presentation: 'session', world}))
+  assert.ok(out.includes('data-walk="walk-one"'), 'the walk row is drawn')
+  assert.equal((out.match(/data-stop="\d+" data-stop-ref=/g) ?? []).length, 2, 'one stop cell per stop of the walk')
+  assert.equal((out.match(/data-stop=/g) ?? []).length, 2, 'the eight designed slots give way to the carried walk')
+  assert.ok(!out.includes('mode-centre-journey-heads'), 'the six-column designed heads are not drawn over a carried walk')
+})

@@ -24,8 +24,9 @@
 import {useEffect, useMemo, useRef, useState} from 'react';
 import {createTimeScale, formatYear} from './atlas/src/data/time';
 import {eventHourOfDay} from '../timeline/timeSpine';
-import {walkStopFocus, walkStopOfClip} from '../timeline/journeyWalks';
+import {journeyWalksOf, walkStopFocus, walkStopOfClip} from '../timeline/journeyWalks';
 import {applyWalkStopFocus} from '../timeline/walkFocus';
+import {JourneyRows, type JourneyPresentation} from '../timeline/JourneyRows';
 import type {WorldTrackClip, WorldTrackSection, WorldTrackSet, WorldWalk, WorldWalkStop} from '../timeline/worldTrackAdapter';
 import type {WorldTimelineView} from './useWorldTemporalReading';
 import './worldTimeline.css';
@@ -71,9 +72,12 @@ const dayOfColumn = (columnId: string): string | null => {
   return day === 'undated' ? 'undated' : day;
 };
 
-export function WorldTimelinePresentation({view, presentation}: {
+export function WorldTimelinePresentation({view, presentation, journey}: {
   view: WorldTimelineView;
   presentation: 'session' | 'arrangement';
+  /** Technē's live Session presents the Journey (T-TIMELINE-WALKS leg 4): the walks as rows above the session cells.
+   * Absent everywhere else, and the Arrangement never takes it. */
+  journey?: JourneyPresentation;
 }) {
   const {source, spine, selectOccasion} = view;
   const [lens, setLens] = useState<WorldTimelineLens>('chronology');
@@ -389,6 +393,9 @@ export function WorldTimelinePresentation({view, presentation}: {
     </div>
   </div>);
 
+  // The Journey's walks: the same walks the rails draw, by reference (the Journey presents them as rows).
+  const journeyWalks = journeyWalksOf(source.sets);
+
   const walkAndSectionGroup = <div className="wt-group" data-world-walks={walkBlocks.length}>
     <div className="wt-group-head">Walks · sections</div>
     {sectionBlocks}
@@ -447,7 +454,15 @@ export function WorldTimelinePresentation({view, presentation}: {
       Deep time: the atlas non-linear scale stands (adopted, not re-ported). The Aion sections and walks are listed under Walks · sections by their own spans and years; their placement on this scale waits for the family's declared time unit.
     </div>}
     <div className="wt-tracks">
-      {walkAndSectionGroup}
+      {journey && presentation === 'session' && (journeyWalks.length > 0
+        ? <div className="wt-group" data-journey-rows={journeyWalks.length}>
+          <div className="wt-group-head">Journey · walks</div>
+          <JourneyRows walks={journeyWalks} eventByClipId={source.eventByClipId} selectOccasion={selectOccasion} journey={journey} />
+        </div>
+        : <div className="wt-absence" role="note" data-journey-absence="0">No walks are carried by the World's track sets, so the Journey holds its place here; its stops appear when a walk is carried.</div>)}
+      {/* Lead ruling (lock §7.3): in Technē's Session the Journey rows ARE the walk presentation, so the rails group (and its
+          absence line) is not drawn twice there; every other presentation, the Arrangement included, keeps it. */}
+      {!(journey && presentation === 'session') && walkAndSectionGroup}
       {groups.map((group) => <div key={group} className="wt-group">
         <div className="wt-group-head">{group}</div>
         {rows.filter((track) => track.group === group).map(trackRow)}
