@@ -9,7 +9,12 @@
     "allowImportingTsExtensions": true,
     "allowJs": true,
     "noEmit": true,
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "paths": {
+      "@research-canvas/schema": ["../../desktop/cradle/expressions-app/vendor/research-canvas/packages/schema/src/index.ts"],
+      "@research-canvas/domain": ["../../desktop/cradle/expressions-app/vendor/research-canvas/packages/domain/src/index.ts"],
+      "@research-canvas/desktop-api": ["../../desktop/cradle/expressions-app/vendor/research-canvas/packages/desktop-api/src/index.ts"]
+    }
   },
   "include": ["src", "../../desktop/cradle/src/**/*.d.ts"]
 }

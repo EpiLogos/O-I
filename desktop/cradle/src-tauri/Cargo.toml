@@ -20,6 +20,7 @@ live-dynamics = { path = "../../../packages/live-dynamics", optional = true }
 uuid = { version = "1", features = ["v4"], optional = true }
 oi-cradle-kernel = { path = "../kernel" }
 tauri-plugin-dialog = "=2.7.1"
+tauri-plugin-opener = "=2.5.5"
 tauri = { version = "=2.11.5", features = ["unstable"] }
 
 [workspace]
