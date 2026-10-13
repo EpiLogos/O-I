@@ -124,7 +124,13 @@ walk-bridge 4179.
 
 ## 9. Carries
 
-- Native run at the lane's HEAD: see §10 (R1 code leg).
+- Native run at the lane's HEAD `c9c1510a8` (13 Oct, stamp `20261013T-phase1b`):
+  clean build (`source_dirty: false`), sealed, launched, AX settled at 1595
+  elements, the window reads "Native host · revision c9c1510a8da4" and "3 of
+  6 owners admitted" (3 excluded by footprint), the rail reads "Central" and
+  no element carries "Base · Central" / "08:30" / "21:00"; quit exit 0
+  (`evidence/p0-r1/run-20261013T-phase1b/`; channel scripted). Screencapture
+  still refused — the pixel legs stay owed.
 - The target register refuses verify: `PROGRAMME.md` was edited (8 Oct) after the
   register recorded its hash — true before the move too. Re-record the basis
   (`python3 acceptance.py`) only with a dated note of what changed; the 0/126

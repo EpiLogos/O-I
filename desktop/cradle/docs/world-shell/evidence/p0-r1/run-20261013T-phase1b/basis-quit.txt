@@ -1,0 +1,11 @@
+seat=/Users/admin/Central/worktrees/env-1/o-i
+branch=dlw/phase1-semantics-20261013
+head=c9c1510a8da4d8d0eed8064565489e374f1e94bf
+stamp=20261013T-phase1b
+out=/Users/admin/Central/Work/O-I/target/p0-r1/20261013T-phase1b
+target=/Users/admin/Central/Work/O-I/target
+backing=0/1/2
+mode=quit
+runner_sha256=a484aebb94ded10bcfa86f07dcfd0ae7fcc3c30bde6257f4107dedf62c353830
+status:
+?? desktop/cradle/docs/world-shell/evidence/p0-r1/run-20261013T-phase1b/

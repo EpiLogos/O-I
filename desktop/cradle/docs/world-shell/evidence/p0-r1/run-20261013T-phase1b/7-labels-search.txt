@@ -1,0 +1,7 @@
+# channel: scripted (accessibility tree), no interaction; pid 29915; 2026-10-13T02:03Z; host revision c9c1510a8da4
+# searched: "Central" "Base · Central" "08:30" "21:00" "Journey" "Timeline" "M3′" (lead, T-LABELS acceptance — scripted support only;
+# the visual acceptance stays computer-use, owed to the screen pass)
+AXCheckBox | title: Central | description: Central | help: Central — The Central ground — the day and its documents
+AXStaticText | value: Central
+AXStaticText | value: central
+# no element carries "Base · Central", "08:30" or "21:00"; Journey/Timeline/M3′ absent (Technē not the open mode)
