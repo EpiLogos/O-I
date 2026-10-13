@@ -202,6 +202,8 @@ export interface PsychogeographicMapProps {
   placeTime?: PlaceTimeHost;
   /** Lane-4 T20: hands the host the named-view restore. The camera flies (reduced motion: it jumps) and the basemap rows are set as saved. */
   onRegisterPlaceViewRestore?: (restore: (target: PlaceViewRestoreTarget) => void) => void;
+  /** Lane-4 T25: hands the host one camera flight for a tour stop. It flies by durationMs (reduced motion or zero duration jumps) and sets no layers or basemap rows. */
+  onRegisterPlaceFlight?: (flight: (camera: PlaceViewState, durationMs: number) => void) => void;
   /** Lane-4 T24: the place the shared session's spatial focus names. Once the map is ready it is selected and framed by its own precision (flyToPlace). A ref the reading does not disclose opens unselected, with no error. */
   initialFocusGraphNodeId?: string | null;
   /** Lane-4 T23: "Open in Timeline" for the selected place's disclosed facet. Absent: no action is offered. */
@@ -256,6 +258,7 @@ export function PsychogeographicMap({
   placeAuthoring,
   placeTime,
   onRegisterPlaceViewRestore,
+  onRegisterPlaceFlight,
   initialFocusGraphNodeId = null,
   onOpenInTimeline,
   onOpenSource,
@@ -273,6 +276,7 @@ export function PsychogeographicMap({
   const placeAuthoringRef = useRef<PlaceAuthoringHost | undefined>(placeAuthoring);
   // Lane-4 T20: the host's named-view restore reaches the current camera and stack through this ref.
   const placeViewRestoreRef = useRef<(target: PlaceViewRestoreTarget) => void>(() => {});
+  const placeFlightRef = useRef<(camera: PlaceViewState, durationMs: number) => void>(() => {});
   placeAuthoringRef.current = placeAuthoring;
   const placeMenuRef = useRef<HTMLDivElement | null>(null);
   const initialViewStateRef = useRef<MapViewState | undefined>(initialViewState);
@@ -1065,6 +1069,26 @@ export function PsychogeographicMap({
   useEffect(() => {
     onRegisterPlaceViewRestore?.((target) => placeViewRestoreRef.current(target));
   }, [onRegisterPlaceViewRestore]);
+  // Lane-4 T25: a tour stop's flight. Only the camera moves; the layers, the basemap rows and the stored view are untouched.
+  placeFlightRef.current = (camera: PlaceViewState, durationMs: number) => {
+    const current = mountedRenderer.current;
+    if (!current) return;
+    const framed = withCameraDefaults(camera);
+    if (reducedMotion || durationMs <= 0) {
+      void current.centerOn(framed.latitude, framed.longitude, framed.zoom);
+      void current.easeCamera?.({ pitch: framed.pitch, bearing: framed.bearing, durationMs: 0 });
+    } else {
+      void current.flyTo?.(framed.latitude, framed.longitude, framed.zoom, {
+        pitch: framed.pitch,
+        bearing: framed.bearing,
+        durationMs,
+        easing: flightEase,
+      });
+    }
+  };
+  useEffect(() => {
+    onRegisterPlaceFlight?.((camera, durationMs) => placeFlightRef.current(camera, durationMs));
+  }, [onRegisterPlaceFlight]);
   // A live source is requested through the policy's tile_refresh gate; the call completes at once, so the indicator never sticks.
   const grantLive = (name: string): boolean => {
     if (!policy || offlineOnly) return false;
