@@ -290,8 +290,8 @@
     },
     "packages/canvas/src/timeline/instant.ts": {
       "upstream_sha256": "e32b94dfab9c85caede5823fa914f3d0a0d4e35c672c53330d60646d928a4070",
-      "adapted_sha256": "33f0192c1f0d84eaf7f00f473dd01d38cbf97da17bf4e2bef951ac2b199e1793",
-      "reason": "Preserve actual native signed ISO instants in transient Timeline parsing; correct BCE chronological fraction and JavaScript year 0\u201399 offset without rewriting source date or precision. | lane-2 T1b: chronology on the authority's epoch-ms extents | lane-2 T2+T7: precision bands, two-row axis, BCE/CE labels"
+      "adapted_sha256": "d55727eb8bfa64551b4b3c413befd3bb29bd2e13f35e52312e8720cec0016793",
+      "reason": "Preserve actual native signed ISO instants in transient Timeline parsing; correct BCE chronological fraction and JavaScript year 0\u201399 offset without rewriting source date or precision. | lane-2 T1b: chronology on the authority's epoch-ms extents | lane-2 T2+T7: precision bands, two-row axis, BCE/CE labels | lane-2 T4: deep time"
     },
     "packages/canvas/src/timeline/TimelineWalk.tsx": {
       "upstream_sha256": "5d6ba77d26a1ab8aee395a066ef70140d2103263f937f0ea39f492a20ce82638",
@@ -325,8 +325,8 @@
       "reason": "lane-2 T1b: chronology on the authority's epoch-ms extents | lane-2 T2+T7: precision bands, two-row axis, BCE/CE labels"
     },
     "packages/canvas/src/timeline/scale.ts": {
-      "adapted_sha256": "5e996e04779c2e7f660393db972db5d83fdae3b578917179c0082c5c228d38e9",
-      "reason": "lane-2 T1b: chronology on the authority's epoch-ms extents"
+      "adapted_sha256": "ef725acdb93186b7da0f6c578960e9830ede21809c4640f9c710044571b9149e",
+      "reason": "lane-2 T1b: chronology on the authority's epoch-ms extents | lane-2 T4: deep time"
     },
     "packages/canvas/src/timeline/timelineStore.ts": {
       "adapted_sha256": "eafacda19997129ea4c77138337285071df3bdd0f5b6cb8efdce9d60c7624b2b",
@@ -345,8 +345,8 @@
       "reason": "lane-2 T1: bridge carries every precision rung verbatim"
     },
     "packages/schema/src/node.ts": {
-      "adapted_sha256": "d49125360d608e2f3345d0c14e68ad3cd37dd6ac5158569eb3f4d3e81e9153e9",
-      "reason": "lane-2 T1: bridge carries every precision rung verbatim"
+      "adapted_sha256": "7f27a3277806df57dc63eb2d86d9c7e97445b4a1969d4d0877ed8d3d0ebd7c0b",
+      "reason": "lane-2 T1: bridge carries every precision rung verbatim | lane-2 T4: deep time"
     },
     "packages/canvas/src/psychogeographic/mapStyle.ts": {
       "upstream_sha256": "1a59316a06bbcfbba0bb41c3de461763d01cfd06591994b28decd9607eb6e626",

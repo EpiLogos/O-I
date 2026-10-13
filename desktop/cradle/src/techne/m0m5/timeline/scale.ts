@@ -14,6 +14,15 @@
  * instant carries its offset, e.g. `+01:00`), so day boundaries land on local
  * midnight, not UTC midnight. Erasable TypeScript: loadable by the renderer,
  * Vite, and `node --test`.
+ *
+ * Deep time (lane-2 T4). A year whose magnitude needs more than four digits
+ * (|year| >= 10000) is written as a bare signed integer, the xsd:gYear shape
+ * ("-780000", "4500000000"). It carries no month, day or clock, so its honest
+ * precision is a year or coarser: age (10^6 y), epoch (10^7), era (10^8) and
+ * eon (10^9) name the coarser rungs. A deep year sits on the same linear
+ * epoch-ms scale as every other instant, extended to any integer year by exact
+ * proleptic-Gregorian day counting; wherever JavaScript Date reaches it equals
+ * Date. Years are astronomical, so year 0000 is 1 BCE.
  */
 import type { TechneTemporalFacet, TechneTemporalPrecision } from "../../contract.ts";
 
@@ -34,21 +43,124 @@ export interface FacetSpan {
 
 const UNIT_MS = { second: 1_000, minute: 60_000, hour: 3_600_000, day: 86_400_000 };
 
+/** The largest epoch ms a JavaScript Date holds (years −271821 … 275760). */
+const DATE_LIMIT_MS = 8.64e15;
+
+/** A bare signed integer: a year-only instant in the xsd:gYear shape. */
+const BARE_YEAR = /^[+-]?\d+$/;
+
+/** A year of this magnitude or more needs more than four digits: deep time. */
+const DEEP_YEAR_MIN = 10_000;
+
+/** The calendar precisions that name a whole number of years. */
+type YearUnit = "eon" | "era" | "epoch" | "age" | "millennium" | "century" | "decade" | "year";
+
+const YEARS_PER_UNIT: Record<YearUnit, number> = {
+  eon: 1_000_000_000,
+  era: 100_000_000,
+  epoch: 10_000_000,
+  age: 1_000_000,
+  millennium: 1_000,
+  century: 100,
+  decade: 10,
+  year: 1,
+};
+
+function isYearUnit(precision: string): precision is YearUnit {
+  return Object.prototype.hasOwnProperty.call(YEARS_PER_UNIT, precision);
+}
+
+/** The years in one unit of a year-or-coarser precision; null for a finer one.
+ * The canvas reads its unit lengths here, never from a table of its own. */
+export function yearsPerUnit(precision: string): number | null {
+  return isYearUnit(precision) ? YEARS_PER_UNIT[precision] : null;
+}
+
+/** Precisions finer than a year: a deep year never claims one of these. */
+const FINER_THAN_YEAR: ReadonlySet<string> = new Set(["month", "day", "hour", "minute", "second", "subsecond"]);
+
+/** Days from 1 January 1970 to 1 January of `year` (proleptic Gregorian, any integer year). */
+function leapYearsThrough(year: number): number {
+  return Math.floor(year / 4) - Math.floor(year / 100) + Math.floor(year / 400);
+}
+
+export function yearStartDays(year: number): number {
+  return 365 * (year - 1970) + (leapYearsThrough(year - 1) - leapYearsThrough(1969));
+}
+
+/** Epoch ms of 00:00 UTC on 1 January of `year`, for any integer year. Equal to
+ * Date.UTC wherever Date reaches; the linear scale is extended beyond it. */
+export function yearStartMs(year: number): number {
+  return yearStartDays(year) * UNIT_MS.day;
+}
+
+export interface CalendarFields {
+  year: number;
+  month: number;
+  day: number;
+  hour: number;
+  minute: number;
+  second: number;
+  millisecond: number;
+}
+
+/** The civil fields of one epoch ms, read in the frame it is given. Inside the
+ * Date range these are Date's own fields. Beyond it the ms is read to its day,
+ * and the civil fields are that year's first instant: a deep ms carries no
+ * month, day or clock, so none is invented. */
+export function calendarFields(ms: number): CalendarFields {
+  const date = new Date(ms);
+  if (Number.isFinite(date.getTime())) {
+    return {
+      year: date.getUTCFullYear(),
+      month: date.getUTCMonth(),
+      day: date.getUTCDate(),
+      hour: date.getUTCHours(),
+      minute: date.getUTCMinutes(),
+      second: date.getUTCSeconds(),
+      millisecond: date.getUTCMilliseconds(),
+    };
+  }
+  const day = Math.round(ms / UNIT_MS.day);
+  if (!Number.isSafeInteger(day)) {
+    return { year: NaN, month: NaN, day: NaN, hour: NaN, minute: NaN, second: NaN, millisecond: NaN };
+  }
+  let year = 1970 + Math.floor(day / 365.2425);
+  while (yearStartDays(year) > day) year -= 1;
+  while (yearStartDays(year + 1) <= day) year += 1;
+  return { year, month: 0, day: 1, hour: 0, minute: 0, second: 0, millisecond: 0 };
+}
+
 /** Date.UTC remaps years 0–99 to 1900–1999. setUTCFullYear retains
- * the native astronomical year, while preserving calendar carry arithmetic. */
+ * the native astronomical year, while preserving calendar carry arithmetic.
+ * Beyond the Date range only a year's first instant is honest, so that alone
+ * is answered from the linear scale; any other civil moment there is NaN. */
 function utcCalendar(year: number, month = 0, day = 1, hour = 0, minute = 0, second = 0, millisecond = 0): number {
   const date = new Date(0);
   date.setUTCFullYear(year, month, day);
   date.setUTCHours(hour, minute, second, millisecond);
-  return date.getTime();
+  const time = date.getTime();
+  if (Number.isFinite(time)) return time;
+  const yearStart = month === 0 && day === 1 && hour === 0 && minute === 0 && second === 0 && millisecond === 0;
+  return yearStart ? yearStartMs(year) : NaN;
+}
+
+function isDeepYear(instant: string): boolean {
+  return BARE_YEAR.test(instant) && Math.abs(Number(instant)) >= DEEP_YEAR_MIN;
 }
 
 /** Parse disclosed ISO calendar dates/timestamps in their own offset frame.
  * Reduced dates expand only for comparison; source strings and precision stay
- * unchanged. Ambiguous strings and impossible dates remain unresolved. */
+ * unchanged. Ambiguous strings and impossible dates remain unresolved. A bare
+ * year of more than four digits is a deep year (year-only); a calendar date
+ * with a day or a clock is accepted only where the Date range reaches. */
 export function parseTimestamp(instant: string): number {
   const match = instant.match(/^([+-]\d{6}|\d{4})(?:-(\d{2})(?:-(\d{2})(?:T(\d{2}):(\d{2})(?::(\d{2})(?:\.(\d+))?)?(Z|[+-]\d{2}:?\d{2})?)?)?)?$/i);
   const invalid = () => {throw new Error(`not a timestamp: ${instant}`);};
+  if (isDeepYear(instant)) {
+    const year = Number(instant);
+    return Number.isSafeInteger(year) ? yearStartMs(year) : invalid();
+  }
   if (!match || match[1] === '-000000') return invalid();
   const year = Number(match[1]), month = Number(match[2] ?? 1), day = Number(match[3] ?? 1);
   const hour = Number(match[4] ?? 0), minute = Number(match[5] ?? 0), second = Number(match[6] ?? 0);
@@ -64,6 +176,7 @@ export function parseTimestamp(instant: string): number {
 
 /** The UTC offset a timestamp itself declares, in ms (e.g. `+01:00` → 3_600_000). */
 export function instantOffsetMs(instant: string): number {
+  if (BARE_YEAR.test(instant)) return 0;
   const match = instant.match(/([+-])(\d{2}):?(\d{2})$/);
   if (!match) return 0;
   const sign = match[1] === "-" ? -1 : 1;
@@ -72,34 +185,37 @@ export function instantOffsetMs(instant: string): number {
 
 /** Floor one local-frame ms to the precision's unit boundary. */
 function truncateToLocal(localMs: number, precision: TechneTemporalPrecision): number {
-  const d = new Date(localMs);
-  const y = d.getUTCFullYear();
-  const mo = d.getUTCMonth();
-  const da = d.getUTCDate();
+  const c = calendarFields(localMs);
   switch (precision) {
-    case "millennium": return utcCalendar(Math.floor(y / 1000) * 1000, 0, 1);
-    case "century": return utcCalendar(Math.floor(y / 100) * 100, 0, 1);
-    case "decade": return utcCalendar(Math.floor(y / 10) * 10, 0, 1);
-    case "year": return utcCalendar(y, 0, 1);
-    case "month": return utcCalendar(y, mo, 1);
-    case "day": return utcCalendar(y, mo, da);
-    case "hour": return utcCalendar(y, mo, da, d.getUTCHours());
-    case "minute": return utcCalendar(y, mo, da, d.getUTCHours(), d.getUTCMinutes());
-    case "second": return utcCalendar(y, mo, da, d.getUTCHours(), d.getUTCMinutes(), d.getUTCSeconds());
+    case "eon":
+    case "era":
+    case "epoch":
+    case "age":
+    case "millennium":
+    case "century":
+    case "decade":
+    case "year": {
+      const years = YEARS_PER_UNIT[precision];
+      return utcCalendar(Math.floor(c.year / years) * years, 0, 1);
+    }
+    case "month": return utcCalendar(c.year, c.month, 1);
+    case "day": return utcCalendar(c.year, c.month, c.day);
+    case "hour": return utcCalendar(c.year, c.month, c.day, c.hour);
+    case "minute": return utcCalendar(c.year, c.month, c.day, c.hour, c.minute);
+    case "second": return utcCalendar(c.year, c.month, c.day, c.hour, c.minute, c.second);
     case "subsecond": return localMs;
   }
 }
 
 /** Advance one local-frame unit boundary by one unit of the precision. */
 function addOneUnit(localMs: number, precision: TechneTemporalPrecision): number {
-  if (precision === "millennium" || precision === "century" || precision === "decade" || precision === "year") {
-    const d = new Date(localMs);
-    const years = precision === "millennium" ? 1000 : precision === "century" ? 100 : precision === "decade" ? 10 : 1;
-    return utcCalendar(d.getUTCFullYear() + years, d.getUTCMonth(), d.getUTCDate(), d.getUTCHours(), d.getUTCMinutes(), d.getUTCSeconds(), d.getUTCMilliseconds());
+  if (isYearUnit(precision)) {
+    const c = calendarFields(localMs);
+    return utcCalendar(c.year + YEARS_PER_UNIT[precision], c.month, c.day, c.hour, c.minute, c.second, c.millisecond);
   }
   if (precision === "month") {
-    const d = new Date(localMs);
-    return utcCalendar(d.getUTCFullYear(), d.getUTCMonth() + 1, 1);
+    const c = calendarFields(localMs);
+    return utcCalendar(c.year, c.month + 1, 1);
   }
   if (precision === "day") return localMs + UNIT_MS.day;
   if (precision === "hour") return localMs + UNIT_MS.hour;
@@ -111,12 +227,16 @@ function addOneUnit(localMs: number, precision: TechneTemporalPrecision): number
 /**
  * The honest range of one precision-qualified instant: from the unit boundary
  * the instant falls in to its end. No precision claim → a point (the reading
- * asserts nothing wider, and we invent nothing).
+ * asserts nothing wider, and we invent nothing). A deep year takes only a
+ * year-or-coarser precision; a finer one would claim a day it does not state.
  */
 export function expandInstant(instant: string, precision?: TechneTemporalPrecision): TimeRange {
   const offset = instantOffsetMs(instant);
   const epoch = parseTimestamp(instant);
   if (!precision) return { fromMs: epoch, toMs: epoch };
+  if (isDeepYear(instant) && FINER_THAN_YEAR.has(precision)) {
+    throw new Error(`a deep year carries no ${precision} precision: ${instant}`);
+  }
   const local = epoch + offset;
   const fromLocal = truncateToLocal(local, precision);
   const toLocal = addOneUnit(fromLocal, precision);
@@ -178,6 +298,10 @@ export interface Tick {
 }
 
 const LADDER: readonly { unit: TechneTemporalPrecision; ms: number }[] = [
+  { unit: "eon", ms: UNIT_MS.day * 365.2425 * 1_000_000_000 },
+  { unit: "era", ms: UNIT_MS.day * 365.2425 * 100_000_000 },
+  { unit: "epoch", ms: UNIT_MS.day * 365.2425 * 10_000_000 },
+  { unit: "age", ms: UNIT_MS.day * 365.2425 * 1_000_000 },
   { unit: "millennium", ms: UNIT_MS.day * 365.2425 * 1000 },
   { unit: "century", ms: UNIT_MS.day * 365.2425 * 100 },
   { unit: "decade", ms: UNIT_MS.day * 365.2425 * 10 },
@@ -194,15 +318,14 @@ function two(value: number): string {
 }
 
 function labelForLocal(localMs: number, unit: TechneTemporalPrecision): string {
-  const d = new Date(localMs);
-  const y = d.getUTCFullYear();
-  if (unit === "millennium" || unit === "century" || unit === "decade" || unit === "year") return String(y);
-  if (unit === "month") return `${y}-${two(d.getUTCMonth() + 1)}`;
-  if (unit === "day") return `${y}-${two(d.getUTCMonth() + 1)}-${two(d.getUTCDate())}`;
-  const hmi = `${two(d.getUTCHours())}:${two(d.getUTCMinutes())}`;
+  const c = calendarFields(localMs);
+  if (isYearUnit(unit)) return String(c.year);
+  if (unit === "month") return `${c.year}-${two(c.month + 1)}`;
+  if (unit === "day") return `${c.year}-${two(c.month + 1)}-${two(c.day)}`;
+  const hmi = `${two(c.hour)}:${two(c.minute)}`;
   if (unit === "hour" || unit === "minute") return hmi;
-  if (unit === "second") return `${hmi}:${two(d.getUTCSeconds())}`;
-  return `${hmi}:${two(d.getUTCSeconds())}.${String(d.getUTCMilliseconds()).padStart(3, "0")}`;
+  if (unit === "second") return `${hmi}:${two(c.second)}`;
+  return `${hmi}:${two(c.second)}.${String(c.millisecond).padStart(3, "0")}`;
 }
 
 /** Snap a raw step multiple to the honest 1/2/5 ladder. */
@@ -219,13 +342,17 @@ function niceMultiple(raw: number): number {
  * coarsest ladder rung that still yields at least two marks; its step is the
  * smallest honest 1/2/5 multiple that keeps the count near the target.
  * Calendar boundaries align in the civil frame, so day ticks land on local
- * midnight. Deterministic and pure.
+ * midnight. A domain beyond the Date range is read at year precision and no
+ * finer: its ms cannot honestly place a month, a day or a clock. Deterministic
+ * and pure.
  */
 export function ticksForDomain(domain: TimeRange, options?: { offsetMs?: number; targetTicks?: number }): Tick[] {
   const offsetMs = options?.offsetMs ?? 0;
   const targetTicks = options?.targetTicks ?? 6;
   const span = domain.toMs - domain.fromMs;
-  if (span <= 0) return [{ ms: domain.fromMs, label: labelForLocal(domain.fromMs + offsetMs, "subsecond"), unit: "subsecond" }];
+  const deep = Math.abs(domain.fromMs) > DATE_LIMIT_MS || Math.abs(domain.toMs) > DATE_LIMIT_MS;
+  const finest: TechneTemporalPrecision = deep ? "year" : "subsecond";
+  if (span <= 0) return [{ ms: domain.fromMs, label: labelForLocal(domain.fromMs + offsetMs, finest), unit: finest }];
 
   const localFrom = domain.fromMs + offsetMs;
   const localTo = domain.toMs + offsetMs;
@@ -236,7 +363,7 @@ export function ticksForDomain(domain: TimeRange, options?: { offsetMs?: number;
   };
 
   // Below two seconds, numeric subsecond steps honestly labelled with ms.
-  if (span < 2 * UNIT_MS.second) {
+  if (!deep && span < 2 * UNIT_MS.second) {
     const pow = Math.pow(10, Math.floor(Math.log10(span / targetTicks)));
     const mantissa = span / targetTicks / pow;
     const stepMs = (mantissa <= 1 ? 1 : mantissa <= 2 ? 2 : mantissa <= 5 ? 5 : 10) * pow;
@@ -248,22 +375,23 @@ export function ticksForDomain(domain: TimeRange, options?: { offsetMs?: number;
     return ticks;
   }
 
-  // The coarsest rung that still yields at least two marks.
-  const rung = LADDER.find((candidate) => span / candidate.ms >= 2) ?? LADDER[LADDER.length - 1];
+  // The coarsest rung that still yields at least two marks. A deep domain
+  // uses the year and coarser rungs only.
+  const rungs = deep ? LADDER.filter((candidate) => isYearUnit(candidate.unit)) : LADDER;
+  const rung = rungs.find((candidate) => span / candidate.ms >= 2) ?? rungs[rungs.length - 1];
   const unit = rung.unit;
   const step = niceMultiple(Math.ceil(span / rung.ms / targetTicks));
 
-  const calendar = ["millennium", "century", "decade", "year", "month"].includes(unit);
-  if (calendar) {
+  if (unit === "month" || isYearUnit(unit)) {
     let boundary = truncateToLocal(localFrom, unit);
     if (unit === "month") {
-      const start = new Date(boundary);
-      const monthIndex = start.getUTCFullYear() * 12 + start.getUTCMonth();
+      const start = calendarFields(boundary);
+      const monthIndex = start.year * 12 + start.month;
       const alignedIndex = Math.floor(monthIndex / step) * step;
       boundary = utcCalendar(Math.floor(alignedIndex / 12), alignedIndex % 12, 1);
     } else {
-      const yearMultiple = unit === "millennium" ? 1000 * step : unit === "century" ? 100 * step : unit === "decade" ? 10 * step : step;
-      const startYear = new Date(boundary).getUTCFullYear();
+      const yearMultiple = YEARS_PER_UNIT[unit] * step;
+      const startYear = calendarFields(boundary).year;
       boundary = utcCalendar(startYear - (((startYear % yearMultiple) + yearMultiple) % yearMultiple), 0, 1);
     }
     for (let guard = 0; guard <= 400 && boundary <= localTo; guard += 1) {
@@ -287,11 +415,10 @@ export function ticksForDomain(domain: TimeRange, options?: { offsetMs?: number;
 }
 
 /** Advance an aligned calendar boundary by N units of the precision. */
-function advanceCalendar(localMs: number, unit: TechneTemporalPrecision, multiple: number): number {
-  const d = new Date(localMs);
-  if (unit === "month") return utcCalendar(d.getUTCFullYear(), d.getUTCMonth() + multiple, 1);
-  const years = (unit === "millennium" ? 1000 : unit === "century" ? 100 : unit === "decade" ? 10 : 1) * multiple;
-  return utcCalendar(d.getUTCFullYear() + years, d.getUTCMonth(), 1);
+function advanceCalendar(localMs: number, unit: "month" | YearUnit, multiple: number): number {
+  const c = calendarFields(localMs);
+  if (unit === "month") return utcCalendar(c.year, c.month + multiple, 1);
+  return utcCalendar(c.year + YEARS_PER_UNIT[unit] * multiple, c.month, 1);
 }
 
 /** Linear time→pixel projection over one view. Pure. */
