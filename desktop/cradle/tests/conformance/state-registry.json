@@ -1780,6 +1780,43 @@
       ]
     },
     {
+      "owner": "src/techne/m0m5/palace/presence.ts",
+      "references": [],
+      "sites": [
+        {
+          "owner": "src/techne/m0m5/palace/presence.ts",
+          "receiver": "storage",
+          "method": "getItem",
+          "key": "PALACE_PRESENCE_KEY",
+          "basis": [
+            "PALACE_PRESENCE_KEY = \"oi-cradle.techne-palace.presence.v1\""
+          ]
+        },
+        {
+          "owner": "src/techne/m0m5/palace/presence.ts",
+          "receiver": "storage",
+          "method": "setItem",
+          "key": "PALACE_PRESENCE_KEY",
+          "basis": [
+            "PALACE_PRESENCE_KEY = \"oi-cradle.techne-palace.presence.v1\""
+          ]
+        }
+      ],
+      "key_literals": [
+        "oi-cradle.techne-palace.presence.v1"
+      ],
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; lane-5 T21 (presentation saving)",
+      "rationale": "Palace arrangement, walk position and bookmarks as refs over a reading; validated against the reading on restore. Object contents remain in their owners; storage is the journey presence owner's (defaultPresenceStorage).",
+      "keys": [
+        {
+          "family": "PALACE_PRESENCE_KEY",
+          "classification": "presentation-local",
+          "rationale": "Palace presence — refs, walk index and bookmarks only; never source truth.",
+          "review": "provisional; Lane B ratifies scope without converting source truth into browser state"
+        }
+      ]
+    },
+    {
       "owner": "src/techne/material.ts",
       "references": [
         "localStorage"
