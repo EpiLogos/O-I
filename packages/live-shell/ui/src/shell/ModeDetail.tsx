@@ -392,24 +392,26 @@ export const LENSES: readonly TechneLens[] = [
   {id: 'palace', name: 'Palace', mark: 'palace', state: 'waiting', owner: 'the Palace owner (the integral composition)'},
 ]
 
-/** The plain reason a lens cannot open as a pane in the Factory centre, or null when it can. Factory's Workbench tree admits only
- * the Earth atlas as a pane body: its Graph view (Project / graph) and its Earth view (Places). Timeline and Journey (Session) are
- * held by the World view; every other waiting lens names its owner. */
+/** The plain reason a lens cannot open as a pane in the Factory centre, or null when it can. Factory's Workbench tree admits the Earth
+ * atlas (its Graph view, Project / graph, and its Earth view, Places) and the Timeline projection's pane body (Timeline, m2, and
+ * Journey, m3, its two presentations). Every other waiting lens names its owner. */
 export function factoryLensReason(lens: TechneLens): string | null {
-  if (lens.id === 'project-graph' || lens.id === 'places') return null
-  if (lens.id === 'timeline' || lens.id === 'journey') return `The ${lens.name} isn't available as a pane in Factory yet — its body is held by the World view.`
+  if (lens.id === 'project-graph' || lens.id === 'places' || lens.id === 'timeline' || lens.id === 'journey') return null
   return `${lens.name} (planned) — the button holds its place; ${lens.owner} is still to be mounted here`
 }
 
-/** The instrument pane a Factory lens press opens inside the Workbench tree, or null when the press opens nothing. Session (Journey)
- * never maps to the Timeline: a Factory press reaches only the admitted Earth atlas panes. */
-export function factoryLensPane(lens: TechneLens): 'projection.earth' | 'projection.constellation' | null {
+/** The instrument pane a Factory lens press opens inside the Workbench tree, or null when the press opens nothing. Timeline and
+ * Journey both open the one Timeline pane (projection.timeline); the lens's presentation is that pane's own presentation. */
+export function factoryLensPane(lens: TechneLens): 'projection.earth' | 'projection.constellation' | 'projection.timeline' | null {
   if (factoryLensReason(lens) !== null) return null
+  if (lens.presentation) return 'projection.timeline'
   return lens.atlas === 'graph' ? 'projection.constellation' : 'projection.earth'
 }
 
 export function TechneLensBar({presentation, atlasOpen, onLens, hosted = null, factory = false}: {
-  presentation: 'session' | 'arrangement'
+  /** The presentation lens in force; null when the focused pane holds no presentation (Factory's agent tab), so no Timeline or
+   * Journey lens reads as pressed. */
+  presentation: 'session' | 'arrangement' | null
   /** the Earth atlas is the open centre pane: the World cut's lenses are not pressed while it is */
   atlasOpen: boolean
   onLens: (lens: TechneLens) => void

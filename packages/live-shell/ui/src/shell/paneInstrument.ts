@@ -16,10 +16,11 @@
  *   graph, a standalone instrument (owner correction, 13 Oct 2026). It is
  *   not the 0 instrument, and it has no device face declared yet: its Device
  *   side states that its controls are not yet declared.
- * - world.ground, native.session, native.arrangement: the Timeline
- *   projection's presentations, paired as TechneLensBar pairs them —
+ * - world.ground, native.session, native.arrangement, projection.timeline: the
+ *   Timeline projection's presentations, paired as TechneLensBar pairs them —
  *   `arrangement` is the Timeline lens (techne:m2), `session` is the Journey
- *   lens (techne:m3). See ModeDetail.tsx LENSES.
+ *   lens (techne:m3). See ModeDetail.tsx LENSES. The projection.timeline pane
+ *   (a Factory pane body) carries its presentation as its own state.
  * - world.expressions → the instrument of the hosted Expressions lens the
  *   frame stands in (HOSTED_INSTRUMENT: project→m0, canvas→m1, timeline→m2,
  *   journey→m3, place→m4, palace→m5). Until the frame reports a lens, the
@@ -114,6 +115,8 @@ export function instrumentOfPane(
     case 'world.ground':
     case 'native.session':
     case 'native.arrangement':
+    case 'projection.timeline':
+      // The Timeline pane (T-FACTORY-TIMELINE-PANE) is the same projection: its own presentation picks the lens.
       if (presentation === 'arrangement') return 'techne:m2'
       if (presentation === 'session') return 'techne:m3'
       return null
@@ -154,10 +157,11 @@ export function showsLensBar(frameMode: FrameModeName, centerPanel: string): boo
 /** The centre pane a focused Factory tab stands for, so the existing `deviceInstrumentFor` reads its instrument (owner ruling,
  * 13 Oct 2026: a pane instrument works in Factory at full capability). The agent tab stands for AgentShellDeviceDetail: it
  * names `native.agent`, which holds no instrument. An Earth or Graph pane holds the 0 instrument; a Timeline pane holds the
- * Timeline lens (techne:m2); a knowledge pane is the standalone knowledge graph. Any other tab holds none. */
-export function factoryFocusedPane(surfaceKind: string | undefined): {pane: string; presentation: TimelinePresentation | null} {
+ * Timeline lens (techne:m2) or the Journey (techne:m3), by its own presentation (`timelinePresentation`, the pane's state);
+ * a knowledge pane is the standalone knowledge graph. Any other tab holds none. */
+export function factoryFocusedPane(surfaceKind: string | undefined, timelinePresentation: TimelinePresentation = 'arrangement'): {pane: string; presentation: TimelinePresentation | null} {
   if (surfaceKind === 'projection.earth' || surfaceKind === 'projection.constellation') return {pane: 'projection.earth', presentation: null}
-  if (surfaceKind === 'projection.timeline') return {pane: 'world.ground', presentation: 'arrangement'}
+  if (surfaceKind === 'projection.timeline') return {pane: 'projection.timeline', presentation: timelinePresentation}
   if (surfaceKind === 'knowledge') return {pane: 'world.knowledge', presentation: null}
   if (surfaceKind === undefined || surfaceKind === 'agent-shell') return {pane: 'native.agent', presentation: null}
   return {pane: 'native.workbench', presentation: null}

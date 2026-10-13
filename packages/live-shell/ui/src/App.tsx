@@ -43,11 +43,14 @@ import {NATIVE_PRESENT_EXPRESSIONS} from './native/openStudio'
 import {sameEditorBasis,type NativeEditorBasis,type NativeEditorController} from '@epilogos/expressions-boundary/editor'
 import './NativeCompositionResidence.css'
 import {registerAtlasHost} from './projections/atlas/registerAtlasHost'
+import {registerTimelineHost} from './projections/timelinePane'
+import {setTimelinePanePresentation, useTimelinePanePresentation, usePublishTimelineReading} from './projections/timelinePaneHost'
 import {presentAtlasView, useAtlasView} from './projections/atlas/AtlasProjectionPanel'
 import {deviceInstrumentFor, factoryFocusedPane, hostedLensOfBarId, showsLensBar, type HostedLens} from './shell/paneInstrument'
 import {focusedSurfaceKind, isFactoryMode, openFactoryInstrumentPane} from './agent/factoryCentre'
 import {captureTechneInstrumentOpen, TECHNE_INSTRUMENT_OPEN, type TechneInstrumentEvent} from './native/techneInstrumentOpen'
 registerAtlasHost()
+registerTimelineHost()
 const PALETTE =['#79b6ce', '#779dcc', '#9885bc', '#8baf9c', '#b096b2', '#6caaa9']
 export function App() {
   const frameRef = useRef<HTMLDivElement>(null)
@@ -366,9 +369,11 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   // Device side follows it in every mode but Live; the lens bar stands over
   // the centre whenever it holds an instrument pane (paneInstrument.ts).
   const atlasView = useAtlasView()
+  // The Timeline pane's own presentation (Session = Journey, Arrangement = Timeline): pane state, never the World cut's `tab`.
+  const timelinePane = useTimelinePanePresentation()
   // A Factory tree's focused tab names its pane (factoryFocusedPane): the agent tab keeps its own Device side, an instrument tab
   // takes its instrument through the same deviceInstrumentFor every mode uses.
-  const factoryFocus = frameMode === 'factory' ? factoryFocusedPane(focusedSurfaceKind(continuity.current.layout)) : null
+  const factoryFocus = frameMode === 'factory' ? factoryFocusedPane(focusedSurfaceKind(continuity.current.layout), timelinePane) : null
   const focusedPane = settingsPresented ? 'world.settings' : factoryFocus ? factoryFocus.pane : centerPanel
   // The hosted Expressions lens the frame reports (publishReading, via the panel's onState). Null until it reports one.
   const hostedLens = workspace.reading?.lens ?? null
@@ -397,6 +402,9 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
       : {value: carrierOf(workspace.transport), title: `The kernel carrier (${carrierOf(workspace.transport)}) serves the ground`},
   } : undefined
   const factoryTask = agency.tracks.find(item => trackKey(item) === shellCtx.selectedTrackId) ?? agency.tracks[0] ?? null
+  // The Timeline pane's reading (T-FACTORY-TIMELINE-PANE): the props the World cut's residence reads, published through the host door
+  // (projections/timelinePaneHost.ts). The pane body renders them; nothing here is copied into a second store.
+  usePublishTimelineReading({set: state.set, document: deep.document, selection, select: choose, colors, setColor, world: worldView, journey: {openExpression: workspace.requestExpression}})
   const frameBody = (<>
     {agentShell ? <AgentShellTransportBridge
       title={workspace.reading?.document?.name ?? 'Agent sessions'}
@@ -428,16 +436,20 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
         instrument pane, in every mode but Live (owner ruling, 13 Oct 2026).
         A World cut lens reached from a mode without the cut enters Technē's
         ground, as the mode transport does. */}
-      {instrumentLensBar && <TechneLensBar presentation={presented ?? 'session'} atlasOpen={centerPanel === 'projection.earth' || factoryFocus?.pane === 'projection.earth'} factory={isFactoryMode(frameMode)} hosted={focusedPane === 'world.expressions' ? {lens: hostedLens} : null} onLens={lens => {
+      {instrumentLensBar && <TechneLensBar presentation={factoryFocus ? factoryFocus.presentation : presented ?? 'session'} atlasOpen={centerPanel === 'projection.earth' || factoryFocus?.pane === 'projection.earth'} factory={isFactoryMode(frameMode)} hosted={focusedPane === 'world.expressions' ? {lens: hostedLens} : null} onLens={lens => {
         // The hosted pane's lens: a press drives the hosted application's lens through its retained-instrument receiver.
         if (focusedPane === 'world.expressions') {const hosted = hostedLensOfBarId(lens.id); if (hosted) driveHostedLens(hosted); return}
         if (lens.state !== 'cut') return
         presentSettings(false)
         // In Factory the lens opens its instrument pane inside the Workbench tree beside the agent tab, never by leaving the centre.
         if (agentShell) {
-          // Only the admitted Earth atlas panes open here; a disabled lens (Timeline, Journey, the rest) opens nothing.
+          // Only the admitted panes open here (the Earth atlas, the Timeline pane); a disabled lens (Canvas, Palace) opens nothing.
+          // Timeline and Journey open the one Timeline pane, and the lens's presentation is that pane's own presentation.
           const paneKind = factoryLensPane(lens)
-          if (paneKind) continuity.setLayout(layout => openFactoryInstrumentPane(layout, paneKind))
+          if (paneKind) {
+            if (paneKind === 'projection.timeline') setTimelinePanePresentation(lens.presentation ?? 'arrangement')
+            continuity.setLayout(layout => openFactoryInstrumentPane(layout, paneKind))
+          }
           return
         }
         if (lens.atlas) { presentAtlasView(lens.atlas); setCenterPanel('projection.earth'); return }
