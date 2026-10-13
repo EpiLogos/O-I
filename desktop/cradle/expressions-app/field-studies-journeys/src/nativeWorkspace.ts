@@ -59,6 +59,9 @@ export interface NativeWorkspaceHost {
  /** E15: a draft flush the owner acknowledged on its own is a Save: it records its checkpoint on the anchor it began at. */
  recordSave?:(anchor:KernelSaveAnchor,checkpoint:KernelCheckpointRecord)=>void;
  toast:(message:string,duration?:number)=>void;
+ /** The host's hold on owner writes: a reason (named, not sent) while an edit the host has open must finish first (a .canvas import).
+  * Checked where each owner write is entered, so a refused write sends nothing to the owner. Null when writes may proceed. */
+ gate?:()=>string|null;
  /** Re-render the open Expression's surfaces when nested documents arrive (E14). */
  refresh?:()=>void;
  summon:(kind:'library'|'verso'|'search',subject?:NativeSubject)=>void;
@@ -121,6 +124,8 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
    file:state?.file?{path:state.file.location.path,revision:state.file.revision}:null,
    page:binding?{page:binding.page,count:binding.page_count,shown:binding.occurrences.length,total:binding.member_refs.length,hidden:binding.hidden_refs.length}:null});
  };
+ // The one refusal every owner write passes at its entry: the reason is the status line and the toast, and nothing is sent.
+ const refusedByHost=():boolean=>{const reason=host.gate?.();if(!reason)return false;status(reason);host.toast(reason,4200);return true;};
  const run=async(task:()=>Promise<void>):Promise<boolean>=>{
   if(busy)return false;busy=true;
   let releaseOwner!:()=>void;ownerIdle=new Promise<void>(resolve=>{releaseOwner=resolve;});
@@ -129,6 +134,7 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
   finally{busy=false;releaseOwner();update();selections.resume();}
  };
  const mutate=async(task:()=>Promise<void>):Promise<boolean>=>{
+  if(refusedByHost())return false;
   const generation=restoreGeneration,draftId=host.snapshot().journey.id;
   const nativeRef=work.state?.view?.document.expression_ref;
   queuedMutations++;
@@ -144,7 +150,7 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
  const selections=new NativeSelectionQueue<FocusIntent>({
   available:()=>!busy&&!work.busy&&queuedMutations===0,
   current:intent=>intent.generation===restoreGeneration&&work.state?.view?.document.expression_ref===intent.nativeRef,
-  apply:intent=>run(async()=>{
+  apply:intent=>refusedByHost()?Promise.resolve(false):run(async()=>{
    const view=work.state?.view,binding=view?.bindings[intent.sceneId];
    if(!view||!binding)throw new Error('This field does not have a native occurrence basis');
    const occurrence=binding.occurrences.find(o=>o.view_entity_id===intent.entityId);
@@ -261,6 +267,7 @@ const settleRecovery=async(found:{record:NativeWorkingRecord;journey:Journey;rec
   changed:()=>{update();},
  });
  const requestOpen=(reference:string)=>{
+  if(refusedByHost())return Promise.resolve(false);
   if(!reference.startsWith('expression:')){status('Choose a native Expression reference');return Promise.resolve(false);}
   return opens.submit(reference,captureNativeAdoption(host,()=>restoreGeneration));
  };
@@ -305,7 +312,7 @@ const settleRecovery=async(found:{record:NativeWorkingRecord;journey:Journey;rec
    members:Object.keys(doc.entities).length,relations:Object.keys(doc.relations??{}).length,
    scenes,currentScene:doc.selection?.scene_ref??null};
  };
- const guarded=(task:()=>Promise<void>)=>run(async()=>{
+ const guarded=(task:()=>Promise<void>)=>refusedByHost()?Promise.resolve(false):run(async()=>{
   if(!kernelExpressionsAvailable())throw new Error('The native host channel is not ready. No native operation has been staged.');
   await task();
  });
@@ -407,7 +414,7 @@ const settleRecovery=async(found:{record:NativeWorkingRecord;journey:Journey;rec
  };
  return {
   /** Retry the last native open that failed (e.g. a revision conflict). */
-  retryOpen:()=>opens.retry(),
+  retryOpen:()=>refusedByHost()?Promise.resolve(false):opens.retry(),
   /** Inspect and settle an interrupted native operation. */
   resolvePending,
   /** Re-perform an interrupted file save with its retained identity. */
@@ -423,10 +430,11 @@ const settleRecovery=async(found:{record:NativeWorkingRecord;journey:Journey;rec
   status:()=>update(),
   open:requestOpen,
   cancelOpen:()=>{opens.cancel();update();},
-  openFile:(path:string)=>run(()=>loadFile(path)),
+  openFile:(path:string)=>refusedByHost()?Promise.resolve(false):run(()=>loadFile(path)),
   /** Follow the same Expression to a newer owner revision when the draft is
    * clean. Resolves false (draft kept) when there is local work to reconcile. */
   advance:async(isCurrent?:()=>boolean):Promise<boolean>=>{
+   if(refusedByHost())return false;
    let adopted=false;
    await run(async()=>{
     if(isCurrent&&!isCurrent())return;
@@ -438,6 +446,7 @@ const settleRecovery=async(found:{record:NativeWorkingRecord;journey:Journey;rec
    return adopted;
   },
   select:(sceneId:string,entityId:string|null,bindingRef?:string)=>{
+   if(refusedByHost())return Promise.resolve('invalidated' as const);
    const nativeRef=work.state?.view?.document.expression_ref;
    if(!nativeRef)return Promise.resolve('invalidated' as const);
    return selections.submit({generation:restoreGeneration,nativeRef,sceneId,entityId,bindingRef});
@@ -499,11 +508,11 @@ const settleRecovery=async(found:{record:NativeWorkingRecord;journey:Journey;rec
    if(!succeeded)throw Error(notice||'The native blueprint was not acknowledged');
   },
   /** Stand on a kernel Expression (host open-expression, boot deep link). */
-  follow:async(reference:string,recovery?:unknown):Promise<boolean>=>{while(busy)await ownerIdle;return run(()=>followOpen(reference,recovery));},
+  follow:async(reference:string,recovery?:unknown):Promise<boolean>=>{if(refusedByHost())return false;while(busy)await ownerIdle;return run(()=>followOpen(reference,recovery));},
   /** Re-read a followed Expression. Clean: adopt the kernel's newer revision
    * (never commits). Edited: keep the edits unsaved and disclose the newer
    * revision. Not open: follow it. */
-  refreshReference:async(reference:string,recovery?:unknown):Promise<boolean>=>{while(busy)await ownerIdle;return run(async()=>{
+  refreshReference:async(reference:string,recovery?:unknown):Promise<boolean>=>{if(refusedByHost())return false;while(busy)await ownerIdle;return run(async()=>{
    if(hostedRecovery()&&recovery!==undefined)recoveryBinding(reference,recovery);
    const current=work.state?.view;
    if(!current||current.document.expression_ref!==reference){await followOpen(reference,recovery);return;}
