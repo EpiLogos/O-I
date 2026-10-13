@@ -106,3 +106,20 @@ the techne contract's facet validator rejects unknown keys
 in the contract (and its native producer) so labelled periods reach the
 chronology; until then production lists every validity facet as "no label
 disclosed".
+
+## Resolution — T8b (the band label carrier)
+
+**Landed (13 Oct 2026; builder haiku).** The techne contract's temporal facet
+admits one new validated key, `label` (≤ 256 chars or null; every other
+unknown key still refused); `timeAxis.ts` carries it as `label_verbatim`; a
+native wiki declaration's period name reaches the band byte-exact through
+the reader (an over-long label fails the declaration loudly, never
+truncated). Scripted: period-labels 6 new, techne suites 25/25 (as CI runs
+them), timeline-bands 7/7, tsc 0.
+
+**T8c (claimable):** a label input beside "Add time range"
+(`src/knowledge/ParticipationFacts.tsx:32`); a native write round-trip proving
+the wiki writer keeps `label` (`kernel/src/construction.rs:75-90,140-150` and
+its writer); `phasesFromFacets` (`relations.ts:409-420`) carries the label to
+the phase view; an empty label reads as absent (`bands.ts:83`); stale
+comments `techneBundle.ts:153-155`, `tests/techne-time-axis-native-acceptance.mjs:93`.

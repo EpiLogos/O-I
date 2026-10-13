@@ -219,6 +219,10 @@ export interface TechneTemporalFacet {
   timezone_policy_ref?: string | null;
   uncertainty?: string | null;
   source_ref?: string | null;
+  /** T8b: the source's own period, era or reign name, verbatim (PeriodO's
+   * twin law: the label is the source's, never a facet ref or kind). At most
+   * 256 characters; absent or null when the source names no period. */
+  label?: string | null;
 }
 
 export interface TechnePlaceName {
@@ -557,7 +561,9 @@ function validateQlReading(value: unknown, errors: string[]): void {
 
 export function validateTemporalFacet(value: unknown, label: string, errors: string[]): void {
   if (!isObject(value)) { errors.push(`${label}: must be an object`); return; }
-  keysAllowed(value, ["facet_ref", "kind", "instant", "interval", "precision", "day_ref", "now_ref", "session_ref", "run_ref", "attempt_ref", "return_ref", "timezone_policy_ref", "uncertainty", "source_ref"], label, errors);
+  keysAllowed(value, ["facet_ref", "kind", "instant", "interval", "precision", "day_ref", "now_ref", "session_ref", "run_ref", "attempt_ref", "return_ref", "timezone_policy_ref", "uncertainty", "source_ref", "label"], label, errors);
+  if (value.label !== undefined && !(value.label === null || (typeof value.label === "string" && value.label.length <= 256)))
+    errors.push(`${label}.label: must be a string of at most 256 characters or null`);
   if (!TEMPORAL_KINDS.includes(value.kind as string)) errors.push(`${label}.kind: not a temporal kind`);
   if (value.facet_ref !== undefined && !nullableRef(value.facet_ref)) errors.push(`${label}.facet_ref: must be a ref or null`);
   if (value.precision !== undefined && !TEMPORAL_PRECISIONS.includes(value.precision as string)) errors.push(`${label}.precision: not a temporal precision`);
