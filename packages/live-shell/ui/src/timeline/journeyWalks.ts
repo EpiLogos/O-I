@@ -56,3 +56,33 @@ export function journeyStopFocus(stop: WorldWalkStop, eventByClipId: ReadonlyMap
   }
   return {kind: 'occasion', event};
 }
+
+/** What a walk stop focuses (T-TIMELINE-WALKS leg 3). An occasion is the Timeline's own rule for the stop's clip. A layer
+ * stop is a stop of a walk that belongs to a reading: the reading's layer id and the stop's own id name the event the
+ * atlas's epoch jump goes to. Anything else names its absence. */
+export type WalkStopFocus =
+  | {kind: 'occasion'; event: TemporalEventRow}
+  | {kind: 'layer'; layerId: string; stopId: string}
+  | {kind: 'absent'; reason: string};
+
+/** The focus of a stop of a walk, read from the walk and the stop alone (an occasion wins over a layer). */
+export function walkStopFocus(walk: WorldWalk, stop: WorldWalkStop, eventByClipId: ReadonlyMap<string, TemporalEventRow>): WalkStopFocus {
+  const occasion = stop.clipId === undefined ? undefined : eventByClipId.get(stop.clipId);
+  if (occasion) return {kind: 'occasion', event: occasion};
+  if (walk.layerId !== undefined) return {kind: 'layer', layerId: walk.layerId, stopId: stop.id};
+  return {
+    kind: 'absent',
+    reason: stop.clipId === undefined
+      ? `${stop.label} stands no clip and belongs to no reading, so there is nothing to focus.`
+      : `${stop.label} stands a clip the civil reading does not give as an occasion, and its walk belongs to no reading.`,
+  };
+}
+
+/** The walk stop a clip stands, across the sets (a walk's clip is its stop's clip). Undefined for any other clip. */
+export function walkStopOfClip(sets: readonly WorldTrackSet[], clipId: string): {walk: WorldWalk; stop: WorldWalkStop} | undefined {
+  for (const walk of journeyWalksOf(sets)) {
+    const stop = walk.stops.find((candidate) => candidate.clipId === clipId);
+    if (stop) return {walk, stop};
+  }
+  return undefined;
+}

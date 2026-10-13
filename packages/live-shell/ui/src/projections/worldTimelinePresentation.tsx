@@ -24,7 +24,9 @@
 import {useEffect, useMemo, useRef, useState} from 'react';
 import {createTimeScale, formatYear} from './atlas/src/data/time';
 import {eventHourOfDay} from '../timeline/timeSpine';
-import type {WorldTrackClip, WorldTrackSet} from '../timeline/worldTrackAdapter';
+import {walkStopFocus, walkStopOfClip} from '../timeline/journeyWalks';
+import {applyWalkStopFocus} from '../timeline/walkFocus';
+import type {WorldTrackClip, WorldTrackSection, WorldTrackSet, WorldWalk, WorldWalkStop} from '../timeline/worldTrackAdapter';
 import type {WorldTimelineView} from './useWorldTemporalReading';
 import './worldTimeline.css';
 
@@ -39,6 +41,8 @@ const groupOfTrackKind = (kind: string): string => {
   if (kind === 'run' || kind === 'run-overflow') return 'Runs · Factory & agency';
   if (kind === 'conversation' || kind === 'conversation-overflow') return 'Conversations';
   if (kind === 'cron') return 'Cron · firings';
+  // The atlas's Aion readings: their event lanes and walk lanes (T-TIMELINE-WALKS leg 3).
+  if (kind === 'atlas-aion-events' || kind === 'walk') return 'Atlas · Aion readings';
   // [L9 musical family] the QL family's role-classified track material.
   if (kind.startsWith('ql-audio/')) return 'QL · audio';
   if (kind.startsWith('ql-physics/')) return 'QL · physics';
@@ -74,6 +78,8 @@ export function WorldTimelinePresentation({view, presentation}: {
   const {source, spine, selectOccasion} = view;
   const [lens, setLens] = useState<WorldTimelineLens>('chronology');
   const [hiddenTracks, setHiddenTracks] = useState<ReadonlySet<string>>(new Set());
+  // The named absence of the last walk stop focus (an atlas epoch the atlas does not hold, a stop with no focus).
+  const [named, setNamed] = useState<string | null>(null);
   // The spine is the truth; this component re-renders on its changes
   // (occasion, transport, cron firings) through this subscription.
   const [tick, setTick] = useState(0);
@@ -199,9 +205,21 @@ export function WorldTimelinePresentation({view, presentation}: {
   };
   const clipX = (entry: PlacedClip): number | null => weekX(entry.day, entry.hour);
 
+  // A walk stop focuses what the Journey would focus for it: its occasion, or its layer's epoch in the atlas (the atlas
+  // owns its camera), or the named reason it cannot. A clip that is neither a mapped occasion nor a walk stop selects
+  // nothing.
+  const focusWalkStop = (walk: WorldWalk, stop: WorldWalkStop) => {
+    const focus = walkStopFocus(walk, stop, source.eventByClipId);
+    void applyWalkStopFocus(focus, selectOccasion).then(setNamed);
+  };
   const selectClip = (entry: PlacedClip) => {
     const event = source.eventByClipId.get(entry.clip.id);
-    if (event) selectOccasion(event);
+    if (event) {
+      selectOccasion(event);
+      return;
+    }
+    const found = walkStopOfClip(sets, entry.clip.id);
+    if (found) focusWalkStop(found.walk, found.stop);
   };
 
   const clipsForTrack = (trackId: string): PlacedClip[] => placed.filter((entry) => entry.trackId === trackId);
@@ -313,6 +331,72 @@ export function WorldTimelinePresentation({view, presentation}: {
   const groups: string[] = [];
   for (const track of rows) if (!groups.includes(track.group)) groups.push(track.group);
 
+  // The walks and nested sections the sets carry, drawn from the same sets as the lanes (leg 1's layer/section model).
+  // Sections are nested by their parents, ordered by their own spans (units are the family's own: no unit is shown
+  // as a date), coloured by their atmosphere. Walks are ordered rails: a stop focuses its occasion or its atlas epoch.
+  const sectionBlocks = sets.flatMap((set, setIndex) => {
+    const sections = set.sections ?? [];
+    if (sections.length === 0) return [];
+    const byId = new Map(sections.map((section) => [section.id, section] as const));
+    const depthOf = (section: WorldTrackSection): number => {
+      let depth = 0;
+      const seen = new Set<string>([section.id]);
+      let parent = section.parentId ? byId.get(section.parentId) : undefined;
+      while (parent && !seen.has(parent.id)) {
+        seen.add(parent.id);
+        depth += 1;
+        parent = parent.parentId ? byId.get(parent.parentId) : undefined;
+      }
+      return depth;
+    };
+    const layerName = new Map((set.layers ?? []).map((layer) => [layer.id, layer.name] as const));
+    const ordered = sections
+      .map((section) => ({section, depth: depthOf(section)}))
+      .sort((a, b) => a.section.span.start - b.section.span.start || b.section.span.end - a.section.span.end || a.depth - b.depth);
+    const byLayer = new Map<string, typeof ordered>();
+    for (const item of ordered) {
+      const key = item.section.layerId ?? '';
+      byLayer.set(key, [...(byLayer.get(key) ?? []), item]);
+    }
+    return [...byLayer.entries()].map(([layerId, items]) => <div key={`${setIndex}:${layerId}`} className="wt-row" data-section-layer={layerId || undefined}>
+      <div className="wt-track-head">
+        <span>{layerName.get(layerId) ?? 'Sections'}</span>
+        <span className="wt-track-kind">sections · nested</span>
+      </div>
+      <div className="wt-lane" style={{display: 'flex', flexWrap: 'wrap', gap: 4, alignItems: 'center'}}>
+        {items.map(({section, depth}) => <span key={section.id} data-section={section.id} data-depth={depth}
+          title={`${section.name} · span ${section.span.start}–${section.span.end} (the family's own units)`}
+          style={{marginLeft: depth * 12, padding: '1px 6px', fontSize: 11, color: 'var(--wt-fact)', background: 'var(--wt-line-faint)', borderLeft: `3px solid ${section.atmosphere ?? 'var(--wt-line)'}`}}>
+          {section.name}
+        </span>)}
+      </div>
+    </div>);
+  });
+
+  const walkBlocks = sets.flatMap((set) => set.walks ?? []).map((walk: WorldWalk) => <div key={walk.id} className="wt-row"
+    data-walk-row={walk.id} data-walk-kind={walk.kind} data-walk-derived={walk.derived ? 'derived' : 'curated'}>
+    <div className="wt-track-head">
+      <span>{walk.name}</span>
+      <span className="wt-track-kind">{walk.kind} · {walk.derived ? 'derived on read' : 'curated'} · {walk.stops.length} {walk.stops.length === 1 ? 'stop' : 'stops'}</span>
+    </div>
+    <div className="wt-lane" style={{display: 'flex', flexWrap: 'wrap', gap: 3, alignItems: 'center'}}>
+      {walk.stops.map((stop, index) => <button key={`${walk.id}:${index}`} type="button" data-walk-stop={index + 1} data-stop-ref={stop.id}
+        title={`${stop.label}${stop.year !== undefined ? ` · ${formatYear(stop.year)}` : ''}${stop.place?.label ? ` · ${stop.place.label}` : ''}${stop.also.length ? ` · ${stop.also.length} attached` : ''}`}
+        onClick={() => focusWalkStop(walk, stop)}
+        style={{font: 'inherit', fontSize: 10, color: 'var(--wt-text-faint)', background: 'transparent', border: '1px solid var(--wt-line-faint)', padding: '1px 5px', cursor: 'pointer', whiteSpace: 'nowrap'}}>
+        {index + 1}/{walk.stops.length} {stop.label}{stop.year !== undefined ? ` · ${formatYear(stop.year)}` : ''}
+      </button>)}
+    </div>
+  </div>);
+
+  const walkAndSectionGroup = <div className="wt-group" data-world-walks={walkBlocks.length}>
+    <div className="wt-group-head">Walks · sections</div>
+    {sectionBlocks}
+    {walkBlocks}
+    {walkBlocks.length === 0 && <div className="wt-absence" role="note">No walks are carried by the World's track sets. The atlas's Aion walks join when the Earth pane has loaded its reading.</div>}
+    {named && <div className="wt-absence" role="status">{named}</div>}
+  </div>;
+
   return <div className={`world-timeline wt-${presentation}`} data-world-cut="true" data-lens={lens}>
     <div className="wt-controls" role="toolbar" aria-label="Time spine controls">
       <span className="wt-chip wt-now-chip" data-i="Now|The situated civil field: the reading's own newest instant and day. It drives Earth and Timeline alike — never the wall clock.">
@@ -360,9 +444,10 @@ export function WorldTimelinePresentation({view, presentation}: {
       {rulerTicks.map((tickEntry, index) => <span key={`${tickEntry.label}-${index}`} className={tickEntry.today ? 'wt-tick wt-tick-today' : 'wt-tick'} style={{left: `${tickEntry.x}%`}}>{tickEntry.label}</span>)}
     </div>}
     {lens !== 'concurrency' && presentation === 'arrangement' && <div className="wt-deep-note" role="note">
-      Deep time: the atlas non-linear scale stands (adopted, not re-ported). No family has bound epoch material into this reading — authored history lands here through the atlas family's Aion jump.
+      Deep time: the atlas non-linear scale stands (adopted, not re-ported). The Aion sections and walks are listed under Walks · sections by their own spans and years; their placement on this scale waits for the family's declared time unit.
     </div>}
     <div className="wt-tracks">
+      {walkAndSectionGroup}
       {groups.map((group) => <div key={group} className="wt-group">
         <div className="wt-group-head">{group}</div>
         {rows.filter((track) => track.group === group).map(trackRow)}

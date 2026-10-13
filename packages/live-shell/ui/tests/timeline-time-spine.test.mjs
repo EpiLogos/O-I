@@ -16,6 +16,7 @@ export async function resolve(specifier,context,next){
     if(!specifier.startsWith('.'))throw error;
     if(specifier.endsWith('.js')){try{return await next(specifier.slice(0,-3)+'.ts',context)}catch{}}
     for(const suffix of ['.ts','.tsx']){try{return await next(specifier+suffix,context)}catch{}}
+    for(const suffix of ['/index.ts','/index.tsx']){try{return await next(specifier+suffix,context)}catch{}}
     throw error;
   }
 }

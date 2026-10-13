@@ -41,9 +41,10 @@
 import {useState, type CSSProperties} from 'react'
 import {MODE_GRAMMAR, type SurfMode} from './modeGrammar'
 import type {WorldTimelineView} from '../projections/useWorldTemporalReading'
-import {journeyStopCells, journeyStopFocus, journeyWalksOf} from '../timeline/journeyWalks'
+import {journeyStopCells, journeyWalksOf, walkStopFocus} from '../timeline/journeyWalks'
+import {applyWalkStopFocus} from '../timeline/walkFocus'
 import type {TemporalEventRow} from '../timeline/timeSpine'
-import type {WorldWalkStop} from '../timeline/worldTrackAdapter'
+import type {WorldWalk, WorldWalkStop} from '../timeline/worldTrackAdapter'
 import './modeSurface.css'
 
 /** The five Base session tracks (Rev 5's second table) with the mockup's
@@ -211,14 +212,11 @@ const NO_OCCASIONS: ReadonlyMap<string, TemporalEventRow> = new Map()
 function JourneyStructure({world}: {world: WorldTimelineView | null}) {
   const [named, setNamed] = useState<string | null>(null)
   const walks = journeyWalksOf(world?.source.sets ?? [])
-  const focusStop = (stop: WorldWalkStop) => {
-    const focus = journeyStopFocus(stop, world?.source.eventByClipId ?? NO_OCCASIONS)
-    if (focus.kind === 'occasion' && world) {
-      setNamed(null)
-      world.selectOccasion(focus.event)
-    } else {
-      setNamed(focus.kind === 'absent' ? focus.reason : null)
-    }
+  // A stop focuses what the Timeline would focus for it: its occasion, or its layer's epoch in the atlas (the atlas owns
+  // its camera), or the named reason it cannot.
+  const focusStop = (walk: WorldWalk, stop: WorldWalkStop) => {
+    const focus = walkStopFocus(walk, stop, world?.source.eventByClipId ?? NO_OCCASIONS)
+    void applyWalkStopFocus(focus, (event) => world?.selectOccasion(event)).then(setNamed)
   }
   return <div className="mode-centre-structure mode-centre-journey" aria-label="Journey — walk stops" data-provenance="M3′" data-walks={walks.length}>
     <div className="mode-centre-journey-heads">
@@ -244,8 +242,8 @@ function JourneyStructure({world}: {world: WorldTimelineView | null}) {
         const cells = journeyStopCells(stop)
         const values = [cells.place, cells.occasion, cells.artefact, cells.expression, null, null]
         return <div key={`${walk.id}:${index}`} className="mode-centre-journey-row" data-stop={index + 1} data-stop-ref={stop.id}>
-          <button type="button" className="mode-centre-stop-chip mode-centre-journey-stop" onClick={() => focusStop(stop)}
-            data-i={`Walk stop ${index + 1} of ${walk.stops.length}|${stop.label}${cells.also ? ` — ${cells.also} attached reached from this stop` : ''}. A click focuses the occasion the Timeline would focus for its clip.`}>
+          <button type="button" className="mode-centre-stop-chip mode-centre-journey-stop" onClick={() => focusStop(walk, stop)}
+            data-i={`Walk stop ${index + 1} of ${walk.stops.length}|${stop.label}${cells.also ? ` — ${cells.also} attached reached from this stop` : ''}. A click focuses the stop: its occasion on the Timeline, or its epoch in the atlas.`}>
             {index + 1}/{walk.stops.length}
           </button>
           {JOURNEY_STOP_COLUMNS.map((column, i) => <JourneyCell key={column.name} column={column} value={values[i]} />)}
@@ -258,7 +256,7 @@ function JourneyStructure({world}: {world: WorldTimelineView | null}) {
       </button>
     </div>
     {walks.length === 0
-      ? <p className="mode-centre-note">The atlas reading carries no walks in the World's track sets; the stops hold their places.</p>
+      ? <p className="mode-centre-note">The atlas reading carries no walks in the World's track sets; the stops hold their places. Aion walks join when the Earth pane has loaded its reading.</p>
       : <p className="mode-centre-note">The walks the World's track sets carry — the same walks the Timeline reads.</p>}
     {named && <p className="mode-centre-journey-named" role="status">{named}</p>}
   </div>
