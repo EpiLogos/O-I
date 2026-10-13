@@ -34,3 +34,13 @@ and run-read-only pass, tsc 0. `maxZoom` stays 2 (the existing ceiling).
 
 Unverified (native pass): the guide render mid-drag, the controls' layout
 beside the minimap, key handling in WKWebView.
+
+**A2 — shapes, stickies, text (landed `bff6060df`, kernel in `5e7d5364a`).**
+`canvasShapes.ts` defines the new card kinds: sticky (palette keys, never
+colours), shape (rectangle / ellipse / diamond, stroke or one token fill)
+and text. They live in `ResearchCard`, with closed-key validation in both JS
+and the kernel. One picker sits in the tool row, and the
+`CanvasObjectNodes.tsx` overlay renders the objects. An object's label is
+its card caption. Lead (kernel): research `frames` / `namedViews`, which the
+kernel had refused, are now admitted with the same bounds as the app.
+**A3 + A4 (dispatched):** connector kinds and labels; side-binding.
