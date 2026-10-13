@@ -18,10 +18,12 @@
 import type {FamilyManifestId} from '../familyManifest.ts'
 import {allFamilyManifests, familyManifest} from '../familyManifest.ts'
 import type {InhabitantManifest} from '../manifest.ts'
-import {validateInhabitantManifest} from '../manifest.ts'
+import {allInhabitantManifests, faceKind, validateInhabitantManifest} from '../manifest.ts'
 import {AGENT_SHELL_ADDRESS_TABLE} from '../agentParamAddresses.ts'
 import type {DeviceDeclaration, FamilyDeclaration, ParamInput, SdkParamRow} from './define.ts'
-import {allSdkParamRows, allTransportBindings, familyProduct, familyWriters} from './define.ts'
+import {allSdkParamRows, allTransportBindings, facePresentation, familyProduct, familyWriters} from './define.ts'
+import {LIVE_EXEMPLARS, isWritePath, semanticModesFor, validateFaceSemantic} from './semantics.ts'
+import type {LiveSemantic, SemanticInvariant} from './semantics.ts'
 import {isIconName} from './icons.ts'
 import {DEVICE_FORMATS, SDK_MODES, TRANSPORT_ROWS, TRANSPORT_SLOT_IDS, isSdkMode, isTransportTarget, transportTargetSlots} from './modes.ts'
 import {PRODUCT_IDS, isKnownProduct} from './products.ts'
@@ -42,15 +44,9 @@ export type SdkParamType = (typeof SDK_PARAM_TYPES)[number]
 /** Types whose rows are readings by nature — a writePath on one is a fault. */
 const READ_ONLY_TYPES: readonly SdkParamType[] = ['stream', 'scope', 'route', 'receipts']
 
-/** The write-path grammar: `kernel:<op>` (the kernel op union), `shell.<setter>`
- * (the shell's own armed setters), or `<tool>:<command>` (a native owner's
- * CLI — `workcell-cli:git commit`). Anything else is not a path an owner
- * stands behind. */
-export function isWritePath(candidate: string): boolean {
-  if (/^kernel:[a-z][a-z0-9_]*$/.test(candidate)) return true
-  if (/^shell\.[a-z][a-zA-Z0-9]*$/.test(candidate)) return true
-  return /^[a-z][a-z0-9-]*:[a-z][a-z0-9-]*(?:[ ][\w./-]+)*$/.test(candidate)
-}
+// isWritePath moved to sdk/semantics.ts (the Live semantics gate, lock §5);
+// re-exported here unchanged so every existing importer keeps its path.
+export {isWritePath}
 
 const PARAM_KEY = /^[a-z0-9][a-z0-9-]*$/
 const FACE_ID = /^[a-z0-9][a-z0-9-]*$/
@@ -286,7 +282,13 @@ export function validateDeclaredFamily(
   for (const fault of validateTransportBindings(declaration.id, declaration.transport ?? [], params, manifest)) {
     faults.push(fault)
   }
-  return faults
+  // The Live semantic law with the declared per-mode formats (lock §5.4): the
+  // door's manifest carries no formats, so the kit checks them here, at
+  // admission. Repeated semantic faults fold away in the Set below.
+  for (const device of declaration.devices) {
+    if (device.formats) faults.push(...validateFaceSemantic(device, {family: manifest.id, formats: device.formats}))
+  }
+  return [...new Set(faults)]
 }
 
 /** The transport binding law over one set of bindings, against a family's
@@ -410,6 +412,62 @@ export function validateAdmittedWorld(): WorldGateResult {
     }
   }
 
+  // The Live semantic law over the standing world (lock §5, the world gate).
+  // (a) a kit face's own presentation modes and formats are checked against
+  // its semantic (the door already checked the face; a repeat fault folds
+  // away in the Set below); (b) a macro maps declared rows of its own family,
+  // within their domains; (c) every write path an invariant names is armed
+  // by the shell or the family, a real kernel op, or a known tool.
+  const semanticRows: readonly {readonly family: string; readonly key: string; readonly values?: readonly string[]; readonly range?: {readonly min?: number; readonly max?: number}}[] =
+    [...allSdkParamRows(), ...AGENT_SHELL_ADDRESS_TABLE]
+  for (const manifest of allInhabitantManifests()) {
+    const family = manifest.id
+    const extra: string[] = []
+    for (const face of manifest.faces) {
+      const where = `${family}/${face.id}`
+      const presentation = facePresentation(family, face.id)
+      if (presentation?.formats || presentation?.modes) {
+        extra.push(...validateFaceSemantic(face, {family, modes: presentation.modes, formats: presentation.formats}))
+      }
+      const invariant: SemanticInvariant = face.invariant ?? {}
+      if (face.liveSemantic === 'macro') {
+        for (const map of invariant.maps ?? []) {
+          const row = semanticRows.find(candidate => candidate.family === family && candidate.key === map.key)
+          if (!row) {
+            extra.push(`${where}: macro maps "${map.key}", which is no declared row of family "${family}" — a macro maps the declared rows of its own family (lock §4.5, §5.3)`)
+            continue
+          }
+          const choices = map.range as readonly unknown[]
+          if (row.values && choices.every(choice => typeof choice === 'string')) {
+            const outside = (choices as readonly string[]).filter(choice => !row.values!.includes(choice))
+            if (outside.length) extra.push(`${where}: macro map "${map.key}" names ${outside.join(', ')}, which the row does not carry (${row.values.join(' | ')})`)
+          }
+          if (row.range && typeof choices[0] === 'number' && choices.length === 2) {
+            const [min, max] = choices as readonly number[]
+            if ((row.range.min !== undefined && min < row.range.min) || (row.range.max !== undefined && max > row.range.max)) {
+              extra.push(`${where}: macro map "${map.key}" range [${min}, ${max}] leaves the row's own domain`)
+            }
+          }
+        }
+      }
+      for (const path of [invariant.generates, invariant.replaceReceipt, invariant.routesTo]) {
+        if (path === undefined || !isWritePath(path)) continue
+        if (path.startsWith('kernel:')) {
+          if (!isKernelOp(path.slice('kernel:'.length))) {
+            extra.push(`${where}: write path "${path}" names no kernel op — the kernel's union is KERNEL_OPS (generated from the kernel's types); pick a real op`)
+          }
+        } else if (path.startsWith('shell.')) {
+          if (!ARMED_SHELL_SETTERS.includes(path) && !familyWriters(family).includes(path)) {
+            extra.push(`${where}: write path "${path}" is armed by no one — the shell arms ${ARMED_SHELL_SETTERS.join(', ')}; arm it in the shell, or declare it on the family's writers with an authority`)
+          }
+        } else if (!isKnownTool(path.slice(0, path.indexOf(':')))) {
+          extra.push(`${where}: write path "${path}" names an unknown tool — known native-owner tools: ${KNOWN_TOOLS.join(', ')}`)
+        }
+      }
+    }
+    if (extra.length) byFamily.set(family, [...new Set([...byFamily.get(family) ?? [], ...extra])])
+  }
+
   // §14 uniqueness across kit rows: one owning address per (family, device, key).
   const seen = new Map<string, SdkParamRow>()
   for (const row of allSdkParamRows()) {
@@ -443,4 +501,52 @@ export function validateAdmittedWorld(): WorldGateResult {
   }
 
   return {byFamily, cross}
+}
+
+// ---------------------------------------------------------------------------
+// the semantic registry (lock §5.6): every admitted face, its family, mode
+// scope, format, Live semantic, invariant, write paths and Live exemplar —
+// generated from the standing world, locked by tests/live-semantics.test.mjs.
+
+export interface SemanticRegistryEntry {
+  readonly family: string
+  readonly face: string
+  readonly kind: string
+  readonly liveSemantic: LiveSemantic
+  /** The modes the face is checked in (declared, else the family's home modes). */
+  readonly modes: readonly string[]
+  /** The per-mode formats the kit declared for the face (empty for door-only faces). */
+  readonly formats: Readonly<Record<string, string>>
+  readonly invariant: SemanticInvariant | null
+  /** The owner write paths the face's invariant names (generates, replaceReceipt, routesTo). */
+  readonly writePaths: readonly string[]
+  /** The Live-mode exemplar this semantic is checked against (lock §5.5). */
+  readonly exemplar: string
+}
+
+/** Every admitted face's semantic, sorted by family then face. */
+export function semanticRegistry(): SemanticRegistryEntry[] {
+  const entries: SemanticRegistryEntry[] = []
+  for (const manifest of allInhabitantManifests()) {
+    for (const face of manifest.faces) {
+      const presentation = facePresentation(manifest.id, face.id)
+      const modes = semanticModesFor({modes: presentation?.modes ?? face.modes}, manifest.id)
+      const formats = Object.fromEntries(Object.entries(presentation?.formats ?? {}).sort(([a], [b]) => a.localeCompare(b)))
+      const invariant = face.invariant ?? null
+      const writePaths = [...new Set([invariant?.generates, invariant?.replaceReceipt, invariant?.routesTo]
+        .filter((path): path is string => typeof path === 'string' && isWritePath(path)))].sort()
+      entries.push({
+        family: manifest.id,
+        face: face.id,
+        kind: faceKind(face),
+        liveSemantic: face.liveSemantic,
+        modes: [...modes],
+        formats,
+        invariant,
+        writePaths,
+        exemplar: LIVE_EXEMPLARS[face.liveSemantic],
+      })
+    }
+  }
+  return entries.sort((a, b) => a.family.localeCompare(b.family) || a.face.localeCompare(b.face))
 }

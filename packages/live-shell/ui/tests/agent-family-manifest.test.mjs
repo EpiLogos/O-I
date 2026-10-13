@@ -108,7 +108,7 @@ test('a seventh family integrates through admission only (no core change)', () =
   door.admitFamilyManifest({
     id: 'seventh-product-proof',
     browser: ['proof'],
-    faces: [{id: 'proof-face', presentations: ['compact']}],
+    faces: [{id: 'proof-face', liveSemantic: 'info', presentations: ['compact']}],
     params: {grammar: 'proof/v1'},
     projections: ['proof-projection'],
     inspectors: ['proof-inspector'],

@@ -98,6 +98,7 @@ const HONEST_FAMILY = {
       id: 'probe',
       title: 'Probe',
       icon: 'form',
+      liveSemantic: 'info',
       note: 'Readings over the probe owner (op acme_probe_read); the calibration writer waits.',
       params: [
         sdkDefine.reading({key: 'readiness', title: 'Readiness', type: 'string', disclosure: 'No owner reading wired yet.'}),
@@ -140,10 +141,10 @@ test('the gate refuses: invented icons, fake writers, broken grammars, unreachab
     [{...HONEST_FAMILY, devices: [{...HONEST_FAMILY.devices[0], params: [sdkDefine.stringParam({key: 'x', title: 'X', type: 'string', writePath: 'make it up'})]}]}, 'owner path'],
     [{...HONEST_FAMILY, devices: [{...HONEST_FAMILY.devices[0], params: [sdkDefine.enumParam({key: 'x', title: 'X', type: 'enumerated', values: [], writePath: 'shell.setAcmeGain'})]}]}, 'values'],
     [{...HONEST_FAMILY, devices: [{...HONEST_FAMILY.devices[0], params: [{key: 'x', title: 'X', type: 'waveform'}]}]}, 'grammar'],
-    [{...HONEST_FAMILY, devices: [{id: 'doc', title: 'Doc', icon: 'lib', kind: 'document', params: []}]}, 'declares a body'],
+    [{...HONEST_FAMILY, devices: [{id: 'doc', title: 'Doc', icon: 'lib', liveSemantic: 'info', kind: 'document', params: []}]}, 'declares a body'],
     [{
       ...HONEST_FAMILY,
-      devices: [{id: 'wait', title: 'Wait', icon: 'form', admission: 'waiting', params: [sdkDefine.boolParam({key: 'x', title: 'X', type: 'boolean', writePath: 'shell.setX'})]}],
+      devices: [{id: 'wait', title: 'Wait', icon: 'form', liveSemantic: 'info', admission: 'waiting', params: [sdkDefine.boolParam({key: 'x', title: 'X', type: 'boolean', writePath: 'shell.setX'})]}],
     }, 'waiting face carries no write path'],
   ]
   for (const [declaration, expected] of refusals) {
@@ -170,19 +171,19 @@ test("the extension path runs the door's validator too (the F1 escapes refuse)",
   // A waiting face carrying a document body through an extension refuses.
   assert.throws(() => sdkDefine.declareDeviceExtension({
     id: 'central:qa-probe', by: 'qa', family: 'central',
-    devices: [{id: 'qa-doc', title: 'QA Doc', icon: 'lib', kind: 'document', admission: 'waiting', note: 'waits',
+    devices: [{id: 'qa-doc', title: 'QA Doc', icon: 'lib', liveSemantic: 'info', kind: 'document', admission: 'waiting', note: 'waits',
                document: {kind: 'x', file: 'x.html', hosting: 'oi.document-frame/v1', saveRouter: ['saved', 'unchanged', 'stale', 'conflict', 'refused'], messages: ['m']}}],
   }), /breaks the device law/)
   // A pop-out face without the family's detachedKinds refuses.
   assert.throws(() => sdkDefine.declareDeviceExtension({
     id: 'central:qa-probe2', by: 'qa', family: 'central',
-    devices: [{id: 'qa-pop', title: 'QA Pop', icon: 'form', dock: ['dock', 'pop-out']}],
+    devices: [{id: 'qa-pop', title: 'QA Pop', icon: 'form', liveSemantic: 'info', dock: ['dock', 'pop-out']}],
   }), /breaks the device law/)
   // The writers law runs on the extension path (N-A): an invented setter
   // refuses even though the family itself declared honest writers.
   assert.throws(() => sdkDefine.declareDeviceExtension({
     id: 'central:qa-evil', by: 'qa', family: 'central',
-    devices: [{id: 'qa-evil', title: 'QA Evil', icon: 'form', params: [sdkDefine.numberParam({key: 'x', title: 'X', type: 'number', range: {min: 0, max: 1}, writePath: 'shell.setEvil'})]}],
+    devices: [{id: 'qa-evil', title: 'QA Evil', icon: 'form', liveSemantic: 'info', params: [sdkDefine.numberParam({key: 'x', title: 'X', type: 'number', range: {min: 0, max: 1}, writePath: 'shell.setEvil'})]}],
   }), /armed by no one/)
   // A second extension composes when a PRIOR extension already carries the
   // detachedKinds its pop-out face needs (N-F: the composed shape validates).
@@ -193,16 +194,16 @@ test("the extension path runs the door's validator too (the F1 escapes refuse)",
   })
   sdkDefine.declareDeviceExtension({
     id: 'central:qa-pop', by: 'qa', family: 'central',
-    devices: [{id: 'qa-pop-face', title: 'QA Pop', icon: 'form', note: 'pops through the prior extension\'s declared door', dock: ['dock', 'pop-out']}],
+    devices: [{id: 'qa-pop-face', title: 'QA Pop', icon: 'form', liveSemantic: 'info', note: 'pops through the prior extension\'s declared door', dock: ['dock', 'pop-out']}],
   })
   // An honest extension composes, idempotently.
   const first = sdkDefine.declareDeviceExtension({
     id: 'central:qa-honest', by: 'qa', family: 'central',
-    devices: [{id: 'qa-face', title: 'QA Face', icon: 'form', note: 'honest readings face'}],
+    devices: [{id: 'qa-face', title: 'QA Face', icon: 'form', liveSemantic: 'info', note: 'honest readings face'}],
   })
   const again = sdkDefine.declareDeviceExtension({
     id: 'central:qa-honest', by: 'qa', family: 'central',
-    devices: [{id: 'qa-face', title: 'QA Face', icon: 'form', note: 'honest readings face'}],
+    devices: [{id: 'qa-face', title: 'QA Face', icon: 'form', liveSemantic: 'info', note: 'honest readings face'}],
   })
   assert.equal(again, first, 're-declaration with identical contents is idempotent')
 })
@@ -283,6 +284,7 @@ test('a kit row that contradicts the verified address table faults the world gat
       id: 'gateway',
       title: 'Gateway · hermes',
       icon: 'link',
+      liveSemantic: 'info',
       params: [sdkDefine.enumParam({key: 'transport', title: 'Transport', type: 'enumerated', values: ['carrier-pigeon']})],
     }],
   })

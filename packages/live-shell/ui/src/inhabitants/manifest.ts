@@ -24,6 +24,7 @@
 
 import type {FamilyFaceDeclaration, FamilyManifest, FamilyManifestId} from './familyManifest.ts'
 import {allFamilyManifests, familyManifest, onFamilyManifestReset} from './familyManifest.ts'
+import {validateFaceSemantic} from './sdk/semantics.ts'
 
 // ---------------------------------------------------------------------------
 // face kinds — the rack's residents (WORLD-SHELL-DESIGN §5.1–§5.4)
@@ -182,6 +183,12 @@ export function declareFamilyExtension(familyId: FamilyManifestId, extension: Fa
     }
     return prior
   }
+  // The Live semantic law over the extension's own faces, before composing
+  // (lock §5): a face that would not keep its semantic never composes.
+  const semanticFaults = (extension.faces ?? []).flatMap(face => validateFaceSemantic(face, {family: familyId}))
+  if (semanticFaults.length) {
+    throw new Error(`Extension "${extension.id}" for family "${familyId}" refuses — the Live semantic law (DEVICE-SEMANTICS-LOCK §5):\n- ${semanticFaults.join('\n- ')}`)
+  }
   const claimed = new Set(base.faces.map(face => face.id))
   for (const declared of composed.extensions) {
     for (const face of declared.faces ?? []) claimed.add(face.id)
@@ -249,6 +256,9 @@ export function validateInhabitantManifest(manifest: InhabitantManifest): readon
   for (const face of manifest.faces) {
     const kind = faceKind(face)
     const waiting = face.admission === 'waiting'
+
+    // The Live semantic law: vocabulary, mode legality, invariant (lock §5).
+    faults.push(...validateFaceSemantic(face, {family: manifest.id}))
 
     if (!INHABITANT_FACE_KINDS.includes(kind)) claim(face.id, `unknown face kind "${String(face.kind)}"`)
 

@@ -44,6 +44,7 @@ export function declareCentralFamilyL7(): ReturnType<typeof declareFamilyExtensi
       {
         id: 'day-now',
         presentations: ['compact', 'expanded'],
+        liveSemantic: 'transport-slot',
         note: dayNowNote(),
       },
     ],

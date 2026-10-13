@@ -1,0 +1,597 @@
+[
+  {
+    "family": "actuation",
+    "face": "experiment",
+    "kind": "parameter",
+    "liveSemantic": "capture",
+    "modes": [
+      "factory"
+    ],
+    "formats": {},
+    "invariant": null,
+    "writePaths": [],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/lom/LOM-INVENTORY.md"
+  },
+  {
+    "family": "actuation",
+    "face": "frames-monitor",
+    "kind": "parameter",
+    "liveSemantic": "status",
+    "modes": [
+      "factory"
+    ],
+    "formats": {},
+    "invariant": null,
+    "writePaths": [],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/ui/UI-EVIDENCE.md"
+  },
+  {
+    "family": "actuation",
+    "face": "gateway",
+    "kind": "parameter",
+    "liveSemantic": "return",
+    "modes": [
+      "factory"
+    ],
+    "formats": {},
+    "invariant": {
+      "routesTo": "kernel:harness_agent_control"
+    },
+    "writePaths": [
+      "kernel:harness_agent_control"
+    ],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/session-model.md#3"
+  },
+  {
+    "family": "actuation",
+    "face": "gateways-rack",
+    "kind": "parameter",
+    "liveSemantic": "rack",
+    "modes": [
+      "factory"
+    ],
+    "formats": {},
+    "invariant": {
+      "chains": [
+        "hermes",
+        "aikit-agency-gateway",
+        "actuation-frank",
+        "remote-carrier"
+      ],
+      "chainSelector": "gateway"
+    },
+    "writePaths": [],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/racks-session-model.md"
+  },
+  {
+    "family": "actuation",
+    "face": "harness-model",
+    "kind": "parameter",
+    "liveSemantic": "device-instrument",
+    "modes": [
+      "factory"
+    ],
+    "formats": {},
+    "invariant": {
+      "generates": "kernel:harness_agent_control"
+    },
+    "writePaths": [
+      "kernel:harness_agent_control"
+    ],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/operator-voice.md"
+  },
+  {
+    "family": "ai-kit",
+    "face": "agency-gateway",
+    "kind": "parameter",
+    "liveSemantic": "return",
+    "modes": [
+      "factory"
+    ],
+    "formats": {},
+    "invariant": {
+      "routesTo": "kernel:harness_agent_control"
+    },
+    "writePaths": [
+      "kernel:harness_agent_control"
+    ],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/session-model.md#3"
+  },
+  {
+    "family": "ai-kit",
+    "face": "capture-skill",
+    "kind": "parameter",
+    "liveSemantic": "capture",
+    "modes": [
+      "factory"
+    ],
+    "formats": {},
+    "invariant": null,
+    "writePaths": [],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/lom/LOM-INVENTORY.md"
+  },
+  {
+    "family": "ai-kit",
+    "face": "knowledge-route",
+    "kind": "parameter",
+    "liveSemantic": "device-audio-fx",
+    "modes": [
+      "factory"
+    ],
+    "formats": {},
+    "invariant": {
+      "transforms": "the agent's context reach (knowledge bounds on the World device)"
+    },
+    "writePaths": [],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/reverb.md"
+  },
+  {
+    "family": "ai-kit",
+    "face": "skill-device",
+    "kind": "parameter",
+    "liveSemantic": "device-audio-fx",
+    "modes": [
+      "factory"
+    ],
+    "formats": {},
+    "invariant": {
+      "transforms": "the agent turn passing the skillset chain (the turn passes on)"
+    },
+    "writePaths": [],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/reverb.md"
+  },
+  {
+    "family": "ai-kit",
+    "face": "skillset-rack",
+    "kind": "parameter",
+    "liveSemantic": "rack",
+    "modes": [
+      "factory"
+    ],
+    "formats": {},
+    "invariant": {
+      "chains": [
+        "skill-device"
+      ],
+      "chainSelector": "skill (admit light)"
+    },
+    "writePaths": [],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/racks-session-model.md"
+  },
+  {
+    "family": "atlas-earth",
+    "face": "globe-engine",
+    "kind": "parameter",
+    "liveSemantic": "device-instrument",
+    "modes": [
+      "techne"
+    ],
+    "formats": {},
+    "invariant": {
+      "generatesAbsent": "the corpus provider seam (C2) has no owner op yet; the globe forms from the bound CorpusProvider bundle"
+    },
+    "writePaths": [],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/operator-voice.md"
+  },
+  {
+    "family": "atlas-earth",
+    "face": "graph-tools",
+    "kind": "parameter",
+    "liveSemantic": "detail-device",
+    "modes": [
+      "techne"
+    ],
+    "formats": {},
+    "invariant": null,
+    "writePaths": [],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/ui/UI-EVIDENCE.md"
+  },
+  {
+    "family": "atlas-earth",
+    "face": "mode-switch",
+    "kind": "parameter",
+    "liveSemantic": "view-selector",
+    "modes": [
+      "techne"
+    ],
+    "formats": {},
+    "invariant": null,
+    "writePaths": [],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/ui/UI-EVIDENCE.md"
+  },
+  {
+    "family": "atlas-earth",
+    "face": "time-control",
+    "kind": "parameter",
+    "liveSemantic": "transport-slot",
+    "modes": [
+      "techne"
+    ],
+    "formats": {},
+    "invariant": null,
+    "writePaths": [],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/lom/LOM-INVENTORY.md"
+  },
+  {
+    "family": "central",
+    "face": "agent-identity",
+    "kind": "parameter",
+    "liveSemantic": "info",
+    "modes": [
+      "base"
+    ],
+    "formats": {},
+    "invariant": null,
+    "writePaths": [],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/ui/UI-EVIDENCE.md"
+  },
+  {
+    "family": "central",
+    "face": "context-world",
+    "kind": "parameter",
+    "liveSemantic": "device-audio-fx",
+    "modes": [
+      "base"
+    ],
+    "formats": {},
+    "invariant": {
+      "transforms": "the agent's context: Central ground reads and context writes"
+    },
+    "writePaths": [],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/reverb.md"
+  },
+  {
+    "family": "central",
+    "face": "day-die",
+    "kind": "document",
+    "liveSemantic": "device-instrument",
+    "modes": [
+      "base"
+    ],
+    "formats": {},
+    "invariant": {
+      "generates": "kernel:receiving"
+    },
+    "writePaths": [
+      "kernel:receiving"
+    ],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/operator-voice.md"
+  },
+  {
+    "family": "central",
+    "face": "day-now",
+    "kind": "parameter",
+    "liveSemantic": "transport-slot",
+    "modes": [
+      "base"
+    ],
+    "formats": {},
+    "invariant": null,
+    "writePaths": [],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/lom/LOM-INVENTORY.md"
+  },
+  {
+    "family": "central",
+    "face": "flow-document",
+    "kind": "document",
+    "liveSemantic": "clip",
+    "modes": [
+      "base"
+    ],
+    "formats": {},
+    "invariant": {
+      "material": "the Flow document (Dialogue · Flow · Journal)",
+      "revision": "CAS revision (central.files.write)",
+      "states": [
+        "draft",
+        "saved",
+        "edited since save"
+      ]
+    },
+    "writePaths": [],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/session-model.md#5"
+  },
+  {
+    "family": "central",
+    "face": "ground-hygiene",
+    "kind": "parameter",
+    "liveSemantic": "device-audio-fx",
+    "modes": [
+      "base"
+    ],
+    "formats": {},
+    "invariant": {
+      "transforms": "the ground in focus — analysed, passed unchanged"
+    },
+    "writePaths": [],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/reverb.md"
+  },
+  {
+    "family": "central",
+    "face": "impact",
+    "kind": "parameter",
+    "liveSemantic": "device-audio-fx",
+    "modes": [
+      "base"
+    ],
+    "formats": {},
+    "invariant": {
+      "transforms": "the selected folder or note — its neighbourhood read, passed unchanged"
+    },
+    "writePaths": [],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/reverb.md"
+  },
+  {
+    "family": "central",
+    "face": "nara-conversation",
+    "kind": "conversation",
+    "liveSemantic": "device-instrument",
+    "modes": [
+      "base"
+    ],
+    "formats": {},
+    "invariant": {
+      "generates": "kernel:nara_dialogue"
+    },
+    "writePaths": [
+      "kernel:nara_dialogue"
+    ],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/operator-voice.md"
+  },
+  {
+    "family": "quaternal-logic",
+    "face": "chakra",
+    "kind": "parameter",
+    "liveSemantic": "device-instrument",
+    "modes": [
+      "techne"
+    ],
+    "formats": {},
+    "invariant": null,
+    "writePaths": [],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/operator-voice.md"
+  },
+  {
+    "family": "quaternal-logic",
+    "face": "deck",
+    "kind": "parameter",
+    "liveSemantic": "device-instrument",
+    "modes": [
+      "techne"
+    ],
+    "formats": {},
+    "invariant": null,
+    "writePaths": [],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/operator-voice.md"
+  },
+  {
+    "family": "quaternal-logic",
+    "face": "m-prime-matrices",
+    "kind": "parameter",
+    "liveSemantic": "device-instrument",
+    "modes": [
+      "techne"
+    ],
+    "formats": {},
+    "invariant": null,
+    "writePaths": [],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/operator-voice.md"
+  },
+  {
+    "family": "quaternal-logic",
+    "face": "m3-clock",
+    "kind": "parameter",
+    "liveSemantic": "device-instrument",
+    "modes": [
+      "techne"
+    ],
+    "formats": {},
+    "invariant": null,
+    "writePaths": [],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/operator-voice.md"
+  },
+  {
+    "family": "quaternal-logic",
+    "face": "ql-instrument",
+    "kind": "instrument",
+    "liveSemantic": "device-instrument",
+    "modes": [
+      "techne"
+    ],
+    "formats": {},
+    "invariant": {
+      "generates": "kernel:native_expression"
+    },
+    "writePaths": [
+      "kernel:native_expression"
+    ],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/operator-voice.md"
+  },
+  {
+    "family": "quaternal-logic",
+    "face": "sky",
+    "kind": "parameter",
+    "liveSemantic": "device-instrument",
+    "modes": [
+      "techne"
+    ],
+    "formats": {},
+    "invariant": null,
+    "writePaths": [],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/operator-voice.md"
+  },
+  {
+    "family": "quaternal-logic",
+    "face": "torus",
+    "kind": "parameter",
+    "liveSemantic": "device-instrument",
+    "modes": [
+      "techne"
+    ],
+    "formats": {},
+    "invariant": null,
+    "writePaths": [],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/operator-voice.md"
+  },
+  {
+    "family": "software-factory",
+    "face": "agent-custody",
+    "kind": "parameter",
+    "liveSemantic": "macro",
+    "modes": [
+      "factory"
+    ],
+    "formats": {},
+    "invariant": {
+      "maps": [
+        {
+          "key": "autonomy",
+          "range": [
+            "suggest",
+            "review",
+            "auto"
+          ]
+        }
+      ]
+    },
+    "writePaths": [],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/racks-session-model.md"
+  },
+  {
+    "family": "software-factory",
+    "face": "approvals",
+    "kind": "parameter",
+    "liveSemantic": "return",
+    "modes": [
+      "factory"
+    ],
+    "formats": {},
+    "invariant": {
+      "routesTo": "kernel:harness_agent_control"
+    },
+    "writePaths": [
+      "kernel:harness_agent_control"
+    ],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/session-model.md#3"
+  },
+  {
+    "family": "software-factory",
+    "face": "attempt-review",
+    "kind": "parameter",
+    "liveSemantic": "capture",
+    "modes": [
+      "factory"
+    ],
+    "formats": {},
+    "invariant": null,
+    "writePaths": [],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/lom/LOM-INVENTORY.md"
+  },
+  {
+    "family": "software-factory",
+    "face": "context-write-mode",
+    "kind": "parameter",
+    "liveSemantic": "return",
+    "modes": [
+      "factory"
+    ],
+    "formats": {},
+    "invariant": {
+      "routesTo": "shell.setWriteArm"
+    },
+    "writePaths": [
+      "shell.setWriteArm"
+    ],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/session-model.md#3"
+  },
+  {
+    "family": "software-factory",
+    "face": "ledger",
+    "kind": "parameter",
+    "liveSemantic": "track",
+    "modes": [
+      "factory"
+    ],
+    "formats": {},
+    "invariant": {
+      "stream": "the Factory ledger (main-track receipts)"
+    },
+    "writePaths": [],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/session-model.md#3"
+  },
+  {
+    "family": "software-factory",
+    "face": "run-device",
+    "kind": "parameter",
+    "liveSemantic": "track",
+    "modes": [
+      "factory"
+    ],
+    "formats": {},
+    "invariant": {
+      "stream": "the Factory run (one session's task stream)"
+    },
+    "writePaths": [],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/session-model.md#3"
+  },
+  {
+    "family": "workcell",
+    "face": "git-seat",
+    "kind": "parameter",
+    "liveSemantic": "return",
+    "modes": [
+      "factory"
+    ],
+    "formats": {},
+    "invariant": {
+      "routesTo": "workcell-cli:git commit"
+    },
+    "writePaths": [
+      "workcell-cli:git commit"
+    ],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/session-model.md#3"
+  },
+  {
+    "family": "workcell",
+    "face": "link",
+    "kind": "parameter",
+    "liveSemantic": "link",
+    "modes": [
+      "factory"
+    ],
+    "formats": {},
+    "invariant": null,
+    "writePaths": [],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/lom/LOM-INVENTORY.md"
+  },
+  {
+    "family": "workcell",
+    "face": "remote-carrier",
+    "kind": "parameter",
+    "liveSemantic": "link",
+    "modes": [
+      "factory"
+    ],
+    "formats": {},
+    "invariant": null,
+    "writePaths": [],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/lom/LOM-INVENTORY.md"
+  },
+  {
+    "family": "workcell",
+    "face": "seat",
+    "kind": "parameter",
+    "liveSemantic": "return",
+    "modes": [
+      "factory"
+    ],
+    "formats": {},
+    "invariant": {
+      "routesTo": "workcell-cli:seat land"
+    },
+    "writePaths": [
+      "workcell-cli:seat land"
+    ],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/session-model.md#3"
+  }
+]

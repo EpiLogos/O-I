@@ -101,6 +101,7 @@ export function loadAcmeFamily(): void {
       id: 'probe',
       title: 'Probe',
       icon: 'form',                      // a mark of the cut — required
+      liveSemantic: 'info',              // the Live semantic it occupies — required (below)
       note: 'Reads op acme_probe_read; the calibration writer waits.',  // the honesty lives here
       params: [
         numberParam({key: 'gain', title: 'Gain', type: 'number',
@@ -118,6 +119,24 @@ Write-path grammar: `kernel:<op>` (the kernel op union), `shell.<setter>`
 (the shell's own armed setters), or `<tool>:<command>` (a native owner's
 CLI — `workcell-cli:git commit`). **A row without a writePath IS a
 reading** — that is the grammar, not a convention.
+
+**The Live semantic law** (DEVICE-SEMANTICS-LOCK §1, §2, §5; `sdk/semantics.ts`):
+every device names the Live semantic it occupies, from the closed vocabulary
+`LIVE_SEMANTICS` (`device-instrument`, `device-audio-fx`, `device-midi-fx`,
+`rack`, `macro`, `clip`, `track`, `stop`, `return`, `link`, `info`, …).
+The gate refuses a face with no semantic, an unknown one, one illegal in a
+mode it presents in (`LEGAL_SEMANTICS_BY_MODE`), a broken invariant, an
+invariant field that does not belong to its semantic, or a format its semantic
+does not take (`FORMAT_RULES`: `die` and `instrument-face` are instruments;
+`run-viewer` is a track or arrangement in factory only). The invariant names
+what the semantic keeps: an instrument names the owner write it `generates`
+(or `generatesAbsent`, the owner it waits for); an effect names what it
+`transforms`; a return names the `routesTo` it proposes to; a rack its
+`chains` and `chainSelector`; a macro the `maps` it moves; a clip its
+`material`, `revision` and `states`; a track its `stream`; a stop the
+`launches` it stands. A new device starts as `info` (readings only). The
+registry is generated: `node scripts/validate-devices.mjs --write-registry`
+writes `sdk/semantic-registry.json`, which a test locks.
 
 **The writers law:** every write path is membered. A `shell.` path must
 be armed by the shell (`ARMED_SHELL_SETTERS`, derived from the verified
