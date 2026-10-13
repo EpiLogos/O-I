@@ -40,7 +40,7 @@ export interface NestedBinding {subject_ref:string;max_depth:number;state:'ready
 export interface NestedDocumentLike {
  expression_ref:string;
  revision?:number;
- scenes?:{scene_ref?:string;entity_refs?:unknown[];body?:{carrier?:unknown;subject_ref?:unknown}|null}[];
+ scenes?:{scene_ref?:string;entity_refs?:unknown[];body?:{carrier?:unknown;subject_ref?:unknown;reading?:{revision?:unknown}|null;recursion?:{max_depth?:unknown}|null}|null}[];
  entities?:Record<string,unknown>;
 }
 export type NestedGraph=Map<string,NestedDocumentLike>;
@@ -86,25 +86,60 @@ export function setNestingDepthChange<B extends {subject_ref:string;recursion:{h
  return {change:'scene_body_set',scene_ref:sceneRef,body:{...current,recursion:{...current.recursion,max_depth:maxDepth}}};
 }
 
-/** The kernel documents still to read for an occurrence rooted at `root`, and
- * no deeper than the placement's own bound. Level 1 is the subject; a document
- * at level L names its nested Scene bodies at level L+1, so a document past
- * `maxDepth` is never read. Documents already in `graph` are walked, not read. */
-export function nestedReadPlan(graph:NestedGraph,root:string,maxDepth:number,skip:ReadonlySet<string>=new Set()):string[]{
- const plan:string[]=[],seen=new Set<string>();
- let frontier=[root];
+/** The key a nested document is requested under: the revision the occurrence records for its subject, the kernel
+ * SceneBody's `reading.revision`. An occurrence that records no revision is keyed by its structure (subject and
+ * depth): it is re-read only when it changes shape, never on every view. */
+export function nestedKeyOf(subjectRef:string,revision:unknown,maxDepth:number):string{
+ if(typeof revision==='string'&&revision.trim())return `rev:${revision.trim()}`;
+ if(typeof revision==='number'&&Number.isFinite(revision))return `rev:${revision}`;
+ return `structure:${subjectRef}:${maxDepth}`;
+}
+/** The request key of an occurrence body, from the kernel SceneBody shape. */
+export function nestedBodyKey(body:{subject_ref:string;reading?:{revision?:unknown}|null;recursion?:{max_depth:number}|null}):string{
+ return nestedKeyOf(body.subject_ref,body.reading?.revision,body.recursion?.max_depth??0);
+}
+export interface NestedRead {ref:string;key:string}
+/** The documents still to read for the occurrence rooted at `root`, no deeper than its bound. A document is current when
+ * it is in the graph under the key its occurrence requests it by; any other document is read. Level 1 is the subject; the
+ * Scene bodies of a current document name the next level, each under the key its own body records. */
+export function nestedReadPlan(graph:NestedGraph,requested:ReadonlyMap<string,string>,root:NestedRead,maxDepth:number,skip:ReadonlySet<string>=new Set()):NestedRead[]{
+ const plan:NestedRead[]=[],seen=new Set<string>();
+ let frontier:NestedRead[]=[root];
  for(let level=1;level<=maxDepth&&frontier.length;level++){
-  const next:string[]=[];
-  for(const ref of frontier){
-   if(seen.has(ref))continue;
-   seen.add(ref);
-   const doc=graph.get(ref);
-   if(!doc){if(!skip.has(ref)&&plan.length+graph.size<NESTED_GRAPH_LIMIT)plan.push(ref);continue;}
-   for(const scene of doc.scenes??[]){const inner=scene?.body;if(inner&&inner.carrier==='expression_ref'&&typeof inner.subject_ref==='string')next.push(inner.subject_ref);}
+  const next:NestedRead[]=[];
+  for(const node of frontier){
+   if(seen.has(node.ref))continue;
+   seen.add(node.ref);
+   const doc=graph.get(node.ref);
+   if(!doc||requested.get(node.ref)!==node.key){
+    if(!skip.has(node.ref)&&plan.length+graph.size<NESTED_GRAPH_LIMIT)plan.push(node);
+    continue;
+   }
+   for(const scene of doc.scenes??[]){
+    const inner=scene?.body;
+    if(inner&&inner.carrier==='expression_ref'&&typeof inner.subject_ref==='string')
+     next.push({ref:inner.subject_ref,key:nestedKeyOf(inner.subject_ref,inner.reading?.revision,Number(inner.recursion?.max_depth??0))});
+   }
   }
   frontier=next;
  }
  return plan;
+}
+/** Every document the open occurrence names, from the graph's current documents, no deeper than the bound. The cache keeps
+ * exactly these and nothing else. */
+export function nestedReachable(graph:NestedGraph,root:string,maxDepth:number):Set<string>{
+ const out=new Set<string>();
+ let frontier=[root];
+ for(let level=1;level<=maxDepth&&frontier.length;level++){
+  const next:string[]=[];
+  for(const ref of frontier){
+   if(out.has(ref))continue;
+   out.add(ref);
+   for(const scene of graph.get(ref)?.scenes??[]){const inner=scene?.body;if(inner&&inner.carrier==='expression_ref'&&typeof inner.subject_ref==='string')next.push(inner.subject_ref);}
+  }
+  frontier=next;
+ }
+ return out;
 }
 
 // ——— playback: a host Scene whose body is a nested occurrence ———
@@ -142,6 +177,41 @@ export function nestedFrameAt(hostLocal:number,hostDuration:number,nestedDuratio
   start+=d;
  }
  return {kind:'end'};
+}
+
+// ——— seams: the transition between two nested Scenes ———
+
+export interface NestedSeamScene {duration:number;transition:number;kind:string}
+export interface NestedSeam {incoming:number;outgoing:number;kind:string;seconds:number;elapsed:number}
+/** The seam in flight at nested local time `local` inside Scene `sceneIndex`, by the app's own rule (setSceneRef): the
+ * entering Scene carries the transition, which runs for its `transition` seconds from the boundary, unless its kind is
+ * 'cut' or it has no length. The first Scene played has no entering seam. The outgoing Scene is the previous one with
+ * length, because the journey clock (sceneAtJourneyTime) skips zero-length Scenes. */
+export function nestedSeamAt(scenes:readonly NestedSeamScene[],sceneIndex:number,local:number):NestedSeam|null{
+ const incoming=scenes[sceneIndex];
+ if(!incoming||!(incoming.duration>0))return null;
+ let outgoing=-1;
+ for(let j=sceneIndex-1;j>=0;j--)if(scenes[j].duration>0){outgoing=j;break;}
+ if(outgoing<0)return null;
+ if(!(incoming.transition>0)||incoming.kind==='cut')return null;
+ if(!(local>=0&&local<incoming.transition))return null;
+ return {incoming:sceneIndex,outgoing,kind:incoming.kind,seconds:incoming.transition,elapsed:local};
+}
+/** How the app draws a seam's kind (setSceneRef): a crossfade overlays the outgoing frame, a painted kind composes its
+ * blend over the live field, a cut draws nothing. */
+export function nestedSeamMode(kind:string):'crossfade'|'painted'|'none'{
+ return kind==='cut'?'none':kind==='crossfade'?'crossfade':'painted';
+}
+/** Identity of the Scene boundary a frame sits in: the occurrence's subject, the Scene and the boundary's time on the host
+ * clock. A seam starts once per crossing, not once per frame. */
+export function nestedBoundaryKey(subjectRef:string,sceneIndex:number,hostLocal:number,local:number):string{
+ return `${subjectRef}#${sceneIndex}@${Math.round((hostLocal-local)*1000)}`;
+}
+/** Of the seams in flight at several nesting levels, the one that began latest: the least elapsed time. */
+export function latestNestedSeam<T>(seams:readonly T[],elapsed:(seam:T)=>number):T|null{
+ let best:T|null=null;
+ for(const seam of seams)if(!best||elapsed(seam)<elapsed(best))best=seam;
+ return best;
 }
 
 /** The honest notice a frame carries when the occurrence cannot be drawn. */
