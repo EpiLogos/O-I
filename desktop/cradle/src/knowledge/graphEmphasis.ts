@@ -1,4 +1,5 @@
-import type {GraphNode} from './graph';
+import type {GraphEdge, GraphNode} from './graph';
+import {standingOf, type StandingVisual} from '../techne/m0m5/timeline/standing';
 
 /** Named display preferences, never semantic tags, edges or QL classification.
  * Criteria use the same literal name/kind/tag matching as the graph controls;
@@ -45,4 +46,24 @@ export function emphasizeGraph(nodes: readonly GraphNode[], groups: readonly Emp
     if (match) result.set(node.ref,{label:match.label,color:match.color});
   }
   return result;
+}
+
+/** The quiet caption tone of each standing class, as presentation tokens. A
+ * relation caption is drawn in its standing's tone only while emphasised; an
+ * absent token falls back to the caption's muted ink in the renderer. */
+export const GRAPH_STANDING_TOKEN: Record<StandingVisual, string> = {
+  sourced: '--oi-foreground',
+  derived: '--oi-focus',
+  authored: '--oi-muted',
+  disputed: '--oi-status-error',
+  mythic: '--oi-gold',
+  unavailable: '--oi-muted',
+};
+/** The M2′ standing reading of a graph edge, through the one authority
+ * (`standingOf`). Only owner-disclosed fields reach it: the verbatim standing
+ * string and the authored relation's own cited source. Provenance never counts
+ * as evidence, so no edge is upgraded to sourced by where it was read from. */
+export function graphEdgeStanding(edge: Pick<GraphEdge, 'standing' | 'authored_relation'>) {
+  const cited = edge.authored_relation?.source_ref;
+  return standingOf({standing: edge.standing ?? null, source_ref: null, evidence_refs: cited ? [cited] : [], derivation_ref: null});
 }
