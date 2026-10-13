@@ -106,25 +106,28 @@ bullet twice gets one Sonnet diagnostic; never a third builder attempt.
 
 ## 7. Open claims
 
-One branch, one run (`dlw/build`, PR #654). Builders are Haiku, three at a
+One branch, one run (`dlw/build`; the open PR is #661). Builders are Haiku, three at a
 time, each with an exclusive zone; the lead converges, commits and keeps
 this table true. Tickets and resolutions live in `tickets/`.
 
 | Ticket | Who | Zone | Since |
 |---|---|---|---|
-| lane-3 E18 (per-document library, quarantine) | haiku builder | `field-studies-journeys/src/{store.ts,draftStorage.ts,recovery.ts,library.ts}` | 2026-10-13 |
-| lane-5 T19 Accept route + seam B ref carry | haiku builder | `expressions-boundary/src/{protocol,host}.ts`, live-shell native owners + `driveHostedLens`, `palaceInstrument.tsx` Accept | 2026-10-13 |
-| WebKit editor-remount (shell-recovery) | sonnet reviewer | read-only investigation | 2026-10-13 |
+| T-LIVE-MIDI (native MIDI in → the Jankó one input path) | haiku builder | `desktop/cradle/src-tauri/{Cargo.toml,Cargo.lock,src/midi.rs,src/main.rs registration}`, live-shell `src/native/liveMidi.ts`, `src/live/janko/{jankoInput.ts,JankoDevice.tsx}` | 2026-10-14 |
+| T-EXPRESSIONS-PANE-LEASE | haiku builder | live-shell `src/panels/expressions.tsx`, `src/projections/**`, Factory pane host; `expressions-boundary/src/host.ts` read-only unless the lease needs it | 2026-10-14 |
+| lane-5 T15 (the palace's free arrangement board) | haiku builder | `field-studies-journeys/src/{palaceInstrument.tsx,palaceInstrument.css,palaceWhole.ts,palaceBoard*.ts}` + its tests | 2026-10-14 |
 
-Landed on main this day: #656 and #654 (the first 133 commits), #657 (the
-D-series, tours, E15/E16, the frame nudge's cradle withdrawal). Continuing on
-#658 (`dlw/build`).
+Landed on main: #656, #654, #657, #658, #659, #660 (through the torus
+instrument leg 2 and the Factory Timeline pane). Continuing on #661: torus
+legs 3–6, the Jankó device (legs 1–2: the kernel serves the owner's window),
+the mode catalogue (legs 2–3: one mode in force for transport, clip and
+keyboard). The WebKit editor-remount failure was StrictMode's layout-effect
+replay in the test, fixed by `settledEditor` (landed).
 
-Open in CI: `Desktop shell recovery` fails intermittently on WebKit only —
-"the same editor DOM returns, not a remount" on the full-workspace Settings
-return at 360 px; ~9 clean runs to 19f5ed41d, then 3 failures in 4. Withdrawing
-the cradle host's nudge did not cure it (9e0527d70 failed again). Under
-investigation; no commit since 19f5ed41d touches the editor's retention.
+Install seam (14 Oct): `oi update --apply quaternal-logic` installed QL main
+with every companion, but `oi where` — what the kernel reads — answers from
+the active suite receipt (QL 4276b94, no field host). Handed off as its own
+task; re-activating the suite moves all six products and is refused today on
+Central's registration drift.
 
 Factory close, after 4c274de4d: the kernel resolves a grant against
 `Control/user/native-action-authority.json` (root: `OI_CENTRAL_ROOT`, else the
