@@ -733,10 +733,17 @@ declaration.
 
 ---
 
-## 7. THE GRAPH CASE STUDY — one type, two implementations
+## 7. THE GRAPH CASE STUDY — two graphs, two instruments
 
-The owner's worked example, stated as the template every
-multi-implementation pane-instrument type follows.
+**Owner correction, 13 Oct 2026 (DEVICE-SEMANTICS-LOCK §8.1):** the two
+graphs below are no longer one type with two implementations. The atlas
+coloured graph is the second view of the **0 instrument** (Earth and solar
+system ⇄ Graph); the planned separate Graph instrument is folded into it.
+The Obsidian-RE knowledge graph is its **own standalone instrument** under
+its existing spec (`docs/cradle/WIKI-CONSTELLATION-SPEC.md`). The code
+readings in §7.1–7.3 stand as descriptions of the two surfaces; §7.4's
+shared type contract still describes how a type with several
+implementations works, but these two graphs no longer share one.
 
 ### 7.1 The two implementations
 **Implementation 1 — the atlas coloured graph surface.**

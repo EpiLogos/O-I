@@ -15,7 +15,10 @@ conformed in the same commit as this ticket).
    pane's instrument expanded and the others folded.
 3. The lens bar rides the instrument panes in any mode, not only Technē.
 4. Technē's 0 instrument is the Earth and solar system with its graph view
-   (atlas Earth ⇄ Graph).
+   (atlas Earth ⇄ Graph) — the `projection.earth` pane. The knowledge graph
+   (`world.knowledge`, `GraphCanvas.tsx`) is a separate standalone
+   instrument (owner correction, 13 Oct; lock §8.1), never mapped to the 0
+   instrument.
 
 ## Out of this ticket (follows the vision spec, O-I PR #655)
 

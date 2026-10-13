@@ -564,6 +564,15 @@ landed surfaces awaiting their formal type declaration (G1).
 
 The owner's worked example, fully.
 
+**Owner correction, 13 Oct 2026 (DEVICE-SEMANTICS-LOCK §8.1):** the two
+graphs studied here are two instruments, not two implementations of one
+Graph type. The atlas coloured graph is the 0 instrument's second view
+(Earth and solar system ⇄ Graph); the Obsidian-RE knowledge graph is a
+standalone instrument under `docs/cradle/WIKI-CONSTELLATION-SPEC.md`. The
+contract below remains the template for a type with several
+implementations; read "both implementations" as the two graphs' separate
+obligations, each kept whole by its own instrument.
+
 ### 3.1 The Graph instrument type contract
 
 What *any* graph instrument must do — drawn jointly from both implementations'

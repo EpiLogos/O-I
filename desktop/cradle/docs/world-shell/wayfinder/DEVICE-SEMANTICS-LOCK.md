@@ -394,24 +394,35 @@ stop across.
 
 ## 8. Clarifications (owner, 12 Oct 2026)
 
-### 8.1 Instrument types, several implementations — the graphs
+### 8.1 Instrument types, several implementations — and the two graphs are two instruments
 
 Every pane hosts an instrument **type**; a type may have several
 **implementations**, selectable like Live's several reverbs
-(`DLW-PANES-ONTOLOGY.md` §0, the owner's words). The **Graph** type has two:
+(`DLW-PANES-ONTOLOGY.md` §0, the owner's words). Settings live in the
+workspace's sets, never in browser storage, for every type with more than
+one implementation.
 
-- the **Archetypal-Earth graph** (the coloured field graph; its look is the
-  standard): its own settings are thin — four forces, the dust (occurrences),
-  the tie bases (jung · inferred · site), the node tiers, kept in browser
-  storage (`Work/Archetypal-Earth/src/graph/settings.ts`);
-- the **wiki constellation graph** (Obsidian-RE-derived, the cradle's;
-  `docs/cradle/WIKI-CONSTELLATION-SPEC.md` §4–5, `desktop/cradle/src/knowledge/`).
+The two graphs are **not** one type (owner correction, 13 Oct 2026; this
+replaces the earlier reading of them as two implementations under one Graph
+parameter model):
 
-Both sit under one native parameter model — M0′'s controls: depth, budget,
-view (list · tree · graph · form), kinds, ghosts, standing floor, relation
-types, the shared filter — which fills out what the AE graph lacks. Settings
-live in the workspace's sets, never in browser storage. The same holds for
-every type with more than one implementation.
+- the **Archetypal-Earth / atlas coloured graph** is the second view of the
+  **0 instrument** — the Earth and solar system ⇄ Graph (§0.1.3;
+  `packages/live-shell/ui/src/projections/atlas/src/graph/`, the switch on
+  key G). Its own settings are its own: four forces, the dust (occurrences),
+  the tie bases (jung · inferred · site), the node tiers
+  (`Work/Archetypal-Earth/src/graph/settings.ts`), moved from browser
+  storage into the workspace's sets. There is no separately planned Graph
+  instrument; it is folded into the 0 instrument.
+- the **knowledge graph** (the wiki constellation, Obsidian-RE-derived;
+  `desktop/cradle/src/knowledge/GraphCanvas.tsx`,
+  `docs/cradle/WIKI-CONSTELLATION-SPEC.md` §4–5) is its **own standalone
+  instrument**, which any pane in any mode can hold (§0.1.1). Its controls
+  are its spec's: depth, budget, view (list · tree · graph · form), kinds,
+  ghosts, standing floor, relation types, the shared filter.
+
+§0.1.2's "the graph projection (the 0 instrument)" names the world's graph
+view; the knowledge graph stays distinct from it.
 
 ### 8.2 Palaces are curated systems within a corpus or project
 
