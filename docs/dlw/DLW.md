@@ -4,40 +4,44 @@
 
 # Part One — The instrument
 
-## 1. Knowing, and its studio
+## 1. Hearing it together
 
-Making music used to need a studio: rooms of equipment, an engineer, someone
-willing to pay for the hours. Then the studio went into software. Ableton Live
-put recording, arranging, mixing and playing into one window with one clock,
-and now someone with a laptop can make a record in their bedroom and have
-strangers dancing to it by the weekend.
+Human knowledge has never been more abundant, or more estranged from itself.
+The fields that know the most barely speak to one another. A physicist and a
+contemplative can spend their lives on the same question — what it is to be
+aware of anything at all — and never read a line of each other's work. The
+traditions that carried wisdom for thousands of years are shelved under
+religion, the sciences sit in their departments, and a person's own
+experience is filed under nothing at all. AI could help. Mostly it is being
+used to make more text, faster than anyone can read it.
 
-Knowing hasn't had that change. Each of us works out what we know inside
-something far larger — other people's knowing, the long history of a
-question, a world that was intelligible before we arrived — and, the other
-way, the depths of a self that never quite gives itself up to being said. To
-work in that, and to hand what you find to someone else, you still need a
-library, an institution, years of apprenticeship, and a dozen programs that
-have never heard of each other. Your reading is in one place, your notes in
-another, your drafts somewhere else. The agent that helped you this morning
-has forgotten you by the afternoon. None of it adds up to anything another
-person could walk into.
+Lay the fields side by side, though, and they are often saying the same thing
+in different keys. Kepler heard the planets as harmony and computed their
+orbits in the same breath. When this project worked through the structure of
+meaning carefully enough, it found the basic intervals of music already inside
+it. Knowledge has a musical shape: separate voices that can be heard together
+without being merged into one. What has been missing is an instrument for
+hearing them that way, and for playing them.
 
-The Digital Logos Workstation gives you a world to know in. It is drawn as
-one: a planet of your own, in a sky with everyone else's. What you are working
-on stands on its surface. What you have in mind circles close. Your agents'
-work turns around worlds of its own, and the fields you belong to hang in the
-same sky at their own distances. You can look at all of it, from the sentence
-you are writing out to the whole field, without changing tools.
+Music got its instrument. Making a record once took a studio, an engineer and
+someone willing to pay for the hours; Ableton Live put recording, arranging,
+mixing and performing into one window with one clock, and now someone with a
+laptop can make a record in their bedroom and have strangers dancing to it by
+the weekend. Live did not make music easy. It made the whole craft reachable,
+with controls you learn once and then play with everything you have.
 
-It is built on Live's grammar, because that grammar already works. Tracks,
-clips, devices, a transport you press, a Session view for trying things out of
-order and an Arrangement view for seeing them over time: musicians learned
-these once and now play anything with them. In the DLW the same controls stay
-in the same places while you move between kinds of work, and only what they
-act on changes. Play sends a passage to an agent in one place, launches a task
-in another, sets a scene sounding in a third, and walks you through a journey
-in a fourth. You learn the instrument once.
+The Digital Logos Workstation is that instrument for knowledge, and it is
+built on Live's own grammar. You can read a source and keep its thread to the
+last citation. You can set agents to build something and watch them work. You
+can give an idea a form you can see and hear, and build what you find into a
+world someone else can walk into. And because the person doing all this is
+also a world — with depths that never quite rise into words — the instrument
+holds both: the whole that can be understood, and the self who understands
+it.
+
+It isn't easy. Working this way takes reading, patience and a willingness to
+be corrected by your sources. But when the voices start to sound together,
+there is nothing like it.
 
 ## 2. Worlds
 
