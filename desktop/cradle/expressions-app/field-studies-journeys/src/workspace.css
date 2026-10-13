@@ -594,3 +594,11 @@ body:not(.research-active) #tool-rail [data-research-only]{display:none!importan
 .scene-track .scene-trim-edge:hover::after{opacity:.7}
 .scene-track .scene-save-dot{right:9px}
 body.trimming-scene,body.trimming-scene *{cursor:ew-resize!important;user-select:none!important}
+/* E04/E06: one hint line names the gestures; a moved clip dims, its drop edge is a line, an overwrite target is outlined, a slip reads its new start. */
+.scene-gesture-hint{margin:6px 0 0;font-size:11px;line-height:1.4;color:var(--ui-muted)}
+body.moving-scene,body.moving-scene *{cursor:grabbing!important;user-select:none!important}
+.scene-track .scene-clip[data-drag]{opacity:.55}
+.scene-track .scene-clip[data-drop="overwrite"]{outline:2px solid var(--ui-ink);outline-offset:1px}
+.scene-track .scene-clip[data-readout]::after{content:attr(data-readout);position:absolute;top:-16px;left:0;font-size:10px;white-space:nowrap;color:var(--ui-ink);pointer-events:none}
+.scene-track-lane .scene-insert-line{position:absolute;top:0;bottom:0;width:2px;margin-left:-1px;background:var(--ui-ink);border-radius:1px;pointer-events:none;z-index:4}
+.scene-track-lane .scene-insert-line[hidden]{display:none}
