@@ -8,6 +8,9 @@ import {preserveRecoveryLibraryCopies} from './recoveryLibrary.js';
 import type {RecoveryRecord} from '../../../src/expressions/recoveryTypes';
 import {TransportState,validateTransport} from '../../src/engine/transportState';
 import {validateWorkingTransport,type WorkingTransport} from './transport';
+// lane-3 E18/E19: the standalone draft records, their quarantine and the boot choice.
+import {readLibrary,saveToLibrary} from './store.js';
+import {type KeyStore,type RecordLayout,type RecoveryPlan,loadRecord,loadRecords,writeRecord,removeRecord,quarantine,listQuarantine,readPair} from './draftStorage.js';
 export const SESSION_KEY='oi.expression-session.v1';
 export interface SessionState {version:1;journeyId:string;sceneId:string;selected:string[];stepIndex:number;sceneElapsed:number;simTime:number;playing:boolean;journeyPlaying:boolean;camera:Camera;transport?:TransportState;workingTransport?:WorkingTransport;scenePlaying?:boolean;fieldPaused?:boolean}
 export function validateSession(value:unknown,j:Journey):SessionState|undefined{
@@ -20,12 +23,14 @@ export function validateSession(value:unknown,j:Journey):SessionState|undefined{
 let database:Promise<IDBDatabase>|undefined;
 function db(){return database??=new Promise<IDBDatabase>((resolve,reject)=>{
  let failed=false;
- const request=indexedDB.open('oi.expression-recovery',2);
+ const request=indexedDB.open('oi.expression-recovery',3);
  request.onupgradeneeded=()=>{
   if(!request.result.objectStoreNames.contains('drafts'))request.result.createObjectStore('drafts',{keyPath:'id'});
   // Same recovery owner, keyed direct reads; listing browser drafts must not
   // deserialize every native baseline/operation checkpoint.
   if(!request.result.objectStoreNames.contains('nativeWorking'))request.result.createObjectStore('nativeWorking',{keyPath:'id'});
+  // lane-3 E18: damaged or invalid draft material, kept verbatim with its reason.
+  if(!request.result.objectStoreNames.contains('quarantine'))request.result.createObjectStore('quarantine',{keyPath:'id'});
  };
  request.onsuccess=()=>{if(failed){request.result.close();return;}request.result.onversionchange=()=>{request.result.close();database=undefined;};resolve(request.result);};
  request.onerror=()=>{failed=true;reject(request.error);};
@@ -57,10 +62,61 @@ function recoveryStore(name:string):Promise<RecoveryStore>{
  if(idbBroken)return Promise.resolve(localStorageBacked(name));
  return db().then(database=>idbBacked(database,name)).catch(()=>{idbBroken=true;return localStorageBacked(name);});
 }
-export async function writeDraft(j:Journey,scope?:RecoveryScope){const value=validateJourney(j);if(hostedRecovery())return nativeWrite('draft',j.id,value,scope??draftRecoveryAddress(j.id).scope);await (await recoveryStore('drafts')).put(j.id,value);}
-export async function readDraft(id:string,scope?:RecoveryScope){if(hostedRecovery()){const row=await nativeRead('draft',id,scope??draftRecoveryAddress(id).scope);return row?validateJourney(row.value):undefined;}const row=await (await recoveryStore('drafts')).get(id);return row?validateJourney(row):undefined;}
-export async function readDrafts(scope?:RecoveryScope){if(hostedRecovery()){const rows=await nativeList('draft',scope??recoveryScope());const values:Journey[]=[];for(const row of rows){const draft=await readDraft(row.id,row.scope);if(draft)values.push(draft);}return values;}const rows=await (await recoveryStore('drafts')).all();return rows.flatMap(value=>{try{return [validateJourney(value)];}catch{return [];}});}
-export async function removeDraft(id:string,scope?:RecoveryScope){if(hostedRecovery())return nativeRemove('draft',id,scope??draftRecoveryAddress(id).scope);await (await recoveryStore('drafts')).delete(id);}
+/** lane-3 E18: raw-string stores for standalone drafts. IndexedDB keys are atomic and hold the record directly; the localStorage fallback keeps a versioned pair per record. */
+function localNamespace(namespace:string):KeyStore{
+ const full=(key:string)=>namespace+key;
+ return {
+  async get(key){const raw=localStorage.getItem(full(key));return raw===null?undefined:raw;},
+  async put(key,raw){localStorage.setItem(full(key),raw);},
+  async delete(key){localStorage.removeItem(full(key));},
+  async keys(prefix){const out:string[]=[];for(let i=0;i<localStorage.length;i++){const stored=localStorage.key(i);if(stored&&stored.startsWith(namespace+prefix))out.push(stored.slice(namespace.length));}return out;},
+ };
+}
+function idbRecordStore(database:IDBDatabase,name:string,wrap:(key:string,raw:string)=>unknown,unwrap:(row:any)=>string):KeyStore{
+ const get=(key:string)=>new Promise<any>((resolve,reject)=>{const r=database.transaction(name,'readonly').objectStore(name).get(key);r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});
+ const write=(op:(store:IDBObjectStore)=>IDBRequest,)=>new Promise<void>((resolve,reject)=>{const tx=database.transaction(name,'readwrite');op(tx.objectStore(name));tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error??new Error('Draft backup was interrupted.'));});
+ return {
+  async get(key){const row=await get(key);return row===undefined?undefined:unwrap(row);},
+  async put(key,raw){await write(store=>store.put(wrap(key,raw)));},
+  async delete(key){await write(store=>store.delete(key));},
+  async keys(prefix){return new Promise<string[]>((resolve,reject)=>{const r=database.transaction(name,'readonly').objectStore(name).getAllKeys();r.onsuccess=()=>resolve((r.result as IDBValidKey[]).map(String).filter(k=>k.startsWith(prefix)));r.onerror=()=>reject(r.error);});},
+ };
+}
+async function idbDatabase():Promise<IDBDatabase|undefined>{if(idbBroken)return undefined;return db().catch(()=>{idbBroken=true;return undefined;});}
+/** Drafts: IndexedDB rows are the journeys themselves (keyed by id); the fallback is a versioned localStorage pair. */
+async function draftLayout():Promise<RecordLayout>{
+ const database=await idbDatabase(),quarantineStore=await quarantineKV();
+ if(database)return {store:idbRecordStore(database,'drafts',(key,raw)=>({...JSON.parse(raw),id:key}),row=>JSON.stringify(row)),quarantine:quarantineStore,prefix:'',paired:false,source:'draft'};
+ return {store:localNamespace('oi.expression-recovery.drafts.'),quarantine:quarantineStore,prefix:'',paired:true,source:'draft'};
+}
+/** Quarantine material is never adopted and is never deleted by a read. */
+async function quarantineKV():Promise<KeyStore>{
+ const database=await idbDatabase();
+ if(database)return idbRecordStore(database,'quarantine',(key,raw)=>({id:key,raw}),row=>row.raw);
+ return localNamespace('oi.expression-recovery.quarantine.');
+}
+/** The verbatim stored text of one draft, or undefined when none is stored. */
+async function draftRawText(layout:RecordLayout,id:string):Promise<string|undefined>{
+ if(!layout.paired)return layout.store.get(id);
+ return (await readPair(layout.store,id)).body;
+}
+/** Every quarantined draft with its reason, for listing to the owner. */
+export async function listQuarantinedDrafts(){return listQuarantine(await quarantineKV());}
+/** Carry out one boot choice. A copy is saved and read back before the draft is removed; a quarantined draft is kept verbatim before removal. */
+export async function applyRecoveryPlan(plan:RecoveryPlan,draft:Journey):Promise<void>{
+ const at=new Date();
+ if(plan.copy){saveToLibrary(plan.copy);if(!readLibrary().some(row=>row.id===plan.copy!.id))throw new Error('The browser Library did not keep the recovered copy. The draft was retained.');}
+ const layout=await draftLayout();
+ if(plan.quarantineDraft){
+  const raw=(await draftRawText(layout,draft.id))??JSON.stringify(validateJourney(draft));
+  await quarantine(layout.quarantine,'draft',draft.id,raw,'Superseded by the saved copy after an unclean exit. The draft is kept here verbatim.',at);
+ }
+ if(plan.removeDraft)await removeRecord(layout,draft.id,at);
+}
+export async function writeDraft(j:Journey,scope?:RecoveryScope){const value=validateJourney(j);if(hostedRecovery())return nativeWrite('draft',j.id,value,scope??draftRecoveryAddress(j.id).scope);await writeRecord(await draftLayout(),j.id,JSON.stringify(value),new Date());}
+export async function readDraft(id:string,scope?:RecoveryScope){if(hostedRecovery()){const row=await nativeRead('draft',id,scope??draftRecoveryAddress(id).scope);return row?validateJourney(row.value):undefined;}return (await loadRecord(await draftLayout(),id,validateJourney,new Date())).value;}
+export async function readDrafts(scope?:RecoveryScope){if(hostedRecovery()){const rows=await nativeList('draft',scope??recoveryScope());const values:Journey[]=[];for(const row of rows){const draft=await readDraft(row.id,row.scope);if(draft)values.push(draft);}return values;}return (await loadRecords(await draftLayout(),validateJourney,new Date())).values;}
+export async function removeDraft(id:string,scope?:RecoveryScope){if(hostedRecovery())return nativeRemove('draft',id,scope??draftRecoveryAddress(id).scope);await removeRecord(await draftLayout(),id,new Date());}
 
 /** Read only the host-selected checkpoint address. A same-ref duplicate is
  * not permission to choose another scope, revision or authoring draft. */

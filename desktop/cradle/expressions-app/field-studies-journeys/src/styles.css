@@ -313,3 +313,17 @@ body{
 .scene-track-lane .seam-blend[data-blending="false"]::after{width:0}
 .scene-track-lane .seam-caption{position:absolute;top:-1px;z-index:3;max-width:min(220px,60%);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 4px;border-radius:3px;background:var(--ui-surface);color:var(--ui-muted,var(--ink));font-size:10px;line-height:16px;pointer-events:none}
 .scene-track-lane .seam-caption[data-blending="true"]{color:var(--ui-ink,var(--ink))}
+
+/* lane-3 E17-E19 — the boot recovery choice (draft vs saved copy after an unclean exit). Tokens only. */
+.recovery-dialog{max-width:min(440px,calc(100vw - 32px));padding:20px 22px;border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--ink);font-family:var(--sans)}
+.recovery-dialog::backdrop{background:rgba(0,0,0,.2)}
+.recovery-dialog .eyebrow{margin:0 0 6px;font-size:10px;letter-spacing:.08em;color:var(--muted)}
+.recovery-dialog h2{margin:0 0 8px;font-family:var(--serif);font-size:20px;font-weight:500}
+.recovery-dialog .intro{margin:0 0 14px;font-size:13px;color:var(--muted)}
+.recovery-basis{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:0 0 16px;font-size:12px;font-variant-numeric:tabular-nums}
+.recovery-basis dt{color:var(--muted)}
+.recovery-basis dd{margin:0;color:var(--ink)}
+.recovery-choices{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px}
+.recovery-choices button{min-height:32px;padding:4px 12px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink);font:inherit;font-size:12px;cursor:pointer}
+.recovery-choices button.primary{background:var(--accent);border-color:var(--accent);color:var(--paper)}
+.recovery-choices button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
