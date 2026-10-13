@@ -1,11 +1,15 @@
-// The Live rack widget for the one instrument, the M1 torus (T-LIVE-TORUS-INSTRUMENT,
-// the compact presentation). It sits at the head of the Live device chain, and only
-// once the owner has published a reading (DeviceChainPanel's mount gate).
+// The Live rack widget for the one instrument, the M1 torus (T-LIVE-TORUS-INSTRUMENT, the compact presentation). It sits at the head of
+// the Live device chain, and only once the owner has published a reading (DeviceChainPanel's mount gate).
 //
-// It presents the shared reading handle (live/torusInstrument.ts). It draws no torus:
-// the visible torus is only ever the simulation's own render in the hosted frame.
+// It presents the shared reading handle (live/torusInstrument.ts) and never draws a torus: the visible torus is only ever the
+// simulation's own render in the hosted frame. Its four macros are the owner's determinants; choosing one sends the owner's own
+// determinant edit through the hosted channel, and a refusal is named here.
 
-import {liveTorusMacroRows, useLiveTorusReading, type LiveTorusState} from '../../live/torusInstrument'
+import {useState} from 'react'
+import type {InstrumentEdit} from '@epilogos/expressions-boundary'
+import {
+  commitLiveInstrumentEdit, liveInstrumentWritable, liveTorusMacroRows, useLiveTorusReading, type LiveTorusState,
+} from '../../live/torusInstrument'
 import './liveTorusWidget.css'
 
 export function LiveTorusWidget() {
@@ -17,6 +21,11 @@ export function LiveTorusWidgetView({state}: {state: LiveTorusState | null}) {
   const kind = state === null ? 'absent' : state.ok ? state.value.standing : 'refused'
   const standing = state !== null && state.ok ? state.value.standing : undefined
   const rows = liveTorusMacroRows(state)
+  const [refusal, setRefusal] = useState<string | null>(null)
+  const choose = (edit: (value: string) => InstrumentEdit, value: string) => {
+    setRefusal(null)
+    void commitLiveInstrumentEdit(edit(value)).then(result => { if (!result.ok) setRefusal(result.error) })
+  }
   return (
     <section className="live-torus" data-live-torus={kind} data-standing={standing} aria-label="M1 torus instrument">
       <header className="live-torus-head">
@@ -37,10 +46,16 @@ export function LiveTorusWidgetView({state}: {state: LiveTorusState | null}) {
         {rows.map(row => (
           <li key={row.macro.id} className="live-torus-macro" data-macro={row.macro.id} data-value={row.value ?? 'none'} title={row.macro.source}>
             <span className="live-torus-macro-name">{row.macro.label}</span>
-            <b className="live-torus-macro-value">{row.value ?? 'not in owner reading'}</b>
+            {row.selected === null
+              ? <b className="live-torus-macro-value">not in owner reading</b>
+              : <select className="live-torus-macro-select" aria-label={row.macro.label} value={row.selected} disabled={!liveInstrumentWritable(state)}
+                  onChange={event => choose(row.edit, event.target.value)}>
+                  {row.options.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+                </select>}
           </li>
         ))}
       </ul>
+      {refusal !== null && <p className="live-torus-note is-fault" role="alert" data-live-torus-refusal>{`Refused by the owner: ${refusal}`}</p>}
     </section>
   )
 }

@@ -7,6 +7,7 @@ import {NativeChannel} from './native-field/channel';
 import {NativeFieldController,NativeRenderer,EMBEDDED_NATIVE_PLAYBACK,CADENCES,INSTRUMENT_PRESENTATION,PRESENTATION_LEVEL,type NativeSky} from './native-field/controller';
 import {LENSES,CONTEXT_FRAMES,type SceneActing} from './native-field/scene';
 import type {FieldEngineAdapter} from './engine';
+import type {InstrumentEdit} from './stageCommands';
 /** scene_field.rs `PLANETS`, in scalar-degree order: the map's own names. */
 const PLANET_NAMES=['Sun','Venus','Mercury','Moon','Saturn','Jupiter','Mars','Neptune','Pluto'];
 const esc=(v:unknown)=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
@@ -430,6 +431,29 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
  // Readback at human cadence; native scheduling stays in InstrumentSession.
  // A cadence-stale event basis is re-read here, never inside a beat.
  const timer=window.setInterval(()=>{void controller.refreshSources();update();},250);
+ /** Run one instrument edit the shell sent through the host channel. It calls the same controller operation the panel's own control calls, so
+  * the owner refuses or accepts it exactly as it does a Studio click: a refused determinant is named by the owner and the rejection carries it. */
+ const command=async(edit:InstrumentEdit):Promise<void>=>{
+  const reading=controller.reading as any;
+  if(edit.kind==='lens'||edit.kind==='context-frame'||edit.kind==='harmonic'||edit.kind==='transcription'){
+   if(!reading.instrument)throw new Error('No scene is open. Open the live instrument first; its determinants act on the scene.');
+   await controller.edit(edit.kind==='lens'?{kind:'lens',lens12:edit.lens12}:edit.kind==='context-frame'?{kind:'context-frame',context_frame:edit.context_frame}
+    :edit.kind==='harmonic'?{kind:'harmonic',source:edit.source}:{kind:'transcription',rna:edit.rna});
+  }
+  else if(edit.kind==='muted')controller.setMuted(edit.muted);
+  else if(edit.kind==='cadence'){if(edit.rate==='hold')controller.pause('held by you');else controller.play(edit.rate);}
+  else if(edit.kind==='level')controller.setLevel(edit.value);
+  else if(edit.kind==='scale')controller.setScale(edit.units_per_metre);
+  else controller.followDomain();
+  update();
+ };
+ /** Enter the Live cut: open the live instrument muted, as the panel's own open does. Nothing sounds: the session opens muted and sound stays
+  * the person's choice. A refused open (no scene, no owner, no retained field) is named in the status line, never faked. */
+ const openLive=()=>{
+  const reading=controller.reading as any;
+  if(busy||composing||reading.lease||reading.status==='opening'||reading.status==='following'||reading.status==='held')return;
+  return open('now');
+ };
  update();
- return {controller,panel,dispose:()=>{clearInterval(timer);panel.removeEventListener('click',click);panel.removeEventListener('input',range);panel.removeEventListener('pointerdown',pressKey);panel.removeEventListener('focusin',focusKey);document.removeEventListener('visibilitychange',visibility);window.removeEventListener('pagehide',pagehide);panel.remove();domainView.dispose();style.remove();void controller.dispose();}};
+ return {controller,panel,command,openLive,dispose:()=>{clearInterval(timer);panel.removeEventListener('click',click);panel.removeEventListener('input',range);panel.removeEventListener('pointerdown',pressKey);panel.removeEventListener('focusin',focusKey);document.removeEventListener('visibilitychange',visibility);window.removeEventListener('pagehide',pagehide);panel.remove();domainView.dispose();style.remove();void controller.dispose();}};
 }

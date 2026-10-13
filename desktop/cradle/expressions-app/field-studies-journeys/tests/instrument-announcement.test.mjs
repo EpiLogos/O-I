@@ -58,3 +58,16 @@ test('a session with no scene carries no determinants: the macro rows say so', (
   assert.equal(determinants, null);
   assert.equal(reading.standing, 'following', 'the reading itself is still announced');
 });
+
+test("the presentation parameters are the owner's own fields: sound, level, scale, cadence and the instrument's named refusal", () => {
+  const owned = controllerReading({muted: false, presentation_level: {value: 2}, presentation_units_per_metre: 120, presentation_mode: 'domain-follow'});
+  owned.instrument = {acting: owned.instrument.acting, cadence: {playing: true, rate: 12, source: '12 ticks/s'}, refusal: {operation: 'lens', reason: 'L1′ is already acting'}};
+  const {parameters} = announceInstrument(owned);
+  assert.deepEqual(parameters, {muted: false, level: 2, scale: {unitsPerMetre: 120, mode: 'domain-follow'},
+    cadence: {rate: 12, playing: true, source: '12 ticks/s'}, refusal: 'lens: L1′ is already acting'});
+  const held = controllerReading({});
+  held.instrument = {acting: held.instrument.acting, cadence: {playing: false, rate: 12, source: '12 ticks/s'}, refusal: null};
+  assert.equal(announceInstrument(held).parameters.cadence.rate, 0, 'a held cadence reads rate 0, not the last rate');
+  const noScene = announceInstrument(controllerReading({instrument: null}));
+  assert.equal(noScene.parameters.cadence, null, 'no scene: no cadence reading, never a default');
+});

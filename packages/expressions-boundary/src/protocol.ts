@@ -5,10 +5,10 @@
  * vendored app's kernelExpressions.ts/app.ts. */
 import {TECHNE_INSTRUMENTS, type TechneActionRoute, type TechneReading} from '../../../desktop/cradle/src/techne/contract.ts';
 import {resolveActionRoute} from '../../../desktop/cradle/src/techne/m0m5/adapter.ts';
-import type {HostedAppState, HostedAppMode, HostedTechneLens, HostedInstrument, HostedInstrumentDeterminants} from '../../../desktop/cradle/src/expressions/hostedApp';
-export type {HostedAppState, HostedAppMode, HostedTechneLens, HostedInstrument, HostedInstrumentDeterminants};
-// The shell's QL reading parser (the owner shape, ql.instrument-reading/v1): the boundary validates the instrument with it, never a copy.
-import {parseQlInstrumentReading} from '../../live-shell/ui/src/inhabitants/ql/qlInstrumentReading.ts';
+import type {HostedAppState, HostedAppMode, HostedTechneLens, HostedInstrument, HostedInstrumentDeterminants, HostedInstrumentParameters} from '../../../desktop/cradle/src/expressions/hostedApp';
+export type {HostedAppState, HostedAppMode, HostedTechneLens, HostedInstrument, HostedInstrumentDeterminants, HostedInstrumentParameters};
+// The QL instrument reading parser (the owner shape, ql.instrument-reading/v1), owned by this package: the boundary validates the instrument with it.
+import {parseQlInstrumentReading} from './qlInstrumentReading.ts';
 export type {TechneReading, TechneActionRoute, TechneActionReceipt, NativeActionRef} from '../../../desktop/cradle/src/techne/contract.ts';
 export {assertReading, resolveActionRoute} from '../../../desktop/cradle/src/techne/m0m5/adapter.ts';
 
@@ -27,9 +27,9 @@ export {STUDIO_SECTIONS, isStudioSection, studioPlacement, type StudioSection} f
 import {isStudioSection, type StudioSection} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/studioSections.ts';
 /** The stage-control vocabulary (view, capture, present, export, import, tool, engine): one closed list for host, frame and shell. */
 export {STAGE_COMMANDS, STAGE_VIEW_ACTIONS, STAGE_CAPTURE_WIDTHS, STAGE_CAPTURE_ASPECTS, STAGE_EXPORT_FORMATS, STAGE_TOOLS, STAGE_TOOL_READINGS, STAGE_ENGINE_ACTIONS, STAGE_TAKE_MODES, STAGE_TRACK_ACTIONS, stageOneOf, stageRefusal,
-  readStageRequest, stageRequestMessage, stageReplyMessage, readStageResult,
+  readStageRequest, stageRequestMessage, stageReplyMessage, readStageResult, readInstrumentEdit, STAGE_INSTRUMENT_CADENCES, STAGE_INSTRUMENT_LEVEL, STAGE_INSTRUMENT_SCALE_MAX,
   type StageCommand, type StageCommandName, type StageResult, type StageViewAction, type StageCaptureSettings, type StageCaptureWidth, type StageCaptureAspect, type StageExportFormat, type StageTakeMode, type StageTrackAction,
-  type StageTool, type StageToolReading, type StageEngineAction,
+  type StageTool, type StageToolReading, type StageEngineAction, type InstrumentEdit,
 } from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/stageCommands.ts';
 import {stageOneOf, STAGE_TAKE_MODES, STAGE_TOOL_READINGS} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/stageCommands.ts';
 /** Host→frame command that opens one Studio section. The frame answers with a
@@ -61,7 +61,25 @@ export function readHostedDeterminants(raw: unknown): HostedInstrumentDeterminan
   return {lens: {lens12: Number(lens.lens12), label: String(lens.label)}, contextFrame: Number(raw.contextFrame), harmonic: harmonicSource, rna: raw.rna};
 }
 
-/** The instrument the frame announces: the owner reading (ql.instrument-reading/v1, parsed by the shell's reader) and the owner's determinants.
+/** The owner's presentation parameters, exact or refused: a value the owner does not state is refused by name, never defaulted. */
+export function readHostedParameters(raw: unknown): HostedInstrumentParameters | string {
+  if (!object(raw) || !object(raw.scale)) return 'parameters: expected muted, level, scale, cadence and refusal';
+  if (typeof raw.muted !== 'boolean') return 'parameters.muted: expected a boolean';
+  if (typeof raw.level !== 'number' || !Number.isFinite(raw.level) || raw.level < 0 || raw.level > 4) return 'parameters.level: expected the presentation gain 0..4';
+  const scale = raw.scale;
+  if (scale.unitsPerMetre !== null && (typeof scale.unitsPerMetre !== 'number' || !Number.isFinite(scale.unitsPerMetre) || scale.unitsPerMetre <= 0)) return 'parameters.scale.unitsPerMetre: expected a positive number or null';
+  if (scale.mode !== 'domain-follow' && scale.mode !== 'manual-presentation-override' && scale.mode !== 'manual') return 'parameters.scale.mode: expected the owner mode';
+  let cadence: HostedInstrumentParameters['cadence'] = null;
+  if (raw.cadence !== null) {
+    const c = raw.cadence;
+    if (!object(c) || typeof c.rate !== 'number' || !Number.isFinite(c.rate) || c.rate < 0 || c.rate > 12 || typeof c.playing !== 'boolean' || typeof c.source !== 'string') return 'parameters.cadence: expected rate 0..12, playing and source';
+    cadence = {rate: c.rate, playing: c.playing, source: c.source};
+  }
+  if (raw.refusal !== null && !boundedText(raw.refusal, 512)) return 'parameters.refusal: expected bounded text or null';
+  return {muted: raw.muted, level: raw.level, scale: {unitsPerMetre: scale.unitsPerMetre as number | null, mode: scale.mode}, cadence, refusal: raw.refusal as string | null};
+}
+
+/** The instrument the frame announces: the owner reading (ql.instrument-reading/v1, parsed by the shell's reader), the owner's determinants and its presentation parameters.
  * A malformed or refused reading is carried as its named fault: the shell renders the refusal, never a plausible state. */
 export function readHostedInstrument(raw: unknown): HostedInstrument {
   if (!object(raw)) return {ok: false, fault: 'instrument: expected the announced reading envelope'};
@@ -70,7 +88,9 @@ export function readHostedInstrument(raw: unknown): HostedInstrument {
   catch (cause) {return {ok: false, fault: cause instanceof Error ? cause.message : String(cause)};}
   const determinants = readHostedDeterminants(raw.determinants);
   if (typeof determinants === 'string') return {ok: false, fault: determinants};
-  return {ok: true, reading, determinants};
+  const parameters = readHostedParameters(raw.parameters);
+  if (typeof parameters === 'string') return {ok: false, fault: parameters};
+  return {ok: true, reading, determinants, parameters};
 }
 
 /** Selection is a reading of what the application shows, never a request. */

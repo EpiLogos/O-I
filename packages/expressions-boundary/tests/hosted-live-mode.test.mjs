@@ -24,6 +24,8 @@ const ownerReading = () => ({
   coalesced_presentation_frames: 0, views: 1, disposed: false,
   playback_policy: {blockFrames: 8192, leadSeconds: 0.5, lookaheadSeconds: 0.5, owner: 'test'},
 });
+const parameters = () => ({muted: true, level: 1, scale: {unitsPerMetre: 120, mode: 'domain-follow'},
+  cadence: {rate: 1, playing: true, source: '1 tick/s'}, refusal: null});
 const determinants = () => ({lens: {lens12: 3, label: 'L1′'}, contextFrame: 2,
   harmonic: {selection: 'canonical-basis', index: 4}, rna: true});
 
@@ -59,12 +61,13 @@ test("the host stands the frame in 'live' and re-posts the cut; the document and
 });
 
 test('an announced instrument is carried: the owner reading parses through the shell reader, with its determinants', () => {
-  const state = readHostedState(base({instrument: {reading: ownerReading(), determinants: determinants()}}));
+  const state = readHostedState(base({instrument: {reading: ownerReading(), determinants: determinants(), parameters: parameters()}}));
   assert.ok(state, 'the announcement is admitted');
   assert.equal(state.instrument.ok, true);
   assert.equal(state.instrument.reading.standing, 'following');
   assert.equal(state.instrument.reading.identity.event_ref, 'controlled:occasion');
   assert.deepEqual(state.instrument.determinants, determinants());
+  assert.deepEqual(state.instrument.parameters, parameters());
 });
 
 test('an announcement with no instrument carries none (the shell withdraws)', () => {
@@ -72,7 +75,7 @@ test('an announcement with no instrument carries none (the shell withdraws)', ()
 });
 
 test('a reading the owner does not produce is carried as its named refusal, never as a plausible state', () => {
-  const bad = readHostedState(base({instrument: {reading: {...ownerReading(), standing: 'guessing'}, determinants: null}}));
+  const bad = readHostedState(base({instrument: {reading: {...ownerReading(), standing: 'guessing'}, determinants: null, parameters: parameters()}}));
   assert.ok(bad, 'the rest of the state is still admitted');
   assert.equal(bad.instrument.ok, false);
   assert.match(bad.instrument.fault, /standing/);
@@ -82,7 +85,7 @@ test('a reading the owner does not produce is carried as its named refusal, neve
 
 test('determinants are exact or refused: out-of-range or missing values are never guessed', () => {
   const refused = (d, pattern) => {
-    const instrument = readHostedInstrument({reading: ownerReading(), determinants: d});
+    const instrument = readHostedInstrument({reading: ownerReading(), determinants: d, parameters: parameters()});
     assert.equal(instrument.ok, false, JSON.stringify(d));
     assert.match(instrument.fault, pattern);
   };
@@ -92,10 +95,10 @@ test('determinants are exact or refused: out-of-range or missing values are neve
   refused({...determinants(), harmonic: {selection: 'canonical-basis', index: 8}}, /harmonic/);
   refused({...determinants(), rna: 'yes'}, /rna/);
   refused({lens: {lens12: 1, label: 'L0'}}, /determinants/);
-  const selectedRow = readHostedInstrument({reading: ownerReading(), determinants: {...determinants(), harmonic: {selection: 'selected-source-row'}}});
+  const selectedRow = readHostedInstrument({reading: ownerReading(), determinants: {...determinants(), harmonic: {selection: 'selected-source-row'}}, parameters: parameters()});
   assert.equal(selectedRow.ok, true);
   assert.deepEqual(selectedRow.determinants.harmonic, {selection: 'selected-source-row'});
-  const none = readHostedInstrument({reading: ownerReading(), determinants: null});
+  const none = readHostedInstrument({reading: ownerReading(), determinants: null, parameters: parameters()});
   assert.equal(none.ok, true);
   assert.equal(none.determinants, null, 'a reading with no scene carries no determinants: the macro rows say so');
 });
@@ -105,7 +108,8 @@ import {announceInstrument} from '../../../desktop/cradle/expressions-app/field-
 test('the frame composes its announcement and the boundary carries it unchanged: the owner reading and its determinants reach the shell', () => {
   const basis = {event_ref: 'event:owner', subject_ref: 'subject:owner', registry_revision: 'registry:owner',
     geometry_ref: 'geometry:owner', material_ref: 'material:owner', model_ref: 'model:owner', generation: '4', samples_elapsed: '245760'};
-  const controller = {schema: 'oi.native-expression-reading/v1', status: 'following', reason: null,
+  const controller = {schema: 'oi.native-expression-reading/v1', status: 'following', reason: null, muted: true,
+    presentation_level: {value: 1}, presentation_units_per_metre: 120, presentation_mode: 'domain-follow',
     playback_policy: {blockFrames: 8192, leadSeconds: 0.5, lookaheadSeconds: 0.5, owner: 'owner policy'},
     native: {event_ref: 'event:owner', subject_ref: 'subject:owner', reason: null,
       acknowledged: {generation: '4', samples_elapsed: '245760'}, presented: {generation: '4', samples_elapsed: '245760'},
@@ -115,11 +119,36 @@ test('the frame composes its announcement and the boundary carries it unchanged:
         standing: 'native PCM scheduled on a browser audio graph; not proof of physical speaker output'},
       available: true, held: false, in_flight: false, queued_blocks: 3, queued_bytes: 4096, coalesced_presentation_frames: 0,
       views: 1, disposed: false},
-    instrument: {acting: {m1: {lens12: 3, lens: 'L1′', context_frame: 2}, harmonic: {source: {selection: 'canonical-basis', index: 4}}, m3: {rna: true}}}};
+    instrument: {acting: {m1: {lens12: 3, lens: 'L1′', context_frame: 2}, harmonic: {source: {selection: 'canonical-basis', index: 4}}, m3: {rna: true}},
+      cadence: {playing: true, rate: 1, source: '1 tick/s'}, refusal: null}};
   const announced = announceInstrument(controller);
   const state = readHostedState(base({instrument: announced}));
   assert.equal(state.instrument.ok, true, JSON.stringify(state.instrument));
   assert.equal(state.instrument.reading.standing, 'following');
   assert.equal(state.instrument.reading.identity.model_ref, 'model:owner');
   assert.deepEqual(state.instrument.determinants, {lens: {lens12: 3, label: 'L1′'}, contextFrame: 2, harmonic: {selection: 'canonical-basis', index: 4}, rna: true});
+  assert.deepEqual(state.instrument.parameters, {muted: true, level: 1, scale: {unitsPerMetre: 120, mode: 'domain-follow'}, cadence: {rate: 1, playing: true, source: '1 tick/s'}, refusal: null});
+});
+
+test('the owner parameters are carried exact: sound, level, scale, cadence and the named refusal', () => {
+  const carried = readHostedInstrument({reading: ownerReading(), determinants: null, parameters: {...parameters(),
+    muted: false, level: 2.5, scale: {unitsPerMetre: null, mode: 'manual'}, cadence: null, refusal: 'determinant: lens is already acting'}});
+  assert.equal(carried.ok, true);
+  assert.deepEqual(carried.parameters, {muted: false, level: 2.5, scale: {unitsPerMetre: null, mode: 'manual'}, cadence: null, refusal: 'determinant: lens is already acting'});
+});
+
+test('parameters are exact or refused: a missing, out-of-range or unknown owner value is named, never defaulted', () => {
+  const refused = (p, pattern) => {
+    const instrument = readHostedInstrument({reading: ownerReading(), determinants: null, parameters: p});
+    assert.equal(instrument.ok, false, JSON.stringify(p));
+    assert.match(instrument.fault, pattern);
+  };
+  refused(undefined, /parameters/);
+  refused({...parameters(), muted: 'no'}, /muted/);
+  refused({...parameters(), level: 5}, /level/);
+  refused({...parameters(), level: null}, /level/);
+  refused({...parameters(), scale: {unitsPerMetre: 0, mode: 'domain-follow'}}, /unitsPerMetre/);
+  refused({...parameters(), scale: {unitsPerMetre: 120, mode: 'guessing'}}, /mode/);
+  refused({...parameters(), cadence: {rate: 13, playing: true, source: 'x'}}, /cadence/);
+  refused({...parameters(), refusal: 7}, /refusal/);
 });

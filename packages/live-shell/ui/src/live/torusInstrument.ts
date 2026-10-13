@@ -3,7 +3,7 @@
 //
 // One simulation, one state. The simulation is the native field owner in the
 // hosted Expressions frame (desktop/cradle/expressions-app/field-studies-journeys/
-// src/nativeField.ts -> native-field/controller.ts). The shell never runs a second
+// src/nativeField.ts and its native-field module). The shell never runs a second
 // build: it holds ONE reading handle here, published from the owner's reading and
 // read by every shell presentation of the instrument (the Live rack widget now; the
 // full centre presentation when its host seat lands). Readers share the identical
@@ -17,7 +17,7 @@
 
 import {useSyncExternalStore} from 'react'
 import type {QlInstrumentReading} from '../inhabitants/ql/qlInstrumentReading'
-import type {HostedInstrument} from '@epilogos/expressions-boundary'
+import type {HostedInstrument, InstrumentEdit, StageCommand, StageResult} from '@epilogos/expressions-boundary'
 
 /** The instrument's id on the quaternal-logic family (quaternalLogicFamilyManifest.ts `torus`). */
 export const LIVE_TORUS_ID = 'ql-m1-torus'
@@ -60,17 +60,64 @@ export const LIVE_TORUS_MACROS: readonly LiveTorusMacro[] = Object.freeze([
 /** The owner's determinants (the scene's acting M1 state), as the boundary validated them. */
 export type LiveTorusDeterminants = Extract<HostedInstrument, {ok: true}>['determinants']
 
-/** What the handle holds: the owner reading the boundary validated, with the owner's determinants, or the refusal it named. */
+/** The owner's presentation parameters, as the boundary validated them. */
+export type LiveTorusParameters = Extract<HostedInstrument, {ok: true}>['parameters']
+
+/** What the handle holds: the owner reading the boundary validated, with the owner's determinants and parameters, or the refusal it named. */
 export type LiveTorusState =
-  | {readonly ok: true; readonly value: QlInstrumentReading; readonly determinants: LiveTorusDeterminants}
+  | {readonly ok: true; readonly value: QlInstrumentReading; readonly determinants: LiveTorusDeterminants; readonly parameters: LiveTorusParameters}
   | {readonly ok: false; readonly fault: string}
 
 /** The handle's state from the instrument the hosted frame announced. Absent (no announcement) is null: the reading is withdrawn. */
 export function liveTorusFromHost(instrument: HostedInstrument | undefined): LiveTorusState | null {
   if (instrument === undefined) return null
   return instrument.ok
-    ? {ok: true, value: instrument.reading, determinants: instrument.determinants}
+    ? {ok: true, value: instrument.reading, determinants: instrument.determinants, parameters: instrument.parameters}
     : {ok: false, fault: instrument.fault}
+}
+
+// ── writes: the owner's controls, reached through the hosted channel ──────────
+// The one instrument's edits leave the shell only as validated `instrument` stage commands. The host registers its stage command here
+// when the frame is mounted; nothing is written from the shell itself. Without a mounted frame a write is refused by name.
+
+export type LiveInstrumentCommander = (command: StageCommand) => Promise<StageResult>
+let commander: LiveInstrumentCommander | null = null
+
+/** Register (or, with null, withdraw) the mounted frame's stage channel. */
+export function setLiveInstrumentCommander(next: LiveInstrumentCommander | null): void {
+  commander = next
+}
+
+/** Send one instrument edit to the owner through the frame. Settles with the owner's answer; a refusal carries the owner's reason. */
+export function commitLiveInstrumentEdit(edit: InstrumentEdit): Promise<StageResult> {
+  if (commander === null) return Promise.resolve({ok: false, error: 'No Expressions application is mounted for the live instrument'})
+  // A synchronous refusal (no mounted frame, or a concealed one) settles as a named result, never a throw into the control.
+  return new Promise<StageResult>(resolve => resolve(commander!({command: 'instrument', edit})))
+    .catch((cause: unknown) => ({ok: false as const, error: cause instanceof Error ? cause.message : String(cause)}))
+}
+
+/** Whether the owner's instrument is in a state to take edits: a following or held session. Any other state refuses by name at the owner. */
+export function liveInstrumentWritable(state: LiveTorusState | null): boolean {
+  return state !== null && state.ok && (state.value.standing === 'following' || state.value.standing === 'held')
+}
+
+/** The owner's choices for each control, labelled as the Studio labels them (nativeField.ts "Change a determinant" and "See and hear").
+ * The lens labels are the owner's lensLabel (scene.ts): L<n>, with a prime on the odd positions. */
+export const LIVE_LENS_OPTIONS = Object.freeze(Array.from({length: 12}, (_, lens12) => ({value: lens12, label: `L${lens12 >> 1}${lens12 & 1 ? '′' : ''}`})))
+export const LIVE_CONTEXT_FRAME_OPTIONS = Object.freeze(Array.from({length: 7}, (_, i) => ({value: i + 1, label: `CF${i + 1}`})))
+export const LIVE_HARMONIC_OPTIONS = Object.freeze([
+  ...Array.from({length: 8}, (_, index) => ({value: `basis:${index}`, label: `B${index + 1}`})),
+  {value: 'row', label: 'Row'},
+])
+export const LIVE_CADENCE_OPTIONS = Object.freeze([
+  {value: 'hold', label: 'Hold'}, {value: '1', label: '1 tick/s'}, {value: '12', label: '12 ticks/s'},
+])
+
+/** The edit a harmonic option names (B1..B8 or the selected row). */
+export function harmonicEdit(value: string): InstrumentEdit {
+  return value === 'row'
+    ? {kind: 'harmonic', source: {selection: 'selected-source-row'}}
+    : {kind: 'harmonic', source: {selection: 'canonical-basis', index: Number(value.slice('basis:'.length))}}
 }
 
 let current: LiveTorusState | null = null
@@ -106,23 +153,50 @@ export function useLiveTorusReading(): LiveTorusState | null {
   return useSyncExternalStore(subscribeLiveTorus, liveTorusState, liveTorusState)
 }
 
+export interface LiveTorusOption {readonly value: string; readonly label: string}
+
 export interface LiveTorusMacroRow {
   readonly macro: LiveTorusMacro
-  /** The owner's value for this determinant, or null while the owner states none. */
+  /** The owner's value for this determinant as a label, or null while the owner states none. */
   readonly value: string | null
+  /** The option the owner's value selects, or null while the owner states none. */
+  readonly selected: string | null
+  /** The owner's choices for this determinant. */
+  readonly options: readonly LiveTorusOption[]
+  /** The owner edit an option names. */
+  readonly edit: (value: string) => InstrumentEdit
 }
 
-/** The four macro rows, each reading the owner's own determinant: the lens label, CF n, the harmonic basis (B n or the selected
- * source row), and the M3 transcription. Null while no owner determinants stand — never a default. */
+/** The four macro rows: each reads the owner's determinant and offers the owner's choices. The values come from the owner's
+ * announcement only; a row with no owner determinants has no selection, and its control stays disabled. */
 export function liveTorusMacroRows(state: LiveTorusState | null): LiveTorusMacroRow[] {
   const d = state !== null && state.ok ? state.determinants ?? null : null
-  const value = (id: string): string | null => {
-    if (d === null) return null
-    if (id === 'lens') return d.lens.label
-    if (id === 'context-frame') return `CF${d.contextFrame}`
-    if (id === 'harmonic-basis') return d.harmonic.selection === 'canonical-basis' ? `B${d.harmonic.index + 1}` : 'Row'
-    if (id === 'm3-transcription') return d.rna ? 'RNA' : 'DNA'
-    return null
+  const harmonic = d === null ? null : d.harmonic.selection === 'canonical-basis' ? `basis:${d.harmonic.index}` : 'row'
+  const byId: Record<string, {value: string | null; selected: string | null; options: readonly LiveTorusOption[]; edit: (value: string) => InstrumentEdit}> = {
+    'lens': {
+      value: d === null ? null : d.lens.label,
+      selected: d === null ? null : String(d.lens.lens12),
+      options: LIVE_LENS_OPTIONS.map(option => ({value: String(option.value), label: option.label})),
+      edit: value => ({kind: 'lens', lens12: Number(value)}),
+    },
+    'context-frame': {
+      value: d === null ? null : `CF${d.contextFrame}`,
+      selected: d === null ? null : String(d.contextFrame),
+      options: LIVE_CONTEXT_FRAME_OPTIONS.map(option => ({value: String(option.value), label: option.label})),
+      edit: value => ({kind: 'context-frame', context_frame: Number(value)}),
+    },
+    'harmonic-basis': {
+      value: d === null ? null : d.harmonic.selection === 'canonical-basis' ? `B${d.harmonic.index + 1}` : 'Row',
+      selected: harmonic,
+      options: LIVE_HARMONIC_OPTIONS,
+      edit: harmonicEdit,
+    },
+    'm3-transcription': {
+      value: d === null ? null : d.rna ? 'RNA' : 'DNA',
+      selected: d === null ? null : d.rna ? 'RNA' : 'DNA',
+      options: [{value: 'DNA', label: 'DNA'}, {value: 'RNA', label: 'RNA'}],
+      edit: value => ({kind: 'transcription', rna: value === 'RNA'}),
+    },
   }
-  return LIVE_TORUS_MACROS.slice(0, LIVE_TORUS_MAX_MACROS).map(macro => ({macro, value: value(macro.id)}))
+  return LIVE_TORUS_MACROS.slice(0, LIVE_TORUS_MAX_MACROS).map(macro => ({macro, ...byId[macro.id]}))
 }

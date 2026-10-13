@@ -4,7 +4,7 @@
  * application's own action body (app.ts action()); nothing here re-implements a
  * control. Camera pan/zoom/orbit stay pointer gestures on the stage itself. */
 import {NATIVE_BINDINGS} from './nativeParameters.js';
-export const STAGE_COMMANDS = ['view', 'capture', 'present', 'export', 'import', 'tool', 'engine', 'take', 'tracks', 'automation', 'live'] as const;
+export const STAGE_COMMANDS = ['view', 'capture', 'present', 'export', 'import', 'tool', 'engine', 'take', 'tracks', 'automation', 'live', 'instrument'] as const;
 export type StageCommandName = (typeof STAGE_COMMANDS)[number];
 /** Rail tools the shell may choose. Text and formation open their panels; pin is a placement mode. Orbit is a stage pointer gesture, never a command. */
 export const STAGE_TOOLS = ['select', 'interact', 'pin', 'text', 'formation'] as const;
@@ -50,6 +50,45 @@ export function stageLiveRefusal(target: unknown, value: unknown): string | null
   if (value < binding.hardMin || value > binding.hardMax) return `${binding.label} must be between ${binding.hardMin} and ${binding.hardMax}.`;
   return null;
 }
+/** The Live instrument's edits: the owner's determinant edits (the scene's lens, context frame, harmonic basis and transcription) and its
+ * presentation writes (sound, tick cadence, level, scale). Each runs the same controller operation the Studio's native controls run. The
+ * cadence presets and the level and scale ranges are the Studio's own controls; the owner's bounds are the outer law. */
+export const STAGE_INSTRUMENT_CADENCES = ['hold', 1, 12] as const;
+export const STAGE_INSTRUMENT_LEVEL = {min: 0, max: 4} as const;
+export const STAGE_INSTRUMENT_SCALE_MAX = 1000000;
+export type InstrumentEdit =
+  | {kind: 'lens'; lens12: number}
+  | {kind: 'context-frame'; context_frame: number}
+  | {kind: 'harmonic'; source: {selection: 'canonical-basis'; index: number} | {selection: 'selected-source-row'}}
+  | {kind: 'transcription'; rna: boolean}
+  | {kind: 'muted'; muted: boolean}
+  | {kind: 'cadence'; rate: (typeof STAGE_INSTRUMENT_CADENCES)[number]}
+  | {kind: 'level'; value: number}
+  | {kind: 'scale'; units_per_metre: number}
+  | {kind: 'follow-scale'};
+/** A closed, validated instrument edit, or null. Every operand is exact: a determinant outside the owner's range is refused here. */
+export function readInstrumentEdit(raw: unknown): InstrumentEdit | null {
+  if (!plain(raw) || typeof raw.kind !== 'string') return null;
+  const integer = (value: unknown, min: number, max: number): value is number => Number.isSafeInteger(value) && (value as number) >= min && (value as number) <= max;
+  switch (raw.kind) {
+    case 'lens': return closed(raw, ['kind', 'lens12']) && integer(raw.lens12, 0, 11) ? {kind: 'lens', lens12: raw.lens12} : null;
+    case 'context-frame': return closed(raw, ['kind', 'context_frame']) && integer(raw.context_frame, 1, 7) ? {kind: 'context-frame', context_frame: raw.context_frame} : null;
+    case 'harmonic': {
+      if (!closed(raw, ['kind', 'source']) || !plain(raw.source)) return null;
+      const source = raw.source;
+      if (source.selection === 'selected-source-row' && closed(source, ['selection'])) return {kind: 'harmonic', source: {selection: 'selected-source-row'}};
+      if (source.selection === 'canonical-basis' && closed(source, ['selection', 'index']) && integer(source.index, 0, 7)) return {kind: 'harmonic', source: {selection: 'canonical-basis', index: source.index}};
+      return null;
+    }
+    case 'transcription': return closed(raw, ['kind', 'rna']) && typeof raw.rna === 'boolean' ? {kind: 'transcription', rna: raw.rna} : null;
+    case 'muted': return closed(raw, ['kind', 'muted']) && typeof raw.muted === 'boolean' ? {kind: 'muted', muted: raw.muted} : null;
+    case 'cadence': return closed(raw, ['kind', 'rate']) && (raw.rate === 'hold' || raw.rate === 1 || raw.rate === 12) ? {kind: 'cadence', rate: raw.rate} : null;
+    case 'level': return closed(raw, ['kind', 'value']) && typeof raw.value === 'number' && Number.isFinite(raw.value) && raw.value >= STAGE_INSTRUMENT_LEVEL.min && raw.value <= STAGE_INSTRUMENT_LEVEL.max ? {kind: 'level', value: raw.value} : null;
+    case 'scale': return closed(raw, ['kind', 'units_per_metre']) && typeof raw.units_per_metre === 'number' && Number.isFinite(raw.units_per_metre) && raw.units_per_metre > 0 && raw.units_per_metre <= STAGE_INSTRUMENT_SCALE_MAX ? {kind: 'scale', units_per_metre: raw.units_per_metre} : null;
+    case 'follow-scale': return closed(raw, ['kind']) ? {kind: 'follow-scale'} : null;
+  }
+  return null;
+}
 export interface StageCaptureSettings {width?: StageCaptureWidth; aspect?: StageCaptureAspect; includeText?: boolean; transparent?: boolean}
 export type StageCommand =
   | {command: 'view'; action: StageViewAction}
@@ -69,7 +108,8 @@ export type StageCommand =
   | {command: 'automation'; action: 'loop'; on: boolean}
   | {command: 'automation'; action: 'resume'}
   | {command: 'live'; action: 'set' | 'hold'; target: string; value: number}
-  | {command: 'live'; action: 'release'};
+  | {command: 'live'; action: 'release'}
+  | {command: 'instrument'; edit: InstrumentEdit};
 export type StageResult = {ok: true} | {ok: false; error: string};
 
 const BASE_KEYS = ['v', 'kind', 'command', 'req'] as const;
@@ -142,6 +182,10 @@ export function readStageRequest(raw: unknown): {req: number; command: StageComm
       if (raw.action === 'play') return closed(raw, [...BASE_KEYS, 'action']) ? {req, command: {command: 'automation', action: 'play'}} : null;
       if (raw.action === 'resume') return closed(raw, [...BASE_KEYS, 'action']) ? {req, command: {command: 'automation', action: 'resume'}} : null;
       return raw.action === 'loop' && closed(raw, [...BASE_KEYS, 'action', 'on']) && typeof raw.on === 'boolean' ? {req, command: {command: 'automation', action: 'loop', on: raw.on}} : null;
+    case 'instrument': {
+      const edit = closed(raw, [...BASE_KEYS, 'edit']) ? readInstrumentEdit(raw.edit) : null;
+      return edit ? {req, command: {command: 'instrument', edit}} : null;
+    }
     case 'live':
       // target and value belong to set and hold; release names no operand. A refused value never reaches the frame's override layer.
       if (raw.action === 'release') return closed(raw, [...BASE_KEYS, 'action']) ? {req, command: {command: 'live', action: 'release'}} : null;

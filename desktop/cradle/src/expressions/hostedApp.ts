@@ -1,6 +1,6 @@
 import type {LibraryItem} from "../library/scope";
-// Type-only: the QL instrument reading the shell parses (its owner shape, ql.instrument-reading/v1).
-import type {QlInstrumentReading} from "../../../../packages/live-shell/ui/src/inhabitants/ql/qlInstrumentReading";
+// Type-only: the QL instrument reading the boundary validates (its owner shape, ql.instrument-reading/v1).
+import type {QlInstrumentReading} from "../../../../packages/expressions-boundary/src/qlInstrumentReading";
 import type {NativeInsertionTarget,VerifiedInsertionSource} from "./sourceInsertion";
 import {hostedCompositionFile} from "./hostedComposition";
 import {relayNativeChannel} from "./nativeChannel";
@@ -479,9 +479,19 @@ export interface HostedInstrumentDeterminants {
   readonly rna: boolean;
 }
 
+/** The owner's presentation parameters (the controls the native field panel reads and writes): sound, level, scale, cadence, and the
+ * instrument's own named refusal. Read from the same owner reading as the rest of the instrument. */
+export interface HostedInstrumentParameters {
+  readonly muted: boolean;
+  readonly level: number;
+  readonly scale: {readonly unitsPerMetre: number | null; readonly mode: "domain-follow" | "manual-presentation-override" | "manual"};
+  readonly cadence: {readonly rate: number; readonly playing: boolean; readonly source: string} | null;
+  readonly refusal: string | null;
+}
+
 /** The owner's instrument reading as the boundary validated it: the QL reading parser's value, or the fault it named. */
 export type HostedInstrument =
-  | {readonly ok: true; readonly reading: QlInstrumentReading; readonly determinants: HostedInstrumentDeterminants | null}
+  | {readonly ok: true; readonly reading: QlInstrumentReading; readonly determinants: HostedInstrumentDeterminants | null; readonly parameters: HostedInstrumentParameters}
   | {readonly ok: false; readonly fault: string};
 
 /** The six deep instruments the hosted Lens Studio may summon, as the wire
