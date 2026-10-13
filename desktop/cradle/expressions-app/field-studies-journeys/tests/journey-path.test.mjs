@@ -9,7 +9,7 @@ import {
 } from '../build/journeyPath.js';
 import {journeyTimelineLayout,overlapFromDrag} from '../build/journeyTimelineLayout.js';
 import {expressionTiming} from '../build/propertyTracks.js';
-import {SCENE_TRANSITION_MAX} from '../build/model.js';
+import {SCENE_TRANSITION_MAX,clamp} from '../build/model.js';
 import {fieldStudies} from '../build/model.js';
 import {DocumentStore} from '../build/store.js';
 import {applyTimelineMove} from '../build/sceneWorkflow.js';
@@ -202,7 +202,39 @@ test('the blend drag is wired: the seam glyph starts it, it authors through over
  assert.match(appSource,/closest<HTMLElement>\('\.seam-glyph'\)/);
  assert.match(appSource,/`Set blend into \$\{target\.name\}`/);
  assert.ok(callsNamed('paintSeamBlends').length>=1,'the live edge follows the playback clock');
- assert.match(appSource,/paintSeamBlends\(expressionTiming\(store\.document,sceneIndex,sceneElapsed,journeyPlaying\)\.time\)/);
+ // review-5 #2: one clock choice, made by the caller and shared with the seam starts.
+ assert.match(appSource,/paintSeamBlends\(journeyPlaying\)/);
+ assert.match(appSource,/function paintSeamBlends\(saved:boolean\)\{[\s\S]*?timing=\(index:number,local:number\)=>expressionTiming\(doc,index,local,saved\)/);
+});
+
+// review-5 #2: the seam band during a saved sequence. The playhead and the seam starts must be read on the same clock.
+test('review-5 #2: a saved sequence lights the blend on its saved clock; a working-clock start never lights it', () => {
+ const doc = {scenes:[{id:'a',duration:4,transition:0},{id:'b',duration:4,transition:1}], savedScenes:{a:{duration:2},b:{duration:2}}};
+ const savedTiming = (index, local) => expressionTiming(doc, index, local, true);
+ const savedTime = savedTiming(1, 0.5).time;
+ const shared = seamStates(doc.scenes, savedTiming, savedTime)[1];
+ assert.equal(shared.blends, true, 'the seam into b blends');
+ assert.ok(Math.abs(shared.fraction - 0.5) < 1e-9, 'on the saved clock the blend is half in force 0.5 s into b');
+ const mismatched = seamStates(doc.scenes, (index, local) => expressionTiming(doc, index, local), savedTime)[1];
+ assert.equal(mismatched.fraction, null, 'the old mismatch: a working-clock start is never reached on the saved clock, so the band stayed dark');
+ const working = seamStates(doc.scenes, (index, local) => expressionTiming(doc, index, local), expressionTiming(doc, 1, 0.5).time)[1];
+ assert.ok(Math.abs(working.fraction - 0.5) < 1e-9, 'the working clock is unchanged');
+});
+
+// review-5 #7: a saved-clock seek lands in a working Scene; its local time is clamped to that Scene's working duration, and a Scene
+// with no saved entry (zero length on the saved clock) is reached at its working start. The app's seek is this same arithmetic.
+test('review-5 #7: a seek clamps its local time to the working Scene and reaches a Scene without a saved entry at its start', () => {
+ const working = {scenes:[{id:'a',duration:6,transition:0},{id:'b',duration:2,transition:0},{id:'c',duration:3,transition:0}], savedScenes:{a:{duration:2},c:{duration:4}}};
+ const clock = {...working, scenes: working.scenes.map(scene => ({...scene, duration: working.savedScenes[scene.id]?.duration ?? 0}))};
+ const seek = seconds => {
+  const total = expressionTiming(clock, 0, 0).total, t = clamp(seconds, 0, total);
+  let index = -1; clock.scenes.forEach((_, i) => { if (expressionTiming(clock, i, 0).time <= t) index = i; });
+  return {index, local: clamp(t - expressionTiming(clock, index, 0).time, 0, working.scenes[index].duration)};
+ };
+ assert.deepEqual(seek(2), {index: 2, local: 0}, 'the scene without a saved entry is reached at its working start');
+ assert.deepEqual(seek(5.5), {index: 2, local: 3}, 'the saved span (4 s) is longer than the working scene (3 s): local is clamped');
+ assert.deepEqual(seek(99), {index: 2, local: 3}, 'past the end clamps to the end of the last working scene');
+ assert.deepEqual(seek(1.5), {index: 0, local: 1.5}, 'inside a scene whose saved and working spans agree, nothing is clamped');
 });
 
 // T-REVIEW-4 lane-5 T8 (OPEN 1): the playback-path panel's host wiring. Seeking a walked scene lands on its own start on the same
@@ -238,8 +270,10 @@ test('T-REVIEW-4 lane-5 T8: the app passes the playback clock and a seek to the 
     'the clock is the journey as the expression clock runs it, and its time');
   assert.ok(app.includes('function playbackJourney():Journey{') && app.includes("if(!journeyPlaying)return working;"),
     'a saved sequence runs on saved durations, otherwise the working ones');
-  assert.ok(app.includes('const journey=playbackJourney(),path=walkJourney(journey,(index,local)=>expressionTiming(journey,index,local),seconds);'),
+  assert.ok(app.includes('const journey=playbackJourney(),total=expressionTiming(journey,0,0).total,t=clamp(seconds,0,total);'),
     'seek maps seconds to a scene on the same clock');
+  assert.ok(app.includes('const local=clamp(t-expressionTiming(journey,index,0).time,0,store.document.scenes[index].duration);'),
+    'the local time is clamped to the working Scene it lands in (review-5 #7)');
   assert.ok(app.includes('if(index!==sceneIndex)setSceneRef(store.document.scenes[index].id);') && app.includes('seekWorkingScene(local);'),
     'seek takes the playhead scrub path: adopt the scene, then seek its local time');
 });
