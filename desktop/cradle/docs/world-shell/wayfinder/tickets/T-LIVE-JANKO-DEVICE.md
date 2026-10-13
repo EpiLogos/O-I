@@ -39,8 +39,14 @@ errors retained.
   piano layout as the alternative. Pointer, touch and keyboard share one
   path; a chord is one act; editing text never plays. Each key goes
   through the `janko` stage command to the owner's own strike.
-- Owner seams: nothing serves `ql music janko window --json` to the shell
-  yet; it follows the kernel `ql_music.rs` pattern. Nothing produces
+- Leg 2: the kernel serves the window. `janko_window_read`
+  (`kernel/src/ql_music.rs`) runs the installed `ql music janko window
+  --json` for the instrument's acting lens (the owner's `lens12` is ql's
+  `--lens` index); the device reads it again when the lens changes, drops
+  stale replies, and names every refusal. The installed quaternal-logic
+  serves it today: lenses 0, 3 and 11 parse and move the surface along the
+  helix.
+- Owner seams: nothing produces
   `influence.played_addresses`, so the owner refuses each strike by name
   (the Studio's own Jankó keys are silent for the same reason). Packet K's
   placement is not published. MIDI is T-LIVE-MIDI.

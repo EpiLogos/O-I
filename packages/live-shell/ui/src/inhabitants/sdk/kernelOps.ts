@@ -54,6 +54,7 @@ export const KERNEL_OPS = [
   'composition_read',
   'system_composition_read',
   'music_modes_read',
+  'janko_window_read',
   'config_registry_read',
   'config_capabilities_read',
   'config_reset',

@@ -43,6 +43,7 @@ const janko = await import('../src/live/janko/jankoLayout.ts')
 const input = await import('../src/live/janko/jankoInput.ts')
 const device = await import('../src/live/janko/JankoDevice.tsx')
 const torus = await import('../src/live/torusInstrument.ts')
+const kernelWindow = await import('../src/native/liveJankoWindow.ts')
 const chain = await import('../src/components/DeviceChainPanel.tsx')
 const fixture = name => JSON.parse(readFileSync(new URL(`fixtures/${name}`, import.meta.url), 'utf8'))
 import {readFileSync} from 'node:fs'
@@ -184,7 +185,7 @@ test('the computer keyboard plays only while armed, never from editable text, ne
 
 // ── 5 — the device: states, accessibility, and no synthesis ───────────────
 
-test('the device is absent of a surface until the owner serves one, and the piano stays available', () => {
+test('the device reads the surface from the owner until it is served, and the piano stays available', () => {
   const absent = renderToStaticMarkup(React.createElement(device.JankoDeviceView, {windowState: null}))
   assert.match(absent, /data-janko-window="absent"/)
   assert.match(absent, /ql music janko window/)
@@ -220,6 +221,35 @@ test('the window store holds the owner\'s validated window, withdraws it, and te
   janko.publishLiveJankoWindow(null)
   assert.equal(janko.liveJankoWindow(), null)
   off()
+})
+
+// ── 6 — the kernel route: janko_window_read ─────────────────────────────────
+
+test('the window is read through the kernel for the acting lens, and each refusal is named', async () => {
+  const asked = []
+  const served = await kernelWindow.readJankoWindowThroughKernel(async op => { asked.push(op); return {outcome: {result: 'janko_window_reading', document: windowV1()}} }, 3)
+  assert.deepEqual(asked, [{op: 'janko_window_read', lens: 3}])
+  assert.equal(served.ok, true)
+  await kernelWindow.readJankoWindowThroughKernel(async op => { asked.push(op); return {outcome: {result: 'janko_window_reading', document: windowV1()}} }, null)
+  assert.deepEqual(asked[1], {op: 'janko_window_read'}, 'no lens is the owner\'s default, never an invented one')
+  const older = await kernelWindow.readJankoWindowThroughKernel(async () => ({outcome: null, error: 'ql-music.unsupported: no `music janko window --json` reading (exit 2)'}), null)
+  assert.deepEqual(older, {ok: false, reason: 'ql-music.unsupported: no `music janko window --json` reading (exit 2)'})
+  const wrong = await kernelWindow.readJankoWindowThroughKernel(async () => ({outcome: {result: 'music_modes_reading'}}), null)
+  assert.match(wrong.reason, /not `janko_window_reading`/)
+  const thrown = await kernelWindow.readJankoWindowThroughKernel(async () => { throw new Error('no bridge') }, null)
+  assert.match(thrown.reason, /could not be asked/)
+})
+
+test('a request publishes the owner\'s window or its refusal, and a stale reply never overwrites a newer lens', async () => {
+  janko.publishLiveJankoWindow(null)
+  await kernelWindow.requestLiveJankoWindow(0, async () => ({outcome: null, error: 'ql-music.unavailable: quaternal-logic is not installed'}))
+  assert.deepEqual(janko.liveJankoWindow(), {ok: false, fault: 'ql-music.unavailable: quaternal-logic is not installed'})
+  let release
+  const slow = kernelWindow.requestLiveJankoWindow(1, () => new Promise(resolve => { release = () => resolve({outcome: null, error: 'stale'}) }))
+  await kernelWindow.requestLiveJankoWindow(2, async () => ({outcome: {result: 'janko_window_reading', document: windowV1()}}))
+  release(); await slow
+  assert.equal(janko.liveJankoWindow().ok, true, 'the newer lens\'s window stands')
+  janko.publishLiveJankoWindow(null)
 })
 
 test('the device mounts beside the torus, only once the owner has published a reading', () => {

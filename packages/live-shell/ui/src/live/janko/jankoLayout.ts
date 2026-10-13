@@ -86,12 +86,19 @@ export function pianoKeys(): readonly PianoKey[] {
   return PIANO_NAMES.map((pitchName, pitchClass) => ({pitchClass, pitchName, black: PIANO_BLACK.has(pitchClass)}))
 }
 
-// The window the shell holds: published by the host when the owner serves one. Nothing is published today; the device says so.
+// The window the shell holds: published when the kernel serves the owner's window (native/liveJankoWindow.ts), or the refusal it named.
 let windowState: JankoWindowState | null = null
 const listeners = new Set<() => void>()
 /** Publish the owner's window (raw, as served), or null to withdraw it. Readers are told only of a change. */
 export function publishLiveJankoWindow(raw: unknown | null): void {
   const next = raw === null ? null : readJankoWindow(raw)
+  if (JSON.stringify(next) === JSON.stringify(windowState)) return
+  windowState = next
+  for (const listener of [...listeners]) listener()
+}
+/** Publish the kernel's named refusal: no key is laid out from a surface the owner did not serve. */
+export function refuseLiveJankoWindow(reason: string): void {
+  const next: JankoWindowState = {ok: false, fault: reason}
   if (JSON.stringify(next) === JSON.stringify(windowState)) return
   windowState = next
   for (const listener of [...listeners]) listener()
