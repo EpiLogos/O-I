@@ -496,6 +496,8 @@ export function postHostMode(frame: HTMLIFrameElement | null, mode: HostedAppMod
  * Every facet is what the application actually reported — an absent facet
  * stays absent (honest absence, never a guessed position). */
 export interface HostedAppState {
+  /** The Technē lens the frame stands in (its masthead chooser), one of the six holders. Absent before the frame reports one. */
+  lens?: HostedTechneLens;
   nativeScene?:{expression_ref:string;revision:number;scene_ref:string};
   document?: {id?: string; name?: string};
   sceneIndex?: number;

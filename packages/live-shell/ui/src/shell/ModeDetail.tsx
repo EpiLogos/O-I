@@ -42,7 +42,7 @@ import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kern
 import type {WorldTimelineView} from '../projections/useWorldTemporalReading'
 import {ATLAS_FAMILY_ID} from '../projections/atlas/atlasFamilyManifest'
 import {admitKnowledgeGraphFamily} from '../inhabitants/knowledgeGraphFamilyManifest'
-import type {PaneInstrumentId} from './paneInstrument'
+import {hostedLensOfBarId, type HostedLens, type PaneInstrumentId} from './paneInstrument'
 import './modeSurface.css'
 
 // The door is idempotent (a second identical load composes nothing new);
@@ -392,26 +392,34 @@ const LENSES: readonly TechneLens[] = [
   {id: 'palace', name: 'Palace', mark: 'palace', state: 'waiting', owner: 'the Palace owner (the integral composition)'},
 ]
 
-export function TechneLensBar({presentation, atlasOpen, onLens}: {
+export function TechneLensBar({presentation, atlasOpen, onLens, hosted = null}: {
   presentation: 'session' | 'arrangement'
   /** the Earth atlas is the open centre pane: the World cut's lenses are not pressed while it is */
   atlasOpen: boolean
   onLens: (lens: TechneLens) => void
+  /** The hosted Expressions pane stands focused: the bar reads and drives its lens (null lens = none reported yet). Absent = the World cut / Earth bar. */
+  hosted?: {lens: HostedLens | null} | null
 }) {
   const atlasView = useAtlasView()
-  const pressed = (lens: TechneLens) => lens.atlas
-    ? atlasOpen && atlasView === lens.atlas
-    : !atlasOpen && lens.presentation === presentation
-  const focused = LENSES.find(lens => lens.state === 'cut' && pressed(lens))
-  return <nav className="techne-lens-bar" data-lens={focused?.id ?? null} aria-label="Technē lenses">
+  // Hosted focus: the bar's entries are the hosted lenses (paneInstrument's one table); every entry with a hosted lens is reachable.
+  const reachable = (lens: TechneLens) => hosted ? hostedLensOfBarId(lens.id) !== null : lens.state === 'cut'
+  const pressed = (lens: TechneLens) => hosted
+    ? hostedLensOfBarId(lens.id) === hosted.lens
+    : lens.atlas
+      ? atlasOpen && atlasView === lens.atlas
+      : !atlasOpen && lens.presentation === presentation
+  const focused = LENSES.find(lens => reachable(lens) && pressed(lens))
+  return <nav className="techne-lens-bar" data-lens={focused?.id ?? null} data-hosted={hosted ? 'true' : undefined} aria-label="Technē lenses">
     <span className="techne-lens-title">Lenses</span>
     {LENSES.map(lens => (
-      <button key={lens.id} type="button" className="techne-lens" data-lens-state={lens.state}
-        aria-pressed={lens.state === 'cut' && pressed(lens)}
-        disabled={lens.state !== 'cut'}
-        title={lens.state === 'cut'
-          ? `${lens.name} — ${lens.owner}`
-          : `${lens.name} (planned) — the button holds its place; ${lens.owner} is still to be mounted here`}
+      <button key={lens.id} type="button" className="techne-lens" data-lens-state={hosted && hostedLensOfBarId(lens.id) ? 'cut' : lens.state}
+        aria-pressed={reachable(lens) && pressed(lens)}
+        disabled={!reachable(lens)}
+        title={hosted
+          ? (hostedLensOfBarId(lens.id) ? `${lens.name} — the hosted Expressions lens` : `${lens.name} — not a hosted Expressions lens`)
+          : lens.state === 'cut'
+            ? `${lens.name} — ${lens.owner}`
+            : `${lens.name} (planned) — the button holds its place; ${lens.owner} is still to be mounted here`}
         onClick={() => onLens(lens)}>
         <Icon name={lens.mark as IconName} size={13} />
         <span>{lens.name}</span>
