@@ -50,6 +50,16 @@ export function connectionLinesLabel(count:number):string{
  return count===1?'Connection line':'Connection lines';
 }
 
+/** A connection act names what it connects: one connection, or several cards at once (drag, import). */
+export function connectActLabel(count:number):string{
+ return count===1?'Connect':'Connect cards';
+}
+
+/** An adoption from outside this editor (another window, the kernel's own reconcile) is named for what it is. */
+export const KERNEL_UPDATE_LABEL='Update from the kernel';
+/** Why Undo refuses an outside update: the owner holds that change, and this editor has no inverse for it. */
+export const OUTSIDE_UPDATE_REASON='it came from outside this editor, and the native owner holds that change; this editor has no inverse for another owner\'s change';
+
 /** What the Undo or Redo toast says about the edit it reversed. */
 export function historyToast(direction:HistoryDirection,label:string|null):string{
  if(!label)return direction==='undo'?'Nothing to undo.':'Nothing to redo.';

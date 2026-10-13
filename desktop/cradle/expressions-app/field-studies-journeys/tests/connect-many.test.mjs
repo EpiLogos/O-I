@@ -33,7 +33,7 @@ test('connectMany writes every relation with exactly one native edit, never one 
  const edits=callsWithin(connectMany.initializer,'edit');
  assert.equal(edits.length,1,'one nativeWorkspace.edit call');
  assert.equal(inLoop(edits[0],connectMany.initializer),false,'the edit is not inside a loop or per-item callback');
- assert.match(edits[0].getText(sf),/nativeWorkspace(!|\?)?\.edit\(changes\)/,'the edit carries the whole change list');
+ assert.match(edits[0].getText(sf),/nativeWorkspace(!|\?)?\.edit\(changes,/,'the edit carries the whole change list, named as one act');
 });
 
 test('connectMany refuses before any write and names the end that has no native occurrence', ()=>{
@@ -51,13 +51,15 @@ test('connectMany returns the minted binding refs in input order', ()=>{
  assert.match(body,/return refs;/,'the refs are returned as minted');
 });
 
-test('connector sides ride the same act: applied once, after the relations, in one labelled change', ()=>{
+// E15/E16: the sides are part of the act's one edit (its third argument): saved with the relations and
+// recorded as the same undo step. No separate labelled change or separate save follows the relations.
+test('connector sides ride the same act: applied inside the one edit, saved with the relations, no separate change', ()=>{
  const body=connectMany.initializer.body;
- const applies=callsWithin(body,'applyConnectorRecord');
- assert.ok(applies.length>=1,'the sides are written through applyConnectorRecord');
- const changedCalls=callsWithin(body,'changed');
- assert.equal(changedCalls.length,1,'the sides are one labelled change, not one per connection');
- assert.ok(changedCalls[0].getStart(sf)>callsWithin(body,'edit')[0].getStart(sf),'the sides follow the relation edit');
+ const edit=callsWithin(body,'edit')[0];
+ assert.equal(edit.arguments.length,3,'the edit takes its act label and the sides');
+ assert.ok(callsWithin(edit.arguments[2],'applyConnectorRecord').length>=1,'the sides are written through applyConnectorRecord inside the act');
+ assert.equal(callsWithin(body,'changed').length,0,'no separate labelled change: the sides are not a second undo step');
+ assert.equal(callsWithin(body,'commitResearch').length,0,'no separate save follows the relations');
 });
 
 test('the Import .canvas wiring makes one connectMany call and no per-edge connect', ()=>{

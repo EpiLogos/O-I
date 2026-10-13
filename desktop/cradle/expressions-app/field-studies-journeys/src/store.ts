@@ -120,6 +120,28 @@ export class DocumentStore {
   this.kernelDepth=anchor.length;
   return true;
  }
+ /** E15/E16: one native act the owner acknowledged, as one labelled step. The step
+  * adopts `next` and records the owner's checkpoint: the kernel edit that reached
+  * it and the kernel documents either side. Steps its flush covered carry no kernel
+  * edit of their own, as under a Save. A checkpoint whose edit has no inverse is kept
+  * as a refusal on the step, so Undo names it instead of diverging from the kernel. */
+ recordNativeAct(label:string,next:Journey,checkpoint:KernelCheckpoint|{refused:string;reason:string}):void{
+  this.change(label,()=>{this.document=clone(next);});
+  const anchor=this.kernelSaveAnchor();
+  if(!('changes' in checkpoint)){
+   if(!anchor.entry)throw new Error(`"${label}" could not be recorded: its step moved`);
+   anchor.entry.inverse=checkpoint;
+   if(anchor.base!==null)for(let index=anchor.base;index<anchor.length-1;index++){const covered=this.undoStack[index];covered.changes=[];covered.inverse={changes:[]};}
+   this.kernelDepth=anchor.length;return;
+  }
+  if(!this.attachKernelCheckpoint(anchor,checkpoint))throw new Error(`"${label}" could not be recorded: its step moved`);
+ }
+ /** E15: an adoption from outside this editor (another window, the kernel's own reconcile) is a labelled step the kernel holds. This editor has no inverse for another owner's change, so Undo refuses it by name. */
+ recordOutsideUpdate(label:string,next:Journey,reason:string):void{
+  this.change(label,()=>{this.document=clone(next);});
+  const top=this.undoStack.at(-1);if(!top)throw new Error(`"${label}" could not be recorded`);
+  top.inverse={refused:'outside-update',reason};this.kernelDepth=this.undoStack.length;
+ }
  /** E15c: undo one step whose kernel compensation was accepted. A checkpoint compensates its whole Save, so the kernel returns to the depth the Save began at. */
  undoAccepted():boolean{
   this.finish();

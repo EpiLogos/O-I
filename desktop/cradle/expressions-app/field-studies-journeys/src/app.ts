@@ -42,7 +42,7 @@ import {CHAKRA_PROFILE_ID} from '../../src/engine/semantics/chakraProfile';
 import type {SemanticBinding,SemanticColorCoupling,SemanticFieldConfig} from '../../src/engine/semantics/semanticTypes';
 import {Journey,Scene,Entity,EntityLayer,TextLayer,Tool,Shape,Vec3,clone,uid,clamp,fieldStudies,oiMark,rethemeMark,sevenCentres,smallLanguage,blankJourney,blankScene,entity,pin,chakraEntities,validateJourney,AutomationLane,SCENE_TRANSITION_MIN,SCENE_TRANSITION_MAX,type MarkThemeReading} from './model.js';
 import {DocumentStore,readLibrary,readLibraryDetailed,saveToLibrary,removeFromLibrary} from './store.js';
-import {bindingEditLabel,connectionLinesLabel,historyTitle,historyToast,researchMaterialLabel} from './undoLabels.js';
+import {bindingEditLabel,connectActLabel,historyTitle,historyToast,KERNEL_UPDATE_LABEL,OUTSIDE_UPDATE_REASON,researchMaterialLabel} from './undoLabels.js';
 import {defaultCamera,cameraForSceneView,project,unproject,facePlane,stageScale,stageCentre,basis,Camera} from './camera.js';
 import {FieldEngineAdapter,EngineFrame} from './engine.js';
 import {readPath} from '../../src/engine/automation';
@@ -68,7 +68,7 @@ import {installKernelExpressions,kernelExpressionsAvailable,readTechneReading,te
 import {hostedRecovery} from './nativeRecovery.js';
 import {entryGateHTML} from './entryGate.js';
 import {AUTHORED_CHAKRA_STARTER,STANDING_LABEL} from './centreStanding.js';
-import {installNativeWorkspace,type NativeSubject} from './nativeWorkspace.js';
+import {installNativeWorkspace,type NativeActRecord,type NativeAdoption,type NativeSubject} from './nativeWorkspace.js';
 import {createRetainedNativeEditor,installNativeEditorReceiver,NativeSceneEditRefusal} from './hostEditor.js';
 import {createSourceEditorSelection} from './sourceEditorSelection.js';
 import {readLayerDisclosure,restoreLayerDisclosure} from './layerDisclosure.js';
@@ -1327,7 +1327,7 @@ async function placeExpressionIntoScene():Promise<void>{
    await nativeWorkspace!.readNested(pick.expression_ref,pick.revision,NESTED_DEFAULT_DEPTH);
    const verdict=nestedEvaluation(host,body,nativeWorkspace!.nestedGraph());
    if(verdict.state!=='ready'){toast(`Not placed: ${verdict.reason}`,8000);return;}
-   await nativeWorkspace!.edit([placeNestedChange(sceneRef,body)]);
+   await nativeWorkspace!.edit([placeNestedChange(sceneRef,body)],'Nest expression');
    toast(`${pick.title||pick.expression_ref} is placed in this Scene at nesting depth ${NESTED_DEFAULT_DEPTH}, under its own expression ref.`,8000);
   }catch(cause){toast(`Not placed: ${(cause as Error).message}`,8000);}
  });
@@ -1336,13 +1336,13 @@ async function changeNestingDepth():Promise<void>{
  const view=nativeWorkspace?.nativeView(),binding=view?.bindings[scene().id];
  if(!view||!binding||binding.body?.carrier!=='expression_ref'){toast('This Scene holds no nested expression, so it has no nesting depth.');return;}
  const depth=nextNestedDepth(binding.body.recursion?.max_depth??NESTED_DEFAULT_DEPTH);
- try{await nativeWorkspace!.edit([setNestingDepthChange(binding.scene_ref,binding.body,depth)]);toast(`Nesting depth is now ${depth}. Timing is still the Scene's own duration.`);}
+ try{await nativeWorkspace!.edit([setNestingDepthChange(binding.scene_ref,binding.body,depth)],'Set nesting depth');toast(`Nesting depth is now ${depth}. Timing is still the Scene's own duration.`);}
  catch(cause){toast(`Nesting depth not changed: ${(cause as Error).message}`,8000);}
 }
 async function removeNestedOccurrence():Promise<void>{
  const view=nativeWorkspace?.nativeView(),binding=view?.bindings[scene().id];
  if(!view||!binding||binding.body?.carrier!=='expression_ref'){toast('This Scene holds no nested expression to remove.');return;}
- try{await nativeWorkspace!.edit([removeNestedChange(binding.scene_ref)]);toast('Nested occurrence removed. This Scene is free of it, and its page slot is released.',8000);}
+ try{await nativeWorkspace!.edit([removeNestedChange(binding.scene_ref)],'Remove nested expression');toast('Nested occurrence removed. This Scene is free of it, and its page slot is released.',8000);}
  catch(cause){toast(`Not removed: ${(cause as Error).message}`,8000);}
 }
 async function action(name:string,el:HTMLElement,event?:Event){const s=scene(),subjectId=el.closest<HTMLElement>('[data-entity-id]')?.dataset.entityId,e=subjectId?s.entities.find(v=>v.id===subjectId):selectedEntity();if(e&&el.closest('.live-sequence'))selected=[e.id];switch(name){
@@ -1438,13 +1438,13 @@ async function action(name:string,el:HTMLElement,event?:Event){const s=scene(),s
   const body=await prepareNativeSceneBody(image?'image_media':'text_source',path,start===0&&end===0?null:{start,end});
   const current=nativeWorkspace?.nativeView();
   if(store.revision!==revision||scene().id!==sceneId||current?.document.expression_ref!==view.document.expression_ref||current.document.revision!==view.document.revision)throw Error('The Scene changed while its source was read. Review the current Scene and choose the body again.');
-  await nativeWorkspace!.edit([{change:'scene_body_set',scene_ref:binding.scene_ref,body}]);
+  await nativeWorkspace!.edit([{change:'scene_body_set',scene_ref:binding.scene_ref,body}],'Set scene body');
   toast(`Scene body set to the current native ${image?'image':'text'}.`);break;
  }
  case 'scene-body-clear':{
   const view=nativeWorkspace?.nativeView(),binding=view?.bindings[scene().id];
   if(!view||!binding){toast('Open this Scene as a native Expression first.');break;}
-  await nativeWorkspace?.edit([{change:'scene_body_clear',scene_ref:binding.scene_ref}]);
+  await nativeWorkspace?.edit([{change:'scene_body_clear',scene_ref:binding.scene_ref}],'Clear scene body');
   toast('Scene body cleared.');break;
  }
  case 'place-expression':void placeExpressionIntoScene();break;
@@ -1456,13 +1456,13 @@ async function action(name:string,el:HTMLElement,event?:Event){const s=scene(),s
   const targetRef=$<HTMLSelectElement>('scene-trigger-target').value,occasion=$<HTMLSelectElement>('scene-trigger-occasion').value;
   if(!targetRef){toast('Choose a Scene to jump to.');break;}
   const triggerRef=`${view.document.expression_ref}:trigger:jump-${crypto.randomUUID()}`;
-  await nativeWorkspace?.edit([{change:'scene_trigger_attach',scene_ref:binding.scene_ref,trigger:{trigger_ref:triggerRef,occasion,target:{kind:'navigate',scene_ref:targetRef}}}]);
+  await nativeWorkspace?.edit([{change:'scene_trigger_attach',scene_ref:binding.scene_ref,trigger:{trigger_ref:triggerRef,occasion,target:{kind:'navigate',scene_ref:targetRef}}}],'Attach trigger');
   toast('Jump trigger added.');break;
  }
  case 'scene-trigger-remove':{
   const ref=el.dataset.triggerRef;
   if(!ref)break;
-  await nativeWorkspace?.edit([{change:'scene_trigger_detach',trigger_ref:ref}]);
+  await nativeWorkspace?.edit([{change:'scene_trigger_detach',trigger_ref:ref}],'Detach trigger');
   toast('Trigger removed.');break;
  }
  case 'fit-view':{const {plane,depth,grid,snap}=camera;camera=defaultCamera();Object.assign(camera,{plane,depth,grid,snap});facePlane(camera);renderAll();break;}
@@ -2064,7 +2064,9 @@ window.__FIELD_STUDIES__={getDocument:()=>clone(store.document),getState:()=>({s
  // Acceptance probe: advance resident particle mechanics by fixed steps against
  // the targets already presented. No native request, clock or target write.
  probeSteps:(frames:number,dt:number)=>{if(!Number.isInteger(frames)||frames<1||frames>2000||!(dt>0&&dt<=.1))throw new Error('probe steps: 1–2000 frames of (0, 0.1] s');for(let i=0;i<frames;i++)engine.render(frameData(dt));needsFrame=true;return frames;},dispose:()=>{sceneTransportAlive=false;sceneIntentEpoch++;researchInstruments?.destroy();nativeEditorEndpoint?.dispose();nativeField?.dispose();cancelAnimationFrame(rafId);coverObserver?.disconnect();engine.dispose();},command:(cmd:any)=>{engine.command?.(cmd);needsFrame=true;},capabilities:engine.capabilities,inspect:(read=false)=>engine.inspect?.(read),telemetry:()=>engine.telemetry?.(),nativeProject:(v:Vec3)=>engine.projectNative?.(v),capture:(w:number,h:number)=>engine.capture?.(w,h)};
-function applyNativeView(view:KernelConversion,preservePosition=false,adoptionHistory:'record'|'acknowledge'='record'){
+/** E15/E16: an owner adoption names its history. 'act' is the app's own native act: one labelled step carrying
+ * the kernel edit it produced. 'outside' is an adoption from outside this editor, labelled for what it is. */
+function applyNativeView(view:KernelConversion,preservePosition=false,adoptionHistory:NativeAdoption='record',act?:NativeActRecord){
  awaitingNativeBoot=false;
  // An opened native Expression is what the frame stands on: the entry gate
  // closes and (unless the caller keeps its position) the engine presents the
@@ -2072,7 +2074,13 @@ function applyNativeView(view:KernelConversion,preservePosition=false,adoptionHi
  const presented=presentAdoption(view);closeEntryGate();
  const oldScene=scene().id,oldCamera={...camera},oldTime=sceneElapsed,oldSelection=[...selected],oldPlaying=journeyPlaying;
  const acknowledgement=adoptionHistory==='acknowledge'?nativeAdoptionHistory(view,store.document):'preserve';
- if(!preservePosition)applyJourney(view.journey,true,adoptionHistory,acknowledgement);else {const incoming=initialiseSceneSaves(initialiseBelts(view.journey));if(adoptionHistory==='acknowledge')store.acknowledge(incoming,acknowledgement);else store.change('Adopt native expression',()=>{store.document=clone(incoming);});}
+ if(!preservePosition)applyJourney(view.journey,true,adoptionHistory==='acknowledge'?'acknowledge':'record',acknowledgement);
+ else {
+  const incoming=initialiseSceneSaves(initialiseBelts(view.journey));
+  if(adoptionHistory==='acknowledge')store.acknowledge(incoming,acknowledgement);
+  else if(adoptionHistory==='act'&&act)store.recordNativeAct(act.label,incoming,act.record);
+  else store.recordOutsideUpdate(KERNEL_UPDATE_LABEL,incoming,OUTSIDE_UPDATE_REASON);
+ }
  const desired=preservePosition?oldScene:presented.sceneId;
  sceneIndex=Math.max(0,store.document.scenes.findIndex(s=>s.id===desired));
  if(preservePosition){camera=oldCamera;sceneElapsed=oldTime;selected=oldSelection.filter(id=>scene().entities.some(e=>e.id===id));journeyPlaying=oldPlaying;}
@@ -2139,7 +2147,7 @@ const mastheadCentre=document.createElement('div');mastheadCentre.className='mas
 const workspaceCluster=masthead.querySelector('.workspace-cluster')!;workspaceCluster.replaceWith(mastheadCentre);
 const lensStudio=installLensStudio({activate:activateInstrument},mastheadCentre);
 mastheadCentre.append(workspaceCluster);
-nativeWorkspace=installNativeWorkspace({shouldRetainDraft:()=>!awaitingNativeBoot||store.revision!==0,snapshot:()=>({journey:clone(store.document),sceneId:scene().id,entityId:selected[0]??null}),version:()=>store.revision,load:applyNativeView,toast,refresh:()=>{needsFrame=true;renderAll();},summon:(kind,subject)=>hostRequest({request:'summon',detail:{kind,subject}}),correspondence:(rows,selection)=>{nativeConnectionRows=rows;nativeSelectedRelation=selection;needsFrame=true;},status:showNativeStatus,chooseRecovery:request=>askRecoveryChoice(request.draft,{...request.offer,revision:request.revision}),followed:(_ref,readThrough)=>{const panels=followedPanels(readThrough);if(panels.sequence!==null)sequenceOpen=panels.sequence;if(panels.inspector!==null)inspectorOpen=panels.inspector;renderAll();}});
+nativeWorkspace=installNativeWorkspace({shouldRetainDraft:()=>!awaitingNativeBoot||store.revision!==0,anchor:()=>store.kernelSaveAnchor(),recordSave:(anchor,checkpoint)=>{if(!store.attachKernelCheckpoint(anchor,checkpoint))toast('Saved. Undo cannot reverse this Save on the native owner, because the step it began from has moved.',7000);},snapshot:()=>({journey:clone(store.document),sceneId:scene().id,entityId:selected[0]??null}),version:()=>store.revision,load:applyNativeView,toast,refresh:()=>{needsFrame=true;renderAll();},summon:(kind,subject)=>hostRequest({request:'summon',detail:{kind,subject}}),correspondence:(rows,selection)=>{nativeConnectionRows=rows;nativeSelectedRelation=selection;needsFrame=true;},status:showNativeStatus,chooseRecovery:request=>askRecoveryChoice(request.draft,{...request.offer,revision:request.revision}),followed:(_ref,readThrough)=>{const panels=followedPanels(readThrough);if(panels.sequence!==null)sequenceOpen=panels.sequence;if(panels.inspector!==null)inspectorOpen=panels.inspector;renderAll();}});
 const retainedEditor=createRetainedNativeEditor({
  store,sceneId:()=>scene().id,nativeView:()=>nativeWorkspace?.nativeView(),
  selection:()=>({entity_ids:[...selected],step_id:scene().entities.find(e=>e.id===selected[0])?.sequence.steps[stepIndex]?.id??null}),
@@ -2194,7 +2202,7 @@ const retainedEditor=createRetainedNativeEditor({
    const plan=prepareNativeSceneMaterialEdit(current,request.basis,request.intent,resolved);
    label=plan.label;
    return plan.changes;
-  });
+  },()=>label);
   toast(`${label}.`);
  },
  // Blueprint receiver (O:I #352): the host already validated and preflighted one fully resolved BlueprintIntent; the same
@@ -2251,7 +2259,7 @@ async function focusNativeSceneRef(scene_ref:string){
 // beside the saved-scene playback.
 installActPanel({journey:()=>store.document,scene,selected:()=>selected,changed:fn=>changed(fn,true,'Set role'),
  nativeView:()=>nativeWorkspace?.nativeView(),
- nativeEdit:async changes=>{if(!nativeWorkspace?.nativeView())throw new Error('Save this Expression to a Central file first: its native Expression is not open.');await nativeWorkspace.edit(changes);},
+ nativeEdit:async changes=>{if(!nativeWorkspace?.nativeView())throw new Error('Save this Expression to a Central file first: its native Expression is not open.');await nativeWorkspace.edit(changes,'Edit expression');},
  expressionRequest:nativeExpressionRequest,advance:async()=>await nativeWorkspace?.advance()??false,transition:actTransition,toast});
 // ES1A/ES1B (O:I #352): the active native Scene's own body and its
 // declarative triggers, laid over the live field as real readable material.
@@ -2303,9 +2311,9 @@ researchInstruments=installResearchInstruments({
  moveMany:async(sceneId,moves)=>{const target=researchScene(sceneId);for(const {entityId,position} of moves){if(pinnedOccurrence(sceneId,entityId))throw new Error('A pinned occurrence is in this selection. Unpin it to move the group.');if(blueprintMember(target,entityId))throw new Error('Use Blueprint to move the whole shape, or release it to edit individual positions.');const item=target.entities.find(value=>value.id===entityId);if(!item||item.locked)throw new Error('This occurrence is locked or no longer present.');if(!Number.isFinite(position.x)||!Number.isFinite(position.y))throw new Error('Position must be finite.');}changed(()=>{for(const {entityId,position} of moves){const item=target.entities.find(value=>value.id===entityId)!;item.position.x=clamp(position.x,-50,50);item.position.y=clamp(position.y,-50,50);}},true,'Move objects');await commitResearch();},
  // Whole-shape Blueprint acts from Canvas: one native edit each; release and
  // pin are separate, explicit acts.
- transformBlueprint:async(sceneId,transform)=>{const view=nativeWorkspace?.nativeView(),binding=view?.bindings[sceneId];if(sceneId!==scene().id||!view||!binding)throw new Error('Open the native Scene before changing its blueprint.');await nativeWorkspace!.blueprint({expression_ref:view.document.expression_ref,revision:view.document.revision,scene_ref:binding.scene_ref,operation:'transform',transform});},
- releaseBlueprint:async sceneId=>{const view=nativeWorkspace?.nativeView(),binding=view?.bindings[sceneId];if(sceneId!==scene().id||!view||!binding)throw new Error('Open the native Scene before releasing its blueprint.');await nativeWorkspace!.blueprint({expression_ref:view.document.expression_ref,revision:view.document.revision,scene_ref:binding.scene_ref,operation:'release'});},
- pinEntity:async(sceneId,entityRef,pinned)=>{researchScene(sceneId);if(!nativeWorkspace?.nativeView()?.document.entities[entityRef])throw new Error('This occurrence has no native identity to pin.');await nativeWorkspace.edit([{change:'entity_pin',entity_ref:entityRef,pinned}]);},
+ transformBlueprint:async(sceneId,transform)=>{const view=nativeWorkspace?.nativeView(),binding=view?.bindings[sceneId];if(sceneId!==scene().id||!view||!binding)throw new Error('Open the native Scene before changing its blueprint.');await nativeWorkspace!.blueprint({expression_ref:view.document.expression_ref,revision:view.document.revision,scene_ref:binding.scene_ref,operation:'transform',transform},'Transform blueprint');},
+ releaseBlueprint:async sceneId=>{const view=nativeWorkspace?.nativeView(),binding=view?.bindings[sceneId];if(sceneId!==scene().id||!view||!binding)throw new Error('Open the native Scene before releasing its blueprint.');await nativeWorkspace!.blueprint({expression_ref:view.document.expression_ref,revision:view.document.revision,scene_ref:binding.scene_ref,operation:'release'},'Release blueprint');},
+ pinEntity:async(sceneId,entityRef,pinned)=>{researchScene(sceneId);if(!nativeWorkspace?.nativeView()?.document.entities[entityRef])throw new Error('This occurrence has no native identity to pin.');await nativeWorkspace.edit([{change:'entity_pin',entity_ref:entityRef,pinned}],pinned?'Pin object':'Unpin object');},
  // An empty Canvas starts construction through the navigator's Project-scoped
  // creation (native constellation create), then opens the result here.
  createScene:async()=>{if(window.parent===window)throw new Error('Constellation creation needs the desktop host.');hostRequest({request:'new-constellation'});},
@@ -2334,23 +2342,20 @@ researchInstruments=installResearchInstruments({
   const expression=view.document.expression_ref;
   const refs=inputs.map(()=>`${expression}:relation:connection-${crypto.randomUUID()}`);
   const changes=inputs.map((input,index)=>({change:'relation_bind',binding:{binding_ref:refs[index],native_owner:'oi',relation:{ref:`${refs[index]}:${connectionKind(input.relationKind)}`,revision:'1',availability:'available'},from_entity_ref:input.sourceEntityRef,to_entity_ref:input.targetEntityRef,provenance:[]}}));
-  await nativeWorkspace!.edit(changes);
   const lines=inputs.flatMap((input,index)=>input.connector?[{ref:refs[index],record:input.connector}]:[]);
-  if(lines.length){
-   changed(()=>{const target=researchScene(sceneId);for(const {ref,record} of lines)applyConnectorRecord(target,ref,record);},true,connectionLinesLabel(lines.length));
-   await commitResearch();
-  }
+  // The connector sides are the same act as the relations: saved with them, one undo step.
+  await nativeWorkspace!.edit(changes,connectActLabel(inputs.length),lines.length?journey=>{const target=journey.scenes.find(item=>item.id===sceneId);if(!target)throw new Error('The active Scene changed; nothing was connected.');for(const {ref,record} of lines)applyConnectorRecord(target,ref,record);}:undefined);
   return refs;
  },
- connect:async(sceneId,input)=>{assertConnectionMembers(sceneId,input.sourceEntityRef,input.targetEntityRef);if(input.directionality&&!['directed','forward'].includes(input.directionality))throw new Error('Expression connections are directed. Choose a directed connection.');const id=`${nativeWorkspace!.nativeView()!.document.expression_ref}:relation:connection-${crypto.randomUUID()}`;await nativeWorkspace?.edit([{change:'relation_bind',binding:{binding_ref:id,native_owner:'oi',relation:{ref:`${id}:${connectionKind(input.relationKind)}`,revision:'1',availability:'available'},from_entity_ref:input.sourceEntityRef,to_entity_ref:input.targetEntityRef,provenance:[]}}]);},
- reconnect:async(sceneId,ref,input)=>{assertConnectionMembers(sceneId,input.sourceEntityRef,input.targetEntityRef);const binding=ownResearchConnection(ref);await nativeWorkspace?.edit([{change:'relation_bind',binding:{...binding,from_entity_ref:input.sourceEntityRef,to_entity_ref:input.targetEntityRef}}]);},
+ connect:async(sceneId,input)=>{assertConnectionMembers(sceneId,input.sourceEntityRef,input.targetEntityRef);if(input.directionality&&!['directed','forward'].includes(input.directionality))throw new Error('Expression connections are directed. Choose a directed connection.');const id=`${nativeWorkspace!.nativeView()!.document.expression_ref}:relation:connection-${crypto.randomUUID()}`;await nativeWorkspace?.edit([{change:'relation_bind',binding:{binding_ref:id,native_owner:'oi',relation:{ref:`${id}:${connectionKind(input.relationKind)}`,revision:'1',availability:'available'},from_entity_ref:input.sourceEntityRef,to_entity_ref:input.targetEntityRef,provenance:[]}}],connectActLabel(1));},
+ reconnect:async(sceneId,ref,input)=>{assertConnectionMembers(sceneId,input.sourceEntityRef,input.targetEntityRef);const binding=ownResearchConnection(ref);await nativeWorkspace?.edit([{change:'relation_bind',binding:{...binding,from_entity_ref:input.sourceEntityRef,to_entity_ref:input.targetEntityRef}}],'Reconnect');},
  // Expression connections are directed: reversing swaps the exact endpoints;
  // undirected/bidirectional have no presentation representation and refuse.
- updateConnectionDirectionality:async(sceneId,ref,directionality)=>{researchScene(sceneId);const binding=ownResearchConnection(ref);if(directionality==='forward')return;if(directionality!=='backward')throw new Error('Expression connections are directed. Reverse it, or record an undirected constellation relationship.');assertConnectionMembers(sceneId,binding.to_entity_ref,binding.from_entity_ref);await nativeWorkspace?.edit([{change:'relation_bind',binding:{...binding,from_entity_ref:binding.to_entity_ref,to_entity_ref:binding.from_entity_ref}}]);},
- deleteConnection:async(sceneId,ref)=>{const target=researchScene(sceneId);ownResearchConnection(ref);await nativeWorkspace?.edit([{change:'relation_remove',binding_ref:ref}]);
+ updateConnectionDirectionality:async(sceneId,ref,directionality)=>{researchScene(sceneId);const binding=ownResearchConnection(ref);if(directionality==='forward')return;if(directionality!=='backward')throw new Error('Expression connections are directed. Reverse it, or record an undirected constellation relationship.');assertConnectionMembers(sceneId,binding.to_entity_ref,binding.from_entity_ref);await nativeWorkspace?.edit([{change:'relation_bind',binding:{...binding,from_entity_ref:binding.to_entity_ref,to_entity_ref:binding.from_entity_ref}}],'Reverse connection');},
+ deleteConnection:async(sceneId,ref)=>{const target=researchScene(sceneId);ownResearchConnection(ref);await nativeWorkspace?.edit([{change:'relation_remove',binding_ref:ref}],'Delete connection',target.research?.connectors?.[ref]?journey=>{const scene=journey.scenes.find(item=>item.id===sceneId);if(!scene)throw new Error('The active Scene changed; nothing was removed.');applyConnectorRecord(scene,ref,null);}:undefined);
   // the removed relation's line record goes with it (A3/A4), so no orphan presentation outlives its edge
-  if(target.research?.connectors?.[ref]){changed(()=>applyConnectorRecord(target,ref,null),true,'Remove connection line');await commitResearch();}},
- updateConnectionKind:async(sceneId,ref,kind)=>{researchScene(sceneId);const binding=ownResearchConnection(ref);await nativeWorkspace?.edit([{change:'relation_bind',binding:{...binding,relation:{...binding.relation,ref:`${ref}:${connectionKind(kind)}`,revision:String(Number(binding.relation.revision)+1)}}}]);},
+  },
+ updateConnectionKind:async(sceneId,ref,kind)=>{researchScene(sceneId);const binding=ownResearchConnection(ref);await nativeWorkspace?.edit([{change:'relation_bind',binding:{...binding,relation:{...binding.relation,ref:`${ref}:${connectionKind(kind)}`,revision:String(Number(binding.relation.revision)+1)}}}],'Set connection type');},
 });
 // M5′ Palace: regions are Scenes of the Palace Expression, each disclosing one
 // contained Expression as its body with a portal; the guided path is Scene
