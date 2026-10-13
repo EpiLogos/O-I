@@ -13,7 +13,7 @@ import {
   type TechneTemporalFacet,
   type TechneWholeRelation,
 } from "../../contract.ts";
-import {facetRange, type FacetSpan} from "./scale.ts";
+import {facetRange, relativeAxisFromFacets, type FacetSpan, type RelativeMark} from "./scale.ts";
 import {resolveTemporalQualification} from "./relations.ts";
 
 export const TECHNE_TIME_AXIS_SCHEMA = "techne:time-axis/v1";
@@ -142,4 +142,54 @@ export function timeAxis(reading: TechneReading, declaredWindow?: SharedTimeWind
   return {schema: TECHNE_TIME_AXIS_SCHEMA, subject_ref: reading.subject.subject_ref,
     reading_ref: reading.reading_ref, snapshot_revision: reading.snapshot?.revision ?? null,
     events, relations, bands, window};
+}
+
+/** A session may only address the reading it discloses: same subject, reading
+ * basis and snapshot. A mismatch is refused, never re-minted or re-pointed. */
+function assertSessionOnReading(reading: TechneReading, session: DisclosureSession): void {
+  if (session.subject_ref !== reading.subject.subject_ref || session.reading_ref !== reading.reading_ref
+    || (session.selection.snapshot_revision ?? null) !== (reading.snapshot?.revision ?? null))
+    throw Error("This DisclosureSession discloses another native reading");
+}
+
+/**
+ * The shared time-axis projection (lane-2 T6, `techne:time-axis/v1`) that both
+ * the chronology and the Places consumers read. The session is the one owner of
+ * the window: `session.time_window` is the window in force, and a null session
+ * puts no window in force. Same reading and session give byte-identical JSON.
+ */
+export function timeAxisProjection(reading: TechneReading, session: DisclosureSession | null): TechneTimeAxis {
+  if (session !== null) assertSessionOnReading(reading, session);
+  return timeAxis(reading, session?.time_window ?? null);
+}
+
+export const TECHNE_RELATIVE_TIME_AXIS_SCHEMA = "techne:relative-time-axis/v1";
+
+/** The relative projection (lane-2 T5), beside the calendar one. It carries no
+ * calendar year, date or duration: marks are steps from the disclosed zero. */
+export interface TechneRelativeTimeAxis {
+  schema: typeof TECHNE_RELATIVE_TIME_AXIS_SCHEMA;
+  subject_ref: string;
+  reading_ref: string;
+  snapshot_revision: string | null;
+  zero_ref: string;
+  marks: RelativeMark[];
+}
+
+/**
+ * The relative axis for a session's disclosed zero. Null, and so honestly
+ * absent, unless the session declares a zero AND the reading warrants it (an
+ * undated continuity facet of this reading, with at least one other undated
+ * facet to place). The calendar projection is never changed by this.
+ */
+export function relativeTimeAxisProjection(reading: TechneReading, session: DisclosureSession | null): TechneRelativeTimeAxis | null {
+  const checked = validateReading(reading);
+  if (!checked.valid) throw Error(`Cannot project a drifted Technē reading: ${checked.errors.join("; ")}`);
+  if (session === null || session.time_zero_ref === undefined) return null;
+  assertSessionOnReading(reading, session);
+  const axis = relativeAxisFromFacets(reading.temporal ?? [], session.time_zero_ref);
+  if (axis === null) return null;
+  return {schema: TECHNE_RELATIVE_TIME_AXIS_SCHEMA, subject_ref: reading.subject.subject_ref,
+    reading_ref: reading.reading_ref, snapshot_revision: reading.snapshot?.revision ?? null,
+    zero_ref: axis.zero_ref, marks: axis.marks};
 }

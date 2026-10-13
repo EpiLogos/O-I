@@ -39,7 +39,9 @@ import {
   postMessageToFrame,
   type HostedAppMode,
   type HostedAppState,
+  KERNEL_CHANNEL_VERSION,
 } from "./hostedApp";
+import {validatePlaceDraft, type PlaceDraft} from "../../expressions-app/vendor/research-canvas/packages/canvas/src/psychogeographic/placeAuthoring";
 import {consumeTechneFieldOpen, peekTechneFieldLens, peekTechneFieldOpen, peekTechneFieldRefresh, subscribeTechneFieldOpen} from "./fieldOpen";
 import "./point-cloud-host.css";
 import {verifyInsertionSource} from "./sourceInsertion";
@@ -61,6 +63,8 @@ export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHos
   const [hostedRevision,setHostedRevision]=useState<number|undefined>();
   const sourceRequest=useRef(0);
   const insertionEpoch=useRef(0);
+  // Lane-4 T17b: constellations this frame opened with a map draft; only their owner answers return to it.
+  const placeRoutes=useRef(new Set<string>());
   const owner = useRef({readTechne, techneWorld, project});
   owner.current = {readTechne, techneWorld, project};
   // The restart checkpoint's deep link (MODE-ENGINE-STATE-PERSISTENCE
@@ -116,10 +120,21 @@ export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHos
         // Deliberate typed knowledge relationship through the constellation owner.
         if (operation === "relate") return relateSceneConstellation(kernel.transport, request);
         if (operation !== "inspect" && operation !== "open") throw new Error("Unknown constellation request");
+        // Lane-4 T17b: the map's draft is validated at this boundary before it reaches the editor (a draft, never a write).
+        const offered = (request as {placeDraft?: unknown}).placeDraft;
+        let placeDraft: PlaceDraft | undefined;
+        if (offered !== undefined) {
+          if (operation !== "open") throw new Error("A place draft is offered only when the editor opens.");
+          const checked = validatePlaceDraft(offered);
+          if (!checked.ok) throw new Error(checked.reason);
+          placeDraft = checked.draft;
+        }
         const target = await resolveSceneConstellation(kernel.transport, request);
+        // Every editor this frame opens answers back to it; the frame keeps only the routes it registered.
+        if (operation === "open") placeRoutes.current.add(target.frame_ref);
         if (operation === "open") await new Promise<void>((resolve, reject) => {
           const timer = window.setTimeout(() => reject(new Error("The constellation editor did not open")), 10000);
-          window.dispatchEvent(new CustomEvent("oi:open-scene-constellation", {detail: {target, returnTo: {place: {ref: (request as {expression_ref:string}).expression_ref, title: "Canvas"}, passageId: (request as {scene_ref:string}).scene_ref}, complete: (error?: string) => {
+          window.dispatchEvent(new CustomEvent("oi:open-scene-constellation", {detail: {target, placeDraft, returnTo: {place: {ref: (request as {expression_ref:string}).expression_ref, title: "Canvas"}, passageId: (request as {scene_ref:string}).scene_ref}, complete: (error?: string) => {
             window.clearTimeout(timer); if (error) reject(new Error(error)); else resolve();
           }}}));
         });
@@ -136,6 +151,28 @@ export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHos
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [src, kernel.transport]);
+
+  // Lane-4 T17b: the owner's save or refusal for a constellation opened from the map returns to this frame on the same
+  // kernel channel the open came through (a typed envelope; the frame never reads the owner's Wiki itself).
+  useEffect(() => {
+    const answer = (event: Event) => {
+      const detail = (event as CustomEvent<{target?: {frame_ref?: unknown; place_ref?: unknown}; kind?: unknown; reason?: unknown}>).detail;
+      const node = frame.current;
+      const frameRef = detail?.target?.frame_ref;
+      if (!node?.contentWindow || typeof frameRef !== "string" || !placeRoutes.current.has(frameRef)) return;
+      if (detail.kind !== "saved" && detail.kind !== "refused") return;
+      const placeRef = typeof detail.target?.place_ref === "string" ? detail.target.place_ref.slice(0, 256) : undefined;
+      node.contentWindow.postMessage({
+        v: KERNEL_CHANNEL_VERSION,
+        kind: "constellation-result",
+        target: {frame_ref: frameRef, ...(placeRef !== undefined ? {place_ref: placeRef} : {})},
+        result: detail.kind,
+        ...(typeof detail.reason === "string" ? {reason: detail.reason.slice(0, 2000)} : {}),
+      }, "*");
+    };
+    window.addEventListener("oi:constellation-result", answer);
+    return () => window.removeEventListener("oi:constellation-result", answer);
+  }, [src]);
 
   useEffect(() => {
     const node = frame.current;

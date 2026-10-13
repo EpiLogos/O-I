@@ -257,12 +257,114 @@ export interface PlaceAuthoringHost extends PlaceAuthoringAvailability {
   onProposeMove(proposal: PlaceMoveProposal): void | Promise<void>;
 }
 
-/** Said beside the route when a click is offered as the new place. The route does not yet take the point (see OPEN). */
+// ---------------------------------------------------------------------------
+// T17b — the draft the map hands the owner's route, and the owner's answer back
+// ---------------------------------------------------------------------------
+
+/** A draft position for the owner's editor. It is offered, never written: the editor still requires a source basis. */
+export interface PlaceDraft {
+  lat: number;
+  lon: number;
+  /** Never "exact": a click or a drag claims no more than the reading's own honest precision. */
+  precision: Extract<TechnePlacePrecision, "approximate" | "region">;
+  /** The position the marker was dragged from; present for a move. */
+  from?: { lat: number; lon: number };
+  /** The marker the move belongs to (the place's own ref), so the answer returns to that marker. */
+  place_ref?: string;
+}
+
+export type PlaceDraftCheck = { ok: true; draft: PlaceDraft } | { ok: false; reason: string };
+
+const DRAFT_KEYS = ["lat", "lon", "precision", "from", "place_ref"];
+export const PLACE_DRAFT_REF_MAX = 256;
+
+function latLonProblem(lat: unknown, lon: unknown, label: string): string | null {
+  if (typeof lat !== "number" || !Number.isFinite(lat) || lat < -90 || lat > 90) {
+    return `${label} latitude must be a finite number from -90 to 90.`;
+  }
+  if (typeof lon !== "number" || !Number.isFinite(lon) || lon < -180 || lon > 180) {
+    return `${label} longitude must be a finite number from -180 to 180.`;
+  }
+  return null;
+}
+
+/** Validates a draft before it crosses the host channel. Bounded: known keys only, finite coordinates, never exact. */
+export function validatePlaceDraft(value: unknown): PlaceDraftCheck {
+  const fail = (reason: string): PlaceDraftCheck => ({ ok: false, reason });
+  if (typeof value !== "object" || value === null || Array.isArray(value)) return fail("The place draft must be an object.");
+  const record = value as Record<string, unknown>;
+  const unknown = Object.keys(record).find((key) => !DRAFT_KEYS.includes(key));
+  if (unknown !== undefined) return fail(`The place draft has an unknown field: ${unknown}.`);
+  const position = latLonProblem(record.lat, record.lon, "The place draft");
+  if (position !== null) return fail(position);
+  if (record.precision === "exact") {
+    return fail("A placed point is never exact: a click or drag is approximate, or region for a region.");
+  }
+  if (record.precision !== "approximate" && record.precision !== "region") {
+    return fail("The place draft precision must be approximate or region.");
+  }
+  let from: { lat: number; lon: number } | undefined;
+  if (record.from !== undefined) {
+    if (typeof record.from !== "object" || record.from === null || Array.isArray(record.from)) {
+      return fail("The place draft origin must be an object with lat and lon.");
+    }
+    const origin = record.from as Record<string, unknown>;
+    const problem = latLonProblem(origin.lat, origin.lon, "The place draft origin");
+    if (problem !== null) return fail(problem);
+    from = { lat: origin.lat as number, lon: origin.lon as number };
+  }
+  if (record.place_ref !== undefined && (
+    typeof record.place_ref !== "string" || record.place_ref.trim() === "" || record.place_ref.length > PLACE_DRAFT_REF_MAX
+  )) {
+    return fail(`The place draft reference must be a non-empty string of at most ${PLACE_DRAFT_REF_MAX} characters.`);
+  }
+  const draft: PlaceDraft = { lat: record.lat as number, lon: record.lon as number, precision: record.precision };
+  if (from !== undefined) draft.from = from;
+  if (record.place_ref !== undefined) draft.place_ref = record.place_ref as string;
+  return { ok: true, draft };
+}
+
+/** The draft a click offers the owner's route: the rounded point, approximate. */
+export function placeDraftForAdd(prefill: PlacePrefillOk): PlaceDraft {
+  return { lat: prefill.latitude, lon: prefill.longitude, precision: "approximate" };
+}
+
+/** The draft a drag offers: the new point at the reading's own precision, the origin, and the marker it belongs to. */
+export function placeDraftForMove(proposal: PlaceMoveProposal): PlaceDraft {
+  return {
+    lat: proposal.to.latitude,
+    lon: proposal.to.longitude,
+    precision: proposal.precision,
+    from: { lat: proposal.from.latitude, lon: proposal.from.longitude },
+    place_ref: proposal.graphNodeId,
+  };
+}
+
+/** Said beside the route when a click is offered as the new place. The editor opens with the point as a draft. */
 export function addRouteNotice(prefill: PlacePrefillOk): string {
-  return `Clicked ${formatCoordinate(prefill)} as an approximate point. Edit place/time opens without this point carried in; enter it there.`;
+  return `Clicked ${formatCoordinate(prefill)} as an approximate point, opened as a draft. Choose a source basis, then save time and place; nothing is written until you save.`;
 }
 
 /** Said beside the route when a drag is proposed. The owner's route checks the basis when the person saves. */
 export function moveRouteNotice(proposal: PlaceMoveProposal): string {
-  return `Proposed move: ${proposalSummary(proposal)}. Edit place/time opens without this proposal carried in; enter the new point there, and the owner checks the basis when you save.`;
+  return `Proposed move opened as a draft: ${proposalSummary(proposal)}. Choose a source basis, then save; the owner checks the basis and the source revision when you save.`;
+}
+
+export type ConstellationRouteOutcome =
+  | { kind: "saved" }
+  | { kind: "refused"; reason?: string | null };
+
+/** The notice for the owner's answer. A refusal shows the owner's own words; a save asks the map to read again. */
+export function constellationResultNotice(outcome: ConstellationRouteOutcome): {
+  kind: PlaceRefusalKind | "saved";
+  text: string;
+  reload: boolean;
+} {
+  if (outcome.kind === "saved") {
+    return { kind: "saved", text: "Saved in the constellation. The reading is refreshed from the owner.", reload: true };
+  }
+  const reason = typeof outcome.reason === "string" && outcome.reason.trim() !== ""
+    ? outcome.reason
+    : "The owner refused this save; no change was made.";
+  return { kind: refusalKind(reason), text: reason, reload: false };
 }

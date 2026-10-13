@@ -125,6 +125,8 @@ import { createPortal, flushSync } from "react-dom";
 import {OPEN_OBJECT_EVENT,ObjectCentreLayer,encodeObjectRef,isOpenObjectDetail} from "./agent/objects";
 import {factoryCentreOwns} from "./contributions/factory/objectKinds";
 import {OPEN_AUTOMATIONS_EVENT, openAutomations} from "./contributions/automations/open";
+import {offerConstellationRoute} from "./knowledge/WikiFactsEditor";
+import type {PlaceDraft} from "../expressions-app/vendor/research-canvas/packages/canvas/src/psychogeographic/placeAuthoring";
 
 function snapshotOf(state: LayoutState): RestorePoint {
   return {
@@ -1107,8 +1109,10 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
       })().catch(error=>{request.complete?.(error instanceof Error?error.message:String(error));fail(error);});
     };
     const constellationOpen=(event:Event)=>{
-      const d=detail<{target?:{frame_ref:string;title:string;project?:string};returnTo?:unknown;complete?:(error?:string)=>void}>(event),target=d?.target;
+      const d=detail<{target?:{frame_ref:string;title:string;project?:string};placeDraft?:PlaceDraft;returnTo?:unknown;complete?:(error?:string)=>void}>(event),target=d?.target;
       if(!target?.frame_ref){d?.complete?.("No verified constellation was supplied");return;}
+      // Lane-4 T17b: the route carries the map's draft to this constellation's time/place editor (a draft; saving still needs a source basis).
+      offerConstellationRoute(target.frame_ref,d.placeDraft);
       leave("Canvas",d.returnTo);enterModeRef.current("base");
       const destinationWorkspaceId=workspaceRef.current.current.id;
       // This request has already inspected the exact native Scene and its
