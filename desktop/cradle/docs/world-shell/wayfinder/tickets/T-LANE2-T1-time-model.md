@@ -172,3 +172,12 @@ and truncates years to six digits. `desktop-api` returns null past six digits.
 been red since T1b removed `generateTicks`; it is to be ported to the axis API.
 Lead ruling: the atlas `formatYear` (−1 and 0 both read "1 BCE") is left to
 the atlas port pin, upstream in AE.
+
+**T4b (landed `64e79508a`).** The transport, desktop-api and schema seams
+carry deep years through the authority. `timeline-navigation.test` is ported
+to `axisRows` and the camera, with two invariants as todo. **T4c
+(dispatched):** step down when a minor row would have fewer than two marks;
+floor the year in the deep branch of `calendarFields`; export the contract's
+`TEMPORAL_PRECISIONS`; route the last private year regexes
+(`repositories.ts`, `TimelineSurface.tsx`, `instant.ts`) through the
+authority. `PsychogeographicMap.tsx:959` waits for lane 4.

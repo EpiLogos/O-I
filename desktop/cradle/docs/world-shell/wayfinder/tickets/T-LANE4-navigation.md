@@ -91,3 +91,25 @@ routed through the host's `inspectSubject` (lead wiring). Scripted: places
 suites 85/85; verify-source green; tsc 0. Unverified: the look and clicks
 (native pass). Not done: provenance in the marker detail (LocationPanel
 carries no provenance field).
+
+**T4 + T5 — basemap stack and terrain (landed `98e66eb90`, `2b2de0cdb`;
+13 Oct 2026).** The offline pack stays the default ground. OSM, Sentinel-2
+cloudless (EOX), Esri imagery, Esri place names, and terrarium raster-dem
+terrain are rows in a basemap stack (visibility, opacity, named source).
+`basemapSources.ts` / `basemapLayers.ts` are the data and the plan;
+`setBasemapPlan` diffs layers, so kept sources keep their tiles. Each source
+draws only after the owner's "Allow live sources" switch, through the policy's
+`tile_refresh` gate (session state `state.livePlaces`). Every drawn source is
+credited with its licence, and refusals show verbatim on their row. Terrain
+reads elevation at the selected place or says "No terrain source". Lead
+(T4c): the native CSP (`src-tauri/tauri.conf.json` connect-src/img-src)
+admits the four hosts. Each was verified live (HTTP 200 with an image type);
+nothing is fetched before the owner allows. The hosted offline stance reads
+"Live sources stay off until you allow them." The OSM-only toolbar opt-in is
+subsumed by the stack row. Scripted: places-basemap 20/20; places/place/canvas
+144/0; verify-source passes. Queued: per-Scene persistence of the stack (with
+T21); layer reorder; dead opt-in selectors
+(`researchInstrumentStyles.css` ~1704) to tidy. Unverified (native pass):
+imagery and terrain rendering, OSM's User-Agent policy under WKWebView.
+
+**T17–T19 — placemark authoring (dispatched 13 Oct 2026).**
