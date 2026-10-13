@@ -1,7 +1,7 @@
 # T-E20b — The live commit path expresses the whole Change grammar
 
 Label: wayfinder:task (Phase 4 · lane 3; no UI leg)
-Claimed-by: —
+Claimed-by: claude-code:dlw-lead (13 Oct 2026; builder haiku)
 Found by: T-E20 (13 Oct 2026).
 
 ## Finding
@@ -34,4 +34,21 @@ change or a named refusal).
 
 ## Resolution
 
-—
+**Landed (13 Oct 2026; builder haiku, converged by the lead).**
+`documentToChanges` now expresses relation bind/remove, entity pin, scene
+body and performance, triggers (detach before a scene's removal, attach
+after creation), representation bind, profile adopt/release, collections,
+reuse and relation focus; the shared `UNEXPRESSIBLE` list names the 13
+cases the grammar cannot carry (entity rename, representation removal,
+owner metadata, source relation added). A field-family sweep (39 mutations)
+asserts every difference yields a change or a named refusal; a parity table
+shows the live path and `documentToChanges` agree on existing-ref edits.
+Scripted: 105/105; tsc 0.
+
+**Lead ruling on the premise:** the live editor's model carries no subject,
+pin, relation, body, trigger, profile, collection, reuse or representation
+fields (`model.ts`), and the app already writes those families through
+explicit owner operations (`app.ts` pin and relation_bind,
+`nativeOccurrence.ts`, `actPanel.ts`, `naraPersonalBody.ts`) — so they stay
+owner-operation families on the live path; `kernelComposition.ts` is
+unchanged. Unverified: the hosted save walk (native).
