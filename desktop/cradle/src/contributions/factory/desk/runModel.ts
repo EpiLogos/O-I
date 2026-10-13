@@ -444,15 +444,21 @@ export function readRunClose(value: unknown, expect: {runRef: string; recognitio
       return !!entry && typeof entry.target === "string" && ["applied", "already-applied"].includes(entry.status as string) && !!objectOf(entry.receipt);
     })
     || (row.status === "refused") !== (refusal !== undefined)
+    // A close that says Finished must show the owner's Run Finished or archived.
+    || (["finished", "already-finished"].includes(row.status as string) && !finishedLifecycle(row.lifecycle))
     || (refusal !== undefined && (!["owner", "driver"].includes(refusal.source as string) || typeof refusal.message !== "string" || !refusal.message.trim())))
     throw Error("Factory did not answer this Run's close.");
   return value as RunCloseReceipt;
 }
 
+/** The owner's lifecycle words at which a Run is closed (Finished or archived). */
+const finishedLifecycle = (lifecycle: unknown): boolean => lifecycle === "finished" || lifecycle === "archived";
+
 /** Whether a close leaves the Run's live production stopped: the owner moved
- * the Run to Finished now, or reported it had already been Finished. */
+ * the Run to Finished now, or reported it had already been Finished, and the
+ * Run's own lifecycle reads finished or archived. */
 export const closeStopsLive = (receipt: RunCloseReceipt): boolean =>
-  receipt.status === "finished" || receipt.status === "already-finished";
+  (receipt.status === "finished" || receipt.status === "already-finished") && finishedLifecycle(receipt.lifecycle);
 
 /** The Desk's state and words for a close. A refusal shows the owner's (or the
  * driver's) own message verbatim and the Run keeps the state the owner gave. */

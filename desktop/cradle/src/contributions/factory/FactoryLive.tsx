@@ -38,7 +38,7 @@
  */
 import {createContext, useCallback, useContext, useMemo, useState, useSyncExternalStore, type ReactNode} from "react";
 import {emitExpressionCue} from "../../stage/cues";
-import {attemptRead, buildViewOf} from "./development";
+import {attemptRead, buildViewOf, developmentRead} from "./development";
 import type {FactoryBuildView, FactoryMaterialSelection} from "./types";
 import type {KernelTransportStatus} from "../../kernel/types";
 import {encounter, type JournalPage} from "../../encounter/client";
@@ -193,6 +193,10 @@ export function kernelLiveIO(transport: KernelTransportStatus, source: LiveRunSo
   const project = source.project ?? "";
   return {
     readAttempts: () => attemptRead(transport, source.statePath, source.runRef),
+    readLifecycle: async () => {
+      const run = await developmentRead<{lifecycle?: unknown}>(transport, source.statePath, "run", source.runRef);
+      return typeof run.lifecycle === "string" ? run.lifecycle : undefined;
+    },
     watch: resume => watchTelemetry(transport, source.statePath, {resume, durationSecs: 4, maxEvents: 1, runRef: source.runRef}),
     readJournal: async (session, after) => encounter<JournalPage>(transport, project, {action: "read", agent_session: session, after, limit: 256}),
     readPopulation: async () => {
@@ -249,6 +253,10 @@ export async function startRunLive(transport: KernelTransportStatus, source: Liv
   const producer = new LiveProducer(makeIO(transport, source), {
     runRef: source.runRef, goal: source.goal, actRef: actRefFor(source.runRef), expressionRef: liveExpressionRefFor(source.runRef),
     actor: "desktop:factory-live", context: {...contextOfUnits(source.units ?? []), ...(explicit ? {explicit} : {})},
+    // The Run finished outside this desk: its production ends itself, and the
+    // Run's intent becomes stopped (the stopRunLive semantics), so a view that
+    // reopens it does not restart a finished Run.
+    onRunFinished: () => { liveIntent.set(source.runKey, "stopped"); emitLive(); },
   });
   const created: LiveHolder = {producer, state: producer.state, unsubscribe: () => {}};
   created.unsubscribe = producer.subscribe(state => { created.state = state; emitLive(); });
