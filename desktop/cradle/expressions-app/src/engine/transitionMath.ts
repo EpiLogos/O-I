@@ -82,7 +82,7 @@ export interface HoldFit{scale:[number,number];offset:[number,number]}
 export interface PixelSize{width:number;height:number}
 const IDENTITY_FIT:HoldFit={scale:[1,1],offset:[0,0]};
 export function holdFit(out:PixelSize,hold:PixelSize):HoldFit{
- if(!(out.width>0&&out.height>0&&hold.width>0&&hold.height>0))return {scale:[1,1],offset:[0,0]};
+ if(!(out.width>0&&out.height>0&&hold.width>0&&hold.height>0))return {scale:[...IDENTITY_FIT.scale],offset:[...IDENTITY_FIT.offset]};
  const outAspect=out.width/out.height,holdAspect=hold.width/hold.height;
  if(Math.abs(outAspect-holdAspect)<1e-9)return {scale:[1,1],offset:[0,0]};
  if(holdAspect>outAspect){const sy=outAspect/holdAspect;return {scale:[1,sy],offset:[0,(1-sy)/2]};}

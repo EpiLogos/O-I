@@ -105,6 +105,13 @@
 .mode-centre-journey-record { margin-top: 6px }
 .mode-centre-record { font-size: 10px; color: var(--text-dim); background: var(--bg-1); border: 1px solid var(--line); padding: 2px 8px; cursor: pointer }
 .mode-centre-record:hover { color: var(--text) }
+/* Technē · Session — a walk is a block of scene rows; each stop's chip is a button that focuses its occasion. */
+.mode-centre-journey-walk { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px }
+.mode-centre-journey-walkhead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; font-size: 10px; color: var(--text-dim) }
+.mode-centre-journey-walkhead strong { color: var(--text); font-weight: 600 }
+.mode-centre-journey-stop { font: inherit; font-size: 10px; color: var(--text-dim); cursor: pointer }
+.mode-centre-journey-stop:hover { color: var(--text) }
+.mode-centre-journey-named { margin: 4px 0 0; font-size: 10px; color: var(--text-dim) }
 
 /* Technē · Arrangement — the M2′ Relation Field surface. */
 .mode-centre-relation { display: flex; flex-direction: column; gap: 5px }
