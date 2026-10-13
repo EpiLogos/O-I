@@ -675,33 +675,39 @@ Keys never play notes while you are typing in a document.
 
 ## 11. The figure
 
-In 1943 Hermann Hesse published a novel about a game nobody had played. His
-narrator calls it "a mode of playing with the total contents and values of
-our culture" (*The Glass Bead Game*, Introduction), and says its player plays
-"like the organist on an organ."
+The game began, Hesse tells us, on a frame like a child's abacus. A
+musicologist strung glass beads of different sizes and colours along its
+wires, and the wires stood for the lines of a stave, so that he could set out a
+theme in beads, transpose it, develop it, and play one theme against another.
+Within a few generations the beads were gone. What remained was a language in
+which mathematics and music counted equally, where a Bach fugue, a law of
+nature and a saying of Confucius could stand in the same sentence. Hesse's
+narrator calls it "a mode of playing with the total contents and values of our
+culture," and says its player plays "like the organist on an organ."
 
-Hesse never wrote the rules down. He wrote around them, closely enough that
-the game's parts can be counted: a fixed instrument; one language in which
-mathematics and music count equally; themes stated and worked out the way a
-fugue works out its subject; a silence after every symbol, kept so that the
-symbols would stay full; an archive that admits new symbols rarely, through
-one yearly competition; festival games that ran for days, and private ones
-that anyone could play; masters who taught, an order of players and the
-village they lived in; every game written down so it could be read back; and
-an ending. Hesse's Magister Ludi does not try to save the game. He knows a
-beautiful thing that has entered history will pass.
+Hesse wrote around the rules rather than writing them down, but he lets us
+watch a game closely enough to follow it. A master sets a symbol before the
+players. Each of them stops and considers it in silence — what it holds, where
+it came from, what it means — so that the sign will not go empty. Then the
+theme is worked against others, the way a fugue works its subject. New symbols
+enter the game's archive rarely, through one competition a year. Great games
+run for days, under rules strict enough to say how long the players may sleep,
+and private games are played by anyone who wants to play one. Every game is
+written down so that it can be read back. And the master who has given his life
+to it knows that it will end; beauty, once it has entered history, passes.
 
-That is a description of a whole environment for meaning, made before anyone
-could build one. Live showed that a whole environment for a medium can be
-software: composition, sound design, arrangement, recording, mixing and
-performance had mostly lived in separate tools, and Live put them in one
-place with one clock. The DLW takes Live's proof and points it at what
-Hesse described: the contents of a world, played on one instrument.
+Nobody built it. For most of a century the Glass Bead Game was the closest
+picture we had of a whole environment for meaning, and it stayed a picture.
+Then music, the art Hesse had taken for his model, got the environment he
+imagined. Live put composition, sound design, recording, mixing and
+performance in one place with one clock, and anyone could sit down at it.
 
-The game grew out of music, and so does the DLW. Its first mode is a music
-studio, and every other mode plays on that studio's grammar. Hesse made music
-the model for a universal language. Here the universal language is built
-from a working musical instrument.
+The DLW takes the step from there to what Hesse described: Live's grammar,
+pointed at the contents of a world. Its centre is an instrument, as it should
+be. Hesse's game grew from a bead frame strung like a stave. The DLW grows from
+a torus whose keys are points along its helices, and whose chords draw the
+symbols they belong to. Here, as in Hesse's novel, the language of symbols and
+the language of sound are one language.
 
 ## 12. The game's language
 
