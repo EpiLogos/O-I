@@ -182,7 +182,10 @@
     "patches/native-relation-attribution.patch",
     "patches/host-selection-viewport-gesture.patch",
     "patches/annotation-erase-and-draft-colour.patch",
-    "patches/editable-relation-label.patch"
+    "patches/editable-relation-label.patch",
+    "packages/canvas/src/canvas/navigationGeometry.ts",
+    "packages/canvas/src/canvas/CanvasGuides.tsx",
+    "packages/canvas/src/canvas/ZoomReadout.tsx"
   ],
   "patches": {
     "packages/canvas/src/CanvasView.tsx": {

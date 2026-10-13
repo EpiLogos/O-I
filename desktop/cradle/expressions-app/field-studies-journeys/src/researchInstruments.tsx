@@ -29,6 +29,9 @@ import {CanvasNavigationOverview} from './canvasNavigationOverview';
 import {CanvasFindOverlay} from './canvasFindOverlay';
 import {canvasFindTargets,resolveCanvasFindTarget,canvasFindCamera,type CanvasFindTarget} from './canvasFind';
 import type {NavigationMinimapController} from '../../../src/shared/NavigationMinimap';
+import {fitViewport,zoomTo,keepGuidedAxes,snapDraggedBox,guideSegments,ZOOM_STEP,type Box,type GuideLine} from '../../vendor/research-canvas/packages/canvas/src/canvas/navigationGeometry';
+import {CanvasGuides} from '../../vendor/research-canvas/packages/canvas/src/canvas/CanvasGuides';
+import {ZoomReadout} from '../../vendor/research-canvas/packages/canvas/src/canvas/ZoomReadout';
 
 /** D3 — the canvas tool row is icon-led, in the app's existing 24×24
  * thin-stroke icon language (icons.ts), not text-led. Every button below
@@ -187,6 +190,9 @@ export interface ResearchInstrumentsHost {
 }
 interface ViewState {
  canvasMinimap?:React.MutableRefObject<NavigationMinimapController|null>;
+ /** A1 — alignment guides for the card being dragged: presentation only,
+  * flow-unit geometry drawn against the live viewport, cleared on release. */
+ snapGuides?:{guides:GuideLine[];boxes:Box[]};
  canvas?:{x:number;y:number;zoom:number};timeline?:TimelineViewState;place?:{latitude:number;longitude:number;zoom:number};selectedNode?:string|null;selectedEdge?:string|null;selectedPlace?:string|null;placeFilter?:PlaceFilterState;
  /** M2′: chronology (the vendored TimelineSurface) vs. the relation-field
   * projections (relationFieldView.tsx) — session-local presentation state,
@@ -273,6 +279,37 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
   applyGroupOverrides(state,canvas,sceneId,overrides);
  };
  window.addEventListener('keydown',onWindowKeydown);
+ // A6 — zoom and fit. Every camera move goes through the path the Canvas
+ // already has (flyToNode with a viewport, so xyflow's own easing), never a
+ // second transform. The limits mirror xyflow's defaults: the vendored
+ // ReactFlow sets no minZoom or maxZoom of its own.
+ const ZOOM_LIMITS={minZoom:0.5,maxZoom:2};
+ let navigation:{canvas:InstrumentCanvas;selection:Set<string>}|null=null;
+ const paneSize=()=>{const rect=mount.querySelector('.research-canvas')?.getBoundingClientRect();return {width:rect?.width??0,height:rect?.height??0};};
+ const currentViewport=()=>captureCanvas?.()??{x:0,y:0,zoom:1};
+ const cameraTo=(viewport:{x:number;y:number;zoom:number})=>{flyToNode?.('',viewport);};
+ const zoomView=(zoom:number)=>{cameraTo(zoomTo(currentViewport(),zoom,paneSize(),ZOOM_LIMITS));};
+ const fitBoxes=(boxes:Box[])=>{const fit=fitViewport(boxes,paneSize(),ZOOM_LIMITS);if(!fit)return;cameraTo(fit.viewport);if(fit.clamped)message('Fit stopped at the zoom limit; some cards are off screen.');};
+ const boxOfNode=(node:{position:{x:number;y:number};size?:{width:number;height:number}}):Box=>({x:node.position.x,y:node.position.y,width:node.size?.width??200,height:node.size?.height??140});
+ // The zoom percentage fades in its own small root, so a running zoom never
+ // re-renders the canvas tree.
+ const readoutHost=document.createElement('div');readoutHost.className='canvas-zoom-readout-host';mount.append(readoutHost);
+ const readoutRoot=createRoot(readoutHost);
+ let readoutZoom:number|null=null,readoutToken=0;
+ const showZoom=(zoom:number)=>{if(zoom===readoutZoom)return;readoutZoom=zoom;readoutToken++;readoutRoot.render(<ZoomReadout zoom={zoom} token={readoutToken}/>);};
+ const onZoomKeydown=(event:KeyboardEvent)=>{
+  if(destroyed||lens!=='m1'||!navigation)return;
+  const target=event.target as HTMLElement|null;
+  if(target?.isContentEditable||target?.tagName==='INPUT'||target?.tagName==='TEXTAREA'||target?.tagName==='SELECT')return;
+  if(!target?.closest?.('.research-canvas')||event.metaKey||event.ctrlKey||event.altKey)return;
+  const {canvas,selection}=navigation;
+  if(event.key==='+'||event.key==='='){event.preventDefault();zoomView(currentViewport().zoom*ZOOM_STEP);}
+  else if(event.key==='-'||event.key==='_'){event.preventDefault();zoomView(currentViewport().zoom/ZOOM_STEP);}
+  else if(event.key==='0'&&!event.shiftKey){event.preventDefault();zoomView(1);}
+  else if(event.shiftKey&&event.code==='Digit1'){event.preventDefault();fitBoxes(canvas.nodes.map(boxOfNode));}
+  else if(event.shiftKey&&event.code==='Digit2'){const chosen=canvas.nodes.filter(node=>selection.has(node.id)).map(boxOfNode);if(chosen.length){event.preventDefault();fitBoxes(chosen);}}
+ };
+ window.addEventListener('keydown',onZoomKeydown);
  /** Preview every override immediately (one redraw) and batch the whole
   * selection into ONE gesture-transaction id, so N nudges/drags/aligns in a
   * row still land as exactly one native write when the gesture settles. */
@@ -303,6 +340,7 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
   const material=scene?.research;
   groupContext=editable?{state,canvas,sceneId:canvas.sceneId}:null;
   const selection=state.multiSelect?.size?state.multiSelect:new Set(state.selectedNode?[state.selectedNode]:[]);
+  navigation={canvas,selection};
   const apply=(action:()=>Promise<void>,refresh=true)=>{
    const key=canvas.key;message('Saving…');
    mutations=mutations.catch(()=>{}).then(async()=>{
@@ -373,6 +411,22 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
    // idle pause mid-drag.
    if(!canvas.sceneId||!selection.has(id)||selection.size<2){state.moveGesture!.preview(id,position,true);return;}
    applyGroupOverrides(state,canvas,canvas.sceneId,{[id]:position},true);
+  };
+  // A1 — alignment guides for a single dragged card. The Technē model's
+  // snapPosition settles the card onto a neighbour's centre within 8 screen px
+  // (÷ zoom) and reports the guide it settled on. Guides live on the ViewState
+  // only: drawn over the pane, cleared on release, never persisted. A group
+  // drag keeps grid snap alone.
+  const alignDrag=(id:string,position:{x:number;y:number}):{x:number;y:number}=>{
+   const dragged=canvas.nodes.find(node=>node.id===id);
+   if(!dragged||(selection.size>1&&selection.has(id))){
+    state.snapGuides=undefined;
+    return state.snapToGrid?snapToGrid(position,CANVAS_UNITS/4,CANVAS_UNITS/16):position;
+   }
+   const others=canvas.nodes.filter(node=>node.id!==id).map(node=>({ref:node.id,box:boxOfNode(node)}));
+   const aligned=snapDraggedBox({...boxOfNode(dragged),x:position.x,y:position.y},others,state.canvas?.zoom??1,id);
+   state.snapGuides=aligned.guides.length?{guides:aligned.guides,boxes:[aligned.box,...others.map(other=>other.box)]}:undefined;
+   return state.snapToGrid?keepGuidedAxes(aligned,snapToGrid(aligned.topLeft,CANVAS_UNITS/4,CANVAS_UNITS/16)):aligned.topLeft;
   };
   // Gesture end is now disclosed directly by the vendored Canvas
   // (onMoveNodeEnd) instead of being guessed from a global pointerup
@@ -503,7 +557,7 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
      // R3 — semantic zoom/LOD, driven directly by the vendored Canvas's own
      // viewport reporting instead of a 400ms captureCanvas() poll. Applies
      // to both native (editable) and read-only reading canvases.
-     state.canvas=viewport;state.canvasMinimap?.current?.draw(viewport);
+     state.canvas=viewport;state.canvasMinimap?.current?.draw(viewport);showZoom(viewport.zoom);
      const level=semanticZoomLevel(viewport.zoom);
      if(level!==state.zoomLevel){state.zoomLevel=level;redraw();}
     }}
@@ -550,15 +604,26 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
     onSelectEdge={id=>{if(id===null){if(state.selectedEdge!==null&&state.selectedEdge!==undefined){state.selectedEdge=null;redraw();}return;}state.selectedEdge=id;state.selectedNode=null;if(canvas.sceneId)host.select(canvas.sceneId,null,id??undefined);if(id)flyToEdge?.(id);redraw();}}
     onNodeDoubleClick={id=>{const view=host.nativeView(),node=canvas.nodes.find(n=>n.id===id);const subject=node?.type==='resource'?node.absolutePath:view?.document.entities[id]?.subject?.subject_ref;if(subject)host.inspectSubject(subject);else{select(id);dismissedCard=null;host.inspector.hidden=false;redraw();}}}
     onMoveNodePreview={editable?(id,position)=>{
-     groupMove(id,state.snapToGrid?snapToGrid(position,CANVAS_UNITS/4,CANVAS_UNITS/16):position);
+     groupMove(id,alignDrag(id,position));
+     redraw();
     }:undefined}
     onMoveNodeEnd={editable?(id,position)=>{
-     groupMove(id,state.snapToGrid?snapToGrid(position,CANVAS_UNITS/4,CANVAS_UNITS/16):position);
+     const placed=alignDrag(id,position);
+     state.snapGuides=undefined;
+     groupMove(id,placed);
      flushMoveEnd();
+     redraw();
     }:undefined}
     onRegisterCaptureViewport={capture=>{captureCanvas=capture;}} />
    {editable&&<CanvasFindOverlay key={`find:${canvas.key}`} canvasKey={canvas.key} targets={findTargets} tools={host.tools} onChoose={chooseFound}/>}
+   <CanvasGuides segments={state.snapGuides?guideSegments(state.snapGuides.guides,state.snapGuides.boxes,state.canvas??{x:0,y:0,zoom:1}):[]}/>
    <CanvasNavigationOverview key={canvas.key} nodes={previewNodes} edges={previewEdges} capture={()=>state.canvas??captureCanvas?.()??null} controller={state.canvasMinimap} onCamera={viewport=>{if(epoch===generation&&currentKey===canvas.key)flyToNode?.('',viewport);}}/>
+   <div className="canvas-zoom-controls" role="group" aria-label="Canvas zoom">
+    <button type="button" aria-label="Zoom out canvas" title="Zoom out (−)" onClick={()=>zoomView(currentViewport().zoom/ZOOM_STEP)}><ToolIcon name="minus"/></button>
+    <button type="button" aria-label="Zoom in canvas" title="Zoom in (+)" onClick={()=>zoomView(currentViewport().zoom*ZOOM_STEP)}><ToolIcon name="plus"/></button>
+    <button type="button" aria-label="Fit all cards" title="Fit all (Shift+1)" onClick={()=>fitBoxes(canvas.nodes.map(boxOfNode))}><ToolIcon name="fit"/></button>
+    <button type="button" aria-label="Fit selected cards" title="Fit selection (Shift+2)" disabled={!selection.size} onClick={()=>fitBoxes(canvas.nodes.filter(node=>selection.has(node.id)).map(boxOfNode))}><ToolIcon name="collapse"/></button>
+   </div>
   </div></>;
  }
  async function load(selected:ResearchInstrument){
@@ -737,7 +802,7 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
    }
    await load(lens);
   },
-  destroy(){++epoch;lens=null;destroyed=true;unmount();mount.remove();status.remove();views.clear();window.removeEventListener('keydown',onWindowKeydown);modifiers.dispose();},
+  destroy(){++epoch;lens=null;destroyed=true;unmount();mount.remove();status.remove();views.clear();window.removeEventListener('keydown',onWindowKeydown);window.removeEventListener('keydown',onZoomKeydown);readoutRoot.unmount();readoutHost.remove();modifiers.dispose();},
   active(){return lens;},
  };
 }
