@@ -1,4 +1,5 @@
 import type { GraphNode } from "./contracts";
+import { CATEGORY_COLOUR } from "./palette";
 
 export type TimelineCategory =
   | "historical-event"
@@ -21,17 +22,17 @@ export interface TimelineCategoryDefinition {
 }
 
 export const TIMELINE_CATEGORIES: readonly TimelineCategoryDefinition[] = [
-  { id: "historical-event", label: "Historical event", color: "#79c0d4", background: "#102633" },
-  { id: "claim", label: "Claim", color: "#e0b86f", background: "#302817" },
-  { id: "interpretation", label: "Interpretation", color: "#cf91c7", background: "#2b1d2a" },
-  { id: "archetype", label: "Archetype", color: "#d0a24a", background: "#2d2414" },
-  { id: "myth-in-time", label: "Myth in time", color: "#b98cff", background: "#281f35" },
-  { id: "myth", label: "Myth", color: "#a994d6", background: "#241f31" },
-  { id: "speculation-contested", label: "Speculation / contested", color: "#e07a6f", background: "#321b1b" },
-  { id: "source", label: "Source", color: "#5fb8a0", background: "#102a24" },
-  { id: "book-writing", label: "Book / writing", color: "#b9a784", background: "#29251d" },
-  { id: "constellation", label: "Constellation", color: "#8fd3ff", background: "#102436" },
-  { id: "institution-network-figure", label: "Institution / network / figure", color: "#9aa6b8", background: "#1b2430" },
+  { id: "historical-event", label: "Historical event", color: CATEGORY_COLOUR["historical-event"].color, background: CATEGORY_COLOUR["historical-event"].background },
+  { id: "claim", label: "Claim", color: CATEGORY_COLOUR["claim"].color, background: CATEGORY_COLOUR["claim"].background },
+  { id: "interpretation", label: "Interpretation", color: CATEGORY_COLOUR["interpretation"].color, background: CATEGORY_COLOUR["interpretation"].background },
+  { id: "archetype", label: "Archetype", color: CATEGORY_COLOUR["archetype"].color, background: CATEGORY_COLOUR["archetype"].background },
+  { id: "myth-in-time", label: "Myth in time", color: CATEGORY_COLOUR["myth-in-time"].color, background: CATEGORY_COLOUR["myth-in-time"].background },
+  { id: "myth", label: "Myth", color: CATEGORY_COLOUR["myth"].color, background: CATEGORY_COLOUR["myth"].background },
+  { id: "speculation-contested", label: "Speculation / contested", color: CATEGORY_COLOUR["speculation-contested"].color, background: CATEGORY_COLOUR["speculation-contested"].background },
+  { id: "source", label: "Source", color: CATEGORY_COLOUR["source"].color, background: CATEGORY_COLOUR["source"].background },
+  { id: "book-writing", label: "Book / writing", color: CATEGORY_COLOUR["book-writing"].color, background: CATEGORY_COLOUR["book-writing"].background },
+  { id: "constellation", label: "Constellation", color: CATEGORY_COLOUR["constellation"].color, background: CATEGORY_COLOUR["constellation"].background },
+  { id: "institution-network-figure", label: "Institution / network / figure", color: CATEGORY_COLOUR["institution-network-figure"].color, background: CATEGORY_COLOUR["institution-network-figure"].background },
 ] as const;
 
 export function categoryDefinition(category: TimelineCategory): TimelineCategoryDefinition {
