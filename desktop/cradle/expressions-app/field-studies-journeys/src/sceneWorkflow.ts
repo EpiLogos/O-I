@@ -27,13 +27,15 @@ export function moveScene(j:Journey,sceneId:string,to:number):void{
  if(!Number.isInteger(to)||to<0||to>=j.scenes.length)throw new Error('A scene can only move within this expression.');
  applyTimelineMove(j,scenes=>{const [item]=scenes.splice(from,1);scenes.splice(to,0,item);});
 }
+/** E06b: a shortening move that leaves a scene's entry offset at or past its new duration moves the offset to the scene's last millisecond, the nearest valid start. A valid offset is untouched, and an absent offset stays absent. */
+function clampEntryOffset(s:Scene):void{if(s.entryOffset!==undefined&&s.entryOffset>=s.duration)s.entryOffset=Math.max(0,s.duration-0.001);}
 /** Change a scene's duration and/or transition, under the same bounds validateJourney applies. */
 export function retimeScene(j:Journey,sceneId:string,facts:{duration?:number;transition?:number}):void{
  const index=indexOfScene(j,sceneId);
  const inRange=(n:unknown,a:number,b:number)=>typeof n==='number'&&Number.isFinite(n)&&n>=a&&n<=b;
  if(facts.duration!==undefined&&!inRange(facts.duration,SCENE_DURATION_MIN,SCENE_DURATION_MAX))throw new Error(`A scene lasts ${SCENE_DURATION_MIN}–${SCENE_DURATION_MAX} seconds.`);
  if(facts.transition!==undefined&&!inRange(facts.transition,SCENE_TRANSITION_MIN,SCENE_TRANSITION_MAX))throw new Error(`A transition lasts ${SCENE_TRANSITION_MIN}–${SCENE_TRANSITION_MAX} seconds.`);
- applyTimelineMove(j,scenes=>{const s=scenes[index];if(facts.duration!==undefined)s.duration=facts.duration;if(facts.transition!==undefined)s.transition=facts.transition;});
+ applyTimelineMove(j,scenes=>{const s=scenes[index];if(facts.duration!==undefined){s.duration=facts.duration;clampEntryOffset(s);}if(facts.transition!==undefined)s.transition=facts.transition;});
 }
 /** Remove a scene and its saved copy. An expression keeps at least one scene. */
 export function removeScene(j:Journey,sceneId:string):void{
@@ -84,7 +86,7 @@ export function rollSceneSeam(j:Journey,leftId:string,seconds:number):{seconds:n
  const range=seamRollRange(left,right);
  const applied=Math.min(range.max,Math.max(range.min,seconds));
  const clamped=seconds<range.min?'min':seconds>range.max?'max':null;
- if(applied!==0)applyTimelineMove(j,scenes=>{scenes[i].duration=left+applied;scenes[i+1].duration=right-applied;});
+ if(applied!==0)applyTimelineMove(j,scenes=>{scenes[i].duration=left+applied;scenes[i+1].duration=right-applied;clampEntryOffset(scenes[i]);clampEntryOffset(scenes[i+1]);});
  return {seconds:applied,clamped};
 }
 /** E06 slip: Scene `sceneId` starts `offset` seconds into its own evolution. Its property tracks read local time + offset (propertyTracks.evaluateTracks). The offset is a timeline fact, so no content changes. The gesture keeps it in [0, duration); 0 removes it, since absent = 0. */
@@ -146,7 +148,7 @@ function rightSequence(sequence:Entity['sequence'],t:number):Entity['sequence']{
 /** Both halves of a scene cut at t. The left keeps the scene's identity and everything before the cut; the right carries the rest. Named limitation: automation lanes (LFO and ramp) are copied whole to both halves, so the right's lanes restart on its own clock. */
 function splitSceneContent(src:Scene,t:number,newId:string):{left:Scene;right:Scene}{
  const left:Scene=clone(src),right:Scene=clone(src);
- left.duration=t;
+ left.duration=t;clampEntryOffset(left);
  right.id=newId;right.name=`${src.name} / split`.slice(0,160);right.duration=src.duration-t;right.transition=0;
  // E06: the tracks are read on the evolution clock, local t + entryOffset. The cut is that evolution time, so the left keeps
  // its evolution [entryOffset, cut) and the right starts its evolution at the cut, with no offset of its own.
