@@ -3,6 +3,8 @@ import {
   BaseEdge,
   EdgeLabelRenderer,
   getBezierPath,
+  getSmoothStepPath,
+  getStraightPath,
   useEdges,
   type Edge,
   type EdgeProps,
@@ -21,6 +23,10 @@ type AnnotatedEdgeData = Record<string, unknown> & {
   relationKind: string;
   selected?: boolean;
   sequencing?: boolean;
+  /** lane-1 A3: the line kind. Absent or "curved" is today's bezier. */
+  connectorKind?: "straight" | "curved" | "elbow";
+  /** lane-1 A3: the owner-written midpoint label (presentation, never the relation kind). */
+  connectorLabel?: string;
 };
 
 export function AnnotatedEdge({
@@ -89,6 +95,20 @@ export function AnnotatedEdge({
     edgePath = `M ${sourceX} ${sourceY} Q ${controlX} ${controlY} ${targetX} ${targetY}`;
     labelX = 0.25 * sourceX + 0.5 * controlX + 0.25 * targetX;
     labelY = 0.25 * sourceY + 0.5 * controlY + 0.25 * targetY;
+  } else if (data?.connectorKind === "straight") {
+    [edgePath, labelX, labelY] = getStraightPath({ sourceX, sourceY, targetX, targetY });
+  } else if (data?.connectorKind === "elbow") {
+    // Orthogonal routing from the handles' own sides: xyflow's smooth-step
+    // router re-plans whenever an endpoint moves, so no waypoint is stored.
+    [edgePath, labelX, labelY] = getSmoothStepPath({
+      sourceX,
+      sourceY,
+      sourcePosition: sourcePosition as Position,
+      targetX,
+      targetY,
+      targetPosition: targetPosition as Position,
+      borderRadius: 8
+    });
   } else {
     [edgePath, labelX, labelY] = getBezierPath({
       sourceX,
@@ -102,7 +122,7 @@ export function AnnotatedEdge({
 
   return (
     <>
-      <g data-sequencing={data?.sequencing ? "true" : "false"} data-testid={`edge-${id}`}>
+      <g data-connector-kind={data?.connectorKind ?? "curved"} data-sequencing={data?.sequencing ? "true" : "false"} data-testid={`edge-${id}`}>
         <BaseEdge markerStart={markerStart} markerEnd={markerEnd} path={edgePath} />
       </g>
       <EdgeLabelRenderer>
@@ -181,6 +201,7 @@ export function AnnotatedEdge({
               <strong>{data?.relationKind}</strong>
             )}
             {data?.note ? <span>{data.note}</span> : null}
+            {data?.connectorLabel ? <span className="flow-edge-label__connector">{data.connectorLabel}</span> : null}
           </div>
           {data?.selected && !data.readOnly ? (
             <div className="flow-edge-actions">

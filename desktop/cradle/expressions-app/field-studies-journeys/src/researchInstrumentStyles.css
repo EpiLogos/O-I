@@ -2366,3 +2366,196 @@
 :where(.research-instrument) .canvas-object[data-selected="true"]{filter:drop-shadow(0 0 0.4rem color-mix(in srgb,var(--accent) 35%,transparent))}
 :where(.research-instrument) .canvas-object--text[data-selected="true"]{filter:none;outline:1px dashed var(--accent);outline-offset:4px}
 :where(.research-instrument) .canvas-object--rectangle .canvas-object__shape *,:where(.research-instrument) .canvas-object--ellipse .canvas-object__shape *,:where(.research-instrument) .canvas-object--diamond .canvas-object__shape *{stroke-linejoin:round}
+
+/* lane-1 A3–A4: connectors. The kind glyphs follow the tool grammar (24×24
+   stroke, currentColor) and the midpoint label is the edge label's quiet
+   caption, set under the relation kind so the relation keeps its own
+   reading. Card handles appear only while a connection or reconnection is
+   being dragged: the side pick is the pointer's nearest handle during that
+   gesture, never standing UI. Tokens only; no new chrome beyond the
+   inspector's kind row and label field. */
+:where(.research-instrument) .research-connector-controls{display:flex;flex-direction:column;gap:8px;margin:6px 0}
+:where(.research-instrument) .research-connector-kinds{display:flex;gap:6px}
+:where(.research-instrument) .research-connector-kind{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;padding:0;border:1px solid var(--line);border-radius:6px;background:transparent;color:var(--muted);cursor:pointer}
+:where(.research-instrument) .research-connector-kind:hover{color:var(--ink)}
+:where(.research-instrument) .research-connector-kind[aria-pressed="true"]{border-color:var(--accent);color:var(--ink)}
+:where(.research-instrument) .research-connector-kind:focus-visible{outline:1px solid var(--accent);outline-offset:2px}
+:where(.research-instrument) .research-connector-kind svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+:where(.research-instrument) .research-connector-label{display:flex;flex-direction:column;gap:4px;color:var(--muted);font:12px/1.4 var(--sans)}
+:where(.research-instrument) .research-connector-label input{font:12px/1.4 var(--sans);color:var(--ink);background:transparent;border:1px solid var(--line);border-radius:4px;padding:4px 6px}
+:where(.research-instrument) .flow-edge-label span.flow-edge-label__connector{display:block;margin-left:0;font-size:11px;font-weight:400;color:var(--muted)}
+:where(.research-instrument) .canvas-flow[data-connecting="true"] .flow-handle{opacity:1 !important;transform:scale(1)}
+
+/* lane-2 T10-T11: cause chains and standing edges on the chronology, and the relation
+ * field's cause walk. Edges keep the relation-type stroke; their standing reads through
+ * dash, arrowhead colour and the shared legend. A followed chain draws its hops at full
+ * strength in sequence on a dimmed field. Tokens only; no transition, no animation. */
+:where(.research-instrument) .timeline-relationship-arrow {
+  stroke: none;
+}
+
+:where(.research-instrument) .timeline-relationship-hit {
+  cursor: pointer;
+}
+
+:where(.research-instrument) .timeline-relationship-layer .timeline-chain-index {
+  fill: var(--ob-ink);
+  font-family: var(--ob-mono);
+  font-size: 9px;
+}
+
+:where(.research-instrument) .timeline-standing-legend {
+  position: absolute;
+  left: 8px;
+  bottom: 6px;
+  z-index: 3;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  max-width: calc(100% - 16px);
+  margin: 0;
+  padding: 6px 8px;
+  list-style: none;
+  background: var(--ob-panel);
+  border: 1px solid var(--ob-line);
+  border-radius: var(--ob-radius-input);
+  font-family: var(--ob-mono);
+  font-size: 10px;
+  color: var(--ob-dim);
+}
+
+:where(.research-instrument) .timeline-standing-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+:where(.research-instrument) .timeline-standing-legend-item svg {
+  flex: none;
+}
+
+:where(.research-instrument) .timeline-chain-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 40%;
+  padding: 8px 12px 10px;
+  border-top: 1px solid var(--ob-line);
+  background: var(--ob-panel);
+  overflow: auto;
+  font-family: var(--ob-mono);
+  font-size: 11px;
+  color: var(--ob-ink);
+}
+
+:where(.research-instrument) .timeline-chain-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+:where(.research-instrument) .timeline-chain-head h3 {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .04em;
+}
+
+:where(.research-instrument) .timeline-chain-hops {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+:where(.research-instrument) .timeline-chain-hop {
+  display: grid;
+  grid-template-columns: 1.6em minmax(0, 2fr) minmax(0, 1.2fr) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+:where(.research-instrument) .timeline-chain-hop-time {
+  color: var(--ob-ink);
+}
+
+:where(.research-instrument) .timeline-chain-hop-time[data-undated="true"] {
+  color: var(--ob-faint);
+  font-style: italic;
+}
+
+:where(.research-instrument) .timeline-chain-hop-offset {
+  color: var(--ob-dim);
+}
+
+:where(.research-instrument) .relation-field-chains {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+  font-family: var(--ob-mono);
+  font-size: 11px;
+}
+
+:where(.research-instrument) .relation-field-chain-toggle {
+  align-self: flex-start;
+  padding: 2px 8px;
+  font: inherit;
+  color: var(--ob-ink);
+  background: none;
+  border: 1px solid var(--ob-line);
+  border-radius: var(--ob-radius-input);
+  cursor: pointer;
+}
+
+:where(.research-instrument) .relation-field-chain-toggle[aria-pressed="true"] {
+  border-color: var(--accent);
+}
+
+:where(.research-instrument) .relation-field-chain-hops {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+:where(.research-instrument) .relation-field-chain-hop {
+  display: grid;
+  grid-template-columns: 1.6em minmax(0, 2fr) minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1.4fr);
+  align-items: center;
+  gap: 8px;
+}
+
+:where(.research-instrument) .relation-field-chain-hop-edge {
+  padding: 0;
+  font: inherit;
+  text-align: left;
+  color: var(--ob-ink);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+:where(.research-instrument) .relation-field-chain-hop-edge:disabled {
+  cursor: default;
+}
+
+:where(.research-instrument) .relation-field-chain-hop-time,
+:where(.research-instrument) .relation-field-chain-hop-offset,
+:where(.research-instrument) .relation-field-chain-hop-standing {
+  color: var(--ob-dim);
+}
+
+:where(.research-instrument) .relation-field-chain-index {
+  fill: var(--ob-ink);
+  font-family: var(--ob-mono);
+  font-size: 9px;
+}
+/* review-3: a sticky is a light paper in every scene, so its label carries its own dark ink, not the scene's --ink. */
+:where(.research-instrument) .canvas-object--sticky{color:var(--canvas-object-ink,#25251e)}

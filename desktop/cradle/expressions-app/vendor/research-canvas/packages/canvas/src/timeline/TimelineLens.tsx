@@ -15,7 +15,9 @@ import { TimelineClusters, type TimelineClusterMark } from "./TimelineClusters";
 import { TimelineBandLanes } from "./TimelineBands";
 import { bandMarks, bandsFromReading } from "./bands";
 import { TimelineNode } from "./TimelineNode";
-import { TimelineRelationshipLayer } from "./TimelineRelationshipLayer";
+import { CauseChainPanel, TimelineRelationshipLayer } from "./TimelineRelationshipLayer";
+import { causeChains, chainContaining, chronologyCauseSource, hopCenterMs, type CauseChain, type CauseHop } from "./causeChain";
+import { msToYear } from "./instant";
 import { TimelineRelationField } from "./TimelineRelationField";
 import { TimelineWalk } from "./TimelineWalk";
 import { TimelineWorkingSet } from "./TimelineWorkingSet";
@@ -122,6 +124,8 @@ export function TimelineLens({
   const [knownRelationTypes, setKnownRelationTypes] = useState<string[]>([]);
   const [knownTags, setKnownTags] = useState<string[]>([]);
   const [showRelations, setShowRelations] = useState(true);
+  // The followed cause chain (lane-2 T10), by its first hop's id; null when none is followed.
+  const [chainId, setChainId] = useState<string | null>(null);
   const [showWalk, setShowWalk] = useState(!toolbarContainer);
   const [showWorkingSet, setShowWorkingSet] = useState(true);
   const walkToggleRef = useRef<HTMLButtonElement | null>(null);
@@ -381,6 +385,27 @@ export function TimelineLens({
     }
     return map;
   }, [state.nodes]);
+  // Cause chains (lane-2 T10): the cause family of the relations this lens shows, walked by the authority.
+  const causeChainList = useMemo(() => {
+    const itemsByFacet = new Map(state.items.map((item) => [item.graphNodeId, item]));
+    const shown = showRelations
+      ? state.relationships.filter((relationship) => relationTypeFilter === null || relationTypeFilter.includes(relationship.relType))
+      : [];
+    return causeChains(shown.map((relationship) => chronologyCauseSource(relationship, itemsByFacet)));
+  }, [state.items, state.relationships, showRelations, relationTypeFilter]);
+  const activeChain: CauseChain | null = causeChainList.find((chain) => chain.id === chainId) ?? null;
+  const chainNodeIds = activeChain === null ? null : new Set(activeChain.hops.flatMap((hop) => [hop.from_ref, hop.to_ref]));
+  // Selecting a cause edge follows its chain; selecting the followed chain again clears it.
+  const selectChainForRelation = (relationshipId: string) => {
+    const chain = chainContaining(causeChainList, relationshipId);
+    setChainId((current) => (chain === null || current === chain.id ? null : chain.id));
+  };
+  // Click-to-follow: one camera move per hop, to the middle of its own dated extent, at the current scale.
+  const followHop = (hop: CauseHop) => {
+    if (hop.time === null) return;
+    const { pixelsPerYear } = store.getState();
+    store.getState().setView(msToYear(hopCenterMs(hop.time)), pixelsPerYear);
+  };
 
   const focusedNodeElement = useRef<HTMLElement | null>(null);
   const closeFocusedRelations = () => {
@@ -905,11 +930,14 @@ export function TimelineLens({
             placed={placed}
             viewportWidth={viewport.widthPx}
             lod={lod}
+            chain={activeChain}
+            onSelectChain={selectChainForRelation}
           />
           <div className="timeline-nodes">
             {placed.map((p) => {
               const lit = lighting.get(p.item.graphNodeId) ?? null;
-              const dimmed = lightingActive && lit === null;
+              // A followed chain dims every card that is not one of its endpoints (lane-2 T10).
+              const dimmed = (lightingActive && lit === null) || (chainNodeIds !== null && !chainNodeIds.has(p.item.graphNodeId));
               return (
                 <TimelineNode
                   key={p.item.graphNodeId}
@@ -934,6 +962,14 @@ export function TimelineLens({
           <TimelineClusters marks={clusterMarks} onZoom={zoomToCluster} />
         </div>
       </div>
+      {activeChain !== null && (
+        <CauseChainPanel
+          chain={activeChain}
+          titleOf={(graphNodeId) => nodeTitleById.get(graphNodeId) ?? graphNodeId}
+          onFollow={followHop}
+          onClear={() => setChainId(null)}
+        />
+      )}
       {hasRelationContext && displayRelationField !== null && (
         <div
           className="timeline-relation-field-shell"
