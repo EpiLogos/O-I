@@ -243,6 +243,29 @@ function declaredWindow(window: NonNullable<DisclosureSession["time_window"]>): 
   return structuredClone(window);
 }
 
+/** Lane-2 T22: the identity an instrument crossing is planned on. Captured before the crossing and
+ * compared with the session the crossing finds, so a drifted session refuses instead of re-targeting. */
+export interface SessionCrossingIdentity {
+  session_ref: string;
+  subject_ref: string;
+  reading_ref: string;
+  snapshot_revision: string | null;
+  selection_ref: string;
+  window: {from: string | null; to: string | null} | null;
+}
+
+/** The crossing identity of a session. Pure: copies refs verbatim, mints nothing. */
+export function sessionCrossingIdentity(session: DisclosureSession): SessionCrossingIdentity {
+  return {
+    session_ref: session.session_ref,
+    subject_ref: session.subject_ref,
+    reading_ref: session.reading_ref,
+    snapshot_revision: session.selection.snapshot_revision ?? null,
+    selection_ref: session.selection.selection_ref,
+    window: session.time_window ? {from: session.time_window.from, to: session.time_window.to} : null,
+  };
+}
+
 /** Two sessions are co-referenced when they disclose the same subject on the
  * same reading basis — what one AgentSession follows across instruments. */
 export function coReferenced(a: DisclosureSession, b: DisclosureSession): boolean {

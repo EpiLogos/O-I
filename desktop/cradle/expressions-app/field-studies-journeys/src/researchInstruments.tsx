@@ -35,6 +35,8 @@ import {openingPlaceSelection,timelineOpenPlan} from '../../../src/techne/m0m5/p
 import {readSharedTimeWindow,writeSharedTimeWindow,qualifyTimeWindowReply,SharedTimeWindowControls,type SharedTimeDraft} from './sharedTimeWindow.js';
 import {sharedTimelinePresentation} from './sharedTimeProjection.js';
 import {timeAxisProjection,relativeTimeAxisProjection} from '../../../src/techne/m0m5/timeline/timeAxis';
+import {axisEventOf,handoffDisclosure,handoffRefusal,showOnGlobeOf,type GlobeCarry} from '../../../src/techne/m0m5/timeline/navigationIdentity';
+import {sessionCrossingIdentity} from '../../../src/techne/session';
 import {containmentPairs,relationEdges,participantSpansFromReading} from '../../../src/techne/m0m5/timeline/relations';
 import type {NativeTimeWindowBasis,NativeTimeWindowReply,NativeTimeWindowRequest} from '../../../../../packages/expressions-boundary/src/timeWindow';
 import {blueprintMember,type SceneBlueprint,type BlueprintTransform} from './blueprintGeometry.js';
@@ -59,6 +61,13 @@ import {CANVAS_TOOL_CHOICES,CANVAS_TOOL_GLYPHS,CANVAS_TOOL_SPEC,PALETTE_KEYS,PAL
  * so nothing here changes for assistive tech or hover discovery — only the
  * always-visible label becomes a glyph. */
 function ToolIcon({name}:{name:string}){return <span className="research-tool-icon" aria-hidden="true" dangerouslySetInnerHTML={{__html:icon(name)}}/>;}
+/** lane-1 C3 — the native subject a canvas card can show in the graph. Only an entity
+ * that carries its own subject ref and native owner qualifies; a resource file, an
+ * unbound card or an owner-less subject yields nothing, so no affordance is offered. */
+export function graphHopSubject(entity:{subject?:{subject_ref?:unknown;native_owner?:unknown}|null}|undefined):{subject_ref:string;native_owner:string}|undefined{
+ const ref=entity?.subject?.subject_ref,owner=entity?.subject?.native_owner;
+ return typeof ref==='string'&&ref.trim()&&typeof owner==='string'&&owner.trim()?{subject_ref:ref,native_owner:owner}:undefined;
+}
 /** lane-1 A9 — a frame's heading at its top edge. A titled frame shows its caption; an untitled frame, while the canvas is editable, offers only a hit strip so the owner can title it in place. Double-click edits; Enter or blur commits; Escape cancels; a blank title removes the heading. */
 function FrameHeadings({headings,editable,onTitle}:{headings:FrameHeading[];editable:boolean;onTitle:(id:string,title:string)=>void}){
  const [editing,setEditing]=useState<string|null>(null);
@@ -228,6 +237,13 @@ function BlueprintWholeControls({binding,pinned,busy,onTransform,onRelease,onPin
   </div>
  </div>;
 }
+/** lane-2 T21: a control that follows the chronology's selected event. It re-renders only itself, so a selection never re-reads
+ * the timeline's repository or resets its filters. */
+function SelectedEventControl({initial,listen,control}:{initial:string|null;listen:(listener:(eventRef:string|null)=>void)=>void;control:(eventRef:string|null)=>ReactNode}){
+ const [selected,setSelected]=useState<string|null>(initial);
+ useEffect(()=>{listen(setSelected);},[]);
+ return <>{control(selected)}</>;
+}
 export type ResearchInstrument='m1'|'m2'|'m4';
 function ImageryPanel(props:React.ComponentProps<typeof StreetViewSurface>&{tools:HTMLElement}){
  const [open,setOpen]=useState(false),toggle=useRef<HTMLButtonElement>(null),panel=useRef<HTMLElement>(null);
@@ -279,6 +295,8 @@ export interface ResearchInstrumentsHost {
  /** lane-1 A3–A4 — sets or clears one connector's presentation record by native edge id (null clears). OPTIONAL: when the host does not supply it the connector kind, label and side are read but not editable. */
  connector?:(sceneId:string,edgeId:string,value:ResearchConnector|null)=>Promise<void>;
  inspectSubject:(ref:string,context?:{node?:unknown;relationField?:unknown})=>void;
+ /** lane-1 C3 — opens the field's wiki graph centred on a native subject, by its exact ref and owner. OPTIONAL: undeclared hosts offer no "Show in graph". */
+ showInGraph?:(subjectRef:string,nativeOwner:string)=>void;
  read:(request:TechneSceneReadingRequest)=>Promise<unknown>;
  nativeView:()=>KernelConversion|undefined;
  sceneId:()=>string;
@@ -293,7 +311,7 @@ export interface ResearchInstrumentsHost {
  openSubject:(ref:string)=>void;
  /** Lane-4 T23 — the app's instrument activation. Places' "Open in Timeline" records the Timeline instrument through it, so the
   * app's instrument state matches the lens. OPTIONAL: undeclared hosts load the Timeline lens directly. */
- activateInstrument?:(lens:'timeline')=>void;
+ activateInstrument?:(lens:'timeline'|'place')=>void;
  /** OPTIONAL — declared for the empty-field creation path (Wayfinder §21:
   * choosing a frame can create an incomplete working draft; creation must
   * not be disabled when no subject/constellation exists yet). Undeclared
@@ -338,6 +356,8 @@ export interface ResearchInstrumentsHost {
  pinEntity?:(sceneId:string,entityId:string,pinned:boolean)=>Promise<void>;
 }
 interface ViewState {
+ /** lane-2 T21: the mounted globe control's listener for the chronology's selected event (presentation only). */
+ globeListener?:(eventRef:string|null)=>void;
  canvasMinimap?:React.MutableRefObject<NavigationMinimapController|null>;
  /** A1 — alignment guides for the card being dragged: presentation only,
   * flow-unit geometry drawn against the live viewport, cleared on release. */
@@ -821,6 +841,7 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
   const objectKind=objectCard&&isCanvasObjectKind(objectCard.type)?objectCard.type:undefined;
   const inspector=<div className="research-inspector-content" onKeyDown={event=>{if(event.key==='Escape'){event.preventDefault();event.stopPropagation();closeInspector();}}}><header><h3>{current?.title??(state.selectedEdge?'Connection':'Canvas')}</h3><button className="card-close" onClick={closeInspector} aria-label="Close" title="Close"><ToolIcon name="close"/></button></header>
    {current&&<button onClick={()=>{const ref=current.type==='resource'?current.absolutePath:host.nativeView()?.document.entities[current.id]?.subject?.subject_ref;if(ref)host.inspectSubject(ref);}}>Open source</button>}
+   {current&&host.showInGraph&&(()=>{const hop=current.type==='resource'?undefined:graphHopSubject(host.nativeView()?.document.entities[current.id]);return hop?<button type="button" aria-label="Show in graph" title="Show in graph" onClick={()=>host.showInGraph!(hop.subject_ref,hop.native_owner)}><ToolIcon name="wiki"/>Show in graph</button>:null;})()}
    {editable&&current&&localId&&host.editObject&&<button aria-label="Edit object" onClick={()=>host.editObject!(canvas.sceneId!,localId)}>Edit object</button>}
    {constellationRequest&&<ConstellationAction request={constellationRequest} onError={message}/>}
    {editable&&localId&&current&&<><label>Width<input type="number" defaultValue={Math.round(current.size.width)} onBlur={e=>act({type:'resize',id:localId,width:Number(e.target.value),height:current.size.height})}/></label><label>Height<input type="number" defaultValue={Math.round(current.size.height)} onBlur={e=>act({type:'resize',id:localId,width:current.size.width,height:Number(e.target.value)})}/></label>
@@ -1082,6 +1103,32 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
      if(plan.projection==='relations')message(`View "${name}" restored; its chronology filters, frame and stack apply when the chronology opens.`);
     };
     const removeTimelineView=(name:string)=>{void host.material(sceneId,{type:'timeline-view-remove',name}).then(()=>{message(`Timeline view "${name}" removed`);render(canvasNode2());},error=>message(error instanceof Error?error.message:String(error)));};
+    // lane-2 T21/T22: "Show on the globe" offers the selected event's one located place. The crossing is planned on the session
+    // read here; a session that has drifted refuses by name (handoffRefusal) and is never re-targeted. The place is the shared
+    // spatial focus and the event's own validity the window, each through the owner's compare-and-set write, then Places opens.
+    const showOnGlobe=async(carry:Extract<GlobeCarry,{state:'offer'}>)=>{
+     if(!sharedTime||!timeCurrent())throw Error('The shared session is no longer presented, so the globe was not changed.');
+     const planned=sessionCrossingIdentity(sharedTime.session);
+     const refuse=()=>{const reason=handoffRefusal(planned,sharedTime?.session??null);if(reason)throw Error(reason);};
+     refuse();
+     sharedTime=await writeSharedSpatialFocus(request,nativeReading,'timeline',sharedTime,carry.place_ref);
+     refuse();
+     if(carry.window)sharedTime=await writeSharedTimeWindow(request,nativeReading,'timeline',sharedTime,carry.window);
+     if(host.activateInstrument)host.activateInstrument('place');
+     else{lens='m4';await load('m4');}
+    };
+    const globeControl=(eventRef:string|null)=>{
+     if(!eventRef||!sharedTime)return null;
+     let carry:GlobeCarry;
+     try{
+      const axisEvent=axisEventOf(timeAxisProjection(nativeReading,sharedTime.session),eventRef);
+      // The window is the event's own validity: an event with no native facet identity has none to offer over.
+      carry=axisEvent?showOnGlobeOf(nativeReading,nativeReading.subject.subject_ref,axisEvent):{state:'absent',reason:'This event has no native facet identity, so its validity cannot be read; nothing is flown to.'};
+     }
+     catch(error){carry={state:'absent',reason:error instanceof Error?error.message:String(error)};}
+     if(carry.state==='absent')return <button type="button" disabled aria-label="Show on the globe" title={carry.reason}>Show on the globe</button>;
+     return <button type="button" aria-label="Show on the globe" title="Show this event's place on the globe, over the event's own validity" onClick={()=>{void showOnGlobe(carry as Extract<GlobeCarry,{state:'offer'}>).catch(error=>message(error instanceof Error?error.message:String(error)));}}>Show on the globe</button>;
+    };
     const canvasNode2=():ReactNode=>{
      // Lane-2 T5: relative mode exists only when the acknowledged session names a
      // zero this reading warrants; otherwise the segment is absent, never disabled.
@@ -1097,6 +1144,7 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
       {view&&Object.keys(savedTimelineViews()).length>0&&<select className="research-timeline-view-select" aria-label="Saved timeline views" value="" onChange={event=>{const [op,name]=event.target.value.split('\u0000');if(op==='apply')applyTimelineView(name);if(op==='remove')removeTimelineView(name);event.target.value='';}}>
        <option value="">Views…</option>{Object.keys(savedTimelineViews()).map(name=><optgroup key={name} label={name}><option value={`apply\u0000${name}`}>Go to</option><option value={`remove\u0000${name}`}>Remove</option></optgroup>)}</select>}
       {(tagReason||relationReason)&&<button onClick={()=>message([tagReason&&`Tags: ${tagReason}`,relationReason&&`Relations: ${relationReason}`].filter(Boolean).join(' · '))}>Reading incomplete</button>}
+      {view&&state.m2Projection==='chronology'&&<SelectedEventControl initial={state.timeline?.selectedNodeId??null} listen={listener=>{state.globeListener=listener;}} control={globeControl}/>}
       {timeControls(()=>render(canvasNode2()))}
      </div>;
      if(state.m2Projection==='field'){
@@ -1117,10 +1165,12 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
      // session the host acknowledged — the same function lane 4 reads.
      const timed=sharedTimelinePresentation(data.dataSource,data.timeline,nativeReading,sharedTime?timeAxisProjection(nativeReading,sharedTime.session):null);
      return <>{createPortal(toggle,host.tools)}<TimelineSurface key={state.timelineKey??0} timeExtent={years.length?{startYear:first,endYear:last}:undefined} toolbarContainer={host.tools} repository={timed.repository} constellationId={data.reading.subject.subject_ref} dataSource={timed.dataSource} containment={containmentPairs(relationEdges(nativeReading))} participants={participantSpansFromReading(nativeReading).spans}
-      initialState={state.timeline!} onViewStateChange={value=>{state.timeline=value;}}
+      initialState={state.timeline!} onViewStateChange={value=>{state.timeline=value;state.globeListener?.(value.selectedNodeId??null);}}
       onOpenCanvasNode={ref=>{const node=data.bundle.nodes.find(node=>node.graphNodeId===ref);if(node)host.inspectSubject(ref,{node});}} onOpenNode={(ref,node,relationField)=>host.inspectSubject(ref,{node,relationField})}/></>;
     };
-    message(temporal.length||state.m2Projection==='field'?(state.m2Projection==='field'?'Relations':'Timeline'):'No dates disclosed by this source');
+    // lane-2 T22: the status line names the subject, reading basis and window the session holds, exactly as it holds them.
+    const chronologyStatus=temporal.length||state.m2Projection==='field'?(state.m2Projection==='field'?'Relations':'Timeline'):'No dates disclosed by this source';
+    message(sharedTime&&state.m2Projection==='chronology'?`${chronologyStatus} · ${handoffDisclosure(sharedTime.session)}`:chronologyStatus);
     render(canvasNode2());return;
    }
    const places=await data.places.getLocatedNodes(data.reading.subject.subject_ref);if(epoch!==generation||destroyed)return;
@@ -1274,7 +1324,12 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
     const openInTimeline=async(facet:TechnePlaceFacet)=>{
       const plan=timelineOpenPlan(facet);
       if(sharedTime&&timeCurrent()){
+        // lane-2 T22: the crossing is planned on the session read here; a drifted session refuses by name, never re-targets.
+        const planned=sessionCrossingIdentity(sharedTime.session);
+        const refuse=()=>{const reason=handoffRefusal(planned,sharedTime?.session??null);if(reason)throw Error(reason);};
+        refuse();
         sharedTime=await writeSharedSpatialFocus(request,nativeReading,'place',sharedTime,plan.spatial_focus_ref);
+        refuse();
         if(plan.window)sharedTime=await writeSharedTimeWindow(request,nativeReading,'place',sharedTime,plan.window);
       }else if(plan.window)throw Error('The shared time window is no longer presented, so it was not changed.');
       if(host.activateInstrument)host.activateInstrument('timeline');
