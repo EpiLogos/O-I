@@ -1,3 +1,6 @@
+// Superseded as the Technē instrument switcher by the live-shell lens bar (packages/live-shell/ui/src/shell/ModeDetail.tsx,
+// TechneLensBar). No code consumer remains. Not retired: the storage key is still cleared by the walks and listed in
+// tests/conformance/state-registry.json.
 /**
  * The Technè arrangement's instrument rail state — which of the six
  * instrument tabs stands in front, and the rail's tab presentation.

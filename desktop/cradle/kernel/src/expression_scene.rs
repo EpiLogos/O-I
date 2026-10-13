@@ -787,8 +787,9 @@ fn validate_research(value: &Value, ids: &BTreeSet<&str>) -> Result<(), String> 
             let v = object(view, "Research named view")?;
             if name.trim().is_empty()
                 || utf16_len(name) > 160
-                || v.keys()
-                    .any(|k| !["viewport", "selectedRefs", "frameOrder"].contains(&k.as_str()))
+                || v.keys().any(|k| {
+                    !["viewport", "selectedRefs", "frameOrder", "basis"].contains(&k.as_str())
+                })
             {
                 return Err("Invalid named view".into());
             }
@@ -798,6 +799,21 @@ fn validate_research(value: &Value, ids: &BTreeSet<&str>) -> Result<(), String> 
             }
             if !refs(&v["frameOrder"], 0, false) {
                 return Err("Invalid view frame order".into());
+            }
+            // D2: the basis a view was saved against (absent in views saved before it existed). Closed:
+            // the subject it was composed about and the Scene binding it was saved from; both are refs.
+            if let Some(basis) = v.get("basis") {
+                let b = object(basis, "Research view basis")?;
+                if b.keys()
+                    .any(|k| !["subject_ref", "binding_ref"].contains(&k.as_str()))
+                    || !["subject_ref", "binding_ref"].iter().all(|k| {
+                        b.get(*k)
+                            .and_then(Value::as_str)
+                            .is_some_and(|s| !s.is_empty() && utf16_len(s) <= 1024)
+                    })
+                {
+                    return Err("Invalid view basis".into());
+                }
             }
         }
     }
@@ -1644,6 +1660,41 @@ mod tests {
         let framed = json!({"schema": "oi.research-scene/v1", "cards": {}, "strokes": [], "views": {}, "timeline": {},
             "frames": {"f": {"label": label, "memberRefs": ["n"], "z": 0}}});
         assert!(validate_research(&framed, &ids).is_err());
+    }
+
+    #[test]
+    fn named_view_basis_is_admitted_closed_and_bounded() {
+        use super::validate_research;
+        use serde_json::{json, Value};
+        use std::collections::BTreeSet;
+        let ids: BTreeSet<&str> = ["a"].into_iter().collect();
+        let with_view = |view: Value| {
+            json!({"schema": "oi.research-scene/v1", "cards": {}, "strokes": [], "views": {}, "timeline": {},
+                "namedViews": {"Overview": view}})
+        };
+        let base = json!({"viewport": {"x": 0, "y": 0, "zoom": 1}, "selectedRefs": ["a"], "frameOrder": []});
+        let basis = json!({"subject_ref": "expr:one", "binding_ref": "scene:one"});
+        // accepted with a basis
+        let mut with = base.clone();
+        with["basis"] = basis.clone();
+        assert!(validate_research(&with_view(with), &ids).is_ok());
+        // accepted without a basis (a view saved before the basis existed)
+        assert!(validate_research(&with_view(base.clone()), &ids).is_ok());
+        // refused: an unknown basis key, a missing or empty ref, a non-object basis
+        for bad in [
+            json!({"subject_ref": "expr:one", "binding_ref": "scene:one", "revision": 3}),
+            json!({"subject_ref": "expr:one"}),
+            json!({"subject_ref": "", "binding_ref": "scene:one"}),
+            json!({"subject_ref": "expr:one", "binding_ref": 7}),
+            json!("expr:one"),
+        ] {
+            let mut view = base.clone();
+            view["basis"] = bad;
+            assert!(
+                validate_research(&with_view(view), &ids).is_err(),
+                "a basis outside the closed grammar must be refused"
+            );
+        }
     }
 
     #[test]

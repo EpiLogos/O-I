@@ -1,6 +1,7 @@
 /** Local research presentation of the SAME native Scene. Canonical source
  * bodies/relations are never edited by these material actions. */
 import {clone,entity,uid,type Scene} from './model.js';
+import type {ViewBasis} from './viewDrift.js';
 import {validateConnector,CONNECTOR_KEY_MAX,CONNECTOR_RECORD_MAX,type ResearchConnector} from './canvasConnectors.js';
 import {CANVAS_OBJECT_KINDS,CANVAS_TOOL_SPEC,STICKY_DEFAULT_PALETTE,isCanvasObjectKind,isPaletteKey,isShapeFill,isShapeGeometry,type CanvasObjectKind,type CanvasToolChoice,type PaletteKey,type ShapeFill,type ShapeGeometry} from './canvasShapes.js';
 import {EMBED_CARD_SIZE,MEDIA_CARD_SIZE,embedHost,embedUrlRecord,isCentralPathRef,mediaFileName,type CentralPathRef} from './canvasEmbeds.js';
@@ -39,7 +40,8 @@ export interface ResearchFrame {label:string;/** lane-1 A9: the owner's heading,
 /** A named saved view: camera + the presentation state a person would
  * expect a "view" to restore — which cards were selected and which frame
  * sits on top. Never a second copy of graph material. */
-export interface ResearchNamedView {viewport:ResearchViewport;selectedRefs:string[];frameOrder:string[]}
+/** D2: the basis a named view was saved against (absent in views saved before it). Closed; both fields are refs. */
+export interface ResearchNamedView {viewport:ResearchViewport;selectedRefs:string[];frameOrder:string[];basis?:ViewBasis}
 /** lane-4 T20–T21: the Places standing classes a layer can read (the cradle's own vocabulary, placeReading). */
 export type PlaceStanding='factual'|'mythic'|'owner-vocabulary';
 /** lane-4 T20: the basemap rows as a view or the Scene keeps them. Keys are the basemap registry ids (closed; the kernel holds the same list). Never the owner's live-source allowance. */
@@ -110,7 +112,7 @@ export type ResearchMaterialAction =
  /** lane-1 A9: the owner's heading for a frame; an empty or blank title removes it (no trace left on the stage). */
  | {type:'frame-title';id:string;title:string}
  | {type:'frame-order';id:string;direction:'front'|'back'}
- | {type:'view-save';name:string;viewport:ResearchViewport;selectedRefs:string[];frameOrder:string[]}
+ | {type:'view-save';name:string;viewport:ResearchViewport;selectedRefs:string[];frameOrder:string[];basis?:ViewBasis}
  | {type:'view-remove';name:string}
  /** lane-4 T20: a named Places view, kept beside the canvas views. Only placeViews changes. */
  | {type:'place-view-save';name:string;place:PlaceViewRecord}
@@ -158,6 +160,11 @@ export function pruneResearchOccurrence(scene:Scene,id:string):void {
  // B4: a saved view keeps the refs it held (its tombstones). Applying it reports
  // the departed members (viewDrift) rather than dropping them here silently.
 }
+/** D2: a named view's basis is closed (subject_ref, binding_ref) and each is a non-empty ref of at most 1024 UTF-16 units — the kernel's grammar. */
+export function validateViewBasis(value:unknown):asserts value is ViewBasis{
+ require(object(value),'Invalid view basis');keys(value,['subject_ref','binding_ref']);
+ require(['subject_ref','binding_ref'].every(key=>typeof value[key]==='string'&&value[key].length>0&&text(value[key],1024)),'Invalid view basis');
+}
 export function validateResearchMaterial(value:unknown,ids:ReadonlySet<string>):asserts value is ResearchMaterial {
  require(object(value),'Research material must be an object');keys(value,['schema','cards','strokes','views','timeline','frames','namedViews','connectors','placeViews','placeLayers','timelineViews']);
  require(value.schema==='oi.research-scene/v1','Unsupported research material');
@@ -176,8 +183,9 @@ export function validateResearchMaterial(value:unknown,ids:ReadonlySet<string>):
   require(Array.isArray(frame.memberRefs)&&frame.memberRefs.length>=1&&frame.memberRefs.length<=64&&frame.memberRefs.every(ref=>typeof ref==='string'&&ids.has(ref)),'Invalid frame membership');
   require(Number.isInteger(frame.z),'Invalid frame order');
  }
- for(const [,view] of Object.entries(value.namedViews??{}) as [string,{viewport?:unknown;selectedRefs?:unknown;frameOrder?:unknown}][]){
-  require(object(view),'Invalid named view');keys(view,['viewport','selectedRefs','frameOrder']);
+ for(const [,view] of Object.entries(value.namedViews??{}) as [string,{viewport?:unknown;selectedRefs?:unknown;frameOrder?:unknown;basis?:unknown}][]){
+  require(object(view),'Invalid named view');keys(view,['viewport','selectedRefs','frameOrder','basis']);
+  if(view.basis!==undefined)validateViewBasis(view.basis);
   validateViewport(view.viewport);
   require(Array.isArray(view.selectedRefs)&&view.selectedRefs.length<=64&&view.selectedRefs.every(ref=>typeof ref==='string'),'Invalid view selection');
   require(Array.isArray(view.frameOrder)&&view.frameOrder.length<=64&&view.frameOrder.every(ref=>typeof ref==='string'),'Invalid view frame order');
@@ -377,7 +385,8 @@ function applyResearchStep(next:Scene,action:Exclude<ResearchMaterialAction,{typ
   validateViewport(action.viewport);
   require(Array.isArray(action.selectedRefs)&&action.selectedRefs.length<=64&&action.selectedRefs.every(ref=>typeof ref==='string'),'Invalid view selection');
   require(Array.isArray(action.frameOrder)&&action.frameOrder.length<=64&&action.frameOrder.every(ref=>typeof ref==='string'),'Invalid view frame order');
-  research.namedViews[action.name]={viewport:clone(action.viewport),selectedRefs:[...action.selectedRefs],frameOrder:[...action.frameOrder]};
+  if(action.basis!==undefined)validateViewBasis(action.basis);
+  research.namedViews[action.name]={viewport:clone(action.viewport),selectedRefs:[...action.selectedRefs],frameOrder:[...action.frameOrder],...(action.basis?{basis:clone(action.basis)}:{})};
   break;
  }
  case 'view-remove':delete research.namedViews[action.name];break;

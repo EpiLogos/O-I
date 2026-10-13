@@ -11,7 +11,7 @@ import {openTimelinePresentation,timelineRestoreNote,timelineStyleLoaded,timelin
 import type {TimelinePresentationHandle} from '../../vendor/research-canvas/packages/canvas/src/timeline/TimelineLens';
 import {CONNECTOR_KINDS,connectorPresentation,connectorRecord,connectorWithSides,sideFromHandleId,type ConnectorKind,type ResearchConnector} from './canvasConnectors.js';
 import {frameHeadings,FRAME_TITLE_HIT_HEIGHT,FRAME_TITLE_MAX,type FrameHeading} from './canvasFrames.js';
-import {departedNotice,viewDrift} from './viewDrift.js';
+import {viewDrift,viewNotice,type ViewBasis} from './viewDrift.js';
 import {EMBED_CARD_SIZE,EMBED_GLYPH,canvasEmbedNodes,cardOverlayBox,embedCardLabel,embedHost,embedUrlRecord,isEmbedCardType,mediaFileName,mediaSourceUrl,type CentralPathRef} from './canvasEmbeds.js';
 import {createRoot,type Root} from 'react-dom/client';
 import {CanvasView,TimelineSurface,PsychogeographicMap,StreetViewSurface,loadBundledGeographyPack,createLiveServicePolicy,type LiveServicePolicy,type TimelineViewState} from '../../vendor/research-canvas/components';
@@ -760,12 +760,15 @@ host.tools.append(saveGlyph);
   // same groupMove/applyGroupOverrides path multi-select already uses.
   const saveFrame=()=>{if(selection.size<2)return;act({type:'frame-save',id:crypto.randomUUID(),label:`Frame ${framesOrdered.length+1}`,memberRefs:[...selection].map(occurrence)});};
   const namedViews=material?.namedViews??{};
-  const saveView=()=>{if(!canvas.sceneId||!captureCanvas)return;const name=window.prompt('Name this view');if(!name)return;const viewport=captureCanvas();act({type:'view-save',name,viewport:{x:viewport.x,y:viewport.y,zoom:viewport.zoom},selectedRefs:[...selection].map(occurrence),frameOrder:framesOrdered.map(([id])=>id)},false);};
+  // D2: the basis a view is saved against and applied from — the canvas's native expression (the subject) and this Scene's binding (its scene_ref). Null when no native Scene is open.
+  const currentViewBasis=():ViewBasis|null=>{const view=host.nativeView(),sceneId=canvas.sceneId;const binding=view&&sceneId?view.bindings[sceneId]:undefined;return view&&binding?{subject_ref:view.document.expression_ref,binding_ref:binding.scene_ref}:null;};
+  const saveView=()=>{if(!canvas.sceneId||!captureCanvas)return;const name=window.prompt('Name this view');if(!name)return;const viewport=captureCanvas();const basis=currentViewBasis();act({type:'view-save',name,viewport:{x:viewport.x,y:viewport.y,zoom:viewport.zoom},selectedRefs:[...selection].map(occurrence),frameOrder:framesOrdered.map(([id])=>id),...(basis?{basis}:{})},false);};
   // B4: applying a view reports the members that have left the Scene since it was saved (one sentence, the view still applies).
   const applyView=(name:string)=>{const view=namedViews[name];if(!view)return;flyToNode?.('',{x:view.viewport.x,y:view.viewport.y,zoom:view.viewport.zoom});state.multiSelect=new Set(view.selectedRefs.map(ref=>canvas.nodes.find(n=>occurrence(n.id)===ref)?.id).filter((v):v is string=>!!v));select(state.multiSelect.size?[...state.multiSelect][0]:null);
    const present=new Set(canvas.sceneId?host.sceneMaterial(canvas.sceneId).entities.map(entity=>entity.id):[]);
    const {departed}=viewDrift(view,present);
-   message(departedNotice(name,departed,ref=>lastTitles.get(ref))??`View "${name}" applied`);};
+   // D2: one sentence — the basis difference (a different subject) and the members that left; a view without a basis is exactly B4.
+   message(viewNotice(name,view,departed,ref=>lastTitles.get(ref),currentViewBasis())??`View "${name}" applied`);};
   // B2 — the composed Canvas as one Obsidian .canvas file. Cards keep their
   // position and size; frames become group nodes; every connection keeps its
   // native identity; what a .canvas cannot carry is named in its header.
