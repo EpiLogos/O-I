@@ -32,14 +32,21 @@
  *   temporal[i] with instant/interval → one anchor GraphNode: graphNodeId is
  *       facet_ref when disclosed, otherwise the derived
  *       `${subject_ref}@techne:temporal:${kind}:${i}`; isTemporal = true;
- *       validFrom/validTo are the instant / interval bounds verbatim;
- *       temporalPrecision is the facet precision verbatim when the substrate
- *       enum can carry it (millennium|century|decade|year|month|day).
- *       Finer-than-day precisions (hour|minute|second|subsecond) and absent
- *       precision coarsen to "day" — an understatement that never claims more
- *       precision than the source warrants, because the substrate runtime
- *       model cannot be widened here; the anchor instants themselves keep
- *       their full precision verbatim. A relationship subject→anchor with
+ *       validFrom/validTo are the instant / interval bounds verbatim. Each
+ *       instant string carries its own UTC offset (e.g. `+01:00`), so the
+ *       offset rides inside validFrom/validTo verbatim and is never
+ *       normalised to UTC here;
+ *       temporalPrecision is the facet precision verbatim across the full
+ *       ladder (millennium…subsecond, the same TEMPORAL_PRECISIONS the schema
+ *       owns; desktop/cradle/src/techne/m0m5/timeline/scale.ts reads the same
+ *       rungs). Nothing finer than the source is claimed, and nothing is
+ *       coarsened: an hour, minute, second or subsecond facet stays that
+ *       precision. An absent precision (or an unrecognised value) still falls
+ *       back to "day": the one remaining coarsening, kept because the anchor
+ *       enum has no no-precision value and the transport drops null-precision
+ *       anchors. The authority reads an unprecisioned instant as a point; that
+ *       is an open follow-up, not decided here.
+ *       A relationship subject→anchor with
  *       relType = the facet kind (verbatim: occurrence, receipt, day, run…)
  *       links the anchor, so occurrence and receipt stay distinct records.
  *   temporal[i] with only day_ref/now_ref/session_ref/run_ref (no instant) →
@@ -69,7 +76,7 @@
  * the reading, which remains the owner of its own meaning).
  */
 
-import { EMPTY_GRAPH_NODE_METADATA } from "@research-canvas/schema";
+import { EMPTY_GRAPH_NODE_METADATA, TEMPORAL_PRECISIONS } from "@research-canvas/schema";
 
 import type { GraphNode, GraphRelationship } from "./graph";
 import type { Scene, SceneSequence } from "./scenes";
@@ -250,23 +257,14 @@ export const TECHNE_UNDISCLOSED_PLACE_ID = "techne:place:undisclosed";
 
 type SubstrateTemporalPrecision = NonNullable<GraphNode["temporalPrecision"]>;
 
-const SUBSTRATE_TEMPORAL_PRECISIONS: ReadonlySet<string> = new Set([
-  "millennium",
-  "century",
-  "decade",
-  "year",
-  "month",
-  "day",
-]);
+const SUBSTRATE_TEMPORAL_PRECISIONS: ReadonlySet<string> = new Set(TEMPORAL_PRECISIONS);
 
 function substrateTemporalPrecision(precision: string | null | undefined): SubstrateTemporalPrecision {
   if (precision !== null && precision !== undefined && SUBSTRATE_TEMPORAL_PRECISIONS.has(precision)) {
     return precision as SubstrateTemporalPrecision;
   }
-  // Finer-than-day precision or no precision at all: coarsen to "day". The
-  // substrate enum cannot carry the finer value and coarsening never claims
-  // more precision than the source warrants; the anchor instants themselves
-  // stay verbatim.
+  // Absent or unrecognised precision only. Every rung the facet actually
+  // states (millennium…subsecond) is carried verbatim above.
   return "day";
 }
 
