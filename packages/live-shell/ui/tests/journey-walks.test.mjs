@@ -237,3 +237,90 @@ test('the World reads the atlas Aion reading through the family door: the same s
   const direct = projectAionReading({history: corpus.history, providerId: 'fixture'})
   assert.deepEqual(viaDoor, direct, 'one derivation: the family door yields the adapter’s own set')
 })
+
+// ── leg 4 (T-TIMELINE-WALKS): Technē's live Session is the Journey ───────────────────────────────────────────────
+// The Journey's walk rows (JourneyRows, one source) sit above the session cells in the Timeline's own scroll container,
+// only where the mode gives them (App threads `journey` for Technē's ground cut). With no walk carried the Session is
+// today's plus one named-absence line; with walks, nothing the Session drew is removed.
+
+const {WorldTimelinePresentation} = await import('../src/projections/worldTimelinePresentation.tsx')
+const {TimelineProjectionResidence} = await import('../src/projections/timelineResidence.tsx')
+const {JourneyRows} = await import('../src/timeline/JourneyRows.tsx')
+
+const opened = []
+const door = {openExpression: (ref) => opened.push(ref)}
+const sessionOf = (trackSets, journey) => html(createElement(WorldTimelinePresentation, {view: worldOf(trackSets), presentation: 'session', journey}))
+const JOURNEY_BLOCK_START = '<div class="wt-group" data-journey-rows='
+const RAILS_BLOCK_START = '<div class="wt-group" data-world-walks='
+
+// Lead ruling (lock §7.3): Technē's Session IS the Journey — its rows present the walks there, so the Timeline's
+// "Walks · sections" rails group is not drawn twice in that Session; everything else is today's markup.
+test('Technē’s live Session presents the walks as rows, above the session cells, in the same scroll container', () => {
+  const out = sessionOf(sets, door)
+  const start = out.indexOf(JOURNEY_BLOCK_START)
+  assert.ok(start > 0, 'the Journey group is drawn')
+  assert.equal(out.indexOf(RAILS_BLOCK_START), -1, 'the rails group is not drawn twice in Technē’s Session')
+  const block = out.slice(start, out.indexOf('data-column='))
+  const walks = journeyWalksOf(sets)
+  assert.deepEqual([...block.matchAll(/data-walk="([^"]+)"/g)].map((match) => match[1]), walks.map((walk) => walk.id), 'one row per walk, in the sets’ order')
+  assert.deepEqual([...block.matchAll(/data-stop="(\d+)" data-stop-ref="([^"]+)"/g)].map((match) => match[2]),
+    walks.flatMap((walk) => walk.stops.map((stop) => stop.id)), 'the stop cells, walk by walk, in the walk’s order')
+  assert.ok(out.indexOf('data-column=') > start, 'the session cells stand beneath the walk rows')
+})
+
+test('the Journey rows take the rails’ place in Technē’s Session and change nothing else', () => {
+  const plain = sessionOf(sets)
+  const withRows = sessionOf(sets, door)
+  assert.ok(plain.includes(RAILS_BLOCK_START), 'without the Journey door the rails group stands as today')
+  assert.equal(withRows.slice(0, withRows.indexOf(JOURNEY_BLOCK_START)), plain.slice(0, plain.indexOf(RAILS_BLOCK_START)), 'everything before is today’s')
+  assert.equal(withRows.slice(withRows.indexOf('data-column=')), plain.slice(plain.indexOf('data-column=')), 'the session cells and everything after are today’s')
+})
+
+test('with no walk carried, Technē’s Session names the absence once', () => {
+  const none = [{columns: [], tracks: [], clips: []}]
+  const withJourney = sessionOf(none, door)
+  assert.ok(/<div class="wt-absence" role="note" data-journey-absence="0">[^<]*<\/div>/.test(withJourney), 'the absence is named in the Session')
+  assert.equal(withJourney.split('data-journey-absence').length - 1, 1, 'exactly one Journey absence line')
+  assert.ok(!withJourney.includes(RAILS_BLOCK_START), 'the rails group’s own absence line is not repeated')
+  assert.ok(!withJourney.includes('data-journey-rows'), 'no walk rows are drawn')
+})
+
+test('the Arrangement never takes the Journey, and JourneyRows draws nothing with no walk', () => {
+  const arrangementPlain = html(createElement(WorldTimelinePresentation, {view: worldOf(sets), presentation: 'arrangement'}))
+  const arrangementWithDoor = html(createElement(WorldTimelinePresentation, {view: worldOf(sets), presentation: 'arrangement', journey: door}))
+  assert.equal(arrangementWithDoor, arrangementPlain, 'the Arrangement is unchanged')
+  assert.equal(html(createElement(JourneyRows, {walks: [], eventByClipId: new Map(), selectOccasion() {}, journey: door})), '')
+})
+
+test('a stop that carries an Expression names it, and offers its launch only where the shell can open it', () => {
+  const walk = journeyWalksOf(sets)[0]
+  const carrying = {...walk, stops: walk.stops.map((stop, index) => index === 0 ? {...stop, sceneRef: 'expression:demo#scene:one'} : stop)}
+  const set = {columns: [], tracks: [], clips: [], walks: [carrying]}
+  const launchable = sessionOf([set], door)
+  assert.ok(launchable.includes('journey-stop-expression'), 'the launch is offered where the door is given')
+  assert.ok(launchable.includes('▷ Expression'))
+  const named = html(createElement(JourneyRows, {walks: [carrying], eventByClipId: new Map(), selectOccasion() {}}))
+  assert.ok(!named.includes('journey-stop-expression'), 'no launch without the door')
+  assert.ok(named.includes('expression:demo#scene:one'), 'the Expression is still named')
+  assert.deepEqual(opened, [], 'rendering opens nothing')
+})
+
+test('the residence hands the Journey to the World cut’s Session only: Technē’s Session shows it, Base and the Arrangement do not', () => {
+  const residence = (journey, presented) => html(createElement(TimelineProjectionResidence, {set: null, document: null,
+    selection: {track: 0, scene: null}, select() {}, colors: [], setColor() {}, session: undefined, arrangement: undefined,
+    compactTransport: false, presented, world: worldOf(sets), journey}))
+  assert.ok(residence(door, 'session').includes(JOURNEY_BLOCK_START), 'Technē’s live Session presents the rows')
+  assert.ok(!residence(undefined, 'session').includes('data-journey-rows'), 'Base’s Session does not')
+  // The Session stays mounted behind the Arrangement (hidden): the rows sit only inside that hidden Session presentation.
+  const arrangement = residence(door, 'arrangement')
+  const sessionTag = arrangement.match(/<div class="inhabitant composition-view"[^>]*data-projection-presentation="session"[^>]*>/)[0]
+  assert.ok(sessionTag.includes('hidden=""'), 'the Session presentation is concealed while the Arrangement stands')
+  assert.ok(!arrangement.slice(0, arrangement.indexOf(sessionTag)).includes('data-journey-rows'), 'the Arrangement presents no Journey')
+})
+
+test('App threads the Journey door only for Technē’s World cut, and the residence stays a fragment of direct children', async () => {
+  const app = await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8')
+  assert.match(app, /journey=\{worldCut && frameMode === 'techne' \? \{openExpression: workspace\.requestExpression\} : undefined\}/)
+  const residence = await readFile(new URL('../src/projections/timelineResidence.tsx', import.meta.url), 'utf8')
+  assert.match(residence, /<Fragment>/, 'the two presentation divs remain direct children of the centre body')
+})

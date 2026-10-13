@@ -18,11 +18,10 @@
  *   needle ONLY when the civil read answers (a reading, never a wall clock),
  *   and the day's material as named lanes.
  * - Technē · Session — the M3′ Journey (world-shell-mockup-r2-scenes): the
- *   walk-stop rows at the mockup's scene-row grammar — place · occasion ·
- *   artefact · Expression · narration · transition in the mockup's column
- *   colours. The walks are the ones the World's track sets carry (the same
- *   objects the Timeline reads); with none carried, eight designed slots hold
- *   their places and the absence is named.
+ *   walks the World's track sets carry, one row of stop cells per walk (the
+ *   shared JourneyRows, the same objects the Timeline reads); with none
+ *   carried, eight designed slots hold their places (place · occasion ·
+ *   artefact · Expression · narration · transition) and the absence is named.
  * - Technē · Arrangement — the M2′ Relation Field: the four lenses in the
  *   design's order (chronology · causal · recurrence · concurrency), the
  *   honest lanes (authored history, development, the day, machines · NOW,
@@ -38,13 +37,12 @@
  * store, no clock, no owner writes.
  */
 
-import {useState, type CSSProperties} from 'react'
+import type {CSSProperties} from 'react'
 import {MODE_GRAMMAR, type SurfMode} from './modeGrammar'
 import type {WorldTimelineView} from '../projections/useWorldTemporalReading'
-import {journeyStopCells, journeyWalksOf, walkStopFocus} from '../timeline/journeyWalks'
-import {applyWalkStopFocus} from '../timeline/walkFocus'
+import {journeyWalksOf} from '../timeline/journeyWalks'
+import {JourneyRows} from '../timeline/JourneyRows'
 import type {TemporalEventRow} from '../timeline/timeSpine'
-import type {WorldWalk, WorldWalkStop} from '../timeline/worldTrackAdapter'
 import './modeSurface.css'
 
 /** The five Base session tracks (Rev 5's second table) with the mockup's
@@ -205,51 +203,27 @@ function TodayRulerStructure({world}: {world: WorldTimelineView | null}) {
 /** The clip-to-occasion map when no World reading is bound (the frame then shows no walks at all). */
 const NO_OCCASIONS: ReadonlyMap<string, TemporalEventRow> = new Map()
 
-/** Technē · Session — the M3′ Journey at the mockup's scene-row grammar. The walks are the ones the World's track sets
- * carry (the same objects the Timeline reads): each walk is a block of scene rows, each stop a row whose cells are the
- * six coloured columns. A stop focuses the occasion the Timeline would focus for its clip. With no walk carried, the
- * eight designed slots hold their places and the absence is named. */
+/** Technē · Session — the M3′ Journey (the frame's designed view). The walks are the ones the World's track sets carry (the
+ * same objects the Timeline reads), drawn by the shared JourneyRows; with none carried, the eight designed slots hold their
+ * places and the absence is named. The live Session presents the same rows above its session cells (timelineResidence). */
 function JourneyStructure({world}: {world: WorldTimelineView | null}) {
-  const [named, setNamed] = useState<string | null>(null)
   const walks = journeyWalksOf(world?.source.sets ?? [])
-  // A stop focuses what the Timeline would focus for it: its occasion, or its layer's epoch in the atlas (the atlas owns
-  // its camera), or the named reason it cannot.
-  const focusStop = (walk: WorldWalk, stop: WorldWalkStop) => {
-    const focus = walkStopFocus(walk, stop, world?.source.eventByClipId ?? NO_OCCASIONS)
-    void applyWalkStopFocus(focus, (event) => world?.selectOccasion(event)).then(setNamed)
-  }
   return <div className="mode-centre-structure mode-centre-journey" aria-label="Journey — walk stops" data-provenance="M3′" data-walks={walks.length}>
-    <div className="mode-centre-journey-heads">
-      <span className="mode-centre-track-head mode-centre-launcher-head">The walk</span>
-      {JOURNEY_STOP_COLUMNS.map(column => <span key={column.name} className="mode-centre-track-head" style={{'--tc': column.colour} as CSSProperties}>{column.name}</span>)}
-    </div>
-    {walks.length === 0 && WALK_STOPS.map(stop => <div key={stop} className="mode-centre-journey-row" data-stop={stop}>
-      <span className="mode-centre-stop-chip" data-i={`Walk stop ${stop}|place · occasion · artefact · Expression · narration · transition — the walk's stops fill from the encounter; ▶ walks it`}>
-        {stop} ·
-      </span>
-      {JOURNEY_STOP_COLUMNS.map(column => <span key={column.name} className="mode-centre-cell mode-centre-cell-void" aria-hidden="true">
-        <span className="mode-centre-soft" />
-      </span>)}
-    </div>)}
-    {walks.map(walk => <div key={walk.id} className="mode-centre-journey-walk" data-walk={walk.id} data-walk-kind={walk.kind} data-walk-derived={walk.derived ? 'derived' : 'curated'}>
-      <div className="mode-centre-journey-walkhead">
-        <strong>{walk.name}</strong>
-        <span>{walk.kind}</span>
-        <span>{walk.derived ? 'derived on read' : 'curated'}</span>
-        <span>{walk.stops.length} {walk.stops.length === 1 ? 'stop' : 'stops'}</span>
+    {walks.length === 0 && <>
+      <div className="mode-centre-journey-heads">
+        <span className="mode-centre-track-head mode-centre-launcher-head">The walk</span>
+        {JOURNEY_STOP_COLUMNS.map(column => <span key={column.name} className="mode-centre-track-head" style={{'--tc': column.colour} as CSSProperties}>{column.name}</span>)}
       </div>
-      {walk.stops.map((stop, index) => {
-        const cells = journeyStopCells(stop)
-        const values = [cells.place, cells.occasion, cells.artefact, cells.expression, null, null]
-        return <div key={`${walk.id}:${index}`} className="mode-centre-journey-row" data-stop={index + 1} data-stop-ref={stop.id}>
-          <button type="button" className="mode-centre-stop-chip mode-centre-journey-stop" onClick={() => focusStop(walk, stop)}
-            data-i={`Walk stop ${index + 1} of ${walk.stops.length}|${stop.label}${cells.also ? ` — ${cells.also} attached reached from this stop` : ''}. A click focuses the stop: its occasion on the Timeline, or its epoch in the atlas.`}>
-            {index + 1}/{walk.stops.length}
-          </button>
-          {JOURNEY_STOP_COLUMNS.map((column, i) => <JourneyCell key={column.name} column={column} value={values[i]} />)}
-        </div>
-      })}
-    </div>)}
+      {WALK_STOPS.map(stop => <div key={stop} className="mode-centre-journey-row" data-stop={stop}>
+        <span className="mode-centre-stop-chip" data-i={`Walk stop ${stop}|place · occasion · artefact · Expression · narration · transition — the walk's stops fill from the encounter; ▶ walks it`}>
+          {stop} ·
+        </span>
+        {JOURNEY_STOP_COLUMNS.map(column => <span key={column.name} className="mode-centre-cell mode-centre-cell-void" aria-hidden="true">
+          <span className="mode-centre-soft" />
+        </span>)}
+      </div>)}
+    </>}
+    {walks.length > 0 && <JourneyRows walks={walks} eventByClipId={world?.source.eventByClipId ?? NO_OCCASIONS} selectOccasion={event => world?.selectOccasion(event)} />}
     <div className="mode-centre-journey-record">
       <button type="button" className="mode-centre-record" data-i="Record a walk|● records a new walk from your encounters — each becomes a stop">
         ● record a walk
@@ -258,18 +232,7 @@ function JourneyStructure({world}: {world: WorldTimelineView | null}) {
     {walks.length === 0
       ? <p className="mode-centre-note">The atlas reading carries no walks in the World's track sets; the stops hold their places. Aion walks join when the Earth pane has loaded its reading.</p>
       : <p className="mode-centre-note">The walks the World's track sets carry — the same walks the Timeline reads.</p>}
-    {named && <p className="mode-centre-journey-named" role="status">{named}</p>}
   </div>
-}
-
-/** One Journey cell: the value a stop carries, or the soft void of a column it does not carry (named on hover). */
-function JourneyCell({column, value}: {column: (typeof JOURNEY_STOP_COLUMNS)[number]; value: string | null}) {
-  if (value === null) return <span className="mode-centre-cell mode-centre-cell-void" data-i={`${column.name}|not carried by this stop`}>
-    <span className="mode-centre-soft" />
-  </span>
-  return <span className="mode-centre-cell mode-centre-cell-named" style={{'--tc': column.colour} as CSSProperties} title={value}>
-    <span className="mode-centre-cell-name">{value}</span>
-  </span>
 }
 
 /** Technē · Arrangement — the M2′ Relation Field: the lenses in the
