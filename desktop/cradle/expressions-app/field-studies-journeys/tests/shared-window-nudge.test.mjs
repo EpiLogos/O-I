@@ -187,3 +187,14 @@ test('a refused re-read keeps the held window and raises nothing into the nudge'
   assert.equal(refreshed.length, 0, 'a refused read changes nothing');
   stop();
 });
+
+test('the Timeline and Places lenses follow the nudge through their own render paths; spatial writes are tracked; destroy tears the follower down', async () => {
+  const {readFile} = await import('node:fs/promises');
+  const source = await readFile(new URL('../src/researchInstruments.tsx', import.meta.url), 'utf8');
+  assert.match(source, /if\(sharedTime\)followSharedTime\(\(\)=>render\(canvasNode2\(\)\)\);\s*render\(canvasNode2\(\)\);return;/, 'the Timeline follows, re-rendering through canvasNode2');
+  assert.match(source, /if\(sharedTime\)followSharedTime\(\(\)=>render\(renderPlaces\(\)\)\);\s*render\(renderPlaces\(\)\);/, 'Places follows, re-rendering through renderPlaces');
+  assert.match(source, /offSharedTimeNudges\?\.\(\);\s*offSharedTimeNudges=followSharedTimeNudges\(/, 'one follower at a time');
+  assert.match(source, /destroy\(\)\{offSharedTimeNudges\?\.\(\);offSharedTimeNudges=null;/, 'destroy tears it down');
+  assert.match(source, /return trackOwnSharedTimeWrite\(writeSharedSpatialFocusNow\(/, 'a spatial write is the frame’s own write');
+  assert.match(source, /if\(draft&&!draft\.captured\)/, 'a draft the person is composing is never overwritten');
+});

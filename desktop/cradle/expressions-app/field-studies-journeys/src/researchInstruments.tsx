@@ -43,7 +43,7 @@ import {OPEN_PLACE_FILTER,filteredPlacesRepository,subjectEntityRef,type PlaceFi
 import type {TechneReading,TechnePlaceFacet} from '../../../src/techne/contract';
 import {placeFocusFromSession} from '../../../src/techne/m0m5/place/register';
 import {openingPlaceSelection,timelineOpenPlan} from '../../../src/techne/m0m5/place/navigation';
-import {readSharedTimeWindow,writeSharedTimeWindow,writeSharedTraversalHop,qualifyTimeWindowReply,SharedTimeWindowControls,type SharedTimeDraft} from './sharedTimeWindow.js';
+import {readSharedTimeWindow,writeSharedTimeWindow,writeSharedTraversalHop,followSharedTimeNudges,trackOwnSharedTimeWrite,qualifyTimeWindowReply,SharedTimeWindowControls,type SharedTimeDraft} from './sharedTimeWindow.js';
 import {sharedTimelinePresentation} from './sharedTimeProjection.js';
 import {timeAxisProjection,relativeTimeAxisProjection} from '../../../src/techne/m0m5/timeline/timeAxis';
 import {axisEventOf,currentHop,foldStanding,handoffDisclosure,handoffRefusal,openEndpoint,openRelation,relationRefOf,showOnGlobeOf,traversalHopOf,trailFromEvent,trailOfNavigation,type GlobeCarry,type TraversalFold} from '../../../src/techne/m0m5/timeline/navigationIdentity';
@@ -292,6 +292,10 @@ const PLACES_DAYLIGHT:DaylightHost={read:readPlacesDaylight};
 /** Lane-4 T23: the Places facet's place becomes the shared session's spatial focus through the owner's compare-and-set write
  * (null clears it). Same discipline as writeSharedTimeWindow: the acknowledged reply must still address this source and Scene. */
 async function writeSharedSpatialFocus(basis:NativeTimeWindowBasis,reading:TechneReading,instrument:'timeline'|'place',acknowledged:NativeTimeWindowReply,placeRef:string|null):Promise<NativeTimeWindowReply> {
+ // T-FRAME-TIME-PUSH: a spatial write is this frame's own write too, so its nudge echo costs nothing.
+ return trackOwnSharedTimeWrite(writeSharedSpatialFocusNow(basis,reading,instrument,acknowledged,placeRef));
+}
+async function writeSharedSpatialFocusNow(basis:NativeTimeWindowBasis,reading:TechneReading,instrument:'timeline'|'place',acknowledged:NativeTimeWindowReply,placeRef:string|null):Promise<NativeTimeWindowReply> {
  if(acknowledged.basis.expression_ref!==basis.expression_ref||acknowledged.basis.scene_ref!==basis.scene_ref
   ||acknowledged.basis.revision!==basis.revision||acknowledged.reading_ref!==reading.reading_ref) {
   throw Error('This place belongs to an earlier native source or Scene; it was not changed');
@@ -448,6 +452,8 @@ class InstrumentBoundary extends Component<{children:ReactNode},{error:string|nu
 }
 export function installResearchInstruments(host:ResearchInstrumentsHost){
  let lens:ResearchInstrument|null=null,root:Root|null=null,epoch=0,destroyed=false;
+ // T-FRAME-TIME-PUSH: the presented time instrument's follower of the host's shared-window nudges (one at a time).
+ let offSharedTimeNudges:(()=>void)|null=null;
  let captureCanvas:(()=>{x:number;y:number;zoom:number})|null=null,currentKey:string|null=null;
  const views=new Map<string,ViewState>();
  let mutations:Promise<void>=Promise.resolve();
@@ -1154,6 +1160,13 @@ host.tools.append(saveGlyph);
     state.timeDraft??={from:sharedTime?.axis.window?.from??'',to:sharedTime?.axis.window?.to??'',captured:null};
     if(!state.timeDraft.captured){state.timeDraft.from=sharedTime?.axis.window?.from??'';state.timeDraft.to=sharedTime?.axis.window?.to??'';}
    }
+   // T-FRAME-TIME-PUSH: a nudge from the host re-reads the shared window through the existing read and re-renders this lens
+   // through its own render path, only when the read differs; a draft the person is composing is never overwritten.
+   const followSharedTime=(rerender:()=>void)=>{
+    offSharedTimeNudges?.();
+    offSharedTimeNudges=followSharedTimeNudges({basis:request,reading:nativeReading,instrument:selected==='m2'?'timeline':'place',current:timeCurrent,held:()=>sharedTime,
+     refresh:reply=>{sharedTime=reply;const draft=state.timeDraft;if(draft&&!draft.captured){draft.from=reply.axis.window?.from??'';draft.to=reply.axis.window?.to??'';}if(timeCurrent())rerender();}});
+   };
    const timeControls=(redraw:()=>void)=><SharedTimeWindowControls basis={request} reading={nativeReading} instrument={selected==='m2'?'timeline':'place'}
     acknowledged={sharedTime} draft={state.timeDraft!} current={timeCurrent} unavailableReason={timeReason} onError={message} onAcknowledged={reply=>{if(timeCurrent()){sharedTime=reply;redraw();}}}/>;
    if(view){
@@ -1365,6 +1378,7 @@ host.tools.append(saveGlyph);
     // lane-2 T22: the status line names the subject, reading basis and window the session holds, exactly as it holds them.
     const chronologyStatus=temporal.length||state.m2Projection==='field'?(state.m2Projection==='field'?'Relations':'Timeline'):'No dates disclosed by this source';
     message(sharedTime&&state.m2Projection==='chronology'?`${chronologyStatus} · ${handoffDisclosure(sharedTime.session)}`:chronologyStatus);
+    if(sharedTime)followSharedTime(()=>render(canvasNode2()));
     render(canvasNode2());return;
    }
    const places=await data.places.getLocatedNodes(data.reading.subject.subject_ref);if(epoch!==generation||destroyed)return;
@@ -1611,6 +1625,7 @@ host.tools.append(saveGlyph);
      {!host.placesHome&&facets}
     </div>{host.placesHome&&createPortal(facets,host.placesHome)}</>;
    };
+   if(sharedTime)followSharedTime(()=>render(renderPlaces()));
    render(renderPlaces());
   }catch(error){if(epoch!==generation||destroyed)return;message(error instanceof Error?error.message:String(error));body.replaceChildren();}
  }
@@ -1632,7 +1647,7 @@ host.tools.append(saveGlyph);
    }
    await load(lens);
   },
-  destroy(){flushPlaceLayers();++epoch;lens=null;destroyed=true;unmount();mount.remove();status.remove();views.clear();window.removeEventListener('keydown',onWindowKeydown);window.removeEventListener('keydown',onZoomKeydown);window.removeEventListener('keydown',onPresentStartKey);readoutRoot.unmount();readoutHost.remove();modifiers.dispose();},
+  destroy(){offSharedTimeNudges?.();offSharedTimeNudges=null;flushPlaceLayers();++epoch;lens=null;destroyed=true;unmount();mount.remove();status.remove();views.clear();window.removeEventListener('keydown',onWindowKeydown);window.removeEventListener('keydown',onZoomKeydown);window.removeEventListener('keydown',onPresentStartKey);readoutRoot.unmount();readoutHost.remove();modifiers.dispose();},
   active(){return lens;},
  };
 }
