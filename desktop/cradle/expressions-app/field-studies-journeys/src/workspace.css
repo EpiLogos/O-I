@@ -571,3 +571,19 @@ body:not(.research-active) #tool-rail [data-research-only]{display:none!importan
 #library-page button,#library-page input{scroll-margin-top:100px}
 @media(max-width:760px){#library-page{scroll-padding-top:80px}#library-page button,#library-page input{scroll-margin-top:80px}}
 @media(max-height:260px){.library-header{position:relative}#library-page{scroll-padding-top:8px}#library-page button,#library-page input{scroll-margin-top:8px}}
+
+/* E01 · the journey timeline: scene clips placed on one Expression clock (journeyTimelineLayout). The scene strip stays the collapsed form. */
+.scene-track{display:grid;gap:4px;padding:8px 2px 4px}
+.scene-track-ruler{position:relative;height:14px;font-size:9px;color:var(--ui-muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.scene-track-ruler span{position:absolute;top:0;transform:translateX(-50%)}
+.scene-track-ruler span:first-child{transform:none}
+.scene-track-ruler span:last-child{transform:translateX(-100%)}
+.scene-track-lane{position:relative;height:60px;border-top:1px solid var(--ui-line);border-bottom:1px solid var(--ui-line)}
+.scene-track .scene-clip{position:absolute;top:4px;bottom:4px;flex:none;height:auto;min-width:12px;transform:none}
+.scene-track .scene-clip:hover,.scene-track .scene-clip:focus-visible,.scene-track .scene-clip.active{transform:none}
+.scene-track .scene-clip.active{opacity:1}
+.scene-track-playhead{position:absolute;top:0;left:-6px;width:calc(100% + 12px);height:60px;margin:0;padding:0;background:transparent;-webkit-appearance:none;appearance:none;pointer-events:none;z-index:2}
+.scene-track-playhead::-webkit-slider-runnable-track{height:60px;background:transparent;border:0}
+.scene-track-playhead::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:12px;height:60px;border:0;border-radius:0;background:linear-gradient(var(--ui-ink),var(--ui-ink)) center/2px 100% no-repeat;pointer-events:auto;cursor:ew-resize}
+.scene-track-playhead::-moz-range-track{height:60px;background:transparent;border:0}
+.scene-track-playhead::-moz-range-thumb{width:12px;height:60px;border:0;border-radius:0;background:linear-gradient(var(--ui-ink),var(--ui-ink)) center/2px 100% no-repeat;pointer-events:auto;cursor:ew-resize}
