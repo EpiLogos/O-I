@@ -1,7 +1,10 @@
 import {installBlueprintHUD} from './blueprintHUD.js';
 import {blueprintMember} from './blueprintGeometry.js';
 import {installNativeField} from "./nativeField";
-import {SESSION_KEY,SessionState,validateSession,writeDraft,readDraft,readDrafts,removeDraft} from './recovery';
+import {SESSION_KEY,SessionState,validateSession,writeDraft,readDraft,readDrafts,removeDraft,applyRecoveryPlan} from './recovery';
+// lane-3 E17-E19: one draft scheduler, the draft/saved offer and the session mark.
+import {DraftSchedule,draftStatusLine} from './draftSchedule';
+import {recoveryOffer,planRecoveryChoice,readUncleanExit,markSessionOpen,markSessionClosed,offerClock,type RecoveryChoice} from './draftStorage';
 import {foldObjectState} from './foldState';
 import {imageSuiteHTML} from './imageSuite';
 import {initialiseShared,effectiveScene,isShared,writeShared,toggleShared,useLocalPointer,POINTER_PATHS} from './sharedSettings';
@@ -162,7 +165,7 @@ const store=new DocumentStore(initialiseSceneSaves(initialiseBelts(initial)));le
 try{engine=window.OI_ENGINE_FACTORY?window.OI_ENGINE_FACTORY($<HTMLCanvasElement>('field-canvas')):new ProductionAdapter($<HTMLCanvasElement>('field-canvas'));(window as any).OI_DEBUG_ENGINE=engine;}catch(err){$('stage').innerHTML='<p style="padding:110px 40px">The native WebGL field could not start. '+esc(err instanceof Error?err.message:err)+'</p>';throw err;}
 let timelineTrack=true;let sceneIndex=0;let selected:string[]=[];let textId:string|null=null;let tab:InspectorContext['tab']='field';let motionTab:InspectorContext['motionTab']='sequence';let stepIndex=0;let search='';let editing=false,inspectorOpen=false,timelineOpen=false,presenting=false,shapePickerOpen=false,tool:Tool='interact';let shapeChoice:Shape='text',glyphChoice='O';let camera=defaultCamera();let placementStep=false,keepPlacing=false,pinRepeat=false;
 let propertyTake:null|{sceneId:string;armed:number;start:number;elapsed:number;tracks:PropertyTrack[];lastSample:number;limit?:number}=null;let appendTake=false,trackPreview=false;const takeWindows=new Map<string,{start:number;end:number}>();
-let width=innerWidth,height=innerHeight;let simTime=0,sceneElapsed=0;let fieldPaused=matchMedia('(prefers-reduced-motion: reduce)').matches,scenePlaying=false,journeyPlaying=false;let lastTime=performance.now(),lastUI=0;let toastTimeout=0,saveTimeout=0,lastLibraryWrite=0;let transitionStart=0,transitionDuration=0;let transitionBackground='#f4f2eb',transitionSceneId='';let transitionEasing:ChainEasing='linear';let autosaveErrorShown=false;let captureSettings=defaultCapture();let recordPerformanceWarned=false;let currentVideo:{blob:Blob;mime:string;url:string;source:DesktopScene;settings:CaptureSettings}|null=null;let recordingSource:DesktopScene|null=null;let recordingSettings:CaptureSettings|null=null;const recorder=new LiveRecorder();
+let width=innerWidth,height=innerHeight;let simTime=0,sceneElapsed=0;let fieldPaused=matchMedia('(prefers-reduced-motion: reduce)').matches,scenePlaying=false,journeyPlaying=false;let lastTime=performance.now(),lastUI=0;let toastTimeout=0,lastLibraryWrite=0;let transitionStart=0,transitionDuration=0;let transitionBackground='#f4f2eb',transitionSceneId='';let transitionEasing:ChainEasing='linear';let autosaveErrorShown=false;let captureSettings=defaultCapture();let recordPerformanceWarned=false;let currentVideo:{blob:Blob;mime:string;url:string;source:DesktopScene;settings:CaptureSettings}|null=null;let recordingSource:DesktopScene|null=null;let recordingSettings:CaptureSettings|null=null;const recorder=new LiveRecorder();
 let pointer={active:false,world:{x:0,y:0,z:0}};let drag:null|{kind:'entity'|'radius'|'camera'|'text';id:string;startX:number;startY:number;startWorld:Vec3;positions:Map<string,Vec3>;initialRadius:number;cam:Camera;layer:TextLayer|null;pan:boolean}=null;
 let guidesVisible=true;let sourceUploadEntityId:{sceneId:string;entityId:string;stepId?:string;layerId?:string;append?:boolean}|null=null;let overlayDirty=true,needsFrame=true;
 // lane-3 E24/E25: the working-view transport (transport.ts), the J/K-held state, the timeline's snap toggle and the snap indicator's screen x.
@@ -199,12 +202,13 @@ function error(err:unknown){console.error(err);toast(err instanceof Error?err.me
 const deletedLibraryIds=new Set<string>();
 function saveSession(){try{const session:SessionState={version:1,journeyId:store.document.id,sceneId:scene().id,selected,stepIndex,sceneElapsed,simTime,playing:scenePlaying,scenePlaying,journeyPlaying,fieldPaused,camera:{...camera},transport:engine.transportState?.(),workingTransport};localStorage.setItem(SESSION_KEY,JSON.stringify(session));localStorage.setItem('oi.field-studies.last',store.document.id);}catch{}}
 let draftBackupBusy=false;
+/** lane-3 E17: the one schedule for draft backups. Edits coalesce on a 350 ms timer; context switches and quit flush at once; nothing flushes inside an open gesture. */
+const draftSchedule=new DraftSchedule({flush:()=>flushDraft(),gestureOpen:()=>store.transactionOpen});
 async function flushDraft(){
- clearTimeout(saveTimeout);saveTimeout=0;
  if(awaitingNativeBoot){if(store.revision===0)return;awaitingNativeBoot=false;nativeWorkspace?.cancelOpen();} // Retain an actual edit; an untouched opening canvas is not recovery material.
  // Coalesce changes while a gesture or native disk write is in flight. A
  // slow owner must not accumulate full-document backups in a renderer queue.
- if(store.transactionOpen||draftBackupBusy){saveTimeout=window.setTimeout(()=>void flushDraft(),350);return;}
+ if(store.transactionOpen||draftBackupBusy){draftSchedule.request();return;}
  saveSession();if(deletedLibraryIds.has(store.document.id))return;
  const draft=clone(store.document),backupVersion=store.revision;
  if(propertyTake&&propertyTake.elapsed>0){
@@ -217,22 +221,22 @@ async function flushDraft(){
   if(deletedLibraryIds.has(draft.id)){await removeDraft(draft.id);return;}
   sessionExpressions.set(draft.id,draft);if(store.document.id!==draft.id)return;
   autosaveErrorShown=false;
-  $('save-status').textContent=store.revision!==backupVersion?'Newer edits are waiting for backup':hostedRecovery()?'Working copy backed up on this device':'Draft backed up in this browser';
+  $('save-status').textContent=store.revision!==backupVersion?draftStatusLine('waiting',new Date(),hostedRecovery()?'native':'browser'):draftStatusLine('backed-up',new Date(),hostedRecovery()?'native':'browser');
   const now=Date.now();
   if(now-lastLibraryWrite>5000){lastLibraryWrite=now;try{saveToLibrary(draft);}catch{/* The acknowledged copy remains with its recovery owner. */}}
  }catch(cause){
   if(hostedRecovery()){
-   $('save-status').textContent='Working copy not backed up';
+   $('save-status').textContent=draftStatusLine('refused',new Date(),'native');
    if(!autosaveErrorShown){toast(cause instanceof Error?cause.message:'Native recovery is unavailable. Keep this work open or save a file.',7000);autosaveErrorShown=true;}
    return;
   }
-  try{saveToLibrary(draft);$('save-status').textContent='Draft backed up in this browser';}
-  catch{$('save-status').textContent='Not saved · export a file';if(!autosaveErrorShown){toast('Browser storage is unavailable or full. Export the expression to preserve your work.',7000);autosaveErrorShown=true;}}
+  try{saveToLibrary(draft);$('save-status').textContent=draftStatusLine('backed-up',new Date(),'browser');}
+  catch{$('save-status').textContent=draftStatusLine('unavailable',new Date(),'browser');if(!autosaveErrorShown){toast('Browser storage is unavailable or full. Export the expression to preserve your work.',7000);autosaveErrorShown=true;}}
  }finally{draftBackupBusy=false;}
 }
 
 let sessionSaveTimeout=0;
-function markSaved(){clearTimeout(sessionSaveTimeout);sessionSaveTimeout=window.setTimeout(saveSession,150);if(deletedLibraryIds.has(store.document.id)){$('save-status').textContent='Saved copy removed · use Save to keep again';return;}$('save-status').textContent=hostedRecovery()?'Backing up working copy…':'Saving in this browser…';if(!saveTimeout)saveTimeout=window.setTimeout(()=>void flushDraft(),350);}
+function markSaved(){clearTimeout(sessionSaveTimeout);sessionSaveTimeout=window.setTimeout(saveSession,150);if(deletedLibraryIds.has(store.document.id)){$('save-status').textContent='Saved copy removed · use Save to keep again';return;}$('save-status').textContent=hostedRecovery()?'Backing up working copy…':'Saving in this browser…';draftSchedule.request();}
 // Every edit names itself: the label is what Undo, Redo and their toast report.
 function changed(fn:()=>void,render:boolean,label:string){trackPreview=false;if(journeyPlaying){journeyPlaying=false;applySceneView();}store.change(label,fn);awaitingNativeBoot=false;nativeWorkspace?.cancelOpen();markSaved();overlayDirty=true;needsFrame=true;if(render)renderAll();}
 function sanitiseSelection(){sceneIndex=clamp(sceneIndex,0,store.document.scenes.length-1);selected=selected.filter(id=>scene().entities.some(e=>e.id===id));if(!scene().text.some(t=>t.id===textId))textId=scene().text[0]?.id??null;const e=selectedEntity();stepIndex=clamp(stepIndex,0,Math.max(0,(e?.sequence.steps.length??1)-1));}
@@ -852,7 +856,7 @@ function renderContext(){const host=$('context-panel');host.hidden=!contextKind|
 function renderLive(){const parts=liveWorkspaceHTML(liveContext(),workspace);const secondary=tool==='pin'||studioOpen||timelineOpen||modesOpen||captureOpen||beltPickerOpen||!!contextKind||shapePickerOpen;$('live-workspace').hidden=!sequenceOpen||secondary||presenting||libraryOpen;$('toolbelt-panel').hidden=!beltOpen||presenting||libraryOpen;$('toolbelt-button').setAttribute('aria-expanded',String(!$('toolbelt-panel').hidden));for(const [id,html] of [['live-content',parts.sequence],['belt-content',parts.controls]]){const host=$(id),scroll=host.scrollTop,openGlyphs=Array.from(host.querySelectorAll<HTMLDetailsElement>('[data-glyph-category][open]')).map(d=>d.dataset.glyphCategory),libraryExpanded=host.querySelector<HTMLDetailsElement>('.glyph-tree')?.open,layerDisclosure=readLayerDisclosure(host.querySelector<HTMLDetailsElement>('.live-layers'));host.innerHTML=html;restoreLayerDisclosure(host.querySelector<HTMLDetailsElement>('.live-layers'),layerDisclosure);if(libraryExpanded){const tree=host.querySelector<HTMLDetailsElement>('.glyph-tree');if(tree)tree.open=true;}host.querySelectorAll<HTMLDetailsElement>('[data-glyph-category]').forEach(d=>d.open=openGlyphs.includes(d.dataset.glyphCategory));host.scrollTop=scroll;}$('belt-picker').hidden=!beltPickerOpen||libraryOpen;if(beltPickerOpen)$('belt-picker').innerHTML=pickerHTML(scene(),workspace.entries,pendingBelt);const evaluated=engine.telemetry?.();updateToolbeltValues($('belt-content'),scene(),evaluated?.params??scene().field.params,evaluated?.config);renderContext();if(!$('context-panel').hidden)void refreshSourcePreviews($('context-panel'));if(!$('live-workspace').hidden)void refreshSourcePreviews($('live-content'));const chooser=$('automation-assignment');chooser.hidden=!assignmentTarget&&!assignmentGroup;if(!chooser.hidden)chooser.innerHTML=assignmentHTML(scene(),assignmentTarget,assignmentGroup);const monitor=$('automation-monitor');monitor.hidden=!scene().automation.length||!beltOpen||presenting||libraryOpen;document.documentElement.style.setProperty('--automation-height',monitor.hidden?'0px':'160px');if(!monitor.hidden){if(!scene().automation.some(l=>l.id===monitoredLane))monitoredLane=scene().automation[0].id;const belt=$('toolbelt-panel');if(monitorDocked){if(monitor.parentElement!==belt)belt.appendChild(monitor);monitor.classList.add('docked');}else{if(monitor.parentElement!==document.body)document.body.appendChild(monitor);monitor.classList.remove('docked');}monitor.innerHTML=monitorHTML(scene(),monitoredLane,monitorMode);}document.querySelector('.instrument')?.classList.toggle('expanded',timelineOpen);}
 // Docking swaps the studio's anchor side, so a width/height transition would teleport it: invert the layout change, then play the transform back.
 function flipPanel(el:HTMLElement,mutate:()=>void){el.style.transition='none';el.style.transform='';const a=el.getBoundingClientRect();mutate();const b=el.getBoundingClientRect(),dx=a.left-b.left,dy=a.top-b.top,sx=b.width?a.width/b.width:1,sy=b.height?a.height/b.height:1;if(!b.width||!b.height||(!dx&&!dy&&Math.abs(sx-1)<.002&&Math.abs(sy-1)<.002)){el.style.transition='';return;}const done=(ev:TransitionEvent)=>{if(ev.target!==el||ev.propertyName!=='transform')return;el.removeEventListener('transitionend',done);el.style.transition='';el.style.transformOrigin='';};el.addEventListener('transitionend',done);el.style.transformOrigin='top left';el.style.transform=`translate(${dx}px,${dy}px) scale(${sx},${sy})`;void el.offsetWidth;el.style.transition='transform .25s cubic-bezier(.2,.8,.2,1)';el.style.transform='';}
-function setStudio(open:boolean){pointer.active=false;if(open)journeyPlaying=false;studioOpen=open;inspectorOpen=open;editing=open||cursorTool==='select';renderAll();}
+function setStudio(open:boolean){if(!open)draftSchedule.flushNow('studio');pointer.active=false;if(open)journeyPlaying=false;studioOpen=open;inspectorOpen=open;editing=open||cursorTool==='select';renderAll();}
 function renderAll(){syncDeepLinkAddress();blueprintHUD?.refresh();if(studioDocked&&studioOpen&&beltOpen){beltWasOpen=true;beltOpen=false;}if(!studioDocked&&beltWasOpen){beltWasOpen=false;beltOpen=true;}if((inspectorOpen||contextKind)&&(tool==='pin'||tool==='formation')){tool=cursorTool;railExpanded=false;}if(beltPickerOpen){inspectorOpen=false;contextKind='';timelineOpen=false;shapePickerOpen=false;modesOpen=false;captureOpen=false;}else if(inspectorOpen){contextKind='';timelineOpen=false;shapePickerOpen=false;modesOpen=false;captureOpen=false;}else if(contextKind){timelineOpen=false;shapePickerOpen=false;modesOpen=false;captureOpen=false;}else if(timelineOpen){shapePickerOpen=false;modesOpen=false;captureOpen=false;}sanitiseSelection();sceneBodies?.refresh();workspace.entries=clone(store.document.shared!.toolbelt);if(tab==='motion')studioSection=motionTab==='automation'?'automation':motionTab==='sequence'?'sequence':motionTab==='focus'?'focus':'motion';else if(tab==='objects'&&!['formations','layout'].includes(studioSection))studioSection='formations';else if(tab==='scene'&&!['scene','text'].includes(studioSection))studioSection='scene';else if(tab==='field'&&!['physics','pointer','relational','collision','appearance','volume','resonance','native','blueprint','palace','places','canvas'].includes(studioSection))studioSection='physics';studioOpen=inspectorOpen&&editing;if(railKey!=='objects'||tool!=='select')railKey=tool;if(transitionDuration&&transitionSceneId!==scene().id){transitionDuration=0;$('transition-canvas').hidden=true;}theme();document.body.classList.toggle('studio-open',studioOpen);$('inspector').classList.toggle('is-studio',studioOpen);$('inspector').classList.toggle('docked',studioDocked);const dockButton=$('dock-studio');if(dockButton){dockButton.setAttribute('aria-pressed',String(studioDocked));dockButton.title=studioDocked?'Return the studio to full size':'Dock the studio where the toolbelt sits';dockButton.innerHTML=icon(studioDocked?'expand':'collapse');}$<HTMLSelectElement>('workspace-appearance').value=workspace.appearance;document.querySelectorAll<HTMLElement>('[data-action="studio-section"]').forEach(b=>b.setAttribute('aria-current',b.dataset.value===studioSection?'page':'false'));document.body.classList.toggle('editing',editing);document.body.classList.toggle('presentation',presenting);document.body.classList.toggle('editing-text',editing&&tool==='text');
  if(!$('inspector').hidden)studioScroll=$('inspector-content').scrollTop;$('inspector').hidden=!inspectorOpen||!editing;$('tool-rail').hidden=presenting;$('view-controls').hidden=!editing||!(tool==='pin'||shapePickerOpen||placementStep)||!!contextKind||inspectorOpen;$('coordinates').hidden=presenting||libraryOpen;$('timeline-panel').hidden=!timelineOpen;$('shape-picker').hidden=!shapePickerOpen||!editing;$('present-return').hidden=!presenting;
  $('scene-number').textContent=String(sceneIndex+1).padStart(2,'0');$('scene-name').textContent=scene().name;
@@ -998,7 +1002,7 @@ function applySceneView(){const v=activeScene().view;if(v)Object.assign(camera,c
 // so previous/next, the arrow keys and transport frames keep wrap-around.
 function sceneRefAt(index:number){const n=store.document.scenes.length;if(index<0)index=n-1;if(index>=n)index=0;return store.document.scenes[index].id;}
 function sceneIndexOf(sceneId:string){const index=store.document.scenes.findIndex(s=>s.id===sceneId);if(index<0)throw Error('The Scene is no longer present in this Expression');return index;}
-function setSceneRef(sceneId:string,automatic=false){const index=sceneIndexOf(sceneId);if(!automatic)sceneIntentEpoch++;if(propertyTake)finishPropertyTake();trackPreview=false;pointer.active=false;if(index===sceneIndex&&!automatic)return;
+function setSceneRef(sceneId:string,automatic=false){const index=sceneIndexOf(sceneId);draftSchedule.flushNow('scene');if(!automatic)sceneIntentEpoch++;if(propertyTake)finishPropertyTake();trackPreview=false;pointer.active=false;if(index===sceneIndex&&!automatic)return;
  if(scenePlaying&&store.document.scenes[index].transition>0&&engine.capabilities.kind==='preview'&&transitionKindOf(store.document.scenes[index].transitionSpec)==='crossfade'){const c=$<HTMLCanvasElement>('transition-canvas');c.width=engine.canvas.width;c.height=engine.canvas.height;c.getContext('2d')!.drawImage(engine.canvas,0,0);transitionBackground=scene().field.background;c.style.background=transitionBackground;c.style.opacity='1';c.hidden=false;transitionStart=simTime;transitionDuration=store.document.scenes[index].transition;transitionEasing='linear';transitionKind='crossfade';transitionSnapshot=null;transitionSceneId=store.document.scenes[index].id;}else if(scenePlaying&&store.document.scenes[index].transition>0&&engine.capabilities.kind==='preview'&&transitionKindOf(store.document.scenes[index].transitionSpec)!=='cut'){startPaintedSeam(store.document.scenes[index]);}else{transitionDuration=0;transitionSnapshot=null;$('transition-canvas').hidden=true;}
 
  sceneIndex=index;if(!automatic)journeyPlaying=false;applySceneView();sceneElapsed=0;selected=[];textId=scene().text[0]?.id??null;saveSession();placementStep=false;shapePickerOpen=false;if(!automatic)journeyPlaying=false;renderAll();void researchInstruments?.refresh();}
@@ -1252,7 +1256,7 @@ async function action(name:string,el:HTMLElement,event?:Event){const s=scene(),s
  case 'native-reset-phases':engine.command?.({type:'reset-phases'});needsFrame=true;break;
  case 'native-reset':confirmChange('Reset the particle field?','This deliberately reseeds particle positions and resets morph phases. The expression and its settings are preserved.',()=>{engine.command?.({type:'reset-field'});needsFrame=true;});break;
  case 'native-recover':engine.command?.({type:'recover-context'});recovery.hidden=true;needsFrame=true;break;
- case 'delete-saved':{const id=el.dataset.id!;confirmChange('Remove this saved copy?','Only this understood saved expression is removed. Other saved and unreadable entries are retained. The active expression remains open.',()=>{removeFromLibrary(id);deletedLibraryIds.add(id);void removeDraft(id).catch(error);clearTimeout(saveTimeout);saveTimeout=0;sessionExpressions.delete(id);covers.delete(id);renderLibrary();});break;}
+ case 'delete-saved':{const id=el.dataset.id!;confirmChange('Remove this saved copy?','Only this understood saved expression is removed. Other saved and unreadable entries are retained. The active expression remains open.',()=>{removeFromLibrary(id);deletedLibraryIds.add(id);void removeDraft(id).catch(error);draftSchedule.cancel();sessionExpressions.delete(id);covers.delete(id);renderLibrary();});break;}
 
  case 'edit':edit(!inspectorOpen,selectedEntity()?'objects':'field');break;
  case 'close-inspector':if(studioOpen){setStudio(false);break;}inspectorOpen=false;railExpanded=false;renderAll();break;
@@ -1678,7 +1682,7 @@ function tick(now:number){if(sceneEditHeld||researchInstruments?.active()&&!rese
  }
  rafId=requestAnimationFrame(tick);
 }
-window.addEventListener('resize',()=>{if(recorder.active){recorder.stop();toast('Recording stopped to preserve its established frame after a window resize.');}resize();});document.addEventListener('visibilitychange',()=>{lastTime=performance.now();if(document.hidden)void flushDraft();if(document.hidden&&propertyTake)finishPropertyTake();if(document.hidden&&recorder.active){recorder.stop();toast('Recording stopped because this tab became hidden.');}});
+window.addEventListener('resize',()=>{if(recorder.active){recorder.stop();toast('Recording stopped to preserve its established frame after a window resize.');}resize();});document.addEventListener('visibilitychange',()=>{lastTime=performance.now();if(document.hidden)draftSchedule.flushNow('hidden');if(document.hidden&&propertyTake)finishPropertyTake();if(document.hidden&&recorder.active){recorder.stop();toast('Recording stopped because this tab became hidden.');}});
 // The desktop shell's window-corner cutout geometry, when hosted (owner
 // addendum 2026-09-19): the host posts the live cutout width/height so the
 // masthead aligns with the shell's traffic-lights corner cutout. Standalone,
@@ -1885,7 +1889,15 @@ window.addEventListener('message',ev=>{if(ev.source!==window.parent)return;const
   return;
  }
 });
-window.addEventListener('pagehide',()=>{if(propertyTake)finishPropertyTake();recorder.stop();lastLibraryWrite=0;void flushDraft();});
+// lane-3 E17/E19: quit flushes the draft (with its Library copy) and, once nothing is pending, marks the session closed cleanly.
+// beforeunload can be cancelled by the page's own prompt, so only pagehide (the page is going away) may mark the exit clean.
+function quitDraft(markClean:boolean){lastLibraryWrite=0;void draftSchedule.flushNow('quit').then(()=>{if(markClean&&draftSchedule.pending()===0){try{markSessionClosed(localStorage,new Date());}catch{/* An unavailable store leaves the mark open: the next start treats it as unclean. */}}}).catch(()=>undefined);}
+window.addEventListener('pagehide',()=>{if(propertyTake)finishPropertyTake();recorder.stop();quitDraft(true);});
+window.addEventListener('beforeunload',()=>quitDraft(false));
+// A page restored from the back-forward cache is running again: it is open until its next pagehide.
+window.addEventListener('pageshow',ev=>{if(ev.persisted){try{markSessionOpen(localStorage,new Date());}catch{/* unavailable storage: see readUncleanExit */}}});
+// A rail switch is a context switch: the departing draft is written before the rail changes.
+document.addEventListener('click',ev=>{if((ev.target as Element|null)?.closest?.('[data-rail]'))draftSchedule.flushNow('rail');},true);
 const nativeField=installNativeField(engine,()=>{fieldPaused=false;needsFrame=true;renderAll();});
 // Without a retaining engine there is no native producer to present; the
 // Studio nav offers no dead "Live instrument" entry for it.
@@ -2355,10 +2367,29 @@ function openNativeFileDialog(){
  dialog.onclose=()=>{if(dialog.returnValue!=='save')return;const form=dialog.querySelector('form')!;void nativeWorkspace?.saveFile((form.elements.namedItem('folder') as HTMLInputElement).value,(form.elements.namedItem('name') as HTMLInputElement).value).then(ok=>{if(ok)toast(nativeState?.text||'Saved to a Central file.',6000);});};
  dialog.showModal();
 }
+/** lane-3 E19: the boot choice between the draft and the saved copy. Both timestamps and the revision are named. Dismissing it (Escape) keeps both, so nothing is lost. */
+function askRecoveryChoice(draft:Journey,offer:{draftAt:string;savedAt:string}):Promise<RecoveryChoice>{
+ return new Promise<RecoveryChoice>(resolve=>{
+  const dialog=document.createElement('dialog');
+  dialog.className='confirm-dialog recovery-dialog';dialog.setAttribute('aria-labelledby','recovery-title');
+  const now=new Date();
+  dialog.innerHTML=`<p class="eyebrow">THE LAST SESSION DID NOT CLOSE CLEANLY</p><h2 id="recovery-title">Unsaved edits in “${esc(draft.name)}”</h2><p class="intro">The draft has changes that the saved copy does not have. Whichever you choose, both versions are kept.</p><dl class="recovery-basis"><dt>Draft</dt><dd>${esc(offerClock(offer.draftAt,now))}</dd><dt>Saved copy</dt><dd>${esc(offerClock(offer.savedAt,now))}</dd><dt>Revision</dt><dd>Browser copy (no kernel revision)</dd></dl><div class="recovery-choices"><button class="secondary" data-choice="keep-saved">Keep saved version</button><button class="secondary" data-choice="keep-both">Keep both</button><button class="primary" data-choice="restore-draft">Restore draft</button></div>`;
+  dialog.addEventListener('click',ev=>{const button=(ev.target as Element).closest<HTMLButtonElement>('button[data-choice]');if(button)dialog.close(button.dataset.choice);});
+  dialog.addEventListener('cancel',()=>{dialog.returnValue='keep-both';});
+  dialog.addEventListener('close',()=>{const choice=dialog.returnValue as RecoveryChoice;dialog.remove();resolve(choice==='restore-draft'||choice==='keep-saved'||choice==='keep-both'?choice:'keep-both');});
+  document.body.append(dialog);dialog.showModal();
+ });
+}
 async function startWorkspace(){
  let recovered:SessionState|undefined;
  let showEntry=false;
- if(!window.__JOURNEY__&&!qs.has('journey')&&!qsExpression){try{for(const draft of await readDrafts())sessionExpressions.set(draft.id,draft);const id=localStorage.getItem('oi.field-studies.last'),draft=id?await readDraft(id):undefined;if(draft&&(!initial.updatedAt||draft.id!==initial.id||draft.updatedAt>=initial.updatedAt)){store.document=initialiseSceneSaves(initialiseBelts(draft));store.touch();}recovered=validateSession(JSON.parse(localStorage.getItem(SESSION_KEY)??'null'),store.document);showEntry=!startsInTechne;}catch(e){console.warn('Draft recovery unavailable',e);showEntry=!startsInTechne;}}
+ if(!window.__JOURNEY__&&!qs.has('journey')&&!qsExpression){try{for(const draft of await readDrafts())sessionExpressions.set(draft.id,draft);const id=localStorage.getItem('oi.field-studies.last'),draft=id?await readDraft(id):undefined;
+ // lane-3 E19: after an unclean exit, a draft that differs from its saved copy is offered as a choice; a clean exit adopts nothing silently either way.
+ let uncleanExit=false;try{uncleanExit=readUncleanExit(localStorage);markSessionOpen(localStorage,new Date());}catch{/* Unavailable storage: no mark, so no prompt can be compared. */}
+ const saved=draft?readLibrary().find(j=>j.id===draft.id):undefined;
+ const offer=draft&&saved&&!hostedRecovery()?recoveryOffer({draft,saved,uncleanExit}):{offer:false as const,reason:''};
+ if(draft&&saved&&offer.offer){const choice=await askRecoveryChoice(draft,offer);const plan=planRecoveryChoice(choice,draft,saved,new Date());await applyRecoveryPlan(plan,draft);if(plan.removeDraft)sessionExpressions.delete(draft.id);if(plan.copy)sessionExpressions.set(plan.copy.id,plan.copy);store.document=initialiseSceneSaves(initialiseBelts(plan.open));store.touch();}
+ else if(draft&&(!initial.updatedAt||draft.id!==initial.id||draft.updatedAt>=initial.updatedAt)){store.document=initialiseSceneSaves(initialiseBelts(draft));store.touch();}recovered=validateSession(JSON.parse(localStorage.getItem(SESSION_KEY)??'null'),store.document);showEntry=!startsInTechne;}catch(e){console.warn('Draft recovery unavailable',e);showEntry=!startsInTechne;}}
  const linkedScene=deepLinkPending?.address.scene;
  if(recovered&&(linkedScene===undefined||linkedScene===recovered.sceneId)){sceneIndex=store.document.scenes.findIndex(s=>s.id===recovered!.sceneId);selected=recovered.selected;stepIndex=recovered.stepIndex;sceneElapsed=recovered.sceneElapsed;simTime=recovered.simTime;scenePlaying=recovered.scenePlaying??recovered.playing;workingTransport=recovered.workingTransport??STOPPED_TRANSPORT;journeyPlaying=recovered.journeyPlaying;if(recovered.fieldPaused!==undefined)fieldPaused=recovered.fieldPaused;if(qs.has('still'))fieldPaused=true;camera=recovered.camera;}else applySceneView();
  document.body.classList.toggle('oi-host-techne',hostMode==='techne');renderRail();
