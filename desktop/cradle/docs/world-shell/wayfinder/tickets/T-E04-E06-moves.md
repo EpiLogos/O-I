@@ -21,9 +21,20 @@ roll two). Split of a slipped scene cuts at t + entryOffset (builder fix).
 Scripted: scene-moves 13; field-studies 517 pass / 0 fail; build + tsc clean.
 Unverified: the gestures, marks and readouts in the native app.
 
-**E06b (claimable):** the live sequence clock — `expressions-app/src/engine/fieldModel.ts:334`
+**E06b + E06c (landed `339211edd`, `382b458b6`, 13 Oct 2026):** the live sequence clock — `expressions-app/src/engine/fieldModel.ts:334`
 (`resolveSequence`, consumed at `entityPose.ts:31` with the engine's simTime)
 honours the presented scene's `entryOffset`, so a slipped scene's entity
 motion starts at its offset like its tracks; and any trim/split that
 shortens a scene below its offset clamps `entryOffset` into [0, duration)
 (today `validateJourney` admits [0, 3600]).
+
+Landed: trim, roll (both sides) and split's left half clamp an offset at or
+past the new length to duration − 1 ms (builder; slip-clock 6/6). The engine
+leg (lead): `toRenderConfig` (`nativeBridge.ts`) carries the offset as
+`sequenceOffsetS`, render only and never exported; `PointCloudField` adds it
+where entity sequences resolve. Ruling: the shift rides the session clock —
+re-anchoring entities to scene entry would change every existing scene's
+motion. `validateJourney` keeps accepting saved offsets up to 3600 s (a
+tightening would refuse documents that load today). Scripted: slip-clock 7/7,
+field-studies suite green, app build clean. Unverified (native pass): a
+slipped scene's entity motion.
