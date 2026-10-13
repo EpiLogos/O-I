@@ -14,7 +14,8 @@ import {NATIVE_BINDINGS,WORLD_SCALE} from './nativeParameters';
 import {basis,stageCentre,stageScale} from './camera';
 import type {EngineFrame,FieldEngineAdapter,EngineCommand} from './engine';
 import {EntitySoundBank,activeFromFocus} from './native-field/entitySound';
-import {DIP_AT_DEFAULT,transitionKindOf,type TransitionSpec} from './transitions';
+import {DIP_AT_DEFAULT,transitionKindOf,paintedOverlayActive,transitionColourOf,type TransitionSpec} from './transitions';
+import type {TransitionOverlay} from '../../src/engine/transitionPass';
 
 const mix=(a:number,b:number,t:number)=>a+(b-a)*t;
 function color(a:string,b:string,t:number){return '#'+new Color(a).lerp(new Color(b),t).getHexString();}
@@ -32,6 +33,9 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
  private from:PointCloudConfig|null=null;private transitionStart=0;private duration=0;
  /** E11: the seam's transition into the current scene. Absent = crossfade (the config blend), byte-identical. */
  private seam:TransitionSpec|undefined;
+ /** E11b: the painted overlay this frame draws through the transition pass, and whether a wipe must hold the outgoing frame
+  * before the new scene reaches the GPU. */
+ private overlay:TransitionOverlay|null=null;private holdDue=false;
  private evaluated:PointCloudConfig|null=null;private applied:PointCloudConfig|null=null;private sources=new Map<string,string>();private sourceStatus:Record<string,string>={};
  private nativeDomain=false;
  /** Per-object sound voices for the present entities (authored `sound`). */
@@ -57,14 +61,20 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
   const sig=frame.authoringRevision===undefined?JSON.stringify(renderScene):frame.scene.id+':'+frame.authoringRevision+':'+(frame.liveRevision??0);
   if(sig!==this.signature){
    const config=toRenderConfig(frame.scene);
-   if(this.engine&&this.sceneId!==frame.scene.id){this.seam=frame.scene.transitionSpec;this.duration=frame.delta>0&&transitionKindOf(this.seam)!=='cut'?frame.scene.transition:0;this.from=this.duration>0?this.evaluated:null;this.transitionStart=this.engine.inspectState().simTime;}
+   if(this.engine&&this.sceneId!==frame.scene.id){this.seam=frame.scene.transitionSpec;this.duration=frame.delta>0&&transitionKindOf(this.seam)!=='cut'?frame.scene.transition:0;this.from=this.duration>0?this.evaluated:null;this.holdDue=this.from!==null&&transitionKindOf(this.seam)==='wipe';this.transitionStart=this.engine.inspectState().simTime;}
    this.target=config;this.signature=sig;this.sceneId=frame.scene.id;
   }
   const target=this.target!;
-  if(!this.from||this.duration<=0)return target;
+  if(!this.from||this.duration<=0){this.overlay=null;return target;}
   const time=this.engine?.inspectState().simTime??0;
   const fraction=Math.max(0,Math.min(1,(time-this.transitionStart)/this.duration));
-  if(fraction>=1){this.from=null;return target;}
+  if(fraction>=1){this.from=null;this.overlay=null;return target;}
+  // E11b: a painted kind draws through the transition pass. A wipe's live side is the incoming scene itself, so it takes the
+  // target without a particle blend; its held side is the outgoing frame captured at the start. A dip's colour is laid over
+  // the frame by the pass at the colour point, so the background ramp below stays only to agree with the frame's own ground.
+  const spec=this.seam,painted=!!spec&&paintedOverlayActive(spec,fraction);
+  const paint=(ground:string|undefined):TransitionOverlay|null=>painted?{spec:spec!,fraction,colour:transitionColourOf(target.backgroundColor),ground:transitionColourOf(ground)}:null;
+  if(transitionKindOf(spec)==='wipe'){this.overlay=paint(target.backgroundColor);return target;}
   const t=fraction*fraction*(3-2*fraction),a=this.from;
   // Target ownership changes once. GPU state is never cross-faded or reseeded.
   // Shared identities keep their actual places as transforms interpolate.
@@ -76,11 +86,12 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
   })};
   for(const key of Object.keys(cfg.fluid) as (keyof typeof cfg.fluid)[])if(typeof cfg.fluid[key]==='number'&&typeof a.fluid[key]==='number')(cfg.fluid as any)[key]=mix(a.fluid[key]!,cfg.fluid[key]!,t);
   for(const key of MATERIAL_KEYS)if(cfg.material&&typeof a.material?.[key]==='number')cfg.material[key]=mix(a.material[key]!,target.material?.[key]??a.material[key]!,t);
-  // E11: a dip to colour reaches the incoming scene's own background at its point; the config blend has no mask, so a wipe
-  // and the particle state still blend as the crossfade does here (the native compositor is not in this path).
+  // E11: a dip to colour reaches the incoming scene's own background at its point. The pass lays the colour over the frame
+  // itself (E11b); this ramp keeps the field's ground in step with it.
   cfg.backgroundColor=color(a.backgroundColor??'#f4f2eb',target.backgroundColor??'#f4f2eb',transitionKindOf(this.seam)==='dip-to-colour'?Math.min(1,fraction/(this.seam?.at??DIP_AT_DEFAULT)):t);
   const oldPalette=a.color?.customPaletteColors??[a.color!.primaryColor],palette=target.color?.customPaletteColors??[target.color!.primaryColor];
   cfg.color.customPaletteColors=palette.map((c,i)=>color(oldPalette[Math.min(i,oldPalette.length-1)],c,t));
+  this.overlay=paint(cfg.backgroundColor);
   return cfg;
  }
  needsRender(){return this.dirty;}
@@ -88,9 +99,11 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
   this.dirty=false;
   if(this.contextLost)throw new Error('GPU context was lost. Your expression is retained. Restore the field explicitly; its physical state must be reseeded.');
   const config=this.nativeConfig(this.configuration(frame));
+  // E11b: a wipe holds the outgoing frame, captured before the new configuration reaches the GPU.
+  if(this.holdDue){this.holdDue=false;this.engine?.captureTransitionHold(transitionColourOf(this.from?.backgroundColor));}
   if(!this.engine){this.engine=new PointCloudField(this.canvas,config,true);this.contextOwner=this.engine;this.connections=new ExpressionConnectionLayer(this.engine);this.connectionRows=undefined;this.selectedConnection=undefined;this.seedRecoveredSources=true;}
   else if(config!==this.applied)this.engine.replaceConfig(config);
-  this.engine.setForceEmitterProjection(frame.forceEmitterProjection??null);this.engine.setLocalizedResonanceProjection(frame.localizedResonanceProjection??null);this.engine.setFormationGeometryProjection(frame.formationGeometryProjection??null);
+  this.engine.setTransitionOverlay(this.overlay);this.engine.setForceEmitterProjection(frame.forceEmitterProjection??null);this.engine.setLocalizedResonanceProjection(frame.localizedResonanceProjection??null);this.engine.setFormationGeometryProjection(frame.formationGeometryProjection??null);
   if(config!==this.applied){this.syncSources(frame.scene);this.soundScene=frame.scene.entities.some(e=>e.sound?.enabled)?frame.scene:null;}this.applied=config;
   if(frame.connections!==this.connectionRows||frame.selectedConnection!==this.selectedConnection){
    this.connectionRows=frame.connections;this.selectedConnection=frame.selectedConnection;

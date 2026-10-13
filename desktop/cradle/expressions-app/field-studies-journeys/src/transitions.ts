@@ -114,3 +114,53 @@ export function writeSeamTransition(scenes:Array<{id:string;transition:number;tr
  if(spec)s.transitionSpec=JSON.parse(JSON.stringify(spec));else delete s.transitionSpec;
  s.transition=seconds;
 }
+
+/** E11b, pure: the production compositor's seam. Only the painted kinds (dip to colour, wipe) need a compositing pass;
+ * cut and crossfade draw directly, exactly as before. */
+export function isPaintedKind(kind:TransitionKind):boolean{return kind==='dip-to-colour'||kind==='wipe';}
+
+/** True from a painted transition's start up to its end. The first frame (fraction 0) is in force, so a wipe shows the held
+ * outgoing frame from the outset; for any other kind, or outside the transition, the frame draws directly. */
+export function paintedOverlayActive(spec:TransitionSpec|undefined|null,fraction:number):boolean{
+ return !!spec&&isPaintedKind(spec.kind)&&fraction>=0&&fraction<1;
+}
+
+/** The pass parameters for a painted transition at a fraction, on a target of the given pixel size. `colourW` is the share
+ * of the colour laid over the live frame (dipWeights). A wipe's hold rectangle is in GL framebuffer coordinates (origin
+ * bottom-left), the space a fragment reads from gl_FragCoord. Until the outgoing frame is held a wipe has nothing to hold,
+ * so it draws the live frame everywhere rather than inventing one. */
+export interface PaintedPassParams{colourW:number;useHold:boolean;holdRect:[number,number,number,number]}
+export function paintedPassParams(spec:TransitionSpec,fraction:number,width:number,height:number,holdReady:boolean):PaintedPassParams{
+ const f=clamp01(fraction),empty:[number,number,number,number]=[0,0,0,0];
+ if(spec.kind==='dip-to-colour')return {colourW:dipWeights(f,spec.at).colour,useHold:false,holdRect:empty};
+ if(spec.kind==='wipe'){
+  if(!holdReady)return {colourW:0,useHold:false,holdRect:empty};
+  const r=wipeHoldRect(spec.direction??'left',f,width,height);
+  return {colourW:0,useHold:true,holdRect:[r.x,height-(r.y+r.height),r.width,r.height]};
+ }
+ return {colourW:0,useHold:false,holdRect:empty};
+}
+
+/** A #rgb or #rrggbb colour as sRGB unit components. The division is exact to the 8-bit channel, so a colour written
+ * through the pass reads back as the same bytes the field's background was authored with. */
+export function srgbUnit(hex:string):[number,number,number]{
+ const m=/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(hex.trim());
+ if(!m)throw new Error(`A transition colour is a #rgb or #rrggbb hex value, not ${JSON.stringify(String(hex).slice(0,24))}.`);
+ const digits=m[1].length===3?[...m[1]].map(c=>c+c).join(''):m[1],n=parseInt(digits,16);
+ return [((n>>16)&255)/255,((n>>8)&255)/255,(n&255)/255];
+}
+
+/** What a compositing target needs this frame: nothing, a fresh target, a resize (which drops its content, so a held frame
+ * must be captured again), or release when the transition has ended. */
+export type RenderTargetAction='none'|'allocate'|'resize'|'release';
+export function renderTargetAction(current:{width:number;height:number}|null,needed:{width:number;height:number}|null):RenderTargetAction{
+ if(!needed)return current?'release':'none';
+ if(!current)return 'allocate';
+ return current.width===needed.width&&current.height===needed.height?'none':'resize';
+}
+
+/** The colour a dip reaches: the incoming field's background when it is a hex value the pass can write exactly, else the
+ * paper colour the field already falls back to. A dip never throws inside the render loop. */
+export function transitionColourOf(background:string|undefined|null):string{
+ return background&&/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(background.trim())?background.trim():'#f4f2eb';
+}
