@@ -8,6 +8,14 @@ reader; this ticket threads it through.
 
 ## The chain (each step drops the selector today)
 
+0. `vendor/research-canvas/packages/desktop-api/src/techneTransport.ts:135`
+   `facetQualification` reads `temporal_source_ref` / `temporal_uncertainty`
+   off the subject→anchor relationship onto the anchor the Timeline draws —
+   it does not read `temporal_provenance_selector`. Read it there (verbatim,
+   through `isLocatableSelector`) so the Timeline item that `onOpenNode`
+   hands to `researchInstruments.tsx:1169` carries it. Vendored change:
+   PROVENANCE `adapted_sha256` + reason suffix.
+
 1. `expressions-app/field-studies-journeys/src/researchInstruments.tsx` →
    `host.inspectSubject(ref,{node,relationField})`: add `anchor` (the
    `LocatableSelector` from `evidenceOpenPlan`) to the context.
