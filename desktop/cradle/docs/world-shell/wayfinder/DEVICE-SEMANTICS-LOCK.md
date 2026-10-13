@@ -173,7 +173,7 @@ VIEWTIP, DVN, BCATS, CTABS/WID, deviceDetail/formDevice/liveDetail, TPM;
 | Chain devices | note devices before the torus (scale mapping · exact-ratio tuning · sky modulation); effects after (filters, dynamics, delays, reverbs; envelopes, LFOs, racks, macros) — the Live corpus's capacities | effect faces built over `live-dynamics` (`DevicePanel`); re-presented as the instrument's chain, not a catalogue (`T-LIVE-TORUS-INSTRUMENT`); note devices `T-LIVE-MODE-SCALES` |
 | Ported generators | Operator, Wavetable, Drift, Drum Rack faces (`panels/devices-pro`, `devices-b2`) | built; leave the exposed surface only as their capacities are carried by the torus or its chain (`T-LIVE-TORUS-INSTRUMENT`) — never removed before |
 | Keyboard | the Jankó surface — the torus unwound; piano layout as alternative | to build (`T-LIVE-JANKO-DEVICE`; placement from QL-MEF packet K) |
-| Detail | Clip (mode-aware piano roll) \| Device (the instrument's chain) | piano roll built; mode-awareness `T-LIVE-MODE-SCALES` |
+| Detail | Clip (mode-aware piano roll) \| Device (the instrument's chain) | to build: no pitch roll or clip-note reading exists yet (the Expressions scene roll is a glyph-step editor); fold/highlight ready in `live/modes.ts` (`T-LIVE-MODE-SCALES`) |
 | Transport | key/root/scale = the mode in force (root, mode, tuning); the rest Live's meanings, read to the instrument | built (`modeGrammar.ts`, re-read 13 Oct) |
 | MIDI | in/out, key and MIDI mapping, the low-latency playing path | to build (`T-LIVE-MIDI`) |
 | Destination | joins Expressions' audio+video timeline | owner-timed (`tickets/T-LIVE-INTO-EXPRESSIONS-joined-timeline.md`) |
