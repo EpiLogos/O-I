@@ -29,7 +29,7 @@ import {CanvasNavigationOverview} from './canvasNavigationOverview';
 import {CanvasFindOverlay} from './canvasFindOverlay';
 import {canvasFindTargets,resolveCanvasFindTarget,canvasFindCamera,type CanvasFindTarget} from './canvasFind';
 import type {NavigationMinimapController} from '../../../src/shared/NavigationMinimap';
-import {fitViewport,zoomTo,keepGuidedAxes,snapDraggedBox,guideSegments,ZOOM_STEP,type Box,type GuideLine} from '../../vendor/research-canvas/packages/canvas/src/canvas/navigationGeometry';
+import {fitViewport,zoomTo,keepGuidedAxes,snapDraggedBox,guideSegments,CANVAS_ZOOM_LIMITS,ZOOM_STEP,type Box,type GuideLine} from '../../vendor/research-canvas/packages/canvas/src/canvas/navigationGeometry';
 import {CanvasGuides} from '../../vendor/research-canvas/packages/canvas/src/canvas/CanvasGuides';
 import {ZoomReadout} from '../../vendor/research-canvas/packages/canvas/src/canvas/ZoomReadout';
 
@@ -280,16 +280,16 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
  };
  window.addEventListener('keydown',onWindowKeydown);
  // A6 — zoom and fit. Every camera move goes through the path the Canvas
- // already has (flyToNode with a viewport, so xyflow's own easing), never a
- // second transform. The limits mirror xyflow's defaults: the vendored
- // ReactFlow sets no minZoom or maxZoom of its own.
- const ZOOM_LIMITS={minZoom:0.5,maxZoom:2};
+ // already has (flyToNode with a viewport, so xyflow's own easing, and the
+ // duration is cameraDuration, zero under reduced motion), never a second
+ // transform. The limits are the vendored Canvas's own, passed to ReactFlow.
+ const ZOOM_LIMITS=CANVAS_ZOOM_LIMITS;
  let navigation:{canvas:InstrumentCanvas;selection:Set<string>}|null=null;
  const paneSize=()=>{const rect=mount.querySelector('.research-canvas')?.getBoundingClientRect();return {width:rect?.width??0,height:rect?.height??0};};
  const currentViewport=()=>captureCanvas?.()??{x:0,y:0,zoom:1};
  const cameraTo=(viewport:{x:number;y:number;zoom:number})=>{flyToNode?.('',viewport);};
  const zoomView=(zoom:number)=>{cameraTo(zoomTo(currentViewport(),zoom,paneSize(),ZOOM_LIMITS));};
- const fitBoxes=(boxes:Box[])=>{const fit=fitViewport(boxes,paneSize(),ZOOM_LIMITS);if(!fit)return;cameraTo(fit.viewport);if(fit.clamped)message('Fit stopped at the zoom limit; some cards are off screen.');};
+ const fitBoxes=(boxes:Box[])=>{const fit=fitViewport(boxes,paneSize(),ZOOM_LIMITS);if(!fit)return;cameraTo(fit.viewport);if(fit.clamped&&fit.viewport.zoom===ZOOM_LIMITS.minZoom)message('Fit stopped at the zoom limit; some cards are off screen.');};
  const boxOfNode=(node:{position:{x:number;y:number};size?:{width:number;height:number}}):Box=>({x:node.position.x,y:node.position.y,width:node.size?.width??200,height:node.size?.height??140});
  // The zoom percentage fades in its own small root, so a running zoom never
  // re-renders the canvas tree.
@@ -548,7 +548,7 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
    {editable&&(material?.strokes??[]).map((stroke,i)=><button key={stroke.id} onClick={()=>act({type:'annotation-remove',id:stroke.id})}>Remove annotation {i+1}</button>)}
   </div>;
   return <>{createPortal(controls,host.tools)}{host.canvasHome&&createPortal(canvasStudio,host.canvasHome)}{inspecting&&createPortal(inspector,host.inspector)}<div className={`research-canvas ${editable?'research-canvas-native':'research-canvas-reading'}`} data-zoom={state.zoomLevel}>
-   <CanvasView toolbarContainer={host.tools} canvasKey={canvas.key} initialViewport={state.canvas??material?.views.canvas} nodes={previewNodes} edges={previewEdges}
+   <CanvasView toolbarContainer={host.tools} hostZoomControls canvasKey={canvas.key} initialViewport={state.canvas??material?.views.canvas} nodes={previewNodes} edges={previewEdges}
     selectedNodeId={state.selectedNode} selectedEdgeId={state.selectedEdge}
     selectedNodeIds={selection.size?[...selection]:undefined}
     selectionOnDrag={editable&&!!state.lassoOn}

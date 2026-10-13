@@ -1,13 +1,15 @@
 /**
  * Canvas navigation geometry — lane-1 A1 (alignment guides) and A6 (fit and
- * zoom). Pure: no React, no DOM, no store. Presentation only: nothing here
- * can reach a document, a relation or a native write.
+ * zoom). Geometry has no React and no store. The one DOM read is
+ * `prefersReducedMotion`, guarded for absent matchMedia so node tests run.
+ * Presentation only: nothing here can reach a document, a relation or a
+ * native write.
  *
  * Node-to-node snapping is not implemented here. It is the Technē canvas
  * model's `snapPosition` (`src/techne/m0m5/canvas/interactions.ts`, imported
  * read-only). This module adapts top-left node boxes to that model's centre
- * points, owns the screen-space threshold, and turns guides into viewport
- * segments.
+ * points and edge sizes, owns the screen-space threshold, and turns guides
+ * into viewport segments.
  *
  * Coordinates are flow units (the canvas's node space). The viewport is the
  * xyflow transform: screen = flow * zoom + offset, measured from the pane's
@@ -31,6 +33,22 @@ export const SNAP_THRESHOLD_PX = 8;
 export const ZOOM_STEP = 1.2;
 /** Two centres closer than this (flow units) count as one guide line. */
 export const GUIDE_TOLERANCE = 0.5;
+/** The one zoom range the vendored Canvas and its hosts share. The floor is
+ * low enough that fit-all of a 50-card scatter fits at 390x844 (needs ~0.073);
+ * the ceiling is xyflow's own default. */
+export const CANVAS_ZOOM_LIMITS:ZoomLimits={minZoom:0.05,maxZoom:2};
+
+/** True when the user asks for reduced motion. Absent matchMedia (node tests,
+ * old hosts) reads as no preference. */
+export function prefersReducedMotion():boolean{
+ const query=(globalThis as {matchMedia?:(q:string)=>{matches:boolean}}).matchMedia;
+ return typeof query==='function'&&!!query('(prefers-reduced-motion: reduce)').matches;
+}
+
+/** Every camera move's transition duration in ms: 0 under reduced motion. */
+export function cameraDuration(ms:number):number{
+ return prefersReducedMotion()?0:ms;
+}
 
 export function clampZoom(zoom:number,limits:ZoomLimits):number{
  return Math.min(limits.maxZoom,Math.max(limits.minZoom,zoom));
@@ -89,9 +107,10 @@ export interface SnapOutcome {
  guides:GuideLine[];
 }
 
-/** Align a dragged card to the centres of the other cards, within 8 screen
- * px (÷ zoom). Delegates the choice to the Technē model's snapPosition; this
- * function only converts top-left boxes to centres and back. */
+/** Align a dragged card to the edges and centres of the other cards, within 8
+ * screen px (÷ zoom). Delegates the choice to the Technē model's snapPosition;
+ * this function converts top-left boxes to centres and back, and passes the
+ * sizes so edges align too. */
 export function snapDraggedBox(
  dragged:Box,
  others:readonly {ref:string;box:Box}[],
@@ -100,8 +119,10 @@ export function snapDraggedBox(
 ):SnapOutcome{
  const centre=(box:Box)=>({x:box.x+box.width/2,y:box.y+box.height/2});
  const positioned:PositionedNode[]=others.map(other=>({ref:other.ref,...centre(other.box),radius:0}));
+ const sizes:Record<string,{width:number;height:number}>={};
+ for(const other of others)sizes[other.ref]={width:other.box.width,height:other.box.height};
  const threshold=SNAP_THRESHOLD_PX/(zoom>0?zoom:1);
- const outcome=snapPosition(centre(dragged),positioned,draggedRef,threshold);
+ const outcome=snapPosition(centre(dragged),positioned,draggedRef,threshold,{boxes:{dragged:{width:dragged.width,height:dragged.height},others:sizes}});
  const topLeft={x:outcome.position.x-dragged.width/2,y:outcome.position.y-dragged.height/2};
  return {topLeft,box:{...dragged,...topLeft},guides:outcome.guides.map(guide=>({axis:guide.axis,at:guide.at}))};
 }
@@ -115,9 +136,9 @@ export function keepGuidedAxes(aligned:SnapOutcome,gridded:{x:number;y:number}):
  };
 }
 
-/** Each guide as a viewport segment spanning the boxes whose centre lies on
- * it. Guides are presentation only: computed from the live viewport on every
- * render, never stored in the document. */
+/** Each guide as a viewport segment spanning the boxes with an edge or centre
+ * on it. Guides are presentation only: computed from the live viewport on
+ * every render, never stored in the document. */
 export function guideSegments(
  guides:readonly GuideLine[],
  boxes:readonly Box[],
@@ -126,8 +147,10 @@ export function guideSegments(
  const segments:GuideSegment[]=[];
  for(const guide of guides){
   const members=boxes.filter(box=>{
-   const centre=guide.axis==='x'?box.x+box.width/2:box.y+box.height/2;
-   return Math.abs(centre-guide.at)<=GUIDE_TOLERANCE;
+   const lines=guide.axis==='x'
+    ?[box.x,box.x+box.width/2,box.x+box.width]
+    :[box.y,box.y+box.height/2,box.y+box.height];
+   return lines.some(line=>Math.abs(line-guide.at)<=GUIDE_TOLERANCE);
   });
   if(!members.length)continue;
   if(guide.axis==='x'){
