@@ -247,7 +247,7 @@
     },
     "packages/desktop-api/src/techneBundle.ts": {
       "upstream_sha256": "7ff3382b2331031cd4294595c660adbac2964330c9de41e807a97fa93e1e4b94",
-      "adapted_sha256": "87339fb651050451bd4333c18316bc666ed934a629f44799b0535990fa65211e",
+      "adapted_sha256": "0780011fd2956f52e948928b00018d36e84154e3fa23eb99ca3d77ba58353cec",
       "reason": "Native canonical PlaceFacet allows absent names. Preserve empty names; only the host presentation chooses an occurrence title or neutral Location label. Preserve exact native relation identity, standing, evidence refs and disclosed temporal qualification in transient relationship properties; no inferred classification or provider-authority substitution. | lane-2 T1: bridge carries every precision rung verbatim | lane-2 T8: periodisation bands"
     },
     "packages/desktop-api/src/techneTransport.ts": {

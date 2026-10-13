@@ -90,7 +90,7 @@ export function bandsFromReading(records: readonly TimelineBandRecord[]): BandRe
       omit("no end disclosed: the reading gives this period no end");
       continue;
     }
-    if (label === null) {
+    if (label === null || label.trim() === "") {
       omit("no label disclosed: the range alone is not drawn as a band");
       continue;
     }

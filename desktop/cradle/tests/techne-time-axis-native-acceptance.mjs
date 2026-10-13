@@ -90,7 +90,7 @@ export async function runNativeTimeAxisAcceptance(source_sha256 = {}) {
           const valid = (reading.temporal ?? []).filter(facet => facet.kind === 'valid');
           assert.equal(projection.bands.length, valid.length);
           for (const [at, facet] of valid.entries()) {
-            assert.equal(projection.bands[at].label_verbatim, null, 'There is no authored period-label carrier in the current owner schema');
+            assert.equal(projection.bands[at].label_verbatim, null, 'This validity facet names no period label');
             assert.equal(projection.bands[at].earliest, facet.interval ? facet.interval.from ?? null : facet.instant ?? null);
             assert.equal(projection.bands[at].latest, facet.interval ? facet.interval.to ?? null : facet.instant ?? null);
           }

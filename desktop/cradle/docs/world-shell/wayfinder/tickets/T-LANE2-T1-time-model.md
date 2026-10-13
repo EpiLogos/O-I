@@ -123,3 +123,20 @@ the wiki writer keeps `label` (`kernel/src/construction.rs:75-90,140-150` and
 its writer); `phasesFromFacets` (`relations.ts:409-420`) carries the label to
 the phase view; an empty label reads as absent (`bands.ts:83`); stale
 comments `techneBundle.ts:153-155`, `tests/techne-time-axis-native-acceptance.mjs:93`.
+
+## Resolution — T8c
+
+**Landed (13 Oct 2026; builder haiku).** "Period name · optional" beside
+"Add time range" (`ParticipationFacts.tsx`, `periodNamed`: verbatim write,
+empty removes the key); `phasesFromFacets` carries the label (blank → null);
+`bands.ts` lists an empty/blank label as absent; stale comments corrected;
+PROVENANCE refreshed. Scripted: techne suites 28/28 (CI form); timeline-bands
+7/7; verify-source green; tsc 0 (cradle + expressions-app).
+
+**Cross-repo (lead, same work):** the native writer is ai-kit's
+`TemporalFacet` (`Work/ai-kit/crates/aikit-core/src/knowledge_facets.rs:85`,
+`deny_unknown_fields`, no `label`) — a named period would be refused at save
+until ai-kit admits an optional bounded `label`; done in ai-kit by the lead
+(see the ai-kit PR). Pre-existing, noted: `tests/participation-facts-native.test.mjs`
+imports `formatYearLabel` from ticks.ts, deleted by T1b — fix with the next
+lane-2 ticket.

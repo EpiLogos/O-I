@@ -402,6 +402,8 @@ export interface PhaseBand {
   toMs: number | null;
   uncertainty: string | null;
   source_ref: string | null;
+  /** The source's own period name, verbatim; null when absent or blank (T8c). */
+  label: string | null;
 }
 
 /** The validity facets of a reading, as honest phase bands (open-ended stays
@@ -423,6 +425,7 @@ export function phasesFromFacets(temporal: readonly TechneTemporalFacet[]): Phas
         toMs: span.toMs,
         uncertainty: facet.uncertainty ?? null,
         source_ref: facet.source_ref ?? null,
+        label: facet.label?.trim() ? facet.label : null,
       };
     });
 }
