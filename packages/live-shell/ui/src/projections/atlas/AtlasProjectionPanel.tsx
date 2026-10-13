@@ -162,6 +162,20 @@ export async function attachAtlas(options: AtlasAttachOptions): Promise<AtlasAtt
   if (claimed) throw Error('The Earth projection is already mounted in this session. Its controller keeps window listeners that cannot be retired, so it is not mounted again.')
   if (!scope) throw Error('No workspace is bound for the Earth projection, so its settings have nowhere to live.')
   claimed = true
+  try {
+    return await attachClaimed(options)
+  } catch (error) {
+    // Everything before the controller mounts binds no window listener, so a failure there (an unlisted corpus, a
+    // transient read) releases the claim and a later attempt may mount. A failure inside mountAtlas keeps it.
+    if (!(error instanceof AtlasMountFailure)) claimed = false
+    throw error instanceof AtlasMountFailure ? error.cause : error
+  }
+}
+
+/** A failure raised once the controller has begun mounting (its listeners may be bound). */
+class AtlasMountFailure extends Error {}
+
+async function attachClaimed(options: AtlasAttachOptions): Promise<AtlasAttachment> {
   const {element, transport, follow} = options
   const fixedView: AtlasView = options.view ?? 'earth'
   const target = (): AtlasView => (follow ? desiredView : fixedView)
@@ -191,8 +205,16 @@ export async function attachAtlas(options: AtlasAttachOptions): Promise<AtlasAtt
     import('./provider/archetypalEarthProvider'),
     import('./mount'),
   ])
-  registerCorpusProvider(archetypalEarthProvider(transport), {asDefault: true})
-  const mounted: AtlasHandle = await mountAtlas({globe, app, provider: ARCHETYPAL_EARTH_PROVIDER_ID})
+  // The corpus is read before the controller mounts, so an unavailable bundle fails while nothing is bound yet.
+  const provider = archetypalEarthProvider(transport)
+  const bundle = await provider.load()
+  registerCorpusProvider({...provider, load: async () => bundle}, {asDefault: true})
+  let mounted: AtlasHandle
+  try {
+    mounted = await mountAtlas({globe, app, provider: ARCHETYPAL_EARTH_PROVIDER_ID})
+  } catch (cause) {
+    throw new AtlasMountFailure('the Earth controller did not mount', {cause})
+  }
 
   let visible = true
   let retired = false

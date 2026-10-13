@@ -135,7 +135,7 @@ test('a revision the owner has moved past is refused by name, and nothing is wri
  assert.equal(work.state.pending,undefined,'the refused intent is cleared, not replayed');
 });
 
-test('a Save with nothing to submit records an empty checkpoint, and undoing it submits nothing', async()=>{
+test('a Save with nothing to submit records nothing, and undoing past it submits nothing', async()=>{
  const {kernel,work,store}=await opened();
  store.change('Rename expression',d=>{d.name='Renamed';});
  let anchor=store.kernelSaveAnchor();
@@ -146,12 +146,16 @@ test('a Save with nothing to submit records an empty checkpoint, and undoing it 
  assert.deepEqual(unchanged.checkpoint.changes,[]);
  assert.equal(store.attachKernelCheckpoint(anchor,unchanged.checkpoint),true);
  const editsBefore=kernel.state.edits.length;
- assert.deepEqual(store.undoPlan(),{label:'Look only',kernel:{changes:[]}});
- assert.equal(store.undoAccepted(),true);
+ // Review fix: the no-op Save records nothing, so the step above the kernel head undoes locally...
+ assert.deepEqual(store.undoPlan(),{label:'Look only',kernel:null});
+ assert.equal(store.undo(),true);
  assert.equal(kernel.state.edits.length,editsBefore,'no owner request');
+ // ...and the earlier Save's real compensation is still there.
+ const earlier=store.undoPlan();
+ assert.ok(earlier.kernel&&'changes' in earlier.kernel&&earlier.kernel.changes.length>0);
 });
 
-test('a Save whose step was undone while the owner answered records nothing, and its redo is refused by name', async()=>{
+test('a Save whose step was undone while the owner answered records nothing, and its redo is local', async()=>{
  const {work,store}=await opened();
  store.change('Rename expression',d=>{d.name='Renamed';});
  const anchor=store.kernelSaveAnchor();
@@ -159,7 +163,9 @@ test('a Save whose step was undone while the owner answered records nothing, and
  store.undo();
  assert.equal(store.attachKernelCheckpoint(anchor,saved.checkpoint),false);
  assert.equal(store.undoStack.length,0);
- assert.equal(store.redoPlan().kernel.refused,'unrecorded');
+ // Review fix: the store never recorded a kernel edit for this step, so its redo is local (it lands the document on what
+ // the owner already holds); it is not refused and does not block the redo stack.
+ assert.equal(store.redoPlan().kernel,null);
 });
 
 test('committing through commitRecorded submits exactly what commit submits', async()=>{
@@ -174,3 +180,27 @@ test('committing through commitRecorded submits exactly what commit submits', as
  assert.equal(digest(saved.checkpoint.after),digest(docA));
  assert.equal(digest(saved.checkpoint.before),digest(kernelDocument()));
 });
+
+// Review fixes (13 Oct 2026). A redo of a step the kernel never held is local; a Save that changed nothing records nothing.
+{
+ const {blankJourney}=await import('../build/model.js');
+ const kdoc=(title,revision)=>({schema:'oi.expression/v1',expression_ref:'e',revision,title,scenes:[{scene_ref:'s',title:'S',entity_refs:[]}],entities:{},relations:{},provenance:[],refinements:[]});
+ test('redo of an unsaved edit on a native expression is local, not refused',()=>{
+  const s=new DocumentStore(blankJourney());s.acknowledge(s.document);
+  s.change('Rename',d=>{d.title='X';});
+  assert.equal(s.undoPlan().kernel,null);assert.ok(s.undo());
+  assert.equal(s.redoPlan().kernel,null,'the kernel never held this step');
+  assert.ok(s.redo());assert.equal(s.document.title,'X');
+  assert.equal(s.undoPlan().kernel,null,'still unsaved after the redo');
+ });
+ test('a Save that changed nothing keeps the earlier Save\'s compensation',()=>{
+  const s=new DocumentStore(blankJourney());s.acknowledge(s.document);
+  s.change('Rename',d=>{d.title='t1';});
+  assert.ok(s.attachKernelCheckpoint(s.kernelSaveAnchor(),{changes:[{change:'rename',title:'t1'}],before:kdoc('t0',1),after:kdoc('t1',2)}));
+  const plan=JSON.stringify(s.undoPlan());assert.notEqual(JSON.parse(plan).kernel.changes.length,0);
+  assert.ok(s.attachKernelCheckpoint(s.kernelSaveAnchor(),{changes:[],before:kdoc('t1',2),after:kdoc('t1',2)}));
+  assert.equal(JSON.stringify(s.undoPlan()),plan,'the no-op Save did not overwrite the real compensation');
+  const empty=new DocumentStore(blankJourney());empty.acknowledge(empty.document);
+  assert.equal(empty.attachKernelCheckpoint(empty.kernelSaveAnchor(),{changes:[],before:kdoc('t1',2),after:kdoc('t1',2)}),true,'a no-op Save on an empty history is not a failure');
+ });
+}

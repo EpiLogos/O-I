@@ -327,3 +327,12 @@ test('the panel names the open route honestly and carries the note verbatim', as
  assert.match(panel,/markerStyleForPrecision\(stop\.precision\)\.drawn/,'an unlocated stop never sits on the line');
  assert.match(panel,/Hierarchy not drawn on the globe/);
 });
+
+// Review fix (13 Oct 2026): a path across the antimeridian goes the short way round on a flat map.
+test('paths across the antimeridian never jump more than 180° between consecutive points', ()=>{
+ const path=api.unwrapLongitudes([[139.7,35.7],[170,40],[-170,42],[-118.2,34.1]]);
+ for(let i=1;i<path.length;i++)assert.ok(Math.abs(path[i][0]-path[i-1][0])<=180,`step ${i} jumps ${path[i][0]-path[i-1][0]}`);
+ assert.deepEqual(path.map(p=>p[1]),[35.7,40,42,34.1]);
+ assert.equal(path.at(-1)[0],-118.2+360,'Los Angeles is reached eastward, past 180');
+ assert.deepEqual(api.unwrapLongitudes([[0,0],[10,1],[20,2]]),[[0,0],[10,1],[20,2]],'a path that never crosses is unchanged');
+});

@@ -99,7 +99,22 @@ export function placeRouteForMap(facets: readonly TechnePlaceFacet[], window?: T
     path.push(...arc.slice(1));
   }
 
-  return { stops, path, note: model.note };
+  return { stops, path: unwrapLongitudes(path), note: model.note };
+}
+
+/** A path MapLibre draws as the short way round: consecutive longitudes never jump more than 180° (a Tokyo → Los Angeles
+ * arc crosses the antimeridian as 140 … 180 … 241, not 140 … −180 … −119, which a flat map would draw across the world). */
+export function unwrapLongitudes(path: readonly LonLat[]): LonLat[] {
+  const out: LonLat[] = [];
+  for (const [lon, lat] of path) {
+    const previous = out.at(-1);
+    if (!previous) { out.push([lon, lat]); continue; }
+    let next = lon;
+    while (next - previous[0] > 180) next -= 360;
+    while (next - previous[0] < -180) next += 360;
+    out.push([next, lat]);
+  }
+  return out;
 }
 
 // ---------------------------------------------------------------------------
@@ -182,7 +197,7 @@ export function placeHierarchy(
       ...base,
       from,
       to,
-      path: greatCircleArc(toLatLng(from), toLatLng(to), HIERARCHY_SEGMENTS),
+      path: unwrapLongitudes(greatCircleArc(toLatLng(from), toLatLng(to), HIERARCHY_SEGMENTS)),
     });
   }
 

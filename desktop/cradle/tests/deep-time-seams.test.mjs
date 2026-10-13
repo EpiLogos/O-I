@@ -234,3 +234,13 @@ test('the static transport still refuses a deep year with a finer precision it d
   assert.equal(view.diagnostics.length, 1);
   assert.match(view.diagnostics[0].message, /invalid validFrom temporal anchor/);
 });
+
+// Review fix (13 Oct 2026): a bare deep year with no stated precision is read at year precision, never coarsened to a
+// "day" the authority refuses (which silently dropped the facet from the timeline).
+test('a bare deep year with no precision stays on the timeline at year precision', async () => {
+  const bundle = seams.bundleFromTechneReadings([readingWith([{kind: 'occurred', facet_ref: 'facet:bare', instant: '-780000'}])]);
+  const transport = seams.createTechneTransport(bundle);
+  const view = await transport.loadTimelineView({workspaceId: bundle.workspaceId, range: {startYear: -790_000, endYear: -770_000}});
+  assert.deepEqual(view.nodes.map((entry) => entry.node.graphNodeId), ['facet:bare']);
+  assert.equal(view.nodes[0].node.temporalPrecision, 'year');
+});

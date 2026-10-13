@@ -662,7 +662,7 @@ export function PsychogeographicMap({
     void readyRenderer.setBasemapPlan(plan).then(() => {
       if (!cancelled) setBasemapFailures(previous => withoutKey(previous, "renderer"));
     }, (cause: unknown) => {
-      if (!cancelled) setBasemapFailures(previous => ({ ...previous, renderer: messageOf(cause) }));
+      if (!cancelled) { const message = messageOf(cause); setBasemapFailures(previous => previous.renderer === message ? previous : { ...previous, renderer: message }); }
     });
     return () => { cancelled = true; };
   }, [plan, readyRenderer]);

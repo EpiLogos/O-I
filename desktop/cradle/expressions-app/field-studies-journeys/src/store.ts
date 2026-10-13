@@ -13,7 +13,9 @@ type Checkpointed=KernelCompensation&{checkpoint?:{before:unknown;after:unknown;
  * returns to. `changes` and `inverse` are the kernel edit the step produced and
  * its compensation (invertEdit), when the caller recorded them with
  * attachKernelEdit or attachKernelCheckpoint; a step without them is undone locally only. */
-export interface HistoryEntry {label:string;snapshot:Journey;changes?:KernelChange[];inverse?:Checkpointed;gesture?:string}
+export interface HistoryEntry {label:string;snapshot:Journey;changes?:KernelChange[];inverse?:Checkpointed;gesture?:string;
+ /** False on a redo entry whose step the kernel never held (undone before any Save reached it): its redo is local. */
+ kernelHeld?:false}
 /** What the next undo or redo asks of the kernel: nothing (local only), one
  * kernel edit to submit first, or a refusal by name. */
 export interface HistoryPlan {label:string;kernel:null|{changes:KernelChange[]}|{refused:string;reason:string}}
@@ -109,6 +111,8 @@ export class DocumentStore {
   * their own: the anchor's edit is the Save's, so they are undone and redone locally.
   * Returns false, and records nothing, when the anchor is no longer where the Save began. */
  attachKernelCheckpoint(anchor:KernelSaveAnchor,checkpoint:KernelCheckpoint):boolean{
+  // A Save that changed nothing records nothing: the step's real compensation (an earlier Save's) stays, and the kernel depth is unchanged.
+  if(checkpoint.changes.length===0)return true;
   if(!anchor.entry||this.undoStack[anchor.length-1]!==anchor.entry)return false;
   const inverse:Checkpointed=Object.assign(invertEdit(checkpoint.before,checkpoint.after),{checkpoint:{before:clone(checkpoint.before),after:clone(checkpoint.after),base:anchor.base}});
   anchor.entry.changes=clone(checkpoint.changes);anchor.entry.inverse=inverse;
@@ -136,14 +140,16 @@ export class DocumentStore {
   * the next diff save. */
  undo(options?:{compensated?:boolean}):boolean{
   this.finish();const entry=this.undoStack.pop();if(!entry)return false;
-  const from=this.undoStack.length+1;this.settleKernel(from,from-1,options?.compensated===true);
-  this.redoStack.push({label:entry.label,snapshot:clone(this.document),changes:entry.changes,inverse:entry.inverse});
+  const from=this.undoStack.length+1;const unheld=this.kernelDepth!==null&&this.kernelDepth<from&&entry.changes===undefined;
+  this.settleKernel(from,from-1,options?.compensated===true);
+  this.redoStack.push({label:entry.label,snapshot:clone(this.document),changes:entry.changes,inverse:entry.inverse,...(unheld?{kernelHeld:false as const}:{})});
   this.document=entry.snapshot;this.touch();return true;
  }
  /** Redo one labelled step; compensated:true means its forward kernel edit was accepted. */
  redo(options?:{compensated?:boolean}):boolean{
   const entry=this.redoStack.pop();if(!entry)return false;
-  const from=this.undoStack.length;this.settleKernel(from,from+1,options?.compensated===true);
+  // A step the kernel never held is redone locally: the kernel stays where it was, below the new head.
+  const from=this.undoStack.length;if(entry.kernelHeld!==false||options?.compensated===true)this.settleKernel(from,from+1,options?.compensated===true);
   this.undoStack.push({label:entry.label,snapshot:clone(this.document),changes:entry.changes,inverse:entry.inverse});
   this.document=entry.snapshot;this.touch();return true;
  }
@@ -159,7 +165,7 @@ export class DocumentStore {
  redoPlan():HistoryPlan|null{
   if(this.transactionOpen)throw new Error('Finish the current gesture before planning a redo.');
   const entry=this.redoStack.at(-1);if(!entry)return null;
-  if(this.kernelDepth!==this.undoStack.length)return{label:entry.label,kernel:null};
+  if(this.kernelDepth!==this.undoStack.length||entry.kernelHeld===false)return{label:entry.label,kernel:null};
   if(!entry.changes)return{label:entry.label,kernel:{refused:'unrecorded',reason:UNRECORDED}};
   return{label:entry.label,kernel:{changes:entry.changes}};
  }

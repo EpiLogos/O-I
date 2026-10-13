@@ -91,7 +91,9 @@ function unitLabel(localMs: number, unitYears: number, precision: TemporalPrecis
     case "century":
     case "decade": {
       const start = Math.floor(c.year / unitYears) * unitYears;
-      if (start < 1) return yearSpan(start, start + unitYears - 1);
+      // A unit that begins before year 0 states its years (BCE has no ordinal convention here). The unit that begins at
+      // year 0 is the first CE century/millennium (its one BCE year aside), as every later unit is named by its start.
+      if (start < 0 || (precision === "decade" && start === 0)) return yearSpan(start, start + unitYears - 1);
       if (precision === "decade") return `${start}s`;
       const index = start / unitYears + 1;
       return precision === "millennium" ? `${ordinal(index)} millennium` : `${ordinal(index)} c.`;
