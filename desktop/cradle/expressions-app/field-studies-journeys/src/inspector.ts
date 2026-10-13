@@ -3,7 +3,8 @@ import {isShared,POINTER_PATHS} from './sharedSettings';
 import {automationEditor} from './automationEditor';
 import {resolvedAutomation,automationLeader} from './automationLinks';
 import {formationSummary} from './workspacePreferences';
-import {Scene,Journey,Entity,SequenceStep} from './model.js';
+import {Scene,Journey,Entity,SequenceStep,SCENE_TRANSITION_MIN,SCENE_TRANSITION_MAX} from './model.js';
+import {seamChooserHTML} from './transitions';
 import {PARAMETERS,Parameter} from './registry.js';
 import {baseValue,nativeBinding,entityTargets,automationTargets,automationTarget,AutomationTarget,entityCycleGroups,pinCycleClockId} from './nativeParameters.js';
 import {CANONICAL_CHAKRAS} from '../../src/engine/chakraSystem';
@@ -90,8 +91,9 @@ export function inspectorHTML(c:InspectorContext){const s=c.scene,e=s.entities.f
  ${heading('Scene settings','Scene '+(c.journey.scenes.indexOf(s)+1))}
  ${text('Scene name','name',s.name,'maxlength="160"')}
  ${area('Character','character',s.character,'maxlength="5000"')}
- <div class="two-col">${numeric('Duration (seconds)','duration',s.duration,1,3600,1)}${numeric('Transition (seconds)','transition',s.transition,0,30,.1)}</div>
+ <div class="two-col">${numeric('Duration (seconds)','duration',s.duration,1,3600,1)}</div>
  <p class="control-note">The scene name belongs to the whole composition. Duration includes transition timing; field, objects, motion and text stay together.</p>
+ ${seamChooserHTML(s,{min:SCENE_TRANSITION_MIN,max:SCENE_TRANSITION_MAX})}
  ${group('Text layers',`
  <div class="text-layer-list">${s.text.map(t=>`<button data-action="select-text" data-id="${t.id}" class="layer-choice ${t.id===(c.textId??s.text[0]?.id)?'active':''}">${icon('text')} ${esc(t.title||'Text block')}${!t.visible?' · hidden':''}</button>`).join('')}</div>
  ${t?`${toggle('Show this text block','text.visible',t.visible)}${text('Small heading','text.kicker',t.kicker,'maxlength="300"')}${text('Title','text.title',t.title,'maxlength="300"')}${text('Italic line','text.italic',t.italic,'maxlength="300"')}${area('Supporting text','text.body',t.body,'maxlength="5000"')}

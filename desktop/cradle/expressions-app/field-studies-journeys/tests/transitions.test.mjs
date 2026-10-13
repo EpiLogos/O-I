@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {fieldStudies,clone,sceneContentDigest,validateJourney} from '../build/model.js';
-import {TRANSITION_KINDS,transitionKindOf,transitionSpecFor,validateTransitionSpec,dipWeights,wipeHoldRect,transitionLabel,seamGlyphHTML,seamChooserHTML} from '../build/transitions.js';
+import {TRANSITION_KINDS,transitionKindOf,transitionSpecFor,validateTransitionSpec,dipWeights,wipeHoldRect,transitionLabel,seamGlyphHTML,seamChooserHTML,paintedOverlayActive,paintedPassParams,srgbUnit,renderTargetAction,transitionColourOf} from '../build/transitions.js';
+import {readFileSync} from 'node:fs';
 
 // Lane-3 E11: typed transitions per seam. The kind and its parameters ride on the Scene beside its duration; absent is
 // crossfade, the default every existing document already has.
@@ -96,4 +97,92 @@ test('the seam glyph and chooser are icons, not words, and the chooser marks the
  assert.doesNotMatch(dip,/data-direction/);
  const plain=seamChooserHTML({id:'s2',name:'Dawn',transition:1.5},{min:0,max:30});
  assert.match(plain,/data-kind="crossfade" aria-pressed="true"/);
+});
+
+// Lane-3 E11b: the production compositor. The GPU pass cannot run under node; these tests pin what the pass is given per
+// fraction (the dip's colour share, the wipe's held rectangle in GL coordinates), the dip's exact byte, the render-target
+// lifecycle, and that the engine's draw paths route through the pass only while a painted overlay is in force.
+
+test('E11b: a painted overlay is in force from a dip or wipe start to its end; cut and crossfade draw directly', ()=>{
+ assert.equal(paintedOverlayActive(undefined,.5),false);
+ assert.equal(paintedOverlayActive({kind:'crossfade'},.5),false);
+ assert.equal(paintedOverlayActive({kind:'cut'},.5),false);
+ assert.equal(paintedOverlayActive({kind:'dip-to-colour'},0),true);
+ assert.equal(paintedOverlayActive({kind:'wipe',direction:'left'},0),true);
+ assert.equal(paintedOverlayActive({kind:'dip-to-colour'},.4),true);
+ assert.equal(paintedOverlayActive({kind:'wipe',direction:'up'},.9),true);
+ assert.equal(paintedOverlayActive({kind:'wipe',direction:'up'},1),false);
+});
+
+test('E11b: the dip reaches the colour exactly at its colour point, and the composited byte is the background byte', ()=>{
+ const spec={kind:'dip-to-colour',at:.5};
+ assert.equal(paintedPassParams(spec,0,1440,900,false).colourW,0);
+ assert.equal(paintedPassParams(spec,.5,1440,900,false).colourW,1);
+ assert.equal(paintedPassParams(spec,1,1440,900,false).colourW,0);
+ assert.equal(paintedPassParams({kind:'dip-to-colour',at:.3},.3,1440,900,false).colourW,1);
+ // CPU mirror of the fragment: premultiplied mix of the live frame toward the colour. At the colour point the live frame
+ // (whatever it holds) contributes nothing, so the channel reads back as the authored background bytes.
+ const colour=srgbUnit('#f4f2eb'),w=paintedPassParams(spec,.5,1440,900,false).colourW,live=[.2,.9,.4,.6];
+ const a=live[3]*(1-w)+w,ground=[.1,.2,.3];
+ assert.equal(a,1);
+ assert.deepEqual([0,1,2].map(i=>Math.round((live[i]*(1-w)+colour[i]*w+ground[i]*(1-a))*255)),[244,242,235]);
+});
+
+test('E11b: the colour is a byte-exact read of the background hex, and a non-hex background falls back to the paper colour', ()=>{
+ assert.deepEqual(srgbUnit('#f4f2eb').map(c=>Math.round(c*255)),[244,242,235]);
+ assert.deepEqual(srgbUnit('#abc').map(c=>Math.round(c*255)),[170,187,204]);
+ assert.throws(()=>srgbUnit('rebeccapurple'),/#rgb or #rrggbb/);
+ assert.equal(transitionColourOf(' #0a0c10 '),'#0a0c10');
+ assert.equal(transitionColourOf('rebeccapurple'),'#f4f2eb');
+ assert.equal(transitionColourOf(undefined),'#f4f2eb');
+});
+
+test('E11b: a wipe holds the outgoing frame on the side it has not crossed, in GL (bottom-left) coordinates', ()=>{
+ const W=1440,H=900,at=(direction,f)=>paintedPassParams({kind:'wipe',direction},f,W,H,true);
+ assert.deepEqual(at('right',0).holdRect,[0,0,W,H]);
+ assert.deepEqual(at('right',.25),{colourW:0,useHold:true,holdRect:[.25*W,0,.75*W,H]});
+ assert.deepEqual(at('left',.25).holdRect,[0,0,.75*W,H]);
+ assert.deepEqual(at('up',.25).holdRect,[0,.25*H,W,.75*H]);
+ assert.deepEqual(at('down',.25).holdRect,[0,0,W,.75*H]);
+ assert.equal(at('left',.5).useHold,true);
+});
+
+test('E11b: a wipe with no held frame draws the live frame, since the pass does not invent the outgoing one', ()=>{
+ assert.deepEqual(paintedPassParams({kind:'wipe',direction:'left'},.5,1440,900,false),{colourW:0,useHold:false,holdRect:[0,0,0,0]});
+});
+
+test('E11b: the render-target lifecycle allocates once, drops content on a resize, and releases when the transition ends', ()=>{
+ const a={width:1440,height:900};
+ assert.equal(renderTargetAction(null,null),'none');
+ assert.equal(renderTargetAction(null,a),'allocate');
+ assert.equal(renderTargetAction(a,{width:1440,height:900}),'none');
+ assert.equal(renderTargetAction(a,{width:720,height:450}),'resize');
+ assert.equal(renderTargetAction(a,null),'release');
+});
+
+test('E11b: the engine routes a frame through the pass only while a painted overlay is in force', ()=>{
+ const field=readFileSync(new URL('../../src/engine/PointCloudField.ts',import.meta.url),'utf8');
+ const pass=readFileSync(new URL('../../src/engine/transitionPass.ts',import.meta.url),'utf8');
+ const production=readFileSync(new URL('../src/production.ts',import.meta.url),'utf8');
+ // Every scene draw to the canvas goes through presentScene, which draws directly when the pass declines.
+ assert.match(field,/if \(!this\.transitionPass\.present\(this\.renderer, this\.scene, this\.camera, null\)\) this\.renderer\.render\(this\.scene, this\.camera\);/);
+ assert.match(field,/if \(draw\) this\.presentScene\(\);/);
+ assert.match(field,/this\.presentScene\(\);return copy\(\);/);
+ // Capture (renderImage) composes the same overlay into its output target.
+ assert.match(field,/if\(!this\.transitionPass\.present\(this\.renderer,this\.scene,camera,target\)\)\{this\.renderer\.setRenderTarget\(target\)/);
+ // The pass is idle without an overlay: present returns false before touching any target.
+ assert.match(pass,/const overlay=this\.overlay;\s*if\(!overlay\)return false;/);
+ // The production engine gates the overlay on the pure predicate, and holds only for a wipe.
+ assert.match(production,/const spec=this\.seam,painted=!!spec&&paintedOverlayActive\(spec,fraction\)/);
+ assert.match(production,/this\.overlay=paint\(cfg\.backgroundColor\)/);
+ assert.match(production,/this\.holdDue=this\.from!==null&&transitionKindOf\(this\.seam\)==='wipe'/);
+ assert.match(production,/this\.engine\.setTransitionOverlay\(this\.overlay\)/);
+ assert.match(production,/this\.engine\?\.captureTransitionHold\(transitionColourOf\(this\.from\?\.backgroundColor\)\)/);
+});
+
+test('E11b: the inspector offers the seam chooser the timeline uses, in place of a bare seconds field', ()=>{
+ const inspector=readFileSync(new URL('../src/inspector.ts',import.meta.url),'utf8');
+ assert.match(inspector,/import \{seamChooserHTML\} from '\.\/transitions';/);
+ assert.match(inspector,/\$\{seamChooserHTML\(s,\{min:SCENE_TRANSITION_MIN,max:SCENE_TRANSITION_MAX\}\)\}/);
+ assert.doesNotMatch(inspector,/numeric\('Transition \(seconds\)'/);
 });

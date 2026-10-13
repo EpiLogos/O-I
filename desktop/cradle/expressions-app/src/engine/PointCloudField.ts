@@ -24,6 +24,7 @@ import { GPGPUSimulator } from './GPGPUSimulator';
 import { GlyphSampler } from './GlyphSampler';
 import { PsgFormSampler, glyphPreparation, coveragesFromAlpha, type FoldProgressReceipt } from './psg-form-sampler';
 import { particleVertexShader, particleFragmentShader } from './shaders/particleShaders';
+import { TransitionPass, type TransitionOverlay } from './transitionPass';
 import { isLightHex } from './colorPalettes';
 import { CymaticResonator, ResonatorTelemetry } from './cymaticResonator';
 import { PinMarkerLayer, PinGhostState } from './pinMarkers';
@@ -127,6 +128,8 @@ export class PointCloudField {
   private gridIsLight: boolean | null = null;
   private pinLayer: PinMarkerLayer | null = null;
   private simulator!: GPGPUSimulator;
+  /** E11b: the painted transition's compositing layer. Idle (no targets) unless a dip or wipe is in flight. */
+  private transitionPass = new TransitionPass();
   private glyphSampler!: GlyphSampler;
   /** The PS-G forms sampler (QL-MEF #296 #299): the retained glyph body, its
    * correspondence and the rasterisation/reseed instrument, consuming the
@@ -1493,8 +1496,20 @@ export class PointCloudField {
   public withCleanFrame<T>(copy:()=>T):T {
     const u=this.particleMaterial.uniforms,selected=u.uEditHasSelection.value;
     const visibility=this.scene.children.map(o=>[o,o.visible] as const);
-    try {u.uEditHasSelection.value=0;for(const [o] of visibility)if(o!==this.particlePoints)o.visible=false;this.renderer.render(this.scene,this.camera);return copy();}
-    finally {u.uEditHasSelection.value=selected;for(const [o,v] of visibility)o.visible=v;if(selected||visibility.some(([o,v])=>o!==this.particlePoints&&v))this.renderer.render(this.scene,this.camera);}
+    try {u.uEditHasSelection.value=0;for(const [o] of visibility)if(o!==this.particlePoints)o.visible=false;this.presentScene();return copy();}
+    finally {u.uEditHasSelection.value=selected;for(const [o,v] of visibility)o.visible=v;if(selected||visibility.some(([o,v])=>o!==this.particlePoints&&v))this.presentScene();}
+  }
+
+  /** E11b: this frame's painted transition overlay (null draws the field directly, as before). */
+  public setTransitionOverlay(overlay: TransitionOverlay | null) { this.transitionPass.setOverlay(overlay); }
+  /** E11b: holds the outgoing frame, flattened over its own ground. Called at a transition's start, before the new configuration reaches the GPU. */
+  public captureTransitionHold(ground: string) {
+    const size = this.renderer.getDrawingBufferSize(new THREE.Vector2());
+    this.transitionPass.captureHold(this.renderer, this.scene, this.camera, { width: Math.round(size.x), height: Math.round(size.y) }, ground);
+  }
+  /** Draws the scene to the canvas: through the transition pass while a painted overlay is in force, else directly. */
+  private presentScene() {
+    if (!this.transitionPass.present(this.renderer, this.scene, this.camera, null)) this.renderer.render(this.scene, this.camera);
   }
 
   /** Render current state at native output resolution without stepping. The
@@ -1530,7 +1545,7 @@ export class PointCloudField {
     }
     this.particleMaterial.uniforms.uPixelRatio.value = sizeScale;
     try {
-      this.renderer.setRenderTarget(target); this.renderer.clear(); this.renderer.render(this.scene,camera);
+      if(!this.transitionPass.present(this.renderer,this.scene,camera,target)){this.renderer.setRenderTarget(target); this.renderer.clear(); this.renderer.render(this.scene,camera);}
       const bytes=new Uint8Array(width*height*4);this.renderer.readRenderTargetPixels(target,0,0,width,height,bytes);
       const out=document.createElement('canvas');out.width=width;out.height=height;
       const ctx=out.getContext('2d')!;const image=ctx.createImageData(width,height);
@@ -1843,7 +1858,7 @@ export class PointCloudField {
       this.particleMaterial.uniforms.uColorHueShift.value = 0.0;
     }
 
-    if (draw) this.renderer.render(this.scene, this.camera);
+    if (draw) this.presentScene();
   }
 
   // ------------------------------------------------------------------ cymatic medium
@@ -2002,6 +2017,7 @@ export class PointCloudField {
 
   private disposeResources() {
     this.isDestroyed = true;
+    this.transitionPass.dispose();
     if (this.animFrameId !== null) {
       cancelAnimationFrame(this.animFrameId);
       this.animFrameId = null;
