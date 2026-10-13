@@ -41,9 +41,9 @@ export type TimeAxisRelation = TechneWholeRelation & {
 export interface TimeAxisBand {
   band_ref: string;
   derived_id: boolean;
-  /** The current ql.techne/v1 facet schema has no authored label carrier.
-   * T8's label/notes require that native seam; no kind/ref becomes a label. */
-  label_verbatim: null;
+  /** The source's own period name, verbatim (T8b's facet `label`); null when
+   * the source names none. No kind, ref or derived id ever becomes a label. */
+  label_verbatim: string | null;
   earliest: string | null;
   latest: string | null;
   interval?: TechneTemporalFacet["interval"];
@@ -126,7 +126,7 @@ export function timeAxis(reading: TechneReading, declaredWindow?: SharedTimeWind
   });
   const bands: TimeAxisBand[] = events.filter(event => event.kind === "valid").map(event => ({
     band_ref: event.facet_ref ?? event.derived_ref!, derived_id: event.facet_ref == null,
-    label_verbatim: null,
+    label_verbatim: event.label ?? null,
     // Keep authored carriers byte-exact: numeric precision extents belong to
     // scale.ts, never to the source's earliest/latest strings.
     earliest: event.interval ? event.interval.from ?? null : event.instant ?? null,
