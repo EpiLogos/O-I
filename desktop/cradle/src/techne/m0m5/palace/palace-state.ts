@@ -86,6 +86,24 @@ export interface PalaceComposition {
    * session-scoped composition so a visitor who leaves mid-walk resumes at the
    * same locus. Absent until the walk is first moved. */
   walk_index?: number;
+  /** The board's held points (lane-5 T15), keyed by studio region name. Presentation only: a point names no Scene, body or
+   * order. Absent until a region is first moved on the board. */
+  board?: Record<string, PalaceBoardPoint>;
+  /** The board's viewport (lane-5 T15): pan and zoom of the canvas the regions sit on. Absent until the board is first panned or zoomed. */
+  viewport?: PalaceBoardViewport;
+}
+
+/** One board point: presentation coordinates on the board's canvas. Finite numbers only. */
+export interface PalaceBoardPoint {
+  x: number;
+  y: number;
+}
+
+/** The board's viewport: the canvas pan and zoom, as the Research Canvas reports them. */
+export interface PalaceBoardViewport {
+  x: number;
+  y: number;
+  zoom: number;
 }
 
 /** Derive the initial composition of one reading: regions from the reading's

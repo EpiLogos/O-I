@@ -50,3 +50,20 @@
 .palace-edge{font:11px/1.4 var(--sans,system-ui,sans-serif);color:var(--muted);margin:0 0 4px 16px;padding:2px 8px;border-left:1px solid var(--line)}
 .palace-edge-path{height:10px;padding:0}
 .palace-edge-gap,.palace-edge-broken,.palace-edge-self{color:var(--ink);border-left:2px solid var(--ink)}
+
+/* lane-5 T15 — the palace board: regions arranged freely over the Research Canvas (its own xyflow surface). Tokens only;
+   the card fill is the canvas-object token the research canvas uses, set inline by the sticky node. */
+.palace-board{display:flex;flex-direction:column;gap:8px;min-width:0;margin:0 0 14px}
+.palace-board-tools{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.palace-board-tools button{font:11px/1.2 var(--sans,system-ui,sans-serif);color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:5px;padding:5px 8px;cursor:pointer}
+.palace-board-tools button:hover{background:var(--wash);border-color:var(--muted)}
+.palace-board-tools button[aria-pressed="true"]{border-color:var(--ink);background:var(--wash)}
+.palace-board-canvas{position:relative;height:340px;min-height:240px;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--paper)}
+.palace-board-canvas .canvas-flow{position:absolute;inset:0;width:100%;height:100%;min-height:0}
+.palace-board-canvas .canvas-object{position:relative;box-sizing:border-box;display:flex;align-items:flex-start;justify-content:flex-start;width:100%;height:100%;min-width:0;min-height:0;padding:14px 16px;color:var(--ink);font:13px/1.35 var(--sans,system-ui,sans-serif);text-align:left;overflow:hidden;border:1px solid var(--line);border-radius:3px}
+.palace-board-canvas .canvas-object__label{position:relative;max-width:100%;overflow-wrap:anywhere}
+.palace-board-canvas .canvas-object[data-selected="true"]{outline:1px solid var(--ink);outline-offset:2px}
+.palace-board-canvas .canvas-toolbar{position:absolute;top:6px;left:6px;z-index:5;display:flex;gap:4px}
+.palace-board-canvas .canvas-toolbar button{font:11px/1.2 var(--sans,system-ui,sans-serif);color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:3px 7px;cursor:pointer}
+.palace-walk-heading{margin:0 0 8px;font:600 12px/1.3 var(--sans,system-ui,sans-serif)}
+.palace-region-selected{border-color:var(--ink);background:var(--wash)}
