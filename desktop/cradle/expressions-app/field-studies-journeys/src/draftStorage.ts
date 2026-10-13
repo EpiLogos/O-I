@@ -18,6 +18,8 @@
 import {Journey,clone,uid,validateJourney} from './model.js';
 export const PAIR_SCHEMA='oi.draft-record/v1';
 export const QUARANTINE_SCHEMA='oi.draft-quarantine/v1';
+/** lane-3 E18: the envelope of one Library document (libraryStore.ts). */
+export const LIBRARY_RECORD_SCHEMA='oi.library-record/v1';
 /** Asynchronous raw-string store. IndexedDB and localStorage both adapt to it. */
 export interface KeyStore{get(key:string):Promise<string|undefined>;put(key:string,raw:string):Promise<void>;delete(key:string):Promise<void>;keys(prefix:string):Promise<string[]>}
 /** Integrity digest: two FNV-1a lanes and the length. It detects truncation and corruption; it is not a security hash. */
@@ -27,14 +29,17 @@ export function digest(text:string):string{
  return (a>>>0).toString(16).padStart(8,'0')+(b>>>0).toString(16).padStart(8,'0')+text.length.toString(16);
 }
 export type SlotReading={state:'absent'}|{state:'damaged';raw:string}|{state:'valid';seq:number;body:string};
-export function readSlot(raw:string|undefined):SlotReading{
+/** lane-3 E18: one versioned record shape for every per-document store (drafts and the Library). */
+export function readEnvelope(schema:string,raw:string|undefined):SlotReading{
  if(raw===undefined)return {state:'absent'};
  try{const v=JSON.parse(raw) as {schema?:unknown;seq?:unknown;body?:unknown;digest?:unknown};
-  if(v&&v.schema===PAIR_SCHEMA&&typeof v.seq==='number'&&Number.isSafeInteger(v.seq)&&v.seq>=1&&typeof v.body==='string'&&v.digest===digest(v.body))return {state:'valid',seq:v.seq,body:v.body};
+  if(v&&v.schema===schema&&typeof v.seq==='number'&&Number.isSafeInteger(v.seq)&&v.seq>=1&&typeof v.body==='string'&&v.digest===digest(v.body))return {state:'valid',seq:v.seq,body:v.body};
  }catch{/* not a readable envelope: damaged below */}
  return {state:'damaged',raw};
 }
-export function encodeSlot(seq:number,body:string):string{return JSON.stringify({schema:PAIR_SCHEMA,seq,digest:digest(body),body});}
+export function readSlot(raw:string|undefined):SlotReading{return readEnvelope(PAIR_SCHEMA,raw);}
+export function encodeEnvelope(schema:string,seq:number,body:string):string{return JSON.stringify({schema,seq,digest:digest(body),body});}
+export function encodeSlot(seq:number,body:string):string{return encodeEnvelope(PAIR_SCHEMA,seq,body);}
 export interface PairReading{
  /** The newest valid body; a pre-pair value at the bare key when no valid slot exists; otherwise undefined. */
  body:string|undefined;seq:number;legacy:boolean;
@@ -203,7 +208,7 @@ export function planRecoveryChoice(choice:RecoveryChoice,draft:Journey,saved:Jou
  return {open:clone(saved),copy:draftCopy(draft,at),quarantineDraft:false,removeDraft:true};
 }
 /** The record's own text: a kept slot envelope is unwrapped, anything else is taken as it is. */
-function recordText(raw:string):string{const slot=readSlot(raw);return slot.state==='valid'?slot.body:raw;}
+function recordText(raw:string):string{for(const schema of [PAIR_SCHEMA,LIBRARY_RECORD_SCHEMA]){const slot=readEnvelope(schema,raw);if(slot.state==='valid')return slot.body;}return raw;}
 /** A quarantined draft as a Library copy. It must validate now; otherwise the refusal names the reason and nothing is made (T-REVIEW-6). */
 export function quarantinedCopy(raw:string,at:Date):Journey{
  let journey:Journey;

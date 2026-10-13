@@ -7,7 +7,9 @@ from PIL import Image,ImageDraw
 from harness import browser_session
 R=Path(__file__).resolve().parents[1];E=R/'evidence-native';E.mkdir(exist_ok=True)
 HTML=(R/'public/index.html').read_text()
-STORAGE="<script>window.__TEST_STORAGE__={};Object.defineProperty(window,'localStorage',{value:{getItem:k=>window.__TEST_STORAGE__[k]??null,setItem:(k,v)=>window.__TEST_STORAGE__[k]=String(v),removeItem:k=>delete window.__TEST_STORAGE__[k]},configurable:true});</script>"
+# lane-3 E18: the Library is one record per document; this reads the newest complete copy of each (the two slots are #a and #b).
+LIBRARY_RECORDS='(()=>{const m={};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(!k.startsWith("oi.field-studies.journey-library.v2.doc."))continue;const e=JSON.parse(localStorage.getItem(k));const id=k.replace(/#[ab]$/,"");if(!m[id]||e.seq>m[id].seq)m[id]=e;}return Object.values(m).map(e=>JSON.parse(e.body));})()'
+STORAGE="<script>window.__TEST_STORAGE__={};Object.defineProperty(window,'localStorage',{value:{getItem:k=>window.__TEST_STORAGE__[k]??null,setItem:(k,v)=>window.__TEST_STORAGE__[k]=String(v),removeItem:k=>delete window.__TEST_STORAGE__[k],key:i=>Object.keys(window.__TEST_STORAGE__)[i]??null,get length(){return Object.keys(window.__TEST_STORAGE__).length}},configurable:true});</script>"
 results=[];errors=[]
 def require(x,m='Assertion failed'):
  if not x:raise AssertionError(m)
@@ -159,7 +161,7 @@ try:
    p.evaluate("__FIELD_STUDIES__.openEditor('motion')");act(p,'motion-tab','[data-value="morph"]');before=doc(p);act(p,'native-reset-phases');require(doc(p)==before);require(abs(p.evaluate('__FIELD_STUDIES__.telemetry().drive.theta'))<1e-8);return {'phaseReset':True,'documentPreserved':True}
   check('UI-RESET-PHASES',phases)
   def saved_delete():
-   act(p,'library');act(p,'save-browser');id=doc(p)['id'];act(p,'delete-saved',f'[data-id="{id}"]');act(p,'confirm');p.wait_for_timeout(550);raw=p.evaluate('JSON.parse(localStorage.getItem("oi.field-studies.journey-library.v1"))');require(not any(j.get('id')==id for j in raw));require(doc(p)['id']==id);act(p,'save-browser');raw=p.evaluate('JSON.parse(localStorage.getItem("oi.field-studies.journey-library.v1"))');require(any(j.get('id')==id for j in raw));return {'removedStaysRemoved':True,'explicitSaveReinstates':True}
+   act(p,'library');act(p,'save-browser');id=doc(p)['id'];act(p,'delete-saved',f'[data-id="{id}"]');act(p,'confirm');p.wait_for_timeout(550);raw=p.evaluate(LIBRARY_RECORDS);require(not any(j.get('id')==id for j in raw));require(doc(p)['id']==id);act(p,'save-browser');raw=p.evaluate(LIBRARY_RECORDS);require(any(j.get('id')==id for j in raw));return {'removedStaysRemoved':True,'explicitSaveReinstates':True}
   check('UI-DELETE-ACTIVE-SAVED-COPY',saved_delete)
   p.screenshot(path=str(E/'parity-library-ui.png'));act(p,'close-library')
   def all_modes():

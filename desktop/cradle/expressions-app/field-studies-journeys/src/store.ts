@@ -1,4 +1,4 @@
-import {Journey,clone,validateJourney} from './model.js';
+import {Journey,clone} from './model.js';
 import {invertEdit,type KernelChange,type KernelCompensation} from './kernelExpressions.js';
 export const STORAGE_KEY='oi.field-studies.journey-library.v1';
 /** E15c: one Save is one kernel checkpoint. `changes` is the kernel edit the Save
@@ -207,27 +207,6 @@ export class DocumentStore {
 }
 /** The one way a multi-step gesture writes to the store: see DocumentStore.composite. */
 export function withComposite<T>(store:DocumentStore,label:string,fn:(doc:Journey)=>T):T{return store.composite(label,fn);}
-export interface LibraryRead {journeys:Journey[];errors:string[];raw:unknown[];blocked:boolean}
-export function readLibraryDetailed():LibraryRead {
- const result:LibraryRead={journeys:[],errors:[],raw:[],blocked:false};
- try {const text=localStorage.getItem(STORAGE_KEY);if(!text)return result;
-  const parsed=JSON.parse(text);if(!Array.isArray(parsed))throw new Error('Library root is not an array');result.raw=parsed;
-  parsed.forEach((value,index)=>{try{result.journeys.push(validateJourney(value));}catch(error){result.errors.push(`Entry ${index+1}: ${error instanceof Error?error.message:String(error)}`);}});
- }catch(error){result.blocked=true;result.errors.push(error instanceof Error?error.message:String(error));}
- return result;
-}
-export function readLibrary():Journey[]{return readLibraryDetailed().journeys;}
-export function saveToLibrary(journey:Journey){
- const library=readLibraryDetailed();if(library.blocked)throw new Error('Existing library could not be read. It has not been overwritten. Export a file to keep this edit.');
- // Retain unrecognised entries byte-for-value and all other saved journeys. Never
- // trim old work or overwrite a newer unrecognised document sharing this ID.
- const all=library.raw.filter(value=>{try{return validateJourney(value).id!==journey.id;}catch{return true;}});
- all.unshift(clone(validateJourney(journey)));localStorage.setItem(STORAGE_KEY,JSON.stringify(all));return readLibrary();
-}
-
-/** Delete only understood entries; failed/newer documents are retained verbatim. */
-export function removeFromLibrary(id:string){
- const library=readLibraryDetailed();if(library.blocked)throw new Error('The existing library could not be read; nothing was deleted.');
- const raw=library.raw.filter(value=>{try{return validateJourney(value).id!==id;}catch{return true;}});
- localStorage.setItem(STORAGE_KEY,JSON.stringify(raw));
-}
+// lane-3 E18: the Library is one record per document (libraryStore.ts). These names are its public surface.
+export {readLibraryDetailed,readLibrary,saveToLibrary,removeFromLibrary,setLibraryQuarantine,sweepLibraryDamage,setLibraryBackend,LEGACY_LIBRARY_KEY} from './libraryStore.js';
+export type {LibraryRead,LibraryBackend,LibraryQuarantineSink} from './libraryStore.js';

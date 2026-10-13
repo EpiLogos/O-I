@@ -110,7 +110,12 @@ test('invalid incoming recovery makes no Library mutation',()=>{
 
 test('actual durable WebStorage survives a second process with the complete retained Library',()=>{
  saveToLibrary(edited());preserveRecoveryLibraryCopies(recovered);
- const expected=createHash('sha256').update(localStorage.getItem(STORAGE_KEY)).digest('hex');
- const child=spawnSync(process.execPath,['--experimental-webstorage',`--localstorage-file=${storageFile}`,'--input-type=module','-e',`import {createHash} from 'node:crypto';const raw=localStorage.getItem(${JSON.stringify(STORAGE_KEY)});if(!raw)throw Error('Library absent');console.log(createHash('sha256').update(raw).digest('hex'));`],{encoding:'utf8',timeout:10000});
+ // E18: the Library is every key under its namespace — the retained v1 array and the v2 per-document records, order
+ // and split proof — so the whole of it, key by key and byte for byte, must survive the second process.
+ const LIBRARY_NAMESPACE='oi.field-studies.journey-library.';
+ const libraryDigest=`const keys=[];for(let i=0;i<localStorage.length;i++){const key=localStorage.key(i);if(key.startsWith(${JSON.stringify('oi.field-studies.journey-library.')}))keys.push(key);}keys.sort();if(!keys.length)throw Error('Library absent');return createHash('sha256').update(JSON.stringify(keys.map(key=>[key,localStorage.getItem(key)]))).digest('hex');`;
+ const expected=new Function('createHash','localStorage',libraryDigest)(createHash,localStorage);
+ assert.ok([...Array(localStorage.length).keys()].some(i=>localStorage.key(i).startsWith(LIBRARY_NAMESPACE+'v2.doc.')),'the per-document records are present');
+ const child=spawnSync(process.execPath,['--experimental-webstorage',`--localstorage-file=${storageFile}`,'--input-type=module','-e',`import {createHash} from 'node:crypto';console.log((()=>{${libraryDigest}})());`],{encoding:'utf8',timeout:10000});
  assert.equal(child.status,0,child.stderr);assert.equal(child.stdout.trim(),expected);
 });

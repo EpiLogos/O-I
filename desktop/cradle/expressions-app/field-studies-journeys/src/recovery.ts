@@ -9,7 +9,7 @@ import type {RecoveryRecord} from '../../../src/expressions/recoveryTypes';
 import {TransportState,validateTransport} from '../../src/engine/transportState';
 import {validateWorkingTransport,type WorkingTransport} from './transport';
 // lane-3 E18/E19: the standalone draft records, their quarantine and the boot choice.
-import {readLibrary,saveToLibrary} from './store.js';
+import {readLibrary,saveToLibrary,setLibraryQuarantine} from './store.js';
 import {type KeyStore,type RecordLayout,type RecoveryPlan,loadRecord,loadRecords,writeRecord,removeRecord,quarantine,listQuarantine,readPair,quarantinedCopy,quarantinedName,offerClock} from './draftStorage.js';
 export const SESSION_KEY='oi.expression-session.v1';
 export interface SessionState {version:1;journeyId:string;sceneId:string;selected:string[];stepIndex:number;sceneElapsed:number;simTime:number;playing:boolean;journeyPlaying:boolean;camera:Camera;transport?:TransportState;workingTransport?:WorkingTransport;scenePlaying?:boolean;fieldPaused?:boolean}
@@ -102,6 +102,8 @@ async function draftRawText(layout:RecordLayout,id:string):Promise<string|undefi
 }
 /** Every quarantined draft with its reason, for listing to the owner. */
 export async function listQuarantinedDrafts(){return listQuarantine(await quarantineKV());}
+// lane-3 E18: an unreadable Library entry is quarantined in this same store, so the Library section lists drafts and Library entries alike.
+setLibraryQuarantine((key,raw,reason,at)=>quarantineKV().then(store=>quarantine(store,'library',key,raw,reason,at)).then(()=>undefined));
 /** The Library's quarantine section (T-REVIEW-6): each readable entry with its name, reason and time, and every unreadable id, never hidden. */
 export async function quarantineView(now:Date=new Date()){
  const {records,unreadable}=await listQuarantinedDrafts();
