@@ -99,12 +99,25 @@ test('T27: an equatorial subsolar point splits the globe along the meridians 90 
  assert.ok(!inside(ring,[-60,-20]),'the near side is day in the south');
 });
 
-test('T27: the terminator feature is a GeoJSON polygon of the night ring, tagged as night', ()=>{
- const feature=api.terminatorFeature(SUBSOLAR);
- assert.equal(feature.type,'Feature');
- assert.equal(feature.geometry.type,'Polygon');
- assert.deepEqual(feature.geometry.coordinates,[api.nightRing(SUBSOLAR)]);
- assert.equal(feature.properties.kind,'night');
+test('T27: the terminator source holds the night polygon (fill) and the great circle alone (edge) — never the seam or pole edges', ()=>{
+ const collection=api.terminatorFeature(SUBSOLAR);
+ assert.equal(collection.type,'FeatureCollection');
+ const [night,line]=collection.features;
+ assert.equal(night.properties.kind,'night');
+ assert.equal(night.geometry.type,'Polygon');
+ assert.deepEqual(night.geometry.coordinates,[api.nightRing(SUBSOLAR)]);
+ assert.equal(line.properties.kind,'terminator');
+ assert.equal(line.geometry.type,'LineString');
+ assert.ok(line.geometry.coordinates.every(([,latitude])=>Math.abs(latitude)<90),'the edge never runs along a pole');
+ assert.equal(line.geometry.coordinates.length,api.nightRing(SUBSOLAR).length-3,'the great-circle samples only');
+});
+
+test('T27 (review-6 #8): the window instant reads through the time authority; an epoch QL cannot read is refused by name', ()=>{
+ assert.equal(api.windowInstant({from:'2026-03-01T00:00:00Z',to:'2026-03-03T00:00:00Z'}),'2026-03-02T00:00:00.000Z');
+ const bce=api.windowInstant({from:'-000500-01-01T00:00:00Z',to:null});
+ assert.ok(bce&&bce.startsWith('-000500'),'a BCE window stays BCE');
+ assert.throws(()=>api.skyRequestEpoch(bce),/years 0000–9999/);
+ assert.equal(api.skyRequestEpoch('2026-03-02T00:00:00.000Z'),'2026-03-02T00:00:00');
 });
 
 test('T27: daylightFromSky admits only a STATED subsolar point, with its provenance', ()=>{
