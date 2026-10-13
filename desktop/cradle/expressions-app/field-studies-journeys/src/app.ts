@@ -20,6 +20,8 @@ import {transitionKindOf,transitionSpecFor,transitionLabel,dipWeights,wipeHoldRe
 import {journeyTimelineLayout} from './journeyTimelineLayout';
 import {MARKER_COLOURS,MARKER_LIMIT,MARKER_NAME_MAX,sceneBoundaries,sceneAtJourneyTime,markerNamed,markerAdd,markerRename,markerMove,markerRemove,nextMarkerTime,prevMarkerTime,setLoopEdge,dragLoopEdge,moveLoopRegion,playDurations,toPlayClock,loopPlayNotice,type LoopEdge,type LoopRegion} from './journeyMarkers';
 import {snapCandidates,snapTime,closestSnap,nextSnapPoint,prevSnapPoint,type SnapPoint} from './snapModel';
+import {parseDeepLink,formatDeepLink,resolveSceneRef,resolveMarker,clampJourneyTime,markerAtTime,type DeepLinkAddress,shortenRef} from './deepLinks';
+import {NOT_FOCUSED,beginFocus,endFocus,focusedLayout,type FocusLayout,type FocusSession} from './focusMode';
 import {shuttle,pauseTransport,beginScrub,endScrub,stepFrame,transportRate,transportPlaying,transportReadout,STOPPED_TRANSPORT,type WorkingTransport} from './transport';
 import {durationFromEdgeDrag,sceneAtTime,secondsFromDrag,slipOffsetFromDrag,insertBeforeFor,dragPreviewStep,SCENE_DURATION_MIN,SCENE_DURATION_MAX,type TimelineLayout} from './journeyTimelineLayout';
 import {entityTargets} from './nativeParameters';
@@ -171,6 +173,12 @@ let studioScroll=0,automationLoop=false;let selectedMarkerId:string|null=null;le
 let physisFpsCap=0,physisPixelRatio:null|number=null,physisParticleCap=0,physisRatioApplied=0,lastStudioRender=0;
 let libraryOpen=false,librarySection:'collection'|'about'='collection',modesOpen=false,captureOpen=false,sourceEditorEpoch=0;
 let railKey:RailItem='interact',railExpanded=false;let cursorTool:'interact'|'select'='interact';
+// lane-3 E22/E23: the address the page opened at (held until it settles, so no write
+// overtakes the link), whether a standalone link named an Expression, the focus snapshot, and the fullscreen grant.
+// The link is read here, before any render can write the address, and it is held until the Expression settles.
+const bootLink=parseDeepLink(location.search);
+let deepLinkPending:{address:DeepLinkAddress;notes:string[]}|null={address:bootLink.address,notes:[...bootLink.refused]},addressKeepsExpression=false;
+let focusSession:FocusSession=NOT_FOCUSED,fullscreenGranted=false,focusExitedAt=Number.NEGATIVE_INFINITY;
 const featured=featuredExpressions(),starters=startingPoints();
 const covers=new Map<string,string>();
 const sessionExpressions=new Map<string,Journey>();
@@ -787,7 +795,7 @@ function renderLive(){const parts=liveWorkspaceHTML(liveContext(),workspace);con
 // Docking swaps the studio's anchor side, so a width/height transition would teleport it: invert the layout change, then play the transform back.
 function flipPanel(el:HTMLElement,mutate:()=>void){el.style.transition='none';el.style.transform='';const a=el.getBoundingClientRect();mutate();const b=el.getBoundingClientRect(),dx=a.left-b.left,dy=a.top-b.top,sx=b.width?a.width/b.width:1,sy=b.height?a.height/b.height:1;if(!b.width||!b.height||(!dx&&!dy&&Math.abs(sx-1)<.002&&Math.abs(sy-1)<.002)){el.style.transition='';return;}const done=(ev:TransitionEvent)=>{if(ev.target!==el||ev.propertyName!=='transform')return;el.removeEventListener('transitionend',done);el.style.transition='';el.style.transformOrigin='';};el.addEventListener('transitionend',done);el.style.transformOrigin='top left';el.style.transform=`translate(${dx}px,${dy}px) scale(${sx},${sy})`;void el.offsetWidth;el.style.transition='transform .25s cubic-bezier(.2,.8,.2,1)';el.style.transform='';}
 function setStudio(open:boolean){pointer.active=false;if(open)journeyPlaying=false;studioOpen=open;inspectorOpen=open;editing=open||cursorTool==='select';renderAll();}
-function renderAll(){blueprintHUD?.refresh();if(studioDocked&&studioOpen&&beltOpen){beltWasOpen=true;beltOpen=false;}if(!studioDocked&&beltWasOpen){beltWasOpen=false;beltOpen=true;}if((inspectorOpen||contextKind)&&(tool==='pin'||tool==='formation')){tool=cursorTool;railExpanded=false;}if(beltPickerOpen){inspectorOpen=false;contextKind='';timelineOpen=false;shapePickerOpen=false;modesOpen=false;captureOpen=false;}else if(inspectorOpen){contextKind='';timelineOpen=false;shapePickerOpen=false;modesOpen=false;captureOpen=false;}else if(contextKind){timelineOpen=false;shapePickerOpen=false;modesOpen=false;captureOpen=false;}else if(timelineOpen){shapePickerOpen=false;modesOpen=false;captureOpen=false;}sanitiseSelection();sceneBodies?.refresh();workspace.entries=clone(store.document.shared!.toolbelt);if(tab==='motion')studioSection=motionTab==='automation'?'automation':motionTab==='sequence'?'sequence':motionTab==='focus'?'focus':'motion';else if(tab==='objects'&&!['formations','layout'].includes(studioSection))studioSection='formations';else if(tab==='scene'&&!['scene','text'].includes(studioSection))studioSection='scene';else if(tab==='field'&&!['physics','pointer','relational','collision','appearance','volume','resonance','native','blueprint','palace','places','canvas'].includes(studioSection))studioSection='physics';studioOpen=inspectorOpen&&editing;if(railKey!=='objects'||tool!=='select')railKey=tool;if(transitionDuration&&transitionSceneId!==scene().id){transitionDuration=0;$('transition-canvas').hidden=true;}theme();document.body.classList.toggle('studio-open',studioOpen);$('inspector').classList.toggle('is-studio',studioOpen);$('inspector').classList.toggle('docked',studioDocked);const dockButton=$('dock-studio');if(dockButton){dockButton.setAttribute('aria-pressed',String(studioDocked));dockButton.title=studioDocked?'Return the studio to full size':'Dock the studio where the toolbelt sits';dockButton.innerHTML=icon(studioDocked?'expand':'collapse');}$<HTMLSelectElement>('workspace-appearance').value=workspace.appearance;document.querySelectorAll<HTMLElement>('[data-action="studio-section"]').forEach(b=>b.setAttribute('aria-current',b.dataset.value===studioSection?'page':'false'));document.body.classList.toggle('editing',editing);document.body.classList.toggle('presentation',presenting);document.body.classList.toggle('editing-text',editing&&tool==='text');
+function renderAll(){syncDeepLinkAddress();blueprintHUD?.refresh();if(studioDocked&&studioOpen&&beltOpen){beltWasOpen=true;beltOpen=false;}if(!studioDocked&&beltWasOpen){beltWasOpen=false;beltOpen=true;}if((inspectorOpen||contextKind)&&(tool==='pin'||tool==='formation')){tool=cursorTool;railExpanded=false;}if(beltPickerOpen){inspectorOpen=false;contextKind='';timelineOpen=false;shapePickerOpen=false;modesOpen=false;captureOpen=false;}else if(inspectorOpen){contextKind='';timelineOpen=false;shapePickerOpen=false;modesOpen=false;captureOpen=false;}else if(contextKind){timelineOpen=false;shapePickerOpen=false;modesOpen=false;captureOpen=false;}else if(timelineOpen){shapePickerOpen=false;modesOpen=false;captureOpen=false;}sanitiseSelection();sceneBodies?.refresh();workspace.entries=clone(store.document.shared!.toolbelt);if(tab==='motion')studioSection=motionTab==='automation'?'automation':motionTab==='sequence'?'sequence':motionTab==='focus'?'focus':'motion';else if(tab==='objects'&&!['formations','layout'].includes(studioSection))studioSection='formations';else if(tab==='scene'&&!['scene','text'].includes(studioSection))studioSection='scene';else if(tab==='field'&&!['physics','pointer','relational','collision','appearance','volume','resonance','native','blueprint','palace','places','canvas'].includes(studioSection))studioSection='physics';studioOpen=inspectorOpen&&editing;if(railKey!=='objects'||tool!=='select')railKey=tool;if(transitionDuration&&transitionSceneId!==scene().id){transitionDuration=0;$('transition-canvas').hidden=true;}theme();document.body.classList.toggle('studio-open',studioOpen);$('inspector').classList.toggle('is-studio',studioOpen);$('inspector').classList.toggle('docked',studioDocked);const dockButton=$('dock-studio');if(dockButton){dockButton.setAttribute('aria-pressed',String(studioDocked));dockButton.title=studioDocked?'Return the studio to full size':'Dock the studio where the toolbelt sits';dockButton.innerHTML=icon(studioDocked?'expand':'collapse');}$<HTMLSelectElement>('workspace-appearance').value=workspace.appearance;document.querySelectorAll<HTMLElement>('[data-action="studio-section"]').forEach(b=>b.setAttribute('aria-current',b.dataset.value===studioSection?'page':'false'));document.body.classList.toggle('editing',editing);document.body.classList.toggle('presentation',presenting);document.body.classList.toggle('editing-text',editing&&tool==='text');
  if(!$('inspector').hidden)studioScroll=$('inspector-content').scrollTop;$('inspector').hidden=!inspectorOpen||!editing;$('tool-rail').hidden=presenting;$('view-controls').hidden=!editing||!(tool==='pin'||shapePickerOpen||placementStep)||!!contextKind||inspectorOpen;$('coordinates').hidden=presenting||libraryOpen;$('timeline-panel').hidden=!timelineOpen;$('shape-picker').hidden=!shapePickerOpen||!editing;$('present-return').hidden=!presenting;
  $('scene-number').textContent=String(sceneIndex+1).padStart(2,'0');$('scene-name').textContent=scene().name;
  $('scene-picker').setAttribute('aria-expanded',String(timelineOpen));$('scene-state').textContent=sceneSaveState(store.document,scene());
@@ -954,7 +962,7 @@ function setSavedScenePlay(playing:boolean){sceneIntentEpoch++;journeyPlaying=pl
   // E13b: say, once at the start, when the brace does not play as drawn in saved scenes.
   const doc=store.document,notice=loopPlayNotice(journeyDurations(doc),playClockDurations(true),doc.loopRegion);if(notice)toast(notice,6500);}
  applySceneView();renderAll();}
-function seekWorkingScene(seconds:number){sceneIntentEpoch++;sceneElapsed=seconds;trackPreview=true;scenePlaying=false;journeyPlaying=false;applySceneView();needsFrame=true;transportUI();}
+function seekWorkingScene(seconds:number){sceneIntentEpoch++;sceneElapsed=seconds;trackPreview=true;scenePlaying=false;journeyPlaying=false;applySceneView();needsFrame=true;transportUI();syncDeepLinkAddress();}
 function snapshotScene(input:{action:'save-snapshot';name:string;next:boolean}|{action:'restore-snapshot'}){const s=scene();sceneIntentEpoch++;if(input.action==='restore-snapshot'){sceneNames.delete(s.id);changed(()=>{if(!restoreScene(store.document,s.id))throw Error('This Scene has no saved snapshot');},true,'Restore scene snapshot');return;}
  changed(()=>{s.view={...s.view,mode:camera.mode,yaw:camera.yaw,pitch:camera.pitch,zoom:camera.zoom,panX:camera.panX/width,panY:camera.panY/height};delete s.view.nativeCamera;saveScene(store.document,s,input.name);sceneNames.delete(s.id);if(input.next){const next=nextSceneFrom(store.document,s);sceneIndex=store.document.scenes.indexOf(next);selected=[];stepIndex=0;sceneElapsed=0;}},true,'Save scene snapshot');}
 function selectEntity(id:string,multi=false){cursorTool='select';pointer.active=false;railKey='select';railExpanded=true;if(multi){selected=selected.includes(id)?selected.filter(x=>x!==id):[...selected,id];}else selected=[id];editing=true;inspectorOpen=false;contextKind='objects';tab='objects';studioSection='formations';tool='select';shapePickerOpen=false;journeyPlaying=false;stepIndex=0;renderAll();}
@@ -1254,8 +1262,8 @@ case 'timeline-track':timelineTrack=!timelineTrack;renderAll();break;
  case 'choose-scene':setSceneRef(el.dataset.sceneId??'');break;
  case 'toggle-play':toggleScenePlay();break;
  case 'play-journey':if(!journeyPlaying&&!savedSceneIndices(store.document).length){timelineOpen=true;renderAll();toast('Save your first scene before playing the scene strip.');break;}setSavedScenePlay(!journeyPlaying);break;
- case 'present':presenting=true;selected=[];shapePickerOpen=false;renderAll();break;
- case 'exit-present':presenting=false;renderAll();break;
+ case 'present':startFocusMode();break;
+ case 'exit-present':stopFocusMode();break;
  case 'library':case 'preset-browser':case 'keep':openLibrary();break;
  case 'deep-verso':hostRequest({request:'summon',detail:{kind:'verso',subject:nativeWorkspace?.nativeSubject()??undefined}});break;
  case 'blueprint':inspectorOpen=true;editing=true;contextKind='';studioSection='blueprint';tab='field';renderAll();blueprintHUD?.open();break;
@@ -1425,7 +1433,9 @@ document.addEventListener('keydown',ev=>{if(ev.defaultPrevented)return;const el=
  if((ev.metaKey||ev.ctrlKey)&&ev.key==='4'&&!presenting){ev.preventDefault();toggleTimelineSnap();return;}
  if((ev.metaKey||ev.ctrlKey)&&ev.key.toLowerCase()==='s'){ev.preventDefault();void action('native-save',el);return;}
  if(ev.metaKey||ev.ctrlKey||ev.altKey)return;
- if(ev.key==='Escape'){if(assignmentTarget||assignmentGroup){assignmentTarget='';assignmentGroup='';renderAll();return;}if(propertyTake){finishPropertyTake();return;}if(beltPickerOpen){beltPickerOpen=false;renderAll();return;}if(contextKind){contextKind='';renderAll();return;}if(studioOpen){setStudio(false);return;}if(presenting){presenting=false;renderAll();}else if(placementStep||shapePickerOpen){placementStep=false;shapePickerOpen=false;cursorTool='select';tool='select';renderAll();}else if(timelineOpen){timelineOpen=false;renderAll();}else if(inspectorOpen){inspectorOpen=false;railExpanded=false;renderAll();}else if(editing)edit(false);return;}
+ // E23: the Escape that leaves a browser fullscreen has already ended focus; it must not also close the editor beneath.
+ if(ev.key==='Escape'&&performance.now()-focusExitedAt<400){ev.preventDefault();return;}
+ if(ev.key==='Escape'){if(assignmentTarget||assignmentGroup){assignmentTarget='';assignmentGroup='';renderAll();return;}if(propertyTake){finishPropertyTake();return;}if(beltPickerOpen){beltPickerOpen=false;renderAll();return;}if(contextKind){contextKind='';renderAll();return;}if(studioOpen){setStudio(false);return;}if(presenting){stopFocusMode();}else if(placementStep||shapePickerOpen){placementStep=false;shapePickerOpen=false;cursorTool='select';tool='select';renderAll();}else if(timelineOpen){timelineOpen=false;renderAll();}else if(inspectorOpen){inspectorOpen=false;railExpanded=false;renderAll();}else if(editing)edit(false);return;}
  if(ev.key===' '){ev.preventDefault();toggleScenePlay();needsFrame=true;return;}
  if(ev.key.toLowerCase()==='s'&&!typing&&timelineOpen&&!presenting){ev.preventDefault();void action('split-scene',el);return;}
  // E12/E13: locators and the loop brace answer while the timeline is open; the tool keys (I, O) take over only when it is closed.
@@ -1893,7 +1903,7 @@ const retainedEditor=createRetainedNativeEditor({
  selectLocal:(entityId,index)=>{selected=entityId===null?[]:[entityId];stepIndex=index;overlayDirty=true;needsFrame=true;renderAll();},
  openEditor:(editor,entityId,index)=>{
   selected=[entityId];stepIndex=index;pointer.active=false;editing=true;
-  libraryOpen=false;presenting=false;contextKind='';beltPickerOpen=false;timelineOpen=false;shapePickerOpen=false;modesOpen=false;inspectorOpen=false;studioOpen=false;placementStep=false;cursorTool='select';tool='select';
+  libraryOpen=false;dropFocusMode();contextKind='';beltPickerOpen=false;timelineOpen=false;shapePickerOpen=false;modesOpen=false;inspectorOpen=false;studioOpen=false;placementStep=false;cursorTool='select';tool='select';
   if(editor==='placement'){captureOpen=false;sequenceOpen=false;placementStep=true;cursorTool='select';tool='select';camera.grid=true;renderAll();}
   else if(editor==='source'){sequenceOpen=false;captureOpen=true;renderAll();}
   else{captureOpen=false;sequenceOpen=true;renderAll();const layers=$('live-content').querySelector<HTMLDetailsElement>('.live-layers');if(layers){layers.open=true;layers.scrollIntoView({block:'nearest'});}}
@@ -2147,9 +2157,11 @@ window.__FIELD_STUDIES__.dispose=()=>{naraInstrument.destroy();journeyInstrument
 // the Technè M0 instrument opens onto the Epii face this way
 // (?expression=source-twelve-faces, owner direction 2026-09-19).
 const qsExpression=qs.get('expression');
-if(qsExpression){const found=[...readLibrary(),...featuredExpressions(),...startingPoints().map(p=>p.expression)].find(j=>j.id===qsExpression);if(found)store.document=initialiseSceneSaves(initialiseBelts(found));}
-if(qs.get('journey')==='seven')store.document=initialiseSceneSaves(initialiseBelts(nativeSeven()));if(qs.get('scene')){const index=store.document.scenes.findIndex(s=>s.name.toLowerCase()===qs.get('scene')!.toLowerCase());if(index>=0)sceneIndex=index;}if(qs.has('still'))fieldPaused=true;
-if(window.__START_PRESENTATION__||qs.has('present')){presenting=true;fieldPaused=false;scenePlaying=true;journeyPlaying=store.document.scenes.length>1;}
+// E22: the address (scene, time, marker) is applied once the Expression has settled; its refusals are named then.
+const bootNotes=deepLinkPending?.notes;
+if(qsExpression){const found=[...readLibrary(),...featuredExpressions(),...startingPoints().map(p=>p.expression)].find(j=>j.id===qsExpression);if(found){store.document=initialiseSceneSaves(initialiseBelts(found));addressKeepsExpression=!qsExpression.startsWith('expression:');}else if(!qsExpression.startsWith('expression:'))bootNotes?.push(`No Expression "${shortenRef(qsExpression)}" is in this browser; it opened the current work.`);}
+if(qs.get('journey')==='seven')store.document=initialiseSceneSaves(initialiseBelts(nativeSeven()));if(qs.has('still'))fieldPaused=true;
+if(window.__START_PRESENTATION__||qs.has('present')){focusSession=beginFocus(focusSession,readFocusLayout());presenting=true;fieldPaused=false;scenePlaying=true;journeyPlaying=store.document.scenes.length>1;}
 // Save is the app's own act: in a hosted native work it commits the working
 // composition to its native Expression (the same owner operation the former
 // native panel used); otherwise it keeps the draft in this browser.
@@ -2243,18 +2255,97 @@ async function startWorkspace(){
  let recovered:SessionState|undefined;
  let showEntry=false;
  if(!window.__JOURNEY__&&!qs.has('journey')&&!qsExpression){try{for(const draft of await readDrafts())sessionExpressions.set(draft.id,draft);const id=localStorage.getItem('oi.field-studies.last'),draft=id?await readDraft(id):undefined;if(draft&&(!initial.updatedAt||draft.id!==initial.id||draft.updatedAt>=initial.updatedAt)){store.document=initialiseSceneSaves(initialiseBelts(draft));store.touch();}recovered=validateSession(JSON.parse(localStorage.getItem(SESSION_KEY)??'null'),store.document);showEntry=!startsInTechne;}catch(e){console.warn('Draft recovery unavailable',e);showEntry=!startsInTechne;}}
- if(recovered&&!qs.has('scene')){sceneIndex=store.document.scenes.findIndex(s=>s.id===recovered!.sceneId);selected=recovered.selected;stepIndex=recovered.stepIndex;sceneElapsed=recovered.sceneElapsed;simTime=recovered.simTime;scenePlaying=recovered.scenePlaying??recovered.playing;workingTransport=recovered.workingTransport??STOPPED_TRANSPORT;journeyPlaying=recovered.journeyPlaying;if(recovered.fieldPaused!==undefined)fieldPaused=recovered.fieldPaused;if(qs.has('still'))fieldPaused=true;camera=recovered.camera;}else applySceneView();
+ const linkedScene=deepLinkPending?.address.scene;
+ if(recovered&&(linkedScene===undefined||linkedScene===recovered.sceneId)){sceneIndex=store.document.scenes.findIndex(s=>s.id===recovered!.sceneId);selected=recovered.selected;stepIndex=recovered.stepIndex;sceneElapsed=recovered.sceneElapsed;simTime=recovered.simTime;scenePlaying=recovered.scenePlaying??recovered.playing;workingTransport=recovered.workingTransport??STOPPED_TRANSPORT;journeyPlaying=recovered.journeyPlaying;if(recovered.fieldPaused!==undefined)fieldPaused=recovered.fieldPaused;if(qs.has('still'))fieldPaused=true;camera=recovered.camera;}else applySceneView();
  document.body.classList.toggle('oi-host-techne',hostMode==='techne');renderRail();
  if(!qsExpression?.startsWith('expression:'))await nativeWorkspace?.changed(store.document);
  resize();engine.render(frameData(0));if(recovered?.transport)engine.restoreTransport?.(recovered.transport);
  trackPreview=!!scene().propertyTracks?.length;resize();renderAll();if(location.hash.startsWith('#library'))openLibrary(location.hash.includes('about')?'about':'collection',false);rafId=requestAnimationFrame(tick);
+if(!qsExpression?.startsWith('expression:'))settleDeepLink(true);
 if(startupError)toast(startupError,7000);else if(workspaceStorageError)toast('Saved toolbelt could not be read. Starter controls are available for this session.',7000);
 if(fieldPaused&&!recovered&&!qs.has('still'))toast('A still field, following your reduced-motion preference. Play a scene, or lift “Pause physics” in the studio, to set it in motion.',6000);
 if(qs.has('edit'))edit(true,(['scene','objects','field','motion'].includes(qs.get('edit')!)?qs.get('edit'):'scene')as InspectorContext['tab']);
 if(showEntry)openEntryGate(!!recovered||!!localStorage.getItem('oi.field-studies.last'),store.document.name);
 
-if(qsExpression?.startsWith('expression:')){const open=()=>void nativeWorkspace?.follow(qsExpression);if(kernelExpressionsAvailable())open();else window.addEventListener('message',function ready(event){if(event.source===window.parent&&event.data?.v===1&&event.data?.kind==='oi-kernel-channel'){window.removeEventListener('message',ready);open();}});}
+if(qsExpression?.startsWith('expression:')){const open=()=>void nativeWorkspace?.follow(qsExpression).then(applied=>settleDeepLink(applied));if(kernelExpressionsAvailable())open();else window.addEventListener('message',function ready(event){if(event.source===window.parent&&event.data?.v===1&&event.data?.kind==='oi-kernel-channel'){window.removeEventListener('message',ready);open();}});}
 setInterval(()=>{saveSession();if(propertyTake&&propertyTake.elapsed>0)void flushDraft();},1000);}
+/** E22: the Scene's native ref, when the Expression is hosted natively; the address prefers it because the kernel is the owner. */
+function nativeSceneRef(sceneId:string):string|undefined{return nativeWorkspace?.nativeView()?.bindings[sceneId]?.scene_ref;}
+/** E22: once the Expression has settled (local, or the followed native Expression), apply the link's address and name each refusal. */
+function settleDeepLink(applied:boolean){
+ const link=deepLinkPending;if(!link)return;deepLinkPending=null;
+ const carried=Object.keys(link.address).length>0||link.notes.length>0;
+ const notes=applied?[...link.notes,...applyDeepLinkAddress(link.address)]:link.notes;
+ if(notes.length)toast(notes.join(' '),8000);
+ // A plain load keeps its address as it is; a link that was carried is corrected to the place it actually opened.
+ if(carried)syncDeepLinkAddress();
+}
+/** E22: the most precise part of an address wins: a marker, then a time, then a Scene. A refusal does not stop the parts after it. */
+function applyDeepLinkAddress(address:DeepLinkAddress):string[]{
+ const doc=store.document,notes:string[]=[];
+ if(address.marker!==undefined){
+  const found=resolveMarker(doc.markers??[],address.marker);
+  if('marker' in found){selectedMarkerId=found.marker.id;jumpToJourneyTime(found.marker.time);return notes;}
+  notes.push(found.refused);
+ }
+ if(address.t!==undefined){
+  const placed=clampJourneyTime(address.t,expressionTiming(doc,0,0).total);
+  if(placed.clamped)notes.push(`t=${address.t} is past the end of this Expression; it opened at its end.`);
+  jumpToJourneyTime(placed.time);return notes;
+ }
+ if(address.scene!==undefined){
+  const found=resolveSceneRef(doc.scenes.map(s=>({id:s.id,name:s.name,ref:nativeSceneRef(s.id)})),address.scene);
+  if('refused' in found){notes.push(found.refused);return notes;}
+  const sceneId=found.id;setSceneRef(sceneId);
+  if(found.via==='name')notes.push(`Matched Scene "${shortenRef(address.scene)}" by name; links carry the Scene's ref.`);
+ }
+ return notes;
+}
+/** E22: the address follows the person. The Scene always; the time and marker while the transport stands still.
+ * Only replaceState, so Back and history stay as they were. */
+function syncDeepLinkAddress(){
+ if(deepLinkPending)return;
+ try{
+  const view=nativeWorkspace?.nativeView(),doc=store.document;
+  const timing=expressionTiming(doc,sceneIndex,sceneElapsed),still=!journeyPlaying&&!scenePlaying;
+  const expression=view?.document.expression_ref??(addressKeepsExpression?doc.id:undefined);
+  const next=formatDeepLink(location.search,{
+   ...(expression!==undefined?{expression}:{}),
+   scene:nativeSceneRef(scene().id)??scene().id,
+   t:still?timing.time:undefined,
+   marker:still?markerAtTime(doc.markers??[],timing.time):undefined,
+  });
+  if(next!==location.search)history.replaceState(history.state,'',location.pathname+next+location.hash);
+ }catch{/* a refused history write leaves the address as it was; the page keeps working */}
+}
+/** E23: the layout focus hides and restores. Read and written as one record; the pure model is focusMode.ts. */
+function readFocusLayout():FocusLayout{return {sequenceOpen,beltOpen,timelineOpen,inspectorOpen,editing,contextKind,beltPickerOpen,shapePickerOpen,modesOpen,captureOpen,tool,cursorTool,selected:[...selected]};}
+function writeFocusLayout(layout:FocusLayout){sequenceOpen=layout.sequenceOpen;beltOpen=layout.beltOpen;timelineOpen=layout.timelineOpen;inspectorOpen=layout.inspectorOpen;editing=layout.editing;contextKind=layout.contextKind as typeof contextKind;beltPickerOpen=layout.beltPickerOpen;shapePickerOpen=layout.shapePickerOpen;modesOpen=layout.modesOpen;captureOpen=layout.captureOpen;tool=layout.tool as Tool;cursorTool=layout.cursorTool as typeof cursorTool;selected=[...layout.selected];}
+/** E23: the presenting mode, extended. It hides the chrome (the .presentation rules), closes the working panels, and asks for real fullscreen on the stage. A refusal keeps focus in place. */
+function startFocusMode(){
+ if(presenting)return;
+ focusSession=beginFocus(focusSession,readFocusLayout());
+ writeFocusLayout(focusedLayout(readFocusLayout()));
+ presenting=true;requestStageFullscreen();renderAll();
+}
+/** E23: leaving focus restores the exact layout it began from. */
+function stopFocusMode(){
+ if(!presenting)return;
+ const ended=endFocus(focusSession);focusSession=ended.session;presenting=false;
+ if(ended.restore)writeFocusLayout(ended.restore);
+ leaveFullscreen();focusExitedAt=performance.now();renderAll();
+}
+/** E23: a path that replaces the layout itself (opening the editor) ends focus without restoring over what it just set. */
+function dropFocusMode(){focusSession=NOT_FOCUSED;presenting=false;leaveFullscreen();}
+function requestStageFullscreen(){
+ const stage=document.getElementById('stage');if(!stage||typeof stage.requestFullscreen!=='function')return;
+ let request:Promise<void>;
+ try{request=Promise.resolve(stage.requestFullscreen({navigationUI:'hide'}));}catch{return;}
+ void request.then(()=>{if(presenting)fullscreenGranted=true;else leaveFullscreen();},()=>{/* refused: focus stands in place, chrome still hidden */});
+}
+function leaveFullscreen(){fullscreenGranted=false;if(document.fullscreenElement)void document.exitFullscreen?.().catch(()=>{});}
+// The browser's own exit from fullscreen (its Esc, or its control) ends the focus that asked for it.
+document.addEventListener('fullscreenchange',()=>{if(fullscreenGranted&&!document.fullscreenElement)stopFocusMode();});
 function openEntryGate(hasContinue:boolean,continueLabel?:string){
  if(nativeWorkspace?.nativeView())return; // the host already opened a native Expression: the frame stands on it
  const gate=$('entry-gate');gate.hidden=false;gate.innerHTML=entryGateHTML({hasContinue,continueLabel:continueLabel?`Continue “${continueLabel}”`:undefined,hasNative:kernelExpressionsAvailable()});
