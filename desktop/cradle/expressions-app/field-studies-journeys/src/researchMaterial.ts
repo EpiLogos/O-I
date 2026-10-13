@@ -4,6 +4,7 @@ import {clone,entity,uid,type Scene} from './model.js';
 import {validateConnector,CONNECTOR_KEY_MAX,CONNECTOR_RECORD_MAX,type ResearchConnector} from './canvasConnectors.js';
 import {CANVAS_OBJECT_KINDS,CANVAS_TOOL_SPEC,STICKY_DEFAULT_PALETTE,isCanvasObjectKind,isPaletteKey,isShapeFill,isShapeGeometry,type CanvasObjectKind,type CanvasToolChoice,type PaletteKey,type ShapeFill,type ShapeGeometry} from './canvasShapes.js';
 import {LIVE_BASEMAP_SOURCES,OFFLINE_GROUND_ID} from '../../vendor/research-canvas/packages/canvas/src/psychogeographic/basemapSources';
+import {TIMELINE_CATEGORIES} from '../../vendor/research-canvas/packages/canvas/src/timeline/categories';
 
 /** Card kinds the material admits: the image/note cards plus the lane-1 A2
  * canvas objects (sticky, shape, text). */
@@ -43,15 +44,47 @@ export interface PlaceLayersRecord {relations?:string[];standing?:PlaceStanding[
 export interface PlaceTimeWindowRecord {from:string|null;to:string|null}
 /** lane-4 T20: a named Places view — camera, layer toggles, basemap rows and the time window. Refs and presentation only, never a copy of the reading. */
 export interface PlaceViewRecord extends PlaceLayersRecord {viewport:{x:number;y:number;zoom:number;pitch?:number;bearing?:number};window:PlaceTimeWindowRecord|null}
+/** lane-2 T16: a timeline card's style, in the card-style colour grammar (`#rrggbb` or `#rrggbbaa`). Absent = the category's own colours. */
+export interface TimelineCardStyle {dotColour?:string;bgColour?:string;textColour?:string}
+/** lane-2 T15: the M2′ chronology (the timeline's own spine) or the relation field. */
+export type TimelineProjection='chronology'|'relations';
+/** lane-2 T15–T18: a named timeline view — camera, projection, relation links, filters, the followed cause chain, the open
+ * sub-timeline frame and the stacked working set. Refs and presentation only: a working-set or frame ref is re-read through
+ * the native owner when the view is restored, never a stored copy of the node. */
+export interface TimelineViewRecord {
+ camera:{centerYear:number;pixelsPerYear:number};
+ projection:TimelineProjection;
+ /** The relation links drawn over the chronology (the relation mode of the lens). */
+ relationLinks:boolean;
+ filters:{hiddenCategories:string[];relationTypes:string[]|null;tags:string[]};
+ /** The followed cause chain (the walk position); null when none is followed. */
+ chainId:string|null;
+ /** The open sub-timeline frame (T18); absent = the Earth zero-case. */
+ frameNodeId?:string;
+ /** The working-set stack, bottom first (T18). At most 64. */
+ workingSetRefs:string[];
+}
+/** lane-2 T15–T18: the bounds a timeline view and a timeline card style admit. The kernel holds the same numbers. */
+export const TIMELINE_VIEW_LIMIT=32;
+export const TIMELINE_VIEW_REF_LIMIT=64;
+export const TIMELINE_REF_MAX=512;
+/** Years either side of zero the camera may name (the reading spans deep time to the present). */
+export const TIMELINE_CENTER_YEAR_LIMIT=1e10;
+/** The camera zoom a view may name: the lens floor (1e-9 px/year) up to a ceiling above the lens's own maximum, which the lens clamps to. */
+export const TIMELINE_PIXELS_PER_YEAR_RANGE:readonly [number,number]=[1e-9,1e14];
+const TIMELINE_CATEGORY_IDS:readonly string[]=TIMELINE_CATEGORIES.map(category=>category.id);
+const TIMELINE_STYLE_KEYS:readonly string[]=['dotColour','bgColour','textColour'];
 export interface ResearchMaterial {
  schema:'oi.research-scene/v1';cards:Record<string,ResearchCard>;strokes:ResearchStroke[];
 
- views:Record<string,ResearchViewport>; timeline:Record<string,{offsetY:number;width?:number;height?:number;lane?:string;layoutRevision?:number}>;
+ views:Record<string,ResearchViewport>; timeline:Record<string,{offsetY:number;width?:number;height?:number;lane?:string;layoutRevision?:number;/** lane-2 T16: the card's colours (absent = the category's own). */style?:TimelineCardStyle}>;
  frames:Record<string,ResearchFrame>; namedViews:Record<string,ResearchNamedView>;
  /** lane-1 A3–A4: presentation connectors keyed by the native edge id (absent = today's curved auto routing). */
  connectors?:Record<string,ResearchConnector>;
  /** lane-4 T20: named Places views, kept beside the canvas's namedViews (absent = none saved). At most 32. */
  placeViews?:Record<string,PlaceViewRecord>;
+ /** lane-2 T15: named timeline views, kept beside the canvas's namedViews (absent = none saved). At most 32. */
+ timelineViews?:Record<string,TimelineViewRecord>;
 }
 export type ResearchMaterialAction =
  | {type:'resize';id:string;width:number;height:number}
@@ -70,7 +103,10 @@ export type ResearchMaterialAction =
  | {type:'view-save';name:string;viewport:ResearchViewport;selectedRefs:string[];frameOrder:string[]}
  /** lane-4 T20: a named Places view. It reuses the 'view-save' key (and its undo label) and writes placeViews, never namedViews. */
  | {type:'view-save';name:string;place:PlaceViewRecord}
- | {type:'view-remove';name:string;scope?:'place'};
+ | {type:'view-remove';name:string;scope?:'place'}
+ /** lane-2 T15: a named timeline view, kept beside the Places and canvas views. Only timelineViews changes. */
+ | {type:'timeline-view-save';name:string;view:TimelineViewRecord}
+ | {type:'timeline-view-remove';name:string};
 const color=(value:unknown)=>typeof value==='string'&&/^#[0-9a-f]{6}([0-9a-f]{2})?$/i.test(value);
 const finite=(v:unknown,low:number,high:number)=>typeof v==='number'&&Number.isFinite(v)&&v>=low&&v<=high;
 const text=(v:unknown,max=4096)=>typeof v==='string'&&v.length<=max;
@@ -105,7 +141,7 @@ export function pruneResearchOccurrence(scene:Scene,id:string):void {
  for(const view of Object.values(namedViews))view.selectedRefs=view.selectedRefs.filter(ref=>ref!==id);
 }
 export function validateResearchMaterial(value:unknown,ids:ReadonlySet<string>):asserts value is ResearchMaterial {
- require(object(value),'Research material must be an object');keys(value,['schema','cards','strokes','views','timeline','frames','namedViews','connectors','placeViews']);
+ require(object(value),'Research material must be an object');keys(value,['schema','cards','strokes','views','timeline','frames','namedViews','connectors','placeViews','timelineViews']);
  require(value.schema==='oi.research-scene/v1','Unsupported research material');
  require(new TextEncoder().encode(JSON.stringify(value)).length<=262144,'Research material exceeds 256 KiB');
  for(const key of ['cards','views','timeline'])require(object(value[key])&&Object.keys(value[key]).length<=(key==='views'?16:256),'Research record count exceeds its bound');
@@ -129,6 +165,9 @@ export function validateResearchMaterial(value:unknown,ids:ReadonlySet<string>):
  // lane-4 T20: named Places views are absent in material saved before them; present, each is validated closed.
  if(value.placeViews!==undefined)require(object(value.placeViews)&&Object.keys(value.placeViews).length<=PLACE_VIEW_LIMIT,'Place view count exceeds its bound');
  for(const [name,view] of Object.entries(value.placeViews??{})){require(text(name,160)&&!!name.trim(),'Invalid place view name');validatePlaceView(view);}
+ // lane-2 T15: named timeline views are absent in material saved before them; present, each is validated closed.
+ if(value.timelineViews!==undefined)require(object(value.timelineViews)&&Object.keys(value.timelineViews).length<=TIMELINE_VIEW_LIMIT,'Timeline view count exceeds its bound');
+ for(const [name,view] of Object.entries(value.timelineViews??{})){require(text(name,160)&&!!name.trim(),'Invalid timeline view name');validateTimelineView(view);}
  for(const [id,card] of Object.entries(value.cards) as [string,ResearchCard][]){
   require(ids.has(id)&&object(card),'Research card must address an existing occurrence');
   keys(card,['type','importedAt','content','caption','color','dotColour','bgColour','textColour','size','palette','shape','fill']);
@@ -149,7 +188,30 @@ export function validateResearchMaterial(value:unknown,ids:ReadonlySet<string>):
  require(Array.isArray(value.strokes)&&value.strokes.length<=128,'Annotation count exceeds its bound');
  const seen=new Set<string>();for(const stroke of value.strokes){require(object(stroke),'Invalid annotation');keys(stroke,['id','points','color','width','opacity','createdAt']);require(text(stroke.id,160)&&!!stroke.id&&!seen.has(stroke.id),'Duplicate annotation');seen.add(stroke.id);require(color(stroke.color)&&finite(stroke.width,.1,100)&&finite(stroke.opacity,0,1)&&text(stroke.createdAt,64)&&Number.isFinite(Date.parse(stroke.createdAt)),'Invalid annotation style');require(Array.isArray(stroke.points)&&stroke.points.length>0&&stroke.points.length<=4096,'Annotation point budget exceeded');for(const p of stroke.points)require(object(p)&&finite(p.x,-40000,40000)&&finite(p.y,-40000,40000)&&(p.pressure===undefined||finite(p.pressure,0,1)),'Invalid annotation point');}
  for(const view of Object.values(value.views))validateViewport(view);
- for(const layout of Object.values(value.timeline) as ResearchMaterial['timeline'][string][]){require(object(layout),'Invalid timeline layout');keys(layout,['offsetY','width','height','lane','layoutRevision']);require((layout.lane===undefined||text(layout.lane,1024))&&(layout.layoutRevision===undefined||Number.isSafeInteger(layout.layoutRevision)&&layout.layoutRevision>=1),'Invalid timeline layout revision');require(finite(layout.offsetY,-40000,40000)&&(layout.width===undefined||finite(layout.width,40,40000))&&(layout.height===undefined||finite(layout.height,40,40000)),'Invalid timeline layout');}
+ for(const layout of Object.values(value.timeline) as ResearchMaterial['timeline'][string][]){require(object(layout),'Invalid timeline layout');keys(layout,['offsetY','width','height','lane','layoutRevision','style']);require((layout.lane===undefined||text(layout.lane,1024))&&(layout.layoutRevision===undefined||Number.isSafeInteger(layout.layoutRevision)&&layout.layoutRevision>=1),'Invalid timeline layout revision');require(finite(layout.offsetY,-40000,40000)&&(layout.width===undefined||finite(layout.width,40,40000))&&(layout.height===undefined||finite(layout.height,40,40000)),'Invalid timeline layout');if(layout.style!==undefined)validateTimelineStyle(layout.style);}
+}
+/** lane-2 T16: a timeline card's colours, in the card-style colour grammar. Closed: only dotColour, bgColour and textColour. */
+export function validateTimelineStyle(value:unknown):asserts value is TimelineCardStyle{
+ require(object(value),'Invalid timeline style');keys(value,TIMELINE_STYLE_KEYS as string[]);
+ for(const key of TIMELINE_STYLE_KEYS)if(value[key]!==undefined)require(color(value[key]),'Timeline colour is invalid');
+}
+/** lane-2 T15–T18: a named timeline view is closed and bounded. Refs are bounded strings, not checked against the Scene:
+ * they name graph nodes and cause-chain ids, which the native owner resolves on restore (a missing one is reported, never invented). */
+export function validateTimelineView(value:unknown):asserts value is TimelineViewRecord{
+ const ref=(v:unknown):v is string=>typeof v==='string'&&text(v,TIMELINE_REF_MAX)&&v.length>0;
+ require(object(value),'Invalid timeline view');keys(value,['camera','projection','relationLinks','filters','chainId','frameNodeId','workingSetRefs']);
+ const [zoomLow,zoomHigh]=TIMELINE_PIXELS_PER_YEAR_RANGE;
+ require(object(value.camera),'Invalid timeline view camera');keys(value.camera,['centerYear','pixelsPerYear']);
+ require(finite(value.camera.centerYear,-TIMELINE_CENTER_YEAR_LIMIT,TIMELINE_CENTER_YEAR_LIMIT)&&finite(value.camera.pixelsPerYear,zoomLow,zoomHigh),'Timeline view camera exceeds its bound');
+ require(value.projection==='chronology'||value.projection==='relations','Invalid timeline view projection');
+ require(typeof value.relationLinks==='boolean','Invalid timeline view relation links');
+ const filters=value.filters;require(object(filters),'Invalid timeline view filters');keys(filters,['hiddenCategories','relationTypes','tags']);
+ require(Array.isArray(filters.hiddenCategories)&&filters.hiddenCategories.length<=TIMELINE_CATEGORY_IDS.length&&filters.hiddenCategories.every((id:unknown)=>typeof id==='string'&&TIMELINE_CATEGORY_IDS.includes(id)),'Invalid timeline view category filter');
+ require(filters.relationTypes===null||Array.isArray(filters.relationTypes)&&filters.relationTypes.length<=256&&filters.relationTypes.every((name:unknown)=>text(name,160)&&!!name),'Invalid timeline view relation filter');
+ require(Array.isArray(filters.tags)&&filters.tags.length<=256&&filters.tags.every((tag:unknown)=>text(tag,160)&&!!tag),'Invalid timeline view tag filter');
+ require(value.chainId===null||ref(value.chainId),'Invalid timeline view walk');
+ if(value.frameNodeId!==undefined)require(ref(value.frameNodeId),'Invalid timeline view frame');
+ require(Array.isArray(value.workingSetRefs)&&value.workingSetRefs.length<=TIMELINE_VIEW_REF_LIMIT&&value.workingSetRefs.every(ref)&&new Set(value.workingSetRefs).size===value.workingSetRefs.length,'Invalid timeline view working set');
 }
 function validateViewport(v:unknown):void{require(object(v),'Invalid research viewport');keys(v,['x','y','zoom','pitch','bearing']);require(finite(v.x,-1e8,1e8)&&finite(v.y,-1e8,1e8)&&finite(v.zoom,.001,1e5)&&(v.pitch===undefined||finite(v.pitch,0,85))&&(v.bearing===undefined||finite(v.bearing,-180,180)),'Research viewport exceeds its bound');}
 /** lane-4 T20: the closed Places vocabularies a view or the layer record admits. The ids are the basemap registry's own; the kernel holds the same list. */
@@ -274,6 +336,15 @@ export function applyResearchMaterial(scene:Scene,action:ResearchMaterialAction)
   if(action.scope==='place'){if(research.placeViews){delete research.placeViews[action.name];if(!Object.keys(research.placeViews).length)delete research.placeViews;}}
   else delete research.namedViews[action.name];
   break;
+ // lane-2 T15: a timeline view is kept beside the other views. Its count bound is checked with the whole material below.
+ case 'timeline-view-save':{
+  require(text(action.name,160)&&!!action.name.trim(),'Invalid timeline view name');
+  validateTimelineView(action.view);
+  research.timelineViews??={};research.timelineViews[action.name]=clone(action.view);
+  break;
+ }
+ // Removing a timeline view touches only timelineViews: no occurrence, timeline layout, frame or other view is changed.
+ case 'timeline-view-remove':{if(research.timelineViews){delete research.timelineViews[action.name];if(!Object.keys(research.timelineViews).length)delete research.timelineViews;}break;}
  }
  require(next.entities.length<=32,'Scene authoring occurrence limit reached');
  validateResearchMaterial(research,new Set(next.entities.map(e=>e.id)));

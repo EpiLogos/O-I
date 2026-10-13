@@ -182,7 +182,8 @@ export async function readingInstruments(raw:unknown,titles:ReadonlyMap<string,s
  const workspaceId=bundle.workspaceId;
  const capabilities={geographyEdges:{available:false,reason:'This source does not disclose movement routes. Select a source with native route records.'},archetypalExpressions:{available:false,reason:'This source does not disclose dated archetype/place assertions.'}};
  const dataSource:TimelineDataSource={
-  styleCapability:{available:false,reason:"Timeline colours have no native Scene write mapping; position and size remain editable."},
+  // lane-2 T16: a card colour persists through the Scene's timeline layout record (researchMaterial 'timeline-layout', style).
+  styleCapability:{available:true},
   archetypeCapability:{available:false,reason:"This native reading does not carry archetype classification or dated archetype/place assertions."},
   loadTimelineView:(range,filters)=>transport.loadTimelineView({workspaceId,range,filters}),
   loadNode:graphNodeId=>transport.readGraphNode({graphNodeId}),

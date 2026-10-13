@@ -2562,3 +2562,12 @@
 /* lane-4 T20-T21: the Places tool row's named-view controls take the instrument's own tokens. */
 :where(.research-instrument) .research-places-view-select{font:inherit;font-size:11px;color:var(--ob-ink);background:transparent;border:1px solid var(--ob-line-3);border-radius:6px;padding:2px 6px}
 :where(.research-instrument) .research-places-view-save{font:inherit;font-size:11px;color:var(--ob-ink);background:transparent;border:1px solid var(--ob-line-3);border-radius:6px;padding:2px 8px;cursor:pointer}
+
+/* lane-1 A7-A8 — present over saved frames. Presenting hides the Canvas's own floating chrome (zoom controls, overview, guides, zoom readout) and takes pointer input away: the presentation moves by keys only. The host hides the panels; fullscreen shows the Canvas alone. Tokens only. */
+:where(.research-instrument) .research-canvas--presenting .canvas-zoom-controls,:where(.research-instrument) .research-canvas--presenting .research-minimap-toggle,:where(.research-instrument) .research-canvas--presenting .navigation-minimap,:where(.research-instrument) .research-canvas--presenting .canvas-guides{display:none}
+:where(.research-instrument):has(.research-canvas--presenting) .canvas-zoom-readout-host{display:none}
+:where(.research-instrument) .research-canvas--presenting,:where(.research-instrument) .research-canvas--presenting *{pointer-events:none!important;cursor:default!important}
+:where(.research-instrument) .research-canvas:fullscreen{width:100vw;height:100vh;background:var(--paper)}
+/* lane-2 T15-T18 — named timeline views (Save view… / Views…) in the Places chooser grammar. Tokens only. */
+:where(.research-instrument) .research-timeline-view-select{font:inherit;font-size:11px;color:var(--ob-ink);background:transparent;border:1px solid var(--ob-line-3);border-radius:6px;padding:2px 6px}
+:where(.research-instrument) .research-timeline-view-save{font:inherit;font-size:11px;color:var(--ob-ink);background:transparent;border:1px solid var(--ob-line-3);border-radius:6px;padding:2px 8px;cursor:pointer}
