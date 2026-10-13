@@ -3,7 +3,7 @@ import type { JSX } from "react";
 import { createPortal } from "react-dom";
 import { useStore } from "zustand";
 
-import type { ArchetypalLighting, ExpandedTimelineNode, GraphNode, LitInstance, TimelineFilters, TimelineLayoutMutationResult, TimelineRelationField as TimelineRelationFieldData, TimelineView, TimelineYearRange } from "./contracts";
+import type { ArchetypalLighting, ExpandedTimelineNode, GraphNode, GraphRelationship, LitInstance, TimelineFilters, TimelineLayoutMutationResult, TimelineRelationField as TimelineRelationFieldData, TimelineView, TimelineYearRange } from "./contracts";
 import { createTimelineStore, type TimelineCardGeometryUpdate } from "./timelineStore";
 import { DEFAULT_TIMELINE_CARD_WIDTH_PX, FALLBACK_TIMELINE_LANE_ID, bandExtent, placeItems, timelineCardBounds, type PlacedItem, type TimelinePresentation } from "./projection";
 import { axisRows, commonOffsetMs } from "./ticks";
@@ -85,6 +85,11 @@ export interface TimelineLensProps {
   containment?: readonly NestingPair[];
   /** lane-2 T14: participant validity spans (the authority's participantSpansFromReading), drawn behind the cards. */
   participants?: readonly ParticipantSpan[];
+  /** lane-2 T20: a cause-family relation selected on the chronology, handed to the host as its native relationship. Optional. */
+  onOpenRelation?: (relationship: GraphRelationship) => void;
+  /** lane-2 T20: one endpoint of a followed cause-chain link selected. The host records the hop and returns false to refuse it;
+   * an accepted endpoint opens through this lens's own node-open path. Optional. */
+  onOpenEndpoint?: (relationship: GraphRelationship, side: "from" | "to") => boolean | void;
 }
 
 const AXIS_HEIGHT = 48;
@@ -112,6 +117,8 @@ export function TimelineLens({
   cameraCommand,
   containment,
   participants,
+  onOpenRelation,
+  onOpenEndpoint,
 }: TimelineLensProps): JSX.Element {
   const store = useMemo(
     () => createTimelineStore(
@@ -456,6 +463,28 @@ export function TimelineLens({
   const selectChainForRelation = (relationshipId: string) => {
     const chain = chainContaining(causeChainList, relationshipId);
     setChainId((current) => (chain === null || current === chain.id ? null : chain.id));
+  };
+  // lane-2 T20: an endpoint of the followed link opens through this lens's own node-open path (handleOpenNode), so the evidence
+  // anchor the Timeline carries stays the one rule. The host records the hop first; a refusal (false) opens nothing.
+  const openChainEndpoint = (relationship: GraphRelationship, side: "from" | "to") => {
+    const graphNodeId = side === "from" ? relationship.sourceGraphNodeId : relationship.targetGraphNodeId;
+    const accept = (node: GraphNode) => {
+      if (onOpenEndpoint?.(relationship, side) === false) return;
+      handleOpenNode(graphNodeId, node, false);
+    };
+    const placed = state.items.find((item) => item.graphNodeId === graphNodeId)?.node;
+    if (placed) {
+      accept(placed);
+      return;
+    }
+    const retry = () => openChainEndpoint(relationship, side);
+    if (!dataSource.loadNode) {
+      setContextError({ message: "This endpoint is not in the loaded reading, so it was not opened.", retry });
+      return;
+    }
+    void dataSource.loadNode(graphNodeId)
+      .then(accept)
+      .catch((error: unknown) => setContextError({ message: `Source reading unavailable: ${error instanceof Error ? error.message : String(error)}`, retry }));
   };
   // Click-to-follow: one camera move per hop, to the middle of its own dated extent, at the current scale.
   const followHop = (hop: CauseHop) => {
@@ -1057,6 +1086,7 @@ export function TimelineLens({
             lod={lod}
             chain={activeChain}
             onSelectChain={selectChainForRelation}
+            onOpenRelation={onOpenRelation}
           />
           <TimelineParticipantSpans marks={participantMarkList} />
           <div className="timeline-nodes">
@@ -1094,6 +1124,14 @@ export function TimelineLens({
           titleOf={(graphNodeId) => nodeTitleById.get(graphNodeId) ?? graphNodeId}
           onFollow={followHop}
           onClear={() => setChainId(null)}
+          onOpenRelation={onOpenRelation ? (hop) => {
+            const relationship = state.relationships.find((row) => row.id === hop.id);
+            if (relationship) onOpenRelation(relationship);
+          } : undefined}
+          onOpenEndpoint={onOpenEndpoint ? (hop, side) => {
+            const relationship = state.relationships.find((row) => row.id === hop.id);
+            if (relationship) openChainEndpoint(relationship, side);
+          } : undefined}
         />
       )}
       {hasRelationContext && displayRelationField !== null && (

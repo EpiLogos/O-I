@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type JSX, type Mouse
 import { createPortal } from "react-dom";
 import type {
   GraphNode,
+  GraphRelationship,
   TimelineRelationField,
   TimelineRepository,
   TimelineTimeWindow,
@@ -39,6 +40,10 @@ export interface TimelineSurfaceProps {
   containment?: readonly NestingPair[];
   /** lane-2 T14b: participant validity spans from the reading, forwarded to the lens. */
   participants?: readonly ParticipantSpan[];
+  /** lane-2 T20: a cause-family relation selected on the chronology, forwarded from the lens. Optional. */
+  onOpenRelation?: (relationship: GraphRelationship) => void;
+  /** lane-2 T20: an endpoint of a followed cause-chain link selected, forwarded from the lens; false refuses it. Optional. */
+  onOpenEndpoint?: (relationship: GraphRelationship, side: "from" | "to") => boolean | void;
 }
 
 /**
@@ -60,6 +65,8 @@ export function TimelineSurface({
   onOpenNode,
   containment,
   participants,
+  onOpenRelation,
+  onOpenEndpoint,
 }: TimelineSurfaceProps): JSX.Element {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const selectedNodeIdRef = useRef(initialState.selectedNodeId);
@@ -373,6 +380,8 @@ export function TimelineSurface({
           cameraCommand={cameraCommand}
           containment={containment}
           participants={participants}
+          onOpenRelation={onOpenRelation}
+          onOpenEndpoint={onOpenEndpoint}
         />
       </div>
       {timeExtent && (

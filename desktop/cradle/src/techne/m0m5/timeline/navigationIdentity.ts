@@ -150,6 +150,17 @@ export function backTrail(trail: NavigationTrail): NavigationTrail {
   return trail.hops.length > 1 ? {hops: trail.hops.slice(0, -1)} : trail;
 }
 
+/** Where the trail stands, one line: the hop kinds it has taken from its event, e.g. "event → relation → endpoint". */
+export function trailStanding(trail: NavigationTrail): string {
+  return trail.hops.map(hop => hop.kind).join(" → ");
+}
+
+/** The native relation ref a bridge disclosed on a relation's properties, or null when the relation is derived. */
+export function relationRefOf(properties: Record<string, unknown>): string | null {
+  const ref = properties.native_relation_ref;
+  return typeof ref === "string" && ref.length > 0 ? ref : null;
+}
+
 // ---------------------------------------------------------------------------
 // T21 — Show on the globe: the event's place and its own validity
 // ---------------------------------------------------------------------------
