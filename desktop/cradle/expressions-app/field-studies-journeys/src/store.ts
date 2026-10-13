@@ -5,11 +5,16 @@ export const STORAGE_KEY='oi.field-studies.journey-library.v1';
  * returns to. `changes` and `inverse` are the kernel edit the step produced and
  * its compensation (invertEdit), when the caller recorded them with
  * attachKernelEdit; a step without them is undone locally only. */
-export interface HistoryEntry {label:string;snapshot:Journey;changes?:KernelChange[];inverse?:KernelCompensation}
+export interface HistoryEntry {label:string;snapshot:Journey;changes?:KernelChange[];inverse?:KernelCompensation;gesture?:string}
 /** What the next undo or redo asks of the kernel: nothing (local only), one
  * kernel edit to submit first, or a refusal by name. */
 export interface HistoryPlan {label:string;kernel:null|{changes:KernelChange[]}|{refused:string;reason:string}}
 const UNRECORDED='this edit recorded no kernel changes, so it cannot be undone as a kernel edit';
+let gestureSeq=0;
+/** A gesture id is unique within this page; the kernel guard refuses a second submission of one. */
+function mintGesture():string{gestureSeq+=1;return `gesture:${Date.now().toString(36)}.${gestureSeq}`;}
+/** Restore a document's content in place, so a reference held by the gesture stays valid. */
+function restoreInPlace(target:Journey,source:Journey):void{const slots=target as unknown as Record<string,unknown>;for(const key of Object.keys(slots))delete slots[key];Object.assign(target,clone(source));}
 export class DocumentStore {
  revision=0;
  /** Invalidates prepared runtime configuration without making a new undo entry. */
@@ -20,20 +25,58 @@ export class DocumentStore {
   * steps of the stack. null means unknown, and the next save reconciles by diff. */
  private kernelDepth:number|null=null;
  private lastCommit:HistoryEntry|null=null;
+ /** True while a composite (withComposite) holds the one gesture open. */
+ private composing=false;
  /** True while a pointer gesture or uncommitted edit holds a baseline. */
  get transactionOpen(){return this.baseline!==null;}
  constructor(document:Journey){this.document=clone(document);}
  /** A gesture takes its label from the first begin(); unlabelled gestures are "Edit". */
  begin(label?:string){if(!this.baseline){this.baseline=clone(this.document);this.mutated=false;this.pendingLabel=label?.trim()||'Edit';}}
  /** Full-document stringify per gesture end showed up as frame hitches; the mutation flag is set by touch(). */
- finish(){this.lastCommit=null;if(!this.baseline)return;const before=this.baseline;this.baseline=null;if(!this.mutated)return;const entry:HistoryEntry={label:this.pendingLabel,snapshot:before};this.undoStack.push(entry);this.lastCommit=entry;if(this.undoStack.length>60){this.undoStack.shift();if(this.kernelDepth!==null)this.kernelDepth=this.kernelDepth>0?this.kernelDepth-1:null;}this.redoStack=[];this.document.updatedAt=new Date().toISOString();this.touch();}
+ finish(){if(this.composing)throw new Error('A composite edit closes once, when its edit returns; finish() inside it is refused');this.lastCommit=null;if(!this.baseline)return;const before=this.baseline;this.baseline=null;if(!this.mutated)return;const entry:HistoryEntry={label:this.pendingLabel,snapshot:before};this.undoStack.push(entry);this.lastCommit=entry;if(this.undoStack.length>60){this.undoStack.shift();if(this.kernelDepth!==null)this.kernelDepth=this.kernelDepth>0?this.kernelDepth-1:null;}this.redoStack=[];this.document.updatedAt=new Date().toISOString();this.touch();}
  /** Commit one labelled edit. Both forms keep working: change(fn) is labelled "Edit". */
  change(label:string,fn:(doc:Journey)=>void):void;
  change(fn:(doc:Journey)=>void):void;
  change(labelOrFn:string|((doc:Journey)=>void),maybeFn?:(doc:Journey)=>void):void{
   const label=typeof labelOrFn==='string'?labelOrFn:undefined,fn=typeof labelOrFn==='function'?labelOrFn:maybeFn;
   if(!fn)throw new TypeError('store.change needs an edit function');
+  if(this.composing){this.joinComposite(fn);return;}
   this.begin(label);try{fn(this.document);this.mutated=true;this.finish();}catch(error){if(this.baseline)this.document=this.baseline;this.baseline=null;this.touch();throw error;}
+ }
+ /** One multi-step gesture as one labelled step: a synchronous edit runs inside a
+  * single gesture, so it leaves exactly one undo entry. A throw anywhere inside
+  * restores the baseline byte-equal, records no entry, and rethrows. A composite
+  * does not nest in another composite, and does not start inside an open gesture. */
+ composite<T>(label:string,fn:(doc:Journey)=>T):T{
+  if(this.composing)throw new Error(`"${label}" cannot nest inside a composite edit; its steps belong to the enclosing edit`);
+  if(this.transactionOpen)throw new Error(`"${label}" cannot start inside an open gesture; finish that gesture first`);
+  const gesture=mintGesture();
+  this.composing=true;this.begin(label);
+  let value!:T;
+  try{
+   value=fn(this.document);
+   if(value instanceof Promise){(value as unknown as Promise<unknown>).catch(()=>undefined);throw new Error(`"${label}" must be synchronous: an async edit would hold the store open across awaits`);}
+   if(!this.mutated&&JSON.stringify(this.document)!==JSON.stringify(this.baseline))this.mutated=true;
+   this.composing=false;
+   this.finish();
+  }catch(error){
+   this.composing=false;
+   if(this.baseline)restoreInPlace(this.document,this.baseline);
+   this.baseline=null;this.mutated=false;this.lastCommit=null;this.touch();
+   throw error;
+  }
+  if(this.lastCommit)this.lastCommit.gesture=gesture;
+  return value;
+ }
+ /** The gesture id of the step the last composite committed, or null when it
+  * committed none. The kernel submission of that step carries it, once. */
+ committedGesture():string|null{return this.lastCommit?.gesture??null;}
+ /** A nested change inside a composite is one more step of the same edit: it joins
+  * without closing the gesture, and a throw restores only its own step. */
+ private joinComposite(fn:(doc:Journey)=>void):void{
+  const before=clone(this.document);
+  try{fn(this.document);this.mutated=true;}
+  catch(error){restoreInPlace(this.document,before);throw error;}
  }
  /** Record the kernel edit the last committed step produced, with its compensation.
   * Attaches only to the step the last change() or finish() committed; false otherwise. */
@@ -94,6 +137,8 @@ export class DocumentStore {
  }
  replace(doc:Journey){this.change('Replace document',()=>{this.document=clone(doc);});}
 }
+/** The one way a multi-step gesture writes to the store: see DocumentStore.composite. */
+export function withComposite<T>(store:DocumentStore,label:string,fn:(doc:Journey)=>T):T{return store.composite(label,fn);}
 export interface LibraryRead {journeys:Journey[];errors:string[];raw:unknown[];blocked:boolean}
 export function readLibraryDetailed():LibraryRead {
  const result:LibraryRead={journeys:[],errors:[],raw:[],blocked:false};
