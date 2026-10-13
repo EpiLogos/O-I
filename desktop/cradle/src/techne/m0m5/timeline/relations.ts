@@ -31,7 +31,7 @@ import type {
   TechneWholeRelation,
 } from "../../contract.ts";
 import { standingOf, type StandingVisual } from "./standing";
-import { facetRange } from "./scale";
+import { facetRange, parseTimestamp } from "./scale";
 
 // ---------------------------------------------------------------------------
 // The edge model
@@ -428,6 +428,92 @@ export function phasesFromFacets(temporal: readonly TechneTemporalFacet[]): Phas
         label: facet.label?.trim() ? facet.label : null,
       };
     });
+}
+
+// ---------------------------------------------------------------------------
+// Participant validity spans — lane-2 T14 (pure; additive)
+// ---------------------------------------------------------------------------
+
+/** One validity span a participant carries: the reading's subject (its own
+ * validity facets) or a place (its valid_from / valid_to). Each side is the
+ * disclosed extent; a null side is open and is never invented. The
+ * participant ref is the native ref, verbatim: no display name is minted. */
+export interface ParticipantSpan {
+  participant_ref: string;
+  participant_kind: "subject" | "place";
+  fromMs: number | null;
+  toMs: number | null;
+  uncertainty: string | null;
+  source_ref: string | null;
+}
+
+export interface ParticipantSpanReading {
+  /** Drawable spans, ordered by participant, then earliest start first (open start first). */
+  spans: ParticipantSpan[];
+  /** Validity that is named but not drawn, with the reason stated plainly. */
+  absent: { participant_ref: string; reason: string }[];
+}
+
+function compareSpans(a: ParticipantSpan, b: ParticipantSpan): number {
+  if (a.participant_ref !== b.participant_ref) return a.participant_ref.localeCompare(b.participant_ref);
+  const from = (span: ParticipantSpan) => span.fromMs ?? Number.NEGATIVE_INFINITY;
+  return (from(a) - from(b)) || ((a.toMs ?? Number.POSITIVE_INFINITY) - (b.toMs ?? Number.POSITIVE_INFINITY));
+}
+
+/**
+ * The participant spans of one reading. The subject's validity comes from
+ * `phasesFromFacets` (the authority's own extent: an interval keeps each end's
+ * precision, an open end stays null). A place's validity is its stated
+ * valid_from / valid_to read as instants: the place facet carries no temporal
+ * precision, so each end is the instant the reading states. Validity that is
+ * present but has no dated side is listed in `absent`, never drawn.
+ */
+export function participantSpansFromReading(reading: TechneReading): ParticipantSpanReading {
+  const spans: ParticipantSpan[] = [];
+  const absent: ParticipantSpanReading["absent"] = [];
+  const subjectRef = reading.subject.subject_ref;
+  for (const phase of phasesFromFacets(reading.temporal ?? [])) {
+    if (phase.fromMs === null && phase.toMs === null) {
+      absent.push({
+        participant_ref: subjectRef,
+        reason: phase.temporal_problem ?? "no dated extent disclosed for this validity",
+      });
+      continue;
+    }
+    spans.push({
+      participant_ref: subjectRef,
+      participant_kind: "subject",
+      fromMs: phase.fromMs,
+      toMs: phase.toMs,
+      uncertainty: phase.uncertainty,
+      source_ref: phase.source_ref,
+    });
+  }
+  for (const place of reading.spatial ?? []) {
+    if (!place.valid_from && !place.valid_to) continue;
+    try {
+      const fromMs = place.valid_from ? parseTimestamp(place.valid_from) : null;
+      const toMs = place.valid_to ? parseTimestamp(place.valid_to) : null;
+      if (fromMs !== null && toMs !== null && toMs < fromMs) {
+        absent.push({ participant_ref: place.place_ref, reason: "the end falls before the start, so nothing is drawn" });
+        continue;
+      }
+      spans.push({
+        participant_ref: place.place_ref,
+        participant_kind: "place",
+        fromMs,
+        toMs,
+        uncertainty: place.uncertainty ?? null,
+        source_ref: place.source_ref ?? null,
+      });
+    } catch (error) {
+      absent.push({
+        participant_ref: place.place_ref,
+        reason: `validity not parseable: ${error instanceof Error ? error.message : String(error)}`,
+      });
+    }
+  }
+  return { spans: spans.sort(compareSpans), absent };
 }
 
 // ---------------------------------------------------------------------------

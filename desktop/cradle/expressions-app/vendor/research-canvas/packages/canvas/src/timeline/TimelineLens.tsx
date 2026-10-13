@@ -24,6 +24,11 @@ import { TimelineWorkingSet } from "./TimelineWorkingSet";
 import { categoryDefinition, deriveTimelineCategory, TIMELINE_CATEGORIES, type TimelineCategory } from "./categories";
 import { assembleTimelineWalk } from "./walk";
 import { frameStateForNode } from "./frames";
+import { nestingAt, type NestingPair } from "./nesting";
+import { TimelineNestSpans, type NestMark } from "./TimelineNesting";
+import { participantMarks } from "./participantSpans";
+import { TimelineParticipantSpans } from "./TimelineParticipants";
+import type { ParticipantSpan } from "../../../../../../../src/techne/m0m5/timeline/relations";
 
 /** lane-2 T15–T18: the lens's presentation as a named view keeps it. Refs and presentation only. */
 export interface TimelinePresentationSnapshot {
@@ -76,6 +81,10 @@ export interface TimelineLensProps {
   onViewportChange?: (viewport: { centerYear: number; pixelsPerYear: number }) => void;
   /** A camera the surface moves in place (the scale-window minimap, lane-2 T13). Applied to the store; never a remount. */
   cameraCommand?: { centerYear: number; pixelsPerYear: number; revision: number } | null;
+  /** lane-2 T9: explicit containment (parent → child) the host supplies. The lens nests only what it is given. */
+  containment?: readonly NestingPair[];
+  /** lane-2 T14: participant validity spans (the authority's participantSpansFromReading), drawn behind the cards. */
+  participants?: readonly ParticipantSpan[];
 }
 
 const AXIS_HEIGHT = 48;
@@ -101,6 +110,8 @@ export function TimelineLens({
   initialViewport,
   onViewportChange,
   cameraCommand,
+  containment,
+  participants,
 }: TimelineLensProps): JSX.Element {
   const store = useMemo(
     () => createTimelineStore(
@@ -293,7 +304,14 @@ export function TimelineLens({
     return itemEnd >= renderFromMs && item.startMs <= renderToMs;
   });
   const allPlaced = placeItems(layoutItems, viewport, state.lanes);
-  const categoryPlaced = allPlaced.filter((p) => visibleCategories[deriveTimelineCategory(p.item.node)]);
+  // lane-2 T9: a collapsed parent hides its descendants; every other card keeps its placement.
+  const nestItems = useMemo(
+    () => state.items.map((item) => ({ id: item.graphNodeId, fromMs: item.startMs, toMs: bandExtent(item).toMs })),
+    [state.items],
+  );
+  const nesting = nestingAt(containment ?? [], nestItems, renderCamera, lod);
+  const categoryPlaced = allPlaced.filter((p) =>
+    visibleCategories[deriveTimelineCategory(p.item.node)] && !nesting.hidden.has(p.item.graphNodeId));
   // Broad tier (lane-2 T12): at the marker band, placements that share an
   // aggregate bucket become one honest count. A lone item keeps its own card.
   const labelOffsetMs = commonOffsetMs(state.items);
@@ -408,6 +426,22 @@ export function TimelineLens({
     }
     return map;
   }, [state.nodes]);
+  // lane-2 T9: each collapsed parent as one band-like span on this camera, labelled with its title and child count.
+  const nestMarks: NestMark[] = nesting.collapsed.flatMap((span) => {
+    const leftPx = msToPixel(renderCamera, span.fromMs);
+    const endPx = span.toMs === null ? viewport.widthPx : msToPixel(renderCamera, span.toMs);
+    if (endPx < 0 || leftPx > viewport.widthPx) return [];
+    const title = nodeTitleById.get(span.parent) ?? span.parent;
+    return [{
+      parent: span.parent,
+      label: `${title} · ${span.childCount} ${span.childCount === 1 ? "item" : "items"}`,
+      leftPx,
+      widthPx: Math.max(0, endPx - leftPx),
+      openEnd: span.toMs === null,
+    }];
+  });
+  // lane-2 T14: participant validity hairlines on this camera, behind the cards.
+  const participantMarkList = participantMarks(participants ?? [], renderCamera);
   // Cause chains (lane-2 T10): the cause family of the relations this lens shows, walked by the authority.
   const causeChainList = useMemo(() => {
     const itemsByFacet = new Map(state.items.map((item) => [item.graphNodeId, item]));
@@ -1009,6 +1043,7 @@ export function TimelineLens({
           </div>
         )}
         <TimelineBandLanes marks={bandMarkList} />
+        <TimelineNestSpans marks={nestMarks} />
         <div
           className="timeline-scene"
           data-testid="timeline-scene"
@@ -1023,6 +1058,7 @@ export function TimelineLens({
             chain={activeChain}
             onSelectChain={selectChainForRelation}
           />
+          <TimelineParticipantSpans marks={participantMarkList} />
           <div className="timeline-nodes">
             {placed.map((p) => {
               const lit = lighting.get(p.item.graphNodeId) ?? null;

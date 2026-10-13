@@ -191,7 +191,11 @@
     "packages/canvas/src/psychogeographic/placeAuthoring.ts",
     "packages/canvas/src/canvas/CanvasObjectNodes.tsx",
     "packages/canvas/src/psychogeographic/placeTimeControl.ts",
-    "packages/canvas/src/timeline/causeChain.ts"
+    "packages/canvas/src/timeline/causeChain.ts",
+    "packages/canvas/src/timeline/nesting.ts",
+    "packages/canvas/src/timeline/participantSpans.ts",
+    "packages/canvas/src/timeline/TimelineNesting.tsx",
+    "packages/canvas/src/timeline/TimelineParticipants.tsx"
   ],
   "patches": {
     "packages/canvas/src/CanvasView.tsx": {
@@ -241,8 +245,8 @@
     },
     "packages/canvas/src/timeline/TimelineLens.tsx": {
       "upstream_sha256": "8f1c71bed489ca426e16bdec89f24b696ccff4f41901167160ace36098057979",
-      "adapted_sha256": "e42d742edc0330a7c1bffd495f88f774d4119f4b074aacc3cdf19950ad28aeaa",
-      "reason": "Exact focused native relation filtering without losing focused reading; explicit Close/Escape clears selection and invalidates late replies, restores card/track focus; preserve host toolbar, capability and Walk controls. Vertical pan bounds consume the same collision-resolved display rectangles as cards. Optional explicit Close/Escape and existing-HUD visibility controls with focus return; hiding retains native walk/working-set state, Clear/Unload remain separate intentional actions. | lane-2 T1b: chronology on the authority's epoch-ms extents | lane-2 T2+T7: precision bands, two-row axis, BCE/CE labels | lane-2 T8: periodisation bands | lane-2 T12+T13: honest clusters, scale-window minimap | lane-2 T10-T11: cause chains, standing edges | lane-2 T15-T18: timeline views and style"
+      "adapted_sha256": "a806dff72eafb8945f49aaedef9d54124d0aff4bd16987f2f45924373737aeec",
+      "reason": "Exact focused native relation filtering without losing focused reading; explicit Close/Escape clears selection and invalidates late replies, restores card/track focus; preserve host toolbar, capability and Walk controls. Vertical pan bounds consume the same collision-resolved display rectangles as cards. Optional explicit Close/Escape and existing-HUD visibility controls with focus return; hiding retains native walk/working-set state, Clear/Unload remain separate intentional actions. | lane-2 T1b: chronology on the authority's epoch-ms extents | lane-2 T2+T7: precision bands, two-row axis, BCE/CE labels | lane-2 T8: periodisation bands | lane-2 T12+T13: honest clusters, scale-window minimap | lane-2 T10-T11: cause chains, standing edges | lane-2 T15-T18: timeline views and style | lane-2 T9-T14: nesting, participant spans"
     },
     "packages/canvas/src/psychogeographic/PsychogeographicMap.tsx": {
       "upstream_sha256": "55b9856e3106912eb7b6f8f6a9fb60e6b40e8852ef8126c0eb82f75a6bc25af7",

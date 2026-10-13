@@ -2582,3 +2582,52 @@
 :where(.research-instrument) .research-embed-title{font:500 12px/1.3 var(--ob-mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 :where(.research-instrument) .research-embed-link{align-self:flex-start;font:400 11px/1.3 var(--ob-mono);color:var(--ob-dim);border-bottom:1px solid var(--ob-line-3);text-decoration:none;pointer-events:auto}
 :where(.research-instrument) .research-embed-card--media img{flex:1;min-height:0;width:100%;object-fit:contain}
+
+/* lane-2 T9-T14 — collapsed parents as band-like spans (T9) and participant hairlines behind the cards (T14). Quiet and static: tokens only. An open side fades out at the view edge rather than ending at an invented date. */
+:where(.research-instrument) .timeline-nest-spans,
+:where(.research-instrument) .timeline-participants {
+  z-index: 0;
+}
+:where(.research-instrument) .timeline-nest-span {
+  box-sizing: border-box;
+  background: color-mix(in srgb, var(--ob-line-3) 20%, transparent);
+  border-left: 1px solid var(--ob-line-3);
+  border-right: 1px solid var(--ob-line-3);
+  overflow: hidden;
+}
+:where(.research-instrument) .timeline-nest-span[data-open-end="true"] {
+  border-right: 0;
+  background: linear-gradient(to right, color-mix(in srgb, var(--ob-line-3) 20%, transparent), transparent);
+}
+:where(.research-instrument) .timeline-nest-span-label {
+  display: block;
+  padding: 2px 6px;
+  font: 500 10px/1.2 var(--ob-mono);
+  color: var(--ob-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+:where(.research-instrument) .timeline-participant {
+  height: 0;
+  pointer-events: auto;
+}
+:where(.research-instrument) .timeline-participant-line {
+  display: block;
+  height: 1px;
+  background: var(--ob-line-3);
+}
+:where(.research-instrument) .timeline-participant[data-open-start="true"] .timeline-participant-line {
+  background: linear-gradient(to left, var(--ob-line-3), transparent);
+}
+:where(.research-instrument) .timeline-participant[data-open-end="true"] .timeline-participant-line {
+  background: linear-gradient(to right, var(--ob-line-3), transparent);
+}
+:where(.research-instrument) .timeline-participant-label {
+  position: absolute;
+  left: 0;
+  top: -11px;
+  font: 400 10px/1 var(--ob-mono);
+  color: var(--ob-dim);
+  white-space: nowrap;
+}
