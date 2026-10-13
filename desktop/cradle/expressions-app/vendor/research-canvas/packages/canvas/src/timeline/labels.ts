@@ -129,6 +129,18 @@ export function precisionLabel(item: LabelledItem): string {
 }
 
 /**
+ * The label of a span of time, by its first and last calendar years, both
+ * inclusive ("1601 – 1650"). A span within one year reads that year once. The
+ * end is the last millisecond of the span, so an exclusive end is never read as
+ * the year after it. Used for a cluster's span (lane-2 T12).
+ */
+export function spanLabel(fromMs: number, toMs: number, offsetMs: number): string {
+  const first = civil(fromMs + offsetMs).year;
+  const last = civil(Math.max(fromMs, toMs - 1) + offsetMs).year;
+  return first === last ? formatYear(first) : yearSpan(first, last);
+}
+
+/**
  * The label of one axis mark. Year-scale marks read the year. Below a year, the
  * minor row is short ("Mar", "4", "10:00"); the major row carries its context
  * ("Mar 1850", "4 Mar 1850"). A mark's label depends only on the mark and its
