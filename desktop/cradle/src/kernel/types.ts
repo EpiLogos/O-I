@@ -263,6 +263,8 @@ export type KernelOp =
   | {op:"system_composition_read"}
   // The installed quaternal-logic's mode catalogue (ql.music-modes/v1), verbatim.
   | {op:"music_modes_read"}
+  // The installed quaternal-logic's Jankó surface window (ql.janko-surface/v1), verbatim; each argument left out is the owner's default.
+  | {op:"janko_window_read";lens?:number;first_column?:number;columns?:number}
   // The configuration-plane binding (#299 C6 live leg): every operation
   // routes through the installed `oi` executable — the same engine
   // `oi config` / `oi profile` drive — so the Desktop keeps no parallel
@@ -439,6 +441,7 @@ export type KernelOpResult =
   | {result:"composition_reading";reading:import("../workspace/SystemPanel").CompositionReading}
   | {result:"system_composition_reading";reading:import("../workspace/settings/types").SystemCompositionReading}
   | {result:"music_modes_reading";document:unknown}
+  | {result:"janko_window_reading";document:unknown}
   // Configuration-plane results: contract documents verbatim, degraded
   // states as named data (see `configuration.rs` in the kernel crate).
   | { result: "config_registry_reading"; reading: { schema: string; observed_at_unix_ms: number; mounts: ConfigurationMountState[]; composition?: import("../configuration/composition").RegistryComposition | null } }

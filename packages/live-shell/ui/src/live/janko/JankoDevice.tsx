@@ -3,11 +3,12 @@
 // (jankoInput.ts) as a janko stage command; the owner answers, and a refusal is named here. The computer keyboard plays only while the
 // keyboard holds focus, never from editable text, and never with a modifier held.
 
-import {useMemo, useState, type KeyboardEvent, type PointerEvent} from 'react'
-import {commitLiveStage} from '../torusInstrument'
+import {useEffect, useMemo, useState, type KeyboardEvent, type PointerEvent} from 'react'
+import {commitLiveStage, useLiveTorusReading} from '../torusInstrument'
 import {
   JANKO_PLACEMENT_NOTE, pianoKeys, useLiveJankoWindow, type JankoKey, type JankoWindowState,
 } from './jankoLayout'
+import {requestLiveJankoWindow} from '../../native/liveJankoWindow'
 import {COMPUTER_KEY_PITCH, createJankoInput, keyboardGate, type JankoInput, type NoteEvent} from './jankoInput'
 import './janko.css'
 
@@ -20,6 +21,10 @@ const editable = (target: EventTarget | null): boolean => {
 
 export function JankoDevice() {
   const windowState = useLiveJankoWindow()
+  // The surface follows the instrument's acting lens (the owner's lens12 is ql's --lens index); read again only when it changes.
+  const torus = useLiveTorusReading()
+  const lens = torus?.ok ? torus.determinants?.lens.lens12 ?? null : null
+  useEffect(() => { void requestLiveJankoWindow(lens) }, [lens])
   return <JankoDeviceView windowState={windowState}/>
 }
 
@@ -70,7 +75,7 @@ export function JankoDeviceView({windowState, initialLayout = 'janko'}: {windowS
         {pianoKeys().map(key => keyButton(key.pitchClass, key.pitchName, `pitch class ${key.pitchClass}`, undefined, key.black))}
       </div>
     : windowState === null
-      ? <p className="janko-note" data-janko-window="absent">The Jankó surface is not served to this shell yet: the owner has no read of the janko window (ql music janko window). The piano layout is available.</p>
+      ? <p className="janko-note" data-janko-window="absent">Reading the Jankó surface from the owner (ql music janko window). The piano layout is available.</p>
       : !windowState.ok
         ? <p className="janko-note is-fault" role="alert" data-janko-window="refused">{`Refused surface: ${windowState.fault}. No key is laid out from a plausible surface.`}</p>
         : <div className="janko-surface" role="group" aria-label="Jankó keyboard: six rows, whole-tone families alternating, repeated touch-points">

@@ -912,6 +912,17 @@ pub enum KernelOp {
     /// names what is missing (ql absent, an older ql without the subcommand, a
     /// reading that is not the schema). See `ql_music.rs`.
     MusicModesRead,
+    /// The installed quaternal-logic's Jankó surface window (`ql music janko
+    /// window --json`, `ql.janko-surface/v1`), passed through verbatim. Each
+    /// argument left out is the owner's own default. See `ql_music.rs`.
+    JankoWindowRead {
+        #[serde(default)]
+        lens: Option<u8>,
+        #[serde(default)]
+        first_column: Option<u16>,
+        #[serde(default)]
+        columns: Option<u16>,
+    },
     /// `fresh` bypasses the cached listing for this one read — the explicit
     /// tree refresh, not an ordinary expansion.
     FileResolve {
@@ -1390,6 +1401,10 @@ pub enum KernelOpResult {
     },
     /// The owner's `ql.music-modes/v1` document, verbatim.
     MusicModesReading {
+        document: serde_json::Value,
+    },
+    /// The owner's `ql.janko-surface/v1` window, verbatim.
+    JankoWindowReading {
         document: serde_json::Value,
     },
     SystemCompositionReading {
@@ -2494,6 +2509,7 @@ impl Kernel {
             | KernelOp::CompositionRead { .. }
             | KernelOp::SystemCompositionRead
             | KernelOp::MusicModesRead
+            | KernelOp::JankoWindowRead { .. }
             | KernelOp::ConfigRegistryRead
             | KernelOp::ConfigCapabilitiesRead
             | KernelOp::ConfigResolutionsRead { .. } => self

@@ -53,6 +53,7 @@ impl PreparedRead {
             | KernelOp::ConfigDiff
             | KernelOp::SystemCompositionRead
             | KernelOp::MusicModesRead
+            | KernelOp::JankoWindowRead { .. }
             | KernelOp::CompositionRead { .. }
             // The bounded telemetry follow waits on the owner for its whole
             // window; it reads only the owner's state file, never the kernel's.
@@ -206,6 +207,13 @@ impl PreparedRead {
             },
             KernelOp::MusicModesRead => KernelOpResult::MusicModesReading {
                 document: crate::ql_music::read_modes()?,
+            },
+            KernelOp::JankoWindowRead {
+                lens,
+                first_column,
+                columns,
+            } => KernelOpResult::JankoWindowReading {
+                document: crate::ql_music::read_janko_window(lens, first_column, columns)?,
             },
             KernelOp::CompositionRead { owners } => KernelOpResult::CompositionReading {
                 reading: crate::composition::Client::discover().read_with_owners(&cwd, owners),
