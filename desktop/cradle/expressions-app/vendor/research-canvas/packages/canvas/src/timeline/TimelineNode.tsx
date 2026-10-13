@@ -5,7 +5,10 @@ import type { LitNodeState } from "./lighting";
 import type { GraphNode } from "./contracts";
 import { categoryDefinition, deriveTimelineCategory } from "./categories";
 import { DEFAULT_TIMELINE_CARD_HEIGHT_PX } from "./projection";
+import { precisionLabel } from "./labels";
 
+/** A band is clipped to this many px. Beyond it the band lies wholly off the viewport, and the browser's layout limits are not reached. */
+const MAX_BAND_WIDTH_PX = 1_000_000;
 const MIN_CARD_WIDTH = 180;
 const MAX_CARD_WIDTH = 520;
 const MIN_CARD_HEIGHT = 72;
@@ -69,6 +72,10 @@ export function TimelineNode({
   const categoryStyle = categoryDefinition(category);
   const placeName = projectedNode.timelinePlaceName ?? item.node.place?.names[0]?.name ?? null;
   const colorTag = projectedNode.timelineColorTag ?? category;
+  // A band takes the card's own family colour, at a lighter fill than its edge.
+  const bandColour = item.presentation.style.dotColour ?? categoryStyle.color;
+  const bandFill = withAlpha(bandColour, 0.2);
+  const bandEdge = withAlpha(bandColour, 0.6);
   const positionX = 0;
   const positionY = item.presentation.offsetY;
   const cardWidth = bounds.width;
@@ -201,9 +208,18 @@ export function TimelineNode({
     >
       {spanWidth > 1 && (
         <div
-          className="timeline-node-span"
+          className="timeline-node-span timeline-node-band"
           data-testid={`timeline-node-span-${item.graphNodeId}`}
-          style={{ width: `${spanWidth}px` }}
+          data-precision={item.precision}
+          title={precisionLabel(item)}
+          style={{
+            width: `${Math.min(spanWidth, MAX_BAND_WIDTH_PX)}px`,
+            top: "-5px",
+            height: "10px",
+            boxSizing: "border-box",
+            background: bandFill,
+            border: bandEdge ? `1px solid ${bandEdge}` : undefined,
+          }}
         />
       )}
       <span className="timeline-node-dot" />
@@ -270,7 +286,7 @@ export function TimelineNode({
             {entityTypeGlyph(item.node.entityType)}
           </span>
           <span className="timeline-node-date">
-            {item.relationCompanion ? "linked context" : formatItemDate(item)}
+            {item.relationCompanion ? "linked context" : precisionLabel(item)}
           </span>
           <span className="timeline-node-title">{item.node.title}</span>
           {placeName && (
@@ -380,14 +396,10 @@ function resizeGeometry(
   };
 }
 
-function formatItemDate(item: PlacedItem["item"]): string {
-  const start = formatYear(item.startYear);
-  if (item.endYear === null) return start;
-  return `${start} to ${formatYear(item.endYear)}`;
-}
-
-function formatYear(year: number): string {
-  const rounded = year < 0 ? Math.ceil(year) : Math.floor(year);
-  if (rounded < 0) return `${Math.abs(rounded)} BCE`;
-  return `${rounded}`;
+/** `#rrggbb` at an alpha; any other colour string is left to the stylesheet. */
+function withAlpha(colour: string, alpha: number): string | undefined {
+  const match = /^#([0-9a-f]{6})$/i.exec(colour.trim());
+  if (!match) return undefined;
+  const value = parseInt(match[1], 16);
+  return `rgba(${(value >> 16) & 255}, ${(value >> 8) & 255}, ${value & 255}, ${alpha})`;
 }

@@ -4,7 +4,7 @@ import type {
   TimelineViewNode,
 } from "./contracts";
 import { anchorExtent } from "./instant";
-import type { TimelineItem } from "./projection";
+import { bandExtent, type TimelineItem } from "./projection";
 
 /**
  * Nestable timeline framing (vision §3.5, ticket #3): the main timeline's
@@ -88,7 +88,7 @@ export function projectSubTimeline(
   if (frame.window) {
     const { fromMs, toMs } = frame.window;
     members = members.filter((item) => {
-      const itemEnd = item.endMs ?? item.startMs;
+      const itemEnd = bandExtent(item).toMs;
       // Overlap semantics: a place whose identity spans the whole frame
       // window still belongs to the frame's sub-timeline.
       return itemEnd >= fromMs && item.startMs <= toMs;

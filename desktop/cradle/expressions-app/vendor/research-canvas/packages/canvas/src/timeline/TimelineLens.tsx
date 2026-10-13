@@ -5,8 +5,8 @@ import { useStore } from "zustand";
 
 import type { ArchetypalLighting, ExpandedTimelineNode, GraphNode, LitInstance, TimelineFilters, TimelineLayoutMutationResult, TimelineRelationField as TimelineRelationFieldData, TimelineView, TimelineYearRange } from "./contracts";
 import { createTimelineStore, type TimelineCardGeometryUpdate } from "./timelineStore";
-import { DEFAULT_TIMELINE_CARD_WIDTH_PX, FALLBACK_TIMELINE_LANE_ID, placeItems, timelineCardBounds, type PlacedItem, type TimelinePresentation } from "./projection";
-import { commonOffsetMs, visibleTicks } from "./ticks";
+import { DEFAULT_TIMELINE_CARD_WIDTH_PX, FALLBACK_TIMELINE_LANE_ID, bandExtent, placeItems, timelineCardBounds, type PlacedItem, type TimelinePresentation } from "./projection";
+import { axisRows, commonOffsetMs } from "./ticks";
 import { densityBandForPixelsPerYear } from "./scale";
 import { pixelToMs, timeCamera } from "./viewport";
 import { TimelineAxis } from "./TimelineAxis";
@@ -247,14 +247,14 @@ export function TimelineLens({
   const renderFromMs = pixelToMs(renderCamera, 0) - TIMELINE_RENDER_OVERSCAN_PX / renderCamera.pixelsPerMs;
   const renderToMs = pixelToMs(renderCamera, viewport.widthPx) + TIMELINE_RENDER_OVERSCAN_PX / renderCamera.pixelsPerMs;
   const layoutItems = state.items.filter((item) => {
-    const itemEnd = item.endMs ?? item.startMs;
+    const itemEnd = bandExtent(item).toMs;
     return itemEnd >= renderFromMs && item.startMs <= renderToMs;
   });
   const allPlaced = placeItems(layoutItems, viewport, state.lanes);
   const categoryPlaced = allPlaced.filter((p) => visibleCategories[deriveTimelineCategory(p.item.node)]);
   const placed = categoryPlaced.filter((placement) => isInsideTimelineRenderBand(placement, viewport.widthPx));
-  const ticks = visibleTicks(viewport, commonOffsetMs(state.items));
-  const axisUnit = ticks[0]?.unit ?? null;
+  const axis = axisRows(renderCamera, commonOffsetMs(state.items));
+  const axisUnit = axis.minor[0]?.unit ?? null;
   const lighting = state.litMap;
   const lightingActive = state.lightingOperatorId !== null;
   const showEmptyState = loaded && !loadError && state.items.length === 0;
@@ -837,7 +837,7 @@ export function TimelineLens({
           data-testid="timeline-scene"
           style={{ transform: `translateY(${state.verticalOffset}px)` }}
         >
-          <TimelineAxis ticks={ticks} height={AXIS_HEIGHT} />
+          <TimelineAxis major={axis.major} minor={axis.minor} height={AXIS_HEIGHT} />
           <TimelineRelationshipLayer
             relationships={renderedRelationships}
             placed={placed}
