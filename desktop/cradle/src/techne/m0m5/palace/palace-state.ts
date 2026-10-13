@@ -81,6 +81,10 @@ export interface PalaceComposition {
    * composition so it survives re-entry within the session. */
   expressions: PalaceArrangement;
   bookmarks: PalaceBookmark[];
+  /** The integral walk's focused locus (lane-5 T17), kept in this same
+   * session-scoped composition so a visitor who leaves mid-walk resumes at the
+   * same locus. Absent until the walk is first moved. */
+  walk_index?: number;
 }
 
 /** Derive the initial composition of one reading: regions from the reading's
