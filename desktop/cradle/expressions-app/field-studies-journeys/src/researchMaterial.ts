@@ -83,6 +83,8 @@ export interface ResearchMaterial {
  connectors?:Record<string,ResearchConnector>;
  /** lane-4 T20: named Places views, kept beside the canvas's namedViews (absent = none saved). At most 32. */
  placeViews?:Record<string,PlaceViewRecord>;
+ /** lane-4 T21: the Places layer toggles and basemap rows the Scene keeps, written whole (absent = every disclosed layer on, the offline ground only). Never the owner's live-source allowance. */
+ placeLayers?:PlaceLayersRecord;
  /** lane-2 T15: named timeline views, kept beside the canvas's namedViews (absent = none saved). At most 32. */
  timelineViews?:Record<string,TimelineViewRecord>;
 }
@@ -101,9 +103,12 @@ export type ResearchMaterialAction =
  | {type:'frame-remove';id:string}
  | {type:'frame-order';id:string;direction:'front'|'back'}
  | {type:'view-save';name:string;viewport:ResearchViewport;selectedRefs:string[];frameOrder:string[]}
- /** lane-4 T20: a named Places view. It reuses the 'view-save' key (and its undo label) and writes placeViews, never namedViews. */
- | {type:'view-save';name:string;place:PlaceViewRecord}
- | {type:'view-remove';name:string;scope?:'place'}
+ | {type:'view-remove';name:string}
+ /** lane-4 T20: a named Places view, kept beside the canvas views. Only placeViews changes. */
+ | {type:'place-view-save';name:string;place:PlaceViewRecord}
+ | {type:'place-view-remove';name:string}
+ /** lane-4 T21: the Places layer toggles and basemap rows, written whole. Only placeLayers changes. */
+ | {type:'place-layers-set';value:PlaceLayersRecord}
  /** lane-2 T15: a named timeline view, kept beside the Places and canvas views. Only timelineViews changes. */
  | {type:'timeline-view-save';name:string;view:TimelineViewRecord}
  | {type:'timeline-view-remove';name:string};
@@ -141,7 +146,7 @@ export function pruneResearchOccurrence(scene:Scene,id:string):void {
  for(const view of Object.values(namedViews))view.selectedRefs=view.selectedRefs.filter(ref=>ref!==id);
 }
 export function validateResearchMaterial(value:unknown,ids:ReadonlySet<string>):asserts value is ResearchMaterial {
- require(object(value),'Research material must be an object');keys(value,['schema','cards','strokes','views','timeline','frames','namedViews','connectors','placeViews','timelineViews']);
+ require(object(value),'Research material must be an object');keys(value,['schema','cards','strokes','views','timeline','frames','namedViews','connectors','placeViews','placeLayers','timelineViews']);
  require(value.schema==='oi.research-scene/v1','Unsupported research material');
  require(new TextEncoder().encode(JSON.stringify(value)).length<=262144,'Research material exceeds 256 KiB');
  for(const key of ['cards','views','timeline'])require(object(value[key])&&Object.keys(value[key]).length<=(key==='views'?16:256),'Research record count exceeds its bound');
@@ -165,6 +170,8 @@ export function validateResearchMaterial(value:unknown,ids:ReadonlySet<string>):
  // lane-4 T20: named Places views are absent in material saved before them; present, each is validated closed.
  if(value.placeViews!==undefined)require(object(value.placeViews)&&Object.keys(value.placeViews).length<=PLACE_VIEW_LIMIT,'Place view count exceeds its bound');
  for(const [name,view] of Object.entries(value.placeViews??{})){require(text(name,160)&&!!name.trim(),'Invalid place view name');validatePlaceView(view);}
+ // lane-4 T21: the Places layers are absent in material saved before them; present, they are validated closed.
+ if(value.placeLayers!==undefined)validatePlaceLayersRecord(value.placeLayers);
  // lane-2 T15: named timeline views are absent in material saved before them; present, each is validated closed.
  if(value.timelineViews!==undefined)require(object(value.timelineViews)&&Object.keys(value.timelineViews).length<=TIMELINE_VIEW_LIMIT,'Timeline view count exceeds its bound');
  for(const [name,view] of Object.entries(value.timelineViews??{})){require(text(name,160)&&!!name.trim(),'Invalid timeline view name');validateTimelineView(view);}
@@ -232,6 +239,8 @@ function validatePlaceLayers(value:Record<string,any>):void{
   }
  }
 }
+/** lane-4 T21: a whole Places layers record (toggles and basemap rows), closed and bounded by the same rules a view's layers meet. */
+export function validatePlaceLayersRecord(value:unknown):asserts value is PlaceLayersRecord{require(object(value),'Invalid place layers');validatePlaceLayers(value);}
 /** lane-4 T20: a named Places view is closed, bounded and refs-free: camera (longitude x, latitude y, zoom, pitch, bearing), the layer toggles, the basemap rows and the shared time window. */
 export function validatePlaceView(value:unknown):void{
  require(object(value),'Invalid place view');keys(value,['viewport','relations','standing','basemap','window']);
@@ -323,19 +332,23 @@ export function applyResearchMaterial(scene:Scene,action:ResearchMaterialAction)
  // never a second copy of graph material.
  case 'view-save':{
   require(text(action.name,160)&&!!action.name.trim(),'Invalid view name');
-  // lane-4 T20: a Places view is kept beside the canvas views and never among them. Its bounds are checked with the whole material below.
-  if('place' in action){research.placeViews??={};research.placeViews[action.name]=clone(action.place);break;}
   validateViewport(action.viewport);
   require(Array.isArray(action.selectedRefs)&&action.selectedRefs.length<=64&&action.selectedRefs.every(ref=>typeof ref==='string'),'Invalid view selection');
   require(Array.isArray(action.frameOrder)&&action.frameOrder.length<=64&&action.frameOrder.every(ref=>typeof ref==='string'),'Invalid view frame order');
   research.namedViews[action.name]={viewport:clone(action.viewport),selectedRefs:[...action.selectedRefs],frameOrder:[...action.frameOrder]};
   break;
  }
- case 'view-remove':
-  // Removing a Places view touches only placeViews; the Scene's occurrences, frames and canvas views stay as they were.
-  if(action.scope==='place'){if(research.placeViews){delete research.placeViews[action.name];if(!Object.keys(research.placeViews).length)delete research.placeViews;}}
-  else delete research.namedViews[action.name];
+ case 'view-remove':delete research.namedViews[action.name];break;
+ // lane-4 T20: a Places view is kept beside the canvas views and never among them. Its bounds are checked with the whole material below.
+ case 'place-view-save':{
+  require(text(action.name,160)&&!!action.name.trim(),'Invalid view name');
+  research.placeViews??={};research.placeViews[action.name]=clone(action.place);
   break;
+ }
+ // Removing a Places view touches only placeViews; the Scene's occurrences, frames and canvas views stay as they were.
+ case 'place-view-remove':{if(research.placeViews){delete research.placeViews[action.name];if(!Object.keys(research.placeViews).length)delete research.placeViews;}break;}
+ // lane-4 T21: the layers are written whole and bounded here, and the whole material is checked again below.
+ case 'place-layers-set':{validatePlaceLayersRecord(action.value);research.placeLayers=clone(action.value);break;}
  // lane-2 T15: a timeline view is kept beside the other views. Its count bound is checked with the whole material below.
  case 'timeline-view-save':{
   require(text(action.name,160)&&!!action.name.trim(),'Invalid timeline view name');

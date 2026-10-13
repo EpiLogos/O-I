@@ -72,6 +72,18 @@ export function layersRecordOf(filter: PlaceFilterState, stack: BasemapStack): P
   return record;
 }
 
+/** lane-4 T21: the layers a Scene keeps, restored as the session holds them: the filter and the basemap stack. Absent = today's
+ * defaults (every layer on, the offline ground only). The owner's live-source allowance is never part of it. */
+export function restoreLayers(record: PlaceLayersRecord | undefined): {filter: PlaceFilterState; stack: BasemapStack} {
+  if (!record) return {filter: OPEN_PLACE_FILTER, stack: defaultBasemapStack()};
+  return {filter: filterFromLayersRecord(record), stack: basemapFromRecord(record.basemap)};
+}
+
+/** lane-4 T21: the canonical key of a layer state, the form a save writes. Equal keys mean the Scene already keeps these layers. */
+export function layersKey(filter: PlaceFilterState, stack: BasemapStack): string {
+  return JSON.stringify(layersRecordOf(filter, stack));
+}
+
 /** The presentation filter a layer record restores. The shared time window is not part of it; the view carries that separately. */
 export function filterFromLayersRecord(record: PlaceLayersRecord): PlaceFilterState {
   if (record.relations === undefined && record.standing === undefined) return OPEN_PLACE_FILTER;

@@ -458,6 +458,7 @@ fn validate_research(value: &Value, ids: &BTreeSet<&str>) -> Result<(), String> 
                 "namedViews",
                 "connectors",
                 "placeViews",
+                "placeLayers",
                 "timelineViews",
             ]
             .contains(&key.as_str())
@@ -795,6 +796,10 @@ fn validate_research(value: &Value, ids: &BTreeSet<&str>) -> Result<(), String> 
             place_view(view)?;
         }
     }
+    // lane-4 T21: the Places layer toggles and basemap rows the Scene keeps, written whole. Absent = every layer on.
+    if let Some(layers) = r.get("placeLayers") {
+        place_layers(layers)?;
+    }
     // lane-2 T15: named timeline views, kept beside the canvas and Places views. Each is closed and bounded (see timeline_view).
     if let Some(views) = r.get("timelineViews") {
         let views = object(views, "Research timeline views")?;
@@ -1057,6 +1062,74 @@ fn place_view(value: &Value) -> Result<(), String> {
             })
         {
             return Err("Invalid place view window".into());
+        }
+    }
+    Ok(())
+}
+/// lane-4 T21: the Places layer toggles and basemap rows the Scene keeps, admitted closed and bounded the way a view's layers
+/// are (see place_view). Every field is optional; the basemap ids are the same list the app holds; no live-source allowance.
+fn place_layers(value: &Value) -> Result<(), String> {
+    let layers = object(value, "Research place layers")?;
+    if layers
+        .keys()
+        .any(|k| !["relations", "standing", "basemap"].contains(&k.as_str()))
+    {
+        return Err("Invalid place layers".into());
+    }
+    if let Some(relations) = layers.get("relations") {
+        let rows = relations.as_array().ok_or("Invalid place layers")?;
+        if rows.len() > 256
+            || rows
+                .iter()
+                .any(|row| !row.as_str().is_some_and(|s| utf16_len(s) <= 160))
+        {
+            return Err("Invalid place layers".into());
+        }
+    }
+    if let Some(standing) = layers.get("standing") {
+        let rows = standing.as_array().ok_or("Invalid place layers standing")?;
+        if rows.len() > PLACE_STANDINGS.len()
+            || rows
+                .iter()
+                .any(|row| !row.as_str().is_some_and(|s| PLACE_STANDINGS.contains(&s)))
+        {
+            return Err("Invalid place layers standing".into());
+        }
+    }
+    if let Some(basemap) = layers.get("basemap") {
+        let basemap = object(basemap, "Place layers basemap")?;
+        if basemap
+            .keys()
+            .any(|k| !["terrainVisible", "layers"].contains(&k.as_str()))
+            || !basemap.get("terrainVisible").is_some_and(Value::is_boolean)
+        {
+            return Err("Invalid place layers basemap".into());
+        }
+        let rows_by_id = object(
+            basemap.get("layers").unwrap_or(&Value::Null),
+            "Place layers basemap rows",
+        )?;
+        if rows_by_id.len() > BASEMAP_LAYER_IDS.len() {
+            return Err("Place layers basemap exceeds its bound".into());
+        }
+        for (id, row) in rows_by_id {
+            if !BASEMAP_LAYER_IDS.contains(&id.as_str()) {
+                return Err("Unknown basemap layer".into());
+            }
+            let row = object(row, "Basemap layer")?;
+            if row
+                .keys()
+                .any(|k| !["visible", "opacity"].contains(&k.as_str()))
+                || !row.get("visible").is_some_and(Value::is_boolean)
+            {
+                return Err("Invalid basemap layer".into());
+            }
+            number(
+                row.get("opacity").unwrap_or(&Value::Null),
+                0.0,
+                1.0,
+                "Basemap opacity",
+            )?;
         }
     }
     Ok(())
@@ -1881,6 +1954,54 @@ mod tests {
             many["placeViews"][format!("v{i}")] = camera(json!({}));
         }
         assert!(validate_research(&many, &ids).is_err());
+    }
+
+    #[test]
+    fn place_layers_are_admitted_bounded_and_closed() {
+        use super::validate_research;
+        use serde_json::{json, Value};
+        use std::collections::BTreeSet;
+        let ids: BTreeSet<&str> = BTreeSet::new();
+        let with = |layers: Value| {
+            json!({"schema": "oi.research-scene/v1", "cards": {}, "strokes": [],
+                "views": {}, "timeline": {}, "placeLayers": layers})
+        };
+        let full = json!({
+            "relations": ["born in", "(relation not disclosed)"],
+            "standing": ["factual", "mythic"],
+            "basemap": {"terrainVisible": true, "layers": {
+                "offline-ground": {"visible": true, "opacity": 1.0},
+                "osm-street": {"visible": true, "opacity": 0.5}}}
+        });
+        // material saved before the layers existed; a whole record; open layers; every layer off
+        assert!(validate_research(
+            &json!({"schema": "oi.research-scene/v1", "cards": {}, "strokes": [], "views": {}, "timeline": {}}),
+            &ids
+        )
+        .is_ok());
+        assert!(validate_research(&with(full), &ids).is_ok());
+        assert!(validate_research(&with(json!({})), &ids).is_ok());
+        assert!(validate_research(&with(json!({"relations": []})), &ids).is_ok());
+        for layers in [
+            json!("born in"),
+            json!({"viewport": {"x": 0, "y": 0, "zoom": 1}}),
+            json!({"window": null}),
+            json!({"relations": "born in"}),
+            json!({"relations": ["x".repeat(161)]}),
+            json!({"standing": ["canonical"]}),
+            json!({"standing": ["factual", "factual", "mythic", "mythic"]}),
+            json!({"basemap": {"terrainVisible": false, "layers": {"bing-aerial": {"visible": true, "opacity": 1}}}}),
+            json!({"basemap": {"terrainVisible": false, "layers": {"osm-street": {"visible": true, "opacity": 1.5}}}}),
+            json!({"basemap": {"terrainVisible": false, "layers": {"osm-street": {"visible": true, "opacity": 1, "extra": 1}}}}),
+            json!({"basemap": {"layers": {}}}),
+            json!({"basemap": {"terrainVisible": "no", "layers": {}}}),
+            json!({"extra": 1}),
+        ] {
+            assert!(
+                validate_research(&with(layers.clone()), &ids).is_err(),
+                "{layers}"
+            );
+        }
     }
 
     #[test]

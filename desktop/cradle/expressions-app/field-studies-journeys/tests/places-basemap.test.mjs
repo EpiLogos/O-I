@@ -255,7 +255,8 @@ test('the host opts in through its own switch and the policy gate, with session 
   assert.match(host,/onLiveSourcesAllowedChange=\{allowed=>/);
   assert.match(host,/live\.policy\.optIn\('tile_refresh'/);
   assert.match(host,/live\.policy\.optOut\('tile_refresh'\)/);
-  assert.match(host,/state\.livePlaces\?\?=\{allowed:false,policy:createLiveServicePolicy\(\),stack:defaultBasemapStack\(\)\}/);
+  // lane-4 T21: a first visit seeds the stack from the Scene's saved layers (absent = the defaults); allowed stays false.
+  assert.match(host,/state\.livePlaces\?\?=\{allowed:false,policy:createLiveServicePolicy\(\),stack:restoredLayers\.stack\}/);
   assert.doesNotMatch(host,/tileSource=\{tileSource\} offlineOnly /,'the bare offline stance is gone from the Places mount');
 });
 
