@@ -148,7 +148,11 @@ test('Field rack addresses the shared solver directly and rounds native discrete
 
 test('Rust admission registry is an exact projection of the source registry, including native units and bounds', async () => {
   const rust = await readFile(new URL('../../../desktop/cradle/kernel/src/expression_parameter_rack.rs', import.meta.url), 'utf8');
-  const actual = [...rust.matchAll(/\("(field|entity)", "([^"]+)", ([-\deE.]+), ([-\deE.]+), "([^"]+)"\),/g)].map(match => ({kind: match[1], path: match[2], min: Number(match[3]), max: Number(match[4]), unit: match[5]}));
+  // rustfmt wraps tuples longer than 100 columns across lines, so match the
+  // whitespace-tolerant tuple form, scoped to the NATIVE_PARAMETERS table only.
+  const table = rust.slice(rust.indexOf('const NATIVE_PARAMETERS'), rust.indexOf('];', rust.indexOf('const NATIVE_PARAMETERS')));
+  const actual = [...table.matchAll(/\(\s*"(field|entity)",\s*"([^"]+)",\s*([-\deE.]+),\s*([-\deE.]+),\s*"([^"]+)",?\s*\)/g)].map(match => ({kind: match[1], path: match[2], min: Number(match[3]), max: Number(match[4]), unit: match[5]}));
+  assert.ok(actual.length > 0, 'the Rust admission table must be present');
   const expected = [...PARAM_REGISTRY.map(def => ({kind: 'field', path: def.path, min: def.hardMin, max: def.hardMax, unit: def.unit ?? 'scalar'})), ...entityParamDefs(0, {}).map(def => ({kind: 'entity', path: def.path.replace('entities.0.', ''), min: def.hardMin, max: def.hardMax, unit: def.unit ?? 'scalar'}))];
   assert.deepEqual(actual, expected);
   assert.equal(NATIVE_BINDINGS.length, PARAM_REGISTRY.length);

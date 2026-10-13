@@ -95,13 +95,13 @@ test('actual follow of already retained native work leaves dirty material, clock
  const {store,work}=working(),local=structuredClone(store.document);local.scenes[0].entities[0].sequence.steps[0].hold=2.45;store.replace(local);
  const before=structuredClone(store.document),calls=[],host={snapshot:()=>({journey:structuredClone(store.document)}),version:()=>store.revision};
  const run=execute(`()=>{let followGeneration=0;return ${callback(files.workspace,'followOpen')};}`,{host,work,opens:{cancel:()=>calls.push('cancel')},hostedRecovery:()=>true,recoveryBinding:()=>binding,status:value=>calls.push(value)})();
- await run(binding.expression_ref);assert.deepEqual(store.document,before);assert.equal(store.undoStack.length,1);assert.equal(work.state.view.document.revision,11);
+ await run(binding.expression_ref,binding);assert.deepEqual(store.document,before);assert.equal(store.undoStack.length,1);assert.equal(work.state.view.document.revision,11);
  assert.equal(calls.length,2);assert.match(calls[1],/transport and working draft were retained/);
 });
 test('actual follow refuses before destination reading/adoption when departing draft cannot be durably retained',async()=>{
  const {store,work}=working(),host={snapshot:()=>({journey:structuredClone(store.document)}),version:()=>store.revision,shouldRetainDraft:()=>true},calls=[];
  const run=execute(`()=>{let followGeneration=0;return ${callback(files.workspace,'followOpen')};}`,{host,work,opens:{cancel:()=>{}},hostedRecovery:()=>true,recoveryBinding:()=>binding,captureNativeAdoption,clone,writeDraft:async()=>{calls.push('retain');throw closed},readBoundWorkingDraft:()=>assert.fail('Refused departing draft must precede destination read')})();
- const before=work.state;await assert.rejects(run('expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1'),error=>error===closed);
+ const before=work.state;await assert.rejects(run('expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1',{...binding,expression_ref:'expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1'}),error=>error===closed);
  assert.deepEqual(calls,['retain']);assert.deepEqual(work.state,before);
 });
 test('human input arriving during genuine recovery reading prevents basis acceptance and native adoption',async()=>{
@@ -111,7 +111,7 @@ test('human input arriving during genuine recovery reading prevents basis accept
  const host={snapshot:()=>({journey:structuredClone(store.document)}),version:()=>store.revision,shouldRetainDraft:()=>false};
  const requireAdoption=execute(callback(files.workspace,'requireAdoption'),{});
  const run=execute(`()=>{let followGeneration=0;return ${callback(files.workspace,'followOpen')};}`,{host,work,opens:{cancel:()=>{}},hostedRecovery:()=>true,recoveryBinding:()=>binding,captureNativeAdoption,clone,requireAdoption,readBoundWorkingDraft:r.readBoundWorkingDraft,acceptWorkingRecoveryBasis:()=>assert.fail('New human input cannot consume recovery CAS'),actPerforms:()=>assert.fail('New human input must retire this adoption first')})();
- const following=run(binding.expression_ref);await started;
+ const following=run(binding.expression_ref,binding);await started;
  const local=structuredClone(store.document);local.scenes[0].entities[0].sequence.steps[0].hold=2.45;store.replace(local);const authored=structuredClone(store.document);release();
  await assert.rejects(following,/working draft changed while opening/);assert.deepEqual(store.document,authored);assert.equal(store.undoStack.length,1);assert.equal(work.state,undefined);assert.equal(r.revisions.get(address),2301);
 });
@@ -175,7 +175,7 @@ test('actual SceneTransport async settlement stops after its production mounted 
  const source=viewSource(read.reading,createNativeContentActions(readNativeExpressionsContent(read.reading),controller)),lifetime={current:{mounted:false,epoch:0}},latest={current:source};
  const effect=nodes(files.transport,n=>ts.isCallExpression(n)&&n.expression.getText(files.transport)==='useEffect'&&n.arguments[0]?.getText(files.transport).includes('lifetime.current.mounted=true'))[0];
  const cleanup=execute(effect.arguments[0].getText(files.transport),{lifetime})();
- const settle=execute(callback(files.transport,'settle'),{source,lifetime,latest,currentNativeSceneReply,setBusy:value=>updates.push(['busy',value]),setFault:value=>updates.push(['fault',value])});
+ const settle=execute(callback(files.transport,'settle'),{source,lifetime,latest,currentNativeSceneReply,draftRef:{current:null},setDraft:()=>{},setBusy:value=>updates.push(['busy',value]),setFault:value=>updates.push(['fault',value])});
  const finishing=settle({action:'focus',scene_ref:source.content.basis.scene_ref});await started;
  cleanup();const before=updates.length;reject(closed);await finishing;
  assert.equal(updates.length,before);assert.deepEqual(updates,[['busy',true],['fault',null]]);assert.equal(r.store.undoStack.length,0);
@@ -184,7 +184,7 @@ test('actual SceneTransport late refusal keeps a newer human draft and clears on
  let reject,entered;const waiting=new Promise((_,r)=>{reject=r}),started=new Promise(resolve=>{entered=resolve});
  const r=sceneOwner(()=>{entered();return waiting}),controller=editor(t,r.owner),read=await controller.request({operation:'read'}),updates=[];
  const source=viewSource(read.reading,createNativeContentActions(readNativeExpressionsContent(read.reading),controller)),lifetime={current:{mounted:true,epoch:3}},latest={current:source};
- const settle=execute(callback(files.transport,'settle'),{source,lifetime,latest,currentNativeSceneReply,setBusy:value=>updates.push(['busy',value]),setFault:value=>updates.push(['fault',value])});
+ const settle=execute(callback(files.transport,'settle'),{source,lifetime,latest,currentNativeSceneReply,draftRef:{current:null},setDraft:()=>{},setBusy:value=>updates.push(['busy',value]),setFault:value=>updates.push(['fault',value])});
  const finishing=settle({action:'focus',scene_ref:source.content.basis.scene_ref});await started;
  const local=structuredClone(r.store.document);local.scenes[0].entities[0].sequence.steps[0].hold=2.45;r.store.replace(local);const authored=structuredClone(r.store.document);
  latest.current=viewSource(r.owner.read());reject(closed);await finishing;
