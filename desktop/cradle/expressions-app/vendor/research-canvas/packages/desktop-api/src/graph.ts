@@ -179,6 +179,8 @@ export interface TimelineDiagnostic {
  */
 export interface TimelineBandRecord {
   band_ref: string;
+  /** lane-2 T9b-T14b: the reading subject whose temporal facet the band anchors (carried by the techne transport). */
+  subject_ref?: string;
   label_verbatim: string | null;
   earliest: string | null;
   latest: string | null;

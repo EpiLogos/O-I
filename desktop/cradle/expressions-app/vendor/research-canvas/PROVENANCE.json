@@ -240,8 +240,8 @@
     },
     "packages/canvas/src/timeline/TimelineSurface.tsx": {
       "upstream_sha256": "167ebc1722ce27f58d2bef03bc60a220d33ee58a7b0930c976ca334dca84f595",
-      "adapted_sha256": "d47d2a747759587e6bf62e0d3e0a6b3725c6554c7e45fea5d7975a4b74c59246",
-      "reason": "Preserve native repository failures as visible unavailable readings with explicit retry; empty successful readings remain distinct. Retain original zoom/fit controls via optional host HUD portal; existing native Timeline state remains unchanged. Inner Timeline controls use the same optional host toolbar portal; original filters, subtimeline, lighting and camera callbacks retained without a duplicate toolbar. Native supplied complete dated Scene extent supports Fit outside the current camera window; button zoom shares the original lens scale, including moment level. | lane-2 T12+T13: honest clusters, scale-window minimap | lane-2 T4c: one year parser"
+      "adapted_sha256": "acd443570757427cf90d95f794b838a9239bcf01580c62a7f893715ed6f53c41",
+      "reason": "Preserve native repository failures as visible unavailable readings with explicit retry; empty successful readings remain distinct. Retain original zoom/fit controls via optional host HUD portal; existing native Timeline state remains unchanged. Inner Timeline controls use the same optional host toolbar portal; original filters, subtimeline, lighting and camera callbacks retained without a duplicate toolbar. Native supplied complete dated Scene extent supports Fit outside the current camera window; button zoom shares the original lens scale, including moment level. | lane-2 T12+T13: honest clusters, scale-window minimap | lane-2 T4c: one year parser | lane-2 T9b-T14b: nesting and participants from readings"
     },
     "packages/canvas/src/timeline/TimelineLens.tsx": {
       "upstream_sha256": "8f1c71bed489ca426e16bdec89f24b696ccff4f41901167160ace36098057979",
@@ -265,8 +265,8 @@
     },
     "packages/desktop-api/src/techneTransport.ts": {
       "upstream_sha256": "4054c16622be5cff834c7f5f5007efc6932fccde317194b259690e9d50bb7ab7",
-      "adapted_sha256": "3b4954e234b1cc113dfb22ee5c748d47c6dd42389421a5c0bdf1e325aaf2f199",
-      "reason": "Exact temporal alias source resolution for native focused relations/expansion, preserving source endpoints without invented dates; retain native filter/error fixes. Resolve exact single-source Place aliases for current native incident relations, as for temporal aliases; no invented route semantics. | lane-2 T3: standing presentation + band/axis craft | lane-2 T8: periodisation bands | lane-2 T4b: deep time through the seams"
+      "adapted_sha256": "f6227ce3e396bfde43176c9d39a53906c61b64f129b278ef0ce99792aa467a13",
+      "reason": "Exact temporal alias source resolution for native focused relations/expansion, preserving source endpoints without invented dates; retain native filter/error fixes. Resolve exact single-source Place aliases for current native incident relations, as for temporal aliases; no invented route semantics. | lane-2 T3: standing presentation + band/axis craft | lane-2 T8: periodisation bands | lane-2 T4b: deep time through the seams | lane-2 T9b-T14b: nesting and participants from readings"
     },
     "packages/canvas/src/timeline/TimelineNode.tsx": {
       "upstream_sha256": "b4fed38eeb92d5815ab81057ac3ea1d00459352baa1d30ab180c34f4bbb41b07",
@@ -280,8 +280,8 @@
     },
     "packages/desktop-api/src/graph.ts": {
       "upstream_sha256": "96471b5834b2544d8ab475019e8de1484ee414af6cb40570200910c58ede52a2",
-      "adapted_sha256": "1998387594ec28b54a244646553b45175f0e0311cacd9572b3cfe0d1edd2565b",
-      "reason": "Optional transient Timeline relation-focus ref preserves dated edge identity; no stored graph change. | lane-2 T3: standing presentation + band/axis craft | lane-2 T8: periodisation bands"
+      "adapted_sha256": "727e829c2f3d9a373e4c001e8b9ad9f8575966f400203fd7bae54c3c92383624",
+      "reason": "Optional transient Timeline relation-focus ref preserves dated edge identity; no stored graph change. | lane-2 T3: standing presentation + band/axis craft | lane-2 T8: periodisation bands | lane-2 T9b-T14b: nesting and participants from readings"
     },
     "packages/canvas/src/timeline/TimelineRelationField.tsx": {
       "upstream_sha256": "7a985dcad012bde50624a7bb846b1acdbac5ccee750f7f9d4538ec7b004c4901",

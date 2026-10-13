@@ -139,3 +139,22 @@ test('the hover title states the validity and carries the uncertainty verbatim',
  const [mark]=participantSpans.participantMarks([{participant_ref:'person:ada',participant_kind:'subject',fromMs:SPAN_FROM,toMs:null,uncertainty:'death disputed',source_ref:'source:letter'}],camera);
  assert.match(mark.title,/^person:ada · from 1874, no end disclosed · death disputed · source:letter$/);
 });
+
+// lane-2 T14b — the host's participants. The chronology host passes
+// participantSpansFromReading(reading).spans: the subject's validity and each place's
+// valid_from / valid_to, read from the native reading the mount already holds.
+test('the host participants: the subject and a place with validity both reach the lens as drawn spans', ()=>{
+ const reading={...personReading([DATED]),spatial:[{place_ref:'place:mill',precision:'exact',valid_from:'1850',valid_to:'1900'},{place_ref:'place:nothing',precision:'region'}]};
+ const hostSpans=relations.participantSpansFromReading(reading).spans;
+ const camera=viewport.timeCamera({centerYear:1900,pixelsPerYear:5,widthPx:1000});
+ const marks=participantSpans.participantMarks(hostSpans,camera);
+ assert.deepEqual(marks.map(mark=>mark.participant_ref).sort(),['person:ada','place:mill'],'the place without validity is not drawn');
+ const mill=marks.find(mark=>mark.participant_ref==='place:mill');
+ assert.equal(mill.openEnd,false,'a place with both ends disclosed is closed on both sides');
+});
+
+test('a reading with no validity hands the lens no participant spans', ()=>{
+ const camera=viewport.timeCamera({centerYear:1900,pixelsPerYear:5,widthPx:1000});
+ const {spans}=relations.participantSpansFromReading(personReading([]));
+ assert.deepEqual(participantSpans.participantMarks(spans,camera),[]);
+});
