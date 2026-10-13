@@ -201,6 +201,12 @@ export interface PsychogeographicMapProps {
   placeTime?: PlaceTimeHost;
   /** Lane-4 T20: hands the host the named-view restore. The camera flies (reduced motion: it jumps) and the basemap rows are set as saved. */
   onRegisterPlaceViewRestore?: (restore: (target: PlaceViewRestoreTarget) => void) => void;
+  /** Lane-4 T24: the place the shared session's spatial focus names. Once the map is ready it is selected and framed by its own precision (flyToPlace). A ref the reading does not disclose opens unselected, with no error. */
+  initialFocusGraphNodeId?: string | null;
+  /** Lane-4 T23: "Open in Timeline" for the selected place's disclosed facet. Absent: no action is offered. */
+  onOpenInTimeline?: (facet: TechnePlaceFacet) => void | Promise<void>;
+  /** Lane-4 T23: "Open source" for the selected place's source ref. Offered only when that facet discloses one. */
+  onOpenSource?: (sourceRef: string) => void;
 }
 
 /**
@@ -236,6 +242,9 @@ export function PsychogeographicMap({
   placeAuthoring,
   placeTime,
   onRegisterPlaceViewRestore,
+  initialFocusGraphNodeId = null,
+  onOpenInTimeline,
+  onOpenSource,
 }: PsychogeographicMapProps): JSX.Element {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mountedRenderer = useRef<MapSurfaceRenderer | null>(null);
@@ -539,6 +548,19 @@ export function PsychogeographicMap({
   useEffect(() => {
     onRegisterFlyToPlace?.(flyToPlace);
   }, [flyToPlace, onRegisterFlyToPlace]);
+
+  // Lane-4 T24: honour the session's spatial focus once, when the map is ready and the place is present. A ref the reading does
+  // not disclose never matches a node, so it opens unselected, with no error. The flight runs after the saved camera restores.
+  const focusHonoured = useRef(false);
+  useEffect(() => {
+    if (focusHonoured.current || !readyRenderer || !initialFocusGraphNodeId) return;
+    if (!nodes.some((node) => node.graphNodeId === initialFocusGraphNodeId)) return;
+    focusHonoured.current = true;
+    selectPlace(initialFocusGraphNodeId);
+  }, [readyRenderer, nodes, initialFocusGraphNodeId, selectPlace]);
+
+  // Lane-4 T23: the selected place's own disclosed facet carries the cross-open actions (none for an unselected or absent facet).
+  const selectedFacet = selectedNodeId ? placeFacets.find((facet) => facet.place_ref === selectedNodeId) ?? null : null;
 
   const openPlaceOnCanvas = useCallback((graphNodeId: string) => {
     selectPlace(graphNodeId);
@@ -1140,6 +1162,8 @@ export function PsychogeographicMap({
         <button type="button" data-testid="places-compass-reset" title="Return to north: bearing and tilt to zero" aria-label="Return to north" disabled={!readyRenderer} onClick={returnToNorth}>North</button>
         <button type="button" data-testid="places-globe-home" title="Globe home: the default view" aria-label="Globe home" disabled={!readyRenderer} onClick={goGlobeHome}>Globe home</button>
         {inspectorContainer && <button type="button" disabled={!selectedNodeId} aria-expanded={detailsOpen} onClick={() => setDetailsOpen(value => !value)}>Location details</button>}
+        {selectedFacet && onOpenInTimeline && <button type="button" data-testid="places-open-in-timeline" onClick={() => void onOpenInTimeline(selectedFacet)}>Open in Timeline</button>}
+        {selectedFacet?.source_ref && onOpenSource && <button type="button" data-testid="places-open-source" onClick={() => onOpenSource(selectedFacet.source_ref!)}>Open source</button>}
       </div>
   );
 

@@ -93,6 +93,9 @@ export interface DisclosureSessionStore {
    * temporal facet_ref the person disclosed as T0. Checked against the reading
    * by the consumer, never inferred here. */
   setTimeZero(ref: string | null): DisclosureSession;
+  /** Lane-4 T23: declare (or, with null, remove) the place facet the session's spatial focus names — the ref the Places
+   * instrument honours on open (placeFocusFromSession). Checked against the reading by the consumer, never inferred here. */
+  setSpatialFocus(ref: string | null): DisclosureSession;
   /** End the session (austere rest). */
   clear(): void;
 }
@@ -187,6 +190,16 @@ export function createDisclosureSessionStore(): DisclosureSessionStore {
       const next = {...current};
       if (ref === null) delete next.time_zero_ref;
       else next.time_zero_ref = ref;
+      const session = checkedSession(next);
+      current = session;
+      notify(listeners);
+      return session;
+    },
+    setSpatialFocus(ref) {
+      if (!current) throw new Error("No DisclosureSession is open — select a subject first");
+      const next = {...current};
+      if (ref === null) delete next.spatial_focus_ref;
+      else next.spatial_focus_ref = ref;
       const session = checkedSession(next);
       current = session;
       notify(listeners);
