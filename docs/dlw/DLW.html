@@ -89,7 +89,7 @@ h1.part{font-size:23px}h2{font-size:20px}
 <li><a href="#1-what-the-dlw-is">1. What the DLW is</a></li>
 <li><a href="#2-concepts">2. Concepts</a></li>
 <li><a href="#3-the-frame">3. The frame</a></li>
-<li><a href="#4-the-transport-one-bar-five-meanings-built">4. The transport — one bar, five meanings</a></li>
+<li><a href="#4-the-transport-one-bar-five-meanings-meanings-built">4. The transport — one bar, five meanings</a></li>
 <li><a href="#5-live-the-measured-basis">5. Live — the measured basis</a></li>
 <li><a href="#6-central-the-ground">6. Central — the ground</a></li>
 <li><a href="#7-factory-the-work">7. Factory — the work</a></li>
@@ -183,7 +183,7 @@ meaning change from mode to mode.</p>
 they are; what they mean moves with the mode.</strong> The tempo control is the
 set&#39;s tempo in Live mode, the Day&#39;s open face in Central, an agent&#39;s thinking
 effort in Factory, the field&#39;s tempo in Expressions and the pace of a walk in
-Technē. Learn the instrument once and you can play it in every discipline.</p>
+Technē. You learn the instrument once; each mode is another discipline played on it.</p>
 <p>Working with meaning isn&#39;t easy. It takes reading, patience and the
 willingness to be corrected by your sources. The DLW does not remove that
 work. It keeps the work in one place, keeps every step of it visible, and
@@ -265,7 +265,7 @@ thing. Its long-term home is inside Expressions, where audio and video tracks
 will share one timeline the way a video editor holds them; until then it
 stays a separate mode so the port stays clean and measurable.</p>
 <p><strong>Epi-Logos is not a mode.</strong> It is a lens you can lay over any mode
-(Chapter 13).</p>
+(Chapter 16).</p>
 <p>The mode rail carries five icons beside the Session and Arrangement icons.
 Switching mode is an encounter transition: what you have selected comes with
 you, and each mode keeps its own panes.</p>
@@ -313,14 +313,20 @@ time. It is the place for seeing the course of things.</p>
 </div>
 <p>Tab switches between the two views in every mode.</p>
 <h3 id="2-4-tracks-clips-and-stops"><a class="anchor" href="#2-4-tracks-clips-and-stops" aria-hidden="true">#</a>2.4 Tracks, clips and stops</h3>
-<p>A <strong>track</strong> is a lane of one kind of material. In Live it owns a device chain
-and routes to the master. In the DLW a track is a native stream — the Day, a
+<p>A <strong>track</strong> is a lane of one kind of material. In Live a track owns a device chain
+and routes to the Main track, and it plays only one clip at a time. The
+Session and the Arrangement share the same tracks. In the DLW a track is a native stream — the Day, a
 Flow, an agent session, an Expression — shown as a projection of its owner&#39;s
 stream, never as a copy.</p>
 <p>A <strong>clip</strong> is a piece of material in a state. In Live a clip can be stopped,
 playing, queued or recording, and it lives in one track. In the DLW a clip is
 a native object at a revision, with a legible state: an entry in the Day, a
 task in a session, an event on the Timeline, a scene in an Expression.</p>
+<p>A <strong>follow action</strong> says what happens when a clip has played: the next clip,
+the previous one, any other, or nothing. <strong>Launch quantize</strong> says when a
+launch lands — at the next bar, the next beat, at once. In the DLW they say
+what follows a save, a steer or a stop, and when it lands: the next queued
+task in Factory, the next stop of a walk in Technē.</p>
 <p><strong>The word &quot;scene&quot; means an Expression&#39;s scene, always.</strong> An Expression is to
 its scenes as a Live track is to its clips. So what Live calls a scene — the
 row that launches one clip per track together — is called a <strong>stop</strong> in the
@@ -385,8 +391,8 @@ whole.</li>
 <li>a <strong>MIDI effect</strong> transforms the events that drive an instrument before it
 plays them.</li>
 </ul>
-<p>A <strong>device chain</strong> is the left-to-right path the material takes through a
-track&#39;s devices. In Factory the chain is the work&#39;s path: gateway → agent →
+<p>A <strong>device chain</strong> is the path the material takes through a track&#39;s
+devices. Signals in a chain always travel left to right. In Factory the chain is the work&#39;s path: gateway → agent →
 skills → world → git.</p>
 <p>A <strong>rack</strong> holds several chains side by side under one device, with a chain
 selector. Live&#39;s Drum Rack holds one chain per pad. In Factory, a skillset
@@ -395,6 +401,12 @@ and an agentset rack holds one chain per agent.</p>
 <p>A <strong>macro</strong> is one control mapped to several parameters, each with a range.
 The four compact controls on a device&#39;s rack widget are macros, and so are the
 delegated controls an agent can be given.</p>
+<p><strong>Routing.</strong> In Live the mixer sets levels, and sends feed shared return
+tracks, which hold effects and never clips. Outside Live mode the DLW draws no
+mixer. Its routing is the <strong>Return</strong>: every proposal travels to the owner of
+what it would change, through the neutral door, with its attribution. The
+World and Git devices carry it in Factory, and Answer&#39;s append-or-replace
+carries it in Central.</p>
 <h3 id="2-6-the-browser"><a class="anchor" href="#2-6-the-browser" aria-hidden="true">#</a>2.6 The browser</h3>
 <p>The <strong>browser</strong> is the left column. As in Live it lists categories, places and
 search, and it lets you preview before you add. Every folder in every mode is
@@ -480,7 +492,9 @@ not built yet says what it is for and that it is not built.</li>
 <hr>
 <h2 id="3-the-frame"><a class="anchor" href="#3-the-frame" aria-hidden="true">#</a>3. The frame</h2>
 <h3 id="3-1-five-regions"><a class="anchor" href="#3-1-five-regions" aria-hidden="true">#</a>3.1 Five regions</h3>
-<p>The DLW window has the same five regions in every mode.</p>
+<p>The frame is the same in every mode, so you always know where to look: the
+transport on top, what you can bring in on the left, your work in the middle,
+your companion on the right, and what works on the selection at the bottom.</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -522,8 +536,9 @@ not built yet says what it is for and that it is not built.</li>
 </tbody></table>
 </div>
 <p>Each region can be hidden; the grid re-flows rather than cramming.</p>
-<h3 id="3-2-panes-and-instrument-types-built-in-part"><a class="anchor" href="#3-2-panes-and-instrument-types-built-in-part" aria-hidden="true">#</a>3.2 Panes and instrument types <span class="mark mark-built" title="built">●</span> built in part</h3>
-<p>The centre is a tree of <strong>panes</strong>. Panes have no headers. One control (⊞)
+<h3 id="3-2-panes-and-instrument-types-in-part"><a class="anchor" href="#3-2-panes-and-instrument-types-in-part" aria-hidden="true">#</a>3.2 Panes and instrument types <span class="mark mark-part" title="in part">◐</span> in part</h3>
+<p>Use panes to hold several views of your work side by side — a document beside
+its Flow, a session grid beside its thread. The centre is a tree of <strong>panes</strong>. Panes have no headers. One control (⊞)
 splits the focused pane beside, below or four ways, or closes it. You can drag
 a tab onto a pane&#39;s centre to move it there, or onto its edge to split. Views
 arrive in panes from the browser&#39;s Views folder, as tabs on an auto-hidden
@@ -625,7 +640,11 @@ you hover it — the Info view, made a law. Nothing ships unlabelled. The status
 bar also carries the run context (which world, which carrier), counts (six
 sessions · two running · one stalled), and the Clip/Device switch.</p>
 <hr>
-<h2 id="4-the-transport-one-bar-five-meanings-built"><a class="anchor" href="#4-the-transport-one-bar-five-meanings-built" aria-hidden="true">#</a>4. The transport — one bar, five meanings <span class="mark mark-built" title="built">●</span> built</h2>
+<h2 id="4-the-transport-one-bar-five-meanings-meanings-built"><a class="anchor" href="#4-the-transport-one-bar-five-meanings-meanings-built" aria-hidden="true">#</a>4. The transport — one bar, five meanings <span class="mark mark-built" title="built">●</span> meanings built</h2>
+<p>The meanings below are in code. Many of the writers behind them — Central&#39;s
+document devices, Factory&#39;s steer, voice and capture, Technē&#39;s walk, Live&#39;s
+engine transport — wait for their owners, and each waiting slot says so on
+hover.</p>
 <p>The transport keeps Live&#39;s slots, in Live&#39;s order, in every mode. The table
 below gives what each slot does in each mode, as declared in the mode
 grammar. The grammar is tested against the design so the two cannot drift.</p>
@@ -687,7 +706,7 @@ views.</p>
 <td>the metronome</td>
 <td>autosave</td>
 <td>heartbeat: running agents check in; a stopped needle is a stall</td>
-<td>pulse: the field breathes on the beat</td>
+<td>pulse: the field&#39;s pulse</td>
 <td>presence: the FieldNow pulse of other Worlds</td>
 </tr>
 <tr>
@@ -733,8 +752,8 @@ views.</p>
 <tr>
 <td><strong>Stop ■</strong></td>
 <td>stop</td>
-<td>stop the current answer or dictation</td>
-<td>stop all: once pauses at the next quantize point; twice cancels, and unlanded writes return to basis</td>
+<td>stop the current dictation</td>
+<td>stop all: pause at the next quantize, context kept; press again to cancel the turns</td>
 <td>stop; rewind the working scene</td>
 <td>stop the walk</td>
 </tr>
@@ -759,7 +778,7 @@ views.</p>
 <td>automation arm</td>
 <td>agent write-arm: off, agent edits arrive as proposals; on, they land with a receipt</td>
 <td>write arm: the same law for world devices</td>
-<td>Studio arm: Play records Studio moves</td>
+<td>Studio arm: an armed Play records a take</td>
 <td>instrument writes: arm the focused lens</td>
 </tr>
 <tr>
@@ -772,7 +791,7 @@ views.</p>
 </tr>
 <tr>
 <td><strong>Capture</strong></td>
-<td>capture what you just played</td>
+<td>capture what you just played (Capture MIDI)¹</td>
 <td>selection → packet</td>
 <td>capture: what you do by hand becomes a worked example an agent can learn</td>
 <td>gestures → scene</td>
@@ -820,6 +839,9 @@ views.</p>
 </tr>
 </tbody></table>
 </div>
+<p>¹ Live&#39;s Capture MIDI keeps what you just played. The mode grammar in code
+currently reads Live&#39;s capture slot as Session record; the two are recorded
+here as drift for the owner to settle.</p>
 <h3 id="4-2-how-to-read-the-table"><a class="anchor" href="#4-2-how-to-read-the-table" aria-hidden="true">#</a>4.2 How to read the table</h3>
 <p>Read across a row and you see one gesture taking five forms. <strong>Play</strong> always
 sets the material going: it plays a set, sends a packet for an answer,
@@ -848,13 +870,15 @@ document, clips and scenes in the Session, the song over time in the
 Arrangement, devices in the track&#39;s chain. Its purpose in the DLW is to be the
 measured original — the reference against which every other mode&#39;s reading of
 a semantic is checked.</p>
-<h3 id="5-2-the-browser-designed"><a class="anchor" href="#5-2-the-browser-designed" aria-hidden="true">#</a>5.2 The browser <span class="mark mark-designed" title="designed">○</span> designed</h3>
-<p>Sounds · Drums · Instruments · Audio Effects · MIDI Effects · Samples · Clips ·
-Grooves · Plug-ins · Views, with the Groove Pool beneath — Live&#39;s own browser
-grammar, and the model for every other mode&#39;s device folders.</p>
+<h3 id="5-2-the-browser-in-part"><a class="anchor" href="#5-2-the-browser-in-part" aria-hidden="true">#</a>5.2 The browser <span class="mark mark-part" title="in part">◐</span> in part</h3>
+<p>Live mode keeps Live&#39;s own browser: Collections; a Library of Sounds, Drums,
+Instruments, Audio Effects, MIDI Effects, Clips, Samples, Grooves and
+Plug-ins; Places for sets; and the Groove Pool beneath. Its device folders are
+the model for every other mode&#39;s. The world mockup adds a Views folder <span class="mark mark-designed" title="designed">○</span>.</p>
 <h3 id="5-3-devices"><a class="anchor" href="#5-3-devices" aria-hidden="true">#</a>5.3 Devices</h3>
-<p>The reverse-engineering corpus covers Live 12&#39;s 70 device slots: 13
-instruments, 46 audio effects and 11 MIDI effects. Each device has a
+<p>The reverse-engineering corpus covers 70 device slots: 13 instruments, 46
+audio effects and 11 MIDI effects. Its count runs above the manual&#39;s because
+it includes legacy devices and the slots that ship as Max for Live. Each device has a
 clean-room derivation, and a device is <strong>gated</strong> when its rebuild passes the
 golden corpus.</p>
 <div class="table-wrap"><table>
@@ -886,10 +910,18 @@ golden corpus.</p>
 matrix, and Meld&#39;s 50 × 19, are the measured precedent for the DLW&#39;s typed
 modulation routes. Spectrum, which only reads, is the model for every
 read-only device face: an honest diagram with no writers.</p>
-<h3 id="5-4-detail-in-part"><a class="anchor" href="#5-4-detail-in-part" aria-hidden="true">#</a>5.4 Detail <span class="mark mark-part" title="in part">◐</span> in part</h3>
+<h3 id="5-4-detail-designed-faces"><a class="anchor" href="#5-4-detail-designed-faces" aria-hidden="true">#</a>5.4 Detail <span class="mark mark-designed" title="designed">○</span> designed · faces <span class="mark mark-built" title="built">●</span></h3>
 <p>Clip is the piano roll; Device is the track&#39;s chain — in the default set,
-Drum Rack (16 pads) → Glue Compressor → Reverb.</p>
-<h3 id="5-5-where-live-mode-is-going"><a class="anchor" href="#5-5-where-live-mode-is-going" aria-hidden="true">#</a>5.5 Where Live mode is going</h3>
+Drum Rack (its 4 × 4 grid of visible pads) → Glue Compressor → Reverb.</p>
+<h3 id="5-5-live-tips"><a class="anchor" href="#5-5-live-tips" aria-hidden="true">#</a>5.5 Live tips</h3>
+<ul>
+<li><strong>To check another mode&#39;s reading of a Live semantic,</strong> open the same
+semantic in Live mode — a rack, a follow action, a re-enable — and compare.
+Live mode is the measured original.</li>
+<li><strong>To try a sound before you commit it,</strong> preview it in the browser; preview,
+open and add are three separate acts.</li>
+</ul>
+<h3 id="5-6-where-live-mode-is-going"><a class="anchor" href="#5-6-where-live-mode-is-going" aria-hidden="true">#</a>5.6 Where Live mode is going</h3>
 <p>Live mode will later join Expressions&#39; timeline, where audio and video tracks
 sit together. The owner sets the timing of that join.</p>
 <hr>
@@ -903,8 +935,9 @@ packet. You press <strong>Answer</strong>, and the situated agent reads the pack
 answers into the document as a new entry, with its sources. You open the
 sources. The thread holds.</p>
 <p>Central is to the DLW what Live&#39;s Clip view is to Live: the place of material
-craft. Its warp markers are the ground&#39;s own — content identity, basis, and
-the five outcomes a save can have: saved, unchanged, stale, conflict, refused.</p>
+craft. The design calls the ground&#39;s exactness its warp markers: content
+identity, basis, and the five named outcomes a save can have — saved,
+unchanged, stale, conflict, refused.</p>
 <h3 id="6-2-session-and-arrangement-designed"><a class="anchor" href="#6-2-session-and-arrangement-designed" aria-hidden="true">#</a>6.2 Session and Arrangement <span class="mark mark-designed" title="designed">○</span> designed</h3>
 <p>The Session shows the day as clips: Day, Flows, Beings, Things and Goals as
 tracks, documents and entries as clips. The Arrangement shows today on one
@@ -927,13 +960,13 @@ ruler: entries, runs, NOWs and returns.</p>
 </tr>
 <tr>
 <td>—</td>
-<td>New… (exactly four: Day · Flow · Beings · Things) · Views</td>
+<td>New… (exactly four: Day · Flow · Beings · Things) <span class="mark mark-designed" title="designed">○</span> · Views <span class="mark mark-designed" title="designed">○</span></td>
 </tr>
 </tbody></table>
 </div>
 <p>Days and Files list live material today. Flows, Beings, Things, Goals and Wiki
 are designed empty categories that name the owner they are waiting for.</p>
-<h3 id="6-4-clip-the-document"><a class="anchor" href="#6-4-clip-the-document" aria-hidden="true">#</a>6.4 Clip: the Document</h3>
+<h3 id="6-4-clip-the-document-in-part"><a class="anchor" href="#6-4-clip-the-document-in-part" aria-hidden="true">#</a>6.4 Clip: the Document <span class="mark mark-part" title="in part">◐</span> in part</h3>
 <p>The Clip side shows the focused document: its form, file, revision and
 bindings; your highlights; your notes; and the packet.</p>
 <h3 id="6-5-device-the-document-devices"><a class="anchor" href="#6-5-device-the-document-devices" aria-hidden="true">#</a>6.5 Device: the document devices</h3>
@@ -1103,7 +1136,7 @@ dock tile.</p>
 <td>Files · Knowledge · Views</td>
 </tr>
 <tr>
-<td>Library</td>
+<td>Library (the agent shell&#39;s own browser) <span class="mark mark-part" title="in part">◐</span></td>
 <td>Agents · Agentsets · Skillsets · Worlds · Git · Models · Context</td>
 </tr>
 </tbody></table>
@@ -1150,7 +1183,7 @@ overrides.</p>
 <td>commit cadence; push off · on land; Land opens a draft PR with its checks</td>
 </tr>
 <tr>
-<td><strong>Agentset rack</strong></td>
+<td><strong>Agentset rack</strong> <span class="mark mark-designed" title="designed">○</span></td>
 <td>rack</td>
 <td>one chain per member agent; fan-out, depth, hand-back as raw · digest · summary</td>
 </tr>
@@ -1286,9 +1319,9 @@ domains; in Expressions it is the presence that meets you in the form.</p>
 <ul>
 <li><strong>To keep a gesture as material,</strong> press Capture (gestures → scene) and
 your last gestures become a new scene.</li>
-<li><strong>To record a performance of the Studio,</strong> arm the Studio and press Play.
-The moves are recorded as automation; Re-enable returns to them after you
-override one.</li>
+<li><strong>To record a performance of the field,</strong> arm the Studio and press Play;
+Play records a take. Re-enable releases any parameter you are holding at a
+manual value.</li>
 <li><strong>To build a performance from takes,</strong> capture takes of a scene and comp
 the one that stands; saving the scene consolidates it.</li>
 </ul>
@@ -1348,7 +1381,7 @@ pane.</p>
 <td><strong>M5′</strong></td>
 <td>Palace / Integral whole</td>
 <td>articulation, inhabitation, memory, Return</td>
-<td>Rooms · Path · Portals</td>
+<td>Rooms · Path and guide · Portals</td>
 </tr>
 </tbody></table>
 </div>
@@ -1387,7 +1420,7 @@ declared break into today.</p>
 <h3 id="9-5-clip-the-encounter-built"><a class="anchor" href="#9-5-clip-the-encounter-built" aria-hidden="true">#</a>9.5 Clip: the encounter <span class="mark mark-built" title="built">●</span> built</h3>
 <p>Identity; place and time; disclosure; typed relations; the bounded
 constellation; source, with ref and revision.</p>
-<h3 id="9-6-the-timeline-s-grammar-from-archetypal-earth"><a class="anchor" href="#9-6-the-timeline-s-grammar-from-archetypal-earth" aria-hidden="true">#</a>9.6 The Timeline&#39;s grammar, from Archetypal-Earth <span class="mark mark-part" title="in part">◐</span></h3>
+<h3 id="9-6-the-timeline-s-grammar-from-archetypal-earth"><a class="anchor" href="#9-6-the-timeline-s-grammar-from-archetypal-earth" aria-hidden="true">#</a>9.6 The Timeline&#39;s grammar, from Archetypal-Earth <span class="mark mark-designed" title="designed">○</span></h3>
 <p>Archetypal-Earth, the owner&#39;s standalone atlas, is a finished instance of the
 instrument pattern the DLW builds, and its time grammar is the Timeline&#39;s:</p>
 <div class="table-wrap"><table>
@@ -1470,8 +1503,10 @@ view becomes a scene that a walk can carry.</li>
 Canvas. It stays a proposal until you promote it through its owner.</li>
 </ul>
 <hr>
-<h2 id="10-walks-from-the-timeline-to-the-sounding-expression"><a class="anchor" href="#10-walks-from-the-timeline-to-the-sounding-expression" aria-hidden="true">#</a>10. Walks — from the Timeline to the sounding Expression</h2>
-<p>A walk connects every mode that plays. Here is its course:</p>
+<h2 id="10-walks-from-the-timeline-to-the-sounding-expression"><a class="anchor" href="#10-walks-from-the-timeline-to-the-sounding-expression" aria-hidden="true">#</a>10. Walks — from the Timeline to the sounding Expression <span class="mark mark-part" title="in part">◐</span></h2>
+<p>A walk connects every mode that plays. Some of Technē&#39;s instruments already
+act on Expressions: a view can be captured as a scene, and a journey&#39;s stops
+carry Expression scenes <span class="mark mark-part" title="in part">◐</span>. Here is its course:</p>
 <ol>
 <li>A <strong>thread</strong> sits on the Timeline (M2′) as a walk track.</li>
 <li>Walked, its stops become the rows of the <strong>Journey</strong> (M3′), Technē&#39;s
@@ -1495,8 +1530,10 @@ view on the standing stop. One transport serves every step: in Technē Play
 walks, in Expressions Play plays the scenes.</p>
 <hr>
 <h2 id="11-clip-editing-in-every-mode"><a class="anchor" href="#11-clip-editing-in-every-mode" aria-hidden="true">#</a>11. Clip editing in every mode</h2>
-<p>Live&#39;s Clip view is the richest editor in the product. Every part of it has a
-home in every mode&#39;s Clip side.</p>
+<p>Live&#39;s Clip view holds a clip&#39;s whole craft: its box, its launch settings,
+its markers, its editors, its envelopes and takes. Each part has a home in a
+mode&#39;s Clip side wherever it has a meaning there; a dash marks where it has
+none.</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -1689,20 +1726,23 @@ mode is addressable in this time, which is why the modes can flow into each
 other: they read from the same spine.</p>
 <hr>
 <h2 id="14-the-shared-field"><a class="anchor" href="#14-the-shared-field" aria-hidden="true">#</a>14. The shared field</h2>
-<h3 id="14-1-your-world-is-a-planet"><a class="anchor" href="#14-1-your-world-is-a-planet" aria-hidden="true">#</a>14.1 Your World is a planet</h3>
-<p>Your World is a planet in a solar-system-like shared field. It has five
-scales:</p>
+<h3 id="14-1-your-world-is-a-planet-designed"><a class="anchor" href="#14-1-your-world-is-a-planet-designed" aria-hidden="true">#</a>14.1 Your World is a planet <span class="mark mark-designed" title="designed">○</span> designed</h3>
+<p>Your World is a planet in a solar-system-like shared field, and the Places
+instrument (M4′) shows it at four scales: <strong>System</strong> · <strong>Body</strong> · <strong>Region</strong> ·
+<strong>Palace</strong> (9.7). What you meet at each:</p>
 <ul>
-<li><strong>Field</strong> — Worlds as planets around the shared hub; contributions travel
-between them as particles.</li>
-<li><strong>Orbit</strong> — your home: your planet with its agents, NOWs, recent
-Expressions and encounters, project worlds as moons, and the cosmos layers —
-the M1 torus, the M2 sky, the M3 clock — around it.</li>
-<li><strong>Surface</strong> — your artefacts placed round the globe, anchored to real
-places; walks drawn as routes.</li>
-<li><strong>Place</strong> — a location close up, with its precision and reference frame.</li>
-<li><strong>Palace</strong> — M5′ as a place you enter.</li>
+<li><strong>The field</strong> — Worlds as planets around the shared hub, a federated field
+at one more remove; contributions travel between them as particles.</li>
+<li><strong>Your home orbit</strong> — your planet with its agents, NOWs, recent Expressions
+and encounters, project worlds as moons, and the cosmos layers — the M1
+torus, the M2 sky, the M3 clock — around it.</li>
+<li><strong>The surface</strong> — your artefacts placed round the globe, anchored to real
+places; walks drawn as routes. Close up, a place shows its precision and
+reference frame.</li>
+<li><strong>The palace</strong> — M5′ as a place you enter.</li>
 </ul>
+<p>The earlier design named these Field, Orbit, Surface, Place and Palace; the
+current instrument names its scales System, Body, Region and Palace.</p>
 <h3 id="14-2-aperture-and-view-as-designed"><a class="anchor" href="#14-2-aperture-and-view-as-designed" aria-hidden="true">#</a>14.2 Aperture and view-as <span class="mark mark-designed" title="designed">○</span> designed</h3>
 <p>The <strong>aperture</strong> sets how far you look: World (only yours) · Local (yours plus
 the project and agent worlds it holds) · Shared (other participants&#39; Worlds,
@@ -1771,9 +1811,9 @@ Each product is a family of devices (12.4):</p>
 </tr>
 </tbody></table>
 </div>
-<p>Expressions is the seventh family, already being carved: each of the
-application&#39;s actions is assigned a home on the neutral surfaces and an exact
-owner operation.</p>
+<p>The design calls Expressions the seventh carving, already in flight: each of
+the application&#39;s actions is being assigned a home on the neutral surfaces
+and an exact owner operation, without changing the frame.</p>
 <p>Two layers sit across the families. <strong>Ta-Onta</strong> is the agent world — who acts,
 in what order, under what custody — and Factory&#39;s chain order belongs to it.
 <strong>Nara</strong> and <strong>Epii</strong> are the presences you meet: Nara the dialogical, the
@@ -1841,11 +1881,11 @@ competition; festival games under a discipline of days; masters who teach;
 an Order of players and a village where they live; games written down so they
 can be read back; and an ending. Hesse&#39;s Magister Ludi does not try to
 preserve the Game, because beauty, once it is historical, is perishable.</p>
-<p>That is the description of a <strong>total environment for meaning</strong>. It is the
-only precise one in Western literature.</p>
-<p>Ableton Live is the proof that a total environment can exist as software.
-Before Live, composition, sound design, arrangement, recording, editing,
-mixing, performance and device-building lived in separate tools. Live put them
+<p>That is the description of a <strong>total environment for meaning</strong>, and few
+descriptions of anything imagined are as exact.</p>
+<p>Ableton Live showed that a total environment can exist as software.
+Composition, sound design, arrangement, recording, editing, mixing,
+performance and device-building had largely lived in separate tools. Live put them
 in one environment with a shared clock and views that pass into one another.
 Its power is in that integration, not in any single feature.</p>
 <p><strong>Hesse described the pattern. Live proved the pattern can be software. The
@@ -1933,8 +1973,8 @@ and Knecht&#39;s last vocation is a teacher&#39;s. In the DLW the teaching layer
 <strong>Epii</strong>, at M5: the synthesising face, working beside Technē&#39;s instruments,
 explaining why each room of a palace exists. The system teaches by being met.</p>
 <h3 id="20-10-performance"><a class="anchor" href="#20-10-performance" aria-hidden="true">#</a>20.10 Performance</h3>
-<p>In Live, performance is the mode that made the software famous: clips launched
-in real time. In the DLW performance runs through Technē and Expressions.
+<p>In Live, performance is clip launching in the Session view: material played
+in real time, in any order. In the DLW performance runs through Technē and Expressions.
 Technē composes; Expressions performs. A thread on the Timeline, walked,
 launches the scenes its stops carry, and the physics instrument sounds and
 forms them (Chapter 10).</p>
@@ -1951,7 +1991,8 @@ core. The Game grew by adopting new disciplines, mathematics first and then
 all the others. The DLW is open at its edges and closed at its core.</p>
 <h3 id="20-13-the-village-the-shared-field"><a class="anchor" href="#20-13-the-village-the-shared-field" aria-hidden="true">#</a>20.13 The village: the shared field</h3>
 <p>Hesse gave the Game one home and an Order. He also gave it a village, the
-Players&#39; Village at Waldzell. The shared field is that village grown honest.
+Players&#39; Village at Waldzell. The shared field is that village, built so that every visit is honest about
+what it sees.
 Every player is a world, and every world is seen through its projection.
 Every visit is a guest at someone&#39;s game, and every contribution is an
 attributable difference returned (Chapter 14). Hesse also kept a private game
@@ -2004,7 +2045,7 @@ game, the DLW is the instrument, and anyone can be the player.</p>
 <p>Language sits at the root of many of our conflicts, inner and outer, and we
 live in it before we learn to hold it. A language model is built from words
 carried on number — name and number in one act, the marriage that Pythagoras,
-John, and Jung with Pauli each pointed toward. That makes it the first
+John, and Jung with Pauli each pointed toward. That makes it an
 instrument that can work on language from inside language, at scale.</p>
 <p>What it lacks is a vocation. The DLW gives its agents one, and bounds it. They
 read, gather, propose, build and test. Every consequential act passes through
@@ -2019,14 +2060,14 @@ are Central&#39;s to read; none are set here.</em></p>
 beside the main inquiry. You highlight three passages, note one, put all three
 in the packet, and press Answer. The situated agent returns a reading with its
 sources, and you follow one of them back into its text.</p>
-<p>Later you move to Factory and commission the repair the reading suggested. You
+<p>Next you move to Factory and commission the repair the reading suggested. You
 set the write window so nothing lands before the plan is approved. The diff
 and the checks come back. You read them while custody holds.</p>
-<p>In the afternoon you open yesterday&#39;s two-voice scene in Expressions. You add
+<p>Later you open yesterday&#39;s two-voice scene in Expressions. You add
 a third voice, pin its force, turn on the cymatic plate and sweep it until the
 nodal figure says what the claim says. The entity sounds its own frequency.
 You take the swell, layer the next section, capture the figure, and save.</p>
-<p>In the evening you are in Technē. You gather the day&#39;s constellation, lay the
+<p>Toward the close of the day you are in Technē. You gather the day&#39;s constellation, lay the
 places it touched on the Timeline, and record a walk across them. You compose
 the palace and return the whole as a proposal to the wiki&#39;s owner.</p>
 <p>Before the day ends you visit another World. Its owner&#39;s projection is fogged
@@ -2050,8 +2091,8 @@ has lost its purpose.</p>
 <p>The measure of the whole is what people leave with. The DLW is working when
 its players leave it with more world than they brought: days closed into
 returns, runs landed, expressions published, a reader served, a pupil who no
-longer needs the teacher. The Game&#39;s own story ends with a schoolmaster
-walking down a mountain.</p>
+longer needs the teacher. The Game&#39;s own story ends with its Magister leaving the Order to teach a
+single pupil.</p>
 <h2 id="24-questions-held-open"><a class="anchor" href="#24-questions-held-open" aria-hidden="true">#</a>24. Questions held open</h2>
 <p>These are unresolved in the owner&#39;s ground. They are marked here so that no
 one fills them in by accident.</p>
