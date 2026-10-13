@@ -18,12 +18,17 @@ import {errorWords, type RunEntry} from "./deskStore";
 import {readRunReturn,recogniseRunReturn,type NativeRecognitionReceipt,type NativeRunReturnReading} from './runReturnReading';
 import type {RunPageHost} from "./RunPage";
 import {revisionWords} from "./RunMap";
-import {attemptsFor, frontierNode, pendingRecognitions, refTail, unitChecks, unitOf, type InspectionAttempt} from "./runModel";
+import {attemptsFor, cardKey, closeWords, frontierNode, pendingRecognitions, recognitionRefOf, refTail, settleRunClose, unitChecks, unitOf, type InspectionAttempt, type RunCloseReceipt} from "./runModel";
+import {closeRun} from "./factoryReads";
+import {stopRunLive} from "../FactoryLive";
 
 export function RunHandoff({entry, host, onRecognised}: {entry: RunEntry; host: RunPageHost; onRecognised: () => void}) {
   const kernel = useKernel();
   const {run, journey, inspection} = entry;
   const [receipt, setReceipt] = useState<NativeRecognitionReceipt>();
+  const [closed,setClosed]=useState<{receipt:RunCloseReceipt;recognitionRef:string}>();
+  const [closeError,setCloseError]=useState<string>();
+  const [closing,setClosing]=useState(false);
   const [nativeReturn,setNativeReturn]=useState<NativeRunReturnReading>();
   const [readError,setReadError]=useState<string>();
   const [reading,setReading]=useState(false);
@@ -37,7 +42,7 @@ export function RunHandoff({entry, host, onRecognised}: {entry: RunEntry; host: 
   const identity=JSON.stringify([kernel.transport,entry.card.source.statePath,entry.card.source.projectRef,run.runRef,run.revision,entry.card.journeyRef,pending]);
   const latest=useRef({identity,host});latest.current={identity,host};
   useEffect(()=>{mounted.current=true;return()=>{mounted.current=false}},[]);
-  useEffect(()=>{setReceipt(undefined);setNativeReturn(undefined);setReadError(undefined);setError(undefined)},[identity]);
+  useEffect(()=>{setReceipt(undefined);setClosed(undefined);setCloseError(undefined);setNativeReturn(undefined);setReadError(undefined);setError(undefined)},[identity]);
   const capture=()=>{const key=identity,original=host.current;return()=>mounted.current&&latest.current.identity===key&&!!region.current?.getClientRects().length&&(!original||original())&&(!latest.current.host.current||latest.current.host.current())};
 
   if (!returned.length && !journeyReturns.length) return <div className="frun-empty" data-handoff-empty><p>Nothing has come back yet.</p></div>;
@@ -54,6 +59,20 @@ export function RunHandoff({entry, host, onRecognised}: {entry: RunEntry; host: 
   const body = primaryAttempt?.body;
   const observations = [refTail(body?.harnessRef), refTail(body?.modelRef)].filter(Boolean).join(" · ");
 
+  /** The Run's own close after the Recognition (T-FACTORY-2b): the owner's
+   * receipt or refusal is shown as it came back; a closed Run stops its live
+   * production, and a refused close leaves the production as it is. */
+  const closeAfter = async (recognitionRef: string, visible: () => boolean) => {
+    setClosing(true); setCloseError(undefined);
+    try {
+      const outcome = await closeRun(kernel.transport, {statePath: entry.card.source.statePath, runRef: run.runRef, recognitionRef});
+      settleRunClose(outcome, cardKey(entry.card.source, run.runRef), stopRunLive);
+      if (visible()) setClosed({receipt: outcome, recognitionRef});
+    } catch (reason) { if (visible()) setCloseError(errorWords(reason)); }
+    finally { if (mounted.current) setClosing(false); }
+    onRecognised();
+  };
+
   const doRecognise = async () => {
     const current=capture();if(flight.current||!current())return;
     const subject = pending[0];
@@ -62,9 +81,10 @@ export function RunHandoff({entry, host, onRecognised}: {entry: RunEntry; host: 
     const own=Symbol('native-recognition');flight.current=own;setActing(true); setError(undefined);
     try {
       const answer = await recogniseRunReturn(kernel.transport, {statePath:entry.card.source.statePath,journeyRef:entry.card.journeyRef,subjectRef,basisRefs:[...(subject.evidence_refs ?? [])]},current);
-      if(!current())return;
-      setReceipt(answer);
-      onRecognised();
+      const recognitionRef = recognitionRefOf(answer);
+      if (!recognitionRef) throw Error("Factory did not name the Recognition the close follows.");
+      if (current()) setReceipt(answer);
+      await closeAfter(recognitionRef, current);
     } catch (reason) { if(current())setError(errorWords(reason)); }
     finally { if(flight.current===own){flight.current=null;if(mounted.current)setActing(false)} }
   };
@@ -88,6 +108,9 @@ export function RunHandoff({entry, host, onRecognised}: {entry: RunEntry; host: 
     </div>}
     {receipt && <p className="fhandoff-receipt" role="status" data-recognition-receipt={receipt.status}>Recognised — the owner acknowledged this exact Return ({receipt.status.replace(/-/g, " ")}).</p>}
     {error && <p className="frun-note" role="alert">Recognition was refused: {error}</p>}
+    {closed && <p className="fhandoff-close" role="status" data-run-close={closed.receipt.status}>{closeWords(closed.receipt).line}</p>}
+    {closed?.receipt.status === "refused" && <button type="button" className="oi-action" disabled={closing||acting} onClick={() => void closeAfter(closed.recognitionRef, () => mounted.current)}>{closing ? "Closing…" : "Try the close again"}</button>}
+    {closeError && <p className="frun-note" role="alert">The close was not recorded: {closeError}</p>}
     <p className="fhandoff-states" data-handoff-states>
       <span data-state-agent>{returned.length ? "Agent returned" : "Agent completion not recorded"}</span>
       <span data-state-recognition>{recognitions.length && !pending.length ? "Recognised" : pending.length ? "Awaiting your recognition" : "Not recognised"}</span>
