@@ -90,6 +90,10 @@ export function load${familyPascal}Family(): void {
         id: '${input.device}',
         title: '${input.deviceTitle}',
         icon: '${icon}',
+        // The Live semantic this face occupies (DEVICE-SEMANTICS-LOCK §1) —
+        // required. A readings-only starter is 'info'; an instrument, effect,
+        // rack, macro, clip, track, stop, return or link names its own (§5.3).
+        liveSemantic: 'info',
         note: 'Starter face: honest readings over the family\\'s own owner ops. Name the kernel ops this face reads (op <op>) and what waits for its writer.',
         params: [
           reading({key: 'readiness', title: 'Readiness', type: 'string', disclosure: 'No owner reading wired yet — this row discloses absence until the op lands.'}),
@@ -216,6 +220,7 @@ export function scaffoldDeclaration(input: ScaffoldInput): {
         id: input.device,
         title: input.deviceTitle,
         icon: (input.icon ?? 'form') as IconName,
+        liveSemantic: 'info',
         note: 'Starter face: honest readings over the family\'s own owner ops. Name the kernel ops this face reads (op <op>) and what waits for its writer.',
         params: [
           {key: 'readiness', title: 'Readiness', type: 'string', disclosure: 'No owner reading wired yet — this row discloses absence until the op lands.'},

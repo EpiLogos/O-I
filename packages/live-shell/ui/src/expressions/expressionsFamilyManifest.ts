@@ -6,6 +6,7 @@ import {deviceCatalogue, type RackDevice} from '../components/nativeDeviceCatalo
 import {FIELD_FACE_MODELS} from '../components/nativeFieldFaceModel.ts'
 import {ENTITY_FACE_MODELS} from '../components/nativeEntityFaceModel.ts'
 import {SCENE_FACE_MODELS} from '../components/nativeSceneFaceModel.ts'
+import type {LiveSemantic, SemanticInvariant} from '../inhabitants/sdk/semantics.ts'
 
 export type ExpressionsBrowserCategory = 'works' | 'material' | 'objects' | 'properties' | 'devices'
 export type ExpressionsFaceRegistry = 'field' | 'entity' | 'scene' | 'bespoke'
@@ -18,6 +19,47 @@ export interface ExpressionsFace {
   readonly registry: ExpressionsFaceRegistry | null
   readonly studio: string | null
   readonly paths: readonly string[]
+  /** The Live semantic the face occupies (DEVICE-SEMANTICS-LOCK §1, §2.4, §5). */
+  readonly liveSemantic: LiveSemantic
+  readonly invariant?: SemanticInvariant
+}
+
+/** The Expressions faces' Live semantics (DEVICE-SEMANTICS-LOCK §2.4, §4.8, §9; lead's ruling 13 Oct 2026, T-SEMANTICS-GATE).
+ * The physics simulation is the sounding instrument (M1 generates); glyph is its visual side and sound its entity
+ * voices — both generate through the native expression owner. The field and entity devices transform the material in
+ * focus and keep the stream (effects on the instrument). Resonance (M2, the ☿ key) and Body 3:3 modulate the
+ * instrument — they never generate (QL-MEF D13: M2 is never a second generator). Automation is the scene's
+ * parameter courses. A scene is a clip: an Expression's scene at its document revision (lock §9.1). */
+const GENERATES = 'kernel:native_expression'
+export const EXPRESSIONS_FACE_SEMANTICS: Readonly<Record<string, {readonly liveSemantic: LiveSemantic; readonly invariant?: SemanticInvariant}>> = {
+  glyph: {liveSemantic: 'device-instrument', invariant: {generates: GENERATES}},
+  physics: {liveSemantic: 'device-instrument', invariant: {generates: GENERATES}},
+  sound: {liveSemantic: 'device-instrument', invariant: {generates: GENERATES}},
+  pointer: {liveSemantic: 'device-audio-fx', invariant: {transforms: 'the field under the pointer (attract, repel, trace) — the field plays on'}},
+  relational: {liveSemantic: 'device-audio-fx', invariant: {transforms: 'the field\'s relational forces between entities'}},
+  medium: {liveSemantic: 'device-audio-fx', invariant: {transforms: 'the medium the field moves in (drag, density)'}},
+  contacts: {liveSemantic: 'device-audio-fx', invariant: {transforms: 'the field\'s contacts and collisions'}},
+  morph: {liveSemantic: 'device-audio-fx', invariant: {transforms: 'the field\'s form between shapes'}},
+  focus: {liveSemantic: 'device-audio-fx', invariant: {transforms: 'what the field brings into focus'}},
+  colour: {liveSemantic: 'device-audio-fx', invariant: {transforms: 'the field\'s colour'}},
+  ink: {liveSemantic: 'device-audio-fx', invariant: {transforms: 'the field\'s ink (trails and marks)'}},
+  depth: {liveSemantic: 'device-audio-fx', invariant: {transforms: 'the field\'s depth'}},
+  resonance: {liveSemantic: 'modulation'},
+  automation: {liveSemantic: 'automation'},
+  formation: {liveSemantic: 'device-audio-fx', invariant: {transforms: 'an entity\'s formation'}},
+  force: {liveSemantic: 'device-audio-fx', invariant: {transforms: 'the forces on an entity'}},
+  scene: {liveSemantic: 'clip', invariant: {material: 'the Expression\'s scene (the native expression document)', revision: 'the expression document revision (kernel:expression)', states: ['stopped', 'playing', 'queued', 'recording']}},
+  meaning: {liveSemantic: 'device-audio-fx', invariant: {transforms: 'an entity\'s meaning binding'}},
+  text: {liveSemantic: 'device-audio-fx', invariant: {transforms: 'the scene\'s text'}},
+  body: {liveSemantic: 'modulation'},
+  blueprint: {liveSemantic: 'device-audio-fx', invariant: {transforms: 'the scene\'s form blueprint'}},
+  arrange: {liveSemantic: 'device-audio-fx', invariant: {transforms: 'the scene\'s arrangement of entities'}},
+}
+
+function semanticOf(id: string): {liveSemantic: LiveSemantic; invariant?: SemanticInvariant} {
+  const declared = EXPRESSIONS_FACE_SEMANTICS[id]
+  if (!declared) throw new Error(`Expressions face "${id}" declares no Live semantic (DEVICE-SEMANTICS-LOCK §5.1) — add it to EXPRESSIONS_FACE_SEMANTICS.`)
+  return declared
 }
 
 export interface ExpressionsManifest {
@@ -51,6 +93,7 @@ function faceOf(declaration: ExpressionsFamilyDeclaration, device: RackDevice | 
     registry: registryOf(declaration.id, device !== undefined),
     studio: device?.studio ?? null,
     paths: device ? [...device.paths] : [],
+    ...semanticOf(declaration.id),
   }
 }
 

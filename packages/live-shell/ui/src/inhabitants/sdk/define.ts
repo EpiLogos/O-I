@@ -40,6 +40,8 @@ import {deriveAgentDeviceRows} from '../agentDeviceCatalogue.ts'
 import type {IconName} from './icons.ts'
 import type {DeviceFormat, SdkModeName, TransportSlotId} from './modes.ts'
 import {MODE_DEFAULT_FORMAT, transportTargetSlots} from './modes.ts'
+import type {LiveSemantic, SemanticInvariant} from './semantics.ts'
+import {validateFaceSemantic} from './semantics.ts'
 import type {NewProductAuthority} from './products.ts'
 import {registerWriterAuthority, validateDeclaredFamily, validateFamilyWriters, validateSdkDevice, validateTransportBindings} from './validate.ts'
 
@@ -140,6 +142,11 @@ export interface DeviceDeclaration {
   /** The device's mark from the cut — required: the plate carries its mark
    * or it is not a face of this shell. */
   readonly icon: IconName
+  /** The Live semantic this device occupies — required (lock §5.1). The
+   * gate refuses an absent, unknown, mode-illegal or invariant-broken one. */
+  readonly liveSemantic: LiveSemantic
+  /** The device's invariant for its semantic (lock §5.3). */
+  readonly invariant?: SemanticInvariant
   readonly kind?: InhabitantFaceKind
   /** Mode scoping — the modes this face presents in (the mode-specific
    * plugin surface). Absent = the face presents wherever its family does. */
@@ -466,6 +473,9 @@ function buildFaces(devices: readonly DeviceDeclaration[]): InhabitantFaceDeclar
   return devices.map(device => ({
     id: device.id,
     presentations: device.presentations ?? ['compact', 'expanded', 'full'],
+    liveSemantic: device.liveSemantic,
+    ...(device.invariant ? {invariant: device.invariant} : {}),
+    ...(device.modes ? {modes: device.modes} : {}),
     ...(device.note ? {note: device.note} : {}),
     ...(device.kind ? {kind: device.kind} : {}),
     ...(device.admission ? {admission: device.admission} : {}),
@@ -592,6 +602,8 @@ export function declareDeviceExtension(declaration: DeviceExtensionDeclaration):
     // The writers law at the extension layer too (N-A): the family's
     // registered writers arm the extension's rows.
     ...validateFamilyWriters(declaration.family, familyWriters(declaration.family), rows),
+    // The declared per-mode formats face the Live semantic law at this door too (lock §5.4).
+    ...declaration.devices.flatMap(device => device.formats ? validateFaceSemantic(device, {family: declaration.family, formats: device.formats}) : []),
   ]
   if (faults.length) {
     throw new Error(`Extension "${declaration.id}" refuses to compose — the declaration breaks the device law:\n- ${faults.join('\n- ')}`)
@@ -609,3 +621,6 @@ export type {SdkModeName, SdkMode, TransportRowId, TransportSlotId, TransportSlo
 export {onFamilyManifestReset} from '../familyManifest.ts'
 export {PRODUCTS, product, isKnownProduct} from './products.ts'
 export type {ProductRecord, NewProductAuthority} from './products.ts'
+/** The Live semantics vocabulary (lock §1) — one import point for authors. */
+export {LIVE_SEMANTICS, LIVE_EXEMPLARS, isLiveSemantic, INVARIANT_FIELDS} from './semantics.ts'
+export type {LiveSemantic, SemanticInvariant, SemanticMap} from './semantics.ts'

@@ -45,17 +45,23 @@ function declareCentralExtension(): void {
       {
         id: 'ground-hygiene',
         presentations: ['compact', 'expanded'],
+        liveSemantic: 'device-audio-fx',
+        invariant: {transforms: 'the ground in focus — analysed, passed unchanged'},
         note: 'The ground as readings: worktree census, branch audit, stray-branch detection, seat occupancy. Reads through the kernel ground and git repository owners (op ground, op git_repository_read) and the workcell status read (op workcell_status_read). The tenders (prune, sweep) have no writer yet — declared, waiting.',
       },
       {
         id: 'impact',
         presentations: ['compact', 'expanded'],
+        liveSemantic: 'device-audio-fx',
+        invariant: {transforms: 'the selected folder or note — its neighbourhood read, passed unchanged'},
         note: 'Select a folder or note: its Central-web neighbourhood, references, and the sessions touching it. Reads through the wiki projection and graph owners (op wiki_projection_read, op graph). The sessions-touching read has no owner op yet — that leg waits.',
       },
       {
         id: 'day-die',
         kind: 'document',
         presentations: ['compact', 'expanded'],
+        liveSemantic: 'device-instrument',
+        invariant: {generates: 'kernel:receiving'},
         dock: ['dock', 'expand', 'pop-out'],
         document: {
           kind: 'ql-daily-die',
@@ -70,6 +76,12 @@ function declareCentralExtension(): void {
         id: 'flow-document',
         kind: 'document',
         presentations: ['compact', 'expanded'],
+        liveSemantic: 'clip',
+        invariant: {
+          material: 'the Flow document (Dialogue · Flow · Journal)',
+          revision: 'CAS revision (central.files.write)',
+          states: ['draft', 'saved', 'edited since save'],
+        },
         dock: ['dock', 'expand', 'pop-out'],
         document: {
           kind: 'ql-flow',
@@ -84,6 +96,8 @@ function declareCentralExtension(): void {
         id: 'nara-conversation',
         kind: 'conversation',
         presentations: ['compact', 'expanded'],
+        liveSemantic: 'device-instrument',
+        invariant: {generates: 'kernel:nara_dialogue'},
         dock: ['dock', 'expand', 'pop-out'],
         conversation: {binding: 'oi.nara-dialogue-binding/v1'},
         note: 'The situated agent conversation: bound over the kernel Nara dialogue binding (op nara_dialogue → oi.nara-dialogue-binding/v1); canonical CAS stays in AIKit. The aperture opens the existing encounter surface — the shell builds no second conversation store.',
@@ -110,6 +124,7 @@ function declareSoftwareFactoryExtension(): void {
       {
         id: 'attempt-review',
         presentations: ['expanded', 'full'],
+        liveSemantic: 'capture',
         note: 'One run\'s attempts and their task trees as readings (op factory_attempt_read, factory_attempt_task_list_read, factory_attempt_task_read; build snapshot via factory_build_snapshot). Review, steer and interrupt writers wait for the Factory owner (the Buzz contract of record names the behaviours, not the writer).',
       },
     ],

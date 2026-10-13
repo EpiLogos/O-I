@@ -2,6 +2,9 @@
  * The shell door knows only this shape; product families declare themselves
  * through admitted manifests. No family names appear in core logic here. */
 
+import type {LiveSemantic, SemanticInvariant} from './sdk/semantics.ts'
+import {validateFaceSemantic} from './sdk/semantics.ts'
+
 export type FamilyManifestId = string
 
 export type DevicePresentation = 'compact' | 'expanded' | 'full'
@@ -10,6 +13,13 @@ export interface FamilyFaceDeclaration {
   readonly id: string
   readonly presentations: readonly DevicePresentation[]
   readonly note?: string
+  /** The Live semantic this face occupies (DEVICE-SEMANTICS-LOCK §1, §5.1).
+   * Required: a face without one is refused at the door. */
+  readonly liveSemantic: LiveSemantic
+  /** The face's invariant for its semantic (lock §5.3). */
+  readonly invariant?: SemanticInvariant
+  /** The modes the face presents in (absent = its family's home modes). */
+  readonly modes?: readonly string[]
 }
 
 export interface FamilyManifest {
@@ -41,6 +51,12 @@ export function onFamilyManifestReset(hook: () => void): void {
 
 /** Admit or replace one family manifest at the neutral door. */
 export function admitFamilyManifest(manifest: FamilyManifest): FamilyManifest {
+  // The Live semantic law speaks first (lock §5): a face that does not occupy
+  // a semantic, or breaks its invariant or mode, never reaches the door.
+  const semanticFaults = manifest.faces.flatMap(face => validateFaceSemantic(face, {family: manifest.id}))
+  if (semanticFaults.length) {
+    throw new Error(`Family manifest "${manifest.id}" refuses at the door — the Live semantic law (DEVICE-SEMANTICS-LOCK §5):\n- ${semanticFaults.join('\n- ')}`)
+  }
   const prior = admitted.get(manifest.id)
   if (prior && JSON.stringify(prior) !== JSON.stringify(manifest)) {
     throw new Error(`Family manifest "${manifest.id}" already admitted with different contents.`)

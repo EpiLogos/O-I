@@ -82,6 +82,8 @@ console.log(`
 Next (the loop — full procedure in src/inhabitants/sdk/DEVICE-SDK.md):
   1. Fill the family's real faces/params in src/inhabitants/${pascal(family)}FamilyManifest.ts
      (writePath ONLY where a real owner write exists; disclosure verbatim otherwise).
+     Each face names its liveSemantic (the starter is 'info'); an instrument, effect,
+     rack, macro, clip, track, stop, return or link carries its invariant (lock §5.3).
   2. Compose the face from the kit's controls (src/inhabitants/sdk/controls.tsx).
   3. node --test tests/${family}-family.test.mjs
   4. node scripts/validate-devices.mjs

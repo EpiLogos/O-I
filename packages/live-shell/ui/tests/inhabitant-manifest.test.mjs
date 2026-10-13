@@ -138,12 +138,12 @@ test('extension discipline: unknown family refuses, differing re-declaration ref
   world.loadWorldShellFamilies()
   assert.throws(() => schema.declareFamilyExtension('nowhere-admitted', {id: 'x', by: 'test'}),
     /owner-admitted base/)
-  const extension = {id: 'probe:one', by: 'test', faces: [{id: 'probe-face', presentations: ['compact']}]}
+  const extension = {id: 'probe:one', by: 'test', faces: [{id: 'probe-face', liveSemantic: 'info', presentations: ['compact']}]}
   schema.declareFamilyExtension('actuation', extension)
   assert.deepEqual(schema.declareFamilyExtension('actuation', extension), extension)
-  assert.throws(() => schema.declareFamilyExtension('actuation', {id: 'probe:one', by: 'test', faces: [{id: 'other-face', presentations: ['compact']}]}),
+  assert.throws(() => schema.declareFamilyExtension('actuation', {id: 'probe:one', by: 'test', faces: [{id: 'other-face', liveSemantic: 'info', presentations: ['compact']}]}),
     /different contents/)
-  assert.throws(() => schema.declareFamilyExtension('actuation', {id: 'probe:two', by: 'test', faces: [{id: 'gateway', presentations: ['compact']}]}),
+  assert.throws(() => schema.declareFamilyExtension('actuation', {id: 'probe:two', by: 'test', faces: [{id: 'gateway', liveSemantic: 'info', presentations: ['compact']}]}),
     /collides/)
 })
 
@@ -156,9 +156,9 @@ test('a seventh family integrates with document faces and detached kinds through
     id: 'seventh-product-proof',
     browser: ['proof'],
     faces: [
-      {id: 'proof-parameter', presentations: ['compact']},
+      {id: 'proof-parameter', liveSemantic: 'info', presentations: ['compact']},
       {
-        id: 'proof-document', presentations: ['compact', 'expanded'], kind: 'document',
+        id: 'proof-document', liveSemantic: 'info', presentations: ['compact', 'expanded'], kind: 'document',
         document: {
           kind: 'proof-form', file: 'proof.html', hosting: 'oi.document-frame/v1',
           saveRouter: ['saved', 'unchanged', 'stale', 'conflict', 'refused'], messages: ['proof:ping'],
@@ -194,23 +194,23 @@ test('the validators name the faults: bodies on the wrong kind, wrong router ord
     browser: [],
     faces: [
       // document face without a body
-      {id: 'docless', presentations: ['compact'], kind: 'document'},
+      {id: 'docless', liveSemantic: 'info', presentations: ['compact'], kind: 'document'},
       // parameter face carrying a body
-      {id: 'bodyless-kind', presentations: ['compact'], document: {
+      {id: 'bodyless-kind', liveSemantic: 'info', presentations: ['compact'], document: {
         kind: 'x', file: 'x.html', hosting: 'oi.document-frame/v1',
         saveRouter: ['saved', 'unchanged', 'stale', 'conflict', 'refused'], messages: ['x'],
       }},
       // document face with a truncated router
-      {id: 'short-router', presentations: ['compact'], kind: 'document', document: {
+      {id: 'short-router', liveSemantic: 'info', presentations: ['compact'], kind: 'document', document: {
         kind: 'x', file: 'x.html', hosting: 'oi.document-frame/v1',
         saveRouter: ['saved', 'conflict'], messages: ['x'],
       }},
       // waiting face carrying a body
-      {id: 'waiting-with-body', presentations: ['compact'], admission: 'waiting', note: 'waits for its owner', conversation: {binding: 'oi.nara-dialogue-binding/v1'}},
+      {id: 'waiting-with-body', liveSemantic: 'info', presentations: ['compact'], admission: 'waiting', note: 'waits for its owner', conversation: {binding: 'oi.nara-dialogue-binding/v1'}},
       // waiting face with no note
-      {id: 'silent-waiter', presentations: ['compact'], admission: 'waiting'},
+      {id: 'silent-waiter', liveSemantic: 'info', presentations: ['compact'], admission: 'waiting'},
       // pop-out face with no family detach door
-      {id: 'popout-nowhere', presentations: ['compact'], dock: ['dock', 'pop-out']},
+      {id: 'popout-nowhere', liveSemantic: 'info', presentations: ['compact'], dock: ['dock', 'pop-out']},
     ],
     params: {grammar: 'bad/v1'},
     projections: [],
@@ -243,6 +243,8 @@ test('EXPRESSIONS_FAMILIES compose into a valid InhabitantManifest, and the land
     browser: ['works', 'material', 'objects', 'properties', 'devices'],
     faces: declarations.map(declaration => ({
       id: declaration.id,
+      // The face's Live semantic, from the landed manifest's ruling (lock §2.4).
+      ...expressionsManifest.EXPRESSIONS_FACE_SEMANTICS[declaration.id],
       presentations: declaration.faced ? ['compact', 'expanded'] : [],
       note: `scope ${declaration.scope}; repeatable ${String(declaration.repeatable)}`,
     })),

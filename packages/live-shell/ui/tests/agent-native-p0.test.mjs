@@ -127,7 +127,7 @@ test('ligament 1 — double-booking normalizes onto slots: a row binding collide
     writerAuthority: 'test fixture (itself)',
     transport: [{mode: 'factory', row: 'arm-capture', face: 'probe', key: 'mode'}],
     devices: [{
-      id: 'probe', title: 'Probe', icon: 'form',
+      id: 'probe', title: 'Probe', icon: 'form', liveSemantic: 'info',
       params: [sdkDefine.enumParam({key: 'mode', title: 'Mode', type: 'enumerated', values: ['a', 'b'], writePath: 'shell.setAcmeMode'})],
     }],
     writers: ['shell.setAcmeMode'],

@@ -27,6 +27,7 @@ admitFamily({
       id: 'probe',
       title: 'Probe',
       icon: 'form',
+      liveSemantic: 'info',
       note: 'The kit demonstration face: fixture-applied rows (the fixture arms its own writers), an enumerated, a boolean, and honest readings.',
       params: [
         numberParam({key: 'gain', title: 'Gain', type: 'number', range: {min: 0, max: 2, unit: 'x'}, writePath: 'shell.setDemoGain', icon: 'form'}),
@@ -41,6 +42,7 @@ admitFamily({
       id: 'later',
       title: 'Later',
       icon: 'orbit',
+      liveSemantic: 'info',
       admission: 'waiting',
       note: 'Waits for the demo owner\'s second device op (fixture of the waiting law).',
     },

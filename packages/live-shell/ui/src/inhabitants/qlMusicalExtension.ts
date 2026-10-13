@@ -43,6 +43,8 @@ export function declareQlMusicalExtension(): void {
         id: 'ql-instrument',
         kind: 'instrument',
         presentations: ['compact', 'expanded'],
+        liveSemantic: 'device-instrument',
+        invariant: {generates: 'kernel:native_expression'},
         dock: ['dock', 'expand'],
         admission: 'admitted',
         note: 'The field/PCM owner as an instrument device face — the proven aperture (reading/disabled/apply/captureCurrent/renderControl/createCustody) over the retained app\'s QL instrument owner (native-field/ql/instrument-session.mjs pipe adapter; identity tuple event/subject/registry/geometry/material/model refs; exact u64 cursors; block 8192, lead/lookahead 0.5 s @ 48 kHz). The face binds the owner\'s real standing states (manual/opening/following/held/unavailable); where no owner reading stands it renders the honest refusing state naming the launch contract (kernel native-expression compose → ql-field-host/ql-field-worker). No sounding claim: scheduling meters only, and the performance act (strike) is not offered — #281\'s packets own performance input.',
