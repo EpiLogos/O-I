@@ -9,6 +9,7 @@ import {NativeSceneEditor} from './NativeSceneEditor'
 import {NativeSceneTransport} from './NativeSceneTransport'
 import {NativeInputRecovery} from './NativeInputRetention'
 import {NativeTakes} from './NativeTakes'
+import {SceneSequenceEditor} from './SceneSequenceEditor'
 import {dispatchOpenDevice} from './nativeDrag'
 import {createNativeContentActions, readNativeExpressionsContent} from '../shell/nativeContent'
 import type {DetailMode} from './DeviceChainPanel'
@@ -162,7 +163,7 @@ export function NativeWorldDetail({mode, expand, collapse, presentMode, presentN
       {fault && <span role="alert">{fault}</span>}
     </header>
     <div className="native-detail-body">
-      <div className="native-detail-view" hidden={mode !== 'clip'}><div className="native-clip-surface" hidden={clipSurface!=='scene'}><NativeSceneEditor reading={reading} request={request}/></div><div className="native-clip-surface" hidden={clipSurface!=='glyph'}><GlyphSequenceEditor reading={reading} request={request} drafts={drafts.current} onExpand={expandClip} isPresented={glyphPresented}/></div><div className="native-clip-surface" hidden={clipSurface!=='takes'}><NativeTakes reading={reading} request={request}/></div></div>
+      <div className="native-detail-view" hidden={mode !== 'clip'}><div className="native-clip-surface" hidden={clipSurface!=='scene'}><NativeSceneEditor reading={reading} request={request}/></div><div className="native-clip-surface" hidden={clipSurface!=='glyph'}>{workspace.mode==='expressions'&&<SceneSequenceEditor reading={reading} request={request}/>}<GlyphSequenceEditor reading={reading} request={request} drafts={drafts.current} onExpand={expandClip} isPresented={glyphPresented}/></div><div className="native-clip-surface" hidden={clipSurface!=='takes'}><NativeTakes reading={reading} request={request}/></div></div>
       <div className="native-detail-view native-device-view" hidden={mode !== 'device'}>
         <div className="native-chain-glyph" hidden={!selectedFormation}><GlyphSequenceEditor compact reading={reading} request={request} drafts={drafts.current} onExpand={expandGlyphDevice} isPresented={compactGlyphPresented}/></div>
         <div className="native-chain-strip"><NativeDeviceRack reading={reading} request={request} onOpen={dispatchOpenDevice}/></div>
