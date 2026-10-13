@@ -72,6 +72,10 @@ const evidenceSummary = (data: unknown): {name?: string; why?: string} => {
 
 /** The local opening address of an owner resolution row. AIKit resolution rows always carry a local address; a hosted row
  * (native_owner shared-field) would not, and is not what resolve returns. */
+function addressOfRowOrNull(row: ResolutionRow): KnowledgeAddress | null {
+  try { return addressOfRow(row); } catch { return null; }
+}
+
 function addressOfRow(row: ResolutionRow): KnowledgeAddress | null {
   return graphAddress({
     ref: row.reference, kind: row.kind, label: row.label, native_owner: row.owner,
@@ -113,10 +117,12 @@ export function SearchOverlay({ project, onClose, onOpen, leader, onLeaderChange
   // A subject with no disclosed place offers nothing; a read that fails offers nothing either. The read is cached per subject ref.
   const [placeOffers, setPlaceOffers] = useState<{subject: PlaceSubject; address: KnowledgeAddress | null; offers: PlaceOffer[]}[]>([]);
   const placeReads = useRef(new Map<string, Promise<PlaceOffer[]>>());
-  const placeSubjects: {subject: PlaceSubject; address: KnowledgeAddress | null}[] = [
+  // Built only where place offers are asked for (Actions tab, a query, a placesOf source), and never throwing during render:
+  // a row the kernel read path does not admit has no opening address, so it offers places without one.
+  const placeSubjects: {subject: PlaceSubject; address: KnowledgeAddress | null}[] = tab === "actions" && query.trim() && typed?.placesOf ? [
     ...hits.filter(hit => hit.resource).map(hit => ({subject: {ref: hit.resource, kind: hit.kind, title: hit.label || hit.resource, project}, address: hit.address})),
-    ...rows.filter(row => row.reference).map(row => ({subject: {ref: row.reference, kind: row.kind, title: subjectLabel(row, "Unnamed resource"), project}, address: addressOfRow(row)})),
-  ].slice(0, 8);
+    ...rows.filter(row => row.reference).map(row => ({subject: {ref: row.reference, kind: row.kind, title: subjectLabel(row, "Unnamed resource"), project}, address: addressOfRowOrNull(row)})),
+  ].slice(0, 8) : [];
   const placeKey = tab === "actions" && query.trim() && typed?.placesOf ? placeSubjects.map(entry => entry.subject.ref).join("\n") : "";
   useEffect(() => {
     const placesOf = typed?.placesOf;
