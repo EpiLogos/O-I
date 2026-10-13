@@ -112,5 +112,5 @@ tsc 0; timeline-walks 12/12; timeline/atlas/mode-grammar/expressions suites
 columns are every reading's top epochs; later readings' tracks are
 `aion-events:<id>`; walk lanes are new on the ruler.
 
-**Open:** leg 2 (the Journey reads the walks) — after T-LABELS. UI: how the
+**Open:** leg 2 (the Journey reads the walks) — after T-ATLAS-HOST: the atlas is mounted nowhere in the running shell, so the Journey has no walk source yet (found 13 Oct; see that ticket). UI: how the
 Timeline draws walk lanes and nested sections — `UNVERIFIED: needs-computer-use`.
