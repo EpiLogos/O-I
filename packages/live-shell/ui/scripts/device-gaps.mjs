@@ -60,7 +60,15 @@ const door = await import(pathToFileURL(join(uiRoot, 'src/inhabitants/familyMani
 const schema = await import(pathToFileURL(join(uiRoot, 'src/inhabitants/manifest.ts')).href)
 const world = await import(pathToFileURL(join(uiRoot, 'src/inhabitants/worldShellFamilies.ts')).href)
 const sdkDefine = await import(pathToFileURL(join(uiRoot, 'src/inhabitants/sdk/define.ts')).href)
+const homes = await import(pathToFileURL(join(uiRoot, 'src/inhabitants/capabilityHomes.ts')).href)
 world.loadWorldShellFamilies()
+
+// Capability ref → the family whose composed manifest declares it (the
+// capability homes). Read from the door; the declarations are the source.
+const capabilityHomeOf = new Map()
+for (const manifest of schema.allInhabitantManifests()) {
+  for (const ref of manifest.capabilities ?? []) capabilityHomeOf.set(ref, manifest.id)
+}
 
 // Product scope → family id. A kit-declared family's OWN product binding is
 // the law (§12); the fallback map carries the six pre-kit families whose
@@ -109,18 +117,28 @@ const rows = []
 for (const record of matrix.records ?? []) {
   if (!includeLanded && record.standing === 'landed') continue
   if (includeLanded && record.standing === 'historical') continue
-  // Family scope: the family's declared product binding, else the fallback map.
+  // Home, in order: the product's family (the binding, else the fallback map);
+  // else the family that declares the ref as a capability home; else the
+  // shell itself, where the ref names a shell surface. Only a ref in none of
+  // the three prints `(no family scope)`.
   const productKey = String(record.product ?? '').toLowerCase()
-  const familyId = declaredProductFamilies.get(productKey) ?? PRODUCT_FAMILY[productKey] ?? null
+  const productFamily = declaredProductFamilies.get(productKey) ?? PRODUCT_FAMILY[productKey] ?? null
+  const declaredFamily = productFamily ? null : (capabilityHomeOf.get(record.id) ?? null)
+  const shellSurface = (productFamily || declaredFamily || !Object.hasOwn(homes.SHELL_CAPABILITIES, record.id))
+    ? null : homes.SHELL_CAPABILITIES[record.id]
+  const home = productFamily ? 'product' : declaredFamily ? 'declared' : shellSurface ? 'shell' : null
+  const familyId = productFamily ?? declaredFamily ?? (shellSurface ? 'shell' : null)
   if (familyFilter && familyId !== familyFilter) continue
   const needs = needsByRef.get(record.id) ?? []
-  const surface = familyId ? surfaceOf(familyId) : {admitted: false, faces: [], params: []}
+  const surface = productFamily || declaredFamily ? surfaceOf(productFamily ?? declaredFamily) : {admitted: false, faces: [], params: []}
   rows.push({
     id: record.id,
     standing: record.standing,
     capability: record.claim ?? '',
     product: record.product ?? '',
     family: familyId ?? '(no family scope)',
+    home,
+    shell_surface: shellSurface,
     family_admitted: surface.admitted,
     faces: surface.faces,
     params: surface.params,
@@ -143,7 +161,9 @@ if (asJson) {
   for (const row of rows) {
     console.log(`${row.id}  [${row.standing}]`)
     console.log(`  ${row.capability}`)
-    console.log(`  family: ${row.family}${row.family_admitted ? ' (admitted)' : ' (NOT admitted at the door)'}`)
+    if (row.home === 'shell') console.log(`  family: shell: ${row.shell_surface} (the shell itself, no device)`)
+    else if (row.home === 'declared') console.log(`  family: ${row.family} (admitted, homed by its capability declaration)`)
+    else console.log(`  family: ${row.family}${row.family_admitted ? ' (admitted)' : ' (NOT admitted at the door)'}`)
     if (row.faces.length) console.log(`  faces:  ${row.faces.join(', ')}`)
     if (row.params.length) console.log(`  params: ${row.params.join(', ')}`)
     for (const need of row.needs.slice(0, 2)) console.log(`  need (${need.product}): ${String(need.need ?? '').slice(0, 140)}`)

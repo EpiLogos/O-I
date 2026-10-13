@@ -21,6 +21,9 @@ import {quaternalLogicFamilyManifest, QUATERNAL_LOGIC_FAMILY_ID} from './quatern
 // [L9 musical family] the QL field/PCM owner's instrument face — an additive
 // declared extension onto quaternal-logic; the base manifest stays verbatim.
 import {declareQlMusicalExtension} from './qlMusicalExtension.ts'
+// [T-CAPABILITY-HOMES-25] the homes of the suite capabilities with no product
+// family scope — additive declarations (or the shell itself), idempotent.
+import {declareCapabilityHomes} from './capabilityHomes.ts'
 
 export {QUATERNAL_LOGIC_FAMILY_ID}
 
@@ -142,6 +145,8 @@ export function loadWorldShellFamilies(): void {
   declareSoftwareFactoryExtension()
   // [L9 musical family] the QL instrument face — additive, idempotent.
   declareQlMusicalExtension()
+  // [T-CAPABILITY-HOMES-25] capability homes — after the families are admitted.
+  declareCapabilityHomes()
 }
 
 /** The six world-shell product families, composed (base + extensions). */

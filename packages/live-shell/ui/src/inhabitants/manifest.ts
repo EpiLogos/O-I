@@ -132,7 +132,15 @@ export interface InhabitantManifest extends FamilyManifest {
   readonly panelSlots?: readonly InhabitantPanelSlot[]
   /** Detached-window kinds the family's faces pop out through. */
   readonly detachedKinds?: readonly DetachedKind[]
+  /** Suite capability refs this family homes (absent = none). A home is a
+   * declaration, never a face: it says which family the capability lives in
+   * (DEVICE-SEMANTICS-LOCK §4.2); the device that carries it is named in the
+   * declaring extension's note. */
+  readonly capabilities?: readonly string[]
 }
+
+/** A suite capability ref as the capability matrix spells it: `cap.<product>.<slug>`. */
+export const CAPABILITY_REF_PATTERN = /^cap\.[a-z0-9-]+\.[a-z0-9-]+$/
 
 // ---------------------------------------------------------------------------
 // declared extensions — compose onto an admitted family, never rewrite it
@@ -148,6 +156,8 @@ export interface FamilyExtension {
   readonly faces?: readonly InhabitantFaceDeclaration[]
   readonly panelSlots?: readonly InhabitantPanelSlot[]
   readonly detachedKinds?: readonly DetachedKind[]
+  /** Capability refs this extension homes in the family (see InhabitantManifest). */
+  readonly capabilities?: readonly string[]
   readonly note?: string
 }
 
@@ -225,11 +235,16 @@ export function inhabitantManifest(familyId: FamilyManifestId): InhabitantManife
     ...(base as InhabitantManifest).detachedKinds ?? [],
     ...composed.extensions.flatMap(extension => extension.detachedKinds ?? []),
   ]
+  const capabilities = [
+    ...(base as InhabitantManifest).capabilities ?? [],
+    ...composed.extensions.flatMap(extension => extension.capabilities ?? []),
+  ]
   return {
     ...base,
     faces,
     ...(panelSlots.length ? {panelSlots} : {}),
     ...(detachedKinds.length ? {detachedKinds} : {}),
+    ...(capabilities.length ? {capabilities} : {}),
   }
 }
 
@@ -311,6 +326,14 @@ export function validateInhabitantManifest(manifest: InhabitantManifest): readon
     if (!(DETACHED_KINDS as readonly string[]).includes(kind)) {
       faults.push(`${manifest.id}: detached kind "${String(kind)}" is not one the pane engine admits`)
     }
+  }
+
+  // Capability homes: each ref is a matrix ref, and a family homes it once.
+  const homed = new Set<string>()
+  for (const ref of manifest.capabilities ?? []) {
+    if (!CAPABILITY_REF_PATTERN.test(ref)) faults.push(`${manifest.id}: capability "${String(ref)}" is not a cap.<product>.<slug> ref`)
+    if (homed.has(ref)) faults.push(`${manifest.id}: capability "${ref}" is homed twice in this family`)
+    homed.add(ref)
   }
 
   // §16 — four surfaces and nowhere else is the schema's shape itself
