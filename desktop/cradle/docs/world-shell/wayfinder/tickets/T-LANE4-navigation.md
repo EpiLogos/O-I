@@ -141,3 +141,17 @@ instead of a module map, and auto-open the place editor for a map route.
 **T14–T16 + T17c-map (dispatched):** a time slider over dated events on the
 shared session window, playback, the imagery note, and a refused move
 returning its marker inside the map.
+
+**T14–T16 + T17c (landed `bff6060df`, `758a73145`).**
+- A docked time control over the reading's dated extent: play, step,
+  ×1/×2/×4 and loop.
+- It filters through `placesInWindow` / `nameInWindow` on every frame, and
+  writes the shared window on pause, step and drag end.
+- Reduced motion steps only.
+- The imagery note reads "data window · imagery not time-aware".
+- A refused move returns its marker.
+- Lead ruling (T29): the stillness guard admits one frame clock, the
+  reader-started playback.
+- T17c cradle: the route is subject-keyed and expires after 10 minutes. It
+  is consumed only after a successful read, and it auto-opens the place
+  editor. Each save is answered exactly once.
