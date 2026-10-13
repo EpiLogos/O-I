@@ -155,8 +155,9 @@ test('Factory opens with the agent tab focused, and every agent-shell chrome pie
   assert.match(app, /const agentShell = isFactoryMode\(frameMode\) && !settingsPresented/)
 })
 
-// Factory's lens bar (lead review): a press opens only an admitted pane body. Timeline, Journey (Session), Canvas and Palace stay
-// visible but disabled, each titled with its plain reason. Session never maps to the Timeline.
+// Factory's lens bar (lead review): a press opens only an admitted pane body. Project / graph, Places, Timeline and Journey are
+// the admitted bodies (T-FACTORY-TIMELINE-PANE: Timeline and Journey are the one Timeline pane's two presentations). Canvas and
+// Palace stay visible but disabled, each titled with its plain reason.
 const {TechneLensBar, LENSES, factoryLensReason, factoryLensPane} = await import('../src/shell/ModeDetail.tsx')
 const decode = text => text.replace(/&#x27;/g, "'").replace(/&amp;/g, '&').replace(/&quot;/g, '"')
 const factoryBar = renderToStaticMarkup(createElement(TechneLensBar, {presentation: 'session', atlasOpen: true, onLens() {}, factory: true}))
@@ -167,11 +168,13 @@ const lensButton = name => {
 }
 const titleOf = name => decode(/title="([^"]*)"/.exec(lensButton(name))[1])
 
-test('in Factory the Timeline and Journey lenses stay visible, disabled, and say why', () => {
-  assert.match(lensButton('Timeline'), /disabled=""/)
-  assert.equal(titleOf('Timeline'), "The Timeline isn't available as a pane in Factory yet — its body is held by the World view.")
-  assert.match(lensButton('Journey'), /disabled=""/)
-  assert.equal(titleOf('Journey'), "The Journey isn't available as a pane in Factory yet — its body is held by the World view.")
+test('in Factory the Timeline and Journey lenses are the admitted Timeline pane and stay enabled', () => {
+  assert.doesNotMatch(lensButton('Timeline'), /disabled=""/)
+  assert.doesNotMatch(lensButton('Journey'), /disabled=""/)
+  assert.equal(titleOf('Timeline'), 'Timeline — the World cut — the Timeline (M2′)')
+  assert.equal(titleOf('Journey'), 'Journey — the World cut — the Journey (M3′)')
+  assert.equal(factoryLensPane(LENSES.find(lens => lens.id === 'timeline')), 'projection.timeline')
+  assert.equal(factoryLensPane(LENSES.find(lens => lens.id === 'journey')), 'projection.timeline')
 })
 
 test('in Factory Canvas and Palace stay disabled with their planned reasons', () => {
@@ -205,15 +208,21 @@ test('a Factory press on an enabled lens opens its one admitted pane beside the 
   }
 })
 
-test('Session (Journey) never maps to the Timeline pane, in any mode', () => {
+test('Timeline and Journey open the one Timeline pane; the lens presentation is that pane\'s own presentation', () => {
+  const timeline = LENSES.find(lens => lens.id === 'timeline')
   const journey = LENSES.find(lens => lens.id === 'journey')
+  assert.equal(timeline.presentation, 'arrangement')
   assert.equal(journey.presentation, 'session')
-  assert.equal(factoryLensPane(journey), null)
-  for (const lens of LENSES) assert.notEqual(factoryLensPane(lens), 'projection.timeline')
+  assert.equal(factoryLensPane(timeline), 'projection.timeline')
+  assert.equal(factoryLensPane(journey), 'projection.timeline')
+  const layout = seedFactoryCentre(freshLayout())
+  const once = openFactoryInstrumentPane(openFactoryInstrumentPane(layout, factoryLensPane(timeline)), factoryLensPane(journey))
+  assert.equal(groupsOf(once.root).flatMap(group => group.tabs).length, 2, 'the two lenses share one pane, never two')
 })
 
 test('the App lens press reads the factory lens table, and the bar is told it is in Factory', () => {
   assert.match(app, /factoryLensPane\(lens\)/, 'the press opens the pane the table admits')
-  assert.doesNotMatch(app, /'projection\.timeline'/, 'App maps no lens to the Timeline pane')
+  assert.match(app, /paneKind === 'projection\.timeline'\) setTimelinePanePresentation\(lens\.presentation/, 'the lens carries its presentation to the one Timeline pane')
+  assert.doesNotMatch(app, /factoryLensPane\(lens\)[\s\S]{0,40}'projection\.timeline'/, 'App names no Timeline pane kind beside the table')
   assert.match(app, /factory=\{isFactoryMode\(frameMode\)\}/, 'the bar carries the Factory reading')
 })
