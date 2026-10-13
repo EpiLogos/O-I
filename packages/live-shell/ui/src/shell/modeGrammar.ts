@@ -186,8 +186,10 @@ const live: SurfModeGrammar = {
   arrangement: {label: 'Arrangement', meaning: 'the song over time'},
   detail: {
     clip: {label: 'Clip', meaning: 'the clip in focus'},
-    device: {label: 'Device', meaning: 'the track\'s device chain'},
+    device: {label: 'Device', meaning: 'the instrument\'s chain — note devices before the torus, effects after'},
   },
+  // Live is the one instrument's playing surface (owner ruling, 13 Oct 2026; QL-MEF Wayfinder §0.4): the M1 torus, its
+  // states saved as presets in the browser, the Live corpus's capacities on its chain as devices — never a catalogue.
   // Live keeps its own browser (the audio BrowserPane) and its own centre —
   // the audio cut's compositions; the grammar records the identity, the
   // frame composes nothing new here.
@@ -196,7 +198,7 @@ const live: SurfModeGrammar = {
     session: {label: 'Session', meaning: 'clips and scenes'},
     arrangement: {label: 'Arrangement', meaning: 'the song over time'},
   },
-  status: {label: 'Live', fn: 'the music surface — the set and its transport'},
+  status: {label: 'Live', fn: 'the instrument — the M1 torus, the set and its transport'},
   transport: [
     {id: 'link', label: 'Link', fn: 'join the set\'s clock with Link peers'},
     {id: 'tap', label: 'Tap', fn: 'tap tempo'},
@@ -204,9 +206,9 @@ const live: SurfModeGrammar = {
     {id: 'signature', label: 'Signature', fn: 'the set\'s time signature'},
     {id: 'metro', label: 'Metronome', fn: 'the metronome'},
     {id: 'quantize', label: 'Quantize', fn: 'global launch quantization'},
-    {id: 'key', label: 'Key', fn: 'the set\'s key'},
-    {id: 'root', label: 'Root', fn: 'the key\'s root note'},
-    {id: 'scale', label: 'Scale', fn: 'the key\'s scale mode'},
+    {id: 'key', label: 'Key', fn: 'the mode in force for the set — root, mode and tuning; the Jankó surface recolours to it'},
+    {id: 'root', label: 'Root', fn: 'the mode\'s root'},
+    {id: 'scale', label: 'Scale', fn: 'the mode — one of the 84 lens/CF modes, or a source scale (Ficino planetary, Shem, maqām)'},
     {id: 'follow', label: 'Follow', fn: 'the arrangement scrolls with playback'},
     {id: 'position', label: 'Position', fn: 'bars . beats . sixteenths'},
     {id: 'play', label: 'Play', fn: 'play the set'},
@@ -221,7 +223,7 @@ const live: SurfModeGrammar = {
     {id: 'punch-out', label: 'Punch out', fn: 'record between the in and out points'},
     {id: 'loop-length', label: 'Loop length', fn: 'the loop brace\'s length'},
     {id: 'draw', label: 'Draw', fn: 'draw notes and automation'},
-    {id: 'keys', label: 'Keys', fn: 'play the set from the computer keyboard'},
+    {id: 'keys', label: 'Keys', fn: 'play the instrument from the computer keyboard — the Jankó surface'},
     {id: 'key-map', label: 'Key map', fn: 'bind computer keys to controls'},
     {id: 'midi-map', label: 'MIDI map', fn: 'bind MIDI controls'},
     {id: 'rate', label: 'Rate', fn: 'the engine\'s sample rate, in kHz'},

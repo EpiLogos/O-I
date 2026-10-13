@@ -4,7 +4,11 @@ Label: wayfinder:task (Phase 4/5, deferred, owner-timed; **not claimable**)
 Alias: T-LIVE-EXPR (DLW-VISION.md:1170, 1364-1368)
 Claimed-by: —
 Blocked-by:
-1. **The Live port measured as a whole against the RE corpus.** Live mode is
+1. **The engine measured as a whole against the RE corpus.** Since the owner's
+   13 Oct 2026 ruling (DEVICE-SEMANTICS-LOCK §0.2), Live mode exposes one
+   instrument, the M1 torus, and the corpus is the engine's measured
+   reference, not a catalogue to expose; the torus is already the one
+   simulation Live and every Expression share. Live mode remains
    the reverse-engineering basis (CONT:244-246). Its dynamics must be ported
    and verified against the measured reference: the verify gate and rows of
    `Work/reverse-engineering/ableton-live-12.0.25/reconstruction-backlog.md` (:8, :25;

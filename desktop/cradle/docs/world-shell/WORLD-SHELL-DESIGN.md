@@ -869,6 +869,14 @@ available" without any of them becoming an application.
 
 ## 18. The musical system — the layer beneath Revision 5's Live mode
 
+**Owner ruling, 13 Oct 2026 (DEVICE-SEMANTICS-LOCK §0.2; QL-MEF Wayfinder
+§0.4; DLW §9):** Live mode exposes one instrument — the M1 torus, the only
+generator, shared with every Expression as one simulation — presented as a
+rack widget, an expanded pool and the full torus in the centre; its keyboard
+is the torus unwound (Jankó); scales follow Live's grammar; the Live corpus's
+capacities are its chain devices, never a ported catalogue. Where this
+section reads otherwise, the ruling stands.
+
 Owner question, 8 October 2026: has the underlying musical system been
 thought through — the instrument, the torus and clock projections onto the
 Earth integration, and whether Expressions gains the full musical suite
