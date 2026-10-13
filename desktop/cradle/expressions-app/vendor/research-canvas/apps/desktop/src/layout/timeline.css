@@ -793,3 +793,57 @@
   font-size: 11px;
   color: #6f6f7d;
 }
+
+/* lane-2 T8: period bands. Quiet, static fills in the standing class's tone
+ * (--band-tone, set inline from the standing table). The lanes sit beneath the
+ * scene so every card is above them; the label is written once, on the axis
+ * edge, below the minor row. No transition, no animation. */
+.timeline-band-lanes {
+  z-index: 0;
+}
+
+.timeline-band-lane {
+  top: 0;
+  bottom: 0;
+  background: color-mix(in srgb, var(--band-tone) 8%, transparent);
+  border-left: 1px solid color-mix(in srgb, var(--band-tone) 38%, transparent);
+  border-right: 1px solid color-mix(in srgb, var(--band-tone) 38%, transparent);
+}
+
+.timeline-band-lane[data-standing="derived"],
+.timeline-band-lane[data-standing="unavailable"] {
+  border-left-style: dashed;
+  border-right-style: dashed;
+}
+
+.timeline-band-stripe {
+  height: 3px;
+  border-radius: 2px;
+  background: var(--band-tone);
+}
+
+.timeline-band-label {
+  max-width: calc(100% - 8px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10px;
+  line-height: 11px;
+  color: var(--band-tone);
+}
+
+.timeline-band-absent {
+  position: absolute;
+  left: 12px;
+  bottom: 8px;
+  max-width: 40%;
+  font-size: 11px;
+  line-height: 15px;
+  color: #788397;
+  pointer-events: none;
+}
+
+.timeline-band-absent ul {
+  margin: 0;
+  padding-left: 16px;
+}

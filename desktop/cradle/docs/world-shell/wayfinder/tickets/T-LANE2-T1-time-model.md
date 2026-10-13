@@ -84,3 +84,25 @@ exists; the copy's header transform applied by hand, sha line updated);
 PROVENANCE refreshed for the 18 lane-2 files (`verify-source.mjs` green for
 them). Scripted: timeline suites 30/30 + 27 wider; tsc 0; build clean.
 Unverified: the look (native pass).
+
+## Resolution — T8 (periodisation bands)
+
+**Landed (13 Oct 2026; builder haiku).** `bands.ts` derives bands from
+validity facets — extent from the authority's `expandInstant` over the
+disclosed earliest/latest (each end at its own precision; the bridge now
+carries `temporal_from_precision` / `temporal_to_precision`, closing T1c for
+bands), the source's label verbatim, standing via `standingOf` (an unsourced
+labelled band reads "authored"), nesting by containment; `TimelineBands.tsx`
+draws quiet full-height lanes behind the cards and a labelled stripe on the
+axis edge; unlabelled or open-ended bands are listed as absent, never drawn
+or invented. The archetype band layer in `TimelineSurface` is kept (an
+established behaviour). Scripted: 7 new, timeline suites 37/37; verify-source
+green; build clean. Unverified: the look (native pass).
+
+**T8b (claimable — native contract):** the band label has no carrier yet —
+the techne contract's facet validator rejects unknown keys
+(`desktop/cradle/src/techne/contract.ts:560`) and `timeAxis.ts:44-46` pins
+`label_verbatim` null; add a validated optional `label` to validity facets
+in the contract (and its native producer) so labelled periods reach the
+chronology; until then production lists every validity facet as "no label
+disclosed".

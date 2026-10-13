@@ -1,7 +1,7 @@
 /* Generated component-only Research Canvas styles, upstream 7df35f822f9235331a69940cdaf484fe4a0b95c1.
  * apps/desktop/src/styles.css sha256 e6c08ff2b137eee45a1b8428460867665bfeb0cee301286256db7105a95cac0e
  * apps/desktop/src/layout/observatory.css sha256 a4ea0293e22c78715e000166378e61ace207b9018f19a89faa96a4627f470fd5
- * apps/desktop/src/layout/timeline.css sha256 53d0542436142610008025843f233f09da91b69ac79070cc89be19c058d5a47e
+ * apps/desktop/src/layout/timeline.css sha256 844fd5b495b869f967ab04aff28185f9aadec21539e837a7c34c5fcd9ce9948d
  * apps/desktop/src/layout/lenses.css sha256 ff5d66b514db5e8999853572c62b375a758bd7b8c5b04d6d6a17a5a082450466
  * Kept component selectors and local design tokens; omitted app/body/html/root
  * layout, imports and unrelated lenses. Every selector is scoped to the engine
@@ -2172,3 +2172,57 @@
 .research-instrument { font-family: var(--ob-sans); font-size: var(--ob-text-base); line-height: var(--ob-leading-normal); }
 .research-instrument *, .research-instrument *::before, .research-instrument *::after { box-sizing: border-box; }
 .research-instrument .canvas-flow { width: 100%; height: 100%; min-height: 0; }
+
+/* lane-2 T8: period bands. Quiet, static fills in the standing class's tone
+ * (--band-tone, set inline from the standing table). The lanes sit beneath the
+ * scene so every card is above them; the label is written once, on the axis
+ * edge, below the minor row. No transition, no animation. */
+:where(.research-instrument) .timeline-band-lanes {
+  z-index: 0;
+}
+
+:where(.research-instrument) .timeline-band-lane {
+  top: 0;
+  bottom: 0;
+  background: color-mix(in srgb, var(--band-tone) 8%, transparent);
+  border-left: 1px solid color-mix(in srgb, var(--band-tone) 38%, transparent);
+  border-right: 1px solid color-mix(in srgb, var(--band-tone) 38%, transparent);
+}
+
+:where(.research-instrument) .timeline-band-lane[data-standing="derived"],
+:where(.research-instrument) .timeline-band-lane[data-standing="unavailable"] {
+  border-left-style: dashed;
+  border-right-style: dashed;
+}
+
+:where(.research-instrument) .timeline-band-stripe {
+  height: 3px;
+  border-radius: 2px;
+  background: var(--band-tone);
+}
+
+:where(.research-instrument) .timeline-band-label {
+  max-width: calc(100% - 8px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10px;
+  line-height: 11px;
+  color: var(--band-tone);
+}
+
+:where(.research-instrument) .timeline-band-absent {
+  position: absolute;
+  left: 12px;
+  bottom: 8px;
+  max-width: 40%;
+  font-size: 11px;
+  line-height: 15px;
+  color: #788397;
+  pointer-events: none;
+}
+
+:where(.research-instrument) .timeline-band-absent ul {
+  margin: 0;
+  padding-left: 16px;
+}

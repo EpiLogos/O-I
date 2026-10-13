@@ -14,6 +14,7 @@ import type {
   TemporalRole,
   GraphNodeContract,
 } from "@research-canvas/schema";
+import type { TemporalPrecision } from "@research-canvas/schema";
 
 export type {
   ClaimKind,
@@ -170,6 +171,23 @@ export interface TimelineDiagnostic {
   validTo: string | null;
 }
 
+/**
+ * One period band as the reading discloses it (lane-2 T8). Facts only: the
+ * source's own label verbatim (null when none is disclosed), the disclosed
+ * earliest/latest instants and their precisions, never a computed extent. The
+ * canvas derives the drawn range from these through the authority's expansion.
+ */
+export interface TimelineBandRecord {
+  band_ref: string;
+  label_verbatim: string | null;
+  earliest: string | null;
+  latest: string | null;
+  earliest_precision: TemporalPrecision | null;
+  latest_precision: TemporalPrecision | null;
+  uncertainty: string | null;
+  source_ref: string | null;
+}
+
 export interface TimelineView {
   workspaceId: string;
   nodes: TimelineViewNode[];
@@ -182,6 +200,8 @@ export interface TimelineView {
   relationships: GraphRelationship[];
   lanes: TimelineLane[];
   diagnostics: TimelineDiagnostic[];
+  /** Period bands disclosed by the reading (lane-2 T8). Absent on older payloads. */
+  bands?: TimelineBandRecord[];
 }
 
 /**
