@@ -4,7 +4,7 @@
 // unavailable store degrades to no presence and no error. Run after `npm run build:journeys`.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {reconcileJourneyPresence, FIELD_ADVANCED_NOTICE, STALE_NOTICE} from '../build/journeyPresence.js';
+import {reconcileJourneyPresence, savedJourneyPosition, recordJourneyPosition, FIELD_ADVANCED_NOTICE, STALE_NOTICE} from '../build/journeyPresence.js';
 
 const KEY = 'oi-cradle.techne-journey.presence.v1';
 const EXPRESSION = 'oi.expression:probe';
@@ -111,4 +111,32 @@ test('T9: the stored presence holds refs and presentation values only, never a r
   const storage = memoryStorage();
   reconcileJourneyPresence({reading: reading(), expression_ref: EXPRESSION, scene_ref: ONE, storage});
   assert.deepEqual(Object.keys(savedEntry(storage)).sort(), ['expression_ref', 'reading_ref', 'scene_ref', 'schema', 'snapshot_revision', 'subject_ref']);
+});
+
+test('T9: a Scene the strip moved to is recorded without disclosing, and a pending field move is still disclosed on the next load', () => {
+  const storage = memoryStorage(JSON.stringify({[EXPRESSION]: presenceAt(TWO, {snapshot_revision: 'rev-0'})}));
+  recordJourneyPosition({reading: reading(), expression_ref: EXPRESSION, scene_ref: ONE, storage});
+  assert.deepEqual(savedEntry(storage), presenceAt(ONE, {snapshot_revision: 'rev-0'}), 'the scene moves, the revision it was saved against stays');
+  const next = reconcileJourneyPresence({reading: reading(), expression_ref: EXPRESSION, scene_ref: ONE, storage});
+  assert.equal(next.standing, 'field-advanced');
+  assert.equal(next.notice, FIELD_ADVANCED_NOTICE);
+});
+
+test('T9: a recorded Scene on a reading the author never saved takes the current basis, and a stale entry is never restored', () => {
+  const storage = memoryStorage(JSON.stringify({[EXPRESSION]: presenceAt(TWO, {reading_ref: 'ql.techne:reading:other'})}));
+  assert.deepEqual(savedJourneyPosition({reading: reading(), storage}), {standing: 'stale'});
+  recordJourneyPosition({reading: reading(), expression_ref: EXPRESSION, scene_ref: ONE, storage});
+  assert.deepEqual(savedEntry(storage), presenceAt(ONE));
+});
+
+test('T9: a restore hands back the saved position only when it is current, and never writes', () => {
+  const current = memoryStorage(JSON.stringify({[EXPRESSION]: presenceAt(TWO)}));
+  const before = current.map.get(KEY);
+  const result = savedJourneyPosition({reading: reading(), storage: current});
+  assert.equal(result.standing, 'current');
+  assert.equal(result.presence.scene_ref, TWO);
+  assert.equal(current.map.get(KEY), before, 'reading the saved position writes nothing');
+  const moved = memoryStorage(JSON.stringify({[EXPRESSION]: presenceAt(TWO, {snapshot_revision: 'rev-0'})}));
+  assert.deepEqual(savedJourneyPosition({reading: reading(), storage: moved}), {standing: 'field-advanced'});
+  assert.deepEqual(savedJourneyPosition({reading: reading(), storage: memoryStorage()}), {standing: 'none'});
 });

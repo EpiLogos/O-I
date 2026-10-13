@@ -1025,7 +1025,8 @@ function sceneIndexOf(sceneId:string){const index=store.document.scenes.findInde
 function setSceneRef(sceneId:string,automatic=false){const index=sceneIndexOf(sceneId);draftSchedule.flushNow('scene');if(!automatic)sceneIntentEpoch++;if(propertyTake)finishPropertyTake();trackPreview=false;pointer.active=false;if(index===sceneIndex&&!automatic)return;
  if(scenePlaying&&store.document.scenes[index].transition>0&&engine.capabilities.kind==='preview'&&transitionKindOf(store.document.scenes[index].transitionSpec)==='crossfade'){startCrossfadeSeam(store.document.scenes[index],scene().field.background);}else if(scenePlaying&&store.document.scenes[index].transition>0&&engine.capabilities.kind==='preview'&&transitionKindOf(store.document.scenes[index].transitionSpec)!=='cut'){startPaintedSeam(store.document.scenes[index]);}else{transitionDuration=0;transitionSnapshot=null;$('transition-canvas').hidden=true;}
 
- sceneIndex=index;if(!automatic)journeyPlaying=false;applySceneView();sceneElapsed=0;selected=[];textId=scene().text[0]?.id??null;saveSession();placementStep=false;shapePickerOpen=false;if(!automatic)journeyPlaying=false;renderAll();void researchInstruments?.refresh();}
+ sceneIndex=index;journeyInstrument?.recordPosition(sceneId); // T9: the strip's Scene is the author's presence, through the presence owner.
+ if(!automatic)journeyPlaying=false;applySceneView();sceneElapsed=0;selected=[];textId=scene().text[0]?.id??null;saveSession();placementStep=false;shapePickerOpen=false;if(!automatic)journeyPlaying=false;renderAll();void researchInstruments?.refresh();}
 /** Saved playback uses the existing frame playhead; native location changes
  * wait for its exact owner acknowledgement before the next Scene is rendered. */
 async function advanceSavedScene(index:number,local=0){if(sceneAdvancePending||!sceneTransportAlive)return;const view=nativeWorkspace?.nativeView(),target=store.document.scenes[index],targetRef=target&&view?.bindings[target.id]?.scene_ref;
@@ -1175,6 +1176,7 @@ const canvasHome=document.createElement('div');canvasHome.className='canvas-home
 let awaitingNativeBoot=startsWithNativeReference;
 let researchInstruments:ReturnType<typeof installResearchInstruments>|undefined;
 let journeyInstrument:ReturnType<typeof installJourneyInstrument>|undefined;
+let journeyPositionRestored=false; // T9: the saved journey Scene is reopened once per page, from the first native load that can read it.
 // A deliberate peek at the live field while a research instrument stays mounted
 // and active: the engine renders only while the person is looking at it.
 let researchPreview=false;
@@ -2069,6 +2071,7 @@ window.__FIELD_STUDIES__={getDocument:()=>clone(store.document),getState:()=>({s
 /** E15/E16: an owner adoption names its history. 'act' is the app's own native act: one labelled step carrying
  * the kernel edit it produced. 'outside' is an adoption from outside this editor, labelled for what it is. */
 function applyNativeView(view:KernelConversion,preservePosition=false,adoptionHistory:NativeAdoption='record',act?:NativeActRecord){
+ if(!journeyPositionRestored&&journeyInstrument)void journeyInstrument.restorePosition().then(settled=>{if(settled)journeyPositionRestored=true;});
  awaitingNativeBoot=false;
  // An opened native Expression is what the frame stands on: the entry gate
  // closes and (unless the caller keeps its position) the engine presents the
@@ -2378,7 +2381,8 @@ function playbackJourney():Journey{
  if(!journeyPlaying)return working;
  return {...working,scenes:working.scenes.map(scene=>({...scene,duration:working.savedScenes?.[scene.id]?.duration??0}))};
 }
-journeyInstrument=installJourneyInstrument({nativeView:()=>nativeWorkspace?.nativeView(),sceneId:()=>scene().id,read:(basis,scope)=>readTechneReading({expression_ref:basis.expression_ref,revision:basis.revision,scene_ref:basis.scene_ref,...(scope?{scope}:{})}),
+journeyInstrument=installJourneyInstrument({nativeView:()=>nativeWorkspace?.nativeView(),sceneId:()=>scene().id,portal:(trigger,basis)=>openScenePortal(trigger.trigger_ref,basis), // T12: the beat's own source portal is the scene-body portal path.
+ read:(basis,scope)=>readTechneReading({expression_ref:basis.expression_ref,revision:basis.revision,scene_ref:basis.scene_ref,...(scope?{scope}:{})}),
  focusScene:async input=>{
   const view=nativeWorkspace?.nativeView(),reading=retainedEditor.read();
   if(!view||view.document.expression_ref!==input.expression_ref||view.document.revision!==input.revision

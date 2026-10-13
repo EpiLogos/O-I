@@ -31,10 +31,14 @@ export interface JourneyFacetChip {
   label: string;
 }
 
+/** The reason a card's facets are not yet in hand: its own Scene reading is still in flight. */
+export const SCENE_READING_PENDING = "this Scene's reading is pending";
+
 /** One beat card. `scene_ref` is the identity; `onBasis` says the native document
- * holds this scene at the revision the reading disclosed. `chipsReason` is present
- * exactly when the card's own facets could not be read: the chips are then empty
- * and the reason is the owner's words, never a guess. */
+ * holds this scene at the revision the reading disclosed. A card's chips come only
+ * from its own Scene's reading (T13): `chipsReason` is present while that reading is
+ * pending and when it cannot be read, and the chips are then empty. Never the whole
+ * Expression's facets on every card. */
 export interface JourneyBeatCard {
   scene_ref: string;
   expression_ref: string;
@@ -114,7 +118,9 @@ function cardOf(beat: JourneyBeat, doc: JourneyKernelDocument): JourneyBeatCard 
     revision: beat.revision,
     title: beat.title,
     onBasis,
-    chips: chipsOf(beat.frame),
+    // T13: the Expression-wide reading names every Scene but attributes no facet to any of them. Chips come from each
+    // Scene's own reading (journeyBeatView), never from the whole.
+    chips: [],
   };
 }
 
@@ -125,8 +131,9 @@ function cardOf(beat: JourneyBeat, doc: JourneyKernelDocument): JourneyBeatCard 
  * `sceneFrames` (optional) carries each Scene's OWN reading, keyed by scene_ref,
  * or the owner's reason it could not be read. The Expression-wide reading names
  * every Scene but attributes no facets to any of them, so a card's chips come
- * only from its own Scene's reading. Without an entry the card's chips are the
- * reading's own (empty for the Expression-wide reading). */
+ * only from its own Scene's reading. Without an entry the card is pending
+ * (SCENE_READING_PENDING) and carries no chips: the Expression-wide facets are
+ * never shown on a card (T13). */
 export function journeyBeatView(
   reading: TechneReading,
   doc: JourneyKernelDocument,
@@ -136,7 +143,7 @@ export function journeyBeatView(
   const cards = model.beats.map((beat): JourneyBeatCard => {
     const card = cardOf(beat, doc);
     const frame = sceneFrames?.get(beat.scene_ref);
-    if (frame === undefined) return card;
+    if (frame === undefined) return {...card, chipsReason: SCENE_READING_PENDING};
     if (typeof frame === 'string') return {...card, chips: [], chipsReason: frame};
     const own = beats(frame).beats.find((row) => row.scene_ref === beat.scene_ref && row.expression_ref === beat.expression_ref);
     if (!own) return {...card, chips: [], chipsReason: 'the Scene reading names no beat for this Scene'};

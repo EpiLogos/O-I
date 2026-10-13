@@ -74,3 +74,33 @@ export function reconcileJourneyPresence(input: {
   if (standing === 'stale') return {standing, notice: STALE_NOTICE};
   return {standing};
 }
+
+/** The saved position for this reading, read with no write: the restore reads it before anything records. Only a
+ * `current` entry is handed back; a `field-advanced` one is for the notice path and a `stale` one is never restored. */
+export function savedJourneyPosition(input: {reading: TechneReading; storage?: PresenceStorage | null}): {standing: 'none' | 'current' | 'field-advanced' | 'stale'; presence?: JourneyPresence} {
+  const storage = input.storage === undefined ? ownStorage() : input.storage;
+  const saved = loadPresence(storage)[input.reading.subject.subject_ref];
+  if (!saved) return {standing: 'none'};
+  const standing = basisStanding(saved, {reading_ref: input.reading.reading_ref, snapshot: {revision: input.reading.snapshot?.revision ?? null}});
+  return standing === 'current' ? {standing, presence: saved} : {standing};
+}
+
+/** Record the Scene the author moved to (the strip, a restore) without disclosing. A saved position on the same reading keeps
+ * its revision, so a field that moved while away is still disclosed on the next load; a missing or stale one takes the current
+ * basis. */
+export function recordJourneyPosition(input: {reading: TechneReading; expression_ref: string; scene_ref: string; storage?: PresenceStorage | null}): void {
+  const storage = input.storage === undefined ? ownStorage() : input.storage;
+  const subject = input.reading.subject.subject_ref;
+  const entries = loadPresence(storage);
+  const saved = entries[subject];
+  const basis = {
+    subject_ref: subject,
+    reading_ref: input.reading.reading_ref,
+    snapshot_revision: input.reading.snapshot?.revision ?? null,
+    expression_ref: input.expression_ref,
+    scene_ref: input.scene_ref,
+  };
+  const keepsRevision = saved !== undefined && saved.reading_ref === basis.reading_ref;
+  const next = keepsRevision ? {...basis, snapshot_revision: saved.snapshot_revision} : basis;
+  savePresence(storage, {...entries, [subject]: presenceFor(next)});
+}
