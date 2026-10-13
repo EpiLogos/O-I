@@ -116,7 +116,81 @@ turning inside a person.
 
 We are all, in a sense, aliens to one another.
 
-## 3. Three forms, three times
+## 3. One grammar
+
+If you have used Live, you already know how to hold the DLW. If you haven't,
+the grammar is small enough to learn in an afternoon, and once learned it does
+not change from one kind of work to the next. Only what it holds changes.
+
+Start with a **track**. In Live a track is a lane for one kind of sound —
+drums, a bassline, a voice — and it plays one clip at a time. In the DLW a
+track is a lane for one stream of your work. In Central the day is a track,
+and so are your Flows, the people and things you are writing about, and your
+goals. In Factory each agent session is a track. In Expressions each
+Expression is one. In Technē a track might be the thread of a single reading
+of history, or every place a subject turned up, in order.
+
+On the track sit **clips**, the pieces you actually handle. A Live clip is a
+melody, a drum pattern, a whole song. A DLW clip is an entry in your day, a
+task an agent is working on, a scene in an Expression, an event at its year
+and place. Every clip shows its state — waiting, running, stopped, recording,
+stalled — so you can read a whole grid at a glance and know where things
+stand.
+
+Live calls a row across the tracks a scene, and launching it starts one clip
+on every track at once. The DLW keeps the row and calls it a **stop**, because
+here *scene* always means an Expression's scene. A stop stands several things
+together. In Factory, firing a row launches a batch of tasks across sessions.
+In Technē, a stop on a walk stands a place, a moment, and the scenes that
+belong there. In Central, the day's face stands the entries you made while it
+was turned up. A stop is how you set several things going as one move.
+
+Clips and stops live in two views of the same material. **Session view** is
+the grid: tracks across, rows down, everything launchable, nothing in any
+fixed order. It is where you try things, fire them, put this beside that and
+see what happens — a batch of tasks, a run of scenes, three passages and an
+answer. **Arrangement view** lays the same material along one ruler, so you
+can see the course of it: today from first entry to last, every thread of
+agent work with a needle showing where it has got to, an Expression's scenes
+in order with their sound beneath them, history from deep time to this
+morning. Tab moves you between the two.
+
+Select a clip, and the bottom of the window shows it in detail. Live splits
+that area in two, and so does the DLW. **Clip view** shows the thing itself,
+with everything you can do to it. **Device view** shows what is working on it.
+
+Clip view is where the hands get busy. In Live it holds a clip's name and
+colour, when and how it launches, what follows it, where it starts and ends
+and loops, and an editor for its notes or its sound. Each of those has a
+counterpart. Open a scene in Expressions and you get a roll where symbols run
+in lanes like notes, each step's hold and change set like a note's length and
+glide, with the scene's sound shown beneath it. Open a task in Factory and you
+get its log, every tool the agent used laid out along the task's time like
+notes on a bar, with what happens after it finishes and when your Stop will
+land. Open an event in Technē and you see its span, what it gathered, and how
+sure anyone is of it. Open an entry in Central and you are simply in the
+document, writing.
+
+Device view shows the chain: the things working on the material, left to
+right, in the order the material passes through them. In Central that means
+the tools at work on the open document. In Factory it is the agent's whole
+path — the way in, the agent, its skills, the part of the world it may touch,
+and the place its work lands. In Expressions it is the studio that shapes the
+field. Wherever you are, the instrument in the focused pane brings its own
+controls into the chain.
+
+A few of Live's quieter habits come through intact, and you will lean on
+them. A **follow action** decides what comes after a clip — the next task,
+the next stop, the next scene — so that things run on without you pressing
+each one. **Launch quantize** decides when a launch lands: right away, at the
+next bar, or, in Factory, once the agent finishes the tool it is using.
+**Takes** stack under a clip so you can choose the one that stands: the best
+capture of a scene, the attempt at a task that should land, the reading of a
+history you want to keep. Above all of it runs the **transport**, the same
+controls in the same places in every mode, each meaning what it should for
+the work in front of you.
+
+## 4. Three forms, three times
 
 Anything in the DLW can be seen in three forms.
 
@@ -142,7 +216,7 @@ week someone else plays the walk and stands where you stood.
 
 This is the instrument's language, and it is the same in every kind of work.
 
-## 4. Instruments
+## 5. Instruments
 
 What you see in a pane is an instrument, and every instrument works in every
 kind of work. The kind of work decides what the instrument is looking at,
@@ -175,7 +249,7 @@ what is not for showing, and doors out to other places. It is how you give a
 whole subject a form someone else can enter.
 
 Beside these sit the instruments any pane can hold for other kinds of
-material. The **expression** stage is the living field of Chapter 7. The
+material. The **expression** stage is the living field of Chapter 8. The
 **knowledge graph** is drawn for reading a wiki or a body of notes, link by
 link, with references nobody has resolved yet drawn as hollow ghosts, and
 with every node offering what its owner allows you to do with it. Documents,
@@ -191,7 +265,7 @@ one reverb, each answering to the same controls. You arrange
 panes and instruments into sets, each kind of work has its default set, and
 you save your own.
 
-## 5. Central — the day's work
+## 6. Central — the day's work
 
 Central is where the day happens. It works like a code editor — files down
 the left, documents open side by side, a terminal a click away — except that
@@ -226,7 +300,7 @@ link into everything you already knew.
 When the day ends it closes itself. What you learned is filed into your
 knowledge, what you made is kept, and tomorrow starts clean.
 
-## 6. Factory — worlds making worlds
+## 7. Factory — worlds making worlds
 
 In Factory you set agents to work, and what they make is worlds: a piece of
 software, a body of research, a place for others to stand. You say what you
@@ -266,7 +340,7 @@ world being made, its agents move around it, and their helpers ride smaller
 orbits inside theirs. A whole programme of work shows as a system of such
 worlds. Through the graph it shows as a map of what depends on what.
 
-## 7. Expressions — the living medium
+## 8. Expressions — the living medium
 
 Expressions is a medium you step into. Text, symbols, image, physics and sound
 share one field. Particles gather into the shapes you give them and move by
@@ -306,7 +380,7 @@ Expressions is not a separate world from your work. Anything in any mode can
 be given an expression — a day, a run, a source, a place — and every mode
 can open the expression instrument beside its own.
 
-## 8. Technē — crafting knowledge
+## 9. Technē — crafting knowledge
 
 Technē is where knowledge is made by building worlds. You find a subject and
 gather what surrounds it. You place it on the Earth where it happened and in
@@ -343,7 +417,7 @@ the time signature is which stop of how many, quantize is how a stop arrives.
 Key is how far you are looking and as whom: your world alone, or the shared
 field, or beyond; as yourself, as the field, as the public.
 
-## 9. Live — the studio it came from
+## 10. Live — the studio it came from
 
 Live is the music studio the DLW grew from, and it is kept whole: a set,
 its tracks, clips and scenes, its instruments and effects, rebuilt from close
@@ -360,9 +434,9 @@ are bodies in it, and a song can be walked stop by stop. In time Live will
 join Expressions, where sound and picture will share one timeline the way a
 film editor holds them.
 
-## 10. The hands
+## 11. The hands
 
-### 10.1 Two views
+### 11.1 Two views
 
 Every kind of work has a Session view and an Arrangement view. Session view
 is a grid of launchable material, tracks across and rows down, for working
@@ -377,7 +451,7 @@ material on one ruler, for seeing the course of it. Tab switches between them.
 | Technē | a journey, its stops as rows | the timeline |
 | Live | clips and scenes | the song over time |
 
-### 10.2 Tracks, clips, stops
+### 11.2 Tracks, clips, stops
 
 A track is a stream of one kind of material, and in Live it plays one clip at
 a time. A clip is a piece of that material in a state: playing, stopped,
@@ -399,7 +473,7 @@ Takes lie under a clip as they do in Live, and you choose the one that
 stands: the best capture of a scene, the attempt at a task that should land,
 the reading of a history you want to keep.
 
-### 10.3 Devices
+### 11.3 Devices
 
 Instruments make things: an agent answers, the field sounds, a world takes
 shape. Effects change what passes through them without replacing it: a
@@ -422,7 +496,7 @@ devices do in Live, and each of the suite's products brings its own: the day
 and its documents, the agents and what tunes them, the skills they carry, the
 work they do, the machines they run on, and the sky and its clock.
 
-### 10.4 The browser
+### 11.4 The browser
 
 The browser on the left holds what you can bring in: material to open, kinds
 of instrument to open in a pane, devices to add to a chain, and running
@@ -430,7 +504,7 @@ things you can work with where they are. Preview, open and add are always
 three separate acts. Drag a skill onto an agent's chain and it is admitted;
 drag an agent onto a track and it takes the seat.
 
-### 10.5 The transport
+### 11.5 The transport
 
 The transport keeps Live's controls in Live's places in every mode, grouped
 as Live groups them. The table is the reference for what each one does where.
@@ -462,7 +536,7 @@ as Live groups them. The table is the reference for what each one does where.
 The day's opening and close come from the day itself. It opens, runs its
 closing routine at the end, and closes; no hours are fixed in the instrument.
 
-### 10.6 Companions
+### 11.6 Companions
 
 Each kind of work has its companion in the panel on the right, with the
 tiles you want beside it: the packet, the trail of everywhere you have been,
@@ -472,7 +546,7 @@ Expressions it is Nara, a presence that meets you in the form. In Technē it
 is Epii, who works beside the instruments and can tell you why each room of a
 palace is there. None of them judges your work for you.
 
-### 10.7 Going back
+### 11.7 Going back
 
 Everywhere you go is kept on a trail, and you can always go back: to the same
 place, the same page, the same point in the reading. Changing your kind of
@@ -482,7 +556,7 @@ work never closes anything. Every place can be linked to and reopened.
 
 # Part Two — The Game
 
-## 11. The figure
+## 12. The figure
 
 In 1943 Hermann Hesse published a novel about a game nobody had played. His
 narrator calls it "a mode of playing with the total contents and values of
@@ -512,7 +586,7 @@ studio, and every other mode plays on that studio's grammar. Hesse made music
 the model for a universal language. Here the universal language is built
 from a working musical instrument.
 
-## 12. The game's language
+## 13. The game's language
 
 Hesse's players stated a theme and developed it. In the DLW the theme is any
 piece of a world, and the development is the movement between its three
@@ -563,7 +637,7 @@ ends by itself. Whether a whole kind of work, or the instrument itself, could
 one day be retired with its record kept is a question the DLW keeps open,
 because an instrument that cannot imagine its end will defend it.
 
-## 13. Epi-Logos
+## 14. Epi-Logos
 
 The game the DLW exists to let anyone play is called Epi-Logos.
 
@@ -602,7 +676,7 @@ build and test; every change that matters passes through whoever owns what
 it would change, and a person has the last word. An agent can defer a
 decision. It cannot approve its own work into the canon.
 
-## 14. A day
+## 15. A day
 
 The day opens. You stand on your own world, the field around you, the sky
 turning over. In Central you read, one tangent held open beside the main
@@ -633,13 +707,13 @@ name.
 The day closes. What you learned is filed, what you made is kept, the walk
 is there for anyone you show it to.
 
-## 15. What the game warns
+## 16. What the game warns
 
 Hesse wrote the game's decline into its history, and three of his warnings
 apply to anything built in its image.
 
 A form can grow more beautiful than what it carries, and then it is glass.
-The DLW meets that by playing the day in Chapter 14: whatever cannot do its
+The DLW meets that by playing the day in Chapter 15: whatever cannot do its
 part in that day is ornament.
 
 A device that judges for the player — scores the scene, picks the reading —
@@ -653,7 +727,7 @@ taught, work landed, an expression shown, a reader who understood, a pupil
 who no longer needs the teacher. Hesse's novel ends with its Magister leaving
 the Order to teach a single pupil.
 
-## 16. Still to decide
+## 17. Still to decide
 
 - What the units of time beyond the day are — a week, a season, a year — and
   how they close.
