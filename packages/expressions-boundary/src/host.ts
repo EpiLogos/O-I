@@ -354,11 +354,14 @@ export class ExpressionsHost {
     this.post({v: CHANNEL_VERSION, kind: 'host-command', command: OPEN_STUDIO_COMMAND, section});
   }
   /** Runs one stage control in the presented application and settles with its answer.
-   * Refused without posting unless the command is in the closed vocabulary and the application is ready and presented. */
+   * Refused without posting unless the command is in the closed vocabulary and the application is ready. The presented gate applies to every
+   * command except the Live instrument's edits, which the owner applies whether or not the frame is visible. */
   stageCommand(command: StageCommand): Promise<StageResult> {
     if (!this.alive) throw Error('The hosted application was disposed');
     if (!this.ready) throw Error('The Expressions application has not reported its state yet');
-    if (!this.presented()) throw Error('The requested application is concealed');
+    // The Live instrument's edits reach the owner while the frame is concealed (under the Timeline, as a DAW's knobs stay live under the
+    // arrangement). Every other stage command keeps the presented gate.
+    if (!this.presented() && command.command !== 'instrument') throw Error('The requested application is concealed');
     const req = ++this.stageRequests;
     const message = stageRequestMessage(req, command);
     if (!message) throw Error('Unknown Expressions stage command');
