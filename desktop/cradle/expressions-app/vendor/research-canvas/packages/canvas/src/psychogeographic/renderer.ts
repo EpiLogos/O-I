@@ -37,6 +37,7 @@ import {
 } from "./placeNavigation";
 import type { PlaceRegion } from "./placeLayers";
 import type { HierarchyEdgeDraw, PlaceRouteDraw } from "./placeRoutes";
+import type { BasemapRenderPlan } from "./basemapLayers";
 
 /** The camera as the map reports it. `pitch` and `bearing` are degrees and are
  * absent in records saved before T1; they read as 0. */
@@ -107,7 +108,14 @@ export interface MapSurfaceRenderer {
   drawRoutes?(route: PlaceRouteDraw | null): Promise<void>;
   /** Lane-4 T12: the drawn LOCATED_IN hierarchy edges as dashed great-circle lines. */
   drawHierarchy?(edges: HierarchyEdgeDraw[]): Promise<void>;
-  setLiveTileSource(tileSource: MapTileSource): Promise<void>;
+  /** Lane-4 T4/T5: holds the basemap plan (ground, imagery stack, terrain). Diffed, so a layer that stays keeps its tiles. */
+  setBasemapPlan?(plan: BasemapRenderPlan): Promise<void>;
+  /** The terrain elevation at a point, read where the terrain layer is loaded; null otherwise. */
+  sampleElevation?(latitude: number, longitude: number): number | null;
+  /** A basemap source refused by the network, keyed by its registry id, with the refusal's own message. */
+  onBasemapError?(handler: (key: string, message: string) => void): void;
+  /** Fires when the map has finished drawing and its tiles have settled. */
+  onSettled?(handler: () => void): void;
   centerOn(latitude: number, longitude: number, zoom?: number): Promise<void>;
   flyTo?(latitude: number, longitude: number, zoom?: number, camera?: MapCameraFlight): Promise<void>;
   /** Eases pitch and bearing in place: the compass return. */
@@ -152,6 +160,10 @@ export async function createMaplibreRenderer(): Promise<MapSurfaceRenderer> {
   let motionTimer: ReturnType<typeof setTimeout> | null = null;
   let pulseAnimation: Animation | null = null;
   let placeElements = new Map<string, HTMLElement>();
+  // Lane-4 T4/T5: the basemap sources this renderer holds, by MapLibre source id.
+  let basemapHeld = new Map<string, { key: string; layerId: string | null }>();
+  let basemapErrorHandler: ((key: string, message: string) => void) | null = null;
+  let settledHandler: (() => void) | null = null;
 
   function emitViewChange(): void {
     if (!map || !viewChangeHandler) return;
@@ -260,6 +272,17 @@ export async function createMaplibreRenderer(): Promise<MapSurfaceRenderer> {
         const placeRef = feature?.properties?.id as string | undefined;
         if (placeRef && placeClickHandler) placeClickHandler(placeRef);
       });
+      // Lane-4 T4/T5: a basemap source the network refuses reports the refusal's own message.
+      // A tile request the map itself cancelled (a pan or a zoom) is not a refusal.
+      map.on("error", (raised) => {
+        const event = raised as unknown as { sourceId?: string; error?: unknown };
+        if (!event.sourceId || !basemapHeld.has(event.sourceId)) return;
+        const cause = event.error as { name?: string; message?: string } | undefined;
+        if (cause?.name === "AbortError") return;
+        const held = basemapHeld.get(event.sourceId);
+        if (held && basemapErrorHandler) basemapErrorHandler(held.key, cause?.message ?? String(event.error));
+      });
+      map.on("idle", () => settledHandler?.());
       await waitForStyleLoad(map);
       if (projection === "globe") {
         map.setSky(skyForProjection("globe") as never);
@@ -565,19 +588,78 @@ export async function createMaplibreRenderer(): Promise<MapSurfaceRenderer> {
         },
       });
     },
-    async setLiveTileSource(tileSource) {
+    async setBasemapPlan(plan) {
       if (!map) throw new Error("map renderer is not initialized");
-      if (map.getLayer("offline-base")) map.removeLayer("offline-base");
-      if (map.getSource("offline")) map.removeSource("offline");
-      map.addSource("offline", sourceDefinition(tileSource) as SourceSpecification);
-      map.addLayer({
-        id: "offline-base",
-        type: tileSource.kind === "raster" ? "raster" : tileSource.kind === "geojson" ? "circle" : "background",
-        source: "offline",
-        paint: tileSource.kind === "geojson"
-          ? { "circle-radius": 4, "circle-color": GLOBE.basePoint, "circle-opacity": 0.9 }
-          : {},
-      } as never, "geography-edges-layer");
+      const m = map;
+      // Terrain reads its elevation source, so it comes off before any source is removed.
+      if (m.getTerrain() && (plan.terrain === null || m.getTerrain()?.source !== plan.terrain.sourceId)) {
+        m.setTerrain(null);
+      }
+      const wanted = new Set([
+        ...plan.rasters.map((draw) => draw.sourceId),
+        ...(plan.terrain ? [plan.terrain.sourceId] : []),
+      ]);
+      for (const [sourceId, held] of [...basemapHeld]) {
+        if (wanted.has(sourceId)) continue;
+        if (held.layerId && m.getLayer(held.layerId)) m.removeLayer(held.layerId);
+        if (m.getSource(sourceId)) m.removeSource(sourceId);
+        basemapHeld.delete(sourceId);
+      }
+      // The offline ground is the bundled pack's own layer: its visibility and opacity, nothing else.
+      const ground = m.getLayer("offline-base");
+      if (ground) {
+        m.setLayoutProperty("offline-base", "visibility", plan.ground.visible ? "visible" : "none");
+        if (ground.type === "circle") m.setPaintProperty("offline-base", "circle-opacity", 0.9 * plan.ground.opacity);
+        if (ground.type === "raster") m.setPaintProperty("offline-base", "raster-opacity", plan.ground.opacity);
+      }
+      // Imagery stacks above the ground and below every overlay, in registry order.
+      const anchor = firstOverlayLayerId(m);
+      for (let index = 0; index < plan.rasters.length; index += 1) {
+        const draw = plan.rasters[index];
+        if (m.getSource(draw.sourceId)) {
+          if (m.getLayer(draw.layerId)) m.setPaintProperty(draw.layerId, "raster-opacity", draw.opacity);
+          continue;
+        }
+        m.addSource(draw.sourceId, {
+          type: "raster",
+          tiles: draw.tiles,
+          tileSize: draw.tileSize,
+          maxzoom: draw.maxZoom,
+          attribution: draw.attribution,
+        } as SourceSpecification);
+        // A new layer goes beneath the next imagery above it that is already on the map.
+        const above = plan.rasters.slice(index + 1).map((next) => next.layerId).find((id) => m.getLayer(id));
+        m.addLayer(
+          { id: draw.layerId, type: "raster", source: draw.sourceId, paint: { "raster-opacity": draw.opacity } } as never,
+          above ?? anchor,
+        );
+        basemapHeld.set(draw.sourceId, { key: draw.key, layerId: draw.layerId });
+      }
+      if (plan.terrain) {
+        const terrain = plan.terrain;
+        if (!m.getSource(terrain.sourceId)) {
+          m.addSource(terrain.sourceId, {
+            type: "raster-dem",
+            tiles: terrain.tiles,
+            tileSize: terrain.tileSize,
+            maxzoom: terrain.maxZoom,
+            encoding: terrain.encoding,
+            attribution: terrain.attribution,
+          } as never);
+          basemapHeld.set(terrain.sourceId, { key: terrain.key, layerId: null });
+        }
+        if (m.getTerrain()?.source !== terrain.sourceId) m.setTerrain({ source: terrain.sourceId, exaggeration: 1 });
+      }
+    },
+    sampleElevation(latitude, longitude) {
+      if (!map || !map.getTerrain()) return null;
+      return map.queryTerrainElevation([longitude, latitude]);
+    },
+    onBasemapError(handler) {
+      basemapErrorHandler = handler;
+    },
+    onSettled(handler) {
+      settledHandler = handler;
     },
     async centerOn(latitude, longitude, zoom) {
       if (!map) return;
@@ -684,23 +766,19 @@ export async function createMaplibreRenderer(): Promise<MapSurfaceRenderer> {
       placeDoubleClickHandler = null;
       laneClickHandler = null;
       viewChangeHandler = null;
+      basemapHeld = new Map();
+      basemapErrorHandler = null;
+      settledHandler = null;
     },
   };
 }
 
-function sourceDefinition(tileSource: MapTileSource): Record<string, unknown> {
-  if (tileSource.kind === "geojson") {
-    return { type: "geojson", data: tileSource.url };
-  }
-  if (tileSource.kind === "raster") {
-    return {
-      type: "raster",
-      tiles: [tileSource.url],
-      tileSize: tileSource.tileSize ?? 256,
-      attribution: tileSource.attribution,
-    };
-  }
-  return { type: "vector", url: tileSource.url, attribution: tileSource.attribution };
+const BASE_LAYER_IDS = new Set(["ocean-background", "graticule-lines", "offline-base"]);
+
+/** The first layer above the offline ground that is not a basemap layer: the overlays begin here. */
+function firstOverlayLayerId(map: InstanceType<typeof import("maplibre-gl").Map>): string | undefined {
+  const layers = map.getStyle()?.layers ?? [];
+  return layers.find((layer) => !BASE_LAYER_IDS.has(layer.id) && !layer.id.startsWith("basemap-"))?.id;
 }
 
 function addGeoJsonSource(

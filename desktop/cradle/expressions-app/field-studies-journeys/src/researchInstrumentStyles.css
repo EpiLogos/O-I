@@ -2331,3 +2331,10 @@
 @media(max-width:600px){:where(.research-instrument) .canvas-zoom-controls{right:calc(var(--oi-space-3,12px) + 118px + 8px)}}
 :where(.research-instrument) .canvas-zoom-readout-host{position:absolute;inset:0;pointer-events:none;z-index:6}
 :where(.research-instrument) .canvas-zoom-readout{position:absolute;left:12px;bottom:16px;padding:2px 8px;border-radius:4px;background:var(--panel);color:var(--ink);font:11px/1.4 system-ui,sans-serif;font-variant-numeric:tabular-nums}
+
+/* lane-4 T4/T5: the basemap stack's layer rows (imagery, terrain) and the live-sources switch. */
+:where(.research-instrument) .psychogeographic-layers-panel [data-testid="places-basemap"] input[type=checkbox],
+:where(.research-instrument) .psychogeographic-layers-panel [data-testid="places-basemap"] input[type=range]{accent-color:var(--accent)}
+:where(.research-instrument) .psychogeographic-layers-panel [data-testid="places-basemap"] input:disabled{opacity:.45}
+:where(.research-instrument) .psychogeographic-layers-panel [data-testid="places-basemap"] input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+:where(.research-instrument) .psychogeographic-layers-panel [data-testid="places-basemap"] li[data-state="unavailable"] > label{opacity:.75}
