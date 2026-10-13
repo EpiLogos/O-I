@@ -68,4 +68,16 @@ absent optional files are undefined.
 
 ## Resolution
 
-—
+**Landed (13 Oct 2026; builder haiku, converged by the lead).**
+`provider/archetypalEarthProvider.ts` reads AE's published bundle through
+Central's files client (listing locations only), re-emits the founding field
+(provider descriptor, `cites`, no `subject`), and hands the bytes to the
+found loaders as `blob:` URLs so their own validation runs unchanged
+(accepted: no validator is exported; nothing reimplemented). `published`
+resolves named material and corpus volumes (`data/corpus.ts` routed through
+`fetchPublished`, recorded in PORT-PIN). Lead fix: the provider binds the
+published door before loading history, so Aion's book (16 chapters) is
+present at boot. Scripted: 9/9; pin check 0; a scratch run over the real
+AE data loaded 2,854 occurrences, 3 readings, 29 symbols, 35 corpus works.
+Unverified: the blob route inside the native webview (the lead's native
+screen pass). Images and the sky leg: T-ATLAS-IMAGES / the QL sky binding.

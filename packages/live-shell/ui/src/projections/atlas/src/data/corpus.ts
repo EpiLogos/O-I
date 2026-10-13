@@ -7,6 +7,7 @@
 // verbatim; the fetch paths carry the one [C2-a3] amendment (provider-supplied
 // paths; the degrade-to-null law stays, untouched).
 import type { CorpusIndex, CorpusWork } from '../types/corpus';
+import { fetchPublished } from './published'; // [§8.4] the volume reads go through the provider's published material
 
 const BASE = (import.meta.env.BASE_URL ?? '/').replace(/\/$/, '');
 
@@ -45,7 +46,7 @@ function loadCorpusWork(work: string): Promise<CorpusWork | null> {
   const key = `${activeBase}|${work}`;
   let p = workCache.get(key);
   if (!p) {
-    p = fetch(`${activeBase}/${encodeURIComponent(work)}.json`)
+    p = fetchPublished(`corpus/${encodeURIComponent(work)}`)
       .then((res) => (res.ok && !res.headers.get('content-type')?.includes('text/html') ? (res.json() as Promise<CorpusWork>) : null))
       .catch(() => null);
     workCache.set(key, p);
