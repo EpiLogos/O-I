@@ -1,7 +1,7 @@
 # T-E03 — Scene operations address refs; the index is a derived view
 
 Label: wayfinder:task (Phase 4 · lane 3; no UI leg)
-Claimed-by: —
+Claimed-by: claude-code:dlw-lead (13 Oct 2026; builder haiku)
 Source: `lanes/lane-3-expressions-editor/TARGET-SET.md:151` (register `lane-3:E03`).
 
 ## Lead's design
@@ -26,4 +26,14 @@ Tests: a scripted case — reorder scenes in the document, then
 
 ## Resolution
 
-—
+**Landed (13 Oct 2026; builder haiku, converged by the lead).** `setScene(index)`
+is gone: `setSceneRef(sceneId)` resolves the index inside (`sceneIndexOf`)
+before any intent-epoch bump; previous/next, arrows, playhead, the chooser
+(`data-scene-id`), focus, installPhysis and saved-scene advance address by
+id (neighbours through `sceneRefAt`); the public disclosure keeps its
+compatibility toast. Scripted: scene-refs 12/12 (0/12 before); seven
+scene suites 84/84 before and after; build clean. Carried into E04: the
+move-left/right, delete, duplicate and drag-reorder controls still pass an
+index; Physis's saved `sceneIndex` (wire format, `physis.ts`) is resolved at
+the boundary. Unverified: the reorder-then-open case in a browser harness
+and on screen (the lead's native pass).
