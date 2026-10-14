@@ -12,6 +12,7 @@ import {deviceBindingId, deviceIdentityFault, deviceIdentityOf, nativeDetachedBo
 import {allInhabitantManifests} from '../inhabitants/manifest'
 import {loadWorldShellFamilies} from '../inhabitants/worldShellFamilies'
 import {DeviceFace} from '../inhabitants/inhabitantRack'
+import {useQlInstrumentFeed} from '../live/torusInstrument'
 
 // The receiving window loads the families the main window loads (ModeDetail calls the same loader at module load): one
 // loader, one door. A device body reads the registry at render, so the registry stands before the first admission.
@@ -65,15 +66,18 @@ export function deviceAdmissionFault(binding: SurfaceBinding, manifests: readonl
 }
 
 /** The receiving body of a popped-out device (seam 8): the face its identity names, drawn from the manifests and the
- * identity's aperture. A fault is refused by name, never drawn. No owner reading is passed in: the rack wires none today. */
+ * identity's aperture. A fault is refused by name, never drawn. The QL instrument's reading is read in this window by the
+ * same reader the shell reads (live/torusInstrument.ts): a separate JS context, so it stands only where this window's own
+ * owner publishes; nothing is carried in the binding. */
 export function DeviceWindowBody({binding, transport, manifests = allInhabitantManifests()}: {
   binding: SurfaceBinding
   transport: KernelTransportStatus
   /** The admitted manifests; the live receiving window reads the registry (the default). */
   manifests?: readonly InhabitantManifest[]
 }) {
+  const instrumentReading = useQlInstrumentFeed()
   const fault = deviceAdmissionFault(binding, manifests)
   const identity = deviceIdentityOf(binding)
   if (fault || !identity) return <p role="alert" data-device-fault>{fault ?? 'The device window carries no device identity.'}</p>
-  return <DeviceFace identity={identity} manifests={manifests} transport={transport}/>
+  return <DeviceFace identity={identity} manifests={manifests} transport={transport} instrumentReading={instrumentReading}/>
 }
