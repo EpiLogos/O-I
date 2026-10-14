@@ -174,21 +174,24 @@ test("the extension path runs the door's validator too (the F1 escapes refuse)",
     devices: [{id: 'qa-doc', title: 'QA Doc', icon: 'lib', liveSemantic: 'info', kind: 'document', admission: 'waiting', note: 'waits',
                document: {kind: 'x', file: 'x.html', hosting: 'oi.document-frame/v1', saveRouter: ['saved', 'unchanged', 'stale', 'conflict', 'refused'], messages: ['m']}}],
   }), /breaks the device law/)
-  // A pop-out face through the SDK is a device: the kit declares the device kind for it, so the extension composes (the
-  // device default). A pop-out face the author opts out of with `popOut: false` carries no pop-out at all.
-  const qaPop = sdkDefine.declareDeviceExtension({
+  // A pop-out the author asks for on a face whose window cannot draw its body alone is refused at declaration, by name
+  // (an empty window is worse than none). The kit's default never offers one there.
+  assert.throws(() => sdkDefine.declareDeviceExtension({
     id: 'central:qa-probe2', by: 'qa', family: 'central',
     devices: [{id: 'qa-pop', title: 'QA Pop', icon: 'form', liveSemantic: 'info', dock: ['dock', 'pop-out']}],
-  })
-  assert.deepEqual(qaPop.detachedKinds, ['device'])
+  }), /refuses pop-out/)
+  assert.throws(() => sdkDefine.declareDeviceExtension({
+    id: 'central:qa-probe4', by: 'qa', family: 'central',
+    devices: [{id: 'qa-pop-true', title: 'QA Pop', icon: 'form', liveSemantic: 'info', popOut: true}],
+  }), /refuses pop-out/)
   // The writers law runs on the extension path (N-A): an invented setter
   // refuses even though the family itself declared honest writers.
   assert.throws(() => sdkDefine.declareDeviceExtension({
     id: 'central:qa-evil', by: 'qa', family: 'central',
     devices: [{id: 'qa-evil', title: 'QA Evil', icon: 'form', liveSemantic: 'info', params: [sdkDefine.numberParam({key: 'x', title: 'X', type: 'number', range: {min: 0, max: 1}, writePath: 'shell.setEvil'})]}],
   }), /armed by no one/)
-  // A second extension composes when a PRIOR extension already carries the
-  // detachedKinds its pop-out face needs (N-F: the composed shape validates).
+  // A second extension composes when a PRIOR extension already carries the detachedKinds it declares (N-F: the composed
+  // shape validates). The face does not pop out: a parameter face has no window of its own.
   sdkDefine.declareDeviceExtension({
     id: 'central:qa-pop-base', by: 'qa', family: 'central',
     detachedKinds: ['object'],
@@ -196,7 +199,7 @@ test("the extension path runs the door's validator too (the F1 escapes refuse)",
   })
   sdkDefine.declareDeviceExtension({
     id: 'central:qa-pop', by: 'qa', family: 'central',
-    devices: [{id: 'qa-pop-face', title: 'QA Pop', icon: 'form', liveSemantic: 'info', note: 'pops through the prior extension\'s declared door', dock: ['dock', 'pop-out']}],
+    devices: [{id: 'qa-pop-face', title: 'QA Pop', icon: 'form', liveSemantic: 'info', note: 'composes through the prior extension\'s declared kinds', dock: ['dock', 'expand']}],
   })
   // An honest extension composes, idempotently.
   const first = sdkDefine.declareDeviceExtension({

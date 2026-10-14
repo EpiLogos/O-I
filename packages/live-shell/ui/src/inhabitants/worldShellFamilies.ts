@@ -49,7 +49,6 @@ function declareCentralExtension(): void {
     faces: [
       {
         id: 'ground-hygiene',
-        dock: ['dock', 'pop-out'],
         presentations: ['compact', 'expanded'],
         liveSemantic: 'device-audio-fx',
         invariant: {transforms: 'the ground in focus — analysed, passed unchanged'},
@@ -57,7 +56,6 @@ function declareCentralExtension(): void {
       },
       {
         id: 'impact',
-        dock: ['dock', 'pop-out'],
         presentations: ['compact', 'expanded'],
         liveSemantic: 'device-audio-fx',
         invariant: {transforms: 'the selected folder or note — its neighbourhood read, passed unchanged'},
@@ -127,11 +125,9 @@ function declareSoftwareFactoryExtension(): void {
   declareFamilyExtension('software-factory', {
     id: SOFTWARE_FACTORY_EXTENSION_ID,
     by: 'zcode:rack-manifests-l2 (owner commission, WORLD-SHELL-DESIGN §12)',
-    detachedKinds: ['device'],
     faces: [
       {
         id: 'attempt-review',
-        dock: ['dock', 'pop-out'],
         presentations: ['expanded', 'full'],
         liveSemantic: 'capture',
         note: 'One run\'s attempts and their task trees as readings (op factory_attempt_read, factory_attempt_task_list_read, factory_attempt_task_read; build snapshot via factory_build_snapshot). Review, steer and interrupt writers wait for the Factory owner (the Buzz contract of record names the behaviours, not the writer).',

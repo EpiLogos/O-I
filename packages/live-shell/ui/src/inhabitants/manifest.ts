@@ -42,6 +42,31 @@ export function faceKind(face: InhabitantFaceDeclaration): InhabitantFaceKind {
 }
 
 // ---------------------------------------------------------------------------
+// standalone bodies (seam 8) — which faces a window of their own can draw
+
+/** The faces whose body draws in a window of their own, from the identity alone (the device door's standalone set), each
+ * with the kind its body belongs to. Central's document and conversation faces read their owners through the transport
+ * from the identity's aperture; ql-instrument draws the owner's reading or its refusal. Every other face stays in the main
+ * window: a parameter face has no body in the rack, and the atlas and knowledge-graph bodies drive the main window's mounted
+ * globe or graph handle, which a separate webview cannot reach, so a window for them would be inert. */
+const STANDALONE_DEVICE_FACES: ReadonlyMap<string, InhabitantFaceKind> = new Map([
+  ['day-die', 'document'],
+  ['flow-document', 'document'],
+  ['nara-conversation', 'conversation'],
+  ['ql-instrument', 'instrument'],
+])
+
+/** Whether a face of this id and kind draws its body in a window of its own. */
+export function standsAlone(id: string, kind: InhabitantFaceKind): boolean {
+  return STANDALONE_DEVICE_FACES.get(id) === kind
+}
+
+/** Whether a declared face draws its body in a window of its own (pop-out is offered only where this holds). */
+export function faceStandsAlone(face: InhabitantFaceDeclaration): boolean {
+  return standsAlone(face.id, faceKind(face))
+}
+
+// ---------------------------------------------------------------------------
 // document devices (§5.2) — the save router's named outcomes
 
 /** The five named outcomes a document device's save router discloses. Order

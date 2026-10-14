@@ -1,5 +1,5 @@
 import {useSyncExternalStore} from 'react'
-import type {InhabitantManifest} from '../inhabitants/manifest'
+import {faceStandsAlone, type InhabitantManifest} from '../inhabitants/manifest'
 import type {DeviceWindowHost} from '../inhabitants/inhabitantRack'
 import type {CentralLocation} from '../../../../../desktop/cradle/src/kernel/types'
 import type {LayoutState, SurfaceBinding} from '../../../../../desktop/cradle/src/surface/types'
@@ -33,8 +33,21 @@ export function deviceBindingId(identity: Pick<DeviceDetachIdentity, 'family' | 
   return `device:${identity.family}/${identity.face}`
 }
 
-/** The manifest's own check of a device identity. The family must admit the face, the face must declare pop-out, and the
- * family must declare the device detached kind. Null when the identity stands in the manifests; otherwise the fault. */
+/** The aperture part a standalone face's window reads: a Day for the die, a flow for the Flow document. Without it the window
+ * would be empty. The Nara and ql-instrument faces show their own honest state without one, so they name no part. */
+const APERTURE_PART: ReadonlyMap<string, 'day' | 'flow'> = new Map([['day-die', 'day'], ['flow-document', 'flow']])
+
+/** The named fault when a face's window would stand without the aperture it reads, or null. */
+export function popOutApertureFault(face: {readonly id: string}, aperture: DeviceAperture): string | null {
+  const part = APERTURE_PART.get(face.id)
+  if (!part || aperture[part]) return null
+  return `${face.id} needs its ${part === 'day' ? 'Day' : 'flow'} in the aperture, or its window would be empty`
+}
+
+/** The manifest's own check of a device identity. The family must admit the face, the face must declare pop-out, the family
+ * must declare the device detached kind, and the face must draw its body in a window of its own (a parameter face, or an
+ * atlas or knowledge-graph face that drives the main window's handle, is refused by name). Null when the identity stands
+ * in the manifests; otherwise the fault. */
 export function deviceIdentityFault(identity: DeviceDetachIdentity, manifests: readonly InhabitantManifest[]): string | null {
   const manifest = manifests.find(entry => entry.id === identity.family)
   if (!manifest) return `no admitted family "${identity.family}" declares this device`
@@ -42,7 +55,8 @@ export function deviceIdentityFault(identity: DeviceDetachIdentity, manifests: r
   if (!face) return `${identity.family} declares no face "${identity.face}"`
   if (!(face.dock ?? ['dock']).includes('pop-out')) return `${identity.family}/${identity.face} does not declare pop-out`
   if (!(manifest.detachedKinds ?? []).includes('device')) return `${identity.family} does not declare the device detached kind`
-  return null
+  if (!faceStandsAlone(face)) return `${identity.family}/${identity.face} does not stand alone: its body draws only in the main window, so a window for it would be empty`
+  return popOutApertureFault(face, identity.aperture)
 }
 
 /** A device window's binding: the workbench surface binding carrying the identity the native owner admits. The identity is

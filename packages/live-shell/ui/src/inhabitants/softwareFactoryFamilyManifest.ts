@@ -5,14 +5,13 @@ import type {InhabitantManifest} from './manifest.ts'
 export function softwareFactoryFamilyManifest(): FamilyManifest {
   const manifest: InhabitantManifest = {
     id: 'software-factory',
-    detachedKinds: ['device'],
     browser: ['tasks', 'runs'],
     faces: [
-      {id: 'agent-custody', dock: ['dock', 'pop-out'], presentations: ['compact', 'expanded'], liveSemantic: 'macro', invariant: {maps: [{key: 'autonomy', range: ['suggest', 'review', 'auto']}]}, note: 'Autonomy, review gate, write mode, hand-back on agent device (shared face with Actuation).'},
-      {id: 'context-write-mode', dock: ['dock', 'pop-out'], presentations: ['compact', 'expanded'], liveSemantic: 'return', invariant: {routesTo: 'shell.setWriteArm'}, note: 'Write receipts and Return on context-world device.'},
-      {id: 'ledger', dock: ['dock', 'pop-out'], presentations: ['compact'], liveSemantic: 'track', invariant: {stream: 'the Factory ledger (main-track receipts)'}, note: 'Main-track ledger device and dock tile.'},
-      {id: 'approvals', dock: ['dock', 'pop-out'], presentations: ['compact', 'full'], liveSemantic: 'return', invariant: {routesTo: 'kernel:harness_agent_control'}, note: 'Default approvals and approval queue tile.'},
-      {id: 'run-device', dock: ['dock', 'pop-out'], presentations: ['expanded', 'full'], liveSemantic: 'track', invariant: {stream: 'the Factory run (one session\'s task stream)'}, note: 'Factory run on timeline when projected.'},
+      {id: 'agent-custody', presentations: ['compact', 'expanded'], liveSemantic: 'macro', invariant: {maps: [{key: 'autonomy', range: ['suggest', 'review', 'auto']}]}, note: 'Autonomy, review gate, write mode, hand-back on agent device (shared face with Actuation).'},
+      {id: 'context-write-mode', presentations: ['compact', 'expanded'], liveSemantic: 'return', invariant: {routesTo: 'shell.setWriteArm'}, note: 'Write receipts and Return on context-world device.'},
+      {id: 'ledger', presentations: ['compact'], liveSemantic: 'track', invariant: {stream: 'the Factory ledger (main-track receipts)'}, note: 'Main-track ledger device and dock tile.'},
+      {id: 'approvals', presentations: ['compact', 'full'], liveSemantic: 'return', invariant: {routesTo: 'kernel:harness_agent_control'}, note: 'Default approvals and approval queue tile.'},
+      {id: 'run-device', presentations: ['expanded', 'full'], liveSemantic: 'track', invariant: {stream: 'the Factory run (one session\'s task stream)'}, note: 'Factory run on timeline when projected.'},
     ],
     params: {grammar: 'software-factory/parameter-address/v1'},
     projections: ['factory-run-track-adapter'],
