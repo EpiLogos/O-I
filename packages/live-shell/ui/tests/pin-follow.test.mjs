@@ -211,3 +211,10 @@ test('the pane host feeds the subject and the mount effect is not keyed on it (c
   assert.match(timeline, /useSyncExternalStore\(subject \? subject\.subscribe : noUnsubscribe, subject \? subject\.pinned : noPin, noPin\)/)
   assert.match(timeline, /<PinnedTracks pinnedRef=\{pinnedRef\} \/>/, 'the body is told the pin')
 })
+
+test('Follow/Pin stands only on a pane whose kind follows the selection; a document pane holds its subject with no unpin (lane F)', async () => {
+  const {readFile: read} = await import('node:fs/promises')
+  const bench = await read(new URL('../../../../desktop/cradle/src/surface/Workbench.tsx', import.meta.url), 'utf8')
+  assert.match(bench, /props\.paneGrammar && active && state\.surfaces\[active\]\?\.projection && followsSelection\(state\.surfaces\[active\]\.projection!\.kind\) && \(\(\) => \{/)
+  assert.doesNotMatch(bench, /projection\?\.subject_ref \|\| followsSelection\(/, 'a held subject alone no longer raises the toggle')
+})
