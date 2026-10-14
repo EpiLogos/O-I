@@ -1,7 +1,7 @@
 // Each mode's tracks for the one Session and Arrangement (FOUNDATION F3), by registration: the mode's adapter over the
 // reading the frame publishes. A table, never a branch in the frame. Live's adapter is the reference (the open set);
 // Central's are its five streams (useCentralTracks.ts); Factory's its agent sessions and their tasks (useFactoryTracks.ts);
-// Technē stands on the World cut's sets until its readings' adapter lands; Expressions stands on the open work's scenes.
+// Technē's its native streams with the walks' stops as rows (useTechneTracks.ts); Expressions' the open work's scenes.
 import type {SurfMode} from '../../shell/modeGrammar'
 import type {SetDocument} from '../../shell/document'
 import type {SetSummary} from '../../shell/useSet'
@@ -13,6 +13,8 @@ import {liveSetTrackAdapter} from '../../timeline/liveSetTrackAdapter'
 import {expressionsTrackAdapter} from '../../timeline/expressionsTrackAdapter'
 import {useFactoryTracks} from './useFactoryTracks'
 import {useCentralTracks} from './useCentralTracks'
+import {useTechneTracks} from './useTechneTracks'
+import type {JourneyPresentation} from '../../timeline/JourneyRows'
 
 export interface TracksReading {
   /** The kernel carrier, for a mode whose tracks read their own owner. */
@@ -22,6 +24,8 @@ export interface TracksReading {
   colors?: readonly string[]
   world?: WorldTimelineView
   native?: NativeExpressionsContent | null
+  /** The shell's door to open an Expression a walk stop carries (the World modes' journey). */
+  journey?: JourneyPresentation
   workName?: string
 }
 
@@ -40,8 +44,6 @@ export function nativeTracks(content: NativeExpressionsContent | null | undefine
     scenes: scenes.map(scene => ({id: scene.scene_ref, name: scene.title || scene.native_title, duration: scene.working?.duration ?? scene.snapshot.duration ?? 0}))}]})
 }
 
-const worldTracks = (reading: TracksReading): WorldTrackSet | null => reading.world ? mergeSets(reading.world.source.sets) : null
-
 /** A mode's tracks: a hook over the published reading (a mode may read its own owner — Central's streams, Factory's
  * sessions); called once per render from a component keyed by the mode, so each mode keeps its own hook order. */
 export type UseModeTracks = (reading: TracksReading) => WorldTrackSet | ModeTracksWaiting | null
@@ -57,6 +59,6 @@ export const MODE_TRACKS: Readonly<Record<SurfMode, UseModeTracks>> = {
   live: reading => liveSetTrackAdapter.project({set: reading.set, document: reading.document, colors: reading.colors}),
   base: useCentralTracks,
   factory: useFactoryTracks,
-  techne: worldTracks,
+  techne: useTechneTracks,
   expressions: reading => nativeTracks(reading.native, reading.workName),
 }
