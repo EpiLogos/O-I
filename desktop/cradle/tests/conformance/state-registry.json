@@ -608,7 +608,8 @@
         "oi:editor-selection",
         "oi:editor-status",
         "oi:selection-anchor",
-        "oi:selection-preview"
+        "oi:selection-preview",
+        "oi:workspace-message"
       ],
       "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; canonical conformance plan Lane A §1 / Lane B §1",
       "rationale": "Caret and scroll restore per editor binding; no source mutation.",
