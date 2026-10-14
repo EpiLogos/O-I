@@ -3,17 +3,19 @@
 // clip as the mode's tracks give it; it writes nothing until a clip's owner discloses a write, and says so.
 import type {CSSProperties} from 'react'
 import {useTimelineReading, type TimelineHostReading} from '../../projections/timelinePaneHost'
-import {MODE_TRACKS, tracksOf} from '../tracks/modeTracks'
+import {useShownTracks} from '../tracks/tracksDoor'
+import type {WorldTrackSet} from '../../timeline/worldTrackAdapter'
 
 const STATUS_WORD: Record<string, string> = {waiting: 'waiting', running: 'running', stopped: 'stopped', recording: 'recording', stalled: 'stalled'}
 
 export function ClipBox() {
   const reading = useTimelineReading()
-  return reading ? <ModeClipBox key={reading.mode} reading={reading} /> : null
+  const set = useShownTracks()
+  return reading ? <ClipBoxOf reading={reading} set={set} /> : null
 }
 
-function ModeClipBox({reading}: {reading: TimelineHostReading}) {
-  const set = tracksOf(MODE_TRACKS[reading.mode](reading))
+/** The selected clip in the tracks the pane shows (frame/tracks/tracksDoor.ts) — the mode's owner is read once, there. */
+function ClipBoxOf({reading, set}: {reading: TimelineHostReading; set: WorldTrackSet | null}) {
   const clip = set?.clips.find(item => item.id === reading.selectedRef)
   if (!clip || !set) return null
   const track = set.tracks.find(item => item.id === clip.trackId)
