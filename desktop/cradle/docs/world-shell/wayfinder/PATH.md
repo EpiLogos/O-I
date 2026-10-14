@@ -99,10 +99,17 @@ objections verbatim and the full validation (`BRIEF-BUILDER.md`); the lead conve
 
 | Ticket | Who | Zone | Since |
 |---|---|---|---|
-| N1: works survive a restart — the kernel's expression owner enumerates a persistent home on `list` | Opus builder | `desktop/cradle/kernel/src/expression.rs`, `expression_file.rs`, `packages/expressions-boundary/src/**` (list/open_file relay), the Expressions panel | 14 Oct |
-| The browser's lower panel is the focused pane's own context (the mockup's aperture slot) | Opus builder | `shell/ModeBrowser.tsx` (ApertureSlot, CategoryContext), `native/workbenchDoor.ts`, one publish in `native/Workbench.tsx`, `frame/browser/**` | 14 Oct |
-| The Expressions centre full-bleed — the pane's header, buttons and stage tools move into the Studio plate | Opus builder | `projections/expressionsPane.tsx`, `components/NativeStageTools.tsx`, `components/expressions/studio/**` | 14 Oct |
 | Native screen pass against the mockup renders; N1; mounting N2's subject door | lead | the frame, `App.tsx`, `native/Workbench.tsx`, `shell/modeFrames.ts`, the book | 14 Oct |
+
+Then, to the end of the evening: N1 (`c1b845e89`, lane E: the works home is `Control/user/flows` — the one Control path
+Central's ordinary policy writes — and `list` names its closed works; Open and New save into it; the frame's readers keep
+to open works; at boot the frame's recovery checkpoint still wins over the file, so an unsaved draft is never overwritten);
+the aperture slot as the focused pane's own context (`e951e8f66`, lane F); the Expressions centre as the field, its stage
+tools in the Studio (`66f3fa86a`, lane G); from their proposals the cut's palette on the shell's root, the document pane's
+pin guarded, the occasion in every mode, the aperture matching the focused pane's own document, Reopen on the Studio's head.
+Carried: NativeStageTools.tsx is now drawn only by its tests (move them to StudioStage, then delete it); `list` makes 1 + N
+owner calls under the kernel lock (about 0.36 s each); a work's edits after its first save reach the file only through
+the frame's own Save; the Studio's Capture column sits past the visible width at 1440px.
 
 Then: the transport and status bar (`80d5beb0c`, lane C: 46px, a title line, words and owner readings, the Info view)
 and Live at the mockup's floor (`ebc5f8cc7`, lane D: the rail in Live, the chain as plates in note order, the clip in the
