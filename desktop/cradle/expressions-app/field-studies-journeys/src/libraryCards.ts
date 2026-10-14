@@ -35,6 +35,11 @@ export function localCopyIdFor(ref:string,origins:ReadonlyMap<string,LibraryOrig
 }
 
 /** The data-action of the "Open browser draft" action an adopted card offers beside its kernel copy. Both pages handle this action. */
+/** What a refused kernel open says. With a browser copy to open, it says so; with none, it says the current document stays open. The copy
+ * is named only when one is actually opened. */
+export function kernelCopyRefusalMessage(hasCopy:boolean):string{
+ return `The kernel copy of this Expression could not be opened. ${hasCopy?'The browser copy opens instead.':'The current document stays open.'}`;
+}
 export const LIBRARY_CARD_DRAFT_ACTION='open-local-draft';
 export const LIBRARY_CARD_DRAFT_TEXT='Open browser draft';
 

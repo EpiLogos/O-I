@@ -60,7 +60,8 @@ export class ExpressionsHost {
   private abort = new AbortController();
   private timeout?: ReturnType<typeof setTimeout>;
   private readonly seen = new Set<string>();
-  private pendingOpen: {ref: string; refresh: boolean; lens?: HostedTechneLens; recovery?: RecoveryBinding} | null = null;
+  /** One open waits for readiness, last wins: an Expression, or a browser-local draft by its Library id (openLocalDraft). */
+  private pendingOpen: {ref: string; refresh: boolean; lens?: HostedTechneLens; recovery?: RecoveryBinding} | {draftId: string} | null = null;
   /** Tagged with the document epoch it was asked of: a reload drops it. */
   private pendingStudio: {section: StudioSection; epoch: number} | null = null;
   /** Each stage control awaits its own answer by request id. A reload or disposal settles all of them. */
@@ -187,7 +188,8 @@ export class ExpressionsHost {
       if (this.pendingOpen && this.presented()) {
         const pending = this.pendingOpen;
         this.pendingOpen = null;
-        this.sendOpen(pending);
+        if ('draftId' in pending) this.sendLocalDraft(pending.draftId);
+        else this.sendOpen(pending);
       }
       if (this.pendingStudio && this.presented()) {
         const pending = this.pendingStudio;
@@ -364,6 +366,17 @@ export class ExpressionsHost {
     const request = {ref, refresh: options.refresh ?? false, lens: options.lens, ...(recovery ? {recovery} : {})};
     if (!this.ready) this.pendingOpen = request;
     else this.sendOpen(request);
+  }
+  /** Opens one browser-local draft by its Library id in the presented application: the host-command `open-local-draft` (the frame reads the
+   * draft from its own Library and loads it). Mirrors openExpression: the same target and presented gate, queued until ready. */
+  openLocalDraft(draftId: string, targetBindingId: string) {
+    if (!boundedText(draftId, 256)) throw Error('A browser draft id is required');
+    if (targetBindingId !== this.bindingId || !this.presented()) throw Error('The requested application is not the presented target');
+    if (!this.ready) this.pendingOpen = {draftId};
+    else this.sendLocalDraft(draftId);
+  }
+  private sendLocalDraft(draftId: string) {
+    this.post({v: CHANNEL_VERSION, kind: 'host-command', command: 'open-local-draft', id: draftId});
   }
   private sendOpen(request: {ref: string; refresh: boolean; lens?: HostedTechneLens; recovery?: RecoveryBinding}) {
     this.post({v: CHANNEL_VERSION, kind: 'host-command', command: request.refresh ? 'refresh-expression' : 'open-expression', ref: request.ref,

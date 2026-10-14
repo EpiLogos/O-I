@@ -36,6 +36,7 @@ export function StubWorkspaceProvider({
     publishWorks: () => {},
     expressionToOpen: null,
     requestExpression: () => {},
+    requestLocalDraft: () => {},
     mode: 'expressions',
     setMode: () => {},
     transport,

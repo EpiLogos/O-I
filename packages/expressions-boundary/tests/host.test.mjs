@@ -195,3 +195,17 @@ test('canonical Action routing preserves opaque subject and owner authority and 
   assert.equal(resolveActionRoute(reading, {...route, action_ref: 'action:undisclosed'}).routed, false);
   assert.throws(() => resolveActionRoute(reading, {...route, executable: '/bin/sh'}), /malformed/);
 });
+
+test('a browser draft opens by its Library id on the open-local-draft command, for the presented target only, and waits for readiness', async t => {
+  const a = aperture(t);
+  assert.throws(() => a.host.openLocalDraft('draft-1', 'center:other'), /presented target/);
+  assert.throws(() => a.host.openLocalDraft('', 'center:world'), /draft id is required/);
+  a.host.openLocalDraft('draft-1', 'center:world');
+  a.host.openLocalDraft('draft-2', 'center:world');
+  assert.equal((await a.messages()).filter(d => d.command === 'open-local-draft').length, 0, 'nothing is posted before the frame is ready');
+  await a.deliver({v: 1, kind: 'oi-app-state', state: state()});
+  assert.deepEqual((await a.messages()).filter(d => d.command === 'open-local-draft' || d.command === 'open-expression'),
+    [{v: CHANNEL_VERSION, kind: 'host-command', command: 'open-local-draft', id: 'draft-2'}], 'last wins; the draft rides the host-command channel');
+  a.host.openLocalDraft('draft-3', 'center:world');
+  assert.equal((await a.messages()).filter(d => d.command === 'open-local-draft' && d.id === 'draft-3').length, 1);
+});

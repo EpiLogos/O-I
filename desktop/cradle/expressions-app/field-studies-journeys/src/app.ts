@@ -47,7 +47,7 @@ import {CHAKRA_PROFILE_ID} from '../../src/engine/semantics/chakraProfile';
 import type {SemanticBinding,SemanticColorCoupling,SemanticFieldConfig} from '../../src/engine/semantics/semanticTypes';
 import {Journey,Scene,Entity,EntityLayer,TextLayer,Tool,Shape,Vec3,clone,uid,clamp,fieldStudies,oiMark,rethemeMark,sevenCentres,smallLanguage,blankJourney,blankScene,entity,pin,chakraEntities,validateJourney,AutomationLane,SCENE_TRANSITION_MIN,SCENE_TRANSITION_MAX,type MarkThemeReading} from './model.js';
 import {DocumentStore,readLibrary,readLibraryWithOrigins,saveToLibrary,removeFromLibrary,recordLibraryAdoption,adoptedLocalOrigin,libraryOpenPlan,type LibraryOrigin} from './store.js';
-import {decorateLibraryCard,libraryCardStanding,localCopyIdFor} from './libraryCards.js';
+import {decorateLibraryCard,libraryCardStanding,kernelCopyRefusalMessage,localCopyIdFor} from './libraryCards.js';
 import {bindingEditLabel,connectActLabel,historyTitle,historyToast,historyWaitReason,KERNEL_UPDATE_LABEL,OUTSIDE_UPDATE_REASON,researchMaterialLabel} from './undoLabels.js';
 import {defaultCamera,cameraForSceneView,project,unproject,facePlane,stageScale,stageCentre,basis,Camera} from './camera.js';
 import {FieldEngineAdapter,EngineFrame} from './engine.js';
@@ -1407,7 +1407,7 @@ function kernelOriginFor(journey:Journey):LibraryOrigin|undefined{
 }
 /** Opens a kernel copy through the boot's own follow path. A refusal is named, and `fallback` (the browser copy) then opens. */
 function openKernelCopy(ref:string,fallback?:()=>void,recovery?:unknown){
- const refused=()=>{toast(`The kernel copy of this Expression could not be opened.${fallback?' The browser copy opens instead.':' The browser copy stays open as local scratch.'}`,7000);fallback?.();};
+ const refused=()=>{toast(kernelCopyRefusalMessage(!!fallback),7000);fallback?.();};
  void Promise.resolve(nativeWorkspace?.follow(ref,recovery)).then(applied=>{if(applied!==true)refused();},refused);
 }
 /** The browser copy a kernel ref falls back to when the kernel refuses it: the Library entry that holds the ref (libraryCards.localCopyIdFor). */
@@ -1754,7 +1754,7 @@ case 'timeline-track':timelineTrack=!timelineTrack;renderAll();break;
  case 'load-saved':{const id=el.dataset.id!,j=store.document.id===id?store.document:sessionExpressions.get(id)??readLibrary().find(j=>j.id===id);
    // T22: a local entry that its first kernel save adopted offers the kernel copy first; its browser draft stays openable beneath.
    const plan=libraryOpenPlan(readLibraryWithOrigins().origins.get(id),kernelExpressionsAvailable());
-   if(plan.kind==='kernel-first'){openKernelCopy(plan.ref,()=>{if(j)void loadJourney(j);});break;}
+   if(plan.kind==='kernel-first'){openKernelCopy(plan.ref,j?()=>{void loadJourney(j)}:undefined);break;}
    if(j)await loadJourney(j);break;}
  case 'open-local-draft':await openBrowserDraft(el.dataset.id!);break;
  case 'new-journey':await loadJourney(blankJourney());edit(true,'scene');closeEntryGate();break;

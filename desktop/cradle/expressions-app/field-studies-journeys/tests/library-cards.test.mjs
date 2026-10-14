@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {blankJourney} from '../build/model.js';
 import {saveToLibrary,readLibraryWithOrigins,recordLibraryAdoption} from '../build/store.js';
-import {libraryCardStanding,libraryCardNoteText,decorateLibraryCard,localCopyIdFor,LIBRARY_CARD_DRAFT_ACTION,LIBRARY_CARD_DRAFT_TEXT} from '../build/libraryCards.js';
+import {libraryCardStanding,libraryCardNoteText,decorateLibraryCard,localCopyIdFor,kernelCopyRefusalMessage,LIBRARY_CARD_DRAFT_ACTION,LIBRARY_CARD_DRAFT_TEXT} from '../build/libraryCards.js';
 
 class MemoryStorage{
  constructor(){this.map=new Map();}
@@ -138,5 +138,22 @@ test('the frame opens a browser draft by id on the host command, and a refused h
   assert.ok(app.includes('openKernelCopy(ref,localCopyFallbackFor(ref),recovery)'), 'the host open routes through the in-app refusal handling');
   assert.ok(app.includes('openKernelCopy(r.ref,localCopyFallbackFor(r.ref),r.recovery)'), 'the buffered host open routes through it too');
   assert.ok(app.includes('localCopyIdFor(ref,origins)'), 'the fallback is the Library entry that holds the ref');
-  assert.ok(app.includes('The browser copy opens instead.'), 'the in-app refusal wording is kept, not copied');
+  assert.ok(app.includes('kernelCopyRefusalMessage(!!fallback)'), 'the refusal toast is the one shared refusal grammar');
+  assert.ok(!app.includes('The browser copy opens instead.'), 'the refusal wording lives once, in libraryCards.ts');
+});
+
+test('a refused kernel open names the refusal, and says a browser copy opens only when one does', () => {
+  assert.equal(kernelCopyRefusalMessage(true),
+    'The kernel copy of this Expression could not be opened. The browser copy opens instead.');
+  assert.equal(kernelCopyRefusalMessage(false),
+    'The kernel copy of this Expression could not be opened. The current document stays open.');
+  const app = fs.readFileSync(new URL('../src/app.ts', import.meta.url), 'utf8');
+  assert.ok(!app.includes('The browser copy stays open as local scratch'), 'no refusal toast says the browser copy stays open as local scratch');
+  assert.ok(app.includes('openKernelCopy(plan.ref,j?()=>{void loadJourney(j)}:undefined)'), 'the in-app open names a browser copy only when it holds one');
+});
+
+test('the frame opens a browser draft from the host command through the in-frame body, and the refusal grammar is one', () => {
+  const app = fs.readFileSync(new URL('../src/app.ts', import.meta.url), 'utf8');
+  assert.equal([...app.matchAll(/openBrowserDraft\(/g)].length, 3, 'the in-frame case, the host command, and the definition share one body');
+  assert.ok(app.includes("command==='open-local-draft'&&typeof (d as {id?:unknown}).id==='string')void openBrowserDraft"));
 });
