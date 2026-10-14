@@ -1,6 +1,8 @@
 import {createContext, useContext, useMemo, useRef, useState, type ReactNode, type RefObject} from 'react'
 import {useDataIStatusInfo, type DataIStatusInfo} from './statusInfo'
 import {useOptionalContinuity} from '../continuity/workspace'
+import {parseFactoryTaskRef} from '../timeline/factoryTrackAdapter'
+import type {WorldSelection} from '../../../../../desktop/cradle/src/workspace/store'
 
 export type AgentCentreView = 'session' | 'arrangement' | 'thread'
 export type AgentEffort = 'low' | 'medium' | 'high' | 'max'
@@ -82,6 +84,14 @@ export interface AgentShellState {
 
 const Ctx = createContext<AgentShellState | null>(null)
 
+const sessionOfSelection = (selection: WorldSelection | null | undefined): string | null => {
+  if (!selection) return null
+  if (selection.kind === 'agent-session') return selection.ref
+  if (selection.mode !== 'factory') return null
+  if (selection.kind === 'track') return selection.ref
+  return selection.kind === 'clip' ? parseFactoryTaskRef(selection.ref)?.trackId ?? null : null
+}
+
 export function AgentShellProvider({children, frameRef}: {children: ReactNode; frameRef?: RefObject<HTMLElement | null>}) {
   const [centreView, setCentreView] = useState<AgentCentreView>('session')
   // The selected session is THE selection when it is one (FOUNDATION F1): read from the world context, written through
@@ -90,7 +100,9 @@ export function AgentShellProvider({children, frameRef}: {children: ReactNode; f
   const continuity = useOptionalContinuity()
   const [unbooked, holdUnbooked] = useState<string | null>(null)
   const worldSelection = continuity?.current.context?.selection
-  const selectedTrackId = continuity ? (worldSelection?.kind === 'agent-session' ? worldSelection.ref : null) : unbooked
+  // The shared Session and Arrangement select Factory's sessions as tracks and their tasks as clips (frame/tracks): a task
+  // selects its session, so the task log opens on it.
+  const selectedTrackId = continuity ? sessionOfSelection(worldSelection) : unbooked
   const select = continuity?.select
   const setSelectedTrackId = (id: string | null, title?: string) => select
     ? select(id ? {mode: 'factory', kind: 'agent-session', ref: id, title: title ?? id} : null)

@@ -11,9 +11,10 @@ import { ContinuityProvider } from './continuity/workspace'
 import {NativeFoundation} from './native/Foundation'
 import {NativeDetached} from './native/Detached'
 import {NativeApplicationClose} from './native/ApplicationClose'
+import {AgentSessionsProvider} from './agent/AgentSessionsProvider'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <ContinuityProvider><WorkspaceProvider><NativeApplicationClose/><NativeFoundation>{window.__OI_DETACHED__ ? <NativeDetached /> : <App />}</NativeFoundation></WorkspaceProvider></ContinuityProvider>
+    <ContinuityProvider><WorkspaceProvider><NativeApplicationClose/><NativeFoundation>{window.__OI_DETACHED__ ? <NativeDetached /> : <AgentSessionsProvider><App /></AgentSessionsProvider>}</NativeFoundation></WorkspaceProvider></ContinuityProvider>
   </StrictMode>,
 )
