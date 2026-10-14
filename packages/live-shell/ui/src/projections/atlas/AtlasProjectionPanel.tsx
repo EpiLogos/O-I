@@ -236,7 +236,13 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {controllerS
   ])
   // The corpus is read before the controller mounts, so an unavailable bundle fails while nothing is bound yet.
   const provider = archetypalEarthProvider(transport)
-  const bundle = await provider.load()
+  const loaded = await provider.load()
+  // T6: the QL family's adapter admits the owner's stated subsolar point of the current sky, read through the kernel,
+  // before the Earth stands. Absence is kept and logged with the reason; the Earth draws without the Sun.
+  const {admitDatedSubsolar} = await import('../../inhabitants/qlSkyEarthAdapter')
+  const sun = await admitDatedSubsolar(loaded.field, transport, new Date())
+  if (!sun.placed) console.warn(`The Sun is not placed on the Earth: ${sun.reason}`)
+  const bundle = {...loaded, field: sun.field}
   registerCorpusProvider({...provider, load: async () => bundle}, {asDefault: true})
   progress.controllerStarted = true
   // T-ATLAS-TIME: the clock is a face of the shell's one shared time window (the session the native owner also writes).

@@ -178,7 +178,9 @@ export type NativePersonalSkySource =
   | {sky_snapshot: NativeSkySnapshot; sky_request?: never; snapshot_purpose?:SnapshotPurpose};
 export interface NaraTransitReading {
   schema: 'ql.nara-transit/v1'; status: string;
-  sky: {snapshot_ref: string; epoch_utc: string; request: SkyRequest; provider: JsonValue; bodies: {body: string; longitude_degrees: number; retrograde: boolean}[]} | null;
+  /** `subsolar` is the owner's stated geographic point (additive in ql.sky-snapshot/v1, QL commit 120f093); absent on
+   * snapshots produced before it. The reading passes the owner's snapshot through; the shell reads it, never recomputes it. */
+  sky: {snapshot_ref: string; epoch_utc: string; request: SkyRequest; provider: JsonValue; bodies: {body: string; longitude_degrees: number; retrograde: boolean}[]; subsolar?: {latitude_degrees: number; longitude_degrees: number}} | null;
   q_transit: {w: number; x: number; y: number; z: number} | null;
   basis: string[]; elemental_counts: number[]; planetary_contributions: JsonValue;
   source: JsonValue; effect_authority_granted: false;
