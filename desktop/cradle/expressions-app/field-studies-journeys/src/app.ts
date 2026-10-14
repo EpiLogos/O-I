@@ -21,7 +21,7 @@ import {updateToolbeltValues,liveValue} from './liveValues';
 import {beltCandidates,pickerHTML} from './beltPicker';
 import {PropertyTrack,sampleTrack,evaluateTracks,readTrackValue,mergeTake,expressionTiming,channelRange,validateCurveEdit,touchesOfKey,type CurveTouch,type ChannelRange,type Interpolation} from './propertyTracks';
 import {curveHit,laneFrame,fromPixel,insertKey,removeKey,moveKey,moveHandle,setSegmentType,channelName,channelStateFor,channelPanelHTML,previewScene,type ChannelView,type HandleEnd,type LaneFrame,type Points} from './curveLane';
-import {transitionKindOf,transitionSpecFor,transitionLabel,dipWeights,wipeHoldRect,seamGlyphHTML,seamChooserHTML,writeSeamTransition,curveProgress,curveOf,edgeEditLabel,edgeEditRefusal,pendingSwitchStillWaits,seamEdgeSpec,curvePointsOf,transitionCurveHandleEdit,curveGestureWrite,TRANSITION_LANE,type TransitionKind,type TransitionParams,type TransitionSpec,type TransitionCurve,type WipeDirection,type SwitchMode,type CurveType} from './transitions';
+import {transitionKindOf,transitionSpecFor,transitionLabel,dipWeights,wipeHoldRect,seamGlyphHTML,seamChooserHTML,writeSeamTransition,curveProgress,curveOf,edgeEditRefusal,pendingSwitchStillWaits,curvePointsOf,transitionCurveHandleEdit,curveGestureWrite,TRANSITION_LANE,type TransitionKind,type TransitionParams,type TransitionSpec,type TransitionCurve,type WipeDirection,type SwitchMode,type CurveType} from './transitions';
 import {journeyTimelineLayout} from './journeyTimelineLayout';
 import {MARKER_COLOURS,MARKER_LIMIT,MARKER_NAME_MAX,sceneBoundaries,sceneAtJourneyTime,markerNamed,markerAdd,markerRename,markerMove,markerRemove,nextMarkerTime,prevMarkerTime,setLoopEdge,dragLoopEdge,moveLoopRegion,playDurations,toPlayClock,loopPlayNotice,type LoopEdge,type LoopRegion} from './journeyMarkers';
 import {snapCandidates,snapTime,closestSnap,nextSnapPoint,prevSnapPoint,type SnapPoint} from './snapModel';
@@ -613,7 +613,7 @@ function setSeamKind(sceneId:string,kind:TransitionKind){
 function editSeamEdge(edit:EdgeEdit){
  const refusal=edit.kind!=='loop'?edgeEditRefusal(store.document.scenes.find(v=>v.id===edit.enterSceneId)?.transitionSpec,edit):undefined;
  if(refusal){toast(refusal);renderTimeline();return;}
- if(journeyInstrument?.editEdge(edit))return;
+ if(journeyInstrument?.editEdge(edit,text=>toast(text)))return;
  const plan=planEdgeEdit(store.document,edit);
  if(!plan.ok){toast(plan.reason);renderTimeline();return;}
  const write=plan.write,label=plan.label;
@@ -654,11 +654,11 @@ function endSeamCurveDrag(commit:boolean){
  document.removeEventListener('pointermove',moveSeamCurveDrag);document.removeEventListener('pointerup',upSeamCurveDrag);document.removeEventListener('pointercancel',cancelSeamCurveDrag);
  const curve=curveGestureWrite(d.base,d.preview,{commit,moved:d.moved,refused:d.refused});
  if(!curve){renderTimeline();return;}
- const sceneId=d.sceneId;
- try{changed(()=>applyTimelineMove(store.document,scenes=>{
-  const s=scenes.find(v=>v.id===sceneId);if(!s)throw new Error('That scene is no longer in this expression.');
-  applyEdgeWrite(scenes,{sceneId,field:'transitionSpec',spec:seamEdgeSpec(s.transitionSpec,{curve})});
- }),true,edgeEditLabel({kind:'curve',type:'bezier'}));}catch(err){error(err);renderTimeline();}
+ // Lane-5 T5 / E09 · the release is the chooser's one edge edit, the same path a preset takes (editSeamEdge): the hosted owner
+ // takes the whole curve, handles included, as one native edit; a local release is one labelled change. The lane re-renders
+ // after, so a hosted release shows the stored curve until the owner's reply, not the held preview.
+ editSeamEdge({kind:'curve',enterSceneId:d.sceneId,type:'bezier',out:curve.out,in:curve.in});
+ renderTimeline();
 }
 function upSeamCurveDrag(){endSeamCurveDrag(true);}
 function cancelSeamCurveDrag(){endSeamCurveDrag(false);}

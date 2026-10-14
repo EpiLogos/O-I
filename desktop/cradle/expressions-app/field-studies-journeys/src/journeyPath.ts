@@ -9,7 +9,7 @@
 import type {Journey,Scene} from './model';
 import {SCENE_TRANSITION_MAX} from './model';
 import {esc} from './icons';
-import {kindLabel,transitionKindOf,switchModeOf,switchLabel,curveLabel,seamEdgeSpec,writeLoopExit,edgeEditLabel,type TransitionSpec,type SwitchMode,type CurveType} from './transitions';
+import {kindLabel,transitionKindOf,switchModeOf,switchLabel,curveLabel,seamEdgeSpec,writeLoopExit,edgeEditLabel,type TransitionSpec,type SwitchMode,type CurveType,type CurveHandle} from './transitions';
 import type {JourneyEditRequest} from './journeyBeats';
 import {journeyTimelineLayout,sceneAtTime,type TimelineTimingFn} from './journeyTimelineLayout';
 
@@ -128,11 +128,18 @@ export function edgeRows(journey:Pick<Journey,'scenes'|'loop'>):EdgeRow[]{
 }
 
 /** Lane-5 T5 / T8: one edit the path panel asks for. A switch or curve edit names the Scene it enters; a loop edit names the last
- * Scene, whose exit it is. */
-export type EdgeEdit={kind:'switch';enterSceneId:string;mode:SwitchMode}|{kind:'curve';enterSceneId:string;type:CurveType}|{kind:'loop';exitSceneId:string;on:boolean};
+ * Scene, whose exit it is. A curve edit carries the whole curve: its type and, for a bezier, its handles (out and in). Absent handles
+ * are the type alone, so a bezier with none takes E08's seed, as the path panel's own select always has. */
+export type EdgeEdit={kind:'switch';enterSceneId:string;mode:SwitchMode}|{kind:'curve';enterSceneId:string;type:CurveType;out?:CurveHandle;in?:CurveHandle}|{kind:'loop';exitSceneId:string;on:boolean};
 /** The write an accepted edit makes to one Scene: its seam spec (undefined = the default) or its loop exit. */
 export type EdgeWrite={sceneId:string;field:'transitionSpec';spec:TransitionSpec|undefined}|{sceneId:string;field:'breakAtEnd';on:boolean};
 export type EdgePlan={ok:true;write:EdgeWrite;label:string}|{ok:false;reason:string};
+
+/** Lane-5 T5 / T8: the curve a curve edit carries, whole. Linear is the absent curve. Handles are present only when the edit has them. */
+function curveOfEdit(edit:Extract<EdgeEdit,{kind:'curve'}>):TransitionSpec['curve']{
+ if(edit.type==='linear')return undefined;
+ return {type:edit.type,...(edit.out?{out:edit.out}:{}),...(edit.in?{in:edit.in}:{})};
+}
 
 /** Lane-5 T5 / T8, pure: plans one edge edit. Validation is the transition's own, and each refusal is named. The plan is applied by
  * applyEdgeWrite, or sent as one native edit by nativeEdgeRequest. */
@@ -147,7 +154,7 @@ export function planEdgeEdit(journey:Pick<Journey,'scenes'>,edit:EdgeEdit):EdgeP
   if(!scene)return {ok:false,reason:'That scene is no longer in this expression.'};
   const spec=edit.kind==='switch'
    ?seamEdgeSpec(scene.transitionSpec,{switchMode:edit.mode})
-   :seamEdgeSpec(scene.transitionSpec,{curve:edit.type==='linear'?undefined:{type:edit.type}});
+   :seamEdgeSpec(scene.transitionSpec,{curve:curveOfEdit(edit)});
   return {ok:true,write:{sceneId:scene.id,field:'transitionSpec',spec},label:edgeEditLabel(edit.kind==='switch'?{kind:'switch',mode:edit.mode}:{kind:'curve',type:edit.type})};
  }catch(cause){return {ok:false,reason:cause instanceof Error?cause.message:String(cause)};}
 }
