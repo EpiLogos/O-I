@@ -41,6 +41,7 @@ pub mod construction;
 pub mod credentials;
 pub mod decision;
 pub mod dictation;
+pub mod document_frame;
 pub mod encounter;
 pub mod events;
 pub mod expression;

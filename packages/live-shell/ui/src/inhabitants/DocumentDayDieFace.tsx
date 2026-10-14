@@ -8,7 +8,11 @@ import {useContext, useCallback, useEffect, useMemo, useRef, useState} from 'rea
  *   route and projected with `projectDieDocument` (the supplied editor's own
  *   closure/serialization seam, with its snapshot bridge and CSP);
  * - the body is the sandboxed opaque-origin iframe; the only host↔frame
- *   traffic is the bounded snapshot request and the dirty announcement;
+ *   traffic is the bounded snapshot request and the dirty announcement.
+ *   Under Tauri the iframe is the native document frame written with the
+ *   projection (a srcdoc document inherits the window's CSP, which refuses
+ *   the form's own scripts); elsewhere it is srcdoc — `useDocumentFrame`,
+ *   one switch by transport;
  * - edits stage in a `DayFormSession` (imported, not copied); Save is one
  *   explicit native write per mapped field through the owner's receiving
  *   contract (`mutate-field`), CAS-checked per field;
@@ -39,6 +43,7 @@ import {
 import {receiving} from '../../../../../desktop/cradle/src/receiving/client'
 import {DocumentPaneContext, documentStateWords, publishDocument, reachedDocument, revisionShort, withdrawDocument, type DocumentInPane} from '../central/documents/documentDoor'
 import {readFile} from '../../../../../desktop/cradle/src/files/client'
+import {useDocumentFrame} from '../../../../../desktop/cradle/src/document/frame'
 import {DOCUMENT_FORMS, resolveDocumentForm} from '../../../../../desktop/cradle/src/flow/documentForms'
 import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
 import {classifySaveFailure, savedOutcome, unchangedOutcome, type SaveRouterReading} from './documentDeviceModel'
@@ -95,6 +100,7 @@ export function DocumentDayDieFace({transport, project, sourceRef, documentId, p
   const [review, setReview] = useState<DieBasis>()
   const [revision, setRevision] = useState<string>('')
   const frame = useRef<HTMLIFrameElement>(null)
+  const frameProps = useDocumentFrame(frame, face, transport)
   const snapshot = useRef<{nonce: string; resolve: (value: unknown) => void; reject: (reason: Error) => void; timer: number}>()
   const templateRef = useRef<string>()
   const editEpoch = useRef(0)
@@ -326,9 +332,9 @@ export function DocumentDayDieFace({transport, project, sourceRef, documentId, p
           <button type="button" className="inhabitant-act" data-action="keep-draft" onClick={keepDraftOnReview}>Keep draft edits on revision {review.revision}</button>
         </div>
       )}
-      {face === undefined
+      {face === undefined || !frameProps
         ? <p role="status" className="inhabitant-quiet">Reading the original Daily Die source…</p>
-        : <iframe ref={frame} className="inhabitant-document-frame" title="Day die — the document's supplied form, projected from its native payload" sandbox="allow-scripts allow-forms allow-downloads" referrerPolicy="no-referrer" srcDoc={face}/>}
+        : <iframe key={frameProps.key} ref={frame} className="inhabitant-document-frame" title="Day die — the document's supplied form, projected from its native payload" sandbox="allow-scripts allow-forms allow-downloads" referrerPolicy="no-referrer" src={frameProps.src} srcDoc={frameProps.srcDoc}/>}
     </div>
   )
 }
