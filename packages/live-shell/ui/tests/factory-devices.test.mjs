@@ -289,9 +289,13 @@ test('one device in three sizes: the same live rows, a picture in each — no te
   assert.doesNotMatch(rackWhole, /sdk-enum|sdk-bool|role="slider"|<legend>Macros<\/legend>/)
   assert.match(rackWhole, /<legend>Settings<\/legend>/)
   const agent = html(createElement(DeviceView, {device: slotOf(set, 'agent').device, size: 'compact', picture: null}))
-  assert.equal((agent.match(/sdk-enum/g) ?? []).length, 2, 'effort and input are the rows with an owner write')
-  assert.equal((agent.match(/sdk-enum" disabled=""/g) ?? []).length, 2, 'and, unread, both stand inert and dark rather than showing the shell\'s defaults')
-  assert.doesNotMatch(agent, />high<|>steer<|>queue</, 'no default is drawn as a value')
+  // Effort (four short choices) and input (two) stand as the plate's segmented toggles (the mockup's .tog).
+  assert.equal((agent.match(/class="sdk-seg" role="radiogroup"/g) ?? []).length, 2, 'effort and input are the rows with an owner write')
+  assert.equal((agent.match(/class="sdk-seg__opt"/g) ?? []).length, 6, 'their choices are the owner\'s own: low · medium · high · max, steer · queue')
+  assert.equal((agent.match(/class="sdk-seg__opt" disabled=""/g) ?? []).length, 6, 'and, unread, every choice stands inert')
+  assert.doesNotMatch(agent, /sdk-seg__opt--on/, 'and dark, rather than lighting the shell\'s defaults')
+  // A segmented toggle names every choice; none is drawn as the value until the owner reads one.
+  assert.doesNotMatch(agent, /aria-checked="true"|aria-pressed="true"/, 'no default is drawn as a value')
   assert.match(agent, /sdk-row--reading"[^>]*><span class="sdk-row__name">Autonomy<\/span>/, 'autonomy is a reading until the task record discloses it')
 })
 
