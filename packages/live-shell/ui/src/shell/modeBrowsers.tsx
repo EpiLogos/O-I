@@ -15,6 +15,7 @@ import {WorldBrowser, WORLD_BROWSER_CATEGORIES} from '../components/WorldBrowser
 import {ModeBrowser, modeBrowserCategories} from './ModeBrowser'
 import {AgentShellBrowser, AGENT_BROWSER_CATEGORIES} from '../agent/AgentShellBrowser'
 import {SetsSection} from './SetsSection'
+import {Icon} from '../inhabitants/sdk/Icon'
 import {InstrumentsSection} from '../frame/InstrumentsSection'
 import {useWorkbenchOpeners} from '../native/workbenchDoor'
 
@@ -73,9 +74,9 @@ const AGENTS: BrowserSource = {id: 'agents', categories: AGENT_BROWSER_CATEGORIE
 /** Outside Factory, the running agent sessions only (Factory browses the whole agent browser). */
 const SESSIONS: BrowserSource = {id: 'sessions', categories: AGENT_BROWSER_CATEGORIES.filter(category => category.id === 'sess'), Body: AgentRows}
 const SHARED: readonly BrowserSource[] = [
-  {id: 'sets', categories: [{id: 'sets', label: 'Sets', kind: 'material', hint: 'named arrangements of panes, detail and browser'}], Body: SetsRows},
-  {id: 'instruments', categories: [{id: 'instruments', label: 'Instruments', kind: 'instruments', hint: 'open one in a pane'}], Body: InstrumentsRows},
-  {id: 'surfaces', categories: [{id: 'surfaces', label: 'Surfaces', kind: 'instruments', hint: 'sources, hosted surfaces, a terminal, a web page — open in a pane'}], Body: SurfacesRows},
+  {id: 'sets', categories: [{id: 'sets', label: 'Sets', kind: 'material', mark: <Icon name="pane" size={12} />, hint: 'named arrangements of panes, detail and browser'}], Body: SetsRows},
+  {id: 'instruments', categories: [{id: 'instruments', label: 'Instruments', kind: 'instruments', mark: <Icon name="techne" size={12} />, hint: 'open one in a pane'}], Body: InstrumentsRows},
+  {id: 'surfaces', categories: [{id: 'surfaces', label: 'Surfaces', kind: 'instruments', mark: <Icon name="browser" size={12} />, hint: 'sources, hosted surfaces, a terminal, a web page — open in a pane'}], Body: SurfacesRows},
 ]
 
 const grammar = (mode: SurfMode): BrowserSource => ({id: `grammar-${mode}`, categories: modeBrowserCategories(mode), Body: GrammarRows})
