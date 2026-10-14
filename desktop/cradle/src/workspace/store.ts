@@ -47,6 +47,9 @@ export interface Workspace {
   recentPlaces?: WorkspaceRecentPlace[];
   /** Named sets (manual §10.2), newest first. */
   sets?: NamedSet[];
+  /** The widget rail (manual §10.6): one open set for the whole world, so a widget opened in one mode is open in every
+   * mode; each widget's pin; the rail's presets and width. Beside the per-mode trees, never inside them. */
+  widgets?: WidgetRail;
   /** When the person last stood in this workspace (the retention warm set's
    * recency order — surface/retention.tsx keeps the active workspace plus
    * the most recently visited ones warm). Presentation bookkeeping, never
@@ -150,6 +153,59 @@ export function switchWorkspaceMode(workspace: Workspace, next: WorkspaceMode): 
     ...(next === "settings" ? { agencyDepth: "panel", rightDepth: "collapsed", settingsReturnMode: from as Exclude<WorkspaceMode, "settings"> } : {}) };
   const context: WorldContext | undefined = next === "epi-logos" ? { ...workspace.context, world: "epi-logos" } : workspace.context;
   return { ...workspace, layout, modeLayouts: rest, context };
+}
+/** The widget rail's state in the book (manual §10.6). `pinned` holds, per widget, the ref it stopped following at. */
+export interface WidgetRail { open: string[]; pinned?: Record<string, string>; presets?: WidgetPreset[]; width?: number }
+export interface WidgetPreset { id: string; name: string; open: string[]; savedAt: number }
+const WIDGET_LIMIT = 32;
+/** The rail as the book holds it; a world that never touched its rail stands on the shell's defaults. */
+const railOf = (workspace: Workspace, defaults: readonly string[] = []): WidgetRail => workspace.widgets ?? { open: [...defaults] };
+/** Open a widget, or close it (it stays in the launcher). Closing drops its pin. Pure. */
+export function toggleWidget(workspace: Workspace, id: string, defaults: readonly string[] = []): Workspace {
+  const rail = railOf(workspace, defaults);
+  if (rail.open.includes(id)) {
+    const { [id]: _dropped, ...pinned } = rail.pinned ?? {};
+    return { ...workspace, widgets: { ...rail, open: rail.open.filter(held => held !== id), pinned } };
+  }
+  return { ...workspace, widgets: { ...rail, open: [...rail.open, id].slice(-WIDGET_LIMIT) } };
+}
+/** Pin a widget at the ref it shows now (it stops following the selection), or unpin it (`null`). Pure. */
+export function pinWidget(workspace: Workspace, id: string, ref: string | null): Workspace {
+  const rail = railOf(workspace);
+  const { [id]: _was, ...rest } = rail.pinned ?? {};
+  return { ...workspace, widgets: { ...rail, pinned: ref === null ? rest : { ...rest, [id]: ref } } };
+}
+/** Keep the open widgets as a preset (a same-named preset is replaced), newest first. Pure. */
+export function saveWidgetPreset(workspace: Workspace, name: string, id: string = crypto.randomUUID(), savedAt: number = Date.now(), defaults: readonly string[] = []): Workspace {
+  const label = name.trim();
+  if (!label) return workspace;
+  const rail = railOf(workspace, defaults);
+  const preset: WidgetPreset = { id, name: label, open: [...rail.open], savedAt };
+  return { ...workspace, widgets: { ...rail, presets: [preset, ...(rail.presets ?? []).filter(held => held.name !== label)].slice(0, SET_LIMIT) } };
+}
+/** Open exactly a preset's widgets. Pure. */
+export function applyWidgetPreset(workspace: Workspace, id: string): Workspace {
+  const rail = railOf(workspace);
+  const preset = rail.presets?.find(held => held.id === id);
+  return preset ? { ...workspace, widgets: { ...rail, open: [...preset.open], pinned: {} } } : workspace;
+}
+/** The rail's width, bounded as the docks were (260–900). Pure. */
+export function setWidgetRailWidth(workspace: Workspace, width: number): Workspace {
+  return { ...workspace, widgets: { ...railOf(workspace), width: Math.max(260, Math.min(900, Math.round(width))) } };
+}
+function decodeWidgetRail(raw: unknown): WidgetRail | undefined {
+  const o = raw as Record<string, unknown> | null;
+  if (!o || typeof o !== "object" || !Array.isArray(o.open)) return undefined;
+  const ids = (list: unknown): string[] => Array.isArray(list) ? list.flatMap(id => text(id, 128) ? [text(id, 128)!] : []).slice(0, WIDGET_LIMIT) : [];
+  const pinned = o.pinned && typeof o.pinned === "object"
+    ? Object.fromEntries(Object.entries(o.pinned as Record<string, unknown>).flatMap(([id, ref]) => text(id, 128) && text(ref, 2048) ? [[id, text(ref, 2048)!]] : []))
+    : undefined;
+  const presets = Array.isArray(o.presets) ? o.presets.flatMap((entry): WidgetPreset[] => {
+    const p = entry as Record<string, unknown> | null;
+    return p && typeof p === "object" && text(p.id, 128) && text(p.name, 128) && typeof p.savedAt === "number"
+      ? [{ id: text(p.id, 128)!, name: text(p.name, 128)!, open: ids(p.open), savedAt: p.savedAt }] : [];
+  }).slice(0, SET_LIMIT) : undefined;
+  return { open: ids(o.open), ...(pinned ? { pinned } : {}), ...(presets?.length ? { presets } : {}), ...(typeof o.width === "number" ? { width: Math.max(260, Math.min(900, o.width)) } : {}) };
 }
 /** Keep the active mode's arrangement under a name (newest first; a same-named set in the same mode is replaced). Pure. */
 export function saveNamedSet(workspace: Workspace, name: string, id: string = crypto.randomUUID(), savedAt: number = Date.now()): Workspace {
@@ -352,7 +408,7 @@ function restoreWorkspace(w: Workspace, draftPrefix?: string): {workspace: Works
     }));
     // A named set that no longer restores is dropped on its own, never the workspace with it.
     const sets = decodeNamedSets(w.sets, raw => { const before = notes.length; try { return restore(raw); } finally { notes.length = before; } });
-    return {workspace: carryLegacyWriting({ projectNavigation, centralFiles: w.centralFiles === true, id: w.id, name: w.name, project: w.project, writing: w.writing, writingMode: false, layout, modeLayouts, context: decodeWorldContext(w.context), recentPlaces: decodeRecentPlaces(w.recentPlaces), sets, lastVisitedAt: typeof w.lastVisitedAt === "number" ? w.lastVisitedAt : undefined }, draftPrefix), notes};
+    return {workspace: carryLegacyWriting({ projectNavigation, centralFiles: w.centralFiles === true, id: w.id, name: w.name, project: w.project, writing: w.writing, writingMode: false, layout, modeLayouts, context: decodeWorldContext(w.context), recentPlaces: decodeRecentPlaces(w.recentPlaces), sets, widgets: decodeWidgetRail(w.widgets), lastVisitedAt: typeof w.lastVisitedAt === "number" ? w.lastVisitedAt : undefined }, draftPrefix), notes};
   } catch (error) {
     // The record still names itself when its name is readable; its
     // identifier survives only when it is a string no healthy workspace
@@ -551,6 +607,11 @@ export function useWorkspaces(options: WorkspaceStorageOptions = {}) {
   const saveSet = (name: string) => update(w => saveNamedSet(w, name));
   const applySet = (id: string) => update(w => applyNamedSet(w, id));
   const removeSet = (id: string) => update(w => ({ ...w, sets: w.sets?.filter(held => held.id !== id) }));
+  const toggleWidgetOpen = (id: string, defaults: readonly string[] = []) => update(w => toggleWidget(w, id, defaults));
+  const pinWidgetAt = (id: string, ref: string | null) => update(w => pinWidget(w, id, ref));
+  const saveWidgets = (name: string, defaults: readonly string[] = []) => update(w => saveWidgetPreset(w, name, undefined, undefined, defaults));
+  const applyWidgets = (id: string) => update(w => applyWidgetPreset(w, id));
+  const widenWidgets = (width: number) => update(w => setWidgetRailWidth(w, width));
   /** Move THE selection (WorldContext.selection) and record the move on the trail — the one writer every mode uses. */
   const select = (selection: WorldSelection | null) => setContext(context => {
     if (!selection) return { ...context, selection: undefined };
@@ -633,5 +694,5 @@ export function useWorkspaces(options: WorkspaceStorageOptions = {}) {
   };
   const showRecovery=()=>{const saved=latest();if(saved)setRecovery({reason:saved.reason,key:saved.key});else setNotice("There is no retained workspace recovery record on this device.");};
   const error=[quarantine,saveError,notice].filter(Boolean).join(" ")||null;
-  return { flushCheckpoint: flushNow, storageNamespace: namespace, switchMode, saveSet, applySet, removeSet, select, moveSurface, setContext, replaceSurface, surfaceView, surfaceEngine, showRecovery,recovery,reload,startFresh,recoverAvailable, setCentralFiles, rememberPlace, setProjectNavigation, browseAll, windowBounds, redock, dropDetachedEverywhere, current, setWritingMode, workspaces: book.workspaces, setLayout, setWriting, activate, browse, create, rename, error, dismissError: () => { setQuarantine(null); setSaveError(null); setNotice(null); } };
+  return { flushCheckpoint: flushNow, storageNamespace: namespace, switchMode, saveSet, applySet, removeSet, toggleWidgetOpen, pinWidgetAt, saveWidgets, applyWidgets, widenWidgets, select, moveSurface, setContext, replaceSurface, surfaceView, surfaceEngine, showRecovery,recovery,reload,startFresh,recoverAvailable, setCentralFiles, rememberPlace, setProjectNavigation, browseAll, windowBounds, redock, dropDetachedEverywhere, current, setWritingMode, workspaces: book.workspaces, setLayout, setWriting, activate, browse, create, rename, error, dismissError: () => { setQuarantine(null); setSaveError(null); setNotice(null); } };
 }
