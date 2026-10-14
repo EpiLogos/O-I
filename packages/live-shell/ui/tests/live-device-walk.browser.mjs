@@ -10,14 +10,14 @@
  * the three M3 endpoints (tests/support/liveDeviceFixture.mjs — Compressor2
  * + Overdrive + Redux2, the faces the round added).
  *
- * It walks: live mode stands (the audio cut's frame and browser pane), the
- * device detail opens from the status bar's Device toggle, the three faces
- * render their parameter rows (lossless stored values, the stored unit, a
- * row the set does not carry shown as its honest "not stored" state), one
- * parameter is edited through the real POST route (Overdrive Tone → 42)
- * and the round-trip is asserted both on the panel (persisted value +
- * saved mark) and from Node against the fixture owner's own state and POST
- * log.
+ * It walks: live mode stands (its frame, the one browser, the widget rail),
+ * the Device side stands as a chain of plates (one per stored device, read
+ * through the owner's table), each plate pressed shows whole in the pool
+ * with its parameter rows (lossless stored values, the stored unit, a row
+ * the set does not carry standing dark), one parameter is edited through
+ * the real POST route (Overdrive Tone → 42), and the round-trip is asserted
+ * both on the plate (persisted value) and from Node against the fixture
+ * owner's own state and POST log.
  *
  * Run: node tests/live-device-walk.browser.mjs [--evidence <dir>]
  */
@@ -78,61 +78,56 @@ try {
   await page.goto(url, {waitUntil: 'domcontentloaded'})
   await page.waitForSelector('.frame', {timeout: 20000})
 
-  // 1 — live mode stands: the audio cut's frame and its browser pane.
+  // 1 — live mode stands: Live's frame, the one browser, and the widget rail (the registration opens Live with its rail).
   if (await page.locator('.frame.mode-audio').count() === 0) {
-    await page.click('[data-mode="live"]')
+    await page.click('.mode-rail-button[data-mode="live"]')
     await page.waitForSelector('.frame.mode-audio', {timeout: 10000})
   }
-  await page.waitForSelector('.browser-residence:not([hidden]) .browser', {timeout: 15000})
-  step('live mode stands', {detail: 'frame mode-audio, audio BrowserPane resident'})
+  await page.waitForSelector('.browser-residence:not([hidden]) .one-browser', {timeout: 15000})
+  await page.waitForSelector('.frame.mode-audio.dock-open .dock-residence:not([hidden])', {timeout: 10000})
+  step('live mode stands', {detail: 'frame mode-audio, the one browser and the widget rail resident'})
 
-  // 2 — the device detail opens from the status bar's Device toggle; the
-  // chain fills from the fixture set (one tile per stored device).
-  await page.click('button[aria-label="Device"]')
-  await page.waitForSelector('.chain[data-detail-density="device"]', {timeout: 10000})
-  await page.waitForSelector('[data-device-tile="Compressor2"]', {timeout: 20000})
-  const tiles = await page.locator('.device-tile').count()
-  assert.equal(tiles, 3, `one device tile per stored device (got ${tiles})`)
-  step('device detail opens', {detail: `detail-density=device, tiles=3 (Compressor2, Overdrive, Redux2)`})
+  // 2 — the set opens from the browser's Live sets (the configured default set's row), and Live's Device side fills from it:
+  // one plate of the device runtime per stored device, each read through the owner's stored-parameter table
+  // (live/SetDeviceOnChain.tsx).
+  await page.waitForSelector('.detail-host[data-detail-side="device"]', {timeout: 10000})
+  await page.locator('.world-category-list button', {hasText: 'Live sets'}).click()
+  await page.locator(`.world-browser-results .browser-item[title="${FIXTURE_SET_PATH}"]`).click()
+  await page.waitForSelector('[data-chain-device="Compressor2"][data-set-device="owner-table"]', {timeout: 20000})
+  const plates = await page.locator('.detail-host [data-chain-device] > .device--compact').count()
+  assert.equal(plates, 3, `one plate per stored device (got ${plates})`)
+  assert.equal(await page.locator('.detail-host .detail-head').count(), 1, 'one head over the row')
+  assert.equal(await page.locator('.detail-host .dropz').count(), 1, 'the chain ends in the drop zone')
+  step('device side stands', {detail: 'plates=3 (Compressor2, Overdrive, Redux2), one head, the drop zone'})
 
-  // 3 — the three faces render their parameter rows: one control per table
-  // row, lossless stored values, the stored unit, and the honest state for
-  // a row the set does not carry.
-  const panelOf = (element) => page.locator('.devp-panel').filter({has: page.locator(`.devp-device-tag:text-is("${element}")`)})
-  const rowOf = (panel, name) => panel.locator('.devp-row').filter({has: page.locator(`.devp-name:text-is("${name}")`)})
+  // 3 — a plate pressed shows whole in the pool: one control per table row, the lossless stored value, the stored unit, and
+  // the honest state of a row the set does not carry.
+  const plate = element => page.locator(`.detail-host [data-chain-device="${element}"] .sdk-face__head`)
+  const pooled = page.locator('.device-pool .device--whole')
   for (const [element, rows] of [['Compressor2', 8], ['Overdrive', 7], ['Redux2', 6]]) {
-    await panelOf(element).waitFor({timeout: 20000})
-    await page.waitForFunction(([tag, count]) => {
-      const panel = [...document.querySelectorAll('.devp-device-tag')].find(node => node.textContent === tag)?.closest('.devp-panel')
-      return !!panel && panel.querySelectorAll('.devp-row').length === count
-    }, [element, rows], {timeout: 15000})
+    await plate(element).click()
+    await page.waitForFunction(([title, count]) => {
+      const whole = document.querySelector('.device-pool .device--whole')
+      return !!whole && whole.querySelector('.sdk-face__title')?.textContent === title && whole.querySelectorAll('.device-row').length === count
+    }, [{Compressor2: 'Compressor', Overdrive: 'Overdrive', Redux2: 'Redux'}[element], rows], {timeout: 15000})
   }
-  assert.equal(await panelOf('Overdrive').locator('.devp-track-select').inputValue(), FIXTURE_TRACK, 'the bound track is named')
-  await page.waitForFunction(() => {
-    const row = [...document.querySelectorAll('.devp-row')].find(node => node.querySelector('.devp-name')?.textContent === 'Threshold')
-    return !!row && row.querySelector('input.devp-value')?.value === '0.1791548878'
-  }, undefined, {timeout: 15000})
-  const midFreq = rowOf(panelOf('Overdrive'), 'Mid Freq')
-  assert.equal((await midFreq.locator('.devp-unit').textContent()).trim(), 'Hz', 'the stored unit rides the row')
-  const modelRow = rowOf(panelOf('Compressor2'), 'Model')
-  assert.equal(await modelRow.locator('.devp-missing').count(), 1, 'a row the set does not carry shows its honest "not stored" state')
-  step('device faces render rows', {detail: `rows 8+7+6 (Compressor2+Overdrive+Redux2); Threshold=0.1791548878; Mid Freq unit Hz; Model row honest "not stored"`})
+  await plate('Compressor2').click()
+  await page.waitForFunction(() => document.querySelector('.device-pool [data-param="Threshold"] [role="slider"]')?.getAttribute('aria-valuenow') === '0.1791548878', undefined, {timeout: 15000})
+  assert.equal(await pooled.locator('[data-param="Model"] .sdk-enum').isDisabled(), true, 'a row the set does not carry stands dark')
+  await plate('Overdrive').click()
+  await page.waitForFunction(() => /Hz$/.test(document.querySelector('.device-pool [data-param="MidFreq"] .sdk-scalar__value')?.textContent ?? ''), undefined, {timeout: 15000})
+  step('the pool shows each device whole', {detail: 'rows 8+7+6 (Compressor2+Overdrive+Redux2); Threshold=0.1791548878; Mid Freq unit Hz; Model dark'})
 
-  // 4 — the edit: Overdrive Tone 50 → 42 through the real POST route; the
-  // panel shows the value the owner persisted, with the saved mark.
-  const toneRow = rowOf(panelOf('Overdrive'), 'Tone')
-  await toneRow.locator('input.devp-value').dblclick()
-  const edit = toneRow.locator('input.devp-value-input')
+  // 4 — the edit: Overdrive Tone 50 → 42, typed into the pool's knob; the owner's POST answers and the plate on the chain shows
+  // the persisted value.
+  await pooled.locator('[data-param="Tone"] .sdk-scalar__value').click()
+  const edit = pooled.locator('[data-param="Tone"] .sdk-scalar__entry')
   await edit.fill('42')
   await edit.press('Enter')
-  await page.waitForFunction(() => {
-    const row = [...document.querySelectorAll('.devp-row')].find(node => node.querySelector('.devp-name')?.textContent === 'Tone')
-    return !!row && row.querySelector('input.devp-value')?.value === '42' && !!row.querySelector('.devp-status-saved')
-  }, undefined, {timeout: 10000})
-  step('param edit round-trips', {detail: 'Overdrive Tone 50 → 42: POST answered, persisted value shown, saved mark lit'})
+  await page.waitForFunction(() => document.querySelector('.device-pool [data-param="Tone"] [role="slider"]')?.getAttribute('aria-valuenow') === '42', undefined, {timeout: 10000})
+  step('param edit round-trips', {detail: 'Overdrive Tone 50 → 42: POST answered, the persisted value shown in the pool'})
 
-  // 5 — the owner's own state: the POST crossed the wire and the set was
-  // rewritten (Node-side re-read, not the panel's echo).
+  // 5 — the owner's own state: the POST crossed the wire and the set was rewritten (Node-side re-read, not the plate's echo).
   const post = owner.posts.find(row => row.paramId === 'Tone' && row.deviceName === 'Overdrive')
   assert.ok(post, 'the POST reached the owner')
   assert.equal(post.track, FIXTURE_TRACK)
@@ -143,8 +138,7 @@ try {
   step('owner persisted the write', {detail: `POST deviceName=Overdrive paramId=Tone value=42 (track ${FIXTURE_TRACK}); owner re-read Tone=${tone.value}`})
 
   // 6 — the captures: the live frame, and the device detail row itself.
-  const chain = page.locator('.chain[data-detail-density="device"]')
-  await chain.scrollIntoViewIfNeeded()
+  const chain = page.locator('.detail-host[data-detail-side="device"]')
   await page.screenshot({path: join(evidence, 'captures', 'live-device-detail.png')})
   await chain.screenshot({path: join(evidence, 'captures', 'live-device-detail-row.png')})
   step('captures written', {detail: join(evidence, 'captures')})

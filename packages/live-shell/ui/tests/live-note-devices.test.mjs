@@ -45,6 +45,7 @@ const input = await import('../src/live/janko/jankoInput.ts')
 const midi = await import('../src/native/liveMidi.ts')
 const torus = await import('../src/live/torusInstrument.ts')
 const chain = await import('../src/components/DeviceChainPanel.tsx')
+const browserPane = await import('../src/components/BrowserPane.tsx')
 
 const {parseQlMusicModes, resolveModeInForce} = modes
 const {runNoteChain, traceNoteChain, composeInOrder, newNoteDevice, foldPitchClass, scalePlan} = noteDevices
@@ -237,7 +238,7 @@ test('a pointer press and a MIDI note both reach the owner through the same chai
 
 // ── 6 — the chain shows in Live's device chain, before the torus ──────────────
 
-test('the note devices render in the Live device chain before the torus, and the Jankó keyboard after it', () => {
+test('the note devices render in the Live device chain after the keyboard and before the torus, each a plate of the runtime', () => {
   resetNoteDeviceChain()
   addNoteDevice('scale')
   torus.publishLiveTorusState({ok: false, fault: 'test reading'})
@@ -250,11 +251,11 @@ test('the note devices render in the Live device chain before the torus, and the
     const jankoAt = html.indexOf('data-janko-layout=')
     assert.ok(at >= 0, 'the note-device chain is in the Live device chain')
     assert.ok(torusAt > at, 'before the torus')
-    assert.ok(jankoAt > torusAt, 'the keyboard follows the torus, as before')
-    assert.match(html.slice(at), /data-note-device="scale"/, 'the Scale tile is in the chain')
-    assert.match(html.slice(at), /aria-label="Scale tie rule"/, 'the tie parameter shows on the device it moves')
+    assert.ok(jankoAt >= 0 && jankoAt < at, 'the keyboard the notes start from stands before them (manual §10.4: in the order the material passes)')
+    assert.match(html.slice(at), /data-note-device="scale"/, 'the Scale plate is in the chain')
+    assert.match(html.slice(at), /data-device="live:note\/note-device-\d+" data-device-size="compact"/, 'drawn by the device runtime at its compact size')
+    assert.match(html.slice(at), /data-param="tie"><div class="sdk-row sdk-row--tog"><span class="sdk-row__name"[^>]*>Tie<\/span>/, 'the tie parameter shows on the device it moves')
     assert.match(html.slice(at), /Passes notes through/, 'the face says why it passes notes through, with no mode in force')
-    assert.match(html.slice(at), /Held for this session only: the set document has no owner write for a note-device chain yet\./)
     torus.publishLiveTorusState(null)
     const unread = renderToStaticMarkup(createElement(chain.DeviceChainPanel, {ctx, document: null, selection, mode: 'device'}))
     assert.doesNotMatch(unread, /data-note-device-chain=/, 'no note chain without a reading, like the keyboard it feeds')
@@ -266,21 +267,23 @@ test('the note devices render in the Live device chain before the torus, and the
   }
 })
 
-test('the chain face: an empty chain says the notes reach the torus unchanged; a bypassed device says so; the add control names the waiting devices', () => {
+test('the plates: an empty chain draws nothing; a bypassed device says so; the waiting devices are named in the browser, not offered', () => {
   const empty = renderToStaticMarkup(createElement(view.NoteDeviceChainView, {devices: [], mode: aeolianMode()}))
-  assert.match(empty, /No note devices\. Played notes reach the torus unchanged\./)
-  assert.match(empty, /Add note device/)
-  assert.match(empty, />Scale</)
-  assert.match(empty, /Exact-ratio tuning — waiting on its owner/, 'tuning is named, not offered')
-  assert.match(empty, /Sky — waiting on its owner/, 'sky is named, not offered')
-  assert.match(empty, /disabled=""/)
+  assert.equal(empty, '', 'no note device: the notes reach the torus as they were played, and nothing is drawn')
   const bypassed = renderToStaticMarkup(createElement(view.NoteDeviceChainView, {devices: [scale('up', false)], mode: aeolianMode()}))
   assert.match(bypassed, /data-note-device-power="off"/)
+  assert.match(bypassed, /data-device-light="off"/, 'its light reads the hold')
   assert.match(bypassed, /Bypassed: notes pass through unchanged\./)
   const folding = renderToStaticMarkup(createElement(view.NoteDeviceChainView, {devices: [scale('down')], mode: aeolianMode()}))
   assert.match(folding, /data-note-device-reading="fold"/)
   assert.match(folding, /Folds onto aeolian on L0&#x27;, chromatic basis/)
-  assert.match(folding, /<option(?=[^>]*value="down")(?=[^>]*selected="")[^>]*>Down<\/option>/, 'the tie rule shows its value on the device')
+  assert.match(folding, /<button type="button" role="radio" aria-checked="true" class="sdk-seg__opt sdk-seg__opt--on"[^>]*>Down<\/button>/, 'the tie rule shows its value on the device')
+  assert.match(folding, /aria-keyshortcuts="Alt\+ArrowLeft Alt\+ArrowRight Delete"/, 'it moves and comes off the chain as a device does in Live')
+  const browser = renderToStaticMarkup(createElement(browserPane.BrowserPane, {defaultSet: '', ctx: {set: null, loading: false, error: null, openSet() {}}, controlled: {category: 'Chain devices', query: ''}}))
+  assert.match(browser, /data-browser-note-device="scale"/, 'the browser offers the Scale device for the chain')
+  assert.match(browser, /data-browser-note-device-waiting="Exact-ratio tuning"[^>]*title="Exact-ratio tuning is waiting on its owner/, 'tuning is named, not offered')
+  assert.match(browser, /data-browser-note-device-waiting="Sky"/, 'sky is named, not offered')
+  assert.match(browser, /Held for this session only: the set document has no owner write for a note-device chain yet\./)
 })
 
 // ── 7 — sources and wiring: read from the code, labelled as source reading ─────
@@ -297,13 +300,14 @@ test('source reading: the one hook point is the input path\'s transform, applied
   assert.equal(noteDeviceChain().length, 0, 'no device is present until one is added: the chain is empty by default')
 })
 
-test('source reading: Live\'s chain mounts the note devices before the torus, and the clip detail carries none', async () => {
-  const panel = readFileSync(new URL('../src/components/DeviceChainPanel.tsx', import.meta.url), 'utf8')
-  const note = panel.indexOf('<NoteDeviceChain />')
-  const torusAt = panel.indexOf('<TorusOnChain state={torus} />')
-  const jankoAt = panel.indexOf('<JankoDevice />')
-  assert.ok(note > 0 && torusAt > note && jankoAt > torusAt, 'note devices, then the torus, then the keyboard')
-  assert.match(panel, /import \{ NoteDeviceChain \} from '\.\.\/live\/noteDevices\/NoteDeviceChain'/)
+test('source reading: Live\'s chain mounts the keyboard, the note devices, then the torus, and the clip detail carries none', async () => {
+  const chainSource = readFileSync(new URL('../src/live/LiveDeviceChain.tsx', import.meta.url), 'utf8')
+  const jankoAt = chainSource.indexOf('<KeyboardOnChain />')
+  const note = chainSource.indexOf('<NoteDeviceChain />')
+  const torusAt = chainSource.indexOf('<TorusOnChain state={torus} />')
+  assert.ok(jankoAt > 0 && note > jankoAt && torusAt > note, 'the keyboard, then the note devices, then the torus')
+  assert.match(chainSource, /import \{NoteDeviceChain\} from '\.\/noteDevices\/NoteDeviceChain'/)
+  assert.doesNotMatch(readFileSync(new URL('../src/live/LiveClip.tsx', import.meta.url), 'utf8'), /NoteDeviceChain/)
 })
 
 // ── 8 — tokens only; nothing persisted in browser storage; no 12-TET ───────────
