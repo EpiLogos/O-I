@@ -43,6 +43,9 @@
 .clipv .hl2-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
 .clipv .hl2 .r { margin-left: auto; flex: none; color: var(--text-faint); font-size: 9.5px; font-family: var(--mono) }
 .clipv .ccol-none { margin: 0; padding: 4px 10px; font-size: 10.5px; line-height: 1.45; color: var(--text-faint) }
+/* A highlight row's mark (:378 .hl2 .d, the document's highlight colour): a dot in place of the row's lead. */
+.clipv .hl2-lead:has(> .hl2-dot) { min-width: 0; display: flex }
+.clipv .hl2-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--hl) }
 .clipv .ccol-text { margin: 0; padding: 4px 10px; white-space: pre-wrap; font: 10.5px/1.5 var(--mono); color: var(--text-dim) }
 
 /* The chain (world-shell-mockup.html:332 .chain): one row of fixed-width plates on bg-1, gap 6, padding 8, scrolling sideways,

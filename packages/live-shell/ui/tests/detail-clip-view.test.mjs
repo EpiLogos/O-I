@@ -114,7 +114,7 @@ test('Central\'s clip with nothing selected is one line and no body — no devic
   assert.equal(out, '<p class="clip-empty" role="status">Select a document.</p>')
 })
 
-test('Central\'s subject as data: form on the head, file · template · revision · state · bindings, Highlights and Notes in one line each', () => {
+test('Central\'s subject as data: form on the head, file · template · revision · state · bindings, Highlights · Notes · Packet waiting in one line each', () => {
   const out = html(createElement(CentralSubjectClip, {transport: UNAVAILABLE, subject: {kind: 'note', path: 'Control/user/notes/the-stone.md'}}))
   assert.match(out, /data-clip-view="subject:note"/)
   assert.match(out, /class="cph"[^>]*>Note</, 'the document\'s form on the head')
@@ -124,8 +124,11 @@ test('Central\'s subject as data: form on the head, file · template · revision
     assert.match(out, new RegExp(`data-row="${key}"><span>${key}</span><span data-undisclosed="true">—</span>`), `${key}: nothing disclosed before the owner answers`)
   }
   assert.match(out, /Reading the owner…/, 'the read in flight is said once, under the rows')
-  assert.match(out, /<h5>Highlights<\/h5><p class="ccol-none">No highlights reading: the document&#x27;s owner discloses none\.<\/p>/)
-  assert.match(out, /<h5>Notes<\/h5><p class="ccol-none">No notes reading: the document&#x27;s owner discloses none\.<\/p>/)
+  // Moved (ticket H): the columns read the file's own payload once the owner answers (tests/central-clip-payload.test.mjs), so
+  // before it answers they wait instead of saying the owner discloses none.
+  for (const column of ['Highlights', 'Notes', 'Packet']) {
+    assert.match(out, new RegExp(`<h5>${column}</h5><p class="ccol-none">Waiting for the owner&#x27;s reading\\.</p>`), `${column} waits for the owner`)
+  }
 })
 
 test('Central\'s Timeline clips: a conversation names its binding gap; material Central does not own is one line', () => {
