@@ -329,7 +329,7 @@ test('the Workbench door pops out and redocks through the existing window doors;
   assert.doesNotMatch(redock, /book\.redock\(/)
   assert.match(workbench, /publishDeviceWindowHost\(\{/)
   const listener = workbench.slice(workbench.indexOf("'oi:window-redock'"), workbench.indexOf('latest.current.book.redock(id, binding.id)'))
-  assert.match(listener, /binding\.kind === 'device'[\s\S]*book\.dropDetached\(id, binding\.id\)/)
+  assert.match(listener, /binding\.kind === 'device'[\s\S]*book\.dropDetachedEverywhere\(binding\.id\)/)
   assert.doesNotMatch(workbench, /setLayout\(layout => dropDeviceDetached/)
   const frame = await readFile(new URL('../../../../desktop/cradle/src/workspace/DetachedFrame.tsx', import.meta.url), 'utf8')
   const device = frame.indexOf('kind==="device"')

@@ -97,23 +97,33 @@ export function deviceWindowGone(cause: unknown): boolean {
   return DEVICE_WINDOW_GONE.some(message => text.includes(message))
 }
 
-/** The three doors a device pop-out may use. `focusExisting` resolves true when the entry's window answered the focus, and
- * false when no window stands for it. */
+/** The doors a device pop-out may use. `focusExisting` resolves true when a native window stands for the device's binding,
+ * whichever workspace opened it, and false when none does. `recordFocused` gives this workspace its entry for that window
+ * (when it lacks one); `dropStale` drops the entry from every workspace (no window stands, so each is stale). */
 export interface DevicePopOutDoor {
   readonly focusExisting: () => Promise<boolean>
+  readonly recordFocused: () => void
   readonly dropStale: () => void
   readonly detach: () => Promise<void>
 }
 
-/** A device pop-out: an entry that names a live window focuses that window; an entry whose window is gone is dropped, and the
- * device pops out afresh. Without an entry the device simply pops out. Returns what happened. */
-export async function popOutDeviceWindow(hasEntry: boolean, door: DevicePopOutDoor): Promise<'focused' | 'popped-out'> {
-  if (hasEntry) {
-    if (await door.focusExisting()) return 'focused'
-    door.dropStale()
+/** A device pop-out is decided by the native window, never by one workspace's entry: a window that stands for the device is
+ * focused and recorded in this workspace, so a device popped out in one workspace and again in another still has one window.
+ * No window stands: every entry is stale, and the device pops out afresh. Returns what happened. */
+export async function popOutDeviceWindow(door: DevicePopOutDoor): Promise<'focused' | 'popped-out'> {
+  if (await door.focusExisting()) {
+    door.recordFocused()
+    return 'focused'
   }
+  door.dropStale()
   await door.detach()
   return 'popped-out'
+}
+
+/** Whether any of a workspace's layouts (the current layout or a saved mode layout) holds this device's detached entry. */
+export function workspaceHoldsDetached(workspace: {readonly layout: LayoutState; readonly modeLayouts?: object}, surfaceId: string): boolean {
+  const layouts = [workspace.layout, ...Object.values(workspace.modeLayouts ?? {})] as readonly (LayoutState | undefined)[]
+  return layouts.some(layout => !!layout?.detached?.some(entry => entry.surfaceId === surfaceId))
 }
 
 /** A device returning to its rack: its detached entry and binding leave the layout. A device never returns as a centre tab. */
