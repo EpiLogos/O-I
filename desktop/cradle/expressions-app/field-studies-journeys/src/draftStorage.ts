@@ -20,6 +20,7 @@
  * or when the owner kept it. A draft with no recorded base is unknown: it is offered, never quarantined. */
 import {Journey,clone,uid,validateJourney} from './model.js';
 import {mergeTake,type PropertyTrack} from './propertyTracks.js';
+import type {ExpressionRecoveryRequest} from '../../../src/expressions/recoveryTypes';
 export const PAIR_SCHEMA='oi.draft-record/v1';
 export const QUARANTINE_SCHEMA='oi.draft-quarantine/v1';
 /** lane-3 E18: the envelope of one Library document (libraryStore.ts). */
@@ -349,7 +350,72 @@ export interface HostedDraftOwners{
 /** The notice a kept draft shows in the frame's status line: what happened, and where the kept copy is. */
 export function quarantineNotice(reason:'superseded'|'chosen',hosted:boolean):string{
  const what=reason==='superseded'?'An older draft of this Expression was kept aside (not opened); the saved version opened.':'The draft was kept aside (not opened); the saved version opened.';
- return `${what} ${hosted?'Its native draft record is kept, and a verbatim copy is in the Library quarantine of this browser.':'A verbatim copy is in the Library quarantine of this browser.'}`;
+ return `${what} ${hosted?"The verbatim copy is in this Expression's quarantine in the native owner, and its draft record is kept too.":'A verbatim copy is in the Library quarantine of this browser.'}`;
+}
+// ---- E19 (owner quarantine): the native owner keeps each superseded draft of an Expression, verbatim, before the native row is marked kept.
+// The owner's quarantine is one record per Expression (kernel expression_recovery.rs, kind draft_quarantine). Its operations travel the
+// same channel as every recovery request; the transport is injected so the rules here are testable without the desktop host.
+/** One request to the owner's recovery channel. The reply is the owner's answer; each reader checks its shape. */
+export type QuarantineTransport=(request:ExpressionRecoveryRequest)=>Promise<unknown>;
+export interface OwnerQuarantineEntry{id:string;draft_id:string;reason:string;kept_at_unix_ms:number;text:string}
+export interface OwnerQuarantineReading{revision:number|null;entries:OwnerQuarantineEntry[]}
+/** The owner's quarantine for this Expression is full. Nothing was kept, removed or overwritten; the draft row stays as it is. */
+export class OwnerQuarantineFullError extends Error{
+ readonly limit:number;
+ constructor(limit:number){super(`This Expression's kept drafts are full (${limit}).`);this.name='OwnerQuarantineFullError';this.limit=limit;}
+}
+/** The notice an older draft shows when the owner's quarantine is full: the open proceeds on the checkpoint and the draft stays as its draft. */
+export function fullQuarantineNotice(limit:number):string{
+ return `This Expression's kept drafts are full (${limit}); an older draft stays as its draft and was not opened. Remove a kept draft to keep this one aside.`;
+}
+/** The authored material of a kept draft's verbatim text: its keys sorted, without the top-level timestamp and the reserved basis key.
+ * The same draft kept again (its superseded flag set) has the same material, so it is one copy. */
+export function draftMaterialKey(text:string):string{
+ const value=JSON.parse(text) as Record<string,unknown>;delete value.updatedAt;delete value[DRAFT_BASIS_KEY];
+ return JSON.stringify(value,(_key,item)=>item&&typeof item==='object'&&!Array.isArray(item)?Object.fromEntries(Object.keys(item).sort().map(k=>[k,(item as Record<string,unknown>)[k]])):item);
+}
+/** The owner's quarantine for one Expression: its revision (null when none is kept yet) and every kept copy. A reading that does not validate throws. */
+export async function readOwnerQuarantine(send:QuarantineTransport,expressionRef:string,scope:'expressions'|'techne'):Promise<OwnerQuarantineReading>{
+ const reply=await send({operation:'read',scope,kind:'draft_quarantine',id:expressionRef}) as {state?:unknown;record?:{revision?:unknown;value?:{entries?:unknown}}|null}|undefined;
+ if(reply?.state!=='ready')throw new Error('The native owner returned an invalid quarantine reading.');
+ if(!reply.record)return {revision:null,entries:[]};
+ const {revision}=reply.record,entries=reply.record.value?.entries;
+ if(typeof revision!=='number'||!Array.isArray(entries))throw new Error('The native owner returned a quarantine record without its revision or entries.');
+ return {revision,entries:entries.map(entry=>{
+  const e=entry as Partial<OwnerQuarantineEntry>;
+  if(typeof e.id!=='string'||typeof e.draft_id!=='string'||typeof e.reason!=='string'||typeof e.kept_at_unix_ms!=='number'||typeof e.text!=='string')throw new Error('The native owner holds a kept draft that does not validate.');
+  return e as OwnerQuarantineEntry;
+ })};
+}
+/** Keep one draft's verbatim native text in the owner's quarantine. The owner's quarantine is read back BEFORE the caller does anything
+ * else: a copy that is not there, or differs, throws and the draft stays held. A stale basis throws by name, and a full quarantine throws
+ * OwnerQuarantineFullError; in both cases nothing is kept or removed. The same material is kept once. */
+export async function keepOwnerQuarantine(send:QuarantineTransport,kept:{expressionRef:string;scope:'expressions'|'techne';draftId:string;reason:string;text:string}):Promise<{entryId:string;kept:boolean}>{
+ const before=await readOwnerQuarantine(send,kept.expressionRef,kept.scope);
+ const reply=await send({operation:'keep_draft_quarantine',scope:kept.scope,expression_ref:kept.expressionRef,draft_id:kept.draftId,reason:kept.reason,text:kept.text,expected_revision:before.revision}) as {state?:unknown;kept?:unknown;entry_id?:unknown;limit?:unknown}|undefined;
+ if(reply?.state==='revision_conflict')throw new Error('The owner quarantine of this Expression changed while the draft was being kept. Nothing was kept or removed; the draft stays held for the next open.');
+ if(reply?.state==='quarantine_full'){if(typeof reply.limit!=='number')throw new Error('The native owner named a full quarantine without its limit.');throw new OwnerQuarantineFullError(reply.limit);}
+ if(reply?.state!=='quarantine_kept'||typeof reply.entry_id!=='string'||typeof reply.kept!=='boolean')throw new Error('The native owner did not acknowledge the kept draft. The draft stays held.');
+ const after=await readOwnerQuarantine(send,kept.expressionRef,kept.scope);
+ const entry=after.entries.find(row=>row.id===reply.entry_id);
+ if(!entry)throw new Error('The kept draft is not in the native owner quarantine after keeping. The draft stays held.');
+ const same=reply.kept?entry.text===kept.text:draftMaterialKey(entry.text)===draftMaterialKey(kept.text);
+ if(!same)throw new Error('The kept draft in the native owner quarantine differs from the draft. The draft stays held.');
+ return {entryId:reply.entry_id,kept:reply.kept};
+}
+/** Remove one kept draft by its entry identity. Only an explicit request calls this; no draft write, save or open does. A listing that is
+ * no longer current is refused by name and nothing is removed. Returns the entries that remain. */
+export async function removeOwnerQuarantineEntry(send:QuarantineTransport,expressionRef:string,scope:'expressions'|'techne',entryId:string):Promise<number>{
+ const before=await readOwnerQuarantine(send,expressionRef,scope);
+ if(before.revision===null)throw new Error('No kept drafts are quarantined for this Expression. Nothing was removed.');
+ const reply=await send({operation:'remove_draft_quarantine',scope,expression_ref:expressionRef,entry_id:entryId,expected_revision:before.revision}) as {state?:unknown;remaining?:unknown}|undefined;
+ if(reply?.state==='revision_conflict')throw new Error('The kept drafts of this Expression changed since they were listed. Nothing was removed; the list has been read again.');
+ if(reply?.state!=='quarantine_entry_removed'||typeof reply.remaining!=='number')throw new Error('The native owner did not remove the kept draft. Nothing was removed.');
+ return reply.remaining;
+}
+/** The rows the owner's kept drafts are listed by: the draft's name, the owner's reason, the owner's time of keeping and the draft id. */
+export function ownerQuarantineRows(entries:OwnerQuarantineEntry[],now:Date=new Date()):{id:string;name:string;reason:string;when:string;draftId:string}[]{
+ return entries.map(entry=>({id:entry.id,name:quarantinedName(entry.text,entry.draft_id),reason:entry.reason,when:offerClock(new Date(entry.kept_at_unix_ms).toISOString(),now),draftId:entry.draft_id}));
 }
 /** A draft that is not newer than its checkpoint is never adopted, after a clean or an unclean exit. It is kept verbatim in quarantine
  * before the saved copy opens, and a failure to keep it holds the draft and names it: nothing is adopted. A newer draft is offered on an
@@ -361,7 +427,12 @@ export async function settleHostedDraft(draftId:string,row:HostedDraftRow,saved:
  const checkpoint:CheckpointOrder={revision:owners.revision,basis};
  if(supersededDraft({draft,saved,checkpoint})){
   try{await owners.keepDraft({open:saved,quarantineDraft:true,removeDraft:false,quarantineReason:'No edits after its base, and its base is at or behind the saved copy, so the saved copy was opened. The draft is kept here verbatim.'},draft,text);}
-  catch(error){throw new Error(`The draft "${draft.name}" could not be kept in quarantine, so it was neither removed nor opened. It stays held for the next open. ${error instanceof Error?error.message:String(error)}`);}
+  catch(error){
+   // A full quarantine never stops the open: the checkpoint opens, and the draft row is left exactly as it is (not removed, not marked kept).
+   // It is not settled, so the next open after space is freed keeps it.
+   if(error instanceof OwnerQuarantineFullError){owners.requireAdoption();return {kind:'checkpoint',journey:saved,kept:fullQuarantineNotice(error.limit)};}
+   throw new Error(`The draft "${draft.name}" could not be kept in quarantine, so it was neither removed nor opened. It stays held for the next open. ${error instanceof Error?error.message:String(error)}`);
+  }
   owners.requireAdoption();
   owners.settled.add(draftId);
   return {kind:'checkpoint',journey:saved,kept:quarantineNotice('superseded',true)};
@@ -373,7 +444,12 @@ export async function settleHostedDraft(draftId:string,row:HostedDraftRow,saved:
  owners.requireAdoption();
  if(choice==='restore-draft'){owners.settled.add(draftId);return {kind:'draft'};}
  const plan=planRecoveryChoice(choice,draft,saved,new Date());
- await owners.keepDraft({...plan,removeDraft:false},draft,text);
+ try{await owners.keepDraft({...plan,removeDraft:false},draft,text);}
+ catch(error){
+  // The same rule as the superseded path: a full quarantine opens the checkpoint with its notice, and the row is left as it is.
+  if(error instanceof OwnerQuarantineFullError){owners.requireAdoption();return {kind:'checkpoint',journey:saved,kept:fullQuarantineNotice(error.limit)};}
+  throw error;
+ }
  owners.requireAdoption();
  await owners.markDraftKept(draft,basis);
  owners.settled.add(draftId);

@@ -16,6 +16,13 @@ const MAX_RECORDS: usize = 256;
 const MAX_REVISION: u64 = crate::expression::MAX_REVISION;
 const SCHEMA: &str = "oi.expression-recovery/v1";
 const STORAGE_SCHEMA: &str = "oi.expression-recovery-storage/v1";
+/// E19: the kept drafts one Expression may hold. A keep beyond it is refused by
+/// name; the owner never drops a kept copy to make room.
+pub const MAX_QUARANTINE_ENTRIES: usize = 16;
+const QUARANTINE_SCHEMA: &str = "oi.draft-quarantine/v1";
+const MAX_QUARANTINE_REASON_BYTES: usize = 1024;
+/// The reserved key a frame draft carries its checkpoint basis under (draftStorage.ts DRAFT_BASIS_KEY).
+const DRAFT_BASIS_KEY: &str = "draftBasis";
 // Opt-in hosted-proof timings only. The bridge supplies a diagnostic ID;
 // no request field, owner result, admission law or default execution changes.
 thread_local! {
@@ -61,6 +68,11 @@ impl Scope {
 pub enum Kind {
     Draft,
     Checkpoint,
+    /// The owner's quarantined draft copies for one Expression (E19). One record per
+    /// Expression, keyed by its native `expression:` ref. Only the keep and remove
+    /// operations below change it: a draft write, a checkpoint write or a generic
+    /// remove never reaches a kept copy.
+    DraftQuarantine,
     /// A Ta-Onta stage session's authored configuration (O:I #581, PS-C first
     /// vertical): versioned `ql.stage-procedure/v1` procedures, their
     /// contribution-ownership claims, evaluation seeds and determinant
@@ -112,6 +124,28 @@ pub enum Request {
         /// The caller's current live event basis.
         event_ref: String,
     },
+    /// E19: keep a superseded or chosen-aside draft's verbatim native text in the
+    /// owner's quarantine for its Expression. The owner validates the text as a
+    /// draft of `draft_id`, stamps the time and the reason, and writes it
+    /// atomically under `expected_revision` (absent when the Expression has no
+    /// quarantine yet). The same material is kept once: a second keep of it
+    /// answers `kept: false` and writes nothing. A full quarantine refuses by name.
+    KeepDraftQuarantine {
+        scope: Scope,
+        expression_ref: String,
+        draft_id: String,
+        reason: String,
+        text: String,
+        expected_revision: Option<u64>,
+    },
+    /// Remove one kept draft by its entry identity. The only removal of a kept
+    /// copy; it is never reached by a draft write or a save.
+    RemoveDraftQuarantine {
+        scope: Scope,
+        expression_ref: String,
+        entry_id: String,
+        expected_revision: u64,
+    },
 }
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -148,6 +182,9 @@ impl Record {
             {
                 row["expression_ref"] = json!(reference);
             }
+        }
+        if self.kind == Kind::DraftQuarantine {
+            row["entries"] = json!(self.value["entries"].as_array().map_or(0, Vec::len));
         }
         if self.kind == Kind::StageConfiguration {
             for name in ["stage_ref", "subject_ref", "source_revision"] {
@@ -251,6 +288,9 @@ fn validate(kind: Kind, id: &str, value: &Value) -> Result<(), String> {
     }
     if kind == Kind::StageConfiguration {
         return stage_configuration(value);
+    }
+    if kind == Kind::DraftQuarantine {
+        return draft_quarantine(value, id);
     }
     let fields = value
         .as_object()
@@ -641,6 +681,149 @@ fn filename(kind: Kind, id: &str) -> String {
         "{:x}.json",
         Sha256::digest(format!("{kind:?}:{id}").as_bytes())
     )
+}
+
+// --- E19: the owner's draft quarantine -------------------------------------
+//
+// A superseded draft is kept here, verbatim, before its native row is marked
+// kept. Each entry holds the draft's own text, the draft identity it belongs to,
+// the reason it was kept and the owner's time of keeping. The identity of an
+// entry is the digest of its material (the text without the top-level timestamp
+// and the reserved basis key), so one draft kept at several boots is one copy.
+
+/// The authored material of one kept draft: its text without the top-level
+/// timestamp and the reserved basis key. Its digest is the entry identity.
+fn draft_material_digest(value: &Value) -> Result<String, String> {
+    let mut material = value.clone();
+    if let Some(object) = material.as_object_mut() {
+        object.remove("updatedAt");
+        object.remove(DRAFT_BASIS_KEY);
+    }
+    let bytes = serde_json::to_vec(&material).map_err(|e| e.to_string())?;
+    Ok(format!("{:x}", Sha256::digest(&bytes)))
+}
+
+/// A kept draft's verbatim text, read as a draft of `draft_id`: it must parse
+/// without duplicate keys, carry no unsafe property and validate as a Journey.
+fn verbatim_draft(text: &str, draft_id: &str) -> Result<Value, String> {
+    let crate::expression_file::UniqueValue(value) =
+        serde_json::from_str(text).map_err(|e| format!("Kept draft text is not readable: {e}"))?;
+    data(&value, 0)?;
+    journey(&value, draft_id)?;
+    Ok(value)
+}
+
+/// The quarantine record of one Expression. Every entry's identity must be the
+/// digest of its own verbatim text, so a stored entry cannot disagree with its copy.
+fn draft_quarantine(value: &Value, expression_ref: &str) -> Result<(), String> {
+    reference(expression_ref)?;
+    if value["schema"] != QUARANTINE_SCHEMA
+        || value["expression_ref"].as_str() != Some(expression_ref)
+    {
+        return Err("Draft quarantine schema or identity disagrees with its Expression".into());
+    }
+    let entries = value["entries"]
+        .as_array()
+        .ok_or("Draft quarantine has no entry list")?;
+    if entries.len() > MAX_QUARANTINE_ENTRIES {
+        return Err(format!(
+            "Draft quarantine holds more than {MAX_QUARANTINE_ENTRIES} kept drafts"
+        ));
+    }
+    let mut ids = BTreeSet::new();
+    for entry in entries {
+        let id = entry["id"]
+            .as_str()
+            .filter(|id| id.len() == 64 && id.bytes().all(|b| b.is_ascii_hexdigit()))
+            .ok_or("Kept draft has no material identity")?;
+        if !ids.insert(id) {
+            return Err("Draft quarantine holds the same kept draft twice".into());
+        }
+        let draft_id = entry["draft_id"]
+            .as_str()
+            .ok_or("Kept draft has no draft identity")?;
+        safe_id(draft_id)?;
+        let reason = entry["reason"].as_str().unwrap_or_default();
+        if reason.trim().is_empty() || reason.len() > MAX_QUARANTINE_REASON_BYTES {
+            return Err("Kept draft reason is outside its bound".into());
+        }
+        if !entry["kept_at_unix_ms"]
+            .as_u64()
+            .is_some_and(|ms| ms <= MAX_EXACT_JSON_INTEGER)
+        {
+            return Err("Kept draft has no owner time of keeping".into());
+        }
+        let text = entry["text"]
+            .as_str()
+            .ok_or("Kept draft has no verbatim text")?;
+        let draft = verbatim_draft(text, draft_id)?;
+        if draft_material_digest(&draft)? != id {
+            return Err("Kept draft identity disagrees with its verbatim text".into());
+        }
+    }
+    Ok(())
+}
+
+/// Write one record as the next revision: the sequence is allocated first, so a
+/// crash can leave a gap but never reissue a revision. Nothing is written when
+/// the record cannot be encoded or the scope would exceed its bounds.
+#[cfg(unix)]
+fn commit_quarantine(
+    root: &unix::Directory,
+    dir: &unix::Directory,
+    scope: Scope,
+    sequence: &mut u64,
+    expression_ref: &str,
+    previous_exists: bool,
+    value: Value,
+) -> Result<Record, String> {
+    let kind = Kind::DraftQuarantine;
+    let id = expression_ref;
+    let entries = inventory(dir)?;
+    if !previous_exists && entries.len() >= MAX_RECORDS {
+        return Err(
+            "Native recovery scope exceeds 256 records; no retained work was evicted".into(),
+        );
+    }
+    *sequence = sequence
+        .checked_add(1)
+        .filter(|v| *v <= MAX_REVISION)
+        .ok_or("Native recovery revision exhausted")?;
+    let record = Record {
+        schema: SCHEMA.into(),
+        scope,
+        kind,
+        id: id.into(),
+        revision: *sequence,
+        value,
+    };
+    let bytes = encode_record(&record)?;
+    let target = filename(kind, id);
+    let total = entries
+        .iter()
+        .filter(|(name, _)| *name != target)
+        .try_fold(bytes.len(), |total, (_, len)| {
+            total
+                .checked_add(*len)
+                .ok_or("Native recovery size overflow")
+        })?;
+    if total > MAX_SCOPE_BYTES {
+        return Err("Native recovery scope exceeds 64 MiB; no retained work was evicted".into());
+    }
+    root.atomic(
+        ".sequence",
+        &serde_json::to_vec(sequence).map_err(|e| e.to_string())?,
+    )?;
+    dir.atomic(&target, &bytes)?;
+    Ok(record)
+}
+
+#[cfg(unix)]
+fn unix_millis_now() -> Result<u64, String> {
+    let elapsed = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map_err(|e| e.to_string())?;
+    u64::try_from(elapsed.as_millis()).map_err(|_| "Owner clock exceeds its bound".into())
 }
 
 // --- The Ta-Onta stage's retained configuration (O:I #581, PS-C) -----------
@@ -1224,7 +1407,9 @@ impl Store {
             | Request::FindCheckpoint { scope, .. }
             | Request::Write { scope, .. }
             | Request::Remove { scope, .. }
-            | Request::OpenConfiguration { scope, .. } => *scope,
+            | Request::OpenConfiguration { scope, .. }
+            | Request::KeepDraftQuarantine { scope, .. }
+            | Request::RemoveDraftQuarantine { scope, .. } => *scope,
         };
         let dir = root.child(scope.name())?;
         dir.cleanup_pending(MAX_RECORD_BYTES + 2048)?;
@@ -1310,6 +1495,9 @@ impl Store {
                 value,
                 ..
             } => {
+                if kind == Kind::DraftQuarantine {
+                    return Err("Draft quarantine changes only through its keep and remove operations; no draft or record write reaches a kept copy".into());
+                }
                 validate(kind, &id, &value)?;
                 let previous = read_record(&dir, scope, &filename(kind, &id), sequence, true)?;
                 if previous.as_ref().map(|r| r.revision) != expected_revision {
@@ -1364,6 +1552,9 @@ impl Store {
                 expected_revision,
                 ..
             } => {
+                if kind == Kind::DraftQuarantine {
+                    return Err("Draft quarantine is removed one kept draft at a time, by its entry identity; a generic remove never discards it".into());
+                }
                 safe_id(&id)?;
                 let previous = read_record(&dir, scope, &filename(kind, &id), sequence, true)?;
                 if previous.as_ref().map(|r| r.revision) != Some(expected_revision) {
@@ -1379,6 +1570,107 @@ impl Store {
                 )?;
                 dir.remove(&filename(kind, &id))?;
                 Ok(json!({"schema":SCHEMA,"state":"removed","id":id,"revision":sequence}))
+            }
+            Request::KeepDraftQuarantine {
+                expression_ref,
+                draft_id,
+                reason,
+                text,
+                expected_revision,
+                ..
+            } => {
+                reference(&expression_ref)?;
+                safe_id(&draft_id)?;
+                if reason.trim().is_empty() || reason.len() > MAX_QUARANTINE_REASON_BYTES {
+                    return Err("Kept draft reason is outside its bound".into());
+                }
+                let draft = verbatim_draft(&text, &draft_id)?;
+                let entry_id = draft_material_digest(&draft)?;
+                let name = filename(Kind::DraftQuarantine, &expression_ref);
+                let previous = read_record(&dir, scope, &name, sequence, true)?;
+                let current = previous.as_ref().map(|r| r.revision);
+                if current != expected_revision {
+                    return Ok(conflict(current));
+                }
+                let mut entries: Vec<Value> = previous
+                    .as_ref()
+                    .and_then(|r| r.value["entries"].as_array().cloned())
+                    .unwrap_or_default();
+                if entries.iter().any(|entry| entry["id"] == json!(entry_id)) {
+                    // The same material is kept once: nothing is written.
+                    return Ok(
+                        json!({"schema":SCHEMA,"state":"quarantine_kept","kept":false,
+                        "entry_id":entry_id,"revision":current}),
+                    );
+                }
+                if entries.len() >= MAX_QUARANTINE_ENTRIES {
+                    // A full quarantine is a named answer, never an error the open must
+                    // stop on: nothing is kept, removed or overwritten, and the caller
+                    // leaves its draft row exactly as it is.
+                    return Ok(json!({"schema":SCHEMA,"state":"quarantine_full",
+                        "limit":MAX_QUARANTINE_ENTRIES,"kept":entries.len(),"revision":current}));
+                }
+                entries.push(json!({
+                    "id": entry_id,
+                    "draft_id": draft_id,
+                    "reason": reason,
+                    "kept_at_unix_ms": unix_millis_now()?,
+                    "text": text,
+                }));
+                let value = json!({"schema":QUARANTINE_SCHEMA,"expression_ref":expression_ref,"entries":entries});
+                let record = commit_quarantine(
+                    &root,
+                    &dir,
+                    scope,
+                    &mut sequence,
+                    &expression_ref,
+                    previous.is_some(),
+                    value,
+                )?;
+                Ok(
+                    json!({"schema":SCHEMA,"state":"quarantine_kept","kept":true,
+                    "entry_id":entry_id,"revision":record.revision}),
+                )
+            }
+            Request::RemoveDraftQuarantine {
+                expression_ref,
+                entry_id,
+                expected_revision,
+                ..
+            } => {
+                reference(&expression_ref)?;
+                safe_id(&entry_id)?;
+                let name = filename(Kind::DraftQuarantine, &expression_ref);
+                let Some(previous) = read_record(&dir, scope, &name, sequence, true)? else {
+                    return Ok(conflict(None));
+                };
+                if previous.revision != expected_revision {
+                    return Ok(conflict(Some(previous.revision)));
+                }
+                let mut entries: Vec<Value> = previous.value["entries"]
+                    .as_array()
+                    .cloned()
+                    .unwrap_or_default();
+                let before = entries.len();
+                entries.retain(|entry| entry["id"] != json!(entry_id));
+                if entries.len() == before {
+                    return Err("No kept draft with that identity is quarantined for this Expression. Nothing was removed.".into());
+                }
+                let remaining = entries.len();
+                let value = json!({"schema":QUARANTINE_SCHEMA,"expression_ref":expression_ref,"entries":entries});
+                let record = commit_quarantine(
+                    &root,
+                    &dir,
+                    scope,
+                    &mut sequence,
+                    &expression_ref,
+                    true,
+                    value,
+                )?;
+                Ok(
+                    json!({"schema":SCHEMA,"state":"quarantine_entry_removed","entry_id":entry_id,
+                    "remaining":remaining,"revision":record.revision}),
+                )
             }
             Request::OpenConfiguration {
                 scope,
@@ -2610,6 +2902,296 @@ mod tests {
             .unwrap()["record"]
             .is_object());
         assert!(!home.path(Scope::Expressions, Kind::Draft, "extra").exists());
+    }
+
+    /// A kept draft's native text: a draft row with its basis under the reserved
+    /// key. `superseded` is the owner-kept flag a later open re-marks.
+    fn kept_text(draft_id: &str, name: &str, scenes: usize, superseded: bool) -> String {
+        let mut value = draft(draft_id);
+        value["name"] = json!(name);
+        value["scenes"] = Value::Array(
+            (0..scenes)
+                .map(|n| json!({"id": format!("scene-{n}")}))
+                .collect(),
+        );
+        value["draftBasis"] = json!({"schema":"oi.draft-basis/v1","revision":7,"edited":false,
+            "superseded":superseded});
+        serde_json::to_string(&value).unwrap()
+    }
+    fn keep(
+        expression: &str,
+        draft_id: &str,
+        text: &str,
+        expected_revision: Option<u64>,
+    ) -> Request {
+        Request::KeepDraftQuarantine {
+            scope: Scope::Expressions,
+            expression_ref: expression.into(),
+            draft_id: draft_id.into(),
+            reason: "No edits after its base, and its base is at or behind the saved copy.".into(),
+            text: text.into(),
+            expected_revision,
+        }
+    }
+
+    #[test]
+    fn kept_drafts_are_verbatim_once_per_material_and_a_full_quarantine_refuses_by_name() {
+        let home = Home::new();
+        let expression = "expression:quarantine-cap";
+        let text = kept_text("d1", "Draft", 1, false);
+        let first = home
+            .store()
+            .apply(keep(expression, "d1", &text, None))
+            .unwrap();
+        assert_eq!(first["state"], "quarantine_kept");
+        assert_eq!(first["kept"], true);
+        let mut revision = first["revision"].as_u64().unwrap();
+        let read_back = home
+            .store()
+            .apply(read(Scope::Expressions, Kind::DraftQuarantine, expression))
+            .unwrap();
+        let entry = &read_back["record"]["value"]["entries"][0];
+        assert_eq!(entry["text"], json!(text), "the kept text is verbatim");
+        assert_eq!(entry["draft_id"], "d1");
+        assert!(entry["kept_at_unix_ms"].as_u64().unwrap() > 0);
+        assert_eq!(read_back["record"]["revision"], json!(revision));
+
+        // The same material with the owner-kept flag set is one copy: nothing is written.
+        let again = home
+            .store()
+            .apply(keep(
+                expression,
+                "d1",
+                &kept_text("d1", "Draft", 1, true),
+                Some(revision),
+            ))
+            .unwrap();
+        assert_eq!(again["kept"], false);
+        assert_eq!(again["revision"], json!(revision));
+        assert_eq!(again["entry_id"], first["entry_id"]);
+
+        // A stale basis is a conflict and writes nothing.
+        let stale = home
+            .store()
+            .apply(keep(
+                expression,
+                "d2",
+                &kept_text("d2", "Other", 2, false),
+                Some(revision + 9),
+            ))
+            .unwrap();
+        assert_eq!(stale["state"], "revision_conflict");
+
+        // Fill to the bound with distinct material; the next keep is refused by name.
+        for n in 1..MAX_QUARANTINE_ENTRIES {
+            let id = format!("d{}", n + 1);
+            let out = home
+                .store()
+                .apply(keep(
+                    expression,
+                    &id,
+                    &kept_text(&id, &format!("Draft {n}"), n + 1, false),
+                    Some(revision),
+                ))
+                .unwrap();
+            assert_eq!(out["kept"], true);
+            revision = out["revision"].as_u64().unwrap();
+        }
+        let overflow = kept_text("overflow", "Overflow", 3, false);
+        let refused = home
+            .store()
+            .apply(keep(expression, "overflow", &overflow, Some(revision)))
+            .unwrap();
+        assert_eq!(refused["state"], "quarantine_full", "{refused}");
+        assert_eq!(refused["limit"], json!(MAX_QUARANTINE_ENTRIES));
+        assert_eq!(refused["kept"], json!(MAX_QUARANTINE_ENTRIES));
+        let after = home
+            .store()
+            .apply(read(Scope::Expressions, Kind::DraftQuarantine, expression))
+            .unwrap();
+        assert_eq!(after["record"]["revision"], json!(revision));
+        assert_eq!(
+            after["record"]["value"]["entries"]
+                .as_array()
+                .unwrap()
+                .len(),
+            MAX_QUARANTINE_ENTRIES
+        );
+        let listed = home
+            .store()
+            .apply(Request::List {
+                scope: Scope::Expressions,
+                kind: Kind::DraftQuarantine,
+            })
+            .unwrap();
+        assert_eq!(
+            listed["records"][0]["entries"],
+            json!(MAX_QUARANTINE_ENTRIES)
+        );
+    }
+
+    #[test]
+    fn a_draft_write_never_reaches_a_kept_copy_and_only_an_explicit_remove_takes_one() {
+        let home = Home::new();
+        let expression = "expression:quarantine-remove";
+        let kept = home
+            .store()
+            .apply(keep(
+                expression,
+                "d1",
+                &kept_text("d1", "Draft", 1, false),
+                None,
+            ))
+            .unwrap();
+        let entry_id = kept["entry_id"].as_str().unwrap().to_owned();
+        let revision = kept["revision"].as_u64().unwrap();
+
+        // The live draft row and a checkpoint are separate records; writing either leaves the kept copy alone.
+        home.store()
+            .apply(write(
+                Scope::Expressions,
+                Kind::Draft,
+                "d1",
+                None,
+                draft("d1"),
+            ))
+            .unwrap();
+        let untouched = home
+            .store()
+            .apply(read(Scope::Expressions, Kind::DraftQuarantine, expression))
+            .unwrap();
+        assert_eq!(untouched["record"]["revision"], json!(revision));
+        assert_eq!(
+            untouched["record"]["value"]["entries"]
+                .as_array()
+                .unwrap()
+                .len(),
+            1
+        );
+
+        // Generic writes and removes refuse the quarantine kind outright.
+        let write_refused = home
+            .store()
+            .apply(write(
+                Scope::Expressions,
+                Kind::DraftQuarantine,
+                expression,
+                Some(revision),
+                json!({}),
+            ))
+            .unwrap_err();
+        assert!(write_refused.contains("keep and remove"), "{write_refused}");
+        let remove_refused = home
+            .store()
+            .apply(Request::Remove {
+                scope: Scope::Expressions,
+                kind: Kind::DraftQuarantine,
+                id: expression.into(),
+                expected_revision: revision,
+            })
+            .unwrap_err();
+        assert!(
+            remove_refused.contains("one kept draft at a time"),
+            "{remove_refused}"
+        );
+
+        // One entry is removed only by its identity, under the current revision.
+        let remove = |entry: &str, expected: u64| Request::RemoveDraftQuarantine {
+            scope: Scope::Expressions,
+            expression_ref: expression.into(),
+            entry_id: entry.into(),
+            expected_revision: expected,
+        };
+        assert_eq!(
+            home.store().apply(remove(&entry_id, revision + 4)).unwrap()["state"],
+            "revision_conflict"
+        );
+        let absent = home
+            .store()
+            .apply(remove(&"0".repeat(64), revision))
+            .unwrap_err();
+        assert!(absent.contains("Nothing was removed"), "{absent}");
+        let removed = home.store().apply(remove(&entry_id, revision)).unwrap();
+        assert_eq!(removed["state"], "quarantine_entry_removed");
+        assert_eq!(removed["remaining"], 0);
+        let empty = home
+            .store()
+            .apply(read(Scope::Expressions, Kind::DraftQuarantine, expression))
+            .unwrap();
+        assert_eq!(empty["record"]["value"]["entries"], json!([]));
+    }
+
+    #[test]
+    fn a_kept_draft_must_verify_as_its_draft_and_its_stored_identity_must_match_its_text() {
+        let home = Home::new();
+        let expression = "expression:quarantine-verify";
+        // Text that is not a readable draft is refused and nothing is kept.
+        let unreadable = home
+            .store()
+            .apply(keep(expression, "d1", "not a draft", None))
+            .unwrap_err();
+        assert!(unreadable.contains("not readable"), "{unreadable}");
+        // A draft of another identity, or a draft with no Scene, is refused.
+        let other = home
+            .store()
+            .apply(keep(
+                expression,
+                "d1",
+                &kept_text("d9", "Other", 1, false),
+                None,
+            ))
+            .unwrap_err();
+        assert!(other.contains("disagrees"), "{other}");
+        let no_scene = home
+            .store()
+            .apply(keep(
+                expression,
+                "d1",
+                &kept_text("d1", "Empty", 0, false),
+                None,
+            ))
+            .unwrap_err();
+        assert!(no_scene.contains("Scene count"), "{no_scene}");
+        let blank_reason = home
+            .store()
+            .apply(Request::KeepDraftQuarantine {
+                scope: Scope::Expressions,
+                expression_ref: expression.into(),
+                draft_id: "d1".into(),
+                reason: "  ".into(),
+                text: kept_text("d1", "Draft", 1, false),
+                expected_revision: None,
+            })
+            .unwrap_err();
+        assert!(blank_reason.contains("reason"), "{blank_reason}");
+        assert!(home
+            .store()
+            .apply(read(Scope::Expressions, Kind::DraftQuarantine, expression))
+            .unwrap()["record"]
+            .is_null());
+
+        // A stored entry whose identity is not the digest of its text is refused on every read.
+        let kept = home
+            .store()
+            .apply(keep(
+                expression,
+                "d1",
+                &kept_text("d1", "Draft", 1, false),
+                None,
+            ))
+            .unwrap();
+        let mut value = home
+            .store()
+            .apply(read(Scope::Expressions, Kind::DraftQuarantine, expression))
+            .unwrap()["record"]["value"]
+            .clone();
+        assert_eq!(value["entries"][0]["id"], kept["entry_id"]);
+        value["entries"][0]["id"] = json!("0".repeat(64));
+        let tampered = validate(Kind::DraftQuarantine, expression, &value).unwrap_err();
+        assert!(
+            tampered.contains("disagrees with its verbatim text"),
+            "{tampered}"
+        );
     }
 }
 

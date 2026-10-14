@@ -3,7 +3,9 @@ import {blueprintMember} from './blueprintGeometry.js';
 import {installNativeField} from "./nativeField";
 import {announceInstrument} from "./native-field/ql/instrumentAnnouncement.mjs";
 import "./native-field/liveCut.css";
-import {SESSION_KEY,SessionState,validateSession,writeDraft,readDraft,readDrafts,removeDraft,applyRecoveryPlan,quarantineView,restoreQuarantinedDraft} from './recovery';
+import {SESSION_KEY,SessionState,validateSession,writeDraft,readDraft,readDrafts,removeDraft,applyRecoveryPlan,quarantineView,restoreQuarantinedDraft,listOwnerQuarantine,removeOwnerKeptDraft,restoreOwnerKeptDraft} from './recovery';
+import {ownerQuarantineRows} from './draftStorage';
+import type {OwnerQuarantineSection} from './expressions';
 // lane-3 E17-E19: one draft scheduler, the draft/saved offer and the session mark.
 import {DraftSchedule,draftStatusLine} from './draftSchedule';
 import {recoveryOffer,supersededDraft,recoveryDiffLines,planRecoveryChoice,mergeTakeIntoDraft,readUncleanExit,markSessionOpen,markSessionClosed,offerClock,recordBootExit,quarantineNotice,type RecoveryChoice,type RecoveryDiff} from './draftStorage';
@@ -1295,8 +1297,29 @@ function rememberCover(){try{engine.render(frameData(0));if(!engine.capture)retu
 let coverObserver:IntersectionObserver|null=null;
 /** T-REVIEW-6: reads the quarantined drafts for the Library section. The section fills when the read lands; a message names the last restore's outcome. */
 function refreshQuarantine(message?:string){void quarantineView().then(view=>{quarantineState={rows:view.rows,unreadable:view.unreadable,message};if(libraryOpen)renderLibrary();}).catch(()=>undefined);}
+// E19: the native owner's kept drafts for the open Expression, listed beside the browser quarantine. A listing carries the address it was read
+// from, so Restore and Remove always act on the listing the person saw.
+type OwnerListing={address:{expressionRef:string;scope:'expressions'|'techne'};rows:ReturnType<typeof ownerQuarantineRows>;message?:string;error?:string};
+let ownerListing:OwnerListing|null=null;
+let ownerListingPending=false;
+function refreshOwnerQuarantine(message?:string){
+ const address=nativeWorkspace?.ownerQuarantineAddress()??null;
+ if(!address){ownerListing=null;if(libraryOpen)renderLibrary();return;}
+ ownerListingPending=true;
+ void listOwnerQuarantine(address.expressionRef,address.scope)
+  .then(reading=>{ownerListing={address,rows:ownerQuarantineRows(reading.entries),message};})
+  .catch(cause=>{ownerListing={address,rows:[],error:`The native owner could not read the kept drafts of this Expression. ${cause instanceof Error?cause.message:String(cause)}`};})
+  .finally(()=>{ownerListingPending=false;if(libraryOpen)renderLibrary();});
+}
+/** The owner section for the Library, or nothing when no native Expression is open. A listing for another Expression is read again first, never shown. */
+function ownerQuarantineView():OwnerQuarantineSection|undefined{
+ const address=nativeWorkspace?.ownerQuarantineAddress()??null;
+ if(!address)return undefined;
+ if(!ownerListing||ownerListing.address.expressionRef!==address.expressionRef||ownerListing.address.scope!==address.scope){if(!ownerListingPending)refreshOwnerQuarantine();return undefined;}
+ return {rows:ownerListing.rows,message:ownerListing.message,error:ownerListing.error};
+}
 function renderLibrary(){coverObserver?.disconnect();const library=readLibraryDetailed(),scroll=$('library-page').scrollTop;const saved=Array.from(new Map([...library.journeys,...sessionExpressions.values()].map(j=>[j.id,j])).values());
- $('library-page').innerHTML=libraryHTML({current:store.document,saved,featured,starters,section:librarySection,errors:library.blocked?['Browser storage is unavailable here. Export an expression to keep a portable copy.']:library.errors,legacy:hasLegacyLibrary(),quarantine:quarantineState,standing:subjectStandingFor(),bins:collectionBins,collectionFilter:libraryCollectionFilter,cover:j=>covers.get(j.id)});$('library-page').scrollTop=scroll;
+ $('library-page').innerHTML=libraryHTML({current:store.document,saved,featured,starters,section:librarySection,errors:library.blocked?['Browser storage is unavailable here. Export an expression to keep a portable copy.']:library.errors,legacy:hasLegacyLibrary(),quarantine:quarantineState,ownerQuarantine:ownerQuarantineView(),standing:subjectStandingFor(),bins:collectionBins,collectionFilter:libraryCollectionFilter,cover:j=>covers.get(j.id)});$('library-page').scrollTop=scroll;
  const documents=new Map([...featured,...saved,store.document,...starters.map(p=>p.expression)].map(j=>[j.id,j]));
  const paint=(image:HTMLImageElement)=>{const j=documents.get(image.dataset.previewId!);if(j){image.src=compositionCover(j.scenes[0]);image.removeAttribute('data-preview-id');}};
  const images=$('library-page').querySelectorAll<HTMLImageElement>('img[data-preview-id]');
@@ -1306,7 +1329,7 @@ function renderLibrary(){coverObserver?.disconnect();const library=readLibraryDe
 function openLibrary(section:'collection'|'about'='collection',navigate=true){if(propertyTake)finishPropertyTake();
  wikiStanding.begin(); // E21: a refusal is not kept across opens; each subject is asked once more in this open.
  if(!libraryOpen)rememberCover();
- pointer.active=false;modesOpen=false;captureOpen=false;librarySection=section;libraryOpen=true;refreshQuarantine();refreshCollections();
+ pointer.active=false;modesOpen=false;captureOpen=false;librarySection=section;libraryOpen=true;refreshQuarantine();refreshOwnerQuarantine();refreshCollections();
  if(recorder.active){recorder.stop();toast('Recording stopped before opening the library.');}
  if(navigate)try{history.pushState({oiLibrary:true},'', '#library'+(section==='about'?'/about':''));}catch{}
  renderAll();$('library-page').focus({preventScroll:true});
@@ -1572,6 +1595,10 @@ async function action(name:string,el:HTMLElement,event?:Event){const s=scene(),s
  case 'native-recover':engine.command?.({type:'recover-context'});recovery.hidden=true;needsFrame=true;break;
  case 'export-quarantine':{const row=quarantineState.rows.find(r=>r.id===el.dataset.id);if(row){download(new Blob([row.raw],{type:'application/json'}),slug(row.name)+'.quarantined.json');toast('Quarantined draft exported exactly as it was kept.');}break;}
  case 'restore-quarantine':{const id=el.dataset.id!;void restoreQuarantinedDraft(id).then(copy=>{refreshQuarantine(`Restored as a Library copy: ${copy.name}`);toast('Restored as a Library copy.');}).catch(cause=>refreshQuarantine(cause instanceof Error?cause.message:String(cause)));break;}
+ // E19: the owner's kept draft becomes a Library copy by the same path as the browser quarantine; the kept draft stays where it is.
+ case 'restore-owner-kept':{const id=el.dataset.id!,address=ownerListing?.address;if(!address)break;void restoreOwnerKeptDraft(address.expressionRef,address.scope,id).then(copy=>{refreshOwnerQuarantine(`Restored as a Library copy: ${copy.name}`);refreshQuarantine();toast('Restored as a Library copy.');}).catch(cause=>refreshOwnerQuarantine(cause instanceof Error?cause.message:String(cause)));break;}
+ // E19: removing a kept draft is an explicit, confirmed request. Nothing else calls the owner's remove.
+ case 'remove-owner-kept':{const id=el.dataset.id!,row=ownerListing?.rows.find(r=>r.id===id),address=ownerListing?.address;if(!row||!address)break;confirmChange('Remove this kept draft?',`The kept copy "${row.name}" (${row.reason}) is removed from this Expression's quarantine in the native owner. Nothing else is removed: the saved copy and the open Expression stay as they are.`,()=>{void removeOwnerKeptDraft(address.expressionRef,address.scope,row.id).then(remaining=>refreshOwnerQuarantine(`Removed. ${remaining} kept ${remaining===1?'draft remains':'drafts remain'}.`)).catch(cause=>refreshOwnerQuarantine(cause instanceof Error?cause.message:String(cause)));});break;}
  case 'delete-saved':{const id=el.dataset.id!;confirmChange('Remove this saved copy?','Only this understood saved expression is removed. Other saved and unreadable entries are retained. The active expression remains open.',()=>{removeFromLibrary(id);deletedLibraryIds.add(id);void removeDraft(id).catch(error);if(store.document.id===id)draftSchedule.cancel();sessionExpressions.delete(id);covers.delete(id);renderLibrary();});break;}
 
  case 'edit':edit(!inspectorOpen,selectedEntity()?'objects':'field');break;
@@ -2833,7 +2860,7 @@ function askRecoveryChoice(draft:Journey,offer:{draftAt:string;savedAt:string;re
   const dialog=document.createElement('dialog');
   dialog.className='confirm-dialog recovery-dialog';dialog.setAttribute('aria-labelledby','recovery-title');
   const now=new Date(),basis=offer.revision===undefined?'Browser copy (no kernel revision)':`Kernel revision ${offer.revision}`;
-  dialog.innerHTML=`<p class="eyebrow">THE LAST SESSION DID NOT CLOSE CLEANLY</p><h2 id="recovery-title">Unsaved edits in “${esc(draft.name)}”</h2><p class="intro">The draft has changes that the saved copy does not have. Whichever you choose, both versions are kept.</p><dl class="recovery-basis"><dt>Draft</dt><dd>${esc(offerClock(offer.draftAt,now))}</dd><dt>Saved copy</dt><dd>${esc(offerClock(offer.savedAt,now))}</dd><dt>Revision</dt><dd>${esc(basis)}</dd></dl>${offer.diff?`<ul class="recovery-diff" aria-label="What the draft changes">${recoveryDiffLines(offer.diff).map(line=>`<li>${esc(line)}</li>`).join('')}</ul>`:''}<div class="recovery-choices"><button class="secondary" data-choice="keep-saved">Keep saved version</button><button class="secondary" data-choice="keep-both">Keep both</button><button class="primary" data-choice="restore-draft">Restore draft</button></div>`;
+  dialog.innerHTML=`<p class="eyebrow">THE LAST SESSION DID NOT CLOSE CLEANLY</p><h2 id="recovery-title">Unsaved edits in “${esc(draft.name)}”</h2><p class="intro">The draft has changes that the saved copy does not have. Whichever you choose, both versions are kept.</p><dl class="recovery-basis"><dt>Draft</dt><dd>${esc(offerClock(offer.draftAt,now))}</dd><dt>Saved copy</dt><dd>${offer.revision===undefined?esc(offerClock(offer.savedAt,now)):'Owner save time not recorded'}</dd><dt>Revision</dt><dd>${esc(basis)}</dd></dl>${offer.diff?`<ul class="recovery-diff" aria-label="What the draft changes">${recoveryDiffLines(offer.diff).map(line=>`<li>${esc(line)}</li>`).join('')}</ul>`:''}<div class="recovery-choices"><button class="secondary" data-choice="keep-saved">Keep saved version</button><button class="secondary" data-choice="keep-both">Keep both</button><button class="primary" data-choice="restore-draft">Restore draft</button></div>`;
   dialog.addEventListener('click',ev=>{const button=(ev.target as Element).closest<HTMLButtonElement>('button[data-choice]');if(button)dialog.close(button.dataset.choice);});
   dialog.addEventListener('cancel',()=>{dialog.returnValue='keep-both';});
   dialog.addEventListener('close',()=>{const choice=dialog.returnValue as RecoveryChoice;dialog.remove();resolve(choice==='restore-draft'||choice==='keep-saved'||choice==='keep-both'?choice:'keep-both');});

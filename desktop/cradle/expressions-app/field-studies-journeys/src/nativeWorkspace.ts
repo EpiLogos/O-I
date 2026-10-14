@@ -7,7 +7,7 @@ import {clone,type Journey} from './model.js';
 import {NativeWorking,type NativeCheckpoint,type NativeFile,type NativeWorkingRecord,type WorkingSnapshot} from './nativeWorking.js';
 import {kernelExpressionsAvailable,listKernelExpressions,readKernelExpression,nativeExpressionRequest,nativeFileRequest,documentToChanges,type KernelChange} from './kernelExpressions.js';
 import type {KernelSaveAnchor} from './store.js';
-import {readWorkingCheckpoint,readWorkingDraft,readBoundWorkingDraft,acceptWorkingRecoveryBasis,writeWorkingCheckpoint,writeDraft,applyRecoveryPlan,readDraftRow,draftRowBasis,draftRowText,markNativeDraftKept} from './recovery.js';
+import {readWorkingCheckpoint,readWorkingDraft,readBoundWorkingDraft,acceptWorkingRecoveryBasis,writeWorkingCheckpoint,writeDraft,keepHostedDraft,readDraftRow,draftRowBasis,draftRowText,markNativeDraftKept} from './recovery.js';
 // lane-3 E19b: the hosted recovery choice uses the same offer and plan as the browser boot.
 import {settleHostedDraft,bootWasUnclean,draftBasis,type RecoveryChoice} from './draftStorage.js';
 import type {RecoveryRecord} from '../../../src/expressions/recoveryTypes';
@@ -193,7 +193,7 @@ const recoveryOffered=new Set<string>();
   const row=found.recoveryRecords?.find(item=>item.kind==='draft')??await readDraftRow(draftId);
   if(!row)return found;
   const revision=found.record.view?.document.revision??0;
-  const settled=await settleHostedDraft(draftId,{journey:found.journey,basis:draftRowBasis(row),text:draftRowText(row)},saved,{hosted:true,uncleanBoot:bootWasUnclean(),settled:recoveryOffered,revision,chooseRecovery:host.chooseRecovery,requireAdoption:()=>requireAdoption(current),keepDraft:(plan,draft,text)=>applyRecoveryPlan(plan,draft,text),markDraftKept:(draft,basis)=>markNativeDraftKept(draft,basis,revision,row.scope)});
+  const settled=await settleHostedDraft(draftId,{journey:found.journey,basis:draftRowBasis(row),text:draftRowText(row)},saved,{hosted:true,uncleanBoot:bootWasUnclean(),settled:recoveryOffered,revision,chooseRecovery:host.chooseRecovery,requireAdoption:()=>requireAdoption(current),keepDraft:(plan,draft,text)=>{const expressionRef=found.record.view?.document.expression_ref;if(!expressionRef)throw new Error('The native owner did not name this Expression, so its draft could not be kept. The draft stays held.');return keepHostedDraft(plan,draft,text,{scope:row.scope,expressionRef,draftId});},markDraftKept:(draft,basis)=>markNativeDraftKept(draft,basis,revision,row.scope)});
   if(settled.kind==='draft')return found;
   heldDrafts.add(draftId);
   if(settled.kept)keptNotice=settled.kept;
@@ -440,6 +440,13 @@ const recoveryOffered=new Set<string>();
    status(`Saved and read back ${file.location.path}.${host.version()!==version?' Newer local edits are still unsaved.':''}`);
   });},
   persistDraft,
+  /** The owner's quarantine address of the open native Expression: its ref, and the scope its recovery records are kept in. Null outside the hosted frame or with no native work open. */
+  ownerQuarantineAddress:():{expressionRef:string;scope:'expressions'|'techne'}|null=>{
+   if(!hostedRecovery())return null;
+   const expressionRef=work.state?.view?.document.expression_ref;
+   if(!expressionRef)return null;
+   return {expressionRef,scope:selectedRecovery(expressionRef)?.scope??hostedScope()};
+  },
   status:()=>update(),
   open:requestOpen,
   cancelOpen:()=>{opens.cancel();update();},

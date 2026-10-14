@@ -10,6 +10,9 @@ import {TransportState,validateTransport} from '../../src/engine/transportState'
 import {validateWorkingTransport,type WorkingTransport} from './transport';
 // lane-3 E18/E19: the standalone draft records, their quarantine and the boot choice.
 import {readLibrary,saveToLibrary,setLibraryQuarantine} from './store.js';
+// lane-3 E19 (owner quarantine): the native owner keeps each superseded draft of an Expression before its native row is marked kept.
+import {nativeRecoveryRequest} from './kernelExpressions.js';
+import {keepOwnerQuarantine,readOwnerQuarantine,removeOwnerQuarantineEntry,type QuarantineTransport,type OwnerQuarantineReading} from './draftStorage.js';
 import {type KeyStore,type RecordLayout,type RecoveryPlan,type DraftBasis,DRAFT_BASIS_SCHEMA,draftValue,splitDraftValue,loadRecord,loadRecords,writeRecord,removeRecord,quarantine,listQuarantine,readPair,quarantinedCopy,quarantinedName,offerClock} from './draftStorage.js';
 export const SESSION_KEY='oi.expression-session.v1';
 export interface SessionState {version:1;journeyId:string;sceneId:string;selected:string[];stepIndex:number;sceneElapsed:number;simTime:number;playing:boolean;journeyPlaying:boolean;camera:Camera;transport?:TransportState;workingTransport?:WorkingTransport;scenePlaying?:boolean;fieldPaused?:boolean}
@@ -111,14 +114,25 @@ export async function quarantineView(now:Date=new Date()){
  const {records,unreadable}=await listQuarantinedDrafts();
  return {rows:records.map(r=>({id:r.id,key:r.key,name:quarantinedName(r.raw,r.key),reason:r.reason,when:offerClock(r.at,now),raw:r.raw})),unreadable};
 }
+/** A quarantined draft's verbatim text as a Library copy: written and read back. The quarantined record it came from stays where it is. */
+function saveQuarantinedCopy(raw:string):Journey{
+ const copy=quarantinedCopy(raw,new Date());
+ saveToLibrary(copy);
+ if(!readLibrary().some(row=>row.id===copy.id))throw new Error('The browser Library did not keep the restored copy. The quarantined draft was retained.');
+ return copy;
+}
 /** Restore one quarantined draft as a Library copy. The copy is written and read back; the quarantined record stays where it is. */
 export async function restoreQuarantinedDraft(id:string):Promise<Journey>{
  const {records}=await listQuarantinedDrafts();const record=records.find(r=>r.id===id);
  if(!record)throw new Error('That quarantined draft is no longer stored.');
- const copy=quarantinedCopy(record.raw,new Date());
- saveToLibrary(copy);
- if(!readLibrary().some(row=>row.id===copy.id))throw new Error('The browser Library did not keep the restored copy. The quarantined draft was retained.');
- return copy;
+ return saveQuarantinedCopy(record.raw);
+}
+/** Restore one of the owner's kept drafts as a Library copy: the same path as the browser quarantine, from the owner's verbatim text. The owner's kept copy stays where it is. */
+export async function restoreOwnerKeptDraft(expressionRef:string,scope:RecoveryScope,entryId:string):Promise<Journey>{
+ const reading=await listOwnerQuarantine(expressionRef,scope);
+ const entry=reading.entries.find(row=>row.id===entryId);
+ if(!entry)throw new Error('That kept draft is no longer in the owner quarantine. Nothing was restored.');
+ return saveQuarantinedCopy(entry.text);
 }
 /** Carry out one boot choice. A copy is saved and read back before the draft is removed; a quarantined draft is kept verbatim before removal. */
 export async function applyRecoveryPlan(plan:RecoveryPlan,draft:Journey,verbatim?:string):Promise<void>{
@@ -148,6 +162,25 @@ export async function markNativeDraftKept(journey:Journey,basis:DraftBasis|undef
  const kept:DraftBasis={schema:DRAFT_BASIS_SCHEMA,revision:basis?.revision??revision,edited:basis?.edited??true,superseded:true};
  await nativeWrite('draft',journey.id,draftValue(validateJourney(journey),kept),scope??draftRecoveryAddress(journey.id).scope);
 }
+/** The owner's quarantine channel: the same expression_recovery requests as every recovery record (kinds and operations in recoveryTypes.ts). */
+const ownerQuarantine:QuarantineTransport=request=>nativeRecoveryRequest(request);
+/** The reason a kept draft is listed under in the owner's quarantine: the plan's own reason, or a default that names which choice kept it. */
+function keptReason(plan:RecoveryPlan):string{
+ if(plan.quarantineReason)return plan.quarantineReason;
+ return plan.quarantineDraft?'Set aside by the owner\'s choice after an unclean exit; the saved copy opened. The draft is kept here verbatim.'
+  :'Kept as a Library copy by the owner\'s choice after an unclean exit; the saved copy opened. The draft is kept here verbatim.';
+}
+/** E19 (owner quarantine): a hosted kept draft is kept in the owner's quarantine for its Expression first, and that copy is read back before
+ * anything else happens. Only then do the webview copies follow (the quarantine and the Library copy, as before). A failure throws before any
+ * webview copy is written, so nothing is removed or adopted. The native draft row is never removed here. */
+export async function keepHostedDraft(plan:RecoveryPlan,draft:Journey,text:string,owner:{scope:RecoveryScope;expressionRef:string;draftId:string}):Promise<void>{
+ await keepOwnerQuarantine(ownerQuarantine,{expressionRef:owner.expressionRef,scope:owner.scope,draftId:owner.draftId,reason:keptReason(plan),text});
+ await applyRecoveryPlan({...plan,removeDraft:false},draft,text);
+}
+/** The owner's quarantine for one Expression: every kept draft, verbatim, with its reason and the owner's time of keeping. Listing reads only. */
+export function listOwnerQuarantine(expressionRef:string,scope:RecoveryScope):Promise<OwnerQuarantineReading>{return readOwnerQuarantine(ownerQuarantine,expressionRef,scope);}
+/** Remove one kept draft from the owner's quarantine, on an explicit request only. Returns the entries that remain. */
+export function removeOwnerKeptDraft(expressionRef:string,scope:RecoveryScope,entryId:string):Promise<number>{return removeOwnerQuarantineEntry(ownerQuarantine,expressionRef,scope,entryId);}
 
 /** Read only the host-selected checkpoint address. A same-ref duplicate is
  * not permission to choose another scope, revision or authoring draft. */
