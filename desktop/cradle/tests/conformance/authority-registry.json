@@ -274,6 +274,12 @@
     },
     {
       "owner": "src-tauri/src/continuity_admission.rs",
+      "operation": "std::fs::read_dir",
+      "rationale": "Candidate continuity admission (LEGACY-CRADLE-RETIREMENT §4.1): checks whether an admission directory is an empty interrupted claim (nothing published under it), so it is not read as pending; never WebKit storage.",
+      "spec_ref": "desktop/cradle/docs/world-shell/LEGACY-CRADLE-RETIREMENT.md §4.1"
+    },
+    {
+      "owner": "src-tauri/src/continuity_admission.rs",
       "operation": "std::fs::symlink_metadata",
       "rationale": "Candidate continuity admission (LEGACY-CRADLE-RETIREMENT §4.1): reads the owner-admitted adoption record from the candidate's own data home and records its one-time apply; never WebKit storage.",
       "spec_ref": "desktop/cradle/docs/world-shell/LEGACY-CRADLE-RETIREMENT.md §4.1"

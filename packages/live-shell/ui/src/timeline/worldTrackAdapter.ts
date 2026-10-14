@@ -12,7 +12,15 @@
 //
 // Pure TypeScript. No React, no family names.
 
-import type {StandingReading} from '../../../../../desktop/cradle/src/techne/m0m5/timeline/standing';
+/** A clip's standing as the one standing authority reads it: the visual class
+ * it is drawn with, the owner's verbatim word (null when none), and the rule
+ * that chose the class. Declared structurally so this contract names no
+ * family; the timeline spine fills it from the authority. */
+export interface ClipStandingReading {
+  visual: 'sourced' | 'derived' | 'authored' | 'disputed' | 'mythic' | 'unavailable';
+  verbatim: string | null;
+  rule: string;
+}
 
 export interface WorldTrackColumn {
   id: string;
@@ -42,11 +50,11 @@ export interface WorldTrackClip {
   // The family's own stated word, kept verbatim (legacy; the presentation
   // draws from `standing`, never from this word).
   state?: string;
-  // The clip's standing, read by the one authority (standingOf in
-  // desktop/cradle/src/techne/m0m5/timeline/standing.ts). Adapters compute it
+  // The clip's standing, read by the one standing authority (the spine's
+  // eventStanding / readStanding call it). Adapters compute it
   // from the source's own disclosed fields; the presentation only draws it.
   // Absent means nothing was disclosed for this clip.
-  standing?: StandingReading;
+  standing?: ClipStandingReading;
 }
 
 // A transport take exposed by a family. Takes belong to the Transport stratum
