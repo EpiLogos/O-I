@@ -1,0 +1,49 @@
+# channel: scripted (accessibility tree), no interaction; pid 20095; 2026-10-14T08:31:34Z; settled=yes at 1690 elements
+# AXIsProcessTrusted: true
+window: O-I Shell Candidate
+AXStaticText | value: Native host · revision 94f52764271b | title:  | description:  | help: 
+# windows: 1
+# web areas: 2
+# elements visited: 1690
+# owner readback (status region) searched in the same window:
+# AXIsProcessTrusted: true
+window: O-I Shell Candidate
+AXGroup | value:  | title: — / — | description:  | help: Signature — the set's time signature · not disclosed by the document
+AXTextField | value: — | title: Global groove amount | description: Global groove amount | help: Groove amount not disclosed
+AXGroup | value:  | title: Owners named by the host: 6 admitted of 6. | description: Owners named by the host: 6 admitted of 6. | help: Owners named by the host: 6 admitted of 6.
+AXStaticText | value: 6 of 6 owners admitted | title:  | description:  | help: 
+AXStaticText | value: admitted | title:  | description:  | help: 
+AXStaticText | value: admitted | title:  | description:  | help: 
+AXStaticText | value: admitted | title:  | description:  | help: 
+AXStaticText | value: admitted | title:  | description:  | help: 
+AXStaticText | value: admitted | title:  | description:  | help: 
+AXStaticText | value: admitted | title:  | description:  | help: 
+# windows: 1
+# web areas: 2
+# elements visited: 1690
+# owner-discovery words searched in the same window:
+# AXIsProcessTrusted: true
+window: O-I Shell Candidate
+AXGroup | value:  | title: — . — . — | description:  | help: Position — bars . beats . sixteenths · native transport position unavailable
+AXGroup | value:  | title: — kHz | description:  | help: Rate — the engine's sample rate · unavailable
+AXGroup | value:  | title: — % | description:  | help: CPU — the engine's CPU load · unavailable
+AXCheckBox | value:  | title: Workbench | description: Workbench | help: Native sources, sessions and registered contribution bodies in the continuity workspace
+AXStaticText | value: awaiting M3 edit API | title:  | description:  | help: 
+AXStaticText | value: awaiting M3 edit API | title:  | description:  | help: 
+AXGroup | value:  | title: Unavailable — native acknowledgement timed out; not retried | description:  | help: 
+AXStaticText | value: Unavailable — native acknowledgement timed out; not retried | title:  | description:  | help: 
+AXStaticText | value: Native recovery was not adopted: No host-selected native recovery address is attached | title:  | description:  | help: 
+AXStaticText | value: No clip is selected. Select a clip in Session (a clip slot) or Arrangement (a clip on a lane) — the clip's readings open here read-only; editing waits for the document owner. | title:  | description:  | help: 
+AXStaticText | value: awaiting M3 edit API | title:  | description:  | help: 
+AXStaticText | value: awaiting M3 edit API | title:  | description:  | help: 
+AXStaticText | value: awaiting M3 edit API | title:  | description:  | help: 
+AXStaticText | value: awaiting M3 edit API | title:  | description:  | help: 
+AXStaticText | value: awaiting M3 edit API | title:  | description:  | help: 
+AXStaticText | value: awaiting M3 edit API | title:  | description:  | help: 
+AXStaticText | value: awaiting M3 edit API | title:  | description:  | help: 
+AXStaticText | value: awaiting M3 edit API | title:  | description:  | help: 
+AXStaticText | value: awaiting M3 edit API | title:  | description:  | help: 
+AXStaticText | value: awaiting M3 edit API | title:  | description:  | help: 
+# windows: 1
+# web areas: 2
+# elements visited: 1690
