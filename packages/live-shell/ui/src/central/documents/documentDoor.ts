@@ -57,3 +57,10 @@ export function documentStateWords({pending, dirty, save, blocked}: {pending: bo
   if (dirty) return 'edited since save'
   return outcomeLabel(save) ?? 'as read'
 }
+
+/** A revision as the head shows it (the mockup's `r7`): the owner's content digest, short — the CAS form
+ * `central.content-fnv1a64/v1:<length>:<digest>` reads as its digest's first eight, never the scheme's prefix. */
+export function revisionShort(revision: string): string {
+  const digest = revision.includes(':') ? revision.slice(revision.lastIndexOf(':') + 1) : revision
+  return digest.slice(0, 8)
+}
