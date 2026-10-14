@@ -1,12 +1,11 @@
 name: Technē constructive field
 
+# The legacy everyday desktop is frozen while its replacement (the candidate
+# shell, packages/live-shell) is built, so this workflow no longer runs on pull
+# requests or pushes. desktop.yml gates the replacement; any of these tests
+# that reaches a file the candidate imports runs there in the shared engine
+# suite (packages/live-shell/ui/scripts/test-engine.mjs). Dispatch to run it.
 on:
-  pull_request:
-    paths:
-      - 'desktop/cradle/**'
-      - 'packages/**'
-      - '.wayfinder/maps/techne-constructive-evidence.md'
-      - '.github/workflows/techne-constructive-field.yml'
   workflow_dispatch:
 
 permissions:

@@ -1,12 +1,12 @@
 name: Configuration setup and recovery
+# The legacy everyday desktop is frozen while its replacement (the candidate
+# shell, packages/live-shell) is built, so this workflow no longer runs on pull
+# requests or pushes. desktop.yml gates the replacement; any of these tests
+# that reaches a file the candidate imports runs there in the shared engine
+# suite (packages/live-shell/ui/scripts/test-engine.mjs). Dispatch to run it.
 on:
-  pull_request:
-    paths:
-      - 'desktop/cradle/src/configuration/**'
-      - 'desktop/cradle/tests/configuration-setup.test.mjs'
-      - 'desktop/cradle/walk/configuration-setup.test.mjs'
-      - '.github/workflows/configuration-setup.yml'
   workflow_dispatch:
+
 permissions:
   contents: read
 concurrency:

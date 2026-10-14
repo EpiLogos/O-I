@@ -1,10 +1,12 @@
 name: Central desktop source walk
+# The legacy everyday desktop is frozen while its replacement (the candidate
+# shell, packages/live-shell) is built, so this workflow no longer runs on pull
+# requests or pushes. desktop.yml gates the replacement; any of these tests
+# that reaches a file the candidate imports runs there in the shared engine
+# suite (packages/live-shell/ui/scripts/test-engine.mjs). Dispatch to run it.
 on:
-  push:
-    branches: [agent/w2-central-day-source-20260920]
-    paths: ['desktop/cradle/**', 'docs/OI-DESKTOP-CONTINUOUS-WORK-WAYFINDER.md', '.github/workflows/central-desktop-source-walk.yml']
-  pull_request:
-    paths: ['desktop/cradle/**', 'docs/OI-DESKTOP-CONTINUOUS-WORK-WAYFINDER.md', '.github/workflows/central-desktop-source-walk.yml']
+  workflow_dispatch:
+
 permissions:
   contents: read
 defaults:

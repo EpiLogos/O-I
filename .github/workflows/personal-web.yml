@@ -1,14 +1,12 @@
 name: Personal Web reference forms
+# The legacy everyday desktop is frozen while its replacement (the candidate
+# shell, packages/live-shell) is built, so this workflow no longer runs on pull
+# requests or pushes. desktop.yml gates the replacement; any of these tests
+# that reaches a file the candidate imports runs there in the shared engine
+# suite (packages/live-shell/ui/scripts/test-engine.mjs). Dispatch to run it.
 on:
-  pull_request:
-    paths:
-      - 'desktop/cradle/documents/**'
-      - 'desktop/cradle/src/personal/**'
-      - 'desktop/cradle/src/flow/documentForms.ts'
-      - 'desktop/cradle/tests/personal-web*'
-      - 'desktop/cradle/package.json'
-      - '.github/workflows/personal-web.yml'
   workflow_dispatch:
+
 permissions:
   contents: read
 jobs:

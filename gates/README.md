@@ -43,14 +43,26 @@ node gates/run.mjs landing --skip site-contracts --keep-going --json
 
 ## Tiers
 
-- **landing** — the correctness floor, minutes, serialised: source-marker
-  guard, rust format/clippy/kernel tests/hosted contracts, suite-data
-  collation, tsc, the full node suite, conformance, appearance battery,
-  the browser contracts that have caught real regressions, the production
-  build, and the site/publication contract tests. **Required before push.**
-- **walks** — the acceptance walks and wide browser batteries. Required when
-  the change touches shell, walk scenarios, or spans surfaces; their
-  receipts are committed evidence.
+- **landing** — the correctness floor, minutes, serialised. It gates the
+  desktop being built, plus the CLI and site:
+  - the conflict-marker guard;
+  - rust format, clippy, kernel tests and hosted contracts;
+  - suite-data collation;
+  - the three TS roots (candidate, shared engine, hosted frame);
+  - the candidate suite;
+  - the shared engine suite (the `desktop/cradle` tests that reach a file the
+    candidate imports);
+  - conformance, the frame suite and the Expressions boundary;
+  - the production builds;
+  - five browser contracts over candidate-reachable components;
+  - the live-* crates;
+  - the site and publication contract tests.
+
+  The legacy everyday desktop is frozen and gated by nothing. **Required
+  before push.**
+- **walks** — empty since 2026-10-14: the legacy desktop's walks retired with
+  it. The candidate is verified on screen with computer use; a candidate walk
+  joins here when one exists.
 - **ci-only** — owner-checkout builds, embedded/native suites, live
   SpaceTimeDB, evidence packaging, release targets. CI's job; never faked
   locally.

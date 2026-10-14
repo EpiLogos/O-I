@@ -27,9 +27,12 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
-          cache-dependency-path: desktop/cradle/package-lock.json
+          cache-dependency-path: |
+            desktop/cradle/package-lock.json
+            desktop/cradle/expressions-app/package-lock.json
+            packages/live-shell/ui/package-lock.json
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -41,6 +44,9 @@ jobs:
           workspaces: |
             cli
             desktop/cradle/kernel
+            packages/live-dynamics
+            packages/live-set
+            packages/live-shell
       - name: Install the browser engines used by the declared landing gates
         run: |
           npm ci --prefix desktop/cradle --no-audit --no-fund

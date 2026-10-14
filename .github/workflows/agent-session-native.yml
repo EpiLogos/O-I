@@ -1,9 +1,12 @@
 name: Agent session native
+# The legacy everyday desktop is frozen while its replacement (the candidate
+# shell, packages/live-shell) is built, so this workflow no longer runs on pull
+# requests or pushes. desktop.yml gates the replacement; any of these tests
+# that reaches a file the candidate imports runs there in the shared engine
+# suite (packages/live-shell/ui/scripts/test-engine.mjs). Dispatch to run it.
 on:
-  push:
-    branches: [agent/native-agent-session-20260920]
-  pull_request:
-    paths: ['desktop/cradle/src/agency/**', 'desktop/cradle/src/encounter/**', 'desktop/cradle/src/agent/**', 'desktop/cradle/kernel/**', 'desktop/cradle/tests/agent-native-*', '.github/workflows/agent-session-native.yml']
+  workflow_dispatch:
+
 permissions:
   contents: read
 jobs:

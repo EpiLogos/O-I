@@ -1,17 +1,12 @@
 name: Adoption lifecycle
+# The legacy everyday desktop is frozen while its replacement (the candidate
+# shell, packages/live-shell) is built, so this workflow no longer runs on pull
+# requests or pushes. desktop.yml gates the replacement; any of these tests
+# that reaches a file the candidate imports runs there in the shared engine
+# suite (packages/live-shell/ui/scripts/test-engine.mjs). Dispatch to run it.
 on:
-  push:
-    branches: [agent/adoption-lifecycle-20260920]
-  pull_request:
-    paths:
-      - '.github/workflows/adoption-lifecycle.yml'
-      - 'cli/**'
-      - 'desktop/cradle/src/configuration/**'
-      - 'desktop/cradle/src/workspace/settings/v2/SystemHome.tsx'
-      - 'desktop/cradle/kernel/**'
-      - 'desktop/cradle/tests/*adoption*'
-      - 'desktop/cradle/walk/*adoption*'
-      - 'scripts/*adoption*'
+  workflow_dispatch:
+
 permissions:
   contents: read
 concurrency:

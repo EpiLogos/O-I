@@ -1,12 +1,11 @@
 name: Search material rendering
 
+# The legacy everyday desktop is frozen while its replacement (the candidate
+# shell, packages/live-shell) is built, so this workflow no longer runs on pull
+# requests or pushes. desktop.yml gates the replacement; any of these tests
+# that reaches a file the candidate imports runs there in the shared engine
+# suite (packages/live-shell/ui/scripts/test-engine.mjs). Dispatch to run it.
 on:
-  pull_request:
-    paths:
-      - 'desktop/cradle/src/knowledge/**'
-      - 'desktop/cradle/tests/search-*'
-      - 'packages/oi-design-system/**'
-      - '.github/workflows/search-material.yml'
   workflow_dispatch:
 
 permissions:
