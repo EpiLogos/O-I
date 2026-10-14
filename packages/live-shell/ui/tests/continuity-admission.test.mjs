@@ -234,7 +234,7 @@ test('a write that fails midway is a named failure, and no confirm is sent', asy
   assert.equal(outcome.status, 'failed')
   assert.match(outcome.reason, /could not be applied/)
   assert.equal(outcome.written, 2, 'the two non-book records landed before the book failed: a partial write, so the workspace is held')
-  assert.match(outcome.reason, /2 admitted record\(s\) were written/)
+  assert.match(outcome.reason, /2 admitted record\(s\) are in place but the rest are not/)
   assert.equal(confirmations.length, 0)
 })
 
@@ -267,7 +267,7 @@ test('a snapshot copy that no longer matches its record is refused before any wr
   assert.equal(outcome.status, 'failed')
   assert.match(outcome.reason, /does not match its record/)
   assert.equal(store.writes.length, 0, 'a mismatched snapshot stops the apply before any write')
-  assert.equal(outcome.written, 0)
+  assert.equal(outcome.written, 3, 'the earlier run left every admitted record in place: the namespace is not as it was, so the start holds')
 })
 
 test('status reports name the outcome once and stay silent when nothing was offered', () => {
@@ -282,4 +282,36 @@ test('the startup gate holds only after a partial write, and the hold offers the
   assert.match(source, /outcome\.status === 'failed' && outcome\.written > 0 && !startWithout/)
   assert.match(source, /data-action="start-without-admission"/)
   assert.match(source, /written: 0, reason: `The owner-admitted continuity could not start/)
+})
+
+test('a retry after a partial write still holds: the records an earlier run left in place count, though this run wrote none', async () => {
+  const store = new FakeStore()
+  store.failOn = (key) => key === NS
+  const first = await applyPendingAdmission(deps(store, await verified()))
+  assert.equal(first.status, 'failed')
+  assert.equal(first.written, 2)
+  store.writes.length = 0
+  const second = await applyPendingAdmission(deps(store, await verified()))
+  assert.equal(second.status, 'failed')
+  assert.equal(store.writes.length, 0, 'the retry skipped the records already in place')
+  assert.equal(second.written, 2, 'the namespace is partial, so the workspace stays held')
+  assert.doesNotMatch(second.reason, /nothing admitted was written/)
+})
+
+test('after a start without the admission, the next start refuses and says it needs a fresh owner-replace admission', async () => {
+  const store = new FakeStore()
+  store.failOn = (key) => key === NS
+  await applyPendingAdmission(deps(store, await verified()))
+  store.failOn = null
+  store.setItem(NS, OLD_BOOK) // the candidate, started without the admission, writes its own workspace book
+  const next = await applyPendingAdmission(deps(store, await verified()))
+  assert.equal(next.status, 'refused')
+  assert.match(next.reason, /admit it again with --owner-replace/)
+})
+
+test('the startup read is bounded, so a read that never answers does not hold the start', async () => {
+  const {readFile} = await import('node:fs/promises')
+  const source = await readFile(new URL('../src/continuity/workspace.tsx', import.meta.url), 'utf8')
+  assert.match(source, /read: \(\) => withinReadBound\(tauriInvoke<PendingAdmission>\('live_shell_continuity_pending'/)
+  assert.match(source, /const ADMISSION_READ_BOUND_MS = 15000/)
 })

@@ -158,7 +158,13 @@ export async function applyVerifiedAdmission(
     const present = keysOf(store).filter(key => key.startsWith(CANDIDATE_PREFIX) || targets.has(key))
     const conflicts = present.filter(key => targets.get(key)?.text !== store.getItem(key))
     if (admission.apply_policy === POLICY_EMPTY) {
-      if (conflicts.length) return refuse(`The candidate namespace already holds ${conflicts.length} key(s) (first: ${conflicts[0]}); the admission applies only to an empty namespace. Nothing is written.`)
+      if (conflicts.length) {
+        // Part of this admission already in place means it was started without, after a partial apply: the candidate has
+        // since written its own data, so this admission can no longer apply as made.
+        const partial = admission.records.some(record => store.getItem(record.target_key) === record.text)
+        const again = partial ? ' Part of this admission is already in place from an earlier start that went ahead without it; to apply it now, admit it again with --owner-replace.' : ''
+        return refuse(`The candidate namespace already holds ${conflicts.length} key(s) (first: ${conflicts[0]}); the admission applies only to an empty namespace. Nothing is written.${again}`)
+      }
     } else if (admission.apply_policy === POLICY_PRESERVE) {
       if (!admission.owner_replace) return refuse('The admission applies over existing candidate data only with owner-replace; nothing is written.')
     } else {
@@ -179,8 +185,13 @@ export async function applyVerifiedAdmission(
     }
     return {status: 'applied', admission: admission.admission, records: admission.records.length, written, preserved, confirmed: false}
   } catch (error) {
+    // Count what an earlier, interrupted run left in place too: a retry skips those records, so this run's own writes
+    // can be zero while the namespace already holds part of the admission. Either way the namespace is partial.
+    let inPlace = 0
+    try { inPlace = admission.records.filter(record => store.getItem(record.target_key) === record.text).length } catch { /* unreadable store: count this run's writes only */ }
+    written = Math.max(written, inPlace)
     const where = written
-      ? `${written} admitted record(s) were written before it stopped; the next start re-verifies and retries`
+      ? `${written} admitted record(s) are in place but the rest are not; the next start re-verifies and retries`
       : 'nothing admitted was written, so the workspace is as it was; the next start retries'
     return {status: 'failed', admission: admission.admission, written, reason: `The admitted continuity could not be applied (${messageOf(error)}): ${where}.`}
   }
