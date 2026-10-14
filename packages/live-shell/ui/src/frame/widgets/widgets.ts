@@ -5,11 +5,30 @@
 import type {ComponentType, ReactElement} from 'react'
 import type {IconName} from '../../inhabitants/sdk/Icon'
 
+/** What an open body read, handed up so the rail can wear it: the count in the tile's head and the live miniature in the
+ * launcher cell (world-shell-mockup.html `.tile`, `.lcell .pv`). Only what the body's owner disclosed — a body that reads
+ * nothing hands up nothing, and its cell keeps the widget's designed mark. */
+export interface WidgetGlance {
+  /** The owner's count of what the widget holds (the packet's items, the trail's stops). */
+  count?: number
+  /** A word for the count or the reading's standing, under the cell's name ("open" is the rail's own). */
+  status?: string
+  /** The reading's first lines, drawn at preview scale in the launcher cell. */
+  lines?: readonly WidgetGlanceLine[]
+}
+export interface WidgetGlanceLine {
+  /** A short faint lead (a time, a size, a speaker). */
+  lead?: string
+  text: string
+}
+
 export interface WidgetBodyProps {
   /** The subject the widget shows: the ref it was pinned at, else THE selection's ref; null when nothing is selected. */
   subject: string | null
   /** Pinned: it no longer follows the selection. */
   pinned: boolean
+  /** Hand the rail what the body read (null when it reads nothing). The rail clears it when the widget closes. */
+  glance?: (glance: WidgetGlance | null) => void
 }
 
 export interface WidgetDeclaration {
@@ -19,6 +38,8 @@ export interface WidgetDeclaration {
   mark: IconName | ReactElement
   /** A one-line hint of what it holds, for its launcher cell. */
   hint?: string
+  /** A name that follows the world (the agent of the mode in front of you): drawn in the head and the cell for `name`. */
+  Name?: ComponentType
   Body: ComponentType<WidgetBodyProps>
 }
 
@@ -39,3 +60,7 @@ export interface WidgetRailBook {
   applyPreset(id: string): void
   widen(width: number): void
 }
+
+/** Two glances are the same reading when they draw the same: the rail keeps the held one, so a body may hand up every render. */
+export const sameGlance = (a: WidgetGlance | null | undefined, b: WidgetGlance | null | undefined): boolean =>
+  JSON.stringify(a ?? null) === JSON.stringify(b ?? null)

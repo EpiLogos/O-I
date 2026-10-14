@@ -109,7 +109,7 @@ test('the dock: each mode’s companion is its own — Epii on Technē, Anima on
 
 test('the dock: the agents tile reads the agency surface — and discloses its absence honestly', () => {
   const out = html(createElement(ModeContextDock, {mode: 'live', world: null, transport: UNAVAILABLE, subject: null, initialOpen: ['agents']}))
-  assert.ok(out.includes('mode-dock-rows'), 'the agents tile renders its rows body')
+  assert.ok(out.includes('mode-dock-lines'), 'the agents tile renders its lines body (the mockup\'s agents rows)')
   assert.ok(out.includes('carrier is unavailable'), 'with no carrier the tile discloses the absence — never a fake row (a light is a reading, so no light is drawn)')
   assert.ok(!out.includes('mode-dock-row-light'), 'no illuminated lie: an unknown state has no lit indicator')
 })

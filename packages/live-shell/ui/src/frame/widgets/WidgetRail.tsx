@@ -1,18 +1,38 @@
 // The one widget rail (FOUNDATION F8): every widget the world registers, one open set for the whole world held in the
 // book (open a terminal in Factory and it is still there in Central), each widget's pin, the launcher at the bottom and the
 // rail's presets. It knows no mode: the frame hands it the registered widgets and the book.
-import {useState, type PointerEvent as ReactPointerEvent} from 'react'
+//
+// Drawn to the mockup's right column (world-shell-mockup.html `.tilesh` 140, `.tiles` 141, `.tile`/`.tlh`/`.tlb` 142–145,
+// `.launch`/`.lh`/`.lgrid`/`.lcell`/`.pv` 379–387): the open widgets as tiles under one head, each tile's head its mark, its
+// name, the count its owner disclosed and the pin and close marks; below, the launcher's two columns of cells, each a live
+// miniature of what the open widget read (its glance) or, with no reading standing, the widget's designed mark.
+import {useCallback, useRef, useState, type PointerEvent as ReactPointerEvent} from 'react'
 import type {ReactNode} from 'react'
 import {Icon} from '../../inhabitants/sdk/Icon'
-import type {WidgetDeclaration, WidgetRailBook} from './widgets'
+import {sameGlance, type WidgetDeclaration, type WidgetGlance, type WidgetRailBook} from './widgets'
 
 export function WidgetRail({widgets, book, selectionRef}: {widgets: readonly WidgetDeclaration[]; book: WidgetRailBook; selectionRef: string | null}) {
   const [needle, setNeedle] = useState('')
   const [naming, setNaming] = useState<string | null>(null)
+  const [glances, setGlances] = useState<Readonly<Record<string, WidgetGlance>>>({})
+  // One stable hand per widget, so a body's glance effect runs only when its reading changes.
+  const hands = useRef(new Map<string, (glance: WidgetGlance | null) => void>())
+  const handOf = useCallback((id: string) => {
+    let hand = hands.current.get(id)
+    if (!hand) {
+      hand = glance => setGlances(held => {
+        if (sameGlance(held[id], glance)) return held
+        const {[id]: _gone, ...rest} = held
+        return glance ? {...rest, [id]: glance} : rest
+      })
+      hands.current.set(id, hand)
+    }
+    return hand
+  }, [])
   const byId = new Map(widgets.map(widget => [widget.id, widget]))
   const open = book.rail.open.map(id => byId.get(id)).filter((widget): widget is WidgetDeclaration => widget !== undefined)
   const query = needle.trim().toLocaleLowerCase()
-  const launcher = widgets.filter(widget => !query || widget.name.toLocaleLowerCase().includes(query))
+  const launcher = widgets.filter(widget => !query || widget.name.toLocaleLowerCase().includes(query) || widget.hint?.toLocaleLowerCase().includes(query))
   const drag = (event: ReactPointerEvent) => {
     const startX = event.clientX, startWidth = book.rail.width ?? 300
     const move = (moved: PointerEvent) => book.widen(startWidth + (startX - moved.clientX))
@@ -29,32 +49,43 @@ export function WidgetRail({widgets, book, selectionRef}: {widgets: readonly Wid
       {open.map(widget => {
         const pinnedAt = book.rail.pinned?.[widget.id] ?? null
         const Body = widget.Body
+        const count = glances[widget.id]?.count
         return <section key={widget.id} className="mode-dock-tile" data-widget={widget.id} data-pinned={pinnedAt !== null || undefined}>
           <header className="mode-dock-tile-head">
-            <span className="mode-dock-tile-mark">{markOf(widget, 12)}</span>
-            <span className="mode-dock-tile-name">{widget.name}</span>
+            <span className="mode-dock-tile-mark">{markOf(widget, 11)}</span>
+            <span className="mode-dock-tile-name">{nameOf(widget)}</span>
+            {count !== undefined && <span className="mode-dock-tile-count" data-count={count}>{count}</span>}
             <span className="mode-dock-tile-marks">
               <button type="button" aria-pressed={pinnedAt !== null} aria-label={`Pin ${widget.name}`}
-                title={pinnedAt !== null ? `Pinned at ${pinnedAt} — press to follow the selection again.` : 'Pin — stop following the selection; keep this view.'}
-                onClick={() => book.pin(widget.id, pinnedAt !== null ? null : selectionRef ?? '')}>⌖</button>
+                title={pinnedAt !== null ? `Pinned at ${pinnedAt || 'nothing selected'} — press to follow the selection again.` : 'Pin — stop following the selection; keep this view.'}
+                onClick={() => book.pin(widget.id, pinnedAt !== null ? null : selectionRef ?? '')}><Icon name={pinnedAt !== null ? 'placed' : 'follow'} size={11} /></button>
               <button type="button" aria-label={`Close ${widget.name}`} title="Close — it stays in the launcher." onClick={() => book.toggle(widget.id)}>✕</button>
             </span>
           </header>
-          <div className="mode-dock-tile-body"><Body subject={pinnedAt !== null ? pinnedAt || null : selectionRef} pinned={pinnedAt !== null} /></div>
+          <div className="mode-dock-tile-body"><Body subject={pinnedAt !== null ? pinnedAt || null : selectionRef} pinned={pinnedAt !== null} glance={handOf(widget.id)} /></div>
         </section>
       })}
     </div>
     <section className="mode-dock-launch" aria-label="Launcher">
       <div className="mode-dock-launch-head">
-        <input type="search" value={needle} onChange={event => setNeedle(event.target.value)} placeholder="Open a widget…" aria-label="Open a widget" />
+        <span className="mode-dock-launch-mark" aria-hidden="true"><Icon name="plus" size={11} /></span>
+        <input type="search" value={needle} onChange={event => setNeedle(event.target.value)} placeholder="Open a widget… agent, packet, trail, terminal" aria-label="Open a widget" />
       </div>
       <div className="mode-dock-launch-grid">
         {launcher.map(widget => {
           const isOpen = book.rail.open.includes(widget.id)
+          const glance = isOpen ? glances[widget.id] : undefined
           return <button key={widget.id} type="button" className={`mode-dock-cell${isOpen ? ' open' : ''}`} aria-pressed={isOpen} data-launch={widget.id}
+            data-preview={glance?.lines?.length ? 'reading' : 'mark'}
             title={`${widget.name}${widget.hint ? ` — ${widget.hint}` : ''}. ${isOpen ? 'Close it above.' : 'Open it above.'}`} onClick={() => book.toggle(widget.id)}>
-            <span className="mode-dock-cell-preview" aria-hidden="true">{markOf(widget, 17)}</span>
-            <span className="mode-dock-cell-name">{widget.name}{isOpen && <span className="mode-dock-cell-dot" aria-label="open" />}</span>
+            <span className="mode-dock-cell-preview" aria-hidden="true">{glance?.lines?.length
+              ? <span className="mode-dock-cell-lines">{glance.lines.slice(0, 7).map((line, index) => <span key={index}>{line.lead && <i>{line.lead}</i>}{line.text}</span>)}</span>
+              : <span className="mode-dock-cell-mark">{markOf(widget, 24)}</span>}</span>
+            <span className="mode-dock-cell-name">
+              <span className="mode-dock-cell-glyph" aria-hidden="true">{markOf(widget, 10)}</span>
+              <span className="mode-dock-cell-label">{nameOf(widget)}</span>
+              {isOpen ? <small aria-label="open">open</small> : glance?.status ? <small>{glance.status}</small> : null}
+            </span>
           </button>
         })}
       </div>
@@ -74,3 +105,4 @@ export function WidgetRail({widgets, book, selectionRef}: {widgets: readonly Wid
 }
 
 const markOf = (widget: WidgetDeclaration, size: number): ReactNode => typeof widget.mark === 'string' ? <Icon name={widget.mark} size={size} /> : widget.mark
+const nameOf = (widget: WidgetDeclaration): ReactNode => { const Name = widget.Name; return Name ? <Name /> : widget.name }

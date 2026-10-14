@@ -1,35 +1,25 @@
-import {useEffect, useState, type ReactElement} from 'react'
+import {useEffect, useState} from 'react'
 import {kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
-import {CutIcon} from './agentIcons'
+import type {IconName} from '../inhabitants/sdk/Icon'
 import {NativeContextPanel} from '../components/NativeContextPanel'
 import {useWorkspace} from '../shell/workspaceContext'
 import {scalarEntries, safeJson} from './RefusalCard'
 import type {AgentTileId} from './AgentShellContext'
 import {useHarnessBinding} from './useHarnessBinding'
 
-/** Tile marks: the specimen's where it has one (dock = companion, folder =
- * files family, link = frames); otherwise a monoline mark held to the
- * specimen's drawing conventions (24 viewBox, stroke 1.7, round caps) —
- * named as convention-held in the lane return, not silently invented. */
-const held = (inner: string, size = 12): ReactElement => (
-  <span
-    aria-hidden
-    style={{display: 'inline-flex', lineHeight: 0}}
-    dangerouslySetInnerHTML={{__html: `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${inner}</svg>`}}
-  />
-)
-
-export const TILE_ICONS: Record<AgentTileId, ReactElement> = {
-  sessions: held('<path d="M4 5h6M8 12h8M8 19h8M6 5v14"/>'),
-  agents: <CutIcon name="dock" size={12} />,
-  terminal: held('<path d="M5 6.5l5 5-5 5M12 17h7"/>'),
-  files: held('<path d="M3.5 6.5a1 1 0 0 1 1-1h5l2 2.5h8a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1z"/>'),
-  web: <CutIcon name="browser" size={12} />,
-  graph: held('<circle cx="12" cy="12" r="2.6"/><path d="M12 9.4V4M12 14.6V20M9.4 12H4M14.6 12H20"/>'),
-  diff: held('<path d="M8 4v10M4 8h8"/><path d="M16 11v9M12 15.5h8"/>'),
-  frames: <CutIcon name="link" size={12} />,
-  ledger: held('<path d="M5 6h14M5 12h10M5 18h13"/>'),
-  approvals: held('<path d="M12 4l7 8-7 8-7-8z"/>'),
+/** Tile marks, every one from the icon cut through the SDK Icon (icon-cut.html; inhabitants/sdk/icons.ts): the rail draws
+ * them in the tile's head and, at preview scale, in its launcher cell. */
+export const TILE_ICONS: Record<AgentTileId, IconName> = {
+  sessions: 'session',
+  agents: 'bind',
+  terminal: 'keys',
+  files: 'lib',
+  web: 'browser',
+  graph: 'orbit',
+  diff: 'select',
+  frames: 'link',
+  ledger: 'chain',
+  approvals: 'arm',
 }
 
 const TILE_TITLES: Record<AgentTileId, string> = {
