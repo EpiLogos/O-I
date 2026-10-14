@@ -4,6 +4,7 @@
 import type {SurfMode} from './modeGrammar'
 import type {LayoutState} from '../../../../../desktop/cradle/src/surface/types'
 import {seedInstruments} from '../frame/openInstrument'
+import {healLiveTree} from '../live/liveTreeHeal'
 import {seedFactoryCentre} from '../agent/factoryCentre'
 import {seedCentralDocuments} from '../central/documents/centralDocuments'
 
@@ -20,9 +21,10 @@ const FRAME = {tab: 'session', detailMode: 'clip', browser: true, detail: true} 
 
 // The centre is the pane tree in every mode (FOUNDATION F2); what each mode holds in it is its seed below.
 // The detail side each mode opens on is the mockup's (world-shell-mockup.html `dv`: base device, factory clip, expressions
-// device, techne device); Live's chain is the instrument.
+// device, techne device); Live's chain is the instrument. The widget rail stands in every mode (manual §10.6: "it stays with
+// you when you move"; the mockup's S.tiles.live = ['agents', 'trail'], world-shell-mockup.html:1700).
 export const MODE_FRAMES: Readonly<Record<SurfMode, ModeFrame>> = {
-  live: {...FRAME, centerPanel: 'native.workbench', detailMode: 'device', dock: false},
+  live: {...FRAME, centerPanel: 'native.workbench', detailMode: 'device', dock: true},
   base: {...FRAME, centerPanel: 'native.workbench', detailMode: 'device', dock: true},
   factory: {...FRAME, centerPanel: 'native.workbench', detailMode: 'clip', dock: true},
   expressions: {...FRAME, centerPanel: 'native.workbench', detailMode: 'device', dock: true},
@@ -43,8 +45,9 @@ export const MODE_TRACK_SOURCES: Readonly<Record<SurfMode, TrackSource>> = {
 /** Each mode's first pane tree (FOUNDATION F2: panes are the centre in every mode), by the book mode it stands on. A seed
  * runs only on a tree with no tab, so a mode's own arrangement — and every named set — stands as it was left. */
 export const MODE_TREE_SEEDS: Readonly<Record<string, (layout: LayoutState) => LayoutState>> = {
-  // Live: the instrument (the torus on the stage) beside the set's tracks.
-  live: seedInstruments(['projection.expressions', 'projection.timeline']),
+  // Live: the instrument (the torus on the stage) beside the set's tracks — laid over a tree that is Central's seed standing in
+  // Live (live/liveTreeHeal.ts), never over one the owner arranged.
+  live: healLiveTree(seedInstruments(['projection.expressions', 'projection.timeline'])),
   // Central: the Day and a Flow, side by side (the mockup's modes.base); the day's tracks a tab behind the Flow.
   base: layout => seedCentralDocuments(layout, {alongside: ['projection.timeline']}),
   // Factory: the agent tab, pinned (agent/factoryCentre.ts), instruments open beside it.

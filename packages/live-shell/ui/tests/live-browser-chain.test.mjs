@@ -90,30 +90,28 @@ test('the legacy generators are exactly the four devices-pro generator faces', (
   assert.deepEqual(chainModel.legacyGeneratorPanels().map(p => p.id).sort(), [...LEGACY].sort())
 })
 
-test('with no set the device side is the torus, then the track\'s empty place — never the registry; the clip side carries no faces', () => {
+test('with no set the device side is the keyboard and the torus, then one waiting line — never the registry; the clip side carries no faces', () => {
   torus.publishLiveTorusState({ok: true, determinants: null,
     value: {schema: 'ql.instrument-reading/v1', standing: 'following', identity: {event_ref: 'event:chain'}},
     parameters: {muted: true, level: 1, scale: {unitsPerMetre: 120, mode: 'domain-follow'}, cadence: null, refusal: null}})
   let device
   try { device = renderToStaticMarkup(React.createElement(chain.DeviceChainPanel, {ctx, document: null, selection, mode: 'device'})) }
   finally { torus.publishLiveTorusState(null) }
-  assert.ok(device.indexOf('data-live-torus=') >= 0, 'the instrument is the chain head once published')
+  assert.ok(device.indexOf('data-live-torus=') >= 0, 'the instrument is on the chain once published')
   assert.doesNotMatch(device, /data-chain-device=/, 'no registered face stands on a chain with no track')
-  assert.ok(device.indexOf('data-detail-empty="device"') > device.indexOf('data-live-torus='), 'the track\'s place follows the torus')
+  assert.ok(device.indexOf('data-live-chain-waits') > device.indexOf('data-live-torus='), 'the line where the track\'s devices would stand follows the torus')
   const clip = renderToStaticMarkup(React.createElement(chain.DeviceChainPanel, {ctx, document: null, selection, mode: 'clip'}))
   assert.doesNotMatch(clip, /data-live-torus=|data-chain-device=/)
 })
 
-test('with a set, the chain is the selected track\'s devices in order: a stored-parameter face where one exists, else the read-only tile', () => {
+test('with a set, the chain is the selected track\'s devices in order, each a plate: the owner\'s table where one exists, else the document read losslessly', () => {
   const set = {path: '/sets/demo.als', tracks: [{name: 'Pad', kind: 'midi', devices: ['Reverb', 'PluginDevice', 'Echo']}, {name: 'Bass', kind: 'midi', devices: ['Gate']}]}
   const markup = renderToStaticMarkup(React.createElement(chain.DeviceChainPanel, {ctx: {set, loading: false, error: null}, document: null, selection, mode: 'device'}))
-  assert.deepEqual([...markup.matchAll(/data-chain-device="([^"]+)"/g)].map(m => m[1]), ['Reverb', 'Echo'], 'faces for the devices that have one, in track order')
-  assert.match(markup, /data-device-tile="PluginDevice"/, 'a device with no face keeps its read-only tile')
+  assert.deepEqual([...markup.matchAll(/data-chain-device="([^"]+)"/g)].map(m => m[1]), ['Reverb', 'PluginDevice', 'Echo'], 'every device of the track, in track order')
+  assert.equal((markup.match(/data-device-size="compact"/g) ?? []).length, 3, 'each one a plate of the runtime (live/SetDeviceOnChain.tsx)')
   assert.doesNotMatch(markup, /Gate/, 'another track\'s devices are not on this chain')
-  assert.ok(markup.indexOf('data-chain-device="Reverb"') < markup.indexOf('data-device-tile="PluginDevice"'))
-  assert.ok(markup.indexOf('data-device-tile="PluginDevice"') < markup.indexOf('data-chain-device="Echo"'))
-  assert.equal(chainModel.trackDeviceFaceTitle('Reverb'), 'Reverb')
-  assert.equal(chainModel.trackDeviceFaceTitle('PluginDevice'), undefined)
+  assert.equal(chainModel.trackDeviceFaceTitle('Reverb'), 'Reverb', 'Reverb reads and writes through its stored-parameter table once the owner\'s table is read')
+  assert.equal(chainModel.trackDeviceFaceTitle('PluginDevice'), undefined, 'a plug-in has none: its plate reads the document')
 })
 
 // ── 4 — the generator faces are reachable under Legacy generators ───────

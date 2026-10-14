@@ -136,34 +136,30 @@ const fakeDocument = {path: '/x/set.als', tempo: 120, scenes: 1, tracks: [{kind:
   {name: 'Saturator', params: []},
 ], arrangementClips: [], sessionSlots: {}}]}
 
-test('Device face: the document\'s own names, lossless values, disclosed ranges — read-only', () => {
+test('Device face: the document\'s own names, lossless values, disclosed ranges — read-only, each device a plate of the runtime', () => {
   const html = htmlOf(React.createElement(DeviceChainPanel, {ctx: fakeCtx, document: fakeDocument, selection: {track: 0, scene: null}, mode: 'device'}))
-  assert.match(html, /data-device-tile="DrumRack"/)
-  assert.match(html, /Device Params\/Drum Decay/, 'the parameter keeps the document\'s own name — never a prettified fake label')
-  assert.match(html, /value="400 ms"/, 'the lossless reading is the inline value')
+  // live/SetDeviceOnChain.tsx: a device with no stored-parameter table reads the deep document (was the read-only tile).
+  assert.match(html, /data-chain-device="DrumRack" data-set-device="reading"/)
+  assert.match(html, /data-param="Device Params\/Drum Decay"/, 'the parameter keeps the document\'s own name — never a prettified fake label')
+  assert.match(html, /<span class="sdk-chip">400 ms<\/span>/, 'the lossless reading is the value shown')
   assert.match(html, /disclosed range 25 ms – 2 s/, 'the range shows only because the document discloses it')
-  assert.match(html, /Lossless document reading · parameter editing awaits native owner/, 'the read-only law in the face')
-  const inputs = [...html.matchAll(/<input[^>]*>/g)].map(input => input[0])
-  assert.ok(inputs.length > 0)
-  for (const input of inputs) assert.match(input, /readonly/, 'every value input is read-only')
-  // A device with no stored-parameter face keeps its read-only tile (devices with a face get the editor, live-browser-chain).
-  assert.match(html, /Saturator[\s\S]*?class="device-empty"/, 'the parameterless device says the document discloses none')
+  assert.match(html, /lossless document reading[^"]*editing awaits the native device owner/, 'the read-only law in the face')
+  assert.doesNotMatch(html, /<input/, 'a reading is a reading row, never a text field')
+  assert.match(html, /data-chain-device="Saturator"[\s\S]*?No parameters disclosed by the native document/, 'the parameterless device says the document discloses none')
 })
 
-test('Device face with an empty chain or no track: the designed empty frame, not a bare line', () => {
-  const emptyChain = htmlOf(React.createElement(DeviceChainPanel, {ctx: fakeCtx, document: fakeDocument, selection: {track: 0, scene: null}, mode: 'device'}))
-  assert.match(emptyChain, /data-detail-density="device"/)
+test('Device face with an empty chain or no track: one line in the host\'s waiting idiom, never a card', () => {
   const noDevices = htmlOf(React.createElement(DeviceChainPanel, {ctx: {...fakeCtx, set: {...fakeCtx.set, tracks: [{kind: 'audio', name: 'Drums', devices: []}]}}, document: null, selection: {track: 0, scene: null}, mode: 'device'}))
-  assert.match(noDevices, /data-detail-empty="device"/)
-  assert.match(noDevices, /insertion awaits the device lane.*?s owner/, 'the empty frame names the owner that fills it')
+  assert.match(noDevices, /data-detail-density="device"/)
+  assert.doesNotMatch(noDevices, /data-chain-device=|data-detail-empty|mode-detail-chip/, 'a track with no devices: the host\'s drop zone speaks')
+  assert.match(noDevices, /The torus joins the chain when its owner publishes a reading\./, 'what the chain still waits for, once')
   const noTrack = htmlOf(React.createElement(DeviceChainPanel, {ctx: {...fakeCtx, set: null}, document: null, selection: {track: 0, scene: null}, mode: 'device'}))
-  assert.match(noTrack, /data-detail-empty="device"/)
+  assert.match(noTrack, /open a set to bring a track&#x27;s devices here\./)
+  assert.doesNotMatch(noTrack, /data-detail-empty/)
 })
 
-test('Clip face with no selection: the designed empty frame naming what docks', () => {
+test('Clip face with no selection: one line in the host\'s waiting idiom, nothing under it', () => {
   const html = htmlOf(React.createElement(DeviceChainPanel, {ctx: fakeCtx, document: fakeDocument, selection: {track: 0, scene: null}, mode: 'clip'}))
-  assert.match(html, /data-detail-empty="clip"/)
-  assert.match(html, /Clip/, 'the Rev-4 pair label')
-  assert.match(html, /mode-detail-chip/, 'the chips name the faces that dock here')
-  assert.doesNotMatch(html, /detail-no-selection/, 'the sparse float is gone')
+  assert.equal(html, '<p class="clip-empty" role="status">Select a clip in the Session or the Arrangement to see it here.</p>')
+  assert.doesNotMatch(html, /mode-detail-chip|data-detail-empty|detail-no-selection/, 'no card, no chips, no float')
 })
