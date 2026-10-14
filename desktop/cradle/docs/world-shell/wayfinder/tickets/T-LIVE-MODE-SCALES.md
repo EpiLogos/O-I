@@ -62,5 +62,12 @@ re-read in `shell/modeGrammar.ts` / `inhabitants/sdk/modes.ts` (13 Oct).
   answers from the active suite receipt (QL 4276b94, no field host).
   Re-activating the suite is refused on Central's registration drift and
   would move all six products; this is handed off as its own task.
-- Next: the note devices before the torus (scale mapping, exact-ratio
-  tuning, sky).
+- Leg 4: the note-device chain before the torus. Every played act (pointer,
+  touch, keyboard, MIDI) passes through it before the one `janko` stage
+  command; an empty or bypassed chain is the identity. The Scale device
+  folds each class onto the mode in force's owner pitch set (tie up or down,
+  duplicates collapse); with no mode, or a maqām (no pitch set), it passes
+  notes through and says why. Power, remove and reorder on each tile; held
+  for the session (no owner write for a device chain yet).
+- Next: exact-ratio tuning and the sky device wait on their owners; a
+  clip's own mode waits on the set document's owner write.

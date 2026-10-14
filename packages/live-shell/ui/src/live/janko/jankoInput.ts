@@ -48,6 +48,9 @@ export interface JankoInputOptions {
   readonly onResult?: (result: StageResult) => void
   /** The keys currently held, after every change. */
   readonly onHeld?: (held: readonly number[]) => void
+  /** The note-device chain (T-LIVE-MODE-SCALES item 3): one act's pitch classes, in, and the classes sent, out. Applied to each act before
+   * its stage command, whatever the source. Absent is the identity. */
+  readonly transform?: (pitchClasses: readonly number[]) => readonly number[]
 }
 
 export interface JankoInput {
@@ -64,7 +67,10 @@ export function createJankoInput(options: JankoInputOptions): JankoInput {
     const pending = batch
     batch = null
     if (!pending) return
-    const command: StageCommand = {command: 'janko', action: 'play', pitch_classes: [...pending.classes].sort((a, b) => a - b), amplitude: pending.amplitude}
+    const classes = [...pending.classes].sort((a, b) => a - b)
+    const played = options.transform ? [...new Set(options.transform(classes))].sort((a, b) => a - b) : classes
+    if (played.length === 0) return
+    const command: StageCommand = {command: 'janko', action: 'play', pitch_classes: played, amplitude: pending.amplitude}
     void options.send(command).then(result => options.onResult?.(result), cause => options.onResult?.({ok: false, error: String(cause instanceof Error ? cause.message : cause)}))
   }
   return {
