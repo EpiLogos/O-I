@@ -19,7 +19,7 @@ const FRAME = join(ui, 'src/frame')
 const CEILING = {
   modeBranches: 23,
   residences: {browser: 1, dock: 1, detail: 1},
-  perModeBodies: 4,
+  perModeBodies: 2,
 }
 
 const MODE = '(?:live|base|central|factory|expressions|techne|audio)'

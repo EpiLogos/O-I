@@ -46,7 +46,7 @@ export function TransportBar({ tempoBpm, name, mode, setView, chooseMode, presen
       texts are the data-i strings. The drawn marks are the icon-cut's, the
       same mark per control in every mode. */}
     {mode === 'expressions' && nativeTransport?.content ? <NativeTransportBar source={nativeTransport} />
-      : <ModeTransport key={surf} mode={surf} reading={{readouts: modeReadouts, timeSpine, focusedInstrument, tempoBpm}} />}
+      : <ModeTransport key={surf} mode={surf} reading={{readouts: modeReadouts, timeSpine, focusedInstrument, tempoBpm, nativeTransport}} />}
     <nav className="surface-icons" aria-label="Working surface">
       {/* Session and Arrangement first — presentations of the Timeline
         projection, their meanings per mode (Rev 5's second table). */}

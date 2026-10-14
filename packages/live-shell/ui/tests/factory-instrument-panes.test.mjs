@@ -129,7 +129,7 @@ test('the focused Factory tab routes the Device side through the existing device
   assert.match(app, /factoryFocusedPane\(/, 'a Factory tree names its focused pane through factoryFocusedPane')
   assert.match(app, /const focusedPane = settingsPresented \? 'world\.settings' : centerPanel !== 'native\.workbench' \? centerPanel : paneFocus\.pane/)
   // The one detail host (FOUNDATION F4) gives a focused instrument the Device side over the mode's own chain.
-  assert.match(modeDetails, /factory: \{clip: FactoryClip, device: FactoryChain\}/, 'Factory\'s chain is its registered Device side')
+  assert.match(modeDetails, /factory: \{clip: FactoryClip, device: FactoryChain, dropHint: /, 'Factory\'s chain is its registered Device side')
   assert.match(detailHost, /const instrument = side === 'device' && !registration\.ownsDeviceSide \? reading\.focusedInstrument : null/, 'a focused instrument pane takes the Device side')
 })
 
@@ -155,7 +155,10 @@ test('Factory opens with the agent tab focused, and every agent-shell chrome pie
   assert.equal(activeBindingId(seedFactoryCentre(freshLayout())), AGENT_SHELL_ID, 'the agent tab is the focused default')
   // The agent dock's tiles are widgets of the one rail (F8), registered in shell/widgets.tsx.
   assert.match(await readFile(new URL('../src/shell/widgets.tsx', import.meta.url), 'utf8'), /AgentDockTileBody id=\{id\}/)
-  for (const piece of ['<AgentShellTransportBridge', '<AgentStatusBarBridge']) {
+  // Factory's transport is the one bar (F7): its controls are bindings (shell/transports/useFactoryTransport.tsx).
+  assert.ok(!app.includes('<AgentShellTransportBridge'), 'no Factory bar of its own')
+  assert.match(await readFile(new URL('../src/shell/modeTransports.tsx', import.meta.url), 'utf8'), /factory: useFactoryTransport/)
+  for (const piece of ['<AgentStatusBarBridge']) {
     assert.ok(app.includes(piece), `${piece} is still rendered by App`)
   }
   // The agent browser's rows are Factory's in the one browser (F6): registered, never a residence of their own.

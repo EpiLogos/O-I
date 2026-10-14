@@ -62,7 +62,7 @@ export function BarValue({parameter, session, disabled, reason}: {parameter: Bar
   }
   const escape = (event: globalThis.KeyboardEvent) => {
     if (event.key !== 'Escape' || !drag.current) return
-    drag.current = null; session.cancel(); setDraft(null)
+    event.preventDefault(); drag.current = null; session.cancel(); setDraft(null)
   }
   useEffect(() => {window.addEventListener('keydown', escape); return () => window.removeEventListener('keydown', escape)})
   return <label className="bar-value" data-automated={parameter.automated} title={reason ?? `${parameter.label}${parameter.unit ? ` (${parameter.unit})` : ''}: drag the name, type a value, or use the arrow keys (Shift for ten steps).`}>
