@@ -169,6 +169,17 @@ async function fireHarnessKey(key: string, value: unknown, ctx: DispatchContext,
   return kernelReceipt(writePath, outcome)
 }
 
+/** The harness answered, and its own document says it refused (`{refused: …}` — the shape the gateway reading uses, and the
+ * control line renders as "Refused (…)"). An answer that refuses is not an acceptance: a receipt of it is a refusal, so the shell
+ * flag behind the setter never moves for it (shellSetterBridge.ts moves it only on a fired receipt). */
+function refusedDocument(document: unknown): string | null {
+  if (!document || typeof document !== 'object' || Array.isArray(document) || !('refused' in document)) return null
+  const refused = (document as {refused: unknown}).refused
+  if (typeof refused === 'string' && refused) return refused
+  const message = refused && typeof refused === 'object' ? (refused as {message?: unknown}).message : undefined
+  return typeof message === 'string' && message ? message : 'the harness refused the control'
+}
+
 /** Uniform kernel receipt: the harness's own answer line, or its refusal
  * verbatim (the unknown-variant refusal of the unpatched kernel included —
  * that refusal IS the honest state until the carrier lands). */
@@ -176,7 +187,11 @@ function kernelReceipt(
   writePath: string,
   outcome: {ok: true; note: string; document: unknown} | {ok: false; error: string},
 ): DispatchReceipt {
-  if (outcome.ok) return {kind: 'fired', channel: 'kernel', writePath, note: outcome.note, outcome: outcome.document}
+  if (outcome.ok) {
+    const refusal = refusedDocument(outcome.document)
+    if (refusal) return {kind: 'refused', channel: 'kernel', writePath, reason: refusal}
+    return {kind: 'fired', channel: 'kernel', writePath, note: outcome.note, outcome: outcome.document}
+  }
   return {kind: 'refused', channel: 'kernel', writePath, reason: outcome.error, missingOp: outcome.error.includes('configure') ? 'kernel:harness_agent_control configure (the value-carrier patch)' : undefined}
 }
 

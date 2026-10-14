@@ -2,7 +2,7 @@
 // §10.4; ticket T-DEVICES-FACTORY). Each is a DeviceView at its compact size (a picture and at most four controls); each is
 // published to the door, so the pool shows the chosen one whole and a pane shows it full — the same live settings in all three,
 // a change in any one the same change through the owner's write path. The skills rack is a rack: its chains with their admit
-// lamps and its selector, its macros as macro rows.
+// lamps and its selector; its four settings stand as readings until ai-kit declares the mapping that would make them macros.
 //
 // What the chain's cards (agent/AgentDeviceChain.tsx + NativeAgentDeviceRack.tsx) did that is not the devices' own is ported
 // here unchanged and named: the drop receiver (aperture law: a drop is one declared owner operation or a named refusal —
@@ -25,6 +25,7 @@ import {harnessAgentControl} from '../harnessAgentControl'
 import {RefusalCard, safeJson} from '../RefusalCard'
 import {CHAIN_DEVICE_IDS, agentChainDevices, chainDeviceId, type ChainWrite} from './agentChainDevices'
 import {chainPicture, type PictureContext} from './AgentDevicePictures'
+import {useOwnerAccepted} from './ownerAccepted'
 import {useAgentChainReading} from './useAgentChainReading'
 import '../agentShell.css'
 import './factoryDevices.css'
@@ -55,6 +56,9 @@ type ChainDropTarget = {kind: 'zone'; label: string} | {kind: 'card'; id: string
 export function FactoryDeviceChain({sessionRef}: {sessionRef: string | null}) {
   const shell = useAgentShell()
   const {reading, transport, binding} = useAgentChainReading(sessionRef)
+  // The settings an owner accepted on this harness: the only readings effort and input have. The shell's own effort, steer,
+  // heartbeat and write-arm flags are presentation, so they are not read here.
+  const accepted = useOwnerAccepted(binding)
   const [note, setNote] = useState<ChainNote | null>(null)
   const [folded, setFolded] = useState<Record<string, boolean>>({})
   // The gesture-held drag, mirrored into state so the zone names what is held and a slide's drop slot opens.
@@ -71,9 +75,7 @@ export function FactoryDeviceChain({sessionRef}: {sessionRef: string | null}) {
     return receipt
   }, [transport, binding])
 
-  const chain = useMemo(() => agentChainDevices({
-    sessionRef, reading, shell: {effort: shell.effort, steer: shell.steer, heartbeat: shell.heartbeat, writeArm: shell.writeArm},
-  }, write), [sessionRef, reading, shell.effort, shell.steer, shell.heartbeat, shell.writeArm, write])
+  const chain = useMemo(() => agentChainDevices({sessionRef, reading, accepted}, write), [sessionRef, reading, accepted, write])
   const pictures: PictureContext = {reading, sessionRef, onFrames: () => shell.toggleTile('frames'), onThread: () => shell.openThread(sessionRef)}
 
   // Publish each device to the door: the pool shows the chosen one whole, a pane shows it full, from these same devices.
@@ -91,7 +93,9 @@ export function FactoryDeviceChain({sessionRef}: {sessionRef: string | null}) {
 
   // One drop, one owner operation (or one named refusal). The session drop rides the run model's own selection — the who slot
   // then reads the new session's task record. The agent drop dispatches `harness_agent_control` (new) on the gateway binding and
-  // folds the owner's outcome document as the receipt. Everything else refuses by name — the dragged item simply returns.
+  // folds the owner's outcome document as the receipt. That op takes a binding and a control word and no agent ref
+  // (harnessAgentControl.ts), so what the drop does is start a NEW agent on the bound harness: the dragged agent is named in the
+  // note and the harness is not told which one it was. Everything else refuses by name — the dragged item simply returns.
   // (Ported from AgentDeviceChain.tsx:199-243.)
   const attemptDrop = useCallback(async (active: ActiveChainDrag, target: ChainDropTarget) => {
     if (active.kind === 'reorder') {
@@ -124,17 +128,18 @@ export function FactoryDeviceChain({sessionRef}: {sessionRef: string | null}) {
       return
     }
     const outcome = await harnessAgentControl(transport, binding, decision.operation.control)
+    const dragged = `«${active.drag.label}» (${active.drag.ref})`
     setNote(outcome.ok
       ? {
           kind: 'receipt',
-          title: 'Agent seat',
-          line: `«${active.drag.label}» onto ${target.label} — ${outcome.note}`,
+          title: 'New agent started',
+          line: `${dragged} onto ${target.label} — started a new agent on the harness bound as “${binding}”; the harness was not told which agent was dragged, because harness_agent_control carries no agent ref. ${outcome.note}`,
           receipt: outcome.document !== undefined ? safeJson(outcome.document) : null,
         }
       : {
           kind: 'refused',
-          title: 'Agent seat refused',
-          line: `«${active.drag.label}» onto ${target.label} — harness_agent_control (${decision.operation.control}) answered: ${outcome.error}`,
+          title: 'New agent refused',
+          line: `${dragged} onto ${target.label} — harness_agent_control (${decision.operation.control}: a new agent on the bound harness, not the dragged one) answered: ${outcome.error}`,
           receipt: outcome.error,
         })
   }, [shell, transport, binding])

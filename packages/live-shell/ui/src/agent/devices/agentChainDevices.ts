@@ -4,7 +4,10 @@
 // manifests' (inhabitants/agentDeviceCatalogue.ts:33-85), the readings are the owners' (the chain's reads, ported to
 // useAgentChainReading.ts), and a write goes where the row's own write path says, through the one resolver
 // (agentNativeDispatch.ts:66, injected here as `write`). A row without a write path is a reading; a light is the owner's
-// reading and dark when unknown; nothing here invents a value, a default or a control.
+// reading and dark when unknown; nothing here invents a value, a default or a control. The shell's own flags (effort, steer,
+// heartbeat, write arm — agent/AgentShellContext.tsx) are the shell's presentation of a press with the defaults it starts
+// with, never a reading: a row shows only what an owner disclosed, or what an owner accepted (ownerAccepted.ts), and is
+// otherwise unknown.
 import type {DeviceDeclaration, SdkParamRow} from '../../inhabitants/sdk/define'
 import type {IconName} from '../../inhabitants/sdk/icons'
 import type {DispatchReceipt} from '../../inhabitants/sdk/shellSetters'
@@ -13,6 +16,7 @@ import {agentAddress, agentAddressesForDevice, type AgentParamAddress} from '../
 import {deriveAgentDeviceRows, type AgentDeviceRow} from '../../inhabitants/agentDeviceCatalogue'
 import {allFamilyManifests} from '../../inhabitants/familyManifest'
 import {CHAIN_SLOTS, type AgentChainSlotId} from '../agentChainDrag'
+import type {OwnerAcceptedValues} from './ownerAccepted'
 
 type Obj = Record<string, unknown>
 const isObj = (value: unknown): value is Obj => !!value && typeof value === 'object' && !Array.isArray(value)
@@ -61,6 +65,9 @@ export interface AgentChainReading {
   identity: string | null
   budget: {used?: number; cap?: number} | null
   autonomy: string | null
+  /** The owner disclosed a task record for the selected session (encounter_task_read). The agent's light reads it: the shell's
+   * selection is the person's choice, not the owner saying the agent is on the session. Null until the owner has said so. */
+  attached: boolean | null
 }
 
 export const INITIAL_READING: AgentChainReading = {
@@ -76,20 +83,14 @@ export const INITIAL_READING: AgentChainReading = {
   identity: null,
   budget: null,
   autonomy: null,
-}
-
-/** What the shell itself holds for the agent rows (AgentShellContext.tsx:29-83). */
-export interface AgentShellValues {
-  effort: string
-  steer: boolean
-  heartbeat: boolean
-  writeArm: boolean
+  attached: null,
 }
 
 export interface AgentChainInput {
   sessionRef: string | null
   reading: AgentChainReading
-  shell: AgentShellValues
+  /** The settings an owner accepted on the bound harness (ownerAccepted.ts); empty until one has. */
+  accepted: OwnerAcceptedValues
 }
 
 // ---------------------------------------------------------------------------
@@ -206,7 +207,9 @@ export function budgetLine(budget: AgentChainReading['budget']): string | undefi
 interface RowPlan {
   group: string
   compact?: boolean
-  macro?: boolean
+  /** A macro, and only with the mapping its owner declares: at least one row of this device, each with a range (lock §0.1,
+   * §5.3). A row that cannot name its mapping is not a macro, so there is no way to plan one without it. */
+  macro?: NonNullable<SdkParamRow['macro']>
   /** The table declares a write for this row but no domain to draw a control on: the device keeps it a reading. */
   unwritten?: string
 }
@@ -234,11 +237,14 @@ const PLAN: Readonly<Record<string, Readonly<Record<string, RowPlan>>>> = {
     model: {group: 'Runtime'},
     identity: {group: 'Runtime'},
   },
+  // The rack's four settings are ai-kit readings that no owner writes (agentParamAddresses.ts: "macros have no live source"), and
+  // ai-kit declares no mapping from them to any row. They stand as readings under "Settings", not as macros, until ai-kit
+  // declares which rows each one turns and across what range (then a `macro` goes on the row, and macroFaults checks it).
   skillset: {
-    thoroughness: {group: 'Macros', macro: true},
-    'test-depth': {group: 'Macros', macro: true},
-    reach: {group: 'Macros', macro: true},
-    risk: {group: 'Macros', macro: true},
+    thoroughness: {group: 'Settings'},
+    'test-depth': {group: 'Settings'},
+    reach: {group: 'Settings'},
+    risk: {group: 'Settings'},
   },
   world: {
     reads: {group: 'Scope'},
@@ -277,10 +283,42 @@ function deviceRow(address: AgentParamAddress, plan: RowPlan | undefined, fallba
     title: rowTitle(address.key),
     group: plan?.group ?? fallbackGroup,
     ...(plan?.compact ? {compact: true} : {}),
-    // A macro maps what the owner maps: ai-kit declares no mapping yet, so none is claimed.
-    ...(plan?.macro ? {macro: {maps: []}} : {}),
+    // A macro maps what the owner maps; the plan carries the mapping or the row claims none.
+    ...(plan?.macro ? {macro: plan.macro} : {}),
     ...(withheld ? {disclosure: address.disclosure ? `${address.disclosure} ${withheld}` : withheld} : writePath ? {writePath} : {}),
   } as SdkParamRow
+}
+
+/** The macro invariant at the instance (lock §0.1: "a macro maps at least one row with a range, or it is not a macro"; §5.3:
+ * "maps ≥1 declared row of its own device, with ranges"). The face gate checks a macro face's declaration; this checks the rows an
+ * instance actually draws, so a row cannot claim the semantic by carrying an empty or foreign mapping. Every fault is named. */
+export function macroFaults(device: string, rows: readonly SdkParamRow[]): string[] {
+  const faults: string[] = []
+  const byKey = new Map(rows.map(row => [row.key, row] as const))
+  for (const row of rows) {
+    if (!row.macro) continue
+    const where = `${device}/${row.key}`
+    if (row.macro.maps.length < 1) {
+      faults.push(`${where}: a macro maps at least one declared row of its own device, and this one maps none`)
+      continue
+    }
+    for (const map of row.macro.maps) {
+      const mapped = byKey.get(map.key)
+      if (!mapped || mapped.key === row.key) {
+        faults.push(`${where}: maps "${map.key}", which is no other row of this device`)
+        continue
+      }
+      if (typeof map.min !== 'number' || typeof map.max !== 'number' || !Number.isFinite(map.min) || !Number.isFinite(map.max) || map.min > map.max) {
+        faults.push(`${where}: its map of "${map.key}" has no range (a min and a max, the min not above the max)`)
+        continue
+      }
+      const min = mapped.range?.min, max = mapped.range?.max
+      if ((min !== undefined && map.min < min) || (max !== undefined && map.max > max)) {
+        faults.push(`${where}: its map of "${map.key}" [${map.min}, ${map.max}] leaves that row's own range [${min ?? '-inf'}, ${max ?? 'inf'}]`)
+      }
+    }
+  }
+  return faults
 }
 
 /** The rows of one chain device: every address of the table for the slot, in the plan's order, none invented and none
@@ -299,8 +337,10 @@ export function slotRows(slot: string): SdkParamRow[] {
 /** The chain faces' marks, as the kit adopts them (sdk/adoptVerifiedRows.ts:33-48). */
 const MARKS: Readonly<Record<string, IconName>> = {gateway: 'link', agent: 'form', skillset: 'lib', world: 'orbit', git: 'chain'}
 
-/** The row whose reading is each device's light. */
-const LIGHT_KEY: Readonly<Record<string, string>> = {gateway: 'admitted', agent: 'attached', skillset: 'admitted', world: 'armed', git: 'admitted'}
+/** The row whose reading is each device's light. The world device has none: the only state it could light from is the write arm,
+ * and the dispatcher calls that the shell's presentation-state and refuses it (agentNativeDispatch.ts), so no owner reports it.
+ * When the apply path (WO-SF2) reports the write standing, the key goes here. */
+const LIGHT_KEY: Readonly<Record<string, string>> = {gateway: 'admitted', agent: 'attached', skillset: 'admitted', git: 'admitted'}
 
 /** The slot's declaration: its primary face from the admitted manifests, with that face's Live semantic and invariant. The
  * rack declares the chains it actually holds. */
@@ -319,7 +359,7 @@ export function slotFace(slot: AgentDeviceRow, chains: readonly SkillChain[] | n
 }
 
 function slotValues(slot: string, input: AgentChainInput): Record<string, ParamValue> {
-  const {reading, shell, sessionRef} = input
+  const {reading, accepted, sessionRef} = input
   const values: Record<string, ParamValue> = {}
   const put = (key: string, value: ParamValue | null | undefined) => { if (value !== null && value !== undefined && value !== '') values[key] = value }
   switch (slot) {
@@ -328,10 +368,13 @@ function slotValues(slot: string, input: AgentChainInput): Record<string, ParamV
       for (const [key, value] of Object.entries(gatewayDisclosed(reading.gatewayDoc))) put(key, value)
       break
     case 'agent':
-      put('attached', sessionRef != null)
-      put('effort', shell.effort)
-      put('input', shell.steer ? 'steer' : 'queue')
-      put('heartbeat', shell.heartbeat)
+      // The light is the owner's task record for the session, not the shell's selection of it (and with no session selected there
+      // is no record to read).
+      put('attached', sessionRef != null ? reading.attached : null)
+      // Effort and input are what an owner accepted. The shell's own effort ('high') and steer (on) are defaults it starts with,
+      // and its heartbeat flag (on) is presentation-state the dispatcher refuses: none of them is a reading, so none is put.
+      put('effort', accepted.effort)
+      put('input', accepted.input)
       put('autonomy', reading.autonomy)
       put('budget-used', budgetLine(reading.budget))
       put('identity', reading.identity)
@@ -340,8 +383,8 @@ function slotValues(slot: string, input: AgentChainInput): Record<string, ParamV
       put('admitted', reading.chains ? reading.chains.some(chain => chain.admitted) : null)
       break
     case 'world':
-      put('armed', shell.writeArm)
-      put('write-mode', shell.writeArm ? 'direct' : 'propose')
+      // Nothing: write-mode would read the shell's write-arm flag, which the dispatcher calls presentation-state (no write flow
+      // reads it; WO-SF2). The row stays unknown, and so does the device's light.
       break
     case 'git':
       put('admitted', reading.gitAdmitted)
@@ -388,9 +431,12 @@ export function chainSubmit(rows: readonly SdkParamRow[], write: ChainWrite): No
 // ---------------------------------------------------------------------------
 // the chain
 
-/** One slot as a device of the runtime. */
+/** One slot as a device of the runtime. A row that claims a macro without keeping it (no mapping, a mapping onto a row the device
+ * does not have, a mapping with no range) refuses the device at admission, the fault named — the lock's gate, at the instance. */
 export function agentChainDevice(slot: AgentDeviceRow, input: AgentChainInput, write: ChainWrite): DeviceInstance {
   const rows = slotRows(slot.id)
+  const faults = macroFaults(slot.id, rows)
+  if (faults.length) throw Error(`The ${slot.id} device claims a macro it does not keep: ${faults.join('; ')}`)
   return {
     id: chainDeviceId(slot.id),
     family: slot.family,
