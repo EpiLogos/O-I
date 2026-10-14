@@ -195,8 +195,12 @@ test("T16: an entry opens through the expression instrument; an unwired instrume
 });
 
 test("T16: an entry with no instrument surface says its depth stays in the palace", () => {
+  // lane-5 T24 changes provenance: a sources entry opens the source surface (see the T24 tests in palace-bookmarks.test.mjs).
+  // What stays refused by name is an entry with no instrument surface that is not provenance.
   const source = palaceWholeView(FULL).regions.find((region) => region.key === "sources").entries[0];
-  const refused = palaceOpenRoute(source, new Set(["expressions"]));
+  assert.deepEqual(palaceOpenRoute(source, new Set(["expressions"])), {kind: "source", ref: source.ref});
+  const agency = {kind: "agency", ref: "agent:x", label: "agent", open_instrument: null};
+  const refused = palaceOpenRoute(agency, new Set(["expressions"]));
   assert.equal(refused.kind, "refused");
   assert.match(refused.reason, /stays in the palace/);
 });

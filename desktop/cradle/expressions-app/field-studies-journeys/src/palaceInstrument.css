@@ -67,3 +67,19 @@
 .palace-board-canvas .canvas-toolbar button{font:11px/1.2 var(--sans,system-ui,sans-serif);color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:3px 7px;cursor:pointer}
 .palace-walk-heading{margin:0 0 8px;font:600 12px/1.3 var(--sans,system-ui,sans-serif)}
 .palace-region-selected{border-color:var(--ink);background:var(--wash)}
+
+/* lane-5 T24 — bookmarks (named positions that jump board, walk and focus in one hop) and the named start. Tokens only; the
+   list and its add row reuse the palace's region-list grammar. */
+.palace-receipt{margin:0 0 10px;border-left:3px solid var(--ink);padding-left:8px}
+.palace-bookmarks{border-top:1px solid var(--line);margin:0 0 10px;padding-top:10px;min-width:0}
+.palace-bookmarks h4{margin:0 0 6px;font:600 12px/1.3 var(--sans,system-ui,sans-serif)}
+.palace-bookmark-add{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 8px}
+.palace-bookmark-add label{display:flex;align-items:center;gap:6px;font:11px/1.3 var(--sans,system-ui,sans-serif);min-width:0}
+.palace-bookmark-add input,.palace-bookmark-name{font:inherit;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:4px 6px;min-width:0}
+.palace-bookmark-add button,.palace-bookmark-list button{font:11px/1.2 var(--sans,system-ui,sans-serif);color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:5px;padding:4px 7px;cursor:pointer}
+.palace-bookmark-add button:hover,.palace-bookmark-list button:hover{background:var(--wash);border-color:var(--muted)}
+.palace-bookmark-add button:disabled,.palace-bookmark-list button:disabled{opacity:.45;cursor:default}
+.palace-bookmark-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+.palace-bookmark-list li{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 6px;border:1px solid transparent;border-radius:4px;min-width:0}
+.palace-bookmark-list li:hover{border-color:var(--line);background:var(--wash)}
+.palace-bookmark-list .palace-ref{flex:1 1 auto}

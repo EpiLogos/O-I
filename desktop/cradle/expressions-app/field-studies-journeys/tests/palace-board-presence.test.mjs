@@ -222,3 +222,17 @@ test('the parent saves the board once per gesture, and restores it on mount thro
   assert.match(panel, /setRestoredViewport\(composition\.viewport\?\?null\)/);
   assert.match(panel, /persist\(\{\.\.\.palaceComposition\(current\),viewport\},current\)/);
 });
+
+test('an entry the next load would refuse is never saved: the last good entry stands', () => {
+  resetPalaceCompositions();
+  const reading = provingReading();
+  const storage = memoryStorage();
+  const good = {...palaceComposition(reading), board: {Walk: {x: 10, y: 20}}, viewport: {x: 0, y: 0, zoom: 1}};
+  assert.equal(savePalaceComposition(storage, good, reading), true);
+  const before = storage.getItem(PALACE_PRESENCE_KEY);
+  assert.equal(savePalaceComposition(storage, {...good, board: {Walk: {x: Number.NaN, y: 20}}}, reading), false, 'a non-finite point is not written');
+  assert.equal(savePalaceComposition(storage, {...good, viewport: {x: 0, y: 0, zoom: 0}}, reading), false, 'a zero zoom is not written');
+  assert.equal(storage.getItem(PALACE_PRESENCE_KEY), before, 'the stored entry is the last good one');
+  resetPalaceCompositions();
+  assert.deepEqual(restorePalaceComposition(reading, storage).composition.board, {Walk: {x: 10, y: 20}});
+});

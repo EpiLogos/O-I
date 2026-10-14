@@ -46,13 +46,14 @@ import {trackOwnSharedTimeWrite} from './sharedTimeWindow';
 import {palaceHopRequest,qualifyPalaceHopReply} from './palaceHop';
 import {assertInstrumentReadingScope} from './researchInstrumentsData';
 import {validateReading,type TechneInstrument,type TechneReading} from '../../../src/techne/contract';
-import {palaceComposition,storeComposition,type PalaceComposition} from '../../../src/techne/m0m5/palace/palace-state';
+import {palaceComposition,removeBookmark,storeComposition,type PalaceBookmark,type PalaceComposition} from '../../../src/techne/m0m5/palace/palace-state';
 import {palacePresenceStorage,PALACE_UNPERSISTED_NOTICE,restorePalaceComposition,savePalaceComposition} from '../../../src/techne/m0m5/palace/presence';
-import {palaceAcceptOutcome,palaceAcceptRequest,palaceReturnProposal,type PalaceReturnProposal} from '../../../src/techne/m0m5/palace/return';
+import {palaceAcceptOutcome,palaceAcceptRequest,palaceReturnProposal,returnGroundInstrument,type PalaceReturnProposal} from '../../../src/techne/m0m5/palace/return';
 import type {PalaceRegionEntry} from '../../../src/techne/m0m5/palace/regions';
 import {PalaceBoardView,type PalaceBoardViewport} from './palaceBoardView';
 import {boardSelectionLine,forgetBoardRegion,moveBoardRegion,validateBoardPositions,type BoardPoint,type BoardPositions} from './palaceBoard';
-import {PALACE_WIRED_INSTRUMENTS,palaceGuidedEdges,palaceOpenRoute,palaceWalkAt,palaceWalkResume,palaceWalkSteps,palaceWholeView,SCENE_REGION_STANDING,type PalaceGuidedEdge} from './palaceWhole';
+import {PALACE_WIRED_INSTRUMENTS,palaceGuidedEdges,palaceInstrumentOpenRequest,palaceOpenRoute,palaceSourceOpenRequest,palaceWalkAt,palaceWalkSteps,palaceWholeView,SCENE_REGION_STANDING,type PalaceGuidedEdge,type PalaceSourceSubject,type PalaceWalkStep} from './palaceWhole';
+import {PALACE_BOOKMARK_NAME_LIMIT,palaceBookmarkAdd,palaceBookmarkJump,palaceBookmarkLabel,palaceBookmarkRename,palaceLandingIndex,palaceStartStep} from './palaceBookmarks';
 import './palaceInstrument.css';
 
 export interface PalaceKernelExpression {expression_ref:string;title:string;revision:number}
@@ -83,6 +84,10 @@ export interface PalaceInstrumentHost {
  openExpression:(ref:string)=>void;
  /** Lane-5 seam B: opens a non-Expression Palace entry through the host's own instrument path (the frame's existing summon). */
  openInstrument:(instrument:TechneInstrument,ref:string)=>void;
+ /** Lane-5 T24: a provenance entry's Open asks for the source surface. Absent means the frame's own source summon, posted to the host. */
+ openSource?:(ref:string,subject:PalaceSourceSubject)=>void;
+ /** Lane-5 T24 / T19: re-opens the M0′ ground on this session. Absent means the instrument summon for the ground, posted to the host. */
+ returnToGround?:()=>void;
  /** The integral whole's reading (lane-5 T14): the Expression-wide Technè
   * reading over the same native channel the journey instrument reads. Absent
   * means the default channel, `readTechneReading`. */
@@ -94,6 +99,12 @@ export interface PalaceInstrumentHost {
 const DEFAULT_REGION='Palace';
 /** T15: how long a pan or zoom must rest before its viewport is saved. */
 const VIEWPORT_SETTLE_MS=400;
+
+/** T24: the frame's host-request, sent the way the frame's own `hostRequest` sends it (app.ts): nothing when unframed, never a throw. */
+function postPalaceHostRequest(payload:Record<string,unknown>){
+ if(window.parent===window)return;
+ try{window.parent.postMessage({v:1,kind:'host-request',...payload},'*');}catch{/* nothing sent rather than a wrong-channel throw */}
+}
 
 /** Seam B: the wired instruments that take an object ref as their focus (the frame carries it through their existing focus paths).
  * The project lens does not yet take one, so its Open keeps the line that says the object is not carried into it. */
@@ -142,6 +153,12 @@ export function PalacePanel({host,doc,reading,readingReason,onMessage,basis,carr
  const viewportLive=useRef(false);
  const viewportPending=useRef<PalaceBoardViewport|null>(null);
  const viewportTimer=useRef<ReturnType<typeof setTimeout>|null>(null);
+ // T24: the viewport the board stands at now (reported or restored), so a new bookmark records where the visitor is looking.
+ const viewportNow=useRef<PalaceBoardViewport|null>(null);
+ // T24: the bookmarks the composition holds, held in the view so each bookmark change re-renders the list.
+ const [bookmarks,setBookmarks]=useState<PalaceBookmark[]>(()=>reading?palaceComposition(reading).bookmarks:[]);
+ const [bookmarkName,setBookmarkName]=useState('');
+ const [renaming,setRenaming]=useState<{ref:string;value:string}|null>(null);
  const readingRef=useRef(reading);readingRef.current=reading;
  // T15 restore: the saved board and viewport come back with the reading, the board pruned to the regions the Palace holds now.
  useEffect(()=>{
@@ -149,6 +166,8 @@ export function PalacePanel({host,doc,reading,readingReason,onMessage,basis,carr
   const composition=palaceComposition(reading);
   setBoard(validateBoardPositions(composition.board,regions.map(region=>region.name))??{});
   setRestoredViewport(composition.viewport??null);
+  viewportNow.current=composition.viewport??null;
+  setBookmarks(composition.bookmarks);
   viewportLive.current=true;
  },[reading]);
  // A pending viewport settles once, on unmount, if the panel leaves before its trailing save fires.
@@ -168,7 +187,9 @@ export function PalacePanel({host,doc,reading,readingReason,onMessage,basis,carr
  const walkSteps=useMemo(()=>palaceWalkSteps(reading??null),[reading]);
  // The walk stands where the visitor last left it (the session presentation composition), wrapped into the walk as it now stands.
  const [walkMoved,setWalkMoved]=useState<number|undefined>(undefined);
- const walkIndex=palaceWalkAt(walkSteps,walkMoved??palaceWalkResume(reading?palaceComposition(reading).walk_index:undefined,walkSteps.length)).index;
+ // T24: a palace with no saved walk position lands on the named start (the walk's first step); a saved one resumes where it stood.
+ const landing=palaceLandingIndex(reading?palaceComposition(reading).walk_index:undefined,walkSteps);
+ const walkIndex=palaceWalkAt(walkSteps,walkMoved??landing).index;
  const focus=palaceWalkAt(walkSteps,walkIndex).step;
  // Seam B: a carried walk locus is focused once per open, through the walk's own index. A ref the walk does not hold is named and nothing moves.
  const carriedApplied=useRef<number|undefined>(undefined);
@@ -188,7 +209,25 @@ export function PalacePanel({host,doc,reading,readingReason,onMessage,basis,carr
  function openWhole(entry:PalaceRegionEntry){
   const route=palaceOpenRoute(entry,PALACE_WIRED_INSTRUMENTS);
   if(route.kind==='refused'){onMessage(`Refused: ${route.reason}.`);return;}
+  if(route.kind==='source'){openPalaceSource(route.ref);return;}
   openPalaceObject(route.instrument,route.ref);
+ }
+ /** T24: a provenance entry's Open asks for the source surface through the frame's existing source summon, naming the Scene the
+  * Palace stands in. The host resolves it; a ref the owner cannot resolve in that Scene is refused there, by name. */
+ function openPalaceSource(ref:string){
+  const subject:PalaceSourceSubject={expression_ref:doc.expression_ref,revision:basis.revision,scene_ref:basis.scene_ref,title:doc.title};
+  if(host.openSource)host.openSource(ref,subject);
+  else postPalaceHostRequest(palaceSourceOpenRequest(ref,subject));
+  onMessage(`Asked the shell for the source of ${ref}. The owner resolves it inside this Scene.`);
+ }
+ /** T24 and T19: the one return to the M0′ ground, shared by the header's "Return to ground" and by an accepted Return's crossing.
+  * It re-opens the ground on this same session; it names no object, so no ref travels with it. */
+ function returnToGround(){
+  if(!reading)return;
+  const ground=returnGroundInstrument(reading);
+  if(!ground){onMessage('This reading does not disclose the M0′ ground as available, so the Palace has nothing to return to.');return;}
+  if(host.returnToGround)host.returnToGround();
+  else postPalaceHostRequest(palaceInstrumentOpenRequest(ground));
  }
  /** Seams A and B: one Open on a Palace object. An Expression opens natively and records its trail step on the session's one
   * history (the owner's palace route); any other wired instrument goes through the host's instrument path, and says plainly
@@ -213,6 +252,48 @@ export function PalacePanel({host,doc,reading,readingReason,onMessage,basis,carr
   if(!savePalaceComposition(palacePresenceStorage(),next,current)&&!persistFailed.current){persistFailed.current=true;onMessage(PALACE_UNPERSISTED_NOTICE);}
  }
 
+ /** T24: one bookmark change, saved once through the Palace's owner (the same write as the walk and the board). */
+ function commitBookmarks(next:PalaceComposition,current:TechneReading){
+  persist(next,current);
+  setBookmarks(next.bookmarks);
+ }
+ /** T24: bookmark the focused walk position under the typed name. The viewport it stands at is recorded with it. */
+ function addBookmarkHere(){
+  if(!reading||!focus)return;
+  const change=palaceBookmarkAdd(palaceComposition(reading),focus,bookmarkName,viewportNow.current);
+  if(change.kind==='refused'){onMessage(`Not bookmarked: ${change.reason}.`);return;}
+  commitBookmarks(change.composition,reading);
+  setBookmarkName('');
+  onMessage(`Bookmarked ${bookmarkName.trim()} at ${focus.office} · ${focus.ref}.`);
+ }
+ /** T24: a jump is one hop: the walk index, the focused step and the board viewport arrive from one result and are saved once. */
+ function jumpBookmark(bookmark:PalaceBookmark){
+  if(!reading)return;
+  const result=palaceBookmarkJump(palaceComposition(reading),bookmark,walkSteps);
+  if(result.kind==='refused'){onMessage(`Not jumped: ${result.reason}.`);return;}
+  setWalkMoved(result.walk_index);
+  if(result.viewport){viewportNow.current=result.viewport;setRestoredViewport({...result.viewport});}
+  commitBookmarks(result.composition,reading);
+  onMessage(`Jumped to ${palaceBookmarkLabel(bookmark)}: locus ${result.walk_index+1} of ${walkSteps.length}, ${result.focus.office} · ${result.focus.ref}.`);
+ }
+ function commitRename(){
+  if(!renaming||!reading)return;
+  const change=palaceBookmarkRename(palaceComposition(reading),renaming.ref,renaming.value);
+  if(change.kind==='refused'){onMessage(`Not renamed: ${change.reason}.`);return;}
+  commitBookmarks(change.composition,reading);
+  setRenaming(null);
+  onMessage('Bookmark renamed.');
+ }
+ function deleteBookmark(bookmark:PalaceBookmark){
+  if(!reading)return;
+  commitBookmarks(removeBookmark(palaceComposition(reading),bookmark.ref),reading);
+  if(renaming?.ref===bookmark.ref)setRenaming(null);
+  onMessage(`Removed the bookmark ${palaceBookmarkLabel(bookmark)}.`);
+ }
+ /** The office a bookmark's region reads as, from the walk it stands in (its region key when the walk no longer names it). */
+ function bookmarkOffice(bookmark:PalaceBookmark):string{
+  return walkSteps.find((step:PalaceWalkStep)=>step.region===bookmark.region&&step.ref===bookmark.ref)?.office??bookmark.region;
+ }
  function createRegion(name:string,member:PalaceRegionSpec['member']){
   setRegions(current=>[...current,{name,scene_ref:regionSceneRef(doc.expression_ref,name),member}]);
  }
@@ -277,6 +358,7 @@ export function PalacePanel({host,doc,reading,readingReason,onMessage,basis,carr
  /** T15: the board's pan and zoom. A pan or zoom fires per frame, so the save trails the last report: one write per settled view, never per frame. */
  function viewportSettled(viewport:PalaceBoardViewport){
   if(!viewportLive.current)return;   // the board's own fit before the restore is not the owner's view
+  viewportNow.current=viewport;
   viewportPending.current=viewport;
   if(viewportTimer.current!==null)clearTimeout(viewportTimer.current);
   viewportTimer.current=setTimeout(flushViewport,VIEWPORT_SETTLE_MS);
@@ -313,7 +395,9 @@ export function PalacePanel({host,doc,reading,readingReason,onMessage,basis,carr
    if(!live())return;
    const outcome=palaceAcceptOutcome(reading,proposal,raw);
    setAcceptance({line:outcome.line,accepted:outcome.accepted});
-   if(outcome.crossing&&proposal.route)host.openInstrument(outcome.crossing.instrument,proposal.route.subject_ref);
+   // T24: an accepted Return's receipt is kept on this session, so the Palace renders it when the visitor comes back to it.
+   if(outcome.accepted)storeComposition({...palaceComposition(reading),receipt:outcome.line});
+   if(outcome.crossing)returnToGround();
   }catch(error){if(live())setAcceptance({line:`Not accepted: ${error instanceof Error?error.message:String(error)}.`,accepted:false});}
   finally{acceptInFlight.current=false;if(live())setAccepting(false);}
  }
@@ -354,6 +438,9 @@ export function PalacePanel({host,doc,reading,readingReason,onMessage,basis,carr
   finally{if(lifetime.current.live&&lifetime.current.generation===generation)setBusy(false);}
  }
 
+ // T24: the M0′ ground the reading discloses (null when it does not), and the Return receipt this session holds.
+ const groundReady=!!reading&&returnGroundInstrument(reading)!==null;
+ const receipt=reading?palaceComposition(reading).receipt:undefined;
  return <div className="palace-panel" role="region" aria-label="M5′ Palace">
   <header className="palace-header">
    <p className="control-note">Regions of {doc.title}</p>
@@ -361,8 +448,10 @@ export function PalacePanel({host,doc,reading,readingReason,onMessage,basis,carr
     <button type="button" disabled={busy||doc.revision>draftDoc.revision} onClick={()=>void save()}>Save composition</button>
     <button type="button" disabled={busy} onClick={cancel}>Revert</button>
     <button type="button" disabled={busy||!reading} onClick={proposeReturn}>Propose Return</button>
+    <button type="button" disabled={busy||!groundReady} onClick={returnToGround} title={groundReady?'Re-open the M0′ ground on this session':'The reading does not disclose the M0′ ground as available'}>Return to ground</button>
    </div>
   </header>
+  {!proposal&&receipt&&<p role="status" className="palace-standing palace-receipt" data-accepted="true">{receipt}</p>}
   {proposal&&<section className="palace-return" aria-label="Return proposal">
    <p className="palace-standing">{proposal.receipt?.routed
     ?`${proposal.attribution} Routed to ${proposal.receipt.action_ref} under ${proposal.receipt.authority??'the owner'}; the native owner decides.`
@@ -383,11 +472,40 @@ export function PalacePanel({host,doc,reading,readingReason,onMessage,basis,carr
       ?<p className="palace-empty">{whole.reason?`Unavailable: ${whole.reason}.`:readingReason?`Unavailable: ${readingReason}.`:'The reading is not yet disclosed.'}</p>
       :<>
       <div className="palace-walk" role="group" aria-label="Integral walk">
-       <button type="button" disabled={busy||walkSteps.length===0} onClick={()=>moveWalk(0)}>Start walk</button>
+       <button type="button" disabled={busy||walkSteps.length===0} onClick={()=>moveWalk(palaceStartStep(walkSteps).index)} title="Jump to the named start: the first step of the walk">Start</button>
        <button type="button" disabled={busy||walkSteps.length===0} onClick={()=>moveWalk(walkIndex-1)} aria-label="Previous locus">←</button>
        <button type="button" disabled={busy||walkSteps.length===0} onClick={()=>moveWalk(walkIndex+1)} aria-label="Next locus">→</button>
        <span className="palace-walk-readout">{focus?`Locus ${walkIndex+1} of ${walkSteps.length} · ${focus.office} · ${focus.ref}`:'Nothing stands in the whole, so the walk focuses nothing.'}</span>
       </div>
+      <section className="palace-bookmarks" aria-label="Bookmarks">
+       <h4>Bookmarks</h4>
+       <div className="palace-bookmark-add">
+        <label>Bookmark name<input disabled={busy||!focus} value={bookmarkName} maxLength={PALACE_BOOKMARK_NAME_LIMIT} placeholder="Name this position" onChange={e=>setBookmarkName(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&bookmarkName.trim()&&focus){e.preventDefault();addBookmarkHere();}}}/></label>
+        <button type="button" disabled={busy||!focus||!bookmarkName.trim()} onClick={addBookmarkHere}>Bookmark this position</button>
+       </div>
+       {bookmarks.length===0
+        ?<p className="palace-empty">No bookmarks yet. Name the focused position above.</p>
+        :<ul className="palace-bookmark-list">{bookmarks.map(bookmark=>
+         <li key={bookmark.ref} data-bookmark={bookmark.ref}>
+          {renaming?.ref===bookmark.ref
+           ?<>
+            <input className="palace-bookmark-name" aria-label={`Rename ${palaceBookmarkLabel(bookmark)}`} value={renaming.value} maxLength={PALACE_BOOKMARK_NAME_LIMIT} onChange={e=>setRenaming({ref:bookmark.ref,value:e.target.value})} onKeyDown={e=>{if(e.key==='Enter'&&renaming.value.trim()){e.preventDefault();commitRename();}if(e.key==='Escape')setRenaming(null);}}/>
+            <span className="palace-member-controls">
+             <button type="button" disabled={busy||!renaming.value.trim()} onClick={commitRename}>Save name</button>
+             <button type="button" disabled={busy} onClick={()=>setRenaming(null)}>Cancel</button>
+            </span>
+           </>
+           :<>
+            <span className="palace-ref" title={bookmark.ref}>{palaceBookmarkLabel(bookmark)}</span>
+            <span className="palace-note">{bookmarkOffice(bookmark)}</span>
+            <span className="palace-member-controls">
+             <button type="button" disabled={busy} onClick={()=>jumpBookmark(bookmark)} title={`Jump to ${bookmark.ref}: board, walk and focus together`}>Jump</button>
+             <button type="button" disabled={busy} onClick={()=>setRenaming({ref:bookmark.ref,value:palaceBookmarkLabel(bookmark)})}>Rename</button>
+             <button type="button" disabled={busy} onClick={()=>deleteBookmark(bookmark)}>Delete</button>
+            </span>
+           </>}
+         </li>)}</ul>}
+      </section>
       {whole.regions.map(region=>
        <div className={`palace-whole-region palace-standing-${region.standing.standing}`} key={region.key} data-region={region.key}>
         <div className="palace-region-head"><h3>{region.office}</h3><span className="palace-note">{region.m_prime===null?'close':`M′${region.m_prime}`}</span></div>

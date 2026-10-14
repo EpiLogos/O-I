@@ -68,6 +68,10 @@ export interface PalaceBookmark {
   region: PalaceRegionKey;
   ref: string;
   locus: PalaceLocus | null;
+  /** lane-5 T24: the name the visitor gave this position. Absent on a bookmark saved before naming; it then reads by its ref. */
+  name?: string;
+  /** lane-5 T24: the board's pan and zoom when the bookmark was made; a jump restores it. Absent when the board had none then. */
+  viewport?: PalaceBoardViewport;
 }
 
 /** The composition state of one basis. */
@@ -91,6 +95,9 @@ export interface PalaceComposition {
   board?: Record<string, PalaceBoardPoint>;
   /** The board's viewport (lane-5 T15): pan and zoom of the canvas the regions sit on. Absent until the board is first panned or zoomed. */
   viewport?: PalaceBoardViewport;
+  /** lane-5 T24: the Return receipt line of the last accepted Return in this session. Session continuity only: never saved by
+   * presence.ts, so a reload does not carry it. Absent until a Return is accepted. */
+  receipt?: string;
 }
 
 /** One board point: presentation coordinates on the board's canvas. Finite numbers only. */
@@ -136,10 +143,30 @@ export function placeAt(composition: PalaceComposition, region: PalaceRegionKey,
 
 /** Bookmark the position of one native ref in one region; a repeated
  * bookmark for the same ref is idempotent. */
-export function addBookmark(composition: PalaceComposition, region: PalaceRegionKey, ref: string): PalaceComposition {
+export function addBookmark(
+  composition: PalaceComposition,
+  region: PalaceRegionKey,
+  ref: string,
+  extra: { name?: string; viewport?: PalaceBoardViewport } = {},
+): PalaceComposition {
   if (composition.bookmarks.some((bookmark) => bookmark.ref === ref)) return composition;
   const locus = composition.placements[region]?.find((placement) => placement.ref === ref)?.locus ?? null;
-  return { ...composition, bookmarks: [...composition.bookmarks, { region, ref, locus }] };
+  const bookmark: PalaceBookmark = {
+    region,
+    ref,
+    locus,
+    ...(extra.name !== undefined ? { name: extra.name } : {}),
+    ...(extra.viewport ? { viewport: { x: extra.viewport.x, y: extra.viewport.y, zoom: extra.viewport.zoom } } : {}),
+  };
+  return { ...composition, bookmarks: [...composition.bookmarks, bookmark] };
+}
+
+/** Rename one bookmark by its ref. Pure; a ref with no bookmark leaves the composition as it is. */
+export function renameBookmark(composition: PalaceComposition, ref: string, name: string): PalaceComposition {
+  return {
+    ...composition,
+    bookmarks: composition.bookmarks.map((bookmark) => (bookmark.ref === ref ? { ...bookmark, name } : bookmark)),
+  };
 }
 
 export function removeBookmark(composition: PalaceComposition, ref: string): PalaceComposition {
