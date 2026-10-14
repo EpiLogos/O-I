@@ -204,6 +204,10 @@ test("a run's inhabitation: custody, occupants by attempt, placement NOW, unplac
   const [factory, workcell] = view.positions;
   assert.equal(factory.custodyWords, "in progress · Factory#261");
   assert.equal(workcell.custodyWords, "blocked · Workcell#12");
+  // The identity is the owner's full custody ref; the tail above is only the label the desk draws.
+  assert.equal(factory.custody[0].workRef, "github:EpiLogos/Factory#261");
+  assert.equal(factory.custody[0].work, "Factory#261");
+  assert.equal(workcell.custody[0].workRef, "github:EpiLogos/Workcell#12");
   assert.deepEqual(factory.occupants.map(occupant => [occupant.attemptRef, occupant.current, occupant.legStatus, occupant.agent, occupant.harnessModel, occupant.workcell, occupant.placementNow, occupant.session]),
     [["attempt:review", true, "active", "factory-guardian", "pi · deepseek-v4-pro", "local", refs.childNow, "session:A"]]);
   assert.deepEqual(view.unplaced.map(occupant => occupant.attemptRef), ["attempt:survey"], "an attempt naming no Position is shown as such");

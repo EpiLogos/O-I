@@ -141,9 +141,12 @@ run's result, the face names the owner seam (owner, op, remedy). No second store
   occurrence bearing this Factory work ref. Remedy: the T6 occurrence binding
   contract binds the work ref to a corpus occurrence; the Factory owner declares
   no such binding today.
-- **Timeline.** Owner: kernel `temporal_sources.rs`. Op: a Factory stream adapter
-  reading `factory telemetry day` (`factory.telemetry-day/v1`) into one moment per
-  run receipt. Remedy: the adapter maps the owner's receipt; it writes nothing.
+- **Timeline.** Closed for run moments (temporal_sources factory-runs); verify
+  against a live telemetry day. The stream reads `factory telemetry day`
+  (`factory.telemetry-day/v1`) into one moment per run signal, subject = the run
+  ref; the join selects the run's newest moment that has a stated instant. A run
+  with no moment in the window names its absence: no stated instant, or the owner
+  unreadable (the field reports neither per run).
 - **Constellation.** Owner: Central wiki (the Constellation). Op: a `wiki:node:`
   ref the Return or the subject names. Remedy: the Return names a node; the Factory
   Return names none today.
@@ -156,9 +159,9 @@ run's result, the face names the owner seam (owner, op, remedy). No second store
 - **Run close.** Owner: `Control/user/native-action-authority.json`. Op: the
   `factory.run.close` grant. Remedy: the owner names the grant; this ticket does not
   create or edit it.
-- **Desk view.** Owner: the Factory desk (`inhabitation/model.ts:451`). Op: keep the
-  full `work_ref` in `runInhabitationView`'s custody. Remedy: the desk's view keeps
-  the owner's ref; the join reads the raw row until then.
+- **Desk view (closed 14 Oct).** `runInhabitationView` keeps the full
+  `work_ref` as `workRef`; the tail is a display label only, and the join
+  reads the desk view, cross-checked against the raw row.
 - **Attempt row.** The task log's `attempt` row still reads "declared, waiting"
   (`ModeDetail.tsx`); the join's return rows carry the attempt facts. Owner
   seam unchanged: `factory_attempt_read` (the row's own op name).

@@ -11,8 +11,9 @@
  * - Earth places the subject only when an atlas occurrence bears it as its
  *   `subject_ref` (the occurrence contract, `field.ts`), otherwise the seam is
  *   named with its owner;
- * - Timeline shows the run's moment only when the temporal reading carries an
- *   event whose subject is the run ref; otherwise the seam is named;
+ * - Timeline selects the run's newest moment with a stated instant from the temporal
+ *   reading (the factory-runs stream, subject = run ref); otherwise the absence is
+ *   named with the owner's reasons;
  * - Constellation opens a wiki subject only from a `wiki:node:` ref the run's
  *   own Return text or subject names (the Central rule, `namedWikiSubjects`);
  * - Expressions: the run's live Expression is the desk's own Run Live tab
@@ -146,6 +147,38 @@ export function factsOf(runRef: string, projectRef: string | null, positions: re
   return {runRef, projectRef, positions: [...positions], occupants: [...occupants], returns: [...returns]}
 }
 
+/** The desk's run view (`RunInhabitationView`, read structurally): its Positions and the attempts no Position names.
+ * Its custody keeps the owner's full `workRef`; the tail `work` is a display label and is never read here. */
+export interface FactoryViewRun {
+  readonly positions: readonly {
+    readonly positionRef: string
+    readonly inCustody: boolean
+    readonly custody: readonly {readonly state: string; readonly workRef?: string}[]
+    readonly occupants: readonly {readonly attemptRef: string; readonly session?: string}[]
+  }[]
+  readonly unplaced: readonly {readonly attemptRef: string; readonly session?: string}[]
+}
+
+/** The run's Positions from the desk view. Same identities as `positionsOfRaw` (the raw owner row), read from the view. */
+export function positionsOfView(view: FactoryViewRun): FactoryPositionFacts[] {
+  return view.positions.map(position => ({
+    positionRef: position.positionRef,
+    inCustody: position.inCustody,
+    custody: position.custody.map(item => ({state: item.state, work: item.workRef ?? null})),
+    occupants: position.occupants.map(item => ({attemptRef: item.attemptRef, session: item.session ?? null})),
+  }))
+}
+
+/** The attempts the run names, once each, from the desk view (placed in a Position, then unplaced). */
+export function occupantsOfView(view: FactoryViewRun): FactoryOccupantFacts[] {
+  const found: FactoryOccupantFacts[] = []
+  for (const item of [...view.positions.flatMap(position => position.occupants), ...view.unplaced]) {
+    if (found.some(row => row.attemptRef === item.attemptRef)) continue
+    found.push({attemptRef: item.attemptRef, session: item.session ?? null})
+  }
+  return found
+}
+
 export interface FactoryVerticalInputs {
   readonly run: FactoryRunFacts
   /** The temporal reading the World cut holds (empty when none is read). */
@@ -171,10 +204,13 @@ export const EARTH_SEAM: OwnerSeam = {
   remedy: 'the work ref is bound to a corpus occurrence through the T6 occurrence binding contract; the Factory owner declares no such binding today',
 }
 
+/** The Timeline's absence for a run: the field holds no moment for it in the World's window. The field's own rule
+ * (temporal_events.rs, a window admits only events with an instant) and its owner-side silence (temporal_sources.rs
+ * drops an unreadable Factory owner without a state) mean the two owner reasons below cannot be told apart here. */
 export const TIMELINE_SEAM: OwnerSeam = {
-  owner: 'kernel temporal reading (desktop/cradle/kernel/src/temporal_sources.rs)',
-  op: 'a Factory stream adapter reading `factory telemetry day` (factory.telemetry-day/v1) into one moment per run receipt',
-  remedy: 'the temporal read has no Factory stream today (its adapters are central-now, central-now-thoughts, wiki-returns, kernel-event-log and aikit-history); the adapter writes nothing, it maps the owner\'s receipt',
+  owner: 'kernel temporal reading (desktop/cradle/kernel/src/temporal_sources.rs, the factory-runs stream)',
+  op: 'a factory-runs moment for this run with a stated instant, inside the World window (the last seven civil days)',
+  remedy: 'the field holds no such moment for this run: its owner states no instant for the signal (an instant-less signal never enters a window), or the Factory owner was unreadable for the window; the field reports neither per run',
 }
 
 export const CONSTELLATION_SEAM: OwnerSeam = {
@@ -247,10 +283,16 @@ export type TimelineRow =
   | {readonly state: 'selected'; readonly runRef: string; readonly event: FactoryTemporalEvent}
   | {readonly state: 'absent'; readonly runRef: string; readonly seam: OwnerSeam}
 
-/** The run's moment: the temporal event whose subject is the run ref (first in reading order). */
+/** The run's moment: the newest event on the run's ref that the World's temporal reading holds with a stated instant.
+ * An event without an instant cannot be placed on the Timeline's instant axis, so it is never selected. */
 export function timelineRowOf(runRef: string, events: readonly FactoryTemporalEvent[]): TimelineRow {
-  const event = events.find(item => item.subject_ref === runRef)
-  return event ? {state: 'selected', runRef, event} : {state: 'absent', runRef, seam: TIMELINE_SEAM}
+  let moment: FactoryTemporalEvent | null = null
+  for (const item of events) {
+    const instant = item.instant_unix_ms
+    if (item.subject_ref !== runRef || typeof instant !== 'number') continue
+    if (moment === null || instant > (moment.instant_unix_ms as number)) moment = item
+  }
+  return moment ? {state: 'selected', runRef, event: moment} : {state: 'absent', runRef, seam: TIMELINE_SEAM}
 }
 
 export type ConstellationRow =

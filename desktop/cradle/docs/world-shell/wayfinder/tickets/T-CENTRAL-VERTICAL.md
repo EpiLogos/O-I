@@ -36,8 +36,9 @@ separate mode and with no parallel store.
 - Owner seams, named on the faces:
   - every sampled real day is `uninitialised` (Central `initialise-day`, an
     authenticated write, not fired here);
-  - the kernel has no `day_read` handler, though `src/day/client.ts` and
-    `src/nara/nativeReturn.ts` call it;
+  - (corrected 14 Oct) `day_read` is handled — `KernelOp::DayRead` landed in
+    #237 and answers `day_reading` from `central.day.read`; the earlier note
+    here was stale. Its arm is being routed through Central's own read guards;
   - no owner read maps a Nara session-space to its Expression (AIKit
     session-space; `nara_dialogue.rs` holds `expression_ref` in provenance);
   - no temporal stream carries a day-open moment, so a standalone day clip

@@ -28,8 +28,8 @@ import {
   factoryRunJoin,
   factsOf,
   identityBreaks,
-  occupantsOfRaw,
-  positionsOfRaw,
+  occupantsOfView,
+  positionsOfView,
   returnFactsOf,
   type FactoryReturnFacts,
   type FactoryRunJoin,
@@ -105,11 +105,11 @@ export function FactoryRunJoinDetail({transport, world, tracks}: FactoryRunJoinP
   const selectedKey = useSelectedRun()
   const reading = useDeskReading()
   const entry: RunEntry | undefined = selectedKey ? reading?.runs[selectedKey] : undefined
-  // The owner's raw inhabitation row for this run's source (the desk keeps it; the view would drop the full custody ref).
-  const raw = entry ? reading?.inhabitation?.[entry.card.source.statePath] : undefined
-  const rawRun = raw && raw.state === 'read' ? raw.data.runs?.find(item => item.run_ref === entry?.run.runRef) : undefined
-  const positions = positionsOfRaw(rawRun)
-  const occupants = occupantsOfRaw(rawRun)
+  // The desk's run view (its custody keeps the owner's full work ref; the tail is a label only). The join reads it, not the raw row.
+  const view = entry?.inhabitation
+  const readView = view && view.state === 'read' ? view : undefined
+  const positions = readView ? positionsOfView(readView) : []
+  const occupants = readView ? occupantsOfView(readView) : []
   const returns = useRunReturns(transport, entry, occupants.map(item => item.attemptRef))
   const handle = useAtlasHandle()
   const shell = useAgentShellOptional()
@@ -143,7 +143,7 @@ export function FactoryRunJoinDetail({transport, world, tracks}: FactoryRunJoinP
         <span className="inhabitant-device-save">{join.projectRef ?? 'no project ref'}</span>
       </header>
       {breaks.length > 0 && <p className="inhabitant-device-fault" role="alert" data-identity-break>{breaks.join('; ')}</p>}
-      {raw && raw.state !== 'read' && <p className="inhabitant-device-notice" data-inhabitation="unavailable">The owner's inhabitation reading is unavailable: {raw.reason}</p>}
+      {view && view.state !== 'read' && <p className="inhabitant-device-notice" data-inhabitation="unavailable">The owner's inhabitation reading is unavailable: {view.reason}</p>}
 
       <ul className="inhabitant-reading-list" data-factory-rows>
         <li className="inhabitant-reading" data-row="subject"><span className="inhabitant-reading-op">subject</span>
