@@ -374,6 +374,14 @@ input { min-width:0; border:1px solid var(--line); background:var(--bg-1); paddi
 /* Retained native consumers keep their model while presentation is concealed. */
 .browser-residence, .dock-residence { display: contents; }
 .browser-residence[hidden], .dock-residence[hidden] { display: none; }
+/* The one detail residence (F4) is the frame grid's detail row itself — the chain area (the agency frame names it ch). */
+.detail-residence { grid-area: chain; min-height: 0; min-width: 0; overflow: hidden; display: flex; flex-direction: column; background: var(--bg-1); border-top: 1px solid var(--line); }
+.frame.agent-shell-frame .detail-residence { grid-area: ch; }
+.detail-residence[hidden] { display: none; }
+/* The one browser and the one widget rail take their areas in both frames — never auto-placed. */
+.widget-rail { grid-area: dock; }
+.frame.agent-shell-frame .one-browser { grid-area: br; }
+.frame.agent-shell-frame .widget-rail { grid-area: dk; }
 .native-foundation-fault { position: fixed; z-index: 90; bottom: 28px; left: 12px; max-width: min(640px, calc(100vw - 24px)); padding: 8px 12px; background: #251e1c; color: #edc9bc; border: 1px solid #705344; font-size: 12px; }
 .native-foundation-pending { position: fixed; z-index: 90; bottom: 3px; left: 32px; color: var(--muted); font-size: 11px; pointer-events: none; }
 
