@@ -22,6 +22,9 @@ import {validateNativeKnowledgeContext} from '../knowledge/nativeContext.mjs';
 // surface engine declares (surface/types.ts). Kept as literals here so the
 // codec stays language-neutral and browser-testable without a TS import.
 const PROJECTION_PANE_KINDS = ['projection.earth', 'projection.timeline', 'projection.constellation', 'projection.expressions'];
+// Any instrument the frame opens is a projection kind by its name (the engine's isProjectionPaneKind grammar), so a
+// document or device pane survives a restart like the four named ones.
+const isProjectionKind = kind => typeof kind === 'string' && /^projection\.[a-z0-9-]+$/.test(kind);
 const SURFACE_KINDS = ['source', 'sources', 'knowledge', 'file', 'encounter', 'browser', 'terminal', 'flow', 'draft', 'blank', 'instrument', 'explore', 'presentation', 'agency', 'object', ...PROJECTION_PANE_KINDS, ...hostedSurfaceDescriptors.map(descriptor => descriptor.kind)];
 const ENCOUNTER_PLANES = ['Conversation', 'Activity', 'Context', 'Inspect'];
 const KNOWLEDGE_PLANES = ['graph', 'page'];
@@ -68,7 +71,7 @@ export function validBinding(raw) {
     const descriptor = hostedSurfaceDescriptors.find(row => row.kind === o.kind);
     if (descriptor) hosted = {descriptor_ref:descriptor.descriptor_ref, contribution_ref:descriptor.contribution_ref};
   }
-  if (!SURFACE_KINDS.includes(o.kind) && !hosted) return null;
+  if (!SURFACE_KINDS.includes(o.kind) && !isProjectionKind(o.kind) && !hosted) return null;
   if (o.ref !== undefined && typeof o.ref !== 'string') return null;
   if (o.kind === 'instrument' && (typeof o.ref !== 'string' || !o.ref.trim())) return null;
   // An object page (10-SIDEBARS §4.7) is identity only: its ref names the object.
@@ -111,7 +114,7 @@ export function validBinding(raw) {
   // spine address, never content. A missing or mistyped slice drops the
   // slice — the pane then follows the encounter — never the binding.
   const projectionRaw = o.projection;
-  const projection = PROJECTION_PANE_KINDS.includes(o.kind) && projectionRaw && typeof projectionRaw === 'object' && projectionRaw.kind === o.kind
+  const projection = isProjectionKind(o.kind) && projectionRaw && typeof projectionRaw === 'object' && projectionRaw.kind === o.kind
     ? {kind: projectionRaw.kind, ...(typeof projectionRaw.subject_ref === 'string' && projectionRaw.subject_ref.trim() ? {subject_ref: projectionRaw.subject_ref} : {})}
     : undefined;
   // Compact view state is kind-scoped: the plane an encounter Surface was

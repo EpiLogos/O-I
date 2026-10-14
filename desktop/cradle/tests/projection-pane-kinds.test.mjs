@@ -83,7 +83,8 @@ test('the codec restores a projection binding with its slice and drops a mistype
   const mistyped=validBinding({id:'p4',kind:'projection.earth',title:'Earth',projection:'earth'});
   assert.ok(mistyped,'a mistyped slice never invalidates the binding');
   assert.equal(mistyped.projection,undefined,'the mistyped slice itself is dropped, never guessed');
-  assert.equal(validBinding({id:'p5',kind:'projection.telescope',title:'Telescope'}),null,'an unknown projection kind is not admitted');
+  assert.ok(validBinding({id:'p5',kind:'projection.central-document',title:'Day',projection:{kind:'projection.central-document',subject_ref:'document:today'}}),'an instrument named by the kind grammar survives a restart');
+  assert.equal(validBinding({id:'p6',kind:'projection.Telescope',title:'Telescope'}),null,'a kind outside the grammar is not admitted');
   // Full layout round trip: split tree, two projections of one subject.
   const a=engine.makeProjectionBinding(freshLayout(),'projection.timeline',{subject_ref:'stone1950'});
   let s=engine.openBinding(freshLayout(),a);
