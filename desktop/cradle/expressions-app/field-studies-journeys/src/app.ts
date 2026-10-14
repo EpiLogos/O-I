@@ -26,7 +26,7 @@ import {journeyTimelineLayout} from './journeyTimelineLayout';
 import {MARKER_COLOURS,MARKER_LIMIT,MARKER_NAME_MAX,sceneBoundaries,sceneAtJourneyTime,markerNamed,markerAdd,markerRename,markerMove,markerRemove,nextMarkerTime,prevMarkerTime,setLoopEdge,dragLoopEdge,moveLoopRegion,playDurations,toPlayClock,loopPlayNotice,type LoopEdge,type LoopRegion} from './journeyMarkers';
 import {snapCandidates,snapTime,closestSnap,nextSnapPoint,prevSnapPoint,type SnapPoint} from './snapModel';
 import {parseDeepLink,formatDeepLink,resolveSceneRef,resolveMarker,clampJourneyTime,markerAtTime,type DeepLinkAddress,shortenRef} from './deepLinks';
-import {NOT_FOCUSED,beginFocus,endFocus,focusedLayout,type FocusLayout,type FocusSession} from './focusMode';
+import {NOT_FOCUSED,beginFocus,endFocus,focusedLayout,releaseStageFullscreen,requestStageFullscreenOn,type FocusLayout,type FocusSession,type FullscreenHold} from './focusMode';
 import {shuttle,pauseTransport,beginScrub,endScrub,stepFrame,transportRate,transportPlaying,transportReadout,STOPPED_TRANSPORT,type WorkingTransport} from './transport';
 import {durationFromEdgeDrag,sceneAtTime,secondsFromDrag,slipOffsetFromDrag,insertBeforeFor,dragPreviewStep,overlapFromDrag,SCENE_DURATION_MIN,SCENE_DURATION_MAX,type TimelineLayout} from './journeyTimelineLayout';
 import {seamStates,seamCaption,seamBlendHTML,blendLimit,blendLimitMessage} from './journeyPath';
@@ -197,7 +197,7 @@ let deepLinkPending:{address:DeepLinkAddress;notes:string[]}|null={address:bootL
 // address is never written faster than WKWebView's replaceState throttle allows, and the last position is always written.
 const DEEP_LINK_WRITE_MS=400;
 let deepLinkWriteTimer=0;
-let focusSession:FocusSession=NOT_FOCUSED,fullscreenGranted=false,focusExitedAt=Number.NEGATIVE_INFINITY;
+let focusSession:FocusSession=NOT_FOCUSED,focusHold:FullscreenHold|null=null,focusExitedAt=Number.NEGATIVE_INFINITY;
 const featured=featuredExpressions(),starters=startingPoints();
 const covers=new Map<string,string>();
 const sessionExpressions=new Map<string,Journey>();
@@ -2806,14 +2806,13 @@ function stopFocusMode(){
 /** E23: a path that replaces the layout itself (opening the editor) ends focus without restoring over what it just set. */
 function dropFocusMode(){focusSession=NOT_FOCUSED;presenting=false;leaveFullscreen();}
 function requestStageFullscreen(){
- const stage=document.getElementById('stage');if(!stage||typeof stage.requestFullscreen!=='function')return;
- let request:Promise<void>;
- try{request=Promise.resolve(stage.requestFullscreen({navigationUI:'hide'}));}catch{return;}
- void request.then(()=>{if(presenting)fullscreenGranted=true;else leaveFullscreen();},()=>{/* refused: focus stands in place, chrome still hidden */});
+ const stage=document.getElementById('stage');if(!stage)return;
+ // The focus is its own hold: the shared path (focusMode.ts) ends it on the browser's exit and when another mode takes the fullscreen over. A refusal keeps focus in place.
+ const hold:FullscreenHold={lost:()=>stopFocusMode()};
+ focusHold=hold;
+ void requestStageFullscreenOn(stage,{navigationUI:'hide'},hold);
 }
-function leaveFullscreen(){fullscreenGranted=false;if(document.fullscreenElement)void document.exitFullscreen?.().catch(()=>{});}
-// The browser's own exit from fullscreen (its Esc, or its control) ends the focus that asked for it.
-document.addEventListener('fullscreenchange',()=>{if(fullscreenGranted&&!document.fullscreenElement)stopFocusMode();});
+function leaveFullscreen(){const hold=focusHold;focusHold=null;if(hold)releaseStageFullscreen(hold);}
 function openEntryGate(hasContinue:boolean,continueLabel?:string){
  if(nativeWorkspace?.nativeView())return; // the host already opened a native Expression: the frame stands on it
  const gate=$('entry-gate');gate.hidden=false;gate.innerHTML=entryGateHTML({hasContinue,continueLabel:continueLabel?`Continue “${continueLabel}”`:undefined,hasNative:kernelExpressionsAvailable()});

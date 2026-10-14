@@ -14,7 +14,8 @@ import {playPlaceTour,type PlaceTourPlayback} from './placeTourPlayback.js';
 import {PlaceTourPanel} from './placeTourPanel.js';
 import {beats as journeyBeatsOf} from '../../../src/techne/m0m5/journey/beats';
 import type {PlaceViewState} from '../../vendor/research-canvas/packages/canvas/src/psychogeographic/placeNavigation';
-import {beginStageFocus,endStageFocus,isStageFocused,NOT_STAGE_FOCUS,releaseStageFullscreen,requestStageFullscreenOn,type StageFocusSession} from './focusMode';
+import {createStageFocus,releaseStageFullscreen,requestStageFullscreenOn} from './focusMode';
+import type {FullscreenHold} from './focusMode';
 import {openTimelinePresentation,timelineRestoreNote,timelineStyleLoaded,timelineStyleOf,timelineViewNameProblem,timelineViewOf,timelineViewRestorePlan,type TimelinePresentation} from './timelineViews.js';
 import type {TimelinePresentationHandle} from '../../vendor/research-canvas/packages/canvas/src/timeline/TimelineLens';
 import {CONNECTOR_KINDS,connectorPresentation,connectorRecord,connectorWithSides,sideFromHandleId,type ConnectorKind,type ResearchConnector} from './canvasConnectors.js';
@@ -471,7 +472,7 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
  let flyToEdge:((id:string,viewport?:{x:number;y:number;zoom:number})=>void)|null=null;
  // A8 — presentation is session-local: its step lives only in this closure, and
  // leaving restores the editor from the snapshot taken on entry.
- type Presentation={key:string;state:ViewState;frames:PresentFrame[];index:number;fullscreen:boolean;snapshot:{viewport?:{x:number;y:number;zoom:number};multiSelect?:Set<string>;selectedNode?:string|null;selectedEdge?:string|null;dismissedCard:string|null;panels:[HTMLElement,string][]}};
+ type Presentation={key:string;state:ViewState;frames:PresentFrame[];index:number;hold:FullscreenHold;snapshot:{viewport?:{x:number;y:number;zoom:number};multiSelect?:Set<string>;selectedNode?:string|null;selectedEdge?:string|null;dismissedCard:string|null;panels:[HTMLElement,string][]}};
  let presentation:Presentation|null=null;
  // The Canvas last rendered as editable, with its find targets: what the Present act and P key start from.
  let presentable:{canvas:InstrumentCanvas;state:ViewState;targets:CanvasFindTarget[]}|null=null;
@@ -488,28 +489,13 @@ host.tools.append(saveGlyph);
  // lane-2 T24, hoisted to the install (lane-2 T23–T25 seams): the M2′ stage has one focus session for the install, not one per
  // view. The session (focusMode.ts) holds the tools display it began from; unmount() ends it, so every lens change, close and
  // destroy brings the shared tools back. The stage's key listener is held here too, and detached on each unmount.
- let timelineFocus:StageFocusSession<{toolsDisplay:string}>=NOT_STAGE_FOCUS,timelineFullscreen=false;
+ // The stage focus is one controller for the install (focusMode.ts, the ported T24 lifecycle): it hides the tools, marks the stage and
+ // asks for fullscreen under its own hold. A browser exit or another mode's takeover ends it through that hold.
+ const stageFocus=createStageFocus({stage:body,chrome:host.tools,markKey:'timelineFocus'});
  let timelineFocusOff:(()=>void)|null=null;
- const focusOn=()=>isStageFocused(timelineFocus);
- const endTimelineFocus=()=>{
-  const ended=endStageFocus(timelineFocus,chrome=>({...chrome}));
-  timelineFocus=ended.session;timelineFullscreen=false;
-  body.removeAttribute('data-timeline-focus');
-  if(ended.restore)host.tools.style.display=ended.restore.toolsDisplay;
-  releaseStageFullscreen();
- };
- const beginTimelineFocus=()=>{
-  if(focusOn())return;
-  const started=beginStageFocus(timelineFocus,{toolsDisplay:host.tools.style.display},chrome=>({...chrome}));
-  timelineFocus=started;
-  host.tools.style.display='none';
-  body.dataset.timelineFocus='true';
-  void requestStageFullscreenOn(body,{navigationUI:'hide'}).then(granted=>{
-   // Ended or superseded while the request settled: a late grant is released, never held.
-   if(timelineFocus!==started){if(granted)releaseStageFullscreen();return;}
-   timelineFullscreen=granted;
-  });
- };
+ const focusOn=()=>stageFocus.isFocused();
+ const endTimelineFocus=()=>stageFocus.end();
+ const beginTimelineFocus=()=>stageFocus.begin();
  function retain(){if(currentKey&&captureCanvas){const state=views.get(currentKey);if(state)state.canvas=captureCanvas();}captureCanvas=null;}
  function disposeGestures(){for(const state of views.values()){state.moveGesture?.dispose();state.resizeGesture?.dispose();state.groupMoveGesture?.dispose();}}
  function unmount(){endTimelineFocus();timelineFocusOff?.();timelineFocusOff=null;retain();endPresentation(false);presentable=null;disposeGestures();root?.unmount();root=null;body.replaceChildren();}
@@ -590,8 +576,7 @@ host.tools.append(saveGlyph);
   const current=presentation;if(!current)return;
   presentation=null;
   window.removeEventListener('keydown',onPresentKeydown,true);
-  document.removeEventListener('fullscreenchange',onFullscreenChange);
-  if(document.fullscreenElement)void document.exitFullscreen?.().catch(()=>{});
+  releaseStageFullscreen(current.hold);
   canvasElement()?.classList.remove('research-canvas--presenting');
   for(const [el,display] of current.snapshot.panels)el.style.display=display;
   const {state,snapshot}=current;
@@ -610,27 +595,25 @@ host.tools.append(saveGlyph);
   else if(event.key==='ArrowRight'||event.code==='Space')stepPresentation(1);
   else if(event.key==='ArrowLeft')stepPresentation(-1);
  }
- function onFullscreenChange(){if(presentation?.fullscreen&&!document.fullscreenElement)endPresentation();}
  function startPresentation(canvas:InstrumentCanvas,state:ViewState,targets:readonly CanvasFindTarget[]){
   if(presentation)return;
   const boxes=new Map(canvas.nodes.map(node=>[node.id,boxOfNode(node)] as const));
   const frames=presentFrames(targets,id=>boxes.get(id));
   if(!frames.length){message('Save two or more cards as a frame to present.');return;}
   const element=canvasElement();if(!element)return;
-  presentation={key:canvas.key,state,frames,index:0,fullscreen:false,snapshot:{
+  // The presentation's fullscreen is this hold: the shared path (focusMode.ts) ends the presentation when the browser leaves fullscreen or the reader's focus takes it over.
+  const hold:FullscreenHold={lost:()=>{if(presentation?.hold===hold)endPresentation();}};
+  presentation={key:canvas.key,state,frames,index:0,hold,snapshot:{
    viewport:captureCanvas?.()??state.canvas,multiSelect:state.multiSelect,selectedNode:state.selectedNode,selectedEdge:state.selectedEdge,dismissedCard,
    panels:presentPanels().map((el):[HTMLElement,string]=>[el,el.style.display])}};
   const started=presentation;
-  document.addEventListener('fullscreenchange',onFullscreenChange);
   window.addEventListener('keydown',onPresentKeydown,true);
   for(const el of presentPanels())el.style.display='none';
   element.classList.add('research-canvas--presenting');
-  // The first frame is reached once the pane has its presented size: after the
-  // fullscreen request settles either way. A refusal presents in place.
-  void Promise.resolve().then(()=>element.requestFullscreen()).then(()=>{
-   if(presentation!==started){if(document.fullscreenElement)void document.exitFullscreen?.().catch(()=>{});return;}
-   started.fullscreen=true;
-  },()=>{}).then(()=>{requestAnimationFrame(()=>{if(presentation===started)presentCamera(started.index);});});
+  // The first frame is reached once the pane has its presented size: after the fullscreen request settles either way. A refusal presents in place.
+  void Promise.resolve().then(()=>presentation===started?requestStageFullscreenOn(element,{},hold):false).then(()=>{
+   requestAnimationFrame(()=>{if(presentation===started)presentCamera(started.index);});
+  });
  }
  function onPresentStartKey(event:KeyboardEvent){
   // Shift+P: the plain P key already plays a Canvas's marked sequence (CanvasView).
@@ -1374,7 +1357,6 @@ host.tools.append(saveGlyph);
      :null;
     // The stage focus is held at install scope (above): this lens only attaches its own keys.
     if(view){
-     const onStageFullscreen=()=>{if(timelineFullscreen&&!document.fullscreenElement)endTimelineFocus();};
      const onStageKey=(event:KeyboardEvent)=>{
       // Focus that outlives its lens ends on the next key, so the shared tools are never left hidden.
       if(destroyed||lens!=='m2'){if(focusOn())endTimelineFocus();return;}
@@ -1386,8 +1368,7 @@ host.tools.append(saveGlyph);
      };
      // Capture phase: a focused Escape is taken here, before the lens's own Escape clears its selection beneath.
      window.addEventListener('keydown',onStageKey,true);
-     document.addEventListener('fullscreenchange',onStageFullscreen);
-     timelineFocusOff=()=>{window.removeEventListener('keydown',onStageKey,true);document.removeEventListener('fullscreenchange',onStageFullscreen);};
+     timelineFocusOff=()=>{window.removeEventListener('keydown',onStageKey,true);};
     }
     const canvasNode2=():ReactNode=>{
      // Lane-2 T5: relative mode exists only when the acknowledged session names a
