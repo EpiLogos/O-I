@@ -99,10 +99,17 @@ objections verbatim and the full validation (`BRIEF-BUILDER.md`); the lead conve
 
 | Ticket | Who | Zone | Since |
 |---|---|---|---|
-| Detail row A: one head for the row, the Clip view anatomy, Central's and Factory's two sides, the status bar's side names | Opus builder | `frame/detail/**`, `shell/modeDetails.tsx`, the Central/Factory bodies in `shell/ModeDetail.tsx`, `central/CentralClipChooser.tsx`, the Factory chain files | 14 Oct |
-| Detail row B: Expressions' Studio plate and scene clip; Technē's instruments rack and event clip | Opus builder | `components/NativeWorldDetail.*`, `components/expressions/**`, the Technē bodies in `shell/ModeDetail.tsx`, the Technē rack files | 14 Oct |
+| Live at the mockup's floor under the one-instrument ruling: the rail in Live, the chain as plates, the clip in the Clip view, the Live tree healed | Opus builder | `shell/modeFrames.ts` (live), `shell/modeDetails.tsx` (live), `components/DeviceChainPanel.tsx`, `live/**`, `components/BrowserPane.tsx` | 14 Oct |
 | Transport and status bar: the title line, the slots' words and sizes, each mode's readings from their owners, the Info view | Opus builder | `shell/modeTransports.tsx`, `shell/transports/**`, `frame/transport/**`, `components/TransportBar.tsx`, `components/StatusBar.tsx` (not the side switch), the pending note | 14 Oct |
 | Native screen pass against the mockup renders; N1; mounting N2's subject door | lead | the frame, `App.tsx`, `native/Workbench.tsx`, `shell/modeFrames.ts`, the book | 14 Oct |
+
+Landed later the same evening: the detail row's one head, the shared Clip view and Central's and Factory's two sides
+(`cdbf9e6ae`, lane A); Expressions' Studio plate and scene clip, Technē's instruments rack and event clip (`14cb8a1bb`,
+lane B); from the native pass at `b9a0a8048`, Factory's thread held to its conversation, whole session names, instruments
+filling their panes (`e8af36ff4`) and Central's documents on the mockup's paper with their actions in the aperture
+(`b2108bb92`). Open from those returns: an owner read of a document's highlights and notes (the Clip view's two columns
+wait on it); Factory's Log shows the kernel's event kinds until a tool-run read exists; the Desk run join is unmounted
+(no Runs category yet); the mockup's invented Studio and planet-builder controls have no owner.
 
 Landed this evening (14 Oct, after the R2 lanes, which all landed): the one browser and the one transport at the
 mockup's floor and the mockup's colours in every mode (`72f6e0d95`, `2891064ed`); every device the mockup's plate and
