@@ -42,10 +42,11 @@ import {
 } from './canvasRepertoire.js';
 import {RelationFieldView} from './relationFieldView.js';
 import {PlaceFacetsPanel} from './placeFacetsPanel.js';
+import {searchChoiceWrite,placeMountFocus} from './placeSearch.js';
+import {PlaceSearch} from './placeSearchPanel.js';
 import {OPEN_PLACE_FILTER,filteredPlacesRepository,subjectEntityRef,type PlaceFilterState} from './placeReading.js';
 import type {TechneReading,TechnePlaceFacet} from '../../../src/techne/contract';
-import {placeFocusFromSession} from '../../../src/techne/m0m5/place/register';
-import {openingPlaceSelection,timelineOpenPlan} from '../../../src/techne/m0m5/place/navigation';
+import {timelineOpenPlan,type PlaceOffer} from '../../../src/techne/m0m5/place/navigation';
 import {readSharedTimeWindow,writeSharedTimeWindow,writeSharedTraversalHop,followSharedTimeNudges,trackOwnSharedTimeWrite,qualifyTimeWindowReply,SharedTimeWindowControls,type SharedTimeDraft} from './sharedTimeWindow.js';
 import {sharedTimelinePresentation} from './sharedTimeProjection.js';
 import {timeAxisProjection,relativeTimeAxisProjection} from '../../../src/techne/m0m5/timeline/timeAxis';
@@ -1614,7 +1615,7 @@ host.tools.append(saveGlyph);
     void host.material(sceneId,{type:'place-tour-save',name,tour}).then(()=>{message(beat?`Stop ${index+1} bound to ${beat.scene_ref}`:`Stop ${index+1} unbound`);render(renderPlaces());},refusal);
    };
    // Seam B: a carried place is the opening selection and the framed focus, through the same two props. A place the reading does not disclose is named.
-   const carriedPlace=focusRef!==undefined&&(nativeReading.spatial??[]).some(facet=>facet.place_ref===focusRef)?focusRef:undefined;
+   let carriedPlace=focusRef!==undefined&&(nativeReading.spatial??[]).some(facet=>facet.place_ref===focusRef)?focusRef:undefined;
    const placeNote=focusRef!==undefined&&carriedPlace===undefined?`Not focused: ${focusRef} is not a disclosed place in this reading.`:null;
    const renderPlaces=():ReactNode=>{
     const filter={...state.placeFilter!,window:sharedTime?.axis.window??null};
@@ -1640,7 +1641,6 @@ host.tools.append(saveGlyph);
     // Lane-4 T24: the shared session's spatial focus (or a focused selection naming a disclosed place) is the place selected and
     // framed on open. A ref the reading does not disclose resolves to null: the lens opens unselected, with no error.
     // A focus the session declares governs the opening even when it is stale (then the lens opens unselected); see openingPlaceSelection.
-    const sessionFocus=placeFocusFromSession(sharedTime?.session??null,nativeReading.spatial??[]);
     // Lane-4 T23: "Open in Timeline" writes the facet's place as the shared spatial focus (so Places reopens on this facet) and the
     // facet's validity as the shared window, each through the owner's compare-and-set write, then opens the Timeline lens through the
     // app's instrument activation so the recorded instrument matches. A facet with no validity leaves the window unchanged.
@@ -1658,12 +1658,30 @@ host.tools.append(saveGlyph);
       if(host.activateInstrument)host.activateInstrument('timeline');
       else{lens='m2';await load('m2');}
     };
-    const facets=<PlaceFacetsPanel reading={nativeReading} selectedRef={state.selectedPlace??null} filter={filter} onOpenSource={ref=>host.inspectSubject(ref)} sharedTime
+    // Lane-4 T22: a searched place is written as the native shared session's spatial focus (the same compare-and-set write
+    // openInTimeline and showOnGlobe use), and the mounted map is then re-rendered over that session. Nothing here reads or writes
+    // the cradle's local session store.
+    // The map is re-rendered in place when it is mounted: the same props path every other Places update uses. The vendor map's
+    // focus latch honours each distinct ref once, so the new ref flies it. Only when no Places map is presented does the search
+    // open the lens (the fallback).
+    const mapFocus=placeMountFocus({carried:carriedPlace,session:sharedTime?.session??null,facets:nativeReading.spatial??[],remembered:state.selectedPlace??null});
+    const flyToSearchedPlace=async(offer:PlaceOffer)=>{
+     const plan=searchChoiceWrite(offer);
+     if(!sharedTime||!timeCurrent())throw Error('The shared spatial focus is no longer presented, so it was not changed.');
+     const mapPresented=root!==null;
+     sharedTime=await writeSharedSpatialFocus(request,nativeReading,plan.instrument,sharedTime,plan.spatial_focus_ref);
+     if(!mapPresented){await load('m4');return;}
+     if(!timeCurrent())throw Error('The Places instrument changed while the place was chosen; the globe was not re-focused.');
+     // A carried ref was the opening focus only; the search's own native focus now decides the globe.
+     carriedPlace=undefined;
+     render(renderPlaces());
+    };
+    const facets=<><PlaceSearch reading={nativeReading} onChoose={offer=>{void flyToSearchedPlace(offer).catch(error=>message(error instanceof Error?error.message:String(error)));}}/><PlaceFacetsPanel reading={nativeReading} selectedRef={state.selectedPlace??null} filter={filter} onOpenSource={ref=>host.inspectSubject(ref)} sharedTime
       onFilterChange={next=>{state.placeFilter={...next,window:null};scheduleLayersSave();render(renderPlaces());}}
-      editRequest={placeEditRequest} onError={message}/>;
+      editRequest={placeEditRequest} onError={message}/></>;
     return <>{createPortal(<div className="research-tool-actions"><button aria-label="Refresh geography" title="Refresh geography" onClick={()=>void load('m4')}><ToolIcon name="history"/></button>{scene&&<button aria-label="Save map view" title="Save map view" onClick={()=>{if(state.place)void host.material(sceneId,{type:'viewport',key:'place',value:placeRecordFromViewState(state.place)}).then(()=>message('View saved'),error=>message(String(error)));}}><ToolIcon name="save"/></button>}{scene&&<button type="button" className="research-places-view-save" aria-label="Save view…" title="Save this place view: camera, layers, basemap and time window" onClick={savePlaceView}>Save view…</button>}{scene&&Object.keys(placeViewsNow).length>0&&<select className="research-places-view-select" aria-label="Saved place views" value="" onChange={event=>{const [op,name]=event.target.value.split('\u0000');if(op==='apply')void applyPlaceView(name);if(op==='remove')removePlaceView(name);event.target.value='';}}><option value="">Views…</option>{Object.keys(placeViewsNow).map(name=><optgroup key={name} label={name}><option value={`apply\u0000${name}`}>Go to</option><option value={`remove\u0000${name}`}>Remove</option></optgroup>)}</select>}{timeControls(()=>render(renderPlaces()))}</div>,host.tools)}
     <div className="research-places"><PsychogeographicMap inspectorContainer={host.inspector} toolbarContainer={host.placesHome??host.tools} repository={filteredRepository} projectId={data.reading.subject.subject_ref} tileSource={tileSource} offlineOnly={!state.livePlaces!.allowed} policy={state.livePlaces!.policy} basemapStack={state.livePlaces!.stack} onBasemapStackChange={next=>{state.livePlaces!.stack=next;scheduleLayersSave();}} onLiveSourcesAllowedChange={allowed=>{const live=state.livePlaces!;if(allowed)live.policy.optIn('tile_refresh','show live basemap sources the owner allowed in Places');else live.policy.optOut('tile_refresh');live.allowed=allowed;render(renderPlaces());}} placeFacets={nativeReading.spatial} placeAuthoring={placeAuthoring} placeTime={placeTime} daylight={PLACES_DAYLIGHT} ladder={ladderRungSummaries(referenceFrameLadder(nativeReading))} onRegisterPlaceViewRestore={restore=>{restoreViewOnMap=restore;}} onRegisterPlaceFlight={flight=>{flyOnMap=flight;}} layerFilter={filter} onLayerFilterChange={next=>{state.placeFilter={...next,window:null};scheduleLayersSave();render(renderPlaces());}} sourceAttributions={pack.manifest.sources.map(source=>`${source.name} (${source.license})`)}
-     initialViewState={state.place} initialSelectedGraphNodeId={carriedPlace??openingPlaceSelection(sharedTime?.session??null,nativeReading.spatial??[],state.selectedPlace??null)} initialFocusGraphNodeId={carriedPlace??sessionFocus}
+     initialViewState={state.place} initialSelectedGraphNodeId={mapFocus.selected} initialFocusGraphNodeId={mapFocus.focus}
      onOpenInTimeline={facet=>{void openInTimeline(facet).catch(error=>message(error instanceof Error?error.message:String(error)));}} onOpenSource={ref=>host.inspectSubject(ref)}
      onViewStateChange={value=>{state.place=value;}} onSelectedGraphNodeIdChange={value=>{state.selectedPlace=value;render(renderPlaces());}}
      onOpenCanvasNode={ref=>{const node=data.bundle.nodes.find(node=>node.graphNodeId===ref&&node.place);if(node)host.inspectSubject(ref,{node});}}/>

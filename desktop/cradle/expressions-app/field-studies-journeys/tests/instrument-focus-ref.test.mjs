@@ -41,9 +41,10 @@ test('the timeline instrument focuses the carried event as the chronology select
 
 test('the place instrument frames the carried place through the opening selection, and names a place it does not disclose', async () => {
   const src = await read('researchInstruments.tsx');
-  assert.match(src, /const carriedPlace=focusRef!==undefined&&\(nativeReading\.spatial\?\?\[\]\)\.some\(facet=>facet\.place_ref===focusRef\)\?focusRef:undefined;/, 'the carried place is admitted only when the reading discloses it');
-  assert.match(src, /initialSelectedGraphNodeId=\{carriedPlace\?\?openingPlaceSelection\(/, 'the carried place is the opening selection');
-  assert.match(src, /initialFocusGraphNodeId=\{carriedPlace\?\?sessionFocus\}/, 'the carried place is the framed focus');
+  assert.match(src, /let carriedPlace=focusRef!==undefined&&\(nativeReading\.spatial\?\?\[\]\)\.some\(facet=>facet\.place_ref===focusRef\)\?focusRef:undefined;/, 'the carried place is admitted only when the reading discloses it');
+  assert.match(src, /const mapFocus=placeMountFocus\(\{carried:carriedPlace,session:sharedTime\?\.session\?\?null,facets:nativeReading\.spatial\?\?\[\],remembered:state\.selectedPlace\?\?null\}\);/, 'the carried place is the opening selection through the one mount-focus rule');
+  assert.match(src, /initialSelectedGraphNodeId=\{mapFocus\.selected\}/, 'the mount opens on the resolved selection');
+  assert.match(src, /initialFocusGraphNodeId=\{mapFocus\.focus\}/, 'the carried place is the framed focus');
   assert.match(src, /const placeNote=focusRef!==undefined&&carriedPlace===undefined\?`Not focused: \$\{focusRef\} is not a disclosed place in this reading\.`:null;/, 'an undisclosed place is named');
   assert.match(src, /if\(placeNote\)message\(placeNote\);/, 'the place status line names the refusal');
 });
