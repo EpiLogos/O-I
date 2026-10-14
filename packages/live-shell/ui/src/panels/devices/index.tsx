@@ -33,7 +33,12 @@ import { installDeviceStyles } from './device-styles'
 
 installDeviceStyles()
 
+/** The set-device faces by the element name the document stores, with their display titles. The Live chain renders one face per
+ * device on the selected track from this table (FOUNDATION F0: the chain is the track's devices, never the registry). */
+export const DEVICE_FACE_TITLES = new Map<string, string>()
+
 function devicePanel(elementName: string, displayTitle: string) {
+  DEVICE_FACE_TITLES.set(elementName, displayTitle)
   return function DevicePanelFor({ set, loading, error }: PanelContext) {
     return (
       <DevicePanel
