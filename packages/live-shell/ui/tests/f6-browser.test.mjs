@@ -36,7 +36,8 @@ const React = await import('react')
 const {renderToStaticMarkup} = await import('react-dom/server')
 const {readFile} = await import('node:fs/promises')
 const {BROWSER_KINDS} = await import('../src/frame/browser/browserKinds.ts')
-const {Browser} = await import('../src/frame/browser/Browser.tsx')
+const {Browser, categoryKey} = await import('../src/frame/browser/Browser.tsx')
+const keyDoors = await import('../src/frame/keys/keyDoors.ts')
 const {MODE_BROWSERS, browserSourcesOf} = await import('../src/shell/modeBrowsers.tsx')
 const {SURF_MODES} = await import('../src/shell/modeGrammar.ts')
 const source = path => readFile(new URL(`../src/${path}`, import.meta.url), 'utf8')
@@ -83,4 +84,54 @@ test('the frame\'s browser names no mode, and App has one browser residence with
   const app = await source('App.tsx')
   assert.equal((app.match(/className="browser-residence"/g) ?? []).length, 1)
   for (const old of ['<BrowserPane', '<WorldBrowser', '<ModeBrowser', '<AgentShellBrowser']) assert.ok(!app.includes(old), `${old} is a row body, not an App residence`)
+})
+
+// FOUNDATION F1: a mode returns to the browser category it was left on. The category is the book's (App holds one per mode in the
+// application view); the browser is controlled by it and reports a choice. Rendered headless; the click is read in the source.
+const makeSources = () => {
+  const Body = ({controlled}) => React.createElement('p', {'data-body': controlled.category}, `rows of ${controlled.category}`)
+  return [
+    {id: 'a', categories: [{id: 'one', label: 'One', kind: 'material'}, {id: 'two', label: 'Two', kind: 'material'}], Body},
+    {id: 'b', categories: [{id: 'two', label: 'Two again', kind: 'devices'}], Body},
+  ]
+}
+const shown = markup => markup.match(/data-body="([^"]+)"/)?.[1]
+const pressed = markup => [...markup.matchAll(/<button[^>]*aria-pressed="true"[^>]*>.*?<\/button>/gs)].map(m => m[0].match(/<span>([^<]+)<\/span>/)?.[1])
+
+test('a category is named by its source and its id, so two sources may each have a "two"', () => {
+  const [a, b] = makeSources()
+  assert.equal(categoryKey(a, a.categories[1]), 'a:two')
+  assert.equal(categoryKey(b, b.categories[0]), 'b:two')
+})
+
+test('a controlled browser shows the category the book holds, and falls back to the first when the key names none', () => {
+  const sources = makeSources()
+  const render = props => renderToStaticMarkup(React.createElement(Browser, {sources, ...props}))
+  assert.equal(shown(render({category: 'a:two', onCategory() {}})), 'two')
+  assert.deepEqual(pressed(render({category: 'a:two', onCategory() {}})), ['Two'])
+  assert.deepEqual(pressed(render({category: 'b:two', onCategory() {}})), ['Two again'], 'the second source\'s "two" is the one pressed')
+  assert.deepEqual(pressed(render({category: 'gone:away', onCategory() {}})), ['One'], 'a stale key falls back to the first category')
+  assert.deepEqual(pressed(render({category: null, onCategory() {}})), ['One'], 'a mode never left holds none: the first')
+  // two modes remount the one browser with their own held category: each returns to its own
+  assert.deepEqual(pressed(render({category: 'a:two', onCategory() {}})), ['Two'])
+  assert.deepEqual(pressed(render({category: 'a:one', onCategory() {}})), ['One'])
+  // without a book (the uncontrolled form) the browser holds its own choice and starts on the first
+  assert.deepEqual(pressed(render({})), ['One'])
+})
+
+test('choosing a category reports it to the book, and the browser registers its search for ⌘F (code-reading)', async () => {
+  const src = await source('frame/browser/Browser.tsx')
+  assert.match(src, /onClick=\{\(\) => \{ hold\(key\(item\)\); onCategory\?\.\(key\(item\)\); setQuery\(''\) \}\}/, 'a press holds the choice and reports it')
+  assert.match(src, /const active = onCategory \? category \?\? null : held/, 'the book\'s category governs once the browser is controlled')
+  assert.match(src, /useBrowserSearchRequest\(searchRef\)/); assert.match(src, /<input ref=\{searchRef\} type="search"/)
+})
+
+test('⌘F reaches the browser\'s search: the box is registered while the browser is mounted (the keys layer\'s door)', () => {
+  assert.equal(typeof keyDoors.useBrowserSearchRequest, 'function')
+  let focused = 0
+  const release = keyDoors.registerBrowserSearch({focus() { focused++ }})
+  assert.equal(keyDoors.requestBrowserSearch(), true)
+  assert.equal(focused, 1)
+  release()
+  assert.equal(keyDoors.requestBrowserSearch(), false, 'no browser, the key is left to others')
 })
