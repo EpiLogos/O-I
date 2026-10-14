@@ -5,7 +5,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {blankJourney,validateJourney} from '../build/model.js';
-import {readLibraryWithOrigins,readLibrary,saveToLibrary,libraryOriginFrom} from '../build/store.js';
+import {readLibraryWithOrigins,readLibrary,saveToLibrary,libraryOriginFrom,recordLibraryAdoption,adoptedLocalOrigin,libraryOpenPlan} from '../build/store.js';
 
 class MemoryStorage{
  constructor(){this.map=new Map();}
@@ -77,4 +77,58 @@ test('origins are per document: one entry flipping leaves the others as they sto
   assert.deepEqual(originOf('a-doc'), {kind:'kernel-ref',ref:'expression:other'});
   assert.deepEqual(originOf('b-doc'), {kind:'kernel-ref',ref:KERNEL});
   assert.equal(readLibrary().length,2, 'no entry is dropped');
+});
+
+// OPEN 1 (adoption): the first kernel save of a browser-local document links its Library entry to the kernel document it created.
+// The kernel's own id is untouched, the local copy is kept, and the link is metadata beside the local origin.
+const ADOPTED='expression:adopted-one';
+const adoption=(ref,title,at='2026-10-14T11:00:00.000Z')=>({ref,title,at});
+
+test('a fresh local entry saved to the kernel is linked to the kernel document, and nothing is removed', () => {
+  storage.map.clear();
+  const local=documentNamed('fresh-two','Fresh two');
+  saveToLibrary(local);
+  const before=readLibrary().length;
+  assert.equal(recordLibraryAdoption('fresh-two',adoption(ADOPTED,'The kernel document')),true);
+  assert.deepEqual(originOf('fresh-two'), {kind:'local-draft',adopted_into:ADOPTED,adopted_title:'The kernel document',adopted_at:'2026-10-14T11:00:00.000Z'});
+  assert.equal(readLibrary().length,before,'no entry is removed by the link');
+  const [read]=readLibrary().filter(j=>j.id==='fresh-two');
+  assert.deepEqual(read, validateJourney(local), 'the local copy is kept with its content');
+});
+
+test('reopening a linked local entry offers the kernel copy first, when the kernel is reachable', () => {
+  storage.map.clear();
+  saveToLibrary(documentNamed('linked-one','Linked one'));
+  recordLibraryAdoption('linked-one',adoption(ADOPTED,'Kernel title'));
+  const origin=originOf('linked-one');
+  assert.deepEqual(libraryOpenPlan(origin,true), {kind:'kernel-first',ref:ADOPTED,title:'Kernel title'});
+  assert.deepEqual(libraryOpenPlan(origin,false), {kind:'local'}, 'with no kernel reachable the browser draft opens as before');
+});
+
+test('a second adoption of the same local entry records the latest ref; the link is kept through later backups', () => {
+  storage.map.clear();
+  saveToLibrary(documentNamed('twice-one','Twice one'));
+  recordLibraryAdoption('twice-one',adoption('expression:first-ref','First'));
+  recordLibraryAdoption('twice-one',adoption('expression:second-ref','Second'));
+  assert.equal(originOf('twice-one').adopted_into,'expression:second-ref');
+  saveToLibrary(documentNamed('twice-one','Twice one, edited'));
+  assert.equal(originOf('twice-one').adopted_into,'expression:second-ref','an unnamed backup keeps the adoption link');
+  assert.equal(readLibrary().find(j=>j.id==='twice-one').name,'Twice one, edited');
+});
+
+test('adoption records nothing where it does not apply: an absent entry, a kernel-ref entry, a malformed ref', () => {
+  storage.map.clear();
+  assert.equal(recordLibraryAdoption('never-saved',adoption(ADOPTED,'X')),false);
+  assert.equal(readLibrary().length,0,'nothing is created for an entry that was never saved');
+  saveToLibrary(documentNamed('bound-one','Bound one'),{kind:'kernel-ref',ref:KERNEL});
+  assert.equal(recordLibraryAdoption('bound-one',adoption(ADOPTED,'X')),false);
+  assert.deepEqual(originOf('bound-one'), {kind:'kernel-ref',ref:KERNEL});
+  assert.deepEqual(adoptedLocalOrigin(adoption('not-a-ref','X')), {kind:'local-draft'}, 'a malformed adopted ref is local-draft only');
+});
+
+test('an adoption link on a local entry is read back with a clean origin', () => {
+  assert.deepEqual(libraryOriginFrom({kind:'local-draft',adopted_into:ADOPTED,adopted_title:'T'.repeat(300),adopted_at:'2026-10-14'}),
+    {kind:'local-draft',adopted_into:ADOPTED,adopted_title:'T'.repeat(160),adopted_at:'2026-10-14'});
+  assert.deepEqual(libraryOpenPlan(undefined,true), {kind:'local'});
+  assert.deepEqual(libraryOpenPlan({kind:'kernel-ref',ref:KERNEL},true), {kind:'local'}, 'a kernel-ref entry opens as it always has');
 });

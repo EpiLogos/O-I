@@ -46,7 +46,7 @@ import {COLOR_PALETTES,hexToRgb,isLightHex} from '../../src/engine/colorPalettes
 import {CHAKRA_PROFILE_ID} from '../../src/engine/semantics/chakraProfile';
 import type {SemanticBinding,SemanticColorCoupling,SemanticFieldConfig} from '../../src/engine/semantics/semanticTypes';
 import {Journey,Scene,Entity,EntityLayer,TextLayer,Tool,Shape,Vec3,clone,uid,clamp,fieldStudies,oiMark,rethemeMark,sevenCentres,smallLanguage,blankJourney,blankScene,entity,pin,chakraEntities,validateJourney,AutomationLane,SCENE_TRANSITION_MIN,SCENE_TRANSITION_MAX,type MarkThemeReading} from './model.js';
-import {DocumentStore,readLibrary,readLibraryWithOrigins,saveToLibrary,removeFromLibrary,type LibraryOrigin} from './store.js';
+import {DocumentStore,readLibrary,readLibraryWithOrigins,saveToLibrary,removeFromLibrary,recordLibraryAdoption,adoptedLocalOrigin,libraryOpenPlan,type LibraryOrigin} from './store.js';
 import {bindingEditLabel,connectActLabel,historyTitle,historyToast,historyWaitReason,KERNEL_UPDATE_LABEL,OUTSIDE_UPDATE_REASON,researchMaterialLabel} from './undoLabels.js';
 import {defaultCamera,cameraForSceneView,project,unproject,facePlane,stageScale,stageCentre,basis,Camera} from './camera.js';
 import {FieldEngineAdapter,EngineFrame} from './engine.js';
@@ -179,6 +179,10 @@ let initial:Journey=startsInTechne?(startingPoints().find(p=>p.expression.id==='
 // T22: a kernel-bound library entry is opened from the kernel once the native channel is up (the boot below). Until then, and when the kernel
 // cannot be reached, the browser copy stands as explicitly local scratch beneath it.
 let bootKernelRef:string|null=null;
+/** The status line of a kernel document this page opened from its browser copy with no kernel channel (standalone). */
+const KERNEL_SCRATCH_LINE="Kernel document — opened from this browser's copy; the kernel is not reachable here";
+/** The document id whose browser copy stands in for a kernel document this page could not reach; null otherwise. */
+let kernelScratchId:string|null=null;
 try{if(window.__JOURNEY__)initial=validateJourney(window.__JOURNEY__);else if(!startsWithNativeReference){try{const last=localStorage.getItem('oi.field-studies.last');const {read,origins}=readLibraryWithOrigins();const saved=read.journeys.find(j=>j.id===last);if(saved){initial=saved;const origin=last?origins.get(last):undefined;if(origin?.kind==='kernel-ref')bootKernelRef=origin.ref;}}catch{/* An opaque or private origin must still open cleanly. */}}}catch(err){startupError=err instanceof Error?err.message:String(err);}
 function initialiseBelts(j:Journey){initialiseShared(j);initialiseSources(j);for(const s of [...j.scenes,...Object.values(j.savedScenes??{})])if(!s.toolbelt)s.toolbelt=clone(workspace.entries).map(e=>e.scope==='named'&&!s.entities.some(v=>v.id===e.entityId)?{id:e.id,key:e.key,scope:'selected' as const}:e);return j;}
 const store=new DocumentStore(initialiseSceneSaves(initialiseBelts(initial)));let engine:FieldEngineAdapter;
@@ -250,7 +254,7 @@ async function flushDraft(){
   if(deletedLibraryIds.has(draft.id)){await removeDraft(draft.id);return;}
   sessionExpressions.set(draft.id,draft);if(store.document.id!==draft.id)return;
   autosaveErrorShown=false;
-  $('save-status').textContent=store.revision!==backupVersion?draftStatusLine('waiting',new Date(),hostedRecovery()?'native':'browser'):draftStatusLine('backed-up',new Date(),hostedRecovery()?'native':'browser');
+  $('save-status').textContent=kernelScratchShows()?KERNEL_SCRATCH_LINE:store.revision!==backupVersion?draftStatusLine('waiting',new Date(),hostedRecovery()?'native':'browser'):draftStatusLine('backed-up',new Date(),hostedRecovery()?'native':'browser');
   const now=Date.now();
   if(now-lastLibraryWrite>5000){lastLibraryWrite=now;try{saveToLibrary(draft,kernelOriginFor(draft));}catch{/* The acknowledged copy remains with its recovery owner. */}}
  }catch(cause){
@@ -266,7 +270,7 @@ async function flushDraft(){
 }
 
 let sessionSaveTimeout=0;
-function markSaved(){clearTimeout(sessionSaveTimeout);sessionSaveTimeout=window.setTimeout(saveSession,150);if(deletedLibraryIds.has(store.document.id)){$('save-status').textContent='Saved copy removed · use Save to keep again';return;}$('save-status').textContent=hostedRecovery()?'Backing up working copy…':'Saving in this browser…';draftSchedule.request();}
+function markSaved(){clearTimeout(sessionSaveTimeout);sessionSaveTimeout=window.setTimeout(saveSession,150);if(deletedLibraryIds.has(store.document.id)){$('save-status').textContent='Saved copy removed · use Save to keep again';return;}$('save-status').textContent=kernelScratchShows()?KERNEL_SCRATCH_LINE:hostedRecovery()?'Backing up working copy…':'Saving in this browser…';draftSchedule.request();}
 // Every edit names itself: the label is what Undo, Redo and their toast report.
 function changed(fn:()=>void,render:boolean,label:string){trackPreview=false;if(journeyPlaying){journeyPlaying=false;applySceneView();}store.change(label,fn);awaitingNativeBoot=false;nativeWorkspace?.cancelOpen();markSaved();overlayDirty=true;needsFrame=true;if(render)renderAll();}
 function sanitiseSelection(){sceneIndex=clamp(sceneIndex,0,store.document.scenes.length-1);selected=selected.filter(id=>scene().entities.some(e=>e.id===id));if(!scene().text.some(t=>t.id===textId))textId=scene().text[0]?.id??null;const e=selectedEntity();stepIndex=clamp(stepIndex,0,Math.max(0,(e?.sequence.steps.length??1)-1));}
@@ -1328,9 +1332,15 @@ function renderLibrary(){coverObserver?.disconnect();const {read:library,origins
   const id=button.dataset.id!;
   const origin=origins.get(id),bound=id===store.document.id?kernelOriginFor(store.document):undefined;
   const kernelRef=origin&&origin.kind==='kernel-ref'?origin.ref:bound&&bound.kind==='kernel-ref'?bound.ref:undefined;
+  const adopted=origin&&origin.kind==='local-draft'&&origin.adopted_into?{ref:origin.adopted_into,title:origin.adopted_title??''}:undefined;
   const note=document.createElement('span');note.className='oi-lib-note';
-  note.textContent=kernelRef?`Kernel copy · ${shortenRef(kernelRef)}`:'Draft in this browser';
+  note.textContent=kernelRef?`Kernel copy · ${shortenRef(kernelRef)}`:adopted?`Saved to the kernel as “${adopted.title||shortenRef(adopted.ref)}”`:'Draft in this browser';
   button.append(note);
+  if(adopted){
+   // The browser draft stays openable beneath the kernel copy the card opens first.
+   const draft=document.createElement('button');draft.type='button';draft.className='oi-lib-note';draft.dataset.action='open-local-draft';draft.dataset.id=id;draft.textContent='Open browser draft';
+   button.closest('article')?.append(draft);
+  }
  }
  const documents=new Map([...featured,...saved,store.document,...starters.map(p=>p.expression)].map(j=>[j.id,j]));
  const paint=(image:HTMLImageElement)=>{const j=documents.get(image.dataset.previewId!);if(j){image.src=compositionCover(j.scenes[0]);image.removeAttribute('data-preview-id');}};
@@ -1403,7 +1413,22 @@ function kernelOriginFor(journey:Journey):LibraryOrigin|undefined{
  if(!view||view.journey.id!==journey.id||!view.document.expression_ref.startsWith('expression:'))return undefined;
  return {kind:'kernel-ref',ref:view.document.expression_ref};
 }
-function applyJourney(j:Journey,native=false,adoptionHistory:'record'|'acknowledge'='record',acknowledgement:'preserve'|'retire'='preserve'){journeyNavigation++;if(!native){awaitingNativeBoot=false;void nativeWorkspace?.changed(j);}if(propertyTake)finishPropertyTake();trackPreview=false;rememberWork(j.id);studioOpen=false;j.scenes.forEach(checkNativeLimits);sessionExpressions.set(store.document.id,clone(store.document));sessionExpressions.set(j.id,clone(j));try{if(!deletedLibraryIds.has(store.document.id))saveToLibrary(store.document,kernelOriginFor(store.document));}catch{toast('The previous expression is retained in Undo; browser storage is unavailable. Export it before closing this page.',6500);}if(native&&adoptionHistory==='acknowledge'&&store.document.id===j.id)store.acknowledge(initialiseSceneSaves(initialiseBelts(j)),acknowledgement);else store.change('Open expression',()=>{store.document=clone(initialiseSceneSaves(initialiseBelts(j)));});store.document.updatedAt=j.updatedAt;sceneIndex=0;selected=[];camera=defaultCamera();applySceneView();transitionDuration=0;$('transition-canvas').hidden=true;sceneElapsed=0;journeyPlaying=false;editing=false;inspectorOpen=false;timelineOpen=false;cursorTool='interact';tool='interact';railKey='interact';railExpanded=false;shapePickerOpen=false;closeDialogs();libraryOpen=false;modesOpen=false;try{history.replaceState(null,'',location.pathname+location.search);}catch{}markSaved();renderAll();}
+/** Opens a kernel copy through the boot's own follow path. A refusal is named, and `fallback` (the browser copy) then opens. */
+function openKernelCopy(ref:string,fallback?:()=>void){
+ const refused=()=>{toast(`The kernel copy of this Expression could not be opened.${fallback?' The browser copy opens instead.':' The browser copy stays open as local scratch.'}`,7000);fallback?.();};
+ void Promise.resolve(nativeWorkspace?.follow(ref)).then(applied=>{if(applied!==true)refused();},refused);
+}
+function kernelScratchShows(){return kernelScratchId!==null&&kernelScratchId===store.document.id;}
+/** T22: the first kernel save of a browser-local document. The kernel document it created has its own id, so the local entry is not
+ * flipped; its Library entry records the kernel document beside its local origin. A save of an already-bound document records nothing. */
+function recordAdoptionAfterSave(localId:string,wasBound:boolean){
+ if(wasBound)return;
+ const view=nativeWorkspace?.nativeView();
+ if(!view||view.journey.id===localId||!view.document.expression_ref.startsWith('expression:'))return;
+ const adoption={ref:view.document.expression_ref,title:view.document.title,at:new Date().toISOString()};
+ try{if(!recordLibraryAdoption(localId,adoption)&&store.document.id===localId)saveToLibrary(store.document,adoptedLocalOrigin(adoption));}catch{/* The link is recorded again by the next save. */}
+}
+function applyJourney(j:Journey,native=false,adoptionHistory:'record'|'acknowledge'='record',acknowledgement:'preserve'|'retire'='preserve'){journeyNavigation++;if(native)kernelScratchId=null;if(!native){awaitingNativeBoot=false;void nativeWorkspace?.changed(j);}if(propertyTake)finishPropertyTake();trackPreview=false;rememberWork(j.id);studioOpen=false;j.scenes.forEach(checkNativeLimits);sessionExpressions.set(store.document.id,clone(store.document));sessionExpressions.set(j.id,clone(j));try{if(!deletedLibraryIds.has(store.document.id))saveToLibrary(store.document,kernelOriginFor(store.document));}catch{toast('The previous expression is retained in Undo; browser storage is unavailable. Export it before closing this page.',6500);}if(native&&adoptionHistory==='acknowledge'&&store.document.id===j.id)store.acknowledge(initialiseSceneSaves(initialiseBelts(j)),acknowledgement);else store.change('Open expression',()=>{store.document=clone(initialiseSceneSaves(initialiseBelts(j)));});store.document.updatedAt=j.updatedAt;sceneIndex=0;selected=[];camera=defaultCamera();applySceneView();transitionDuration=0;$('transition-canvas').hidden=true;sceneElapsed=0;journeyPlaying=false;editing=false;inspectorOpen=false;timelineOpen=false;cursorTool='interact';tool='interact';railKey='interact';railExpanded=false;shapePickerOpen=false;closeDialogs();libraryOpen=false;modesOpen=false;try{history.replaceState(null,'',location.pathname+location.search);}catch{}markSaved();renderAll();}
 function openKeep(){captureOpen=!captureOpen;modesOpen=false;pointer.active=false;
  if(captureOpen){inspectorOpen=false;contextKind='';timelineOpen=false;beltPickerOpen=false;shapePickerOpen=false;}renderAll();}
 function renderImageSuite(){sourceEditorEpoch++;readCapture();if(!selectedEntity()){const e=scene().entities.find(e=>e.kind==='formation');if(e)selected=[e.id];} $('capture-panel').innerHTML=`<header><h3>Image suite</h3>${ib('capture-options','close','Close image suite')}</header>${imageSuiteHTML(scene(),selected[0],stepIndex)}<details class="image-output"><summary>Capture output settings</summary><div class="two-col"><label class="control"><span>Output size</span><select id="capture-width"><option value="1280">1280</option><option value="1440">1440</option><option value="1920">1920</option><option value="3840">3840 · PNG</option></select></label><label class="control"><span>Frame</span><select id="capture-aspect"><option value="stage">Current stage</option><option value="16:9">16:9</option><option value="1:1">1:1</option><option value="9:16">9:16</option></select></label></div><label class="toggle-row"><span>Include page text</span><input id="capture-text" type="checkbox" ${captureSettings.includeText?'checked':''}><i></i></label><label class="toggle-row"><span>Transparent PNG</span><input id="capture-transparent" type="checkbox" ${captureSettings.transparent?'checked':''}><i></i></label><p class="control-note">Clean artwork only. Aspect changes centre-crop the current view. Silent live video requests 30 fps; 2-minute / 128 MB limit.</p></details>`;
@@ -1724,7 +1749,12 @@ case 'timeline-track':timelineTrack=!timelineTrack;renderAll();break;
  case 'load-built-in':{const j=preset(el.dataset.value!);j.id=uid('journey');await loadJourney(j);break;}
  case 'add-built-in':{const added=clone(preset(el.dataset.value!).scenes[0].entities);for(const x of added)x.id=uid('entity');changed(()=>{s.entities.push(...added);selected=added.map(x=>x.id);},true,'Add objects');closeDialogs();edit(true,'objects');break;}
  case 'import-legacy':{const raw=localStorage.getItem('typographic_pointcloud_saved_states');if(raw){const result=importDocuments(JSON.parse(raw));collectImported(result.journeys);toast(`${result.journeys.length} previous native scenes imported. Original browser key unchanged. ${result.errors.map(e=>e.message).join(' · ')}`,9000);openLibrary();}break;}
- case 'load-saved':{const j=store.document.id===el.dataset.id?store.document:sessionExpressions.get(el.dataset.id!)??readLibrary().find(j=>j.id===el.dataset.id);if(j)await loadJourney(j);break;}
+ case 'load-saved':{const id=el.dataset.id!,j=store.document.id===id?store.document:sessionExpressions.get(id)??readLibrary().find(j=>j.id===id);
+   // T22: a local entry that its first kernel save adopted offers the kernel copy first; its browser draft stays openable beneath.
+   const plan=libraryOpenPlan(readLibraryWithOrigins().origins.get(id),kernelExpressionsAvailable());
+   if(plan.kind==='kernel-first'){openKernelCopy(plan.ref,()=>{if(j)void loadJourney(j);});break;}
+   if(j)await loadJourney(j);break;}
+ case 'open-local-draft':{const id=el.dataset.id!;const j=store.document.id===id?store.document:sessionExpressions.get(id)??readLibrary().find(j=>j.id===id);if(j)await loadJourney(j);break;}
  case 'new-journey':await loadJourney(blankJourney());edit(true,'scene');closeEntryGate();break;
  case 'entry-new':await loadJourney(blankJourney());edit(true,'scene');closeEntryGate();toast('Blank Expression — place a glyph or formation to begin.');break;
  case 'entry-continue':closeEntryGate();toast(store.document.name?'Continued '+store.document.name:'Continued last work');break;
@@ -2828,9 +2858,11 @@ async function saveNative(){
   if(propertyTake)finishPropertyTake();
   // The Save is recorded on the undo step it began from. That step is read in the
   // same breath as the snapshot the workspace submits, so both describe one document.
+  const localId=store.document.id,wasBound=!!kernelOriginFor(store.document);
   const anchor=store.kernelSaveAnchor(),saved=await nativeWorkspace.commitRecorded();
   if(saved){
    const recorded=store.attachKernelCheckpoint(anchor,saved.checkpoint);
+   recordAdoptionAfterSave(localId,wasBound);
    // T22: the Library copy of a document the kernel now holds records its kernel origin at this save.
    try{saveToLibrary(store.document,kernelOriginFor(store.document));}catch{/* The Library mirror is retried by the next backup. */}
    closeEntryGate();
@@ -2843,8 +2875,9 @@ async function saveNative(){
 /** E15d: a host commit, flush or research commit is a Save too. It records its checkpoint on the step it began from, as saveNative does. */
 async function commitNativeRecorded():Promise<boolean|undefined>{
  if(!nativeWorkspace)return undefined;
+ const localId=store.document.id,wasBound=!!kernelOriginFor(store.document);
  const anchor=store.kernelSaveAnchor(),saved=await nativeWorkspace.commitRecorded();
- if(saved){store.attachKernelCheckpoint(anchor,saved.checkpoint);try{saveToLibrary(store.document,kernelOriginFor(store.document));}catch{/* T22: the Library mirror is retried by the next backup. */}}
+ if(saved){store.attachKernelCheckpoint(anchor,saved.checkpoint);recordAdoptionAfterSave(localId,wasBound);try{saveToLibrary(store.document,kernelOriginFor(store.document));}catch{/* T22: the Library mirror is retried by the next backup. */}}
  return !!saved;
 }
 /** One Undo or Redo step. A step that crosses a recorded Save replays that Save's
@@ -2975,8 +3008,10 @@ if(qsExpression?.startsWith('expression:')){
 else if(bootKernelRef&&!qsExpression){
  // T22: the library entry this page opened is kernel-bound, so the kernel copy is the document. The browser copy stands as local scratch
  // until the kernel adopts it; a refusal or an unreachable kernel is named, and the scratch copy stays open.
- const ref=bootKernelRef,refused=()=>toast('The kernel copy of this Expression could not be opened. The browser copy stays open as local scratch.',7000);
- const open=()=>void Promise.resolve(nativeWorkspace?.follow(ref)).then(applied=>{if(applied!==true)refused();},refused);
+ const ref=bootKernelRef;
+ // OPEN 3: a standalone page has no host frame and so no kernel channel. Its kernel-bound entry is named as the scratch it is.
+ if(!kernelExpressionsAvailable()&&window.parent===window){kernelScratchId=store.document.id;$('save-status').textContent=KERNEL_SCRATCH_LINE;}
+ const open=()=>{kernelScratchId=null;openKernelCopy(ref);};
  if(kernelExpressionsAvailable())open();else window.addEventListener('message',function ready(event){if(event.source===window.parent&&event.data?.v===1&&event.data?.kind==='oi-kernel-channel'){window.removeEventListener('message',ready);open();}});
 }
 setInterval(()=>{saveSession();if(propertyTake&&propertyTake.elapsed>0)draftSchedule.request();},1000);}

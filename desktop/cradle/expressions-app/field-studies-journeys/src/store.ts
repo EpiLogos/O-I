@@ -247,5 +247,5 @@ export class DocumentStore {
 /** The one way a multi-step gesture writes to the store: see DocumentStore.composite. */
 export function withComposite<T>(store:DocumentStore,label:string,fn:(doc:Journey)=>T):T{return store.composite(label,fn);}
 // lane-3 E18: the Library is one record per document (libraryStore.ts). These names are its public surface.
-export {readLibraryDetailed,readLibraryWithOrigins,readLibrary,saveToLibrary,removeFromLibrary,setLibraryQuarantine,sweepLibraryDamage,setLibraryBackend,LEGACY_LIBRARY_KEY,libraryOriginFrom} from './libraryStore.js';
-export type {LibraryRead,LibraryReadWithOrigins,LibraryBackend,LibraryQuarantineSink,LibraryOrigin} from './libraryStore.js';
+export {readLibraryDetailed,readLibraryWithOrigins,readLibrary,saveToLibrary,removeFromLibrary,setLibraryQuarantine,sweepLibraryDamage,setLibraryBackend,LEGACY_LIBRARY_KEY,libraryOriginFrom,recordLibraryAdoption,adoptedLocalOrigin,libraryOpenPlan} from './libraryStore.js';
+export type {LibraryRead,LibraryReadWithOrigins,LibraryBackend,LibraryQuarantineSink,LibraryOrigin,LibraryAdoption,LibraryOpenPlan} from './libraryStore.js';
