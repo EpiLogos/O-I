@@ -32,7 +32,7 @@ export async function load(u, c, n) {
     compilerOptions: {target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext, jsx: ts.JsxEmit.ReactJSX}}).outputText};
 }`)}`, import.meta.url)
 
-const {instrumentOfPane, deviceInstrumentFor, showsLensBar, HOSTED_INSTRUMENT, BAR_LENS_OF_HOSTED, hostedLensOfBarId} = await import('../src/shell/paneInstrument.ts')
+const {instrumentOfPane, deviceInstrumentFor, HOSTED_INSTRUMENT, BAR_LENS_OF_HOSTED, hostedLensOfBarId} = await import('../src/shell/paneInstrument.ts')
 const {TECHNE_INSTRUMENTS} = await import('../src/inhabitants/sdk/semantics.ts')
 const {TechneInstrumentsDetail, InstrumentDeviceDetail, BaseDevicesDetail, TechneLensBar} = await import('../src/shell/ModeDetail.tsx')
 
@@ -72,8 +72,16 @@ test('the knowledge graph is its own instrument, never the 0 instrument', () => 
   }
 })
 
-test('the Device-side gate: Live keeps the audio chain, Expressions keeps its native rack for its own panes', () => {
-  assert.equal(deviceInstrumentFor('live', 'projection.earth', null, 'graph'), null, 'Live presents no instrument')
+test('the Device-side gate: Expressions keeps its native rack for its own panes; Live\'s audio chain is the detail host\'s veto, not this module\'s', async () => {
+  // Live keeps its own chain whatever pane is focused: MODE_DETAILS.live.ownsDeviceSide, applied once by the one detail host
+  // (pane-instrument-app.test.mjs pins the host). This module pairs panes with instruments and names no mode in a branch.
+  assert.equal(deviceInstrumentFor('live', 'projection.earth', null, 'graph'), 'techne:m0', 'the pairing is mode-blind: the host, not this module, keeps Live\'s chain')
+  const details = await readFile(new URL('../src/shell/modeDetails.tsx', import.meta.url), 'utf8')
+  assert.match(details, /live: \{clip: LiveClip, device: LiveChain, ownsDeviceSide: true/, 'Live registers its own Device side once')
+  const host = await readFile(new URL('../src/frame/detail/DetailHost.tsx', import.meta.url), 'utf8')
+  assert.match(host, /side === 'device' && !registration\.ownsDeviceSide \? reading\.focusedInstrument : null/, 'the host vetoes the instrument for a mode that owns its Device side')
+  const source = await readFile(new URL('../src/shell/paneInstrument.ts', import.meta.url), 'utf8')
+  assert.doesNotMatch(source, /[!=]==\s*'(?:live|base|factory|expressions|techne)'/, 'paneInstrument.ts holds no mode comparison: a mode\'s difference is a registration')
   assert.equal(deviceInstrumentFor('expressions', 'world.expressions', null, 'graph'), null, 'the Expressions pane keeps its native rack')
   assert.equal(deviceInstrumentFor('expressions', 'projection.earth', null, 'graph'), 'techne:m0', 'the atlas in Expressions takes its instrument')
 })
@@ -92,17 +100,6 @@ test('no instrument pane: the mode keeps its own Device side (Central → the gr
   assert.equal(deviceInstrumentFor('base', 'world.settings', null, 'graph'), null)
   assert.equal(deviceInstrumentFor('factory', 'native.agent', null, 'graph'), null, 'Factory keeps the agent device side')
   assert.match(html(createElement(BaseDevicesDetail, {transport})), /data-mode-detail="base-devices"/)
-})
-
-test('the lens bar stands over an instrument pane in every mode but Live', () => {
-  assert.equal(showsLensBar('base', 'world.ground'), true, 'Central')
-  assert.equal(showsLensBar('techne', 'projection.earth'), true, 'Technē')
-  assert.equal(showsLensBar('expressions', 'projection.earth'), true, 'Expressions')
-  assert.equal(showsLensBar('factory', 'projection.earth'), true, 'Factory')
-  assert.equal(showsLensBar('factory', 'native.agent'), true, 'Factory: the bar stands over the agent tab — it is how an instrument pane opens there')
-  assert.equal(showsLensBar('live', 'world.ground'), false, 'Live shows the audio cut, no instrument pane')
-  assert.equal(showsLensBar('base', 'native.agent'), false)
-  assert.equal(showsLensBar('base', 'world.settings'), false)
 })
 
 const expandedOf = (out, faceId) => {
@@ -205,18 +202,12 @@ test('the lens bar and the hosted frame speak one table: project-graph↔project
   assert.equal(hostedLensOfBarId('no.such.lens'), null)
 })
 
-test('the lens bar stands over the hosted Expressions pane in every mode but its own, as over the other instrument panes', () => {
-  for (const mode of ['base', 'techne', 'factory']) assert.equal(showsLensBar(mode, 'world.expressions'), true, mode)
-  assert.equal(showsLensBar('expressions', 'world.expressions'), false, 'in Expressions mode the pane’s own studio is its chrome')
-  assert.equal(showsLensBar('live', 'world.expressions'), false, 'Live shows the audio cut')
-})
-
-test('the hosted Expressions pane follows the hosted lens in every mode the ruling covers (not Live)', () => {
+test('the hosted Expressions pane follows the hosted lens in every mode the ruling covers (Live\'s chain is the host\'s veto)', () => {
   for (const mode of ['base', 'techne', 'factory']) {
     assert.equal(deviceInstrumentFor(mode, 'world.expressions', null, 'graph', 'timeline'), 'techne:m2', `${mode} · hosted timeline`)
   }
   assert.equal(deviceInstrumentFor('techne', 'world.expressions', null, 'graph', 'palace'), 'techne:m5', 'Technē · hosted palace')
-  assert.equal(deviceInstrumentFor('live', 'world.expressions', null, 'graph', 'timeline'), null, 'Live keeps the audio chain')
+  assert.equal(deviceInstrumentFor('live', 'world.expressions', null, 'graph', 'timeline'), 'techne:m2', 'the pairing is mode-blind; the host keeps Live\'s audio chain')
   assert.equal(deviceInstrumentFor('base', 'world.expressions', null, 'graph', null), null, 'no hosted lens reported: the mode keeps its own Device side')
 })
 
