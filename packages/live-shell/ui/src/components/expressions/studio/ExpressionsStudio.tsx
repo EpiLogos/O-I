@@ -144,6 +144,7 @@ export function ExpressionsStudio({reading, request, selectEntity, drafts, onExp
     {icon: 'cmd', label: configure ? 'Close the settings' : 'Configure: your rack, chosen controls, macros and the Scene', onPress: onConfigure},
     ...(deep.available ? [{icon: 'full' as const, label: deep.open ? 'Return the Studio to its place' : 'Deep edit: the Studio at full height', onPress: deep.onPress}] : []),
     ...(refresh.available ? [{icon: 'orbit' as const, label: 'Read the retained editor again', onPress: refresh.onPress}] : []),
+    ...(chrome?.reopen ? [{icon: 'orbit' as const, label: 'Reopen the native work: the frame\'s host is gone', onPress: chrome.reopen}] : []),
   ]
   // One line: the editor's refusal, the stage's refusal, and the frame's faults while no pane holds the frame.
   const said = [fault ?? paneFault ?? editor.error, stage.refusal, ...(placement === null ? chrome?.faults ?? [] : [])].filter((text): text is string => !!text)
