@@ -98,12 +98,19 @@ converges, commits and keeps this table true. Tickets and resolutions live in `t
 
 | Ticket | Who | Zone | Since |
 |---|---|---|---|
-| T-DEVICES-EXPRESSIONS (the field devices on the runtime) | Sonnet builder | `components/devices/**`, `components/NativeDeviceRack.tsx` | 14 Oct |
-| T-TRANSPORT-BINDINGS (Factory's and Expressions' controls on the one bar) | Sonnet builder | `shell/transports/**` | 14 Oct |
-| F9 keys | Sonnet builder | `frame/keys/**` (the lead mounts it) | 14 Oct |
-| Unreached-code sweep (FOUNDATION §7) | Sonnet builder | unreached, unmodified tracked files under `packages/live-shell/ui/src` and their tests | 14 Oct |
-| R2 review of F0–F8 and the track/device wave | Sonnet reviewer | read-only | 14 Oct |
-| Native screen check of F1–F8; F7's fold-in of the two bars; N1, N2 | lead | the frame, `frame/**`, `shell/**`, `App.tsx`, the book (`desktop/cradle/src/workspace/store.ts`) | 14 Oct |
+| R2 objections 9–10: Central's devices write at every size; a day is a stop standing its entries | Sonnet builder | `central/devices/**`, `timeline/centralTrackAdapter.ts` | 14 Oct |
+| R2 objections 3, 5, 14: pin/follow real; browser category per mode; instrument rows; a real torus picture | Sonnet builder | `frame/InstrumentsSection.tsx`, `frame/instruments.ts`, `frame/browser/Browser.tsx`, `live/TorusOnChain.tsx`, the projection pane modules | 14 Oct |
+| R2 objection 6 + mockup: Factory's centre is the shared grid beside the thread; the legacy grid and run viewer retire | Sonnet builder | `agent/factoryCentre.ts`, `agent/AgentShellRoot.tsx`, the two retired views | 14 Oct |
+| Mockup: Central's documents open as panes (the Day, a Flow, a Thing) | Sonnet builder | `central/documents/**`, the Central rows' open gesture in `shell/ModeBrowser.tsx` | 14 Oct |
+| R2 objection 4 + F7: Expressions' Clip side takes the scene focus and the Scene's own controls; its bar retires | Sonnet builder | `components/TransportBar.tsx`, `components/NativeTransportBar.tsx`, the Expressions clip body | 14 Oct |
+| R2 objections 12–13: one `temporal_events_read` poller; the tripwire over `src/**` | Sonnet builder | the two temporal readers, `shell/paneInstrument.ts`, `components/StatusBar.tsx`, the tripwire | 14 Oct |
+| Native screen pass against the mockup renders (F1–F9); N1; mounting N2's subject door | lead | the frame, `App.tsx`, `native/Workbench.tsx`, `shell/modeFrames.ts`, the book | 14 Oct |
+
+R2 review (14 Oct, Sonnet): FAIL — 15 objections; 1, 2, 7, 8, 11 and the transport's flag lights fixed by the lead and a
+builder the same evening; the rest are the lanes above. The owner, watching the candidate: options inside the pane (the
+Workbench toolbar — removed, its openers now the browser's Surfaces) and a main space below the mockups (panes, empty
+states and drop zones brought to the mockup's floor; each mode's first tree and detail side now the mockup's). Every UI
+brief now carries a mockup comparison, and the lead renders the mockup headless beside each screen check.
 
 Landed on `dlw/build` this run (14 Oct): F0 (the switchboard tripwire — App.tsx
 mode branches 58 → 26, detail residences 6 → 1, per-mode bodies 21 → 10 — and
