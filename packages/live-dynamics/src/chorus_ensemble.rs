@@ -416,7 +416,10 @@ pub fn classic_delay_provider_placeholder(_phase: (f64, f64), _voice: usize) -> 
 /// PLACEHOLDER, EXPLICIT (derivation §5 open, NEON stub): the Ensemble
 /// provider (`getEnsembleModeParameters`) — see
 /// [`classic_delay_provider_placeholder`].
-pub fn ensemble_delay_provider_placeholder(_phase: (f64, f64), _voice: usize) -> Option<(f64, f64)> {
+pub fn ensemble_delay_provider_placeholder(
+    _phase: (f64, f64),
+    _voice: usize,
+) -> Option<(f64, f64)> {
     None
 }
 
@@ -473,7 +476,7 @@ mod per_sample_tests {
         assert_eq!(cubic_interp(-3.0, 1.0, 5.0, 9.0, 0.0), 1.0);
         assert_eq!(cubic_interp(-3.0, 1.0, 5.0, 9.0, 1.0), 5.0);
         // Linear signal y = 2x + 1 sampled at x = −1..2 → reproduced.
-        let (ym1, y0, y1, y2) = (2.0 * -1.0 + 1.0, 1.0, 3.0, 5.0);
+        let (ym1, y0, y1, y2) = (-2.0 + 1.0, 1.0, 3.0, 5.0);
         for frac in [0.0, 0.125, 0.25, 0.5, 0.75, 0.875, 1.0] {
             let got = cubic_interp(ym1, y0, y1, y2, frac);
             let want = 1.0 + 2.0 * frac;
@@ -541,7 +544,10 @@ mod per_sample_tests {
         assert_eq!((l, r), (0.5, 0.5), "Ensemble substitutes mid for both");
 
         let (l, r) = width_ms(0.3, -0.1, 1.0);
-        assert!((l - 0.3).abs() < 1e-15 && (r + 0.1).abs() < 1e-15, "g = 1 is identity");
+        assert!(
+            (l - 0.3).abs() < 1e-15 && (r + 0.1).abs() < 1e-15,
+            "g = 1 is identity"
+        );
         let (l, r) = width_ms(1.0, -1.0, 0.0);
         assert_eq!((l, r), (0.0, 0.0), "g = 0 collapses to mono");
         // L = 1, R = 0 → m = 0.5, s = 0.5; g = 2 → (m + 2s, m − 2s).

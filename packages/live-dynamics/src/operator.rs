@@ -398,8 +398,10 @@ mod tests {
     fn release_path_is_linear_db() {
         let v = OperatorVoiceA::default_patch(48, 44100);
         let rate = v.envelope.sustained_release_rate_db_s();
-        assert!((rate - fitted::RELEASE_FROM_SUSTAIN_RATE_DB_S).abs() < 0.01,
-            "default-patch release rate {rate} vs 175");
+        assert!(
+            (rate - fitted::RELEASE_FROM_SUSTAIN_RATE_DB_S).abs() < 0.01,
+            "default-patch release rate {rate} vs 175"
+        );
         let s = v.render_note(0.875, 1.5);
         let mid = 0.905f64;
         let a = (0.895 * 44100.0) as usize;
@@ -408,7 +410,10 @@ mod tests {
         let expect = -32.77 - fitted::RELEASE_FROM_SUSTAIN_RATE_DB_S * (mid - 0.875);
         // tolerance 0.3 dB: a 20 ms window spans ~1.45 cycles at C3, so the
         // window RMS sits near (not exactly at) the midpoint value
-        assert!((rms - expect).abs() <= 0.3, "release {rms:.2} vs {expect:.2}");
+        assert!(
+            (rms - expect).abs() <= 0.3,
+            "release {rms:.2} vs {expect:.2}"
+        );
     }
 
     /// OP2 pins (SustainLevel −24 dB): the sustain knob engages the decay
@@ -457,21 +462,27 @@ mod tests {
     #[test]
     fn osc_b_raised_is_pm_modulator_op7_signature() {
         const F0: f64 = 130.81278265;
-        let s_on = OperatorVoiceA::default_patch_with_osc_b(48, 44100, 1.0)
-            .render_note(2.0, 2.0);
+        let s_on = OperatorVoiceA::default_patch_with_osc_b(48, 44100, 1.0).render_note(2.0, 2.0);
         let s_off = OperatorVoiceA::default_patch(48, 44100).render_note(2.0, 2.0);
         // steady windows: B's 400 ms pluck fully settled
         let h1 = amp_to_db(goertzel_amp(&s_on, 44100, F0, 1.15, 1.70));
         let h2 = amp_to_db(goertzel_amp(&s_on, 44100, 2.0 * F0, 1.15, 1.70));
         let h3 = amp_to_db(goertzel_amp(&s_on, 44100, 3.0 * F0, 1.15, 1.70));
-        println!("osc-B steady: h1 {h1:.2}, h2 {h2:.2} ({:+.2} rel), h3 {h3:.2} ({:+.2} rel)",
-            h2 - h1, h3 - h1);
+        println!(
+            "osc-B steady: h1 {h1:.2}, h2 {h2:.2} ({:+.2} rel), h3 {h3:.2} ({:+.2} rel)",
+            h2 - h1,
+            h3 - h1
+        );
         assert!(
             (h2 - h1 - (-19.5)).abs() <= 0.5,
             "steady h2 rel carrier {:+.2} dB vs measured −19.5 (±0.5)",
             h2 - h1
         );
-        assert!(h3 - h1 > -60.0, "h3 {:+.2} rel h1 — no sideband family", h3 - h1);
+        assert!(
+            h3 - h1 > -60.0,
+            "h3 {:+.2} rel h1 — no sideband family",
+            h3 - h1
+        );
         // PM energy law: 10·log10(1 − J₂(2β)) — the J₂-in-2φ DC term of
         // sin²(θ + β·sinθ) over a period (shift-invariant, so it holds in
         // any steady window).
@@ -489,7 +500,10 @@ mod tests {
             (drop - predicted_drop_db).abs() <= 0.05,
             "RMS drop {drop:+.4} dB off the PM prediction {predicted_drop_db:+.4}"
         );
-        assert!(drop.abs() <= 0.15, "RMS moved {drop:+.3} dB — outside the render family");
+        assert!(
+            drop.abs() <= 0.15,
+            "RMS moved {drop:+.3} dB — outside the render family"
+        );
     }
 
     /// B-off byte-path guard: with the shell at `None` the render must be
@@ -499,7 +513,7 @@ mod tests {
     fn osc_b_none_matches_pure_sine_path() {
         let v = OperatorVoiceA::default_patch(48, 44100);
         let s = v.render_note(0.875, 1.5);
-        let n = s.len();
+        let _n = s.len();
         let w = 2.0 * std::f64::consts::PI * v.freq_hz;
         let g = fitted::RESIDUAL_GAIN * v.osc_a_level * v.globals_volume;
         for (i, slot) in s.iter().enumerate() {

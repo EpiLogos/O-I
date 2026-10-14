@@ -63,7 +63,7 @@ function ownerReading() {
   const scene = store.document.scenes.find(value => value.id === view.startSceneId) ?? store.document.scenes[0]
   const selection = {entity_ids: [], step_id: null}
   const owner = Retained.createRetainedNativeEditor({store, sceneId: () => scene.id, selection: () => selection, nativeView: () => view,
-    nativeSelect: blocked, commit: blocked, change: mutate => store.change(mutate), afterHistory: blocked, selectLocal: blocked,
+    nativeSelect: blocked, commit: blocked, change: (label, mutate) => store.change(label, mutate), afterHistory: blocked, selectLocal: blocked,
     openEditor: blocked, standing: () => ({busy: false, notice: null}), telemetry: () => undefined, fieldPaused: () => false,
     sceneControls: {read: () => ({scene_playing: false, saved_sequence_playing: false, scene_elapsed_seconds: 0, expression_time_seconds: 0,
       scene_ref: SCENE, field_paused: false, track_preview: false, intent_epoch: 0}), recording: () => false, transitionPending: () => false,

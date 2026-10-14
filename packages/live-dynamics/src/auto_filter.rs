@@ -468,8 +468,7 @@ pub fn modern_radius(t: f64, sample_rate: u32) -> f64 {
 /// one-pole smoother — `radius = min(0.98, 0x415c·t/(2·sr) + 0x4158·prev)`
 /// (smoother pair 0x4158/0x415c, see [`SMOOTH_PAIRS`]).
 pub fn legacy_radius_next(t: f64, prev: f64, smoother: (f64, f64), sample_rate: u32) -> f64 {
-    (smoother.1 * t / (2.0 * f64::from(sample_rate)) + smoother.0 * prev)
-        .min(STAGE_RADIUS_CLAMP)
+    (smoother.1 * t / (2.0 * f64::from(sample_rate)) + smoother.0 * prev).min(STAGE_RADIUS_CLAMP)
 }
 
 /// Calc-slot dispatch law [D §1]: LegacyMode == 0 → mode = LFO shape + 5
@@ -540,15 +539,17 @@ pub fn legacy_common(m: f64, drive: f64) -> (f64, f64, f64) {
 /// term, then `c3 = (drive+drive)·(g919c·0.5)` where the parenthetical
 /// `(drive = 0x40fc)` is captured for the c3 line specifically (0x40fc is
 /// the 1.0-default slot; its consumer gloss is [H] in derivation §4).
-pub fn legacy_case0(
-    m: f64,
-    drive: f64,
-    drive_40fc: f64,
-    globals: &LegacyGlobals,
-) -> LegacyCoeffs {
+pub fn legacy_case0(m: f64, drive: f64, drive_40fc: f64, globals: &LegacyGlobals) -> LegacyCoeffs {
     let (c0, c1, c2) = legacy_common(m, drive);
     let c3 = (drive_40fc + drive_40fc) * (globals.ram_1059a919c * 0.5);
-    LegacyCoeffs { c0, c1, c2, c3, c4: 0.0, c5: 0.0 }
+    LegacyCoeffs {
+        c0,
+        c1,
+        c2,
+        c3,
+        c4: 0.0,
+        c5: 0.0,
+    }
 }
 
 /// Legacy case 1 [D, §3, transcribed as written]:
@@ -567,7 +568,14 @@ pub fn legacy_case1(m: f64, drive: f64) -> LegacyCoeffs {
     };
     s -= 2.0 * m;
     let (c0, c1, c2) = legacy_common(m, drive);
-    LegacyCoeffs { c0, c1, c2, c3: 1.0, c4: 20.0, c5: s.powi(4) * 0.0625 }
+    LegacyCoeffs {
+        c0,
+        c1,
+        c2,
+        c3: 1.0,
+        c4: 20.0,
+        c5: s.powi(4) * 0.0625,
+    }
 }
 
 /// Legacy case 2 [D, §3, verbatim unfolded-none]: c3/c4 from the runtime
@@ -579,7 +587,14 @@ pub fn legacy_case2(m: f64, drive: f64, globals: &LegacyGlobals) -> LegacyCoeffs
     let c3 = globals.ram_1059a919c * 0.25;
     let c4 = globals.ram_1059a91ac * 20.0;
     let c5 = (1.0 - (1.0 - (m * 1.5 - 1.0))).powi(4) * 0.0625;
-    LegacyCoeffs { c0, c1, c2, c3, c4, c5 }
+    LegacyCoeffs {
+        c0,
+        c1,
+        c2,
+        c3,
+        c4,
+        c5,
+    }
 }
 
 /// The shared biquad law — same family as the Saturator derivation §3
@@ -619,7 +634,7 @@ pub struct DriveResonanceMap;
 impl DriveResonanceMap {
     /// 0.1-step index law [D]; identity placeholder: mapped = stored.
     pub fn map(&self, stored_radius: f64) -> f64 {
-        let _ = (stored_radius / 0.1) as f64; // index units, contents pending
+        let _ = stored_radius / 0.1; // index units, contents pending
         stored_radius
     }
 }
@@ -637,7 +652,10 @@ mod coefficient_law_tests {
     /// past the clamp.
     #[test]
     fn pole_radius_clamps_at_098() {
-        assert_eq!(modern_radius(0.98 * 2.0 * f64::from(SR), SR), STAGE_RADIUS_CLAMP);
+        assert_eq!(
+            modern_radius(0.98 * 2.0 * f64::from(SR), SR),
+            STAGE_RADIUS_CLAMP
+        );
         assert_eq!(modern_radius(1.0e9, SR), STAGE_RADIUS_CLAMP);
         // Small t stays unclamped: t = 0.5·2·sr → radius exactly 0.5.
         let small = 0.5 * 2.0 * f64::from(SR);
@@ -645,8 +663,14 @@ mod coefficient_law_tests {
 
         // Legacy: pair (0x4158, 0x415c) = {0.6, 0.4}: r' = 0.4·t/(2sr) + 0.6·r.
         let t = 1.0e9;
-        assert_eq!(legacy_radius_next(t, 0.0, SMOOTH_PAIRS[0], SR), STAGE_RADIUS_CLAMP);
-        assert_eq!(legacy_radius_next(t, STAGE_RADIUS_CLAMP, SMOOTH_PAIRS[0], SR), STAGE_RADIUS_CLAMP);
+        assert_eq!(
+            legacy_radius_next(t, 0.0, SMOOTH_PAIRS[0], SR),
+            STAGE_RADIUS_CLAMP
+        );
+        assert_eq!(
+            legacy_radius_next(t, STAGE_RADIUS_CLAMP, SMOOTH_PAIRS[0], SR),
+            STAGE_RADIUS_CLAMP
+        );
         // Unclamped blend check at small t: 0.4·1/(2sr) + 0.6·0.5.
         let blended = legacy_radius_next(1.0, 0.5, SMOOTH_PAIRS[0], SR);
         let want = 0.4 * (1.0 / (2.0 * f64::from(SR))) + 0.6 * 0.5;
@@ -682,7 +706,10 @@ mod coefficient_law_tests {
         // (2400 − 1381.8816)/5 ≈ 203.62 in the identity reading — the LUT
         // input is a bounded quantity, not raw Hz over the full range.
         assert!((lut.lookup(100.0) - 100.0).abs() < 1e-9);
-        assert!((lut.lookup(220.0) - 203.62368).abs() < 1e-6, "clamped at the tail");
+        assert!(
+            (lut.lookup(220.0) - 203.62368).abs() < 1e-6,
+            "clamped at the tail"
+        );
 
         // Drive gain [D]: exp10f(dB·0.05).
         assert!((drive_gain(0.0) - 1.0).abs() < 1e-15);

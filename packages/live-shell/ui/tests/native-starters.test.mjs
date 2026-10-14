@@ -36,7 +36,7 @@ function owner(entities, {selected = [], pending = false} = {}) {
   scene.engine.autoFitSizes = true
   const selection = {entity_ids: selected, step_id: null}
   const retained = createRetainedNativeEditor({store, sceneId: () => scene.id, selection: () => selection, nativeView: () => view,
-    nativeSelect: blocked, commit: async () => true, change: mutate => store.change(mutate), afterHistory: blocked, selectLocal: blocked,
+    nativeSelect: blocked, commit: async () => true, change: (label, mutate) => store.change(label, mutate), afterHistory: blocked, selectLocal: blocked,
     openEditor: blocked, standing: () => ({busy: false, notice: null}), telemetry: () => undefined, fieldPaused: () => false})
   const read = () => {const r = retained.read(); return pending ? {...r, standing: {...r.standing, pending: true}} : r}
   // The owner's apply resolves to nothing and throws on refusal; the Browser sees the same refusal as a reply.

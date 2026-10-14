@@ -103,7 +103,9 @@ pub const GLUE_COMPRESSOR: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 2.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["0", "1", "2"] },
+        kind: ParamKind::Discrete {
+            labels: &["0", "1", "2"],
+        },
         notes: "3-entry discrete menu; each stored index selects a curve \
                 family, not an n:1 number — no display-ratio law exists \
                 (D1-final refuted limiter asymptote and both fixed-ratio maps)",
@@ -139,7 +141,9 @@ pub const GLUE_COMPRESSOR: &[ParamDesc] = &[
         stored_max: 6.0,
         unit: "",
         kind: ParamKind::Discrete {
-            labels: &["170690", "249580", "340761", "478756", "643902", "880000", "91000"],
+            labels: &[
+                "170690", "249580", "340761", "478756", "643902", "880000", "91000",
+            ],
         },
         notes: "menu table exactly as stated in the dossier's parameter-law \
                 section; stored 6 is a special case (extra constants); the µs \
@@ -235,7 +239,9 @@ pub const ECHO: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 2.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "PingPong", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "PingPong", "?"],
+        },
         notes: "only stored 1 is documented (pingpong, L-first alternation — \
                 echo.md E-series, high confidence on the pattern); the 0..2 \
                 extent and the other entries are NOT dossier-verified (the \
@@ -524,7 +530,9 @@ pub const EQ8: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 2.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?", "?"],
+        },
         notes: "bare integer element — no menu structure or labels stored in the XML; stored \
                 values observed: 0 (set 'chunky-shine'), 1 (set 'chunky-shine'), 2 (default); \
                 extent is an observed lower bound (the app menu may extend it)",
@@ -574,7 +582,9 @@ pub const EQ8: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 3.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?", "?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?", "?", "?"],
+        },
         notes: "bare integer element — no menu structure or labels stored in the XML; stored \
                 values observed: 1 (default), 3 (set 'piano-voices-mastering'); extent is an \
                 observed lower bound (the app menu may extend it)",
@@ -624,7 +634,9 @@ pub const EQ8: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 3.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?", "?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?", "?", "?"],
+        },
         notes: "bare integer element — no menu structure or labels stored in the XML; stored \
                 values observed: 2 (set 'chunky-shine'), 3 (default); extent is an observed \
                 lower bound (the app menu may extend it)",
@@ -674,7 +686,9 @@ pub const EQ8: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 3.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?", "?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?", "?", "?"],
+        },
         notes: "bare integer element — no menu structure or labels stored in the XML; stored \
                 values observed: 2 (default), 3 (set 'piano-voices-mastering'); extent is an \
                 observed lower bound (the app menu may extend it)",
@@ -724,7 +738,9 @@ pub const EQ8: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 3.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?", "?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?", "?", "?"],
+        },
         notes: "bare integer element — no menu structure or labels stored in the XML; stored \
                 values observed: 3 (default); extent is an observed lower bound (the app menu \
                 may extend it)",
@@ -774,7 +790,9 @@ pub const EQ8: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 3.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?", "?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?", "?", "?"],
+        },
         notes: "bare integer element — no menu structure or labels stored in the XML; stored \
                 values observed: 3 (default); extent is an observed lower bound (the app menu \
                 may extend it)",
@@ -824,7 +842,9 @@ pub const EQ8: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 5.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?", "?", "?", "?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?", "?", "?", "?", "?"],
+        },
         notes: "bare integer element — no menu structure or labels stored in the XML; stored \
                 values observed: 3 (set 'chunky-shine'), 5 (default); extent is an observed \
                 lower bound (the app menu may extend it)",
@@ -874,7 +894,9 @@ pub const EQ8: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 3.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?", "?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?", "?", "?"],
+        },
         notes: "bare integer element — no menu structure or labels stored in the XML; stored \
                 values observed: 3 (default); extent is an observed lower bound (the app menu \
                 may extend it)",
@@ -924,7 +946,9 @@ pub const EQ8: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 6.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?", "?", "?", "?", "?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?", "?", "?", "?", "?", "?"],
+        },
         notes: "bare integer element — no menu structure or labels stored in the XML; stored \
                 values observed: 3 (default), 6 (set 'piano-voices-mastering'); extent is an \
                 observed lower bound (the app menu may extend it)",
@@ -974,7 +998,9 @@ pub const EQ8: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 3.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?", "?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?", "?", "?"],
+        },
         notes: "bare integer element — no menu structure or labels stored in the XML; stored \
                 values observed: 3 (default); extent is an observed lower bound (the app menu \
                 may extend it)",
@@ -1024,7 +1050,9 @@ pub const EQ8: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 3.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?", "?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?", "?", "?"],
+        },
         notes: "bare integer element — no menu structure or labels stored in the XML; stored \
                 values observed: 3 (default); extent is an observed lower bound (the app menu \
                 may extend it)",
@@ -1074,7 +1102,9 @@ pub const EQ8: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 3.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?", "?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?", "?", "?"],
+        },
         notes: "bare integer element — no menu structure or labels stored in the XML; stored \
                 values observed: 3 (default); extent is an observed lower bound (the app menu \
                 may extend it)",
@@ -1124,7 +1154,9 @@ pub const EQ8: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 5.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?", "?", "?", "?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?", "?", "?", "?", "?"],
+        },
         notes: "bare integer element — no menu structure or labels stored in the XML; stored \
                 values observed: 3 (default), 5 (set 'chunky-shine'); extent is an observed \
                 lower bound (the app menu may extend it)",
@@ -1174,7 +1206,9 @@ pub const EQ8: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 5.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?", "?", "?", "?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?", "?", "?", "?", "?"],
+        },
         notes: "bare integer element — no menu structure or labels stored in the XML; stored \
                 values observed: 3 (set 'piano-voices-mastering'), 5 (default); extent is an \
                 observed lower bound (the app menu may extend it)",
@@ -1224,7 +1258,9 @@ pub const EQ8: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 6.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?", "?", "?", "?", "?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?", "?", "?", "?", "?", "?"],
+        },
         notes: "bare integer element — no menu structure or labels stored in the XML; stored \
                 values observed: 3 (set 'piano-voices-mastering'), 5 (set 'chunky-shine'), 6 \
                 (default); extent is an observed lower bound (the app menu may extend it)",
@@ -1274,7 +1310,9 @@ pub const EQ8: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 6.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?", "?", "?", "?", "?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?", "?", "?", "?", "?", "?"],
+        },
         notes: "bare integer element — no menu structure or labels stored in the XML; stored \
                 values observed: 3 (set 'piano-voices-mastering'), 6 (default); extent is an \
                 observed lower bound (the app menu may extend it)",
@@ -1334,7 +1372,9 @@ pub const EQ8: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 1.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?"],
+        },
         notes: "adaptive-Q factor selector; stored 0 and 1 observed across the cited evidence — \
                 extent is an observed lower bound, labels not in evidence",
     },
@@ -1386,7 +1426,9 @@ pub const AUTOFILTER: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 3.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?", "?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?", "?", "?"],
+        },
         notes: "bare integer element — no menu structure or labels stored in the XML; stored \
                 values observed: 0 (default), 3 ('Stereo Notch'); extent is an observed lower \
                 bound (the app menu may extend it)",
@@ -1397,7 +1439,9 @@ pub const AUTOFILTER: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 4.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?", "?", "?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?", "?", "?", "?"],
+        },
         notes: "bare integer element — no menu structure or labels stored in the XML; stored \
                 values observed: 0 (default), 1 (set 'piano-voices-mastering'), 2 ('Bandpass \
                 Spinner'), 4 ('Stereo Notch'); extent is an observed lower bound (the app menu \
@@ -1420,7 +1464,9 @@ pub const AUTOFILTER: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 1.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?"],
+        },
         notes: "bare integer element — no menu structure or labels stored in the XML; stored \
                 values observed: 0 (default), 1 ('Bandpass Spinner'); extent is an observed \
                 lower bound (the app menu may extend it)",
@@ -1528,7 +1574,9 @@ pub const AUTOFILTER: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 2.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?", "?"],
+        },
         notes: "bare integer element — no menu structure or labels stored in the XML; stored \
                 values observed: 0 (default), 2 ('Bandpass Spinner'); extent is an observed \
                 lower bound (the app menu may extend it)",
@@ -1549,7 +1597,9 @@ pub const AUTOFILTER: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 1.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?"],
+        },
         notes: "bare integer element — no menu structure or labels stored in the XML; stored \
                 values observed: 0 (default), 1 (set 'piano-voices-mastering'); extent is an \
                 observed lower bound (the app menu may extend it)",
@@ -1570,7 +1620,9 @@ pub const AUTOFILTER: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 1.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?"],
+        },
         notes: "bare integer element — no menu structure or labels stored in the XML; stored \
                 values observed: 0 (default), 1 ('Bandpass Spinner'); extent is an observed \
                 lower bound (the app menu may extend it)",
@@ -1629,7 +1681,9 @@ pub const AUTOFILTER: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 2.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?", "?"],
+        },
         notes: "bare integer element — no menu structure or labels stored in the XML; stored \
                 values observed: 2 (default); extent is an observed lower bound (the app menu \
                 may extend it)",
@@ -1690,7 +1744,9 @@ pub const AUTOPAN: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 1.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?"],
+        },
         notes: "bare integer element — no menu structure or labels stored in the XML; stored \
                 values observed: 0 (set 'piano-voices-mastering'), 1 ('Slow & Steady'); extent \
                 is an observed lower bound (the app menu may extend it)",
@@ -1770,7 +1826,9 @@ pub const AUTOPAN: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 2.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?", "?"],
+        },
         notes: "bare integer element — no menu structure or labels stored in the XML; stored \
                 values observed: 2 ('Slow & Steady'); extent is an observed lower bound (the \
                 app menu may extend it)",
@@ -1879,7 +1937,9 @@ pub const SATURATOR: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 5.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?", "?", "?", "?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?", "?", "?", "?", "?"],
+        },
         notes: "bare integer element — no menu structure or labels stored in the XML; stored \
                 values observed: 0 (default), 2 (set 'piano-voices-mastering'), 4 (set \
                 'piano-voices-mastering'), 5 ('Digital Clip Center'); extent is an observed \
@@ -1947,7 +2007,9 @@ pub const SATURATOR: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 1.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?"],
+        },
         notes: "oversampling selector (integer steps); stored 0 and 1 observed (default preset \
                 stores 1) — extent is an observed lower bound, labels not in evidence",
     },
@@ -2049,7 +2111,9 @@ pub const DRUMBUSS: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 2.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?", "?"],
+        },
         notes: "bare integer element — no menu structure or labels stored in the XML; stored \
                 values observed: 0 ('Boom in A'), 2 ('Compression Gate'); extent is an observed \
                 lower bound (the app menu may extend it)",
@@ -2178,7 +2242,9 @@ pub const CHORUS_ENSEMBLE: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 2.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?", "?"],
+        },
         notes: "bare integer element — no menu structure or labels stored in the XML; stored \
                 values observed: 0 ('Chorus Classic'), 1 ('Ensemble Deep'), 2 ('Vibrato \
                 Flutter'); extent is an observed lower bound (the app menu may extend it)",
@@ -2332,7 +2398,9 @@ pub const DELAY: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 1.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?"],
+        },
         notes: "bare integer element — no menu structure or labels stored in the XML; stored \
                 values observed: 0 (default), 1 (set 'chunky-shine'); extent is an observed \
                 lower bound (the app menu may extend it)",
@@ -2435,7 +2503,9 @@ pub const DELAY: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 3.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?", "?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?", "?", "?"],
+        },
         notes: "bare integer element — no menu structure or labels stored in the XML; stored \
                 values observed: 0 ('16th Ping Pong'), 1 (set 'chunky-shine'), 2 (default), 3 \
                 ('4th Bandpass'); extent is an observed lower bound (the app menu may extend \
@@ -2447,7 +2517,9 @@ pub const DELAY: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 3.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?", "?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?", "?", "?"],
+        },
         notes: "bare integer element — no menu structure or labels stored in the XML; stored \
                 values observed: 0 ('4th Bandpass'), 1 (set 'chunky-shine'), 2 (set \
                 'piano-voices-mastering'), 3 (default); extent is an observed lower bound (the \
@@ -2577,7 +2649,9 @@ pub const DELAY: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 1.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?"],
+        },
         notes: "bare integer element; stored 0 and 1 observed (default preset stores 1) — \
                 extent is an observed lower bound, labels not in evidence",
     },
@@ -2683,7 +2757,12 @@ pub const HYBRID_REVERB: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 20.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &[
+                "?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?",
+                "?", "?", "?", "?", "?",
+            ],
+        },
         notes: "stored extent from the preset XML; unit unresolved (ms suspected, unverified)",
     },
     ParamDesc {
@@ -2692,7 +2771,9 @@ pub const HYBRID_REVERB: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 1.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?"],
+        },
         notes: "stored extent from the preset XML; semantics unmeasured",
     },
     ParamDesc {
@@ -3068,7 +3149,9 @@ pub const HYBRID_REVERB: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 1.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?"],
+        },
         notes: "bare integer element — no menu structure or labels stored in the XML; stored \
                 values observed: 1 (default); extent is an observed lower bound (the app menu \
                 may extend it)",
@@ -3119,7 +3202,9 @@ pub const HYBRID_REVERB: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 1.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?"],
+        },
         notes: "bare integer element — no menu structure or labels stored in the XML; stored \
                 values observed: 1 (default); extent is an observed lower bound (the app menu \
                 may extend it)",
@@ -3591,7 +3676,9 @@ pub const MULTIBAND_DYNAMICS: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 2.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?", "?"],
+        },
         notes: "active-band edit-mode selector; stored 0..2 observed across the cited evidence \
                 — extent is an observed lower bound, labels not in evidence",
     },
@@ -3641,7 +3728,9 @@ pub const STEREO_GAIN: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 2.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?", "?"],
+        },
         notes: "bare integer element — no menu structure or labels stored in the XML; stored \
                 values observed: 0 ('Left'), 1 ('Mid Only'), 2 ('Right'); extent is an observed \
                 lower bound (the app menu may extend it)",
@@ -3866,7 +3955,9 @@ pub const DRIFT: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 1.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?"],
+        },
         notes: "bare integer element — no menu structure or labels stored in the XML; stored \
                 values observed: 1 (default); extent is an observed lower bound (the app menu \
                 may extend it)",
@@ -3877,7 +3968,9 @@ pub const DRIFT: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 6.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?", "?", "?", "?", "?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?", "?", "?", "?", "?", "?"],
+        },
         notes: "bare integer element — no menu structure or labels stored in the XML; stored \
                 values observed: 6 (default); extent is an observed lower bound (the app menu \
                 may extend it)",
@@ -3987,7 +4080,9 @@ pub const DRIFT: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 5.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?", "?", "?", "?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?", "?", "?", "?", "?"],
+        },
         notes: "bare integer element — no menu structure or labels stored in the XML; stored \
                 values observed: 5 (default); extent is an observed lower bound (the app menu \
                 may extend it)",
@@ -4017,7 +4112,9 @@ pub const DRIFT: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 4.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?", "?", "?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?", "?", "?", "?"],
+        },
         notes: "bare integer element — no menu structure or labels stored in the XML; stored \
                 values observed: 4 (default); extent is an observed lower bound (the app menu \
                 may extend it)",
@@ -4048,7 +4145,9 @@ pub const DRIFT: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 7.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?", "?", "?", "?", "?", "?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?", "?", "?", "?", "?", "?", "?"],
+        },
         notes: "bare integer element — no menu structure or labels stored in the XML; stored \
                 values observed: 7 (default); extent is an observed lower bound (the app menu \
                 may extend it)",
@@ -4100,7 +4199,9 @@ pub const DRIFT: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 1.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?"],
+        },
         notes: "bare integer element — no menu structure or labels stored in the XML; stored \
                 values observed: 1 (default); extent is an observed lower bound (the app menu \
                 may extend it)",
@@ -4111,7 +4212,9 @@ pub const DRIFT: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 2.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?", "?"],
+        },
         notes: "bare integer element — no menu structure or labels stored in the XML; stored \
                 values observed: 2 (default); extent is an observed lower bound (the app menu \
                 may extend it)",
@@ -4350,7 +4453,9 @@ pub const DRIFT: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 5.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?", "?", "?", "?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?", "?", "?", "?", "?"],
+        },
         notes: "bare integer element — no menu structure or labels stored in the XML; stored \
                 values observed: 5 (default); extent is an observed lower bound (the app menu \
                 may extend it)",
@@ -4361,7 +4466,9 @@ pub const DRIFT: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 4.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?", "?", "?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?", "?", "?", "?"],
+        },
         notes: "bare integer element — no menu structure or labels stored in the XML; stored \
                 values observed: 4 (default); extent is an observed lower bound (the app menu \
                 may extend it)",
@@ -4372,7 +4479,9 @@ pub const DRIFT: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 6.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?", "?", "?", "?", "?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?", "?", "?", "?", "?", "?"],
+        },
         notes: "bare integer element — no menu structure or labels stored in the XML; stored \
                 values observed: 6 (default); extent is an observed lower bound (the app menu \
                 may extend it)",
@@ -4413,7 +4522,9 @@ pub const DRIFT: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 8.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?", "?", "?", "?", "?", "?", "?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?", "?", "?", "?", "?", "?", "?", "?"],
+        },
         notes: "bare integer element — no menu structure or labels stored in the XML; stored \
                 values observed: 8 (default); extent is an observed lower bound (the app menu \
                 may extend it)",
@@ -4526,7 +4637,9 @@ pub const DRIFT: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 2.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?", "?"],
+        },
         notes: "pitch-bend range in semitones (extent unverified); only stored 2 observed",
     },
     ParamDesc {
@@ -4545,7 +4658,9 @@ pub const DRIFT: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 4.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?", "?", "?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?", "?", "?", "?"],
+        },
         notes: "voice count (integer steps); only stored 4 observed across the cited evidence — \
                 extent is an observed lower bound",
     },
@@ -4665,7 +4780,9 @@ pub const WAVETABLE: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 3.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?", "?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?", "?", "?"],
+        },
         notes: "bare integer element — no menu structure or labels stored in the XML; stored \
                 values observed: 3 (default); extent is an observed lower bound (the app menu \
                 may extend it)",
@@ -4835,7 +4952,9 @@ pub const WAVETABLE: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 1.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?"],
+        },
         notes: "bare integer element — no menu structure or labels stored in the XML; stored \
                 values observed: 1 (default); extent is an observed lower bound (the app menu \
                 may extend it)",
@@ -4948,7 +5067,9 @@ pub const WAVETABLE: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 1.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?"],
+        },
         notes: "bare integer element — no menu structure or labels stored in the XML; stored \
                 values observed: 1 (default); extent is an observed lower bound (the app menu \
                 may extend it)",
@@ -5547,7 +5668,9 @@ pub const WAVETABLE: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 3.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?", "?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?", "?", "?"],
+        },
         notes: "unison voice count; only stored values observed across the cited evidence bound \
                 the extent — labels not in evidence",
     },
@@ -5607,7 +5730,9 @@ pub const WAVETABLE: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 1.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?"],
+        },
         notes: "mono/poly switch; bool element in the preset XML",
     },
     ParamDesc {
@@ -5616,7 +5741,9 @@ pub const WAVETABLE: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 6.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?", "?", "?", "?", "?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?", "?", "?", "?", "?", "?"],
+        },
         notes: "polyphony voice count; only stored values observed across the cited evidence \
                 bound the extent — labels not in evidence",
     },
@@ -5735,8 +5862,8 @@ pub const OPERATOR: &[ParamDesc] = &[
         unit: "",
         kind: ParamKind::Discrete {
             labels: &[
-                "?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?",
-                "?", "?", "?", "?", "?", "?", "?", "?", "?", "?",
+                "?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?",
+                "?", "?", "?", "?", "?", "?", "?",
             ],
         },
         notes: "wave selector, bare integer element — no menu structure or \
@@ -6051,7 +6178,9 @@ pub const COMPRESSOR: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 1.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?"],
+        },
         notes: "bare integer element — no menu structure or labels stored in the \
                 XML; only stored 1 observed across the cited evidence — extent \
                 is an observed lower bound (the app menu may extend it)",
@@ -6093,7 +6222,9 @@ pub const COMPRESSOR: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 1.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?"],
+        },
         notes: "bare integer element — no menu structure or labels stored in the \
                 XML; only stored 1 observed across the cited evidence — extent \
                 is an observed lower bound (the app menu may extend it)",
@@ -6600,7 +6731,9 @@ pub const EROSION: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 1.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?"],
+        },
         notes: "bare integer element — no menu structure or labels stored in the \
                 XML; only stored 1 observed across the cited evidence — extent \
                 is an observed lower bound (the app menu may extend it)",
@@ -6711,7 +6844,9 @@ pub const LIMITER: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 1.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?"],
+        },
         notes: "bare integer element — no menu structure or labels stored in the \
                 XML; only stored 1 observed across the cited evidence — extent \
                 is an observed lower bound (the app menu may extend it)",
@@ -7227,7 +7362,9 @@ pub const BEAT_REPEAT: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 1.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?"],
+        },
         notes: "bare integer element — no menu structure or labels stored in the \
                 XML; only stored 1 observed across the cited evidence — extent \
                 is an observed lower bound (the app menu may extend it)",
@@ -7642,7 +7779,9 @@ pub const PHASER_FLANGER: &[ParamDesc] = &[
         stored_min: 0.0,
         stored_max: 1.0,
         unit: "",
-        kind: ParamKind::Discrete { labels: &["?", "?"] },
+        kind: ParamKind::Discrete {
+            labels: &["?", "?"],
+        },
         notes: "bare integer element — no menu structure or labels stored in the \
                 XML; only stored 1 observed across the cited evidence — extent \
                 is an observed lower bound (the app menu may extend it)",
@@ -8054,7 +8193,12 @@ mod tests {
         let t = table("GlueCompressor").expect("glue table");
 
         let ratio = desc(t, "Ratio");
-        assert_eq!(ratio.kind, ParamKind::Discrete { labels: &["0", "1", "2"] });
+        assert_eq!(
+            ratio.kind,
+            ParamKind::Discrete {
+                labels: &["0", "1", "2"]
+            }
+        );
         assert_eq!(labels(ratio), vec![0.0, 1.0, 2.0]);
         assert_eq!(ratio.stored_min, 0.0);
         assert_eq!(ratio.stored_max, 2.0);
@@ -8067,9 +8211,10 @@ mod tests {
         );
 
         let release = desc(t, "Release");
-        assert_eq!(labels(release), vec![
-            170690.0, 249580.0, 340761.0, 478756.0, 643902.0, 880000.0, 91000.0
-        ]);
+        assert_eq!(
+            labels(release),
+            vec![170690.0, 249580.0, 340761.0, 478756.0, 643902.0, 880000.0, 91000.0]
+        );
         assert_eq!(release.stored_min, 0.0);
         assert_eq!(release.stored_max, 6.0);
     }
@@ -8234,7 +8379,11 @@ mod tests {
         for device in all {
             let t = table(device).unwrap();
             for (i, p) in t.iter().enumerate() {
-                assert!(t[..i].iter().all(|q| q.id != p.id), "{device}: dup {}", p.id);
+                assert!(
+                    t[..i].iter().all(|q| q.id != p.id),
+                    "{device}: dup {}",
+                    p.id
+                );
                 assert!(!p.notes.is_empty(), "{device}: {} missing notes", p.id);
                 assert!(!p.ui_name.is_empty(), "{device}: {} missing ui_name", p.id);
                 assert!(
@@ -8415,7 +8564,9 @@ mod tests {
         assert!(matches!(mode.kind, ParamKind::Discrete { .. }));
         assert_eq!(
             mode.kind,
-            ParamKind::Discrete { labels: &["?", "?", "?"] }
+            ParamKind::Discrete {
+                labels: &["?", "?", "?"]
+            }
         );
         assert_range(mode, 0.0, 2.0);
 
@@ -8552,16 +8703,8 @@ mod tests {
             assert_continuous(desc(t, &format!("BelowThreshold{band}")), -80.0, 0.0);
             assert_continuous(desc(t, &format!("AboveRatio{band}")), -1.0, 1.0);
             assert_continuous(desc(t, &format!("BelowRatio{band}")), -3.0, 1.0);
-            assert_continuous(
-                desc(t, &format!("Attack{band}")),
-                0.1000000015,
-                5000.00098,
-            );
-            assert_continuous(
-                desc(t, &format!("Release{band}")),
-                0.1000000015,
-                5000.00098,
-            );
+            assert_continuous(desc(t, &format!("Attack{band}")), 0.1000000015, 5000.00098);
+            assert_continuous(desc(t, &format!("Release{band}")), 0.1000000015, 5000.00098);
             assert_toggle(desc(t, &format!("Active{band}")));
         }
         assert_toggle(desc(t, "SoftKnee"));
@@ -8717,12 +8860,12 @@ mod tests {
             0.009999999776,
             30.0,
         );
+        assert_continuous(desc(t, "Voice_Modulators_Lfo1_Time_SyncedRate"), 0.0, 21.0);
         assert_continuous(
-            desc(t, "Voice_Modulators_Lfo1_Time_SyncedRate"),
+            desc(t, "Voice_Modulators_Lfo1_Shape_PhaseOffset"),
             0.0,
-            21.0,
+            360.0,
         );
-        assert_continuous(desc(t, "Voice_Modulators_Lfo1_Shape_PhaseOffset"), 0.0, 360.0);
         assert_continuous(desc(t, "Voice_Modulators_TimeScale"), -1.0, 1.0);
         assert_continuous(desc(t, "Voice_Modulators_Amount"), 0.0, 2.0);
 
@@ -8780,24 +8923,13 @@ mod tests {
         assert_continuous(desc(t, "Operator.0/Envelope/DecayTime"), 1.0, 60000.0);
         assert_continuous(desc(t, "Operator.0/Envelope/ReleaseTime"), 1.0, 60000.0);
         for time in ["AttackTime", "DecayTime", "ReleaseTime"] {
-            assert_eq!(
-                desc(t, &format!("Operator.0/Envelope/{time}")).unit,
-                "ms"
-            );
+            assert_eq!(desc(t, &format!("Operator.0/Envelope/{time}")).unit, "ms");
         }
         for level in ["AttackLevel", "DecayLevel", "SustainLevel", "ReleaseLevel"] {
-            assert_continuous(
-                desc(t, &format!("Operator.0/Envelope/{level}")),
-                floor,
-                1.0,
-            );
+            assert_continuous(desc(t, &format!("Operator.0/Envelope/{level}")), floor, 1.0);
         }
         for slope in ["AttackSlope", "DecaySlope", "ReleaseSlope"] {
-            assert_continuous(
-                desc(t, &format!("Operator.0/Envelope/{slope}")),
-                -1.0,
-                1.0,
-            );
+            assert_continuous(desc(t, &format!("Operator.0/Envelope/{slope}")), -1.0, 1.0);
         }
         assert_continuous(desc(t, "Operator.0/Envelope/TimeVelScale"), -100.0, 100.0);
 
@@ -8829,7 +8961,10 @@ mod tests {
         in_range("Operator.0/Envelope/DecayTime", s::DECAY_TIME_S * 1000.0);
         in_range("Operator.0/Envelope/DecayLevel", s::DECAY_LEVEL_AMP);
         in_range("Operator.0/Envelope/SustainLevel", s::SUSTAIN_LEVEL_AMP);
-        in_range("Operator.0/Envelope/ReleaseTime", s::RELEASE_TIME_S * 1000.0);
+        in_range(
+            "Operator.0/Envelope/ReleaseTime",
+            s::RELEASE_TIME_S * 1000.0,
+        );
         in_range("Operator.0/Envelope/ReleaseLevel", s::RELEASE_LEVEL_AMP);
         in_range("Globals/Volume", s::GLOBALS_VOLUME_AMP);
 
@@ -9052,18 +9187,54 @@ mod tests {
         // the module's preset constants corroborate the table's extents
         // (gate.rs carries them at preset-constant rounding)
         let close = |a: f64, b: f64| (a - b).abs() < 0.01;
-        assert!(close(desc(t, "Threshold").stored_min, crate::gate::PRESET_THRESHOLD_MIN));
-        assert!(close(desc(t, "Threshold").stored_max, crate::gate::PRESET_THRESHOLD_MAX));
-        assert!(close(desc(t, "Attack").stored_min, crate::gate::PRESET_ATTACK_MS_MIN));
-        assert!(close(desc(t, "Attack").stored_max, crate::gate::PRESET_ATTACK_MS_MAX));
-        assert!(close(desc(t, "Hold").stored_min, crate::gate::PRESET_HOLD_MS_MIN));
-        assert!(close(desc(t, "Hold").stored_max, crate::gate::PRESET_HOLD_MS_MAX));
-        assert!(close(desc(t, "Release").stored_min, crate::gate::PRESET_RELEASE_MS_MIN));
-        assert!(close(desc(t, "Release").stored_max, crate::gate::PRESET_RELEASE_MS_MAX));
-        assert!(close(desc(t, "Return").stored_min, crate::gate::PRESET_RETURN_DB_MIN));
-        assert!(close(desc(t, "Return").stored_max, crate::gate::PRESET_RETURN_DB_MAX));
-        assert!(close(desc(t, "Gain").stored_min, crate::gate::PRESET_GAIN_DB_MIN));
-        assert!(close(desc(t, "Gain").stored_max, crate::gate::PRESET_GAIN_DB_MAX));
+        assert!(close(
+            desc(t, "Threshold").stored_min,
+            crate::gate::PRESET_THRESHOLD_MIN
+        ));
+        assert!(close(
+            desc(t, "Threshold").stored_max,
+            crate::gate::PRESET_THRESHOLD_MAX
+        ));
+        assert!(close(
+            desc(t, "Attack").stored_min,
+            crate::gate::PRESET_ATTACK_MS_MIN
+        ));
+        assert!(close(
+            desc(t, "Attack").stored_max,
+            crate::gate::PRESET_ATTACK_MS_MAX
+        ));
+        assert!(close(
+            desc(t, "Hold").stored_min,
+            crate::gate::PRESET_HOLD_MS_MIN
+        ));
+        assert!(close(
+            desc(t, "Hold").stored_max,
+            crate::gate::PRESET_HOLD_MS_MAX
+        ));
+        assert!(close(
+            desc(t, "Release").stored_min,
+            crate::gate::PRESET_RELEASE_MS_MIN
+        ));
+        assert!(close(
+            desc(t, "Release").stored_max,
+            crate::gate::PRESET_RELEASE_MS_MAX
+        ));
+        assert!(close(
+            desc(t, "Return").stored_min,
+            crate::gate::PRESET_RETURN_DB_MIN
+        ));
+        assert!(close(
+            desc(t, "Return").stored_max,
+            crate::gate::PRESET_RETURN_DB_MAX
+        ));
+        assert!(close(
+            desc(t, "Gain").stored_min,
+            crate::gate::PRESET_GAIN_DB_MIN
+        ));
+        assert!(close(
+            desc(t, "Gain").stored_max,
+            crate::gate::PRESET_GAIN_DB_MAX
+        ));
     }
 
     /// Erosion ranges match the preset XML
@@ -9083,12 +9254,30 @@ mod tests {
         assert_continuous(desc(t, "BandQ"), 0.1000000015, 2.5);
 
         let close = |a: f64, b: f64| (a - b).abs() < 1e-7;
-        assert!(close(desc(t, "Freq").stored_min, crate::erosion::FREQ_RANGE.0));
-        assert!(close(desc(t, "Freq").stored_max, crate::erosion::FREQ_RANGE.1));
-        assert!(close(desc(t, "Amplitude").stored_min, crate::erosion::AMPLITUDE_RANGE.0));
-        assert!(close(desc(t, "Amplitude").stored_max, crate::erosion::AMPLITUDE_RANGE.1));
-        assert!(close(desc(t, "BandQ").stored_min, crate::erosion::BAND_Q_RANGE.0));
-        assert!(close(desc(t, "BandQ").stored_max, crate::erosion::BAND_Q_RANGE.1));
+        assert!(close(
+            desc(t, "Freq").stored_min,
+            crate::erosion::FREQ_RANGE.0
+        ));
+        assert!(close(
+            desc(t, "Freq").stored_max,
+            crate::erosion::FREQ_RANGE.1
+        ));
+        assert!(close(
+            desc(t, "Amplitude").stored_min,
+            crate::erosion::AMPLITUDE_RANGE.0
+        ));
+        assert!(close(
+            desc(t, "Amplitude").stored_max,
+            crate::erosion::AMPLITUDE_RANGE.1
+        ));
+        assert!(close(
+            desc(t, "BandQ").stored_min,
+            crate::erosion::BAND_Q_RANGE.0
+        ));
+        assert!(close(
+            desc(t, "BandQ").stored_max,
+            crate::erosion::BAND_Q_RANGE.1
+        ));
     }
 
     /// Limiter ranges match the preset XML
@@ -9109,8 +9298,14 @@ mod tests {
         assert_range(desc(t, "Lookahead"), 0.0, 1.0); // observed lower bound
 
         let close = |a: f64, b: f64| (a - b).abs() < 1e-7;
-        assert!(close(desc(t, "Gain").stored_min, crate::limiter::PRESET_GAIN_DB_MIN));
-        assert!(close(desc(t, "Gain").stored_max, crate::limiter::PRESET_GAIN_DB_MAX));
+        assert!(close(
+            desc(t, "Gain").stored_min,
+            crate::limiter::PRESET_GAIN_DB_MIN
+        ));
+        assert!(close(
+            desc(t, "Gain").stored_max,
+            crate::limiter::PRESET_GAIN_DB_MAX
+        ));
         assert!(close(
             desc(t, "Release").stored_min,
             crate::limiter::PRESET_RELEASE_MS_MIN
@@ -9122,8 +9317,7 @@ mod tests {
         // the crate's default ceiling sits inside the table's Ceiling extent
         let ceiling = desc(t, "Ceiling");
         assert!(
-            (ceiling.stored_min..=ceiling.stored_max)
-                .contains(&crate::limiter::DEFAULT_CEILING_DB),
+            (ceiling.stored_min..=ceiling.stored_max).contains(&crate::limiter::DEFAULT_CEILING_DB),
             "default ceiling outside [{}, {}]",
             ceiling.stored_min,
             ceiling.stored_max
@@ -9412,7 +9606,10 @@ mod tests {
     fn table_keys_resolve_and_are_unique() {
         let keys = table_keys();
         for key in keys {
-            assert!(table(key).is_some(), "{key}: table_keys carries a key table() does not resolve");
+            assert!(
+                table(key).is_some(),
+                "{key}: table_keys carries a key table() does not resolve"
+            );
         }
         let mut sorted = keys.to_vec();
         sorted.sort_unstable();

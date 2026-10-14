@@ -15,11 +15,19 @@ pub struct Element {
 
 impl Element {
     pub fn new(name: &str) -> Element {
-        Element { name: name.to_string(), attrs: Vec::new(), children: Vec::new(), text: String::new() }
+        Element {
+            name: name.to_string(),
+            attrs: Vec::new(),
+            children: Vec::new(),
+            text: String::new(),
+        }
     }
 
     pub fn attr(&self, name: &str) -> Option<&str> {
-        self.attrs.iter().find(|(k, _)| k == name).map(|(_, v)| v.as_str())
+        self.attrs
+            .iter()
+            .find(|(k, _)| k == name)
+            .map(|(_, v)| v.as_str())
     }
 
     pub fn set_attr(&mut self, name: &str, value: &str) {
@@ -66,7 +74,9 @@ impl Element {
 
     /// Value of `<Manual Value="…"/>` under the named parameter element.
     pub fn manual_of(&self, param: &str) -> Option<&str> {
-        self.find(param).and_then(|p| p.child("Manual")).and_then(|m| m.attr("Value"))
+        self.find(param)
+            .and_then(|p| p.child("Manual"))
+            .and_then(|m| m.attr("Value"))
     }
 
     pub fn children_named<'a>(&'a self, name: &'a str) -> impl Iterator<Item = &'a Element> {
@@ -110,7 +120,9 @@ pub fn parse(xml: &str) -> Result<Element, ParseError> {
                 }
             }
             Ok(quick_xml::events::Event::End(_)) => {
-                let el = stack.pop().ok_or_else(|| ParseError("unbalanced end tag".into()))?;
+                let el = stack
+                    .pop()
+                    .ok_or_else(|| ParseError("unbalanced end tag".into()))?;
                 if let Some(top) = stack.last_mut() {
                     top.children.push(el);
                 } else {

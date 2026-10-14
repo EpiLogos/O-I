@@ -587,9 +587,13 @@ impl CompressorModel {
     pub fn new(params: CompressorParams, sample_rate: u32) -> Self {
         let sr_khz = f64::from(sample_rate) * 0.001;
         // Attack/release: CONTINUOUS ms parameters, coefficient laws [D §2].
-        let att_ms = effective_attack_ms(params.model, params.legacy_env_follower_mode, params.attack);
-        let rel_ms =
-            effective_release_ms(params.model, params.legacy_env_follower_mode, params.release);
+        let att_ms =
+            effective_attack_ms(params.model, params.legacy_env_follower_mode, params.attack);
+        let rel_ms = effective_release_ms(
+            params.model,
+            params.legacy_env_follower_mode,
+            params.release,
+        );
         let attack_coeff = ballistic_coeff(att_ms, sample_rate);
         let release_coeff = ballistic_coeff(rel_ms, sample_rate);
         // Stage-2 fixed follower: 6× faster ATTACK coefficient, no release
@@ -711,13 +715,11 @@ mod curve_tests {
         assert_eq!(reduction_octaves(lo, T, K, S), 0.0);
         assert!((reduction_octaves(hi, T, K, S) - K * S).abs() < 1e-12);
         for &eps in &[1e-3, 1e-6, 1e-9] {
-            let gap_lo = (reduction_octaves(lo - eps, T, K, S)
-                - reduction_octaves(lo + eps, T, K, S))
-            .abs();
+            let gap_lo =
+                (reduction_octaves(lo - eps, T, K, S) - reduction_octaves(lo + eps, T, K, S)).abs();
             assert!(gap_lo < eps, "lower edge gap {gap_lo} at eps {eps}");
-            let gap_hi = (reduction_octaves(hi - eps, T, K, S)
-                - reduction_octaves(hi + eps, T, K, S))
-            .abs();
+            let gap_hi =
+                (reduction_octaves(hi - eps, T, K, S) - reduction_octaves(hi + eps, T, K, S)).abs();
             // linear approach: |mid − over| = |s|·(2eps − eps²/4K)
             assert!(
                 gap_hi < 2.0 * S.abs() * eps * 1.001,
@@ -736,8 +738,8 @@ mod curve_tests {
     fn deep_over_slope_is_stored_ratio_in_octaves() {
         let env = T + 6.0;
         let d = 1e-4;
-        let slope = (reduction_octaves(env + d, T, K, S) - reduction_octaves(env - d, T, K, S))
-            / (2.0 * d);
+        let slope =
+            (reduction_octaves(env + d, T, K, S) - reduction_octaves(env - d, T, K, S)) / (2.0 * d);
         assert!((slope - S).abs() < 1e-9, "slope {slope} vs {S}");
         // expansion (Model 2 reading): mirrored sign, positive red.
         let s_exp = expansion_slope(4.0);
@@ -751,11 +753,20 @@ mod curve_tests {
     #[test]
     fn threshold_floor_clamps_linear_values() {
         assert_eq!(threshold_octaves(0.0), f64::log2(THRESHOLD_FLOOR));
-        assert_eq!(threshold_octaves(THRESHOLD_FLOOR), f64::log2(THRESHOLD_FLOOR));
-        assert_eq!(threshold_octaves(THRESHOLD_FLOOR * 4.0), f64::log2(THRESHOLD_FLOOR * 4.0));
+        assert_eq!(
+            threshold_octaves(THRESHOLD_FLOOR),
+            f64::log2(THRESHOLD_FLOOR)
+        );
+        assert_eq!(
+            threshold_octaves(THRESHOLD_FLOOR * 4.0),
+            f64::log2(THRESHOLD_FLOOR * 4.0)
+        );
         // preset default (0.179 linear) and the surface extent top (2.0)
         // are far above the floor
-        assert_eq!(threshold_octaves(DEFAULTS.threshold), f64::log2(DEFAULTS.threshold));
+        assert_eq!(
+            threshold_octaves(DEFAULTS.threshold),
+            f64::log2(DEFAULTS.threshold)
+        );
         assert_eq!(threshold_octaves(2.0), f64::log2(2.0));
     }
 
@@ -827,7 +838,11 @@ mod curve_tests {
         let mut m = CompressorModel::new(DEFAULTS, sr);
         // one sample: the weight is 1−c ≈ 1/τ, not c ≈ 1 (literal reading)
         let _ = m.process(1.0, 1.0);
-        assert!(m.stage1 < 0.001, "near-instant literal reading: {}", m.stage1);
+        assert!(
+            m.stage1 < 0.001,
+            "near-instant literal reading: {}",
+            m.stage1
+        );
         // τ = 30 ms · 48 kHz = 1440 samples → 1 − e^−1
         let tau = 1440usize;
         for _ in 1..tau {

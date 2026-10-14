@@ -21,7 +21,7 @@ const {NATIVE_BINDINGS}=await import(new URL('packages/expressions-boundary/src/
 const {PARAM_REGISTRY}=await import(new URL('desktop/cradle/expressions-app/src/engine/paramRegistry.ts',root))
 const {fieldValue}=await import('../src/components/nativeFieldFaceValues.ts')
 const automationEngine=await import(new URL('desktop/cradle/expressions-app/src/engine/automation.ts',root))
-const receiptPath='/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/evidence/native/material-verification-c79dab7c-8de3-4b69-87cb-ee11cce28c9f/rich-artifact-inspection-3a33a7f6-94e9-445d-b2ec-7e7f25950935.json'
+const receiptPath=new URL('./fixtures/native-rich-glyph-rack-r8.receipt.json',import.meta.url)
 const archived=JSON.parse(await readFile(receiptPath,'utf8'));assert.deepEqual(archived.before.document,archived.after.document)
 const nativeBytes=JSON.stringify(archived.after.document)
 function source(){const view=kernelDocumentToJourney(archived.after.document),store=new DocumentStore(view.journey),scene=store.document.scenes.find(s=>s.id===view.startSceneId),entity=scene.entities[0]

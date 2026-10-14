@@ -106,7 +106,7 @@ test('the reading names each recorded track by its binding and carries its own k
 });
 
 test('a take round-trips: the reading carries the tracks, the composition material carries them, and one removal commits one gesture', async () => {
-  const receiptPath = process.env.OI_NATIVE_COMPOSITION_RECEIPT ?? '/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/evidence/native/material-verification-c79dab7c-8de3-4b69-87cb-ee11cce28c9f/rich-artifact-inspection-3a33a7f6-94e9-445d-b2ec-7e7f25950935.json';
+  const receiptPath = process.env.OI_NATIVE_COMPOSITION_RECEIPT??new URL('./fixtures/native-rich-glyph-rack-r8.receipt.json',import.meta.url);
   const nativeDocument = JSON.parse(await readFile(receiptPath, 'utf8')).after.document;
   const view = kernelDocumentToJourney(nativeDocument);
   const store = new DocumentStore(view.journey);
@@ -116,7 +116,7 @@ test('a take round-trips: the reading carries the tracks, the composition materi
   });
   let committed = 0;
   const owner = createRetainedNativeEditor({store, sceneId: () => scene.id, selection: () => ({entity_ids: [], step_id: null}), nativeView: () => view,
-    nativeSelect: () => {throw Error('closed')}, commit: async () => {committed++; return true}, change: mutate => store.change(mutate), afterHistory: () => {throw Error('closed')},
+    nativeSelect: () => {throw Error('closed')}, commit: async () => {committed++; return true}, change: (label, mutate) => store.change(label, mutate), afterHistory: () => {throw Error('closed')},
     selectLocal: () => {throw Error('closed')}, openEditor: () => {throw Error('closed')}, standing: () => ({busy: false, notice: null}), telemetry: () => undefined, fieldPaused: () => false});
   assert.deepEqual(owner.read().scene.propertyTracks.map(row => row.id), ['take-a', 'take-b'], 'the reading carries the recorded tracks');
   const materialOf = () => prepareCompositionEdit(view, store.document, {sceneId: scene.id}).changes

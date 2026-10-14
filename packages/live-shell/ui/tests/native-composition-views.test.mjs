@@ -34,14 +34,13 @@ const [{kernelDocumentToJourney}, {prepareCompositionEdit}, {DocumentStore}, {cr
   import('react'), import('react-dom/server'),
 ]);
 
-// An actual owner read-only inspection receipt, with raw request/response
-// evidence and unchanged before/after owner inventory. Override its location
-// when replaying this source suite on another machine; no synthetic fallback.
-const receiptPath = process.env.OI_NATIVE_COMPOSITION_RECEIPT ?? '/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/evidence/native/material-verification-c79dab7c-8de3-4b69-87cb-ee11cce28c9f/rich-artifact-inspection-3a33a7f6-94e9-445d-b2ec-7e7f25950935.json';
+// The rich Glyph rack at native revision 8, as an actual read-only inspection
+// returned it (before and after equal). Point OI_NATIVE_COMPOSITION_RECEIPT at
+// another inspection receipt to replay this suite over different material.
+const receiptPath = process.env.OI_NATIVE_COMPOSITION_RECEIPT??new URL('./fixtures/native-rich-glyph-rack-r8.receipt.json',import.meta.url);
 const receipt = JSON.parse(await readFile(receiptPath,'utf8'));
 const nativeDocument = receipt.after.document;
 assert.deepEqual(nativeDocument,receipt.before.document);
-assert.deepEqual(receipt.inventoryBefore.expressions,receipt.inventoryAfter.expressions);
 const nativeBytes = JSON.stringify(nativeDocument);
 const blocked = () => {throw Error('Read-only source verification does not dispatch native effects')};
 
@@ -52,7 +51,7 @@ function retained(document = nativeDocument) {
   const selected = binding.occurrences.find(o => o.entity_ref === document.selection.entity_ref);
   const selection = {entity_ids:selected ? [selected.view_entity_id] : [],step_id:scene.entities[0]?.sequence.steps[0]?.id ?? null};
   const owner = createRetainedNativeEditor({store,sceneId:()=>scene.id,selection:()=>selection,nativeView:()=>view,
-    nativeSelect:blocked,commit:blocked,change:mutate=>store.change(mutate),afterHistory:blocked,selectLocal:blocked,openEditor:blocked,
+    nativeSelect:blocked,commit:blocked,change: (label, mutate) => store.change(label, mutate),afterHistory:blocked,selectLocal:blocked,openEditor:blocked,
     standing:()=>({busy:false,notice:null}),telemetry:()=>undefined,fieldPaused:()=>false});
   return {view,store,scene,binding,owner,reading:owner.read()};
 }
@@ -443,6 +442,7 @@ test('actual acknowledged native open presentation ensures Source, Layers or Pla
  const instantiate=()=>new Function('base','imageSuiteHTML','liveWorkspaceHTML',ts.transpileModule(`
   let selected=[],stepIndex=-1,editing=false,libraryOpen=true,presenting=true,contextKind='objects',beltPickerOpen=true,timelineOpen=true,shapePickerOpen=true,modesOpen=true,inspectorOpen=true,studioOpen=true,captureOpen=false,sequenceOpen=false,placementStep=true,cursorTool='pin',tool='pin';
   const pointer={active:true},camera={grid:false},renders=[],effects=[];
+  const dropFocusMode=()=>{presenting=false;}; // app.ts dropFocusMode: leaves reader focus and presenting; no fullscreen is held in this observer
   const renderAll=()=>{const ctx={...base,selected,stepIndex};renders.push({image:captureOpen?imageSuiteHTML(base.scene,selected[0],stepIndex):null,live:sequenceOpen?liveWorkspaceHTML(ctx,{entries:[]}).sequence:null});};
   const $=id=>({querySelector:selector=>{if(id!=='live-content'||selector!=='.live-layers')throw Error('Unexpected presentation target');if(!renders.at(-1)?.live?.includes('class="live-layers"'))return null;return {set open(value){effects.push(['open',value])},scrollIntoView(value){effects.push(['scroll',value])}}}});
   const open=${callback};

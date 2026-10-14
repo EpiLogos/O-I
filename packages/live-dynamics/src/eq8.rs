@@ -1054,7 +1054,13 @@ pub struct CoeffRecord {
 /// d = t/((q+t)·t + 1)
 /// rec = {t, −2(q+t)d, d, 2d, t²d, n0..n3}
 /// ```
-pub fn section_record(freq: f64, q: f64, gain_db: f64, rate: f64, internal_type: i32) -> CoeffRecord {
+pub fn section_record(
+    freq: f64,
+    q: f64,
+    gain_db: f64,
+    rate: f64,
+    internal_type: i32,
+) -> CoeffRecord {
     let a = 10f64.powf(gain_db * GAIN_DB_TO_AMPLITUDE);
     let qi = 1.0 / q;
     let w = (freq * std::f64::consts::PI / rate).min(PREWARP_MAX_RAD);
@@ -1339,19 +1345,28 @@ mod coefficient_law_tests {
         // At exponent 0 and Q = 1/√2 the remap folds to ≈ 0.7071 as well
         // (log10(1) = 0 shape at Q·√2 ≈ 1: (Q + c) → 1 within the remap).
         let remapped = qeff_shelf(std::f64::consts::FRAC_1_SQRT_2, 6.0, 1.12);
-        assert!(remapped > 0.0 && remapped < 1.0, "remap keeps Q sub-unity: {remapped}");
+        assert!(
+            remapped > 0.0 && remapped < 1.0,
+            "remap keeps Q sub-unity: {remapped}"
+        );
 
         // Shelf legacy: bell-shaped law with the >12 → ×0.25 split.
         assert!((qeff_shelf_legacy(2.0, 6.0, 1.12) - 2.0).abs() < 1e-12);
         let over = qeff_shelf_legacy(13.0, 6.0, 1.0);
-        assert!((over - 13.0 * LEGACY_Q_SCALE).abs() < 1e-12, "13 → ×0.25: {over}");
+        assert!(
+            (over - 13.0 * LEGACY_Q_SCALE).abs() < 1e-12,
+            "13 → ×0.25: {over}"
+        );
         let under = qeff_shelf_legacy(11.0, 6.0, 1.0);
         assert!((under - 11.0).abs() < 1e-12, "≤ 12 untouched: {under}");
         // After the split the legacy Q cannot exceed 3 (50 → 12.5 at worst
         // clamp path: 50·0.25 = 12.5 > 3 — the derivation's parenthetical
         // "legacy Q ≤ 3" holds only below the clamp; verify the captured
         // law, not the gloss).
-        assert_eq!(qeff_shelf_legacy(50.0, 16.0, 1.12), QEFF_CLAMP * LEGACY_Q_SCALE);
+        assert_eq!(
+            qeff_shelf_legacy(50.0, 16.0, 1.12),
+            QEFF_CLAMP * LEGACY_Q_SCALE
+        );
     }
 
     /// Closed-form record arithmetic [D §3]: verify the shared c-part
@@ -1431,7 +1446,11 @@ mod coefficient_law_tests {
         };
         let recs = build_band_cascade(&hp, 2.0, 1.12, false, RATE);
         assert_eq!(recs.len(), 1);
-        assert_eq!(recs[0].n, [1.0, 1.0, -1.0 / 3.0, -1.0], "HP section, q = 1/Q raw");
+        assert_eq!(
+            recs[0].n,
+            [1.0, 1.0, -1.0 / 3.0, -1.0],
+            "HP section, q = 1/Q raw"
+        );
 
         // Out-of-range mode clamps to Bell (3).
         let wild = Eq8FilterParams { mode: 99, ..bell };
@@ -1454,8 +1473,16 @@ mod coefficient_law_tests {
         assert!((mg - 0.4).abs() < 1e-12 && (sg - (-0.15)).abs() < 1e-12);
 
         // Record blend: identity at the endpoints, midpoint averages.
-        let x = CoeffRecord { t: 1.0, c: [1.0; 4], n: [0.0; 4] };
-        let y = CoeffRecord { t: 3.0, c: [3.0; 4], n: [2.0; 4] };
+        let x = CoeffRecord {
+            t: 1.0,
+            c: [1.0; 4],
+            n: [0.0; 4],
+        };
+        let y = CoeffRecord {
+            t: 3.0,
+            c: [3.0; 4],
+            n: [2.0; 4],
+        };
         let mid = blend_records(&x, &y, 0.5);
         assert_eq!(mid.t, 2.0);
         assert_eq!(mid.c, [2.0; 4]);

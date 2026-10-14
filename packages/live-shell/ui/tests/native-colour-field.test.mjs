@@ -18,8 +18,8 @@ const [drive,devices,{kernelDocumentToJourney},{DocumentStore},{createRetainedNa
 ])
 const {NativeColourField}=await import('../src/components/NativeColourField.tsx')
 const automationEngine=await import(new URL('desktop/cradle/expressions-app/src/engine/automation.ts',root))
-const receiptPath='/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/evidence/native/material-verification-c79dab7c-8de3-4b69-87cb-ee11cce28c9f/rich-artifact-inspection-3a33a7f6-94e9-445d-b2ec-7e7f25950935.json'
-const archived=JSON.parse(await readFile(receiptPath,'utf8'));assert.deepEqual(archived.before.document,archived.after.document)
+// The rich Glyph rack at native revision 8 (a file-proof composition, presentation included).
+const archived=JSON.parse(await readFile(new URL('./fixtures/native-rich-glyph-rack-r8.receipt.json',import.meta.url),'utf8'))
 const nativeBytes=JSON.stringify(archived.after.document)
 function source(){const view=kernelDocumentToJourney(archived.after.document),store=new DocumentStore(view.journey),scene=store.document.scenes.find(s=>s.id===view.startSceneId),entity=scene.entities[0]
  const closed=()=>{throw Error('Native effects are closed in Morph source verification')}

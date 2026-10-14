@@ -61,7 +61,11 @@ impl SetSummary {
                     .map(|ds| ds.children.iter().map(|d| d.name.clone()).collect())
                     .unwrap_or_default();
                 arrangement_clips += count_arrangement_clips(tr);
-                tracks.push(TrackInfo { kind, name, devices });
+                tracks.push(TrackInfo {
+                    kind,
+                    name,
+                    devices,
+                });
             }
         }
         if let Some(mt) = ls.find("MainTrack") {
@@ -76,7 +80,12 @@ impl SetSummary {
             });
         }
         let scene_count = ls.find("Scenes").map(|s| s.children.len()).unwrap_or(0);
-        Some(SetSummary { tempo_bpm, tracks, scene_count, arrangement_clips })
+        Some(SetSummary {
+            tempo_bpm,
+            tracks,
+            scene_count,
+            arrangement_clips,
+        })
     }
 }
 
@@ -189,7 +198,11 @@ impl SetDocument {
                 session_slots: Vec::new(),
             });
         }
-        Some(SetDocument { tempo_bpm, tracks, scene_count })
+        Some(SetDocument {
+            tempo_bpm,
+            tracks,
+            scene_count,
+        })
     }
 }
 
@@ -203,7 +216,10 @@ fn device_list(holder: &Element) -> Vec<DeviceInfo> {
         .map(|ds| {
             ds.children
                 .iter()
-                .map(|d| DeviceInfo { name: d.name.clone(), params: params_of(d) })
+                .map(|d| DeviceInfo {
+                    name: d.name.clone(),
+                    params: params_of(d),
+                })
                 .collect()
         })
         .unwrap_or_default()

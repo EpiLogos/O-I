@@ -244,7 +244,11 @@ pub mod unison {
         // deal index j skips the odd-N centre so the voices above it
         // continue the L,R pairing (VC3: k=2 → R; VC5: k=3 → L, k=4 → R)
         let j = if n % 2 == 1 && k > n / 2 { k - 1 } else { k };
-        if j % 2 == 0 { -1.0 } else { 1.0 }
+        if j % 2 == 0 {
+            -1.0
+        } else {
+            1.0
+        }
     }
 
     /// Per-voice amplitude law (gain-law lane, CLOSED 2026-10-09): every
@@ -315,19 +319,34 @@ mod frames {
         let kf = k as f64;
         let odd = k % 2 == 1;
         match frame {
-            0 => if k == 1 { 1.0 } else { 0.0 }, // sine
+            0 => {
+                if k == 1 {
+                    1.0
+                } else {
+                    0.0
+                }
+            } // sine
             // triangle: odd harmonics only, ALTERNATING sign
             1 => {
                 if odd {
-                    (8.0 / (std::f64::consts::PI * std::f64::consts::PI))
-                        / (kf * kf)
-                        * (if ((k - 1) / 2).is_multiple_of(2) { 1.0 } else { -1.0 })
+                    (8.0 / (std::f64::consts::PI * std::f64::consts::PI)) / (kf * kf)
+                        * (if ((k - 1) / 2).is_multiple_of(2) {
+                            1.0
+                        } else {
+                            -1.0
+                        })
                 } else {
                     0.0
                 }
             }
             2 => 2.0 / (std::f64::consts::PI * kf), // sawtooth: all k
-            _ => if odd { 4.0 / (std::f64::consts::PI * kf) } else { 0.0 }, // square
+            _ => {
+                if odd {
+                    4.0 / (std::f64::consts::PI * kf)
+                } else {
+                    0.0
+                }
+            } // square
         }
     }
 
@@ -524,7 +543,10 @@ mod tests {
         let s = v.render_note(2.0, 2.0);
         let win = &s[(SR as f64 * 0.15) as usize..(SR as f64 * 0.70) as usize];
         let rms = rms_db(win);
-        assert!((rms - (-26.06)).abs() <= 0.05, "steady RMS {rms:.2} vs M2 −26.06");
+        assert!(
+            (rms - (-26.06)).abs() <= 0.05,
+            "steady RMS {rms:.2} vs M2 −26.06"
+        );
     }
 
     /// Sustain law (WV4): Sustain is linear amplitude — 0.5012 → 0.25 must
@@ -535,9 +557,8 @@ mod tests {
         let base = v.render_note(0.875, 1.3);
         v.envelope.sustain_amp = 0.25;
         let probe = v.render_note(0.875, 1.3);
-        let late = |s: &[f32]| {
-            rms_db(&s[(SR as f64 * 0.70) as usize..(SR as f64 * 0.875) as usize])
-        };
+        let late =
+            |s: &[f32]| rms_db(&s[(SR as f64 * 0.70) as usize..(SR as f64 * 0.875) as usize]);
         let d = late(&probe) - late(&base);
         let expect = amp_to_db(0.25 / stored::SUSTAIN_AMP);
         // 0.5 dB law tolerance: with the rev-4 warp decay the envelope sits
@@ -554,12 +575,13 @@ mod tests {
         let base = v.render_note(0.875, 1.3);
         v.osc2.on = true;
         let probe = v.render_note(0.875, 1.3);
-        let steady = |s: &[f32]| {
-            rms_db(&s[(SR as f64 * 0.15) as usize..(SR as f64 * 0.70) as usize])
-        };
+        let steady =
+            |s: &[f32]| rms_db(&s[(SR as f64 * 0.15) as usize..(SR as f64 * 0.70) as usize]);
         let d = steady(&probe) - steady(&base);
-        assert!((d - fitted::OSC2_COHERENT_SUM_DB).abs() <= 0.05,
-            "osc2 Δ {d:.2} dB vs coherent +6.02");
+        assert!(
+            (d - fitted::OSC2_COHERENT_SUM_DB).abs() <= 0.05,
+            "osc2 Δ {d:.2} dB vs coherent +6.02"
+        );
     }
 
     /// Position law (WV2): pos 0.5 = 0.5·triangle + 0.5·saw carries the
@@ -570,16 +592,21 @@ mod tests {
         let base = v.render_note(0.875, 1.3);
         v.osc1.wave_position = 0.5;
         let probe = v.render_note(0.875, 1.3);
-        let steady = |s: &[f32]| {
-            rms_db(&s[(SR as f64 * 0.15) as usize..(SR as f64 * 0.70) as usize])
-        };
+        let steady =
+            |s: &[f32]| rms_db(&s[(SR as f64 * 0.15) as usize..(SR as f64 * 0.70) as usize]);
         let d = steady(&probe) - steady(&base);
-        assert!((d - (-2.43)).abs() <= 0.1, "pos0.5 Δ {d:.2} dB vs mix −2.43");
+        assert!(
+            (d - (-2.43)).abs() <= 0.1,
+            "pos0.5 Δ {d:.2} dB vs mix −2.43"
+        );
         // h2 rises from the dither floor to −39.4 dBFS (render WV2; the mix
         // predicts −39.07: 0.5·(2/2π) against the −23.11 h1 anchor)
         let h2 = crate::operator::goertzel_amp(&probe, SR, 2.0 * v.freq_hz, 0.15, 0.70);
         let h2_db = amp_to_db(h2);
-        assert!((h2_db - (-39.41)).abs() <= 1.0, "pos0.5 h2 {h2_db:.2} vs −39.41");
+        assert!(
+            (h2_db - (-39.41)).abs() <= 1.0,
+            "pos0.5 h2 {h2_db:.2} vs −39.41"
+        );
     }
 
     /// Frame census (rev 3): the four anchors read their pure shape, and the
@@ -591,26 +618,43 @@ mod tests {
         let pi = std::f64::consts::PI;
         // anchors: pure frames at thirds
         let h = |p: f64, k: usize| frame_harmonic(p, k);
-        assert!((h(0.0, 1) - 1.0).abs() < 1e-12 && h(0.0, 2).abs() < 1e-12,
-            "pos 0 is the unit sine");
-        assert!((h(1.0 / 3.0, 1) - 8.0 / (pi * pi)).abs() < 1e-12,
-            "pos 1/3 triangle h1");
-        assert!((h(1.0 / 3.0, 3) + (8.0 / (pi * pi)) / 9.0).abs() < 1e-12,
-            "pos 1/3 triangle h3 carries the alternating MINUS sign");
+        assert!(
+            (h(0.0, 1) - 1.0).abs() < 1e-12 && h(0.0, 2).abs() < 1e-12,
+            "pos 0 is the unit sine"
+        );
+        assert!(
+            (h(1.0 / 3.0, 1) - 8.0 / (pi * pi)).abs() < 1e-12,
+            "pos 1/3 triangle h1"
+        );
+        assert!(
+            (h(1.0 / 3.0, 3) + (8.0 / (pi * pi)) / 9.0).abs() < 1e-12,
+            "pos 1/3 triangle h3 carries the alternating MINUS sign"
+        );
         assert!((h(2.0 / 3.0, 1) - 2.0 / pi).abs() < 1e-12, "pos 2/3 saw h1");
-        assert!((h(1.0, 1) - 4.0 / pi).abs() < 1e-12 && h(1.0, 2).abs() < 1e-12,
-            "pos 1 square: h1 4/π, evens 0");
+        assert!(
+            (h(1.0, 1) - 4.0 / pi).abs() < 1e-12 && h(1.0, 2).abs() < 1e-12,
+            "pos 1 square: h1 4/π, evens 0"
+        );
         // pos 0.25 (WV6): 0.25 sine + 0.75 triangle — evens EXACTLY zero,
         // h1 to the measured 0.85797 (render) within 0.1 dB
-        assert!(h(0.25, 2) == 0.0 && h(0.25, 4) == 0.0,
-            "pos 0.25 evens vanish (measured at the dither floor)");
-        assert!((h(0.25, 1) - 0.857_97).abs() < 0.005,
-            "pos 0.25 h1 {} vs measured 0.85797", h(0.25, 1));
+        assert!(
+            h(0.25, 2) == 0.0 && h(0.25, 4) == 0.0,
+            "pos 0.25 evens vanish (measured at the dither floor)"
+        );
+        assert!(
+            (h(0.25, 1) - 0.857_97).abs() < 0.005,
+            "pos 0.25 h1 {} vs measured 0.85797",
+            h(0.25, 1)
+        );
         // pos 0.75 (WV7): h1 = 0.75·(2/π) + 0.25·(4/π) = 2.5/π
-        assert!((h(0.75, 1) - 2.5 / pi).abs() < 1e-12,
-            "pos 0.75 h1 coherent saw+square sum");
-        assert!((h(0.75, 2) - 0.75 * 2.0 / (2.0 * pi)).abs() < 1e-12,
-            "pos 0.75 h2 comes from the saw alone");
+        assert!(
+            (h(0.75, 1) - 2.5 / pi).abs() < 1e-12,
+            "pos 0.75 h1 coherent saw+square sum"
+        );
+        assert!(
+            (h(0.75, 2) - 0.75 * 2.0 / (2.0 * pi)).abs() < 1e-12,
+            "pos 0.75 h2 comes from the saw alone"
+        );
     }
 
     /// Release timing (stated gate law): the envelope's −40 dB point must
@@ -723,7 +767,11 @@ mod tests {
             let got: Vec<f64> = (0..n).map(|k| unison::voice_pan(n, k)).collect();
             assert_eq!(got, want.to_vec(), "pan deal at N={n}");
         }
-        assert_eq!(unison::voice_pan(1, 0), 0.0, "N=1: trivial centre-only degenerate");
+        assert_eq!(
+            unison::voice_pan(1, 0),
+            0.0,
+            "N=1: trivial centre-only degenerate"
+        );
 
         // per-voice gain vs the measured ladder: predicted √(2/N) in dB
         // (exact by construction, ≤0.01) and the law's residuals against
@@ -738,14 +786,23 @@ mod tests {
         ];
         for (n, pred, meas) in ladder {
             let law = amp_to_db(unison::voice_gain(n));
-            assert!((law - pred).abs() <= 0.01, "N={n}: gain {law:.3} dB vs √(2/N) {pred}");
-            assert!((pred - meas).abs() <= 0.15, "N={n}: law {pred} vs measured {meas}");
+            assert!(
+                (law - pred).abs() <= 0.01,
+                "N={n}: gain {law:.3} dB vs √(2/N) {pred}"
+            );
+            assert!(
+                (pred - meas).abs() <= 0.15,
+                "N={n}: law {pred} vs measured {meas}"
+            );
         }
 
         // centre-power split at N = 3: per-channel amplitude 1/√3
         // (−4.77 dB; measured −4.98 / −4.79, residual ≤0.25 dB)
         let centre_ch = unison::voice_gain(3) / SQRT_2;
-        assert!((centre_ch - 1.0 / 3.0f64.sqrt()).abs() < 1e-12, "centre = 1/√3 per channel");
+        assert!(
+            (centre_ch - 1.0 / 3.0f64.sqrt()).abs() < 1e-12,
+            "centre = 1/√3 per channel"
+        );
         for meas in [-4.98f64, -4.79] {
             assert!(
                 (amp_to_db(centre_ch) - meas).abs() <= 0.25,
@@ -771,8 +828,10 @@ mod tests {
                     r += c * c;
                 }
             }
-            assert!((l - 1.0).abs() < 1e-12 && (r - 1.0).abs() < 1e-12,
-                "N={n}: channel power L {l} / R {r} vs unity");
+            assert!(
+                (l - 1.0).abs() < 1e-12 && (r - 1.0).abs() < 1e-12,
+                "N={n}: channel power L {l} / R {r} vs unity"
+            );
         }
     }
 
@@ -793,24 +852,55 @@ mod tests {
             // (slope, [(t_ms, dB above plateau)])
             (
                 -0.5,
-                [(25.0, 5.98), (75.0, 5.94), (150.0, 5.84), (325.0, 5.30), (500.0, 3.41), (575.0, 1.22)],
+                [
+                    (25.0, 5.98),
+                    (75.0, 5.94),
+                    (150.0, 5.84),
+                    (325.0, 5.30),
+                    (500.0, 3.41),
+                    (575.0, 1.22),
+                ],
             ),
             (
                 0.0,
-                [(25.0, 5.82), (75.0, 5.48), (150.0, 4.87), (325.0, 3.29), (500.0, 1.36), (575.0, 0.37)],
+                [
+                    (25.0, 5.82),
+                    (75.0, 5.48),
+                    (150.0, 4.87),
+                    (325.0, 3.29),
+                    (500.0, 1.36),
+                    (575.0, 0.37),
+                ],
             ),
             (
                 0.5,
-                [(25.0, 5.36), (75.0, 4.27), (150.0, 2.83), (325.0, 0.92), (500.0, 0.18), (575.0, 0.03)],
+                [
+                    (25.0, 5.36),
+                    (75.0, 4.27),
+                    (150.0, 2.83),
+                    (325.0, 0.92),
+                    (500.0, 0.18),
+                    (575.0, 0.03),
+                ],
             ),
             (
                 1.0,
-                [(25.0, 4.80), (75.0, 3.02), (150.0, 1.28), (325.0, 0.15), (500.0, 0.01), (575.0, 0.00)],
+                [
+                    (25.0, 4.80),
+                    (75.0, 3.02),
+                    (150.0, 1.28),
+                    (325.0, 0.15),
+                    (500.0, 0.01),
+                    (575.0, 0.00),
+                ],
             ),
         ];
         let s = stored::SUSTAIN_AMP;
         for (slope, points) in table {
-            let env = AmpEnvelope { decay_slope: slope, ..AmpEnvelope::default() };
+            let env = AmpEnvelope {
+                decay_slope: slope,
+                ..AmpEnvelope::default()
+            };
             for (ms, want) in points {
                 let got = amp_to_db(env.gain(ms / 1000.0, 2.0) / s);
                 assert!(
@@ -824,7 +914,10 @@ mod tests {
         // 1 ms attack and sits ON the sustain from u = 1 on; slope 0 is the
         // linear limit.
         for slope in [-0.5f64, 0.0, 0.5, 1.0] {
-            let env = AmpEnvelope { decay_slope: slope, ..AmpEnvelope::default() };
+            let env = AmpEnvelope {
+                decay_slope: slope,
+                ..AmpEnvelope::default()
+            };
             let peak = env.gain(stored::ATTACK_TIME_S + 1e-9, 2.0);
             assert!((peak - 1.0).abs() < 1e-6, "slope {slope}: peak {peak}");
             assert!(
@@ -833,10 +926,16 @@ mod tests {
                 "slope {slope}: plateau not exact at u = 1"
             );
         }
-        let lin = AmpEnvelope { decay_slope: 0.0, ..AmpEnvelope::default() };
+        let lin = AmpEnvelope {
+            decay_slope: 0.0,
+            ..AmpEnvelope::default()
+        };
         let mid = stored::ATTACK_TIME_S + 0.5 * stored::DECAY_TIME_S;
         let want_mid = s + (1.0 - s) * 0.5;
-        assert!((lin.gain(mid, 2.0) - want_mid).abs() < 1e-9, "slope 0 is the linear ramp");
+        assert!(
+            (lin.gain(mid, 2.0) - want_mid).abs() < 1e-9,
+            "slope 0 is the linear ramp"
+        );
         assert!(
             (decay_warp(0.0, 0.25) - 0.75).abs() < 1e-12
                 && (decay_warp(-3.705, 0.0) - 1.0).abs() < 1e-12

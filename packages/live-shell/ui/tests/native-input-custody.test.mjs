@@ -21,7 +21,7 @@ const [drafts,{createNativeInputContinuity,nativeInputTargetKey},{kernelDocument
  import(new URL('desktop/cradle/src/workspace/drafts.ts',root)),import('../src/continuity/nativeInputs.ts'),
  import(new URL('kernelDocumentBridge.ts',author)),import(new URL('store.ts',author)),import(new URL('hostEditor.ts',author)),import('../src/components/NativeDeviceEditors.tsx'),import(new URL('desktop/cradle/src/document/identity.ts',root)),
 ]);
-const raw=JSON.parse(await readFile('/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/evidence/native/material-verification-c79dab7c-8de3-4b69-87cb-ee11cce28c9f/rich-artifact-inspection-3a33a7f6-94e9-445d-b2ec-7e7f25950935.json','utf8'));
+const raw=JSON.parse(await readFile(new URL('./fixtures/native-rich-glyph-rack-r8.receipt.json',import.meta.url),'utf8'));
 assert.deepEqual(raw.before.document,raw.after.document);
 const view=kernelDocumentToJourney(raw.after.document),store=new DocumentStore(view.journey),scene=store.document.scenes[0],entity=scene.entities[0];
 const closed=()=>{throw Error('Native mutation/adoption is closed during private-input source verification')};

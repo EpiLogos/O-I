@@ -410,7 +410,10 @@ pub fn band_ratio(band_width: f64) -> f64 {
 /// HPF), HIGH = min(MidFreq·r, 18 kHz) (biquad #2 = LPF); the band is
 /// HPF(LOW) → LPF(HIGH) in series.
 pub fn band_edges(mid_freq: f64, ratio: f64) -> (f64, f64) {
-    ((mid_freq / ratio).max(EDGE_LOW_HZ), (mid_freq * ratio).min(EDGE_HIGH_HZ))
+    (
+        (mid_freq / ratio).max(EDGE_LOW_HZ),
+        (mid_freq * ratio).min(EDGE_HIGH_HZ),
+    )
 }
 
 /// RBJ biquad, Q = 1/√2 Butterworth section [B constants, D form — the
@@ -461,7 +464,11 @@ pub struct Biquad {
 
 impl Biquad {
     pub fn new(c: BiquadCoeffs) -> Self {
-        Biquad { c, s1: 0.0, s2: 0.0 }
+        Biquad {
+            c,
+            s1: 0.0,
+            s2: 0.0,
+        }
     }
 
     pub fn clear(&mut self) {
@@ -490,14 +497,22 @@ pub struct InlineRamp {
 
 impl InlineRamp {
     pub fn new(value: f64) -> Self {
-        InlineRamp { current: value, inc: 0.0, steps: 0.0 }
+        InlineRamp {
+            current: value,
+            inc: 0.0,
+            steps: 0.0,
+        }
     }
 
     /// Retarget per the captured law: the target arrives as `value`, the
     /// increment spreads the approach over `steps`, sub-epsilon increments
     /// are killed.
     pub fn retarget(&mut self, value: f64, steps: f64) {
-        self.inc = if steps > 0.0 { (value - self.current) / steps } else { 0.0 };
+        self.inc = if steps > 0.0 {
+            (value - self.current) / steps
+        } else {
+            0.0
+        };
         if self.inc.abs() < RAMP_EPSILON {
             self.inc = 0.0;
         }
@@ -756,7 +771,11 @@ mod law_tests {
         let y0 = bq.process(1.0);
         assert!((y0 - lp.b0).abs() < 1e-15);
         assert!((bq.process(0.0) - (lp.b1 - lp.a1 * y0)).abs() < 1e-15);
-        assert_eq!(Biquad::new(lp).process(0.0), 0.0, "silent states stay silent");
+        assert_eq!(
+            Biquad::new(lp).process(0.0),
+            0.0,
+            "silent states stay silent"
+        );
 
         // Inline ramp: increments die below 1e-12 (epsilon kill).
         let mut r = InlineRamp::new(0.5);

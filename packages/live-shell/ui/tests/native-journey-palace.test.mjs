@@ -10,7 +10,7 @@ export async function resolve(s,c,n){if(s.startsWith('@research-canvas/'))return
 export async function load(u,c,n){if(u.endsWith('.css'))return {format:'module',shortCircuit:true,source:'export {}'};if(!/\\.tsx?$/.test(u))return n(u,c);return {format:'module',shortCircuit:true,source:ts.transpileModule(await readFile(new URL(u),'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext,jsx:ts.JsxEmit.ReactJSX},fileName:new URL(u).pathname}).outputText}}
 `)}`,import.meta.url);
 const [journey,palace,{kernelDocumentToJourney}]=await Promise.all([import(new URL('journeyInstrumentModel.ts',author)),import(new URL('palaceInstrumentBasis.ts',author)),import(new URL('kernelDocumentBridge.ts',author))]);
-const path=process.env.OI_NATIVE_COMPOSITION_RECEIPT??'/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/evidence/native/material-verification-c79dab7c-8de3-4b69-87cb-ee11cce28c9f/rich-artifact-inspection-3a33a7f6-94e9-445d-b2ec-7e7f25950935.json';
+const path=process.env.OI_NATIVE_COMPOSITION_RECEIPT??new URL('./fixtures/native-rich-glyph-rack-r8.receipt.json',import.meta.url);
 const receipt=JSON.parse(await readFile(path,'utf8')),document=receipt.after.document;
 assert.deepEqual(document,receipt.before.document);
 const bytes=JSON.stringify(document),view=kernelDocumentToJourney(document),sceneId=view.startSceneId;

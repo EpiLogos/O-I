@@ -51,7 +51,7 @@ function editor() {
   const scene = store.document.scenes.find(s => s.id === view.startSceneId) ?? store.document.scenes[0]
   let commits = 0
   const owner = createRetainedNativeEditor({store, sceneId: () => scene.id, selection: () => ({entity_ids: [], step_id: null}), nativeView: () => view,
-    nativeSelect: blocked, commit: async () => {commits++; return true}, change: mutate => store.change(mutate), afterHistory: blocked, selectLocal: blocked,
+    nativeSelect: blocked, commit: async () => {commits++; return true}, change: (label, mutate) => store.change(label, mutate), afterHistory: blocked, selectLocal: blocked,
     openEditor: blocked, standing: () => ({busy: false, notice: null}), telemetry: () => undefined, fieldPaused: () => false})
   return {view, store, scene, owner, commits: () => commits}
 }

@@ -58,11 +58,7 @@ pub fn strip_track_sends(track: &mut Element) {
 pub const AUDIO_RULE_32BIT_MUST_BE_FLOAT: &str =
     "32-bit integer WAV files are not supported; for 32 bit, only floating point samples";
 
-fn for_each_descendant_mut<F: FnMut(&mut Element)>(
-    el: &mut Element,
-    names: &[&str],
-    f: &mut F,
-) {
+fn for_each_descendant_mut<F: FnMut(&mut Element)>(el: &mut Element, names: &[&str], f: &mut F) {
     if names.contains(&el.name.as_str()) {
         f(el);
     }

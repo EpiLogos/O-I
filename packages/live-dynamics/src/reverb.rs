@@ -135,14 +135,70 @@ pub struct TailBand {
 /// `hf` is present exactly on the bands above [`HF_CORNER_HZ`] — the
 /// measured corner is fixed across the 600/1200/2400 pins [refine (a)].
 pub const BANDS: &[TailBand] = &[
-    TailBand { lo_hz: 20.0, hi_hz: 80.0, level_db: -54.6, rt60_per_decay_ms: 0.89, r0: 0.40, hf: None },
-    TailBand { lo_hz: 80.0, hi_hz: 160.0, level_db: -45.0, rt60_per_decay_ms: 0.89, r0: 0.40, hf: None },
-    TailBand { lo_hz: 160.0, hi_hz: 315.0, level_db: -49.0, rt60_per_decay_ms: 0.89, r0: 0.00, hf: None },
-    TailBand { lo_hz: 315.0, hi_hz: 630.0, level_db: -45.7, rt60_per_decay_ms: 0.94, r0: 0.25, hf: None },
-    TailBand { lo_hz: 630.0, hi_hz: 900.0, level_db: -46.7, rt60_per_decay_ms: 0.94, r0: 0.17, hf: None },
-    TailBand { lo_hz: 900.0, hi_hz: 1250.0, level_db: -44.5, rt60_per_decay_ms: 0.94, r0: 0.37, hf: None },
-    TailBand { lo_hz: 1250.0, hi_hz: 2500.0, level_db: -44.0, rt60_per_decay_ms: 0.87, r0: 0.09, hf: None },
-    TailBand { lo_hz: 2500.0, hi_hz: 4500.0, level_db: -45.0, rt60_per_decay_ms: 0.87, r0: 0.16, hf: None },
+    TailBand {
+        lo_hz: 20.0,
+        hi_hz: 80.0,
+        level_db: -54.6,
+        rt60_per_decay_ms: 0.89,
+        r0: 0.40,
+        hf: None,
+    },
+    TailBand {
+        lo_hz: 80.0,
+        hi_hz: 160.0,
+        level_db: -45.0,
+        rt60_per_decay_ms: 0.89,
+        r0: 0.40,
+        hf: None,
+    },
+    TailBand {
+        lo_hz: 160.0,
+        hi_hz: 315.0,
+        level_db: -49.0,
+        rt60_per_decay_ms: 0.89,
+        r0: 0.00,
+        hf: None,
+    },
+    TailBand {
+        lo_hz: 315.0,
+        hi_hz: 630.0,
+        level_db: -45.7,
+        rt60_per_decay_ms: 0.94,
+        r0: 0.25,
+        hf: None,
+    },
+    TailBand {
+        lo_hz: 630.0,
+        hi_hz: 900.0,
+        level_db: -46.7,
+        rt60_per_decay_ms: 0.94,
+        r0: 0.17,
+        hf: None,
+    },
+    TailBand {
+        lo_hz: 900.0,
+        hi_hz: 1250.0,
+        level_db: -44.5,
+        rt60_per_decay_ms: 0.94,
+        r0: 0.37,
+        hf: None,
+    },
+    TailBand {
+        lo_hz: 1250.0,
+        hi_hz: 2500.0,
+        level_db: -44.0,
+        rt60_per_decay_ms: 0.87,
+        r0: 0.09,
+        hf: None,
+    },
+    TailBand {
+        lo_hz: 2500.0,
+        hi_hz: 4500.0,
+        level_db: -45.0,
+        rt60_per_decay_ms: 0.87,
+        r0: 0.16,
+        hf: None,
+    },
     // Above the corner: two-component split. level_db re-fitted to the
     // unchanged R1 48-band profile under the new envelope structure (model
     // fit, 2026-10-09 extension).
@@ -349,7 +405,7 @@ pub fn impulse_response_stereo(params: &ReverbParams, sample_rate: u32) -> (Vec<
         spec_re.extend_from_slice(&re);
         spec_im.extend_from_slice(&im);
     }
-    fn band_view<'a>(idx: usize, n_fft: usize, v: &'a [f64]) -> &'a [f64] {
+    fn band_view(idx: usize, n_fft: usize, v: &[f64]) -> &[f64] {
         &v[idx * n_fft..(idx + 1) * n_fft]
     }
 
@@ -379,9 +435,33 @@ pub fn impulse_response_stereo(params: &ReverbParams, sample_rate: u32) -> (Vec<
         let b = c.sqrt();
         let norm2 = a * a * a_bar * a_bar + (b * b / 4.0) * (alpha * alpha + alpha_inv * alpha_inv);
         let gain = 10f64.powf(band.level_db / 20.0) / norm2.sqrt();
-        band_noise(band_view(0, n_fft, &spec_re), band_view(0, n_fft, &spec_im), band, sr, n_fft, &mut s_re, &mut s_im);
-        band_noise(band_view(1, n_fft, &spec_re), band_view(1, n_fft, &spec_im), band, sr, n_fft, &mut nl_re, &mut nl_im);
-        band_noise(band_view(2, n_fft, &spec_re), band_view(2, n_fft, &spec_im), band, sr, n_fft, &mut nr_re, &mut nr_im);
+        band_noise(
+            band_view(0, n_fft, &spec_re),
+            band_view(0, n_fft, &spec_im),
+            band,
+            sr,
+            n_fft,
+            &mut s_re,
+            &mut s_im,
+        );
+        band_noise(
+            band_view(1, n_fft, &spec_re),
+            band_view(1, n_fft, &spec_im),
+            band,
+            sr,
+            n_fft,
+            &mut nl_re,
+            &mut nl_im,
+        );
+        band_noise(
+            band_view(2, n_fft, &spec_re),
+            band_view(2, n_fft, &spec_im),
+            band,
+            sr,
+            n_fft,
+            &mut nr_re,
+            &mut nr_im,
+        );
         // amplitude slopes: power −60 dB per RT60 → amplitude 10^(−3t/RT60).
         // Above the corner the envelope is two-component [refine (a)]: slow
         // early segment to the crossover, then the true HF tail.

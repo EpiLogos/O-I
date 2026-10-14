@@ -66,7 +66,10 @@ pub fn read_wav_f32(bytes: &[u8]) -> Result<Audio, AudioError> {
 
 /// Parse an AIFF file with 16-bit big-endian samples (Live's export format).
 pub fn read_aiff_i16(bytes: &[u8]) -> Result<Audio, AudioError> {
-    if bytes.len() < 12 || &bytes[0..4] != b"FORM" || (&bytes[8..12] != b"AIFF" && &bytes[8..12] != b"AIFC") {
+    if bytes.len() < 12
+        || &bytes[0..4] != b"FORM"
+        || (&bytes[8..12] != b"AIFF" && &bytes[8..12] != b"AIFC")
+    {
         return err("not an AIFF/AIFC file");
     }
     let mut pos = 12usize;
@@ -111,14 +114,20 @@ pub fn read_aiff_i16(bytes: &[u8]) -> Result<Audio, AudioError> {
 
 fn mixdown(interleaved: Vec<f32>, channels: u16, rate: u32) -> Audio {
     if channels <= 1 {
-        return Audio { sample_rate: rate, samples: interleaved };
+        return Audio {
+            sample_rate: rate,
+            samples: interleaved,
+        };
     }
     let ch = channels as usize;
     let samples: Vec<f32> = interleaved
         .chunks_exact(ch)
         .map(|frame| frame.iter().sum::<f32>() / ch as f32)
         .collect();
-    Audio { sample_rate: rate, samples }
+    Audio {
+        sample_rate: rate,
+        samples,
+    }
 }
 
 /// RMS power in dBFS for one channel-agnostic slice.
@@ -141,7 +150,10 @@ pub fn rms_db(samples: &[f32]) -> f64 {
 /// between-tap reverb floor mask them. Pure addition; `read_aiff_i16`
 /// behavior is unchanged.
 pub fn read_aiff_i16_channels(bytes: &[u8]) -> Result<(Audio, Audio), AudioError> {
-    if bytes.len() < 12 || &bytes[0..4] != b"FORM" || (&bytes[8..12] != b"AIFF" && &bytes[8..12] != b"AIFC") {
+    if bytes.len() < 12
+        || &bytes[0..4] != b"FORM"
+        || (&bytes[8..12] != b"AIFF" && &bytes[8..12] != b"AIFC")
+    {
         return err("not an AIFF/AIFC file");
     }
     let mut pos = 12usize;
@@ -191,7 +203,13 @@ pub fn read_aiff_i16_channels(bytes: &[u8]) -> Result<(Audio, Audio), AudioError
         r.push(*rp);
     }
     Ok((
-        Audio { sample_rate: rate, samples: l },
-        Audio { sample_rate: rate, samples: r },
+        Audio {
+            sample_rate: rate,
+            samples: l,
+        },
+        Audio {
+            sample_rate: rate,
+            samples: r,
+        },
     ))
 }

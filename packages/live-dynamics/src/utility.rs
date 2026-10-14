@@ -300,10 +300,7 @@ impl DcBlocker {
 /// With M/S OFF: `(1.0, raw StereoWidth)`.
 pub fn msb_push(msb: f64, msb_on: bool, stereo_width_raw: f64) -> (f64, f64) {
     if msb_on {
-        (
-            f64::min(2.0 - msb, 1.0),
-            if msb <= 1.0 { msb } else { 1.0 },
-        )
+        (f64::min(2.0 - msb, 1.0), if msb <= 1.0 { msb } else { 1.0 })
     } else {
         (1.0, stereo_width_raw)
     }
@@ -674,7 +671,10 @@ mod per_sample_tests {
         // clamp: everything above f_clamp = 3.1337388·sr/2π collapses to
         // the same coefficient
         let f_clamp = BASS_MONO_W_CLAMP * sr as f64 / (2.0 * std::f64::consts::PI);
-        assert_eq!(bass_mono_coeff(f_clamp, sr), bass_mono_coeff(f_clamp * 4.0, sr));
+        assert_eq!(
+            bass_mono_coeff(f_clamp, sr),
+            bass_mono_coeff(f_clamp * 4.0, sr)
+        );
     }
 
     /// The TPT SVF body: DC gain exactly 1 for arbitrary (g, k), and the
@@ -695,14 +695,25 @@ mod per_sample_tests {
         let mut svf = TptSvf::default();
         let n = 48000;
         for i in 0..n {
-            svf.lowpass((2.0 * std::f64::consts::PI * 1000.0 * i as f64 / sr as f64).sin(), g, std::f64::consts::SQRT_2);
+            svf.lowpass(
+                (2.0 * std::f64::consts::PI * 1000.0 * i as f64 / sr as f64).sin(),
+                g,
+                std::f64::consts::SQRT_2,
+            );
         }
         let mut peak = 0.0f64;
         for i in n..n + 480 {
-            let v = svf.lowpass((2.0 * std::f64::consts::PI * 1000.0 * i as f64 / sr as f64).sin(), g, std::f64::consts::SQRT_2);
+            let v = svf.lowpass(
+                (2.0 * std::f64::consts::PI * 1000.0 * i as f64 / sr as f64).sin(),
+                g,
+                std::f64::consts::SQRT_2,
+            );
             peak = peak.max(v.abs());
         }
-        assert!((peak - std::f64::consts::FRAC_1_SQRT_2).abs() < 0.01, "amp {peak}");
+        assert!(
+            (peak - std::f64::consts::FRAC_1_SQRT_2).abs() < 0.01,
+            "amp {peak}"
+        );
     }
 
     // -- DC blocker -------------------------------------------------------
@@ -780,7 +791,11 @@ mod per_sample_tests {
         assert_eq!(LegacyMode::from_channel_mode(2, false), LegacyMode::MonoR);
         assert_eq!(LegacyMode::from_channel_mode(3, false), LegacyMode::Swap);
         assert_eq!(LegacyMode::from_channel_mode(1, true), LegacyMode::Mute);
-        assert_eq!(LegacyMode::from_channel_mode(9, false), LegacyMode::Stereo, "default 1");
+        assert_eq!(
+            LegacyMode::from_channel_mode(9, false),
+            LegacyMode::Stereo,
+            "default 1"
+        );
     }
 
     /// Body shapes [D §3]: MonoL routes only inL to both outputs; Stereo
@@ -873,7 +888,11 @@ mod per_sample_tests {
         let mut r = EndpointRamp::default();
         r.set(8.0, 4);
         let vals: Vec<f64> = (0..4).map(|_| r.step()).collect();
-        assert_eq!(vals, vec![0.0, 2.0, 4.0, 6.0], "linear, delta = (f(end)−out)/m");
+        assert_eq!(
+            vals,
+            vec![0.0, 2.0, 4.0, 6.0],
+            "linear, delta = (f(end)−out)/m"
+        );
         assert!((r.out - 8.0).abs() < 1e-12, "lands on the endpoint");
         // snap
         r.set(-3.0, 0);
@@ -960,7 +979,10 @@ mod per_sample_tests {
         for _ in 0..60000 {
             last = e.process(0.2, 0.2);
         }
-        assert!((last.0 - 0.2).abs() < 1e-3 && (last.1 - 0.2).abs() < 1e-3, "{last:?}");
+        assert!(
+            (last.0 - 0.2).abs() < 1e-3 && (last.1 - 0.2).abs() < 1e-3,
+            "{last:?}"
+        );
 
         // audition: S leg zeroed — a stereo-different input still sums the
         // two channels to the same value as non-audition (both carry LP(M))
@@ -970,7 +992,7 @@ mod per_sample_tests {
         let mut e = UtilityEngine::new(p, 44100);
         let mut sum = 0.0f32;
         for n in 0..4800 {
-            let (l, r) = e.process((0.1 * n as f32 / 4800.0), (0.05 * n as f32 / 4800.0));
+            let (l, r) = e.process(0.1 * n as f32 / 4800.0, 0.05 * n as f32 / 4800.0);
             sum += l + r;
         }
         let mut p = DEFAULTS;
@@ -980,9 +1002,12 @@ mod per_sample_tests {
         e.bass_audition = true;
         let mut sum2 = 0.0f32;
         for n in 0..4800 {
-            let (l, r) = e.process((0.1 * n as f32 / 4800.0), (0.05 * n as f32 / 4800.0));
+            let (l, r) = e.process(0.1 * n as f32 / 4800.0, 0.05 * n as f32 / 4800.0);
             sum2 += l + r;
         }
-        assert!((sum - sum2).abs() / sum.abs() < 1e-3, "audition preserves L+R");
+        assert!(
+            (sum - sum2).abs() / sum.abs() < 1e-3,
+            "audition preserves L+R"
+        );
     }
 }

@@ -12,9 +12,8 @@ export async function load(u,c,n){if(u.endsWith('.css'))return {format:'module',
 const author=new URL('desktop/cradle/expressions-app/field-studies-journeys/src/',root);
 const [{kernelDocumentToJourney},{DocumentStore},{createRetainedNativeEditor},api]=await Promise.all([
  import(new URL('kernelDocumentBridge.ts',author)),import(new URL('store.ts',author)),import(new URL('hostEditor.ts',author)),import('../src/native/techneInstrumentOpen.ts')]);
-const path=process.env.OI_NATIVE_COMPOSITION_RECEIPT??'/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/evidence/native/material-verification-c79dab7c-8de3-4b69-87cb-ee11cce28c9f/rich-artifact-inspection-3a33a7f6-94e9-445d-b2ec-7e7f25950935.json';
-const receipt=JSON.parse(await readFile(path,'utf8')),document=receipt.after.document;
-assert.deepEqual(document,receipt.before.document);
+// The rich Glyph rack at native revision 8 (a file-proof composition, presentation included).
+const document=JSON.parse(await readFile(process.env.OI_NATIVE_COMPOSITION_RECEIPT??new URL('./fixtures/native-rich-glyph-rack-r8.receipt.json',import.meta.url),'utf8')).after.document;
 const blocked=()=>{throw Error('Source suite cannot dispatch native effects')};
 function actualScope(){
  const view=kernelDocumentToJourney(document),store=new DocumentStore(view.journey),scene=store.document.scenes.find(s=>s.id===view.startSceneId)??store.document.scenes[0];

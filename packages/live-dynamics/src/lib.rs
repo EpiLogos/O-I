@@ -21,26 +21,41 @@
 //! the Compressor GR composition (`compressor::GR_TABLE`) — and `reverb`,
 //! `echo`, `operator` and `wavetable` also gate against the render corpus.
 
+// Constants and loops here are transcribed from Live's binaries and evidence
+// XML: a pinned literal keeps the exact digits and grouping the derivation
+// document cites (CUT_SCALE is Live's f32 constant, not SQRT_2; the Erosion
+// mask is the 27-bit one the binary uses), and per-channel index loops mirror
+// the derived signal flow. Clippy's rewrites would obscure that citation.
+#![allow(
+    clippy::approx_constant,
+    clippy::excessive_precision,
+    clippy::unusual_byte_groupings,
+    clippy::needless_range_loop,
+    clippy::type_complexity
+)]
+// Tests pin derived constants with assertions over consts on purpose.
+#![cfg_attr(test, allow(clippy::assertions_on_constants))]
+
 pub mod audio;
-pub mod phaser_flanger;
-pub mod grain_delay;
-pub mod eq_three;
-pub mod drum_buss;
-pub mod chorus_ensemble;
-pub mod channel_eq;
-pub mod beat_repeat;
 pub mod auto_filter;
+pub mod beat_repeat;
+pub mod channel_eq;
+pub mod chorus_ensemble;
 pub mod compressor;
+pub mod drum_buss;
 pub mod echo;
 pub mod eq8;
+pub mod eq_three;
 pub mod erosion;
 pub mod filter_delay;
 pub mod gate;
 pub mod glue;
+pub mod grain_delay;
 pub mod limiter;
 pub mod operator;
 pub mod overdrive;
 pub mod params;
+pub mod phaser_flanger;
 pub mod redux;
 pub mod reverb;
 pub mod saturator;

@@ -270,8 +270,8 @@ impl GateModel {
         // Gain smoother: user Attack/Release in both modes [D §2 0x140/0x158].
         let (gain_atk, gain_rel) = (params.attack_ms, params.release_ms);
 
-        let lookahead_samples = (sample_rate as f64 * 0.001 * lookahead_ms(params.look_ahead))
-            as usize;
+        let lookahead_samples =
+            (sample_rate as f64 * 0.001 * lookahead_ms(params.look_ahead)) as usize;
         let cap = ring_capacity(sample_rate);
 
         GateModel {
@@ -317,10 +317,18 @@ impl GateModel {
         //    eL = |sideL|² → env1 = eL + c(env1 − eL), c = atk rising,
         //    rel falling; env2 likewise on the other channel.
         let e1 = f64::from(side_l) * f64::from(side_l);
-        let c1 = if e1 > self.env1 { self.env1_atk } else { self.env1_rel };
+        let c1 = if e1 > self.env1 {
+            self.env1_atk
+        } else {
+            self.env1_rel
+        };
         self.env1 = e1 + c1 * (self.env1 - e1);
         let e2 = f64::from(side_r) * f64::from(side_r);
-        let c2 = if e2 > self.env2 { self.env2_atk } else { self.env2_rel };
+        let c2 = if e2 > self.env2 {
+            self.env2_atk
+        } else {
+            self.env2_rel
+        };
         self.env2 = e2 + c2 * (self.env2 - e2);
 
         // 3. max-combined linear envelope [D §3]: sqrt(max(env1, env2)).
@@ -346,7 +354,11 @@ impl GateModel {
         // 5. gain smoother toward the target [D §3]: 1.0 open, floor
         //    closed; user Attack rising / user Release falling.
         let target = if gate > 0.0 { 1.0 } else { self.floor };
-        let cg = if target > self.smooth { self.gain_atk } else { self.gain_rel };
+        let cg = if target > self.smooth {
+            self.gain_atk
+        } else {
+            self.gain_rel
+        };
         self.smooth = target + cg * (self.smooth - target);
 
         // 6. delayed audio: write, advance, then read back la samples (so
@@ -510,7 +522,7 @@ mod tests {
         // gain smoother converges to 1 on constant drive and the output is
         // the pure look-ahead delay of the input.
         let mut m = GateModel::new(p, 48000);
-        let la = m.lookahead_samples as usize;
+        let la = m.lookahead_samples;
         let mut outs = Vec::new();
         for _ in 0..960 {
             let (ol, _) = m.process(0.8, 0.8); // env 0.8 > open 0.01 → open

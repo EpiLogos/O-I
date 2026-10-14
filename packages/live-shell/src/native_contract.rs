@@ -1,7 +1,9 @@
 //! Strict decoding of native owner contracts, shared by the development and installed hosts.
 use serde::Deserialize;
 
-pub(crate) fn current_world_output(output: std::process::Output) -> Result<serde_json::Value, String> {
+pub(crate) fn current_world_output(
+    output: std::process::Output,
+) -> Result<serde_json::Value, String> {
     if !output.status.success() {
         return Err(format!(
             "Native CurrentWorld failed ({}): {}",
@@ -22,7 +24,9 @@ pub(crate) fn current_world_output(output: std::process::Output) -> Result<serde
 /// Project effective product presence from the native owner's positions.
 /// This is not an installation backing or profile: those retain their own
 /// qualified receipts. Validate every position before admitting any product.
-pub(crate) fn current_world_product_ids(reading: &serde_json::Value) -> Result<Vec<String>, String> {
+pub(crate) fn current_world_product_ids(
+    reading: &serde_json::Value,
+) -> Result<Vec<String>, String> {
     if reading["schema"] != "oi.current-world/v2" {
         return Err("Native CurrentWorld returned an incompatible schema".into());
     }
@@ -32,23 +36,25 @@ pub(crate) fn current_world_product_ids(reading: &serde_json::Value) -> Result<V
     let mut seen = std::collections::BTreeSet::new();
     let mut products = Vec::new();
     for (index, position) in positions.iter().enumerate() {
-        let position = position.as_object().ok_or_else(|| {
-            format!("Native CurrentWorld positions[{index}] is not an object")
-        })?;
+        let position = position
+            .as_object()
+            .ok_or_else(|| format!("Native CurrentWorld positions[{index}] is not an object"))?;
         let present = position
             .get("present")
             .and_then(serde_json::Value::as_bool)
             .ok_or_else(|| {
-                format!("Native CurrentWorld positions[{index}].present is missing or is not a boolean")
+                format!(
+                    "Native CurrentWorld positions[{index}].present is missing or is not a boolean"
+                )
             })?;
         let id = position
             .get("product_id")
             .and_then(serde_json::Value::as_str)
             .filter(|id| {
                 !id.is_empty()
-                    && !id.chars().any(|character| {
-                        character.is_whitespace() || character.is_control()
-                    })
+                    && !id
+                        .chars()
+                        .any(|character| character.is_whitespace() || character.is_control())
             })
             .ok_or_else(|| {
                 format!("Native CurrentWorld positions[{index}].product_id is missing or malformed")
