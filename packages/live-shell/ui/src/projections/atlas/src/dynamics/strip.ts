@@ -4,6 +4,7 @@
 // band and no trace; companion traces are drawn only where their own series varies. A midpoint crossing that survives
 // the sustained rule carries one neutral tick on the 0.5 line. The cursor is a point on the drawn line.
 // No axes, no legends, no numbers (SPEC §14): the strip is read, not decoded.
+import { listen, watch } from '../ui/lifetime';
 import { hexToRgb, type RGB } from '../data/palette';
 import type { Palette } from '../types/field';
 import { el } from '../ui/dom';
@@ -54,18 +55,17 @@ const rgbOf = (hex: string | undefined, fallback: RGB): RGB => (hex ? hexToRgb(h
  */
 export function onPixelRatio(cb: () => void): () => void {
   if (typeof matchMedia === 'undefined' || typeof window === 'undefined') return () => {};
-  let mq: MediaQueryList | null = null;
+  let stop: () => void = () => {};
   const onChange = () => {
     cb();
     arm();
   };
   const arm = () => {
-    mq?.removeEventListener?.('change', onChange);
-    mq = matchMedia(`(resolution: ${window.devicePixelRatio || 1}dppx)`);
-    mq.addEventListener?.('change', onChange);
+    stop();
+    stop = listen(matchMedia(`(resolution: ${window.devicePixelRatio || 1}dppx)`), 'change', onChange);
   };
   arm();
-  return () => mq?.removeEventListener?.('change', onChange);
+  return () => stop();
 }
 
 export class PhaseStrip {
@@ -110,12 +110,12 @@ export class PhaseStrip {
     if (parent) parent.append(this.root);
     if (typeof ResizeObserver !== 'undefined') {
       this.ro = new ResizeObserver(() => this.resize());
-      this.ro.observe(this.root);
+      watch(this.ro, this.root);
     }
     this.stopDpr = onPixelRatio(() => this.resize());
     if (typeof matchMedia !== 'undefined') {
       this.media = matchMedia(REDUCED);
-      this.media.addEventListener?.('change', this.onMedia);
+      listen(this.media, 'change', this.onMedia);
     }
   }
 

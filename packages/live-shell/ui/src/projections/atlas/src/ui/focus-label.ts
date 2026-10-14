@@ -1,4 +1,5 @@
 // The minimal focus label: a name, one line, and (only in focus) two quiet links.
+import { later, nextFrame } from './lifetime';
 import { clear, el } from './dom';
 
 export interface LabelContent {
@@ -73,14 +74,14 @@ export class FocusLabel {
       this.root.classList.remove('on');
       this.root.inert = true;
       this.root.setAttribute('aria-hidden', 'true');
-      window.setTimeout(() => {
+      later(() => {
         if (gen !== this.gen) return;
         swap();
         this.root.classList.add('on');
       }, 240);
     } else {
       swap();
-      requestAnimationFrame(() => {
+      nextFrame(() => {
         if (gen === this.gen) this.root.classList.add('on');
       });
     }

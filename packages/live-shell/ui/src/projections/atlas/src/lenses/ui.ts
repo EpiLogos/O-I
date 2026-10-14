@@ -1,5 +1,6 @@
 // Shared pieces for the panel lenses: a quotation with its cite (provenance lives in the quote, MODES-RFC laws),
 // the privacy line every personal tool carries, and a small loader for the lens data files.
+import { nextFrame, watch } from '../ui/lifetime';
 import { scopeOf } from '../data/scope';
 import { el } from '../ui/dom';
 import { icon } from '../ui/icons';
@@ -97,8 +98,8 @@ export async function stillFigure(id: 'construction' | 'torus', palette: Palette
     const ctx = canvas.getContext('2d');
     if (ctx) figure.draw(ctx, canvas.width, canvas.height, figure.still, p, dpr);
   };
-  if (typeof ResizeObserver !== 'undefined') new ResizeObserver(paint).observe(fig);
-  requestAnimationFrame(paint);
+  if (typeof ResizeObserver !== 'undefined') watch(new ResizeObserver(paint), fig);
+  nextFrame(paint);
   return fig;
 }
 

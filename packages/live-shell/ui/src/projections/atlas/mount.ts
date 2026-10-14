@@ -34,6 +34,7 @@ import { setPublishedSource } from './src/data/published';
 import { loadRedbook } from './src/redbook/load';
 import type { Family, Occurrence } from './src/types/field';
 import type { SeamChange } from './src/data/occurrenceSeam';
+import { beginLifetime, nextFrame, type AtlasLifetime } from './src/ui/lifetime';
 
 export { registerFixtureProvider, FIXTURE_PROVIDER_ID } from './provider/fixtureProvider';
 export { setSkyProvider } from './provider/skyProvider';
@@ -81,7 +82,9 @@ export interface AtlasHandle {
   /** [T-ATLAS-SEAM] One occurrence of the drawn field replaced in place (`occ` null takes it away): the Earth's Sun follows
    * the shared window through this, and nothing else is redrawn. A refusal names its rule and leaves the field as it was. */
   replaceOccurrence(occ: Occurrence | null, id: string, family?: Family): SeamChange;
-  destroy(): void;
+  /** Release the atlas: the frames and the GPU resources of the globe, every listener, timer and observer it installed
+   * (the atlas lifetime), and its DOM. Idempotent. Nothing of the atlas runs after it. */
+  dispose(): void;
 }
 
 /** Mount the Earth projection (globe + graph + aion over one corpus bundle).
@@ -90,6 +93,9 @@ export interface AtlasHandle {
 export async function mountAtlas(options: AtlasMountOptions): Promise<AtlasHandle> {
   const { globe, app, loading } = options;
   paletteHost = globe.closest<HTMLElement>('.atlas-host');
+  // every listener, timer, frame and observer the mounted atlas installs is registered under this lifetime (ui/lifetime.ts)
+  const life: AtlasLifetime = beginLifetime();
+  let built: GlobeEngine | null = null;
   try {
     // [C2-a1] the provider registry composes the boot bundle (was four fixed
     // fetches). History/symbols ride the bundle (a5/a4); a URL-shaped provider
@@ -123,12 +129,13 @@ export async function mountAtlas(options: AtlasMountOptions): Promise<AtlasHandl
       },
       prefersReducedMotion(),
     );
+    built = engine;
     ctl = new Controller(model, engine, time, app, history, corpus, redbook ?? undefined);
     await engine.ready;
     ctl.boot();
     // T-ATLAS-TIME: the clock binds to the shared window only after the boot, so the boot writes nothing to it.
     const binding = options.clock ? options.clock(time, model.scale) : null;
-    requestAnimationFrame(() => loading?.classList.add('done'));
+    nextFrame(() => loading?.classList.add('done'));
     const handle: AtlasHandle = {
       engine,
       model,
@@ -141,23 +148,20 @@ export async function mountAtlas(options: AtlasMountOptions): Promise<AtlasHandl
         if (change.changed) ctl!.refreshOccurrences(change.removed);
         return change;
       },
-      destroy() {
+      dispose() {
         binding?.dispose();
-        // The found app had no unmount (a page, not a pane); the pane boundary
-        // needs one. The engine's renderer and the controller's document-level
-        // listeners are the two owners of teardown; full listener retirement is
-        // recorded below as port debt (see the lane's unverified list).
-        try {
-          engine.renderer.dispose();
-        } catch {
-          /* the globe may already be gone with its pane */
-        }
+        // the globe stops drawing and frees its GPU resources (GlobeEngine.dispose); then the lifetime releases every window,
+        // document and global listener, timer, frame and observer the atlas installed, and the atlas's marks on the body
+        engine.dispose();
+        life.dispose();
         globe.replaceChildren();
         app.replaceChildren();
       },
     };
     return handle;
   } catch (err) {
+    built?.dispose();
+    life.dispose();
     console.error(err);
     if (loading) {
       loading.classList.add('failed');

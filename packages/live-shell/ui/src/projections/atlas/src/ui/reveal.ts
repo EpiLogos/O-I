@@ -1,4 +1,5 @@
 // MANIFESTATION: the quiet contextual reveal for one occurrence.
+import { later } from './lifetime';
 import type { Model } from '../data/model';
 import { occurrenceImage } from '../data/model';
 import { symbolReading } from './symbol-reading';
@@ -91,7 +92,7 @@ export class Reveal {
     if (this.shown && this.currentId !== o.id) {
       // swap content with a quiet cross-fade rather than re-mounting the panel
       this.root.classList.add('swap');
-      window.setTimeout(() => {
+      later(() => {
         if (gen !== this.gen) return;
         render();
         this.root.classList.remove('swap');

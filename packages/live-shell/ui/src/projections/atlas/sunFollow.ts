@@ -5,6 +5,8 @@
 // wanted and no newer read has started since (request order): a late answer never draws a Sun for an instant the window has
 // left. Pure apart from the timers, which are injected so the logic is testable without a clock.
 
+import {later} from './src/ui/lifetime.ts';
+
 export interface SunFollowTimers {
   set(run: () => void, ms: number): unknown;
   clear(handle: unknown): void;
@@ -34,9 +36,11 @@ export interface SunFollower<I> {
 /** The stillness the Sun waits for before it is read. */
 export const SUN_FOLLOW_DELAY_MS = 300;
 
+// The default timers are the atlas lifetime's: a follower still waiting when the atlas is disposed is cancelled with it, and
+// a follower made after dispose waits for nothing (ui/lifetime.ts).
 const realTimers: SunFollowTimers = {
-  set: (run, ms) => setTimeout(run, ms),
-  clear: (handle) => clearTimeout(handle as ReturnType<typeof setTimeout>),
+  set: (run, ms) => later(run, ms),
+  clear: (handle) => (handle as () => void)(),
 };
 
 export function createSunFollower<I, S>(options: SunFollowOptions<I, S>): SunFollower<I> {

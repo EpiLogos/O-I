@@ -1,6 +1,7 @@
 // A compact graph settings space, away from the history scrubber. Filters first, then the layout's four forces in one
 // quiet disclosure (closed by default). The crumb, the mode pill and G already take the person out of the graph, so
 // the sheet does not repeat them.
+import { listen } from '../ui/lifetime';
 import { el } from '../ui/dom';
 import { DEFAULT_TIE_BASES, type TieBasis, type TieBasisDecl } from '../types/field';
 import { DEFAULT_FORCES, FORCE_ROWS, forceMultiple, type Forces } from './forces';
@@ -110,13 +111,13 @@ export class GraphTools {
     this.root = el('nav', { class: 'gv-tools', 'aria-label': 'Graph' }, [this.toggle, this.panel]);
     // Safari does not focus buttons on pointer click, so Escape must also work
     // when the settings were opened with a pointer and focus remains on the canvas.
-    document.addEventListener('keydown', (e) => {
+    listen<KeyboardEvent>(document, 'keydown', (e) => {
       if (e.key === 'Escape' && !this.panel.hidden) {
         e.preventDefault(); e.stopPropagation(); this.close(); this.toggle.focus();
       }
       if (e.key === '/' || ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k')) this.close();
     }, { capture: true });
-    document.addEventListener('pointerdown', (e) => {
+    listen<PointerEvent>(document, 'pointerdown', (e) => {
       if (!this.panel.hidden && !this.root.contains(e.target as Node)) this.close();
     });
     this.render();

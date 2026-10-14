@@ -3,6 +3,7 @@
 // and visions of that image first; then the question compensation asks: what does this dream add to the waking attitude?
 // Everything stays in this browser (src/practice/store.ts). Routes name an entry by a random id, never its content:
 // #/dreams, #/dreams/new, #/dreams/<id>, #/dreams/<id>/edit, #/dreams/<id>/<family>.
+import { later } from '../ui/lifetime';
 import { el } from '../ui/dom';
 import { icon } from '../ui/icons';
 import { startThread, WORLD } from '../state/store';
@@ -105,7 +106,7 @@ export function mount(ctx: LensContext): LensInstance {
       ]),
       privacyLine(),
     ]);
-    window.setTimeout(() => text.focus({ preventScroll: true }), 50);
+    later(() => text.focus({ preventScroll: true }), 50);
   };
 
   // ── a dream, read ────────────────────────────────────────────────────

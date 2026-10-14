@@ -7,6 +7,7 @@
 // verbatim; [C2-b8]/[C2-b14] treatment on the one vault-named comment and the
 // one vault-named footer string — the corpus's name travels in the index's
 // provider descriptor (types/corpus.ts), never in code.
+import { later, nextFrame, type Cancel } from './lifetime';
 import type { CorpusIndex } from '../types/corpus';
 import { neighbourPara, resolvePassage, type PassageRef } from '../data/corpus';
 import { clear, el } from './dom';
@@ -23,7 +24,7 @@ export class PassageSheet {
   private article: HTMLElement;
   private openState = false;
   private ref: PassageRef | null = null;
-  private hideTimer = 0;
+  private hideTimer: Cancel = () => {};
 
   constructor(parent: HTMLElement, private index: CorpusIndex | null) {
     this.article = el('article', { class: 'dp-article ps-article' });
@@ -53,9 +54,9 @@ export class PassageSheet {
     if (!ref) return;
     this.ref = ref;
     this.render();
-    window.clearTimeout(this.hideTimer);
+    this.hideTimer();
     this.root.hidden = false;
-    requestAnimationFrame(() => this.root.classList.add('on'));
+    nextFrame(() => this.root.classList.add('on'));
     this.openState = true;
   }
 
@@ -64,8 +65,8 @@ export class PassageSheet {
     this.openState = false;
     this.ref = null;
     this.root.classList.remove('on');
-    window.clearTimeout(this.hideTimer);
-    this.hideTimer = window.setTimeout(() => { if (!this.openState) this.root.hidden = true; }, 420);
+    this.hideTimer();
+    this.hideTimer = later(() => { if (!this.openState) this.root.hidden = true; }, 420);
   }
 
   private render() {

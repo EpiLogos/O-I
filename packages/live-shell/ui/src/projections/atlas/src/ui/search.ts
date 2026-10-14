@@ -1,5 +1,6 @@
 // ⌘K / "/" : a centred minimal field over a dimmed globe. Choosing a result
 // closes the field and moves the globe — it never opens a page.
+import { later, nextFrame } from './lifetime';
 import { search, type SearchIndex, type SearchResult } from '../data/search';
 import { clear, el, plate } from './dom';
 
@@ -44,7 +45,7 @@ export class SearchUI {
     this.isOpen = true;
     this.opener = opener ?? (document.activeElement as HTMLElement | null);
     this.root.hidden = false;
-    requestAnimationFrame(() => this.root.classList.add('open'));
+    nextFrame(() => this.root.classList.add('open'));
     this.input.value = '';
     this.refresh();
     this.input.focus();
@@ -55,7 +56,7 @@ export class SearchUI {
     if (!this.isOpen) return;
     this.isOpen = false;
     this.root.classList.remove('open');
-    window.setTimeout(() => { if (!this.isOpen) this.root.hidden = true; }, 260);
+    later(() => { if (!this.isOpen) this.root.hidden = true; }, 260);
     this.onToggle(false);
     this.opener?.focus?.();
   }

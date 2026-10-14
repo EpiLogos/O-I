@@ -1,5 +1,6 @@
 // The discreet time control: a hairline scrubber over the whole span, with a
 // non-linear scale, soft era names, and an "all time" resting state.
+import { nextFrame, watch } from './lifetime';
 import type { Model } from '../data/model';
 import { formatYear } from '../data/time';
 import type { TimeModel } from '../state/timeModel';
@@ -61,7 +62,7 @@ export class TimeControl {
     this.track.addEventListener('pointercancel', this.onUp);
     this.track.addEventListener('keydown', this.onKey);
     time.subscribe(() => this.schedule());
-    new ResizeObserver(() => { this.drawDensity(); this.layoutEras(); }).observe(this.track);
+    watch(new ResizeObserver(() => { this.drawDensity(); this.layoutEras(); }), this.track);
     // the names are measured, so lay them out again once the label face has loaded
     document.fonts.ready.then(() => this.layoutEras());
     this.render();
@@ -231,7 +232,7 @@ export class TimeControl {
   private schedule() {
     if (this.scheduled) return;
     this.scheduled = true;
-    requestAnimationFrame(() => {
+    nextFrame(() => {
       this.scheduled = false;
       this.render();
     });

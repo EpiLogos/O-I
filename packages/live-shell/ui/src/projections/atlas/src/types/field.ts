@@ -51,7 +51,8 @@ export type LocusType =
   | 'vision'
   | 'active-imagination'
   | 'clinical-case'
-  | 'historical-event';
+  | 'historical-event'
+  | 'sky';
 
 /** How trustworthy lat/lon is. "culture" = placed at the tradition's centroid. */
 export type GeoPrecision = 'place' | 'region' | 'culture' | 'none';

@@ -19,6 +19,7 @@ import type { SkyLayer } from '../sky/layer';
 import type { BodyKey } from '../types/sky';
 import { wrapLon } from '../data/geo';
 import { hostSize } from '../ui/hostSize';
+import { listen, later, nextFrame } from '../ui/lifetime';
 
 export interface ScreenPoint {
   x: number;
@@ -38,6 +39,25 @@ export interface EngineCallbacks {
 }
 
 export const FOV = 38;
+
+/** Free the GPU resources under an object: each geometry, each material, and every texture a material holds (its maps and
+ * its shader uniforms). Resources shared between objects are freed more than once, which three.js allows. */
+function releaseObjectTree(root: THREE.Object3D): void {
+  const release = (material: THREE.Material) => {
+    for (const value of Object.values(material)) if (value instanceof THREE.Texture) value.dispose();
+    for (const uniform of Object.values((material as THREE.ShaderMaterial).uniforms ?? {})) {
+      if (uniform?.value instanceof THREE.Texture) uniform.value.dispose();
+    }
+    material.dispose();
+  };
+  root.traverse((object) => {
+    const mesh = object as THREE.Mesh;
+    mesh.geometry?.dispose();
+    const material = mesh.material as THREE.Material | THREE.Material[] | undefined;
+    if (Array.isArray(material)) material.forEach(release);
+    else if (material) release(material);
+  });
+}
 
 export class GlobeEngine {
   readonly renderer: THREE.WebGLRenderer;
@@ -77,7 +97,8 @@ export class GlobeEngine {
   private pointer = { x: 0, y: 0, inside: false, dirty: false };
   private hoverIdx = -1;
   private tmpV = new THREE.Vector3();
-  private raf = 0;
+  /** cancels the frame the loop has scheduled next (ui/lifetime.ts: released with the atlas) */
+  private cancelFrame: () => void = () => {};
   baseKind: '2k' | '4k' | '8k' = '2k';
   baseUploadMs = 0;
   private running = true;
@@ -111,12 +132,13 @@ export class GlobeEngine {
     this.markers = { sel: new Marker(this.shared, 26), hover: new Marker(this.shared, 17), head: new Marker(this.shared, 30) };
 
     this.ready = this.init();
-    window.addEventListener('resize', this.onResize);
+    listen(window, 'resize', this.onResize);
     this.onResize();
   }
 
   private async init() {
     const lo = await loadBaseLo(this.renderer);
+    if (this.released) return; // disposed while the base loaded: nothing of the globe is built
     this.presences = new Presences(this.model, this.shared, this.renderer);
     this.earth = new Earth(this.shared, lo, this.presences.densityTarget.texture);
     this.tiles = new TileLayer(this.renderer, this.earth.u, this.reduced);
@@ -125,7 +147,7 @@ export class GlobeEngine {
     this.last = performance.now();
     const loop = () => {
       if (!this.running) return;
-      this.raf = requestAnimationFrame(loop);
+      this.cancelFrame = nextFrame(loop);
       this.frame();
     };
     loop();
@@ -138,10 +160,11 @@ export class GlobeEngine {
     this.tiles.minEmit = which === '8k' ? 6 : 5;
     if (!which) return;
     try {
-      await new Promise((r) => setTimeout(r, 700));
+      await new Promise<void>((r) => { later(() => r(), 700); });
       const hi = await loadBaseHi(this.renderer, which);
       // wait for a calm frame: the upload of a big texture is one long GPU call
-      await new Promise((r) => requestAnimationFrame(() => r(null)));
+      await new Promise<void>((r) => { nextFrame(() => r()); });
+      if (this.released) return;
       const t0 = performance.now();
       this.renderer.initTexture(hi);
       this.baseUploadMs = performance.now() - t0;
@@ -161,11 +184,29 @@ export class GlobeEngine {
     if (!paused) this.last = performance.now();
   }
 
+  /**
+   * Release the globe: the frame loop and its pending base upload stop, and the GPU resources the scene holds are freed
+   * (geometries, materials with their textures, the presence density target, the tiles), then the renderer's context is
+   * lost, so a later mount takes a fresh one. Window listeners are released with the atlas lifetime (ui/lifetime.ts).
+   */
   dispose() {
+    if (this.released) return;
+    this.released = true;
     this.running = false;
-    cancelAnimationFrame(this.raf);
-    window.removeEventListener('resize', this.onResize);
+    this.cancelFrame();
+    this.tiles?.release();
+    releaseObjectTree(this.scene);
+    this.presences?.densityTarget.dispose();
+    try {
+      this.renderer.dispose();
+      this.renderer.forceContextLoss();
+    } catch {
+      /* the context may already be gone with its pane */
+    }
+    this.renderer.domElement.remove();
   }
+  /** set once dispose has run: no frame, upload or listener is started again */
+  released = false;
 
   onFrame(cb: (dt: number, t: number) => void) {
     this.frameCbs.push(cb);
@@ -350,7 +391,7 @@ export class GlobeEngine {
    */
   advance(seconds: number, step = 1 / 30) {
     this.running = false;
-    cancelAnimationFrame(this.raf);
+    this.cancelFrame();
     const n = Math.max(1, Math.ceil(seconds / step));
     for (let i = 0; i < n; i++) this.frame(step, i === n - 1);
   }
