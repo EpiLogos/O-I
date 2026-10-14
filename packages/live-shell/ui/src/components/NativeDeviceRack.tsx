@@ -2,15 +2,19 @@ import {Fragment, useEffect, useId, useRef, useState, type DragEvent, type Keybo
 import {sameEditorBasis, type NativeEditorBasis, type NativeEditorChange, type NativeEditorReading, type NativeEditorReply, type NativeEditorRequest} from '../../../../expressions-boundary/src/editor'
 import {forceStripDevice, selectedEntity} from './nativeDeviceStripModel'
 import {ForceDeviceCard} from './NativeDeviceStrip'
-import {NativeFieldHandle} from './NativeFieldHandle'
 import {grabOffset, handlePosition, keyboardValue, resetValue, valueFromPoint, valueText, type HandleBinding} from './nativeFieldHandleModel'
 import {numberProblem, parseNumberText, soundNumberSpec, steppedValue, type SoundNumberSpec} from './nativeEntityFace.sound'
 import {short} from './nativeFieldFaceModel'
 import {DEVICE_MIME, afterIdFor, deviceInsertIndex, parseDeviceDrag} from './nativeDrag'
 import {activatorChanges, addableDevices, deviceAddChange, deviceNote, deviceOrderChange, deviceRemoveChange, entitySoundControlChange, rackWidgets, reorderWidgetIds,
-  LOCKED_OBJECT_NOTE, entityParameterChange, type RackControl, type RackDevice, type RackWidget} from './nativeDeviceRackModel'
+  LOCKED_OBJECT_NOTE, entityParameterChange, type RackDevice, type RackWidget} from './nativeDeviceRackModel'
 import {nativeDeviceSvgPoint, type Apply, type CaptureCurrent} from './nativeDeviceCustody'
-import {modulationView, type Modulation} from './nativeModulation'
+import type {Modulation} from './nativeModulation'
+import {selectDevice} from '../frame/devices/deviceDoor'
+import {Icon} from '../inhabitants/sdk/Icon'
+import {ExpressionsRackDevice, openFieldDeviceFull} from './devices/ExpressionsDeviceView'
+import {expressionsDeviceId} from './devices/expressionsDevice'
+import {ModulationLine} from './devices/ModulationLine'
 import './NativeDeviceRack.css'
 
 export interface NativeDeviceRackProps {
@@ -97,7 +101,7 @@ export function NativeDeviceRack({reading, request, onOpen}: NativeDeviceRackPro
           {gap === index && <li className="native-rack-gap" aria-hidden="true"/>}
           <li>
           <RackWidgetView widget={widget} index={index} reading={reading} locked={locked} apply={apply} captureCurrent={captureCurrent}
-            send={changes => void send(changes)} onOpen={onOpen} move={move} dragging={dragging}/>
+            send={changes => void send(changes)} onOpen={onOpen} fault={setError} move={move} dragging={dragging}/>
           </li>
         </Fragment>)}{gap === widgets.length && <li className="native-rack-gap" aria-hidden="true"/>}</ol>
         : <>{gap !== null && <span className="native-rack-gap" aria-hidden="true"/>}<p className="native-rack-empty">{reading ? EMPTY : 'Open a native Expression to see its devices.'}</p></>}
@@ -107,9 +111,10 @@ export function NativeDeviceRack({reading, request, onOpen}: NativeDeviceRackPro
   </div>
 }
 
-function RackWidgetView({widget, index, reading, locked, apply, captureCurrent, send, onOpen, move, dragging}: {widget: RackWidget; index: number;
+function RackWidgetView({widget, index, reading, locked, apply, captureCurrent, send, onOpen, fault, move, dragging}: {widget: RackWidget; index: number;
   reading: NativeEditorReading; locked: boolean; apply: Apply; captureCurrent: CaptureCurrent; send: Send;
-  onOpen: (device: {scope: 'entity' | 'field'; family: string}) => void; move: (deviceId: string, to: number) => void; dragging: MutableRefObject<string | null>}) {
+  onOpen: (device: {scope: 'entity' | 'field'; family: string}) => void; fault: (message: string) => void;
+  move: (deviceId: string, to: number) => void; dragging: MutableRefObject<string | null>}) {
   const [folded, setFolded] = useState(false)
   if (widget.unavailable) return <div className="native-rack-card is-unavailable" role="group" aria-label={`${widget.family} unavailable`}>
     <header className="native-rack-head">
@@ -139,7 +144,10 @@ function RackWidgetView({widget, index, reading, locked, apply, captureCurrent, 
         onClick={() => setFolded(!folded)}><span aria-hidden="true">{folded ? '▸' : '▾'}</span></button>
       {widget.scope === 'scene'
         ? <span className="native-rack-title" title={widget.name}>{widget.name}</span>
-        : <button type="button" className="native-rack-title" title="Open settings" onClick={() => onOpen({scope: widget.scope === 'entity' ? 'entity' : 'field', family: widget.family})}>{widget.name}</button>}
+        : <button type="button" className="native-rack-title" title="Open settings"
+          onClick={() => {if (widget.scope === 'field') selectDevice(expressionsDeviceId(widget.family)); onOpen({scope: widget.scope === 'entity' ? 'entity' : 'field', family: widget.family})}}>{widget.name}</button>}
+      {widget.scope === 'field' && <button type="button" className="native-rack-pane" aria-label={`Open ${widget.name} full size in a pane`} title="Open full size in a pane"
+        onClick={() => {const problem = openFieldDeviceFull(widget.family, widget.name); if (problem) fault(problem)}}><Icon name="pane" size={12}/></button>}
       {/* Dragging is pointer-only; Alt+Left and Alt+Right are the keyboard reorder. Both commit one device-order change. */}
       <span role="button" tabIndex={0} draggable className="native-rack-grip" aria-label={`Reorder ${widget.name}: drag, or Alt+Left or Alt+Right`} title="Drag to reorder"
         onDragStart={event => {dragging.current = widget.id; event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData('text/plain', widget.id)}}
@@ -149,7 +157,10 @@ function RackWidgetView({widget, index, reading, locked, apply, captureCurrent, 
       <button type="button" className="native-rack-remove" aria-label={`Remove ${widget.name} from the rack`} title="Removes the widget only; parameters keep their values" disabled={locked}
         onClick={() => send([deviceRemoveChange(widget.id)])}><span aria-hidden="true">✕</span></button>
     </header>
-    {!folded && <div className="native-rack-body">
+    {widget.scope === 'field' && <div className="native-rack-body">
+      <ExpressionsRackDevice family={widget.family} summary={widget.summary} host={{reading, apply, captureCurrent, locked: off}}/>
+    </div>}
+    {widget.scope !== 'field' && !folded && <div className="native-rack-body">
       <p className="native-rack-summary" title={widget.summary}>{widget.summary}</p>
       {widget.scope === 'entity' && (widget.target
         ? <p className="native-rack-target" title={`Acts on the selected object: ${widget.target}`}>Target · {widget.target}</p>
@@ -157,9 +168,8 @@ function RackWidgetView({widget, index, reading, locked, apply, captureCurrent, 
       {widget.scope === 'scene' && widget.target && <p className="native-rack-target">Scene · {widget.target}</p>}
       {widget.locked && <p className="native-rack-target is-empty">{LOCKED_OBJECT_NOTE}</p>}
       {blocked && !widget.locked && <p className="native-rack-target is-empty">{blocked}</p>}
-      {widget.compact.length > 0 && <div className="native-rack-controls">{widget.compact.map(control => widget.scope === 'entity'
-        ? <EntityScrub key={control.path} binding={control} value={control.value} modulation={control.modulation} disabled={off} submit={value => apply([entityParameterChange(control.path, value)])}/>
-        : <CompactControl key={control.path} control={control} family={widget.family} reading={reading} disabled={off} apply={apply} captureCurrent={captureCurrent}/>)}</div>}
+      {widget.compact.length > 0 && <div className="native-rack-controls">{widget.compact.map(control =>
+        <EntityScrub key={control.path} binding={control} value={control.value} modulation={control.modulation} disabled={off} submit={value => apply([entityParameterChange(control.path, value)])}/>)}</div>}
       {widget.entityCompact.length > 0 && <div className="native-rack-controls">{widget.entityCompact.map(row => {
         const disabledRow = off || row.blocked !== null
         if (row.field === 'waveform') return <EntitySelect key="waveform" label="Waveform" value={row.value} options={row.options} disabled={disabledRow} submit={soundSubmit('waveform')}/>
@@ -171,35 +181,6 @@ function RackWidgetView({widget, index, reading, locked, apply, captureCurrent, 
           disabled={off || action.disabled !== null} onClick={() => send(action.changes)}>{action.label}</button>)}</div>}
     </div>}
   </div>
-}
-
-/** One compact control: label above, a 96x18 bar hosting the real NativeFieldHandle, and the live value beside it. */
-function CompactControl({control, family, reading, disabled, apply, captureCurrent}: {control: RackControl; family: string; reading: NativeEditorReading;
-  disabled: boolean; apply: Apply; captureCurrent: CaptureCurrent}) {
-  const [draft, setDraft] = useState<number | null>(null)
-  const shown = draft ?? control.value, end = handlePosition(control, BAR, shown)
-  return <div className="native-rack-control">
-    <span className="native-rack-label">{control.label}</span>
-    <div className="native-rack-control-row">
-      <svg className="native-rack-bar" width="96" height="18" viewBox="0 0 96 18">
-        <line className="native-rack-track" x1={BAR.origin.x} y1="9" x2={BAR.origin.x + BAR.length} y2="9" />
-        <line className="native-rack-fill" x1={BAR.origin.x} y1="9" x2={end.x} y2={end.y} />
-        <NativeFieldHandle reading={reading} path={control.path} family={family} geometry={BAR} disabled={disabled} apply={apply}
-          captureCurrent={captureCurrent} onDraft={(_path, value) => setDraft(value)} shape="bar" label={control.label} />
-      </svg>
-      <output className="native-rack-value">{short(shown)}{control.unit ? ` ${control.unit}` : ''}</output>
-    </div>
-    <ModulationLine modulation={control.modulation}/>
-  </div>
-}
-
-/** The modulation disclosure of one compact control: its source names, base and effective, as the model's view gives them. Nothing renders when nothing modulates it. */
-function ModulationLine({modulation}: {modulation?: Modulation | null}) {
-  const view = modulationView(modulation)
-  if (!view) return null
-  return <p className="native-rack-modulation" role="group" aria-label={view.accessible} title={view.accessible}>
-    <span className="native-rack-mark" aria-hidden="true">A </span>{view.named ? 'Driven by ' : ''}{view.driven} · Base {view.base} · Effective {view.effective}
-  </p>
 }
 
 /** A committed entity value the owner has not acknowledged yet. The control holds it until the reply: an ok clears it, a refusal keeps it for Retry or Discard.

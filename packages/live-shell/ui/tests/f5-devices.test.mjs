@@ -81,3 +81,14 @@ test('the torus is a device of the runtime: its four macros are the owner\'s det
   assert.ok(live.rows.every(r => r.writePath === 'stage:instrument'), 'a following instrument takes edits through the stage channel')
   assert.equal(live.values.lens, 'L1′', 'the owner\'s label, not its code')
 })
+
+test('a control that drafts and commits in one handler (a toggle, a typed value) sends what it just drafted', async () => {
+  const {useFaceDrafts} = await import('../src/inhabitants/sdk/controls.tsx')
+  const sent = []
+  let held
+  const Probe = () => { held = useFaceDrafts(async changes => { sent.push(changes) }); return null }
+  renderToStaticMarkup(React.createElement(Probe))
+  held.setDraft('enabled', true)
+  await held.commit()
+  assert.deepEqual(sent, [[{key: 'enabled', value: true}]], 'the commit in the same handler sees the draft')
+})
