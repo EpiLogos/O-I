@@ -417,7 +417,10 @@ export function ExpressionsPanel() {
   // The frame alone: its faults, the stage tools and Reopen ride the published chrome to the Studio plate and the pane's slot
   // (panes are the centre in every mode, F2 — this residence is never shown on its own).
   return <div className="expressions-inhabitant" title={status}>
-    <div ref={container} className="expressions-application" data-i="Expressions|The field. Orbit is a pointer drag on the stage itself; its tools are the Studio's, in the detail row." />
+    {/* With no native work open and no instrument to draw, the frame paints an opaque empty body over its pane; it stands
+        hidden then, so the pane's own waiting line shows (seen on screen, 15 Oct). Live's torus keeps it shown. */}
+    <div ref={container} className="expressions-application" data-empty={stage && !stage.nativeScene && !stage.instrument ? 'true' : undefined}
+      data-i="Expressions|The field. Orbit is a pointer drag on the stage itself; its tools are the Studio's, in the detail row." />
   </div>
 }
 
