@@ -10204,8 +10204,13 @@
       "status": "pending",
       "progress": {
         "implemented": {
-          "state": "pending",
-          "evidence": []
+          "state": "yes",
+          "evidence": [
+            "commit 850844a38163c3a052a1321be053d2dfe4509bb8 \u2014 lane-5 T10 + T11: the journey crosses into a beat's Scene and returns to the exact beat, through the session's one history",
+            "source packages/expressions-boundary/src/timeWindow.ts:302-312 \u2014 the owner's cross operation calls crossToExpression, sets the crossed selection and records the scene hop and the cut crossing",
+            "source packages/live-shell/ui/src/native/expressionOwners.ts:18 \u2014 the production host mounts the time-window owner",
+            "scripted desktop/cradle/tests/journey-crossing-route.test.mjs, journey-crossing-owner.test.mjs, lane5-journey-chain.test.mjs \u2014 the crossing carries identity byte-exact; occupied cut and non-beat scene refused"
+          ]
         },
         "exercised": {
           "state": "pending",
@@ -10224,7 +10229,7 @@
           "evidence": []
         }
       },
-      "candidate_revision": null,
+      "candidate_revision": "525474ee162f2b0e0dd38191cb4478d74da37d50",
       "dependencies": [
         "boundary:P1",
         "editing:SC-1",
@@ -10244,7 +10249,7 @@
       ],
       "notes": [
         "No new-shell native exercise or craft acceptance executed for this target at initialization. Earlier model/unit checks are baselines and do not close it.",
-"Implemented axis pending: commit 850844a38 names T10 and the cross behaviour landed in app.ts and journeyInstrument.tsx, but the named seam crossing.ts (crossToExpression) has no consumer outside tests (tests/journey-crossing-owner.test.mjs, tests/techne-m0m5.test.mjs). The Landing seam's app setScene and host-channel wiring is not found at 525474ee1."
+"Implemented (corrected 14 Oct 2026): the crossing law is consumed by the Expressions time-window owner (packages/expressions-boundary/src/timeWindow.ts), which the earlier search of the frame and cradle missed."
       ]
     },
     {
@@ -10273,8 +10278,13 @@
       "status": "pending",
       "progress": {
         "implemented": {
-          "state": "pending",
-          "evidence": []
+          "state": "yes",
+          "evidence": [
+            "commit 850844a38163c3a052a1321be053d2dfe4509bb8 \u2014 lane-5 T10 + T11: the journey crosses into a beat's Scene and returns to the exact beat, through the session's one history",
+            "source packages/expressions-boundary/src/timeWindow.ts:314-325 \u2014 the owner's return operation restores the beat by returnPosition (scene_ref equality) or names the lost ref via lostCrossingScene",
+            "source desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:2383 \u2014 activateInstrument('journey') returns through returnFromCrossing / writeJourneyReturn; a lost beat is named by journeyReturnNotice",
+            "scripted desktop/cradle/tests/lane5-journey-chain.test.mjs \u2014 reorder while crossed returns by ref; a deleted beat is an honest miss"
+          ]
         },
         "exercised": {
           "state": "pending",
@@ -10293,7 +10303,7 @@
           "evidence": []
         }
       },
-      "candidate_revision": null,
+      "candidate_revision": "525474ee162f2b0e0dd38191cb4478d74da37d50",
       "dependencies": [
         "boundary:P1",
         "editing:SC-1",
@@ -10320,7 +10330,7 @@
       ],
       "notes": [
         "No new-shell native exercise or craft acceptance executed for this target at initialization. Earlier model/unit checks are baselines and do not close it.",
-"Implemented axis pending: commits 850844a38 and f25621584 name T11, but the named seam crossing.ts returnPosition has no consumer outside tests; the app return path (activateInstrument, app.ts:1001-1023) does not call it at 525474ee1."
+"Implemented (corrected 14 Oct 2026): the crossing law is consumed by the Expressions time-window owner (packages/expressions-boundary/src/timeWindow.ts), which the earlier search of the frame and cradle missed."
       ]
     },
     {
