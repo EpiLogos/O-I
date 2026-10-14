@@ -99,7 +99,18 @@ objections verbatim and the full validation (`BRIEF-BUILDER.md`); the lead conve
 
 | Ticket | Who | Zone | Since |
 |---|---|---|---|
+| Central's document forms run natively: the Flow and the Day die served through `oi-material://` with the host's seam as an external script (the srcdoc frame inherits the window's script-src hash and runs nothing) | Opus builder | `desktop/cradle/src-tauri/src/material_protocol.rs`, a pure kernel module, `desktop/cradle/src/document/frame.ts` (one seam source), the two document faces | 15 Oct |
 | Native screen pass against the mockup renders; N1; mounting N2's subject door | lead | the frame, `App.tsx`, `native/Workbench.tsx`, `shell/modeFrames.ts`, the book | 14 Oct |
+
+The native pass at `ae9301a1b` (computer-use, 15 Oct): every mode at the mockup's anatomy — Central's paper documents,
+plates and aperture; Factory's grid, thread and one-line clip side; Live's rail, Keyboard and M1 torus plates with real
+readings; Expressions' Studio; Technē's rack. Found and fixed: the traffic lights covered the transport's first controls
+at the 46px bar, and the window had no drag region; the empty hosted Expressions frame painted over the pane's waiting
+line; Expressions' aperture named the frame's own scene as a work. Found and given a lane: the Flow's form never starts
+natively (lane I above). Seen, not ours to change: the owner's saved trees hold an Automations surface in Live (its own icon
+tabs and Refresh inside the pane) and an Expressions pane in Technē; Central's Day waits on the owner ensuring the
+current Day. Also landed: Central's Clip view reads Highlights, Notes and Packet from the document's own payload
+(`0fcd51006`, lane H).
 
 Then, to the end of the evening: N1 (`c1b845e89`, lane E: the works home is `Control/user/flows` — the one Control path
 Central's ordinary policy writes — and `list` names its closed works; Open and New save into it; the frame's readers keep
