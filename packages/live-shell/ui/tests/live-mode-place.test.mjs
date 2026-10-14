@@ -106,13 +106,19 @@ test('Live · Arrangement with no set: overview ABOVE the ruler, framed lanes, h
 
 const baseState = (overrides = {}) => ({set: null, path: null, error: null, loading: false, open: () => {}, ...overrides})
 
-test('Live\'s status line names the presented presentation and the live work', () => {
+test('Live\'s identity is the title line\'s: the open set by name, and the status bar reads the Info view and the set\'s counts', async () => {
+  // Ticket C: the mockup draws the work's identity in the title line ("Mercurius sketch — Live set"), and the status bar's left
+  // is the Info view. The identity line that stood in the status bar moved to the title line (components/TransportBar.tsx).
+  // (The line's markup is pinned in transport-readings-modes.test.mjs; its words are these.)
+  const {titleLine} = await import('../src/shell/transports/transportReadings.ts')
+  assert.deepEqual(titleLine({line: 'set', setName: 'Mercurius'}), {lead: 'Mercurius', absent: null, context: 'Live set'})
+  assert.deepEqual(titleLine({line: 'set', setName: ''}), {lead: null, absent: 'No set open', context: 'Live set'}, 'no set: the line says so')
   const none = htmlOf(React.createElement(StatusBar, {state: baseState(), documentError: null, viewport: [1920, 1200], audio: true, mode: 'live', reading: null, detailMode: 'clip', changeDetailMode: () => {}, presentedView: 'session'}))
-  assert.match(none, /<b>Session<\/b> — clips and scenes · no set open/, 'no set: the line says so and keeps the affordance')
+  assert.match(none, /data-region="info-view"[^>]*><b>Info<\/b>Hover anything to read what it does\.</)
   const withSet = htmlOf(React.createElement(StatusBar, {state: baseState({set: {path: '/Users/x/Mercurius.als', tracks: [], scene_count: 0, arrangement_clips: 0, tempo_bpm: 120}, path: '/Users/x/Mercurius.als'}), documentError: null, viewport: [1920, 1200], audio: true, mode: 'live', reading: null, detailMode: 'clip', changeDetailMode: () => {}, presentedView: 'session'}))
-  assert.match(withSet, /<b>Session<\/b> — clips and scenes · \/Users\/x\/Mercurius\.als/, 'the set IS the named live work')
-  const arranged = htmlOf(React.createElement(StatusBar, {state: baseState(), documentError: null, viewport: [1920, 1200], audio: true, mode: 'live', reading: null, detailMode: 'clip', changeDetailMode: () => {}, presentedView: 'arrangement'}))
-  assert.match(arranged, /<b>Arrangement<\/b> — the song over time · no set open/, 'the identity follows the presented presentation')
+  assert.match(withSet, /title="\/Users\/x\/Mercurius\.als">0 tracks · 0 scenes · 0 clips</, 'the set\'s counts carry its path')
+  const failed = htmlOf(React.createElement(StatusBar, {state: baseState({error: 'no such set'}), documentError: null, viewport: [1920, 1200], audio: true, mode: 'live', reading: null, detailMode: 'clip', changeDetailMode: () => {}, presentedView: 'arrangement'}))
+  assert.match(failed, /class="statusbar-error"[^>]*>Open failed: no such set</, 'an open failure is still read in the bar')
 })
 
 // ————————————————————————————————————————————————————————————————————————

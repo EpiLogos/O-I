@@ -13,6 +13,7 @@ import {configureSettingsHost} from '../settings/host'
 import {unavailableSettingsAdapter} from '../settings/adapter'
 import {useWorkspace} from '../shell/workspace'
 import {ShellConfigContext} from '../shell/useSet'
+import {publishFoundationPending} from './foundationDoor'
 
 function qualifiedWorld(reading: ShellConfig | null): reading is ShellConfig & {world_scope: NonNullable<ShellConfig['world_scope']> & {workcell_ref: string}} {
   const world = reading?.world_scope
@@ -128,6 +129,9 @@ export function NativeFoundation({children}: {children: ReactNode}) {
     if (!live.current || !lifetime.isCurrent()) return
     invalidateSet()
   }, [qualify])
+  // The first read's pending state reaches the status bar's Info line (native/foundationDoor.ts), never a note drawn over it.
+  useEffect(() => { publishFoundationPending(pending) }, [pending])
+  useEffect(() => () => publishFoundationPending(false), [])
   const failure = fault ?? replayFault
   const error = failure && <div className="native-foundation-fault" role="alert">{failure} {fault && <button type="button" disabled={pending} onClick={() => {
     retire(); currentWorkspace.current.attachTransport({kind: 'unavailable', reason: 'Reading the native World…'})
@@ -137,7 +141,7 @@ export function NativeFoundation({children}: {children: ReactNode}) {
   return <ShellConfigContext.Provider value={config}><KernelProvider transport={transport} operationEpoch={operationEpoch} onReceipts={receive}
     onAccessRetired={retire} onResync={resync} onSubscriptionError={showReplayFailure} onSubscriptionHealthy={replayHealthy}>
     <VisualsProvider><ExpressionStageProvider><ExpressionProvider>
-      {error}{pending && <div className="native-foundation-pending" role="status">Reading the native World…</div>}{config?.onboarding && <GroundChooser/>}{children}
+      {error}{config?.onboarding && <GroundChooser/>}{children}
     </ExpressionProvider></ExpressionStageProvider></VisualsProvider>
   </KernelProvider></ShellConfigContext.Provider>
 }

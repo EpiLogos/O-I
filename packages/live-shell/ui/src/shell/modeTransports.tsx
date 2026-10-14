@@ -4,7 +4,9 @@
 // enables a slot only with a write path, and a light only with a reading. The working controls move here from the old
 // bars: Live's mode in force (root, scale) and its key and MIDI maps; Technē's Back to Now, occasion steps and instrument
 // arm; Factory's run, stop, voice, steer, effort, heartbeat, quantize and write arm (shell/transports); Expressions' scene
-// play, stop, take, arm, loop, time scale and scrub; every mode's real readouts.
+// play, stop, take, arm, loop, time scale and scrub; Central's Day, its die and bounds, the packet and the ground's carrier
+// (shell/transports/useCentralTransport.tsx); every mode's real readouts. The title line above the bar is registered here too
+// (MODE_TITLE): THE selection with its world and day, or — in Live — the open set.
 import {useEffect} from 'react'
 import type {SurfMode, TransportSlotId} from './modeGrammar'
 import {publishTransportKeys} from '../frame/keys/keyDoors'
@@ -22,6 +24,9 @@ import {MidiMapHost, MidiMapToggles} from '../live/midiMap/midiMapControls'
 import type {NativeCompositionViewSource} from './compositionViews'
 import {useFactoryTransport} from './transports/useFactoryTransport'
 import {useExpressionsTransport} from './transports/useExpressionsTransport'
+import {useCentralTransport} from './transports/useCentralTransport'
+import {civilDayLabel} from './transports/transportReadings'
+import {civilDateOfDayRef} from '../central/centralVertical'
 
 /** What the bindings read from the frame: the mode's real readouts, the World's time spine, the focused instrument, Live's set. */
 export interface TransportReading {
@@ -43,7 +48,13 @@ export function slotWords(mode: SurfMode, id: TransportSlotId): SlotWords {
   const waiting = binding
     ? `${meaning.label} — ${meaning.fn}. Bound by the ${binding.family} family to ${binding.face}/${binding.key} (owner op: ${row?.writePath ?? row?.disclosure ?? 'its owner operation'}); the control waits for its owner's wiring.`
     : `${meaning.label} — ${meaning.fn}. Not wired here yet: ${MODE_GRAMMAR[mode].waitingNote}`
-  return {label: meaning.label, fn: meaning.fn, dataI: slotDataI(meaning), waiting}
+  return {label: meaning.label, fn: meaning.fn, dataI: slotDataI(meaning), waiting, ...(meaning.face ? {face: meaning.face} : {})}
+}
+
+/** What the title line above the bar reads in each mode (the mockup's `#title`): `set` — the open Live set's name; `selection`
+ * — THE selection, the world and the civil day (components/TransportBar.tsx draws it; transports/transportReadings.ts words it). */
+export const MODE_TITLE: Readonly<Record<SurfMode, 'set' | 'selection'>> = {
+  live: 'set', base: 'selection', factory: 'selection', expressions: 'selection', techne: 'selection',
 }
 
 /** The owner readouts a mode's frame publishes (Now, the carrier, …), as slot readouts. */
@@ -80,7 +91,11 @@ const useLiveTransport: UseModeTransport = ({tempoBpm}) => {
 
 const useTechneTransport: UseModeTransport = ({readouts, timeSpine, focusedInstrument}) => {
   useSpineRevision(timeSpine)
-  const bindings: TransportBindings = {...readoutsOf(readouts), arm: {control: instrumentArmControl(slotMeaning('techne', 'arm'), focusedInstrument)}}
+  // The clock that drives the panes (the mockup's `14:37 · 08 Oct`): the civil Now the World cut reads, with the civil day the
+  // spine's own civil reading stands in (timeline/timeSpine.ts `now().dayRef`).
+  const now = readouts?.position, day = civilDayLabel(civilDateOfDayRef(timeSpine?.now()?.dayRef))
+  const clock = now && day && /\d/.test(now.value) ? {position: {readout: {value: `${now.value} · ${day}`, title: now.title}}} : {}
+  const bindings: TransportBindings = {...readoutsOf(readouts), ...clock, arm: {control: instrumentArmControl(slotMeaning('techne', 'arm'), focusedInstrument)}}
   if (!timeSpine) return bindings
   const brace = timeSpine.transport().loopClipIds
   const length = slotMeaning('techne', 'loop-length')
@@ -92,11 +107,9 @@ const useTechneTransport: UseModeTransport = ({readouts, timeSpine, focusedInstr
   }
 }
 
-const useReadouts: UseModeTransport = ({readouts}) => readoutsOf(readouts)
-
 export const MODE_TRANSPORT: Readonly<Record<SurfMode, UseModeTransport>> = {
   live: useLiveTransport,
-  base: useReadouts,
+  base: useCentralTransport,
   factory: useFactoryTransport,
   expressions: useExpressionsTransport,
   techne: useTechneTransport,
