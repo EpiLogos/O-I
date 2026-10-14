@@ -22,6 +22,7 @@ export function registerDevicePane(): void {
   registerProjectionModule({id: 'device-full', kind: DEVICE_PANE_KIND, create: ({element, binding}) => {
     const root = createRoot(element)
     root.render(<div style={{position: 'absolute', inset: 0}}><DeviceFullPane id={binding.subject_ref} /></div>)
-    return {unmount: () => root.unmount()}
+    // The pane session tears down inside a commit; the root leaves after it (its container is the session's own).
+    return {unmount: () => queueMicrotask(() => root.unmount())}
   }})
 }

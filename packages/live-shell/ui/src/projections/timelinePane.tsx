@@ -40,7 +40,8 @@ export function TimelinePaneRoot({subject}: {subject?: PaneSubject}) {
 function mountTimelinePane(element: HTMLElement, subject?: PaneSubject): ProjectionModuleHandle {
   const root = createRoot(element)
   root.render(<TimelinePaneRoot subject={subject} />)
-  return {unmount: () => root.unmount()}
+  // The pane session tears down inside a commit; the root leaves after it (its container is the session's own).
+  return {unmount: () => queueMicrotask(() => root.unmount())}
 }
 
 let registered = false

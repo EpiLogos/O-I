@@ -148,7 +148,8 @@ export function registerCentralDocumentPane(): void {
     create: ({element, binding}) => {
       const root = createRoot(element)
       root.render(<CentralDocumentPane transport={detectTransport()} subjectRef={binding.subject_ref} />)
-      return {unmount: () => root.unmount()}
+      // The pane session tears down inside a commit; the root leaves after it (its container is the session's own).
+      return {unmount: () => queueMicrotask(() => root.unmount())}
     },
   })
 }
