@@ -21,7 +21,7 @@ import { OPEN_PLACE_FILTER, type PlaceFilterState } from "../../../../../../fiel
 import { standingLabel, type StandingDrawing } from "../timeline/standingStyle";
 
 import { LocationPanel, pointForPlace } from "./LocationPanel";
-import { placeStandingMark } from "./placeStanding";
+import { placeStandingOfRelations, relationsByPlace } from "./placeStanding";
 import { attributionReadout, imageryReadout, liveTileDisclosure } from "./disclosure";
 import {
   basemapGateReason,
@@ -417,6 +417,8 @@ export function PsychogeographicMap({
     [layerFilter, liveWindow],
   );
   const facetByRef = useMemo(() => new Map(placeFacets.map((facet) => [facet.place_ref, facet] as const)), [placeFacets]);
+  // T30: a place's standing reads every facet it carries (placeStandingOfRelations), never whichever facet the map kept last.
+  const relationsByRef = useMemo(() => relationsByPlace(placeFacets), [placeFacets]);
   const layers = useMemo<PlaceLayer[]>(() => placeLayers(placeFacets), [placeFacets]);
   const polygonRefs = useMemo(() => polygonPlaceRefs(placeFacets), [placeFacets]);
   const hiddenRefs = useMemo(() => placeRefsHidden(placeFacets, layerState), [placeFacets, layerState]);
@@ -455,9 +457,9 @@ export function PsychogeographicMap({
       precision: node.place.coordinate.precision,
       entityType: node.entityType,
       // Lane-4 T30: the facet's standing, read from its relation by the cradle authority; only mythic draws differently.
-      standingClass: placeStandingMark(facetByRef.get(node.graphNodeId)?.relation).standingClass,
+      standingClass: placeStandingOfRelations(relationsByRef.get(node.graphNodeId) ?? []).standingClass,
     }];
-  }), [nodes, polygonRefs, hiddenRefs, facetByRef, layerState.window]);
+  }), [nodes, polygonRefs, hiddenRefs, facetByRef, relationsByRef, layerState.window]);
 
   const expressionMarkers = useMemo<ArchetypeExpressionRenderMarker[]>(() => {
     const pointsByPlace = new Map(
@@ -1684,7 +1686,7 @@ export function PsychogeographicMap({
         const panel = <LocationPanel node={selectedNode} relatedNodes={relatedNodes}
           expressions={selectedExpressions} loadingContext={contextLoading}
           hosted={!!inspectorContainer}
-          standingClass={placeStandingMark(facetByRef.get(selectedNode.graphNodeId)?.relation).standingClass}
+          standingClass={placeStandingOfRelations(relationsByRef.get(selectedNode.graphNodeId) ?? []).standingClass}
           onClose={() => { if (inspectorContainer) setDetailsOpen(false); else { setSelectedNodeId(null); onSelectedGraphNodeIdChangeRef.current?.(null); } containerRef.current?.querySelector<HTMLElement>('canvas')?.focus(); }} />;
         return inspectorContainer ? createPortal(panel, inspectorContainer) : panel;
       })()}

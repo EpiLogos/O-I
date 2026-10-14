@@ -118,3 +118,21 @@ test('T26: the panel names a bound stop by both its refs', async () => {
  const panel=await src('src/placeTourPanel.tsx');
  assert.match(panel,/Bound to journey beat \$\{state\.binding\.expression_ref\} in \$\{state\.binding\.scene_ref\}/);
 });
+
+test('T30 (R2): a place with a factual and a mythic facet reads mythic everywhere — search, marker and inspector share one rule', async () => {
+ const reading={
+  subject:{subject_ref:'subject:voyage',native_owner:'wiki'},
+  spatial:[
+   {place_ref:'place:isle',precision:'exact',relation:'LOCATED_IN',identity:{names:[{name:'The isle'}]},source_ref:SOURCE},
+   {place_ref:'place:isle',precision:'approximate',relation:'MYTH_LOCATED_AT',identity:{names:[{name:'The isle'}]},source_ref:SOURCE},
+  ],
+ };
+ assert.deepEqual(api.placeSearchRows(reading,'').map(row=>row.standing),['mythic'],'mythic is never passed as factual in search');
+ assert.equal(api.placeStandingOfRelations(['MYTH_LOCATED_AT','LOCATED_IN']).standingClass,'mythic','order does not matter');
+ assert.equal(api.placeStandingOfRelations(['LOCATED_IN','owner-term-not-in-the-hard-set']).standingClass,'owner-vocabulary');
+ assert.equal(api.placeStandingOfRelations(['LOCATED_IN']).standingClass,'factual');
+ const map=await src('../vendor/research-canvas/packages/canvas/src/psychogeographic/PsychogeographicMap.tsx');
+ assert.match(map,/standingClass: placeStandingOfRelations\(relationsByRef\.get\(node\.graphNodeId\) \?\? \[\]\)\.standingClass/,'the marker reads every facet');
+ assert.match(map,/standingClass=\{placeStandingOfRelations\(relationsByRef\.get\(selectedNode\.graphNodeId\) \?\? \[\]\)\.standingClass\}/,'the inspector reads the same rule');
+ assert.doesNotMatch(map,/placeStandingMark\(facetByRef/,'no surface reads a single facet');
+});

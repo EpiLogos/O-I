@@ -96,8 +96,8 @@ test('T30 renderer (source reading): the mythic branch is the only place a marke
  assert.equal(renderer.match(/dataset\.standing =/g).length,1,'dataset.standing is written in exactly one guarded place');
 });
 
-test('T30 map wiring (source reading): markers and the inspector read standing from the facet relation', async () => {
+test('T30 map wiring (source reading): markers and the inspector read standing over every facet the place carries', async () => {
  const map=await src(resolve(vendor,'PsychogeographicMap.tsx'));
- assert.match(map,/standingClass: placeStandingMark\(facetByRef\.get\(node\.graphNodeId\)\?\.relation\)\.standingClass,/);
- assert.match(map,/standingClass=\{placeStandingMark\(facetByRef\.get\(selectedNode\.graphNodeId\)\?\.relation\)\.standingClass\}/);
+ assert.match(map,/standingClass: placeStandingOfRelations\(relationsByRef\.get\(node\.graphNodeId\) \?\? \[\]\)\.standingClass,/);
+ assert.match(map,/standingClass=\{placeStandingOfRelations\(relationsByRef\.get\(selectedNode\.graphNodeId\) \?\? \[\]\)\.standingClass\}/);
 });
