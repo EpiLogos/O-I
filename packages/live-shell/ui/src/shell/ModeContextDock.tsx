@@ -223,12 +223,13 @@ function AgentsTile({transport}: {transport: KernelTransportStatus}) {
   const agency = useAgencySessions(transport)
   const tracks = agency.tracks.filter(track => !track.group)
   const stateColour: Record<string, string> = {live: 'var(--accent)', stalled: 'var(--stall)', idle: 'var(--text-faint)'}
-  return <div className="mode-dock-rows" aria-label="Agents">
+  // One line per session (the mockup's agents tile, world-shell-mockup.html 1632): its light only where the reading states it.
+  return <div className="mode-dock-lines" aria-label="Agents">
     {transport.kind === 'unavailable' && <p className="mode-dock-note">The carrier is unavailable — the agency reading waits: {transport.reason}</p>}
-    {tracks.slice(0, 8).map(track => <div key={track.sessionRef} className="mode-dock-row" data-i={`${track.purpose ?? track.sessionRef}|${track.needle?.state ?? 'unknown'} — the agency surface's own reading`}>
-      <span className="mode-dock-row-light" style={{background: stateColour[track.needle?.state ?? ''] ?? 'var(--bg-3)'}} aria-hidden="true" />
-      <b>{track.purpose ?? track.sessionRef.slice(0, 24)}</b>
-      <span className="mode-dock-row-meta">{track.needle?.state ?? '—'}</span>
+    {tracks.slice(0, 8).map(track => <div key={track.sessionRef} className="mode-dock-line" data-i={`${track.purpose ?? track.sessionRef}|${track.needle?.state ?? 'unknown'} — the agency surface's own reading`}>
+      {stateColour[track.needle?.state ?? ''] && <span className="mode-dock-row-light" style={{background: stateColour[track.needle?.state ?? '']}} aria-hidden="true" />}
+      <span className="mode-dock-line-text">{track.agentName && <b>{track.agentName} </b>}{track.purpose ?? track.sessionRef.slice(0, 24)}</span>
+      <span className="mode-dock-line-meta">{track.needle?.state ?? '—'}</span>
     </div>)}
     {transport.kind !== 'unavailable' && !tracks.length && <p className="mode-dock-note">No sessions in the agency reading yet.</p>}
   </div>
