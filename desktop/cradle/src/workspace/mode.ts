@@ -20,8 +20,10 @@ import type {GlyphName} from "./Glyph";
  * NOT a mode at all: it is the connective field every mode reaches through
  * the one Library (the wiki as the expressions library, the shared wiki web,
  * the local instance nested in it as a subset) — see library/scope.ts. */
-export type WorkspaceMode = "base" | "factory" | "expressions" | "techne" | "epi-logos" | "settings";
-export const WORKSPACE_MODES: readonly WorkspaceMode[] = ["base", "factory", "expressions", "techne", "epi-logos", "settings"] as const;
+export type WorkspaceMode = "base" | "live" | "factory" | "expressions" | "techne" | "epi-logos" | "settings";
+/** `live` is the DLW candidate's Live mode (the instrument), its own tree beside Central's (FOUNDATION F1); the legacy
+ * desktop has no Live and never shows it in its strip (STRIP_MODES). */
+export const WORKSPACE_MODES: readonly WorkspaceMode[] = ["base", "live", "factory", "expressions", "techne", "epi-logos", "settings"] as const;
 
 /** How a pane presents its tabs — the pin model. Pinned horizontal shows the
  * strip along the pane's top; pinned vertical shows a resizable list beside
@@ -100,6 +102,11 @@ export const MODE_CURATION: Record<WorkspaceMode, ModeCuration> = {
     // Core planes: Chat, Activity, Agents and the shared Context canvas.
     panel: {planes: ["Chat", "Activity", "Agents", "context"], extra: ["context"]},
   },
+  live: {
+    // The DLW candidate's Live mode: the instrument in the centre, its chain in the detail (lock §0.2).
+    id: "live", label: "Live", hint: "The instrument: the torus, its keyboard and its chain", glyph: "field", left: "world",
+    panel: {planes: ["Chat", "Activity", "Agents", "context"], extra: ["context"]},
+  },
   factory: {
     id: "factory", label: "Factory", hint: "Desk for whole Runs, Tasks for conversations", glyph: "factory", left: "factory", centreKind: "factory",
     // The conversation stays in the centre; Run, Agents and Context accompany it.
@@ -140,7 +147,7 @@ export const TREE_MODES: readonly WorkspaceMode[] = WORKSPACE_MODES.filter(mode 
 /** The icons the sidebar strip carries: the four work modes only. Settings is
  * the separate terminal button beside them (never a second settings icon in
  * the strip), and Epi-Logos lives in the footer as the whole-app world state. */
-export const STRIP_MODES: readonly WorkspaceMode[] = TREE_MODES.filter(mode => mode !== "settings");
+export const STRIP_MODES: readonly WorkspaceMode[] = TREE_MODES.filter(mode => mode !== "settings" && mode !== "live");
 export const isWorkspaceMode = (value: unknown): value is WorkspaceMode => WORKSPACE_MODES.includes(value as WorkspaceMode);
 /** Runtime behaviour: true only for the pin-model names. The declared
  * narrowing carries the legacy default name "strip" as well, so persist.ts's

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ComponentProps, type CSSProperties, type RefObject } from 'react'
-import {useContinuity} from './continuity/workspace'
+import {BOOK_MODE_OF_SHELL, useContinuity, type ShellMode} from './continuity/workspace'
 import { BrowserPane } from './components/BrowserPane'
 import { WorldBrowser } from './components/WorldBrowser'
 import { OPEN_DEVICE_EVENT, PARAMETER_BROWSE_EVENT } from './components/nativeDrag'
@@ -35,6 +35,8 @@ import type {NativeCompositionViewSource} from './shell/compositionViews'
 import {TimelineProjectionResidence, timelinePresentation} from './projections/timelineResidence'
 import {useWorldTemporalReading, type WorldTimelineView} from './projections/useWorldTemporalReading'
 import {surfModeOf, type SurfMode} from './shell/modeGrammar'
+import {MODE_FRAMES} from './shell/modeFrames'
+import {liveWorldSelection, setSelectionOf} from './shell/liveSelection'
 import type {ModeTransportReadouts} from './shell/ModeTransportBar'
 import {CentralClipChooser} from './central/CentralClipChooser'
 import {BaseDevicesDetail, TechneInstrumentsDetail, InstrumentDeviceDetail, TechneClipDetail, FactoryTaskLogDetail, TechneLensBar, factoryLensPane, worldNowReadout} from './shell/ModeDetail'
@@ -61,6 +63,8 @@ import {captureTechneInstrumentOpen, TECHNE_INSTRUMENT_OPEN, type TechneInstrume
 registerAtlasHost()
 registerTimelineHost()
 const PALETTE =['#79b6ce', '#779dcc', '#9885bc', '#8baf9c', '#b096b2', '#6caaa9']
+/** The ground material kinds the Document detail opens (CentralSubjectSelection). */
+const CENTRAL_SUBJECT_KINDS = new Set(['day', 'note', 'folder'])
 export function App() {
   const frameRef = useRef<HTMLDivElement>(null)
   return <AgentShellProvider frameRef={frameRef}><AgentShellFrameInner frameRef={frameRef} /></AgentShellProvider>
@@ -101,14 +105,29 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   // (workspace.mode); the frame's regions compose on this reading.
   const frameMode: 'live' | 'base' | 'factory' | 'expressions' | 'techne' = surfModeOf(continuity.mode) ?? 'live'
   const restored = continuity.applicationView
-  const [frameWorkspace, setFrameWorkspace] = useState(workspace.workspaceId)
+  // The frame's state belongs to the mode it stands in (FOUNDATION F1): each book mode's layout carries its own
+  // application view, restored whenever the workspace or the mode changes, and a mode never stood in opens on its
+  // registered frame (shell/modeFrames.ts).
+  const frameKey = `${workspace.workspaceId}|${continuity.current.layout.mode ?? 'base'}`
+  // Applying a named set marks the layout, so the frame restores from it even within the same mode.
+  const restoreKey = `${frameKey}|${continuity.current.layout.appliedSet ?? ''}`
+  const opening = MODE_FRAMES[frameMode]
+  const [restoredKey, setRestoredKey] = useState(restoreKey)
+  // A move that changes mode AND asks for a centre (open Knowledge, reveal the stage, a lens press) names the frame it
+  // is aimed at; the restore of that frame honours it instead of the mode's own centre.
+  const centreIntent = useRef<{key: string; panel: string; tab?: 'session' | 'arrangement'} | null>(null)
+  const presentIn = (mode: ShellMode, panel: string, tab?: 'session' | 'arrangement') => {
+    centreIntent.current = {key: `${workspace.workspaceId}|${BOOK_MODE_OF_SHELL[mode]}`, panel, tab}
+    setCenterPanel(panel); if (tab) setTab(tab)
+    continuity.setMode(mode)
+  }
   const [restoration, restorePath] = useState({workspaceId: workspace.workspaceId, path: restored?.alsPath})
   const config = useShellConfig()
   const rememberedPath = restoration.workspaceId === workspace.workspaceId ? restoration.path : restored?.alsPath
   const initialPath = rememberedPath === undefined ? config?.default_set : rememberedPath ?? undefined
   const state = useSetSummary(initialPath, workspace.workspaceId)
   const deep = useSetDocument(state.set)
-  const [detailMode, changeDetailMode] = useState<DetailMode>(restored?.detailMode ?? 'clip')
+  const [detailMode, changeDetailMode] = useState<DetailMode>(restored?.detailMode ?? opening.detailMode)
   const [browserWidth, resizeBrowser] = useState<number | null>(restored?.browserWidth ?? null)
   const [detailHeight, resizeDetail] = useState<number | null>(restored?.detailHeight ?? null)
   const [nativeEditorReturn,setNativeEditorReturn]=useState<{workspaceId:string;accessEpoch:number;bindingId:string;expression_ref:string;scene_ref:string;centerPanel:string;detail:boolean;detailMode:DetailMode;editor:'source'|'layers'|'placement';owner:NativeEditorController|null;mode:'expressions'|'techne';focus:HTMLElement|null}|null>(null)
@@ -117,13 +136,13 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   useEffect(()=>{detailExpansionReturn.current=null},[workspace.workspaceId,workspace.accessEpoch])
   const [viewport, setViewport] = useState([window.innerWidth, window.innerHeight])
   useEffect(() => { const read = () => setViewport([window.innerWidth, window.innerHeight]); window.addEventListener('resize', read); return () => window.removeEventListener('resize', read) }, [])
-  const [tab, setTab] = useState(restored?.tab ?? 'session')
+  const [tab, setTab] = useState(restored?.tab ?? opening.tab)
   // A refusal of the hosted lens press, named in one status sentence under the lens bar (the hosted pane only).
   const [lensFault, setLensFault] = useState<string | null>(null)
   // The Factory centre is the Workbench's pane tree (agent/factoryCentre.ts); the retired agent centre and the knowledge
   // centre both restore to the Workbench, so no saved centre names a panel the mode does not stand.
   const workbenchCentre = (panel: string | undefined): string | undefined => frameMode === 'factory' || panel === 'native.agent' || panel === 'world.knowledge' ? 'native.workbench' : panel
-  const [centerPanel, setCenterPanel] = useState(workbenchCentre(restored?.centerPanel) ?? 'world.expressions')
+  const [centerPanel, setCenterPanel] = useState(workbenchCentre(restored?.centerPanel) ?? opening.centerPanel)
   const [knowledgeIntent, setKnowledgeIntent] = useState<{workspaceId: string; bindingId: string} | null>(null)
   // A resolved file source from the hosted frame: the Workbench is presented first, then asked to open it (it acts only while presented).
   const [sourceIntent, setSourceIntent] = useState<{location: unknown; passage?: unknown; note?: unknown} | null>(null)
@@ -150,8 +169,9 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
       }
       // Expressions remains mounted while its Graph is presented. Returning
       // reveals that exact owner and camera without reopening or replacing it.
-      presentSettings(false); setCenterPanel('world.expressions')
-      if (retained.mode === 'expressions' || retained.mode === 'techne') workspace.setMode(retained.mode)
+      presentSettings(false)
+      if (retained.mode === 'expressions' || retained.mode === 'techne') presentIn(retained.mode, 'world.expressions')
+      else setCenterPanel('world.expressions')
       input.complete?.()
     }
     window.addEventListener('oi:candidate-knowledge-present', presentKnowledge)
@@ -185,7 +205,7 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   useEffect(() => {
     // Only the Expressions panel requests this, and only with native work
     // mounted: the centre shows that body in the cut the workspace stands in.
-    const reveal = () => {presentSettings(false); setCenterPanel('world.expressions'); workspace.setMode(workspace.mode === 'techne' ? 'techne' : 'expressions')}
+    const reveal = () => {presentSettings(false); presentIn(workspace.mode === 'techne' ? 'techne' : 'expressions', 'world.expressions')}
     window.addEventListener(NATIVE_PRESENT_EXPRESSIONS, reveal)
     return () => window.removeEventListener(NATIVE_PRESENT_EXPRESSIONS, reveal)
   }, [workspace.mode, workspace.setMode])
@@ -203,7 +223,7 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
     if (!settingsPresented) settingsOrigin.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
     presentSettings(true)
   }, [settingsHost.request])
-  const [browser, setBrowser] = useState(restored?.browser ?? true)
+  const [browser, setBrowser] = useState(restored?.browser ?? opening.browser)
   // An open device request shows the Browser: the expanded panel lives in its pool, not on the bottom rack.
   useEffect(() => {const openDevice = () => {if (workspace.mode !== 'audio') setBrowser(true)}; window.addEventListener(OPEN_DEVICE_EVENT, openDevice); return () => window.removeEventListener(OPEN_DEVICE_EVENT, openDevice)}, [workspace.mode])
   useEffect(() => {
@@ -215,12 +235,15 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
     window.addEventListener(PARAMETER_BROWSE_EVENT, browseParameters)
     return () => window.removeEventListener(PARAMETER_BROWSE_EVENT, browseParameters)
   }, [workspace.mode])
-  const [detail, setDetail] = useState(restored?.detail ?? true)
+  const [detail, setDetail] = useState(restored?.detail ?? opening.detail)
   const [detailConfiguration, configureDetail] = useState<NativeDetailConfigurationIntent | null>(null)
-  // The Base mode's selected ground subject (the browser's Days/Files rows
-  // select it): the Document detail's aperture. The selection rides the
-  // frame's own state — the spine keeps the encounter, not a second store.
-  const [centralSubject, selectCentralSubject] = useState<CentralSubjectSelection | null>(null)
+  // The selected ground subject (the browser's Days/Files rows select it) is THE selection when it is ground material:
+  // the Document detail's aperture reads it from the world context, and choosing one moves the one selection.
+  const worldSelection = continuity.current.context?.selection
+  const centralSubject: CentralSubjectSelection | null = worldSelection && CENTRAL_SUBJECT_KINDS.has(worldSelection.kind)
+    ? {kind: worldSelection.kind as CentralSubjectSelection['kind'], path: worldSelection.ref} : null
+  const selectCentralSubject = (subject: CentralSubjectSelection | null) => continuity.select(subject
+    ? {mode: 'base', kind: subject.kind, ref: subject.path, title: subject.path.split('/').filter(Boolean).pop() ?? subject.path} : null)
   const nativeComposition = (workspace.mode === 'expressions' || workspace.mode === 'techne') && (centerPanel === 'native.session' || centerPanel === 'native.arrangement')
   const nativeProjection = useMemo(() => {
     if (!workspace.editorReading) return {content: null, error: null}
@@ -317,10 +340,8 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   const chooseMode = (next: SurfMode) => {
     presentSettings(false)
     continuity.setContext(context => ({...context, world: next === 'base' ? 'central' : undefined}))
+    // The mode's own frame returns with its layout (the restore below); nothing here sets another mode's parts.
     continuity.setMode(next === 'live' ? 'audio' : next)
-    if (next === 'live' || next === 'expressions') { setCenterPanel('world.expressions'); return }
-    if (next === 'base' || next === 'techne') { setCenterPanel('world.ground'); setDock(true); return }
-    setCenterPanel('native.workbench'); setDock(true)
   }
   // The Library page's workspace-mode request, relayed by LibraryHost on oi:host-workspace-mode. The mode switch is the mode rail's
   // own (chooseMode). The one open door (workspace.expressionToOpen) carries two request kinds: a kernel ref (requestExpression), or,
@@ -340,8 +361,12 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
     window.addEventListener('oi:host-workspace-mode', onHostMode)
     return () => window.removeEventListener('oi:host-workspace-mode', onHostMode)
   }, [])
-  const [dock, setDock] = useState(restored?.dock ?? false)
-  const [selection, select] = useState<SetSelection>(restored?.selection ?? { track: 0, scene: null })
+  const [dock, setDock] = useState(restored?.dock ?? opening.dock)
+  // Live's selection is THE selection when it is a place in the open set; otherwise Live keeps the place it last held
+  // (its view's remembered selection), so returning to Live returns to it.
+  const [liveHeld, holdLive] = useState<SetSelection>(restored?.selection ?? { track: 0, scene: null })
+  const selection: SetSelection = setSelectionOf(worldSelection, state.set?.path) ?? liveHeld
+  const select = (value: SetSelection) => { holdLive(value); const next = liveWorldSelection(value, state.set); if (next) continuity.select(next) }
   const [overrides, setOverrides] = useState<Record<number, string>>({})
   const colorKey = `live-shell.track-display/v1:${state.set?.path ?? ''}`
   useEffect(() => {
@@ -353,25 +378,28 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   const selectedSet = useRef(restored?.alsPath ?? null)
   useEffect(() => {
     if (!state.set) return
-    if (selectedSet.current && selectedSet.current !== state.set.path) select({track: 0, scene: null})
+    if (selectedSet.current && selectedSet.current !== state.set.path) holdLive({track: 0, scene: null})
     selectedSet.current = state.set.path
   }, [state.set?.path])
   useEffect(() => {
-    if (frameWorkspace === workspace.workspaceId) return
+    if (restoredKey === restoreKey) return
     const view = continuity.applicationView
-    restorePath({workspaceId: workspace.workspaceId, path: view?.alsPath})
-    setTab(view?.tab ?? 'session'); setCenterPanel(workbenchCentre(view?.centerPanel) ?? 'world.expressions')
-    changeDetailMode(view?.detailMode ?? 'clip'); resizeBrowser(view?.browserWidth ?? null); resizeDetail(view?.detailHeight ?? null)
-    setBrowser(view?.browser ?? true); setDetail(view?.detail ?? true); setDock(view?.dock ?? false)
-    select(view?.selection ?? {track: 0, scene: null}); presentSettings(view?.settingsPresented ?? false)
-    selectedSet.current = view?.alsPath ?? null
-    setFrameWorkspace(workspace.workspaceId)
-  }, [workspace.workspaceId, frameWorkspace, continuity.applicationView])
+    // The open set stays open across modes: a mode with no view of its own keeps the set in hand.
+    restorePath({workspaceId: workspace.workspaceId, path: view && view.alsPath !== undefined ? view.alsPath : state.path ?? undefined})
+    const intent = centreIntent.current?.key === frameKey ? centreIntent.current : null
+    centreIntent.current = null
+    setTab(intent?.tab ?? view?.tab ?? opening.tab); setCenterPanel(intent?.panel ?? workbenchCentre(view?.centerPanel) ?? opening.centerPanel)
+    changeDetailMode(view?.detailMode ?? opening.detailMode); resizeBrowser(view?.browserWidth ?? null); resizeDetail(view?.detailHeight ?? null)
+    setBrowser(view?.browser ?? opening.browser); setDetail(view?.detail ?? opening.detail); setDock(view?.dock ?? opening.dock)
+    holdLive(view?.selection ?? {track: 0, scene: null}); presentSettings(view?.settingsPresented ?? false)
+    if (view?.alsPath !== undefined) selectedSet.current = view.alsPath ?? null
+    setRestoredKey(restoreKey)
+  }, [restoreKey, restoredKey, continuity.applicationView])
   useEffect(() => {
-    if (frameWorkspace !== workspace.workspaceId) return
-    continuity.checkpointApplicationView({alsPath: state.path ?? restored?.alsPath ?? null, tab, selection,
+    if (restoredKey !== restoreKey) return
+    continuity.checkpointApplicationView({alsPath: state.path ?? restored?.alsPath ?? null, tab, selection: liveHeld,
       browser, detail:nativeEditorPresented?nativeEditorReturn!.detail:detail, dock, browserWidth, detailHeight:detailExpansionReturn.current?detailExpansionReturn.current.height:detailHeight, centerPanel:nativeEditorPresented?nativeEditorReturn!.centerPanel:centerPanel, detailMode:nativeEditorPresented?nativeEditorReturn!.detailMode:detailMode, settingsPresented, settingsReturn: workspace.mode === 'expressions' || workspace.mode === 'techne' ? workspace.mode : undefined})
-  }, [frameWorkspace, workspace.workspaceId, state.path, tab, selection, browser, detail, dock, browserWidth, detailHeight, centerPanel, detailMode, nativeEditorReturn, nativeEditorPresented, settingsPresented, workspace.mode, continuity.checkpointApplicationView])
+  }, [restoredKey, restoreKey, state.path, tab, liveHeld, browser, detail, dock, browserWidth, detailHeight, centerPanel, detailMode, nativeEditorReturn, nativeEditorPresented, settingsPresented, workspace.mode, continuity.checkpointApplicationView])
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key === ',') {
@@ -408,12 +436,11 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
       presentSettings(true)
     } else {
       presentSettings(false)
-      if (id === 'native.agent') { setCenterPanel('native.workbench'); setDock(true); continuity.setMode('factory'); return }
-      setCenterPanel(id)
+      if (id === 'native.agent') { presentIn('factory', 'native.workbench'); return }
       // The other centre panels belong to the Expressions side: the
       // workspace leaves the audio surface, or the centre residence stays
       // hidden in mode audio.
-      continuity.setMode('expressions')
+      presentIn('expressions', id)
     }
   }
   // The mode system's frame readings (Rev 5): which presentation stands
@@ -430,7 +457,7 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   // occasion, and that selection clears the browser's subject, so exactly one selection stands in the Document row
   // (CentralClipChooser). Technē and the other modes keep the World cut's view unchanged.
   const centralWorld: WorldTimelineView = frameMode === 'base'
-    ? {...worldView, selectOccasion: event => { worldView.selectOccasion(event); selectCentralSubject(null) }}
+    ? {...worldView, selectOccasion: event => { worldView.selectOccasion(event); if (centralSubject) selectCentralSubject(null) }}
     : worldView
   const presented = worldCut ? (tab === 'arrangement' ? 'arrangement' as const : 'session' as const) : timelinePresentation(workspace.mode, tab, centerPanel)
   const presentedView = agentShell ? (shellCtx.centreView === 'arrangement' ? 'arrangement' as const : shellCtx.centreView === 'session' ? 'session' as const : null) : presented
@@ -525,7 +552,7 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
           return
         }
         if (lens.atlas) { presentAtlasView(lens.atlas); setCenterPanel('projection.earth'); return }
-        if (lens.presentation) { if (frameMode !== 'base' && frameMode !== 'techne') chooseMode('techne'); setTab(lens.presentation); setCenterPanel('world.ground') }
+        if (lens.presentation) { if (frameMode !== 'base' && frameMode !== 'techne') { presentSettings(false); continuity.setContext(context => ({...context, world: undefined})); presentIn('techne', 'world.ground', lens.presentation) } else { setTab(lens.presentation); setCenterPanel('world.ground') } }
       }} />}
       {instrumentLensBar && focusedPane === 'world.expressions' && lensFault && <p className="techne-lens-fault" role="status">{lensFault}</p>}
       {nativeEditorReturn&&centerPanel==='world.expressions'&&!settingsPresented&&<div className="native-editor-return"><span>{nativeEditorReturn.editor==='source'?'Source':nativeEditorReturn.editor==='layers'?'Layers':'State placement'}</span><button onClick={returnNativeEditor}>Return to {nativeEditorReturn.centerPanel==='native.arrangement'?'Arrangement':nativeEditorReturn.centerPanel==='native.session'?'Session':'Glyph editor'}</button></div>}

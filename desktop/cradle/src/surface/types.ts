@@ -164,6 +164,9 @@ export interface ApplicationViewEnvelope {
 
 export interface LayoutState {
   applicationView?: ApplicationViewEnvelope;
+  /** Set when a named set was just applied to this layout (its id and the moment): the frame restores its parts from
+   * the set's application view. Transient — the codec does not persist it. */
+  appliedSet?: string;
   focusedTabId?: SurfaceId;
   /** null = austere rest (law 12: rest is *what is on screen*). */
   root: Pane | null;

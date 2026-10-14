@@ -33,6 +33,7 @@
  * conditional sprawl beyond the categories the grammar already declares.
  */
 
+import {SetsSection} from './SetsSection'
 import {useEffect, useMemo, useState} from 'react'
 import type {NativeDirectory} from '../../../../../desktop/cradle/src/kernel/types'
 import {listFiles} from '../../../../../desktop/cradle/src/files/client'
@@ -121,6 +122,7 @@ export function ModeBrowser({mode, onSelectSubject, selectedSubject}: {
         <ApertureSlot mode={mode} selectedSubject={selectedSubject} />
       </div>
     </section>
+    <SetsSection />
   </aside>
 }
 

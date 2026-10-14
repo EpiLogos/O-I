@@ -287,3 +287,26 @@
 .mode-dock-cell-name { height: 20px; display: flex; align-items: center; gap: 5px; padding: 0 6px; font-size: 10.5px; color: var(--text-dim) }
 .mode-dock-cell-dot { margin-left: auto; width: 7px; height: 7px; border-radius: 50%; background: var(--accent) }
 .mode-dock-preset { margin: 0 5px 5px; padding: 3px 6px; font-size: 10px; color: var(--text-faint); border: 1px dashed var(--line-strong); background: transparent; text-align: left }
+
+/* Sets (manual §10.2, FOUNDATION F1): the browser's named arrangements, in every browser until F6 makes them one. */
+.browser-sets { flex: none; border-top: 1px solid var(--line); background: var(--bg-1); padding: 4px 0 6px; font-size: 10.5px; color: var(--text-dim) }
+.browser-sets-head { display: flex; align-items: center; gap: 6px; padding: 2px 8px 4px; color: var(--text-faint); text-transform: uppercase; letter-spacing: .06em; font-size: 9.5px }
+.browser-sets-head button { margin-left: auto; background: none; border: 1px solid var(--line); color: var(--text-dim); font-size: 10px; padding: 1px 6px; text-transform: none; letter-spacing: 0 }
+.browser-sets-head button:hover { border-color: var(--line-strong); color: var(--text) }
+.browser-sets-head form { margin-left: auto; flex: 1 }
+.browser-sets-head input { width: 100%; height: 18px; background: var(--bg-0); border: 1px solid var(--accent-dim); padding: 0 6px; font-size: 10.5px; color: var(--text) }
+.browser-sets ul { list-style: none; margin: 0; padding: 0 }
+.browser-sets li button { display: flex; width: 100%; gap: 8px; align-items: baseline; background: none; border: 0; padding: 2px 8px; color: var(--text-dim); text-align: left; font-size: 10.5px }
+.browser-sets li button:hover { background: var(--bg-2); color: var(--text) }
+.browser-sets li b { font-weight: 400; color: var(--text) }
+.browser-sets li span { margin-left: auto; color: var(--text-faint); font-size: 9.5px }
+.browser-sets-empty { margin: 2px 8px; color: var(--text-faint) }
+
+/* The trail (manual §10.7): newest stop first; the current selection is marked. */
+.trail-stops { list-style: none; margin: 0; padding: 2px 0 }
+.trail-stops .mode-dock-row { display: block; padding: 0 }
+.trail-stop { display: grid; grid-template-columns: 62px 1fr; gap: 6px; width: 100%; background: none; border: 0; padding: 1px 8px; color: var(--text-dim); text-align: left; font-size: 10.5px }
+.trail-stop:hover { background: var(--bg-2); color: var(--text) }
+.trail-stop span { color: var(--text-faint); font-size: 9.5px }
+.trail-stop b { font-weight: 400; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.trail-stops [aria-current="location"] .trail-stop b { color: var(--accent) }
