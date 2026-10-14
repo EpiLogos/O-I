@@ -137,7 +137,7 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
   // A group's members fold away with it (agent/AgentSessionGrid.tsx:92-96); every ancestor folded hides them, not only the parent.
   const tracks = lanes.filter(track => !tree.ancestorsOf(track).some(above => folded[above.id]))
   const {here: stalledHere} = stalledLanes(set, tree)
-  const launch = set.actions?.launch, launchStop = set.actions?.launchStop, stopTrack = set.actions?.stopTrack, retry = set.actions?.retry
+  const launch = set.actions?.launch, launchStop = set.actions?.launchStop, stopTrack = set.actions?.stopTrack, retry = set.actions?.retry, seat = set.actions?.seat
   if (!lanes.length) return <div className="tracks-empty" role="status">No tracks in this work yet.</div>
   return <div className="sg-pane" data-tracks-view="session">
     <div className="sg" role="grid" aria-label="Session">
@@ -200,7 +200,11 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
           </div>}
         </div>
       })}
-      <div className="sg-fill" />
+      {/* The empty track: what the set can seat is dropped here (Live: drop onto the empty area to make a track). */}
+      <div className="sg-fill" data-seat-drop={seat ? 'open' : undefined} data-receipt={receiptMark(receipt, 'seat')}
+        title={seat ? `Drop here to seat it on a new track (${seat.op})` : undefined} aria-label={seat ? 'Empty track: drop to seat' : undefined}
+        onDragOver={seat ? event => { if (event.dataTransfer.types.includes(seat.accepts)) { event.preventDefault(); event.dataTransfer.dropEffect = 'copy' } } : undefined}
+        onDrop={seat ? event => { const payload = event.dataTransfer.getData(seat.accepts); if (!payload) return; event.preventDefault(); onPress('seat', 'Seat', () => seat.run(payload)) } : undefined} />
       <div className="trk trk-main" role="row" aria-label="Stops">
         <div className="thd">Main</div>
         {rows.map((row, index) => {

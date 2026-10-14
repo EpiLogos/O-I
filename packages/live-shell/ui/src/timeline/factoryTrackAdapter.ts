@@ -25,6 +25,7 @@
 //   none. Launch quantize and follow are absent: the armed timing is shell state, not a reading of the task.
 //
 // Pure TypeScript. No React.
+import {AGENT_CHAIN_MIME, decodeChainDrag} from '../agent/agentChainDrag'
 import {sharedAxis, trackKey, type AgentSessionTrack, type TaskClip, type TaskState} from '../agent/agentRunModel'
 import type {
   ClipStatus,
@@ -44,7 +45,7 @@ export const FACTORY_TRACK_PALETTE = ['#79b6ce', '#779dcc', '#9885bc', '#8baf9c'
 export const FACTORY_MIN_BATCH_ROWS = 4
 
 /** The control words `harness_agent_control` takes that a track's actions use (agent/harnessAgentControl.ts:4). */
-export type FactoryControl = 'stop' | 'restart' | 'resume'
+export type FactoryControl = 'stop' | 'restart' | 'resume' | 'new'
 /** The owner's answer, verbatim in shape from `harnessAgentControl`: a one-line note, or the refusal. */
 export type FactoryControlReceipt = {ok: true; note: string; document?: unknown} | {ok: false; error: string}
 /** The one owner call: `harness_agent_control` on the bound harness. Handed in by whoever holds the carrier and the binding. */
@@ -55,6 +56,7 @@ export interface FactoryControls {
 /** The ops the actions name. The owner addresses the bound harness, never one session, task or row, so each says so. */
 export const FACTORY_STOP_OP = 'harness_agent_control:stop (the bound harness)'
 export const FACTORY_LAUNCH_OP = 'harness_agent_control:restart (a stalled task) · resume (a queued one)'
+export const FACTORY_SEAT_OP = 'harness_agent_control:new (the agent dropped, on the bound harness — the agent chain\'s own drop)'
 export const FACTORY_RETRY_OP = 'harness_agent_control:restart (the stalled task, from its last good step)'
 export const FACTORY_BATCH_OP = 'harness_agent_control:resume (every queued task; the owner takes no row)'
 
@@ -123,6 +125,12 @@ function actionsFor(controls: FactoryControls, tracks: readonly WorldTrack[], cl
     }},
     launchStop: {op: FACTORY_BATCH_OP, run: columnId => columnIds.has(columnId) ? controls.control('resume') : refused(`"${columnId}" is not a batch row of this work.`)},
     // A stalled lane lights its retry (manual §6); the owner restarts the bound harness's stalled task.
+    // An agent dropped on the empty track is seated as the agent chain seats one (agent/agentChainDrag.ts chainDropDecision).
+    seat: {op: FACTORY_SEAT_OP, accepts: AGENT_CHAIN_MIME, run: payload => {
+      const dropped = decodeChainDrag(payload)
+      return dropped?.kind === 'chain-item' && dropped.drag.family === 'agent' ? controls.control('new')
+        : refused('Only an agent seats on a track; drop a session, skillset or seat on the agent chain.')
+    }},
     retry: {op: FACTORY_RETRY_OP, run: trackId => trackIds.has(trackId) ? controls.control('restart') : refused(`"${trackId}" is not a session of this work.`)},
   }
 }
