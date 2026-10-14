@@ -48,6 +48,8 @@ export function useFaceDrafts(submit: (changes: readonly ParamChange[]) => Promi
   const [base, setBase] = useState<Record<string, number | string | boolean>>({})
   const [drafts, setHeldDrafts] = useState<Record<string, number | string | boolean>>({})
   const [standing, setStanding] = useState<WriteStanding>('idle')
+  // The owner's own words when it refuses, shown where the change was asked for (never a generic line).
+  const [refusal, setRefusal] = useState<string | null>(null)
   // The drafts as they stand this instant: a control that drafts and commits in one handler (a toggle, a typed value)
   // commits what it just drafted, not the render's stale copy.
   const live = useRef(drafts)
@@ -85,6 +87,7 @@ export function useFaceDrafts(submit: (changes: readonly ParamChange[]) => Promi
       .map(([key, value]) => ({key, value}))
     if (!changes.length) return
     setStanding('pending')
+    setRefusal(null)
     try {
       await submit(changes)
       setBase(previous => ({...previous, ...Object.fromEntries(changes.map(change => [change.key, change.value]))}))
@@ -94,12 +97,13 @@ export function useFaceDrafts(submit: (changes: readonly ParamChange[]) => Promi
         return next
       })
       setStanding('idle')
-    } catch {
+    } catch (cause) {
       setStanding('refused') // drafts retained; the plate discloses the refusal
+      setRefusal(cause instanceof Error ? cause.message : typeof cause === 'string' ? cause : null)
     }
   }, [base, submit, setDrafts])
 
-  return {base, drafts, standing, adopt, setDraft, cancel, dirtyKeys, commit}
+  return {base, drafts, standing, refusal, adopt, setDraft, cancel, dirtyKeys, commit}
 }
 
 // ---------------------------------------------------------------------------
