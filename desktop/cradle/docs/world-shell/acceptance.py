@@ -297,14 +297,21 @@ def verify() -> None:
         if row["progress"]["failed"]["state"] == "yes":
             assert row["progress"]["exercised"]["state"] == "yes", f"Failure requires exercise: {row['id']}"
         assert {decision["source_id"] for decision in row["licence_decisions"]} == set(row["reference_sources"]), f"Per-target licence classification incomplete: {row['id']}"
+    licence_text_absent = []
     for ref in refs["sources"]:
         assert ref["classification"] in ("adopt", "clean-room", "interface-only")
         if ref["licence_source"]:
-            assert source(Path(ref["licence_source"]["path"])) == ref["licence_source"], f"Licence revision changed: {ref['id']}"
+            # The pinned digest is the licence record. Its text was read from a study clone; when that clone is gone
+            # and no code has entered from the source, the digest stands and the absence is named. Once code enters,
+            # the licence text must be present and match.
+            if not Path(ref["licence_source"]["path"]).exists() and not ref["code_entered"]:
+                licence_text_absent.append(ref["id"])
+            else:
+                assert source(Path(ref["licence_source"]["path"])) == ref["licence_source"], f"Licence revision changed: {ref['id']}"
         if ref["id"] in ("tldraw", "twine", "timelinejs3", "kdenlive", "olive", "shotcut"):
             assert ref["classification"] == "interface-only" and not ref["code_entered"], f"Uncleared adoption: {ref['id']}"
     counts = {str(lane): sum(row["lane"] == lane for row in rows) for lane in LANES}
-    result = {"schema": "techne.new-shell-register-verification/v1", "result": "passed", "scope": "identity / source revision / target text / dependency / licence / evidence-record integrity only; no target functionality asserted", "total": len(rows), "by_lane": counts, "by_status": dict(Counter(row["status"] for row in rows)), "progress_yes": {axis: sum(row["progress"][axis]["state"] == "yes" for row in rows) for axis in AXES}}
+    result = {"schema": "techne.new-shell-register-verification/v1", "result": "passed", "scope": "identity / source revision / target text / dependency / licence / evidence-record integrity only; no target functionality asserted", "total": len(rows), "by_lane": counts, "by_status": dict(Counter(row["status"] for row in rows)), "progress_yes": {axis: sum(row["progress"][axis]["state"] == "yes" for row in rows) for axis in AXES}, "licence_text_absent_no_code_entered": licence_text_absent}
     save("register-verification.json", result)
     print(json.dumps(result, ensure_ascii=False))
 
