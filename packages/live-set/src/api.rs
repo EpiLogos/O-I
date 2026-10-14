@@ -451,6 +451,7 @@ pub fn device_param_set(
 /// are flushed to disk, and are renamed over the set; the directory is flushed
 /// after. A crash or kill leaves either the old set or the new one, never a
 /// truncated file. A symlinked set is written at its target, so the link stays.
+/// Extended attributes (Finder tags, quarantine) are not carried to the new file.
 fn replace_file_atomically(path: &std::path::Path, bytes: &[u8]) -> Result<(), String> {
     use std::io::Write;
     let target = std::fs::canonicalize(path).map_err(|e| e.to_string())?;
@@ -462,9 +463,23 @@ fn replace_file_atomically(path: &std::path::Path, bytes: &[u8]) -> Result<(), S
         .ok_or_else(|| "the set has no file name".to_string())?
         .to_string_lossy()
         .into_owned();
-    let permissions = std::fs::metadata(&target)
-        .map_err(|e| e.to_string())?
-        .permissions();
+    let metadata = std::fs::metadata(&target).map_err(|e| e.to_string())?;
+    // The replace keeps what the old in-place write kept: a read-only set is refused, not swapped for a writable copy,
+    // and a hard-linked set is refused rather than silently split from its other names.
+    if metadata.permissions().readonly() {
+        return Err("the set is read-only; it is not written".into());
+    }
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::MetadataExt;
+        if metadata.nlink() > 1 {
+            return Err(
+                "the set has other hard links; replacing it would split them, so it is not written"
+                    .into(),
+            );
+        }
+    }
+    let permissions = metadata.permissions();
     let staged = dir.join(format!(".{name}.oi-write-{}", std::process::id()));
     let result = (|| -> std::io::Result<()> {
         let mut file = std::fs::OpenOptions::new()
@@ -474,13 +489,15 @@ fn replace_file_atomically(path: &std::path::Path, bytes: &[u8]) -> Result<(), S
         file.write_all(bytes)?;
         file.sync_all()?;
         std::fs::set_permissions(&staged, permissions)?;
-        std::fs::rename(&staged, &target)?;
-        std::fs::File::open(dir)?.sync_all()
+        std::fs::rename(&staged, &target)
     })();
-    if result.is_err() {
+    if let Err(error) = result {
         let _ = std::fs::remove_file(&staged);
+        return Err(format!("the set could not be written safely: {error}"));
     }
-    result.map_err(|e| format!("the set could not be written safely: {e}"))
+    // The set is replaced; flushing the directory makes the rename durable. A flush failure does not unwrite it.
+    let _ = std::fs::File::open(dir).and_then(|dir| dir.sync_all());
+    Ok(())
 }
 
 fn out_of_range(desc: &live_dynamics::params::ParamDesc, value: f64) -> String {
