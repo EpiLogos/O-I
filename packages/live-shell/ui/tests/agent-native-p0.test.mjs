@@ -250,6 +250,13 @@ test('ligament 4 — the setter bridge wires the armed values: registration, arr
   assert.ok(presented.some(([key, value]) => key === 'effort' && value === 'medium'), 'presentation keeps the control\u2019s value true')
   assert.equal(receipt.kind, 'fired', `the setter returns a fired receipt: ${JSON.stringify(receipt)}`)
   assert.deepEqual(captured.at(-1), {op: 'harness_agent_control', binding: BINDING, control: 'configure', value: {effort: 'medium'}}, 'the value ARRIVES through the bridge')
+  // The shell holds steer as a boolean; the carrier's input mode arrives as its word.
+  await sdkSetters.shellSetter('shell.setSteer')(true)
+  await sdkSetters.shellSetter('shell.setSteer')(false)
+  const sent = JSON.stringify(captured)
+  assert.match(sent, /"input_mode":"steer"/, 'steer arrives as input_mode steer'); assert.match(sent, /"input_mode":"queue"/, 'release arrives as queue')
+  assert.doesNotMatch(sent, /"input_mode":(true|false)/, 'never a boolean')
+  assert.ok(presented.some(([key, value]) => key === 'steer' && value === true), 'the presentation keeps the boolean')
   // The setter channel also answers refusals through the bridge: heartbeat
   // refuses naming the cron owner, nothing captured.
   const hbReceipt = await sdkSetters.shellSetter('shell.setHeartbeat')(false)
