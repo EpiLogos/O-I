@@ -257,3 +257,73 @@ test('the App hands the one spine the temporal hook holds to the transport, and 
   assert.equal(app.match(/createTimeSpine\(/g), null, 'App creates no spine of its own')
   assert.match(hook, /const spine = useMemo\(\(\) => createTimeSpine\(\), \[\]\);/)
 })
+
+// Seam 8, host side: the native door admits the device by its identity, the receiving window draws or refuses it by
+// name, and the Workbench's door pops out and redocks through the existing window doors. Channel: scripted only.
+// The build-time define the cradle's walk scenario reads at module evaluation (settings-apply-native.test.mjs does the same).
+globalThis.__CRADLE_WALK__ = false
+const {DeviceWindowBody, deviceAdmissionFault} = await import('../src/native/Detached.tsx')
+const {deviceIdentityOf, placeDeviceDetached, dropDeviceDetached, nativeDetachedBodySupported} = await import('../src/native/detachedKinds.ts')
+const boundDevice = (identity) => ({id: deviceBindingId(identity), kind: 'device', title: 'Probe', ref: deviceBindingId(identity), device: identity})
+
+test('a device is a native detached kind, and its identity alone carries the device', () => {
+  assert.equal(nativeDetachedBodySupported('device'), true)
+  const identity = identityFor(probeFamily(['device']))
+  assert.deepEqual(deviceIdentityOf(boundDevice(identity)), identity)
+  assert.equal(deviceIdentityOf({id: 'device:probe/probe-face', kind: 'device', title: 'Probe'}), null)
+})
+
+test('the receiving window draws the declared device for a valid identity, and refuses an invalid one by name', () => {
+  const declared = probeFamily(['device'])
+  const drawn = html(createElement(DeviceWindowBody, {binding: boundDevice(identityFor(declared)), transport, manifests: [declared]}))
+  assert.match(drawn, /data-device-window/)
+  assert.match(drawn, /data-device-face="probe-face"/)
+  assert.doesNotMatch(drawn, /data-device-fault/)
+  const undeclared = probeFamily(['flow'])
+  const refused = html(createElement(DeviceWindowBody, {binding: boundDevice(identityFor(undeclared)), transport, manifests: [undeclared]}))
+  assert.match(refused, /data-device-fault/)
+  assert.match(refused, /device detached kind/)
+  assert.doesNotMatch(refused, /data-device-window/)
+  assert.equal(deviceAdmissionFault(boundDevice(identityFor(declared)), [declared]), null)
+  assert.match(deviceAdmissionFault({...boundDevice(identityFor(declared)), id: 'device:probe/other'}, [declared]), /binding id does not name/)
+  assert.match(deviceAdmissionFault({id: 'device:probe/probe-face', kind: 'device', title: 'Probe'}, [declared]), /no device identity/)
+})
+
+test('the pop-out holds the device in the detached set, never as a centre tab, and a second pop-out finds the first', () => {
+  const identity = identityFor(probeFamily(['device']))
+  const binding = boundDevice(identity)
+  const empty = {root: null, surfaces: {}, detached: undefined, focusedGroupId: null}
+  const placed = placeDeviceDetached(empty, binding, '')
+  assert.deepEqual(placed.surfaces[binding.id], binding)
+  assert.deepEqual(placed.detached, [{surfaceId: binding.id, groupId: '', index: 0, pinned: false}])
+  assert.equal(placed.root, null)
+  assert.equal(placeDeviceDetached(placed, binding, '').detached.length, 1)
+  const dropped = dropDeviceDetached(placed, binding.id)
+  assert.equal(dropped.surfaces[binding.id], undefined)
+  assert.deepEqual(dropped.detached, [])
+})
+
+test('the Workbench door pops out and redocks through the existing window doors; the frame never draws a device as knowledge', async () => {
+  const workbench = await readFile(new URL('../src/native/Workbench.tsx', import.meta.url), 'utf8')
+  const popOut = workbench.slice(workbench.indexOf('const popOutDevice'), workbench.indexOf('const redockDevice'))
+  assert.match(popOut, /invoke\('window_detach'/)
+  assert.match(popOut, /kind: 'device'/)
+  assert.doesNotMatch(popOut, /detachBinding\(/)
+  const redock = workbench.slice(workbench.indexOf('const redockDevice'), workbench.indexOf('// The device door the racks read'))
+  assert.match(redock, /invoke\('window_redock_surface'/)
+  assert.doesNotMatch(redock, /book\.redock\(/)
+  assert.match(workbench, /publishDeviceWindowHost\(\{/)
+  const listener = workbench.slice(workbench.indexOf("'oi:window-redock'"), workbench.indexOf('latest.current.book.redock(id, binding.id)'))
+  assert.match(listener, /binding\.kind === 'device'[\s\S]*dropDeviceDetached/)
+  const frame = await readFile(new URL('../../../../desktop/cradle/src/workspace/DetachedFrame.tsx', import.meta.url), 'utf8')
+  const device = frame.indexOf('kind==="device"')
+  assert.ok(device > 0 && device < frame.indexOf('<KnowledgeSurface'), 'a device binding is drawn by its renderer, never the knowledge fallback')
+  assert.doesNotMatch(frame, /packages\/live-shell|live-shell\//, 'the cradle frame does not import the live shell')
+})
+
+test('every rack in the mode detail is handed the device door', async () => {
+  const modeDetail = await readFile(new URL('../src/shell/ModeDetail.tsx', import.meta.url), 'utf8')
+  const racks = modeDetail.match(/<InhabitantRack [^>]*\/>/g) ?? []
+  assert.ok(racks.length >= 5, 'the mode detail stands its racks')
+  for (const rack of racks) assert.match(rack, /deviceWindows=\{deviceWindows\}/, rack)
+})

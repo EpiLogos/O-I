@@ -1,12 +1,17 @@
 import {useCallback, useRef} from 'react'
 import {DetachedFrame} from '../../../../../desktop/cradle/src/workspace/DetachedFrame'
 import {checkpointDocuments} from '../../../../../desktop/cradle/src/document/frame'
+import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
+import type {InhabitantManifest} from '../inhabitants/manifest'
 import type {SurfaceBinding} from '../../../../../desktop/cradle/src/surface/types'
 import {CANDIDATE_WORKSPACE_KEY} from '../continuity/workspace'
 import {useWorkspace} from '../shell/workspace'
 import {readShellConfig} from './application'
 import {admitContribution} from './contributions'
-import {nativeDetachedBodySupported} from './detachedKinds'
+import {deviceBindingId, deviceIdentityFault, deviceIdentityOf, nativeDetachedBodySupported} from './detachedKinds'
+import {allInhabitantManifests} from '../inhabitants/manifest'
+import {loadWorldShellFamilies} from '../inhabitants/worldShellFamilies'
+import {DeviceFace} from '../inhabitants/inhabitantRack'
 
 /** Receives the original Windows owner's existing binding; no surface/session
  * is opened again and the original frame owns redock and navigation contracts. */
@@ -21,6 +26,14 @@ export function NativeDetached() {
     const epoch = latest.current.accessEpoch
     current(epoch)
     if (!nativeDetachedBodySupported(binding.kind)) throw Error('This surface has no native detached receiving body. Its binding has been retained.')
+    if (binding.kind === 'device') {
+      // A device is admitted by the manifests that declare it, never as a hosted contribution. The named fault is the refusal.
+      loadWorldShellFamilies()
+      const fault = deviceAdmissionFault(binding, allInhabitantManifests())
+      current(epoch)
+      if (fault) throw Error(fault)
+      return
+    }
     const config = await readShellConfig()
     current(epoch)
     admitContribution(binding, config.product_ids, config.contributions)
@@ -28,9 +41,35 @@ export function NativeDetached() {
   const beforeRelease = useCallback(async (binding: SurfaceBinding) => {
     const epoch = latest.current.accessEpoch
     current(epoch)
-    await checkpointDocuments([binding.id])
+    if (binding.kind !== 'device') await checkpointDocuments([binding.id])
     current(epoch)
   }, [])
+  const transport = workspace.transport
   return <DetachedFrame workspaceStorageKey={CANDIDATE_WORKSPACE_KEY} admitBinding={admitBinding}
-    beforeRelease={beforeRelease} ownerEpoch={`${workspace.accessEpoch}:${workspace.accessReady}`} />
+    beforeRelease={beforeRelease} renderDevice={binding => <DeviceWindowBody binding={binding} transport={transport}/>}
+    ownerEpoch={`${workspace.accessEpoch}:${workspace.accessReady}`} />
+}
+
+/** The named refusal for a device window's binding, or null where the admitted manifests stand for it (seam 8). The
+ * device's own identity is checked against the manifests, never against a hosted contribution. */
+export function deviceAdmissionFault(binding: SurfaceBinding, manifests: readonly InhabitantManifest[]): string | null {
+  const identity = deviceIdentityOf(binding)
+  if (!identity) return 'The device window carries no device identity.'
+  if (binding.id !== deviceBindingId(identity)) return 'The device binding id does not name its family and face.'
+  const fault = deviceIdentityFault(identity, manifests)
+  return fault ? `This device cannot be shown: ${fault}.` : null
+}
+
+/** The receiving body of a popped-out device (seam 8): the face its identity names, drawn from the manifests and the
+ * identity's aperture. A fault is refused by name, never drawn. No owner reading is passed in: the rack wires none today. */
+export function DeviceWindowBody({binding, transport, manifests = allInhabitantManifests()}: {
+  binding: SurfaceBinding
+  transport: KernelTransportStatus
+  /** The admitted manifests; the live receiving window reads the registry (the default). */
+  manifests?: readonly InhabitantManifest[]
+}) {
+  const fault = deviceAdmissionFault(binding, manifests)
+  const identity = deviceIdentityOf(binding)
+  if (fault || !identity) return <p role="alert" data-device-fault>{fault ?? 'The device window carries no device identity.'}</p>
+  return <DeviceFace identity={identity} manifests={manifests} transport={transport}/>
 }

@@ -1,9 +1,13 @@
+import {useSyncExternalStore} from 'react'
 import type {InhabitantManifest} from '../inhabitants/manifest'
+import type {DeviceWindowHost} from '../inhabitants/inhabitantRack'
 import type {CentralLocation} from '../../../../../desktop/cradle/src/kernel/types'
+import type {LayoutState, SurfaceBinding} from '../../../../../desktop/cradle/src/surface/types'
 
-/** Original Windows owner admission (src-tauri/src/windows.rs::window_detach).
- * Compiled hosted identities alone do not grant a detached receiving body. */
-const nativeDetachedKinds = new Set(['source', 'knowledge', 'file', 'encounter', 'browser', 'terminal', 'flow'])
+/** Original Windows owner admission (src-tauri/src/windows.rs::window_detach). The device kind (seam 8) is admitted by the
+ * same door through its identity alone (`admit_device_binding`). Compiled hosted identities alone do not grant a detached
+ * receiving body. */
+const nativeDetachedKinds = new Set(['source', 'knowledge', 'file', 'encounter', 'browser', 'terminal', 'flow', 'device'])
 export function nativeDetachedBodySupported(kind: string): boolean {
   return nativeDetachedKinds.has(kind)
 }
@@ -39,4 +43,47 @@ export function deviceIdentityFault(identity: DeviceDetachIdentity, manifests: r
   if (!(face.dock ?? ['dock']).includes('pop-out')) return `${identity.family}/${identity.face} does not declare pop-out`
   if (!(manifest.detachedKinds ?? []).includes('device')) return `${identity.family} does not declare the device detached kind`
   return null
+}
+
+/** A device window's binding: the workbench surface binding carrying the identity the native owner admits. The identity is
+ * the binding's own `device` field; it is never a kernel surface. */
+export type DeviceBinding = SurfaceBinding & {readonly device?: DeviceDetachIdentity}
+
+/** The identity a device window's binding carries, or null where the binding carries none. */
+export function deviceIdentityOf(binding: SurfaceBinding): DeviceDetachIdentity | null {
+  const device = (binding as DeviceBinding).device
+  if (!device || typeof device.family !== 'string' || typeof device.face !== 'string' || !device.aperture || typeof device.aperture !== 'object') return null
+  return device
+}
+
+/** The layout's own record of a popped-out device: its binding is held in the detached set (never as a centre tab), so the
+ * rack reads the same store the pane engine's detach door writes. */
+export function placeDeviceDetached(layout: LayoutState, binding: SurfaceBinding, groupId: string): LayoutState {
+  return {
+    ...layout,
+    surfaces: {...layout.surfaces, [binding.id]: binding},
+    detached: [...(layout.detached ?? []).filter(entry => entry.surfaceId !== binding.id), {surfaceId: binding.id, groupId, index: 0, pinned: false}],
+  }
+}
+
+/** A device returning to its rack: its detached entry and binding leave the layout. A device never returns as a centre tab. */
+export function dropDeviceDetached(layout: LayoutState, id: string): LayoutState {
+  const surfaces = {...layout.surfaces}
+  delete surfaces[id]
+  return {...layout, surfaces, detached: layout.detached?.filter(entry => entry.surfaceId !== id)}
+}
+
+// The receiving Workbench publishes its host door; the racks read it. Null where no Workbench stands (no pop-out door).
+let deviceWindowHost: DeviceWindowHost | null = null
+const deviceWindowListeners = new Set<() => void>()
+export function publishDeviceWindowHost(host: DeviceWindowHost | null): void {
+  deviceWindowHost = host
+  for (const listener of deviceWindowListeners) listener()
+}
+function subscribeDeviceWindowHost(listener: () => void): () => void {
+  deviceWindowListeners.add(listener)
+  return () => {deviceWindowListeners.delete(listener)}
+}
+export function useDeviceWindowHost(): DeviceWindowHost | null {
+  return useSyncExternalStore(subscribeDeviceWindowHost, () => deviceWindowHost, () => null)
 }

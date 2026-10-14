@@ -2,7 +2,7 @@ import {ObjectSurface} from "../agent/objects/ObjectSurface";
 import {DraftSurface} from "../flow/DraftSurface";
 import {FlowSurface} from "../flow/FlowSurface";
 import {EncounterSurface} from "../encounter/EncounterSurface";
-import {lazy,Suspense,useCallback,useEffect,useRef,useState} from "react";
+import {lazy,Suspense,useCallback,useEffect,useRef,useState,type ReactNode} from "react";
 // The same lazy bodies as the workbench (one law for both windows).
 const TerminalSurface=lazy(()=>import("../terminal/TerminalSurface").then((module)=>({default:module.TerminalSurface})));
 const BrowserSurface=lazy(()=>import("../browser/BrowserSurface").then((module)=>({default:module.BrowserSurface})));
@@ -26,8 +26,11 @@ export interface DetachedFrameOptions {
   admitBinding?: (binding: SurfaceBinding) => Promise<void>;
   beforeRelease?: (binding: SurfaceBinding) => Promise<void>;
   ownerEpoch?: string;
+  /** The live shell's receiving body for a popped-out device (seam 8). The frame never imports it: a device binding with no
+   * renderer shows its honest refusal, never a knowledge surface. */
+  renderDevice?: (binding: SurfaceBinding) => ReactNode;
 }
-export function DetachedFrame({workspaceStorageKey="oi-cradle.workspaces.v1",admitBinding,beforeRelease,ownerEpoch}:DetachedFrameOptions={}) {
+export function DetachedFrame({workspaceStorageKey="oi-cradle.workspaces.v1",admitBinding,beforeRelease,ownerEpoch,renderDevice}:DetachedFrameOptions={}) {
   const kernel=useKernel();
   const leader=useSearchLeader();
   const [searchOpen,setSearchOpen]=useState(false);
@@ -110,7 +113,8 @@ export function DetachedFrame({workspaceStorageKey="oi-cradle.workspaces.v1",adm
       }catch{/* The main workspace owns recovery. */}
       if(disposed)return;
       setRecord(r);
-      await kernel.surfaceFocus(r.binding.id);
+      // A device has no kernel surface to focus; its window stands on the admitted identity alone.
+      if(r.binding.kind!=="device")await kernel.surfaceFocus(r.binding.id);
     }).catch(e=>{if(!disposed)setError(String(e));}).finally(()=>{if(!disposed)setLoading(false);});
     return()=>{disposed=true;};
   },[loadAttempt,workspaceStorageKey,admitBinding,ownerEpoch]);
@@ -175,7 +179,7 @@ export function DetachedFrame({workspaceStorageKey="oi-cradle.workspaces.v1",adm
     }finally{if(timer)clearTimeout(timer);cleanup();}
   };
   return <div className="desktop-shell detached-shell"><header className="desktop-bar"><strong className="desktop-brand">O-I</strong><span>{record?.binding.title}</span><button onClick={redock} disabled={redocking}>{redocking?"Re-docking…":"Re-dock"}</button></header>{error&&<p role="alert">{error} {!record&&<button onClick={()=>setLoadAttempt(n=>n+1)} disabled={loading}>Retry opening surface</button>}</p>}
-    <main ref={bodyRef} className="desktop-centre"><Suspense fallback={null}>{record?.binding.kind==="object"?<ObjectSurface binding={record.binding}/>:record?.binding.kind==="terminal"?<TerminalSurface binding={record.binding}/>:record?.binding.kind==="flow"?<FlowSurface binding={record.binding}/>:record?.binding.kind==="draft"?<DraftSurface binding={record.binding}/>:record?.binding.kind==="browser"?<BrowserSurface key={record.binding.id} binding={record.binding}/>:record?.binding.kind==="encounter"?<EncounterSurface key={record.binding.id} binding={record.binding} onView={view=>void updateView(view)} presentation="tab"/>:record?.binding.kind==="file"?<FileSurface key={record.binding.id} binding={record.binding} onView={view=>void updateView(view)}/>:record?.binding.kind==="source"?<SourceSurface binding={record.binding}/>:record?.binding.kind==="system"?<SystemPanel key={record.binding.id} binding={record.binding}/>:record?.binding.kind==="explore"||record?.binding.kind==="presentation"?<ExploreSurface key={record.binding.id} binding={record.binding}/>:record&&<KnowledgeSurface binding={record.binding} onOpen={navigate}/>}</Suspense></main>
+    <main ref={bodyRef} className="desktop-centre"><Suspense fallback={null}>{record?.binding.kind==="device"?(renderDevice?.(record.binding)??<p role="alert">This device has no receiving body in this window.</p>):record?.binding.kind==="object"?<ObjectSurface binding={record.binding}/>:record?.binding.kind==="terminal"?<TerminalSurface binding={record.binding}/>:record?.binding.kind==="flow"?<FlowSurface binding={record.binding}/>:record?.binding.kind==="draft"?<DraftSurface binding={record.binding}/>:record?.binding.kind==="browser"?<BrowserSurface key={record.binding.id} binding={record.binding}/>:record?.binding.kind==="encounter"?<EncounterSurface key={record.binding.id} binding={record.binding} onView={view=>void updateView(view)} presentation="tab"/>:record?.binding.kind==="file"?<FileSurface key={record.binding.id} binding={record.binding} onView={view=>void updateView(view)}/>:record?.binding.kind==="source"?<SourceSurface binding={record.binding}/>:record?.binding.kind==="system"?<SystemPanel key={record.binding.id} binding={record.binding}/>:record?.binding.kind==="explore"||record?.binding.kind==="presentation"?<ExploreSurface key={record.binding.id} binding={record.binding}/>:record&&<KnowledgeSurface binding={record.binding} onOpen={navigate}/>}</Suspense></main>
     {searchOpen&&<SearchOverlay leader={leader.shift} onLeaderChange={leader.change} shortcutError={leader.error} project={record?.binding.project} onClose={()=>setSearchOpen(false)} onOpen={navigate}/>}
   </div>;
 }

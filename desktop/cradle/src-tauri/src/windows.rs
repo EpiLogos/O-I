@@ -40,6 +40,9 @@ pub struct Binding {
     pub browser: Option<serde_json::Value>,
     pub terminal: Option<serde_json::Value>,
     pub flow: Option<serde_json::Value>,
+    /// A popped-out device's identity (seam 8): the family, face and aperture its manifest declares. A device has no
+    /// kernel surface; its binding id is `device:{family}/{face}` (native/detachedKinds.ts `deviceBindingId`).
+    pub device: Option<serde_json::Value>,
     /// Presentation metadata travels with the binding rather than relying
     /// on another renderer's potentially stale localStorage snapshot.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -54,6 +57,33 @@ pub struct Detached {
 #[derive(Default)]
 pub struct Windows(pub Mutex<BTreeMap<String, Detached>>);
 static NEXT: AtomicU64 = AtomicU64::new(1);
+
+/// The device binding id the TypeScript door mints (`deviceBindingId` in native/detachedKinds.ts): `device:{family}/{face}`.
+fn device_binding_id(device: &serde_json::Value) -> Result<String, &'static str> {
+    let part = |key: &str| {
+        device
+            .get(key)
+            .and_then(serde_json::Value::as_str)
+            .filter(|v| !v.is_empty())
+    };
+    let family = part("family").ok_or("Device identity has no family")?;
+    let face = part("face").ok_or("Device identity has no face")?;
+    Ok(format!("device:{family}/{face}"))
+}
+
+/// A device has no kernel surface to match: its identity admits it. The binding id and its reference must both name the
+/// family and face the identity carries, so a mismatched id is refused before any window is built.
+pub(crate) fn admit_device_binding(binding: &Binding) -> Result<(), String> {
+    let identity = binding
+        .device
+        .as_ref()
+        .ok_or("Device identity is missing")?;
+    let expected = device_binding_id(identity)?;
+    if binding.id != expected || binding.reference.as_deref() != Some(expected.as_str()) {
+        return Err("Device binding differs from its device identity".into());
+    }
+    Ok(())
+}
 
 #[tauri::command]
 pub fn window_detach(
@@ -70,14 +100,28 @@ pub fn window_detach(
         let host = app.state::<KernelHost>();
         let mut kernel = host.0.lock().map_err(|_| "Kernel unavailable")?;
         let snapshot = kernel.snapshot();
-        let surface = snapshot
-            .surfaces
-            .get(&binding.id)
-            .ok_or("Resolve the surface before detaching")?;
-        if surface.kind != binding.kind || surface.source_ref != binding.reference {
-            return Err("Detached binding differs from the kernel subject".into());
+        if binding.kind == "device" {
+            admit_device_binding(&binding)?;
+        } else {
+            let surface = snapshot
+                .surfaces
+                .get(&binding.id)
+                .ok_or("Resolve the surface before detaching")?;
+            if surface.kind != binding.kind || surface.source_ref != binding.reference {
+                return Err("Detached binding differs from the kernel subject".into());
+            }
         }
-        if !matches!(binding.kind.as_str(), "source" | "knowledge" | "file" | "encounter" | "browser" | "terminal" | "flow") {
+        if !matches!(
+            binding.kind.as_str(),
+            "source"
+                | "knowledge"
+                | "file"
+                | "encounter"
+                | "browser"
+                | "terminal"
+                | "flow"
+                | "device"
+        ) {
             return Err("This surface has no native detached body".into());
         }
         if binding.kind == "file" {
@@ -183,7 +227,8 @@ pub fn window_detach(
     };
     let handle = app.clone();
     detached.on_window_event(move |event| {
-        if matches!(event, WindowEvent::Focused(true)) {
+        // A device has no kernel surface to focus; its window is focused without a kernel receipt.
+        if matches!(event, WindowEvent::Focused(true)) && record.binding.kind != "device" {
             let receipts = handle
                 .state::<KernelHost>()
                 .0
@@ -277,6 +322,40 @@ mod detached_binding_lookup_tests {
     fn detached_callers_cannot_override_their_registered_label() {
         assert!(detached_binding_label("surface-1", Some("surface-2")).is_err());
         assert!(detached_binding_label("surface-1", Some("surface-1")).is_err());
+    }
+}
+#[cfg(test)]
+mod device_binding_admission_tests {
+    use super::{admit_device_binding, Binding};
+    use serde_json::json;
+    const FACE: &str = "device:probe/face";
+    const OTHER: &str = "device:probe/other";
+    fn device(id: &str, reference: Option<&str>, family: &str, face: &str) -> Binding {
+        serde_json::from_value(json!({
+            "id": id,
+            "kind": "device",
+            "title": "Probe",
+            "ref": reference,
+            "device": {"family": family, "face": face, "aperture": {"day": null, "flow": null, "conversation": null, "instrument": null}},
+        }))
+        .unwrap()
+    }
+    #[test]
+    fn a_device_is_admitted_with_its_matching_binding_id() {
+        assert_eq!(
+            admit_device_binding(&device(FACE, Some(FACE), "probe", "face")),
+            Ok(())
+        );
+    }
+    #[test]
+    fn a_mismatched_device_binding_id_is_refused() {
+        assert!(admit_device_binding(&device(OTHER, Some(OTHER), "probe", "face")).is_err());
+        assert!(admit_device_binding(&device(FACE, None, "probe", "face")).is_err());
+        assert!(admit_device_binding(&device(FACE, Some(OTHER), "probe", "face")).is_err());
+        assert!(admit_device_binding(&device(FACE, Some(FACE), "", "face")).is_err());
+        let mut without_identity = device(FACE, Some(FACE), "probe", "face");
+        without_identity.device = None;
+        assert!(admit_device_binding(&without_identity).is_err());
     }
 }
 #[tauri::command]
