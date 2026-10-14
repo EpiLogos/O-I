@@ -375,7 +375,9 @@ export function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "gro
         </IconTabStrip>
         <div className="pane-tools">
           {props.stripTools}
-          {props.paneGrammar && active && state.surfaces[active]?.projection && (state.surfaces[active].projection?.subject_ref || followsSelection(state.surfaces[active].projection!.kind)) && (() => {
+          {/* Follow/Pin stands only for a pane whose kind follows the selection: a pane that holds its own subject (a Central
+            document) has nothing to follow, and unpinning it swapped the Day for the latest Flow (lane F, 14 Oct). */}
+          {props.paneGrammar && active && state.surfaces[active]?.projection && followsSelection(state.surfaces[active].projection!.kind) && (() => {
             const pinnedTo = state.surfaces[active].projection?.subject_ref;
             const canPin = !!props.paneGrammar.selectionRef;
             return <button type="button" className="pane-follow" data-pane-follow={pinnedTo ? "pinned" : "following"} aria-pressed={!pinnedTo}
