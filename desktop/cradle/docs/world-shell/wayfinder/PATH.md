@@ -91,20 +91,26 @@ bullet twice gets one Sonnet diagnostic; never a third builder attempt.
 
 ## 7. Open claims
 
-One branch, one run (`dlw/build`; #675 landed; PR #677 open for F0–F5 and the first wave). Builders are module builders
-(Sonnet by default), up to six at a time (owner, 14 Oct: six lanes, type-checks serialised through one lock because the
-machine runs swap-full; no task chips — side work is a builder lane here), each with an exclusive zone; the lead
-converges, commits and keeps this table true. Tickets and resolutions live in `tickets/`.
+One branch, one run (`dlw/build`; #675 landed; PR #677 open for F0–F5 and the waves after). Builders are Opus, at most
+three at a time, driven from the lead session (owner, 14 Oct evening: "run like 3 opus subagents and drive from the main
+session … get work done well first time round"); type-checks serialised through one lock because the machine runs
+swap-full; no task chips. Each builder has an exclusive zone and a brief carrying the mockup rendered to PNG, the
+objections verbatim and the full validation (`BRIEF-BUILDER.md`); the lead converges, commits and keeps this table true.
 
 | Ticket | Who | Zone | Since |
 |---|---|---|---|
-| R2 objections 9–10: Central's devices write at every size; a day is a stop standing its entries | Sonnet builder | `central/devices/**`, `timeline/centralTrackAdapter.ts` | 14 Oct |
-| R2 objections 3, 5, 14: pin/follow real; browser category per mode; instrument rows; a real torus picture | Sonnet builder | `frame/InstrumentsSection.tsx`, `frame/instruments.ts`, `frame/browser/Browser.tsx`, `live/TorusOnChain.tsx`, the projection pane modules | 14 Oct |
-| R2 objection 6 + mockup: Factory's centre is the shared grid beside the thread; the legacy grid and run viewer retire | Sonnet builder | `agent/factoryCentre.ts`, `agent/AgentShellRoot.tsx`, the two retired views | 14 Oct |
-| Mockup: Central's documents open as panes (the Day, a Flow, a Thing) | Sonnet builder | `central/documents/**`, the Central rows' open gesture in `shell/ModeBrowser.tsx` | 14 Oct |
-| R2 objection 4 + F7: Expressions' Clip side takes the scene focus and the Scene's own controls; its bar retires | Sonnet builder | `components/TransportBar.tsx`, `components/NativeTransportBar.tsx`, the Expressions clip body | 14 Oct |
-| R2 objections 12–13: one `temporal_events_read` poller; the tripwire over `src/**` | Sonnet builder | the two temporal readers, `shell/paneInstrument.ts`, `components/StatusBar.tsx`, the tripwire | 14 Oct |
-| Native screen pass against the mockup renders (F1–F9); N1; mounting N2's subject door | lead | the frame, `App.tsx`, `native/Workbench.tsx`, `shell/modeFrames.ts`, the book | 14 Oct |
+| Detail row A: one head for the row, the Clip view anatomy, Central's and Factory's two sides, the status bar's side names | Opus builder | `frame/detail/**`, `shell/modeDetails.tsx`, the Central/Factory bodies in `shell/ModeDetail.tsx`, `central/CentralClipChooser.tsx`, the Factory chain files | 14 Oct |
+| Detail row B: Expressions' Studio plate and scene clip; Technē's instruments rack and event clip | Opus builder | `components/NativeWorldDetail.*`, `components/expressions/**`, the Technē bodies in `shell/ModeDetail.tsx`, the Technē rack files | 14 Oct |
+| Native screen pass against the mockup renders; the transport's readings per mode; N1; mounting N2's subject door | lead | the frame, `App.tsx`, `native/Workbench.tsx`, `shell/modeFrames.ts`, the book | 14 Oct |
+
+Landed this evening (14 Oct, after the R2 lanes, which all landed): the one browser and the one transport at the
+mockup's floor and the mockup's colours in every mode (`72f6e0d95`, `2891064ed`); every device the mockup's plate and
+the detail row a chain of plates (`c567015e2`); the widget rail at the mockup's floor — the agent widget is the real
+conversation, the packet the prepared context, the trail with times (`03ce86fd4`, `b9a0a8048`). Found by looking and
+fixed: the detail row drew nothing in any mode since F4 (its host had no grid area; computer-use); kernel tabs failed at
+every launch on retired owner access (admitted before `operationReady`; computer-use); centre panes drew blank after a
+mode switch (two React roots on one pane element; headless, `cd5b5553c`); Live opened on Central's Day and Flow (the
+pre-F1 rename took Central's seeded tree; headless, `13cd48a1d`).
 
 R2 review (14 Oct, Sonnet): FAIL — 15 objections; 1, 2, 7, 8, 11 and the transport's flag lights fixed by the lead and a
 builder the same evening; the rest are the lanes above. The owner, watching the candidate: options inside the pane (the
