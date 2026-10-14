@@ -4,6 +4,8 @@ import fs from 'node:fs';
 import {blankJourney,blankScene,clone,validateJourney} from '../build/model.js';
 import {supersededDraft,recoveryDiff,recoveryDiffLines,settleHostedDraft,mergeTakeIntoDraft,basisSuperseded,draftValue,splitDraftValue,quarantineNotice} from '../build/draftStorage.js';
 import {draftStatusLine} from '../build/draftSchedule.js';
+import {keepOwnerQuarantine,readOwnerQuarantine,removeOwnerQuarantineEntry,draftMaterialKey,ownerQuarantineRows,OwnerQuarantineFullError,fullQuarantineNotice} from '../build/draftStorage.js';
+import {libraryHTML} from '../build/expressions.js';
 import {recoveryOffer,planRecoveryChoice,draftCopy,readUncleanExit,markSessionOpen,markSessionClosed,offerClock,SESSION_MARK_KEY,TAB_INSTANCE_KEY,tabInstance,recordBootExit,bootWasUnclean,writeRecord,loadRecord,removeRecord,listQuarantine,quarantine,quarantinedCopy,quarantinedName,encodeSlot} from '../build/draftStorage.js';
 
 // lane-3 E19: after an unclean exit, the draft and the last saved copy are both kept and the owner chooses.
@@ -386,8 +388,8 @@ test('E19 hosted: a draft at its base with no later edits is kept aside with its
   assert.equal(names().includes('choose'),false,'a superseded draft is never offered');
   assert.equal(owners.settled.has('h1'),true);
   assert.match(out.kept,/^An older draft of this Expression was kept aside \(not opened\); the saved version opened\./,'the notice shows');
-  assert.match(out.kept,/Its native draft record is kept/,'the native kept copy is named');
-  assert.match(out.kept,/Library quarantine of this browser/,'the webview kept copy is named');
+  assert.match(out.kept,/quarantine in the native owner/,'the owner quarantine is named as where the copy is');
+  assert.match(out.kept,/its draft record is kept too/,'the native row is named as kept');
  }
 });
 test('E19 hosted: a draft whose base is behind the checkpoint, with no edits after it, is superseded by the checkpoint', async()=>{
@@ -496,7 +498,7 @@ test('E19 base: the basis rides under one reserved key and never reaches the Jou
 test('E19 notice: a kept draft names what happened and where the kept copy is; the frame carries it to its next status and the browser shows a toast', ()=>{
  const nw=fs.readFileSync(new URL('../src/nativeWorkspace.ts',import.meta.url),'utf8');
  const app=fs.readFileSync(new URL('../src/app.ts',import.meta.url),'utf8');
- assert.match(quarantineNotice('superseded',true),/^An older draft of this Expression was kept aside \(not opened\); the saved version opened\. Its native draft record is kept/);
+ assert.match(quarantineNotice('superseded',true),/^An older draft of this Expression was kept aside \(not opened\); the saved version opened\. The verbatim copy is in this Expression's quarantine in the native owner, and its draft record is kept too\.$/);
  assert.match(quarantineNotice('superseded',false),/A verbatim copy is in the Library quarantine of this browser\.$/);
  assert.ok(nw.includes("notice=keptNotice?`${text} ${keptNotice}`:text;keptNotice='';"),'the notice rides the next status line, and is never dropped');
  assert.ok(nw.includes('if(settled.kept)keptNotice=settled.kept;'),'the settle sets the notice');
@@ -539,4 +541,219 @@ test('E19: the choice dialog names what changed in a style rule that uses tokens
  const rules=css.split('\n').filter(line=>line.startsWith('.recovery-diff'));
  assert.equal(rules.length,3,'the list, its items and their markers are styled');
  assert.ok(rules.every(rule=>!/#[0-9a-fA-F]{3,8}\b|rgba?\(/.test(rule)),'no literal colours');
+});
+
+// lane-3 E19 (owner quarantine): the native owner keeps each superseded draft of an Expression verbatim. The owner is modelled here by its
+// own rules (one record per Expression, revisions, the same material kept once, a bound of 16 that refuses by name, explicit removal only).
+function ownerQuarantineFake(overrides={}){
+ const rows=new Map();let sequence=0;const calls=[];
+ const send=async request=>{
+  calls.push(request.operation);
+  if(overrides.send)return overrides.send(request,rows);
+  if(request.operation==='read'){
+   const row=rows.get(request.id);
+   return {schema:'oi.expression-recovery/v1',state:'ready',record:row?{id:request.id,scope:request.scope,kind:'draft_quarantine',revision:row.revision,value:row.value}:null};
+  }
+  if(request.operation==='keep_draft_quarantine'){
+   const row=rows.get(request.expression_ref),current=row?row.revision:null;
+   if(current!==request.expected_revision)return {state:'revision_conflict',current_revision:current};
+   const id=draftMaterialKey(request.text),entries=row?[...row.value.entries]:[];
+   if(entries.some(entry=>entry.id===id))return {state:'quarantine_kept',kept:false,entry_id:id,revision:current};
+   if(entries.length>=16)return {state:'quarantine_full',limit:16,kept:entries.length,revision:current};
+   entries.push({id,draft_id:request.draft_id,reason:request.reason,kept_at_unix_ms:1000+sequence,text:request.text});
+   sequence+=1;rows.set(request.expression_ref,{revision:sequence,value:{schema:'oi.draft-quarantine/v1',expression_ref:request.expression_ref,entries}});
+   return {state:'quarantine_kept',kept:true,entry_id:id,revision:sequence};
+  }
+  if(request.operation==='remove_draft_quarantine'){
+   const row=rows.get(request.expression_ref);
+   if(!row||row.revision!==request.expected_revision)return {state:'revision_conflict',current_revision:row?row.revision:null};
+   const entries=row.value.entries.filter(entry=>entry.id!==request.entry_id);
+   if(entries.length===row.value.entries.length)throw new Error('No kept draft with that identity is quarantined for this Expression. Nothing was removed.');
+   sequence+=1;rows.set(request.expression_ref,{revision:sequence,value:{...row.value,entries}});
+   return {state:'quarantine_entry_removed',entry_id:request.entry_id,remaining:entries.length,revision:sequence};
+  }
+  throw new Error(`unexpected ${request.operation}`);
+ };
+ return {send,rows,calls};
+}
+const basisText=(journey,superseded=false)=>JSON.stringify(draftValue(journey,{schema:'oi.draft-basis/v1',revision:7,edited:false,...(superseded?{superseded:true}:{})}));
+const kept={expressionRef:'expression:owner-1',scope:'expressions',draftId:'k1',reason:'No edits after its base.'};
+
+test('E19 owner quarantine: a superseded draft is kept verbatim, read back before anything else, and the same material is kept once', async()=>{
+ const draft=expression('k1','Kept draft',T0,2);
+ const fake=ownerQuarantineFake();
+ const text=basisText(draft);
+ const first=await keepOwnerQuarantine(fake.send,{...kept,text});
+ assert.equal(first.kept,true);
+ const reading=await readOwnerQuarantine(fake.send,kept.expressionRef,kept.scope);
+ assert.equal(reading.entries.length,1);
+ assert.equal(reading.entries[0].text,text,'the owner holds the verbatim native text');
+ assert.equal(reading.entries[0].draft_id,'k1');
+ assert.equal(reading.entries[0].reason,'No edits after its base.');
+ assert.ok(reading.entries[0].kept_at_unix_ms>0,'the owner states the time it was kept');
+ // The same draft kept again with its owner-kept flag set is one copy: nothing is written.
+ const again=await keepOwnerQuarantine(fake.send,{...kept,text:basisText(draft,true)});
+ assert.equal(again.kept,false);
+ assert.equal((await readOwnerQuarantine(fake.send,kept.expressionRef,kept.scope)).entries.length,1);
+ assert.equal(draftMaterialKey(basisText(draft,true)),draftMaterialKey(text),'the flag and the timestamp are not material');
+});
+
+test('E19 owner quarantine: a stale basis, a copy that is not there after keeping, a copy that differs, and a full quarantine all throw and keep nothing', async()=>{
+ const draft=expression('k1','Kept draft',T0,2);
+ const text=basisText(draft);
+ const stale=ownerQuarantineFake({send:async(request,rows)=>request.operation==='keep_draft_quarantine'?{state:'revision_conflict',current_revision:9}:(request.operation==='read'?{state:'ready',record:null}:assert.fail('unexpected'))});
+ await assert.rejects(keepOwnerQuarantine(stale.send,{...kept,text}),/changed while the draft was being kept\. Nothing was kept or removed/);
+ // A keep acknowledged but not found on the read back.
+ const missing=ownerQuarantineFake({send:async(request,rows)=>{
+  if(request.operation==='keep_draft_quarantine')return {state:'quarantine_kept',kept:true,entry_id:'x',revision:1};
+  return {state:'ready',record:null};
+ }});
+ await assert.rejects(keepOwnerQuarantine(missing.send,{...kept,text}),/not in the native owner quarantine after keeping/);
+ // A keep whose read back holds different text is refused, not trusted.
+ const altered=ownerQuarantineFake({send:async(request,rows)=>{
+  if(request.operation==='keep_draft_quarantine')return {state:'quarantine_kept',kept:true,entry_id:draftMaterialKey(request.text),revision:1};
+  return {state:'ready',record:{id:kept.expressionRef,scope:'expressions',kind:'draft_quarantine',revision:1,value:{entries:[{id:draftMaterialKey(text),draft_id:'k1',reason:'r',kept_at_unix_ms:1,text:text.replace('Kept draft','Edited')}]}}};
+ }});
+ await assert.rejects(keepOwnerQuarantine(altered.send,{...kept,text}),/differs from the draft/);
+ // A full quarantine refuses by name; the owner's rule decides, the frame does not drop an old copy.
+ const full=ownerQuarantineFake();
+ for(let n=0;n<16;n++)await keepOwnerQuarantine(full.send,{...kept,draftId:`f${n}`,text:basisText(expression(`f${n}`,`Full ${n}`,T0,n+1))});
+ await assert.rejects(keepOwnerQuarantine(full.send,{...kept,draftId:'overflow',text:basisText(expression('overflow','Over',T0,2))}),err=>err instanceof OwnerQuarantineFullError&&err.limit===16&&/kept drafts are full \(16\)/.test(err.message));
+ assert.equal((await readOwnerQuarantine(full.send,kept.expressionRef,kept.scope)).entries.length,16,'the full quarantine kept all of its drafts');
+});
+
+test('E19 owner quarantine: a kept draft is removed only by its identity, and a reading that does not validate is refused', async()=>{
+ const draft=expression('k1','Kept draft',T0,2);
+ const fake=ownerQuarantineFake();
+ const {entryId}=await keepOwnerQuarantine(fake.send,{...kept,text:basisText(draft)});
+ const other=await keepOwnerQuarantine(fake.send,{...kept,draftId:'k2',text:basisText(expression('k2','Second',T1,2))});
+ assert.equal(await removeOwnerQuarantineEntry(fake.send,kept.expressionRef,kept.scope,entryId),1,'one entry removed, the other remains');
+ const left=await readOwnerQuarantine(fake.send,kept.expressionRef,kept.scope);
+ assert.deepEqual(left.entries.map(entry=>entry.id),[other.entryId]);
+ await assert.rejects(removeOwnerQuarantineEntry(fake.send,kept.expressionRef,kept.scope,'absent'),/Nothing was removed/);
+ const broken=ownerQuarantineFake({send:async()=>({state:'ready',record:{revision:'x',value:{entries:[]}}})});
+ await assert.rejects(readOwnerQuarantine(broken.send,kept.expressionRef,kept.scope),/without its revision or entries/);
+ const invalid=ownerQuarantineFake({send:async()=>({state:'ready',record:{revision:1,value:{entries:[{id:'a'}]}}})});
+ await assert.rejects(readOwnerQuarantine(invalid.send,kept.expressionRef,kept.scope),/does not validate/);
+});
+
+test('E19 owner quarantine: the hosted keep writes the owner first, reads it back, and only then the webview copies; the native row is never removed', ()=>{
+ const hosted=fs.readFileSync(new URL('../src/draftStorage.ts',import.meta.url),'utf8');
+ const recovery=fs.readFileSync(new URL('../src/recovery.ts',import.meta.url),'utf8');
+ const nw=fs.readFileSync(new URL('../src/nativeWorkspace.ts',import.meta.url),'utf8');
+ const keep=recovery.slice(recovery.indexOf('export async function keepHostedDraft('),recovery.indexOf('/** The owner\'s quarantine for one Expression'));
+ assert.ok(keep.indexOf('await keepOwnerQuarantine(')<keep.indexOf('await applyRecoveryPlan({...plan,removeDraft:false}'),'the owner copy is confirmed before any webview copy');
+ assert.ok(!keep.includes('removeDraft:true')&&!keep.includes('removeRecord'),'the hosted keep never removes a draft');
+ const owner=hosted.slice(hosted.indexOf('export async function keepOwnerQuarantine('),hosted.indexOf('/** Remove one kept draft by its entry identity'));
+ assert.ok(owner.indexOf("send({operation:'keep_draft_quarantine'")<owner.indexOf('const after=await readOwnerQuarantine(send,kept.expressionRef'),'the copy is read back after the keep');
+ assert.ok(owner.indexOf('const after=await readOwnerQuarantine(send,kept.expressionRef')<owner.indexOf('const same='),'the read back is compared before the copy is trusted');
+ assert.ok(nw.includes('keepDraft:(plan,draft,text)=>{const expressionRef=found.record.view?.document.expression_ref;'),'the settle keeps through the owner, naming the Expression');
+ assert.ok(!nw.includes('keepDraft:(plan,draft,text)=>applyRecoveryPlan'),'the webview-only keep is gone from the hosted path');
+ assert.ok(!/\bremoveOwnerKeptDraft\b|removeOwnerQuarantineEntry\(/.test(nw+recovery.replace(/export function removeOwnerKeptDraft\([^\n]*\n?/,'')),'nothing in the frame removes a kept draft on its own');
+});
+
+test('E19 dialog: the saved row names the owner save time only when the owner states one; a hosted offer never shows the conversion time', ()=>{
+ const app=fs.readFileSync(new URL('../src/app.ts',import.meta.url),'utf8');
+ assert.ok(app.includes("offer.revision===undefined?esc(offerClock(offer.savedAt,now)):'Owner save time not recorded'"),'a hosted saved row never shows the regenerated checkpoint time');
+ assert.ok(app.includes('<dt>Revision</dt><dd>${esc(basis)}</dd>'),'the checkpoint revision is named');
+});
+
+// lane-3 E19 (full quarantine never stops an open): a kept draft the owner refuses because its quarantine is full opens the checkpoint.
+// The native draft row is left exactly as it is (not removed, not marked kept); it is not settled, so the next open after space is freed keeps it.
+test('E19 full quarantine: an older draft is not kept, the checkpoint opens with the named notice, and the row is left as it is', async()=>{
+ const saved=expression('f1','Checkpoint',T1),older=expression('f1','Checkpoint',T0,2);
+ const made=hostedOwners();
+ let full=true;
+ made.owners.keepDraft=async(plan,draft,text)=>{made.calls.push({call:'keep',plan,draft,text});if(full)throw new OwnerQuarantineFullError(16);};
+ const out=await settleHostedDraft('f1',hostedRow(older,basisOf(7,false)),saved,made.owners);
+ assert.equal(out.kind,'checkpoint','the open proceeds on the checkpoint');
+ assert.equal(material(out.journey),material(saved),'nothing is adopted over the checkpoint');
+ assert.equal(out.kept,fullQuarantineNotice(16));
+ assert.equal(out.kept,"This Expression's kept drafts are full (16); an older draft stays as its draft and was not opened. Remove a kept draft to keep this one aside.");
+ assert.equal(made.names().includes('mark'),false,'the native row is not marked kept');
+ assert.equal(made.names().includes('remove'),false,'the native row is not removed');
+ assert.equal(made.owners.settled.has('f1'),false,'not settled: the next open after space is freed keeps it');
+ // Space freed: the next open keeps the draft normally.
+ full=false;
+ const next=await settleHostedDraft('f1',hostedRow(older,basisOf(7,false)),saved,made.owners);
+ assert.equal(next.kind,'checkpoint');
+ assert.match(next.kept,/^An older draft of this Expression was kept aside \(not opened\)/,'the keep now completes with its notice');
+ assert.equal(made.owners.settled.has('f1'),true);
+ assert.deepEqual(made.names(),['keep','adopt','keep','adopt'],'each open keeps first, then opens the checkpoint; the native row is never removed');
+});
+
+test('E19 full quarantine on a chosen keep: the checkpoint opens with the named notice, the row is not marked kept, and nothing is adopted', async()=>{
+ const saved=expression('f2','Checkpoint',T1),draft=expression('f2','Checkpoint',T2,2);
+ const made=hostedOwners({choice:'keep-saved'});
+ made.owners.keepDraft=async(plan,d,text)=>{made.calls.push({call:'keep',plan,draft:d,text});throw new OwnerQuarantineFullError(16);};
+ const out=await settleHostedDraft('f2',hostedRow(draft,basisOf(7,true)),saved,made.owners);
+ assert.equal(out.kind,'checkpoint');
+ assert.equal(material(out.journey),material(saved));
+ assert.equal(out.kept,fullQuarantineNotice(16));
+ assert.equal(made.names().includes('mark'),false,'the choice is not recorded as kept');
+ assert.equal(made.owners.settled.has('f2'),false,'the draft is offered again on the next unclean open');
+});
+
+test('E19 full quarantine is not swallowed: any other keep failure still holds the draft and names the cause', async()=>{
+ const saved=expression('f3','Checkpoint',T1),older=expression('f3','Checkpoint',T0,2);
+ const made=hostedOwners();
+ made.owners.keepDraft=async()=>{throw new Error('the owner refused the write');};
+ await assert.rejects(settleHostedDraft('f3',hostedRow(older,basisOf(7,false)),saved,made.owners),/could not be kept in quarantine[\s\S]*the owner refused the write/);
+});
+
+// The owner's kept drafts are listed for the open Expression. Each row carries the owner's reason, its kept time and its draft id.
+test('E19 list: the owner\'s kept drafts are listed with name, reason, kept time and draft id, and each offers Restore as copy and Remove', async()=>{
+ const draft=expression('k1','Kept <draft>',T0,2);
+ const fake=ownerQuarantineFake();
+ const {entryId}=await keepOwnerQuarantine(fake.send,{...kept,text:basisText(draft)});
+ const reading=await readOwnerQuarantine(fake.send,kept.expressionRef,kept.scope);
+ const rows=ownerQuarantineRows(reading.entries,new Date(reading.entries[0].kept_at_unix_ms));
+ assert.equal(rows.length,1);
+ assert.equal(rows[0].id,entryId);
+ assert.equal(rows[0].name,'Kept <draft>');
+ assert.equal(rows[0].reason,kept.reason);
+ assert.equal(rows[0].draftId,'k1');
+ assert.match(rows[0].when,/^\d{2}:\d{2}:\d{2}$/,'the kept time is the owner\'s, in local clock text');
+ const base={saved:[],featured:[],starters:[],section:'collection',errors:[],legacy:false,cover:()=>undefined,standalone:true};
+ const html=libraryHTML({...base,ownerQuarantine:{rows}});
+ assert.match(html,/data-scope="owner-quarantine"/);
+ assert.match(html,/Kept &lt;draft&gt;/,'the name is escaped');
+ assert.match(html,/data-action="restore-owner-kept" data-id="/);
+ assert.match(html,/data-action="remove-owner-kept" data-id="/);
+ assert.match(html,/draft k1/);
+ assert.match(libraryHTML({...base,ownerQuarantine:{rows:[]}}),/No drafts are kept for this Expression/);
+ assert.match(libraryHTML({...base,ownerQuarantine:{rows:[],error:'The native owner could not read the kept drafts.'}}),/role="alert"[^>]*>[^<]*could not read/);
+ assert.doesNotMatch(libraryHTML({...base}),/data-scope="owner-quarantine"/,'no owner section when no native Expression is open');
+});
+
+// Remove is an explicit request, confirmed by the page. A listing that is no longer current is refused by name, and nothing is removed.
+test('E19 remove: only the explicit request removes one kept draft; a listing that changed is refused by name and nothing is removed', async()=>{
+ const fake=ownerQuarantineFake();
+ const a=await keepOwnerQuarantine(fake.send,{...kept,text:basisText(expression('k1','One',T0,2))});
+ await keepOwnerQuarantine(fake.send,{...kept,draftId:'k2',text:basisText(expression('k2','Two',T1,2))});
+ const stale=ownerQuarantineFake({send:async request=>request.operation==='read'?{state:'ready',record:{id:kept.expressionRef,scope:'expressions',kind:'draft_quarantine',revision:3,value:{entries:[]}}}:request.operation==='remove_draft_quarantine'?{state:'revision_conflict',current_revision:4}:assert.fail('unexpected')});
+ await assert.rejects(removeOwnerQuarantineEntry(stale.send,kept.expressionRef,kept.scope,a.entryId),/changed since they were listed\. Nothing was removed/);
+ assert.equal((await readOwnerQuarantine(fake.send,kept.expressionRef,kept.scope)).entries.length,2,'nothing was removed by the refused request');
+ assert.equal(await removeOwnerQuarantineEntry(fake.send,kept.expressionRef,kept.scope,a.entryId),1,'the explicit request removes exactly one');
+});
+
+test('E19 remove wiring: the page confirms before the owner is asked, and nothing else in the frame removes a kept draft', ()=>{
+ const app=fs.readFileSync(new URL('../src/app.ts',import.meta.url),'utf8');
+ const removeCase=app.slice(app.indexOf("case 'remove-owner-kept'"),app.indexOf("case 'remove-owner-kept'")+900);
+ assert.ok(removeCase.indexOf('confirmChange(')<removeCase.indexOf('removeOwnerKeptDraft('),'Remove asks for confirmation before the owner is asked');
+ assert.equal(app.match(/removeOwnerKeptDraft\(/g)?.length,1,'the only call is inside the confirmed Remove');
+ const nw=fs.readFileSync(new URL('../src/nativeWorkspace.ts',import.meta.url),'utf8');
+ const recovery=fs.readFileSync(new URL('../src/recovery.ts',import.meta.url),'utf8');
+ assert.equal(nw.includes('removeOwnerKeptDraft'),false,'the workspace never removes a kept draft');
+ assert.equal(recovery.match(/removeOwnerKeptDraft\(/g)?.length,1,'the recovery module only defines the explicit remove');
+});
+
+test('E19 open as a copy: the owner\'s kept draft uses the browser quarantine\'s restore path, and the kept copy stays where it is', ()=>{
+ const recovery=fs.readFileSync(new URL('../src/recovery.ts',import.meta.url),'utf8');
+ const restoreBrowser=recovery.slice(recovery.indexOf('export async function restoreQuarantinedDraft('),recovery.indexOf('/** Restore one of the owner'));
+ const restoreOwner=recovery.slice(recovery.indexOf('export async function restoreOwnerKeptDraft('),recovery.indexOf('/** Carry out one boot choice'));
+ assert.ok(restoreBrowser.includes('saveQuarantinedCopy(record.raw)'));
+ assert.ok(restoreOwner.includes('saveQuarantinedCopy(entry.text)'),'the owner copy is written by the same function');
+ assert.equal(restoreOwner.includes('removeOwnerKeptDraft'),false,'restoring never removes the kept draft');
+ assert.ok(recovery.includes("const ownerQuarantine:QuarantineTransport=request=>nativeRecoveryRequest(request);"),'the owner channel is typed by recoveryTypes, with no cast');
 });

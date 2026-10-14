@@ -89,6 +89,8 @@ const button=(action:string,glyph:string,label:string,extra='')=>`<button class=
  * the gallery, the sections and the kernel/native reads. */
 /** T-REVIEW-6: the quarantined drafts the Library lists. `when` is already the owner's local clock text. */
 export interface LibraryQuarantine{rows:{id:string;key:string;name:string;reason:string;when:string}[];unreadable:string[];message?:string}
+/** E19: the native owner's kept drafts for the open Expression. Each row is verbatim in the owner's quarantine; restoring makes a Library copy and removing needs an explicit confirmation. */
+export interface OwnerQuarantineSection{rows:{id:string;name:string;reason:string;when:string;draftId:string}[];message?:string;error?:string}
 /** E21: where the selected occurrence's subject stands. A native row jumps through the bindings in this frame; a
  * projection row names a wiki register the host reads from the one projection state. */
 export type StandingRow=
@@ -99,7 +101,7 @@ export interface LibraryStanding{subject:string;projection:'read'|'unread';rows:
 export interface CollectionMember{ref:string;title:string;current:boolean}
 export interface CollectionBin{name:string;members:CollectionMember[]}
 export interface CollectionBins{bins:CollectionBin[];uncollected:CollectionMember[];current:{ref:string;collections:string[]}|null}
-export interface LibraryContext {current?:Expression;saved:Expression[];featured:Expression[];starters:StartingPoint[];section:string;errors:string[];legacy:boolean;cover:(expression:Expression)=>string|undefined;standalone?:boolean;quarantine?:LibraryQuarantine;standing?:LibraryStanding;bins?:CollectionBins|null;collectionFilter?:CollectionFilter}
+export interface LibraryContext {current?:Expression;saved:Expression[];featured:Expression[];starters:StartingPoint[];section:string;errors:string[];legacy:boolean;cover:(expression:Expression)=>string|undefined;standalone?:boolean;quarantine?:LibraryQuarantine;ownerQuarantine?:OwnerQuarantineSection;standing?:LibraryStanding;bins?:CollectionBins|null;collectionFilter?:CollectionFilter}
 
 /** E26: the kernel's own `index` reading (its `collections` map and each row's collections) as Library bins.
  * Pure and defensive: a malformed reading is null, an unlisted title keeps its ref, nothing is invented. */
@@ -187,6 +189,13 @@ function quarantineHTML(q:LibraryQuarantine|undefined):string{
   const unreadable=count?`<p class="oi-lib-note">${count} stored ${count===1?'entry':'entries'} could not be read and ${count===1?'is':'are'} kept as stored: ${q.unreadable.map(id=>esc(id)).join(', ')}</p>`:'';
   return `<section class="library-section" data-scope="quarantine"><header><h2>Quarantined copies</h2><span>Damaged or invalid drafts and Library copies, kept exactly as they were. They never load on their own.</span></header>${q.message?`<p class="quarantine-message" role="status">${esc(q.message)}</p>`:''}${rows?`<ul class="quarantine-list">${rows}</ul>`:''}${unreadable}</section>`;
 }
+/** E19: the kept drafts of the open Expression, read from the native owner. Each row offers Restore as copy and Remove; Remove is confirmed by the page before it is sent. */
+function ownerQuarantineHTML(o:OwnerQuarantineSection|undefined):string{
+  if(!o)return '';
+  const rows=o.rows.map(r=>`<li class="quarantine-row"><div><strong>${esc(r.name)}</strong><span class="quarantine-reason">${esc(r.reason)}</span><span class="quarantine-when">${esc(r.when)} · draft ${esc(r.draftId)}</span></div><div class="quarantine-actions"><button type="button" data-action="restore-owner-kept" data-id="${esc(r.id)}">Restore as copy</button><button type="button" data-action="remove-owner-kept" data-id="${esc(r.id)}">Remove</button></div></li>`).join('');
+  const empty=!o.rows.length&&!o.error?'<p class="oi-lib-note">No drafts are kept for this Expression.</p>':'';
+  return `<section class="library-section" data-scope="owner-quarantine"><header><h2>Kept drafts of this Expression</h2><span>Kept by the native owner, verbatim. A kept draft never loads on its own. Restoring makes a Library copy and leaves the kept draft where it is.</span></header>${o.message?`<p class="quarantine-message" role="status">${esc(o.message)}</p>`:''}${o.error?`<p class="quarantine-message" role="alert">${esc(o.error)}</p>`:''}${rows?`<ul class="quarantine-list">${rows}</ul>`:empty}</section>`;
+}
 export function libraryHTML(c:LibraryContext):string{
   const card=(j:Expression,kind:'saved'|'featured'|'mode',key=j.id)=>`<article class="expression-card"><button class="expression-open" data-action="${kind==='mode'?'start-mode':kind==='featured'?'open-featured':'load-saved'}" data-id="${esc(key)}" aria-label="${kind==='saved'?'Open':'Start from'} ${esc(j.name)}">
     <span class="expression-cover"><img src="${c.cover(j)??'data:image/svg+xml,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="560" height="350"><path fill="${j.scenes[0].field.background}" d="M0 0h560v350H0z"/></svg>`)}" ${c.cover(j)?'':`data-preview-id="${esc(key)}"`} alt="Composition preview of ${esc(j.name)}" loading="lazy" width="560" height="350"><span class="cover-count">${String(j.scenes.length).padStart(2,'0')} ${j.scenes.length===1?'scene':'scenes'}</span><span class="cover-open">${icon(kind==='saved'?'arrowRight':'branch')}</span></span>
@@ -208,7 +217,7 @@ export function libraryHTML(c:LibraryContext):string{
   ${c.standalone?'':`<section class="expression-filebar" aria-label="Current expression and files"><div class="expression-details"><label><span class="eyebrow">CURRENT EXPRESSION</span><input data-bind="journey.name" aria-label="Expression name" value="${esc(c.current!.name)}" maxlength="160"></label><input data-bind="journey.description" aria-label="Expression subtitle" placeholder="A subtitle for this expression" value="${esc(c.current!.description)}" maxlength="5000"></div><div class="expression-file-actions">${button('save-browser','save','Save expression in this browser')}${button('native-save-file','layers','Save to a Central file')}${button('native-open-file','copy','Open a Central file')}${button('export-json','code','Export expression JSON')}${button('export-artifact','external','Export living HTML with editor')}${button('export-native','download','Export current scene as native configuration')}</div></section>`}
   ${c.errors.length?`<p class="library-error" role="status">${esc(c.errors.join(' · '))} Original entries are untouched.</p>`:''}
   <section class="library-section" data-scope="current-project"><header><h2>${c.standalone?'Saved copies':'Current project / world'}</h2><span>${c.standalone?'Your saved expressions, kept in this application':'Your work in this world'}</span></header><div class="expression-grid">${saved.map(j=>card(j,'saved')).join('')}</div></section>
-  ${quarantineHTML(c.quarantine)}
+  ${quarantineHTML(c.quarantine)}${ownerQuarantineHTML(c.ownerQuarantine)}
   ${standingHTML(c.standing)}${collectionBinsHTML(c.bins,!c.standalone,c.collectionFilter??{kind:'all'})}
   ${featured.length?`<section class="library-section" data-scope="project-collections"><header><h2>Project collections</h2><span>Collected studies & featured compositions</span></header><div class="expression-grid">${featured.map(j=>card(j,'featured')).join('')}</div></section>`:''}
   <section class="library-section" data-scope="personal-collections"><header><h2>Personal collections</h2><label class="library-search">${icon('search')}<input id="library-search" placeholder="Find a mode or material" aria-label="Find a starting composition"></label></header><div class="expression-grid starting-grid">${starterGrid(personal)}</div><p id="library-empty" hidden>No compositions match that search.</p></section>
