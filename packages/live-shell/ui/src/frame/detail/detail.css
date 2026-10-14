@@ -1,5 +1,8 @@
 /* The one detail host and its clip box (FOUNDATION F4). */
-.detail-host { position: relative; height: 100%; display: flex; flex-direction: column; min-height: 0 }
+/* The host is the frame's detail row: its residence is display:contents (components/NativeWorldDetail.css), so the host itself
+   takes the frame grid's chain area; the agent frame names that area `ch` (agent/agentShell.css). */
+.detail-host { grid-area: chain; position: relative; height: 100%; display: flex; flex-direction: column; min-height: 0; min-width: 0 }
+.frame.agent-shell-frame .detail-host { grid-area: ch }
 .detail-body { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: auto }
 .detail-body[hidden] { display: none }
 .clip-box { flex: none; display: flex; align-items: center; gap: 10px; height: 24px; padding: 0 8px; background: var(--bg-1); border-bottom: 1px solid var(--line); font-size: 10.5px; color: var(--text-dim); white-space: nowrap; overflow: hidden }
@@ -9,9 +12,56 @@
 .clip-box-field[data-clip-status="stalled"] { color: var(--stall) }
 .clip-box-field[data-clip-status="running"] { color: var(--accent) }
 
-/* A device chain and its end (the mockup's .dropz, world-shell-mockup.html:348): the devices, then where one can be dropped. */
-.detail-chain { flex: 1; min-height: 0; display: flex; gap: 6px; padding: 6px; overflow-x: auto; align-items: stretch }
-.detail-chain-devices { flex: 0 1 auto; min-width: 0; display: flex; overflow: visible }
+/* The chain (world-shell-mockup.html:332 .chain): one row of fixed-width plates on bg-1, gap 6, padding 8, scrolling sideways,
+   ending where a device can be dropped (:348 .dropz). Every plate stands the row's height. */
+.detail-chain { flex: 1; min-height: 0; display: flex; gap: 6px; padding: 8px; overflow-x: auto; overflow-y: hidden; align-items: stretch; background: var(--bg-1); border: 1px solid var(--line) }
+.detail-chain-devices { flex: none; min-width: 0; min-height: 0; display: flex; gap: 6px; align-items: stretch; overflow: visible }
 .detail-chain-devices:empty { display: none }
 .dropz { width: 140px; flex: none; border: 1px dashed var(--line-strong); display: flex; align-items: center; justify-content: center; text-align: center; color: var(--text-faint); font-size: 10.5px; padding: 10px }
 .clip-empty { margin: 0; padding: 18px; color: var(--text-faint); font-size: 11px }
+
+/* The families' chain bodies, laid into the one row (CSS only: their files are the families'). Each wrapper between the row and
+   its plates becomes part of the row — no wrap, no padding of its own, no scroller of its own — so the plates are the row's
+   children in chain order: Central's document devices (central/devices), the Technē instruments' faces (inhabitants/ql/
+   devices), Factory's agent chain (agent/devices), the Expressions rack (components/NativeDeviceRack) and Live's chain
+   (components/DeviceChainPanel, live/TorusOnChain). */
+.detail-chain :is(.mode-detail, .central-devices-chain, .techne-devices, .agent-device-chain, .native-agent-rack, .native-chain-strip, .native-device-rack, .native-device-rack-row, .native-rack-widgets) {
+  flex: none; display: flex; flex-flow: row nowrap; gap: 6px; align-items: stretch; min-width: 0; min-height: 0; width: auto; height: auto;
+  margin: 0; padding: 0; border: 0; background: none; overflow: visible
+}
+.detail-chain :is(.central-device-slot, .techne-family) { display: contents }
+.detail-chain .native-rack-widgets > li { display: flex; flex: none }
+/* A notice a family stands beside its plates (the Day's notice, a refusal, a receipt) is one more card in the row. */
+.detail-chain :is(.mode-detail, .agent-device-chain) > :not(.central-devices-chain, .techne-devices, .native-agent-rack, .inhabitant-rack) { flex: 0 0 auto; max-width: 260px; align-self: stretch; overflow: auto }
+
+/* Each plate stands the row's height. */
+.detail-chain .techne-device { display: flex; align-items: stretch }
+.detail-chain .techne-device > .device, .detail-chain .factory-slot > .device { flex: none }
+
+/* Technē's own fold (a face its focused instrument does not hold): the strip of the mockup's folded instruments (:153 .ifold),
+   its light and name read upward, the owner's standing beside them. */
+.detail-chain .techne-device[data-expanded="false"] { width: 26px; flex-direction: column; overflow: hidden; background: var(--bg-2); border: 1px solid var(--line) }
+.detail-chain .techne-device[data-expanded="false"] > .sdk-face { flex: 1 1 auto; min-height: 0; border: 0; background: none }
+.detail-chain .techne-device[data-expanded="false"] .sdk-face__head { writing-mode: vertical-rl; height: auto; flex: 1 1 auto; padding: 7px 0; gap: 8px; border: 0 }
+.detail-chain .techne-device[data-expanded="false"] .sdk-face__owner { display: none }
+.detail-chain .techne-device[data-expanded="false"] .techne-standing { writing-mode: vertical-rl; margin: 0 auto 6px; padding: 5px 0 }
+.detail-chain .techne-device[data-expanded="false"]:hover { border-color: var(--text-faint) }
+
+/* Factory's slot: the runtime's ▾ folds the plate, so the rail's own fold stands down here; the rail keeps the slide grip. */
+.detail-chain .factory-slot { background: none }
+.detail-chain .factory-slot__fold { display: none }
+
+/* The Expressions rack card is that device's plate: the head of .dh (light as the power ring, name, marks), the body of .db. */
+.detail-chain .native-rack-card { width: auto; min-width: 120px; border: 1px solid var(--line); border-radius: 0; background: var(--bg-2) }
+.detail-chain .native-rack-card .native-rack-head { height: 21px; gap: 4px; padding: 0 5px; background: none; border-bottom: 1px solid var(--line) }
+.detail-chain .native-rack-card .native-rack-title { font-weight: 400; font-size: 11px }
+.detail-chain .native-rack-card .native-rack-light { width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--accent) }
+.detail-chain .native-rack-card .native-rack-light::before { content: none }
+.detail-chain .native-rack-card .native-rack-light.is-off { border-color: var(--text-faint) }
+.detail-chain .native-rack-card .native-rack-light.is-unknown { border-color: var(--line-strong) }
+.detail-chain .native-rack-card .native-rack-body { flex: 1 1 auto; min-height: 0; overflow: hidden auto }
+.detail-chain .native-rack-body .expr-device .device--compact { width: var(--plate-w, 180px) }
+
+/* Live's chain: the panel's own frame stands down so the torus, the keyboard and the note devices are plates of the row. */
+.detail-chain .chain[data-detail-density="device"] { display: contents }
+.detail-chain .chain-side { display: flex; flex: none; width: auto; border: 0; overflow: visible }

@@ -37,8 +37,16 @@ export function selectedDeviceId(): string | null {
   return selected
 }
 
+const subscribe = (listener: () => void) => { listeners.add(listener); return () => { listeners.delete(listener) } }
+
 /** Re-render when any published device or the selection changes. */
 export function useDeviceDoor(): {device: (id: string) => PublishedDevice | undefined; selected: string | null} {
-  useSyncExternalStore(listener => { listeners.add(listener); return () => { listeners.delete(listener) } }, () => version, () => version)
+  useSyncExternalStore(subscribe, () => version, () => version)
   return {device: publishedDevice, selected}
+}
+
+/** Re-render only when the selection changes (a plate on the chain wears the outline of the one the pool shows), never on
+ * a publish: a chain of plates does not redraw each time one of its devices reads anew. */
+export function useSelectedDeviceId(): string | null {
+  return useSyncExternalStore(subscribe, selectedDeviceId, selectedDeviceId)
 }

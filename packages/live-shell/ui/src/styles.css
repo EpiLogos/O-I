@@ -374,9 +374,9 @@ input { min-width:0; border:1px solid var(--line); background:var(--bg-1); paddi
 /* Retained native consumers keep their model while presentation is concealed. */
 .browser-residence, .dock-residence { display: contents; }
 .browser-residence[hidden], .dock-residence[hidden] { display: none; }
-/* The one detail residence (F4) is the frame grid's detail row itself — the chain area (the agency frame names it ch). */
-.detail-residence { grid-area: chain; min-height: 0; min-width: 0; overflow: hidden; display: flex; flex-direction: column; background: var(--bg-1); border-top: 1px solid var(--line); }
-.frame.agent-shell-frame .detail-residence { grid-area: ch; }
+/* The one detail residence (F4) dissolves like the others; its host takes the detail row (frame/detail/detail.css:
+   chain, ch in the agency frame). */
+.detail-residence { display: contents; }
 .detail-residence[hidden] { display: none; }
 /* The one browser and the one widget rail take their areas in both frames — never auto-placed. */
 .widget-rail { grid-area: dock; }
