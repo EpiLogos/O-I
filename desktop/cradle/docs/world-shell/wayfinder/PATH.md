@@ -58,7 +58,7 @@ only build artifacts and raw captures (not in git) — read its
 
 | Gate | State | Clears by |
 |---|---|---|
-| Screen: login unlocked + Computer Use on in the lead session (or Screen Recording for the lead's shell) | red | owner act |
+| Screen: a computer-use pass at the end of every wave (owner, 14 Oct: "get computer use going … at the end of waves") — a Sonnet subagent drives the candidate built at HEAD and reports what it saw | owner-asked; run at each wave's end | lead, every wave |
 | R1 native run at HEAD | code green (clean build, quit 0, AX reads the run context); pixel legs owe the screen gate | lead, after the screen gate |
 | R0 review | FAIL stands until screen evidence exists | lead + reviewer |
 
@@ -106,7 +106,7 @@ bullet twice gets one Sonnet diagnostic; never a third builder attempt.
 
 ## 7. Open claims
 
-One branch, one run (`dlw/build`; the open PR is #674). Builders are Haiku, up to six at a
+One branch, one run (`dlw/build`; the open PR is #675). Builders are Haiku, up to six at a
 time (owner, 14 Oct; no task chips — side work is a builder lane here), each with an exclusive zone; the lead converges, commits and keeps
 this table true. Tickets and resolutions live in `tickets/`.
 
