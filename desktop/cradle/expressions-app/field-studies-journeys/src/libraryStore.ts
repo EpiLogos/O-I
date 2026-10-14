@@ -27,6 +27,19 @@
 import {Journey,clone,validateJourney} from './model.js';
 import {digest,encodeEnvelope,readEnvelope,LIBRARY_RECORD_SCHEMA} from './draftStorage.js';
 
+/** T22: where a library entry's document came from. A kernel-ref entry is the browser copy of the kernel Expression `ref`;
+ * a local-draft entry is browser-local work the kernel has not recorded. The origin is stored beside the document, never in it:
+ * a document read from the Library carries no origin, so its authored material and drafts compare exactly as before. */
+export type LibraryOrigin={kind:'kernel-ref';ref:string}|{kind:'local-draft'};
+const LOCAL_DRAFT:LibraryOrigin={kind:'local-draft'};
+/** The origin a stored or supplied value reads as. Anything that is not a well-formed kernel ref is local-draft: an unknown origin is not kernel-bound. */
+export function libraryOriginFrom(value:unknown):LibraryOrigin{
+ const candidate=value as {kind?:unknown;ref?:unknown}|null;
+ if(candidate&&typeof candidate==='object'&&candidate.kind==='kernel-ref'&&typeof candidate.ref==='string'&&candidate.ref.startsWith('expression:')&&candidate.ref.length<=512)
+  return {kind:'kernel-ref',ref:candidate.ref};
+ return {kind:'local-draft'};
+}
+
 /** The earlier single-array key. Retained read-only after its split is proven (see the module note). */
 export const LEGACY_LIBRARY_KEY='oi.field-studies.journey-library.v1';
 const PREFIX='oi.field-studies.journey-library.v2.';
@@ -59,6 +72,9 @@ let sink:LibraryQuarantineSink|undefined;
 export function setLibraryQuarantine(next:LibraryQuarantineSink|undefined):void{sink=next;}
 
 export interface LibraryRead{journeys:Journey[];errors:string[];raw:unknown[];blocked:boolean}
+/** The Library read with each listed entry's origin, by document id (the newest listed copy wins). An id absent from `origins` is
+ * local-draft: an entry saved before origins were recorded is not kernel-bound. The read shape itself is unchanged. */
+export interface LibraryReadWithOrigins{read:LibraryRead;origins:Map<string,LibraryOrigin>}
 const messageOf=(error:unknown):string=>error instanceof Error?error.message:String(error);
 
 /** A record's place: its encoded id, with an ordinal for the second and later definitions of one id. */
@@ -114,8 +130,14 @@ function removeValidCopies(b:LibraryBackend,base:string):void{
 /** What a record's pair holds now. An unrecognised copy is complete but does not validate: it is kept in place, and held before a save replaces it. */
 type DocState=
  |{state:'absent';damaged:boolean}
- |{state:'valid';seq:number;body:string;journey:Journey;damaged:boolean}
+ |{state:'valid';seq:number;body:string;journey:Journey;origin:LibraryOrigin;damaged:boolean}
  |{state:'unrecognised';seq:number;raw:string;body:string;reason:string;damaged:boolean};
+/** The stored body is the document with its origin beside it. The origin is taken out before the document is validated. */
+function splitOrigin(parsed:unknown):{document:unknown;origin:LibraryOrigin}{
+ if(!parsed||typeof parsed!=='object'||Array.isArray(parsed))return {document:parsed,origin:LOCAL_DRAFT};
+ const {origin,...document}=parsed as Record<string,unknown>;
+ return {document,origin:libraryOriginFrom(origin)};
+}
 function docState(b:LibraryBackend,base:string):DocState{
  const pair=readPair(b,base),damaged=pair.damaged.length>0;
  if(!pair.newest)return {state:'absent',damaged};
@@ -123,13 +145,22 @@ function docState(b:LibraryBackend,base:string):DocState{
  let parsed:unknown;
  try{parsed=JSON.parse(body);}
  catch(error){return {state:'unrecognised',seq:pair.newest.seq,raw,body,reason:`The saved copy is not a readable document: ${messageOf(error)}.`,damaged};}
- try{return {state:'valid',seq:pair.newest.seq,body,journey:validateJourney(parsed),damaged};}
+ try{const split=splitOrigin(parsed);return {state:'valid',seq:pair.newest.seq,body,journey:validateJourney(split.document),origin:split.origin,damaged};}
  catch(error){return {state:'unrecognised',seq:pair.newest.seq,raw,body,reason:messageOf(error),damaged};}
 }
 
 /** Every record place in storage, in no particular order. */
 function partsIn(b:LibraryBackend):string[]{
  return [...new Set(b.keys().filter(key=>key.startsWith(DOC_PREFIX)).map(key=>key.slice(DOC_PREFIX.length).replace(/#[ab]$/,'')))];
+}
+/** The origin of another valid copy of the same document id, or local-draft when none is recorded. */
+function originOfId(b:LibraryBackend,id:string,exclude:string):LibraryOrigin{
+ for(const other of partsIn(b)){
+  if(other===exclude||idOf(other)!==id)continue;
+  const state=docState(b,DOC_PREFIX+other);
+  if(state.state==='valid')return state.origin;
+ }
+ return LOCAL_DRAFT;
 }
 /** The newest-first order of records, or an empty list when there is none readable. */
 function readOrder(b:LibraryBackend):string[]{
@@ -232,7 +263,7 @@ export function sweepLibraryDamage(at:Date=new Date()):Promise<number>{
 function parseOrText(text:string):unknown{try{return JSON.parse(text);}catch{return text;}}
 
 /** Reads every saved copy in newest-first order. A damaged or held record is reported and kept in place; the sweep then quarantines it. */
-export function readLibraryDetailed():LibraryRead{
+function readLibraryRecords(origins:Map<string,LibraryOrigin>):LibraryRead{
  const result:LibraryRead={journeys:[],errors:[],raw:[],blocked:false};
  let b:LibraryBackend;
  try{b=store();b.keys();}
@@ -242,11 +273,11 @@ export function readLibraryDetailed():LibraryRead{
  let needsSweep=false;
  try{
   // Every readable place, valid or unrecognised, carries its stored value so that `raw` follows the same order as the list.
-  const items:{part:string;journey?:Journey;raw:unknown}[]=[];
+  const items:{part:string;journey?:Journey;origin?:LibraryOrigin;raw:unknown}[]=[];
   for(const part of partsIn(b)){
    const state=docState(b,DOC_PREFIX+part),id=idOf(part);
    if(state.damaged)needsSweep=true;
-   if(state.state==='valid')items.push({part,journey:state.journey,raw:JSON.parse(state.body)});
+   if(state.state==='valid')items.push({part,journey:state.journey,origin:state.origin,raw:JSON.parse(state.body)});
    else if(state.state==='unrecognised'){result.errors.push(`Entry ${id}: ${state.reason}`);items.push({part,raw:parseOrText(state.body)});}
    else if(state.damaged)result.errors.push(`Entry ${id}: its saved copy is damaged and is kept for recovery.`);
   }
@@ -264,6 +295,7 @@ export function readLibraryDetailed():LibraryRead{
   const ordered=[...orphans,...listed];
   result.raw=ordered.map(item=>item.raw);
   const journeys=ordered.flatMap(item=>item.journey?[item.journey]:[]);
+  for(const item of ordered)if(item.journey&&item.origin&&!origins.has(item.journey.id))origins.set(item.journey.id,item.origin);
   // The earlier array is read from only while its split is unproven: a failed split must not hide any of its entries.
   const legacy=b.get(LEGACY_LIBRARY_KEY);
   if(legacy!==null&&readProof(b)!==digest(legacy)){
@@ -280,10 +312,13 @@ export function readLibraryDetailed():LibraryRead{
  if(needsSweep)void sweepLibraryDamage(new Date());
  return result;
 }
+export function readLibraryDetailed():LibraryRead{return readLibraryRecords(new Map());}
+/** The Library read together with each listed entry's origin (T22). */
+export function readLibraryWithOrigins():LibraryReadWithOrigins{const origins=new Map<string,LibraryOrigin>();return {read:readLibraryRecords(origins),origins};}
 export function readLibrary():Journey[]{return readLibraryDetailed().journeys;}
 
 /** Saves one document, replacing every saved copy of the same expression. An unrecognised copy is held verbatim first; the new copy is read back before it is listed. */
-export function saveToLibrary(journey:Journey):Journey[]{
+export function saveToLibrary(journey:Journey,origin?:LibraryOrigin):Journey[]{
  const at=new Date();
  let b:LibraryBackend;
  try{b=store();b.keys();}
@@ -291,8 +326,11 @@ export function saveToLibrary(journey:Journey):Journey[]{
  migrateLegacy(b,at);
  const next=clone(validateJourney(journey)),part=partOf(next.id);
  const base=DOC_PREFIX+part,state=docState(b,base);
+ // T22: a save that names no origin keeps the origin the entry already records (or a copy of the same id records), so backing up or
+ // opening a document never flips it. Only a save that names the kernel ref records one.
+ const recorded:LibraryOrigin=origin!==undefined?libraryOriginFrom(origin):state.state==='valid'?state.origin:originOfId(b,next.id,part);
  if(state.state==='unrecognised')holdRecord(b,state.raw,`Replaced by a newer save. ${state.reason}`,at);
- writePair(b,base,JSON.stringify(next),at,'Replaced by a newer save.','Library entry');
+ writePair(b,base,JSON.stringify({...next,origin:recorded}),at,'Replaced by a newer save.','Library entry');
  // The other valid definitions of this expression are replaced by this one, as before; unrecognised ones are kept.
  const replaced=partsIn(b).filter(other=>other!==part&&idOf(other)===next.id&&docState(b,DOC_PREFIX+other).state==='valid');
  for(const other of replaced)removeValidCopies(b,DOC_PREFIX+other);
