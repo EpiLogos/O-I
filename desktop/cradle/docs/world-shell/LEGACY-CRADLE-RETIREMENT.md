@@ -51,10 +51,11 @@ delivered at 0.1.2 — `evidence/integrated-v012-delivery-receipt.json`):
    native exercise of all 126, and the §9 vocabulary (the destinations are
    lens and instrument names, not (projection, rack) pairs).
 2. **UX spine convergence** — the shell's spine matches the design frontier
-   per `UX-SPINE-ALIGNMENT.md` (the eight seams). **Open.** Seam status recorded
-   14 Oct 2026 (`UX-SPINE-ALIGNMENT.md` §5, source-level): seam 2 converged;
-   seams 1, 3, 4, 5, 6, 7 partial; seam 8 open. Native verification of every
-   seam is still pending.
+   per `UX-SPINE-ALIGNMENT.md` (the eight seams). **Open.** Seam status
+   (`UX-SPINE-ALIGNMENT.md` §5, updated 14 Oct 2026 after the seam builds;
+   scripted and source only): seams 2, 3, 5, 6, 7 and 8 converged; seams 1
+   and 4 partial; none open. Native verification of every seam is still
+   pending.
 3. **Everyday-data continuity** — the candidate adopts the everyday
    workspace state on first cutover run: the everyday workspace book,
    recovery records and drafts are migrated (or re-adoptable in place) into
