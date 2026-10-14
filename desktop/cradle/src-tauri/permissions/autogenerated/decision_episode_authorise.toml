@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-decision-episode-authorise"
+description = "Enables the decision_episode_authorise command without any pre-configured scope."
+commands.allow = ["decision_episode_authorise"]
+
+[[permission]]
+identifier = "deny-decision-episode-authorise"
+description = "Denies the decision_episode_authorise command without any pre-configured scope."
+commands.deny = ["decision_episode_authorise"]
