@@ -12,7 +12,7 @@ import {validateWorkingTransport,type WorkingTransport} from './transport';
 import {readLibrary,saveToLibrary,setLibraryQuarantine} from './store.js';
 // lane-3 E19 (owner quarantine): the native owner keeps each superseded draft of an Expression before its native row is marked kept.
 import {nativeRecoveryRequest} from './kernelExpressions.js';
-import {keepOwnerQuarantine,readOwnerQuarantine,removeOwnerQuarantineEntry,type QuarantineTransport,type OwnerQuarantineReading} from './draftStorage.js';
+import {keepOwnerQuarantine,readOwnerQuarantine,removeOwnerQuarantineEntry,ownerRefusalText,browserKeptNotice,type QuarantineTransport,type OwnerQuarantineReading,type KeptPlace} from './draftStorage.js';
 import {type KeyStore,type RecordLayout,type RecoveryPlan,type DraftBasis,DRAFT_BASIS_SCHEMA,draftValue,splitDraftValue,loadRecord,loadRecords,writeRecord,removeRecord,quarantine,listQuarantine,readPair,quarantinedCopy,quarantinedName,offerClock} from './draftStorage.js';
 export const SESSION_KEY='oi.expression-session.v1';
 export interface SessionState {version:1;journeyId:string;sceneId:string;selected:string[];stepIndex:number;sceneElapsed:number;simTime:number;playing:boolean;journeyPlaying:boolean;camera:Camera;transport?:TransportState;workingTransport?:WorkingTransport;scenePlaying?:boolean;fieldPaused?:boolean}
@@ -163,7 +163,9 @@ export async function markNativeDraftKept(journey:Journey,basis:DraftBasis|undef
  await nativeWrite('draft',journey.id,draftValue(validateJourney(journey),kept),scope??draftRecoveryAddress(journey.id).scope);
 }
 /** The owner's quarantine channel: the same expression_recovery requests as every recovery record (kinds and operations in recoveryTypes.ts). */
-const ownerQuarantine:QuarantineTransport=request=>nativeRecoveryRequest(request);
+let ownerQuarantine:QuarantineTransport=request=>nativeRecoveryRequest(request);
+/** Replaces the owner's quarantine channel (a test seam, as the Library quarantine is). Without an argument the desktop owner is restored. */
+export function setOwnerQuarantineTransport(transport?:QuarantineTransport):void{ownerQuarantine=transport??(request=>nativeRecoveryRequest(request));}
 /** The reason a kept draft is listed under in the owner's quarantine: the plan's own reason, or a default that names which choice kept it. */
 function keptReason(plan:RecoveryPlan):string{
  if(plan.quarantineReason)return plan.quarantineReason;
@@ -171,11 +173,29 @@ function keptReason(plan:RecoveryPlan):string{
   :'Kept as a Library copy by the owner\'s choice after an unclean exit; the saved copy opened. The draft is kept here verbatim.';
 }
 /** E19 (owner quarantine): a hosted kept draft is kept in the owner's quarantine for its Expression first, and that copy is read back before
- * anything else happens. Only then do the webview copies follow (the quarantine and the Library copy, as before). A failure throws before any
- * webview copy is written, so nothing is removed or adopted. The native draft row is never removed here. */
-export async function keepHostedDraft(plan:RecoveryPlan,draft:Journey,text:string,owner:{scope:RecoveryScope;expressionRef:string;draftId:string}):Promise<void>{
- await keepOwnerQuarantine(ownerQuarantine,{expressionRef:owner.expressionRef,scope:owner.scope,draftId:owner.draftId,reason:keptReason(plan),text});
- await applyRecoveryPlan({...plan,removeDraft:false},draft,text);
+ * anything else happens. When the owner does not keep it (a full, over-size or unreadable quarantine, or a failed read back), this browser's
+ * quarantine keeps the verbatim text instead, read back, and the Library copy follows. Only when neither place keeps the draft does this throw,
+ * and the caller holds the row. The native draft row is never removed here. A Library copy that cannot be written never undoes a kept copy. */
+export async function keepHostedDraft(plan:RecoveryPlan,draft:Journey,text:string,owner:{scope:RecoveryScope;expressionRef:string|undefined;draftId:string}):Promise<KeptPlace>{
+ const reason=keptReason(plan);
+ let refusal:unknown;
+ if(owner.expressionRef===undefined)refusal=new Error('The native owner did not name this Expression.');
+ else{try{await keepOwnerQuarantine(ownerQuarantine,{expressionRef:owner.expressionRef,scope:owner.scope,draftId:owner.draftId,reason,text});}catch(error){refusal=error;}}
+ if(refusal===undefined){
+  try{await applyRecoveryPlan({...plan,removeDraft:false},draft,text);return {place:'owner'};}
+  catch(error){return {place:'owner',note:`The Library copy could not be written (${error instanceof Error?error.message:String(error)}); the verbatim copy is in the native owner's quarantine.`};}
+ }
+ // The browser keeps the verbatim text first and reads it back; only then does the Library copy follow. A failure here leaves the draft held.
+ try{await quarantineVerbatim(draft,text,reason);}
+ catch(error){throw new Error(`${ownerRefusalText(refusal)} This browser's quarantine could not keep it either: ${error instanceof Error?error.message:String(error)}`);}
+ let note:string|undefined;
+ if(plan.copy){try{await applyRecoveryPlan({open:plan.open,copy:plan.copy,quarantineDraft:false,removeDraft:false},draft);}catch(error){note=`The Library copy could not be written (${error instanceof Error?error.message:String(error)}); the verbatim copy is in this browser's quarantine.`;}}
+ return {place:'browser',refusal:ownerRefusalText(refusal),...(note?{note}:{})};
+}
+/** This browser's verbatim copy of one draft, kept under its reason and read back. The native row is not touched. */
+async function quarantineVerbatim(draft:Journey,text:string,reason:string):Promise<void>{
+ const layout=await draftLayout();
+ await quarantine(layout.quarantine,'draft',draft.id,text,reason,new Date());
 }
 /** The owner's quarantine for one Expression: every kept draft, verbatim, with its reason and the owner's time of keeping. Listing reads only. */
 export function listOwnerQuarantine(expressionRef:string,scope:RecoveryScope):Promise<OwnerQuarantineReading>{return readOwnerQuarantine(ownerQuarantine,expressionRef,scope);}

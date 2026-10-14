@@ -1307,7 +1307,7 @@ function refreshOwnerQuarantine(message?:string){
  if(!address){ownerListing=null;if(libraryOpen)renderLibrary();return;}
  ownerListingPending=true;
  void listOwnerQuarantine(address.expressionRef,address.scope)
-  .then(reading=>{ownerListing={address,rows:ownerQuarantineRows(reading.entries),message};})
+  .then(reading=>{ownerListing={address,rows:ownerQuarantineRows(reading.entries),message,...(reading.unreadable!==undefined?{error:`The native owner cannot read the kept drafts of this Expression, so none are listed and none were removed or overwritten. ${reading.unreadable}`}:{})};})
   .catch(cause=>{ownerListing={address,rows:[],error:`The native owner could not read the kept drafts of this Expression. ${cause instanceof Error?cause.message:String(cause)}`};})
   .finally(()=>{ownerListingPending=false;if(libraryOpen)renderLibrary();});
 }
@@ -2317,6 +2317,8 @@ window.__FIELD_STUDIES__={getDocument:()=>clone(store.document),draftPending:()=
 /** E15/E16: an owner adoption names its history. 'act' is the app's own native act: one labelled step carrying
  * the kernel edit it produced. 'outside' is an adoption from outside this editor, labelled for what it is. */
 function applyNativeView(view:KernelConversion,preservePosition=false,adoptionHistory:NativeAdoption='record',act?:NativeActRecord){
+ // E19: a native load may have kept or opened drafts, so the owner's kept-drafts listing is read again the next time the Library shows it.
+ ownerListing=null;
  if(!journeyPositionRestored&&journeyInstrument)void journeyInstrument.restorePosition().then(settled=>{if(settled)journeyPositionRestored=true;});
  awaitingNativeBoot=false;
  // An opened native Expression is what the frame stands on: the entry gate

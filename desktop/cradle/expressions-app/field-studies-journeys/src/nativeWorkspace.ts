@@ -111,6 +111,8 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
  let busy=false,notice='',lastFailure=false,restoreGeneration=0;const bootState={booted:false};
  // E19: a kept draft's notice is carried into the next status line, so it is never dropped; the drafts this session holds are not overwritten by a write that adds no edits.
  let keptNotice='';const heldDrafts=new Set<string>();
+ // E19: a draft no place keeps (owner or browser) is held here with its named reason: no edit is written over its native row until a kept slot is freed.
+ const unkeptDrafts=new Map<string,string>();
  let ownerIdle:Promise<void>=Promise.resolve();
  let queuedMutations=0;
  // E14: the nested documents the open Expression names (nestedDocumentReads).
@@ -170,6 +172,9 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
  const persistDraft=async(journey:Journey):Promise<void>=>{
   if(!hostedRecovery())return writeDraft(journey);
   const basis=draftBasisOf(journey);
+  // A draft kept nowhere is never replaced by an edit: the edit is refused by name, and the native row stays as it is.
+  const unkept=unkeptDrafts.get(journey.id);
+  if(unkept!==undefined&&basis?.edited)throw new Error(unkept);
   if(heldDrafts.has(journey.id)&&!basis?.edited)return;
   await writeDraft(journey,undefined,basis);
   if(basis?.edited)heldDrafts.delete(journey.id);
@@ -193,9 +198,10 @@ const recoveryOffered=new Set<string>();
   const row=found.recoveryRecords?.find(item=>item.kind==='draft')??await readDraftRow(draftId);
   if(!row)return found;
   const revision=found.record.view?.document.revision??0;
-  const settled=await settleHostedDraft(draftId,{journey:found.journey,basis:draftRowBasis(row),text:draftRowText(row)},saved,{hosted:true,uncleanBoot:bootWasUnclean(),settled:recoveryOffered,revision,chooseRecovery:host.chooseRecovery,requireAdoption:()=>requireAdoption(current),keepDraft:(plan,draft,text)=>{const expressionRef=found.record.view?.document.expression_ref;if(!expressionRef)throw new Error('The native owner did not name this Expression, so its draft could not be kept. The draft stays held.');return keepHostedDraft(plan,draft,text,{scope:row.scope,expressionRef,draftId});},markDraftKept:(draft,basis)=>markNativeDraftKept(draft,basis,revision,row.scope)});
-  if(settled.kind==='draft')return found;
+  const settled=await settleHostedDraft(draftId,{journey:found.journey,basis:draftRowBasis(row),text:draftRowText(row)},saved,{hosted:true,uncleanBoot:bootWasUnclean(),settled:recoveryOffered,revision,chooseRecovery:host.chooseRecovery,requireAdoption:()=>requireAdoption(current),keepDraft:(plan,draft,text)=>{const expressionRef=found.record.view?.document.expression_ref;return keepHostedDraft(plan,draft,text,{scope:row.scope,expressionRef,draftId});},markDraftKept:(draft,basis)=>markNativeDraftKept(draft,basis,revision,row.scope)});
+  if(settled.kind==='draft'){unkeptDrafts.delete(draftId);return found;}
   heldDrafts.add(draftId);
+  if(settled.unkept!==undefined)unkeptDrafts.set(draftId,settled.unkept);else unkeptDrafts.delete(draftId);
   if(settled.kept)keptNotice=settled.kept;
   return {...found,journey:settled.journey,recoveryRecords:found.recoveryRecords?.filter(item=>item.kind==='checkpoint')};
  };
