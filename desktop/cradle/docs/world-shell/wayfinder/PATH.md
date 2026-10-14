@@ -101,7 +101,8 @@ objections verbatim and the full validation (`BRIEF-BUILDER.md`); the lead conve
 |---|---|---|---|
 | Detail row A: one head for the row, the Clip view anatomy, Central's and Factory's two sides, the status bar's side names | Opus builder | `frame/detail/**`, `shell/modeDetails.tsx`, the Central/Factory bodies in `shell/ModeDetail.tsx`, `central/CentralClipChooser.tsx`, the Factory chain files | 14 Oct |
 | Detail row B: Expressions' Studio plate and scene clip; Technē's instruments rack and event clip | Opus builder | `components/NativeWorldDetail.*`, `components/expressions/**`, the Technē bodies in `shell/ModeDetail.tsx`, the Technē rack files | 14 Oct |
-| Native screen pass against the mockup renders; the transport's readings per mode; N1; mounting N2's subject door | lead | the frame, `App.tsx`, `native/Workbench.tsx`, `shell/modeFrames.ts`, the book | 14 Oct |
+| Transport and status bar: the title line, the slots' words and sizes, each mode's readings from their owners, the Info view | Opus builder | `shell/modeTransports.tsx`, `shell/transports/**`, `frame/transport/**`, `components/TransportBar.tsx`, `components/StatusBar.tsx` (not the side switch), the pending note | 14 Oct |
+| Native screen pass against the mockup renders; N1; mounting N2's subject door | lead | the frame, `App.tsx`, `native/Workbench.tsx`, `shell/modeFrames.ts`, the book | 14 Oct |
 
 Landed this evening (14 Oct, after the R2 lanes, which all landed): the one browser and the one transport at the
 mockup's floor and the mockup's colours in every mode (`72f6e0d95`, `2891064ed`); every device the mockup's plate and
