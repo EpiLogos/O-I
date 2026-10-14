@@ -71,12 +71,7 @@ export function buildSearchIndex(m: Model): SearchIndex {
       sub: t.ground ? GROUND_SUB : 'theory', action: { type: 'subject', subject: { type: 'theoretic', id: t.id } }, image: t.image, tone: t.palette.core, bias: BIAS.theoretic,
     });
   }
-  for (const f of m.field.families) {
-    entries.push({
-      kind: 'family', key: `f:${f.id}`, label: f.name, names: [norm(f.name)], aliases: f.aliases.map(norm).filter(Boolean), secondary: [norm(f.oneLine)],
-      sub: 'form', action: { type: 'subject', subject: { type: 'family', id: f.id } }, image: f.image, tone: f.palette.core, bias: BIAS.family,
-    });
-  }
+  for (const f of m.field.families) entries.push(familyEntry(f));
   for (const c of m.field.cultures) {
     entries.push({
       kind: 'culture', key: `c:${c.id}`, label: c.name, names: [norm(c.name)], aliases: [], secondary: [],
@@ -90,32 +85,100 @@ export function buildSearchIndex(m: Model): SearchIndex {
       sub: 'place', action: { type: 'subject', subject: { type: 'place', id: p.id } }, bias: BIAS.place,
     });
   }
-  m.occ.forEach((o, i) => {
-    if (!m.located[i]) return;
-    const fam = m.famById.get(o.familyId);
-    const cultures = o.cultureIds.map((c) => m.cultureById.get(c)?.name ?? '').filter(Boolean);
-    entries.push({
-      kind: 'occurrence', key: `o:${o.id}`, label: o.label, names: [norm(o.label), norm(o.title)],
-      aliases: [], secondary: [norm(o.place ?? ''), ...cultures.map(norm), norm(fam?.name ?? '')],
-      sub: eraShort(o.yearDisplay, 22), action: { type: 'occurrence', occId: o.id },
-      image: o.image ?? fam?.image, tone: fam?.palette.core, bias: BIAS.occurrence,
-    });
+  m.occ.forEach((_o, i) => {
+    const e = occurrenceEntry(m, i);
+    if (e) entries.push(e);
   });
   const candidates = new Map<string, Entry[]>();
   for (const e of entries) {
-    const keys = new Set<string>();
-    for (const text of [...e.names, ...e.aliases, ...e.secondary]) for (const word of text.split(' ')) {
-      if (!word) continue;
-      keys.add('p:' + word.slice(0, 1));
-      if (word.length >= 2) keys.add('p:' + word.slice(0, 2));
-      for (let i = 0; i <= word.length - 3; i++) keys.add('g:' + word.slice(i, i + 3));
-    }
-    for (const key of keys) {
+    for (const key of postingKeys(e)) {
       const list = candidates.get(key);
       if (list) list.push(e); else candidates.set(key, [e]);
     }
   }
   return { entries, model: m, candidates };
+}
+
+type FieldFamily = Model['field']['families'][number];
+
+/** The index entry of a family the field declares. */
+function familyEntry(f: FieldFamily): Entry {
+  return {
+    kind: 'family', key: `f:${f.id}`, label: f.name, names: [norm(f.name)], aliases: f.aliases.map(norm).filter(Boolean), secondary: [norm(f.oneLine)],
+    sub: 'form', action: { type: 'subject', subject: { type: 'family', id: f.id } }, image: f.image, tone: f.palette.core, bias: BIAS.family,
+  };
+}
+
+/** Posts an entry under its keys in the index's candidate lists. */
+function postEntry(idx: SearchIndex, e: Entry): void {
+  for (const k of postingKeys(e)) {
+    const list = idx.candidates.get(k);
+    if (list) list.push(e); else idx.candidates.set(k, [e]);
+  }
+}
+
+/** The index entry of the occurrence at `i` of the model; null when it is not located (only a located occurrence is searchable). */
+function occurrenceEntry(m: Model, i: number): Entry | null {
+  if (!m.located[i]) return null;
+  const o = m.occ[i];
+  const fam = m.famById.get(o.familyId);
+  const cultures = o.cultureIds.map((c) => m.cultureById.get(c)?.name ?? '').filter(Boolean);
+  return {
+    kind: 'occurrence', key: `o:${o.id}`, label: o.label, names: [norm(o.label), norm(o.title)],
+    aliases: [], secondary: [norm(o.place ?? ''), ...cultures.map(norm), norm(fam?.name ?? '')],
+    sub: eraShort(o.yearDisplay, 22), action: { type: 'occurrence', occId: o.id },
+    image: o.image ?? fam?.image, tone: fam?.palette.core, bias: BIAS.occurrence,
+  };
+}
+
+/** The trigram and prefix keys an entry is posted under in the candidate lists. */
+function postingKeys(e: Entry): Set<string> {
+  const keys = new Set<string>();
+  for (const text of [...e.names, ...e.aliases, ...e.secondary]) for (const word of text.split(' ')) {
+    if (!word) continue;
+    keys.add('p:' + word.slice(0, 1));
+    if (word.length >= 2) keys.add('p:' + word.slice(0, 2));
+    for (let i = 0; i <= word.length - 3; i++) keys.add('g:' + word.slice(i, i + 3));
+  }
+  return keys;
+}
+
+/**
+ * [T-ATLAS-SEAM] Brings one occurrence's entry in an index built earlier to the model's state for it: added when it is
+ * placed and located, replaced when it changed, removed when it has left. Only that entry and its postings are touched;
+ * the index object is the one the search UI holds, so it is updated in place. An occurrence the model does not hold is
+ * removed. The result matches a full buildSearchIndex of the same model.
+ */
+export function refreshOccurrenceEntry(idx: SearchIndex, occId: string): void {
+  const m = idx.model;
+  const key = `o:${occId}`;
+  const at = idx.entries.findIndex((e) => e.key === key);
+  const old = at >= 0 ? idx.entries[at] : undefined;
+  const i = m.occIndex.get(occId);
+  const next = i === undefined ? null : occurrenceEntry(m, i);
+  if (old) {
+    for (const k of postingKeys(old)) {
+      const list = idx.candidates.get(k);
+      if (!list) continue;
+      const p = list.indexOf(old);
+      if (p >= 0) list.splice(p, 1);
+      if (list.length === 0) idx.candidates.delete(k);
+    }
+  }
+  if (next) postEntry(idx, next);
+  if (old && next) idx.entries[at] = next;
+  else if (old) idx.entries.splice(at, 1);
+  else if (next) idx.entries.push(next);
+  // the seam declares the occurrence's family when the field did not hold it (a family first placed after the index was
+  // built): its entry is added too, once, so the family is searchable as a buildSearchIndex would have it
+  if (i !== undefined) {
+    const fam = m.field.families.find((f) => f.id === m.occ[i].familyId);
+    if (fam && !idx.entries.some((e) => e.key === `f:${fam.id}`)) {
+      const fe = familyEntry(fam);
+      idx.entries.push(fe);
+      postEntry(idx, fe);
+    }
+  }
 }
 
 function wordPrefix(text: string, tok: string): boolean {

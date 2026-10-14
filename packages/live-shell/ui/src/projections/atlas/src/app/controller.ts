@@ -6,7 +6,7 @@ import { scopeOf } from '../data/scope';
 import { archetypesOfFamily, selfSubject, subjectExists, subjectLine, subjectName, subjectOccurrences, subjectPalette } from '../data/model';
 import { angleBetween, dirFromLatLon, fitDistance, latLonFromDir, spreadOf, worldDistance, type Vec3 } from '../data/geo';
 import { averagePalettes, rgbToHex, WORLD_PALETTE, type RGBPalette } from '../data/palette';
-import { buildSearchIndex, type SearchResult } from '../data/search';
+import { buildSearchIndex, refreshOccurrenceEntry, type SearchResult } from '../data/search';
 import { planThread, type ThreadStep } from '../data/thread';
 import { FOV, type GlobeEngine } from '../globe/engine';
 import { chronologyPath } from '../globe/chronology';
@@ -117,6 +117,8 @@ export class Controller {
   private globeWhole = false;
   private loading = new Map<string, Promise<void>>();
   private navTok = 0;
+  /** true once the atlas that owns this controller is disposed (T-ATLAS-DISPOSE): every late callback checks it and does nothing */
+  private disposed = false;
   private root: HTMLElement;
   /** [§8.4] Where the atlas's own overlays mount: the root's parent — document.body when the atlas stands alone (AE), the
    * shell's `.atlas-host` pane when hosted, so they stay inside the pane's containment. */
@@ -445,6 +447,7 @@ export class Controller {
   };
 
   private syncHash(s: AppState, replace = false) {
+    if (this.disposed) return;
     const h = hashWithFilter(s, this.filter);
     if (location.hash === h || (h === '#/' && (location.hash === '' || location.hash === '#'))) return;
     if (replace) {
@@ -460,6 +463,7 @@ export class Controller {
   private needs(next: AppState): Promise<void> | null {
     const jobs: Promise<void>[] = [];
     if (next.graph && !this.graph) jobs.push(this.ensure('graph', () => import('../graph/view').then(({ GraphView }) => {
+      if (this.disposed) return;
       this.graph = new GraphView(this.overlayParent(), this.m, this.time, {
         onSelect: (key) => this.onGraphSelect(key),
         onEarth: (key) => this.onGraphEarth(key),
@@ -470,12 +474,15 @@ export class Controller {
       this.emitFaces();
     })));
     if (next.history && !this.aion && this.history) jobs.push(this.ensure('aion', () => import('../aion/view').then(({ AionView }) => {
+      if (this.disposed) return;
       this.aion = new AionView(this.root, this.m, this.engine, this.time, this.history!, (state) => this.navigate(state), this.passages, (occId) => this.openReading(occId), this.chrome);
     })));
     if (next.redbook && !this.redbook && this.redbookData) jobs.push(this.ensure('redbook', () => import('../redbook/view').then(({ RedBookView }) => {
+      if (this.disposed) return;
       this.redbook = new RedBookView(this.root, this.m, this.engine, this.redbookData!, (state) => this.navigate(state), (id) => this.tuneToFolio(id), (occId) => this.openReading(occId), this.chrome);
     })));
     if (next.dynamics && !this.lens) jobs.push(this.ensure('dynamics', () => Promise.all([import('../dynamics/view'), import('../dynamics/load')]).then(([{ DynamicsView }, { loadDynamics, loadRoute }]) => {
+      if (this.disposed) return;
       const lens = new DynamicsView(this.root, this.m, this.engine, this.time, (state) => this.navigate(state), this.passages, null, this.chrome);
       this.lens = lens;
       // the standing stop's families join the subject on the globe whenever they change
@@ -505,12 +512,18 @@ export class Controller {
     const wait = this.needs(next);
     if (!wait) return false;
     document.body.classList.add('lens-loading');
-    wait.then(() => { document.body.classList.remove('lens-loading'); if (tok === this.navTok) go(); })
-      .catch((err) => { document.body.classList.remove('lens-loading'); console.error(err); });
+    wait.then(() => {
+      // a pane closed while the view loaded: nothing is written to the page for it (the hash, the body) and nothing is mounted
+      if (this.disposed) return;
+      document.body.classList.remove('lens-loading');
+      if (tok === this.navTok) go();
+    })
+      .catch((err) => { if (!this.disposed) document.body.classList.remove('lens-loading'); console.error(err); });
     return true;
   }
 
   navigate(next: AppState, opts: { replace?: boolean } = {}) {
+    if (this.disposed) return;
     // a navigation asked for while a state is being applied (a lens redirecting to its first step) runs right after it,
     // so the hash is written in the order the states are applied
     if (this.applying) { queueMicrotask(() => this.navigate(next, opts)); return; }
@@ -976,15 +989,30 @@ export class Controller {
     this.syncHash(s, true);
   }
 
-  /** [T-ATLAS-SEAM] The occurrence list changed in place (the engine's replaceOccurrence): the per-occurrence scratch and the
-   * filter's mask follow the new count. A removal also hides the hover and the reveal, which may name the leaving index. */
-  refreshOccurrences(removed: boolean): void {
+  /**
+   * [T-ATLAS-SEAM] One occurrence changed in place (the engine's replaceOccurrence, `change.id`): the per-occurrence scratch
+   * and the filter's mask follow the new count; the search index brings that one entry up to date (added, replaced or
+   * removed, not rebuilt); the graph is marked stale, so its next opening builds it from the model. A removal hides the
+   * hover, and the reveal only when the reveal shows the removed occurrence.
+   */
+  refreshOccurrences(change: { readonly id: string; readonly removed: boolean }): void {
     this.rel = new Float32Array(this.m.occ.length);
-    if (removed) {
+    if (change.removed) {
       this.hover.hide();
-      this.reveal.hide();
+      if (this.reveal.shows(change.id)) this.reveal.hide();
     }
+    refreshOccurrenceEntry(this.searchIndex, change.id);
+    this.graph?.markStale();
     this.applyFilter(this.filter);
+  }
+
+  /** The atlas that owns this controller is disposed: nothing the controller started runs after it (its pending navigation,
+   * its loading views, its hash and page writes). Idempotent. */
+  dispose(): void {
+    if (this.disposed) return;
+    this.disposed = true;
+    this.navTok++;
+    this.lensTok++;
   }
 
   private applyFilter(f: FieldFilter) {
@@ -1066,11 +1094,13 @@ export class Controller {
     const tok = ++this.lensTok;
     document.body.classList.add('lens-loading');
     PANEL_LOADERS[id]().then((mod) => {
+      if (this.disposed) return;
       document.body.classList.remove('lens-loading');
       if (!this.lensInst.has(id)) this.lensInst.set(id, mod.mount(this.lensContext(id)));
       if (tok !== this.lensTok || this.state.lens?.id !== id) return;
       this.enterLensInstance(this.lensInst.get(id)!, this.state.lens.path);
     }).catch((err) => {
+      if (this.disposed) return;
       document.body.classList.remove('lens-loading');
       console.error(err);
       this.panel.open('Lens unavailable', [el('p', { class: 'lp-error', text: 'This lens could not be loaded. Check the connection and try again.' })]);

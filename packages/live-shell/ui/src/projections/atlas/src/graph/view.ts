@@ -169,6 +169,8 @@ export class GraphView {
   private dirty = true;
   private live: Float32Array;
   private timeDirty = true;
+  /** [T-ATLAS-SEAM] the field's occurrences changed in place since the graph was built: it is built again at its next opening */
+  private stale = false;
 
   // what is shown
   private mode: 'global' | 'local' = 'global';
@@ -382,8 +384,41 @@ export class GraphView {
     return this.visible;
   }
 
+  /** [T-ATLAS-SEAM] The model's occurrences changed in place: the graph is built again from the model when it next opens. */
+  markStale(): void {
+    this.stale = true;
+  }
+
+  /** Built again from the model (the field's nodes, and the sky's bodies when the sky is on). Every index the view keeps is
+   * re-derived: the target is re-applied by key on the next setTarget, and its emphasis indices are dropped (the controller
+   * re-supplies them). The view is hidden here, so nothing is drawn until it opens. */
+  private rebuildFromModel(): void {
+    this.stale = false;
+    this.gBase = this.g = buildGraph(this.model);
+    this.nodes = this.g.nodes.map((n) => this.makeNode(n));
+    this.live = new Float32Array(this.g.nodes.length).fill(1);
+    this.active = new Map();
+    this.activeEdges = [];
+    this.simNodes = [];
+    this.emph = null;
+    this.subject = -1;
+    this.selected = -1;
+    this.hover = -1;
+    this.press = null;
+    this.dragging = -1;
+    this.lastClick = null;
+    this.lastTargetKey = '';
+    this.qt = null;
+    this.qtStale = true;
+    this.spawnAll();
+    if (this.sky.on && this.sky.source) this.applySky(this.sky.source);
+    this.target = { ...this.target, emphasis: null };
+    this.setTarget(this.target);
+  }
+
   show(instant = false) {
     if (this.visible) return;
+    if (this.stale) this.rebuildFromModel();
     this.visible = true;
     // a touch that was down when the graph hid never lifts on this canvas: it must not make the next touch a pinch
     this.touches.clear();

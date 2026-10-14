@@ -128,6 +128,11 @@ export class Reveal {
     return row;
   }
 
+  /** Whether the reveal is up and shows the occurrence with this id (T-ATLAS-SEAM: a removal hides only that one). */
+  shows(id: string): boolean {
+    return this.shown && this.currentId === id;
+  }
+
   hide() {
     ++this.gen;
     this.shown = false;
