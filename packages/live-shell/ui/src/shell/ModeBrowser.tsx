@@ -36,7 +36,7 @@
 import {useEffect, useMemo, useState} from 'react'
 import type {NativeDirectory} from '../../../../../desktop/cradle/src/kernel/types'
 import {listFiles} from '../../../../../desktop/cradle/src/files/client'
-import {composeModeBrowser, type ModeBrowserCategory, type SurfMode} from './modeGrammar'
+import {composeModeBrowser, ROW_SOURCE_OWNERS, type ModeBrowserCategory, type SurfMode} from './modeGrammar'
 import {allInhabitantBrowserEntries} from '../inhabitants/manifest'
 import {useWorkspace} from './workspace'
 import {carrierOf} from './runContext'
@@ -156,6 +156,12 @@ function CategoryRows({category, mode, needle, onSelectSubject, selectedSubject}
   onSelectSubject: (subject: CentralSubjectSelection | null) => void
   selectedSubject: CentralSubjectSelection | null
 }) {
+  // The ownership law at the render: a row source draws rows only for the category its owner declares. Composition already
+  // hides a foreign declaration of its id; this names the fault if one ever reaches the renderer, instead of dispatching it.
+  const rowOwner = ROW_SOURCE_OWNERS.get(category.id)
+  if (rowOwner !== undefined && rowOwner !== (category.family ?? null)) {
+    return <div className="mode-browser-fault" role="alert">The {category.label} category is declared by {category.family ?? 'the shell'}, but its rows belong to {rowOwner ?? 'the shell'} — the composition refuses the declaration.</div>
+  }
   if (category.state === 'waiting') {
     return <DesignedEmptyCategory category={category} />
   }
