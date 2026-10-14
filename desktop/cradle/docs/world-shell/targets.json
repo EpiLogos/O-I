@@ -11180,8 +11180,13 @@
       "status": "pending",
       "progress": {
         "implemented": {
-          "state": "pending",
-          "evidence": []
+          "state": "yes",
+          "evidence": [
+            "commit b1e8b94294fd7f21e268a05a73bce9e34ad65b7b \u2014 lane-5 T22 and the T11 return: library entries record their origin, boot prefers the kernel copy",
+            "commit 33c0ec5e0fd2eaab1644153b53fcdc0745574b01 \u2014 lane-5 T22: a local draft saved to the kernel keeps a link to its kernel document",
+            "source desktop/cradle/expressions-app/field-studies-journeys/src/libraryStore.ts \u2014 LibraryOrigin, libraryOriginFrom, recordLibraryAdoption, libraryOpenPlan; saveToLibrary(journey, origin)",
+            "scripted desktop/cradle/expressions-app/field-studies-journeys/tests/library-origin.test.mjs \u2014 origin recorded beside the document; a backup never flips a kernel entry; adoption links the local entry; the open plan prefers the kernel copy"
+          ]
         },
         "exercised": {
           "state": "pending",
@@ -11200,7 +11205,7 @@
           "evidence": []
         }
       },
-      "candidate_revision": null,
+      "candidate_revision": "33c0ec5e0fd2eaab1644153b53fcdc0745574b01",
       "dependencies": [
         "boundary:P1",
         "editing:SC-7",
@@ -11247,7 +11252,7 @@
       ],
       "notes": [
         "No new-shell native exercise or craft acceptance executed for this target at initialization. Earlier model/unit checks are baselines and do not close it.",
-"Implemented axis pending: no commit reachable from 525474ee1 names lane-5 T22 in its subject or body. Lane-2 and lane-4 T22 commits are different targets."
+"Implemented (14 Oct 2026) on dlw/build, not yet on main; runtime walk pending."
       ]
     },
     {
@@ -11276,8 +11281,12 @@
       "status": "pending",
       "progress": {
         "implemented": {
-          "state": "pending",
-          "evidence": []
+          "state": "yes",
+          "evidence": [
+            "commit 850844a38163c3a052a1321be053d2dfe4509bb8 \u2014 lane-5 T10 + T11: the crossing and the exact return through the session's one history",
+            "commit b1e8b94294fd7f21e268a05a73bce9e34ad65b7b \u2014 the frame's Return to journey control on a crossed beat (the source portal's grammar), returning through activateInstrument('journey')",
+            "scripted packages/expressions-boundary/tests/lane5-journey-chain.test.mjs \u2014 journey to scene to source and back, twice; identity refs byte-identical; reorder while crossed returns by ref; a deleted beat is an honest miss"
+          ]
         },
         "exercised": {
           "state": "pending",
@@ -11296,7 +11305,7 @@
           "evidence": []
         }
       },
-      "candidate_revision": null,
+      "candidate_revision": "b1e8b94294fd7f21e268a05a73bce9e34ad65b7b",
       "dependencies": [
         "boundary:P1",
         "editing:SC-1",
@@ -11317,7 +11326,7 @@
       ],
       "notes": [
         "No new-shell native exercise or craft acceptance executed for this target at initialization. Earlier model/unit checks are baselines and do not close it.",
-"Implemented axis pending: no commit reachable from 525474ee1 names lane-5 T23 in its subject or body."
+"Implemented (14 Oct 2026) on dlw/build, not yet on main; runtime walk pending."
       ]
     },
     {
