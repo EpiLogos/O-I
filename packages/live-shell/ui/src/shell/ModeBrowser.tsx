@@ -46,6 +46,8 @@ import {Icon} from '../inhabitants/sdk/Icon'
 import {KindMark} from '../inhabitants/sdk/marks.tsx'
 import type {CentralSubjectSelection} from '../inhabitants/CentralSubjectDetail'
 import './modeSurface.css'
+import {createPortal} from 'react-dom'
+import type {BrowserCategory, ControlledBrowser} from '../frame/browser/browserKinds'
 
 /** The root register's day surface — where the civil calendar's records
  * live (`centralDayNowModel`'s subjectDayRef reads this shape). */
@@ -58,8 +60,16 @@ function CategoryMark({category, size = 13}: {category: ModeBrowserCategory; siz
   return <Icon name={category.mark} size={size} />
 }
 
-export function ModeBrowser({mode, onSelectSubject, selectedSubject}: {
+/** A mode's grammar categories in the one browser (F6): the ground's and the world's categories are material to open. */
+export function modeBrowserCategories(mode: SurfMode): BrowserCategory[] {
+  return composeModeBrowser(mode, allInhabitantBrowserEntries()).map(category => ({id: category.id, label: category.label, kind: 'material',
+    mark: <CategoryMark category={category} />, hint: category.hint, waiting: category.state === 'waiting'}))
+}
+
+export function ModeBrowser({mode, onSelectSubject, selectedSubject, controlled}: {
   mode: SurfMode
+  /** Held by the one browser (F6): the category and the search are its. */
+  controlled?: ControlledBrowser
   /** Selecting a ground subject (a day, folder or note) opens its craft in
    * the mode's Document detail. */
   onSelectSubject: (subject: CentralSubjectSelection | null) => void
@@ -77,9 +87,27 @@ export function ModeBrowser({mode, onSelectSubject, selectedSubject}: {
     return seen
   }, [categories])
   const [active, setActive] = useState(categories[0]?.id ?? '')
-  const [needle, setNeedle] = useState('')
+  const [ownNeedle, setNeedle] = useState('')
+  const needle = controlled?.query ?? ownNeedle
   // Selecting a category keeps its rows; the needle filters them.
-  const activeCategory = categories.find(category => category.id === active) ?? categories[0] ?? null
+  const activeCategory = categories.find(category => category.id === (controlled?.category ?? active)) ?? categories[0] ?? null
+  const results = <>
+        <div className="mode-browser-resulthead" aria-hidden="true">
+          <span>Name</span>
+          <span>{activeCategory?.id === 'central-days' ? 'State' : activeCategory?.id === 'techne-sources' ? 'Rev' : 'Size'}</span>
+        </div>
+        {activeCategory && <CategoryRows category={activeCategory} mode={mode} needle={needle}
+          onSelectSubject={onSelectSubject} selectedSubject={selectedSubject} />}
+  </>
+  const pool = <section className="world-context-pool" aria-label="Browser context">
+      <header><button type="button" data-i="Context|the selected category's standing — what its rows read, and what selecting a row does"
+        title="Context — the category's standing"><span aria-hidden="true">▾</span> {activeCategory ? `${activeCategory.label} · ${activeCategory.state === 'waiting' ? 'declared, waiting' : 'reads'}` : 'Context'}</button></header>
+      <div className="world-pool-body">
+        {activeCategory && <CategoryContext category={activeCategory} mode={mode} />}
+        <ApertureSlot mode={mode} selectedSubject={selectedSubject} />
+      </div>
+    </section>
+  if (controlled) return <div className="mode-browser-body" data-mode-browser={mode}>{results}{controlled.poolHost && createPortal(pool, controlled.poolHost)}</div>
 
   return <aside className="world-browser world-browser-categories mode-browser" data-mode-browser={mode} aria-label="Mode browser">
     <div className="world-browser-searchrow">
@@ -106,23 +134,9 @@ export function ModeBrowser({mode, onSelectSubject, selectedSubject}: {
           </button>}
         </div>)}
       </nav>
-      <div className="world-browser-results">
-        <div className="mode-browser-resulthead" aria-hidden="true">
-          <span>Name</span>
-          <span>{activeCategory?.id === 'central-days' ? 'State' : activeCategory?.id === 'techne-sources' ? 'Rev' : 'Size'}</span>
-        </div>
-        {activeCategory && <CategoryRows category={activeCategory} mode={mode} needle={needle}
-          onSelectSubject={onSelectSubject} selectedSubject={selectedSubject} />}
-      </div>
+      <div className="world-browser-results">{results}</div>
     </div>
-    <section className="world-context-pool" aria-label="Browser context">
-      <header><button type="button" data-i="Context|the selected category's standing — what its rows read, and what selecting a row does"
-        title="Context — the category's standing"><span aria-hidden="true">▾</span> {activeCategory ? `${activeCategory.label} · ${activeCategory.state === 'waiting' ? 'declared, waiting' : 'reads'}` : 'Context'}</button></header>
-      <div className="world-pool-body">
-        {activeCategory && <CategoryContext category={activeCategory} mode={mode} />}
-        <ApertureSlot mode={mode} selectedSubject={selectedSubject} />
-      </div>
-    </section>
+    {pool}
     <InstrumentsSection /><SetsSection />
   </aside>
 }
