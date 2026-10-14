@@ -1,0 +1,22 @@
+/* One device in three sizes (FOUNDATION F5). */
+.device { display: flex; flex-direction: column; min-width: 0 }
+.device--compact { width: 180px; flex: none }
+.device--whole { width: 100% }
+.device--full { position: absolute; inset: 0; overflow: auto; padding: 12px; background: var(--bg-2) }
+.device-picture { height: 64px; background: var(--bg-0); border: 1px solid var(--line); margin: 4px 0; overflow: hidden; display: grid; place-items: center }
+.device--whole .device-picture { height: 140px }
+.device--full .device-picture { height: 50vh }
+.device-controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px }
+.device-group { border: 0; border-top: 1px solid var(--line); margin: 6px 0 0; padding: 4px 0 0 }
+.device-group legend { font-size: 9.5px; color: var(--text-faint); text-transform: uppercase; letter-spacing: .06em; padding: 0 4px 0 0 }
+.device-row { display: flex; align-items: center; gap: 4px; min-width: 0 }
+.device-row[data-held-by] { box-shadow: inset 2px 0 0 var(--accent) }
+.device-handback { background: none; border: 1px solid var(--accent); color: var(--accent); font-size: 10px; padding: 0 4px; flex: none }
+.device-commit { display: flex; gap: 6px; align-items: center; margin-top: 6px; font-size: 10.5px; color: var(--text-dim) }
+.device-commit button { background: var(--bg-2); border: 1px solid var(--line); color: var(--text); font-size: 10.5px; padding: 1px 8px }
+.device-commit [role="alert"] { color: var(--rec) }
+.device-pool { padding: 6px; overflow: auto; height: 100% }
+.device-pool-empty { margin: 6px; font-size: 10.5px; color: var(--text-faint) }
+.torus-picture { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 10px; color: var(--text-dim) }
+.torus-picture b { color: var(--text); font-weight: 500 }
+.torus-picture small { color: var(--text-faint); font-size: 9px; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }

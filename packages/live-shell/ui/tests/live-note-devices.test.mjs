@@ -300,7 +300,7 @@ test('source reading: the one hook point is the input path\'s transform, applied
 test('source reading: Live\'s chain mounts the note devices before the torus, and the clip detail carries none', async () => {
   const panel = readFileSync(new URL('../src/components/DeviceChainPanel.tsx', import.meta.url), 'utf8')
   const note = panel.indexOf('<NoteDeviceChain />')
-  const torusAt = panel.indexOf('<LiveTorusWidget />')
+  const torusAt = panel.indexOf('<TorusOnChain state={torus} />')
   const jankoAt = panel.indexOf('<JankoDevice />')
   assert.ok(note > 0 && torusAt > note && jankoAt > torusAt, 'note devices, then the torus, then the keyboard')
   assert.match(panel, /import \{ NoteDeviceChain \} from '\.\.\/live\/noteDevices\/NoteDeviceChain'/)

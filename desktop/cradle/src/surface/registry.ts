@@ -33,10 +33,13 @@ import {
   shiftDepth,
   splitOff,
   tileSurfaces,
+  splitQuad,
+  dropOnEdge,
+  pinSubject,
   togglePin,
 } from "./engine";
 import {clampTabListWidth, type TabPresentation} from "../workspace/mode";
-import {PROJECTION_PANE_KINDS} from "./types";
+import {PROJECTION_PANE_KINDS, isProjectionPaneKind} from "./types";
 import type {
   ActionArg,
   ActionDisclosure,
@@ -71,7 +74,7 @@ export function bindingDisclosures(
 ): ActionDisclosure[] {
   const binding = ctx.state.surfaces[surfaceId];
   if (!binding) return [];
-  if (!FRAME_DISCLOSED_KINDS.has(binding.kind)) return [];
+  if (!FRAME_DISCLOSED_KINDS.has(binding.kind) && !isProjectionPaneKind(binding.kind)) return [];
   const pinned = isPinned(ctx.state, surfaceId);
   return [
     {action_ref:"surface.focus-tab",title:"Focus this tab",enabled:true},
@@ -228,6 +231,12 @@ function executeBaseAction(
       return active() ? splitOff(state, active(), "v", true) : state;
     case "surface.tile":
       return tileSurfaces(state);
+    case "surface.split-quad":
+      return splitQuad(state, arg?.groupId ?? state.focusedGroupId ?? "");
+    case "surface.pin-subject":
+      return arg?.surfaceId ? pinSubject(state, arg.surfaceId, arg.ref) : state;
+    case "surface.drop-edge":
+      return arg?.surfaceId && arg?.groupId && arg?.edge ? dropOnEdge(state, arg.surfaceId, arg.groupId, arg.edge) : state;
     case "surface.move":
       return arg?.dir ? moveDirectional(state, arg.dir) : state;
     case "surface.focus":

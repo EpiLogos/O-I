@@ -7,7 +7,7 @@ import type {LayoutState, SurfaceId} from "./types";
 import {MODE_CURATION, TREE_MODES, type WorkspaceMode} from "../workspace/mode";
 import type {Workspace} from "../workspace/store";
 import {hostedSurfaceDescriptors} from "../contributions/registered-kinds.mjs";
-import {PROJECTION_PANE_KINDS} from "./types";
+import {PROJECTION_PANE_KINDS, isProjectionPaneKind} from "./types";
 
 /** The centre kinds the tier retains: engines and hosted applications —
  * `expressions` (the vendored application's iframe), `techne`, `epi-logos`,
@@ -22,7 +22,7 @@ export const isRetainedCentreKind = (kind: string) => RETAINED_CENTRE_KINDS.has(
  * projections would otherwise be dropped on a mode or workspace swap, which
  * unmounts the module and — for the Earth — cannot be remounted in-session. */
 export const RETAINED_PANE_KINDS = new Set<string>(["draft", "file", "source", "knowledge", "encounter", "terminal", "browser", "presentation", "explore", ...PROJECTION_PANE_KINDS]);
-export const isRetainedPaneKind = (kind: string) => RETAINED_PANE_KINDS.has(kind);
+export const isRetainedPaneKind = (kind: string) => RETAINED_PANE_KINDS.has(kind) || isProjectionPaneKind(kind);
 
 export interface WarmTreeRef { key: string; workspaceId: string; layout: LayoutState; presented: boolean }
 

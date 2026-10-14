@@ -13,10 +13,27 @@
 import {useLayoutEffect, useSyncExternalStore} from 'react'
 import type {TimelineResidenceProps} from './timelineResidence'
 import type {TimelinePresentation} from './timelinePresentation'
+import type {SurfMode} from '../shell/modeGrammar'
+import type {NativeExpressionsContent} from '../shell/nativeContent'
+import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
 
-/** The props the World cut's residence reads, for a pane. The native sources and the presentation are not published: the
- * World cut passes no native source, and the presentation is the pane's own. */
-export type TimelineHostReading = Pick<TimelineResidenceProps, 'set' | 'document' | 'selection' | 'select' | 'colors' | 'setColor' | 'world' | 'journey'>
+/** The props the Session · Arrangement residence reads, for a pane: the mode's tracks (FOUNDATION F2 — the pane is the
+ * centre in every mode; which material it shows is the mode's registration, shell/modeFrames.ts MODE_TRACK_SOURCES: the
+ * open set, the World cut, or the open Expression's native sources). The presentation is the pane's own. `mode` names
+ * the mode whose designed empty frame stands while the World cut's reading is unread. */
+export type TimelineHostReading = Pick<TimelineResidenceProps, 'set' | 'document' | 'selection' | 'select' | 'colors' | 'setColor' | 'world' | 'journey' | 'session' | 'arrangement'> & {
+  mode: SurfMode
+  /** The open Expression's content and title (Expressions' tracks, F3). */
+  native?: NativeExpressionsContent | null
+  workName?: string
+  /** THE selection's ref, and the one writer the shared views select through (FOUNDATION F1, F3). */
+  selectedRef?: string
+  selectTrackItem: (target: {kind: 'clip' | 'track'; ref: string; title: string; track?: string}) => void
+  /** Why the mode has no tracks yet, in its own words, when it has none. */
+  waiting?: string
+  /** The kernel carrier, for a mode whose tracks read their own owner (frame/tracks/modeTracks.ts). */
+  transport?: KernelTransportStatus
+}
 
 let reading: TimelineHostReading | null = null
 let presentation: TimelinePresentation = 'arrangement'

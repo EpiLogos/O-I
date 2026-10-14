@@ -1,5 +1,29 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import {register} from 'node:module'
+
+// Loader as live-browser-chain.test.mjs: extensionless TypeScript imports, transpiled in memory.
+const compiler = new URL('../node_modules/typescript/lib/typescript.js', import.meta.url).href
+register(`data:text/javascript,${encodeURIComponent(`
+import ts from ${JSON.stringify(compiler)};
+import {readFile} from 'node:fs/promises';
+export async function resolve(specifier,context,next){
+  try{return await next(specifier,context)}catch(error){
+    if(!specifier.startsWith('.'))throw error;
+    if(specifier.endsWith('.js')){try{return await next(specifier.slice(0,-3)+'.ts',context)}catch{}}
+    for(const suffix of ['.ts','.tsx']){try{return await next(specifier+suffix,context)}catch{}}
+    throw error;
+  }
+}
+export async function load(url,context,next){
+  if(url.endsWith('.css'))return {format:'module',shortCircuit:true,source:'export default null'};
+  if(url.endsWith('.ts')||url.endsWith('.tsx')){
+    const source=await readFile(new URL(url).pathname,'utf8');
+    const {outputText}=ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext,jsx:ts.JsxEmit.ReactJSX},fileName:url});
+    return {format:'module',shortCircuit:true,source:outputText};
+  }
+  return next(url,context);
+}`)}`, {parentURL: import.meta.url})
 
 // FOUNDATION F1 in the candidate: Live's selection is the world's one selection (a ref the open set anchors), and each
 // mode first opens on its registered frame. Loaded as erasable TypeScript (--experimental-strip-types).

@@ -1,4 +1,5 @@
 import {useEffect, useMemo, useState, type DragEvent} from 'react'
+import {InstrumentsSection} from '../frame/InstrumentsSection'
 import {SetsSection} from '../shell/SetsSection'
 import type {AgencySessionRow} from '../../../../../desktop/cradle/src/agency/agencyTypes'
 import {AgentDevicePool} from './AgentDevicePool'
@@ -307,7 +308,7 @@ export function AgentShellBrowser({rows, error, loading}: {rows: AgencySessionRo
         skillsNote={skillAdmission.note}
         skillsWaitingOn={skillAdmission.waiting}
       />
-      <SetsSection />
+      <InstrumentsSection /><SetsSection />
     </aside>
   )
 }
