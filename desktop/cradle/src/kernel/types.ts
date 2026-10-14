@@ -265,6 +265,14 @@ export type KernelOp =
   | {op:"music_modes_read"}
   // The installed quaternal-logic's Jankó surface window (ql.janko-surface/v1), verbatim; each argument left out is the owner's default.
   | {op:"janko_window_read";lens?:number;first_column?:number;columns?:number}
+  // The Live set reading ({summary, document, revision}) for one absolute .als path: the owner read the 8787 seam served at /api/set.
+  | {op:"live_set_read";path:string}
+  // Every live-dynamics device parameter table, keyed by document element name.
+  | {op:"live_device_descriptors"}
+  // One device's stored parameter values on one track.
+  | {op:"live_device_params_read";path:string;track:string;device:string}
+  // Validate one stored parameter against its table's extent and write the set back in place; refusals name the law.
+  | {op:"live_device_param_write";path:string;track:string;device_name:string;param_id:string;value:unknown}
   // The configuration-plane binding (#299 C6 live leg): every operation
   // routes through the installed `oi` executable — the same engine
   // `oi config` / `oi profile` drive — so the Desktop keeps no parallel
@@ -442,6 +450,11 @@ export type KernelOpResult =
   | {result:"system_composition_reading";reading:import("../workspace/settings/types").SystemCompositionReading}
   | {result:"music_modes_reading";document:unknown}
   | {result:"janko_window_reading";document:unknown}
+  // Live document owner results: the 8787 seam's contract documents, verbatim.
+  | {result:"live_set_reading";reading:{summary:unknown;document:unknown;revision:string}}
+  | {result:"live_device_descriptors_reading";descriptors:Record<string,unknown[]>}
+  | {result:"live_device_params_reading";reading:{params:unknown[]}}
+  | {result:"live_device_param_written";reading:{param:unknown}}
   // Configuration-plane results: contract documents verbatim, degraded
   // states as named data (see `configuration.rs` in the kernel crate).
   | { result: "config_registry_reading"; reading: { schema: string; observed_at_unix_ms: number; mounts: ConfigurationMountState[]; composition?: import("../configuration/composition").RegistryComposition | null } }

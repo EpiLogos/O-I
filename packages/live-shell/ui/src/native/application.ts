@@ -1,4 +1,4 @@
-import {tauriInvoke} from '../../../../../desktop/cradle/src/kernel/bridge'
+import {detectTransport, kernelOp, tauriInvoke} from '../../../../../desktop/cradle/src/kernel/bridge'
 import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
 
 export interface NativeContributionReading {
@@ -155,6 +155,14 @@ export function invalidateSet(path?: string): void {
   for (const [subject, listeners] of setListeners) if (!path || subject === path) for (const listener of [...listeners]) listener()
 }
 function current(signal?: AbortSignal) {if (signal?.aborted) throw new DOMException('The originating view was released', 'AbortError')}
+/** The Live set reading from the kernel's live_set_read op, the owner's document verbatim. */
+async function kernelSetReading(transport: KernelTransportStatus, path: string): Promise<unknown> {
+  const answer = await kernelOp(transport, {op: 'live_set_read', path})
+  if (answer.outcome == null) throw Error(answer.error ?? 'the kernel did not serve the set reading')
+  const outcome = answer.outcome as {result?: string; reading?: unknown}
+  if (outcome.result !== 'live_set_reading') throw Error(`the kernel answered \`${outcome.result ?? 'unknown'}\`, not \`live_set_reading\``)
+  return outcome.reading
+}
 export async function readSet(path: string, signal?: AbortSignal): Promise<SetReading> {
   current(signal)
   await readShellConfig()
@@ -174,7 +182,9 @@ export async function readSet(path: string, signal?: AbortSignal): Promise<SetRe
       let value: unknown
       try {
         if (origin !== generation || readings.get(key) !== held) throw Error('The set subject retired before its owner acquisition')
-        value = nativeHost() ? await tauriInvoke<unknown>('live_shell_read', {request: {kind: 'set', path}})
+        const transport = detectTransport()
+        value = transport.kind !== 'unavailable' ? await kernelSetReading(transport, path)
+          : nativeHost() ? await tauriInvoke<unknown>('live_shell_read', {request: {kind: 'set', path}})
           : await json(`/api/set?path=${encodeURIComponent(path)}`)
       } finally {release()}
       if (origin !== generation || readings.get(key) !== held) throw Error('The set reading belongs to a retired owner access')

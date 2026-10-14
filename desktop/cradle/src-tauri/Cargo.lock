@@ -2126,7 +2126,11 @@ name = "live-set"
 version = "0.1.0"
 dependencies = [
  "flate2",
+ "live-dynamics",
  "quick-xml 0.36.2",
+ "serde",
+ "serde_json",
+ "sha2",
 ]
 
 [[package]]
@@ -2559,6 +2563,8 @@ dependencies = [
  "getrandom 0.3.4",
  "jiff",
  "libc",
+ "live-dynamics",
+ "live-set",
  "serde",
  "serde_json",
  "sha2",

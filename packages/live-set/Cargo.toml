@@ -7,3 +7,7 @@ description = "Document engine for the Live shell: typed read/write of the Live 
 [dependencies]
 flate2 = "1"
 quick-xml = "0.36"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+live-dynamics = { path = "../live-dynamics" }
