@@ -47,6 +47,13 @@ export function useCandidateWorkspace() {
 }
 const Continuity = createContext<CandidateWorkspace | null>(null)
 
+const ADMISSION_READ_BOUND_MS = 15000
+function withinReadBound<T>(read: Promise<T>): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const bound = new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new Error(`no answer within ${ADMISSION_READ_BOUND_MS / 1000} s`)), ADMISSION_READ_BOUND_MS) })
+  return Promise.race([read, bound]).finally(() => clearTimeout(timer))
+}
+
 /** One apply per page load. React StrictMode runs effects twice, and two applies must never race. */
 let admissionRun: Promise<AdmissionOutcome> | null = null
 function runAdmissionOnce(): Promise<AdmissionOutcome> {
@@ -54,7 +61,8 @@ function runAdmissionOnce(): Promise<AdmissionOutcome> {
     .then(() => applyPendingAdmission({
       store: localStorage,
       namespace: CANDIDATE_WORKSPACE_KEY,
-      read: () => tauriInvoke<PendingAdmission>('live_shell_continuity_pending', {}),
+      // A read that never answers must not hold the start: past the bound it is a failed read, which writes nothing.
+      read: () => withinReadBound(tauriInvoke<PendingAdmission>('live_shell_continuity_pending', {})),
       confirm: confirmation => tauriInvoke<void>('live_shell_continuity_confirm', {...confirmation}),
     }))
     .catch((error: unknown): AdmissionOutcome => ({status: 'failed', admission: '', written: 0, reason: `The owner-admitted continuity could not start (${error instanceof Error ? error.message : String(error)}); nothing was applied, and the next start tries again.`}))
@@ -89,7 +97,7 @@ export function ContinuityProvider({children}: {children: ReactNode}) {
   if (outcome.status === 'failed' && outcome.written > 0 && !startWithout) {
     return <div role="alert" data-region="continuity-admission" data-admission="failed" style={holdStyle}>
       <p style={{margin: '0 0 8px'}}>{outcome.reason}</p>
-      <p style={{margin: '0 0 8px'}}>The workspace is held so nothing overwrites the half-applied records. Starting without the admission opens the candidate on the records now in place; the admission stays pending and is verified again at the next start.</p>
+      <p style={{margin: '0 0 8px'}}>The workspace is held so nothing overwrites the half-applied records. Quitting and reopening retries the apply. Starting without it opens the candidate on the records now in place; once the candidate writes its own workspace, this admission can no longer apply as made, and applying it later needs a fresh admission with --owner-replace.</p>
       <button type="button" data-action="start-without-admission" onClick={() => setStartWithout(true)}>Start without the admitted continuity</button>
     </div>
   }
