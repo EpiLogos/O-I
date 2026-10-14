@@ -975,6 +975,17 @@ export class Controller {
     this.syncHash(s, true);
   }
 
+  /** [T-ATLAS-SEAM] The occurrence list changed in place (the engine's replaceOccurrence): the per-occurrence scratch and the
+   * filter's mask follow the new count. A removal also hides the hover and the reveal, which may name the leaving index. */
+  refreshOccurrences(removed: boolean): void {
+    this.rel = new Float32Array(this.m.occ.length);
+    if (removed) {
+      this.hover.hide();
+      this.reveal.hide();
+    }
+    this.applyFilter(this.filter);
+  }
+
   private applyFilter(f: FieldFilter) {
     this.filter = f;
     this.filterMask = maskOf(this.m.occ, f, this.m.tags);

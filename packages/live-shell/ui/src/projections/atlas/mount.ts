@@ -32,6 +32,8 @@ import { loadProvider, type CorpusBundle } from './provider/corpusProvider';
 import { setSkyProvider, type SkyProvider } from './provider/skyProvider';
 import { setPublishedSource } from './src/data/published';
 import { loadRedbook } from './src/redbook/load';
+import type { Family, Occurrence } from './src/types/field';
+import type { SeamChange } from './src/data/occurrenceSeam';
 
 export { registerFixtureProvider, FIXTURE_PROVIDER_ID } from './provider/fixtureProvider';
 export { setSkyProvider } from './provider/skyProvider';
@@ -76,6 +78,9 @@ export interface AtlasHandle {
   readonly time: TimeModel;
   /** the corpus model the atlas draws (its time scale is the deep-time scale) */
   readonly model: Model;
+  /** [T-ATLAS-SEAM] One occurrence of the drawn field replaced in place (`occ` null takes it away): the Earth's Sun follows
+   * the shared window through this, and nothing else is redrawn. A refusal names its rule and leaves the field as it was. */
+  replaceOccurrence(occ: Occurrence | null, id: string, family?: Family): SeamChange;
   destroy(): void;
 }
 
@@ -130,6 +135,11 @@ export async function mountAtlas(options: AtlasMountOptions): Promise<AtlasHandl
       time,
       get ctl(): Controller {
         return ctl!;
+      },
+      replaceOccurrence(occ, id, family) {
+        const change = engine.replaceOccurrence(occ, id, family);
+        if (change.changed) ctl!.refreshOccurrences(change.removed);
+        return change;
       },
       destroy() {
         binding?.dispose();

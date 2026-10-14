@@ -7,16 +7,24 @@ import { PRESENCE_FRAG, PRESENCE_VERT, SPLAT_FRAG, SPLAT_VERT } from './shaders'
 import type { Shared } from './shared';
 
 const PREC: Record<string, number> = { place: 0, region: 1, culture: 2, none: 3 };
+/** [T-ATLAS-SEAM] spare slots past the count, so a host that adds an occurrence at the tail does not regrow the buffers */
+const HEADROOM = 16;
 
 export class Presences {
   readonly mesh: THREE.Mesh;
   readonly densityTarget: THREE.WebGLRenderTarget;
   readonly densityScene = new THREE.Scene();
   readonly densityCam = new THREE.OrthographicCamera(-1, 1, 1, -1, -1, 1);
-  readonly rel: Float32Array;
+  /** per-slot level, eased toward relTarget; index-aligned with the model, held at capacity (>= the count) */
+  rel: Float32Array;
   private relTarget: Float32Array;
   private relAttr: THREE.InstancedBufferAttribute;
   private n: number;
+  /** [T-ATLAS-SEAM] the slots the buffers hold */
+  private capacity: number;
+  private geo: THREE.InstancedBufferGeometry;
+  private sgeo: THREE.InstancedBufferGeometry;
+  private buf: { dir: Float32Array; ll: Float32Array; col: Float32Array; glow: Float32Array; meta: Float32Array };
   private focusCore = { value: new THREE.Vector3(1, 1, 1) };
   private focusMix = { value: 0 };
   private focusMixTarget = 0;
@@ -28,33 +36,22 @@ export class Presences {
 
   constructor(private model: Model, private shared: Shared, private renderer: THREE.WebGLRenderer) {
     const n = (this.n = model.occ.length);
-    const dir = new Float32Array(n * 3);
-    const ll = new Float32Array(n * 2);
-    const col = new Float32Array(n * 3);
-    const glowCol = new Float32Array(n * 3);
-    const meta = new Float32Array(n * 4);
-    this.rel = new Float32Array(n).fill(1);
-    this.relTarget = new Float32Array(n).fill(1);
-
-    for (let i = 0; i < n; i++) {
-      const o = model.occ[i];
-      const d = model.dir[i];
-      dir.set(d, i * 3);
-      ll[i * 2] = (o.lon * Math.PI) / 180;
-      ll[i * 2 + 1] = (o.lat * Math.PI) / 180;
-      col.set(model.colour[i], i * 3);
-      glowCol.set(model.famPalette.get(o.familyId)?.glow ?? model.colour[i], i * 3);
-      const prec = model.located[i] ? PREC[o.geoPrecision] ?? 0 : 3;
-      const seed = hash01(i);
-      meta[i * 4] = model.u[i];
-      meta[i * 4 + 1] = 5.4 + seed * 1.8;
-      meta[i * 4 + 2] = prec;
-      meta[i * 4 + 3] = seed;
-    }
+    this.capacity = n + HEADROOM;
+    this.rel = new Float32Array(this.capacity).fill(1);
+    this.relTarget = new Float32Array(this.capacity).fill(1);
+    this.buf = {
+      dir: new Float32Array(this.capacity * 3),
+      ll: new Float32Array(this.capacity * 2),
+      col: new Float32Array(this.capacity * 3),
+      glow: new Float32Array(this.capacity * 3),
+      meta: new Float32Array(this.capacity * 4),
+    };
+    for (let i = 0; i < n; i++) this.writeSlot(i);
+    const { dir, ll, col, glow, meta } = this.buf;
     const aDir = new THREE.InstancedBufferAttribute(dir, 3);
     const aLL = new THREE.InstancedBufferAttribute(ll, 2);
     const aColor = new THREE.InstancedBufferAttribute(col, 3);
-    const aGlow = new THREE.InstancedBufferAttribute(glowCol, 3);
+    const aGlow = new THREE.InstancedBufferAttribute(glow, 3);
     const aMeta = new THREE.InstancedBufferAttribute(meta, 4);
     this.relAttr = new THREE.InstancedBufferAttribute(this.rel, 1);
     this.relAttr.setUsage(THREE.DynamicDrawUsage);
@@ -66,7 +63,7 @@ export class Presences {
     };
 
     // ── presence points
-    const geo = new THREE.InstancedBufferGeometry();
+    const geo = (this.geo = new THREE.InstancedBufferGeometry());
     quad(geo);
     geo.setAttribute('aDir', aDir);
     geo.setAttribute('aColor', aColor);
@@ -94,7 +91,7 @@ export class Presences {
     this.mesh.renderOrder = 10;
 
     // ── density splats (three copies across the dateline)
-    const sgeo = new THREE.InstancedBufferGeometry();
+    const sgeo = (this.sgeo = new THREE.InstancedBufferGeometry());
     quad(sgeo);
     sgeo.setAttribute('aLL', aLL);
     sgeo.setAttribute('aGlow', aGlow);
@@ -123,6 +120,79 @@ export class Presences {
       generateMipmaps: false,
       depthBuffer: false,
     });
+  }
+
+  /** The per-slot values of one occurrence: the constructor's writer, and the writer of a host replacement (sync). */
+  private writeSlot(i: number): void {
+    const m = this.model;
+    const o = m.occ[i];
+    const { dir, ll, col, glow, meta } = this.buf;
+    dir.set(m.dir[i], i * 3);
+    ll[i * 2] = (o.lon * Math.PI) / 180;
+    ll[i * 2 + 1] = (o.lat * Math.PI) / 180;
+    col.set(m.colour[i], i * 3);
+    glow.set(m.famPalette.get(o.familyId)?.glow ?? m.colour[i], i * 3);
+    const prec = m.located[i] ? PREC[o.geoPrecision] ?? 0 : 3;
+    const seed = hash01(i);
+    meta[i * 4] = m.u[i];
+    meta[i * 4 + 1] = 5.4 + seed * 1.8;
+    meta[i * 4 + 2] = prec;
+    meta[i * 4 + 3] = seed;
+  }
+
+  /**
+   * [T-ATLAS-SEAM] Brings the buffers to the model's count and rewrites one slot: an occurrence the host replaced in place
+   * (data/occurrenceSeam.ts has already changed the model). No other slot is written. A count past the capacity regrows the
+   * buffers and copies the values held; a count that falls only ends the draw. A new slot starts at full level; a replaced
+   * slot keeps its level. The caller follows with setTargets, which sets the emphasis for the new count.
+   */
+  sync(slot: number | null): void {
+    const before = this.n;
+    const n = this.model.occ.length;
+    if (n > this.capacity) this.regrow(n + HEADROOM);
+    this.n = n;
+    this.geo.instanceCount = n;
+    this.sgeo.instanceCount = n;
+    if (slot !== null && slot >= 0 && slot < n) {
+      if (slot >= before) {
+        this.rel[slot] = 1;
+        this.relTarget[slot] = 1;
+      }
+      this.writeSlot(slot);
+    }
+    for (const g of [this.geo, this.sgeo]) {
+      for (const name of ['aDir', 'aLL', 'aColor', 'aGlow', 'aMeta', 'aRel']) {
+        const attr = g.getAttribute(name) as THREE.InstancedBufferAttribute | undefined;
+        if (attr) attr.needsUpdate = true;
+      }
+    }
+    this.densityDirty = true;
+  }
+
+  /** [T-ATLAS-SEAM] Larger buffers for a larger count: the held values are copied, the new slots take the rest state. */
+  private regrow(capacity: number): void {
+    const used = this.capacity;
+    const fit = (src: Float32Array, size: number, fill: number) => {
+      const out = new Float32Array(capacity * size).fill(fill);
+      out.set(src.subarray(0, used * size));
+      return out;
+    };
+    const b = this.buf;
+    this.buf = { dir: fit(b.dir, 3, 0), ll: fit(b.ll, 2, 0), col: fit(b.col, 3, 0), glow: fit(b.glow, 3, 0), meta: fit(b.meta, 4, 0) };
+    this.rel = fit(this.rel, 1, 1);
+    this.relTarget = fit(this.relTarget, 1, 1);
+    this.capacity = capacity;
+    this.relAttr = new THREE.InstancedBufferAttribute(this.rel, 1);
+    this.relAttr.setUsage(THREE.DynamicDrawUsage);
+    const { dir, ll, col, glow, meta } = this.buf;
+    this.geo.setAttribute('aDir', new THREE.InstancedBufferAttribute(dir, 3));
+    this.geo.setAttribute('aColor', new THREE.InstancedBufferAttribute(col, 3));
+    this.geo.setAttribute('aMeta', new THREE.InstancedBufferAttribute(meta, 4));
+    this.geo.setAttribute('aRel', this.relAttr);
+    this.sgeo.setAttribute('aLL', new THREE.InstancedBufferAttribute(ll, 2));
+    this.sgeo.setAttribute('aGlow', new THREE.InstancedBufferAttribute(glow, 3));
+    this.sgeo.setAttribute('aMeta', new THREE.InstancedBufferAttribute(meta, 4));
+    this.sgeo.setAttribute('aRel', this.relAttr);
   }
 
   /** Targets are rel values (see REL_GLSL); they ease in over ~1.2s. */

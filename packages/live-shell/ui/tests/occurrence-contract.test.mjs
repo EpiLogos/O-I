@@ -282,16 +282,16 @@ test('an absence takes the Sun away: a reading that places no point leaves the f
 test('the Earth states the Sun\'s standing on its own line: nothing when placed for the instant shown, the instant when the window moves on, the reason when absent', async () => {
   const present = await qlSky.admitDatedSubsolar(foundingField(), bridgeAnswering(transitAnswer({schema: 'ql.nara-transit/v1', status: 'available', sky: SHAPE})), shownInstantOf(null, new Date('2026-10-14T10:20:30.456Z')))
   assert.equal(sunStanding(present, null), null, 'the present Sun, with all time shown, is stated by nothing')
-  assert.equal(sunStanding(present, 2026), 'The Sun is drawn for the present sky. The Earth shows the year 2026, and the Sun is not redrawn for it in this session.', 'the present sun is not the year 2026 start, so a year shown is a change')
-  assert.equal(sunStanding(present, 1931), 'The Sun is drawn for the present sky. The Earth shows the year 1931, and the Sun is not redrawn for it in this session.')
+  assert.equal(sunStanding(present, 2026), 'The Sun is drawn for the present sky. The Earth shows the year 2026, and the Sun is read for it when the window settles.', 'the present sun is not the year 2026 start, so a year shown is a change')
+  assert.equal(sunStanding(present, 1931), 'The Sun is drawn for the present sky. The Earth shows the year 1931, and the Sun is read for it when the window settles.')
 
   const dated = await qlSky.admitDatedSubsolar(foundingField(), bridgeAnswering(transitAnswer({schema: 'ql.nara-transit/v1', status: 'available', sky: SHAPE_1931})), shownInstantOf(1931, new Date()))
   assert.equal(sunStanding(dated, 1931), null)
-  assert.equal(sunStanding(dated, null), 'The Sun is drawn for the year 1931. The Earth shows all time, and the Sun is not redrawn for it in this session.')
+  assert.equal(sunStanding(dated, null), 'The Sun is drawn for the year 1931. The Earth shows all time, and the Sun is read for it when the window settles.')
 
   const absent = await qlSky.admitDatedSubsolar(foundingField(), {kind: 'unavailable', reason: 'no kernel host'}, shownInstantOf(null, new Date()))
   assert.equal(sunStanding(absent, null), 'The Sun is not placed on the Earth for the present sky: the dated sky did not answer: no kernel host.')
   const outOfRange = await qlSky.admitDatedSubsolar(foundingField(), bridgeAnswering({ok: false}), shownInstantOf(-780000, new Date()))
   assert.equal(sunStanding(outOfRange, -780000), 'The Sun is not placed on the Earth for the year -780000: the dated sky answers only 1800 to 2399, and the Earth shows -780000.')
-  assert.equal(sunStanding(outOfRange, 1931), 'The Sun is not placed on the Earth for the year -780000: the dated sky answers only 1800 to 2399, and the Earth shows -780000. The Earth shows the year 1931, and the Sun is not read for it in this session.')
+  assert.equal(sunStanding(outOfRange, 1931), 'The Sun is not placed on the Earth for the year -780000: the dated sky answers only 1800 to 2399, and the Earth shows -780000. The Earth shows the year 1931, and the Sun is read for it when the window settles.')
 })

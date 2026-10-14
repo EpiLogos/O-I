@@ -2,6 +2,8 @@
 import type { ScopeInfo } from '../data/scope';
 import * as THREE from 'three';
 import type { Model } from '../data/model';
+import { replaceModelOccurrence, type SeamChange } from '../data/occurrenceSeam';
+import type { Family, Occurrence } from '../types/field';
 import { clonePalette, easeInOutCubic, mixPalette, WORLD_PALETTE, type RGBPalette } from '../data/palette';
 import type { Vec3 } from '../data/geo';
 import type { TimeModel } from '../state/timeModel';
@@ -210,6 +212,35 @@ export class GlobeEngine {
   setFilterMask(mask: Float32Array | null) {
     this.filterMask = mask;
     this.presences.setTargets(this.composeFilter(this.emphasis));
+  }
+
+  /**
+   * [T-ATLAS-SEAM] One occurrence of the mounted field replaced in place (the Sun follows the shared window): the model's
+   * arrays and the globe's buffers take that one change, and nothing else is rebuilt (data/occurrenceSeam.ts). The lens
+   * emphasis and the field filter are sized to the new count here; the controller re-derives the filter after it.
+   */
+  replaceOccurrence(occ: Occurrence | null, id: string, family?: Family): SeamChange {
+    const change = replaceModelOccurrence(this.model, occ, id, family);
+    if (!change.changed) return change;
+    const n = this.model.occ.length;
+    this.presences.sync(change.removed ? null : change.index);
+    // an occurrence the lens did not name is receded, as the controller recedes the unnamed (REL_RECEDED)
+    if (this.emphasis && this.emphasis.length !== n) {
+      const next = new Float32Array(n).fill(0.07);
+      next.set(this.emphasis.subarray(0, Math.min(n, this.emphasis.length)));
+      this.emphasis = next;
+    }
+    if (this.filterMask && this.filterMask.length !== n) {
+      const next = new Float32Array(n).fill(1);
+      next.set(this.filterMask.subarray(0, Math.min(n, this.filterMask.length)));
+      this.filterMask = next;
+    }
+    if (this.hoverIdx >= n) {
+      this.hoverIdx = -1;
+      this.cb.onHover(-1, 0, 0);
+    }
+    this.presences.setTargets(this.composeFilter(this.emphasis));
+    return change;
   }
 
   private emphasis: Float32Array | null = null;

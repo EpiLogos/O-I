@@ -55,7 +55,8 @@ export interface QlSkyRequest {
   schema: 'ql.sky-request/v1';
   epoch: string;
   timezone: string;
-  mode: 'current' | 'retained-occasion';
+  /** the QL contract's mode (desktop/cradle/src/nara/identity/types.ts SkyRequest): a present reading or a dated one */
+  mode: 'current' | 'historical';
   perspective: 'shared-geocentric' | 'observer-private';
   zodiac: unknown; // 'Tropical' | sidereal named frames — domain unverified here
   ayanamsha?: unknown; // required with sidereal, forbidden with Tropical (adapter refuses)
