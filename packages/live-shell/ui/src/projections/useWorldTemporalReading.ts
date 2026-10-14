@@ -23,6 +23,7 @@ import {
   eventDayKey,
   type CivilReading,
   type TemporalEventRow,
+  type TemporalStreamAbsence,
   type TimeSpine,
 } from '../timeline/timeSpine';
 import {projectDayTracks, dayClipEventIndex} from '../timeline/dayTrackAdapter';
@@ -47,6 +48,9 @@ export interface WorldTimelineSource {
   /** The read events, exactly as the kernel gave them (the kernel is the
    * one store; this is the reading, held for projection). */
   events: TemporalEventRow[];
+  /** The streams the reading names as contributing nothing, each with its owner's named cause (the reading's
+   * `absences`; empty when every stream answered or the reading is not live). */
+  absences: TemporalStreamAbsence[];
   /** The projected World track sets (day · run · conversation), built
    * through the adapters over the reading. */
   sets: WorldTrackSet[];
@@ -78,6 +82,7 @@ export interface WorldTimelineView {
 export function useWorldTemporalReading(transport: KernelTransportStatus): WorldTimelineView {
   const spine = useMemo(() => createTimeSpine(), []);
   const [events, setEvents] = useState<TemporalEventRow[]>([]);
+  const [absences, setAbsences] = useState<TemporalStreamAbsence[]>([]);
   const [status, setStatus] = useState<'reading' | 'live' | 'unavailable'>('reading');
   const [error, setError] = useState<string | null>(null);
   const [readAtUnixMs, setReadAtUnixMs] = useState<number | null>(null);
@@ -141,8 +146,9 @@ export function useWorldTemporalReading(transport: KernelTransportStatus): World
       setError(result.error ?? 'Temporal events reading unavailable');
       return;
     }
-    const document = result.outcome.document as {events?: TemporalEventRow[]} | undefined;
+    const document = result.outcome.document as {events?: TemporalEventRow[]; absences?: TemporalStreamAbsence[]} | undefined;
     const fresh = Array.isArray(document?.events) ? document.events : [];
+    const freshAbsences = Array.isArray(document?.absences) ? document.absences : [];
     // The owner's admitted runs — the run LANES come from the agency
     // reading (the agent shell's own track source), the clips from the
     // temporal read. A refused agency read is named, never silently empty.
@@ -178,6 +184,7 @@ export function useWorldTemporalReading(transport: KernelTransportStatus): World
       : {instantUnixMs: readAt, dayRef: null, source: 'kernel temporal read (no dated events in window)'};
     spine.readNow(now);
     setEvents(fresh);
+    setAbsences(freshAbsences);
     setAdmittedRuns(admittedRuns);
     setAdmittedRunsError(admittedRunsError);
     setStatus('live');
@@ -227,6 +234,7 @@ export function useWorldTemporalReading(transport: KernelTransportStatus): World
       error: status === 'live' ? null : error,
       now: status === 'live' ? spine.now() : null,
       events: status === 'live' ? events : [],
+      absences: status === 'live' ? absences : [],
       sets,
       eventByClipId,
       admittedRuns: status === 'live' ? admittedRuns : null,
@@ -234,7 +242,7 @@ export function useWorldTemporalReading(transport: KernelTransportStatus): World
       readAtUnixMs: status === 'live' ? readAtUnixMs : null,
       readCadence: spine.cadences().find((cadence) => cadence.id === READ_CADENCE_ID) ?? null,
     }),
-    [status, error, events, sets, eventByClipId, admittedRuns, admittedRunsError, readAtUnixMs, spine],
+    [status, error, events, absences, sets, eventByClipId, admittedRuns, admittedRunsError, readAtUnixMs, spine],
   );
 
   const selectOccasion = useCallback(

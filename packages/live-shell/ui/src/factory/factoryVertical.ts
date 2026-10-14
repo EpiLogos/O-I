@@ -12,8 +12,9 @@
  *   `subject_ref` (the occurrence contract, `field.ts`), otherwise the seam is
  *   named with its owner;
  * - Timeline selects the run's newest moment with a stated instant from the temporal
- *   reading (the factory-runs stream, subject = run ref); otherwise the absence is
- *   named with the owner's reasons;
+ *   reading (the factory-runs stream, subject = run ref); otherwise the reading's own
+ *   named cause for the stream (owner absent, unreadable, timed out or refused, in the
+ *   owner's words) is shown, and the seam alone when the reading names none;
  * - Constellation opens a wiki subject only from a `wiki:node:` ref the run's
  *   own Return text or subject names (the Central rule, `namedWikiSubjects`);
  * - Expressions: the run's live Expression is the desk's own Run Live tab
@@ -187,6 +188,8 @@ export interface FactoryVerticalInputs {
   readonly occurrences: readonly FactoryEarthOccurrence[] | null
   /** The agency reading's session refs (the shell's tracks). */
   readonly sessionRefs: readonly string[]
+  /** The streams the temporal reading names as contributing nothing (its `absences`); absent or empty when none. */
+  readonly absences?: readonly FactoryStreamAbsence[]
 }
 
 // ---------------------------------------------------------------------------
@@ -211,6 +214,38 @@ export const TIMELINE_SEAM: OwnerSeam = {
   owner: 'kernel temporal reading (desktop/cradle/kernel/src/temporal_sources.rs, the factory-runs stream)',
   op: 'a factory-runs moment for this run with a stated instant, inside the World window (the last seven civil days)',
   remedy: 'the field holds no such moment for this run: its owner states no instant for the signal (an instant-less signal never enters a window), or the Factory owner was unreadable for the window; the field reports neither per run',
+}
+
+/** One stream the temporal reading names as silent, with its owner's named cause (`oi.temporal-events/v1` → `absences`). */
+export interface FactoryStreamAbsence {
+  readonly stream: string
+  readonly reason: string
+  readonly owner_words: string
+}
+
+/** The Factory stream's named cause for a run's silence on the Timeline, in the reading's own kind and the owner's words. */
+export interface FactoryTimelineAbsence {
+  readonly reason: string
+  /** The owner's own words, trimmed; empty when the owner stated none. */
+  readonly ownerWords: string
+  /** The reason in the Timeline's words, the owner's words included. */
+  readonly text: string
+}
+
+const FACTORY_RUNS_STREAM = 'factory-runs'
+
+/** The Timeline's words for each owner state kind. A kind this face does not know is named as it arrives. */
+const ABSENCE_LABEL: Readonly<Record<string, string>> = {
+  'owner-absent': 'The Factory owner is absent here',
+  'owner-unreadable': 'The Factory owner answered, and the field could not read the answer',
+  'owner-timeout': 'The Factory owner did not answer within its bound',
+  refused: 'The Factory owner refused the reading',
+}
+
+function timelineAbsenceOf(item: FactoryStreamAbsence): FactoryTimelineAbsence {
+  const label = ABSENCE_LABEL[item.reason] ?? `The Factory owner contributed nothing (${item.reason})`
+  const words = item.owner_words.trim()
+  return {reason: item.reason, ownerWords: words, text: words ? `${label}: ${words}` : `${label}; the owner stated no words`}
 }
 
 export const CONSTELLATION_SEAM: OwnerSeam = {
@@ -281,18 +316,24 @@ export function earthRowsOf(runRef: string, subjects: readonly FactorySubject[],
 
 export type TimelineRow =
   | {readonly state: 'selected'; readonly runRef: string; readonly event: FactoryTemporalEvent}
-  | {readonly state: 'absent'; readonly runRef: string; readonly seam: OwnerSeam}
+  | {readonly state: 'absent'; readonly runRef: string; readonly seam: OwnerSeam; readonly absence?: FactoryTimelineAbsence}
 
 /** The run's moment: the newest event on the run's ref that the World's temporal reading holds with a stated instant.
- * An event without an instant cannot be placed on the Timeline's instant axis, so it is never selected. */
-export function timelineRowOf(runRef: string, events: readonly FactoryTemporalEvent[]): TimelineRow {
+ * An event without an instant cannot be placed on the Timeline's instant axis, so it is never selected.
+ * When no moment is held and the reading names a `factory-runs` absence, the row says that reason; otherwise it is the
+ * seam alone (the owner's remedy, as before). */
+export function timelineRowOf(runRef: string, events: readonly FactoryTemporalEvent[], absences: readonly FactoryStreamAbsence[] = []): TimelineRow {
   let moment: FactoryTemporalEvent | null = null
   for (const item of events) {
     const instant = item.instant_unix_ms
     if (item.subject_ref !== runRef || typeof instant !== 'number') continue
     if (moment === null || instant > (moment.instant_unix_ms as number)) moment = item
   }
-  return moment ? {state: 'selected', runRef, event: moment} : {state: 'absent', runRef, seam: TIMELINE_SEAM}
+  if (moment) return {state: 'selected', runRef, event: moment}
+  const named = absences.find(item => item.stream === FACTORY_RUNS_STREAM)
+  return named
+    ? {state: 'absent', runRef, seam: TIMELINE_SEAM, absence: timelineAbsenceOf(named)}
+    : {state: 'absent', runRef, seam: TIMELINE_SEAM}
 }
 
 export type ConstellationRow =
@@ -380,7 +421,7 @@ export function factoryRunJoin(inputs: FactoryVerticalInputs): FactoryRunJoin {
     projectRef: run.projectRef,
     subjects,
     earth: earthRowsOf(run.runRef, subjects, inputs.occurrences),
-    timeline: timelineRowOf(run.runRef, inputs.events),
+    timeline: timelineRowOf(run.runRef, inputs.events, inputs.absences ?? []),
     constellation: constellationRowOf(run.runRef, subjects, run.returns),
     expression: expressionRowOf(run.runRef),
     devices: deviceRowsOf(run.runRef, run.occupants, inputs.sessionRefs),

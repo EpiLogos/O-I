@@ -55,6 +55,15 @@ export interface TemporalEventRow {
   evidence_refs?: string[]
 }
 
+/** One stream the temporal reading names as contributing nothing, because of a named cause
+ * (`oi.temporal-events/v1` → `absences`, desktop/cradle/kernel/src/temporal_events.rs `StreamAbsence`).
+ * `reason` is the owner's state kind; `owner_words` are the owner's own words (empty when it stated none). */
+export interface TemporalStreamAbsence {
+  stream: string
+  reason: 'owner-absent' | 'owner-unreadable' | 'owner-timeout' | 'refused'
+  owner_words: string
+}
+
 /** The retained occasion basis (§15.5): the snapshot exactly as first read. */
 export interface OccasionBasis {
   ref: string;
