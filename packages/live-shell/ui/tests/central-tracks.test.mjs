@@ -44,6 +44,7 @@ const React = await import('react')
 const {renderToStaticMarkup} = await import('react-dom/server')
 const adapter = await import('../src/timeline/centralTrackAdapter.ts')
 const dayTrack = await import('../src/timeline/dayTrackAdapter.ts')
+const {walkReaches} = await import('../src/timeline/worldTrackAdapter.ts')
 const {SessionGrid} = await import('../src/frame/tracks/SessionGrid.tsx')
 const {ArrangementRuler, placeClips} = await import('../src/frame/tracks/ArrangementRuler.tsx')
 const {useCentralTracks, readDayRecords} = await import('../src/frame/tracks/useCentralTracks.ts')
@@ -104,7 +105,12 @@ test('a day record\'s clip id is the Central-relative path the browser\'s Days r
   assert.deepEqual(records.map(record => record.name), ['2026-09-12.md', '2026-09-11.md', '2026-09-09.md', '2026-09-08.md', '2026-09-07.md', '2026-09-06.md'], 'only the .md files are day records, newest first')
   const recordClips = dayClips.filter(clip => adapter.centralSubjectOfClip(clip.id))
   assert.deepEqual(recordClips.map(clip => clip.id), records.map(record => `Control/agents/now/day/${record.name}`))
-  assert.deepEqual(recordClips.map(clip => clip.label), ['2026-09-12', '2026-09-11', '2026-09-09', '2026-09-08', '2026-09-07', '2026-09-06'])
+  // A day's face is labelled by its date and carries the count of the entries it stands (the same row's other clips).
+  for (const clip of recordClips) {
+    const standing = dayClips.filter(other => other.columnId === clip.columnId && other.id !== clip.id).length
+    const date = clip.id.match(/(\d{4}-\d{2}-\d{2})\.md$/)[1]
+    assert.equal(clip.label, `${date.slice(5)}${standing ? ` · ${standing} ${standing === 1 ? 'entry' : 'entries'}` : ''}`, `${clip.id}: the date, and the entries it stands`)
+  }
   assert.deepEqual(adapter.centralSubjectOfClip('Control/agents/now/day/2026-09-12.md'), {kind: 'day', path: 'Control/agents/now/day/2026-09-12.md'})
   assert.equal(adapter.centralSubjectOfClip('Control/agents/now/day/2026-09-12.sources'), null)
   // The two places this adapter ports from still say what it says: the browser's day surface and ground-subject test, and the
@@ -149,7 +155,7 @@ test('Flows, Beings, Things and Goals stand as named, empty tracks; the absence 
 
 // ── 4 — rows and the ruler ───────────────────────────────────────────────────────────────────────
 
-test('rows are days newest first — a day\'s record, then the entries it stood; the ruler is the covered days end to end', () => {
+test('rows are days newest first — one stop per day; the day\'s face stands its entries; the ruler is the covered days end to end', () => {
   // FIXTURE: four entries with explicit instants, a BST-night entry (23:40 UTC on the 13th is 00:40 on the 14th, London), and an
   // instant-less wiki return; two day records.
   const at = (day, hour, minute) => Date.UTC(2026, 9, day, hour, minute)
@@ -164,23 +170,62 @@ test('rows are days newest first — a day\'s record, then the entries it stood;
   const rowOf = clip => made.columns.find(column => column.id === clip.columnId).name
   // the day-lane clip ids are the World cut's: `day-clip:<subject>:<instant>:<ordinal>`.
   const byLabel = Object.fromEntries(made.clips.map(clip => [clip.label, clip]))
-  assert.deepEqual(made.columns.map(column => column.name), ['2026-10-14', '10-14 · 1', '10-14 · 2', '10-13 · 1', '2026-09-12', 'no day · 1'])
-  assert.deepEqual(made.clips.map(clip => clip.label), ['2026-10-14', 'entry B', 'entry C', 'entry A', '2026-09-12', 'return.md'], 'the face, then the day\'s entries by instant; the BST-night entry is the 14th\'s first')
-  assert.equal(new Set(made.clips.map(clip => clip.columnId)).size, made.clips.length, 'one clip per track per row: the grid draws every one')
-  assert.equal(made.columns.length, made.clips.length)
-  assert.deepEqual(['entry B', 'entry C'].map(name => rowOf(byLabel[name])), ['10-14 · 1', '10-14 · 2'])
+  // One row per day — the stop — never one per entry: three days that have a record or an entry, and the entries that name no day.
+  assert.deepEqual(made.columns.map(column => column.name), ['2026-10-14', '2026-10-13', '2026-09-12', 'no day'])
+  // The day's entries first (the BST-night entry is the 14th's first), its face last: the face is the Session's one slot for the day.
+  assert.deepEqual(made.clips.map(clip => clip.label), ['entry B', 'entry C', '10-14 · 2 entries', 'entry A', '09-12', 'return.md'])
+  assert.deepEqual(made.clips.map(rowOf), ['2026-10-14', '2026-10-14', '2026-10-14', '2026-10-13', '2026-09-12', 'no day'], 'a row stands every clip of its day together')
+  assert.deepEqual(['entry B', 'entry C', '10-14 · 2 entries'].map(label => byLabel[label].id).slice(2), ['Control/agents/now/day/2026-10-14.md'], 'the face of a day with a record is that record, under the selection\'s own ref')
+  // A day with no record stands on its first entry (a real clip, opened as the occasion it is); a record with no entry is the bare date.
+  assert.equal(byLabel['entry A'].columnId, made.columns.find(column => column.name === '2026-10-13').id)
   // ruler: [no time][09-12][10-13][10-14], 1440 minutes each.
   assert.equal(made.ruler.unit, 'minutes (UTC) over the covered days, end to end')
   const starts = Object.fromEntries(made.clips.map(clip => [clip.label, clip.at.start]))
-  assert.deepEqual(starts, {'return.md': 0, '2026-09-12': 1440, 'entry A': 2880 + 9 * 60 + 30, '2026-10-14': 4320, 'entry B': 4320, 'entry C': 4320 + 8 * 60 + 15},
+  assert.deepEqual(starts, {'return.md': 0, '09-12': 1440, 'entry A': 2880 + 9 * 60 + 30, '10-14 · 2 entries': 4320, 'entry B': 4320, 'entry C': 4320 + 8 * 60 + 15},
     'a day record is a locator at its day\'s opening; an entry past a local midnight stands at its day\'s opening, not the day before')
   assert.equal(made.clips.every(clip => clip.at.end === undefined), true, 'no span is invented')
   assert.equal(made.ruler.label(starts['entry A']), '10-13 09:30')
   assert.equal(made.ruler.label(starts['entry C']), '10-14 08:15')
   assert.equal(made.ruler.label(starts['return.md']), 'no time · 1', 'no date is invented for an instant-less entry')
-  // The Arrangement lays them by their own place, in order, on one ruler.
+  // The Arrangement lays every entry by its own place, in order, on one ruler — the entries the Session folds into a day's face.
   const {placed} = placeClips(made)
   assert.deepEqual(placed.filter(item => item.clip.label.startsWith('entry')).sort((a, b) => a.start - b.start).map(item => item.clip.label), ['entry A', 'entry B', 'entry C'])
+  assert.equal(placed.length, made.clips.length, 'nothing is left off the ruler')
+})
+
+test('a stop stands several clips together: the grid shows the day\'s face in its slot, the walk reaches the rest, the ruler lays them all', () => {
+  // FIXTURE: one day with a record and three entries, one day with two entries and no record.
+  const at = (day, hour) => Date.UTC(2026, 9, day, hour)
+  const entry = (n, instant, civilDay) => ({stream: 'central-now', kind: 'now', subject_ref: `central:now:fixture:stop${n}`, instant_unix_ms: instant, summary: `stop entry ${n}`,
+    day_ref: `central:day:control:root:${civilDay}`, evidence_refs: [`central:source:fixture:stop${n}`]})
+  const fixture = [entry(1, at(14, 9), '2026-10-14'), entry(2, at(14, 11), '2026-10-14'), entry(3, at(14, 13), '2026-10-14'), entry(4, at(12, 8), '2026-10-12'), entry(5, at(12, 9), '2026-10-12')]
+  const made = adapter.projectCentralTracks({
+    records: {state: 'read', records: adapter.dayRecordsOf({entries: [{name: '2026-10-14.md', byte_len: 1, location: {path: 'Control/agents/now/day/2026-10-14.md'}}]})},
+    civil: {state: 'live', events: fixture, absences: []},
+  })
+  assert.equal(made.columns.length, 2, 'two days, two stops')
+  const [walk] = made.walks
+  assert.deepEqual([made.walks.length, walk.id, walk.kind, walk.derived], [1, 'central:days', 'day', true])
+  assert.deepEqual(walk.stops.map(stop => stop.label), ['2026-10-14', '2026-10-12'])
+  const [recorded, bare] = walk.stops
+  assert.equal(recorded.clipId, 'Control/agents/now/day/2026-10-14.md', 'the stop\'s clip is the day\'s face')
+  assert.equal(recorded.also.length, 3, 'the face stands its three entries: nothing is dropped')
+  assert.equal(made.clips.find(clip => clip.id === recorded.clipId).label, '10-14 · 3 entries')
+  assert.equal(made.clips.find(clip => clip.id === bare.clipId).label, 'stop entry 4', 'with no record the day\'s first entry stands the row')
+  assert.equal(bare.also.length, 1)
+  assert.deepEqual([...walkReaches(made, 'central:days')].sort(), [...made.clips.map(clip => clip.id), ...walk.stops.map(stop => stop.id)].sort(), 'the walk reaches every clip of the set')
+  assert.deepEqual(adapter.entriesStoodBy(made, recorded.clipId).map(clip => clip.label), ['stop entry 1', 'stop entry 2', 'stop entry 3'], 'the Clip side lists the entries under the face, as the day went')
+  assert.deepEqual(adapter.entriesStoodBy(made, bare.clipId).map(clip => clip.label), ['stop entry 5'])
+  assert.deepEqual(adapter.entriesStoodBy(made, 'not-a-face'), [], 'a clip that is no day\'s face stands nothing')
+  // The Session: one clip per track per row, and it is the face — never an entry the face stands.
+  const session = renderToStaticMarkup(React.createElement(SessionGrid, {set: made, selection: {select() {}}}))
+  const drawn = [...session.matchAll(/data-clip="([^"]*)"/g)].map(match => match[1])
+  assert.deepEqual(drawn, walk.stops.map(stop => stop.clipId), 'the grid draws each day\'s face and nothing the face stands')
+  for (const stop of walk.stops) for (const id of stop.also) assert.ok(!drawn.includes(id), `${id} stands inside its day's face in the Session`)
+  // The Arrangement: every one of them, each at its own instant.
+  const ruler = renderToStaticMarkup(React.createElement(ArrangementRuler, {set: made, selection: {select() {}}}))
+  assert.equal((ruler.match(/data-clip="/g) ?? []).length, made.clips.length)
+  assert.equal(made.clips.length, 5 + 1, 'five entries and one record, each a clip')
 })
 
 test('nothing is placed on the ruler by a guess: an entry with no instant, or whose day names no date, stands in the "no time" segment, in order', () => {
@@ -191,8 +236,9 @@ test('nothing is placed on the ruler by a guess: an entry with no instant, or wh
   ]
   const made = adapter.projectCentralTracks({records: {state: 'read', records: []}, civil: {state: 'live', events: odd, absences: []}})
   const rowNames = made.columns.map(column => column.name)
-  assert.ok(rowNames.includes('10-12 · 1 (no time)'), 'a dated entry with no instant is a row under its day, flagged')
-  assert.ok(rowNames.includes('central:day:control:root:today · 1 (no time)'), 'a day that names no date keeps the owner\'s own word for it')
+  assert.deepEqual(rowNames.sort(), ['2026-10-12', 'central:day:control:root:today'], 'a row is a day; a day that names no date keeps the owner\'s own word for it')
+  assert.equal(made.clips.length, 2)
+  for (const clip of made.clips) assert.match(clip.note, /^no time: /, 'the clip says it has no time, where its row used to carry a "(no time)" flag')
   assert.deepEqual(made.clips.map(clip => clip.at.start).sort(), [0, 1], 'both stand in the first segment, one minute apart, in the order read')
   assert.equal(made.ruler.label(0), 'no time · 1')
   assert.equal(made.ruler.label(1), 'no time · 2')
@@ -205,7 +251,7 @@ test('what has not been read, or was refused, is named in the Day track — neve
   assert.equal(kind({records: {state: 'reading'}, civil: {state: 'reading'}}), 'stream · day records being read · civil field being read')
   assert.equal(kind({records: {state: 'unavailable', reason: 'the day-records read refused'}, civil: {state: 'unavailable', reason: 'no carrier'}}),
     'stream · day records unread (the day-records read refused) · civil field unread (no carrier)')
-  assert.equal(kind(reading), `stream · 6 day records · ${nowEvents.length + wikiEvents.length} ${nowEvents.length + wikiEvents.length === 1 ? 'entry' : 'entries'} from the civil field`)
+  assert.equal(kind(reading), `stream · 6 day records · ${nowEvents.length + wikiEvents.length} ${nowEvents.length + wikiEvents.length === 1 ? 'entry' : 'entries'} from the civil field · a day's face stands its entries: the Session draws the face, the Arrangement every entry`)
   const absences = [{stream: 'central-now', reason: 'owner-timeout', owner_words: 'the NOW register did not answer'}, {stream: 'aikit-history', reason: 'owner-absent', owner_words: ''}]
   assert.equal(kind({records: {state: 'read', records: []}, civil: {state: 'live', events: [], absences}}),
     'stream · 0 day records · 0 entries from the civil field · central-now gave nothing: owner-timeout — the NOW register did not answer',
@@ -224,21 +270,23 @@ test('the adapter reads and presents; it launches, records and stops nothing, an
 
 // ── 6 — the shared views draw it ─────────────────────────────────────────────────────────────────
 
-test('the shared Session grid draws the five streams, every row, and the Day track\'s clips', () => {
+test('the shared Session grid draws the five streams, a row per day, and the Day track\'s one face per row', () => {
   const markup = renderToStaticMarkup(React.createElement(SessionGrid, {set, selection: {ref: records[0].path, select() {}}}))
   assert.equal((markup.match(/data-track="/g) ?? []).length, 5)
   assert.deepEqual([...markup.matchAll(/class="thd[^"]*" title="([^"]*)"/g)].map(match => match[1].split(' · ')[0]).slice(0, 5), ['Day', 'Flows', 'Beings', 'Things', 'Goals'])
   assert.match(markup, /title="Flows · stream · waiting — /, 'the owner\'s absence is in the name tooltip')
   assert.match(markup, /data-clip="Control\/agents\/now\/day\/2026-09-12\.md"/)
   assert.match(markup, /class="cs clip sel"/, 'the selected day record stands lit')
-  assert.equal((markup.match(/data-clip="/g) ?? []).length, set.clips.length, 'every clip has its cell')
+  const drawn = [...markup.matchAll(/data-clip="([^"]*)"/g)].map(match => match[1])
+  assert.equal(drawn.length, set.columns.length, 'one clip per row: the day\'s face')
+  assert.deepEqual(drawn.sort(), set.walks[0].stops.map(stop => stop.clipId).sort(), 'the clip each row draws is its stop\'s clip')
   assert.equal((markup.match(/class="stop-launch" disabled=""/g) ?? []).length, set.columns.length, 'a row per stop, none launchable: the owner gives no op')
 })
 
 test('the shared Arrangement lays the same clips on one civil ruler, each at its own place', () => {
   const markup = renderToStaticMarkup(React.createElement(ArrangementRuler, {set, selection: {select() {}}}))
   assert.equal((markup.match(/data-track="/g) ?? []).length, 5)
-  assert.equal((markup.match(/data-clip="/g) ?? []).length, set.clips.length, 'what the Session shows, the ruler shows')
+  assert.equal((markup.match(/data-clip="/g) ?? []).length, set.clips.length, 'the ruler shows every entry, which the Session stands inside each day\'s face')
   assert.match(markup, /aria-label="Ruler in minutes \(UTC\) over the covered days, end to end"/)
   const {placed, end} = placeClips(set)
   assert.equal(placed.length, set.clips.length)

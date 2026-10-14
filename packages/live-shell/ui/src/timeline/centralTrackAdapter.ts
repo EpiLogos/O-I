@@ -10,9 +10,16 @@
 // - Day's clips: the day records (the browser's Days rows: `files_list` at the root register's day surface, ported from
 //   shell/ModeBrowser.tsx DaysRows) and the day's entries (the World cut's own day lane — timeline/dayTrackAdapter.ts — the
 //   same clips under the same ids, so the shell's existing occasion route opens an entry in the Clip side);
-// - rows (stops): the shared grid draws one clip per track per row, so a day owns its face row (the day record, when the
-//   owner lists one) and one row per entry it stood. Days run newest first, as the browser lists them, and each day's entries
-//   in the order the day went;
+// - rows (stops): a row is a DAY, and a day is one stop, newest first as the browser lists them (lock §9.1 Central row: "stop =
+//   the day's face (the die) standing its entries"; manual §3: "In Central, the day's face stands the entries you made while it
+//   was turned up. A stop stands several things together."; mockup `docgrid`: the Day track's clips are days, not entries, and the
+//   entries lie on `tl-today`, the Arrangement). The shared grid draws one clip per track per row, so the Day track's slot in a
+//   day's row is the day's FACE: the day record, when the owner lists one (its label carries the count of entries it stands), else
+//   the day's first entry, which opens as the occasion it is, with the day it stands in. The day's other entries are clips of the same track in the same row — the
+//   Arrangement lays each on the ruler at its instant, the Clip side opens each as the occasion it is — and the grid's slot shows
+//   the clip the set lists LAST, so the face is listed last; tests/central-tracks.test.mjs renders the grid to hold that. The
+//   stop itself is also a walk (the contract's own "stop stands a clip and reaches the rest": `walks`, kind `day`): its `clipId`
+//   is the face and its `also` every other entry of the day, nothing dropped (lock §7.2; worldTrackAdapter.ts WorldWalkStop);
 // - ruler: the covered civil days laid end to end, as the World cut's own week strip tiles them. The ruler starts at 0, so it
 //   cannot carry absolute unix time: each covered day is one 1440-minute segment, and an entry stands at its instant's minutes
 //   from its civil day's UTC midnight, held inside that day (the owner's day_ref names the civil day; the reading publishes no
@@ -30,7 +37,7 @@
 import {browserCategoriesOf, type ModeBrowserCategory} from '../shell/modeGrammar'
 import {dayClipEventIndex, dayTrackLaneOf, projectDayTracks} from './dayTrackAdapter'
 import {eventDayKey, type TemporalEventRow, type TemporalStreamAbsence} from './timeSpine'
-import type {WorldTrack, WorldTrackAdapter, WorldTrackClip, WorldTrackColumn, WorldTrackSet} from './worldTrackAdapter'
+import type {WorldTrack, WorldTrackAdapter, WorldTrackClip, WorldTrackColumn, WorldTrackSet, WorldWalk, WorldWalkStop} from './worldTrackAdapter'
 import type {WorldTimelineSource} from '../projections/useWorldTemporalReading'
 
 export const CENTRAL_TRACK_ADAPTER_ID = 'central-stream-tracks'
@@ -152,6 +159,7 @@ function dayKindText(reading: CentralReading, records: number, entries: number):
       parts.push(`${absence.stream} gave nothing: ${absence.reason}${absence.owner_words ? ` — ${absence.owner_words}` : ''}`)
     }
   }
+  if (entries > 0) parts.push('a day\'s face stands its entries: the Session draws the face, the Arrangement every entry')
   return `stream · ${parts.join(' · ')}`
 }
 
@@ -198,27 +206,32 @@ export function projectCentralTracks(reading: CentralReading): WorldTrackSet {
   const dayTrack = centralStreamTrackId('day')
   const columns: WorldTrackColumn[] = []
   const clips: WorldTrackClip[] = []
-  const stand = (entry: Entry, name: string) => {
-    const columnId = `central:entry-row:${entry.clip.id}`
-    columns.push({id: columnId, name})
+  const stops: WorldWalkStop[] = []
+  const entryClip = (entry: Entry, columnId: string): WorldTrackClip => {
     const start = entry.minute !== null && entry.key !== null ? (startOfDay.get(entry.key) ?? 0) + entry.minute : unplacedAt.get(entry.clip.id) ?? 0
-    clips.push({id: entry.clip.id, trackId: dayTrack, columnId, label: entry.clip.label, ...(entry.clip.standing ? {standing: entry.clip.standing} : {}), at: {start}})
+    // An entry the reading cannot place on its day says so on the clip, in place of the "(no time)" its own row used to carry.
+    return {id: entry.clip.id, trackId: dayTrack, columnId, label: entry.clip.label, ...(entry.clip.standing ? {standing: entry.clip.standing} : {}), at: {start},
+      ...(entry.minute === null ? {note: 'no time: the reading gives this entry no instant on a dated day, so it stands in the ruler\'s "no time" segment'} : {})}
   }
-  // Days newest first, as the browser's Days rows list them; within a day, the face (its record), then its entries as the day went.
-  for (const key of dayKeys.sort((a, b) => b.localeCompare(a))) {
-    const record = recordByDay.get(key)
-    if (record) {
-      const columnId = `central:day-row:${key}`
-      columns.push({id: columnId, name: key})
-      clips.push({id: record.path, trackId: dayTrack, columnId, label: key, at: {start: startOfDay.get(key) ?? 0}})
-    }
+  // Days newest first, as the browser's Days rows list them; the entries that name no day close the set as one "no day" stop.
+  const days: (string | null)[] = [...dayKeys.sort((a, b) => b.localeCompare(a)), ...(entriesByDay.has(null) ? [null] : [])]
+  for (const key of days) {
+    const record = key === null ? undefined : recordByDay.get(key)
+    // Within a day, the entries as the day went: the timed ones by instant, then the untimed in the order read.
     const own = entriesByDay.get(key) ?? []
-    const timed = own.filter(entry => entry.instant !== null).sort((a, b) => (a.instant as number) - (b.instant as number))
-    const untimed = own.filter(entry => entry.instant === null)
-    const ordered = [...timed, ...untimed]
-    for (const [order, entry] of ordered.entries()) stand(entry, `${shortDay(key)} · ${order + 1}${entry.minute === null ? ' (no time)' : ''}`)
+    const ordered = [...own.filter(entry => entry.instant !== null).sort((a, b) => (a.instant as number) - (b.instant as number)), ...own.filter(entry => entry.instant === null)]
+    const columnId = `central:day-row:${key ?? 'none'}`
+    columns.push({id: columnId, name: key ?? 'no day'})
+    const entryClips = ordered.map(entry => entryClip(entry, columnId))
+    // The day's face: its record when the owner lists one, else its first entry. It is the Session's slot.
+    const face: WorldTrackClip = record
+      ? {id: record.path, trackId: dayTrack, columnId, label: `${shortDay(key!)}${entryClips.length ? ` · ${plural(entryClips.length, 'entry', 'entries')}` : ''}`, at: {start: startOfDay.get(key!) ?? 0}}
+      : entryClips[0]!
+    const rest = record ? entryClips : entryClips.slice(1)
+    clips.push(...rest, face) // the face is listed last: the grid's one slot per track per row shows it
+    stops.push({id: `central:day-stop:${key ?? 'none'}`, label: key ?? 'no day', clipId: face.id, also: rest.map(clip => clip.id)})
   }
-  for (const [order, entry] of (entriesByDay.get(null) ?? []).entries()) stand(entry, `no day · ${order + 1}`)
+  const walks: WorldWalk[] = stops.length ? [{id: 'central:days', name: 'Days', kind: 'day', derived: true, stops}] : []
 
   const tracks: WorldTrack[] = STREAMS.map(stream => ({
     id: centralStreamTrackId(stream.id),
@@ -239,7 +252,16 @@ export function projectCentralTracks(reading: CentralReading): WorldTrackSet {
     tracks,
     clips,
     ...(segments.length ? {ruler: {unit: 'minutes (UTC) over the covered days, end to end', label}} : {}),
+    ...(walks.length ? {walks} : {}),
   }
+}
+
+/** The entries a day's face stands — for the Clip side to list under the face the Session shows. The face's clip id in, the other
+ * clips of its stop out (the walk's own `also`, in the order the day went); empty for a clip that is no day's face. */
+export function entriesStoodBy(set: Pick<WorldTrackSet, 'clips' | 'walks'>, faceClipId: string): WorldTrackClip[] {
+  const stop = set.walks?.find(walk => walk.id === 'central:days')?.stops.find(candidate => candidate.clipId === faceClipId)
+  const byId = new Map(set.clips.map(clip => [clip.id, clip]))
+  return (stop?.also ?? []).flatMap(id => { const clip = byId.get(id); return clip ? [clip] : [] })
 }
 
 export const centralTrackAdapter: WorldTrackAdapter<CentralReading> = {

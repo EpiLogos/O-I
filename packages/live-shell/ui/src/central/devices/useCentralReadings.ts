@@ -8,7 +8,7 @@
 //     identity, agent/AgentDeviceChain.tsx:38-46);
 //   - the workcell: `workcell_status_read` (inhabitants/CentralHygieneDevice.tsx:70-80);
 //   - the Flow: the owner's revision of the selected flow document (`readFlowInstance`).
-import {useEffect, useMemo, useState} from 'react'
+import {useCallback, useEffect, useMemo, useState} from 'react'
 import {kernelOp} from '../../../../../../desktop/cradle/src/kernel/bridge'
 import {receiving} from '../../../../../../desktop/cradle/src/receiving/client'
 import {validateDocumentBasis} from '../../../../../../desktop/cradle/src/central/dayForm'
@@ -32,7 +32,7 @@ export interface DayDieAperture {
 /** The Day document's open face and CAS revision, from the owner's document reading. Null with no Day standing. A Day can
  * be saved in its pane or edited elsewhere, so the owner is read again when the window regains focus or becomes visible,
  * as the Day's standing is (central/useCentralDayStanding.ts) — never polled. */
-export function useDayDieReading(transport: KernelTransportStatus, day: DayDieAperture | null): {face: number | null; revision: string | null} {
+export function useDayDieReading(transport: KernelTransportStatus, day: DayDieAperture | null): {face: number | null; revision: string | null; refresh: () => void} {
   const [held, setHeld] = useState<{key: string; face: number; revision: string} | null>(null)
   const [reread, setReread] = useState(0)
   const key = day ? `${day.project ?? ''}|${day.sourceRef}|${day.documentId}` : null
@@ -55,17 +55,20 @@ export function useDayDieReading(transport: KernelTransportStatus, day: DayDieAp
     return () => { alive = false }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- the key names the aperture
   }, [transport, key, reread])
-  return held && held.key === key ? {face: held.face, revision: held.revision} : {face: null, revision: null}
+  // The owner is read again after a write the devices made (the die's open face), so the three sizes show what the owner holds.
+  const refresh = useCallback(() => setReread(count => count + 1), [])
+  return held && held.key === key ? {face: held.face, revision: held.revision, refresh} : {face: null, revision: null, refresh}
 }
 
 type NaraStanding = {readonly state: Exclude<NaraState, 'bound'>} | {readonly state: 'bound'; readonly dialogue: NativeDialogue}
 
 /** Where the conversation's binding stands, and its own fields once bound. */
-export function useNaraReading(transport: KernelTransportStatus, project: string | null, expressionRef: string | null, conversation: string | null): NonNullable<CentralReads['nara']> {
+export function useNaraReading(transport: KernelTransportStatus, project: string | null, expressionRef: string | null, conversation: string | null): NonNullable<CentralReads['nara']> & {refresh: () => void} {
   // The identity is read as the face reads it (inhabitants/ConversationNaraFace.tsx:69, `currentIdentity()`): at render, with no
   // subscription, so a conversation device re-reads it whenever its chain does.
   const identity = currentIdentity()
   const [looked, setLooked] = useState<{key: string; standing: NaraStanding} | null>(null)
+  const [reread, setReread] = useState(0)
   const key = identity && expressionRef ? `${project ?? ''}|${identity.selection_ref}|${expressionRef}` : null
   useEffect(() => {
     if (!identity || !expressionRef || !key) return
@@ -75,7 +78,9 @@ export function useNaraReading(transport: KernelTransportStatus, project: string
       .catch(() => { if (alive) setLooked({key, standing: {state: 'refused'}}) })
     return () => { alive = false }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- the key names the binding
-  }, [transport, key])
+  }, [transport, key, reread])
+  // The binding is looked up again after the device resolved it: the owner's session is then in the lookup's reach.
+  const refresh = useCallback(() => setReread(count => count + 1), [])
   const standing: NaraStanding = !identity ? {state: 'no-identity'} : !expressionRef ? {state: 'no-expression'} : looked?.key === key ? looked.standing : {state: 'resolving'}
   const dialogue = standing.state === 'bound' ? standing.dialogue : null
   return useMemo(() => ({
@@ -83,7 +88,8 @@ export function useNaraReading(transport: KernelTransportStatus, project: string
     gap: conversation && !expressionRef ? conversationGap(conversation) : null,
     expression: dialogue ? dialogue.binding.expression_ref : null,
     session: dialogue ? dialogue.provisioning.agent_session : null,
-  }), [standing.state, conversation, expressionRef, dialogue])
+    refresh,
+  }), [standing.state, conversation, expressionRef, dialogue, refresh])
 }
 
 /** Central's accepted agents. The first accepted agent is the identity the agent face shows. */
