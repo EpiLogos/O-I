@@ -1,0 +1,3 @@
+$ '/Users/admin/Central/Work/O-I/target/p0-r1/20261014T040813Z/run/oi-desktop-bundle/app/O-I Shell Candidate.app/Contents/Resources/live-shell/native-products/central/bin/ctrl' --version
+ctrl 0.1.0 (cf58c54e0a3d)
+exit 0

@@ -98,3 +98,12 @@ CRAFT: <the 3 most visible craft gaps against Ableton Live / the mockups>
   watch the close path. The wave's checklist (Live transport, browser,
   device chain, presets; the Factory Expressions pane; the palace board and
   bookmarks; fullscreen) stands ready in the driver's brief for the grant.
+- 14 Oct 2026, build `20261014T040813Z` at `9c1e41919`, backing `full-suite`
+  (pid 63224): the first candidate carrying Quaternal Logic in its own
+  payload (the QL sky export refreshed from QL main). Clean tree, every step
+  exit 0, sealed, launched; readback (scripted, accessibility tree) shows
+  "Native host · revision 9c1e419191ea" and "6 of 6 owners admitted". The
+  Sonnet driver's `request_access` for "O-I Shell Candidate"
+  (`org.epilogos.oi.live-shell`) came back `user_denied` — the fourth
+  decline; no further requests will be made until the owner asks for a
+  pass. Nothing was driven or substituted; the lead ended its own pid.
