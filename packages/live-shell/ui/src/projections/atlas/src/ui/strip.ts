@@ -1,5 +1,6 @@
 // THREAD: the image sequence strip — plays through the thread oldest to newest.
 // Transport lives in the one time-control button (bottom right): never a second play/pause here.
+import { later, type Cancel } from './lifetime';
 import type { Model } from '../data/model';
 import { occurrenceImage } from '../data/model';
 import { clear, el, onReadGesture, plate } from './dom';
@@ -38,7 +39,7 @@ export class Strip {
   private alsoList: HTMLElement;
   private index = -1;
   private tapAt: number | null = null;
-  private holdTimer = 0;
+  private holdTimer: Cancel = () => {};
 
   constructor(parent: HTMLElement, private model: Model, private h: StripHandlers) {
     this.rail = el('div', { class: 'st-rail' });
@@ -131,10 +132,10 @@ export class Strip {
 
   /** Centre the current step, unless a tap holds the rail; then centre when the hold ends (one timer, re-checked). */
   private centreWhenFree() {
-    window.clearTimeout(this.holdTimer);
-    this.holdTimer = 0;
+    this.holdTimer();
+    this.holdTimer = () => {};
     const wait = holdRemaining(this.tapAt, performance.now());
-    if (wait > 0) this.holdTimer = window.setTimeout(() => this.centreWhenFree(), wait);
+    if (wait > 0) this.holdTimer = later(() => this.centreWhenFree(), wait);
     else if (this.index >= 0) this.center(this.index);
   }
 

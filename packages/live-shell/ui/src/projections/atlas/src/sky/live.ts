@@ -2,6 +2,7 @@
 // adds is a witness: while the local ephemeris sidecar answers, the page follows the clock and checks the grids
 // against the sidecar's own "now" on a slow poll. Without the sidecar the moment is a snapshot, and says so. The
 // degradation is always a labelled state — never silence, never a stale moment dressed as the present.
+import { later } from '../ui/lifetime';
 import type { SkyEphemeris } from './ephemeris';
 
 export const formatMoment = (ms: number): string => {
@@ -56,8 +57,8 @@ export class SkyLive {
       livePeriod: 60_000,
       idlePeriod: 300_000,
       timeout: 2500,
-      setTimer: (fn, ms) => setTimeout(fn, ms),
-      clearTimer: (id) => clearTimeout(id as ReturnType<typeof setTimeout>),
+      setTimer: (fn, ms) => later(fn, ms),
+      clearTimer: (id) => (id as () => void)(),
       ...options,
     };
     this.state = this.initial();

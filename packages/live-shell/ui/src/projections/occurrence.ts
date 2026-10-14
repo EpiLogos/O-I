@@ -10,7 +10,7 @@
 
 import type {Field, LocusType, GeoPrecision, Occurrence, OccurrenceBasis} from './atlas/src/types/field'
 
-export const LOCUS_TYPES: readonly LocusType[] = ['artifact', 'text-passage', 'myth-episode', 'ritual', 'dream', 'vision', 'active-imagination', 'clinical-case', 'historical-event']
+export const LOCUS_TYPES: readonly LocusType[] = ['artifact', 'text-passage', 'myth-episode', 'ritual', 'dream', 'vision', 'active-imagination', 'clinical-case', 'historical-event', 'sky']
 export const GEO_PRECISIONS: readonly GeoPrecision[] = ['place', 'region', 'culture', 'none']
 const BASIS_KEYS: readonly string[] = ['ref', 'revision', 'epoch', 'read_at_unix_ms']
 

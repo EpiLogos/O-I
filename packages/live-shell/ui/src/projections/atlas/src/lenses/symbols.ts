@@ -1,6 +1,7 @@
 // SYMBOLS (Thread 4): the amplification engine as a flow of its own. Any word → the image family the field knows it by →
 // Jung's definition, the dated instances in order, the dreams and visions among them, what it expresses, what it is found
 // with. Routes: #/symbols, #/symbols/<family>, #/symbols/archetype/<id>.
+import { later } from '../ui/lifetime';
 import { el } from '../ui/dom';
 import { icon } from '../ui/icons';
 import { startThread, WORLD } from '../state/store';
@@ -60,7 +61,7 @@ export function mount(ctx: LensContext): LensInstance {
       el('div', { class: 'am-chips' }, top.map((f) => el('button', { type: 'button', class: 'sf-pill', text: f.name, onclick: () => ctx.setPath([f.id]) }))),
       ...(framing ? [el('h3', { class: 'as-h3', text: 'The method' }), ...framing.dreams.method.map((q) => quoteBlock(q, ctx.passages, { compact: true }))] : []),
     ]);
-    window.setTimeout(() => box.input.focus({ preventScroll: true }), 50);
+    later(() => box.input.focus({ preventScroll: true }), 50);
   };
 
   const family = (id: string) => {

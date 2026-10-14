@@ -1,6 +1,7 @@
 // One Options control under the lens title: an icon that opens a popover anchored under it (a bottom sheet on a phone),
 // in the shell menu's family: labelled groups of rows with a title and an optional one-line description.
 // Every reading lens hands the shell this instead of loose links.
+import { listen } from './lifetime';
 import { el } from './dom';
 import { icon } from './icons';
 
@@ -77,12 +78,14 @@ function dismissOnOutside(details: HTMLDetailsElement) {
     details.removeAttribute('open');
     details.querySelector('summary')?.focus();
   };
+  let stopDown: () => void = () => {};
+  let stopKey: () => void = () => {};
   const forget = () => {
-    document.removeEventListener('pointerdown', onDown, true);
-    window.removeEventListener('keydown', onKey, true);
+    stopDown();
+    stopKey();
   };
-  document.addEventListener('pointerdown', onDown, true);
-  window.addEventListener('keydown', onKey, true);
+  stopDown = listen<PointerEvent>(document, 'pointerdown', onDown, true);
+  stopKey = listen<KeyboardEvent>(window, 'keydown', onKey, true);
 }
 
 /** The one Options disclosure the shell places under the title — icon only; the icon rotates when open. */

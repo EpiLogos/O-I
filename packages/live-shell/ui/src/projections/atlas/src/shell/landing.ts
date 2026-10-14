@@ -3,6 +3,8 @@
 // globe or pressing Escape simply lets it go. No image, no menu of choices, nothing before the field is seen.
 import { el } from '../ui/dom';
 import { icon } from '../ui/icons';
+import { later, listen } from '../ui/lifetime';
+import type { Cancel } from '../ui/lifetime';
 
 const SEEN = 'aae.landing.seen';
 
@@ -28,6 +30,8 @@ function remember() {
 
 export class Landing {
   private root: HTMLElement | null = null;
+  /** removes the Escape listener shown with the landing (ui/lifetime.ts) */
+  private stopKey: Cancel = () => {};
 
   /** Show the landing if this browser has not seen it; `onStart` flies to the Self. Returns whether it showed. */
   maybeShow(parent: HTMLElement, onStart: () => void): boolean {
@@ -37,8 +41,8 @@ export class Landing {
     parent.append(this.root);
     document.body.classList.add('landing-on');
     // the line arrives after the field has had a moment on its own
-    window.setTimeout(() => this.root?.classList.add('on'), 900);
-    window.addEventListener('keydown', this.onKey, true);
+    later(() => this.root?.classList.add('on'), 900);
+    this.stopKey = listen<KeyboardEvent>(window, 'keydown', this.onKey, true);
     start.focus({ preventScroll: true });
     return true;
   }
@@ -54,9 +58,10 @@ export class Landing {
     const node = this.root;
     this.root = null;
     document.body.classList.remove('landing-on');
-    window.removeEventListener('keydown', this.onKey, true);
+    this.stopKey();
+    this.stopKey = () => {};
     node.classList.remove('on');
-    window.setTimeout(() => node.remove(), 600);
+    later(() => node.remove(), 600);
   }
 
   private onKey = (e: KeyboardEvent) => {

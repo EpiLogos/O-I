@@ -1,5 +1,6 @@
 // DEEP: the optional reading layer — longer body text, the definition, all cites,
 // related forms. A wide translucent sheet; the globe stays visible behind it.
+import { later, nextFrame } from './lifetime';
 import type { Model, Subject } from '../data/model';
 import { archetypesOfFamily, occurrenceImage, subjectName, subjectOccurrences } from '../data/model';
 import type { Cite, Occurrence } from '../types/field';
@@ -98,7 +99,7 @@ export class DeepSheet {
       this.scroller.scrollTop = 0;
     }
     this.root.hidden = false;
-    requestAnimationFrame(() => this.root.classList.add('on'));
+    nextFrame(() => this.root.classList.add('on'));
     this.open = true;
     this.scroller.focus({ preventScroll: true });
   }
@@ -108,7 +109,7 @@ export class DeepSheet {
     this.open = false;
     this.key = '';
     this.root.classList.remove('on');
-    window.setTimeout(() => { if (!this.open) this.root.hidden = true; }, 420);
+    later(() => { if (!this.open) this.root.hidden = true; }, 420);
   }
 
   // ── subjects ──────────────────────────────────────────────────────────

@@ -1,6 +1,7 @@
 // The shell: the one frame that owns all chrome (ProjectCentral/docs/MODES-RFC.md §2). One title, one menu, one slot for a lens's
 // own controls, the filter, the corners. Lenses render content; they never draw a heading or a switch of their own.
 import { el, clear, isNarrow } from '../ui/dom';
+import { listen } from '../ui/lifetime';
 import { icon, type IconName } from '../ui/icons';
 import { BUILT, LENSES, lensDef, type LensDef, type LensId } from './lens';
 import { chips, ERAS, isEmpty, KIND_LABELS, type FieldFilter } from './filter';
@@ -79,7 +80,7 @@ export class Shell {
 
     parent.append(this.root, corner, this.chipRow, this.menuScrim, this.menu);
     this.buildMenu();
-    window.addEventListener('keydown', (e) => {
+    listen<KeyboardEvent>(window, 'keydown', (e) => {
       if (e.key === 'Escape' && !this.menu.hidden) { e.stopImmediatePropagation(); e.preventDefault(); this.closeMenu(); }
     }, true);
     this.setLens('field');

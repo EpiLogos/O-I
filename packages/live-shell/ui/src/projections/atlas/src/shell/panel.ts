@@ -9,6 +9,7 @@
 // close() is the lens leaving: nothing loaded, hidden, so the next entry starts hidden again.
 import { el, clear, isNarrow } from '../ui/dom';
 import { icon } from '../ui/icons';
+import { listen } from '../ui/lifetime';
 import { isVisible, onContent, onLensEnter, onLensLeave, onReveal, onUserClose, PANEL_CLOSED, type PanelState } from './panel-state';
 
 export type SheetHeight = 'half' | 'full';
@@ -33,7 +34,7 @@ export class Panel {
     parent.append(this.root);
     // a drag on the handle moves the sheet between its two heights (a tap toggles it); a drag down dismisses it
     this.handle.addEventListener('pointerdown', (e) => { this.dragY = e.clientY; });
-    window.addEventListener('pointerup', (e) => {
+    listen<PointerEvent>(window, 'pointerup', (e) => {
       if (this.dragY === null) return;
       const dy = e.clientY - this.dragY;
       this.dragY = null;

@@ -55,6 +55,7 @@ import { dataWithWindow } from '../sky/sidecar';
 import type { CuratedPerson } from '../astro/charts';
 import { loadLensData } from '../lenses/ui';
 import { SkyTies } from '../sky/ties';
+import { later, listen, whenIdle } from '../ui/lifetime';
 import { systemViewLatLon } from '../sky/frames';
 import { approachDist, EARTH_FIELD_EXIT, isSkyApproachBody, skyMaxDist, SETTLE, STAGE_EDGES, SKY_ENTER, SKY_EXIT, SYSTEM_VIEW_ELEVATION, systemHomeDist, systemViewLongitude } from '../sky/stages';
 import { BODY_KEYS, type BodyKey } from '../types/sky';
@@ -124,7 +125,8 @@ export class Controller {
   private modeSwitch: ModeSwitch;
   /** true while the graph mode (not the globe) is the main view */
   private graphMode = false;
-  private pauseTimer = 0;
+  /** cancels the pending pause of the globe (ui/lifetime.ts) */
+  private cancelPause: () => void = () => {};
   private aion: AionView | null = null;
   /** the one frame of chrome (MODES-RFC §2) and its panel for the panel lenses */
   readonly shell: Shell;
@@ -285,14 +287,13 @@ export class Controller {
     });
     // the Earth ⇄ Graph pill is the Field's own control: it stands beside the lens button while the Field is the lens
     this.shell.setAside(this.modeSwitch.root);
-    window.addEventListener('keydown', this.onKey);
-    window.addEventListener('hashchange', this.onHash);
-    window.addEventListener('resize', () => { this.syncRig(); this.syncShift(); this.strip.recenter(); this.measureLabel(); this.syncGraphInsets(); });
+    // window listeners are released with the atlas lifetime (ui/lifetime.ts): a closed pane leaves none of them bound
+    listen(window, 'keydown', this.onKey);
+    listen(window, 'hashchange', this.onHash);
+    listen(window, 'resize', () => { this.syncRig(); this.syncShift(); this.strip.recenter(); this.measureLabel(); this.syncGraphInsets(); });
     engine.onFrame((dt) => this.tick(dt));
     // the sky's data is fetched at idle, so the first pull-back never waits on it (audit S3 (d)); never on the boot path
-    const idle = (window as Window & { requestIdleCallback?: (cb: () => void, opts: { timeout: number }) => number }).requestIdleCallback;
-    if (idle) idle(() => this.requestSky(), { timeout: 4000 });
-    else window.setTimeout(() => this.requestSky(), 1500);
+    whenIdle(() => this.requestSky(), 4000, 1500);
   }
 
   /** The distance at which the whole earth sits in view for this viewport. */
@@ -1369,6 +1370,8 @@ export class Controller {
     if (this.skyRequested) return;
     this.skyRequested = true;
     this.skyData().then((data) => {
+      // the pane was closed while the sky loaded: nothing of the sky is attached to a globe that is gone
+      if (this.engine.released) return;
       const layer = new SkyLayer(data);
       this.skyLayer = layer;
       this.startSkyLive(layer);
@@ -1534,7 +1537,7 @@ export class Controller {
       const landed = this.state;
       const show = () => { if (this.state === landed) ui(); };
       if (instant || this.engine.reduced) show();
-      else window.setTimeout(show, 300);
+      else later(show, 300);
     };
     this.skyCam.descend({ lat: land.lat, lon: land.lon, dist: land.dist, high }, { instant }, landUi);
   }
@@ -1919,13 +1922,13 @@ export class Controller {
     this.graphMode = graph;
     this.modeSwitch.set(graph);
     if (!changed) return;
-    window.clearTimeout(this.pauseTimer);
+    this.cancelPause();
     if (graph) {
       this.graph?.show(first);
       this.hover.hide();
       // the globe is not seen: once the cross-fade has covered it, stop drawing it
       if (first) this.engine.setPaused(true);
-      else this.pauseTimer = window.setTimeout(() => { if (this.graphMode) this.engine.setPaused(true); }, 1100);
+      else this.cancelPause = later(() => { if (this.graphMode) this.engine.setPaused(true); }, 1100);
     } else {
       this.engine.setPaused(false);
       this.graph?.hide();

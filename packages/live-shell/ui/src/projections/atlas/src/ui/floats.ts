@@ -1,6 +1,7 @@
 // FOCUS: a few large, framed images surfaced in the field — fanned around the
 // distribution they belong to, each tied to its place by a hairline.
 // Not a grid; a handful at most. Image-less entries become compact tonal plates.
+import { later } from './lifetime';
 import type { ImageRef, Palette } from '../types/field';
 import type { Vec3 } from '../data/geo';
 import type { Subject } from '../data/model';
@@ -171,7 +172,7 @@ export class Floats {
       const off = leaderOpacity(0);
       ln.style.opacity = String(off.line);
       d.style.opacity = String(off.dot);
-      window.setTimeout(() => { n.remove(); ln.remove(); d.remove(); }, 600);
+      later(() => { n.remove(); ln.remove(); d.remove(); }, 600);
     }
     this.live = [];
   }

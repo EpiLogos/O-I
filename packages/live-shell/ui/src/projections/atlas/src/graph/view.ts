@@ -6,6 +6,7 @@
 // and reports what the person chose (GraphHandlers).
 // graph.css is loaded by main.ts: the Earth ⇄ Graph pill it styles stands before the graph is ever opened
 
+import { later, nextFrame, watch, type Cancel } from '../ui/lifetime';
 import { forceCollide, forceLink, forceManyBody, forceSimulation, forceX, forceY, type ForceLink, type ForceManyBody, type ForceX, type ForceY, type Simulation, type SimulationLinkDatum } from 'd3-force';
 import { quadtree, type Quadtree } from 'd3-quadtree';
 import { select } from 'd3-selection';
@@ -162,7 +163,8 @@ export class GraphView {
   private stars: HTMLCanvasElement | null = null;
 
   private visible = false;
-  private raf = 0;
+  /** cancels the frame the loop has scheduled (ui/lifetime.ts); null while the loop is idle */
+  private raf: Cancel | null = null;
   private lastTs = 0;
   private dirty = true;
   private live: Float32Array;
@@ -308,7 +310,7 @@ export class GraphView {
     this.canvas.addEventListener('pointercancel', this.onUp);
     this.canvas.addEventListener('pointerleave', this.onLeave);
     this.canvas.addEventListener('keydown', this.onKey);
-    new ResizeObserver(() => this.resize()).observe(this.root);
+    watch(new ResizeObserver(() => this.resize()), this.root);
     time.subscribe(() => {
       this.timeDirty = true;
       if (this.visible) this.wake();
@@ -411,10 +413,10 @@ export class GraphView {
     this.coast.stop();
     this.panning = false;
     // let the cross-fade finish, then stop spending anything
-    window.setTimeout(() => {
+    later(() => {
       if (!this.visible && this.raf) {
-        cancelAnimationFrame(this.raf);
-        this.raf = 0;
+        this.raf();
+        this.raf = null;
       }
     }, 1100);
   }
@@ -821,11 +823,11 @@ export class GraphView {
   private wake() {
     if (!this.visible || this.raf) return;
     this.lastTs = performance.now();
-    this.raf = requestAnimationFrame(this.loop);
+    this.raf = nextFrame(this.loop);
   }
 
   private loop = (ts: number) => {
-    this.raf = 0;
+    this.raf = null;
     if (!this.visible) return;
     const dt = frameSeconds(ts - this.lastTs);
     this.lastTs = ts;
@@ -834,7 +836,7 @@ export class GraphView {
       this.draw();
       this.dirty = false;
     }
-    if (busy) this.raf = requestAnimationFrame(this.loop);
+    if (busy) this.raf = nextFrame(this.loop);
   };
 
   /** Advance everything that moves. Returns whether another frame is wanted. */

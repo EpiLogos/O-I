@@ -19,8 +19,10 @@ import type {AionEpochJump} from './aionTimeline'
 import type {History} from './src/types/history'
 import type {AtlasHandle} from './mount'
 import {createSunFollower, type SunFollower} from './sunFollow'
+import {later} from './src/ui/lifetime'
 import type {DatedSubsolarState, ShownInstant} from '../../inhabitants/qlSkyEarthAdapter'
 import {disclosureSession} from '../../../../../../desktop/cradle/src/techne/session'
+import {sunStanding} from '../../inhabitants/qlSkyEarthAdapter'
 import {bindSharedTimeClock, windowYear} from './sharedClock'
 import './atlasHost.css'
 
@@ -50,6 +52,33 @@ function sunLine(element: HTMLElement): (text: string | null) => void {
 }
 
 export type AtlasView = 'earth' | 'graph'
+
+// ── the Sun's reading: its keys, its status line ─────────────────────────
+
+/** The present sky is read again once its ten-minute bucket has moved (a stale Sun is not shown as current for long). */
+export const SUN_REREAD_MS = 10 * 60_000
+/** How often the Earth offers the present instant to the follower; a read happens only when the bucket moved. */
+export const SUN_REREAD_TICK_MS = 60_000
+/** The reason the Sun's first read is pending: the field is mounted without it, and the follower makes the first read. */
+export const NOT_READ_REASON = 'the Sun has not been read yet'
+/** The key of the state drawn before the first read: no instant has that key, so the first offer is read. */
+const NOT_READ_KEY = 'not-read'
+
+/** The key of an instant the Sun is read for: the present sky by its ten-minute bucket, a dated year as itself. */
+export function sunInstantKey(instant: ShownInstant): string {
+  return instant.present ? `present:${Math.floor(instant.at.getTime() / SUN_REREAD_MS)}` : `year:${instant.year}`
+}
+
+const utcStamp = (at: Date): string => `${at.toISOString().slice(0, 16).replace('T', ' ')} UTC`
+
+/** The Sun's status line: what sunStanding states, and, for a present-sky reading, the instant it is read for and that it is
+ * read again every ten minutes. Null when nothing needs saying (the Sun is drawn for the instant shown). */
+export function sunStatusText(drawn: DatedSubsolarState, shownYear: number | null, pending: boolean): string | null {
+  const standing = sunStanding(drawn, shownYear, pending)
+  if (!drawn.instant.present || drawn.reason === NOT_READ_REASON) return standing
+  const read = `The present sky is read for ${utcStamp(drawn.instant.at)}, and is read again every ten minutes.`
+  return standing === null ? read : `${standing} ${read}`
+}
 
 // ── the view ──────────────────────────────────────────────────────────────
 
@@ -194,9 +223,15 @@ export function useAtlasHandle(): AtlasHandle | null {
 // ── the attachment: one atlas in one element ──────────────────────────────
 
 export interface AtlasAttachment {
+  /** The named state of a pane that does not hold the atlas: another pane of this session has it open. Null when this pane
+   * holds the atlas. The pane body says the same in words (heldBy). */
+  readonly held: string | null
   setVisible(visible: boolean): void
   unmount(): void
 }
+
+/** What a pane that is not the atlas's holder says, in its own body. One atlas stands in a session (ui/lifetime.ts). */
+export const ATLAS_HELD_MESSAGE = 'The Earth atlas is already open in another pane of this session. It is drawn once, in the pane that opened it first.'
 
 export interface AtlasAttachOptions {
   /** the pane body the atlas fills */
@@ -209,29 +244,41 @@ export interface AtlasAttachOptions {
   view?: AtlasView
 }
 
-/** The ported controller binds window and document listeners that its unmount does not retire (mount.ts, destroy). A
- * second instance would therefore stack on the first, so the atlas is mounted once per session, and a retired one is
- * not mounted again. */
+/** The one atlas this session holds: claimed from the first attach until its pane is unmounted, and the atlas disposed.
+ * A second pane that asks while the claim stands is given the held state (heldBy), not a second atlas: the atlas's memories,
+ * its document marks and its view mirror are one set per session (named OPEN in the lane report). */
 let claimed = false
 
-/** Mount the atlas into the element. Throws with the atlas's own honest message when it cannot mount. */
+/** The pane that is not the holder: its body says the atlas is open elsewhere. Nothing is mounted and nothing is claimed. */
+function heldBy(element: HTMLElement): AtlasAttachment {
+  element.replaceChildren()
+  const line = document.createElement('p')
+  line.className = 'atlas-host-status'
+  line.setAttribute('role', 'status')
+  line.textContent = ATLAS_HELD_MESSAGE
+  element.append(line)
+  return {held: ATLAS_HELD_MESSAGE, setVisible: () => {}, unmount: () => {}}
+}
+
+/** Mount the atlas into the element. A pane that asks while another holds the atlas is told so in its body (held). Throws
+ * with the atlas's own honest message when it cannot mount. */
 export async function attachAtlas(options: AtlasAttachOptions): Promise<AtlasAttachment> {
-  if (claimed) throw Error('The Earth projection is already mounted in this session. Its controller keeps window listeners that cannot be retired, so it is not mounted again.')
+  if (claimed) return heldBy(options.element)
   if (!scope) throw Error('No workspace is bound for the Earth projection, so its settings have nowhere to live.')
   claimed = true
-  const progress = {controllerStarted: false}
+  const progress: {teardown: (() => void) | null} = {teardown: null}
   try {
     return await attachClaimed(options, progress)
   } catch (error) {
-    // Everything before the controller mounts binds no window listener, so a failure there (an unlisted corpus, a
-    // transient read) releases the claim and a later attempt may mount. Once mountAtlas has begun — including any failure
-    // after it returned — its listeners may be bound, so the claim is kept.
-    if (!progress.controllerStarted) claimed = false
+    // A failure releases what the attach made: the atlas (if it had mounted) is disposed, and the claim is released so a
+    // later attempt may mount. A failure before mountAtlas returned made nothing to release.
+    progress.teardown?.()
+    claimed = false
     throw error
   }
 }
 
-async function attachClaimed(options: AtlasAttachOptions, progress: {controllerStarted: boolean}): Promise<AtlasAttachment> {
+async function attachClaimed(options: AtlasAttachOptions, progress: {teardown: (() => void) | null}): Promise<AtlasAttachment> {
   const {element, transport, follow} = options
   const fixedView: AtlasView = options.view ?? 'earth'
   const target = (): AtlasView => (follow ? desiredView : fixedView)
@@ -267,7 +314,7 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {controllerS
   // T6: the QL family's adapter admits the owner's stated subsolar point for the instant the Earth shows (the shared
   // window's year; the present while no window is in force), read through the kernel before the Earth stands. A read that
   // fails is stated as an absent Sun with its reason, never thrown into the mount.
-  const {admitDatedSubsolar, shownInstantOf, sunStanding, withoutSubsolar, QL_SKY_FAMILY, QL_SKY_FAMILY_ID, SUBSOLAR_OCCURRENCE_ID} = await import('../../inhabitants/qlSkyEarthAdapter')
+  const {admitDatedSubsolar, shownInstantOf, withoutSubsolar, QL_SKY_FAMILY, QL_SKY_FAMILY_ID, SUBSOLAR_OCCURRENCE_ID} = await import('../../inhabitants/qlSkyEarthAdapter')
   const readSun = (instant: ShownInstant): Promise<DatedSubsolarState> => admitDatedSubsolar(loaded.field, transport, instant)
     .catch((error: unknown): DatedSubsolarState => ({
       field: withoutSubsolar(loaded.field),
@@ -275,24 +322,32 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {controllerS
       reason: `the dated sky did not answer: ${error instanceof Error ? error.message : String(error)}`,
       instant,
     }))
-  const sun = await readSun(shownInstantOf(shownYearNow(), new Date()))
-  const bundle = {...loaded, field: sun.field}
+  // The Earth stands on the field as loaded: the QL Sun is not awaited before the mount, since the kernel's dated read can
+  // stall for its whole deadline and a stalled sky would leave the Earth blank. The follower below makes the first read
+  // through the same seam; until it answers, the status line states the Sun as not yet read.
+  const bundle = loaded
   registerCorpusProvider({...provider, load: async () => bundle}, {asDefault: true})
-  progress.controllerStarted = true
   // T-ATLAS-TIME: the clock is a face of the shell's one shared time window (the session the native owner also writes).
   const mounted: AtlasHandle = await mountAtlas({globe, app, provider: ARCHETYPAL_EARTH_PROVIDER_ID,
     clock: (time, scale) => bindSharedTimeClock({store: disclosureSession, time, scale})})
+  // from here the atlas stands: a failure below disposes it and releases the claim (attachAtlas)
+  progress.teardown = () => {
+    publishAtlasHandle(null)
+    publishAtlasAionReading(null)
+    mounted.dispose()
+    element.replaceChildren()
+    claimed = false
+  }
   publishAtlasHandle(mounted)
   // The Sun follows the instant the Earth shows (T-ATLAS-SUN). The window's instant is offered on each change; the Sun is
   // read for it once the window has been still (sunFollow.ts), and each reading replaces the one Sun in place through the
   // atlas's seam. The status line states the Sun for the instant actually drawn, and that it is read for the instant shown
   // while the window is behind it.
   const setSunLine = sunLine(element)
-  const instantKey = (instant: ShownInstant): string => (instant.present ? 'present' : `year:${instant.year}`)
-  let drawn: DatedSubsolarState = sun
+  let drawn: DatedSubsolarState = {field: loaded.field, placed: false, reason: NOT_READ_REASON, instant: shownInstantOf(shownYearNow(), new Date())}
   const follower: SunFollower<ShownInstant> = createSunFollower<ShownInstant, DatedSubsolarState>({
-    keyOf: instantKey,
-    drawnKey: instantKey(sun.instant),
+    keyOf: sunInstantKey,
+    drawnKey: NOT_READ_KEY,
     read: readSun,
     apply: (next) => {
       const occ = next.placed ? next.field.occurrences.find(item => item.id === SUBSOLAR_OCCURRENCE_ID) ?? null : null
@@ -306,16 +361,24 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {controllerS
         return
       }
       drawn = next
-      setSunLine(sunStanding(drawn, shownYearNow(), follower.pending()))
+      setSunLine(sunStatusText(drawn, shownYearNow(), follower.pending()))
     },
   })
   const stateSun = () => {
     const year = shownYearNow()
     follower.offer(shownInstantOf(year, new Date()))
-    setSunLine(sunStanding(drawn, year, follower.pending()))
+    setSunLine(sunStatusText(drawn, year, follower.pending()))
   }
   stateSun()
   const unsubscribeSun = disclosureSession.subscribe(stateSun)
+  // The present sky is offered again each minute: the follower reads it only when its ten-minute bucket has moved, so a
+  // Sun read long ago does not stand as the current sky (T-ATLAS-SUN, the present sky)
+  let cancelReread: () => void = () => {}
+  const reread = () => {
+    stateSun()
+    cancelReread = later(reread, SUN_REREAD_TICK_MS)
+  }
+  cancelReread = later(reread, SUN_REREAD_TICK_MS)
   // The reading the atlas holds is the World's Aion source, by reference, from the moment it stands.
   publishAtlasAionReading(bundle.history ? {providerId: ARCHETYPAL_EARTH_PROVIDER_ID, history: bundle.history} : null)
 
@@ -347,17 +410,23 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {controllerS
   const unmount = () => {
     if (retired) return
     retired = true
+    // the Sun follower stops (its pending read is cancelled, and a late reply is dropped), and its status line goes
     unsubscribeSun()
+    cancelReread()
     follower.dispose()
     setSunLine(null)
     publishAtlasAionReading(null)
     publishAtlasHandle(null)
     observer?.disconnect()
     if (reconcileFollowed === reconcile) reconcileFollowed = null
-    mounted.engine.setPaused(true)
-    mounted.destroy()
+    // the atlas is disposed: its frames and GPU resources, every listener, timer and observer it installed, and its marks on
+    // the body. The pane is emptied, and the claim is released, so the next pane that asks mounts a fresh atlas.
+    mounted.dispose()
+    element.replaceChildren()
+    claimed = false
   }
-  return {setVisible, unmount}
+  progress.teardown = unmount
+  return {held: null, setVisible, unmount}
 }
 
 // ── the Aion reading and the epoch jump (T-TIMELINE-WALKS leg 3) ──────────
@@ -425,7 +494,7 @@ export function AtlasEarthPane() {
   const started = useRef(false)
   const transportRef = useRef(transport)
   transportRef.current = transport
-  const [phase, setPhase] = useState<{state: 'waiting' | 'reading' | 'ready' | 'failed'; message?: string}>({state: 'waiting'})
+  const [phase, setPhase] = useState<{state: 'waiting' | 'reading' | 'ready' | 'failed' | 'held'; message?: string}>({state: 'waiting'})
 
   useEffect(() => {
     bindAtlasScope({namespace, workspaceId})
@@ -447,7 +516,8 @@ export function AtlasEarthPane() {
           }
           attachment.current = next
           next.setVisible(wantVisible.current)
-          setPhase({state: 'ready'})
+          // a pane that does not hold the atlas says so in its body (heldBy); the pane's phase names it too
+          setPhase({state: next.held ? 'held' : 'ready'})
         })
         .catch((error: unknown) => {
           if (alive) setPhase({state: 'failed', message: error instanceof Error ? error.message : String(error)})

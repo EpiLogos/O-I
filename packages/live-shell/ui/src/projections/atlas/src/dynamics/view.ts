@@ -2,6 +2,7 @@
 // Red Book, built to the same pattern: show(state) / hide() / update(dt), a root section, a reveal card.
 // The globe is not touched here: the engine is exposed read-only, and the controller owns every globe effect
 // (the chronology is offered by chronology() for it to light).
+import { watch } from '../ui/lifetime';
 import { entered } from '../lenses/ui';
 import { averagePalettes, rgbToHex } from '../data/palette';
 import { selfSubject, subjectExists, subjectName, subjectPalette, type Model, type Subject } from '../data/model';
@@ -415,7 +416,7 @@ export class DynamicsView {
     if (!this.heroRo && typeof ResizeObserver !== 'undefined') {
       this.heroRo = new ResizeObserver(() => this.paintHero());
     }
-    this.heroRo?.observe(canvas);
+    if (this.heroRo) watch(this.heroRo, canvas);
     return hero;
   }
 

@@ -79,7 +79,7 @@ export function depthView(m: Model, d: DepthEntry, act: DepthActions, passages: 
     ]),
   ]);
   const datedList = el('ol', { class: 'dp-instances' }, (d.instances?.items ?? []).slice(0, DATED).map(instanceRow));
-  const LOCUS: Record<string, string> = { artifact: 'Objects and images', ritual: 'Rites', 'myth-episode': 'Myths', 'text-passage': 'Texts', figure: 'Figures', 'clinical-case': 'Cases', 'historical-event': 'Events', dream: 'Dreams', vision: 'Visions' };
+  const LOCUS: Record<string, string> = { artifact: 'Objects and images', ritual: 'Rites', 'myth-episode': 'Myths', 'text-passage': 'Texts', figure: 'Figures', 'clinical-case': 'Cases', 'historical-event': 'Events', sky: 'Sky', dream: 'Dreams', vision: 'Visions' };
   const groups = new Map<string, DepthInstance[]>();
   for (const x of d.instances?.undated ?? []) groups.set(x.locus, [...(groups.get(x.locus) ?? []), x]);
   // each group is drawn when it is first opened: hundreds of entries stay out of the page until asked for

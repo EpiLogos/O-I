@@ -283,6 +283,20 @@ export class TileLayer {
     }
   }
 
+  /** Release every tile: fetches in flight are cancelled (a late reply is dropped by its own check), and the tiles' textures,
+   * materials and grids are freed. The layer draws nothing afterwards. */
+  release(): void {
+    this.enabled = false;
+    for (const t of this.tiles.values()) {
+      this.cancel(t);
+      this.dispose(t);
+    }
+    this.tiles.clear();
+    for (const g of this.geos.values()) g.dispose();
+    this.geos.clear();
+    this.group.clear();
+  }
+
   private cancel(t: Tile) {
     t.abort?.abort();
     t.abort = null;

@@ -116,6 +116,7 @@ export const KIND_LABELS: Record<LocusType, string> = {
   'active-imagination': 'Active imagination',
   'clinical-case': 'Clinical cases',
   'historical-event': 'Historical events',
+  sky: 'Sky',
 };
 
 /** Short chip labels for the active filter, each with the filter that removes it. */

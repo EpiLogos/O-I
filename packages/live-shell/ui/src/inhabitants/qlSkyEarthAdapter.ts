@@ -27,8 +27,9 @@ import type {NaraIdentityResult, SkyRequest} from '../../../../../desktop/cradle
 /** The family's own declaration for the stated point. The family owns the name; the palette is the Earth's own world
  * palette (projections/atlas/src/data/palette.ts WORLD_PALETTE), so no colour is invented here. */
 export const QL_SKY_FAMILY_ID = 'ql-sky-subsolar'
-/** The contract's locus vocabulary has no sky value. `historical-event` is the nearest entry; the owner decides a sky value. */
-export const QL_SKY_LOCUS: LocusType = 'historical-event'
+/** The sky's own locus value, additive to the contract's locus vocabulary (LOCUS_TYPES): the Sun is a sky occurrence,
+ * listed under Sky in the Earth's kind filter, not under historical events. */
+export const QL_SKY_LOCUS: LocusType = 'sky'
 /** The one occurrence the Sun holds on the Earth. The instant is not in the id: it is the basis's epoch. */
 export const SUBSOLAR_OCCURRENCE_ID = 'sky-subsolar'
 /** The years the QL sky adapter answers, [first, end): providers/sky/kerykeion_snapshot.py MIN_EPOCH and MAX_EPOCH. */
