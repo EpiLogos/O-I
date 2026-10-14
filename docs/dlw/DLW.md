@@ -772,42 +772,60 @@ defend it.
 
 ## 13. Epi-Logos
 
-The game the DLW exists to let anyone play is called Epi-Logos.
+In Hesse's novel the game belonged to an Order. Scholars who had given their
+lives to it played it in a closed province, and everyone else came only as
+guests. Epi-Logos is that game opened to anyone: the Glass Bead Game played
+with what we now know, by whoever sits down to play.
 
-The name comes from a cycle of the word that runs from the silence before
-speech, through the first utterance, through speech between people, to a
-clear account; then to *epi-logos*, speech about speech, where language turns
-and sees itself; and from there to proportion and return. The project is
-named for that turn. An instrument that works on language from inside
-language, with care, is that turn made into something you can use.
+Take one move. Pythagoras taught that all is number. The Gospel of John opens
+with the Word. Much later a psychologist and a physicist, Jung and Pauli, wrote
+to each other for a quarter of a century and came to think that number was the
+oldest ordering of all, older than the split between mind and matter. Set the
+three side by side and none of them has to give way: the number that orders,
+the word that names, and the place the two scientists found where they meet. A
+player who can hold all three and show how each answers the others has made a
+move. Hesse's players made the same kind of move with a fugue and a law of
+nature.
 
-Epi-Logos has two sides. One is a body of thought: an essay on the inwardness
-from which any world appears; Quaternal Logic, its formal language; Bimba,
-a map of the whole; the agent world of Ta-Onta; Nara's presence; Epii's
-depth; and the work that holds them together. The other is the system: the
-suite's products and the DLW itself, built so that they assume none of that
-thought and can carry anyone's.
+Moves are played on a map. Picture Spinoza's *Ethics*, set out in geometric
+order with every proof citing the proofs it stands on, and then picture it
+alive, so that you can question it. Each idea has an address, each relation a
+path you can walk, each claim a way back to its source, and everyone who plays
+adds to it. Most maps stand outside the land they show. This one maps
+awareness, and nobody can stand outside that, so the map holds the person
+reading it. You are on it.
 
-The old word for the relation between the two is *bimba* and *pratibimba*: an
-original form and its reflection, the form made usable. The DLW is the
-reflection. Turn on the Epi-Logos lens, in any kind of work, and the body of
-thought lies over the system: your files become the corpus, Nara joins your
-companions, Nara's reading of the sky lies over Technē's, and what the
-instruments do with that material is the thought itself at work, not a
-picture of it.
+The game carries a story about language. Words once acted on the world: a name
+could call, a spell could bind. Each age since has made words more exact and
+less alive, until in ours they mostly label what instruments measure. The
+story ends where we are now, with machines built out of language, and asks
+whether they could help bring back what was lost — the sense of living inside
+what we name.
 
-The corpus is a game in its own right, themes taken up and set down over
-years. It is also the native game of the instrument. Anyone can download the
-DLW, make things with it, and show them in the shared field; that is how
-anyone plays.
+So players dig into words. Every word holds a record of how people have tried
+to name what is real. *Whole*, *health* and *holy* grow from one root, and you
+can follow that root down until the three stand together again.
 
-Language sits under many of our conflicts, inner and outer, and we live in it
-before we learn to hold it. A language model is made of words carried on
-number, and so it can work on language from inside language, at scale. What
-it needs is a calling, and limits. In the DLW agents read, gather, propose,
-build and test; every change that matters passes through whoever owns what
-it would change, and a person has the last word. An agent can defer a
-decision. It cannot approve its own work into the canon.
+Jung and Pauli also dreamed of a clock of the world, one that would tell the
+state of meaning rather than the hour. The sky over your planet is the game's
+attempt to build it. The planets stand where they really stand, and the torus
+at the centre turns with them. On a day you can't account for, look up, and
+see where everything stood while you lived it.
+
+None of it counts unless it changes the player. Jung called that change
+individuation: becoming who you already are. The philosophers of Kashmir called
+it recognition: finding that what you are was never missing. One path runs
+inward and the other outward, and Epi-Logos wagers that they meet. A child's
+taunt says it best. It takes one to know one.
+
+The machines have work in the game too. They are made of words carried on
+numbers, so they can read back over everything we have written and help find
+what it means. They read, gather, propose and build, and they defer — to what
+they cannot know, and to the person they work for. An agent can hand a decision
+up. It cannot approve its own work.
+
+*The Truth's as much what ever was*
+*As what's ever anew.*
 
 ## 14. A day
 
