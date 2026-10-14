@@ -3,7 +3,7 @@
 // tile. The registry is never the chain. The ported generator faces (Operator, Wavetable) are not in the chain: they sit in the browser's
 // Legacy generators section until their capacities have a home (owner ruling).
 import {getPanels, type PanelRegistration} from '../shell/panels'
-import {DEVICE_FACE_TITLES} from '../panels/devices/index'
+import {DEVICE_FACE_TITLES} from '../panels/devices/faceTitles'
 
 /** The ported generator faces in the browser's Legacy generators section (devices-pro, frozen as the corpus reference). Their capacities
  * are not yet carried by the torus or its chain. (Drum Rack has no registered face in the shell and so is not listed.) */
