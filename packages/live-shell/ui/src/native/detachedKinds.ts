@@ -1,15 +1,22 @@
 import {useSyncExternalStore} from 'react'
-import {faceStandsAlone, type InhabitantManifest} from '../inhabitants/manifest'
+import {DETACHED_KINDS, faceStandsAlone, type DetachedKind, type InhabitantManifest} from '../inhabitants/manifest'
 import type {DeviceWindowHost} from '../inhabitants/inhabitantRack'
 import type {CentralLocation} from '../../../../../desktop/cradle/src/kernel/types'
 import type {LayoutState, SurfaceBinding} from '../../../../../desktop/cradle/src/surface/types'
 
-/** Original Windows owner admission (src-tauri/src/windows.rs::window_detach). The device kind (seam 8) is admitted by the
- * same door through its identity alone (`admit_device_binding`). Compiled hosted identities alone do not grant a detached
- * receiving body. */
-const nativeDetachedKinds = new Set(['source', 'knowledge', 'file', 'encounter', 'browser', 'terminal', 'flow', 'device'])
+/** The kinds the native host has a receiving body for. This is the one shell-side table: the native set is derived from it
+ * and the door's declared kinds (`DETACHED_KINDS`), so a kind a family declares and the host admits cannot drift apart.
+ * The Rust side mirrors it in `src-tauri/src/windows.rs::window_detach`; `tests/native-detached-kinds-conformance.test.mjs`
+ * parses that list and fails on any difference. The device kind (seam 8) is admitted by the same door through its identity
+ * alone (`admit_device_binding`). Compiled hosted identities alone do not grant a detached receiving body. */
+const NATIVE_RECEIVING_BODY_TABLE: readonly DetachedKind[] = ['source', 'knowledge', 'file', 'encounter', 'browser', 'terminal', 'flow', 'device']
+
+/** The door's declared detached kinds that the native host can receive (derived, never a second list). */
+export const NATIVE_DETACHED_KINDS: readonly DetachedKind[] = DETACHED_KINDS.filter(kind => NATIVE_RECEIVING_BODY_TABLE.includes(kind))
+
+const nativeDetachedKindSet: ReadonlySet<string> = new Set<string>(NATIVE_DETACHED_KINDS)
 export function nativeDetachedBodySupported(kind: string): boolean {
-  return nativeDetachedKinds.has(kind)
+  return nativeDetachedKindSet.has(kind)
 }
 
 /** A device's aperture (seam 8): the selection the face reads, as identity — never the owner's reading. Each face reads

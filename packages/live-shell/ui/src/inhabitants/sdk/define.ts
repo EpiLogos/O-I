@@ -43,6 +43,7 @@ import type {DeviceFormat, SdkModeName, TransportSlotId} from './modes.ts'
 import {MODE_DEFAULT_FORMAT, transportTargetSlots} from './modes.ts'
 import type {LiveSemantic, SemanticInvariant} from './semantics.ts'
 import {validateFaceSemantic} from './semantics.ts'
+import {isKnownProduct} from './products.ts'
 import type {NewProductAuthority} from './products.ts'
 import {registerWriterAuthority, validateDeclaredFamily, validateFamilyWriters, validateSdkDevice, validateTransportBindings} from './validate.ts'
 
@@ -345,9 +346,11 @@ export function facesForMode(mode: SdkModeName): readonly (FacePresentation & {f
     }))
 }
 
-/** The declared product carving of a family, when it declared one. */
+/** The product a family carves (§12): its declared binding, or — for a family admitted by hand, before the kit — the
+ * registered product its own id names. The validator's squatting rule (an unbound family may not take a product's name)
+ * is the same fact read the other way, so both readers see the six carvings and a second family cannot claim one. */
 export function familyProduct(family: FamilyManifestId): string | undefined {
-  return familyProducts.get(family)
+  return familyProducts.get(family) ?? (isKnownProduct(family) ? family : undefined)
 }
 
 /** The writers a family declared (its own armed shell paths). */

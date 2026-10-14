@@ -18,7 +18,7 @@
 import {loadAgentShellFamilies} from './loadAgentShellFamilies.ts'
 import {admitKnowledgeGraphFamily} from './knowledgeGraphFamilyManifest.ts'
 import {admitAtlasFamily} from '../projections/atlas/atlasFamilyManifest.ts'
-import {declareFamilyExtension, inhabitantManifest, type InhabitantManifest} from './manifest.ts'
+import {allInhabitantManifests, declareFamilyExtension, type InhabitantManifest} from './manifest.ts'
 import {quaternalLogicFamilyManifest, QUATERNAL_LOGIC_FAMILY_ID} from './quaternalLogicFamilyManifest.ts'
 // [L9 musical family] the QL field/PCM owner's instrument face — an additive
 // declared extension onto quaternal-logic; the base manifest stays verbatim.
@@ -155,20 +155,9 @@ export function loadWorldShellFamilies(): void {
   declareCapabilityHomes()
 }
 
-/** The six world-shell product families, composed (base + extensions). */
-export const WORLD_SHELL_FAMILY_IDS = [
-  'central',
-  'actuation',
-  'ai-kit',
-  'software-factory',
-  'workcell',
-  QUATERNAL_LOGIC_FAMILY_ID,
-] as const
-
-/** The six families' composed manifests, in the §12 order. Loading is the
- * caller's concern (`loadWorldShellFamilies`); this reads the door. */
+/** The world shell's composed family manifests, read from the door (door order). The door is the one admission store, so
+ * the shell carries no list of product ids: a seventh family admitted at the door appears here with no edit in this
+ * module. Loading is the caller's concern (`loadWorldShellFamilies`). */
 export function worldShellFamilyManifests(): readonly InhabitantManifest[] {
-  return WORLD_SHELL_FAMILY_IDS
-    .map(id => inhabitantManifest(id))
-    .filter((manifest): manifest is InhabitantManifest => manifest !== undefined)
+  return allInhabitantManifests()
 }
