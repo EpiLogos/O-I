@@ -275,10 +275,21 @@ test('Expressions Arm, Record and Re-enable follow the old bar: Arm decides Play
   assert.match(b.overdub.title, /Replace last take/)
 })
 
-test('Expressions\' hook makes only the old bar\'s owner calls', async () => {
+test('Expressions\' hook makes only the old bar\'s owner calls on its slots; the Scene\'s own calls stand on the Clip side', async () => {
   const code = await source('shell/transports/useExpressionsTransport.tsx')
   const actions = [...new Set([...code.matchAll(/actions\.(\w+)\(/g)].map(m => m[1]))].sort()
-  assert.deepEqual(actions, ['applyChanges', 'readNow', 'scene', 'setSceneLoop'], 'the editor requests the old bar made (not Save, which has no slot)')
+  assert.deepEqual(actions, ['applyChanges', 'readNow', 'scene', 'setSceneLoop'], 'the editor requests the old bar made on a slot (Save has no slot: it is the Clip side\'s, through sendSave)')
   for (const call of ['takeStart(takeMode)', 'takeStop', 'STAGE_AUTOMATION_RESUME', 'createLiveSession(', 'spaceTogglesPlayback(']) assert.ok(code.includes(call), `the hook uses ${call}, as the old bar did`)
   assert.doesNotMatch(code, /kernelOp|fetch\(|history\('save'\)/, 'no owner call the old bar did not make on a slot')
+  // What the Scene keeps while Expressions stands (⌘S, the selection's focus) is mounted here once, and nowhere else.
+  assert.equal((code.match(/useSceneKeepers\(source\)/g) ?? []).length, 1)
+})
+
+test('Expressions\' bar is the one bar: TransportBar draws ModeTransport for every mode and the retired bar is gone', async () => {
+  const bar = await source('components/TransportBar.tsx')
+  assert.doesNotMatch(bar, /NativeTransportBar/, 'TransportBar draws no second Expressions bar')
+  assert.equal((bar.match(/<ModeTransport /g) ?? []).length, 1, 'one ModeTransport, whatever the mode')
+  assert.doesNotMatch(bar, /mode === 'expressions'/, 'no branch for Expressions beside the one bar')
+  const {existsSync} = await import('node:fs')
+  assert.equal(existsSync(new URL('../src/components/NativeTransportBar.tsx', import.meta.url)), false, 'the retired bar is deleted, not parked')
 })

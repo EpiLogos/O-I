@@ -8,7 +8,7 @@ import type {CentralLocation} from '../../../../../desktop/cradle/src/kernel/typ
 import type {ExpressionResult} from '../../../../../desktop/cradle/src/expression/types';
 
 /** Models for the Expressions file and library commands in the shell. The
- * transport bar and the Expressions browser make the owner calls; this module
+ * one transport, the Clip side's Scene controls and the Expressions browser make the owner calls; this module
  * decides what is offered, why an action is not, and what a reply may claim, and
  * holds the one open sequence (create, save_as, open) the browser's rows run. */
 
@@ -194,9 +194,9 @@ export const QUICK_GUIDE_STANDING = 'Browser draft ≠ saved Scene ≠ committed
 
 /** The shortcuts the shell binds, each with the handler that binds it. */
 export const BOUND_SHORTCUTS: readonly {keys: string; action: string; source: string}[] = [
-  {keys: 'Space', action: 'Play or pause the working Scene, when no control has focus', source: 'NativeTransportBar.tsx'},
-  {keys: 'Ctrl or ⌘ S', action: 'Save the open Expression to the native owner', source: 'NativeTransportBar.tsx'},
-  {keys: '← → ↑ ↓ Home End', action: 'Seek the working Scene on the position slider (Shift steps 1 s)', source: 'NativeTransportBar.tsx'},
+  {keys: 'Space', action: 'Play or pause the working Scene, when no control has focus', source: 'useExpressionsTransport.tsx'},
+  {keys: 'Ctrl or ⌘ S', action: 'Save the open Expression to the native owner', source: 'sceneKeepers.ts'},
+  {keys: '← → ↑ ↓ Home End', action: 'Seek the working Scene on the position slider (Shift steps 1 s)', source: 'useExpressionsTransport.tsx'},
   {keys: 'Tab', action: 'Switch Session and Arrangement in the Expressions, session and arrangement views, outside text fields', source: 'App.tsx'},
   {keys: '⌘ Option B', action: 'Show or hide the browser', source: 'App.tsx'},
   {keys: '⌘ Option L', action: 'Show or hide the detail panel', source: 'App.tsx'},

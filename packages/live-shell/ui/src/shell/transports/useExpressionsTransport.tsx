@@ -1,16 +1,19 @@
 // Expressions' bindings of the one transport (T-TRANSPORT-BINDINGS; FOUNDATION F7; manual §10.5, the Expressions column).
-// The working controls of the native Scene bar (components/NativeTransportBar.tsx, drawn by TransportBar while the native
-// reading stands) fold in here, slot by slot, so the frame's one bar (frame/transport/Transport.tsx) carries them. The bar
-// owns no clock and no playback state, and neither does this hook: each press is one owner request on the captured basis, and
-// each light and readout is the owner's reading. Nothing is new — the old bar's own words name the slots it filled (the Draw-mode
-// slot, the Map slot, the CPU-light slot), and the grammar (shell/modeGrammar.ts, `expressions`) names the rest.
+// The working controls of the native Scene bar (components/NativeTransportBar.tsx, now retired: the frame's one bar,
+// frame/transport/Transport.tsx, is drawn in Expressions too) fold in here, slot by slot. The bar owns no clock and no playback
+// state, and neither does this hook: each press is one owner request on the captured basis, and each light and readout is the
+// owner's reading. Nothing is new — the old bar's own words name the slots it filled (the Draw-mode slot, the Map slot, the
+// CPU-light slot), and the grammar (shell/modeGrammar.ts, `expressions`) names the rest.
 //
 // What this hook reads beyond TransportReading is the native transport source the old bar took as its prop (`nativeTransport`,
 // a NativeCompositionViewSource). With none, or with no native content standing, the slots show only the frame's readouts and
 // wait, as they did while the old bar was not drawn.
 //
-// Not here, because §10.5 gives them no slot (returned as PROPOSE): the Scene ‹ name › selector, Saved scenes, Save (and its
-// ⌘S chord), Guide, the pinned-controls strip, and the fault and notice lines.
+// Not here, because §10.5 gives them no slot: the Scene ‹ name › selector, Saved scenes, Save, Guide, the pinned-controls strip
+// and the Expression time readout. A Scene is a clip (lock §9.1), so they stand on the Clip side of the detail, where manual §3
+// puts "everything you can do to it": components/expressions/clip/SceneControls.tsx. Two things of the Scene must not wait for
+// that side to be shown, and are mounted here (the one part of Expressions that stands whenever the mode does): the Ctrl or ⌘ S
+// chord of Save, and the focus a selected scene clip asks of the owner (components/expressions/clip/sceneKeepers.ts).
 import {useEffect, useMemo, useRef, useState} from 'react'
 import type {NativeEditorReply} from '../../../../../expressions-boundary/src/editor'
 import {STAGE_TAKE_MODES, type StageTakeMode} from '@epilogos/expressions-boundary'
@@ -22,6 +25,7 @@ import {clampSeek, scrubRequest, scrubStep, sceneFocused, sceneTransportModel, s
 import type {TransportBindings, TransportSlotId} from '../../frame/transport/slots'
 import {frameTakeReason, TAKE_MODE_LABELS, takeStart, takeStop, useFrameTakeLink, type FrameStageRun} from '../../native/frameTakes'
 import {STAGE_AUTOMATION_RESUME} from '../../native/stageCommands'
+import {useSceneKeepers} from '../../components/expressions/clip/sceneKeepers'
 import {currentCompositionReply, currentNativeSceneReply, type NativeCompositionViewSource} from '../compositionViews'
 import type {NativeContentActions, NativeSceneAction} from '../nativeContent'
 import type {ModeTransportReadouts} from '../ModeTransportBar'
@@ -86,7 +90,7 @@ export const useExpressionsTransport = (reading: ExpressionsTransportReading): T
   const [armed, setArmed] = useState(false)
   useEffect(() => {if (link.state?.takeMode) setTakeMode(link.state.takeMode)}, [link.state?.takeMode])          // :65
   useEffect(() => {setFault(null); setTakeFault(null); draftRef.current = null; setDraft(null)}, [identity])       // :66
-  // Space reaches the transport only through this ref, so it is retired with the content (:67-84; Ctrl/⌘ S travels with Save).
+  // Space reaches the transport only through this ref, so it is retired with the content (:67-84). Ctrl/⌘ S travelled with Save (sceneKeepers.ts).
   const playRef = useRef<(() => void) | null>(null)
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -99,6 +103,8 @@ export const useExpressionsTransport = (reading: ExpressionsTransportReading): T
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [])
+  // The Scene's chord and the selection's focus stand with Expressions, not with its Clip side.
+  useSceneKeepers(source)
   const content = source?.content, scenes = content?.scenes, playback = content?.playback
   if (!source || !content || !scenes || !playback) { playRef.current = null; return readoutBindings(reading.readouts) } // :86 (the old bar drew nothing)
   const current = scenes.scenes.find(row => row.scene_ref === content.basis.scene_ref)
@@ -226,7 +232,7 @@ export const useExpressionsTransport = (reading: ExpressionsTransportReading): T
     draw: {title: 'Draw — the stage tool rail: select, interact, pin, text, formation. Each is one command to the Expressions frame.',
       control: <><BarTools state={link.state} run={link.run} /><BarPointerGroup reading={editorReading} state={link.state} apply={barApply} disabled={!ready} /></>},
     // Map: Pin mode (the old bar's "Map slot", NativePinControls.tsx:9) (:188).
-    'key-map': {title: 'Map — pin mode: every parameter shows a pin; pin it to the bar or the rack.', control: <PinModeToggle />},
+    'key-map': {title: 'Map — pin mode: every parameter shows a pin; pin it to the Scene\'s pinned controls (its Clip side) or the rack.', control: <PinModeToggle />},
     // The engine light, read-only (the old bar's "CPU-light slot", NativeBarControls.tsx:123) (:190).
     cpu: {title: light.title, control: <BarEngineLight state={link.state} playback={playback} />},
   }
