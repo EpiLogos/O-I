@@ -49,6 +49,7 @@ import type {CentralSubjectSelection} from '../inhabitants/CentralSubjectDetail'
 import './modeSurface.css'
 import {createPortal} from 'react-dom'
 import type {BrowserCategory, ControlledBrowser} from '../frame/browser/browserKinds'
+import {useReachedDocument} from '../central/documents/documentDoor'
 
 /** The root register's day surface — where the civil calendar's records
  * live (`centralDayNowModel`'s subjectDayRef reads this shape). */
@@ -155,12 +156,33 @@ function ApertureSlot({mode, selectedSubject}: {mode: SurfMode; selectedSubject:
     {name: 'Subject', value: selectedSubject ? selectedSubject.path.split('/').pop() ?? selectedSubject.path : 'not selected', title: selectedSubject ? selectedSubject.path : 'select a subject in the results — the pane follows the encounter'},
     {name: 'Occasion', value: 'the day\'s Now', title: 'the pane follows the day\'s civil Now'},
   ]
+  const document = useReachedDocument()
+  // The document the hand last reached in a pane: its view rows and its owner actions (the mockup's Day context panel —
+  // Form, File, Revision, then "Save HTML copy" / "Place on Central"). The pane's face carries no buttons of its own.
+  const view = mode === 'base' && document ? [
+    {name: 'Form', value: document.form, title: `the ${document.form} the reached pane holds`},
+    {name: 'File', value: document.title, title: document.title},
+    {name: 'Revision', value: document.revision ? `r${document.revision.slice(0, 12)} · ${document.state}` : document.state, title: document.state},
+  ] : []
   return <div className="mode-browser-aperture" aria-label="Aperture slot">
     <div className="mode-browser-aperture-head">aperture <span>pane (1) · follows</span></div>
     {rows.map(row => <div key={row.name} className="mode-browser-aperture-row" data-i={`${row.name}|${row.title}`}>
       <span className="mode-browser-aperture-name">{row.name}</span>
       <span className="mode-browser-aperture-value">{row.value}</span>
     </div>)}
+    {document && view.length > 0 && <>
+      <div className="mode-browser-aperture-head">view <span>{document.form.toLowerCase()} · reached</span></div>
+      {view.map(row => <div key={row.name} className="mode-browser-aperture-row" data-i={`${row.name}|${row.title}`}>
+        <span className="mode-browser-aperture-name">{row.name}</span>
+        <span className="mode-browser-aperture-value" title={row.title}>{row.value}</span>
+      </div>)}
+      <div className="mode-browser-aperture-actions">
+        <button type="button" data-action="save" disabled={!document.save} onClick={() => document.save?.()}
+          data-i={`Save to Central|the owner's revision-checked write of the ${document.form} as it stands in its pane`}>Save to Central</button>
+        <button type="button" data-action="reread" disabled={!document.reread} onClick={() => document.reread?.()}
+          data-i={`${document.rereadLabel ?? 'Re-read'}|read the ${document.form} again from its owner`}>{document.rereadLabel ?? 'Re-read'}</button>
+      </div>
+    </>}
   </div>
 }
 

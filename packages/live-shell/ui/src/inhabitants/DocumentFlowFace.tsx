@@ -29,12 +29,17 @@ import type {KernelTransportStatus, CentralLocation} from '../../../../../deskto
 import {classifySaveFailure, savedOutcome, unchangedOutcome, type SaveRouterReading} from './documentDeviceModel'
 import {SaveOutcomeChip} from './inhabitantCard.tsx'
 import './inhabitantDevices.css'
+import {documentStateWords, publishDocument, reachedDocument, withdrawDocument, type DocumentInPane} from '../central/documents/documentDoor'
 
 export interface DocumentFlowFaceProps {
   readonly transport: KernelTransportStatus
   /** The flow instance's owner location (the aperture selects the document;
    * nothing here mints a flow identity — it comes from the document). */
   readonly location: CentralLocation
+  /** In a pane the document is the face (the mockup's document pane): its head reads the revision and the save standing, and
+   * Save / Re-read stand in the browser's aperture for the document reached (central/documents/documentDoor.ts). As a device
+   * the face keeps its own action row. */
+  readonly presentation?: 'device' | 'pane'
 }
 
 /** The hosted copy: payload read seam + the bounded host bridge, injected
@@ -46,7 +51,7 @@ function projectFlowDocument(html: string): string {
     : withSeam
 }
 
-export function FlowFace({transport, location}: DocumentFlowFaceProps) {
+export function FlowFace({transport, location, presentation = 'device'}: DocumentFlowFaceProps) {
   const [instance, setInstance] = useState<FlowInstance>()
   const [face, setFace] = useState<string>()
   const [failure, setFailure] = useState<string>()
@@ -169,9 +174,19 @@ export function FlowFace({transport, location}: DocumentFlowFaceProps) {
   }, [face, refreshDraftStanding])
 
   const documentLabel = instance?.doc.meta.title || instance?.doc.meta.documentId || location.path
+  const inPane = presentation === 'pane'
+  const key = useRef(`flow:${Math.random().toString(36).slice(2)}`).current
+  const standing: DocumentInPane = {key, form: 'Flow', title: documentLabel, revision: revision || undefined,
+    state: documentStateWords({pending, dirty, save}), save: face && !pending ? () => void saveToOwner() : undefined,
+    reread: pending ? undefined : () => void load(), rereadLabel: 'Re-read'}
+  // The aperture follows the document the hand reached (the first one standing until then); a change of standing reaches it.
+  useEffect(() => { if (inPane) publishDocument(standing, !reachedDocument()) })
+  useEffect(() => () => withdrawDocument(key), [key])
 
   return (
     <div
+      onPointerDownCapture={inPane ? () => publishDocument(standing, true) : undefined}
+      onFocusCapture={inPane ? () => publishDocument(standing, true) : undefined}
       className="inhabitant-face-body inhabitant-document"
       data-document-device="ql-flow"
       data-save-outcome={save?.outcome ?? ''}
@@ -179,7 +194,10 @@ export function FlowFace({transport, location}: DocumentFlowFaceProps) {
       data-baselined={baselined ? 'true' : 'false'}
       data-basis-revision={revision}
     >
-      <div className="inhabitant-body-actions">
+      {inPane ? <div className="document-pane-head" data-document-head="flow">
+        <span className="document-pane-form">Flow</span>
+        <span className="document-pane-state" role="status" aria-live="polite">{revision ? `r${revision.slice(0, 8)} · ` : ''}{standing.state}</span>
+      </div> : <div className="inhabitant-body-actions">
         <button type="button" className="inhabitant-act" data-action="save" disabled={!face || pending} onClick={() => void saveToOwner()}>Save to native source</button>
         <button type="button" className="inhabitant-act" data-action="reread" disabled={pending} onClick={() => void load()}>Re-read current document</button>
         <span className="inhabitant-device-save" role="status" aria-live="polite" data-save-outcome-label={save?.outcome ?? ''}>
@@ -187,7 +205,7 @@ export function FlowFace({transport, location}: DocumentFlowFaceProps) {
             ? <SaveOutcomeChip outcome={save.outcome} detail={save.detail}/>
             : <span className="inhabitant-quiet">{pending ? 'waiting for the native operation…' : 'no save attempted'}</span>}
         </span>
-      </div>
+      </div>}
       {failure && <p className="inhabitant-device-fault" role="alert">Flow document unavailable: {failure}</p>}
       {notice && <p className="inhabitant-device-notice" role="status">{notice}</p>}
       {face === undefined
