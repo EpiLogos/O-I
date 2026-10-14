@@ -36,8 +36,9 @@
 import {InstrumentsSection} from '../frame/InstrumentsSection'
 import {SetsSection} from './SetsSection'
 import {useEffect, useMemo, useState} from 'react'
-import type {NativeDirectory} from '../../../../../desktop/cradle/src/kernel/types'
+import type {NativeDirectory, NativeFileEntry} from '../../../../../desktop/cradle/src/kernel/types'
 import {listFiles} from '../../../../../desktop/cradle/src/files/client'
+import {useCentralDocumentOpener} from '../central/documents/useOpenCentralDocument'
 import {composeModeBrowser, ROW_SOURCE_OWNERS, type ModeBrowserCategory, type SurfMode} from './modeGrammar'
 import {allInhabitantBrowserEntries} from '../inhabitants/manifest'
 import {useWorkspace} from './workspace'
@@ -183,11 +184,25 @@ function CategoryRows({category, mode, needle, onSelectSubject, selectedSubject}
     return <DesignedEmptyCategory category={category} />
   }
   if (category.id === 'central-days') return <DaysRows needle={needle} onSelectSubject={onSelectSubject} selectedSubject={selectedSubject} />
-  if (category.id === 'central-files' || category.id === 'techne-files') return <GroundRows needle={needle} onSelectSubject={onSelectSubject} selectedSubject={selectedSubject} mode={mode} />
+  if (category.id === 'central-files' || category.id === 'techne-files') return <GroundRows needle={needle} onSelectSubject={onSelectSubject} selectedSubject={selectedSubject} mode={mode} opens={category.id === 'central-files'} />
   if (category.id === 'techne-sources') return <SourceRows needle={needle} />
   // A `cut` category without a composed row source is a lane fault, named —
   // never silently empty.
   return <div className="mode-browser-fault" role="alert">The {category.label} category is declared `cut` but composes no rows here — the composition owes its owner read.</div>
+}
+
+/** The open gestures of the Central rows (manual §10.3): a row previews on select; double-click, or Enter, opens its document
+ * in the focused pane — a Days row its Day, a Files row its Flow or its own file tab (central/documents). A refusal is the
+ * owner's own words, said by the rows. */
+function useOpening() {
+  const {openDay, openFile} = useCentralDocumentOpener()
+  const [openFault, setOpenFault] = useState<string | null>(null)
+  const said = (opening: Promise<void>) => opening.catch(reason => setOpenFault(reason instanceof Error ? reason.message : String(reason)))
+  return {
+    openFault,
+    openDay: (entry: NativeFileEntry, path: string) => { setOpenFault(null); void said(openDay(entry, path)) },
+    openFile: (entry: NativeFileEntry, path: string) => { setOpenFault(null); void said(openFile(entry, path)) },
+  }
 }
 
 /** The Days rows: the day records at the root register's day surface, read
@@ -200,6 +215,7 @@ function DaysRows({needle, onSelectSubject, selectedSubject}: {
   const {transport} = useWorkspace()
   const [directory, setDirectory] = useState<NativeDirectory | null>(null)
   const [fault, setFault] = useState<string | null>(null)
+  const {openDay, openFault} = useOpening()
   useEffect(() => {
     let live = true
     setFault(null)
@@ -227,30 +243,35 @@ function DaysRows({needle, onSelectSubject, selectedSubject}: {
       return <li key={entry.location?.ref ?? entry.name}>
         <button type="button" data-browser-row className={`mode-browser-row${selected ? ' selected' : ''}`}
           aria-current={selected || undefined}
-          data-i={`Day ${entry.name.replace(/\.md$/, '')}|select the day — its record opens in the Document detail (CAS identity, basis, save-router standing)`}
-          title={`${path} — select the day; its craft opens in the Document detail`}
-          onClick={() => onSelectSubject({kind: 'day', path})}>
+          data-i={`Day ${entry.name.replace(/\.md$/, '')}|select the day — its record opens in the Document detail (CAS identity, basis, save-router standing); double-click or Enter opens the Day in the focused pane`}
+          title={`${path} — select the day; its craft opens in the Document detail. Double-click or Enter opens the Day in the focused pane.`}
+          onClick={() => onSelectSubject({kind: 'day', path})}
+          onDoubleClick={() => openDay(entry, path)}
+          onKeyDown={event => { if (event.key === 'Enter') openDay(entry, path) }}>
           <span aria-hidden="true"><KindMark kind="day" size={12} /></span><span>{entry.name.replace(/\.md$/, '')}</span>
           <span className="mode-browser-row-meta">{entry.byte_len ?? '—'} B</span>
         </button>
       </li>
     })}
-  </ul></section>
+  </ul>{openFault && <p className="native-error" role="alert" data-open-fault>{openFault}</p>}</section>
 }
 
 /** The Files rows: the ground's listing through the workspace's directory
  * resource — the same listing the WorldBrowser's Files category reads. */
-function GroundRows({needle, onSelectSubject, selectedSubject, mode}: {
+function GroundRows({needle, onSelectSubject, selectedSubject, mode, opens}: {
   needle: string
   onSelectSubject: (subject: CentralSubjectSelection | null) => void
   selectedSubject: CentralSubjectSelection | null
   mode: SurfMode
+  /** Central's Files open into its panes on double-click or Enter; Technē's take the file to hand (its lens), as they did. */
+  opens: boolean
 }) {
   const workspace = useWorkspace()
   const {transport, workspaceId, accessEpoch, accessReady, sourceRecoveryReady, resources, browserPath: path, navigateFiles, selectedRef} = workspace
   const [directory, setDirectory] = useState<NativeDirectory | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const {openFile, openFault} = useOpening()
   const origin = useMemo(() => ({current: workspace}), [workspace])
   origin.current = workspace
   useEffect(() => {
@@ -292,6 +313,7 @@ function GroundRows({needle, onSelectSubject, selectedSubject, mode}: {
       </span>)}
     </div>
     {error && <p className="native-error" role="alert">{error}</p>}
+    {openFault && <p className="native-error" role="alert" data-open-fault>{openFault}</p>}
     {loading && <p className="native-empty" role="status">Reading the ground…</p>}
     {directory && <ul>
       {parts.length > 0 && <li><button type="button" className="mode-browser-row" onClick={() => navigateFiles(parts.slice(0, -1).join('/'))}
@@ -304,9 +326,11 @@ function GroundRows({needle, onSelectSubject, selectedSubject, mode}: {
           <button type="button" data-browser-row
             className={`mode-browser-row${selected || selectedRef === entry.location?.ref ? ' selected' : ''}`}
             aria-current={selected || undefined}
-            data-i={isDirectory ? `${entry.name}|open the folder's listing` : `${entry.name}|select the ${entry.kind} — its craft opens in the Document detail`}
-            title={`${entryPath} — ${isDirectory ? 'open the folder' : 'select; the craft opens in the Document detail'}`}
-            onClick={() => isDirectory ? navigateFiles(entryPath) : onSelectSubject(entryPath.endsWith('.md') && /\/now\/day\/\d{4}-\d{2}-\d{2}\.md$/.test(entryPath) ? {kind: 'day', path: entryPath} : {kind: 'note', path: entryPath})}>
+            data-i={isDirectory ? `${entry.name}|open the folder's listing` : `${entry.name}|select the ${entry.kind} — its craft opens in the Document detail${opens ? '; double-click or Enter opens it in the focused pane' : ''}`}
+            title={`${entryPath} — ${isDirectory ? 'open the folder' : `select; the craft opens in the Document detail${opens ? '. Double-click or Enter opens it in the focused pane' : ''}`}`}
+            onClick={() => isDirectory ? navigateFiles(entryPath) : onSelectSubject(entryPath.endsWith('.md') && /\/now\/day\/\d{4}-\d{2}-\d{2}\.md$/.test(entryPath) ? {kind: 'day', path: entryPath} : {kind: 'note', path: entryPath})}
+            onDoubleClick={opens && !isDirectory ? () => openFile(entry, entryPath) : undefined}
+            onKeyDown={opens && !isDirectory ? event => { if (event.key === 'Enter') openFile(entry, entryPath) } : undefined}>
             <span aria-hidden="true">{isDirectory ? <Icon name="lib" size={12} /> : <KindMark kind="doc" size={12} />}</span>
             <span>{entry.name}</span>
             {!isDirectory && entry.byte_len != null && <span className="mode-browser-row-meta">{entry.byte_len} B</span>}
@@ -377,8 +401,8 @@ function CategoryContext({category, mode}: {category: ModeBrowserCategory; mode:
   return <div className="mode-browser-context">
     <strong>{category.label}</strong>
     <p>{category.hint}</p>
-    {category.id === 'central-days' && <p>Selecting a day opens its record in the Document detail — CAS identity, basis, save-router standing.</p>}
-    {category.id === 'central-files' && <p>Selecting a note selects it as the Document detail's subject; folders walk the ground.</p>}
+    {category.id === 'central-days' && <p>Selecting a day opens its record in the Document detail — CAS identity, basis, save-router standing. Double-click or Enter opens the Day itself in the focused pane.</p>}
+    {category.id === 'central-files' && <p>Selecting a note selects it as the Document detail's subject; folders walk the ground. Double-click or Enter opens a file in the focused pane — a Flow as its Flow, any other file as its own tab.</p>}
     {category.id === 'techne-sources' && <p>A source opens in its instrument over the current encounter.</p>}
     {mode === 'techne' && category.state === 'waiting' && <p role="note">The World groups wait for their owners; the lens surface holds their places.</p>}
   </div>
