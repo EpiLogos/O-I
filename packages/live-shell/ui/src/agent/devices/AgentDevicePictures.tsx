@@ -14,7 +14,7 @@ import {budgetLine, type AgentChainReading, type OwnerReading, type SkillChain} 
 import {selectSkillChain, useSelectedSkillChain} from './skillRackSelection'
 import './factoryDevices.css'
 
-/** What a picture needs beyond the reading: whether a session is attached and the two doors the old cards' pop-outs opened. */
+/** What a picture needs beyond the reading: which session is selected and the two doors the old cards' pop-outs opened. */
 export interface PictureContext {
   reading: AgentChainReading
   sessionRef: string | null
@@ -108,12 +108,15 @@ function AgentPicture({ctx, size}: {ctx: PictureContext; size: DeviceSize}) {
   const {ink, ground} = useFaceColours(holder)
   const px = size === 'compact' ? 52 : size === 'whole' ? 96 : 200
   const budget = budgetLine(ctx.reading.budget)
+  // "attached" is the owner's word (a task record for the session); a session the person selected that no owner has spoken for
+  // is only "selected".
+  const attached = ctx.sessionRef != null && ctx.reading.attached === true
   return (
-    <div className="fd-pic fd-pic--agent" data-size={size} data-attached={ctx.sessionRef != null} ref={holder}>
+    <div className="fd-pic fd-pic--agent" data-size={size} data-attached={attached} ref={holder}>
       <div className="fd-pic__row">
         <span className="fd-face" dangerouslySetInnerHTML={{__html: maskStatic('think', ink, ink, px, ground)}} />
         <div className="fd-pic__text">
-          <span className="fd-pic__caption">{budget ? `${budget} turns` : 'turns not read'} · {ctx.sessionRef != null ? 'attached' : 'unselected'}</span>
+          <span className="fd-pic__caption">{budget ? `${budget} turns` : 'turns not read'} · {attached ? 'attached' : ctx.sessionRef != null ? 'selected' : 'unselected'}</span>
           <button type="button" className="fd-pic__open" data-i={PICTURE_DATA_I.thread} disabled={ctx.sessionRef == null} title="Open this session’s thread" onClick={alone(ctx.onThread)}>thread ↗</button>
         </div>
       </div>
