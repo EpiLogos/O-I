@@ -23,6 +23,7 @@ import {useAgentMetrics} from '../../agent/useAgentMetrics'
 import {startAgentVoice, stopAgentVoice} from '../../agent/useAgentVoice'
 import {useHarnessBinding} from '../../agent/useHarnessBinding'
 import {useShellSetterBridge} from '../../agent/shellSetterBridge'
+import {useOwnerAccepted} from '../../agent/devices/ownerAccepted'
 import type {TransportBindings, TransportSlotId} from '../../frame/transport/slots'
 import {shellSetter, type DispatchReceipt} from '../../inhabitants/sdk/shellSetters'
 import type {ModeTransportReadouts} from '../ModeTransportBar'
@@ -57,6 +58,8 @@ export const useFactoryTransport: UseModeTransport = ({readouts}) => {
   const track = tracks.find(item => trackKey(item) === provided?.selectedTrackId) ?? tracks[0]
   const metrics = useAgentMetrics(transport, track?.sessionRef ?? null)
   const {binding} = useHarnessBinding(transport)
+  // A light or a value is the owner's reading (R2 objection 7): what the harness accepted, never the shell's own flag.
+  const accepted = useOwnerAccepted(binding)
   // The bar mounts the setters' registration (AgentShellTransport.tsx:74): without it the effort, steer, quantize, heartbeat and
   // write-arm presses reach no setter, and the atlas and knowledge setters are never registered.
   useShellSetterBridge(provided ?? INERT_SETTERS, transport, binding)
@@ -140,10 +143,10 @@ export const useFactoryTransport: UseModeTransport = ({readouts}) => {
     ...readoutBindings(readouts),
     // Link has no handler on the old bar (AgentShellTransport.tsx:135): it stays unbound, drawn waiting.
     tap: {press: tap, title: noted(TIPS.tap, shell.tapNote)},                                                              // :136
-    tempo: {step: stepEffort, readout: {value: shell.effort, title: noted(TIPS.effort, notes.tempo)}, title: noted(`${TIPS.effort} ‹ and › step it.`, notes.tempo)}, // :137-138
+    tempo: {step: stepEffort, readout: {value: accepted.effort ?? '—', title: noted(accepted.effort ? TIPS.effort : `${TIPS.effort} Unread until the harness accepts a value.`, notes.tempo)}, title: noted(`${TIPS.effort} ‹ and › step it.`, notes.tempo)}, // :137-138
     signature: {readout: {value: budget, title: TIPS.budget}},                                                            // :139
-    metro: {press: toggleHeartbeat, lit: shell.heartbeat, title: noted(TIPS.heartbeat, notes.metro)},                      // :140
-    quantize: {press: cycleQuantize, readout: {value: `${shell.quantize} ▾`, title: noted(TIPS.quantize, notes.quantize)}, title: noted(TIPS.quantize, notes.quantize)}, // :141
+    metro: {press: toggleHeartbeat, title: noted(TIPS.heartbeat, notes.metro)},                                            // :140 — no owner reading, so no light
+    quantize: {press: cycleQuantize, readout: {value: '— ▾', title: noted(`${TIPS.quantize} Unread until the harness accepts a value.`, notes.quantize)}, title: noted(TIPS.quantize, notes.quantize)}, // :141
     // Σ scope, tokens in, tokens out — the manual's "count tokens in and out" across key, root and scale (:144-146).
     key: {press: shell.cycleTokenScope, readout: {value: `Σ ${shell.tokenScope}`, title: TIPS.tokens}, title: TIPS.tokens},
     root: {readout: {value: `in ${metrics.tokensIn}`, title: TIPS.tokIn}},
@@ -154,8 +157,8 @@ export const useFactoryTransport: UseModeTransport = ({readouts}) => {
     play: {press: controlBusy ? undefined : () => void runControl('play', 'resume'), ...(running === null ? {} : {lit: running}), title: noted(TIPS.run, notes.play)}, // :152
     stop: {press: controlBusy ? undefined : () => void runControl('stop', 'stop'), title: noted(TIPS.stop, notes.stop)},    // :153
     record: {press: () => void toggleVoice(), lit: shell.voiceArmed, title: noted(TIPS.voice, shell.voiceNote)},           // :154
-    overdub: {press: toggleSteer, lit: shell.steer, title: noted(TIPS.steer, notes.overdub)},                              // :155
-    arm: {press: toggleWriteArm, lit: shell.writeArm, title: noted(TIPS.writeArm, notes.arm)},                             // :156
+    overdub: {press: toggleSteer, lit: accepted.input === undefined ? undefined : accepted.input === 'steer', title: noted(TIPS.steer, notes.overdub)}, // :155
+    arm: {press: toggleWriteArm, title: noted(TIPS.writeArm, notes.arm)},                                                  // :156 — no owner reading, so no light
     're-enable': {press: () => shell.setHandBackLit(false), lit: shell.handBackLit, title: TIPS.handBack},                 // :157
     capture: {press: toggleCapture, lit: shell.capturing, title: noted(TIPS.capture, shell.captureNote)},                  // :158
     loop: {press: () => shell.setLoopOn(!shell.loopOn), lit: shell.loopOn, title: TIPS.loop},                              // :159

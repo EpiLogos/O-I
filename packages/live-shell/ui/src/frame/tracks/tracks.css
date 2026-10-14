@@ -106,3 +106,6 @@
 @media (prefers-reduced-motion: reduce) {
   .cs.clip.running .tri, .cs.clip.waiting .tri, .trk-foot .rt.lit { animation: none }
 }
+
+/* The owner's grain, when its ops act on more than a control looks (Factory: the whole harness). */
+.sg-grain { margin-left: 4px; font-size: 8.5px; color: var(--text-faint); text-transform: uppercase; letter-spacing: .04em }

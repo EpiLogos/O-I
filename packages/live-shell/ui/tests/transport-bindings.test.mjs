@@ -82,23 +82,24 @@ test('Factory binds the old bar\'s working controls to the slots §10.5 names, a
   assert.deepEqual([...markup.matchAll(/data-slot="([^"]+)"/g)].map(m => m[1]).filter((id, i, all) => all.indexOf(id) === i), [...TRANSPORT_SLOT_IDS], 'the same 28 slots, in order')
 })
 
-test('Factory\'s lights are the shell\'s own readings; Run lights only after the owner has answered', () => {
+test('Factory\'s lights are readings: none from a shell flag the owner has not accepted; Run lights only after the owner answers', () => {
   const {bindings} = factory()
   const markup = draw(bindings)
-  // The agent shell's defaults: heartbeat, steer and follow on; write arm, capture, voice, hand back and routine off.
-  assert.deepEqual(['metro', 'overdub', 'follow', 'arm', 'capture', 'record', 're-enable', 'loop'].map(id => light(markup, id)), ['on', 'on', 'on', 'off', 'off', 'off', 'off', 'off'])
+  // Heartbeat, steer and write arm have no owner reading until the harness accepts a value (R2 objection 7): no light. Follow
+  // is the frame's own view (keep views with the agents); capture, voice, hand back and routine are the shell's own acts.
+  assert.deepEqual(['metro', 'overdub', 'follow', 'arm', 'capture', 'record', 're-enable', 'loop'].map(id => light(markup, id)), [null, null, 'on', null, 'off', 'off', 'off', 'off'])
   // Run was lit from mount on the old bar (a `useState(true)` no owner had answered); here no light shows until the harness answers.
   assert.equal(light(markup, 'play'), null, 'no Run light without an answer')
   assert.equal(light(markup, 'stop'), null, 'the old bar never lit Stop')
   for (const id of ['tempo', 'signature', 'quantize', 'key', 'root', 'scale', 'position', 'cpu']) assert.equal(light(markup, id), null, `${id} is a readout, not a light`)
 })
 
-test('Factory\'s readouts are the old bar\'s, and read their owner\'s dashes when it discloses nothing', () => {
+test('Factory\'s readouts are the old bar\'s, and read dashes until the owner accepts a value', () => {
   const {bindings} = factory()
   assert.deepEqual(['tempo', 'signature', 'quantize', 'key', 'root', 'scale', 'position', 'cpu'].map(id => bindings[id].readout.value),
-    ['high', '— / —', 'next tool ▾', 'Σ session', 'in —', 'out —', '— . — . —', '—'])
+    ['—', '— / —', '— ▾', 'Σ session', 'in —', 'out —', '— . — . —', '—'])
   const markup = draw(bindings)
-  assert.match(markup, />high</); assert.match(markup, />next tool ▾</); assert.match(markup, />Σ session</)
+  assert.match(markup, />— ▾</); assert.match(markup, />Σ session</)
 })
 
 test('Factory\'s Run and Stop send harness_agent_control on the bound harness, and nothing else', async () => {

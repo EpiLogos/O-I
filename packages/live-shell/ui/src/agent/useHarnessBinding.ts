@@ -5,9 +5,12 @@ import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kern
 export function useHarnessBinding(transport: KernelTransportStatus) {
   const [binding, setBinding] = useState<string>('cursor')
   const [error, setError] = useState<string | null>(null)
+  // Whether the owner has named the binding: until it has, 'cursor' is only the shell's default and nothing writes to it.
+  const [resolved, setResolved] = useState(false)
 
   useEffect(() => {
     let live = true
+    setResolved(false)
     void (async () => {
       if (transport.kind === 'unavailable') {
         if (live) {
@@ -23,12 +26,13 @@ export function useHarnessBinding(transport: KernelTransportStatus) {
         return
       }
       const rows = (harness.outcome.data as {harnesses?: Array<{id?: string; binding?: string}>})?.harnesses
-      const next = rows?.find(row => row.binding)?.binding ?? rows?.[0]?.id ?? 'cursor'
-      setBinding(next)
+      const disclosed = rows?.find(row => row.binding)?.binding ?? rows?.[0]?.id
+      setBinding(disclosed ?? 'cursor')
+      setResolved(disclosed !== undefined)
       setError(null)
     })()
     return () => { live = false }
   }, [transport])
 
-  return {binding, error}
+  return {binding, error, resolved}
 }

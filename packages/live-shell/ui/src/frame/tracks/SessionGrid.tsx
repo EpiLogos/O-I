@@ -143,6 +143,8 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
   const tracks = lanes.filter(track => !tree.ancestorsOf(track).some(above => folded[above.id]))
   const {here: stalledHere} = stalledLanes(set, tree)
   const launch = set.actions?.launch, launchStop = set.actions?.launchStop, stopTrack = set.actions?.stopTrack, retry = set.actions?.retry, seat = set.actions?.seat
+  // What the owner's ops act on when it is coarser than a control looks, said on each control and over the stops.
+  const grain = set.actions?.grain ? ` (${set.actions.grain})` : ''
   // An empty work draws Live's empty Session: the stops down the right and the drop area where tracks will stand, with the
   // reason in it — never a blank box (world-shell-mockup.html .sg; Live's "Drop Files and Devices Here").
   if (!lanes.length) return <div className="sg-pane" data-tracks-view="session" data-empty="true">
@@ -188,7 +190,7 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
                 data-receipt={receiptMark(receipt, key)}
                 title={`${clip.label} · ${word}${clip.launch?.quantize ? ` · launches ${clip.launch.quantize}` : ''}${clip.launch?.follow ? ` · then ${clip.launch.follow}` : ''}${clip.takes?.length ? ` · ${clip.takes.length} takes` : ''}${clip.note ? ` · ${clip.note}` : ''}`}
                 onClick={() => selection.select({kind: 'clip', ref: clip.id, title: clip.label, track: clip.trackId})}>
-                <button type="button" className="tri" aria-label={`Launch ${clip.label}`} disabled={!launch} title={launch ? `Launch (${launch.op})` : 'No launch: the owner discloses no launch for this clip'}
+                <button type="button" className="tri" aria-label={`Launch ${clip.label}${grain}`} disabled={!launch} title={launch ? `Launch (${launch.op})` : 'No launch: the owner discloses no launch for this clip'}
                   onClick={event => { event.stopPropagation(); if (launch) onPress(key, `Launch ${clip.label}`, () => launch.run(clip.id)) }} />
                 <span className="cs-label">{clip.label}</span>
                 {clip.note && <span className="cs-note" role="img" aria-label={clip.note} title={clip.note}>⚑</span>}
@@ -207,12 +209,12 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
             }
             const key = `stop:${track.id}:${row.id}`
             return <div key={row.id} className="cs" role="gridcell" data-receipt={receiptMark(receipt, key)} title={stopTrack ? 'Empty slot · its square stops the track' : 'Empty slot'}>
-              <button type="button" className="sg2" aria-label={`Stop ${track.name}`} disabled={!stopTrack} title={stopTrack ? `Stop ${track.name} (${stopTrack.op})` : 'No stop: the owner discloses no stop for this track'}
+              <button type="button" className="sg2" aria-label={`Stop ${track.name}${grain}`} disabled={!stopTrack} title={stopTrack ? `Stop ${track.name} (${stopTrack.op})` : 'No stop: the owner discloses no stop for this track'}
                 onClick={() => { if (stopTrack) onPress(key, `Stop ${track.name}`, () => stopTrack.run(track.id)) }} />
             </div>
           })}
           {retry && <div className="trk-foot">
-            <button type="button" className={`rt${lit ? ' lit' : ''}`} aria-label={`Retry ${track.name}`} data-receipt={receiptMark(receipt, `retry:${track.id}`)}
+            <button type="button" className={`rt${lit ? ' lit' : ''}`} aria-label={`Retry ${track.name}${grain}`} data-receipt={receiptMark(receipt, `retry:${track.id}`)}
               title={`Retry ${track.name} (${retry.op})${lit ? ' · lit: a lane in here has stalled' : ''}`}
               onClick={() => onPress(`retry:${track.id}`, `Retry ${track.name}`, () => retry.run(track.id))}>↻</button>
           </div>}
@@ -224,7 +226,7 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
         onDragOver={seat ? event => { if (event.dataTransfer.types.includes(seat.accepts)) { event.preventDefault(); event.dataTransfer.dropEffect = 'copy' } } : undefined}
         onDrop={seat ? event => { const payload = event.dataTransfer.getData(seat.accepts); if (!payload) return; event.preventDefault(); onPress('seat', 'Seat', () => seat.run(payload)) } : undefined} />
       <div className="trk trk-main" role="row" aria-label="Stops">
-        <div className="thd">Main</div>
+        <div className="thd" title={grain ? `Every control here acts on the${grain.replace(/[()]/g, '')}: the owner takes nothing finer` : undefined}>Main{grain && <span className="sg-grain">{set.actions?.grain}</span>}</div>
         {rows.map((row, index) => {
           const key = `row:${row.id}`
           return <div key={row.id} className="cs" role="gridcell" data-receipt={receiptMark(receipt, key)}>
