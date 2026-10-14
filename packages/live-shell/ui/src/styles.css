@@ -238,43 +238,11 @@ input { min-width:0; border:1px solid var(--line); background:var(--bg-1); paddi
 .arrange-mixer button { padding:0 2px; border:1px solid var(--line); min-width:16px; height:14px; font-size:9px }
 .arrange-mixer .track-number { width:31px; min-width:31px; height:14px; display:block; padding:0; line-height:12px; font-size:10px }
 .chain { position:relative; border-top:6px solid var(--line); border-radius:3px; padding:0; background:var(--bg-2); gap:4px; border-left:1px solid var(--line-strong); border-right:1px solid var(--line-strong); border-bottom:1px solid var(--line-strong) }
-.detail-no-selection { flex:1; display:grid; place-items:center; color:var(--text-dim); font-size:10px }
-.device-chain-surface { flex:1; min-width:0; overflow-x:auto; display:flex; padding:7px; gap:6px }
-.device-tile { height:100%; width:200px; min-width:200px; background:var(--bg-1); display:flex; flex-direction:column; border:1px solid var(--line-strong); border-radius:3px }
 .device-title { padding:2px 5px; font-size:10px; height:22px; flex:none; background:var(--bg-0); gap:4px; white-space:nowrap }
 .device-title>span:last-child { margin-left:auto }
 .device-power { color:var(--text-faint) }
-.device-parameters { overflow:auto; padding:4px 5px; flex:1 }
-.device-parameter { display:flex; flex-direction:column; gap:1px; margin-bottom:6px; font-size:9px }
-.device-parameter>span { overflow-wrap:anywhere; color:var(--text-dim) }
-.device-parameter>input { padding:1px 3px; height:17px; width:100%; text-overflow:ellipsis; font-size:10px; color:var(--text) }
-.device-empty { height:100%; display:grid; place-items:center; color:var(--text-faint) }
-.clip-inspector { width:180px; flex:none; padding:3px; background:var(--bg-1); border-right:5px solid var(--line); overflow:auto; font-size:10px }
 .clip-section-title { height:20px; background:var(--bg-0); padding:2px 3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
 .clip-color-chip { display:inline-block; width:7px; height:7px; background:var(--accent); margin-right:4px }
-.clip-inspector summary { height:20px; padding:2px 3px; background:var(--bg-0); cursor:pointer; color:var(--text-dim) }
-.clip-inspector details { border-top:1px solid var(--line); padding-bottom:4px }
-.clip-values-pair { display:flex; gap:4px; padding:2px 4px }
-.clip-value { flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; font-size:10px }
-.clip-value input { width:100%; height:15px; padding:0 3px; font-size:10px; text-align:center }
-.clip-inspector button { width:calc(100% - 8px); height:17px; font-size:10px; background:var(--bg-0); border:1px solid var(--line); border-radius:7px; margin:2px 4px }
-.clip-values-pair button { margin:2px 0; flex:1; width:auto }
-.clip-subheading { display:block; padding:3px 7px 0 }
-.note-editor { flex:1; min-width:0; display:flex; flex-direction:column }
-.note-toolbar { height:20px; padding:1px 4px; font-size:10px; background:var(--bg-1); display:flex; align-items:center; gap:4px }
-.note-toolbar button { padding:0 4px; background:var(--bg-0); border:1px solid var(--line) }
-.note-toolbar label { display:flex; gap:3px; align-items:center; white-space:nowrap }
-.note-toolbar input { width:10px; height:10px; margin:0 }
-.note-toolbar>span { flex:1; text-align:center }
-.note-toolbar output { overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
-.note-ruler { height:20px; margin-left:52px; display:flex; overflow:hidden; background:var(--bg-1); flex:none }
-.note-ruler span { width:72px; min-width:72px; padding:2px; font-size:10px; border-left:1px solid var(--line) }
-.note-grid { display:flex; flex:1; min-height:0 }
-.note-keyboard { width:52px; flex:none; display:flex; flex-direction:column; justify-content:space-between; padding:6px 6px; font-size:10px; border-right:1px solid var(--line); background:repeating-linear-gradient(0deg,var(--bg-1) 0,var(--bg-1) 13px,var(--bg-0) 13px,var(--bg-0) 18px) }
-.note-grid-body { flex:1; background:repeating-linear-gradient(90deg,transparent 0,transparent 71px,var(--line) 71px,var(--line) 72px),repeating-linear-gradient(0deg,transparent 0,transparent 17px,#363b4055 17px,#363b4055 18px); border-bottom:1px solid var(--line) }
-.velocity-lane { height:45px; display:flex; flex:none; border-top:1px solid var(--line) }
-.velocity-lane>span { width:52px; padding:6px 4px; font-size:9px; color:var(--text-dim); background:var(--bg-1) }
-.velocity-lane>div { flex:1; background:repeating-linear-gradient(90deg,transparent 0,transparent 71px,var(--line) 71px,var(--line) 72px) }
 .statusbar { padding:0 4px; gap:8px; border:none; font-size:10px }
 .statusbar-info { width:14px; height:14px; border-radius:50%; background:var(--bg-3); display:grid; place-items:center; font-weight:bold }
 /* The Info view (the mockup's .sb .info): what the pointer is over, read in the bar; idle, how to use it. */
