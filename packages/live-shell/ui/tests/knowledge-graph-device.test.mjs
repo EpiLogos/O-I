@@ -111,7 +111,7 @@ test('the knowledge rows are the controls the cradle holds, each on the domain t
   assert.deepEqual(rows.map(row => row.key).sort(), [...KNOWLEDGE_ROW_KEYS].sort())
   const row = key => rows.find(candidate => candidate.key === key)
   assert.deepEqual(row('depth').range, {min: 0, max: 8, unit: 'steps'}, 'the depth input clamps to zero through eight')
-  assert.deepEqual(row('zoom').range, {min: 0.15, max: 4, unit: '×'}, 'the zoom buttons clamp to the surface zoom range')
+  assert.deepEqual(row('zoom').range, {min: 0.05, max: 4, unit: '×'}, 'the zoom buttons clamp to the surface zoom range (the Canvas floor, camera.ts GRAPH_ZOOM_LIMITS)')
   assert.deepEqual(row('scope').values, ['field', 'local'])
   assert.deepEqual(row('direction').values, ['both', 'outgoing', 'incoming'])
   assert.deepEqual(row('context').values, ['structure', 'matches'])
@@ -173,7 +173,7 @@ test('zoom takes the surface zoom range and calls the zoom act the buttons call'
   const graph = fakeGraph()
   const token = openGraph(graph)
   try {
-    assert.match((await fire('shell.setKnowledgeZoom', 5)).reason, /0\.15 to 4/)
+    assert.match((await fire('shell.setKnowledgeZoom', 5)).reason, /0\.05 to 4/)
     assert.match((await fire('shell.setKnowledgeZoom', 'close')).reason, /takes a number/)
     assert.equal((await fire('shell.setKnowledgeZoom', 1.5)).kind, 'fired')
     assert.deepEqual(graph.calls, [['zoom', 1.5]])

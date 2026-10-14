@@ -1,5 +1,5 @@
 import type {Camera} from './camera';
-import {unaccommodate} from './camera';
+import {GRAPH_ZOOM_LIMITS, unaccommodate} from './camera';
 import type {GraphFilters, SavedGraphView} from './filters';
 import type {GraphNode, GraphReading} from './graph';
 import type {KnowledgeAddress} from '../kernel/types';
@@ -24,7 +24,7 @@ export type GraphReturnVisit = Omit<GraphVisit, 'detail' | 'detailReturn'>;
 export function restoreGraphCamera(value: unknown): Camera | undefined {
   if (!value || typeof value !== 'object') return;
   const camera = value as Camera;
-  if (![camera.zoom, camera.x, camera.y].every(Number.isFinite) || camera.zoom < .15 || camera.zoom > 4) return;
+  if (![camera.zoom, camera.x, camera.y].every(Number.isFinite) || camera.zoom < GRAPH_ZOOM_LIMITS.minZoom || camera.zoom > GRAPH_ZOOM_LIMITS.maxZoom) return;
   return {zoom: camera.zoom, x: camera.x, y: camera.y};
 }
 /** A saved camera is the rendered viewport, independent of selected-subject
@@ -73,6 +73,10 @@ export function unresolvedGraphAssociations(nodes: GraphNode[]) {
     ? Object.entries(node.unresolved.sources).filter(([source]) => refs.has(source))
       .map(([source, occurrences]) => ({source, ghost: node.ref, occurrences})) : []);
 }
+/** A ghost's caption says what it is: an unresolved link, never a subject name. */
+export function graphNodeCaption(node: Pick<GraphNode, 'kind' | 'label'>): string {
+  return node.kind === 'unresolved-link' ? `${node.label} · unresolved` : node.label;
+}
 export function unresolvedAssociationsAllowed(filters: GraphFilters) {
   return filters.unresolved && (!filters.relations.length || filters.relations.includes('wiki-link')) &&
     (!filters.families.length || filters.families.includes('native-semantic'));
@@ -107,7 +111,7 @@ export function appendGraphVisit<T extends {visits: GraphVisit[]; index: number}
 export function restoreGraphReturn(value: unknown): GraphReturnVisit | undefined {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return;
   const visit = value as GraphVisit;
-  const camera = (v: Camera | undefined) => !!v && [v.zoom, v.x, v.y].every(Number.isFinite) && v.zoom >= .15 && v.zoom <= 4;
+  const camera = (v: Camera | undefined) => !!v && [v.zoom, v.x, v.y].every(Number.isFinite) && v.zoom >= GRAPH_ZOOM_LIMITS.minZoom && v.zoom <= GRAPH_ZOOM_LIMITS.maxZoom;
   if (typeof visit.query !== 'string' || !camera(visit.camera) || visit.overviewCamera && !camera(visit.overviewCamera)
     || visit.selected !== undefined && typeof visit.selected !== 'string') return;
   const result = graphReturn(visit);

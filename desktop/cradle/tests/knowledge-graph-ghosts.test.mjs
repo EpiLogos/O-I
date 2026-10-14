@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {isUnresolvedGraphNode, projectUnresolvedGraph, unresolvedAssociationsAllowed, unresolvedGraphAssociations} from '../src/knowledge/graphNavigation.ts';
+import {graphNodeCaption, isUnresolvedGraphNode, projectUnresolvedGraph, unresolvedAssociationsAllowed, unresolvedGraphAssociations} from '../src/knowledge/graphNavigation.ts';
 import {defaultGraphFilters, filterGraph} from '../src/knowledge/filters.ts';
 
 const provenance = {source: 'central:wiki', revision: 'r1'};
@@ -64,4 +64,11 @@ test('the unresolved toggle gates associations and hides ghosts from the filtere
   const projected = projectUnresolvedGraph(reading());
   assert.equal(filterGraph(projected, shown).nodes.filter(isUnresolvedGraphNode).length, 2);
   assert.equal(filterGraph(projected, {...shown, unresolved: false}).nodes.filter(isUnresolvedGraphNode).length, 0);
+});
+
+test('a ghost is captioned as unresolved, while a subject keeps its own name', () => {
+  const projected = projectUnresolvedGraph(reading());
+  const ghost = projected.nodes.filter(isUnresolvedGraphNode).find(node => node.label === 'Missing Page');
+  assert.equal(graphNodeCaption(ghost), 'Missing Page · unresolved');
+  assert.equal(graphNodeCaption(projected.nodes.find(node => node.ref === 'central:node:a')), 'central:node:a');
 });
