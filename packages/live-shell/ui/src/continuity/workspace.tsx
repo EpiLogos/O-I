@@ -26,8 +26,12 @@ export function useCandidateWorkspace() {
   const book = useWorkspaces({storageKey: CANDIDATE_WORKSPACE_KEY, legacyLayoutKey: CANDIDATE_LEGACY_LAYOUT_KEY})
   const storedMode = book.current.layout.mode ?? 'base'
   // A book saved before Live had its own mode stood in Live as `base` without the Central world: that tree is renamed
-  // Live's, once, and Central opens on its own default the first time it is entered.
-  const standsInOldLive = storedMode === 'base' && book.current.context?.world !== 'central' && !book.current.modeLayouts?.live
+  // Live's, once, and Central opens on its own default the first time it is entered. A tree holding Central's documents is
+  // Central's own (its seed), never an old Live tree, whatever world the context names.
+  // (The kind is central/documents/centralDocuments.ts CENTRAL_DOCUMENT_PANE_KIND, named here: that module reaches the flow
+  // templates, which the book's readers do not load.)
+  const holdsCentralDocuments = Object.values(book.current.layout.surfaces ?? {}).some(surface => surface.kind === 'projection.central-document')
+  const standsInOldLive = storedMode === 'base' && book.current.context?.world !== 'central' && !book.current.modeLayouts?.live && !holdsCentralDocuments
   useEffect(() => { if (standsInOldLive) book.setLayout(layout => ({...layout, mode: 'live'})) }, [standsInOldLive, book.current.id])
   const mode: ShellMode = standsInOldLive ? 'audio' : SHELL_MODE_OF_BOOK[storedMode] ?? 'base'
   const setMode = (next: ShellMode) => book.switchMode(BOOK_MODE_OF_SHELL[next])
