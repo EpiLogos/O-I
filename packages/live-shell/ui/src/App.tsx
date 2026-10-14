@@ -10,13 +10,8 @@ import type { SetSelection } from './components/SessionView'
 import { StatusBar } from './components/StatusBar'
 import { TransportBar } from './components/TransportBar'
 import {AgentShellProvider, useAgentShell} from './agent/AgentShellContext'
-import {useAgentMetrics} from './agent/useAgentMetrics'
-import {useHarnessBinding} from './agent/useHarnessBinding'
-import {harnessAgentControl} from './agent/harnessAgentControl'
-import {AgentShellTransport} from './agent/AgentShellTransport'
-import {useAgencySessions, type AgentSessionTrack} from './agent/useAgencySessions'
+import {useAgencySessions} from './agent/useAgencySessions'
 import {trackKey} from './agent/agentRunModel'
-import type {KernelTransportStatus} from '../../../../desktop/cradle/src/kernel/types'
 import {workspaceModeDetail} from '../../../../desktop/cradle/src/library/workspaceModeRelay'
 import './agent/agentShell.css'
 import './shell/modeSurface.css'
@@ -31,6 +26,7 @@ import {surfModeOf, type SurfMode} from './shell/modeGrammar'
 import {MODE_FRAMES, MODE_TRACK_SOURCES} from './shell/modeFrames'
 import {centralSubjectOfClip} from './timeline/centralTrackAdapter'
 import {Browser} from './frame/browser/Browser'
+import {FrameKeys} from './frame/keys/FrameKeys'
 import {WidgetRail} from './frame/widgets/WidgetRail'
 import type {WidgetRailBook} from './frame/widgets/widgets'
 import {WIDGETS, WidgetReadingProvider} from './shell/widgets'
@@ -521,16 +517,9 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
     factory: {tracks: agency.tracks, task: {taskLabel: factoryTask?.purpose ?? null, task: factoryTask ? {sessionRef: factoryTask.sessionRef, purpose: factoryTask.purpose, agentName: factoryTask.agentName, needleState: factoryTask.needle?.state ?? null, tasks: factoryTask.tasks, budget: factoryTask.budget} : null, join: detail && detailMode === 'clip' ? {transport: workspace.transport, world: worldView, tracks: agency.tracks} : undefined}},
   }
   const frameBody = (<>
-    {agentShell ? <AgentShellTransportBridge
-      title={workspace.reading?.document?.name ?? 'Agent sessions'}
-      browser={browser} detail={detail} dock={dock}
-      toggleBrowser={() => setBrowser(!browser)} toggleDetail={() => setDetail(!detail)} toggleDock={() => setDock(!dock)}
-      onLeaveAgent={() => openCenterPanel('world.expressions')}
-      tracks={agency.tracks}
-      transport={workspace.transport}
-      mode={frameMode}
-      onMode={chooseMode}
-    /> : <TransportBar tempoBpm={state.set?.tempo_bpm ?? null} name={state.set?.path.split('/').pop()?.replace(/\.als$/i, '') ?? ''} mode={frameMode} view={tab} setView={chooseView} chooseMode={chooseMode} presentedView={presentedView} modeReadouts={modeReadouts} timeSpine={worldView.spine} focusedInstrument={focusedInstrument} centerPanels={panels.filter(panel => panel.id !== 'world.expressions' && panel.id !== 'native.agent' && panel.navigation !== false)} activeCenter={settingsPresented ? 'world.settings' : frameMode === 'live' ? null : centerPanel} openCenter={openCenterPanel} workName={workspace.reading?.document?.name} sceneName={workspace.reading?.sceneName} nativeTransport={nativeView('expressions')} browser={browser} detail={detail} dock={dock} toggleBrowser={() => setBrowser(!browser)} toggleDetail={() => setDetail(!detail)} toggleDock={() => setDock(!dock)} />}
+    {/* The frame's keys (F9): Space, Esc, ⌘F, the row and macro keys, Enter and ⌥Enter — through the controls' own doors. */}
+    <FrameKeys paused={settingsPresented} focusedGroupId={continuity.current.layout.focusedGroupId} revealBrowser={() => setBrowser(true)} />
+    {<TransportBar tempoBpm={state.set?.tempo_bpm ?? null} name={state.set?.path.split('/').pop()?.replace(/\.als$/i, '') ?? ''} mode={frameMode} view={tab} setView={chooseView} chooseMode={chooseMode} presentedView={presentedView} modeReadouts={modeReadouts} timeSpine={worldView.spine} focusedInstrument={focusedInstrument} centerPanels={panels.filter(panel => panel.id !== 'world.expressions' && panel.id !== 'native.agent' && panel.navigation !== false)} activeCenter={settingsPresented ? 'world.settings' : frameMode === 'live' ? null : centerPanel} openCenter={openCenterPanel} workName={workspace.reading?.document?.name} sceneName={workspace.reading?.sceneName} nativeTransport={nativeView('expressions')} browser={browser} detail={detail} dock={dock} toggleBrowser={() => setBrowser(!browser)} toggleDetail={() => setDetail(!detail)} toggleDock={() => setDock(!dock)} />}
     {/* The one browser (F6): the mode's row sources and the shared ones, under one search, grouped by the four kinds. */}
     <NativeInputRetentionProvider><div className="browser-residence" hidden={!browser}><BrowserReadingProvider value={browserReading}><Browser key={frameMode} sources={browserSources} /></BrowserReadingProvider></div>
     {browser && <div className="browser-resizer" role="separator" aria-label="Resize browser" aria-orientation="vertical" tabIndex={0} onKeyDown={event => { if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {event.preventDefault(); resizeBrowser(Math.max(120, Math.min(viewport[0] - 320, (browserWidth ?? document.querySelector('.browser-residence:not([hidden]) .browser,.browser-residence:not([hidden]) .world-browser')?.getBoundingClientRect().width ?? 430) + (event.key === 'ArrowRight' ? 10 : -10))))} }} onPointerDown={event => event.currentTarget.setPointerCapture(event.pointerId)} onPointerMove={event => { if (event.currentTarget.hasPointerCapture(event.pointerId)) resizeBrowser(Math.max(120, Math.min(viewport[0] - 320, event.clientX))) }} />}
@@ -560,61 +549,3 @@ function AgentStatusBarBridge(props: ComponentProps<typeof StatusBar>) {
 }
 
 
-function AgentShellTransportBridge(props: {
-  title: string
-  browser: boolean
-  detail: boolean
-  dock: boolean
-  toggleBrowser: () => void
-  toggleDetail: () => void
-  toggleDock: () => void
-  onLeaveAgent: () => void
-  tracks: AgentSessionTrack[]
-  transport: KernelTransportStatus
-  /** The mode rail (Rev 5): the frame's mode reading and its transition. */
-  mode: string
-  onMode: (mode: SurfMode) => void
-}) {
-  const shell = useAgentShell()
-  const track = props.tracks.find(item => trackKey(item) === shell.selectedTrackId) ?? props.tracks[0]
-  const metrics = useAgentMetrics(props.transport, track?.sessionRef ?? null)
-  const {binding} = useHarnessBinding(props.transport)
-  const [running, setRunning] = useState(true)
-  const [controlBusy, setControlBusy] = useState(false)
-  const runControl = async (control: 'resume' | 'stop' | 'restart') => {
-    setControlBusy(true)
-    const outcome = await harnessAgentControl(props.transport, binding, control)
-    setControlBusy(false)
-    if (outcome.ok) {
-      if (control === 'stop') setRunning(false)
-      if (control === 'resume' || control === 'restart') setRunning(true)
-    } else {
-      console.warn(outcome.error)
-    }
-  }
-  return (
-    <AgentShellTransport
-      title={props.title}
-      browser={props.browser}
-      detail={props.detail}
-      dock={props.dock}
-      toggleBrowser={props.toggleBrowser}
-      toggleDetail={props.toggleDetail}
-      toggleDock={props.toggleDock}
-      centreView={shell.centreView}
-      onCentreView={view => shell.setCentreView(view)}
-      onMode={props.onMode}
-      mode={props.mode}
-      tokensIn={metrics.tokensIn}
-      tokensOut={metrics.tokensOut}
-      spendFill={metrics.spend}
-      running={running}
-      controlBusy={controlBusy}
-      onRun={() => void runControl('resume')}
-      onStop={() => void runControl('stop')}
-      budgetLabel={metrics.budgetUsed === null && metrics.budgetCap === null ? '— / —' : `${metrics.budgetUsed ?? '—'} / ${metrics.budgetCap ?? '—'}`}
-      positionLabel={metrics.position}
-      transport={props.transport}
-    />
-  )
-}

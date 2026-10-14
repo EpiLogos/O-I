@@ -14,7 +14,7 @@ export function PinModeToggle() {
     if (!mode.active) return
     const onKey = (event: KeyboardEvent) => {
       const field = document.activeElement instanceof HTMLElement && document.activeElement.closest('input,textarea,select,[contenteditable="true"]')
-      if (event.key === 'Escape' && !field) setPinMode({active: false})
+      if (event.key === 'Escape' && !field) { event.preventDefault(); setPinMode({active: false}) }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
