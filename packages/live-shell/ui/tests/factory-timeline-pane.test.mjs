@@ -5,9 +5,9 @@ import {register} from 'node:module'
 import {createElement} from 'react'
 import {renderToStaticMarkup} from 'react-dom/server'
 
-// T-FACTORY-TIMELINE-PANE: the Timeline as a projection-door pane body. Production sources in memory (the mode-surface-fidelity
-// loader: .ts/.tsx transpiled, CSS stubbed). The pane reads the App's published reading, renders it through the World cut's
-// residence, and carries its own presentation (Timeline = m2, Journey = m3).
+// T-FACTORY-TIMELINE-PANE, as F3 re-founded it: the Session · Arrangement pane as a projection-door pane body. Production
+// sources in memory (the mode-surface-fidelity loader: .ts/.tsx transpiled, CSS stubbed). The pane reads the App's published
+// reading and draws the mode's tracks through the one grid and ruler, with its own presentation.
 const compiler = new URL('../node_modules/typescript/lib/typescript.js', import.meta.url).href
 register(`data:text/javascript,${encodeURIComponent(`
 import ts from ${JSON.stringify(compiler)};
@@ -72,34 +72,29 @@ test('the pane presentation is the pane\'s own: Timeline (arrangement) by defaul
   assert.equal(host.timelinePanePresentation(), 'arrangement')
 })
 
-test('the pane body renders the same items as the World cut residence for the same reading and window', () => {
-  host.publishTimelineReading(props)
+// F3: the pane body is the one Session grid and Arrangement ruler over the mode's tracks (frame/tracks/TracksPane.tsx); the
+// World cut residence it once wrapped is gone from the App. Technē stands on the World cut's sets until its own adapter.
+const published = {...props, mode: 'techne'}
+
+test('the pane body draws the mode\'s tracks through the shared grid, from the published reading', () => {
+  host.publishTimelineReading(published)
   host.setTimelinePanePresentation('session')
-  const residence = html(createElement(TimelineProjectionResidence, {...props, session: undefined, arrangement: undefined,
-    compactTransport: false, presented: 'session'}))
   const body = html(createElement(pane.TimelinePaneBody))
-  assert.ok(residence.includes('data-projection-presentation="session"'), 'the residence presents its Session')
-  assert.ok(body.includes(residence), 'the pane body contains the residence markup, byte for byte')
+  assert.match(body, /data-tracks-mode="techne"/); assert.match(body, /data-tracks-view="session"/)
+  assert.equal(pane.TimelinePaneBody.name, 'TracksPane', 'the body is the one tracks pane')
 })
 
-test('the pane body presents its own presentation: Journey (session, m3) or Timeline (arrangement, m2)', () => {
-  host.publishTimelineReading(props)
+test('the pane body presents its own presentation: Session as the grid, Arrangement as the ruler, the same tracks', () => {
+  host.publishTimelineReading(published)
   host.setTimelinePanePresentation('session')
-  const session = html(createElement(pane.TimelinePaneBody))
-  const sessionTag = session.match(/<div class="inhabitant composition-view"[^>]*data-projection-presentation="session"[^>]*>/)[0]
-  assert.ok(!sessionTag.includes('hidden=""'), 'the Session stands in the Journey presentation')
+  assert.match(html(createElement(pane.TimelinePaneBody)), /data-tracks-view="session"/)
   host.setTimelinePanePresentation('arrangement')
-  const arrangement = html(createElement(pane.TimelinePaneBody))
-  const arrangementTag = arrangement.match(/<div class="inhabitant composition-view"[^>]*data-projection-presentation="arrangement"[^>]*>/)[0]
-  assert.ok(!arrangementTag.includes('hidden=""'), 'the Arrangement stands in the Timeline presentation')
-  const sessionAgain = arrangement.match(/<div class="inhabitant composition-view"[^>]*data-projection-presentation="session"[^>]*>/)[0]
-  assert.ok(sessionAgain.includes('hidden=""'), 'the Session is concealed while the Arrangement stands')
-  host.setTimelinePanePresentation('arrangement')
+  assert.match(html(createElement(pane.TimelinePaneBody)), /data-tracks-view="arrangement"/)
 })
 
-test('before the App publishes a reading the pane body says so, rather than presenting an empty timeline', () => {
+test('before the App publishes a reading the pane body says so, rather than presenting empty tracks', () => {
   host.publishTimelineReading(null)
-  assert.match(html(createElement(pane.TimelinePaneBody)), /waiting for the shell to publish its temporal reading/)
+  assert.match(html(createElement(pane.TimelinePaneBody)), /waiting for the shell to publish this work&#x27;s reading/)
   host.publishTimelineReading(props)
 })
 
@@ -111,12 +106,12 @@ test('the Timeline pane kind is admitted through the projection door, once, unde
   assert.equal(admitted?.kind, 'projection.timeline')
 })
 
-test('the Device side of a focused Timeline pane reads m2 or m3 through deviceInstrumentFor, by the pane\'s presentation', () => {
-  const arrangement = factoryFocusedPane('projection.timeline', 'arrangement')
-  assert.equal(arrangement.pane, 'projection.timeline')
-  assert.equal(deviceInstrumentFor('factory', arrangement.pane, arrangement.presentation, 'graph'), 'techne:m2')
-  const session = factoryFocusedPane('projection.timeline', 'session')
-  assert.equal(deviceInstrumentFor('factory', session.pane, session.presentation, 'graph'), 'techne:m3')
+test('a focused tracks pane holds no instrument of its own: its Device side is the selected track\'s chain (F3, F4)', () => {
+  for (const presentation of ['arrangement', 'session']) {
+    const focus = factoryFocusedPane('projection.timeline', presentation)
+    assert.equal(focus.pane, 'projection.timeline')
+    assert.equal(deviceInstrumentFor('factory', focus.pane, focus.presentation, 'graph'), null)
+  }
 })
 
 test('the Timeline and Journey lenses reach the one Timeline pane kind, and the lens presentation is what the pane presents', () => {
@@ -128,25 +123,14 @@ test('the Timeline and Journey lenses reach the one Timeline pane kind, and the 
   assert.equal(LENSES.find(item => item.id === 'journey').presentation, 'session')
 })
 
-test('App publishes the World cut\'s reading through the door, and the Factory lens press changes only the pane\'s presentation', () => {
+test('App publishes the frame\'s reading through the door, with the mode it stands in; the lens bar and the World cut residence are gone (F2, F3)', () => {
   assert.match(app, /registerTimelineHost\(\)/)
-  assert.match(app, /usePublishTimelineReading\(\{set: state\.set, document: deep\.document, selection, select: choose, colors, setColor, world: worldView,/)
-  const block = app.slice(app.indexOf('if (agentShell) {'), app.indexOf('if (lens.atlas)'))
-  assert.match(block, /setTimelinePanePresentation\(lens\.presentation/)
-  assert.doesNotMatch(block, /setTab\(/, 'a Factory press never writes the World cut\'s presentation')
-  assert.match(app, /<TechneLensBar presentation=\{factoryFocus \? factoryFocus\.presentation : presented \?\? 'session'\}/, 'the lens bar reads the focused Timeline pane presentation (null when the Factory focus holds none)')
+  assert.match(app, /usePublishTimelineReading\(\{set: state\.set, document: deep\.document, selection, select: choose, colors, setColor, mode: frameMode,/)
+  assert.doesNotMatch(app, /<TechneLensBar/, 'the lens bar is removed: instruments open as panes')
+  assert.doesNotMatch(app, /<TimelineProjectionResidence/, 'Session and Arrangement are the tracks pane, unbound from Journey and Timeline')
 })
 
-test('the World cut residence call is unchanged: its presentation, native sources and Journey door stay as they were', () => {
-  assert.match(app, /<TimelineProjectionResidence set=\{state\.set\} document=\{deep\.document\} selection=\{selection\} select=\{choose\} colors=\{colors\} setColor=\{setColor\}/)
-  assert.match(app, /presented=\{settingsPresented \|\| centreFrameUp \? null : presented\}/)
-  assert.match(app, /journey=\{worldCut && frameMode === 'techne' \? \{openExpression: workspace\.requestExpression\} : undefined\}/)
-})
-
-test('in Factory, the lens bar presses no Timeline or Journey lens while the agent tab (or an Earth pane) is focused', async () => {
-  const {readFile} = await import('node:fs/promises')
-  const app = await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8')
-  assert.match(app, /<TechneLensBar presentation=\{factoryFocus \? factoryFocus\.presentation : presented \?\? 'session'\}/, 'a Factory focus without a presentation passes null, never the session fallback')
+test('a focus without a presentation names none: the agent tab and an Earth pane carry null, the tracks pane its own', async () => {
   const pane = await import('../src/shell/paneInstrument.ts')
   assert.equal(pane.factoryFocusedPane('agent-shell').presentation, null)
   assert.equal(pane.factoryFocusedPane('projection.earth').presentation, null)
