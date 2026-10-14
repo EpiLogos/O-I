@@ -41,7 +41,7 @@ const torus = await import('../src/live/torusInstrument.ts')
 const chain = await import('../src/live/noteDevices/noteDeviceHold.ts')
 const noteDevices = await import('../src/live/noteDevices/noteDevices.ts')
 const section = await import('../src/live/LiveInstrumentSection.tsx')
-const widget = await import('../src/panels/devices/LiveTorusWidget.tsx')
+const onChain = await import('../src/live/TorusOnChain.tsx')
 const noteChain = await import('../src/live/noteDevices/NoteDeviceChain.tsx')
 const grammar = await import('../src/shell/modeGrammar.ts')
 
@@ -553,7 +553,7 @@ test('the owner\'s refusal shows on the parameter, not only in the section that 
   teardown()
 })
 
-test('the instrument section, the rack widget and the Scale tie frame their parameters, and map mode opens each frame', () => {
+test('the instrument section, the torus device on the chain and the Scale tie frame their parameters, and map mode opens each frame', () => {
   session()
   chain.addNoteDevice('scale')
   hold.setMapMode('midi')
@@ -562,8 +562,8 @@ test('the instrument section, the rack widget and the Scale tie frame their para
   for (const id of ['lens', 'context-frame', 'harmonic-basis', 'm3-transcription', 'cadence', 'sound', 'level', 'scale-units']) {
     assert.match(expanded, new RegExp(`data-midi-target="${id}"[^>]*data-midi-open="yes"`), `expanded: ${id} is framed`)
   }
-  const rack = renderToStaticMarkup(createElement(widget.LiveTorusWidgetView, {state}))
-  assert.match(rack, /data-midi-target="lens"[^>]*data-midi-open="yes"/, 'rack: a macro is framed')
+  const rack = renderToStaticMarkup(createElement(onChain.TorusOnChain, {state}))
+  assert.match(rack, /data-midi-target="lens"[^>]*data-midi-open="yes"/, 'chain: a macro of the torus device is framed')
   const devices = chain.noteDeviceChain()
   const tieChain = renderToStaticMarkup(createElement(noteChain.NoteDeviceChainView, {devices, mode: {state: 'waiting', selection: null, line: 'waiting'}}))
   assert.match(tieChain, new RegExp(`data-midi-target="note-device:${devices[0].id}:tie"`), 'the Scale tie is framed')

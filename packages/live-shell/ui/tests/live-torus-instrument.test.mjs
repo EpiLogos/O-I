@@ -6,8 +6,8 @@ import {createElement} from 'react'
 import {renderToStaticMarkup} from 'react-dom/server'
 
 // T-LIVE-TORUS-INSTRUMENT leg 1 — Live mode seats the one instrument, the M1 torus
-// (DEVICE-SEMANTICS-LOCK §0.2, §2.1). The shell holds ONE reading handle; the rack
-// widget and the Live device chain read it. The simulation itself runs in the
+// (DEVICE-SEMANTICS-LOCK §0.2, §2.1). The shell holds ONE reading handle; the torus
+// device (live/torusDevice.ts, drawn on the Live chain by live/TorusOnChain.tsx through the frame's DeviceView) reads it. The simulation itself runs in the
 // hosted Expressions frame (field-studies-journeys native-field), so the shell
 // never draws a second torus: it shows only what the owner reading carries.
 // Same in-memory TS loader as devices-panels-ssr.test.mjs.
@@ -36,7 +36,8 @@ export async function load(url,context,next){
 
 const here = new URL('../src/', import.meta.url)
 const torus = await import('../src/live/torusInstrument.ts')
-const widget = await import('../src/panels/devices/LiveTorusWidget.tsx')
+const onChain = await import('../src/live/TorusOnChain.tsx')
+const torusDeviceModule = await import('../src/live/torusDevice.ts')
 const manifest = await import('../src/inhabitants/quaternalLogicFamilyManifest.ts')
 const qlReading = await import('../src/inhabitants/ql/qlInstrumentReading.ts')
 const chain = await import('../src/components/DeviceChainPanel.tsx')
@@ -84,7 +85,7 @@ test('the topology is QL-MEF ql_m1_torus: coordinate #1-5-1, R=16/9, r=1, and no
 
 // ── 2 — at most four macros, the engine's own first determinants ────────────
 
-test('the rack widget carries at most four macros: the determinants the native field panel exposes first, each with its source', () => {
+test('the torus device carries at most four macros: the determinants the native field panel exposes first, each with its source', () => {
   assert.ok(torus.LIVE_TORUS_MACROS.length <= torus.LIVE_TORUS_MAX_MACROS)
   assert.equal(torus.LIVE_TORUS_MAX_MACROS, 4)
   assert.deepEqual(torus.LIVE_TORUS_MACROS.map(macro => macro.id), ['lens', 'context-frame', 'harmonic-basis', 'm3-transcription'])
@@ -120,27 +121,31 @@ test('the handle is one store: readers see the same state object, a change notif
   torus.publishLiveTorusState(null)
 })
 
-// ── 4 — the widget refuses honestly and never shows a plausible state ───────
+// ── 4 — the device refuses honestly and never shows a plausible state ──────
+// (the old LiveTorusWidget rack card is gone: the torus is a device of the runtime — live/torusDevice.ts, drawn by live/TorusOnChain.tsx)
 
-test('a refused reading renders the refusal; an absent state renders the absence', () => {
-  const absent = renderToStaticMarkup(createElement(widget.LiveTorusWidgetView, {state: null}))
-  assert.match(absent, /data-live-torus="absent"/)
-  assert.doesNotMatch(absent, /data-standing=/)
-  const refused = renderToStaticMarkup(createElement(widget.LiveTorusWidgetView, {state: {ok: false, fault: 'reading.schema: expected ql.instrument-reading/v1'}}))
+test('a refused reading renders the refusal on the chain; an absent state is a dark device that writes nothing', () => {
+  const absent = torusDeviceModule.torusDevice(null)
+  assert.equal(absent.rows.length, 4, 'the four macros stand even with no reading')
+  assert.ok(absent.rows.every(row => !row.writePath), 'no reading, no writes')
+  assert.deepEqual(absent.values, {}, 'and no value is invented')
+  const refused = renderToStaticMarkup(createElement(onChain.TorusOnChain, {state: {ok: false, fault: 'reading.schema: expected ql.instrument-reading/v1'}}))
   assert.match(refused, /data-live-torus="refused"/)
   assert.match(refused, /Refused reading/)
+  assert.match(refused, /data-device-light="unknown"/, 'a refused reading lights nothing')
 })
 
 // ── 5 — with the owner reading: standing shows, no macro is invented, no drawn torus ──
 
-test('with the owner reading the widget shows its standing; each macro reads not published; the widget draws no torus', () => {
-  const markup = renderToStaticMarkup(createElement(widget.LiveTorusWidgetView, {state: validState()}))
+test('with the owner reading the chain shows its standing; each macro reads not published; the device draws no torus', () => {
+  const markup = renderToStaticMarkup(createElement(onChain.TorusOnChain, {state: validState()}))
   assert.match(markup, /data-live-torus="following"/)
-  assert.match(markup, /data-standing="following"/)
-  assert.equal((markup.match(/data-macro="/g) || []).length, 4)
-  assert.equal((markup.match(/data-value="none"/g) || []).length, 4, 'the owner reading publishes no determinant yet, so no macro carries a value')
-  assert.doesNotMatch(markup, /data-value="(?!none")/)
-  assert.doesNotMatch(markup, /<svg|<ellipse/, 'the shell draws no torus: the visible torus is the simulation render only')
+  assert.match(markup, /data-device-light="on"/, 'a following instrument is lit')
+  assert.match(markup, /<div class="device-picture"><div class="torus-picture" data-live-torus="following"><b>following<\/b><small>controlled:occasion<\/small><\/div><\/div>/, 'the picture is the owner\'s standing, not a drawing')
+  assert.equal((markup.match(/data-param="/g) || []).length, 4)
+  assert.equal((markup.match(/class="sdk-enum"[^>]*>—<\/button>/g) || []).length, 4, 'the owner reading publishes no determinant yet, so no macro carries a value')
+  assert.deepEqual(torusDeviceModule.torusDevice(validState()).values, {enabled: true}, 'the device holds no macro value either')
+  assert.doesNotMatch(markup, /<ellipse|<circle/, 'the shell draws no torus: the visible torus is the simulation render only')
 })
 
 // ── 6 — the torus face declares the full presentation, admission unchanged ──
@@ -154,12 +159,12 @@ test('the quaternal-logic torus face declares the full presentation too, and sta
 
 // ── 7 — tokens only for colour ──────────────────────────────────────────────
 
-test('the widget and its stylesheet take colour from tokens only', async () => {
-  const css = await readFile(new URL('panels/devices/liveTorusWidget.css', here), 'utf8')
-  const tsx = await readFile(new URL('panels/devices/LiveTorusWidget.tsx', here), 'utf8')
-  assert.doesNotMatch(css, /#[0-9a-fA-F]{3,8}\b/)
-  assert.doesNotMatch(css, /\b(rgb|rgba|hsl|hsla)\(/)
-  assert.doesNotMatch(tsx, /#[0-9a-fA-F]{3,8}\b/)
+test('the torus device and its chain card take colour from tokens only', async () => {
+  for (const file of ['live/TorusOnChain.tsx', 'live/torusDevice.ts']) {
+    const source = await readFile(new URL(file, here), 'utf8')
+    assert.doesNotMatch(source, /#[0-9a-fA-F]{3,8}\b/, `${file}: no raw hex colour`)
+    assert.doesNotMatch(source, /\b(rgb|rgba|hsl|hsla)\(/, `${file}: no raw colour function`)
+  }
 })
 
 // ── 8 — the Live device chain mounts the one instrument only once a reading is published ──
@@ -186,9 +191,8 @@ test('with the owner determinants the four macros show the owner values: lens, C
   torus.publishLiveTorusState(validState(determinantsOwned()))
   const rows = torus.liveTorusMacroRows(torus.liveTorusState())
   assert.deepEqual(rows.map(row => row.value), ['L1′', 'CF2', 'B5', 'RNA'])
-  const markup = renderToStaticMarkup(createElement(widget.LiveTorusWidgetView, {state: torus.liveTorusState()}))
-  assert.equal((markup.match(/data-value="none"/g) || []).length, 0)
-  assert.match(markup, /data-macro="harmonic-basis" data-value="B5"/)
+  assert.deepEqual(torusDeviceModule.torusDevice(torus.liveTorusState()).values, {lens: 'L1′', 'context-frame': 'CF2', 'harmonic-basis': 'B5', 'm3-transcription': 'RNA', enabled: true},
+    'the device shows the owner\'s values under the macros\' ids')
   torus.publishLiveTorusState(null)
 })
 
@@ -205,9 +209,9 @@ test('a reading without owner determinants leaves every macro absent, and a refu
   assert.deepEqual(torus.liveTorusMacroRows(null).map(row => row.value), [null, null, null, null])
 })
 
-// ── 10 — the publisher path: the frame's announcement → boundary → handle → widget ──
+// ── 10 — the publisher path: the frame's announcement → boundary → handle → device ──
 
-test('the frame announcement reaches the widget through the boundary reader and the one handle', async () => {
+test('the frame announcement reaches the torus device through the boundary reader and the one handle', async () => {
   const boundary = await import('../../../expressions-boundary/src/protocol.ts')
   const composer = await import('../../../../desktop/cradle/expressions-app/field-studies-journeys/src/native-field/ql/instrumentAnnouncement.mjs')
   const basis = {event_ref: 'event:owner', subject_ref: 'subject:owner', registry_revision: 'registry:owner', geometry_ref: 'geometry:owner', material_ref: 'material:owner', model_ref: 'model:owner', generation: '4', samples_elapsed: '245760'}
@@ -223,10 +227,11 @@ test('the frame announcement reaches the widget through the boundary reader and 
   const state = torus.liveTorusState()
   assert.equal(state.ok, true)
   assert.equal(state.value.identity.model_ref, 'model:owner')
-  const markup = renderToStaticMarkup(createElement(widget.LiveTorusWidgetView, {state}))
+  const markup = renderToStaticMarkup(createElement(onChain.TorusOnChain, {state}))
   assert.match(markup, /data-live-torus="following"/)
-  assert.match(markup, /data-macro="lens" data-value="L1′"/)
-  assert.match(markup, /data-macro="context-frame" data-value="CF2"/)
+  const values = torusDeviceModule.torusDevice(state).values
+  assert.equal(values.lens, 'L1′')
+  assert.equal(values['context-frame'], 'CF2')
   // The announcement withdrawn (no instrument in the next hosted state): the handle, and so the chain, is absent again.
   const bare = boundary.readHostedState({hostMode: 'live', sceneIndex: 0, sceneCount: 1, nativeScene: {expression_ref: 'expression:kept', revision: 3, scene_ref: 'scene:one'}})
   torus.publishLiveTorusState(torus.liveTorusFromHost(bare.instrument))

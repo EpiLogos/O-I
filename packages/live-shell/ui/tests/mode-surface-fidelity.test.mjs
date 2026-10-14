@@ -33,7 +33,6 @@ export async function load(u, c, n) {
     compilerOptions: {target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext, jsx: ts.JsxEmit.ReactJSX}}).outputText};
 }`)}`, import.meta.url)
 
-const {ModeCentreFrame} = await import('../src/shell/ModeCentre.tsx')
 const {ModeContextDock} = await import('../src/shell/ModeContextDock.tsx')
 const {BaseDocumentDetail, TechneClipDetail, FactoryTaskLogDetail} = await import('../src/shell/ModeDetail.tsx')
 const {StubWorkspaceProvider} = await import('../src/shell/workspaceContext.tsx')
@@ -42,64 +41,10 @@ const {ModeBrowser} = await import('../src/shell/ModeBrowser.tsx')
 const html = element => renderToStaticMarkup(element)
 const UNAVAILABLE = {kind: 'unavailable', reason: 'the test carrier is down'}
 
-// ————————————————————————————————————————————————————————————————————————
-// Base · Session — the day as clips at the mockup's session grammar.
-
-test('base session: five coloured track columns, named clips, the eight-slot rhythm and stop rows', () => {
-  const out = html(createElement(ModeCentreFrame, {mode: 'base', presentation: 'session', world: null}))
-  const document = out
-  for (const track of ['Day', 'Flows', 'Beings', 'Things', 'Goals']) {
-    assert.ok(document.includes(`data-track="${track}"`), `${track} track drawn`)
-  }
-  assert.ok(!document.includes('its document opens in the …'), 'no truncated sentence in a clip cell')
-  assert.ok(document.includes('mode-centre-tri'), 'the clip triangle drawn')
-  assert.equal((document.match(/mode-centre-stoprow/g) ?? []).length, 5, 'a stop row per track')
-  assert.equal((document.match(/mode-centre-soft\b/g) ?? []).length, 35, 'soft-stop squares: seven per track')
-  assert.ok(document.includes('mode-centre-disclosure'), 'the unread-reading disclosure styled inside the frame')
-  // The colours are the mockup's identity grammar.
-  assert.ok(document.includes('--mode-day'), 'the colour grammar present')
-})
-
-test('base arrangement: the hour ruler drawn, no day window typed in code, lanes named', () => {
-  const out = html(createElement(ModeCentreFrame, {mode: 'base', presentation: 'arrangement', world: null}))
-  assert.equal((out.match(/mode-centre-tick/g) ?? []).length, 13, 'the civil day ruled 00:00–24:00')
-  // the day's bounds are the Central owner's (DEVICE-SEMANTICS-LOCK §0, §4.7): no band without its reading
-  assert.ok(!out.includes('mode-centre-window'), 'no day window without the owner')
-  assert.ok(!/08:30|21:00/.test(out), 'no typed day hours')
-  assert.ok(out.includes('mode-centre-now') === false, 'no now needle without a live reading — never a wall clock')
-  for (const lane of ['documents', 'entries', 'returns · handoffs', 'the close']) {
-    assert.ok(out.includes(`data-lane="${lane}"`), `the ${lane} lane drawn`)
-  }
-})
-
-test('base arrangement: the now needle rides only the kernel’s own reading', () => {
-  const now = Date.UTC(2026, 9, 10, 14, 37)
-  const world = {source: {status: 'live', now: {instantUnixMs: now, dayRef: '2026-10-10', source: 'test'}}}
-  const out = html(createElement(ModeCentreFrame, {mode: 'base', presentation: 'arrangement', world}))
-  assert.ok(out.includes('mode-centre-now'), 'the now needle over a real reading')
-  assert.ok(out.includes('data-lane'), 'the lanes stand beside it')
-})
-
-test('techne journey: the six stop columns with Expression, eight stops, the launcher column', () => {
-  const out = html(createElement(ModeCentreFrame, {mode: 'techne', presentation: 'session', world: null}))
-  for (const column of ['Place', 'Occasion', 'Artefact', 'Expression', 'Narration', 'Transition']) {
-    assert.ok(out.includes(`>${column}</span>`), `the ${column} column drawn`)
-  }
-  assert.equal((out.match(/data-stop=/g) ?? []).length, 8, 'eight walk stops')
-  assert.ok(out.includes('The walk'), 'the scene-launcher column drawn')
-  assert.ok(out.includes('record a walk'), 'record-a-walk affordance drawn')
-})
-
-test('techne relation field: lenses in the design’s order, the declared break, the standings', () => {
-  const out = html(createElement(ModeCentreFrame, {mode: 'techne', presentation: 'arrangement', world: null}))
-  const lenses = [...out.matchAll(/data-lens="([a-z]+)"/g)].map(match => match[1])
-  assert.deepEqual(lenses, ['chronology', 'causal', 'recurrence', 'concurrency'], 'the design’s lens order')
-  assert.ok(out.includes('mode-centre-break'), 'the declared break drawn as a break')
-  assert.ok(out.includes('mode-centre-standing-legend'), 'the epistemic standings legend drawn')
-  for (const standing of ['fact', 'claim', 'inferred', 'disputed', 'ghost']) {
-    assert.ok(out.includes(`mode-centre-standing-${standing}`), `the ${standing} standing drawn`)
-  }
-})
+// The per-mode centre frames (shell/ModeCentre.tsx: Base's session grid and hour ruler, Technē's designed Journey and relation field)
+// are gone: the centre is the pane engine's tracks pane in every mode (FOUNDATION F2–F3). Base's day tracks, session grid and
+// ruler are asserted in central-tracks.test.mjs and f3-tracks.test.mjs (frame/tracks SessionGrid, ArrangementRuler, TracksPane
+// over useCentralTracks); Technē's walks are asserted in journey-walks.test.mjs (JourneyRows) and techne-tracks.test.mjs.
 
 // ————————————————————————————————————————————————————————————————————————
 // The detail row — device cards, the clip craft, the task log.
@@ -185,19 +130,4 @@ test('the browser: results header, the New affordance on the Project group, the 
     assert.ok(out.includes(`mode-browser-aperture-name">${row}</span>`), `the ${row} concept drawn`)
   }
   assert.ok(out.includes('not selected'), 'the subject line honest when nothing is selected')
-})
-
-// T-TIMELINE-WALKS leg 4: the centre's Technē Session draws the carried walks through the shared JourneyRows; the eight
-// designed slots stand only when no walk is carried.
-test('techne journey with a walk carried: the walk is one row of stop cells and the eight designed slots give way', () => {
-  const walk = {id: 'walk-one', name: 'The walk', kind: 'curated', derived: false, stops: [
-    {id: 'stop-a', label: 'First', also: [], year: 1}, {id: 'stop-b', label: 'Second', also: []}]}
-  const world = {source: {status: 'live', error: null, now: null, events: [], sets: [{columns: [], tracks: [], clips: [], walks: [walk]}],
-    eventByClipId: new Map(), admittedRuns: null, admittedRunsError: null, readAtUnixMs: null, readCadence: null},
-    spine: {}, selectOccasion() {}}
-  const out = html(createElement(ModeCentreFrame, {mode: 'techne', presentation: 'session', world}))
-  assert.ok(out.includes('data-walk="walk-one"'), 'the walk row is drawn')
-  assert.equal((out.match(/data-stop="\d+" data-stop-ref=/g) ?? []).length, 2, 'one stop cell per stop of the walk')
-  assert.equal((out.match(/data-stop=/g) ?? []).length, 2, 'the eight designed slots give way to the carried walk')
-  assert.ok(!out.includes('mode-centre-journey-heads'), 'the six-column designed heads are not drawn over a carried walk')
 })

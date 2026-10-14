@@ -40,7 +40,6 @@ const FOLDED_RECEIPTS = {
 // Developer disclosures that may still preformat JSON, with the reason each is
 // not an owner refusal (the rescope in the ticket's Resolution).
 const DEVELOPER_DISCLOSURES = {
-  'panels/inspector.tsx': 'developer inspection of the set summary (rescope: not a refusal)',
   'settings/SettingsWorkspace.tsx': 'developer plan blocks and the acknowledgement of a settings apply (rescope: plan blocks are not refusals; the acknowledgement dump is a carried follow-up)',
   'components/NativeInputRetention.tsx': 'the input gesture receipt of a retained copy (an input record, not an owner refusal)',
   'agent/RefusalCard.tsx': 'the verbatim receipt folded behind a summary, never the surface (the refusal line is the surface)',
