@@ -22,13 +22,13 @@ main).
 - **You (Opus):** the foundation F0–F9 and N1–N3, item by item, in your own
   hands. You also claim, brief and converge module tickets, keep PATH true,
   build and run the native app, and do the screen checks.
-- **Module builders:** up to six at once (Agent tool), each with one ticket
-  and an exclusive zone, briefed from `BRIEF-BUILDER.md` with its Target
-  block, manual §, mockup region, docking contract and on-screen done-when.
-  Use Sonnet by default and Opus for a hard module. Use Haiku only for
-  mechanical tickets: records, pins, fixtures.
-- **A Sonnet reviewer** at the end of each foundation item and each module
-  wave (`BRIEF-REVIEWER.md`).
+- **Module builders:** Opus, at most three at once (owner, 14 Oct evening: "run like 3 opus subagents and drive from
+  the main session … get work done well first time round, reduce review needs"), each with one ticket and an
+  exclusive zone, briefed from `BRIEF-BUILDER.md`: Target block, manual §, the binding objections verbatim, the mockup
+  rendered to a PNG (`tools/shoot-mockup.mjs`) with an element-by-element comparison owed back, docking contract,
+  on-screen done-when, and the full validation (serial tsc, the whole UI suite).
+- **Review** is the lead's: every builder return is re-checked, the diff read, and UI seen on screen beside the mockup
+  render. A Sonnet reviewer (`BRIEF-REVIEWER.md`) only at a wave's end, when the lead asks for a second reading.
 - **Nothing else.** No task chips, no Workflow tool, no research fan-outs
   unless the owner asks.
 

@@ -10,8 +10,8 @@ earlier PATH (waves W0–W0e, carries 1–57) is in git at `760fa4916`.
 | Role | Who | Count | Does | Never |
 |---|---|---|---|---|
 | **Lead** | the Opus session running the build | 1 | builds the foundation (FOUNDATION F0–F9, N1–N3) itself and checks each item on screen; claims module tickets, writes briefs from `BRIEF-BUILDER.md` (its Target block names the candidate as the product), dispatches (no task chips: side work is a builder lane in this seat), converges each return itself (first: `candidate-reachable.mjs` over every changed file — a file not reachable from the candidate is never committed as product work) (re-runs checks, reads the diff, stages the ticket's files, commits, pushes), keeps PATH, runs the native app and screen checks | spawns any agent other than the builders and the reviewer below; writes product code beyond one-file glue |
-| **Builders** | module builders (Agent tool): Sonnet by default, Opus for a hard module, Haiku only for mechanical tickets | ≤6 at once (owner, 14 Oct), one ticket each, exclusive zones, docking through one contract (FOUNDATION §4) | edit inside the zone, run the ticket's checks, return the receipt | stage, commit, leave the zone, decide design |
-| **Reviewer** | one Sonnet subagent (Agent tool, `model: sonnet`) | 1, only at review points (§6) | reads the wave's commits and refutes the done-claim | edits anything |
+| **Builders** | module builders (Agent tool), Opus only (owner, 14 Oct evening) | ≤3 at once, one ticket each, exclusive zones | build to the brief (`BRIEF-BUILDER.md`): the mockup PNG, the binding objections, the full validation | commit, stage, ask the owner, or leave the zone |
+| **Reviewer** | the lead first (re-runs checks, reads the diff, sees UI on screen beside the mockup); a Sonnet subagent only when the lead asks for a second reading at a wave's end | 0–1 | refutes the done-claim | edits anything |
 
 No Workflow tool, no Opus subagents, no research fan-outs. A ticket that
 needs judgment (a native build, a cross-repo change, a design reading) is
