@@ -172,9 +172,10 @@ export function FlowFace({transport, location, presentation = 'device'}: Documen
   }, [captureIsland, face, instance, markDraft, pending])
   const unanswered = useRef(0)
 
+  // A new form starts its count afresh; the poll below re-arms whenever its callback changes, which must not reset it.
+  useEffect(() => { unanswered.current = 0 }, [face])
   useEffect(() => {
     if (!face) return
-    unanswered.current = 0
     const timer = window.setInterval(() => void refreshDraftStanding(), 2500)
     return () => window.clearInterval(timer)
   }, [face, refreshDraftStanding])
@@ -184,7 +185,7 @@ export function FlowFace({transport, location, presentation = 'device'}: Documen
   const key = useRef(`flow:${Math.random().toString(36).slice(2)}`).current
   const paneId = useContext(DocumentPaneContext) ?? undefined
   const standing: DocumentInPane = {key, paneId, form: 'Flow', title: documentLabel, revision: revision || undefined,
-    state: documentStateWords({pending, dirty, save}), save: face && !pending ? () => void saveToOwner() : undefined,
+    state: face && !baselined && !save ? 'form not answered yet' : documentStateWords({pending, dirty, save}), save: face && !pending ? () => void saveToOwner() : undefined,
     reread: pending ? undefined : () => void load(), rereadLabel: 'Re-read'}
   // The aperture follows the document the hand reached (the first one standing until then); a change of standing reaches it.
   useEffect(() => { if (inPane) publishDocument(standing, !reachedDocument()) })
