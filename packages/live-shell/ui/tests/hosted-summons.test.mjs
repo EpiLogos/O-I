@@ -279,7 +279,12 @@ test('the source-open receiver is handed the passage, and the Workbench reveals 
   assert.match(workbench, /queueSourcePassageReveal\(reveal\)/, 'the reveal is queued for the binding the file opened in, and the editor admits it at its revision')
   assert.match(workbench, /kind: 'source-passage' as const, bindingId: binding\.id/, 'the reveal names the binding it opened')
   assert.match(workbench, /callbacks\.current\.report\(request\.note\)/, 'a refusal the frame asked about is named on the Workbench line')
-  assert.match(workbench, /materialViewKey\(binding\.id\), encodeMaterialViewPrefs\(\{view: 'source'/, 'a Markdown or HTML passage opens in its Source view, where the editor mounts')
+  assert.match(workbench, /requestMaterialViewOpen\(binding\.id, 'source'\)/, 'a Markdown or HTML passage asks its surface for the Source view, for this open only')
+  assert.doesNotMatch(workbench, /materialViewKey|encodeMaterialViewPrefs|oi-cradle\.material-view/, 'the Workbench never writes the remembered Rendered|Source view; only the person\'s own toggle does (MaterialSurface)')
+  assert.doesNotMatch(workbench, /span && !held/, 'a held tab is not exempt from the passage request')
+  const requestAt = workbench.indexOf("requestMaterialViewOpen(binding.id, 'source')")
+  const queueAt = workbench.indexOf('queueSourcePassageReveal(reveal)')
+  assert.ok(requestAt > 0 && queueAt > requestAt, 'the Source request is made before the reveal is queued, in the same turn for a held tab and a new tab')
 })
 
 // ---- The currentness basis: frame, host, document, Scene and selection ----

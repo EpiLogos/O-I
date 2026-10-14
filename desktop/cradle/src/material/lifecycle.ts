@@ -192,6 +192,34 @@ export function encodeMaterialViewPrefs(prefs: MaterialViewPrefs): string {
   return JSON.stringify({view: prefs.view, zoom: prefs.zoom});
 }
 
+// ---------------------------------------------------------------------------
+// The per-open view request — a passage opens its file in one view for this
+// open only. It is never persisted: the remembered Rendered|Source choice is
+// written only by the person's own toggle or zoom in MaterialSurface.
+// A request is keyed by binding id, applied once (take consumes it), and is
+// both queued (for a surface not yet mounted) and announced (for one mounted).
+
+export const MATERIAL_VIEW_OPEN_EVENT = "oi:material-view-open";
+const pendingMaterialViewOpens = new Map<string, MaterialView>();
+
+/** Ask a binding's material surface to show this view for the current open. */
+export function requestMaterialViewOpen(bindingId: string, view: MaterialView): void {
+  pendingMaterialViewOpens.set(bindingId, view);
+  if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent(MATERIAL_VIEW_OPEN_EVENT, {detail: {bindingId, view}}));
+}
+
+/** Read a queued request without consuming it (safe in a state initializer, which StrictMode runs twice). */
+export function peekMaterialViewOpen(bindingId: string): MaterialView | undefined {
+  return pendingMaterialViewOpens.get(bindingId);
+}
+
+/** Consume a queued request, once. */
+export function takeMaterialViewOpen(bindingId: string): MaterialView | undefined {
+  const view = pendingMaterialViewOpens.get(bindingId);
+  pendingMaterialViewOpens.delete(bindingId);
+  return view;
+}
+
 /** Tolerant decode: never throws, never guesses. An unusable record (corrupt
  * JSON, wrong shape, unknown view, off-scale zoom) contributes nothing, so
  * the caller's defaults hold — a first mount, or a damaged record, opens

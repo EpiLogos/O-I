@@ -21,7 +21,7 @@ import {EditorButton,EditorFrame} from "../editor/EditorChrome";
 import {readPage} from "../personal/page.mjs";
 import {PageExpression,type PageExpressionHostedState} from "../personal/PageExpression";
 import {Glyph} from "../workspace/Glyph";
-import {useSuspensionDisclosure,useMaterialReadiness,materialViewKey,parseMaterialViewPrefs,encodeMaterialViewPrefs,MATERIAL_ZOOM_STEPS,type MaterialView} from "./lifecycle";
+import {useSuspensionDisclosure,useMaterialReadiness,materialViewKey,parseMaterialViewPrefs,encodeMaterialViewPrefs,MATERIAL_ZOOM_STEPS,MATERIAL_VIEW_OPEN_EVENT,peekMaterialViewOpen,takeMaterialViewOpen,type MaterialView} from "./lifecycle";
 
 /** One material path segment, percent-encoded whole (mirrors
  * `ctrl/src/files.rs::escape` closely enough for URL transport — the
@@ -94,7 +94,8 @@ export function MaterialSurface({ binding, format, onView }: { binding: SurfaceB
   // default; a saved choice is restored once, here at mount — never imposed
   // over the person's own newer toggle after that.
   const [savedView] = useState(() => parseMaterialViewPrefs(localStorage.getItem(viewKey)));
-  const [view, setView] = useState<MaterialView>(savedView.view ?? "rendered");
+  // A queued per-open request (a passage opened this file) is peeked here and taken by the effect below, so StrictMode's second initializer call still sees it.
+  const [view, setView] = useState<MaterialView>(() => peekMaterialViewOpen(binding.id) ?? savedView.view ?? "rendered");
   const [sourceVisited,setSourceVisited]=useState(view!=="rendered");
   useEffect(()=>{if(view!=="rendered")setSourceVisited(true);},[view]);
   const { containerRef, suspended, observed } = useSuspensionDisclosure(view);
@@ -110,6 +111,20 @@ export function MaterialSurface({ binding, format, onView }: { binding: SurfaceB
   }, [everPresented, observed, suspended]);
   useMaterialContext(containerRef,binding,view);
   const [zoom, setZoom] = useState<number>(savedView.zoom ?? 1);
+  // The remembered record is the person's own choice: only their Rendered|Source toggle or zoom writes it. A per-open Source request
+  // moves `view` for this open and never reaches this record.
+  const remembered = useRef<MaterialView>(savedView.view ?? "rendered");
+  const rememberView = (prefs: {view: MaterialView; zoom: number}) => { try { localStorage.setItem(viewKey, encodeMaterialViewPrefs(prefs)); } catch { /* Optional presentation state; never source authority. */ } };
+  const chooseView = (next: MaterialView) => { setView(next); remembered.current = next; rememberView({view: next, zoom}); };
+  const chooseZoom = (next: number) => { setZoom(next); rememberView({view: remembered.current, zoom: next}); };
+  // A per-open request applies once to this binding: taken at mount, or when it arrives for a mounted surface. It is never persisted.
+  useEffect(() => {
+    const apply = () => { const next = takeMaterialViewOpen(binding.id); if (next) setView(next); };
+    apply();
+    const arrived = (event: Event) => { if ((event as CustomEvent<{bindingId?: string}>).detail?.bindingId === binding.id) apply(); };
+    window.addEventListener(MATERIAL_VIEW_OPEN_EVENT, arrived);
+    return () => window.removeEventListener(MATERIAL_VIEW_OPEN_EVENT, arrived);
+  }, [binding.id]);
   const [generation, setGeneration] = useState(0);
   // Readiness is generation-scoped and honest (C25): a load event or a late
   // message from a retired generation can neither clear this generation's
@@ -120,7 +135,6 @@ export function MaterialSurface({ binding, format, onView }: { binding: SurfaceB
   const showing = loadState.readiness === "ready" && loadState.generation === generation;
   const loadError = loadState.readiness === "failed" && loadState.generation === generation ? loadState.error : undefined;
   const busy = loadState.readiness === "loading";
-  useEffect(() => { try { localStorage.setItem(viewKey, encodeMaterialViewPrefs({view, zoom})); } catch { /* Optional presentation state; never source authority. */ } }, [viewKey,view,zoom]);
   const [textContent, setTextContent] = useState<string>();
   const [textRevision, setTextRevision] = useState<string>();
   // Canonical revalidation and an editable document instance are different
@@ -350,7 +364,7 @@ export function MaterialSurface({ binding, format, onView }: { binding: SurfaceB
   const showToggle = materialCapabilities(format).split;
   const zoomable = ["html","markdown","image"].includes(format);
   const tools = view !== "source" ? <div className="material-tools">
-    {zoomable && <select aria-label="Preview zoom" value={zoom} onChange={e=>setZoom(Number(e.target.value))}>{MATERIAL_ZOOM_STEPS.map(value=><option key={value} value={value}>{Math.round(value*100)}%</option>)}</select>}
+    {zoomable && <select aria-label="Preview zoom" value={zoom} onChange={e=>chooseZoom(Number(e.target.value))}>{MATERIAL_ZOOM_STEPS.map(value=><option key={value} value={value}>{Math.round(value*100)}%</option>)}</select>}
     <button type="button" aria-label="Reload preview" title="Reload from the file owner" disabled={busy} onClick={reload}><Glyph name="refresh" size={12}/></button>
   </div> : null;
   if (!location) return <p role="alert" className="source-note">The saved file location is unavailable</p>;
@@ -380,10 +394,10 @@ export function MaterialSurface({ binding, format, onView }: { binding: SurfaceB
   // subtree on the hook mismatch and the error boundary remounted it
   // straight back into the rendered view — the toggle could never stick.)
   return <div className="material-composition" data-view={view}>
-    {(sourceVisited||view!=="rendered")&&<div className="material-source-pane" hidden={view==="rendered"}><FileSurface binding={binding} forceSource onView={onView} leadingTools={<MaterialToggle view={view} onChange={setView}/>}/></div>}
+    {(sourceVisited||view!=="rendered")&&<div className="material-source-pane" hidden={view==="rendered"}><FileSurface binding={binding} forceSource onView={onView} leadingTools={<MaterialToggle view={view} onChange={chooseView}/>}/></div>}
     <div className="material-preview-pane" hidden={view==="source"}>
   <EditorFrame className="material-surface" label={`Material ${binding.title}`}
-    toolbar={null} presentationTools={<>{showToggle&&<MaterialToggle view={view} onChange={setView}/>} {tools}</>}
+    toolbar={null} presentationTools={<>{showToggle&&<MaterialToggle view={view} onChange={chooseView}/>} {tools}</>}
     footer={<><span className="editor-path" title={`Central / ${location.path}`}>Central / {location.path}</span><span>{FORMAT_LABEL[format]}{unsavedPreview?" · unsaved preview":""}</span>{zoomable&&<span>{Math.round(zoom*100)}%</span>}{identity&&<span className="editor-path" title={identity.templateRef?`Template ${identity.templateRef}`:undefined}>{FAMILY_LABEL[identity.family]??identity.label}{identity.documentRevision!=null?` · r${identity.documentRevision}`:""}{pageDirty?" · unsaved on the page":""}</span>}{docSave&&!docSave.busy&&<span role={docSave.outcome.state==="saved"||docSave.outcome.state==="unchanged"?"status":"alert"}>{docSave.outcome.state==="saved"?(docSave.outcome.readback==="verified"?"Saved":"Saved · updated reading unavailable"):docSave.outcome.state==="unchanged"?"Already saved":docSave.outcome.detail}</span>}{waitingReturns?<span role="status" title="Material returned against this document is waiting in the Inbox">{waitingReturns} waiting return{waitingReturns===1?"":"s"}</span>:null}<EditorButton disabled={busy} onClick={reload}>Reload</EditorButton>{identity?.payload==="ql-doc"&&<EditorButton disabled={docSave?.busy===true||!docWritable} onClick={saveDocument} title={docWritable?undefined:readingMeta?.writeReason??"No write authority for this document"}>{docSave?.busy?"Saving…":"Save"}</EditorButton>}</>}
   >
     <div ref={containerRef} className="material-rendered-content" data-suspended={suspended || undefined} aria-busy={!showing && !loadError}>
