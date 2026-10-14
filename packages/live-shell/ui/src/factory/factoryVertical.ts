@@ -27,6 +27,8 @@
  * Pure TypeScript. No React, no transport, no timers. */
 
 import {namedWikiSubjects, parseCentralPathRef} from '../central/centralVertical'
+import type {Occurrence, OccurrenceBasis} from '../projections/atlas/src/types/field'
+import {checkOccurrence, refuse, type Checked} from '../projections/occurrence'
 
 // ---------------------------------------------------------------------------
 // the owner readings the join reads (structural: the desk's and the owners' own types satisfy these)
@@ -58,11 +60,9 @@ export interface FactoryTemporalEvent {
   readonly instant_unix_ms?: number | null
 }
 
-/** An atlas occurrence's native identity (the occurrence contract's `subject_ref`). */
-export interface FactoryEarthOccurrence {
-  readonly id: string
-  readonly subject_ref?: string
-}
+/** An atlas occurrence as the Factory join reads it: the Earth's one occurrence contract (`Occurrence`, field.ts),
+ * narrowed to the fields the join uses — its id, its native subject and the basis of the owner reading it came from. */
+export type FactoryEarthOccurrence = Pick<Occurrence, 'id' | 'subject_ref' | 'basis'>
 
 /** An attempt the run's inhabitation names, with the agent session the owner's occupant body carries (null when absent). */
 export interface FactoryOccupantFacts {
@@ -310,7 +310,7 @@ function kindOfRef(ref: string): FactorySubjectKind {
 }
 
 export type EarthRow =
-  | {readonly state: 'placed'; readonly runRef: string; readonly subject: FactorySubject; readonly occurrenceId: string}
+  | {readonly state: 'placed'; readonly runRef: string; readonly subject: FactorySubject; readonly occurrenceId: string; readonly basis?: OccurrenceBasis}
   | {readonly state: 'absent'; readonly runRef: string; readonly subject: FactorySubject; readonly seam: OwnerSeam}
   | {readonly state: 'not-mounted'; readonly runRef: string; readonly seam: OwnerSeam}
 
@@ -319,9 +319,23 @@ export function earthRowsOf(runRef: string, subjects: readonly FactorySubject[],
   return subjects.map((subject): EarthRow => {
     const occurrence = occurrences.find(item => item.subject_ref === subject.ref)
     return occurrence
-      ? {state: 'placed', runRef, subject, occurrenceId: occurrence.id}
+      ? {state: 'placed', runRef, subject, occurrenceId: occurrence.id, ...(occurrence.basis ? {basis: occurrence.basis} : {})}
       : {state: 'absent', runRef, subject, seam: EARTH_SEAM}
   })
+}
+
+/** The Factory side of the occurrence contract: an occurrence the Factory owner declares for one work ref, checked by
+ * the one contract (`checkOccurrence`) and carrying the basis of the Factory reading it was read from. The owner
+ * declares no binding today (EARTH_SEAM), so a caller with nothing declared has nothing to admit. The reading's basis
+ * replaces any basis the binding carries: the reading the join read it from is the one that stands. */
+export function factoryEarthOccurrence(binding: unknown, reading: {readonly subjectRef: string; readonly basis: OccurrenceBasis}): Checked<Occurrence> {
+  if (typeof binding !== 'object' || binding === null) return refuse('the Factory binding is not an occurrence')
+  const checked = checkOccurrence({...binding, basis: reading.basis})
+  if (!checked.ok) return checked
+  if (checked.value.subject_ref !== reading.subjectRef) {
+    return refuse(`the occurrence binds ${checked.value.subject_ref ?? 'no subject'}, not the run's work ${reading.subjectRef}`)
+  }
+  return checked
 }
 
 export type TimelineRow =

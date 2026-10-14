@@ -182,11 +182,26 @@ export interface Culture {
   occurrenceCount: number;
 }
 
+/** [T6 — WORLD-SHELL-DESIGN §3.1, §10.6] The owner reading an occurrence was read from: the owner's ref and the
+ * revision, epoch and read instant that owner returned for it. A basis says where a record came from; it never
+ * upgrades its standing. Names follow the owners' returns: `ref` ← the QL sky snapshot's `snapshot_ref` or a Factory
+ * run ref; `epoch` ← the snapshot's `epoch_utc`; `read_at_unix_ms` ← its `receipt_unix_ms`; `revision` ← a Factory
+ * Return's `revision`. */
+export interface OccurrenceBasis {
+  ref: string;
+  revision?: string;
+  epoch?: string;
+  read_at_unix_ms?: number;
+}
+
 export interface Occurrence {
   id: OccurrenceId;
   /** [C2 §1.3, the one additive field] The native identity the shell's encounter
    * spine addresses (design §10.6). Absent ⇒ `id` stands in. */
   subject_ref?: string;
+  /** [T6] The owner reading this record was read from. Absent for records whose source states no reading
+   * (the founding Jung field); present when an owner produced the record (Factory binding, QL sky). */
+  basis?: OccurrenceBasis;
   title: string; // full record title
   label: string; // ≤ 48 chars, for the one-line marker label
   familyId: FamilyId; // primary instance_of

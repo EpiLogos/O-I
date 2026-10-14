@@ -176,7 +176,7 @@
     "style/sky.css": "[§8.4] host adaptation (DEVICE-SEMANTICS-LOCK §8.4), T-ATLAS-HOST-b: pane-relative sizing: vw/vh become cqw/cqh against the atlas pane (.atlas-host, a size container), so an overlay fits the pane, not the window",
     "style/touch.css": "[§8.4] host adaptation (DEVICE-SEMANTICS-LOCK §8.4), T-ATLAS-HOST-b: pane-relative sizing: vw/vh become cqw/cqh against the atlas pane (.atlas-host, a size container), so an overlay fits the pane, not the window",
     "types/corpus.ts": "[C2] corpus-neutral seam (C2-CORPUS-SEAM.md): the corpus index names its provider, not a vault path (C2-a3)",
-    "types/field.ts": "[C2] corpus-neutral seam (C2-CORPUS-SEAM.md): provider descriptor, tie bases, cites, dropped subject (C2 §1.2–§1.3, b1/b2/b7)",
+    "types/field.ts": "[C2] corpus-neutral seam (C2-CORPUS-SEAM.md): provider descriptor, tie bases, cites, dropped subject (C2 §1.2–§1.3, b1/b2/b7); [T6] additive OccurrenceBasis and Occurrence.basis (WORLD-SHELL-DESIGN §3.1, §10.6): the owner reading a record was read from; standing is never upgraded by it",
     "types/history.ts": "[C2] corpus-neutral seam (C2-CORPUS-SEAM.md): the reading's sourcing label, provider-neutral wording (C2-a3)",
     "ui/deep.ts": "[C2] corpus-neutral seam (C2-CORPUS-SEAM.md): cite deep links and provider-named foot (C2-a3/b8)",
     "ui/floats.ts": "[§8.4] host adaptation (DEVICE-SEMANTICS-LOCK §8.4), T-ATLAS-HOST-b: the plate scale reads the pane size (hostSize), not the window",

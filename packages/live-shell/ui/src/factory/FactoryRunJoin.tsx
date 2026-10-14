@@ -126,7 +126,7 @@ export function FactoryRunJoinDetail({transport, world, tracks}: FactoryRunJoinP
     run: factsOf(entry.run.runRef, entry.card.source.projectRef ?? null, positions, occupants, returns.done ? returns.returns : []),
     events: world?.source.events ?? [],
     absences: world?.source.absences ?? [],
-    occurrences: handle ? handle.model.occ.map(item => ({id: String(item.id), subject_ref: item.subject_ref})) : null,
+    occurrences: handle ? handle.model.occ.map(item => ({id: String(item.id), subject_ref: item.subject_ref, basis: item.basis})) : null,
     sessionRefs: tracks.map(track => track.sessionRef),
   })
   const breaks = identityBreaks(join)

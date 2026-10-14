@@ -26,9 +26,12 @@
 // lane, and projecting a `ql.sky-snapshot/v1` (one epoch) into the atlas's
 // grid shape (a sampled span) is the QL family's projection adapter — NOT
 // written here, because writing it here would silently merge the two
-// contracts. What binds now: the request/snapshot envelope types below and
-// `requestQlSkySnapshot`, which speaks the declared shapes and returns the
-// snapshot untouched for the owning adapter.
+// contracts. The sky→Earth adapter for the owner's one stated point now lives
+// in the family module, `inhabitants/qlSkyEarthAdapter.ts` (manifest
+// `ql-sky-earth-adapter`). It admits that single point, `subsolar`, as an
+// occurrence with the snapshot as its basis. It projects no grid and writes no
+// ephemeris, and this port file keeps only the envelope: the request/snapshot
+// types below and `requestQlSkySnapshot`, which returns the snapshot untouched.
 
 /** Field names verified against the K8 contract reading (CONTEXT-PACK §2.1);
  * the `speed` component key is the contract's "full three-component speed"

@@ -1,0 +1,35 @@
+{
+  "schema": "ql.sky-snapshot/v1",
+  "request": {
+    "schema": "ql.sky-request/v1",
+    "epoch": "2026-03-20T12:00:00Z",
+    "timezone": "UTC",
+    "mode": "historical",
+    "perspective": "Apparent Geocentric",
+    "zodiac": "Tropical",
+    "ayanamsha": null,
+    "observer": null,
+    "max_age_seconds": 60,
+    "backend_policy": "allow-moshier"
+  },
+  "epoch_utc": "2026-03-20T12:00:00Z",
+  "epoch_unix_ms": 1774008000000,
+  "receipt_utc": "2026-09-12T12:00:00Z",
+  "receipt_clock": "injected-controlled-clock",
+  "receipt_unix_ms": 1789214400000,
+  "julian_day_ut_argument": 2461120.0,
+  "time_scale_policy": "UTC-as-UT argument; UT1 correction not supplied",
+  "reference_frame": "ecliptic-of-date",
+  "ayanamsha_degrees": null,
+  "house_policy": "not-emitted; factory auxiliary Whole-Sign houses discarded",
+  "scope": "shared-geocentric",
+  "standing": "calculated-ephemeris-not-observed-sky",
+  "provider": "NOT-CAPTURED: the producer's provider descriptor (name, versions, sha256 digests, used_data_files); no value is read by the shell admission",
+  "source_binding": "NOT-CAPTURED: the producer's source_binding (nine voices, seven receiving centres, the Earth anchor); no value is read by the shell admission",
+  "subsolar": {
+    "latitude_degrees": -0.05,
+    "longitude_degrees": 1.9
+  },
+  "bodies": "NOT-CAPTURED: the producer's ten body rows; no value is read by the shell admission",
+  "snapshot_ref": "sha256:NOT-CAPTURED"
+}
