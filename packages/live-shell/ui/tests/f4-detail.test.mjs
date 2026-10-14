@@ -31,6 +31,8 @@ const React = await import('react')
 const {renderToStaticMarkup} = await import('react-dom/server')
 const {publishTimelineReading} = await import('../src/projections/timelinePaneHost.ts')
 const {ClipBox} = await import('../src/frame/detail/ClipBox.tsx')
+const {publishShownTracks} = await import('../src/frame/tracks/tracksDoor.ts')
+const {MODE_TRACKS} = await import('../src/frame/tracks/modeTracks.ts')
 const {readFile} = await import('node:fs/promises')
 
 const set = {path: '/sets/demo.als', tempo_bpm: 120, scene_count: 1, arrangement_clips: 1, tracks: [{kind: 'midi', name: 'Pad', devices: []}]}
@@ -38,7 +40,10 @@ const doc = {path: '/sets/demo.als', tempo: 120, scenes: 1, tracks: [{kind: 'mid
 const reading = (selectedRef) => ({mode: 'live', set, document: doc, colors: ['#79b6ce'], selection: {track: 0, scene: null}, select() {}, setColor() {}, selectedRef, selectTrackItem() {}})
 
 test('the clip box shows the selected clip as its mode\'s tracks give it: name, colour, track, place, and what is not disclosed', () => {
-  publishTimelineReading(reading('als:/sets/demo.als#track/0/clip/0'))
+  const shown = reading('als:/sets/demo.als#track/0/clip/0')
+  publishTimelineReading(shown)
+  // The tracks pane publishes the set it draws (frame/tracks/tracksDoor.ts); the clip box reads that, never the owner again.
+  publishShownTracks(MODE_TRACKS[shown.mode](shown))
   const markup = renderToStaticMarkup(React.createElement(ClipBox))
   assert.match(markup, /data-clip-box="als:\/sets\/demo\.als#track\/0\/clip\/0"/)
   assert.match(markup, />Intro</); assert.match(markup, />Pad</)
@@ -50,7 +55,7 @@ test('the clip box shows the selected clip as its mode\'s tracks give it: name, 
 test('with nothing of this mode selected, the clip box stands down', () => {
   publishTimelineReading(reading('Control/agents/now/day/2026-10-14.md'))
   assert.equal(renderToStaticMarkup(React.createElement(ClipBox)), '')
-  publishTimelineReading(null)
+  publishTimelineReading(null); publishShownTracks(null)
 })
 
 test('App mounts one detail residence, the host, and the status bar reads Clip | Device in every mode', async () => {

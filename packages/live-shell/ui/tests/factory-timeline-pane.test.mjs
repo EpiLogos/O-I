@@ -64,8 +64,8 @@ test('the host door holds the App reading by reference and notifies its subscrib
   assert.equal(host.timelineReading(), props, 'the published reading is the App\'s own object, never a copy')
 })
 
-test('the pane presentation is the pane\'s own: Timeline (arrangement) by default, changed only by the pane door', () => {
-  assert.equal(host.timelinePanePresentation(), 'arrangement')
+test('the pane presentation is Session by default, as every mode frame opens, and moves only through the pane door', () => {
+  assert.equal(host.timelinePanePresentation(), 'session')
   host.setTimelinePanePresentation('session')
   assert.equal(host.timelinePanePresentation(), 'session')
   host.setTimelinePanePresentation('arrangement')

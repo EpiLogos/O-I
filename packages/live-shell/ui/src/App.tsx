@@ -376,7 +376,10 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
     restorePath({workspaceId: workspace.workspaceId, path: view && view.alsPath !== undefined ? view.alsPath : state.path ?? undefined})
     const intent = centreIntent.current?.key === frameKey ? centreIntent.current : null
     centreIntent.current = null
-    setTab(intent?.tab ?? view?.tab ?? opening.tab); setCenterPanel(intent?.panel ?? workbenchCentre(view?.centerPanel) ?? opening.centerPanel)
+    // One presentation (R2 objection 2): the tracks pane presents what the mode's frame restores, so Tab, the transport and
+    // the pane never disagree.
+    const presentation = intent?.tab ?? view?.tab ?? opening.tab
+    setTab(presentation); setTimelinePanePresentation(presentation); setCenterPanel(intent?.panel ?? workbenchCentre(view?.centerPanel) ?? opening.centerPanel)
     changeDetailMode(view?.detailMode ?? opening.detailMode); resizeBrowser(view?.browserWidth ?? null); resizeDetail(view?.detailHeight ?? null)
     setBrowser(view?.browser ?? opening.browser); setDetail(view?.detail ?? opening.detail); setDock(view?.dock ?? opening.dock)
     holdLive(view?.selection ?? {track: 0, scene: null}); presentSettings(view?.settingsPresented ?? false)

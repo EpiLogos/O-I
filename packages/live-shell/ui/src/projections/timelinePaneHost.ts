@@ -36,7 +36,8 @@ export type TimelineHostReading = Pick<TimelineResidenceProps, 'set' | 'document
 }
 
 let reading: TimelineHostReading | null = null
-let presentation: TimelinePresentation = 'arrangement'
+// Session, as every mode's frame opens (shell/modeFrames.ts); the App moves it with the mode's restored view.
+let presentation: TimelinePresentation = 'session'
 const readingListeners = new Set<() => void>()
 const presentationListeners = new Set<() => void>()
 

@@ -5,6 +5,7 @@ import {useTimelinePanePresentation, useTimelineReading, type TimelineHostReadin
 import {useEffect} from 'react'
 import {MODE_TRACKS} from './modeTracks'
 import {publishTrackRows} from '../keys/keyDoors'
+import {publishShownTracks} from './tracksDoor'
 import {SessionGrid} from './SessionGrid'
 import {ArrangementRuler} from './ArrangementRuler'
 import type {WorldTrackSet} from '../../timeline/worldTrackAdapter'
@@ -24,6 +25,9 @@ function ModeTracksView({reading}: {reading: TimelineHostReading}) {
   const selection = {ref: reading.selectedRef, select: reading.selectTrackItem}
   // The row keys launch the stops drawn here (F9), so they read the set this pane shows.
   useEffect(() => { publishTrackRows(set && !('waiting' in set) ? {set, presented} : null); return () => publishTrackRows(null) })
+  // The clip box shows the same tracks (frame/tracks/tracksDoor.ts): published here, never read twice.
+  const drawn = set && !('waiting' in set) ? set : null
+  useEffect(() => { publishShownTracks(drawn); return () => publishShownTracks(null) }, [drawn])
   // While the mode's owner has not answered, the empty Session or Arrangement stands with the reason in it.
   const waiting = !set || 'waiting' in set ? set?.waiting ?? reading.waiting ?? 'This work has no tracks to show yet.' : undefined
   const shown = set && !('waiting' in set) ? set : NO_TRACKS
