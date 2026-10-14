@@ -154,7 +154,9 @@ jobs:
       - name: Shared engine suite (desktop/cradle tests that reach a file the candidate imports)
         if: always()
         working-directory: packages/live-shell/ui
-        run: node scripts/test-engine.mjs
+        run: |
+          node ../../../desktop/cradle/documents/build-personal.mjs
+          node scripts/test-engine.mjs
       - name: Shared engine architecture conformance and bounded debt
         if: always()
         working-directory: desktop/cradle

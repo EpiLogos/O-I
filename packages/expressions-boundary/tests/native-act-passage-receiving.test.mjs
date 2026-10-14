@@ -10,7 +10,7 @@ const [{currentNativeActReply},{readNativeExpressionsContent},{kernelDocumentToJ
   import('../../../desktop/cradle/expressions-app/field-studies-journeys/src/kernelDocumentBridge.ts'),
   import('../../../desktop/cradle/expressions-app/field-studies-journeys/src/worldChannel.ts'),
 ]);
-const archive=JSON.parse(await readFile('/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/evidence/native/material-verification-c79dab7c-8de3-4b69-87cb-ee11cce28c9f/rich-artifact-inspection-3a33a7f6-94e9-445d-b2ec-7e7f25950935.json','utf8'));
+const archive=JSON.parse(await readFile(new URL('../../live-shell/ui/tests/fixtures/native-rich-glyph-rack-r8.receipt.json',import.meta.url),'utf8'));
 assert.deepEqual(archive.before.document,archive.after.document);
 const view=kernelDocumentToJourney(structuredClone(archive.before.document)),scene=view.journey.scenes[0];
 const reading={basis:{expression_ref:view.document.expression_ref,scene_ref:view.bindings[scene.id].scene_ref,revision:view.document.revision,authored_revision:0},scene,entityOccurrences:{},selection:{entity_ids:[],step_id:null},history:{canUndo:false,canRedo:false},standing:{dirty:false,pending:false,notice:null}};

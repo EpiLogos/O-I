@@ -162,7 +162,7 @@ test('routed through the retained editor, a fold into an earlier Scene reaches t
     import(new URL('kernelDocumentBridge.ts', author)), import(new URL('store.ts', author)), import(new URL('hostEditor.ts', author)), import(new URL('kernelComposition.ts', author)),
   ]);
   const {readFileSync} = await import('node:fs');
-  const receipt = '/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/evidence/native/material-verification-c79dab7c-8de3-4b69-87cb-ee11cce28c9f/rich-artifact-inspection-3a33a7f6-94e9-445d-b2ec-7e7f25950935.json';
+  const receipt = new URL('../../live-shell/ui/tests/fixtures/native-rich-glyph-rack-r8.receipt.json',import.meta.url);
   const view = kernelDocumentToJourney(JSON.parse(readFileSync(receipt, 'utf8')).after.document);
   const store = new DocumentStore(view.journey);
   const presented = store.document.scenes.find(row => row.id === view.startSceneId);

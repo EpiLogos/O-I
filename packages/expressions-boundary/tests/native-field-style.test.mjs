@@ -26,7 +26,7 @@ export async function load(url,context,next) {
 }
 `)}`, import.meta.url);
 const author = new URL('desktop/cradle/expressions-app/field-studies-journeys/src/', root);
-const receiptPath = '/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/evidence/native/material-verification-c79dab7c-8de3-4b69-87cb-ee11cce28c9f/rich-artifact-inspection-3a33a7f6-94e9-445d-b2ec-7e7f25950935.json';
+const receiptPath = new URL('../../live-shell/ui/tests/fixtures/native-rich-glyph-rack-r8.receipt.json',import.meta.url);
 const [style, {applyNativeDeviceChanges: apply}, model, {kernelDocumentToJourney}, {DocumentStore}, {createRetainedNativeEditor}, {toNativeConfig}, {effectiveScene, initialiseShared, toggleShared}] = await Promise.all([
   import(new URL('../src/nativeFieldStyle.ts', import.meta.url)),
   import(new URL('../src/nativeDeviceEdits.ts', import.meta.url)),

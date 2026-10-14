@@ -1,6 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {readFile} from 'node:fs/promises'
+import {existsSync} from 'node:fs'
 import {register} from 'node:module'
 
 // Production modules in memory (the inhabitant-manifest loader pattern):
@@ -249,16 +250,12 @@ test('CAS identity: the grammar\u2019s three parts parse; short form carries dig
   assert.equal(daynow.casShort('r12'), 'r12')
 })
 
-test('the day record parses into returns and carry-forward refs — the real 2026-10-08 record, read-only', async () => {
-  const dayPath = new URL('../../../Work/reverse-engineering/ProjectCentral/now/day/2026-10-08.md', root)
-  let content
-  try {
-    content = await readFile(dayPath, 'utf8')
-  } catch {
-    // The harness may run outside the ground layout; the fixture below
-    // carries the same shape so the parser is still exercised.
-    content = '# DAY — 2026-10-08\n\n## Agent returns at close\n\n### A return\n\n- actor: `codex:x`\n- kind: `note`\n- status at close: `active`\n\n## Carry forward by stable NOW source ref\n\n- `ProjectCentral/now/agents/a.json`\n'
-  }
+// The owner's real 2026-10-08 day record lives in the ground, not this repository:
+// the test runs where the ground layout is present and is skipped elsewhere.
+const dayPath = new URL('../../../Work/reverse-engineering/ProjectCentral/now/day/2026-10-08.md', root)
+test('the day record parses into returns and carry-forward refs — the real 2026-10-08 record, read-only',
+  {skip: existsSync(dayPath) ? false : 'owner day record absent on this machine (Work/reverse-engineering/ProjectCentral/now/day/2026-10-08.md)'}, async () => {
+  const content = await readFile(dayPath, 'utf8')
   const parsed = daynow.parseDayRecord(content)
   assert.ok(parsed.returns.length >= 30, `the real day holds its returns (${parsed.returns.length})`)
   assert.ok(parsed.carryForward.length >= 30, `the real day carries its refs forward (${parsed.carryForward.length})`)

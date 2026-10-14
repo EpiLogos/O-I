@@ -1,3 +1,4 @@
+import {existsSync} from 'node:fs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
@@ -6,7 +7,7 @@ const [{kernelDocumentToJourney},{DocumentStore},{NativeWorking},{NativeSelectio
  import('../../../desktop/cradle/expressions-app/field-studies-journeys/src/kernelDocumentBridge.ts'),import('../../../desktop/cradle/expressions-app/field-studies-journeys/src/store.ts'),
  import('../../../desktop/cradle/expressions-app/field-studies-journeys/src/nativeWorking.ts'),import('../../../desktop/cradle/expressions-app/field-studies-journeys/src/nativeSelectionQueue.ts'),
  import('../../../desktop/cradle/expressions-app/field-studies-journeys/src/hostEditor.ts')]);
-const path='/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/evidence/native/material-verification-c79dab7c-8de3-4b69-87cb-ee11cce28c9f/rich-artifact-inspection-3a33a7f6-94e9-445d-b2ec-7e7f25950935.json';
+const path=new URL('../../live-shell/ui/tests/fixtures/native-rich-glyph-rack-r8.receipt.json',import.meta.url);
 const input=JSON.parse(await readFile(path,'utf8'));assert.deepEqual(input.before.document,input.after.document);
 const document=input.after.document;
 function retained(selectedDocument=document) {
@@ -65,8 +66,10 @@ test('real receiver disposal invalidates an awaited select before local focus is
  assert.deepEqual(r.local,[]);assert.deepEqual(r.editors,[]);assert.ok(!sent.some(row=>row.req==='select'));
 });
 
-test('actual acknowledged Field receipt supports null-focus no-op; retired Field callback cannot clear newer local selection',async()=>{
- const receipt=JSON.parse(await readFile('/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/evidence/native/glyph-ui-field-selection-ack-20261008.json','utf8'));
+// The owner's actual kernel acknowledgement stays off this public repository; the test runs where it is present.
+const fieldAck='/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/evidence/native/glyph-ui-field-selection-ack-20261008.json';
+test('actual acknowledged Field receipt supports null-focus no-op; retired Field callback cannot clear newer local selection',{skip:existsSync(fieldAck)?false:'owner World evidence absent on this machine (glyph-ui-field-selection-ack-20261008.json)'},async()=>{
+ const receipt=JSON.parse(await readFile(fieldAck,'utf8'));
  assert.equal(receipt.response.ok,true);assert.equal(receipt.response.outcome.result,'expression');const fieldDocument=receipt.response.outcome.data.document;assert.equal(fieldDocument.selection.entity_ref,null);
  for(const retired of [false,true]){
   const r=retained(fieldDocument);let current=true;

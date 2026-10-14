@@ -65,7 +65,7 @@ test('native changed, revoked or unavailable source refuses with its actual reas
  assert.throws(()=>readNativeSessionProfile({session,source_state:'current',profile:null},basis.accompanying),/no definition material/);
 });
 test('actual rich native inspection cannot cosmetically name the Agent or Session of a different owner',async()=>{
- const raw=JSON.parse(await readFile('/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/evidence/native/material-verification-c79dab7c-8de3-4b69-87cb-ee11cce28c9f/rich-artifact-inspection-3a33a7f6-94e9-445d-b2ec-7e7f25950935.json','utf8'));
+ const raw=JSON.parse(await readFile(new URL('../../live-shell/ui/tests/fixtures/native-rich-glyph-rack-r8.receipt.json',import.meta.url),'utf8'));
  assert.deepEqual(raw.before.document,raw.after.document);
  assert.throws(()=>readNativeSessionProfile(raw.before,basis.accompanying));
  assert.throws(()=>assertAgentSessionPage(raw.before,basis.accompanying.ref));

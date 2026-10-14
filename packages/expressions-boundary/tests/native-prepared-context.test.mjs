@@ -4,7 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {preparedContextCurrent, preparedContextScopeKey, preparedContextSession, readDeliveredContext} from '../../live-shell/ui/src/native/preparedContextBinding.ts';
-const archive='/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/evidence/native/material-verification-c79dab7c-8de3-4b69-87cb-ee11cce28c9f/rich-artifact-inspection-3a33a7f6-94e9-445d-b2ec-7e7f25950935.json';
+const archive=new URL('../../live-shell/ui/tests/fixtures/native-rich-glyph-rack-r8.receipt.json',import.meta.url);
 const scope={workspaceId:'retained-workspace',accessEpoch:4,project:'O-I',sourceWorldRef:'world:source-owner',accompanying:{project:'O-I',ref:'agent-session:captured',space:'space:captured'}};
 
 test('binding carries the disclosed World/project/session/space without selecting or preparing anything',()=>{
