@@ -52,6 +52,9 @@ export interface WorldTrackActions {
   /** Restart a stalled lane from its last good step (manual §6: "its track lights a retry"). The Session shows a retry on
    * each track only where the set carries this, and lights it while the lane has stalled. */
   retry?: {op: string; run(trackId: string): unknown};
+  /** Seat what is dropped on the empty track (manual §10.3: "To seat an agent, drag it onto an empty track"): the drag type
+   * the set accepts, and the owner op that seats it. The dropped payload reaches `run` as the drag carried it. */
+  seat?: {op: string; accepts: string; run(payload: string): unknown};
 }
 /** What an owner op answers when it answers in words (the shell's own control receipt): a note, or the refusal. An action's
  * `run` may return one, or a promise of one; the Session shows it where the action was pressed. Any other return is not shown. */

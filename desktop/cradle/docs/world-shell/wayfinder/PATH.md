@@ -141,8 +141,9 @@ source-reading tests until those move to the one browser (the candidate mounts o
 reads for Flows, Beings, Things and Goals are not landed (Central adapter shows
 them empty and named); the Graph op reads in 88 s cold (AIKit times out at 20 s).
 F6's gestures stand where their owners do: preview/open on the Expressions works, drag-to-chain on the agent chain and
-the Expressions rack; seating an agent by dropping it on an empty track of the shared grid is not yet wired (the
-grid has no drop target), and Live's set devices browse but cannot be inserted (no native device owner).
+the Expressions rack; an agent dropped on the shared grid's empty track is seated through `harness_agent_control new`
+(the agent chain's own drop), anything else refused by name; Live's set devices browse but cannot be inserted (no
+native device owner).
 The machine ran swap-full most of the day, so builds and type-checks took 10–60 min.
 
 #673 landed on main (14 Oct): Phase 5 gates 1–4 (the audit, the migration
