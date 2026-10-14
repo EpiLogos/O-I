@@ -1,0 +1,11 @@
+seat=/Users/admin/Central/worktrees/env-1/o-i
+branch=dlw/build
+head=665906251b97277cbb31a6bd3a62a8dceeef82dd
+stamp=20261014T075023Z
+out=/Users/admin/Central/Work/O-I/target/p0-r1/20261014T075023Z
+target=/Users/admin/Central/Work/O-I/target
+backing=0/1/2
+mode=readback
+runner_sha256=0a26931bf14fbc63ac265526ae775dcb4acdd184024b78304a362c13872dc440
+status:
+?? desktop/cradle/docs/world-shell/evidence/p0-r1/run-20261014T075023Z/
