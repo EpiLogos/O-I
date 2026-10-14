@@ -15,7 +15,7 @@ export function PlaceSearch({reading,onChoose}:{reading:TechneReading;onChoose:(
   </label>
   <ul className="place-search-rows">
    {rows.map(row=>row.kind==='place'
-    ?<li key={row.key}><button type="button" onClick={()=>onChoose(row.offer)}>{row.label}</button><span className="place-search-precision">{row.offer.precision}</span></li>
+    ?<li key={row.key}><button type="button" onClick={()=>onChoose(row.offer)}>{row.label}</button><span className="place-search-precision">{row.offer.precision}</span><span className={`place-standing-tag place-standing-${row.standing}`} data-testid="place-search-standing">{row.standing}</span></li>
     :<li key={row.key} className="place-search-none" role="status">{row.label}</li>)}
   </ul>
  </section>;

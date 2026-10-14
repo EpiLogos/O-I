@@ -33,7 +33,7 @@ const bindingKey=(binding:{expression_ref:string;scene_ref:string}|null|undefine
 
 function bindingLine(state:PlaceTourBindingState|undefined):string|null{
  if(!state||state.state==='none')return null;
- if(state.state==='bound')return `Bound to journey beat ${state.binding.scene_ref}`;
+ if(state.state==='bound')return `Bound to journey beat ${state.binding.expression_ref} in ${state.binding.scene_ref}`;
  return `Journey beat ${state.binding.scene_ref} is gone: ${state.reason}`;
 }
 

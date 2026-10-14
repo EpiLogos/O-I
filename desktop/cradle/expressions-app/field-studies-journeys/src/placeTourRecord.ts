@@ -113,6 +113,6 @@ export function resolveTourBindings(tour:PlaceTourRecord,beats:readonly {express
   if(!stop.binding)return {state:'none',binding:null,reason:null};
   const held=beats.some(beat=>beat.expression_ref===stop.binding!.expression_ref&&beat.scene_ref===stop.binding!.scene_ref);
   if(held)return {state:'bound',binding:stop.binding,reason:null};
-  return {state:'unbound',binding:stop.binding,reason:'The journey no longer holds this beat; the stop stays and is unbound.'};
+  return {state:'unbound',binding:stop.binding,reason:'The journey no longer holds this beat. The stop stays, and its binding stays on the record until you choose Not bound.'};
  });
 }

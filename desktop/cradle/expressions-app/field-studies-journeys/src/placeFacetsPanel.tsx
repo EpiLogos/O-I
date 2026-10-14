@@ -24,6 +24,7 @@ import {
 import {markerStyleForPrecision} from '../../vendor/research-canvas/packages/canvas/src/psychogeographic/placeNavigation';
 import {placeHierarchy} from '../../vendor/research-canvas/packages/canvas/src/psychogeographic/placeRoutes';
 import {facetProvenance,type FacetProvenance} from '../../vendor/research-canvas/packages/canvas/src/psychogeographic/placeProvenance';
+import {MYTHIC_NOTE} from './placeStanding.js';
 import './placeFacetsPanel.css';
 
 /** W3 — opens the SAME native constellation-authoring route "Edit
@@ -178,7 +179,7 @@ export function PlaceFacetsPanel({reading,selectedRef,filter,onFilterChange,edit
 
   {street.place&&world?.selected&&<div className={`place-facets-detail place-standing-${world.selected.standing_class}`}>
    <h4>{street.standing_name??street.place_ref}</h4>
-   {world.selected.standing_class==='mythic'&&<p className="place-facets-mythic-note" role="note">Mythic — a disclosed narrative location, never presented as a factual one.</p>}
+   {world.selected.standing_class==='mythic'&&<p className="place-facets-mythic-note" role="note">{MYTHIC_NOTE}</p>}
    <dl>
     {subject&&<><dt>Subject</dt><dd>{subject.subject_ref}{subject.kind?` (${subject.kind})`:''}</dd></>}
     <dt>Place ref</dt><dd>{street.place_ref}</dd>
