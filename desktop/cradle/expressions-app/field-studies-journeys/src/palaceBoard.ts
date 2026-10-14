@@ -11,11 +11,14 @@
  *   - a region the board does not hold yet is placed deterministically in walk order, so the board is never empty and
  *     never invents a position for a name the Palace does not carry;
  *   - the card's size and fill are the Research Canvas's own sticky vocabulary (canvasShapes.ts); the fill is a palette
- *     TOKEN, never a colour value.
+ *     TOKEN, never a colour value;
+ *   - lane-5 T16/T17: the board's connections are the guided path's own edges, passed through `boardEdges` (never a second
+ *     set, never authored here), and the walk's focus is the card holding the focused Expression (`boardFocusName`). Both are
+ *     presentation over the reading and the walk; neither writes anything.
  *
  * Erasable TypeScript: loadable by the renderer, Vite, and `node --test` (via the build).
  */
-import {CANVAS_TOOL_SPEC, paletteToken, type PaletteKey} from './canvasShapes.js';
+import {CANVAS_TOOL_SPEC, paletteToken, STICKY_DEFAULT_PALETTE, type PaletteKey} from './canvasShapes.js';
 import {snapToGrid} from './canvasRepertoire.js';
 
 export interface BoardPoint {x: number; y: number}
@@ -123,24 +126,94 @@ export interface BoardNode {
   title: string;
   bgColour: string;
   selected: boolean;
+  /** lane-5 T17: this card is the walk's focused element. */
+  focused: boolean;
 }
 
-/** The board's nodes, in walk order, each at its displayed point. Pure. */
+/** lane-5 T17: the focused walk element's card takes the Research Canvas's warm default token, so the one walk focus stands out
+ * from the quiet stone of every other card. The card also names the focus in its label. */
+export const BOARD_FOCUS_PALETTE: PaletteKey = STICKY_DEFAULT_PALETTE;
+
+/** lane-5 T17: the board card the walk's focused ref stands on, by the card's own contained Expression. Null when the focused
+ * element is not a board card (a Scene, a place, a source): the board then highlights nothing rather than guess. Pure. */
+export function boardFocusName(
+  regions: readonly {name: string; member: {expression_ref: string} | null}[],
+  focusRef: string | null,
+): string | null {
+  if (focusRef === null) return null;
+  return regions.find((region) => region.member?.expression_ref === focusRef)?.name ?? null;
+}
+
+/** The board's nodes, in walk order, each at its displayed point. The focused card (lane-5 T17) takes the focus token and names
+ * itself as the walk focus; every other card keeps the quiet token. Pure. */
 export function boardNodes(
   regions: readonly {name: string; member: {title: string; expression_ref: string} | null}[],
   positions: Record<string, BoardPoint>,
   selected: readonly string[],
+  focused: string | null = null,
 ): BoardNode[] {
   const picked = new Set(selected);
-  return regions.map((region) => ({
-    id: region.name,
-    type: 'sticky',
-    position: {x: positions[region.name].x, y: positions[region.name].y},
-    size: {...BOARD_REGION_SIZE},
-    title: boardTitle(region.name, region.member),
-    bgColour: paletteToken(BOARD_REGION_PALETTE),
-    selected: picked.has(region.name),
-  }));
+  return regions.map((region) => {
+    const isFocus = region.name === focused;
+    const title = boardTitle(region.name, region.member);
+    return {
+      id: region.name,
+      type: 'sticky',
+      position: {x: positions[region.name].x, y: positions[region.name].y},
+      size: {...BOARD_REGION_SIZE},
+      title: isFocus ? `Walk focus: ${title}` : title,
+      bgColour: paletteToken(isFocus ? BOARD_FOCUS_PALETTE : BOARD_REGION_PALETTE),
+      selected: picked.has(region.name),
+      focused: isFocus,
+    };
+  });
+}
+
+/** The kinds a derived board connection can take: a plain path, a gap, a broken reference, a self reference. */
+export type BoardEdgeKind = 'path' | 'gap' | 'broken' | 'self';
+
+/** One connection the board draws between two region cards. Derived from the guided path (never authored here). */
+export interface BoardEdge {
+  id: string;
+  source: string;
+  target: string;
+  kind: BoardEdgeKind;
+  /** The short word the line carries on the canvas (a broken or self edge is named, never hidden). */
+  label: string;
+  /** The one-line note on the canvas, empty for a plain path. */
+  note: string;
+  /** The Research Canvas connector shape for the kind: a straight path, a dashed-looking elbow for gap and broken, a curve for self. */
+  connector: 'straight' | 'elbow' | 'curved';
+  reason: string;
+}
+
+const BOARD_EDGE_TEXT: Record<BoardEdgeKind, {label: string; note: string; connector: BoardEdge['connector']}> = {
+  // A plain path line carries no label: only what needs attention (gap, broken, self) is named on the board; its reason stays on hover.
+  path: {label: '', note: '', connector: 'straight'},
+  gap: {label: 'gap', note: 'no Expression yet', connector: 'elbow'},
+  broken: {label: 'broken', note: 'reference broken', connector: 'elbow'},
+  self: {label: 'self', note: "this Palace's own Expression", connector: 'curved'},
+};
+
+/** The board's connections, from the guided path's own edges (lane-5 T16). An edge naming a region the board does not hold is
+ * dropped: the board never draws a line to a card it does not show. Pure: a reorder of the path re-derives the lines. */
+export function boardEdges(
+  guided: readonly {from: string; to: string; kind: BoardEdgeKind; reason: string}[],
+  names: readonly string[],
+): BoardEdge[] {
+  const known = new Set(names);
+  return guided
+    .filter((edge) => known.has(edge.from) && known.has(edge.to))
+    .map((edge, index) => ({
+      id: `palace-guided-${index}`,
+      source: edge.from,
+      target: edge.to,
+      kind: edge.kind,
+      label: BOARD_EDGE_TEXT[edge.kind].label,
+      note: BOARD_EDGE_TEXT[edge.kind].note,
+      connector: BOARD_EDGE_TEXT[edge.kind].connector,
+      reason: edge.reason,
+    }));
 }
 
 /**

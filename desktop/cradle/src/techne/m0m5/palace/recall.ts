@@ -26,9 +26,16 @@ export interface PalaceRecall {
  * walk; an empty walk always focuses nothing). */
 export function recallAt(arrangement: PalaceArrangement, index = 0): PalaceRecall {
   const ordered = sortLoci(arrangement);
-  const count = ordered.length;
+  return recallOver(arrangementOrder(arrangement), ordered.map((placement) => placement.locus), index);
+}
+
+/** The walk over any ordered run of occupied loci (lane-5 T17: the integral whole walks its regions' loci as one run). `refs[i]`
+ * stands at `loci[i]`; `index` is normalised into the walk with wrap, and an empty walk focuses nothing. The one normalisation every
+ * walk in the Palace uses. */
+export function recallOver(refs: readonly string[], loci: readonly PalaceLocus[], index = 0): PalaceRecall {
+  const count = refs.length;
   const normalised = count === 0 ? 0 : ((Math.trunc(index) % count) + count) % count;
-  return { loci: ordered.map((placement) => placement.locus), refs: arrangementOrder(arrangement), index: normalised };
+  return { loci: [...loci], refs: [...refs], index: normalised };
 }
 
 /** The walk from its first occupied locus. */

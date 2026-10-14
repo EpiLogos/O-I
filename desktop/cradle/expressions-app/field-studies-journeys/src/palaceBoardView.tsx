@@ -13,7 +13,7 @@
 import React,{useEffect,useMemo,useReducer,useRef,useState,type ComponentProps} from 'react';
 import {CanvasView} from '../../vendor/research-canvas/components';
 import {createGestureTransaction,withGesturePreviews,type GestureTransaction} from './canvasGesture.js';
-import {boardNodes,boardPositions,boardSelection,commitBatch,snapBoardPoint,type BoardPoint,type BoardPositions} from './palaceBoard.js';
+import {boardNodes,boardPositions,boardSelection,commitBatch,snapBoardPoint,type BoardEdge,type BoardPoint,type BoardPositions} from './palaceBoard.js';
 
 export interface PalaceBoardRegion {name:string;member:{title:string;expression_ref:string}|null}
 /** The board's pan and zoom, as `CanvasView` reports them. */
@@ -32,10 +32,22 @@ export interface PalaceBoardViewProps {
  /** The viewport once a pan or zoom has been reported. The parent decides when to save it. */
  onViewport:(viewport:PalaceBoardViewport)=>void;
  onSelect:(names:string[])=>void;
+ /** lane-5 T16: the connections the board draws, derived from the guided path by the parent (never authored here). */
+ edges:readonly BoardEdge[];
+ /** lane-5 T17: the region card the walk's focused element stands on, or null when the focus is not a card. */
+ focused:string|null;
+ /** lane-5 T16: one card's Open (a double-click, or the toolbar's Open for the one selected card). The parent decides the route. */
+ onOpen:(name:string)=>void;
 }
 
-export function PalaceBoardView({canvasKey,regions,held,selected,viewport,onMoves,onViewport,onSelect}:PalaceBoardViewProps){
+export function PalaceBoardView({canvasKey,regions,held,selected,viewport,onMoves,onViewport,onSelect,edges,focused,onOpen}:PalaceBoardViewProps){
  const names=useMemo(()=>regions.map(region=>region.name),[regions]);
+ // lane-5 T16: the derived connections in the Research Canvas's own edge shape; the kind rides as the connector and the label.
+ const boardLines=useMemo(()=>edges.map(edge=>({
+  id:edge.id,sourceNodeId:edge.source,targetNodeId:edge.target,relationKind:edge.label,note:edge.note,
+  directionality:'forward' as const,sequencing:false,presentation:{kind:edge.connector},
+ })),[edges]);
+ const openSelected=selected.length===1?selected[0]:null;
  const [snap,setSnap]=useState(false);
  const [marquee,setMarquee]=useState(false);
  const [,redraw]=useReducer((count:number)=>count+1,0);
@@ -57,7 +69,7 @@ export function PalaceBoardView({canvasKey,regions,held,selected,viewport,onMove
 
  const positions=useMemo(()=>boardPositions(names,held),[names,held]);
  const nodes=withGesturePreviews(
-  boardNodes(regions,positions,selected),
+  boardNodes(regions,positions,selected,focused),
   name=>gesture.current?.previewValue(name),
   ()=>undefined,
  );
@@ -73,7 +85,8 @@ export function PalaceBoardView({canvasKey,regions,held,selected,viewport,onMove
   <div className="palace-board-tools" role="toolbar" aria-label="Board tools">
    <button type="button" aria-pressed={marquee} title="Marquee: drag on the board to select regions" onClick={()=>setMarquee(on=>!on)}>Marquee</button>
    <button type="button" aria-pressed={snap} title="Snap: an authoring aid to the grid; positions stay free" onClick={()=>setSnap(on=>!on)}>Snap</button>
-   <span className="palace-note">Drag a region anywhere. The walk order stays in the list below.</span>
+   <button type="button" disabled={openSelected===null} title="Open the one selected region's Expression in its own instrument" onClick={()=>{if(openSelected!==null)onOpen(openSelected);}}>Open</button>
+   <span className="palace-note">Drag a region anywhere. Free composition: the arrangement is the author's, not warranted structure. The walk order stays in the list below.</span>
   </div>
   <div className="palace-board-canvas">
    <CanvasView
@@ -81,11 +94,12 @@ export function PalaceBoardView({canvasKey,regions,held,selected,viewport,onMove
     initialViewport={viewport}
     onViewportChange={next=>viewportRef.current(next)}
     nodes={nodes as unknown as ComponentProps<typeof CanvasView>['nodes']}
-    edges={[]}
+    edges={boardLines as unknown as ComponentProps<typeof CanvasView>['edges']}
     selectedNodeIds={selected}
     selectionOnDrag={marquee}
     onSelectionChange={ids=>onSelect(boardSelection(names,ids))}
     onSelectNode={id=>onSelect(id===null?[]:boardSelection(names,[id]))}
+    onNodeDoubleClick={id=>onOpen(id)}
     onMoveNodePreview={(name,point)=>preview(name,point,true)}
     onMoveNodeEnd={release}
    />

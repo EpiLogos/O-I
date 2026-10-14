@@ -51,8 +51,8 @@ import {palacePresenceStorage,PALACE_UNPERSISTED_NOTICE,restorePalaceComposition
 import {palaceAcceptOutcome,palaceAcceptRequest,palaceReturnProposal,returnGroundInstrument,type PalaceReturnProposal} from '../../../src/techne/m0m5/palace/return';
 import type {PalaceRegionEntry} from '../../../src/techne/m0m5/palace/regions';
 import {PalaceBoardView,type PalaceBoardViewport} from './palaceBoardView';
-import {boardSelectionLine,forgetBoardRegion,moveBoardRegion,validateBoardPositions,type BoardPoint,type BoardPositions} from './palaceBoard';
-import {PALACE_WIRED_INSTRUMENTS,palaceGuidedEdges,palaceInstrumentOpenRequest,palaceOpenRoute,palaceSourceOpenRequest,palaceWalkAt,palaceWalkSteps,palaceWholeView,SCENE_REGION_STANDING,type PalaceGuidedEdge,type PalaceSourceSubject,type PalaceWalkStep} from './palaceWhole';
+import {boardEdges,boardFocusName,boardSelectionLine,forgetBoardRegion,moveBoardRegion,validateBoardPositions,type BoardPoint,type BoardPositions} from './palaceBoard';
+import {PALACE_WIRED_INSTRUMENTS,palaceGuidedEdges,palaceInstrumentOpenRequest,palaceOpenRoute,palaceRegionOpenRoute,palaceSourceOpenRequest,palaceWalkAt,palaceWalkSteps,palaceWholeView,SCENE_REGION_STANDING,type PalaceGuidedEdge,type PalaceSourceSubject,type PalaceWalkStep} from './palaceWhole';
 import {PALACE_BOOKMARK_NAME_LIMIT,palaceBookmarkAdd,palaceBookmarkJump,palaceBookmarkLabel,palaceBookmarkRename,palaceLandingIndex,palaceStartStep} from './palaceBookmarks';
 import './palaceInstrument.css';
 
@@ -179,8 +179,13 @@ export function PalacePanel({host,doc,reading,readingReason,onMessage,basis,carr
  // T16: the live Expression refs. Null until the owner's list is known, so a
  // member is never called broken on a list that has not yet arrived.
  const liveRefs=useMemo(()=>eligibleKnown?new Set(eligible.map(entry=>entry.expression_ref)):null,[eligible,eligibleKnown]);
+ // T16: the regions the owner's document still carries as Scenes. A region among them with no member is a named-but-missing reference.
+ const savedNames=useMemo(()=>new Set(discoverRegions(draftDoc).map(region=>region.name)),[draftDoc]);
  // T16: the guided path's edges, re-derived from the Scene order on every render.
- const guided=useMemo(()=>palaceGuidedEdges(regions.map(region=>({name:region.name,member_ref:region.member?.expression_ref??null})),doc.expression_ref,liveRefs),[regions,doc.expression_ref,liveRefs]);
+ const guided=useMemo(()=>palaceGuidedEdges(regions.map(region=>({name:region.name,member_ref:region.member?.expression_ref??null,saved:savedNames.has(region.name)})),doc.expression_ref,liveRefs),[regions,doc.expression_ref,liveRefs,savedNames]);
+ // T16: the board draws the same derived connections, never a second set; T17: the walk's focused card is named on the board.
+ const boardLines=useMemo(()=>boardEdges(guided.edges,regions.map(region=>region.name)),[guided,regions]);
+ const boardRegions=useMemo(()=>regions.map(region=>({name:region.name,member:region.member})),[regions]);
  // T14/T17: the integral whole and its walk, from the reading the Palace read.
  // `whole` is null while the reading is still returning.
  const whole=useMemo(()=>reading===undefined?null:palaceWholeView(reading),[reading]);
@@ -210,6 +215,14 @@ export function PalacePanel({host,doc,reading,readingReason,onMessage,basis,carr
   const route=palaceOpenRoute(entry,PALACE_WIRED_INSTRUMENTS);
   if(route.kind==='refused'){onMessage(`Refused: ${route.reason}.`);return;}
   if(route.kind==='source'){openPalaceSource(route.ref);return;}
+  openPalaceObject(route.instrument,route.ref);
+ }
+ /** T16: a board card's Open opens its contained Expression in that object's own instrument, through the same route its list Open takes.
+  * A card with no member, a self reference or a member no longer disclosed is refused by name. */
+ function openBoardRegion(name:string){
+  const region=regions.find(candidate=>candidate.name===name);
+  const route=palaceRegionOpenRoute(name,region?.member??null,doc.expression_ref,liveRefs);
+  if(route.kind==='refused'){onMessage(`Refused: ${route.reason}.`);return;}
   openPalaceObject(route.instrument,route.ref);
  }
  /** T24: a provenance entry's Open asks for the source surface through the frame's existing source summon, naming the Scene the
@@ -525,7 +538,7 @@ export function PalacePanel({host,doc,reading,readingReason,onMessage,basis,carr
      </>}
    </section>
    <section className="palace-regions" aria-label="Regions and guided path">
-    <PalaceBoardView canvasKey={doc.expression_ref} regions={regions.map(region=>({name:region.name,member:region.member}))} held={held} selected={selectedRegions} viewport={restoredViewport} onMoves={moveBoardPoints} onViewport={viewportSettled} onSelect={pickRegions}/>
+    <PalaceBoardView canvasKey={doc.expression_ref} regions={boardRegions} held={held} selected={selectedRegions} viewport={restoredViewport} onMoves={moveBoardPoints} onViewport={viewportSettled} onSelect={pickRegions} edges={boardLines} focused={boardFocusName(boardRegions,focus?.ref??null)} onOpen={openBoardRegion}/>
     <h3 className="palace-walk-heading">Guided path · walk order</h3>
     {regions.map((region,index)=>
      <React.Fragment key={region.name}>
