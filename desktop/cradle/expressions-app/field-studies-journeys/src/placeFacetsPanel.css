@@ -11,7 +11,8 @@
 .place-facets-detail dl{display:grid;grid-template-columns:auto 1fr;gap:.15rem .5rem;margin:.25rem 0}
 .place-facets-detail dt{opacity:.7}
 .place-standing-tag{font-size:.7em;text-transform:uppercase;letter-spacing:.03em;opacity:.7;margin-left:.35rem}
-.place-standing-mythic{color:var(--place-mythic,#8a5a2b)}
+/* T30: the one mythic colour, the chronology palette's STANDING_COLOUR.mythic (legend swatch and tag agree). */
+.place-standing-mythic{color:var(--place-mythic,#b8860b)}
 .place-facets-mythic-note{font-weight:600}
 .place-standing-owner-vocabulary{opacity:.9}
 .place-facets-hierarchy ol{margin:0;padding-left:1.1rem}
