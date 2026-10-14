@@ -19,6 +19,19 @@ Seat: /Users/admin/Central/worktrees/env-1/o-i (lane: <the lead's current dlw/�
 Other agents work here too: run `git status` first; anything you did not
 change is not yours — never touch, revert, format or stage it.
 
+Target — the product is the candidate shell, nothing else:
+- The app being built is packages/live-shell/ui (entry src/main.tsx) plus the
+  hosted Expressions frame (desktop/cradle/expressions-app). desktop/cradle/src
+  is shared engine code: a file there is product only if the candidate imports
+  it. The everyday desktop's own frame (e.g. desktop/cradle/src/CradleFrame.tsx)
+  is legacy and is never a target.
+- Before editing ANY file, prove it is product:
+    node packages/live-shell/ui/scripts/candidate-reachable.mjs <file>
+  "NOT" means a change there never reaches the app: find the candidate's own
+  site for the behaviour instead (grep the candidate tree), or return
+  ZONE: BLOCKED <path> with the reachability output. Put the command's output
+  for every file you edited in your CHECKS.
+
 Zone — write only under:
 <allowlist>
 If the work needs another path, stop and return ZONE: BLOCKED <path>.
