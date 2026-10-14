@@ -1,0 +1,125 @@
+/* A Central document in a pane (CentralDocumentPane.tsx). The pane draws the document and nothing around it: no toolbar, no
+   card. The hosted faces (the Day die's form, the Flow's form) were drawn for the device card — a 320px frame under a strip of
+   controls, in the card's dark tones — so this sheet lays them out for a pane: the form fills it, on the pane's own paper
+   (the design system's `--oi-canvas-ground`, "pane body paper"), and the face's own save line sits quietly under the form.
+   Nothing of the faces is removed but the Day die's net: the Day die on the Device chain draws that, and the form's own die
+   stands here. */
+
+.central-document-pane {
+  /* inhabitantDevices.css reads the card's `--inh-*`; in a pane they resolve to the paper's tones (status colours stay). */
+  --inh-bg-0: var(--oi-canvas-ground);
+  --inh-bg-1: var(--oi-pane-bar-ground);
+  --inh-bg-2: var(--oi-wash);
+  --inh-bg-3: var(--oi-wash-strong);
+  --inh-line: var(--oi-hairline-soft);
+  --inh-line-strong: var(--oi-hairline);
+  --inh-text: var(--oi-foreground);
+  --inh-dim: var(--oi-muted);
+  --inh-faint: var(--oi-muted-2);
+  --inh-accent: var(--oi-accent-ink);
+  --inh-accent-soft: var(--oi-wash);
+  --inh-paper: var(--oi-canvas-ground);
+  --inh-ink: var(--oi-foreground);
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--oi-canvas-ground);
+  color: var(--oi-foreground);
+  font-family: var(--oi-font-sans);
+}
+
+/* the hosted face: the form fills the pane, its notices above its save line */
+.central-document-pane > .inhabitant-document {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 0;
+  gap: 0;
+}
+
+.central-document-pane .inhabitant-die-net { display: none; }
+
+.central-document-pane .inhabitant-document-frame {
+  order: 1;
+  flex: 1 1 auto;
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+  background: var(--oi-canvas-ground);
+}
+
+.central-document-pane .inhabitant-document > p.inhabitant-quiet {
+  order: 1;
+  margin: 0;
+  padding: 18px 22px;
+  font-size: var(--oi-shell-type-ui);
+}
+
+.central-document-pane .inhabitant-document > .inhabitant-device-fault,
+.central-document-pane .inhabitant-document > .inhabitant-device-notice {
+  order: 2;
+  flex: none;
+  padding: 6px 14px;
+  border-top: 1px solid var(--oi-hairline-soft);
+  font-size: var(--oi-shell-type-meta);
+}
+
+.central-document-pane .inhabitant-body-actions {
+  order: 3;
+  flex: none;
+  gap: 8px;
+  padding: 3px 12px;
+  border-top: 1px solid var(--oi-hairline-soft);
+  background: var(--oi-canvas-ground);
+  font-size: var(--oi-shell-type-meta);
+}
+
+.central-document-pane .inhabitant-act {
+  font-size: var(--oi-shell-type-meta);
+  border-radius: 3px;
+  padding: 1px 8px;
+}
+
+/* a document the owner has not stood up: its sentence, set as the paper's own text */
+.central-document-absence {
+  box-sizing: border-box;
+  width: min(100%, 58ch);
+  margin: 0 auto;
+  padding: 56px 32px;
+  overflow: auto;
+  font-size: var(--oi-shell-type-prose);
+  line-height: 1.55;
+  color: var(--oi-foreground);
+}
+
+.central-document-absence p { margin: 0 0 10px; }
+
+.central-document-absence .inhabitant-device-notice,
+.central-document-absence .inhabitant-device-fault {
+  font-size: var(--oi-shell-type-nav);
+  line-height: 1.55;
+  color: var(--oi-foreground);
+}
+
+.central-document-absence .inhabitant-device-notice p,
+.central-document-absence .inhabitant-device-fault p { margin: 0 0 10px; }
+
+.central-document-absence .mono { font-family: var(--oi-font-mono); font-size: var(--oi-shell-type-ui); }
+
+.central-document-absence .central-document-eyebrow {
+  margin: 0 0 14px;
+  font-size: var(--oi-shell-type-meta);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--oi-muted-2);
+}
+
+.central-document-owner {
+  font-size: var(--oi-shell-type-meta);
+  color: var(--oi-muted-2);
+}
