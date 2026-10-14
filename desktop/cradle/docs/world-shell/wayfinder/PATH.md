@@ -112,13 +112,13 @@ this table true. Tickets and resolutions live in `tickets/`.
 
 | Ticket | Who | Zone | Since |
 |---|---|---|---|
-| Phase 5 gate 2: seam 8 host wiring (a device face pops out through the existing detach door) | haiku builder | `src-tauri/src/windows.rs`, cradle `workspace/DetachedFrame.tsx`, live-shell `native/{Detached,Workbench}.tsx`, `native/detachedKinds.ts`, `shell/ModeDetail.tsx` | 2026-10-14 |
+| Phase 5 gate 2: seam 8 reach (every rack device family declares pop-out; the receiving window admits every family; a stale detached entry is dropped from any layout) | haiku builder | live-shell `inhabitants/*FamilyManifest.ts`, `worldShellFamilies.ts`, `sdk/define.ts`, `manifest.ts`, `native/Detached.tsx` loader; cradle `surface/types.ts`, `workspace/store.ts` (one method) | 2026-10-14 |
 | Phase 5 gate 2: seam 3 (every encounter linkable, Back walks the trail) | haiku builder | live-shell `projections/encounterBridge.ts`, new `projections/encounterLink.ts`, `App.tsx` mount; cradle `workspace/encounter.ts` | 2026-10-14 |
 | Phase 5 gate 2: seam 5 (clips carry the standing their source states) | haiku builder | live-shell `timeline/timeSpine.ts`, `timeline/*TrackAdapter.ts`, `projections/worldTimelinePresentation.tsx` | 2026-10-14 |
 
 Committed on `dlw/build` after #671's head: the E19 quarantine safety fixes,
 the gate 4 census, the gates 1–2 audit, the gate 3 migration command and the
-candidate's first-run apply (`LEGACY-CRADLE-RETIREMENT.md` §4.1), seam 7 (the transport on the one spine), the zone side of seam 8, and gate 4's native Live set and device ops.
+candidate's first-run apply (`LEGACY-CRADLE-RETIREMENT.md` §4.1), seam 7 (the transport on the one spine), seam 8's pop-out door, and gate 4's native Live set and device ops.
 
 Landed on main through #666 (14 Oct): the torus instrument legs 1–6; the
 Jankó keyboard (the owner's window, presses held by identity); the mode
