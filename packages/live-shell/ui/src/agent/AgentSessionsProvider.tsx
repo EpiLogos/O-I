@@ -15,7 +15,6 @@ import {
 } from './agentRunModel'
 import {budgetFromReading, readEncounterTask} from './useAgentMetrics'
 import {useTemporalEvents} from './useTemporalEvents'
-import {RefusalCard} from './RefusalCard'
 
 const AGENCY_POLL_MS = 3000
 const PROJECT = 'O-I'
@@ -228,21 +227,11 @@ function AgentSessionsSource({children}: {children: ReactNode}) {
     nowUnixMs,
   }), [transport, tracks, rows, roster, events, error, rosterError, temporalError, loading, refresh, refreshTemporal, selectedSessionRef, selectSession, nowUnixMs])
 
-  // A named owner refusal is shell-level truth, not a view's property: the
-  // source itself discloses it at the top of whatever tree it powers — as the
-  // disclosure card (named, receipt folded), never a raw dump — so no centre
-  // view or context consumer can swallow it.
+  // A named owner refusal is disclosed where its reading is used — Factory's centre and browser, the agent widget — each as
+  // the named disclosure card. This provider stands above the whole window (main.tsx), so a card drawn here pushed the
+  // frame down out of the window's grid; it draws nothing of its own.
   return (
     <Ctx.Provider value={value}>
-      {rosterError && (
-        <div data-region="agent-disclosures">
-          <RefusalCard
-            title="Roster refused"
-            line={`Agent roster read failed. Central owner Action refused: ${rosterError}`}
-            receipt={rosterError}
-          />
-        </div>
-      )}
       {children}
     </Ctx.Provider>
   )

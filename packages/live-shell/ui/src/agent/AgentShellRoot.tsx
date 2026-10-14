@@ -47,13 +47,13 @@ function AgentShellCentreBody() {
       : sessions.temporalError)
     return (
       <div className="agent-shell-centre" data-region="centre" style={{overflow: 'auto'}}>
-        {refusal && (
+        {refusal && (<div data-region="agent-disclosures">
           <RefusalCard
             title={sessions.error ? 'Read failed' : 'Roster refused'}
             line={refusal}
             receipt={sessions.rosterError ?? sessions.error ?? sessions.temporalError ?? null}
           />
-        )}
+        </div>)}
         <div className="agent-empty-note" role="status" style={{flex: 'none'}}>
           <b>Reading agency sessions…</b> The run model polls <code>agency_read</code>; the thread opens on the selected session once the reading answers. Nothing is drawn that no owner has said.
         </div>
