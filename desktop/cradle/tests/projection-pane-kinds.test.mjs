@@ -16,11 +16,11 @@ const group=(id,tabs=[id])=>({type:'group',id,tabs,pinned:[],active:tabs[0]??nul
 const bindingOf=(id,kind='draft',extra={})=>({id,kind,title:id,...extra});
 const stateOf=(root,surfaces)=>({...freshLayout(),root,surfaces:Object.fromEntries(surfaces.map(b=>[b.id,b])),focusedGroupId:engine.groupsOf(root)[0]?.id??null});
 
-test('the four projection kinds are additive body kinds of the existing engine',()=>{
+test('the projection kinds are additive body kinds of the existing engine: the four named, and any instrument by the kind grammar (F2)',()=>{
   assert.deepEqual([...PROJECTION_PANE_KINDS],['projection.earth','projection.timeline','projection.constellation','projection.expressions']);
   for(const kind of PROJECTION_PANE_KINDS)assert.ok(isProjectionPaneKind(kind));
-  assert.equal(isProjectionPaneKind('projection.telescope'),false);
-  assert.equal(isProjectionPaneKind('source'),false);
+  assert.equal(isProjectionPaneKind('projection.device'),true,'an instrument the frame opens (the device pane) is a projection kind by its name');
+  for(const malformed of ['source','projection.','projection.Earth','projection.a b','xprojection.earth'])assert.equal(isProjectionPaneKind(malformed),false,malformed);
 });
 
 test('a projection binding is minted with its encounter slice; the same kind+subject reactivates, a different subject mints a second instance',()=>{
@@ -105,7 +105,7 @@ test('the module door: one module per kind, a different late module refuses, sam
   assert.throws(()=>registerProjectionModule(make('other-earth','projection.earth')),'a second, different module for a taken kind refuses');
   registerProjectionModule(make('atlas-earth','projection.earth'));
   assert.equal(projectionModule('projection.earth')?.id,'atlas-earth','idempotent re-admission of the same module stands');
-  assert.throws(()=>registerProjectionModule(make('x','projection.telescope')),'an unknown kind refuses');
+  assert.throws(()=>registerProjectionModule(make('x','telescope')),'a kind outside the projection grammar refuses');
   resetProjectionModulesForTest();
   assert.equal(projectionModule('projection.earth'),undefined);
 });
