@@ -20,6 +20,9 @@
  * - Sources (Technē) — the retained app's own work list
    * (`nativeWorks`); a row opens the work in the instrument
    * (`requestExpression` — the existing door).
+ * - Family-declared categories compose after the mockup's own entries in the modes they name
+ *   (`composeModeBrowser`, modeGrammar.ts; `allInhabitantBrowserEntries`, manifest.ts). A declared category with no
+ *   row source here is `waiting` (a designed empty category) or a named fault when declared `cut`.
  * - Every declared-waiting category renders as a DESIGNED empty category:
    * mark, name, the owner it waits for, and the affordance that would fill
    * it (the widget guide's empty-state law) — never another mode's content,
@@ -33,7 +36,8 @@
 import {useEffect, useMemo, useState} from 'react'
 import type {NativeDirectory} from '../../../../../desktop/cradle/src/kernel/types'
 import {listFiles} from '../../../../../desktop/cradle/src/files/client'
-import {browserCategoriesOf, type ModeBrowserCategory, type SurfMode} from './modeGrammar'
+import {composeModeBrowser, type ModeBrowserCategory, type SurfMode} from './modeGrammar'
+import {allInhabitantBrowserEntries} from '../inhabitants/manifest'
 import {useWorkspace} from './workspace'
 import {carrierOf} from './runContext'
 import {Icon} from '../inhabitants/sdk/Icon'
@@ -59,7 +63,8 @@ export function ModeBrowser({mode, onSelectSubject, selectedSubject}: {
   onSelectSubject: (subject: CentralSubjectSelection | null) => void
   selectedSubject: CentralSubjectSelection | null
 }) {
-  const categories = browserCategoriesOf(mode)
+  // The one composition: the mockup's static categories, then the admitted families' declared categories for this mode.
+  const categories = useMemo(() => composeModeBrowser(mode, allInhabitantBrowserEntries()), [mode])
   const groups = useMemo(() => {
     const seen: {group: string; categories: ModeBrowserCategory[]}[] = []
     for (const category of categories) {

@@ -168,8 +168,9 @@ export interface DeviceDeclaration {
    * waits; see `devicePopsOut`. The author's other lifecycles (`dock`, `expand`) stand as declared. */
   readonly dock?: readonly FaceDockLifecycle[]
   /** Pop-out (rack-device lifecycle, seam 8). Absent = the face pops out only where its window can draw its body alone
-   * (`faceStandsAlone`, manifest.ts): Central's day die, Flow and Nara conversation, and the QL instrument. Every other
-   * face (parameter faces, the atlas and knowledge-graph faces) stays in the main window. `false` = this face never pops
+   * (`faceStandsAlone`, manifest.ts): Central's day die, Flow and Nara conversation. The QL instrument does not pop out
+   * (commit 853c6f176: its reading is published only in the main window). Every other face (parameter faces, the atlas
+   * and knowledge-graph faces) stays in the main window. `false` = this face never pops
    * out. `true` = the author asks for pop-out, which is refused at declaration by name unless the face stands alone. A
    * waiting face does not pop out unless it says so (and only if it stands alone). */
   readonly popOut?: boolean

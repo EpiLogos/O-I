@@ -525,6 +525,39 @@ export function browserCategoriesOf(mode: string): readonly ModeBrowserCategory[
   return surf ? MODE_GRAMMAR[surf].browser : []
 }
 
+/** A family's declared browser category as the door reads it (manifest.ts `DeclaredBrowserEntry`): the category's standing,
+ * the family that declares it, and the modes it belongs to. */
+export type DeclaredBrowserCategory = ModeBrowserCategory & {
+  readonly family: string
+  readonly modes: readonly string[]
+}
+
+/** The composed browser of one mode — the one composition the browser renderer calls. The mockup's static categories come
+ * first, exactly as drawn (the floor, in their order). Then, over them:
+ * - a declared category whose id is a mockup category of the SAME family fills that entry in place: its standing and hint
+ *   are the family's; its label, group, mark and position stay as drawn. A declaration by any other family never reaches
+ *   a mockup entry (the mockup's owner keys its own rows);
+ * - every other declared category that names this mode is appended in declaration order, after the mockup's entries, and
+ *   the renderer groups it under its group heading.
+ * Declarations for other modes never appear here. A mode that keeps its own browser (an empty static list) composes
+ * nothing. */
+export function composeModeBrowser(mode: string, declared: readonly DeclaredBrowserCategory[]): readonly ModeBrowserCategory[] {
+  const statics = browserCategoriesOf(mode)
+  if (!statics.length) return statics
+  const inMode = declared.filter(category => category.modes.includes(mode))
+  const filled = statics.map(category => {
+    const owned = inMode.find(entry => entry.id === category.id && entry.family === category.family)
+    return owned ? {...category, state: owned.state, hint: owned.hint} : category
+  })
+  const mockupIds = new Set(statics.map(category => category.id))
+  const appended: ModeBrowserCategory[] = []
+  for (const entry of inMode) {
+    if (mockupIds.has(entry.id) || appended.some(category => category.id === entry.id)) continue
+    appended.push(entry)
+  }
+  return [...filled, ...appended]
+}
+
 /** The status identity of the mode the spine stands in (null outside the
  * five — the caller keeps its own reading there). */
 export function statusIdentityOf(mode: string): ModeStatusIdentity | null {
