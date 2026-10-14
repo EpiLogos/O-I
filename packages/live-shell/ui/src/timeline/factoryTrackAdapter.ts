@@ -19,8 +19,11 @@
 //   at the live edge with no length at all. A task with no disclosed state has no place on the ruler. A session's needle stands at
 //   its last activity; one with no activity in the window has none.
 // - actions: only through the owner the agent shell already uses — `harness_agent_control` on the bound harness. The owner takes
-//   a binding and a control word, never a task, a row or a session, so each op names that grain. No controls handed in (no
-//   carrier, no resolved binding), no actions: the grid stays read-only.
+//   a binding and a control word, never a task, a row, a session or an agent, so the grain of every action is the whole harness
+//   and each op leads with it (FACTORY_GRAIN), as does each receipt: a Stop pressed on one track says it stopped the harness, a
+//   Retry says it restarted the harness's stalled task, a seat says it started a NEW agent and names the one dragged. The mockup
+//   draws these per session (agent-shell-mockup.html:625); that needs a per-session owner op, which does not exist. No controls
+//   handed in (no carrier, no resolved binding), no actions: the grid stays read-only.
 // - takes (attempts) are absent: the attempts owner (`factory_attempt_read`) is addressed by run, and the sessions reading names
 //   none. Launch quantize and follow are absent: the armed timing is shell state, not a reading of the task.
 //
@@ -53,12 +56,15 @@ export interface FactoryControls {
   control(control: FactoryControl): Promise<FactoryControlReceipt>
 }
 
-/** The ops the actions name. The owner addresses the bound harness, never one session, task or row, so each says so. */
-export const FACTORY_STOP_OP = 'harness_agent_control:stop (the bound harness)'
-export const FACTORY_LAUNCH_OP = 'harness_agent_control:restart (a stalled task) · resume (a queued one)'
-export const FACTORY_SEAT_OP = 'harness_agent_control:new (the agent dropped, on the bound harness — the agent chain\'s own drop)'
-export const FACTORY_RETRY_OP = 'harness_agent_control:restart (the stalled task, from its last good step)'
-export const FACTORY_BATCH_OP = 'harness_agent_control:resume (every queued task; the owner takes no row)'
+/** The grain every action here takes: the owner addresses the bound harness, never one session, task, row or agent. */
+export const FACTORY_GRAIN = 'whole harness'
+
+/** The ops the actions name, each leading with its grain (the grid prints an op in the control's title). */
+export const FACTORY_STOP_OP = `${FACTORY_GRAIN} · harness_agent_control:stop — the bound harness's conversation; the owner takes no session, so this is not a stop of this track alone`
+export const FACTORY_LAUNCH_OP = `${FACTORY_GRAIN} · harness_agent_control:restart (a stalled task) · resume (a queued one) — the bound harness's conversation; the owner takes no task`
+export const FACTORY_SEAT_OP = 'harness_agent_control:new — starts a NEW agent conversation on the bound harness; the agent dropped is named in the receipt, not sent (the owner takes no agent ref)'
+export const FACTORY_RETRY_OP = `${FACTORY_GRAIN} · harness_agent_control:restart — the bound harness's stalled task, from its last good step; the owner takes no session`
+export const FACTORY_BATCH_OP = `${FACTORY_GRAIN} · harness_agent_control:resume — the bound harness's queued tasks; the owner takes no row`
 
 export interface FactorySessionsReading {
   /** The agency tracks with their tasks and needles (agent/useAgencySessions.ts). */
@@ -108,30 +114,57 @@ function ancestorsOf(tracks: readonly AgentSessionTrack[], track: AgentSessionTr
 
 const refused = (error: string): Promise<FactoryControlReceipt> => Promise.resolve({ok: false, error})
 
-/** The actions the owner gives, over the set's own ids: an id the set does not hold is refused before any owner call. */
+/** The owner's answer with the grain said first. The control was pressed on one session, task or row, but the owner takes none of
+ * them, so what it reached is the bound harness; the receipt (the grid prints it where the press was) says that, then the owner's
+ * own words. */
+function atWholeHarness(answer: Promise<FactoryControlReceipt>, pressed: string): Promise<FactoryControlReceipt> {
+  return answer.then(receipt => {
+    const said = `Whole harness: ${pressed} reached the bound harness, because the owner takes no session, task or row.`
+    return receipt.ok ? {...receipt, note: `${said} ${receipt.note}`} : {...receipt, error: `${said} ${receipt.error}`}
+  })
+}
+
+/** The actions the owner gives, over the set's own ids: an id the set does not hold is refused before any owner call. Every one
+ * reaches the whole harness (FACTORY_GRAIN) and its receipt says so. */
 function actionsFor(controls: FactoryControls, tracks: readonly WorldTrack[], clips: readonly WorldTrackClip[], columns: readonly WorldTrackColumn[]): WorldTrackActions {
-  const trackIds = new Set(tracks.map(track => track.id))
-  const columnIds = new Set(columns.map(column => column.id))
+  const trackById = new Map(tracks.map(track => [track.id, track]))
+  const columnById = new Map(columns.map(column => [column.id, column]))
   const clipById = new Map(clips.map(clip => [clip.id, clip]))
   return {
-    stopTrack: {op: FACTORY_STOP_OP, run: trackId => trackIds.has(trackId) ? controls.control('stop') : refused(`"${trackId}" is not a session of this work.`)},
+    stopTrack: {op: FACTORY_STOP_OP, run: trackId => {
+      const track = trackById.get(trackId)
+      return track ? atWholeHarness(controls.control('stop'), `Stop on “${track.name}”`) : refused(`"${trackId}" is not a session of this work.`)
+    }},
     launch: {op: FACTORY_LAUNCH_OP, run: clipId => {
       const clip = clipById.get(clipId)
       if (!clip) return refused(`"${clipId}" is not a task of this work.`)
-      if (clip.status === 'stalled') return controls.control('restart')
-      if (clip.status === 'waiting') return controls.control('resume')
+      const pressed = `Launch of “${clip.label}”`
+      if (clip.status === 'stalled') return atWholeHarness(controls.control('restart'), pressed)
+      if (clip.status === 'waiting') return atWholeHarness(controls.control('resume'), pressed)
       const word = clip.status === 'stopped' ? 'finished' : clip.status ?? 'in a state its owner does not disclose'
       return refused(`${clip.label} is ${word}: the owner has no op that launches a task in that state.`)
     }},
-    launchStop: {op: FACTORY_BATCH_OP, run: columnId => columnIds.has(columnId) ? controls.control('resume') : refused(`"${columnId}" is not a batch row of this work.`)},
+    launchStop: {op: FACTORY_BATCH_OP, run: columnId => {
+      const column = columnById.get(columnId)
+      return column ? atWholeHarness(controls.control('resume'), `Launch of row ${column.name || column.id}`) : refused(`"${columnId}" is not a batch row of this work.`)
+    }},
     // A stalled lane lights its retry (manual §6); the owner restarts the bound harness's stalled task.
-    // An agent dropped on the empty track is seated as the agent chain seats one (agent/agentChainDrag.ts chainDropDecision).
+    retry: {op: FACTORY_RETRY_OP, run: trackId => {
+      const track = trackById.get(trackId)
+      return track ? atWholeHarness(controls.control('restart'), `Retry on “${track.name}”`) : refused(`"${trackId}" is not a session of this work.`)
+    }},
+    // An agent dropped on the empty track starts a NEW agent on the bound harness, as the agent chain's own drop does
+    // (agent/agentChainDrag.ts chainDropDecision). `harness_agent_control` carries a binding and a control word and no agent ref
+    // (agent/harnessAgentControl.ts), so the dragged agent is not seated: it is named in the receipt and the harness is not told
+    // which agent it was.
     seat: {op: FACTORY_SEAT_OP, accepts: AGENT_CHAIN_MIME, run: payload => {
       const dropped = decodeChainDrag(payload)
-      return dropped?.kind === 'chain-item' && dropped.drag.family === 'agent' ? controls.control('new')
-        : refused('Only an agent seats on a track; drop a session, skillset or seat on the agent chain.')
+      if (dropped?.kind !== 'chain-item' || dropped.drag.family !== 'agent') return refused('Only an agent starts on a track; drop a session, skillset or seat on the agent chain.')
+      const dragged = `“${dropped.drag.label}” (${dropped.drag.ref})`
+      return controls.control('new').then((receipt): FactoryControlReceipt => receipt.ok
+        ? {...receipt, note: `Dragged ${dragged}: started a NEW agent on the bound harness. The harness was not told which agent, because harness_agent_control carries no agent ref. ${receipt.note}`}
+        : {...receipt, error: `Dragged ${dragged}: the owner did not start a new agent on the bound harness (no agent was seated). ${receipt.error}`})
     }},
-    retry: {op: FACTORY_RETRY_OP, run: trackId => trackIds.has(trackId) ? controls.control('restart') : refused(`"${trackId}" is not a session of this work.`)},
   }
 }
 

@@ -32,7 +32,7 @@ const React = await import('react')
 const {renderToStaticMarkup} = await import('react-dom/server')
 const {readFile} = await import('node:fs/promises')
 const model = await import('../src/agent/agentRunModel.ts')
-const {factoryTrackAdapter, factoryTaskRef, parseFactoryTaskRef, FACTORY_TRACK_PALETTE, FACTORY_MIN_BATCH_ROWS, FACTORY_STOP_OP, FACTORY_LAUNCH_OP, FACTORY_BATCH_OP}
+const {factoryTrackAdapter, factoryTaskRef, parseFactoryTaskRef, FACTORY_TRACK_PALETTE, FACTORY_MIN_BATCH_ROWS, FACTORY_STOP_OP, FACTORY_LAUNCH_OP, FACTORY_BATCH_OP, FACTORY_RETRY_OP, FACTORY_SEAT_OP, FACTORY_GRAIN}
   = await import('../src/timeline/factoryTrackAdapter.ts')
 const {SessionGrid} = await import('../src/frame/tracks/SessionGrid.tsx')
 const {ArrangementRuler, placeClips} = await import('../src/frame/tracks/ArrangementRuler.tsx')
@@ -193,24 +193,44 @@ test('with the owner\'s path, five actions name their ops and reach only harness
   assert.deepEqual(Object.keys(set.actions).sort(), ['launch', 'launchStop', 'retry', 'seat', 'stopTrack'], 'no record: the owner has no capture path')
   const {AGENT_CHAIN_MIME, encodeChainDrag} = await import('../src/agent/agentChainDrag.ts')
   assert.equal(set.actions.seat.accepts, AGENT_CHAIN_MIME, 'the empty track takes what the agent browser drags')
-  assert.deepEqual(await set.actions.seat.run(encodeChainDrag({family: 'agent', ref: 'codex', label: 'codex'})), answer, 'an agent dropped is seated through the owner')
+  // The owner takes a binding and a control word, never an agent: the drop starts a NEW agent on the bound harness, and the
+  // receipt names the one dragged without claiming it was seated.
+  const seated = await set.actions.seat.run(encodeChainDrag({family: 'agent', ref: 'agent:codex', label: 'codex'}))
+  assert.equal(seated.ok, true)
+  assert.match(seated.note, /Dragged “codex” \(agent:codex\): started a NEW agent on the bound harness/, 'the dragged agent is named, and what happened is said')
+  assert.match(seated.note, /not told which agent[\s\S]*carries no agent ref/, 'and that the harness was not told which')
+  assert.ok(seated.note.endsWith(answer.note), 'the owner\'s own words close the receipt')
+  assert.doesNotMatch(seated.note, /seated on|is seated|was seated/, 'nothing claims the dragged agent took the seat')
+  assert.match(set.actions.seat.op, /starts a NEW agent/, 'the seat\'s op says what it does')
+  assert.doesNotMatch(set.actions.seat.op, /the agent dropped, on the bound harness/, 'and no longer claims to carry the agent dropped')
   assert.equal((await set.actions.seat.run(encodeChainDrag({family: 'skillset', ref: 's', label: 's'}))).ok, false, 'anything else is refused, named')
   assert.equal((await set.actions.seat.run('not a drag')).ok, false)
   assert.deepEqual(calls.splice(0), ['new'], 'seating reached the owner once, as new')
-  assert.match(set.actions.retry.op, /^harness_agent_control:restart/)
-  assert.deepEqual(await set.actions.retry.run(sessionKey('sess-test')), answer, 'a stalled lane restarts through the owner')
+  assert.match(set.actions.retry.op, /^whole harness · harness_agent_control:restart/)
+  const retried = await set.actions.retry.run(sessionKey('sess-test'))
+  assert.equal(retried.ok, true, 'a stalled lane restarts through the owner')
+  assert.match(retried.note, /^Whole harness: Retry on “[^”]+” reached the bound harness, because the owner takes no session, task or row\./, 'its receipt says the harness, not the session, was reached')
+  assert.ok(retried.note.endsWith(answer.note), 'then the owner\'s own words')
   assert.equal((await set.actions.retry.run('nope')).ok, false, 'an id the set does not hold is refused')
   assert.deepEqual(calls.splice(0), ['restart'], 'the retry reached the owner once, as restart; the counts below are the other actions\'')
-  assert.deepEqual([set.actions.stopTrack.op, set.actions.launch.op, set.actions.launchStop.op], [FACTORY_STOP_OP, FACTORY_LAUNCH_OP, FACTORY_BATCH_OP])
-  for (const op of [FACTORY_STOP_OP, FACTORY_LAUNCH_OP, FACTORY_BATCH_OP]) assert.match(op, /^harness_agent_control:/)
+  assert.deepEqual([set.actions.stopTrack.op, set.actions.launch.op, set.actions.launchStop.op, set.actions.retry.op, set.actions.seat.op], [FACTORY_STOP_OP, FACTORY_LAUNCH_OP, FACTORY_BATCH_OP, FACTORY_RETRY_OP, FACTORY_SEAT_OP])
+  assert.equal(FACTORY_GRAIN, 'whole harness')
+  for (const op of [FACTORY_STOP_OP, FACTORY_LAUNCH_OP, FACTORY_BATCH_OP, FACTORY_RETRY_OP]) {
+    assert.ok(op.startsWith(`${FACTORY_GRAIN} · harness_agent_control:`), `${op}: leads with its grain, then the one owner op`)
+    assert.match(op, /the owner takes no (session|task|row)/, `${op}: and says what the owner does not take`)
+  }
   const byLabel = label => set.clips.find(c => c.label === label).id
   const { stopTrack, launch, launchStop } = set.actions
 
-  assert.deepEqual(await stopTrack.run(sessionKey('sess-test')), answer, 'the owner\'s answer comes back verbatim')
-  assert.deepEqual(await stopTrack.run(set.tracks[0].id), answer, 'a group stops through the same owner op')
+  const stopped = await stopTrack.run(sessionKey('sess-test'))
+  assert.equal(stopped.ok, true)
+  assert.match(stopped.note, /^Whole harness: Stop on “[^”]+” reached the bound harness, because the owner takes no session, task or row\. stop → state stopped$/, 'the owner\'s answer comes back in full, the grain said first')
+  const groupStop = await stopTrack.run(set.tracks[0].id)
+  assert.equal(groupStop.ok, true); assert.match(groupStop.note, /^Whole harness: Stop on “/, 'a group stops through the same owner op')
   assert.deepEqual(calls, ['stop', 'stop'])
   calls.length = 0
-  await launch.run(byLabel('widget tests')); await launch.run(byLabel('queued one'))
+  const relaunched = await launch.run(byLabel('widget tests')); const resumed = await launch.run(byLabel('queued one'))
+  assert.match(relaunched.note, /^Whole harness: Launch of “widget tests” reached the bound harness/); assert.match(resumed.note, /^Whole harness: Launch of “queued one” reached the bound harness/)
   assert.deepEqual(calls, ['restart', 'resume'], 'a stalled task retries, a queued one runs')
   calls.length = 0
   for (const label of ['done one', 'live one', 'unread one']) {
@@ -220,7 +240,8 @@ test('with the owner\'s path, five actions name their ops and reach only harness
   assert.match((await launch.run(byLabel('unread one'))).error, /does not disclose/)
   assert.match((await launch.run(byLabel('done one'))).error, /finished/)
   assert.deepEqual(calls, [], 'a task with no owner op is refused before any owner call')
-  assert.deepEqual(await launchStop.run('batch:1'), answer); assert.deepEqual(calls, ['resume'])
+  const row = await launchStop.run('batch:1')
+  assert.equal(row.ok, true); assert.match(row.note, /^Whole harness: Launch of row 1 reached the bound harness/); assert.deepEqual(calls, ['resume'])
   calls.length = 0
   for (const run of [() => stopTrack.run('not:a-track'), () => launch.run('not:a-clip'), () => launchStop.run('batch:99')]) {
     const refusal = await run(); assert.equal(refusal.ok, false)
@@ -228,7 +249,20 @@ test('with the owner\'s path, five actions name their ops and reach only harness
   assert.deepEqual(calls, [], 'an id the set does not hold reaches no owner')
   const markup = renderToStaticMarkup(React.createElement(SessionGrid, {set, selection: SELECT}))
   assert.doesNotMatch(markup, /aria-label="Launch [^"]*" disabled=""/); assert.doesNotMatch(markup, /class="stop-launch" disabled=""/)
-  assert.match(markup, /Stop lead \(harness_agent_control:stop/)
+  assert.match(markup, /Stop lead \(whole harness · harness_agent_control:stop/, 'the grid prints the grain in the control\'s title')
+  assert.match(markup, /Retry lead \(whole harness · harness_agent_control:restart/)
+  assert.match(markup, /Drop here to seat it on a new track \(harness_agent_control:new — starts a NEW agent/, 'and the seat says it starts a new agent')
+})
+
+test('a refusal by the owner keeps its grain too: the receipt names the harness, then the owner\'s words; a refused seat says no agent was seated', async () => {
+  const refuse = {ok: false, error: 'the harness is not running'}
+  const set = project(agencyTracks(), {control: async () => refuse})
+  const { encodeChainDrag } = await import('../src/agent/agentChainDrag.ts')
+  const stop = await set.actions.stopTrack.run(sessionKey('sess-test'))
+  assert.equal(stop.ok, false); assert.match(stop.error, /^Whole harness: Stop on “[^”]+” reached the bound harness[\s\S]*the harness is not running$/)
+  const seat = await set.actions.seat.run(encodeChainDrag({family: 'agent', ref: 'agent:codex', label: 'codex'}))
+  assert.equal(seat.ok, false)
+  assert.match(seat.error, /Dragged “codex” \(agent:codex\): the owner did not start a new agent on the bound harness \(no agent was seated\)\. the harness is not running$/)
 })
 
 test('no sessions, no tracks', () => {

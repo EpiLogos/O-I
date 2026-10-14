@@ -8,10 +8,9 @@
  * by value, each traced to its ACTUAL destination:
  *
  * - effort → the armed session's harness, through the value-carrying
- *   harness control (`configure {effort}` — the kernel patch). Local state
- *   stays (the control's own presentation); the harness answer or refusal
- *   comes back as the receipt. Until the carrier lands, the kernel's own
- *   unknown-variant refusal IS the honest state, verbatim.
+ *   harness control (`configure {effort}` — the kernel patch). The harness
+ *   answer or refusal comes back as the receipt. Until the carrier lands,
+ *   the kernel's own unknown-variant refusal IS the honest state, verbatim.
  * - input (steer vs queue) → the same carrier, `{input_mode}`.
  * - quantize → the carrier, `{quantize}`; its consumption (stop/steer
  *   reading the armed timing) is WO-A5 and stays owner-named.
@@ -23,6 +22,14 @@
  *   is the device apply path gating proposals vs direct-with-receipt
  *   (WO-SF2, Factory receiving). Presentation-state, refusal names it.
  *
+ * The order is the owner's first (lock §0.4, manual §10.4): the dispatch
+ * runs, and only a fired receipt — the owner accepted — moves the shell's
+ * flag and is recorded for the Factory devices to read (devices/
+ * ownerAccepted.ts). A refusal moves nothing: the flag a control shows is
+ * never ahead of the owner, and a refused heartbeat or write arm never
+ * flips (the flag used to flip first, so a light read it while the receipt
+ * said "refused"). A setter the grammar cannot resolve moves nothing either.
+ *
  * The registration runs where the agent shell mounts its transport (the
  * hook below); tests register the same dispatchers directly. Registry
  * shape and receipt vocabulary are the SDK's (`sdk/shellSetters.ts`) —
@@ -32,6 +39,7 @@ import {useEffect, useRef, useState} from 'react'
 import type {DispatchReceipt} from '../inhabitants/sdk/shellSetters.ts'
 import {registerShellSetter} from '../inhabitants/sdk/shellSetters.ts'
 import {fireHarnessControlByKey, familyParamRows} from './agentNativeDispatch.ts'
+import {recordOwnerAccepted} from './devices/ownerAccepted.ts'
 import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
 import type {AgentShellState} from './AgentShellContext.tsx'
 import {atlasHandle, presentAtlasView} from '../projections/atlas/AtlasProjectionPanel.tsx'
@@ -63,9 +71,8 @@ export interface ShellSetterBridgeConfig {
    * value should reach), not a mount-time snapshot. */
   readonly transport: () => KernelTransportStatus
   readonly binding: () => string
-  /** The agent shell state: the bridge keeps each control's presentation
-   * true (the shell state remains the visible value) while the dispatch
-   * runs beside it. */
+  /** The agent shell state: the bridge moves a control's flag after the
+   * owner accepts the value, and not before. */
   readonly shell: Pick<AgentShellState, 'setEffort' | 'setSteer' | 'setHeartbeat' | 'setWriteArm' | 'setQuantize'> & {
     quantize: AgentShellState['quantize']
   }
@@ -79,7 +86,6 @@ export interface ShellSetterBridgeConfig {
  * path (registration replaces); returns an unregister (tests use it). */
 export function registerAgentShellSetters(config: ShellSetterBridgeConfig): () => void {
   const dispatchFor = async (family: string, key: string, presentation: () => void, value: unknown): Promise<DispatchReceipt> => {
-    presentation()
     const row = agentRow(family, key)
     if (!row) {
       const receipt: DispatchReceipt = {
@@ -94,7 +100,14 @@ export function registerAgentShellSetters(config: ShellSetterBridgeConfig): () =
     // fireWritePath would recurse through this very registry (the row's
     // writePath IS this setter). The key semantics are the dispatch's one
     // shared map, refusals included.
-    const receipt = await fireHarnessControlByKey(key, value, {transport: config.transport(), binding: config.binding(), ...(config.invoke ? {invoke: config.invoke} : {})})
+    const binding = config.binding()
+    const receipt = await fireHarnessControlByKey(key, value, {transport: config.transport(), binding, ...(config.invoke ? {invoke: config.invoke} : {})})
+    // The owner accepted: now the flag moves, and the Factory devices may read the value (an owner's acceptance is a reading).
+    // Refused — by the kernel, by the harness's own document, or by the dispatcher naming a presentation-state — nothing moves.
+    if (receipt.kind === 'fired') {
+      presentation()
+      recordOwnerAccepted(binding, key, value)
+    }
     config.onReceipt?.(receipt)
     return receipt
   }

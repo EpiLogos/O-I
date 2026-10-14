@@ -29,8 +29,9 @@ export function useAgentChainReading(sessionRef: string | null): {reading: Agent
       if (live) setReading(previous => ({...previous, waitingOn: {...previous.waitingOn, [key]: owner}}))
     }
     void (async () => {
-      // Another session's task record is not this one's: its budget and custody go back to unknown until this one answers.
-      update({budget: null, autonomy: null})
+      // Another session's task record is not this one's: its budget, custody and the agent's attachment go back to unknown until
+      // this one answers.
+      update({budget: null, autonomy: null, attached: null})
       if (transport.kind === 'unavailable') {
         const reason = transport.reason ?? 'Transport unavailable'
         update({
@@ -83,6 +84,9 @@ export function useAgentChainReading(sessionRef: string | null): {reading: Agent
           update({
             budget: read.used !== undefined || read.cap !== undefined ? {used: read.used, cap: read.cap} : null,
             autonomy: read.autonomy ?? null,
+            // The owner holds a task record for this session: that is the agent's light. A refusal or an empty answer says nothing
+            // about the agent, so it leaves the light dark rather than off.
+            attached: true,
           })
         }
       }
