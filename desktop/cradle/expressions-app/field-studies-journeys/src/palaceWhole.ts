@@ -162,12 +162,16 @@ export function palaceGuidedEdges(
 
 export type PalaceOpenRoute =
   | {kind: 'open'; instrument: TechneInstrument; ref: string}
+  | {kind: 'source'; ref: string}
   | {kind: 'refused'; reason: string};
 
 /** The route for one entry's Open. `wired` names the instruments this surface
- * can summon. An entry with no instrument surface says its depth stays in the
+ * can summon. A provenance entry opens the source surface (lane-5 T24): the
+ * frame's own source summon, which the host resolves against the current
+ * Scene. An entry with no instrument surface says its depth stays in the
  * palace; an unwired instrument is refused by name. */
 export function palaceOpenRoute(entry: PalaceRegionEntry, wired: ReadonlySet<string>): PalaceOpenRoute {
+  if (entry.kind === 'sources') return {kind: 'source', ref: entry.ref};
   if (!entry.open_instrument) {
     return {kind: 'refused', reason: `${entry.label} has no instrument surface — its depth stays in the palace`};
   }
@@ -182,9 +186,27 @@ export function palaceOpenRoute(entry: PalaceRegionEntry, wired: ReadonlySet<str
 export const PALACE_WIRED_INSTRUMENTS: ReadonlySet<string> = new Set(['expressions', 'project', 'canvas', 'timeline', 'journey', 'place']);
 
 /** The frame's request for a non-Expression instrument: the existing host-request instrument summon, which the host turns into its
- * own selectInstrument (expressions-boundary host.ts). It names the object ref it means; the host does not carry that ref yet. */
-export function palaceInstrumentOpenRequest(instrument: TechneInstrument, ref: string): {request: 'summon'; detail: {kind: 'instrument'; lens: TechneInstrument; ref: string}} {
-  return {request: 'summon', detail: {kind: 'instrument', lens: instrument, ref}};
+ * own selectInstrument (expressions-boundary host.ts) with the ref it names. A request with no ref asks for the instrument alone
+ * (the return to M0′ ground names no object), so no `ref` key is sent. */
+export function palaceInstrumentOpenRequest(instrument: TechneInstrument, ref?: string): {request: 'summon'; detail: {kind: 'instrument'; lens: TechneInstrument; ref?: string}} {
+  return {request: 'summon', detail: {kind: 'instrument', lens: instrument, ...(ref !== undefined ? {ref} : {})}};
+}
+
+/** The Palace's Expression subject a source summon carries: the same subject the frame's own source summon names
+ * (app.ts `summonSource`), so the host resolves the source inside the Scene the Palace is standing in. */
+export interface PalaceSourceSubject {expression_ref: string; revision: number; scene_ref: string; title: string}
+
+/** The frame's request for a provenance entry's source surface: the existing source summon, the same shape the frame sends from
+ * its own source affordances. The host resolves the ref against the current Scene; a ref outside it is refused by the owner. */
+export function palaceSourceOpenRequest(ref: string, subject: PalaceSourceSubject): {request: 'summon'; detail: {kind: 'source'; ref: string; subject: Record<string, unknown>}} {
+  return {
+    request: 'summon',
+    detail: {
+      kind: 'source',
+      ref,
+      subject: {ref: subject.expression_ref, kind: 'expression', nativeOwner: 'oi', revision: subject.revision, title: subject.title, sceneRef: subject.scene_ref, entityRef: null, relationRef: null},
+    },
+  };
 }
 
 // ---------------------------------------------------------------------------

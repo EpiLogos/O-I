@@ -51,7 +51,9 @@ export interface PalacePresenceEntry {
   walk_index?: number;
   placements: Partial<Record<PalaceRegionKey, {ref: string; locus: PalaceLocus}[]>>;
   expressions: {expression_ref: string; locus: PalaceLocus}[];
-  bookmarks: {region: PalaceRegionKey; ref: string; locus: PalaceLocus | null}[];
+  /** lane-5 T24: a bookmark's name and board viewport are optional: rows saved before naming load exactly as they were. Absent
+   * altogether in an entry that predates bookmarks, which then restores with none. */
+  bookmarks?: {region: PalaceRegionKey; ref: string; locus: PalaceLocus | null; name?: string; viewport?: {x: number; y: number; zoom: number}}[];
   /** lane-5 T15: the board's held points, keyed by studio region name. Absent in entries saved before the board. */
   board?: Record<string, {x: number; y: number}>;
   /** lane-5 T15: the board's pan and zoom. Absent in entries saved before the board. */
@@ -115,10 +117,15 @@ function validEntry(value: unknown, subject: string, key: string): PalacePresenc
   for (const row of value.expressions) {
     if (!isObject(row) || !isText(row.expression_ref) || !isLocus(row.locus)) return null;
   }
-  if (!Array.isArray(value.bookmarks)) return null;
-  for (const row of value.bookmarks) {
-    if (!isObject(row) || !isRegionKey(row.region) || !isText(row.ref)) return null;
-    if (row.locus !== null && !isLocus(row.locus)) return null;
+  // lane-5 T24: bookmarks may be absent (an entry that predates them); a present row's name and viewport are checked when given.
+  if (value.bookmarks !== undefined) {
+    if (!Array.isArray(value.bookmarks)) return null;
+    for (const row of value.bookmarks) {
+      if (!isObject(row) || !isRegionKey(row.region) || !isText(row.ref)) return null;
+      if (row.locus !== null && !isLocus(row.locus)) return null;
+      if (row.name !== undefined && !isText(row.name)) return null;
+      if (row.viewport !== undefined && !isViewport(row.viewport)) return null;
+    }
   }
   // lane-5 T15: optional board fields. A non-finite board point refuses the whole entry (refusedBoardPoint names it); an absent field is an older entry, accepted unchanged.
   if (value.board !== undefined) {
@@ -187,7 +194,13 @@ function encode(composition: PalaceComposition, reading: TechneReading): PalaceP
     ...(composition.walk_index !== undefined ? {walk_index: composition.walk_index} : {}),
     placements,
     expressions: composition.expressions.placements.map((row) => ({expression_ref: row.expression_ref, locus: structuredClone(row.locus)})),
-    bookmarks: composition.bookmarks.map((bookmark) => ({region: bookmark.region, ref: bookmark.ref, locus: structuredClone(bookmark.locus)})),
+    bookmarks: composition.bookmarks.map((bookmark) => ({
+      region: bookmark.region,
+      ref: bookmark.ref,
+      locus: structuredClone(bookmark.locus),
+      ...(bookmark.name !== undefined ? {name: bookmark.name} : {}),
+      ...(bookmark.viewport ? {viewport: {x: bookmark.viewport.x, y: bookmark.viewport.y, zoom: bookmark.viewport.zoom}} : {}),
+    })),
     ...(composition.board ? {board: copyBoard(composition.board)} : {}),
     ...(composition.viewport ? {viewport: {x: composition.viewport.x, y: composition.viewport.y, zoom: composition.viewport.zoom}} : {}),
   };
@@ -220,7 +233,11 @@ export function savePalaceComposition(storage: PresenceStorage | null, compositi
     const {entries} = readEntries(storage);
     const next: Record<string, PalacePresenceEntry> = {};
     for (const [key, entry] of Object.entries(entries)) if (!key.startsWith(`${subject}${NUL}`)) next[key] = entry;
-    next[palaceBasis(reading)] = encode(composition, reading);
+    // Saved by the same predicate it is loaded by: an entry the next load would refuse (a non-finite board point, a bad viewport or
+    // bookmark) is never written, so one bad reading cannot void the saved walk, bookmarks and placements. The last good entry stands.
+    const key = palaceBasis(reading), entry = encode(composition, reading);
+    if (validEntry(JSON.parse(JSON.stringify(entry)), subject, key) === null) return false;
+    next[key] = entry;
     storage.setItem(PALACE_PRESENCE_KEY, JSON.stringify(next));
     return true;
   } catch {
@@ -249,9 +266,15 @@ function applyEntry(base: PalaceComposition, entry: PalacePresenceEntry): Palace
       return locus ? {expression_ref: placement.expression_ref, locus: structuredClone(locus)} : placement;
     }),
   };
-  const bookmarks: PalaceBookmark[] = entry.bookmarks
+  const bookmarks: PalaceBookmark[] = (entry.bookmarks ?? [])
     .filter((row) => present.has(row.ref) && base.regions.some((region) => region.key === row.region && region.entries.some((candidate) => candidate.ref === row.ref)))
-    .map((row) => ({region: row.region, ref: row.ref, locus: row.locus === null ? null : structuredClone(row.locus)}));
+    .map((row) => ({
+      region: row.region,
+      ref: row.ref,
+      locus: row.locus === null ? null : structuredClone(row.locus),
+      ...(row.name !== undefined ? {name: row.name} : {}),
+      ...(row.viewport ? {viewport: {x: row.viewport.x, y: row.viewport.y, zoom: row.viewport.zoom}} : {}),
+    }));
   return {
     ...base,
     bound: entry.bound,
