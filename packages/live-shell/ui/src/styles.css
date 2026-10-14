@@ -1,5 +1,5 @@
-/* UI-EVIDENCE.md, rev 1: measured region/density/colour facts. Original glyphs; no captured assets. */
-:root { --bg-0:#3f4348; --bg-1:#33363b; --bg-2:#43464c; --bg-3:#51565d; --line:#292c31; --line-strong:#656a70; --text:#e0e0dc; --text-dim:#b8bbb9; --text-faint:#919693; --accent:#ffbe00; --accent-dim:#b09035; --rec:#df716c; --font-ui:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; }
+/* The DLW mockup's colours (world-shell-mockup.html :root, the craft floor — owner, 14 Oct: "mockups are the minimal standard"); they replace UI-EVIDENCE.md rev 1's measured Live greys. Original glyphs; no captured assets. */
+:root { --bg-0:#26292d; --bg-1:#33363b; --bg-2:#3f4348; --bg-3:#4a4e54; --surface:#43464c; --line:#24262a; --line-strong:#3d4147; --text:#d4d7da; --text-dim:#a2a7ad; --text-faint:#71767c; --accent:#ffbe00; --accent-dim:#b09035; --accent-soft:rgba(255,190,0,.13); --sel:#7ec3e6; --rec:#e0523f; --green:#8fd0a8; --stall:#ff9b4a; --mono:ui-monospace,'SF Mono',Menlo,monospace; --font-ui:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif }
 * { box-sizing:border-box }
 html,body,#root { height:100%; margin:0 }
 body { background:var(--bg-0); color:var(--text); font:11px/1.35 var(--font-ui); overflow:hidden; -webkit-font-smoothing:antialiased }
