@@ -32,7 +32,7 @@ export function isEmpty(f: FieldFilter): boolean {
 export function passes(o: Occurrence, f: FieldFilter, tags?: OccurrenceTags): boolean {
   if (f.works?.length && !o.cites.some((c) => f.works!.includes(c.work))) return false;
   if (f.cultures?.length && !o.cultureIds.some((c) => f.cultures!.includes(c))) return false;
-  if (f.era && (o.year < f.era[0] || o.year > f.era[1])) return false;
+  if (f.era && (o.dated === false || o.year < f.era[0] || o.year > f.era[1])) return false; // [§8.4 host] an undated occurrence is in no era
   if (f.kinds?.length && !f.kinds.includes(o.locusType)) return false;
   if (f.archetypes?.length && !(tags?.archetypes ?? []).some((id) => f.archetypes!.includes(id))) return false;
   if (f.theoretics?.length && !(tags?.theoretics ?? []).some((id) => f.theoretics!.includes(id))) return false;

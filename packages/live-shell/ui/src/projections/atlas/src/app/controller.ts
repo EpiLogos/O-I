@@ -806,7 +806,7 @@ export class Controller {
     this.chronoKey = key;
     if (!subject) { this.engine.arcs.clearChronology(); return; }
     const m = this.m;
-    const idx = subjectOccurrences(m, subject);
+    const idx = subjectOccurrences(m, subject).filter((i) => m.u[i] >= 0); // [§8.4 host] a chronology is in date order: an undated occurrence has no place in it
     const path = chronologyPath(idx.map((i) => ({ u: m.u[i], dir: m.dir[i] })));
     const steps = path.map((k) => idx[k]);
     this.engine.arcs.buildChronology(steps.map((i) => m.dir[i]), steps.map((i) => m.u[i]), this.subjectPal(subject).core);
@@ -818,7 +818,7 @@ export class Controller {
     if (i === undefined) return;
     this.time.pause();
     this.time.setCumulative(false);
-    this.time.glideTo(this.m.u[i]);
+    if (this.m.u[i] >= 0) this.time.glideTo(this.m.u[i]); // [§8.4 host] an undated folio has no year to glide to
   }
 
   /** Leave Aion's mode: its view, the time range it set, and the clock it held. */
@@ -2557,7 +2557,7 @@ export class Controller {
       this.tour.timer = 2.7;
     });
     this.time.setCumulative(true);
-    this.time.glideTo(m.u[step.occ] + DEFAULT_RAMP * 1.6);
+    if (m.u[step.occ] >= 0) this.time.glideTo(m.u[step.occ] + DEFAULT_RAMP * 1.6); // [§8.4 host] an undated step has no time to glide to
     e.arcs.uniforms.uTour.value = 1;
     e.markers.head.show(m.dir[step.occ], this.engine.palette.core);
     // an unmoving flight (same spot) never fires onFlyEnd

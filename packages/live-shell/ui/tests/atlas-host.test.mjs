@@ -140,7 +140,7 @@ test('the panel loads the atlas lazily, writes no storage of its own, and reimpl
   const code = source.split('\n').filter(line => !/^\s*\/\//.test(line)).join('\n')
   const storageUses = code.match(/localStorage|sessionStorage|indexedDB/g) ?? []
   assert.equal(storageUses.length, 1, 'the only browser-storage reference is the workspace area lookup')
-  assert.match(code, /import\('\.\/provider\/archetypalEarthProvider'\)/, 'the provider loads with the atlas, not with the shell')
+  assert.match(code, /import\('\.\/provider\/suiteProvider'\)/, 'the provider loads with the atlas, not with the shell')
   assert.match(code, /import\('\.\/mount'\)/, 'the atlas loads on first view')
   assert.match(code, /mounted\.ctl\.toggleMode\(\)/, 'the Earth ⇄ Graph switch is the controller\'s own toggle')
   assert.doesNotMatch(code, /new GlobeEngine|new Controller|\.navigate\(/, 'nothing of the atlas is reimplemented here')
