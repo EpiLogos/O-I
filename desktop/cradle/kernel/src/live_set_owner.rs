@@ -247,6 +247,30 @@ mod tests {
 
     #[cfg(unix)]
     #[test]
+    fn a_read_only_or_hard_linked_set_is_refused_and_left_as_it_was() {
+        use std::os::unix::fs::PermissionsExt;
+        let locked = fixture("read-only");
+        params(&locked);
+        std::fs::set_permissions(&locked, std::fs::Permissions::from_mode(0o444)).unwrap();
+        let before = std::fs::read(&locked).unwrap();
+        let refused = write(&locked, "Threshold", json!(0.25)).unwrap_err();
+        assert!(refused.contains("read-only"), "{refused}");
+        assert_eq!(std::fs::read(&locked).unwrap(), before);
+        std::fs::set_permissions(&locked, std::fs::Permissions::from_mode(0o644)).unwrap();
+        std::fs::remove_file(&locked).unwrap();
+
+        let linked = fixture("hard-linked");
+        let other = format!("{linked}.other.als");
+        std::fs::hard_link(&linked, &other).unwrap();
+        params(&linked);
+        let refused = write(&linked, "Threshold", json!(0.25)).unwrap_err();
+        assert!(refused.contains("hard links"), "{refused}");
+        std::fs::remove_file(&other).unwrap();
+        std::fs::remove_file(&linked).unwrap();
+    }
+
+    #[cfg(unix)]
+    #[test]
     fn a_symlinked_set_is_written_at_its_target_and_the_link_stays() {
         let target = fixture("linked-target");
         let link = format!("{target}.link.als");
