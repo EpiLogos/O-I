@@ -261,10 +261,14 @@ function ThreadView({pane}: {pane: FocusedPane}) {
 function ExpressionView() {
   const reading = useContext(Workspace)?.reading
   const scene = reading?.nativeScene
+  // The rows read a native work's Scene only: with none open the frame stands on its own local scene, which is no work of
+  // the owner's (the pane says "No Expression is open"), so the rows say so rather than name it.
+  const sceneName = scene ? reading?.sceneName : undefined
+  const sceneState = scene ? reading?.sceneState : undefined
   return <>
-    <Row k="Scene" info={reading?.sceneName ? `The open Scene${scene ? ` (${scene.scene_ref}, revision ${scene.revision})` : ''}.` : 'No Expression has reported its Scene yet.'}>{reading?.sceneName ?? '—'}</Row>
-    <Row k="State" info={reading?.sceneState ? `The Scene's standing: ${reading.sceneState}.` : 'No Expression has reported its standing yet.'}>
-      <span style={{color: toneOf(reading?.sceneState?.toLowerCase())}}>{reading?.sceneState ?? '—'}</span></Row>
+    <Row k="Scene" info={sceneName ? `The open Scene (${scene!.scene_ref}, revision ${scene!.revision}).` : 'No native Expression is open: the frame stands on its own scene, which is no work of yours.'}>{sceneName ?? '—'}</Row>
+    <Row k="State" info={sceneState ? `The Scene's standing: ${sceneState}.` : 'No native Expression is open.'}>
+      <span style={{color: toneOf(sceneState?.toLowerCase())}}>{sceneState ?? '—'}</span></Row>
   </>
 }
 
