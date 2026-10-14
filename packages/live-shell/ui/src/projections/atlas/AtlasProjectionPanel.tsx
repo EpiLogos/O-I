@@ -19,8 +19,33 @@ import type {AionEpochJump} from './aionTimeline'
 import type {History} from './src/types/history'
 import type {AtlasHandle} from './mount'
 import {disclosureSession} from '../../../../../../desktop/cradle/src/techne/session'
-import {bindSharedTimeClock} from './sharedClock'
+import {bindSharedTimeClock, windowYear} from './sharedClock'
 import './atlasHost.css'
+
+/** The year the Earth shows, from the shared window: null while no window is in force (all time). */
+function shownYearNow(): number | null {
+  const year = windowYear(disclosureSession.get()?.time_window ?? null)
+  return year === null ? null : Math.round(year)
+}
+
+/** The Earth's own status line for the Sun: the existing `atlas-host-status` surface, one element per attachment. */
+function sunLine(element: HTMLElement): (text: string | null) => void {
+  let line: HTMLParagraphElement | null = null
+  return text => {
+    if (text === null) {
+      line?.remove()
+      line = null
+      return
+    }
+    if (!line) {
+      line = document.createElement('p')
+      line.className = 'atlas-host-status'
+      line.setAttribute('role', 'status')
+      element.append(line)
+    }
+    line.textContent = text
+  }
+}
 
 export type AtlasView = 'earth' | 'graph'
 
@@ -237,11 +262,10 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {controllerS
   // The corpus is read before the controller mounts, so an unavailable bundle fails while nothing is bound yet.
   const provider = archetypalEarthProvider(transport)
   const loaded = await provider.load()
-  // T6: the QL family's adapter admits the owner's stated subsolar point of the current sky, read through the kernel,
-  // before the Earth stands. Absence is kept and logged with the reason; the Earth draws without the Sun.
-  const {admitDatedSubsolar} = await import('../../inhabitants/qlSkyEarthAdapter')
-  const sun = await admitDatedSubsolar(loaded.field, transport, new Date())
-  if (!sun.placed) console.warn(`The Sun is not placed on the Earth: ${sun.reason}`)
+  // T6: the QL family's adapter admits the owner's stated subsolar point for the instant the Earth shows (the shared
+  // window's year; the present while no window is in force), read through the kernel before the Earth stands.
+  const {admitDatedSubsolar, shownInstantOf, sunStanding} = await import('../../inhabitants/qlSkyEarthAdapter')
+  const sun = await admitDatedSubsolar(loaded.field, transport, shownInstantOf(shownYearNow(), new Date()))
   const bundle = {...loaded, field: sun.field}
   registerCorpusProvider({...provider, load: async () => bundle}, {asDefault: true})
   progress.controllerStarted = true
@@ -249,6 +273,12 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {controllerS
   const mounted: AtlasHandle = await mountAtlas({globe, app, provider: ARCHETYPAL_EARTH_PROVIDER_ID,
     clock: (time, scale) => bindSharedTimeClock({store: disclosureSession, time, scale})})
   publishAtlasHandle(mounted)
+  // The Sun's standing is stated on the Earth itself, and kept current as the shared window moves. The Sun is read once
+  // (the drawn model holds it), so a window that moves on states that the Sun is not redrawn for the instant shown.
+  const setSunLine = sunLine(element)
+  const stateSun = () => setSunLine(sunStanding(sun, shownYearNow()))
+  stateSun()
+  const unsubscribeSun = disclosureSession.subscribe(stateSun)
   // The reading the atlas holds is the World's Aion source, by reference, from the moment it stands.
   publishAtlasAionReading(bundle.history ? {providerId: ARCHETYPAL_EARTH_PROVIDER_ID, history: bundle.history} : null)
 
@@ -280,6 +310,8 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {controllerS
   const unmount = () => {
     if (retired) return
     retired = true
+    unsubscribeSun()
+    setSunLine(null)
     publishAtlasAionReading(null)
     publishAtlasHandle(null)
     observer?.disconnect()
