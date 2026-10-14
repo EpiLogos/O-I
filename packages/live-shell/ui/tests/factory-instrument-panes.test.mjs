@@ -153,7 +153,9 @@ test('the native.agent centre panel no longer mounts a second agent body', () =>
 test('Factory opens with the agent tab focused, and every agent-shell chrome piece stands over the tree', async () => {
   const {activeBindingId} = engine
   assert.equal(activeBindingId(seedFactoryCentre(freshLayout())), AGENT_SHELL_ID, 'the agent tab is the focused default')
-  for (const piece of ['<AgentShellTransportBridge', '<AgentStatusBarBridge', '<AgentContextDock']) {
+  // The agent dock's tiles are widgets of the one rail (F8), registered in shell/widgets.tsx.
+  assert.match(await readFile(new URL('../src/shell/widgets.tsx', import.meta.url), 'utf8'), /AgentDockTileBody id=\{id\}/)
+  for (const piece of ['<AgentShellTransportBridge', '<AgentStatusBarBridge']) {
     assert.ok(app.includes(piece), `${piece} is still rendered by App`)
   }
   // The agent browser's rows are Factory's in the one browser (F6): registered, never a residence of their own.

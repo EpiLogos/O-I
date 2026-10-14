@@ -98,13 +98,12 @@ converges, commits and keeps this table true. Tickets and resolutions live in `t
 
 | Ticket | Who | Zone | Since |
 |---|---|---|---|
-| T-DEVICES-CENTRAL (Central's devices on the runtime) | Sonnet builder | `central/devices/**`, `BaseDevicesDetail` in `shell/ModeDetail.tsx` | 14 Oct |
-| T-DEVICES-TECHNE (QL, atlas and knowledge faces on the runtime) | Sonnet builder | `inhabitants/ql/devices/**`, `TechneInstrumentsDetail` + `InstrumentDeviceDetail` in `shell/ModeDetail.tsx` | 14 Oct |
-| T-DEVICES-FACTORY (the agent chain and skills rack on the runtime) | Sonnet builder | `agent/devices/**`, `agent/AgentShellDeviceDetail.tsx` | 14 Oct |
 | T-DEVICES-EXPRESSIONS (the field devices on the runtime) | Sonnet builder | `components/devices/**`, `components/NativeDeviceRack.tsx` | 14 Oct |
-| T-TRACKS-TECHNE (readings as tracks, walks as stops) | Sonnet builder | `timeline/techneTrackAdapter.ts`, `frame/tracks/useTechneTracks.ts` | 14 Oct |
-| T-TRACKS-VIEWS (the shared grid and ruler at the craft floor) | Sonnet builder | `frame/tracks/SessionGrid.tsx`, `ArrangementRuler.tsx`, `tracks.css`, additive fields in `worldTrackAdapter.ts` | 14 Oct |
-| F1–F6 native screen check; F6 the one browser; F7–F9 | lead | the frame, `frame/**`, `shell/**`, `App.tsx`, the four browsers' row bodies, the cradle engine's pane grammar | 14 Oct |
+| T-TRANSPORT-BINDINGS (Factory's and Expressions' controls on the one bar) | Sonnet builder | `shell/transports/**` | 14 Oct |
+| F9 keys | Sonnet builder | `frame/keys/**` (the lead mounts it) | 14 Oct |
+| Unreached-code sweep (FOUNDATION §7) | Sonnet builder | unreached, unmodified tracked files under `packages/live-shell/ui/src` and their tests | 14 Oct |
+| R2 review of F0–F8 and the track/device wave | Sonnet reviewer | read-only | 14 Oct |
+| Native screen check of F1–F8; F7's fold-in of the two bars; N1, N2 | lead | the frame, `frame/**`, `shell/**`, `App.tsx`, the book (`desktop/cradle/src/workspace/store.ts`) | 14 Oct |
 
 Landed on `dlw/build` this run (14 Oct): F0 (the switchboard tripwire — App.tsx
 mode branches 58 → 26, detail residences 6 → 1, per-mode bodies 21 → 10 — and
@@ -123,7 +122,17 @@ Factory's sessions on the one grid and ruler; the sessions provider mounted once
 above the App); F6 (one browser: the four kinds, one search, one pool; the four
 old browsers are row bodies under its control, registered per mode in
 `shell/modeBrowsers.tsx`; App.tsx mode branches 26 → 23, browser residences
-3 → 1, per-mode bodies 10 → 6).
+3 → 1, per-mode bodies 10 → 6). T-TRACKS-TECHNE and T-TRACKS-VIEWS (Technē's six streams with
+walk stops as rows on one ruler; the grid folds groups with ancestor rails, rolls
+up, lights a retry on a stalled lane, shows receipts; the ruler keeps a fixed
+window with a now line and stalled needles); T-DEVICES-CENTRAL, -TECHNE and
+-FACTORY (every Central, QL, atlas, knowledge and agent face a device on the one
+runtime, InhabitantRack no longer reached; the steer setter sends its word, not a
+boolean); F7's one bar (28 slots, Live's places, the cut's marks; Live, Central
+and Technē bound; Factory's and Expressions' bars stand until their bindings
+land); F8 (one widget rail: every tile of both docks a widget, one open set in
+the book for the whole world, pins and presets; dock residences 2 → 1,
+per-mode bodies 6 → 4).
 
 Open, owned by the lead: N1 (the kernel's works need a persistent home before
 Open can save a file); the knowledge panel (`world.knowledge`) still stands over
