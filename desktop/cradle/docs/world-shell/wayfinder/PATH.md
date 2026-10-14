@@ -132,6 +132,11 @@ Native: the 14 Oct build at `3a619dbb8` was sealed and read back (3 of 6
 owners admitted); computer-use access was refused (third time), so no
 screen pass has run. Every target above is scripted and source-read only.
 
+Install seam, what waits on it: the native torus (no ql-field-host in the active suite's QL), the mode
+catalogue (`ql music modes`, QL-MEF #330) and lane-4 T27's terminator (QL's sky snapshot states its
+subsolar point since QL-MEF #328, `providers/sky/kerykeion_snapshot.py`; the frame reads `sky.subsolar`).
+All three are built on both sides and flow once the active suite carries QL main.
+
 Install seam (14 Oct): `oi update --apply quaternal-logic` installed QL main
 with every companion, but `oi where` — what the kernel reads — answers from
 the active suite receipt (QL 4276b94, no field host). Handed off as its own
