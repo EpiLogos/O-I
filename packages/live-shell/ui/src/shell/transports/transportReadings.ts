@@ -197,6 +197,8 @@ export function centralBindings(input: {
   readouts?: Partial<Record<string, Readout>>
   turn?: (direction: 1 | -1) => void
   turned?: string | null
+  /** The document the hand last reached in a pane (central/documents/documentDoor.ts): its save standing is the Load slot. */
+  document?: {form: string; title: string; state: string; revision?: string} | null
 }): TransportBindings {
   const die = dayDieOf(input.ground, input.groundError)
   const faces = dieReadouts(die)
@@ -218,7 +220,17 @@ export function centralBindings(input: {
     ...(sized.key ? {key: {readout: sized.key}} : sized.refused ? {key: {title: `Packet tokens — the packet's size. ${sized.refused}`}} : {}),
     ...(sized.scale ? {scale: {readout: sized.scale}} : {}),
     ...(carrier ? {rate: {readout: carrier}} : {}),
+    ...(input.document ? {cpu: {readout: documentLoad(input.document)}} : {}),
   }
+}
+
+/** Whether the document is saved (Central's Load slot, the mockup's `edited`): the reached document's standing in one word,
+ * its full words and revision in the title. */
+export function documentLoad(document: {form: string; title: string; state: string; revision?: string}): Readout {
+  const word = document.state.startsWith('edited') ? 'edited' : document.state.startsWith('waiting') ? 'saving…'
+    : document.state.startsWith('saved') ? 'saved' : document.state.startsWith('unchanged') ? 'saved'
+    : document.state.startsWith('as read') ? 'as read' : document.state.split(' — ')[0]
+  return {value: word, title: `Save state — the ${document.form} ${document.title}${document.revision ? ` at r${document.revision.slice(0, 12)}` : ''}: ${document.state}`}
 }
 
 // ————————————————————————————————————————————————————————————————————————

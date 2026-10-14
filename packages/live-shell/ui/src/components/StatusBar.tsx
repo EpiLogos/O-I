@@ -8,6 +8,7 @@ import {Icon} from './Icon'
 import {RunContextReading} from '../shell/runContext'
 import {parseDataI, type DataIStatusInfo} from '../agent/statusInfo'
 import {useFoundationPending} from '../native/foundationDoor'
+import {apertureWords, useWorkbenchAperture} from '../native/workbenchDoor'
 
 /** The Info line's words with nothing read yet (Live's Info view; the mockup's `#info`). */
 export const INFO_IDLE = 'Hover anything to read what it does.'
@@ -46,6 +47,7 @@ export function useInfoView(): DataIStatusInfo | null {
 
 export function StatusBar({ state, documentError, viewport, selectedTrack, audio, mode, reading, detailMode, changeDetailMode, agentInfo }: { state: UseSet; documentError: string | null; viewport: number[]; selectedTrack?: string; audio: boolean; mode: string; reading: HostedAppState | null; detailMode: DetailMode; changeDetailMode: (mode: DetailMode) => void; agentInfo?: { label: string; fn: string } | null; /** The presentation that stands (kept for the callers; the title line now names the work). */ presentedView?: 'session' | 'arrangement' | null; /** The Base mode's selected ground subject (kept for the callers; THE selection now stands in the title line). */ subjectLabel?: string }) {
   const { set, path, error, loading } = state
+  const aperture = useWorkbenchAperture()
   // The detail row's pair is per mode (WORLD-SHELL-DESIGN Rev 4): Clip |
   // Device in Live, Document | Devices in Base·Central, Task log | Agent
   // chain in Factory, Scene | Studio in Expressions, Clip | Instruments in
@@ -73,6 +75,7 @@ export function StatusBar({ state, documentError, viewport, selectedTrack, audio
     {audio && set && <span className="statusbar-counts" title={set.path}>{set.tracks.length} tracks · {set.scene_count} scenes · {set.arrangement_clips} clips</span>}
     {track && <span className="statusbar-track" title={track}>{track}</span>}
     {!audio && status?.snapshot && reading?.sceneState && <span className="statusbar-counts" title="Current Scene snapshot; file-save standing appears in the native Save control">Snapshot: {reading.sceneState === 'Edited since save' ? 'edited' : reading.sceneState === 'Draft' ? 'none' : 'saved'}{reading.nativeScene ? ` · revision ${reading.nativeScene.revision}` : ''}</span>}
+    {aperture && <span className="statusbar-counts statusbar-aperture" data-i={`Aperture|${aperture.pinned ? 'panes pinned to their own subject' : 'every pane follows the shared encounter'} — ${aperture.panes} pane${aperture.panes === 1 ? '' : 's'} in the centre`}>{apertureWords(aperture)}</span>}
     {/* The run context stands in every mode: which world this shell runs in, from the host's own disclosure. */}
     <RunContextReading />
     <nav className="status-detail-views" aria-label="Detail view">

@@ -26,7 +26,7 @@ import {bindScopeWriter, publishScope, publishFocusedProject, scopeFromWorkspace
 import {FactoryLiveProvider} from '../../../../../desktop/cradle/src/contributions/factory/FactoryLive'
 import {publishCentreView} from '../../../../../desktop/cradle/src/contributions/factory/desk/deskModel'
 import {registeredHostedSurfaces} from '../../../../../desktop/cradle/src/contributions/generated'
-import {publishWorkbenchOpeners} from './workbenchDoor'
+import {publishWorkbenchAperture, publishWorkbenchOpeners} from './workbenchDoor'
 import {withHostedDescriptor} from '../../../../../desktop/cradle/src/contributions/registry'
 import {DOCUMENT_FORMS} from '../../../../../desktop/cradle/src/flow/documentForms'
 import {createFormInPlace} from '../../../../../desktop/cradle/src/flow/createInPlace'
@@ -131,6 +131,13 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
     return () => observer.disconnect()
   }, [])
   useEffect(() => {restore.current = checkpoint(book.current.layout); setMenu(null)}, [book.current.id, book.current.layout.mode])
+  // The status bar reads the aperture the panes stand in: the panes the tree holds, and those pinned to their own subject.
+  useEffect(() => {
+    const layout = book.current.layout
+    const groups = groupsOf(layout.root).filter(group => group.tabs.length > 0)
+    const pinned = groups.filter(group => {const id = group.active ?? group.tabs[0]; return !!(id && layout.surfaces[id]?.projection?.subject_ref)}).length
+    publishWorkbenchAperture(presented ? {panes: groups.length, pinned} : null)
+  }, [book.current.layout, presented])
   // The pane tree is the centre in every mode (FOUNDATION F2): a mode's first tree is seeded from its registration
   // (shell/modeFrames.ts MODE_TREE_SEEDS — Factory's pinned agent tab, the others' instruments); a seed never touches a tree
   // that already holds the mode's own arrangement.
