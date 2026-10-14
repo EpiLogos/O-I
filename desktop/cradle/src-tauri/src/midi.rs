@@ -1,6 +1,7 @@
-//! MIDI input for the Jankó keyboard (T-LIVE-MIDI, first leg). The native host opens the MIDI inputs the system offers (midir;
+//! MIDI input for the Jankó keyboard and the MIDI map (T-LIVE-MIDI). The native host opens the MIDI inputs the system offers (midir;
 //! CoreMIDI on macOS), follows ports as they appear and disappear, and sends each note-on and note-off to the shell window as the
-//! `oi://midi-note` event. The shell hands every note to the one Jankó input path; nothing here decides what sounds.
+//! `oi://midi-note` event, and each control change as `oi://midi-cc`. The shell hands every note to the one Jankó input path and every
+//! control to the MIDI map; nothing here decides what sounds or what a control moves.
 //!
 //! Latency: the CoreMIDI callback only decodes three bytes and queues a small value. A forwarder thread drains what has queued and
 //! emits it as one event, so notes that arrived together reach the shell in one task: one chord, one owner act.
@@ -14,6 +15,9 @@ use tauri::{AppHandle, Emitter, Manager};
 
 /// The notes: an array, one entry per decoded message, in arrival order.
 pub const NOTE_EVENT: &str = "oi://midi-note";
+/// The control changes (T-LIVE-MIDI leg 2): an array, one entry per decoded controller message, in arrival order. A sibling of the notes,
+/// so a note batch keeps its shape; a drain that carries only controls emits only this event.
+pub const CONTROL_EVENT: &str = "oi://midi-cc";
 /// The ports the host hears, with a named refusal when it could not open some or any of them.
 pub const PORTS_EVENT: &str = "oi://midi-ports";
 /// The one window that plays the Jankó keyboard. Detached surfaces receive no MIDI, so a note is never struck twice.
@@ -29,6 +33,45 @@ pub struct NoteMessage {
     pub note: u8,
     pub velocity: u8,
     pub on: bool,
+}
+
+/// One channel controller message (control change, 0xBn). `controller` is the wire controller number (0 to 119); `value` is 0 to 127.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct ControlMessage {
+    pub channel: u8,
+    pub controller: u8,
+    pub value: u8,
+}
+
+/// One decoded channel message the host forwards: a note, or a control change.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum MidiMessage {
+    Note(NoteMessage),
+    Control(ControlMessage),
+}
+
+/// Decode one complete MIDI message as the host forwards it: a note when it is one, else a control change when it is one, else nothing.
+pub fn decode_message(bytes: &[u8]) -> Option<MidiMessage> {
+    decode(bytes)
+        .map(MidiMessage::Note)
+        .or_else(|| decode_control(bytes).map(MidiMessage::Control))
+}
+
+/// Decode one channel control change (0xBn controller value). Controllers 120 to 127 are channel mode messages (all notes off, reset
+/// controllers and the like), not controls a parameter can be mapped to, so they decode to `None` with the rest of the non-controls.
+pub fn decode_control(bytes: &[u8]) -> Option<ControlMessage> {
+    if bytes.len() != 3 {
+        return None;
+    }
+    let (status, controller, value) = (bytes[0], bytes[1], bytes[2]);
+    if status & 0xF0 != 0xB0 || controller > 119 || value > 127 {
+        return None;
+    }
+    Some(ControlMessage {
+        channel: status & 0x0F,
+        controller,
+        value,
+    })
 }
 
 /// Decode one complete MIDI message. Only channel note-off (0x8n) and note-on (0x9n) are notes, and a note-on at velocity 0 is a
@@ -68,9 +111,15 @@ pub struct MidiHost {
 }
 
 /// A decoded message on its way from the CoreMIDI thread to the forwarder.
-struct Heard {
-    port: Arc<str>,
-    message: NoteMessage,
+enum Heard {
+    Note {
+        port: Arc<str>,
+        message: NoteMessage,
+    },
+    Control {
+        port: Arc<str>,
+        message: ControlMessage,
+    },
 }
 
 #[derive(Serialize, Clone)]
@@ -80,6 +129,14 @@ struct NoteEvent<'a> {
     note: u8,
     velocity: u8,
     on: bool,
+}
+
+#[derive(Serialize, Clone)]
+struct ControlEvent<'a> {
+    port: &'a str,
+    channel: u8,
+    controller: u8,
+    value: u8,
 }
 
 /// Start the MIDI listener: the forwarder that emits the notes, and the scanner that follows the system's ports.
@@ -111,15 +168,35 @@ fn forward(app: AppHandle, rx: Receiver<Heard>) {
         }
         let notes: Vec<NoteEvent<'_>> = batch
             .iter()
-            .map(|heard| NoteEvent {
-                port: &heard.port,
-                channel: heard.message.channel,
-                note: heard.message.note,
-                velocity: heard.message.velocity,
-                on: heard.message.on,
+            .filter_map(|heard| match heard {
+                Heard::Note { port, message } => Some(NoteEvent {
+                    port,
+                    channel: message.channel,
+                    note: message.note,
+                    velocity: message.velocity,
+                    on: message.on,
+                }),
+                Heard::Control { .. } => None,
             })
             .collect();
-        let _ = app.emit_to(SHELL_WINDOW, NOTE_EVENT, notes);
+        if !notes.is_empty() {
+            let _ = app.emit_to(SHELL_WINDOW, NOTE_EVENT, notes);
+        }
+        let controls: Vec<ControlEvent<'_>> = batch
+            .iter()
+            .filter_map(|heard| match heard {
+                Heard::Control { port, message } => Some(ControlEvent {
+                    port,
+                    channel: message.channel,
+                    controller: message.controller,
+                    value: message.value,
+                }),
+                Heard::Note { .. } => None,
+            })
+            .collect();
+        if !controls.is_empty() {
+            let _ = app.emit_to(SHELL_WINDOW, CONTROL_EVENT, controls);
+        }
     }
 }
 
@@ -143,7 +220,7 @@ mod backend {
 
     use midir::{MidiInput, MidiInputConnection};
 
-    use super::{decode, Heard, PortsState, CLIENT_NAME};
+    use super::{decode_message, Heard, MidiMessage, PortsState, CLIENT_NAME};
 
     /// The open inputs, keyed by midir's stable port id. Each keeps the name it was opened under.
     #[derive(Default)]
@@ -210,13 +287,22 @@ mod backend {
             .connect(
                 &port,
                 CLIENT_NAME,
-                move |_stamp: u64, bytes: &[u8], port_name: &mut Arc<str>| {
-                    if let Some(message) = decode(bytes) {
-                        let _ = tx.send(Heard {
+                move |_stamp: u64, bytes: &[u8], port_name: &mut Arc<str>| match decode_message(
+                    bytes,
+                ) {
+                    Some(MidiMessage::Note(message)) => {
+                        let _ = tx.send(Heard::Note {
                             port: Arc::clone(port_name),
                             message,
                         });
                     }
+                    Some(MidiMessage::Control(message)) => {
+                        let _ = tx.send(Heard::Control {
+                            port: Arc::clone(port_name),
+                            message,
+                        });
+                    }
+                    None => {}
                 },
                 owner,
             )
@@ -298,6 +384,75 @@ mod tests {
                 velocity: 0,
                 on: false
             })
+        );
+    }
+
+    #[test]
+    fn control_change_decodes_with_channel_controller_and_value() {
+        assert_eq!(
+            decode_control(&[0xB0, 74, 127]),
+            Some(ControlMessage {
+                channel: 0,
+                controller: 74,
+                value: 127
+            })
+        );
+        assert_eq!(
+            decode_control(&[0xBF, 1, 0]),
+            Some(ControlMessage {
+                channel: 15,
+                controller: 1,
+                value: 0
+            })
+        );
+        assert_eq!(
+            decode_message(&[0xB3, 7, 64]),
+            Some(MidiMessage::Control(ControlMessage {
+                channel: 3,
+                controller: 7,
+                value: 64
+            }))
+        );
+    }
+
+    #[test]
+    fn decode_message_routes_notes_and_controls_apart() {
+        assert_eq!(
+            decode_message(&[0x90, 60, 100]),
+            Some(MidiMessage::Note(NoteMessage {
+                channel: 0,
+                note: 60,
+                velocity: 100,
+                on: true
+            }))
+        );
+        assert_eq!(decode_message(&[0xF8]), None, "timing clock is neither");
+        // A control is never a note: the notes path still ignores 0xBn, so a sustain pedal cannot sound a key.
+        assert_eq!(decode(&[0xB0, 64, 127]), None);
+    }
+
+    #[test]
+    fn channel_mode_messages_and_malformed_controls_are_not_controls() {
+        assert_eq!(
+            decode_control(&[0xB0, 120, 0]),
+            None,
+            "all sound off is channel mode"
+        );
+        assert_eq!(
+            decode_control(&[0xB0, 127, 0]),
+            None,
+            "poly mode is channel mode"
+        );
+        assert_eq!(
+            decode_control(&[0xB0, 7, 128]),
+            None,
+            "value byte out of range"
+        );
+        assert_eq!(decode_control(&[0xB0, 7]), None, "truncated");
+        assert_eq!(
+            decode_control(&[0x90, 7, 100]),
+            None,
+            "a note is not a control"
         );
     }
 

@@ -10,6 +10,7 @@ import type {InstrumentEdit} from '@epilogos/expressions-boundary'
 import {
   commitLiveInstrumentEdit, liveInstrumentWritable, liveTorusMacroRows, useLiveTorusReading, type LiveTorusState,
 } from '../../live/torusInstrument'
+import {MidiMapTarget} from '../../live/midiMap/midiMapControls'
 import './liveTorusWidget.css'
 
 export function LiveTorusWidget() {
@@ -43,17 +44,24 @@ export function LiveTorusWidgetView({state}: {state: LiveTorusState | null}) {
         )}
       </div>
       <ul className="live-torus-macros" aria-label="Macros">
-        {rows.map(row => (
-          <li key={row.macro.id} className="live-torus-macro" data-macro={row.macro.id} data-value={row.value ?? 'none'} title={row.macro.source}>
-            <span className="live-torus-macro-name">{row.macro.label}</span>
-            {row.selected === null
-              ? <b className="live-torus-macro-value">not in owner reading</b>
-              : <select className="live-torus-macro-select" aria-label={row.macro.label} value={row.selected} disabled={!liveInstrumentWritable(state)}
-                  onChange={event => choose(row.edit, event.target.value)}>
-                  {row.options.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
-                </select>}
-          </li>
-        ))}
+        {rows.map(row => {
+          const content = (
+            <>
+              <span className="live-torus-macro-name">{row.macro.label}</span>
+              {row.selected === null
+                ? <b className="live-torus-macro-value">not in owner reading</b>
+                : <select className="live-torus-macro-select" aria-label={row.macro.label} value={row.selected} disabled={!liveInstrumentWritable(state)}
+                    onChange={event => choose(row.edit, event.target.value)}>
+                    {row.options.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+                  </select>}
+            </>
+          )
+          return (
+            <li key={row.macro.id} className="live-torus-macro" data-macro={row.macro.id} data-value={row.value ?? 'none'} title={row.macro.source}>
+              {row.selected === null ? content : <MidiMapTarget id={row.macro.id}>{content}</MidiMapTarget>}
+            </li>
+          )
+        })}
       </ul>
       {refusal !== null && <p className="live-torus-note is-fault" role="alert" data-live-torus-refusal>{`Refused by the owner: ${refusal}`}</p>}
     </section>

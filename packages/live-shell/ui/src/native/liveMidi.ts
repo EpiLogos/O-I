@@ -121,3 +121,66 @@ export function subscribeLiveMidi(options: LiveMidiOptions): () => void {
     for (const stop of stops.splice(0)) stop()
   }
 }
+
+// ── control changes: the MIDI map's input (T-LIVE-MIDI leg 2) ──────────────────────────────────────────────────────────────────
+// The host sends each control change as `oi://midi-cc`, a sibling of the notes. This is the map's input, not the Jankó's: a control
+// moves a mapped parameter (midi map model, midiMap/), and no note is struck by it.
+
+export const MIDI_CC_EVENT = 'oi://midi-cc'
+
+/** One control change as the host decoded it: `value` is 0 to 127; `controller` is 0 to 119 (channel-mode messages are not controls). */
+export interface MidiControl {
+  readonly port: string
+  readonly channel: number
+  readonly controller: number
+  readonly value: number
+}
+
+export interface LiveMidiControlOptions {
+  /** One batch of control changes, in arrival order. */
+  readonly onControls: (controls: readonly MidiControl[]) => void
+  /** A named refusal: outside the native host, a payload this window does not read, or a listener that did not attach. */
+  readonly onRefused?: (reason: string) => void
+  /** Whether this window is the native host. Defaults to the host marker. */
+  readonly native?: boolean
+  /** The host's event listener. Defaults to the Tauri event API, loaded only in the native host. */
+  readonly listen?: (event: string, handler: (event: {readonly payload: unknown}) => void) => Promise<() => void>
+}
+
+const isControl = (value: unknown): value is MidiControl => {
+  if (typeof value !== 'object' || value === null) return false
+  const row = value as Record<string, unknown>
+  return typeof row.port === 'string'
+    && Number.isInteger(row.channel) && (row.channel as number) >= 0 && (row.channel as number) <= 15
+    && Number.isInteger(row.controller) && (row.controller as number) >= 0 && (row.controller as number) <= 119
+    && Number.isInteger(row.value) && (row.value as number) >= 0 && (row.value as number) <= 127
+}
+
+/** Subscribe to the host's control changes. Returns the unsubscribe, which releases the listener: after it, no control reaches the map. */
+export function subscribeLiveMidiControls(options: LiveMidiControlOptions): () => void {
+  if (!(options.native ?? nativeHost())) {
+    options.onRefused?.(LIVE_MIDI_ABSENT)
+    return () => {}
+  }
+  let live = true
+  let stop: (() => void) | null = null
+  const listen = options.listen ?? tauriListen
+  listen(MIDI_CC_EVENT, event => {
+    if (!live) return
+    if (!Array.isArray(event.payload) || !event.payload.every(isControl)) {
+      options.onRefused?.('the native host sent a control change this device does not read')
+      return
+    }
+    if (event.payload.length > 0) options.onControls(event.payload)
+  }).then(released => {
+    if (live) stop = released
+    else released()
+  }, cause => {
+    if (live) options.onRefused?.(`the native host did not answer MIDI control listening: ${cause instanceof Error ? cause.message : String(cause)}`)
+  })
+  return () => {
+    live = false
+    stop?.()
+    stop = null
+  }
+}
