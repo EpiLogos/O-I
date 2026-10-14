@@ -24,10 +24,12 @@ import {SAVE_ROUTER_OUTCOMES} from './manifest.ts'
 import {KindMark} from './sdk/marks.tsx'
 import './inhabitantDevices.css'
 
+/** A Central subject the browser selected: its Central-relative path, and the owner's location for it when the row carried
+ * one (the owner's `files_list` entry — its root is the owner's, never written into the shell). */
 export type CentralSubjectSelection =
-  | {kind: 'folder'; path: string}
-  | {kind: 'note'; path: string}
-  | {kind: 'day'; path: string}
+  | {kind: 'folder'; path: string; location?: CentralLocation}
+  | {kind: 'note'; path: string; location?: CentralLocation}
+  | {kind: 'day'; path: string; location?: CentralLocation}
 
 export interface CentralSubjectDetailProps {
   readonly transport: KernelTransportStatus

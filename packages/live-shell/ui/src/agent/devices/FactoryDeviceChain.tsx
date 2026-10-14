@@ -6,8 +6,9 @@
 //
 // What the chain's cards (agent/AgentDeviceChain.tsx + NativeAgentDeviceRack.tsx) did that is not the devices' own is ported
 // here unchanged and named: the drop receiver (aperture law: a drop is one declared owner operation or a named refusal —
-// AgentDeviceChain.tsx:199-243), the slide grip and drop slot (NativeAgentDeviceRack.tsx:113-182), the fold to a title
-// (:210-221), the card click that opens the device in the pool (:119) and the owner-line notes.
+// AgentDeviceChain.tsx:199-243), the slide grip and drop slot (NativeAgentDeviceRack.tsx:113-182), the card click that opens
+// the device in the pool (:119) and the owner-line notes. The fold to a title (:210-221) is the runtime's own (DeviceView's ▾,
+// its light read by deviceRuntime.ts lightOf); the chain draws no fold or light of its own.
 import {Fragment, useCallback, useEffect, useMemo, useRef, useState, type DragEvent} from 'react'
 import {DeviceView} from '../../frame/devices/DeviceView'
 import {publishDevice, selectDevice} from '../../frame/devices/deviceDoor'
@@ -19,7 +20,6 @@ import {
   encodeChainDrag, missingOpRemedy, setActiveChainDrag, type ActiveChainDrag, type AgentChainSlotId,
 } from '../agentChainDrag'
 import {agentDataI} from '../agentFidelity'
-import {FoldChevron} from '../agentIcons'
 import {fireWritePath} from '../agentNativeDispatch'
 import {harnessAgentControl} from '../harnessAgentControl'
 import {RefusalCard, safeJson} from '../RefusalCard'
@@ -39,7 +39,6 @@ const SLOT_DATA_I: Readonly<Record<string, string>> = {
   world: agentDataI('World · bridge', 'What the session may read (teal) and write (amber).'),
   git: agentDataI('Git', 'The session’s repository seat. The diagram is the branch against main; the pulsing hollow dot is uncommitted work.'),
 }
-const FOLDED_DATA_I = agentDataI('Gateway (folded)', 'This session rides its lead’s Hermes gateway connection.')
 const DROP_ZONE_DATA_I = agentDataI('Drop zone', 'Gateways, agents, skillsets, worlds, git. Left to right: through → who → how → where → lands.')
 
 /** The outcome of one drop attempt or one write: the owner's receipt, or the refusal that names the missing operation. */
@@ -60,7 +59,6 @@ export function FactoryDeviceChain({sessionRef}: {sessionRef: string | null}) {
   // heartbeat and write-arm flags are presentation, so they are not read here.
   const accepted = useOwnerAccepted(binding)
   const [note, setNote] = useState<ChainNote | null>(null)
-  const [folded, setFolded] = useState<Record<string, boolean>>({})
   // The gesture-held drag, mirrored into state so the zone names what is held and a slide's drop slot opens.
   const [held, setHeld] = useState<ActiveChainDrag | null>(null)
   const [gap, setGap] = useState<number | null>(null)
@@ -89,7 +87,6 @@ export function FactoryDeviceChain({sessionRef}: {sessionRef: string | null}) {
     try { openInstrument(DEVICE_PANE_KIND, undefined, {ref: chainDeviceId(slotId), title}) }
     catch (cause) { setNote({kind: 'refused', title: 'Open full', line: cause instanceof Error ? cause.message : String(cause), receipt: null}) }
   }
-  const fold = (slotId: string, to: boolean) => setFolded(state => ({...state, [slotId]: to}))
 
   // One drop, one owner operation (or one named refusal). The session drop rides the run model's own selection — the who slot
   // then reads the new session's task record. The agent drop dispatches `harness_agent_control` (new) on the gateway binding and
@@ -220,26 +217,18 @@ export function FactoryDeviceChain({sessionRef}: {sessionRef: string | null}) {
             {/* The visible drop slot while a card slides — it opens under the pointer and closes on release. It never lies:
               a slot is not a landing, the owner operation (here: the refusal naming the missing order op) is. */}
             {held?.kind === 'reorder' && gap === index && <span className="agent-chain-gap" aria-hidden="true" />}
-            {folded[slot.id]
-              ? <article className="agent-device folded" data-slot={slot.id} data-family={slot.family} data-device={slot.id} data-i={FOLDED_DATA_I} onClick={() => fold(slot.id, false)}>
-                  <header className="dh"><span className="pw off" />{slot.title}</header>
-                </article>
-              : <div className="factory-slot" data-slot={slot.id} data-family={slot.family} data-device={slot.id}
-                  data-selected={shell.expandedDevice === slot.id} data-i={SLOT_DATA_I[slot.id]} onClick={() => choose(slot.id)}>
-                  <div className="factory-slot__rail">
-                    {grip(slot.id, slot.title)}
-                    <button type="button" className="factory-slot__fold" title="Fold to its title" aria-label={`Fold ${slot.title} to its title`}
-                      onClick={event => { event.stopPropagation(); fold(slot.id, true) }}><FoldChevron /></button>
-                  </div>
-                  <DeviceView device={device} size="compact" picture={chainPicture(slot.id, pictures, 'compact')} actions={[
-                    {icon: 'detail', label: 'Show every setting in the pool', onPress: () => choose(slot.id)},
-                    {icon: 'pane', label: `Open ${slot.title} full size in a pane`, onPress: () => openFull(slot.id, slot.title)},
-                  ]} />
-                </div>}
+            <div className="factory-slot" data-slot={slot.id} data-family={slot.family} data-device={slot.id}
+              data-selected={shell.expandedDevice === slot.id} data-i={SLOT_DATA_I[slot.id]} onClick={() => choose(slot.id)}>
+              <div className="factory-slot__rail">{grip(slot.id, slot.title)}</div>
+              <DeviceView device={device} size="compact" picture={chainPicture(slot.id, pictures, 'compact')} actions={[
+                {icon: 'detail', label: 'Show every setting in the pool', onPress: () => choose(slot.id)},
+                {icon: 'pane', label: `Open ${slot.title} full size in a pane`, onPress: () => openFull(slot.id, slot.title)},
+              ]} />
+            </div>
           </Fragment>
         ))}
         {held?.kind === 'reorder' && gap === chain.length && <span className="agent-chain-gap" aria-hidden="true" />}
-        <div className={'agent-dropz' + (held ? ' armed' : '')} data-slot="zone" data-i={DROP_ZONE_DATA_I} title={DROP_ZONE_DATA_I.split('|')[1]}>
+        <div className={'agent-dropz dropz' + (held ? ' armed' : '')} data-slot="zone" data-i={DROP_ZONE_DATA_I} title={DROP_ZONE_DATA_I.split('|')[1]}>
           {held ? dropZoneLine(held) : 'Drop gateways, agents, skillsets, worlds or git here'}
         </div>
       </div>

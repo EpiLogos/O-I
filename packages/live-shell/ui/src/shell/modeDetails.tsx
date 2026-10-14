@@ -1,14 +1,38 @@
-// Each mode's detail bodies (FOUNDATION F4): the clip editor its clips open in, and the chain on its Device side. A table
-// read by the one detail host (frame/detail/DetailHost.tsx), never a branch in the frame. The bodies are the ones each mode
-// already had; they move here unchanged, and the host gives every mode the same clip box and the same Clip | Device pair.
+// Each mode's detail bodies (FOUNDATION F4): the clip editor its clips open in, the chain on its Device side, and the row's
+// head line over each (world-shell-mockup.html `#dth`, set by clipDetail() and deviceDetail()). A table read by the one detail
+// host (frame/detail/DetailHost.tsx), never a branch in the frame. The bodies are the ones each mode already had; the host
+// gives every mode the same head, the same clip box, the same Clip | Device pair and the same one line while nothing is
+// selected.
 import type {ComponentType} from 'react'
 import type {SurfMode} from './modeGrammar'
-import {useDetailReading} from '../frame/detail/detailReading'
+import {useDetailReading, type DetailReading} from '../frame/detail/detailReading'
+import {clipBoxRows, useSelectedClip, type SelectedClip} from '../frame/detail/ClipBox'
+import {ClipWaiting} from '../frame/detail/ClipView'
 import {DeviceChainPanel} from '../components/DeviceChainPanel'
 import {NativeWorldDetail} from '../components/NativeWorldDetail'
 import {CentralClipChooser} from '../central/CentralClipChooser'
+import {centralSubjectName} from '../central/CentralClipDetail'
 import {BaseDevicesDetail, FactoryTaskLogDetail, TechneClipDetail, TechneInstrumentsDetail} from './ModeDetail'
 import {AgentShellDeviceDetail} from '../agent/AgentShellDeviceDetail'
+import {useAgentSessionsOptional} from '../agent/AgentSessionsProvider'
+import {eventsForSession, trackKey, type AgentSessionTrack} from '../agent/agentRunModel'
+import {parseFactoryTaskRef} from '../timeline/factoryTrackAdapter'
+import {STANDALONE_INSTRUMENTS, TECHNE_INSTRUMENTS} from '../inhabitants/sdk/semantics'
+import type {PaneInstrumentId} from './paneInstrument'
+
+/** What a head is drawn from: the frame's detail reading, the selected clip as the shown tracks give it, and the focused
+ * pane's instrument when it takes the Device side. Nothing more is read for a head. */
+export interface DetailHeadReading {
+  detail: DetailReading
+  selected: SelectedClip
+  instrument: PaneInstrumentId | null
+}
+
+/** The row's head line: the thing in bold, then what this side of the row shows of it (the mockup's `<b>…</b> — …`). */
+export interface DetailHead {
+  name: string
+  line?: string
+}
 
 export interface ModeDetail {
   clip: ComponentType
@@ -17,15 +41,62 @@ export interface ModeDetail {
   devicesLeadInstrument?: boolean
   /** The mode keeps its own Device side whatever pane is focused (Live: the instrument's chain is the mode). */
   ownsDeviceSide?: boolean
-  /** The chain's end: what can be dropped onto it (Live's "Drop Instruments or Samples Here"; the mockup's .dropz). */
-  dropHint: string
+  /** The chain's end: what can be dropped onto it (Live's "Drop Instruments or Samples Here"; the mockup's .dropz). Null when
+   * the chain draws its own drop receiver (Factory's, which arms while a drag is held and answers through the owner). */
+  dropHint: string | null
+  /** The one line the Clip side shows while nothing is selected — what it waits for, in the mode's own words. */
+  clipWaits: string
+  /** The Clip side opens without a selection: the mode's clip is not chosen from its tracks (Expressions: the open
+   * Expression's scene). */
+  clipUngated?: boolean
+  /** The row's head line, per side. */
+  head: {clip: (reading: DetailHeadReading) => DetailHead; device: (reading: DetailHeadReading) => DetailHead}
 }
+
+/** An instrument by the plain name its holder declares (inhabitants/sdk/semantics.ts; its M′ address is provenance, never
+ * its name): "Timeline", "Knowledge graph". */
+export function instrumentName(id: PaneInstrumentId): string {
+  return [...TECHNE_INSTRUMENTS, ...STANDALONE_INSTRUMENTS].find(item => item.id === id)?.title ?? id
+}
+
+/** The head of a Device side the focused pane's instrument has taken (the mockup's Technē head, renderDetail() :1650). */
+const instrumentHead = (id: PaneInstrumentId): DetailHead => ({name: 'Instruments', line: `${instrumentName(id)} open on the focused pane; its controls are its own`})
+
+/** A Factory session's name beside its task: the tracks pane's name for it, unless that is the task's own title (a session is
+ * named by its purpose, which is its task's), then the agent and the session as the pane names an unnamed one
+ * (timeline/factoryTrackAdapter.ts trackName). */
+function factorySessionName(track: AgentSessionTrack, taskTitle: string | null | undefined, shown: string | undefined): string {
+  if (shown && shown !== taskTitle) return shown
+  return track.agentName ? `${track.agentName} · ${track.sessionRef.slice(0, 10)}` : track.sessionRef.slice(0, 12)
+}
+
+/** Central's open document: the browser subject, else the selected clip. */
+const centralDocument = ({detail, selected}: DetailHeadReading): string | null =>
+  detail.centralSubject ? centralSubjectName(detail.centralSubject) : selected.clip?.label ?? null
 
 function LiveClip() { const {live} = useDetailReading(); return <DeviceChainPanel ctx={live.ctx} document={live.document} selection={live.selection} mode="clip" /> }
 function LiveChain() { const {live} = useDetailReading(); return <DeviceChainPanel ctx={live.ctx} document={live.document} selection={live.selection} mode="device" /> }
-function CentralClip() { const {transport, centralSubject, world} = useDetailReading(); return <CentralClipChooser transport={transport} subject={centralSubject} world={world} /> }
+function CentralClip() {
+  const {transport, centralSubject, world} = useDetailReading()
+  const selected = useSelectedClip()
+  return <CentralClipChooser transport={transport} subject={centralSubject} world={world} waits={MODE_DETAILS.base.clipWaits} colour={selected.track?.color} />
+}
 function CentralChain() { const {transport, centralSubject, world} = useDetailReading(); return <BaseDevicesDetail transport={transport} world={world} subject={centralSubject} /> }
-function FactoryClip() { const {factory} = useDetailReading(); return <FactoryTaskLogDetail {...factory.task} /> }
+/** The selected task: THE selection names it (`<session track>#task/<n>`, timeline/factoryTrackAdapter.ts), or a session track
+ * whose first task it opens; its session is the agency reading's own track, its log the sessions provider's one temporal read. */
+function FactoryClip() {
+  const {factory} = useDetailReading()
+  const selected = useSelectedClip()
+  const sessions = useAgentSessionsOptional()
+  const task = selected.ref ? parseFactoryTaskRef(selected.ref) : null
+  const trackId = task?.trackId ?? selected.ref
+  const track = trackId ? factory.tracks.find(item => trackKey(item) === trackId) ?? null : null
+  if (!track) return <ClipWaiting line={MODE_DETAILS.factory.clipWaits} />
+  const shown = selected.set?.tracks.find(item => item.id === trackId)
+  const title = track.tasks.find(item => !item.softStop && (task ? item.n === task.n : true))?.title
+  return <FactoryTaskLogDetail track={track} n={task?.n ?? null} name={factorySessionName(track, title, shown?.name)} colour={shown?.color} box={clipBoxRows(selected)}
+    events={sessions ? eventsForSession(sessions.events, track.sessionRef) : null} />
+}
 function FactoryChain() { const {factory} = useDetailReading(); return <AgentShellDeviceDetail tracks={factory.tracks} /> }
 // An Expressions clip is a scene (lock §9.1). Beside its editor stand the Scene's own controls — the Scene selector, Saved scenes,
 // Save, Guide, the pins strip and Expression time — which stood on the Expressions bar until they had a home on the clip
@@ -37,9 +108,49 @@ function TechneClip() { const {worldCut, world, native} = useDetailReading(); re
 function TechneChain() { const {transport} = useDetailReading(); return <TechneInstrumentsDetail transport={transport} /> }
 
 export const MODE_DETAILS: Readonly<Record<SurfMode, ModeDetail>> = {
-  live: {clip: LiveClip, device: LiveChain, ownsDeviceSide: true, dropHint: 'Drop an instrument or effect here'},
-  base: {clip: CentralClip, device: CentralChain, devicesLeadInstrument: true, dropHint: 'Add a document device'},
-  factory: {clip: FactoryClip, device: FactoryChain, dropHint: 'Drop agents, skillsets, worlds or git here'},
-  expressions: {clip: ExpressionsClip, device: ExpressionsChain, dropHint: 'Drop a field device here'},
-  techne: {clip: TechneClip, device: TechneChain, dropHint: 'Drop a device here'},
+  live: {clip: LiveClip, device: LiveChain, ownsDeviceSide: true, dropHint: 'Drop an instrument or effect here',
+    clipWaits: 'Select a clip in the Session or the Arrangement to see it here.',
+    head: {
+      clip: ({selected}) => selected.clip ? {name: selected.clip.label, line: `${selected.track?.name ?? selected.clip.trackId} · the clip in focus`} : {name: 'Clip'},
+      device: ({detail}) => ({name: detail.live.document?.tracks[detail.live.selection.track]?.name ?? 'Device', line: 'the instrument\'s chain: note devices before the torus, effects after'}),
+    }},
+  base: {clip: CentralClip, device: CentralChain, devicesLeadInstrument: true, dropHint: 'Add a document device',
+    clipWaits: 'Select a day, a document or an entry, in the browser or on the day\'s tracks, to see it as data here.',
+    head: {
+      clip: reading => ({name: centralDocument(reading) ?? 'Document', line: centralDocument(reading) ? 'the document as data' : undefined}),
+      device: reading => ({name: centralDocument(reading) ?? 'No document selected',
+        line: `document devices: each modifies the open document${reading.instrument ? ` · then ${instrumentName(reading.instrument)}, open on the focused pane` : ''}`}),
+    }},
+  factory: {clip: FactoryClip, device: FactoryChain, dropHint: null,
+    clipWaits: 'Select a task on a session\'s track to read its tool-run log here.',
+    head: {
+      clip: ({detail, selected}) => {
+        if (!selected.clip) return {name: 'Task log'}
+        const track = detail.factory.tracks.find(item => trackKey(item) === selected.clip!.trackId)
+        const session = track ? factorySessionName(track, selected.clip.label, selected.track?.name) : selected.track?.name ?? selected.clip.trackId
+        return {name: selected.clip.label, line: `${session} · the task's tool-run log`}
+      },
+      device: ({detail, selected, instrument}) => {
+        if (instrument) return instrumentHead(instrument)
+        // The chain's session is THE selection's, as the agent shell reads it (agent/AgentShellContext.tsx sessionOfSelection).
+        const trackId = selected.ref ? parseFactoryTaskRef(selected.ref)?.trackId ?? selected.ref : null
+        const track = trackId ? detail.factory.tracks.find(item => trackKey(item) === trackId) : undefined
+        const shown = selected.set?.tracks.find(item => item.id === trackId)?.name
+        return {name: track ? shown ?? factorySessionName(track, null, undefined) : 'No session selected',
+          line: 'the agent\'s path: gateway → agent → skills → world → git'}
+      },
+    }},
+  expressions: {clip: ExpressionsClip, device: ExpressionsChain, dropHint: 'Drop a field device here',
+    clipWaits: 'Open an Expression to see its scene here.', clipUngated: true,
+    head: {
+      clip: ({selected}) => ({name: selected.clip?.label ?? 'Scene', line: selected.set?.tracks[0]?.name ?? 'the open Expression\'s scene'}),
+      device: ({selected, instrument}) => instrument ? instrumentHead(instrument)
+        : {name: 'Studio', line: `the Expressions engine's own controls${selected.set?.tracks[0] ? ` · ${selected.set.tracks[0].name}` : ''}`},
+    }},
+  techne: {clip: TechneClip, device: TechneChain, dropHint: 'Drop a device here',
+    clipWaits: 'Select an event or a stop to see what is in focus here.',
+    head: {
+      clip: ({selected}) => selected.clip ? {name: selected.clip.label, line: 'what is in focus'} : {name: 'Clip'},
+      device: ({instrument}) => instrument ? instrumentHead(instrument) : {name: 'Instruments', line: 'none open on the focused pane'},
+    }},
 }
