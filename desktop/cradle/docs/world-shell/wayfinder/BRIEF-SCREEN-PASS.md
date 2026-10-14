@@ -87,3 +87,14 @@ CRAFT: <the 3 most visible craft gaps against Ableton Live / the mockups>
   by footprint). The computer-use driver's `request_access` for "O-I Shell
   Candidate" was refused twice (owner away). The interactive checklist waits
   for the owner's grant; it is not substituted by scripted clicks.
+- 14 Oct 2026, build `20261014T003607Z` at `3a619dbb8` (pid 25648): clean
+  tree, sealed, launched; readback (scripted, accessibility tree) shows
+  "Native host · revision 3a619dbb8b45" and "3 of 6 owners admitted". The
+  Sonnet driver's `request_access` for "O-I Shell Candidate" came back
+  `user_denied` (third refusal; owner away at night): nothing was driven or
+  captured, nothing substituted. The menu Quit (accessibility tree) did not
+  end the process within 60 s, where it had on 13 Oct — possibly a close
+  confirmation on screen, unseen; the lead ended its own pid. Next pass:
+  watch the close path. The wave's checklist (Live transport, browser,
+  device chain, presets; the Factory Expressions pane; the palace board and
+  bookmarks; fullscreen) stands ready in the driver's brief for the grant.
