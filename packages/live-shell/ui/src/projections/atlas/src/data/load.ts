@@ -4,7 +4,7 @@ const BASE = import.meta.env.BASE_URL ?? '/';
 
 /** Site-relative image paths are served from public/; data/http URLs pass through. */
 export function resolveSrc(src: string): string {
-  if (/^(data:|https?:|blob:)/.test(src)) return src;
+  if (/^(data:|https?:|blob:|oi-material:)/.test(src)) return src;
   return BASE.replace(/\/$/, '') + '/' + src.replace(/^\//, '');
 }
 

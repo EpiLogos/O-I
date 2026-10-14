@@ -5,7 +5,8 @@
 // reads it only through the files client: the bundle root and `corpus/` are listed once, and each file is read at the
 // location its own listing returned. The found loaders (loadField, loadHistory, loadSymbols) keep their own validation:
 // each takes a URL, so the bytes read through Central are handed to them as a blob: URL and their checks run unchanged.
-// Images are out of scope (T-ATLAS-IMAGES): ImageRefs ride the field inline and pass through unresolved.
+// Images (T-ATLAS-ASSETS): an ImageRef's relative path (`img/…`) resolves through the host's material route, beside a base
+// Location the provider finds in AE's `public/` (provider/imageRefs.ts); with no base, the plate stays absent.
 
 import {listFiles, readFile} from '../../../../../../../desktop/cradle/src/files/client';
 import type {CentralLocation, KernelTransportStatus, NativeDirectory, NativeFileReading} from '../../../../../../../desktop/cradle/src/kernel/types';
@@ -18,12 +19,15 @@ import type {History} from '../src/types/history';
 import type {CorpusIndex} from '../src/types/corpus';
 import type {Symbols} from '../src/types/symbols';
 import type {CorpusBundle, CorpusProvider} from './corpusProvider';
+import {hasRelativeImage, resolveFieldImages, type ImageBase} from './imageRefs';
 
 export const ARCHETYPAL_EARTH_PROVIDER_ID = 'archetypal-earth';
 /** The provider's display name: the only place the corpus is named (C2 §1.2, C2-b8). */
 const ARCHETYPAL_EARTH_NAME = 'Jung archetypal field';
 /** The published bundle, as a Central-root-relative folder. */
 export const ARCHETYPAL_EARTH_DATA = 'Work/Archetypal-Earth/public/data';
+/** The folder AE's ImageRef paths (`img/families/serpent.jpg`) are relative to: its `public/`, beside `data/`. */
+export const ARCHETYPAL_EARTH_ASSETS = 'Work/Archetypal-Earth/public';
 /** The founding triple, strongest first, labelled the way the provider words it (C2-b2). */
 const FOUNDING_TIE_BASES: TieBasisDecl[] = [
   {id: 'jung', label: 'Jung'},
@@ -45,14 +49,15 @@ export function centralReader(transport: KernelTransportStatus): BundleReader {
 
 /** AE's field.json predates the C2 contract. Its vault descriptor becomes the provider descriptor, its tie bases are the
  * founding triple, each occurrence's `jung` cites are renamed `cites` (C2-b7) and the vault's `subject` word is dropped
- * (C2 §1.3). Everything else is carried verbatim. */
-export function adaptFoundingField(raw: unknown): Field {
+ * (C2 §1.3). Each relative ImageRef is served through the material route beside `images.base` (imageRefs.ts); with no
+ * `images`, or no base, a relative plate is absent. Everything else is carried verbatim. */
+export function adaptFoundingField(raw: unknown, images?: ImageBase): Field {
   const {meta, occurrences, ...rest} = raw as Omit<Field, 'meta' | 'occurrences'> & {
     meta: Omit<FieldMeta, 'provider' | 'freshness' | 'ties'> & {vaultPath?: string; vaultLedgerLine?: string};
     occurrences: (Omit<Occurrence, 'cites'> & {jung?: Cite[]; subject?: unknown})[];
   };
   const {vaultPath, vaultLedgerLine, ...verbatimMeta} = meta;
-  return {
+  const adapted = {
     ...rest,
     meta: {
       ...verbatimMeta,
@@ -62,6 +67,7 @@ export function adaptFoundingField(raw: unknown): Field {
     },
     occurrences: occurrences.map(({jung, subject: _subject, ...occurrence}) => ({...occurrence, cites: jung ?? []})),
   } as Field;
+  return resolveFieldImages(adapted, images);
 }
 
 /** The corpus index names its provider by data, not by a vault path (C2-a3). */
@@ -96,6 +102,7 @@ export function archetypalEarthProvider(
   transport: KernelTransportStatus,
   root: string = ARCHETYPAL_EARTH_DATA,
   reader: BundleReader = centralReader(transport),
+  assets: string = ARCHETYPAL_EARTH_ASSETS,
 ): CorpusProvider {
   // Each folder is listed once; a failed listing is forgotten so a later read may try it again.
   const listings = new Map<string, Promise<NativeDirectory>>();
@@ -119,6 +126,13 @@ export function archetypalEarthProvider(
     const entry = rows.find(row => row.kind === 'file' && row.retrieval_allowed && row.name === file);
     return entry ? (await reader.read(entry.location)).content : null;
   }
+  /** The base of AE's relative ImageRef paths: a Location in `assets` (the material route resolves a path beside the directory of
+   * the Location it is given). Looked up only when the field carries a relative plate; undefined when the folder cannot be
+   * listed, so those plates stay absent. */
+  async function imageBase(field: Field): Promise<CentralLocation | undefined> {
+    if (!hasRelativeImage(field)) return undefined;
+    return optional(async () => (await listing(assets)).entries.find(row => row.kind === 'file' || row.kind === 'directory')?.location);
+  }
   const published: PublishedSource = async name => {
     try {
       const text = await publishedText(name);
@@ -133,10 +147,13 @@ export function archetypalEarthProvider(
     async load(): Promise<CorpusBundle> {
       // The field is the one required part: a bundle without it is unavailable, never invented (the found law).
       let field: Field;
+      let location: CentralLocation | undefined;
       try {
         const text = await publishedText('field');
         if (text === null) throw new Error('field.json is not in the bundle');
-        field = adaptFoundingField((await throughLoader(text, loadField)).field);
+        const loaded = (await throughLoader(text, loadField)).field;
+        location = await imageBase(loaded);
+        field = adaptFoundingField(loaded, {transport, base: location});
       } catch (cause) {
         throw new Error('The atlas data is unavailable.', {cause});
       }
@@ -158,7 +175,7 @@ export function archetypalEarthProvider(
           return text === null ? undefined : adaptFoundingCorpusIndex(JSON.parse(text));
         }),
       ]);
-      return {id: ARCHETYPAL_EARTH_PROVIDER_ID, name: ARCHETYPAL_EARTH_NAME, field, images: {}, history, symbols, corpus, published};
+      return {id: ARCHETYPAL_EARTH_PROVIDER_ID, name: ARCHETYPAL_EARTH_NAME, field, images: location ? {location} : {}, history, symbols, corpus, published};
     },
   };
 }
