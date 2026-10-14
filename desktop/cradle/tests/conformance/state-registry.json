@@ -612,7 +612,7 @@
         "oi:workspace-message"
       ],
       "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; canonical conformance plan Lane A §1 / Lane B §1",
-      "rationale": "Caret and scroll restore per editor binding; no source mutation.",
+      "rationale": "Caret and scroll restore per editor binding; no source mutation. The oi:* literals are window event names (editor commands, selection, status, and the workspace message that names a refused passage reveal), not storage keys.",
       "keys": [
         {
           "family": "storageKey",

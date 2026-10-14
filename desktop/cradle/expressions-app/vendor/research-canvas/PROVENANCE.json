@@ -199,7 +199,20 @@
     "packages/canvas/src/psychogeographic/terminator.ts",
     "packages/canvas/src/timeline/availabilityVoice.ts",
     "packages/canvas/src/timeline/palette.ts",
-    "packages/canvas/src/timeline/standingStyle.ts"
+    "packages/canvas/src/timeline/standingStyle.ts",
+    "packages/canvas/src/psychogeographic/disclosure.ts",
+    "packages/canvas/src/psychogeographic/placeLayers.ts",
+    "packages/canvas/src/psychogeographic/placeNavigation.ts",
+    "packages/canvas/src/psychogeographic/placeProvenance.ts",
+    "packages/canvas/src/psychogeographic/placeRoutes.ts",
+    "packages/canvas/src/psychogeographic/placeStanding.ts",
+    "packages/canvas/src/timeline/TimelineBands.tsx",
+    "packages/canvas/src/timeline/TimelineClusters.tsx",
+    "packages/canvas/src/timeline/TimelineMinimap.tsx",
+    "packages/canvas/src/timeline/bands.ts",
+    "packages/canvas/src/timeline/clusters.ts",
+    "packages/canvas/src/timeline/labels.ts",
+    "packages/canvas/src/timeline/minimapGeometry.ts"
   ],
   "patches": {
     "packages/canvas/src/timeline/categories.ts": {
