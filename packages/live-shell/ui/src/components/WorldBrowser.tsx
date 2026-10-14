@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from 'react'
+import {SetsSection} from '../shell/SetsSection'
 import type { NativeDirectory, NativeFileEntry } from '@epilogos/expressions-boundary/cradle'
 import {createCradleOwners} from '@epilogos/expressions-boundary/cradle'
 import {sameEditorBasis} from '@epilogos/expressions-boundary/editor'
@@ -219,5 +220,6 @@ export function WorldBrowser() {
         </div>
       </div>
     </section>
+    <SetsSection />
   </aside>
 }

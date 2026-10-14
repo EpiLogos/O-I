@@ -17,7 +17,7 @@ const FRAME = join(ui, 'src/frame')
 
 // The ceilings. Lower them as the switchboard is taken apart; never raise them.
 const CEILING = {
-  modeBranches: 58,
+  modeBranches: 54,
   residences: {browser: 3, dock: 2, detail: 6},
   perModeBodies: 21,
 }

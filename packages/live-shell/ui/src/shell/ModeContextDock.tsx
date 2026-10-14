@@ -18,6 +18,7 @@
  * presentation over landed readings: no second store, no owner writes.
  */
 
+import {TrailWidget} from './TrailWidget'
 import {useRef, useState, type PointerEvent as ReactPointerEvent} from 'react'
 import {MODE_GRAMMAR, type SurfMode} from './modeGrammar'
 import {useAgencySessions} from '../agent/useAgencySessions'
@@ -197,13 +198,7 @@ function TileBody({id, mode, world, transport, subject}: {
       <p className="mode-dock-note">Exactly what the agent receives — selection · entry · document. Select a document in the browser; the packet composes from it in the Document detail.</p>
     </div>
   }
-  if (id === 'trail') {
-    return <div className="mode-dock-rows">
-      {subject
-        ? <div className="mode-dock-row"><span>here</span><b title={subject.path}>{subject.path.split('/').pop()}</b></div>
-        : <p className="mode-dock-note">Every encounter, returnable. Select a subject — the trail keeps the encounters and returns to them.</p>}
-    </div>
-  }
+  if (id === 'trail') return <TrailWidget />
   if (id === 'field') {
     return <div className="mode-dock-rows">
       <div className="mode-dock-row"><span>carrier</span><b>{transport.kind === 'unavailable' ? '—' : carrierOf(transport)}</b></div>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import {SetsSection} from '../shell/SetsSection'
 import type { PanelContext } from '../shell/panels'
 import { getPanels } from '../shell/panels'
 import { displayDeviceName } from '../shell/document'
@@ -42,5 +43,5 @@ export function BrowserPane({ defaultSet, ctx }: { defaultSet: string; ctx: Pane
       {category === 'Views' && LIVE_VIEWS.map(view => <div key={view} className="browser-item" title="The transport's view switch chooses the Live view"><span>▸</span><span>{view}</span></div>)}
       {category === 'Open set' && <form className="browser-open" onSubmit={event => { event.preventDefault(); ctx.openSet(path) }}><label>Set path<input aria-label="Set path" placeholder="/path/to/set.als" value={path} onChange={e => setPath(e.target.value)} /></label><button type="submit">Open</button></form>}
       {getPanels('browser-section').filter(p => p.id === category).map(panel => { const Panel = panel.component; return <Panel key={panel.id} {...ctx} /> })}
-    </div></div><div className="browser-pool"><div className="groove-columns"><span>Groove Name</span><span>Base</span><span>Quantize</span><span>Timing</span><span>Random</span><span>Velocity</span></div><div className="groove-empty" title="Groove material and drop operations require the document owner">No grooves in this reading.</div><div className="groove-footer"><span>Groove Pool</span><span>Global Amount</span><input readOnly value="—" aria-label="Global groove amount" title="Groove amount not disclosed" /></div></div></aside>
+    </div></div><div className="browser-pool"><div className="groove-columns"><span>Groove Name</span><span>Base</span><span>Quantize</span><span>Timing</span><span>Random</span><span>Velocity</span></div><div className="groove-empty" title="Groove material and drop operations require the document owner">No grooves in this reading.</div><div className="groove-footer"><span>Groove Pool</span><span>Global Amount</span><input readOnly value="—" aria-label="Global groove amount" title="Groove amount not disclosed" /></div></div><SetsSection /></aside>
 }
