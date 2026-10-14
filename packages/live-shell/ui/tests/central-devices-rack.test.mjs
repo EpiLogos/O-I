@@ -92,7 +92,7 @@ const deviceMarkup = (markup, faceId) => {
 }
 
 test('no selected occasion: the chain is unchanged by a world with nothing retained', () => {
-  assert.match(todayMarkup, /data-central-devices="7"/, 'the seven devices of the Central family stand on the chain')
+  assert.match(todayMarkup, /data-central-devices="6"/, 'the six device faces of the Central family stand on the chain (its Flow is a clip, on the Clip side)')
   const empty = worldWith([nowEvent], null)
   assert.equal(html(createElement(BaseDevicesDetail, {transport, world: empty, standing: null})), todayMarkup, 'a world with no retained occasion: unchanged')
   assert.equal(html(createElement(BaseDevicesDetail, {transport, standing: readyStanding})), todayMarkup, 'a Day standing with no occasion draws no Day: the die has no aperture')
