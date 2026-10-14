@@ -212,6 +212,21 @@ jobs:
             packages/live-dynamics
             packages/live-set
             packages/live-shell
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            desktop/cradle/package-lock.json
+            desktop/cradle/expressions-app/package-lock.json
+            packages/oi-design-system/package-lock.json
+      # live-shell's packaging test serves the candidate's own built frame.
+      - name: Build the hosted Expressions frame the server serves
+        run: |
+          npm ci --prefix desktop/cradle --no-audit --no-fund
+          npm ci --prefix desktop/cradle/expressions-app --no-audit --no-fund
+          npm ci --prefix packages/oi-design-system --no-audit --no-fund
+          npm --prefix desktop/cradle/expressions-app run build
       - name: Format, lint and test the crates behind the candidate's server
         run: |
           set -euo pipefail
