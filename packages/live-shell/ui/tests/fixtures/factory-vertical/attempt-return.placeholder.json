@@ -1,0 +1,29 @@
+{
+  "contract": "factory.attempt-return-reading/v1",
+  "projectRef": "project:00000000000PLACEHOLDER0001",
+  "runRef": "run:01Z0000000000000000000RUN1",
+  "revision": 3,
+  "sourceCurrent": true,
+  "workflowSourceRef": "workflow-source:01Z00000000000000000000SRC1",
+  "workflowSourceRevision": "placeholder-revision-1",
+  "workflowSourceDigest": "placeholder-digest-0001",
+  "attempt": {
+    "standing": "current-attempt",
+    "status": "passed",
+    "record": {
+      "attemptRef": "attempt:placeholder-survey-1",
+      "readableReturn": {
+        "returnRef": "return:placeholder/survey-1",
+        "summary": "Placeholder return: the ordering is decided in one place; the account draws on wiki:node:placeholder-node-a for its concept.",
+        "artifactRefs": ["central:path:Control:agents/now/placeholder-artifact.md"],
+        "evidenceRefs": ["evidence:placeholder/citations"],
+        "archiveRefs": [],
+        "regressionObservationRefs": []
+      }
+    },
+    "receivingStanding": "absent",
+    "archiveStanding": "absent",
+    "unresolvedOwnerOperations": [],
+    "regressionObservationRefs": []
+  }
+}

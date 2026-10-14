@@ -1,0 +1,204 @@
+// The Factory vertical, scripted (WORLD-SHELL-DESIGN §17.1; DLW-PLAN Phase 3):
+// one selected Factory run recovered through each projection on its own ref —
+// select a run → its subject in the Earth → its moment on the Timeline → its
+// subject in the Constellation → its Expression → its devices and files —
+// with identity asserted at every step, then repeated with the Earth unmounted,
+// an occupant change, and a retained occasion.
+//
+// Channels (every claim below is labelled by the one that carries it):
+// - SHAPE (placeholder-valued): tests/fixtures/factory-vertical/*.placeholder.json are the owner's
+//   `factory.inhabitation-reading/v1` and `factory.attempt-return-reading/v1` shapes with neutral
+//   values (see the folder's README.md). The key sets of the Return and of the occupant body are
+//   checked against the real capture desktop/cradle/tests/fixtures/factory-live-events.json.
+// - REAL OWNER READER: the desk's inhabitation adapter `runInhabitationView` runs on the shape
+//   fixture, so the claim that the desk's view keeps only the tail of a custody ref is measured,
+//   not assumed.
+// - FIXTURE: the temporal event, the atlas occurrences and the agency tracks are built here. The
+//   event is shaped as desktop/cradle/kernel/src/temporal_sources.rs `history_entry_to_event`
+//   would map an aikit-history `procedure` entry whose subject is the run; no kernel read is made.
+// - SOURCE: the seam sentences name the owner, op and remedy read from the source (factoryVertical.ts).
+// What is NOT claimed: no live Factory agent ran; no owner read was invoked; the native walk
+// (computer use) is open. The Earth and Timeline states of the REAL state (unmounted Earth, no Factory
+// stream) are scripted as reported by the source reading, not observed in a running shell.
+// The React face (FactoryRunJoin.tsx) is checked by tsc, not here.
+
+import test from 'node:test'
+import assert from 'node:assert/strict'
+import {readFile} from 'node:fs/promises'
+import {register} from 'node:module'
+
+// Production modules in memory (the central-vertical pattern): .ts/.tsx transpiled, CSS stubbed.
+const compiler = new URL('../node_modules/typescript/lib/typescript.js', import.meta.url).href
+register(`data:text/javascript,${encodeURIComponent(`
+import ts from ${JSON.stringify(compiler)};
+import {readFile} from 'node:fs/promises';
+export async function resolve(s, c, n) {
+  try { return await n(s, c) } catch (e) {
+    if (!s.startsWith('.')) throw e;
+    if (s.endsWith('.js')) { try { return await n(s.slice(0, -3) + '.ts', c) } catch {} }
+    for (const x of ['.ts', '.tsx']) { try { return await n(s + x, c) } catch {} }
+    throw e;
+  }
+}
+export async function load(u, c, n) {
+  if (u.endsWith('.css')) return {format: 'module', shortCircuit: true, source: 'export {}'};
+  if (!u.endsWith('.ts') && !u.endsWith('.tsx')) return n(u, c);
+  return {format: 'module', shortCircuit: true, source: ts.transpileModule(await readFile(new URL(u), 'utf8'), {fileName: new URL(u).pathname,
+    compilerOptions: {target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext, jsx: ts.JsxEmit.ReactJSX}}).outputText};
+}`)}`, import.meta.url)
+
+const join = await import('../src/factory/factoryVertical.ts')
+const runTrack = await import('../src/timeline/runTrackAdapter.ts')
+const model = await import('../../../../desktop/cradle/src/contributions/factory/inhabitation/model.ts')
+
+const FIXTURES = new URL('./fixtures/factory-vertical/', import.meta.url)
+const shape = async (name) => JSON.parse(await readFile(new URL(name, FIXTURES), 'utf8'))
+
+const inhabitation = await shape('inhabitation.placeholder.json')
+const attemptReturn = await shape('attempt-return.placeholder.json')
+const realCapture = JSON.parse(await readFile(new URL('../../../../desktop/cradle/tests/fixtures/factory-live-events.json', import.meta.url), 'utf8'))
+
+const RUN = inhabitation.runs[0].run_ref
+const PROJECT = inhabitation.project_ref
+const SUBJECT = 'central:path:Control:agents/now/placeholder-subject.md'
+const ARTIFACT = 'central:path:Control:agents/now/placeholder-artifact.md'
+const SURVEY = 'attempt:placeholder-survey-1'
+const REVIEW = 'attempt:placeholder-review-1'
+const SESSION = 'agent-session/placeholder-survey'
+
+// ---------------------------------------------------------------------------
+// the shape against the owner's real capture
+
+test('SHAPE: the Return and the occupant body keep the owner\'s key sets (real capture cross-check)', () => {
+  const realReturn = realCapture.attemptReadings.flatMap(reading => reading.attempts).find(item => item.readableReturn).readableReturn
+  assert.deepEqual(Object.keys(attemptReturn.attempt.record.readableReturn).sort(), Object.keys(realReturn).sort(),
+    'the placeholder Return carries the same readableReturn keys as the captured Return')
+  const occupant = inhabitation.runs[0].occupants[0].body
+  assert.ok(occupant.agent_session_ref.state === 'present' && typeof occupant.agent_session_ref.value === 'string',
+    'a session facet is present with a value, the form model.ts reads')
+})
+
+// ---------------------------------------------------------------------------
+// the desk's view and the owner's raw row: the full World object ref
+
+test('REAL OWNER READER: the desk view keeps only the tail of a custody ref; the join reads the full ref from the raw row', () => {
+  const view = model.runInhabitationView({state: 'read', data: inhabitation, source: 'shape'}, RUN)
+  assert.equal(view.positions[0].custody[0].work, 'placeholder-subject.md',
+    'runInhabitationView applies refTail to work_ref, so the desk view names only the tail')
+  const positions = join.positionsOfRaw(inhabitation.runs[0])
+  assert.equal(positions[0].custody[0].work, SUBJECT, 'the join keeps the full central:path ref from the raw row')
+})
+
+// ---------------------------------------------------------------------------
+// the run: select → subject → Earth → Timeline → Constellation → Expression → devices → files
+
+const positionsReal = join.positionsOfRaw(inhabitation.runs[0])
+const occupantsReal = join.occupantsOfRaw(inhabitation.runs[0])
+const returnFacts = join.returnFactsOf(SURVEY, attemptReturn.attempt.record)
+const runFacts = join.factsOf(RUN, PROJECT, positionsReal, occupantsReal, returnFacts ? [returnFacts] : [])
+
+const base = (over = {}) => ({run: runFacts, events: [], occurrences: null, sessionRefs: [SESSION], ...over})
+
+test('select a run: one identity through every row, with the Earth unmounted (the source reading\'s real state)', () => {
+  const selected = join.factoryRunJoin(base())
+  assert.equal(selected.runRef, RUN)
+  assert.equal(selected.projectRef, PROJECT)
+  assert.deepEqual(join.identityBreaks(selected), [], 'every row names the run it was joined from')
+  assert.deepEqual(selected.subjects.map(item => ({ref: item.ref, kind: item.kind, custodyState: item.custodyState})),
+    [{ref: SUBJECT, kind: 'central-path', custodyState: 'in-progress'}])
+  assert.deepEqual(selected.earth, [{state: 'not-mounted', runRef: RUN, seam: join.EARTH_SEAM}])
+  assert.deepEqual(selected.expression, {runRef: RUN, door: 'desk-run-live'})
+})
+
+test('the subject in the Earth: placed only when an occurrence bears the subject ref (FIXTURE occurrences)', () => {
+  const unbound = join.factoryRunJoin(base({occurrences: [{id: 'occ-placeholder-other', subject_ref: 'central:path:Work:elsewhere.md'}]}))
+  assert.equal(unbound.earth[0].state, 'absent')
+  assert.equal(unbound.earth[0].subject.ref, SUBJECT)
+  assert.equal(unbound.earth[0].seam.owner, join.EARTH_SEAM.owner, 'the absence names the atlas owner, op and remedy')
+  const bound = join.factoryRunJoin(base({occurrences: [{id: 'occ-placeholder-bound', subject_ref: SUBJECT}]}))
+  assert.deepEqual(bound.earth, [{state: 'placed', runRef: RUN, subject: bound.subjects[0], occurrenceId: 'occ-placeholder-bound'}])
+  assert.deepEqual(join.identityBreaks(bound), [])
+})
+
+test('the moment on the Timeline: absent with its owner seam on the real read; selected when the reading carries the run (FIXTURE event)', () => {
+  const none = join.factoryRunJoin(base())
+  assert.equal(none.timeline.state, 'absent')
+  assert.equal(none.timeline.seam.owner, join.TIMELINE_SEAM.owner, 'no Factory stream: the kernel temporal reading names its owner')
+  // FIXTURE, shaped as temporal_sources.rs history_entry_to_event maps an aikit-history `procedure` entry about the run.
+  const event = {stream: 'aikit-history', subject_ref: RUN, summary: 'placeholder run receipt', instant_unix_ms: 1790000000000}
+  const moment = join.factoryRunJoin(base({events: [{stream: 'kernel-event-log', subject_ref: 'oi:kernel-event:other'}, event]}))
+  assert.equal(moment.timeline.state, 'selected')
+  assert.equal(moment.timeline.event.subject_ref, RUN, 'the moment is the run\'s own identity')
+  assert.equal(runTrack.isRunSubject(RUN), true, 'the Timeline\'s run track admits the run ref (runTrackAdapter.isRunSubject)')
+  assert.deepEqual(join.identityBreaks(moment), [])
+})
+
+test('the subject in the Constellation: a wiki node the Return names is opened; a wiki root names none', () => {
+  const named = join.factoryRunJoin(base())
+  assert.deepEqual(named.constellation, {state: 'named', runRef: RUN, refs: ['wiki:node:placeholder-node-a']})
+  const noNode = join.factoryRunJoin(base({run: join.factsOf(RUN, PROJECT, positionsReal, occupantsReal, [])}))
+  assert.equal(noNode.constellation.state, 'absent')
+  assert.equal(noNode.constellation.seam.owner, join.CONSTELLATION_SEAM.owner)
+  const nodeSubject = join.factsOf(RUN, PROJECT, [{...positionsReal[0], custody: [{state: 'in-progress', work: 'wiki:node:placeholder-node-b'}]}], occupantsReal, [])
+  assert.deepEqual(join.factoryRunJoin(base({run: nodeSubject})).constellation, {state: 'named', runRef: RUN, refs: ['wiki:node:placeholder-node-b']})
+})
+
+test('the Expression: the desk\'s own Run Live door, keyed on the run ref', () => {
+  assert.deepEqual(join.expressionRowOf(RUN), {runRef: RUN, door: 'desk-run-live'})
+})
+
+test('the devices and the files: the attempt\'s session selects its track; the Return\'s central:path artifact opens through the owner route', () => {
+  const selected = join.factoryRunJoin(base())
+  assert.deepEqual(selected.devices, [
+    {state: 'selected', runRef: RUN, attemptRef: SURVEY, sessionRef: SESSION},
+    {state: 'absent', runRef: RUN, attemptRef: REVIEW, seam: join.DEVICE_SEAM},
+  ])
+  assert.deepEqual(selected.files.openable.map(item => item.ref), [SUBJECT, ARTIFACT])
+  assert.deepEqual(selected.files.openable[1], {ref: ARTIFACT, root: 'Control', path: 'agents/now/placeholder-artifact.md'})
+  assert.deepEqual(selected.files.unopenable.map(item => item.ref), ['evidence:placeholder/citations'])
+  assert.equal(selected.files.unopenable[0].seam.owner, join.FILE_SEAM.owner, 'an artifact or evidence ref no file route admits names its owner')
+  const withoutAgency = join.factoryRunJoin(base({sessionRefs: []}))
+  assert.equal(withoutAgency.devices[0].state, 'absent', 'a session the agency reading does not list is named, never selected')
+  assert.deepEqual(join.identityBreaks(selected), [])
+})
+
+// ---------------------------------------------------------------------------
+// repetition: views closed, reopening, occupant change, a retained occasion
+
+test('repeated with views closed and reopened: the same inputs give the same join', () => {
+  const first = join.factoryRunJoin(base({occurrences: [{id: 'occ-placeholder-bound', subject_ref: SUBJECT}]}))
+  const reopened = join.factoryRunJoin(base({occurrences: [{id: 'occ-placeholder-bound', subject_ref: SUBJECT}]}))
+  assert.deepEqual(reopened, first)
+})
+
+test('occupant change: a new occupant on the run appears as a device row; the subject and identity do not move', () => {
+  const extra = {attempt_ref: 'attempt:placeholder-review-2', participant: {position_ref: {state: 'present', value: 'central:position:project:PLACEHOLDER-PROJECT:position-a'}},
+    body: {agent_session_ref: {state: 'present', value: 'agent-session/placeholder-review'}}}
+  const changedRun = {...inhabitation.runs[0], occupants: [...inhabitation.runs[0].occupants, extra]}
+  const changed = join.factsOf(RUN, PROJECT, join.positionsOfRaw(changedRun), join.occupantsOfRaw(changedRun), runFacts.returns)
+  const after = join.factoryRunJoin(base({run: changed, sessionRefs: [SESSION, 'agent-session/placeholder-review']}))
+  assert.equal(after.devices.length, 3)
+  assert.equal(after.devices[2].state, 'selected')
+  assert.deepEqual(after.subjects, join.factoryRunJoin(base()).subjects)
+  assert.deepEqual(join.identityBreaks(after), [])
+})
+
+test('a retained occasion: the Timeline moment stays selected while the Earth is unmounted, on the same run', () => {
+  const event = {stream: 'aikit-history', subject_ref: RUN, summary: 'placeholder run receipt', instant_unix_ms: 1790000000000}
+  const retained = join.factoryRunJoin(base({events: [event], occurrences: null}))
+  assert.equal(retained.timeline.state, 'selected')
+  assert.equal(retained.earth[0].state, 'not-mounted')
+  assert.equal(retained.timeline.event.subject_ref, retained.runRef)
+  assert.deepEqual(join.identityBreaks(retained), [])
+})
+
+test('the identity check is live: a row that names another run is reported', () => {
+  const joined = join.factoryRunJoin(base())
+  const broken = {...joined, timeline: {...joined.timeline, runRef: 'run:other'}}
+  assert.deepEqual(join.identityBreaks(broken), [`timeline names run:other, not ${RUN}`])
+})
+
+test('a Return that names no readable material yields no Return fact', () => {
+  assert.equal(join.returnFactsOf(REVIEW, {attemptRef: REVIEW, readableReturn: null}), null)
+  assert.equal(join.returnFactsOf(REVIEW, undefined), null)
+})

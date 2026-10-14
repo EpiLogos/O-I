@@ -48,6 +48,8 @@ import {centralRackApertures} from '../central/centralRack'
 import {useCentralSelection} from '../central/useCentralSelection'
 import {useCentralDayStanding} from '../central/useCentralDayStanding'
 import {CentralDayNotice} from '../central/CentralDayNotice'
+import {FactoryRunJoinDetail} from '../factory/FactoryRunJoin'
+import type {AgentSessionTrack} from '../agent/useAgencySessions'
 import './modeSurface.css'
 
 // The door is idempotent (a second identical load composes nothing new);
@@ -178,7 +180,7 @@ export function TechneInstrumentsDetail({transport, instrumentReading, focusInst
  * log column carries those clips' facts as entries. The deeper tool-run
  * rows wait for the Factory owner's task-log read — named, never
  * fabricated. The agent chain (the detail's other side) is live. */
-export function FactoryTaskLogDetail({taskLabel, task}: {
+export function FactoryTaskLogDetail({taskLabel, task, join}: {
   taskLabel: string | null
   task?: {
     sessionRef: string
@@ -190,6 +192,8 @@ export function FactoryTaskLogDetail({taskLabel, task}: {
     /** Turns used / allowed — the track's budget reading. */
     budget?: {used: number | null; max: number | null} | null
   } | null
+  /** The Factory run join's owner readings (src/factory). Absent, the run join is not drawn. */
+  join?: {transport: KernelTransportStatus; world: WorldTimelineView | null; tracks: readonly AgentSessionTrack[]}
 }) {
   const tasks = task?.tasks ?? []
   const clock = (unixMs: number | null) => unixMs == null ? null
@@ -252,6 +256,7 @@ export function FactoryTaskLogDetail({taskLabel, task}: {
           </div>
         </div>
       </section>
+      {join && <FactoryRunJoinDetail transport={join.transport} world={join.world} tracks={join.tracks}/>}
     </div>
   )
 }
