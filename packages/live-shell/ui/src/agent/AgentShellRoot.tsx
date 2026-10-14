@@ -70,8 +70,11 @@ function AgentShellCentreBody() {
       {sessions.temporalError && (
         <RefusalCard title="Temporal read refused" line={sessions.temporalError} receipt={sessions.temporalError} />
       )}
-      {/* The roster refusal renders at the source (the provider, above this
-        tree) — not duplicated here. */}
+      {sessions.rosterError && (
+        <div data-region="agent-disclosures">
+          <RefusalCard title="Roster refused" line={`Agent roster read failed. Central owner Action refused: ${sessions.rosterError}`} receipt={sessions.rosterError} />
+        </div>
+      )}
       <AgentThreadView tracks={tracks} />
     </div>
   )
