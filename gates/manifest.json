@@ -13,7 +13,8 @@
       "run_if_selected": [
         "candidate",
         "browser",
-        "guard"
+        "guard",
+        "rust"
       ],
       "commands": [
         "npm --prefix desktop/cradle install --no-audit --no-fund",
