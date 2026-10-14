@@ -106,22 +106,31 @@ bullet twice gets one Sonnet diagnostic; never a third builder attempt.
 
 ## 7. Open claims
 
-One branch, one run (`dlw/build`; the open PR is #661). Builders are Haiku, three at a
+One branch, one run (`dlw/build`; the open PR is #667). Builders are Haiku, three at a
 time, each with an exclusive zone; the lead converges, commits and keeps
 this table true. Tickets and resolutions live in `tickets/`.
 
 | Ticket | Who | Zone | Since |
 |---|---|---|---|
-| T-LIVE-MIDI (native MIDI in → the Jankó one input path) | haiku builder | `desktop/cradle/src-tauri/{Cargo.toml,Cargo.lock,src/midi.rs,src/main.rs registration}`, live-shell `src/native/liveMidi.ts`, `src/live/janko/{jankoInput.ts,JankoDevice.tsx}` | 2026-10-14 |
-| T-EXPRESSIONS-PANE-LEASE | haiku builder | live-shell `src/panels/expressions.tsx`, `src/projections/**`, Factory pane host; `expressions-boundary/src/host.ts` read-only unless the lease needs it | 2026-10-14 |
-| lane-5 T15 (the palace's free arrangement board) | haiku builder | `field-studies-journeys/src/{palaceInstrument.tsx,palaceInstrument.css,palaceWhole.ts,palaceBoard*.ts}` + its tests | 2026-10-14 |
+| T-LIVE-MIDI leg 2 (MIDI map / Key map) | haiku builder | `src-tauri/src/midi.rs` (CC), live-shell `native/liveMidi.ts`, `live/midiMap/*`, `TransportBar.tsx` map slots, parameter faces' map overlay | 2026-10-14 |
+| lane-5 T5 remainder (compositor, seam chooser, bezier handles) | haiku builder | frame `production.ts`, `engine/transitionPass.ts`, `transitions.ts` chooser, app.ts seam sites, the E09 curve editor | 2026-10-14 |
+| lane-3 E21 remainder (wiki register loaded on ask) | haiku builder | live-shell `native/wikiSubjectStanding.ts`, `techne/wikiProjectionStore.ts` load hook | 2026-10-14 |
+| R2 review, second wave | sonnet reviewer | read-only | 2026-10-14 |
 
-Landed on main: #656, #654, #657, #658, #659, #660 (through the torus
-instrument leg 2 and the Factory Timeline pane). Continuing on #661: torus
-legs 3–6, the Jankó device (legs 1–2: the kernel serves the owner's window),
-the mode catalogue (legs 2–3: one mode in force for transport, clip and
-keyboard). The WebKit editor-remount failure was StrictMode's layout-effect
-replay in the test, fixed by `settledEditor` (landed).
+Landed on main through #666 (14 Oct): the torus instrument legs 1–6; the
+Jankó keyboard (the owner's window, presses held by identity); the mode
+catalogue and one mode in force (transport, clip, keyboard); the Scale note
+device; MIDI input; the Expressions pane beside the agent (the one frame,
+placed, never remounted); hosted source and graph summons; the Central
+vertical (Phase 3); lane-1 B1–B4, C1–C4, D1–D3; lane-2 T9, T14, T19–T22;
+lane-3 E15–E22; lane-4 T22–T30; lane-5 T4, T11, T14–T24; the R2 review fixes.
+#667 carries lane-5 T5/T8 (edge switch, curve and loop exit, saved by the
+owner's widened Scene grammar), T19b (the source opens at its passage), and
+the honest handoff fixes.
+
+Native: the 14 Oct build at `3a619dbb8` was sealed and read back (3 of 6
+owners admitted); computer-use access was refused (third time), so no
+screen pass has run. Every target above is scripted and source-read only.
 
 Install seam (14 Oct): `oi update --apply quaternal-logic` installed QL main
 with every companion, but `oi where` — what the kernel reads — answers from
