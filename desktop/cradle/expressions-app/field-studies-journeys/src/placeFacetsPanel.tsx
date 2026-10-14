@@ -17,7 +17,7 @@ import {depthChain,placeRelations,routeModel,worldState,type DepthState} from '.
 import {placeState,renderStreetModel} from '../../../src/techne/m0m5/place/modes';
 import {equirectBounds,projectEquirect,DEFAULT_CAMERA} from '../../../src/techne/m0m5/place/project';
 import {
- filteredFacets,filteredReading,placeFilterOptions,toggleFilterMembership,
+ filteredFacets,filteredReading,placeFilterOptions,placeSubjectOf,toggleFilterMembership,
  type PlaceFilterState,
  sharedPlaceTimeScope,
 } from './placeReading.js';
@@ -129,6 +129,8 @@ export interface PlaceFacetsPanelProps {
 
 export function PlaceFacetsPanel({reading,selectedRef,filter,onFilterChange,editRequest,onError,sharedTime=false,onOpenSource}:PlaceFacetsPanelProps){
  const status=placeState(reading);
+ // Lane-4 T23: the place's subject is named here, read from the reading itself (never minted).
+ const subject=placeSubjectOf(reading);
  const options=placeFilterOptions(reading);
  const facets=filteredFacets(reading,filter);
  const narrowed=filteredReading(reading,filter);
@@ -167,7 +169,10 @@ export function PlaceFacetsPanel({reading,selectedRef,filter,onFilterChange,edit
    </div>}
   </fieldset>}
 
-  {!selectedRef&&<p className="place-facets-message" role="status">No place disclosed — select a place on the map to inspect it.</p>}
+  {/* Lane-4 T22: a subject whose reading discloses no place is named as such, rather than left as a bare empty panel. */}
+  {!selectedRef&&(subject&&(reading?.spatial?.length??0)===0
+   ?<p className="place-facets-message" role="status">No place disclosed for {subject.subject_ref}: this subject carries no place facet, so there is no place to fly to.</p>
+   :<p className="place-facets-message" role="status">No place disclosed — select a place on the map to inspect it.</p>)}
 
   {selectedRef&&!street.place&&<p className="place-facets-message" role="status">No place disclosed for this member — either the filter above excludes it, or the reading discloses no place facet for it.</p>}
 
@@ -175,6 +180,7 @@ export function PlaceFacetsPanel({reading,selectedRef,filter,onFilterChange,edit
    <h4>{street.standing_name??street.place_ref}</h4>
    {world.selected.standing_class==='mythic'&&<p className="place-facets-mythic-note" role="note">Mythic — a disclosed narrative location, never presented as a factual one.</p>}
    <dl>
+    {subject&&<><dt>Subject</dt><dd>{subject.subject_ref}{subject.kind?` (${subject.kind})`:''}</dd></>}
     <dt>Place ref</dt><dd>{street.place_ref}</dd>
     <dt>Relation</dt><dd>{street.relation??'(relation not disclosed)'} <span className="place-standing-tag">{world.selected.standing_class}</span></dd>
     <dt>Precision</dt><dd>{street.precision} — {street.precision_note}</dd>

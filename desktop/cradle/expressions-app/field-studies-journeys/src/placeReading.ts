@@ -117,3 +117,15 @@ export function subjectEntityRef(entities: Record<string, EntityLookup> | undefi
  }
  return null;
 }
+
+/**
+ * The subject this place reading is about, read verbatim from the reading
+ * (lane-4 T23: selecting a place names its subject). Null when the reading
+ * discloses no subject ref, so no subject is invented for the panel.
+ */
+export function placeSubjectOf(reading: TechneReading | null): {subject_ref: string; kind: string | null} | null {
+ const subject = reading?.subject;
+ if (!subject || typeof subject.subject_ref !== 'string' || !subject.subject_ref.trim()) return null;
+ const kind = (subject as {kind?: unknown}).kind;
+ return {subject_ref: subject.subject_ref, kind: typeof kind === 'string' && kind.trim() ? kind : null};
+}
