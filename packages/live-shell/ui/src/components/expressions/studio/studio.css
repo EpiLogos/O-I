@@ -46,3 +46,35 @@
 .studio-settings-nav button:hover { color: var(--text); border-color: var(--text-faint) }
 .studio-settings-nav button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--bg-1) }
 .studio-settings-nav button:focus-visible { outline: 1px solid var(--accent); outline-offset: 1px }
+
+/* The stage's controls in Tools and Capture (StudioStage.tsx; the mockup's x.tool / x.cap segs and its ◉ Capture and Edition… buttons,
+   world-shell-mockup.html:1434, :1440). A seg is the mockup's .tog .tg (:343-344): segments on the well, the pressed one lit; a lone
+   control is the mockup's .bt (:128-129), the capture itself its .bt.pri. */
+.studio-stage { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-width: 0 }
+.studio-stage-label { font-size: 9.5px; color: var(--text-dim); white-space: nowrap }
+.studio-seg { display: flex; width: max-content; max-width: 100%; border: 1px solid var(--line) }
+.studio-seg .studio-stage-button { height: 17px; padding: 1px 6px; background: var(--bg-0); border: 0; border-right: 1px solid var(--line); color: var(--text-faint); font: inherit; font-size: 9.5px; white-space: nowrap; cursor: pointer }
+.studio-seg .studio-stage-button:last-child { border-right: 0 }
+.studio-seg .studio-stage-button:hover:not(:disabled) { color: var(--text) }
+.studio-seg .studio-stage-button[aria-pressed="true"] { background: var(--accent); color: var(--bg-1) }
+.studio-stage-row { display: flex; flex-wrap: wrap; gap: 4px }
+.studio-stage-row .studio-stage-button { display: inline-flex; align-items: center; gap: 4px; height: 20px; padding: 0 9px; background: var(--bg-1); border: 1px solid var(--line); color: var(--text-dim); font: inherit; font-size: 10.5px; white-space: nowrap; cursor: pointer }
+.studio-stage-row .studio-stage-button:hover:not(:disabled) { color: var(--text); border-color: var(--text-faint) }
+.studio-stage-row .studio-stage-button[aria-pressed="true"], .studio-stage-row .studio-stage-button[aria-expanded="true"] { border-color: var(--accent); color: var(--text) }
+.studio-stage-row .studio-stage-button.is-primary { background: var(--accent); border-color: var(--accent); color: var(--bg-1) }
+.studio-stage-button:disabled { cursor: default; opacity: .45 }
+.studio-stage-button:focus-visible { outline: 1px solid var(--accent); outline-offset: 1px }
+.studio-stage-reason { max-width: 30ch }
+
+/* Capture: the capture itself, then Edition… open beside it — the options, Export and Import as columns of the section. */
+.studio-capture { flex-direction: row; align-items: flex-start; gap: 12px }
+.studio-capture-main { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; min-width: 0 }
+.studio-edition { display: flex; gap: 12px; padding-left: 12px; border-left: 1px solid var(--line) }
+.studio-edition-col { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-width: 0 }
+.studio-edition-col .studio-stage-button { height: 20px; padding: 0 9px; background: var(--bg-1); border: 1px solid var(--line); color: var(--text-dim); font: inherit; font-size: 10.5px; white-space: nowrap; cursor: pointer }
+.studio-edition-col .studio-stage-button:hover:not(:disabled) { color: var(--text); border-color: var(--text-faint) }
+.studio-edition-field { display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--text-dim); white-space: nowrap }
+.studio-edition-field select { height: 20px; padding: 0 4px; background: var(--bg-1); border: 1px solid var(--line); color: var(--text); font: inherit; font-size: 10.5px }
+.studio-edition-field select:focus-visible { outline: 1px solid var(--accent); outline-offset: 1px }
+.studio-edition-check { display: flex; align-items: center; gap: 5px; font-size: 10px; color: var(--text-dim); white-space: nowrap }
+.studio-edition-check input { margin: 0; accent-color: var(--accent) }
