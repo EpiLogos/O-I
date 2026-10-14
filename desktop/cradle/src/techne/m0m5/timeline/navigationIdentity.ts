@@ -218,8 +218,12 @@ export function relationRefOf(properties: Record<string, unknown>): string | nul
 /** The subject-to-place relation an event's location is read from (walk.ts's placeGraphNodeId vocabulary). */
 export const EVENT_LOCATION_RELATION = "LOCATED_AT";
 
+export const NO_LOCATION_SENTENCE = "No location is disclosed for this event's subject.";
+
 export type GlobeCarry =
   | {state: "offer"; place_ref: string; window: SharedTimeWindow | null}
+  /** A place-less event with its own validity: only the window is carried; the globe clears its place focus and says so. */
+  | {state: "window"; place_ref: null; window: SharedTimeWindow; reason: string}
   | {state: "absent"; reason: string};
 
 /** The event's own dated extent as a shared window, read from the T6 projection. Null when the event discloses no bound. */
@@ -238,7 +242,13 @@ export function showOnGlobeOf(reading: TechneReading, subjectRef: string, event:
   const located = [...new Set((reading.whole?.relations ?? [])
     .filter(row => row.from_ref === subjectRef && row.relation === EVENT_LOCATION_RELATION)
     .map(row => row.to_ref))];
-  if (located.length === 0) return {state: "absent", reason: "No location is disclosed for this event's subject."};
+  if (located.length === 0) {
+    // A place-less event still carries its own validity: the window is the event's, the place is honestly absent.
+    const window = eventWindowOf(event);
+    return window === null
+      ? {state: "absent", reason: NO_LOCATION_SENTENCE}
+      : {state: "window", place_ref: null, window, reason: NO_LOCATION_SENTENCE};
+  }
   const placed = located.filter(ref => (reading.spatial ?? []).some(facet => facet.place_ref === ref));
   if (placed.length === 0) {
     return {state: "absent", reason: "The located place is not disclosed as a place facet, so nothing is flown to."};

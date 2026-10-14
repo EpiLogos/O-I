@@ -33,7 +33,7 @@ import {daylightFromSky,skyRequestEpoch,type DaylightAnswer,type DaylightHost} f
 import type {NaraIdentityResult} from '../../../src/nara/identity/types';
 import type {SkyRequest} from '../../../src/nara/identity/types';
 import {ladderRungSummaries,referenceFrameLadder} from '../../../src/techne/m0m5/place/world';
-import {evidenceAnchorOf} from '../../../src/techne/m0m5/timeline/navigationIdentity';
+import {evidenceAnchorOf,evidenceControlOf,type EvidenceAnchor} from '../../../src/techne/m0m5/timeline/navigationIdentity';
 import {nativeInstrumentCanvas,nativeInstrumentTitles,nativeInstrumentPreviews,nativeInstrumentNodeTags,nativeInstrumentSourceRelations,readingInstruments,CANVAS_UNITS,assertInstrumentReadingScope,expressionTextFromNote,type InstrumentCanvas,type NativeRelationDirectionReading} from './researchInstrumentsData.js';
 import {createGestureTransaction,withGesturePreviews,type GestureTransaction} from './canvasGesture.js';
 import {
@@ -1270,17 +1270,36 @@ host.tools.append(saveGlyph);
     // lane-2 T21/T22: "Show on the globe" offers the selected event's one located place. The crossing is planned on the session
     // read here; a session that has drifted refuses by name (handoffRefusal) and is never re-targeted. The place is the shared
     // spatial focus and the event's own validity the window, each through the owner's compare-and-set write, then Places opens.
-    const showOnGlobe=async(carry:Extract<GlobeCarry,{state:'offer'}>)=>{
+    // The crossing is planned when its control is offered (`planned`): a session that has moved since is refused by name, both
+    // before the first write and on the owner's reply, and is never re-targeted onto whatever is open now.
+    const showOnGlobe=async(carry:Extract<GlobeCarry,{state:'offer'|'window'}>,planned:ReturnType<typeof sessionCrossingIdentity>)=>{
      if(!sharedTime||!timeCurrent())throw Error('The shared session is no longer presented, so the globe was not changed.');
-     const planned=sessionCrossingIdentity(sharedTime.session);
-     const refuse=()=>{const reason=handoffRefusal(planned,sharedTime?.session??null);if(reason)throw Error(reason);};
-     refuse();
+     const refuse=(session:NativeTimeWindowReply['session']|null)=>{const reason=handoffRefusal(planned,session);if(reason)throw Error(reason);};
+     refuse(sharedTime.session);
+     // A place-less event writes a null place: the globe's focus is cleared, so no earlier place is flown to over this event's validity.
      sharedTime=await writeSharedSpatialFocus(request,nativeReading,'timeline',sharedTime,carry.place_ref);
-     refuse();
+     refuse(sharedTime.session);
      if(carry.window)sharedTime=await writeSharedTimeWindow(request,nativeReading,'timeline',sharedTime,carry.window);
      if(host.activateInstrument)host.activateInstrument('place');
      else{lens='m4';await load('m4');}
     };
+    // lane-2 T19: an event's evidence is read from the relation that carries its temporal facet, through the one rule
+    // (evidenceAnchorOf). More than one facet on the event is named, never chosen between: its source opens at its top.
+    const eventEvidence=(ref:string):EvidenceAnchor=>{
+     const facets=data.bundle.relationships.filter(row=>row.targetGraphNodeId===ref&&typeof row.properties.temporal_kind==='string');
+     return facets.length>1?{state:'absent',reason:'More than one temporal facet is disclosed for this event; its source opens at its top.'}:evidenceAnchorOf(facets[0]?.properties??{});
+    };
+    // The evidence control exists only where the reading discloses a passage for the event's source. Otherwise the honest absence
+    // stands in its place, and the card's own open still opens the source at its top.
+    const evidenceControl=(eventRef:string|null)=>{
+     if(!eventRef)return null;
+     const anchor=eventEvidence(eventRef);
+     const control=evidenceControlOf(anchor);
+     if(!control.present)return <span className="research-evidence-absent" role="note">{control.reason}</span>;
+     const node=data.bundle.nodes.find(candidate=>candidate.graphNodeId===eventRef);
+     return <button type="button" aria-label={control.label} title="Open this event's source at the passage its reading discloses" onClick={()=>host.inspectSubject(eventRef,{node,anchor})}>{control.label}</button>;
+    };
+    const eventControls=(eventRef:string|null):ReactNode=><>{globeControl(eventRef)}{evidenceControl(eventRef)}</>;
     const globeControl=(eventRef:string|null)=>{
      if(!eventRef||!sharedTime)return null;
      let carry:GlobeCarry;
@@ -1291,7 +1310,12 @@ host.tools.append(saveGlyph);
      }
      catch(error){carry={state:'absent',reason:error instanceof Error?error.message:String(error)};}
      if(carry.state==='absent')return <button type="button" disabled aria-label="Show on the globe" title={carry.reason}>Show on the globe</button>;
-     return <button type="button" aria-label="Show on the globe" title="Show this event's place on the globe, over the event's own validity" onClick={()=>{void showOnGlobe(carry as Extract<GlobeCarry,{state:'offer'}>).catch(error=>message(error instanceof Error?error.message:String(error)));}}>Show on the globe</button>;
+     // The offer is planned over the session it is shown on; a later click refuses by name if that session has moved.
+     const settled:Extract<GlobeCarry,{state:'offer'|'window'}>=carry;
+     const planned=sessionCrossingIdentity(sharedTime.session);
+     const onClick=()=>{void showOnGlobe(settled,planned).catch(error=>message(error instanceof Error?error.message:String(error)));};
+     if(settled.state==='window')return <button type="button" aria-label="Show on the globe" title={`Carry this event's validity to the globe. ${settled.reason}`} onClick={onClick}>Show on the globe</button>;
+     return <button type="button" aria-label="Show on the globe" title="Show this event's place on the globe, over the event's own validity" onClick={onClick}>Show on the globe</button>;
     };
     // lane-2 T20: the traversal trail, one history. Every step is one compare-and-set write on the shared session through the owner's
     // traversal route, and the trail is read back from the session's own navigation (its traversal hops since the origin event).
@@ -1303,10 +1327,11 @@ host.tools.append(saveGlyph);
      if(!acknowledged)throw Error('The shared session is no longer presented, so the trail was not changed.');
      const planned=sessionCrossingIdentity(acknowledged.session);
      const reply=await writeSharedTraversalHop(request,nativeReading,'timeline',acknowledged,traversalHopOf(acknowledged.session,step,ref));
-     // The session the write was made on must still be the one presented; a drift is refused by name, never re-targeted.
-     const reason=handoffRefusal(planned,sharedTime?.session??null);
-     if(reason)throw Error(reason);
+     // The owner's reply is the session as it now stands. The check reads that reply, never the session the hop was planned from
+     // (which is still the acknowledged one here): a drift is named, the reply is held as the owner's truth, and nothing is re-targeted.
+     const reason=handoffRefusal(planned,reply.session);
      sharedTime=reply;
+     if(reason)throw Error(reason);
     };
     // The steps to record from the event: a new event starts its trail at the event; a relation always opens from that event.
     const stepsFromEvent=(eventRef:string,steps:[DisclosureTraversalStep,string][]):[DisclosureTraversalStep,string][]=>{
@@ -1330,8 +1355,11 @@ host.tools.append(saveGlyph);
      const relation=relationOfRow(row);
      const step=openRelation(trailFromEvent(eventRef,sharedTime.session.subject_ref,sharedTime.session.selection.selection_ref),relation);
      if(!step.ok){message(step.reason);return;}
-     if(relation.relation_ref===null)return;
-     void runSteps(stepsFromEvent(eventRef,[['relation',relation.relation_ref]]));
+     const relationRef=relation.relation_ref;
+     if(relationRef===null)return;
+     // A native relation is co-referenced in the Studio through the same selection route the Relations projection uses, and only once
+     // its hop is recorded: a refused or failed step selects nothing. A derived relation never reaches here (it is refused above).
+     void runSteps(stepsFromEvent(eventRef,[['relation',relationRef]])).then(recorded=>{if(recorded)host.select(sceneId,null,relationRef);});
     };
     // An endpoint of the followed link: the relation it belongs to is recorded first when the trail is not already on it, then the
     // endpoint. The host's answer decides whether the lens opens the endpoint: a refusal is stated by name and opens nothing.
@@ -1388,7 +1416,7 @@ host.tools.append(saveGlyph);
       {view&&Object.keys(savedTimelineViews()).length>0&&<select className="research-timeline-view-select" aria-label="Saved timeline views" value="" onChange={event=>{const [op,name]=event.target.value.split('\u0000');if(op==='apply')applyTimelineView(name);if(op==='remove')removeTimelineView(name);event.target.value='';}}>
        <option value="">Views…</option>{Object.keys(savedTimelineViews()).map(name=><optgroup key={name} label={name}><option value={`apply\u0000${name}`}>Go to</option><option value={`remove\u0000${name}`}>Remove</option></optgroup>)}</select>}
       {(tagReason||relationReason)&&<button onClick={()=>message([tagReason&&`Tags: ${tagReason}`,relationReason&&`Relations: ${relationReason}`].filter(Boolean).join(' · '))}>Reading incomplete</button>}
-      {view&&state.m2Projection==='chronology'&&<SelectedEventControl initial={state.timeline?.selectedNodeId??null} listen={listener=>{state.globeListener=listener;}} control={globeControl}/>}
+      {view&&state.m2Projection==='chronology'&&<SelectedEventControl initial={state.timeline?.selectedNodeId??null} listen={listener=>{state.globeListener=listener;}} control={eventControls}/>}
       {view&&state.m2Projection==='chronology'&&<TrailControl initial={trailOf()} listen={listener=>{state.traversalListener=listener;}} control={trailControl}/>}
       {view&&<button type="button" className="research-timeline-focus" aria-label="Focus the timeline stage" title="Focus the stage: F toggles, Escape restores. The stage asks for fullscreen where granted; the chrome returns exactly on exit." onClick={beginTimelineFocus}>Focus</button>}
       {timeControls(()=>render(canvasNode2()))}
@@ -1416,7 +1444,7 @@ host.tools.append(saveGlyph);
      const datedNodes=new Set(data.bundle.nodes.filter(node=>node.isTemporal).map(node=>node.graphNodeId));
      return <>{createPortal(toggle,host.tools)}<TimelineSurface key={state.timelineKey??0} timeExtent={years.length?{startYear:first,endYear:last}:undefined} toolbarContainer={host.tools} repository={timed.repository} constellationId={data.reading.subject.subject_ref} dataSource={timed.dataSource} containment={containmentPairs(relationEdges(nativeReading)).map(pair=>({...pair,dated:datedNodes.has(pair.child)}))} participants={participantSpansFromReading(nativeReading).spans}
       initialState={state.timeline!} onViewStateChange={value=>{const moved=value.selectedNodeId!==state.timeline?.selectedNodeId;state.timeline=value;if(moved)setTrail(trailOf());state.globeListener?.(value.selectedNodeId??null);}}
-      onOpenCanvasNode={ref=>{const node=data.bundle.nodes.find(node=>node.graphNodeId===ref);if(node)host.inspectSubject(ref,{node});}} onOpenNode={(ref,node,relationField)=>{const facets=data.bundle.relationships.filter(row=>row.targetGraphNodeId===ref&&typeof row.properties.temporal_kind==='string');host.inspectSubject(ref,{node,relationField,anchor:facets.length>1?{state:'absent',reason:'More than one temporal facet is disclosed for this event; its source opens at its top.'}:evidenceAnchorOf(facets[0]?.properties??{})});}}
+      onOpenCanvasNode={ref=>{const node=data.bundle.nodes.find(node=>node.graphNodeId===ref);if(node)host.inspectSubject(ref,{node});}} onOpenNode={(ref,node,relationField)=>{host.inspectSubject(ref,{node,relationField,anchor:eventEvidence(ref)});}}
       onOpenRelation={openTrailRelation} onOpenEndpoint={openTrailEndpoint}/></>;
     };
     // lane-2 T22: the status line names the subject, reading basis and window the session holds, exactly as it holds them.
