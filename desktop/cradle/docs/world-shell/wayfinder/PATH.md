@@ -100,6 +100,7 @@ objections verbatim and the full validation (`BRIEF-BUILDER.md`); the lead conve
 | Ticket | Who | Zone | Since |
 |---|---|---|---|
 | Central's document forms run natively: the Flow and the Day die served through `oi-material://` with the host's seam as an external script (the srcdoc frame inherits the window's script-src hash and runs nothing) | Opus builder | `desktop/cradle/src-tauri/src/material_protocol.rs`, a pure kernel module, `desktop/cradle/src/document/frame.ts` (one seam source), the two document faces | 15 Oct |
+| FOUNDATION §7, unreached code: the reachability measure made true (type-only imports do not reach; the hosted frame's entry is a root), then the old Session/Arrangement views, the shell's Technē Timeline, the unrendered timeline residence and NativeStageTools deleted, each with its replacement named | Opus builder | `packages/live-shell/ui/scripts/candidate-reachable.mjs`, deletions under `packages/live-shell/ui/src` and `tests` | 15 Oct |
 | Native screen pass against the mockup renders; N1; mounting N2's subject door | lead | the frame, `App.tsx`, `native/Workbench.tsx`, `shell/modeFrames.ts`, the book | 14 Oct |
 
 The native pass at `ae9301a1b` (computer-use, 15 Oct): every mode at the mockup's anatomy — Central's paper documents,
