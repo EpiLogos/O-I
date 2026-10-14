@@ -53,9 +53,8 @@ delivered at 0.1.2 — `evidence/integrated-v012-delivery-receipt.json`):
 2. **UX spine convergence** — the shell's spine matches the design frontier
    per `UX-SPINE-ALIGNMENT.md` (the eight seams). **Open.** Seam status
    (`UX-SPINE-ALIGNMENT.md` §5, updated 14 Oct 2026 after the seam builds;
-   scripted and source only): seams 2, 3, 5, 6, 7 and 8 converged; seams 1
-   and 4 partial; none open. Native verification of every seam is still
-   pending.
+   scripted and source only): all eight seams converged. Native
+   verification of every seam is still pending.
 3. **Everyday-data continuity** — the candidate adopts the everyday
    workspace state on first cutover run: the everyday workspace book,
    recovery records and drafts are migrated (or re-adoptable in place) into
