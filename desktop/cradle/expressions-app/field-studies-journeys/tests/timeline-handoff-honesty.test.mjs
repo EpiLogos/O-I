@@ -51,3 +51,13 @@ test('T19: the evidence control exists only for a disclosed passage; otherwise t
   assert.match(mount, /control=\{eventControls\}/);
   assert.match(css, /\.research-evidence-absent\)\{color:var\(--ui-muted\)/, 'the absence is styled as instrument status text');
 });
+
+test("the globe's Open in Timeline plans its crossing when offered, not when pressed, so a drifted session refuses", async () => {
+  const {readFile} = await import('node:fs/promises');
+  const source = await readFile(new URL('../src/researchInstruments.tsx', import.meta.url), 'utf8');
+  const render = source.slice(source.indexOf('const renderPlaces=():ReactNode=>{'));
+  assert.match(render, /const offeredCrossing=sharedTime\?sessionCrossingIdentity\(sharedTime\.session\):null;/, 'planned at render, the moment it is offered');
+  assert.match(render, /const openInTimeline=async\(facet:TechnePlaceFacet,planned:/);
+  assert.doesNotMatch(render.slice(render.indexOf('const openInTimeline'), render.indexOf('const openInTimeline') + 600), /const planned=sessionCrossingIdentity/, 'never re-planned at press time');
+  assert.match(render, /onOpenInTimeline=\{facet=>\{void openInTimeline\(facet,offeredCrossing\)/);
+});
