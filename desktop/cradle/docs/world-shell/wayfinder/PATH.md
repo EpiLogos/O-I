@@ -113,11 +113,12 @@ this table true. Tickets and resolutions live in `tickets/`.
 | Ticket | Who | Zone | Since |
 |---|---|---|---|
 | Phase 5 gate 4: native Live set and device ops (`LiveSetRead`, `LiveDeviceDescriptors`, `LiveDeviceParamsRead`, `LiveDeviceParamWrite`) | haiku builder | kernel `live_set_owner.rs`, `owner_read.rs`, `lib.rs`; `packages/live-set`; live-shell `panels/devices/api.ts`, `native/application.ts`; the census | 2026-10-14 |
-| Phase 5 gate 2: spine seams 7 (transport Now / Occasion / Instrument) and 8 (device pop-out) | haiku builder | live-shell `TransportBar.tsx`, `shell/ModeTransportBar.tsx`, `inhabitants/*`, `native/detachedKinds.ts` | 2026-10-14 |
+| Phase 5 gate 2: seam 7 host wiring (one spine on the transport: Back to Now, the occasion stepper, Instrument writes) | haiku builder | live-shell `App.tsx` transport props, `timeline/timeSpine.ts`, `shell/ModeTransportBar.tsx`, `components/TransportBar.tsx` | 2026-10-14 |
+| Phase 5 gate 2: seam 8 host wiring (a device face pops out through the existing detach door) | haiku builder | `src-tauri/src/windows.rs`, cradle `workspace/DetachedFrame.tsx`, live-shell `native/{Detached,Workbench}.tsx`, `native/detachedKinds.ts`, `shell/ModeDetail.tsx` | 2026-10-14 |
 
 Committed on `dlw/build` after #671's head: the E19 quarantine safety fixes,
 the gate 4 census, the gates 1–2 audit, the gate 3 migration command and the
-candidate's first-run apply (`LEGACY-CRADLE-RETIREMENT.md` §4.1).
+candidate's first-run apply (`LEGACY-CRADLE-RETIREMENT.md` §4.1), and the zone side of seams 7 and 8.
 
 Landed on main through #666 (14 Oct): the torus instrument legs 1–6; the
 Jankó keyboard (the owner's window, presses held by identity); the mode
