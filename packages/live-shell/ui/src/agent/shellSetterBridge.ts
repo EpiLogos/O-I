@@ -99,7 +99,8 @@ export function registerAgentShellSetters(config: ShellSetterBridgeConfig): () =
     return receipt
   }
   registerShellSetter('shell.setEffort', value => dispatchFor('actuation', 'effort', () => config.shell.setEffort(value as never), value))
-  registerShellSetter('shell.setSteer', value => dispatchFor('actuation', 'input', () => config.shell.setSteer(value as never), value))
+  // The shell holds steer as a boolean; the harness carrier's input mode is a word (harnessAgentControl.ts input_mode).
+  registerShellSetter('shell.setSteer', value => dispatchFor('actuation', 'input', () => config.shell.setSteer(value as never), typeof value === 'boolean' ? (value ? 'steer' : 'queue') : value))
   registerShellSetter('shell.setQuantize', value => dispatchFor('actuation', 'interrupt-quantize', () => config.shell.setQuantize(value as never), value))
   registerShellSetter('shell.setHeartbeat', value => dispatchFor('actuation', 'heartbeat', () => config.shell.setHeartbeat(value as never), value))
   registerShellSetter('shell.setWriteArm', value => dispatchFor('software-factory', 'write-mode', () => config.shell.setWriteArm(value as never), value))
