@@ -100,7 +100,9 @@ objections verbatim and the full validation (`BRIEF-BUILDER.md`); the lead conve
 | Ticket | Who | Zone | Since |
 |---|---|---|---|
 | Live at the mockup's floor under the one-instrument ruling: the rail in Live, the chain as plates, the clip in the Clip view, the Live tree healed | Opus builder | `shell/modeFrames.ts` (live), `shell/modeDetails.tsx` (live), `components/DeviceChainPanel.tsx`, `live/**`, `components/BrowserPane.tsx` | 14 Oct |
-| Transport and status bar: the title line, the slots' words and sizes, each mode's readings from their owners, the Info view | Opus builder | `shell/modeTransports.tsx`, `shell/transports/**`, `frame/transport/**`, `components/TransportBar.tsx`, `components/StatusBar.tsx` (not the side switch), the pending note | 14 Oct |
+| N1: works survive a restart — the kernel's expression owner enumerates a persistent home on `list` | Opus builder | `desktop/cradle/kernel/src/expression.rs`, `expression_file.rs`, `packages/expressions-boundary/src/**` (list/open_file relay), the Expressions panel | 14 Oct |
+| The browser's lower panel is the focused pane's own context (the mockup's aperture slot) | Opus builder | `shell/ModeBrowser.tsx` (ApertureSlot, CategoryContext), `native/workbenchDoor.ts`, one publish in `native/Workbench.tsx`, `frame/browser/**` | 14 Oct |
+| Queued: the Expressions centre full-bleed — the pane's header, buttons and stage tools move into the Studio plate | Opus builder (next free slot) | `projections/expressionsPane.tsx`, `components/NativeStageTools.tsx`, `components/expressions/studio/**` | 14 Oct |
 | Native screen pass against the mockup renders; N1; mounting N2's subject door | lead | the frame, `App.tsx`, `native/Workbench.tsx`, `shell/modeFrames.ts`, the book | 14 Oct |
 
 Landed later the same evening: the detail row's one head, the shared Clip view and Central's and Factory's two sides
