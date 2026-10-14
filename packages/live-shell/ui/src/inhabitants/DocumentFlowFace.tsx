@@ -163,12 +163,18 @@ export function FlowFace({transport, location, presentation = 'device'}: Documen
       }
       if (JSON.stringify(doc) !== baselineText.current) markDraft()
     } catch {
-      // Absence of an answer is not a draft; the strip keeps its last state.
+      // Absence of an answer is not a draft; the strip keeps its last state. Three silent polls after the form stood (7.5 s)
+      // mean its own scripts never started in this window: say so, rather than show blank paper (the native pass at
+      // 14cb8a1bb showed the Flow pane blank while the same document draws its entries standalone).
+      unanswered.current += 1
+      if (unanswered.current === 3 && baselineText.current === undefined) setNotice('The Flow\'s form has not started in this window: its own scripts did not answer the host\'s read, so nothing is drawn and nothing can be saved.')
     }
   }, [captureIsland, face, instance, markDraft, pending])
+  const unanswered = useRef(0)
 
   useEffect(() => {
     if (!face) return
+    unanswered.current = 0
     const timer = window.setInterval(() => void refreshDraftStanding(), 2500)
     return () => window.clearInterval(timer)
   }, [face, refreshDraftStanding])
