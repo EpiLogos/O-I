@@ -242,7 +242,7 @@ test('the centre frame keeps its mount and its container element; the placement 
   assert.match(panel, /<div ref=\{container\} className="expressions-application" \/>/, 'the container element is the one the frame lives in')
   assert.match(panel, /useEffect\(\(\) => \{\s*const frame = container\.current\s*if \(!frame \|\| !placement\) return\s*return followFrame\(frame, placement\.slot\)\s*\}, \[placement\]\)/)
   assert.match(panel, /\{!placement && <>/, 'the centre chrome (toolbar, faults, reopen) moves to the pane while a pane holds the frame')
-  assert.match(panel, /publishHostedChrome\(\{state: stage, run: stageRun/)
+  assert.match(panel, /publishHostedChrome\(\{state: stage, run: host\.current \? stageRun : null/)
   assert.match(panel, /publishHostedExpressions\(\{expression_ref: state\.nativeScene\?\.expression_ref \?\? null, title: state\.document\?\.name \?\? null\}\)/)
   assert.match(panel, /registerExpressionsPaneHost\(\)\n/)
   assert.doesNotMatch(panel.slice(panel.indexOf('onStatus: (value, reason)'), panel.indexOf('onHostRequest:')), /publishHostedExpressions|publishHostedChrome/, 'the status callback stays exactly as the lifetime test reads it')

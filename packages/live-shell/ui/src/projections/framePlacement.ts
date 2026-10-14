@@ -59,14 +59,24 @@ export function releaseFrame(frame: {style: PlacedStyle}): void {
   for (const key of PLACED_STYLE_KEYS) frame.style[key] = ''
 }
 
+/** The slot's ancestors that clip their overflow: the only elements whose box can cut the slot's rectangle. Style is read here,
+ * once per layout change, never per frame. */
+export function clippingAncestors(slot: HTMLElement, view: Window = window): HTMLElement[] {
+  const clips: HTMLElement[] = []
+  for (let el = slot.parentElement; el; el = el.parentElement) {
+    const style = view.getComputedStyle(el)
+    if (style.overflowX !== 'visible' || style.overflowY !== 'visible') clips.push(el)
+  }
+  return clips
+}
+
 /** The slot's rectangle in the viewport, clipped by every ancestor that clips its overflow and by the viewport itself. Null when
- * nothing of the slot is visible. */
-export function visibleSlotRect(slot: HTMLElement, view: Window = window): FrameRect | null {
+ * nothing of the slot is visible. `clips` is the cached clipping chain (clippingAncestors); without it the chain is read now. */
+export function visibleSlotRect(slot: HTMLElement, view: Window = window, clips: readonly HTMLElement[] = clippingAncestors(slot, view)): FrameRect | null {
   const box = slot.getBoundingClientRect()
   let rect: FrameRect | null = {left: box.left, top: box.top, width: box.width, height: box.height}
-  for (let el = slot.parentElement; el && rect; el = el.parentElement) {
-    const style = view.getComputedStyle(el)
-    if (style.overflowX === 'visible' && style.overflowY === 'visible') continue
+  for (const el of clips) {
+    if (!rect) break
     const clip = el.getBoundingClientRect()
     rect = intersectRect(rect, {left: clip.left, top: clip.top, width: clip.width, height: clip.height})
   }
@@ -78,8 +88,10 @@ export function followFrame(frame: HTMLElement, slot: HTMLElement): () => void {
   let live = true
   let last: FrameRect | null | undefined = undefined
   let frameRequest = 0
+  // The clipping chain is read once, and again only on a layout change (resize, the slot's own size): each frame reads boxes only.
+  let clips = clippingAncestors(slot)
   const apply = () => {
-    const rect = visibleSlotRect(slot)
+    const rect = visibleSlotRect(slot, window, clips)
     if (last === undefined || !sameRect(last, rect)) {
       last = rect
       placeFrame(frame, rect)
@@ -92,9 +104,10 @@ export function followFrame(frame: HTMLElement, slot: HTMLElement): () => void {
   }
   // A geometry change the animation frame would also catch: resize, any scroll, the slot's own size. The re-read is immediate.
   const moved = () => {last = undefined; if (live) apply()}
-  const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(moved)
+  const relaid = () => {clips = clippingAncestors(slot); moved()}
+  const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(relaid)
   observer?.observe(slot)
-  window.addEventListener('resize', moved)
+  window.addEventListener('resize', relaid)
   document.addEventListener('scroll', moved, true)
   apply()
   frameRequest = requestAnimationFrame(tick)
@@ -102,7 +115,7 @@ export function followFrame(frame: HTMLElement, slot: HTMLElement): () => void {
     live = false
     cancelAnimationFrame(frameRequest)
     observer?.disconnect()
-    window.removeEventListener('resize', moved)
+    window.removeEventListener('resize', relaid)
     document.removeEventListener('scroll', moved, true)
     releaseFrame(frame)
   }
