@@ -45,6 +45,7 @@ export async function load(u, c, n) {
 
 const contract = await import('../src/projections/occurrence.ts')
 const qlSky = await import('../src/inhabitants/qlSkyEarthAdapter.ts')
+const {shownInstantOf, sunStanding, withoutSubsolar, SUBSOLAR_OCCURRENCE_ID} = qlSky
 const factory = await import('../src/factory/factoryVertical.ts')
 const founding = await import('../src/projections/atlas/provider/archetypalEarthProvider.ts')
 
@@ -110,14 +111,14 @@ test('the QL family admits the owner\'s stated subsolar point through the one ad
   const {field, admitted, refused} = qlSky.admitSubsolar(before, SHAPE)
   assert.deepEqual(refused, [])
   assert.equal(admitted.length, 1)
-  const placed = field.occurrences.find(item => item.id === 'sky-subsolar:2026-03-20T12:00:00Z')
+  const placed = field.occurrences.find(item => item.id === 'sky-subsolar')
   assert.ok(placed, 'the stated point is in the field')
   assert.equal(placed.lat, SHAPE.subsolar.latitude_degrees, 'the latitude is the owner\'s, not recomputed')
   assert.equal(placed.lon, SHAPE.subsolar.longitude_degrees, 'the longitude is the owner\'s, not recomputed')
   assert.equal(placed.geoPrecision, 'place')
   assert.equal(placed.subject_ref, 'ql:sky-occasion:2026-03-20T12:00:00Z')
   assert.deepEqual(placed.basis, {ref: 'sha256:NOT-CAPTURED', epoch: '2026-03-20T12:00:00Z', read_at_unix_ms: 1789214400000})
-  assert.deepEqual(field.families.find(item => item.id === 'ql-sky-subsolar').occurrenceIds, ['sky-subsolar:2026-03-20T12:00:00Z'], 'the family lists it, as for any occurrence')
+  assert.deepEqual(field.families.find(item => item.id === 'ql-sky-subsolar').occurrenceIds, ['sky-subsolar'], 'the family lists it, as for any occurrence')
   assert.equal(field.meta.counts.occurrences, before.occurrences.length + 1)
   assert.equal(before.occurrences.length, 1, 'the input field is not mutated')
   assert.equal(before.families.some(item => item.id === 'ql-sky-subsolar'), false, 'the input field declares no family of its own')
@@ -151,10 +152,10 @@ test('a snapshot that is not the owner\'s shape, or whose stated point is out of
 
 test('the dated read asks the kernel for the current transit and admits the stated point the reply carries', async () => {
   const sent = []
-  const state = await qlSky.admitDatedSubsolar(foundingField(), bridgeAnswering(transitAnswer({schema: 'ql.nara-transit/v1', status: 'available', sky: SHAPE}), sent), new Date('2026-10-14T10:20:30.456Z'))
+  const state = await qlSky.admitDatedSubsolar(foundingField(), bridgeAnswering(transitAnswer({schema: 'ql.nara-transit/v1', status: 'available', sky: SHAPE}), sent), shownInstantOf(null, new Date('2026-10-14T10:20:30.456Z')))
   assert.equal(state.placed, true, state.reason ?? '')
   assert.equal(state.reason, null)
-  assert.ok(state.field.occurrences.some(item => item.id === 'sky-subsolar:2026-03-20T12:00:00Z'))
+  assert.ok(state.field.occurrences.some(item => item.id === 'sky-subsolar'))
   assert.equal(sent.length, 1)
   assert.equal(sent[0].url, 'http://kernel.test/op')
   assert.deepEqual(sent[0].body, {op: 'nara_identity', request: {operation: 'transit', request: {
@@ -164,20 +165,20 @@ test('the dated read asks the kernel for the current transit and admits the stat
 
 test('absence is kept with its reason: an unavailable channel, a kernel refusal, a reading with no sky, and a sky with no stated point', async () => {
   const field = foundingField()
-  const unavailable = await qlSky.admitDatedSubsolar(field, {kind: 'unavailable', reason: 'no kernel host'}, new Date())
+  const unavailable = await qlSky.admitDatedSubsolar(field, {kind: 'unavailable', reason: 'no kernel host'}, shownInstantOf(null, new Date()))
   assert.equal(unavailable.placed, false)
   assert.equal(unavailable.field, field)
   assert.match(unavailable.reason, /did not answer: no kernel host/)
 
-  const refused = await qlSky.admitDatedSubsolar(field, bridgeAnswering({ok: false, error: 'QL refused the request'}), new Date())
+  const refused = await qlSky.admitDatedSubsolar(field, bridgeAnswering({ok: false, error: 'QL refused the request'}), shownInstantOf(null, new Date()))
   assert.match(refused.reason, /QL refused the request/)
 
-  const noSky = await qlSky.admitDatedSubsolar(field, bridgeAnswering(transitAnswer({schema: 'ql.nara-transit/v1', status: 'unavailable', sky: null})), new Date())
+  const noSky = await qlSky.admitDatedSubsolar(field, bridgeAnswering(transitAnswer({schema: 'ql.nara-transit/v1', status: 'unavailable', sky: null})), shownInstantOf(null, new Date()))
   assert.match(noSky.reason, /dated sky is unavailable \(transit status: unavailable\)/)
 
   const legacy = {...SHAPE}
   delete legacy.subsolar
-  const noPoint = await qlSky.admitDatedSubsolar(field, bridgeAnswering(transitAnswer({schema: 'ql.nara-transit/v1', status: 'available', sky: legacy})), new Date())
+  const noPoint = await qlSky.admitDatedSubsolar(field, bridgeAnswering(transitAnswer({schema: 'ql.nara-transit/v1', status: 'available', sky: legacy})), shownInstantOf(null, new Date()))
   assert.equal(noPoint.placed, false)
   assert.match(noPoint.reason, /states no subsolar point/)
 })
@@ -215,4 +216,82 @@ test('the Factory join carries the basis of a placed occurrence; a row without o
   const without = factory.earthRowsOf('run:placeholder', [subject], [{id: 'o1', subject_ref: FACTORY_SUBJECT}])
   assert.deepEqual(without, [{state: 'placed', runRef: 'run:placeholder', subject, occurrenceId: 'o1'}])
   assert.equal('basis' in without[0], false)
+})
+
+// A dated reading for 1 January 1931, as the owner's snapshot would carry it (FIXTURE shaped to the contract; not owner output).
+const SHAPE_1931 = {...SHAPE, snapshot_ref: 'fixture:dated-1931', epoch_utc: '1931-01-01T00:00:00Z', epoch_unix_ms: Date.UTC(1931, 0, 1),
+  subsolar: {latitude_degrees: 23.0, longitude_degrees: -10.5}}
+const sunIds = field => field.occurrences.filter(item => item.id === SUBSOLAR_OCCURRENCE_ID).map(item => item.id)
+
+test('the Sun is read for the year the Earth shows: a dated request goes out as historical at the year start, and the reply places the Sun for that year', async () => {
+  const sent = []
+  const state = await qlSky.admitDatedSubsolar(foundingField(), bridgeAnswering(transitAnswer({schema: 'ql.nara-transit/v1', status: 'available', sky: SHAPE_1931}), sent), shownInstantOf(1931, new Date()))
+  assert.equal(state.placed, true, state.reason ?? '')
+  assert.equal(sent.length, 1)
+  assert.deepEqual(sent[0].body.request.request, {schema: 'ql.sky-request/v1', epoch: '1931-01-01T00:00:00Z', timezone: 'UTC', mode: 'historical',
+    perspective: 'Apparent Geocentric', zodiac: 'Tropical', ayanamsha: null, observer: null, max_age_seconds: 300, backend_policy: 'allow-moshier'})
+  const placed = state.field.occurrences.find(item => item.id === SUBSOLAR_OCCURRENCE_ID)
+  assert.equal(placed.year, 1931)
+  assert.equal(placed.lat, 23.0)
+  assert.deepEqual(placed.basis, {ref: 'fixture:dated-1931', epoch: '1931-01-01T00:00:00Z', read_at_unix_ms: SHAPE_1931.receipt_unix_ms})
+  assert.deepEqual(state.instant, {present: false, year: 1931})
+})
+
+test('a year outside the dated sky\'s range is refused by name before any kernel call, and the Earth carries no Sun for it', async () => {
+  for (const year of [-780000, 2400]) {
+    const sent = []
+    const state = await qlSky.admitDatedSubsolar(foundingField(), bridgeAnswering(transitAnswer({schema: 'ql.nara-transit/v1', status: 'available', sky: SHAPE}), sent), shownInstantOf(year, new Date()))
+    assert.equal(state.placed, false)
+    assert.equal(sent.length, 0, `no kernel call for year ${year}`)
+    assert.match(state.reason, /answers only 1800 to 2399, and the Earth shows /)
+    assert.equal(sunIds(state.field).length, 0)
+  }
+})
+
+test('a reply that answers for another epoch than the year asked is not placed; the reply\'s own epoch is named', async () => {
+  const state = await qlSky.admitDatedSubsolar(foundingField(), bridgeAnswering(transitAnswer({schema: 'ql.nara-transit/v1', status: 'available', sky: SHAPE})), shownInstantOf(1931, new Date()))
+  assert.equal(state.placed, false)
+  assert.match(state.reason, /answered for 2026-03-20T12:00:00Z, not 1931-01-01T00:00:00Z/)
+})
+
+test('one Sun: a reading for another instant replaces the occurrence in place, and never accumulates', () => {
+  const first = qlSky.admitSubsolar(foundingField(), SHAPE)
+  assert.equal(sunIds(first.field).length, 1)
+  const second = qlSky.admitSubsolar(first.field, SHAPE_1931)
+  assert.deepEqual(second.refused, [])
+  assert.equal(sunIds(second.field).length, 1, 'one occurrence, whatever the instant')
+  assert.equal(second.field.occurrences.find(item => item.id === SUBSOLAR_OCCURRENCE_ID).year, 1931)
+  assert.deepEqual(second.field.families.find(item => item.id === 'ql-sky-subsolar').occurrenceIds, [SUBSOLAR_OCCURRENCE_ID])
+  assert.equal(second.field.meta.counts.occurrences, foundingField().occurrences.length + 1)
+  assert.equal(first.field.occurrences.find(item => item.id === SUBSOLAR_OCCURRENCE_ID).year, 2026, 'the earlier field is not mutated')
+})
+
+test('an absence takes the Sun away: a reading that places no point leaves the field with no Sun and the family empty', () => {
+  const placed = qlSky.admitSubsolar(foundingField(), SHAPE).field
+  const legacy = {...SHAPE}
+  delete legacy.subsolar
+  const absent = qlSky.admitSubsolar(placed, legacy)
+  assert.equal(absent.admitted.length, 0)
+  assert.equal(sunIds(absent.field).length, 0)
+  assert.deepEqual(absent.field.families.find(item => item.id === 'ql-sky-subsolar').occurrenceIds, [])
+  assert.equal(absent.field.meta.counts.occurrences, foundingField().occurrences.length)
+  const untouched = foundingField()
+  assert.equal(withoutSubsolar(untouched), untouched, 'a field with no Sun is returned as it is')
+})
+
+test('the Earth states the Sun\'s standing on its own line: nothing when placed for the instant shown, the instant when the window moves on, the reason when absent', async () => {
+  const present = await qlSky.admitDatedSubsolar(foundingField(), bridgeAnswering(transitAnswer({schema: 'ql.nara-transit/v1', status: 'available', sky: SHAPE})), shownInstantOf(null, new Date('2026-10-14T10:20:30.456Z')))
+  assert.equal(sunStanding(present, null), null, 'the present Sun, with all time shown, is stated by nothing')
+  assert.equal(sunStanding(present, 2026), 'The Sun is drawn for the present sky. The Earth shows the year 2026, and the Sun is not redrawn for it in this session.', 'the present sun is not the year 2026 start, so a year shown is a change')
+  assert.equal(sunStanding(present, 1931), 'The Sun is drawn for the present sky. The Earth shows the year 1931, and the Sun is not redrawn for it in this session.')
+
+  const dated = await qlSky.admitDatedSubsolar(foundingField(), bridgeAnswering(transitAnswer({schema: 'ql.nara-transit/v1', status: 'available', sky: SHAPE_1931})), shownInstantOf(1931, new Date()))
+  assert.equal(sunStanding(dated, 1931), null)
+  assert.equal(sunStanding(dated, null), 'The Sun is drawn for the year 1931. The Earth shows all time, and the Sun is not redrawn for it in this session.')
+
+  const absent = await qlSky.admitDatedSubsolar(foundingField(), {kind: 'unavailable', reason: 'no kernel host'}, shownInstantOf(null, new Date()))
+  assert.equal(sunStanding(absent, null), 'The Sun is not placed on the Earth for the present sky: the dated sky did not answer: no kernel host.')
+  const outOfRange = await qlSky.admitDatedSubsolar(foundingField(), bridgeAnswering({ok: false}), shownInstantOf(-780000, new Date()))
+  assert.equal(sunStanding(outOfRange, -780000), 'The Sun is not placed on the Earth for the year -780000: the dated sky answers only 1800 to 2399, and the Earth shows -780000.')
+  assert.equal(sunStanding(outOfRange, 1931), 'The Sun is not placed on the Earth for the year -780000: the dated sky answers only 1800 to 2399, and the Earth shows -780000. The Earth shows the year 1931, and the Sun is not read for it in this session.')
 })
