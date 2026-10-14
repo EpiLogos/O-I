@@ -41,6 +41,7 @@ import {ModeBrowser} from './shell/ModeBrowser'
 import {ModeCentreFrame} from './shell/ModeCentre'
 import type {CentralSubjectSelection} from './inhabitants/CentralSubjectDetail'
 import {NATIVE_PRESENT_EXPRESSIONS} from './native/openStudio'
+import {SOURCE_PRESENT} from './native/hostedSummons'
 import {PLACED_RESIDENCE_STYLE, useFramePlacement} from './projections/expressionsPaneHost'
 import {sameEditorBasis,type NativeEditorBasis,type NativeEditorController} from '@epilogos/expressions-boundary/editor'
 import './NativeCompositionResidence.css'
@@ -103,6 +104,8 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   const workbenchCentre = (panel: string | undefined): string | undefined => frameMode === 'factory' || panel === 'native.agent' || panel === 'world.knowledge' ? 'native.workbench' : panel
   const [centerPanel, setCenterPanel] = useState(workbenchCentre(restored?.centerPanel) ?? 'world.expressions')
   const [knowledgeIntent, setKnowledgeIntent] = useState<{workspaceId: string; bindingId: string} | null>(null)
+  // A resolved file source from the hosted frame: the Workbench is presented first, then asked to open it (it acts only while presented).
+  const [sourceIntent, setSourceIntent] = useState<{location: unknown} | null>(null)
   useEffect(() => {
     const presentKnowledge = (event: Event) => {
       const input = (event as CustomEvent<{workspaceId?: string; bindingId?: string}>).detail
@@ -143,6 +146,21 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
     if (continuity.current.layout.surfaces[knowledgeIntent.bindingId]?.kind !== 'knowledge') return
     presentSettings(false); setCenterPanel('native.workbench'); setKnowledgeIntent(null)
   }, [knowledgeIntent, workspace.workspaceId, workspace.mode, workspace.setMode, continuity.current.layout.surfaces])
+  useEffect(() => {
+    const present = (event: Event) => {
+      const location = (event as CustomEvent<{location?: unknown}>).detail?.location
+      if (!location) return
+      presentSettings(false); setCenterPanel('native.workbench'); setSourceIntent({location})
+    }
+    window.addEventListener(SOURCE_PRESENT, present)
+    return () => window.removeEventListener(SOURCE_PRESENT, present)
+  }, [])
+  useEffect(() => {
+    // After the commit that presents the Workbench, its receiver is live: hand it the source once.
+    if (!sourceIntent || centerPanel !== 'native.workbench') return
+    window.dispatchEvent(new CustomEvent('oi:epi-open-source', {detail: {location: sourceIntent.location}}))
+    setSourceIntent(null)
+  }, [sourceIntent, centerPanel])
   useEffect(() => {
     // Only the Expressions panel requests this, and only with native work
     // mounted: the centre shows that body in the cut the workspace stands in.

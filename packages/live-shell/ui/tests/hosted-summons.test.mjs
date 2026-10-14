@@ -225,3 +225,13 @@ test('the Expressions pane routes summons here and keeps workspace-mode and open
   assert.ok(source.includes('answerHostedSummon('), 'the summon is answered by the ported handler')
   assert.ok(source.includes('sameSummonBasis(hostedBasis(), at)'), 'the answer is guarded by the frame basis it arrived on')
 })
+
+test('a resolved file source presents the Workbench first, then opens there once — the receiver acts only while presented', async () => {
+  const {readFile} = await import('node:fs/promises')
+  const panel = await readFile(new URL('../src/panels/expressions.tsx', import.meta.url), 'utf8')
+  const app = await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8')
+  assert.match(panel, /openFile: location => window\.dispatchEvent\(new CustomEvent\(SOURCE_PRESENT, \{detail: \{location\}\}\)\)/, 'the panel asks App to present, never fires into a hidden Workbench')
+  assert.match(app, /window\.addEventListener\(SOURCE_PRESENT, present\)/)
+  assert.match(app, /setCenterPanel\('native\.workbench'\); setSourceIntent\(\{location\}\)/, 'the Workbench is presented in the same act')
+  assert.match(app, /if \(!sourceIntent \|\| centerPanel !== 'native\.workbench'\) return\n\s*window\.dispatchEvent\(new CustomEvent\('oi:epi-open-source', \{detail: \{location: sourceIntent\.location\}\}\)\)\n\s*setSourceIntent\(null\)/, 'after that commit, the open is handed over once and the intent cleared')
+})

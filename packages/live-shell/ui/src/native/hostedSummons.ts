@@ -8,7 +8,7 @@
  * ports those answers onto the new shell's own surfaces, and imports the legacy resolver and graph subject admission
  * rather than copying them:
  *
- *   source, resolved file     → oi:epi-open-source     (the Workbench opens a file tab, as its Explorer does)
+ *   source, resolved file     → SOURCE_PRESENT; App presents the Workbench, then oi:epi-open-source (it opens a file tab, as its Explorer does)
  *   source, resolved address  → oi:epi-open-knowledge  (the Knowledge panel: the Graph, or a source page)
  *   graph                     → oi:epi-open-knowledge  (the Graph plane, focused on the subject through view.nativeKnowledge)
  *
@@ -33,6 +33,9 @@ const LOCATION_SCHEMA = 'central.path-ref/v1'
 
 const plain = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value)
 const bounded = (value: unknown, max: number): value is string => typeof value === 'string' && value.trim().length > 0 && value.length <= max && !CONTROL.test(value)
+
+/** Ask App to present the Workbench and then open a resolved file there (the Workbench acts only while presented). */
+export const SOURCE_PRESENT = 'oi:candidate-source-present'
 
 export type SummonReading =
   | {ok: true; kind: 'source'; detail: Record<string, unknown>}

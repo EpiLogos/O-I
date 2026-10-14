@@ -22,7 +22,7 @@ import {connectTechneInstrumentRequests} from '../native/techneInstrumentOpen'
 import {NATIVE_OPEN_STUDIO, NATIVE_PRESENT_EXPRESSIONS, parseNativeOpenStudio} from '../native/openStudio'
 import {NATIVE_ENGINE_COMMAND, parseNativeEngineCommand, setNativeEngineMounted} from '../native/engineCommand'
 import {stageEngine} from '../native/stageCommands'
-import {answerHostedSummon, sameSummonBasis, summonBasis} from '../native/hostedSummons'
+import {answerHostedSummon, sameSummonBasis, SOURCE_PRESENT, summonBasis} from '../native/hostedSummons'
 import type {StudioSection} from '@epilogos/expressions-boundary'
 import type {HostedAppState, StageCommand, StageResult} from '@epilogos/expressions-boundary'
 import {NativeStageTools} from '../components/NativeStageTools'
@@ -195,7 +195,8 @@ export function ExpressionsPanel() {
           transport,
           current: () => live && token === summonToken && presented() && sameSummonBasis(hostedBasis(), at),
           project: () => bookRef.current.current.project,
-          openFile: location => window.dispatchEvent(new CustomEvent('oi:epi-open-source', {detail: {location}})),
+          // The Workbench opens files only while it is presented, and the frame holds the centre now: App presents it first (SOURCE_PRESENT).
+          openFile: location => window.dispatchEvent(new CustomEvent(SOURCE_PRESENT, {detail: {location}})),
           openKnowledge: input => window.dispatchEvent(new CustomEvent('oi:epi-open-knowledge', {detail: input})),
           fault: reason => {if (live) setFault(reason)},
           clear: () => {if (live) setFault(null)},
