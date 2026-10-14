@@ -57,10 +57,7 @@ impl std::fmt::Debug for StaticResult {
     }
 }
 
-pub fn static_gate(
-    render: &audio::Audio,
-    params: &glue::GlueParams,
-) -> StaticResult {
+pub fn static_gate(render: &audio::Audio, params: &glue::GlueParams) -> StaticResult {
     let steps: [(f64, f64); 7] = [
         (-30.0, 0.25),
         (-24.0, 0.75),
@@ -84,7 +81,10 @@ pub fn static_gate(
         max_error = max_error.max((measured - predicted).abs());
         step_db.push((db, measured, predicted));
     }
-    StaticResult { step_db, max_error_db: max_error }
+    StaticResult {
+        step_db,
+        max_error_db: max_error,
+    }
 }
 
 pub fn static_gate_passes(r: &StaticResult) -> bool {
@@ -93,10 +93,7 @@ pub fn static_gate_passes(r: &StaticResult) -> bool {
 
 /// Spectral gate: band profiles of render vs rebuild output (or vs a second
 /// render, for the determinism bound).
-pub fn spectral_gate(
-    a: &audio::Audio,
-    b: &audio::Audio,
-) -> spectrum::Distance {
+pub fn spectral_gate(a: &audio::Audio, b: &audio::Audio) -> spectrum::Distance {
     let bands = 48;
     let pa = spectrum::band_profile(&a.samples, a.sample_rate, bands);
     let pb = spectrum::band_profile(&b.samples, b.sample_rate, bands);
@@ -104,8 +101,7 @@ pub fn spectral_gate(
 }
 
 pub fn spectral_gate_passes(d: &spectrum::Distance) -> bool {
-    d.mean_db <= SPECTRAL_MEAN_TOLERANCE_DB
-        && d.max_band_db <= SPECTRAL_MAX_BAND_TOLERANCE_DB
+    d.mean_db <= SPECTRAL_MEAN_TOLERANCE_DB && d.max_band_db <= SPECTRAL_MAX_BAND_TOLERANCE_DB
 }
 
 // ---------------------------------------------------------------------------
@@ -166,8 +162,15 @@ pub fn band_block_envelope(
         }
         spectrum::fft(&mut re, &mut im);
         let p: f64 = bins.iter().map(|k| re[*k] * re[*k] + im[*k] * im[*k]).sum();
-        let p = if bins.is_empty() { 0.0 } else { p / bins.len() as f64 };
-        out.push((k as f64 * bw + bw / 2.0, if p > 0.0 { 10.0 * p.log10() } else { -144.0 }));
+        let p = if bins.is_empty() {
+            0.0
+        } else {
+            p / bins.len() as f64
+        };
+        out.push((
+            k as f64 * bw + bw / 2.0,
+            if p > 0.0 { 10.0 * p.log10() } else { -144.0 },
+        ));
     }
     out
 }
@@ -216,7 +219,12 @@ pub fn block_floor(blocks: &[(f64, f64)]) -> f64 {
 /// Least-squares decay fit over `[t0, t1]`, keeping blocks above
 /// `floor_db + 3 dB`. Returns (slope dB/s, RT60 s, n blocks); `None` if
 /// fewer than 4 blocks survive or the slope is non-decaying.
-pub fn fit_rt60(blocks: &[(f64, f64)], t0: f64, t1: f64, floor_db: f64) -> Option<(f64, f64, usize)> {
+pub fn fit_rt60(
+    blocks: &[(f64, f64)],
+    t0: f64,
+    t1: f64,
+    floor_db: f64,
+) -> Option<(f64, f64, usize)> {
     let pts: Vec<&(f64, f64)> = blocks
         .iter()
         .filter(|(t, d)| *t >= t0 && *t <= t1 && *d > floor_db + 3.0)
@@ -254,8 +262,14 @@ pub fn reverb_rt60_fits(samples: &[f32], sample_rate: u32, t0: f64, t1: f64) -> 
     let mut out = Vec::new();
     let bb = rms_block_envelope(samples, sample_rate, 6.0);
     let floor = block_floor(&bb);
-    if let Some((slope, rt60, n)) = fit_rt60(&smooth_blocks(&bb, RT60_FIT_SMOOTHING), t0, t1, floor) {
-        out.push(Rt60Fit { name: "broadband".into(), slope_db_s: slope, rt60_s: rt60, blocks: n });
+    if let Some((slope, rt60, n)) = fit_rt60(&smooth_blocks(&bb, RT60_FIT_SMOOTHING), t0, t1, floor)
+    {
+        out.push(Rt60Fit {
+            name: "broadband".into(),
+            slope_db_s: slope,
+            rt60_s: rt60,
+            blocks: n,
+        });
     }
     for (lo, hi) in REVERB_BANDS {
         let blocks = band_block_envelope(samples, sample_rate, *lo, *hi, 6.0);

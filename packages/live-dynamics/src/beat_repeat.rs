@@ -283,8 +283,8 @@ pub const OFFSET_TABLE: [f64; 16] = [
 /// Gate table [B §3: 0x10528cbf0, 19 entries] — the repeat duration in
 /// beats (0.25..4 step 0.25, then 8/12/16).
 pub const GATE_TABLE: [f64; 19] = [
-    0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5, 2.75, 3.0, 3.25, 3.5, 3.75, 4.0,
-    8.0, 12.0, 16.0,
+    0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5, 2.75, 3.0, 3.25, 3.5, 3.75, 4.0, 8.0,
+    12.0, 16.0,
 ];
 /// Grid time cap [D §3: the constant 0.06666667014360428 (f32 of 1/15) in
 /// every re-anchor path].
@@ -304,23 +304,35 @@ pub const MIX_LOW_CLAMP_HZ: f64 = 50.0;
 
 /// Interval lookup [B §3] — `None` outside the table.
 pub fn interval_beats(index: i64) -> Option<f64> {
-    usize::try_from(index).ok().and_then(|i| INTERVAL_TABLE.get(i).copied())
+    usize::try_from(index)
+        .ok()
+        .and_then(|i| INTERVAL_TABLE.get(i).copied())
 }
 
 /// Grid lookup [B §3]: `triplets` selects the BlockTripplets view.
 pub fn grid_beats(index: i64, triplets: bool) -> Option<f64> {
-    let table = if triplets { &GRID_TABLE_TRIPPLETS } else { &GRID_TABLE };
-    usize::try_from(index).ok().and_then(|i| table.get(i).copied())
+    let table = if triplets {
+        &GRID_TABLE_TRIPPLETS
+    } else {
+        &GRID_TABLE
+    };
+    usize::try_from(index)
+        .ok()
+        .and_then(|i| table.get(i).copied())
 }
 
 /// Offset lookup [B §3].
 pub fn offset_beats(index: i64) -> Option<f64> {
-    usize::try_from(index).ok().and_then(|i| OFFSET_TABLE.get(i).copied())
+    usize::try_from(index)
+        .ok()
+        .and_then(|i| OFFSET_TABLE.get(i).copied())
 }
 
 /// Gate lookup [B §3].
 pub fn gate_beats(index: i64) -> Option<f64> {
-    usize::try_from(index).ok().and_then(|i| GATE_TABLE.get(i).copied())
+    usize::try_from(index)
+        .ok()
+        .and_then(|i| GATE_TABLE.get(i).copied())
 }
 
 /// A division in seconds at a tempo [D §3: `division/bps`].
@@ -508,7 +520,9 @@ mod per_sample_tests {
         // Independent wrapping-arithmetic recomputation.
         assert_eq!(
             chance_lcg_next(0x1234_5678),
-            0x1234_5678u32.wrapping_mul(1_664_525).wrapping_add(1_013_904_223)
+            0x1234_5678u32
+                .wrapping_mul(1_664_525)
+                .wrapping_add(1_013_904_223)
         );
         // The uniform mapping: state 1013904223 (0x3C6EF35F) → low 23 bits
         // 0x6EF35F → f32 1.8668020963668823 → 1.7336041927337646.

@@ -232,10 +232,7 @@ pub fn device_descriptors_json() -> serde_json::Value {
 
 /// Track element by the summary's own names: audio/midi/return tracks by
 /// `EffectiveName`, the master's `MainTrack` as "Master".
-fn find_track<'a>(
-    root: &'a crate::xml::Element,
-    name: &str,
-) -> Option<&'a crate::xml::Element> {
+fn find_track<'a>(root: &'a crate::xml::Element, name: &str) -> Option<&'a crate::xml::Element> {
     let live_set = root.find("LiveSet")?;
     if name == "Master" {
         return live_set.find("MainTrack");
@@ -520,8 +517,7 @@ mod tests {
 
     #[test]
     fn set_json_reads_one_native_gzip_revision() {
-        let directory = std::env::temp_dir()
-            .join(format!("set-api-{}", std::process::id()));
+        let directory = std::env::temp_dir().join(format!("set-api-{}", std::process::id()));
         std::fs::create_dir_all(&directory).unwrap();
         let path = directory.join("native.als");
         let root = crate::xml::parse(
@@ -531,10 +527,16 @@ mod tests {
         std::fs::write(&path, &bytes).unwrap();
         let reading = set_json(path.to_str().unwrap()).unwrap();
         use sha2::{Digest, Sha256};
-        assert_eq!(reading["revision"], format!("sha256:{:x}", Sha256::digest(&bytes)));
+        assert_eq!(
+            reading["revision"],
+            format!("sha256:{:x}", Sha256::digest(&bytes))
+        );
         assert_eq!(reading["summary"]["tempo_bpm"], 131.0);
         assert_eq!(reading["document"]["tempo"], 131.0);
-        assert_eq!(reading["summary"]["scene_count"], reading["document"]["scenes"]);
+        assert_eq!(
+            reading["summary"]["scene_count"],
+            reading["document"]["scenes"]
+        );
         assert_eq!(reading["summary"]["path"], reading["document"]["path"]);
         std::fs::write(&path, b"invalid native gzip").unwrap();
         assert!(set_json(path.to_str().unwrap()).is_err());

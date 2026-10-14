@@ -114,7 +114,11 @@ impl MaxPyramid {
             }
             width /= 2;
         }
-        MaxPyramid { n, levels, write: 0 }
+        MaxPyramid {
+            n,
+            levels,
+            write: 0,
+        }
     }
 
     pub fn window(&self) -> usize {
@@ -158,7 +162,11 @@ struct MovingAverage {
 
 impl MovingAverage {
     fn new(n: usize) -> Self {
-        MovingAverage { buf: vec![0.0; n], sum: 0.0, write: 0 }
+        MovingAverage {
+            buf: vec![0.0; n],
+            sum: 0.0,
+            write: 0,
+        }
     }
     fn push(&mut self, value: f32) {
         self.sum -= f64::from(self.buf[self.write]);
@@ -411,11 +419,19 @@ mod tests {
                 window = w;
             }
             let brute = window.iter().cloned().fold(f32::NEG_INFINITY, f32::max);
-            assert_eq!(pyr.window_max(), brute, "window max diverged at {}", history.len());
+            assert_eq!(
+                pyr.window_max(),
+                brute,
+                "window max diverged at {}",
+                history.len()
+            );
         }
         // structural invariant: parent == max(children) at every level
         for level in 1..pyr.levels().len() {
-            let (kids, parents) = (pyr.levels()[level - 1].as_slice(), pyr.levels()[level].as_slice());
+            let (kids, parents) = (
+                pyr.levels()[level - 1].as_slice(),
+                pyr.levels()[level].as_slice(),
+            );
             for (p, &pk) in parents.iter().enumerate() {
                 assert_eq!(pk, kids[2 * p].max(kids[2 * p + 1]));
             }
@@ -477,7 +493,10 @@ mod tests {
         // must be AT target on the first slammed sample (instant attack).
         let expect_target = m.ceiling / 2.0;
         let g = first_gain_after_slam.expect("slam gain captured");
-        assert!((g - expect_target).abs() < 1e-9, "gain {g} vs target {expect_target}");
+        assert!(
+            (g - expect_target).abs() < 1e-9,
+            "gain {g} vs target {expect_target}"
+        );
         // window peak holds 2 for the whole window → every gain_ma ≈ target
         assert!((m.gain_ma - expect_target).abs() < 1e-4);
     }
@@ -514,8 +533,8 @@ mod tests {
     }
 
     /// Steady-state box filters pass constants [D §3]: a constant gain
-        // through the two cascaded 1/N averages reproduces the constant
-        // once both rings fill.
+    // through the two cascaded 1/N averages reproduces the constant
+    // once both rings fill.
     #[test]
     fn double_moving_average_passes_constants() {
         let n = 128usize;

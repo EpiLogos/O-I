@@ -783,25 +783,40 @@ pub fn qualify(root: &Path, footprint_json: &[u8]) -> Result<QualifiedPayload, S
         return Err("Native host marker does not qualify this candidate bootstrap".into());
     }
     for (record, expected_path) in [
-        (&marker.source_archive.archive, "Contents/Resources/live-shell-sources/sources.tar.gz"),
-        (&marker.source_archive.receipt, "Contents/Resources/live-shell-sources/receipt.json"),
+        (
+            &marker.source_archive.archive,
+            "Contents/Resources/live-shell-sources/sources.tar.gz",
+        ),
+        (
+            &marker.source_archive.receipt,
+            "Contents/Resources/live-shell-sources/receipt.json",
+        ),
     ] {
-        if record.path != expected_path || !payload.host.resources.iter().any(|resource|
-            resource.path == record.path && resource.sha256 == record.sha256 && resource.bytes == record.bytes)
+        if record.path != expected_path
+            || !payload.host.resources.iter().any(|resource| {
+                resource.path == record.path
+                    && resource.sha256 == record.sha256
+                    && resource.bytes == record.bytes
+            })
         {
-            return Err("Native source archive is not bound to the qualified host resources".into());
+            return Err(
+                "Native source archive is not bound to the qualified host resources".into(),
+            );
         }
     }
     if marker.source_archive.receipt.bytes > 65536 {
         return Err("Native source archive receipt exceeds 64 KiB".into());
     }
-    let source_receipt: serde_json::Value = unique_json(&fs::read(
-        contained(&root, &marker.source_archive.receipt.path)?).map_err(|e| e.to_string())?)?;
+    let source_receipt: serde_json::Value = unique_json(
+        &fs::read(contained(&root, &marker.source_archive.receipt.path)?)
+            .map_err(|e| e.to_string())?,
+    )?;
     if source_receipt["schema"] != "oi.build-source-archive/v1"
         || source_receipt["source_revision"] != marker.source_revision
         || source_receipt["source_dirty"] != marker.source_dirty
         || source_receipt["phase_tree_sha256"]["broad-staging"] != marker.source_tree_sha256
-        || source_receipt["phase_tree_sha256"]["suite-normal-build"] != payload.host.suite_cli.source_tree_sha256
+        || source_receipt["phase_tree_sha256"]["suite-normal-build"]
+            != payload.host.suite_cli.source_tree_sha256
         || source_receipt["archive"]["sha256"] != marker.source_archive.archive.sha256
         || source_receipt["archive"]["size_bytes"] != marker.source_archive.archive.bytes
     {

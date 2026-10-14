@@ -196,7 +196,15 @@ pub struct Biquad {
 
 impl Biquad {
     pub fn new(coeffs: [f64; 5]) -> Self {
-        Biquad { b0: coeffs[0], b1: coeffs[1], b2: coeffs[2], a1: coeffs[3], a2: coeffs[4], s1: 0.0, s2: 0.0 }
+        Biquad {
+            b0: coeffs[0],
+            b1: coeffs[1],
+            b2: coeffs[2],
+            a1: coeffs[3],
+            a2: coeffs[4],
+            s1: 0.0,
+            s2: 0.0,
+        }
     }
 
     pub fn process(&mut self, x: f64) -> f64 {
@@ -333,15 +341,27 @@ mod per_sample_tests {
         let u = lcg_uniform(0x3C88_596C);
         let expect = f32::from_bits((0x3C88_596C & 0x7fff_fff) | 0x3f80_0000) * 2.0 - 3.0;
         assert_eq!(u, expect);
-        assert_eq!(u, -0.869542121887207_f32);
+        assert_eq!(u, -0.869_542_1_f32);
         let mut same = ErosionModel::new(
-            ErosionParams { on: true, freq: 1000.0, amplitude: 100.0, band_q: 1.0, mode: 0 },
+            ErosionParams {
+                on: true,
+                freq: 1000.0,
+                amplitude: 100.0,
+                band_q: 1.0,
+                mode: 0,
+            },
             48_000,
             0x12345,
         );
         let a = (0..256).map(|_| same.next_noise()).collect::<Vec<_>>();
         let mut again = ErosionModel::new(
-            ErosionParams { on: true, freq: 1000.0, amplitude: 100.0, band_q: 1.0, mode: 0 },
+            ErosionParams {
+                on: true,
+                freq: 1000.0,
+                amplitude: 100.0,
+                band_q: 1.0,
+                mode: 0,
+            },
             48_000,
             0x12345,
         );
@@ -397,10 +417,7 @@ mod per_sample_tests {
         let d = depth_samples(MODE_NOISE, 200.0, 300.0, 48_000);
         assert!((d - 88.68100134752652).abs() < 1e-9, "depth {d}");
         assert!((d / 48.0 - 1.847_520_861_406_802_4).abs() < 1e-12);
-        assert_eq!(
-            depth_samples(MODE_WIDE_NOISE, 200.0, 300.0, 48_000),
-            d
-        );
+        assert_eq!(depth_samples(MODE_WIDE_NOISE, 200.0, 300.0, 48_000), d);
         let s1 = depth_samples(MODE_SINUS, 200.0, 300.0, 48_000);
         let s2 = depth_samples(MODE_SINUS, 200.0, 18_000.0, 48_000);
         assert!((s1 - 7.68).abs() < 1e-12);
@@ -440,7 +457,13 @@ mod per_sample_tests {
     /// unwritten memory ahead of the write pointer.
     #[test]
     fn model_is_reproducible_and_wide_noise_decorrelates() {
-        let p = |mode| ErosionParams { on: true, freq: 1000.0, amplitude: 150.0, band_q: 1.5, mode };
+        let p = |mode| ErosionParams {
+            on: true,
+            freq: 1000.0,
+            amplitude: 150.0,
+            band_q: 1.5,
+            mode,
+        };
         let mut a = ErosionModel::new(p(MODE_NOISE), 48_000, 7);
         let mut b = ErosionModel::new(p(MODE_NOISE), 48_000, 7);
         for n in 0..4096 {

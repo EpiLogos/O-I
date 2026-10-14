@@ -16,12 +16,12 @@ const author=new URL('desktop/cradle/expressions-app/field-studies-journeys/src/
 const [{createNativeInputContinuity},face,{kernelDocumentToJourney},{applyNativeDeviceChanges},{toNativeConfig},{DocumentStore},{compileEntityForceEmitters},{NATIVE_BINDINGS},{createRetainedNativeEditor},tsModule]=await Promise.all([
  import('../src/continuity/nativeInputs.ts'),import('../src/components/NativeDeviceEditors.tsx'),import(new URL('kernelDocumentBridge.ts',author)),import('../../../expressions-boundary/src/nativeDeviceEdits.ts'),import(new URL('nativeBridge.ts',author)),import(new URL('store.ts',author)),import(new URL('desktop/cradle/expressions-app/src/engine/forceRuntime.ts',root)),import(parameters),import(new URL('hostEditor.ts',author)),import(compiler),
 ]);
-const receiptPath='/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/evidence/native/material-verification-c79dab7c-8de3-4b69-87cb-ee11cce28c9f/rich-artifact-inspection-3a33a7f6-94e9-445d-b2ec-7e7f25950935.json';
+const receiptPath=new URL('./fixtures/native-rich-glyph-rack-r8.receipt.json',import.meta.url);
 const receipt=JSON.parse(await readFile(receiptPath,'utf8'));assert.deepEqual(receipt.before.document,receipt.after.document);
 const closed=()=>{throw Error('Live native effects are closed during source verification')};
 function source(){
  const view=kernelDocumentToJourney(receipt.after.document),store=new DocumentStore(view.journey),scene=store.document.scenes[0],entity=scene.entities[0];
- const owner=createRetainedNativeEditor({store,sceneId:()=>scene.id,selection:()=>({entity_ids:[entity.id],step_id:entity.sequence.steps[0].id}),nativeView:()=>view,nativeSelect:closed,commit:closed,change:fn=>store.change(fn),afterHistory:closed,selectLocal:closed,openEditor:closed,standing:()=>({busy:false,notice:null}),telemetry:()=>undefined,fieldPaused:()=>false});
+ const owner=createRetainedNativeEditor({store,sceneId:()=>scene.id,selection:()=>({entity_ids:[entity.id],step_id:entity.sequence.steps[0].id}),nativeView:()=>view,nativeSelect:closed,commit:closed,change: (label, fn) => store.change(label, fn),afterHistory:closed,selectLocal:closed,openEditor:closed,standing:()=>({busy:false,notice:null}),telemetry:()=>undefined,fieldPaused:()=>false});
  return {view,store,scene,entity,reading:owner.read()};
 }
 test('real SVG transform inversion preserves letterboxed, scaled and rotated handle coordinates',()=>{

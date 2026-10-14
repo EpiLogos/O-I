@@ -306,7 +306,11 @@ impl Dezipper {
     /// Parked at a value (no motion) — how the model starts, so no uncited
     /// ramp length is ever exercised implicitly.
     pub fn at(value: f64) -> Self {
-        Dezipper { cur: value, inc: 0.0, target: value }
+        Dezipper {
+            cur: value,
+            inc: 0.0,
+            target: value,
+        }
     }
 
     /// Ramp message: re-aim at `target` over `ramp_samples`
@@ -348,7 +352,11 @@ pub struct DcBlocker {
 
 impl DcBlocker {
     pub fn new() -> Self {
-        DcBlocker { r: DC_BLOCK_R, x1: 0.0, y1: 0.0 }
+        DcBlocker {
+            r: DC_BLOCK_R,
+            x1: 0.0,
+            y1: 0.0,
+        }
     }
 
     pub fn process(&mut self, x: f64) -> f64 {
@@ -444,7 +452,11 @@ impl OverdriveModel {
         // Envelope on the pre-shaper signal [D §3]: the shelf stage is a
         // residual (placeholder) so pre = input here.
         let level = f64::from(in_l.abs().max(in_r.abs()));
-        let coeff = if level > self.env { self.attack_coeff } else { self.release_coeff };
+        let coeff = if level > self.env {
+            self.attack_coeff
+        } else {
+            self.release_coeff
+        };
         self.env += coeff * (level - self.env);
 
         // PreserveDynamics compressor on the drive stage [D §3]: gain =
@@ -452,7 +464,11 @@ impl OverdriveModel {
         let v = self.params.preserve_dynamics;
         let thr = preserve_threshold(v);
         let base = preserve_base_gain(v);
-        self.reduction = if self.env <= thr { 0.0 } else { preserve_reduction(self.env, thr) };
+        self.reduction = if self.env <= thr {
+            0.0
+        } else {
+            preserve_reduction(self.env, thr)
+        };
         let gain = base * lut_placeholder(self.reduction);
 
         // De-zippered multipliers [D §2/§3].
@@ -476,11 +492,7 @@ impl OverdriveModel {
             wet = self.dc1[ch].process(wet);
             wet = self.dc2[ch].process(wet);
             // Tone tilt LUT placeholder (corpus-pending).
-            wet *= tone_tilt_placeholder(
-                f64::from(inputs[0]),
-                f64::from(inputs[1]),
-                tone_ramp,
-            );
+            wet *= tone_tilt_placeholder(f64::from(inputs[0]), f64::from(inputs[1]), tone_ramp);
             // Equal-power-family mix, raw input as the dry leg [D §3].
             out[ch] = (f64::from(inputs[ch]) * dry_mix + wet * wet_mix) as f32;
         }
@@ -549,7 +561,10 @@ mod per_sample_tests {
         let num = b0 * (1.0 + (-omega).cos()); // |b0(1 + z^-1)|
         let den = ((1.0 + a1 * a1 + 2.0 * a1 * (-omega).cos()).sqrt()).max(1e-30);
         let mag = num / den;
-        assert!((mag - std::f64::consts::FRAC_1_SQRT_2).abs() < 0.01, "corner gain {mag}");
+        assert!(
+            (mag - std::f64::consts::FRAC_1_SQRT_2).abs() < 0.01,
+            "corner gain {mag}"
+        );
     }
 
     /// Shelf laws [D §3]: corners min(g·f, 20000) / max(f/g, 50); ω clamp;
@@ -563,7 +578,7 @@ mod per_sample_tests {
         let (lo, hi) = shelf_corners(30.0, 10.0); // low guard 50 Hz
         assert_eq!(lo, 50.0);
         assert!((hi - 300.0).abs() < 1e-12); // min(g·f, 20000) = 300 here
-        let (lo, hi) = shelf_corners(5000.0, 10.0); // high guard engages
+        let (_lo, hi) = shelf_corners(5000.0, 10.0); // high guard engages
         assert_eq!(hi, 20_000.0);
         let omega = 2.5;
         let c = shelf_biquad(omega, 0.7);
@@ -632,7 +647,10 @@ mod per_sample_tests {
         for n in 0..48_000 {
             let s = (0.3 * (w * n as f64).sin()) as f32;
             let (ol, or_) = m.process(s, s);
-            assert!(ol.abs() <= 1.5 && or_.abs() <= 1.5, "unbounded out {ol}/{or_}");
+            assert!(
+                ol.abs() <= 1.5 && or_.abs() <= 1.5,
+                "unbounded out {ol}/{or_}"
+            );
             engaged |= m.reduction < -1.0;
         }
         assert!(engaged, "reduction never engaged");

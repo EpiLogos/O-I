@@ -178,12 +178,13 @@ pub mod modulation {
     /// the L (odd) / R (even) line, read at `read_time_s`, at `amount`.
     pub fn pass_offset_s(amount: f64, pass: usize, read_time_s: f64) -> f64 {
         let depth_s = PER_PASS_MS_AT_035 * 1e-3 * (amount / 0.35).powi(3);
-        let phase_deg =
-            PHASE_L_DEG + if pass % 2 == 0 { PHASE_STEREO_DEG } else { 0.0 };
-        depth_s
-            * (2.0 * std::f64::consts::PI * LFO_HZ * read_time_s
-                + phase_deg.to_radians())
-            .sin()
+        let phase_deg = PHASE_L_DEG
+            + if pass.is_multiple_of(2) {
+                PHASE_STEREO_DEG
+            } else {
+                0.0
+            };
+        depth_s * (2.0 * std::f64::consts::PI * LFO_HZ * read_time_s + phase_deg.to_radians()).sin()
     }
 
     /// Accumulating same-channel tap offsets in ms for taps 1..=n.
@@ -264,15 +265,22 @@ pub mod modulation {
             let (o1, o5, o9) = (offs[0], offs[4], offs[8]);
             assert!((o1 - o9).abs() <= 0.75, "first ≈ last: {o1:.2} vs {o9:.2}");
             assert!(
-                o5.abs() > o1.abs() && o5.abs() > o9.abs() && o5.abs() >= 1.5 * o1.abs().max(o9.abs()),
+                o5.abs() > o1.abs()
+                    && o5.abs() > o9.abs()
+                    && o5.abs() >= 1.5 * o1.abs().max(o9.abs()),
                 "mid-tap overshoot: o5 {o5:.2} vs ends {o1:.2}/{o9:.2} (measured 2.4×)"
             );
             let l_seq: Vec<f64> = [1, 3, 5, 7, 9].iter().map(|&k| offs[k - 1]).collect();
             let r_seq: Vec<f64> = [2, 4, 6, 8, 10].iter().map(|&k| offs[k - 1]).collect();
-            let pp = |s: &[f64]| s.iter().cloned().fold(f64::MIN, f64::max)
-                - s.iter().cloned().fold(f64::MAX, f64::min);
+            let pp = |s: &[f64]| {
+                s.iter().cloned().fold(f64::MIN, f64::max)
+                    - s.iter().cloned().fold(f64::MAX, f64::min)
+            };
             let ratio = pp(&r_seq) / pp(&l_seq);
-            assert!((ratio - 1.954 / 7.342).abs() < 0.02, "R/L pp ratio {ratio:.3}");
+            assert!(
+                (ratio - 1.954 / 7.342).abs() < 0.02,
+                "R/L pp ratio {ratio:.3}"
+            );
         }
 
         /// E1-family walk (amount 0.21875): the six measured tap offsets
@@ -280,8 +288,14 @@ pub mod modulation {
         #[test]
         fn tap_walk_e1_family_offsets() {
             let offs = tap_offsets_ms(0.21875, 0.1875, 100.0 / 48000.0, 6);
-            for (k, m) in [(1, -0.64), (3, 0.19), (5, 1.37), (2, -0.06), (4, 0.50), (6, 0.59)]
-            {
+            for (k, m) in [
+                (1, -0.64),
+                (3, 0.19),
+                (5, 1.37),
+                (2, -0.06),
+                (4, 0.50),
+                (6, 0.59),
+            ] {
                 let o = offs[k - 1];
                 assert!(
                     (o - m).abs() <= 1.5,
@@ -296,9 +310,12 @@ pub mod modulation {
         #[test]
         fn tap_walk_amount_05_bare_and_full_preset() {
             let offs = tap_offsets_ms(0.5, 0.1875, 100.0 / 48000.0, 7);
-            for (k, m, tol) in
-                [(1, -5.79, 2.0), (3, 2.92, 1.5), (5, 15.79, 1.5), (7, 2.52, 2.0)]
-            {
+            for (k, m, tol) in [
+                (1, -5.79, 2.0),
+                (3, 2.92, 1.5),
+                (5, 15.79, 1.5),
+                (7, 2.52, 2.0),
+            ] {
                 let o = offs[k - 1];
                 assert!(
                     (o - m).abs() <= tol,
@@ -383,7 +400,14 @@ impl EchoConfig {
     /// both channels repeat at 2×hop).
     pub fn hop_s(&self) -> f64 {
         (0..2)
-            .map(|c| synced_time_s(self.bpm, self.division[c], self.sixteenth[c], self.sync_mode[c]))
+            .map(|c| {
+                synced_time_s(
+                    self.bpm,
+                    self.division[c],
+                    self.sixteenth[c],
+                    self.sync_mode[c],
+                )
+            })
             .fold(f64::INFINITY, f64::min)
     }
 }
@@ -450,12 +474,19 @@ pub const E1_DIRECT_PEAK_DB: f64 = -13.83;
 pub fn e1_family_tap_peaks_db(cfg: &EchoConfig) -> Vec<f64> {
     let fb_db = 20.0 * cfg.feedback.log10();
     let mut peaks = Vec::with_capacity(cfg.taps);
-    let mut level = [E1_FIRST_PASS_L_DB, E1_FIRST_PASS_L_DB + E1_FIRST_PASS_R_OFFSET_DB];
+    let mut level = [
+        E1_FIRST_PASS_L_DB,
+        E1_FIRST_PASS_L_DB + E1_FIRST_PASS_R_OFFSET_DB,
+    ];
     for k in 0..cfg.taps {
         if k >= 2 {
             let ch = k % 2;
             let loss = if k < 4 {
-                if ch == 0 { E1_FIRST_RECIRC_L_DB } else { E1_FIRST_RECIRC_R_DB }
+                if ch == 0 {
+                    E1_FIRST_RECIRC_L_DB
+                } else {
+                    E1_FIRST_RECIRC_R_DB
+                }
             } else if ch == 0 {
                 E1_RECIRC_L_DB
             } else {

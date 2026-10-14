@@ -6,13 +6,12 @@ use live_dynamics::compressor;
 use live_dynamics::echo as taps_echo;
 use live_dynamics::glue::{self, GlueParams};
 use live_dynamics::operator;
-use live_dynamics::wavetable;
 use live_dynamics::reverb::{self, ReverbParams};
 use live_dynamics::taps;
 use live_dynamics::verify;
+use live_dynamics::wavetable;
 
-const RENDERS: &str =
-    "../../docs/research/ableton-live-12.0.25/harness/renders";
+const RENDERS: &str = "../../docs/research/ableton-live-12.0.25/harness/renders";
 
 /// Read-only archive of the 2026-10-07 render lane (final-pass renders).
 /// Four golden renders (G1, G6 pair, R1, E1) were pruned from
@@ -124,14 +123,24 @@ fn check_taps(render: &audio::Audio, model_buf: &[f32]) {
     let t0_s = direct as f64 / sr;
     let expected: Vec<f64> = reverb::EARLY_TAPS.iter().map(|(t, _)| t0_s + t).collect();
     let gate = taps::TapGate::default(); // ±1 ms
-    // the render must show each model tap in its ±1 ms window
-    let measured = taps::tap_table(&render.samples, render.sample_rate, &expected, gate.max_time_err_s);
+                                         // the render must show each model tap in its ±1 ms window
+    let measured = taps::tap_table(
+        &render.samples,
+        render.sample_rate,
+        &expected,
+        gate.max_time_err_s,
+    );
     assert!(
         taps::tap_gate_passes(&expected, &measured, &gate),
         "render taps missing or displaced beyond ±1 ms"
     );
     // the model buffer must carry them too (self-check of the alignment)
-    let model_taps = taps::tap_table(model_buf, render.sample_rate, &expected, gate.max_time_err_s);
+    let model_taps = taps::tap_table(
+        model_buf,
+        render.sample_rate,
+        &expected,
+        gate.max_time_err_s,
+    );
     assert!(
         taps::tap_gate_passes(&expected, &model_taps, &gate),
         "model buffer taps misaligned"
@@ -168,11 +177,13 @@ fn check_spectral(render: &audio::Audio, model_buf: &[f32]) {
         verify::REVERB_SPECTRAL_MAX_BAND_TOL_DB
     );
     // name the worst bands (evidence discipline: a gate failure must say where)
-    let mut bands: Vec<(usize, f64)> =
-        (0..48).map(|i| (i, (pb[i] - pa[i]).abs())).collect();
+    let mut bands: Vec<(usize, f64)> = (0..48).map(|i| (i, (pb[i] - pa[i]).abs())).collect();
     bands.sort_by(|x, y| y.1.partial_cmp(&x.1).unwrap());
     for (i, e) in bands.iter().take(4) {
-        println!("  band {i:2}: render {:7.2}  model {:7.2}  |Δ| {e:.2} dB", pa[*i], pb[*i]);
+        println!(
+            "  band {i:2}: render {:7.2}  model {:7.2}  |Δ| {e:.2} dB",
+            pa[*i], pb[*i]
+        );
     }
     assert!(
         d.mean_db <= verify::REVERB_SPECTRAL_MEAN_TOL_DB,
@@ -195,7 +206,13 @@ fn reverb_golden_default_pin() {
     let model_buf = model_buffer_at_direct(&render, 1200.0);
     check_taps(&render, &model_buf);
     // stated default-pin fit window (clean above the dither floor on all bands)
-    check_rt60(&render, &model_buf, 0.25, 0.60, verify::REVERB_RT60_TOL_DEFAULT_PIN);
+    check_rt60(
+        &render,
+        &model_buf,
+        0.25,
+        0.60,
+        verify::REVERB_RT60_TOL_DEFAULT_PIN,
+    );
     check_spectral(&render, &model_buf);
 }
 
@@ -217,7 +234,12 @@ fn reverb_golden_decay_scaling() {
 
 #[test]
 fn glue_static_model_matches_measured_anchors() {
-    let p = GlueParams { threshold_db: -12.0, range: 30.0, ratio: 1.0, makeup_db: 0.0 };
+    let p = GlueParams {
+        threshold_db: -12.0,
+        range: 30.0,
+        ratio: 1.0,
+        makeup_db: 0.0,
+    };
     for (input, measured) in glue::MEASURED_ANCHORS_R30_T12 {
         let predicted = glue::static_gain_change_db(*input, &p);
         assert!(
@@ -236,7 +258,12 @@ fn glue_golden_render_static_gate() {
     // canonical clean-chain render (master chain stripped, unity staging)
     let bytes = read_render_bytes("G1_T-12_R30_MU0_v2.aif");
     let render = audio::read_aiff_i16(&bytes).unwrap();
-    let p = GlueParams { threshold_db: -12.0, range: 30.0, ratio: 1.0, makeup_db: 0.0 };
+    let p = GlueParams {
+        threshold_db: -12.0,
+        range: 30.0,
+        ratio: 1.0,
+        makeup_db: 0.0,
+    };
     let result = verify::static_gate(&render, &p);
     println!("{result:?}");
     assert!(
@@ -349,7 +376,11 @@ fn operator_voice_golden_gate() {
         (h1_db - (-29.76)).abs() <= 0.5,
         "h1 peak {h1_db:.2} vs measured −29.76"
     );
-    assert!(h1_db - h2_db >= 60.0, "h2 only {} dB below h1", h1_db - h2_db);
+    assert!(
+        h1_db - h2_db >= 60.0,
+        "h2 only {} dB below h1",
+        h1_db - h2_db
+    );
 
     // --- OP2: sustain pinned to −24 dB (level knob = linear amplitude) ---
     // Model revision (2026-10-08, probe analysis): the flat-sustain reading
@@ -518,9 +549,8 @@ fn wavetable_voice_golden_gate() {
     }
 
     // --- release: −40 dB crossing ±25%, windows ±2.5 dB to +300 ms ---
-    let plateau = |buf: &[f32]| {
-        audio::rms_db(&buf[(3.60 * sr as f64) as usize..(3.87 * sr as f64) as usize])
-    };
+    let plateau =
+        |buf: &[f32]| audio::rms_db(&buf[(3.60 * sr as f64) as usize..(3.87 * sr as f64) as usize]);
     let crossing = |buf: &[f32], plateau_db: f64| -> f64 {
         let mut t = 3.875;
         while t < 4.8 {
@@ -695,19 +725,14 @@ fn wavetable_law_gates() {
     let agree_harmonics = |render: &audio::Audio, model: &[f32]| -> Vec<f64> {
         (1..=8)
             .map(|k| {
-                operator::amp_to_db(operator::goertzel_amp(
-                    model,
-                    sr,
-                    f0 * k as f64,
-                    1.15,
-                    1.70,
-                )) - operator::amp_to_db(operator::goertzel_amp(
-                    &render.samples,
-                    sr,
-                    f0 * k as f64,
-                    1.15,
-                    1.70,
-                ))
+                operator::amp_to_db(operator::goertzel_amp(model, sr, f0 * k as f64, 1.15, 1.70))
+                    - operator::amp_to_db(operator::goertzel_amp(
+                        &render.samples,
+                        sr,
+                        f0 * k as f64,
+                        1.15,
+                        1.70,
+                    ))
             })
             .collect()
     };
@@ -729,7 +754,8 @@ fn wavetable_law_gates() {
     for (k, v) in law.iter().enumerate() {
         assert!(
             (v - (-6.0206)).abs() <= HARM_TOL_DB,
-            "WV3 h{}: law Δ {v:+.2} dB vs −6.02", k + 1
+            "WV3 h{}: law Δ {v:+.2} dB vs −6.02",
+            k + 1
         );
     }
     let mut voice = wavetable::WavetableVoice::default_patch(48, sr);
@@ -738,7 +764,8 @@ fn wavetable_law_gates() {
     for (k, v) in agree_harmonics(&render, &model).iter().enumerate() {
         assert!(
             (v - bias).abs() <= LAW_TOL_DB,
-            "WV3 h{}: model−render {v:+.2} dB (bias {bias:+.2})", k + 1
+            "WV3 h{}: model−render {v:+.2} dB (bias {bias:+.2})",
+            k + 1
         );
     }
 
@@ -749,7 +776,8 @@ fn wavetable_law_gates() {
     for (k, v) in law.iter().enumerate() {
         assert!(
             (v - 6.0206).abs() <= HARM_TOL_DB,
-            "WV5 h{}: law Δ {v:+.2} dB vs coherent +6.02", k + 1
+            "WV5 h{}: law Δ {v:+.2} dB vs coherent +6.02",
+            k + 1
         );
     }
     let mut voice = wavetable::WavetableVoice::default_patch(48, sr);
@@ -758,15 +786,15 @@ fn wavetable_law_gates() {
     for (k, v) in agree_harmonics(&render, &model).iter().enumerate() {
         assert!(
             (v - bias).abs() <= LAW_TOL_DB,
-            "WV5 h{}: model−render {v:+.2} dB (bias {bias:+.2})", k + 1
+            "WV5 h{}: model−render {v:+.2} dB (bias {bias:+.2})",
+            k + 1
         );
     }
 
     // --- WV4: sustain 0.5012 → 0.25 → plateau −6.04 dB (linear amplitude) ---
     let render = read_render("WV4_SUSTAIN.aif");
-    let late = |buf: &[f32]| {
-        audio::rms_db(&buf[(3.60 * sr as f64) as usize..(3.87 * sr as f64) as usize])
-    };
+    let late =
+        |buf: &[f32]| audio::rms_db(&buf[(3.60 * sr as f64) as usize..(3.87 * sr as f64) as usize]);
     let law_delta = late(&render.samples) - late(&baseline.samples);
     println!("WV4 law plateau delta: {law_delta:+.2} dB (−6.04)");
     assert!(
@@ -778,7 +806,10 @@ fn wavetable_law_gates() {
     let model = render_model(&voice);
     let agree = late(&model) - late(&render.samples);
     println!("WV4 model−render plateau: {agree:+.2} dB");
-    assert!((agree - bias).abs() <= LAW_TOL_DB, "WV4 plateau agreement {agree:+.2}");
+    assert!(
+        (agree - bias).abs() <= LAW_TOL_DB,
+        "WV4 plateau agreement {agree:+.2}"
+    );
 
     // --- WV2: position 0 → 0.5 reads the 0.5·triangle + 0.5·saw segment
     // mix (census law, rev 3; timbre + −2.43 dB RMS) ---
@@ -794,7 +825,10 @@ fn wavetable_law_gates() {
     let mean: f64 = agree.iter().map(|v| v.abs()).sum::<f64>() / agree.len() as f64;
     println!("WV2 model−render harmonic deltas: {agree:?} (mean {mean:.2})  steady: {agree_s:?}");
     for v in &agree_s[1..] {
-        assert!((*v - bias).abs() <= LAW_TOL_DB, "WV2 steady agreement {v:+.2}");
+        assert!(
+            (*v - bias).abs() <= LAW_TOL_DB,
+            "WV2 steady agreement {v:+.2}"
+        );
     }
     assert!(
         mean <= HARM_MEAN_TOL_DB,
@@ -1021,17 +1055,33 @@ fn wavetable_position_leave_one_out() {
     let frame_partial = |frame: usize, k: usize| -> f64 {
         let kf = k as f64;
         match frame {
-            0 => if k == 1 { 1.0 } else { 0.0 },
+            0 => {
+                if k == 1 {
+                    1.0
+                } else {
+                    0.0
+                }
+            }
             1 => {
                 if k % 2 == 1 {
                     (8.0 / (pi * pi)) / (kf * kf)
-                        * (if ((k - 1) / 2).is_multiple_of(2) { 1.0 } else { -1.0 })
+                        * (if ((k - 1) / 2).is_multiple_of(2) {
+                            1.0
+                        } else {
+                            -1.0
+                        })
                 } else {
                     0.0
                 }
             }
             2 => 2.0 / (pi * kf),
-            _ => if k % 2 == 1 { 4.0 / (pi * kf) } else { 0.0 },
+            _ => {
+                if k % 2 == 1 {
+                    4.0 / (pi * kf)
+                } else {
+                    0.0
+                }
+            }
         }
     };
     let segment = |pos: f64| -> (usize, f64) {
@@ -1053,7 +1103,9 @@ fn wavetable_position_leave_one_out() {
         }
     }
     let above_floor = |col: usize| -> Vec<usize> {
-        (0..8).filter(|&k| DBFS[k][col] > FLOOR_DBFS + FLOOR_GUARD_DB).collect()
+        (0..8)
+            .filter(|&k| DBFS[k][col] > FLOOR_DBFS + FLOOR_GUARD_DB)
+            .collect()
     };
     // cyclic-coordinate LS on gains g1..g3 over the TRAINING positions only
     // (targets signed by the ideal mix; the pinned frame-0 share
@@ -1091,16 +1143,18 @@ fn wavetable_position_leave_one_out() {
                         let ideal = ideal_partial(p, kh);
                         let mag = LIN[k][col];
                         let signed = if ideal >= 0.0 { mag } else { -mag };
-                        let pinned =
-                            if i == 0 { (1.0 - w) * frame_partial(0, kh) } else { 0.0 };
+                        let pinned = if i == 0 {
+                            (1.0 - w) * frame_partial(0, kh)
+                        } else {
+                            0.0
+                        };
                         target[k] = signed - pinned;
                         coef[k] = c;
                         let cj = c[j];
                         if cj.abs() < 1e-15 {
                             continue;
                         }
-                        let rest: f64 =
-                            (0..3).filter(|&m| m != j).map(|m| c[m] * g[m]).sum();
+                        let rest: f64 = (0..3).filter(|&m| m != j).map(|m| c[m] * g[m]).sum();
                         num += cj * (target[k] - rest);
                         den += cj * cj;
                     }
@@ -1165,7 +1219,9 @@ fn wavetable_position_leave_one_out() {
             "WT position LOO hold-out pos {held:4.2}: gains [{:.4} {:.4} {:.4}] \
              per-hΔ {} mean |Δ| {mean:.2} dB (≤{HARMONIC_MEAN_TOL_DB}) | \
              RMS pred {pred_rms:+.2} meas {meas_rms:+.2} Δ {:+.2} dB (±{RMS_TOL_DB})",
-            fold_gains[0], fold_gains[1], fold_gains[2],
+            fold_gains[0],
+            fold_gains[1],
+            fold_gains[2],
             row.join(" "),
             meas_rms - pred_rms
         );
@@ -1292,14 +1348,20 @@ fn glue_circuit_golden_envelope_gate() {
         println!("== {file} (attack idx {att}, release idx {rel})");
         let render = read_render(file);
         let got = glue::measure_envelope(&render.samples, render.sample_rate);
-        let mut m = glue::CircuitModel::new(circuit_params(att, rel), glue::CircuitFit::default(), sr);
+        let mut m =
+            glue::CircuitModel::new(circuit_params(att, rel), glue::CircuitFit::default(), sr);
         let mut out = vec![0f32; signal.len()];
         let mut out_r = vec![0f32; signal.len()];
         m.process_block(&signal, &signal, &mut out, &mut out_r);
         let pred = glue::measure_envelope(&out, sr);
 
         let mut worst = 0.0f64;
-        for (i, (g, p2)) in got.steady_state_db.iter().zip(&pred.steady_state_db).enumerate() {
+        for (i, (g, p2)) in got
+            .steady_state_db
+            .iter()
+            .zip(&pred.steady_state_db)
+            .enumerate()
+        {
             let d = p2 - g;
             worst = worst.max(d.abs());
             println!(
@@ -1316,8 +1378,10 @@ fn glue_circuit_golden_envelope_gate() {
         failures.is_empty(),
         "C1 static gate failed:
   {}",
-        failures.join("
-  ")
+        failures.join(
+            "
+  "
+        )
     );
 }
 
@@ -1382,7 +1446,8 @@ fn glue_circuit_golden_release_gate() {
         let render = read_render(file);
         let (tau_r, loud_r, _) = release_probe_tau(&render.samples, render.sample_rate);
         // Attack stored 2 → setter default → case 2 (see the envelope gate).
-        let mut m = glue::CircuitModel::new(circuit_params(2, rel), glue::CircuitFit::default(), sr);
+        let mut m =
+            glue::CircuitModel::new(circuit_params(2, rel), glue::CircuitFit::default(), sr);
         let mut out = vec![0f32; n];
         let mut out_r = vec![0f32; n];
         m.process_block(&signal, &signal, &mut out, &mut out_r);
@@ -1415,7 +1480,6 @@ fn glue_circuit_golden_release_gate() {
         failures.join("\n  ")
     );
 }
-
 
 // ---------------------------------------------------------------------------
 // LAM λ discriminator — the CircuitModel against the deep-over slow-attack
@@ -1511,7 +1575,10 @@ fn glue_lam_lambda_discriminator_gate() {
             over_db[i]
         );
         if d.abs() > LAM_TOL_DB {
-            failures.push(format!("+{} over: model {gr_model:.2} vs render {gr_render:.2}", over_db[i]));
+            failures.push(format!(
+                "+{} over: model {gr_model:.2} vs render {gr_render:.2}",
+                over_db[i]
+            ));
         }
     }
     println!("  worst |Δ| {worst:.2} dB");
@@ -1527,7 +1594,12 @@ fn glue_lam_lambda_discriminator_gate() {
     m13.process_block(&long, &long, &mut out13, &mut out13_r);
     let got13 = glue::measure_envelope(&read_render("G13_LONG_A10.aif").samples, sr);
     let pred13 = glue::measure_envelope(&out13, sr);
-    for (i, (g, p)) in got13.steady_state_db.iter().zip(&pred13.steady_state_db).enumerate() {
+    for (i, (g, p)) in got13
+        .steady_state_db
+        .iter()
+        .zip(&pred13.steady_state_db)
+        .enumerate()
+    {
         let d = p - g;
         println!("  step {i}: render {g:8.2}  model {p:8.2}  Δ {d:+.2} dB (tol ±{LAM_TOL_DB:.1})");
         if d.abs() > LAM_TOL_DB {
@@ -1564,8 +1636,14 @@ fn echo_e1_golden_gate() {
     let hop = cfg.hop_s();
 
     // expected tap times split by channel: odd taps L (k = 1, 3, 5), even R
-    let l_times: Vec<f64> = [1usize, 3, 5].iter().map(|k| t0_s + *k as f64 * hop).collect();
-    let r_times: Vec<f64> = [2usize, 4, 6].iter().map(|k| t0_s + *k as f64 * hop).collect();
+    let l_times: Vec<f64> = [1usize, 3, 5]
+        .iter()
+        .map(|k| t0_s + *k as f64 * hop)
+        .collect();
+    let r_times: Vec<f64> = [2usize, 4, 6]
+        .iter()
+        .map(|k| t0_s + *k as f64 * hop)
+        .collect();
     // Level extraction uses the dossier's own ±8 ms scan width
     // (harness/analyze_echo_taps.py); the ±1 ms TIME gate is asserted below
     // for the first-pass taps and relaxed to ±2 ms for the recirculated ones
@@ -1608,15 +1686,18 @@ fn echo_e1_golden_gate() {
     }
     let mut measured_peaks = Vec::with_capacity(6);
     for k in 0..6usize {
-        measured_peaks.push(if k % 2 == 0 { peaks_l[k / 2] } else { peaks_r[k / 2] });
+        measured_peaks.push(if k % 2 == 0 {
+            peaks_l[k / 2]
+        } else {
+            peaks_r[k / 2]
+        });
     }
 
     // compare the five successive per-hop level slopes against the model tap
     // table (±1.0 dB, stated before the model was run against the render)
     let model_peaks = taps_echo::e1_family_tap_peaks_db(&cfg);
     let model_slopes: Vec<f64> = model_peaks.windows(2).map(|w| w[1] - w[0]).collect();
-    let measured_slopes: Vec<f64> =
-        measured_peaks.windows(2).map(|w| w[1] - w[0]).collect();
+    let measured_slopes: Vec<f64> = measured_peaks.windows(2).map(|w| w[1] - w[0]).collect();
     for (k, (m, p)) in measured_slopes.iter().zip(&model_slopes).enumerate() {
         println!(
             "  slope tap{}→{}: render {m:+7.2}  model {p:+7.2}  Δ {:+.2} (tol ±1.0)",
@@ -1624,7 +1705,11 @@ fn echo_e1_golden_gate() {
             k + 2,
             m - p
         );
-        assert!((m - p).abs() <= 1.0, "E1 hop slope {}: render {m:.2} vs model {p:.2}", k + 1);
+        assert!(
+            (m - p).abs() <= 1.0,
+            "E1 hop slope {}: render {m:.2} vs model {p:.2}",
+            k + 1
+        );
     }
 }
 
@@ -1679,12 +1764,14 @@ fn echo_e1_golden_gate() {
 /// harness/gen_signals.py #1: 0.25 s silence, 7 × 0.5 s steps at
 /// −30/−24/−18/−12/−6/−3/0 dBFS peak (1 kHz), 1.5 s tail.
 fn synth_steps_1k(sr: u32) -> Vec<f32> {
-    let n = (0.25 * sr as f64) as usize
-        + 7 * (0.5 * sr as f64) as usize
-        + (1.5 * sr as f64) as usize;
+    let n =
+        (0.25 * sr as f64) as usize + 7 * (0.5 * sr as f64) as usize + (1.5 * sr as f64) as usize;
     let mut s = vec![0f32; n];
     let w = 2.0 * std::f64::consts::PI * 1000.0 / sr as f64;
-    for (i, db) in [-30.0f64, -24.0, -18.0, -12.0, -6.0, -3.0, 0.0].iter().enumerate() {
+    for (i, db) in [-30.0f64, -24.0, -18.0, -12.0, -6.0, -3.0, 0.0]
+        .iter()
+        .enumerate()
+    {
         let start = ((0.25 + 0.5 * i as f64) * sr as f64) as usize;
         let end = (start + (0.5 * sr as f64) as usize).min(n);
         let a = 10f64.powf(db / 20.0);
@@ -1750,10 +1837,8 @@ fn saturator_bulk_static_map_gate() {
     // the serialized default) on the same steps signal at the render rate.
     let render = read_render(NAME);
     let sr = render.sample_rate;
-    let mut m = live_dynamics::saturator::SaturatorModel::new(
-        live_dynamics::saturator::DEFAULTS,
-        sr,
-    );
+    let mut m =
+        live_dynamics::saturator::SaturatorModel::new(live_dynamics::saturator::DEFAULTS, sr);
     let signal = synth_steps_1k(sr);
     let mut out = vec![0f32; signal.len()];
     for (i, x) in signal.iter().enumerate() {
@@ -1762,7 +1847,10 @@ fn saturator_bulk_static_map_gate() {
     }
     let mut worst = 0.0f64;
     let mut failures: Vec<String> = Vec::new();
-    for (k, db) in [-30.0f64, -24.0, -18.0, -12.0, -6.0, -3.0, 0.0].iter().enumerate() {
+    for (k, db) in [-30.0f64, -24.0, -18.0, -12.0, -6.0, -3.0, 0.0]
+        .iter()
+        .enumerate()
+    {
         let got = step_window_rms_db(&render.samples, sr, k);
         let pred = step_window_rms_db(&out, sr, k);
         let d = pred - got;
@@ -1830,7 +1918,11 @@ fn saturator_bulk_sweep_gate() {
         }
     }
     println!("saturator sweep: worst |Δ| {worst:.2} dB");
-    assert!(failures.is_empty(), "saturator sweep gate failed:\n  {}", failures.join("\n  "));
+    assert!(
+        failures.is_empty(),
+        "saturator sweep gate failed:\n  {}",
+        failures.join("\n  ")
+    );
 }
 
 #[test]
@@ -1852,9 +1944,7 @@ fn eq8_bulk_globalgain_gate() {
     // this configuration is `global_gain_linear(0, ms=false)`.
     let d = read_render(def).samples;
     let u = read_render(util).samples;
-    let peak = |b: &[f32]| -> f64 {
-        f64::from(b.iter().fold(0.0f32, |m, v| m.max(v.abs())))
-    };
+    let peak = |b: &[f32]| -> f64 { f64::from(b.iter().fold(0.0f32, |m, v| m.max(v.abs()))) };
     let gain0 = 20.0 * (peak(&d) / peak(&u)).log10();
     println!("EQ8 default vs Utility (unity ref): {gain0:+.3} dB (model 0, tol ±0.5)");
     assert!(
@@ -1866,10 +1956,12 @@ fn eq8_bulk_globalgain_gate() {
     // on the peak: 0.12381 / 0.49292 = −12.000 dB).
     let m = read_render(gmin).samples;
     let gain_min = 20.0 * (peak(&m) / peak(&d)).log10();
-    let model_min =
-        20.0 * live_dynamics::eq8::global_gain_linear(-12.0, false).log10();
+    let model_min = 20.0 * live_dynamics::eq8::global_gain_linear(-12.0, false).log10();
     println!("GlobalGain −12: render {gain_min:+.3} dB  model {model_min:+.3} dB (tol ±0.2)");
-    assert!((gain_min - model_min).abs() <= 0.2, "GlobalGain −12 law off");
+    assert!(
+        (gain_min - model_min).abs() <= 0.2,
+        "GlobalGain −12 law off"
+    );
 
     // GlobalGain +12: the +12 dB copy CLIPS at the 16-bit export ceiling
     // (peak 0.99997 = full scale); gate the law on the unclipped region
@@ -1890,8 +1982,14 @@ fn eq8_bulk_globalgain_gate() {
          clipped peak {:.5} (expect ≈1.0)",
         peak(&x)
     );
-    assert!((gain_max - model_max).abs() <= 0.2, "GlobalGain +12 law off");
-    assert!(peak(&x) >= 0.9999, "the +12 render did not reach the export ceiling");
+    assert!(
+        (gain_max - model_max).abs() <= 0.2,
+        "GlobalGain +12 law off"
+    );
+    assert!(
+        peak(&x) >= 0.9999,
+        "the +12 render did not reach the export ceiling"
+    );
 }
 
 #[test]
@@ -1904,7 +2002,12 @@ fn redux_bulk_drywet_and_pin_consistency_gate() {
         "BULK-redux-pin-bitdepth-min.aif",
         "BULK-redux-pin-bitdepth-max.aif",
     );
-    if !(render_exists(def) && render_exists(util) && render_exists(dry0) && render_exists(bd_min) && render_exists(bd_max)) {
+    if !(render_exists(def)
+        && render_exists(util)
+        && render_exists(dry0)
+        && render_exists(bd_min)
+        && render_exists(bd_max))
+    {
         println!("skip redux gate: renders not present in this checkout");
         return;
     }
@@ -1971,14 +2074,15 @@ fn filterdelay_bulk_delay_time_gate() {
     let sr = l.sample_rate;
     let direct = verify::find_direct_sample(&l.samples, sr);
     let direct_util = verify::find_direct_sample(&u, sr);
-    assert_eq!(direct, direct_util, "direct alignment differs from the unity render");
+    assert_eq!(
+        direct, direct_util,
+        "direct alignment differs from the unity render"
+    );
     let dry_vol = 0.8032414317f64;
-    let dry_gain =
-        20.0 * (f64::from(l.samples[direct]) / f64::from(u[direct_util])).log10();
+    let dry_gain = 20.0 * (f64::from(l.samples[direct]) / f64::from(u[direct_util])).log10();
     println!(
         "dry direct: render {:.5} = input {:.5} × DryVolume → {dry_gain:+.3} dB (tol ±0.5)",
-        l.samples[direct],
-        u[direct_util]
+        l.samples[direct], u[direct_util]
     );
     assert!(
         (dry_gain - 20.0 * dry_vol.log10()).abs() <= 0.5,
@@ -1999,11 +2103,31 @@ fn filterdelay_bulk_delay_time_gate() {
     // direct + delay_samples within ±1 for all three bands); the PEAK sits
     // at onset + the band filter's group delay (measured +3 samples for the
     // 1 kHz band, +12 for the 156 Hz band) — tolerances state both.
-    let cases: [(&str, &[f32], &[f32], f64, f64); 3] = [
+    // (band, input, Live's render, expected onset, peak tolerance)
+    type Case<'a> = (&'a str, &'a [f32], &'a [f32], f64, f64);
+    let cases: [Case; 3] = [
         // band, own channel, other channel, delay ms, other/own ratio bound
-        ("band 1 (18.71875 ms, hard L)", &l.samples, &r.samples, 18.71875, 0.1),
-        ("band 3 (31.515625 ms, hard R)", &r.samples, &l.samples, 31.515625, 0.1),
-        ("band 2 (64.984375 ms, centre)", &l.samples, &r.samples, 64.984375, 1.2),
+        (
+            "band 1 (18.71875 ms, hard L)",
+            &l.samples,
+            &r.samples,
+            18.71875,
+            0.1,
+        ),
+        (
+            "band 3 (31.515625 ms, hard R)",
+            &r.samples,
+            &l.samples,
+            31.515625,
+            0.1,
+        ),
+        (
+            "band 2 (64.984375 ms, centre)",
+            &l.samples,
+            &r.samples,
+            64.984375,
+            1.2,
+        ),
     ];
     for (label, ch, other, ms, ratio_bound) in cases {
         let want = direct + filter_delay::delay_samples(ms, sr).round() as usize;
@@ -2064,7 +2188,11 @@ fn filterdelay_bulk_delay_time_gate() {
         prev_val = val.abs();
     }
     println!("filter-delay taps: {} failure(s)", failures.len());
-    assert!(failures.is_empty(), "filter-delay delay-time gate failed:\n  {}", failures.join("\n  "));
+    assert!(
+        failures.is_empty(),
+        "filter-delay delay-time gate failed:\n  {}",
+        failures.join("\n  ")
+    );
 }
 
 #[test]
@@ -2105,7 +2233,10 @@ fn overdrive_bulk_static_map_gate() {
     }
     let mut worst = 0.0f64;
     let mut failures: Vec<String> = Vec::new();
-    for (k, db) in [-30.0f64, -24.0, -18.0, -12.0, -6.0, -3.0, 0.0].iter().enumerate() {
+    for (k, db) in [-30.0f64, -24.0, -18.0, -12.0, -6.0, -3.0, 0.0]
+        .iter()
+        .enumerate()
+    {
         let got = step_window_rms_db(&render.samples, sr, k);
         let pred = step_window_rms_db(&out, sr, k);
         let d = pred - got;
@@ -2169,10 +2300,16 @@ fn autofilter_bulk_cutoff_probe() {
     );
     assert!(n < d / 16.0, "cutoff-min pin inert or not collapsing");
     assert!(x > d, "cutoff-max pin inert");
-    assert!(i_n > i_d + 200, "cutoff-min group delay not visible (filter identity?)");
+    assert!(
+        i_n > i_d + 200,
+        "cutoff-min group delay not visible (filter identity?)"
+    );
     // Pre-LUT cutoff law [D] sanity (the model's only cutoff-path claim):
     let e = live_dynamics::auto_filter::event_cutoff(127.0, 0.0, 0.0, 0.0, 0.0, 135.0);
-    assert_eq!(e, 127.0, "event_cutoff must pass the unmodulated stored cutoff");
+    assert_eq!(
+        e, 127.0,
+        "event_cutoff must pass the unmodulated stored cutoff"
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -2211,14 +2348,19 @@ fn compressor_bulk_static_map_gate() {
         "compressor static map (BULK steps-1k, [t0+0.10, t0+0.40], tol ±{:.1} dB/step):",
         verify::STATIC_TOLERANCE_DB
     );
-    for (k, db) in [-30.0f64, -24.0, -18.0, -12.0, -6.0, -3.0, 0.0].iter().enumerate() {
+    for (k, db) in [-30.0f64, -24.0, -18.0, -12.0, -6.0, -3.0, 0.0]
+        .iter()
+        .enumerate()
+    {
         let got = step_window_rms_db(&render.samples, sr, k);
         let pred = step_window_rms_db(&out, sr, k);
         let d = pred - got;
         worst = worst.max(d.abs());
         println!("  step {k} ({db:+5.0} dBFS): render {got:8.2}  model {pred:8.2}  Δ {d:+.2} dB");
         if d.abs() > verify::STATIC_TOLERANCE_DB {
-            failures.push(format!("step {k} ({db:+.0} dBFS): model {pred:.2} vs render {got:.2}"));
+            failures.push(format!(
+                "step {k} ({db:+.0} dBFS): model {pred:.2} vs render {got:.2}"
+            ));
         }
     }
     println!("compressor static map: worst |Δ| {worst:.3} dB");

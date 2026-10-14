@@ -416,7 +416,11 @@ pub fn lfo_phase_tick(phase: f64, increment: f64) -> f64 {
 /// The coefficients themselves are the object's attack/release ramp values
 /// at +0x6f0/+0x700 [H — not decoded; the rising/falling selection is D].
 pub fn env_follower_tick(state: f64, level: f64, attack_coeff: f64, release_coeff: f64) -> f64 {
-    let c = if level > state { attack_coeff } else { release_coeff };
+    let c = if level > state {
+        attack_coeff
+    } else {
+        release_coeff
+    };
     c * state + (1.0 - c) * level
 }
 
@@ -535,7 +539,11 @@ mod per_sample_tests {
     fn envelope_follower_attack_release() {
         assert_eq!(env_follower_tick(0.0, 1.0, 0.5, 0.9), 0.5);
         assert!((env_follower_tick(0.5, 0.2, 0.5, 0.9) - 0.47).abs() < 1e-15);
-        assert_eq!(env_follower_tick(0.3, 0.3, 0.5, 0.9), 0.3, "steady state holds");
+        assert_eq!(
+            env_follower_tick(0.3, 0.3, 0.5, 0.9),
+            0.3,
+            "steady state holds"
+        );
         // A full attack coefficient (0.0) snaps to the level.
         assert_eq!(env_follower_tick(0.0, 0.7, 0.0, 0.9), 0.7);
     }
@@ -552,10 +560,7 @@ mod per_sample_tests {
         for u in [128.5_f64, 127.25, 129.75, 125.125] {
             let got = f64::from(exp2_assembly(u));
             let want = 2.0f64.powf(u - 127.0);
-            assert!(
-                (got - want).abs() / want < 5e-6,
-                "u={u}: {got} vs {want}"
-            );
+            assert!((got - want).abs() / want < 5e-6, "u={u}: {got} vs {want}");
         }
         assert_eq!(exp2_mantissa_poly(0.0), 0.6930501);
         assert!((exp2_mantissa_poly(1.0) - 1.0).abs() < 2e-8);

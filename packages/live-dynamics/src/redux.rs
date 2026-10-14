@@ -278,7 +278,12 @@ pub struct SvfLowpass {
 
 impl SvfLowpass {
     pub fn new(sample_rate: u32, k: f64) -> Self {
-        SvfLowpass { g: tpt_coeff(tpt_cutoff_hz(sample_rate), sample_rate), k, ic1: 0.0, ic2: 0.0 }
+        SvfLowpass {
+            g: tpt_coeff(tpt_cutoff_hz(sample_rate), sample_rate),
+            k,
+            ic1: 0.0,
+            ic2: 0.0,
+        }
     }
 
     pub fn process(&mut self, x: f64) -> f64 {
@@ -305,7 +310,11 @@ pub struct Decimator {
 impl Decimator {
     pub fn new(rate: f64, base: f64) -> Self {
         let hold = (rate.min(base - 1.0)).floor().max(1.0) as u32;
-        Decimator { hold_samples: hold, hold_ctr: 0, held: 0.0 }
+        Decimator {
+            hold_samples: hold,
+            hold_ctr: 0,
+            held: 0.0,
+        }
     }
 
     pub fn hold_samples(&self) -> u32 {
@@ -490,7 +499,7 @@ mod per_sample_tests {
     fn tpt_cutoff_and_coefficient() {
         assert!((tpt_cutoff_hz(48_000) - 10_000.0).abs() < 1e-12);
         assert!((tpt_cutoff_hz(20_000) - 9_600.0).abs() < 1e-12); // 0.48·sr wins
-        // fc = 1000, sr = 48000: 2·sin(π·1000/48000)
+                                                                  // fc = 1000, sr = 48000: 2·sin(π·1000/48000)
         let expect = 2.0 * (std::f64::consts::PI * 1_000.0 / 48_000.0).sin();
         assert!((tpt_coeff(1_000.0, 48_000) - expect).abs() < 1e-15);
         // Clamp: at Nyquist the coefficient is 2·sin(3.1337388), not 2.

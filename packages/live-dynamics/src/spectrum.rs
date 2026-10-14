@@ -113,5 +113,8 @@ pub fn band_distance(a: &[f64], b: &[f64]) -> Distance {
         sum += d;
         max = max.max(d);
     }
-    Distance { mean_db: sum / n.max(1) as f64, max_band_db: max }
+    Distance {
+        mean_db: sum / n.max(1) as f64,
+        max_band_db: max,
+    }
 }

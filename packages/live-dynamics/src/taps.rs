@@ -25,7 +25,10 @@ pub fn peak_in_window(samples: &[f32], sample_rate: u32, t0: f64, t1: f64) -> Op
         }
     }
     let peak_dbfs = 20.0 * (best_v.abs() as f64).log10();
-    Some(Tap { time_s: best_i as f64 / sample_rate as f64, peak_dbfs })
+    Some(Tap {
+        time_s: best_i as f64 / sample_rate as f64,
+        peak_dbfs,
+    })
 }
 
 /// Extract a tap table: strongest peak in each `[t_i - tol, t_i + tol]`.
@@ -38,9 +41,7 @@ pub fn tap_table(
 ) -> Vec<Tap> {
     expected_times_s
         .iter()
-        .filter_map(|t| {
-            peak_in_window(samples, sample_rate, t - tolerance_s, t + tolerance_s)
-        })
+        .filter_map(|t| peak_in_window(samples, sample_rate, t - tolerance_s, t + tolerance_s))
         .collect()
 }
 
@@ -53,15 +54,14 @@ pub struct TapGate {
 
 impl Default for TapGate {
     fn default() -> Self {
-        TapGate { max_time_err_s: 0.001, max_amp_err_db: 1.0 }
+        TapGate {
+            max_time_err_s: 0.001,
+            max_amp_err_db: 1.0,
+        }
     }
 }
 
-pub fn tap_gate_passes(
-    model_times_s: &[f64],
-    measured: &[Tap],
-    gate: &TapGate,
-) -> bool {
+pub fn tap_gate_passes(model_times_s: &[f64], measured: &[Tap], gate: &TapGate) -> bool {
     if model_times_s.len() != measured.len() {
         return false;
     }
@@ -86,6 +86,10 @@ mod tests {
         let table = tap_table(&s, sr, &[0.05, 0.25, 0.45], 0.01);
         assert_eq!(table.len(), 3);
         assert!((table[0].peak_dbfs - 20.0 * 0.5f64.log10()).abs() < 0.01);
-        assert!(tap_gate_passes(&[0.05, 0.25, 0.45], &table, &TapGate::default()));
+        assert!(tap_gate_passes(
+            &[0.05, 0.25, 0.45],
+            &table,
+            &TapGate::default()
+        ));
     }
 }

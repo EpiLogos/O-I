@@ -8,7 +8,7 @@ import {register} from 'node:module'
 const root=new URL('../../../../',import.meta.url),compiler=new URL('desktop/cradle/node_modules/typescript/lib/typescript.js',root).href
 register(`data:text/javascript,${encodeURIComponent(`import ts from ${JSON.stringify(compiler)};import {readFile} from 'node:fs/promises';export async function resolve(s,c,n){if(s==='@epilogos/expressions-boundary/parameters')return n(${JSON.stringify(new URL('packages/expressions-boundary/src/parameters.ts',root).href)},c);try{return await n(s,c)}catch(e){if(!s.startsWith('.'))throw e;if(s.endsWith('.js')){try{return await n(s.slice(0,-3)+'.ts',c)}catch{}}for(const x of ['.ts','.tsx']){try{return await n(s+x,c)}catch{}}throw e}}export async function load(u,c,n){if(u.endsWith('?raw'))return {format:'module',shortCircuit:true,source:'export default '+JSON.stringify(await readFile(new URL(u.split('?')[0]),'utf8'))};if(u.endsWith('.css'))return {format:'module',shortCircuit:true,source:'export {}'};if(!u.endsWith('.ts')&&!u.endsWith('.tsx'))return n(u,c);return {format:'module',shortCircuit:true,source:ts.transpileModule(await readFile(new URL(u),'utf8'),{fileName:new URL(u).pathname,compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext,jsx:ts.JsxEmit.ReactJSX}}).outputText}}`)}`,import.meta.url)
 const author=new URL('desktop/cradle/expressions-app/field-studies-journeys/src/',root),app=new URL('app.ts',author),features=new URL('nativeFeatures.ts',author)
-const receiptPath='/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/evidence/native/material-verification-c79dab7c-8de3-4b69-87cb-ee11cce28c9f/rich-artifact-inspection-3a33a7f6-94e9-445d-b2ec-7e7f25950935.json'
+const receiptPath=new URL('./fixtures/native-rich-glyph-rack-r8.receipt.json',import.meta.url)
 const [helpers,drive,devices,registry,colours,{kernelDocumentToJourney},{DocumentStore},{createRetainedNativeEditor},{toNativeConfig},shared,react,ssr,{NativeDeviceInputCustody},{NativeColourField}]=await Promise.all([
  import('../src/components/nativeColourHelpers.ts'),import('../src/components/nativeColourController.ts'),import('../../../expressions-boundary/src/nativeDeviceEdits.ts'),import(new URL('packages/expressions-boundary/src/parameters.ts',root)),import(new URL('desktop/cradle/expressions-app/src/engine/colorPalettes.ts',root)),import(new URL('kernelDocumentBridge.ts',author)),import(new URL('store.ts',author)),import(new URL('hostEditor.ts',author)),import(new URL('nativeBridge.ts',author)),import(new URL('sharedSettings.ts',author)),import('../node_modules/react/index.js'),import('../node_modules/react-dom/server.node.js'),import('../src/components/nativeDeviceCustody.tsx'),import('../src/components/NativeColourField.tsx'),
 ])
@@ -30,7 +30,7 @@ test('invert palette swaps only the end stops, as the app does, and never mutate
  const out=helpers.invertPaletteStops(eight);assert.equal(out[0],eight[7]);assert.equal(out[7],eight[0]);assert.deepEqual(out.slice(1,7),eight.slice(1,7));assert.equal(out.length,8)
  assert.throws(()=>helpers.invertPaletteStops(['#111111']),/2–8/)
  assert.match(await featuresText(),/export function invertPalette\(s:Scene\)\{const p=s\.field\.palette;\[p\[0\],p\[p\.length-1\]\]=\[p\[p\.length-1\],p\[0\]\];\}/)
- assert.match(await appText(),/case 'native-palette-invert':changed\(\(\)=>invertPalette\(s\)\);break;/)
+ assert.match(await appText(),/case 'native-palette-invert':changed\(\(\)=>invertPalette\(s\)(?:,true,'[^']*')?\);break;/)
 })
 test('remove stop deletes one stop by position, never drops below two, and refuses bad positions',()=>{
  assert.deepEqual(helpers.removePaletteStop(['#111111','#222222','#333333'],1),['#111111','#333333'])
@@ -47,7 +47,7 @@ test('random palette is a uniform pick over the native catalogue, built only fro
  assert.throws(()=>helpers.randomPaletteId(()=>0.1,[]),/\[0, 1\)/)
  const change=helpers.randomPaletteChange(()=>0);assert.deepEqual(change,{kind:'colour-preset',palette_id:ids[0]});assert.deepEqual(devices.validateNativeColourChange(change),change)
  assert.deepEqual(devices.NATIVE_COLOUR_PALETTES.map(p=>p.id),ids)
- assert.match(await appText(),/case 'native-palette-random':changed\(\(\)=>\{applyPalette\(s,COLOR_PALETTES\[Math\.floor\(Math\.random\(\)\*COLOR_PALETTES\.length\)\]\.id\);\}\);break;/)
+ assert.match(await appText(),/case 'native-palette-random':changed\(\(\)=>\{applyPalette\(s,COLOR_PALETTES\[Math\.floor\(Math\.random\(\)\*COLOR_PALETTES\.length\)\]\.id\);\}(?:,true,'[^']*')?\);break;/)
  const pure=await readFile(new URL('../src/components/nativeColourHelpers.ts',import.meta.url),'utf8');assert.doesNotMatch(pure,/Math\.random/)
  const shell=await readFile(new URL('../src/components/NativeColourField.tsx',import.meta.url),'utf8');assert.equal(shell.match(/Math\.random/g)?.length,1);assert.match(shell,/onClick=\{\(\)=>discrete\.run\(\(\)=>\[randomPaletteChange\(Math\.random\)\]\)\}/)
 })
@@ -72,7 +72,7 @@ test('invert paper flips between the two fixed papers by luminance and names the
  assert.deepEqual(helpers.invertedPaper('#fafaf9'),{background:'#09090b',ink:'whiteOnBlack'})
  assert.deepEqual(helpers.invertedPaper('#ffffff'),{background:'#09090b',ink:'whiteOnBlack'})
  assert.deepEqual(helpers.invertedPaper('#000000'),{background:'#fafaf9',ink:'blackOnWhite'})
- assert.match(await appText(),/case 'native-paper-invert':changed\(\(\)=>\{s\.field\.background=isLightHex\(s\.field\.background\)\?'#09090b':'#fafaf9';s\.engine\.inkMode=isLightHex\(s\.field\.background\)\?'blackOnWhite':'whiteOnBlack';\}\);break;/)
+ assert.match(await appText(),/case 'native-paper-invert':changed\(\(\)=>\{s\.field\.background=isLightHex\(s\.field\.background\)\?'#09090b':'#fafaf9';s\.engine\.inkMode=isLightHex\(s\.field\.background\)\?'blackOnWhite':'whiteOnBlack';\}(?:,true,'[^']*')?\);break;/)
 })
 test('paper presets are the app themes with the ink their luminance selects, and refuse unknown ids',()=>{
  const presets=helpers.paperPresets()

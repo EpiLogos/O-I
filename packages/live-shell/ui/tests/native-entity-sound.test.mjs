@@ -14,7 +14,7 @@ assert.equal(localStorage.constructor.name,'Storage')
 const root=new URL('../../../../',import.meta.url),compiler=new URL('desktop/cradle/node_modules/typescript/lib/typescript.js',root).href
 register(`data:text/javascript,${encodeURIComponent(`import ts from ${JSON.stringify(compiler)};import {readFile} from 'node:fs/promises';export async function resolve(s,c,n){if(s==='@epilogos/expressions-boundary/parameters')return n(${JSON.stringify(new URL('packages/expressions-boundary/src/parameters.ts',root).href)},c);try{return await n(s,c)}catch(e){if(!s.startsWith('.'))throw e;if(s.endsWith('.js')){try{return await n(s.slice(0,-3)+'.ts',c)}catch{}}for(const x of ['.ts','.tsx']){try{return await n(s+x,c)}catch{}}throw e}}export async function load(u,c,n){if(u.endsWith('?raw'))return {format:'module',shortCircuit:true,source:'export default '+JSON.stringify(await readFile(new URL(u.split('?')[0]),'utf8'))};if(u.endsWith('.css'))return {format:'module',shortCircuit:true,source:'export {}'};if(!u.endsWith('.ts')&&!u.endsWith('.tsx'))return n(u,c);return {format:'module',shortCircuit:true,source:ts.transpileModule(await readFile(new URL(u),'utf8'),{fileName:new URL(u).pathname,compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext,jsx:ts.JsxEmit.ReactJSX}}).outputText}}`)}`,import.meta.url)
 const author=new URL('desktop/cradle/expressions-app/field-studies-journeys/src/',root)
-const receiptPath='/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/evidence/native/material-verification-c79dab7c-8de3-4b69-87cb-ee11cce28c9f/rich-artifact-inspection-3a33a7f6-94e9-445d-b2ec-7e7f25950935.json'
+const receiptPath=new URL('./fixtures/native-rich-glyph-rack-r8.receipt.json',import.meta.url)
 const [devices,sounds,appSound,{kernelDocumentToJourney},{DocumentStore},{createRetainedNativeEditor},{prepareCompositionEdit},kernelSource,archivedText]=await Promise.all([
  import(new URL('packages/expressions-boundary/src/nativeDeviceEdits.ts',root)),
  import(new URL('packages/expressions-boundary/src/nativeEntitySound.ts',root)),
@@ -128,7 +128,7 @@ test('frequency and follow coupling are pure, match the inspector, and change th
 })
 test('the retained host admits the kind through the device batch and commits one transaction, with readback from the reading',async()=>{
  const r=source(),id=r.entity.id;let commits=0,changes=0
- const owner=host(r,{commit:async()=>{commits++;return true},change:fn=>{changes++;fn()}})
+ const owner=host(r,{commit:async()=>{commits++;return true},change:(...edit)=>{changes++;edit[edit.length-1]()}})
  const reading=owner.read()
  await owner.apply({operation:'apply',basis:reading.basis,changes:[changeOf(r,sound0)]})
  assert.equal(commits,1);assert.equal(changes,1)

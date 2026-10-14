@@ -424,7 +424,10 @@ mod per_sample_tests {
             (48.0 * (161.199997 / 10.0)) as i64
         );
         assert_eq!(default_capacity_samples(48.0), 292_801);
-        assert_eq!(default_capacity_samples(44.1), (44.1 * 6100.0 + 1.0) as usize);
+        assert_eq!(
+            default_capacity_samples(44.1),
+            (44.1 * 6100.0 + 1.0) as usize
+        );
     }
 
     /// Voice topology and windows [D §3]: quarter-phase stagger; each
@@ -467,7 +470,10 @@ mod per_sample_tests {
         assert_eq!(spray_offset_ms(500.0, 200.0, 0.25), 550.0);
 
         // u₁ = u₂ = 0.5 kills the jitter term.
-        assert_eq!(drift_ms(50.0, 0.5, 0.5, 0.5, 50.0), (1.0 - 0.5) * 1000.0 / 50.0);
+        assert_eq!(
+            drift_ms(50.0, 0.5, 0.5, 0.5, 50.0),
+            (1.0 - 0.5) * 1000.0 / 50.0
+        );
         // ratio = 1 → zero drift at centred draws; jitter survives.
         assert_eq!(drift_ms(50.0, 0.5, 0.5, 1.0, 50.0), 0.0);
         assert_eq!(drift_ms(50.0, 1.0, 1.0, 1.0, 50.0), 50.0 * 1.0 / 50.0);

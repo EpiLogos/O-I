@@ -21,15 +21,36 @@ fn reads_the_real_template_set() {
     let s = SetSummary::of(&root).expect("LiveSet present");
     // the template's recorded facts (session-model evidence)
     assert_eq!(s.tempo_bpm, 131.0);
-    assert_eq!(s.tracks.iter().filter(|t| t.kind == TrackKind::Audio).count(), 6);
-    assert_eq!(s.tracks.iter().filter(|t| t.kind == TrackKind::Midi).count(), 12);
-    assert_eq!(s.tracks.iter().filter(|t| t.kind == TrackKind::Return).count(), 2);
+    assert_eq!(
+        s.tracks
+            .iter()
+            .filter(|t| t.kind == TrackKind::Audio)
+            .count(),
+        6
+    );
+    assert_eq!(
+        s.tracks
+            .iter()
+            .filter(|t| t.kind == TrackKind::Midi)
+            .count(),
+        12
+    );
+    assert_eq!(
+        s.tracks
+            .iter()
+            .filter(|t| t.kind == TrackKind::Return)
+            .count(),
+        2
+    );
     // the master carries the mastering chain that contaminated v1 renders
-    let master = s.tracks.iter().find(|t| t.kind == TrackKind::Master).unwrap();
+    let master = s
+        .tracks
+        .iter()
+        .find(|t| t.kind == TrackKind::Master)
+        .unwrap();
     assert!(master.devices.contains(&"Compressor2".to_string()));
     assert!(master.devices.contains(&"Saturator".to_string()));
 }
-
 
 #[test]
 fn gzip_round_trip_is_stable() {
@@ -90,8 +111,16 @@ fn document_enumerates_template_session_slots() {
     let reverb = d.tracks.iter().find(|t| t.name == "A-Reverb").unwrap();
     assert_eq!(reverb.kind, TrackKind::Return);
     assert!(reverb.session_slots.is_empty());
-    assert!(d.tracks.iter().filter(|t| t.kind == TrackKind::Midi).all(|t| t.session_slots.len() == 8));
-    assert!(d.tracks.iter().filter(|t| t.kind == TrackKind::Audio).all(|t| t.session_slots.len() == 8));
+    assert!(d
+        .tracks
+        .iter()
+        .filter(|t| t.kind == TrackKind::Midi)
+        .all(|t| t.session_slots.len() == 8));
+    assert!(d
+        .tracks
+        .iter()
+        .filter(|t| t.kind == TrackKind::Audio)
+        .all(|t| t.session_slots.len() == 8));
 }
 
 #[test]
@@ -100,16 +129,30 @@ fn document_enumerates_template_device_parameters() {
     let d = SetDocument::of(&root).expect("LiveSet present");
     // the master carries the mastering chain (contaminated v1 renders —
     // see the summary test above); deep view: Compressor2's parameter tree
-    let master = d.tracks.iter().find(|t| t.kind == TrackKind::Master).unwrap();
+    let master = d
+        .tracks
+        .iter()
+        .find(|t| t.kind == TrackKind::Master)
+        .unwrap();
     let names: Vec<&str> = master.devices.iter().map(|dev| dev.name.as_str()).collect();
     assert_eq!(
         names,
         vec![
-            "StereoGain", "StereoGain", "Chorus2", "Eq8", "Eq8", "AutoPan", "Saturator",
+            "StereoGain",
+            "StereoGain",
+            "Chorus2",
+            "Eq8",
+            "Eq8",
+            "AutoPan",
+            "Saturator",
             "Compressor2"
         ]
     );
-    let comp = master.devices.iter().find(|dev| dev.name == "Compressor2").unwrap();
+    let comp = master
+        .devices
+        .iter()
+        .find(|dev| dev.name == "Compressor2")
+        .unwrap();
     assert_eq!(comp.params.len(), 17);
     let threshold = comp.params.iter().find(|p| p.id == "Threshold").unwrap();
     assert_eq!(threshold.value, "0.08451672643");

@@ -34,7 +34,8 @@ test('the neutral door admits the five agent-shell families once and exposes dec
   const ids = door.allFamilyManifests().map(m => m.id)
   assert.deepEqual(ids, ['actuation', 'ai-kit', 'central', 'software-factory', 'workcell'])
   for (const manifest of door.allFamilyManifests()) {
-    assert.ok(manifest.browser.length >= 1, manifest.id)
+    // A family's browser presence is its declared entries (seam 4, browserEntries) or a bare id list.
+    assert.ok(manifest.browser.length + (manifest.browserEntries?.length ?? 0) >= 1, manifest.id)
     assert.ok(manifest.faces.length >= 1, manifest.id)
     assert.ok(manifest.params.grammar, manifest.id)
     assert.ok(manifest.projections.length >= 1, manifest.id)

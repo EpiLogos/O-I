@@ -19,7 +19,7 @@ const [{createNativeInputContinuity},drafts,recovery,{glyphInputMaterial},{kerne
  import(new URL('kernelDocumentBridge.ts',author)),import(new URL('store.ts',author)),import(new URL('hostEditor.ts',author)),import('../../../expressions-boundary/src/editor.ts'),import('../../../expressions-boundary/src/host.ts'),import('../../../expressions-boundary/src/editorHost.ts'),
  import(new URL('desktop/cradle/src/surface/engine.ts',root)),import(new URL('desktop/cradle/src/surface/types.ts',root)),import(new URL('desktop/cradle/src/document/frame.ts',root)),import(compiler),
 ]);
-const raw=JSON.parse(await readFile('/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/evidence/native/material-verification-c79dab7c-8de3-4b69-87cb-ee11cce28c9f/rich-artifact-inspection-3a33a7f6-94e9-445d-b2ec-7e7f25950935.json','utf8'));
+const raw=JSON.parse(await readFile(new URL('./fixtures/native-rich-glyph-rack-r8.receipt.json',import.meta.url),'utf8'));
 assert.deepEqual(raw.before.document,raw.after.document);
 const closed=()=>{throw Error('Native mutation/adoption remains closed in private-input source verification')};
 function source(){const view=kernelDocumentToJourney(raw.after.document),store=new DocumentStore(view.journey),scene=store.document.scenes[0],entity=scene.entities[0],selection={entity_ids:[entity.id],step_id:entity.sequence.steps[0].id};

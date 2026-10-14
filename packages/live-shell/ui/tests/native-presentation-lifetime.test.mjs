@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
+import {existsSync} from 'node:fs';
 import {register} from 'node:module';
 import {messageWire} from '../../../expressions-boundary/tests/message-wire.mjs';
 
@@ -38,6 +39,14 @@ function workspace() {
     attach:execute(variableCallback(files.workspace,'attachNativeAccess'),state),transport:execute(variableCallback(files.workspace,'attachTransport'),state),
     lifetime:execute(effect(files.workspace,'resources.retire()'),state)};
 }
+
+// Two suites replay archived readings of the owner's actual World (a qualified
+// presentation acknowledgement and a startup state/world read). That material is
+// the owner's and stays off this public repository, so these tests run where the
+// evidence is present (or named by env) and skip, saying so, everywhere else.
+const presentationAckPath=process.env.OI_NATIVE_PRESENTATION_ACK ?? '/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/evidence/native/glyph-ui-timing-ack-20261008.json';
+const readinessInputPath=process.env.OI_NATIVE_READINESS_INPUT ?? '/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/evidence/native/native-state-world-readiness-input-20261008.json';
+const ownerEvidence=path=>existsSync(path)?false:`owner World evidence absent on this machine (${path.split('/').pop()})`;
 
 test('live production resource guard refuses stale ready snapshots immediately on retirement',()=>{
   const w = workspace();w.attach(access);
@@ -84,8 +93,8 @@ test('actual WorldBrowser directory effect refuses retired resources before dire
   assert.equal(w.state.resources.hasAccess(),false);
 });
 
-test('real host delayed qualified state clears only the production panel host fault',async t=>{
-  const raw=JSON.parse(await readFile(process.env.OI_NATIVE_PRESENTATION_ACK ?? '/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/evidence/native/glyph-ui-timing-ack-20261008.json','utf8'));
+test('real host delayed qualified state clears only the production panel host fault',{skip:ownerEvidence(presentationAckPath)},async t=>{
+  const raw=JSON.parse(await readFile(presentationAckPath,'utf8'));
   const doc=raw.response.outcome.data.document,view=kernelDocumentToJourney(doc),scene=view.journey.scenes[0],binding=view.bindings[scene.id];
   // Presentation grammar over actual archived owner material. This tests the
   // real channel/status receiving path, not an invented owner acknowledgement.
@@ -196,7 +205,6 @@ test('actual presentation rejection retains diagnostics only for its current own
   }
 });
 
-const readinessInputPath=process.env.OI_NATIVE_READINESS_INPUT ?? '/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/evidence/native/native-state-world-readiness-input-20261008.json';
 async function readinessInput() {
   const input=JSON.parse(await readFile(readinessInputPath,'utf8'));
   assert.equal(input.schema,'oi.native-state-readiness-input/v1');
@@ -208,7 +216,7 @@ function mergeObserver() {
   return {snapshots,receipts,merge:execute(variableCallback(files.kernel,'merge'),{admitReceipts:value=>receipts.push(value),setSnapshot:value=>snapshots.push(value)})};
 }
 
-test('actual startup admission prefix accepts genuine archived state only for its current lifetime',async()=>{
+test('actual startup admission prefix accepts genuine archived state only for its current lifetime',{skip:ownerEvidence(readinessInputPath)},async()=>{
   const input=await readinessInput();
   const bootstrap=nodes(files.kernel,n=>ts.isCallExpression(n)&&n.expression.getText(files.kernel)==='useEffect'&&n.arguments[0]?.getText(files.kernel).includes('const initial = await kernelOp'))[0].arguments[0];
   const startup=nodes(bootstrap,n=>ts.isArrowFunction(n)&&n.body?.statements?.some(s=>s.getText(files.kernel).startsWith('const initial = await kernelOp')))[0];
@@ -229,7 +237,7 @@ test('actual startup admission prefix accepts genuine archived state only for it
   }
 });
 
-test('actual replay admits archived world only after receiving qualification and refuses retirement during qualification',async()=>{
+test('actual replay admits archived world only after receiving qualification and refuses retirement during qualification',{skip:ownerEvidence(readinessInputPath)},async()=>{
   const input=await readinessInput(),subscription=nodes(files.kernel,n=>ts.isCallExpression(n)&&n.expression.getText(files.kernel)==='subscribeTopic')[0];
   for(const retireWhileQualifying of [false,true]) {
     const a=admissionBindings(),m=mergeObserver(),pending=deferred(),qualification=deferred(),abort=new AbortController(),requests=[],order=[];

@@ -96,12 +96,20 @@ async fn config(State(state): State<AppState>) -> Json<serde_json::Value> {
         // This server is explicit development tooling. It asks the same public
         // native World route as the installed host; a missing reading stays named.
         let executable = std::env::var_os("OI_BIN").unwrap_or_else(|| "oi".into());
-        match native_world::current_world_bounded(std::path::Path::new(&executable), std::time::Duration::from_secs(30)).await {
+        match native_world::current_world_bounded(
+            std::path::Path::new(&executable),
+            std::time::Duration::from_secs(30),
+        )
+        .await
+        {
             Ok(reading) => {
                 match native_world::current_world_product_ids(&reading) {
                     Ok(products) => {
                         value["product_ids"] = serde_json::json!(products);
-                        if let (Some(ground), Some(workcell)) = (reading["personal_ground"].as_str(), reading["current_machine"]["workcell_ref"].as_str()) {
+                        if let (Some(ground), Some(workcell)) = (
+                            reading["personal_ground"].as_str(),
+                            reading["current_machine"]["workcell_ref"].as_str(),
+                        ) {
                             value["world_scope"] = serde_json::json!({"owner":"central", "world":"control:root", "personal_ground":ground, "workcell_ref":workcell});
                         }
                     }
@@ -546,7 +554,9 @@ mod tests {
         assert!(params
             .iter()
             .any(|p| p["id"] == "WaveShaper/Drive" && p["value"] == "0.8"));
-        assert!(params.iter().any(|p| p["id"] == "On" && p["value"] == "false"));
+        assert!(params
+            .iter()
+            .any(|p| p["id"] == "On" && p["value"] == "false"));
 
         // an out-of-range write is refused with the law named; the set stands
         let resp = post(edit("WaveShaper/Drive", serde_json::json!(99.0)))

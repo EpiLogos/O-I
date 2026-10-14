@@ -56,45 +56,88 @@ mod native_world_acceptance {
         assert_eq!(reading["schema"], "oi.current-world/v2");
         let products = current_world_product_ids(&reading)
             .expect("Actual native product positions must qualify without a guessed backing");
-        let positions = reading["positions"].as_array().expect("Native product positions");
-        let expected = positions.iter().filter(|position| position["present"] == true)
-            .map(|position| position["product_id"].as_str().expect("Native product identity").to_owned())
+        let positions = reading["positions"]
+            .as_array()
+            .expect("Native product positions");
+        let expected = positions
+            .iter()
+            .filter(|position| position["present"] == true)
+            .map(|position| {
+                position["product_id"]
+                    .as_str()
+                    .expect("Native product identity")
+                    .to_owned()
+            })
             .collect::<Vec<_>>();
-        assert_eq!(products, expected, "Projection preserves native presence and order");
+        assert_eq!(
+            products, expected,
+            "Projection preserves native presence and order"
+        );
 
         // Exercise refusal against the same actual owner reading, never a
         // substitute native World or a hardcoded product composition.
-        let first = positions.first().expect("The installed owner discloses its product positions");
+        let first = positions
+            .first()
+            .expect("The installed owner discloses its product positions");
         let mut duplicate = reading.clone();
-        duplicate["positions"].as_array_mut().unwrap().push(first.clone());
-        assert!(current_world_product_ids(&duplicate).unwrap_err().contains("duplicate product_id"));
+        duplicate["positions"]
+            .as_array_mut()
+            .unwrap()
+            .push(first.clone());
+        assert!(current_world_product_ids(&duplicate)
+            .unwrap_err()
+            .contains("duplicate product_id"));
         let mut malformed = reading.clone();
         malformed["positions"][0]["present"] = "true".into();
-        assert!(current_world_product_ids(&malformed).unwrap_err().contains(".present"));
+        assert!(current_world_product_ids(&malformed)
+            .unwrap_err()
+            .contains(".present"));
         let mut missing = reading.clone();
-        missing["positions"][0].as_object_mut().unwrap().remove("product_id");
-        assert!(current_world_product_ids(&missing).unwrap_err().contains(".product_id"));
+        missing["positions"][0]
+            .as_object_mut()
+            .unwrap()
+            .remove("product_id");
+        assert!(current_world_product_ids(&missing)
+            .unwrap_err()
+            .contains(".product_id"));
         let mut malformed_id = reading.clone();
         malformed_id["positions"][0]["product_id"] = "invalid identity".into();
-        assert!(current_world_product_ids(&malformed_id).unwrap_err().contains(".product_id"));
+        assert!(current_world_product_ids(&malformed_id)
+            .unwrap_err()
+            .contains(".product_id"));
         let mut missing_positions = reading.clone();
-        missing_positions.as_object_mut().unwrap().remove("positions");
-        assert!(current_world_product_ids(&missing_positions).unwrap_err().contains("positions"));
+        missing_positions
+            .as_object_mut()
+            .unwrap()
+            .remove("positions");
+        assert!(current_world_product_ids(&missing_positions)
+            .unwrap_err()
+            .contains("positions"));
         let mut absent = reading.clone();
         absent["positions"][0]["present"] = false.into();
-        let expected_absent = products.iter().filter(|id| Some(id.as_str()) != first["product_id"].as_str())
-            .cloned().collect::<Vec<_>>();
+        let expected_absent = products
+            .iter()
+            .filter(|id| Some(id.as_str()) != first["product_id"].as_str())
+            .cloned()
+            .collect::<Vec<_>>();
         assert_eq!(current_world_product_ids(&absent).unwrap(), expected_absent);
         // An absent duplicate still makes the owner's identity ambiguous.
-        duplicate["positions"].as_array_mut().unwrap().last_mut().unwrap()["present"] = false.into();
-        assert!(current_world_product_ids(&duplicate).unwrap_err().contains("duplicate product_id"));
+        duplicate["positions"]
+            .as_array_mut()
+            .unwrap()
+            .last_mut()
+            .unwrap()["present"] = false.into();
+        assert!(current_world_product_ids(&duplicate)
+            .unwrap_err()
+            .contains("duplicate product_id"));
     }
 
     #[cfg(unix)]
     #[tokio::test]
     #[ignore = "Requires the actual installed O:I executable and Unix process observation"]
     async fn current_world_timeout_stops_its_actual_native_process() {
-        let child = spawn_current_world(&installed_owner()).expect("Launch the actual native owner");
+        let child =
+            spawn_current_world(&installed_owner()).expect("Launch the actual native owner");
         let pid = child.id().expect("Observe the actual child identity");
         let error = wait_current_world(child, std::time::Duration::ZERO)
             .await
@@ -107,10 +150,16 @@ mod native_world_acceptance {
                 .output()
                 .expect("Observe the actual native process after timeout");
             let state_text = String::from_utf8_lossy(&state.stdout);
-            if !state.status.success() || state_text.trim().is_empty() || state_text.trim().starts_with('Z') {
+            if !state.status.success()
+                || state_text.trim().is_empty()
+                || state_text.trim().starts_with('Z')
+            {
                 break;
             }
-            assert!(std::time::Instant::now() < until, "Native CurrentWorld process {pid} remains running after its timeout");
+            assert!(
+                std::time::Instant::now() < until,
+                "Native CurrentWorld process {pid} remains running after its timeout"
+            );
             tokio::time::sleep(std::time::Duration::from_millis(20)).await;
         }
     }
