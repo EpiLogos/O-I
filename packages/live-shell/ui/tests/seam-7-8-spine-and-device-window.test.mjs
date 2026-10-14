@@ -308,11 +308,11 @@ test('the pop-out holds the device in the detached set, never as a centre tab, a
   const identity = identityFor(probeFamily(['device']))
   const binding = boundDevice(identity)
   const empty = {root: null, surfaces: {}, detached: undefined, focusedGroupId: null}
-  const placed = placeDeviceDetached(empty, binding, '')
+  const placed = placeDeviceDetached(empty, binding)
   assert.deepEqual(placed.surfaces[binding.id], binding)
   assert.deepEqual(placed.detached, [{surfaceId: binding.id, groupId: '', index: 0, pinned: false}])
   assert.equal(placed.root, null)
-  assert.equal(placeDeviceDetached(placed, binding, '').detached.length, 1)
+  assert.equal(placeDeviceDetached(placed, binding).detached.length, 1)
   const dropped = dropDeviceDetached(placed, binding.id)
   assert.equal(dropped.surfaces[binding.id], undefined)
   assert.deepEqual(dropped.detached, [])
