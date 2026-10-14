@@ -82,7 +82,7 @@
 #instrument-tools button:focus-visible,#instrument-tools select:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 #instrument-tools select{height:26px;max-width:120px;min-width:0;font:11px var(--sans);color:var(--ui-ink);background:transparent;border:1px solid var(--ui-line);border-radius:6px;padding:0 4px}
 #instrument-tools input[type=color]{appearance:none;width:22px;height:22px;padding:1px;border:1px solid var(--ui-line);border-radius:5px;background:transparent}
-#instrument-tools :is(.research-instrument-status,.research-selection-count,.timeline-tier,.timeline-filter-label,.timeline-frame-crumb){color:var(--ui-muted);font:10px/1.2 var(--sans);padding:0 4px;white-space:nowrap}
+#instrument-tools :is(.research-instrument-status,.research-selection-count,.timeline-tier,.timeline-filter-label,.timeline-frame-crumb,.research-evidence-absent){color:var(--ui-muted);font:10px/1.2 var(--sans);padding:0 4px;white-space:nowrap}
 #instrument-tools .timeline-filter[data-active=false]{opacity:.5}
 #instrument-tools .timeline-filter__swatch{width:8px;height:8px;border-radius:2px}
 #instrument-tools .street-view-toolbar__title{display:none}

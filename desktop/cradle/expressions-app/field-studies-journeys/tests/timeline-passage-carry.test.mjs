@@ -64,8 +64,12 @@ test('the Timeline call site hands the carried anchor to the inspector, and the 
   const source = await readFile(resolve(engine, 'src/researchInstruments.tsx'), 'utf8');
   const onOpenNode = source.split('\n').find(line => line.includes('onOpenNode={(ref,node,relationField)'));
   assert.ok(onOpenNode, 'the timeline onOpenNode call site exists');
-  assert.match(onOpenNode, /anchor:/, 'the call site passes an anchor');
-  assert.match(onOpenNode, /evidenceAnchorOf\(/, 'the anchor is read by the navigation identity rule, not re-derived');
-  assert.match(onOpenNode, /temporal_kind/, 'the anchor is read from the relation that carries the facet, not from the node');
+  assert.match(onOpenNode, /anchor:eventEvidence\(ref\)/, 'the call site passes the event\'s anchor through the one helper');
+  const helper = source.slice(source.indexOf('const eventEvidence='), source.indexOf('const evidenceControl='));
+  assert.ok(helper.length > 0, 'the one evidence helper exists');
+  assert.match(helper, /evidenceAnchorOf\(/, 'the anchor is read by the navigation identity rule, not re-derived');
+  assert.match(helper, /temporal_kind/, 'the anchor is read from the relation that carries the facet, not from the node');
+  assert.match(source, /const evidenceControl=\(eventRef:string\|null\)=>\{[\s\S]*?evidenceControlOf\(anchor\)/, 'the evidence control reads the same rule for its presence');
+  assert.match(source, /\{control\.present\}|!control\.present\)return <span className="research-evidence-absent"/, 'the control is absent unless a passage exists');
   assert.match(source, /inspectSubject:\(ref:string,context\?:\{node\?:unknown;relationField\?:unknown;anchor\?:unknown\}\)=>void;/);
 });

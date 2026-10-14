@@ -69,6 +69,18 @@ test('the disabled globe control carries its reason verbatim', ()=>{
  assert.equal(carry.reason,"No location is disclosed for this event's subject.");
 });
 
+test('a place-less event with its own validity carries the window only: no place is flown to, and the absence is named', ()=>{
+ const reading=api.provingReading();
+ const store=api.createDisclosureSessionStore();
+ const session=store.setSelection(api.groundSelection(reading,'timeline'));
+ const event=api.axisEventOf(api.timeAxisProjection(reading,session),AUTHORED);
+ const carry=api.showOnGlobeOf(reading,reading.subject.subject_ref,event);
+ assert.equal(carry.state,'window');
+ assert.equal(carry.place_ref,null);
+ assert.deepEqual(carry.window,{from:'2026-09-16T00:00:00+01:00',to:'2026-09-16T00:00:00+01:00'});
+ assert.equal(carry.reason,"No location is disclosed for this event's subject.");
+});
+
 test('the crossing the mount plans refuses by name once the session has moved, and never re-targets', ()=>{
  const reading=api.provingReading();
  const store=api.createDisclosureSessionStore();
