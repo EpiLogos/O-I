@@ -43,12 +43,22 @@ const sdkDefine = await import('../src/inhabitants/sdk/define.ts')
 const sdkValidate = await import('../src/inhabitants/sdk/validate.ts')
 const detached = await import('../src/native/detachedKinds.ts')
 const rack = await import('../src/inhabitants/inhabitantRack.tsx')
+const modeGrammar = await import('../src/shell/modeGrammar.ts')
+const panels = await import('../src/shell/panels.ts')
+const {ModeBrowser} = await import('../src/shell/ModeBrowser.tsx')
+const {StubWorkspaceProvider} = await import('../src/shell/workspaceContext.tsx')
+const {RightDock} = await import('../src/components/RightDock.tsx')
 
 const SIX = ['central', 'actuation', 'ai-kit', 'software-factory', 'workcell', 'quaternal-logic']
 const FAMILY = 'fixture-seventh'
 const PRODUCT = 'fixture-seventh-product'
 const CATEGORY = 'fixture-seventh-category'
 const PANEL = 'fixture-seventh.context'
+const WAITING = 'fixture-waiting'
+// The mockup's Technē categories, in drawn order: the composition's floor.
+const TECHNE_STATIC = modeGrammar.MODE_GRAMMAR.techne.browser.map(category => category.id)
+const UNAVAILABLE = {kind: 'unavailable', reason: 'the test carrier is down'}
+const PANEL_CTX = {set: null, loading: false, error: null, openSet() {}}
 const NO_APERTURE = {day: null, flow: null, conversation: null, instrument: null}
 const transport = {kind: 'unavailable', reason: 'the test carrier is down'}
 
@@ -84,6 +94,18 @@ const SEVENTH = {
     },
   ],
 }
+// The fixture's browser category: it names the Technē mode only, so it must compose after the mockup's Technē entries and
+// nowhere else. Its group is the mockup's "To hand", so it sits under that heading after Sources and Files.
+const SEVENTH_BROWSER = {
+  id: CATEGORY,
+  label: 'Fixture Shelf',
+  group: 'To hand',
+  mark: 'form',
+  hint: 'The fixture shelf — its owner has not landed a listing read.',
+  state: 'waiting',
+  modes: ['techne'],
+}
+
 function admitSevenPlusSix() {
   door.resetFamilyManifestsForTest()
   world.loadWorldShellFamilies()
@@ -95,6 +117,13 @@ function admitSevenPlusSix() {
     by: 'SDK test fixture',
     panelSlots: [{slot: 'right-dock', panel: PANEL}],
     note: 'Fixture panel slot — composes onto the admitted family.',
+  })
+  // The browser category composes through the door too: a declared entry with its modes, beside the shipped families.
+  manifests.declareFamilyExtension(FAMILY, {
+    id: `${FAMILY}:browser`,
+    by: 'SDK test fixture',
+    browserEntries: [SEVENTH_BROWSER],
+    note: 'Fixture browser category — composes into the Technē browser after the mockup\'s own entries.',
   })
   return {admitted, sixBefore}
 }
@@ -170,4 +199,105 @@ test('the gate refuses a seventh product that claims no authority or squats a re
   assert.throws(() => sdkDefine.admitFamily({...SEVENTH, id: 'fixture-no-authority', newProduct: {id: PRODUCT, authority: '   '}}), /commissioning authority/)
   assert.throws(() => sdkDefine.admitFamily({...SEVENTH, id: 'fixture-squat', product: 'central', newProduct: undefined}), /registered product|one product family per product/)
   assert.equal(door.familyManifest('fixture-no-authority'), undefined, 'a refused declaration never reaches the door')
+})
+
+// The browser and the panel slot compose on the running shell (WORLD-SHELL-DESIGN §10 item 4): the mockup's categories
+// stay as drawn, the family's category composes into its mode after them, and its panel slot reads through the registry.
+
+test('a family-declared browser category composes into its mode after the mockup\'s entries, and into no other mode', () => {
+  admitSevenPlusSix()
+  const declared = manifests.allInhabitantBrowserEntries()
+  const techne = modeGrammar.composeModeBrowser('techne', declared)
+  assert.deepEqual(techne.slice(0, TECHNE_STATIC.length), modeGrammar.MODE_GRAMMAR.techne.browser, 'the mockup\'s Technē categories stay first, exactly as drawn')
+  const own = techne[techne.length - 1]
+  assert.equal(techne.length, TECHNE_STATIC.length + 1, 'one family category is appended')
+  assert.equal(own.id, CATEGORY, 'the family\'s category follows the mockup\'s entries')
+  assert.equal(own.group, 'To hand', 'under its declared group')
+  assert.equal(own.family, FAMILY, 'owned by the declaring family')
+  assert.equal(own.state, 'waiting', 'declared waiting: its owner has not landed a read')
+  assert.deepEqual(modeGrammar.composeModeBrowser('base', declared), modeGrammar.MODE_GRAMMAR.base.browser, 'base is the mockup, unchanged')
+  assert.deepEqual(modeGrammar.composeModeBrowser('factory', declared), modeGrammar.MODE_GRAMMAR.factory.browser, 'factory is the mockup, unchanged')
+  assert.deepEqual(modeGrammar.composeModeBrowser('live', declared), [], 'live keeps its own browser')
+})
+
+test('a mockup category its owner family declares fills that entry in place — never a duplicate, never by another family', () => {
+  admitSevenPlusSix()
+  manifests.declareFamilyExtension('quaternal-logic', {
+    id: 'quaternal-logic:browser-fill',
+    by: 'SDK test fixture',
+    browserEntries: [{
+      id: 'techne-bodies', label: 'Bodies', group: 'World', mark: 'earth', kindMark: 'world',
+      hint: 'The bodies, as the quaternal family now declares them.', state: 'waiting', modes: ['techne'],
+    }],
+    note: 'Fixture fill of the owner\'s own mockup category.',
+  })
+  manifests.declareFamilyExtension(FAMILY, {
+    id: `${FAMILY}:browser-squat`,
+    by: 'SDK test fixture',
+    browserEntries: [{id: 'techne-places', label: 'Squat', group: 'World', mark: 'map', hint: 'A squatted category.', state: 'waiting', modes: ['techne']}],
+    note: 'A category claiming a mockup entry its family does not own.',
+  })
+  const techne = modeGrammar.composeModeBrowser('techne', manifests.allInhabitantBrowserEntries())
+  assert.equal(techne.filter(category => category.id === 'techne-bodies').length, 1, 'one Bodies entry, never a duplicate')
+  assert.deepEqual(techne.slice(0, TECHNE_STATIC.length).map(category => category.id), TECHNE_STATIC, 'the mockup\'s positions hold')
+  const bodies = techne.find(category => category.id === 'techne-bodies')
+  assert.equal(bodies.hint, 'The bodies, as the quaternal family now declares them.', 'the owner family\'s declaration fills the entry')
+  assert.equal(bodies.label, 'Bodies', 'its label stays as drawn')
+  const places = techne.find(category => category.id === 'techne-places')
+  assert.equal(places.label, 'Places', 'a squat by another family does not rename the mockup entry')
+  assert.equal(places.family, 'quaternal-logic', 'the mockup entry keeps its owner')
+  assert.equal(techne.filter(category => category.id === 'techne-places').length, 1, 'and is not duplicated')
+})
+
+test('the browser draws the family\'s category in the Technē browser after the mockup\'s, and not in Central', () => {
+  admitSevenPlusSix()
+  const render = mode => renderToStaticMarkup(createElement(StubWorkspaceProvider, {transport: UNAVAILABLE},
+    createElement(ModeBrowser, {mode, onSelectSubject: () => {}, selectedSubject: null})))
+  const techne = render('techne')
+  const at = needle => techne.indexOf(needle)
+  assert.ok(at('data-i="Fixture Shelf|') > 0, 'the family\'s category is drawn in the Technē browser')
+  assert.ok(at('data-i="Files|') < at('data-i="Fixture Shelf|'), 'after the mockup\'s To hand entries')
+  assert.ok(at('data-i="Fixture Shelf|') < at('data-i="Bodies|'), 'under the To hand group, ahead of the World group')
+  assert.ok(!render('base').includes('Fixture Shelf'), 'the Central browser never carries it')
+})
+
+test('the declared panel slot reads through the panel registry and renders in the right dock, named for its family', () => {
+  admitSevenPlusSix()
+  const slot = panels.getPanels('right-dock').find(panel => panel.id === PANEL)
+  assert.ok(slot, 'the declared slot reads through the registry\'s right-dock view')
+  assert.equal(slot.title, FAMILY, 'with the family\'s name')
+  assert.equal(panels.getPanels('center').some(panel => panel.id === PANEL), false, 'and only in the slot it declares')
+  const markup = renderToStaticMarkup(createElement(RightDock, {ctx: PANEL_CTX}))
+  assert.match(markup, /class="dock-panel-title">fixture-seventh</, 'the right dock draws the family\'s slot under its name')
+  assert.match(markup, /data-panel="fixture-seventh.context" data-admission="declared"/, 'an admitted family whose body is not registered is declared')
+})
+
+test('a waiting family\'s declared slot shows as waiting, and a panel the code registers under the declared id wins', () => {
+  door.resetFamilyManifestsForTest()
+  world.loadWorldShellFamilies()
+  sdkDefine.admitFamily({
+    id: WAITING,
+    owner: 'Fixture Waiting Owner (test only)',
+    browser: [],
+    paramsGrammar: `${WAITING}/parameter-address/v1`,
+    devices: [{id: 'dial', title: 'Fixture Dial', icon: 'form', liveSemantic: 'info', admission: 'waiting', note: 'Waits for an owner op that has not landed.'}],
+  })
+  manifests.declareFamilyExtension(WAITING, {
+    id: `${WAITING}:panel`,
+    by: 'SDK test fixture',
+    panelSlots: [{slot: 'right-dock', panel: `${WAITING}.context`}],
+  })
+  const markup = renderToStaticMarkup(createElement(RightDock, {ctx: PANEL_CTX}))
+  assert.match(markup, /data-family="fixture-waiting" data-panel="fixture-waiting.context" data-admission="waiting"/, 'no admitted face: the slot shows as waiting')
+
+  const codeBody = () => null
+  panels.registerPanel({id: `${WAITING}.context`, title: 'Code Body', slot: 'right-dock', component: codeBody})
+  try {
+    const found = panels.getPanels('right-dock').filter(panel => panel.id === `${WAITING}.context`)
+    assert.equal(found.length, 1, 'the declared id is never listed twice')
+    assert.equal(found[0].component, codeBody, 'the registered panel is the one that renders')
+    assert.equal(found[0].title, 'Code Body')
+  } finally {
+    panels.unregisterPanel(`${WAITING}.context`)
+  }
 })

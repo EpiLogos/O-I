@@ -1,5 +1,6 @@
-import type { ComponentType } from 'react'
+import { createElement, type ComponentType } from 'react'
 
+import { allInhabitantManifests, inhabitantManifest } from '../inhabitants/manifest'
 import type { SetSummary } from './useSet'
 
 /**
@@ -64,9 +65,53 @@ export function unregisterPanel(id: string): void {
   panels.delete(id)
 }
 
-/** Panels for a slot, ordered by `order` then title. */
+// Family-declared panel slots (manifest `panelSlots`, composed at the door) read through this registry. A declared slot
+// whose panel id the code has registered IS that registration: the declaration never duplicates it. The rest are the
+// family's own placeholders — their bodies are not registered yet, so they show as waiting (no admitted face) or declared
+// (an admitted face, no body). One body per family and panel, so the component identity is stable across renders.
+const familyBodies = new Map<string, ComponentType<PanelContext>>()
+
+function familyPanelBody(family: string, panel: string): ComponentType<PanelContext> {
+  const key = `${family}\u0000${panel}`
+  const known = familyBodies.get(key)
+  if (known) return known
+  const body = function FamilyPanelPlaceholder() {
+    const admitted = (inhabitantManifest(family)?.faces ?? []).some((face) => face.admission !== 'waiting')
+    const standing = admitted ? 'declared' : 'waiting'
+    return createElement(
+      'div',
+      { className: 'family-panel-placeholder', 'data-family': family, 'data-panel': panel, 'data-admission': standing },
+      admitted
+        ? `The ${family} family declares this panel. Its body is not registered yet.`
+        : `The ${family} family's panel waits: its owner has not landed a face for it.`,
+    )
+  }
+  familyBodies.set(key, body)
+  return body
+}
+
+function familyPanels(): PanelRegistration[] {
+  const seen = new Set<string>()
+  const composed: PanelRegistration[] = []
+  for (const manifest of allInhabitantManifests()) {
+    for (const entry of manifest.panelSlots ?? []) {
+      if (panels.has(entry.panel) || seen.has(entry.panel)) continue
+      seen.add(entry.panel)
+      composed.push({
+        id: entry.panel,
+        title: entry.title ?? manifest.id,
+        slot: entry.slot,
+        component: familyPanelBody(manifest.id, entry.panel),
+        note: `Declared by the ${manifest.id} family`,
+      })
+    }
+  }
+  return composed
+}
+
+/** Panels for a slot, ordered by `order` then title. Code-registered panels and the admitted families' declared slots. */
 export function getPanels(slot: PanelSlot): PanelRegistration[] {
-  return [...panels.values()]
+  return allPanels()
     .filter((p) => p.slot === slot)
     .sort(
       (a, b) =>
@@ -75,5 +120,5 @@ export function getPanels(slot: PanelSlot): PanelRegistration[] {
 }
 
 export function allPanels(): PanelRegistration[] {
-  return [...panels.values()]
+  return [...panels.values(), ...familyPanels()]
 }

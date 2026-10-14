@@ -24,6 +24,8 @@
 
 import type {FamilyFaceDeclaration, FamilyManifest, FamilyManifestId} from './familyManifest.ts'
 import {allFamilyManifests, familyManifest, onFamilyManifestReset} from './familyManifest.ts'
+import {SDK_MODES} from './sdk/modes.ts'
+import type {IconName, KindShapeName} from './sdk/icons.ts'
 import {validateFaceSemantic} from './sdk/semantics.ts'
 
 // ---------------------------------------------------------------------------
@@ -138,6 +140,32 @@ export interface InhabitantPanelSlot {
   readonly slot: 'center' | 'right-dock' | 'bottom' | 'browser-section'
   /** The registered panel id (namespaced, e.g. "native.context"). */
   readonly panel: string
+  /** The header title the slot shows. Absent = the family's id. */
+  readonly title?: string
+}
+
+/** A browser category a family declares (WORLD-SHELL-DESIGN §12, the mode plugin's browser door). The door's `browser`
+ * list names ids only; this entry carries the category's standing and the modes it belongs to. The mode's own mockup
+ * categories stay in `shell/modeGrammar.ts`: a declaration with the id of a mockup category its family owns fills that
+ * entry, and any other declaration composes after the mockup's entries in each mode it names. */
+export interface InhabitantBrowserEntry {
+  readonly id: string
+  readonly label: string
+  /** The column group heading the category sits under (e.g. "To hand", "World"). */
+  readonly group: string
+  readonly mark: IconName
+  readonly kindMark?: KindShapeName
+  /** What the category's rows are, or what it waits for. */
+  readonly hint: string
+  readonly state: 'cut' | 'waiting'
+  /** The surf modes this category belongs to. Absent = the modes the family's faces present in. */
+  readonly modes?: readonly string[]
+}
+
+/** A declared browser entry as the door reads it: the family that declares it and the modes it resolves to. */
+export interface DeclaredBrowserEntry extends InhabitantBrowserEntry {
+  readonly family: FamilyManifestId
+  readonly modes: readonly string[]
 }
 
 /** The detached-window kinds (desktop/cradle DetachedFrame / surface
@@ -159,6 +187,8 @@ export interface InhabitantManifest extends FamilyManifest {
   readonly faces: readonly InhabitantFaceDeclaration[]
   /** Panel-slot entries the family declares (absent = none). */
   readonly panelSlots?: readonly InhabitantPanelSlot[]
+  /** Browser categories the family declares, with their modes (absent = none). */
+  readonly browserEntries?: readonly InhabitantBrowserEntry[]
   /** Detached-window kinds the family's faces pop out through. */
   readonly detachedKinds?: readonly DetachedKind[]
   /** Suite capability refs this family homes (absent = none). A home is a
@@ -184,6 +214,7 @@ export interface FamilyExtension {
   readonly by: string
   readonly faces?: readonly InhabitantFaceDeclaration[]
   readonly panelSlots?: readonly InhabitantPanelSlot[]
+  readonly browserEntries?: readonly InhabitantBrowserEntry[]
   readonly detachedKinds?: readonly DetachedKind[]
   /** Capability refs this extension homes in the family (see InhabitantManifest). */
   readonly capabilities?: readonly string[]
@@ -260,6 +291,10 @@ export function inhabitantManifest(familyId: FamilyManifestId): InhabitantManife
     ...(base as InhabitantManifest).panelSlots ?? [],
     ...composed.extensions.flatMap(extension => extension.panelSlots ?? []),
   ]
+  const browserEntries = [
+    ...(base as InhabitantManifest).browserEntries ?? [],
+    ...composed.extensions.flatMap(extension => extension.browserEntries ?? []),
+  ]
   // Deduplicated: a base and an extension may each declare the device kind (the family declares it once, honestly).
   const detachedKinds = [...new Set([
     ...(base as InhabitantManifest).detachedKinds ?? [],
@@ -273,6 +308,7 @@ export function inhabitantManifest(familyId: FamilyManifestId): InhabitantManife
     ...base,
     faces,
     ...(panelSlots.length ? {panelSlots} : {}),
+    ...(browserEntries.length ? {browserEntries} : {}),
     ...(detachedKinds.length ? {detachedKinds} : {}),
     ...(capabilities.length ? {capabilities} : {}),
   }
@@ -283,6 +319,19 @@ export function allInhabitantManifests(): InhabitantManifest[] {
   return allFamilyManifests()
     .map(manifest => inhabitantManifest(manifest.id))
     .filter((manifest): manifest is InhabitantManifest => manifest !== undefined)
+}
+
+/** Every declared browser entry across the admitted families, door order then declaration order. A missing `modes` falls
+ * back to the modes the family's faces present in; an entry with no mode composes into no browser. */
+export function allInhabitantBrowserEntries(): DeclaredBrowserEntry[] {
+  return allInhabitantManifests().flatMap(manifest => {
+    const faceModes = [...new Set(manifest.faces.flatMap(face => face.modes ?? []))]
+    return (manifest.browserEntries ?? []).map((entry): DeclaredBrowserEntry => ({
+      ...entry,
+      family: manifest.id,
+      modes: entry.modes ?? faceModes,
+    }))
+  })
 }
 
 // ---------------------------------------------------------------------------
@@ -348,6 +397,22 @@ export function validateInhabitantManifest(manifest: InhabitantManifest): readon
   for (const entry of manifest.panelSlots ?? []) {
     if (!['center', 'right-dock', 'bottom', 'browser-section'].includes(entry.slot)) {
       faults.push(`${manifest.id}: panel "${entry.panel}" declares unknown slot "${String(entry.slot)}"`)
+    }
+  }
+
+  // Browser entries: each category named once, with its standing; a waiting one says what it waits for, and every
+  // category names at least one mode it composes into (a category in no mode is a declaration the shell never shows).
+  const browserIds = new Set<string>()
+  const faceModes = [...new Set(manifest.faces.flatMap(face => face.modes ?? []))]
+  for (const entry of manifest.browserEntries ?? []) {
+    if (browserIds.has(entry.id)) faults.push(`${manifest.id}: browser entry "${entry.id}" is declared twice`)
+    browserIds.add(entry.id)
+    if (entry.state !== 'cut' && entry.state !== 'waiting') faults.push(`${manifest.id}: browser entry "${entry.id}" has unknown state "${String(entry.state)}"`)
+    if (entry.state === 'waiting' && !entry.hint) faults.push(`${manifest.id}: browser entry "${entry.id}" waits without saying for what (hint)`)
+    const modes = entry.modes ?? faceModes
+    if (!modes.length) faults.push(`${manifest.id}: browser entry "${entry.id}" names no mode and no face presents in one`)
+    for (const mode of modes) {
+      if (!(SDK_MODES as readonly string[]).includes(mode)) faults.push(`${manifest.id}: browser entry "${entry.id}" names unknown mode "${mode}"`)
     }
   }
 
