@@ -22,6 +22,7 @@ import {connectTechneInstrumentRequests} from '../native/techneInstrumentOpen'
 import {NATIVE_OPEN_STUDIO, NATIVE_PRESENT_EXPRESSIONS, parseNativeOpenStudio} from '../native/openStudio'
 import {NATIVE_ENGINE_COMMAND, parseNativeEngineCommand, setNativeEngineMounted} from '../native/engineCommand'
 import {stageEngine} from '../native/stageCommands'
+import {answerHostedSummon, sameSummonBasis, summonBasis} from '../native/hostedSummons'
 import type {StudioSection} from '@epilogos/expressions-boundary'
 import type {HostedAppState, StageCommand, StageResult} from '@epilogos/expressions-boundary'
 import {NativeStageTools} from '../components/NativeStageTools'
@@ -185,6 +186,21 @@ export function ExpressionsPanel() {
       // than reuse a cached HTML page pointing at a previous build. Hidden
       // residents keep this same frame and lease; their reveal does not reload.
       const hostLoad = crypto.randomUUID()
+      // The hosted frame's summons (native/hostedSummons.ts). Each answer binds to the frame basis it arrived on and speaks only while that basis stands.
+      let summonToken = 0
+      const hostedBasis = () => summonBasis(target.querySelector('iframe'), mounted?.host ?? null, mounted ? mounted.host.getState() : null)
+      const answerSummon = (request: Readonly<Record<string, unknown>>) => {
+        const token = ++summonToken, at = hostedBasis()
+        void answerHostedSummon(request, {
+          transport,
+          current: () => live && token === summonToken && presented() && sameSummonBasis(hostedBasis(), at),
+          project: () => bookRef.current.current.project,
+          openFile: location => window.dispatchEvent(new CustomEvent('oi:epi-open-source', {detail: {location}})),
+          openKnowledge: input => window.dispatchEvent(new CustomEvent('oi:epi-open-knowledge', {detail: input})),
+          fault: reason => {if (live) setFault(reason)},
+          clear: () => {if (live) setFault(null)},
+        })
+      }
       mounted = mountExpressionsApplication(target, `${config.expressions_entry ?? '/__application/expressions/index.html'}?mode=${modeRef.current}&world=${worldLens.current}&host-load=${hostLoad}${initialRef ? `&expression=${encodeURIComponent(initialRef)}` : ''}`, {
         bindingId: 'world.expressions', owners, mode: modeRef.current, world: worldLens.current,
         recoveryBindings: continued?.works, initialRecoveryBinding: initial,
@@ -221,6 +237,8 @@ export function ExpressionsPanel() {
             const url = externalHttpsUrl((request as {url?: unknown}).url)
             if (url) void import('@tauri-apps/api/core').then(({invoke}) => invoke('plugin:opener|open_url', {url})).catch(() => {})
           }
+          // The frame's source and graph summons (native/hostedSummons.ts); every other kind is named there as not handled.
+          if (request.request === 'summon') answerSummon(request)
         },
         onStudioResult: result => {if (live && !result.ok) setFault(result.error)},
       })
