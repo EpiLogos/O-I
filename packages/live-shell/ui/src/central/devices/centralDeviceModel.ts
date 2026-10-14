@@ -1,13 +1,17 @@
-// The Central family's devices as devices of the runtime (FOUNDATION F5; manual §10.4): the Day die, the Flow, the Nara
-// conversation, and the Context-world, Agent identity, Ground hygiene and Impact readings, each a `DeviceInstance` the
-// three sizes draw. Pure: no React, no transport. The family declares the faces (inhabitants/worldShellFamilies.ts,
-// centralFamilyManifest.ts); this module reads them from the door, adds nothing the family did not declare, and turns the
-// owners' readings (passed in) into the instance's values.
+// The Central family's devices as devices of the runtime (FOUNDATION F5; manual §10.4): the Day die, the Nara conversation,
+// and the Context-world, Agent identity, Ground hygiene and Impact readings, each a `DeviceInstance` the three sizes draw;
+// and the Flow, which the family declares a `clip` (worldShellFamilies.ts) and so stands on the Clip side with its states as
+// a row (`centralDevice` builds its instance too, so one gate reads every declared face). Pure: no React, no transport. The
+// family declares the faces (inhabitants/worldShellFamilies.ts, centralFamilyManifest.ts); this module reads them from the
+// door, adds nothing the family did not declare, and turns the owners' readings (passed in) into the instance's values.
 //
-// Owners write, faces read (lock §0.4): every Central row here is a reading. The Day die and the Flow write through their
-// bodies (`kernel:receiving` mutate-field per field; `central.files.write` under a CAS revision) and the conversation through
-// the encounter surface; none declares a per-row owner write, so none is dressed as a control. A light is the owner's
-// reading and stays dark when the owner has not answered.
+// Owners write, faces read (lock §0.4), and a device keeps its Live semantic at every size (lock §0.1; manual §10.4 "all three
+// show the same live settings"). A `device-instrument` declares the owner op that generates (`invariant.generates`), so its
+// instance carries a write row on that path and a `submit`, and the compact, whole and full sizes all draw it:
+//   - the Day die: the open face, written through `kernel:receiving` (mutate-field on the Day document; centralDeviceWrites.ts);
+//   - the Nara conversation: the binding, resolved through `kernel:nara_dialogue` (centralDeviceWrites.ts).
+// Every other row is a reading. A light is the owner's reading and stays dark when the owner has not answered. A row whose
+// writer has no aperture refuses by name, and the draft is kept (the runtime's own law).
 import type {DeviceDeclaration, SdkParamRow} from '../../inhabitants/sdk/define'
 import type {IconName, KindShapeName} from '../../inhabitants/sdk/icons'
 import type {DeviceInstance, ParamValue} from '../../frame/devices/deviceRuntime'
@@ -19,9 +23,10 @@ import {DIE_POSITIONS, dieFaceLabel} from './dayDie'
 
 export const CENTRAL_FAMILY = 'central'
 
-/** The faces this module knows, in the order the chain draws them: the documents and the conversation (the work), then the
- * readings. A face the family declares that is not named here is still drawn, generically, after these. */
-export const CENTRAL_DEVICE_FACES = ['day-die', 'flow-document', 'nara-conversation', 'context-world', 'agent-identity', 'ground-hygiene', 'impact'] as const
+/** The device faces this module knows, in the order the chain draws them: the Day and the conversation (the work), then the
+ * readings. A device face the family declares that is not named here is still drawn, generically, after these. A face the
+ * family declares a `clip` (the Flow) is not a device: it stands on the Clip side (`clipFaces`). */
+export const CENTRAL_DEVICE_FACES = ['day-die', 'nara-conversation', 'context-world', 'agent-identity', 'ground-hygiene', 'impact'] as const
 
 export const centralDeviceId = (faceId: string): string => `${CENTRAL_FAMILY}:${faceId}`
 
@@ -57,8 +62,9 @@ type Answer = 'reading' | 'read' | 'refused'
 export interface CentralReads {
   /** The Day: the owner's open-day standing, and what the document reading holds (the open face, the CAS revision). */
   readonly day?: {readonly standing: DayDocumentStanding | null; readonly face: number | null; readonly revision: string | null}
-  /** The Flow the aperture selects, and the revision the owner holds. */
-  readonly flow?: {readonly path: string; readonly revision: string | null} | null
+  /** The Flow the aperture selects, the revision the owner holds, and the state the hosted form discloses (one of the clip's
+   * declared states; absent while nothing discloses one). */
+  readonly flow?: {readonly path: string; readonly revision: string | null; readonly state?: string | null} | null
   /** The conversation face: where the binding stands, and the binding's own fields once bound. */
   readonly nara?: {readonly state: NaraState; readonly conversation: string | null; readonly gap: string | null; readonly expression: string | null; readonly session: string | null}
   /** The accepted agents on Central's roster (central.agent-profile-roster/v1). */
@@ -68,6 +74,12 @@ export interface CentralReads {
   /** The subject the Impact reads: the browser's selected folder, note or day. */
   readonly impact?: {readonly kind: string; readonly path: string} | null
 }
+
+/** One owner write: the value the row carries in, the owner's own refusal thrown out (centralDeviceWrites.ts). */
+export type CentralWrite = (value: ParamValue) => Promise<void>
+/** The owners' write paths the devices hold, by face id and row key. A writable row whose writer is absent (its aperture does
+ * not stand) refuses by name. */
+export type CentralWriters = Readonly<Record<string, Readonly<Record<string, CentralWrite>>>>
 
 /** The standing the Nara face states for each binding state (inhabitants/ConversationNaraFace.tsx:138-147, unchanged). */
 export function naraStandingLabel(state: NaraState): string {
@@ -88,6 +100,15 @@ type RowExtra = Partial<Pick<SdkParamRow, 'compact' | 'disclosure' | 'values'>>
 const reading = (faceId: string, key: string, title: string, group: string, type: string, extra: RowExtra = {}): SdkParamRow =>
   ({family: CENTRAL_FAMILY, deviceInstance: faceId, key, title, type, group, ...extra}) as SdkParamRow
 
+/** A row the owner writes: the write path is the one the family declared its instrument generates through
+ * (`invariant.generates`, lock §5.3) — nothing is added that the family did not declare. A face that declares none gets a
+ * reading, the grammar's own rule for a row with no writer. */
+const writing = (face: InhabitantFaceDeclaration, key: string, title: string, group: string, type: string, extra: RowExtra = {}): SdkParamRow => {
+  const row = reading(face.id, key, title, group, type, extra)
+  const path = face.invariant?.generates
+  return path ? {...row, writePath: path} : row
+}
+
 /** The family's declared rows for one chain device (inhabitants/agentParamAddresses.ts), as readings of this chain. */
 function tableRows(deviceInstance: string, group: string, extra: Readonly<Record<string, RowExtra>>): SdkParamRow[] {
   return AGENT_SHELL_ADDRESS_TABLE
@@ -97,38 +118,51 @@ function tableRows(deviceInstance: string, group: string, extra: Readonly<Record
 
 const DAY_ABSENT = 'No Day is selected. Select one in the browser\'s ground.'
 
-function dayRows(standing: DayDocumentStanding | null | undefined): SdkParamRow[] {
+function dayRows(face: InhabitantFaceDeclaration, standing: DayDocumentStanding | null | undefined): SdkParamRow[] {
   const absent = standing?.state === 'uninitialised'
     ? `Day ${standing.civilDate} has no Day document yet; the owner's ${standing.op} admits it.`
     : standing?.state === 'refused' ? `The owner refused Day ${standing.civilDate}: ${standing.message}` : DAY_ABSENT
   return [
-    reading('day-die', 'day', 'Day', 'Die', 'string', {compact: true, disclosure: absent}),
-    reading('day-die', 'face', 'Open face', 'Die', 'enumerated', {
+    reading(face.id, 'day', 'Day', 'Die', 'string', {compact: true, disclosure: absent}),
+    writing(face, 'face', 'Open face', 'Die', 'enumerated', {
       compact: true, values: DIE_POSITIONS.map(position => dieFaceLabel(position.n)),
-      disclosure: 'The die turns inside its own form; the host declares no turn channel, so the face is a reading.',
+      disclosure: absent,
     }),
-    reading('day-die', 'revision', 'Revision', 'Source', 'string', {compact: true, disclosure: 'The owner\'s CAS revision of the Day document.'}),
-    reading('day-die', 'source', 'Source', 'Source', 'string', {disclosure: 'The Day document\'s native source ref.'}),
+    reading(face.id, 'revision', 'Revision', 'Source', 'string', {compact: true, disclosure: 'The owner\'s CAS revision of the Day document.'}),
+    reading(face.id, 'source', 'Source', 'Source', 'string', {disclosure: 'The Day document\'s native source ref.'}),
   ]
 }
 
-function naraRows(reads: CentralReads['nara']): SdkParamRow[] {
+function naraRows(face: InhabitantFaceDeclaration, reads: CentralReads['nara']): SdkParamRow[] {
   return [
-    reading('nara-conversation', 'standing', 'Standing', 'Binding', 'enumerated', {compact: true, values: (['bound', 'resolving', 'unbound', 'no-identity', 'no-expression', 'refused'] as const).map(naraStandingLabel)}),
-    reading('nara-conversation', 'conversation', 'Conversation', 'Binding', 'string', {compact: true, disclosure: 'No conversation is selected.'}),
-    reading('nara-conversation', 'expression', 'Expression', 'Binding', 'string', {disclosure: reads?.gap ?? 'No expression is bound.'}),
-    reading('nara-conversation', 'session', 'Session', 'Binding', 'string', {disclosure: 'AIKit holds the session once the binding resolves.'}),
+    reading(face.id, 'standing', 'Standing', 'Binding', 'enumerated', {compact: true, values: (['bound', 'resolving', 'unbound', 'no-identity', 'no-expression', 'refused'] as const).map(naraStandingLabel)}),
+    reading(face.id, 'conversation', 'Conversation', 'Binding', 'string', {compact: true, disclosure: 'No conversation is selected.'}),
+    writing(face, 'bound', 'Bound', 'Binding', 'boolean', {compact: true, disclosure: reads?.gap ?? 'Binding resolves the dialogue through AIKit (op nara_dialogue); the owner holds the session, and nothing here releases it.'}),
+    reading(face.id, 'expression', 'Expression', 'Binding', 'string', {disclosure: reads?.gap ?? 'No expression is bound.'}),
+    reading(face.id, 'session', 'Session', 'Binding', 'string', {disclosure: 'AIKit holds the session once the binding resolves.'}),
   ]
 }
 
-function rowsFor(faceId: string, reads: CentralReads): SdkParamRow[] {
+/** The Flow clip's rows: the material and its revision, and the clip's states as a row (lock §5.3: a clip binds material at a
+ * revision with a state). The row names the states the family declared and reads the one the hosted form discloses. */
+function flowRows(face: InhabitantFaceDeclaration): SdkParamRow[] {
+  const states = face.invariant?.states
+  return [
+    reading(face.id, 'document', 'Document', 'Flow', 'string', {compact: true, disclosure: 'No flow document is selected.'}),
+    reading(face.id, 'revision', 'Revision', 'Flow', 'string', {compact: true, disclosure: 'The owner\'s CAS revision (central.files.write).'}),
+    reading(face.id, 'state', 'State', 'Flow', 'enumerated', {
+      compact: true, ...(states ? {values: [...states]} : {}),
+      disclosure: 'Saved: the owner holds this revision and the hosted form holds nothing it has not. Edited since save: the form holds edits the owner has not. Draft: a Flow not yet written has no owner revision, and no route here makes one.',
+    }),
+  ]
+}
+
+function rowsFor(face: InhabitantFaceDeclaration, reads: CentralReads): SdkParamRow[] {
+  const faceId = face.id
   switch (faceId) {
-    case 'day-die': return dayRows(reads.day?.standing)
-    case 'flow-document': return [
-      reading(faceId, 'document', 'Document', 'Flow', 'string', {compact: true, disclosure: 'No flow document is selected.'}),
-      reading(faceId, 'revision', 'Revision', 'Flow', 'string', {compact: true, disclosure: 'The owner\'s CAS revision (central.files.write).'}),
-    ]
-    case 'nara-conversation': return naraRows(reads.nara)
+    case 'day-die': return dayRows(face, reads.day?.standing)
+    case 'flow-document': return flowRows(face)
+    case 'nara-conversation': return naraRows(face, reads.nara)
     case 'context-world': return tableRows('world', 'Reach', {
       reads: {compact: true, disclosure: 'The scope an agent reads is its session\'s context; this chain holds no session, so there is no reading.'},
       writes: {compact: true, disclosure: 'The scope an agent writes is its session\'s context; this chain holds no session, so there is no reading.'},
@@ -162,7 +196,11 @@ function valuesFor(faceId: string, reads: CentralReads): {values: Record<string,
       return {values, enabledKey: 'ready'}
     }
     case 'flow-document': {
-      if (reads.flow) { values.document = reads.flow.path; if (reads.flow.revision) values.revision = casShort(reads.flow.revision) }
+      if (reads.flow) {
+        values.document = reads.flow.path
+        if (reads.flow.revision) values.revision = casShort(reads.flow.revision)
+        if (reads.flow.state) values.state = reads.flow.state
+      }
       return {values}
     }
     case 'nara-conversation': {
@@ -199,10 +237,27 @@ function valuesFor(faceId: string, reads: CentralReads): {values: Record<string,
   }
 }
 
-/** One Central face as a device of the runtime, over the owners' readings. */
-export function centralDevice(face: InhabitantFaceDeclaration, reads: CentralReads): DeviceInstance {
+/** The write door of a device: each changed row goes to its own owner path and nowhere else. Present exactly where the
+ * device has a row with a write path (the runtime reads a device with no `submit` as all readings). */
+function submitOf(faceId: string, rows: readonly SdkParamRow[], writers: CentralWriters): DeviceInstance['submit'] | undefined {
+  if (!rows.some(row => row.writePath)) return undefined
+  return async changes => {
+    for (const change of changes) {
+      const row = rows.find(candidate => candidate.key === change.key)
+      if (!row?.writePath) throw new Error(`${change.key}: no owner write is declared for this row`)
+      const write = writers[faceId]?.[change.key]
+      if (!write) throw new Error(`${row.title}: the owner path ${row.writePath} has no aperture in this chain`)
+      await write(change.value)
+    }
+  }
+}
+
+/** One Central face as a device of the runtime, over the owners' readings and the owners' write paths it holds. */
+export function centralDevice(face: InhabitantFaceDeclaration, reads: CentralReads, writers: CentralWriters = {}): DeviceInstance {
   const {values, enabledKey} = valuesFor(face.id, reads)
-  return {id: centralDeviceId(face.id), family: CENTRAL_FAMILY, face: centralDeclaration(face), rows: rowsFor(face.id, reads), values, ...(enabledKey ? {enabledKey} : {})}
+  const rows = rowsFor(face, reads)
+  const submit = submitOf(face.id, rows, writers)
+  return {id: centralDeviceId(face.id), family: CENTRAL_FAMILY, face: centralDeclaration(face), rows, values, ...(enabledKey ? {enabledKey} : {}), ...(submit ? {submit} : {})}
 }
 
 /** The family's declared faces in chain order: the known ones first, then any other the family declares. */
@@ -210,6 +265,16 @@ export function orderedFaces(faces: readonly InhabitantFaceDeclaration[]): Inhab
   const known = CENTRAL_DEVICE_FACES.flatMap(id => faces.filter(face => face.id === id))
   return [...known, ...faces.filter(face => !(CENTRAL_DEVICE_FACES as readonly string[]).includes(face.id))]
 }
+
+/** A face the family declares a `clip` is the Clip side's, not a device's (lock §0.1: an element that does not keep a
+ * semantic's invariant may not claim it; §2.2: the Flow is a document, the Device chain is the effects on it). */
+export const isClipFace = (face: Pick<InhabitantFaceDeclaration, 'liveSemantic'>): boolean => face.liveSemantic === 'clip'
+
+/** The faces that stand on the Device chain: every declared face but the clips. */
+export const chainFaces = (faces: readonly InhabitantFaceDeclaration[]): InhabitantFaceDeclaration[] => orderedFaces(faces).filter(face => !isClipFace(face))
+
+/** The faces that stand on the Clip side: the family's clips (the Flow). */
+export const clipFaces = (faces: readonly InhabitantFaceDeclaration[]): InhabitantFaceDeclaration[] => faces.filter(isClipFace)
 
 // ---------------------------------------------------------------------------
 // pictures
