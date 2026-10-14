@@ -2412,6 +2412,65 @@ for line in sys.stdin: time.sleep(60)
         assert!(error.contains("cannot start"), "{error}");
         fs::remove_dir_all(dir).unwrap();
     }
+
+    /// A candidate whose payload carries QL binds the field pair through the
+    /// host's override and never asks the suite; with no pair bound, the pair
+    /// comes from the suite's own reading (`oi where quaternal-logic --json`).
+    #[cfg(unix)]
+    #[test]
+    fn native_executables_prefer_the_qualified_payload_over_the_installed_suite() {
+        use std::os::unix::fs::PermissionsExt;
+        let dir =
+            std::env::temp_dir().join(format!("native-payload-ql-test-{}", std::process::id()));
+        fs::create_dir_all(dir.join("bin")).unwrap();
+        let suite = dir.join("oi");
+        let asked = dir.join("suite-was-asked");
+        let (host, worker) = (
+            dir.join("bin/ql-field-host"),
+            dir.join("bin/ql-field-worker"),
+        );
+        fs::write(
+            &suite,
+            format!("#!/bin/sh\ntouch '{}'\nexit 9\n", asked.display()),
+        )
+        .unwrap();
+        fs::set_permissions(&suite, fs::Permissions::from_mode(0o700)).unwrap();
+        {
+            let _env = EnvGuard::set(&[
+                ("OI_BIN", Some(suite.as_os_str())),
+                ("OI_QL_FIELD_HOST_BIN", Some(host.as_os_str())),
+                ("OI_QL_FIELD_WORKER_BIN", Some(worker.as_os_str())),
+            ]);
+            assert_eq!(
+                native_executables().unwrap(),
+                (host.clone(), worker.clone())
+            );
+            assert!(
+                !asked.exists(),
+                "a payload-bound QL asked the installed suite"
+            );
+        }
+        let reading = json!({"schema":"oi.product-location/v1","product":"quaternal-logic",
+            "executable":dir.join("bin/ql").display().to_string(),"sha256":"q",
+            "companions":{
+                "ql-field-host":{"executable":host.display().to_string(),"present":true,"sha256":"a"},
+                "ql-field-worker":{"executable":worker.display().to_string(),"present":true,"sha256":"b"}}});
+        fs::write(
+            &suite,
+            format!("#!/bin/sh\ncat <<'JSON'\n{reading}\nJSON\n"),
+        )
+        .unwrap();
+        {
+            let _env = EnvGuard::set(&[
+                ("OI_BIN", Some(suite.as_os_str())),
+                ("OI_QL_FIELD_HOST_BIN", None),
+                ("OI_QL_FIELD_WORKER_BIN", None),
+            ]);
+            assert_eq!(native_executables().unwrap(), (host, worker));
+        }
+        fs::remove_dir_all(dir).unwrap();
+    }
+
     fn valid() -> Value {
         json!({"texture":[256,256],"units_per_metre":400,"sky":"none"})
     }

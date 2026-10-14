@@ -158,6 +158,30 @@ class PayloadQualification(unittest.TestCase):
                 payload.qualify_owner_export(binding, item)
         self.assertEqual(payload.digest(original), before)
 
+    def test_wrong_digest_of_a_real_ql_companion_is_refused_by_name(self):
+        # The managed QL receipt's own bytes, with one companion's digest wrong:
+        # qualification names the companion, not a generic product failure.
+        receipts = payload.read_json(Path('/Users/admin/Library/Application Support/OI/receipts/updates/active.json'))
+        ql = receipts['products']['quaternal-logic']
+        main = Path(ql['managed'])
+        companions = ql['companions']
+        def native(name, sha):
+            return {'path': str(main.parent / name), 'sha256': sha, 'kind': 'native'}
+        binding = {
+            'id': 'quaternal-logic',
+            'source_revision': ql['revision'],
+            'descriptor': str(Path(ql['source_path']) / '.oi/product.json'),
+            'executables': [
+                native('ql-field-host', '0' * 64),
+                native('ql', ql['sha256']),
+                native('ql-field-worker', companions['ql-field-worker']),
+                native('ql-focused-host', companions['ql-focused-host']),
+                {'path': str(main.parent / 'ql-sky'), 'sha256': companions['ql-sky'], 'kind': 'shell-script', 'interpreter': '/bin/sh'},
+            ],
+        }
+        with self.assertRaisesRegex(ValueError, r'Product binary digest mismatch: .*ql-field-host'):
+            payload.qualify_product(binding)
+
     def test_real_native_code_digest_survives_resource_sealing_and_seal_detects_tamper(self):
         import shutil
         import subprocess
