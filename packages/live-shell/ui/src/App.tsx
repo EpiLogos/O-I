@@ -40,6 +40,7 @@ import {ModeBrowser} from './shell/ModeBrowser'
 import {ModeCentreFrame} from './shell/ModeCentre'
 import type {CentralSubjectSelection} from './inhabitants/CentralSubjectDetail'
 import {NATIVE_PRESENT_EXPRESSIONS} from './native/openStudio'
+import {PLACED_RESIDENCE_STYLE, useFramePlacement} from './projections/expressionsPaneHost'
 import {sameEditorBasis,type NativeEditorBasis,type NativeEditorController} from '@epilogos/expressions-boundary/editor'
 import './NativeCompositionResidence.css'
 import './live/liveCentre.css'
@@ -409,6 +410,9 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   // The Timeline pane's reading (T-FACTORY-TIMELINE-PANE): the props the World cut's residence reads, published through the host door
   // (projections/timelinePaneHost.ts). The pane body renders them; nothing here is copied into a second store.
   usePublishTimelineReading({set: state.set, document: deep.document, selection, select: choose, colors, setColor, world: worldView, journey: {openExpression: workspace.requestExpression}})
+  // The Factory pane holding the one Expressions frame, if any (T-EXPRESSIONS-PANE-LEASE): the centre residence is then placed, not hidden.
+  const framePlacement = useFramePlacement()
+  const expressionsPlaced = agentShell && framePlacement !== null
   const frameBody = (<>
     {agentShell ? <AgentShellTransportBridge
       title={workspace.reading?.document?.name ?? 'Agent sessions'}
@@ -440,14 +444,14 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
         instrument pane, in every mode but Live (owner ruling, 13 Oct 2026).
         A World cut lens reached from a mode without the cut enters Technē's
         ground, as the mode transport does. */}
-      {instrumentLensBar && <TechneLensBar presentation={factoryFocus ? factoryFocus.presentation : presented ?? 'session'} atlasOpen={centerPanel === 'projection.earth' || factoryFocus?.pane === 'projection.earth'} factory={isFactoryMode(frameMode)} hosted={focusedPane === 'world.expressions' ? {lens: hostedLens} : null} onLens={lens => {
+      {instrumentLensBar && <TechneLensBar presentation={factoryFocus ? factoryFocus.presentation : presented ?? 'session'} atlasOpen={centerPanel === 'projection.earth' || factoryFocus?.pane === 'projection.earth'} factory={isFactoryMode(frameMode)} expressionsFocused={factoryFocus?.pane === 'projection.expressions'} hosted={focusedPane === 'world.expressions' ? {lens: hostedLens} : null} onLens={lens => {
         // The hosted pane's lens: a press drives the hosted application's lens through its retained-instrument receiver.
         if (focusedPane === 'world.expressions') {const hosted = hostedLensOfBarId(lens.id); if (hosted) driveHostedLens(hosted); return}
         if (lens.state !== 'cut') return
         presentSettings(false)
         // In Factory the lens opens its instrument pane inside the Workbench tree beside the agent tab, never by leaving the centre.
         if (agentShell) {
-          // Only the admitted panes open here (the Earth atlas, the Timeline pane); a disabled lens (Canvas, Palace) opens nothing.
+          // Only the admitted panes open here (the Earth atlas, the Timeline pane, the Expressions pane); a disabled lens (Canvas, Palace) opens nothing.
           // Timeline and Journey open the one Timeline pane, and the lens's presentation is that pane's own presentation.
           const paneKind = factoryLensPane(lens)
           if (paneKind) {
@@ -480,7 +484,7 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
       <div className="mode-centre-residence" hidden={!centreFrameUp} data-mode-centre-residence={frameMode}>
         {(frameMode === 'base' || frameMode === 'techne') && <ModeCentreFrame mode={frameMode} presentation={presented ?? 'session'} world={worldView} />}
       </div>
-      {panels.map(panel => { const Panel = panel.component; return <div className={`inhabitant${panel.id === 'world.expressions' ? ' native-stage-residence' : ''}${frameMode === 'live' && panel.id === 'world.expressions' ? ' live-centre-torus' : ''}`} hidden={panel.id === 'world.settings' ? !settingsPresented : settingsPresented || workspace.mode === 'audio' && panel.id !== 'world.knowledge' && panel.id !== 'world.expressions' || (centerPanel !== panel.id && !(nativeComposition && panel.id === 'world.expressions'))} key={panel.id}><Panel {...ctx} /></div> })}
+      {panels.map(panel => { const Panel = panel.component; const placed = expressionsPlaced && panel.id === 'world.expressions'; return <div className={`inhabitant${panel.id === 'world.expressions' ? ' native-stage-residence' : ''}${frameMode === 'live' && panel.id === 'world.expressions' ? ' live-centre-torus' : ''}`} style={placed ? PLACED_RESIDENCE_STYLE : undefined} hidden={placed ? false : panel.id === 'world.settings' ? !settingsPresented : settingsPresented || workspace.mode === 'audio' && panel.id !== 'world.knowledge' && panel.id !== 'world.expressions' || (centerPanel !== panel.id && !(nativeComposition && panel.id === 'world.expressions'))} key={panel.id}><Panel {...ctx} /></div> })}
     </div></main>
     {/* Rev 4's dock per mode: the mode context dock (tiles above, launcher
       below, the wedge that dies with the toggle) carries the non-agency
