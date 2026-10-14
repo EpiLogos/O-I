@@ -2518,10 +2518,7 @@
           "method": "setItem",
           "key": "`${draftPrefix}${id}`",
           "basis": [
-            "KEY = \"oi-cradle.workspaces.v1\"",
-            "key = options.storageKey ?? KEY",
-            "raw = localStorage.getItem(KEY)",
-            "record = preserve(localStorage.getItem(KEY) ? KEY : (legacyKey ?? KEY), String(error))"
+            "raw = localStorage.getItem(KEY)"
           ]
         },
         {
