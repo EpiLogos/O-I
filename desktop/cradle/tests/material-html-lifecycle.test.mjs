@@ -365,3 +365,41 @@ test('lifecycle carries the request and event as pure functions with no storage 
   assert.equal(MATERIAL_VIEW_OPEN_EVENT, 'oi:material-view-open');
   assert.doesNotMatch(lifecycleSource, /localStorage\.setItem/);
 });
+
+// ---------------------------------------------------------------------------
+// A per-open request lives only for its own open: it waits MATERIAL_VIEW_OPEN_WINDOW_MS for its surface to mount, then lapses.
+
+const {dropMaterialViewOpen, peekMaterialViewOpen: peekLapsed, MATERIAL_VIEW_OPEN_WINDOW_MS} = await import('../src/material/lifecycle.ts');
+
+test('a per-open request waits for a late mount, then lapses: a later ordinary open of the same binding never inherits it', async (t) => {
+  const env = browser();
+  t.mock.timers.enable({apis: ['setTimeout']});
+  try {
+    requestMaterialViewOpen('late-1', 'source');
+    t.mock.timers.tick(MATERIAL_VIEW_OPEN_WINDOW_MS - 100);
+    const late = mountSurface(env, 'late-1');
+    assert.equal(late.view, 'source', 'a new tab that mounts late within the window still opens in Source');
+    requestMaterialViewOpen('lapsed-1', 'source');
+    assert.equal(peekLapsed('lapsed-1'), 'source', 'it waits for its surface');
+    t.mock.timers.tick(MATERIAL_VIEW_OPEN_WINDOW_MS + 1);
+    assert.equal(peekLapsed('lapsed-1'), undefined, 'it lapses once the window has passed');
+    const surface = mountSurface(env, 'lapsed-1');
+    assert.equal(surface.view, 'rendered', 'a later ordinary open opens the remembered view, not Source');
+    assert.deepEqual(env.writes, []);
+  } finally { t.mock.timers.reset(); env.restore(); }
+});
+
+test('a request taken by its mount is applied once, and a dropped request is gone', async () => {
+  const env = browser();
+  try {
+    requestMaterialViewOpen('taken-1', 'source');
+    const surface = mountSurface(env, 'taken-1');
+    assert.equal(surface.view, 'source');
+    const later = mountSurface(env, 'taken-1');
+    assert.equal(later.view, 'rendered', 'the taken request is not replayed to a later mount');
+    requestMaterialViewOpen('dropped-1', 'source');
+    dropMaterialViewOpen('dropped-1');
+    assert.equal(peekLapsed('dropped-1'), undefined, 'a request whose passage reveal was dropped is gone at once');
+    assert.equal(takeMaterialViewOpen('dropped-1'), undefined);
+  } finally { env.restore(); }
+});

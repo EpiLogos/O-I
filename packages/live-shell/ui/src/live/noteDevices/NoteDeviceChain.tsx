@@ -7,6 +7,7 @@ import {useLiveModeInForce} from '../../native/liveModeCatalogue'
 import {addNoteDevice, moveNoteDevice, removeNoteDevice, setNoteDevicePower, setScaleTie, useNoteDeviceChain} from './noteDeviceHold'
 import {NOTE_DEVICE_LABEL, NOTE_DEVICES_WAITING, TIE_RULES, TIE_RULE_LABEL, scalePlan, type NoteDevice, type TieRule} from './noteDevices'
 import {MidiMapTarget} from '../midiMap/midiMapControls'
+import {setMapRefusal} from '../midiMap/midiMapHold'
 import './noteDevices.css'
 
 /** The connected chain: the session hold, read with the set's mode in force. */
@@ -72,10 +73,14 @@ function NoteDeviceTile({device, index, count, mode}: {device: NoteDevice; index
       </div>
       <div className="device-parameters">
         {device.kind === 'scale' && (
-          <MidiMapTarget id={`note-device:${device.id}:tie`}>
+          <MidiMapTarget id={`note-device:${device.id}:tie`} writer="session">
             <label className="device-parameter note-device-parameter">
               <span className="device-parameter-name">Tie: equal distance up or down</span>
-              <select aria-label={`${name} tie rule`} value={device.params.tie} onChange={event => setScaleTie(device.id, event.target.value as TieRule)}>
+              {/* The face's own change is an accepted write of the tie: any refusal the map named on it is stale. */}
+              <select aria-label={`${name} tie rule`} value={device.params.tie} onChange={event => {
+                setScaleTie(device.id, event.target.value as TieRule)
+                setMapRefusal(`note-device:${device.id}:tie`, null)
+              }}>
                 {TIE_RULES.map(tie => <option key={tie} value={tie}>{TIE_RULE_LABEL[tie]}</option>)}
               </select>
             </label>

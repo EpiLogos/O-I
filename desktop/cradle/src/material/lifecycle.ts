@@ -198,26 +198,52 @@ export function encodeMaterialViewPrefs(prefs: MaterialViewPrefs): string {
 // written only by the person's own toggle or zoom in MaterialSurface.
 // A request is keyed by binding id, applied once (take consumes it), and is
 // both queued (for a surface not yet mounted) and announced (for one mounted).
+// A request lives only for its own open: it is dropped one task after it is
+// made, unless its binding's surface has taken it by then, so a later ordinary
+// open of the same binding never inherits it.
 
 export const MATERIAL_VIEW_OPEN_EVENT = "oi:material-view-open";
-const pendingMaterialViewOpens = new Map<string, MaterialView>();
+interface PendingMaterialViewOpen {view: MaterialView; timer: ReturnType<typeof setTimeout> | null}
+const pendingMaterialViewOpens = new Map<string, PendingMaterialViewOpen>();
 
-/** Ask a binding's material surface to show this view for the current open. */
+function clearPendingMaterialViewOpen(bindingId: string): void {
+  const request = pendingMaterialViewOpens.get(bindingId);
+  if (request === undefined) return;
+  if (request.timer !== null) clearTimeout(request.timer);
+  pendingMaterialViewOpens.delete(bindingId);
+}
+
+/** How long a per-open view request waits for its surface to mount: long enough for a new tab to mount and render, short enough
+ * that a later, ordinary open of the same binding never inherits it. */
+export const MATERIAL_VIEW_OPEN_WINDOW_MS = 4000;
+
+/** Ask a binding's material surface to show this view for the current open. The request waits MATERIAL_VIEW_OPEN_WINDOW_MS for
+ * the surface to mount, then lapses. */
 export function requestMaterialViewOpen(bindingId: string, view: MaterialView): void {
-  pendingMaterialViewOpens.set(bindingId, view);
+  clearPendingMaterialViewOpen(bindingId);
+  const request: PendingMaterialViewOpen = {view, timer: null};
+  pendingMaterialViewOpens.set(bindingId, request);
+  request.timer = setTimeout(() => {
+    if (pendingMaterialViewOpens.get(bindingId) === request) pendingMaterialViewOpens.delete(bindingId);
+  }, MATERIAL_VIEW_OPEN_WINDOW_MS);
   if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent(MATERIAL_VIEW_OPEN_EVENT, {detail: {bindingId, view}}));
 }
 
 /** Read a queued request without consuming it (safe in a state initializer, which StrictMode runs twice). */
 export function peekMaterialViewOpen(bindingId: string): MaterialView | undefined {
-  return pendingMaterialViewOpens.get(bindingId);
+  return pendingMaterialViewOpens.get(bindingId)?.view;
 }
 
 /** Consume a queued request, once. */
 export function takeMaterialViewOpen(bindingId: string): MaterialView | undefined {
-  const view = pendingMaterialViewOpens.get(bindingId);
-  pendingMaterialViewOpens.delete(bindingId);
+  const view = pendingMaterialViewOpens.get(bindingId)?.view;
+  clearPendingMaterialViewOpen(bindingId);
   return view;
+}
+
+/** Drop a binding's queued request: its passage reveal was dropped, so the request has no open left to serve. */
+export function dropMaterialViewOpen(bindingId: string): void {
+  clearPendingMaterialViewOpen(bindingId);
 }
 
 /** Tolerant decode: never throws, never guesses. An unusable record (corrupt

@@ -95,6 +95,20 @@ export function commitLiveStage(command: StageCommand): Promise<StageResult> {
   // A synchronous refusal (no mounted frame, or a concealed one) settles as a named result, never a throw into the control.
   return new Promise<StageResult>(resolve => resolve(commander!(command)))
     .catch((cause: unknown) => ({ok: false as const, error: cause instanceof Error ? cause.message : String(cause)}))
+    .then(result => {
+      if (result.ok) for (const listener of [...acceptedWriteListeners]) listener(command)
+      return result
+    })
+}
+
+type AcceptedWriteListener = (command: StageCommand) => void
+const acceptedWriteListeners = new Set<AcceptedWriteListener>()
+
+/** Subscribe to the stage commands the owner accepted through the one channel (commitLiveStage). A refused command is not announced: a
+ * listener learns only of a write the owner has taken. Returns the unsubscribe. */
+export function subscribeAcceptedLiveWrites(listener: AcceptedWriteListener): () => void {
+  acceptedWriteListeners.add(listener)
+  return () => { acceptedWriteListeners.delete(listener) }
 }
 
 /** Send one instrument edit to the owner through the frame. Settles with the owner's answer; a refusal carries the owner's reason. */

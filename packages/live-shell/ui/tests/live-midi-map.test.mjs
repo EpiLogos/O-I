@@ -503,15 +503,15 @@ test('a rebound parameter is sent afresh: forgetting it clears its last value', 
 // ── 6 — the key route and the faces ───────────────────────────────────────────────
 
 test('the computer keyboard routes by the map mode: Escape leaves, Delete removes, keys bind in key mode, bound keys step outside it, and the A–J row is never a map', () => {
-  assert.equal(controls.mapKeyRoute({key: 'Escape', editable: false, modifier: false, repeat: false}, 'midi'), 'leave')
-  assert.equal(controls.mapKeyRoute({key: 'Escape', editable: false, modifier: false, repeat: false}, 'off'), 'step', 'Escape outside a map mode goes to the router, which has no binding for it (named keys are never mapped)')
-  assert.equal(controls.mapKeyRoute({key: 'Delete', editable: false, modifier: false, repeat: false}, 'key'), 'remove')
-  assert.equal(controls.mapKeyRoute({key: 'p', editable: false, modifier: false, repeat: false}, 'key'), 'press')
-  assert.equal(controls.mapKeyRoute({key: 'p', editable: false, modifier: false, repeat: false}, 'off'), 'step')
-  assert.equal(controls.mapKeyRoute({key: 'p', editable: false, modifier: false, repeat: false}, 'midi'), 'ignore', 'a MIDI map takes no key')
-  assert.equal(controls.mapKeyRoute({key: 'p', editable: true, modifier: false, repeat: false}, 'key'), 'ignore', 'typing in a field never maps')
-  assert.equal(controls.mapKeyRoute({key: 'p', editable: false, modifier: true, repeat: false}, 'off'), 'ignore', 'a modifier keeps its own meaning')
-  assert.equal(controls.mapKeyRoute({key: 'p', editable: false, modifier: false, repeat: true}, 'off'), 'ignore', 'a held key is one press')
+  assert.equal(controls.mapKeyRoute({key: 'Escape', editable: false, modifier: false, repeat: false, live: true}, 'midi'), 'leave')
+  assert.equal(controls.mapKeyRoute({key: 'Escape', editable: false, modifier: false, repeat: false, live: true}, 'off'), 'step', 'Escape outside a map mode goes to the router, which has no binding for it (named keys are never mapped)')
+  assert.equal(controls.mapKeyRoute({key: 'Delete', editable: false, modifier: false, repeat: false, live: true}, 'key'), 'remove')
+  assert.equal(controls.mapKeyRoute({key: 'p', editable: false, modifier: false, repeat: false, live: true}, 'key'), 'press')
+  assert.equal(controls.mapKeyRoute({key: 'p', editable: false, modifier: false, repeat: false, live: true}, 'off'), 'step')
+  assert.equal(controls.mapKeyRoute({key: 'p', editable: false, modifier: false, repeat: false, live: true}, 'midi'), 'ignore', 'a MIDI map takes no key')
+  assert.equal(controls.mapKeyRoute({key: 'p', editable: true, modifier: false, repeat: false, live: true}, 'key'), 'ignore', 'typing in a field never maps')
+  assert.equal(controls.mapKeyRoute({key: 'p', editable: false, modifier: true, repeat: false, live: true}, 'off'), 'ignore', 'a modifier keeps its own meaning')
+  assert.equal(controls.mapKeyRoute({key: 'p', editable: false, modifier: false, repeat: true, live: true}, 'off'), 'ignore', 'a held key is one press')
 })
 
 test('the transport\'s Key and MIDI slots are real toggles with the grammar\'s meanings, and the map line says the mappings are held for the session', () => {
@@ -582,4 +582,173 @@ test('with the map off a faced parameter is unframed in its open state, and the 
 test('the grammar still names the two slots the toggles take', () => {
   assert.equal(grammar.slotMeaning('live', 'key-map').label, 'Key map')
   assert.equal(grammar.slotMeaning('live', 'midi-map').label, 'MIDI map')
+})
+
+// ── 7 — the review's third wave: refusals, the session tie, the owner's reading, the focus gate, the idle host ──────
+
+const reachRouter = (read, frame, deps = {}) => router.createMapRouter({
+  read, targets: targets.readMapTargets, apply: model.applyMapValue, refusal: hold.setMapRefusal, schedule: frame.schedule, ...deps,
+})
+const liveRead = () => ({mode: hold.midiMapState().mode, bindings: hold.midiMapState().bindings})
+
+test('a refusal clears when its mapping is removed, replaced or moved away, and it is named only while its parameter is mapped', async () => {
+  session({write: async command => command.edit.kind === 'lens' ? {ok: false, error: 'The owner refuses lens 9 in this state'} : {ok: true}})
+  const frame = clock()
+  const live = reachRouter(liveRead, frame)
+  hold.setMapMode('midi')
+  hold.clickMapTarget('lens', targets.readMapTargets())
+  hold.bindArmed(CC_SOURCE(74), targets.readMapTargets())
+  hold.leaveMapMode()
+  live.control([CC(74, 100)]); frame.frame(); await tick(); await tick()
+  assert.equal(hold.midiMapState().refusals.lens, 'The owner refuses lens 9 in this state', 'the refused mapped write is named')
+  hold.setMapMode('midi')
+  hold.clickMapTarget('lens', targets.readMapTargets())
+  assert.equal(hold.midiMapState().refusals.lens, undefined, 'removing the mapping clears its refusal')
+  hold.leaveMapMode()
+  hold.setMapMode('midi')
+  hold.clickMapTarget('lens', targets.readMapTargets())
+  hold.bindArmed(CC_SOURCE(74), targets.readMapTargets())
+  hold.leaveMapMode()
+  live.control([CC(74, 100)]); frame.frame(); await tick(); await tick()
+  assert.equal(hold.midiMapState().refusals.lens !== undefined, true)
+  hold.setMapMode('midi')
+  hold.clickMapTarget('lens', targets.readMapTargets())
+  hold.bindArmed(CC_SOURCE(75), targets.readMapTargets())
+  assert.equal(hold.midiMapState().refusals.lens, undefined, 'replacing the mapping clears its refusal')
+  hold.leaveMapMode()
+  teardown()
+})
+
+test('a refusal clears when a source moves away from its parameter, and an unmapped parameter names no refusal', async () => {
+  session()
+  hold.setMapMode('midi')
+  hold.clickMapTarget('lens', targets.readMapTargets())
+  hold.bindArmed(CC_SOURCE(74), targets.readMapTargets())
+  hold.setMapRefusal('lens', 'The owner refuses lens 9 in this state')
+  hold.clickMapTarget('level', targets.readMapTargets())
+  hold.bindArmed(CC_SOURCE(74), targets.readMapTargets())
+  assert.equal(hold.midiMapState().refusals.lens, undefined, 'the source left lens, so lens is unmapped and its refusal is gone')
+  teardown()
+})
+
+test('a refused write to a parameter unmapped while in flight names no refusal when it settles', async () => {
+  let settle
+  session({write: () => new Promise(resolve => { settle = resolve })})
+  const frame = clock()
+  const live = reachRouter(liveRead, frame)
+  hold.setMapMode('midi')
+  hold.clickMapTarget('lens', targets.readMapTargets())
+  hold.bindArmed(CC_SOURCE(74), targets.readMapTargets())
+  hold.leaveMapMode()
+  live.control([CC(74, 100)]); frame.frame(); await tick()
+  hold.setMapMode('midi')
+  hold.clickMapTarget('lens', targets.readMapTargets())
+  hold.leaveMapMode()
+  settle({ok: false, error: 'late refusal'}); await tick(); await tick()
+  assert.equal(hold.midiMapState().refusals.lens, undefined, 'the refusal is named only while the parameter is mapped')
+  teardown()
+})
+
+test('an accepted write to the parameter by its own face clears its refusal', async () => {
+  session({write: async command => command.edit.kind === 'lens' ? {ok: false, error: 'The owner refuses lens 9 in this state'} : {ok: true}})
+  const frame = clock()
+  const live = reachRouter(liveRead, frame)
+  hold.setMapRefusal('lens', 'The owner refuses lens 9 in this state')
+  assert.ok(hold.midiMapState().refusals.lens)
+  const sentAfter = session()
+  assert.deepEqual(await torus.commitLiveInstrumentEdit({kind: 'lens', lens12: 4}), {ok: true}, 'the owner accepts the face\'s own edit')
+  assert.equal(hold.midiMapState().refusals.lens, undefined, 'the accepted face write is the newest word on the parameter')
+  assert.deepEqual(sentAfter, [{command: 'instrument', edit: {kind: 'lens', lens12: 4}}])
+  teardown()
+})
+
+test('the Scale tie is a session-held value: its target says so, its map line names it, and its write is never an owner write', async () => {
+  const sent = session()
+  const device = chain.addNoteDevice('scale')
+  const tieId = `note-device:${device.id}:tie`
+  const tie = targets.mapTargets(torus.liveTorusState(), chain.noteDeviceChain()).find(t => t.id === tieId)
+  assert.equal(tie.writer, 'session')
+  assert.equal(targets.mapTargets(torus.liveTorusState(), []).find(t => t.id === 'lens').writer, 'owner')
+  hold.setMapMode('midi')
+  hold.clickMapTarget(tieId, targets.readMapTargets())
+  assert.match(hold.midiMapState().notice, /Held for this session: not an owner write/)
+  assert.deepEqual(await model.applyMapValue(tie, 'down'), {ok: true}, 'the session took the value, and says only that')
+  assert.equal(chain.noteDeviceChain()[0].params.tie, 'down')
+  assert.deepEqual(sent, [], 'the owner received nothing for the tie')
+  chain.removeNoteDevice(device.id)
+  const gone = await model.applyMapValue(tie, 'up')
+  assert.equal(gone.ok, false)
+  assert.match(gone.error, /no longer in the note-device chain/, 'a tie whose device is gone is refused by name, never reported as taken')
+  teardown()
+})
+
+test('a control already at the owner\'s value sends nothing, even after a restart: unchanged is judged against the owner\'s reading', async () => {
+  const frame = clock()
+  const sent = []
+  const map = router.createMapRouter({
+    read: () => ({mode: 'off', bindings: [{target: 'lens', source: CC_SOURCE(74)}]}),
+    targets: () => targets.mapTargets(okState(), []),
+    apply: async (target, value) => { sent.push(value); return {ok: true} },
+    refusal: () => {}, schedule: frame.schedule,
+  })
+  // The owner's lens is 3 (L1′). Control value 40 selects option 3 (40·12/128 = 3.75), so the owner already states it.
+  map.control([CC(74, 40)]); frame.frame(); await tick()
+  assert.deepEqual(sent, [], 'the first control after a forget, at the owner\'s value, writes nothing')
+  map.control([CC(74, 100)]); frame.frame(); await tick()
+  assert.deepEqual(sent, ['9'])
+  map.control([CC(74, 40)]); frame.frame(); await tick()
+  assert.deepEqual(sent, ['9'], 'a return to the owner\'s value is not sent as stale: the last value is the owner\'s own')
+  map.control([CC(74, 100)]); frame.frame(); await tick()
+  assert.deepEqual(sent, ['9', '9'], 'a change back to a value the owner no longer states is sent again')
+})
+
+test('a key step right after an accepted write steps from the newest value the owner accepted, and from the reading once the reading moves', async () => {
+  let state = okState()
+  const sent = []
+  const map = router.createMapRouter({
+    read: () => ({mode: 'off', bindings: [{target: 'cadence', source: {kind: 'key', key: 'c'}}]}),
+    targets: () => targets.mapTargets(state, []),
+    apply: async (target, value) => { sent.push(value); return {ok: true} },
+    refusal: () => {}, schedule: () => {},
+  })
+  // The owner's cadence reads 1 tick/s. The accepted 12 is not yet in the reading: the next press steps from 12, not from the stale 1.
+  map.key('c'); await tick(); await tick()
+  assert.deepEqual(sent, ['12'])
+  map.key('c'); await tick(); await tick()
+  assert.deepEqual(sent, ['12', 'hold'], 'from the accepted 12, which wraps to hold')
+  // The owner's reading moves to 12 (a recall, or its publish): the reading is the newer word, and the next press steps from it.
+  state = okState(determinants(), parameters({cadence: {rate: 12, playing: true, source: '12 ticks/s'}}))
+  map.reading()
+  map.key('c'); await tick(); await tick()
+  assert.deepEqual(sent, ['12', 'hold', 'hold'], 'from the reading 12, which wraps to hold')
+})
+
+test('a mapped key fires only while the Live surface has focus, the same gate the Jankó keyboard uses', () => {
+  const at = (closest) => ({closest: selector => (closest(selector) ? {} : null)})
+  const janko = at(selector => selector.includes('.janko'))
+  const body = at(() => false)
+  assert.equal(controls.liveSurfaceFocused(janko), true, 'the Jankó keyboard region is the Live surface')
+  assert.equal(controls.liveSurfaceFocused(at(selector => selector.includes('.transport-system'))), true, 'the transport is the Live surface')
+  assert.equal(controls.liveSurfaceFocused(body), false, 'the page itself takes no mapping')
+  assert.equal(controls.liveSurfaceFocused(null), false)
+  assert.equal(controls.mapKeyRoute({key: 'p', editable: false, modifier: false, repeat: false, live: false}, 'key'), 'ignore', 'a key map press outside the Live surface is not a mapping')
+  assert.equal(controls.mapKeyRoute({key: 'p', editable: false, modifier: false, repeat: false, live: false}, 'off'), 'ignore', 'a bound key outside the Live surface does not step')
+  assert.equal(controls.mapKeyRoute({key: 'Delete', editable: false, modifier: false, repeat: false, live: false}, 'key'), 'ignore', 'Delete outside the Live surface removes nothing')
+  assert.equal(controls.mapKeyRoute({key: 'Escape', editable: false, modifier: false, repeat: false, live: false}, 'key'), 'leave', 'leaving a map mode is always allowed')
+})
+
+test('control changes with the map off and no control binding are dropped before any per-frame work', () => {
+  let reads = 0, scheduled = 0, targetReads = 0
+  const map = router.createMapRouter({
+    read: () => { reads += 1; return {mode: 'off', bindings: [{target: 'sound', source: {kind: 'key', key: 'm'}}]} },
+    targets: () => { targetReads += 1; return [] },
+    apply: async () => ({ok: true}), refusal: () => {}, schedule: () => { scheduled += 1 },
+  })
+  map.control([CC(74, 10), CC(75, 20)])
+  assert.equal(targetReads, 0, 'no parameter is read')
+  assert.equal(scheduled, 0, 'no frame is scheduled')
+  assert.equal(model.controlsReach('off', []), false)
+  assert.equal(model.controlsReach('off', [{target: 'lens', source: CC_SOURCE(74)}]), true, 'a control binding reaches')
+  assert.equal(model.controlsReach('midi', []), true, 'MIDI map mode arms and binds from any control')
+  assert.equal(model.controlsReach('key', [{target: 'lens', source: CC_SOURCE(74)}]), false, 'key map mode takes no control')
 })

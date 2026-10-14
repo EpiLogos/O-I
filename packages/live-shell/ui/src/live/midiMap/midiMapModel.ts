@@ -28,6 +28,7 @@ export interface ChoiceTarget {
   readonly id: string
   readonly label: string
   readonly group: string
+  readonly writer: MapWriter
   readonly options: readonly {readonly value: string; readonly label: string}[]
   /** The owner's current option value, or null while the owner states none. */
   readonly current: string | null
@@ -39,6 +40,7 @@ export interface ToggleTarget {
   readonly id: string
   readonly label: string
   readonly group: string
+  readonly writer: MapWriter
   readonly current: boolean | null
   readonly apply: (value: boolean) => Promise<StageResult>
 }
@@ -48,10 +50,15 @@ export interface RangeTarget {
   readonly id: string
   readonly label: string
   readonly group: string
+  readonly writer: MapWriter
   readonly range: {readonly min: number; readonly max: number; readonly step: number}
   readonly current: number | null
   readonly apply: (value: number) => Promise<StageResult>
 }
+
+/** Whose write a parameter's value goes to: the owner's (an instrument edit the owner accepts), or the session's own hold (a note device the
+ * session keeps, which the owner does not write). A session value is never presented as owner-accepted. */
+export type MapWriter = 'owner' | 'session'
 
 /** A mappable parameter as the owner reads it now. */
 export type MapTarget = ChoiceTarget | ToggleTarget | RangeTarget
@@ -127,6 +134,12 @@ export function planBinding(bindings: readonly MapBinding[], targetId: string, s
 /** The bindings without a parameter's binding. */
 export function removeBinding(bindings: readonly MapBinding[], targetId: string): MapBinding[] {
   return bindings.filter(binding => binding.target !== targetId)
+}
+
+/** Whether a control change can reach anything: the map is in MIDI mode (it arms and binds), or the map is off and a binding listens for a
+ * control. Otherwise the host's control changes are dropped before any per-frame work. */
+export function controlsReach(mode: MapMode, bindings: readonly MapBinding[]): boolean {
+  return mode === 'midi' || (mode === 'off' && bindings.some(binding => binding.source.kind === 'cc'))
 }
 
 /** The bindings a control change reaches: the same port, channel and controller. */
