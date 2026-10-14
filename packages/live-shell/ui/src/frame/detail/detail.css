@@ -1,4 +1,4 @@
-/* The one detail host and its clip box (FOUNDATION F4). */
+/* The one detail host, its head line, its clip box and the Clip view (FOUNDATION F4). */
 /* The host is the frame's detail row: its residence is display:contents (components/NativeWorldDetail.css), so the host itself
    takes the frame grid's chain area; the agent frame names that area `ch` (agent/agentShell.css). */
 .detail-host { grid-area: chain; position: relative; height: 100%; display: flex; flex-direction: column; min-height: 0; min-width: 0 }
@@ -11,6 +11,39 @@
 .clip-box-field { color: var(--text-faint) }
 .clip-box-field[data-clip-status="stalled"] { color: var(--stall) }
 .clip-box-field[data-clip-status="running"] { color: var(--accent) }
+/* Over a Clip view the clip box's facts are rows of its props column (ClipBox.tsx clipBoxRows), so the strip stands down. */
+.detail-body--clip:has(.clipv) > .clip-box { display: none }
+
+/* The row's head line (world-shell-mockup.html:329-330 .dth): the thing in bold, then what this side shows of it. It sits on the
+   row's frame, which carries on below it as the chain or the clip well. */
+.detail-head { flex: none; height: 22px; line-height: 20px; padding: 0 8px; background: var(--bg-1); border: 1px solid var(--line); border-bottom: none; font-size: 10.5px; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0 }
+.detail-head b { color: var(--text); font-weight: 500 }
+
+/* The Clip side's well: the row's frame (the mockup draws the Clip view inside #chain, :331), the Clip view inset by its padding. */
+.detail-body--clip { background: var(--bg-1); border: 1px solid var(--line) }
+
+/* The Clip view (frame/detail/ClipView.tsx; world-shell-mockup.html:147-152 .clipv .cprops .cph .ccol, :375-378 .kvs .hl2): a props
+   column — the clip's name on its colour, then key and value rows — beside named columns, each a heading over its rows. */
+.clipv { flex: 1; min-height: 0; min-width: 0; margin: 8px; display: flex; background: var(--bg-1); border: 1px solid var(--line); overflow: hidden }
+.clipv .cprops { width: 230px; flex: none; border-right: 1px solid var(--line); overflow: auto }
+.clipv .cph { height: 22px; line-height: 22px; padding: 0 7px; background: var(--cph, var(--bg-3)); color: var(--cph-ink, var(--text)); font-weight: 500; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.clipv .kvs { display: grid; grid-template-columns: 78px minmax(0, 1fr); padding: 1px 10px; font-size: 10.5px; color: var(--text-dim) }
+.clipv .kvs > span:last-child { font-family: var(--mono); color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.clipv .kvs > span[data-undisclosed] { color: var(--text-faint) }
+.clipv .cprops-note { margin: 6px 10px; font-size: 10px; line-height: 1.45; color: var(--text-faint); overflow-wrap: anywhere }
+.clipv .cprops-note [role="alert"] { color: var(--stall) }
+.clipv .ccol { border-right: 1px solid var(--line); overflow: auto; padding: 4px 0; min-width: 0 }
+.clipv .ccol:last-child { border-right: none; flex: 1 }
+.clipv .ccol h5 { margin: 0; font-weight: 400; font-size: 9.5px; color: var(--text-faint); letter-spacing: .06em; text-transform: uppercase; padding: 4px 10px }
+.clipv .hl2 { box-sizing: border-box; width: 100%; display: flex; align-items: center; gap: 6px; padding: 4px 10px; font: inherit; font-size: 10.5px; color: var(--text); text-align: left; background: none; border: 0; border-bottom: 1px solid color-mix(in srgb, var(--text) 3%, transparent); min-width: 0 }
+.clipv button.hl2 { cursor: pointer }
+.clipv button.hl2:hover { background: var(--bg-3) }
+.clipv .hl2-lead { flex: none; min-width: 36px; font-family: var(--mono); font-size: 9.5px; color: var(--text-faint) }
+.clipv .hl2-chip { flex: none; font-family: var(--mono); font-size: 10px; background: var(--bg-0); padding: 0 4px; border: 1px solid var(--line) }
+.clipv .hl2-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.clipv .hl2 .r { margin-left: auto; flex: none; color: var(--text-faint); font-size: 9.5px; font-family: var(--mono) }
+.clipv .ccol-none { margin: 0; padding: 4px 10px; font-size: 10.5px; line-height: 1.45; color: var(--text-faint) }
+.clipv .ccol-text { margin: 0; padding: 4px 10px; white-space: pre-wrap; font: 10.5px/1.5 var(--mono); color: var(--text-dim) }
 
 /* The chain (world-shell-mockup.html:332 .chain): one row of fixed-width plates on bg-1, gap 6, padding 8, scrolling sideways,
    ending where a device can be dropped (:348 .dropz). Every plate stands the row's height. */
@@ -18,7 +51,10 @@
 .detail-chain-devices { flex: none; min-width: 0; min-height: 0; display: flex; gap: 6px; align-items: stretch; overflow: visible }
 .detail-chain-devices:empty { display: none }
 .dropz { width: 140px; flex: none; border: 1px dashed var(--line-strong); display: flex; align-items: center; justify-content: center; text-align: center; color: var(--text-faint); font-size: 10.5px; padding: 10px }
+/* The Clip side while nothing is selected: one line saying what it waits for, in the well the clip would fill — the mockup's
+   empty idiom (deviceDetail() :1444, a dashed .dropz standing the row). */
 .clip-empty { margin: 0; padding: 18px; color: var(--text-faint); font-size: 11px }
+.detail-body--clip .clip-empty { flex: 1; min-height: 0; margin: 8px; padding: 10px; display: flex; align-items: center; justify-content: center; text-align: center; border: 1px dashed var(--line-strong); font-size: 10.5px }
 
 /* The families' chain bodies, laid into the one row (CSS only: their files are the families'). Each wrapper between the row and
    its plates becomes part of the row — no wrap, no padding of its own, no scroller of its own — so the plates are the row's
@@ -47,9 +83,8 @@
 .detail-chain .techne-device[data-expanded="false"] .techne-standing { writing-mode: vertical-rl; margin: 0 auto 6px; padding: 5px 0 }
 .detail-chain .techne-device[data-expanded="false"]:hover { border-color: var(--text-faint) }
 
-/* Factory's slot: the runtime's ▾ folds the plate, so the rail's own fold stands down here; the rail keeps the slide grip. */
+/* Factory's slot: the runtime's ▾ folds the plate (agent/devices/FactoryDeviceChain.tsx); the rail keeps only the slide grip. */
 .detail-chain .factory-slot { background: none }
-.detail-chain .factory-slot__fold { display: none }
 
 /* The Expressions rack card is that device's plate: the head of .dh (light as the power ring, name, marks), the body of .db. */
 .detail-chain .native-rack-card { width: auto; min-width: 120px; border: 1px solid var(--line); border-radius: 0; background: var(--bg-2) }

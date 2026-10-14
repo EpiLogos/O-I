@@ -346,7 +346,7 @@ test('the gestures open into the book\'s layout: a Days row its Day, a Flow row 
 test('the browser\'s Central rows preview on select and open on double-click or Enter; Technē\'s Files take the file to hand as they did', async () => {
   const source = await readFile(new URL('../src/shell/ModeBrowser.tsx', import.meta.url), 'utf8')
   const days = source.slice(source.indexOf('function DaysRows'), source.indexOf('function GroundRows'))
-  assert.match(days, /onClick=\{\(\) => onSelectSubject\(\{kind: 'day', path\}\)\}/, 'select still previews')
+  assert.match(days, /onClick=\{\(\) => onSelectSubject\(\{kind: 'day', path, location: entry\.location \?\? undefined\}\)\}/, 'select still previews, carrying the owner\'s own location for the day (no machine root in the shell)')
   assert.match(days, /onDoubleClick=\{\(\) => openDay\(entry, path\)\}/)
   assert.match(days, /event\.key === 'Enter'\) openDay\(entry, path\)/)
   assert.match(days, /Double-click or Enter opens the Day in the focused pane/, 'the row states what it does (the F2 law)')

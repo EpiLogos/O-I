@@ -58,10 +58,12 @@ test('with nothing of this mode selected, the clip box stands down', () => {
   publishTimelineReading(null); publishShownTracks(null)
 })
 
-test('App mounts one detail residence, the host, and the status bar reads Clip | Device in every mode', async () => {
+test('App mounts one detail residence, the host, and the status bar reads Clip | Device in every mode, each side named as the mode names it', async () => {
   const app = await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8')
   assert.equal((app.match(/className="detail-residence"/g) ?? []).length, 1)
   assert.match(app, /<DetailHost side=\{detailMode\} \/>/)
   const bar = await readFile(new URL('../src/components/StatusBar.tsx', import.meta.url), 'utf8')
-  assert.match(bar, /<span>Clip<\/span>/); assert.match(bar, /<span>Device<\/span>/)
+  // The two sides stand in every mode; their names are the mode's registration (the mockup's DVN: Document | Devices, Task log |
+  // Agent chain, …), rendered per mode in detail-host.test.mjs.
+  assert.match(bar, /data-detail-side="clip"[^\n]*<span>\{pair\.clip\.label\}<\/span>/); assert.match(bar, /data-detail-side="device"[^\n]*<span>\{pair\.device\.label\}<\/span>/)
 })
