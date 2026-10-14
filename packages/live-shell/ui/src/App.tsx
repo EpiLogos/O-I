@@ -11,7 +11,6 @@ import { StatusBar } from './components/StatusBar'
 import { TransportBar } from './components/TransportBar'
 import {AgentShellProvider, useAgentShell} from './agent/AgentShellContext'
 import {useAgencySessions} from './agent/useAgencySessions'
-import {trackKey} from './agent/agentRunModel'
 import {workspaceModeDetail} from '../../../../desktop/cradle/src/library/workspaceModeRelay'
 import './agent/agentShell.css'
 import './shell/modeSurface.css'
@@ -316,7 +315,6 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
           ...(mode==='clip'?{mode,material:family==='scene'?'scene' as const:'glyph' as const}:{mode,family:family??'controls'})}))
       }}
   }
-  const shellCtx = useAgentShell()
   const chooseView = (view: string) => {
     if (view !== 'session' && view !== 'arrangement') return
     // Session and Arrangement are two presentations of one pane (manual §3: "Tab moves you between the two"): the pane's own
@@ -483,7 +481,6 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
       ? {value: '—', title: `The kernel carrier is unavailable: ${workspace.transport.reason}`}
       : {value: carrierOf(workspace.transport), title: `The kernel carrier (${carrierOf(workspace.transport)}) serves the ground`},
   } : undefined
-  const factoryTask = agency.tracks.find(item => trackKey(item) === shellCtx.selectedTrackId) ?? agency.tracks[0] ?? null
   // The Timeline pane's reading (T-FACTORY-TIMELINE-PANE): the props the World cut's residence reads, published through the host door
   // (projections/timelinePaneHost.ts). The pane body renders them; nothing here is copied into a second store.
   // The shared Session and Arrangement select through THE selection (F1): a Live place also moves Live's held selection, and
@@ -522,7 +519,7 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
     native: {configurationIntent: detailConfiguration, presentMode: mode => {changeDetailMode(mode); setDetail(true)}, presentNativeEditor,
       expand: () => {if(!detailExpansionReturn.current)detailExpansionReturn.current={height:detailHeight,workspaceId:workspace.workspaceId,accessEpoch:workspace.accessEpoch};resizeDetail(Math.max(120,viewport[1]-156))},
       collapse: () => {const previous=detailExpansionReturn.current;detailExpansionReturn.current=null;if(previous&&previous.workspaceId===workspace.workspaceId&&previous.accessEpoch===workspace.accessEpoch)resizeDetail(previous.height)}},
-    factory: {tracks: agency.tracks, task: {taskLabel: factoryTask?.purpose ?? null, task: factoryTask ? {sessionRef: factoryTask.sessionRef, purpose: factoryTask.purpose, agentName: factoryTask.agentName, needleState: factoryTask.needle?.state ?? null, tasks: factoryTask.tasks, budget: factoryTask.budget} : null, join: detail && detailMode === 'clip' ? {transport: workspace.transport, world: worldView, tracks: agency.tracks} : undefined}},
+    factory: {tracks: agency.tracks},
   }
   const frameBody = (<>
     {/* The frame's keys (F9): Space, Esc, ⌘F, the row and macro keys, Enter and ⌥Enter — through the controls' own doors. */}
