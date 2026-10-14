@@ -148,22 +148,11 @@ test('a raw malformed reading still renders the face\'s own parse fault (the fac
 
 // ── 3 — the popped-out window reads the same reader, in its own context ──────
 
-test('a popped-out QL instrument window draws the owner reading its own reader publishes', () => {
+test('the QL instrument does not pop out: its reading is published only in the main window, so the device door refuses it by name', () => {
   torus.publishLiveTorusState(validState('following'))
   const out = html(createElement(DeviceWindowBody, {binding: boundInstrument(instrumentIdentity), transport}))
-  assert.match(out, /data-device-window/)
-  assert.match(out, /data-device-face="ql-instrument"/)
-  assert.doesNotMatch(out, /data-device-fault/)
-  assert.match(out, /data-ql-instrument[^>]*data-state="following"/, 'the window body reads the owner standing')
-  assert.match(out, /controlled:occasion/)
-})
-
-test('a popped-out window with no publish names the absence; it never reads a reading carried in its binding', () => {
-  torus.publishLiveTorusState(null)
-  const carried = {...boundInstrument(instrumentIdentity), reading: ownerReading('held'), instrumentReading: ownerReading('held')}
-  const out = html(createElement(DeviceWindowBody, {binding: carried, transport}))
-  assert.ok(out.includes(escaped(torus.LIVE_TORUS_ABSENT_REASON)), 'the named absence stands in the window')
-  assert.doesNotMatch(out, /data-ql-standing="held"/, 'the binding is never a snapshot source')
+  assert.match(out, /data-device-fault/, 'the window names the refusal instead of drawing a body that can only say "no reading"')
+  assert.doesNotMatch(out, /data-ql-instrument[^>]*data-state="following"/)
 })
 
 // ── 4 — one reader, and no fixture path in production ───────────────────────
