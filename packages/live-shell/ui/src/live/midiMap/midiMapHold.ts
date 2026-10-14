@@ -64,7 +64,14 @@ export function onBindingChanged(listener: (targetId: string) => void): () => vo
 }
 
 function changed(targetId: string): void {
+  // A parameter whose binding changed is no longer refused by the write its old binding made: a refusal is named only while mapped.
+  setMapRefusal(targetId, null)
   for (const listener of [...bindingListeners]) listener(targetId)
+}
+
+/** A session-held parameter says so where its action is named: the owner did not accept it. */
+function writerNote(target: MapTarget): string {
+  return target.writer === 'session' ? ' Held for this session: not an owner write.' : ''
 }
 
 /** The binding a parameter has, if any. */
@@ -118,7 +125,7 @@ export function clickMapTarget(id: string, targets: readonly MapTarget[]): void 
     commit({armed: null, notice: `${target.label} is a range: a key cannot step it, so it takes a hardware control (MIDI map).`})
     return
   }
-  commit({armed: id, notice: `${target.label} armed: ${state.mode === 'midi' ? 'move a hardware control' : 'press a key'}.`})
+  commit({armed: id, notice: `${target.label} armed: ${state.mode === 'midi' ? 'move a hardware control' : 'press a key'}.${writerNote(target)}`})
 }
 
 /** Remove a parameter's binding. An unbound parameter is a no-op. */
@@ -166,7 +173,7 @@ export function bindArmed(source: MapSource, targets: readonly MapTarget[]): voi
   const verb = previous ? 'replaced' : 'mapped'
   commit({
     bindings: plan.bindings,
-    notice: `${sourceLabel(source)} ${verb} to ${target.label}${movedLabel ? ` (moved from ${movedLabel})` : ''}.`,
+    notice: `${sourceLabel(source)} ${verb} to ${target.label}${movedLabel ? ` (moved from ${movedLabel})` : ''}.${writerNote(target)}`,
   })
   changed(target.id)
   if (plan.moved !== null) changed(plan.moved)
