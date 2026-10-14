@@ -1,0 +1,34 @@
+/* The Scene's controls as the mockup's clip properties (world-shell-mockup.html .clipv/.cprops/.cph/.kvs, lines 147-150 and 375):
+ * a 230px column with a header carrying the clip's name and key and value rows. Shell tokens only; no native colour. */
+.native-clip-surfaces{display:contents}
+.native-clip-view.has-scene-controls{display:flex;align-items:stretch}
+.native-clip-view.has-scene-controls>.native-clip-surfaces{display:block;flex:1;min-width:0;min-height:0}
+.native-clip-view.has-scene-controls[hidden]{display:none}
+
+.scene-props{width:230px;flex:none;box-sizing:border-box;border-right:1px solid var(--line);overflow:auto;background:var(--bg-1);font-size:10.5px;color:var(--text-dim)}
+.scene-props .cph{height:22px;display:flex;align-items:center;gap:6px;padding:0 7px;background:var(--bg-3);color:var(--text);font-size:11px;font-weight:500;white-space:nowrap;overflow:hidden}
+.scene-props .scene-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.scene-props .kvs{display:grid;grid-template-columns:78px 1fr;align-items:center;min-height:22px;padding:1px 10px}
+.scene-props .kvs>span:last-child{display:flex;align-items:center;gap:6px;min-width:0;overflow:hidden;font-family:var(--mono, ui-monospace, 'SF Mono', Menlo, monospace);color:var(--text);white-space:nowrap}
+.scene-props .scene-standing[data-dirty]{color:var(--accent)}
+.scene-props .sec{display:flex;align-items:center;justify-content:space-between;padding:8px 10px 3px;font-size:10px;color:var(--text-faint)}
+
+/* The mockup's .bt: 20px, 10.5px, a quiet border; a pressed toggle wears the accent (the owner's "edited since save" word does too). */
+.scene-props button{display:inline-flex;align-items:center;justify-content:center;height:20px;padding:0 9px;border:1px solid var(--line);border-radius:2px;background:var(--bg-2);color:var(--text-dim);font:inherit;font-family:var(--font-ui,inherit);white-space:nowrap;cursor:pointer}
+.scene-props button:hover:not(:disabled){color:var(--text);border-color:var(--text-faint)}
+.scene-props button:disabled{opacity:.45;cursor:default}
+.scene-props button[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:var(--bg-0,#202020)}
+.scene-props .cph button{min-width:18px;padding:0 4px;background:transparent;border-color:transparent;color:var(--text)}
+.scene-props button:focus-visible,.scene-props input:focus-visible,.scene-props select:focus-visible{outline:1px solid var(--accent);outline-offset:1px}
+.scene-props .scene-fault{margin:0;padding:3px 10px;color:var(--accent);overflow-wrap:anywhere}
+.scene-props .scene-notice{display:block;padding:3px 10px;color:var(--text-dim);overflow-wrap:anywhere}
+
+/* The pins strip is a single scrolling row on the bar; in the column it wraps. Its value fields were styled by the bar's own
+ * scope (.native-transport), so the column carries the same field look. */
+.scene-pins{padding:0 10px 8px;min-width:0}
+.scene-pins .bar-strip{flex-wrap:wrap;overflow:visible;gap:6px 8px;max-width:100%}
+.scene-pins .bar-strip-menu-panel{left:0;right:auto}
+.scene-pins .bar-range-track{width:110px}
+.scene-pins .bar-macro input[type=range]{width:90px}
+.scene-pins input[type=text],.scene-pins select{height:22px;border:1px solid var(--line);border-radius:3px;background:var(--bg-2);color:var(--text);font-size:11px;padding:0 4px}
+.scene-pins select{max-width:104px}

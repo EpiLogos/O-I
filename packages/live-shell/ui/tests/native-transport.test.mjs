@@ -28,10 +28,11 @@ export async function load(url,context,next){
 const root = new URL('../../../../', import.meta.url)
 const author = new URL('desktop/cradle/expressions-app/field-studies-journeys/src/', root)
 const boundary = new URL('packages/expressions-boundary/src/', root)
-const [P, C, NT, AT, NSE, Scenes, Host, Retained, Bridge, Model, Store] = await Promise.all([
+const [P, C, SC, EXT, AT, NSE, Scenes, Host, Retained, Bridge, Model, Store] = await Promise.all([
   import('../src/components/nativeScenePlayback.ts'),
   import('../src/shell/nativeContent.ts'),
-  import('../src/components/NativeTransportBar.tsx'),
+  import('../src/components/expressions/clip/SceneControls.tsx'),
+  import('../src/shell/transports/useExpressionsTransport.tsx'),
   import('../src/components/nativeArrangementTimeline.tsx'),
   import('../src/components/NativeSceneEditor.tsx'),
   import(new URL('scenes.ts', boundary)),
@@ -203,52 +204,54 @@ test('the loop toggle is the Scene editor loop intent on the captured selection'
   assert.equal(sent.length, 1, 'an unfocused loop change sends nothing')
 })
 
-test('the transport renders its accessible controls, the record reason, and no hold button', () => {
+const source = (reading, content, actions) => ({owner: 'expressions', content, actions, isPresented: () => true, currentReading: () => reading, revealDetail: () => {}})
+/** Run Expressions' bindings once, in a probe component, as the one bar's own hook runs them. */
+function bound(nativeTransport) {
+  const out = {}
+  const Probe = () => { out.bindings = EXT.useExpressionsTransport({tempoBpm: null, nativeTransport}); return null }
+  renderToStaticMarkup(createElement(Probe))
+  return out.bindings
+}
+
+test('the Scene controls stand on the Clip side with their reasons; the bar keeps only what has a slot', () => {
   const reading = ownerReading(true)
   const content = C.readNativeExpressionsContent(reading)
   const actions = C.createNativeContentActions(content, {request: async () => ({ok: true, reading})})
-  const markup = renderToStaticMarkup(createElement(NT.NativeTransportBar, {source: {owner: 'expressions', content, actions,
-    isPresented: () => true, currentReading: () => reading, revealDetail: () => {}}}))
-  assert.match(markup, /aria-label="Expressions transport"/)
-  assert.match(markup, /aria-label="Play Scene"/)
-  assert.match(markup, /aria-label="Stop Scene"/)
+  const markup = renderToStaticMarkup(createElement(SC.SceneControls, {source: source(reading, content, actions)}))
+  assert.match(markup, /aria-label="Scene"/)
+  assert.match(markup, /aria-label="Previous Scene"/); assert.match(markup, /aria-label="Next Scene"/)
+  assert.match(markup, /aria-label="Native Scene"/)
   assert.match(markup, />Saved scenes</)
-  assert.match(markup, /aria-label="Scene position"/)
-  assert.match(markup, /Scene time · working/)
-  assert.match(markup, /Expression time · sequence/)
-  assert.match(markup, /aria-label="Engine: Running"/, 'the engine light replaces the physics label')
-  assert.match(markup, /aria-label="More transport controls"/)
-  assert.match(markup, /aria-label="Stage tool"/)
-  assert.match(markup, /aria-label="Time Scale"/)
-  // No Expressions frame is linked in this render, so the take control is off and says why.
-  // Arm automation does nothing alone: Play starts a take. The dot only lights, and stops the take, while one records.
-  const arm = markup.match(/<button[^>]*aria-label="Arm automation recording"[^>]*>/)[0]
-  assert.match(arm, /aria-pressed="false"/)
-  const record = markup.match(/<button[^>]*aria-label="Property take"[^>]*>/)[0]
-  assert.match(record, /disabled=""/, 'Record is never an immediate-record button')
-  assert.match(record, /Arm automation, then press Play/)
-  assert.doesNotMatch(markup, /aria-label="Re-enable automation"/, 'the orange button is hidden until something is held')
-  assert.match(markup, /<select[^>]*aria-label="Take mode"/)
-  assert.doesNotMatch(markup, /aria-label="Hold/)
-  assert.doesNotMatch(markup, />Hold</)
+  assert.match(markup, /aria-label="Expression time"/)
+  assert.match(markup, /aria-label="Save Expression"/); assert.match(markup, /aria-label="Expressions guide"/)
+  assert.match(markup, /aria-label="Pinned controls"/, 'the pins strip stands in the column')
+  assert.doesNotMatch(markup, /aria-label="Play Scene"|aria-label="Stop Scene"|aria-label="Scene position"|aria-label="Stage tool"|aria-label="Time Scale"|aria-label="Arm automation recording"/,
+    'the bar\'s controls are not drawn twice')
+  assert.doesNotMatch(markup, /aria-label="Hold/); assert.doesNotMatch(markup, />Hold</)
+  // The bar binds the rest: play, stop, the scrub and Scene time, the time scale, the tool rail, Map, the engine light, arm, take mode, loop.
+  const bindings = bound(source(reading, content, actions))
+  for (const id of ['play', 'stop', 'position', 'tempo', 'draw', 'key-map', 'cpu', 'arm', 'overdub', 'loop']) assert.ok(bindings[id], `${id} is bound on the one bar`)
+  assert.equal(bindings.record.press, undefined, 'Record is never an immediate-record button (no Expressions frame is linked in this render)')
+  assert.match(bindings.record.title, /Arm automation, then press Play/)
+  assert.equal(bindings['re-enable'].press, undefined, 'the orange return is live only while something is held')
+  assert.match(bindings.overdub.title, /Replace last take/)
 })
 
-test('the transport, Arrangement chip and Scene editor switch show the same loop value', () => {
+test('the bar\'s Loop slot, Arrangement chip and Scene editor switch show the same loop value', () => {
   for (const loop of [true, false]) {
     const reading = ownerReading(loop)
     const content = C.readNativeExpressionsContent(reading)
     const actions = C.createNativeContentActions(content, {request: async () => ({ok: true, reading})})
-    const source = {owner: 'expressions', content, actions, isPresented: () => true, currentReading: () => reading, revealDetail: () => {}}
-    const transport = renderToStaticMarkup(createElement(NT.NativeTransportBar, {source}))
+    const bar = source(reading, content, actions)
     const control = P.sceneLoopControl({loop: content.scenes.loop, ready: true, focused: P.sceneFocused(content.native_selection, content.basis.scene_ref),
       savedAvailable: content.scenes.timing.saved.available})
     const chip = renderToStaticMarkup(createElement(AT.NativeArrangementTimeline, {content, clock: 'seconds', unit: 'seconds', duration: 0,
       lanes: [], ready: true, perform: async () => {}, loop: {on: control.on, reason: control.reason, toggle: () => {}}}))
     const editor = renderToStaticMarkup(createElement(NSE.NativeSceneEditor, {reading, request: async () => ({ok: true, reading})}))
     const pressed = value => value === null ? null : value === 'true'
-    const transportLoop = pressed(transport.match(/class="native-transport-loop"[^>]*aria-pressed="(true|false)"/)?.[1] ?? null)
+    const barLoop = bound(bar).loop.lit
     const chipLoop = pressed(chip.match(/class="nar-chip nar-loop"[^>]*aria-pressed="(true|false)"/)?.[1] ?? null)
     const switchLoop = pressed(editor.match(/role="switch" aria-checked="(true|false)"/)?.[1] ?? null)
-    assert.deepEqual([transportLoop, chipLoop, switchLoop], [loop, loop, loop], `loop ${loop} is shown identically`)
+    assert.deepEqual([barLoop, chipLoop, switchLoop], [loop, loop, loop], `loop ${loop} is shown identically`)
   }
 })

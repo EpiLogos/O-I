@@ -1,6 +1,5 @@
 import { Icon } from './Icon'
 import { Icon as CutIcon } from '../inhabitants/sdk/Icon'
-import { NativeTransportBar } from './NativeTransportBar'
 import { MODE_GRAMMAR, surfModeOf, type SurfMode } from '../shell/modeGrammar'
 import type { ModeTransportReadouts } from '../shell/ModeTransportBar'
 import { ModeTransport } from '../shell/modeTransports'
@@ -12,7 +11,7 @@ import type { NativeCompositionViewSource } from '../shell/compositionViews'
 
 
 export function TransportBar({ tempoBpm, name, mode, setView, chooseMode, presentedView, modeReadouts, timeSpine, focusedInstrument, workName, nativeTransport, centerPanels, activeCenter, openCenter, browser, detail, dock, toggleBrowser, toggleDetail, toggleDock }: {
-  /** The Expressions Scene transport source; absent until the native reading is admitted. */
+  /** The Expressions owner's source for the bar's bindings; absent until the native reading is admitted. */
   nativeTransport?: NativeCompositionViewSource | null
   centerPanels: PanelRegistration[]; activeCenter: string | null; openCenter: (id: string) => void
   /** The frame's Rev-5 mode reading (surfModeOf maps it onto the surf). */
@@ -40,13 +39,15 @@ export function TransportBar({ tempoBpm, name, mode, setView, chooseMode, presen
       agent transport draw the same marks — the icon law). */}
     <button className="chrome-toggle" aria-label="Toggle browser" aria-pressed={browser} onClick={toggleBrowser} title="Browser · ⌘⌥B"><CutIcon name="browser" size={15} /></button>
     {/* One transport, five meanings (Rev 5): the SAME slots in the SAME
-      places. Live keeps the audio cut's own controls; Expressions keeps the
-      native transport when the owner is attached; Base·Central and Technē
-      wear the grammar's meanings as drawn waiting states; every mode's
-      texts are the data-i strings. The drawn marks are the icon-cut's, the
-      same mark per control in every mode. */}
-    {mode === 'expressions' && nativeTransport?.content ? <NativeTransportBar source={nativeTransport} />
-      : <ModeTransport key={surf} mode={surf} reading={{readouts: modeReadouts, timeSpine, focusedInstrument, tempoBpm, nativeTransport}} />}
+      places, in every mode — Expressions too: its own bar is retired, its
+      working controls are bound to the slots (shell/transports/useExpressionsTransport.tsx)
+      and the Scene's other controls stand on the Clip side
+      (components/expressions/clip/SceneControls.tsx). Live keeps the audio
+      cut's own controls; Base·Central and Technē wear the grammar's
+      meanings as drawn waiting states; every mode's texts are the data-i
+      strings. The drawn marks are the icon-cut's, the same mark per control
+      in every mode. */}
+    <ModeTransport key={surf} mode={surf} reading={{readouts: modeReadouts, timeSpine, focusedInstrument, tempoBpm, nativeTransport}} />
     <nav className="surface-icons" aria-label="Working surface">
       {/* Session and Arrangement first — presentations of the Timeline
         projection, their meanings per mode (Rev 5's second table). */}

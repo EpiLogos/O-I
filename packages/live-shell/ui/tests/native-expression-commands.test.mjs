@@ -30,9 +30,9 @@ const root = new URL('../../../../', import.meta.url)
 const author = new URL('desktop/cradle/expressions-app/field-studies-journeys/src/', root)
 const boundary = new URL('packages/expressions-boundary/src/', root)
 const shell = new URL('packages/live-shell/ui/src/', root)
-const [C, NT, CMD, COL, GUIDE, App, Model, Store, Retained, Bridge] = await Promise.all([
+const [C, SC, CMD, COL, GUIDE, App, Model, Store, Retained, Bridge] = await Promise.all([
   import(new URL('shell/nativeContent.ts', shell)),
-  import(new URL('components/NativeTransportBar.tsx', shell)),
+  import(new URL('components/expressions/clip/SceneControls.tsx', shell)),
   import(new URL('components/nativeExpressionCommands.ts', shell)),
   import(new URL('components/NativeExpressionCollections.tsx', shell)),
   import(new URL('components/NativeExpressionGuide.tsx', shell)),
@@ -155,10 +155,13 @@ test('the guide text is the app own text: each quick-guide paragraph and About p
 })
 
 test('every shortcut in the guide is bound by the handler it names', async () => {
-  const transport = await read('components/NativeTransportBar.tsx'), app = await read('App.tsx'), browser = await read('components/WorldBrowser.tsx')
+  // The retired Expressions bar held three of these; they stand in the one bar's bindings and with Save (the guide's `source`
+  // column still names the retired file until nativeExpressionCommands.ts is updated: see the ticket's PROPOSE).
+  const bindings = await read('shell/transports/useExpressionsTransport.tsx'), keepers = await read('components/expressions/clip/sceneKeepers.ts')
+  const app = await read('App.tsx'), browser = await read('components/WorldBrowser.tsx')
   const scrub = await read('components/nativeScenePlayback.ts')
-  assert.match(transport, /event\.key\.toLowerCase\(\) === 's'/)
-  assert.match(transport, /spaceTogglesPlayback/)
+  assert.match(keepers, /event\.key\.toLowerCase\(\) === 's'/)
+  assert.match(bindings, /spaceTogglesPlayback/)
   assert.match(scrub, /case 'ArrowRight': case 'ArrowUp'/)
   assert.match(scrub, /case 'Home'/)
   assert.match(app, /event\.key === ','/)
@@ -171,27 +174,33 @@ test('every shortcut in the guide is bound by the handler it names', async () =>
   assert.match(browser, /<NativeExpressionCollections query=\{query\}\/>/)
 })
 
-test('the transport offers Save with its reason, and a Guide control, from the owner reading', () => {
+test('the Clip side offers Save with its reason, and a Guide control, from the owner reading', () => {
   const clean = ownerReading()
-  const cleanMarkup = renderToStaticMarkup(createElement(NT.NativeTransportBar, {source: transportSource(clean)}))
+  const cleanMarkup = renderToStaticMarkup(createElement(SC.SceneControls, {source: transportSource(clean)}))
   const saveClean = cleanMarkup.match(/<button[^>]*aria-label="Save Expression"[^>]*>/)[0]
   assert.match(saveClean, /disabled=""/)
   assert.match(saveClean, /Nothing to save/)
+  assert.match(cleanMarkup, />saved</, 'the standing row reads the owner: clean')
   const guide = cleanMarkup.match(/<button[^>]*aria-label="Expressions guide"[^>]*>/)[0]
   assert.match(guide, /aria-expanded="false"/)
   assert.doesNotMatch(cleanMarkup, /role="dialog"/, 'the guide is closed until asked')
 
-  const dirtyMarkup = renderToStaticMarkup(createElement(NT.NativeTransportBar, {source: transportSource(clean, {...clean.standing, dirty: true})}))
+  const dirtyMarkup = renderToStaticMarkup(createElement(SC.SceneControls, {source: transportSource(clean, {...clean.standing, dirty: true})}))
   const saveDirty = dirtyMarkup.match(/<button[^>]*aria-label="Save Expression"[^>]*>/)[0]
   assert.doesNotMatch(saveDirty, /disabled=""/)
   assert.match(saveDirty, /Ctrl or ⌘ S/)
+  assert.match(dirtyMarkup, />edited since save</)
 
-  const pendingMarkup = renderToStaticMarkup(createElement(NT.NativeTransportBar, {source: transportSource(clean, {...clean.standing, dirty: true, pending: true})}))
+  const pendingMarkup = renderToStaticMarkup(createElement(SC.SceneControls, {source: transportSource(clean, {...clean.standing, dirty: true, pending: true})}))
   assert.match(pendingMarkup.match(/<button[^>]*aria-label="Save Expression"[^>]*>/)[0], /disabled=""/)
 })
 
-test('the transport source sends save through the same history channel the device toolbar uses', async () => {
-  const transport = await read('components/NativeTransportBar.tsx'), devices = await read('components/NativeDeviceEditors.tsx')
-  assert.match(transport, /actions\.history\('save'\)/)
+test('Save sends the owner save request through the same history channel the device toolbar uses, from one place', async () => {
+  const calls = await read('components/expressions/clip/sceneCalls.ts'), devices = await read('components/NativeDeviceEditors.tsx')
+  assert.match(calls, /actions\.history\('save'\)/)
   assert.match(devices, /invoke\(\{operation: 'save', basis: reading\.basis\}\)/)
+  // The Clip side's Save button and the chord both go through sendSave: neither makes the owner call itself.
+  for (const file of ['components/expressions/clip/SceneControls.tsx', 'components/expressions/clip/sceneKeepers.ts', 'shell/transports/useExpressionsTransport.tsx']) {
+    assert.doesNotMatch(await read(file), /history\('save'\)/, `${file} reaches the owner only through sendSave`)
+  }
 })

@@ -27,7 +27,10 @@ function CentralClip() { const {transport, centralSubject, world} = useDetailRea
 function CentralChain() { const {transport, centralSubject, world} = useDetailReading(); return <BaseDevicesDetail transport={transport} world={world} subject={centralSubject} /> }
 function FactoryClip() { const {factory} = useDetailReading(); return <FactoryTaskLogDetail {...factory.task} /> }
 function FactoryChain() { const {factory} = useDetailReading(); return <AgentShellDeviceDetail tracks={factory.tracks} /> }
-function ExpressionsClip() { const {native} = useDetailReading(); return <NativeWorldDetail mode="clip" {...native} /> }
+// An Expressions clip is a scene (lock §9.1). Beside its editor stand the Scene's own controls — the Scene selector, Saved scenes,
+// Save, Guide, the pins strip and Expression time — which stood on the Expressions bar until they had a home on the clip
+// (components/expressions/clip/SceneControls.tsx). Technē's native clip below is the same editor without them: its bar never had them.
+function ExpressionsClip() { const {native} = useDetailReading(); return <NativeWorldDetail mode="clip" sceneControls {...native} /> }
 function ExpressionsChain() { const {native} = useDetailReading(); return <NativeWorldDetail mode="device" {...native} /> }
 // Technē's clips are World cut events while the tracks pane stands over the World cut, else the open work's native clip.
 function TechneClip() { const {worldCut, world, native} = useDetailReading(); return worldCut ? <TechneClipDetail world={world} /> : <NativeWorldDetail mode="clip" {...native} /> }
