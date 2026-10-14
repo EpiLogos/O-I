@@ -9,7 +9,10 @@ import {useContext, useCallback, useEffect, useRef, useState} from 'react'
  * - the body is the sandboxed iframe carrying the page with its payload
  *   island; the only host↔frame traffic is the bounded island read
  *   (`oi:document-host-request/response` — the document host bridge the
- *   cradle's frames already carry);
+ *   cradle's frames already carry). Under Tauri the iframe is the native
+ *   document frame written with the projection (a srcdoc document inherits
+ *   the window's CSP, which refuses the form's own scripts); elsewhere it is
+ *   srcdoc — `useDocumentFrame`, one switch by transport;
  * - Save is the document's own revision-checked CAS write
  *   (`writeFlowInstance`): the host reads the island, embeds it with the
  *   owner's `embedDocument`, and the owner CAS-checks `expected_revision`.
@@ -24,7 +27,7 @@ import {useContext, useCallback, useEffect, useRef, useState} from 'react'
 
 import {embedDocument, type QlDoc} from '../../../../../desktop/cradle/src/flow/instance'
 import {readFlowInstance, writeFlowInstance, type FlowInstance} from '../../../../../desktop/cradle/src/flow/instances'
-import {documentPayloadSource, documentScripts, useDocumentHostRead, type FrameIsland} from '../../../../../desktop/cradle/src/document/frame'
+import {documentPayloadSource, documentScripts, useDocumentFrame, useDocumentHostRead, type FrameIsland} from '../../../../../desktop/cradle/src/document/frame'
 import type {KernelTransportStatus, CentralLocation} from '../../../../../desktop/cradle/src/kernel/types'
 import {classifySaveFailure, savedOutcome, unchangedOutcome, type SaveRouterReading} from './documentDeviceModel'
 import {SaveOutcomeChip} from './inhabitantCard.tsx'
@@ -62,6 +65,7 @@ export function FlowFace({transport, location, presentation = 'device'}: Documen
   const [revision, setRevision] = useState<string>('')
   const [baselined, setBaselined] = useState(false)
   const frame = useRef<HTMLIFrameElement>(null)
+  const frameProps = useDocumentFrame(frame, face, transport)
   const readIsland = useDocumentHostRead(frame, true)
   /** The basis the current draft was taken against; a moved basis is stale. */
   const draftBasis = useRef<string>()
@@ -216,9 +220,9 @@ export function FlowFace({transport, location, presentation = 'device'}: Documen
       </div>}
       {failure && <p className="inhabitant-device-fault" role="alert">Flow document unavailable: {failure}</p>}
       {notice && <p className="inhabitant-device-notice" role="status">{notice}</p>}
-      {face === undefined
+      {face === undefined || !frameProps
         ? <p role="status" className="inhabitant-quiet">Reading the flow instance…</p>
-        : <iframe ref={frame} className="inhabitant-document-frame" title={`Flow — Dialogue · Flow · Journal · ${documentLabel}`} sandbox="allow-scripts allow-forms allow-downloads" referrerPolicy="no-referrer" srcDoc={face}/>}
+        : <iframe key={frameProps.key} ref={frame} className="inhabitant-document-frame" title={`Flow — Dialogue · Flow · Journal · ${documentLabel}`} sandbox="allow-scripts allow-forms allow-downloads" referrerPolicy="no-referrer" src={frameProps.src} srcDoc={frameProps.srcDoc}/>}
     </div>
   )
 }
