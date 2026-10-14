@@ -1,4 +1,4 @@
-import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
+import {useContext, useCallback, useEffect, useMemo, useRef, useState} from 'react'
 
 /** The Day die document device — central family, face `day-die`.
  *
@@ -37,7 +37,7 @@ import {
   type DayDocumentField,
 } from '../../../../../desktop/cradle/src/central/dayForm'
 import {receiving} from '../../../../../desktop/cradle/src/receiving/client'
-import {documentStateWords, publishDocument, reachedDocument, revisionShort, withdrawDocument, type DocumentInPane} from '../central/documents/documentDoor'
+import {DocumentPaneContext, documentStateWords, publishDocument, reachedDocument, revisionShort, withdrawDocument, type DocumentInPane} from '../central/documents/documentDoor'
 import {readFile} from '../../../../../desktop/cradle/src/files/client'
 import {DOCUMENT_FORMS, resolveDocumentForm} from '../../../../../desktop/cradle/src/flow/documentForms'
 import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
@@ -254,7 +254,8 @@ export function DocumentDayDieFace({transport, project, sourceRef, documentId, p
   const open = DIE_POSITIONS[openFace]
   const inPane = presentation === 'pane'
   const key = useRef(`day:${Math.random().toString(36).slice(2)}`).current
-  const standing: DocumentInPane = {key, form: 'Day', title: documentId, revision: revision || undefined,
+  const paneId = useContext(DocumentPaneContext) ?? undefined
+  const standing: DocumentInPane = {key, paneId, form: 'Day', title: documentId, revision: revision || undefined,
     state: documentStateWords({pending, dirty, save, blocked: session.blocked}),
     save: face && !pending && !blocked ? () => void saveToNative() : undefined,
     reread: pending || !face ? undefined : () => void reviewNative(), rereadLabel: 'Review the native source'}

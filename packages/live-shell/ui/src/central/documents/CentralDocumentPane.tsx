@@ -30,6 +30,7 @@ import {CentralDayNotice} from '../CentralDayNotice'
 import {CENTRAL_DOCUMENT_PANE_KIND, parseDocumentSubject} from './centralDocuments'
 import {readDayStanding, readLatestFlow, type FlowReading} from './documentReadings'
 import './centralDocuments.css'
+import {DocumentPaneContext} from './documentDoor'
 
 /** A count that advances when the window regains focus or becomes visible: a document that can change outside this shell (a
  * Day initialised elsewhere) is read again then — never polled. */
@@ -147,7 +148,7 @@ export function registerCentralDocumentPane(): void {
     kind: CENTRAL_DOCUMENT_PANE_KIND,
     create: ({element, binding}) => {
       const root = createRoot(element)
-      root.render(<CentralDocumentPane transport={detectTransport()} subjectRef={binding.subject_ref} />)
+      root.render(<DocumentPaneContext.Provider value={binding.id}><CentralDocumentPane transport={detectTransport()} subjectRef={binding.subject_ref} /></DocumentPaneContext.Provider>)
       // The pane session tears down inside a commit; the root leaves after it (its container is the session's own).
       return {unmount: () => queueMicrotask(() => root.unmount())}
     },

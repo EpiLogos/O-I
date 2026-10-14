@@ -1,4 +1,4 @@
-import {useCallback, useEffect, useRef, useState} from 'react'
+import {useContext, useCallback, useEffect, useRef, useState} from 'react'
 
 /** The Flow document device — central family, face `flow-document`.
  *
@@ -29,7 +29,7 @@ import type {KernelTransportStatus, CentralLocation} from '../../../../../deskto
 import {classifySaveFailure, savedOutcome, unchangedOutcome, type SaveRouterReading} from './documentDeviceModel'
 import {SaveOutcomeChip} from './inhabitantCard.tsx'
 import './inhabitantDevices.css'
-import {documentStateWords, publishDocument, reachedDocument, revisionShort, withdrawDocument, type DocumentInPane} from '../central/documents/documentDoor'
+import {DocumentPaneContext, documentStateWords, publishDocument, reachedDocument, revisionShort, withdrawDocument, type DocumentInPane} from '../central/documents/documentDoor'
 
 export interface DocumentFlowFaceProps {
   readonly transport: KernelTransportStatus
@@ -182,7 +182,8 @@ export function FlowFace({transport, location, presentation = 'device'}: Documen
   const documentLabel = instance?.doc.meta.title || instance?.doc.meta.documentId || location.path
   const inPane = presentation === 'pane'
   const key = useRef(`flow:${Math.random().toString(36).slice(2)}`).current
-  const standing: DocumentInPane = {key, form: 'Flow', title: documentLabel, revision: revision || undefined,
+  const paneId = useContext(DocumentPaneContext) ?? undefined
+  const standing: DocumentInPane = {key, paneId, form: 'Flow', title: documentLabel, revision: revision || undefined,
     state: documentStateWords({pending, dirty, save}), save: face && !pending ? () => void saveToOwner() : undefined,
     reread: pending ? undefined : () => void load(), rereadLabel: 'Re-read'}
   // The aperture follows the document the hand reached (the first one standing until then); a change of standing reaches it.
