@@ -1,5 +1,5 @@
 {
-  "capture": "Control/agents/wiki/wiki.json read directly (14 Oct 2026): the five node objects and the root space node_refs, verbatim refs",
+  "capture": "Control/agents/wiki/wiki.json read directly (14 Oct 2026): the five node objects and the root space node_refs, in the real shape; refs and titles replaced by samples for this public repo",
   "space_ref": "central:wiki:root",
   "space_node_refs": [
     "wiki:node:sample-node-e",
