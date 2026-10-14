@@ -189,18 +189,21 @@ export async function admitDatedSubsolar(field: Field, transport: KernelTranspor
   return {field: admitted.field, placed: true, reason: null, instant};
 }
 
-/** The words the Earth states about its Sun, on its own status line, or null when the Sun is placed for the instant the
- * Earth shows. A Sun not placed is stated with its reason. A Sun placed for another instant is stated as drawn for its own,
- * and as not redrawn for the instant shown. `shownYear` is the year the Earth shows, or null for all time. */
-export function sunStanding(sun: DatedSubsolarState, shownYear: number | null): string | null {
+/** The words the Earth states about its Sun, on its own status line. The line names the instant the Sun is drawn for. A
+ * Sun that is placed for the instant the Earth shows is stated by nothing. A Sun not placed is stated with its reason. While
+ * the Sun is behind the window (`behind`: the window has moved and the Sun is not yet read for it, or a read is pending),
+ * the line says the Sun is read for the instant shown once the window settles. `shownYear` is the year the Earth shows, or
+ * null for all time. */
+export function sunStanding(sun: DatedSubsolarState, shownYear: number | null, reading = false): string | null {
   const drawnYear = sun.instant.present ? null : sun.instant.year;
   const drawn = sun.instant.present ? 'the present sky' : `the year ${sun.instant.year}`;
   const shown = shownYear === null ? 'all time' : `the year ${shownYear}`;
-  const moved = drawnYear !== shownYear;
+  const behind = reading || drawnYear !== shownYear;
+  const follows = `The Earth shows ${shown}, and the Sun is read for it when the window settles.`;
   if (!sun.placed) {
     const reason = (sun.reason ?? 'the stated point was not placed').replace(/\.$/, '');
-    return `The Sun is not placed on the Earth for ${drawn}: ${reason}.${moved ? ` The Earth shows ${shown}, and the Sun is not read for it in this session.` : ''}`;
+    return `The Sun is not placed on the Earth for ${drawn}: ${reason}.${behind ? ` ${follows}` : ''}`;
   }
-  if (!moved) return null;
-  return `The Sun is drawn for ${drawn}. The Earth shows ${shown}, and the Sun is not redrawn for it in this session.`;
+  if (!behind) return null;
+  return `The Sun is drawn for ${drawn}. ${follows}`;
 }

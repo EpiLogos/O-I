@@ -18,6 +18,8 @@ import {useWorkspace} from '../../shell/workspace'
 import type {AionEpochJump} from './aionTimeline'
 import type {History} from './src/types/history'
 import type {AtlasHandle} from './mount'
+import {createSunFollower, type SunFollower} from './sunFollow'
+import type {DatedSubsolarState, ShownInstant} from '../../inhabitants/qlSkyEarthAdapter'
 import {disclosureSession} from '../../../../../../desktop/cradle/src/techne/session'
 import {bindSharedTimeClock, windowYear} from './sharedClock'
 import './atlasHost.css'
@@ -263,9 +265,17 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {controllerS
   const provider = archetypalEarthProvider(transport)
   const loaded = await provider.load()
   // T6: the QL family's adapter admits the owner's stated subsolar point for the instant the Earth shows (the shared
-  // window's year; the present while no window is in force), read through the kernel before the Earth stands.
-  const {admitDatedSubsolar, shownInstantOf, sunStanding} = await import('../../inhabitants/qlSkyEarthAdapter')
-  const sun = await admitDatedSubsolar(loaded.field, transport, shownInstantOf(shownYearNow(), new Date()))
+  // window's year; the present while no window is in force), read through the kernel before the Earth stands. A read that
+  // fails is stated as an absent Sun with its reason, never thrown into the mount.
+  const {admitDatedSubsolar, shownInstantOf, sunStanding, withoutSubsolar, QL_SKY_FAMILY, QL_SKY_FAMILY_ID, SUBSOLAR_OCCURRENCE_ID} = await import('../../inhabitants/qlSkyEarthAdapter')
+  const readSun = (instant: ShownInstant): Promise<DatedSubsolarState> => admitDatedSubsolar(loaded.field, transport, instant)
+    .catch((error: unknown): DatedSubsolarState => ({
+      field: withoutSubsolar(loaded.field),
+      placed: false,
+      reason: `the dated sky did not answer: ${error instanceof Error ? error.message : String(error)}`,
+      instant,
+    }))
+  const sun = await readSun(shownInstantOf(shownYearNow(), new Date()))
   const bundle = {...loaded, field: sun.field}
   registerCorpusProvider({...provider, load: async () => bundle}, {asDefault: true})
   progress.controllerStarted = true
@@ -273,10 +283,37 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {controllerS
   const mounted: AtlasHandle = await mountAtlas({globe, app, provider: ARCHETYPAL_EARTH_PROVIDER_ID,
     clock: (time, scale) => bindSharedTimeClock({store: disclosureSession, time, scale})})
   publishAtlasHandle(mounted)
-  // The Sun's standing is stated on the Earth itself, and kept current as the shared window moves. The Sun is read once
-  // (the drawn model holds it), so a window that moves on states that the Sun is not redrawn for the instant shown.
+  // The Sun follows the instant the Earth shows (T-ATLAS-SUN). The window's instant is offered on each change; the Sun is
+  // read for it once the window has been still (sunFollow.ts), and each reading replaces the one Sun in place through the
+  // atlas's seam. The status line states the Sun for the instant actually drawn, and that it is read for the instant shown
+  // while the window is behind it.
   const setSunLine = sunLine(element)
-  const stateSun = () => setSunLine(sunStanding(sun, shownYearNow()))
+  const instantKey = (instant: ShownInstant): string => (instant.present ? 'present' : `year:${instant.year}`)
+  let drawn: DatedSubsolarState = sun
+  const follower: SunFollower<ShownInstant> = createSunFollower<ShownInstant, DatedSubsolarState>({
+    keyOf: instantKey,
+    drawnKey: instantKey(sun.instant),
+    read: readSun,
+    apply: (next) => {
+      const occ = next.placed ? next.field.occurrences.find(item => item.id === SUBSOLAR_OCCURRENCE_ID) ?? null : null
+      const family = next.field.families.find(item => item.id === QL_SKY_FAMILY_ID) ?? QL_SKY_FAMILY
+      try {
+        mounted.replaceOccurrence(occ, SUBSOLAR_OCCURRENCE_ID, occ ? family : undefined)
+      } catch (error) {
+        // the seam refuses by name and leaves the drawn Sun as it was: the line says the reading was not drawn
+        const reason = error instanceof Error ? error.message : String(error)
+        setSunLine(`The Sun could not be redrawn for ${next.instant.present ? 'the present sky' : `the year ${next.instant.year}`}: ${reason}.`)
+        return
+      }
+      drawn = next
+      setSunLine(sunStanding(drawn, shownYearNow(), follower.pending()))
+    },
+  })
+  const stateSun = () => {
+    const year = shownYearNow()
+    follower.offer(shownInstantOf(year, new Date()))
+    setSunLine(sunStanding(drawn, year, follower.pending()))
+  }
   stateSun()
   const unsubscribeSun = disclosureSession.subscribe(stateSun)
   // The reading the atlas holds is the World's Aion source, by reference, from the moment it stands.
@@ -311,6 +348,7 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {controllerS
     if (retired) return
     retired = true
     unsubscribeSun()
+    follower.dispose()
     setSunLine(null)
     publishAtlasAionReading(null)
     publishAtlasHandle(null)
