@@ -4,21 +4,24 @@
  * Revision 3's lens navigation, drawn only from what the landed lanes
  * declared.
  *
- * - Base · Devices: the ground's family chain through the ONE inhabitant
- *   rack (L2's manifest door + L7's bodies) — hygiene, impact, the Day die,
- *   the Flow, the conversation, the day/now civil controls. With no material
- *   selected the rack's own empty slots name what would dock.
+ * - Base · Devices: the ground's family chain through the device runtime
+ *   (src/central/devices) — the Day die, the Flow, the conversation, the
+ *   context-world, agent identity, hygiene and impact readings, each compact on
+ *   the chain, whole in the pool, full in a pane. With no material selected a
+ *   device's rows name what would dock and its light stays dark.
  * - Base · Document: the L7 subject detail (CAS identity, basis, the save
  *   router's named outcomes) over the encounter's subject — honest absence
  *   until a subject is selected.
  * - Technē · Instruments: the Quaternal Logic family's faces through the
- *   same rack — the admitted field/PCM owner's face with its honest
- *   refusing state, the declared-waiting faces with their named owners and
- *   dark lamps. With a focused instrument (owner ruling, 13 Oct 2026) the
- *   rack is the instrument families' faces (Quaternal Logic and the atlas),
- *   the faces that instrument holds docked expanded, the others folded.
+ *   device runtime (inhabitants/ql/devices) — the admitted field/PCM owner's
+ *   device with its honest refusing state, the declared-waiting faces as dark
+ *   devices that name their owners. With a focused instrument (owner ruling,
+ *   13 Oct 2026) the chain is the instrument families' devices (Quaternal
+ *   Logic, the atlas and the knowledge graph): each compact on the chain with
+ *   its body as its picture, whole in the pool, full in a pane; the devices
+ *   that instrument holds stand open, the others fold to their titles.
  *   The Device side follows the focused pane's instrument in every mode
- *   (paneInstrument.ts); this rack is the instrument face in any mode.
+ *   (paneInstrument.ts); this chain is the instrument's devices in any mode.
  * - Technē lens bar: the six lenses by their plain actual names (the
  *   programme's naming ruling) — timeline and journey drive the landed
  *   World cut's two presentations; project / graph and places drive the
@@ -33,7 +36,6 @@
 import {useEffect, useState, type ReactNode} from 'react'
 import {loadWorldShellFamilies, QUATERNAL_LOGIC_FAMILY_ID} from '../inhabitants/worldShellFamilies'
 import {inhabitantManifest, type InhabitantManifest} from '../inhabitants/manifest'
-import {InhabitantRack} from '../inhabitants/inhabitantRack'
 import {useQlInstrumentFeed} from '../live/torusInstrument'
 import {useDeviceWindowHost} from '../native/detachedKinds'
 import {CentralSubjectDetail, type CentralSubjectSelection} from '../inhabitants/CentralSubjectDetail'
@@ -50,6 +52,8 @@ import {centralRackApertures} from '../central/centralRack'
 import {useCentralSelection} from '../central/useCentralSelection'
 import {useCentralDayStanding} from '../central/useCentralDayStanding'
 import {CentralDayNotice} from '../central/CentralDayNotice'
+import {CentralDevicesChain} from '../central/devices/CentralDevices'
+import {TechneDevices} from '../inhabitants/ql/devices/TechneDevices'
 import {FactoryRunJoinDetail} from '../factory/FactoryRunJoin'
 import type {AgentSessionTrack} from '../agent/useAgencySessions'
 import './modeSurface.css'
@@ -57,11 +61,6 @@ import './modeSurface.css'
 // The door is idempotent (a second identical load composes nothing new);
 // the shell frame admits the declared families once per module load.
 loadWorldShellFamilies()
-
-const centralManifests = (): readonly InhabitantManifest[] => {
-  const central = inhabitantManifest('central')
-  return central ? [central] : []
-}
 
 const qlManifests = (): readonly InhabitantManifest[] => {
   const ql = inhabitantManifest(QUATERNAL_LOGIC_FAMILY_ID)
@@ -90,12 +89,13 @@ export function BaseDevicesDetail({transport, world = null, subject = null, stan
   const selection = useCentralSelection(world, subject)
   const read = useCentralDayStanding(transport, selection?.dayRef ?? null)
   const deviceWindows = useDeviceWindowHost()
-  const apertures = centralRackApertures(selection, standing !== undefined ? standing : read)
+  const dayStanding = standing !== undefined ? standing : read
+  const apertures = centralRackApertures(selection, dayStanding)
   return (
     <div className="mode-detail" data-mode-detail="base-devices">
       {apertures.dayNotice && <CentralDayNotice notice={apertures.dayNotice} />}
-      <InhabitantRack manifests={centralManifests()} transport={transport} deviceWindows={deviceWindows}
-        day={apertures.day ?? null} conversation={apertures.conversation ?? null} />
+      <CentralDevicesChain transport={transport} dayStanding={apertures.day || apertures.dayNotice ? dayStanding : null} deviceWindows={deviceWindows}
+        day={apertures.day ?? null} conversation={apertures.conversation ?? null} impact={subject} />
     </div>
   )
 }
@@ -159,22 +159,21 @@ export function BaseDocumentDetail({transport, subject}: {transport: KernelTrans
   )
 }
 
-/** Technē · Instruments — the six lenses' instruments (Rev 4's table): the
- * admitted field/PCM owner's face reads its owner; the declared faces wait,
- * named. With `focusInstrument` (a techne:* holder id) the instrument families'
- * rack stands with that instrument's faces expanded and the others folded. */
-export function TechneInstrumentsDetail({transport, focusInstrument}: {
+/** Technē · Instruments — the six lenses' instruments (Rev 4's table), as devices of the runtime: the
+ * admitted field/PCM owner's device reads its owner; the declared faces wait, named, as dark devices.
+ * With `focusInstrument` (a techne:* holder id) the instrument families' chain stands with that
+ * instrument's devices open and the others folded to their titles. */
+export function TechneInstrumentsDetail({focusInstrument}: {
   transport: KernelTransportStatus
-  /** The focused pane's instrument (paneInstrument.ts); absent → the QL rack as it stands. */
+  /** The focused pane's instrument (paneInstrument.ts); absent → the QL family's devices as they stand. */
   focusInstrument?: string | null
 }) {
   const manifests = focusInstrument ? instrumentManifests() : qlManifests()
-  const deviceWindows = useDeviceWindowHost()
   // The QL instrument's reading is the one reader's (live/torusInstrument.ts), read here and never passed in by a caller.
   const instrumentReading = useQlInstrumentFeed()
   return (
     <div className="mode-detail" data-mode-detail="techne-instruments" data-focus-instrument={focusInstrument ?? undefined}>
-      <InhabitantRack manifests={manifests} transport={transport} instrumentReading={instrumentReading} focusInstrument={focusInstrument ?? null} deviceWindows={deviceWindows} />
+      <TechneDevices manifests={manifests} focusInstrument={focusInstrument ?? null} instrumentReading={instrumentReading} />
     </div>
   )
 }
@@ -366,10 +365,10 @@ export function TechneClipDetail({world}: {world: WorldTimelineView | null}) {
 }
 
 /** The instrument device side for a focused pane's instrument (owner ruling,
- * 13 Oct 2026). A Technē holder stands its instrument rack. The knowledge
+ * 13 Oct 2026). A Technē holder stands its instrument's devices. The knowledge
  * graph is a standalone instrument (T-KNOWLEDGE-GRAPH-DEVICE): its own family's
- * rack stands here, its faces driving the open graph's own controls, and the
- * 0 instrument's rack is never shown for it. */
+ * devices stand here, driving the open graph's own controls, and the
+ * 0 instrument's devices are never shown for it. */
 export function InstrumentDeviceDetail({transport, instrument, centralDevices = false}: {
   transport: KernelTransportStatus
   instrument: PaneInstrumentId
@@ -382,15 +381,16 @@ export function InstrumentDeviceDetail({transport, instrument, centralDevices = 
   if (instrument === 'knowledge-graph') {
     return (
       <div className="mode-detail" data-mode-detail="knowledge-graph-device">
-        {centralDevices && <InhabitantRack manifests={centralManifests()} transport={transport} deviceWindows={deviceWindows} />}
-        <InhabitantRack manifests={[admitKnowledgeGraphFamily()]} transport={transport} focusInstrument="knowledge-graph" deviceWindows={deviceWindows} />
+        {centralDevices && <CentralDevicesChain transport={transport} dayStanding={null} deviceWindows={deviceWindows} />}
+        <TechneDevices manifests={[admitKnowledgeGraphFamily()]} focusInstrument="knowledge-graph" instrumentReading={instrumentReading} />
       </div>
     )
   }
   if (centralDevices) {
     return (
       <div className="mode-detail" data-mode-detail="techne-instruments" data-focus-instrument={instrument} data-central-devices="true">
-        <InhabitantRack manifests={[...centralManifests(), ...instrumentManifests()]} transport={transport} instrumentReading={instrumentReading} focusInstrument={instrument} deviceWindows={deviceWindows} />
+        <CentralDevicesChain transport={transport} dayStanding={null} deviceWindows={deviceWindows} />
+        <TechneDevices manifests={instrumentManifests()} focusInstrument={instrument} instrumentReading={instrumentReading} />
       </div>
     )
   }

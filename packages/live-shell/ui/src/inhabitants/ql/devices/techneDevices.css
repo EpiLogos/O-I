@@ -1,0 +1,24 @@
+/* The Technē instruments' devices on the chain (T-DEVICES-TECHNE). Shell tokens only. The runtime's own sheet (frame/devices/devices.css)
+   sizes a device's picture for a small drawing; these faces' pictures are their bodies, so the sheet below lets a body show as itself:
+   scrollable in the compact well, whole at its own height in the pool, at the pane's size in a pane. */
+.techne-devices { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start; padding: 4px }
+.techne-family { display: contents }
+.techne-device { position: relative; flex: none }
+.techne-device[data-expanded="false"] { width: 180px }
+.techne-device .sdk-face__title { cursor: pointer }
+.techne-device-unfold { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0; border: 0; background: none; opacity: 0; cursor: pointer }
+.techne-device-unfold:focus-visible { opacity: 1; outline: 1px solid var(--accent); background: none }
+.techne-picture { width: 100%; box-sizing: border-box; align-self: stretch; text-align: left; font-size: 10.5px; color: var(--text-dim) }
+.techne-standing { display: inline-block; margin: 0 0 3px; padding: 0 5px; font-size: 9.5px; color: var(--text-dim); border: 1px solid var(--line) }
+.techne-standing[data-ql-standing="following"] { color: var(--text); border-color: var(--accent) }
+.techne-standing[data-ql-standing="refusing"], .techne-standing[data-ql-standing="unavailable"] { color: var(--stall) }
+.techne-waiting { display: grid; place-items: center; width: 100%; height: 100%; min-height: 48px; color: var(--text-faint); opacity: .7 }
+.device-picture:has(> .techne-picture) { display: block; overflow: auto }
+.device--compact .device-picture:has(> .techne-picture) { padding: 2px 3px }
+.device--whole .device-picture:has(> .techne-picture), .device--full .device-picture:has(> .techne-picture) { height: auto; max-height: 55vh; padding: 4px 6px }
+.device--full .device-picture:has(> .techne-picture) { max-height: none }
+.device-picture:has(> .techne-picture[data-picture="mode-switch"]) { height: auto }
+/* A reading's reason (a waiting face's note, the owner's refusal) is read whole in the pool and the pane. */
+:is(.device--whole, .device--full):is([data-device^="quaternal-logic:"], [data-device^="atlas-earth:"], [data-device^="knowledge-graph:"]) .sdk-row--reading .sdk-chip { white-space: normal; max-width: 100% }
+/* Central's devices lead the instrument's on the same row (the ruling: they are never removed): Central's chain takes what it needs. */
+.mode-detail[data-central-devices="true"] > .inhabitant-rack, .mode-detail[data-mode-detail="knowledge-graph-device"] > .inhabitant-rack { flex: 0 1 auto }

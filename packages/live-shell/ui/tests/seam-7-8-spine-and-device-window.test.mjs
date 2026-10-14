@@ -339,7 +339,9 @@ test('the Workbench door pops out and redocks through the existing window doors;
 
 test('every rack in the mode detail is handed the device door', async () => {
   const modeDetail = await readFile(new URL('../src/shell/ModeDetail.tsx', import.meta.url), 'utf8')
-  const racks = modeDetail.match(/<InhabitantRack [^>]*\/>/g) ?? []
-  assert.ok(racks.length >= 5, 'the mode detail stands its racks')
+  // The Central chain draws through the device runtime (central/devices); it is handed the same door as the racks.
+  const racks = modeDetail.match(/<(?:InhabitantRack|CentralDevicesChain) [^>]*\/>/g) ?? []
+  assert.ok(racks.length >= 1, 'the mode detail stands Central\'s device chain')
+  assert.ok(racks.some(rack => rack.startsWith('<CentralDevicesChain ')), 'Central\'s Devices side is the device runtime\'s chain')
   for (const rack of racks) assert.match(rack, /deviceWindows=\{deviceWindows\}/, rack)
 })
