@@ -9,25 +9,32 @@ import {readFile, readdir} from 'node:fs/promises'
 // rules from icon-cut.html (the owner's icon standard).
 
 const css = await readFile(new URL('../src/agent/agentShell.css', import.meta.url), 'utf8')
+// The Session grid and the Arrangement ruler are the one tracks pane's (FOUNDATION F3); the agent shell no longer draws its own.
+// Their craft floor is world-shell-mockup.html (`.trk`, `.cs`, `.thd`), so those rhythms are pinned on the shared stylesheet.
+const tracksCss = await readFile(new URL('../src/frame/tracks/tracks.css', import.meta.url), 'utf8')
 const agentDir = new URL('../src/agent/', import.meta.url).pathname
 const sources = (await readdir(agentDir)).filter(name => name.endsWith('.tsx') || name.endsWith('.ts'))
 const read = name => readFile(new URL(`../src/agent/${name}`, import.meta.url), 'utf8')
 
-const ruleFor = selector => {
+const ruleIn = (text, selector) => {
   // Anchor on a line start so compound selectors (.a .b {) do not shadow the
   // main rule with an earlier substring match.
-  const at = css.search(new RegExp(selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/^\\./, '^\\.'), 'm')) ?? -1
+  const at = text.search(new RegExp(selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/^\\\./, '^\\.'), 'm')) ?? -1
   if (at === -1) return null
-  const open = css.indexOf('{', at)
-  const close = css.indexOf('}', open)
-  return css.slice(open + 1, close)
+  const open = text.indexOf('{', at)
+  const close = text.indexOf('}', open)
+  return text.slice(open + 1, close)
 }
+const ruleFor = selector => ruleIn(css, selector)
+const trackRule = selector => ruleIn(tracksCss, selector)
 
-test('the session grid keeps the mockup 26px slot and header rhythm', () => {
-  assert.match(ruleFor('.agent-slot {') ?? ruleFor('.agent-slot {'), /height:26px/, 'clip slot height 26px')
-  assert.match(ruleFor('.agent-track-hd {'), /height:26px/, 'track header height 26px')
-  assert.match(ruleFor('.agent-stoprow {'), /height:22px/, 'stop row height 22px')
-  assert.match(ruleFor('.agent-strip {'), /height:228px/, 'mixer strip keeps the mockup height')
+test('the session grid keeps the mockup 28px cell, 26px header and 22px stop-row rhythm (the one shared grid)', () => {
+  assert.match(trackRule('.cs {'), /height:\s*28px/, 'clip cell height 28px (world-shell-mockup.html .cs)')
+  assert.match(trackRule('.trk .thd {'), /height:\s*26px/, 'track header height 26px')
+  assert.match(trackRule('.trk-foot {'), /height:\s*22px/, 'the track foot (retry) keeps the stop row\'s 22px')
+  assert.match(trackRule('.trk.sub {'), /width:\s*104px/, 'a helper\'s track is 104px wide (mockup .trk.sub)')
+  assert.match(trackRule('.trk-main {'), /width:\s*100px/, 'the Main column is 100px (mockup sessView)')
+  assert.equal(ruleFor('.agent-slot {'), null, 'the agent shell no longer styles a grid of its own')
 })
 
 test('the transport keeps the mockup control rhythm (19px rows, 10px type)', () => {
@@ -44,21 +51,19 @@ test('the context dock uses the mockup tile/launcher geometry', () => {
   assert.match(ruleFor('.agent-lgrid {'), /grid-auto-rows:126px/, 'launcher rows 126px')
 })
 
-test('the clip stall grammar is the mockup hazard, not a flat fill', () => {
-  const stall = ruleFor('.agent-slot.stall {')
+test('the clip stall grammar is the mockup hazard, not a flat fill (the one shared grid)', () => {
+  const stall = trackRule('.cs.clip.stalled {')
   assert.match(stall, /repeating-linear-gradient\(135deg/, 'hazard stripes at 135deg')
-  assert.match(stall, /var\(--stall\)/, 'stall colour carries the stripe')
-  assert.match(ruleFor('.agent-slot.stall .tri {'), /var\(--stall\)/, 'stall triangle recolours')
-  assert.match(ruleFor('.agent-slot.run .tri {'), /animation:agent-blink 1s/, 'run triangle blinks at 1s')
-  assert.match(ruleFor('.agent-slot.queued .tri {'), /animation:agent-blink .35s/, 'queued triangle blinks fast')
+  assert.match(stall, /var\(--stalled\)/, 'stall colour carries the stripe')
+  assert.match(trackRule('.cs.clip.stalled .tri {'), /var\(--stalled\)/, 'stall triangle recolours')
+  assert.match(trackRule('.cs.clip.running .tri {'), /animation:\s*tracks-blink 1s/, 'run triangle blinks at 1s')
+  assert.match(trackRule('.cs.clip.waiting .tri {'), /animation:\s*tracks-blink \.35s/, 'queued triangle blinks fast')
 })
 
-test('the arrangement draws no predicted ends (mask fade on running, dash on queued)', () => {
-  const run = ruleFor('.agent-arr .ac.run {')
-  assert.match(run, /mask-image:linear-gradient/, 'running block fades out — no right edge')
-  const qd = ruleFor('.agent-arr .qd {')
-  assert.match(qd, /dashed/, 'queued block is a dash')
-  assert.match(ruleFor('.agent-arr .needle {'), /width:2px/, 'needle is a 2px line')
+test('the arrangement draws no predicted ends (mask fade on running, dash on queued) (the one shared ruler)', () => {
+  assert.match(trackRule('.tl-clip.running {'), /mask-image:\s*linear-gradient/, 'running block fades out — no right edge')
+  assert.match(trackRule('.tl-clip.dash {'), /dashed/, 'queued block is a dash')
+  assert.match(trackRule('.tl-needle {'), /width:\s*2px/, 'needle is a 2px line')
 })
 
 test('transport controls carry drawn marks, not bare text glyphs', async () => {
