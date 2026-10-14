@@ -1,19 +1,22 @@
 // The World cut's one temporal read — the Timeline projection's civil-field
-// poller (WORLD-SHELL-DESIGN §6, §10 seams 5/7).
+// reader (WORLD-SHELL-DESIGN §6, §10 seams 5/7).
 //
-// Port law: the receiving pattern is ported from the agent shell's ONE
-// poller (src/agent/useTemporalEvents.ts:24-71) — the same kernelOp
-// 'temporal_events_read' over a bounded last-civil-day window, the same
-// in-flight guard, the K1-measured 90 s cadence. It is re-ported here, not
-// imported, because the agent dir is another lane's zone and this poller
-// binds the time spine (declare/arm/fire the read cadence; qualify the
-// retained occasions) — a different concern over the same owner read.
+// The read itself is the frame's, not this hook's: timeline/temporalPoll.ts
+// polls the kernel's 'temporal_events_read' once for every reader (this cut
+// and the agent shell's run needles), over the civil week through tomorrow
+// bounded at UTC midnights, behind one in-flight guard, at the K1-measured
+// 90 s cadence. This hook consumes that reading and binds the time spine to
+// it (declare/arm/fire the read cadence; qualify the retained occasions) — a
+// different concern over the same owner read. It ports the receiving pattern
+// the agent shell's poller had (src/agent/useTemporalEvents.ts) into the one
+// poll; it does not read the op itself.
 //
-// Honesty: every cadence firing recorded here is a real read execution;
-// Now is derived from the reading's own civil instants and day refs, never
-// from the wall clock; the wall clock bounds the query window only (the
-// same bound the agent shell's read uses). Nothing is copied: adapters
-// project the events; the reading is not a second store.
+// Honesty: every cadence firing recorded here is a real read execution (one
+// per completed execution of the shared read, processed once by its
+// revision); Now is derived from the reading's own civil instants and day
+// refs, never from the wall clock; the wall clock bounds the query window
+// only. Nothing is copied: adapters project the events; the reading is not a
+// second store.
 
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge';
@@ -30,13 +33,15 @@ import {projectDayTracks, dayClipEventIndex} from '../timeline/dayTrackAdapter';
 import {projectRunTracks, runClipEventIndex, type AdmittedRun} from '../timeline/runTrackAdapter';
 import {projectConversationTracks, conversationClipEventIndex} from '../timeline/conversationTrackAdapter';
 import {projectLaneWorldTracks, projectWorldTracks} from '../timeline/registerWorldTrackAdapters';
+import {TEMPORAL_POLL_MS, useTemporalReading} from '../timeline/temporalPoll';
 import type {WorldTrackSet} from '../timeline/worldTrackAdapter';
 import {useAtlasAionReading} from './atlas/AtlasProjectionPanel';
 
 // The read's real cost is the owner's (K1: the temporal read walks every
 // stream; the 2 s answer cache makes repeats identical) — the needle
-// cadence serves that cost: once at mount, then every 90 s.
-const READ_CADENCE_MS = 90_000;
+// cadence serves that cost: once at mount, then every 90 s, the frame's one
+// poll's own cadence.
+const READ_CADENCE_MS = TEMPORAL_POLL_MS;
 const READ_CADENCE_ID = 'central-temporal-read';
 
 export interface WorldTimelineSource {
@@ -76,9 +81,10 @@ export interface WorldTimelineView {
   selectOccasion: (event: TemporalEventRow) => void;
 }
 
-/** Read the civil field once now and every 90 s, arm the read cadence, and
- * project the World track sets. One poller per call site — the Timeline
- * projection is mounted once per shell frame. */
+/** Read the civil field (the frame's one temporal read: once now, then every
+ * 90 s), arm the read cadence, and project the World track sets. This hook
+ * polls nothing of its own — the Timeline projection is mounted once per
+ * shell frame, and the poll is shared with the agent shell. */
 export function useWorldTemporalReading(transport: KernelTransportStatus): WorldTimelineView {
   const spine = useMemo(() => createTimeSpine(), []);
   const [events, setEvents] = useState<TemporalEventRow[]>([]);
@@ -120,96 +126,78 @@ export function useWorldTemporalReading(transport: KernelTransportStatus): World
     return spine.subscribe(() => bumpRevision((value) => value + 1));
   }, [spine]);
 
-  const refresh = useCallback(async () => {
-    if (transport.kind === 'unavailable') {
-      setStatus('unavailable');
-      setError(transport.reason ?? 'Transport unavailable');
-      return;
-    }
-    // The window is the day track's own scale: the last seven civil days
-    // through tomorrow, bounded at UTC midnights. Day-bounded keys also
-    // keep the kernel's 2 s answer cache warm within a day (K1) — a
-    // per-poll millisecond bound would defeat it and re-read every stream
-    // cold each time. Measured against the live ground (9 Oct): ~10 s
-    // cold, ~13 ms warm, over the walks' full streams. (The agent shell's
-    // run needle reads a 24 h window for the same cost reason; this cut's
-    // scale is the civil week so returns and clearings stay reachable.)
-    const nowDate = new Date();
-    const fromUnixMs = Date.UTC(nowDate.getUTCFullYear(), nowDate.getUTCMonth(), nowDate.getUTCDate() - 7);
-    const toUnixMs = Date.UTC(nowDate.getUTCFullYear(), nowDate.getUTCMonth(), nowDate.getUTCDate() + 1);
-    const result = await kernelOp(transport, {
-      op: 'temporal_events_read',
-      query: {window: {window: 'between', from_unix_ms: fromUnixMs, to_unix_ms: toUnixMs}},
-    });
-    if (result.error || result.outcome?.result !== 'temporal_events_reading') {
-      setStatus('unavailable');
-      setError(result.error ?? 'Temporal events reading unavailable');
-      return;
-    }
-    const document = result.outcome.document as {events?: TemporalEventRow[]; absences?: TemporalStreamAbsence[]} | undefined;
-    const fresh = Array.isArray(document?.events) ? document.events : [];
-    const freshAbsences = Array.isArray(document?.absences) ? document.absences : [];
-    // The owner's admitted runs — the run LANES come from the agency
-    // reading (the agent shell's own track source), the clips from the
-    // temporal read. A refused agency read is named, never silently empty.
-    let admittedRuns: AdmittedRun[] | null = null;
-    let admittedRunsError: string | null = null;
-    const agency = await kernelOp(transport, {op: 'agency_read', project: 'O-I'});
-    if (agency.error || agency.outcome?.result !== 'agency_reading') {
-      admittedRunsError = agency.error ?? 'The agency reading is unavailable; run lanes come only from the temporal read.';
-    } else {
-      const spaces = (agency.outcome as {spaces?: unknown[]}).spaces ?? [];
-      admittedRuns = spaces.flatMap((space) => Object.keys((space as {agent_sessions?: Record<string, unknown>}).agent_sessions ?? {}))
-        .map((sessionRef) => ({sessionRef}));
-    }
-    // The execution's own instant (never the window bound): the firing
-    // clip records when the read actually ran.
-    const readAt = Date.now();
-    // A real execution of the read cadence lands as a clip (§15.3). The
-    // clip count is therefore the number of reads this projection ran —
-    // real executions only, never synthetic history.
-    spine.fireCadence(READ_CADENCE_ID, {
-      atUnixMs: readAt,
-      label: 'civil-field read',
-      disclosure: 'the Timeline projection read the civil field',
-    });
-    spine.qualifyOccasions(fresh, readAt, 'qualified against this refresh of the temporal reading');
-    // Now: the newest civil instant the reading itself carries.
-    const dated = [...fresh]
-      .filter((event) => event.instant_unix_ms != null)
-      .sort((a, b) => (b.instant_unix_ms ?? 0) - (a.instant_unix_ms ?? 0));
-    const newest = dated[0];
-    const now: CivilReading = newest
-      ? {instantUnixMs: newest.instant_unix_ms ?? readAt, dayRef: eventDayKey(newest), source: 'kernel temporal read'}
-      : {instantUnixMs: readAt, dayRef: null, source: 'kernel temporal read (no dated events in window)'};
-    spine.readNow(now);
-    setEvents(fresh);
-    setAbsences(freshAbsences);
-    setAdmittedRuns(admittedRuns);
-    setAdmittedRunsError(admittedRunsError);
-    setStatus('live');
-    setError(null);
-    setReadAtUnixMs(readAt);
-  }, [transport, spine]);
-
-  const inFlight = useRef(false);
+  // The frame's one temporal read (timeline/temporalPoll.ts). Each completed execution lands here once, by its revision;
+  // an execution the owner refused, or a transport that cannot serve, is named, never silently empty.
+  const {reading} = useTemporalReading(transport);
+  const processed = useRef(-1);
+  const mounted = useRef(true);
   useEffect(() => {
-    const ticked = async () => {
-      if (inFlight.current) return;
-      inFlight.current = true;
-      try {
-        await refresh();
-      } finally {
-        inFlight.current = false;
+    mounted.current = true;
+    return () => { mounted.current = false; };
+  }, []);
+
+  useEffect(() => {
+    if (reading.status === 'reading') return;
+    if (reading.status === 'unavailable') {
+      setStatus('unavailable');
+      setError(reading.error ?? 'Temporal events reading unavailable');
+      return;
+    }
+    if (processed.current === reading.revision) return;
+    processed.current = reading.revision;
+    const fresh = reading.events;
+    const freshAbsences = reading.absences;
+    void (async () => {
+      // The owner's admitted runs — the run LANES come from the agency
+      // reading (the agent shell's own track source), the clips from the
+      // temporal read. A refused agency read is named, never silently empty.
+      let admittedRuns: AdmittedRun[] | null = null;
+      let admittedRunsError: string | null = null;
+      const agency = await kernelOp(transport, {op: 'agency_read', project: 'O-I'});
+      if (agency.error || agency.outcome?.result !== 'agency_reading') {
+        admittedRunsError = agency.error ?? 'The agency reading is unavailable; run lanes come only from the temporal read.';
+      } else {
+        const spaces = (agency.outcome as {spaces?: unknown[]}).spaces ?? [];
+        admittedRuns = spaces.flatMap((space) => Object.keys((space as {agent_sessions?: Record<string, unknown>}).agent_sessions ?? {}))
+          .map((sessionRef) => ({sessionRef}));
       }
-    };
-    void ticked();
-    const id = setInterval(() => void ticked(), READ_CADENCE_MS);
-    return () => clearInterval(id);
-  }, [refresh]);
+      if (!mounted.current) return;
+      // The execution's own instant (never the window bound): the firing
+      // clip records when the read actually ran.
+      const readAt = reading.readAtUnixMs ?? Date.now();
+      // A real execution of the read cadence lands as a clip (§15.3). The
+      // clip count is therefore the number of reads this projection ran —
+      // real executions only, never synthetic history.
+      spine.fireCadence(READ_CADENCE_ID, {
+        atUnixMs: readAt,
+        label: 'civil-field read',
+        disclosure: 'the Timeline projection read the civil field',
+      });
+      spine.qualifyOccasions(fresh, readAt, 'qualified against this refresh of the temporal reading');
+      // Now: the newest civil instant the reading itself carries.
+      const dated = [...fresh]
+        .filter((event) => event.instant_unix_ms != null)
+        .sort((a, b) => (b.instant_unix_ms ?? 0) - (a.instant_unix_ms ?? 0));
+      const newest = dated[0];
+      const now: CivilReading = newest
+        ? {instantUnixMs: newest.instant_unix_ms ?? readAt, dayRef: eventDayKey(newest), source: 'kernel temporal read'}
+        : {instantUnixMs: readAt, dayRef: null, source: 'kernel temporal read (no dated events in window)'};
+      spine.readNow(now);
+      setEvents(fresh);
+      setAbsences(freshAbsences);
+      setAdmittedRuns(admittedRuns);
+      setAdmittedRunsError(admittedRunsError);
+      setStatus('live');
+      setError(null);
+      setReadAtUnixMs(readAt);
+    })();
+  }, [reading, transport, spine]);
+
+  // The World stands on a reading only while one is live; otherwise it states the absence (status + error), never a set.
+  const live = status === 'live';
 
   const sets = useMemo((): WorldTrackSet[] => {
-    if (status !== 'live') return [];
+    if (!live) return [];
     // Central's civil day first (the mockup's Day group), then runs, then
     // conversations, then the atlas's Aion readings when the Earth pane holds
     // one. The lane adapters are pure; the family door
@@ -220,7 +208,7 @@ export function useWorldTemporalReading(transport: KernelTransportStatus): World
   }, [events, status, admittedRuns, aionSet]);
 
   const eventByClipId = useMemo((): Map<string, TemporalEventRow> => {
-    if (status !== 'live') return new Map();
+    if (!live) return new Map();
     return new Map([
       ...dayClipEventIndex(events),
       ...runClipEventIndex(events),
@@ -231,15 +219,15 @@ export function useWorldTemporalReading(transport: KernelTransportStatus): World
   const source = useMemo(
     (): WorldTimelineSource => ({
       status,
-      error: status === 'live' ? null : error,
-      now: status === 'live' ? spine.now() : null,
-      events: status === 'live' ? events : [],
-      absences: status === 'live' ? absences : [],
+      error: live ? null : error,
+      now: live ? spine.now() : null,
+      events: live ? events : [],
+      absences: live ? absences : [],
       sets,
       eventByClipId,
-      admittedRuns: status === 'live' ? admittedRuns : null,
-      admittedRunsError: status === 'live' ? admittedRunsError : null,
-      readAtUnixMs: status === 'live' ? readAtUnixMs : null,
+      admittedRuns: live ? admittedRuns : null,
+      admittedRunsError: live ? admittedRunsError : null,
+      readAtUnixMs: live ? readAtUnixMs : null,
       readCadence: spine.cadences().find((cadence) => cadence.id === READ_CADENCE_ID) ?? null,
     }),
     [status, error, events, absences, sets, eventByClipId, admittedRuns, admittedRunsError, readAtUnixMs, spine],

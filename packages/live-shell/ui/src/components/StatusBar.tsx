@@ -2,6 +2,7 @@ import type { UseSet } from '../shell/useSet'
 import type { HostedAppState } from '@epilogos/expressions-boundary'
 import type { DetailMode } from './DeviceChainPanel'
 import { detailPairOf, MODE_GRAMMAR, surfModeOf } from '../shell/modeGrammar'
+import { MODE_STATUS } from '../shell/modeStatus'
 import {Icon} from './Icon'
 import {RunContextReading} from '../shell/runContext'
 export function StatusBar({ state, documentError, viewport, selectedTrack, audio, mode, reading, detailMode, changeDetailMode, agentInfo, presentedView, subjectLabel }: { state: UseSet; documentError: string | null; viewport: number[]; selectedTrack?: string; audio: boolean; mode: string; reading: HostedAppState | null; detailMode: DetailMode; changeDetailMode: (mode: DetailMode) => void; agentInfo?: { label: string; fn: string } | null; /** The presentation that stands — the status identity is per presented view (the mockup's status line). */ presentedView?: 'session' | 'arrangement' | null; /** The Base mode's selected ground subject — the Document detail's aperture. */ subjectLabel?: string }) {
@@ -14,16 +15,18 @@ export function StatusBar({ state, documentError, viewport, selectedTrack, audio
   // The status identity is per mode (the audit's finding: Base·Central must
   // not say "Expressions"): the presented centre composition names what the
   // frame holds — Live keeps the audio set line, Expressions the open work.
+  // The line each mode reads is its registration (shell/modeStatus.ts), never a branch here.
   const surf = surfModeOf(mode)
-  const centreIdentity = !audio && surf && surf !== 'expressions'
+  const status = surf ? MODE_STATUS[surf] : null
+  const centreIdentity = !audio && surf && status?.line === 'centre'
     ? MODE_GRAMMAR[surf].centre[presentedView ?? 'session']
     : null
   // Live's own identity (the commission): the presented presentation names
   // the live work — "Session — clips and scenes · <the set>", the set being
   // the context the mode's transport and detail serve. No set: the line
   // says so and keeps the affordance (never another mode's identity).
-  const liveIdentity = audio && surf === 'live'
-    ? MODE_GRAMMAR.live.centre[presentedView ?? 'session']
+  const liveIdentity = audio && surf && status?.line === 'set'
+    ? MODE_GRAMMAR[surf].centre[presentedView ?? 'session']
     : null
   const liveWork = error ? null : loading ? null : set ? set.path : 'no set open — the browser opens one'
   return <footer className="statusbar" data-region="status-bar" role="status" title={`Viewport ${viewport[0]} × ${viewport[1]} · ${audio ? documentError ?? 'Summary and deep document readings' : reading?.nativeScene?.expression_ref ?? 'Native Expressions owner'} `}>
@@ -33,7 +36,7 @@ export function StatusBar({ state, documentError, viewport, selectedTrack, audio
     {/* The track slot: the armed audio track in Live, the selected ground subject in Base·Central —
       the Expressions reading's scene name stays Expressions' own (never another mode's identity). */}
     <span className="statusbar-track">{audio ? selectedTrack : centreIdentity ? (subjectLabel ?? '') : reading?.sceneName}</span>
-    {!audio && surf === 'expressions' && reading?.sceneState && <span className="statusbar-counts" title="Current Scene snapshot; file-save standing appears in the native Save control">Snapshot: {reading.sceneState === 'Edited since save' ? 'edited' : reading.sceneState === 'Draft' ? 'none' : 'saved'}{reading.nativeScene ? ` · revision ${reading.nativeScene.revision}` : ''}</span>}
+    {!audio && status?.snapshot && reading?.sceneState && <span className="statusbar-counts" title="Current Scene snapshot; file-save standing appears in the native Save control">Snapshot: {reading.sceneState === 'Edited since save' ? 'edited' : reading.sceneState === 'Draft' ? 'none' : 'saved'}{reading.nativeScene ? ` · revision ${reading.nativeScene.revision}` : ''}</span>}
     {/* The run context stands in every mode: which world this shell runs in, from the host's own disclosure. */}
     <RunContextReading />
     <nav className="status-detail-views" aria-label="Detail view">
