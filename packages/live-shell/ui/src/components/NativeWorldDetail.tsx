@@ -13,7 +13,8 @@ import {SceneSequenceEditor} from './SceneSequenceEditor'
 import {dispatchOpenDevice} from './nativeDrag'
 import {createNativeContentActions, readNativeExpressionsContent} from '../shell/nativeContent'
 import type {DetailMode} from './DeviceChainPanel'
-import {openDetailSettings, toggleDetailSettings, type NativeDetailConfigurationFamily} from '../shell/compositionViews'
+import {openDetailSettings, toggleDetailSettings, type NativeCompositionViewSource, type NativeDetailConfigurationFamily} from '../shell/compositionViews'
+import {SceneControls} from './expressions/clip/SceneControls'
 import './NativeWorldDetail.css'
 
 interface NativeDetailDestinationBasis {
@@ -26,8 +27,9 @@ interface NativeDetailDestinationBasis {
 export type NativeDetailConfigurationIntent = NativeDetailDestinationBasis &
   ({mode:'clip';material:'glyph'|'scene'}|{mode:'device';family:NativeDetailConfigurationFamily});
 
-/** Persistent presentation of the retained application's actual editor owner. */
-export function NativeWorldDetail({mode, expand, collapse, presentMode, presentNativeEditor, configurationIntent}: {mode: DetailMode; expand: () => void; collapse: () => void; presentMode:(mode:DetailMode)=>void; presentNativeEditor?:(editor:'source'|'layers'|'placement',basis:NativeEditorBasis)=>void; configurationIntent?: NativeDetailConfigurationIntent | null}) {
+/** Persistent presentation of the retained application's actual editor owner. `sceneControls`: the clip is an Expressions Scene, so the
+ * Scene's own controls stand beside it (components/expressions/clip/SceneControls.tsx); only the Expressions clip entry asks for them. */
+export function NativeWorldDetail({mode, expand, collapse, presentMode, presentNativeEditor, configurationIntent, sceneControls = false}: {mode: DetailMode; expand: () => void; collapse: () => void; presentMode:(mode:DetailMode)=>void; presentNativeEditor?:(editor:'source'|'layers'|'placement',basis:NativeEditorBasis)=>void; configurationIntent?: NativeDetailConfigurationIntent | null; sceneControls?: boolean}) {
   const workspace = useWorkspace()
   const currentWorkspace=useRef(workspace);currentWorkspace.current=workspace
   const publishedReading=useRef(workspace.editorReading)
@@ -68,7 +70,8 @@ export function NativeWorldDetail({mode, expand, collapse, presentMode, presentN
     document.addEventListener('fullscreenchange', changed)
     return () => document.removeEventListener('fullscreenchange', changed)
   }, [])
-  const request = useCallback(async (operation: NativeEditorRequest): Promise<NativeEditorReply> => {
+  // `quiet`: the caller says the owner's refusal in its own place (the Scene's controls do), so this header does not say it twice.
+  const request = useCallback(async (operation: NativeEditorRequest, quiet = false): Promise<NativeEditorReply> => {
     const epoch=lifetime.current;
     const captured={...requestResidence.current};
     const restoredMode=deepReturn.current?.mode??captured.mode;let depthExit=false;
@@ -85,7 +88,7 @@ export function NativeWorldDetail({mode, expand, collapse, presentMode, presentN
     if(!current()||epoch!==lifetime.current||!residence.current?.getClientRects().length)return {ok:false,error:'The native editor residence changed before dispatch; current work was retained'}
     const result = workspace.editor ? await workspace.editor.request(operation) : {ok: false as const, error: 'The retained native editor is unavailable'}
     const readingNow=publishedReading.current;
-    if(current()&&epoch===lifetime.current&&residence.current?.getClientRects().length
+    if(!quiet&&current()&&epoch===lifetime.current&&residence.current?.getClientRects().length
       &&(operation.operation==='read'||readingNow&&sameEditorBasis(result.ok?result.reading.basis:operation.basis,readingNow.basis)))setFault(result.ok ? null : result.error)
     if(operation.operation==='open'&&result.ok&&current()&&epoch===lifetime.current&&residence.current?.getClientRects().length
       &&readingNow&&sameEditorBasis(result.reading.basis,readingNow.basis))presentNativeEditor?.(operation.editor,result.reading.basis)
@@ -110,6 +113,13 @@ export function NativeWorldDetail({mode, expand, collapse, presentMode, presentN
     &&!!residence.current?.getClientRects().length;};
   const sceneSource={owner:'expressions' as const,content:sceneContent,actions:sceneContent?createNativeContentActions(sceneContent,{request:operation=>scenePresented()?request(operation):Promise.resolve({ok:false as const,error:'The Scene editor is no longer presented'})}):null,
     isPresented:scenePresented,revealDetail:()=>{}};
+  // The Scene's controls on the clip side: the same owner, presented while this clip body is the one shown.
+  const clipPresented=()=>{const current=scenePresentation.current;return current.mode==='clip'
+    &&current.workspaceId===sceneWorkspaceId&&current.accessEpoch===sceneAccessEpoch&&workspace.nativeAccessCurrent(sceneAccessEpoch)
+    &&!!residence.current?.getClientRects().length;};
+  const clipSource:NativeCompositionViewSource={owner:'expressions',content:sceneContent,actions:sceneContent?createNativeContentActions(sceneContent,{request:operation=>clipPresented()?request(operation,true):Promise.resolve({ok:false as const,error:'The Scene controls are no longer presented'})}):null,
+    isPresented:clipPresented,currentReading:()=>publishedReading.current,revealDetail:()=>{}};
+  const showSceneControls=sceneControls&&mode==='clip';
   const selectEntity = (id: string) => {
     if (reading) void request({operation: 'select', basis: reading.basis, entity_id: id})
   }
@@ -163,7 +173,7 @@ export function NativeWorldDetail({mode, expand, collapse, presentMode, presentN
       {fault && <span role="alert">{fault}</span>}
     </header>
     <div className="native-detail-body">
-      <div className="native-detail-view" hidden={mode !== 'clip'}><div className="native-clip-surface" hidden={clipSurface!=='scene'}><NativeSceneEditor reading={reading} request={request}/></div><div className="native-clip-surface" hidden={clipSurface!=='glyph'}>{workspace.mode==='expressions'&&<SceneSequenceEditor reading={reading} request={request}/>}<GlyphSequenceEditor reading={reading} request={request} drafts={drafts.current} onExpand={expandClip} isPresented={glyphPresented}/></div><div className="native-clip-surface" hidden={clipSurface!=='takes'}><NativeTakes reading={reading} request={request}/></div></div>
+      <div className={`native-detail-view native-clip-view${showSceneControls ? ' has-scene-controls' : ''}`} hidden={mode !== 'clip'}>{showSceneControls&&<SceneControls source={clipSource}/>}<div className="native-clip-surfaces"><div className="native-clip-surface" hidden={clipSurface!=='scene'}><NativeSceneEditor reading={reading} request={request}/></div><div className="native-clip-surface" hidden={clipSurface!=='glyph'}>{workspace.mode==='expressions'&&<SceneSequenceEditor reading={reading} request={request}/>}<GlyphSequenceEditor reading={reading} request={request} drafts={drafts.current} onExpand={expandClip} isPresented={glyphPresented}/></div><div className="native-clip-surface" hidden={clipSurface!=='takes'}><NativeTakes reading={reading} request={request}/></div></div></div>
       <div className="native-detail-view native-device-view" hidden={mode !== 'device'}>
         <div className="native-chain-glyph" hidden={!selectedFormation}><GlyphSequenceEditor compact reading={reading} request={request} drafts={drafts.current} onExpand={expandGlyphDevice} isPresented={compactGlyphPresented}/></div>
         <div className="native-chain-strip"><NativeDeviceRack reading={reading} request={request} onOpen={dispatchOpenDevice}/></div>

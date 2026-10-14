@@ -55,7 +55,7 @@ export interface WorldTrackActions {
   /** Seat what is dropped on the empty track (manual §10.3: "To seat an agent, drag it onto an empty track"): the drag type
    * the set accepts, and the owner op that seats it. The dropped payload reaches `run` as the drag carried it. */
   seat?: {op: string; accepts: string; run(payload: string): unknown};
-  /** The grain the owner's ops take when it is coarser than the controls look (Factory: "whole harness" — a Stop on one track
+  /** The grain the owner's ops take when it is coarser than the controls look (e.g. "whole harness": a Stop on one track
    * stops the harness). The Session says it on every control it applies to. */
   grain?: string;
 }
