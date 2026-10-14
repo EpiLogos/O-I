@@ -1,5 +1,5 @@
 import {contributionUnavailable} from './contributions'
-import {deviceBindingId, nativeDetachedBodySupported, placeDeviceDetached, publishDeviceWindowHost, type DeviceBinding, type DeviceDetachIdentity} from './detachedKinds'
+import {deviceBindingId, deviceWindowGone, nativeDetachedBodySupported, placeDeviceDetached, popOutDeviceWindow, publishDeviceWindowHost, type DeviceBinding, type DeviceDetachIdentity} from './detachedKinds'
 /** Receiving frame over the original native Workbench and the one continuity book. */
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import {Workbench, GroupPane, type WorkbenchProps} from '../../../../../desktop/cradle/src/surface/Workbench'
@@ -294,16 +294,23 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
     origin.book.setLayout(layout => detachBinding(layout, id))
   }
   /** The device pop-out (seam 8): the existing detach door carries the device's own binding, whose id is the face's and whose
-   * identity travels with it. The layout holds it in the detached set, never as a centre tab. */
+   * identity travels with it. The layout holds it in the detached set, never as a centre tab. A device whose window is already
+   * open is focused, never popped out twice; an entry whose window is gone is dropped and the device pops out afresh. */
   const popOutDevice = async (identity: DeviceDetachIdentity) => {
     const id = deviceBindingId(identity)
-    if (latest.current.book.current.layout.detached?.some(entry => entry.surfaceId === id)) return
     const binding: DeviceBinding = {id, kind: 'device', title: `${identity.family} · ${identity.face}`, ref: id, device: identity}
     const {origin, current, workspaceId} = capture()
     if (origin.kernel.transport.kind !== 'tauri') throw Error('Detached native windows are unavailable in the development browser.')
     const {invoke} = await import('@tauri-apps/api/core')
-    await ownerIO(current, () => invoke('window_detach', {workspaceId, binding, bounds: origin.book.current.layout.windowBounds?.[id] ?? null}))
-    origin.book.setLayout(layout => placeDeviceDetached(layout, binding, layout.focusedGroupId ?? ''))
+    await popOutDeviceWindow(!!latest.current.book.current.layout.detached?.some(entry => entry.surfaceId === id), {
+      // windows.rs answers false when no window stands for the device's binding reference.
+      focusExisting: () => ownerIO(current, () => invoke<boolean>('window_focus_subject', {reference: id})),
+      dropStale: () => { current(); origin.book.dropDetached(workspaceId, id) },
+      detach: async () => {
+        await ownerIO(current, () => invoke('window_detach', {workspaceId, binding, bounds: origin.book.current.layout.windowBounds?.[id] ?? null}))
+        origin.book.setLayout(layout => placeDeviceDetached(layout, binding))
+      },
+    })
   }
   /** The device returns to its rack through the existing window door: closing its window runs the same redock lifecycle. */
   const redockDevice = async (identity: DeviceDetachIdentity) => {
@@ -314,7 +321,7 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
       await ownerIO(current, () => invoke('window_redock_surface', {workspaceId, surfaceId: id}))
     } catch (cause) {
       // No open window answers for this device: its detached entry is stale, and the rack shows it docked again.
-      if (!String(cause).includes('no matching detached Surface')) throw cause
+      if (!deviceWindowGone(cause)) throw cause
       current()
       origin.book.dropDetached(workspaceId, id)
     }

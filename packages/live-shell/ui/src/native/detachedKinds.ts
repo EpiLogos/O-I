@@ -78,13 +78,42 @@ export function deviceIdentityOf(binding: SurfaceBinding): DeviceDetachIdentity 
 }
 
 /** The layout's own record of a popped-out device: its binding is held in the detached set (never as a centre tab), so the
- * rack reads the same store the pane engine's detach door writes. */
-export function placeDeviceDetached(layout: LayoutState, binding: SurfaceBinding, groupId: string): LayoutState {
+ * rack reads the same store the pane engine's detach door writes. A device names no pane group: its entry's group is
+ * empty, so the focused group it was popped from is never kept alive as a reserved slot (engine.ts reads a detached
+ * entry's group as one). */
+export function placeDeviceDetached(layout: LayoutState, binding: SurfaceBinding): LayoutState {
   return {
     ...layout,
     surfaces: {...layout.surfaces, [binding.id]: binding},
-    detached: [...(layout.detached ?? []).filter(entry => entry.surfaceId !== binding.id), {surfaceId: binding.id, groupId, index: 0, pinned: false}],
+    detached: [...(layout.detached ?? []).filter(entry => entry.surfaceId !== binding.id), {surfaceId: binding.id, groupId: '', index: 0, pinned: false}],
   }
+}
+
+/** The window door's own answers that a device's window is gone (windows.rs `window_redock_surface`). The entry is stale
+ * then, and the rack shows the device docked again; any other failure is a fault and still reaches the report. */
+const DEVICE_WINDOW_GONE: readonly string[] = ['no matching detached Surface', 'The detached Surface window is no longer available']
+export function deviceWindowGone(cause: unknown): boolean {
+  const text = String(cause)
+  return DEVICE_WINDOW_GONE.some(message => text.includes(message))
+}
+
+/** The three doors a device pop-out may use. `focusExisting` resolves true when the entry's window answered the focus, and
+ * false when no window stands for it. */
+export interface DevicePopOutDoor {
+  readonly focusExisting: () => Promise<boolean>
+  readonly dropStale: () => void
+  readonly detach: () => Promise<void>
+}
+
+/** A device pop-out: an entry that names a live window focuses that window; an entry whose window is gone is dropped, and the
+ * device pops out afresh. Without an entry the device simply pops out. Returns what happened. */
+export async function popOutDeviceWindow(hasEntry: boolean, door: DevicePopOutDoor): Promise<'focused' | 'popped-out'> {
+  if (hasEntry) {
+    if (await door.focusExisting()) return 'focused'
+    door.dropStale()
+  }
+  await door.detach()
+  return 'popped-out'
 }
 
 /** A device returning to its rack: its detached entry and binding leave the layout. A device never returns as a centre tab. */

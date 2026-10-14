@@ -21,6 +21,8 @@ import { decodeLayout } from "../surface/persist";
 import type { LayoutState, SurfaceBinding } from "../surface/types";
 
 const asBinding = (raw: unknown): SurfaceBinding | null => (validBinding as (raw: unknown) => SurfaceBinding | null)(raw);
+/** A device window's binding (seam 8): the kind the native shell alone draws, never a persisted workbench surface. */
+const isDeviceBinding = (raw: unknown): raw is { id?: unknown; kind: "device" } => !!raw && typeof raw === "object" && (raw as { kind?: unknown }).kind === "device";
 
 export interface ProgressiveLayoutDecode {
   /** The best valid layout, decoded once through the real codec path — or
@@ -61,7 +63,13 @@ export function decodeLayoutProgressive(raw: unknown, workspaceId: string): Prog
   const valid = new Set<string>();
   const surfaces: Record<string, unknown> = {};
   const rawSurfaces = record.surfaces && typeof record.surfaces === "object" ? record.surfaces as Record<string, unknown> : {};
+  // A popped-out device (seam 8) is not persisted state: its window dies with the app, so nothing it held is restorable
+  // and nothing it held is damage. Its binding and its detached entry leave the record silently — no drop note, no drop
+  // count, and no part of the damaged-to-empty decision below. Older saved books may still carry one; this is where they
+  // are read.
+  const devices = new Set<string>();
   for (const [mapKey, candidate] of Object.entries(rawSurfaces)) {
+    if (isDeviceBinding(candidate)) { devices.add(mapKey); if (typeof candidate.id === "string") devices.add(candidate.id); continue; }
     const binding = asBinding(candidate);
     if (!binding || valid.has(binding.id)) { droppedBindingIds.push(mapKey); continue; }
     valid.add(binding.id);
@@ -69,6 +77,7 @@ export function decodeLayoutProgressive(raw: unknown, workspaceId: string): Prog
   }
   for (const id of droppedBindingIds) notes.push(`Surface binding "${id}" could not be restored and was dropped; its saved siblings were kept.`);
   record.surfaces = surfaces;
+  if (Array.isArray(record.detached)) record.detached = record.detached.filter(entry => !(entry && typeof entry === "object" && devices.has((entry as { surfaceId?: unknown }).surfaceId as string)));
   // 2. PANE TREE — prune refs the surfaces map can no longer resolve, the
   // way the caller will want them pruned: a group keeps its valid tabs,
   // loses only the dead ones; a group left holding nothing goes (an

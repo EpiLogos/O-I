@@ -86,7 +86,10 @@ export function createSpineEncounterBridge(
         book.setContext(context => {
           const next = {ref: intent.ref, kind: intent.subjectKind, title: intent.title};
           if (context.subject?.ref !== undefined && context.subject.ref === intent.ref) return {...context, subject: next};
-          return {...context, subject: next, trail: [...(context.trail ?? []), trailStopFrom(String(mode), context.subject)]};
+          // A stop is where the person came FROM: with no previous subject there is nothing to walk back to, so the trail
+          // is unchanged (the first subject opens an encounter; it leaves no stop).
+          const stop = trailStopFrom(String(mode), context.subject);
+          return {...context, subject: next, trail: stop ? [...(context.trail ?? []), stop] : context.trail};
         });
         return;
       }
@@ -106,7 +109,9 @@ export function createSpineEncounterBridge(
 }
 
 /** The trail stop a subject transition leaves: where the person came from. */
-export function trailStopFrom(mode: string, previous: {ref?: string; kind?: string; title?: string} | undefined): TrailStop {
+export function trailStopFrom(mode: string, previous: {ref?: string; kind?: string; title?: string} | undefined): TrailStop | null {
+  // A transition with no previous subject leaves no stop: a stop with no subject behind it is not a place to return to.
+  if (!previous?.ref) return null;
   const stopMode = (mode === 'audio' ? 'base' : mode) as WorkspaceMode;
-  return {mode: stopMode, label: previous?.title || stopMode, surfaceRef: previous?.ref, surfaceKind: previous?.kind};
+  return {mode: stopMode, label: previous.title || stopMode, surfaceRef: previous.ref, surfaceKind: previous.kind};
 }

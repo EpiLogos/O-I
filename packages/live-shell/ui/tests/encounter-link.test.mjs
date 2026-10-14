@@ -140,8 +140,8 @@ test('popstate: Back walks the trail the sync pushed, and forward returns to it'
   store.bridge.transition({kind: 'subject', ref: 'b', subjectKind: 'artefact', title: 'B'})
   link.publish()
   assert.equal(w.entries().length, 3, 'the initial entry and one entry per encounter')
-  assert.equal(store.book.current.context.trail.length, 2, 'each subject transition leaves a trail stop')
-  assert.equal(store.book.current.context.trail[1].surfaceRef, 'a', 'the second stop names where the person came from')
+  assert.equal(store.book.current.context.trail.length, 1, 'only a transition from a subject leaves a trail stop; the first encounter leaves none')
+  assert.equal(store.book.current.context.trail[0].surfaceRef, 'a', 'the stop names where the person came from')
 
   w.back()
   assert.equal(store.book.current.context.subject.ref, 'a', 'Back restores the previous encounter')
@@ -225,7 +225,18 @@ test('the link helpers: an address with no subject, and a stop for a mode with n
   assert.equal(inboundPlan('?projection=earth').carried.arrangement, 'base', 'projection alone names an encounter, arrangement defaults to base')
   assert.equal(inboundPlan('?other=1'), null, 'a query with no encounter key names none')
   assert.equal(mergeLinkSearch('?dev=1&arr=old', 'arr=base&ap=0'), 'arr=base&ap=0&dev=1', 'link keys are replaced, other keys kept')
-  assert.deepEqual(trailStopFrom('audio', undefined), {mode: 'base', label: 'base', surfaceRef: undefined, surfaceKind: undefined})
+  assert.equal(trailStopFrom('audio', undefined), null, 'with no previous subject there is no stop to leave')
+  assert.equal(trailStopFrom('audio', {title: 'no ref'}), null, 'a previous subject without a ref is no stop either')
+  assert.deepEqual(trailStopFrom('audio', {ref: 'a', kind: 'artefact', title: 'A'}), {mode: 'base', label: 'A', surfaceRef: 'a', surfaceKind: 'artefact'})
+})
+
+test('the bridge: the first subject leaves no stop, so the legacy return chip shows no meaningless trail entry', () => {
+  const store = fixtureStore({}, 'base')
+  store.bridge.transition({kind: 'subject', ref: 'first', subjectKind: 'artefact', title: 'First'})
+  assert.equal(store.book.current.context.subject.ref, 'first')
+  assert.equal(store.book.current.context.trail, undefined, 'no previous subject, so no trail stop')
+  store.bridge.transition({kind: 'subject', ref: 'second', subjectKind: 'artefact', title: 'Second'})
+  assert.deepEqual(store.book.current.context.trail, [{mode: 'base', label: 'First', surfaceRef: 'first', surfaceKind: 'artefact'}], 'the second transition leaves the real stop')
 })
 
 test('no write-back loop: a render that still shows the pre-apply store is not written over the link', () => {
