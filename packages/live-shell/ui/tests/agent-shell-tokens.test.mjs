@@ -46,12 +46,16 @@ test('frame grid templates equal the oracle geometry strings', () => {
     ['grid-template-areas', frame.gridTemplateAreas],
   ]) {
     assert.ok(decls.has(prop), `missing ${prop}`)
-    assert.equal(collapse(decls.get(prop)), collapse(oracleValue), `${prop} drifted from the oracle`)
+    // The transport row is the shell's one bar in every mode (lane C, 14 Oct: the mockup's 46px, styles.css --transport-h); the
+    // rest of the geometry stays the oracle's.
+    const value = prop === 'grid-template-rows' ? collapse(decls.get(prop)).replace(/^var\(--transport-h\)/, collapse(oracleValue).split(' ')[0]) : decls.get(prop)
+    if (prop === 'grid-template-rows') assert.match(decls.get(prop), /^var\(--transport-h\) /, 'Factory\'s bar is the shell\'s one transport height')
+    assert.equal(collapse(value), collapse(oracleValue), `${prop} drifted from the oracle`)
   }
 })
 
 test('frame variants keep the oracle fallback geometry', () => {
-  const rowDetail = /grid-template-rows:64px minmax\(0, ?1fr\) 0 28px/
+  const rowDetail = /grid-template-rows:var\(--transport-h\) minmax\(0, ?1fr\) 0 28px/
   const colBrowser = /grid-template-columns:0 minmax\(0, ?1fr\) var\(--dock-w\)/
   const rule = pattern => {
     const match = css.match(pattern)
