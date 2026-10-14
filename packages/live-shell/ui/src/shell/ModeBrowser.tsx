@@ -42,14 +42,11 @@ import {useCentralDocumentOpener} from '../central/documents/useOpenCentralDocum
 import {composeModeBrowser, ROW_SOURCE_OWNERS, type ModeBrowserCategory, type SurfMode} from './modeGrammar'
 import {allInhabitantBrowserEntries} from '../inhabitants/manifest'
 import {useWorkspace} from './workspace'
-import {carrierOf} from './runContext'
 import {Icon} from '../inhabitants/sdk/Icon'
 import {KindMark} from '../inhabitants/sdk/marks.tsx'
 import type {CentralSubjectSelection} from '../inhabitants/CentralSubjectDetail'
 import './modeSurface.css'
-import {createPortal} from 'react-dom'
 import type {BrowserCategory, ControlledBrowser} from '../frame/browser/browserKinds'
-import {useReachedDocument} from '../central/documents/documentDoor'
 
 /** The root register's day surface — where the civil calendar's records
  * live (`centralDayNowModel`'s subjectDayRef reads this shape). */
@@ -62,10 +59,30 @@ function CategoryMark({category, size = 13}: {category: ModeBrowserCategory; siz
   return <Icon name={category.mark} size={size} />
 }
 
+/** What selecting a row of a category does, beyond its hint — the words the browser's lower panel used to hold above the
+ * aperture (the category's context), now the category's own Info words (manual §10.1: the status bar reads what any control
+ * does). Keyed by the category's id; a category not named here has its hint alone. */
+const CATEGORY_WORDS: Readonly<Record<string, string>> = {
+  'central-days': 'Selecting a day opens its record in the Document detail — CAS identity, basis, save-router standing. Double-click or Enter opens the Day itself in the focused pane.',
+  'central-files': 'Selecting a note selects it as the Document detail\'s subject; folders walk the ground. Double-click or Enter opens a file in the focused pane — a Flow as its Flow, any other file as its own tab.',
+  'techne-sources': 'A source opens in its instrument over the current encounter.',
+}
+/** A waiting category's words, by the group it stands in. */
+const WAITING_WORDS: Readonly<Record<string, string>> = {
+  World: 'The World groups wait for their owners; the lens surface holds their places.',
+}
+
+/** A category's Info words (the row's data-i): its hint, what selecting a row does, and whether it reads or waits. */
+export function categoryInfo(category: ModeBrowserCategory): string {
+  const waiting = category.state === 'waiting'
+  return [category.hint, CATEGORY_WORDS[category.id], waiting ? WAITING_WORDS[category.group] : undefined, waiting ? '(Declared, waiting.)' : undefined]
+    .filter(Boolean).join(' ')
+}
+
 /** A mode's grammar categories in the one browser (F6): the ground's and the world's categories are material to open. */
 export function modeBrowserCategories(mode: SurfMode): BrowserCategory[] {
   return composeModeBrowser(mode, allInhabitantBrowserEntries()).map(category => ({id: category.id, label: category.label, kind: 'material',
-    mark: <CategoryMark category={category} />, hint: category.hint, waiting: category.state === 'waiting'}))
+    mark: <CategoryMark category={category} />, hint: category.hint, info: categoryInfo(category), waiting: category.state === 'waiting'}))
 }
 
 export function ModeBrowser({mode, onSelectSubject, selectedSubject, controlled}: {
@@ -101,15 +118,9 @@ export function ModeBrowser({mode, onSelectSubject, selectedSubject, controlled}
         {activeCategory && <CategoryRows category={activeCategory} mode={mode} needle={needle}
           onSelectSubject={onSelectSubject} selectedSubject={selectedSubject} />}
   </>
-  const pool = <section className="world-context-pool" aria-label="Browser context">
-      <header><button type="button" data-i="Context|the selected category's standing — what its rows read, and what selecting a row does"
-        title="Context — the category's standing"><span aria-hidden="true">▾</span> {activeCategory ? `${activeCategory.label} · ${activeCategory.state === 'waiting' ? 'declared, waiting' : 'reads'}` : 'Context'}</button></header>
-      <div className="world-pool-body">
-        {activeCategory && <CategoryContext category={activeCategory} mode={mode} />}
-        <ApertureSlot mode={mode} selectedSubject={selectedSubject} />
-      </div>
-    </section>
-  if (controlled) return <div className="mode-browser-body" data-mode-browser={mode}>{results}{controlled.poolHost && createPortal(pool, controlled.poolHost)}</div>
+  // The browser's lower panel is the focused pane's own context (the aperture slot, frame/browser/apertureViews.tsx), in every
+  // mode; a category's words are its row's Info (categoryInfo), so these rows portal nothing into the pool.
+  if (controlled) return <div className="mode-browser-body" data-mode-browser={mode}>{results}</div>
 
   return <aside className="world-browser world-browser-categories mode-browser" data-mode-browser={mode} aria-label="Mode browser">
     <div className="world-browser-searchrow">
@@ -123,7 +134,7 @@ export function ModeBrowser({mode, onSelectSubject, selectedSubject, controlled}
         {groups.map(({group, categories: list}) => <div key={group}>
           <h3>{group}</h3>
           {list.map(category => <button type="button" key={category.id} aria-pressed={activeCategory?.id === category.id}
-            data-i={`${category.label}|${category.hint}`}
+            data-i={`${category.label}|${categoryInfo(category)}`}
             title={`${category.label} — ${category.hint}${category.state === 'waiting' ? ' (declared, waiting)' : ''}`}
             onClick={() => {setActive(category.id); setNeedle('')}}>
             <span aria-hidden="true"><CategoryMark category={category} /></span><span>{category.label}</span>
@@ -138,52 +149,8 @@ export function ModeBrowser({mode, onSelectSubject, selectedSubject, controlled}
       </nav>
       <div className="world-browser-results">{results}</div>
     </div>
-    {pool}
     <InstrumentsSection /><SetsSection />
   </aside>
-}
-
-/** The aperture slot (Revision 3) — where Live keeps the groove pool: the
- * encounter concepts the focused pane follows, and the pane line. Honest
- * values only: the carrier's kind, the selected subject's path, the
- * reading's state — never an invented encounter. */
-function ApertureSlot({mode, selectedSubject}: {mode: SurfMode; selectedSubject: CentralSubjectSelection | null}) {
-  const {transport} = useWorkspace()
-  const carrier = transport.kind === 'unavailable' ? '—' : carrierOf(transport)
-  const rows = [
-    {name: 'Field', value: mode === 'base' ? 'central' : 'the encounter\'s field', title: 'the field the pane follows'},
-    {name: 'World', value: carrier, title: transport.kind === 'unavailable' ? `the carrier is unavailable: ${transport.reason}` : `${carrier} serves this ground`},
-    {name: 'Subject', value: selectedSubject ? selectedSubject.path.split('/').pop() ?? selectedSubject.path : 'not selected', title: selectedSubject ? selectedSubject.path : 'select a subject in the results — the pane follows the encounter'},
-    {name: 'Occasion', value: 'the day\'s Now', title: 'the pane follows the day\'s civil Now'},
-  ]
-  const document = useReachedDocument()
-  // The document the hand last reached in a pane: its view rows and its owner actions (the mockup's Day context panel —
-  // Form, File, Revision, then "Save HTML copy" / "Place on Central"). The pane's face carries no buttons of its own.
-  const view = document ? [
-    {name: 'Form', value: document.form, title: `the ${document.form} the reached pane holds`},
-    {name: 'File', value: document.title, title: document.title},
-    {name: 'Revision', value: document.revision ? `r${document.revision.slice(0, 12)} · ${document.state}` : document.state, title: document.state},
-  ] : []
-  return <div className="mode-browser-aperture" aria-label="Aperture slot">
-    <div className="mode-browser-aperture-head">aperture <span>pane (1) · follows</span></div>
-    {rows.map(row => <div key={row.name} className="mode-browser-aperture-row" data-i={`${row.name}|${row.title}`}>
-      <span className="mode-browser-aperture-name">{row.name}</span>
-      <span className="mode-browser-aperture-value">{row.value}</span>
-    </div>)}
-    {document && view.length > 0 && <>
-      <div className="mode-browser-aperture-head">view <span>{document.form.toLowerCase()} · reached</span></div>
-      {view.map(row => <div key={row.name} className="mode-browser-aperture-row" data-i={`${row.name}|${row.title}`}>
-        <span className="mode-browser-aperture-name">{row.name}</span>
-        <span className="mode-browser-aperture-value" title={row.title}>{row.value}</span>
-      </div>)}
-      <div className="mode-browser-aperture-actions">
-        <button type="button" data-action="save" disabled={!document.save} onClick={() => document.save?.()}
-          data-i={`Save to Central|the owner's revision-checked write of the ${document.form} as it stands in its pane`}>Save to Central</button>
-        <button type="button" data-action="reread" disabled={!document.reread} onClick={() => document.reread?.()}
-          data-i={`${document.rereadLabel ?? 'Re-read'}|read the ${document.form} again from its owner`}>{document.rereadLabel ?? 'Re-read'}</button>
-      </div>
-    </>}
-  </div>
 }
 
 // ————————————————————————————————————————————————————————————————————————
@@ -415,17 +382,4 @@ function DesignedRead({absence, reason, affordance}: {absence: string; reason: s
     <p className="mode-browser-empty-owner">{reason}</p>
     <p className="mode-browser-empty-read" role="note">{affordance}</p>
   </section>
-}
-
-/** The context pool's line: the category's standing (what it reads, what
- * selecting a row does). */
-function CategoryContext({category, mode}: {category: ModeBrowserCategory; mode: SurfMode}) {
-  return <div className="mode-browser-context">
-    <strong>{category.label}</strong>
-    <p>{category.hint}</p>
-    {category.id === 'central-days' && <p>Selecting a day opens its record in the Document detail — CAS identity, basis, save-router standing. Double-click or Enter opens the Day itself in the focused pane.</p>}
-    {category.id === 'central-files' && <p>Selecting a note selects it as the Document detail's subject; folders walk the ground. Double-click or Enter opens a file in the focused pane — a Flow as its Flow, any other file as its own tab.</p>}
-    {category.id === 'techne-sources' && <p>A source opens in its instrument over the current encounter.</p>}
-    {mode === 'techne' && category.state === 'waiting' && <p role="note">The World groups wait for their owners; the lens surface holds their places.</p>}
-  </div>
 }

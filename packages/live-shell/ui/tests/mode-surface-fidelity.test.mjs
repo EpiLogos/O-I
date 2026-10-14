@@ -110,19 +110,16 @@ test('the dock: the agents tile reads the agency surface — and discloses its a
 })
 
 // ————————————————————————————————————————————————————————————————————————
-// The browser — rail marks, the results header, the New affordance, the
-// aperture slot.
+// The browser — rail marks, the results header, the New affordance. The
+// aperture slot is the one browser's (frame/browser/apertureViews.tsx,
+// tests/aperture-slot-context.test.mjs): the focused pane's own context.
 
-test('the browser: results header, the New affordance on the Project group, the aperture slot', () => {
+test('the browser: results header, the New affordance on the Project group; the rows draw no aperture of their own', () => {
   const out = html(createElement(StubWorkspaceProvider, {transport: UNAVAILABLE},
     createElement(ModeBrowser, {mode: 'base', onSelectSubject: () => {}, selectedSubject: null})))
   assert.ok(out.includes('mode-browser-resulthead'), 'the results header drawn')
   assert.ok(out.includes('>Name</span>'), 'the header names the column')
   assert.ok(out.includes('mode-browser-new'), 'the New affordance drawn')
   assert.ok(out.includes('exactly Day · Flow · Beings · Things'), 'New names the four forms')
-  assert.ok(out.includes('mode-browser-aperture'), 'the aperture slot drawn')
-  for (const row of ['Field', 'World', 'Subject', 'Occasion']) {
-    assert.ok(out.includes(`mode-browser-aperture-name">${row}</span>`), `the ${row} concept drawn`)
-  }
-  assert.ok(out.includes('not selected'), 'the subject line honest when nothing is selected')
+  assert.ok(!out.includes('mode-browser-aperture') && !out.includes('aria-label="Aperture"'), 'the slot stands in the one browser\'s pool, not in the rows')
 })

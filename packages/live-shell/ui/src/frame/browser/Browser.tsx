@@ -1,14 +1,16 @@
 // The one browser (FOUNDATION F6; manual §10.3): one search, the categories grouped by the four kinds, a category's rows,
 // and the pool beneath. It knows no mode: the frame hands it the mode's row sources (shell/modeBrowsers.tsx) and the
-// sources every mode shares, and each source's body draws its rows under the browser's control. The pool shows the
-// selected device whole (frame/devices/DevicePool.tsx); a body's own pool content (a material's detail, a native
-// device, the agent chain's readings) is portalled into the same pool. Drawn at the mockup's floor (world-shell-mockup
-// .bsearch/.bcats/.bres/.bitem/.slot; browser.css).
+// sources every mode shares, and each source's body draws its rows under the browser's control. The pool is the aperture
+// slot first — the focused pane's own context (apertureViews.tsx) — then a body's own pool content (a material's detail, a
+// native device, the agent chain's readings), portalled in, then the selected device whole (frame/devices/DevicePool.tsx),
+// which takes the slot's place while it is chosen. A category's words are its row's Info (data-i). Drawn at the mockup's
+// floor (world-shell-mockup .bsearch/.bcats/.bres/.bitem/.slot; browser.css, apertureViews.css).
 import {useEffect, useMemo, useRef, useState} from 'react'
 import {DevicePool} from '../devices/DevicePool'
 import {useBrowserSearchRequest} from '../keys/keyDoors'
 import {BROWSER_KINDS, type BrowserCategory, type BrowserSource} from './browserKinds'
 import {EMPTY_TRAIL, visitCategory, walkTrail} from './browserTrail'
+import {ApertureSlot} from './apertureViews'
 import '../../components/WorldBrowser.css'
 import './browser.css'
 
@@ -64,6 +66,7 @@ export function Browser({sources, category, onCategory}: BrowserProps) {
           return list.length ? <div key={kind} data-browser-kind={kind}>
             <h3 title={`${label} — ${hint}`}>{label}</h3>
             {list.map(item => <button type="button" key={key(item)} aria-pressed={current !== null && key(current) === key(item)}
+              data-i={`${item.label}|${item.info ?? item.hint ?? ''}`}
               title={item.hint ? `${item.label} — ${item.hint}${item.waiting ? ' (declared, waiting)' : ''}` : item.label}
               onClick={() => { hold(key(item)); onCategory?.(key(item)); setQuery('') }}>
               <span aria-hidden="true">{item.mark ?? '▸'}</span><span>{item.label}</span>
@@ -78,6 +81,7 @@ export function Browser({sources, category, onCategory}: BrowserProps) {
       </div>
     </div>
     <section className="world-context-pool one-browser-pool" aria-label="Pool">
+      <ApertureSlot />
       <div ref={setPoolHost} className="one-browser-pool-host" />
       <DevicePool />
     </section>

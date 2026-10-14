@@ -77,8 +77,8 @@
   flex: none; margin-left: auto; padding-left: 6px; font-size: 9.5px; color: var(--text-faint) }
 .one-browser .world-browser-results :is(.browser-empty, .native-empty) { padding: 8px 6px; margin: 0; font-size: 10.5px; color: var(--text-faint) }
 
-/* ——— the pool (.slot): 46% of the column under a 5px rule, bg-2; a body's pool content above the selected device, its
-   head the 22px .sloth on bg-1 ——— */
+/* ——— the pool (.slot): 46% of the column under a 5px rule, bg-2; the aperture slot (apertureViews.css), then a body's pool
+   content, then the selected device; a body's pool head is the 22px .sloth on bg-1 ——— */
 .one-browser .one-browser-pool { flex: 0 0 46%; min-height: 120px; max-height: none; display: flex; flex-direction: column; overflow: auto; border-top: 5px solid var(--line); background: var(--bg-2) }
 .one-browser .one-browser-pool > .device-pool { height: auto; flex: 1 0 auto }
 .one-browser-pool-host:empty { display: none }
@@ -87,17 +87,6 @@
 .one-browser .one-browser-pool-host > .world-context-pool > header > button { display: flex; align-items: center; gap: 6px; height: 21px; min-height: 0; padding: 0; font-size: 11px; color: var(--text) }
 .one-browser .one-browser-pool-host > .world-context-pool > .world-pool-body { padding: 4px 0 8px }
 .one-browser .one-browser-pool-host .pool { height: auto; min-height: 0; border-top: 0 }
-/* the pool's context (.sec, .ctx): a section line, then keyed rows */
-.one-browser .one-browser-pool-host .mode-browser-context { padding: 4px 8px 2px; font-size: 11px }
-.one-browser .one-browser-pool-host .mode-browser-aperture { margin: 0; border: 0; background: transparent }
-.one-browser .one-browser-pool-host .mode-browser-aperture-head { display: flex; justify-content: space-between; padding: 8px 8px 3px; border: 0; background: transparent; font-size: 10px; letter-spacing: 0; color: var(--text-faint) }
-.one-browser .one-browser-pool-host .mode-browser-aperture-row { grid-template-columns: 62px minmax(0, 1fr); gap: 6px; align-items: center; min-height: 21px; padding: 2px 8px; font-size: 11px }
-.one-browser .one-browser-pool-host .mode-browser-aperture-name { font-size: 10px; color: var(--text-faint) }
-.one-browser .one-browser-pool-host .mode-browser-aperture-value { font-family: inherit; font-size: 11px; color: var(--text) }
-/* The reached document's owner actions (the mockup's "Save HTML copy" / "Place on Central" under the Day's view rows). */
-.one-browser .one-browser-pool-host .mode-browser-aperture-actions { display: flex; gap: 6px; padding: 6px 8px 8px }
-.one-browser .one-browser-pool-host .mode-browser-aperture-actions button { height: 20px; padding: 0 8px; border: 1px solid var(--line-strong); background: var(--bg-3); color: var(--text); font-size: 10.5px }
-.one-browser .one-browser-pool-host .mode-browser-aperture-actions button:disabled { color: var(--text-faint); background: transparent }
 
 @media (max-width: 760px) {
   .one-browser .world-browser-main { grid-template-columns: fit-content(96px) minmax(0, 1fr) }

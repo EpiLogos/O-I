@@ -27,6 +27,9 @@ export interface BrowserCategory {
   /** The category's mark (icon-cut). */
   mark?: ReactNode
   hint?: string
+  /** The category's words in the Info view (its row's data-i): what its rows read and what selecting one does. Absent, the
+   * hint stands. */
+  info?: string
   /** Declared, but its owner read has not landed. */
   waiting?: boolean
   /** How many rows the category holds, when its source discloses that (the mockup's right-aligned count). Never guessed:
