@@ -12,7 +12,7 @@ test('Lane A §2: all registered native commands have a bounded role',()=>{
  const code=rustCode(read('src-tauri/src/main.rs'));
  const registered=[...code.matchAll(/generate_handler!\s*\[([^\]]*)\]/g)].flatMap(m=>m[1].split(',').map(s=>s.trim()).filter(Boolean)).sort();
  assert.ok(registered.length);assert.deepEqual(registered,rules.commands.map(r=>r.command).sort());
- for(const row of rules.commands)assert.ok(['kernel_op','presentation-lease','dialog','menu','window-lifecycle','diagnostics','input-device'].includes(row.classification)&&row.rationale&&row.spec_ref);
+ for(const row of rules.commands)assert.ok(['kernel_op','presentation-lease','dialog','menu','window-lifecycle','diagnostics'].includes(row.classification)&&row.rationale&&row.spec_ref);
 });
 test('Lane A §2: native shell filesystem access is limited to its two declared host duties',()=>{
  const actual=files('src-tauri/src',/\.rs$/).flatMap(owner=>[...rustRuntime(read(owner)).matchAll(/(?:std::fs|tokio::fs|fs)::[A-Za-z_]+/g)].map(m=>({owner,operation:m[0]})));

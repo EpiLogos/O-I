@@ -71,11 +71,12 @@ export function JankoDeviceView({windowState, initialLayout = 'janko', modeMask 
       }
     },
   }), [input])
-  const press = (pitchClass: number, source: NoteEvent['source'], pressure?: number | null) => {
+  // `id` is the press's own identity (a pointer id), so two touch-points of one class release independently.
+  const press = (pitchClass: number, source: NoteEvent['source'], pressure?: number | null, id?: string) => {
     setRefusal(null)
-    input.down({kind: 'down', pitchClass, source, pressure})
+    input.down({kind: 'down', pitchClass, source, pressure, press: id})
   }
-  const release = (pitchClass: number, source: NoteEvent['source']) => input.up({kind: 'up', pitchClass, source})
+  const release = (pitchClass: number, source: NoteEvent['source'], id?: string) => input.up({kind: 'up', pitchClass, source, press: id})
   const pointerSource = (event: PointerEvent<HTMLButtonElement>): NoteEvent['source'] => event.pointerType === 'touch' ? 'touch' : 'pointer'
   const pen = (event: PointerEvent<HTMLButtonElement>) => event.pointerType === 'pen' ? event.pressure : null
 
@@ -96,9 +97,9 @@ export function JankoDeviceView({windowState, initialLayout = 'janko', modeMask 
       aria-label={`${label}, ${detail}${modeMask ? (modeMask[pitchClass] ? ', in the mode' : ', outside the mode') : ''}`} aria-pressed={held.includes(pitchClass)}
       data-janko-in-mode={modeMask ? (modeMask[pitchClass] ? 'yes' : 'no') : undefined}
       data-janko-pitch-class={pitchClass} data-janko-row={key?.row} data-janko-column={key?.column} data-janko-touch-point={key?.touchPoint}
-      onPointerDown={event => { press(pitchClass, pointerSource(event), pen(event)) }}
-      onPointerUp={event => release(pitchClass, pointerSource(event))}
-      onPointerLeave={event => { if (held.includes(pitchClass)) release(pitchClass, pointerSource(event)) }}
+      onPointerDown={event => { press(pitchClass, pointerSource(event), pen(event), `pointer-${event.pointerId}`) }}
+      onPointerUp={event => release(pitchClass, pointerSource(event), `pointer-${event.pointerId}`)}
+      onPointerLeave={event => release(pitchClass, pointerSource(event), `pointer-${event.pointerId}`)}
       onClick={event => { if (event.detail === 0) { press(pitchClass, 'pointer'); release(pitchClass, 'pointer') } }}>
       {label}
     </button>

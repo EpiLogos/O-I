@@ -12,6 +12,9 @@ export interface NoteEvent {
   readonly pressure?: number | null
   /** MIDI note-on velocity over 127, in (0, 1]. A MIDI note strikes at it in place of pressure; no other source carries it. */
   readonly velocity?: number | null
+  /** The press's own identity: a pointer id, a MIDI port, channel and note, a computer key. A pitch class stays held while any press holds it,
+   * so two touch-points of one class (the Jankó surface repeats each class) release independently. Absent: one press per source and class. */
+  readonly press?: string
 }
 
 /** The owner's default strike (controller.playVoices: 0.35 modal metres). Keys without pressure strike at this amplitude. */
@@ -61,7 +64,10 @@ export interface JankoInput {
 
 /** One input path for every source. Notes struck in the same task are one chord (one owner act); a later task is a new act. */
 export function createJankoInput(options: JankoInputOptions): JankoInput {
-  const held = new Set<number>()
+  // Each press, by its identity, to the class it holds. A class is held while any press holds it.
+  const presses = new Map<string, number>()
+  const heldClasses = () => [...new Set(presses.values())].sort((a, b) => a - b)
+  const pressId = (event: NoteEvent) => `${event.source}:${event.press ?? event.pitchClass}`
   let batch: {classes: Set<number>; amplitude: number} | null = null
   const flush = () => {
     const pending = batch
@@ -76,8 +82,10 @@ export function createJankoInput(options: JankoInputOptions): JankoInput {
   return {
     down(event) {
       if (!Number.isInteger(event.pitchClass) || event.pitchClass < 0 || event.pitchClass > 11) return
-      held.add(event.pitchClass)
-      options.onHeld?.([...held].sort((a, b) => a - b))
+      const id = pressId(event)
+      if (presses.get(id) === event.pitchClass) return
+      presses.set(id, event.pitchClass)
+      options.onHeld?.(heldClasses())
       const amplitude = strikeAmplitude(event)
       if (batch === null) {
         batch = {classes: new Set([event.pitchClass]), amplitude}
@@ -88,9 +96,9 @@ export function createJankoInput(options: JankoInputOptions): JankoInput {
       }
     },
     up(event) {
-      held.delete(event.pitchClass)
-      options.onHeld?.([...held].sort((a, b) => a - b))
+      if (!presses.delete(pressId(event))) return
+      options.onHeld?.(heldClasses())
     },
-    held: () => [...held].sort((a, b) => a - b),
+    held: heldClasses,
   }
 }

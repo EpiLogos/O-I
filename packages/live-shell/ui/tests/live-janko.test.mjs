@@ -153,6 +153,28 @@ test('notes struck in one task are one chord, one owner act; a later task is its
   assert.deepEqual(path.held(), [0, 7, 9], 'the held keys are the notes still down')
 })
 
+test('repeated-touch lifetime: two touch-points of one class release independently; the class stays held while any press holds it', async () => {
+  const sent = [], heldSeen = []
+  const path = input.createJankoInput({send: async command => { sent.push(command); return {ok: true} }, onHeld: held => heldSeen.push(held)})
+  path.down({kind: 'down', pitchClass: 3, source: 'touch', press: 'pointer-1'})
+  path.down({kind: 'down', pitchClass: 3, source: 'touch', press: 'pointer-2'})
+  await new Promise(resolve => setTimeout(resolve, 0))
+  assert.deepEqual(sent.map(c => c.pitch_classes), [[3]], 'two touch-points of one class in one task are one strike of that class')
+  path.up({kind: 'up', pitchClass: 3, source: 'touch', press: 'pointer-1'})
+  assert.deepEqual(path.held(), [3], 'the other finger still holds the class')
+  path.up({kind: 'up', pitchClass: 3, source: 'touch', press: 'pointer-1'})
+  assert.deepEqual(path.held(), [3], 'a repeated release of the same press changes nothing')
+  path.up({kind: 'up', pitchClass: 3, source: 'touch', press: 'pointer-2'})
+  assert.deepEqual(path.held(), [], 'the class is released with its last press')
+  path.down({kind: 'down', pitchClass: 3, source: 'touch', press: 'pointer-2'})
+  path.down({kind: 'down', pitchClass: 3, source: 'touch', press: 'pointer-2'})
+  assert.equal(heldSeen.filter(h => h.length === 1).length, 4, 'a duplicate down of the same press is no new hold (two downs, one release, one re-press)')
+  const midi = await import('../src/native/liveMidi.ts')
+  const a = midi.midiNoteEvent({port: 'Keys', channel: 0, note: 60, velocity: 90, on: true})
+  const b = midi.midiNoteEvent({port: 'Keys', channel: 0, note: 72, velocity: 90, on: true})
+  assert.notEqual(a.press, b.press, 'two MIDI notes of one class (an octave apart) are two presses')
+})
+
 test('velocity: pen pressure maps to the Studio\'s pressure law inside the owner bound; every other input strikes at the owner default', () => {
   assert.equal(input.strikeAmplitude({source: 'pointer', pressure: 1}), 0.9)
   assert.equal(input.strikeAmplitude({source: 'pointer', pressure: 0.01}), 0.15)

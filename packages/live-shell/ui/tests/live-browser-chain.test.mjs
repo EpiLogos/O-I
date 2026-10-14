@@ -33,6 +33,7 @@ globalThis.document = {getElementById: () => null, createElement: () => ({}), he
 const here = new URL('../src/', import.meta.url)
 const React = await import('react')
 const {renderToStaticMarkup} = await import('react-dom/server')
+const {readFileSync} = await import('node:fs')
 await import('../src/live/LiveInstrumentSection.tsx')
 await import('../src/live/LivePresets.tsx')
 await import('../src/panels/devices/index.tsx')
@@ -133,4 +134,14 @@ test('nothing is removed: every committed bottom face is still registered, with 
   const registered = panels.getPanels('bottom').map(p => p.id).sort()
   assert.deepEqual(registered, [...COMMITTED_BOTTOM].sort())
   for (const panel of panels.getPanels('bottom')) assert.ok(panel.title && panel.component, panel.id)
+})
+
+test("the opened set's own devices stay browsable: its instruments under Instruments, every other device (plug-ins too) under Chain devices", () => {
+  const set = {path: '/sets/demo.als', tracks: [{devices: ['Operator', 'Reverb', 'PluginDevice']}, {devices: ['Simpler', 'Delay']}]}
+  const ctx = {set, openSet: () => {}}
+  const html = renderToStaticMarkup(React.createElement(browser.BrowserPane, {defaultSet: '', ctx}))
+  const listed = [...html.matchAll(/data-browser-set-device="([^"]+)"/g)].map(m => m[1])
+  assert.deepEqual(listed, ['Operator', 'Simpler'], 'the browser opens on Instruments, listing the set\'s own instruments')
+  const source = readFileSync(new URL('../src/components/BrowserPane.tsx', import.meta.url), 'utf8')
+  assert.match(source, /category === 'Instruments' \? INSTRUMENTS\.has\(name\) : category === 'Chain devices' && !INSTRUMENTS\.has\(name\)/, 'plug-ins and effects list under Chain devices')
 })

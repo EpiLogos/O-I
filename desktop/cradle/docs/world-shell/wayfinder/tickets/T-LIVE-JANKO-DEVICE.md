@@ -32,7 +32,7 @@ errors retained.
 
 ## Progress
 
-- Leg 1 (aa364d2c1): the keyboard is a device in Live's chain (after the
+- Leg 1 (868a24424): the keyboard is a device in Live's chain (after the
   torus, before the effects, mounted once a reading is published). It
   validates `ql.janko-surface/v1` exactly, proves fingering invariance and
   the one-semitone row step on the owner's real output, and offers the

@@ -109,7 +109,9 @@ export function setModeInForce(reading: LiveModeCatalogueState, held: LiveModeHo
   const mode: ModeInForce = !ready
     ? waitingModeInForce(reading.state === 'refused' ? reading.reason : LIVE_MODE_SEAM)
     : resolveModeInForce(ready.scales, choice)
-  return {groups, mode, line: ready ? catalogueStatusLine(ready, mode) : mode.line}
+  // The choice is held for this session: the set document has no owner write for a mode yet, so the line says so wherever it shows.
+  const sessionOnly = mode.state === 'in-force' ? ' · held for this session (the set has no owner write for a mode yet)' : ''
+  return {groups, mode, line: (ready ? catalogueStatusLine(ready, mode) : mode.line) + sessionOnly}
 }
 
 /** The set's mode in force for any Live surface; reads the catalogue once per session. */

@@ -48,6 +48,7 @@ export function midiNoteEvent(note: MidiNote): NoteEvent {
     pitchClass: note.note % 12,
     source: 'midi',
     velocity: down ? note.velocity / 127 : null,
+    press: `${note.port}/${note.channel}/${note.note}`,
   }
 }
 
