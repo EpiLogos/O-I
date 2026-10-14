@@ -98,7 +98,7 @@
       "surface": "studio-only",
       "outward_home": "Expressions Studio (legacy deep editor, retained during port)",
       "components": [],
-      "boundary_op": null,
+      "boundary_op": "none: toggles the legacy Studio drawer (app.ts:480); the shell reaches the Studio only through device Open-in-studio requests",
       "tests": [],
       "status": "studio-only-by-design",
       "live_replay": "pending-native-stack",
@@ -111,7 +111,7 @@
       "surface": "studio-only",
       "outward_home": "Expressions Studio (legacy deep editor, retained during port)",
       "components": [],
-      "boundary_op": null,
+      "boundary_op": "none: closes the legacy Studio drawer, which is studio chrome hosted by the application frame (app.ts:481)",
       "tests": [],
       "status": "studio-only-by-design",
       "live_replay": "pending-native-stack",
@@ -124,7 +124,7 @@
       "surface": "studio-only",
       "outward_home": "Expressions Studio docking (legacy)",
       "components": [],
-      "boundary_op": null,
+      "boundary_op": "none: docks or floats the legacy Studio panel (app.ts:482); the shell workbench owns its own docking",
       "tests": [],
       "status": "studio-only-by-design",
       "live_replay": "pending-native-stack",
@@ -219,7 +219,7 @@
         "packages/live-shell/ui/src/components/nativeExpressionCommands.ts",
         "packages/live-shell/ui/src/components/NativeTransportBar.tsx"
       ],
-      "boundary_op": null,
+      "boundary_op": "none: the Guide popover shows app quick-guide text, drift-tested against the app sources (packages/live-shell/ui/tests/native-expression-commands.test.mjs:162) (app.ts:487)",
       "tests": [
         "packages/live-shell/ui/tests/native-expression-commands.test.mjs"
       ],
@@ -309,7 +309,7 @@
         "packages/live-shell/ui/src/components/NativeChosenControls.tsx",
         "packages/live-shell/ui/src/components/NativeWorldDetail.tsx"
       ],
-      "boundary_op": null,
+      "boundary_op": "none: family settings and reorder presentation only; writes ride the chosen-add and chosen-order changes (packages/expressions-boundary/src/chosenControls.ts:68) (app.ts:491)",
       "tests": [
         "packages/live-shell/ui/tests/native-coverage-wave4-chosen-configure.test.mjs",
         "packages/live-shell/ui/tests/native-detail-settings.test.mjs"
@@ -344,7 +344,7 @@
       "surface": "browser",
       "outward_home": "None (picker popover has no shell form)",
       "components": [],
-      "boundary_op": null,
+      "boundary_op": "none: closes the legacy belt-picker popover (app.ts:493); the shell has no popover and no close-belt-picker id in packages/live-shell/ui/src or packages/expressions-boundary/src (grep, 2026-10-14)",
       "tests": [],
       "status": "internal-no-outward-need",
       "live_replay": "pending-native-stack",
@@ -394,7 +394,7 @@
       "surface": "menu",
       "outward_home": "None (no contextual popover in shell)",
       "components": [],
-      "boundary_op": null,
+      "boundary_op": "none: clears the legacy contextual popover (app.ts:496); no close-context id in the shell or boundary source (grep, 2026-10-14)",
       "tests": [],
       "status": "internal-no-outward-need",
       "live_replay": "pending-native-stack",
@@ -834,7 +834,7 @@
       "surface": "browser",
       "outward_home": "Browser collections (saved-copy removal)",
       "components": [],
-      "boundary_op": null,
+      "boundary_op": "pending: owner op: a removal over the saved-works store (kernel owner); no removal op is callable from the shell (app.ts:522; expressions-boundary/src/protocol.ts:18 FRAME_EXPRESSION_OPERATIONS has no remove op)",
       "tests": [],
       "status": "owner-op-required",
       "live_replay": "pending-native-stack",
@@ -847,7 +847,7 @@
       "surface": "studio-only",
       "outward_home": "Studio inspector drawer (legacy)",
       "components": [],
-      "boundary_op": null,
+      "boundary_op": "none: opens the legacy inspector drawer (app.ts:524); the shell device panels and Deep edit replace it",
       "tests": [],
       "status": "studio-only-by-design",
       "live_replay": "pending-native-stack",
@@ -860,7 +860,7 @@
       "surface": "internal",
       "outward_home": "None (detail panel collapse in shell)",
       "components": [],
-      "boundary_op": null,
+      "boundary_op": "none: closes the legacy inspector drawer or Studio (app.ts:525); the shell detail panel collapses on its own; no close-inspector id in shell or boundary source (grep, 2026-10-14)",
       "tests": [],
       "status": "internal-no-outward-need",
       "live_replay": "pending-native-stack",
@@ -873,7 +873,7 @@
       "surface": "studio-only",
       "outward_home": "Studio inspector tabs (legacy)",
       "components": [],
-      "boundary_op": null,
+      "boundary_op": "none: selects a legacy inspector tab (app.ts:526); the shell names Studio sections instead, so tab state stays inside the Studio",
       "tests": [],
       "status": "studio-only-by-design",
       "live_replay": "pending-native-stack",
@@ -1008,7 +1008,7 @@
       "components": [
         "packages/live-shell/ui/src/components/NativeStageTools.tsx"
       ],
-      "boundary_op": null,
+      "boundary_op": "none: camera orbit is a stage pointer drag; the frame orbit value is read back and never sent; StageTool has no orbit value (packages/live-shell/ui/src/native/stageCommands.ts:11; app.ts:528)",
       "tests": [
         "packages/live-shell/ui/tests/native-stage-commands.test.mjs"
       ],
@@ -1280,7 +1280,7 @@
       "surface": "out-of-scope-other-track",
       "outward_home": "Timeline centre lens (other track)",
       "components": [],
-      "boundary_op": null,
+      "boundary_op": "pending: other track (Technē Timeline lens, out of this track); legacy strip toggle at app.ts:576 has no shell owner in this ledger",
       "tests": [],
       "status": "out-of-scope-other-track",
       "live_replay": "pending-native-stack",
@@ -1293,7 +1293,7 @@
       "surface": "out-of-scope-other-track",
       "outward_home": "Timeline centre lens (other track)",
       "components": [],
-      "boundary_op": null,
+      "boundary_op": "pending: other track (Technē Timeline lens, out of this track); legacy open at app.ts:577",
       "tests": [],
       "status": "out-of-scope-other-track",
       "live_replay": "pending-native-stack",
@@ -1306,7 +1306,7 @@
       "surface": "internal",
       "outward_home": "none (legacy timeline drawer)",
       "components": [],
-      "boundary_op": null,
+      "boundary_op": "none: closes the legacy scene-strip drawer (app.ts:610); the shell Arrangement is left by switching tabs; no close-timeline id in shell or boundary source (grep, 2026-10-14)",
       "tests": [],
       "status": "internal-no-outward-need",
       "live_replay": "pending-native-stack",
@@ -1477,7 +1477,7 @@
         "packages/live-shell/ui/src/components/NativeExpressionCollections.tsx",
         "packages/live-shell/ui/src/components/WorldBrowser.tsx"
       ],
-      "boundary_op": null,
+      "boundary_op": "pending: owner op: native save_as/fork to start from a built-in preset; presets are listed read-only (app.ts:617; save_as caller expressions-boundary/src/nativeMaterials.ts:271)",
       "tests": [
         "packages/live-shell/ui/tests/native-expression-commands.test.mjs"
       ],
@@ -1510,7 +1510,7 @@
       "surface": "out-of-scope",
       "outward_home": "Technè subject account (Verso)",
       "components": [],
-      "boundary_op": null,
+      "boundary_op": "pending: other track (Technē subject account, Verso); menu item is data-techne-only and no shell summon handler exists (app.ts:618)",
       "tests": [],
       "status": "out-of-scope-other-track",
       "live_replay": "pending-native-stack",
@@ -1562,7 +1562,7 @@
       "surface": "menu",
       "outward_home": "Retained conflict surface (Edit/File status)",
       "components": [],
-      "boundary_op": null,
+      "boundary_op": "pending: owner op: resolving a pending native open belongs to the recovery and continuity layer; no shell control resolves it (app.ts:621)",
       "tests": [],
       "status": "owner-op-required",
       "live_replay": "pending-native-stack",
@@ -1577,7 +1577,7 @@
       "components": [
         "packages/live-shell/ui/src/panels/expressions.tsx"
       ],
-      "boundary_op": null,
+      "boundary_op": "host command open-expression ref=<ref> (packages/expressions-boundary/src/host.ts:369); a retry re-calls the same open, with no separate retry op (app.ts:622)",
       "tests": [],
       "status": "partial",
       "live_replay": "pending-native-stack",
@@ -1590,7 +1590,7 @@
       "surface": "menu",
       "outward_home": "Retained conflict surface (Edit/File status)",
       "components": [],
-      "boundary_op": null,
+      "boundary_op": "pending: owner op: a retry of a failed Expression file read needs a shell Expression file open (native-open-file), which is itself pending (app.ts:623)",
       "tests": [],
       "status": "owner-op-required",
       "live_replay": "pending-native-stack",
@@ -1605,7 +1605,7 @@
       "components": [
         "packages/live-shell/ui/src/panels/expressions.tsx"
       ],
-      "boundary_op": null,
+      "boundary_op": "none: the saved-work list is one kernel enumerate call (panels/expressions.tsx), not a paged member list, so there is no page state to carry (app.ts:624; no native-page id in shell or boundary source)",
       "tests": [],
       "status": "internal-no-outward-need",
       "live_replay": "pending-native-stack",
@@ -1618,7 +1618,7 @@
       "surface": "menu",
       "outward_home": "File/export actions",
       "components": [],
-      "boundary_op": null,
+      "boundary_op": "pending: owner op: a shell-callable expression save_as under the Expression own identity; the only save_as call is inside the material save (expressions-boundary/src/nativeMaterials.ts:271; the row note cites :265, which is stale)",
       "tests": [],
       "status": "owner-op-required",
       "live_replay": "pending-native-stack",
@@ -1631,7 +1631,7 @@
       "surface": "browser",
       "outward_home": "Browser files and import",
       "components": [],
-      "boundary_op": null,
+      "boundary_op": "pending: owner op: admit a Central file to the saved_works list; the host refuses unregistered Expressions by design (expressions-boundary/src/host.ts; app.ts:626)",
       "tests": [],
       "status": "owner-op-required",
       "live_replay": "pending-native-stack",
@@ -1644,7 +1644,7 @@
       "surface": "out-of-scope",
       "outward_home": "Technè research preview (out of scope)",
       "components": [],
-      "boundary_op": null,
+      "boundary_op": "pending: other track (Technē research-instrument preview); not an Expressions surface (app.ts:627)",
       "tests": [],
       "status": "out-of-scope-other-track",
       "live_replay": "pending-native-stack",
@@ -1691,7 +1691,7 @@
       "surface": "out-of-scope",
       "outward_home": "Epii home (out of scope)",
       "components": [],
-      "boundary_op": null,
+      "boundary_op": "pending: other track (Epii home); loads the authored Epii starter, belongs to the Epii track (app.ts:630)",
       "tests": [],
       "status": "out-of-scope-other-track",
       "live_replay": "pending-native-stack",
@@ -1742,7 +1742,7 @@
         "packages/live-shell/ui/src/components/nativeExpressionCommands.ts",
         "packages/live-shell/ui/src/components/NativeTransportBar.tsx"
       ],
-      "boundary_op": null,
+      "boundary_op": "none: About text in the Guide popover, drift-tested against the app sources (packages/live-shell/ui/tests/native-expression-commands.test.mjs:162) (app.ts:632)",
       "tests": [
         "packages/live-shell/ui/tests/native-expression-commands.test.mjs"
       ],
@@ -1757,7 +1757,7 @@
       "surface": "internal",
       "outward_home": "none (legacy dialog close)",
       "components": [],
-      "boundary_op": null,
+      "boundary_op": "none: closes the legacy Library dialog (app.ts:633); the shell World browser is a persistent panel with no dialog to close",
       "tests": [],
       "status": "internal-no-outward-need",
       "live_replay": "pending-native-stack",
@@ -1773,7 +1773,7 @@
         "packages/live-shell/ui/src/components/WorldBrowser.tsx",
         "packages/live-shell/ui/src/components/NativeExpressionGuide.tsx"
       ],
-      "boundary_op": null,
+      "boundary_op": "none: category selection is local to the browser; the read-only collections carry no boundary op (app.ts:634)",
       "tests": [
         "packages/live-shell/ui/tests/native-expression-commands.test.mjs"
       ],
@@ -1791,7 +1791,7 @@
         "packages/live-shell/ui/src/components/NativeExpressionCollections.tsx",
         "packages/live-shell/ui/src/components/nativeExpressionCommands.ts"
       ],
-      "boundary_op": null,
+      "boundary_op": "pending: owner op: native save_as for Fork before a Featured, Starter or Built-in work can start; Open is disabled with the fork reason (app.ts:635; save_as caller expressions-boundary/src/nativeMaterials.ts:271)",
       "tests": [
         "packages/live-shell/ui/tests/native-expression-commands.test.mjs"
       ],
@@ -1809,7 +1809,7 @@
         "packages/live-shell/ui/src/components/NativeExpressionCollections.tsx",
         "packages/live-shell/ui/src/components/nativeExpressionCommands.ts"
       ],
-      "boundary_op": null,
+      "boundary_op": "pending: owner op: native save_as for Fork; starter rows are listed read-only (app.ts:636; expressions-boundary/src/nativeMaterials.ts:271)",
       "tests": [
         "packages/live-shell/ui/tests/native-expression-commands.test.mjs"
       ],
@@ -1827,7 +1827,7 @@
         "packages/live-shell/ui/src/components/NativeExpressionCollections.tsx",
         "packages/live-shell/ui/src/components/nativeExpressionCommands.ts"
       ],
-      "boundary_op": null,
+      "boundary_op": "pending: owner op: native save_as for Fork; featured rows are listed read-only (app.ts:637; expressions-boundary/src/nativeMaterials.ts:271)",
       "tests": [
         "packages/live-shell/ui/tests/native-expression-commands.test.mjs"
       ],
@@ -1842,7 +1842,7 @@
       "surface": "browser",
       "outward_home": "Browser collections (fork and variation)",
       "components": [],
-      "boundary_op": null,
+      "boundary_op": "pending: owner op: a native fork and save_as of an arbitrary expression_ref; nativeMaterials.ts:271 forks only the presented Expression into material, a different act (app.ts:638)",
       "tests": [],
       "status": "owner-op-required",
       "live_replay": "pending-native-stack",
@@ -1855,7 +1855,7 @@
       "surface": "internal",
       "outward_home": "none (legacy modal close)",
       "components": [],
-      "boundary_op": null,
+      "boundary_op": "none: generic close for legacy modal dialogs (app.ts:639); the shell uses no such modal on this path",
       "tests": [],
       "status": "internal-no-outward-need",
       "live_replay": "pending-native-stack",
@@ -1868,7 +1868,7 @@
       "surface": "internal",
       "outward_home": "none (legacy confirm wrapper)",
       "components": [],
-      "boundary_op": null,
+      "boundary_op": "none: generic confirm wrapper for legacy delete and fold dialogs (app.ts:640); shell scene removal runs without a confirmation step (a gap noted in the row)",
       "tests": [],
       "status": "internal-no-outward-need",
       "live_replay": "pending-native-stack",
@@ -1884,7 +1884,7 @@
         "packages/live-shell/ui/src/components/NativeExpressionCollections.tsx",
         "packages/live-shell/ui/src/components/nativeExpressionCommands.ts"
       ],
-      "boundary_op": null,
+      "boundary_op": "pending: owner op: native save_as for Fork; built-in presets are listed read-only and Load is disabled (app.ts:641; expressions-boundary/src/nativeMaterials.ts:271)",
       "tests": [
         "packages/live-shell/ui/tests/native-expression-commands.test.mjs"
       ],
@@ -1899,7 +1899,7 @@
       "surface": "browser",
       "outward_home": "Browser presets and Objects add",
       "components": [],
-      "boundary_op": null,
+      "boundary_op": "pending: owner op: a preset-add change kind; the editor change union has none, and formation-add covers single formations only (app.ts:642; expressions-boundary/src/editor.ts)",
       "tests": [],
       "status": "owner-op-required",
       "live_replay": "pending-native-stack",
@@ -1912,7 +1912,7 @@
       "surface": "menu",
       "outward_home": "File/import (browser)",
       "components": [],
-      "boundary_op": null,
+      "boundary_op": "pending: owner op: a browser-store read for Expressions; the shell cannot call the app import function, and the Import stage command opens the legacy file input instead (app.ts:643)",
       "tests": [],
       "status": "owner-op-required",
       "live_replay": "pending-native-stack",
@@ -1943,7 +1943,7 @@
       "surface": "menu",
       "outward_home": "Browser recent/start work; File/New",
       "components": [],
-      "boundary_op": null,
+      "boundary_op": "pending: owner op: a shell-callable native create admitted into the shell saved_works list; the kernel expression create op exists and answered on the live bridge (packages/live-shell/ui/tests/audit-l6-live-replay.test.mjs:144) (app.ts:645)",
       "tests": [],
       "status": "owner-op-required",
       "live_replay": "pending-native-stack",
@@ -1956,7 +1956,7 @@
       "surface": "menu",
       "outward_home": "Browser recent/start work; File/New",
       "components": [],
-      "boundary_op": null,
+      "boundary_op": "pending: owner op: the same native create op admitted to the shell, as for new-journey (app.ts:646; packages/live-shell/ui/tests/audit-l6-live-replay.test.mjs:144)",
       "tests": [],
       "status": "owner-op-required",
       "live_replay": "pending-native-stack",
@@ -1969,7 +1969,7 @@
       "surface": "menu",
       "outward_home": "Browser recent/start work",
       "components": [],
-      "boundary_op": null,
+      "boundary_op": "none: the shell has no entry gate (app.ts:647); continuing the last work is the continuity restore, outside this row (packages/live-shell/ui/src/continuity/workspace.tsx)",
       "tests": [],
       "status": "studio-only-by-design",
       "live_replay": "pending-native-stack",
@@ -2020,7 +2020,7 @@
         "packages/live-shell/ui/src/components/NativeExpressionCollections.tsx",
         "packages/live-shell/ui/src/components/nativeExpressionCommands.ts"
       ],
-      "boundary_op": null,
+      "boundary_op": "pending: owner op: Fork (native save_as) to start from the O:I mark; Open is disabled with the fork reason (app.ts:650; expressions-boundary/src/nativeMaterials.ts:271)",
       "tests": [
         "packages/live-shell/ui/tests/native-expression-commands.test.mjs"
       ],
@@ -2035,7 +2035,7 @@
       "surface": "internal",
       "outward_home": "none (legacy entry gate)",
       "components": [],
-      "boundary_op": null,
+      "boundary_op": "none: dismisses the legacy entry gate (app.ts:651); the shell has no entry gate",
       "tests": [],
       "status": "internal-no-outward-need",
       "live_replay": "pending-native-stack",
@@ -2204,7 +2204,7 @@
       "surface": "menu",
       "outward_home": "Contextual centre tool row; browser object tree",
       "components": [],
-      "boundary_op": null,
+      "boundary_op": "pending: owner block: the editor select grammar addresses one entity_id (packages/expressions-boundary/src/editor.ts:25); multi-select needs a boundary select-grammar extension (app.ts:660)",
       "tests": [],
       "status": "not-ported",
       "live_replay": "pending-native-stack",
@@ -2647,7 +2647,7 @@
         "packages/live-shell/ui/src/components/NativeSceneFace.text.tsx",
         "packages/live-shell/ui/src/components/nativeSceneFace.text.ts"
       ],
-      "boundary_op": null,
+      "boundary_op": "none: local focus on a text layer; writes no document (docs/world-shell/NATIVE-ACTIONS-AUDIT-20261009.md section 2) (app.ts:682)",
       "tests": [
         "packages/live-shell/ui/tests/native-scene-faces.test.mjs"
       ],
@@ -2734,7 +2734,7 @@
       "surface": "internal",
       "outward_home": "none (no outward home in the shell)",
       "components": [],
-      "boundary_op": null,
+      "boundary_op": "none: switches a legacy inspector tab (app.ts:687); the shell presents each family as its own device face, so there is no outward counterpart",
       "tests": [],
       "status": "internal-no-outward-need",
       "live_replay": "pending-native-stack",
@@ -3001,7 +3001,7 @@
         "packages/live-shell/ui/src/components/NativeSceneFace.automation.tsx",
         "packages/live-shell/ui/src/components/nativeSceneFace.automation.ts"
       ],
-      "boundary_op": null,
+      "boundary_op": "none: selecting a lane shows its authored-shape Monitor section locally; live monitor output is pending under monitor-mode (app.ts:706)",
       "tests": [
         "packages/live-shell/ui/tests/native-device-automation.test.mjs"
       ],
@@ -3018,7 +3018,7 @@
       "components": [
         "packages/live-shell/ui/src/components/NativeSceneFace.automation.tsx"
       ],
-      "boundary_op": null,
+      "boundary_op": "pending: owner block: live monitor output is not disclosed in NativeEditorReading (packages/expressions-boundary/src/editor.ts:77) (app.ts:707)",
       "tests": [],
       "status": "not-ported",
       "live_replay": "pending-native-stack",
@@ -3031,7 +3031,7 @@
       "surface": "device",
       "outward_home": "none (no outward home in the shell)",
       "components": [],
-      "boundary_op": null,
+      "boundary_op": "pending: owner block: the live reading the monitor needs is not disclosed in NativeEditorReading (packages/expressions-boundary/src/editor.ts:77); no docking surface exists (app.ts:708)",
       "tests": [],
       "status": "not-ported",
       "live_replay": "pending-native-stack",
@@ -3120,7 +3120,7 @@
       "components": [
         "packages/live-shell/ui/src/components/NativeSceneFace.automation.tsx"
       ],
-      "boundary_op": null,
+      "boundary_op": "none: closes the lane picker local open state and writes nothing (app.ts:713); the shell picker has its own Close button",
       "tests": [],
       "status": "internal-no-outward-need",
       "live_replay": "pending-native-stack",
@@ -3170,7 +3170,7 @@
       "surface": "studio-only",
       "outward_home": "Studio Automation section",
       "components": [],
-      "boundary_op": null,
+      "boundary_op": "none: whole-group deletion is not built in the shell face and stays in the Studio Automation section (app.ts:716)",
       "tests": [],
       "status": "studio-only-by-design",
       "live_replay": "pending-native-stack",
@@ -3311,7 +3311,7 @@
       "components": [
         "packages/live-shell/ui/src/components/NativePropertyBrowser.tsx"
       ],
-      "boundary_op": null,
+      "boundary_op": "none: a shell-local window event (oi:native-open-device, packages/live-shell/ui/src/components/nativeDrag.ts:9) opens the owning device panel (app.ts:723)",
       "tests": [
         "packages/live-shell/ui/tests/native-coverage-wave4-open-device.test.mjs",
         "packages/live-shell/ui/tests/native-browser-drag.test.mjs"
@@ -3368,7 +3368,7 @@
       "components": [
         "packages/live-shell/ui/src/components/NativeFieldFace.resonance.tsx"
       ],
-      "boundary_op": null,
+      "boundary_op": "none: manual takeover writes base values outside native history and nativeAutomationEdits.ts refuses it by design (app.ts:726); no shell control exists",
       "tests": [],
       "status": "studio-only-by-design",
       "live_replay": "pending-native-stack",
@@ -3383,7 +3383,7 @@
       "components": [
         "packages/live-shell/ui/src/components/NativeFieldFace.resonance.tsx"
       ],
-      "boundary_op": null,
+      "boundary_op": "pending: owner block: a station-set change kind from the resonance owner; the editor change union has no station kind (packages/expressions-boundary/src/editor.ts; grep station, 0 hits) (app.ts:727)",
       "tests": [],
       "status": "not-ported",
       "live_replay": "pending-native-stack",
@@ -3524,7 +3524,7 @@
       "surface": "studio-only",
       "outward_home": "Studio browser library (legacy localStorage copy)",
       "components": [],
-      "boundary_op": null,
+      "boundary_op": "none: the legacy browser-storage copy stays in the Studio (app.ts:733); the shell saves through native Save (history save)",
       "tests": [],
       "status": "studio-only-by-design",
       "live_replay": "pending-native-stack",
