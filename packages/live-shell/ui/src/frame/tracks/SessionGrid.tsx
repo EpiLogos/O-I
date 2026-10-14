@@ -7,7 +7,7 @@
 // roll up its members' clips, a stalled lane lights its retry. Craft floor: world-shell-mockup.html `sessView` and
 // `.sg/.trk/.cs`, agent-shell-mockup.html `.trk.grp/.cs.grp/.stoprow`; ported from agent/AgentSessionGrid.tsx.
 import {useRef, useState, type CSSProperties} from 'react'
-import type {WorldTrack, WorldTrackClip, WorldTrackSet} from '../../timeline/worldTrackAdapter'
+import type {WorldTrack, WorldTrackClip, WorldTrackColumn, WorldTrackSet} from '../../timeline/worldTrackAdapter'
 import './tracks.css'
 
 export interface TracksSelection {
@@ -125,9 +125,14 @@ export interface SessionGridViewProps {
   /** An action pressed: `key` names the control, `what` the press, `run` calls the owner. */
   onPress(key: string, what: string, run: () => unknown): void
   onDismiss(): void
+  /** Why there are no tracks yet, said where they will stand. */
+  empty?: string
 }
 
-export function SessionGridView({set, selection, folded, onFold, receipt, onPress, onDismiss}: SessionGridViewProps) {
+/** The stops an empty Session shows, as a new Live set does. */
+const EMPTY_STOPS: readonly WorldTrackColumn[] = Array.from({length: 8}, (_, i) => ({id: `empty:${i}`, name: String(i + 1)}))
+
+export function SessionGridView({set, selection, folded, onFold, receipt, onPress, onDismiss, empty}: SessionGridViewProps) {
   const rows = set.columns
   const inRow = new Map<string, WorldTrackClip>()
   for (const clip of set.clips) if (clip.columnId) inRow.set(`${clip.trackId}\u0000${clip.columnId}`, clip)
@@ -138,7 +143,20 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
   const tracks = lanes.filter(track => !tree.ancestorsOf(track).some(above => folded[above.id]))
   const {here: stalledHere} = stalledLanes(set, tree)
   const launch = set.actions?.launch, launchStop = set.actions?.launchStop, stopTrack = set.actions?.stopTrack, retry = set.actions?.retry, seat = set.actions?.seat
-  if (!lanes.length) return <div className="tracks-empty" role="status">No tracks in this work yet.</div>
+  // An empty work draws Live's empty Session: the stops down the right and the drop area where tracks will stand, with the
+  // reason in it — never a blank box (world-shell-mockup.html .sg; Live's "Drop Files and Devices Here").
+  if (!lanes.length) return <div className="sg-pane" data-tracks-view="session" data-empty="true">
+    <div className="sg" role="grid" aria-label="Session">
+      <div className="sg-drop" role="status">{empty ?? 'No tracks in this work yet.'}</div>
+      <div className="trk trk-main" role="row" aria-label="Stops">
+        <div className="thd">Main</div>
+        {(rows.length ? rows : EMPTY_STOPS).map((row, index) => <div key={row.id} className="cs" role="gridcell">
+          <button type="button" className="stop-launch" disabled title="No row launch: this work has no tracks yet">▸</button>
+          <span className="cs-label">{row.name || index + 1}</span>
+        </div>)}
+      </div>
+    </div>
+  </div>
   return <div className="sg-pane" data-tracks-view="session">
     <div className="sg" role="grid" aria-label="Session">
       {tracks.map(track => {
@@ -226,7 +244,7 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
 }
 
 /** The Session grid: the view, with the state a grid keeps — which groups are folded shut, and the owner's last answer. */
-export function SessionGrid({set, selection}: {set: WorldTrackSet; selection: TracksSelection}) {
+export function SessionGrid({set, selection, empty}: {set: WorldTrackSet; selection: TracksSelection; empty?: string}) {
   const [folded, setFolded] = useState<Record<string, boolean>>({})
   const [receipt, setReceipt] = useState<PressedReceipt | null>(null)
   const latest = useRef(0)
@@ -235,6 +253,6 @@ export function SessionGrid({set, selection}: {set: WorldTrackSet; selection: Tr
     setReceipt(null)
     void answerOf(run).then(answer => { if (answer && turn === latest.current) setReceipt({key, what, ...answer}) })
   }
-  return <SessionGridView set={set} selection={selection} folded={folded} receipt={receipt} onPress={press}
+  return <SessionGridView set={set} selection={selection} folded={folded} receipt={receipt} onPress={press} empty={empty}
     onFold={id => setFolded(current => ({...current, [id]: !current[id]}))} onDismiss={() => { latest.current += 1; setReceipt(null) }} />
 }
