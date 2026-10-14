@@ -1,9 +1,8 @@
 import {useRef, useState} from 'react'
-import {listFiles} from '../../../../../desktop/cradle/src/files/client'
 import {featuredExpressions, forkExpression, startingPoints, type Expression} from '../../../../../desktop/cradle/expressions-app/field-studies-journeys/src/expressions'
 import {blankJourney} from '../../../../../desktop/cradle/expressions-app/field-studies-journeys/src/model'
 import {useWorkspace} from '../shell/workspaceContext'
-import {collectionSections, enumerateWorks, expressionOwner, freshTitle, newExpression, openStarter, WORKS_FOLDER,
+import {collectionSections, enumerateWorks, expressionOwner, freshTitle, newExpression, openStarter, worksHome,
   type CollectionItem, type CollectionRow, type CollectionSection, type OpenOutcome, type OpenPorts} from './nativeExpressionCommands'
 import './NativeExpressionCollections.css'
 
@@ -90,7 +89,8 @@ export function NativeExpressionCollections({query}: {query: string}) {
     try {
       outcome = await start({
         expression: channel,
-        parent: WORKS_FOLDER === null ? null : (folder => async () => (await listFiles(origin.current.transport, folder, true)).location)(WORKS_FOLDER),
+        // The owner's works home (FOUNDATION N1): every opened or new work is saved there, so it is listed after a restart.
+        parent: channel ? () => worksHome(channel) : null,
         uuid: () => crypto.randomUUID(),
         current,
         refresh: () => channel ? enumerateWorks(channel, works => origin.current.publishWorks(works), current) : Promise.resolve([]),
