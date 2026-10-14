@@ -1,6 +1,7 @@
 import {esc} from './icons';
 import {TRANSITION_KINDS,WIPE_DIRECTIONS,DIP_AT_MIN,DIP_AT_MAX,DIP_AT_DEFAULT,SWITCH_MODES,CURVE_TYPES,type TransitionKind,type WipeDirection,type TransitionParams,type TransitionSpec,type SwitchMode,type CurveType,type TransitionCurve,type CurveHandle} from '../../src/engine/transitionMath';
 import {validateCurveEdit,valueAt,type Interpolation} from './propertyTracks';
+import {laneFrame,toPixel,handlePosition,samplePath,moveHandle,PATH_SPACE,type Points,type HandleEnd} from './curveLane';
 
 /** Lane-3 E11, pure logic: the typed transition per seam, its validation, the seam glyph and chooser HTML, and the timeline
  * write. The arithmetic the production compositor uses (dip weights, the wipe's held rectangle, the pass parameters, the
@@ -141,9 +142,72 @@ export function seamGlyphHTML(scene:{id:string;name:string;transitionSpec?:Trans
  return `<button type="button" class="seam-glyph" data-action="seam-transition" data-scene-id="${esc(scene.id)}" style="left:${leftPercent.toFixed(3)}%" aria-label="${esc(label)}" title="${esc(label)}">${transitionGlyph(kind)}</button>`;
 }
 
-/** The compact chooser for the seam into a scene: kind, its parameters, and the duration (the scene's `transition`). */
-export function seamChooserHTML(scene:{id:string;name:string;transition:number;transitionSpec?:TransitionSpec},seconds:{min:number;max:number}):string{
- const spec=scene.transitionSpec,kind=transitionKindOf(spec),id=esc(scene.id);
+/** Lane-5 T5: the blend an edge plays at a fraction, for the produced field (production.ts). `progress` is what the painted pass and
+ * the dip's ground read; `blend` is the particle blend. An edge without a curve (a linear one is never stored) keeps the field's own
+ * law, bit for bit: the raw fraction, and the smoothstep it always used. An edge with a curve plays that curve's progress for both,
+ * the same law live playback reads (curveProgress, in app.ts). The switch mode never changes the blend; it decides when a seam starts. */
+export function edgeBlend(spec:TransitionSpec|undefined|null,fraction:number):{progress:number;blend:number}{
+ const curve=curveOf(spec);
+ if(!curve||curve.type==='linear')return {progress:fraction,blend:fraction*fraction*(3-2*fraction)};
+ const progress=curveProgress(curve,fraction);
+ return {progress,blend:progress};
+}
+
+/** Lane-5 T5 / E09: the unit lane a transition curve is edited in: time and progress both run 0 to 1. */
+export const TRANSITION_LANE={duration:1,range:{min:0,max:1}} as const;
+/** Lane-5 T5 / E09: a bezier curve as the unit segment the E09 lane edits, from (0,0) to (1,1), its out handle on the start and its in
+ * handle on the end. It is the property tracks' own point shape, so E08's evaluator and validator read it unchanged. */
+export function curvePointsOf(curve:TransitionCurve):Points{
+ const start:Points[number]={time:0,value:0,type:'bezier'},end:Points[number]={time:1,value:1};
+ if(curve.out)start.out={dt:curve.out.dt,dv:curve.out.dv};
+ if(curve.in)end.in={dt:curve.in.dt,dv:curve.in.dv};
+ return [start,end];
+}
+/** Lane-5 T5 / E09: one bezier handle dragged to (time, value). E08's own edit validator judges the move on the unit segment (handle time
+ * inside its segment, handle value inside 0 to 1); the transition's law then judges the whole curve. The result is the curve, or the
+ * refusal named. */
+export function transitionCurveHandleEdit(curve:TransitionCurve,index:0|1,end:HandleEnd,time:number,value:number):{ok:true;curve:TransitionCurve}|{ok:false;reason:string}{
+ try{
+  const points=moveHandle(curvePointsOf(curve),index,end,time,value);
+  validateCurveEdit(points,TRANSITION_LANE.range,[{handle:index,end}]);
+  const next:TransitionCurve={type:'bezier'};
+  if(points[0].out)next.out=points[0].out;
+  if(points[1].in)next.in=points[1].in;
+  const valid=validateTransitionCurve(next);
+  if(!valid)throw new Error('A bezier curve keeps its handles.');
+  return {ok:true,curve:valid};
+ }catch(cause){return {ok:false,reason:cause instanceof Error?cause.message:String(cause)};}
+}
+/** Lane-5 T5 / E09: the one curve a finished bezier drag writes, or undefined. Nothing is written when the pointer never moved, when the
+ * release is over a refused position (the lane keeps its last valid preview and the release commits nothing), when the drag was cancelled,
+ * or when the curve comes back as it was. One gesture is at most one write. */
+export function curveGestureWrite(base:TransitionCurve,preview:TransitionCurve|null,ended:{commit:boolean;moved:boolean;refused:boolean}):TransitionCurve|undefined{
+ if(!ended.commit||!ended.moved||ended.refused||!preview)return undefined;
+ return JSON.stringify(preview)===JSON.stringify(base)?undefined:preview;
+}
+/** Lane-5 T5 / E09: a bezier edge's curve in the E09 lane's own geometry (laneFrame, handlePosition, samplePath). Its two handles are the
+ * drag targets; the keys are the fixed ends of the blend. */
+export function seamCurveLaneHTML(scene:{id:string;name:string},curve:TransitionCurve):string{
+ const points=curvePointsOf(curve),frame=laneFrame(points,TRANSITION_LANE.duration,TRANSITION_LANE.range,100,100),id=esc(scene.id);
+ const keys=points.map(p=>{const q=toPixel(frame,p.time,p.value);return `<span class="curve-key" style="left:${q.x.toFixed(3)}%;top:${q.y.toFixed(3)}%" aria-hidden="true"></span>`;}).join('');
+ const handles=([[0,'out'],[1,'in']] as const).map(([index,end])=>{const c=handlePosition(points,index,end),q=toPixel(frame,c.x,c.y);return `<span class="curve-handle curve-handle-${end}" data-handle-index="${index}" data-end="${end}" style="left:${q.x.toFixed(3)}%;top:${q.y.toFixed(3)}%" aria-hidden="true"></span>`;}).join('');
+ return `<div class="seam-curve" data-seam-curve data-scene-id="${id}" role="group" aria-label="${esc(`Bezier curve into ${scene.name}`)}" title="Drag a handle to shape the blend"><svg class="curve-svg" viewBox="0 0 ${PATH_SPACE} ${PATH_SPACE}" preserveAspectRatio="none" aria-hidden="true"><path d="${samplePath(points,frame)}"/></svg>${keys}${handles}</div>`;
+}
+/** Lane-5 T5: the seam chooser's edge facts. The switch mode and the curve belong to this edge (the Scene it enters); each has its own
+ * select. A bezier curve shows its handles to drag. A cut takes no curve. */
+function seamEdgeHTML(scene:{id:string;name:string},spec:TransitionSpec|undefined,preview?:TransitionCurve):string{
+ const id=esc(scene.id),kind=transitionKindOf(spec),mode=switchModeOf(spec),curve=curveOf(spec),type:CurveType=curve?.type??'linear';
+ const switchSelect=`<label class="seam-param"><span>Switch</span><select data-edge-switch data-scene-id="${id}" aria-label="${esc(`Switch into ${scene.name}`)}" title="When the switch lands">${SWITCH_MODES.map(m=>`<option value="${m}"${m===mode?' selected':''}>${esc(SWITCH_LABEL[m])}</option>`).join('')}</select></label>`;
+ if(kind==='cut')return `<div class="seam-edge" role="group" aria-label="${esc(`Edge into ${scene.name}`)}">${switchSelect}</div>`;
+ const curveSelect=`<label class="seam-param"><span>Curve</span><select data-edge-curve data-scene-id="${id}" aria-label="${esc(`Curve into ${scene.name}`)}" title="The blend's curve">${CURVE_TYPES.map(t=>`<option value="${t}"${t===type?' selected':''}>${esc(CURVE_LABEL[t])}</option>`).join('')}</select></label>`;
+ const lane=curve&&type==='bezier'?seamCurveLaneHTML(scene,preview??curve):'';
+ return `<div class="seam-edge" role="group" aria-label="${esc(`Edge into ${scene.name}`)}">${switchSelect}${curveSelect}${lane}</div>`;
+}
+
+/** The compact chooser for the seam into a scene: kind, its parameters, the edge's switch and curve, and the duration (the scene's
+ * `transition`). `preview` is the bezier curve a drag is holding, shown in place of the stored one. */
+export function seamChooserHTML(scene:{id:string;name:string;transition:number;transitionSpec?:TransitionSpec},seconds:{min:number;max:number},preview?:TransitionCurve):string{
+ const spec=scene.transitionSpec,kind=transitionKindOf(spec),id=esc(scene.id),edge=seamEdgeHTML(scene,spec,preview);
  const kinds=TRANSITION_KINDS.map(k=>`<button type="button" class="seam-kind" data-action="set-transition-kind" data-scene-id="${id}" data-kind="${k}" aria-pressed="${k===kind}" aria-label="${esc(kindLabel(k))}" title="${esc(kindLabel(k))}">${transitionGlyph(k)}</button>`).join('');
  const at=spec?.at??DIP_AT_DEFAULT;
  const param=kind==='dip-to-colour'
@@ -151,7 +215,7 @@ export function seamChooserHTML(scene:{id:string;name:string;transition:number;t
   :kind==='wipe'
    ?`<div class="seam-directions" role="group" aria-label="Wipe direction">${WIPE_DIRECTIONS.map(d=>`<button type="button" data-action="set-transition-direction" data-scene-id="${id}" data-direction="${d}" aria-pressed="${(spec?.direction??'left')===d}" aria-label="${esc(DIRECTION_LABEL[d])}" title="${esc(DIRECTION_LABEL[d])}">${directionGlyph(d)}</button>`).join('')}</div>`
    :'';
- return `<div class="seam-chooser" role="group" aria-label="${esc(`Transition into ${scene.name}`)}"><div class="seam-kinds">${kinds}</div>${param}<label class="seam-seconds"><span>Seconds</span><input type="number" min="${seconds.min}" max="${seconds.max}" step=".1" value="${scene.transition}" data-transition-seconds data-scene-id="${id}"></label></div>`;
+ return `<div class="seam-chooser" role="group" aria-label="${esc(`Transition into ${scene.name}`)}"><div class="seam-kinds">${kinds}</div>${param}${edge}<label class="seam-seconds"><span>Seconds</span><input type="number" min="${seconds.min}" max="${seconds.max}" step=".1" value="${scene.transition}" data-transition-seconds data-scene-id="${id}"></label></div>`;
 }
 
 /** The timeline write of a seam change: its kind (absent for crossfade) and its duration. Callers run it inside
@@ -168,7 +232,23 @@ export function writeSeamTransition(scenes:Array<{id:string;transition:number;tr
 /** Lane-5 T5: the edge a seam's switch mode or curve edit writes, validated. The result is the whole seam spec, or undefined
  * when the seam returns to the default (crossfade, immediate, linear). The caller owns the labelled write. */
 export function seamEdgeSpec(spec:TransitionSpec|undefined|null,edit:{switchMode?:SwitchMode;curve?:TransitionCurve|undefined}):TransitionSpec|undefined{
- return specWithEdge(spec,{...('switchMode' in edit?{switchMode:edit.switchMode}:{}),...('curve' in edit?{curve:edit.curve}:{})} as Partial<Pick<TransitionParams,'switchMode'|'curve'>>);
+ const picked=edit.curve,current=curveOf(spec),seeded=picked&&picked.type==='bezier'&&!picked.out&&!picked.in?(current?.type==='bezier'?current:BEZIER_SEED):picked;
+ return specWithEdge(spec,{...('switchMode' in edit?{switchMode:edit.switchMode}:{}),...('curve' in edit?{curve:seeded}:{})} as Partial<Pick<TransitionParams,'switchMode'|'curve'>>);
+}
+/** Lane-5 T5 / E09: the handles a bezier takes when it is first chosen. E09 seeds none, and a handle-less bezier evaluates as a linear one,
+ * so the choice would show nothing. The first bezier takes E08's own smooth handles, flat at the thirds, so the choice shows and its
+ * handles can then be dragged. A bezier already chosen keeps the handles it has. */
+export const BEZIER_SEED:TransitionCurve={type:'bezier',out:{dt:1/3,dv:0},in:{dt:-1/3,dv:0}};
+/** Lane-5 T5: an edge edit the edge cannot take, named before anything is written. A cut has no curve: the path panel and the seam chooser
+ * both refuse a curve edit on a cut here, so no edit is sent that the owner would save unchanged. */
+export function edgeEditRefusal(spec:TransitionSpec|undefined|null,edit:{kind:'switch'|'curve'|'loop'}):string|undefined{
+ if(edit.kind==='curve'&&transitionKindOf(spec)==='cut')return 'A cut has no curve.';
+ return undefined;
+}
+/** Lane-5 T5: a jump held for a seam's natural end stays pending only while playback still runs toward that end (or the end itself lands
+ * this frame). A pause or a stop drops it, so it cannot fire later on its own. */
+export function pendingSwitchStillWaits(frame:{scene_playing:boolean;completed:boolean;advance_to_scene_index:number|null;unavailable_reason:string|null}):boolean{
+ return frame.scene_playing||frame.completed||frame.advance_to_scene_index!==null||frame.unavailable_reason!==null;
 }
 
 /** Lane-5 T5 / T8: the one scene field a loop exit writes. It belongs to the scene whose exit edge wraps (the last scene), so it

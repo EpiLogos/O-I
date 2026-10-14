@@ -14,7 +14,7 @@ import {NATIVE_BINDINGS,WORLD_SCALE} from './nativeParameters';
 import {basis,stageCentre,stageScale} from './camera';
 import type {EngineFrame,FieldEngineAdapter,EngineCommand} from './engine';
 import {EntitySoundBank,activeFromFocus} from './native-field/entitySound';
-import {DIP_AT_DEFAULT,transitionKindOf,paintedOverlayActive,transitionColourOf,type TransitionSpec} from './transitions';
+import {DIP_AT_DEFAULT,transitionKindOf,paintedOverlayActive,transitionColourOf,edgeBlend,type TransitionSpec} from './transitions';
 import type {TransitionOverlay} from '../../src/engine/transitionPass';
 
 const mix=(a:number,b:number,t:number)=>a+(b-a)*t;
@@ -73,9 +73,12 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
   // target without a particle blend; its held side is the outgoing frame captured at the start. A dip's colour is laid over
   // the frame by the pass at the colour point, so the background ramp below stays only to agree with the frame's own ground.
   const spec=this.seam,painted=!!spec&&paintedOverlayActive(spec,fraction);
-  const paint=(ground:string|undefined):TransitionOverlay|null=>painted?{spec:spec!,fraction,colour:transitionColourOf(target.backgroundColor),ground:transitionColourOf(ground)}:null;
+  // T5: the edge's own curve is the blend the field and the painted pass both read, the law live playback reads. An edge without one
+  // blends exactly as it always did (the raw fraction, and the smoothstep).
+  const {progress,blend:t}=edgeBlend(spec,fraction);
+  const paint=(ground:string|undefined):TransitionOverlay|null=>painted?{spec:spec!,fraction:progress,colour:transitionColourOf(target.backgroundColor),ground:transitionColourOf(ground)}:null;
   if(transitionKindOf(spec)==='wipe'){this.overlay=paint(target.backgroundColor);return target;}
-  const t=fraction*fraction*(3-2*fraction),a=this.from;
+  const a=this.from;
   // Target ownership changes once. GPU state is never cross-faded or reseeded.
   // Shared identities keep their actual places as transforms interpolate.
   const cfg={...target,fluid:{...target.fluid},material:target.material?{...target.material}:undefined,color:{...target.color!},entities:target.entities?.map(e=>{
@@ -88,7 +91,7 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
   for(const key of MATERIAL_KEYS)if(cfg.material&&typeof a.material?.[key]==='number')cfg.material[key]=mix(a.material[key]!,target.material?.[key]??a.material[key]!,t);
   // E11: a dip to colour reaches the incoming scene's own background at its point. The pass lays the colour over the frame
   // itself (E11b); this ramp keeps the field's ground in step with it.
-  cfg.backgroundColor=color(a.backgroundColor??'#f4f2eb',target.backgroundColor??'#f4f2eb',transitionKindOf(this.seam)==='dip-to-colour'?Math.min(1,fraction/(this.seam?.at??DIP_AT_DEFAULT)):t);
+  cfg.backgroundColor=color(a.backgroundColor??'#f4f2eb',target.backgroundColor??'#f4f2eb',transitionKindOf(this.seam)==='dip-to-colour'?Math.min(1,progress/(this.seam?.at??DIP_AT_DEFAULT)):t);
   const oldPalette=a.color?.customPaletteColors??[a.color!.primaryColor],palette=target.color?.customPaletteColors??[target.color!.primaryColor];
   cfg.color.customPaletteColors=palette.map((c,i)=>color(oldPalette[Math.min(i,oldPalette.length-1)],c,t));
   this.overlay=paint(cfg.backgroundColor);
