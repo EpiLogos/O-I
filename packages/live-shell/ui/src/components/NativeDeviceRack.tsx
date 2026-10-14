@@ -12,8 +12,9 @@ import {nativeDeviceSvgPoint, type Apply, type CaptureCurrent} from './nativeDev
 import type {Modulation} from './nativeModulation'
 import {selectDevice} from '../frame/devices/deviceDoor'
 import {Icon} from '../inhabitants/sdk/Icon'
+import {ChevronFold, PopOut} from '../inhabitants/sdk/marks'
 import {ExpressionsRackDevice, openFieldDeviceFull} from './devices/ExpressionsDeviceView'
-import {expressionsDeviceId} from './devices/expressionsDevice'
+import {EXPRESSIONS_DEVICE_ICONS, expressionsDeviceId} from './devices/expressionsDevice'
 import {ModulationLine} from './devices/ModulationLine'
 import './NativeDeviceRack.css'
 
@@ -27,6 +28,12 @@ type Send = (changes: readonly NativeEditorChange[]) => void
 const BAR = {origin: {x: 4, y: 9}, dir: {x: 1, y: 0}, length: 88}
 const EMPTY = 'No devices on the rack. + Device adds one; parameters stay active at their defaults.'
 const sameTarget = (a: NativeEditorBasis, b: NativeEditorBasis) => a.expression_ref === b.expression_ref && a.scene_ref === b.scene_ref
+
+/** Remove, drawn with the cut's own plus turned a quarter (inhabitants/sdk/icons.ts `plus`): the plate's marks are the cut's, never a
+ * text glyph (the device head of icon-cut.html: power, mark, name, owner, fold, pop-out). */
+function RemoveMark() {
+  return <span className="native-rack-remove-mark" aria-hidden="true"><Icon name="plus" size={11}/></span>
+}
 
 /** Bottom device rack: the widgets the person added, in order, after the contextual Force card. Parameters stay live whether or not a widget is on the rack.
  * Every commit is one apply on the reading's basis, under one in-flight lock for the whole rack. */
@@ -121,7 +128,7 @@ function RackWidgetView({widget, index, reading, locked, apply, captureCurrent, 
       <span className="native-rack-family">{widget.family}</span>
       <span className="native-rack-note">not available in this shell</span>
       <button type="button" className="native-rack-remove" aria-label={`Remove ${widget.family} from the rack`} title="Remove from the rack" disabled={locked}
-        onClick={() => send([deviceRemoveChange(widget.id)])}><span aria-hidden="true">✕</span></button>
+        onClick={() => send([deviceRemoveChange(widget.id)])}><RemoveMark/></button>
     </header>
   </div>
   const state = widget.on === undefined ? 'unknown' : widget.on ? 'on' : 'off'
@@ -137,25 +144,25 @@ function RackWidgetView({widget, index, reading, locked, apply, captureCurrent, 
     onDragOver={event => {if (dragging.current) {event.preventDefault(); event.dataTransfer.dropEffect = 'move'}}}
     onDrop={event => {event.preventDefault(); const id = dragging.current; dragging.current = null; if (id) move(id, index)}}>
     <header className="native-rack-head">
-      {widget.toggle && <button type="button" className={`native-rack-light is-${state}`} aria-pressed={widget.on} aria-label={`${widget.name} ${state}`}
+      {widget.toggle && <button type="button" className={`native-rack-light is-${state} sdk-power sdk-power--${state}`} aria-pressed={widget.on} aria-label={`${widget.name} ${state}`}
         title={`Turn ${widget.name} ${widget.on ? 'off' : 'on'}`} disabled={locked}
         onClick={() => {const changes = activatorChanges(widget); if (changes.length) send(changes)}} />}
       <button type="button" className="native-rack-fold" aria-expanded={!folded} aria-label={`${folded ? 'Expand' : 'Fold'} ${widget.name}`}
-        onClick={() => setFolded(!folded)}><span aria-hidden="true">{folded ? '▸' : '▾'}</span></button>
+        onClick={() => setFolded(!folded)}><ChevronFold size={10}/></button>
       {widget.scope === 'scene'
         ? <span className="native-rack-title" title={widget.name}>{widget.name}</span>
         : <button type="button" className="native-rack-title" title="Open settings"
           onClick={() => {if (widget.scope === 'field') selectDevice(expressionsDeviceId(widget.family)); onOpen({scope: widget.scope === 'entity' ? 'entity' : 'field', family: widget.family})}}>{widget.name}</button>}
       {widget.scope === 'field' && <button type="button" className="native-rack-pane" aria-label={`Open ${widget.name} full size in a pane`} title="Open full size in a pane"
-        onClick={() => {const problem = openFieldDeviceFull(widget.family, widget.name); if (problem) fault(problem)}}><Icon name="pane" size={12}/></button>}
+        onClick={() => {const problem = openFieldDeviceFull(widget.family, widget.name); if (problem) fault(problem)}}><PopOut size={10}/></button>}
       {/* Dragging is pointer-only; Alt+Left and Alt+Right are the keyboard reorder. Both commit one device-order change. */}
       <span role="button" tabIndex={0} draggable className="native-rack-grip" aria-label={`Reorder ${widget.name}: drag, or Alt+Left or Alt+Right`} title="Drag to reorder"
         onDragStart={event => {dragging.current = widget.id; event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData('text/plain', widget.id)}}
         onDragEnd={() => {dragging.current = null}}
         onKeyDown={event => {if (!event.altKey || (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight')) return; event.preventDefault(); move(widget.id, index + (event.key === 'ArrowLeft' ? -1 : 1))}}>
-        <span aria-hidden="true">⋮⋮</span></span>
+        <Icon name={EXPRESSIONS_DEVICE_ICONS[widget.family] ?? 'form'} size={12}/></span>
       <button type="button" className="native-rack-remove" aria-label={`Remove ${widget.name} from the rack`} title="Removes the widget only; parameters keep their values" disabled={locked}
-        onClick={() => send([deviceRemoveChange(widget.id)])}><span aria-hidden="true">✕</span></button>
+        onClick={() => send([deviceRemoveChange(widget.id)])}><RemoveMark/></button>
     </header>
     {widget.scope === 'field' && <div className="native-rack-body">
       <ExpressionsRackDevice family={widget.family} summary={widget.summary} host={{reading, apply, captureCurrent, locked: off}}/>

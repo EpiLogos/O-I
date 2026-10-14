@@ -3,7 +3,7 @@
 // browser's pool (`ExpressionsFieldWhole`), full in a pane (frame/devices/devicePane.tsx reads the device this module publishes
 // to the door). All three are `DeviceView` over the one `DeviceInstance` that `expressionsFieldDevice` builds from the retained
 // editor's reading, and all three write through the one `apply` of the editor — so a change in any size is the same change.
-import {useCallback, useEffect, useMemo, useRef, useState, type ReactNode} from 'react'
+import {useEffect, useMemo, useRef, useState, type ReactNode} from 'react'
 import {sameEditorBasis, type NativeEditorBasis, type NativeEditorChange, type NativeEditorReading, type NativeEditorReply, type NativeEditorRequest} from '@epilogos/expressions-boundary/editor'
 import type {SdkParamRow} from '../../inhabitants/sdk/define'
 import type {DeviceInstance, DeviceSize} from '../../frame/devices/deviceRuntime'
@@ -40,7 +40,7 @@ function targetOf(row: SdkParamRow): string | null {
 }
 
 /** A row whose value something moves carries the line that says what (modulation honesty, WORLD-SHELL-DESIGN §14). */
-function modulationWrap(reading: NativeEditorReading) {
+export function modulationWrap(reading: NativeEditorReading) {
   return (row: SdkParamRow, control: ReactNode): ReactNode => {
     const target = targetOf(row)
     const modulation = target ? modulationOf(reading, target) : null
@@ -66,30 +66,41 @@ export function hostedFieldDevice(family: string, host: Pick<FieldHost, 'reading
 }
 
 /** The device, its picture, and its place at the door. The device is rebuilt from the reading, never kept: nothing of the owner's is held here. */
-function useFieldDevice(family: string, host: FieldHost) {
+export function useFieldDevice(family: string, host: FieldHost) {
+  return useFieldDevices(useMemo(() => [family], [family]), host)[0]!
+}
+
+/** Several field devices over one host at once (the Studio's sections hold eleven): each built as `useFieldDevice` builds one — the
+ * same send through the host's one apply, the same picture, the same claim at the door — so a device in the Studio is the device on
+ * the rack, in the pool and in a pane. `families` is a fixed list for the life of the caller. */
+export function useFieldDevices(families: readonly string[], host: Omit<FieldHost, 'reading'> & {readonly reading: NativeEditorReading | null}): {family: string; id: string; device: DeviceInstance | null; picture: (size: DeviceSize) => ReactNode}[] {
   const aperture = useNativeInputRetention()
   const latest = useRef({host, aperture})
   latest.current = {host, aperture}
-  const send = useMemo(() => fieldDeviceSend(family, {
+  const key = families.join('|')
+  const sends = useMemo(() => new Map(families.map(family => [family, fieldDeviceSend(family, {
     apply: (changes, basis) => latest.current.host.apply(changes, basis),
     captureCurrent: () => latest.current.host.captureCurrent(),
     aperture: () => latest.current.aperture,
-  }), [family])
-  const device = useMemo(() => hostedFieldDevice(family, {reading: host.reading, locked: host.locked}, send), [host.reading, family, host.locked, send])
-  const id = expressionsDeviceId(family)
-  const picture = useCallback((size: DeviceSize): ReactNode => {
+  })])), [key])
+  const pictures = useMemo(() => new Map(families.map(family => [family, (size: DeviceSize): ReactNode => {
     const now = latest.current
-    return <ExpressionsPicture family={family} size={size} reading={now.host.reading} apply={now.host.apply} captureCurrent={now.host.captureCurrent}
-      disabled={now.host.locked} aperture={now.aperture} />
-  }, [family])
-  const claim = useRef<DeviceClaim | null>(null)
+    // A picture is asked for only of a device that stands, and a device stands only over a reading.
+    return now.host.reading ? <ExpressionsPicture family={family} size={size} reading={now.host.reading} apply={now.host.apply} captureCurrent={now.host.captureCurrent}
+      disabled={now.host.locked} aperture={now.aperture} /> : null
+  }])), [key])
+  // No reading, no device: a field device is the owner's reading of the open work, never a default.
+  const devices = useMemo(() => families.map(family => ({family, id: expressionsDeviceId(family),
+    device: host.reading ? hostedFieldDevice(family, {reading: host.reading, locked: host.locked}, sends.get(family)!) : null, picture: pictures.get(family)!})),
+  [host.reading, host.locked, sends, pictures])
+  const claims = useRef(new Map<string, DeviceClaim>())
   useEffect(() => {
-    const held = claimDevice(id)
-    claim.current = held
-    return () => { held.release(); claim.current = null }
-  }, [id])
-  useEffect(() => { if (device) claim.current?.publish({device, picture}) }, [device, picture])
-  return {device, picture, id}
+    const held = new Map(families.map(family => [family, claimDevice(expressionsDeviceId(family))]))
+    claims.current = held
+    return () => { for (const claim of held.values()) claim.release(); claims.current = new Map() }
+  }, [key])
+  useEffect(() => { for (const entry of devices) if (entry.device) claims.current.get(entry.family)?.publish({device: entry.device, picture: entry.picture}) }, [devices])
+  return devices
 }
 
 /** The field device on the rack: compact, with its summary line above and the modulation lines under the controls it moves. The card's
@@ -111,7 +122,7 @@ export function ExpressionsRackDevice({family, summary, host}: {family: string; 
 
 /** The editor's one apply for a place that does not hold the rack: the same lock and the same capture of the basis the rack uses
  * (components/NativeDeviceRack.tsx lines 33-71), so a pool edit is refused and retained the way a rack edit is. */
-function useEditorApply(reading: NativeEditorReading | null, request: (request: NativeEditorRequest) => Promise<NativeEditorReply>) {
+export function useEditorApply(reading: NativeEditorReading | null, request: (request: NativeEditorRequest) => Promise<NativeEditorReply>) {
   const [busy, setBusy] = useState(false), [error, setError] = useState<string | null>(null)
   const inFlight = useRef(false), mounted = useRef(true), live = useRef(reading)
   live.current = reading

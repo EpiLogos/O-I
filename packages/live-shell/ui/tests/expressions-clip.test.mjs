@@ -303,13 +303,14 @@ function detailMarkup(props, reading) {
 test('the editor carries the Scene controls beside the clip surfaces only when it is the Expressions clip', () => {
   const {reading} = threeScenes()
   const clipWith = detailMarkup({mode: 'clip', sceneControls: true}, reading)
-  assert.match(clipWith, /<div class="native-detail-view native-clip-view has-scene-controls">/, 'the clip view is the mockup\'s .clipv: properties column, then the editors')
-  assert.match(clipWith, /<aside class="scene-props"[^>]*>[^]*<\/aside><div class="native-clip-surfaces">/, 'the column stands before the surfaces, which are wrapped as one')
+  assert.match(clipWith, /<div class="clipv native-detail-view native-clip-view has-scene-controls">/, 'the clip view is the mockup\'s .clipv: properties column, then the editors')
+  assert.match(clipWith, /<aside class="scene-props"[^>]*>[^]*<\/aside><div class="ccol scene-strip" aria-label="Scenes">[^]*<div class="ccol native-clip-sequence" aria-label="Sequence">[^]*<div class="native-clip-surfaces">/,
+    'the properties, then the Scenes, then the Sequence holding the surfaces, which are wrapped as one')
   for (const label of ['Previous Scene', 'Next Scene', 'Save Expression', 'Expressions guide']) assert.match(clipWith, new RegExp(`aria-label="${label}"`))
   assert.equal((clipWith.match(/<aside class="scene-props"/g) ?? []).length, 1, 'one set of controls in the instance')
   // Technē's native clip is the same editor without them; the Device side never draws them (one chord, one column).
   assert.doesNotMatch(detailMarkup({mode: 'clip'}, reading), /scene-props/)
-  assert.match(detailMarkup({mode: 'clip'}, reading), /<div class="native-detail-view native-clip-view">/)
+  assert.match(detailMarkup({mode: 'clip'}, reading), /<div class="clipv native-detail-view native-clip-view">/)
   assert.doesNotMatch(detailMarkup({mode: 'device', sceneControls: true}, reading), /scene-props/)
   // With no reading there is nothing to say about a Scene: the column is not drawn, and nothing is claimed.
   assert.doesNotMatch(detailMarkup({mode: 'clip', sceneControls: true}, null), /scene-props/)

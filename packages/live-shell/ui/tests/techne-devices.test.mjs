@@ -346,29 +346,50 @@ test('a face declared waiting is a dark device with no control: its standing and
 
 // ── the chain: compact devices, no text-only card ──────────────────────────────────────────────────────────────────
 
-test('the focused 0 instrument stands its four atlas devices open as compact devices; every face on the chain draws a plate', () => {
+test('the focused 0 instrument stands open as one plate of its families\' devices, the other five fold by the runtime\'s fold, in rack order', () => {
   const out = html(createElement(TechneInstrumentsDetail, {transport, focusInstrument: 'techne:m0'}))
   assert.match(out, /data-focus-instrument="techne:m0"/)
+  assert.match(out, /data-open-instrument="techne:m0"/)
+  assert.match(out, /class="inst-plate" data-instrument="techne:m0" data-expanded="true"/, 'the open instrument is one plate')
+  assert.match(out, /<h3 class="sdk-face__title">Project<\/h3>/, 'its plain name, never its M′ address (lock §9.4)')
+  assert.match(out, /data-section="atlas-earth"/, 'its column is the family whose devices it holds')
   for (const id of ['globe-engine', 'graph-tools', 'mode-switch', 'time-control']) {
     assert.match(out, new RegExp(`data-face-id="${id}"[^>]*data-expanded="true"`), `${id} is open`)
     assert.match(out, new RegExp(`data-device="atlas-earth:${id}" data-device-size="compact"`), `${id} is a compact device through DeviceView`)
     assert.match(out, new RegExp(`data-atlas-face="${id}"`), `${id}: its body is its picture`)
   }
-  assert.match(out, /data-face-id="sky"[^>]*data-expanded="false"/, 'a face the instrument does not hold folds to its title')
+  const order = ['techne:m0', 'techne:m1', 'techne:m2', 'techne:m3', 'techne:m4', 'techne:m5'].map(id => out.indexOf(`data-instrument="${id}"`))
+  assert.ok(order.every((at, index) => at >= 0 && (index === 0 || at > order[index - 1])), 'the six stand in their order')
+  for (const id of ['techne:m1', 'techne:m2', 'techne:m3', 'techne:m4', 'techne:m5']) {
+    assert.match(out, new RegExp(`data-instrument="${id}" data-expanded="false"`), `${id} folds`)
+  }
+  assert.equal((out.match(/class="sdk-face sdk-face--folded"/g) ?? []).length, 5, 'each fold is the runtime\'s own (FacePlate folded), not a private strip')
+  assert.doesNotMatch(out, /techne-device-unfold/, 'no private fold is drawn')
+  assert.doesNotMatch(out, /data-face-id="sky"/, 'a face another instrument holds stands inside that instrument\'s fold')
   assert.doesNotMatch(out, /inhabitant-card|data-inhabitant-rack|docks when its material is selected/, 'no rack card is drawn')
-  const wrappers = out.match(/data-face-id="/g).length
-  assert.equal(wrappers, out.match(/<section class="sdk-face/g).length, 'every face on the chain is a device plate; none is a text card')
 })
 
-test('with no focus the QL owner stands open and the waiting faces fold; the Technē rack no longer draws the atlas', () => {
+test('with no focus the six fold and the faces no instrument holds stand after them: the QL owner open, the waiting faces folded', () => {
   const out = html(createElement(TechneInstrumentsDetail, {transport}))
   assert.doesNotMatch(out, /data-focus-instrument/)
+  assert.equal((out.match(/data-instrument="techne:m\d" data-expanded="false"/g) ?? []).length, 6, 'all six instruments fold')
   assert.match(out, /data-face-id="ql-instrument"[^>]*data-expanded="true"/)
   assert.match(out, /data-device="quaternal-logic:ql-instrument" data-device-size="compact"/)
   assert.match(out, /data-ql-instrument/, 'the owner\'s body is its picture')
-  assert.match(out, /data-face-id="sky"[^>]*data-expanded="false"/)
-  assert.match(out, /class="techne-device-unfold"[^>]*aria-label="Open Sky"/, 'a folded device opens from its title')
+  assert.match(out, /data-face-id="deck"[^>]*data-expanded="false"/)
+  assert.match(out, /class="sdk-face__unfold"[^>]*aria-label="Open Deck"/, 'a folded device opens from its title, by the runtime\'s fold')
   assert.doesNotMatch(out, /data-face-id="graph-tools"/)
+  assert.doesNotMatch(out, /data-face-id="sky"/, 'the sky is the Timeline\'s and the World\'s, inside their folds')
+})
+
+test('a fold opens its instrument: the door each instrument opens through is the pane that holds it', () => {
+  assert.deepEqual(chain.instrumentDoorOf('techne:m0'), {kind: 'projection.earth'}, 'the Earth pane is the 0 instrument')
+  assert.deepEqual(chain.instrumentDoorOf('techne:m1'), {kind: 'projection.expressions', lens: 'canvas'})
+  assert.deepEqual(chain.instrumentDoorOf('techne:m4'), {kind: 'projection.expressions', lens: 'place'})
+  assert.deepEqual(chain.instrumentDoorOf('techne:m5'), {kind: 'projection.expressions', lens: 'palace'})
+  assert.equal(chain.instrumentDoorOf('knowledge-graph'), null)
+  assert.deepEqual(chain.rackInstruments('knowledge-graph').map(holder => holder.id), ['knowledge-graph'], 'the knowledge graph stands alone')
+  assert.deepEqual(chain.rackInstruments(null).map(holder => holder.id), ['techne:m0', 'techne:m1', 'techne:m2', 'techne:m3', 'techne:m4', 'techne:m5'])
 })
 
 test('a focused Timeline stands its waiting faces open as dark devices beside the clock', () => {
@@ -406,11 +427,13 @@ test('the QL owner\'s standing and the reader\'s named reason reach the device\'
   assert.match(following, /data-device-light="on"/)
   assert.match(following, /data-ql-control="muted"/, 'the one control the stage carries is on the body')
   assert.doesNotMatch(following, /data-ql-control="hold"|data-ql-control="recover"/, 'hold and recover have no path in this host and are not drawn')
-  // A folded QL device still carries the owner's standing on its title (the chain that does not hold the owner folds it).
+  // The owner stands where its holder is (Body · 3:3): focused on that holder, the rack reads the same reader; a Technē instrument
+  // that does not hold it does not draw it.
   torus.publishLiveTorusState(validState('held'))
-  const folded = html(createElement(InstrumentDeviceDetail, {transport, instrument: 'techne:m0', centralDevices: true}))
-  assert.match(folded, /data-face-id="ql-instrument"[^>]*data-expanded="false"/)
-  assert.match(folded, /data-ql-standing="held"/)
+  const held = html(createElement(TechneInstrumentsDetail, {transport, focusInstrument: 'studio:body'}))
+  assert.match(held, /data-face-id="ql-instrument"[^>]*data-expanded="true"/)
+  assert.match(held, /data-ql-standing="held"/)
+  assert.doesNotMatch(html(createElement(InstrumentDeviceDetail, {transport, instrument: 'techne:m0', centralDevices: true})), /data-face-id="ql-instrument"/)
 })
 
 // ── one device, three sizes, one door ──────────────────────────────────────────────────────────────────────────────

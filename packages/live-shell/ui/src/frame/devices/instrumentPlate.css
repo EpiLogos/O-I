@@ -1,0 +1,40 @@
+/* An instrument as one plate, its controls grouped in columns: the mockup's .inst / .insth / .isecs / .isec
+   (world-shell-mockup.html:352-359) drawn on the SDK's plate (inhabitants/sdk/sdk.css). Shell and SDK tokens only. */
+.inst-plate { flex: none; display: flex; flex-direction: column; min-width: 0; min-height: 0; height: 100%; max-height: 100% }
+.inst-plate > .sdk-face { flex: 1 1 auto; min-height: 0; background: var(--bg-2) }
+/* The head (.insth): 22px, the plate's gradient, the ring, the mark, the name, the owner faint, the marks at the right. */
+.inst-plate > .sdk-face > .sdk-face__head { height: 22px; gap: 7px; padding: 0 7px; background: linear-gradient(var(--bg-3), var(--surface)) }
+.inst-plate > .sdk-face > .sdk-face__head .sdk-face__title { font-weight: 500 }
+.inst-plate > .sdk-face > .sdk-face__head .sdk-face__owner { font-size: 9.5px }
+.inst-plate > .sdk-face > .sdk-face__head .sdk-face__x { gap: 8px }
+
+/* The sections (.isecs, .isec): a row of columns, each ruled off from the next; the last takes what is left. */
+.inst-sections { flex: 1 1 auto; display: flex; min-height: 0; min-width: 0; overflow-x: auto; overflow-y: hidden }
+.inst-section { flex: none; width: var(--section-w, auto); min-width: 0; display: flex; flex-direction: column; gap: 6px; padding: 6px 8px; border-right: 1px solid var(--line); overflow: hidden }
+.inst-section:last-child { border-right: none; flex: 1 0 auto }
+.inst-section-head { flex: none; margin: 0; display: flex; justify-content: space-between; gap: 8px; font-weight: 400; font-size: 9.5px; line-height: 1.3; color: var(--text-faint); letter-spacing: .06em; text-transform: uppercase; white-space: nowrap }
+.inst-section-note { color: var(--text-faint); letter-spacing: .02em; text-transform: none }
+.inst-section-body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 6px; overflow: hidden auto }
+.inst-section-line { margin: 0; max-width: 24ch; font-size: 10.5px; line-height: 1.5; color: var(--text-faint) }
+
+/* A section's devices: the selector of marks (one per device it holds), then the shown device drawn flat into the column — its
+   own head (ring, name, marks) stays, the plate's frame stands down so the column reads as one group. */
+.inst-devices { display: flex; flex-direction: column; gap: 4px; min-width: 0 }
+.inst-selector { display: flex; flex-wrap: wrap; gap: 2px }
+.inst-selector-mark { position: relative; display: inline-grid; place-items: center; width: 22px; height: 18px; padding: 0; background: var(--bg-1); border: 1px solid var(--line); color: var(--text-faint); cursor: pointer }
+.inst-selector-mark:hover { color: var(--text) }
+.inst-selector-mark[aria-selected="true"] { border-color: var(--accent); color: var(--text) }
+.inst-selector-mark:focus-visible { outline: 1px solid var(--accent); outline-offset: 1px }
+/* The device's light on its mark: lit only when the owner reports on (a reading, never a default). */
+.inst-selector-mark[data-device-light="on"]::after { content: ''; position: absolute; right: 2px; top: 2px; width: 4px; height: 4px; border-radius: 50%; background: var(--accent) }
+.inst-device { min-width: 0 }
+.inst-device > .device > .sdk-face { background: transparent; border: 0 }
+.inst-device > .device > .sdk-face > .sdk-face__head { height: 18px; padding: 0; border-bottom: 0 }
+.inst-device > .device .device-body { padding: 4px 0 0 }
+.inst-device > .device--compact { max-height: none }
+/* In a section the group's heading names it, so a device's owner line stands down and its name takes the head; its knobs are the
+   mockup's Studio size (.knob, :340) so two rows of them stand under the heading. */
+.inst-device .sdk-face__owner { display: none }
+.inst-device .sdk-knob { width: 24px; height: 24px }
+.inst-device .device-controls { gap: 4px 6px }
+.inst-device .device-row { gap: 1px }
