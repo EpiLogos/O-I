@@ -136,7 +136,7 @@ test('the lens bar in Factory opens instrument panes inside the tree, never by l
 test('the Workbench tree mounts the agent surface from the tree conversation, and admits no kernel surface for it', () => {
   assert.match(nativeWorkbench, /conversation: tree\.layout\.mode === 'factory' \? <AgentShellCentre\/> : <FactoryChat/, 'the Factory tree conversation is the agent surface')
   assert.match(nativeWorkbench, /seedFactoryCentre\(/, 'the Workbench seeds the Factory tree with its agent tab')
-  assert.match(nativeWorkbench, /const unowned = new Set\(\['draft', 'blank', AGENT_SHELL_KIND\]\)/, 'the agent tab is not a kernel-owned surface')
+  assert.match(nativeWorkbench, /const unowned = new Set\(\['draft', 'blank', 'device', AGENT_SHELL_KIND\]\)/, 'the agent tab (and a popped-out device, seam 8) is not a kernel-owned surface')
   assert.match(engineTree, /if \(binding\.kind === "agent-shell"\) return <>\{conversation\}<\/>;/, 'the engine mounts the agent body from the tree conversation')
 })
 
