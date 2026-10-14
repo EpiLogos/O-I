@@ -26,6 +26,9 @@ export interface HostedExpressionsChrome {
   state: HostedAppState | null
   run: ComponentProps<typeof NativeStageTools>['run']
   faults: readonly string[]
+  /** Reopen the native work when the frame's host is gone (the old centre residence's "Reopen native work", hidden since
+   * F2): the Studio carries it as a mark on its head. */
+  reopen?: (() => void) | null
 }
 
 /** A pane whose slot the frame is drawn over. */
