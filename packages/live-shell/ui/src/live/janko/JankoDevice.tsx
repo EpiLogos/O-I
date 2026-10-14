@@ -4,7 +4,7 @@
 // keyboard holds focus, never from editable text, and never with a modifier held. MIDI from the native host joins the same path (liveMidi.ts):
 // a hardware controller plays whether or not the keyboard holds focus, and only while this device is mounted.
 
-import {useEffect, useMemo, useState, type KeyboardEvent, type PointerEvent} from 'react'
+import {useEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent} from 'react'
 import {commitLiveStage, useLiveTorusReading} from '../torusInstrument'
 import {
   JANKO_PLACEMENT_NOTE, pianoKeys, useLiveJankoWindow, type JankoKey, type JankoWindowState,
@@ -13,10 +13,15 @@ import {requestLiveJankoWindow} from '../../native/liveJankoWindow'
 import {liveMidiInitial, liveMidiLine, midiNoteEvent, subscribeLiveMidi, type LiveMidiState} from '../../native/liveMidi'
 import {useLiveModeInForce} from '../../native/liveModeCatalogue'
 import {pitchMask} from '../modes'
+import {runNoteChain} from '../noteDevices/noteDevices'
+import {useNoteDeviceChain} from '../noteDevices/noteDeviceHold'
 import {COMPUTER_KEY_PITCH, createJankoInput, keyboardGate, type JankoInput, type NoteEvent} from './jankoInput'
 import './janko.css'
 
 export type JankoLayout = 'janko' | 'piano'
+
+/** With no note device the act sounds as it was struck. */
+const NO_NOTE_DEVICES = (pitchClasses: readonly number[]): readonly number[] => pitchClasses
 
 const editable = (target: EventTarget | null): boolean => {
   const element = target as HTMLElement | null
@@ -32,19 +37,26 @@ export function JankoDevice() {
   // The surface recolours to the set's mode in force: the owner's pitch set only. A source scale serves no pitch set, so nothing is marked.
   const {mode} = useLiveModeInForce()
   const mask = mode.state === 'in-force' ? pitchMask(mode.selection.scale) : null
-  return <JankoDeviceView windowState={windowState} modeMask={mask} modeLine={mode.state === 'in-force' ? mode.line : null}/>
+  // The note devices before the torus (T-LIVE-MODE-SCALES item 3): every act folds through the chain, under the mode in force, before its stage command.
+  const chain = useNoteDeviceChain()
+  const noteTransform = (pitchClasses: readonly number[]) => runNoteChain(chain, pitchClasses, {mode})
+  return <JankoDeviceView windowState={windowState} modeMask={mask} modeLine={mode.state === 'in-force' ? mode.line : null} noteTransform={noteTransform}/>
 }
 
-export function JankoDeviceView({windowState, initialLayout = 'janko', modeMask = null, modeLine = null, initialMidi = null}: {windowState: JankoWindowState | null; initialLayout?: JankoLayout; modeMask?: readonly boolean[] | null; modeLine?: string | null; initialMidi?: LiveMidiState | null}) {
+export function JankoDeviceView({windowState, initialLayout = 'janko', modeMask = null, modeLine = null, initialMidi = null, noteTransform = NO_NOTE_DEVICES}: {windowState: JankoWindowState | null; initialLayout?: JankoLayout; modeMask?: readonly boolean[] | null; modeLine?: string | null; initialMidi?: LiveMidiState | null; noteTransform?: (pitchClasses: readonly number[]) => readonly number[]}) {
   const [layout, setLayout] = useState<JankoLayout>(initialLayout)
   const [armed, setArmed] = useState(false)
   const [held, setHeld] = useState<readonly number[]>([])
   const [refusal, setRefusal] = useState<string | null>(null)
   const [midi, setMidi] = useState<LiveMidiState>(() => initialMidi ?? liveMidiInitial())
+  // The input is made once; it reads the chain as it stands at each act, through this ref.
+  const transformRef = useRef(noteTransform)
+  transformRef.current = noteTransform
   const input: JankoInput = useMemo(() => createJankoInput({
     send: command => commitLiveStage(command),
     onResult: result => setRefusal(result.ok ? null : result.error),
     onHeld: setHeld,
+    transform: classes => transformRef.current(classes),
   }), [])
   // MIDI joins the one input path. A hardware controller is explicit input, so it plays whether or not the keyboard holds focus; it is heard
   // only while this device is mounted, and the unsubscribe on unmount releases the host's listeners.
