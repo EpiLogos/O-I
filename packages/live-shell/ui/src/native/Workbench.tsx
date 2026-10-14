@@ -1,5 +1,5 @@
 import {contributionUnavailable} from './contributions'
-import {nativeDetachedBodySupported} from './detachedKinds'
+import {deviceBindingId, dropDeviceDetached, nativeDetachedBodySupported, placeDeviceDetached, publishDeviceWindowHost, type DeviceBinding, type DeviceDetachIdentity} from './detachedKinds'
 /** Receiving frame over the original native Workbench and the one continuity book. */
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import {Workbench, GroupPane, type WorkbenchProps} from '../../../../../desktop/cradle/src/surface/Workbench'
@@ -50,7 +50,8 @@ import './workbench.css'
 
 const OMIT_BODY_KINDS = ['expressions'] as const
 // The agent tab is the shell's own body, not a kernel-owned surface: it is never admitted to the native owner.
-const unowned = new Set(['draft', 'blank', AGENT_SHELL_KIND])
+// A device (seam 8) is a popped-out face's identity: it has no kernel surface and is never admitted as one.
+const unowned = new Set(['draft', 'blank', 'device', AGENT_SHELL_KIND])
 const identity = (binding: SurfaceBinding) => JSON.stringify([binding.kind, binding.ref, binding.project, binding.location, binding.address, binding.encounter, binding.hosted, binding.view?.nativeKnowledge, worldView(binding)?.sourceWorldRef])
 const worldView = (binding: SurfaceBinding) => binding.view as (NonNullable<SurfaceBinding['view']> & {sourceWorldRef?: string}) | undefined
 const hostedWorld = (binding: SurfaceBinding) => worldView(binding)?.sourceWorldRef
@@ -292,6 +293,44 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
     await ownerIO(current, () => invoke('window_detach', {workspaceId, binding, bounds: origin.book.current.layout.windowBounds?.[id] ?? null}))
     origin.book.setLayout(layout => detachBinding(layout, id))
   }
+  /** The device pop-out (seam 8): the existing detach door carries the device's own binding, whose id is the face's and whose
+   * identity travels with it. The layout holds it in the detached set, never as a centre tab. */
+  const popOutDevice = async (identity: DeviceDetachIdentity) => {
+    const id = deviceBindingId(identity)
+    if (latest.current.book.current.layout.detached?.some(entry => entry.surfaceId === id)) return
+    const binding: DeviceBinding = {id, kind: 'device', title: `${identity.family} · ${identity.face}`, ref: id, device: identity}
+    const {origin, current, workspaceId} = capture()
+    if (origin.kernel.transport.kind !== 'tauri') throw Error('Detached native windows are unavailable in the development browser.')
+    const {invoke} = await import('@tauri-apps/api/core')
+    await ownerIO(current, () => invoke('window_detach', {workspaceId, binding, bounds: origin.book.current.layout.windowBounds?.[id] ?? null}))
+    origin.book.setLayout(layout => placeDeviceDetached(layout, binding, layout.focusedGroupId ?? ''))
+  }
+  /** The device returns to its rack through the existing window door: closing its window runs the same redock lifecycle. */
+  const redockDevice = async (identity: DeviceDetachIdentity) => {
+    const id = deviceBindingId(identity)
+    const {origin, current, workspaceId} = capture()
+    const {invoke} = await import('@tauri-apps/api/core')
+    try {
+      await ownerIO(current, () => invoke('window_redock_surface', {workspaceId, surfaceId: id}))
+    } catch (cause) {
+      // No open window answers for this device: its detached entry is stale, and the rack shows it docked again.
+      if (!String(cause).includes('no matching detached Surface')) throw cause
+      current()
+      origin.book.setLayout(layout => dropDeviceDetached(layout, id))
+    }
+  }
+  // The device door the racks read. Republished when the detached set changes, so each rack re-reads its devices' state.
+  const deviceDoors = useRef<{popOut: (identity: DeviceDetachIdentity) => Promise<void>; redock: (identity: DeviceDetachIdentity) => Promise<void>}>()
+  deviceDoors.current = {popOut: popOutDevice, redock: redockDevice}
+  const detachedSet = book.current.layout.detached
+  useEffect(() => {
+    publishDeviceWindowHost({
+      popOut: identity => void deviceDoors.current?.popOut(identity).catch(report),
+      redock: identity => void deviceDoors.current?.redock(identity).catch(report),
+      poppedOut: identity => (latest.current.book.current.layout.detached ?? []).some(entry => entry.surfaceId === deviceBindingId(identity)),
+    })
+  }, [book.current.id, detachedSet, report])
+  useEffect(() => () => publishDeviceWindowHost(null), [])
   const execute = (ref: string, arg?: ActionArg) => {
     if (host.current?.closest<HTMLElement>('.inhabitant')?.hidden) return
     if (ref === 'surface.detach') {void detach(arg?.surfaceId ?? activeBindingId(latest.current.book.current.layout) ?? '').catch(report); return}
@@ -521,12 +560,18 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
           else if(failure&&live)report(failure)
         })().catch(cause=>{if(live)report(cause)})
       }))
-      const stop = await listen<{workspace_id: string; binding: {id: string}}>('oi:window-redock', event => {
+      const stop = await listen<{workspace_id: string; binding: {id: string; kind?: string}}>('oi:window-redock', event => {
         void (async () => {
           current()
           const {workspace_id: id, binding} = event.payload
           const owner = latest.current.book.workspaces.find(value => value.id === id)
           if (!owner || ![owner.layout, ...Object.values(owner.modeLayouts ?? {})].some(layout => layout.detached?.some(item => item.surfaceId === binding.id))) return
+          // A device returns to its rack, never as a centre tab: its detached entry and binding leave the layout.
+          if (binding.kind === 'device') {
+            current()
+            latest.current.book.setLayout(layout => dropDeviceDetached(layout, binding.id))
+            return
+          }
           await ownerIO(current, () => latest.current.kernel.apply({op: 'state'}))
           current(); latest.current.book.redock(id, binding.id)
         })().catch(cause => {if (live) report(cause)})

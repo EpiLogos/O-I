@@ -34,6 +34,7 @@ import {useEffect, useState, type ReactNode} from 'react'
 import {loadWorldShellFamilies, QUATERNAL_LOGIC_FAMILY_ID} from '../inhabitants/worldShellFamilies'
 import {inhabitantManifest, type InhabitantManifest} from '../inhabitants/manifest'
 import {InhabitantRack} from '../inhabitants/inhabitantRack'
+import {useDeviceWindowHost} from '../native/detachedKinds'
 import {CentralSubjectDetail, type CentralSubjectSelection} from '../inhabitants/CentralSubjectDetail'
 import {Icon, type IconName} from '../inhabitants/sdk/Icon'
 import {useAtlasView, type AtlasView} from '../projections/atlas/AtlasProjectionPanel'
@@ -87,11 +88,12 @@ export function BaseDevicesDetail({transport, world = null, subject = null, stan
 }) {
   const selection = useCentralSelection(world, subject)
   const read = useCentralDayStanding(transport, selection?.dayRef ?? null)
+  const deviceWindows = useDeviceWindowHost()
   const apertures = centralRackApertures(selection, standing !== undefined ? standing : read)
   return (
     <div className="mode-detail" data-mode-detail="base-devices">
       {apertures.dayNotice && <CentralDayNotice notice={apertures.dayNotice} />}
-      <InhabitantRack manifests={centralManifests()} transport={transport}
+      <InhabitantRack manifests={centralManifests()} transport={transport} deviceWindows={deviceWindows}
         day={apertures.day ?? null} conversation={apertures.conversation ?? null} />
     </div>
   )
@@ -167,9 +169,10 @@ export function TechneInstrumentsDetail({transport, instrumentReading, focusInst
   focusInstrument?: string | null
 }) {
   const manifests = focusInstrument ? instrumentManifests() : qlManifests()
+  const deviceWindows = useDeviceWindowHost()
   return (
     <div className="mode-detail" data-mode-detail="techne-instruments" data-focus-instrument={focusInstrument ?? undefined}>
-      <InhabitantRack manifests={manifests} transport={transport} instrumentReading={instrumentReading} focusInstrument={focusInstrument ?? null} />
+      <InhabitantRack manifests={manifests} transport={transport} instrumentReading={instrumentReading} focusInstrument={focusInstrument ?? null} deviceWindows={deviceWindows} />
     </div>
   )
 }
@@ -372,18 +375,19 @@ export function InstrumentDeviceDetail({transport, instrument, centralDevices = 
    * mode's material devices, then the focused pane's instrument. */
   centralDevices?: boolean
 }) {
+  const deviceWindows = useDeviceWindowHost()
   if (instrument === 'knowledge-graph') {
     return (
       <div className="mode-detail" data-mode-detail="knowledge-graph-device">
-        {centralDevices && <InhabitantRack manifests={centralManifests()} transport={transport} />}
-        <InhabitantRack manifests={[admitKnowledgeGraphFamily()]} transport={transport} focusInstrument="knowledge-graph" />
+        {centralDevices && <InhabitantRack manifests={centralManifests()} transport={transport} deviceWindows={deviceWindows} />}
+        <InhabitantRack manifests={[admitKnowledgeGraphFamily()]} transport={transport} focusInstrument="knowledge-graph" deviceWindows={deviceWindows} />
       </div>
     )
   }
   if (centralDevices) {
     return (
       <div className="mode-detail" data-mode-detail="techne-instruments" data-focus-instrument={instrument} data-central-devices="true">
-        <InhabitantRack manifests={[...centralManifests(), ...instrumentManifests()]} transport={transport} focusInstrument={instrument} />
+        <InhabitantRack manifests={[...centralManifests(), ...instrumentManifests()]} transport={transport} focusInstrument={instrument} deviceWindows={deviceWindows} />
       </div>
     )
   }

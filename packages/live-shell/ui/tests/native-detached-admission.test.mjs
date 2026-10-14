@@ -59,7 +59,7 @@ test('candidate detached receiving accepts exactly the original native owner bod
   const admission = detach.match(/if\s*!\s*matches!\(\s*binding\.kind\.as_str\(\)\s*,([\s\S]*?)\)\s*\{/)
   assert.ok(admission, 'the actual native owner must expose its detached body admission')
   const nativeKinds = [...admission[1].matchAll(/"([^"]+)"/g)].map(match => match[1])
-  assert.equal(nativeKinds.length, 7)
+  assert.equal(nativeKinds.length, 8)
   for (const kind of nativeKinds) assert.equal(nativeDetachedBodySupported(kind), true, kind)
   for (const {descriptor} of registeredHostedSurfaces) assert.equal(nativeDetachedBodySupported(descriptor.kind), nativeKinds.includes(descriptor.kind), descriptor.kind)
   assert.equal(nativeDetachedBodySupported(''), false)
