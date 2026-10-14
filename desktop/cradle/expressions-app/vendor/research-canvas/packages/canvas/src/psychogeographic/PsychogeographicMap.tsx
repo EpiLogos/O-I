@@ -578,11 +578,12 @@ export function PsychogeographicMap({
 
   // Lane-4 T24: honour the session's spatial focus once, when the map is ready and the place is present. A ref the reading does
   // not disclose never matches a node, so it opens unselected, with no error. The flight runs after the saved camera restores.
-  const focusHonoured = useRef(false);
+  // Each distinct focus is honoured once (lane-4 T22: a search choice flies the mounted map in place, with no remount).
+  const focusHonoured = useRef<string | null>(null);
   useEffect(() => {
-    if (focusHonoured.current || !readyRenderer || !initialFocusGraphNodeId) return;
+    if (!readyRenderer || !initialFocusGraphNodeId || focusHonoured.current === initialFocusGraphNodeId) return;
     if (!nodes.some((node) => node.graphNodeId === initialFocusGraphNodeId)) return;
-    focusHonoured.current = true;
+    focusHonoured.current = initialFocusGraphNodeId;
     selectPlace(initialFocusGraphNodeId);
   }, [readyRenderer, nodes, initialFocusGraphNodeId, selectPlace]);
 
