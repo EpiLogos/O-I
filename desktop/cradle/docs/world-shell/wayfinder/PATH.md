@@ -75,8 +75,10 @@ the evidence is `../audit-20261014/`.
 
 ## 5. Claimable now (in order)
 
-`FOUNDATION.md` §6. Step 1: F0 (lead) together with the first module wave —
-M1–M4 atlas delivery, M6–M7 Expressions open, the records ticket.
+`FOUNDATION.md` §6. Step 1: F0 (lead), the overhaul removals that need no
+replacement (§7), and the first module wave: atlas assets, M6–M7 Expressions
+open, the records ticket. Design N3 (Archetypal-Earth refit onto the suite's
+data model) before F2.
 
 ## 6. Review points (Sonnet, one at a time)
 

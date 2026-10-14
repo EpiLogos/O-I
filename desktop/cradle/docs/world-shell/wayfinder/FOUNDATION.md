@@ -35,14 +35,14 @@ region that is its craft floor (`../world-shell-mockup*.html`,
   Session and Arrangement are bound to Technē's lenses. The SDK's control
   renderer (`sdk/controls.tsx`) is unreachable, so device sides are text-card
   catalogues. Live's chain draws all 31 registered faces whatever the track.
-- **The data and the works never arrive.**
-  - The atlas field (5.4 MB) is over Central's 4 MiB text read. The globe
-    textures, sky grid and image plates are not delivered. The Earth has never
-    rendered natively.
-  - The kernel keeps Expressions only in memory, and the migration has never
-    run, so the candidate has no works.
-  - The Featured "cannot call save_as" refusal is false: `fork`, `save_as` and
-    `create` exist and are relayed.
+- **The Earth reads the wrong data, and the works never arrive.** The ported
+  atlas still loads Archetypal-Earth's own bundle (`field.json`, its own
+  corpus), which it cannot even read through Central's 4 MiB text bound. That
+  is the wrong source in any case. The atlas must be refit to the suite's data
+  model, not fed its old corpus (owner, 14 Oct). The kernel keeps Expressions
+  only in memory, and the migration has never run, so the candidate has no
+  works. The Featured "cannot call save_as" refusal is false: `fork`,
+  `save_as` and `create` exist and are relayed.
 - **Technē routes to the shell's own presentations**
   (`worldTimelinePresentation`, `JourneyRows`), not to the instruments lanes
   1–5 built in the frame. The 126-target register's "implemented" column
@@ -187,8 +187,32 @@ presets in the book. Every existing tile becomes a widget.
   read that gives the instruments a subject's reading, or show that a Scene per
   subject is the intended shape. Decide from the code and lock §0.1; do not ask
   the owner.
-- **N3. Atlas data bound.** Read through bytes (M1); Central's 4 MiB text bound
-  stays.
+- **N3. Archetypal-Earth refit onto the suite's data model** (owner, 14 Oct).
+  The atlas is the one Places instrument and the home of palaces. It reads the
+  O:I suite through its owners, never its own corpus bundle. The sources are:
+  - the kernel's `Graph` op (`kernel/src/lib.rs` `KernelOp::Graph`): Central's
+    wiki read model, composed with AIKit's owner-side resolution rows and the
+    Shared Field projection, with every node and edge carrying its owner ref and
+    provenance;
+  - the Technē reading (`ql.techne/v1`) and its place relations, kept
+    verbatim (`src/techne/m0m5/place/world.ts`: OCCURRED_AT, LOCATED_IN,
+    OPERATED_IN, TRAVELLED_TO, MYTH_LOCATED_AT);
+  - the QL producers for sky and clock depth (`DEVICE-SEMANTICS-LOCK.md` §7).
+
+  The work is one provider, `projections/atlas/provider/`, that turns those
+  readings into the atlas's `Field` and `Occurrence` contract. Each occurrence
+  carries its owner basis, as `projections/occurrence.ts` already does. AE's
+  bundled corpus stops being a source; its Jung material becomes owner
+  material in the wiki if it is to stay. The lead designs the mapping from the
+  real owner outputs (run the ops; read the shapes) before any module builds
+  it.
+  - *Done when:* Technē › Earth shows the owner's own places and subjects from
+    the wiki, each traceable to its owner node. Palaces sit on that world
+    (N4).
+- **N4. Palaces live in the atlas.** The palace model (`src/techne/m0m5/palace`,
+  the frame's `palaceInstrument.tsx` and `palaceBoardView.tsx`) moves onto the
+  atlas: a palace is a place on the world you can enter (manual §2, §8). There
+  is no separate palace surface.
 
 ## 4. Docking contracts and the first module wave
 
@@ -202,9 +226,10 @@ The contracts are in FOUNDATION-AUDIT §D, "Docking contracts":
 - widget: `PanelRegistration` slot `right-dock`.
 
 **Can start now** (independent of F1–F9; PORT-AUDIT §D):
-- **M1–M4, atlas delivery:** the field through bytes, the globe textures, the
-  sky grid and the image plates through `oi-material://`. Each vendored change
-  goes on PORT-PIN.
+- **Atlas assets that are not data:** the globe textures and the image plates,
+  served through `oi-material://` (PORT-AUDIT M2, M4). Each vendored change goes
+  on PORT-PIN. The field itself is N3, not a data port; PORT-AUDIT M1 (read
+  `field.json` through bytes) is withdrawn.
 - **M6–M7, Expressions open:** Featured, Starters and New through `fork`/`create`
   + `save_as`; always enumerate works. Remove `FORK_REASON`.
 - **Records (Haiku):** PORT-AUDIT §E restatements, the PROVENANCE label for the
@@ -221,10 +246,13 @@ The contracts are in FOUNDATION-AUDIT §D, "Docking contracts":
 - Technē (readings, occurrences and walks; the frame's Timeline, Journey,
   Canvas and Palace as instrument builds via the hosted lenses, M8).
 
-**Places is one instrument type with two builds** (§10.2): the Archetypal-Earth
-atlas (default; lock §0.1.3) and the frame's map. Both answer to one control
-set and the shared time window. The frame build's own time control and day/night
-line give way to the shared ones.
+**Places is the Archetypal-Earth atlas, alone** (owner, 14 Oct). It replaces
+the frame's map. The frame's Places map retires along with its overlays: lane 4's
+`PsychogeographicMap.tsx` overlays, `placeTimeControl.ts`, `terminator.ts`,
+the basemap and place modules under `vendor/research-canvas/packages/canvas/src/psychogeographic/`,
+and the frame's Places lens. Any lane-4 behaviour worth keeping (search,
+facets, tours, standing marks, navigation identity) is re-homed onto the atlas
+as a device or a pane control, and is listed before the frame map is removed.
 
 ## 5. How work is verified
 
@@ -241,8 +269,9 @@ line give way to the shared ones.
 
 ## 6. Order of the next runs
 
-1. F0 by the lead, together with the first module wave (M1–M4, M6–M7,
-   records).
+1. F0 by the lead, the overhaul removals (§7) that need no replacement, and
+   the first module wave (atlas assets, M6–M7, records). Design N3 before F2
+   so the Earth pane has a real source when panes become the centre.
 2. F1 → F2 → F3 → F4 → F5, each on screen before the next, with the module
    wave of each landing as its contract appears (mode adapters after F3,
    devices after F5).
@@ -250,3 +279,60 @@ line give way to the shared ones.
 4. Then the register's "exercised" column, lane by lane, through the instrument
    builds now reachable.
 5. Then retirement gates 5–6, which are the owner's.
+
+## 7. Overhaul, not touch-up
+
+Most of what the 11–14 Oct run added beside the foundation is a hindrance.
+The next runs clear it, they do not polish it. Anything that does not satisfy a
+contract in §4 is removed once its replacement stands, and removal is part of
+each foundation item's done-when. The list below comes from FOUNDATION-AUDIT
+§E and PORT-AUDIT §C.
+
+- **The `App.tsx` switchboard.** Remove its per-mode residences, the Technē
+  lens bar and the Session=Journey / Arrangement=Timeline binding (F2, F3).
+- **The shell's recreations of instruments.** `worldTimelinePresentation` as the
+  Technē Timeline and `JourneyRows` as the Journey give way to the frame's
+  instruments, reached through panes (M8). The frame's Places map goes too
+  (§4).
+- **The device catalogues.** Remove the `InhabitantRack` text cards and the
+  registry dump in `DeviceChainPanel`. The devices-b2 faces, which save
+  nothing, are deleted (F4, F5).
+- **The duplicate bars, browsers and rails.** Each goes once its controls live
+  as bindings or registrations: four transports, four browsers, two rails
+  (F6–F8).
+- **Unreached code.** `candidate-reachable.mjs --list` against the tree
+  names it. Delete it, unless the legacy desktop still runs it.
+
+Keep what works: Factory's transport and Expressions' transport until their
+bindings land, the pane engine, the book, the contracts, the frame's
+instruments, and Live's real owners.
+
+## 8. The 126 targets are the suite, not a side list
+
+The 126 targets (`../lanes/*/TARGET-SET.md`, `../targets.json`) cover what
+the O:I products actually do through the DLW: Central, AIKit, Factory,
+Workcell, Actuation, Quaternal Logic and the Expressions owner. They are the
+functional inventory the new structures must carry, not an arcane register
+beside them.
+
+After F2–F5, every target is re-homed. The register gains two columns, both
+verified on screen:
+- **home:** the instrument pane, device, clip editor or adapter that carries it;
+- **owner op:** the suite operation it reads or writes.
+
+A target counts as implemented only when its home is reachable in the
+candidate and reads its real owner. The "implemented: 125" of 14 Oct records
+code in the frame, mostly unreachable (PORT-AUDIT B2). It is not a measure of
+the product.
+
+## 9. Not walking blind
+
+- The lead opens every run by walking the app on screen, and closes every
+  foundation item the same way.
+- Before building anything that reads a suite owner, the lead runs the owner
+  op and reads its real output shape. A mapping is never designed from a
+  ticket's description.
+- A builder's return is checked on screen before it is committed. A green
+  suite is never the claim.
+- When something cannot be seen (screen access, a missing owner), the run
+  stops building UI and fixes that first.

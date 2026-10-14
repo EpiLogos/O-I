@@ -56,6 +56,12 @@ answer. Derive it, and record the derivation in the ticket.
 **Close of session:** the tree is clean, all work is pushed, PATH and
 FOUNDATION are true, and the open claims are listed in PATH §7.
 
-**Start:** FOUNDATION §6 step 1. Do F0 yourself and dispatch the first module
-wave (M1–M4 atlas delivery, M6–M7 Expressions open, the records ticket) in
-parallel. Then F1.
+**Start:** walk the app on screen first (FOUNDATION §9). Then FOUNDATION §6
+step 1. Do F0 yourself, make the overhaul removals that need no replacement
+(§7), and dispatch the first module wave in parallel: atlas assets, M6–M7
+Expressions open, and the records ticket. Design N3 (Archetypal-Earth on the
+suite's data model) by running the owner ops yourself. Then F1.
+
+**Stance:** overhaul, not touch-up. Most of what the 11–14 Oct run added
+beside the foundation is in the way (FOUNDATION §7). Remove it as its
+replacement stands, and keep only what satisfies a contract.
