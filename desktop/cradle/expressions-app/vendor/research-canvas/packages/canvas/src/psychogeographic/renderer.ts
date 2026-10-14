@@ -39,6 +39,7 @@ import type { PlaceRegion } from "./placeLayers";
 import type { HierarchyEdgeDraw, PlaceRouteDraw } from "./placeRoutes";
 import type { BasemapRenderPlan } from "./basemapLayers";
 import type { TerminatorFeature } from "./terminator";
+import { markerStandingPatch } from "./placeStanding";
 import {
   dragEligibility,
   longPressFires,
@@ -87,6 +88,8 @@ export interface PlaceRenderMarker {
   longitude: number;
   precision: string;
   entityType: string;
+  /** Lane-4 T30: the facet's standing class. Only "mythic" changes how the marker is drawn. */
+  standingClass?: "factual" | "mythic" | "owner-vocabulary";
 }
 
 export interface ArchetypeExpressionRenderMarker {
@@ -454,6 +457,14 @@ export async function createMaplibreRenderer(): Promise<MapSurfaceRenderer> {
           cursor: eligibility.ok ? "grab" : place.precision === "exact" ? "not-allowed" : "pointer",
           padding: "0",
         });
+        // Lane-4 T30: a mythic place is drawn as mythic (a dashed mythic ring and its title sentence). A factual or
+        // owner-vocabulary place takes no patch, so its element is exactly the one it was.
+        const standing = markerStandingPatch(place.standingClass);
+        if (standing) {
+          element.style.border = standing.border;
+          element.dataset.standing = standing.standing;
+          element.title = `${element.title}. ${standing.title}`;
+        }
         anchor.append(element);
         placeElements.set(place.graphNodeId, element);
 
@@ -474,6 +485,26 @@ export async function createMaplibreRenderer(): Promise<MapSurfaceRenderer> {
             textShadow: "0 1px 2px rgba(0,0,0,.85)",
           });
           anchor.append(note);
+        }
+
+        // Lane-4 T30: the mythic note, drawn as the precision note is, beside the disc (below the precision note when both).
+        if (standing) {
+          const tag = document.createElement("span");
+          tag.className = "places-standing-note";
+          tag.dataset.testid = `globe-marker-standing-${place.graphNodeId}`;
+          tag.textContent = standing.note;
+          Object.assign(tag.style, {
+            position: "absolute",
+            left: `${style.diameterPx / 2 + 6}px`,
+            top: style.uncertainty ? "7px" : "-7px",
+            whiteSpace: "nowrap",
+            pointerEvents: "none",
+            fontSize: "10px",
+            lineHeight: "14px",
+            color: standing.colour,
+            textShadow: "0 1px 2px rgba(0,0,0,.85)",
+          });
+          anchor.append(tag);
         }
 
         element.addEventListener("click", (event) => {

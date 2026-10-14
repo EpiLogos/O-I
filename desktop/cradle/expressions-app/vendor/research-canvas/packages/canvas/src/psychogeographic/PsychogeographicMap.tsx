@@ -21,6 +21,7 @@ import { OPEN_PLACE_FILTER, type PlaceFilterState } from "../../../../../../fiel
 import { standingLabel, type StandingDrawing } from "../timeline/standingStyle";
 
 import { LocationPanel, pointForPlace } from "./LocationPanel";
+import { placeStandingMark } from "./placeStanding";
 import { attributionReadout, imageryReadout, liveTileDisclosure } from "./disclosure";
 import {
   basemapGateReason,
@@ -453,6 +454,8 @@ export function PsychogeographicMap({
       longitude: point.longitude,
       precision: node.place.coordinate.precision,
       entityType: node.entityType,
+      // Lane-4 T30: the facet's standing, read from its relation by the cradle authority; only mythic draws differently.
+      standingClass: placeStandingMark(facetByRef.get(node.graphNodeId)?.relation).standingClass,
     }];
   }), [nodes, polygonRefs, hiddenRefs, facetByRef, layerState.window]);
 
@@ -1681,6 +1684,7 @@ export function PsychogeographicMap({
         const panel = <LocationPanel node={selectedNode} relatedNodes={relatedNodes}
           expressions={selectedExpressions} loadingContext={contextLoading}
           hosted={!!inspectorContainer}
+          standingClass={placeStandingMark(facetByRef.get(selectedNode.graphNodeId)?.relation).standingClass}
           onClose={() => { if (inspectorContainer) setDetailsOpen(false); else { setSelectedNodeId(null); onSelectedGraphNodeIdChangeRef.current?.(null); } containerRef.current?.querySelector<HTMLElement>('canvas')?.focus(); }} />;
         return inspectorContainer ? createPortal(panel, inspectorContainer) : panel;
       })()}

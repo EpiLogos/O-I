@@ -1,6 +1,7 @@
 import type { ArchetypalExpression, GraphNodeContract } from "@research-canvas/schema";
 import type { LocatedGraphNode } from "@research-canvas/domain";
 import type { JSX } from "react";
+import { MYTHIC_NOTE, markerStandingPatch } from "./placeStanding";
 
 export interface LocationPanelProps {
   node: LocatedGraphNode;
@@ -9,6 +10,8 @@ export interface LocationPanelProps {
   loadingContext?: boolean;
   hosted?: boolean;
   onClose?: () => void;
+  /** Lane-4 T30: the place's standing class. A mythic place shows its tag and the mythic sentence; any other shows nothing extra. */
+  standingClass?: "factual" | "mythic" | "owner-vocabulary";
 }
 
 /** Focused context panel for one selected location on Surface #3. */
@@ -19,8 +22,10 @@ export function LocationPanel({
   loadingContext = false,
   hosted = false,
   onClose,
+  standingClass,
 }: LocationPanelProps): JSX.Element {
   const coordinate = pointForPlace(node);
+  const mythic = markerStandingPatch(standingClass);
   const precision = node.place.coordinate.precision;
   const archetypesById = new Map(
     relatedNodes.map((related) => [related.graphNodeId, related.title] as const),
@@ -55,6 +60,14 @@ export function LocationPanel({
           {node.entityType} · {precision}
         </div>
         <h2 style={{ margin: "5px 0 0", fontSize: 18, fontWeight: 600 }}>{node.title}</h2>
+        {mythic && (
+          <>
+            <div data-testid="place-standing-tag" style={{ marginTop: 6, fontSize: 10, letterSpacing: ".08em", textTransform: "uppercase", color: mythic.colour }}>
+              mythic
+            </div>
+            <p role="note" data-testid="place-mythic-note" style={{ margin: "6px 0 0", fontSize: 12, color: mythic.colour }}>{MYTHIC_NOTE}</p>
+          </>
+        )}
       </header>
 
       <dl style={{ display: "grid", gridTemplateColumns: "92px 1fr", gap: "6px 10px", margin: 0, fontSize: 12 }}>
