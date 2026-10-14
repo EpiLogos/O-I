@@ -8,3 +8,10 @@
 .clip-box-field { color: var(--text-faint) }
 .clip-box-field[data-clip-status="stalled"] { color: var(--stall) }
 .clip-box-field[data-clip-status="running"] { color: var(--accent) }
+
+/* A device chain and its end (the mockup's .dropz, world-shell-mockup.html:348): the devices, then where one can be dropped. */
+.detail-chain { flex: 1; min-height: 0; display: flex; gap: 6px; padding: 6px; overflow-x: auto; align-items: stretch }
+.detail-chain-devices { flex: 0 1 auto; min-width: 0; display: flex; overflow: visible }
+.detail-chain-devices:empty { display: none }
+.dropz { width: 140px; flex: none; border: 1px dashed var(--line-strong); display: flex; align-items: center; justify-content: center; text-align: center; color: var(--text-faint); font-size: 10.5px; padding: 10px }
+.clip-empty { margin: 0; padding: 18px; color: var(--text-faint); font-size: 11px }

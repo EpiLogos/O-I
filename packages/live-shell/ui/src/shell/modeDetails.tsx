@@ -17,6 +17,8 @@ export interface ModeDetail {
   devicesLeadInstrument?: boolean
   /** The mode keeps its own Device side whatever pane is focused (Live: the instrument's chain is the mode). */
   ownsDeviceSide?: boolean
+  /** The chain's end: what can be dropped onto it (Live's "Drop Instruments or Samples Here"; the mockup's .dropz). */
+  dropHint: string
 }
 
 function LiveClip() { const {live} = useDetailReading(); return <DeviceChainPanel ctx={live.ctx} document={live.document} selection={live.selection} mode="clip" /> }
@@ -32,9 +34,9 @@ function TechneClip() { const {worldCut, world, native} = useDetailReading(); re
 function TechneChain() { const {transport} = useDetailReading(); return <TechneInstrumentsDetail transport={transport} /> }
 
 export const MODE_DETAILS: Readonly<Record<SurfMode, ModeDetail>> = {
-  live: {clip: LiveClip, device: LiveChain, ownsDeviceSide: true},
-  base: {clip: CentralClip, device: CentralChain, devicesLeadInstrument: true},
-  factory: {clip: FactoryClip, device: FactoryChain},
-  expressions: {clip: ExpressionsClip, device: ExpressionsChain},
-  techne: {clip: TechneClip, device: TechneChain},
+  live: {clip: LiveClip, device: LiveChain, ownsDeviceSide: true, dropHint: 'Drop an instrument or effect here'},
+  base: {clip: CentralClip, device: CentralChain, devicesLeadInstrument: true, dropHint: 'Add a document device'},
+  factory: {clip: FactoryClip, device: FactoryChain, dropHint: 'Drop agents, skillsets, worlds or git here'},
+  expressions: {clip: ExpressionsClip, device: ExpressionsChain, dropHint: 'Drop a field device here'},
+  techne: {clip: TechneClip, device: TechneChain, dropHint: 'Drop a device here'},
 }
