@@ -1050,6 +1050,12 @@ fn command_update_apply(
     let pending: Vec<&PlanEntry> = entries.iter()
         .filter(|entry| matches!(entry.action, PlanAction::Adopt | PlanAction::Build))
         .collect();
+    // Products already current with their planned cut: the active suite
+    // receipt is brought to their managed install too.
+    let current: Vec<String> = entries.iter()
+        .filter(|entry| entry.action == PlanAction::Skip)
+        .map(|entry| entry.id.clone())
+        .collect();
     if json_mode {
         let products: Vec<serde_json::Value> = entries.iter().map(|entry| json!({
             "product": entry.id,
@@ -1074,17 +1080,18 @@ fn command_update_apply(
             "drift": drift,
             "updates_pending": pending.len(),
         })).map_err(|error| error.to_string())?);
-        if pending.is_empty() { return Ok(0); }
+        if pending.is_empty() { return reconcile_suite_with_current(&data_root, &current, json_mode); }
     } else {
         let updates = print_plan_report(&entries, &drift, channel);
         if !updates {
             println!("Everything selected is already current with its planned cuts; nothing to apply.");
-            return Ok(0);
+            return reconcile_suite_with_current(&data_root, &current, json_mode);
         }
     }
+    suite_supersession_admitted(&pending.iter().map(|entry| entry.id.clone()).collect::<Vec<_>>())?;
 
     let lock = acquire_update_lock(&data_root)?;
-    let outcome = (|| -> Result<Vec<String>, String> {
+    let outcome = (|| -> Result<(Vec<String>, Option<SuiteSupersession>), String> {
         let targets = update_targets(&manifest)?;
         let activation_root = activation_dir()?;
         let previous = load_active_update_receipt(&data_root)?;
@@ -1139,6 +1146,17 @@ fn command_update_apply(
             receipt.products.insert(entry.id.clone(), product.product.clone());
             updated.push(entry.id.clone());
         }
+        // The active suite receipt is superseded first for every product this
+        // run moved or found current, so `oi where` names what was installed;
+        // a later receipt write that fails puts it back with the flips.
+        let reconciled: Vec<String> = updated.iter().chain(current.iter()).cloned().collect();
+        let supersession = match supersede_active_suite(&receipt.products, &reconciled) {
+            Ok(supersession) => supersession,
+            Err(error) => {
+                undo_flips(&flips);
+                return Err(format!("{error}; every flip was put back"));
+            }
+        };
         let receipted = (|| -> Result<(), String> {
             // Receipt order is the recovery order: the previous set is durably
             // recorded before the active receipt names the new one.
@@ -1167,18 +1185,20 @@ fn command_update_apply(
         })();
         if let Err(error) = receipted {
             undo_flips(&flips);
+            if let Some(supersession) = &supersession { let _ = restore_superseded_suite(supersession); }
             return Err(format!("{error}; every flip was put back"));
         }
         for (_, product) in &prepared { finish_prepared(product); }
-        Ok(updated)
+        Ok((updated, supersession))
     })();
     let _ = fs::remove_file(lock.path());
-    let updated = outcome?;
+    let (updated, supersession) = outcome?;
     if !json_mode && !updated.is_empty() {
         println!("Managed update complete (channel {}): {} product(s) swapped atomically; receipts at {}.",
             channel.as_str(), updated.len(), active_update_receipt_path(&data_root).display());
         println!("Running processes kept their binaries; the next invocation resolves the new set. Roll back with 'oi update --rollback'.");
     }
+    report_suite_supersession(supersession.as_ref(), json_mode)?;
     if updated.is_empty() { return Ok(0); }
     // A new binary on disk is not a new process. Every resident a product owns
     // says whether it still runs an older build, by the product's own reading;
@@ -1226,6 +1246,9 @@ fn command_update_check(json_mode: bool, selection: &[String], force_rebuild: bo
             (Some(_), Some(_), Some(behind)) if behind > 0
         )
     }).count();
+    // A managed install the active suite receipt hides is not what `oi where`
+    // resolves; the check names it beside the plan.
+    let suite_shadowed = suite_shadowed_report(&entries.iter().map(|entry| entry.id.clone()).collect::<Vec<_>>())?;
     if json_mode {
         let products: Vec<serde_json::Value> = entries.iter().map(|entry| json!({
             "product": entry.id,
@@ -1246,6 +1269,7 @@ fn command_update_check(json_mode: bool, selection: &[String], force_rebuild: bo
         let pending = entries.iter().filter(|entry| matches!(entry.action, PlanAction::Adopt | PlanAction::Build)).count();
         println!("{}", serde_json::to_string_pretty(&json!({
             "schema": "oi.update-check/v1",
+            "suite_shadowed": suite_shadowed,
             "channel": channel.as_str(),
             "modality": "developer-source",
             "updates_available": pending > 0,
@@ -1258,6 +1282,16 @@ fn command_update_check(json_mode: bool, selection: &[String], force_rebuild: bo
         return Ok(if pending > 0 { 1 } else { 0 });
     }
     let updates = print_plan_report(&entries, &drift, channel);
+    for shadow in &suite_shadowed {
+        println!(
+            "{}: the active suite receipt {} pins {} and hides the managed install {}; '{}' brings the suite to it.",
+            shadow["product"].as_str().unwrap_or_default(),
+            shadow["receipt_ref"].as_str().unwrap_or_default(),
+            short_rev(shadow["pinned_revision"].as_str().unwrap_or_default()),
+            short_rev(shadow["revision"].as_str().unwrap_or_default()),
+            shadow["remedy"].as_str().unwrap_or_default(),
+        );
+    }
     if updates {
         println!("Updates available. Run 'oi update' (or 'oi update --apply') to swap them in; this check changed nothing.");
         Ok(1)
@@ -1289,7 +1323,7 @@ fn command_update_rollback(json_mode: bool) -> Result<i32, String> {
         }
     }
     let lock = acquire_update_lock(&data_root)?;
-    let outcome = (|| -> Result<Vec<String>, String> {
+    let outcome = (|| -> Result<(Vec<String>, Option<SuiteSupersession>), String> {
         let activation_root = activation_dir()?;
         let mut restored = Vec::new();
         for (id, product) in &previous.products {
@@ -1314,10 +1348,13 @@ fn command_update_rollback(json_mode: bool) -> Result<i32, String> {
             }
         }
         save_composition(&composition)?;
-        Ok(restored)
+        // The suite receipt follows the restored set, as it followed the update.
+        let supersession = supersede_active_suite(&previous.products, &restored)
+            .map_err(|error| format!("managed binaries, receipts and registrations were rolled back, but the active suite receipt was not brought to them: {error}"))?;
+        Ok((restored, supersession))
     })();
     let _ = fs::remove_file(lock.path());
-    let restored = outcome?;
+    let (restored, supersession) = outcome?;
     if json_mode {
         println!("{}", serde_json::to_string_pretty(&json!({
             "schema": "oi.managed-update-rollback/v1",
@@ -1329,6 +1366,7 @@ fn command_update_rollback(json_mode: bool) -> Result<i32, String> {
             restored.len(), restored.join(", "));
         println!("The former active set is retained as the new rollback target.");
     }
+    report_suite_supersession(supersession.as_ref(), json_mode)?;
     Ok(0)
 }
 

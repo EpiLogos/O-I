@@ -76,6 +76,37 @@ managed path, the activation path, the exact build command and gate log, the
 provenance (`built` or `adopted`), and the install time. The receipt is the
 answer to "what is installed here" — not `ls ~/.local/bin`.
 
+## The active suite receipt follows the managed update
+
+`oi where` — and through it the cradle kernel, `oi aikit` and the world heads
+— resolves a suite product from the one active suite receipt
+(`receipts/active-suite.json`, [Development Field §9.4](DEVELOPMENT-FIELD-PROTOCOL-WAYFINDER.md)),
+not from `bin/<exe>`. A managed update that moved a product the suite pins
+would otherwise be shadowed: built, linked and receipted, yet never what the
+suite resolves. On 14 October 2026 this left the installed desktop resolving a
+September `ql` with none of its companions, after the update had installed the
+current cut with all four.
+
+So `oi update --apply` supersedes the suite receipt's entry for every product
+it moved or found already current. It activates a successor receipt
+(`receipt-managed-…`, source `managed-update`) that reuses every other product
+exactly as pinned. It stages the managed artifact and its companions under
+the successor's own suite root, and names the replaced receipt as
+`previous_receipt_ref`, so `oi suite rollback` restores it. The successor is
+written before the update receipts; if a later receipt write fails, the flips
+are undone and the replaced suite receipt becomes active again.
+`oi update --rollback` brings the suite receipt to the restored set the same
+way.
+
+Only a developer-source suite is superseded. When the active suite is on any
+other channel, an apply of a product it pins is refused before anything
+builds, and the whole suite moves through `oi suite update`.
+`oi update --check` and `oi where` name a managed install the active suite
+receipt hides (`suite_shadowed`, `shadowed_managed_update`), with the
+`oi update --apply <product>` that brings the suite to it. Suite staging
+(`oi suite update`) carries each primary's declared companions too, read from
+beside the source executable.
+
 ## Cut resolution (developer-source modality)
 
 For each product the desired cut is the **committed HEAD** of its checkout
