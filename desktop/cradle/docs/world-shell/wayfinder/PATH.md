@@ -9,8 +9,8 @@ earlier PATH (waves W0–W0e, carries 1–57) is in git at `760fa4916`.
 
 | Role | Who | Count | Does | Never |
 |---|---|---|---|---|
-| **Lead** | the Opus session running the build | 1 | claims tickets, writes briefs, dispatches, converges each return itself (re-runs checks, reads the diff, stages the ticket's files, commits, pushes), keeps PATH, runs the native app and screen checks | spawns any agent other than the builders and the reviewer below; writes product code beyond one-file glue |
-| **Builders** | Haiku subagents (Agent tool, `model: haiku`) | ≤3 at once, one ticket each, exclusive zones | edit inside the zone, run the ticket's checks, return the receipt | stage, commit, leave the zone, decide design |
+| **Lead** | the Opus session running the build | 1 | claims tickets, writes briefs, dispatches (no task chips: side work is a builder lane in this seat), converges each return itself (re-runs checks, reads the diff, stages the ticket's files, commits, pushes), keeps PATH, runs the native app and screen checks | spawns any agent other than the builders and the reviewer below; writes product code beyond one-file glue |
+| **Builders** | Haiku subagents (Agent tool, `model: haiku`) | ≤6 at once (owner, 14 Oct), one ticket each, exclusive zones | edit inside the zone, run the ticket's checks, return the receipt | stage, commit, leave the zone, decide design |
 | **Reviewer** | one Sonnet subagent (Agent tool, `model: sonnet`) | 1, only at review points (§6) | reads the wave's commits and refutes the done-claim | edits anything |
 
 No Workflow tool, no Opus subagents, no research fan-outs. A ticket that
@@ -106,8 +106,8 @@ bullet twice gets one Sonnet diagnostic; never a third builder attempt.
 
 ## 7. Open claims
 
-One branch, one run (`dlw/build`; the open PR is #674). Builders are Haiku, three at a
-time, each with an exclusive zone; the lead converges, commits and keeps
+One branch, one run (`dlw/build`; the open PR is #674). Builders are Haiku, up to six at a
+time (owner, 14 Oct; no task chips — side work is a builder lane here), each with an exclusive zone; the lead converges, commits and keeps
 this table true. Tickets and resolutions live in `tickets/`.
 
 | Ticket | Who | Zone | Since |
@@ -149,11 +149,15 @@ catalogue (`ql music modes`, QL-MEF #330) and lane-4 T27's terminator (QL's sky 
 subsolar point since QL-MEF #328, `providers/sky/kerykeion_snapshot.py`; the frame reads `sky.subsolar`).
 All three are built on both sides and flow once the active suite carries QL main.
 
-Install seam (14 Oct): `oi update --apply quaternal-logic` installed QL main
-with every companion, but `oi where` — what the kernel reads — answers from
-the active suite receipt (QL 4276b94, no field host). Handed off as its own
-task; re-activating the suite moves all six products and is refused today on
-Central's registration drift.
+Install seam, resolved on main (#672, 14 Oct): `oi update --apply` now
+supersedes the active suite receipt's entry for every product it moves
+(`docs/INSTALL-UPDATE-FLOW.md`), and `oi where` names a shadowed managed
+install. The owner's one step, once the installed `oi` carries #672: re-run
+`oi update --apply quaternal-logic`, which points the suite receipt at QL
+37e3085 with its four companions. The installed desktop then starts the native
+M1 field and `ql music modes`. The candidate already carries QL in its own
+payload and does not wait on this. #670 restored the legacy desktop's
+instrument summon.
 
 Factory close, after 4c274de4d: the kernel resolves a grant against
 `Control/user/native-action-authority.json` (root: `OI_CENTRAL_ROOT`, else the
