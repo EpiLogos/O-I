@@ -123,7 +123,9 @@ test('the transport stylesheet holds the floor and leaves the shell\'s narrow-wi
   // The shell's narrow-width rules (styles.css) fold the scale, loop and system groups and the later tempo and play cells by
   // `display: none`; a display set here would outrank them. Only an owner's slot, and a cell's icon, set one.
   const displayed = [...css.replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/([^{}]+)\{([^}]*)\}/g)].filter(([, , body]) => /(^|[\s;])display:/.test(body)).map(([, selector]) => selector.trim())
-  assert.deepEqual(displayed, ['.one-transport .transport-slot', '.mode-transport.one-transport .native-control svg'])
+  // Ticket C: the owner's stage tool rail swaps to its own abbreviations inside the bar (a display on its labels, never a group).
+  assert.deepEqual(displayed, ['.one-transport .transport-slot', '.mode-transport.one-transport .native-control svg',
+    '.mode-transport.one-transport .bar-tool-full', '.mode-transport.one-transport .bar-tool-abbr'])
   assert.doesNotMatch(css.replace(/\/\*[\s\S]*?\*\//g, ''), /#[0-9a-f]{3,8}\b/i, 'shell tokens only (the comments may name the mockup\'s colours)')
 })
 

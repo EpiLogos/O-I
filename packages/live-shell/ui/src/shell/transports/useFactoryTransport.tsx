@@ -28,6 +28,7 @@ import type {TransportBindings, TransportSlotId} from '../../frame/transport/slo
 import {shellSetter, type DispatchReceipt} from '../../inhabitants/sdk/shellSetters'
 import type {ModeTransportReadouts} from '../ModeTransportBar'
 import type {UseModeTransport} from '../modeTransports'
+import {tokenReadout} from './transportReadings'
 import {Workspace} from '../workspaceContext'
 
 const TIPS = AGENT_TRANSPORT_TIPS
@@ -42,6 +43,9 @@ const INERT_SETTERS: Pick<AgentShellState, 'setEffort' | 'setSteer' | 'setHeartb
 /** The owner readouts a frame publishes for a slot (Now, the carrier, …), as slot readouts — what the registry's default hook shows. */
 const readoutBindings = (readouts: ModeTransportReadouts | undefined): TransportBindings =>
   Object.fromEntries(Object.entries(readouts ?? {}).map(([id, readout]) => [id, {readout}])) as TransportBindings
+
+/** A name as a readout cell holds it: the whole name stays in the title. */
+const clipped = (name: string): string => name.length > 16 ? `${name.slice(0, 15)}…` : name
 
 /** A slot's base title and the last thing its owner said about it (the old bar's note line, under the control it concerned). */
 const noted = (base: string, note: string | null | undefined): string => note ? `${base} ${note}` : base
@@ -138,6 +142,7 @@ export const useFactoryTransport: UseModeTransport = ({readouts}) => {
   // (useAgentMetrics.ts:68-70), so only a fraction is a fill: anything else is not shown as a percentage.
   const spend = metrics.spend !== null && metrics.spend >= 0 && metrics.spend <= 1 ? `${Math.round(metrics.spend * 100)}%` : null
   const budget = metrics.budgetUsed === null && metrics.budgetCap === null ? '— / —' : `${metrics.budgetUsed ?? '—'} / ${metrics.budgetCap ?? '—'}`
+  const tokens = tokenReadout(metrics.tokensIn, metrics.tokensOut, shell.tokenScope)
 
   return {
     ...readoutBindings(readouts),
@@ -147,10 +152,11 @@ export const useFactoryTransport: UseModeTransport = ({readouts}) => {
     signature: {readout: {value: budget, title: TIPS.budget}},                                                            // :139
     metro: {press: toggleHeartbeat, title: noted(TIPS.heartbeat, notes.metro)},                                            // :140 — no owner reading, so no light
     quantize: {press: cycleQuantize, readout: {value: '— ▾', title: noted(`${TIPS.quantize} Unread until the harness accepts a value.`, notes.quantize)}, title: noted(TIPS.quantize, notes.quantize)}, // :141
-    // Σ scope, tokens in, tokens out — the manual's "count tokens in and out" across key, root and scale (:144-146).
-    key: {press: shell.cycleTokenScope, readout: {value: `Σ ${shell.tokenScope}`, title: TIPS.tokens}, title: TIPS.tokens},
-    root: {readout: {value: `in ${metrics.tokensIn}`, title: TIPS.tokIn}},
-    scale: {readout: {value: `out ${metrics.tokensOut}`, title: TIPS.tokOut}},
+    // Tokens in · out on the key slot, as the mockup's `Σ 142k · 38k` (the manual's "count tokens in and out"), the scope's root
+    // session and the scope on root and scale (the grammar's meanings) — the old bar's three readouts (:144-146), re-placed.
+    key: {press: shell.cycleTokenScope, readout: tokens, title: `${TIPS.tokens} ${tokens.title}`},
+    root: track ? {readout: {value: clipped(track.agentName ?? track.purpose ?? track.sessionRef), title: `Root — the scope's root session: ${track.agentName ?? 'an unnamed agent'}${track.purpose ? ` · ${track.purpose}` : ''} (${track.sessionRef}), the selected session in the agency reading.`}} : {},
+    scale: {readout: {value: shell.tokenScope, title: `Scale — the token scope the counts cover: ${shell.tokenScope} (session · group · everything open; the key slot changes it).`}},
     follow: {press: () => shell.setFollow(!shell.follow), lit: shell.follow, title: TIPS.follow},                          // :150
     position: {readout: {value: metrics.position, title: TIPS.position}},                                                  // :151
     // Run lights only after the owner has answered a Run or Stop; the old bar held it lit from mount (`useState(true)` in AgentShellTransportBridge, App.tsx).

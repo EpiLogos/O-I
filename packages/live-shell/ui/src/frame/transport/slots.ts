@@ -1,8 +1,8 @@
 // The transport's slot contract (FOUNDATION F7; manual §10.5: "The transport keeps Live's controls in Live's places in every
 // kind of work. What each control does follows the work in front of you."). The bar has 28 slots in fixed places
 // (shell/modeGrammar.ts TRANSPORT_SLOT_IDS); a mode binds what a slot does. A slot is enabled only by a binding with a write
-// path (`press`, `step` or an owner `control`); a light shows only the owner's reading (`lit`); text appears only in a
-// readout. Pure TypeScript.
+// path (`press`, `step` or an owner `control`); a light shows only the owner's reading (`lit`); a value appears only in a
+// readout, and a word only where the mockup names the control with one (Link, Ground, Stamp, Tap, Map). Pure TypeScript.
 import type {ReactNode} from 'react'
 import type {TransportSlotId} from '../../shell/modeGrammar'
 
@@ -34,4 +34,6 @@ export interface SlotWords {
   fn: string
   dataI: string
   waiting: string
+  /** The word a word-faced slot (Link, Tap, the maps) wears in this mode — the mockup's word, a name and never a value. */
+  face?: string
 }

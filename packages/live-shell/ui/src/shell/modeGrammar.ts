@@ -53,6 +53,9 @@ export interface SlotMeaning {
   readonly id: string
   readonly label: string
   readonly fn: string
+  /** The word the slot's face wears in this mode where the mockup draws a word on a control (Link, Ground, Stamp, Tap,
+   * Map — world-shell-mockup.html rev 5 `TPM`): a name, never a reading. Absent: the slot's face is its mark or its reading. */
+  readonly face?: string
 }
 
 /** One presentation's meaning: what the icon shows, and what the view holds.
@@ -200,8 +203,8 @@ const live: SurfModeGrammar = {
   },
   status: {label: 'Live', fn: 'the instrument — the M1 torus, the set and its transport'},
   transport: [
-    {id: 'link', label: 'Link', fn: 'join the set\'s clock with Link peers'},
-    {id: 'tap', label: 'Tap', fn: 'tap tempo'},
+    {id: 'link', label: 'Link', fn: 'join the set\'s clock with Link peers', face: 'Link'},
+    {id: 'tap', label: 'Tap', fn: 'tap tempo', face: 'Tap'},
     {id: 'tempo', label: 'Tempo', fn: 'the set\'s tempo'},
     {id: 'signature', label: 'Signature', fn: 'the set\'s time signature'},
     {id: 'metro', label: 'Metronome', fn: 'the metronome'},
@@ -224,8 +227,8 @@ const live: SurfModeGrammar = {
     {id: 'loop-length', label: 'Loop length', fn: 'the loop brace\'s length'},
     {id: 'draw', label: 'Draw', fn: 'draw notes and automation'},
     {id: 'keys', label: 'Keys', fn: 'play the instrument from the computer keyboard — the Jankó surface'},
-    {id: 'key-map', label: 'Key map', fn: 'bind computer keys to controls'},
-    {id: 'midi-map', label: 'MIDI map', fn: 'bind MIDI controls'},
+    {id: 'key-map', label: 'Key map', fn: 'bind computer keys to controls', face: 'KEY'},
+    {id: 'midi-map', label: 'MIDI map', fn: 'bind MIDI controls', face: 'MIDI'},
     {id: 'rate', label: 'Rate', fn: 'the engine\'s sample rate, in kHz'},
     {id: 'cpu', label: 'CPU', fn: 'the engine\'s CPU load'},
   ],
@@ -270,8 +273,8 @@ const base: SurfModeGrammar = {
   },
   status: {label: 'Central', fn: 'the ground — the day as clips, documents and entries'},
   transport: [
-    {id: 'link', label: 'Ground sync', fn: 'the frame follows the ground\'s carrier (the kernel link)'},
-    {id: 'tap', label: 'Stamp Now', fn: 'stamp Now into the open document'},
+    {id: 'link', label: 'Ground sync', fn: 'the frame follows the ground\'s carrier (the kernel link)', face: 'Ground'},
+    {id: 'tap', label: 'Stamp Now', fn: 'stamp Now into the open document', face: 'Stamp'},
     {id: 'tempo', label: 'Die face', fn: 'the Day die\'s open face; ‹ › turns it'},
     {id: 'signature', label: '4 + 2', fn: 'the die\'s 4+2 reading — four working faces, two flanks'},
     {id: 'metro', label: 'Autosave', fn: 'the document\'s autosave'},
@@ -294,8 +297,8 @@ const base: SurfModeGrammar = {
     {id: 'loop-length', label: 'Day span', fn: 'the day\'s span'},
     {id: 'draw', label: 'Highlight pen', fn: 'highlight in the open document'},
     {id: 'keys', label: 'Keys', fn: 'keys for the document\'s controls'},
-    {id: 'key-map', label: 'Map', fn: 'bind a key or spoken phrase to any control'},
-    {id: 'midi-map', label: 'Map', fn: 'bind a pad or phrase to any control'},
+    {id: 'key-map', label: 'Map', fn: 'bind a key or spoken phrase to any control', face: 'Map'},
+    {id: 'midi-map', label: 'Map', fn: 'bind a pad or phrase to any control', face: 'MIDI'},
     {id: 'rate', label: 'Carrier', fn: 'which carrier serves the field, and its round-trip'},
     {id: 'cpu', label: 'Save state', fn: 'the document\'s save standing'},
   ],
@@ -332,8 +335,8 @@ const factory: SurfModeGrammar = {
   },
   status: {label: 'Factory', fn: 'sessions and tasks — the agency desk'},
   transport: [
-    {id: 'link', label: 'Peers', fn: 'link the shell\'s sessions to agents in other harnesses and machines (one ledger, one clock)'},
-    {id: 'tap', label: 'Ping', fn: 'ask every running agent for a status line now; answers land in the Agents tile'},
+    {id: 'link', label: 'Peers', fn: 'link the shell\'s sessions to agents in other harnesses and machines (one ledger, one clock)', face: 'Link'},
+    {id: 'tap', label: 'Ping', fn: 'ask every running agent for a status line now; answers land in the Agents tile', face: 'Tap'},
     {id: 'tempo', label: 'Effort', fn: 'thinking effort per turn (low → max); per-task override exists'},
     {id: 'signature', label: 'Budget', fn: 'turns used / allowed for the selected session'},
     {id: 'metro', label: 'Heartbeat', fn: 'running agents check in on a cadence; a stopped needle is a stall'},
@@ -356,8 +359,8 @@ const factory: SurfModeGrammar = {
     {id: 'loop-length', label: 'Routine cap', fn: 'the routine\'s cap'},
     {id: 'draw', label: 'Point', fn: 'mark the stage or tiles as agent reference'},
     {id: 'keys', label: 'Keys', fn: 'number keys launch task rows; letters fire rack macros'},
-    {id: 'key-map', label: 'Map', fn: 'bind a key to any control ("Fizz, retry")'},
-    {id: 'midi-map', label: 'Map', fn: 'bind a pad or spoken phrase to any control'},
+    {id: 'key-map', label: 'Map', fn: 'bind a key to any control ("Fizz, retry")', face: 'Map'},
+    {id: 'midi-map', label: 'Map', fn: 'bind a pad or spoken phrase to any control', face: 'MIDI'},
     {id: 'rate', label: 'Throughput', fn: 't/s across running agents — the tokens/s rate'},
     {id: 'cpu', label: 'Context', fn: 'context-window fill of the selected session'},
   ],
@@ -384,8 +387,8 @@ const expressions: SurfModeGrammar = {
   },
   status: {label: 'Expressions', fn: 'the living field — the retained body'},
   transport: [
-    {id: 'link', label: 'Field sync', fn: 'sync the frame with the field carrier'},
-    {id: 'tap', label: 'Tap', fn: 'tap tempo for the field'},
+    {id: 'link', label: 'Field sync', fn: 'sync the frame with the field carrier', face: 'Link'},
+    {id: 'tap', label: 'Tap', fn: 'tap tempo for the field', face: 'Tap'},
     {id: 'tempo', label: 'Field tempo', fn: 'the field\'s time scale'},
     {id: 'signature', label: '5 : 3', fn: 'the scene ratio — hold : transition'},
     {id: 'metro', label: 'Pulse', fn: 'the field\'s pulse'},
@@ -408,8 +411,8 @@ const expressions: SurfModeGrammar = {
     {id: 'loop-length', label: 'Sequence span', fn: 'the saved sequence\'s span'},
     {id: 'draw', label: 'Draw form', fn: 'draw on the field'},
     {id: 'keys', label: 'Keys', fn: 'keys for the field\'s controls'},
-    {id: 'key-map', label: 'Map', fn: 'bind keys to the field\'s controls'},
-    {id: 'midi-map', label: 'Map', fn: 'bind pads to the field\'s controls'},
+    {id: 'key-map', label: 'Map', fn: 'bind keys to the field\'s controls', face: 'Map'},
+    {id: 'midi-map', label: 'Map', fn: 'bind pads to the field\'s controls', face: 'MIDI'},
     {id: 'rate', label: 'fps', fn: 'the field\'s frame rate, in fps'},
     {id: 'cpu', label: 'GPU', fn: 'the GPU share of the field'},
   ],
@@ -457,8 +460,8 @@ const techne: SurfModeGrammar = {
   },
   status: {label: 'Technē', fn: 'the six lenses over one encounter'},
   transport: [
-    {id: 'link', label: 'Field carrier', fn: 'join the World to the shared field carrier; off, the same grammar runs over the local ground'},
-    {id: 'tap', label: 'Back to Now', fn: 'snap the occasion back to Now'},
+    {id: 'link', label: 'Field carrier', fn: 'join the World to the shared field carrier; off, the same grammar runs over the local ground', face: 'Link'},
+    {id: 'tap', label: 'Back to Now', fn: 'snap the occasion back to Now', face: 'Tap'},
     {id: 'tempo', label: 'Walk pace', fn: 'walk dwell per stop'},
     {id: 'signature', label: 'Stop n/8', fn: 'the stop of eight in the walk'},
     {id: 'metro', label: 'Presence', fn: 'the FieldNow presence pulse — other Worlds\' presence animates'},
@@ -481,8 +484,8 @@ const techne: SurfModeGrammar = {
     {id: 'loop-length', label: 'Window span', fn: 'the occasion window\'s span'},
     {id: 'draw', label: 'Place tool', fn: 'presentation placement'},
     {id: 'keys', label: 'Keys', fn: 'keys for the lens\'s controls'},
-    {id: 'key-map', label: 'Map', fn: 'bind keys to the lens\'s controls'},
-    {id: 'midi-map', label: 'Map', fn: 'bind pads to the lens\'s controls'},
+    {id: 'key-map', label: 'Map', fn: 'bind keys to the lens\'s controls', face: 'Map'},
+    {id: 'midi-map', label: 'Map', fn: 'bind pads to the lens\'s controls', face: 'MIDI'},
     {id: 'rate', label: 'Carrier', fn: 'the carrier and its round-trip'},
     {id: 'cpu', label: 'Projected', fn: 'share of your World projected into the field'},
   ],

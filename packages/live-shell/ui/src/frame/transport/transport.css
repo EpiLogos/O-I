@@ -18,14 +18,15 @@
    block on the bar, as it does in the mockup */
 .mode-transport.one-transport .native-control { height: 19px; min-width: 17px;
   padding: 1px 4px; border: 1px solid var(--bg-1); background: var(--bg-0); color: var(--text-dim); font-size: 10px; line-height: 14px }
-.mode-transport.one-transport .native-control svg { display: block; margin: 0 auto }
+/* a cell's mark sits inline, centred, so a mark and its owner's word (Technē's focused instrument) share one 19px line */
+.mode-transport.one-transport .native-control svg { display: inline-block; vertical-align: -2px }
 .mode-transport.one-transport .native-control:not(:disabled):hover { color: var(--text) }
 .mode-transport.one-transport .native-control[data-light=on]:not(.transport-btn) { background: var(--accent); border-color: var(--accent); color: var(--accent-ink, var(--line)) }
 
 /* a readout (.fld): mono, on bg-0, the owner's value in the text colour; unread, it stays faint */
 .mode-transport.one-transport :is(.tempo-field, .meter-field, .position-field) { width: auto; height: 19px; line-height: 15px;
   padding: 2px 6px; border: 0; background: var(--bg-0); color: var(--text); font-family: var(--mono, ui-monospace, 'SF Mono', Menlo, monospace); font-size: 10px; white-space: nowrap }
-.mode-transport.one-transport .position-field { min-width: 64px; text-align: center }
+.mode-transport.one-transport .position-field { text-align: center }
 .mode-transport.one-transport .position-field[data-slot=position] { box-shadow: inset 0 -2px 0 var(--accent) }
 .mode-transport.one-transport :is(.tempo-field, .meter-field, .position-field)[data-unread] { color: var(--text-faint) }
 
@@ -36,6 +37,19 @@
 .mode-transport.one-transport .transport-record { color: var(--rec-ink, var(--text-dim)) !important }
 .mode-transport.one-transport .transport-record[data-light=on] { color: var(--rec) !important }
 
-/* an owner's own control in a slot (a choice of root or scale, the map toggles), drawn at the cell's height */
+/* an owner's own control in a slot (a choice of root or scale, the map toggles), drawn at the cell's height and type */
+.mode-transport.one-transport .transport-slot :is(button, output, label) { font-size: 10px }
 .mode-transport.one-transport .transport-slot select { height: 19px; padding: 0 4px; border: 1px solid var(--bg-1); background: var(--bg-0); color: var(--text-dim); font-size: 10px }
 .mode-transport.one-transport .transport-slot > :not(output) { flex-shrink: 0 }
+
+/* the key group's readings give way before the bar does (a long session name on Factory's root) */
+.mode-transport.one-transport .transport-scale :is(.meter-field, .transport-reading) { max-width: 120px; overflow: hidden; text-overflow: ellipsis }
+/* a reading in a marked slot's place (the day's opening and close on the punch slots, the mockup's .fld) reads as a field */
+.mode-transport.one-transport .transport-reading { color: var(--text) }
+/* the owner's own controls at the bar's density: the Scene scrub (Expressions' position) keeps a short track beside its time */
+.mode-transport.one-transport .native-transport-scrub { flex: 0 0 72px; min-width: 0; height: 19px }
+/* the owner's stage tool rail in the draw slot (components/NativeBarControls.tsx BarTools) wears its own abbreviations at
+   the bar's density, as the mockup's one ✎ cell takes the place; the full names stay its accessible names and titles */
+.mode-transport.one-transport .bar-tool-full { display: none }
+.mode-transport.one-transport .bar-tool-abbr { display: inline }
+.mode-transport.one-transport .bar-tools { padding: 0 }

@@ -96,10 +96,13 @@ test('Factory\'s lights are readings: none from a shell flag the owner has not a
 
 test('Factory\'s readouts are the old bar\'s, and read dashes until the owner accepts a value', () => {
   const {bindings} = factory()
-  assert.deepEqual(['tempo', 'signature', 'quantize', 'key', 'root', 'scale', 'position', 'cpu'].map(id => bindings[id].readout.value),
-    ['—', '— / —', '— ▾', 'Σ session', 'in —', 'out —', '— . — . —', '—'])
+  // Ticket C: tokens in · out stand on the key slot (the mockup's `Σ 142k · 38k`), the scope on scale, the scope's root session on
+  // root — which waits, unread, while no session stands.
+  assert.deepEqual(['tempo', 'signature', 'quantize', 'key', 'scale', 'position', 'cpu'].map(id => bindings[id].readout.value),
+    ['—', '— / —', '— ▾', 'Σ — · —', 'session', '— . — . —', '—'])
+  assert.equal(bindings.root.readout, undefined, 'no session, no root session')
   const markup = draw(bindings)
-  assert.match(markup, />— ▾</); assert.match(markup, />Σ session</)
+  assert.match(markup, />— ▾</); assert.match(markup, />Σ — · —</)
 })
 
 test('Factory\'s Run and Stop send harness_agent_control on the bound harness, and nothing else', async () => {
@@ -219,8 +222,10 @@ test('Expressions with no native reading shows only the frame\'s readouts and pr
 test('Expressions binds the old bar\'s working controls to the slots §10.5 and the old bar name, and no others', () => {
   const {source: bar} = native()
   const bindings = expressions(bar)
-  assert.deepEqual(owner(bindings), ['arm', 'cpu', 'draw', 'key-map', 'loop', 'overdub', 'play', 'position', 're-enable', 'record', 'stop', 'tempo'].sort())
-  for (const id of ['link', 'tap', 'signature', 'metro', 'quantize', 'key', 'root', 'scale', 'follow', 'capture', 'punch-in', 'punch-out', 'loop-length', 'keys', 'midi-map', 'rate']) {
+  assert.deepEqual(owner(bindings), ['arm', 'cpu', 'draw', 'key-map', 'loop', 'overdub', 'play', 'position', 're-enable', 'record', 'signature', 'stop', 'tempo'].sort())
+  // Ticket C: the scene's ratio of hold to change reads the field's own morph hold share (toroidalMorph.holdRatio).
+  assert.match(bindings.signature.readout.value, /^\d+ : \d+$/); assert.match(bindings.signature.readout.title, /ratio of hold to change/)
+  for (const id of ['link', 'tap', 'metro', 'quantize', 'key', 'root', 'scale', 'follow', 'capture', 'punch-in', 'punch-out', 'loop-length', 'keys', 'midi-map', 'rate']) {
     assert.equal(bindings[id], undefined, `${id} had no control on the old bar and stays unbound`)
   }
   const markup = draw(bindings)
