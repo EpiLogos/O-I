@@ -46,6 +46,10 @@ bound; lane 2 owns `techne:time-axis/v1`, consumed by Places. Audio, device
 editing and deep document lanes are consumed when they land.
 
 
+## Standing note — 2026-10-14 (the "implemented" count)
+
+2026-10-14: the register's "implemented: 125" (PATH §7 "125 of 126"; FOUNDATION §8) counts code in the frame, mostly unreachable from the candidate (PORT-AUDIT B2). It is not a measure of the product. No target carries `home` or `owner_op` yet (scripted check of `targets.json`); each target is re-homed with both after F2–F5, verified on screen (FOUNDATION §8). This note changes no per-target value, and the baseline above stands as recorded.
+
 ## Native recovery increment — 2026-10-07T16:38:26.484596+00:00
 
 The assigned native recovery source now reads the existing lossless storage envelope, adopted from O-I revision `5c1c9e4347fe731c903fb54dc37e1a83bf96854c` (acquisition B, adopt; no external reference import). Nine focused native storage tests and one source-hash-bound actual retained-data proof passed; candidate walk-bridge built with jobs2. Exact source, build/binary and operation evidence is in [saved-work-repair.json](saved-work-repair.json), with the human reading in [NATIVE-RECOVERY-REPAIR.md](NATIVE-RECOVERY-REPAIR.md).
