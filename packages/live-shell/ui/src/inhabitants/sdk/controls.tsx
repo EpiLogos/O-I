@@ -46,8 +46,15 @@ export type WriteStanding = 'idle' | 'pending' | 'refused'
  * until the result is understood). */
 export function useFaceDrafts(submit: (changes: readonly ParamChange[]) => Promise<void>) {
   const [base, setBase] = useState<Record<string, number | string | boolean>>({})
-  const [drafts, setDrafts] = useState<Record<string, number | string | boolean>>({})
+  const [drafts, setHeldDrafts] = useState<Record<string, number | string | boolean>>({})
   const [standing, setStanding] = useState<WriteStanding>('idle')
+  // The drafts as they stand this instant: a control that drafts and commits in one handler (a toggle, a typed value)
+  // commits what it just drafted, not the render's stale copy.
+  const live = useRef(drafts)
+  const setDrafts = useCallback((change: (previous: Record<string, number | string | boolean>) => Record<string, number | string | boolean>) => {
+    live.current = change(live.current)
+    setHeldDrafts(live.current)
+  }, [])
 
   /** Adopt the owner's acknowledged values (call when a reading arrives).
    * Drafts persist — they are the operator's intended values. */
@@ -58,7 +65,7 @@ export function useFaceDrafts(submit: (changes: readonly ParamChange[]) => Promi
   const setDraft = useCallback((key: string, value: number | string | boolean) => {
     setDrafts(previous => ({...previous, [key]: value}))
     setStanding('idle')
-  }, [])
+  }, [setDrafts])
 
   const cancel = useCallback((key?: string) => {
     setDrafts(previous => {
@@ -67,13 +74,13 @@ export function useFaceDrafts(submit: (changes: readonly ParamChange[]) => Promi
       return rest
     })
     setStanding('idle')
-  }, [])
+  }, [setDrafts])
 
   const dirtyKeys = useCallback(() =>
     Object.keys(drafts).filter(key => drafts[key] !== base[key]), [drafts, base])
 
   const commit = useCallback(async () => {
-    const changes: readonly ParamChange[] = Object.entries(drafts)
+    const changes: readonly ParamChange[] = Object.entries(live.current)
       .filter(([key, value]) => value !== base[key])
       .map(([key, value]) => ({key, value}))
     if (!changes.length) return
@@ -90,7 +97,7 @@ export function useFaceDrafts(submit: (changes: readonly ParamChange[]) => Promi
     } catch {
       setStanding('refused') // drafts retained; the plate discloses the refusal
     }
-  }, [drafts, base, submit])
+  }, [base, submit, setDrafts])
 
   return {base, drafts, standing, adopt, setDraft, cancel, dirtyKeys, commit}
 }
