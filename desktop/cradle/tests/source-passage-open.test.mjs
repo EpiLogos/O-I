@@ -6,6 +6,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {evidenceAnchorOf} from '../src/techne/m0m5/timeline/navigationIdentity.ts';
 import {
+  judgePassageReveal,
   passageForSource,
   passageRevealDecision,
   queueSourcePassageReveal,
@@ -100,4 +101,34 @@ test('a queued reveal is taken once, by its own binding', () => {
   assert.equal(takeSourcePassageReveal('binding-2'), undefined);
   assert.deepEqual(takeSourcePassageReveal('binding-1'), REVEAL);
   assert.equal(takeSourcePassageReveal('binding-1'), undefined);
+});
+
+// lane-2 T19b (drift): a reveal addressed to this editor that cannot land is named, never silently dropped.
+test('a reveal that lands is judged reveal, with its span', () => {
+  assert.deepEqual(judgePassageReveal(REVEAL, EDITOR), {kind: 'reveal', start: 4, end: 9});
+});
+
+test('a passage whose file has moved on is named, and nothing is revealed', () => {
+  const verdict = judgePassageReveal(REVEAL, {...EDITOR, revision: 'rev-8'});
+  assert.equal(verdict.kind, 'refuse');
+  assert.match(verdict.reason, /changed after the passage was disclosed/);
+  assert.match(verdict.reason, /opens at its top/);
+});
+
+test('a passage over unsaved edits is named, never guessed into them', () => {
+  const verdict = judgePassageReveal(REVEAL, {...EDITOR, workingCopy: true});
+  assert.equal(verdict.kind, 'refuse');
+  assert.match(verdict.reason, /unsaved edits/);
+});
+
+test('a passage that no longer fits the document is named', () => {
+  const verdict = judgePassageReveal({...REVEAL, end: 41}, EDITOR);
+  assert.equal(verdict.kind, 'refuse');
+  assert.match(verdict.reason, /no longer fits/);
+});
+
+test('a reveal addressed to another editor is ignored, never named by this one', () => {
+  assert.deepEqual(judgePassageReveal(REVEAL, {...EDITOR, bindingId: 'binding-2', revision: 'rev-8'}), {kind: 'ignore'});
+  assert.deepEqual(judgePassageReveal(REVEAL, {...EDITOR, sourceRef: 'central:notes/other.md', workingCopy: true}), {kind: 'ignore'});
+  assert.deepEqual(judgePassageReveal(undefined, EDITOR), {kind: 'ignore'});
 });
