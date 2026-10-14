@@ -1843,6 +1843,36 @@ mod tests {
         let back: EncounterRequest = serde_json::from_value(wire).unwrap();
         assert_eq!(back, send);
     }
+    /// Write a test stub without exposing a half-written or still-open file at
+    /// its final name (stage, chmod, rename), as agent_card.rs's fixtures do:
+    /// a bare write + chmod races a parallel test's fork/exec into ETXTBSY.
+    pub(super) fn write_executable_stub(path: &std::path::Path, contents: &str) {
+        let staged = path.with_extension(format!("tmp-{}", std::process::id()));
+        std::fs::write(&staged, contents).unwrap();
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            std::fs::set_permissions(&staged, std::fs::Permissions::from_mode(0o755)).unwrap();
+        }
+        std::fs::rename(&staged, path).unwrap();
+    }
+
+    /// The kernel-level exec race can still answer "Text file busy" (os error
+    /// 26) under a loaded parallel run; the TEST retries a bounded number of
+    /// times rather than weakening what the client asserts.
+    pub(super) fn retry_busy<T>(mut call: impl FnMut() -> Result<T, String>) -> Result<T, String> {
+        let mut attempt = 0;
+        loop {
+            match call() {
+                Err(message) if attempt < 20 && message.contains("os error 26") => {
+                    attempt += 1;
+                    std::thread::sleep(std::time::Duration::from_millis(25));
+                }
+                other => return other,
+            }
+        }
+    }
+
     #[test]
     fn mint_agency_parses_success_and_caches_the_absent_verb() {
         let dir = std::env::temp_dir().join(format!("oi-mint-test-{}", std::process::id()));
@@ -1850,12 +1880,7 @@ mod tests {
         std::fs::create_dir_all(&dir).unwrap();
         let script = |name: &str, body: &str| {
             let path = dir.join(name);
-            std::fs::write(&path, format!("#!/bin/sh\n{body}\n")).unwrap();
-            #[cfg(unix)]
-            {
-                use std::os::unix::fs::PermissionsExt;
-                std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o755)).unwrap();
-            }
+            write_executable_stub(&path, &format!("#!/bin/sh\n{body}\n"));
             path
         };
         let ok=script("mint-ok","echo '{\"ok\":true,\"data\":{\"configured\":true,\"standing\":\"minted-per-project-agency\",\"agent_ref\":\"agent/oh-i\"}}'");
@@ -1864,9 +1889,11 @@ mod tests {
             "echo \"error: unrecognized subcommand 'encounter-agency-mint'\" >&2\nexit 2",
         );
 
-        let success = Client::with(ok, None)
-            .mint_agency(std::path::Path::new("/tmp"), "agent-session/x")
-            .unwrap();
+        let success = retry_busy(|| {
+            Client::with(ok.clone(), None)
+                .mint_agency(std::path::Path::new("/tmp"), "agent-session/x")
+        })
+        .unwrap();
         assert_eq!(
             success["standing"],
             serde_json::json!("minted-per-project-agency")
@@ -1876,13 +1903,14 @@ mod tests {
         // The absent verb is refused once, the verdict is cached, and the
         // next call falls back WITHOUT running the executable again.
         let absent_client = Client::with(absent.clone(), None);
-        let error = absent_client
-            .mint_agency(std::path::Path::new("/tmp"), "agent-session/x")
-            .unwrap_err();
+        let error = retry_busy(|| {
+            absent_client.mint_agency(std::path::Path::new("/tmp"), "agent-session/x")
+        })
+        .unwrap_err();
         assert!(mint_verb_absent(&error), "{error}");
         assert_eq!(absent_client.mint_support.load(Ordering::Relaxed), 2);
         // Rewrite the stub to succeed: the cached verdict still refuses first.
-        std::fs::write(&absent, "#!/bin/sh\necho '{\"ok\":true}'\n").unwrap();
+        write_executable_stub(&absent, "#!/bin/sh\necho '{\"ok\":true}'\n");
         assert!(absent_client
             .mint_agency(std::path::Path::new("/tmp"), "agent-session/x")
             .is_err());
@@ -2035,12 +2063,7 @@ mod gateway_agent_tests {
             dir.display(),
             canned.replace('\'', "'\\''"),
         );
-        std::fs::write(&path, script).unwrap();
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::PermissionsExt;
-            std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o755)).unwrap();
-        }
+        super::tests::write_executable_stub(&path, &script);
         path
     }
 
@@ -2049,9 +2072,10 @@ mod gateway_agent_tests {
         let dir = unique_dir("argv");
         let canned = r#"{"ok":true,"data":{"type":"sessions","sessions":[]},"schema":1}"#;
         let client = Client::with(fake_aikit(&dir, canned), None);
-        let document = client
-            .gateway_agent(None, "gateway-binding/telegram", "sessions")
-            .expect("fake answers");
+        let document = super::tests::retry_busy(|| {
+            client.gateway_agent(None, "gateway-binding/telegram", "sessions")
+        })
+        .expect("fake answers");
         assert_eq!(document["type"], "sessions");
         let argv = std::fs::read_to_string(dir.join("argv.txt")).unwrap();
         for expected in [
@@ -2071,9 +2095,9 @@ mod gateway_agent_tests {
         let dir = unique_dir("pass-through");
         let canned = r#"{"ok":true,"data":{"type":"status","binding":"gateway-binding/x","alive":true},"schema":1}"#;
         let client = Client::with(fake_aikit(&dir, canned), None);
-        let document = client
-            .gateway_agent(None, "gateway-binding/x", "status")
-            .expect("fake answers");
+        let document =
+            super::tests::retry_busy(|| client.gateway_agent(None, "gateway-binding/x", "status"))
+                .expect("fake answers");
         assert_eq!(document["binding"], "gateway-binding/x");
         assert_eq!(document["alive"], true);
         assert!(document.get("refused").is_none());
@@ -2084,9 +2108,9 @@ mod gateway_agent_tests {
         let dir = unique_dir("refusal");
         let canned = r#"{"error":{"code":"agency_gateway_client.gateway_refused","details":{"gateway_error_code":"agency_gateway.unknown_binding","gateway_error_message":"gateway binding harness:hermes does not exist"},"message":"gateway refused the command: gateway binding harness:hermes does not exist"},"ok":false,"schema":1}"#;
         let client = Client::with(fake_aikit(&dir, canned), None);
-        let document = client
-            .gateway_agent(None, "harness:hermes", "sessions")
-            .expect("a refusal is an answer, not a kernel error");
+        let document =
+            super::tests::retry_busy(|| client.gateway_agent(None, "harness:hermes", "sessions"))
+                .expect("a refusal is an answer, not a kernel error");
         eprintln!("DOC: {document}");
         assert_eq!(document["refused"], true);
         assert_eq!(
