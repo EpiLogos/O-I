@@ -7,7 +7,8 @@
  * browser); everything React is here.
  */
 import {createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode} from "react";
-import {absentEncounterBridge, projectionModule, type EncounterBridge, type ProjectionModuleHandle} from "./projectionModules";
+import {absentEncounterBridge, projectionModule, type EncounterBridge} from "./projectionModules";
+import {ProjectionPaneSession, observeConcealment} from "./projectionPaneSession";
 import {isProjectionPaneKind, type SurfaceBinding} from "./types";
 
 // ---------------------------------------------------------------------------
@@ -48,7 +49,7 @@ export function ProjectionSurface({binding}: {binding: SurfaceBinding}) {
   const {bridge, publish} = useProjectionEncounter();
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const elementRef = useRef<HTMLDivElement | null>(null);
-  const handleRef = useRef<ProjectionModuleHandle | null>(null);
+  const sessionRef = useRef<ProjectionPaneSession | null>(null);
   const presentedRef = useRef(true);
   const panePresentationRef = useRef<string | null>(null);
   const [fault, setFault] = useState<string | null>(null);
@@ -70,26 +71,19 @@ export function ProjectionSurface({binding}: {binding: SurfaceBinding}) {
   const epoch = bridge.snapshot().accessEpoch;
   useEffect(() => {
     if (!registration || !elementRef.current) return;
-    let live = true;
     setFault(null);
-    Promise.resolve()
-      .then(() => registration.create({
-        kind: registration.kind,
-        binding: {id: binding.id, title: binding.title, subject_ref: binding.projection?.subject_ref},
-        element: elementRef.current!,
-        encounter: paneEncounter,
-      }))
-      .then(handle => {
-        if (!live) {handle.unmount(); return;}
-        handleRef.current = handle;
-      })
-      .catch(reason => {
-        if (live) setFault(reason instanceof Error ? reason.message : String(reason));
-      });
+    // The session (projectionPaneSession.ts) owns the mount: one module per
+    // binding instance and connection generation, unmounted once on dispose.
+    const session = new ProjectionPaneSession(registration, {
+      kind: registration.kind,
+      binding: {id: binding.id, title: binding.title, subject_ref: binding.projection?.subject_ref},
+      element: elementRef.current,
+      encounter: paneEncounter,
+    }, message => setFault(message));
+    sessionRef.current = session;
     return () => {
-      live = false;
-      handleRef.current?.unmount();
-      handleRef.current = null;
+      session.dispose();
+      if (sessionRef.current === session) sessionRef.current = null;
     };
     // One mount per binding instance per connection generation; encounter
     // delivery rides `publish`.
@@ -100,20 +94,18 @@ export function ProjectionSurface({binding}: {binding: SurfaceBinding}) {
   });
   // Concealed-retained notice (the pane tier hides the WRAPPER with
   // display:none): the same off-screen observation every viewport-gated
-  // surface honours — an IntersectionObserver — tells the module it is
-  // concealed so its engines may pause. Its state survives; only `unmount`
-  // ends it.
+  // surface honours tells the session it is concealed, so the module's
+  // engines may pause. Concealment never unmounts: the module's state
+  // survives until the session is disposed.
   useEffect(() => {
-    const wrapper = wrapperRef.current, handle = () => handleRef.current;
-    if (!wrapper || typeof IntersectionObserver === "undefined") return;
-    const observer = new IntersectionObserver(entries => {
-      for (const entry of entries) {
-        presentedRef.current = entry.isIntersecting;
-        handle()?.setVisible?.(entry.isIntersecting);
-      }
+    const wrapper = wrapperRef.current;
+    if (!wrapper) return;
+    const stop = observeConcealment(wrapper, visible => {
+      presentedRef.current = visible;
+      sessionRef.current?.setVisible(visible);
     });
-    observer.observe(wrapper);
-    return () => {observer.disconnect(); presentedRef.current = false; handle()?.setVisible?.(false);};
+    if (!stop) return;
+    return () => {stop(); presentedRef.current = false; sessionRef.current?.setVisible(false);};
   }, [!!registration]);
   if (!registration) {
     return <p role="status" className="source-note">No projection module is admitted for {binding.kind} — the pane kind exists; its body has not been admitted by any owner yet.</p>;
