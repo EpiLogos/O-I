@@ -124,6 +124,10 @@ fn read_reading(
             Ok(None) => {
                 let _ = child.kill();
                 let _ = child.wait();
+                // A reading over the cap stops being read, so the child blocks on its pipe until the deadline: name the cap, not the clock.
+                if let Ok(Err(over)) = stdout.try_recv() {
+                    return Err(over);
+                }
                 return Err(format!(
                     "ql-music.unavailable: `{shown}` exceeded 30 seconds"
                 ));
@@ -137,10 +141,10 @@ fn read_reading(
     };
     let out = stdout
         .recv_timeout(Duration::from_secs(2))
-        .map_err(|e| e.to_string())??;
+        .map_err(|e| format!("ql-music.unavailable: `{shown}` output was not read: {e}"))??;
     let err = stderr
         .recv_timeout(Duration::from_secs(2))
-        .map_err(|e| e.to_string())??;
+        .map_err(|e| format!("ql-music.unavailable: `{shown}` errors were not read: {e}"))??;
     if !status.success() {
         let stderr_text = String::from_utf8_lossy(&err);
         let first = stderr_text
@@ -175,7 +179,7 @@ fn reader<R: Read + Send + 'static>(pipe: R) -> mpsc::Receiver<Result<Vec<u8>, S
         let result = pipe
             .take(MAX_OUTPUT + 1)
             .read_to_end(&mut bytes)
-            .map_err(|e| e.to_string())
+            .map_err(|e| format!("ql-music.unavailable: {e}"))
             .and_then(|_| {
                 if bytes.len() as u64 > MAX_OUTPUT {
                     Err("ql-music.refused: output exceeds 16 MiB".into())

@@ -32,7 +32,7 @@ re-read in `shell/modeGrammar.ts` / `inhabitants/sdk/modes.ts` (13 Oct).
 
 ## Progress
 
-- Leg 1 (8c4293b08): `live/modes.ts` resolves the mode in force, a clip's
+- Leg 1 (e9a0fcbf7): `live/modes.ts` resolves the mode in force, a clip's
   own mode, the pitch mask and fold/highlight rows from a served catalogue
   only; the transport names the seam while none is served.
 - Leg 2: the owner serves the catalogue. QL-MEF #330 adds

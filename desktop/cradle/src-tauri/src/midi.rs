@@ -61,7 +61,7 @@ pub struct PortsState {
     pub refusal: Option<String>,
 }
 
-/// The last ports state, for the `midi_inputs` command.
+/// The last ports state the scanner read; the shell hears it as the `oi://midi-ports` event.
 #[derive(Default)]
 pub struct MidiHost {
     state: Mutex<PortsState>,
@@ -100,19 +100,6 @@ pub fn start(app: &AppHandle) {
         .spawn(move || scan_forever(scanner, tx))
     {
         eprintln!("MIDI port scanner unavailable: {error}");
-    }
-}
-
-/// Every MIDI input the host hears, by name. Named refusal when none can be read at all.
-#[tauri::command]
-pub fn midi_inputs(host: tauri::State<'_, MidiHost>) -> Result<Vec<String>, String> {
-    let state = host
-        .state
-        .lock()
-        .map_err(|_| "MIDI input state is unavailable".to_owned())?;
-    match &state.refusal {
-        Some(reason) if state.ports.is_empty() => Err(reason.clone()),
-        _ => Ok(state.ports.clone()),
     }
 }
 

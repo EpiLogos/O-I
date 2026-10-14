@@ -3,7 +3,10 @@
 // chain is their composition in chain order. An empty or all-bypassed chain is the identity, so today's behaviour is unchanged.
 //
 // Law: a device holds no pitch set of its own. The Scale device folds onto the owner's pitch set (pitchMask over the catalogue the
-// transport holds). A mode that serves no pitch set passes notes through and says why. Nothing here is 12-TET.
+// transport holds). A mode that serves no pitch set passes notes through and says why. The fold is the shell's own rule, stated on
+// the face: the nearest in-mode class by semitone steps on the owner's twelve closed pitch-class addresses, ties by the tie parameter.
+// It retunes nothing (pitch classes are addresses, not frequencies), and it reads no basis: on a fifths basis it still steps by
+// semitones.
 //
 // Pure. No React, no store, no I/O.
 
@@ -49,7 +52,7 @@ export function scalePlan(mode: ModeInForce): ScalePlan {
   if (mask === null || !mask.some(Boolean)) {
     return {state: 'pass', line: `Passes notes through: ${mode.selection.scale.label} serves no pitch set, so nothing folds and no 12-TET mapping is invented.`}
   }
-  return {state: 'fold', mask, line: `Folds onto ${mode.selection.scale.label}, the owner's pitch set.`}
+  return {state: 'fold', mask, line: `Folds onto ${mode.selection.scale.label}, the owner's pitch set: each note out of the mode moves to the nearest in-mode pitch class by semitone steps (ties by the tie rule).`}
 }
 
 /**
