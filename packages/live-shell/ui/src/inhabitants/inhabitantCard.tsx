@@ -52,6 +52,10 @@ export interface InhabitantCardProps {
   /** Pop-out is declared: render the mark; the press is the host's door. */
   readonly popOut?: boolean
   readonly onPopOut?: (() => void) | null
+  /** The device lives in its own native window (seam 8): the card says so, and the redock press is the host's door
+   * (the same redock the detached frame uses). One device lives in one place: a popped-out card has no pop-out press. */
+  readonly poppedOut?: boolean
+  readonly onRedock?: (() => void) | null
   /** Body content (none for waiting faces — declared, waiting, bodyless). */
   readonly children?: ReactNode
   /** Fixed chain width (the guide's card density); default by kind. */
@@ -62,7 +66,7 @@ export interface InhabitantCardProps {
 
 export function InhabitantCard({
   faceId, kind, admission = 'admitted', data, light, mark, title, owner, note,
-  status, expanded = false, onToggle, popOut = false, onPopOut, children,
+  status, expanded = false, onToggle, popOut = false, onPopOut, poppedOut = false, onRedock = null, children,
   width, className, style,
 }: InhabitantCardProps) {
   const classes = [
@@ -70,6 +74,7 @@ export function InhabitantCard({
     admission === 'waiting' ? 'is-waiting' : '',
     expanded ? 'is-expanded' : '',
     onToggle && !expanded ? 'can-expand' : '',
+    popOut && poppedOut ? 'is-popped-out' : '',
     className ?? '',
   ].filter(Boolean).join(' ')
   const hooks = Object.fromEntries(
@@ -102,11 +107,16 @@ export function InhabitantCard({
         {owner && <span className="inhabitant-device-sub">{owner}</span>}
         <span className="inhabitant-device-x">
           {status}
-          {popOut && (
-            <button type="button" className="inhabitant-device-mark-btn" data-action="pop-out" title={`${title} pops out through the pane engine's detach door`} disabled={!onPopOut} onClick={onPopOut ?? undefined}>
+          {popOut && (poppedOut
+            ? <>
+              <span className="inhabitant-device-sub" data-action="popped-out" role="status"
+                title={`${title} lives in its own native window — redock returns it to this rack`}>popped out</span>
+              <button type="button" className="inhabitant-device-mark-btn" data-action="redock" aria-label={`Redock ${title}`}
+                title={`Redock ${title} into this rack`} disabled={!onRedock} onClick={onRedock ?? undefined}>redock</button>
+            </>
+            : <button type="button" className="inhabitant-device-mark-btn" data-action="pop-out" title={`${title} pops out through the pane engine's detach door`} disabled={!onPopOut} onClick={onPopOut ?? undefined}>
               <PopOut size={10} />
-            </button>
-          )}
+            </button>)}
           {onToggle && (
             <button type="button" className="inhabitant-device-fold" data-action="fold" aria-expanded={expanded}
               title={expanded ? 'Fold to the strip' : 'Dock the body under the strip'} onClick={onToggle}>
