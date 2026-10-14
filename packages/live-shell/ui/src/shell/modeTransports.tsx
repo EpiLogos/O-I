@@ -3,9 +3,11 @@
 // manual §10.5's table, one column per mode. A slot with no binding is drawn waiting with its grammar meaning; a binding
 // enables a slot only with a write path, and a light only with a reading. The working controls move here from the old
 // bars: Live's mode in force (root, scale) and its key and MIDI maps; Technē's Back to Now, occasion steps and instrument
-// arm; every mode's real readouts. Factory's and Expressions' working controls fold in as bindings next (their own bars
-// stand until they do).
+// arm; Factory's run, stop, voice, steer, effort, heartbeat, quantize and write arm (shell/transports); Expressions' scene
+// play, stop, take, arm, loop, time scale and scrub; every mode's real readouts.
+import {useEffect} from 'react'
 import type {SurfMode, TransportSlotId} from './modeGrammar'
+import {publishTransportKeys} from '../frame/keys/keyDoors'
 import {MODE_GRAMMAR, slotDataI, slotMeaning} from './modeGrammar'
 import {transportBindingForSlot, transportBindingRow} from '../inhabitants/sdk/define'
 import type {SdkModeName} from '../inhabitants/sdk/modes'
@@ -17,6 +19,9 @@ import type {SlotWords, TransportBindings} from '../frame/transport/slots'
 import {PITCH_CLASS_NAMES} from '../live/modes'
 import {setLiveModeHold, useLiveModeInForce} from '../native/liveModeCatalogue'
 import {MidiMapHost, MidiMapToggles} from '../live/midiMap/midiMapControls'
+import type {NativeCompositionViewSource} from './compositionViews'
+import {useFactoryTransport} from './transports/useFactoryTransport'
+import {useExpressionsTransport} from './transports/useExpressionsTransport'
 
 /** What the bindings read from the frame: the mode's real readouts, the World's time spine, the focused instrument, Live's set. */
 export interface TransportReading {
@@ -24,6 +29,8 @@ export interface TransportReading {
   timeSpine?: TimeSpine | null
   focusedInstrument?: PaneInstrumentId | null
   tempoBpm: number | null
+  /** Expressions' native scene transport, when its reading stands. */
+  nativeTransport?: NativeCompositionViewSource | null
 }
 
 export type UseModeTransport = (reading: TransportReading) => TransportBindings
@@ -90,13 +97,15 @@ const useReadouts: UseModeTransport = ({readouts}) => readoutsOf(readouts)
 export const MODE_TRANSPORT: Readonly<Record<SurfMode, UseModeTransport>> = {
   live: useLiveTransport,
   base: useReadouts,
-  factory: useReadouts,
-  expressions: useReadouts,
+  factory: useFactoryTransport,
+  expressions: useExpressionsTransport,
   techne: useTechneTransport,
 }
 
 /** The mode's bar: its bindings over the one transport. Keyed by mode where it is mounted, so each mode keeps its hook order. */
 export function ModeTransport({mode, reading}: {mode: SurfMode; reading: TransportReading}) {
   const bindings = MODE_TRANSPORT[mode](reading)
+  // The keys press the same slots (F9: Space plays or stops, Esc stops), so they read the bindings drawn here.
+  useEffect(() => { publishTransportKeys(bindings); return () => publishTransportKeys(null) })
   return <Transport bindings={bindings} words={id => slotWords(mode, id)} />
 }

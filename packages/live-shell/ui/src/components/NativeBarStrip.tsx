@@ -107,7 +107,7 @@ function BarRange({slot, reading, disabled, sessionFor}: {slot: Slot<'range'>; r
     const escape = (event: globalThis.KeyboardEvent) => {
       const live = gesture.current
       if (event.key !== 'Escape' || !live) return
-      gesture.current = null; live.session.cancel(); setDrag(null)
+      event.preventDefault(); gesture.current = null; live.session.cancel(); setDrag(null)
     }
     window.addEventListener('keydown', escape)
     return () => window.removeEventListener('keydown', escape)
