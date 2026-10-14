@@ -5,7 +5,6 @@ import type { NativeDetailConfigurationIntent } from './components/NativeWorldDe
 import {NativeInputRetentionProvider,nativeInputBinding} from './components/NativeInputRetention'
 import { useWorkspace } from './shell/workspace'
 import type { DetailMode } from './components/DeviceChainPanel'
-import { ModeContextDock } from './shell/ModeContextDock'
 import { carrierOf } from './shell/runContext'
 import type { SetSelection } from './components/SessionView'
 import { StatusBar } from './components/StatusBar'
@@ -15,7 +14,6 @@ import {useAgentMetrics} from './agent/useAgentMetrics'
 import {useHarnessBinding} from './agent/useHarnessBinding'
 import {harnessAgentControl} from './agent/harnessAgentControl'
 import {AgentShellTransport} from './agent/AgentShellTransport'
-import {AgentContextDock} from './agent/AgentContextDock'
 import {useAgencySessions, type AgentSessionTrack} from './agent/useAgencySessions'
 import {trackKey} from './agent/agentRunModel'
 import type {KernelTransportStatus} from '../../../../desktop/cradle/src/kernel/types'
@@ -33,6 +31,10 @@ import {surfModeOf, type SurfMode} from './shell/modeGrammar'
 import {MODE_FRAMES, MODE_TRACK_SOURCES} from './shell/modeFrames'
 import {centralSubjectOfClip} from './timeline/centralTrackAdapter'
 import {Browser} from './frame/browser/Browser'
+import {WidgetRail} from './frame/widgets/WidgetRail'
+import type {WidgetRailBook} from './frame/widgets/widgets'
+import {WIDGETS, WidgetReadingProvider} from './shell/widgets'
+import {DEFAULT_WIDGETS} from './shell/widgetDefaults'
 import {BrowserReadingProvider, browserSourcesOf, type BrowserReading} from './shell/modeBrowsers'
 import {openInstrument, publishStageLensDriver} from './frame/instrumentDoor'
 import {captureTechneInstrumentOpen, TECHNE_INSTRUMENT_OPEN, type TechneInstrumentEvent} from './native/techneInstrumentOpen'
@@ -493,6 +495,9 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
     if (event) centralWorld.selectOccasion(event)
     continuity.select(next)
   }
+  // The widget rail's book: the world's one open set, pins, presets and width (desktop/cradle/src/workspace/store.ts).
+  const widgetBook: WidgetRailBook = {rail: continuity.current.widgets ?? {open: DEFAULT_WIDGETS}, toggle: id => continuity.toggleWidgetOpen(id, DEFAULT_WIDGETS),
+    pin: continuity.pinWidgetAt, savePreset: name => continuity.saveWidgets(name, DEFAULT_WIDGETS), applyPreset: continuity.applyWidgets, widen: continuity.widenWidgets}
   // The one browser's row sources (shell/modeBrowsers.tsx) and what their bodies read.
   const browserSources = useMemo(() => browserSourcesOf(frameMode), [frameMode])
   const browserReading: BrowserReading = {mode: frameMode, ctx, defaultSet: config?.default_set ?? '', selectSubject: selectCentralSubject,
@@ -537,15 +542,16 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
     {/* Rev 4's dock per mode: the mode context dock (tiles above, launcher
       below, the wedge that dies with the toggle) carries the non-agency
       modes; the agency surface keeps its own dock. */}
-    <div className="dock-residence" hidden={!dock || agentShell}><ModeContextDock mode={frameMode} world={worldView} transport={workspace.transport} subject={centralSubject} /></div>
-    <div className="dock-residence" hidden={!dock || !agentShell}><AgentContextDock /></div>
+    {/* The one widget rail (F8): every widget of the world, one open set in the book, pins and presets. */}
+    <div className="dock-residence" hidden={!dock}><WidgetReadingProvider value={{mode: frameMode, world: worldView, transport: workspace.transport, subject: centralSubject}}>
+      <WidgetRail widgets={WIDGETS} book={widgetBook} selectionRef={worldSelection?.ref ?? null} /></WidgetReadingProvider></div>
     {detail && <div className="detail-resizer" role="separator" aria-label="Resize detail" aria-orientation="horizontal" tabIndex={0} onKeyDown={event => { if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {event.preventDefault(); resizeDetail(Math.max(120, Math.min(viewport[1] - 240, (detailHeight ?? document.querySelector('.detail-residence:not([hidden]) .chain,.detail-residence:not([hidden]) .native-world-detail')?.getBoundingClientRect().height ?? 330) + (event.key === 'ArrowUp' ? 10 : -10))))} }} onPointerDown={event => event.currentTarget.setPointerCapture(event.pointerId)} onPointerMove={event => { if (event.currentTarget.hasPointerCapture(event.pointerId)) resizeDetail(Math.max(120, Math.min(viewport[1] - 240, viewport[1] - 28 - event.clientY))) }} />}
     {/* The detail row (manual §3, §10.1; FOUNDATION F4): one host for every mode. The mode's clip editor and chain come from
       its registration (shell/modeDetails.tsx); a pane holding an instrument takes the Device side in every mode but Live. */}
     <div className="detail-residence" hidden={!detail}><DetailContext.Provider value={detailReading}><DetailHost side={detailMode} /></DetailContext.Provider></div></NativeInputRetentionProvider>
     {agentShell ? <AgentStatusBarBridge detailMode={detailMode} changeDetailMode={mode => {changeDetailMode(mode); setDetail(true)}} audio={frameMode === 'live'} mode={frameMode} reading={workspace.reading} state={state} documentError={deep.error} viewport={viewport} selectedTrack={agency.tracks[0]?.purpose ?? undefined} presentedView={presentedView} subjectLabel={frameMode === 'base' && centralSubject ? centralSubject.path : undefined} /> : <StatusBar detailMode={detailMode} changeDetailMode={mode => {changeDetailMode(mode); setDetail(true)}} audio={frameMode === 'live'} mode={frameMode} reading={workspace.reading} state={state} documentError={deep.error} viewport={viewport} selectedTrack={state.set?.tracks[selection.track]?.name} presentedView={presentedView} subjectLabel={frameMode === 'base' && centralSubject ? centralSubject.path : undefined} />}
   </>)
-  return <div ref={frameRef} style={{ ...(browserWidth === null ? {} : { '--browser-w': `${browserWidth}px` }), ...(detailHeight === null ? {} : { '--detail-h': `${detailHeight}px` }), ...(agentShell ? {'--dock-w': `${shellCtx.dockWidth}px`} : {}) } as CSSProperties} className={`frame mode-${workspace.mode}${browser ? '' : ' browser-hidden'}${detail ? '' : ' detail-hidden'}${dock ? ' dock-open' : agentShell ? ' no-dock' : ''}${agentShell ? ' agent-shell-frame' : ''}`} data-agent-shell={agentShell ? 'true' : undefined}>{frameBody}{unlinkedSubject && <p role="status" data-region="encounter-link" style={{position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 10000, margin: 0, padding: '8px 16px', font: '13px system-ui, sans-serif', background: 'Canvas', color: 'CanvasText', borderTop: '1px solid GrayText'}}>The linked subject {unlinkedSubject} could not be opened here; the rest of the link is applied. <button type="button" onClick={() => setUnlinkedSubject(null)}>Dismiss</button></p>}</div>
+  return <div ref={frameRef} style={{ ...(browserWidth === null ? {} : { '--browser-w': `${browserWidth}px` }), ...(detailHeight === null ? {} : { '--detail-h': `${detailHeight}px` }), ...(continuity.current.widgets?.width ? {'--dock-w': `${continuity.current.widgets.width}px`} : {}) } as CSSProperties} className={`frame mode-${workspace.mode}${browser ? '' : ' browser-hidden'}${detail ? '' : ' detail-hidden'}${dock ? ' dock-open' : agentShell ? ' no-dock' : ''}${agentShell ? ' agent-shell-frame' : ''}`} data-agent-shell={agentShell ? 'true' : undefined}>{frameBody}{unlinkedSubject && <p role="status" data-region="encounter-link" style={{position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 10000, margin: 0, padding: '8px 16px', font: '13px system-ui, sans-serif', background: 'Canvas', color: 'CanvasText', borderTop: '1px solid GrayText'}}>The linked subject {unlinkedSubject} could not be opened here; the rest of the link is applied. <button type="button" onClick={() => setUnlinkedSubject(null)}>Dismiss</button></p>}</div>
 }
 
 function AgentStatusBarBridge(props: ComponentProps<typeof StatusBar>) {

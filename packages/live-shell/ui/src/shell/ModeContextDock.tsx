@@ -38,7 +38,7 @@ interface TileSpec {
   readonly launcherOnly?: boolean
 }
 
-const TILES: Record<string, TileSpec> = {
+export const TILES: Record<string, TileSpec> = {
   agent: {id: 'agent', name: 'Agent', mark: 'dock'},
   packet: {id: 'packet', name: 'Packet', mark: 'cap'},
   trail: {id: 'trail', name: 'Trail', mark: 'trav'},
@@ -61,7 +61,7 @@ const DOCKS: Record<SurfMode, {tiles: string[]; open: string[]}> = {
 }
 
 /** The companion per mode (Rev 3's right-column row). */
-const COMPANIONS: Record<SurfMode, {name: string; tabs: string; note: string}> = {
+export const COMPANIONS: Record<SurfMode, {name: string; tabs: string; note: string}> = {
   live: {name: 'Fizz', tabs: 'Conversation · Activity · Context · Inspect', note: 'The situated agent rides the shell in every mode; its chain docks in the detail row.'},
   base: {name: 'Fizz', tabs: 'Conversation · Activity · Context · Inspect', note: 'The situated agent for the ground. The conversation device docks on the detail chain; the packet tile shows exactly what it receives.'},
   factory: {name: 'Fizz', tabs: 'Activity · Context · Inspect · Results', note: 'The result desk — the agency surface carries the live dock.'},
@@ -167,7 +167,7 @@ export function ModeContextDock({mode, world, transport, subject, initialOpen}: 
 
 /** One tile's body — the landed readings it composes, or the designed
  * frame naming its owner read. */
-function TileBody({id, mode, world, transport, subject}: {
+export function TileBody({id, mode, world, transport, subject}: {
   id: string
   mode: SurfMode
   world: WorldTimelineView | null

@@ -18,8 +18,8 @@ const FRAME = join(ui, 'src/frame')
 // The ceilings. Lower them as the switchboard is taken apart; never raise them.
 const CEILING = {
   modeBranches: 23,
-  residences: {browser: 1, dock: 2, detail: 1},
-  perModeBodies: 6,
+  residences: {browser: 1, dock: 1, detail: 1},
+  perModeBodies: 4,
 }
 
 const MODE = '(?:live|base|central|factory|expressions|techne|audio)'
