@@ -39,6 +39,7 @@ import {
   postHostMode,
   postOpenExpression,
   postMessageToFrame,
+  instrumentLensCommand,
   type HostedAppMode,
   type HostedAppState,
   KERNEL_CHANNEL_VERSION,
@@ -299,8 +300,8 @@ export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHos
 
   // The deep cut's requests ride back through the host: a workspace-mode
   // switch goes to the shell's own mode pipeline (enterMode); a summon asks
-  // for the verso account overlay; an instrument summon asks for the ONE
-  // deep-instrument HUD. Nothing here opens a second UI — the events land in
+  // for the verso account overlay; an instrument summon opens that lens in
+  // this same frame. Nothing here opens a second UI — the events land in
   // the seams that already exist.
   useEffect(() => {
     const handler = (event: MessageEvent) => {
@@ -338,6 +339,18 @@ export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHos
         }).catch(error=>complete(error instanceof Error?error.message:String(error)));
         return;
       }
+      if (data.request === "summon" && data.detail?.kind === "instrument") {
+        // The application summons a deep instrument (the Palace's Open on a
+        // region names the object's ref). Answered by THIS centre instance —
+        // the presented Technē centre opens that lens in its own frame, on the
+        // same field, focused on the ref — never a global listener and never a
+        // second renderer. A host outside the Technē cut (the Expressions cut,
+        // where the chooser never stands) consumes nothing, exactly like any
+        // other unanswered summon.
+        const node = frame.current, command = instrumentLensCommand(data.detail);
+        if (mode === "techne" && command && node?.getClientRects().length && !node.closest("[hidden],[inert]")) postMessageToFrame(node, command);
+        return;
+      }
       if (data.request === "summon" && data.detail?.kind === "source") {
         const request=++sourceRequest.current,node=frame.current,at=hostedState.current;
         const selection=(value:HostedAppState|undefined)=>JSON.stringify(value?.selection?.map(item=>item.id)??[]);
@@ -358,7 +371,7 @@ export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHos
     };
     window.addEventListener("message", handler);
     return () => {sourceRequest.current++;window.removeEventListener("message", handler);};
-  }, [kernel.transport]);
+  }, [kernel.transport, mode]);
 
   return <div className="pcd-host" aria-label="O:I Expressions application" data-state={state}>
     {state === "reading" && <p className="oi-note" role="status">Opening the Expressions application…</p>}
