@@ -32,9 +32,23 @@ excitation, with measured latency.
   `source: 'midi'` (velocity/127 is the strike), so it reaches the same
   `janko` stage command as a pointer press. The device names the ports it
   hears, "no MIDI input connected", or the absence outside the native host.
-  `midi_inputs` is granted to the main window and classified
-  `input-device` in the authority register.
-- Open: key/MIDI mapping of parameters and recording them as automation;
-  mappings persisted with the set; MIDI out; the latency budget asserted at
-  the engine boundary; the native run with a hardware controller and the
-  measured input-to-sound latency.
+  The shell hears ports by event (`oi://midi-ports`); no command is
+  granted (the unused `midi_inputs` command was removed after the R2
+  review).
+- Leg 2: MIDI map and Key map. The native host decodes Control Change as
+  its own event (`oi://midi-cc`). The transport's MIDI map and Key map slots
+  are real toggles: in map mode every owner-stated mappable parameter (the
+  four determinants, cadence, sound, level, units per metre, the Scale tie)
+  shows the overlay; click it, then move a control or press a key. A second
+  source replaces the binding; Delete or a click in map mode removes it;
+  mapped parameters keep a marker. A bound control moves its parameter only
+  through the owner's write (`commitLiveInstrumentEdit`, the note-device
+  setters): choices split 0–127 evenly, coalesced to one write per frame and
+  none when unchanged; a refusal is named on the parameter. Keys step
+  choices and never fire from text fields. Mappings are held for the session
+  and say so.
+- Open: recording mappings as automation and persisting them with the set
+  (both wait on the arrangement's automation owner and the set document
+  write); MIDI out; pitch bend, aftertouch and program change; the latency
+  budget asserted at the engine boundary; the native run with a hardware
+  controller and the measured input-to-sound latency.

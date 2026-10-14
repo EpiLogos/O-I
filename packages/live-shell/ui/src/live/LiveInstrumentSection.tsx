@@ -3,14 +3,18 @@
 // read from the same owner reading as the rack widget, and writes each one through the hosted channel (torusInstrument.ts). It renders
 // nothing until the owner has published a reading.
 
-import {useState} from 'react'
+import {Fragment, useState, type ReactElement} from 'react'
 import {registerPanel, type PanelContext} from '../shell/panels'
 import type {InstrumentEdit} from '@epilogos/expressions-boundary'
 import {
   commitLiveInstrumentEdit, LIVE_CADENCE_OPTIONS, liveInstrumentWritable, liveTorusMacroRows, useLiveTorusReading, type LiveTorusState,
 } from './torusInstrument'
 import {legacyGeneratorPanels} from './liveChain'
+import {MidiMapTarget} from './midiMap/midiMapControls'
 import './liveInstrumentSection.css'
+
+/** Wraps a control in its map frame when the owner states a value to map it by; a control with no owner value stays unwrapped. */
+const mapped = (id: string | null, node: ReactElement): ReactElement => id === null ? node : <MidiMapTarget id={id}>{node}</MidiMapTarget>
 
 /** The owner's status line, as the native field words it (nativeField.ts statusLine). */
 function statusLine(state: Extract<LiveTorusState, {ok: true}>): string {
@@ -52,44 +56,51 @@ export function LiveInstrumentSectionView({state}: {state: LiveTorusState | null
 
       <section className="live-instrument-group" aria-label="What is acting">
         <h4>What is acting</h4>
-        {rows.map(row => (
-          <label key={row.macro.id} className="live-instrument-row" data-live-param={row.macro.id}>
-            <span>{row.macro.label}</span>
-            {row.selected === null
-              ? <b>not in owner reading</b>
-              : <select aria-label={row.macro.label} value={row.selected} disabled={!writable} onChange={event => write(row.edit(event.target.value))}>
-                  {row.options.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
-                </select>}
-          </label>
-        ))}
+        {rows.map(row => {
+          const control = (
+            <label className="live-instrument-row" data-live-param={row.macro.id}>
+              <span>{row.macro.label}</span>
+              {row.selected === null
+                ? <b>not in owner reading</b>
+                : <select aria-label={row.macro.label} value={row.selected} disabled={!writable} onChange={event => write(row.edit(event.target.value))}>
+                    {row.options.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+                  </select>}
+            </label>
+          )
+          return <Fragment key={row.macro.id}>{mapped(row.selected === null ? null : row.macro.id, control)}</Fragment>
+        })}
       </section>
 
       <section className="live-instrument-group" aria-label="Play">
         <h4>Play</h4>
-        <div className="live-instrument-segments" role="group" aria-label="Tick cadence">
-          {LIVE_CADENCE_OPTIONS.map(option => (
-            <button key={option.value} type="button" aria-pressed={cadenceValue === option.value} disabled={!writable || cadence === null}
-              onClick={() => write({kind: 'cadence', rate: option.value === 'hold' ? 'hold' : Number(option.value) as 1 | 12})}>{option.label}</button>
-          ))}
-        </div>
+        {mapped(cadence === null ? null : 'cadence',
+          <div className="live-instrument-segments" role="group" aria-label="Tick cadence">
+            {LIVE_CADENCE_OPTIONS.map(option => (
+              <button key={option.value} type="button" aria-pressed={cadenceValue === option.value} disabled={!writable || cadence === null}
+                onClick={() => write({kind: 'cadence', rate: option.value === 'hold' ? 'hold' : Number(option.value) as 1 | 12})}>{option.label}</button>
+            ))}
+          </div>)}
         {cadence === null && <p className="live-instrument-note">No scene is open, so there is no cadence to set.</p>}
       </section>
 
       <section className="live-instrument-group" aria-label="See and hear">
         <h4>See and hear</h4>
-        <button type="button" aria-pressed={!parameters.muted} disabled={!writable} onClick={() => write({kind: 'muted', muted: !parameters.muted})}>
-          {parameters.muted ? 'Sound on' : 'Sound off'}
-        </button>
-        <label className="live-instrument-range">
-          <span>Level · presentation gain {parameters.level.toFixed(2)}×</span>
-          <input type="range" min={0} max={4} step={0.05} value={parameters.level} disabled={!writable}
-            onChange={event => write({kind: 'level', value: Number(event.target.value)})}/>
-        </label>
-        <label className="live-instrument-range">
-          <span>Scale · units per metre {parameters.scale.unitsPerMetre ?? '—'} ({parameters.scale.mode})</span>
-          <input type="range" min={40} max={400} step={5} value={parameters.scale.unitsPerMetre ?? 120} disabled={!writable || parameters.scale.unitsPerMetre === null}
-            onChange={event => write({kind: 'scale', units_per_metre: Number(event.target.value)})}/>
-        </label>
+        {mapped('sound',
+          <button type="button" aria-pressed={!parameters.muted} disabled={!writable} onClick={() => write({kind: 'muted', muted: !parameters.muted})}>
+            {parameters.muted ? 'Sound on' : 'Sound off'}
+          </button>)}
+        {mapped('level',
+          <label className="live-instrument-range">
+            <span>Level · presentation gain {parameters.level.toFixed(2)}×</span>
+            <input type="range" min={0} max={4} step={0.05} value={parameters.level} disabled={!writable}
+              onChange={event => write({kind: 'level', value: Number(event.target.value)})}/>
+          </label>)}
+        {mapped(parameters.scale.unitsPerMetre === null ? null : 'scale-units',
+          <label className="live-instrument-range">
+            <span>Scale · units per metre {parameters.scale.unitsPerMetre ?? '—'} ({parameters.scale.mode})</span>
+            <input type="range" min={40} max={400} step={5} value={parameters.scale.unitsPerMetre ?? 120} disabled={!writable || parameters.scale.unitsPerMetre === null}
+              onChange={event => write({kind: 'scale', units_per_metre: Number(event.target.value)})}/>
+          </label>)}
         <button type="button" disabled={!writable} onClick={() => write({kind: 'follow-scale'})}>Use the instrument's scale</button>
       </section>
     </section>
