@@ -364,3 +364,8 @@ input { min-width:0; border:1px solid var(--line); background:var(--bg-1); paddi
 .frame.agent-shell-frame .widget-rail { grid-area: dk; }
 .native-foundation-fault { position: fixed; z-index: 90; bottom: 28px; left: 12px; max-width: min(640px, calc(100vw - 24px)); padding: 8px 12px; background: #251e1c; color: #edc9bc; border: 1px solid #705344; font-size: 12px; }
 
+
+/* The native Mac window's traffic lights stand over the content's top-left (titleBarStyle "Overlay"): the transport's
+   controls row starts past them, the title line stays centred. Seen on screen 15 Oct: at the mockup's 46px bar the lights
+   covered the globe, Link and Tap. */
+:root[data-window-chrome="overlay"] .transport-controls { padding-left: 72px }
