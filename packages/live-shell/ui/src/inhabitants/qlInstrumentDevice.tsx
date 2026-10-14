@@ -30,11 +30,33 @@ import {
   QL_EMBEDDED_NATIVE_PLAYBACK, QL_IDENTITY_KEYS, QL_INSTRUMENT_PRESENTATION,
   QL_LAUNCH_CONTRACT, QL_SCENE_SAMPLE_RATE,
   parseQlInstrumentReading,
-  type QlOwnerStanding,
+  type QlInstrumentReading, type QlOwnerStanding,
 } from './ql/qlInstrumentReading'
+import type {QlInstrumentRefusal} from '../live/torusInstrument'
 import {createQlSampleClockStratum} from '../timeline/qlSampleClock'
 import {InhabitantCard, type CardLight} from './inhabitantCard.tsx'
 import './qlInstrumentDevice.css'
+
+/** The face's one reading: the owner's reading, or the reader's own named reason (absent owner / boundary refusal), verbatim. */
+type FeedRead =
+  | {readonly ok: true; readonly value: QlInstrumentReading}
+  | {readonly ok: false; readonly fault: string; readonly named: QlInstrumentRefusal['kind'] | null}
+
+function isNamedRefusal(value: unknown): value is QlInstrumentRefusal {
+  if (typeof value !== 'object' || value === null || 'schema' in value) return false
+  const kind = (value as {kind?: unknown}).kind
+  return (kind === 'absent' || kind === 'refused') && typeof (value as {reason?: unknown}).reason === 'string'
+}
+
+/** Read the feed the rack or window hands the face: a named reason passes through verbatim; anything else is parsed against the owner's shape. */
+function readFeed(reading: unknown): FeedRead {
+  if (isNamedRefusal(reading)) return {ok: false, fault: reading.reason, named: reading.kind}
+  try {
+    return {ok: true, value: parseQlInstrumentReading(reading)}
+  } catch (error) {
+    return {ok: false, fault: String(error instanceof Error ? error.message : error), named: null}
+  }
+}
 
 /** A change this face may send — the session's presentation-standing
  * operations only. The performance act (strike) is deliberately absent. */
@@ -54,7 +76,8 @@ export interface QlInstrumentCustody {
 
 /** The proven aperture, bound to this face's reading and changes. */
 export interface QlInstrumentDeviceProps {
-  /** The owner's reading as the host received it — raw. The face parses; a
+  /** The owner's reading as the host received it — raw, or the reader's named
+   * reason (QlInstrumentFeed, live/torusInstrument.ts). The face parses; a
    * refused shape renders the refusing state with the fault named. */
   readonly reading: unknown
   readonly disabled?: boolean
@@ -82,44 +105,41 @@ const STANDING_LABEL: Readonly<Record<QlOwnerStanding, string>> = Object.freeze(
 /** The card light's reading, parsed once for the rack's header. No reading
  * or a refused one = off (the owner is not docked; nothing is illuminated). */
 export function qlInstrumentLight(reading: unknown): CardLight {
-  try {
-    const value = parseQlInstrumentReading(reading)
-    return value.available
-      ? {state: 'on', title: 'The owner stands and this face reads it'}
-      : {state: 'off', title: 'The last lifetime ended — explicit recovery required'}
-  } catch {
-    return {state: 'off', title: 'No reading stands — the owner is not docked; nothing is illuminated'}
+  const feed = readFeed(reading)
+  if (!feed.ok) {
+    return {state: 'off', title: feed.named !== null ? feed.fault : 'No reading stands — the owner is not docked; nothing is illuminated'}
   }
+  return feed.value.available
+    ? {state: 'on', title: 'The owner stands and this face reads it'}
+    : {state: 'off', title: 'The last lifetime ended — explicit recovery required'}
 }
 
 /** The standing chip the rack's header carries (label + the chip's data
- * state). A refused reading names itself "not docked". */
+ * state). A refused reading names itself "not docked"; a named reason from the reader is carried as its title, verbatim. */
 export function qlInstrumentStanding(reading: unknown): {label: string; title: string; state: string} {
-  try {
-    const value = parseQlInstrumentReading(reading)
-    return {label: value.standing, title: STANDING_LABEL[value.standing], state: value.standing}
-  } catch {
-    return {label: 'not docked', title: 'No owner reading stands — the launch contract below names what would start it', state: 'refusing'}
+  const feed = readFeed(reading)
+  if (!feed.ok) {
+    return feed.named !== null
+      ? {label: 'not docked', title: feed.fault, state: 'refusing'}
+      : {label: 'not docked', title: 'No owner reading stands — the launch contract below names what would start it', state: 'refusing'}
   }
+  return {label: feed.value.standing, title: STANDING_LABEL[feed.value.standing], state: feed.value.standing}
 }
 
 /** The instrument body: the sections the reading carries, at instrument-card
  * scale. Rendered inside the rack's card (the header belongs to the card). */
 export function QlInstrumentBody({reading, disabled = false, apply = null, captureCurrent = null, renderControl, createCustody}: QlInstrumentDeviceProps) {
-  const parsed = useMemo(() => {
-    try {
-      return {ok: true as const, value: parseQlInstrumentReading(reading)}
-    } catch (error) {
-      return {ok: false as const, fault: String(error instanceof Error ? error.message : error)}
-    }
-  }, [reading])
+  const parsed = useMemo(() => readFeed(reading), [reading])
 
   const clock = useMemo(() => createQlSampleClockStratum(), [])
 
   if (!parsed.ok) {
+    // The reader's named reason leads, verbatim: an absent owner says so, a boundary refusal names its fault. The launch contract stays below.
     return (
-      <div className="ql-instrument is-refusing" data-ql-instrument data-state="refusing">
-        {reading !== null && <p className="ql-instrument-fault" role="alert">Refused reading: {parsed.fault}. A plausible owner state is never rendered.</p>}
+      <div className="ql-instrument is-refusing" data-ql-instrument data-state="refusing" data-named-reason={parsed.named ?? undefined}>
+        {parsed.named === 'absent' && <p className="ql-instrument-reason" role="status" data-ql-absent>{parsed.fault}</p>}
+        {parsed.named === 'refused' && <p className="ql-instrument-fault" role="alert" data-ql-refused>{`Refused reading: ${parsed.fault}. A plausible owner state is never rendered.`}</p>}
+        {parsed.named === null && reading !== null && <p className="ql-instrument-fault" role="alert">{`Refused reading: ${parsed.fault}. A plausible owner state is never rendered.`}</p>}
         <LaunchContract/>
       </div>
     )
@@ -282,13 +302,7 @@ export function QlInstrumentControl({path, reading, disabled = false, apply, cap
   captureCurrent?: (() => unknown) | null
   createCustody?: ((aperture: string, material: QlInstrumentChange) => QlInstrumentCustody) | null
 }) {
-  const parsed = useMemo(() => {
-    try {
-      return {ok: true as const, value: parseQlInstrumentReading(reading)}
-    } catch (error) {
-      return {ok: false as const, fault: String(error instanceof Error ? error.message : error)}
-    }
-  }, [reading])
+  const parsed = useMemo(() => readFeed(reading), [reading])
   const [draft, setDraft] = useState<QlInstrumentChange | null>(null)
   const [outcome, setOutcome] = useState<string | null>(null)
   const writeAllowed = !disabled && typeof apply === 'function'

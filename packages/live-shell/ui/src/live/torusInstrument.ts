@@ -173,6 +173,29 @@ export function useLiveTorusReading(): LiveTorusState | null {
   return useSyncExternalStore(subscribeLiveTorus, liveTorusState, liveTorusState)
 }
 
+/** The named reason the reader gives while no owner reading stands in a host (the same words the Live widget shows). */
+export const LIVE_TORUS_ABSENT_REASON = 'No owner reading in this host. The stage is the Expressions frame\'s native field; it is not open here.'
+
+/** A reason the reader names in place of an owner reading: an absent owner, or the refusal the boundary named. */
+export interface QlInstrumentRefusal {
+  readonly kind: 'absent' | 'refused'
+  readonly reason: string
+}
+
+/** What the QL instrument face is fed: the owner reading the boundary validated, or the reader's own named reason. */
+export type QlInstrumentFeed = QlInstrumentReading | QlInstrumentRefusal
+
+/** The reader's state as the instrument face takes it. No publish is an absent owner, named; a refusal carries the boundary's fault verbatim. */
+export function qlInstrumentFeed(state: LiveTorusState | null): QlInstrumentFeed {
+  if (state === null) return {kind: 'absent', reason: LIVE_TORUS_ABSENT_REASON}
+  return state.ok ? state.value : {kind: 'refused', reason: state.fault}
+}
+
+/** The QL instrument's feed, as a hook: the same one reader handle every shell presentation of the instrument reads. */
+export function useQlInstrumentFeed(): QlInstrumentFeed {
+  return qlInstrumentFeed(useLiveTorusReading())
+}
+
 export interface LiveTorusOption {readonly value: string; readonly label: string}
 
 export interface LiveTorusMacroRow {

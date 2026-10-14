@@ -34,6 +34,7 @@ import {useEffect, useState, type ReactNode} from 'react'
 import {loadWorldShellFamilies, QUATERNAL_LOGIC_FAMILY_ID} from '../inhabitants/worldShellFamilies'
 import {inhabitantManifest, type InhabitantManifest} from '../inhabitants/manifest'
 import {InhabitantRack} from '../inhabitants/inhabitantRack'
+import {useQlInstrumentFeed} from '../live/torusInstrument'
 import {useDeviceWindowHost} from '../native/detachedKinds'
 import {CentralSubjectDetail, type CentralSubjectSelection} from '../inhabitants/CentralSubjectDetail'
 import {Icon, type IconName} from '../inhabitants/sdk/Icon'
@@ -162,14 +163,15 @@ export function BaseDocumentDetail({transport, subject}: {transport: KernelTrans
  * admitted field/PCM owner's face reads its owner; the declared faces wait,
  * named. With `focusInstrument` (a techne:* holder id) the instrument families'
  * rack stands with that instrument's faces expanded and the others folded. */
-export function TechneInstrumentsDetail({transport, instrumentReading, focusInstrument}: {
+export function TechneInstrumentsDetail({transport, focusInstrument}: {
   transport: KernelTransportStatus
-  instrumentReading?: unknown
   /** The focused pane's instrument (paneInstrument.ts); absent → the QL rack as it stands. */
   focusInstrument?: string | null
 }) {
   const manifests = focusInstrument ? instrumentManifests() : qlManifests()
   const deviceWindows = useDeviceWindowHost()
+  // The QL instrument's reading is the one reader's (live/torusInstrument.ts), read here and never passed in by a caller.
+  const instrumentReading = useQlInstrumentFeed()
   return (
     <div className="mode-detail" data-mode-detail="techne-instruments" data-focus-instrument={focusInstrument ?? undefined}>
       <InhabitantRack manifests={manifests} transport={transport} instrumentReading={instrumentReading} focusInstrument={focusInstrument ?? null} deviceWindows={deviceWindows} />
@@ -376,6 +378,7 @@ export function InstrumentDeviceDetail({transport, instrument, centralDevices = 
   centralDevices?: boolean
 }) {
   const deviceWindows = useDeviceWindowHost()
+  const instrumentReading = useQlInstrumentFeed()
   if (instrument === 'knowledge-graph') {
     return (
       <div className="mode-detail" data-mode-detail="knowledge-graph-device">
@@ -387,7 +390,7 @@ export function InstrumentDeviceDetail({transport, instrument, centralDevices = 
   if (centralDevices) {
     return (
       <div className="mode-detail" data-mode-detail="techne-instruments" data-focus-instrument={instrument} data-central-devices="true">
-        <InhabitantRack manifests={[...centralManifests(), ...instrumentManifests()]} transport={transport} focusInstrument={instrument} deviceWindows={deviceWindows} />
+        <InhabitantRack manifests={[...centralManifests(), ...instrumentManifests()]} transport={transport} instrumentReading={instrumentReading} focusInstrument={instrument} deviceWindows={deviceWindows} />
       </div>
     )
   }
