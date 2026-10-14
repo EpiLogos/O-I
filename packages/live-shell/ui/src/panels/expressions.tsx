@@ -363,7 +363,7 @@ export function ExpressionsPanel() {
   // The pane body reads the frame only while the frame reports ready (T-EXPRESSIONS-PANE-LEASE): a status that is not ready clears it.
   useEffect(() => {if (status !== 'Expressions') publishHostedExpressions(null)}, [status])
   // The frame's chrome is published by value: a Factory pane that holds the frame shows the same toolbar and faults beside its header.
-  useEffect(() => {publishHostedChrome({state: stage, run: stageRun, faults: [hostFault, surfaceFault, fault].filter((text): text is string => !!text)})}, [stage, hostFault, surfaceFault, fault, attempt])
+  useEffect(() => {publishHostedChrome({state: stage, run: host.current ? stageRun : null, faults: [hostFault, surfaceFault, fault].filter((text): text is string => !!text)})}, [stage, hostFault, surfaceFault, fault, attempt])
   useEffect(() => () => publishHostedChrome(null), [])
   // While a Factory pane holds the frame, the container follows that pane's slot (its own place and state return on release).
   useEffect(() => {
