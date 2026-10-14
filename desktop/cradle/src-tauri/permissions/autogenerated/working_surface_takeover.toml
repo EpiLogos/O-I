@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-working-surface-takeover"
+description = "Enables the working_surface_takeover command without any pre-configured scope."
+commands.allow = ["working_surface_takeover"]
+
+[[permission]]
+identifier = "deny-working-surface-takeover"
+description = "Denies the working_surface_takeover command without any pre-configured scope."
+commands.deny = ["working_surface_takeover"]

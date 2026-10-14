@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-working-surface-client-resize"
+description = "Enables the working_surface_client_resize command without any pre-configured scope."
+commands.allow = ["working_surface_client_resize"]
+
+[[permission]]
+identifier = "deny-working-surface-client-resize"
+description = "Denies the working_surface_client_resize command without any pre-configured scope."
+commands.deny = ["working_surface_client_resize"]

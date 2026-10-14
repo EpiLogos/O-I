@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-live-shell-continuity-confirm"
+description = "Enables the live_shell_continuity_confirm command without any pre-configured scope."
+commands.allow = ["live_shell_continuity_confirm"]
+
+[[permission]]
+identifier = "deny-live-shell-continuity-confirm"
+description = "Denies the live_shell_continuity_confirm command without any pre-configured scope."
+commands.deny = ["live_shell_continuity_confirm"]

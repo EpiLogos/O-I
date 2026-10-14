@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-working-surface-client-input"
+description = "Enables the working_surface_client_input command without any pre-configured scope."
+commands.allow = ["working_surface_client_input"]
+
+[[permission]]
+identifier = "deny-working-surface-client-input"
+description = "Denies the working_surface_client_input command without any pre-configured scope."
+commands.deny = ["working_surface_client_input"]
