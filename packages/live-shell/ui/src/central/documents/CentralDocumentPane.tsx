@@ -84,7 +84,7 @@ const Absence = ({form, state, children}: {form: string; state: string; children
 export function DayView({transport, standing}: {transport: KernelTransportStatus; standing: DayDocumentStanding | null}) {
   if (!standing) return <Absence form="Day" state="reading"><p>Reading the owner’s Day…</p></Absence>
   if (standing.state === 'ready') {
-    return <DocumentDayDieFace transport={transport} project={null} sourceRef={standing.sourceRef} documentId={standing.documentId} />
+    return <DocumentDayDieFace transport={transport} project={null} sourceRef={standing.sourceRef} documentId={standing.documentId} presentation="pane" />
   }
   return <Absence form="Day" state={standing.state}><CentralDayNotice notice={standing} /></Absence>
 }
@@ -96,7 +96,7 @@ export function DayDocument({transport, dayRef}: {transport: KernelTransportStat
 
 /** One Flow, by its owner location. */
 export function FlowDocument({transport, location}: {transport: KernelTransportStatus; location: CentralLocation}) {
-  return <FlowFace transport={transport} location={location} />
+  return <FlowFace transport={transport} location={location} presentation="pane" />
 }
 
 /** The most recent Flow as the owner lists it, or what the owner says about there being none. */
