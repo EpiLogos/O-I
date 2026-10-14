@@ -152,3 +152,15 @@ test('the Central hook reads through the owners\' own readers and writes only th
   assert.doesNotMatch(code, /setInterval|kernelOp\(|fetch\(/, 'no poll and no owner call of its own')
   assert.match(await source('shell/modeTransports.tsx'), /base: useCentralTransport/)
 })
+
+test('the Load slot is the reached document\'s save standing (the mockup\'s `edited`), from the document door — never a guess', async () => {
+  const {centralBindings, documentLoad} = await import('../src/shell/transports/transportReadings.ts')
+  const base = {ground: null, groundError: null, packet: null, config: null, transport: {kind: 'unavailable', reason: 'test'}}
+  assert.equal(centralBindings(base).cpu, undefined, 'no document reached, no reading')
+  const edited = centralBindings({...base, document: {form: 'Day', title: '2026-10-08', state: 'edited since save', revision: 'abc123'}}).cpu
+  assert.equal(edited.readout.value, 'edited')
+  assert.match(edited.readout.title, /the Day 2026-10-08 at rabc123: edited since save/)
+  assert.equal(documentLoad({form: 'Flow', title: 'f', state: 'waiting for the owner'}).value, 'saving…')
+  assert.equal(documentLoad({form: 'Flow', title: 'f', state: 'saved — native save acknowledged'}).value, 'saved')
+  assert.equal(documentLoad({form: 'Flow', title: 'f', state: 'refused — the owner declined'}).value, 'refused')
+})

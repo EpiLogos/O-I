@@ -42,11 +42,10 @@
   --ink-on-rec:#ffffff;
   --mask-ink:#000000;
   --browser-w:400px;
-  --transport-h:64px;
   --detail-h:300px;
   --dock-w:300px;
   grid-template-columns:400px minmax(0, 1fr) var(--dock-w);
-  grid-template-rows:64px minmax(0, 1fr) 300px 28px;
+  grid-template-rows:var(--transport-h) minmax(0, 1fr) 300px 28px;
   grid-template-areas:"tp tp tp" "br ct dk" "ch ch dk" "sb sb sb";
 }
 
@@ -233,7 +232,7 @@
 .frame.agent-shell-frame.browser-hidden.dock-open,
 .frame.agent-shell-frame.no-browser.dock-open { grid-template-columns:0 minmax(0, 1fr) var(--dock-w) }
 .frame.agent-shell-frame.detail-hidden,
-.frame.agent-shell-frame.no-detail { grid-template-rows:64px minmax(0, 1fr) 0 28px }
+.frame.agent-shell-frame.no-detail { grid-template-rows:var(--transport-h) minmax(0, 1fr) 0 28px }
 .frame.agent-shell-frame.no-dock { grid-template-columns:400px minmax(0, 1fr) 0 }
 .frame.agent-shell-frame.browser-hidden.no-dock,
 .frame.agent-shell-frame.no-browser.no-dock { grid-template-columns:0 minmax(0, 1fr) 0 }

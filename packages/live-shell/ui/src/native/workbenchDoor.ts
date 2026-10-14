@@ -24,3 +24,29 @@ const subscribe = (listener: () => void) => { listeners.add(listener); return ()
 export function useWorkbenchOpeners(): readonly WorkbenchOpener[] {
   return useSyncExternalStore(subscribe, () => openers, () => openers)
 }
+
+/** The aperture the panes stand in (the mockup's status bar: "aperture shared · 2 panes"): how many panes the presented tree
+ * holds, and how many of them are pinned to their own subject rather than following the shared encounter. */
+export interface WorkbenchAperture {
+  panes: number
+  pinned: number
+}
+
+let aperture: WorkbenchAperture | null = null
+const apertureListeners = new Set<() => void>()
+
+export function publishWorkbenchAperture(next: WorkbenchAperture | null): void {
+  if (aperture === next || (aperture && next && aperture.panes === next.panes && aperture.pinned === next.pinned)) return
+  aperture = next
+  for (const listener of apertureListeners) listener()
+}
+
+const subscribeAperture = (listener: () => void) => { apertureListeners.add(listener); return () => { apertureListeners.delete(listener) } }
+export function useWorkbenchAperture(): WorkbenchAperture | null {
+  return useSyncExternalStore(subscribeAperture, () => aperture, () => aperture)
+}
+
+/** The aperture in the status bar's words. */
+export function apertureWords({panes, pinned}: WorkbenchAperture): string {
+  return `aperture ${pinned ? `${pinned} pinned` : 'shared'} · ${panes} pane${panes === 1 ? '' : 's'}`
+}
