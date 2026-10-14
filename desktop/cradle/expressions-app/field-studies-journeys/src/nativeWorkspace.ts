@@ -7,9 +7,9 @@ import {clone,type Journey} from './model.js';
 import {NativeWorking,type NativeCheckpoint,type NativeFile,type NativeWorkingRecord,type WorkingSnapshot} from './nativeWorking.js';
 import {kernelExpressionsAvailable,listKernelExpressions,readKernelExpression,nativeExpressionRequest,nativeFileRequest,documentToChanges,type KernelChange} from './kernelExpressions.js';
 import type {KernelSaveAnchor} from './store.js';
-import {readWorkingCheckpoint,readWorkingDraft,readBoundWorkingDraft,acceptWorkingRecoveryBasis,writeWorkingCheckpoint,writeDraft,applyRecoveryPlan,removeDraft} from './recovery.js';
+import {readWorkingCheckpoint,readWorkingDraft,readBoundWorkingDraft,acceptWorkingRecoveryBasis,writeWorkingCheckpoint,writeDraft,applyRecoveryPlan,readDraftRow,draftRowBasis,draftRowText,markNativeDraftKept} from './recovery.js';
 // lane-3 E19b: the hosted recovery choice uses the same offer and plan as the browser boot.
-import {settleHostedDraft,bootWasUnclean,type RecoveryChoice} from './draftStorage.js';
+import {settleHostedDraft,bootWasUnclean,draftBasis,type RecoveryChoice} from './draftStorage.js';
 import type {RecoveryRecord} from '../../../src/expressions/recoveryTypes';
 import {hostedRecovery,hostedScope,recoveryBinding,selectedRecovery,draftRecoveryAddress,selectNativeRecovery} from './nativeRecovery.js';
 import {kernelDocumentToJourney,type KernelConversion,type KernelExpressionDocument} from './kernelDocumentBridge.js';
@@ -109,11 +109,13 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
  const work=new NativeWorking({expression:nativeExpressionRequest,file:nativeFileRequest,
   checkpoint,mint:()=>`expression:authored-${crypto.randomUUID()}`});
  let busy=false,notice='',lastFailure=false,restoreGeneration=0;const bootState={booted:false};
+ // E19: a kept draft's notice is carried into the next status line, so it is never dropped; the drafts this session holds are not overwritten by a write that adds no edits.
+ let keptNotice='';const heldDrafts=new Set<string>();
  let ownerIdle:Promise<void>=Promise.resolve();
  let queuedMutations=0;
  // E14: the nested documents the open Expression names (nestedDocumentReads).
  const nested=nestedDocumentReads(readKernelExpression,()=>host.refresh?.(),listKernelExpressions);
- const status=(text:string)=>{notice=text;update();};
+ const status=(text:string)=>{notice=keptNotice?`${text} ${keptNotice}`:text;keptNotice='';update();};
  const update=()=>{
   const state=work.state,doc=state?.view?.document;
   host.correspondence(nativeConnections(state?.view),doc?.selection?.relation_ref??null);
@@ -162,28 +164,45 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
     :occurrence?`Selected ${occurrence.subject?.subject_ref??occurrence.entity_ref} · occurrence ${occurrence.entity_ref}`:'Native selection cleared.');
   }),
  });
+ // E19 (base): every draft write records the checkpoint revision it was edited from. A draft this session kept by a choice or a superseded
+ // open is not overwritten by a write that adds no edits: the kept native row stays the owner's copy until the owner's own edits replace it.
+ const draftBasisOf=(journey:Journey)=>{const view=work.state?.view;return view?draftBasis(journey,{revision:view.document.revision,journey:view.journey}):undefined;};
+ const persistDraft=async(journey:Journey):Promise<void>=>{
+  if(!hostedRecovery())return writeDraft(journey);
+  const basis=draftBasisOf(journey);
+  if(heldDrafts.has(journey.id)&&!basis?.edited)return;
+  await writeDraft(journey,undefined,basis);
+  if(basis?.edited)heldDrafts.delete(journey.id);
+ };
  const retainSubmitted=async(snapshot:WorkingSnapshot)=>{
   const generation=restoreGeneration;
-  await writeDraft(snapshot.journey);
+  await persistDraft(snapshot.journey);
   if(generation!==restoreGeneration||host.snapshot().journey.id!==snapshot.journey.id)throw new Error('The selected work changed while its draft was being retained. No composition was committed.');
  };
  const requireAdoption=(current:()=>boolean)=>{if(!current())throw new Error('The working draft changed while opening. It and its native basis were retained; choose Open again when ready.');};
 // lane-3 E19b: a hosted draft newer than its checkpoint's acknowledged basis is not adopted silently after an unclean exit. The owner
-// chooses once per expression. Each choice keeps both sides: the draft is quarantined or copied to the Library, read back, and only
-// then does its native copy leave the owner. The checkpoint's view is the saved basis; the kernel revision is named in the choice.
+// chooses once per expression. Each choice keeps both sides: the draft is quarantined or copied to the Library, read back, and its native row
+// is kept and marked kept, never removed. The checkpoint's view is the saved basis; the kernel revision is named in the choice.
 const recoveryOffered=new Set<string>();
-// E19: the decision lives in draftStorage.settleHostedDraft. A draft not newer than the checkpoint is quarantined and the checkpoint opens,
-// so it is never adopted; a newer draft is offered after an unclean exit exactly as before.
-const settleRecovery=async(found:{record:NativeWorkingRecord;journey:Journey;recoveryRecords?:RecoveryRecord[]},current:()=>boolean)=>{
- const saved=found.record.view?.journey,draftId=found.record.draft_id,scope=found.recoveryRecords?.find(row=>row.kind==='draft')?.scope;
- const settled=await settleHostedDraft(draftId,found.journey,saved,{hosted:hostedRecovery(),uncleanBoot:bootWasUnclean(),settled:recoveryOffered,revision:found.record.view?.document.revision??0,chooseRecovery:host.chooseRecovery,requireAdoption:()=>requireAdoption(current),keepDraft:(plan,draft)=>applyRecoveryPlan(plan,draft),removeNativeDraft:()=>removeDraft(draftId,scope)});
- if(settled.kind==='draft')return found;
- return {...found,journey:settled.journey,recoveryRecords:found.recoveryRecords?.filter(row=>row.kind==='checkpoint')};
-};
+ // E19: the decision lives in draftStorage.settleHostedDraft. A draft that is superseded (no edits after its base and its base at or behind the
+ // checkpoint, or kept by a choice) is kept verbatim and the checkpoint opens with a notice; a newer draft is offered after an unclean exit.
+ // The native row is never removed here: it is kept, and a choice marks it kept, so nothing ends webview-only.
+ const settleRecovery=async(found:{record:NativeWorkingRecord;journey:Journey;recoveryRecords?:RecoveryRecord[]},current:()=>boolean)=>{
+  if(!hostedRecovery())return found;
+  const saved=found.record.view?.journey,draftId=found.record.draft_id;
+  const row=found.recoveryRecords?.find(item=>item.kind==='draft')??await readDraftRow(draftId);
+  if(!row)return found;
+  const revision=found.record.view?.document.revision??0;
+  const settled=await settleHostedDraft(draftId,{journey:found.journey,basis:draftRowBasis(row),text:draftRowText(row)},saved,{hosted:true,uncleanBoot:bootWasUnclean(),settled:recoveryOffered,revision,chooseRecovery:host.chooseRecovery,requireAdoption:()=>requireAdoption(current),keepDraft:(plan,draft,text)=>applyRecoveryPlan(plan,draft,text),markDraftKept:(draft,basis)=>markNativeDraftKept(draft,basis,revision,row.scope)});
+  if(settled.kind==='draft')return found;
+  heldDrafts.add(draftId);
+  if(settled.kept)keptNotice=settled.kept;
+  return {...found,journey:settled.journey,recoveryRecords:found.recoveryRecords?.filter(item=>item.kind==='checkpoint')};
+ };
  const adopt=async(raw:KernelExpressionDocument,current:()=>boolean,file?:NativeFile)=>{
   requireAdoption(current);
   const old=clone(host.snapshot());
-  if(host.shouldRetainDraft?.()!==false)await writeDraft(old.journey); // retain authored work, not an untouched boot canvas
+  if(host.shouldRetainDraft?.()!==false)await persistDraft(old.journey); // retain authored work, not an untouched boot canvas
   requireAdoption(current);
   const view=await work.adopt(raw,file,current);
   requireAdoption(current);
@@ -212,7 +231,7 @@ const settleRecovery=async(found:{record:NativeWorkingRecord;journey:Journey;rec
   const captured=captureNativeAdoption(host,()=>followGeneration),current=()=>generation===followGeneration&&captured();
   // Retain the departing draft before reading the destination's exact records.
   // A refusal leaves both copies in place and cannot accept a newer CAS basis.
-  if(host.shouldRetainDraft?.()!==false)await writeDraft(clone(host.snapshot().journey));
+  if(host.shouldRetainDraft?.()!==false)await persistDraft(clone(host.snapshot().journey));
   requireAdoption(current);
   const found=address?await readBoundWorkingDraft(address):await readWorkingDraft(reference,hostedRecovery()?hostedScope():'expressions');
   requireAdoption(current);
@@ -244,7 +263,7 @@ const settleRecovery=async(found:{record:NativeWorkingRecord;journey:Journey;rec
   const address=hostedRecovery()?selectedRecovery(reference):null,found=address?await readBoundWorkingDraft(address):await readWorkingDraft(reference,hostedRecovery()?hostedScope():'expressions');requireAdoption(current);
   const recovered=found?await settleRecovery(found,current):found;requireAdoption(current);
   if(recovered){
-   if(host.shouldRetainDraft?.()!==false)await writeDraft(clone(host.snapshot().journey));requireAdoption(current);
+   if(host.shouldRetainDraft?.()!==false)await persistDraft(clone(host.snapshot().journey));requireAdoption(current);
    acceptWorkingRecoveryBasis(recovered,current);
    const view=await work.reopenCheckpoint(recovered.record,recovered.journey,current);
    requireAdoption(current);
@@ -420,6 +439,7 @@ const settleRecovery=async(found:{record:NativeWorkingRecord;journey:Journey;rec
    const file=await work.saveFile(snapshot,{parent_path:folder,name});
    status(`Saved and read back ${file.location.path}.${host.version()!==version?' Newer local edits are still unsaved.':''}`);
   });},
+  persistDraft,
   status:()=>update(),
   open:requestOpen,
   cancelOpen:()=>{opens.cancel();update();},

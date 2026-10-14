@@ -14,7 +14,10 @@
  * same expression and is not older than it is offered as a choice with both
  * timestamps: restore the draft, keep the saved version (the draft goes to
  * quarantine), or keep both (the draft becomes a Library copy). Each choice
- * keeps both sides. A clean exit offers nothing. */
+ * keeps both sides. A clean exit offers nothing.
+ * E19 (base). A hosted draft is ordered by the checkpoint revision it was edited FROM, recorded with the draft (DraftBasis), never by a
+ * regenerated timestamp. A draft is superseded only when it carries no edits after its base and its base is at or behind the checkpoint,
+ * or when the owner kept it. A draft with no recorded base is unknown: it is offered, never quarantined. */
 import {Journey,clone,uid,validateJourney} from './model.js';
 import {mergeTake,type PropertyTrack} from './propertyTracks.js';
 export const PAIR_SCHEMA='oi.draft-record/v1';
@@ -214,25 +217,64 @@ export function recoveryDiffLines(diff:RecoveryDiff):string[]{
  if(diff.other)lines.push('Expression details changed');
  return lines;
 }
+/** E19 (base): the checkpoint revision a hosted draft was edited FROM, recorded when the draft is written. `edited` is whether the draft
+ * carried edits after that revision. `superseded` is the owner's kept state: a choice kept the draft, so it is never offered or adopted again. */
+export const DRAFT_BASIS_KEY='draftBasis';
+export const DRAFT_BASIS_SCHEMA='oi.draft-basis/v1';
+export interface DraftBasis{schema:typeof DRAFT_BASIS_SCHEMA;revision:number;edited:boolean;superseded?:boolean}
+/** The basis a draft is written with: the checkpoint revision the frame stood on, and whether the draft differs from that checkpoint's material. */
+export function draftBasis(draft:Journey,checkpoint:{revision:number;journey:Journey}):DraftBasis{
+ return {schema:DRAFT_BASIS_SCHEMA,revision:checkpoint.revision,edited:material(draft)!==material(checkpoint.journey)};
+}
+/** The stored draft value: the journey with its basis under one reserved key (absent when no basis is known). The Journey itself never carries it. */
+export function draftValue(journey:Journey,basis?:DraftBasis):Record<string,unknown>{
+ const value=clone(journey) as unknown as Record<string,unknown>;
+ if(basis)value[DRAFT_BASIS_KEY]=basis;
+ return value;
+}
+/** Read a stored draft value: the journey without the reserved key, and the basis when it validates. A basis that does not validate is unknown. */
+export function splitDraftValue(value:unknown):{journey:unknown;basis?:DraftBasis}{
+ if(!value||typeof value!=='object'||Array.isArray(value))return {journey:value};
+ const {[DRAFT_BASIS_KEY]:raw,...journey}=value as Record<string,unknown>;
+ const b=raw as Partial<DraftBasis>|undefined;
+ if(!b||b.schema!==DRAFT_BASIS_SCHEMA||typeof b.revision!=='number'||!Number.isSafeInteger(b.revision)||b.revision<0||typeof b.edited!=='boolean'||(b.superseded!==undefined&&typeof b.superseded!=='boolean'))return {journey};
+ return {journey,basis:{schema:DRAFT_BASIS_SCHEMA,revision:b.revision,edited:b.edited,...(b.superseded?{superseded:true}:{})}};
+}
+/** E19 (base): a draft is superseded when the owner kept it, or when it carries no edits after its base and its base is at or behind the checkpoint.
+ * An unknown basis (undefined) is never superseded. */
+export function basisSuperseded(basis:DraftBasis|undefined,checkpointRevision:number):boolean{
+ if(!basis)return false;
+ if(basis.superseded)return true;
+ return !basis.edited&&basis.revision<=checkpointRevision;
+}
+/** The checkpoint a hosted draft is ordered against: its revision and the draft's own basis. */
+export interface CheckpointOrder{revision:number;basis?:DraftBasis}
 export type RecoveryOffer={offer:true;draftId:string;draftAt:string;savedAt:string;diff:RecoveryDiff}|{offer:false;reason:string};
 /** Offer only after an unclean exit, when the draft differs from the saved copy of the same expression and is strictly newer than it.
  * The content comparison decides whether there is a difference; the order of the two copies only decides whether the draft is newer. */
-export function recoveryOffer(input:{draft?:Journey;saved?:Journey;uncleanExit:boolean}):RecoveryOffer{
+export function recoveryOffer(input:{draft?:Journey;saved?:Journey;uncleanExit:boolean;checkpoint?:CheckpointOrder}):RecoveryOffer{
  if(!input.uncleanExit)return {offer:false,reason:'The last session closed cleanly.'};
- const {draft,saved}=input;
+ const {draft,saved,checkpoint}=input;
  if(!draft||!saved)return {offer:false,reason:'There is no draft and saved copy to compare.'};
  if(draft.id!==saved.id)return {offer:false,reason:'The draft and the saved copy are different expressions.'};
  if(material(draft)===material(saved))return {offer:false,reason:'The draft matches the saved copy.'};
- const draftAt=Date.parse(draft.updatedAt),savedAt=Date.parse(saved.updatedAt);
- if(!(draftAt>savedAt))return {offer:false,reason:draftAt<savedAt?'The saved copy is newer than the draft.':'The draft is not newer than the saved copy.'};
+ if(checkpoint){
+  // E19 (hosted): order by the draft's base revision. The checkpoint's regenerated time is never compared. An unknown base is offered.
+  if(basisSuperseded(checkpoint.basis,checkpoint.revision))return {offer:false,reason:'The draft has no edits after its base, and its base is at or behind the saved copy.'};
+ }else{
+  // Browser only (no kernel): the saved side is the Library record, whose time is a real local time.
+  const draftAt=Date.parse(draft.updatedAt),savedAt=Date.parse(saved.updatedAt);
+  if(!(draftAt>savedAt))return {offer:false,reason:draftAt<savedAt?'The saved copy is newer than the draft.':'The draft is not newer than the saved copy.'};
+ }
  return {offer:true,draftId:draft.id,draftAt:draft.updatedAt,savedAt:saved.updatedAt,diff:recoveryDiff(draft,saved)};
 }
 /** E19: a draft that differs from the saved copy and is not newer than it. The saved copy is the basis and the draft is superseded:
  * it is never offered and never adopted silently, and the owner keeps it in quarantine, verbatim, so nothing is overwritten. */
-export function supersededDraft(input:{draft?:Journey;saved?:Journey}):boolean{
- const {draft,saved}=input;
+export function supersededDraft(input:{draft?:Journey;saved?:Journey;checkpoint?:CheckpointOrder}):boolean{
+ const {draft,saved,checkpoint}=input;
  if(!draft||!saved||draft.id!==saved.id)return false;
  if(material(draft)===material(saved))return false;
+ if(checkpoint)return basisSuperseded(checkpoint.basis,checkpoint.revision);
  return !(Date.parse(draft.updatedAt)>Date.parse(saved.updatedAt));
 }
 /** E17 (take): merge an armed take's samples into a copy of the document. The samples are new content, so the copy's time advances with
@@ -272,7 +314,7 @@ function recordText(raw:string):string{for(const schema of [PAIR_SCHEMA,LIBRARY_
 /** A quarantined draft as a Library copy. It must validate now; otherwise the refusal names the reason and nothing is made (T-REVIEW-6). */
 export function quarantinedCopy(raw:string,at:Date):Journey{
  let journey:Journey;
- try{journey=validateJourney(JSON.parse(recordText(raw)));}
+ try{journey=validateJourney(splitDraftValue(JSON.parse(recordText(raw))).journey);}
  catch(error){throw new Error(`This quarantined draft cannot be restored: ${error instanceof Error?error.message:String(error)}`);}
  return namedCopy(journey,at,'restored draft');
 }
@@ -282,8 +324,11 @@ export function quarantinedName(raw:string,fallback:string):string{
  catch{return fallback;}
 }
 /** E19 (hosted): what a native draft becomes against its checkpoint, the saved basis. The owners are injected by nativeWorkspace, so every
- * branch is testable. `draft` means the draft is adopted as found; `checkpoint` means the saved basis is adopted and the draft has left the owner. */
-export type HostedDraftSettlement={kind:'draft'}|{kind:'checkpoint';journey:Journey};
+ * branch is testable. `draft` means the draft is adopted as found; `checkpoint` means the saved basis is adopted. `kept` is the notice the
+ * frame shows when the draft was kept aside. */
+export type HostedDraftSettlement={kind:'draft'}|{kind:'checkpoint';journey:Journey;kept?:string};
+/** The native draft row as found: its journey, its recorded basis (absent when unknown), and its verbatim text. */
+export interface HostedDraftRow{journey:Journey;basis?:DraftBasis;text:string}
 export interface HostedDraftOwners{
  /** The hosted recovery store is in use. */
  hosted:boolean;
@@ -296,36 +341,43 @@ export interface HostedDraftOwners{
  chooseRecovery?:(request:{draft:Journey;saved:Journey;offer:{draftAt:string;savedAt:string};revision:number})=>Promise<RecoveryChoice>;
  /** Stops adoption when another open superseded this one. */
  requireAdoption:()=>void;
- /** Keeps the draft verbatim (quarantine), then removes its local copy as the plan says. Rejects when the draft cannot be kept. */
- keepDraft:(plan:RecoveryPlan,draft:Journey)=>Promise<void>;
- /** Removes the native draft row, with its scope. */
- removeNativeDraft:()=>Promise<void>;
+ /** Keeps the draft's verbatim native text in quarantine (read back) and applies the plan's copy. It never removes the native row. Rejects when the draft cannot be kept. */
+ keepDraft:(plan:RecoveryPlan,draft:Journey,text:string)=>Promise<void>;
+ /** Marks the native row kept by a choice. The row stays, so every later open keeps it again and never offers or adopts it. */
+ markDraftKept:(draft:Journey,basis:DraftBasis|undefined)=>Promise<void>;
+}
+/** The notice a kept draft shows in the frame's status line: what happened, and where the kept copy is. */
+export function quarantineNotice(reason:'superseded'|'chosen',hosted:boolean):string{
+ const what=reason==='superseded'?'An older draft of this Expression was kept aside (not opened); the saved version opened.':'The draft was kept aside (not opened); the saved version opened.';
+ return `${what} ${hosted?'Its native draft record is kept, and a verbatim copy is in the Library quarantine of this browser.':'A verbatim copy is in the Library quarantine of this browser.'}`;
 }
 /** A draft that is not newer than its checkpoint is never adopted, after a clean or an unclean exit. It is kept verbatim in quarantine
- * before its native copy leaves, and a failure to keep it holds the draft and names it: nothing is removed or adopted. A newer draft is
- * offered on an unclean exit exactly as before, and the owner's choice keeps both sides. */
-export async function settleHostedDraft(draftId:string,draft:Journey,saved:Journey|undefined,owners:HostedDraftOwners):Promise<HostedDraftSettlement>{
+ * before the saved copy opens, and a failure to keep it holds the draft and names it: nothing is adopted. A newer draft is offered on an
+ * unclean exit, and the owner's choice keeps both sides. The native row is never removed: the owner has no quarantine store of its own,
+ * so the row is kept, and a choice marks it kept. Order is by the draft's base revision, not by any regenerated time. */
+export async function settleHostedDraft(draftId:string,row:HostedDraftRow,saved:Journey|undefined,owners:HostedDraftOwners):Promise<HostedDraftSettlement>{
+ const {journey:draft,basis,text}=row;
  if(!owners.hosted||!saved||owners.settled.has(draftId))return {kind:'draft'};
- if(supersededDraft({draft,saved})){
-  try{await owners.keepDraft({open:saved,quarantineDraft:true,removeDraft:true,quarantineReason:'Not newer than the saved copy, so the saved copy was opened. The draft is kept here verbatim.'},draft);}
+ const checkpoint:CheckpointOrder={revision:owners.revision,basis};
+ if(supersededDraft({draft,saved,checkpoint})){
+  try{await owners.keepDraft({open:saved,quarantineDraft:true,removeDraft:false,quarantineReason:'No edits after its base, and its base is at or behind the saved copy, so the saved copy was opened. The draft is kept here verbatim.'},draft,text);}
   catch(error){throw new Error(`The draft "${draft.name}" could not be kept in quarantine, so it was neither removed nor opened. It stays held for the next open. ${error instanceof Error?error.message:String(error)}`);}
   owners.requireAdoption();
-  await owners.removeNativeDraft();
   owners.settled.add(draftId);
-  return {kind:'checkpoint',journey:saved};
+  return {kind:'checkpoint',journey:saved,kept:quarantineNotice('superseded',true)};
  }
  if(!owners.uncleanBoot)return {kind:'draft'};
- const offer=recoveryOffer({draft,saved,uncleanExit:true});
+ const offer=recoveryOffer({draft,saved,uncleanExit:true,checkpoint});
  if(!offer.offer)return {kind:'draft'};
  const choice:RecoveryChoice=owners.chooseRecovery?await owners.chooseRecovery({draft,saved,offer,revision:owners.revision}):'keep-both';
  owners.requireAdoption();
  if(choice==='restore-draft'){owners.settled.add(draftId);return {kind:'draft'};}
  const plan=planRecoveryChoice(choice,draft,saved,new Date());
- await owners.keepDraft(plan,draft);
+ await owners.keepDraft({...plan,removeDraft:false},draft,text);
  owners.requireAdoption();
- if(plan.removeDraft)await owners.removeNativeDraft();
+ await owners.markDraftKept(draft,basis);
  owners.settled.add(draftId);
- return {kind:'checkpoint',journey:saved};
+ return {kind:'checkpoint',journey:saved,...(plan.quarantineDraft?{kept:quarantineNotice('chosen',true)}:{})};
 }
 export const SESSION_MARK_KEY='oi.field-studies.session.v1';
 export const TAB_INSTANCE_KEY='oi.field-studies.tab.v1';
