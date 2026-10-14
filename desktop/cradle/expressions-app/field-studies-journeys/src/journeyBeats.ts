@@ -10,7 +10,7 @@
  * compose.ts mints under the substrate grammar.
  */
 import type {DisclosureSelection, TechneActionRoute, TechneReading} from '../../../src/techne/contract';
-import {beats, type JourneyBeat, type JourneyBeatFrame} from '../../../src/techne/m0m5/journey/beats';
+import {beats, sceneTitle, type JourneyBeat, type JourneyBeatFrame} from '../../../src/techne/m0m5/journey/beats';
 import {composeSceneProposal, type CompositionProposal} from '../../../src/techne/m0m5/journey/compose';
 import {composeProposal, type SequenceDraft} from '../../../src/techne/m0m5/journey/sequence';
 import type {CtKind} from '../../../src/techne/m0m5/journey/vak';
@@ -151,6 +151,20 @@ export function journeyBeatView(
   });
   if (cards.length) return {cards};
   return {cards, unavailableReason: model.unavailableReason ?? 'the reading discloses no scene beats'};
+}
+
+/** T11, pure: the status line for a return that restored a beat, and whether the native Scene moves to it. The beat is named by its
+ * title, never an index. A beat the native Scene already presents is named and nothing moves. A beat this Journey can present on the
+ * native basis as it stands (`focusable`) moves the Scene by ref. Any other restored beat is a miss: the Scene stays where it was, and
+ * nothing is claimed as restored. */
+export function restoredBeatNotice(restoredRef: string, basisSceneRef: string, focusable: boolean): {moves: boolean; notice: string} {
+  const title = sceneTitle(restoredRef);
+  if (restoredRef === basisSceneRef) return {moves: false, notice: `Back in this Journey at "${title}".`};
+  if (focusable) return {moves: true, notice: `Back in this Journey at "${title}".`};
+  return {
+    moves: false,
+    notice: `The return named the beat "${title}", but this Journey cannot present it on the native Expression as it stands, so the Scene stays where it was.`,
+  };
 }
 
 /** T2: mint one scene through the floor and route exactly one `scene_create`,
