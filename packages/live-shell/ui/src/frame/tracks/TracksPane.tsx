@@ -16,7 +16,7 @@ export function TracksPane() {
 function ModeTracksView({reading}: {reading: TimelineHostReading}) {
   const presented = useTimelinePanePresentation()
   const set = MODE_TRACKS[reading.mode](reading)
-  if (!set) return <div className="tracks-empty" role="status">{reading.waiting ?? 'This work has no tracks to show yet.'}</div>
+  if (!set || 'waiting' in set) return <div className="tracks-empty" role="status">{set?.waiting ?? reading.waiting ?? 'This work has no tracks to show yet.'}</div>
   const selection = {ref: reading.selectedRef, select: reading.selectTrackItem}
   return <div className="tracks-pane" style={{position: 'absolute', inset: 0}} data-tracks-mode={reading.mode}>
     {presented === 'arrangement' ? <ArrangementRuler set={set} selection={selection} /> : <SessionGrid set={set} selection={selection} />}

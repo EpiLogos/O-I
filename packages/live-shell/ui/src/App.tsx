@@ -34,6 +34,7 @@ import type {NativeCompositionViewSource} from './shell/compositionViews'
 import {useWorldTemporalReading, type WorldTimelineView} from './projections/useWorldTemporalReading'
 import {surfModeOf, type SurfMode} from './shell/modeGrammar'
 import {MODE_FRAMES, MODE_TRACK_SOURCES} from './shell/modeFrames'
+import {centralSubjectOfClip} from './timeline/centralTrackAdapter'
 import {openInstrument, publishStageLensDriver} from './frame/instrumentDoor'
 import {captureTechneInstrumentOpen, TECHNE_INSTRUMENT_OPEN, type TechneInstrumentEvent} from './native/techneInstrumentOpen'
 import {liveWorldSelection, setSelectionOf} from './shell/liveSelection'
@@ -484,6 +485,9 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   // The shared Session and Arrangement select through THE selection (F1): a Live place also moves Live's held selection, and
   // a World cut clip stands its event on the spine, as the World cut's own selection did.
   const selectTrackItem = (target: {kind: 'clip' | 'track'; ref: string; title: string; track?: string}) => {
+    // A day record on Central's Day track is ground material: it opens as the browser's Days row does.
+    const subject = target.kind === 'clip' ? centralSubjectOfClip(target.ref) : null
+    if (subject) { selectCentralSubject(subject); return }
     const next = {mode: (continuity.current.layout.mode ?? 'base') as WorldSelection['mode'], kind: target.kind, ref: target.ref, title: target.title, track: target.track}
     const live = setSelectionOf(next, state.set?.path)
     if (live) { holdLive(live); changeDetailMode(target.kind === 'clip' ? 'clip' : 'device') }
