@@ -135,17 +135,62 @@ test('a refused reading renders the refusal on the chain; an absent state is a d
   assert.match(refused, /data-device-light="unknown"/, 'a refused reading lights nothing')
 })
 
-// ── 5 — with the owner reading: standing shows, no macro is invented, no drawn torus ──
+// ── 5 — with the owner reading: standing shows, no macro is invented, the picture is the torus's outline ──
 
-test('with the owner reading the chain shows its standing; each macro reads not published; the device draws no torus', () => {
+test('with the owner reading the chain shows its standing; each macro reads not published; the device draws the torus outline, not a phase', () => {
   const markup = renderToStaticMarkup(createElement(onChain.TorusOnChain, {state: validState()}))
   assert.match(markup, /data-live-torus="following"/)
   assert.match(markup, /data-device-light="on"/, 'a following instrument is lit')
-  assert.match(markup, /<div class="device-picture"><div class="torus-picture" data-live-torus="following"><b>following<\/b><small>controlled:occasion<\/small><\/div><\/div>/, 'the picture is the owner\'s standing, not a drawing')
+  assert.match(markup, /<div class="device-picture"><div class="torus-picture" data-live-torus="following" data-torus-size="compact"/, 'the compact picture is the torus figure')
+  assert.match(markup, /<svg role="img" aria-label="M1 torus, following"/, 'a drawing with a name, not a text label')
+  assert.match(markup, /<path d="M[-\d. ML]+L[-\d. ML]+"[^>]*data-torus-side="far"/, 'the far side is drawn, fainter')
+  assert.match(markup, /<path d="M[-\d. ML]+L[-\d. ML]+"[^>]*data-torus-side="near"/, 'the near side is drawn')
+  assert.match(markup, /data-torus-tone="lit"/, 'the standing tints it')
+  assert.doesNotMatch(markup, /<div class="torus-picture"[^>]*><b>/, 'no text-only card')
   assert.equal((markup.match(/data-param="/g) || []).length, 4)
   assert.equal((markup.match(/class="sdk-enum"[^>]*>—<\/button>/g) || []).length, 4, 'the owner reading publishes no determinant yet, so no macro carries a value')
   assert.deepEqual(torusDeviceModule.torusDevice(validState()).values, {enabled: true}, 'the device holds no macro value either')
-  assert.doesNotMatch(markup, /<ellipse|<circle/, 'the shell draws no torus: the visible torus is the simulation render only')
+  assert.doesNotMatch(markup, /<ellipse|<circle/, 'the outline is paths: no point or phase is drawn on it — the oscillation is the simulation render only')
+})
+
+test('the picture is the same device at all three sizes: the figure grows denser, the owner\'s reading is the same', () => {
+  const figures = ['compact', 'whole', 'full'].map(size => torusDeviceModule.torusFigure(size))
+  const strokes = figures.map(figure => (figure.front.match(/M/g) ?? []).length + (figure.back.match(/M/g) ?? []).length)
+  assert.ok(strokes[0] < strokes[1] && strokes[1] < strokes[2], `more of the outline at each size: ${strokes}`)
+  for (const figure of figures) {
+    assert.ok(figure.front.length > 0 && figure.back.length > 0, 'both sides of the surface are drawn')
+    // every coordinate lies inside the viewBox the figure names: the whole torus is in the picture
+    const {x, y, width, height} = figure.view
+    const numbers = (figure.front + figure.back).match(/-?\d+(?:\.\d+)?/g).map(Number)
+    for (let index = 0; index < numbers.length; index += 2) {
+      assert.ok(numbers[index] >= x && numbers[index] <= x + width, `x ${numbers[index]} inside the view`)
+      assert.ok(numbers[index + 1] >= y && numbers[index + 1] <= y + height, `y ${numbers[index + 1]} inside the view`)
+    }
+  }
+  assert.deepEqual(torusDeviceModule.torusFigure('compact'), torusDeviceModule.torusFigure('compact'), 'the same size draws the same figure')
+  // the geometry is the kernel's: the widest reach across is R + r, from the topology constants
+  const compact = torusDeviceModule.torusFigure('compact')
+  assert.ok(Math.abs((compact.view.width / 2) - (25 / 9 + 0.15)) < 0.01)
+  // the pool and the pane draw the same picture at their own size: the chain publishes it by size (TorusOnChain publishDevice)
+  for (const size of ['whole', 'full']) {
+    const markup = renderToStaticMarkup(createElement(onChain.TorusPicture, {state: validState(), size}))
+    assert.match(markup, new RegExp(`data-torus-size="${size}"`))
+    assert.match(markup, /<small>following · controlled:occasion<\/small>/, `${size}: the owner's standing and event under the figure`)
+  }
+  assert.doesNotMatch(renderToStaticMarkup(createElement(onChain.TorusPicture, {state: validState(), size: 'compact'})), /<small>/, 'the rack\'s small picture is the figure alone')
+})
+
+test('a refused or absent reading draws the outline unlit and names the refusal', () => {
+  const refused = renderToStaticMarkup(createElement(onChain.TorusPicture, {state: {ok: false, fault: 'reading.schema: expected ql.instrument-reading/v1'}, size: 'whole'}))
+  assert.match(refused, /data-torus-tone="unlit"/)
+  assert.match(refused, /role="alert"[^>]*>Refused reading: reading\.schema/)
+  assert.equal(torusDeviceModule.torusTone(null), 'unlit')
+  const standing = name => ({...validState(), value: {...validState().value, standing: name}})
+  assert.equal(torusDeviceModule.torusTone(standing('following')), 'lit')
+  assert.equal(torusDeviceModule.torusTone(standing('held')), 'lit')
+  assert.equal(torusDeviceModule.torusTone(standing('opening')), 'rising')
+  assert.equal(torusDeviceModule.torusTone(standing('manual')), 'unlit')
+  assert.equal(torusDeviceModule.torusTone(standing('unavailable')), 'unlit')
 })
 
 // ── 6 — the torus face declares the full presentation, admission unchanged ──
