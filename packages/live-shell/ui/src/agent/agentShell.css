@@ -73,18 +73,18 @@
 .agent-shell-browser .agent-bcat.on { background:var(--bg-3); color:var(--text) }
 .agent-shell-browser .agent-bcat svg { width:11px; height:11px; flex:none }
 .agent-shell-browser .browser-results { flex:1; min-width:0; overflow:auto; background:var(--bg-2) }
-.agent-shell-browser .agent-bfilt { height:21px; flex:none; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between; padding:2px 5px; color:var(--text-dim); font-size:10px; background:var(--bg-1) }
-.agent-shell-browser .agent-bhead { display:flex; justify-content:space-between; height:20px; flex:none; background:var(--bg-0); padding:2px 5px; font-size:10px; color:var(--text-dim) }
-.agent-shell-browser .agent-bitem { height:23px; display:flex; align-items:center; gap:6px; width:100%; padding:2px 5px; color:var(--text-dim); font-size:11px; text-align:left; cursor:grab; white-space:nowrap }
-.agent-shell-browser .agent-bitem:hover { background:var(--bg-3); color:var(--text) }
-.agent-shell-browser .agent-bitem .st { margin-left:auto; font-size:10px; color:var(--text-faint) }
-.agent-shell-browser .agent-bitem .sdk { font-size:8.5px; border:1px solid var(--line-strong); padding:0 3px; color:var(--sel) }
-.agent-shell-browser .agent-bitem svg { flex:none }
+.agent-shell-browser .agent-bfilt, .agent-browser-body .agent-bfilt { height:21px; flex:none; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between; padding:2px 5px; color:var(--text-dim); font-size:10px; background:var(--bg-1) }
+.agent-shell-browser .agent-bhead, .agent-browser-body .agent-bhead { display:flex; justify-content:space-between; height:20px; flex:none; background:var(--bg-0); padding:2px 5px; font-size:10px; color:var(--text-dim) }
+.agent-shell-browser .agent-bitem, .agent-browser-body .agent-bitem { height:23px; display:flex; align-items:center; gap:6px; width:100%; padding:2px 5px; color:var(--text-dim); font-size:11px; text-align:left; cursor:grab; white-space:nowrap }
+.agent-shell-browser .agent-bitem:hover, .agent-browser-body .agent-bitem:hover { background:var(--bg-3); color:var(--text) }
+.agent-shell-browser .agent-bitem .st, .agent-browser-body .agent-bitem .st { margin-left:auto; font-size:10px; color:var(--text-faint) }
+.agent-shell-browser .agent-bitem .sdk, .agent-browser-body .agent-bitem .sdk { font-size:8.5px; border:1px solid var(--line-strong); padding:0 3px; color:var(--sel) }
+.agent-shell-browser .agent-bitem svg, .agent-browser-body .agent-bitem svg { flex:none }
 /* pool (mockup tier-2 grammar, agent-prefixed) */
-.agent-shell-browser .pool { height:46%; min-height:85px; display:flex; flex-direction:column; border-top:5px solid var(--line); background:var(--bg-2) }
-.agent-shell-browser .poolh { height:22px; display:flex; align-items:center; gap:6px; padding:0 6px; background:var(--bg-1); border-bottom:1px solid var(--line); font-size:11px; flex:none }
-.agent-shell-browser .poolh .r { margin-left:auto; display:flex; gap:3px }
-.agent-shell-browser .poolb { flex:1; overflow:auto; padding:4px 0 8px }
+.agent-shell-browser .pool, .one-browser-pool-host .pool { height:46%; min-height:85px; display:flex; flex-direction:column; border-top:5px solid var(--line); background:var(--bg-2) }
+.agent-shell-browser .poolh, .one-browser-pool-host .poolh { height:22px; display:flex; align-items:center; gap:6px; padding:0 6px; background:var(--bg-1); border-bottom:1px solid var(--line); font-size:11px; flex:none }
+.agent-shell-browser .poolh .r, .one-browser-pool-host .poolh .r { margin-left:auto; display:flex; gap:3px }
+.agent-shell-browser .poolb, .one-browser-pool-host .poolb { flex:1; overflow:auto; padding:4px 0 8px }
 .agent-sec { padding:6px 8px 2px; font-size:10px; color:var(--text-faint); display:flex; justify-content:space-between }
 .agent-row { display:grid; grid-template-columns:78px minmax(0,1fr); align-items:center; gap:6px; padding:2px 8px; font-size:11px; min-height:22px }
 .agent-row .k { color:var(--text-dim) }

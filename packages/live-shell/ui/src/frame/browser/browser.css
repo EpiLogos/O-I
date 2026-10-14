@@ -1,0 +1,6 @@
+/* The one browser (F6): the World browser's chrome (WorldBrowser.css) with the four kinds as the category column's
+   headings, and one pool holding a body's pool content above the selected device. */
+.one-browser .world-category-list > div + div h3 { border-top: 1px solid var(--line) }
+.one-browser-pool { overflow: auto }
+.one-browser-pool-host:empty { display: none }
+.one-browser .world-browser-results > .browser-results { overflow: visible; background: transparent }

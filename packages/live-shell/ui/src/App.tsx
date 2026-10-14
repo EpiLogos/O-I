@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ComponentProps, type CSSProperties, type RefObject } from 'react'
 import {BOOK_MODE_OF_SHELL, useContinuity, type ShellMode} from './continuity/workspace'
-import { BrowserPane } from './components/BrowserPane'
-import { WorldBrowser } from './components/WorldBrowser'
 import { OPEN_DEVICE_EVENT, PARAMETER_BROWSE_EVENT } from './components/nativeDrag'
 import type { NativeDetailConfigurationIntent } from './components/NativeWorldDetail'
 import {NativeInputRetentionProvider,nativeInputBinding} from './components/NativeInputRetention'
@@ -17,7 +15,6 @@ import {useAgentMetrics} from './agent/useAgentMetrics'
 import {useHarnessBinding} from './agent/useHarnessBinding'
 import {harnessAgentControl} from './agent/harnessAgentControl'
 import {AgentShellTransport} from './agent/AgentShellTransport'
-import {AgentShellBrowser} from './agent/AgentShellBrowser'
 import {AgentContextDock} from './agent/AgentContextDock'
 import {useAgencySessions, type AgentSessionTrack} from './agent/useAgencySessions'
 import {trackKey} from './agent/agentRunModel'
@@ -35,6 +32,8 @@ import {useWorldTemporalReading, type WorldTimelineView} from './projections/use
 import {surfModeOf, type SurfMode} from './shell/modeGrammar'
 import {MODE_FRAMES, MODE_TRACK_SOURCES} from './shell/modeFrames'
 import {centralSubjectOfClip} from './timeline/centralTrackAdapter'
+import {Browser} from './frame/browser/Browser'
+import {BrowserReadingProvider, browserSourcesOf, type BrowserReading} from './shell/modeBrowsers'
 import {openInstrument, publishStageLensDriver} from './frame/instrumentDoor'
 import {captureTechneInstrumentOpen, TECHNE_INSTRUMENT_OPEN, type TechneInstrumentEvent} from './native/techneInstrumentOpen'
 import {liveWorldSelection, setSelectionOf} from './shell/liveSelection'
@@ -43,7 +42,6 @@ import type {ModeTransportReadouts} from './shell/ModeTransportBar'
 import {worldNowReadout} from './shell/ModeDetail'
 import {DetailHost} from './frame/detail/DetailHost'
 import {DetailContext, type DetailReading} from './frame/detail/detailReading'
-import {ModeBrowser} from './shell/ModeBrowser'
 import type {CentralSubjectSelection} from './inhabitants/CentralSubjectDetail'
 import {NATIVE_PRESENT_EXPRESSIONS} from './native/openStudio'
 import {SOURCE_PRESENT} from './native/hostedSummons'
@@ -495,6 +493,10 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
     if (event) centralWorld.selectOccasion(event)
     continuity.select(next)
   }
+  // The one browser's row sources (shell/modeBrowsers.tsx) and what their bodies read.
+  const browserSources = useMemo(() => browserSourcesOf(frameMode), [frameMode])
+  const browserReading: BrowserReading = {mode: frameMode, ctx, defaultSet: config?.default_set ?? '', selectSubject: selectCentralSubject,
+    selectedSubject: centralSubject, agency: {rows: agency.rows, error: agency.error, loading: agency.loading}}
   usePublishTimelineReading({set: state.set, document: deep.document, selection, select: choose, colors, setColor, mode: frameMode,
     world: tracks === 'world' ? centralWorld : undefined, journey: tracks === 'world' ? {openExpression: workspace.requestExpression} : undefined,
     session: tracks === 'native' ? nativeView('session') : undefined, arrangement: tracks === 'native' ? nativeView('arrangement') : undefined,
@@ -524,17 +526,8 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
       mode={frameMode}
       onMode={chooseMode}
     /> : <TransportBar tempoBpm={state.set?.tempo_bpm ?? null} name={state.set?.path.split('/').pop()?.replace(/\.als$/i, '') ?? ''} mode={frameMode} view={tab} setView={chooseView} chooseMode={chooseMode} presentedView={presentedView} modeReadouts={modeReadouts} timeSpine={worldView.spine} focusedInstrument={focusedInstrument} centerPanels={panels.filter(panel => panel.id !== 'world.expressions' && panel.id !== 'native.agent' && panel.navigation !== false)} activeCenter={settingsPresented ? 'world.settings' : frameMode === 'live' ? null : centerPanel} openCenter={openCenterPanel} workName={workspace.reading?.document?.name} sceneName={workspace.reading?.sceneName} nativeTransport={nativeView('expressions')} browser={browser} detail={detail} dock={dock} toggleBrowser={() => setBrowser(!browser)} toggleDetail={() => setDetail(!detail)} toggleDock={() => setDock(!dock)} />}
-    <NativeInputRetentionProvider><div className="browser-residence" hidden={!browser || frameMode !== 'live' || agentShell}><BrowserPane defaultSet={config?.default_set ?? ''} ctx={ctx} /></div>
-    {/* The browser is per mode (Rev 3's left column): Live keeps the audio
-      pane, Expressions keeps the retained app's library (the parent's own
-      browser — correct per the audit); Base·Central and Technē wear the
-      grammar's categories over the families' declared entries. */}
-    <div className="browser-residence" hidden={!browser || frameMode === 'live' || agentShell}>
-      {frameMode === 'expressions'
-        ? <WorldBrowser />
-        : <ModeBrowser mode={frameMode} onSelectSubject={selectCentralSubject} selectedSubject={centralSubject} />}
-    </div>
-    <div className="browser-residence" hidden={!browser || !agentShell}><AgentShellBrowser rows={agency.rows} error={agency.error} loading={agency.loading} /></div>
+    {/* The one browser (F6): the mode's row sources and the shared ones, under one search, grouped by the four kinds. */}
+    <NativeInputRetentionProvider><div className="browser-residence" hidden={!browser}><BrowserReadingProvider value={browserReading}><Browser key={frameMode} sources={browserSources} /></BrowserReadingProvider></div>
     {browser && <div className="browser-resizer" role="separator" aria-label="Resize browser" aria-orientation="vertical" tabIndex={0} onKeyDown={event => { if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {event.preventDefault(); resizeBrowser(Math.max(120, Math.min(viewport[0] - 320, (browserWidth ?? document.querySelector('.browser-residence:not([hidden]) .browser,.browser-residence:not([hidden]) .world-browser')?.getBoundingClientRect().width ?? 430) + (event.key === 'ArrowRight' ? 10 : -10))))} }} onPointerDown={event => event.currentTarget.setPointerCapture(event.pointerId)} onPointerMove={event => { if (event.currentTarget.hasPointerCapture(event.pointerId)) resizeBrowser(Math.max(120, Math.min(viewport[0] - 320, event.clientX))) }} />}
     <main className="center"><div className={`center-body${nativeEditorReturn&&centerPanel==='world.expressions'&&!settingsPresented?' native-editor-residence':''}`}>
       {nativeEditorReturn&&centerPanel==='world.expressions'&&!settingsPresented&&<div className="native-editor-return"><span>{nativeEditorReturn.editor==='source'?'Source':nativeEditorReturn.editor==='layers'?'Layers':'State placement'}</span><button onClick={returnNativeEditor}>Return to {nativeEditorReturn.centerPanel==='native.arrangement'?'Arrangement':nativeEditorReturn.centerPanel==='native.session'?'Session':'Glyph editor'}</button></div>}
