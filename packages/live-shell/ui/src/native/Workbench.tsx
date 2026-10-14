@@ -214,7 +214,9 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
   }
 
   useEffect(() => {
-    if (!workspace.accessReady || !config) return
+    // The kernel admits operations a moment after access is ready; admitting a tab before then is refused as retired
+    // access and never retried (seen on screen at every launch). Wait for the kernel, and run again when it is ready.
+    if (!workspace.accessReady || !config || !kernel.operationReady) return
     const membership = workbenchMembership(book)
     const demanded = new Set<string>()
     if (presented) for (const group of [...groupsOf(book.current.layout.root), ...(book.current.layout.sidePane ? [book.current.layout.sidePane] : [])]) if (group.active) demanded.add(group.active)
@@ -238,7 +240,7 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
         await origin.kernel.surfaceClose(id)
       })().catch(report).finally(() => closing.current.delete(ticket))
     }
-  }, [book.workspaces, book.current.layout, workspace.accessEpoch, workspace.accessReady, kernel.snapshot.surfaces, config, presented, releaseRetry])
+  }, [book.workspaces, book.current.layout, workspace.accessEpoch, workspace.accessReady, kernel.operationReady, kernel.snapshot.surfaces, config, presented, releaseRetry])
 
   const retainedMembership=()=>{
     const live=workbenchMembership(latest.current.book);
