@@ -487,6 +487,10 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
 const saveGlyph=document.createElement('span');saveGlyph.className='research-save-glyph';saveGlyph.setAttribute('role','img');saveGlyph.dataset.saveState='saved';saveGlyph.setAttribute('aria-label','Saved');
 const saveState=(state:'saving'|'saved'|'held')=>{saveGlyph.dataset.saveState=state;saveGlyph.setAttribute('aria-label',state==='saving'?'Saving':state==='held'?'Held, not saved':'Saved');};
 host.tools.append(saveGlyph);
+ // B1: quitting is a flush too. A drag still held when the page goes away has its commit dispatched before the page goes; whether the owner
+ // acknowledges it before unload is not observable from here (named in OPEN). The one schedule is the gesture transaction's own: no timer is added.
+ const quitGestures=()=>flushGestures();
+ window.addEventListener('pagehide',quitGestures);
  // lane-2 T24, hoisted to the install (lane-2 T23–T25 seams): the M2′ stage has one focus session for the install, not one per
  // view. The session (focusMode.ts) holds the tools display it began from; unmount() ends it, so every lens change, close and
  // destroy brings the shared tools back. The stage's key listener is held here too, and detached on each unmount.
@@ -498,8 +502,11 @@ host.tools.append(saveGlyph);
  const endTimelineFocus=()=>stageFocus.end();
  const beginTimelineFocus=()=>stageFocus.begin();
  function retain(){if(currentKey&&captureCanvas){const state=views.get(currentKey);if(state)state.canvas=captureCanvas();}captureCanvas=null;}
+ // B1: a gesture still holding a preview when its Scene is left (a lens switch, a reload, a close, or the page going away) is committed,
+ // never dropped. flushNow queues each commit on the mutation chain synchronously, so the native writes keep their order.
+ function flushGestures(){for(const state of views.values()){void state.moveGesture?.flushNow();void state.resizeGesture?.flushNow();void state.groupMoveGesture?.flushNow();}}
  function disposeGestures(){for(const state of views.values()){state.moveGesture?.dispose();state.resizeGesture?.dispose();state.groupMoveGesture?.dispose();}}
- function unmount(){endTimelineFocus();timelineFocusOff?.();timelineFocusOff=null;retain();endPresentation(false);presentable=null;disposeGestures();root?.unmount();root=null;body.replaceChildren();}
+ function unmount(){endTimelineFocus();timelineFocusOff?.();timelineFocusOff=null;retain();endPresentation(false);presentable=null;flushGestures();disposeGestures();root?.unmount();root=null;body.replaceChildren();}
  // Multi-select repertoire (R1/R2, Wayfinder §6, §13). The vendored Canvas
  // reports neither modifier keys on a node click nor a batched multi-node
  // drag, so shift/ctrl-extend is tracked independently here, and a group
@@ -1743,7 +1750,7 @@ host.tools.append(saveGlyph);
    }
    await load(lens);
   },
-  destroy(){flushPlaceLayers();++epoch;offSharedTimeNudges?.();offSharedTimeNudges=null;lens=null;destroyed=true;unmount();mount.remove();status.remove();views.clear();window.removeEventListener('keydown',onWindowKeydown);window.removeEventListener('keydown',onZoomKeydown);window.removeEventListener('keydown',onPresentStartKey);readoutRoot.unmount();readoutHost.remove();modifiers.dispose();},
+  destroy(){flushPlaceLayers();++epoch;offSharedTimeNudges?.();offSharedTimeNudges=null;lens=null;destroyed=true;unmount();mount.remove();status.remove();views.clear();window.removeEventListener('keydown',onWindowKeydown);window.removeEventListener('keydown',onZoomKeydown);window.removeEventListener('keydown',onPresentStartKey);window.removeEventListener('pagehide',quitGestures);readoutRoot.unmount();readoutHost.remove();modifiers.dispose();},
   active(){return lens;},
  };
 }
