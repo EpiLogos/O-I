@@ -120,9 +120,10 @@ const envSidecar = (): string | undefined => {
   }
 };
 
-/** The port's default sky slot: no grid ships with the port (the atlas's own
- * generated sky stays corpus-side with its provider); the sidecar address is
- * the presentation-scope default the controller already guarded. */
+/** The port's default sky slot: no grid ships with the port. 2026-10-14 (PORT-AUDIT §E3):
+ * the earlier note that the atlas's own generated sky stays corpus-side with its provider
+ * is restated. No provider supplies the sky grid, and Sky mode is unbound until N3's QL sky
+ * producer. The sidecar address is the presentation-scope default the controller already guarded. */
 export const DEFAULT_SKY_PROVIDER: SkyProvider = {
   id: 'default',
   sidecarBase: envSidecar(),

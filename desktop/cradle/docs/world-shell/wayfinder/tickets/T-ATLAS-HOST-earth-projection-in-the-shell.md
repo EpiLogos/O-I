@@ -111,3 +111,5 @@ Carried: the controller's window listeners outlive `destroy()` (the host
 claims the atlas once per session — hidden-inhabitant retention, so it is
 never unmounted in practice); a workspace-sets field would replace the
 namespaced keys. UI legs: the native screen pass.
+
+2026-10-14: restated by PORT-AUDIT §E2 — the Earth has never been seen natively. The only rendering so far is the fixture harness (`packages/live-shell/ui/src/projections/atlas/dev/main.ts:8`, `registerFixtureProvider(true)`). The scripted counts above do not reach the native host.

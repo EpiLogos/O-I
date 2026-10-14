@@ -2,7 +2,7 @@
   "schema": "techne.new-shell-target-register/v1",
   "recorded_on": "2026-10-07",
   "recorded_at_utc": "2026-10-08T06:23:20.571383+00:00",
-  "standing": "agent-maintained acceptance continuation, source-bound to owner-commissioned target sets; no authored source edited",
+  "standing": "agent-maintained acceptance continuation, source-bound to owner-commissioned target sets; no authored source edited. 2026-10-14 (PORT-AUDIT §E, FOUNDATION §8): the 'implemented: 125' count (PATH §7, '125 of 126') counts code in the frame, mostly unreachable from the candidate (PORT-AUDIT B2); it is not a measure of the product. No target carries home or owner_op yet; each is re-homed with both after F2–F5, verified on screen. No per-target value is changed by this note.",
   "candidate_basis": {
     "checkout": "/Users/admin/Central/worktrees/env-1/o-i",
     "head": "03b021c952610c7a749ca71cd5f07b779d3281dc",

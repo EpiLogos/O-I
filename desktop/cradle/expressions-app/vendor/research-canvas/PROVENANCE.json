@@ -2,7 +2,7 @@
   "source": "Research Canvas / Antichrist Project",
   "source_checkout": "/Users/admin/Central/Work/projects/Antichrist Project",
   "revision": "7df35f822f9235331a69940cdaf484fe4a0b95c1",
-  "scope": "Mature Canvas, Timeline, Places and Street View source dependency closure plus native ql.techne compatibility adapters. Upstream files byte-exact except explicitly recorded capability, native error disclosure and hosted offline-network patches. No standalone application, database or backend is mounted.",
+  "scope": "Mature Canvas, Timeline, Places and Street View source dependency closure plus native ql.techne compatibility adapters. Upstream files byte-exact except explicitly recorded capability, native error disclosure and hosted offline-network patches. No standalone application, database or backend is mounted. 2026-10-14 (PORT-AUDIT §E5): the 30 overlays under packages/canvas/src/** are port-new modules, not upstream files; each is absent at the recorded revision 7df35f8 (git cat-file, scripted). Their file headers cite O-I lanes 1, 2 and 4; three of the 30 cite none.",
   "entries": [
     "packages/desktop-api/src/techneBundle.ts",
     "packages/desktop-api/src/techneTransport.ts",
@@ -214,6 +214,7 @@
     "packages/canvas/src/timeline/labels.ts",
     "packages/canvas/src/timeline/minimapGeometry.ts"
   ],
+  "overlays_standing": "port-new — authored in the O-I port (file headers cite lanes 1, 2 and 4), not upstream; covers the 30 overlays under packages/canvas/src/**; the other 14 overlays are not classified by this field (2026-10-14, PORT-AUDIT §E5)",
   "patches": {
     "packages/canvas/src/timeline/categories.ts": {
       "upstream_sha256": "201d672a055205d5843cc7467d6393dfa56c8aa1b19598154d45f32670023734",

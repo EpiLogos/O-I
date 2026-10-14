@@ -45,7 +45,7 @@ delivered at 0.1.2 — `evidence/integrated-v012-delivery-receipt.json`):
    213 of 213 rows name an `outward_home` and a `boundary_op` (160 operations,
    28 explicit `none:`, 25 explicit `pending:` naming the owner op or track;
    before: 159 of 213 had a `boundary_op`). Validator:
-   `tests/conformance/port-ledger.test.mjs`, 3 of 3 pass (scripted). Crosswalk:
+   `tests/conformance/port-ledger.test.mjs`, 3 of 3 pass (scripted; it checks the ledger's shape — fields present, counts consistent — not behaviour; 2026-10-14, PORT-AUDIT §E9). Crosswalk:
    126 of 126 destinations named, 2 corrected (lane-1 D1, D2); native exercise
    is `pending` for all 126 (source-level only). Open: the 25 `pending:` rows,
    native exercise of all 126, and the §9 vocabulary (the destinations are
