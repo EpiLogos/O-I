@@ -74,7 +74,7 @@ export function StatusBar({ state, documentError, viewport, selectedTrack, audio
     {audio && documentError && <span className="statusbar-error" title={documentError}>Document unavailable</span>}
     {audio && set && <span className="statusbar-counts" title={set.path}>{set.tracks.length} tracks · {set.scene_count} scenes · {set.arrangement_clips} clips</span>}
     {track && <span className="statusbar-track" title={track}>{track}</span>}
-    {!audio && status?.snapshot && reading?.sceneState && <span className="statusbar-counts" title="Current Scene snapshot; file-save standing appears in the native Save control">Snapshot: {reading.sceneState === 'Edited since save' ? 'edited' : reading.sceneState === 'Draft' ? 'none' : 'saved'}{reading.nativeScene ? ` · revision ${reading.nativeScene.revision}` : ''}</span>}
+    {!audio && status?.snapshot && reading?.sceneState && reading.nativeScene && <span className="statusbar-counts" title="Current Scene snapshot; file-save standing appears in the native Save control">Snapshot: {reading.sceneState === 'Edited since save' ? 'edited' : reading.sceneState === 'Draft' ? 'none' : 'saved'}{reading.nativeScene ? ` · revision ${reading.nativeScene.revision}` : ''}</span>}
     {aperture && <span className="statusbar-counts statusbar-aperture" data-i={`Aperture|${aperture.pinned ? 'panes pinned to their own subject' : 'every pane follows the shared encounter'} — ${aperture.panes} pane${aperture.panes === 1 ? '' : 's'} in the centre`}>{apertureWords(aperture)}</span>}
     {/* The run context stands in every mode: which world this shell runs in, from the host's own disclosure. */}
     <RunContextReading />
