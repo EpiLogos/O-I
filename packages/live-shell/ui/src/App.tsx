@@ -129,6 +129,8 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   const [detailMode, changeDetailMode] = useState<DetailMode>(restored?.detailMode ?? opening.detailMode)
   const [browserWidth, resizeBrowser] = useState<number | null>(restored?.browserWidth ?? null)
   const [detailHeight, resizeDetail] = useState<number | null>(restored?.detailHeight ?? null)
+  // The browser category each mode stands on, restored with its frame (F1).
+  const [browserCategory, chooseBrowserCategory] = useState<string | undefined>(restored?.browserCategory)
   const [nativeEditorReturn,setNativeEditorReturn]=useState<{workspaceId:string;accessEpoch:number;bindingId:string;expression_ref:string;scene_ref:string;centerPanel:string;detail:boolean;detailMode:DetailMode;editor:'source'|'layers'|'placement';owner:NativeEditorController|null;mode:'expressions'|'techne';focus:HTMLElement|null}|null>(null)
   useEffect(()=>setNativeEditorReturn(null),[workspace.workspaceId,workspace.accessEpoch])
   const detailExpansionReturn=useRef<{height:number|null;workspaceId:string;accessEpoch:number}|null>(null)
@@ -381,6 +383,7 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
     const presentation = intent?.tab ?? view?.tab ?? opening.tab
     setTab(presentation); setTimelinePanePresentation(presentation); setCenterPanel(intent?.panel ?? workbenchCentre(view?.centerPanel) ?? opening.centerPanel)
     changeDetailMode(view?.detailMode ?? opening.detailMode); resizeBrowser(view?.browserWidth ?? null); resizeDetail(view?.detailHeight ?? null)
+    chooseBrowserCategory(view?.browserCategory)
     setBrowser(view?.browser ?? opening.browser); setDetail(view?.detail ?? opening.detail); setDock(view?.dock ?? opening.dock)
     holdLive(view?.selection ?? {track: 0, scene: null}); presentSettings(view?.settingsPresented ?? false)
     if (view?.alsPath !== undefined) selectedSet.current = view.alsPath ?? null
@@ -388,9 +391,9 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   }, [restoreKey, restoredKey, continuity.applicationView])
   useEffect(() => {
     if (restoredKey !== restoreKey) return
-    continuity.checkpointApplicationView({alsPath: state.path ?? restored?.alsPath ?? null, tab, selection: liveHeld,
+    continuity.checkpointApplicationView({alsPath: state.path ?? restored?.alsPath ?? null, tab, selection: liveHeld, browserCategory,
       browser, detail:nativeEditorPresented?nativeEditorReturn!.detail:detail, dock, browserWidth, detailHeight:detailExpansionReturn.current?detailExpansionReturn.current.height:detailHeight, centerPanel:nativeEditorPresented?nativeEditorReturn!.centerPanel:centerPanel, detailMode:nativeEditorPresented?nativeEditorReturn!.detailMode:detailMode, settingsPresented, settingsReturn: workspace.mode === 'expressions' || workspace.mode === 'techne' ? workspace.mode : undefined})
-  }, [restoredKey, restoreKey, state.path, tab, liveHeld, browser, detail, dock, browserWidth, detailHeight, centerPanel, detailMode, nativeEditorReturn, nativeEditorPresented, settingsPresented, workspace.mode, continuity.checkpointApplicationView])
+  }, [restoredKey, restoreKey, state.path, tab, liveHeld, browserCategory, browser, detail, dock, browserWidth, detailHeight, centerPanel, detailMode, nativeEditorReturn, nativeEditorPresented, settingsPresented, workspace.mode, continuity.checkpointApplicationView])
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key === ',') {
@@ -524,7 +527,7 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
     <FrameKeys paused={settingsPresented} focusedGroupId={continuity.current.layout.focusedGroupId} revealBrowser={() => setBrowser(true)} />
     {<TransportBar tempoBpm={state.set?.tempo_bpm ?? null} name={state.set?.path.split('/').pop()?.replace(/\.als$/i, '') ?? ''} mode={frameMode} view={tab} setView={chooseView} chooseMode={chooseMode} presentedView={presentedView} modeReadouts={modeReadouts} timeSpine={worldView.spine} focusedInstrument={focusedInstrument} centerPanels={panels.filter(panel => panel.id !== 'world.expressions' && panel.id !== 'native.agent' && panel.navigation !== false)} activeCenter={settingsPresented ? 'world.settings' : frameMode === 'live' ? null : centerPanel} openCenter={openCenterPanel} workName={workspace.reading?.document?.name} sceneName={workspace.reading?.sceneName} nativeTransport={nativeView('expressions')} browser={browser} detail={detail} dock={dock} toggleBrowser={() => setBrowser(!browser)} toggleDetail={() => setDetail(!detail)} toggleDock={() => setDock(!dock)} />}
     {/* The one browser (F6): the mode's row sources and the shared ones, under one search, grouped by the four kinds. */}
-    <NativeInputRetentionProvider><div className="browser-residence" hidden={!browser}><BrowserReadingProvider value={browserReading}><Browser key={frameMode} sources={browserSources} /></BrowserReadingProvider></div>
+    <NativeInputRetentionProvider><div className="browser-residence" hidden={!browser}><BrowserReadingProvider value={browserReading}><Browser key={frameMode} sources={browserSources} category={browserCategory} onCategory={chooseBrowserCategory} /></BrowserReadingProvider></div>
     {browser && <div className="browser-resizer" role="separator" aria-label="Resize browser" aria-orientation="vertical" tabIndex={0} onKeyDown={event => { if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {event.preventDefault(); resizeBrowser(Math.max(120, Math.min(viewport[0] - 320, (browserWidth ?? document.querySelector('.browser-residence:not([hidden]) .browser,.browser-residence:not([hidden]) .world-browser')?.getBoundingClientRect().width ?? 430) + (event.key === 'ArrowRight' ? 10 : -10))))} }} onPointerDown={event => event.currentTarget.setPointerCapture(event.pointerId)} onPointerMove={event => { if (event.currentTarget.hasPointerCapture(event.pointerId)) resizeBrowser(Math.max(120, Math.min(viewport[0] - 320, event.clientX))) }} />}
     <main className="center"><div className={`center-body${nativeEditorReturn&&centerPanel==='world.expressions'&&!settingsPresented?' native-editor-residence':''}`}>
       {nativeEditorReturn&&centerPanel==='world.expressions'&&!settingsPresented&&<div className="native-editor-return"><span>{nativeEditorReturn.editor==='source'?'Source':nativeEditorReturn.editor==='layers'?'Layers':'State placement'}</span><button onClick={returnNativeEditor}>Return to {nativeEditorReturn.centerPanel==='native.arrangement'?'Arrangement':nativeEditorReturn.centerPanel==='native.session'?'Session':'Glyph editor'}</button></div>}

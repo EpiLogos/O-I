@@ -15,8 +15,10 @@ export interface CandidateApplicationView {
   detailMode?: 'clip' | 'device'
   settingsPresented?: boolean
   settingsReturn?: 'audio' | 'expressions' | 'techne'
+  /** The browser category the mode stands on (F1: a mode returns as it was left). */
+  browserCategory?: string
 }
-const fieldNames = ['alsPath','tab','selection','browser','detail','dock','browserWidth','detailHeight','centerPanel','detailMode','settingsPresented','settingsReturn'] as const
+const fieldNames = ['alsPath','tab','selection','browser','detail','dock','browserWidth','detailHeight','centerPanel','detailMode','settingsPresented','settingsReturn','browserCategory'] as const
 const fields = new Set<string>(fieldNames)
 const index = (value: unknown) => Number.isSafeInteger(value) && (value as number) >= 0 && (value as number) <= 1_000_000
 /** The native core carries an envelope; only this application decides which
@@ -30,6 +32,7 @@ export function validateCandidateApplicationView(raw: unknown): CandidateApplica
     if (['browser','detail','dock','settingsPresented'].includes(key)) {if (typeof field !== 'boolean') return null}
     else if (key === 'alsPath') {if (field !== null && (typeof field !== 'string' || !field.trim() || field.length > 4096 || !field.toLowerCase().endsWith('.als'))) return null}
     else if (key === 'tab') {if (field !== 'session' && field !== 'arrangement') return null}
+    else if (key === 'browserCategory') {if (typeof field !== 'string' || !field || field.length > 256) return null}
     else if (key === 'detailMode') {if (field !== 'clip' && field !== 'device') return null}
     else if (key === 'settingsReturn') {if (!['audio','expressions','techne'].includes(field as string)) return null}
     else if (key === 'centerPanel') {if (typeof field !== 'string' || (field !== 'native.workbench' && field !== 'native.agent' && field !== 'native.session' && field !== 'native.arrangement' && !/^world\.[a-z0-9.-]{1,128}$/.test(field))) return null}
