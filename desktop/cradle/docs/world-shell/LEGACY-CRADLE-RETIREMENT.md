@@ -59,32 +59,41 @@ delivered at 0.1.2 — `evidence/integrated-v012-delivery-receipt.json`):
    workspace state on first cutover run: the everyday workspace book,
    recovery records and drafts are migrated (or re-adoptable in place) into
    the candidate's namespace without loss; saved Expressions open with their
-   native identities and revisions. **Open** — a migration step to build
-   (the namespaces are deliberately isolated today; the migration is a
-   one-time owner-admitted copy, never a shared store).
+   native identities and revisions. **Built, scripted-verified; open on owner data** — the
+   one-time owner-admitted copy (export, admit, and the candidate's
+   first-run apply) is in §4.1; the namespaces stay isolated, never a
+   shared store. It has not been run on the owner's stores or in a native
+   candidate.
 4. **Native service parity** — every owner operation the everyday runtime
    served (ground reads/writes, day/now operations, kernel ops, events) is
    served by the candidate kernel at parity; the 8787 seam retires with a
-   named replacement for each caller. **Partially proven** (kernel ops and
-   files verified). **Census built (scripted), replacements still open.**
-   Scripted census: `tests/conformance/owner-service-census.test.mjs` with
-   register `tests/conformance/owner-service-census.json`; evidence
-   `docs/world-shell/evidence/owner-service-census-20261014.json`; 22 of 22
-   conformance tests pass, including a negative control that a new 8787
-   caller fails. The in-tree 8787 server (`packages/live-shell`) has 8 routes
-   and serves only the Live Set document and device-parameter domain. Its
-   shipping callers: 6, in 3 files (`application.ts` x2, `devices/api.ts` x3,
-   `assets/index.html` x1). Status: 0 replaced, 1 replaceable (`/api/config`,
-   residual ShellConfigRead; not converted, since a conversion would change
-   the result shape), 5 missing (no KernelOp for Live Set or device
-   parameters). Conversions made: 0. Test-tree callers: 11 hits in 6 files.
-   Open owner ops, named in the register: `LiveSetRead` (set, summary),
-   `LiveDeviceDescriptors`, `LiveDeviceParamsRead`, `LiveDeviceParamWrite`,
-   `ShellConfigRead`. The retirement's premise that 8787 served ground, day/now
-   and event routes is not borne out by the in-tree server. The relative
-   `/api/*` routes the frame calls (scenes, media, overlay, state, hardware,
-   events, telemetry) are not on 8787's table, and no in-tree server answers
-   them. Their owner is unresolved, and gate 4 cannot close until it is named.
+   named replacement for each caller. **Native callers replaced (scripted); the seam retires
+   with the dev server.** Scripted census: `tests/conformance/owner-service-census.test.mjs`
+   with register `tests/conformance/owner-service-census.json`; first
+   evidence `docs/world-shell/evidence/owner-service-census-20261014.json`.
+   The census test fails on any new 8787 caller. The in-tree 8787 server
+   (`packages/live-shell`) serves only the Live Set document and the device
+   parameters. Its shipping callers: 6, in 3 files. Replaced: 4, by the
+   kernel ops `LiveSetRead`, `LiveDeviceDescriptors`, `LiveDeviceParamsRead`
+   and `LiveDeviceParamWrite` (`kernel/src/live_set_owner.rs`; the handlers
+   live once, in `packages/live-set/src/api.rs`, for the server, the native
+   host and the kernel). The device panels and the set reader use the kernel
+   transport whenever one exists, which is always natively. The two that
+   remain are dev-browser paths the native host never takes: `/api/config`
+   in `application.ts` (natively the host's `live_shell_config` answers) and
+   the server's own inspector page `assets/index.html` (`/api/summary`).
+   Both retire with the server. Device writes change the owner's `.als` and
+   record no kernel receipt, since no kernel state changes. [Scripted:
+   kernel `live_set_owner` 7 tests, `device-kernel-transport.test.mjs` 3
+   tests, conformance 25 of 25. Not run natively.]
+   The relative `/api/*` routes the frame calls (scenes, media, overlay,
+   state, hardware, events, telemetry) belong to the Physis desktop server,
+   `Work/point-cloud-demo/server/index.mjs`, the frame's upstream. Every
+   call sits behind `physisHost()` (`field-studies-journeys/src/physis.ts`),
+   which is true only when the Physis server injects its `physis-host` meta
+   tag, so the cradle and the candidate never make them. `src/physis/render.ts`
+   is that server's screensaver page and is not loaded by either app.
+   [Source reading.]
 5. **Everyday journey acceptance on the successor** — one full owner day
    lived in the candidate (ground work, conversations, Expression editing,
    day close) with identities, drafts and revisions preserved across
