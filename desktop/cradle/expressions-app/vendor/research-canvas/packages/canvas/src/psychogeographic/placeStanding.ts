@@ -49,6 +49,30 @@ export function placeStandingMark(relation: string | null | undefined): PlaceSta
   return { standingClass, label: standingClass, colour: null, dash: null, note: null };
 }
 
+/**
+ * The mark for a PLACE, over every facet the reading discloses for it: the one rule every surface uses (search, marker, inspector).
+ * The most cautious class wins — mythic over owner vocabulary over factual — so a place with any mythic facet never passes as
+ * factual on any surface. With no facet the place reads as its relation-less class.
+ */
+export function placeStandingOfRelations(relations: readonly (string | null | undefined)[]): PlaceStandingMark {
+  const marks = relations.map((relation) => placeStandingMark(relation));
+  return marks.find((mark) => mark.standingClass === "mythic")
+    ?? marks.find((mark) => mark.standingClass === "owner-vocabulary")
+    ?? marks[0]
+    ?? placeStandingMark(undefined);
+}
+
+/** Every disclosed relation per place ref, in reading order: the input placeStandingOfRelations reads. */
+export function relationsByPlace(facets: readonly { place_ref: string; relation?: string | null }[]): Map<string, (string | null | undefined)[]> {
+  const byPlace = new Map<string, (string | null | undefined)[]>();
+  for (const facet of facets) {
+    const rows = byPlace.get(facet.place_ref);
+    if (rows) rows.push(facet.relation);
+    else byPlace.set(facet.place_ref, [facet.relation]);
+  }
+  return byPlace;
+}
+
 /** How a mythic MARKER is drawn on the globe: a dashed mythic ring, a short note beside it, and its title sentence. */
 export interface MarkerStandingPatch {
   /** The note's and the ring's colour: the chronology palette's mythic colour. */

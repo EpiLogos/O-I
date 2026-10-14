@@ -15,7 +15,7 @@ import type {TechnePlaceFacet} from '../../../src/techne/contract';
 import {openingPlaceSelection} from '../../../src/techne/m0m5/place/navigation';
 import {placeFocusFromSession} from '../../../src/techne/m0m5/place/register';
 import {placeSubjectOf} from './placeReading.js';
-import {placeStandingMark} from './placeStanding.js';
+import {placeStandingOfRelations, relationsByPlace} from './placeStanding.js';
 import type {RelationStandingClass} from '../../../src/techne/m0m5/place/world';
 
 /** The session the Places mount reads (the native shared session, as the navigation helpers type it). */
@@ -40,10 +40,9 @@ export function placeSearchRows(reading: TechneReading | null, query: string): P
   ? offers.filter(offer => offer.title.toLowerCase().includes(needle) || offer.place_ref.toLowerCase().includes(needle))
   : offers;
  if (matched.length === 0) return [{kind: 'none', key: 'no-match', label: `No disclosed place matches "${query.trim()}"`}];
- // T30: the row's standing is the first facet's relation (the same facet placeOffersOf keeps), read by the cradle authority.
- const relationOf = new Map<string, string | null | undefined>();
- for (const facet of reading?.spatial ?? []) if (facet && !relationOf.has(facet.place_ref)) relationOf.set(facet.place_ref, facet.relation);
- return matched.map(offer => ({kind: 'place', key: offer.place_ref, label: flyHereLabel(offer), offer, standing: placeStandingMark(relationOf.get(offer.place_ref)).standingClass}));
+ // T30: the row's standing reads every facet the place carries, by the one rule the marker and inspector use (mythic wins).
+ const relations = relationsByPlace((reading?.spatial ?? []).filter(Boolean));
+ return matched.map(offer => ({kind: 'place', key: offer.place_ref, label: flyHereLabel(offer), offer, standing: placeStandingOfRelations(relations.get(offer.place_ref) ?? []).standingClass}));
 }
 
 /**
