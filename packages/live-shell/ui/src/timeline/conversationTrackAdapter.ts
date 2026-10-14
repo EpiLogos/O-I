@@ -110,7 +110,7 @@ export function projectConversationTracks(events: TemporalEventRow[]): WorldTrac
         columnId: `day:${day}`,
         label: shortSummary(event.summary, event.subject_ref),
         // A receipt is a moment; the read gives no honest span.
-        state: eventStanding(event),
+        standing: eventStanding(event),
       });
     }
   }

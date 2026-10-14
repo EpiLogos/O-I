@@ -20,6 +20,7 @@
 // Pure TypeScript. No React, no clock, no simulation.
 
 import {QL_PHYSICS_ROLES, QL_ROLE_LAWS, type QlSonicRole} from './qlTrackRoles'
+import {readStanding} from './timeSpine'
 import type {
   WorldTrackAdapter,
   WorldTrackClip,
@@ -99,6 +100,9 @@ export function projectQlPhysicsTracks(reading: QlPhysicsTrackReading): WorldTra
         label: `${clip.label} [${law.label}${suffix}${clip.standing ? ' · ' + clip.standing : ''}]`,
         span: {start: clip.start, end: clip.end},
         state: clip.standing ?? (lane.role === 'visual-only' ? 'visual-only' : 'fact'),
+        // The family's own stated standing is the only disclosed input; the
+        // visual-only role is a role, not a standing, so it is never passed in.
+        standing: readStanding({standing: clip.standing ?? null, source_ref: null, evidence_refs: [], derivation_ref: null}),
       })
     }
   }

@@ -12,6 +12,8 @@
 //
 // Pure TypeScript. No React, no family names.
 
+import type {StandingReading} from '../../../../../desktop/cradle/src/techne/m0m5/timeline/standing';
+
 export interface WorldTrackColumn {
   id: string;
   name: string;
@@ -37,7 +39,14 @@ export interface WorldTrackClip {
   label: string;
   // Column-local time span. Units are the family's own.
   span?: {start: number; end: number};
+  // The family's own stated word, kept verbatim (legacy; the presentation
+  // draws from `standing`, never from this word).
   state?: string;
+  // The clip's standing, read by the one authority (standingOf in
+  // desktop/cradle/src/techne/m0m5/timeline/standing.ts). Adapters compute it
+  // from the source's own disclosed fields; the presentation only draws it.
+  // Absent means nothing was disclosed for this clip.
+  standing?: StandingReading;
 }
 
 // A transport take exposed by a family. Takes belong to the Transport stratum

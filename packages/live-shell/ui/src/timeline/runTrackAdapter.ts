@@ -143,7 +143,7 @@ export function projectRunTracks(events: TemporalEventRow[], admitted?: readonly
         label: shortSummary(event.summary, event.subject_ref),
         // A run event is a moment (a receipt, an attempt): the read gives
         // no honest span, so none is fabricated.
-        state: eventStanding(event),
+        standing: eventStanding(event),
       });
     }
   }

@@ -11,7 +11,8 @@
 //   machine NOWs (aikit-history), the kernel event log — the mockup's
 //   Authored/Development→Day, Machines·NOW groups as one reading's lanes;
 // - clips: one moment per event, day-local position in hours. Events are
-//   readings of record → standing 'fact'; placement never upgrades it.
+//   each clip's standing is read by the one authority (standingOf) from the
+//   event's own disclosed source and evidence; placement never upgrades it.
 //
 // Pure TypeScript. No React, no transport, no family names in the shape —
 // the Timeline renders WorldTrackSet and knows no family.
@@ -101,7 +102,7 @@ export function projectDayTracks(events: TemporalEventRow[]): WorldTrackSet {
       // A clearing is a moment: no span is fabricated. The renderer draws
       // moment clips as points at their day-local hour (the mockup's pt
       // form), thinning side labels where dots crowd.
-      state: eventStanding(event),
+      standing: eventStanding(event),
     });
     ordinal += 1;
   }

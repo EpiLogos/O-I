@@ -9,10 +9,6 @@
   --wt-line-faint: #2c3036;
   --wt-text-faint: #8b9198;
   --wt-fact: #cfd4da;
-  --wt-claim: #c79ae0;
-  --wt-inferred: #9fb4c8;
-  --wt-disputed: #e3806f;
-  --wt-ghost: #6f767e;
   --wt-admitted: #7fd08a;
   --wt-refused: #e3806f;
   position: relative;
@@ -144,13 +140,7 @@
 }
 .wt-undated {position: static; margin: 1px 2px;}
 
-/* epistemic standing — from the source, never upgraded by placement */
-.wt-clip[data-standing='fact'] {border-left: 2px solid var(--wt-fact);}
-.wt-clip[data-standing='claim'] {border-left: 2px solid var(--wt-claim);}
-.wt-clip[data-standing='inferred'] {border-left: 2px solid var(--wt-inferred);}
-.wt-clip[data-standing='hypothesis'] {border-left: 2px dashed var(--wt-inferred);}
-.wt-clip[data-standing='disputed'] {border-left: 2px solid var(--wt-disputed);}
-.wt-clip[data-standing='ghost'] {border-left: 2px dotted var(--wt-ghost); opacity: .6;}
+/* clip standing is drawn inline from the shared grammar (worldTimelinePresentation.tsx) */
 
 /* cursors and the declared break */
 .wt-ruler-layer {position: absolute; inset: 0; pointer-events: none;}
