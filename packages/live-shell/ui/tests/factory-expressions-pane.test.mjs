@@ -248,16 +248,16 @@ test('the centre frame keeps its mount and its container element; the placement 
   assert.doesNotMatch(panel.slice(panel.indexOf('onStatus: (value, reason)'), panel.indexOf('onHostRequest:')), /publishHostedExpressions|publishHostedChrome/, 'the status callback stays exactly as the lifetime test reads it')
 })
 
-test('centre residence: the Expressions panel stays mounted in Factory (hidden, never unmounted), and the centre forces the Workbench there (source reading)', async () => {
+test('centre residence: the Expressions panel stays mounted (hidden, never unmounted), and the centre is the Workbench in every mode (F2; source reading)', async () => {
   const app = await source('../src/App.tsx')
   assert.match(app, /\{panels\.map\(panel => \{ const Panel = panel\.component; const placed = expressionsPlaced && panel\.id === 'world\.expressions'; return <div/, 'every centre panel is rendered; only its wrapper\'s hidden attribute changes')
   assert.match(app, /<Panel \{\.\.\.ctx\} \/>/)
-  assert.match(app, /const workbenchCentre = \(panel: string \| undefined\): string \| undefined => frameMode === 'factory' \|\| panel === 'native\.agent'/, 'Factory forces the Workbench as its centre: the Expressions panel is concealed, not unmounted')
+  assert.match(app, /const workbenchCentre = \(_panel: string \| undefined\): string => 'native\.workbench'/, 'the panes are the centre in every mode (F2): the Expressions panel is concealed, not unmounted')
 })
 
-test('the Expressions residence is placed only while a Factory pane holds the frame, and is otherwise exactly as it was', async () => {
+test('the Expressions residence is placed while a pane holds the frame, and is otherwise exactly as it was', async () => {
   const app = await source('../src/App.tsx')
-  assert.match(app, /const framePlacement = useFramePlacement\(\)\n\s*const expressionsPlaced = agentShell && framePlacement !== null/)
+  assert.match(app, /const framePlacement = useFramePlacement\(\)\n[\s\S]{0,400}const expressionsPlaced = framePlacement !== null && centerPanel !== 'world\.expressions'/, 'a pane holds the frame in any mode (F2)')
   assert.match(app, /style=\{placed \? PLACED_RESIDENCE_STYLE : undefined\} hidden=\{placed \? false : panel\.id === 'world\.settings'/)
   const style = await source('../src/projections/expressionsPaneHost.ts')
   assert.match(style, /export const PLACED_RESIDENCE_STYLE: CSSProperties = \{position: 'fixed', left: 0, top: 0, width: 0, height: 0, overflow: 'visible', pointerEvents: 'none'\}/, 'the residence is zero-size and out of flow: the container, not the residence, is the one placed')
@@ -270,18 +270,19 @@ test('the Factory Expressions entry is enabled with its real behaviour, and the 
   assert.equal(LENSES.some(lens => lens.id === 'expressions'), false, 'the Expressions entry is a Factory-bar entry only')
 })
 
-test('a focused Expressions pane holds no instrument of its own; the Factory focus names it, and Device gates nothing', () => {
+test('a focused Expressions pane brings the hosted lens\'s instrument into the chain (manual §3); the focus names it', () => {
   const focus = factoryFocusedPane('projection.expressions')
   assert.deepEqual(focus, {pane: 'projection.expressions', presentation: null})
-  assert.equal(instrumentOfPane('projection.expressions', null, 'graph', 'timeline'), null, 'the hosted lens stands in the centre bar, never in this pane')
-  assert.equal(deviceInstrumentFor('factory', 'projection.expressions', null, 'graph', 'timeline'), null)
+  const instrument = instrumentOfPane('projection.expressions', null, 'graph', 'timeline')
+  assert.ok(instrument, 'the instrument in the focused pane brings its own controls into the chain')
+  assert.deepEqual(deviceInstrumentFor('factory', 'projection.expressions', null, 'graph', 'timeline'), instrument, 'in every mode the same')
 })
 
 test('the Factory centre helper admits the Expressions pane kind on the one engine door, and App keeps the established call', async () => {
   const centre = await source('../src/agent/factoryCentre.ts')
   assert.match(centre, /kind: 'projection\.earth' \| 'projection\.constellation' \| 'projection\.timeline' \| 'projection\.expressions'\)/)
   const app = await source('../src/App.tsx')
-  assert.match(app, /continuity\.setLayout\(layout => openFactoryInstrumentPane\(layout, paneKind\)\)/)
+  assert.match(app, /openInstrument\('projection\.expressions'\)/, 'App opens the pane through the one instrument door (F2)')
   assert.doesNotMatch(app, /openProjectionPane/, 'App no longer branches around the widened helper')
   assert.match(app, /registerTimelineHost\(\)/, 'the Timeline door is untouched')
 })
