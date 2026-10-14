@@ -102,7 +102,7 @@ delivered at 0.1.2 — `evidence/integrated-v012-delivery-receipt.json`):
 | Credentials | native credential facilities | unchanged (never migrate; both apps read the same facilities) | — |
 | Receipts/history | `~/Library/Application Support/OI/receipts` | unchanged (owner world records; candidate reads, never rewrites) | — |
 
-### 4.1 The migration command (gate 3): built, scripted-verified, not yet run on owner data
+### 4.1 The migration command and first-run apply (gate 3): built, scripted-verified, not yet run on owner data
 
 Command: `packages/live-shell/continuity-migration.py`, with `export` and
 `admit` (each takes `--dry-run`). Tests:
@@ -180,14 +180,39 @@ Scripted evidence (fixtures only):
   and recomputed-mapping bundles, the namespace refusal and `--owner-replace`,
   and idempotent re-runs.
 
-Open, and owned outside this gate's zone:
+The candidate's first-run apply: built, scripted-verified, not yet run in a
+native app.
 
-1. The candidate's first-run apply step. It reads `continuity/admission-*/adoption.json`
-   and applies it only when the recorded policy allows. Under `--owner-replace` it
-   preserves the existing namespace first. This is shell UI work, so it is not built.
-2. The owner runs `export --dry-run` on the real stores, names the origin, archives
+- Native: `desktop/cradle/src-tauri/src/continuity_admission.rs` finds the one
+  pending `admission-*` directory under the candidate's data home and verifies it
+  against the digests the command recorded: the adoption digest over the stored
+  bytes, the schemas, the policy and its preconditions, each record's text digest
+  and key mapping, and the counts. It refuses a tampered or mis-keyed admission by
+  name and leaves it on disk. `confirm` re-verifies and writes `APPLIED.json`
+  once. The commands `live_shell_continuity_pending` and
+  `live_shell_continuity_confirm` answer the main webview only.
+- Shell: `packages/live-shell/ui/src/continuity/admission.ts` applies the verified
+  records before the workspace book is read (`ContinuityProvider` in
+  `continuity/workspace.tsx` is the gate). The default policy fills only an empty
+  namespace. A key that already holds the exact admitted value counts as applied,
+  so an interrupted apply retries cleanly. `--owner-replace` copies the existing
+  namespace aside first (`<namespace>.preserved.<digest16>`, the same snapshot on
+  every retry), checks the copy, then writes. The outcome is shown once in a
+  dismissible status line. A held apply (a native read error, a write failure, a
+  failed confirm) mounts no workspace, so nothing can overwrite a partial apply.
+  A refusal starts the candidate on its own data and reports it on each start.
+- Scripted evidence: 8 Rust tests, including a round trip over a bundle the
+  Python command admitted, and 15 Node tests over a Storage-shaped store
+  (`packages/live-shell/ui/tests/continuity-admission.test.mjs`).
+- The preserved copy sits in the same WebKit store it protects, so a store wipe
+  removes both. The digests prove integrity, not authority: authority rests on
+  `admit` being the only writer under the owner's home.
+
+Open:
+
+1. The owner runs `export --dry-run` on the real stores, names the origin, archives
    the bundle, then runs `admit --dry-run`. Nothing above has been run on owner data.
-3. Candidate acceptance (gate 5): the book opens with identities and drafts
+2. Candidate acceptance (gate 5): the apply runs in the native candidate, and the book opens with identities and drafts
    restored after a quit and restart.
 
 ## 5. Removal steps (executed only after §3 completes)

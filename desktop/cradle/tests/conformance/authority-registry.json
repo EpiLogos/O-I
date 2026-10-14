@@ -67,6 +67,18 @@
   ],
   "commands": [
     {
+      "command": "native_shell::live_shell_continuity_pending",
+      "classification": "window-lifecycle",
+      "rationale": "Live-shell host command: continuity admission read and one-time confirm for the candidate's first-run apply; main webview only.",
+      "spec_ref": "desktop/cradle/docs/world-shell/LEGACY-CRADLE-RETIREMENT.md §4.1; docs/cradle/02-ARCHITECTURE.md §5/§12"
+    },
+    {
+      "command": "native_shell::live_shell_continuity_confirm",
+      "classification": "window-lifecycle",
+      "rationale": "Live-shell host command: continuity admission read and one-time confirm for the candidate's first-run apply; main webview only.",
+      "spec_ref": "desktop/cradle/docs/world-shell/LEGACY-CRADLE-RETIREMENT.md §4.1; docs/cradle/02-ARCHITECTURE.md §5/§12"
+    },
+    {
       "command": "native_shell::live_shell_read",
       "classification": "window-lifecycle",
       "rationale": "Live-shell host command: config, read, checkpoint or close. It is a declared window-lifecycle duty, not a generic shell.",
@@ -248,6 +260,42 @@
     }
   ],
   "filesystem": [
+    {
+      "owner": "src-tauri/src/continuity_admission.rs",
+      "operation": "std::fs::read",
+      "rationale": "Candidate continuity admission (LEGACY-CRADLE-RETIREMENT §4.1): reads the owner-admitted adoption record from the candidate's own data home and records its one-time apply; never WebKit storage.",
+      "spec_ref": "desktop/cradle/docs/world-shell/LEGACY-CRADLE-RETIREMENT.md §4.1"
+    },
+    {
+      "owner": "src-tauri/src/continuity_admission.rs",
+      "operation": "std::fs::read_dir",
+      "rationale": "Candidate continuity admission (LEGACY-CRADLE-RETIREMENT §4.1): reads the owner-admitted adoption record from the candidate's own data home and records its one-time apply; never WebKit storage.",
+      "spec_ref": "desktop/cradle/docs/world-shell/LEGACY-CRADLE-RETIREMENT.md §4.1"
+    },
+    {
+      "owner": "src-tauri/src/continuity_admission.rs",
+      "operation": "std::fs::symlink_metadata",
+      "rationale": "Candidate continuity admission (LEGACY-CRADLE-RETIREMENT §4.1): reads the owner-admitted adoption record from the candidate's own data home and records its one-time apply; never WebKit storage.",
+      "spec_ref": "desktop/cradle/docs/world-shell/LEGACY-CRADLE-RETIREMENT.md §4.1"
+    },
+    {
+      "owner": "src-tauri/src/continuity_admission.rs",
+      "operation": "std::fs::File",
+      "rationale": "Candidate continuity admission (LEGACY-CRADLE-RETIREMENT §4.1): reads the owner-admitted adoption record from the candidate's own data home and records its one-time apply; never WebKit storage.",
+      "spec_ref": "desktop/cradle/docs/world-shell/LEGACY-CRADLE-RETIREMENT.md §4.1"
+    },
+    {
+      "owner": "src-tauri/src/continuity_admission.rs",
+      "operation": "std::fs::rename",
+      "rationale": "Candidate continuity admission (LEGACY-CRADLE-RETIREMENT §4.1): reads the owner-admitted adoption record from the candidate's own data home and records its one-time apply; never WebKit storage.",
+      "spec_ref": "desktop/cradle/docs/world-shell/LEGACY-CRADLE-RETIREMENT.md §4.1"
+    },
+    {
+      "owner": "src-tauri/src/continuity_admission.rs",
+      "operation": "std::fs::File",
+      "rationale": "Candidate continuity admission (LEGACY-CRADLE-RETIREMENT §4.1): reads the owner-admitted adoption record from the candidate's own data home and records its one-time apply; never WebKit storage.",
+      "spec_ref": "desktop/cradle/docs/world-shell/LEGACY-CRADLE-RETIREMENT.md §4.1"
+    },
     {
       "owner": "src-tauri/src/main.rs",
       "operation": "std::fs::create_dir_all",
