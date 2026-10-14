@@ -10,6 +10,7 @@ import {registerPanel} from '../shell/panels'
 import {useWorkspace} from '../shell/workspace'
 import {readShellConfig, shellTransport} from '../native/application'
 import {qualifiedExpressionOwners} from '../native/expressionOwners'
+import {withWikiSubjectStanding} from '../native/wikiSubjectStanding'
 import {disclosureSession} from '../../../../../desktop/cradle/src/techne/session'
 import {useContinuity, type Workspace} from '../continuity'
 import {useKernel} from '../../../../../desktop/cradle/src/kernel/KernelProvider'
@@ -133,7 +134,8 @@ export function ExpressionsPanel() {
       if (registrationFailure) throw Error(registrationFailure)
       worldLens.current = config.product_ids?.includes('quaternal-logic') ? 'epi-logos' : 'generic'
       const transport: KernelTransportStatus = shellTransport(config)
-      const owners = qualifiedExpressionOwners(config, () => workspaceRef.current, () => live)
+      // E21: the owner answers the frame's wiki standing request (native/wikiSubjectStanding.ts); every other channel is unchanged.
+      const owners = withWikiSubjectStanding(qualifiedExpressionOwners(config, () => workspaceRef.current, () => live))
       const rebind = () => {
         const request = ++facadeGeneration
         stopFacade?.(); stopFacade = null

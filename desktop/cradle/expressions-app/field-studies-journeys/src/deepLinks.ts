@@ -2,7 +2,8 @@
 // The pure parse and format of the address the app opens at and keeps current in the URL:
 // `?expression=<ref>&scene=<scene_ref>&t=<seconds>&marker=<id>`. Parameters the app does not
 // own (mode, world, journey, present, still, edit, nara) are carried through untouched.
-// Every refusal names what was refused; nothing maps a bad ref to an index.
+// Every refusal names what was refused. The only positional form, an old `?scene=<n>`, is converted once to the
+// Scene's ref and named as converted (resolveSceneRef via 'index'); no other link maps to an index.
 import type {JourneyMarker} from './journeyMarkers';
 
 export const DEEP_LINK_KEYS = ['expression', 'scene', 't', 'marker'] as const;
@@ -94,19 +95,28 @@ export interface SceneRefCandidate {
   ref?: string;
 }
 
+// The old positional form `?scene=<n>` (0-based, the Scene's place when the link was written). Read once, never kept.
+const SCENE_INDEX_PATTERN = /^\d{1,6}$/;
+
 /**
  * A Scene by its ref: the document id, or the native scene_ref. A name still matches, announced,
- * so older `?scene=<name>` links keep opening. An index is never a Scene ref: `?scene=0` is refused.
+ * so older `?scene=<name>` links keep opening. An old positional `?scene=<n>` is the one index form
+ * accepted: it resolves to the Scene at that place, announced as converted (via 'index'), and the
+ * address is written back with that Scene's ref. An index past the end is refused by name.
  */
 export function resolveSceneRef(
   scenes: readonly SceneRefCandidate[],
   ref: string,
-): {index: number; id: string; via: 'ref' | 'name'} | {refused: string} {
+): {index: number; id: string; via: 'ref' | 'name' | 'index'} | {refused: string} {
   const byRef = scenes.findIndex(scene => scene.id === ref || scene.ref === ref);
   if (byRef >= 0) return {index: byRef, id: scenes[byRef].id, via: 'ref'};
   const lowered = ref.toLowerCase();
   const byName = scenes.findIndex(scene => scene.name.toLowerCase() === lowered);
   if (byName >= 0) return {index: byName, id: scenes[byName].id, via: 'name'};
+  if (SCENE_INDEX_PATTERN.test(ref)) {
+    const index = Number(ref);
+    if (index < scenes.length) return {index, id: scenes[index].id, via: 'index'};
+  }
   return {refused: `No Scene "${shortenRef(ref)}" in this Expression; it opened at its first Scene.`};
 }
 

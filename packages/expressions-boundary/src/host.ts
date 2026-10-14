@@ -5,6 +5,7 @@ import {
   type HostedTechneLens, type HostTarget, type StudioSection,
 } from './protocol.ts';
 import {readStageResult, stageRequestMessage, type StageCommand, type StageResult} from './protocol.ts';
+import {readWikiSubjectStandingRequest, WIKI_SUBJECT_STANDING_CHANNEL} from './protocol.ts';
 import {readFramePerformanceRequest, type PerformanceAction} from './protocol.ts';
 import {RecoveryAdmission, type RecoveryBinding} from './recoveryBinding.ts';
 import {onSharedTimeWindowChange, SHARED_TIME_NUDGE, type DisclosureSessionStore} from '../../../desktop/cradle/src/techne/session.ts';
@@ -249,6 +250,12 @@ export class ExpressionsHost {
         if (request.operation === 'performance' && !this.presentedPerformance(request)) throw Error('Malformed performance request: a presented Scene and an exact action are required');
       } else if (kind === 'central-read') request = {path: data.path};
       else if (kind === 'central-subject-text' || kind === 'central-subject-bytes') request = {ref: data.ref};
+      else if (kind === WIKI_SUBJECT_STANDING_CHANNEL) {
+        // E21: a standing is read for one exact basis; a malformed or unbounded request is refused by name, never guessed.
+        const standing = readWikiSubjectStandingRequest(request);
+        if (!standing) throw Error('Malformed wiki-subject-standing request: a subject ref, an Expression ref and its revision are required');
+        request = standing;
+      }
       else if (kind === 'expression-recovery') {
         const binding = this.recovery.admit(request);
         const result = await owner(request, context);

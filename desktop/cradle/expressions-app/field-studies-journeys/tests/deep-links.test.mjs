@@ -45,13 +45,36 @@ test('a parameter the app does not own is carried by the format and ignored by t
   assert.deepEqual(parsed.refused, []);
 });
 
-test('scene=0 is a ref string, never an index: it resolves to no Scene and is refused by name', () => {
-  const parsed = parseDeepLink('?scene=0');
-  assert.equal(parsed.address.scene, '0');
-  const found = resolveSceneRef(SCENES, parsed.address.scene);
-  assert.ok('refused' in found, 'an index-looking ref must not select a Scene');
-  assert.match(found.refused, /"0"/);
+test('an old positional ?scene=<n> is converted once to the Scene it reaches, and is named as converted', () => {
+  const parsed = parseDeepLink('?scene=1');
+  assert.equal(parsed.address.scene, '1');
+  assert.deepEqual(resolveSceneRef(SCENES, parsed.address.scene), {index: 1, id: 'scene-middle', via: 'index'});
+  assert.deepEqual(resolveSceneRef(SCENES, '0'), {index: 0, id: 'scene-open', via: 'index'});
+});
+
+test('an index past the end is refused by name and never selects a Scene', () => {
+  const found = resolveSceneRef(SCENES, '2');
+  assert.ok('refused' in found, 'an out-of-range index must not select a Scene');
+  assert.match(found.refused, /"2"/);
   assert.match(found.refused, /first Scene/);
+  assert.ok('refused' in resolveSceneRef([], '0'));
+});
+
+test('a Scene named with digits still resolves by that name before any index is read', () => {
+  const named = [{id: 'scene-x', name: '1'}, {id: 'scene-y', name: 'Two'}];
+  assert.deepEqual(resolveSceneRef(named, '1'), {index: 0, id: 'scene-x', via: 'name'});
+  assert.deepEqual(resolveSceneRef(named, '0'), {index: 0, id: 'scene-x', via: 'index'});
+});
+
+test('a reorder does not break a ref-addressed link: the Scene is found where it now stands', () => {
+  const reordered = [SCENES[1], SCENES[0]];
+  assert.deepEqual(resolveSceneRef(reordered, 'scene:native-open'), {index: 1, id: 'scene-open', via: 'ref'});
+  assert.deepEqual(resolveSceneRef(reordered, 'scene-middle'), {index: 0, id: 'scene-middle', via: 'ref'});
+});
+
+test('an old index link after a reorder reaches the Scene now at that place, announced as converted', () => {
+  const reordered = [SCENES[1], SCENES[0]];
+  assert.deepEqual(resolveSceneRef(reordered, '0'), {index: 0, id: 'scene-middle', via: 'index'});
 });
 
 test('an empty or unprintable ref is refused by name and not kept', () => {
@@ -108,12 +131,11 @@ test('parse of a format returns the same address (round trip, refs with colons i
   assert.match(search, /^\?mode=techne&/);
 });
 
-test('a Scene resolves by its document id, its native scene_ref, or a legacy name, never by index', () => {
+test('a Scene resolves by its document id, its native scene_ref, or a legacy name', () => {
   assert.deepEqual(resolveSceneRef(SCENES, 'scene-middle'), {index: 1, id: 'scene-middle', via: 'ref'});
   assert.deepEqual(resolveSceneRef(SCENES, 'scene:native-open'), {index: 0, id: 'scene-open', via: 'ref'});
   assert.deepEqual(resolveSceneRef(SCENES, 'middle'), {index: 1, id: 'scene-middle', via: 'name'});
   assert.deepEqual(resolveSceneRef(SCENES, 'MIDDLE'), {index: 1, id: 'scene-middle', via: 'name'});
-  assert.match(resolveSceneRef(SCENES, '1').refused, /"1"/);
   assert.match(resolveSceneRef(SCENES, 'scene-gone').refused, /"scene-gone"/);
 });
 
@@ -155,6 +177,7 @@ test('the app reads its address through this parser and only ever writes it with
 test('an applied link never navigates by index, and each refusal is named in a toast', () => {
   const apply = functionBody('applyDeepLinkAddress');
   assert.doesNotMatch(apply, /sceneIndex\s*=/, 'a link selects a Scene through its ref, not an index');
+  assert.match(apply, /Converted the old scene index/, 'an old index link is named as converted');
   assert.match(apply, /resolveSceneRef\(/);
   assert.match(apply, /resolveMarker\(/);
   assert.match(apply, /clampJourneyTime\(/);
