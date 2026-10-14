@@ -9,11 +9,12 @@ import type {InhabitantManifest} from './manifest.ts'
  * Honesty (every face's standing is recorded in its note):
  * - The QL sky contract is LANDED QL-SIDE — `ql.sky-request/v1` →
  *   `ql.sky-snapshot/v1` (Work/Quaternal-Logic providers/sky/kerykeion_snapshot.py);
- *   the shell-side envelope exists (atlas skyProvider `requestQlSkySnapshot`),
- *   but the sky→projection adapter and the rack face body are the QL family's
- *   to land — the atlas port explicitly refused to write them (writing them
- *   there would merge the two contracts). So the sky face waits, with its
- *   owner named.
+ *   the shell-side envelope exists (atlas skyProvider `requestQlSkySnapshot`).
+ *   The sky→Earth adapter is the family's, in `qlSkyEarthAdapter.ts`: it
+ *   admits the one geographic body the snapshot states (the subsolar point)
+ *   as an Earth occurrence and projects no grid — the atlas port refused to
+ *   write it, since that would merge the two contracts. The rack face body
+ *   still waits, with its owner named.
  * - The torus lives in the retained M4 body's stage (the QL instrument
  *   presentation); the M3 clock/inscription is #281's packet — law today,
  *   not landed. Deck, chakra and the M1–M3 matrices have no shell-side
@@ -42,7 +43,7 @@ const QUATERNAL_LOGIC_MANIFEST: InhabitantManifest = {
         liveSemantic: 'device-instrument',
         admission: 'waiting',
         heldBy: ['techne:m4', 'techne:m2'],
-        note: 'Compact sky face over the landed QL kerykeion contract (ql.sky-request/v1 → ql.sky-snapshot/v1, ten bodies, Earth anchor, standing "calculated-ephemeris-not-observed-sky"). The shell-side envelope exists (skyProvider.requestQlSkySnapshot); the projection adapter and face body are the QL family\'s to land.',
+        note: 'Compact sky face over the landed QL kerykeion contract (ql.sky-request/v1 → ql.sky-snapshot/v1, ten bodies, Earth anchor, standing "calculated-ephemeris-not-observed-sky"). The shell-side envelope exists (skyProvider.requestQlSkySnapshot) and the family\'s Earth adapter places the stated subsolar point (qlSkyEarthAdapter.ts); the face body is the QL family\'s to land.',
       },
       {
         id: 'torus',
@@ -84,9 +85,10 @@ const QUATERNAL_LOGIC_MANIFEST: InhabitantManifest = {
     ],
     params: {grammar: 'quaternal-logic/parameter-address/v1'},
     projections: [
-      // Declared, waiting: the sky→Earth adapter is the family's projection
-      // contribution (§12); the atlas port refused to write it (merging the
-      // sky contracts would be a port-law fault). The name reserves the seam.
+      // Landed: the sky→Earth adapter is the family's projection contribution
+      // (§12), in ./qlSkyEarthAdapter.ts — the stated subsolar point placed as
+      // an Earth occurrence with the snapshot as its basis. The atlas port
+      // refused to write it (merging the sky contracts would be a port-law fault).
       'ql-sky-earth-adapter',
     ],
     inspectors: [],
