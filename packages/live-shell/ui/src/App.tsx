@@ -51,6 +51,7 @@ import './live/LiveInstrumentSection'
 import './live/LivePresets'
 import {registerAtlasHost} from './projections/atlas/registerAtlasHost'
 import {registerTimelineHost} from './projections/timelinePane'
+import {registerCentralDocumentPane} from './central/documents/CentralDocumentPane'
 import {registerDevicePane} from './frame/devices/devicePane'
 import {createSpineEncounterBridge} from './projections/encounterBridge'
 import {createEncounterLink, type EncounterLink} from './projections/encounterLink'
@@ -60,6 +61,7 @@ import {deviceInstrumentFor, factoryFocusedPane, type HostedLens} from './shell/
 import {focusedSurfaceKind, isFactoryMode} from './agent/factoryCentre'
 registerAtlasHost()
 registerTimelineHost()
+registerCentralDocumentPane()
 registerDevicePane()
 const PALETTE =['#79b6ce', '#779dcc', '#9885bc', '#8baf9c', '#b096b2', '#6caaa9']
 /** The ground material kinds the Document detail opens (CentralSubjectSelection). */

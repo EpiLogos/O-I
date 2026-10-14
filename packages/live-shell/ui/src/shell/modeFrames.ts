@@ -5,6 +5,7 @@ import type {SurfMode} from './modeGrammar'
 import type {LayoutState} from '../../../../../desktop/cradle/src/surface/types'
 import {seedInstruments} from '../frame/openInstrument'
 import {seedFactoryCentre} from '../agent/factoryCentre'
+import {seedCentralDocuments} from '../central/documents/centralDocuments'
 
 export interface ModeFrame {
   centerPanel: string
@@ -44,8 +45,8 @@ export const MODE_TRACK_SOURCES: Readonly<Record<SurfMode, TrackSource>> = {
 export const MODE_TREE_SEEDS: Readonly<Record<string, (layout: LayoutState) => LayoutState>> = {
   // Live: the instrument (the torus on the stage) beside the set's tracks.
   live: seedInstruments(['projection.expressions', 'projection.timeline']),
-  // Central: the day's tracks; documents open beside them from the browser.
-  base: seedInstruments(['projection.timeline']),
+  // Central: the Day and a Flow, side by side (the mockup's modes.base); the day's tracks a tab behind the Flow.
+  base: layout => seedCentralDocuments(layout, {alongside: ['projection.timeline']}),
   // Factory: the agent tab, pinned (agent/factoryCentre.ts), instruments open beside it.
   factory: seedFactoryCentre,
   // Expressions: the Expression, one pane (the mockup's modes.expressions); its scenes are its tracks, a Tab away in a pane.
