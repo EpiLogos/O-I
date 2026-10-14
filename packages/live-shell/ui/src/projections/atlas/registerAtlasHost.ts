@@ -38,6 +38,10 @@ export function registerAtlasHost(): void {
 
 /** The module door's mount: the same atlas, in a pane of its kind, with the kind's fixed view. */
 async function mountKind(context: ProjectionModuleContext, view: AtlasView): Promise<ProjectionModuleHandle> {
+  // The pane element is the atlas host (atlasHost.css): its containment keeps the ported atlas's fixed #globe and ~30 fixed
+  // overlays inside the pane. Without it the globe stood 1440×900 over the whole window and took the pointer from the
+  // transport (seen headless by the transport lane, 14 Oct).
+  context.element.classList.add('atlas-host')
   const attachment = await attachAtlas({element: context.element, transport: detectTransport(), follow: false, view})
   const turning = turnWithSubject(context.subject, attachment)
   return {
