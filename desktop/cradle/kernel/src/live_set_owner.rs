@@ -10,18 +10,58 @@
 //!
 //! Every path is one absolute `.als` document, the law the native host's own
 //! read keeps (`native_shell.rs` live_shell_read): the renderer reaches one
-//! Live set at a time, never an arbitrary file.
+//! Live set at a time, never an arbitrary file. A write is admitted only for a
+//! set this kernel process has already read (`READ_SETS`, by canonical path):
+//! the device panels always read before they write, so an op naming any other
+//! `.als` on disk is refused. The write itself replaces the file atomically
+//! (`live_set::api`), so a crash never leaves a half-written set.
 
 use crate::{KernelOp, KernelOpResult};
+use std::collections::HashSet;
+use std::path::PathBuf;
 use std::sync::Mutex;
 
 static WRITE_GATE: Mutex<()> = Mutex::new(());
+static READ_SETS: Mutex<Option<HashSet<PathBuf>>> = Mutex::new(None);
+
+fn canonical(path: &str) -> Option<PathBuf> {
+    std::fs::canonicalize(path).ok()
+}
+
+/// Record a set this process has read, by its canonical path.
+fn remember_read(path: &str) {
+    if let Some(path) = canonical(path) {
+        READ_SETS
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner())
+            .get_or_insert_with(HashSet::new)
+            .insert(path);
+    }
+}
+
+/// A write names a set this process has read, or it is refused.
+fn admitted_for_write(path: &str) -> Result<(), String> {
+    let known = canonical(path).is_some_and(|path| {
+        READ_SETS
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner())
+            .as_ref()
+            .is_some_and(|sets| sets.contains(&path))
+    });
+    if known {
+        Ok(())
+    } else {
+        Err("Read this Live set before writing to it: the kernel writes only a set the shell has read".into())
+    }
+}
 
 /// Serve one Live op; `None` for every other op.
 pub fn execute(op: &KernelOp) -> Option<Result<KernelOpResult, String>> {
     Some(match op {
         KernelOp::LiveSetRead { path } => native_document(path).and_then(|()| {
-            live_set::api::set_json(path).map(|reading| KernelOpResult::LiveSetReading { reading })
+            let reading = live_set::api::set_json(path)?;
+            remember_read(path);
+            Ok(KernelOpResult::LiveSetReading { reading })
         }),
         KernelOp::LiveDeviceDescriptors => Ok(KernelOpResult::LiveDeviceDescriptorsReading {
             descriptors: live_set::api::device_descriptors_json(),
@@ -31,8 +71,9 @@ pub fn execute(op: &KernelOp) -> Option<Result<KernelOpResult, String>> {
             track,
             device,
         } => native_document(path).and_then(|()| {
-            live_set::api::device_params_json(path, track, device)
-                .map(|reading| KernelOpResult::LiveDeviceParamsReading { reading })
+            let reading = live_set::api::device_params_json(path, track, device)?;
+            remember_read(path);
+            Ok(KernelOpResult::LiveDeviceParamsReading { reading })
         }),
         KernelOp::LiveDeviceParamWrite {
             path,
@@ -40,13 +81,15 @@ pub fn execute(op: &KernelOp) -> Option<Result<KernelOpResult, String>> {
             device_name,
             param_id,
             value,
-        } => native_document(path).and_then(|()| {
-            let _gate = WRITE_GATE
-                .lock()
-                .unwrap_or_else(|poisoned| poisoned.into_inner());
-            live_set::api::device_param_set(path, track, device_name, param_id, value)
-                .map(|reading| KernelOpResult::LiveDeviceParamWritten { reading })
-        }),
+        } => native_document(path)
+            .and_then(|()| admitted_for_write(path))
+            .and_then(|()| {
+                let _gate = WRITE_GATE
+                    .lock()
+                    .unwrap_or_else(|poisoned| poisoned.into_inner());
+                live_set::api::device_param_set(path, track, device_name, param_id, value)
+                    .map(|reading| KernelOpResult::LiveDeviceParamWritten { reading })
+            }),
         _ => return None,
     })
 }
@@ -155,6 +198,8 @@ mod tests {
     #[test]
     fn device_param_write_validates_then_writes_back_in_place() {
         let path = fixture("param-write");
+        // The shell reads a set before writing to it.
+        params(&path);
         // Out of the table's stored extent: refused, and the set is untouched.
         let refused = write(&path, "Threshold", json!(3.0)).unwrap_err();
         assert!(refused.contains("out of range for Threshold"), "{refused}");
@@ -171,7 +216,50 @@ mod tests {
         assert!(write(&path, "On", json!(1)).unwrap_err().contains("toggle"));
         write(&path, "On", json!(false)).unwrap();
         assert!(params(&path)["params"].to_string().contains("\"false\""));
+        // The write replaced the file atomically: no staged sibling is left behind.
+        let set = std::path::Path::new(&path);
+        let prefix = format!(".{}.oi-write-", set.file_name().unwrap().to_string_lossy());
+        let staged: Vec<_> = std::fs::read_dir(set.parent().unwrap())
+            .unwrap()
+            .filter_map(|entry| entry.ok())
+            .filter(|entry| entry.file_name().to_string_lossy().starts_with(&prefix))
+            .collect();
+        assert!(staged.is_empty(), "a staged write was left: {staged:?}");
         std::fs::remove_file(path).unwrap();
+    }
+
+    #[test]
+    fn a_set_never_read_by_this_process_is_not_written() {
+        let path = fixture("unread-write");
+        let before = std::fs::read(&path).unwrap();
+        let refused = write(&path, "Threshold", json!(0.25)).unwrap_err();
+        assert!(
+            refused.contains("Read this Live set before writing"),
+            "{refused}"
+        );
+        assert_eq!(
+            std::fs::read(&path).unwrap(),
+            before,
+            "the unread set is untouched"
+        );
+        std::fs::remove_file(path).unwrap();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_symlinked_set_is_written_at_its_target_and_the_link_stays() {
+        let target = fixture("linked-target");
+        let link = format!("{target}.link.als");
+        std::os::unix::fs::symlink(&target, &link).unwrap();
+        params(&link);
+        write(&link, "Threshold", json!(0.25)).unwrap();
+        assert!(std::fs::symlink_metadata(&link)
+            .unwrap()
+            .file_type()
+            .is_symlink());
+        assert!(params(&target)["params"].to_string().contains("\"0.25\""));
+        std::fs::remove_file(&link).unwrap();
+        std::fs::remove_file(target).unwrap();
     }
 
     #[test]
