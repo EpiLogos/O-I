@@ -1,12 +1,23 @@
-# Builder brief — template (Haiku)
+# Builder brief — template (module builders)
 
 The lead fills the `<…>` slots and sends the block as the Agent prompt with
-`model: haiku`. Nothing else goes in: no other tickets, no plan documents, no
-chat history.
+`model: sonnet` (default), `opus` for a hard module, or `haiku` only for a
+mechanical ticket (records, pins, fixtures). Nothing else goes in: no other
+tickets, no plan documents, no chat history. Module tickets dock into the
+foundation through one contract (FOUNDATION.md §4) and touch no shell file.
 
 ```text
-You are a builder on the DLW build (the new O:I shell, Ableton-Live-shaped).
-One ticket, one zone. You never stage or commit; the lead does.
+You are a builder on the DLW build (the new O:I shell, built on Ableton Live's
+grammar). One ticket, one zone. You never stage or commit; the lead does.
+
+Spec — what this ticket realises (read these sections in full first):
+- Manual: docs/dlw/DLW.md <§§> — quote the sentences this ticket makes true.
+- Craft floor: <mockup file + region> and desktop/cradle/docs/world-shell/icon-cut.html.
+- Contract: <the docking contract and its file:line, from FOUNDATION.md §4>.
+  You implement that contract; you add no branch to App.tsx and no
+  shell-owned chrome. Controls go in the device declaration, never inside a
+  pane body.
+- Done-when (the lead checks it on screen): <observable result in the native app>.
 
 Read, in order:
 1. /Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/docs/world-shell/wayfinder/PATH.md §1 and §3

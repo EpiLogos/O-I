@@ -50,11 +50,21 @@ delivered at 0.1.2 — `evidence/integrated-v012-delivery-receipt.json`):
    is `pending` for all 126 (source-level only). Open: the 25 `pending:` rows,
    native exercise of all 126, and the §9 vocabulary (the destinations are
    lens and instrument names, not (projection, rack) pairs).
+   Restated 14 Oct after the port audit (`audit-20261014/PORT-AUDIT.md` §E):
+   "126 of 126 destinations named" overstates — in Technē the named
+   destinations open the shell's own presentations or disabled buttons, not
+   the frame instruments the targets were built in; the port-ledger test checks
+   the ledger's shape, not behaviour; EXPRESSIONS-PORT-STATUS's `ported: 136`
+   is a static reading with every row unreplayed natively, and its 20
+   "cannot call save_as" rows are wrong (`fork`, `save_as`, `create` exist and
+   are relayed).
 2. **UX spine convergence** — the shell's spine matches the design frontier
    per `UX-SPINE-ALIGNMENT.md` (the eight seams). **Open.** Seam status
    (`UX-SPINE-ALIGNMENT.md` §5, updated 14 Oct 2026 after the seam builds;
-   scripted and source only): all eight seams converged. Native
-   verification of every seam is still pending.
+   scripted and source only) marked all eight converged; restated 14 Oct after
+   the foundation audit: the seams' code exists, but the candidate runs a
+   per-mode switchboard beside it, and on screen none holds in use. Open; the
+   work is `wayfinder/FOUNDATION.md` F1–F9.
 3. **Everyday-data continuity** — the candidate adopts the everyday
    workspace state on first cutover run: the everyday workspace book,
    recovery records and drafts are migrated (or re-adoptable in place) into
@@ -64,6 +74,9 @@ delivered at 0.1.2 — `evidence/integrated-v012-delivery-receipt.json`):
    first-run apply) is in §4.1; the namespaces stay isolated, never a
    shared store. It has not been run on the owner's stores or in a native
    candidate.
+   Restated 14 Oct: built is not run — the migration has never run, and the
+   kernel keeps Expressions only in memory, which is why the candidate has no
+   works (PORT-AUDIT break 2; FOUNDATION N1).
 4. **Native service parity** — every owner operation the everyday runtime
    served (ground reads/writes, day/now operations, kernel ops, events) is
    served by the candidate kernel at parity; the 8787 seam retires with a

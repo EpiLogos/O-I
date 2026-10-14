@@ -1,64 +1,61 @@
 # EXECUTE — the DLW build (paste this whole file into a fresh Opus session)
 
-You are the **lead** of the DLW build (the new O:I shell, Ableton-Live-shaped,
-the instrument of Epi-Logos). You run one wave at a time, and you are the only
-Opus in the build.
+You are the **lead** of the DLW build: the new O:I shell, built on Ableton
+Live's grammar, the instrument of Epi-Logos. You build the foundation
+yourself and run module waves around it.
 
-**Read first:** `/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/docs/world-shell/wayfinder/`
-`PATH.md` (route, roles, gates, claimable tickets), then
-`DEVICE-SEMANTICS-LOCK.md` (the law and the owner's settled facts). Then
-`git status` and `git log --oneline -5` in the seat
-`/Users/admin/Central/worktrees/env-1/o-i`. Cut your lane from `main` first:
-`seat join env-1 o-i --branch dlw/<wave-or-ticket>-<date> --actor <you>` (the
-first DLW lane, `dlw/build-20261012`, landed as O-I #650). Land each wave by
-PR (main is protected); release the seat when the lane has landed.
+**Read first, in order:**
+1. `docs/dlw/DLW.md` Part One (the owner's manual — the spec), §3–§10 in full.
+2. `desktop/cradle/docs/world-shell/wayfinder/FOUNDATION.md` (the route and
+   its decisions).
+3. `../audit-20261014/FOUNDATION-AUDIT.md` and `PORT-AUDIT.md` (what is true,
+   with path:line evidence).
+4. `PATH.md` §1–§3 and §7 (roles, ground, gates, open claims), then
+   `DEVICE-SEMANTICS-LOCK.md` §0 and §9.
 
-**Who works — exactly this:**
-- **You:** claim, brief, converge, commit, keep PATH, run the native app,
-  and do the screen checks.
-- **Haiku builders:** up to 3 at once, via the Agent tool with
-  `model: haiku`. Each gets one ticket and an exclusive zone, briefed from
-  `BRIEF-BUILDER.md`.
-- **One Sonnet reviewer:** via the Agent tool with `model: sonnet`, only at
-  PATH §6 review points, briefed from `BRIEF-REVIEWER.md`.
-- **Nothing else:** no Workflow tool, no Opus or Explore subagents, no
-  research fan-outs. Judgment work (native builds, cross-repo changes, design
-  reading) is yours.
+Then `git status` and `git log --oneline -5` in the seat
+`/Users/admin/Central/worktrees/env-1/o-i` (branch `dlw/build`; main is
+protected; land code by rebase-merge PR; docs-only changes may go straight to
+main).
 
-**The loop:**
-1. Take the next claimable tickets from PATH §5 whose zones don't overlap,
-   and write the claims into PATH §7.
-2. Dispatch one builder per ticket, in the background.
-3. As each return lands:
-   - refuse it if it has no RECEIPT or ZONE line;
-   - re-run its checks yourself and read the diff;
-   - stage only that ticket's files, commit, and push;
-   - write the ticket's Resolution: what landed, and what stays unverified
-     and on which channel.
-4. If the same acceptance bullet fails twice, send one Sonnet diagnostic and
-   then rewrite the ticket. There is never a third builder attempt.
-5. At a review point, send the reviewer. Turn its carries into tickets.
-6. Update PATH: §5, §7, and a §9 row for the wave.
+**Who works:**
+- **You (Opus):** the foundation F0–F9 and N1–N3, item by item, in your own
+  hands. You also claim, brief and converge module tickets, keep PATH true,
+  build and run the native app, and do the screen checks.
+- **Module builders:** up to six at once (Agent tool), each with one ticket
+  and an exclusive zone, briefed from `BRIEF-BUILDER.md` with its Target
+  block, manual §, mockup region, docking contract and on-screen done-when.
+  Use Sonnet by default and Opus for a hard module. Use Haiku only for
+  mechanical tickets: records, pins, fixtures.
+- **A Sonnet reviewer** at the end of each foundation item and each module
+  wave (`BRIEF-REVIEWER.md`).
+- **Nothing else.** No task chips, no Workflow tool, no research fan-outs
+  unless the owner asks.
 
-**Laws you hold every builder to:** DEVICE-SEMANTICS-LOCK §0–§1, §5.
-- Every device declares its Live semantic and keeps its invariant.
-- Port, never recreate; owners write and faces read.
-- The mockups are the craft floor.
-- Every observation is labelled with its channel.
-- No UI is called done until you've seen it on screen. A ticket with no UI
-  leg may run while the screen gate is red.
+**Laws:**
+- The manual is the spec, and the mockups are the craft floor. Cite both in
+  every ticket.
+- The product is the candidate (`packages/live-shell/ui` plus the hosted
+  frame). Run `node packages/live-shell/ui/scripts/candidate-reachable.mjs`
+  over every changed source file before committing.
+- Port, never recreate. Owners write and faces read. Never remove an
+  established behaviour without naming its replacement.
+- **No per-mode branch in `App.tsx`.** Modes differ only by their
+  registrations; the switchboard tripwire enforces this.
+- Controls live in the device UI (compact, whole, full) and never as chrome
+  inside a pane.
+- Nothing is done until you have seen it on screen with computer use
+  (FOUNDATION §5). If screen access fails, fix that before building more UI.
+- Label every claim by channel: computer-use, scripted, or code-reading.
+- Re-run conformance on every convergence that touches `desktop/cradle/src`.
+  Type-check all three TS roots.
 
-**Never ask the owner** anything the lock, the mockups, the code or the
-corpus answer. The settled facts are in lock §0. Owner acts are listed in
-PATH §3, currently: unlock the login session, and turn on Computer Use for
-your session.
+**Never ask the owner** what the manual, the lock, the mockups or the code
+answer. Derive it, and record the derivation in the ticket.
 
-**Close of session:**
-- the tree is clean, everything is committed and pushed;
-- PATH is true;
-- one NOW return goes to the O-I register (`ctrl --json action run projectcentral.now.return '{"project":"O-I",…}'`);
-- the seat is released only when the lane has landed on `main` (by PR — main is protected).
+**Close of session:** the tree is clean, all work is pushed, PATH and
+FOUNDATION are true, and the open claims are listed in PATH §7.
 
-**Start:** PATH §5 item 1, T-SEMANTICS-GATE (one Haiku builder). When it
-lands, T-LABELS (one Haiku builder). When the screen gate clears, do the
-screen pass and run R0.
+**Start:** FOUNDATION §6 step 1. Do F0 yourself and dispatch the first module
+wave (M1–M4 atlas delivery, M6–M7 Expressions open, the records ticket) in
+parallel. Then F1.

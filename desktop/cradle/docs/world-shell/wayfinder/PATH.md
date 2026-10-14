@@ -9,8 +9,8 @@ earlier PATH (waves W0–W0e, carries 1–57) is in git at `760fa4916`.
 
 | Role | Who | Count | Does | Never |
 |---|---|---|---|---|
-| **Lead** | the Opus session running the build | 1 | claims tickets, writes briefs from `BRIEF-BUILDER.md` (its Target block names the candidate as the product), dispatches (no task chips: side work is a builder lane in this seat), converges each return itself (first: `candidate-reachable.mjs` over every changed file — a file not reachable from the candidate is never committed as product work) (re-runs checks, reads the diff, stages the ticket's files, commits, pushes), keeps PATH, runs the native app and screen checks | spawns any agent other than the builders and the reviewer below; writes product code beyond one-file glue |
-| **Builders** | Haiku subagents (Agent tool, `model: haiku`) | ≤6 at once (owner, 14 Oct), one ticket each, exclusive zones | edit inside the zone, run the ticket's checks, return the receipt | stage, commit, leave the zone, decide design |
+| **Lead** | the Opus session running the build | 1 | builds the foundation (FOUNDATION F0–F9, N1–N3) itself and checks each item on screen; claims module tickets, writes briefs from `BRIEF-BUILDER.md` (its Target block names the candidate as the product), dispatches (no task chips: side work is a builder lane in this seat), converges each return itself (first: `candidate-reachable.mjs` over every changed file — a file not reachable from the candidate is never committed as product work) (re-runs checks, reads the diff, stages the ticket's files, commits, pushes), keeps PATH, runs the native app and screen checks | spawns any agent other than the builders and the reviewer below; writes product code beyond one-file glue |
+| **Builders** | module builders (Agent tool): Sonnet by default, Opus for a hard module, Haiku only for mechanical tickets | ≤6 at once (owner, 14 Oct), one ticket each, exclusive zones, docking through one contract (FOUNDATION §4) | edit inside the zone, run the ticket's checks, return the receipt | stage, commit, leave the zone, decide design |
 | **Reviewer** | one Sonnet subagent (Agent tool, `model: sonnet`) | 1, only at review points (§6) | reads the wave's commits and refutes the done-claim | edits anything |
 
 No Workflow tool, no Opus subagents, no research fan-outs. A ticket that
@@ -68,34 +68,15 @@ it on screen. No new UI phase opens on top of unseen UI.
 
 ## 4. Phase
 
-**0 → 1.** Phase 0's code is landed (W0–W0e): native host builds and
-launches from a commit; run-context reading; owner refusals as disclosures;
-owner readback from `live_shell_config` (`suite_product_ids`,
-`suite_owner_names`); agent-chain owner bindings; live Bimba receipt.
-Its screen legs (P0-R1, P0-R4, P0-R5/5b/5c, P0-R6) close with one screen pass
-and R0. Phase 1 opens with the no-UI work below.
-
-Phase chain: 0 native + disclosure → 1 semantics gate + craft →
-2 seams → 3 verticals (Factory, Central) → 4 the 126 targets (lane 3 → 2+4 →
-1+5) → 5 retirement.
+Re-founded 14 Oct 2026: the earlier route (semantics → seams → verticals →
+126 targets → retirement) never made the window's one grammar its
+foundation. The route, its decisions and its order are now `FOUNDATION.md`;
+the evidence is `../audit-20261014/`.
 
 ## 5. Claimable now (in order)
 
-1. **Screen pass** (Sonnet computer use) — waits on the owner's grant of
-   "O-I Shell Candidate" (refused twice; never substituted by scripted AX
-   clicks).
-2. T-FACTORY-TIMELINE-PANE; T-EXPRESSIONS-PANE-LEASE.
-3. Lane-5 T15 (the palace's free-placement board), T22–T24; T21's journey
-   draft (scene order, pace) — no draft store exists yet.
-4. Lane-3: E21's projection standing reached from the frame (a host
-   request answering wikiSubjectStandings); `.canvas` import as one undo
-   entry (the material batch and the native connect act, grouped).
-5. Lane-2: the two parallel fullscreen paths (E23 requestStageFullscreen,
-   A8 Canvas present) unified when focus-mode.test.mjs's pin allows.
-6. Phase 3 Central vertical; Phase 5 retirement.
-
-Held for the owner: M1′–M5′ restatement and instrument count (vision spec
-#655); Factory `factory.run.close` grant; Factory owner `writeAuthority`.
+`FOUNDATION.md` §6. Step 1: F0 (lead) together with the first module wave —
+M1–M4 atlas delivery, M6–M7 Expressions open, the records ticket.
 
 ## 6. Review points (Sonnet, one at a time)
 
@@ -106,13 +87,13 @@ bullet twice gets one Sonnet diagnostic; never a third builder attempt.
 
 ## 7. Open claims
 
-One branch, one run (`dlw/build`; the open PR is #675). Builders are Haiku, up to six at a
+One branch, one run (`dlw/build`; #675 landed; no open PR). Builders are module builders (Sonnet by default), up to six at a
 time (owner, 14 Oct; no task chips — side work is a builder lane here), each with an exclusive zone; the lead converges, commits and keeps
 this table true. Tickets and resolutions live in `tickets/`.
 
 | Ticket | Who | Zone | Since |
 |---|---|---|---|
-| R2 fifth wave: review of the fourth-wave fixes and the native IPC ACL | sonnet reviewer | read-only | 2026-10-14 |
+| none — the next run starts at FOUNDATION §6 step 1 | | | |
 
 #673 landed on main (14 Oct): Phase 5 gates 1–4 (the audit, the migration
 and its first-run apply, the census and the native Live ops), seams 7 and 8's
