@@ -9,7 +9,7 @@ import {kernelExpressionsAvailable,listKernelExpressions,readKernelExpression,na
 import type {KernelSaveAnchor} from './store.js';
 import {readWorkingCheckpoint,readWorkingDraft,readBoundWorkingDraft,acceptWorkingRecoveryBasis,writeWorkingCheckpoint,writeDraft,applyRecoveryPlan,removeDraft} from './recovery.js';
 // lane-3 E19b: the hosted recovery choice uses the same offer and plan as the browser boot.
-import {recoveryOffer,planRecoveryChoice,bootWasUnclean,type RecoveryChoice} from './draftStorage.js';
+import {settleHostedDraft,bootWasUnclean,type RecoveryChoice} from './draftStorage.js';
 import type {RecoveryRecord} from '../../../src/expressions/recoveryTypes';
 import {hostedRecovery,hostedScope,recoveryBinding,selectedRecovery,draftRecoveryAddress,selectNativeRecovery} from './nativeRecovery.js';
 import {kernelDocumentToJourney,type KernelConversion,type KernelExpressionDocument} from './kernelDocumentBridge.js';
@@ -172,20 +172,13 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
 // chooses once per expression. Each choice keeps both sides: the draft is quarantined or copied to the Library, read back, and only
 // then does its native copy leave the owner. The checkpoint's view is the saved basis; the kernel revision is named in the choice.
 const recoveryOffered=new Set<string>();
+// E19: the decision lives in draftStorage.settleHostedDraft. A draft not newer than the checkpoint is quarantined and the checkpoint opens,
+// so it is never adopted; a newer draft is offered after an unclean exit exactly as before.
 const settleRecovery=async(found:{record:NativeWorkingRecord;journey:Journey;recoveryRecords?:RecoveryRecord[]},current:()=>boolean)=>{
- const saved=found.record.view?.journey,draftId=found.record.draft_id;
- if(!hostedRecovery()||!saved||!bootWasUnclean()||recoveryOffered.has(draftId))return found;
- const offer=recoveryOffer({draft:found.journey,saved,uncleanExit:true});
- if(!offer.offer)return found;
- const choice:RecoveryChoice=host.chooseRecovery?await host.chooseRecovery({draft:found.journey,saved,offer,revision:found.record.view!.document.revision}):'keep-both';
- requireAdoption(current);
- if(choice==='restore-draft'){recoveryOffered.add(draftId);return found;}
- const plan=planRecoveryChoice(choice,found.journey,saved,new Date());
- await applyRecoveryPlan(plan,found.journey);
- requireAdoption(current);
- if(plan.removeDraft)await removeDraft(draftId,found.recoveryRecords?.find(row=>row.kind==='draft')?.scope);
- recoveryOffered.add(draftId);
- return {...found,journey:saved,recoveryRecords:found.recoveryRecords?.filter(row=>row.kind==='checkpoint')};
+ const saved=found.record.view?.journey,draftId=found.record.draft_id,scope=found.recoveryRecords?.find(row=>row.kind==='draft')?.scope;
+ const settled=await settleHostedDraft(draftId,found.journey,saved,{hosted:hostedRecovery(),uncleanBoot:bootWasUnclean(),settled:recoveryOffered,revision:found.record.view?.document.revision??0,chooseRecovery:host.chooseRecovery,requireAdoption:()=>requireAdoption(current),keepDraft:(plan,draft)=>applyRecoveryPlan(plan,draft),removeNativeDraft:()=>removeDraft(draftId,scope)});
+ if(settled.kind==='draft')return found;
+ return {...found,journey:settled.journey,recoveryRecords:found.recoveryRecords?.filter(row=>row.kind==='checkpoint')};
 };
  const adopt=async(raw:KernelExpressionDocument,current:()=>boolean,file?:NativeFile)=>{
   requireAdoption(current);

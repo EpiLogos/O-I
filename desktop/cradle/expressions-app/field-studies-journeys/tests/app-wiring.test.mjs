@@ -75,9 +75,12 @@ test('every scene timeline write in app.ts goes through the guarded model op', (
  for(const call of splices)assert.ok(enclosingCall(call,'applyTimelineMove'),`scenes.splice at app.ts:${lineOf(call)} bypasses applyTimelineMove`);
  // A write to a Scene's own length or transition: a receiver that is a Scene, not a step, lane or CSS style.
  const writes=[];walk(sf,n=>{if(ts.isBinaryExpression(n)&&n.operatorToken.kind===ts.SyntaxKind.EqualsToken&&ts.isPropertyAccessExpression(n.left)&&['duration','transition'].includes(n.left.name.text)&&['s','scene()','target'].includes(n.left.expression.getText(sf)))writes.push(n);});
- // Only the property take extends a scene's length, and that is a recording, not a timeline move.
- assert.equal(writes.length,2);
+ // Only the property take extends a scene's length, and that is a recording, not a timeline move. The draft's take merge now lives in
+ // draftStorage.mergeTakeIntoDraft (E19), so app.ts keeps the finished take's write and the merge's write is checked where it lives.
+ assert.equal(writes.length,1,'app.ts keeps the property take finish write');
  for(const write of writes)assert.match(write.right.getText(sf),/^Math\.max\(/,`app.ts:${lineOf(write)} writes a timeline fact directly`);
+ const draftStorage=fs.readFileSync(new URL('../src/draftStorage.ts',import.meta.url),'utf8');
+ assert.ok(draftStorage.includes('scene.duration=Math.max(scene.duration,end);'),'the draft take merge is the other take write, and it extends a scene only by a take');
 });
 
 test('the timeline moves, retimes, removals and duplicates each run inside one labelled change', ()=>{

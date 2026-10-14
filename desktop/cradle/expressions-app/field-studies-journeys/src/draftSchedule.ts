@@ -88,12 +88,14 @@ export class DraftSchedule{
  }
 }
 /** Status-line voice for the save state. Times are local hh:mm. */
-export type DraftOutcome='backed-up'|'waiting'|'refused'|'unavailable';
+/** 'library-copy': the draft record did not land, and only the browser Library copy did. It must not read as a draft backup. */
+export type DraftOutcome='backed-up'|'waiting'|'refused'|'unavailable'|'library-copy';
 export function clockText(at:Date):string{return `${String(at.getHours()).padStart(2,'0')}:${String(at.getMinutes()).padStart(2,'0')}`;}
 export function draftStatusLine(outcome:DraftOutcome,at:Date,scope:'browser'|'native'):string{
  if(outcome==='waiting')return 'Newer edits are waiting for backup';
  if(outcome==='refused')return scope==='native'?'Working copy not backed up':'Not saved · export a file';
  if(outcome==='unavailable')return 'Not saved · export a file';
+ if(outcome==='library-copy')return 'Draft not recorded; a Library copy was saved';
  const place=scope==='native'?'Working copy backed up on this device':'Draft backed up in this browser';
  return `${place} · ${clockText(at)}`;
 }
