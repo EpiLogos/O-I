@@ -47,7 +47,7 @@ import {PlaceSearch} from './placeSearchPanel.js';
 import {OPEN_PLACE_FILTER,filteredPlacesRepository,subjectEntityRef,type PlaceFilterState} from './placeReading.js';
 import type {TechneReading,TechnePlaceFacet} from '../../../src/techne/contract';
 import {timelineOpenPlan,type PlaceOffer} from '../../../src/techne/m0m5/place/navigation';
-import {readSharedTimeWindow,writeSharedTimeWindow,writeSharedTraversalHop,followSharedTimeNudges,trackOwnSharedTimeWrite,qualifyTimeWindowReply,SharedTimeWindowControls,type SharedTimeDraft} from './sharedTimeWindow.js';
+import {readSharedTimeWindow,writeSharedTimeWindow,writeSharedTraversalHop,followSharedTimeNudges,trackOwnSharedTimeWrite,qualifyTimeWindowReply,SharedTimeWindowControls,TIMELINE_ACT_LABEL,type SharedTimeDraft} from './sharedTimeWindow.js';
 import {sharedTimelinePresentation} from './sharedTimeProjection.js';
 import {timeAxisProjection,relativeTimeAxisProjection} from '../../../src/techne/m0m5/timeline/timeAxis';
 import {axisEventOf,currentHop,foldStanding,handoffDisclosure,handoffRefusal,openEndpoint,openRelation,relationRefOf,showOnGlobeOf,traversalHopOf,trailFromEvent,trailOfNavigation,type GlobeCarry,type TraversalFold} from '../../../src/techne/m0m5/timeline/navigationIdentity';
@@ -1191,7 +1191,8 @@ host.tools.append(saveGlyph);
      refresh:reply=>{sharedTime=reply;const draft=state.timeDraft;if(draft&&!draft.captured){draft.from=reply.axis.window?.from??'';draft.to=reply.axis.window?.to??'';}if(timeCurrent())rerender();}});
    };
    const timeControls=(redraw:()=>void)=><SharedTimeWindowControls basis={request} reading={nativeReading} instrument={selected==='m2'?'timeline':'place'}
-    acknowledged={sharedTime} draft={state.timeDraft!} current={timeCurrent} unavailableReason={timeReason} onError={message} onAcknowledged={reply=>{if(timeCurrent()){sharedTime=reply;redraw();}}}/>;
+    acknowledged={sharedTime} draft={state.timeDraft!} current={timeCurrent} unavailableReason={timeReason} onError={message} onAcknowledged={reply=>{if(timeCurrent()){sharedTime=reply;redraw();}}}
+    applyLabel={selected==='m2'?TIMELINE_ACT_LABEL:undefined}/>;
    if(view){
     const loadTimeline=data.dataSource.loadTimelineView;
     data.dataSource.loadTimelineView=async(range,filters)=>{const returned=await loadTimeline(range,filters),material=host.sceneMaterial(sceneId).research;return {...returned,nodes:returned.nodes.map(node=>{const layout=material?.timeline[node.node.graphNodeId];return layout?{...node,layoutOverride:{lane:layout.lane??'default',offsetY:layout.offsetY,width:layout.width??240,height:layout.height??160,style:timelineStyleLoaded(layout.style),layoutRevision:layout.layoutRevision??0}}:node;})};};

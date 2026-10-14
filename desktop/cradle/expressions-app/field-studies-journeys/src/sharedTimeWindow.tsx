@@ -6,7 +6,7 @@ import {timeAxis,type SharedTimeWindow} from '../../../src/techne/m0m5/timeline/
 import {sceneTitle} from '../../../src/techne/m0m5/journey/beats';
 import type {NativeTimeWindowBasis,NativeTimeWindowReply,NativeTimeWindowRequest} from '../../../../../packages/expressions-boundary/src/timeWindow';
 import {techneTimeWindowRequest} from './kernelExpressions.js';
-import {SHARED_TIME_NUDGE} from '../../../src/techne/session';
+import {SHARED_TIME_NUDGE,windowLabel} from '../../../src/techne/session';
 import './sharedTimeWindow.css';
 
 export interface SharedTimeDraft {
@@ -193,9 +193,14 @@ export async function readSharedTimeWindow(basis:NativeTimeWindowBasis,reading:T
  return qualifyTimeWindowReply(reply,basis,reading,instrument);
 }
 
-export function SharedTimeWindowControls({basis,reading,instrument,acknowledged,draft,current,onAcknowledged,onError,unavailableReason}:{
+/** T17: the explicit disclosure act of the Timeline (M2′). The window is the session's own, set only by this act, never by zoom or pan. */
+export const TIMELINE_ACT_LABEL='Read over this window';
+
+export function SharedTimeWindowControls({basis,reading,instrument,acknowledged,draft,current,onAcknowledged,onError,unavailableReason,applyLabel='Apply'}:{
  basis:NativeTimeWindowBasis;reading:TechneReading;instrument:'timeline'|'place';
  acknowledged:NativeTimeWindowReply|null;draft:SharedTimeDraft;
+ /** The verb of the explicit act. Timeline names what it asserts; Places keeps its plain Apply. */
+ applyLabel?:string;
  current:()=>boolean;onAcknowledged:(reply:NativeTimeWindowReply)=>void;onError:(message:string)=>void;
  unavailableReason?:string;
 }) {
@@ -256,9 +261,12 @@ export function SharedTimeWindowControls({basis,reading,instrument,acknowledged,
  };
  const declared=acknowledged?.axis.window;
  const outside=acknowledged?.axis.events.filter(event=>event.scope.state==='out-of-scope').length??0;
+ // The control is labelled with the window it will assert: the typed draft while one is open, else the window the session holds. Null names nothing.
+ const asserted=draft.captured?{from:draft.from||null,to:draft.to||null}:(declared??null);
+ const named=windowLabel(asserted);
  return <div className="shared-time-window">
-  <button ref={toggle} type="button" aria-expanded={open} title={`Shared Timeline and Places bounds${declared?`: ${declared.from??'open'} — ${declared.to??'open'}`:''}${outside?`; ${outside} dated facets outside`:''}`} onClick={()=>setOpen(value=>!value)}>
-   Time{declared?' · bounded':''}{draft.captured?' *':''}
+  <button ref={toggle} type="button" aria-expanded={open} title={`Shared time window${named?`: ${named}${draft.captured?' (draft, not yet read over)':''}`:' — none set'}${outside?`; ${outside} dated facets outside`:''}`} onClick={()=>setOpen(value=>!value)}>
+   Time{named?` · ${named}`:''}{draft.captured?' *':''}
   </button>
   <div ref={panel} popover="manual" className="shared-time-window-popover" hidden={!open} role="group" aria-label="Shared time window" onKeyDown={event=>{
    if(event.key==='Escape'){event.preventDefault();event.stopPropagation();close()}
@@ -266,7 +274,7 @@ export function SharedTimeWindowControls({basis,reading,instrument,acknowledged,
   }}>
    <label>From<input type="text" placeholder="Open" value={draft.from} disabled={busy||!acknowledged} onChange={event=>edit('from',event.target.value)}/></label>
    <label>To<input type="text" placeholder="Open" value={draft.to} disabled={busy||!acknowledged} onChange={event=>edit('to',event.target.value)}/></label>
-   <button type="button" disabled={busy||!acknowledged} onClick={()=>write({from:draft.from||null,to:draft.to||null})}>{busy?'Applying…':'Apply'}</button>
+   <button type="button" disabled={busy||!acknowledged} onClick={()=>write({from:draft.from||null,to:draft.to||null})}>{busy?'Applying…':applyLabel}</button>
    <button type="button" disabled={busy||!acknowledged} onClick={()=>write(null)}>Clear</button>
    {draft.captured&&<button type="button" disabled={busy} onClick={()=>{draft.captured=null;draft.from=declared?.from??'';draft.to=declared?.to??'';setFault(undefined);redraw(value=>value+1)}}>Cancel draft</button>}
    <button type="button" disabled={busy} onClick={refresh} title="Explicitly place this admitted source and Scene in the native time session; any typed draft is retained">Refresh time context</button>

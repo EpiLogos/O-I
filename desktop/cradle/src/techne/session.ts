@@ -235,6 +235,13 @@ export function createDisclosureSessionStore(): DisclosureSessionStore {
   return store;
 }
 
+/** T17: the window a control names, exactly as it is (or will be) asserted: "from – to", an open bound shown as "open".
+ * Null is the honest absence: no window stands, so nothing is named. Pure; it mints and reads nothing. */
+export function windowLabel(window: DisclosureSession["time_window"] | null | undefined): string | null {
+  if (!window) return null;
+  return `${window.from ?? "open"} – ${window.to ?? "open"}`;
+}
+
 /** A session that drifted from the contract is a bug, refused before it is
  * ever observable. */
 function checkedSession(session: DisclosureSession): DisclosureSession {
