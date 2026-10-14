@@ -364,3 +364,41 @@ test('the browser rows draw without a pane tree or a workspace book mounted (the
   const out = html(createElement(StubWorkspaceProvider, {transport}, createElement(ModeBrowser, {mode: 'base', onSelectSubject: () => {}, selectedSubject: null})))
   assert.match(out, /data-mode-browser="base"/)
 })
+
+// Seen on screen (computer-use, native b9a0a8048, 14 Oct): the Flow pane carried "Save to native source" and "Re-read current
+// document" on its face — options inside a pane. In a pane the document's head reads its revision and save standing; the
+// actions stand in the browser's aperture for the document the hand reached (central/documents/documentDoor.ts).
+test('in a pane a document carries a head reading and no buttons; as a device it keeps its own row', async () => {
+  const {FlowFace} = await import('../src/inhabitants/DocumentFlowFace.tsx')
+  const transport = {kind: 'unavailable', reason: 'test'}
+  const inPane = html(createElement(FlowFace, {transport, location: FLOW, presentation: 'pane'}))
+  assert.match(inPane, /data-document-head="flow"/)
+  assert.match(inPane, /class="document-pane-state"[^>]*>as read</, 'the standing is a reading: nothing read, nothing saved')
+  assert.doesNotMatch(inPane, /<button/, 'no control on the document\'s face')
+  const asDevice = html(createElement(FlowFace, {transport, location: FLOW}))
+  assert.match(asDevice, /Save to native source/, 'the device keeps its action row')
+  assert.doesNotMatch(asDevice, /data-document-head/)
+  const pane = await readFile(new URL('../src/central/documents/CentralDocumentPane.tsx', import.meta.url), 'utf8')
+  assert.equal((pane.match(/presentation="pane"/g) ?? []).length, 2, 'the Day and the Flow both stand in a pane as documents')
+})
+
+test('the aperture follows the document the hand reached, and lets it go when the pane closes', async () => {
+  const door = await import('../src/central/documents/documentDoor.ts')
+  const day = {key: 'day:1', form: 'Day', title: 'today', state: 'as read', save: () => {}}
+  const flow = {key: 'flow:1', form: 'Flow', title: 'flow', state: 'edited since save'}
+  door.publishDocument(day, true)
+  assert.equal(door.reachedDocument()?.key, 'day:1')
+  door.publishDocument({...flow}, false)
+  assert.equal(door.reachedDocument()?.key, 'day:1', 'a standing change of a document not reached moves nothing')
+  door.publishDocument(flow, true)
+  assert.equal(door.reachedDocument()?.key, 'flow:1', 'reaching the Flow moves the aperture to it')
+  door.publishDocument({...flow, state: 'saved'}, false)
+  assert.equal(door.reachedDocument()?.state, 'saved', 'the reached one\'s standing is followed')
+  door.withdrawDocument('day:1')
+  assert.equal(door.reachedDocument()?.key, 'flow:1', 'closing another pane leaves the reached one')
+  door.withdrawDocument('flow:1')
+  assert.equal(door.reachedDocument(), null)
+  assert.equal(door.documentStateWords({pending: true, dirty: true}), 'waiting for the owner')
+  assert.equal(door.documentStateWords({pending: false, dirty: true}), 'edited since save')
+  assert.equal(door.documentStateWords({pending: false, dirty: false, blocked: 'moved'}), 'blocked — moved')
+})

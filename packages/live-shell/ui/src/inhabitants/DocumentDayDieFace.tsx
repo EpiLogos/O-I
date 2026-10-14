@@ -37,6 +37,7 @@ import {
   type DayDocumentField,
 } from '../../../../../desktop/cradle/src/central/dayForm'
 import {receiving} from '../../../../../desktop/cradle/src/receiving/client'
+import {documentStateWords, publishDocument, reachedDocument, withdrawDocument, type DocumentInPane} from '../central/documents/documentDoor'
 import {readFile} from '../../../../../desktop/cradle/src/files/client'
 import {DOCUMENT_FORMS, resolveDocumentForm} from '../../../../../desktop/cradle/src/flow/documentForms'
 import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
@@ -56,6 +57,10 @@ export interface DocumentDayDieFaceProps {
    * (the form resolver's owner path); absent, the resolver falls back to the
    * cradle's canonical Work/O-I path. */
   readonly projects?: readonly {name?: string; path?: string}[]
+  /** In a pane the document is the face (the mockup's Day pane): its head reads the revision and the save standing, the die
+   * turns inside the form itself, and Save / Review stand in the browser's aperture for the document reached
+   * (central/documents/documentDoor.ts). As a device the face keeps its die net and its own action row. */
+  readonly presentation?: 'device' | 'pane'
 }
 
 interface DieBasis {sourceRef: string; documentId: string; revision: string; payload: unknown; fields: DayDocumentField[]}
@@ -78,7 +83,7 @@ function dieFaceOf(payload: unknown): number {
   return typeof face === 'number' && Number.isInteger(face) && face >= 0 && face <= 5 ? face : 0
 }
 
-export function DocumentDayDieFace({transport, project, sourceRef, documentId, projects}: DocumentDayDieFaceProps) {
+export function DocumentDayDieFace({transport, project, sourceRef, documentId, projects, presentation = 'device'}: DocumentDayDieFaceProps) {
   const session = useMemo(() => new DayFormSession({sourceRef, documentId, revision: '', payload: undefined, fields: []}), [sourceRef, documentId])
   const [basis, setBasis] = useState<DieBasis>()
   const [face, setFace] = useState<string>()
@@ -247,18 +252,33 @@ export function DocumentDayDieFace({transport, project, sourceRef, documentId, p
   const blocked = session.blocked !== undefined
   const openFace = dieFaceOf(basis?.payload)
   const open = DIE_POSITIONS[openFace]
+  const inPane = presentation === 'pane'
+  const key = useRef(`day:${Math.random().toString(36).slice(2)}`).current
+  const standing: DocumentInPane = {key, form: 'Day', title: documentId, revision: revision || undefined,
+    state: documentStateWords({pending, dirty, save, blocked: session.blocked}),
+    save: face && !pending && !blocked ? () => void saveToNative() : undefined,
+    reread: pending || !face ? undefined : () => void reviewNative(), rereadLabel: 'Review the native source'}
+  // The aperture follows the document the hand reached (the first one standing until then); a change of standing reaches it.
+  useEffect(() => { if (inPane) publishDocument(standing, !reachedDocument()) })
+  useEffect(() => () => withdrawDocument(key), [key])
 
   return (
     <div
+      onFocusCapture={inPane ? () => publishDocument(standing, true) : undefined}
+      onPointerDownCapture={inPane ? () => publishDocument(standing, true) : undefined}
       className="inhabitant-face-body inhabitant-document"
       data-document-device="ql-daily-die"
       data-save-outcome={save?.outcome ?? ''}
       data-dirty={dirty ? 'true' : 'false'}
       data-basis-revision={revision}
     >
+      {inPane && <div className="document-pane-head" data-document-head="day">
+        <span className="document-pane-form">Day · #{open.n} {open.name}</span>
+        <span className="document-pane-state" role="status" aria-live="polite">{revision ? `r${revision.slice(0, 8)} · ` : ''}{standing.state}</span>
+      </div>}
       {/* The die net — the device's compact face, a reading of the die's own
           face position (icon-cut's Day-die drawing, the open face inked). */}
-      <div className="inhabitant-die-net" data-die-face={openFace}
+      {!inPane && <div className="inhabitant-die-net" data-die-face={openFace}
         title={`The die's own face position, read from the payload: #${open.n} ${open.name} — ${open.role}. The die turns inside its own form; the host declares no turn channel, so ‹ › stand named and unfireable.`}>
         <svg width="140" height="72" viewBox="0 0 140 72" aria-label="Day die — six positions, the open face inked">
           <path d="M55 22V26M38 36H42M68 36H72M98 36H102M55 46V50" stroke="var(--inh-faint)" strokeWidth="1" strokeDasharray="1.5 1.5"/>
@@ -288,8 +308,8 @@ export function DocumentDayDieFace({transport, project, sourceRef, documentId, p
           <button type="button" className="inhabitant-die-turn-btn" disabled
             title="‹ › turn the die inside its own form. The hosted form owns its dots and no host turn channel is declared — the affordance holds its place, named and unfireable.">›</button>
         </span>
-      </div>
-      <div className="inhabitant-body-actions">
+      </div>}
+      {!inPane && <div className="inhabitant-body-actions">
         <button type="button" className="inhabitant-act" data-action="save" disabled={!face || pending || blocked} onClick={() => void saveToNative()}>Save to native source</button>
         <button type="button" className="inhabitant-act" data-action="review" disabled={pending || !face} onClick={() => void reviewNative()}>Review current native source</button>
         <span className="inhabitant-device-save" role="status" aria-live="polite" data-save-outcome-label={save?.outcome ?? ''}>
@@ -297,7 +317,7 @@ export function DocumentDayDieFace({transport, project, sourceRef, documentId, p
             ? <SaveOutcomeChip outcome={save.outcome} detail={save.detail}/>
             : <span className="inhabitant-quiet">{pending ? 'waiting for the native operation…' : blocked ? `blocked — ${session.blocked}` : 'no save attempted'}</span>}
         </span>
-      </div>
+      </div>}
       {failure && <p className="inhabitant-device-fault" role="alert">Day die original source unavailable: {failure}</p>}
       {notice && <p className="inhabitant-device-notice" role="status">{notice}</p>}
       {review && (
