@@ -1,25 +1,26 @@
 {
   "schema": "oi.gate-manifest/v1",
-  "updated": "2026-10-01",
+  "updated": "2026-10-14",
   "law": "A change is landed when main contains it AND the landing-tier receipt is green at that exact tip. Installs, snapshots and physical acceptance are separate concerns and never gate a landing. Every gate here is derived from a GitHub Actions workflow, with provenance recorded: CI and local run the same commands, so a green landing receipt means no CI surprise in the covered surface.",
   "tiers": {
-    "landing": "Run and pass at the exact tip before pushing toward main. Serialised, minutes, no runner-only infrastructure. The pre-push guard enforces a green receipt for HEAD.",
-    "walks": "Long acceptance walks and wide browser batteries. Required when the change touches shell, walks or multi-surface behaviour; the walk receipts are committed evidence.",
+    "landing": "Run and pass at the exact tip before pushing toward main. Serialised, minutes, no runner-only infrastructure. The pre-push guard enforces a green receipt for HEAD. It gates the desktop being built \u2014 the candidate shell, its hosted Expressions frame, the shared engine it imports, the live-* crates, the kernel \u2014 and the CLI and site; the legacy everyday desktop is frozen and gated by nothing.",
+    "walks": "Long acceptance walks. Empty since 2026-10-14: the legacy desktop's walks retired with it, and the candidate is verified on screen with computer use (desktop/cradle/docs/world-shell/wayfinder/FOUNDATION.md \u00a75). A candidate walk joins here when one exists.",
     "ci-only": "Requires GitHub runners, pinned owner checkouts, multi-target builds or live services. Not locally executable: listed so a landing receipt honestly names what it deferred to CI."
   },
   "bootstrap": [
     {
-      "area": "cradle",
+      "area": "candidate",
       "run_if_selected": [
-        "cradle",
+        "candidate",
         "browser",
         "guard"
       ],
       "commands": [
         "npm --prefix desktop/cradle install --no-audit --no-fund",
+        "npm --prefix desktop/cradle/expressions-app install --no-audit --no-fund",
+        "npm --prefix packages/live-shell/ui install --no-audit --no-fund",
         "npm --prefix packages/oi-design-system install --no-audit --no-fund",
-        "node desktop/cradle/scripts/ensure-expressions-app.mjs --build",
-        "node desktop/cradle/documents/build-personal.mjs"
+        "node desktop/cradle/scripts/ensure-expressions-app.mjs --build"
       ]
     },
     {
@@ -36,16 +37,16 @@
   ],
   "gates": [
     {
-      "name": "guard-source-markers-and-syntax",
+      "name": "guard-source-markers",
       "tier": "landing",
       "area": "guard",
-      "cwd": "desktop/cradle",
+      "cwd": ".",
       "provenance": {
         "workflow": "desktop.yml",
-        "job": "cradle",
-        "step": "Guard executable source \u2014 no unresolved markers, runner entry points parse"
+        "job": "candidate",
+        "step": "Guard executable source \u2014 no unresolved conflict markers"
       },
-      "command": "if git grep -lnE '^(<<<<<<<|>>>>>>>|=======$)' -- '*.mjs' '*.ts' '*.tsx'; then echo 'unresolved conflict markers in executable source'; exit 1; fi\nfor f in $(git ls-files 'walk/*.mjs' 'walk/scenarios/*.mjs' 'tests/*.mjs'); do node --check \"$f\" || { echo \"syntax error in $f\"; exit 1; }; done\nnode --test tests/walk-runner.test.mjs"
+      "command": "if git grep -lnE '^(<<<<<<<|>>>>>>>|=======$)' -- '*.mjs' '*.ts' '*.tsx'; then echo 'unresolved conflict markers in executable source'; exit 1; fi"
     },
     {
       "name": "rust-format-cli",
@@ -101,7 +102,7 @@
       "provenance": {
         "workflow": "desktop.yml",
         "job": "kernel",
-        "step": "Test and lint cradle kernel"
+        "step": "Complete cradle kernel unit and native target tests"
       },
       "command": "cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --all-targets"
     },
@@ -113,82 +114,117 @@
       "provenance": {
         "workflow": "desktop.yml",
         "job": "kernel",
-        "step": "Test and lint cradle kernel (clippy -D warnings)"
+        "step": "Lint all cradle kernel targets"
       },
       "command": "cargo clippy --manifest-path desktop/cradle/kernel/Cargo.toml --all-targets -- -D warnings"
     },
     {
-      "name": "cradle-tsc",
+      "name": "candidate-tsc",
       "tier": "landing",
-      "area": "cradle",
+      "area": "candidate",
+      "cwd": "packages/live-shell/ui",
+      "provenance": {
+        "workflow": "desktop.yml",
+        "job": "candidate",
+        "step": "Type-check the three TypeScript roots (candidate, shared engine, hosted frame)"
+      },
+      "command": "npx tsc --noEmit -p tsconfig.json"
+    },
+    {
+      "name": "engine-tsc",
+      "tier": "landing",
+      "area": "candidate",
       "cwd": "desktop/cradle",
       "provenance": {
-        "workflow": "canvas-editor-context.yml",
-        "job": "canvas",
-        "step": "Type and range/lifecycle contracts"
+        "workflow": "desktop.yml",
+        "job": "candidate",
+        "step": "Type-check the three TypeScript roots (candidate, shared engine, hosted frame)"
       },
       "command": "npx tsc --noEmit"
     },
     {
-      "name": "cradle-node-suite",
+      "name": "frame-tsc",
       "tier": "landing",
-      "area": "cradle",
-      "cwd": "desktop/cradle",
+      "area": "candidate",
+      "cwd": "desktop/cradle/expressions-app",
       "provenance": {
-        "workflow": "desktop-shell-recovery.yml",
-        "job": "wider-suite",
-        "step": "Wider suite (tests/*.test.mjs)"
+        "workflow": "desktop.yml",
+        "job": "candidate",
+        "step": "Type-check the three TypeScript roots (candidate, shared engine, hosted frame)"
       },
-      "command": "node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/*.test.mjs"
+      "command": "npm run lint"
     },
     {
-      "name": "cradle-conformance",
+      "name": "candidate-suite",
       "tier": "landing",
-      "area": "cradle",
+      "area": "candidate",
+      "cwd": "packages/live-shell/ui",
+      "provenance": {
+        "workflow": "desktop.yml",
+        "job": "candidate",
+        "step": "Candidate shell suite"
+      },
+      "command": "node scripts/test-all.mjs"
+    },
+    {
+      "name": "engine-suite",
+      "tier": "landing",
+      "area": "candidate",
+      "cwd": "packages/live-shell/ui",
+      "provenance": {
+        "workflow": "desktop.yml",
+        "job": "candidate",
+        "step": "Shared engine suite (desktop/cradle tests that reach a file the candidate imports)"
+      },
+      "command": "node scripts/test-engine.mjs"
+    },
+    {
+      "name": "engine-conformance",
+      "tier": "landing",
+      "area": "candidate",
       "cwd": "desktop/cradle",
       "provenance": {
         "workflow": "desktop.yml",
-        "job": "cradle",
-        "step": "Enforce desktop architecture conformance and bounded debt"
+        "job": "candidate",
+        "step": "Shared engine architecture conformance and bounded debt"
       },
       "command": "node --test tests/conformance/*.test.mjs"
     },
     {
-      "name": "cradle-shell-presentation",
+      "name": "frame-suite",
       "tier": "landing",
-      "area": "cradle",
-      "cwd": "desktop/cradle",
+      "area": "candidate",
+      "cwd": "desktop/cradle/expressions-app",
       "provenance": {
         "workflow": "desktop.yml",
-        "job": "cradle",
-        "step": "Enforce the shell presentation rules and deliberate source disclosure"
+        "job": "candidate",
+        "step": "Hosted Expressions frame suite"
       },
-      "command": "node --test tests/cradle-shell-antipatterns.test.mjs"
+      "command": "npm test"
     },
     {
-      "name": "native-formation-regressions",
+      "name": "expressions-boundary",
       "tier": "landing",
-      "area": "browser",
-      "cwd": "desktop/cradle",
+      "area": "candidate",
+      "cwd": "packages/expressions-boundary",
       "provenance": {
         "workflow": "desktop.yml",
-        "job": "cradle",
-        "step": "Prove native formation authoring and bounded particle candidate retention"
+        "job": "candidate",
+        "step": "Expressions boundary type-check and suite"
       },
-      "command": "node tests/formation-native-regressions.mjs"
+      "command": "npm run check && npm test"
     },
     {
-      "name": "cradle-appearance",
+      "name": "candidate-production-build",
       "tier": "landing",
-      "area": "browser",
-      "cwd": "desktop/cradle",
+      "area": "candidate",
+      "cwd": ".",
       "provenance": {
         "workflow": "desktop.yml",
-        "job": "cradle",
-        "step": "Prove desktop appearance, source syntax and native prepaint policy"
+        "job": "candidate",
+        "step": "Production builds of the candidate and its hosted frame"
       },
-      "command": "node tests/desktop-appearance.mjs && node tests/text-editor-appearance.mjs && node tests/expression-document-appearance.mjs && node tests/theme-prepaint-csp.mjs && npm --prefix ../../packages/oi-design-system run verify",
-      "retry": 1
+      "command": "npm --prefix desktop/cradle/expressions-app run build && npm --prefix packages/live-shell/ui run build"
     },
     {
       "name": "browser-search-overlay",
@@ -197,11 +233,34 @@
       "cwd": "desktop/cradle",
       "provenance": {
         "workflow": "desktop.yml",
-        "job": "cradle",
-        "step": "Prove search component and literal query transport (D)"
+        "job": "candidate",
+        "step": "Browser contracts \u2014 search, text editor, Expression stage, canvas surfaces, frame formations"
       },
-      "command": "node tests/search-overlay.mjs",
-      "retry": 1
+      "command": "node tests/search-overlay.mjs"
+    },
+    {
+      "name": "browser-text-editor",
+      "tier": "landing",
+      "area": "browser",
+      "cwd": "desktop/cradle",
+      "provenance": {
+        "workflow": "desktop.yml",
+        "job": "candidate",
+        "step": "Browser contracts \u2014 search, text editor, Expression stage, canvas surfaces, frame formations"
+      },
+      "command": "node tests/text-editor-appearance.mjs"
+    },
+    {
+      "name": "browser-expression-stage",
+      "tier": "landing",
+      "area": "browser",
+      "cwd": "desktop/cradle",
+      "provenance": {
+        "workflow": "desktop.yml",
+        "job": "candidate",
+        "step": "Browser contracts \u2014 search, text editor, Expression stage, canvas surfaces, frame formations"
+      },
+      "command": "node tests/expression-provider-lifecycle.mjs"
     },
     {
       "name": "browser-canvas-editor",
@@ -209,37 +268,35 @@
       "area": "browser",
       "cwd": "desktop/cradle",
       "provenance": {
-        "workflow": "canvas-editor-context.yml",
-        "job": "canvas",
-        "step": "Production editor selection and send interaction"
+        "workflow": "desktop.yml",
+        "job": "candidate",
+        "step": "Browser contracts \u2014 search, text editor, Expression stage, canvas surfaces, frame formations"
       },
-      "command": "node tests/canvas-editor-browser.mjs",
-      "retry": 1
+      "command": "node tests/canvas-editor-browser.mjs"
     },
     {
-      "name": "browser-techne-lens-studio",
+      "name": "browser-frame-formations",
       "tier": "landing",
       "area": "browser",
       "cwd": "desktop/cradle",
       "provenance": {
-        "workflow": "techne-constructive-field.yml",
-        "job": "source-runtime",
-        "step": "Prove entrance and actual relation drawing with disconnected-binding negatives"
+        "workflow": "desktop.yml",
+        "job": "candidate",
+        "step": "Browser contracts \u2014 search, text editor, Expression stage, canvas surfaces, frame formations"
       },
-      "command": "node tests/techne-lens-studio-browser.mjs",
-      "retry": 1
+      "command": "node tests/formation-native-regressions.mjs"
     },
     {
-      "name": "cradle-production-build",
+      "name": "live-crates",
       "tier": "landing",
-      "area": "cradle",
-      "cwd": "desktop/cradle",
+      "area": "rust",
+      "cwd": ".",
       "provenance": {
         "workflow": "desktop.yml",
-        "job": "cradle",
-        "step": "Build cradle web bundle from the locked graph"
+        "job": "live-crates",
+        "step": "Format, lint and test the crates behind the candidate's server"
       },
-      "command": "npm run build"
+      "command": "set -e; for crate in live-dynamics live-set live-shell; do cargo fmt --manifest-path packages/$crate/Cargo.toml -- --check; cargo clippy --manifest-path packages/$crate/Cargo.toml --locked --all-targets -- -D warnings; cargo test --manifest-path packages/$crate/Cargo.toml --locked; done"
     },
     {
       "name": "site-contracts",
@@ -264,70 +321,6 @@
         "step": "Verify the essay publication builders and host contract"
       },
       "command": "node --experimental-strip-types --test essay-source.test.mjs essay-browser.test.mjs essay-host.test.mjs quartz-staged-input.test.mjs"
-    },
-    {
-      "name": "walk-mode-workspaces",
-      "tier": "walks",
-      "area": "walks",
-      "cwd": "desktop/cradle",
-      "provenance": {
-        "workflow": "walk harness (committed receipts are the evidence)"
-      },
-      "command": "node walk/run.mjs mode-workspaces"
-    },
-    {
-      "name": "walk-factory-desk",
-      "tier": "walks",
-      "area": "walks",
-      "cwd": "desktop/cradle",
-      "provenance": {
-        "workflow": "walk harness (committed receipts are the evidence)"
-      },
-      "command": "node walk/run.mjs factory-desk"
-    },
-    {
-      "name": "walk-factory-tasks",
-      "tier": "walks",
-      "area": "walks",
-      "cwd": "desktop/cradle",
-      "provenance": {
-        "workflow": "walk harness (committed receipts are the evidence)"
-      },
-      "command": "node walk/run.mjs factory-tasks"
-    },
-    {
-      "name": "walk-factory-expressions",
-      "tier": "walks",
-      "area": "walks",
-      "cwd": "desktop/cradle",
-      "provenance": {
-        "workflow": "walk harness (committed receipts are the evidence)"
-      },
-      "command": "node walk/run.mjs factory-expressions"
-    },
-    {
-      "name": "browser-shell-recovery",
-      "tier": "walks",
-      "area": "browser",
-      "cwd": "desktop/cradle",
-      "provenance": {
-        "workflow": "desktop-shell-recovery.yml",
-        "job": "shell",
-        "step": "Actual shell interactions in Chromium and WebKit"
-      },
-      "command": "node tests/shell-recovery.browser.mjs"
-    },
-    {
-      "name": "browser-personal-web",
-      "tier": "walks",
-      "area": "browser",
-      "cwd": "desktop/cradle",
-      "provenance": {
-        "workflow": "personal-web.yml",
-        "job": "carriers",
-        "step": "Exercise standalone editing, export, narrow reading and safe data"
-      },
-      "command": "node tests/personal-web-browser.mjs"
     },
     {
       "name": "ci-native-full-regression",
@@ -371,29 +364,12 @@
       "why": "installs SpaceTimeDB CLI, publishes live databases, needs network services"
     },
     {
-      "name": "ci-techne-native-owners",
-      "tier": "ci-only",
-      "provenance": {
-        "workflow": "techne-constructive-field.yml",
-        "job": "native-application"
-      },
-      "why": "restores exact native owner binaries and runs against actual storage"
-    },
-    {
       "name": "ci-development-field",
       "tier": "ci-only",
       "provenance": {
         "workflow": "development-field-native.yml + development-field-conformance.yml"
       },
       "why": "isolated owner checkouts at exact cut revisions"
-    },
-    {
-      "name": "ci-adoption-lifecycle",
-      "tier": "ci-only",
-      "provenance": {
-        "workflow": "adoption-lifecycle.yml + adoption-ingress.yml"
-      },
-      "why": "multi-repo evidence packets, swiftc media checker"
     },
     {
       "name": "ci-desktop-bundle-and-release",
@@ -422,26 +398,6 @@
         "step": "Verify shared-field contracts (spacetimedb-explore-surface.test.mjs member)"
       },
       "why": "needs the generated spacetimedb client bindings environment; excluded from the local site-contracts list for that reason"
-    },
-    {
-      "name": "ci-readable-native-presentation",
-      "tier": "ci-only",
-      "provenance": {
-        "workflow": "desktop.yml",
-        "job": "cradle",
-        "step": "Prove native composition names, disclosure and exact subject selection"
-      },
-      "why": "Requires the current native walk bridge and provisioned Chromium/WebKit; executes node tests/presentation-readable-native.mjs with OI_KERNEL_BRIDGE and retains accessibility/browser evidence."
-    },
-    {
-      "name": "ci-readable-native-owners",
-      "tier": "ci-only",
-      "provenance": {
-        "workflow": "readable-presentation-native.yml",
-        "job": "native-readable",
-        "step": "Prove native source, library, context and account readability"
-      },
-      "why": "Builds pinned AIKit/Central and the current O-I native walk bridge, then exercises real native knowledge, Library, context and complete verso account readings against production components."
     }
   ]
 }

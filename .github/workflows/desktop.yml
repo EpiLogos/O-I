@@ -1,14 +1,22 @@
 name: O:I desktop
 
-# Guards the desktop surface only: the cradle kernel crate, the cradle web
-# build and the native Tauri shell graph. The CLI is gated by verify.yml; the
-# kernel tests that need built owner executables are marked ignored and run
-# through `oi dev gate`, so no sibling repository is built here.
+# Guards the desktop being built: the candidate shell (packages/live-shell/ui)
+# with its hosted Expressions frame, the shared engine it imports from
+# desktop/cradle/src, the live-* crates behind its server, the cradle kernel
+# and the native Tauri host. The legacy everyday desktop (CradleFrame and the
+# surfaces only it reaches) is frozen while its replacement is built: no job
+# here exercises it, and its own workflows run only on dispatch. The CLI is
+# gated by verify.yml; kernel tests that need built owner executables are
+# marked ignored and run through `oi dev gate`.
 
 on:
   pull_request:
     paths:
       - 'desktop/**'
+      - 'packages/live-shell/**'
+      - 'packages/live-set/**'
+      - 'packages/live-dynamics/**'
+      - 'packages/expressions-boundary/**'
       - 'packages/oi-design-system/**'
       - 'shared-field/**'
       - '.github/workflows/desktop.yml'
@@ -108,163 +116,110 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-  cradle:
+  candidate:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
-          cache-dependency-path: desktop/cradle/package-lock.json
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2.9.2
-        with:
-          workspaces: desktop/cradle/kernel
-      - name: Build cradle web bundle from the locked graph
+          cache-dependency-path: |
+            desktop/cradle/package-lock.json
+            desktop/cradle/expressions-app/package-lock.json
+            packages/live-shell/ui/package-lock.json
+            packages/oi-design-system/package-lock.json
+      - name: Install the locked graphs the candidate builds from
         run: |
           npm ci --prefix desktop/cradle --no-audit --no-fund
-          npm --prefix desktop/cradle run build
-      - name: Build and start the dev-only kernel walk bridge with a disposable OI_HOME
-        id: bridge
+          npm ci --prefix desktop/cradle/expressions-app --no-audit --no-fund
+          npm ci --prefix packages/live-shell/ui --no-audit --no-fund
+          npm ci --prefix packages/oi-design-system --no-audit --no-fund
+      - name: Guard executable source — no unresolved conflict markers
         run: |
-          set -euo pipefail
-          cargo build --manifest-path desktop/cradle/kernel/Cargo.toml --locked --bin walk-bridge
-          export OI_HOME="$RUNNER_TEMP/cradle-kernel-home"
-          mkdir -p "$OI_HOME"
-          OI_HOME="$OI_HOME" desktop/cradle/kernel/target/debug/walk-bridge 127.0.0.1:4179 \
-            > "$RUNNER_TEMP/walk-bridge.log" 2>&1 &
-          echo $! > "$RUNNER_TEMP/walk-bridge.pid"
-          for _ in $(seq 1 50); do
-            curl -sf http://127.0.0.1:4179/state > /dev/null && exit 0
-            sleep 0.2
-          done
-          echo "::error::walk bridge never came up"; cat "$RUNNER_TEMP/walk-bridge.log"; exit 1
-      - name: Prove bounded native replay, owner resync and process generation
-        working-directory: desktop/cradle
-        env:
-          OI_NATIVE_EVENT_REPLAY: '1'
-          OI_KERNEL_BIN: ${{ github.workspace }}/desktop/cradle/kernel/target/debug/walk-bridge
-          OI_EVENT_REPLAY_RECEIPT: ${{ runner.temp }}/kernel-event-replay.json
-        run: node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/kernel-event-replay-native.test.mjs
-      - name: Guard executable source — no unresolved markers, runner entry points parse
-        working-directory: desktop/cradle
-        run: |
-          # The bundle build never imports the walk runner, so a syntax error
-          # or an unresolved merge marker there is invisible to tsc/vite. Catch
-          # both cheaply against tracked executable source (F01/F02).
           if git grep -lnE '^(<<<<<<<|>>>>>>>|=======$)' -- '*.mjs' '*.ts' '*.tsx'; then
             echo "::error::unresolved conflict markers in executable source"; exit 1
           fi
-          for f in $(git ls-files 'walk/*.mjs' 'walk/scenarios/*.mjs' 'tests/*.mjs'); do
-            node --check "$f" || { echo "::error::syntax error in $f"; exit 1; }
-          done
-          node --test tests/walk-runner.test.mjs
-      - name: Enforce desktop architecture conformance and bounded debt
+      - name: Type-check the three TypeScript roots (candidate, shared engine, hosted frame)
+        if: always()
+        run: |
+          (cd packages/live-shell/ui && npx tsc --noEmit -p tsconfig.json)
+          (cd desktop/cradle && npx tsc --noEmit)
+          (cd desktop/cradle/expressions-app && npm run lint)
+      - name: Candidate shell suite
+        if: always()
+        working-directory: packages/live-shell/ui
+        run: node scripts/test-all.mjs
+      - name: Shared engine suite (desktop/cradle tests that reach a file the candidate imports)
+        if: always()
+        working-directory: packages/live-shell/ui
+        run: node scripts/test-engine.mjs
+      - name: Shared engine architecture conformance and bounded debt
+        if: always()
         working-directory: desktop/cradle
         run: node --test tests/conformance/*.test.mjs
-      - name: Enforce the shell presentation rules and deliberate source disclosure
-        working-directory: desktop/cradle
-        run: node --test tests/cradle-shell-antipatterns.test.mjs
-      - name: Prove native Encounter material rendering and source offsets
-        working-directory: desktop/cradle
-        run: node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/encounter-markdown.test.mjs tests/canvas-editor-contract.test.mjs
-      - name: Prove Expression projection through the declared native engine
-        working-directory: desktop/cradle
-        run: node tests/expression-engine.mjs
-      - name: Prove knowledge projection identity and provenance preservation
-        working-directory: desktop/cradle
-        run: node tests/knowledge-expression.mjs
-      - name: Prove the Factory attempt-task consumer joins the native reads honestly
-        working-directory: desktop/cradle
-        run: node tests/factory-attempt-task.mjs
-      - name: Prove the Factory run model and the World-inhabitation apertures (no silent picks)
-        working-directory: desktop/cradle
-        run: node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/factory-run-model.test.mjs tests/factory-inhabitation-model.test.mjs tests/share-world-authoring.test.mjs
-      - name: Prove collection source identity and native-protocol consumer regressions
-        working-directory: desktop/cradle
+      - name: Hosted Expressions frame suite
+        if: always()
+        working-directory: desktop/cradle/expressions-app
+        run: npm test
+      - name: Expressions boundary type-check and suite
+        if: always()
+        working-directory: packages/expressions-boundary
         run: |
-          mkdir -p tests/artifacts/collection-source
-          set -o pipefail
-          node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/collection-source-identity.test.mjs tests/collection-consumers.test.mjs | tee tests/artifacts/collection-source/controlled.log
-      - name: Prove Explore travel, field search and primary projection readings (SF1)
-        working-directory: desktop/cradle
-        run: node --test tests/explore-field.test.mjs
-      - name: Prove the live configuration source against the typed kernel seam (#299 C6)
-        working-directory: desktop/cradle
-        run: node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/configuration-live-source.test.mjs
-      - name: Prove the settings × composition interface (composition lock §5/§7)
-        working-directory: desktop/cradle
-        run: node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/configuration-composition.test.mjs
-      - name: Prove Workspace state continuity across relaunch and degradation (#18/#65)
-        working-directory: desktop/cradle
-        run: node --test tests/workspace-continuity.test.mjs
-      - name: Install browser engines for search component contracts
+          npm run check
+          npm test
+      - name: Production builds of the candidate and its hosted frame
+        if: always()
+        run: |
+          npm --prefix desktop/cradle/expressions-app run build
+          npm --prefix packages/live-shell/ui run build
+      - name: Install browser engines for the component contracts
         working-directory: desktop/cradle
         run: npx playwright install --with-deps chromium webkit
-      - name: Prove native formation authoring and bounded particle candidate retention
-        working-directory: desktop/cradle
-        run: node tests/formation-native-regressions.mjs
-      - name: Prove search component and literal query transport (D)
-        working-directory: desktop/cradle
-        run: node tests/search-overlay.mjs
-      - name: Prove native composition names, disclosure and exact subject selection
-        working-directory: desktop/cradle
-        env:
-          OI_KERNEL_BRIDGE: http://127.0.0.1:4179
-          OI_PRESENTATION_EVIDENCE: tests/artifacts/readable-presentation
-        run: node tests/presentation-readable-native.mjs
-      - name: Interact with the production Library on controlled owner protocol
-        working-directory: desktop/cradle
-        run: node tests/collection-browser.mjs
-      - name: Prove Expression page placement and capture on one WebGL context
+      # Browser contracts over components the candidate mounts (each fixture's
+      # subject is candidate-reachable) and the hosted frame; none needs a live
+      # native service. Contracts whose subject only the legacy desktop reaches
+      # are not run here.
+      - name: Browser contracts — search, text editor, Expression stage, canvas surfaces, frame formations
         working-directory: desktop/cradle
         run: |
-          node tests/expression-stage-placement.mjs
-          node tests/expression-stage-ascii.mjs
-      - name: Prove shared Expression ownership and sleeping lifecycle
-        working-directory: desktop/cradle
-        env:
-          OI_KERNEL_BRIDGE: http://127.0.0.1:4179
-        run: |
-          node tests/expression-stage-lifecycle.mjs
-          node tests/expression-provider-lifecycle.mjs
-          node tests/visuals-preview-lifecycle.mjs
-          node tests/welcome-lifecycle.mjs
-      - name: Stop the dev-only kernel walk bridge
-        if: always()
-        run: |
-          [ -f "$RUNNER_TEMP/walk-bridge.pid" ] && kill "$(cat "$RUNNER_TEMP/walk-bridge.pid")" 2>/dev/null || true
-      - name: Prove desktop appearance, source syntax and native prepaint policy
-        working-directory: desktop/cradle
-        run: |
-          node tests/desktop-appearance.mjs
+          node tests/search-overlay.mjs
           node tests/text-editor-appearance.mjs
-          node tests/expression-document-appearance.mjs
-          node tests/theme-prepaint-csp.mjs
-          npm --prefix ../../packages/oi-design-system run verify
-          npm --prefix ../../packages/oi-design-system run verify:browser
-      - name: Retain search browser receipts and screenshots
+          node tests/expression-provider-lifecycle.mjs
+          node tests/canvas-editor-browser.mjs
+          node tests/formation-native-regressions.mjs
+      - name: Retain browser contract evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: search-component-${{ github.sha }}
-          path: desktop/cradle/tests/artifacts/search
-      - name: Retain native presentation browser and accessibility evidence
-        if: always()
-        uses: actions/upload-artifact@v4
+          name: candidate-browser-contracts-${{ github.sha }}
+          path: desktop/cradle/tests/artifacts/
+          if-no-files-found: ignore
+          retention-days: 14
+
+  live-crates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
         with:
-          name: readable-presentation-${{ github.sha }}
-          path: desktop/cradle/tests/artifacts/readable-presentation/
-          if-no-files-found: warn
-      - name: Retain collection source-identity consumer evidence
-        if: always()
-        uses: actions/upload-artifact@v4
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2.9.2
         with:
-          name: collection-consumer-evidence-${{ github.sha }}
-          path: desktop/cradle/tests/artifacts/collection-source/
-          if-no-files-found: warn
+          workspaces: |
+            packages/live-dynamics
+            packages/live-set
+            packages/live-shell
+      - name: Format, lint and test the crates behind the candidate's server
+        run: |
+          set -euo pipefail
+          for crate in live-dynamics live-set live-shell; do
+            cargo fmt --manifest-path packages/$crate/Cargo.toml -- --check
+            cargo clippy --manifest-path packages/$crate/Cargo.toml --locked --all-targets -- -D warnings
+            cargo test --manifest-path packages/$crate/Cargo.toml --locked
+          done
 
   native-shell:
     runs-on: macos-15
@@ -279,7 +234,7 @@ jobs:
           workspaces: desktop/cradle/src-tauri
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
           cache-dependency-path: desktop/cradle/package-lock.json
       - name: Prove locked native-shell graph

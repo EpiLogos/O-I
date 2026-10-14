@@ -1,15 +1,12 @@
 name: Canvas editor and context
+# The legacy everyday desktop is frozen while its replacement (the candidate
+# shell, packages/live-shell) is built, so this workflow no longer runs on pull
+# requests or pushes. desktop.yml gates the replacement; any of these tests
+# that reaches a file the candidate imports runs there in the shared engine
+# suite (packages/live-shell/ui/scripts/test-engine.mjs). Dispatch to run it.
 on:
-  push:
-    branches: [agent/canvas-editor-context-20260920]
-  pull_request:
-    paths:
-      - 'desktop/cradle/src/**'
-      - 'desktop/cradle/tests/canvas-editor*'
-      - 'desktop/cradle/tests/situation-frame.test.mjs'
-      - 'desktop/cradle/kernel/**'
-      - 'desktop/cradle/package*.json'
-      - '.github/workflows/canvas-editor-context.yml'
+  workflow_dispatch:
+
 permissions:
   contents: read
 concurrency:

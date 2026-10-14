@@ -47,10 +47,10 @@ region that is its craft floor (`../world-shell-mockup*.html`,
   (`worldTimelinePresentation`, `JourneyRows`), not to the instruments lanes
   1–5 built in the frame. The 126-target register's "implemented" column
   counts code that no user path reaches.
-- **CI never builds or tests the product.** No workflow touches
-  `packages/live-shell`. The 12 workflows that run on a PR gate the legacy
-  desktop, the kernel and the site (about 190 compute-minutes and 33 minutes
-  of wall clock per push).
+- **CI gated the legacy desktop, never the product** (until 14 Oct). No
+  workflow touched `packages/live-shell`; 12 workflows ran on PRs over the
+  legacy desktop, the kernel and the site. Fixed on 14 October by the CI cutover
+  (F0, below).
 
 ## 2. The shape of the work
 
@@ -84,19 +84,33 @@ the decisions.
 
 **F0. Truth and gates first.**
 - Correct the overstated records (PORT-AUDIT §E 1–12, FOUNDATION-AUDIT §E).
-- Add a candidate job to the existing `verify.yml`, with no new workflow. It
-  runs `packages/live-shell/ui` tsc, its node tests (the 32 known storage reds
-  fixed or quarantined by name), `candidate-reachable.mjs`, and the frame's tsc
-  and suite.
-- Path-filter or move to nightly the legacy-desktop suites that do not touch
-  the candidate: canvas-editor-context, central-desktop-source-walk,
-  adoption-lifecycle, desktop-shell-recovery, native-expression-backcheck,
-  agent-session-native, wiki-constellation, techne-constructive-field,
-  readable-presentation-native. They run when the files they gate change.
+- **CI cutover: done 14 Oct.** The legacy desktop is frozen, and CI gates its
+  replacement.
+  - `desktop.yml` job `candidate` covers:
+    - the type-checks of the three TS roots;
+    - the whole candidate suite (`ui/scripts/test-all.mjs`);
+    - the shared engine suite (`ui/scripts/test-engine.mjs`, the
+      `desktop/cradle` tests that reach a file the candidate imports, worked
+      out by `candidate-reachable.mjs`);
+    - conformance, the frame suite and the Expressions boundary;
+    - production builds of the candidate and frame;
+    - five browser contracts whose subject is candidate-reachable.
+  - Job `live-crates` runs fmt, clippy and test on live-dynamics, live-set and
+    live-shell.
+  - The kernel and native-host jobs stay.
+  - The 12 legacy-only workflows run on dispatch only.
+  - `gates/manifest.json` follows suit. Its landing tier has 24 gates; the
+    legacy walks tier and the 4 legacy ci-only entries are gone.
+  - Tests no longer read evidence from `Work/reverse-engineering`. The
+    rich-Glyph proof document is a committed fixture. The three replays of the
+    owner's real World skip, with a stated reason, where that evidence is
+    absent.
+  - A test reaching the candidate is gated; a test only the legacy desktop
+    reaches is not.
 - Add the switchboard tripwire.
-- *Done when:* a PR touching only `packages/live-shell/ui` runs the candidate
-  job in under 10 minutes and none of the legacy suites. The register's
-  reachability notes are true.
+- *Done when:* the register's reachability notes are true and the tripwire
+  is in CI. (The CI condition holds: a PR touching only the candidate runs the
+  candidate jobs and none of the legacy suites.)
 
 **F1. One state model** (manual §10.2 sets, §10.7 going back). Live gets its
 own book mode. The frame state of `App.tsx` lives in each mode's layout. There
