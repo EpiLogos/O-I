@@ -30,14 +30,47 @@ import {digest,encodeEnvelope,readEnvelope,LIBRARY_RECORD_SCHEMA} from './draftS
 /** T22: where a library entry's document came from. A kernel-ref entry is the browser copy of the kernel Expression `ref`;
  * a local-draft entry is browser-local work the kernel has not recorded. The origin is stored beside the document, never in it:
  * a document read from the Library carries no origin, so its authored material and drafts compare exactly as before. */
-export type LibraryOrigin={kind:'kernel-ref';ref:string}|{kind:'local-draft'};
+/** A local-draft entry may record the kernel document its first kernel save created (`adopted_into`, the kernel ref, with its title and
+ * time). The link is metadata beside the local copy: the copy is kept, and no kernel identity changes. */
+export interface LibraryAdoption{ref:string;title:string;at:string}
+export type LibraryOrigin={kind:'kernel-ref';ref:string}|({kind:'local-draft'}&Partial<{adopted_into:string;adopted_title:string;adopted_at:string}>);
 const LOCAL_DRAFT:LibraryOrigin={kind:'local-draft'};
+const isKernelRef=(value:unknown):value is string=>typeof value==='string'&&value.startsWith('expression:')&&value.length<=512;
 /** The origin a stored or supplied value reads as. Anything that is not a well-formed kernel ref is local-draft: an unknown origin is not kernel-bound. */
 export function libraryOriginFrom(value:unknown):LibraryOrigin{
- const candidate=value as {kind?:unknown;ref?:unknown}|null;
- if(candidate&&typeof candidate==='object'&&candidate.kind==='kernel-ref'&&typeof candidate.ref==='string'&&candidate.ref.startsWith('expression:')&&candidate.ref.length<=512)
+ const candidate=value as {kind?:unknown;ref?:unknown;adopted_into?:unknown;adopted_title?:unknown;adopted_at?:unknown}|null;
+ if(candidate&&typeof candidate==='object'&&candidate.kind==='kernel-ref'&&isKernelRef(candidate.ref))
   return {kind:'kernel-ref',ref:candidate.ref};
+ if(candidate&&typeof candidate==='object'&&candidate.kind==='local-draft'&&isKernelRef(candidate.adopted_into)){
+  const title=typeof candidate.adopted_title==='string'?candidate.adopted_title.slice(0,160):'';
+  const at=typeof candidate.adopted_at==='string'?candidate.adopted_at.slice(0,40):'';
+  return {kind:'local-draft',adopted_into:candidate.adopted_into,adopted_title:title,adopted_at:at};
+ }
  return {kind:'local-draft'};
+}
+/** The origin a local entry records once its first kernel save has adopted it. */
+export function adoptedLocalOrigin(adoption:LibraryAdoption):LibraryOrigin{return libraryOriginFrom({kind:'local-draft',adopted_into:adoption.ref,adopted_title:adoption.title,adopted_at:adoption.at});}
+/** Records the kernel document a browser-local entry was saved into. Only a local-draft entry that is already stored takes the link: its
+ * copy is re-written with the same content, and a kernel-ref entry or an absent entry is left as it is (false). A later adoption
+ * records the latest ref. Nothing is removed. */
+export function recordLibraryAdoption(id:string,adoption:LibraryAdoption):boolean{
+ let b:LibraryBackend;
+ try{b=store();b.keys();}
+ catch{return false;}
+ const at=new Date();
+ migrateLegacy(b,at);
+ const base=DOC_PREFIX+partOf(id),state=docState(b,base);
+ if(state.state!=='valid'||state.origin.kind!=='local-draft')return false;
+ const {origin:_stored,...document}=JSON.parse(state.body) as Record<string,unknown>;
+ writePair(b,base,JSON.stringify({...document,origin:adoptedLocalOrigin(adoption)}),at,'Replaced by a newer save.','Library entry');
+ return true;
+}
+/** How opening a Library entry resolves: a local entry that its first kernel save adopted offers the kernel copy first (the boot's own
+ * follow path), with the browser draft still openable beneath it; everything else opens as it always has. */
+export type LibraryOpenPlan={kind:'kernel-first';ref:string;title:string}|{kind:'local'};
+export function libraryOpenPlan(origin:LibraryOrigin|undefined,kernelReachable:boolean):LibraryOpenPlan{
+ if(origin&&origin.kind==='local-draft'&&origin.adopted_into&&kernelReachable)return {kind:'kernel-first',ref:origin.adopted_into,title:origin.adopted_title??''};
+ return {kind:'local'};
 }
 
 /** The earlier single-array key. Retained read-only after its split is proven (see the module note). */
