@@ -5,7 +5,14 @@ import type {InhabitantManifest} from './manifest.ts'
 export function softwareFactoryFamilyManifest(): FamilyManifest {
   const manifest: InhabitantManifest = {
     id: 'software-factory',
-    browser: ['tasks', 'runs'],
+    // `runs` fills the mockup's Runs entry (factory-runs, the same family); `tasks` is the selected run's task list.
+    browser: [],
+    browserEntries: [
+      {id: 'factory-runs', label: 'Runs', group: 'Work', mark: 'arrangement', kindMark: 'run', modes: ['factory'], state: 'waiting',
+        hint: 'Attempts and their task trees (ops factory_attempt_read and factory_attempt_task_list_read). The run viewer reads them in the agency column; this composed browser has no row source for it yet.'},
+      {id: 'tasks', label: 'Tasks', group: 'Work', mark: 'form', modes: ['factory'], state: 'waiting',
+        hint: 'The selected run\'s task list (op factory_attempt_task_list_read). No row source is composed in this browser yet; the same tasks show as the run\'s tree under Runs.'},
+    ],
     faces: [
       {id: 'agent-custody', presentations: ['compact', 'expanded'], liveSemantic: 'macro', invariant: {maps: [{key: 'autonomy', range: ['suggest', 'review', 'auto']}]}, note: 'Autonomy, review gate, write mode, hand-back on agent device (shared face with Actuation).'},
       {id: 'context-write-mode', presentations: ['compact', 'expanded'], liveSemantic: 'return', invariant: {routesTo: 'shell.setWriteArm'}, note: 'Write receipts and Return on context-world device.'},

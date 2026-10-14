@@ -5,7 +5,13 @@ import type {InhabitantManifest} from './manifest.ts'
 export function aiKitFamilyManifest(): FamilyManifest {
   const manifest: InhabitantManifest = {
     id: 'ai-kit',
-    browser: ['agents', 'skillsets', 'skills'],
+    // `skillsets` is carried by browserEntries. `agents` and `skills` stay bare: each overlaps a mockup Factory entry
+    // owned by software-factory (factory-agents, factory-knowledge) and no owner has ruled whose they are — OPEN.
+    browser: ['agents', 'skills'],
+    browserEntries: [
+      {id: 'skillsets', label: 'Skillsets', group: 'Ground', mark: 'lib', modes: ['factory'], state: 'waiting',
+        hint: 'Accepted skill refs on the agent roster (op agent_definition_reading). The agent shell\'s own Skillsets column reads them; this composed browser has no row source for it yet.'},
+    ],
     faces: [
       {id: 'skillset-rack', presentations: ['compact', 'expanded'], liveSemantic: 'rack', invariant: {chains: ['skill-device'], chainSelector: 'skill (admit light)'}, note: 'Skills as chains with admit lights; macros Thoroughness, Test depth, Reach, Risk.'},
       {id: 'skill-device', presentations: ['compact', 'expanded'], liveSemantic: 'device-audio-fx', invariant: {transforms: 'the agent turn passing the skillset chain (the turn passes on)'}, note: 'Single skill on a chain; disclosure law as admit light.'},
