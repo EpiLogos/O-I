@@ -29,6 +29,9 @@ export interface BrowserCategory {
   hint?: string
   /** Declared, but its owner read has not landed. */
   waiting?: boolean
+  /** How many rows the category holds, when its source discloses that (the mockup's right-aligned count). Never guessed:
+   * a source that does not know leaves it out, and the column draws no count. */
+  count?: number
 }
 
 /** A row source: its categories and the body that draws a category's rows. */

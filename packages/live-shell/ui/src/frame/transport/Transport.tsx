@@ -1,10 +1,12 @@
 // The one transport (FOUNDATION F7): 28 slots in Live's places, the same in every mode, each with its specimen mark from
 // the icon cut; readout slots show values. What a slot does is the mode's binding (shell/modeTransports.tsx); unbound,
 // it is drawn waiting — reduced, disabled, its title naming what it would do and that it waits. A slot is enabled only by
-// a binding with a write path; a light shows only a reading. It knows no mode.
+// a binding with a write path; a light shows only a reading. It knows no mode. Drawn at the mockup's floor (.tp's groups,
+// .nc cells, .fld readouts, .tbtn play row; transport.css).
 import type {ReactNode} from 'react'
 import {Icon as CutIcon, type IconName} from '../../inhabitants/sdk/Icon'
 import type {SlotBinding, SlotWords, TransportBindings, TransportSlotId} from './slots'
+import './transport.css'
 
 /** Each pressable slot's specimen mark (icon-cut.html); the slots without one are readouts. */
 const MARKS: Partial<Record<TransportSlotId, IconName>> = {
@@ -24,8 +26,9 @@ const READOUTS = new Set<TransportSlotId>(['tempo', 'signature', 'root', 'scale'
 export function Transport({bindings, words}: {bindings: TransportBindings; words: (id: TransportSlotId) => SlotWords}) {
   const slot = (id: TransportSlotId): ReactNode => <Slot key={id} id={id} binding={bindings[id]} words={words(id)} />
   return <div className="mode-transport one-transport" role="group" aria-label="Transport">
-    <div className="transport-group">{slot('link')}{slot('tap')}</div>
-    <div className="transport-group transport-tempo">{slot('tempo')}{slot('signature')}{slot('metro')}{slot('quantize')}</div>
+    {/* Link and Tap lead the tempo cells as one group, as the mockup's first group does. */}
+    <div className="transport-group transport-lead">{slot('link')}{slot('tap')}
+      <div className="transport-group transport-tempo">{slot('tempo')}{slot('signature')}{slot('metro')}{slot('quantize')}</div></div>
     <div className="transport-scale">{slot('key')}{slot('root')}{slot('scale')}</div>
     <div className="transport-spacer" />
     <div className="transport-group transport-playback">{slot('follow')}{slot('position')}{slot('play')}{slot('stop')}{slot('record')}{slot('overdub')}{slot('arm')}{slot('re-enable')}{slot('capture')}</div>
@@ -51,7 +54,9 @@ function Slot({id, binding, words}: {id: TransportSlotId; binding: SlotBinding |
   }
   if (!mark) {
     // A readout slot: its value; a stepped readout (tempo) carries its nudges, enabled only by the owner's step.
-    const face = <output className={id === 'position' || id === 'loop-length' ? 'position-field' : id === 'tempo' ? 'tempo-field' : 'meter-field'} {...common} data-light={light}>{readout}</output>
+    // Unread (no owner value), the readout shows Live's empty face, drawn faint: a dash is not a value.
+    const face = <output className={id === 'position' || id === 'loop-length' ? 'position-field' : id === 'tempo' ? 'tempo-field' : 'meter-field'} {...common} data-light={light}
+      data-unread={binding?.readout ? undefined : ''}>{readout}</output>
     if (!binding?.step && id !== 'tempo') return face
     return <>{face}
       <button type="button" className="native-control" data-slot={id} data-i={words.dataI} title={title} aria-label={`${words.label} down`} disabled={!stepper} onClick={() => binding?.step?.(-1)}>‹</button>
@@ -62,6 +67,6 @@ function Slot({id, binding, words}: {id: TransportSlotId; binding: SlotBinding |
   return <button type="button" className={`native-control${PLAY_ROW.has(id) ? ` transport-btn transport-${id === 'record' ? 'record' : id}` : ''}`} {...common}
     data-light={light} aria-pressed={binding?.lit} disabled={!enabled && !step} aria-disabled={!enabled && !step}
     onClick={binding?.press ?? (step ? () => binding?.step?.(1) : undefined)}>
-    <CutIcon name={mark} size={PLAY_ROW.has(id) ? 15 : 14} />
+    <CutIcon name={mark} size={PLAY_ROW.has(id) ? 15 : 13} />
   </button>
 }

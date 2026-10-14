@@ -1,0 +1,41 @@
+/* The one transport (F7) at the mockup's floor (world-shell-mockup.html .tp, .g, .nc, .fld, .tbtn, .sp, .cpu): groups of
+   cells 2px apart and 7px between groups; a cell is 19px on bg-0 with a line border, lit (the owner's reading) in the
+   accent; a readout is a mono field on bg-0, the position underlined in the accent; play, stop and record are the 20×22
+   play row — play in the accent and filled when lit, record lighting in --rec. Shell tokens only (the agent frame's
+   --accent-ink / --rec-ink / --mono where it carries them). Scoped to .one-transport so the old bars' rules elsewhere
+   stand. */
+
+.mode-transport.one-transport { gap: 7px }
+/* Display stays the shell's everywhere but in an owner's slot, so the narrow-width rules (styles.css) still fold the scale,
+   loop and system groups and the tempo and play rows' later cells away. */
+.one-transport .transport-group, .one-transport .transport-scale, .one-transport .transport-system { align-items: center; gap: 2px; white-space: nowrap }
+.one-transport .transport-slot { display: flex; align-items: center; gap: 2px; white-space: nowrap }
+.one-transport .transport-slot:has(> output) { min-width: 0 }
+/* the scale group may give way: an owner's long line in it (Live's mode in force) ellipsizes before the bar overflows */
+.one-transport .transport-scale { margin-left: 10px; min-width: 0; flex-shrink: 1 }
+
+/* a cell (.nc); its line is the mockup's #30343a, whose closest shell token is --bg-1 (#33363b): the cell reads as a flat
+   block on the bar, as it does in the mockup */
+.mode-transport.one-transport .native-control { height: 19px; min-width: 17px;
+  padding: 1px 4px; border: 1px solid var(--bg-1); background: var(--bg-0); color: var(--text-dim); font-size: 10px; line-height: 14px }
+.mode-transport.one-transport .native-control svg { display: block; margin: 0 auto }
+.mode-transport.one-transport .native-control:not(:disabled):hover { color: var(--text) }
+.mode-transport.one-transport .native-control[data-light=on]:not(.transport-btn) { background: var(--accent); border-color: var(--accent); color: var(--accent-ink, var(--line)) }
+
+/* a readout (.fld): mono, on bg-0, the owner's value in the text colour; unread, it stays faint */
+.mode-transport.one-transport :is(.tempo-field, .meter-field, .position-field) { width: auto; height: 19px; line-height: 15px;
+  padding: 2px 6px; border: 0; background: var(--bg-0); color: var(--text); font-family: var(--mono, ui-monospace, 'SF Mono', Menlo, monospace); font-size: 10px; white-space: nowrap }
+.mode-transport.one-transport .position-field { min-width: 64px; text-align: center }
+.mode-transport.one-transport .position-field[data-slot=position] { box-shadow: inset 0 -2px 0 var(--accent) }
+.mode-transport.one-transport :is(.tempo-field, .meter-field, .position-field)[data-unread] { color: var(--text-faint) }
+
+/* the play row (.tbtn): 20×22, no cell; play in the accent, filled when lit; record lights in --rec */
+.mode-transport.one-transport .transport-playback > .transport-btn { width: 20px; height: 22px; min-width: 0; padding: 0; border: 0; background: transparent }
+.mode-transport.one-transport .transport-btn[data-light=on] { color: var(--text) }
+.mode-transport.one-transport .transport-play[data-light=on] { background: var(--accent); color: var(--accent-ink, var(--line)) !important }
+.mode-transport.one-transport .transport-record { color: var(--rec-ink, var(--text-dim)) !important }
+.mode-transport.one-transport .transport-record[data-light=on] { color: var(--rec) !important }
+
+/* an owner's own control in a slot (a choice of root or scale, the map toggles), drawn at the cell's height */
+.mode-transport.one-transport .transport-slot select { height: 19px; padding: 0 4px; border: 1px solid var(--bg-1); background: var(--bg-0); color: var(--text-dim); font-size: 10px }
+.mode-transport.one-transport .transport-slot > :not(output) { flex-shrink: 0 }

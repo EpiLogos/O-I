@@ -2,11 +2,13 @@
 // and the pool beneath. It knows no mode: the frame hands it the mode's row sources (shell/modeBrowsers.tsx) and the
 // sources every mode shares, and each source's body draws its rows under the browser's control. The pool shows the
 // selected device whole (frame/devices/DevicePool.tsx); a body's own pool content (a material's detail, a native
-// device, the agent chain's readings) is portalled into the same pool.
-import {useMemo, useRef, useState} from 'react'
+// device, the agent chain's readings) is portalled into the same pool. Drawn at the mockup's floor (world-shell-mockup
+// .bsearch/.bcats/.bres/.bitem/.slot; browser.css).
+import {useEffect, useMemo, useRef, useState} from 'react'
 import {DevicePool} from '../devices/DevicePool'
 import {useBrowserSearchRequest} from '../keys/keyDoors'
 import {BROWSER_KINDS, type BrowserCategory, type BrowserSource} from './browserKinds'
+import {EMPTY_TRAIL, visitCategory, walkTrail} from './browserTrail'
 import '../../components/WorldBrowser.css'
 import './browser.css'
 
@@ -34,8 +36,23 @@ export function Browser({sources, category, onCategory}: BrowserProps) {
   useBrowserSearchRequest(searchRef)
   const current = categories.find(item => key(item) === active) ?? categories[0] ?? null
   const Body = current?.source.Body
+  // Back and forward walk the categories this browser has shown, whoever chose them (a press here, or the book).
+  const [trail, setTrail] = useState(EMPTY_TRAIL)
+  const shown = current ? key(current) : null
+  useEffect(() => { setTrail(before => visitCategory(before, shown)) }, [shown])
+  const walk = (direction: 'back' | 'forward') => {
+    const step = walkTrail(trail, direction)
+    if (!step) return
+    setTrail(step.trail); hold(step.show); onCategory?.(step.show); setQuery('')
+  }
+  const nameOf = (to: string | undefined) => categories.find(item => key(item) === to)?.label ?? 'a category no longer here'
+  const back = trail.back[trail.back.length - 1], forward = trail.forward[trail.forward.length - 1]
   return <aside className="world-browser world-browser-categories one-browser" aria-label="Browser" data-browser-category={current?.id}>
     <div className="world-browser-searchrow">
+      <button type="button" className="one-browser-step" aria-label="Back" disabled={back === undefined} onClick={() => walk('back')}
+        title={back === undefined ? 'Back — nothing shown before this category yet' : `Back — to ${nameOf(back)}`}>‹</button>
+      <button type="button" className="one-browser-step" aria-label="Forward" disabled={forward === undefined} onClick={() => walk('forward')}
+        title={forward === undefined ? 'Forward — nothing to go forward to' : `Forward — to ${nameOf(forward)}`}>›</button>
       <label className="world-browser-search"><span className="sr-only">Search {current?.label ?? ''}</span>
         <input ref={searchRef} type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder="Search (⌘ F)" /></label>
       <output className="world-browser-count" aria-live="polite">{current?.waiting ? 'waiting' : ''}</output>
@@ -50,6 +67,7 @@ export function Browser({sources, category, onCategory}: BrowserProps) {
               title={item.hint ? `${item.label} — ${item.hint}${item.waiting ? ' (declared, waiting)' : ''}` : item.label}
               onClick={() => { hold(key(item)); onCategory?.(key(item)); setQuery('') }}>
               <span aria-hidden="true">{item.mark ?? '▸'}</span><span>{item.label}</span>
+              {item.count !== undefined && <span className="one-browser-category-count" aria-label={`${item.count} in ${item.label}`}>{item.count}</span>}
               {item.waiting && <span className="mode-browser-waiting-dot" aria-label="declared, waiting" />}
             </button>)}
           </div> : null
