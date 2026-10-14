@@ -33,11 +33,18 @@ export interface JourneyPresence {
   expression_ref: string;
   /** The exact position: the scene the Journey was on. */
   scene_ref: string;
-  /** The local composition draft carried across reload — still a draft. */
-  draft?: {
-    scene_order: string[];
-    pace: { scene_ref: string; dwell_seconds: number }[];
-  };
+  /** The local pace draft carried across reload — still a draft, never routed by reload. */
+  draft?: JourneyPresenceDraft;
+}
+
+/** The local pace draft: the beat order it was taken against, the per-beat pace, and its basis. The basis names the reading and
+ * the Expression revision the draft was taken at. A draft whose basis has moved is stale: the caller names it and offers to
+ * re-apply or discard it, and never applies it silently. The draft lives only here; the Expression stays the store of record. */
+export interface JourneyPresenceDraft {
+  basis_reading_ref: string;
+  basis_revision: string;
+  scene_order: string[];
+  pace: { scene_ref: string; dwell_seconds: number }[];
 }
 
 /** The minimal storage face (localStorage satisfies it; tests pass a map). */
@@ -63,21 +70,29 @@ function isPresence(value: unknown): value is JourneyPresence {
     if (typeof entry[key] !== "string" || (entry[key] as string).trim().length === 0) return false;
   }
   if (entry.snapshot_revision !== null && typeof entry.snapshot_revision !== "string") return false;
-  if (entry.draft !== undefined) {
-    if (!entry.draft || typeof entry.draft !== "object") return false;
-    const draft = entry.draft as Record<string, unknown>;
-    if (!Array.isArray(draft.scene_order) || draft.scene_order.length === 0
-      || !draft.scene_order.every((ref) => typeof ref === "string" && ref.trim().length > 0)) return false;
-    if (new Set(draft.scene_order).size !== draft.scene_order.length) return false;
-    if (draft.pace !== undefined) {
-      if (!Array.isArray(draft.pace)) return false;
-      for (const pace of draft.pace) {
-        const item = pace as Record<string, unknown>;
-        if (!item || typeof item.scene_ref !== "string"
-          || typeof item.dwell_seconds !== "number"
-          || !Number.isFinite(item.dwell_seconds) || item.dwell_seconds <= 0) return false;
-      }
-    }
+  if (entry.draft !== undefined && !isPresenceDraft(entry.draft)) return false;
+  return true;
+}
+
+/** Whether a value is a well-formed pace draft: a basis naming its reading and revision, a non-empty distinct beat order, and paces
+ * that each name a beat of that order at a positive, finite number of seconds. The reader and the writer both use it, so a draft is
+ * never written that the reader would drop. */
+export function isPresenceDraft(value: unknown): value is JourneyPresenceDraft {
+  if (!value || typeof value !== "object") return false;
+  const draft = value as Record<string, unknown>;
+  if (typeof draft.basis_reading_ref !== "string" || draft.basis_reading_ref.trim().length === 0) return false;
+  if (typeof draft.basis_revision !== "string" || draft.basis_revision.trim().length === 0) return false;
+  if (!Array.isArray(draft.scene_order) || draft.scene_order.length === 0
+    || !draft.scene_order.every((ref) => typeof ref === "string" && ref.trim().length > 0)) return false;
+  if (new Set(draft.scene_order).size !== draft.scene_order.length) return false;
+  if (!Array.isArray(draft.pace)) return false;
+  for (const pace of draft.pace) {
+    const item = pace as Record<string, unknown>;
+    if (!item || typeof item.scene_ref !== "string"
+      || typeof item.dwell_seconds !== "number"
+      || !Number.isFinite(item.dwell_seconds) || item.dwell_seconds <= 0) return false;
+    // A pace names a beat of the draft's own order; a pace for a beat the draft does not hold is drifted.
+    if (!(draft.scene_order as string[]).includes(item.scene_ref)) return false;
   }
   return true;
 }
@@ -109,13 +124,16 @@ export function loadPresence(storage: PresenceStorage | null): Record<string, Jo
 }
 
 /** Save every presence entry. Storage may refuse (private mode &c.) — the
- * journey still works, it simply will not restore. Honest degradation. */
-export function savePresence(storage: PresenceStorage | null, entries: Record<string, JourneyPresence>): void {
-  if (!storage) return;
+ * journey still works, it simply will not restore. Honest degradation. Returns
+ * whether the write was kept, so a caller that must not lose a draft can say so. */
+export function savePresence(storage: PresenceStorage | null, entries: Record<string, JourneyPresence>): boolean {
+  if (!storage) return false;
   try {
     storage.setItem(JOURNEY_PRESENCE_KEY, JSON.stringify(entries));
+    return true;
   } catch {
     // Storage unavailable — the frame still works. Never an error.
+    return false;
   }
 }
 
@@ -128,7 +146,7 @@ export function presenceFor(input: {
   snapshot_revision: string | null;
   expression_ref: string;
   scene_ref: string;
-  draft?: { scene_order: string[]; pace: { scene_ref: string; dwell_seconds: number }[] } | null;
+  draft?: JourneyPresenceDraft | null;
 }): JourneyPresence {
   return {
     schema: JOURNEY_PRESENCE_SCHEMA,

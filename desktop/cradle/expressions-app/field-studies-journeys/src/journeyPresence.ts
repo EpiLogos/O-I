@@ -13,8 +13,10 @@ import {
   defaultPresenceStorage,
   loadPresence,
   presenceFor,
+  isPresenceDraft,
   savePresence,
   type JourneyPresence,
+  type JourneyPresenceDraft,
   type PresenceStorage,
 } from '../../../src/techne/m0m5/journey/presence';
 
@@ -67,6 +69,8 @@ export function reconcileJourneyPresence(input: {
       snapshot_revision: revision,
       expression_ref: input.expression_ref,
       scene_ref: input.scene_ref,
+      // T3/T9: the pace draft is not a position; it rides the entry unchanged, with its own basis, until the author saves or discards it.
+      draft: saved?.draft ?? null,
     }),
   });
   if (standing === 'current') return {standing, presence: saved};
@@ -102,5 +106,37 @@ export function recordJourneyPosition(input: {reading: TechneReading; expression
   };
   const keepsRevision = saved !== undefined && saved.reading_ref === basis.reading_ref;
   const next = keepsRevision ? {...basis, snapshot_revision: saved.snapshot_revision} : basis;
-  savePresence(storage, {...entries, [subject]: presenceFor(next)});
+  savePresence(storage, {...entries, [subject]: presenceFor({...next, draft: saved?.draft ?? null})});
+}
+
+/** T3/T9: the pace draft saved for this subject, read against the basis it stands on now. `current` when its reading and its
+ * Expression revision are the ones disclosed; `stale` when either has moved. A stale draft is returned so the caller can name it
+ * and offer to re-apply or discard it. It is never applied here. Undefined when no draft is saved. */
+export function paceDraftOf(input: {reading: TechneReading; revision: number; storage?: PresenceStorage | null}): {standing: 'current' | 'stale'; draft: JourneyPresenceDraft} | undefined {
+  const storage = input.storage === undefined ? ownStorage() : input.storage;
+  const draft = loadPresence(storage)[input.reading.subject.subject_ref]?.draft;
+  if (!draft) return undefined;
+  const standing = draft.basis_reading_ref === input.reading.reading_ref && draft.basis_revision === String(input.revision) ? 'current' : 'stale';
+  return {standing, draft};
+}
+
+/** T3/T9: save the pace draft on this subject's entry, or clear it with `null`. The position is kept as it stands; the draft's basis
+ * is written with it. Returns whether the browser kept the write. A draft the browser refused is not kept, so the caller says so
+ * and does not hold a second copy. */
+export function savePaceDraft(input: {reading: TechneReading; expression_ref: string; scene_ref: string; draft: JourneyPresenceDraft | null; storage?: PresenceStorage | null}): boolean {
+  // A draft the presence owner would not read back is refused here, so nothing is written that a reload would silently drop.
+  if (input.draft !== null && !isPresenceDraft(input.draft)) return false;
+  const storage = input.storage === undefined ? ownStorage() : input.storage;
+  const subject = input.reading.subject.subject_ref;
+  const entries = loadPresence(storage);
+  const saved = entries[subject];
+  const keepsRevision = saved !== undefined && saved.reading_ref === input.reading.reading_ref;
+  const position = {
+    subject_ref: subject,
+    reading_ref: input.reading.reading_ref,
+    snapshot_revision: keepsRevision && saved !== undefined ? saved.snapshot_revision : (input.reading.snapshot?.revision ?? null),
+    expression_ref: input.expression_ref,
+    scene_ref: input.scene_ref,
+  };
+  return savePresence(storage, {...entries, [subject]: presenceFor({...position, draft: input.draft})});
 }

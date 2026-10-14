@@ -2695,6 +2695,15 @@ journeyInstrument=installJourneyInstrument({nativeView:()=>nativeWorkspace?.nati
   if((reply as {state?:string}|null)?.state==='ready')await nativeWorkspace?.refreshReference(request.expression_ref);
   return reply;
  },
+ // lane-5 T3 · the pace draft's save. Each beat's own duration is retimed through the timeline's retime (the E05 trim path) as ONE
+ // labelled step (E16), and the Save path then acknowledges it on the owner (E15d). Only a clean working copy is retimed, so the
+ // save carries the pace and nothing else. A refusal resolves false and leaves the step in the working copy to undo.
+ commitPace:async(edits,label)=>{
+  const reading=retainedEditor.read();
+  if(store.transactionOpen||reading.standing.pending||reading.standing.dirty)throw Error("Save the open work before changing this Journey's pace.");
+  changed(()=>{for(const edit of edits)retimeScene(store.document,edit.sceneId,{duration:edit.seconds});},true,label);
+  return await commitNativeRecorded()===true;
+ },
 },journeyHome);
 // lane-5 T2 · compose a scene from the journey lens. The floor (journeyBeats.ts) mints the
 // scene ref and refuses collisions; the kernel receives exactly one scene_create on the revision
