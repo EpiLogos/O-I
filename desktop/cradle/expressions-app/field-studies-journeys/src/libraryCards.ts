@@ -23,6 +23,17 @@ export function libraryCardNoteText(standing:LibraryCardStanding):string{
   :'Draft in this browser';
 }
 
+/** The Library entry that holds the browser copy of a kernel ref, or undefined when none does: an adopted local draft first (its own
+ * work), then a kernel-ref copy of the same document. This is the copy an in-app open falls back to when the kernel refuses the ref. */
+export function localCopyIdFor(ref:string,origins:ReadonlyMap<string,LibraryOrigin>):string|undefined{
+ let copy:string|undefined;
+ for(const [id,origin] of origins){
+  if(origin.kind==='local-draft'&&origin.adopted_into===ref)return id;
+  if(copy===undefined&&origin.kind==='kernel-ref'&&origin.ref===ref)copy=id;
+ }
+ return copy;
+}
+
 /** The data-action of the "Open browser draft" action an adopted card offers beside its kernel copy. Both pages handle this action. */
 export const LIBRARY_CARD_DRAFT_ACTION='open-local-draft';
 export const LIBRARY_CARD_DRAFT_TEXT='Open browser draft';

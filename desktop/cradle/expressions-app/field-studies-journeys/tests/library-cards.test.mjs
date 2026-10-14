@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {blankJourney} from '../build/model.js';
 import {saveToLibrary,readLibraryWithOrigins,recordLibraryAdoption} from '../build/store.js';
-import {libraryCardStanding,libraryCardNoteText,decorateLibraryCard,LIBRARY_CARD_DRAFT_ACTION,LIBRARY_CARD_DRAFT_TEXT} from '../build/libraryCards.js';
+import {libraryCardStanding,libraryCardNoteText,decorateLibraryCard,localCopyIdFor,LIBRARY_CARD_DRAFT_ACTION,LIBRARY_CARD_DRAFT_TEXT} from '../build/libraryCards.js';
 
 class MemoryStorage{
  constructor(){this.map=new Map();}
@@ -116,4 +116,27 @@ test('the note wording lives once: neither page carries its own copy', () => {
   }
   assert.ok(app.includes("from './libraryCards.js'"),'app.ts imports the shared card helper');
   assert.ok(page.includes("from './libraryCards.js'"),'library.ts imports the shared card helper');
+});
+
+test('the browser copy a kernel ref falls back to is the entry that adopted it, else a kernel-ref copy of it', () => {
+  const origins = new Map([
+    ['kernel-copy', {kind: 'kernel-ref', ref: 'expression:other'}],
+    ['draft-a', {kind: 'local-draft'}],
+    ['draft-b', {kind: 'local-draft', adopted_into: KERNEL, adopted_title: 'Gate', adopted_at: ''}],
+  ]);
+  assert.equal(localCopyIdFor(KERNEL, origins), 'draft-b');
+  assert.equal(localCopyIdFor('expression:other', origins), 'kernel-copy');
+  assert.equal(localCopyIdFor('expression:none', origins), undefined);
+  const both = new Map([['kc', {kind: 'kernel-ref', ref: KERNEL}], ['dr', {kind: 'local-draft', adopted_into: KERNEL, adopted_title: '', adopted_at: ''}]]);
+  assert.equal(localCopyIdFor(KERNEL, both), 'dr', 'an adopted local draft is preferred over a kernel-ref copy of the same ref');
+});
+
+test('the frame opens a browser draft by id on the host command, and a refused host open falls back to the browser copy', () => {
+  const app = fs.readFileSync(new URL('../src/app.ts', import.meta.url), 'utf8');
+  assert.ok(app.includes("d.command==='open-local-draft'"), 'the host command opens a browser draft by its id');
+  assert.ok(app.includes('await openBrowserDraft(el.dataset.id!)'), 'the in-frame Open browser draft uses the same body');
+  assert.ok(app.includes('openKernelCopy(ref,localCopyFallbackFor(ref),recovery)'), 'the host open routes through the in-app refusal handling');
+  assert.ok(app.includes('openKernelCopy(r.ref,localCopyFallbackFor(r.ref),r.recovery)'), 'the buffered host open routes through it too');
+  assert.ok(app.includes('localCopyIdFor(ref,origins)'), 'the fallback is the Library entry that holds the ref');
+  assert.ok(app.includes('The browser copy opens instead.'), 'the in-app refusal wording is kept, not copied');
 });
