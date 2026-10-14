@@ -3,14 +3,14 @@
 // The identity fields (subject, reading, selection, agent session, session) are byte-identical at the start and the end;
 // only the scene focus and the navigation history change, and the scene focus names the entered beat by ref.
 // The source/verso leg is a host placement (the frame's portal path), so it writes no session state here.
-// The owner imports the production sources, so run it with the boundary's loader, from desktop/cradle:
-//   node --experimental-webstorage --localstorage-file=<tmp> --import ../../packages/expressions-boundary/tests/register-production-sources.mjs --test tests/lane5-journey-chain.test.mjs
+// The owner imports the production sources, so run it with the boundary's loader, from packages/expressions-boundary:
+//   node --experimental-webstorage --localstorage-file=<tmp> --import ./tests/register-production-sources.mjs --test tests/lane5-journey-chain.test.mjs
 import test from "node:test";
 import assert from "node:assert/strict";
-import {validateSession} from "../src/techne/contract.ts";
-import {createDisclosureSessionStore} from "../src/techne/session.ts";
-import {provingReading} from "../src/techne/m0m5/journey/proving-reading.ts";
-import {createNativeTimeWindowOwner} from "../../../packages/expressions-boundary/src/timeWindow.ts";
+import {validateSession} from "../../../desktop/cradle/src/techne/contract.ts";
+import {createDisclosureSessionStore} from "../../../desktop/cradle/src/techne/session.ts";
+import {provingReading} from "../../../desktop/cradle/src/techne/m0m5/journey/proving-reading.ts";
+import {createNativeTimeWindowOwner} from "../src/timeWindow.ts";
 
 const EXPRESSION = "expression:journey-chain";
 const ONE = `${EXPRESSION}:scene:one`;
