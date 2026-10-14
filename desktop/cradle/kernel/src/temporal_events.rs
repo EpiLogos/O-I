@@ -310,6 +310,11 @@ pub struct StreamAbsence {
     /// The owner's own words (its refusal or diagnostic). Empty when the owner
     /// stated none.
     pub owner_words: String,
+    /// The located source the absence names (its `source_ref`), when the stream
+    /// reads several sources and this one failed. Absent for a stream-wide
+    /// cause, so every answer that names no source keeps its exact bytes.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source_ref: Option<String>,
 }
 
 /// The versioned answer: ordered, evidence-ref'd, and honest about the field
@@ -894,6 +899,7 @@ mod tests {
             stream: "factory-runs".into(),
             reason: AbsenceReason::OwnerTimeout,
             owner_words: "factory telemetry day did not answer within 20000 ms".into(),
+            source_ref: None,
         };
         assert_eq!(
             serde_json::to_value(&absence).unwrap(),

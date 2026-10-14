@@ -99,7 +99,7 @@ test('REAL OWNER READER: the desk view keeps the full custody ref beside its tai
 
 const positionsReal = join.positionsOfRaw(inhabitation.runs[0])
 const occupantsReal = join.occupantsOfRaw(inhabitation.runs[0])
-const returnFacts = join.returnFactsOf(SURVEY, attemptReturn.attempt.record)
+const returnFacts = join.returnFactsOf(SURVEY, attemptReturn.attempt.record, attemptReturn.runRef)
 const runFacts = join.factsOf(RUN, PROJECT, positionsReal, occupantsReal, returnFacts ? [returnFacts] : [])
 
 const base = (over = {}) => ({run: runFacts, events: [], occurrences: null, sessionRefs: [SESSION], ...over})
@@ -108,7 +108,7 @@ test('select a run: one identity through every row, with the Earth unmounted (th
   const selected = join.factoryRunJoin(base())
   assert.equal(selected.runRef, RUN)
   assert.equal(selected.projectRef, PROJECT)
-  assert.deepEqual(join.identityBreaks(selected), [], 'every row names the run it was joined from')
+  assert.deepEqual(join.identityBreaks(selected), [], 'every owner-returned ref matches the identity it was joined on')
   assert.deepEqual(selected.subjects.map(item => ({ref: item.ref, kind: item.kind, custodyState: item.custodyState})),
     [{ref: SUBJECT, kind: 'central-path', custodyState: 'in-progress'}])
   assert.deepEqual(selected.earth, [{state: 'not-mounted', runRef: RUN, seam: join.EARTH_SEAM}])
@@ -220,10 +220,36 @@ test('a retained occasion: the Timeline moment stays selected while the Earth is
   assert.deepEqual(join.identityBreaks(retained), [])
 })
 
-test('the identity check is live: a row that names another run is reported', () => {
-  const joined = join.factoryRunJoin(base())
-  const broken = {...joined, timeline: {...joined.timeline, runRef: 'run:other'}}
-  assert.deepEqual(join.identityBreaks(broken), [`timeline names run:other, not ${RUN}`])
+// The identity check reads the refs the owner reads returned (FactoryRunJoin.identity), not the rows' own run key.
+test('the owner\'s Return reading names the run the join reads it under (FIXTURE: the shape the desk reads)', () => {
+  assert.equal(attemptReturn.runRef, RUN, 'the placeholder Return reading names the run the inhabitation reading names')
+  assert.equal(returnFacts.ownerRunRef, RUN, 'the Return fact records the run ref the Return reading returned')
+})
+
+test('an owner read that names another run fires the break, and the clean fixture does not', () => {
+  const OTHER = 'run:01Z0000000000000000000OTHER'
+  const otherFacts = join.returnFactsOf(SURVEY, attemptReturn.attempt.record, OTHER)
+  const named = join.factoryRunJoin({...base(), run: join.factsOf(RUN, PROJECT, positionsReal, occupantsReal, [otherFacts])})
+  assert.deepEqual(join.identityBreaks(named), [`return[${SURVEY}] (Return reading, run_ref) names ${OTHER}, not ${RUN}`])
+  assert.deepEqual(join.identityBreaks(join.factoryRunJoin(base())), [], 'the clean fixture: the Return names this run')
+})
+
+test('the identity check reads the recorded owner refs: a tampered recorded ref is reported on its own row', () => {
+  const joined = join.factoryRunJoin(base({events: [{stream: 'factory-runs', subject_ref: RUN, instant_unix_ms: Date.parse('2026-10-14T08:30:00Z'), summary: 'placeholder signal', stream_position: 'placeholder-source#signal:S5'}]}))
+  const tampered = {...joined, identity: joined.identity.map(item => item.where === 'timeline' ? {...item, ownerRef: 'run:other'} : item)}
+  assert.deepEqual(join.identityBreaks(tampered), [`timeline (temporal reading, factory-runs subject_ref) names run:other, not ${RUN}`])
+})
+
+test('each owner-returned ref is recorded with the identity it was joined on; an absent read records nothing', () => {
+  const event = {stream: 'factory-runs', subject_ref: RUN, instant_unix_ms: Date.parse('2026-10-14T08:30:00Z'), summary: 'placeholder signal', stream_position: 'placeholder-source#signal:S6'}
+  const bound = join.factoryRunJoin(base({events: [event], occurrences: [{id: 'occ-placeholder-bound', subject_ref: SUBJECT}], sessionRefs: [SESSION]}))
+  assert.deepEqual(bound.identity.map(item => item.where), ['earth[0]', 'timeline', 'return[' + SURVEY + ']', 'devices[0]', 'files[0]', 'files[1]'])
+  const earthRecord = bound.identity.find(item => item.where === 'earth[0]')
+  assert.deepEqual({ownerRef: earthRecord.ownerRef, joinedOn: earthRecord.joinedOn}, {ownerRef: SUBJECT, joinedOn: SUBJECT}, 'the atlas returned the subject ref the run holds')
+  const unmounted = join.factoryRunJoin(base({events: [], occurrences: null, sessionRefs: []}))
+  assert.deepEqual(unmounted.identity.map(item => item.where), ['return[' + SURVEY + ']', 'files[0]', 'files[1]'], 'no Earth, no moment and no agency session: no record for them')
+  assert.deepEqual(join.identityBreaks(bound), [])
+  assert.deepEqual(join.identityBreaks(unmounted), [])
 })
 
 test('a Return that names no readable material yields no Return fact', () => {
@@ -256,6 +282,17 @@ test('each owner state kind has its own Timeline words; the owner\'s words are s
   assert.match(wordless.absence.text, /is absent here; the owner stated no words$/)
   const unknown = join.timelineRowOf(RUN, [], [absenceFor('owner-future-kind', 'words')])
   assert.match(unknown.absence.text, /contributed nothing \(owner-future-kind\): words$/, 'an unknown kind is named as it arrives')
+})
+
+test('a partial failure names the located source it failed on, so a gap is not read as this run\'s own', () => {
+  const partial = {stream: 'factory-runs', reason: 'owner-unreadable', owner_words: 'telemetry day reading names no signal_ref', source_ref: 'project:other'}
+  const row = join.factoryRunJoin(base({absences: [partial]})).timeline
+  assert.equal(row.state, 'absent')
+  assert.equal(row.absence.sourceRef, 'project:other')
+  assert.match(row.absence.text, /could not read the answer \(source project:other\): telemetry day reading names no signal_ref$/)
+  const unnamed = join.factoryRunJoin(base({absences: [absenceFor('owner-timeout')]})).timeline
+  assert.equal(unnamed.absence.sourceRef, null, 'a stream-wide absence names no source')
+  assert.doesNotMatch(unnamed.absence.text, /\(source/)
 })
 
 test('a reading with no factory-runs absence keeps the Timeline row as it was: no absence key, the same seam', () => {

@@ -46,6 +46,8 @@ export interface FactoryReturnFacts {
   readonly summary: string
   readonly artifactRefs: readonly string[]
   readonly evidenceRefs: readonly string[]
+  /** The run ref the Return reading itself names (its top-level `runRef`), as the owner returned it; null when it names none. */
+  readonly ownerRunRef: string | null
 }
 
 /** A temporal event the kernel's reading gives (TemporalEventRow's fields this join uses). */
@@ -77,8 +79,9 @@ export interface FactoryRunFacts {
   readonly returns: readonly FactoryReturnFacts[]
 }
 
-/** One attempt's `readableReturn` (`factory attempt return`: `attempt.record.readableReturn`), or null when it has none. */
-export function returnFactsOf(attemptRef: string, record: {readableReturn?: {returnRef?: unknown; summary?: unknown; artifactRefs?: unknown; evidenceRefs?: unknown} | null} | undefined): FactoryReturnFacts | null {
+/** One attempt's `readableReturn` (`factory attempt return`: `attempt.record.readableReturn`), or null when it has none.
+ * `ownerRunRef` is the top-level `runRef` of the same Return reading: the run the owner says the attempt belongs to. */
+export function returnFactsOf(attemptRef: string, record: {readableReturn?: {returnRef?: unknown; summary?: unknown; artifactRefs?: unknown; evidenceRefs?: unknown} | null} | undefined, ownerRunRef: unknown = null): FactoryReturnFacts | null {
   const material = record?.readableReturn
   if (!material || typeof material.returnRef !== 'string') return null
   const list = (value: unknown): string[] => Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : []
@@ -88,6 +91,7 @@ export function returnFactsOf(attemptRef: string, record: {readableReturn?: {ret
     summary: typeof material.summary === 'string' ? material.summary : '',
     artifactRefs: list(material.artifactRefs),
     evidenceRefs: list(material.evidenceRefs),
+    ownerRunRef: typeof ownerRunRef === 'string' && ownerRunRef.trim() ? ownerRunRef : null,
   }
 }
 
@@ -216,11 +220,13 @@ export const TIMELINE_SEAM: OwnerSeam = {
   remedy: 'the field holds no such moment for this run: its owner states no instant for the signal (an instant-less signal never enters a window), or the Factory owner was unreadable for the window; the field reports neither per run',
 }
 
-/** One stream the temporal reading names as silent, with its owner's named cause (`oi.temporal-events/v1` → `absences`). */
+/** One stream the temporal reading names as silent, with its owner's named cause (`oi.temporal-events/v1` → `absences`).
+ * A stream that reads several located sources names the one that failed in `source_ref`. */
 export interface FactoryStreamAbsence {
   readonly stream: string
   readonly reason: string
   readonly owner_words: string
+  readonly source_ref?: string | null
 }
 
 /** The Factory stream's named cause for a run's silence on the Timeline, in the reading's own kind and the owner's words. */
@@ -230,6 +236,8 @@ export interface FactoryTimelineAbsence {
   readonly ownerWords: string
   /** The reason in the Timeline's words, the owner's words included. */
   readonly text: string
+  /** The located source the failure names, when the reading names one. */
+  readonly sourceRef: string | null
 }
 
 const FACTORY_RUNS_STREAM = 'factory-runs'
@@ -243,9 +251,11 @@ const ABSENCE_LABEL: Readonly<Record<string, string>> = {
 }
 
 function timelineAbsenceOf(item: FactoryStreamAbsence): FactoryTimelineAbsence {
-  const label = ABSENCE_LABEL[item.reason] ?? `The Factory owner contributed nothing (${item.reason})`
+  const base = ABSENCE_LABEL[item.reason] ?? `The Factory owner contributed nothing (${item.reason})`
+  const sourceRef = item.source_ref?.trim() ? item.source_ref.trim() : null
+  const label = sourceRef ? `${base} (source ${sourceRef})` : base
   const words = item.owner_words.trim()
-  return {reason: item.reason, ownerWords: words, text: words ? `${label}: ${words}` : `${label}; the owner stated no words`}
+  return {reason: item.reason, ownerWords: words, sourceRef, text: words ? `${label}: ${words}` : `${label}; the owner stated no words`}
 }
 
 export const CONSTELLATION_SEAM: OwnerSeam = {
@@ -400,6 +410,19 @@ export function fileRowsOf(runRef: string, subjects: readonly FactorySubject[], 
 // ---------------------------------------------------------------------------
 // the whole join
 
+/** One identity an owner read returned, set against the identity its row was joined on. The rows are built from the
+ * run, so the check is on the refs the owner reads returned, which the join records as it reads them. */
+export interface FactoryIdentityRecord {
+  /** The row or fact the read fed: `earth[i]`, `timeline`, `return[attempt]`, `devices[i]`, `files[i]`. */
+  readonly where: string
+  /** The owner read the ref came from, in the reader's words (no parentheses). */
+  readonly owner: string
+  /** The ref the owner's read returned, verbatim. */
+  readonly ownerRef: string
+  /** The identity the row was joined on: the run, or the subject the run holds in custody. */
+  readonly joinedOn: string
+}
+
 export interface FactoryRunJoin {
   readonly runRef: string
   readonly projectRef: string | null
@@ -410,34 +433,60 @@ export interface FactoryRunJoin {
   readonly expression: ExpressionRow
   readonly devices: readonly DeviceRow[]
   readonly files: FileRows
+  /** Every owner-returned identity this join read, each with the identity it was joined on. */
+  readonly identity: readonly FactoryIdentityRecord[]
+}
+
+/** The owner-returned identities of one join: the Earth's occurrence ref, the temporal answer's subject, each Return
+ * reading's run, the agency's session for an occupant, and each file ref the Return or the subject names. */
+function identityOf(inputs: FactoryVerticalInputs, earth: readonly EarthRow[], timeline: TimelineRow, devices: readonly DeviceRow[], files: FileRows): FactoryIdentityRecord[] {
+  const runRef = inputs.run.runRef
+  const records: FactoryIdentityRecord[] = []
+  earth.forEach((row, index) => {
+    if (row.state !== 'placed') return
+    const occurrence = inputs.occurrences?.find(item => String(item.id) === row.occurrenceId)
+    records.push({where: `earth[${index}]`, owner: 'Earth atlas, occurrence subject_ref', ownerRef: occurrence?.subject_ref ?? '', joinedOn: row.subject.ref})
+  })
+  if (timeline.state === 'selected') records.push({where: 'timeline', owner: 'temporal reading, factory-runs subject_ref', ownerRef: timeline.event.subject_ref, joinedOn: runRef})
+  for (const item of inputs.run.returns) {
+    if (item.ownerRunRef !== null) records.push({where: `return[${item.attemptRef}]`, owner: 'Return reading, run_ref', ownerRef: item.ownerRunRef, joinedOn: runRef})
+  }
+  devices.forEach((row, index) => {
+    if (row.state !== 'selected') return
+    const listed = inputs.sessionRefs.find(ref => ref === row.sessionRef) ?? ''
+    records.push({where: `devices[${index}]`, owner: 'agency reading, session_ref', ownerRef: listed, joinedOn: row.sessionRef})
+  })
+  files.openable.forEach((file, index) => records.push({where: `files[${index}]`, owner: 'Return or subject, central:path ref', ownerRef: file.ref, joinedOn: `central:path:${file.root}:${file.path}`}))
+  return records
 }
 
 /** The run's recovery through each projection, on its own ref. */
 export function factoryRunJoin(inputs: FactoryVerticalInputs): FactoryRunJoin {
   const {run} = inputs
   const subjects = factorySubjectsOf(run.positions)
+  const earth = earthRowsOf(run.runRef, subjects, inputs.occurrences)
+  const timeline = timelineRowOf(run.runRef, inputs.events, inputs.absences ?? [])
+  const devices = deviceRowsOf(run.runRef, run.occupants, inputs.sessionRefs)
+  const files = fileRowsOf(run.runRef, subjects, run.returns)
   return {
     runRef: run.runRef,
     projectRef: run.projectRef,
     subjects,
-    earth: earthRowsOf(run.runRef, subjects, inputs.occurrences),
-    timeline: timelineRowOf(run.runRef, inputs.events, inputs.absences ?? []),
+    earth,
+    timeline,
     constellation: constellationRowOf(run.runRef, subjects, run.returns),
     expression: expressionRowOf(run.runRef),
-    devices: deviceRowsOf(run.runRef, run.occupants, inputs.sessionRefs),
-    files: fileRowsOf(run.runRef, subjects, run.returns),
+    devices,
+    files,
+    identity: identityOf(inputs, earth, timeline, devices, files),
   }
 }
 
-/** Every row names the run it was joined from. A row that names another ref is an identity break. */
+/** Each owner read's returned identity, set against the identity its row was joined on. An identity break is a read
+ * that returned another identity: a Return reading naming another run, a file ref that the file route does not
+ * round-trip, and so on. An absent read records nothing, so it is never a break. */
 export function identityBreaks(join: FactoryRunJoin): string[] {
-  const rows: {where: string; ref: string}[] = [
-    ...join.earth.map((row, index) => ({where: `earth[${index}]`, ref: row.runRef})),
-    {where: 'timeline', ref: join.timeline.runRef},
-    {where: 'constellation', ref: join.constellation.runRef},
-    {where: 'expression', ref: join.expression.runRef},
-    ...join.devices.map((row, index) => ({where: `devices[${index}]`, ref: row.runRef})),
-    {where: 'files', ref: join.files.runRef},
-  ]
-  return rows.filter(row => row.ref !== join.runRef).map(row => `${row.where} names ${row.ref}, not ${join.runRef}`)
+  return join.identity
+    .filter(record => record.ownerRef !== record.joinedOn)
+    .map(record => `${record.where} (${record.owner}) names ${record.ownerRef || 'no ref'}, not ${record.joinedOn}`)
 }

@@ -33,7 +33,7 @@ use crate::temporal_events::{
     TemporalEventsError, TemporalQuery, TemporalStreamSource, Window,
 };
 use serde_json::{json, Value};
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::path::PathBuf;
 use std::process::Command;
 
@@ -653,9 +653,13 @@ pub(crate) fn factory_days_for(
 
 /// Map one located Factory source's day reading into run moments: one per
 /// signal that names a run (`run_ref`). The moment's instant is the signal's
-/// own `updated_at_unix_ms`, inherited verbatim; a signal that states none is
-/// instant-less (it never joins a civil window). A reading whose signal names
-/// no `signal_ref`, or names one twice, is refused whole by the caller.
+/// `updated_at_unix_ms`, inherited verbatim. The day reading states no
+/// creation or occurred-at instant for a run receipt, so the moment is placed
+/// at the owner's last update to the signal: it moves when the owner updates
+/// the signal again, and the Timeline names that placement. A signal that
+/// states no `updated_at_unix_ms` is instant-less (it never joins a civil
+/// window). A reading whose signal names no `signal_ref`, or names one twice,
+/// is refused whole by the caller.
 pub(crate) fn telemetry_day_to_events(
     source_ref: &str,
     reading: &Value,
@@ -727,7 +731,9 @@ pub(crate) fn telemetry_day_to_events(
 /// contributed nothing.
 pub(crate) struct FactoryReading {
     pub(crate) events: Vec<TemporalEvent>,
-    pub(crate) absence: Option<StreamAbsence>,
+    /// Every named cause the stream holds: one per failing source, one per
+    /// refused position, or the stream-wide cause when nothing was readable.
+    pub(crate) absences: Vec<StreamAbsence>,
 }
 
 /// The named cause of one owner failure, by the kind the owner call reports:
@@ -752,12 +758,17 @@ pub(crate) fn owner_failure_reason(error: &crate::material::Error) -> AbsenceRea
 /// that point, and the rest of the field answers as it would without
 /// Factory.
 ///
-/// The silence is named, not swallowed. The stream records one absence only
-/// when it contributed no moment: a located, readable Factory source that
-/// holds no run in the window is "no moment" and names nothing; an owner
-/// that could not be read, or a root that is not a Factory source, names its
-/// cause (the first in read order; a failure outranks a root with no Factory
-/// state).
+/// Located sources are merged by position (`source_ref#signal_ref`): the same
+/// Factory state reached from two roots is one moment, and two sources that
+/// give one position different content keep neither (see
+/// [`merge_factory_moments`]). The field never fails for this stream.
+///
+/// The silence is named, not swallowed. Each failing source names its own
+/// cause, with its `source_ref` where the owner stated one, even when other
+/// sources contributed moments. A located, readable source that holds no run
+/// in the window is "no moment" and names nothing; a root that is not a
+/// Factory source names its cause only when no source is readable and nothing
+/// else failed.
 pub(crate) fn factory_runs_read(
     client: &CentralClient,
     window: &Window,
@@ -765,11 +776,7 @@ pub(crate) fn factory_runs_read(
 ) -> FactoryReading {
     let silent = |reason: AbsenceReason, owner_words: String| FactoryReading {
         events: Vec::new(),
-        absence: Some(StreamAbsence {
-            stream: FACTORY_STREAM.into(),
-            reason,
-            owner_words,
-        }),
+        absences: vec![factory_absence(reason, owner_words, None)],
     };
     let days = match factory_days_for(window, field) {
         Ok(Some(days)) => days,
@@ -778,7 +785,7 @@ pub(crate) fn factory_runs_read(
         Ok(None) | Err(_) => {
             return FactoryReading {
                 events: Vec::new(),
-                absence: None,
+                absences: Vec::new(),
             }
         }
     };
@@ -797,12 +804,13 @@ pub(crate) fn factory_runs_read(
         Err(error) => return silent(owner_failure_reason(&error), error.message),
     };
 
-    let mut events = Vec::new();
-    // Named causes in read order: failures, then roots with no Factory state.
-    let mut failures: Vec<(AbsenceReason, String)> = Vec::new();
-    let mut absent_roots: Vec<(AbsenceReason, String)> = Vec::new();
-    // Set once any located source answers its day reading, whatever it holds.
-    let mut readable = false;
+    // The moments of each located source that answered its day reading,
+    // whatever it holds, with that source's ref.
+    let mut readings: Vec<(String, Vec<TemporalEvent>)> = Vec::new();
+    // Each failing source, in read order, named with its own cause.
+    let mut failures: Vec<StreamAbsence> = Vec::new();
+    // Roots that are not a Factory source; named only when nothing else is.
+    let mut absent_roots: Vec<StreamAbsence> = Vec::new();
     for row in located
         .get("locations")
         .and_then(Value::as_array)
@@ -817,17 +825,18 @@ pub(crate) fn factory_runs_read(
         match row.get("state").and_then(Value::as_str) {
             Some("located") => {}
             Some("absent") => {
-                absent_roots.push((AbsenceReason::OwnerAbsent, row_words));
+                absent_roots.push(factory_absence(AbsenceReason::OwnerAbsent, row_words, None));
                 continue;
             }
             Some("refused") => {
-                failures.push((AbsenceReason::Refused, row_words));
+                failures.push(factory_absence(AbsenceReason::Refused, row_words, None));
                 continue;
             }
             _ => {
-                failures.push((
+                failures.push(factory_absence(
                     AbsenceReason::OwnerUnreadable,
                     "the owner's locate row names no known state".into(),
+                    None,
                 ));
                 continue;
             }
@@ -836,9 +845,10 @@ pub(crate) fn factory_runs_read(
             row.pointer("/location/statePath").and_then(Value::as_str),
             row.pointer("/location/projectRef").and_then(Value::as_str),
         ) else {
-            failures.push((
+            failures.push(factory_absence(
                 AbsenceReason::OwnerUnreadable,
                 "the located answer names no state path".into(),
+                None,
             ));
             continue;
         };
@@ -859,40 +869,89 @@ pub(crate) fn factory_runs_read(
         ) {
             Ok(reading) => reading,
             Err(error) => {
-                failures.push((owner_failure_reason(&error), error.message));
+                failures.push(factory_absence(
+                    owner_failure_reason(&error),
+                    error.message,
+                    Some(source_ref.to_string()),
+                ));
                 continue;
             }
         };
         match telemetry_day_to_events(source_ref, &reading) {
-            Ok(mut moments) => {
-                readable = true;
-                events.append(&mut moments);
-            }
-            Err(error) => failures.push((AbsenceReason::OwnerUnreadable, error.to_string())),
+            Ok(moments) => readings.push((source_ref.to_string(), moments)),
+            Err(error) => failures.push(factory_absence(
+                AbsenceReason::OwnerUnreadable,
+                error.to_string(),
+                Some(source_ref.to_string()),
+            )),
         }
     }
 
-    if !events.is_empty() {
-        return FactoryReading {
-            events,
-            absence: None,
-        };
+    let readable = !readings.is_empty();
+    let (events, refusals) = merge_factory_moments(readings);
+    let mut absences = refusals;
+    absences.extend(failures);
+    if !readable && absences.is_empty() {
+        absences.extend(absent_roots.into_iter().next());
     }
-    // A readable source with no run in the window is the owner's own "no
-    // moment": only a root that is not a Factory source is then no cause.
-    let named = if readable {
-        failures.into_iter().next()
-    } else {
-        failures.into_iter().chain(absent_roots).next()
-    };
-    FactoryReading {
-        events,
-        absence: named.map(|(reason, owner_words)| StreamAbsence {
-            stream: FACTORY_STREAM.into(),
-            reason,
-            owner_words,
-        }),
+    FactoryReading { events, absences }
+}
+
+/// One named absence for the Factory stream, with the source it names when the
+/// owner stated one.
+fn factory_absence(
+    reason: AbsenceReason,
+    owner_words: String,
+    source_ref: Option<String>,
+) -> StreamAbsence {
+    StreamAbsence {
+        stream: FACTORY_STREAM.into(),
+        reason,
+        owner_words,
+        source_ref,
     }
+}
+
+/// Merge the Factory moments of every readable located source into one moment
+/// per position. The same position with the same content, from two sources, is
+/// one moment: the same Factory state reached from two roots. The same position
+/// with different content keeps neither: the position is refused by name (the
+/// owner's two readings disagree on it), and every other moment still answers.
+pub(crate) fn merge_factory_moments(
+    readings: Vec<(String, Vec<TemporalEvent>)>,
+) -> (Vec<TemporalEvent>, Vec<StreamAbsence>) {
+    let mut kept: BTreeMap<String, TemporalEvent> = BTreeMap::new();
+    // Refused positions, each with the source that gave the disagreeing reading.
+    let mut refused: BTreeMap<String, String> = BTreeMap::new();
+    for (source_ref, moments) in readings {
+        for moment in moments {
+            let position = moment.stream_position.clone();
+            if refused.contains_key(&position) {
+                continue;
+            }
+            match kept.get(&position) {
+                None => {
+                    kept.insert(position, moment);
+                }
+                Some(held) if *held == moment => {}
+                Some(_) => {
+                    kept.remove(&position);
+                    refused.insert(position, source_ref.clone());
+                }
+            }
+        }
+    }
+    let absences = refused
+        .into_iter()
+        .map(|(position, source_ref)| {
+            factory_absence(
+                AbsenceReason::Refused,
+                format!("the owner's two readings disagree on {position}"),
+                Some(source_ref),
+            )
+        })
+        .collect();
+    (kept.into_values().collect(), absences)
 }
 
 /// The field's own wait on the Factory stream, as its reading arrives. A
@@ -904,11 +963,7 @@ pub(crate) fn awaited_factory(
 ) -> FactoryReading {
     let named = |reason: AbsenceReason, owner_words: String| FactoryReading {
         events: Vec::new(),
-        absence: Some(StreamAbsence {
-            stream: FACTORY_STREAM.into(),
-            reason,
-            owner_words,
-        }),
+        absences: vec![factory_absence(reason, owner_words, None)],
     };
     match received {
         Ok(reading) => reading,
@@ -1230,7 +1285,7 @@ pub fn read_field(
             // reads; this wait is the second guard.
             let FactoryReading {
                 events: factory_events,
-                absence: factory_absence,
+                absences: factory_absences,
             } = awaited_factory(factory.recv_timeout(FACTORY_READ_BOUND));
 
             let now_stream = Collected {
@@ -1272,7 +1327,7 @@ pub fn read_field(
             )?;
             // Every stream that swallowed its failure names it here; the five
             // others fail the whole reading by name and never reach this list.
-            answer.absences = factory_absence.into_iter().collect();
+            answer.absences = factory_absences;
             cache.lock().expect("temporal read cache lock").put(
                 cache_key,
                 serde_json::to_value(&answer).map_err(|error| TemporalEventsError::CivilTime {
@@ -1357,6 +1412,14 @@ mod read_field_tests {
                 "factory-day.json",
                 r#"{"schema":"factory.telemetry-day/v1","signals":[]}"#,
             );
+            // A second root (`Work/b`, a project in the world reading) and its
+            // own state (`state-b.json`), for tests that read two sources.
+            let factory_locate_b = write_file(&directory, "factory-locate-b.json", "");
+            let factory_day_b = write_file(
+                &directory,
+                "factory-day-b.json",
+                r#"{"schema":"factory.telemetry-day/v1","signals":[]}"#,
+            );
             let world = write_file(
                 &directory,
                 "world.json",
@@ -1377,15 +1440,17 @@ mod read_field_tests {
                 // `project locate <root> --json` and `telemetry day <state> ... --json`
                 let _ = writeln!(
                     body,
-                    r#"if [ "$1" = "project" ]; then echo "$*" >> {log}; if [ -s {locate} ]; then cat {locate}; exit 0; fi; echo "No such file or directory" >&2; exit 1; fi"#,
+                    r#"if [ "$1" = "project" ]; then echo "$*" >> {log}; case "$3" in *Work/b) cat {locate_b}; exit 0;; esac; if [ -s {locate} ]; then cat {locate}; exit 0; fi; echo "No such file or directory" >&2; exit 1; fi"#,
                     log = factory_calls.display(),
-                    locate = factory_locate.display()
+                    locate = factory_locate.display(),
+                    locate_b = factory_locate_b.display()
                 );
                 let _ = writeln!(
                     body,
-                    r#"if [ "$1" = "telemetry" ]; then echo "$*" >> {}; cat {}; exit 0; fi"#,
-                    factory_calls.display(),
-                    factory_day.display()
+                    r#"if [ "$1" = "telemetry" ]; then echo "$*" >> {log}; case "$3" in *state-b.json) cat {day_b};; *) cat {day};; esac; exit 0; fi"#,
+                    log = factory_calls.display(),
+                    day_b = factory_day_b.display(),
+                    day = factory_day.display()
                 );
                 let _ = writeln!(body, r#"echo "$4" >> {}"#, calls.display());
                 let _ = writeln!(body, r#"case "$4" in"#);
@@ -1783,6 +1848,7 @@ mod read_field_tests {
                 stream: FACTORY_STREAM.into(),
                 reason: AbsenceReason::OwnerAbsent,
                 owner_words: "No such file or directory".into(),
+                source_ref: None,
             }]
         );
     }
@@ -1809,6 +1875,7 @@ mod read_field_tests {
                 stream: FACTORY_STREAM.into(),
                 reason: AbsenceReason::Refused,
                 owner_words: "No such file or directory".into(),
+                source_ref: None,
             }]
         );
     }
@@ -1899,6 +1966,260 @@ mod read_field_tests {
         );
     }
 
+    /// The world reading with a second root: `Work/b` beside Central's own root.
+    fn with_a_second_root(owner: &FakeOwner) {
+        std::fs::write(
+            owner.directory.join("world.json"),
+            format!(
+                r#"{{"ok":true,"data":{{"schema":"central.world-map/v1","root":"{}","work":{{"projects":[{{"name":"b","path":"Work/b"}}]}}}}}}"#,
+                owner.directory.display()
+            ),
+        )
+        .unwrap();
+    }
+
+    /// A second located source: the same project, a second state file.
+    const LOCATED_B: &str = r#"{"contract":"factory.project-location/v1","projectRef":"project:fixture","statePath":"/fixture/state-b.json"}"#;
+    /// A second located source in another project, with its own state file.
+    const LOCATED_OTHER_PROJECT: &str = r#"{"contract":"factory.project-location/v1","projectRef":"project:other","statePath":"/fixture/state-b.json"}"#;
+    /// The second state's reading of the same position, revised in content.
+    const DAY_READING_REVISED: &str = r#"{"schema":"factory.telemetry-day/v1","signals":[
+        {"signal_ref":"signal:S1","summary":"run A receipt, revised","source_refs":["github:fixture#1"],"run_ref":"run:A","updated_at_unix_ms":1791460592000}
+    ]}"#;
+    /// A second state's reading that is malformed: a run signal with no `signal_ref`.
+    const DAY_READING_MALFORMED: &str = r#"{"schema":"factory.telemetry-day/v1","signals":[{"run_ref":"run:A","updated_at_unix_ms":1791460592000}]}"#;
+
+    fn factory_moments(answer: &TemporalEventsAnswer) -> Vec<&TemporalEvent> {
+        answer
+            .events
+            .iter()
+            .filter(|event| event.stream == FACTORY_STREAM)
+            .collect()
+    }
+
+    #[test]
+    fn the_same_factory_state_reached_from_two_roots_is_one_moment() {
+        let _env = owner_env();
+        let owner = FakeOwner::new("factory-two-roots", &nowlist(&["ref-a"]), THOUGHTS_REPLY);
+        with_a_second_root(&owner);
+        std::fs::write(owner.directory.join("factory-locate.json"), LOCATED).unwrap();
+        std::fs::write(owner.directory.join("factory-locate-b.json"), LOCATED).unwrap();
+        std::fs::write(owner.directory.join("factory-day.json"), DAY_READING).unwrap();
+        let cache = Mutex::new(crate::read_cache::OwnerReadCache::default());
+        let answer = read_field(
+            &owner.client(),
+            &cache,
+            &[],
+            owner.directory.clone(),
+            &span_window(),
+        )
+        .expect("one state reached from two roots does not fail the field");
+
+        let moments = factory_moments(&answer);
+        assert_eq!(moments.len(), 1, "{moments:?}");
+        assert_eq!(moments[0].stream_position, "project:fixture#signal:S1");
+        assert!(answer.absences.is_empty(), "{:?}", answer.absences);
+        assert_eq!(
+            owner
+                .factory_calls()
+                .iter()
+                .filter(|call| call.starts_with("telemetry day"))
+                .count(),
+            2,
+            "each located source is read once"
+        );
+    }
+
+    #[test]
+    fn two_readings_that_disagree_on_a_position_refuse_it_by_name_and_the_field_still_answers() {
+        let _env = owner_env();
+        let owner = FakeOwner::new("factory-disagree", &nowlist(&["ref-a"]), THOUGHTS_REPLY);
+        with_a_second_root(&owner);
+        std::fs::write(owner.directory.join("factory-locate.json"), LOCATED).unwrap();
+        std::fs::write(owner.directory.join("factory-locate-b.json"), LOCATED_B).unwrap();
+        std::fs::write(owner.directory.join("factory-day.json"), DAY_READING).unwrap();
+        std::fs::write(
+            owner.directory.join("factory-day-b.json"),
+            DAY_READING_REVISED,
+        )
+        .unwrap();
+        let cache = Mutex::new(crate::read_cache::OwnerReadCache::default());
+        let answer = read_field(
+            &owner.client(),
+            &cache,
+            &[],
+            owner.directory.clone(),
+            &span_window(),
+        )
+        .expect("a disputed position refuses one moment, never the field");
+
+        assert!(
+            factory_moments(&answer).is_empty(),
+            "the disputed position is kept neither: {:?}",
+            answer.events
+        );
+        assert_eq!(
+            answer.absences,
+            vec![StreamAbsence {
+                stream: FACTORY_STREAM.into(),
+                reason: AbsenceReason::Refused,
+                owner_words: "the owner's two readings disagree on project:fixture#signal:S1"
+                    .into(),
+                source_ref: Some("project:fixture".into()),
+            }]
+        );
+        assert!(
+            answer
+                .events
+                .iter()
+                .any(|event| event.stream == "central-now"),
+            "the other streams still answer"
+        );
+    }
+
+    #[test]
+    fn a_failing_source_is_named_by_its_source_ref_even_when_another_source_contributed_moments() {
+        let _env = owner_env();
+        let owner = FakeOwner::new("factory-partial", &nowlist(&["ref-a"]), THOUGHTS_REPLY);
+        with_a_second_root(&owner);
+        std::fs::write(owner.directory.join("factory-locate.json"), LOCATED).unwrap();
+        std::fs::write(
+            owner.directory.join("factory-locate-b.json"),
+            LOCATED_OTHER_PROJECT,
+        )
+        .unwrap();
+        std::fs::write(owner.directory.join("factory-day.json"), DAY_READING).unwrap();
+        std::fs::write(
+            owner.directory.join("factory-day-b.json"),
+            DAY_READING_MALFORMED,
+        )
+        .unwrap();
+        let cache = Mutex::new(crate::read_cache::OwnerReadCache::default());
+        let answer = read_field(
+            &owner.client(),
+            &cache,
+            &[],
+            owner.directory.clone(),
+            &span_window(),
+        )
+        .expect("a failing source never fails the field");
+
+        let positions: Vec<&str> = factory_moments(&answer)
+            .iter()
+            .map(|event| event.stream_position.as_str())
+            .collect();
+        assert_eq!(positions, vec!["project:fixture#signal:S1"]);
+        assert_eq!(answer.absences.len(), 1, "{:?}", answer.absences);
+        assert_eq!(answer.absences[0].reason, AbsenceReason::OwnerUnreadable);
+        assert_eq!(
+            answer.absences[0].source_ref.as_deref(),
+            Some("project:other"),
+            "the absence names the source that failed"
+        );
+        assert!(answer.absences[0].owner_words.contains("signal_ref"));
+    }
+
+    #[test]
+    fn merging_factory_moments_keeps_one_identical_moment_and_refuses_a_disputed_position() {
+        let moment = |position: &str, summary: &str| TemporalEvent {
+            stream: FACTORY_STREAM.into(),
+            kind: EventKind::Run,
+            thought_type: None,
+            subject_ref: "run:A".into(),
+            civil_instant: None,
+            instant_unix_ms: None,
+            day_ref: None,
+            stream_position: position.into(),
+            evidence_refs: Vec::new(),
+            summary: summary.into(),
+        };
+        let (events, absences) = merge_factory_moments(vec![
+            (
+                "project:a".into(),
+                vec![
+                    moment("project:a#signal:S1", "same"),
+                    moment("project:a#signal:S2", "left"),
+                ],
+            ),
+            (
+                "project:a".into(),
+                vec![moment("project:a#signal:S1", "same")],
+            ),
+            (
+                "project:a".into(),
+                vec![moment("project:a#signal:S2", "right")],
+            ),
+        ]);
+        assert_eq!(events.len(), 1, "{events:?}");
+        assert_eq!(events[0].stream_position, "project:a#signal:S1");
+        assert_eq!(
+            absences,
+            vec![StreamAbsence {
+                stream: FACTORY_STREAM.into(),
+                reason: AbsenceReason::Refused,
+                owner_words: "the owner's two readings disagree on project:a#signal:S2".into(),
+                source_ref: Some("project:a".into()),
+            }]
+        );
+    }
+
+    #[test]
+    fn a_factory_window_at_the_london_day_edges_names_the_london_civil_days_not_utc() {
+        let field = CivilField::new(
+            "Europe/London".into(),
+            0,
+            "control:root".into(),
+            "rev-1".into(),
+        )
+        .unwrap();
+        // October 2026 is British Summer Time (UTC+1): 23:30 local on the 14th is 22:30Z,
+        // and 00:30 local on the 15th is 23:30Z on the 14th. A UTC reader would name the 14th there.
+        let between = |from: &str, to: &str| Window::Between {
+            from_unix_ms: from.parse::<jiff::Timestamp>().unwrap().as_millisecond(),
+            to_unix_ms: to.parse::<jiff::Timestamp>().unwrap().as_millisecond(),
+        };
+        let one = |day: &str| Some(FactoryDays::One(day.into()));
+        assert_eq!(
+            factory_days_for(
+                &between("2026-10-14T22:30:00Z", "2026-10-14T22:45:00Z"),
+                &field
+            )
+            .unwrap(),
+            one("2026-10-14"),
+            "23:30 to 23:45 local is the 14th"
+        );
+        assert_eq!(
+            factory_days_for(
+                &between("2026-10-14T23:30:00Z", "2026-10-15T00:00:00Z"),
+                &field
+            )
+            .unwrap(),
+            one("2026-10-15"),
+            "00:30 to 01:00 local is the 15th"
+        );
+        assert_eq!(
+            factory_days_for(
+                &between("2026-10-14T22:30:00Z", "2026-10-14T23:00:00Z"),
+                &field
+            )
+            .unwrap(),
+            one("2026-10-14"),
+            "23:30 to local midnight, the half-open end excluded, is the 14th"
+        );
+        assert_eq!(
+            factory_days_for(
+                &between("2026-10-14T22:30:00Z", "2026-10-14T23:30:00Z"),
+                &field
+            )
+            .unwrap(),
+            Some(FactoryDays::Range {
+                from: "2026-10-14".into(),
+                through: "2026-10-15".into(),
+            }),
+            "23:30 on the 14th to 00:30 on the 15th names both local days"
+        );
+    }
+
     #[test]
     fn a_factory_answer_later_than_the_field_bound_is_a_named_timeout() {
         // The field's own wait: an answer that arrives is read as it stands.
@@ -1906,16 +2227,20 @@ mod read_field_tests {
         sender
             .send(FactoryReading {
                 events: Vec::new(),
-                absence: None,
+                absences: Vec::new(),
             })
             .unwrap();
         let answered = awaited_factory(receiver.recv_timeout(FACTORY_READ_BOUND));
-        assert!(answered.absence.is_none());
+        assert!(answered.absences.is_empty());
 
         // No answer inside the bound: a named owner timeout, in the field's words.
         let (_held, silent) = std::sync::mpsc::channel::<FactoryReading>();
         let late = awaited_factory(silent.recv_timeout(std::time::Duration::from_millis(1)));
-        let absence = late.absence.expect("a late answer is named");
+        let absence = late
+            .absences
+            .into_iter()
+            .next()
+            .expect("a late answer is named");
         assert_eq!(absence.stream, FACTORY_STREAM);
         assert_eq!(absence.reason, AbsenceReason::OwnerTimeout);
         assert!(absence.owner_words.contains("did not answer within 30 s"));
@@ -1925,7 +2250,7 @@ mod read_field_tests {
         drop(dropped);
         let lost = awaited_factory(ended.recv_timeout(std::time::Duration::from_millis(1)));
         assert_eq!(
-            lost.absence.map(|absence| absence.reason),
+            lost.absences.first().map(|absence| absence.reason),
             Some(AbsenceReason::OwnerUnreadable)
         );
     }

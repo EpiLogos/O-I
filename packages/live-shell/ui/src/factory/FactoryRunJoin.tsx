@@ -59,7 +59,7 @@ function useRunReturns(transport: KernelTransportStatus, entry: RunEntry | undef
       const refused: {attemptRef: string; message: string}[] = []
       for (const result of results) {
         if (!result.ok) { refused.push({attemptRef: result.attemptRef, message: result.message}); continue }
-        const fact = returnFactsOf(result.attemptRef, result.reading.attempt.record as Parameters<typeof returnFactsOf>[1])
+        const fact = returnFactsOf(result.attemptRef, result.reading.attempt.record as Parameters<typeof returnFactsOf>[1], result.reading.runRef)
         if (fact) returns.push(fact)
       }
       setState({returns, refused, done: true})
@@ -137,11 +137,12 @@ export function FactoryRunJoinDetail({transport, world, tracks}: FactoryRunJoinP
   }
 
   return (
-    <section className="inhabitant-device" data-factory-run={join.runRef} data-factory-identity={breaks.length ? 'broken' : 'one'}>
+    <section className="inhabitant-device" data-factory-run={join.runRef} data-factory-identity={breaks.length ? 'broken' : 'verified'} data-identity-checked={join.identity.length}>
       <header className="inhabitant-device-head">
         <strong>Factory · run</strong>
         <span className="inhabitant-device-sub mono">{join.runRef}</span>
         <span className="inhabitant-device-save">{join.projectRef ?? 'no project ref'}</span>
+        <span className="inhabitant-device-note" data-identity-note>{breaks.length ? 'identity broken' : `${join.identity.length} owner-returned ref(s) match the run`}</span>
       </header>
       {breaks.length > 0 && <p className="inhabitant-device-fault" role="alert" data-identity-break>{breaks.join('; ')}</p>}
       {view && view.state !== 'read' && <p className="inhabitant-device-notice" data-inhabitation="unavailable">The owner's inhabitation reading is unavailable: {view.reason}</p>}
@@ -159,9 +160,9 @@ export function FactoryRunJoinDetail({transport, world, tracks}: FactoryRunJoinP
               ? <Seam key={index} label={`earth · ${row.subject.ref}`} owner={row.seam.owner} op={row.seam.op} remedy={row.seam.remedy}/>
               : <Seam key={index} label="earth" owner={row.seam.owner} op={row.seam.op} remedy="the Earth is not mounted, so no occurrence reading is held for it"/>)}</span></li>
 
-        <li className="inhabitant-reading" data-row="timeline"><span className="inhabitant-reading-op">timeline</span>
+        <li className="inhabitant-reading" data-row="timeline" title="Placed at the owner's last update: the day reading states no occurred-at instant for a run receipt"><span className="inhabitant-reading-op">timeline</span>
           <span className="inhabitant-reading-standing">{join.timeline.state === 'selected'
-            ? <button type="button" className="inhabitant-act" data-action="select-run-moment" onClick={() => { if (world && timelineEvent) world.selectOccasion(timelineEvent) }}>Select the run's moment ({join.timeline.event.stream ?? 'stream'})</button>
+            ? <><button type="button" className="inhabitant-act" data-action="select-run-moment" onClick={() => { if (world && timelineEvent) world.selectOccasion(timelineEvent) }}>Select the run's moment ({join.timeline.event.stream ?? 'stream'})</button> <span className="inhabitant-device-note" data-timeline-placement>placed at the owner's last update</span></>
             : <>{join.timeline.absence && <span className="inhabitant-device-note" data-timeline-absence={join.timeline.absence.reason}>{join.timeline.absence.text}. </span>}<Seam label="timeline" owner={join.timeline.seam.owner} op={join.timeline.seam.op} remedy={join.timeline.seam.remedy}/></>}</span></li>
 
         <li className="inhabitant-reading" data-row="constellation"><span className="inhabitant-reading-op">constellation</span>
