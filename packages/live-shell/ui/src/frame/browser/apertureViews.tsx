@@ -208,8 +208,9 @@ function DocumentView({pane}: {pane: FocusedPane}) {
   const reached = useReachedDocument()
   const held = parseDocumentSubject(pane.pinned)
   const form = held ? (held.form === 'day' ? 'Day' : 'Flow') : null
-  // The document door holds the one the hand last reached; it is this pane's when its form is this pane's.
-  const document = reached && (!form || reached.form === form) ? reached : null
+  // The document door holds the one the hand last reached; it is this pane's when it stands in this pane (by the hosting
+  // binding), else — a face outside a pane — when its form is this pane's.
+  const document = reached && (reached.paneId ? reached.paneId === pane.id : !form || reached.form === form) ? reached : null
   const revision = document?.revision ? `r${revisionShort(document.revision)}` : null
   return <>
     <Row k="Form" info={`The form of the document this pane holds${pane.pinned ? ` (${pane.pinned})` : ''}.`}>{document?.form ?? form ?? '—'}</Row>
