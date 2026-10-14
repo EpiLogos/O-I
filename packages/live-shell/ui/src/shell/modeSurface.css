@@ -62,8 +62,8 @@
 .mode-centre-note { margin: 6px 2px; font-size: 10px; color: var(--text-faint) }
 
 /* The mockup's column colours — the identity grammar of the mode centres and the shared tracks pane
-   (world-shell-mockup-base-session / -r2-scenes). */
-.mode-centre, .tracks-pane { --mode-day: #97b1be; --mode-flows: #5cc6b4; --mode-beings: #8fd0a8; --mode-things: #e2a35e; --mode-goals: #c79ae0;
+   (world-shell-mockup.html docgrid: Day · Flows · Beings · Things · Goals). */
+.mode-centre, .tracks-pane { --mode-day: #a8b0b8; --mode-flows: #e8e4d8; --mode-beings: #5cc6b4; --mode-things: #d8c89a; --mode-goals: #9fb4c8;
   --mode-place: #d8c89a; --mode-occasion: #e2a35e; --mode-artefact: #c79ae0; --mode-expression: #b095d6; --mode-narration: #9db8cc; --mode-transition: #6fb3c9 }
 
 /* Base · Session — the day as clips: five coloured track columns at the
