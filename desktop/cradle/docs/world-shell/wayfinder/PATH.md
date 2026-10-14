@@ -99,11 +99,18 @@ objections verbatim and the full validation (`BRIEF-BUILDER.md`); the lead conve
 
 | Ticket | Who | Zone | Since |
 |---|---|---|---|
-| Live at the mockup's floor under the one-instrument ruling: the rail in Live, the chain as plates, the clip in the Clip view, the Live tree healed | Opus builder | `shell/modeFrames.ts` (live), `shell/modeDetails.tsx` (live), `components/DeviceChainPanel.tsx`, `live/**`, `components/BrowserPane.tsx` | 14 Oct |
 | N1: works survive a restart — the kernel's expression owner enumerates a persistent home on `list` | Opus builder | `desktop/cradle/kernel/src/expression.rs`, `expression_file.rs`, `packages/expressions-boundary/src/**` (list/open_file relay), the Expressions panel | 14 Oct |
 | The browser's lower panel is the focused pane's own context (the mockup's aperture slot) | Opus builder | `shell/ModeBrowser.tsx` (ApertureSlot, CategoryContext), `native/workbenchDoor.ts`, one publish in `native/Workbench.tsx`, `frame/browser/**` | 14 Oct |
-| Queued: the Expressions centre full-bleed — the pane's header, buttons and stage tools move into the Studio plate | Opus builder (next free slot) | `projections/expressionsPane.tsx`, `components/NativeStageTools.tsx`, `components/expressions/studio/**` | 14 Oct |
+| The Expressions centre full-bleed — the pane's header, buttons and stage tools move into the Studio plate | Opus builder | `projections/expressionsPane.tsx`, `components/NativeStageTools.tsx`, `components/expressions/studio/**` | 14 Oct |
 | Native screen pass against the mockup renders; N1; mounting N2's subject door | lead | the frame, `App.tsx`, `native/Workbench.tsx`, `shell/modeFrames.ts`, the book | 14 Oct |
+
+Then: the transport and status bar (`80d5beb0c`, lane C: 46px, a title line, words and owner readings, the Info view)
+and Live at the mockup's floor (`ebc5f8cc7`, lane D: the rail in Live, the chain as plates in note order, the clip in the
+Clip view, Live's tree healed); from their proposals the atlas contained in its pane (`beca86c5b`), a fresh book opening in
+Central (`a7cbcb195`), plates never narrower than their heads, dead CSS removed. Carried from lane D: the chain's drop zone
+has no drop receiver yet (a browser row cannot land on Live's chain); the device side's head names only the track's own
+devices. From the native pass at `14cb8a1bb`: the Flow pane draws blank paper although the Flow holds entries (to inspect);
+Central's Day is refused by its owner ("the native today pointer is stale") until the owner ensures the current Day.
 
 Landed later the same evening: the detail row's one head, the shared Clip view and Central's and Factory's two sides
 (`cdbf9e6ae`, lane A); Expressions' Studio plate and scene clip, Technē's instruments rack and event clip (`14cb8a1bb`,
