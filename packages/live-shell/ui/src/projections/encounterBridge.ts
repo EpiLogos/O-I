@@ -25,6 +25,8 @@
 import type {EncounterBridge, EncounterListener, EncounterSnapshot} from '../../../../../desktop/cradle/src/surface/projectionModules';
 import type {CandidateWorkspace} from '../continuity';
 import type {WorkspaceReading} from '../shell/workspaceTypes';
+import type {TrailStop} from '../../../../../desktop/cradle/src/workspace/store';
+import type {WorkspaceMode} from '../../../../../desktop/cradle/src/workspace/mode';
 
 export interface SpineEncounterBridge extends EncounterBridge {
   /** Deliver the current spine reading to every live registration. The
@@ -76,10 +78,16 @@ export function createSpineEncounterBridge(
       if (intent.kind === 'subject') {
         // Selection propagates as an encounter transition into the ONE
         // WorldContext owner. Refs and titles only — never content.
-        book.setContext(context => ({
-          ...context,
-          subject: {ref: intent.ref, kind: intent.subjectKind, title: intent.title},
-        }));
+        // A subject change is a new encounter: the trail grows by the stop
+        // it came from (encounter.ts: the trail grows on every subject
+        // transition), so the encounter link can push it and Back walks it.
+        // Re-selecting the same subject is no transition.
+        const mode = latest.current.workspace.mode;
+        book.setContext(context => {
+          const next = {ref: intent.ref, kind: intent.subjectKind, title: intent.title};
+          if (context.subject?.ref !== undefined && context.subject.ref === intent.ref) return {...context, subject: next};
+          return {...context, subject: next, trail: [...(context.trail ?? []), trailStopFrom(String(mode), context.subject)]};
+        });
         return;
       }
       if (intent.kind === 'occasion') {
@@ -95,4 +103,10 @@ export function createSpineEncounterBridge(
       // the contract, not a swallowed write.
     },
   };
+}
+
+/** The trail stop a subject transition leaves: where the person came from. */
+export function trailStopFrom(mode: string, previous: {ref?: string; kind?: string; title?: string} | undefined): TrailStop {
+  const stopMode = (mode === 'audio' ? 'base' : mode) as WorkspaceMode;
+  return {mode: stopMode, label: previous?.title || stopMode, surfaceRef: previous?.ref, surfaceKind: previous?.kind};
 }
