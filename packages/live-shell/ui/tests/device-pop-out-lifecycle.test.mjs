@@ -42,8 +42,8 @@ const withDay = {...aperture, day: {project: null, sourceRef: 'source:day', docu
 const withFlow = {...aperture, flow: {location: {}}}
 const transport = {kind: 'unavailable', reason: 'the test carrier is down'}
 const host = (popped = false) => ({popOut() {}, redock() {}, poppedOut: () => popped})
-const STANDALONE = [['day-die', 'document'], ['flow-document', 'document'], ['nara-conversation', 'conversation'], ['ql-instrument', 'instrument']]
-const POPPING_FAMILIES = ['central', 'quaternal-logic']
+const STANDALONE = [['day-die', 'document'], ['flow-document', 'document'], ['nara-conversation', 'conversation']]
+const POPPING_FAMILIES = ['central']
 const NON_STANDALONE = [
   ['atlas-earth', 'globe-engine'], ['atlas-earth', 'graph-tools'], ['atlas-earth', 'mode-switch'], ['atlas-earth', 'time-control'],
   ['knowledge-graph', 'knowledge-scope'], ['knowledge-graph', 'knowledge-filters'], ['knowledge-graph', 'knowledge-display'],
@@ -62,7 +62,7 @@ test('the standalone set is exactly the four faces whose bodies draw in a window
   assert.equal(schema.standsAlone('globe-engine', 'instrument'), false, 'the atlas globe drives the main window handle')
   const manifests = loaded()
   const standing = manifests.flatMap(manifest => manifest.faces.filter(schema.faceStandsAlone).map(face => `${manifest.id}/${face.id}`)).sort()
-  assert.deepEqual(standing, ['central/day-die', 'central/flow-document', 'central/nara-conversation', 'quaternal-logic/ql-instrument'])
+  assert.deepEqual(standing, ['central/day-die', 'central/flow-document', 'central/nara-conversation'])
 })
 
 test('a device pops out exactly where its face stands alone; the families that carry those faces declare the device kind', () => {

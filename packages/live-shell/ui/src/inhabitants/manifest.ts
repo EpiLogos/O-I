@@ -46,14 +46,14 @@ export function faceKind(face: InhabitantFaceDeclaration): InhabitantFaceKind {
 
 /** The faces whose body draws in a window of their own, from the identity alone (the device door's standalone set), each
  * with the kind its body belongs to. Central's document and conversation faces read their owners through the transport
- * from the identity's aperture; ql-instrument draws the owner's reading or its refusal. Every other face stays in the main
- * window: a parameter face has no body in the rack, and the atlas and knowledge-graph bodies drive the main window's mounted
- * globe or graph handle, which a separate webview cannot reach, so a window for them would be inert. */
+ * from the identity's aperture. Every other face stays in the main window: a parameter face has no body in the rack; the
+ * atlas and knowledge-graph bodies drive the main window's mounted globe or graph handle, which a separate webview cannot
+ * reach; and the QL instrument's reading is published only by the main window's mounted Expressions frame (the kernel's
+ * owner reads need that frame's lease, and there is no passive read), so its window could only ever say "no reading". */
 const STANDALONE_DEVICE_FACES: ReadonlyMap<string, InhabitantFaceKind> = new Map([
   ['day-die', 'document'],
   ['flow-document', 'document'],
   ['nara-conversation', 'conversation'],
-  ['ql-instrument', 'instrument'],
 ])
 
 /** Whether a face of this id and kind draws its body in a window of its own. */
