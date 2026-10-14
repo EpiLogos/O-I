@@ -30,9 +30,12 @@ export function useCandidateWorkspace() {
   // Central's own (its seed), never an old Live tree, whatever world the context names.
   // (The kind is central/documents/centralDocuments.ts CENTRAL_DOCUMENT_PANE_KIND, named here: that module reaches the flow
   // templates, which the book's readers do not load.)
-  const holdsCentralDocuments = Object.values(book.current.layout.surfaces ?? {}).some(surface => surface.kind === 'projection.central-document')
-  const standsInOldLive = storedMode === 'base' && book.current.context?.world !== 'central' && !book.current.modeLayouts?.live && !holdsCentralDocuments
-  useEffect(() => { if (standsInOldLive) book.setLayout(layout => ({...layout, mode: 'live'})) }, [standsInOldLive, book.current.id])
+  // An old Live tree is a SAVED tree: a fresh book has none, and its first tree is Central's seed (lane D found every fresh
+  // book renamed: the base seed landed between this reading and the rename). The rename tests the layout it renames.
+  const holdsCentralDocuments = (layout: {surfaces?: Record<string, {kind?: string}>}) => Object.values(layout.surfaces ?? {}).some(surface => surface.kind === 'projection.central-document')
+  const savedTree = Object.keys(book.current.layout.surfaces ?? {}).length > 0
+  const standsInOldLive = storedMode === 'base' && savedTree && book.current.context?.world !== 'central' && !book.current.modeLayouts?.live && !holdsCentralDocuments(book.current.layout)
+  useEffect(() => { if (standsInOldLive) book.setLayout(layout => holdsCentralDocuments(layout) ? layout : {...layout, mode: 'live'}) }, [standsInOldLive, book.current.id])
   const mode: ShellMode = standsInOldLive ? 'audio' : SHELL_MODE_OF_BOOK[storedMode] ?? 'base'
   const setMode = (next: ShellMode) => book.switchMode(BOOK_MODE_OF_SHELL[next])
   const warmTrees = warmWorkspaceTrees(book.workspaces, book.current.id, storedMode)
