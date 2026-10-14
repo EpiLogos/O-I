@@ -264,17 +264,19 @@ test('a works list that cannot refresh after a good open is a warning beside the
 })
 
 // ——— New ———————————————————————————————————————————————————————————————————————————————————
-test('New is one create with a fresh ref and title, then the open door; nothing is composed or saved', async () => {
+test('New is one create with a fresh ref and title, then save_as into the works home, then the open door (N1)', async () => {
   const owner = stubOwner(), {ports, events, published} = portsOver(owner)
   const outcome = await CMD.newExpression(ports, 'Untitled expression')
   const ref = FIRST_REF
   assert.equal(outcome.ok, true)
-  assert.deepEqual(events, ['create', 'open:' + ref, 'refresh', 'list'])
-  assert.deepEqual(operations(owner.calls), ['create', 'list'])
+  assert.deepEqual(events, ['create', 'parent', 'save_as', 'open:' + ref, 'refresh', 'list'])
+  assert.deepEqual(operations(owner.calls), ['create', 'save_as', 'list'])
   assert.deepEqual([owner.calls[0].expression_ref, owner.calls[0].title, owner.calls[0].actor], [ref, 'Untitled expression', CMD.OPEN_ACTOR])
   const document = owner.documents.get(ref)
   assert.deepEqual([document.scenes.length, Object.keys(document.entities).length], [1, 0], 'an empty work: one Scene, no objects')
-  assert.equal(outcome.saved, null)
+  assert.deepEqual(owner.calls[1].parent, CENTRAL_ROOT)
+  assert.match(owner.calls[1].name, /^untitled-expression-00000001\.expression\.json$/)
+  assert.deepEqual(outcome.saved, {path: owner.calls[1].name, revision: 'file-r1'})
   assert.deepEqual(published.at(-1).map(work => work.title), ['Untitled expression'])
 })
 
@@ -416,7 +418,7 @@ test('code-reading: FORK_REASON is gone from the shell, and the container opens 
   assert.match(browser, /<NativeExpressionCollections query=\{query\}\/>/, 'the browser mounts the collections with the one prop')
 })
 
-test('with no home for works, Open commits and opens the work and saves no file', async () => {
+test('with no works home (parent null), New commits and opens the work and saves no file', async () => {
   const sent = []
   const channel = async request => {
     sent.push(request.operation)
@@ -429,5 +431,4 @@ test('with no home for works, Open commits and opens the work and saves no file'
   assert.equal(outcome.saved, null)
   assert.deepEqual(opened, ['expression:authored-u-1'])
   assert.ok(!sent.includes('save_as'))
-  assert.equal(CMD.WORKS_FOLDER, null, 'works have no Central folder until N1 gives them a home; the Central root is not a writable placement')
 })

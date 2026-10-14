@@ -50,6 +50,7 @@ pub mod expression_asset;
 pub mod expression_blueprint;
 pub mod expression_carrier;
 pub mod expression_file;
+pub mod expression_home;
 pub mod expression_material;
 pub mod expression_parameter_rack;
 pub mod expression_performance;

@@ -28,6 +28,7 @@ import type {StudioSection} from '@epilogos/expressions-boundary'
 import type {HostedAppState, StageCommand, StageResult} from '@epilogos/expressions-boundary'
 import {NativeStageTools} from '../components/NativeStageTools'
 import {enumerateWorks, needsListing, setExpressionOwner} from '../components/nativeExpressionCommands'
+import {closedWork, expressionOwner, openListedWork} from '../components/nativeExpressionCommands'
 import {publishFrameTakeLink} from '../native/frameTakes'
 import {publishHostedChrome, publishHostedExpressions, useFramePlacement} from '../projections/expressionsPaneHost'
 import {followFrame} from '../projections/framePlacement'
@@ -127,7 +128,16 @@ export function ExpressionsPanel() {
     const openNative = (ref: string) => {
       if (!presented() || !mounted) {pendingOpen.current = ref; pendingDraft.current = null; return}
       selectionOwner.current = {workspaceId: bookRef.current.current.id, expected: ref}
-      mounted.host.openExpression(ref, 'world.expressions')
+      // A work the owner lists only as its file in its works home (FOUNDATION N1) opens from that file first, then by ref.
+      const closed = closedWork(workspaceRef.current.nativeWorks, ref), channel = expressionOwner(), presenting = mounted.host
+      if (!closed || !channel) {presenting.openExpression(ref, 'world.expressions'); return}
+      const epoch = workspaceRef.current.accessEpoch
+      const current = () => live && mounted?.host === presenting && workspaceRef.current.nativeAccessCurrent(epoch)
+      void openListedWork(channel, closed).then(() => {
+        if (!current()) return
+        presenting.openExpression(ref, 'world.expressions')
+        return enumerateWorks(channel, works => workspaceRef.current.publishWorks(works), current)
+      }).catch(fail)
     }
     openRequest.current = openNative
     // The same door, the other request kind: a browser-local draft by its Library id, through the host's open-local-draft command.
@@ -198,7 +208,15 @@ export function ExpressionsPanel() {
       let listedFor: string | null = null
       const existing = knownRef || initial ? [] : await enumerate()
       if (!live) return
-      const initialRef = knownRef ?? initial?.expression_ref ?? existing[0]?.expression_ref
+      let initialRef: string | undefined = knownRef ?? initial?.expression_ref ?? existing[0]?.expression_ref
+      // The first listed work may live only as its file in the owner's works home (N1): the owner opens it from that file
+      // before the frame boots on its ref. A refusal shows here and the frame boots on no work.
+      const firstClosed = initialRef ? closedWork(existing, initialRef) : null, owner = expressionOwner()
+      if (firstClosed && owner) {
+        try {await openListedWork(owner, firstClosed); await enumerate()}
+        catch (cause) {fail(cause); initialRef = undefined}
+        if (!live) return
+      }
       selectionOwner.current = {workspaceId: bookRef.current.current.id, expected: initialRef}
       // A new native owner lease must fetch the current hosted entry rather
       // than reuse a cached HTML page pointing at a previous build. Hidden
