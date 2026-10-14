@@ -14,3 +14,5 @@ url = "2"
 base64 = "0.22"
 brotli = "=8.0.4"
 jiff = "0.2"
+live-set = { path = "../../../packages/live-set" }
+live-dynamics = { path = "../../../packages/live-dynamics" }

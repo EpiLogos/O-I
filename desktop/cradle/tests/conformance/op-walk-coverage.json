@@ -702,6 +702,42 @@
       "reason": "No directly attributable executed native walk is recorded here for knowledge; retain explicit operation-specific coverage debt until its owner supplies a receipt."
     },
     {
+      "op": "live_device_descriptors",
+      "native_owner": "kernel/src/live_set_owner.rs",
+      "spec_ref": "docs/world-shell/LEGACY-CRADLE-RETIREMENT.md §3 gate 4; tests/conformance/owner-service-census.json (8787 seam)",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "A/native verification",
+      "reason": "Ported from the 8787 owner-service seam; no directly attributable executed native walk is recorded here for live_device_descriptors; retain explicit operation-specific coverage debt until its owner supplies a receipt."
+    },
+    {
+      "op": "live_device_param_write",
+      "native_owner": "kernel/src/live_set_owner.rs",
+      "spec_ref": "docs/world-shell/LEGACY-CRADLE-RETIREMENT.md §3 gate 4; tests/conformance/owner-service-census.json (8787 seam)",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "A/native verification",
+      "reason": "Ported from the 8787 owner-service seam; no directly attributable executed native walk is recorded here for live_device_param_write; retain explicit operation-specific coverage debt until its owner supplies a receipt."
+    },
+    {
+      "op": "live_device_params_read",
+      "native_owner": "kernel/src/live_set_owner.rs",
+      "spec_ref": "docs/world-shell/LEGACY-CRADLE-RETIREMENT.md §3 gate 4; tests/conformance/owner-service-census.json (8787 seam)",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "A/native verification",
+      "reason": "Ported from the 8787 owner-service seam; no directly attributable executed native walk is recorded here for live_device_params_read; retain explicit operation-specific coverage debt until its owner supplies a receipt."
+    },
+    {
+      "op": "live_set_read",
+      "native_owner": "kernel/src/live_set_owner.rs",
+      "spec_ref": "docs/world-shell/LEGACY-CRADLE-RETIREMENT.md §3 gate 4; tests/conformance/owner-service-census.json (8787 seam)",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "A/native verification",
+      "reason": "Ported from the 8787 owner-service seam; no directly attributable executed native walk is recorded here for live_set_read; retain explicit operation-specific coverage debt until its owner supplies a receipt."
+    },
+    {
       "op": "m3_reception",
       "native_owner": "kernel/src/m3_reception.rs",
       "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; QL-MEF #252/#268 Nara M4 integration; canonical plan Lane A \u00a73",

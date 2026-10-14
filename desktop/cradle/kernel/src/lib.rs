@@ -82,6 +82,7 @@ pub mod inhabitation;
 pub mod knowledge;
 pub mod knowledge_prepared;
 pub mod links;
+pub mod live_set_owner;
 pub mod m3_reception;
 pub mod material;
 pub mod nara_coordinate;
@@ -923,6 +924,32 @@ pub enum KernelOp {
         #[serde(default)]
         columns: Option<u16>,
     },
+    /// The Live set reading for one absolute `.als` path: `{summary, document,
+    /// revision}`, the same document the 8787 seam serves at `/api/set`. An
+    /// owner read. See `live_set_owner.rs`.
+    LiveSetRead {
+        path: String,
+    },
+    /// Every live-dynamics device parameter table, keyed by document element
+    /// name (the 8787 seam's `/api/device-descriptors`). An owner read.
+    LiveDeviceDescriptors,
+    /// One device's stored parameter values on one track (the 8787 seam's
+    /// `/api/document/device-params`). An owner read.
+    LiveDeviceParamsRead {
+        path: String,
+        track: String,
+        device: String,
+    },
+    /// Validate one stored parameter against its table's extent and write the
+    /// set back in place (the 8787 seam's `POST /api/document/device-param`).
+    /// Refusals name the law. Writes the user's file, not kernel state.
+    LiveDeviceParamWrite {
+        path: String,
+        track: String,
+        device_name: String,
+        param_id: String,
+        value: serde_json::Value,
+    },
     /// `fresh` bypasses the cached listing for this one read — the explicit
     /// tree refresh, not an ordinary expansion.
     FileResolve {
@@ -1406,6 +1433,22 @@ pub enum KernelOpResult {
     /// The owner's `ql.janko-surface/v1` window, verbatim.
     JankoWindowReading {
         document: serde_json::Value,
+    },
+    /// `{summary, document, revision}` for one Live set, as the 8787 seam serves it.
+    LiveSetReading {
+        reading: serde_json::Value,
+    },
+    /// Every device parameter table, keyed by element name.
+    LiveDeviceDescriptorsReading {
+        descriptors: serde_json::Value,
+    },
+    /// `{params: [...]}`: one device's stored values on one track.
+    LiveDeviceParamsReading {
+        reading: serde_json::Value,
+    },
+    /// `{param: {...}}`: the persisted reading of one written parameter.
+    LiveDeviceParamWritten {
+        reading: serde_json::Value,
     },
     SystemCompositionReading {
         reading: system_composition::Reading,
@@ -2505,6 +2548,13 @@ impl Kernel {
                     document: git::diff(&self.client, request)?,
                 },
             }),
+            op @ (KernelOp::LiveSetRead { .. }
+            | KernelOp::LiveDeviceDescriptors
+            | KernelOp::LiveDeviceParamsRead { .. }
+            | KernelOp::LiveDeviceParamWrite { .. }) => self
+                .prepare_owner_read(&op)
+                .ok_or("Cannot prepare the Live document owner operation")?
+                .execute(),
             KernelOp::ConfigDiff
             | KernelOp::CompositionRead { .. }
             | KernelOp::SystemCompositionRead

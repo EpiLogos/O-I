@@ -6,6 +6,7 @@
 //! functions. Clean-room: written from `session-model.md` and the Schema
 //! vocabulary; no Ableton material.
 
+pub mod api;
 pub mod model;
 pub mod rules;
 pub mod xml;

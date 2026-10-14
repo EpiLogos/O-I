@@ -321,7 +321,11 @@ name = "live-set"
 version = "0.1.0"
 dependencies = [
  "flate2",
+ "live-dynamics",
  "quick-xml",
+ "serde",
+ "serde_json",
+ "sha2",
 ]
 
 [[package]]

@@ -54,6 +54,10 @@ impl PreparedRead {
             | KernelOp::SystemCompositionRead
             | KernelOp::MusicModesRead
             | KernelOp::JankoWindowRead { .. }
+            | KernelOp::LiveSetRead { .. }
+            | KernelOp::LiveDeviceDescriptors
+            | KernelOp::LiveDeviceParamsRead { .. }
+            | KernelOp::LiveDeviceParamWrite { .. }
             | KernelOp::CompositionRead { .. }
             // The bounded telemetry follow waits on the owner for its whole
             // window; it reads only the owner's state file, never the kernel's.
@@ -139,6 +143,14 @@ impl PreparedRead {
             return Ok(KernelOpOutcome {
                 receipts: vec![],
                 result: KernelOpResult::FactoryDevelopmentReading { data },
+            });
+        }
+        // The Live document owner (the 8787 seam's replacements). None of these
+        // needs the World, so none pays for its discovery.
+        if let Some(result) = crate::live_set_owner::execute(&self.op) {
+            return Ok(KernelOpOutcome {
+                receipts: vec![],
+                result: result?,
             });
         }
         let git_reading = match &self.op {
@@ -259,5 +271,21 @@ mod tests {
             cache: Arc::new(Mutex::new(crate::read_cache::OwnerReadCache::default())),
         };
         assert!(PreparedRead::prepare(&client, None, &op, Some(inputs)).is_some());
+    }
+
+    /// The Live document owner's ops run outside the kernel lock, the device
+    /// write included: it rewrites a user file, not kernel state.
+    #[test]
+    fn the_live_document_owner_ops_prepare_outside_the_lock() {
+        let client = CentralClient::discover();
+        for value in [
+            serde_json::json!({"op": "live_set_read", "path": "/a.als"}),
+            serde_json::json!({"op": "live_device_descriptors"}),
+            serde_json::json!({"op": "live_device_params_read", "path": "/a.als", "track": "Master", "device": "Compressor2"}),
+            serde_json::json!({"op": "live_device_param_write", "path": "/a.als", "track": "Master", "device_name": "Compressor2", "param_id": "Threshold", "value": 0.5}),
+        ] {
+            let op: KernelOp = serde_json::from_value(value).unwrap();
+            assert!(PreparedRead::prepare(&client, None, &op, None).is_some());
+        }
     }
 }
