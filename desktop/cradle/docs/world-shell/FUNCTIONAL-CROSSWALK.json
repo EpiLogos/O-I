@@ -4396,7 +4396,7 @@
           "current_receipt": "pending native binding/revision replay for this target; no completion inferred from imports"
         },
         "shell_destination": {
-          "surface": "ordinary instrument opening / saved views",
+          "surface": "Lens bar (instrument rail)",
           "status": "required destination, pending target-specific candidate replay",
           "entry": "Browser definition or ordinary open/focus; selected installed instrument opens expanded surface through existing identity/placement",
           "clip_track_binding": "Track/work context selects installed editor; deep editor reads same subject; timeline material does not become a duplicate source store"
@@ -4575,7 +4575,7 @@
           "current_receipt": "pending native binding/revision replay for this target; no completion inferred from imports"
         },
         "shell_destination": {
-          "surface": "ordinary instrument opening / saved views",
+          "surface": "Canvas",
           "status": "required destination, pending target-specific candidate replay",
           "entry": "Browser definition or ordinary open/focus; selected installed instrument opens expanded surface through existing identity/placement",
           "clip_track_binding": "Track/work context selects installed editor; deep editor reads same subject; timeline material does not become a duplicate source store"
