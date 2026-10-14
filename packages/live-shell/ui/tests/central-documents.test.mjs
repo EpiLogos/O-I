@@ -402,3 +402,14 @@ test('the aperture follows the document the hand reached, and lets it go when th
   assert.equal(door.documentStateWords({pending: false, dirty: true}), 'edited since save')
   assert.equal(door.documentStateWords({pending: false, dirty: false, blocked: 'moved'}), 'blocked — moved')
 })
+
+test('a document reached in a pane names its pane, and the aperture matches the focused pane by it (lane F)', async () => {
+  const door = await import('../src/central/documents/documentDoor.ts')
+  door.publishDocument({key: 'day:p', paneId: 'pane-a', form: 'Day', title: 'today', state: 'as read'}, true)
+  assert.equal(door.reachedDocument()?.paneId, 'pane-a')
+  door.withdrawDocument('day:p')
+  const views = await readFile(new URL('../src/frame/browser/apertureViews.tsx', import.meta.url), 'utf8')
+  assert.match(views, /reached\.paneId \? reached\.paneId === pane\.id/)
+  const pane = await readFile(new URL('../src/central/documents/CentralDocumentPane.tsx', import.meta.url), 'utf8')
+  assert.match(pane, /<DocumentPaneContext\.Provider value=\{binding\.id\}>/)
+})

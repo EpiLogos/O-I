@@ -3,12 +3,18 @@
 // document, never on the document's face). A Central document hosted in a pane publishes itself here when the hand reaches
 // it — a press or focus anywhere in the pane, its hosted form included — and withdraws when it unmounts. The aperture reads
 // the last one reached. No React state is held here: one value and its listeners.
-import {useSyncExternalStore} from 'react'
+import {createContext, useSyncExternalStore} from 'react'
 import {outcomeLabel, type SaveRouterReading} from '../../inhabitants/documentDeviceModel'
+
+/** The pane binding a document face is hosted in (CentralDocumentPane provides it): the aperture matches the focused pane
+ * by it, not by the form alone. */
+export const DocumentPaneContext = createContext<string | null>(null)
 
 export interface DocumentInPane {
   /** The pane's own key (one per mounted document face). */
   key: string
+  /** The hosting pane's binding id, when the face stands in a pane. */
+  paneId?: string
   form: 'Day' | 'Flow'
   title: string
   /** The owner's revision of the bytes the face stands on, when read. */
