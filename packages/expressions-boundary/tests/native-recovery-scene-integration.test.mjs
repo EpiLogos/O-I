@@ -18,6 +18,7 @@ const ts=typescript.default,files={};
 const {sameSceneData}=await import(new URL('sceneCorrespondence.ts',author));
 const {saveScene,restoreScene}=await import(new URL('sceneWorkflow.ts',author));
 const {preserveRecoveryLibraryCopies}=await import(new URL('recoveryLibrary.ts',author));
+const {draftJourney}=await import(new URL('recovery.ts',author));
 const {STORAGE_KEY,saveToLibrary,readLibraryDetailed}=await import(new URL('store.ts',author));
 for(const [name,path] of Object.entries({nativeRecovery:'desktop/cradle/expressions-app/field-studies-journeys/src/nativeRecovery.ts',recovery:'desktop/cradle/expressions-app/field-studies-journeys/src/recovery.ts',workspace:'desktop/cradle/expressions-app/field-studies-journeys/src/nativeWorkspace.ts',transport:'packages/live-shell/ui/src/components/NativeSceneTransport.tsx',session:'packages/live-shell/ui/src/components/SessionView.tsx'}))files[name]=ts.createSourceFile(path,await readFile(new URL(path,root),'utf8'),ts.ScriptTarget.Latest,true);
 const nodes=(file,predicate)=>{const found=[];const walk=n=>{if(predicate(n))found.push(n);ts.forEachChild(n,walk)};walk(file);return found};
@@ -38,7 +39,7 @@ function recovery(beforeRead=async()=>{}) {
  const native=functions(files.nativeRecovery,['nativeRead','rememberReading','collectNativeRecoveryBasis','validateNativeRecoveryBasis','acceptNativeRecoveryBasis','acceptRecoveryDraft'],{...state,key:(scope,kind,id)=>`${scope}:${kind}:${id}`,nativeRecoveryRequest:async request=>{
   requests.push(request);await beforeRead(request);const input=inputs.find(row=>JSON.stringify(row.request.request)===JSON.stringify(request));assert.ok(input,'only genuine archived owner reads are admitted');return structuredClone(input.response.outcome.data);
  }});
- const receiving=functions(files.recovery,['readBoundWorkingDraft','acceptWorkingRecoveryBasis'],{...native,hostedRecovery:()=>true,validateJourney,validateWorkingRecord,sameSceneData,preserveRecoveryLibraryCopies});
+ const receiving=functions(files.recovery,['readBoundWorkingDraft','acceptWorkingRecoveryBasis'],{...native,hostedRecovery:()=>true,validateJourney,draftJourney,validateWorkingRecord,sameSceneData,preserveRecoveryLibraryCopies});
  return {...state,...native,...receiving,requests};
 }
 test('actual bound recovery read carries original owner records without accepting newer CAS and explicit validated adoption couples them',async()=>{
@@ -100,7 +101,7 @@ test('actual follow of already retained native work leaves dirty material, clock
 });
 test('actual follow refuses before destination reading/adoption when departing draft cannot be durably retained',async()=>{
  const {store,work}=working(),host={snapshot:()=>({journey:structuredClone(store.document)}),version:()=>store.revision,shouldRetainDraft:()=>true},calls=[];
- const run=execute(`()=>{let followGeneration=0;return ${callback(files.workspace,'followOpen')};}`,{host,work,opens:{cancel:()=>{}},hostedRecovery:()=>true,recoveryBinding:()=>binding,captureNativeAdoption,clone,writeDraft:async()=>{calls.push('retain');throw closed},readBoundWorkingDraft:()=>assert.fail('Refused departing draft must precede destination read')})();
+ const run=execute(`()=>{let followGeneration=0;return ${callback(files.workspace,'followOpen')};}`,{host,work,opens:{cancel:()=>{}},hostedRecovery:()=>true,recoveryBinding:()=>binding,captureNativeAdoption,clone,writeDraft:async()=>{calls.push('retain');throw closed},persistDraft:async()=>{calls.push('retain');throw closed},readBoundWorkingDraft:()=>assert.fail('Refused departing draft must precede destination read')})();
  const before=work.state;await assert.rejects(run('expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1',{...binding,expression_ref:'expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1'}),error=>error===closed);
  assert.deepEqual(calls,['retain']);assert.deepEqual(work.state,before);
 });
