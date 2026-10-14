@@ -13,6 +13,7 @@ import type {ShellConfig} from '../../native/application'
 import type {TransportBindings} from '../../frame/transport/slots'
 import {civilDateOfDayRef} from '../../central/centralVertical'
 import {DIE_POSITIONS, dieFaceLabel, dieFaceOf} from '../../central/devices/dayDie'
+import {revisionShort} from '../../central/documents/documentDoor'
 
 export interface Readout {value: string; title: string}
 
@@ -230,7 +231,7 @@ export function documentLoad(document: {form: string; title: string; state: stri
   const word = document.state.startsWith('edited') ? 'edited' : document.state.startsWith('waiting') ? 'saving…'
     : document.state.startsWith('saved') ? 'saved' : document.state.startsWith('unchanged') ? 'saved'
     : document.state.startsWith('as read') ? 'as read' : document.state.split(' — ')[0]
-  return {value: word, title: `Save state — the ${document.form} ${document.title}${document.revision ? ` at r${document.revision.slice(0, 12)}` : ''}: ${document.state}`}
+  return {value: word, title: `Save state — the ${document.form} ${document.title}${document.revision ? ` at r${revisionShort(document.revision)}` : ''}: ${document.state}`}
 }
 
 // ————————————————————————————————————————————————————————————————————————
