@@ -6,7 +6,7 @@ import "./native-field/liveCut.css";
 import {SESSION_KEY,SessionState,validateSession,writeDraft,readDraft,readDrafts,removeDraft,applyRecoveryPlan,quarantineView,restoreQuarantinedDraft} from './recovery';
 // lane-3 E17-E19: one draft scheduler, the draft/saved offer and the session mark.
 import {DraftSchedule,draftStatusLine} from './draftSchedule';
-import {recoveryOffer,supersededDraft,recoveryDiffLines,planRecoveryChoice,mergeTakeIntoDraft,readUncleanExit,markSessionOpen,markSessionClosed,offerClock,recordBootExit,type RecoveryChoice,type RecoveryDiff} from './draftStorage';
+import {recoveryOffer,supersededDraft,recoveryDiffLines,planRecoveryChoice,mergeTakeIntoDraft,readUncleanExit,markSessionOpen,markSessionClosed,offerClock,recordBootExit,quarantineNotice,type RecoveryChoice,type RecoveryDiff} from './draftStorage';
 import {foldObjectState} from './foldState';
 import {imageSuiteHTML} from './imageSuite';
 import {initialiseShared,effectiveScene,isShared,writeShared,toggleShared,useLocalPointer,POINTER_PATHS} from './sharedSettings';
@@ -228,6 +228,8 @@ let recoveryOfferOpen=false;
 let quarantineState:{rows:{id:string;key:string;name:string;reason:string;when:string;raw:string}[];unreadable:string[];message?:string}={rows:[],unreadable:[]};
 /** lane-3 E17: the one schedule for draft backups. Edits coalesce on a 350 ms timer; context switches and quit flush at once; nothing flushes inside an open gesture or a held recovery choice. */
 const draftSchedule=new DraftSchedule({flush:()=>flushDraft(),gestureOpen:()=>store.transactionOpen,held:()=>recoveryOfferOpen});
+/** E19: every draft write goes through the hosted frame's basis rule (nativeWorkspace.persistDraft); the browser writes as before. */
+const persistDraft=(journey:Journey)=>nativeWorkspace?nativeWorkspace.persistDraft(journey):writeDraft(journey);
 async function flushDraft(){
  if(awaitingNativeBoot){if(store.revision===0)return;awaitingNativeBoot=false;nativeWorkspace?.cancelOpen();} // Retain an actual edit; an untouched opening canvas is not recovery material.
  // Coalesce changes while a gesture or native disk write is in flight. A
@@ -239,7 +241,7 @@ async function flushDraft(){
  if(propertyTake&&propertyTake.elapsed>0)mergeTakeIntoDraft(draft,propertyTake,new Date());
  draftBackupBusy=true;
  try{
-  await writeDraft(draft);
+  await persistDraft(draft);
   if(deletedLibraryIds.has(draft.id)){await removeDraft(draft.id);return;}
   sessionExpressions.set(draft.id,draft);if(store.document.id!==draft.id)return;
   autosaveErrorShown=false;
@@ -1352,7 +1354,7 @@ async function loadJourney(j:Journey){
  const generation=++journeyNavigation,version=store.revision,previous=clone(store.document);
  // A navigation may only replace the canvas after its actual departing work
  // has an acknowledged backup. A returning save never replaces newer edits.
- if(!deletedLibraryIds.has(previous.id)&&!recoveryOfferOpen)await writeDraft(previous);
+ if(!deletedLibraryIds.has(previous.id)&&!recoveryOfferOpen)await persistDraft(previous);
  if(generation!==journeyNavigation||version!==store.revision)throw new Error('The open request was superseded by newer work. Your current Expression was retained.');
  applyJourney(j);
  // A successful explicit open is the person's entry into the instrument.
@@ -2856,6 +2858,7 @@ async function startWorkspace(){
  const choice=await askRecoveryChoice(draft,offer);const plan=planRecoveryChoice(choice,draft,saved,new Date());
  try{await applyRecoveryPlan(plan,draft);}catch(error){toast('The recovery choice could not be kept. The draft stays held for the next start; export a file to keep this work.',9000);throw error;}
  recoveryOfferOpen=false;
+ if(plan.quarantineDraft)toast(quarantineNotice('chosen',false),9000);
  if(plan.removeDraft)sessionExpressions.delete(draft.id);if(plan.copy)sessionExpressions.set(plan.copy.id,plan.copy);store.document=initialiseSceneSaves(initialiseBelts(plan.open));store.touch();
  // E19: a restored draft is the working copy, and it differs from the saved copy until it is saved: the status says so.
  if(choice==='restore-draft')$('save-status').textContent=`Restored draft, not yet saved: ${recoveryDiffLines(offer.diff).join('; ')}`;}
@@ -2864,6 +2867,7 @@ async function startWorkspace(){
  recoveryOfferOpen=true;
  try{await applyRecoveryPlan({open:saved,quarantineDraft:true,removeDraft:true,quarantineReason:'Not newer than the saved copy, so the saved copy was opened. The draft is kept here verbatim.'},draft);}catch(error){toast('The draft could not be kept in quarantine, so it stays held for the next start. Export a file to keep this work.',9000);throw error;}
  recoveryOfferOpen=false;
+ toast(quarantineNotice('superseded',false),9000);
  sessionExpressions.delete(draft.id);sessionExpressions.set(saved.id,clone(saved));store.document=initialiseSceneSaves(initialiseBelts(clone(saved)));store.touch();}
  else if(draft&&(!initial.updatedAt||draft.id!==initial.id||draft.updatedAt>=initial.updatedAt)){store.document=initialiseSceneSaves(initialiseBelts(draft));store.touch();}recovered=validateSession(JSON.parse(localStorage.getItem(SESSION_KEY)??'null'),store.document);showEntry=!startsInTechne;}catch(e){console.warn('Draft recovery unavailable',e);showEntry=!startsInTechne;}}
  const linkedScene=deepLinkPending?.address.scene;

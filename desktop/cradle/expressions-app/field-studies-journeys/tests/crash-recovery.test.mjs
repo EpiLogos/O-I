@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {blankJourney,blankScene,clone,validateJourney} from '../build/model.js';
-import {supersededDraft,recoveryDiff,recoveryDiffLines,settleHostedDraft,mergeTakeIntoDraft} from '../build/draftStorage.js';
+import {supersededDraft,recoveryDiff,recoveryDiffLines,settleHostedDraft,mergeTakeIntoDraft,basisSuperseded,draftValue,splitDraftValue,quarantineNotice} from '../build/draftStorage.js';
 import {draftStatusLine} from '../build/draftSchedule.js';
 import {recoveryOffer,planRecoveryChoice,draftCopy,readUncleanExit,markSessionOpen,markSessionClosed,offerClock,SESSION_MARK_KEY,TAB_INSTANCE_KEY,tabInstance,recordBootExit,bootWasUnclean,writeRecord,loadRecord,removeRecord,listQuarantine,quarantine,quarantinedCopy,quarantinedName,encodeSlot} from '../build/draftStorage.js';
 
@@ -233,13 +233,14 @@ test('E19b: the native open settles its recovery through the same plan, before a
  const app=fs.readFileSync(new URL('../src/app.ts',import.meta.url),'utf8');
  assert.equal(nw.match(/await settleRecovery\(found,current\)/g)?.length,2,'follow and open both settle the recovery');
  const settle=nw.slice(nw.indexOf('const settleRecovery='),nw.indexOf('// Following (host open-expression'));
- assert.ok(settle.includes('await settleHostedDraft(draftId,found.journey,saved,'),'the hosted decision is the one settleHostedDraft owns');
+ assert.ok(settle.includes('await settleHostedDraft(draftId,{journey:found.journey,basis:draftRowBasis(row),text:draftRowText(row)},saved,'),'the hosted decision is the one settleHostedDraft owns, ordered by the recorded base');
  assert.ok(!settle.includes('await applyRecoveryPlan(plan,found.journey)'),'nativeWorkspace no longer applies its own plan');
  const hosted=fs.readFileSync(new URL('../src/draftStorage.ts',import.meta.url),'utf8');
  const owner=hosted.slice(hosted.indexOf('export async function settleHostedDraft('),hosted.indexOf('export const SESSION_MARK_KEY'));
- assert.ok(owner.indexOf('await owners.keepDraft(')<owner.indexOf('await owners.removeNativeDraft()'),'the draft is kept before its native copy leaves');
- assert.ok(owner.indexOf('owners.requireAdoption()')<owner.indexOf('await owners.removeNativeDraft()'),'a superseded choice retains everything');
- assert.ok(owner.includes('if(supersededDraft({draft,saved}))'),'a draft not newer than the checkpoint is decided before any offer');
+ assert.ok(owner.indexOf('await owners.keepDraft(')<owner.indexOf('await owners.markDraftKept('),'the draft is kept before its native row is marked kept');
+ assert.ok(!owner.includes('removeNativeDraft')&&!settle.includes('removeDraft('),'the hosted native row is never removed by recovery');
+ assert.ok(owner.indexOf('owners.requireAdoption()')<owner.indexOf('await owners.markDraftKept('),'a choice retains everything before it is marked');
+ assert.ok(owner.includes('if(supersededDraft({draft,saved,checkpoint}))'),'a draft superseded by its base is decided before any offer');
  assert.ok(app.includes('chooseRecovery:request=>askRecoveryChoice(request.draft,{...request.offer,revision:request.revision})'),'the owner is asked with the kernel revision named');
  assert.ok(app.indexOf('recordBootExit(uncleanExit)')<app.indexOf("if(!window.__JOURNEY__&&!qs.has('journey')&&!qsExpression)"),'a hosted boot records its mark too');
  assert.ok(app.includes('let uncleanExit=false;try{uncleanExit=readUncleanExit(localStorage);markSessionOpen(localStorage,new Date());}catch'),'one reading of the tab mark, before this page marks itself open');
@@ -267,7 +268,7 @@ test('T-REVIEW-6: the recovery choice holds the draft from the dialog until its 
  assert.ok(boot.includes('recoveryOfferOpen=true'),'the draft is held');
  assert.ok(boot.indexOf('recoveryOfferOpen=true')<boot.indexOf('await askRecoveryChoice(draft,offer)'),'held before the dialog opens');
  assert.ok(boot.indexOf('await applyRecoveryPlan(plan,draft)')<boot.indexOf('recoveryOfferOpen=false'),'released only after the plan is kept');
- assert.ok(/!recoveryOfferOpen\)await writeDraft\(previous\)/.test(source),'a departing write cannot replace the held draft');
+ assert.ok(/!recoveryOfferOpen\)await persistDraft\(previous\)/.test(source),'a departing write cannot replace the held draft');
  assert.ok(/held:\(\)=>recoveryOfferOpen/.test(source),'the schedule reads the hold');
 });
 
@@ -356,44 +357,93 @@ test('E19: the boot decides a superseded draft before any silent adoption, and t
 });
 
 // lane-3 E19 (hosted, data safety): settleHostedDraft runs with injected owners, so every branch of the native settle is exercised as written.
+// A native draft row carries the checkpoint revision it was edited from (its basis). Order is by that base, never by a regenerated time.
+const basisOf=(revision,edited,superseded)=>({schema:'oi.draft-basis/v1',revision,edited,...(superseded?{superseded:true}:{})});
+const hostedRow=(journey,basis)=>({journey,basis,text:JSON.stringify(basis?{...journey,draftBasis:basis}:journey)});
 function hostedOwners(overrides={}){
  const calls=[];
  const {choice='keep-saved',...rest}=overrides;
  const owners={hosted:true,uncleanBoot:true,settled:new Set(),revision:7,
   chooseRecovery:async request=>{calls.push({call:'choose',request});return choice;},
   requireAdoption:()=>{calls.push({call:'adopt'});},
-  keepDraft:async(plan,draft)=>{calls.push({call:'keep',plan,draft});},
-  removeNativeDraft:async()=>{calls.push({call:'remove'});},
+  keepDraft:async(plan,draft,text)=>{calls.push({call:'keep',plan,draft,text});},
+  markDraftKept:async(draft,basis)=>{calls.push({call:'mark',draft,basis});},
   ...rest};
  return {owners,calls,names:()=>calls.map(c=>c.call)};
 }
-test('E19 hosted: an older draft is quarantined, never adopted, and the checkpoint opens, after a clean or an unclean boot', async()=>{
- const saved=expression('h1','Checkpoint',T1),older=expression('h1','Checkpoint',T0,2);
+test('E19 hosted: a draft at its base with no later edits is kept aside with its notice, and the checkpoint opens, after a clean or an unclean boot', async()=>{
+ const saved=expression('h1','Checkpoint',T1),draft=expression('h1','Checkpoint',T0,2);
  for(const uncleanBoot of [true,false]){
   const {owners,calls,names}=hostedOwners({uncleanBoot});
-  const out=await settleHostedDraft('h1',older,saved,owners);
+  const out=await settleHostedDraft('h1',hostedRow(draft,basisOf(7,false)),saved,owners);
   assert.equal(out.kind,'checkpoint','the checkpoint is what opens');
   assert.equal(material(out.journey),material(saved),'the saved basis is adopted');
-  assert.deepEqual(names(),['keep','adopt','remove'],'kept first, then the native copy leaves');
-  assert.equal(calls[0].draft,older,'the draft kept is the draft as found');
-  assert.equal(calls[0].plan.quarantineDraft,true);assert.equal(calls[0].plan.removeDraft,true);
-  assert.match(calls[0].plan.quarantineReason,/Not newer than the saved copy/);
-  assert.equal(names().includes('choose'),false,'an older draft is never offered');
+  assert.deepEqual(names(),['keep','adopt'],'kept first; the native row is neither removed nor marked');
+  assert.equal(calls[0].draft,draft,'the draft kept is the draft as found');
+  assert.equal(calls[0].text,hostedRow(draft,basisOf(7,false)).text,'the verbatim native text is what is kept');
+  assert.equal(calls[0].plan.quarantineDraft,true);assert.equal(calls[0].plan.removeDraft,false);
+  assert.match(calls[0].plan.quarantineReason,/No edits after its base/);
+  assert.equal(names().includes('choose'),false,'a superseded draft is never offered');
   assert.equal(owners.settled.has('h1'),true);
+  assert.match(out.kept,/^An older draft of this Expression was kept aside \(not opened\); the saved version opened\./,'the notice shows');
+  assert.match(out.kept,/Its native draft record is kept/,'the native kept copy is named');
+  assert.match(out.kept,/Library quarantine of this browser/,'the webview kept copy is named');
  }
 });
-test('E19 hosted: a draft at the checkpoint time with different content is not offered and is not adopted', async()=>{
- const saved=expression('h3','Checkpoint',T1),same=expression('h3','Checkpoint',T1,2);
+test('E19 hosted: a draft whose base is behind the checkpoint, with no edits after it, is superseded by the checkpoint', async()=>{
+ const saved=expression('h1b','Checkpoint',T1),draft=expression('h1b','Checkpoint',T0,2);
  const {owners,names}=hostedOwners();
- const out=await settleHostedDraft('h3',same,saved,owners);
+ const out=await settleHostedDraft('h1b',hostedRow(draft,basisOf(5,false)),saved,owners);
  assert.equal(out.kind,'checkpoint');
- assert.deepEqual(names(),['keep','adopt','remove']);
+ assert.deepEqual(names(),['keep','adopt']);
 });
-test('E19 hosted: a newer draft is still offered through askRecoveryChoice exactly as before, and each choice keeps both sides', async()=>{
+test('E19 hosted: a draft newer than its base is OFFERED even when the checkpoint conversion came later, and is never quarantined by itself', async()=>{
+ const saved=expression('h5','Checkpoint',T2),newer=expression('h5','Checkpoint',T0,2);
+ const restore=hostedOwners({choice:'restore-draft'});
+ const out=await settleHostedDraft('h5',hostedRow(newer,basisOf(7,true)),saved,restore.owners);
+ assert.deepEqual(restore.names(),['choose','adopt'],'the draft is offered through the dialog');
+ assert.equal(restore.calls[0].request.offer.offer,true);
+ assert.equal(restore.names().includes('keep'),false,'nothing is kept aside without a choice');
+ assert.equal(out.kind,'draft','restore adopts the draft as found');
+ assert.equal(out.kept,undefined);
+ const kept=hostedOwners({choice:'keep-saved'});
+ const chosen=await settleHostedDraft('h5',hostedRow(newer,basisOf(7,true)),saved,kept.owners);
+ assert.match(chosen.kept,/^The draft was kept aside \(not opened\); the saved version opened\./,'a choice to keep the saved version shows its notice');
+});
+test('E19 hosted: a draft with no recorded base is unknown: offered on an unclean exit, never silently quarantined, and adopted as found after a clean one', async()=>{
+ const saved=expression('h6','Checkpoint',T1),older=expression('h6','Checkpoint',T0,2);
+ const unclean=hostedOwners({choice:'restore-draft'});
+ const out=await settleHostedDraft('h6',hostedRow(older,undefined),saved,unclean.owners);
+ assert.deepEqual(unclean.names(),['choose','adopt'],'an old draft is offered, not quarantined');
+ assert.equal(out.kind,'draft');
+ assert.equal(out.kept,undefined);
+ const clean=hostedOwners({uncleanBoot:false});
+ assert.equal((await settleHostedDraft('h6',hostedRow(older,undefined),saved,clean.owners)).kind,'draft','a clean boot adopts it as found and never quarantines it');
+ assert.deepEqual(clean.names(),[]);
+});
+test('E19 hosted: the native draft row is marked kept only after its copy is confirmed; a failed keep holds the draft and names it, and nothing is adopted', async()=>{
+ const saved=expression('h4','Checkpoint',T1),older=expression('h4','Checkpoint',T0,2);
+ let refuse=true;
+ const made=hostedOwners();
+ made.owners.keepDraft=async(plan,draft,text)=>{made.calls.push({call:'keep',plan,draft,text});if(refuse)throw new Error('quarantine store refused');};
+ await assert.rejects(settleHostedDraft('h4',hostedRow(older,basisOf(7,false)),saved,made.owners),err=>{
+  assert.match(err.message,/The draft "Checkpoint" could not be kept in quarantine/,'the draft is named');
+  assert.match(err.message,/It stays held for the next open/,'the hold is named');
+  assert.match(err.message,/quarantine store refused/,'the cause is named');
+  return true;
+ });
+ assert.equal(made.names().includes('mark'),false,'the native row is not marked kept');
+ assert.equal(made.names().includes('adopt'),false,'nothing is adopted');
+ assert.equal(made.owners.settled.has('h4'),false,'the draft is not settled, so the next open tries again');
+ refuse=false;
+ assert.equal((await settleHostedDraft('h4',hostedRow(older,basisOf(7,false)),saved,made.owners)).kind,'checkpoint');
+ assert.deepEqual(made.names(),['keep','keep','adopt'],'the retry keeps again (idempotent by digest) and only then opens the checkpoint');
+});
+test('E19 hosted: a choice keeps both sides, marks its native row kept and never removes it; a restore adopts; a clean boot adopts the draft', async()=>{
  const saved=expression('h2','Checkpoint',T0),newer=expression('h2','Checkpoint',T1,2);
  for(const choice of ['restore-draft','keep-saved','keep-both']){
   const {owners,calls,names}=hostedOwners({choice});
-  const out=await settleHostedDraft('h2',newer,saved,owners);
+  const out=await settleHostedDraft('h2',hostedRow(newer,basisOf(7,true)),saved,owners);
   assert.equal(calls[0].call,'choose','the owner is asked first');
   const asked=calls[0].request;
   assert.equal(asked.draft,newer);assert.equal(asked.saved,saved);assert.equal(asked.revision,7,'the kernel revision is named');
@@ -405,33 +455,63 @@ test('E19 hosted: a newer draft is still offered through askRecoveryChoice exact
   }else{
    assert.equal(out.kind,'checkpoint');
    assert.equal(material(out.journey),material(saved));
-   assert.deepEqual(names(),['choose','adopt','keep','adopt','remove']);
-   if(choice==='keep-saved')assert.equal(calls.find(c=>c.call==='keep').plan.quarantineDraft,true,'the draft is kept verbatim');
-   if(choice==='keep-both')assert.ok(calls.find(c=>c.call==='keep').plan.copy,'the draft becomes a Library copy');
+   assert.deepEqual(names(),['choose','adopt','keep','adopt','mark'],'kept, then marked kept: the native row stays');
+   assert.equal(calls.find(c=>c.call==='keep').plan.removeDraft,false,'the native row is never removed');
+   assert.deepEqual(calls.find(c=>c.call==='mark').basis,basisOf(7,true),'the row is marked with the basis it was edited from');
+   if(choice==='keep-saved'){assert.equal(calls.find(c=>c.call==='keep').plan.quarantineDraft,true,'the draft is kept verbatim');assert.match(out.kept,/was kept aside/,'the choice names its kept copy');}
+   if(choice==='keep-both'){assert.ok(calls.find(c=>c.call==='keep').plan.copy,'the draft becomes a Library copy');assert.equal(out.kept,undefined,'a Library copy needs no quarantine notice');}
   }
  }
  const clean=hostedOwners({uncleanBoot:false});
- assert.equal((await settleHostedDraft('h2',newer,saved,clean.owners)).kind,'draft','a clean boot offers nothing and adopts the newer draft');
+ assert.equal((await settleHostedDraft('h2',hostedRow(newer,basisOf(7,true)),saved,clean.owners)).kind,'draft','a clean boot offers nothing and adopts the newer draft');
  assert.deepEqual(clean.names(),[]);
 });
-test('E19 hosted: a failed quarantine holds the draft and names it: nothing is removed or adopted, and the next open tries again', async()=>{
- const saved=expression('h4','Checkpoint',T1),older=expression('h4','Checkpoint',T0,2);
- let refuse=true;
- const {owners,names}=hostedOwners({keepDraft:async()=>{if(refuse)throw new Error('quarantine store refused');}});
- await assert.rejects(settleHostedDraft('h4',older,saved,owners),err=>{
-  assert.match(err.message,/The draft "Checkpoint" could not be kept in quarantine/,'the draft is named');
-  assert.match(err.message,/It stays held for the next open/,'the hold is named');
-  assert.match(err.message,/quarantine store refused/,'the cause is named');
-  return true;
- });
- assert.equal(names().includes('remove'),false,'the native draft is not removed');
- assert.equal(names().includes('adopt'),false,'nothing is adopted');
- assert.equal(owners.settled.has('h4'),false,'the draft is not settled, so the next open tries again');
- refuse=false;
- const retry=await settleHostedDraft('h4',older,saved,owners);
- assert.equal(retry.kind,'checkpoint');
- assert.ok(names().includes('remove'),'once kept, the native copy leaves');
+test('E19 hosted: a row the owner marked kept is superseded on every later open: kept again verbatim, never offered or adopted', async()=>{
+ const saved=expression('h7','Checkpoint',T0),draft=expression('h7','Checkpoint',T1,2);
+ for(const uncleanBoot of [true,false]){
+  const {owners,names}=hostedOwners({uncleanBoot});
+  const out=await settleHostedDraft('h7',hostedRow(draft,basisOf(7,true,true)),saved,owners);
+  assert.deepEqual(names(),['keep','adopt'],'kept again, never offered');
+  assert.equal(out.kind,'checkpoint');
+  assert.match(out.kept,/kept aside/);
+ }
 });
+test('E19 base: the basis rides under one reserved key and never reaches the Journey; an invalid or absent basis is unknown', ()=>{
+ const j=expression('b1','Base',T0,2);
+ const stored=draftValue(j,basisOf(7,true));
+ assert.deepEqual(stored.draftBasis,basisOf(7,true));
+ const {journey,basis}=splitDraftValue(stored);
+ assert.deepEqual(basis,basisOf(7,true));
+ assert.equal('draftBasis' in journey,false,'the Journey carries no basis');
+ assert.equal(material(journey),material(j));
+ assert.equal(splitDraftValue(draftValue(j)).basis,undefined,'no basis recorded is unknown');
+ assert.equal(splitDraftValue({...draftValue(j),draftBasis:{schema:'oi.draft-basis/v1',revision:-1,edited:true}}).basis,undefined,'an invalid basis is unknown');
+ assert.equal(basisSuperseded(basisOf(5,false),7),true,'no edits after an older base is superseded');
+ assert.equal(basisSuperseded(basisOf(7,false),7),true,'no edits at the checkpoint base is superseded');
+ assert.equal(basisSuperseded(basisOf(7,true),7),false,'edits after the base are never superseded');
+ assert.equal(basisSuperseded(basisOf(8,false),7),false,'a base ahead of the checkpoint is not superseded');
+ assert.equal(basisSuperseded(basisOf(7,true,true),3),true,'a row the owner kept stays kept');
+ assert.equal(basisSuperseded(undefined,7),false,'an unknown basis is never superseded');
+});
+test('E19 notice: a kept draft names what happened and where the kept copy is; the frame carries it to its next status and the browser shows a toast', ()=>{
+ const nw=fs.readFileSync(new URL('../src/nativeWorkspace.ts',import.meta.url),'utf8');
+ const app=fs.readFileSync(new URL('../src/app.ts',import.meta.url),'utf8');
+ assert.match(quarantineNotice('superseded',true),/^An older draft of this Expression was kept aside \(not opened\); the saved version opened\. Its native draft record is kept/);
+ assert.match(quarantineNotice('superseded',false),/A verbatim copy is in the Library quarantine of this browser\.$/);
+ assert.ok(nw.includes("notice=keptNotice?`${text} ${keptNotice}`:text;keptNotice='';"),'the notice rides the next status line, and is never dropped');
+ assert.ok(nw.includes('if(settled.kept)keptNotice=settled.kept;'),'the settle sets the notice');
+ assert.ok(app.includes("toast(quarantineNotice('superseded',false),9000)"),'the browser superseded quarantine is never silent');
+ assert.ok(app.includes("toast(quarantineNotice('chosen',false),9000)"),'the browser keep-saved choice is never silent');
+});
+test('E19 write: every draft write records its base; a kept native row is not overwritten by a write that adds no edits', ()=>{
+ const nw=fs.readFileSync(new URL('../src/nativeWorkspace.ts',import.meta.url),'utf8');
+ const app=fs.readFileSync(new URL('../src/app.ts',import.meta.url),'utf8');
+ assert.ok(nw.includes('draftBasis(journey,{revision:view.document.revision,journey:view.journey})'),'the basis is the checkpoint revision the frame stood on');
+ assert.ok(nw.includes('if(heldDrafts.has(journey.id)&&!basis?.edited)return;'),'a held native row is not replaced by a write that adds no edits');
+ assert.ok(app.includes('const persistDraft=(journey:Journey)=>nativeWorkspace?nativeWorkspace.persistDraft(journey):writeDraft(journey);'),'the frame writes through the basis rule');
+ assert.ok(/async function flushDraft\(\)\{[\s\S]*?await persistDraft\(draft\)/.test(app),'the backup flush writes through the basis rule');
+});
+
 test('E19 take: merging a take advances the draft time, so a draft with merged samples is newer and offered; the older-or-equal rule is unchanged', ()=>{
  const saved=expression('t1','Saved',T0,1);
  const draft=clone(saved);

@@ -10,7 +10,7 @@ import {TransportState,validateTransport} from '../../src/engine/transportState'
 import {validateWorkingTransport,type WorkingTransport} from './transport';
 // lane-3 E18/E19: the standalone draft records, their quarantine and the boot choice.
 import {readLibrary,saveToLibrary,setLibraryQuarantine} from './store.js';
-import {type KeyStore,type RecordLayout,type RecoveryPlan,loadRecord,loadRecords,writeRecord,removeRecord,quarantine,listQuarantine,readPair,quarantinedCopy,quarantinedName,offerClock} from './draftStorage.js';
+import {type KeyStore,type RecordLayout,type RecoveryPlan,type DraftBasis,DRAFT_BASIS_SCHEMA,draftValue,splitDraftValue,loadRecord,loadRecords,writeRecord,removeRecord,quarantine,listQuarantine,readPair,quarantinedCopy,quarantinedName,offerClock} from './draftStorage.js';
 export const SESSION_KEY='oi.expression-session.v1';
 export interface SessionState {version:1;journeyId:string;sceneId:string;selected:string[];stepIndex:number;sceneElapsed:number;simTime:number;playing:boolean;journeyPlaying:boolean;camera:Camera;transport?:TransportState;workingTransport?:WorkingTransport;scenePlaying?:boolean;fieldPaused?:boolean}
 export function validateSession(value:unknown,j:Journey):SessionState|undefined{
@@ -100,6 +100,8 @@ async function draftRawText(layout:RecordLayout,id:string):Promise<string|undefi
  if(!layout.paired)return layout.store.get(id);
  return (await readPair(layout.store,id)).body;
 }
+/** The draft grammar stores the journey with its basis under one reserved key. Every read validates the journey alone. */
+export function draftJourney(value:unknown):Journey{return validateJourney(splitDraftValue(value).journey);}
 /** Every quarantined draft with its reason, for listing to the owner. */
 export async function listQuarantinedDrafts(){return listQuarantine(await quarantineKV());}
 // lane-3 E18: an unreadable Library entry is quarantined in this same store, so the Library section lists drafts and Library entries alike.
@@ -119,20 +121,33 @@ export async function restoreQuarantinedDraft(id:string):Promise<Journey>{
  return copy;
 }
 /** Carry out one boot choice. A copy is saved and read back before the draft is removed; a quarantined draft is kept verbatim before removal. */
-export async function applyRecoveryPlan(plan:RecoveryPlan,draft:Journey):Promise<void>{
+export async function applyRecoveryPlan(plan:RecoveryPlan,draft:Journey,verbatim?:string):Promise<void>{
  const at=new Date();
  if(plan.copy){saveToLibrary(plan.copy);if(!readLibrary().some(row=>row.id===plan.copy!.id))throw new Error('The browser Library did not keep the recovered copy. The draft was retained.');}
  const layout=await draftLayout();
  if(plan.quarantineDraft){
-  const raw=(await draftRawText(layout,draft.id))??JSON.stringify(validateJourney(draft));
+  // A hosted draft is kept from its own native text (verbatim), never from a webview copy that may be older.
+  const raw=verbatim??(await draftRawText(layout,draft.id))??JSON.stringify(validateJourney(draft));
   await quarantine(layout.quarantine,'draft',draft.id,raw,plan.quarantineReason??'Superseded by the saved copy after an unclean exit. The draft is kept here verbatim.',at);
  }
- if(plan.removeDraft)await removeRecord(layout,draft.id,at,validateJourney);
+ if(plan.removeDraft)await removeRecord(layout,draft.id,at,draftJourney);
 }
-export async function writeDraft(j:Journey,scope?:RecoveryScope){const value=validateJourney(j);if(hostedRecovery())return nativeWrite('draft',j.id,value,scope??draftRecoveryAddress(j.id).scope);await writeRecord(await draftLayout(),j.id,JSON.stringify(value),new Date(),validateJourney);}
-export async function readDraft(id:string,scope?:RecoveryScope){if(hostedRecovery()){const row=await nativeRead('draft',id,scope??draftRecoveryAddress(id).scope);return row?validateJourney(row.value):undefined;}return (await loadRecord(await draftLayout(),id,validateJourney,new Date())).value;}
-export async function readDrafts(scope?:RecoveryScope){if(hostedRecovery()){const rows=await nativeList('draft',scope??recoveryScope());const values:Journey[]=[];for(const row of rows){const draft=await readDraft(row.id,row.scope);if(draft)values.push(draft);}return values;}const loaded=await loadRecords(await draftLayout(),validateJourney,new Date());for(const row of loaded.rejected)console.warn(`Draft ${row.key} is kept in place and was not adopted: ${row.reason}`);return loaded.values;}
-export async function removeDraft(id:string,scope?:RecoveryScope){if(hostedRecovery())return nativeRemove('draft',id,scope??draftRecoveryAddress(id).scope);await removeRecord(await draftLayout(),id,new Date(),validateJourney);}
+/** E19 (base): a draft is written with the checkpoint revision it was edited from (`basis`), when the frame knows it. */
+export async function writeDraft(j:Journey,scope?:RecoveryScope,basis?:DraftBasis){const stored=draftValue(validateJourney(j),basis);if(hostedRecovery())return nativeWrite('draft',j.id,stored,scope??draftRecoveryAddress(j.id).scope);await writeRecord(await draftLayout(),j.id,JSON.stringify(stored),new Date(),draftJourney);}
+export async function readDraft(id:string,scope?:RecoveryScope){if(hostedRecovery()){const row=await nativeRead('draft',id,scope??draftRecoveryAddress(id).scope);return row?draftJourney(row.value):undefined;}return (await loadRecord(await draftLayout(),id,draftJourney,new Date())).value;}
+export async function readDrafts(scope?:RecoveryScope){if(hostedRecovery()){const rows=await nativeList('draft',scope??recoveryScope());const values:Journey[]=[];for(const row of rows){const draft=await readDraft(row.id,row.scope);if(draft)values.push(draft);}return values;}const loaded=await loadRecords(await draftLayout(),draftJourney,new Date());for(const row of loaded.rejected)console.warn(`Draft ${row.key} is kept in place and was not adopted: ${row.reason}`);return loaded.values;}
+export async function removeDraft(id:string,scope?:RecoveryScope){if(hostedRecovery())return nativeRemove('draft',id,scope??draftRecoveryAddress(id).scope);await removeRecord(await draftLayout(),id,new Date(),draftJourney);}
+/** E19 (hosted): the native draft row exactly as the owner holds it (or null), read for the basis and the verbatim text. */
+export function readDraftRow(id:string,scope?:RecoveryScope){return nativeRead('draft',id,scope??draftRecoveryAddress(id).scope);}
+/** The basis a native draft row was written with; undefined when the row carries none (an unknown basis). */
+export function draftRowBasis(row:{value?:unknown}):DraftBasis|undefined{return splitDraftValue(row.value).basis;}
+/** The verbatim text of a native draft row, kept as it is when a choice quarantines it. */
+export function draftRowText(row:{value?:unknown}):string{return JSON.stringify(row.value);}
+/** E19 (hosted): the native draft row marked kept by the owner's choice. The row stays, so a later open keeps it again verbatim and never offers or adopts it. */
+export async function markNativeDraftKept(journey:Journey,basis:DraftBasis|undefined,revision:number,scope?:RecoveryScope):Promise<void>{
+ const kept:DraftBasis={schema:DRAFT_BASIS_SCHEMA,revision:basis?.revision??revision,edited:basis?.edited??true,superseded:true};
+ await nativeWrite('draft',journey.id,draftValue(validateJourney(journey),kept),scope??draftRecoveryAddress(journey.id).scope);
+}
 
 /** Read only the host-selected checkpoint address. A same-ref duplicate is
  * not permission to choose another scope, revision or authoring draft. */
@@ -142,7 +157,7 @@ export async function readBoundWorkingDraft(binding:RecoveryBinding){
  if(!row)throw new Error('The selected native working checkpoint is absent');
  const draftId=acceptRecoveryDraft(binding,row),raw=row.value as import('./nativeWorking').NativeWorkingRecord;
  const draft=await nativeRead('draft',draftId,binding.scope);
- const journey=draft?validateJourney(draft.value):validateJourney(raw.view!.journey);
+ const journey=draft?draftJourney(draft.value):validateJourney(raw.view!.journey);
  const record=validateWorkingRecord(raw,journey);
  return {record,journey,recoveryRecords:[row,...(draft?[draft]:[])]};
 }
@@ -155,7 +170,7 @@ export function acceptWorkingRecoveryBasis(recovered:{record:unknown;journey:Jou
   if(checkpoints.length!==1||drafts.length>1)throw new Error('Recover one exact checkpoint and its acknowledged draft');
   const checkpoint=checkpoints[0],raw=checkpoint.value as import('./nativeWorking').NativeWorkingRecord,draft=drafts[0];
   if(draft&&(draft.scope!==checkpoint.scope||draft.id!==raw.draft_id))throw new Error('The recovered draft does not belong to its exact checkpoint');
-  const journey=draft?validateJourney(draft.value):validateJourney(raw.view!.journey);
+  const journey=draft?draftJourney(draft.value):validateJourney(raw.view!.journey);
   const acknowledged=validateWorkingRecord(raw,journey);
   // Conversion regenerates this projection timestamp; authored draft and
   // receipt bytes still compare exactly, including their own timestamps.
