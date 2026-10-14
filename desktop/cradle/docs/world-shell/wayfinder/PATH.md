@@ -112,9 +112,11 @@ this table true. Tickets and resolutions live in `tickets/`.
 
 | Ticket | Who | Zone | Since |
 |---|---|---|---|
-| Phase 5 gate 2: seam 8 reach (every rack device family declares pop-out; the receiving window admits every family; a stale detached entry is dropped from any layout) | haiku builder | live-shell `inhabitants/*FamilyManifest.ts`, `worldShellFamilies.ts`, `sdk/define.ts`, `manifest.ts`, `native/Detached.tsx` loader; cradle `surface/types.ts`, `workspace/store.ts` (one method) | 2026-10-14 |
-| Phase 5 gate 2: seam 3 (every encounter linkable, Back walks the trail) | haiku builder | live-shell `projections/encounterBridge.ts`, new `projections/encounterLink.ts`, `App.tsx` mount; cradle `workspace/encounter.ts` | 2026-10-14 |
-| Phase 5 gate 2: seam 5 (clips carry the standing their source states) | haiku builder | live-shell `timeline/timeSpine.ts`, `timeline/*TrackAdapter.ts`, `projections/worldTimelinePresentation.tsx` | 2026-10-14 |
+| Seam 8: pop-out only where a face stands alone (Central's three faces, the QL instrument); parameter, atlas and knowledge-graph faces refused at the device door | haiku builder | live-shell `inhabitants/*` manifests, `sdk/define.ts`, `sdk/DEVICE-SDK.md`, `inhabitantRack.tsx`, `native/detachedKinds.ts` | 2026-10-14 |
+| lane-5 T10, T11, T22, T23: the crossing law mounted (journey → scene → back by ref), the journey library's local standing | haiku builder | frame `app.ts`, `store.ts`, `hostedApp.ts`, `journeyPresence.ts`, `journeyPath.ts`; cradle `journey/crossing.ts` | 2026-10-14 |
+| lane-2 T17: the session's time window, set by an explicit act and consumed | haiku builder | cradle session / contract / relation-field state; frame M2′ toolbar and shared time window | 2026-10-14 |
+
+Queued: the Earth's Sun follows the shared time window (today it is read once, for the present sky) and its absence is stated on the Earth face, not only logged; flip `ql-sky-earth-adapter` from waiting in `quaternalLogicFamilyManifest.ts` once the manifests are free; record seams 3, 5, 6, 7 and 8 in `UX-SPINE-ALIGNMENT.md` §5.
 
 #673 carries: the E19 quarantine safety fixes, the gates 1–2 audit, the gate 3
 migration and the candidate's first-run apply (`LEGACY-CRADLE-RETIREMENT.md`
