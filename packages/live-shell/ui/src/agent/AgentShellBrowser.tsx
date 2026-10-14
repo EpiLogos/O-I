@@ -1,4 +1,6 @@
 import {useEffect, useMemo, useState, type DragEvent} from 'react'
+import {createPortal} from 'react-dom'
+import type {BrowserCategory, BrowserKind, ControlledBrowser} from '../frame/browser/browserKinds'
 import {InstrumentsSection} from '../frame/InstrumentsSection'
 import {SetsSection} from '../shell/SetsSection'
 import type {AgencySessionRow} from '../../../../../desktop/cradle/src/agency/agencyTypes'
@@ -32,6 +34,11 @@ const CONTEXT_TILES = [
   {id: 'approvals' as const, name: 'Approvals'},
   {id: 'agents' as const, name: 'Agents'},
 ]
+
+/** Each Factory category's kind in the one browser (F6): sessions and agents are running things (an agent dragged onto an
+ * empty track is seated); the context tiles open in a pane; skillsets go on the agent chain; the git seat is material. */
+const AGENT_KINDS: Record<(typeof CATEGORIES)[number]['id'], BrowserKind> = {sess: 'running', agents: 'running', context: 'instruments', skillsets: 'devices', git: 'material'}
+export const AGENT_BROWSER_CATEGORIES: readonly BrowserCategory[] = CATEGORIES.map(category => ({id: category.id, label: category.label, kind: AGENT_KINDS[category.id]}))
 
 /** The right-edge action the results header names (mockup .bhead law). */
 const RESULT_HEADER: Record<(typeof CATEGORIES)[number]['id'], string> = {
@@ -135,8 +142,11 @@ export function gitRowsFromWorkcell(
   }]
 }
 
-export function AgentShellBrowser({rows, error, loading}: {rows: AgencySessionRow[]; error: string | null; loading: boolean}) {
-  const [category, setCategory] = useState<(typeof CATEGORIES)[number]['id']>('sess')
+export function AgentShellBrowser({rows, error, loading, controlled}: {rows: AgencySessionRow[]; error: string | null; loading: boolean; controlled?: ControlledBrowser}) {
+  const [ownCategory, setCategory] = useState<(typeof CATEGORIES)[number]['id']>('sess')
+  // Held by the one browser (F6), the category and the search are its.
+  const category = (controlled?.category as (typeof CATEGORIES)[number]['id'] | undefined) ?? ownCategory
+  const needle = controlled?.query.trim().toLowerCase() ?? ''
   const shell = useAgentShell()
   const {transport} = useWorkspace()
   const {binding} = useHarnessBinding(transport)
@@ -243,23 +253,12 @@ export function AgentShellBrowser({rows, error, loading}: {rows: AgencySessionRo
     }
   }, [rosterOutcome, rosterError])
 
-  return (
-    <aside className="agent-shell-browser" data-region="browser">
-      <div className="browser-search"><input readOnly placeholder="Search (⌘F)" aria-label="Search browser" /></div>
-      <div className="browser-columns">
-        <nav className="agent-bcats" aria-label="Browser categories">
-          {CATEGORIES.map(cat => (
-            <button key={cat.id} type="button" className={'agent-bcat' + (category === cat.id ? ' on' : '')} onClick={() => setCategory(cat.id)}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><path d="M12 3.5a8.5 8.5 0 1 1 0 17 8.5 8.5 0 0 1 0-17zM12 7.5v4.5l3 2.5" /></svg>
-              {cat.label}
-            </button>
-          ))}
-        </nav>
-        <div className="browser-results">
+  const shown = needle ? list.filter(item => item.label.toLowerCase().includes(needle) || item.meta.toLowerCase().includes(needle)) : list
+  const results = <>
           <div className="agent-bfilt"><span>○ Filters</span><span>In set</span></div>
           <div className="agent-bhead"><span>Name</span><span>{RESULT_HEADER[category]}</span></div>
           {error && <p className="native-error" role="alert">{error}</p>}
-          {list.map(item => (
+          {shown.map(item => (
             <button
               key={item.key}
               type="button"
@@ -291,8 +290,8 @@ export function AgentShellBrowser({rows, error, loading}: {rows: AgencySessionRo
             </button>
           ))}
           <p id={`chain-drag-hint-${category}`} hidden>Drag onto the device chain: through → who → how → where → lands.</p>
-        </div>
-      </div>
+  </>
+  const pool = (
       <AgentDevicePool
         gatewayLine={gateway.line}
         gatewayReceipt={gateway.receipt}
@@ -308,6 +307,25 @@ export function AgentShellBrowser({rows, error, loading}: {rows: AgencySessionRo
         skillsNote={skillAdmission.note}
         skillsWaitingOn={skillAdmission.waiting}
       />
+  )
+  if (controlled) return <div className="agent-browser-body">{results}{controlled.poolHost && createPortal(pool, controlled.poolHost)}</div>
+  return (
+    <aside className="agent-shell-browser" data-region="browser">
+      <div className="browser-search"><input readOnly placeholder="Search (⌘F)" aria-label="Search browser" /></div>
+      <div className="browser-columns">
+        <nav className="agent-bcats" aria-label="Browser categories">
+          {CATEGORIES.map(cat => (
+            <button key={cat.id} type="button" className={'agent-bcat' + (category === cat.id ? ' on' : '')} onClick={() => setCategory(cat.id)}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><path d="M12 3.5a8.5 8.5 0 1 1 0 17 8.5 8.5 0 0 1 0-17zM12 7.5v4.5l3 2.5" /></svg>
+              {cat.label}
+            </button>
+          ))}
+        </nav>
+        <div className="browser-results">
+          {results}
+        </div>
+      </div>
+      {pool}
       <InstrumentsSection /><SetsSection />
     </aside>
   )

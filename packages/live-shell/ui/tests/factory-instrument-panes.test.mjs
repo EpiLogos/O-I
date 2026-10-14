@@ -150,12 +150,16 @@ test('the native.agent centre panel no longer mounts a second agent body', () =>
   assert.doesNotMatch(agentPanel, /AgentShellCentre/, 'the agent body lives in the Workbench tree only')
 })
 
-test('Factory opens with the agent tab focused, and every agent-shell chrome piece stands over the tree', () => {
+test('Factory opens with the agent tab focused, and every agent-shell chrome piece stands over the tree', async () => {
   const {activeBindingId} = engine
   assert.equal(activeBindingId(seedFactoryCentre(freshLayout())), AGENT_SHELL_ID, 'the agent tab is the focused default')
-  for (const piece of ['<AgentShellTransportBridge', '<AgentStatusBarBridge', '<AgentContextDock', '<AgentShellBrowser']) {
+  for (const piece of ['<AgentShellTransportBridge', '<AgentStatusBarBridge', '<AgentContextDock']) {
     assert.ok(app.includes(piece), `${piece} is still rendered by App`)
   }
+  // The agent browser's rows are Factory's in the one browser (F6): registered, never a residence of their own.
+  const modeBrowsers = await readFile(new URL('../src/shell/modeBrowsers.tsx', import.meta.url), 'utf8')
+  assert.match(modeBrowsers, /factory: \(\) => \[AGENTS\]/); assert.match(modeBrowsers, /<AgentShellBrowser rows=/)
+  assert.ok(app.includes('<Browser key={frameMode} sources={browserSources} />'), 'App mounts the one browser')
   for (const piece of ['<FactoryTaskLogDetail', '<AgentShellDeviceDetail']) assert.ok(modeDetails.includes(piece), `${piece} is Factory's registered detail`)
   const bridge = appLines.find(l => l.includes('{agentShell ? <AgentStatusBarBridge'))
   assert.ok(bridge, 'the status bar switches on the agent shell, not on the retired centre panel')

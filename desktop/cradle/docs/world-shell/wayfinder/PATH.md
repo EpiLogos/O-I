@@ -91,35 +91,49 @@ bullet twice gets one Sonnet diagnostic; never a third builder attempt.
 
 ## 7. Open claims
 
-One branch, one run (`dlw/build`; #675 landed; no open PR). Builders are module builders (Sonnet by default), up to six at a
-time (owner, 14 Oct; no task chips — side work is a builder lane here), each with an exclusive zone; the lead converges, commits and keeps
-this table true. Tickets and resolutions live in `tickets/`.
+One branch, one run (`dlw/build`; #675 landed; PR #677 open for F0–F5 and the first wave). Builders are module builders
+(Sonnet by default), up to six at a time (owner, 14 Oct: six lanes, type-checks serialised through one lock because the
+machine runs swap-full; no task chips — side work is a builder lane here), each with an exclusive zone; the lead
+converges, commits and keeps this table true. Tickets and resolutions live in `tickets/`.
 
 | Ticket | Who | Zone | Since |
 |---|---|---|---|
-| T-N3-ATLAS-SUITE-PROVIDER (the atlas reads the suite) | Sonnet builder | `projections/atlas/provider/**`, the atlas wiring in `AtlasProjectionPanel.tsx`, the atlas dev harness | 14 Oct |
-| T-TRACKS-CENTRAL (Day, Flows, Beings, Things, Goals as tracks) | Sonnet builder | `timeline/centralTrackAdapter.ts`, `frame/tracks/useCentralTracks.ts` | 14 Oct |
-| T-TRACKS-FACTORY (sessions and tasks as tracks) | Sonnet builder | `timeline/factoryTrackAdapter.ts`, `frame/tracks/useFactoryTracks.ts` | 14 Oct |
-| F1–F4 native screen check; F5 the device runtime | lead | the frame, `frame/**`, `shell/**`, `App.tsx`, the cradle engine's pane grammar | 14 Oct |
+| T-DEVICES-CENTRAL (Central's devices on the runtime) | Sonnet builder | `central/devices/**`, `BaseDevicesDetail` in `shell/ModeDetail.tsx` | 14 Oct |
+| T-DEVICES-TECHNE (QL, atlas and knowledge faces on the runtime) | Sonnet builder | `inhabitants/ql/devices/**`, `TechneInstrumentsDetail` + `InstrumentDeviceDetail` in `shell/ModeDetail.tsx` | 14 Oct |
+| T-DEVICES-FACTORY (the agent chain and skills rack on the runtime) | Sonnet builder | `agent/devices/**`, `agent/AgentShellDeviceDetail.tsx` | 14 Oct |
+| T-DEVICES-EXPRESSIONS (the field devices on the runtime) | Sonnet builder | `components/devices/**`, `components/NativeDeviceRack.tsx` | 14 Oct |
+| T-TRACKS-TECHNE (readings as tracks, walks as stops) | Sonnet builder | `timeline/techneTrackAdapter.ts`, `frame/tracks/useTechneTracks.ts` | 14 Oct |
+| T-TRACKS-VIEWS (the shared grid and ruler at the craft floor) | Sonnet builder | `frame/tracks/SessionGrid.tsx`, `ArrangementRuler.tsx`, `tracks.css`, additive fields in `worldTrackAdapter.ts` | 14 Oct |
+| F1–F6 native screen check; F6 the one browser; F7–F9 | lead | the frame, `frame/**`, `shell/**`, `App.tsx`, the four browsers' row bodies, the cradle engine's pane grammar | 14 Oct |
 
 Landed on `dlw/build` this run (14 Oct): F0 (the switchboard tripwire — App.tsx
 mode branches 58 → 26, detail residences 6 → 1, per-mode bodies 21 → 10 — and
 the Live chain as the selected track's devices, devices-b2 deleted);
 T-ATLAS-ASSETS; T-EXPRESSIONS-OPEN (opened works are committed and opened, not
-yet saved to a file: works have no Central folder until N1); T-RECORDS; F1 (Live's
-own mode, per-mode frames, one selection on the trail, named sets); F2 (panes as
-the centre in every mode, ⊞ Beside / Below / Four ways, edge drops, browser
-instruments, follow/pin, the lens bar removed); F3 (the contract extended, one
-Session grid and one Arrangement ruler, Live's set as the reference adapter,
-Session and Arrangement unbound from Journey and Timeline); F4 (one detail host,
-the clip box, Clip | Device in every mode).
+yet saved to a file: works have no Central folder until N1); T-RECORDS; N3 (the
+atlas reads the suite through its owners); F1 (Live's own mode, per-mode frames,
+one selection on the trail, named sets); F2 (panes as the centre in every mode,
+⊞ Beside / Below / Four ways, edge drops, browser instruments, follow/pin, the
+lens bar removed); F3 (the contract extended, one Session grid and one
+Arrangement ruler, Live's set as the reference adapter, Session and Arrangement
+unbound from Journey and Timeline); F4 (one detail host, the clip box, Clip |
+Device in every mode); F5 (one device in three sizes, the Live torus as the
+reference); T-TRACKS-CENTRAL and T-TRACKS-FACTORY (Central's five streams and
+Factory's sessions on the one grid and ruler; the sessions provider mounted once
+above the App); F6 (one browser: the four kinds, one search, one pool; the four
+old browsers are row bodies under its control, registered per mode in
+`shell/modeBrowsers.tsx`; App.tsx mode branches 26 → 23, browser residences
+3 → 1, per-mode bodies 10 → 6).
 
 Open, owned by the lead: N1 (the kernel's works need a persistent home before
 Open can save a file); the knowledge panel (`world.knowledge`) still stands over
-the panes rather than in one; the Workbench's insert row and the four browsers'
-Sets and Instruments sections fold into F6's one browser; the Central owner
+the panes rather than in one; the Workbench's insert row still stands; the four old browsers keep their standalone chrome for the
+source-reading tests until those move to the one browser (the candidate mounts only their row bodies); the Central owner
 reads for Flows, Beings, Things and Goals are not landed (Central adapter shows
 them empty and named); the Graph op reads in 88 s cold (AIKit times out at 20 s).
+F6's gestures stand where their owners do: preview/open on the Expressions works, drag-to-chain on the agent chain and
+the Expressions rack; seating an agent by dropping it on an empty track of the shared grid is not yet wired (the
+grid has no drop target), and Live's set devices browse but cannot be inserted (no native device owner).
 The machine ran swap-full most of the day, so builds and type-checks took 10–60 min.
 
 #673 landed on main (14 Oct): Phase 5 gates 1–4 (the audit, the migration
