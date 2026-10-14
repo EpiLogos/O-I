@@ -323,17 +323,19 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
     setCenterPanel('native.workbench'); setDock(true)
   }
   // The Library page's workspace-mode request, relayed by LibraryHost on oi:host-workspace-mode. The mode switch is the mode rail's
-  // own (chooseMode); a kernel ref opens through the shell's one open door (workspace.requestExpression), which the Expressions pane
-  // opens in its one frame. An id-only request (Open browser draft) switches the mode and opens nothing here (see the report).
-  const chooseModeRef = useRef(chooseMode), requestExpressionRef = useRef(workspace.requestExpression)
+  // own (chooseMode). The one open door (workspace.expressionToOpen) carries two request kinds: a kernel ref (requestExpression), or,
+  // for an id-only request (Open browser draft), a browser-local draft by its Library id (requestLocalDraft). A ref wins when both come.
+  const chooseModeRef = useRef(chooseMode), requestExpressionRef = useRef(workspace.requestExpression), requestLocalDraftRef = useRef(workspace.requestLocalDraft)
   chooseModeRef.current = chooseMode
   requestExpressionRef.current = workspace.requestExpression
+  requestLocalDraftRef.current = workspace.requestLocalDraft
   useEffect(() => {
     const onHostMode = (event: Event) => {
       const request = workspaceModeDetail((event as CustomEvent<unknown>).detail)
       if (!request) return
       chooseModeRef.current(request.mode)
       if (request.ref !== undefined) requestExpressionRef.current(request.ref)
+      else if (request.id !== undefined && request.mode === 'expressions') requestLocalDraftRef.current(request.id)
     }
     window.addEventListener('oi:host-workspace-mode', onHostMode)
     return () => window.removeEventListener('oi:host-workspace-mode', onHostMode)

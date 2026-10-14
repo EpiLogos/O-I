@@ -39,6 +39,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [nativeWorks, publishWorks] = useState<WorkspaceReading['nativeWorks']>([])
   const [expressionToOpen, openExpression] = useState<WorkspaceReading['expressionToOpen']>(null)
   const requestExpression = (ref: string) => openExpression(current => ({ ref, request: (current?.request ?? 0) + 1 }))
+  const requestLocalDraft = (draftId: string) => openExpression(current => ({ draftId, request: (current?.request ?? 0) + 1 }))
   // The spine's cut reading (see workspaceTypes): the continuity ShellMode
   // is the Rev-5 mode; Base·Central stands on the audio cut, Factory's
   // agency surface stands on the Expressions cut (as the agent surface
@@ -202,5 +203,5 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   }
   const browserPath = continuity.current.projectNavigation?.['control:root']?.locationPath ?? ''
   const navigateFiles = (path: string) => continuity.setProjectNavigation('control:root', {mode: 'files', locationPath: path}, continuity.current.id)
-  return <Workspace.Provider value={{ workspaceId: continuity.current.id, resources, residency, accessEpoch, accessReady, nativeScope, nativeAccessCurrent, attachNativeAccess, sourceError, sourceRecoveryReady, sourceReadingCurrent, prepareSource, publishSource, browserPath, navigateFiles, nativeWorks, publishWorks, expressionToOpen, requestExpression, mode, setMode, transport, attachTransport, reading, publishReading, editor, attachEditor, editorReading, publishEditorReading, receipts, publishReceipts, revalidateSource, selectedSource, selectedRef: selectedSource?.location.ref ?? null, selectSource }}>{children}</Workspace.Provider>
+  return <Workspace.Provider value={{ workspaceId: continuity.current.id, resources, residency, accessEpoch, accessReady, nativeScope, nativeAccessCurrent, attachNativeAccess, sourceError, sourceRecoveryReady, sourceReadingCurrent, prepareSource, publishSource, browserPath, navigateFiles, nativeWorks, publishWorks, expressionToOpen, requestExpression, requestLocalDraft, mode, setMode, transport, attachTransport, reading, publishReading, editor, attachEditor, editorReading, publishEditorReading, receipts, publishReceipts, revalidateSource, selectedSource, selectedRef: selectedSource?.location.ref ?? null, selectSource }}>{children}</Workspace.Provider>
 }

@@ -66,4 +66,5 @@ test('the host relays through the reader, and the candidate shell listens and op
   assert.ok(shell.includes("window.addEventListener('oi:host-workspace-mode', onHostMode)"), 'App listens for the relayed event');
   assert.ok(shell.includes('chooseModeRef.current(request.mode)'), 'the mode switch is the mode rail\'s own chooseMode');
   assert.ok(shell.includes('requestExpressionRef.current(request.ref)'), 'a named ref goes through the shell\'s one open door (workspace.requestExpression)');
+  assert.ok(shell.includes('requestLocalDraftRef.current(request.id)'), 'an id-only request goes through the same door as a browser draft (workspace.requestLocalDraft)');
 });

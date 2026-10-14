@@ -34,8 +34,10 @@ export interface WorkspaceReading {
   navigateFiles: (path: string) => void
   nativeWorks: readonly {expression_ref: string; title: string; revision: number}[]
   publishWorks: (works: readonly {expression_ref: string; title: string; revision: number}[]) => void
-  expressionToOpen: {ref: string; request: number} | null
+  /** The one open door's request: an Expression by its ref, or a browser-local draft by its Library id (requestLocalDraft). */
+  expressionToOpen: {ref: string; request: number} | {draftId: string; request: number} | null
   requestExpression: (ref: string) => void
+  requestLocalDraft: (draftId: string) => void
   mode: WorkspaceMode
   setMode: (mode: WorkspaceMode) => void
   transport: KernelTransportStatus

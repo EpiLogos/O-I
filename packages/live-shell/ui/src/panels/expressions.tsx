@@ -57,6 +57,8 @@ export function ExpressionsPanel() {
   const navigator = useRef<ReturnType<typeof createNativeTechneNavigator> | null>(null)
   const stopSelection = useRef<(() => void) | null>(null)
   const pendingOpen = useRef<string | null>(null)
+  // A browser-local draft waiting for presentation (the other open kind; only one of the two slots holds a request at a time).
+  const pendingDraft = useRef<string | null>(null)
   const pendingStudio = useRef<StudioSection | null>(null)
   const workspace = useWorkspace()
   const book = useContinuity(), kernel = useKernel()
@@ -68,6 +70,7 @@ export function ExpressionsPanel() {
   const workspaceRef = useRef(workspace)
   workspaceRef.current = workspace
   const openRequest = useRef<((ref: string) => void) | null>(null)
+  const openDraftRequest = useRef<((draftId: string) => void) | null>(null)
   const requalify = useRef<(() => void) | null>(null)
   const qualified = !!workspace.nativeScope
   const starting = useRef(false)
@@ -122,11 +125,23 @@ export function ExpressionsPanel() {
     const fail = (cause: unknown) => {if (live) setFault(cause instanceof Error ? cause.message : String(cause))}
     const presented = () => !!target.getClientRects().length && !target.closest('[hidden],[inert]')
     const openNative = (ref: string) => {
-      if (!presented() || !mounted) {pendingOpen.current = ref; return}
+      if (!presented() || !mounted) {pendingOpen.current = ref; pendingDraft.current = null; return}
       selectionOwner.current = {workspaceId: bookRef.current.current.id, expected: ref}
       mounted.host.openExpression(ref, 'world.expressions')
     }
     openRequest.current = openNative
+    // The same door, the other request kind: a browser-local draft by its Library id, through the host's open-local-draft command.
+    const openDraft = (draftId: string) => {
+      if (!presented() || !mounted) {pendingDraft.current = draftId; pendingOpen.current = null; return}
+      mounted.host.openLocalDraft(draftId, 'world.expressions')
+    }
+    openDraftRequest.current = openDraft
+    // A waiting request opens once the pane is presented (mount and visibility both flush it).
+    const flushPendingOpen = () => {
+      if (pendingDraft.current && presented()) {const draftId = pendingDraft.current; pendingDraft.current = null; openDraft(draftId); return}
+      const waiting = pendingOpen.current
+      if (waiting && presented()) {pendingOpen.current = null; openNative(waiting)}
+    }
     void (async () => {
       const config = await readShellConfig()
       if (!expressionDescriptor) throw Error('This build has no compiled native Expressions contribution')
@@ -252,7 +267,7 @@ export function ExpressionsPanel() {
       refreshEditor()
       rebind()
       if (knownRef || initial) void enumerate().catch(fail)
-      if (pendingOpen.current && presented()) {const ref = pendingOpen.current; pendingOpen.current = null; openNative(ref)}
+      flushPendingOpen()
       // The boot deep link opens this work after the native channel arrives.
       // Posting it again would retain a second copy during initial recovery.
     })().catch(fail).finally(() => {starting.current = false})
@@ -288,14 +303,14 @@ export function ExpressionsPanel() {
       const deepPresented = modeRef.current === 'techne' && presented()
       if (deepPresented && navigator.current && !stopSelection.current) stopSelection.current = navigator.current.connectSelectionRequests()
       else if (!deepPresented && stopSelection.current) {stopSelection.current(); stopSelection.current = null}
-      if (pendingOpen.current && presented()) {const ref = pendingOpen.current; pendingOpen.current = null; openNative(ref)}
+      flushPendingOpen()
       flushStudio()
     }
     const examine = () => {if (live) workspace.setMode('techne')}
     window.addEventListener('oi:epi-examine', examine)
     const observer = new MutationObserver(visible)
     for (let parent: HTMLElement | null = target; parent; parent = parent.parentElement) observer.observe(parent, {attributes: true, attributeFilter: ['hidden', 'inert', 'style', 'class']})
-    return () => {live = false; publishLiveTorusState(null); publishHostedExpressions(null); ++facadeGeneration; openRequest.current = null; requalify.current = null; abort.abort(); observer.disconnect(); window.removeEventListener('oi:epi-examine', examine); window.removeEventListener(NATIVE_OPEN_STUDIO, openStudio); window.removeEventListener(NATIVE_ENGINE_COMMAND, engineCommand);
+    return () => {live = false; publishLiveTorusState(null); publishHostedExpressions(null); ++facadeGeneration; openRequest.current = null; openDraftRequest.current = null; requalify.current = null; abort.abort(); observer.disconnect(); window.removeEventListener('oi:epi-examine', examine); window.removeEventListener(NATIVE_OPEN_STUDIO, openStudio); window.removeEventListener(NATIVE_ENGINE_COMMAND, engineCommand);
       stopSelection.current?.(); stopSelection.current = null; navigator.current?.dispose(); navigator.current = null;
       stopInstruments?.(); stopInstruments = null;
       stopEditor?.(); editor?.dispose(); workspace.attachEditor(null); workspace.publishEditorReading(null);
@@ -357,7 +372,14 @@ export function ExpressionsPanel() {
   }, [workspace.mode])
   useEffect(() => {
     if (!workspace.expressionToOpen) return
-    try { if (openRequest.current) openRequest.current(workspace.expressionToOpen.ref); else pendingOpen.current = workspace.expressionToOpen.ref; setFault(null) }
+    const request = workspace.expressionToOpen
+    try {
+      // One door, two request kinds: an Expression by its ref, or a browser-local draft by its Library id.
+      if ('draftId' in request) {
+        if (openDraftRequest.current) openDraftRequest.current(request.draftId); else {pendingDraft.current = request.draftId; pendingOpen.current = null}
+      } else if (openRequest.current) openRequest.current(request.ref); else {pendingOpen.current = request.ref; pendingDraft.current = null}
+      setFault(null)
+    }
     catch (cause) { setFault(cause instanceof Error ? cause.message : String(cause)) }
   }, [workspace.expressionToOpen])
   // The pane body reads the frame only while the frame reports ready (T-EXPRESSIONS-PANE-LEASE): a status that is not ready clears it.
