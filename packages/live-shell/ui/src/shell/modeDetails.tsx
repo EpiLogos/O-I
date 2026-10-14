@@ -8,7 +8,10 @@ import type {SurfMode} from './modeGrammar'
 import {useDetailReading, type DetailReading} from '../frame/detail/detailReading'
 import {clipBoxRows, useSelectedClip, type SelectedClip} from '../frame/detail/ClipBox'
 import {ClipWaiting} from '../frame/detail/ClipView'
-import {DeviceChainPanel} from '../components/DeviceChainPanel'
+import {DeviceChainPanel, LIVE_CLIP_WAITS} from '../components/DeviceChainPanel'
+import {liveClipOf} from '../live/LiveClip'
+import {trackDeviceFaceTitle} from '../live/liveChain'
+import {displayDeviceName} from './document'
 import {NativeWorldDetail} from '../components/NativeWorldDetail'
 import {CentralClipChooser} from '../central/CentralClipChooser'
 import {centralSubjectName} from '../central/CentralClipDetail'
@@ -108,11 +111,22 @@ function TechneClip() { const {worldCut, world, native} = useDetailReading(); re
 function TechneChain() { const {transport} = useDetailReading(); return <TechneInstrumentsDetail transport={transport} /> }
 
 export const MODE_DETAILS: Readonly<Record<SurfMode, ModeDetail>> = {
+  // Live: the one instrument's chain and the open set's clips (lock §0.2). The heads are the mockup's liveDetail() :1760 —
+  // "<b>Drums</b> — Drum Rack → Glue Compressor → Reverb" and "<b>Kit 1</b> — Drums · clip" — read from the open set alone, so a
+  // head never names what the row does not show: the instrument's own plates (keyboard, note devices, torus) stand in the row.
   live: {clip: LiveClip, device: LiveChain, ownsDeviceSide: true, dropHint: 'Drop an instrument or effect here',
-    clipWaits: 'Select a clip in the Session or the Arrangement to see it here.',
+    clipWaits: LIVE_CLIP_WAITS,
     head: {
-      clip: ({selected}) => selected.clip ? {name: selected.clip.label, line: `${selected.track?.name ?? selected.clip.trackId} · the clip in focus`} : {name: 'Clip'},
-      device: ({detail}) => ({name: detail.live.document?.tracks[detail.live.selection.track]?.name ?? 'Device', line: 'the instrument\'s chain: note devices before the torus, effects after'}),
+      clip: ({detail, selected}) => {
+        const clip = liveClipOf(detail.live.ctx?.set ?? null, detail.live.document, detail.live.selection)
+        return clip ? {name: clip.name, line: `${clip.track ?? selected.track?.name ?? 'its track'} · clip`} : {name: 'Clip'}
+      },
+      device: ({detail}) => {
+        const track = detail.live.ctx?.set?.tracks[detail.live.selection.track]
+        if (!track) return {name: 'No track selected'}
+        const devices = track.devices.map(name => trackDeviceFaceTitle(name) ?? displayDeviceName(name))
+        return devices.length ? {name: track.name, line: devices.join(' → ')} : {name: track.name}
+      },
     }},
   base: {clip: CentralClip, device: CentralChain, devicesLeadInstrument: true, dropHint: 'Add a document device',
     clipWaits: 'Select a day, a document or an entry, in the browser or on the day\'s tracks, to see it as data here.',

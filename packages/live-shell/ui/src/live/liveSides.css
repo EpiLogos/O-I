@@ -1,0 +1,33 @@
+/* Live's two detail sides (live/LiveDeviceChain.tsx, live/LiveClip.tsx), laid into the host's row (frame/detail/detail.css). Shell
+   tokens only. */
+
+/* The chain's one waiting line, in the host's waiting idiom (.clip-empty): faint, standing in the row before the drop zone. */
+.live-chain-waits { flex: 0 1 300px; align-self: center; margin: 0; padding: 0 10px; color: var(--text-faint); font-size: 10.5px; line-height: 1.45 }
+
+/* The set's devices stand at the mockup's effect plate (liveDetail() :1764-1765, dev(…, 220, …)): wide enough for the name and
+   its owner on the head and two columns of knobs; a device with more to show takes the runtime's own width. */
+.detail-chain [data-chain-device] > .device--compact:not(.device--folded) { min-width: 220px }
+/* A note device's head carries its name and its kind ("note device") whole. */
+.detail-chain .note-plate > .device--compact:not(.device--folded) { min-width: 180px }
+
+/* The keyboard's plate: its picture is the playing surface, so the picture box takes the plate's height and the width six keys
+   need beside the layout toggle (the runtime's 104px box is a live picture's, not a keyboard's). */
+.keyboard-plate > .device--compact { width: 392px }
+.keyboard-plate .device-body { align-items: stretch }
+.keyboard-plate .device-picture { width: 236px; height: auto; align-self: stretch; display: flex; place-items: stretch; overflow: hidden }
+
+/* The roll's frame in the Clip view's Notes column (the mockup's roll, liveDetail() :1761): a key column of the twelve pitch
+   classes beside their lanes, the lanes of the mode in force lifted, those outside it sunk; the clip's bars along the top. */
+.live-roll { margin: 2px 10px 4px; display: flex; flex-direction: column; border: 1px solid var(--line); background: var(--bg-0) }
+.live-roll-ruler, .live-roll-row { display: grid; grid-template-columns: 34px minmax(0, 1fr); min-height: 0 }
+.live-roll-ruler { grid-template-columns: 34px repeat(auto-fit, minmax(0, 1fr)); height: 14px; border-bottom: 1px solid var(--line); font: 9px/14px var(--mono); color: var(--text-faint) }
+.live-roll-ruler > span { padding-left: 3px; border-left: 1px solid var(--line); overflow: hidden; white-space: nowrap }
+.live-roll-ruler > span:first-child { border-left: 0 }
+.live-roll-row { height: 11px; border-bottom: 1px solid color-mix(in srgb, var(--text) 4%, transparent) }
+.live-roll-row:last-child { border-bottom: 0 }
+.live-roll-key { padding: 0 4px; font: 8.5px/11px var(--mono); color: var(--text-dim); background: var(--bg-2); border-right: 1px solid var(--line) }
+.live-roll-lane { background: var(--bg-1) }
+.live-roll-row[data-in-mode="yes"] .live-roll-key { color: var(--text) }
+.live-roll-row[data-in-mode="yes"] .live-roll-lane { background: var(--bg-3) }
+.live-roll-row[data-in-mode="no"] .live-roll-key { color: var(--text-faint) }
+.live-roll-row[data-in-mode="no"] .live-roll-lane { background: var(--bg-0) }
