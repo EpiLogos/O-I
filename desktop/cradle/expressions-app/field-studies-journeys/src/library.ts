@@ -9,14 +9,20 @@
  *   - browse/search/sections/horizons — local, exactly the app's grammar;
  *   - open, start-from and branch — handed to the host (workspace-mode
  *     host request): the instrument owns opening compositions, and it
- *     reads the SAME saved library from its own storage origin;
+ *     reads the SAME saved library from its own storage origin. An
+ *     adopted local entry names its kernel ref on the open request (the
+ *     instrument opens the kernel copy first, as the in-app Library does);
+ *     the browser-draft action names the entry id;
+ *   - origin notes — each saved card states its origin with the in-app
+ *     wording (libraryCards.ts), read from readLibraryWithOrigins;
  *   - remove-saved — local (store.removeFromLibrary, the same store);
  *   - close — a host request, so the cradle closes the tab.
  * Appearance rides the existing `oi-shell-cutout` host message; until it
  * lands, the OS preference leads. */
 
 import {compositionCover,featuredExpressions,startingPoints,libraryHTML,collectionBinsOf,parseCollectionFilter,type CollectionBins,type CollectionFilter} from './expressions.js';
-import {readLibraryDetailed,removeFromLibrary} from './store.js';
+import {readLibraryWithOrigins,libraryOpenPlan,removeFromLibrary} from './store.js';
+import {decorateLibraryCard,libraryCardStanding,LIBRARY_CARD_DRAFT_ACTION} from './libraryCards.js';
 import {nativeExpressionRequest} from './kernelExpressions.js';
 import {installNativeLibraryInteractions} from './libraryScopes.js';
 // T-REVIEW-6: the quarantine section reads and restores through the same recovery owner as the instrument.
@@ -45,7 +51,7 @@ function refreshQuarantine(message?:string):void{
 }
 
 const page=():HTMLElement=>document.getElementById('library-page')!;
-const hostRequest=(payload:{request:string;mode?:string})=>{
+const hostRequest=(payload:{request:string;mode?:string;ref?:string;id?:string})=>{
   if(window.parent===window)return;
   try{window.parent.postMessage({v:1,kind:'host-request',...payload},'*');}catch{/* nothing sent rather than a wrong-channel throw */}
 };
@@ -58,7 +64,7 @@ const covers=new Map<string,string>();
 
 function renderLibrary():void{
   coverObserverLive?.disconnect();
-  const library=readLibraryDetailed();
+  const {read:library,origins}=readLibraryWithOrigins();
   const scroll=page().scrollTop;
   const saved=library.journeys;
   const featured=featuredExpressions().filter(j=>!saved.some(s=>s.id===j.id));
@@ -69,6 +75,11 @@ function renderLibrary():void{
     errors:library.blocked?['Browser storage is unavailable here. Export an expression from the instrument to keep a portable copy.']:library.errors,
     legacy:hasLegacyLibrary(),quarantine,bins,collectionFilter,cover:j=>covers.get(j.id)});
   page().scrollTop=scroll;
+  // T22: each saved card names its origin, with the same note and actions the in-app Library shows (one wording, libraryCards.ts).
+  page().querySelectorAll<HTMLButtonElement>('button[data-action="load-saved"][data-id]').forEach(button=>{
+    const id=button.dataset.id!;
+    decorateLibraryCard(button,id,libraryCardStanding(origins.get(id)));
+  });
   const images=page().querySelectorAll<HTMLImageElement>('img[data-preview-id]');
   if(typeof IntersectionObserver==='undefined')images.forEach(paint);
   else{coverObserverLive=new IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting){paint(entry.target as HTMLImageElement);coverObserverLive?.unobserve(entry.target);}},{root:page(),rootMargin:'160px'});images.forEach(image=>coverObserverLive!.observe(image));}
@@ -104,7 +115,14 @@ document.addEventListener('click',event=>{
     // brings the Expressions mode forward and its Library holds the same
     // entries (this page's store and the instrument's are one storage
     // origin). The branch/edit itself stays an instrument act.
-    case 'load-saved':
+    // T22: an adopted local entry opens its kernel copy first, as the in-app Library's open does; the kernel ref travels on the same
+    // workspace-mode request. This page cannot reach the kernel itself: the host relays the ref to the instrument's follow path.
+    case 'load-saved':{
+      const id=el.dataset.id!;
+      const plan=libraryOpenPlan(readLibraryWithOrigins().origins.get(id),true);
+      hostRequest(plan.kind==='kernel-first'?{request:'workspace-mode',mode:'expressions',ref:plan.ref,id}:{request:'workspace-mode',mode:'expressions'});
+      break;}
+    case LIBRARY_CARD_DRAFT_ACTION:hostRequest({request:'workspace-mode',mode:'expressions',id:el.dataset.id});break;
     case 'fork-saved':
     case 'start-mode':
     case 'open-featured':hostRequest({request:'workspace-mode',mode:'expressions'});break;
