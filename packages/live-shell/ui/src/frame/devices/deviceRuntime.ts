@@ -106,15 +106,26 @@ function naturalWidth(row: SdkParamRow): number {
   return Math.max(label, PLATE.column)
 }
 
+/** What the plate's head takes (the mockup's .dh: ring, mark, the name at 11px, the owner at 9.5px, the marks at the right):
+ * a plate is never narrower than its head, so the name is not cut short ("Compres… ef…", lane D, 14 Oct). */
+export interface PlateHead {title: string; owner: string; marks: number}
+const HEAD_FIXED = 14 + 16 + 12, TITLE_CHAR = 6.2, OWNER_CHAR = 5, HEAD_MARK = 18
+
+export function headWidth(head: PlateHead): number {
+  return PLATE.border + HEAD_FIXED + head.title.length * TITLE_CHAR + head.owner.length * OWNER_CHAR + head.marks * HEAD_MARK
+}
+
 /** A compact plate's fixed width, derived from what it shows: its picture box beside its controls, one column for one small
- * control and two otherwise, each column as wide as its widest control. Clamped to the mockup's range. */
-export function plateWidth(rows: readonly SdkParamRow[], picture: boolean): number {
-  if (!rows.length) return picture ? PLATE.body : PLATE.min
+ * control and two otherwise, each column as wide as its widest control — and never narrower than its head. Clamped to the
+ * mockup's range. */
+export function plateWidth(rows: readonly SdkParamRow[], picture: boolean, head?: PlateHead): number {
+  const atLeast = head ? headWidth(head) : 0
+  if (!rows.length) return Math.min(PLATE.max, Math.max(picture ? PLATE.body : PLATE.min, Math.round(atLeast)))
   const single = rows.filter(row => rowSpan(row) === 1)
   const column = Math.max(PLATE.column, ...single.map(naturalWidth))
   const twoColumns = rows.length > 1 || single.length < rows.length
   let controls = twoColumns ? column * 2 + PLATE.columnGap : column
   for (const row of rows) if (rowSpan(row) === 2) controls = Math.max(controls, naturalWidth(row))
-  const width = PLATE.border + PLATE.padding + (picture ? PLATE.picture + PLATE.gap : 0) + controls
+  const width = Math.max(atLeast, PLATE.border + PLATE.padding + (picture ? PLATE.picture + PLATE.gap : 0) + controls)
   return Math.min(PLATE.max, Math.max(PLATE.min, Math.round(width)))
 }
