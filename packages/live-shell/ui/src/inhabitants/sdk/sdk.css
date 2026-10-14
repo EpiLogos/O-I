@@ -8,26 +8,28 @@
 .sdk-face {
   --sdk-bg: var(--inh-bg-1, var(--surface, #33363b));
   --sdk-bg-raised: var(--inh-bg-2, #3f4348);
+  --sdk-well: var(--inh-bg-0, var(--bg-1));
+  --sdk-cap: var(--inh-bg-3, var(--bg-3));
   --sdk-line: var(--inh-line, var(--line, #24262a));
   --sdk-line-strong: var(--inh-line-strong, var(--line-strong, #3d4147));
   --sdk-text: var(--inh-text, var(--text, #d4d7da));
   --sdk-dim: var(--inh-dim, var(--text-dim, #a2a7ad));
   --sdk-faint: var(--inh-faint, var(--text-faint, #71767c));
   --sdk-accent: var(--inh-accent, var(--accent, #ffbe00));
+  --sdk-on-accent: var(--inh-ink, var(--bg-1));
   --sdk-green: var(--green, #8fd0a8);
   --sdk-rec: var(--rec, #e0523f);
   --sdk-stall: var(--stall, #ff9b4a);
   --sdk-faint-lamp: color-mix(in srgb, var(--sdk-faint) 22%, transparent);
+  --sdk-mono: var(--inh-mono, var(--mono, ui-monospace, 'SF Mono', Menlo, monospace));
 
+  /* The plate (world-shell-mockup.html:333 .dev): a raised panel on a hairline, its head, then its body. */
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 8px;
-  background: var(--sdk-bg);
+  min-width: 0;
+  background: var(--sdk-bg-raised);
   border: 1px solid var(--sdk-line);
-  border-radius: 4px;
-  min-width: 148px;
-  font: 11px/1.45 var(--inh-mono, var(--mono, ui-monospace, 'SF Mono', Menlo, monospace));
+  font: 11px/1.35 var(--font-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
   color: var(--sdk-text);
 }
 
@@ -35,11 +37,23 @@
   opacity: 0.82;
 }
 
+/* The plate the pool shows (.dev.sel). */
+.sdk-face--sel {
+  outline: 1px solid var(--sdk-accent);
+  outline-offset: -1px;
+}
+
+/* The head (.dh, :335-337): the power ring, the mark, the name, the owner, then ▾ ⤢ at the right. */
 .sdk-face__head {
   display: flex;
   align-items: center;
-  gap: 6px;
-  min-height: 18px;
+  gap: 5px;
+  flex: none;
+  height: 21px;
+  padding: 0 5px;
+  border-bottom: 1px solid var(--sdk-line);
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .sdk-face__mark {
@@ -49,43 +63,47 @@
 
 .sdk-face__title {
   margin: 0;
+  flex: 0 1 auto;
+  min-width: 0;
   font: inherit;
-  font-weight: 600;
+  font-weight: 400;
   font-size: 11px;
-  letter-spacing: 0.02em;
+  color: var(--sdk-text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .sdk-face__owner {
-  margin: 0;
+  flex: 0 10 auto;
+  min-width: 0;
   color: var(--sdk-faint);
-  font-size: 9.5px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font-size: 9px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.sdk-face__x {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex: none;
+  margin-left: auto;
+  color: var(--sdk-faint);
 }
 
 .sdk-face__action {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 18px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   padding: 0;
-  margin-left: auto;
   background: transparent;
   border: 1px solid transparent;
-  border-radius: 3px;
-  color: var(--sdk-dim);
+  color: var(--sdk-faint);
   cursor: pointer;
-}
-
-.sdk-face__action + .sdk-face__action {
-  margin-left: 0;
 }
 
 .sdk-face__action:hover,
@@ -94,6 +112,61 @@
   border-color: var(--sdk-line-strong);
   outline: none;
 }
+
+/* A face drawn straight into the plate (the SDK's own dev page, a waiting card, a scaffold): its rows sit inside the body's
+   padding. The device runtime draws its own body (frame/devices/devices.css). */
+.sdk-face > :is(.sdk-row, .sdk-disclosure, .sdk-waiting) { margin: 4px 7px 0; }
+.sdk-face > :is(.sdk-row, .sdk-disclosure, .sdk-waiting):last-child { margin-bottom: 7px; }
+
+/* — the power ring (.pw, :336): the device's light, a reading — lit only on the owner's "on"; a known "off" is a grey
+   ring; an unknown state is dark — */
+
+.sdk-power {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid var(--sdk-well);
+  background: transparent;
+}
+
+.sdk-power--on { border-color: var(--sdk-accent); }
+.sdk-power--off { border-color: var(--sdk-faint); }
+button.sdk-power { cursor: pointer; }
+button.sdk-power:hover { box-shadow: 0 0 0 2px color-mix(in srgb, var(--sdk-accent) 30%, transparent); }
+button.sdk-power:focus-visible { outline: 1px solid var(--sdk-accent); outline-offset: 1px; }
+button.sdk-power:disabled { cursor: default; box-shadow: none; }
+
+/* — folded to its title (manual §10.4; the mockup's folded instrument strip .ifold): a vertical strip, pressed to open — */
+
+.sdk-face--folded {
+  width: 26px;
+  flex: none;
+}
+
+.sdk-face__unfold {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: 7px 0;
+  writing-mode: vertical-rl;
+  background: transparent;
+  border: 0;
+  color: var(--sdk-dim);
+  font: inherit;
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.sdk-face__unfold:hover { color: var(--sdk-text); }
+.sdk-face--folded:hover { border-color: var(--sdk-faint); }
+.sdk-face__fold-title { overflow: hidden; text-overflow: ellipsis; }
 
 /* — lamps: readings, never literals — */
 
@@ -121,6 +194,7 @@
   justify-content: space-between;
   gap: 8px;
   min-height: 22px;
+  min-width: 0;
 }
 
 .sdk-row__name {
@@ -138,13 +212,70 @@
   max-width: 60%;
 }
 
-/* — scalar (knob/fader share the grammar; the well is vertical) — */
+/* The knob and the toggle stand as the mockup's .knob and .tog (:342-346): the name above, the control, the value below. */
+.sdk-row--knob,
+.sdk-row--tog {
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 2px;
+  min-height: 0;
+}
+
+.sdk-row--tog { gap: 3px; }
+
+.sdk-row--knob .sdk-row__name,
+.sdk-row--tog .sdk-row__name {
+  max-width: 100%;
+  font-size: 9.5px;
+}
+
+/* — scalar: the knob ring (knobSVG, :835) or the fader well — */
 
 .sdk-scalar {
   display: flex;
   align-items: center;
   gap: 5px;
 }
+
+.sdk-scalar--knob {
+  display: grid;
+  place-items: center;
+  cursor: ns-resize;
+  user-select: none;
+  touch-action: none;
+}
+
+.sdk-scalar--knob[aria-disabled="true"] {
+  cursor: default;
+}
+
+.sdk-knob {
+  display: block;
+  overflow: visible;
+}
+
+.sdk-knob__track,
+.sdk-knob__base,
+.sdk-knob__draft {
+  fill: none;
+  stroke-width: 3;
+}
+
+.sdk-knob__track { stroke: var(--sdk-well); }
+.sdk-knob__base { stroke: var(--sdk-accent); }
+.sdk-knob__draft { stroke: var(--sdk-accent); stroke-dasharray: 2 1.5; }
+.sdk-knob__cap { fill: var(--sdk-cap); }
+.sdk-knob__needle { stroke: var(--sdk-text); stroke-width: 1.5; stroke-linecap: round; }
+
+/* An unsent draft: the acknowledged arc dims, the draft's travel is dashed, the needle takes the accent. */
+.sdk-row--dirty .sdk-knob__base { opacity: 0.45; }
+.sdk-row--dirty .sdk-knob__needle { stroke: var(--sdk-accent); }
+
+/* A knob with no owner write, or no reading, stands inert and dim (the mockup's disabled control). */
+.sdk-scalar--knob[aria-disabled="true"] .sdk-knob { opacity: 0.55; }
+
+/* A modulated knob wears its cause: a faint accent halo on the track (§14). */
+.sdk-scalar--modulated .sdk-knob__track { stroke: color-mix(in srgb, var(--sdk-accent) 22%, var(--sdk-well)); }
 
 .sdk-scalar__well {
   position: relative;
@@ -188,13 +319,26 @@
   min-width: 44px;
   padding: 1px 4px;
   font: inherit;
+  font-family: var(--sdk-mono);
   font-size: 10px;
   color: var(--sdk-text);
   background: transparent;
   border: 1px solid transparent;
   border-radius: 2px;
-  cursor: ns-resize;
+  cursor: text;
   text-align: right;
+}
+
+/* The knob's value (.knob .kv): mono, under the ring, centred. */
+.sdk-row--knob .sdk-scalar__value {
+  min-width: 0;
+  max-width: 100%;
+  padding: 0 2px;
+  font-size: 9.5px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .sdk-scalar__value:hover:not(:disabled) {
@@ -210,24 +354,64 @@
   width: 56px;
   padding: 1px 4px;
   font: inherit;
+  font-family: var(--sdk-mono);
   font-size: 10px;
   color: var(--sdk-text);
-  background: var(--sdk-bg-raised);
+  background: var(--sdk-well);
   border: 1px solid var(--sdk-accent);
-  border-radius: 2px;
+  border-radius: 0;
   text-align: right;
 }
 
-/* — enum / bool — */
+/* — the segmented toggle (.tog .tg, :344-345): every choice side by side, the acknowledged one lit — */
+
+.sdk-seg {
+  display: flex;
+  max-width: 100%;
+  border: 1px solid var(--sdk-line);
+  overflow: hidden;
+}
+
+.sdk-seg__opt {
+  flex: 0 1 auto;
+  min-width: 0;
+  padding: 1px 5px;
+  font: inherit;
+  font-size: 9.5px;
+  line-height: 14px;
+  color: var(--sdk-faint);
+  background: var(--sdk-well);
+  border: 0;
+  border-radius: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.sdk-seg__opt:hover:not(:disabled):not(.sdk-seg__opt--on) { color: var(--sdk-text); }
+.sdk-seg__opt:focus-visible { outline: 1px solid var(--sdk-accent); outline-offset: -1px; }
+.sdk-seg__opt--on { background: var(--sdk-accent); color: var(--sdk-on-accent); }
+/* An unsent or refused choice: outlined in the accent, the acknowledged one still lit beside it. */
+.sdk-seg__opt--draft { box-shadow: inset 0 0 0 1px var(--sdk-accent); color: var(--sdk-text); }
+.sdk-seg__opt:disabled { cursor: default; }
+.sdk-seg__opt:disabled:not(.sdk-seg__opt--on) { color: color-mix(in srgb, var(--sdk-faint) 70%, transparent); }
+
+/* — the stepped choice: one value box over a long list of the owner's choices — */
 
 .sdk-enum {
+  max-width: 100%;
   padding: 1px 6px;
   font: inherit;
-  font-size: 10px;
+  font-size: 9.5px;
+  line-height: 14px;
   color: var(--sdk-text);
-  background: var(--sdk-bg-raised);
-  border: 1px solid var(--sdk-line-strong);
-  border-radius: 2px;
+  background: var(--sdk-well);
+  border: 1px solid var(--sdk-line);
+  border-radius: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   cursor: pointer;
 }
 
@@ -242,44 +426,11 @@
   cursor: default;
 }
 
-.sdk-bool {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 14px;
-  padding: 0;
-  background: var(--sdk-bg-raised);
-  border: 1px solid var(--sdk-line-strong);
-  border-radius: 3px;
-  cursor: pointer;
-}
-
-.sdk-bool:disabled {
-  cursor: default;
-}
-
-.sdk-bool__dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--sdk-faint-lamp);
-  border: 1px solid var(--sdk-line-strong);
-}
-
-.sdk-bool--on .sdk-bool__dot {
-  background: var(--sdk-green);
-  border-color: color-mix(in srgb, var(--sdk-green) 55%, black);
-}
-
-.sdk-bool--off .sdk-bool__dot {
-  background: transparent;
-}
-
 /* — chips, disclosure, waiting — */
 
 .sdk-chip {
   padding: 1px 5px;
+  font-family: var(--sdk-mono);
   font-size: 10px;
   color: var(--sdk-text);
   background: var(--sdk-bg-raised);

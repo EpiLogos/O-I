@@ -50,18 +50,20 @@ try {
   assert.ok(marks >= 1, 'the plate carries its mark from the cut');
   step('plate renders', {detail: `title="${title}", owner="${owner.trim()}", marks=${marks}`});
 
-  // 2 — the scalar: pointer drag moves the DRAFT, amber, distinct from base.
-  const gain = page.locator('.sdk-scalar').first();
-  const before = await gain.locator('.sdk-scalar__value').textContent();
-  const box = await gain.locator('.sdk-scalar__well').boundingBox();
+  // 2 — the scalar: pointer drag moves the DRAFT, amber, distinct from base. The first scalar is the plate's knob ring
+  // (controls.tsx KnobRing, the mockup's knobSVG): its value stands under the ring, and the drag is on the ring.
+  const gainRow = page.locator('.sdk-row--knob').first();
+  const gain = gainRow.locator('.sdk-scalar');
+  const before = await gainRow.locator('.sdk-scalar__value').textContent();
+  const box = await gain.boundingBox();
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   await page.mouse.down();
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2 - 30, {steps: 5});
   await page.mouse.up();
   const rowDirty = await page.locator('.sdk-row--dirty').count();
   assert.ok(rowDirty >= 1, 'the drag leaves a retained draft, shown dirty');
-  const draftHeight = await gain.locator('.sdk-scalar__draft').count();
-  assert.equal(draftHeight, 1, 'the draft handle rides beside the base');
+  const draftHeight = await gainRow.locator('.sdk-knob__draft').count();
+  assert.equal(draftHeight, 1, 'the draft\'s travel rides beside the acknowledged arc');
   step('scalar drag → draft', {detail: `value ${before?.trim()} → draft shown dirty`});
   await page.screenshot({path: join(evidence, 'captures', 'device-sdk-draft.png')});
 

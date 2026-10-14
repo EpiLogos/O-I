@@ -148,7 +148,11 @@ test('with the owner reading the chain shows its standing; each macro reads not 
   assert.match(markup, /data-torus-tone="lit"/, 'the standing tints it')
   assert.doesNotMatch(markup, /<div class="torus-picture"[^>]*><b>/, 'no text-only card')
   assert.equal((markup.match(/data-param="/g) || []).length, 4)
-  assert.equal((markup.match(/class="sdk-enum"[^>]*>—<\/button>/g) || []).length, 4, 'the owner reading publishes no determinant yet, so no macro carries a value')
+  // The long lists (lens, context frame, harmonic basis) step through one value box; the two-choice transcription is a
+  // segmented toggle (the mockup's .tog) — and with no determinant published, no box shows a value and no choice is lit.
+  assert.equal((markup.match(/class="sdk-enum"[^>]*>—<\/button>/g) || []).length, 3, 'the owner reading publishes no determinant yet, so no stepped macro carries a value')
+  assert.equal((markup.match(/class="sdk-seg"/g) || []).length, 1, 'the two-choice macro is a segmented toggle')
+  assert.doesNotMatch(markup, /sdk-seg__opt--on/, 'and none of its choices is lit')
   assert.deepEqual(torusDeviceModule.torusDevice(validState()).values, {enabled: true}, 'the device holds no macro value either')
   assert.doesNotMatch(markup, /<ellipse|<circle/, 'the outline is paths: no point or phase is drawn on it — the oscillation is the simulation render only')
 })
