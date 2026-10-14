@@ -8,6 +8,7 @@
 // relations are open: the writers check each name against the open reading too, and refuse what it does not hold.
 
 import type {KnowledgeGraphSurface} from '../../../../../desktop/cradle/src/knowledge/knowledgeGraphHandle'
+import {GRAPH_ZOOM_LIMITS} from '../../../../../desktop/cradle/src/knowledge/camera'
 
 export const KNOWLEDGE_SCOPES = ['field', 'local'] as const
 export const KNOWLEDGE_DIRECTIONS = ['both', 'outgoing', 'incoming'] as const
@@ -28,8 +29,8 @@ export const KNOWLEDGE_RELATIONS: readonly string[] = ['space-child-space', 'spa
 
 /** The depth input clamps to these (GraphFilters.tsx: min 0, max 8). */
 export const DEPTH_RANGE = {min: 0, max: 8} as const
-/** The zoom buttons clamp to these (KnowledgeSurface.tsx: minZoom .15, maxZoom 4). */
-export const ZOOM_RANGE = {min: 0.15, max: 4} as const
+/** The zoom buttons and slider clamp to the graph's one zoom grammar (knowledge/camera.ts GRAPH_ZOOM_LIMITS). */
+export const ZOOM_RANGE = {min: GRAPH_ZOOM_LIMITS.minZoom, max: GRAPH_ZOOM_LIMITS.maxZoom} as const
 /** The find field keeps at most this many characters (filters.ts restoreGraphFilters). */
 export const TEXT_LIMIT = 1024
 

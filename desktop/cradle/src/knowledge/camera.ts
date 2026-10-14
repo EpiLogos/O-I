@@ -1,5 +1,11 @@
 export interface Camera {x:number;y:number;zoom:number}
-export function zoomAt(camera:Camera,factor:number,x:number,y:number,min=.15,max=4):Camera {
+/** The graph's zoom grammar, one source for every floor and ceiling (the
+ * surface, its buttons, its restore guards and its fit). The floor matches the
+ * Canvas's own (A6, CANVAS_ZOOM_LIMITS minZoom .05): a budget-scale reading
+ * (4096 subjects spread over the layout's reach of ~3072 world units) must fit
+ * whole, and at the old .15 floor it could not. */
+export const GRAPH_ZOOM_LIMITS: {readonly minZoom: number; readonly maxZoom: number} = {minZoom: .05, maxZoom: 4};
+export function zoomAt(camera:Camera,factor:number,x:number,y:number,min=GRAPH_ZOOM_LIMITS.minZoom,max=GRAPH_ZOOM_LIMITS.maxZoom):Camera {
   const zoom=Math.max(min,Math.min(max,camera.zoom*factor)),ratio=zoom/camera.zoom;
   return {zoom,x:x-(x-camera.x)*ratio,y:y-(y-camera.y)*ratio};
 }

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {graphFitCamera} from '../src/knowledge/graph.ts';
-import {screenPoint} from '../src/knowledge/camera.ts';
+import {GRAPH_ZOOM_LIMITS, screenPoint} from '../src/knowledge/camera.ts';
 
 const limits = {minZoom: .15, maxZoom: 4};
 const extent = {width: 800, height: 520};
@@ -42,4 +42,15 @@ test('nothing finite to fit yields no camera, and a degenerate extent is refused
 test('the zoom limits the canvas passes are honoured exactly', () => {
   const camera = graphFitCamera([{x: 0, y: 0}, {x: 1000, y: 1000}], extent, {minZoom: .5, maxZoom: 1}, 48);
   assert.equal(camera.zoom, .5);
+});
+
+test('a budget-scale reading (4096 subjects over the layout reach) fits whole at the graph floor', () => {
+  // The layout's reach about the centre is max(260, sqrt(n) * 48): 3072 world units for 4096 subjects.
+  const reach = Math.max(260, Math.sqrt(4096) * 48);
+  const points = Array.from({length: 4096}, (_, i) => ({x: 400 + (i * 37) % 6144 - reach, y: 260 + (i * 91) % 6144 - reach}));
+  assert.equal(GRAPH_ZOOM_LIMITS.minZoom, .05, 'the graph floor is the Canvas floor');
+  const camera = graphFitCamera(points, extent, GRAPH_ZOOM_LIMITS, 48);
+  assert.ok(camera.zoom > GRAPH_ZOOM_LIMITS.minZoom, 'the fit is not clamped at the floor');
+  for (const point of points) assert.ok(onScreen(point, camera, 48), `subject ${point.x},${point.y} is on screen`);
+  assert.ok(camera.zoom < .15, 'the old .15 floor could not fit this reading whole');
 });

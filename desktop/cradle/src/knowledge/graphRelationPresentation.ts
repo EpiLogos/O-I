@@ -14,6 +14,32 @@ export function hitGraphScreenEdge(edges:readonly GraphScreenEdge[],point:{x:num
 export function emphasizedGraphRelations(edges:readonly GraphScreenEdge[],input:{selected?:string;hovered?:string;hoveredEdge?:number;focused:ReadonlySet<string>}):GraphScreenEdge[]{
  return edges.filter(({edge,index})=>!!edge.relation&&(index===input.hoveredEdge||!!input.hovered&&(edge.from_ref===input.hovered||edge.to_ref===input.hovered)||!!input.selected&&input.focused.has(edge.from_ref)&&input.focused.has(edge.to_ref)));
 }
+/** A relation caption's life across emphasis: it eases in from the moment its
+ * emphasis began and eases out from the moment it left. The motion duration
+ * (zero under reduced motion) switches at once. */
+export interface GraphCaptionLife {since:number;leftAt?:number}
+export function graphCaptionAlpha(life:GraphCaptionLife,now:number,duration:number):number {
+ if(![now,life.since,duration].every(Number.isFinite))return 0;
+ if(life.leftAt!==undefined)return duration>0?Math.max(0,1-(now-life.leftAt)/duration):0;
+ return duration>0?Math.min(1,Math.max(0,(now-life.since)/duration)):1;
+}
+/** Advances the caption lives to one frame. A caption whose relation is newly
+ * emphasised begins (or re-begins after leaving); one whose relation left
+ * starts to fade; a departed caption that has faded is dropped. Returns the
+ * captions to draw at their alpha, and whether any is still easing. */
+export function advanceGraphCaptions(lives:Map<number,GraphCaptionLife>,live:ReadonlySet<number>,now:number,duration:number):{drawn:{index:number;alpha:number}[];fading:boolean} {
+ for(const index of live){const life=lives.get(index);if(!life||life.leftAt!==undefined)lives.set(index,{since:now});}
+ for(const [index,life] of lives)if(!live.has(index)&&life.leftAt===undefined)life.leftAt=now;
+ const drawn:{index:number;alpha:number}[]=[];let fading=false;
+ for(const [index,life] of lives){
+  const alpha=graphCaptionAlpha(life,now,duration);
+  if(life.leftAt!==undefined&&alpha<=0){lives.delete(index);continue;}
+  // A departing caption keeps the frames coming until it is dropped, even at full strength on its first frame.
+  if(alpha<1||life.leftAt!==undefined)fading=true;
+  if(alpha>0)drawn.push({index,alpha});
+ }
+ return {drawn,fading};
+}
 export interface GraphLabelBox {x:number;y:number;w:number;h:number}
 export function admitGraphLabel(box:GraphLabelBox,existing:readonly GraphLabelBox[]):boolean {
  return [box.x,box.y,box.w,box.h].every(Number.isFinite)&&box.w>0&&box.h>0&&!existing.some(other=>other.x<box.x+box.w&&other.x+other.w>box.x&&other.y<box.y+box.h&&other.y+other.h>box.y);

@@ -3,8 +3,8 @@ import {graphFitCamera,type GraphNode,type GraphReading} from './graph';
 import {GRAPH_STANDING_TOKEN,graphEdgeStanding} from './graphEmphasis';
 import type {Point} from './layout';
 import {screenPoint,segmentVisible,zoomAt,type Camera} from './camera';
-import {graphDragPosition,isUnresolvedGraphNode,unresolvedGraphAssociations} from './graphNavigation';
-import {graphScreenEdges,hitGraphScreenEdge,emphasizedGraphRelations,admitGraphLabel,type GraphScreenEdge} from './graphRelationPresentation';
+import {graphDragPosition,graphNodeCaption,isUnresolvedGraphNode,unresolvedGraphAssociations} from './graphNavigation';
+import {graphScreenEdges,hitGraphScreenEdge,emphasizedGraphRelations,admitGraphLabel,advanceGraphCaptions,type GraphCaptionLife,type GraphScreenEdge} from './graphRelationPresentation';
 import {NavigationMinimap,type NavigationMinimapController} from '../shared/NavigationMinimap.tsx';
 import {captureGraphContext,resolveGraphContext,type GraphContextSource} from './graphContext';
 import './graphContext.css';
@@ -42,6 +42,8 @@ export const GraphCanvas=memo(function GraphCanvas(props:Props) {
     const duration=reduced.matches?0:num('--oi-motion-normal');
     let screen:{node:GraphNode;p:Point;x:number;y:number;r:number}[]=[],lookup=new Map<string,{x:number;y:number}>();
     let relationScreens:GraphScreenEdge[]=[];
+    // Relation captions by edge index: when each began to emphasise, or when it left.
+    const captions=new Map<number,GraphCaptionLife>();
     const drawTimes:number[]=[];
     const report=()=>{if(!(import.meta as unknown as {env?:{DEV?:boolean}}).env?.DEV||!drawTimes.length)return;const times=drawTimes.splice(0).sort((a,b)=>a-b);console.info('C4 canvas draw',JSON.stringify({frames:times.length,p95DrawMs:times[Math.floor(times.length*.95)],maxDrawMs:times[times.length-1],visibleNodes:screen.length,totalNodes:current.current.nodes.length}));};
     const schedule=()=>{if(!frame&&!disposed)frame=requestAnimationFrame(draw);};
@@ -81,19 +83,24 @@ export const GraphCanvas=memo(function GraphCanvas(props:Props) {
         if(isUnresolvedGraphNode(node)){ctx!.strokeStyle=active?accent:muted;ctx!.lineWidth=line;ctx!.setLineDash([line*3,line*2]);ctx!.stroke();ctx!.setLineDash([]);}
         else{ctx!.fillStyle=selected?accent:(p.emphasis?.get(node.ref)?.color??ink);ctx!.fill();}
         if(active||(p.labels!=='focus'&&!receded&&(p.labels==='all'||(node.kind==='wiki-space'&&view.zoom>.3)||view.zoom>1.1))){
-          ctx!.font=`${font}px ${fontFamily}`;const w=ctx!.measureText(node.label).width,box={x:x-w/2,y:y+r+hit*.65,w,h:font*1.5};
-          if(active||!labelBoxes.some(b=>b.x<box.x+box.w&&b.x+b.w>box.x&&b.y<box.y+box.h&&b.y+b.h>box.y)){labelBoxes.push(box);ctx!.globalAlpha=active?1:.8;ctx!.fillStyle=active?ink:muted;ctx!.textAlign='center';ctx!.lineJoin='round';ctx!.strokeStyle=ground;ctx!.lineWidth=3;ctx!.strokeText(node.label,x,box.y+font);ctx!.fillText(node.label,x,box.y+font);}
+          const caption=graphNodeCaption(node);
+          ctx!.font=`${font}px ${fontFamily}`;const w=ctx!.measureText(caption).width,box={x:x-w/2,y:y+r+hit*.65,w,h:font*1.5};
+          if(active||!labelBoxes.some(b=>b.x<box.x+box.w&&b.x+b.w>box.x&&b.y<box.y+box.h&&b.y+b.h>box.y)){labelBoxes.push(box);ctx!.globalAlpha=active?1:.8;ctx!.fillStyle=active?ink:muted;ctx!.textAlign='center';ctx!.lineJoin='round';ctx!.strokeStyle=ground;ctx!.lineWidth=3;ctx!.strokeText(caption,x,box.y+font);ctx!.fillText(caption,x,box.y+font);}
         }
       }
-      for(const item of emphasizedGraphRelations(relationScreens,{selected:p.selected,hovered:hover,hoveredEdge,focused:p.focused})){
+      // A relation's kind eases in while it is emphasised and eases out after it leaves (C4); reduced motion switches at once.
+      const emphasised=emphasizedGraphRelations(relationScreens,{selected:p.selected,hovered:hover,hoveredEdge,focused:p.focused});
+      const {drawn,fading}=advanceGraphCaptions(captions,new Set(emphasised.map(item=>item.index)),time,duration);
+      for(const {index,alpha} of drawn){
+        const item=relationScreens.find(candidate=>candidate.index===index);if(!item)continue;
         const x=(item.from.x+item.to.x)/2,y=(item.from.y+item.to.y)/2;
         ctx!.font=`${font}px ${fontFamily}`;const text=item.edge.relation,w=ctx!.measureText(text).width,box={x:x-w/2-hit*.25,y:y-font*.75,w:w+hit*.5,h:font*1.5};
         if(x<0||y<0||x>width||y>height||!admitGraphLabel(box,labelBoxes))continue;
-        labelBoxes.push(box);ctx!.globalAlpha=.86;ctx!.fillStyle=ground;ctx!.fillRect(box.x,box.y,box.w,box.h);ctx!.fillStyle=value(GRAPH_STANDING_TOKEN[graphEdgeStanding(item.edge).visual])||muted;ctx!.textAlign='center';ctx!.fillText(text,x,y+font*.35);
+        labelBoxes.push(box);ctx!.globalAlpha=.86*alpha;ctx!.fillStyle=ground;ctx!.fillRect(box.x,box.y,box.w,box.h);ctx!.fillStyle=value(GRAPH_STANDING_TOKEN[graphEdgeStanding(item.edge).visual])||muted;ctx!.textAlign='center';ctx!.fillText(text,x,y+font*.35);
       }
       mini.current?.draw(view);
       ctx!.globalAlpha=1;drawTimes.push(performance.now()-started);if(drawTimes.length>600)drawTimes.shift();
-      if(travel||(hover&&!reduced.matches))schedule();
+      if(travel||fading||(hover&&!reduced.matches))schedule();
     }
     const pointer=(e:{clientX:number;clientY:number})=>{const bounds=el.getBoundingClientRect();return {x:e.clientX-bounds.left,y:e.clientY-bounds.top};};
     const hitNode=(x:number,y:number)=>{let best:GraphNode|undefined,distance=Infinity;for(const item of screen){const d=Math.hypot(x-item.x,y-item.y);if(d<=Math.max(hit*.65,item.r+3)&&d<distance){best=item.node;distance=d;}}return best;};
