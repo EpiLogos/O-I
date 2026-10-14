@@ -288,6 +288,37 @@ export function ensureWikiProjectionReading(register: WikiRegister, transport: K
 }
 export const wikiProjectionReadingPending = (registerKey: string) => rereadsInFlight.has(registerKey);
 
+/** The store's load entry for one register's settled standing, for a caller that answers from the projection rather
+ * than opening a native composition (the Expressions pane's wiki standing, lane-3 E21). It runs the same
+ * `ensureWikiProjection` the Technē centre and the Library run: one read per register, guarded in flight, so concurrent
+ * callers share it. It resolves with the standing once the reading has settled; an absent wiki or an unavailable reading
+ * is a standing (returned as its phase), never a rejection. A reread in flight is waited for. Rejects by name only when
+ * the owner access changes or the reading does not settle within `timeoutMs` (the retained read keeps running). */
+export function ensureWikiStanding(register: WikiRegister, transport: KernelTransportStatus, timeoutMs = 120_000): Promise<RegisterStanding> {
+  const access = captureWikiProjectionAccess();
+  return new Promise((resolve, reject) => {
+    let done = false;
+    let unsubscribe = () => {};
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const finish = (error?: string, standing?: RegisterStanding) => {
+      if (done) return;
+      done = true; if (timer !== undefined) clearTimeout(timer); unsubscribe();
+      if (error) reject(new Error(error)); else resolve(standing!);
+    };
+    const check = () => {
+      if (!access.current()) {finish("The native Wiki owner access changed; its work was retained"); return;}
+      const standing = state.standings[register.key];
+      if (!standing || standing.phase === "idle" || standing.phase === "reading") return;
+      if (rereadsInFlight.has(register.key)) return;
+      finish(undefined, standing);
+    };
+    timer = setTimeout(() => finish("The native Wiki reading did not finish; its work was retained"), timeoutMs);
+    unsubscribe = subscribeWikiProjection(check);
+    ensureWikiProjection(register, transport);
+    check();
+  });
+}
+
 /** Explicit source refresh reuses the existing receipt-driven owner path.
  * It does not replace or edit the native Expression document. */
 export async function refreshWikiProjectionReading(register: WikiRegister, transport: KernelTransportStatus): Promise<ReadyReading> {
