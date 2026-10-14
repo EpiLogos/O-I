@@ -99,7 +99,7 @@ export interface LibraryStanding{subject:string;projection:'read'|'unread';rows:
 export interface CollectionMember{ref:string;title:string;current:boolean}
 export interface CollectionBin{name:string;members:CollectionMember[]}
 export interface CollectionBins{bins:CollectionBin[];uncollected:CollectionMember[];current:{ref:string;collections:string[]}|null}
-export interface LibraryContext {current?:Expression;saved:Expression[];featured:Expression[];starters:StartingPoint[];section:string;errors:string[];legacy:boolean;cover:(expression:Expression)=>string|undefined;standalone?:boolean;quarantine?:LibraryQuarantine;standing?:LibraryStanding;bins?:CollectionBins|null}
+export interface LibraryContext {current?:Expression;saved:Expression[];featured:Expression[];starters:StartingPoint[];section:string;errors:string[];legacy:boolean;cover:(expression:Expression)=>string|undefined;standalone?:boolean;quarantine?:LibraryQuarantine;standing?:LibraryStanding;bins?:CollectionBins|null;collectionFilter?:CollectionFilter}
 
 /** E26: the kernel's own `index` reading (its `collections` map and each row's collections) as Library bins.
  * Pure and defensive: a malformed reading is null, an unlisted title keeps its ref, nothing is invented. */
@@ -146,16 +146,38 @@ function standingHTML(s:LibraryStanding|undefined):string{
 function collectionMemberHTML(member:CollectionMember,bin:string):string{
  return `<li class="collection-member${member.current?' is-current':''}" data-starting-card data-search="${esc(`${member.title} ${member.ref} ${bin}`.toLowerCase())}"><span>${esc(member.title)}</span>${member.current?'<small>current</small>':''}</li>`;
 }
-/** E26: the bins section. The assignment picker appears only where the open Expression can be written (the instrument). */
-function collectionBinsHTML(b:CollectionBins|null|undefined,picker:boolean):string{
- if(!b)return '';
- if(!b.bins.length&&!b.uncollected.length)return `<section class="library-section" data-scope="collection-bins"><header><h2>Collections</h2><span>Read live from this instance</span></header><p class="oi-lib-note">No Expressions are reachable from this instance yet.</p></section>`;
- const bins=b.bins.map(bin=>`<details class="collection-bin" open><summary><strong>${esc(bin.name)}</strong><span>${bin.members.length}</span></summary><ul>${bin.members.map(m=>collectionMemberHTML(m,bin.name)).join('')}</ul></details>`).join('');
- const uncollected=b.uncollected.length?`<details class="collection-bin is-uncollected" open><summary><strong>Uncollected</strong><span>${b.uncollected.length}</span></summary><ul>${b.uncollected.map(m=>collectionMemberHTML(m,'uncollected')).join('')}</ul></details>`:'';
+/** E26: which bins the Library shows. `all` shows every bin and Uncollected; a bin shows only itself; `uncollected`
+ * shows only the unassigned Expressions. A choice with nothing left to show (its bin is gone, or no Expression is
+ * uncollected) falls back to all, so a stale choice never hides an Expression. */
+export type CollectionFilter={kind:'all'}|{kind:'uncollected'}|{kind:'bin';name:string};
+/** The chip's `data-filter` value: `all`, `uncollected`, or `bin:<name>`. A bin named "uncollected" stays a bin. */
+export function collectionFilterValue(f:CollectionFilter):string{return f.kind==='bin'?`bin:${f.name}`:f.kind;}
+export function parseCollectionFilter(value:string):CollectionFilter{
+ if(value==='uncollected')return{kind:'uncollected'};
+ if(value.startsWith('bin:')&&value.length>4)return{kind:'bin',name:value.slice(4)};
+ return{kind:'all'};
+}
+export function collectionView(b:CollectionBins,filter:CollectionFilter):{bins:CollectionBin[];uncollected:boolean;filter:CollectionFilter}{
+ if(filter.kind==='bin'){const named=b.bins.find(bin=>bin.name===filter.name);if(named)return{bins:[named],uncollected:false,filter};}
+ if(filter.kind==='uncollected'&&b.uncollected.length)return{bins:[],uncollected:true,filter};
+ return{bins:b.bins,uncollected:b.uncollected.length>0,filter:{kind:'all'}};
+}
+/** E26: the bins section. The assignment picker appears only where the open Expression can be written (the instrument).
+ * `undefined` is a reading not yet taken and states nothing; `null` is a reading that failed, and says so. */
+function collectionBinsHTML(b:CollectionBins|null|undefined,picker:boolean,filter:CollectionFilter):string{
+ if(b===undefined)return '';
+ if(b===null)return `<section class="library-section" data-scope="collection-bins"><header><h2>Collections</h2><span>Read live from this instance</span></header><p class="oi-lib-note">Collections could not be read from this instance just now. Nothing was invented to fill their place.<small>kernel index · not read</small></p></section>`;
+ if(!b.bins.length&&!b.uncollected.length&&!b.current)return `<section class="library-section" data-scope="collection-bins"><header><h2>Collections</h2><span>Read live from this instance</span></header><p class="oi-lib-note">No Expressions are reachable from this instance yet.</p></section>`;
+ const view=collectionView(b,filter),active=collectionFilterValue(view.filter);
+ const chip=(label:string,count:number|null,value:string)=>`<button type="button" data-action="collection-filter" data-filter="${esc(value)}" aria-pressed="${active===value?'true':'false'}">${esc(label)}${count===null?'':` <span>${count}</span>`}</button>`;
+ const chips=`<nav class="collection-filters" aria-label="Show collections">${chip('All',null,'all')}${b.bins.map(bin=>chip(bin.name,bin.members.length,`bin:${bin.name}`)).join('')}${b.uncollected.length?chip('Uncollected',b.uncollected.length,'uncollected'):''}</nav>`;
+ const bins=view.bins.map(bin=>`<details class="collection-bin" open><summary><strong>${esc(bin.name)}</strong><span>${bin.members.length}</span></summary><ul>${bin.members.map(m=>collectionMemberHTML(m,bin.name)).join('')}</ul></details>`).join('');
+ const uncollected=view.uncollected&&b.uncollected.length?`<details class="collection-bin is-uncollected" open><summary><strong>Uncollected</strong><span>${b.uncollected.length}</span></summary><ul>${b.uncollected.map(m=>collectionMemberHTML(m,'uncollected')).join('')}</ul></details>`:'';
  const cur=b.current;
- const names=b.bins.map(bin=>bin.name);
+ // The picker offers every bin and every name the open Expression carries, so a save never drops a name it cannot show.
+ const names=[...new Set([...b.bins.map(bin=>bin.name),...(cur?.collections??[])])].sort((x,y)=>x.localeCompare(y));
  const form=picker&&cur?`<div class="collection-picker" data-scope="collection-picker" data-expression="${esc(cur.ref)}">${names.map(name=>`<label class="collection-option"><input type="checkbox" name="collection" value="${esc(name)}"${cur.collections.includes(name)?' checked':''}> ${esc(name)}</label>`).join('')}<input name="new-collection" aria-label="New collection name" placeholder="New collection" maxlength="80"><button type="button" data-action="set-collections">Save collections</button></div>`:'';
- return `<section class="library-section" data-scope="collection-bins"><header><h2>Collections</h2><span>Read live from this instance · each Expression sits in its bins</span></header>${bins}${uncollected}${form}</section>`;
+ return `<section class="library-section" data-scope="collection-bins"><header><h2>Collections</h2><span>Read live from this instance · each Expression sits in its bins</span></header>${chips}${bins}${uncollected}${form}</section>`;
 }
 /** T-REVIEW-6: each quarantined draft with its name, reason and time, and the two actions. Damaged material is shown, never loaded on its own. */
 function quarantineHTML(q:LibraryQuarantine|undefined):string{
@@ -187,7 +209,7 @@ export function libraryHTML(c:LibraryContext):string{
   ${c.errors.length?`<p class="library-error" role="status">${esc(c.errors.join(' · '))} Original entries are untouched.</p>`:''}
   <section class="library-section" data-scope="current-project"><header><h2>${c.standalone?'Saved copies':'Current project / world'}</h2><span>${c.standalone?'Your saved expressions, kept in this application':'Your work in this world'}</span></header><div class="expression-grid">${saved.map(j=>card(j,'saved')).join('')}</div></section>
   ${quarantineHTML(c.quarantine)}
-  ${standingHTML(c.standing)}${collectionBinsHTML(c.bins,!c.standalone)}
+  ${standingHTML(c.standing)}${collectionBinsHTML(c.bins,!c.standalone,c.collectionFilter??{kind:'all'})}
   ${featured.length?`<section class="library-section" data-scope="project-collections"><header><h2>Project collections</h2><span>Collected studies & featured compositions</span></header><div class="expression-grid">${featured.map(j=>card(j,'featured')).join('')}</div></section>`:''}
   <section class="library-section" data-scope="personal-collections"><header><h2>Personal collections</h2><label class="library-search">${icon('search')}<input id="library-search" placeholder="Find a mode or material" aria-label="Find a starting composition"></label></header><div class="expression-grid starting-grid">${starterGrid(personal)}</div><p id="library-empty" hidden>No compositions match that search.</p></section>
   ${libraryNativeSectionHTML()}

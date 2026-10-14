@@ -168,6 +168,64 @@ test('the graph owner is read from the occurrence subject that discloses it, nev
   }
 });
 
+test('a refusal, then the Library reopens, then the subject is asked again', () => {
+  const h = harness();
+  h.client.ensure(BASIS);
+  h.client.receive({v: 1, kind: 'wiki-subject-standing-result', req: h.posts[0].req, ok: false,
+    error: 'No wiki register is loaded in this shell, so where this subject stands is not read yet.'});
+  assert.equal(h.client.ensure(BASIS).state, 'refused');
+  assert.equal(h.posts.length, 1, 'within one open a refusal is not asked again');
+  h.client.begin();
+  assert.deepEqual(h.client.ensure(BASIS), {state: 'pending'}, 'reopening the Library asks again');
+  assert.equal(h.posts.length, 2);
+  h.client.receive(answer(h.posts[1].req, REPLY));
+  assert.equal(h.client.ensure(BASIS).state, 'read');
+});
+
+test('a read at revision A, then the projection moves to B: the next open shows B', () => {
+  const h = harness();
+  h.client.ensure(BASIS);
+  h.client.receive(answer(h.posts[0].req, REPLY));
+  const a = h.client.ensure(BASIS);
+  assert.equal(a.state, 'read');
+  assert.equal(a.standing_revision, 9);
+  h.client.begin();
+  const shownWhileAsking = h.client.ensure(BASIS);
+  assert.equal(shownWhileAsking.state, 'read', 'the settled read stays visible while the one re-ask is in flight');
+  assert.equal(h.posts.length, 2, 'the open re-asks the subject once');
+  const ROW_B = {...ROW, scene_title: 'Moved', entity_title: 'Alpha'};
+  h.client.receive(answer(h.posts[1].req, {...REPLY, standing_revision: 10, rows: [ROW_B]}));
+  const b = h.client.ensure(BASIS);
+  assert.equal(b.standing_revision, 10);
+  assert.deepEqual(b.rows.map(row => row.title), ['Alpha · Moved']);
+  assert.equal(h.posts.length, 2, 'no further ask within the same open');
+});
+
+test('an ask already in flight is shared across the open: one request, one settle', () => {
+  const h = harness();
+  assert.deepEqual(h.client.ensure(BASIS), {state: 'pending'});
+  h.client.begin();
+  assert.deepEqual(h.client.ensure(BASIS), {state: 'pending'}, 'the in-flight ask is shared, not repeated');
+  assert.equal(h.posts.length, 1);
+  h.client.receive(answer(h.posts[0].req, REPLY));
+  assert.equal(h.settled.length, 1, 'one settle for the one request');
+  assert.equal(h.client.ensure(BASIS).state, 'read');
+  assert.equal(h.posts.length, 1);
+});
+
+test('a read reply must name a readable standing_revision when it names one', () => {
+  assert.equal(readWikiStandingData({...REPLY, standing_revision: 'nine'}, BASIS).ok, 'refused');
+  assert.equal(readWikiStandingData({...REPLY, standing_revision: -1}, BASIS).ok, 'refused');
+  const bare = readWikiStandingData({...REPLY, standing_revision: undefined}, BASIS);
+  assert.equal(bare.ok, 'read');
+  assert.equal(bare.standing_revision, null);
+});
+
+test('the Library asks once per subject per open, and the open clears refusals in the app', () => {
+  assert.match(appSource, /wikiStanding\.begin\(\)/, 'openLibrary begins a new ask window');
+  assert.match(appSource, /wikiStanding\.dispose\(\)/, 'the teardown releases the standing client');
+});
+
 test('the graph sites no longer default the owner to wiki: the reveal and the standing jump read the occurrence', () => {
   assert.doesNotMatch(appSource, /dataset\.owner\|\|'wiki'/, 'no element-carried wiki default remains');
   assert.match(appSource, /function disclosedOwnerOrRefuse\(subjectRef:string\)/);

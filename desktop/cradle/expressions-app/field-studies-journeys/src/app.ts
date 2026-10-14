@@ -66,7 +66,7 @@ import {defaultCapture,CaptureSettings,CaptureTransition,download,slug,createOut
 const $=<T extends HTMLElement=HTMLElement>(id:string)=>document.getElementById(id) as T;
 import {mountShell,iconButton as ib} from './shell.js';
 import {RailItem,railPressed} from './rail.js';
-import {featuredExpressions,startingPoints,nativeSeven,forkExpression,libraryHTML,modesHTML,compositionCover,collectionBinsOf,collectionsWith,type CollectionBins,type LibraryStanding} from './expressions.js';
+import {featuredExpressions,startingPoints,nativeSeven,forkExpression,libraryHTML,modesHTML,compositionCover,collectionBinsOf,collectionsWith,parseCollectionFilter,type CollectionBins,type CollectionFilter,type LibraryStanding} from './expressions.js';
 import {installKernelExpressions,kernelExpressionsAvailable,readTechneReading,techneConstellationRelate,listKernelExpressions,readKernelExpression,nativeExpressionRequest,invertEdit} from './kernelExpressions.js';
 import {hostedRecovery} from './nativeRecovery.js';
 import {entryGateHTML} from './entryGate.js';
@@ -1132,7 +1132,10 @@ async function jumpToStanding(el:HTMLElement){
 }
 // ——— E26 collections as bins: the kernel's own index is the one reading; assignment is the existing collections_set
 // change through the one save path, labelled for undo. ———
-let collectionBins:CollectionBins|null=null;
+// undefined = not yet read (nothing stated); null = the read failed or was malformed (stated in the Library).
+let collectionBins:CollectionBins|null|undefined=undefined;
+/** E26: the bin choice on the Library page. A view state only: the data is re-read, never stored. */
+let libraryCollectionFilter:CollectionFilter={kind:'all'};
 /** The kernel's collections, read live; the Library redraws when the reading lands. */
 function refreshCollections(){void nativeExpressionRequest({operation:'index'}).then(index=>{collectionBins=collectionBinsOf(index,nativeWorkspace?.nativeView()?.document.expression_ref);}).catch(()=>{collectionBins=null;}).finally(()=>{if(libraryOpen)renderLibrary();});}
 async function assignCollections(el:HTMLElement){
@@ -1229,7 +1232,7 @@ let coverObserver:IntersectionObserver|null=null;
 /** T-REVIEW-6: reads the quarantined drafts for the Library section. The section fills when the read lands; a message names the last restore's outcome. */
 function refreshQuarantine(message?:string){void quarantineView().then(view=>{quarantineState={rows:view.rows,unreadable:view.unreadable,message};if(libraryOpen)renderLibrary();}).catch(()=>undefined);}
 function renderLibrary(){coverObserver?.disconnect();const library=readLibraryDetailed(),scroll=$('library-page').scrollTop;const saved=Array.from(new Map([...library.journeys,...sessionExpressions.values()].map(j=>[j.id,j])).values());
- $('library-page').innerHTML=libraryHTML({current:store.document,saved,featured,starters,section:librarySection,errors:library.blocked?['Browser storage is unavailable here. Export an expression to keep a portable copy.']:library.errors,legacy:hasLegacyLibrary(),quarantine:quarantineState,standing:subjectStandingFor(),bins:collectionBins,cover:j=>covers.get(j.id)});$('library-page').scrollTop=scroll;
+ $('library-page').innerHTML=libraryHTML({current:store.document,saved,featured,starters,section:librarySection,errors:library.blocked?['Browser storage is unavailable here. Export an expression to keep a portable copy.']:library.errors,legacy:hasLegacyLibrary(),quarantine:quarantineState,standing:subjectStandingFor(),bins:collectionBins,collectionFilter:libraryCollectionFilter,cover:j=>covers.get(j.id)});$('library-page').scrollTop=scroll;
  const documents=new Map([...featured,...saved,store.document,...starters.map(p=>p.expression)].map(j=>[j.id,j]));
  const paint=(image:HTMLImageElement)=>{const j=documents.get(image.dataset.previewId!);if(j){image.src=compositionCover(j.scenes[0]);image.removeAttribute('data-preview-id');}};
  const images=$('library-page').querySelectorAll<HTMLImageElement>('img[data-preview-id]');
@@ -1237,6 +1240,7 @@ function renderLibrary(){coverObserver?.disconnect();const library=readLibraryDe
  else{coverObserver=new IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting){paint(entry.target as HTMLImageElement);coverObserver?.unobserve(entry.target);}},{root:$('library-page'),rootMargin:'160px'});images.forEach(image=>coverObserver!.observe(image));}
 }
 function openLibrary(section:'collection'|'about'='collection',navigate=true){if(propertyTake)finishPropertyTake();
+ wikiStanding.begin(); // E21: a refusal is not kept across opens; each subject is asked once more in this open.
  if(!libraryOpen)rememberCover();
  pointer.active=false;modesOpen=false;captureOpen=false;librarySection=section;libraryOpen=true;refreshQuarantine();refreshCollections();
  if(recorder.active){recorder.stop();toast('Recording stopped before opening the library.');}
@@ -1600,6 +1604,7 @@ case 'timeline-track':timelineTrack=!timelineTrack;renderAll();break;
  case 'reveal-stands':openLibrary('collection');break;
  case 'set-collections':void assignCollections(el).catch(cause=>toast(cause instanceof Error?cause.message:String(cause)));break;
  case 'library-section':librarySection=el.dataset.section as 'collection'|'about';renderLibrary();$('library-page').scrollTop=0;break;
+ case 'collection-filter':libraryCollectionFilter=parseCollectionFilter(el.dataset.filter??'');renderLibrary();break;
  case 'modes':modesOpen=!modesOpen;if(modesOpen){inspectorOpen=false;contextKind='';beltPickerOpen=false;timelineOpen=false;}captureOpen=false;pointer.active=false;if(modesOpen)$('modes-panel').innerHTML=modesHTML(starters,recentJourneys(Array.from(new Map([...readLibrary(),...sessionExpressions.values(),store.document].map(j=>[j.id,j])).values()),recentIds));renderAll();break;
  case 'start-mode':{const item=starters.find(p=>p.id===el.dataset.id);if(item)await loadJourney(forkExpression(item.expression));break;}
  case 'open-featured':{const item=featured.find(j=>j.id===el.dataset.id);if(item)await loadJourney(forkExpression(item));break;}
@@ -2646,7 +2651,7 @@ const naraInstrument=installNaraInstrument({nativeView:()=>nativeWorkspace?.nati
  }});
 if(qs.get('nara')==='1')naraInstrument.open();
 const disposeFieldStudies=window.__FIELD_STUDIES__.dispose;
-window.__FIELD_STUDIES__.dispose=()=>{naraInstrument.destroy();journeyInstrument?.destroy();palaceInstrument.destroy();disposeFieldStudies();};
+window.__FIELD_STUDIES__.dispose=()=>{naraInstrument.destroy();journeyInstrument?.destroy();palaceInstrument.destroy();wikiStanding.dispose();disposeFieldStudies();};
 // A hosted deep link (the app's own ?journey/?scene idiom): open a named
 // expression from the browser library, the featured set or the starters —
 // the Technè M0 instrument opens onto the Epii face this way
