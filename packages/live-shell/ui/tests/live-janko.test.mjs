@@ -36,7 +36,6 @@ const here = new URL('../src/', import.meta.url)
 // The device-panel modules inject styles at import time; a minimal document shim stands in (as devices-panels-ssr.test.mjs does).
 globalThis.document = {getElementById: () => null, createElement: () => ({}), head: {appendChild: () => {}}}
 await import('../src/panels/devices/index.tsx')
-await import('../src/panels/devices-b2/index.tsx')
 await import('../src/panels/devices-pro/index.ts')
 const React = await import('react')
 const janko = await import('../src/live/janko/jankoLayout.ts')
@@ -287,8 +286,8 @@ test('the device mounts beside the torus, only once the owner has published a re
   try { after = renderToStaticMarkup(React.createElement(chain.DeviceChainPanel, {ctx, document: null, selection, mode: 'device'})) }
   finally { torus.publishLiveTorusState(null) }
   assert.ok(after.indexOf('data-live-torus=') < after.indexOf('data-janko-layout='), 'the keyboard row sits beside the torus')
-  assert.ok(after.indexOf('data-chain-device=') > 0, 'the effect faces are on the chain')
-  assert.ok(after.indexOf('data-janko-layout=') < after.indexOf('data-chain-device='), 'and before the effect faces')
+  assert.doesNotMatch(after, /data-chain-device=/, 'with no set there is no track, so no device faces: the chain is never the registry')
+  assert.ok(after.indexOf('data-janko-layout=') < after.indexOf('data-detail-empty="device"'), 'and before the track\'s place in the chain')
 })
 
 test('the Jankó module synthesises no sound and no angle; it draws nothing by eye and stores nothing', async () => {
