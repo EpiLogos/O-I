@@ -106,17 +106,24 @@ export function passageForSource(anchor:unknown,source:{kind:'file';ref:string;r
 }
 
 /** The editor's half of the reveal. A span lands only when the binding, the source and the editor's revision are the ones the
- * resolver proved, and the span is non-empty and inside the document. A mismatch reveals nothing; it never searches for the text. */
-export function passageRevealDecision(reveal:unknown,editor:{bindingId:string;sourceRef:string|undefined;revision:string|undefined;docLength:number;workingCopy?:boolean}):{start:number;end:number}|null{
+ * resolver proved, and the span is non-empty and inside the document. A mismatch reveals nothing; it never searches for the text.
+ * A reveal addressed to this editor that cannot land is refused by name (lane-2 T19b drift), so the file opens at its top, said. */
+export type PassageRevealJudgement={kind:'reveal';start:number;end:number}|{kind:'refuse';reason:string}|{kind:'ignore'};
+export function judgePassageReveal(reveal:unknown,editor:{bindingId:string;sourceRef:string|undefined;revision:string|undefined;docLength:number;workingCopy?:boolean}):PassageRevealJudgement{
  const row=object(reveal);
- if(!row||row.kind!=='source-passage')return null;
+ if(!row||row.kind!=='source-passage')return {kind:'ignore'};
+ if(row.bindingId!==editor.bindingId||row.sourceRef!==editor.sourceRef)return {kind:'ignore'};
  // An unsaved working copy is not the proved revision: its offsets may have moved, so the passage is never guessed into it.
- if(editor.workingCopy)return null;
- if(row.bindingId!==editor.bindingId||row.sourceRef!==editor.sourceRef)return null;
- if(!editor.revision||row.revision!==editor.revision)return null;
+ if(editor.workingCopy)return {kind:'refuse',reason:'This file has unsaved edits, so its passage cannot be placed in them; the file opens at its top.'};
+ if(!editor.revision||row.revision!==editor.revision)return {kind:'refuse',reason:'This file changed after the passage was disclosed, so the passage no longer matches it; the file opens at its top.'};
  const start=row.start,end=row.end;
- if(typeof start!=='number'||typeof end!=='number'||!Number.isSafeInteger(start)||!Number.isSafeInteger(end)||start<0||end<=start||end>editor.docLength)return null;
- return {start,end};
+ if(typeof start!=='number'||typeof end!=='number'||!Number.isSafeInteger(start)||!Number.isSafeInteger(end)||start<0||end<=start||end>editor.docLength)return {kind:'refuse',reason:'The passage no longer fits this file, so the file opens at its top.'};
+ return {kind:'reveal',start,end};
+}
+/** The span a reveal lands on, or null when it lands nowhere (another editor's, or refused). See judgePassageReveal. */
+export function passageRevealDecision(reveal:unknown,editor:{bindingId:string;sourceRef:string|undefined;revision:string|undefined;docLength:number;workingCopy?:boolean}):{start:number;end:number}|null{
+ const verdict=judgePassageReveal(reveal,editor);
+ return verdict.kind==='reveal'?{start:verdict.start,end:verdict.end}:null;
 }
 
 const pendingPassageReveals=new Map<string,SourcePassageReveal>();

@@ -105,7 +105,7 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   const [centerPanel, setCenterPanel] = useState(workbenchCentre(restored?.centerPanel) ?? 'world.expressions')
   const [knowledgeIntent, setKnowledgeIntent] = useState<{workspaceId: string; bindingId: string} | null>(null)
   // A resolved file source from the hosted frame: the Workbench is presented first, then asked to open it (it acts only while presented).
-  const [sourceIntent, setSourceIntent] = useState<{location: unknown} | null>(null)
+  const [sourceIntent, setSourceIntent] = useState<{location: unknown; passage?: unknown; note?: unknown} | null>(null)
   useEffect(() => {
     const presentKnowledge = (event: Event) => {
       const input = (event as CustomEvent<{workspaceId?: string; bindingId?: string}>).detail
@@ -148,9 +148,9 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   }, [knowledgeIntent, workspace.workspaceId, workspace.mode, workspace.setMode, continuity.current.layout.surfaces])
   useEffect(() => {
     const present = (event: Event) => {
-      const location = (event as CustomEvent<{location?: unknown}>).detail?.location
-      if (!location) return
-      presentSettings(false); setCenterPanel('native.workbench'); setSourceIntent({location})
+      const detail = (event as CustomEvent<{location?: unknown; passage?: unknown; note?: unknown}>).detail
+      if (!detail?.location) return
+      presentSettings(false); setCenterPanel('native.workbench'); setSourceIntent({location: detail.location, passage: detail.passage, note: detail.note})
     }
     window.addEventListener(SOURCE_PRESENT, present)
     return () => window.removeEventListener(SOURCE_PRESENT, present)
@@ -158,7 +158,7 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   useEffect(() => {
     // After the commit that presents the Workbench, its receiver is live: hand it the source once.
     if (!sourceIntent || centerPanel !== 'native.workbench') return
-    window.dispatchEvent(new CustomEvent('oi:epi-open-source', {detail: {location: sourceIntent.location}}))
+    window.dispatchEvent(new CustomEvent('oi:epi-open-source', {detail: {location: sourceIntent.location, passage: sourceIntent.passage, note: sourceIntent.note}}))
     setSourceIntent(null)
   }, [sourceIntent, centerPanel])
   useEffect(() => {

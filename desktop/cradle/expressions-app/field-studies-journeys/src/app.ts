@@ -1054,7 +1054,30 @@ function snapshotScene(input:{action:'save-snapshot';name:string;next:boolean}|{
 // ——— E21 (SC-6) scene → source → subject, with back-references. Source and subject reveal through the two summons the
 // research host already sends (inspectSubject, showInGraph); the back-reference reads this Expression's own bindings
 // (occurrencesOfSubject). No second index. ———
-function summonSource(ref:string,context?:{node?:unknown;relationField?:unknown}){const view=nativeWorkspace?.nativeView(),binding=view?.bindings[scene().id];if(!view||!binding){toast('Open a native Scene before opening its source.');return;}hostRequest({request:'summon',detail:{kind:'source',ref,context,subject:{ref:view.document.expression_ref,kind:'expression',nativeOwner:'oi',revision:view.document.revision,title:view.document.title,sceneRef:binding.scene_ref,entityRef:null,relationRef:null}}});}
+// lane-2 T19b: the evidence a Timeline event carries to its source, reduced to the bounded shape the shell reads. The shell proves a
+// passage again against the file's revision; a shape this cannot carry returns undefined and is named by the caller.
+function sourceEvidenceCarry(value:unknown):Record<string,unknown>|undefined{
+ if(!value||typeof value!=='object'||Array.isArray(value))return undefined;
+ const row=value as Record<string,unknown>;
+ const text=(item:unknown,max:number):string|undefined=>typeof item==='string'&&item.length>0&&item.length<=max&&!/[\u0000-\u001f\u007f]/.test(item)?item:undefined;
+ const integer=(item:unknown):boolean=>Number.isSafeInteger(item)&&(item as number)>=0;
+ const finite=(item:unknown):boolean=>typeof item==='number'&&Number.isFinite(item);
+ if(row.state==='top'||row.state==='absent'){const reason=text(row.reason,512);return reason?{state:row.state as string,reason}:undefined;}
+ if(row.state!=='passage')return undefined;
+ const source=text(row.source_ref,2048),sel=row.selector;
+ if(!source||!sel||typeof sel!=='object'||Array.isArray(sel))return undefined;
+ const s=sel as Record<string,unknown>;
+ if(s.unit==='text_span'&&integer(s.start)&&integer(s.end)&&(s.start as number)<=(s.end as number))return {state:'passage',source_ref:source,selector:{unit:'text_span',start:s.start,end:s.end}};
+ if(s.unit==='timestamp_range'){const from=text(s.from,64),to=text(s.to,64);return from&&to?{state:'passage',source_ref:source,selector:{unit:'timestamp_range',from,to}}:undefined;}
+ if(s.unit==='image_region'&&finite(s.x)&&finite(s.y)&&finite(s.width)&&finite(s.height))return {state:'passage',source_ref:source,selector:{unit:'image_region',x:s.x,y:s.y,width:s.width,height:s.height}};
+ return undefined;
+}
+function summonSource(ref:string,context?:{node?:unknown;relationField?:unknown;anchor?:unknown}){const view=nativeWorkspace?.nativeView(),binding=view?.bindings[scene().id];if(!view||!binding){toast('Open a native Scene before opening its source.');return;}
+ // The passage an event discloses is carried only in the shape above; a malformed one is named here and the source opens at its top.
+ const evidence=context?.anchor===undefined?undefined:sourceEvidenceCarry(context.anchor);
+ if(context?.anchor!==undefined&&!evidence)toast('The passage this event discloses is malformed; its source opens at its top.');
+ const carried=context?{node:context.node,relationField:context.relationField,...(evidence?{anchor:evidence}:{})}:undefined;
+ hostRequest({request:'summon',detail:{kind:'source',ref,context:carried,subject:{ref:view.document.expression_ref,kind:'expression',nativeOwner:'oi',revision:view.document.revision,title:view.document.title,sceneRef:binding.scene_ref,entityRef:null,relationRef:null}}});}
 function summonGraph(subjectRef:string,nativeOwner:string){const view=nativeWorkspace?.nativeView(),binding=view?.bindings[scene().id];if(!view||!binding){toast('Open a native Scene before showing its subject in the graph.');return;}hostRequest({request:'summon',detail:{kind:'graph',subject:{ref:subjectRef,nativeOwner,kind:'subject',revision:view.document.revision,title:view.document.title,sceneRef:binding.scene_ref,entityRef:null,relationRef:null} as unknown as NativeSubject}});}
 /** The selected occurrence, when exactly one bound entity is selected in the open Scene. */
 function selectedOccurrence(){const view=nativeWorkspace?.nativeView(),binding=view?.bindings[scene().id];if(!view||!binding||selected.length!==1)return null;const occurrence=binding.occurrences.find(o=>o.view_entity_id===selected[0]);return occurrence?{view,occurrence}:null;}

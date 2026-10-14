@@ -44,7 +44,7 @@ import {useEditorMode} from "./EditorChrome";
 import {EditorIcon,type EditorIconName} from "./EditorIcon";
 import {EDITOR_LANGUAGES,languageFor,markdownEdit,type EditorLanguage,type EditCommand} from "./commands";
 import {contextCues,CONTEXT_CUES_CHANGED,type ContextCue} from "../context/selectionPresentation";
-import {passageRevealDecision,takeSourcePassageReveal,type SourcePassageReveal} from "../expressions/sourceHandoff";
+import {judgePassageReveal,takeSourcePassageReveal,type SourcePassageReveal} from "../expressions/sourceHandoff";
 
 // basicSetup's defaultHighlightStyle is a light-only fallback. Installing
 // an explicit highlighter replaces that whole fallback, so retain its tag
@@ -314,7 +314,8 @@ export const TextEditor = forwardRef<EditorHandle, Props>(
       const showContext=()=>v.dispatch({effects:contextMarks.of(contextCues(callbacks.current.binding.ref,callbacks.current.binding.id))});
       // lane-2 T19b: a source-passage reveal lands only when the binding, the source and this editor's revision are the ones the
       // resolver proved; a mismatch reveals nothing and never searches for the text.
-      const revealPassage=(passage:unknown)=>{const at=passageRevealDecision(passage,{bindingId:callbacks.current.binding.id,sourceRef:callbacks.current.binding.location?.ref??callbacks.current.binding.ref,revision:callbacks.current.sourceRevision,docLength:v.state.doc.length,workingCopy:callbacks.current.workingCopy});if(!at)return;v.dispatch({selection:{anchor:at.start,head:at.end},effects:EditorView.scrollIntoView(at.start,{y:"center"})});v.focus();};
+      // A reveal addressed to this editor that cannot land is named (the workspace's message line), never silently dropped: the file opens at its top.
+      const revealPassage=(passage:unknown)=>{const verdict=judgePassageReveal(passage,{bindingId:callbacks.current.binding.id,sourceRef:callbacks.current.binding.location?.ref??callbacks.current.binding.ref,revision:callbacks.current.sourceRevision,docLength:v.state.doc.length,workingCopy:callbacks.current.workingCopy});if(verdict.kind==='refuse'){window.dispatchEvent(new CustomEvent("oi:workspace-message",{detail:{message:verdict.reason}}));return;}if(verdict.kind!=='reveal')return;v.dispatch({selection:{anchor:verdict.start,head:verdict.end},effects:EditorView.scrollIntoView(verdict.start,{y:"center"})});v.focus();};
       const reveal=(event:Event)=>{const passage=(event as CustomEvent<unknown>).detail;if(typeof passage==='object'&&passage!==null&&(passage as {kind?:unknown}).kind==='source-passage'){if((passage as SourcePassageReveal).bindingId===callbacks.current.binding.id)takeSourcePassageReveal(callbacks.current.binding.id);revealPassage(passage);return;}const item=(event as CustomEvent<ContextCue>).detail;if(item.bindingId!==callbacks.current.binding.id&&item.sourceRef!==callbacks.current.binding.ref)return;if(v.state.doc.sliceString(item.start,item.end)!==item.text)return;v.dispatch({selection:{anchor:item.start,head:item.end},effects:EditorView.scrollIntoView(item.start,{y:"center"})});v.focus();};
       window.addEventListener(CONTEXT_CUES_CHANGED,showContext);window.addEventListener("oi:context-reveal",reveal);showContext();
       // A passage reveal queued before this editor mounted is taken here, once, and admitted by the same revision gate.

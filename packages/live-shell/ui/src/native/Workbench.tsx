@@ -15,6 +15,9 @@ import type {ListedSource, CentralLocation} from '../../../../../desktop/cradle/
 import {acquireFileReading, acquireFileBytes} from '../../../../../desktop/cradle/src/files/resources'
 import {fileOperation, type FileMutation} from '../../../../../desktop/cradle/src/files/client'
 import {detectFormat} from '../../../../../desktop/cradle/src/material/detect'
+import {encodeMaterialViewPrefs, materialViewKey} from '../../../../../desktop/cradle/src/material/lifecycle'
+import {queueSourcePassageReveal} from '../../../../../desktop/cradle/src/expressions/sourceHandoff'
+import {passageSpanOf} from './hostedSummons'
 import {encounter, encounterProvision} from '../../../../../desktop/cradle/src/encounter/client'
 import type {EncounterRow} from '../../../../../desktop/cradle/src/encounter/EncounterList'
 import {checkpointDocuments} from '../../../../../desktop/cradle/src/document/frame'
@@ -555,12 +558,27 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
     const newTab = (event: Event) => {if (!ownsPresented()) return; const groupId = (event as CustomEvent<{groupId?: string}>).detail?.groupId; if (groupId) callbacks.current.execute('surface.focus-group', {groupId}); callbacks.current.execute('surface.open')}
     const encounterOpen = (event: Event) => {if (!ownsPresented()) return; const row = (event as CustomEvent<EncounterRow>).detail; if (row && typeof row.ref === 'string' && typeof row.project === 'string') void callbacks.current.openEncounter(row).catch(callbacks.current.report)}
     const sourceOpen = (event: Event) => {
-      const request = (event as CustomEvent<{location?: CentralLocation; project?: string}>).detail
+      const request = (event as CustomEvent<{location?: CentralLocation; project?: string; passage?: unknown; note?: unknown}>).detail
       if (!ownsPresented() || !request?.location || request.location.schema !== 'central.path-ref/v1' || typeof request.location.ref !== 'string' || typeof request.location.path !== 'string') return
       try {
         callbacks.current.capture(undefined, true)
-        const held = Object.values(latest.current.book.current.layout.surfaces).find(binding => binding.kind === 'file' && binding.location?.ref === request.location!.ref && binding.project === request.project)
-        callbacks.current.insert(held ?? {id: crypto.randomUUID(), kind: 'file', title: request.location.path.split('/').pop() ?? request.location.ref, ref: request.location.ref, location: request.location, project: request.project})
+        const location = request.location
+        const held = Object.values(latest.current.book.current.layout.surfaces).find(binding => binding.kind === 'file' && binding.location?.ref === location.ref && binding.project === request.project)
+        const binding: SurfaceBinding = held ?? {id: crypto.randomUUID(), kind: 'file', title: location.path.split('/').pop() ?? location.ref, ref: location.ref, location, project: request.project}
+        // lane-2 T19b: a disclosed passage opens revealed and selected in its source. Only a text span of this file is carried; any
+        // other shape was refused upstream and arrives as `note`, which names why the file opens at its top.
+        const span = passageSpanOf(request.passage, location.ref)
+        // A Markdown or HTML file opens Rendered, and its editor mounts only in the Source view; a new tab opens there for a passage.
+        if (span && !held && detectFormat({path: location.path}) !== 'text') {
+          try {localStorage.setItem(materialViewKey(binding.id), encodeMaterialViewPrefs({view: 'source', zoom: 1}))} catch {/* Presentation only: the passage waits for the Source view. */}
+        }
+        callbacks.current.insert(binding)
+        if (span) {
+          const reveal = {kind: 'source-passage' as const, bindingId: binding.id, sourceRef: location.ref, start: span.start, end: span.end, revision: span.revision}
+          // One turn later, so an already-open tab is laid out before its editor is asked to reveal (the editor takes it at mount otherwise).
+          window.setTimeout(() => queueSourcePassageReveal(reveal), 0)
+        }
+        if (typeof request.note === 'string' && request.note) callbacks.current.report(request.note)
       } catch (cause) {callbacks.current.report(cause)}
     }
     const message = (event: Event) => {if (ownsPresented()) callbacks.current.report((event as CustomEvent<{message?: string}>).detail?.message ?? 'The native workspace operation was refused.')}

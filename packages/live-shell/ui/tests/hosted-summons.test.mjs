@@ -28,7 +28,7 @@ export async function load(url,context,next){
   return next(url,context);
 }`)}`, {parentURL: import.meta.url})
 
-const {readSummon, answerHostedSummon, sourcePlan, summonBasis, sameSummonBasis} = await import('../src/native/hostedSummons.ts')
+const {readSummon, answerHostedSummon, sourcePlan, summonBasis, sameSummonBasis, passageSpanOf} = await import('../src/native/hostedSummons.ts')
 const {validateKnowledgeOpen, createKnowledgeBinding} = await import('../src/native/knowledgeOpen.ts')
 
 const location = {schema: 'central.path-ref/v1', ref: 'central:file:notes/a.md', root: 'Control', path: 'notes/a.md'}
@@ -39,13 +39,13 @@ const summon = detail => ({request: 'summon', detail})
 const unavailable = {kind: 'unavailable', reason: 'test transport: the kernel must not be reached'}
 
 function harness({current = true, project = 'O-I', resolveSource, transport = unavailable} = {}) {
-  const log = {files: [], knowledge: [], faults: [], cleared: 0}
+  const log = {files: [], carries: [], knowledge: [], faults: [], cleared: 0}
   let live = current
   const deps = {
     transport,
     current: () => live,
     project: () => project ?? undefined,
-    openFile: value => log.files.push(value),
+    openFile: (value, carry) => {log.files.push(value); log.carries.push(carry)},
     openKnowledge: value => log.knowledge.push(value),
     fault: reason => log.faults.push(reason),
     clear: () => {log.cleared++},
@@ -200,6 +200,88 @@ test('sourcePlan opens a file or a knowledge address, and refuses a target with 
   assert.match(none.reason, /neither a file nor a knowledge address/)
 })
 
+// ---- lane-2 T19b: a source opens at the passage its event discloses ----
+
+const SPAN = {unit: 'text_span', start: 4, end: 9, anchor_ref: null}
+const passageAnchor = (overrides = {}) => ({source_ref: location.ref, selector: SPAN, revision: 'rev-7', ...overrides})
+const passageContext = {node: {graphNodeId: 'event-1', sourceCoordinates: []}, anchor: {state: 'passage', source_ref: location.ref, selector: SPAN}}
+const passageFrom = (carry) => carry.passage
+
+test('a disclosed text span is carried to the file open, with the revision the resolver proved', async () => {
+  const {deps, log} = harness({resolveSource: async () => ({...fileTarget, anchor: passageAnchor()})})
+  await answerHostedSummon(summon(sourceDetail({context: passageContext})), deps)
+  assert.deepEqual(log.files, [location])
+  assert.deepEqual(passageFrom(log.carries[0]), {source_ref: location.ref, selector: {unit: 'text_span', start: 4, end: 9}, revision: 'rev-7'})
+  assert.equal('note' in log.carries[0], false, 'a passage that opens is not named as refused')
+})
+
+test('an open that asked for no passage carries nothing, and names nothing', async () => {
+  const {deps, log} = harness({resolveSource: async () => fileTarget})
+  await answerHostedSummon(summon(sourceDetail()), deps)
+  assert.deepEqual(log.carries, [{}])
+})
+
+test('a passage the reader cannot place (a timestamp) is named, and the file opens at its top', async () => {
+  const refusal = 'A timestamp passage has no reader that positions it; the source opens at its top.'
+  const {deps, log} = harness({resolveSource: async () => ({...fileTarget, anchorRefusal: refusal})})
+  await answerHostedSummon(summon(sourceDetail({context: passageContext})), deps)
+  assert.deepEqual(log.files, [location])
+  assert.deepEqual(log.carries[0], {note: refusal})
+})
+
+test('an unasked refusal from the resolver is not named on a plain open', async () => {
+  const {deps, log} = harness({resolveSource: async () => ({...fileTarget, anchorRefusal: 'No passage is disclosed for this event; its source opens at the top.'})})
+  await answerHostedSummon(summon(sourceDetail({context: {node: {graphNodeId: 'event-1', sourceCoordinates: []}, anchor: {state: 'top', reason: 'x'}}})), deps)
+  assert.deepEqual(log.carries[0], {})
+})
+
+test('a passage the shell cannot prove is refused by name and never carried, whatever the resolver said', async () => {
+  const badSpans = [
+    passageAnchor({source_ref: 'central:file:notes/other.md'}),
+    passageAnchor({selector: {unit: 'text_span', start: 9, end: 4}}),
+    passageAnchor({selector: {unit: 'text_span', start: 4, end: 4}}),
+    passageAnchor({selector: {unit: 'timestamp_range', from: 'a', to: 'b'}}),
+    passageAnchor({revision: ''}),
+  ]
+  for (const anchor of badSpans) {
+    const {deps, log} = harness({resolveSource: async () => ({...fileTarget, anchor})})
+    await answerHostedSummon(summon(sourceDetail({context: passageContext})), deps)
+    assert.equal('passage' in log.carries[0], false, JSON.stringify(anchor))
+    assert.match(log.carries[0].note, /malformed|top/)
+  }
+})
+
+test('a knowledge reading names why a passage is not opened, and still opens its Knowledge page', async () => {
+  const refusal = 'This source opens as a knowledge reading, which has no passage addressing; it opens at its top.'
+  const {deps, log} = harness({resolveSource: async () => ({...addressTarget, anchorRefusal: refusal})})
+  await answerHostedSummon(summon(sourceDetail({context: passageContext})), deps)
+  assert.deepEqual(log.faults, [refusal])
+  assert.equal(log.knowledge.length, 1)
+})
+
+test('passageSpanOf admits only a text span of the opened file at a revision, and refuses the rest', () => {
+  assert.deepEqual(passageSpanOf(passageAnchor(), location.ref), {start: 4, end: 9, revision: 'rev-7'})
+  assert.equal(passageSpanOf(passageAnchor(), 'central:file:notes/other.md'), undefined)
+  assert.equal(passageSpanOf(passageAnchor({selector: {unit: 'text_span', start: -1, end: 3}}), location.ref), undefined)
+  assert.equal(passageSpanOf(passageAnchor({selector: {unit: 'text_span', start: 1.5, end: 3}}), location.ref), undefined)
+  assert.equal(passageSpanOf(passageAnchor({selector: {unit: 'image_region', x: 0, y: 0, width: 1, height: 1}}), location.ref), undefined)
+  assert.equal(passageSpanOf(null, location.ref), undefined)
+  assert.equal(passageSpanOf('rev-7', location.ref), undefined)
+})
+
+test('the source-open receiver is handed the passage, and the Workbench reveals it or names why not', async () => {
+  const {readFile} = await import('node:fs/promises')
+  const app = await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8')
+  const workbench = await readFile(new URL('../src/native/Workbench.tsx', import.meta.url), 'utf8')
+  assert.match(app, /setSourceIntent\(\{location: detail\.location, passage: detail\.passage, note: detail\.note\}\)/, 'the presented intent keeps the passage and note')
+  assert.match(app, /detail: \{location: sourceIntent\.location, passage: sourceIntent\.passage, note: sourceIntent\.note\}/, 'the Workbench is handed the same carry, once')
+  assert.match(workbench, /const span = passageSpanOf\(request\.passage, location\.ref\)/, 'the Workbench admits only a passage it can place')
+  assert.match(workbench, /queueSourcePassageReveal\(reveal\)/, 'the reveal is queued for the binding the file opened in, and the editor admits it at its revision')
+  assert.match(workbench, /kind: 'source-passage' as const, bindingId: binding\.id/, 'the reveal names the binding it opened')
+  assert.match(workbench, /callbacks\.current\.report\(request\.note\)/, 'a refusal the frame asked about is named on the Workbench line')
+  assert.match(workbench, /materialViewKey\(binding\.id\), encodeMaterialViewPrefs\(\{view: 'source'/, 'a Markdown or HTML passage opens in its Source view, where the editor mounts')
+})
+
 // ---- The currentness basis: frame, host, document, Scene and selection ----
 
 test('the currentness basis holds only while the frame, document, Scene and selection stand', () => {
@@ -230,8 +312,8 @@ test('a resolved file source presents the Workbench first, then opens there once
   const {readFile} = await import('node:fs/promises')
   const panel = await readFile(new URL('../src/panels/expressions.tsx', import.meta.url), 'utf8')
   const app = await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8')
-  assert.match(panel, /openFile: location => window\.dispatchEvent\(new CustomEvent\(SOURCE_PRESENT, \{detail: \{location\}\}\)\)/, 'the panel asks App to present, never fires into a hidden Workbench')
+  assert.match(panel, /openFile: \(location, carry\) => window\.dispatchEvent\(new CustomEvent\(SOURCE_PRESENT, \{detail: \{location, \.\.\.carry\}\}\)\)/, 'the panel asks App to present, never fires into a hidden Workbench, and carries the passage')
   assert.match(app, /window\.addEventListener\(SOURCE_PRESENT, present\)/)
-  assert.match(app, /setCenterPanel\('native\.workbench'\); setSourceIntent\(\{location\}\)/, 'the Workbench is presented in the same act')
-  assert.match(app, /if \(!sourceIntent \|\| centerPanel !== 'native\.workbench'\) return\n\s*window\.dispatchEvent\(new CustomEvent\('oi:epi-open-source', \{detail: \{location: sourceIntent\.location\}\}\)\)\n\s*setSourceIntent\(null\)/, 'after that commit, the open is handed over once and the intent cleared')
+  assert.match(app, /setCenterPanel\('native\.workbench'\); setSourceIntent\(\{location: detail\.location, passage: detail\.passage, note: detail\.note\}\)/, 'the Workbench is presented in the same act')
+  assert.match(app, /if \(!sourceIntent \|\| centerPanel !== 'native\.workbench'\) return\n\s*window\.dispatchEvent\(new CustomEvent\('oi:epi-open-source', \{detail: \{location: sourceIntent\.location, passage: sourceIntent\.passage, note: sourceIntent\.note\}\}\)\)\n\s*setSourceIntent\(null\)/, 'after that commit, the open is handed over once and the intent cleared')
 })

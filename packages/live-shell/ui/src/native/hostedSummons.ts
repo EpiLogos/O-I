@@ -9,6 +9,7 @@
  * rather than copying them:
  *
  *   source, resolved file     → SOURCE_PRESENT; App presents the Workbench, then oi:epi-open-source (it opens a file tab, as its Explorer does)
+ *                               carrying the passage the event discloses (lane-2 T19b): the Workbench reveals it, or names why it cannot
  *   source, resolved address  → oi:epi-open-knowledge  (the Knowledge panel: the Graph, or a source page)
  *   graph                     → oi:epi-open-knowledge  (the Graph plane, focused on the subject through view.nativeKnowledge)
  *
@@ -16,7 +17,7 @@
  * validates the native identity it is given. A stale answer (the frame, document, Scene or selection has moved) opens
  * nothing; a refusal is named through `fault`, the Expressions pane's own fault line.
  */
-import {resolveHostedSource, type HostedSourceTarget} from '../../../../../desktop/cradle/src/expressions/sourceHandoff'
+import {resolveHostedSource, type HostedSourceTarget, type PassageAnchor} from '../../../../../desktop/cradle/src/expressions/sourceHandoff'
 import {graphSummonSubject} from '../../../../../desktop/cradle/src/knowledge/nativeFocus'
 import type {CentralLocation, KernelTransportStatus, KnowledgeAddress} from '../../../../../desktop/cradle/src/kernel/types'
 import type {HostedAppState} from '@epilogos/expressions-boundary'
@@ -75,10 +76,24 @@ function contextTooLarge(context: Record<string, unknown>): boolean {
   try {return JSON.stringify(context).length > CONTEXT_LIMIT} catch {return true}
 }
 
+/** lane-2 T19b: the passage a file open carries. `passage` is a text span of the opened file, proved by the resolver at its revision. */
+export interface SourceOpenCarry {passage?: PassageAnchor; note?: string}
+
 export type SourceOpenPlan =
-  | {ok: true; kind: 'file'; location: CentralLocation}
-  | {ok: true; kind: 'knowledge'; address: KnowledgeAddress; title: string; project?: string}
+  | {ok: true; kind: 'file'; location: CentralLocation; passage?: PassageAnchor; refusal?: string}
+  | {ok: true; kind: 'knowledge'; address: KnowledgeAddress; title: string; project?: string; refusal?: string}
   | {ok: false; reason: string}
+
+const MALFORMED_PASSAGE = 'The Timeline passage is malformed; the source opens at its top.'
+
+/** A carried passage the editor can reveal: a text span of `sourceRef` with the revision it was proved at. Anything else is undefined. */
+export function passageSpanOf(value: unknown, sourceRef: string): {start: number; end: number; revision: string} | undefined {
+  if (!plain(value) || value.source_ref !== sourceRef || !plain(value.selector) || value.selector.unit !== 'text_span') return undefined
+  const {start, end} = value.selector
+  if (!Number.isSafeInteger(start) || !Number.isSafeInteger(end) || (start as number) < 0 || (end as number) <= (start as number)) return undefined
+  if (!bounded(value.revision, 256)) return undefined
+  return {start: start as number, end: end as number, revision: value.revision}
+}
 
 /** What a resolved source opens as. A file must be a Central path reference, or the Workbench would ignore it silently. */
 export function sourcePlan(target: HostedSourceTarget): SourceOpenPlan {
@@ -86,13 +101,25 @@ export function sourcePlan(target: HostedSourceTarget): SourceOpenPlan {
     const location = target.location
     if (location.schema !== LOCATION_SCHEMA || !bounded(location.ref, REFERENCE_LIMIT) || typeof location.path !== 'string')
       return refuse('The resolved source is not a Central file location, so it is not opened.')
-    return {ok: true, kind: 'file', location}
+    // The resolver carries a passage only for a file it proved; the shell checks its shape again before it is carried on.
+    const span = target.anchor === undefined ? undefined : passageSpanOf(target.anchor, location.ref)
+    const passage: PassageAnchor | undefined = target.anchor && span
+      ? {source_ref: location.ref, selector: {unit: 'text_span', start: span.start, end: span.end}, revision: span.revision}
+      : undefined
+    const refusal = passage ? undefined : target.anchorRefusal ?? (target.anchor === undefined ? undefined : MALFORMED_PASSAGE)
+    return {ok: true, kind: 'file', location, ...(passage ? {passage} : {}), ...(refusal ? {refusal} : {})}
   }
   if (target.address) {
     const title = bounded(target.title, TEXT_LIMIT) ? target.title : 'Source'
-    return {ok: true, kind: 'knowledge', address: target.address, title, ...(target.project ? {project: target.project} : {})}
+    return {ok: true, kind: 'knowledge', address: target.address, title, ...(target.project ? {project: target.project} : {}), ...(target.anchorRefusal ? {refusal: target.anchorRefusal} : {})}
   }
   return refuse('The resolved source names neither a file nor a knowledge address.')
+}
+
+/** Whether the frame asked for a passage (its event discloses one). An open that asked for none is silent about passages. */
+function passageAsked(detail: Record<string, unknown>): boolean {
+  const context = plain(detail.context) ? detail.context : undefined
+  return !!context && plain(context.anchor) && context.anchor.state === 'passage'
 }
 
 /** The frame state an answer is bound to: the same frame, host, document, Scene and selection (legacy PointCloudHost isCurrent). */
@@ -125,7 +152,8 @@ export interface HostedSummonDeps {
   current(): boolean
   /** The shell's current project, the register a graph summon is shown in when the summon names none. */
   project(): string | undefined
-  openFile(location: CentralLocation): void
+  /** Opens the file; `carry` holds the passage it opens at, or the named reason it opens at its top. */
+  openFile(location: CentralLocation, carry: SourceOpenCarry): void
   openKnowledge(input: KnowledgeOpenInput): void
   /** Name a refusal in the Expressions pane's fault line. */
   fault(reason: string): void
@@ -161,6 +189,12 @@ export async function answerHostedSummon(raw: unknown, deps: HostedSummonDeps): 
   const plan = sourcePlan(target)
   if (!plan.ok) {deps.fault(plan.reason); return}
   deps.clear()
-  if (plan.kind === 'file') {deps.openFile(plan.location); return}
+  // A passage the frame asked for is either carried, or named here; an open that asked for none carries nothing.
+  const asked = passageAsked(read.detail)
+  if (plan.kind === 'file') {
+    deps.openFile(plan.location, {...(plan.passage ? {passage: plan.passage} : {}), ...(asked && plan.refusal ? {note: plan.refusal} : {})})
+    return
+  }
+  if (asked && plan.refusal) deps.fault(plan.refusal)
   deps.openKnowledge({title: plan.title, ...(plan.project ? {project: plan.project} : {}), address: plan.address, complete: named(deps)})
 }

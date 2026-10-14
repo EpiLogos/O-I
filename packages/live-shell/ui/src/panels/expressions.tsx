@@ -198,7 +198,7 @@ export function ExpressionsPanel() {
           current: () => live && token === summonToken && presented() && sameSummonBasis(hostedBasis(), at),
           project: () => bookRef.current.current.project,
           // The Workbench opens files only while it is presented, and the frame holds the centre now: App presents it first (SOURCE_PRESENT).
-          openFile: location => window.dispatchEvent(new CustomEvent(SOURCE_PRESENT, {detail: {location}})),
+          openFile: (location, carry) => window.dispatchEvent(new CustomEvent(SOURCE_PRESENT, {detail: {location, ...carry}})),
           openKnowledge: input => window.dispatchEvent(new CustomEvent('oi:epi-open-knowledge', {detail: input})),
           fault: reason => {if (live) setFault(reason)},
           clear: () => {if (live) setFault(null)},
