@@ -51,3 +51,13 @@
 .seam-curve{position:relative;width:min(100%,220px);height:120px;border:1px solid var(--ui-line,var(--line));border-radius:6px;background:var(--ui-wash,var(--panel));touch-action:none;user-select:none;cursor:crosshair}
 .seam-edge select{font:inherit;font-size:11px}
 .pending-switch{margin:4px 0;font-size:11px;color:var(--ui-muted,var(--muted))}
+/* lane-5 T3 — the pace draft: one status line (unsaved, or stale and not applied), and each beat's pace input with its draft/saved state. Tokens only. */
+.journey-pace-status{margin:6px 10px 0;padding:6px 8px;border:1px dashed var(--ui-line,var(--line));border-radius:4px;font-size:10px;line-height:1.4;overflow-wrap:anywhere}
+.journey-pace-status p{margin:0 0 4px}
+.journey-pace-actions{display:flex;gap:6px;flex-wrap:wrap}
+.journey-pace-actions button{font:10px/1.4 var(--sans);padding:2px 6px}
+.journey-pace-actions button:focus-visible,.journey-beat-pace input:focus-visible{outline:1px solid var(--accent);outline-offset:1px}
+.journey-beat-pace{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-top:4px;font-size:10px;color:var(--ui-muted,var(--muted))}
+.journey-beat-pace input{width:64px;font:10px/1.4 var(--sans);color:var(--ui-ink,var(--ink));background:var(--panel);border:1px solid var(--ui-line,var(--line));border-radius:3px;padding:1px 4px;font-variant-numeric:tabular-nums}
+.journey-beat-pace input:disabled{opacity:.5}
+.journey-beat-pace[data-pace-state=draft] .journey-beat-pace-state{color:var(--ui-ink,var(--ink));font-style:italic}

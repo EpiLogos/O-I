@@ -13,7 +13,10 @@ import {expressionTiming} from './propertyTracks';
 import {walkJourney,edgeRows,nativeEdgeRequest,edgeReplyMessage,edgeErrorMessage,type JourneyPath,type EdgeRow,type EdgeEdit} from './journeyPath';
 import {SWITCH_MODES,CURVE_TYPES,switchLabel,curveLabel,transitionKindOf,edgeEditRefusal,type SwitchMode,type CurveType,type TransitionSpec} from './transitions';
 import {beatLoadKey,settleBounded} from './journeyLoadSchedule';
-import {reconcileJourneyPresence,recordJourneyPosition,savedJourneyPosition} from './journeyPresence';
+import {reconcileJourneyPresence,recordJourneyPosition,savedJourneyPosition,paceDraftOf,savePaceDraft} from './journeyPresence';
+import {paceViewOf,setPace,newPaceDraft,sequenceOfDraft,draftForPresence,planPaceCommit,type JourneyPaceView} from './journeyPace';
+import {SCENE_DURATION_MIN,SCENE_DURATION_MAX} from './model';
+import type {SequenceDraft} from '../../../src/techne/m0m5/journey/sequence';
 import {journeyInstrumentBasis,sameJourneyInstrumentBasis,readJourneyInstrument,readJourneySceneFrame,prepareJourneyBeatFocus,type JourneyBeatFocus,type JourneyInstrumentBasis} from './journeyInstrumentModel';
 import './journeyInstrument.css';
 
@@ -51,6 +54,10 @@ export interface JourneyInstrumentHost {
  /** The native edit channel the compose form also uses. Resolves with the
   * owner's reply, unchanged; nothing is persisted by the instrument. */
  editExpression:(request:JourneyEditRequest)=>Promise<unknown>;
+ /** T3: save a paced draft as one labelled step through the owner's Save path (E15/E16). Each edit names a journey scene and its
+  * seconds. Resolves true when the owner acknowledged it, false when it did not (its reason is on the Expression status line).
+  * Absent: the pace draft stays local and cannot be saved. */
+ commitPace?:(edits:{sceneId:string;seconds:number}[],label:string)=>Promise<boolean>;
  /** T10: enter the presented beat's Scene from the Journey through the owner's crossing (the session's one history). Absent: no crossing affordance. */
  crossing?:(basis:JourneyInstrumentBasis,scene:TechneReading,sceneRef:string)=>Promise<NativeTimeWindowReply>;
  /** T11: return from the Expression reading to the beat the crossing entered, by ref, through the owner's return. */
@@ -156,7 +163,21 @@ function JourneyPlaybackPath({read,seek,edit}:{read:()=>JourneyPlaybackClock|und
  </section>;
 }
 
-export function JourneyBeatPanel({reading,beatView,native,basis,busy,onFocus,onMove,onRefresh,playback,notice,onPortal,onEnter}:{
+/** T3: the pace actions the panel offers. Each is one local step; only `save` reaches the Expression, and only as one labelled step. */
+export interface JourneyPaceActions {set:(sceneRef:string,seconds:number)=>void;save:()=>void;discard:()=>void;reapply:()=>void}
+/** T3: the pace status line, in the journey's notice voice. A draft says it is unsaved; a stale draft says why it is not applied. */
+function JourneyPaceStatus({pace,busy,actions}:{pace:JourneyPaceView;busy:boolean;actions:JourneyPaceActions}):ReactElement|null{
+ if(pace.standing==='none')return null;
+ if(pace.standing==='stale')return <div className="journey-pace-status" data-pace-standing="stale" role="status">
+  <p>This pace draft was taken at revision {pace.basisRevision ?? 'an earlier one'}, or on another reading. The Expression has moved on, so the draft is not applied. Re-apply it to this revision, or discard it.</p>
+  <span className="journey-pace-actions"><button type="button" disabled={busy} onClick={actions.reapply}>Re-apply draft</button><button type="button" disabled={busy} onClick={actions.discard}>Discard draft</button></span>
+ </div>;
+ return <div className="journey-pace-status" data-pace-standing="draft" role="status">
+  <p>Pace draft: {pace.count} {pace.count===1?'beat':'beats'} not saved. Nothing reaches the Expression until you save the pace.</p>
+  <span className="journey-pace-actions"><button type="button" disabled={busy||!pace.canSave} title={pace.canSave?undefined:'Saving the pace needs the native Expression open'} onClick={actions.save}>Save pace</button><button type="button" disabled={busy} onClick={actions.discard}>Discard draft</button></span>
+ </div>;
+}
+export function JourneyBeatPanel({reading,beatView,native,basis,busy,onFocus,onMove,onRefresh,playback,notice,onPortal,onEnter,pace,paceActions}:{
  reading:TechneReading;beatView:JourneyBeatView;native:KernelConversion;basis:JourneyInstrumentBasis;busy:boolean;
  onFocus:(card:JourneyBeatCard)=>void;onMove:(sceneRef:string,toIndex:number)=>void;onRefresh:()=>void;
  playback?:{read:()=>JourneyPlaybackClock|undefined;seek:(seconds:number)=>void;edit?:()=>JourneyPathEdit|undefined};
@@ -166,14 +187,20 @@ export function JourneyBeatPanel({reading,beatView,native,basis,busy,onFocus,onM
  notice?:string;
  /** T10: enter this beat's Scene in the Expression reading. Absent: no crossing affordance. */
  onEnter?:(card:JourneyBeatCard)=>void;
+ /** T3: the pace of each beat and its local draft. Absent: no pace affordance. */
+ pace?:JourneyPaceView;paceActions?:JourneyPaceActions;
 }):ReactElement{
  const cards=beatView.cards;
  return <section className="journey-beat-panel" aria-label="Reading-derived Journey">
   <header><h3>Journey</h3><button type="button" disabled={busy} onClick={onRefresh}>Refresh reading</button></header>
   {notice?<p className="journey-presence-notice" role="status">{notice}</p>:null}
+  {pace&&paceActions?<JourneyPaceStatus pace={pace} busy={busy} actions={paceActions}/>:null}
   {!cards.length?<p role="status">{beatView.unavailableReason}</p>:<div className="journey-beat-lane">
    <ol className="journey-reading-beats">{cards.map((card,index)=>{
     const scene=native.document.scenes.find(item=>item.scene_ref===card.scene_ref);
+    const saved=pace?.saved[card.scene_ref]??null,drafted=pace?.drafted[card.scene_ref],shown=drafted??saved;
+    // T3: a beat's pace is editable while the draft stands on this basis, the beat is open here, and it has authored material to retime.
+    const editable=!!pace&&!!paceActions&&pace.standing!=='stale'&&pace.paceable&&!busy&&card.onBasis&&saved!==null;
     return <li key={`${card.expression_ref}\0${card.scene_ref}\0${index}`} className="journey-beat-item" data-expression-ref={card.expression_ref} data-scene-ref={card.scene_ref}
      onPointerDown={ev=>{if(!busy)beginBeatDrag(ev,index,cards,onMove);}}>
      <button type="button" className="journey-beat-card" disabled={busy||!card.onBasis} aria-current={basis.scene_ref===card.scene_ref?'step':undefined}
@@ -184,6 +211,14 @@ export function JourneyBeatPanel({reading,beatView,native,basis,busy,onFocus,onM
       <span className="journey-beat-chips">{card.chips.map((chip,i)=><span key={`${chip.kind}:${i}`} className={`journey-beat-chip journey-beat-chip-${chip.kind}`} data-facet={chip.kind} title={chip.ref??undefined}>{chip.label}</span>)}</span>
       {card.chipsReason?<span className="journey-beat-reason">{card.chipsReason}</span>:null}
      </button>
+     {pace&&paceActions?<label className="journey-beat-pace" data-pace-state={drafted!==undefined?'draft':'saved'} onPointerDown={ev=>ev.stopPropagation()}>
+      <span className="journey-beat-pace-state">{saved===null?'No saved length':drafted!==undefined?'Draft · not saved':'Saved'}</span>
+      {/* The key carries the saved length and the epoch, never the typed value, so typing keeps focus; a save, discard or re-apply remounts it. */}
+      <input key={`${card.scene_ref}\0${saved}\0${pace.epoch}`} type="number" inputMode="decimal" min={SCENE_DURATION_MIN} max={SCENE_DURATION_MAX} step="0.1"
+       aria-label={`Hold ${scene?.title||card.title} for seconds`} defaultValue={shown??undefined} disabled={!editable}
+       onChange={ev=>{const seconds=ev.currentTarget.valueAsNumber;if(Number.isFinite(seconds))paceActions.set(card.scene_ref,seconds);}}/>
+      <span aria-hidden="true">s</span>
+     </label>:null}
      {onEnter?<button type="button" className="journey-beat-enter" data-journey-enter={card.scene_ref} disabled={busy||!card.onBasis||basis.scene_ref!==card.scene_ref}
       title={card.onBasis&&basis.scene_ref===card.scene_ref?'Enter this Scene in the Expression reading; Return to journey brings you back to this beat':'Open this Scene first to enter it'}
       onClick={()=>onEnter(card)}>Enter in Expression</button>:null}
@@ -292,7 +327,57 @@ export function installJourneyInstrument(host:JourneyInstrumentHost,home:HTMLEle
      host.entered?.();
     }).catch(error=>{if(!destroyed&&open&&generation===epoch){busy=false;draw();message(failure(error));}});
    };
-   const draw=()=>{if(!current(basis,generation))return;root!.render(<JourneyBeatPanel reading={reading} beatView={beatView} native={view!} basis={basis} busy={busy} onRefresh={()=>void reuseOrLoad()} playback={playback} notice={presence.notice} onEnter={host.crossing?enter:undefined}
+   // T3: the pace draft is local. Every change is saved to the presence entry (T9) with its basis; only `save` reaches the Expression,
+   // as one labelled step through the host's Save path. A draft the browser would not keep is refused by name, never held twice.
+   let paceEpoch=0;
+   const paceStored=()=>paceDraftOf({reading,revision:basis.revision});
+   const keepPace=(next:SequenceDraft|null):boolean=>savePaceDraft({reading,expression_ref:basis.expression_ref,scene_ref:basis.scene_ref,draft:next?draftForPresence(next,reading.reading_ref):null});
+   const beatRefs=()=>beatView.cards.map(card=>card.scene_ref);
+   const paceView=():JourneyPaceView=>paceViewOf({view:view!,sceneRefs:beatRefs(),stored:paceStored(),canSave:!!host.commitPace,epoch:paceEpoch});
+   const paceActions:JourneyPaceActions={
+    set:(sceneRef,seconds)=>{
+     if(busy||!current(basis,generation))return;
+     const stored=paceStored();
+     if(stored?.standing==='stale'){message('This pace draft was taken at an earlier revision, so it is not applied. Re-apply it or discard it first.');return;}
+     const base=stored?sequenceOfDraft(stored.draft,basis.expression_ref):newPaceDraft(basis.expression_ref,String(basis.revision),beatRefs());
+     const next=setPace(base,sceneRef,seconds);
+     if(!next.ok){message(next.reason);return;}
+     if(!keepPace(next.draft)){message('This browser would not keep the pace draft, so the pace is unchanged. Nothing was saved to the Expression.');return;}
+     draw();
+    },
+    save:()=>{
+     const commit=host.commitPace;
+     if(busy||!current(basis,generation)||!commit)return;
+     const stored=paceStored();
+     if(stored?.standing!=='current')return;
+     const plan=planPaceCommit(view!,sequenceOfDraft(stored.draft,basis.expression_ref));
+     if(!plan.ok){message(plan.reason);return;}
+     if(!plan.edits.length){keepPace(null);paceEpoch++;message('Nothing to save: every beat already holds this pace.');draw();return;}
+     const label=plan.label;
+     busy=true;draw();
+     void commit(plan.edits.map(edit=>({sceneId:edit.sceneId,seconds:edit.seconds})),label).then(acknowledged=>{
+      if(destroyed)return;
+      if(!acknowledged){busy=false;draw();message(`${label} was not accepted by the native owner. The draft is kept, and the change is in your working copy as its own step: undo it, or save again.`);return;}
+      keepPace(null);paceEpoch++;busy=false;
+      if(open)void load().then(()=>message(`${label}: saved.`));
+     }).catch(error=>{if(destroyed)return;busy=false;draw();message(`${label} was refused: ${failure(error)}. The draft is kept.`);});
+    },
+    discard:()=>{
+     if(busy||!current(basis,generation))return;
+     keepPace(null);paceEpoch++;message('Pace draft discarded. Nothing was saved to the Expression.');draw();
+    },
+    reapply:()=>{
+     if(busy||!current(basis,generation))return;
+     const stored=paceStored();
+     if(stored?.standing!=='stale')return;
+     // Re-applying takes the draft onto this revision as a draft again: the paced beats still in the Journey, nothing saved.
+     const refs=beatRefs(),paced=stored.draft.pace.filter(entry=>refs.includes(entry.scene_ref));
+     if(!paced.length){keepPace(null);paceEpoch++;message('The stale pace draft paced no beat of this Journey, so it was discarded.');draw();return;}
+     if(!keepPace({...newPaceDraft(basis.expression_ref,String(basis.revision),refs),pace:paced})){message('This browser would not keep the pace draft, so it was not re-applied.');return;}
+     paceEpoch++;message('Pace draft re-applied to this revision. Nothing is saved yet.');draw();
+    },
+   };
+   const draw=()=>{if(!current(basis,generation))return;root!.render(<JourneyBeatPanel reading={reading} beatView={beatView} native={view!} basis={basis} busy={busy} onRefresh={()=>void reuseOrLoad()} playback={playback} notice={presence.notice} pace={paceView()} paceActions={paceActions} onEnter={host.crossing?enter:undefined}
     onPortal={portal?(trigger,card)=>{
      // T12: the source is placed by the host; its own return closes it, and this journey position is not changed.
      void portal(trigger,{expression_ref:basis.expression_ref,revision:basis.revision,scene_ref:card.scene_ref}).then(()=>{

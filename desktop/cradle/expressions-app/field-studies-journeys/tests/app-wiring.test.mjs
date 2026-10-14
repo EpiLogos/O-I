@@ -90,7 +90,8 @@ test('the timeline moves, retimes, removals and duplicates each run inside one l
   for(const call of found)assert.ok(enclosingCall(call,'changed'),`${name} at app.ts:${lineOf(call)} is outside a labelled change`);
  }
  const retimes=callsNamed('retimeScene');
- assert.equal(retimes.length,2);
+ // Three: the trim and the Scene inspector's duration/transition, and the journey's pace save (lane-5 T3), which retimes each paced beat inside its own labelled change.
+ assert.equal(retimes.length,3);
  for(const call of retimes){
   const inChange=!!enclosingCall(call,'changed'),inHold=enclosingFunctionName(call)==='applyBinding';
   assert.ok(inChange||inHold,`retimeScene at app.ts:${lineOf(call)} is not labelled`);

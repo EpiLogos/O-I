@@ -14,9 +14,11 @@ const SURFACE = [
   'journeyPath.ts',
   'journeyLoadSchedule.ts',
   'journeyPresence.ts',
+  'journeyPace.ts',
   'journeyTimelineLayout.ts',
 ];
-const OWNER_CHANNELS = new Set(['nativeView', 'sceneId', 'portal', 'playback', 'seek', 'read', 'focusScene', 'editExpression', 'crossing', 'returning', 'entered']);
+// commitPace (lane-5 T3) is the pace save: the host retimes the paced beats inside one labelled change and saves it through the Save path.
+const OWNER_CHANNELS = new Set(['nativeView', 'sceneId', 'portal', 'playback', 'seek', 'read', 'focusScene', 'editExpression', 'commitPace', 'crossing', 'returning', 'entered']);
 
 /** The code of a source with its block and line comments removed. */
 function codeOf(text) {
