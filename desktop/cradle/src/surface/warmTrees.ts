@@ -7,6 +7,7 @@ import type {LayoutState, SurfaceId} from "./types";
 import {MODE_CURATION, TREE_MODES, type WorkspaceMode} from "../workspace/mode";
 import type {Workspace} from "../workspace/store";
 import {hostedSurfaceDescriptors} from "../contributions/registered-kinds.mjs";
+import {PROJECTION_PANE_KINDS} from "./types";
 
 /** The centre kinds the tier retains: engines and hosted applications —
  * `expressions` (the vendored application's iframe), `techne`, `epi-logos`,
@@ -15,7 +16,12 @@ import {hostedSurfaceDescriptors} from "../contributions/registered-kinds.mjs";
 export const RETAINED_CENTRE_KINDS = new Set(hostedSurfaceDescriptors.filter(descriptor => descriptor.retention === "mounted").map(descriptor => descriptor.kind));
 export const isRetainedCentreKind = (kind: string) => RETAINED_CENTRE_KINDS.has(kind);
 
-export const RETAINED_PANE_KINDS = new Set(["draft", "file", "source", "knowledge", "encounter", "terminal", "browser", "presentation", "explore"]);
+/** The pane kinds a hidden tree must keep mounted. The four projection kinds
+ * are named here as well: a concealed projection pane keeps its module (the
+ * hidden-inhabitant law, WORLD-SHELL-DESIGN §10.1), and a tree that holds only
+ * projections would otherwise be dropped on a mode or workspace swap, which
+ * unmounts the module and — for the Earth — cannot be remounted in-session. */
+export const RETAINED_PANE_KINDS = new Set<string>(["draft", "file", "source", "knowledge", "encounter", "terminal", "browser", "presentation", "explore", ...PROJECTION_PANE_KINDS]);
 export const isRetainedPaneKind = (kind: string) => RETAINED_PANE_KINDS.has(kind);
 
 export interface WarmTreeRef { key: string; workspaceId: string; layout: LayoutState; presented: boolean }
