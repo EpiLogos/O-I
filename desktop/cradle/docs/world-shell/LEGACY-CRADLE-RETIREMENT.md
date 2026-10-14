@@ -102,6 +102,94 @@ delivered at 0.1.2 — `evidence/integrated-v012-delivery-receipt.json`):
 | Credentials | native credential facilities | unchanged (never migrate; both apps read the same facilities) | — |
 | Receipts/history | `~/Library/Application Support/OI/receipts` | unchanged (owner world records; candidate reads, never rewrites) | — |
 
+### 4.1 The migration command (gate 3): built, scripted-verified, not yet run on owner data
+
+Command: `packages/live-shell/continuity-migration.py`, with `export` and
+`admit` (each takes `--dry-run`). Tests:
+`packages/live-shell/tests/continuity_migration_test.py`. Both run on fixture
+homes only. No owner WebKit store was written, and the owner's data was not
+used as a test input.
+
+Audit, with the evidence channel for each finding:
+
+- The everyday book, journal, recovery records and drafts are all in WebKit
+  `localStorage` (`ItemTable(key TEXT, value BLOB)`), with UTF-16LE values.
+  [Native read-only audit: key names and four-byte value headers on scratch
+  copies; no values read.]
+- Everyday localStorage sits in eleven origin stores, across
+  `WebsiteData/Default` and `WebsiteDataStore/<partition>/Origins`. Ten hold a
+  `oi-cradle.workspaces.v1` book. The live store appears to be
+  `Default/hFjtlW…` (last written 9 October 2026; the everyday app's data
+  directory carries the same date), but that is an inference from mtimes. The
+  owner names the store with `--origin`. [Native read-only audit: names, sizes
+  and mtimes.]
+- The candidate's keys derive from `oi.live-shell.candidate.workspace.v2`: its
+  journal is `…stage`, its recovery keys are `…recovery.`, and its carried
+  drafts are `…unplaced-draft:`. The everyday and candidate namespaces therefore
+  differ on those keys. The draft records (`oi-cradle.draft.v1:<ref>`) are the
+  same key in both apps, so they are kept verbatim. [Source reading:
+  `desktop/cradle/src/workspace/store.ts` `workspaceStorageNamespace`,
+  `drafts.ts`; pinned by `test_key_map_matches_source`.]
+- The candidate's WebKit origin already holds candidate data (a book, two
+  recovery records and a stage journal). Admission therefore refuses by default.
+  [Native read-only audit.]
+- The native recovery store lives under `OI_EXPRESSION_HOME`, the owner home,
+  not in WebKit. It is already shared, so it needs no migration. [Source
+  reading: `desktop/cradle/kernel/src/expression_recovery.rs`, `Store`.]
+- Ground placement and owner home are already adopted natively. The candidate
+  reads `personal_ground` from `~/.config/oi/composition.json`, and it persists
+  `owner_home` in its own composition. The first run should verify this, and no
+  migration step is needed. [Source reading:
+  `desktop/cradle/src-tauri/src/native_shell.rs` around lines 326–377.]
+
+Decision. WebKit storage cannot safely be written from outside a running app,
+and the candidate must not write a shared store. Export therefore reads a
+private copy while the everyday app is stopped. Admission publishes an adoption
+record into the candidate's own data home,
+`~/Library/Application Support/OI-Shell-Candidate/<backing>/continuity/admission-<digest16>/`,
+and the candidate applies it in its own process on first run. The placement
+follows the audit: the command sits beside the candidate packaging scripts and
+reuses the source-archive helper's publish pattern (`build-source-archive.py`).
+The `oi` suite CLI is the installed suite and sits outside this gate.
+
+What the command does:
+
+- `export` refuses while the everyday app runs (checked by executable path
+  prefix, before any store is read). It refuses when more than one origin holds
+  a book and no `--origin <label>` is given, and it names the most recently
+  modified store as a suggestion only. It digests each store file before and
+  after the copy. It keeps only register keys (an allowlist), so credentials,
+  receipts and every unlisted key are counted and left behind. It re-keys the
+  namespace keys and carries everything else verbatim. It publishes
+  `BUNDLE.json` and `records.json`, sealed by digest, through stage, fsync,
+  verify and rename. A re-run reports `already exported` with the bundle digest.
+- `admit` re-verifies the bundle digest, each text digest and the key mapping
+  (recomputed from the source keys). It refuses an unreadable book and a running
+  candidate. It probes the candidate namespace read-only and refuses on existing
+  data or key collisions unless `--owner-replace` is given. The adoption record
+  is published as `adoption.json` and `ADMISSION.json`. A re-run reports
+  `already admitted` with the bundle digest.
+
+Scripted evidence (fixtures only):
+
+- `python3 -m unittest packages/live-shell/tests/continuity_migration_test.py`:
+  25 tests pass. They cover the key-map pin against the TypeScript sources, the
+  allowlist, the UTF-16 decode, the rewrites, both dry runs, the running-app
+  refusals, the ambiguous-origin refusal, byte-identical source digests after
+  export, the publish-failure injections that leave no partial output, tampered
+  and recomputed-mapping bundles, the namespace refusal and `--owner-replace`,
+  and idempotent re-runs.
+
+Open, and owned outside this gate's zone:
+
+1. The candidate's first-run apply step. It reads `continuity/admission-*/adoption.json`
+   and applies it only when the recorded policy allows. Under `--owner-replace` it
+   preserves the existing namespace first. This is shell UI work, so it is not built.
+2. The owner runs `export --dry-run` on the real stores, names the origin, archives
+   the bundle, then runs `admit --dry-run`. Nothing above has been run on owner data.
+3. Candidate acceptance (gate 5): the book opens with identities and drafts
+   restored after a quit and restart.
+
 ## 5. Removal steps (executed only after §3 completes)
 
 1. Owner backs up / acknowledges: the everyday app's WebKit data stores are
