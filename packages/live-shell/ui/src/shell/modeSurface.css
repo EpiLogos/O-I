@@ -19,6 +19,9 @@
 .mode-transport { display: flex; align-items: center; gap: 7px; flex: 1; min-width: 0 }
 .mode-transport .native-control[disabled] { color: var(--text-faint); opacity: 0.82 }
 .mode-transport output { color: var(--text-dim) }
+/* The Occasion slot (Technē loop): previous · label · next read as one control, its label a fixed-width readout. */
+.mode-transport .occasion-label { display: inline-block; height: 20px; line-height: 20px; max-width: 168px; padding: 0 6px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 11px; background: var(--bg-0); color: var(--text) }
+.mode-transport [data-occasion-step] { min-width: 18px; padding: 0 3px }
 
 /* The Technē lens bar — its own axis above the centre (never the
    transport's, never the surf's). */

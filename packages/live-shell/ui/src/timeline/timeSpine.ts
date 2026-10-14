@@ -138,6 +138,9 @@ export interface TimeSpine {
   selectOccasion(event: TemporalEventRow, retainedAtUnixMs: number): Occasion;
   occasion(): Occasion | null;
   occasionFor(ref: string): Occasion | null;
+  /** Snap back to Now (Technē's Back to Now): clear the selected occasion. Retained occasions stay retained and their
+   * bases never move; only the selection goes. A no-op (no notify) when no occasion is selected. */
+  returnToNow(): void;
   /** Every occasion retained in this projection's life — the occasion rail. */
   occasions(): Occasion[];
   /** Re-qualify every retained occasion against a fresh reading — the
@@ -210,6 +213,11 @@ export function createTimeSpine(): TimeSpine {
     },
     occasion: () => (selectedRef ? retained.get(selectedRef) ?? null : null),
     occasionFor: (ref) => retained.get(ref) ?? null,
+    returnToNow() {
+      if (selectedRef === null) return;
+      selectedRef = null;
+      changed();
+    },
     occasions: () => [...retained.values()],
     qualifyOccasions(freshEvents, qualifiedAtUnixMs, disclosure) {
       const present = new Set(freshEvents.map((event) => event.subject_ref));

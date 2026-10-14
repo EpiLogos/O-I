@@ -4,6 +4,7 @@ import { NativeTransportBar } from './NativeTransportBar'
 import { MODE_GRAMMAR, slotDataI, slotMeaning, surfModeOf, type SurfMode } from '../shell/modeGrammar'
 import { ModeTransportBar, type ModeTransportReadouts } from '../shell/ModeTransportBar'
 import type { TimeSpine } from '../timeline/timeSpine'
+import type { PaneInstrumentId } from '../shell/paneInstrument'
 import { ModeModeRail } from '../shell/ModeModeRail'
 import type { PanelRegistration } from '../shell/panels'
 import type { NativeCompositionViewSource } from '../shell/compositionViews'
@@ -53,7 +54,7 @@ function NativeControl({ children, label, slot, className = '' }: { children: Re
   >{children}</button>
 }
 
-export function TransportBar({ tempoBpm, name, mode, setView, chooseMode, presentedView, modeReadouts, timeSpine, workName, nativeTransport, centerPanels, activeCenter, openCenter, browser, detail, dock, toggleBrowser, toggleDetail, toggleDock }: {
+export function TransportBar({ tempoBpm, name, mode, setView, chooseMode, presentedView, modeReadouts, timeSpine, focusedInstrument, workName, nativeTransport, centerPanels, activeCenter, openCenter, browser, detail, dock, toggleBrowser, toggleDetail, toggleDock }: {
   /** The Expressions Scene transport source; absent until the native reading is admitted. */
   nativeTransport?: NativeCompositionViewSource | null
   centerPanels: PanelRegistration[]; activeCenter: string | null; openCenter: (id: string) => void
@@ -69,6 +70,8 @@ export function TransportBar({ tempoBpm, name, mode, setView, chooseMode, presen
   modeReadouts?: ModeTransportReadouts
   /** The World's time spine — the same one the Timeline chips drive. Its Occasion slot steps it; absent, the slot waits. */
   timeSpine?: TimeSpine | null
+  /** The focused centre pane's instrument (paneInstrument.ts); Technē's arm slot names it and waits for its writer. */
+  focusedInstrument?: PaneInstrumentId | null
   workName?: string; sceneName?: string
   tempoBpm: number | null; name: string; browser: boolean; detail: boolean; dock: boolean
   toggleBrowser: () => void; toggleDetail: () => void; toggleDock: () => void
@@ -93,7 +96,7 @@ export function TransportBar({ tempoBpm, name, mode, setView, chooseMode, presen
     <div className="transport-spacer" />
     <div className="transport-system"><NativeControl label="Draw mode" slot="draw"><CutIcon name="draw" size={14} /></NativeControl><NativeControl label="Computer MIDI keyboard" slot="keys"><CutIcon name="keys" size={14} /></NativeControl><MidiMapToggles /><MidiMapHost /><output data-i={slotDataI(slotMeaning('live', 'rate'))} title="Rate — the engine's sample rate · unavailable">— kHz</output><output data-i={slotDataI(slotMeaning('live', 'cpu'))} title="CPU — the engine's CPU load · unavailable">— %</output><span className="cpu-meter" /></div>
     </> : mode === 'expressions' && nativeTransport?.content ? <NativeTransportBar source={nativeTransport} />
-      : <ModeTransportBar mode={surf} readouts={modeReadouts} timeSpine={timeSpine} />}
+      : <ModeTransportBar mode={surf} readouts={modeReadouts} timeSpine={timeSpine} focusedInstrument={focusedInstrument} />}
     <nav className="surface-icons" aria-label="Working surface">
       {/* Session and Arrangement first — presentations of the Timeline
         projection, their meanings per mode (Rev 5's second table). */}
