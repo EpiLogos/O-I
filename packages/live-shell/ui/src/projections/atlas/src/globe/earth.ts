@@ -62,8 +62,8 @@ async function loadDecoded(url: string): Promise<HTMLImageElement | ImageBitmap>
  * [C2-a7 — licence gate] The base textures (earth-2k/4k/8k.jpg) are prepared
  * assets generated corpus-side (scripts/textures/prepare.mjs, from NASA Blue
  * Marble imagery — NASA open-data terms, attribution requested; see
- * globe/tilemath.ts). No texture bytes ship with this port; the paths stay
- * constants, resolved against the host's asset base. */
+ * globe/tilemath.ts). Shipped byte-identical in the shell's public/textures
+ * (PORT-PIN vendoredAssets); the paths stay constants, resolved against BASE. */
 export async function loadBaseLo(renderer: THREE.WebGLRenderer): Promise<THREE.Texture> {
   return baseTexture(await loadImage(`${BASE}/textures/earth-2k.jpg`), renderer);
 }
