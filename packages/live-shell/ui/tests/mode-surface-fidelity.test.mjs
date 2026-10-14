@@ -49,40 +49,35 @@ const UNAVAILABLE = {kind: 'unavailable', reason: 'the test carrier is down'}
 // ————————————————————————————————————————————————————————————————————————
 // The detail row — device cards, the clip craft, the task log.
 
-test('base document (empty): the six device cards at chain anatomy, dark lamps', () => {
-  const out = html(createElement(BaseDocumentDetail, {transport: UNAVAILABLE, subject: null}))
-  assert.equal((out.match(/mode-detail-devcard(?=")/g) ?? []).length, 6, 'six document device cards')
-  assert.equal((out.match(/mode-detail-devcard-lamp/g) ?? []).length, 6, 'a power lamp per card')
-  assert.ok(out.includes('mode-detail-dropzone'), 'the dashed drop zone drawn')
-  for (const device of ['Text', 'Highlight', 'Notes', 'Packet', 'Answer', 'Form device']) {
-    assert.ok(out.includes(`<strong>${device}</strong>`), `${device} card named`)
-  }
-  assert.ok(out.includes('dark — waits for its subject'), 'the honest reason line')
+test('base document (empty): one line saying what it waits for — no device cards in the pane (their chain is the Device side)', () => {
+  const out = html(createElement(BaseDocumentDetail, {transport: UNAVAILABLE, subject: null, waits: 'Select a document to see it as data here.'}))
+  assert.equal(out, '<p class="clip-empty" role="status">Select a document to see it as data here.</p>')
+  assert.doesNotMatch(out, /mode-detail-devcard|mode-detail-dropzone/, 'the six dark document-device cards are retired')
 })
 
-test('techne clip: the four craft sections — identity, relations, constellation, source', () => {
+test('techne clip: the event as a Clip view — its props and ladder, relations, constellation, source; "—" where the reading is silent', () => {
   const out = html(createElement(TechneClipDetail, {world: null}))
-  for (const craft of ['identity', 'relations', 'constellation', 'source']) {
-    assert.ok(out.includes(`data-craft="${craft}"`), `the ${craft} section drawn`)
-  }
-  assert.ok(out.includes('mode-detail-standing-chip'), 'standing chips on the relation rows')
-  assert.ok(out.includes('mode-detail-constellation-ghost'), 'the ghost ring holds the constellation')
+  assert.ok(out.includes('data-clip-view="techne-event"'), 'drawn through the one Clip view')
+  for (const key of ['kind', 'standing', 'world', 'revision', 'occasion', 'place', 'provenance']) assert.ok(out.includes(`data-row="${key}"`), `the ${key} row`)
+  for (const column of ['Relations · typed, in standing', 'Constellation · bounded whole', 'Source']) assert.ok(out.includes(`data-column="${column}"`), `the ${column} column`)
+  assert.ok(out.includes('techne-ladder'), 'the disclosure ladder under the props')
+  assert.ok(!out.includes('mode-detail-standing-chip') && !out.includes('declared, waiting'), 'no placeholder relation list, no waiting prose')
 })
 
-test('factory task log: the track’s real clips as the task column and log rows', () => {
+test('factory task log: the task as data through the Clip view — its session\'s readings, "—" where nothing is disclosed', () => {
   const tasks = [
-    {n: 1, title: 'survey the vault', state: 'done', startUnixMs: Date.UTC(2026, 9, 10, 13, 41), lastActivityUnixMs: Date.UTC(2026, 9, 10, 13, 58), disclosure: null},
-    {n: 2, title: 'correlate occurrences', state: 'running', startUnixMs: Date.UTC(2026, 9, 10, 14, 2), lastActivityUnixMs: null, disclosure: 'the running clip draws no end of its own'},
+    {n: 1, title: 'correlate occurrences', state: 'running', startUnixMs: Date.UTC(2026, 9, 10, 14, 2), lastActivityUnixMs: null, softStop: false, disclosure: 'the running clip draws no end of its own'},
+    {n: 2, title: null, state: 'unknown', startUnixMs: null, lastActivityUnixMs: null, softStop: true, disclosure: null},
   ]
-  const out = html(createElement(FactoryTaskLogDetail, {taskLabel: 'correlate occurrences', task: {
-    sessionRef: 'session:test', purpose: 'correlate occurrences', agentName: 'Fizz', needleState: 'live',
-    tasks, budget: {used: 2, max: 12},
-  }}))
-  assert.equal((out.match(/mode-detail-tasklist-row/g) ?? []).length, 2, 'a task row per clip')
-  assert.equal((out.match(/mode-detail-logrow(?=")/g) ?? []).length, 2, 'a log row per clip')
+  const track = {sessionRef: 'session:test', purpose: 'correlate occurrences', agentRef: null, agentName: 'Fizz', agentAccepted: null, spaceRef: 'space:test',
+    spaceLabel: null, depth: 0, parentRef: null, group: false, memberRefs: [], tasks, needle: null, telemetryOn: false, budget: {used: 2, max: 12}, disclosure: null}
+  const out = html(createElement(FactoryTaskLogDetail, {track, name: 'Fizz · lead', events: [
+    {stream: 'agency', kind: 'run', subject_ref: 'agency/session:test/turn', instant_unix_ms: Date.UTC(2026, 9, 10, 14, 2), summary: 'attempt 2 started'},
+  ]}))
   assert.ok(out.includes('2 / 12 turns'), 'the budget reading carried')
-  assert.ok(out.includes('running'), 'the clip’s own state drawn')
-  assert.ok(out.includes('task-log read'), 'the deeper tool rows named as waiting')
+  assert.ok(out.includes('<span>running</span>'), 'the task\'s own state drawn')
+  assert.equal((out.match(/class="hl2"/g) ?? []).length, 1, 'a log row per owner event')
+  assert.ok(!out.includes('declared, waiting'), 'undisclosed rows read "—", never prose')
 })
 
 // ————————————————————————————————————————————————————————————————————————

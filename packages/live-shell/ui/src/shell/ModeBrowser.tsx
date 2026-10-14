@@ -159,7 +159,7 @@ function ApertureSlot({mode, selectedSubject}: {mode: SurfMode; selectedSubject:
   const document = useReachedDocument()
   // The document the hand last reached in a pane: its view rows and its owner actions (the mockup's Day context panel —
   // Form, File, Revision, then "Save HTML copy" / "Place on Central"). The pane's face carries no buttons of its own.
-  const view = mode === 'base' && document ? [
+  const view = document ? [
     {name: 'Form', value: document.form, title: `the ${document.form} the reached pane holds`},
     {name: 'File', value: document.title, title: document.title},
     {name: 'Revision', value: document.revision ? `r${document.revision.slice(0, 12)} · ${document.state}` : document.state, title: document.state},
@@ -267,7 +267,7 @@ function DaysRows({needle, onSelectSubject, selectedSubject}: {
           aria-current={selected || undefined}
           data-i={`Day ${entry.name.replace(/\.md$/, '')}|select the day — its record opens in the Document detail (CAS identity, basis, save-router standing); double-click or Enter opens the Day in the focused pane`}
           title={`${path} — select the day; its craft opens in the Document detail. Double-click or Enter opens the Day in the focused pane.`}
-          onClick={() => onSelectSubject({kind: 'day', path})}
+          onClick={() => onSelectSubject({kind: 'day', path, location: entry.location ?? undefined})}
           onDoubleClick={() => openDay(entry, path)}
           onKeyDown={event => { if (event.key === 'Enter') openDay(entry, path) }}>
           <span aria-hidden="true"><KindMark kind="day" size={12} /></span><span>{entry.name.replace(/\.md$/, '')}</span>
@@ -350,7 +350,7 @@ function GroundRows({needle, onSelectSubject, selectedSubject, mode, opens}: {
             aria-current={selected || undefined}
             data-i={isDirectory ? `${entry.name}|open the folder's listing` : `${entry.name}|select the ${entry.kind} — its craft opens in the Document detail${opens ? '; double-click or Enter opens it in the focused pane' : ''}`}
             title={`${entryPath} — ${isDirectory ? 'open the folder' : `select; the craft opens in the Document detail${opens ? '. Double-click or Enter opens it in the focused pane' : ''}`}`}
-            onClick={() => isDirectory ? navigateFiles(entryPath) : onSelectSubject(entryPath.endsWith('.md') && /\/now\/day\/\d{4}-\d{2}-\d{2}\.md$/.test(entryPath) ? {kind: 'day', path: entryPath} : {kind: 'note', path: entryPath})}
+            onClick={() => isDirectory ? navigateFiles(entryPath) : onSelectSubject(entryPath.endsWith('.md') && /\/now\/day\/\d{4}-\d{2}-\d{2}\.md$/.test(entryPath) ? {kind: 'day', path: entryPath, location: entry.location ?? undefined} : {kind: 'note', path: entryPath, location: entry.location ?? undefined})}
             onDoubleClick={opens && !isDirectory ? () => openFile(entry, entryPath) : undefined}
             onKeyDown={opens && !isDirectory ? event => { if (event.key === 'Enter') openFile(entry, entryPath) } : undefined}>
             <span aria-hidden="true">{isDirectory ? <Icon name="lib" size={12} /> : <KindMark kind="doc" size={12} />}</span>
