@@ -1,0 +1,1906 @@
+{
+ "graph": {
+  "aikit_resolution": {
+   "counts": {
+    "edges": 0,
+    "hosted_rows": 0,
+    "knowledge_rows": 0,
+    "link_rows": 0,
+    "nodes": 0,
+    "spaces": 0,
+    "wiki_nodes": 0
+   },
+   "edges": [],
+   "inputs": {
+    "aikit_resolution": {
+     "detail": "AIKit is unavailable: AIKit knowledge read did not return within 20 seconds",
+     "owner_operation": "aikit.knowledge.resolve",
+     "state": "unavailable"
+    },
+    "central_wiki": {
+     "detail": "not requested yet",
+     "owner_operation": "central.wiki.read",
+     "state": "deferred"
+    },
+    "shared_field": {
+     "detail": "not requested yet",
+     "owner_operation": "shared-field.projection",
+     "state": "deferred"
+    },
+    "wiki_links": {
+     "detail": "not requested yet",
+     "owner_operation": "oi.cradle.wiki-links/v1",
+     "state": "deferred"
+    }
+   },
+   "nodes": [],
+   "schema": "oi.cradle.graph-reading/v1",
+   "shape_catalog": null,
+   "truncated": false
+  },
+  "central_wiki": {
+   "counts": {
+    "edges": 35,
+    "hosted_rows": 0,
+    "knowledge_rows": 0,
+    "link_rows": 0,
+    "nodes": 6,
+    "spaces": 1,
+    "wiki_nodes": 5
+   },
+   "edges": [
+    {
+     "from_ref": "wiki:node:delivered-lane-loses-install",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "node-source",
+     "to_ref": "central:source:control:root:Work/O-I/.wayfinder/maps/command-encounter-convergence.md"
+    },
+    {
+     "from_ref": "wiki:node:delivered-lane-loses-install",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "node-source",
+     "to_ref": "commission:oi527-command-work-journey-20260927"
+    },
+    {
+     "from_ref": "wiki:node:delivered-lane-loses-install",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "node-source",
+     "to_ref": "git:ai-kit@convergence/command-encounter-20260926"
+    },
+    {
+     "from_ref": "wiki:node:delivered-lane-loses-install",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "node-source",
+     "to_ref": "git:ai-kit@guidance/development-world-shape"
+    },
+    {
+     "from_ref": "wiki:node:identity",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "node-source",
+     "to_ref": "Control/user/identity.md"
+    },
+    {
+     "from_ref": "wiki:node:place-provider-reconciles-like-the-floor",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "node-source",
+     "to_ref": "central:source:control:root:Control/agents/now/flows/herdr-world-entry-20260927/IMPLEMENTATION-PACKET.md"
+    },
+    {
+     "from_ref": "wiki:node:place-provider-reconciles-like-the-floor",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "node-source",
+     "to_ref": "central:source:control:root:Control/agents/now/flows/herdr-world-entry-20260927/omarchy-packet/findings.md"
+    },
+    {
+     "from_ref": "wiki:node:place-provider-reconciles-like-the-floor",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "node-source",
+     "to_ref": "commission:herdr-omarchy-multisurface-158"
+    },
+    {
+     "from_ref": "wiki:node:root/ta-onta-and-the-thought-stream",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "node-source",
+     "to_ref": "central:source:control:root:Control/agents/wiki/returns/ta-onta-and-the-thought-stream-2026-09-16.md"
+    },
+    {
+     "from_ref": "wiki:node:staged/propose-not-write",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "node-source",
+     "to_ref": "staging/propose-not-write"
+    },
+    {
+     "from_ref": "wiki:node:delivered-lane-loses-install",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "node-space",
+     "to_ref": "central:wiki:root"
+    },
+    {
+     "from_ref": "wiki:node:identity",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "node-space",
+     "to_ref": "central:wiki:root"
+    },
+    {
+     "from_ref": "wiki:node:place-provider-reconciles-like-the-floor",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "node-space",
+     "to_ref": "central:wiki:root"
+    },
+    {
+     "from_ref": "wiki:node:root/ta-onta-and-the-thought-stream",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "node-space",
+     "to_ref": "central:wiki:root"
+    },
+    {
+     "from_ref": "wiki:node:staged/propose-not-write",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "node-space",
+     "to_ref": "central:wiki:root"
+    },
+    {
+     "from_ref": "central:wiki:root",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "space-child-space",
+     "to_ref": "central:wiki:project:Actuation"
+    },
+    {
+     "from_ref": "central:wiki:root",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "space-child-space",
+     "to_ref": "central:wiki:project:Archetypal-Earth"
+    },
+    {
+     "from_ref": "central:wiki:root",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "space-child-space",
+     "to_ref": "central:wiki:project:Central"
+    },
+    {
+     "from_ref": "central:wiki:root",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "space-child-space",
+     "to_ref": "central:wiki:project:Epi-Prime"
+    },
+    {
+     "from_ref": "central:wiki:root",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "space-child-space",
+     "to_ref": "central:wiki:project:Factory"
+    },
+    {
+     "from_ref": "central:wiki:root",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "space-child-space",
+     "to_ref": "central:wiki:project:O-I"
+    },
+    {
+     "from_ref": "central:wiki:root",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "space-child-space",
+     "to_ref": "central:wiki:project:Point-Cloud-Demo"
+    },
+    {
+     "from_ref": "central:wiki:root",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "space-child-space",
+     "to_ref": "central:wiki:project:ProjectCentral"
+    },
+    {
+     "from_ref": "central:wiki:root",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "space-child-space",
+     "to_ref": "central:wiki:project:Quaternal-I-Ching"
+    },
+    {
+     "from_ref": "central:wiki:root",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "space-child-space",
+     "to_ref": "central:wiki:project:Quaternal-Tarot"
+    },
+    {
+     "from_ref": "central:wiki:root",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "space-child-space",
+     "to_ref": "central:wiki:project:Workcell"
+    },
+    {
+     "from_ref": "central:wiki:root",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "space-child-space",
+     "to_ref": "central:wiki:project:ai-kit"
+    },
+    {
+     "from_ref": "central:wiki:root",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "space-child-space",
+     "to_ref": "central:wiki:project:face-rig"
+    },
+    {
+     "from_ref": "central:wiki:root",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "space-child-space",
+     "to_ref": "central:wiki:project:personal"
+    },
+    {
+     "from_ref": "central:wiki:root",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "space-child-space",
+     "to_ref": "central:wiki:project:projects"
+    },
+    {
+     "from_ref": "central:wiki:root",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "space-node",
+     "to_ref": "wiki:node:delivered-lane-loses-install"
+    },
+    {
+     "from_ref": "central:wiki:root",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "space-node",
+     "to_ref": "wiki:node:identity"
+    },
+    {
+     "from_ref": "central:wiki:root",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "space-node",
+     "to_ref": "wiki:node:place-provider-reconciles-like-the-floor"
+    },
+    {
+     "from_ref": "central:wiki:root",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "space-node",
+     "to_ref": "wiki:node:root/ta-onta-and-the-thought-stream"
+    },
+    {
+     "from_ref": "central:wiki:root",
+     "provenance": {
+      "source": "central.wiki.read"
+     },
+     "relation": "space-node",
+     "to_ref": "wiki:node:staged/propose-not-write"
+    }
+   ],
+   "inputs": {
+    "aikit_resolution": {
+     "detail": "not requested yet",
+     "owner_operation": "aikit.knowledge.resolve",
+     "state": "deferred"
+    },
+    "central_wiki": {
+     "detail": "central:source:control:root:Control/agents/wiki/wiki.json",
+     "owner_operation": "central.wiki.read",
+     "state": "available"
+    },
+    "shared_field": {
+     "detail": "not requested yet",
+     "owner_operation": "shared-field.projection",
+     "state": "deferred"
+    },
+    "wiki_links": {
+     "detail": "not requested yet",
+     "owner_operation": "oi.cradle.wiki-links/v1",
+     "state": "deferred"
+    }
+   },
+   "nodes": [
+    {
+     "actions": [
+      "central.wiki.read"
+     ],
+     "kind": "wiki-space",
+     "label": "Central",
+     "native_owner": "wiki",
+     "provenance": {
+      "revision": "66",
+      "source": "central.wiki.read"
+     },
+     "ref": "central:wiki:root"
+    },
+    {
+     "actions": [
+      "central.wiki.read"
+     ],
+     "kind": "wiki-node",
+     "label": "You may propose",
+     "native_owner": "wiki",
+     "provenance": {
+      "revision": "1",
+      "source": "central.wiki.read"
+     },
+     "ref": "wiki:node:staged/propose-not-write"
+    },
+    {
+     "actions": [
+      "central.wiki.read"
+     ],
+     "kind": "wiki-node",
+     "label": "User identity",
+     "native_owner": "wiki",
+     "provenance": {
+      "revision": "1",
+      "source": "central.wiki.read"
+     },
+     "ref": "wiki:node:identity"
+    },
+    {
+     "actions": [
+      "central.wiki.read"
+     ],
+     "kind": "wiki-node",
+     "label": "The beings, the thought stream, and who owns what",
+     "native_owner": "wiki",
+     "provenance": {
+      "revision": "1",
+      "source": "central.wiki.read"
+     },
+     "ref": "wiki:node:root/ta-onta-and-the-thought-stream"
+    },
+    {
+     "actions": [
+      "central.wiki.read"
+     ],
+     "kind": "wiki-node",
+     "label": "A place provider reconciles like the floor",
+     "native_owner": "wiki",
+     "provenance": {
+      "revision": "1",
+      "source": "central.wiki.read"
+     },
+     "ref": "wiki:node:place-provider-reconciles-like-the-floor"
+    },
+    {
+     "actions": [
+      "central.wiki.read"
+     ],
+     "kind": "wiki-node",
+     "label": "A delivered lane that leaves the installed cut is lost work",
+     "native_owner": "wiki",
+     "provenance": {
+      "revision": "1",
+      "source": "central.wiki.read"
+     },
+     "ref": "wiki:node:delivered-lane-loses-install"
+    }
+   ],
+   "schema": "oi.cradle.graph-reading/v1",
+   "shape_catalog": null,
+   "truncated": false
+  },
+  "shared_field": {
+   "counts": {
+    "edges": 59,
+    "hosted_rows": 42,
+    "knowledge_rows": 0,
+    "link_rows": 0,
+    "nodes": 42,
+    "spaces": 0,
+    "wiki_nodes": 0
+   },
+   "edges": [
+    {
+     "from_ref": "world:central:project:O-I",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "oi.world/position",
+     "to_ref": "world:central:project:O-I/central:position:project:O-I:aletheia-5"
+    },
+    {
+     "from_ref": "world:central:project:O-I",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "oi.world/position",
+     "to_ref": "world:central:project:O-I/central:position:project:O-I:oi-root-agency"
+    },
+    {
+     "from_ref": "world:central:project:O-I",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "oi.world/workcell",
+     "to_ref": "world:central:project:O-I/workcell:mac"
+    },
+    {
+     "from_ref": "world:central:project:O-I/central:position:project:O-I:aletheia-5",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "oi.world/carried-by",
+     "to_ref": "world:central:project:O-I/workcell:mac"
+    },
+    {
+     "from_ref": "world:central:project:O-I/central:wiki:root",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "wiki.contains",
+     "to_ref": "world:central:project:O-I/central:wiki:project:O-I"
+    },
+    {
+     "from_ref": "world:central:project:O-I",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "oi.world/wiki-space",
+     "to_ref": "world:central:project:O-I/central:wiki:project:O-I"
+    },
+    {
+     "from_ref": "world:central:project:O-I/central:position:project:O-I:aletheia-5",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "oi.world/practises",
+     "to_ref": "world:central:project:O-I/skill/ql/darshana"
+    },
+    {
+     "from_ref": "world:central:project:O-I/central:position:project:O-I:aletheia-5",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "oi.world/practises",
+     "to_ref": "world:central:project:O-I/skill/ql/ql-evidence-report"
+    },
+    {
+     "from_ref": "world:central:project:O-I/central:position:project:O-I:aletheia-5",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "oi.world/practises",
+     "to_ref": "world:central:project:O-I/skill/ql/repl"
+    },
+    {
+     "from_ref": "world:central:project:O-I/central:position:project:O-I:aletheia-5",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "oi.world/practises",
+     "to_ref": "world:central:project:O-I/skill/ql/aletheia-collab-gate"
+    },
+    {
+     "from_ref": "world:central:project:O-I/central:position:project:O-I:aletheia-5",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "oi.world/practises",
+     "to_ref": "world:central:project:O-I/skill/ql/aletheia-improvement-propose"
+    },
+    {
+     "from_ref": "world:central:project:O-I/central:position:project:O-I:aletheia-5",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "oi.world/practises",
+     "to_ref": "world:central:project:O-I/skill/ql/aletheia-m-prime-gate"
+    },
+    {
+     "from_ref": "world:central:project:O-I/central:position:project:O-I:aletheia-5",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "oi.world/practises",
+     "to_ref": "world:central:project:O-I/skill/ql/aletheia-m-gate"
+    },
+    {
+     "from_ref": "world:central:project:O-I/central:position:project:O-I:aletheia-5",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "oi.world/practises",
+     "to_ref": "world:central:project:O-I/skill/ql/aletheia-module-audit"
+    },
+    {
+     "from_ref": "world:central:project:O-I/central:position:project:O-I:aletheia-5",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "oi.world/practises",
+     "to_ref": "world:central:project:O-I/skill/ql/aletheia-plugin-integrate"
+    },
+    {
+     "from_ref": "world:central:project:O-I/central:position:project:O-I:aletheia-5",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "oi.world/practises",
+     "to_ref": "world:central:project:O-I/skill/ql/aletheia-rupa-gate"
+    },
+    {
+     "from_ref": "world:central:project:O-I/central:position:project:O-I:aletheia-5",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "oi.world/practises",
+     "to_ref": "world:central:project:O-I/skill/ql/aletheia-ql-gate"
+    },
+    {
+     "from_ref": "world:central:project:O-I/central:position:project:O-I:aletheia-5",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "oi.world/practises",
+     "to_ref": "world:central:project:O-I/skill/ql/aletheia-s-gate"
+    },
+    {
+     "from_ref": "world:central:project:O-I/central:position:project:O-I:aletheia-5",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "oi.world/practises",
+     "to_ref": "world:central:project:O-I/skill/ql/aletheia-self-extend"
+    },
+    {
+     "from_ref": "world:central:project:O-I/central:position:project:O-I:aletheia-5",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "oi.world/practises",
+     "to_ref": "world:central:project:O-I/skill/ql/aletheia-stack-traverse"
+    },
+    {
+     "from_ref": "world:central:project:O-I/central:position:project:O-I:aletheia-5",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "oi.world/practises",
+     "to_ref": "world:central:project:O-I/skill/ql/anansi"
+    },
+    {
+     "from_ref": "world:central:project:O-I/central:position:project:O-I:aletheia-5",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "oi.world/practises",
+     "to_ref": "world:central:project:O-I/skill/ql/gnosis-retrieve"
+    },
+    {
+     "from_ref": "world:central:project:O-I/central:position:project:O-I:aletheia-5",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "oi.world/practises",
+     "to_ref": "world:central:project:O-I/skill/ql/thought-distil"
+    },
+    {
+     "from_ref": "world:central:project:O-I",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "oi.world/activity",
+     "to_ref": "world:central:project:O-I/run:01M3FNY3P0E4H7JGN0BARSRQ8R"
+    },
+    {
+     "from_ref": "world:central:project:O-I",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "oi.world/wiki-space",
+     "to_ref": "world:central:project:O-I/central:wiki:root"
+    },
+    {
+     "from_ref": "world:central:project:O-I/central:wiki:project:O-I",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "wiki.contains",
+     "to_ref": "world:central:project:O-I/wiki:node:project-root/o-i"
+    },
+    {
+     "from_ref": "world:central:project:O-I:region:a04-mask/wiki:node:record/A04",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "wiki.edge/references",
+     "to_ref": "world:central:project:O-I:region:a04-mask/wiki:node:record/A04p"
+    },
+    {
+     "from_ref": "world:central:project:O-I:region:a04-mask/wiki:node:record/A04p",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "wiki.edge/references",
+     "to_ref": "world:central:project:O-I:region:a04-mask/wiki:node:record/A04"
+    },
+    {
+     "from_ref": "world:central:project:O-I:region:a04-mask/central:wiki:root",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "wiki.contains",
+     "to_ref": "world:central:project:O-I:region:a04-mask/central:wiki:project:O-I"
+    },
+    {
+     "from_ref": "world:central:project:O-I:region:a04-mask/wiki:node:record/A05p",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "wiki.edge/references",
+     "to_ref": "world:central:project:O-I:region:a04-mask/wiki:node:record/A04p"
+    },
+    {
+     "from_ref": "world:central:project:O-I:region:a04-mask",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "oi.world/wiki-space",
+     "to_ref": "world:central:project:O-I:region:a04-mask/central:wiki:project:O-I"
+    },
+    {
+     "from_ref": "world:central:project:O-I:region:a04-mask",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "oi.world/position",
+     "to_ref": "world:central:project:O-I:region:a04-mask/central:position:project:O-I:aletheia-5"
+    },
+    {
+     "from_ref": "world:central:project:O-I:region:a04-mask/wiki:node:record/A04",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "node-source",
+     "to_ref": "world:central:project:O-I:region:a04-mask/artifact:central:corpus:A04"
+    },
+    {
+     "from_ref": "world:central:project:O-I:region:a04-mask",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "oi.world/artifact",
+     "to_ref": "world:central:project:O-I:region:a04-mask/artifact:central:corpus:A04p"
+    },
+    {
+     "from_ref": "world:central:project:O-I:region:a04-mask/wiki:node:record/A05",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "wiki.edge/references",
+     "to_ref": "world:central:project:O-I:region:a04-mask/wiki:node:record/A05p"
+    },
+    {
+     "from_ref": "world:central:project:O-I:region:a04-mask",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "oi.world/artifact",
+     "to_ref": "world:central:project:O-I:region:a04-mask/artifact:central:corpus:A05p"
+    },
+    {
+     "from_ref": "world:central:project:O-I:region:a04-mask/wiki:node:record/A05",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "node-source",
+     "to_ref": "world:central:project:O-I:region:a04-mask/artifact:central:corpus:A05"
+    },
+    {
+     "from_ref": "world:central:project:O-I:region:a04-mask/wiki:node:record/A04p",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "node-source",
+     "to_ref": "world:central:project:O-I:region:a04-mask/artifact:central:corpus:A04p"
+    },
+    {
+     "from_ref": "world:central:project:O-I:region:a04-mask",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "oi.world/artifact",
+     "to_ref": "world:central:project:O-I:region:a04-mask/artifact:central:corpus:A05"
+    },
+    {
+     "from_ref": "world:central:project:O-I:region:a04-mask/wiki:space:room/section-rooms/arguments",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "wiki.contains",
+     "to_ref": "world:central:project:O-I:region:a04-mask/wiki:node:record/A04p"
+    },
+    {
+     "from_ref": "world:central:project:O-I:region:a04-mask/wiki:space:room/section-rooms/arguments",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "wiki.contains",
+     "to_ref": "world:central:project:O-I:region:a04-mask/wiki:node:record/A05"
+    },
+    {
+     "from_ref": "world:central:project:O-I:region:a04-mask/wiki:node:contemplation/a05p-re-sites-a05-2026-09-28",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "wiki.edge/explains",
+     "to_ref": "world:central:project:O-I:region:a04-mask/wiki:node:record/A05"
+    },
+    {
+     "from_ref": "world:central:project:O-I:region:a04-mask/wiki:node:contemplation/a05p-re-sites-a05-2026-09-28",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "wiki.edge/explains",
+     "to_ref": "world:central:project:O-I:region:a04-mask/wiki:node:record/A05p"
+    },
+    {
+     "from_ref": "world:central:project:O-I:region:a04-mask",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "oi.world/wiki-space",
+     "to_ref": "world:central:project:O-I:region:a04-mask/central:wiki:root"
+    },
+    {
+     "from_ref": "world:central:project:O-I:region:a04-mask/central:position:project:O-I:aletheia-5",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "oi.world/practises",
+     "to_ref": "world:central:project:O-I:region:a04-mask/skill/ql/darshana"
+    },
+    {
+     "from_ref": "world:central:project:O-I:region:a04-mask/wiki:node:record/A05p",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "node-source",
+     "to_ref": "world:central:project:O-I:region:a04-mask/artifact:central:corpus:A05p"
+    },
+    {
+     "from_ref": "world:central:project:O-I:region:a04-mask/wiki:space:room/section-rooms/arguments",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "wiki.contains",
+     "to_ref": "world:central:project:O-I:region:a04-mask/wiki:node:record/A05p"
+    },
+    {
+     "from_ref": "world:central:project:O-I:region:a04-mask/wiki:node:record/A05",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "wiki.edge/references",
+     "to_ref": "world:central:project:O-I:region:a04-mask/wiki:node:record/A04"
+    },
+    {
+     "from_ref": "world:central:project:O-I:region:a04-mask/wiki:node:contemplation/a04p-re-sites-a04-2026-09-28",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "wiki.edge/explains",
+     "to_ref": "world:central:project:O-I:region:a04-mask/wiki:node:record/A04"
+    },
+    {
+     "from_ref": "world:central:project:O-I:region:a04-mask/wiki:node:contemplation/a04p-re-sites-a04-2026-09-28",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "wiki.edge/explains",
+     "to_ref": "world:central:project:O-I:region:a04-mask/wiki:node:record/A04p"
+    },
+    {
+     "from_ref": "world:central:project:O-I:region:a04-mask/wiki:node:contemplation/a05p-re-sites-a05-2026-09-28",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "wiki.edge/follows-pattern-of",
+     "to_ref": "world:central:project:O-I:region:a04-mask/wiki:node:contemplation/a04p-re-sites-a04-2026-09-28"
+    },
+    {
+     "from_ref": "world:central:project:O-I:region:a04-mask/wiki:node:record/A04p",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "wiki.edge/re-sites",
+     "to_ref": "world:central:project:O-I:region:a04-mask/wiki:node:record/A04"
+    },
+    {
+     "from_ref": "world:central:project:O-I:region:a04-mask/central:position:project:O-I:aletheia-5",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "oi.world/carried-by",
+     "to_ref": "world:central:project:O-I:region:a04-mask/workcell:mac"
+    },
+    {
+     "from_ref": "world:central:project:O-I:region:a04-mask/wiki:space:room/section-rooms/arguments",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "wiki.contains",
+     "to_ref": "world:central:project:O-I:region:a04-mask/wiki:node:record/A04"
+    },
+    {
+     "from_ref": "world:central:project:O-I:region:a04-mask/wiki:node:record/A05p",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "wiki.edge/re-sites",
+     "to_ref": "world:central:project:O-I:region:a04-mask/wiki:node:record/A05"
+    },
+    {
+     "from_ref": "world:central:project:O-I:region:a04-mask",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "oi.world/artifact",
+     "to_ref": "world:central:project:O-I:region:a04-mask/artifact:central:corpus:A04"
+    },
+    {
+     "from_ref": "world:central:project:O-I:region:a04-mask",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "oi.world/wiki-space",
+     "to_ref": "world:central:project:O-I:region:a04-mask/wiki:space:room/section-rooms/arguments"
+    },
+    {
+     "from_ref": "world:central:project:O-I:region:a04-mask",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "oi.world/workcell",
+     "to_ref": "world:central:project:O-I:region:a04-mask/workcell:mac"
+    },
+    {
+     "from_ref": "world:central:project:O-I:region:a04-mask/wiki:node:record/A05p",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field"
+      ],
+      "source": "shared-field.projection"
+     },
+     "relation": "wiki.edge/references",
+     "to_ref": "world:central:project:O-I:region:a04-mask/wiki:node:record/A05"
+    }
+   ],
+   "inputs": {
+    "aikit_resolution": {
+     "detail": "not requested yet",
+     "owner_operation": "aikit.knowledge.resolve",
+     "state": "deferred"
+    },
+    "central_wiki": {
+     "detail": "not requested yet",
+     "owner_operation": "central.wiki.read",
+     "state": "deferred"
+    },
+    "shared_field": {
+     "detail": "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field",
+     "owner_operation": "shared-field.projection",
+     "state": "available"
+    },
+    "wiki_links": {
+     "detail": "not requested yet",
+     "owner_operation": "oi.cradle.wiki-links/v1",
+     "state": "deferred"
+    }
+   },
+   "nodes": [
+    {
+     "actions": [],
+     "kind": "hosted-world-position",
+     "label": "Aletheia 5 (M5 Epii × S5′ Aletheia)",
+     "native_owner": "shared-field",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field",
+       "r2"
+      ],
+      "revision": "3",
+      "source": "shared-field.projection"
+     },
+     "ref": "world:central:project:O-I/central:position:project:O-I:aletheia-5"
+    },
+    {
+     "actions": [],
+     "kind": "hosted-world-position",
+     "label": "O:I Root Agency",
+     "native_owner": "shared-field",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field",
+       "r1"
+      ],
+      "revision": "3",
+      "source": "shared-field.projection"
+     },
+     "ref": "world:central:project:O-I/central:position:project:O-I:oi-root-agency"
+    },
+    {
+     "actions": [],
+     "kind": "hosted-workcell",
+     "label": "Workcell mac",
+     "native_owner": "shared-field",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field",
+       "workcell:a936b0740f80389d"
+      ],
+      "revision": "3",
+      "source": "shared-field.projection"
+     },
+     "ref": "world:central:project:O-I/workcell:mac"
+    },
+    {
+     "actions": [],
+     "kind": "hosted-practice",
+     "label": "darshana",
+     "native_owner": "shared-field",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field",
+       "f3d55f2f9ec70f44ff661623c7a931f299dcf29659d00df835446c997ee7ef99"
+      ],
+      "revision": "3",
+      "source": "shared-field.projection"
+     },
+     "ref": "world:central:project:O-I/skill/ql/darshana"
+    },
+    {
+     "actions": [],
+     "kind": "hosted-wiki-space",
+     "label": "O-I",
+     "native_owner": "shared-field",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field",
+       "24"
+      ],
+      "revision": "3",
+      "source": "shared-field.projection"
+     },
+     "ref": "world:central:project:O-I/central:wiki:project:O-I"
+    },
+    {
+     "actions": [],
+     "kind": "hosted-wiki-node",
+     "label": "O-I",
+     "native_owner": "shared-field",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field",
+       "1"
+      ],
+      "revision": "3",
+      "source": "shared-field.projection"
+     },
+     "ref": "world:central:project:O-I/wiki:node:project-root/o-i"
+    },
+    {
+     "actions": [],
+     "kind": "hosted-practice",
+     "label": "ql-evidence-report",
+     "native_owner": "shared-field",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field",
+       "384dd9e79cae393b31703c6334fee5e0df6351c7cfbcb25aaf9f12f12f0ada71"
+      ],
+      "revision": "3",
+      "source": "shared-field.projection"
+     },
+     "ref": "world:central:project:O-I/skill/ql/ql-evidence-report"
+    },
+    {
+     "actions": [],
+     "kind": "hosted-practice",
+     "label": "repl",
+     "native_owner": "shared-field",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field",
+       "151ab5c409d6942f6ece28ed2d40ddaf50f23fa05f39dcbe5eb5372d7046699b"
+      ],
+      "revision": "3",
+      "source": "shared-field.projection"
+     },
+     "ref": "world:central:project:O-I/skill/ql/repl"
+    },
+    {
+     "actions": [],
+     "kind": "hosted-practice",
+     "label": "aletheia-collab-gate",
+     "native_owner": "shared-field",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field",
+       "f6543e577b868ba8d3970448c3754fcc391c3c2c9dd9ec03f507d8712199b5a0"
+      ],
+      "revision": "3",
+      "source": "shared-field.projection"
+     },
+     "ref": "world:central:project:O-I/skill/ql/aletheia-collab-gate"
+    },
+    {
+     "actions": [],
+     "kind": "hosted-practice",
+     "label": "aletheia-improvement-propose",
+     "native_owner": "shared-field",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field",
+       "ff1500e35e81012bafc2aa5fcc4a8228c44dbaf7e529844f575fd8235c6fdd60"
+      ],
+      "revision": "3",
+      "source": "shared-field.projection"
+     },
+     "ref": "world:central:project:O-I/skill/ql/aletheia-improvement-propose"
+    },
+    {
+     "actions": [],
+     "kind": "hosted-practice",
+     "label": "aletheia-m-gate",
+     "native_owner": "shared-field",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field",
+       "d89f52812b61b49805345b750143ebffc904168ef693e50ced89bda61ea8834d"
+      ],
+      "revision": "3",
+      "source": "shared-field.projection"
+     },
+     "ref": "world:central:project:O-I/skill/ql/aletheia-m-gate"
+    },
+    {
+     "actions": [],
+     "kind": "hosted-practice",
+     "label": "aletheia-m-prime-gate",
+     "native_owner": "shared-field",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field",
+       "72258ad0d2624e62f07f1890aa79c3944686c5179ae1e4aae7f2b32cb76b0373"
+      ],
+      "revision": "3",
+      "source": "shared-field.projection"
+     },
+     "ref": "world:central:project:O-I/skill/ql/aletheia-m-prime-gate"
+    },
+    {
+     "actions": [],
+     "kind": "hosted-practice",
+     "label": "aletheia-module-audit",
+     "native_owner": "shared-field",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field",
+       "d4df8c8ac04ee960a321bb20bfeb7ae886d965b692390a256f8f6c412024d064"
+      ],
+      "revision": "3",
+      "source": "shared-field.projection"
+     },
+     "ref": "world:central:project:O-I/skill/ql/aletheia-module-audit"
+    },
+    {
+     "actions": [],
+     "kind": "hosted-practice",
+     "label": "aletheia-plugin-integrate",
+     "native_owner": "shared-field",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field",
+       "8a6eb7e1ac08a7c4c05dc34da02fa5a73c81b054d5753fb4de871acc3c70d70e"
+      ],
+      "revision": "3",
+      "source": "shared-field.projection"
+     },
+     "ref": "world:central:project:O-I/skill/ql/aletheia-plugin-integrate"
+    },
+    {
+     "actions": [],
+     "kind": "hosted-practice",
+     "label": "aletheia-ql-gate",
+     "native_owner": "shared-field",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field",
+       "d126f6bd19419c0bd619c327aa8c99c66f0a95cc3206bfe61edddf64442d0e0b"
+      ],
+      "revision": "3",
+      "source": "shared-field.projection"
+     },
+     "ref": "world:central:project:O-I/skill/ql/aletheia-ql-gate"
+    },
+    {
+     "actions": [],
+     "kind": "hosted-practice",
+     "label": "aletheia-rupa-gate",
+     "native_owner": "shared-field",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field",
+       "efb073256f6abbb2b3ed910adc5f553515d2b74b14289cb1de7306f54b404643"
+      ],
+      "revision": "3",
+      "source": "shared-field.projection"
+     },
+     "ref": "world:central:project:O-I/skill/ql/aletheia-rupa-gate"
+    },
+    {
+     "actions": [],
+     "kind": "hosted-practice",
+     "label": "aletheia-s-gate",
+     "native_owner": "shared-field",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field",
+       "aa48ce3f66bf2b2fd60140fc7198dd91da5150996f6c3bf7afb30b97743213f5"
+      ],
+      "revision": "3",
+      "source": "shared-field.projection"
+     },
+     "ref": "world:central:project:O-I/skill/ql/aletheia-s-gate"
+    },
+    {
+     "actions": [],
+     "kind": "hosted-practice",
+     "label": "aletheia-self-extend",
+     "native_owner": "shared-field",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field",
+       "4e4694edc43efaa8b913894287590c0ffec43fb1133c368fc63144441c7f63e0"
+      ],
+      "revision": "3",
+      "source": "shared-field.projection"
+     },
+     "ref": "world:central:project:O-I/skill/ql/aletheia-self-extend"
+    },
+    {
+     "actions": [],
+     "kind": "hosted-practice",
+     "label": "aletheia-stack-traverse",
+     "native_owner": "shared-field",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field",
+       "3e1b69ee71e57d3846cfad2a64491b83feab0938e86a502de695737305f116e2"
+      ],
+      "revision": "3",
+      "source": "shared-field.projection"
+     },
+     "ref": "world:central:project:O-I/skill/ql/aletheia-stack-traverse"
+    },
+    {
+     "actions": [],
+     "kind": "hosted-practice",
+     "label": "anansi",
+     "native_owner": "shared-field",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field",
+       "6bfc2d89dfeff488cc0fe4b2904537db4378d8b3aad5cf87ecf7b78ec4ade16a"
+      ],
+      "revision": "3",
+      "source": "shared-field.projection"
+     },
+     "ref": "world:central:project:O-I/skill/ql/anansi"
+    },
+    {
+     "actions": [],
+     "kind": "hosted-practice",
+     "label": "gnosis-retrieve",
+     "native_owner": "shared-field",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field",
+       "94bae0334c5d184f4cc91f15a360a31d54252a43a87d4f03f97417c2090fa550"
+      ],
+      "revision": "3",
+      "source": "shared-field.projection"
+     },
+     "ref": "world:central:project:O-I/skill/ql/gnosis-retrieve"
+    },
+    {
+     "actions": [],
+     "kind": "hosted-practice",
+     "label": "thought-distil",
+     "native_owner": "shared-field",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field",
+       "674b053beef707b2b939664238c260da7315772161c21c906cf744368130a57d"
+      ],
+      "revision": "3",
+      "source": "shared-field.projection"
+     },
+     "ref": "world:central:project:O-I/skill/ql/thought-distil"
+    },
+    {
+     "actions": [],
+     "kind": "hosted-activity",
+     "label": "Factory run 01M3FNY3P0",
+     "native_owner": "shared-field",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field",
+       "6"
+      ],
+      "revision": "3",
+      "source": "shared-field.projection"
+     },
+     "ref": "world:central:project:O-I/run:01M3FNY3P0E4H7JGN0BARSRQ8R"
+    },
+    {
+     "actions": [],
+     "kind": "hosted-wiki-space",
+     "label": "Central",
+     "native_owner": "shared-field",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field",
+       "52"
+      ],
+      "revision": "3",
+      "source": "shared-field.projection"
+     },
+     "ref": "world:central:project:O-I/central:wiki:root"
+    },
+    {
+     "actions": [],
+     "kind": "hosted-central-world",
+     "label": "O-I — a ProjectCentral world",
+     "native_owner": "shared-field",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field",
+       "oi.world-sources/v1:d4a649fe1b671799"
+      ],
+      "revision": "3",
+      "source": "shared-field.projection"
+     },
+     "ref": "world:central:project:O-I"
+    },
+    {
+     "actions": [],
+     "kind": "hosted-central-world",
+     "label": "Undertaking — A04 Diaphaneity and A04′ The Mask as Document",
+     "native_owner": "shared-field",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field",
+       "oi.world-sources/v1:87bfb5d4a3c4fcc6"
+      ],
+      "revision": "8",
+      "source": "shared-field.projection"
+     },
+     "ref": "world:central:project:O-I:region:a04-mask"
+    },
+    {
+     "actions": [],
+     "kind": "hosted-wiki-space",
+     "label": "Central",
+     "native_owner": "shared-field",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field",
+       "52"
+      ],
+      "revision": "8",
+      "source": "shared-field.projection"
+     },
+     "ref": "world:central:project:O-I:region:a04-mask/central:wiki:root"
+    },
+    {
+     "actions": [],
+     "kind": "hosted-wiki-space",
+     "label": "Room: section-rooms/arguments",
+     "native_owner": "shared-field",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field",
+       "1"
+      ],
+      "revision": "8",
+      "source": "shared-field.projection"
+     },
+     "ref": "world:central:project:O-I:region:a04-mask/wiki:space:room/section-rooms/arguments"
+    },
+    {
+     "actions": [],
+     "kind": "hosted-world-position",
+     "label": "Aletheia 5 (M5 Epii × S5′ Aletheia)",
+     "native_owner": "shared-field",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field",
+       "r2"
+      ],
+      "revision": "8",
+      "source": "shared-field.projection"
+     },
+     "ref": "world:central:project:O-I:region:a04-mask/central:position:project:O-I:aletheia-5"
+    },
+    {
+     "actions": [],
+     "kind": "hosted-workcell",
+     "label": "Workcell mac",
+     "native_owner": "shared-field",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field",
+       "workcell:a936b0740f80389d"
+      ],
+      "revision": "8",
+      "source": "shared-field.projection"
+     },
+     "ref": "world:central:project:O-I:region:a04-mask/workcell:mac"
+    },
+    {
+     "actions": [],
+     "kind": "hosted-wiki-node",
+     "label": "A05 — Prakāśa–Vimarśa",
+     "native_owner": "shared-field",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field",
+       "1"
+      ],
+      "revision": "8",
+      "source": "shared-field.projection"
+     },
+     "ref": "world:central:project:O-I:region:a04-mask/wiki:node:record/A05"
+    },
+    {
+     "actions": [],
+     "kind": "hosted-wiki-node",
+     "label": "A05′ re-sites A05 — how Lights, Camera, Action stands to Prakāśa–Vimarśa (2026-09-28)",
+     "native_owner": "shared-field",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field",
+       "2"
+      ],
+      "revision": "8",
+      "source": "shared-field.projection"
+     },
+     "ref": "world:central:project:O-I:region:a04-mask/wiki:node:contemplation/a05p-re-sites-a05-2026-09-28"
+    },
+    {
+     "actions": [],
+     "kind": "hosted-curated-artifact",
+     "label": "A05 — Prakāśa–Vimarśa",
+     "native_owner": "shared-field",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field",
+       "5a9055fc4e5395ef"
+      ],
+      "revision": "8",
+      "source": "shared-field.projection"
+     },
+     "ref": "world:central:project:O-I:region:a04-mask/artifact:central:corpus:A05"
+    },
+    {
+     "actions": [],
+     "kind": "hosted-curated-artifact",
+     "label": "A04 — Diaphaneity / Contextual Transparency",
+     "native_owner": "shared-field",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field",
+       "4d3e93cce1d87aa1"
+      ],
+      "revision": "8",
+      "source": "shared-field.projection"
+     },
+     "ref": "world:central:project:O-I:region:a04-mask/artifact:central:corpus:A04"
+    },
+    {
+     "actions": [],
+     "kind": "hosted-curated-artifact",
+     "label": "A04′ — The Mask as Document",
+     "native_owner": "shared-field",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field",
+       "d3a083e0ed98c235"
+      ],
+      "revision": "8",
+      "source": "shared-field.projection"
+     },
+     "ref": "world:central:project:O-I:region:a04-mask/artifact:central:corpus:A04p"
+    },
+    {
+     "actions": [],
+     "kind": "hosted-wiki-node",
+     "label": "A04 — Diaphaneity / Contextual Transparency",
+     "native_owner": "shared-field",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field",
+       "1"
+      ],
+      "revision": "8",
+      "source": "shared-field.projection"
+     },
+     "ref": "world:central:project:O-I:region:a04-mask/wiki:node:record/A04"
+    },
+    {
+     "actions": [],
+     "kind": "hosted-practice",
+     "label": "darshana",
+     "native_owner": "shared-field",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field",
+       "f3d55f2f9ec70f44ff661623c7a931f299dcf29659d00df835446c997ee7ef99"
+      ],
+      "revision": "8",
+      "source": "shared-field.projection"
+     },
+     "ref": "world:central:project:O-I:region:a04-mask/skill/ql/darshana"
+    },
+    {
+     "actions": [],
+     "kind": "hosted-curated-artifact",
+     "label": "A05′ — Lights, Camera, Action",
+     "native_owner": "shared-field",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field",
+       "4963f236c3110d44"
+      ],
+      "revision": "8",
+      "source": "shared-field.projection"
+     },
+     "ref": "world:central:project:O-I:region:a04-mask/artifact:central:corpus:A05p"
+    },
+    {
+     "actions": [],
+     "kind": "hosted-wiki-node",
+     "label": "A04′ — The Mask as Document",
+     "native_owner": "shared-field",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field",
+       "1"
+      ],
+      "revision": "8",
+      "source": "shared-field.projection"
+     },
+     "ref": "world:central:project:O-I:region:a04-mask/wiki:node:record/A04p"
+    },
+    {
+     "actions": [],
+     "kind": "hosted-wiki-space",
+     "label": "O-I",
+     "native_owner": "shared-field",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field",
+       "24"
+      ],
+      "revision": "8",
+      "source": "shared-field.projection"
+     },
+     "ref": "world:central:project:O-I:region:a04-mask/central:wiki:project:O-I"
+    },
+    {
+     "actions": [],
+     "kind": "hosted-wiki-node",
+     "label": "A04′ re-sites A04 — how The Mask as Document stands to Diaphaneity (2026-09-28)",
+     "native_owner": "shared-field",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field",
+       "1"
+      ],
+      "revision": "8",
+      "source": "shared-field.projection"
+     },
+     "ref": "world:central:project:O-I:region:a04-mask/wiki:node:contemplation/a04p-re-sites-a04-2026-09-28"
+    },
+    {
+     "actions": [],
+     "kind": "hosted-wiki-node",
+     "label": "A05′ — Lights, Camera, Action",
+     "native_owner": "shared-field",
+     "provenance": {
+      "detail": [
+       "wss://maincloud.spacetimedb.com/epilogos-oi-shared-field",
+       "1"
+      ],
+      "revision": "8",
+      "source": "shared-field.projection"
+     },
+     "ref": "world:central:project:O-I:region:a04-mask/wiki:node:record/A05p"
+    }
+   ],
+   "schema": "oi.cradle.graph-reading/v1",
+   "shape_catalog": null,
+   "truncated": false
+  }
+ },
+ "recorded": {
+  "at": "2026-10-14, 15:17:18 (all inputs) and 15:19:43-47 (one input per read), BST",
+  "channel": "scripted: POST /op {op:'graph', query:'', options:{input}} on the lead's private walk-bridge, read-only. The aikit_resolution reading is the all-inputs reading with its rows removed and the other two inputs stated as not requested, as the kernel states an input it was not asked for; its aikit_resolution input is the owner's own account, verbatim.",
+  "law": "Labels, refs, revisions and relation names are exactly as the owners returned them. Nothing here was edited, shortened or added; the rows carry no place and no time, because the owners did not.",
+  "owners": "central.wiki.read (Central root wiki, 5 nodes, 1 space with 15 child project spaces); shared-field.projection (42 hosted rows over 2 worlds); aikit.knowledge.resolve (unavailable: it did not return within 20 seconds)",
+  "wikiFile": "Control/agents/wiki/wiki.json as central.wiki.read read it (revision central.content-fnv1a64/v1:9023:537083deea5d1ce5), each node's long `body` text dropped; every other field as the file holds it. No object in it declares `place` or `aikit.techne-facet/v1`."
+ },
+ "schema": "oi.test-fixture/atlas-suite-reading/v1",
+ "wikiFile": {
+  "objects": [
+   {
+    "anchor_ref": "wiki:node:identity",
+    "child_space_refs": [
+     "central:wiki:project:Actuation",
+     "central:wiki:project:Central",
+     "central:wiki:project:Epi-Prime",
+     "central:wiki:project:Factory",
+     "central:wiki:project:O-I",
+     "central:wiki:project:Point-Cloud-Demo",
+     "central:wiki:project:Workcell",
+     "central:wiki:project:ai-kit",
+     "central:wiki:project:personal",
+     "central:wiki:project:projects",
+     "central:wiki:project:Archetypal-Earth",
+     "central:wiki:project:Quaternal-I-Ching",
+     "central:wiki:project:Quaternal-Tarot",
+     "central:wiki:project:ProjectCentral",
+     "central:wiki:project:face-rig"
+    ],
+    "node_refs": [
+     "wiki:node:delivered-lane-loses-install",
+     "wiki:node:identity",
+     "wiki:node:place-provider-reconciles-like-the-floor",
+     "wiki:node:root/ta-onta-and-the-thought-stream",
+     "wiki:node:staged/propose-not-write"
+    ],
+    "object": "space",
+    "parent_space_refs": [],
+    "profile": "okf-wiki/v1",
+    "provenance": [],
+    "ref": "central:wiki:root",
+    "revision": 66,
+    "title": "Central"
+   },
+   {
+    "object": "node",
+    "profile": "okf-wiki/v1",
+    "provenance": [
+     {
+      "source_ref": "staging/propose-not-write"
+     }
+    ],
+    "ql": {
+     "face": "direct",
+     "position": 3,
+     "unit": "documentation"
+    },
+    "ref": "wiki:node:staged/propose-not-write",
+    "revision": 1,
+    "source_refs": [
+     "staging/propose-not-write"
+    ],
+    "space_refs": [
+     "central:wiki:root"
+    ],
+    "title": "You may propose",
+    "type": "intent"
+   },
+   {
+    "object": "node",
+    "profile": "okf-wiki/v1",
+    "provenance": [
+     {
+      "source_ref": "Control/user/identity.md"
+     }
+    ],
+    "ref": "wiki:node:identity",
+    "revision": 1,
+    "source_refs": [
+     "Control/user/identity.md"
+    ],
+    "space_refs": [
+     "central:wiki:root"
+    ],
+    "title": "User identity",
+    "type": "identity"
+   },
+   {
+    "object": "node",
+    "profile": "okf-wiki/v1",
+    "provenance": [],
+    "ref": "wiki:node:root/ta-onta-and-the-thought-stream",
+    "revision": 1,
+    "source_refs": [
+     "central:source:control:root:Control/agents/wiki/returns/ta-onta-and-the-thought-stream-2026-09-16.md"
+    ],
+    "space_refs": [
+     "central:wiki:root"
+    ],
+    "title": "The beings, the thought stream, and who owns what",
+    "type": "return"
+   },
+   {
+    "object": "node",
+    "profile": "okf-wiki/v1",
+    "provenance": [
+     {
+      "source_ref": "commission:herdr-omarchy-multisurface-158"
+     }
+    ],
+    "ref": "wiki:node:place-provider-reconciles-like-the-floor",
+    "revision": 1,
+    "source_refs": [
+     "central:source:control:root:Control/agents/now/flows/herdr-world-entry-20260927/IMPLEMENTATION-PACKET.md",
+     "central:source:control:root:Control/agents/now/flows/herdr-world-entry-20260927/omarchy-packet/findings.md"
+    ],
+    "space_refs": [
+     "central:wiki:root"
+    ],
+    "title": "A place provider reconciles like the floor",
+    "type": "return"
+   },
+   {
+    "object": "node",
+    "profile": "okf-wiki/v1",
+    "provenance": [
+     {
+      "source_ref": "commission:oi527-command-work-journey-20260927"
+     }
+    ],
+    "ref": "wiki:node:delivered-lane-loses-install",
+    "revision": 1,
+    "source_refs": [
+     "central:source:control:root:Work/O-I/.wayfinder/maps/command-encounter-convergence.md",
+     "git:ai-kit@convergence/command-encounter-20260926",
+     "git:ai-kit@guidance/development-world-shape"
+    ],
+    "space_refs": [
+     "central:wiki:root"
+    ],
+    "title": "A delivered lane that leaves the installed cut is lost work",
+    "type": "learning"
+   }
+  ],
+  "path": "Control/agents/wiki/wiki.json",
+  "revision": "central.content-fnv1a64/v1:9023:537083deea5d1ce5"
+ }
+}

@@ -17,6 +17,7 @@
 
 import type { Family, Occurrence } from '../types/field';
 import { slug, shortPlace, type Model } from './model';
+import { UNDATED_U } from './time';
 import { dirFromLatLon, type Vec3 } from './geo';
 import { toRgbPalette, type RGB } from './palette';
 
@@ -99,7 +100,7 @@ export function replaceModelOccurrence(model: Model, occ: Occurrence | null, id:
 
   const located = occ.geoPrecision !== 'none' && Number.isFinite(occ.lat) && Number.isFinite(occ.lon);
   const dir: Vec3 = dirFromLatLon(occ.lat, occ.lon);
-  const u = model.scale.toU(occ.year);
+  const u = occ.dated === false ? UNDATED_U : model.scale.toU(occ.year); // [§8.4 host] undated: outside the scale
   const colour: RGB = [...palette.core] as RGB;
   const k = at ?? n;
 

@@ -2,8 +2,10 @@
 //
 // The host leg of T-ATLAS-HOST (DEVICE-SEMANTICS-LOCK §8.1, §8.4). The atlas is the ported Archetypal-Earth code and is
 // mounted with mountAtlas; its own Earth ⇄ Graph switch is driven through its controller (toggleMode). Nothing of the
-// atlas is reimplemented here. What the host adds: the corpus provider is registered from the World
-// (archetypalEarthProvider), the atlas's three memories are bound to the workspace's storage namespace, and the pane's
+// atlas is reimplemented here. What the host adds: the corpus provider is registered from the World (the suite provider,
+// provider/suiteProvider.ts: Central's owners, never an old corpus), the atlas's three memories are bound to the workspace's
+// storage namespace, the pane says how many of the owners' subjects the Earth cannot place and which owner input did not answer
+// (the suite standing), and the pane's
 // lifecycle is the shell's: the atlas mounts on first view, pauses while concealed (the hidden-inhabitant law: the
 // instance survives), and is destroyed with its pane.
 //
@@ -24,6 +26,7 @@ import type {DatedSubsolarState, ShownInstant} from '../../inhabitants/qlSkyEart
 import {disclosureSession} from '../../../../../../desktop/cradle/src/techne/session'
 import {sunStanding} from '../../inhabitants/qlSkyEarthAdapter'
 import {bindSharedTimeClock, windowYear} from './sharedClock'
+import {SUITE_PROVIDER_ID, describeProgress, describeStanding, subscribeSuiteStanding, suiteStanding, type SuiteStanding} from './provider/suiteStanding'
 import './atlasHost.css'
 
 /** The year the Earth shows, from the shared window: null while no window is in force (all time). */
@@ -32,8 +35,24 @@ function shownYearNow(): number | null {
   return year === null ? null : Math.round(year)
 }
 
+/** The pane's status lines stand in one column at the pane's foot, so that none overlaps another (the world's standing above the
+ * Sun's), and above the atlas's time control (fixed in the pane, 20px up and 46px tall: src/style/main.css:323 `.time`, :331 `.t-track`). The column is
+ * made when the first line is. Its rules are inline (setAttribute), since the atlas host's stylesheet places each
+ * `atlas-host-status` line alone at the pane's foot, and it does not take a click: the lines are said, not used. */
+function statusColumn(element: HTMLElement): () => HTMLElement {
+  let column: HTMLElement | null = null
+  return () => {
+    if (!column) {
+      column = document.createElement('div')
+      column.setAttribute('style', 'position:absolute;left:12px;bottom:72px;display:flex;flex-direction:column;gap:3px;max-width:calc(100% - 24px);pointer-events:none')
+      element.append(column)
+    }
+    return column
+  }
+}
+
 /** The Earth's own status line for the Sun: the existing `atlas-host-status` surface, one element per attachment. */
-function sunLine(element: HTMLElement): (text: string | null) => void {
+function sunLine(column: () => HTMLElement): (text: string | null) => void {
   let line: HTMLParagraphElement | null = null
   return text => {
     if (text === null) {
@@ -45,13 +64,42 @@ function sunLine(element: HTMLElement): (text: string | null) => void {
       line = document.createElement('p')
       line.className = 'atlas-host-status'
       line.setAttribute('role', 'status')
-      element.append(line)
+      line.setAttribute('style', 'position:static')
+      column().append(line)
+    }
+    line.textContent = text
+  }
+}
+
+/** The Earth's status line for the world it reads: how many of the owners' subjects it does not draw, and every owner input that did
+ * not answer, with the owner's own detail (provider/suiteStanding.ts). It stands above the Sun's line in the same column. Hidden
+ * while the Graph is the view (the Graph draws every subject); null removes it. */
+function standingLine(column: () => HTMLElement): (text: string | null) => void {
+  let line: HTMLParagraphElement | null = null
+  return text => {
+    if (text === null || text === '') {
+      line?.remove()
+      line = null
+      return
+    }
+    if (!line) {
+      line = document.createElement('p')
+      line.className = 'atlas-host-status'
+      line.setAttribute('role', 'status')
+      line.setAttribute('style', 'position:static;order:-1')
+      line.dataset.atlasStanding = 'suite'
+      column().append(line)
     }
     line.textContent = text
   }
 }
 
 export type AtlasView = 'earth' | 'graph'
+
+/** The standing of the world the Earth reads, as a hook: the pane's progress while the owners are read, and the Places browser's rows. */
+export function useSuiteStanding(): SuiteStanding {
+  return useSyncExternalStore(subscribeSuiteStanding, suiteStanding, suiteStanding)
+}
 
 // ── the Sun's reading: its keys, its status line ─────────────────────────
 
@@ -335,13 +383,14 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {teardown: (
   settings.setGraphSettingsStore(sharedStorage)
   landing.setLandingStore(sharedStorage)
   practice.setPracticeStorage(sharedStorage)
-  const [{registerCorpusProvider}, {archetypalEarthProvider, ARCHETYPAL_EARTH_PROVIDER_ID}, {mountAtlas}] = await Promise.all([
+  const [{registerCorpusProvider}, {suiteProvider}, {mountAtlas}] = await Promise.all([
     import('./provider/corpusProvider'),
-    import('./provider/archetypalEarthProvider'),
+    import('./provider/suiteProvider'),
     import('./mount'),
   ])
-  // The corpus is read before the controller mounts, so an unavailable bundle fails while nothing is bound yet.
-  const provider = archetypalEarthProvider(transport)
+  // The world is read before the controller mounts, so an unavailable owner input fails while nothing is bound yet, named with
+  // its owner's own detail (the suite provider reads Central's wiki, the shared field and AIKit, one input at a time).
+  const provider = suiteProvider(transport)
   const loaded = await provider.load()
   // T6: the QL family's adapter admits the owner's stated subsolar point for the instant the Earth shows (the shared
   // window's year; the present while no window is in force), read through the kernel before the Earth stands. A read that
@@ -360,7 +409,7 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {teardown: (
   const bundle = loaded
   registerCorpusProvider({...provider, load: async () => bundle}, {asDefault: true})
   // T-ATLAS-TIME: the clock is a face of the shell's one shared time window (the session the native owner also writes).
-  const mounted: AtlasHandle = await mountAtlas({globe, app, provider: ARCHETYPAL_EARTH_PROVIDER_ID,
+  const mounted: AtlasHandle = await mountAtlas({globe, app, provider: SUITE_PROVIDER_ID,
     clock: (time, scale) => bindSharedTimeClock({store: disclosureSession, time, scale})})
 
   // Everything the attach makes from here is named before it is made, so the one teardown below releases whatever stands
@@ -371,7 +420,13 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {teardown: (
   let unsubscribeSun: () => void = () => {}
   let cancelReread: () => void = () => {}
   let observer: MutationObserver | null = null
-  const setSunLine = sunLine(element)
+  let unsubscribeStanding: () => void = () => {}
+  let unsubscribeView: () => void = () => {}
+  const column = statusColumn(element)
+  const setSunLine = sunLine(column)
+  const setStandingLine = standingLine(column)
+  // The standing line is said on the Earth, where an unlocated subject is not drawn, and is silent on the Graph, which draws every one.
+  const paintStanding = () => setStandingLine(target() === 'earth' ? describeStanding(suiteStanding()) : null)
   const reconcile = () => {
     if (retired || !visible) return
     const current: AtlasView = mounted.ctl.state.graph ? 'graph' : 'earth'
@@ -382,9 +437,12 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {teardown: (
     retired = true
     // the Sun follower stops (its pending read is cancelled, and a late reply is dropped), and its status line goes
     unsubscribeSun()
+    unsubscribeStanding()
+    unsubscribeView()
     cancelReread()
     follower?.dispose()
     setSunLine(null)
+    setStandingLine(null)
     publishAtlasAionReading(null)
     publishAtlasHandle(null)
     observer?.disconnect()
@@ -439,7 +497,10 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {teardown: (
   }
   cancelReread = later(reread, SUN_REREAD_TICK_MS)
   // The reading the atlas holds is the World's Aion source, by reference, from the moment it stands.
-  publishAtlasAionReading(bundle.history ? {providerId: ARCHETYPAL_EARTH_PROVIDER_ID, history: bundle.history} : null)
+  publishAtlasAionReading(bundle.history ? {providerId: SUITE_PROVIDER_ID, history: bundle.history} : null)
+  unsubscribeStanding = subscribeSuiteStanding(paintStanding)
+  unsubscribeView = subscribeView(paintStanding)
+  paintStanding()
 
   if (follow) {
     // A view asked before the atlas stood is honoured; otherwise the atlas's own state is adopted.
@@ -581,9 +642,10 @@ export function AtlasEarthPane() {
     }
   }, [])
 
+  const standing = useSuiteStanding()
   const text = phase.state === 'failed'
     ? `The Earth could not mount: ${phase.message ?? 'unknown error'}`
-    : phase.state === 'reading' ? 'Reading the field…' : null
+    : phase.state === 'reading' ? (standing.phase === 'reading' ? describeProgress(standing) : 'Reading your world…') : null
   return (
     <div ref={wrapper} className="atlas-host" data-atlas-phase={phase.state} data-projection-kind="projection.earth">
       <div ref={body} className="atlas-host-body" />

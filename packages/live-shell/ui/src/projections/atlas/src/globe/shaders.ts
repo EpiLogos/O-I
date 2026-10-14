@@ -7,12 +7,14 @@ uniform float uTrail;
 uniform float uRamp;
 uniform float uTimeOn;
 float timeVis(float u) {
+  if (u < 0.0) return 1.0; // [§8.4 host] UNDATED_U (src/data/time.ts): outside the time scale, never gated
   float d = uCursor - u;
   float fin = smoothstep(0.0, uRamp, d);
   float fout = 1.0 - smoothstep(uTrail * 0.55, uTrail, d);
   return mix(1.0, fin * fout, uTimeOn);
 }
 float timeFlare(float u) {
+  if (u < 0.0) return 0.0; // [§8.4 host] undated: no emergence flare
   float d = uCursor - u;
   return uTimeOn * smoothstep(0.0, uRamp * 0.5, d) * exp(-max(d, 0.0) / (uRamp * 2.6));
 }
@@ -27,6 +29,7 @@ float timeVisRel(float u, float rel) {
 // T1 lifecycle, a function of d alone. Mirrors presenceCurve in src/data/time.ts (keep the constants identical).
 // x: arrive (0 before the date .. 1), y: leave (0 present .. 1 dissolved), z: emergence ring amplitude, w: ring radius 0..1
 vec4 presenceCurve(float u, float rel) {
+  if (u < 0.0) return vec4(1.0, 0.0, 0.0, 0.0); // [§8.4 host] undated: always arrived, never dissolved, no ring
   float d = uCursor - u;
   float on = uTimeOn * (1.0 - standingWeight(rel));
   float e = uRamp * 1.5;
