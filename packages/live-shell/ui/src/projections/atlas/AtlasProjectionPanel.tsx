@@ -230,6 +230,9 @@ export interface AtlasAttachment {
   unmount(): void
 }
 
+/** What a held pane is handed when the claim frees: the atlas mounted into it, or the mount's own refusal. */
+export type AtlasHandover = {readonly attachment: AtlasAttachment} | {readonly error: unknown}
+
 /** What a pane that is not the atlas's holder says, in its own body. One atlas stands in a session (ui/lifetime.ts). */
 export const ATLAS_HELD_MESSAGE = 'The Earth atlas is already open in another pane of this session. It is drawn once, in the pane that opened it first.'
 
@@ -242,6 +245,9 @@ export interface AtlasAttachOptions {
   follow: boolean
   /** the fixed view when not following */
   view?: AtlasView
+  /** A held pane waits for the claim to free. When it does, the first pane that asked mounts the atlas (one claim, one
+   * owner); the other held panes stay held. Called once, with the handover's outcome, for the pane that mounts. */
+  onHandover?: (outcome: AtlasHandover) => void
 }
 
 /** The one atlas this session holds: claimed from the first attach until its pane is unmounted, and the atlas disposed.
@@ -249,31 +255,57 @@ export interface AtlasAttachOptions {
  * its document marks and its view mirror are one set per session (named OPEN in the lane report). */
 let claimed = false
 
-/** The pane that is not the holder: its body says the atlas is open elsewhere. Nothing is mounted and nothing is claimed. */
-function heldBy(element: HTMLElement): AtlasAttachment {
+/** The held panes, in the order they asked. Released in that order: the first one mounts when the claim frees. */
+const waiting: {readonly options: AtlasAttachOptions}[] = []
+
+/** Free the claim, and hand it to the first waiting pane, which mounts the atlas (its attach takes the claim before its first
+ * await, so the panes behind it keep waiting). */
+function releaseClaim(): void {
+  claimed = false
+  const first = waiting.shift()
+  if (!first) return
+  attachAtlas(first.options).then(
+    attachment => first.options.onHandover?.({attachment}),
+    error => first.options.onHandover?.({error}),
+  )
+}
+
+/** The pane that is not the holder: its body says the atlas is open elsewhere. Nothing is mounted and nothing is claimed; the
+ * pane waits, and its attachment's unmount drops it from the waiting. */
+function heldBy(options: AtlasAttachOptions): AtlasAttachment {
+  const {element} = options
   element.replaceChildren()
   const line = document.createElement('p')
   line.className = 'atlas-host-status'
   line.setAttribute('role', 'status')
   line.textContent = ATLAS_HELD_MESSAGE
   element.append(line)
-  return {held: ATLAS_HELD_MESSAGE, setVisible: () => {}, unmount: () => {}}
+  const entry = {options}
+  waiting.push(entry)
+  return {
+    held: ATLAS_HELD_MESSAGE,
+    setVisible: () => {},
+    unmount: () => {
+      const at = waiting.indexOf(entry)
+      if (at >= 0) waiting.splice(at, 1)
+    },
+  }
 }
 
-/** Mount the atlas into the element. A pane that asks while another holds the atlas is told so in its body (held). Throws
- * with the atlas's own honest message when it cannot mount. */
+/** Mount the atlas into the element. A pane that asks while another holds the atlas is told so in its body (held), and waits
+ * for the claim. Throws with the atlas's own honest message when it cannot mount. */
 export async function attachAtlas(options: AtlasAttachOptions): Promise<AtlasAttachment> {
-  if (claimed) return heldBy(options.element)
+  if (claimed) return heldBy(options)
   if (!scope) throw Error('No workspace is bound for the Earth projection, so its settings have nowhere to live.')
   claimed = true
   const progress: {teardown: (() => void) | null} = {teardown: null}
   try {
     return await attachClaimed(options, progress)
   } catch (error) {
-    // A failure releases what the attach made: the atlas (if it had mounted) is disposed, and the claim is released so a
-    // later attempt may mount. A failure before mountAtlas returned made nothing to release.
-    progress.teardown?.()
-    claimed = false
+    // A failure releases what the attach made: whatever it had made is torn down (its teardown releases the claim); a failure
+    // before anything stood releases the claim here.
+    if (progress.teardown) progress.teardown()
+    else releaseClaim()
     throw error
   }
 }
@@ -330,22 +362,49 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {teardown: (
   // T-ATLAS-TIME: the clock is a face of the shell's one shared time window (the session the native owner also writes).
   const mounted: AtlasHandle = await mountAtlas({globe, app, provider: ARCHETYPAL_EARTH_PROVIDER_ID,
     clock: (time, scale) => bindSharedTimeClock({store: disclosureSession, time, scale})})
-  // from here the atlas stands: a failure below disposes it and releases the claim (attachAtlas)
-  progress.teardown = () => {
-    publishAtlasHandle(null)
+
+  // Everything the attach makes from here is named before it is made, so the one teardown below releases whatever stands
+  // when the attach fails part way (T-ATLAS-DISPOSE). Each is null or inert until it is made.
+  let visible = true
+  let retired = false
+  let follower: SunFollower<ShownInstant> | null = null
+  let unsubscribeSun: () => void = () => {}
+  let cancelReread: () => void = () => {}
+  let observer: MutationObserver | null = null
+  const setSunLine = sunLine(element)
+  const reconcile = () => {
+    if (retired || !visible) return
+    const current: AtlasView = mounted.ctl.state.graph ? 'graph' : 'earth'
+    if (current !== target()) mounted.ctl.toggleMode()
+  }
+  const unmount = () => {
+    if (retired) return
+    retired = true
+    // the Sun follower stops (its pending read is cancelled, and a late reply is dropped), and its status line goes
+    unsubscribeSun()
+    cancelReread()
+    follower?.dispose()
+    setSunLine(null)
     publishAtlasAionReading(null)
+    publishAtlasHandle(null)
+    observer?.disconnect()
+    if (reconcileFollowed === reconcile) reconcileFollowed = null
+    // the atlas is disposed: its frames and GPU resources, every listener, timer and observer it installed, and its marks on
+    // the body. The pane is emptied, and the claim is released, so the next pane that asks mounts a fresh atlas, or the first
+    // waiting pane takes it.
     mounted.dispose()
     element.replaceChildren()
-    claimed = false
+    releaseClaim()
   }
+  progress.teardown = unmount
   publishAtlasHandle(mounted)
+
   // The Sun follows the instant the Earth shows (T-ATLAS-SUN). The window's instant is offered on each change; the Sun is
   // read for it once the window has been still (sunFollow.ts), and each reading replaces the one Sun in place through the
   // atlas's seam. The status line states the Sun for the instant actually drawn, and that it is read for the instant shown
   // while the window is behind it.
-  const setSunLine = sunLine(element)
   let drawn: DatedSubsolarState = {field: loaded.field, placed: false, reason: NOT_READ_REASON, instant: shownInstantOf(shownYearNow(), new Date())}
-  const follower: SunFollower<ShownInstant> = createSunFollower<ShownInstant, DatedSubsolarState>({
+  const sunFollower: SunFollower<ShownInstant> = createSunFollower<ShownInstant, DatedSubsolarState>({
     keyOf: sunInstantKey,
     drawnKey: NOT_READ_KEY,
     read: readSun,
@@ -361,19 +420,19 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {teardown: (
         return
       }
       drawn = next
-      setSunLine(sunStatusText(drawn, shownYearNow(), follower.pending()))
+      setSunLine(sunStatusText(drawn, shownYearNow(), sunFollower.pending()))
     },
   })
+  follower = sunFollower
   const stateSun = () => {
     const year = shownYearNow()
-    follower.offer(shownInstantOf(year, new Date()))
-    setSunLine(sunStatusText(drawn, year, follower.pending()))
+    sunFollower.offer(shownInstantOf(year, new Date()))
+    setSunLine(sunStatusText(drawn, year, sunFollower.pending()))
   }
   stateSun()
-  const unsubscribeSun = disclosureSession.subscribe(stateSun)
+  unsubscribeSun = disclosureSession.subscribe(stateSun)
   // The present sky is offered again each minute: the follower reads it only when its ten-minute bucket has moved, so a
   // Sun read long ago does not stand as the current sky (T-ATLAS-SUN, the present sky)
-  let cancelReread: () => void = () => {}
   const reread = () => {
     stateSun()
     cancelReread = later(reread, SUN_REREAD_TICK_MS)
@@ -382,14 +441,6 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {teardown: (
   // The reading the atlas holds is the World's Aion source, by reference, from the moment it stands.
   publishAtlasAionReading(bundle.history ? {providerId: ARCHETYPAL_EARTH_PROVIDER_ID, history: bundle.history} : null)
 
-  let visible = true
-  let retired = false
-  const reconcile = () => {
-    if (retired || !visible) return
-    const current: AtlasView = mounted.ctl.state.graph ? 'graph' : 'earth'
-    if (current !== target()) mounted.ctl.toggleMode()
-  }
-  let observer: MutationObserver | null = null
   if (follow) {
     // A view asked before the atlas stood is honoured; otherwise the atlas's own state is adopted.
     if (!viewAsked) mirrorView(mounted.ctl.state.graph ? 'graph' : 'earth')
@@ -407,25 +458,6 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {teardown: (
     mounted.engine.setPaused(!next || !!mounted.ctl.state.graph)
     if (next) reconcile()
   }
-  const unmount = () => {
-    if (retired) return
-    retired = true
-    // the Sun follower stops (its pending read is cancelled, and a late reply is dropped), and its status line goes
-    unsubscribeSun()
-    cancelReread()
-    follower.dispose()
-    setSunLine(null)
-    publishAtlasAionReading(null)
-    publishAtlasHandle(null)
-    observer?.disconnect()
-    if (reconcileFollowed === reconcile) reconcileFollowed = null
-    // the atlas is disposed: its frames and GPU resources, every listener, timer and observer it installed, and its marks on
-    // the body. The pane is emptied, and the claim is released, so the next pane that asks mounts a fresh atlas.
-    mounted.dispose()
-    element.replaceChildren()
-    claimed = false
-  }
-  progress.teardown = unmount
   return {held: null, setVisible, unmount}
 }
 
@@ -504,24 +536,34 @@ export function AtlasEarthPane() {
     const element = wrapper.current
     if (!element || typeof IntersectionObserver === 'undefined') return
     let alive = true
+    // The pane's attachment, however it was given: a held pane's is replaced when the atlas is handed to it (onHandover).
+    const adopt = (next: AtlasAttachment) => {
+      if (!alive) {
+        next.unmount()
+        return
+      }
+      attachment.current?.unmount()
+      attachment.current = next
+      next.setVisible(wantVisible.current)
+      // a pane that does not hold the atlas says so in its body (heldBy); the pane's phase names it too
+      setPhase({state: next.held ? 'held' : 'ready'})
+    }
+    const fail = (error: unknown) => {
+      if (alive) setPhase({state: 'failed', message: error instanceof Error ? error.message : String(error)})
+    }
+    const attach = () => {
+      attachAtlas({
+        element: body.current!,
+        transport: transportRef.current,
+        follow: true,
+        onHandover: outcome => ('error' in outcome ? fail(outcome.error) : adopt(outcome.attachment)),
+      }).then(adopt, fail)
+    }
     const start = () => {
       if (started.current) return
       started.current = true
       setPhase({state: 'reading'})
-      attachAtlas({element: body.current!, transport: transportRef.current, follow: true})
-        .then(next => {
-          if (!alive) {
-            next.unmount()
-            return
-          }
-          attachment.current = next
-          next.setVisible(wantVisible.current)
-          // a pane that does not hold the atlas says so in its body (heldBy); the pane's phase names it too
-          setPhase({state: next.held ? 'held' : 'ready'})
-        })
-        .catch((error: unknown) => {
-          if (alive) setPhase({state: 'failed', message: error instanceof Error ? error.message : String(error)})
-        })
+      attach()
     }
     const observer = new IntersectionObserver(entries => {
       for (const entry of entries) {

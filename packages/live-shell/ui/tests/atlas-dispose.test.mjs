@@ -114,6 +114,8 @@ test('the first pane mounts and holds the atlas; a second pane is told it is ope
   assert.deepEqual(heldText(body), [panel.ATLAS_HELD_MESSAGE], 'the second pane says so in its own body')
   assert.equal(body.children[0].attrs.role, 'status')
   assert.equal(stub.stubState().mounts, mounts + 1, 'the second pane mounts nothing')
+  // the held pane is waiting for the claim: it closes with the test, so the claim it waits for is not handed to it later
+  second.unmount()
   first.unmount()
 })
 

@@ -145,11 +145,13 @@ export async function mountAtlas(options: AtlasMountOptions): Promise<AtlasHandl
       },
       replaceOccurrence(occ, id, family) {
         const change = engine.replaceOccurrence(occ, id, family);
-        if (change.changed) ctl!.refreshOccurrences(change.removed);
+        if (change.changed) ctl!.refreshOccurrences(change);
         return change;
       },
       dispose() {
         binding?.dispose();
+        // the controller stops first: its late callbacks (loaders, hash writes) check it and do nothing once it is disposed
+        ctl?.dispose();
         // the globe stops drawing and frees its GPU resources (GlobeEngine.dispose); then the lifetime releases every window,
         // document and global listener, timer, frame and observer the atlas installed, and the atlas's marks on the body
         engine.dispose();
