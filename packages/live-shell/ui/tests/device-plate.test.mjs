@@ -216,3 +216,13 @@ test('the chain is one row in the frame\'s detail area: fixed plates scrolling s
   assert.match(detail, /\.detail-chain \.chain\[data-detail-density="device"\] \{ display: contents \}/, 'Live\'s chain panel stands down to its plates')
   assert.match(detail, /\.dropz \{ width: 140px; flex: none; border: 1px dashed var\(--line-strong\)/, 'the row ends where a device can be dropped')
 })
+
+test('a plate is never narrower than its head: a long name and owner widen it, up to the mockup\'s maximum', async () => {
+  const {plateWidth, headWidth, PLATE} = await import('../src/frame/devices/deviceRuntime.ts')
+  const knob = {family: 'f', deviceInstance: 'd', key: 'k', type: 'number', title: 'K', range: {min: 0, max: 1}, writePath: 'kernel:x'}
+  const narrow = plateWidth([knob], false)
+  const head = {title: 'Glue Compressor', owner: 'audio effect', marks: 2}
+  assert.ok(plateWidth([knob], false, head) >= Math.min(PLATE.max, Math.round(headWidth(head))), 'the head sets the floor')
+  assert.ok(plateWidth([knob], false, head) > narrow, 'the long head widens a one-knob plate')
+  assert.equal(plateWidth([knob], false, {title: 'x'.repeat(200), owner: 'y', marks: 1}), PLATE.max, 'clamped to the mockup\'s range')
+})

@@ -61,7 +61,7 @@ export function DeviceView({device, size, picture, actions, wrapRow}: DeviceView
   }
   const dirty = drafts.dirtyKeys().length > 0
   return <div className={`device device--${size}${compact && folded ? ' device--folded' : ''}`} data-device={device.id} data-device-size={size} data-device-light={light}
-    style={compact ? {'--plate-w': `${plateWidth(rows, drawn)}px`} as CSSProperties : undefined}
+    style={compact ? {'--plate-w': `${plateWidth(rows, drawn, {title: presentation.title, owner: presentation.owner, marks: (marks?.length ?? 0) + 1})}px`} as CSSProperties : undefined}
     data-unsent={dirty ? 'true' : undefined}
     onPointerDownCapture={select ? () => select.onPress() : undefined} onFocusCapture={select ? () => select.onPress() : undefined}>
     <FacePlate presentation={presentation} power={light} onPower={pressPower} actions={marks} selected={compact && selected === device.id}
