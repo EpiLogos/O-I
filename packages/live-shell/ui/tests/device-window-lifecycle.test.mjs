@@ -73,6 +73,7 @@ const recordingDoor = ({focus}) => {
     calls,
     door: {
       focusExisting: async () => { calls.push('focus'); if (focus instanceof Error) throw focus; return focus },
+      recordFocused: () => { calls.push('record') },
       dropStale: () => { calls.push('drop') },
       detach: async () => { calls.push('detach') },
     },
@@ -81,26 +82,65 @@ const recordingDoor = ({focus}) => {
 
 test('finding 6: a pop-out of a device whose window is open focuses that window and does not pop out twice', async () => {
   const {calls, door} = recordingDoor({focus: true})
-  assert.equal(await popOutDeviceWindow(true, door), 'focused')
-  assert.deepEqual(calls, ['focus'], 'no drop, no second window')
+  assert.equal(await popOutDeviceWindow(door), 'focused')
+  assert.deepEqual(calls, ['focus', 'record'], 'no drop, no second window; this workspace records the window it focused')
 })
 
-test('finding 6: a pop-out whose entry names a window that is gone drops the entry, then pops out afresh', async () => {
+test('finding 6: a pop-out when no window stands drops every stale entry, then pops out afresh', async () => {
   const {calls, door} = recordingDoor({focus: false})
-  assert.equal(await popOutDeviceWindow(true, door), 'popped-out')
-  assert.deepEqual(calls, ['focus', 'drop', 'detach'], 'the stale entry is dropped before the device pops out again')
-})
-
-test('finding 6: a pop-out with no entry simply pops out and never asks for focus', async () => {
-  const {calls, door} = recordingDoor({focus: true})
-  assert.equal(await popOutDeviceWindow(false, door), 'popped-out')
-  assert.deepEqual(calls, ['detach'])
+  assert.equal(await popOutDeviceWindow(door), 'popped-out')
+  assert.deepEqual(calls, ['focus', 'drop', 'detach'], 'the stale entries are dropped before the device pops out again')
 })
 
 test('finding 6: a focus fault is not swallowed as a stale entry; it reaches the caller', async () => {
   const {calls, door} = recordingDoor({focus: new Error('Window state unavailable')})
-  await assert.rejects(popOutDeviceWindow(true, door), /Window state unavailable/)
-  assert.deepEqual(calls, ['focus'], 'nothing is dropped or detached on a fault')
+  await assert.rejects(popOutDeviceWindow(door), /Window state unavailable/)
+  assert.deepEqual(calls, ['focus'], 'nothing is recorded, dropped or detached on a fault')
+})
+
+// The Workbench's device doors over a two-workspace book, with the native window as one fact: it stands once, whichever
+// workspace opened it. The close path (the window-redock event) drops the entry from every workspace.
+test('pop out in workspace A then B, then close: one window, and no workspace keeps an entry', async () => {
+  const {dropDetachedAcrossWorkspaces} = await import('../../../../desktop/cradle/src/workspace/store.ts')
+  const base = () => ({root: null, surfaces: {}, detached: [], closedStack: [], focusedGroupId: null, agencyDepth: 'panel'})
+  let workspaces = [{id: 'A', name: 'A', writing: '', layout: base()}, {id: 'B', name: 'B', writing: '', layout: base()}]
+  const native = {open: false}
+  const edit = (id, change) => { workspaces = workspaces.map(w => w.id === id ? {...w, layout: change(w.layout)} : w) }
+  const dropEverywhere = () => { workspaces = dropDetachedAcrossWorkspaces(workspaces, DEVICE) }
+  const holds = id => workspaces.find(w => w.id === id).layout.detached.some(entry => entry.surfaceId === DEVICE)
+  const popOut = id => popOutDeviceWindow({
+    focusExisting: async () => native.open,
+    recordFocused: () => edit(id, layout => layout.detached.some(entry => entry.surfaceId === DEVICE) ? layout : placeDeviceDetached(layout, binding)),
+    dropStale: dropEverywhere,
+    detach: async () => { native.open = true; edit(id, layout => placeDeviceDetached(layout, binding)) },
+  })
+  assert.equal(await popOut('A'), 'popped-out')
+  assert.equal(await popOut('B'), 'focused', 'the window A opened is focused from B, not opened again')
+  assert.equal(holds('A') && holds('B'), true, 'both workspaces show the one window as popped out')
+  // The window closes (the Destroyed -> window-redock event, which names only A): every workspace's entry leaves.
+  native.open = false
+  dropEverywhere()
+  assert.equal(holds('A') || holds('B'), false, 'no workspace keeps a popped-out entry for a window that is gone')
+  assert.equal(workspaces.every(w => w.layout.surfaces[DEVICE] === undefined), true, 'and no binding is left behind')
+})
+
+test('a single-workspace pop-out and redock is unchanged: the window opens, and closing it returns the device to its rack', async () => {
+  const {dropDetachedAcrossWorkspaces} = await import('../../../../desktop/cradle/src/workspace/store.ts')
+  let workspaces = [{id: 'A', name: 'A', writing: '', layout: {root: null, surfaces: {}, detached: [], closedStack: [], focusedGroupId: null, agencyDepth: 'panel'}}]
+  const native = {open: false}
+  const outcomes = []
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    outcomes.push(await popOutDeviceWindow({
+      focusExisting: async () => native.open,
+      recordFocused: () => {},
+      dropStale: () => { workspaces = dropDetachedAcrossWorkspaces(workspaces, DEVICE) },
+      detach: async () => { native.open = true; workspaces = [{...workspaces[0], layout: placeDeviceDetached(workspaces[0].layout, binding)}] },
+    }))
+  }
+  assert.deepEqual(outcomes, ['popped-out', 'focused'], 'the second pop-out focuses the one window')
+  native.open = false
+  workspaces = dropDetachedAcrossWorkspaces(workspaces, DEVICE)
+  assert.deepEqual(workspaces[0].layout.detached, [], 'the device is docked again in its rack')
 })
 
 test('finding 6: after a stale drop the device pops out with exactly one fresh entry, and the pane is not re-kept', () => {
@@ -113,12 +153,19 @@ test('finding 6: after a stale drop the device pops out with exactly one fresh e
 test('the Workbench wires the device doors through the shared decisions, not its own string checks', async () => {
   const workbench = await readFile(new URL('../src/native/Workbench.tsx', import.meta.url), 'utf8')
   const popOut = workbench.slice(workbench.indexOf('const popOutDevice'), workbench.indexOf('const redockDevice'))
-  assert.match(popOut, /popOutDeviceWindow\(/)
+  assert.match(popOut, /popOutDeviceWindow\(\{/)
+  assert.doesNotMatch(popOut, /hasEntry|latest\.current\.book\.current\.layout\.detached/, 'the native window decides, not one workspace entry')
   assert.match(popOut, /window_focus_subject/)
-  assert.match(popOut, /dropDetached\(workspaceId, id\)/)
+  assert.match(popOut, /dropDetachedEverywhere\(id\)/, 'stale entries leave every workspace of the book')
+  assert.doesNotMatch(popOut, /dropDetached\(workspaceId/, 'no single-workspace drop on the device path')
   assert.doesNotMatch(popOut, /layout\.focusedGroupId/, 'a device never takes the focused pane group')
   assert.doesNotMatch(popOut, /\.some\(entry => entry\.surfaceId === id\)\) return/, 'a popped device is not an early return')
   const redock = workbench.slice(workbench.indexOf('const redockDevice'), workbench.indexOf('// The device door the racks read'))
   assert.match(redock, /deviceWindowGone\(cause\)/)
+  assert.match(redock, /workspaceHoldsDetached\(w, id\)/, 'the window is asked in every workspace that holds it')
+  assert.match(redock, /dropDetachedEverywhere\(id\)/)
   assert.doesNotMatch(redock, /includes\('no matching detached Surface'\)/)
+  const redockListener = workbench.slice(workbench.indexOf("listen<{workspace_id"), workbench.indexOf("if (!live) stop(); else unlisten.push(stop)"))
+  assert.match(redockListener, /if \(binding\.kind === 'device'\) \{[\s\S]*dropDetachedEverywhere\(binding\.id\)/, 'a device window close drops the entry everywhere')
+  assert.ok(redockListener.indexOf("binding.kind === 'device'") < redockListener.indexOf('const owner ='), 'the device branch runs before the owner check')
 })

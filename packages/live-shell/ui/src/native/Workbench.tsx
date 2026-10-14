@@ -1,5 +1,5 @@
 import {contributionUnavailable} from './contributions'
-import {deviceBindingId, deviceWindowGone, nativeDetachedBodySupported, placeDeviceDetached, popOutDeviceWindow, publishDeviceWindowHost, type DeviceBinding, type DeviceDetachIdentity} from './detachedKinds'
+import {deviceBindingId, deviceWindowGone, nativeDetachedBodySupported, placeDeviceDetached, popOutDeviceWindow, publishDeviceWindowHost, workspaceHoldsDetached, type DeviceBinding, type DeviceDetachIdentity} from './detachedKinds'
 /** Receiving frame over the original native Workbench and the one continuity book. */
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import {Workbench, GroupPane, type WorkbenchProps} from '../../../../../desktop/cradle/src/surface/Workbench'
@@ -294,37 +294,48 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
     origin.book.setLayout(layout => detachBinding(layout, id))
   }
   /** The device pop-out (seam 8): the existing detach door carries the device's own binding, whose id is the face's and whose
-   * identity travels with it. The layout holds it in the detached set, never as a centre tab. A device whose window is already
-   * open is focused, never popped out twice; an entry whose window is gone is dropped and the device pops out afresh. */
+   * identity travels with it. The layout holds it in the detached set, never as a centre tab. One device, one window across the
+   * book: the native window decides. A window that stands for the device (opened from any workspace) is focused, and this
+   * workspace records its entry; no window stands, so every workspace's entry is stale and the device pops out afresh. */
   const popOutDevice = async (identity: DeviceDetachIdentity) => {
     const id = deviceBindingId(identity)
     const binding: DeviceBinding = {id, kind: 'device', title: `${identity.family} · ${identity.face}`, ref: id, device: identity}
     const {origin, current, workspaceId} = capture()
     if (origin.kernel.transport.kind !== 'tauri') throw Error('Detached native windows are unavailable in the development browser.')
     const {invoke} = await import('@tauri-apps/api/core')
-    await popOutDeviceWindow(!!latest.current.book.current.layout.detached?.some(entry => entry.surfaceId === id), {
+    await popOutDeviceWindow({
       // windows.rs answers false when no window stands for the device's binding reference.
       focusExisting: () => ownerIO(current, () => invoke<boolean>('window_focus_subject', {reference: id})),
-      dropStale: () => { current(); origin.book.dropDetached(workspaceId, id) },
+      recordFocused: () => {
+        current()
+        origin.book.setLayout(layout => layout.detached?.some(entry => entry.surfaceId === id) ? layout : placeDeviceDetached(layout, binding))
+      },
+      dropStale: () => { current(); origin.book.dropDetachedEverywhere(id) },
       detach: async () => {
         await ownerIO(current, () => invoke('window_detach', {workspaceId, binding, bounds: origin.book.current.layout.windowBounds?.[id] ?? null}))
         origin.book.setLayout(layout => placeDeviceDetached(layout, binding))
       },
     })
   }
-  /** The device returns to its rack through the existing window door: closing its window runs the same redock lifecycle. */
+  /** The device returns to its rack through the existing window door: closing its window runs the same redock lifecycle.
+   * windows.rs answers for the workspace that opened the window, so the holders are tried in turn, the current one first; the
+   * first that answers closes the window, and the close event drops the entry everywhere. No holder answers: the window is gone. */
   const redockDevice = async (identity: DeviceDetachIdentity) => {
     const id = deviceBindingId(identity)
     const {origin, current, workspaceId} = capture()
     const {invoke} = await import('@tauri-apps/api/core')
-    try {
-      await ownerIO(current, () => invoke('window_redock_surface', {workspaceId, surfaceId: id}))
-    } catch (cause) {
-      // No open window answers for this device: its detached entry is stale, and the rack shows it docked again.
-      if (!deviceWindowGone(cause)) throw cause
-      current()
-      origin.book.dropDetached(workspaceId, id)
+    const holders = [workspaceId, ...origin.book.workspaces.filter(w => w.id !== workspaceId && workspaceHoldsDetached(w, id)).map(w => w.id)]
+    for (const holder of holders) {
+      try {
+        await ownerIO(current, () => invoke('window_redock_surface', {workspaceId: holder, surfaceId: id}))
+        return
+      } catch (cause) {
+        if (!deviceWindowGone(cause)) throw cause
+      }
     }
+    // No open window answers for this device: its detached entries are stale, and the rack shows it docked again.
+    current()
+    origin.book.dropDetachedEverywhere(id)
   }
   // The device door the racks read. Republished when the detached set changes, so each rack re-reads its devices' state.
   const deviceDoors = useRef<{popOut: (identity: DeviceDetachIdentity) => Promise<void>; redock: (identity: DeviceDetachIdentity) => Promise<void>}>()
@@ -571,14 +582,15 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
         void (async () => {
           current()
           const {workspace_id: id, binding} = event.payload
-          const owner = latest.current.book.workspaces.find(value => value.id === id)
-          if (!owner || ![owner.layout, ...Object.values(owner.modeLayouts ?? {})].some(layout => layout.detached?.some(item => item.surfaceId === binding.id))) return
-          // A device returns to its rack, never as a centre tab: its detached entry and binding leave the layout.
+          // A device returns to its rack, never as a centre tab: one device window stands across the book, so its entry leaves
+          // every workspace (the window may have been opened from another workspace than the one named here).
           if (binding.kind === 'device') {
             current()
-            latest.current.book.dropDetached(id, binding.id)
+            latest.current.book.dropDetachedEverywhere(binding.id)
             return
           }
+          const owner = latest.current.book.workspaces.find(value => value.id === id)
+          if (!owner || ![owner.layout, ...Object.values(owner.modeLayouts ?? {})].some(layout => layout.detached?.some(item => item.surfaceId === binding.id))) return
           await ownerIO(current, () => latest.current.kernel.apply({op: 'state'}))
           current(); latest.current.book.redock(id, binding.id)
         })().catch(cause => {if (live) report(cause)})

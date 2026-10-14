@@ -4,7 +4,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-const {dropWorkspaceDetached} = await import('../src/workspace/store.ts');
+const {dropWorkspaceDetached, dropDetachedAcrossWorkspaces} = await import('../src/workspace/store.ts');
 const {freshLayout} = await import('../src/surface/types.ts');
 
 const DEVICE = 'device:probe/face';
@@ -48,4 +48,25 @@ test('a device popped out of the current layout of the named workspace leaves it
 test('a workspace that holds no entry for the surface is returned as the same object', () => {
   const unrelated = workspace('unrelated', detachedLayout(OTHER_DEVICE), {tech: detachedLayout(KNOWLEDGE)});
   assert.equal(dropWorkspaceDetached(unrelated, DEVICE), unrelated);
+});
+
+test('a device popped out in two workspaces leaves every workspace when its one window closes; no other entry is touched', () => {
+  const first = workspace('first', detachedLayout(DEVICE, KNOWLEDGE), {tech: detachedLayout(DEVICE)});
+  const second = workspace('second', detachedLayout(DEVICE));
+  const unrelated = workspace('unrelated', detachedLayout(OTHER_DEVICE), {tech: detachedLayout(KNOWLEDGE)});
+  const after = dropDetachedAcrossWorkspaces([first, second, unrelated], DEVICE);
+  for (const entry of after.slice(0, 2)) {
+    for (const layout of [entry.layout, ...Object.values(entry.modeLayouts ?? {})]) {
+      assert.equal(layout.detached.some(row => row.surfaceId === DEVICE), false, `${entry.id} keeps no entry for the device`);
+      assert.equal(layout.surfaces[DEVICE], undefined, `${entry.id} keeps no binding for the device`);
+    }
+  }
+  assert.deepEqual(after[0].layout.detached.map(row => row.surfaceId), [KNOWLEDGE], 'the knowledge surface stays detached');
+  assert.equal(after[1].layout.root, null, 'a device never returns as a centre tab');
+  assert.equal(after[2], unrelated, 'a workspace without the entry is the same object');
+});
+
+test('no workspace holding the device returns the same array', () => {
+  const books = [workspace('unrelated', detachedLayout(OTHER_DEVICE))];
+  assert.equal(dropDetachedAcrossWorkspaces(books, DEVICE), books);
 });

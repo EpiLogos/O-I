@@ -190,6 +190,12 @@ export function dropWorkspaceDetached(workspace: Workspace, surfaceId: string): 
   const unchanged = layout === workspace.layout && (!workspace.modeLayouts || Object.entries(workspace.modeLayouts).every(([mode, saved]) => modeLayouts?.[mode as keyof typeof modeLayouts] === saved));
   return unchanged ? workspace : {...workspace, layout, ...(modeLayouts ? {modeLayouts} : {})};
 }
+/** One device window stands for the device across the whole book, so its closing drops the entry from every workspace
+ * (see dropWorkspaceDetached). Returns the same array when no workspace held the entry. */
+export function dropDetachedAcrossWorkspaces(workspaces: Workspace[], surfaceId: string): Workspace[] {
+  const next = workspaces.map(workspace => dropWorkspaceDetached(workspace, surfaceId));
+  return next.every((workspace, index) => workspace === workspaces[index]) ? workspaces : next;
+}
 /**
  * Book versions. v1: one pane tree per workspace (`layout`), with optional
  * presentation fields decoded leniently. v2 (this writer): per-mode trees —
@@ -546,9 +552,12 @@ export function useWorkspaces(options: WorkspaceStorageOptions = {}) {
     const layout=write(w.layout),modeLayouts=w.modeLayouts?Object.fromEntries(Object.entries(w.modeLayouts).map(([mode,saved])=>[mode,write(saved)])) as Workspace['modeLayouts']:undefined;
     return layout===w.layout&&(!w.modeLayouts||Object.entries(w.modeLayouts).every(([mode,saved])=>modeLayouts?.[mode as keyof typeof modeLayouts]===saved))?w:{...w,layout,...(modeLayouts?{modeLayouts}:{})};
   })}));
-  /** A device window closed: its entry leaves the named workspace's layouts, wherever it was popped out from (see
-   * dropWorkspaceDetached). A device never returns as a centre tab. */
-  const dropDetached = (workspaceId: string, surfaceId: string) => setBook(b => ({...b, workspaces: b.workspaces.map(w => w.id === workspaceId ? dropWorkspaceDetached(w, surfaceId) : w)}));
+  /** A device window closed, wherever it was popped out from: its entry leaves every workspace of the book (see
+   * dropDetachedAcrossWorkspaces). A device never returns as a centre tab. No change keeps the same book. */
+  const dropDetachedEverywhere = (surfaceId: string) => setBook(b => {
+    const workspaces = dropDetachedAcrossWorkspaces(b.workspaces, surfaceId);
+    return workspaces === b.workspaces ? b : {...b, workspaces};
+  });
   /** One click, one reload (owner ruling 2026-09-19): retry the load from
    * the protected storage; success clears the standing message, failure
    * re-reports through the same footer path. Pending coalesced state is
@@ -571,5 +580,5 @@ export function useWorkspaces(options: WorkspaceStorageOptions = {}) {
   };
   const showRecovery=()=>{const saved=latest();if(saved)setRecovery({reason:saved.reason,key:saved.key});else setNotice("There is no retained workspace recovery record on this device.");};
   const error=[quarantine,saveError,notice].filter(Boolean).join(" ")||null;
-  return { flushCheckpoint: flushNow, storageNamespace: namespace, switchMode, moveSurface, setContext, replaceSurface, surfaceView, surfaceEngine, showRecovery,recovery,reload,startFresh,recoverAvailable, setCentralFiles, rememberPlace, setProjectNavigation, browseAll, windowBounds, redock, dropDetached, current, setWritingMode, workspaces: book.workspaces, setLayout, setWriting, activate, browse, create, rename, error, dismissError: () => { setQuarantine(null); setSaveError(null); setNotice(null); } };
+  return { flushCheckpoint: flushNow, storageNamespace: namespace, switchMode, moveSurface, setContext, replaceSurface, surfaceView, surfaceEngine, showRecovery,recovery,reload,startFresh,recoverAvailable, setCentralFiles, rememberPlace, setProjectNavigation, browseAll, windowBounds, redock, dropDetachedEverywhere, current, setWritingMode, workspaces: book.workspaces, setLayout, setWriting, activate, browse, create, rename, error, dismissError: () => { setQuarantine(null); setSaveError(null); setNotice(null); } };
 }
