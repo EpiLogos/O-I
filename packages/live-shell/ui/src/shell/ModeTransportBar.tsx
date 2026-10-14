@@ -56,7 +56,7 @@ export function stepOccasion(spine: TimeSpine, direction: 1 | -1 = 1): Occasion 
 }
 
 /** Re-draw when the spine moves (its own subscription; nothing here keeps a clock). */
-function useSpineRevision(spine: TimeSpine | null | undefined): void {
+export function useSpineRevision(spine: TimeSpine | null | undefined): void {
   const [, setRevision] = useState(0)
   useEffect(() => (spine ? spine.subscribe(() => setRevision(value => value + 1)) : undefined), [spine])
 }
@@ -65,7 +65,7 @@ function useSpineRevision(spine: TimeSpine | null | undefined): void {
  * occasion, and the label shows the selected occasion (its basis as first read). The two steppers and the label are the
  * one slot's parts, as the tempo slot's nudges are: they all carry the slot's own data-i. The admission is a separate
  * qualification and is named in the title, never merged into the basis. */
-function occasionStepControl(spine: TimeSpine, meaning: SlotMeaning): ReactNode {
+export function occasionStepControl(spine: TimeSpine, meaning: SlotMeaning): ReactNode {
   const retained = spine.occasions()
   const current = spine.occasion()
   const idle = retained.length === 0
@@ -90,7 +90,7 @@ function occasionStepControl(spine: TimeSpine, meaning: SlotMeaning): ReactNode 
 
 /** Technē's tap slot, Back to Now, over the spine: enabled only while an occasion is selected, and its title says why it
  * is not. Clearing the selection is the spine's own `returnToNow`; retained occasions stay retained. */
-function returnToNowControl(spine: TimeSpine, meaning: SlotMeaning): ReactNode {
+export function returnToNowControl(spine: TimeSpine, meaning: SlotMeaning): ReactNode {
   const selected = spine.occasion() !== null
   const reason = selected
     ? 'Clears the selected occasion; the Now field keeps the driving clock.'
@@ -103,7 +103,7 @@ function returnToNowControl(spine: TimeSpine, meaning: SlotMeaning): ReactNode {
 /** Technē's arm slot, Instrument writes. No instrument write gate stands in the shell: `shell.setWriteArm` is the AGENT's
  * write arm (agent writes land as proposals or directly), not an instrument's, so arming it would be a fake toggle. The slot
  * shows the focused instrument's name and waits; its title names the missing writer owner. */
-function instrumentArmControl(meaning: SlotMeaning, focused: PaneInstrumentId | null | undefined): ReactNode {
+export function instrumentArmControl(meaning: SlotMeaning, focused: PaneInstrumentId | null | undefined): ReactNode {
   const name = focused ? (HOLDERS.find(holder => holder.id === focused)?.title ?? focused) : null
   const line = name
     ? `Focused: ${name}. No instrument write gate is built in the shell: the write arm belongs to the agent, not to the instrument. The Quaternal Logic family holds the lens instruments and declares no instrument writer yet, so this waits for that owner.`

@@ -184,13 +184,17 @@ test('no controls handed in, no action: the grid is read-only and says so; no gr
   assert.match(markup, /aria-label="Stop lead" disabled=""/)
 })
 
-test('with the owner\'s path, three actions name their ops and reach only harness_agent_control, and only for ids the set holds', async () => {
+test('with the owner\'s path, four actions name their ops and reach only harness_agent_control, and only for ids the set holds', async () => {
   const calls = []
   const answer = {ok: true, note: 'stop → state stopped'}
   const set = project(agencyTracks().concat([blank({sessionRef: 'many', spaceRef: 'sp-many', purpose: 'Many', tasks: [
     task(1, 'done one', 'done', NOW - 900_000, NOW - 800_000), task(2, 'live one', 'running', NOW - 90_000, NOW - 5_000),
     task(3, 'queued one', 'queued'), task(4, 'unread one', 'unknown'), soft(5)]})]), {control: async control => { calls.push(control); return answer }})
-  assert.deepEqual(Object.keys(set.actions).sort(), ['launch', 'launchStop', 'stopTrack'], 'no record: the owner has no capture path')
+  assert.deepEqual(Object.keys(set.actions).sort(), ['launch', 'launchStop', 'retry', 'stopTrack'], 'no record: the owner has no capture path')
+  assert.match(set.actions.retry.op, /^harness_agent_control:restart/)
+  assert.deepEqual(await set.actions.retry.run(sessionKey('sess-test')), answer, 'a stalled lane restarts through the owner')
+  assert.equal((await set.actions.retry.run('nope')).ok, false, 'an id the set does not hold is refused')
+  assert.deepEqual(calls.splice(0), ['restart'], 'the retry reached the owner once, as restart; the counts below are the other actions\'')
   assert.deepEqual([set.actions.stopTrack.op, set.actions.launch.op, set.actions.launchStop.op], [FACTORY_STOP_OP, FACTORY_LAUNCH_OP, FACTORY_BATCH_OP])
   for (const op of [FACTORY_STOP_OP, FACTORY_LAUNCH_OP, FACTORY_BATCH_OP]) assert.match(op, /^harness_agent_control:/)
   const byLabel = label => set.clips.find(c => c.label === label).id

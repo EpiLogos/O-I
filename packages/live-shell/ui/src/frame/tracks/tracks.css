@@ -1,45 +1,103 @@
-/* The one Session grid and Arrangement ruler (FOUNDATION F3). Craft floor: world-shell-mockup.html .sg/.trk/.cs and the ruler. */
-.sg { position: absolute; inset: 0; display: flex; overflow: auto; background: var(--bg-2) }
+/* The one Session grid and Arrangement ruler (FOUNDATION F3). Craft floor: world-shell-mockup.html .sg/.trk/.cs and the ruler,
+   agent-shell-mockup.html .trk.grp/.cs.grp/.stoprow/.needle/.qd (ported from agent/agentShell.css). Shell tokens only: a
+   track's own colour arrives as --tc. --stall exists only inside the agent frame, so the stall colour falls back to the
+   shell's amber rather than dropping the whole declaration. */
+.sg-pane, .tl { --stalled: var(--stall, var(--accent-dim, var(--accent))) }
+
+/* Session */
+.sg-pane { position: absolute; inset: 0; display: flex; flex-direction: column; background: var(--bg-2) }
+.sg { flex: 1; min-height: 0; display: flex; overflow: auto; background: var(--bg-2) }
 .trk { flex: none; width: 122px; display: flex; flex-direction: column; border-right: 2px solid var(--line); position: relative }
-.trk .thd { height: 26px; flex: none; display: flex; align-items: center; gap: 4px; padding: 0 6px; background: var(--tc); color: var(--bg-0); font-size: 10px; font-weight: 500; border: 0; border-bottom: 2px solid var(--line); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left }
+.trk .thd { height: 26px; flex: none; display: flex; align-items: center; gap: 4px; padding: 0 6px; padding-left: calc(6px + var(--rails, 0) * 4px); background: var(--tc); color: var(--bg-0); font-size: 10px; font-weight: 500; border: 0; border-bottom: 2px solid var(--line); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left }
 .trk .thd.sel { box-shadow: inset 0 0 0 1px var(--accent) }
 .trk.sub { width: 104px }
-.trk.sub .thd { font-weight: 400; font-size: 9.5px; padding-left: calc(6px + var(--rail, 3px)) }
-.trk .rail { position: absolute; left: 0; top: 0; bottom: 0; width: var(--rail, 3px); background: var(--tc); opacity: .9; z-index: 1 }
-.cs { height: 28px; flex: none; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 5px; padding: 0 6px; font-size: 10px; white-space: nowrap; overflow: hidden; color: var(--text-dim) }
+.trk.sub .thd { font-weight: 400; font-size: 9.5px }
+/* A track others sit under: a coloured band over the group's dark head, its colour carried down the rule beneath it. */
+.trk[data-group] .thd { padding-left: calc(6px + var(--rails, 0) * 4px + 12px); padding-bottom: 5px; background: linear-gradient(var(--tc), var(--tc)) top / 100% 21px no-repeat, var(--bg-1); border-bottom-color: var(--tc) }
+.trk[data-stalled] .thd { border-bottom-color: var(--stalled) }
+.trk .gf { position: absolute; top: 0; left: calc(var(--rails, 0) * 4px + 2px); width: 12px; height: 21px; z-index: 3; display: grid; place-items: center; padding: 0; background: none; border: 0; color: var(--bg-0); font-size: 8px }
+/* One rail per ancestor, each in that ancestor's colour. */
+.rails { position: absolute; left: 0; top: 0; bottom: 0; display: flex; pointer-events: none; z-index: 2 }
+.rails i { width: 3px; height: 100%; margin-right: 1px; opacity: .9 }
+
+.cs { height: 28px; flex: none; position: relative; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 5px; padding: 0 6px; font-size: 10px; white-space: nowrap; overflow: hidden; color: var(--text-dim) }
 .cs.clip { background: var(--tc); color: var(--bg-0); cursor: pointer }
 .cs.clip.stopped { opacity: .55 }
 .cs.clip.sel { box-shadow: inset 0 0 0 1px var(--accent) }
-.cs.clip.stalled { background: repeating-linear-gradient(135deg, var(--tc) 0 6px, var(--stall) 6px 9px) }
+.cs.clip.stalled { background: repeating-linear-gradient(135deg, var(--tc) 0 7px, color-mix(in srgb, var(--stalled) 33%, transparent) 7px 9px) }
+.cs.clip.stalled .tri { border-left-color: var(--stalled) }
+/* Waiting is not stopped: a dashed edge on a faint ground, its triangle blinking fast (Live's queued-to-launch blink). */
+.cs.clip.waiting { background: color-mix(in srgb, var(--tc) 30%, var(--bg-2)); color: var(--text); outline: 1px dashed var(--tc); outline-offset: -2px }
+.cs.clip.waiting .tri { border-left-color: var(--tc); animation: tracks-blink .35s steps(2) infinite }
 .cs.clip.recording { box-shadow: inset 3px 0 0 var(--rec) }
 .cs .cs-label { overflow: hidden; text-overflow: ellipsis }
+.cs .cs-note { flex: none; font-size: 9px; opacity: .8 }
 .cs .cs-takes { margin-left: auto; font-size: 9px; padding: 0 3px; border: 1px solid currentColor; opacity: .7 }
 .cs .tri { width: 0; height: 0; padding: 0; background: none; border: 0; border-left: 7px solid var(--bg-0); border-top: 4.5px solid transparent; border-bottom: 4.5px solid transparent; flex: none; opacity: .75 }
 .cs .tri:disabled { opacity: .3 }
 .cs.clip.running .tri { animation: tracks-blink 1s steps(2) infinite }
 .cs .sg2 { width: 9px; height: 9px; padding: 0; background: none; border: 1px solid var(--line); flex: none }
+.cs .sg2:hover:not(:disabled) { border-color: var(--text-faint) }
 .cs .sg2:disabled { opacity: .5 }
+/* A group's cell in a row it has no clip in: one tick per member's clip, by that clip's status. A read, not a clip. */
+.cs.roll { background: var(--bg-1); padding: 3px 4px; gap: 2px }
+.cs.roll i { height: 100%; flex: 1; background: var(--tc); opacity: .85 }
+.cs.roll i[data-status="running"] { opacity: 1 }
+.cs.roll i[data-status="stopped"] { opacity: .45 }
+.cs.roll i[data-status="waiting"] { background: none; outline: 1px dashed var(--tc); outline-offset: -1px }
+.cs.roll i[data-status="undisclosed"] { background: none; outline: 1px solid var(--tc); outline-offset: -1px }
+.cs.roll i[data-status="stalled"] { background: var(--stalled); opacity: 1 }
+/* The owner's answer to a press, marked where it was pressed. */
+.cs[data-receipt]::after, .trk-foot .rt[data-receipt]::after { content: ''; position: absolute; right: 2px; top: 2px; width: 5px; height: 5px; background: var(--accent) }
+.cs[data-receipt="refused"]::after, .trk-foot .rt[data-receipt="refused"]::after { background: var(--rec) }
+/* The track's foot, only where the set carries a retry: it lights while a lane in here has stalled. */
+.trk-foot { margin-top: auto; height: 22px; flex: none; display: flex; align-items: center; gap: 3px; padding: 0 4px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line) }
+.trk-foot .rt { position: relative; width: 18px; height: 16px; padding: 0; display: grid; place-items: center; background: var(--bg-0); border: 1px solid var(--line); color: var(--text-faint); font-size: 11px }
+.trk-foot .rt.lit { background: var(--stalled); color: var(--bg-0); border-color: var(--stalled); animation: tracks-blink 1.2s steps(2) infinite }
 .trk-main { width: 100px; --tc: var(--bg-1) }
 .trk-main .thd { background: var(--bg-1); color: var(--text-dim) }
 .trk-main .stop-launch { background: none; border: 0; padding: 0 2px; color: var(--text-dim); font-size: 10px }
 .trk-main .stop-launch:disabled { opacity: .4 }
 .sg-fill { flex: 1; background: var(--bg-2) }
+.sg-receipt { flex: none; display: flex; align-items: center; gap: 8px; margin: 0; padding: 3px 8px; font-size: 10px; color: var(--text-dim); background: var(--bg-1); border-top: 1px solid var(--line-strong) }
+.sg-receipt b { font-weight: 500; color: var(--text) }
+.sg-receipt span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.sg-receipt[data-ok="false"] span { color: var(--rec) }
+.sg-receipt button { flex: none; padding: 0 4px; color: var(--text-faint) }
 @keyframes tracks-blink { 50% { opacity: .2 } }
 
+/* Arrangement */
 .tl { position: absolute; inset: 0; overflow: auto; background: var(--bg-2); display: flex; flex-direction: column }
 .tl-ruler, .tl-lane { display: grid; grid-template-columns: 132px 1fr; flex: none }
-.tl-ruler { height: 22px; border-bottom: 1px solid var(--line-strong); background: var(--bg-1); position: sticky; top: 0; z-index: 2 }
-.tl-marks { position: relative; font-size: 9px; color: var(--text-faint) }
-.tl-marks span { position: absolute; top: 5px; transform: translateX(2px); border-left: 1px solid var(--line); padding-left: 3px; height: 16px }
+.tl-ruler { height: 22px; border-bottom: 1px solid var(--line-strong); background: var(--bg-1); position: sticky; top: 0; z-index: 4 }
+.tl-marks { position: relative; overflow: hidden; font-size: 9px; color: var(--text-faint) }
+.tl-marks span { position: absolute; top: 5px; transform: translateX(2px); border-left: 1px solid var(--line); padding-left: 3px; height: 16px; white-space: nowrap }
+.tl-marks span.end { transform: translateX(-100%); border-left: 0; border-right: 1px solid var(--line); padding: 0 3px 0 0 }
 .tl-lane { height: 30px; border-bottom: 1px solid var(--line) }
 .tl-lane.lane-audio { height: 22px }
-.tl-head { display: flex; align-items: center; gap: 6px; padding: 0 8px; background: var(--bg-1); border: 0; border-right: 1px solid var(--line); border-left: 3px solid var(--tc); color: var(--text); font-size: 10px; text-align: left; overflow: hidden; white-space: nowrap; text-overflow: ellipsis }
+.tl-head { position: relative; display: flex; align-items: center; gap: 6px; padding: 0 8px; padding-left: calc(8px + var(--rails, 0) * 4px); background: var(--bg-1); border: 0; border-right: 1px solid var(--line); border-left: 3px solid var(--tc); color: var(--text); font-size: 10px; text-align: left; overflow: hidden; white-space: nowrap; text-overflow: ellipsis }
+.tl-head .rails { left: 3px }
 .tl-head small { color: var(--text-faint); font-size: 9px }
 .tl-head.sel { box-shadow: inset 0 0 0 1px var(--accent) }
-.tl-body { position: relative }
+.tl-body { position: relative; overflow: hidden }
+.tl-now { position: absolute; top: 0; bottom: 0; width: 1px; z-index: 1; pointer-events: none; background: color-mix(in srgb, var(--text) 16%, transparent) }
 .tl-clip { position: absolute; top: 3px; bottom: 3px; background: var(--tc); color: var(--bg-0); border: 0; font-size: 9.5px; padding: 0 4px; text-align: left; overflow: hidden; white-space: nowrap; text-overflow: ellipsis }
 .tl-clip.sel { box-shadow: inset 0 0 0 1px var(--accent) }
-.tl-clip.stalled { background: repeating-linear-gradient(135deg, var(--tc) 0 6px, var(--stall) 6px 9px) }
+.tl-clip.stalled { background: repeating-linear-gradient(135deg, var(--tc) 0 6px, color-mix(in srgb, var(--stalled) 33%, transparent) 6px 9px) }
 .tl-clip.stopped { opacity: .55 }
-.tl-needle { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--accent) }
+.tl-clip.recording { box-shadow: inset 3px 0 0 var(--rec) }
+/* A running clip has no right edge: its needle is the edge, so it fades out at the end. */
+.tl-clip.running { -webkit-mask-image: linear-gradient(90deg, currentColor calc(100% - 30px), transparent); mask-image: linear-gradient(90deg, currentColor calc(100% - 30px), transparent) }
+.tl-clip.waiting { background: color-mix(in srgb, var(--tc) 30%, var(--bg-2)); color: var(--text); outline: 1px dashed var(--tc); outline-offset: -2px }
+/* A waiting clip with no length is a dash and a name: nobody knows how long it will take. */
+.tl-clip.dash { top: 8px; bottom: 8px; display: flex; align-items: center; padding: 0 5px; background: none; outline: 0; border: 1px dashed var(--tc); color: var(--text-dim); text-overflow: clip }
+.tl-needle { position: absolute; top: 0; bottom: 0; z-index: 3; width: 2px; background: var(--accent); pointer-events: none }
+.tl-needle[data-stalled] { background: var(--stalled) }
+.tl-readout { position: absolute; top: 2px; left: 5px; padding: 0 4px; background: var(--bg-1); border-left: 2px solid var(--stalled); color: var(--stalled); font: 9px ui-monospace, 'SF Mono', Menlo, monospace; white-space: nowrap }
+.tl-needle[data-edge="end"] .tl-readout { left: auto; right: 5px; border-left: 0; border-right: 2px solid var(--stalled) }
+.tl-note { position: sticky; bottom: 0; flex: none; margin: auto 0 0; padding: 3px 8px; font-size: 10px; color: var(--text-faint); background: var(--bg-1); border-top: 1px solid var(--line) }
 .tracks-empty { position: absolute; inset: 0; display: grid; place-items: center; color: var(--text-faint); font-size: 11px; background: var(--bg-2) }
+
+@media (prefers-reduced-motion: reduce) {
+  .cs.clip.running .tri, .cs.clip.waiting .tri, .trk-foot .rt.lit { animation: none }
+}
