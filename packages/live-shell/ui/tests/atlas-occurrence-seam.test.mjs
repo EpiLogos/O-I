@@ -28,7 +28,7 @@ export async function load(u, c, n) {
     compilerOptions: {target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext, jsx: ts.JsxEmit.ReactJSX}}).outputText};
 }`)}`, import.meta.url)
 
-const founding = await import('../src/projections/atlas/provider/archetypalEarthProvider.ts')
+const {adaptFoundingFixture} = await import('./support/foundingFieldFixture.mjs')
 const {buildModel} = await import('../src/projections/atlas/src/data/model.ts')
 const {replaceModelOccurrence, OccurrenceSeamRefusal} = await import('../src/projections/atlas/src/data/occurrenceSeam.ts')
 const {Presences} = await import('../src/projections/atlas/src/globe/presences.ts')
@@ -49,8 +49,8 @@ const founded = () => ({
   joins: [],
 })
 
-// The founding field, as the atlas-provider suite and the occurrence contract build it (FIXTURE).
-const foundingField = () => founding.adaptFoundingField(founded())
+// The founding field, as the occurrence contract builds it (FIXTURE; tests/support/foundingFieldFixture.mjs).
+const foundingField = () => adaptFoundingFixture(founded())
 
 // The Sun's record: the QL adapter's own admission of a stated subsolar point (FIXTURE snapshot, contract-shaped).
 const snapshot = (epochUtc, lat, lon) => ({

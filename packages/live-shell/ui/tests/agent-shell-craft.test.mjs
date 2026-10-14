@@ -89,15 +89,17 @@ test('icon marks come from the specimen set, not ad-hoc paths', async () => {
 })
 
 test('no raw JSON renders as a panel surface — receipts fold, cards name', async () => {
-  for (const name of ['AgentDeviceChain.tsx', 'AgentShellBrowser.tsx', 'AgentDockTileBody.tsx', 'AgentDevicePool.tsx']) {
+  for (const name of ['devices/FactoryDeviceChain.tsx', 'AgentShellBrowser.tsx', 'AgentDockTileBody.tsx', 'AgentDevicePool.tsx']) {
     const source = await read(name)
     // The only allowed JSON.stringify is through safeJson (a folded receipt).
     const raw = [...source.matchAll(/JSON\.stringify\(/g)].length
     const safe = [...source.matchAll(/safeJson\(/g)].length
     assert.ok(raw === 0, `${name} stringify calls must go through safeJson (found ${raw})`)
   }
-  const rack = await read('NativeAgentDeviceRack.tsx')
-  assert.ok(rack.includes('InlineNote'), 'chain cards carry the one-styled-line refusal')
+  // The chain's cards are devices of the runtime (devices/FactoryDeviceChain.tsx); its refusals land as the one disclosure card.
+  const chain = await read('devices/FactoryDeviceChain.tsx')
+  assert.ok(chain.includes('<RefusalCard'), 'the chain\'s refusals render through the landed disclosure card')
+  assert.ok(chain.includes('agent-transport-note'), 'and its receipts as the one styled line')
   const dock = await read('AgentContextDock.tsx')
   assert.ok(dock.includes('agent-lcell'), 'launcher renders preview cells')
   assert.ok(dock.includes('agent-tile-h'), 'tiles carry the tile header anatomy')
