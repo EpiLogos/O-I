@@ -10,6 +10,11 @@
  *   (Workbench's `.surface-retained[hidden]`), the observer reports it, and the
  *   session calls `setVisible(false)`; showing the pane again calls
  *   `setVisible(true)`. The module's state lives until `unmount`.
+ * - each session mounts into its own container inside the pane element. A new
+ *   connection generation remounts the pane during React's commit, when the
+ *   old module's React root defers its unmount: two roots sharing one element
+ *   then tear each other's children out ("removeChild … not a child") and the
+ *   pane draws blank. A container per session keeps every root on its own node.
  */
 import type {ProjectionModuleContext, ProjectionModuleHandle, ProjectionModuleRegistration} from "./projectionModules";
 
@@ -19,10 +24,13 @@ export class ProjectionPaneSession {
   private handle: ProjectionModuleHandle | null = null;
   private live = true;
   private visible = true;
+  private readonly container: HTMLElement | null;
 
   constructor(registration: ProjectionModuleRegistration, context: ProjectionModuleContext, onFault: (message: string) => void) {
+    this.container = ownContainer(context.element);
+    const mounted = this.container ? {...context, element: this.container} : context;
     this.ready = Promise.resolve()
-      .then(() => registration.create(context))
+      .then(() => registration.create(mounted))
       .then(handle => {
         if (!this.live) {handle.unmount(); return;}
         this.handle = handle;
@@ -48,7 +56,20 @@ export class ProjectionPaneSession {
     const handle = this.handle;
     this.handle = null;
     handle?.unmount();
+    // A React root may finish its unmount after this commit; the container leaves once it has.
+    const container = this.container;
+    if (container) setTimeout(() => container.remove(), 0);
   }
+}
+
+/** The session's own node inside the pane element; none where the element is not a DOM node (the node tests). */
+function ownContainer(element: HTMLElement): HTMLElement | null {
+  const document = (element as Partial<HTMLElement>).ownerDocument;
+  if (!document || typeof element.appendChild !== "function") return null;
+  const container = document.createElement("div");
+  container.style.cssText = "position:absolute;inset:0";
+  element.appendChild(container);
+  return container;
 }
 
 /**
