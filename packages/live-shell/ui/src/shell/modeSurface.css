@@ -178,17 +178,6 @@
 
 /* ——— the per-mode detail frames (device density, the guide's §3.7 chain
    anatomy scaled to the strip) ——— */
-.mode-detail-frame { width: min(100%, 980px); border: 1px solid var(--line-strong); background: var(--bg-1); margin: 6px; align-self: flex-start }
-.mode-detail-frame-wide { width: calc(100% - 12px) }
-.mode-detail-frame-head { display: flex; align-items: center; gap: 7px; padding: 5px 8px; border-bottom: 1px solid var(--line); background: var(--bg-0) }
-.mode-detail-frame-mark { display: grid; place-items: center; color: var(--text-dim) }
-.mode-detail-frame-head strong { font-size: 11px }
-.mode-detail-frame-sub { font-size: 10px; color: var(--text-faint); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
-.mode-detail-frame-state { margin-left: auto; flex: none; font-size: 9px; letter-spacing: .04em; color: var(--text-faint); border: 1px dashed var(--line-strong); padding: 1px 5px; white-space: nowrap }
-.mode-detail-frame-note { margin: 7px 8px; font-size: 11px; color: var(--text-dim); line-height: 1.45 }
-.mode-detail-frame-note b { color: var(--text) }
-.mode-detail-chips { list-style: none; display: flex; flex-wrap: wrap; gap: 4px; margin: 0; padding: 0 8px 8px }
-.mode-detail-chip { font-size: 10px; color: var(--text-dim); background: var(--bg-2); border: 1px solid var(--line-strong); padding: 2px 7px }
 
 /* The document device cards — the guide's §3.7 chain anatomy: power lamp
    (dark = no reading), name, owner, fold/pop marks, reason line. */
