@@ -19,10 +19,12 @@
  * Pure presentation over the grammar: no store, no clock, no owner writes.
  */
 
-import {MODE_GRAMMAR, slotDataI, slotMeaning, type SurfMode, type TransportSlotId} from './modeGrammar'
+import {useEffect, useState, type ReactNode} from 'react'
+import {MODE_GRAMMAR, slotDataI, slotMeaning, type SlotMeaning, type SurfMode, type TransportSlotId} from './modeGrammar'
 import {Icon as CutIcon} from '../inhabitants/sdk/Icon'
 import {transportBindingForSlot, transportBindingRow} from '../inhabitants/sdk/define'
 import type {SdkModeName} from '../inhabitants/sdk/modes'
+import type {Occasion, TimeSpine} from '../timeline/timeSpine'
 import './modeSurface.css'
 
 /** One real reading a mode's transport may show: the owner's value and the
@@ -30,9 +32,58 @@ import './modeSurface.css'
 export type ModeTransportReadout = {value: string; title: string}
 export type ModeTransportReadouts = Partial<Record<TransportSlotId, ModeTransportReadout>>
 
-export function ModeTransportBar({mode, readouts}: {mode: SurfMode; readouts?: ModeTransportReadouts}) {
+/** The next retained occasion in the spine's own order, wrapping. It is reopened THROUGH the spine, so an exact saved
+ * occasion keeps its snapshot basis and only the selection moves (the K8 law: reopening never re-bases). Null when no
+ * occasion is retained. The spine is the World timeline's own: this is the same selection its chips drive. */
+export function stepOccasion(spine: TimeSpine): Occasion | null {
+  const retained = spine.occasions()
+  if (!retained.length) return null
+  const current = spine.occasion()
+  const index = current ? retained.findIndex(entry => entry.basis.ref === current.basis.ref) : -1
+  const {basis} = retained[(index + 1) % retained.length]
+  return spine.selectOccasion({
+    subject_ref: basis.ref,
+    instant_unix_ms: basis.instantUnixMs,
+    summary: basis.summary ?? undefined,
+    evidence_refs: [...basis.evidenceRefs],
+    day_ref: basis.civilDayRef,
+  }, basis.retainedAtUnixMs)
+}
+
+/** Re-draw when the spine moves (its own subscription; nothing here keeps a clock). */
+function useSpineRevision(spine: TimeSpine | null | undefined): void {
+  const [, setRevision] = useState(0)
+  useEffect(() => (spine ? spine.subscribe(() => setRevision(value => value + 1)) : undefined), [spine])
+}
+
+/** The Occasion slot, drawn live: it shows the stepped occasion (its basis as first read, its admission as a separate
+ * qualification) and steps to the next retained one. Its data-i is the grammar's own meaning for the slot. */
+function occasionStepControl(spine: TimeSpine, meaning: SlotMeaning): ReactNode {
+  const retained = spine.occasions()
+  const current = spine.occasion()
+  const text = current ? (current.basis.summary ?? current.basis.ref) : retained.length ? `${retained.length} retained` : 'none retained'
+  const admission = current?.admission
+    ? `current admission: ${admissionWord(current.admission.admitted)} — ${current.admission.disclosure}`
+    : current ? 'current admission not yet qualified against a fresh reading' : 'no occasion selected'
+  return <button type="button" className="native-control" data-occasion-step data-i={slotDataI(meaning)}
+    aria-label={meaning.label} disabled={retained.length === 0}
+    title={`${meaning.label} — ${meaning.fn}. Steps to the next of ${retained.length} retained occasion${retained.length === 1 ? '' : 's'}; ${admission}.`}
+    onClick={() => { stepOccasion(spine) }}>
+    <CutIcon name="loop" size={13} /> <span>{text.slice(0, 24)}{text.length > 24 ? '…' : ''}</span>
+  </button>
+}
+
+function admissionWord(admitted: boolean): string {
+  return admitted ? 'admitted' : 'no longer in the reading'
+}
+
+export function ModeTransportBar({mode, readouts, timeSpine}: {mode: SurfMode; readouts?: ModeTransportReadouts; timeSpine?: TimeSpine | null}) {
   const grammar = MODE_GRAMMAR[mode]
+  useSpineRevision(timeSpine)
   const meaning = (id: TransportSlotId) => slotMeaning(mode, id)
+  // Techne's loop slot is the Occasion (its grammar meaning: the saved occasion keeps its snapshot and separately
+  // qualifies its admission). With the spine held it steps the occasion; without one it stays the drawn waiting state.
+  const occasionStep = mode === 'techne' && timeSpine ? occasionStepControl(timeSpine, meaning('loop')) : null
   const dataI = (id: TransportSlotId) => ({'data-i': slotDataI(meaning(id))})
   // The ligaments' honesty at the slot grain: a slot a family has BOUND to
   // a §14 row names that binding in its waiting line (the owner op and its
@@ -90,7 +141,7 @@ export function ModeTransportBar({mode, readouts}: {mode: SurfMode; readouts?: M
     <div className="transport-loop transport-group">
       <output className="position-field" {...dataI('punch-in')} title={waiting('punch-in')} aria-label={meaning('punch-in').label}>{readout('punch-in').value}</output>
       <button type="button" className="native-control" disabled {...hold('punch-in')}><CutIcon name="punchIn" size={14} /></button>
-      <button type="button" className="native-control" disabled {...hold('loop')}><CutIcon name="loop" size={13} /></button>
+      {occasionStep ?? <button type="button" className="native-control" disabled {...hold('loop')}><CutIcon name="loop" size={13} /></button>}
       <button type="button" className="native-control" disabled {...hold('punch-out')}><CutIcon name="punchOut" size={14} /></button>
       <output className="position-field" {...dataI('loop-length')} title={waiting('loop-length')} aria-label={meaning('loop-length').label}>{readout('loop-length').value}</output>
     </div>

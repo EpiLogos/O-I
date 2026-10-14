@@ -121,6 +121,10 @@ export interface InhabitantPanelSlot {
 export const DETACHED_KINDS = [
   'source', 'knowledge', 'file', 'encounter', 'browser', 'terminal',
   'flow', 'object', 'draft', 'system', 'explore', 'presentation',
+  // A device face's own pop-out (seam 8): the family declares `device` beside its faces' pop-out lifecycle, and the
+  // identity travels with the binding (native/detachedKinds.ts DeviceDetachIdentity). Native admission lands with the
+  // receiving frame's device body; until then no native owner admits it.
+  'device',
 ] as const
 export type DetachedKind = (typeof DETACHED_KINDS)[number]
 

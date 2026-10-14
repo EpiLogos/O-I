@@ -26,6 +26,7 @@ import {useEffect, useState, type ReactNode} from 'react'
 
 import type {CentralLocation, KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
 import {faceKind, type InhabitantFaceDeclaration, type InhabitantManifest} from './manifest.ts'
+import {deviceBindingId, deviceIdentityFault, type DeviceDetachIdentity} from '../native/detachedKinds'
 import {DocumentDayDieFace} from './DocumentDayDieFace'
 import {FlowFace} from './DocumentFlowFace'
 import {NaraConversationFace} from './ConversationNaraFace'
@@ -55,9 +56,20 @@ export interface InhabitantRackProps {
    * (`heldBy`) dock expanded and every other face folds — the lock's "the
    * focused lens expanded, the others folded". Absent → every face folds. */
   readonly focusInstrument?: string | null
+  /** The host's native device windows (seam 8). A face pops out through `popOut` only where its family declares the
+   * device detached kind and the face declares pop-out; `poppedOut` says where a device lives; `redock` returns it.
+   * Absent → the pop-out mark stands disabled: the honest state where no host door exists. */
+  readonly deviceWindows?: DeviceWindowHost | null
 }
 
-export function InhabitantRack({manifests, transport, day, flow, conversation, projects, instrumentReading, focusInstrument}: InhabitantRackProps) {
+/** The host door for popped-out devices. The rack never opens a window itself: the host's existing detach door does. */
+export interface DeviceWindowHost {
+  readonly popOut: (identity: DeviceDetachIdentity) => void
+  readonly redock: (identity: DeviceDetachIdentity) => void
+  readonly poppedOut: (identity: DeviceDetachIdentity) => boolean
+}
+
+export function InhabitantRack({manifests, transport, day, flow, conversation, projects, instrumentReading, focusInstrument, deviceWindows}: InhabitantRackProps) {
   const families = manifests.map(manifest => ({manifest, faces: manifest.faces}))
   const total = families.reduce((count, family) => count + family.faces.length, 0)
   return (
@@ -69,7 +81,7 @@ export function InhabitantRack({manifests, transport, day, flow, conversation, p
             {faces.map(face => (
               <InhabitantFace key={`${manifest.id}:${face.id}`} face={face} manifest={manifest}
                 transport={transport} day={day} flow={flow} conversation={conversation} projects={projects}
-                instrumentReading={instrumentReading} focusInstrument={focusInstrument}/>
+                instrumentReading={instrumentReading} focusInstrument={focusInstrument} deviceWindows={deviceWindows}/>
             ))}
           </div>
         </section>
@@ -92,6 +104,7 @@ interface FaceProps {
   readonly projects?: readonly {name?: string; path?: string}[]
   readonly instrumentReading?: unknown
   readonly focusInstrument?: string | null
+  readonly deviceWindows?: DeviceWindowHost | null
 }
 
 /** Each face's named mark of the cut — the header's kind reading. A face
@@ -142,7 +155,7 @@ function faceWidth(face: InhabitantFaceDeclaration): number | string {
 
 /** One face on the chain: the strip always; the body when expanded (dock/
  * expand — pop-out is declared and rides the pane engine's detach door). */
-function InhabitantFace({face, manifest, transport, day, flow, conversation, projects, instrumentReading, focusInstrument}: FaceProps) {
+function InhabitantFace({face, manifest, transport, day, flow, conversation, projects, instrumentReading, focusInstrument, deviceWindows}: FaceProps) {
   // The focused instrument's faces dock expanded; a change of focus re-stands
   // every face (held → expanded, the rest folded). Without a focus, a face
   // starts folded, as before.
@@ -155,7 +168,6 @@ function InhabitantFace({face, manifest, transport, day, flow, conversation, pro
   const waiting = face.admission === 'waiting'
   const dockable = (face.dock ?? ['dock']).includes('dock')
   const expandable = (face.dock ?? ['dock']).includes('expand') && !waiting
-  const popOutDeclared = (face.dock ?? ['dock']).includes('pop-out')
   const mark = FACE_MARKS[face.id]
 
   // The power light is a reading. Admitted parameter faces carry the hollow
@@ -169,40 +181,41 @@ function InhabitantFace({face, manifest, transport, day, flow, conversation, pro
       ? qlInstrumentLight(instrumentReading ?? null)
       : {state: 'admitted', title: 'Admitted at the manifest door — the native owner exists; its registry owns the controls, this strip holds no live reading'}
 
-  let body: ReactNode = null
-  if (!waiting && expanded) {
-    if (face.id === 'day-die' && day) {
-      body = <DocumentDayDieFace transport={transport} project={day.project} sourceRef={day.sourceRef}
-        documentId={day.documentId} projects={projects}/>
-    } else if (face.id === 'flow-document' && flow) {
-      body = <FlowFace transport={transport} location={flow.location}/>
-    } else if (face.id === 'nara-conversation') {
-      body = <NaraConversationFace transport={transport} project={conversation?.project ?? null}
-        expressionRef={conversation?.expressionRef ?? null} conversation={conversation?.conversation ?? null}/>
-    } else if (face.id === 'ql-instrument') {
-      // [L9 musical family] the QL field/PCM owner's instrument face. The
-      // reading arrives as the host received it (raw); the face parses and
-      // renders the honest refusing state where no owner reading stands.
-      body = <QlInstrumentBody reading={instrumentReading ?? null}/>
-    } else if (isAtlasFaceId(face.id)) {
-      // [atlas family] the Earth's own controls on the 0 instrument's rack: each body drives the mounted atlas's own state.
-      body = <AtlasFaceBody faceId={face.id}/>
-    } else if (isKnowledgeFaceId(face.id)) {
-      // [T-KNOWLEDGE-GRAPH-DEVICE] the wiki constellation's own controls: each body drives the open graph's own handle.
-      body = <KnowledgeFaceBody faceId={face.id}/>
-    }
+  // Seam 8: a popped-out device lives in its own native window. Its identity is the manifest's family and face with the
+  // aperture the face reads; the rack holds no second copy of it. While popped out the rack draws no body.
+  const popOutDeclared = (face.dock ?? ['dock']).includes('pop-out')
+  const deviceKindDeclared = (manifest.detachedKinds ?? []).includes('device')
+  const identity: DeviceDetachIdentity = {
+    family: manifest.id,
+    face: face.id,
+    aperture: {
+      day: day ? {project: day.project, sourceRef: day.sourceRef, documentId: day.documentId} : null,
+      flow: flow ?? null,
+      conversation: conversation ?? null,
+      instrument: focusInstrument ?? null,
+    },
   }
+  const popped = !waiting && !!deviceWindows && deviceWindows.poppedOut(identity)
+  const popOutHost = !waiting && popOutDeclared && deviceKindDeclared && deviceWindows ? deviceWindows : null
+  const onPopOut = popOutHost && !popped ? () => popOutHost.popOut(identity) : null
+  const onRedock = popOutHost && popped ? () => popOutHost.redock(identity) : null
 
-  const emptySlot = !waiting && expanded && body === null && kind !== 'parameter'
+  const body: ReactNode = !waiting && expanded && !popped
+    ? faceBodyFor(face, {transport, day, flow, conversation, projects, instrumentReading})
+    : null
+
+  const emptySlot = !waiting && expanded && !popped && body === null && kind !== 'parameter'
     ? emptySlotLabel(face.id)
     : null
-  const note = waiting
-    ? face.note
-    : kind === 'parameter'
-      ? face.note ?? `declared on the ${manifest.id} chain: ${face.presentations.join(' · ')}`
-      : !expanded
-        ? emptySlotHint(face.id)
-        : undefined
+  const note = popped
+    ? 'popped out — this device lives in its own native window; redock returns it to this rack'
+    : waiting
+      ? face.note
+      : kind === 'parameter'
+        ? face.note ?? `declared on the ${manifest.id} chain: ${face.presentations.join(' · ')}`
+        : !expanded
+          ? emptySlotHint(face.id)
+          : undefined
 
   return (
     <InhabitantCard
@@ -223,12 +236,83 @@ function InhabitantFace({face, manifest, transport, day, flow, conversation, pro
       expanded={expanded}
       onToggle={expandable ? () => setExpanded(value => !value) : null}
       popOut={popOutDeclared}
+      onPopOut={onPopOut}
+      poppedOut={popped}
+      onRedock={onRedock}
       width={faceWidth(face)}
-      data={waiting ? {'waiting-note': face.note} : undefined}
+      data={{'waiting-note': waiting ? face.note : undefined, 'device-binding': popOutDeclared ? deviceBindingId(identity) : undefined}}
     >
       {emptySlot && <p className="inhabitant-device-notice" role="status">{emptySlot}</p>}
       {body}
     </InhabitantCard>
+  )
+}
+
+/** What a face body reads: the aperture and the owner readings the host holds. */
+interface FaceReads {
+  readonly transport: KernelTransportStatus
+  readonly day?: InhabitantRackProps['day']
+  readonly flow?: InhabitantRackProps['flow']
+  readonly conversation?: InhabitantRackProps['conversation']
+  readonly projects?: readonly {name?: string; path?: string}[]
+  readonly instrumentReading?: unknown
+}
+
+/** One face's expanded body, selected by the face's identity and the aperture it reads (null where the face docks no
+ * body). Shared by the rack and by a popped-out device's receiving body, so both draw the same face. */
+export function faceBodyFor(face: InhabitantFaceDeclaration, reads: FaceReads): ReactNode | null {
+  const {transport, day, flow, conversation, projects, instrumentReading} = reads
+  if (face.id === 'day-die' && day) {
+    return <DocumentDayDieFace transport={transport} project={day.project} sourceRef={day.sourceRef}
+      documentId={day.documentId} projects={projects}/>
+  }
+  if (face.id === 'flow-document' && flow) return <FlowFace transport={transport} location={flow.location}/>
+  if (face.id === 'nara-conversation') {
+    return <NaraConversationFace transport={transport} project={conversation?.project ?? null}
+      expressionRef={conversation?.expressionRef ?? null} conversation={conversation?.conversation ?? null}/>
+  }
+  // [L9 musical family] the QL field/PCM owner's instrument face. The reading arrives as the host received it (raw); the
+  // face parses it and renders the honest refusing state where no owner reading stands.
+  if (face.id === 'ql-instrument') return <QlInstrumentBody reading={instrumentReading ?? null}/>
+  // [atlas family] the Earth's own controls on the 0 instrument's rack: each body drives the mounted atlas's own state.
+  if (isAtlasFaceId(face.id)) return <AtlasFaceBody faceId={face.id}/>
+  // [T-KNOWLEDGE-GRAPH-DEVICE] the wiki constellation's own controls: each body drives the open graph's own handle.
+  if (isKnowledgeFaceId(face.id)) return <KnowledgeFaceBody faceId={face.id}/>
+  return null
+}
+
+export interface DeviceFaceProps {
+  readonly identity: DeviceDetachIdentity
+  readonly manifests: readonly InhabitantManifest[]
+  readonly transport: KernelTransportStatus
+  readonly projects?: readonly {name?: string; path?: string}[]
+  /** The QL owner's reading as the receiving frame holds it (raw; the instrument face parses it). */
+  readonly instrumentReading?: unknown
+}
+
+/** The receiving body of a popped-out device (seam 8): the face the identity names, drawn from the same manifest and the
+ * identity's aperture, reading the same owners. A face the manifests no longer carry is refused, named, never drawn. */
+export function DeviceFace({identity, manifests, transport, projects, instrumentReading}: DeviceFaceProps) {
+  const fault = deviceIdentityFault(identity, manifests)
+  const manifest = manifests.find(entry => entry.id === identity.family)
+  const face = manifest?.faces.find(entry => entry.id === identity.face)
+  if (fault || !manifest || !face) {
+    return <p className="inhabitant-device-notice" role="alert" data-device-fault>{fault ?? 'The device is not declared by any admitted family.'}</p>
+  }
+  const body = faceBodyFor(face, {
+    transport, day: identity.aperture.day, flow: identity.aperture.flow,
+    conversation: identity.aperture.conversation, projects, instrumentReading: instrumentReading ?? null,
+  })
+  const light: CardLight = face.id === 'ql-instrument'
+    ? qlInstrumentLight(instrumentReading ?? null)
+    : {state: 'admitted', title: 'Admitted at the manifest door — the native owner exists; its registry owns the controls'}
+  return (
+    <div className="inhabitant-rack" data-device-window data-family={manifest.id} data-device-face={face.id}>
+      <InhabitantCard faceId={face.id} kind={faceKind(face)} light={light} mark={FACE_MARKS[face.id]} title={faceTitle(face.id)}
+        owner={`${faceKind(face)} · popped out`} width={faceWidth(face)} expanded>
+        {body ?? <p className="inhabitant-device-notice" role="status">{emptySlotLabel(face.id)}</p>}
+      </InhabitantCard>
+    </div>
   )
 }
 
