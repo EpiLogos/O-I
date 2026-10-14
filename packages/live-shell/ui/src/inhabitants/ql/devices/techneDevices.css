@@ -1,13 +1,20 @@
-/* The Technē instruments' devices on the chain (T-DEVICES-TECHNE). Shell tokens only. The runtime's own sheet (frame/devices/devices.css)
-   sizes a device's picture for a small drawing; these faces' pictures are their bodies, so the sheet below lets a body show as itself:
-   scrollable in the compact well, whole at its own height in the pool, at the pane's size in a pane. */
-.techne-devices { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start; padding: 4px }
+/* The Technē instruments rack (T-DEVICES-TECHNE; the mockup's Technē device side, world-shell-mockup.html:153 .ifold and :352-359 .inst):
+   the instruments folded to their titles by the runtime's own fold (the SDK's vertical strip, inhabitants/sdk/sdk.css .sdk-face--folded)
+   around the one open instrument, a plate whose columns are the families whose devices it holds. Shell tokens only. The runtime's own
+   sheet (frame/devices/devices.css) sizes a device's picture for a small drawing; these faces' pictures are their bodies, so the sheet
+   below lets a body show as itself: scrollable in the compact well, whole at its own height in the pool, at the pane's size in a pane. */
+.techne-devices { flex: 1; min-width: 0; min-height: 0; display: flex; gap: 6px; align-items: stretch; padding: 4px }
 .techne-family { display: contents }
-.techne-device { position: relative; flex: none }
-.techne-device[data-expanded="false"] { width: 180px }
-.techne-device .sdk-face__title { cursor: pointer }
-.techne-device-unfold { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0; border: 0; background: none; opacity: 0; cursor: pointer }
-.techne-device-unfold:focus-visible { opacity: 1; outline: 1px solid var(--accent); background: none }
+.techne-instrument { flex: none; display: flex; min-height: 0 }
+.techne-instrument > .sdk-face--folded { height: 100% }
+/* The instrument's mark takes the accent the mockup's strip gives its M′ prefix (.ifold b); the strip reads the plain name (lock §9.4:
+   the name, never the M′ address — the address is the strip's title text on hover). */
+.techne-instrument .sdk-face__mark { color: var(--accent) }
+.techne-device { position: relative; flex: none; display: flex; min-height: 0 }
+.techne-device > .sdk-face--folded { height: 100% }
+/* Inside the open instrument a family's devices stand side by side, each its own plate on the column. */
+.techne-section-devices { display: flex; gap: 6px; align-items: stretch; min-height: 0; height: 100% }
+.inst-section .techne-device > .device > .sdk-face { background: var(--bg-1) }
 .techne-picture { width: 100%; box-sizing: border-box; align-self: stretch; text-align: left; font-size: 10.5px; color: var(--text-dim) }
 .techne-standing { display: inline-block; margin: 0 0 3px; padding: 0 5px; font-size: 9.5px; color: var(--text-dim); border: 1px solid var(--line) }
 .techne-standing[data-ql-standing="following"] { color: var(--text); border-color: var(--accent) }
@@ -22,3 +29,27 @@
 :is(.device--whole, .device--full):is([data-device^="quaternal-logic:"], [data-device^="atlas-earth:"], [data-device^="knowledge-graph:"]) .sdk-row--reading .sdk-chip { white-space: normal; max-width: 100% }
 /* Central's devices lead the instrument's on the same row (the ruling: they are never removed): Central's chain takes what it needs. */
 .mode-detail[data-central-devices="true"] > .inhabitant-rack, .mode-detail[data-mode-detail="knowledge-graph-device"] > .inhabitant-rack { flex: 0 1 auto }
+
+/* Technē's event clip (shell/ModeDetail.tsx TechneClipDetail, through frame/detail/ClipView.tsx): the disclosure ladder under the props
+   (the mockup's .sec + rungs, world-shell-mockup.html:1655), the bounded whole (:1656) and the source (:1658). Its sheet stands with the
+   Technē instruments' — the families' Technē presentation, one sheet. */
+.techne-ladder { display: flex; flex-direction: column; gap: 4px; margin: 2px -10px 0 }
+.techne-ladder-head { display: flex; justify-content: space-between; padding: 6px 10px 0; font-size: 10px; color: var(--text-faint) }
+.techne-ladder-rungs { display: flex; gap: 2px; padding: 0 10px 8px }
+.techne-ladder-rungs i { flex: 1; height: 5px; background: var(--bg-0) }
+.techne-constellation { display: block; margin: 0 auto }
+.techne-constellation line { stroke: var(--text); stroke-opacity: .22 }
+.techne-constellation circle { fill: var(--sel) }
+.techne-constellation .techne-constellation-focus { fill: var(--accent) }
+.techne-constellation text { fill: var(--text-dim); font-size: 8.5px }
+.techne-source { padding: 4px 10px; font: 12px/1.55 var(--serif, Georgia, serif); color: var(--text-dim) }
+.techne-source p { margin: 0 }
+.techne-source-ref { margin-bottom: 4px; font: 9.5px var(--mono); color: var(--sel); overflow-wrap: anywhere }
+.techne-source-note { margin-top: 4px; font: 9.5px var(--font-ui); color: var(--text-faint) }
+
+/* The rack is the row's width (the mockup's .inst fills the chain between its folds, :352 flex:1): the open instrument takes what the
+   folds leave and its columns scroll sideways under its head; the folds stay in reach on both sides. */
+.detail-chain .detail-chain-devices:has(> .mode-detail > .techne-devices), .detail-chain .detail-chain-devices:has(> .techne-devices) { flex: 1 1 auto; min-width: 0 }
+.detail-chain .mode-detail:has(> .techne-devices[data-open-instrument]) { flex: 1 1 auto; min-width: 0 }
+.detail-chain .techne-devices[data-techne-devices][data-open-instrument] { flex: 1 1 auto; min-width: 0 }
+.techne-devices > .inst-plate { flex: 1 1 auto; min-width: 0 }

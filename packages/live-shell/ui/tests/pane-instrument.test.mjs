@@ -108,13 +108,13 @@ const expandedOf = (out, faceId) => {
   return match[1]
 }
 
-test('the focused instrument rack: the 0 instrument expands its held faces and folds the others', () => {
+test('the focused instrument rack: the 0 instrument stands open with its held faces; the other instruments fold', () => {
   const out = html(createElement(TechneInstrumentsDetail, {transport, focusInstrument: 'techne:m0'}))
   assert.match(out, /data-focus-instrument="techne:m0"/)
   assert.equal(expandedOf(out, 'graph-tools'), 'true', 'graph-tools is held by techne:m0')
   assert.equal(expandedOf(out, 'mode-switch'), 'true', 'mode-switch is held by techne:m0')
-  assert.equal(expandedOf(out, 'torus'), 'false', 'a face the instrument does not hold stays folded')
-  assert.equal(expandedOf(out, 'sky'), 'false')
+  assert.doesNotMatch(out, /data-face-id="torus"|data-face-id="sky"/, 'a face the instrument does not hold is not drawn open: it is inside its own instrument\'s fold')
+  assert.match(out, /data-instrument="techne:m2" data-expanded="false"/, 'the Timeline folds')
 })
 
 test('the focused rack for the Timeline expands the faces it holds', () => {
@@ -122,14 +122,16 @@ test('the focused rack for the Timeline expands the faces it holds', () => {
   assert.equal(expandedOf(out, 'sky'), 'true')
   assert.equal(expandedOf(out, 'time-control'), 'true')
   assert.equal(expandedOf(out, 'm3-clock'), 'true', 'm3-clock is held by techne:m2 too')
-  assert.equal(expandedOf(out, 'torus'), 'false')
+  assert.doesNotMatch(out, /data-face-id="torus"/, 'the torus is Body · 3:3\'s, not the Timeline\'s')
+  assert.match(out, /data-instrument="techne:m0" data-expanded="false"/)
 })
 
-test('without a focus the Technē rack stands as it did: the QL faces, all folded', () => {
+test('without a focus the Technē rack folds its six instruments; the QL faces none holds stand after them', () => {
   const out = html(createElement(TechneInstrumentsDetail, {transport}))
   assert.doesNotMatch(out, /data-focus-instrument/)
-  assert.equal(expandedOf(out, 'sky'), 'false')
-  assert.doesNotMatch(out, /data-face-id="graph-tools"/, 'the atlas faces are not in the unfocused Technē rack')
+  assert.equal(expandedOf(out, 'torus'), 'false')
+  assert.equal(expandedOf(out, 'ql-instrument'), 'true')
+  assert.doesNotMatch(out, /data-face-id="graph-tools"/, 'the atlas faces are not drawn while their instrument folds')
 })
 
 test('the knowledge graph Device side draws its own family rack, never the 0 rack and never the placeholder', () => {
