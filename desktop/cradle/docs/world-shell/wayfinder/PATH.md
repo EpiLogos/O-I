@@ -106,13 +106,13 @@ bullet twice gets one Sonnet diagnostic; never a third builder attempt.
 
 ## 7. Open claims
 
-One branch, one run (`dlw/build`; the next PR follows #673). Builders are Haiku, three at a
+One branch, one run (`dlw/build`; the open PR is #674). Builders are Haiku, three at a
 time, each with an exclusive zone; the lead converges, commits and keeps
 this table true. Tickets and resolutions live in `tickets/`.
 
 | Ticket | Who | Zone | Since |
 |---|---|---|---|
-| R2 fourth wave: a popped-out device never empties a restored workspace; a device holds no pane slot; a stale device entry clears; no empty trail stop | haiku builder | cradle `surface/layout-codec.mjs`, `workspace/checkpoints.ts`; live-shell `native/Workbench.tsx`, `native/detachedKinds.ts`, `projections/encounterBridge.ts` | 2026-10-14 |
+| R2 fifth wave: review of the fourth-wave fixes and the native IPC ACL | sonnet reviewer | read-only | 2026-10-14 |
 
 #673 landed on main (14 Oct): Phase 5 gates 1–4 (the audit, the migration
 and its first-run apply, the census and the native Live ops), seams 7 and 8's
@@ -135,9 +135,14 @@ lane-3 E15–E22; lane-4 T22–T30; lane-5 T4, T11, T14–T24; the R2 review fix
 owner's widened Scene grammar), T19b (the source opens at its passage), and
 the honest handoff fixes.
 
-Native: the 14 Oct full-suite build at `9c1e41919` (run `20261014T040813Z`)
-was sealed and read back with 6 of 6 owners admitted; computer-use access
-was refused a fourth time, so no screen pass has run. Every target above is scripted and source-read only.
+Native: the 14 Oct full-suite builds at `665906251` and `94f52764` were sealed,
+launched and read back with 6 of 6 owners admitted. The first readback named a
+real fault no scripted test could see: the continuity commands were denied by
+the native IPC ACL (and so, since 25 September, were the Factory working
+surface and the decision confirmation); fixed in `6f41f6f5b`, with a
+conformance test holding registration, manifest and capability together, and
+the second run reads the continuity with no denial. Computer-use access was
+refused a fourth time, so no screen pass has run.
 
 Install seam, what waits on it: the native torus (no ql-field-host in the active suite's QL), the mode
 catalogue (`ql music modes`, QL-MEF #330) and lane-4 T27's terminator (QL's sky snapshot states its
