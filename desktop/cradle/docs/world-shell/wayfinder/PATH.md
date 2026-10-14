@@ -106,23 +106,23 @@ bullet twice gets one Sonnet diagnostic; never a third builder attempt.
 
 ## 7. Open claims
 
-One branch, one run (`dlw/build`; the open PR is #673). Builders are Haiku, three at a
+One branch, one run (`dlw/build`; the next PR follows #673). Builders are Haiku, three at a
 time, each with an exclusive zone; the lead converges, commits and keeps
 this table true. Tickets and resolutions live in `tickets/`.
 
 | Ticket | Who | Zone | Since |
 |---|---|---|---|
-| Seam 8: pop-out only where a face stands alone (Central's three faces, the QL instrument); parameter, atlas and knowledge-graph faces refused at the device door | haiku builder | live-shell `inhabitants/*` manifests, `sdk/define.ts`, `sdk/DEVICE-SDK.md`, `inhabitantRack.tsx`, `native/detachedKinds.ts` | 2026-10-14 |
-| lane-5 T10, T11, T22, T23: the crossing law mounted (journey → scene → back by ref), the journey library's local standing | haiku builder | frame `app.ts`, `store.ts`, `hostedApp.ts`, `journeyPresence.ts`, `journeyPath.ts`; cradle `journey/crossing.ts` | 2026-10-14 |
-| lane-2 T17: the session's time window, set by an explicit act and consumed | haiku builder | cradle session / contract / relation-field state; frame M2′ toolbar and shared time window | 2026-10-14 |
+| R2 fourth wave: a popped-out device never empties a restored workspace; a device holds no pane slot; a stale device entry clears; no empty trail stop | haiku builder | cradle `surface/layout-codec.mjs`, `workspace/checkpoints.ts`; live-shell `native/Workbench.tsx`, `native/detachedKinds.ts`, `projections/encounterBridge.ts` | 2026-10-14 |
 
-Queued: the Earth's Sun follows the shared time window (today it is read once, for the present sky) and its absence is stated on the Earth face, not only logged; flip `ql-sky-earth-adapter` from waiting in `quaternalLogicFamilyManifest.ts` once the manifests are free; record seams 3, 5, 6, 7 and 8 in `UX-SPINE-ALIGNMENT.md` §5.
-
-#673 carries: the E19 quarantine safety fixes, the gates 1–2 audit, the gate 3
-migration and the candidate's first-run apply (`LEGACY-CRADLE-RETIREMENT.md`
-§4.1), gate 4's native Live set and device ops, seam 7 (the transport on the
-one spine) and seam 8's pop-out door. #671 (lane-5 T3/T9, R2 third wave) is
-on main.
+#673 landed on main (14 Oct): Phase 5 gates 1–4 (the audit, the migration
+and its first-run apply, the census and the native Live ops), seams 7 and 8's
+door, the cli lock. After it, on `dlw/build`: all eight spine seams converged
+(scripted or source; `UX-SPINE-ALIGNMENT.md` §5), lane-2 T17, lane-5 T22 and
+the T11 return, the QL instrument owner feed, the Earth's Sun following the
+instant on one occurrence seam, the Earth closing and reopening cleanly, the
+acceptance register at 125 of 126 implemented (D1 superseded by the lens bar,
+the owner's call), and the R2 fourth-wave fixes (continuity never bricks the
+start; the kernel writes only a read set, atomically).
 
 Landed on main through #666 (14 Oct): the torus instrument legs 1–6; the
 Jankó keyboard (the owner's window, presses held by identity); the mode
