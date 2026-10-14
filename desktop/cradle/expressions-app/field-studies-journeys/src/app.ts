@@ -47,6 +47,7 @@ import {CHAKRA_PROFILE_ID} from '../../src/engine/semantics/chakraProfile';
 import type {SemanticBinding,SemanticColorCoupling,SemanticFieldConfig} from '../../src/engine/semantics/semanticTypes';
 import {Journey,Scene,Entity,EntityLayer,TextLayer,Tool,Shape,Vec3,clone,uid,clamp,fieldStudies,oiMark,rethemeMark,sevenCentres,smallLanguage,blankJourney,blankScene,entity,pin,chakraEntities,validateJourney,AutomationLane,SCENE_TRANSITION_MIN,SCENE_TRANSITION_MAX,type MarkThemeReading} from './model.js';
 import {DocumentStore,readLibrary,readLibraryWithOrigins,saveToLibrary,removeFromLibrary,recordLibraryAdoption,adoptedLocalOrigin,libraryOpenPlan,type LibraryOrigin} from './store.js';
+import {decorateLibraryCard,libraryCardStanding} from './libraryCards.js';
 import {bindingEditLabel,connectActLabel,historyTitle,historyToast,historyWaitReason,KERNEL_UPDATE_LABEL,OUTSIDE_UPDATE_REASON,researchMaterialLabel} from './undoLabels.js';
 import {defaultCamera,cameraForSceneView,project,unproject,facePlane,stageScale,stageCentre,basis,Camera} from './camera.js';
 import {FieldEngineAdapter,EngineFrame} from './engine.js';
@@ -1331,16 +1332,7 @@ function renderLibrary(){coverObserver?.disconnect();const {read:library,origins
  for(const button of $('library-page').querySelectorAll<HTMLButtonElement>('button[data-action="load-saved"][data-id]')){
   const id=button.dataset.id!;
   const origin=origins.get(id),bound=id===store.document.id?kernelOriginFor(store.document):undefined;
-  const kernelRef=origin&&origin.kind==='kernel-ref'?origin.ref:bound&&bound.kind==='kernel-ref'?bound.ref:undefined;
-  const adopted=origin&&origin.kind==='local-draft'&&origin.adopted_into?{ref:origin.adopted_into,title:origin.adopted_title??''}:undefined;
-  const note=document.createElement('span');note.className='oi-lib-note';
-  note.textContent=kernelRef?`Kernel copy · ${shortenRef(kernelRef)}`:adopted?`Saved to the kernel as “${adopted.title||shortenRef(adopted.ref)}”`:'Draft in this browser';
-  button.append(note);
-  if(adopted){
-   // The browser draft stays openable beneath the kernel copy the card opens first.
-   const draft=document.createElement('button');draft.type='button';draft.className='oi-lib-note';draft.dataset.action='open-local-draft';draft.dataset.id=id;draft.textContent='Open browser draft';
-   button.closest('article')?.append(draft);
-  }
+  decorateLibraryCard(button,id,libraryCardStanding(origin,bound));
  }
  const documents=new Map([...featured,...saved,store.document,...starters.map(p=>p.expression)].map(j=>[j.id,j]));
  const paint=(image:HTMLImageElement)=>{const j=documents.get(image.dataset.previewId!);if(j){image.src=compositionCover(j.scenes[0]);image.removeAttribute('data-preview-id');}};
