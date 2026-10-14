@@ -435,7 +435,7 @@ pub fn device_param_set(
         manual.set_attr("Value", &stored);
     }
     let out = crate::write_gz(&root).map_err(|e| e.to_string())?;
-    std::fs::write(path, out).map_err(|e| e.to_string())?;
+    replace_file_atomically(std::path::Path::new(path), &out)?;
     // The persisted reading, from the set's own element (range unchanged).
     let range = find_track(&root, track_name)
         .and_then(|track| find_device(track, device))
@@ -444,6 +444,43 @@ pub fn device_param_set(
     Ok(serde_json::json!({
         "param": serde_json::to_value(param_json(param_id, &stored, range)).expect("param serializes"),
     }))
+}
+
+/// Replace the user's set without ever leaving it half-written: the new bytes go
+/// to a sibling file in the same directory (same filesystem, same permissions),
+/// are flushed to disk, and are renamed over the set; the directory is flushed
+/// after. A crash or kill leaves either the old set or the new one, never a
+/// truncated file. A symlinked set is written at its target, so the link stays.
+fn replace_file_atomically(path: &std::path::Path, bytes: &[u8]) -> Result<(), String> {
+    use std::io::Write;
+    let target = std::fs::canonicalize(path).map_err(|e| e.to_string())?;
+    let dir = target
+        .parent()
+        .ok_or_else(|| "the set has no parent directory".to_string())?;
+    let name = target
+        .file_name()
+        .ok_or_else(|| "the set has no file name".to_string())?
+        .to_string_lossy()
+        .into_owned();
+    let permissions = std::fs::metadata(&target)
+        .map_err(|e| e.to_string())?
+        .permissions();
+    let staged = dir.join(format!(".{name}.oi-write-{}", std::process::id()));
+    let result = (|| -> std::io::Result<()> {
+        let mut file = std::fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&staged)?;
+        file.write_all(bytes)?;
+        file.sync_all()?;
+        std::fs::set_permissions(&staged, permissions)?;
+        std::fs::rename(&staged, &target)?;
+        std::fs::File::open(dir)?.sync_all()
+    })();
+    if result.is_err() {
+        let _ = std::fs::remove_file(&staged);
+    }
+    result.map_err(|e| format!("the set could not be written safely: {e}"))
 }
 
 fn out_of_range(desc: &live_dynamics::params::ParamDesc, value: f64) -> String {
