@@ -1,4 +1,5 @@
 import {createContext, useContext, useEffect, useRef, useState, type PointerEvent} from 'react';
+import {PopOut} from '../inhabitants/sdk/marks.tsx';
 import {sameEditorBasis, type Entity, type EntityLayer, type NativeEditorChange, type NativeEditorReading, type NativeEditorReply, type NativeEditorRequest, type NativeSequenceSettings, type SequenceStep} from '../../../../expressions-boundary/src/editor';
 import {applyEasing} from '../../../../../desktop/cradle/expressions-app/src/engine/fieldModel';
 import {sourceVisual} from '../../../../../desktop/cradle/expressions-app/field-studies-journeys/src/sourcePreview';
@@ -288,7 +289,7 @@ export function GlyphSequenceEditor({reading,request,compact=false,onExpand,draf
   const moveLayer=(id:string,delta:-1|1)=>{const next=reorderLayers(layers,id,delta);if(next)void apply([{kind:'step-layers',entity_id:e.id,step_id:k.id,layers:next}])};
   return <Drafts.Provider value={{scope:`${r.basis.expression_ref}:${r.basis.scene_ref}:${e.id}:${k.id}`,values:draftValues,changed:draftChanged,capture:(label,identity,initial)=>text=>glyphInputMaterial(r,e,k,label,identity,text,initial),retain:retainInput,submit:submitCapturedInput,discard:discardInput}}><section ref={residence} className={`glyph-editor${compact?' compact':''}`} aria-label="Glyph Sequence editor" data-entity-id={e.id}>
     <header className="glyph-head"><button aria-label="Glyph sequence enabled" aria-pressed={sequence.enabled} disabled={locked} onClick={()=>settings({enabled:!sequence.enabled,manual:false})}>●</button><strong>Glyph Sequence</strong><span>{e.name}</span>
-      {compact&&<button onClick={onExpand} aria-label="Expand glyph clip">↗</button>}
+      {compact&&<button onClick={onExpand} aria-label="Expand glyph clip" title="Expand the glyph clip"><PopOut size={10} /></button>}
       <button disabled={!r.history.canUndo||locked} onClick={()=>history('undo')} aria-label="Undo glyph edit">↶</button><button disabled={!r.history.canRedo||locked} onClick={()=>history('redo')} aria-label="Redo glyph edit">↷</button><button disabled={locked} onClick={()=>history('save')}>Save</button>
     </header>
     <fieldset className="glyph-field-font"><legend>Field · glyph font</legend><label>Family<select aria-label="Field font family" value={fontChoice} disabled={fieldLocked} onChange={event=>{const option=FONT_OPTIONS.find(value=>value.id===event.target.value);setCustomFont(!option);if(option)void apply([{kind:'field-font',values:{fontFamily:option.stack}}])}}>{FONT_OPTIONS.map(option=><option key={option.id} value={option.id}>{option.label}</option>)}<option value={CUSTOM_SENTINEL}>Custom stack</option></select></label>
