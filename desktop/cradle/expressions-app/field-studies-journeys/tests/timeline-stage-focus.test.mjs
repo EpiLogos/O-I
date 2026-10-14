@@ -95,15 +95,15 @@ test('releasing the stage fullscreen exits only a fullscreen the document holds,
 // The M2′ block: the wiring lives in researchInstruments.tsx's chronology region and reads the shared model.
 const instruments=await readFile(resolve(engine,'src/researchInstruments.tsx'),'utf8');
 const styles=await readFile(resolve(engine,'src/styles.css'),'utf8');
+const focusModeSrc=await readFile(resolve(engine,'src/focusMode.ts'),'utf8');
 
-test('the M2′ stage imports the shared focus model and the one fullscreen request, and holds its session at install scope',()=>{
- assert.match(instruments,/import \{beginStageFocus,endStageFocus,isStageFocused,NOT_STAGE_FOCUS,releaseStageFullscreen,requestStageFullscreenOn,type StageFocusSession\} from '\.\/focusMode';/);
- assert.match(instruments,/let timelineFocus:StageFocusSession<\{toolsDisplay:string\}>=NOT_STAGE_FOCUS,timelineFullscreen=false;/,'one stage focus per install, not per view');
+test('the M2′ stage holds its focus at install scope on the shared controller, and keeps one key listener there',()=>{
+ assert.match(instruments,/import \{createStageFocus,releaseStageFullscreen,requestStageFullscreenOn\} from '\.\/focusMode';/);
+ assert.match(instruments,/const stageFocus=createStageFocus\(\{stage:body,chrome:host\.tools,markKey:'timelineFocus'\}\);/,'one stage focus per install, on the shared controller (focusMode.ts)');
  assert.match(instruments,/let timelineFocusOff:\(\(\)=>void\)\|null=null;/,'one stage key listener per install');
  assert.doesNotMatch(instruments,/timelineFocus\?:StageFocusSession/,'the session is no longer a field of the view state');
- assert.match(instruments,/void requestStageFullscreenOn\(body,\{navigationUI:'hide'\}\)\.then\(granted=>\{/,'the stage asks for real fullscreen on its own body');
+ assert.doesNotMatch(instruments,/timelineFullscreen|onStageFullscreen/,'the stage keeps no fullscreen flag or listener of its own: its hold ends it');
 });
-
 test('the stage focus ends at install scope: unmount ends it, every load (a lens change) unmounts first, and destroy releases its listener',()=>{
  const install=instruments.indexOf('export function installResearchInstruments(');
  const declared=instruments.indexOf('const endTimelineFocus=');
@@ -117,26 +117,23 @@ test('the stage focus ends at install scope: unmount ends it, every load (a lens
  assert.doesNotMatch(instruments,/state\.timelineFocusOff/,'the listener is held once, at install scope');
 });
 
-test('F toggles focus; Escape restores while focused; a late grant after the focus ended is released, never held',()=>{
+test('F toggles focus; Escape restores while focused',()=>{
  assert.match(instruments,/if\(event\.key==='f'\|\|event\.key==='F'\)\{event\.preventDefault\(\);if\(focusOn\(\)\)endTimelineFocus\(\);else beginTimelineFocus\(\);\}/);
  assert.match(instruments,/if\(event\.key==='Escape'&&focusOn\(\)\)\{event\.preventDefault\(\);event\.stopImmediatePropagation\(\);endTimelineFocus\(\);return;\}/);
- assert.match(instruments,/if\(timelineFocus!==started\)\{if\(granted\)releaseStageFullscreen\(\);return;\}/);
  assert.match(instruments,/window\.addEventListener\('keydown',onStageKey,true\);/,'Escape is taken in the capture phase, before the lens clears its selection');
 });
-
-test('focus hides the shared tools, marks the stage, and the exit restores the tools display it began from',()=>{
- assert.match(instruments,/const started=beginStageFocus\(timelineFocus,\{toolsDisplay:host\.tools\.style\.display\},chrome=>\(\{\.\.\.chrome\}\)\);/);
- assert.match(instruments,/host\.tools\.style\.display='none';\s*body\.dataset\.timelineFocus='true';/);
- assert.match(instruments,/if\(ended\.restore\)host\.tools\.style\.display=ended\.restore\.toolsDisplay;/);
- assert.match(instruments,/body\.removeAttribute\('data-timeline-focus'\);/);
- assert.match(instruments,/releaseStageFullscreen\(\);\s*\};/,'the exit releases the fullscreen it asked for');
+test('the install routes begin and end through the stage controller; the tools, the mark and the fullscreen are its own (see focus-mode.test)',()=>{
+ assert.match(instruments,/const focusOn=\(\)=>stageFocus\.isFocused\(\);/);
+ assert.match(instruments,/const endTimelineFocus=\(\)=>stageFocus\.end\(\);/);
+ assert.match(instruments,/const beginTimelineFocus=\(\)=>stageFocus\.begin\(\);/);
+ assert.match(focusModeSrc,/export function createStageFocus\(dom: StageFocusDom\): StageFocus \{/);
+ assert.match(focusModeSrc,/const hold: FullscreenHold = \{lost: \(\) => end\(\)\};/,'the stage focus ends through its hold: a browser exit or a takeover');
+ assert.match(focusModeSrc,/releaseStageFullscreen\(hold\);/,'the stage focus releases its own hold');
 });
-
-test('the browser exit from fullscreen ends a granted focus; a refused focus is ended only by its own keys',()=>{
- assert.match(instruments,/const onStageFullscreen=\(\)=>\{if\(timelineFullscreen&&!document\.fullscreenElement\)endTimelineFocus\(\);\};/);
- assert.match(instruments,/document\.addEventListener\('fullscreenchange',onStageFullscreen\);/);
+test('the browser exit from fullscreen reaches the stage focus through its hold; no fullscreen listener is left in the instrument',()=>{
+ assert.doesNotMatch(instruments,/fullscreenchange/,'the instrument listens to no fullscreen change of its own');
+ assert.match(focusModeSrc,/document\.addEventListener\('fullscreenchange', onFullscreenChange\);/);
 });
-
 test('the Focus control and its title document the keyboard map',()=>{
  assert.match(instruments,/aria-label="Focus the timeline stage" title="Focus the stage: F toggles, Escape restores\./);
  assert.match(instruments,/onClick=\{beginTimelineFocus\}>Focus<\/button>/);
@@ -153,7 +150,15 @@ test('the focus rules hide every chrome panel but leave the axis and the cards, 
  assert.doesNotMatch(rules.join('\n'),/#[0-9a-fA-F]{3,8}\b|rgba?\(/,'tokens only, no raw colours');
 });
 
-test('the stage adds no fullscreen request of its own: the only direct request left in the instrument is the A8 Canvas present',()=>{
- const requests=instruments.match(/\.requestFullscreen\(/g)??[];
- assert.equal(requests.length,1,'the Timeline stage requests fullscreen through requestStageFullscreenOn; the Canvas present (A8) is the one other direct request');
+test('no instrument makes a direct fullscreen request: the Timeline stage and the Canvas present both go through the shared path',()=>{
+ assert.equal((instruments.match(/\.requestFullscreen\(/g)??[]).length,0,'every fullscreen request is the shared path');
+ assert.equal((instruments.match(/requestStageFullscreenOn\(/g)??[]).length,1,'the Canvas present requests through requestStageFullscreenOn');
+ assert.equal((instruments.match(/createStageFocus\(/g)??[]).length,1,'the Timeline stage requests through its controller');
+});
+test('the Canvas present (A8) holds its fullscreen through the shared hold, and ends through the same release; no second fullscreenchange listener',()=>{
+ assert.match(instruments,/const hold:FullscreenHold=\{lost:\(\)=>\{if\(presentation\?\.hold===hold\)endPresentation\(\);\}\};/,'a presentation ends through its hold when the browser leaves or the reader takes over');
+ assert.match(instruments,/void Promise\.resolve\(\)\.then\(\(\)=>presentation===started\?requestStageFullscreenOn\(element,\{\},hold\):false\)/,'the present requests through the shared path, and not at all once it has ended');
+ assert.match(instruments,/window\.removeEventListener\('keydown',onPresentKeydown,true\);\s*releaseStageFullscreen\(current\.hold\);/,'the presentation releases its own hold');
+ assert.doesNotMatch(instruments,/onFullscreenChange/,'the Canvas present keeps no listener of its own');
+ assert.doesNotMatch(instruments,/started\.fullscreen|fullscreen:false/,'the presentation keeps no fullscreen flag of its own');
 });
