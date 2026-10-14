@@ -53,7 +53,7 @@ test('bad evidence scope refuses before Recognition dispatch without changing or
   assert.deepEqual(recognition.basisRefs,['retained-evidence']);
 });
 test('actual archived rich native reading is retained losslessly and cannot become a Factory Return',async()=>{
-  const raw=JSON.parse(await readFile('/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/evidence/native/material-verification-c79dab7c-8de3-4b69-87cb-ee11cce28c9f/rich-artifact-inspection-3a33a7f6-94e9-445d-b2ec-7e7f25950935.json','utf8'));
+  const raw=JSON.parse(await readFile(new URL('../../live-shell/ui/tests/fixtures/native-rich-glyph-rack-r8.receipt.json',import.meta.url),'utf8'));
   assert.deepEqual(raw.before.document,raw.after.document);
   assert.throws(()=>readNativeRunReturn(raw.before,target),/exact native/);
   assert.throws(()=>readNativeRecognitionReceipt(raw.before,recognition),/exact Journey\/Return/);

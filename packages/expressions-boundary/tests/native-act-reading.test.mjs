@@ -12,7 +12,7 @@ const [{createNativeMaterialController,readNativeActResult,readNativeActList,sam
  import('../../../desktop/cradle/expressions-app/field-studies-journeys/src/worldChannel.ts'),
  import('../../../desktop/cradle/expressions-app/field-studies-journeys/src/kernelExpressions.ts'),
 ]);
-const archive='/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/evidence/native/material-verification-c79dab7c-8de3-4b69-87cb-ee11cce28c9f/rich-artifact-inspection-3a33a7f6-94e9-445d-b2ec-7e7f25950935.json';
+const archive=new URL('../../live-shell/ui/tests/fixtures/native-rich-glyph-rack-r8.receipt.json',import.meta.url);
 const receipt=JSON.parse(await readFile(archive,'utf8'));
 assert.deepEqual(receipt.before.document,receipt.after.document);
 const original=receipt.before.document;

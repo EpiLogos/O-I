@@ -6,10 +6,10 @@ import ts from '../../../desktop/cradle/node_modules/typescript/lib/typescript.j
 const base='../../../desktop/cradle/expressions-app/field-studies-journeys/src/';
 const [{kernelDocumentToJourney},{DocumentStore},{NativeWorking},{NativeSelectionQueue},{createRetainedNativeEditor},{createSourceEditorSelection},{liveWorkspaceHTML},{defaultWorkspace},{readLayerDisclosure,restoreLayerDisclosure},{formationStateNudge},{prepareCompositionEdit}]=await Promise.all([
  import(base+'kernelDocumentBridge.ts'),import(base+'store.ts'),import(base+'nativeWorking.ts'),import(base+'nativeSelectionQueue.ts'),import(base+'hostEditor.ts'),import(base+'sourceEditorSelection.ts'),import(base+'liveWorkspace.ts'),import(base+'workspacePreferences.ts'),import(base+'layerDisclosure.ts'),import(base+'formationPlacement.ts'),import(base+'kernelComposition.ts')]);
-const receiptPath='/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/evidence/native/material-verification-c79dab7c-8de3-4b69-87cb-ee11cce28c9f/rich-artifact-inspection-3a33a7f6-94e9-445d-b2ec-7e7f25950935.json';
+const receiptPath=new URL('../../live-shell/ui/tests/fixtures/native-rich-glyph-rack-r8.receipt.json',import.meta.url);
 const receipt=JSON.parse(await readFile(receiptPath,'utf8'));assert.deepEqual(receipt.before.document,receipt.after.document);
 const document=receipt.after.document,originalNativeBytes=JSON.stringify(document);
-const laterReceipt=JSON.parse(await readFile('/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/evidence/native/rich-artifact-inspection-32346939-42e0-4994-851a-e03537a95c8f.json','utf8'));assert.deepEqual(laterReceipt.before.document,laterReceipt.after.document);
+const laterReceipt=JSON.parse(await readFile(new URL('../../live-shell/ui/tests/fixtures/native-rich-glyph-rack-r32.receipt.json',import.meta.url),'utf8'));assert.deepEqual(laterReceipt.before.document,laterReceipt.after.document);
 function retained(nativeDocument=document){
  const view=kernelDocumentToJourney(nativeDocument),store=new DocumentStore(view.journey),scene=store.document.scenes.find(s=>s.id===view.startSceneId),binding=view.bindings[scene.id],occurrence=binding.occurrences.find(o=>o.entity_ref===nativeDocument.selection.entity_ref)??binding.occurrences[0],entity=scene.entities.find(e=>e.id===occurrence.view_entity_id);
  const effects=[];const closed=()=>{effects.push('closed-native-effect');throw Error('Native effects are closed in production source verification')};

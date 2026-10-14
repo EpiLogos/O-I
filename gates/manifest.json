@@ -21,7 +21,8 @@
         "npm --prefix desktop/cradle/expressions-app install --no-audit --no-fund",
         "npm --prefix packages/live-shell/ui install --no-audit --no-fund",
         "npm --prefix packages/oi-design-system install --no-audit --no-fund",
-        "node desktop/cradle/scripts/ensure-expressions-app.mjs --build"
+        "node desktop/cradle/scripts/ensure-expressions-app.mjs --build",
+        "node desktop/cradle/documents/build-personal.mjs"
       ]
     },
     {

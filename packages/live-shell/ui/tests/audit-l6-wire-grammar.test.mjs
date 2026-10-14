@@ -1,3 +1,4 @@
+import {fileURLToPath} from 'node:url'
 /**
  * audit-l6-wire-grammar — lane zcode:native-actions-audit-l6, 2026-10-09.
  *
@@ -24,10 +25,12 @@ import assert from 'node:assert/strict'
 import {readFileSync, readdirSync} from 'node:fs'
 import {join} from 'node:path'
 
-const UI = '/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui'
-const BOUNDARY = '/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/src'
-const APP = '/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src'
-const CRADLE = '/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src'
+// Paths from this checkout, wherever it stands.
+const REPO = fileURLToPath(new URL('../../../../', import.meta.url)).replace(/\/$/, '')
+const UI = `${REPO}/packages/live-shell/ui`
+const BOUNDARY = `${REPO}/packages/expressions-boundary/src`
+const APP = `${REPO}/desktop/cradle/expressions-app/field-studies-journeys/src`
+const CRADLE = `${REPO}/desktop/cradle/src`
 const read = path => readFileSync(join(path), 'utf8')
 
 test('every shell stage command rides the frame-hosted STAGE_COMMANDS vocabulary', () => {

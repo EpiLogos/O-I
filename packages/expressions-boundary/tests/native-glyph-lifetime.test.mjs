@@ -24,7 +24,7 @@ function execute(name,bindings={}) {
 const currentGlyphReply=execute('currentGlyphReply',{sameEditorBasis});
 const reconcileGlyphSelection=execute('reconcileGlyphSelection');
 const glyphThumbnailMaterial=execute('glyphThumbnailMaterial',{stateSource});
-const inputPath='/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/evidence/native/material-verification-c79dab7c-8de3-4b69-87cb-ee11cce28c9f/rich-artifact-inspection-3a33a7f6-94e9-445d-b2ec-7e7f25950935.json';
+const inputPath=new URL('../../live-shell/ui/tests/fixtures/native-rich-glyph-rack-r8.receipt.json',import.meta.url);
 const receipt=JSON.parse(await readFile(inputPath,'utf8'));
 assert.deepEqual(receipt.before.document,receipt.after.document);
 const nativeDocument=receipt.after.document,closed=Error('Native effects remain closed during Glyph source verification');
