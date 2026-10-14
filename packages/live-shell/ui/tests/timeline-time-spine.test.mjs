@@ -63,7 +63,9 @@ test('the day track projects Central civil days with returns/clearings as clips'
   assert.ok(set.columns.some((column) => column.name === 'undated · relative order'), 'undated material keeps a relative column');
   assert.ok(set.columns.some((column) => column.name.includes('2026-10-06')), 'the reading’s own day refs name the columns');
   const centralClips = set.clips.filter((clip) => clip.trackId === 'central-day');
-  assert.equal(centralClips.filter((clip) => clip.state === 'fact').length, centralClips.length, 'readings of record stand as fact — placement never upgrades standing');
+  const disclosed = centralClips.filter((clip) => clip.standing?.visual === 'sourced');
+  assert.equal(disclosed.length, centralClips.length - 1, 'a clearing that discloses its evidence reads as sourced');
+  assert.equal(centralClips.filter((clip) => clip.standing?.visual === 'unavailable').length, 1, 'the undated clearing discloses nothing and reads unavailable, never fact — placement never upgrades standing');
   assert.ok(centralClips.every((clip) => clip.columnId.startsWith('day:')), 'clips place in their civil day column');
   const undated = centralClips.filter((clip) => clip.columnId === 'day:undated');
   assert.equal(undated.length, 1, 'the undated clearing stands in the undated column, undated');
@@ -181,7 +183,7 @@ test('the cron stratum: declared cadences fire real executions; every firing lan
   const clips = spine.cronClips();
   assert.equal(clips.length, 1);
   assert.equal(clips[0].trackId, 'cron');
-  assert.equal(clips[0].state, 'fact', 'a real firing is a fact, and it is temporal material like anything else');
+  assert.equal(clips[0].standing?.visual, 'sourced', 'a real firing discloses its own record as its source, and it is temporal material like anything else');
   // Chronos: the QL family binds read-only functions; the spine holds none.
   assert.equal(spine.chronos().length, 0);
   spine.bindChronos({id: 'sky-epoch', label: 'retained sky', read: () => '1913 (retained)'});
@@ -246,7 +248,7 @@ test('the World cut renders honest states and places day and run clips in both p
     assert.ok(html.includes('2026-10-06'), `${presentation}: a civil day stands on the ruler`);
     assert.ok(html.includes('Central · civil field'), `${presentation}: the day track group renders`);
     assert.ok(html.includes('Runs · Factory &amp; agency'), `${presentation}: the run track group renders`);
-    assert.ok(html.includes('data-standing="fact"'), `${presentation}: clips carry their standing`);
+    assert.ok(html.includes('data-standing="sourced"'), `${presentation}: clips carry their standing`);
     assert.ok(html.includes('Cron'), `${presentation}: the cron chip renders`);
     if (presentation === 'arrangement') {
       assert.ok(html.includes('⟩ week'), 'the declared break into the civil strip renders on the integrated ruler');

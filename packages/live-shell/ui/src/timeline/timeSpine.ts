@@ -29,6 +29,7 @@
 // and calls in; this module keeps the strata straight.
 
 import type {WorldTrackClip} from './worldTrackAdapter';
+import {standingOf, type StandingReading} from '../../../../../desktop/cradle/src/techne/m0m5/timeline/standing';
 
 // ── strata readings ──────────────────────────────────────────────────────────
 
@@ -52,6 +53,8 @@ export interface TemporalEventRow {
   instant_unix_ms?: number | null
   summary?: string
   day_ref?: string | null
+  /** The event's anchor within its own stream (kernel `stream_position`, the exactly-once identity). */
+  stream_position?: string
   evidence_refs?: string[]
 }
 
@@ -273,7 +276,8 @@ export function createTimeSpine(): TimeSpine {
         trackId: 'cron',
         columnId: 'cron',
         label: `${firing.label} · ${firing.cadenceId}`,
-        state: 'fact',
+        // A real firing is the spine's own execution record: its id is the source.
+        standing: readStanding({standing: null, source_ref: firing.id, evidence_refs: [], derivation_ref: null}),
       }));
     },
 
@@ -304,12 +308,39 @@ export function eventDayKey(event: TemporalEventRow): string | null {
   return null;
 }
 
-/** The standing a clip honestly carries. Events read from the kernel's
- * temporal read are readings of record → 'fact'. The spine never upgrades
- * standing by placement (Revision 2 law); a future source may supply
- * claim/inferred/hypothesis/disputed/ghost and the presentation keeps it. */
-export function eventStanding(_event: TemporalEventRow): string {
-  return 'fact';
+// ── standing (WORLD-SHELL-DESIGN §1, Revision 2; UX-SPINE-ALIGNMENT §5 row 5) ─
+// The one standing authority is standingOf (desktop/cradle/src/techne/m0m5/
+// timeline/standing.ts). This module only supplies the source's own disclosed
+// fields to it; it holds no vocabulary and no class table of its own.
+
+/** The standing input a clip discloses: the owner's stated word, the source
+ * ref, the evidence refs, the derivation ref. Exactly the authority's input. */
+export type StandingInput = Parameters<typeof standingOf>[0];
+
+/** The one reading of a clip's standing: standingOf over the disclosed fields. */
+export function readStanding(input: StandingInput): StandingReading {
+  return standingOf(input);
+}
+
+/** The standing input a kernel temporal event discloses. The source is the
+ * event's own stream identity (`stream:stream_position`, the exactly-once
+ * anchor the kernel names) and its evidence refs. The kernel carries no stated
+ * word and no derivation, so a stated standing is never invented here. */
+export function standingInputOf(event: TemporalEventRow): StandingInput {
+  const source = event.stream && event.stream_position ? `${event.stream}:${event.stream_position}` : null;
+  return {
+    standing: null,
+    source_ref: source,
+    evidence_refs: [...(event.evidence_refs ?? [])],
+    derivation_ref: null,
+  };
+}
+
+/** The standing of a kernel temporal event, read by the authority. A reading
+ * with a disclosed source is `sourced`; one with nothing disclosed is
+ * `unavailable`. Placement (instant, day, kind, undated) is not an input. */
+export function eventStanding(event: TemporalEventRow): StandingReading {
+  return readStanding(standingInputOf(event));
 }
 
 /** Hour-of-day for a day-local column (units are the column's own: hours). */

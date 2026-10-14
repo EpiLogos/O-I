@@ -27,6 +27,7 @@ import {
 } from '../inhabitants/ql/qlInstrumentReading'
 import {createQlSampleClockStratum} from './qlSampleClock'
 import {QL_AUDIO_ROLES, QL_ROLE_LAWS, type QlSonicRole} from './qlTrackRoles'
+import {readStanding} from './timeSpine'
 import type {
   WorldTrackAdapter,
   WorldTrackClip,
@@ -130,6 +131,7 @@ export function projectQlAudioTracks(reading: QlAudioTrackReading): WorldTrackSe
         label: `${clip.label} [${QL_ROLE_LAWS[lane.role].label}${clip.standing ? ' · ' + clip.standing : ''}]`,
         span: {start: start.value, end: end.value},
         state: clip.standing ?? 'fact',
+        standing: readStanding({standing: clip.standing ?? null, source_ref: null, evidence_refs: [], derivation_ref: null}),
       })
     }
   }

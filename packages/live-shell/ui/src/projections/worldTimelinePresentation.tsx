@@ -23,11 +23,13 @@
 
 import {useEffect, useMemo, useRef, useState} from 'react';
 import {createTimeScale, formatYear} from './atlas/src/data/time';
-import {eventHourOfDay} from '../timeline/timeSpine';
+import {eventHourOfDay, readStanding} from '../timeline/timeSpine';
 import {journeyWalksOf, walkStopFocus, walkStopOfClip} from '../timeline/journeyWalks';
 import {applyWalkStopFocus} from '../timeline/walkFocus';
 import {JourneyRows, type JourneyPresentation} from '../timeline/JourneyRows';
 import type {WorldTrackClip, WorldTrackSection, WorldTrackSet, WorldWalk, WorldWalkStop} from '../timeline/worldTrackAdapter';
+import {STANDING_DRAWING, standingLabel, type StandingDrawing} from '../../../../../desktop/cradle/expressions-app/vendor/research-canvas/packages/canvas/src/timeline/standingStyle';
+import type {StandingReading, StandingVisual} from '../../../../../desktop/cradle/src/techne/m0m5/timeline/standing';
 import type {WorldTimelineView} from './useWorldTemporalReading';
 import './worldTimeline.css';
 
@@ -71,6 +73,47 @@ const dayOfColumn = (columnId: string): string | null => {
   const day = columnId.slice(4);
   return day === 'undated' ? 'undated' : day;
 };
+
+// ── standing marks ──────────────────────────────────────────────────────────
+// A clip is drawn in the standing its source discloses (WORLD-SHELL-DESIGN §1,
+// Revision 2: "never upgraded by placement"). The class comes only from the one
+// authority, standingOf (desktop/cradle/src/techne/m0m5/timeline/standing.ts),
+// which the track adapter reads onto clip.standing. The drawing is the shared
+// grammar's (STANDING_DRAWING, standingStyle.ts). This file holds no class table.
+const UNDISCLOSED: StandingReading = readStanding({standing: null, source_ref: null, evidence_refs: [], derivation_ref: null});
+
+export interface ClipStandingMark {
+  reading: StandingReading;
+  /** The class the clip is drawn in: the authority's visual class. */
+  visual: StandingVisual;
+  /** The verbatim stated word when the source states one, else the grammar's legend label for the class. */
+  word: string;
+  stroke: string;
+  /** The CSS border style the grammar's dash pattern draws as. */
+  line: 'solid' | 'dashed' | 'dotted';
+}
+
+export function clipStandingMark(clip: WorldTrackClip): ClipStandingMark {
+  const reading = clip.standing ?? UNDISCLOSED;
+  const drawing: StandingDrawing = STANDING_DRAWING[reading.visual];
+  const line: ClipStandingMark['line'] = drawing.dash === undefined
+    ? 'solid'
+    : Number(drawing.dash.split(' ')[0]) <= 2 ? 'dotted' : 'dashed';
+  return {reading, visual: reading.visual, word: reading.verbatim ?? standingLabel(reading.visual), stroke: drawing.stroke, line};
+}
+
+/** The accessible name of a clip: its label and the standing it is drawn in. */
+const clipAccessibleName = (label: string, mark: ClipStandingMark): string => `${label} — standing ${mark.word}`;
+
+/** A visible standing tag on the label. A sourced clip with no stated word carries no tag. */
+const clipStandingTag = (mark: ClipStandingMark): string =>
+  mark.reading.verbatim == null && mark.visual === 'sourced' ? '' : ` · ${mark.word}`;
+
+/** Standing attributes shared by every clip form. */
+const clipStandingAttributes = (mark: ClipStandingMark) => ({
+  'data-standing': mark.visual,
+  'data-standing-stated': mark.reading.verbatim ?? undefined,
+});
 
 export function WorldTimelinePresentation({view, presentation, journey}: {
   view: WorldTimelineView;
@@ -272,10 +315,13 @@ export function WorldTimelinePresentation({view, presentation, journey}: {
       <div className={`wt-lane${presentation === 'session' ? ' wt-session-lane' : ''}`} data-track={track.id}>
         {presentation === 'arrangement' && entries.map((entry) => {
           const x = clipX(entry);
+          const mark = clipStandingMark(entry.clip);
           if (x == null) {
-            return <button key={entry.clip.id} className="wt-clip wt-undated" data-standing={entry.clip.state ?? 'fact'}
-              title={`${entry.clip.label} · undated — relative order, no fabricated date`}
-              onClick={() => selectClip(entry)}><span className="wt-clip-label">{entry.clip.label}</span></button>;
+            return <button key={entry.clip.id} className="wt-clip wt-undated" {...clipStandingAttributes(mark)}
+              style={{borderLeft: `2px ${mark.line} ${mark.stroke}`}}
+              title={`${entry.clip.label} · undated — relative order, no fabricated date · standing ${mark.word} · ${mark.reading.rule}`}
+              aria-label={clipAccessibleName(entry.clip.label, mark)}
+              onClick={() => selectClip(entry)}><span className="wt-clip-label">{entry.clip.label}{clipStandingTag(mark)}</span></button>;
           }
           const moment = entry.clip.span == null;
           const showLabel = labelled.get(entry.clip.id) ?? false;
@@ -284,27 +330,34 @@ export function WorldTimelinePresentation({view, presentation, journey}: {
             // label when the next dot leaves room.
             return <span key={entry.clip.id} className="wt-point-wrap">
               <button className={`wt-clip wt-point${entry.selected ? ' is-selected' : ''}`}
-                style={{left: `${x}%`}} data-standing={entry.clip.state ?? 'fact'}
-                title={`${entry.clip.label} · ${entry.day ?? '—'}${entry.hour != null ? ` · ${String(Math.floor(entry.hour)).padStart(2, '0')}:${String(Math.round((entry.hour % 1) * 60)).padStart(2, '0')} UTC` : ''} · standing ${entry.clip.state ?? 'fact'}`}
+                style={{left: `${x}%`, borderColor: mark.stroke, borderStyle: mark.line}} {...clipStandingAttributes(mark)}
+                title={`${entry.clip.label} · ${entry.day ?? '—'}${entry.hour != null ? ` · ${String(Math.floor(entry.hour)).padStart(2, '0')}:${String(Math.round((entry.hour % 1) * 60)).padStart(2, '0')} UTC` : ''} · standing ${mark.word} · ${mark.reading.rule}`}
+                aria-label={clipAccessibleName(entry.clip.label, mark)}
                 onClick={() => selectClip(entry)} />
-              {showLabel && <span className="wt-side-label" style={{left: `calc(${x}% + 8px)`}}>{entry.clip.label}</span>}
+              {showLabel && <span className="wt-side-label" style={{left: `calc(${x}% + 8px)`}}>{entry.clip.label}{clipStandingTag(mark)}</span>}
             </span>;
           }
           return <button key={entry.clip.id}
             className={`wt-clip${entry.selected ? ' is-selected' : ''}`}
-            style={{left: `${x}%`, width: `min(${Math.max(6, (100 - TODAY_BREAK) / daySpan / 2)}%, 240px)`}}
-            data-standing={entry.clip.state ?? 'fact'}
-            title={`${entry.clip.label} · ${entry.day ?? '—'} · standing ${entry.clip.state ?? 'fact'}`}
-            onClick={() => selectClip(entry)}><span className="wt-clip-label">{entry.clip.label}</span></button>;
+            style={{left: `${x}%`, width: `min(${Math.max(6, (100 - TODAY_BREAK) / daySpan / 2)}%, 240px)`, borderLeft: `2px ${mark.line} ${mark.stroke}`}}
+            {...clipStandingAttributes(mark)}
+            title={`${entry.clip.label} · ${entry.day ?? '—'} · standing ${mark.word} · ${mark.reading.rule}`}
+            aria-label={clipAccessibleName(entry.clip.label, mark)}
+            onClick={() => selectClip(entry)}><span className="wt-clip-label">{entry.clip.label}{clipStandingTag(mark)}</span></button>;
         })}
         {presentation === 'session' && <div className="wt-session-cells">
           {columns.map((column) => {
             const cells = entries.filter((entry) => entry.clip.columnId === column.id);
             return <div key={column.id} className="wt-session-cell" data-column={column.id}>
-              {cells.map((entry) => <button key={entry.clip.id}
-                className={`wt-clip wt-cell-clip${entry.selected ? ' is-selected' : ''}`} data-standing={entry.clip.state ?? 'fact'}
-                title={`${entry.clip.label} · ${column.name} · standing ${entry.clip.state ?? 'fact'}`}
-                onClick={() => selectClip(entry)}>{entry.clip.label}</button>)}
+              {cells.map((entry) => {
+                const mark = clipStandingMark(entry.clip);
+                return <button key={entry.clip.id}
+                  className={`wt-clip wt-cell-clip${entry.selected ? ' is-selected' : ''}`} {...clipStandingAttributes(mark)}
+                  style={{borderLeft: `2px ${mark.line} ${mark.stroke}`}}
+                  title={`${entry.clip.label} · ${column.name} · standing ${mark.word} · ${mark.reading.rule}`}
+                  aria-label={clipAccessibleName(entry.clip.label, mark)}
+                  onClick={() => selectClip(entry)}>{entry.clip.label}{clipStandingTag(mark)}</button>;
+              })}
             </div>;
           })}
         </div>}
