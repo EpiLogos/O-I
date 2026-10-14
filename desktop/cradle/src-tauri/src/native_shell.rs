@@ -19,6 +19,9 @@ mod inhabitants;
 #[cfg(feature = "native_shell")]
 #[path = "../../../../packages/live-shell/src/runtime.rs"]
 pub mod runtime;
+#[cfg(feature = "native_shell")]
+#[path = "continuity_admission.rs"]
+pub mod continuity_admission;
 
 #[cfg(feature = "native_shell")]
 mod candidate {
@@ -500,6 +503,35 @@ mod candidate {
         Ok(result)
     }
 
+    /// The candidate's own data home and backing directory, from the qualified payload.
+    fn continuity_home() -> Result<(PathBuf, String), String> {
+        let payload = PAYLOAD
+            .get()
+            .ok_or("Native candidate has not qualified its payload")?;
+        let home = std::env::var_os("HOME")
+            .map(PathBuf::from)
+            .ok_or("Candidate needs the native user's HOME")?;
+        Ok((
+            super::continuity_admission::data_home(&home, &payload.backing_id),
+            super::continuity_admission::backing_dir(&payload.backing_id),
+        ))
+    }
+
+    pub fn continuity_pending() -> Result<Value, String> {
+        let (data, backing) = continuity_home()?;
+        let pending = super::continuity_admission::pending(&data, &backing)?;
+        serde_json::to_value(pending).map_err(|e| e.to_string())
+    }
+
+    pub fn continuity_confirm(
+        admission: &str,
+        applied: usize,
+        preserved: Option<&str>,
+    ) -> Result<(), String> {
+        let (data, backing) = continuity_home()?;
+        super::continuity_admission::confirm(&data, &backing, admission, applied, preserved)
+    }
+
     pub fn attach_act_store(kernel: &mut oi_cradle_kernel::Kernel) -> Result<(), String> {
         let home = RUNTIME
             .get()
@@ -681,6 +713,57 @@ pub async fn live_shell_config(webview: tauri::WebviewWindow) -> Result<serde_js
     }
     #[cfg(not(feature = "native_shell"))]
     {
+        Err("This native host was built without the shell candidate".into())
+    }
+}
+
+/// The pending owner-admitted continuity record, verified natively. Main webview only:
+/// the apply runs once, at the main shell's start, before its workspace book is read.
+#[tauri::command]
+pub async fn live_shell_continuity_pending(
+    webview: tauri::WebviewWindow,
+) -> Result<serde_json::Value, String> {
+    if webview.label() != "main" {
+        return Err("The continuity admission is read by the main shell webview only".into());
+    }
+    #[cfg(feature = "native_shell")]
+    admit_candidate_webview(&webview)?;
+    #[cfg(feature = "native_shell")]
+    {
+        tauri::async_runtime::spawn_blocking(candidate::continuity_pending)
+            .await
+            .map_err(|error| error.to_string())?
+    }
+    #[cfg(not(feature = "native_shell"))]
+    {
+        Err("This native host was built without the shell candidate".into())
+    }
+}
+
+/// Records that the webview has applied an admission's records. Writes APPLIED.json once.
+#[tauri::command]
+pub async fn live_shell_continuity_confirm(
+    webview: tauri::WebviewWindow,
+    admission: String,
+    applied: usize,
+    preserved: Option<String>,
+) -> Result<(), String> {
+    if webview.label() != "main" {
+        return Err("The continuity admission is confirmed by the main shell webview only".into());
+    }
+    #[cfg(feature = "native_shell")]
+    admit_candidate_webview(&webview)?;
+    #[cfg(feature = "native_shell")]
+    {
+        tauri::async_runtime::spawn_blocking(move || {
+            candidate::continuity_confirm(&admission, applied, preserved.as_deref())
+        })
+        .await
+        .map_err(|error| error.to_string())?
+    }
+    #[cfg(not(feature = "native_shell"))]
+    {
+        let _ = (admission, applied, preserved);
         Err("This native host was built without the shell candidate".into())
     }
 }
