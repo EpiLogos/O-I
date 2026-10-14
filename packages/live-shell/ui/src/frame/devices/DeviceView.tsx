@@ -42,7 +42,7 @@ export function DeviceView({device, size, picture, actions, wrapRow}: DeviceView
       {drafts.dirtyKeys().length > 0 && <div className="device-commit" role="group" aria-label="Unsent changes">
         <button type="button" onClick={() => void drafts.commit()}>Send</button>
         <button type="button" onClick={() => drafts.cancel()}>Cancel</button>
-        {drafts.standing === 'refused' && <span role="alert">The owner refused the change; your values are kept.</span>}
+        {drafts.standing === 'refused' && <span role="alert">{drafts.refusal ? `${drafts.refusal} Your values are kept.` : 'The owner refused the change; your values are kept.'}</span>}
       </div>}
     </FacePlate>
   </div>

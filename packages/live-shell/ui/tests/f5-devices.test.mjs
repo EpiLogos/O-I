@@ -92,3 +92,14 @@ test('a control that drafts and commits in one handler (a toggle, a typed value)
   await held.commit()
   assert.deepEqual(sent, [[{key: 'enabled', value: true}]], 'the commit in the same handler sees the draft')
 })
+
+test('a refused change shows the owner\'s own words, and keeps the drafts', async () => {
+  const {useFaceDrafts} = await import('../src/inhabitants/sdk/controls.tsx')
+  let held
+  const Probe = () => { held = useFaceDrafts(async () => { throw new Error('The Day is closed; open it to turn its face.') }); return null }
+  renderToStaticMarkup(React.createElement(Probe))
+  held.setDraft('face', 'Learning')
+  await held.commit()
+  const source = await (await import('node:fs/promises')).readFile(new URL('../src/frame/devices/DeviceView.tsx', import.meta.url), 'utf8')
+  assert.match(source, /drafts\.refusal \?/, 'the plate shows the refusal it was given')
+})
