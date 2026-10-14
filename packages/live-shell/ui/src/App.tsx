@@ -320,7 +320,6 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
     // Session and Arrangement are two presentations of one pane (manual §3: "Tab moves you between the two"): the pane's own
     // presentation moves, in every mode; Factory's agent tab carries the same two views of its sessions.
     presentSettings(false); setTab(view); setTimelinePanePresentation(view)
-    if (isFactoryMode(frameMode)) shellCtx.setCentreView(view)
   }
   /** Enter a surf mode (Rev 5): one encounter transition over the spine —
    * mode and world context ride the one book (the bridge publishes both);
@@ -452,7 +451,8 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
     ? {...worldView, selectOccasion: event => { worldView.selectOccasion(event); if (centralSubject) selectCentralSubject(null) }}
     : worldView
   const presented = timelinePane
-  const presentedView = agentShell ? (shellCtx.centreView === 'arrangement' ? 'arrangement' as const : shellCtx.centreView === 'session' ? 'session' as const : null) : presented
+  // One presentation in every mode (the tracks pane's), Factory included: its centre is the shared grid beside the thread.
+  const presentedView = presented
   // The focused pane's instrument (owner ruling, 13 Oct 2026): the Device side follows it in every mode but Live
   // (paneInstrument.ts). The instruments themselves open from the browser's Instruments group (frame/InstrumentsSection.tsx).
   const atlasView = useAtlasView()
