@@ -64,6 +64,7 @@ export interface PaneGrammar {
   tabs?: { presentation: import("../workspace/mode").TabPresentation; orientation: "horizontal" | "vertical" };
 }
 export {dropEdge, INSTRUMENT_DRAG_TYPE} from "./dropEdge";
+import {followsSelection} from "./projectionModules";
 import {dropEdge, INSTRUMENT_DRAG_TYPE} from "./dropEdge";
 export interface WorkbenchProps {
   paneGrammar?: PaneGrammar;
@@ -374,7 +375,7 @@ export function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "gro
         </IconTabStrip>
         <div className="pane-tools">
           {props.stripTools}
-          {props.paneGrammar && active && state.surfaces[active]?.projection && (() => {
+          {props.paneGrammar && active && state.surfaces[active]?.projection && (state.surfaces[active].projection?.subject_ref || followsSelection(state.surfaces[active].projection!.kind)) && (() => {
             const pinnedTo = state.surfaces[active].projection?.subject_ref;
             const canPin = !!props.paneGrammar.selectionRef;
             return <button type="button" className="pane-follow" data-pane-follow={pinnedTo ? "pinned" : "following"} aria-pressed={!pinnedTo}

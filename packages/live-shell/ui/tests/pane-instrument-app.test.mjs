@@ -20,12 +20,12 @@ test('the focused instrument takes the Device side in every mode but Live, from 
   assert.match(host, /<InstrumentDeviceDetail transport=\{reading\.transport\} instrument=\{instrument\}/, 'the host presents the focused instrument')
   assert.doesNotMatch(host, /'(live|base|factory|expressions|techne)'/, 'the host names no mode')
   const details = await readFile(new URL('../src/shell/modeDetails.tsx', import.meta.url), 'utf8')
-  assert.match(details, /live: \{clip: LiveClip, device: LiveChain, ownsDeviceSide: true\}/, 'Live keeps its own chain')
+  assert.match(details, /live: \{clip: LiveClip, device: LiveChain, ownsDeviceSide: true, dropHint: /, 'Live keeps its own chain')
 })
 
 test('in Central the instrument\'s chain keeps the ground devices leading', async () => {
   const details = await readFile(new URL('../src/shell/modeDetails.tsx', import.meta.url), 'utf8')
-  assert.match(details, /base: \{clip: CentralClip, device: CentralChain, devicesLeadInstrument: true\}/)
+  assert.match(details, /base: \{clip: CentralClip, device: CentralChain, devicesLeadInstrument: true, dropHint: /)
   const host = await readFile(new URL('../src/frame/detail/DetailHost.tsx', import.meta.url), 'utf8')
   assert.match(host, /centralDevices=\{!!registration\.devicesLeadInstrument\}/)
 })
@@ -39,7 +39,10 @@ test('the stage pane\'s reported lens reaches the Device side, and a stage lens 
   const device = lines.find(l => l.includes('const focusedInstrument = deviceInstrumentFor('))
   assert.match(device, /hostedLens\)/, 'the Device side passes the hosted lens')
   const section = await readFile(new URL('../src/frame/InstrumentsSection.tsx', import.meta.url), 'utf8')
-  assert.match(section, /driveStageLens\(entry\.lens, setFault\)/, 'a stage lens row drives the stage through the frame\'s published driver')
+  // The row's payload carries its lens; the instrument door opens the stage and drives the lens (frame/instrumentDoor.ts).
+  const door = await readFile(new URL('../src/frame/instrumentDoor.ts', import.meta.url), 'utf8')
+  assert.match(door, /driveStageLens\(lens, reportInstrumentFault\)/, 'the door drives the stage through the frame\'s published driver')
+  assert.match(section, /openInstrument\(instrumentPayload\(entry\)\)/, 'a stage lens row opens through the door with its lens')
   assert.match(app, /window\.dispatchEvent\(new CustomEvent\(TECHNE_INSTRUMENT_OPEN, \{detail\}\)\)/, 'the driver dispatches the retained-instrument event')
   assert.match(app, /captureTechneInstrumentOpen\(\{workspaceId: now\.workspaceId/, 'the press is captured from the current native scope, never from a stale copy')
 })

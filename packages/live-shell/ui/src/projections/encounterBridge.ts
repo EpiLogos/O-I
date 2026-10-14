@@ -46,6 +46,8 @@ export function createSpineEncounterBridge(
       mode: origin.workspace.mode,
       world: context?.world,
       subject: context?.subject,
+      // THE selection, which a following pane turns to (projectionModules followedRefOf).
+      selection: context?.selection,
       reading: context?.reading,
       trail: context?.trail,
       accessEpoch: origin.workspace.accessEpoch,
