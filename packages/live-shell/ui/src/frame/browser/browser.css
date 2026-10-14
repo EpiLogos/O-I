@@ -68,7 +68,10 @@
 .one-browser .world-browser-results :is(.browser-item, .mode-browser-row, .world-work-row, .world-file-row) > span:not([aria-hidden]):not([class]),
 .one-browser .world-browser-results :is(.browser-instruments, .browser-sets) li > button > b { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 400; flex: 0 1 auto }
 .one-browser .world-browser-results :is(.browser-instruments, .browser-sets) li > button > b { color: inherit }
-.one-browser .world-browser-results .agent-bitem > span:first-child { min-width: 0; flex: 0 1 auto; white-space: nowrap }
+/* An agent row is [mark] name meta: the mark keeps its size, the name shrinks to an ellipsis. (The mark's wrapper used to
+   take the name's shrink rule as the first child, collapse to nothing and paint its icon over the name's first letters.) */
+.one-browser .world-browser-results .agent-bitem > span[aria-hidden] { flex: none; display: inline-flex }
+.one-browser .world-browser-results .agent-bitem > span:not([aria-hidden]):not(.st) { min-width: 0; flex: 0 1 auto; white-space: nowrap }
 /* the status (.st) */
 .one-browser .world-browser-results :is(.mode-browser-row-meta, .agent-bitem .st, .native-material-mark, .world-file-status, .browser-instruments li > button > span, .browser-sets li > button > span) {
   flex: none; margin-left: auto; padding-left: 6px; font-size: 9.5px; color: var(--text-faint) }
@@ -91,6 +94,10 @@
 .one-browser .one-browser-pool-host .mode-browser-aperture-row { grid-template-columns: 62px minmax(0, 1fr); gap: 6px; align-items: center; min-height: 21px; padding: 2px 8px; font-size: 11px }
 .one-browser .one-browser-pool-host .mode-browser-aperture-name { font-size: 10px; color: var(--text-faint) }
 .one-browser .one-browser-pool-host .mode-browser-aperture-value { font-family: inherit; font-size: 11px; color: var(--text) }
+/* The reached document's owner actions (the mockup's "Save HTML copy" / "Place on Central" under the Day's view rows). */
+.one-browser .one-browser-pool-host .mode-browser-aperture-actions { display: flex; gap: 6px; padding: 6px 8px 8px }
+.one-browser .one-browser-pool-host .mode-browser-aperture-actions button { height: 20px; padding: 0 8px; border: 1px solid var(--line-strong); background: var(--bg-3); color: var(--text); font-size: 10.5px }
+.one-browser .one-browser-pool-host .mode-browser-aperture-actions button:disabled { color: var(--text-faint); background: transparent }
 
 @media (max-width: 760px) {
   .one-browser .world-browser-main { grid-template-columns: fit-content(96px) minmax(0, 1fr) }
