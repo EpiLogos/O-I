@@ -328,3 +328,13 @@ test('the views know no mode, and the stylesheet takes no raw colour and survive
   assert.match(bare, /--stalled:\s*var\(--stall,\s*var\(--accent-dim,\s*var\(--accent\)\)\)/, '--stall is defined inside the agent frame only: the stall colour must fall back to a shell token')
   assert.doesNotMatch(bare.replace(/--stalled:[^;}]*/, ''), /var\(--stall\)/, 'nothing reads --stall bare')
 })
+
+test('the empty track takes a drop only where the set can seat what is dropped', async () => {
+  const {SessionGridView} = await import('../src/frame/tracks/SessionGrid.tsx')
+  const base = {columns: [{id: 'r', name: '1'}], tracks: [{id: 't', name: 'T', kind: 'k'}], clips: []}
+  const props = {selection: {select() {}}, folded: {}, onFold() {}, receipt: null, onPress() {}, onDismiss() {}}
+  const bare = renderToStaticMarkup(React.createElement(SessionGridView, {...props, set: base}))
+  assert.doesNotMatch(bare, /data-seat-drop/, 'no seat, no drop target')
+  const seated = renderToStaticMarkup(React.createElement(SessionGridView, {...props, set: {...base, actions: {seat: {op: 'owner:new', accepts: 'application/x-test', run() {}}}}}))
+  assert.match(seated, /data-seat-drop="open"/); assert.match(seated, /owner:new/)
+})

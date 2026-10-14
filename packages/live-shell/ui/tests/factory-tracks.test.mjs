@@ -184,13 +184,19 @@ test('no controls handed in, no action: the grid is read-only and says so; no gr
   assert.match(markup, /aria-label="Stop lead" disabled=""/)
 })
 
-test('with the owner\'s path, four actions name their ops and reach only harness_agent_control, and only for ids the set holds', async () => {
+test('with the owner\'s path, five actions name their ops and reach only harness_agent_control, and only for ids the set holds', async () => {
   const calls = []
   const answer = {ok: true, note: 'stop → state stopped'}
   const set = project(agencyTracks().concat([blank({sessionRef: 'many', spaceRef: 'sp-many', purpose: 'Many', tasks: [
     task(1, 'done one', 'done', NOW - 900_000, NOW - 800_000), task(2, 'live one', 'running', NOW - 90_000, NOW - 5_000),
     task(3, 'queued one', 'queued'), task(4, 'unread one', 'unknown'), soft(5)]})]), {control: async control => { calls.push(control); return answer }})
-  assert.deepEqual(Object.keys(set.actions).sort(), ['launch', 'launchStop', 'retry', 'stopTrack'], 'no record: the owner has no capture path')
+  assert.deepEqual(Object.keys(set.actions).sort(), ['launch', 'launchStop', 'retry', 'seat', 'stopTrack'], 'no record: the owner has no capture path')
+  const {AGENT_CHAIN_MIME, encodeChainDrag} = await import('../src/agent/agentChainDrag.ts')
+  assert.equal(set.actions.seat.accepts, AGENT_CHAIN_MIME, 'the empty track takes what the agent browser drags')
+  assert.deepEqual(await set.actions.seat.run(encodeChainDrag({family: 'agent', ref: 'codex', label: 'codex'})), answer, 'an agent dropped is seated through the owner')
+  assert.equal((await set.actions.seat.run(encodeChainDrag({family: 'skillset', ref: 's', label: 's'}))).ok, false, 'anything else is refused, named')
+  assert.equal((await set.actions.seat.run('not a drag')).ok, false)
+  assert.deepEqual(calls.splice(0), ['new'], 'seating reached the owner once, as new')
   assert.match(set.actions.retry.op, /^harness_agent_control:restart/)
   assert.deepEqual(await set.actions.retry.run(sessionKey('sess-test')), answer, 'a stalled lane restarts through the owner')
   assert.equal((await set.actions.retry.run('nope')).ok, false, 'an id the set does not hold is refused')
