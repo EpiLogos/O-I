@@ -3,33 +3,57 @@
 //
 // The pane does not host a frame. The question is answered from code (the receipt): the kernel's native owner holds one active
 // driver, so there is one lease and one frame. The one live frame (the centre panel's container, never re-parented) is drawn
-// over this pane's slot while this pane holds the placement (framePlacement.ts, expressionsPaneHost.ts). The body is the
-// placeholder: a header line (the frame's reading, by value), the frame's own chrome, "Show in the centre", and the slot the
-// frame fills. When another Expressions pane holds the frame, this one says so and offers to move it here.
+// over this pane's slot while this pane holds the placement (framePlacement.ts, expressionsPaneHost.ts).
+//
+// The pane IS the field (the mockup's Expressions centre, world-shell-mockup.html:1716: "the field only — tools live in the
+// Studio"; PATH §1: controls live in device UI, never as chrome inside a pane). The body is the slot only, edge to edge. Under the
+// frame it draws one line saying what it waits for (no work open, or the application not yet reporting), so an empty frame never
+// leaves a blank pane. When another Expressions pane holds the frame, this one says so; pressing it brings the frame here. The
+// frame's faults stand at the slot's foot. The stage's controls stand in the Studio's Tools and Capture sections
+// (components/expressions/studio/StudioStage.tsx); orbit is a pointer drag on the stage, said in the pane's hover words.
 //
 // Lifecycle: the module mounts its React root into the pane element and admits the pane to the placement registry. Its handle's
 // `setVisible` is the pane tier's concealment (the same observer every projection uses), so a tab switch or leaving Factory
-// releases the frame from this pane. Unmount unregisters the pane and unmounts only its own root. The pane holds no lease.
+// releases the frame from this pane. Unmount unregisters the pane at once and unmounts only its own root, after the commit that
+// asked for it (the pane session tears down inside React's commit, and its container is the session's own). The pane holds no lease.
 
-import {useLayoutEffect, useRef} from 'react'
+import {useLayoutEffect, useRef, type CSSProperties} from 'react'
 import {createRoot} from 'react-dom/client'
 import {registerProjectionModule, type ProjectionModuleHandle} from '../../../../../desktop/cradle/src/surface/projectionModules'
-import {NativeStageTools} from '../components/NativeStageTools'
 import {
-  attachExpressionsSlot, preferExpressionsPane, presentHostedExpressions, registerExpressionsPane, setExpressionsPanePresented,
+  attachExpressionsSlot, preferExpressionsPane, registerExpressionsPane, setExpressionsPanePresented,
   unregisterExpressionsPane, useFramePlacement, useHostedChrome, useHostedExpressions,
 } from './expressionsPaneHost'
 
 export const EXPRESSIONS_MODULE_ID = 'expressions-hosted-presenter'
 
-/** The header's reading line: the held expression's title and ref, or the honest state the reading stands in. */
+/** The frame's reading as one line: the held expression's title and ref, or the honest state the reading stands in. It names the
+ * pane in the Info view's hover words. */
 export function expressionsHeading(reading: ReturnType<typeof useHostedExpressions>): string {
   if (reading === null) return 'Expressions: the hosted application has not reported its state yet'
   if (!reading.expression_ref) return 'Expressions: no native Expression open'
   return `${reading.title ?? reading.expression_ref} · ${reading.expression_ref}`
 }
 
-/** The pane body. The slot is the placeholder the frame is drawn over while this pane holds it. */
+/** What an empty slot says it waits for — the heading's two honest states, with the way to the work — or null while a work is open
+ * (then the field fills the slot and nothing is drawn under it). */
+export function expressionsWaiting(reading: ReturnType<typeof useHostedExpressions>): string | null {
+  if (reading === null) return 'The Expressions application has not reported its state yet.'
+  if (!reading.expression_ref) return 'No Expression is open — open one from the browser\'s Expressions, or New.'
+  return null
+}
+
+export const EXPRESSIONS_ELSEWHERE = 'Presented in the other Expressions pane.'
+/** The pane's hover words beyond its reading: what the pane does when pressed, and orbit (a pointer drag, never a button). */
+const ORBIT_WORDS = 'Orbit is a pointer drag on the stage itself, not a button; the stage\'s view and capture are in the Studio.'
+
+/** The shell's empty idiom (styles.css .view-empty): one centred line, dim, on the stage's ground. */
+const EMPTY_LINE: CSSProperties = {position: 'absolute', inset: 0, display: 'grid', placeContent: 'center', margin: 0, padding: 16, textAlign: 'center',
+  fontSize: 11, lineHeight: 1.5, color: 'var(--text-dim)', pointerEvents: 'none'}
+const FAULT_LINE: CSSProperties = {flex: 'none', margin: 0, padding: '3px 8px', borderTop: '1px solid var(--line)', background: 'var(--bg-1)',
+  color: 'var(--rec)', fontSize: 10, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}
+
+/** The pane body: the slot the frame is drawn over while this pane holds it, edge to edge. */
 export function ExpressionsPaneBody({paneId}: {paneId: string}) {
   const reading = useHostedExpressions()
   const chrome = useHostedChrome()
@@ -42,23 +66,20 @@ export function ExpressionsPaneBody({paneId}: {paneId: string}) {
     attachExpressionsSlot(paneId, slot.current)
     return () => attachExpressionsSlot(paneId, null)
   }, [paneId])
+  const heading = expressionsHeading(reading)
+  const waiting = elsewhere ? EXPRESSIONS_ELSEWHERE : expressionsWaiting(reading)
+  const faults = chrome?.faults ?? []
+  const words = elsewhere ? `${EXPRESSIONS_ELSEWHERE} Press this pane to bring the field here.` : `${heading}. ${ORBIT_WORDS}`
   return <div className="expressions-pane-body" data-expressions-presenter="true" data-frame-here={here ? 'true' : 'false'}
+    data-i={`Expressions|${words}`} aria-label={heading} tabIndex={elsewhere ? 0 : undefined}
     onPointerDown={() => preferExpressionsPane(paneId)}
-    style={{position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', minHeight: 0, padding: '6px 8px', gap: 6, boxSizing: 'border-box'}}>
-    <header style={{display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, flex: 'none'}}>
-      <span data-hosted-expression={reading?.expression_ref ?? undefined} style={{fontSize: 12, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>
-        {expressionsHeading(reading)}
-      </span>
-      <button type="button" onClick={() => presentHostedExpressions()}>Show in the centre</button>
-      {elsewhere && <button type="button" onClick={() => preferExpressionsPane(paneId)}>Show here</button>}
-    </header>
-    {chrome?.faults.map(text => <p key={text} role="alert" className="inhabitant-fault" style={{margin: 0, flex: 'none'}}>{text}</p>)}
-    <div style={{flex: 'none'}}>
-      <NativeStageTools state={chrome?.state ?? null} run={chrome?.run ?? null} />
+    onKeyDown={event => {if (elsewhere && (event.key === 'Enter' || event.key === ' ')) {event.preventDefault(); preferExpressionsPane(paneId)}}}
+    style={{position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', minHeight: 0, background: 'var(--bg-0)'}}>
+    <div ref={slot} className="expressions-frame-slot" data-frame-slot={here ? 'held' : 'free'} data-hosted-expression={reading?.expression_ref ?? undefined}
+      style={{flex: '1 1 auto', minHeight: 0, position: 'relative'}}>
+      {waiting && <p role="status" className="view-empty expressions-pane-waiting" style={EMPTY_LINE}>{waiting}</p>}
     </div>
-    <div ref={slot} className="expressions-frame-slot" data-frame-slot={here ? 'held' : 'free'} style={{flex: '1 1 auto', minHeight: 0, position: 'relative'}}>
-      {elsewhere && <p role="status" style={{margin: 0, padding: 8, fontSize: 12}}>Presented in the other Expressions pane.</p>}
-    </div>
+    {faults.length > 0 && <p role="alert" className="inhabitant-fault expressions-pane-fault" title={faults.join('\n')} style={FAULT_LINE}>{faults.join(' · ')}</p>}
   </div>
 }
 
@@ -70,7 +91,7 @@ function mountExpressionsPane(element: HTMLElement, paneId: string): ProjectionM
   return {
     unmount: () => {
       unregisterExpressionsPane(paneId)
-      root.unmount()
+      queueMicrotask(() => root.unmount())
     },
     setVisible: visible => setExpressionsPanePresented(paneId, visible),
   }

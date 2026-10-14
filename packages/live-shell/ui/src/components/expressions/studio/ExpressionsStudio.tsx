@@ -12,8 +12,11 @@
 //   • the object and Scene devices a section holds are listed with their light, open their settings in the pool (the rack title's
 //     press) and go on the rack with + (the rack's + Device);
 //   • the head's marks are Configure (the settings: your rack, chosen controls, macros, the Scene), Deep edit and Read again;
-//   • a device dragged from the browser onto the plate goes on the rack (the rack's drop, components/NativeDeviceRack.tsx:90).
-// Every write leaves through the owner path it used before: the retained editor's one apply, the device's own submit.
+//   • a device dragged from the browser onto the plate goes on the rack (the rack's drop, components/NativeDeviceRack.tsx:90);
+//   • Tools and Capture hold the stage's own controls, moved out of the Expressions pane (PATH §1: controls in the device, never chrome
+//     in a pane): the view in Tools, still | video, ◉ Capture, Present and Edition… in Capture (StudioStage.tsx). They read the frame's
+//     chrome as the pane did (projections/expressionsPaneHost.ts useHostedChrome) and send through the frame's one runner.
+// Every write leaves through the owner path it used before: the retained editor's one apply, the device's own submit, the stage's runner.
 import {useMemo, useState, type DragEvent, type ReactNode} from 'react'
 import type {NativeEditorReading, NativeEditorReply, NativeEditorRequest} from '@epilogos/expressions-boundary/editor'
 import {InstrumentPlate, SectionDevices, SectionNote, type PlateSection, type SectionDevice} from '../../../frame/devices/InstrumentPlate'
@@ -35,6 +38,8 @@ import {DEVICE_MIME, afterIdFor, dispatchOpenDevice, parseDeviceDrag} from '../.
 import type {RackDevice} from '../../nativeDeviceCatalogue'
 import {GlyphSequenceEditor, type RetainedGlyphInput} from '../../GlyphSequenceEditor'
 import {firstShown, onRack, studioFieldFamilies, studioOwner, studioSections, type StudioSection} from './studioModel'
+import {StageCaptureTools, StageViewTools, useStageSender} from './StudioStage'
+import {useFramePlacement, useHostedChrome} from '../../../projections/expressionsPaneHost'
 import './studio.css'
 
 type Request = (request: NativeEditorRequest) => Promise<NativeEditorReply>
@@ -77,6 +82,11 @@ export function ExpressionsStudio({reading, request, selectEntity, drafts, onExp
   const qlFaces = inhabitantManifest(QUATERNAL_LOGIC_FAMILY_ID)?.faces ?? []
   const fieldById = new Map(fields.map(entry => [entry.family, entry]))
   const sceneKey = reading ? `${reading.basis.expression_ref}|${reading.basis.scene_ref}` : 'none'
+  // The stage's controls read the frame's chrome by value and send through its one runner (one sender for Tools and Capture).
+  const chrome = useHostedChrome()
+  const stage = useStageSender(chrome?.state ?? null, chrome?.run ?? null)
+  // The frame's faults stand at the foot of the pane that holds it; while no pane holds it, they stand here — never lost.
+  const placement = useFramePlacement()
 
   const fieldDevices = (section: StudioSection): SectionDevice[] => [
     ...section.field.flatMap(entry => {
@@ -108,6 +118,8 @@ export function ExpressionsStudio({reading, request, selectEntity, drafts, onExp
     const devices = fieldDevices(section)
     const listed = [...section.entity.filter(device => device.family !== 'force'), ...section.scene]
     const parts: ReactNode[] = []
+    if (section.id === 'studio:tools') parts.push(<StageViewTools key="stage" sender={stage} />)
+    if (section.id === 'studio:capture') parts.push(<StageCaptureTools key="stage" sender={stage} />)
     if (section.id === 'studio:selected') parts.push(<SelectedGlyph key="selected" reading={reading} selectEntity={selectEntity} locked={editor.locked}
       send={changes => void editor.apply(changes)} drafts={drafts} request={request} onExpandGlyph={onExpandGlyph} glyphPresented={glyphPresented} />)
     const first = firstShown(section.field.map(device => device.family), reading, lit)
@@ -117,7 +129,7 @@ export function ExpressionsStudio({reading, request, selectEntity, drafts, onExp
       add={family => void editor.apply([deviceAddChange(family)])} />)
     if (!parts.length) parts.push(<SectionNote key="none">{section.id === 'studio:nara-m4'
       ? 'No owner discloses the Nara layer in this shell, so nothing here can turn it on.'
-      : section.id === 'studio:capture' ? 'No owner discloses capture to the Studio in this shell.' : 'No owner discloses a device here.'}</SectionNote>)
+      : 'No owner discloses a device here.'}</SectionNote>)
     return parts
   }
 
@@ -133,7 +145,9 @@ export function ExpressionsStudio({reading, request, selectEntity, drafts, onExp
     ...(deep.available ? [{icon: 'full' as const, label: deep.open ? 'Return the Studio to its place' : 'Deep edit: the Studio at full height', onPress: deep.onPress}] : []),
     ...(refresh.available ? [{icon: 'orbit' as const, label: 'Read the retained editor again', onPress: refresh.onPress}] : []),
   ]
-  const shown = fault ?? paneFault ?? editor.error
+  // One line: the editor's refusal, the stage's refusal, and the frame's faults while no pane holds the frame.
+  const said = [fault ?? paneFault ?? editor.error, stage.refusal, ...(placement === null ? chrome?.faults ?? [] : [])].filter((text): text is string => !!text)
+  const shown = said.length ? said.join(' · ') : null
   return <InstrumentPlate presentation={{family: 'expressions', faceId: 'studio', title: 'Studio', icon: 'expr', owner: studioOwner(reading)}}
     actions={actions} sections={sections} bodyClassName="native-device-view"
     dataAttributes={{'data-studio': configure ? 'settings' : 'sections', 'data-dropping': dropping ? 'true' : undefined, 'data-dirty': reading?.standing.dirty ? 'true' : undefined}}
