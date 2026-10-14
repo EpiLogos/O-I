@@ -96,3 +96,17 @@ test('the pending note is never drawn over the status bar: the foundation publis
   assert.doesNotMatch(css, /native-foundation-pending/)
   assert.match(css, /\.statusbar-info-line \{ flex:1; min-width:0; height:20px;[^}]*background:var\(--bg-0\)/, 'the line is the mockup\'s .sb .info')
 })
+
+test('the status bar reads the aperture the panes stand in (the mockup\'s "aperture shared · 2 panes"), as the Workbench publishes it', async () => {
+  const door = await import('../src/native/workbenchDoor.ts')
+  assert.equal(door.apertureWords({panes: 2, pinned: 0}), 'aperture shared · 2 panes')
+  assert.equal(door.apertureWords({panes: 1, pinned: 1}), 'aperture 1 pinned · 1 pane')
+  door.publishWorkbenchAperture({panes: 2, pinned: 0})
+  const held = door.useWorkbenchAperture
+  assert.equal(typeof held, 'function')
+  const source = (await import('node:fs/promises')).readFile
+  const bar = await source(new URL('../src/components/StatusBar.tsx', import.meta.url), 'utf8')
+  assert.match(bar, /apertureWords\(aperture\)/, 'the status bar draws the published aperture')
+  const bench = await source(new URL('../src/native/Workbench.tsx', import.meta.url), 'utf8')
+  assert.match(bench, /publishWorkbenchAperture\(presented \? \{panes: groups\.length, pinned\} : null\)/, 'the Workbench publishes it while presented')
+})

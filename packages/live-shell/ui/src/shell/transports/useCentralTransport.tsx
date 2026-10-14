@@ -24,6 +24,7 @@ import {ShellConfigContext} from '../useSet'
 import {Workspace} from '../workspaceContext'
 import type {UseModeTransport} from '../modeTransports'
 import {centralBindings, dayDieOf} from './transportReadings'
+import {useReachedDocument} from '../../central/documents/documentDoor'
 
 const NO_CARRIER: KernelTransportStatus = {kind: 'unavailable', reason: 'The shell has published no kernel carrier for this reading.'}
 const message = (cause: unknown): string => cause instanceof Error ? cause.message : String(cause)
@@ -111,5 +112,6 @@ export const useCentralTransport: UseModeTransport = ({readouts}) => {
       cause => setTurned(`↳ Refused — ${message(cause)}`),
     ).finally(() => { setTurning(false); ground.reread() })
   } : undefined
-  return centralBindings({ground: ground.reading, groundError: ground.error, packet, config, transport, readouts, turn, turned})
+  const document = useReachedDocument()
+  return centralBindings({ground: ground.reading, groundError: ground.error, packet, config, transport, readouts, turn, turned, document})
 }
