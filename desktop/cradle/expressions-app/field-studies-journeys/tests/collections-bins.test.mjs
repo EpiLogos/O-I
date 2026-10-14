@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {libraryHTML,collectionBinsOf,collectionsWith} from '../build/expressions.js';
+import {libraryHTML,collectionBinsOf,collectionsWith,collectionView,parseCollectionFilter,collectionFilterValue} from '../build/expressions.js';
 import {documentToChanges} from '../build/kernelExpressions.js';
 import {fieldStudies} from '../build/model.js';
 
@@ -66,4 +66,54 @@ test('E26: a collections change on an Expression emits exactly one collections_s
  const diff=documentToChanges(before,after);
  assert.ok(!diff.error,'the diff is expressible');
  assert.deepEqual(diff.changes.filter(c=>c.change==='collections_set'),[{change:'collections_set',collections:['library','Shelf']}]);
+});
+
+test('E26: a filter choice round-trips through its chip value, and a bin named "uncollected" stays a bin', ()=>{
+ assert.deepEqual(parseCollectionFilter('uncollected'),{kind:'uncollected'});
+ assert.deepEqual(parseCollectionFilter('bin:uncollected'),{kind:'bin',name:'uncollected'});
+ assert.deepEqual(parseCollectionFilter('bin:'),{kind:'all'});
+ assert.deepEqual(parseCollectionFilter('nonsense'),{kind:'all'});
+ for(const f of [{kind:'all'},{kind:'uncollected'},{kind:'bin',name:'library'}])assert.deepEqual(parseCollectionFilter(collectionFilterValue(f)),f);
+});
+
+test('E26: a bin filter shows only its bin; Uncollected shows only unassigned Expressions; a stale choice falls back to every bin', ()=>{
+ const b=collectionBinsOf(index);
+ const lessons=collectionView(b,{kind:'bin',name:'lessons'});
+ assert.deepEqual(lessons.bins.map(x=>x.name),['lessons']);
+ assert.equal(lessons.uncollected,false);
+ const un=collectionView(b,{kind:'uncollected'});
+ assert.deepEqual(un.bins,[]);
+ assert.equal(un.uncollected,true);
+ const gone=collectionView(b,{kind:'bin',name:'deleted'});
+ assert.deepEqual(gone.bins.map(x=>x.name),['lessons','library']);
+ assert.equal(gone.uncollected,true);
+ assert.deepEqual(gone.filter,{kind:'all'});
+ const none=collectionBinsOf({expressions:[{expression_ref:'expression:a',title:'A',collections:['x']}],collections:{x:['expression:a']}});
+ assert.equal(collectionView(none,{kind:'uncollected'}).filter.kind,'all');
+});
+
+test('E26: the Library shows the chosen bin alone, marks the pressed chip, and keeps Uncollected reachable by its own chip', ()=>{
+ const html=libraryHTML({...base,standalone:false,current:{...fieldStudies(),id:'expression:a',name:'Alpha'},bins:collectionBinsOf(index,'expression:a'),collectionFilter:{kind:'bin',name:'lessons'}});
+ assert.match(html,/data-filter="bin:lessons" aria-pressed="true"/);
+ assert.match(html,/data-filter="all" aria-pressed="false"/);
+ assert.match(html,/data-filter="uncollected" aria-pressed="false"/);
+ assert.match(html,/<strong>lessons<\/strong>/);
+ assert.doesNotMatch(html,/<strong>library<\/strong>/);
+ assert.doesNotMatch(html,/is-uncollected/);
+});
+
+test('E26: a reading that failed is stated on the page, never a silent gap; a reading not yet taken states nothing', ()=>{
+ const failed=libraryHTML({...base,standalone:true,bins:null});
+ assert.match(failed,/data-scope="collection-bins"/);
+ assert.match(failed,/could not be read from this instance/);
+ assert.doesNotMatch(failed,/data-action="collection-filter"/);
+ const pending=libraryHTML({...base,standalone:true});
+ assert.doesNotMatch(pending,/data-scope="collection-bins"/);
+});
+
+test('E26: a collection the open Expression carries is offered as a checked option even when no bin lists it, so a save never drops it', ()=>{
+ const stale={expressions:[{expression_ref:'expression:a',title:'Alpha',collections:['orphan']}],collections:{}};
+ const html=libraryHTML({...base,standalone:false,current:{...fieldStudies(),id:'expression:a',name:'Alpha'},bins:collectionBinsOf(stale,'expression:a')});
+ assert.match(html,/data-scope="collection-picker" data-expression="expression:a"/);
+ assert.match(html,/<input type="checkbox" name="collection" value="orphan" checked>/);
 });

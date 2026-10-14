@@ -15,7 +15,7 @@
  * Appearance rides the existing `oi-shell-cutout` host message; until it
  * lands, the OS preference leads. */
 
-import {compositionCover,featuredExpressions,startingPoints,libraryHTML,collectionBinsOf,type CollectionBins} from './expressions.js';
+import {compositionCover,featuredExpressions,startingPoints,libraryHTML,collectionBinsOf,parseCollectionFilter,type CollectionBins,type CollectionFilter} from './expressions.js';
 import {readLibraryDetailed,removeFromLibrary} from './store.js';
 import {nativeExpressionRequest} from './kernelExpressions.js';
 import {installNativeLibraryInteractions} from './libraryScopes.js';
@@ -26,7 +26,10 @@ type StartingPoint = ReturnType<typeof startingPoints>[number];
 type QuarantineState={rows:{id:string;key:string;name:string;reason:string;when:string;raw:string}[];unreadable:string[];message?:string};
 let quarantine:QuarantineState={rows:[],unreadable:[]};
 /** E26: the kernel's collections read as bins, read-only on this page (assignment belongs to the instrument). */
-let bins:CollectionBins|null=null;
+// undefined = not yet read (nothing stated); null = the read failed or was malformed (stated on the page).
+let bins:CollectionBins|null|undefined=undefined;
+/** E26: the bin choice on this page; a view state only, the data is re-read on every boot. */
+let collectionFilter:CollectionFilter={kind:'all'};
 function refreshBins():void{
   void nativeExpressionRequest({operation:'index'}).then(index=>{bins=collectionBinsOf(index);renderLibrary();}).catch(()=>{bins=null;});
 }
@@ -64,7 +67,7 @@ function renderLibrary():void{
   const paint=(image:HTMLImageElement)=>{const j=documents.get(image.dataset.previewId!);if(j){image.src=compositionCover(j.scenes[0]);image.removeAttribute('data-preview-id');}};
   page().innerHTML=libraryHTML({saved,featured,starters,section,standalone:true,
     errors:library.blocked?['Browser storage is unavailable here. Export an expression from the instrument to keep a portable copy.']:library.errors,
-    legacy:hasLegacyLibrary(),quarantine,bins,cover:j=>covers.get(j.id)});
+    legacy:hasLegacyLibrary(),quarantine,bins,collectionFilter,cover:j=>covers.get(j.id)});
   page().scrollTop=scroll;
   const images=page().querySelectorAll<HTMLImageElement>('img[data-preview-id]');
   if(typeof IntersectionObserver==='undefined')images.forEach(paint);
@@ -96,6 +99,7 @@ document.addEventListener('click',event=>{
   switch(el.dataset.action){
     case 'close-library':hostRequest({request:'close-library'});break;
     case 'library-section':section=el.dataset.section as typeof section;renderLibrary();page().scrollTop=0;break;
+    case 'collection-filter':collectionFilter=parseCollectionFilter(el.dataset.filter??'');renderLibrary();break;
     // Opening, starting-from and branching land in the instrument: the host
     // brings the Expressions mode forward and its Library holds the same
     // entries (this page's store and the instrument's are one storage
