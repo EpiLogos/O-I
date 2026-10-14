@@ -10,7 +10,8 @@ import {journeyReturnNotice} from './sharedTimeWindow.js';
 import {journeyBeatView,reorderSceneRequest,restoredBeatNotice,type JourneyBeatCard,type JourneyBeatView,type JourneyEditRequest} from './journeyBeats';
 import type {Journey} from './model';
 import {expressionTiming} from './propertyTracks';
-import {walkJourney,type JourneyPath} from './journeyPath';
+import {walkJourney,edgeRows,nativeEdgeRequest,edgeReplyMessage,edgeErrorMessage,type JourneyPath,type EdgeRow,type EdgeEdit} from './journeyPath';
+import {SWITCH_MODES,CURVE_TYPES,switchLabel,curveLabel,type SwitchMode,type CurveType} from './transitions';
 import {beatLoadKey,settleBounded} from './journeyLoadSchedule';
 import {reconcileJourneyPresence,recordJourneyPosition,savedJourneyPosition} from './journeyPresence';
 import {journeyInstrumentBasis,sameJourneyInstrumentBasis,readJourneyInstrument,readJourneySceneFrame,prepareJourneyBeatFocus,type JourneyBeatFocus,type JourneyInstrumentBasis} from './journeyInstrumentModel';
@@ -115,19 +116,38 @@ function beginBeatDrag(ev:ReactPointerEvent<HTMLLIElement>,from:number,cards:rea
 /** T8: the walked journey path beneath the beats: the scenes in order with their seams, the scene the clock stands in, the
  * blend in force, and the scene next after it. Each scene seeks the playhead. The clock is polled, so a paused or scrubbed
  * playhead reads the same way a playing one does. */
-function JourneyPlaybackPath({read,seek}:{read:()=>JourneyPlaybackClock|undefined;seek:(seconds:number)=>void}):ReactElement|null{
+/** Lane-5 T5 / T8: the path panel's edge controls exist on the native owner's journey. Each change is handed to the instrument, which
+ * sends it as one native edit (or shows the named refusal). Off the native owner there is no edit channel, so no controls. */
+export type JourneyPathEdit=(edit:EdgeEdit)=>void;
+function JourneyPlaybackPath({read,seek,edit}:{read:()=>JourneyPlaybackClock|undefined;seek:(seconds:number)=>void;edit?:JourneyPathEdit}):ReactElement|null{
  const [clock,setClock]=useState<JourneyPlaybackClock|undefined>(()=>read());
  useEffect(()=>{const id=window.setInterval(()=>setClock(read()),200);return ()=>window.clearInterval(id);},[read]);
  if(!clock||!clock.journey.scenes.length)return null;
- const path:JourneyPath=walkJourney(clock.journey,(index,local)=>expressionTiming(clock.journey,index,local),clock.time);
+ const journey=clock.journey;
+ const path:JourneyPath=walkJourney(journey,(index,local)=>expressionTiming(journey,index,local),clock.time);
+ const rows=edgeRows(journey);
+ const send=(next:EdgeEdit)=>{if(edit)edit(next);};
+ const edgeControls=(enterSceneId:string,name:string,row:EdgeRow)=>edit?<span className="journey-path-controls">
+  <select aria-label={`Switch into ${name}`} title="When the switch lands" value={row.switchMode} onChange={ev=>send({kind:'switch',enterSceneId,mode:ev.target.value as SwitchMode})}>{SWITCH_MODES.map(m=><option key={m} value={m}>{switchLabel(m)}</option>)}</select>
+  <select aria-label={`Curve into ${name}`} title="The blend's curve" value={row.curve} onChange={ev=>send({kind:'curve',enterSceneId,type:ev.target.value as CurveType})}>{CURVE_TYPES.map(t=><option key={t} value={t}>{curveLabel(t)}</option>)}</select>
+ </span>:null;
+ const seamRow=(id:string)=>rows.find(row=>row.kind==='seam'&&row.enterSceneId===id);
+ const loopRow=rows.find(row=>row.kind==='loop');
  return <section className="journey-playback-path" aria-label="Journey playback path">
   <header><h3>Playback</h3>{path.position?<span className="journey-path-clock">Scene {path.position.index+1} of {path.steps.length} · {path.position.time.toFixed(1)} / {path.total.toFixed(1)} s</span>:null}</header>
   <ol className="journey-path-steps">{path.steps.map(step=>{const current=path.position?.index===step.index;return <li key={step.sceneId} className="journey-path-step" data-current={current}>
    <button type="button" className="journey-path-scene" aria-current={current?'step':undefined} title={`Play from ${step.start.toFixed(1)} s`} onClick={()=>seek(step.start)}>
     <span aria-hidden="true">{step.index+1}</span> {step.name}</button>
    <span className={`journey-path-seam${step.seam?step.seam.blends?'':' is-cut':' is-start'}`}>{step.seam?step.seam.label:'Start'}</span>
+   {step.index>0&&seamRow(step.sceneId)?edgeControls(step.sceneId,step.name,seamRow(step.sceneId)!):null}
   </li>;})}</ol>
   {path.edge?<p className="journey-path-edge">{path.edge.from} → {path.edge.to} · {path.edge.label} · {Math.round(path.edge.fraction*100)}%</p>:null}
+  {path.stop?<p className="journey-path-stop">Playback stops at the end of {path.stop.name}, instead of looping.</p>:null}
+  {loopRow?<div className="journey-path-loop" data-loop-row>
+   <span className="journey-path-seam">{loopRow.label}</span>
+   {edgeControls(loopRow.enterSceneId,journey.scenes[0].name,loopRow)}
+   {edit&&loopRow.exitSceneId?<label className="journey-path-stop-toggle"><input type="checkbox" checked={loopRow.breakAtEnd} onChange={ev=>send({kind:'loop',exitSceneId:loopRow.exitSceneId!,on:ev.target.checked})}/> Stop at the end instead of looping</label>:null}
+  </div>:null}
   <p className="journey-path-next">{path.next?`Next: ${path.next.name}${path.next.wraps?' (loops to the start)':''}`:path.position?'The journey ends here.':'The playhead is outside the journey.'}</p>
  </section>;
 }
@@ -135,7 +155,7 @@ function JourneyPlaybackPath({read,seek}:{read:()=>JourneyPlaybackClock|undefine
 export function JourneyBeatPanel({reading,beatView,native,basis,busy,onFocus,onMove,onRefresh,playback,notice,onPortal,onEnter}:{
  reading:TechneReading;beatView:JourneyBeatView;native:KernelConversion;basis:JourneyInstrumentBasis;busy:boolean;
  onFocus:(card:JourneyBeatCard)=>void;onMove:(sceneRef:string,toIndex:number)=>void;onRefresh:()=>void;
- playback?:{read:()=>JourneyPlaybackClock|undefined;seek:(seconds:number)=>void};
+ playback?:{read:()=>JourneyPlaybackClock|undefined;seek:(seconds:number)=>void;edit?:()=>JourneyPathEdit|undefined};
  /** T12: place one of a beat's own source portals. Absent: no portal affordance. */
  onPortal?:(trigger:KernelSceneTrigger,card:JourneyBeatCard)=>void;
  /** T9: the presence disclosure for this load (field moved / stale), one plain sentence. */
@@ -173,7 +193,7 @@ export function JourneyBeatPanel({reading,beatView,native,basis,busy,onFocus,onM
    })}</ol>
    <span className="scene-insert-line" aria-hidden="true" hidden/>
   </div>}
-  {playback?<JourneyPlaybackPath read={playback.read} seek={playback.seek}/>:null}
+  {playback?<JourneyPlaybackPath read={playback.read} seek={playback.seek} edit={playback.edit?.()}/>:null}
   <p className="journey-reading-source">{reading.subject.subject_ref}</p>
  </section>;
 }
@@ -192,10 +212,26 @@ export function installJourneyInstrument(host:JourneyInstrumentHost,home:HTMLEle
  let restoring:Promise<boolean>|undefined;
  /** T10: the crossing this instrument made and has not yet returned from: the owner's acknowledged reply is the compare-and-set of its return. */
  let crossed:NativeTimeWindowReply|undefined;
- const playback=host.playback&&host.seek?{read:host.playback,seek:host.seek}:undefined;
+ // T8/T5: the path's edge controls send through submitEdge, on the native owner's journey only.
+ const playback=host.playback&&host.seek?{read:host.playback,seek:host.seek,edit:()=>host.nativeView()?submitEdge:undefined}:undefined;
  const current=(basis:JourneyInstrumentBasis,generation:number)=>!destroyed&&open&&epoch===generation&&sameJourneyInstrumentBasis(basis,host.nativeView(),host.sceneId());
  const message=(text:string)=>{status.textContent=text;};
  const failure=(cause:unknown)=>cause instanceof Error?cause.message:String(cause);
+ // Lane-5 T5 / T8: a hosted edge edit is one native edit through the instrument's own edit channel: one scene_material_set on the
+ // captured revision, labelled by its composite. The owner's reply names the outcome; a refusal passes the owner's reason through.
+ const submitEdge=(edit:EdgeEdit)=>{
+  const view=host.nativeView();
+  if(!view){message('The native Expression is not open, so nothing was written.');return;}
+  let routed:ReturnType<typeof nativeEdgeRequest>;
+  try{routed=nativeEdgeRequest({expression:view.document,bindings:view.bindings},edit);}catch(error){message(failure(error));return;}
+  if(!routed.ok){message(routed.reason);return;}
+  const label=routed.label;
+  void host.editExpression(routed.request).then(reply=>{
+   const outcome=edgeReplyMessage(reply,label);
+   if(!outcome.ok){message(outcome.text);return;}
+   void load().then(()=>message(outcome.text));
+  }).catch(error=>message(edgeErrorMessage(label,failure(error))));
+ };
  const basisKey=():string|undefined=>{try{return beatLoadKey(journeyInstrumentBasis(host.nativeView(),host.sceneId()));}catch{return undefined;}};
  function load():Promise<void>{
   const key=basisKey(),done=loadBeats();

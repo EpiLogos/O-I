@@ -99,22 +99,33 @@ pub fn data(value: &Value, depth: usize) -> Result<(), String> {
     Ok(())
 }
 
-/// A Scene's painted transition (lane-3 E11): `cut`, `dip-to-colour` (optional `at` in [0.2, 0.8]) or `wipe`
-/// (optional `direction`). Crossfade is the default and is carried by absence, so it is not admitted here.
+/// A Scene's painted transition (lane-3 E11) and its edge facts (lane-5 T5), in the shape the frame writes them: `cut`,
+/// `dip-to-colour` (optional `at` in [0.2, 0.8]) or `wipe` (optional `direction`), each with an optional `switchMode`
+/// (`sync` or `at-end`; `immediate` is the default and is carried by absence) and an optional `curve` (an E08 type; bezier
+/// handles bounded as the frame's curve editor bounds them; `linear` is the default and is carried by absence). A bare
+/// `crossfade` is not admitted: the frame carries its crossfade by absence and the Scene's `transition` seconds. A crossfade
+/// is admitted only with a switch mode or a curve, which is the one crossfade shape the frame writes.
 fn transition_spec(value: &Value) -> Result<(), String> {
     let spec = object(value, "Scene transition kind")?;
     let kind = spec.get("kind").and_then(Value::as_str).unwrap_or("");
     let params: &[&str] = match kind {
-        "cut" => &[],
-        "dip-to-colour" => &["at"],
-        "wipe" => &["direction"],
-        _ => return Err("Unknown Scene transition kind".into()),
+        "cut" => &["switchMode"],
+        "crossfade" => &["switchMode", "curve"],
+        "dip-to-colour" => &["at", "switchMode", "curve"],
+        "wipe" => &["direction", "switchMode", "curve"],
+        _ => return Err(format!("Unknown Scene transition kind {kind:?}")),
     };
-    if spec
+    if let Some(key) = spec
         .keys()
-        .any(|key| key != "kind" && !params.contains(&key.as_str()))
+        .find(|key| key.as_str() != "kind" && !params.contains(&key.as_str()))
     {
-        return Err("Unknown Scene transition parameter".into());
+        return Err(format!("Scene transition {kind} takes no {key} parameter"));
+    }
+    if kind == "crossfade" && !spec.contains_key("switchMode") && !spec.contains_key("curve") {
+        return Err(
+            "Scene transition crossfade is carried by absence; it is written only with a switch mode or a curve"
+                .into(),
+        );
     }
     if let Some(at) = spec.get("at") {
         number(at, 0.2, 0.8, "Dip to colour point")?;
@@ -124,7 +135,97 @@ fn transition_spec(value: &Value) -> Result<(), String> {
             return Err("Invalid wipe direction".into());
         }
     }
+    if let Some(mode) = spec.get("switchMode") {
+        match mode.as_str() {
+            Some("sync" | "at-end") => {}
+            Some("immediate") => {
+                return Err("Scene transition switch mode immediate is carried by absence".into())
+            }
+            _ => {
+                return Err(format!(
+                    "Unknown Scene transition switch mode {mode}. Choose immediate, sync or at-end."
+                ))
+            }
+        }
+    }
+    if let Some(curve) = spec.get("curve") {
+        transition_curve(curve)?;
+    }
     Ok(())
+}
+
+/// lane-5 T5: an E08 curve on a seam. Its progress runs from (time 0, value 0) to (time 1, value 1). A bezier's handles are
+/// checked as the frame's `validateCurveEdit` checks them: `out` has time in [0, 1] and value in the channel range [0, 1]
+/// from the start; `in` has time in [-1, 0] and value in [0, 1] at the end. Handles belong to a bezier only.
+fn transition_curve(value: &Value) -> Result<(), String> {
+    let curve = object(value, "Scene transition curve")?;
+    if let Some(key) = curve
+        .keys()
+        .find(|key| !matches!(key.as_str(), "type" | "out" | "in"))
+    {
+        return Err(format!("A Scene transition curve takes no {key} parameter"));
+    }
+    let kind = curve.get("type").and_then(Value::as_str).unwrap_or("");
+    match kind {
+        "hold" | "smooth" | "bezier" => {}
+        "linear" => return Err("Scene transition curve linear is carried by absence".into()),
+        _ => {
+            return Err(format!(
+                "Unknown Scene transition curve {kind:?}. Choose linear, hold, smooth or bezier."
+            ))
+        }
+    }
+    let has_handles = curve.contains_key("out") || curve.contains_key("in");
+    if has_handles && kind != "bezier" {
+        return Err("Only a bezier curve takes handles".into());
+    }
+    if let Some(out) = curve.get("out") {
+        let (dt, dv) = curve_handle(out)?;
+        if !(0.0..=1.0).contains(&dt) {
+            return Err("Handle time must stay inside its segment".into());
+        }
+        if !(0.0..=1.0).contains(&dv) {
+            return Err("Handle value is outside the channel range (0 to 1)".into());
+        }
+    }
+    if let Some(inn) = curve.get("in") {
+        let (dt, dv) = curve_handle(inn)?;
+        if !(-1.0..=0.0).contains(&dt) {
+            return Err("Handle time must stay inside its segment".into());
+        }
+        if !(0.0..=1.0).contains(&(1.0 + dv)) {
+            return Err("Handle value is outside the channel range (0 to 1)".into());
+        }
+    }
+    Ok(())
+}
+
+/// One bezier handle: finite `dt` and `dv`, and nothing else.
+fn curve_handle(value: &Value) -> Result<(f64, f64), String> {
+    let handle = object(value, "Scene transition handle")?;
+    if let Some(key) = handle
+        .keys()
+        .find(|key| !matches!(key.as_str(), "dt" | "dv"))
+    {
+        return Err(format!("A transition handle takes no {key} parameter"));
+    }
+    let finite = |name: &str| {
+        handle
+            .get(name)
+            .and_then(Value::as_f64)
+            .filter(|n| n.is_finite())
+            .ok_or_else(|| "Invalid property keyframe handle".to_string())
+    };
+    Ok((finite("dt")?, finite("dv")?))
+}
+
+/// lane-5 T8: a Scene's loop exit, the one Scene field the edge grammar adds. It is a flag on the Scene whose exit wraps, on or off.
+fn loop_exit(material: &serde_json::Map<String, Value>) -> Result<(), String> {
+    match material.get("breakAtEnd") {
+        None => Ok(()),
+        Some(flag) if flag.is_boolean() => Ok(()),
+        Some(_) => Err("Scene loop exit is on or off".into()),
+    }
 }
 
 pub fn validate(
@@ -164,6 +265,7 @@ pub fn validate(
         "research",
         "epiWorld",
         "transitionSpec",
+        "breakAtEnd",
         "entryOffset",
     ];
     if material.keys().any(|key| !KEYS.contains(&key.as_str())) {
@@ -197,6 +299,7 @@ pub fn validate(
     if let Some(spec) = material.get("transitionSpec") {
         transition_spec(spec)?;
     }
+    loop_exit(material)?;
     for key in ["view", "field", "composition", "morph", "engine"] {
         object(&presentation.scene[key], key)?;
     }
@@ -2290,6 +2393,99 @@ mod tests {
         ] {
             assert!(transition_spec(&refused).is_err(), "{refused}");
         }
+    }
+
+    #[test]
+    fn a_transition_edge_fact_is_admitted_in_the_shape_the_frame_writes() {
+        use super::transition_spec;
+        use serde_json::json;
+        for ok in [
+            json!({"kind": "cut", "switchMode": "at-end"}),
+            json!({"kind": "crossfade", "switchMode": "sync"}),
+            json!({"kind": "crossfade", "curve": {"type": "smooth"}}),
+            json!({"kind": "dip-to-colour", "at": 0.3, "switchMode": "sync", "curve": {"type": "hold"}}),
+            json!({"kind": "wipe", "direction": "left", "curve": {"type": "bezier"}}),
+            json!({"kind": "crossfade", "curve": {"type": "bezier", "out": {"dt": 0.3, "dv": 0.1}, "in": {"dt": -0.3, "dv": -0.1}}}),
+            json!({"kind": "crossfade", "curve": {"type": "bezier", "out": {"dt": 0.0, "dv": 1.0}, "in": {"dt": -1.0, "dv": 0.0}}}),
+        ] {
+            assert!(transition_spec(&ok).is_ok(), "{ok}");
+        }
+        let refused = [
+            (
+                json!({"kind": "cut", "curve": {"type": "smooth"}}),
+                "Scene transition cut takes no curve parameter",
+            ),
+            (json!({"kind": "crossfade"}), "carried by absence"),
+            (
+                json!({"kind": "crossfade", "switchMode": "later"}),
+                "Unknown Scene transition switch mode",
+            ),
+            (
+                json!({"kind": "crossfade", "switchMode": "immediate"}),
+                "switch mode immediate is carried by absence",
+            ),
+            (
+                json!({"kind": "crossfade", "curve": {"type": "ease-in"}}),
+                "Unknown Scene transition curve \"ease-in\"",
+            ),
+            (
+                json!({"kind": "crossfade", "curve": {"type": "linear"}}),
+                "curve linear is carried by absence",
+            ),
+            (
+                json!({"kind": "crossfade", "curve": {"type": "smooth", "out": {"dt": 0.2, "dv": 0.0}}}),
+                "Only a bezier curve takes handles",
+            ),
+            (
+                json!({"kind": "crossfade", "curve": {"type": "bezier", "out": {"dt": 1.5, "dv": 0.0}}}),
+                "Handle time must stay inside its segment",
+            ),
+            (
+                json!({"kind": "crossfade", "curve": {"type": "bezier", "in": {"dt": 0.2, "dv": 0.0}}}),
+                "Handle time must stay inside its segment",
+            ),
+            (
+                json!({"kind": "crossfade", "curve": {"type": "bezier", "out": {"dt": 0.3, "dv": 2.0}}}),
+                "outside the channel range (0 to 1)",
+            ),
+            (
+                json!({"kind": "crossfade", "curve": {"type": "bezier", "in": {"dt": -0.3, "dv": 0.5}}}),
+                "outside the channel range (0 to 1)",
+            ),
+            (
+                json!({"kind": "crossfade", "curve": {"type": "bezier", "out": {"dt": 0.3}}}),
+                "Invalid property keyframe handle",
+            ),
+            (
+                json!({"kind": "crossfade", "curve": {"type": "bezier", "out": {"dt": 0.3, "dv": 0.0, "extra": 1}}}),
+                "takes no extra parameter",
+            ),
+            (
+                json!({"kind": "crossfade", "curve": {"type": "bezier", "tension": 2}}),
+                "takes no tension parameter",
+            ),
+        ];
+        for (bad, message) in refused {
+            let error = transition_spec(&bad).expect_err(&bad.to_string());
+            assert!(error.contains(message), "{bad}: {error}");
+        }
+    }
+
+    #[test]
+    fn a_loop_exit_is_a_boolean_scene_flag() {
+        use super::loop_exit;
+        use serde_json::json;
+        let flag = |v: serde_json::Value| json!({"breakAtEnd": v});
+        assert!(loop_exit(flag(json!(true)).as_object().unwrap()).is_ok());
+        assert!(loop_exit(flag(json!(false)).as_object().unwrap()).is_ok());
+        assert!(
+            loop_exit(json!({}).as_object().unwrap()).is_ok(),
+            "absent is the wrap"
+        );
+        assert_eq!(
+            loop_exit(flag(json!("yes")).as_object().unwrap()).unwrap_err(),
+            "Scene loop exit is on or off"
+        );
     }
 
     #[test]

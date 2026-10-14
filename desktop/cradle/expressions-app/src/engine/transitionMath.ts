@@ -9,7 +9,17 @@ export const WIPE_DIRECTIONS=['left','right','up','down'] as const;
 export type WipeDirection=(typeof WIPE_DIRECTIONS)[number];
 /** Where, as a fraction of the transition, the colour is fully reached. */
 export const DIP_AT_MIN=.2,DIP_AT_MAX=.8,DIP_AT_DEFAULT=.5;
-export interface TransitionParams {at?:number;direction?:WipeDirection}
+/** Lane-5 T5: when a jump into a Scene takes effect while playback runs. Absent = immediate, today's behaviour. */
+export const SWITCH_MODES=['immediate','sync','at-end'] as const;
+export type SwitchMode=(typeof SWITCH_MODES)[number];
+/** Lane-3 E08: the segment law of a property track, restated here because this module imports nothing. The app binds it to
+ * propertyTracks' `Interpolation` at compile time (transitions.ts), so there is one vocabulary, not two. */
+export const CURVE_TYPES=['linear','hold','smooth','bezier'] as const;
+export type CurveType=(typeof CURVE_TYPES)[number];
+/** An E08 bezier handle: `dt` in time, `dv` in value, relative to its own point. */
+export interface CurveHandle{dt:number;dv:number}
+export interface TransitionCurve{type:CurveType;out?:CurveHandle;in?:CurveHandle}
+export interface TransitionParams {at?:number;direction?:WipeDirection;switchMode?:SwitchMode;curve?:TransitionCurve}
 export interface TransitionSpec extends TransitionParams {kind:TransitionKind}
 
 const clamp01=(n:number)=>Number.isFinite(n)?Math.min(1,Math.max(0,n)):0;

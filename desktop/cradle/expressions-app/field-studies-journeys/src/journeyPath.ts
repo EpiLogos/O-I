@@ -9,7 +9,8 @@
 import type {Journey,Scene} from './model';
 import {SCENE_TRANSITION_MAX} from './model';
 import {esc} from './icons';
-import {kindLabel,transitionKindOf,type TransitionSpec} from './transitions';
+import {kindLabel,transitionKindOf,switchModeOf,switchLabel,curveLabel,seamEdgeSpec,writeLoopExit,edgeEditLabel,type TransitionSpec,type SwitchMode,type CurveType} from './transitions';
+import type {JourneyEditRequest} from './journeyBeats';
 import {journeyTimelineLayout,sceneAtTime,type TimelineTimingFn} from './journeyTimelineLayout';
 
 /** One decimal place, with its unit: "1.5 s". */
@@ -21,7 +22,10 @@ export function seamBlends(spec:TransitionSpec|undefined|null,seconds:number):bo
 
 /** The seam's caption: "Cut", or the kind and its seconds ("Crossfade · 1.5 s"). */
 export function seamLabel(spec:TransitionSpec|undefined|null,seconds:number):string{
- return seamBlends(spec,seconds)?`${kindLabel(transitionKindOf(spec))} · ${formatSeconds(seconds)}`:'Cut';
+ // Lane-5 T5: a non-default switch mode and curve are named after the kind, so the seam's whole meaning reads on the edge.
+ const mode=switchModeOf(spec),edge=[mode!=='immediate'?switchLabel(mode):null,spec?.curve?curveLabel(spec.curve.type):null].filter((part):part is string=>part!==null);
+ const tail=edge.length?` · ${edge.join(' · ')}`:'';
+ return seamBlends(spec,seconds)?`${kindLabel(transitionKindOf(spec))} · ${formatSeconds(seconds)}${tail}`:`Cut${tail}`;
 }
 
 /** The most a blend can last into a scene: the scene's own length, and the journey's transition bound. */
@@ -70,6 +74,8 @@ export interface JourneyPath {
  position:{index:number;name:string;local:number;time:number}|null;
  edge:{from:string;to:string;fraction:number;label:string}|null;
  next:{index:number;name:string;wraps:boolean}|null;
+ /** T8: where playback stops instead of wrapping: the last Scene, when the journey loops and that Scene's exit is a loop exit. */
+ stop:{index:number;name:string}|null;
 }
 
 /** T8, pure: the journey's walked path at journey time `time`. The steps are the authored sequence with their seams; the
@@ -89,10 +95,106 @@ export function walkJourney(journey:Pick<Journey,'scenes'|'loop'>,timing:Timelin
   ?{from:journey.scenes[position.index-1].name,to:journey.scenes[position.index].name,fraction,label:seamLabel(journey.scenes[position.index].transitionSpec,journey.scenes[position.index].transition)}
   :null;
  const n=journey.scenes.length;
+ // T8: a loop exit on the last Scene is where the loop stops; the journey does not wrap from it.
+ const exit=journey.loop&&n>0&&journey.scenes[n-1].breakAtEnd===true;
  let next:JourneyPath['next']=null;
  if(position){
   if(position.index+1<n)next={index:position.index+1,name:journey.scenes[position.index+1].name,wraps:false};
-  else if(journey.loop&&n>0)next={index:0,name:journey.scenes[0].name,wraps:true};
+  else if(journey.loop&&n>0&&!exit)next={index:0,name:journey.scenes[0].name,wraps:true};
  }
- return {steps,total:layout.total,loop:journey.loop,position,edge,next};
+ const stop=exit?{index:n-1,name:journey.scenes[n-1].name}:null;
+ return {steps,total:layout.total,loop:journey.loop,position,edge,next,stop};
 }
+
+/** Lane-5 T5 / T8: the edges the path panel edits, each with the parameters it moves. A seam row is a Scene's entering seam: its
+ * switch mode and curve. The loop row is the wrap from the last Scene to the first: the first Scene's entering seam (the wrap blend
+ * a loop plays) and the last Scene's loop exit. The loop row exists only when the journey loops. */
+export interface EdgeRow {
+ kind:'seam'|'loop';enterSceneId:string;exitSceneId:string|null;from:string;to:string;
+ switchMode:SwitchMode;curve:CurveType;breakAtEnd:boolean;label:string;
+}
+export function edgeRows(journey:Pick<Journey,'scenes'|'loop'>):EdgeRow[]{
+ const s=journey.scenes,rows:EdgeRow[]=[];
+ for(let i=1;i<s.length;i++){
+  const spec=s[i].transitionSpec;
+  rows.push({kind:'seam',enterSceneId:s[i].id,exitSceneId:null,from:s[i-1].name,to:s[i].name,switchMode:switchModeOf(spec),curve:spec?.curve?.type??'linear',breakAtEnd:false,label:seamLabel(spec,s[i].transition)});
+ }
+ if(journey.loop&&s.length){
+  const first=s[0],last=s[s.length-1],spec=first.transitionSpec,exit=last.breakAtEnd===true;
+  rows.push({kind:'loop',enterSceneId:first.id,exitSceneId:last.id,from:last.name,to:first.name,switchMode:switchModeOf(spec),curve:spec?.curve?.type??'linear',breakAtEnd:exit,
+   label:`${last.name} → ${first.name} · ${exit?'Stops at end':'Loops'}`});
+ }
+ return rows;
+}
+
+/** Lane-5 T5 / T8: one edit the path panel asks for. A switch or curve edit names the Scene it enters; a loop edit names the last
+ * Scene, whose exit it is. */
+export type EdgeEdit={kind:'switch';enterSceneId:string;mode:SwitchMode}|{kind:'curve';enterSceneId:string;type:CurveType}|{kind:'loop';exitSceneId:string;on:boolean};
+/** The write an accepted edit makes to one Scene: its seam spec (undefined = the default) or its loop exit. */
+export type EdgeWrite={sceneId:string;field:'transitionSpec';spec:TransitionSpec|undefined}|{sceneId:string;field:'breakAtEnd';on:boolean};
+export type EdgePlan={ok:true;write:EdgeWrite;label:string}|{ok:false;reason:string};
+
+/** Lane-5 T5 / T8, pure: plans one edge edit. Validation is the transition's own, and each refusal is named. The plan is applied by
+ * applyEdgeWrite, or sent as one native edit by nativeEdgeRequest. */
+export function planEdgeEdit(journey:Pick<Journey,'scenes'>,edit:EdgeEdit):EdgePlan{
+ try{
+  if(edit.kind==='loop'){
+   const scene=journey.scenes.find(s=>s.id===edit.exitSceneId);
+   if(!scene)return {ok:false,reason:'That scene is no longer in this expression.'};
+   return {ok:true,write:{sceneId:scene.id,field:'breakAtEnd',on:edit.on},label:edgeEditLabel({kind:'loop',on:edit.on})};
+  }
+  const scene=journey.scenes.find(s=>s.id===edit.enterSceneId);
+  if(!scene)return {ok:false,reason:'That scene is no longer in this expression.'};
+  const spec=edit.kind==='switch'
+   ?seamEdgeSpec(scene.transitionSpec,{switchMode:edit.mode})
+   :seamEdgeSpec(scene.transitionSpec,{curve:edit.type==='linear'?undefined:{type:edit.type}});
+  return {ok:true,write:{sceneId:scene.id,field:'transitionSpec',spec},label:edgeEditLabel(edit.kind==='switch'?{kind:'switch',mode:edit.mode}:{kind:'curve',type:edit.type})};
+ }catch(cause){return {ok:false,reason:cause instanceof Error?cause.message:String(cause)};}
+}
+
+/** Lane-5 T5 / T8: applies one planned write to the Scenes of an expression. The caller runs it inside the labelled edit. */
+export function applyEdgeWrite(scenes:Array<{id:string;transitionSpec?:TransitionSpec;breakAtEnd?:boolean}>,write:EdgeWrite):void{
+ if(write.field==='breakAtEnd'){writeLoopExit(scenes,write.sceneId,write.on);return;}
+ const scene=scenes.find(s=>s.id===write.sceneId);
+ if(!scene)throw new Error('That scene is no longer in this expression.');
+ if(write.spec)scene.transitionSpec=JSON.parse(JSON.stringify(write.spec));else delete scene.transitionSpec;
+}
+
+/** The native view an edge edit reads: the owner's Expression with each Scene's authored material, and the binding of each frame
+ * Scene to its native reference. These are the instrument's own read shapes; the owner answers them for the open Expression. */
+export interface NativeEdgeView {
+ expression:{expression_ref:string;revision:number;scenes:ReadonlyArray<{scene_ref:string;presentation?:{schema:string;scene:unknown;saved?:unknown}|null}>};
+ bindings:Readonly<Record<string,{scene_ref:string}>>;
+}
+/** Lane-5 T5 / T8, pure: one hosted edge edit as the instrument's existing native edit. The Scene's authored material is read from
+ * the owner, the edit is applied to a copy of it through the same write the local path uses, and the result is one
+ * `scene_material_set` on the captured revision: one request, one owner revision, one labelled composite. */
+export function nativeEdgeRequest(view:NativeEdgeView,edit:EdgeEdit,actor='human:expressions-app'):{ok:true;request:JourneyEditRequest;label:string}|{ok:false;reason:string}{
+ const sceneId=edit.kind==='loop'?edit.exitSceneId:edit.enterSceneId;
+ const ref=view.bindings[sceneId]?.scene_ref;
+ if(!ref)return {ok:false,reason:'That scene has no native reference in this Expression.'};
+ const record=view.expression.scenes.find(s=>s.scene_ref===ref);
+ const presentation=record?.presentation;
+ if(!record||!presentation||presentation.schema!=='oi.journey-scene/v1'||!presentation.scene||typeof presentation.scene!=='object')
+  return {ok:false,reason:'That scene has no authored native material to change.'};
+ const material=JSON.parse(JSON.stringify(presentation.scene)) as Scene;
+ if(material.id!==sceneId)return {ok:false,reason:'That scene is not the native material bound to it.'};
+ const plan=planEdgeEdit({scenes:[material]},edit);
+ if(!plan.ok)return plan;
+ applyEdgeWrite([material],plan.write);
+ return {ok:true,label:plan.label,request:{
+  operation:'edit',expression_ref:view.expression.expression_ref,expected_revision:view.expression.revision,actor,
+  changes:[{change:'scene_material_set',scene_ref:ref,presentation:{schema:'oi.journey-scene/v1',scene:material,saved:presentation.saved??null}}],
+ }};
+}
+/** Lane-5 T5 / T8: the words an edge edit's owner reply is shown in. Saved names the edit; a revision conflict says nothing was
+ * written; any other refusal passes the owner's own reason through by name. */
+export function edgeReplyMessage(reply:unknown,label:string):{ok:boolean;text:string}{
+ const r=(reply??{}) as {state?:string;current_revision?:number;error?:string;reason?:string};
+ if(r.state==='ready')return {ok:true,text:`${label}: saved.`};
+ if(r.state==='revision_conflict')return {ok:false,text:`${label} was not written: this Expression changed elsewhere (now revision ${r.current_revision}). Refresh and try again.`};
+ const named=r.error??r.reason;
+ return {ok:false,text:named?`${label} was refused by the native owner: ${named}`:`${label} was refused by the native owner (state ${String(r.state)}).`};
+}
+/** Lane-5 T5 / T8: the words for an edge edit the owner rejected outright, with the owner's own message. */
+export function edgeErrorMessage(label:string,cause:string):string{return `${label} was refused by the native owner: ${cause}`;}
