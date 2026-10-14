@@ -125,6 +125,7 @@ export function FactoryRunJoinDetail({transport, world, tracks}: FactoryRunJoinP
   const join: FactoryRunJoin = factoryRunJoin({
     run: factsOf(entry.run.runRef, entry.card.source.projectRef ?? null, positions, occupants, returns.done ? returns.returns : []),
     events: world?.source.events ?? [],
+    absences: world?.source.absences ?? [],
     occurrences: handle ? handle.model.occ.map(item => ({id: String(item.id), subject_ref: item.subject_ref})) : null,
     sessionRefs: tracks.map(track => track.sessionRef),
   })
@@ -161,7 +162,7 @@ export function FactoryRunJoinDetail({transport, world, tracks}: FactoryRunJoinP
         <li className="inhabitant-reading" data-row="timeline"><span className="inhabitant-reading-op">timeline</span>
           <span className="inhabitant-reading-standing">{join.timeline.state === 'selected'
             ? <button type="button" className="inhabitant-act" data-action="select-run-moment" onClick={() => { if (world && timelineEvent) world.selectOccasion(timelineEvent) }}>Select the run's moment ({join.timeline.event.stream ?? 'stream'})</button>
-            : <Seam label="timeline" owner={join.timeline.seam.owner} op={join.timeline.seam.op} remedy={join.timeline.seam.remedy}/>}</span></li>
+            : <>{join.timeline.absence && <span className="inhabitant-device-note" data-timeline-absence={join.timeline.absence.reason}>{join.timeline.absence.text}. </span>}<Seam label="timeline" owner={join.timeline.seam.owner} op={join.timeline.seam.op} remedy={join.timeline.seam.remedy}/></>}</span></li>
 
         <li className="inhabitant-reading" data-row="constellation"><span className="inhabitant-reading-op">constellation</span>
           <span className="inhabitant-reading-standing">{!returns.done ? 'waiting for the owner\'s Return, which names the wiki nodes'

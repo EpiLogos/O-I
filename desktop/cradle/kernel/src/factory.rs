@@ -144,9 +144,10 @@ pub fn is_development_read(read: &str) -> bool {
     DEVELOPMENT_READS.contains(&read)
 }
 
-/// How long one inhabitation read may take before the desktop stops waiting
-/// and names it `unavailable` (a read never hangs a panel). Tests shorten it
-/// with `OI_INHABITATION_READ_TIMEOUT_MS`.
+/// How long one bounded Factory read may take before the desktop stops waiting
+/// and names it `timeout` (a read never hangs a panel or the temporal field).
+/// The bound covers the inhabitation reads and the telemetry day read alike.
+/// Tests shorten it with `OI_INHABITATION_READ_TIMEOUT_MS`.
 pub fn inhabitation_read_timeout() -> std::time::Duration {
     std::env::var("OI_INHABITATION_READ_TIMEOUT_MS")
         .ok()
@@ -407,16 +408,10 @@ fn owner_call(args: &[std::ffi::OsString], input: Option<&[u8]>) -> Result<Value
         argv.push("factory".into());
     }
     argv.extend(args.iter().cloned());
-    if input.is_none() && is_inhabitation_read(args) {
-        // The inhabitation reads are bounded: a stalled owner is named
-        // `unavailable`, never a hung panel.
-        return crate::inhabitation::run_bounded(
-            &executable,
-            &argv,
-            None,
-            inhabitation_read_timeout(),
-            &format!("factory development {}", args[1].to_string_lossy()),
-        );
+    if input.is_none() && is_bounded_owner_read(args) {
+        // The bounded reads (inhabitation, telemetry day): a stalled owner is
+        // named `timeout`, never a hung panel or a stalled temporal field.
+        return bounded_owner_read(&executable, &argv, args);
     }
     let mut child = std::process::Command::new(&executable)
         .args(&argv)
@@ -466,6 +461,48 @@ fn is_inhabitation_read(args: &[std::ffi::OsString]) -> bool {
         && args
             .get(1)
             .is_some_and(|read| read == "inhabitation" || read == "current-work")
+}
+
+/// `telemetry day <state> …` — the Factory day reading the temporal field joins.
+fn is_telemetry_day_read(args: &[std::ffi::OsString]) -> bool {
+    args.first().is_some_and(|verb| verb == "telemetry")
+        && args.get(1).is_some_and(|read| read == "day")
+}
+
+/// The reads the owner bounds: a read-only Factory call with no input, which a
+/// stalled owner must never hold open.
+fn is_bounded_owner_read(args: &[std::ffi::OsString]) -> bool {
+    is_inhabitation_read(args) || is_telemetry_day_read(args)
+}
+
+/// Run one bounded read at the inhabitation bound. `args` names the read as
+/// the owner's grammar does (`development <read>` or `telemetry <read>`); the
+/// stop is named with the same words either way.
+fn bounded_owner_read(
+    executable: &Path,
+    argv: &[std::ffi::OsString],
+    args: &[std::ffi::OsString],
+) -> Result<Value, Error> {
+    bounded_owner_read_with(executable, argv, args, inhabitation_read_timeout())
+}
+
+fn bounded_owner_read_with(
+    executable: &Path,
+    argv: &[std::ffi::OsString],
+    args: &[std::ffi::OsString],
+    timeout: std::time::Duration,
+) -> Result<Value, Error> {
+    crate::inhabitation::run_bounded(
+        executable,
+        argv,
+        None,
+        timeout,
+        &format!(
+            "factory {} {}",
+            args[0].to_string_lossy(),
+            args[1].to_string_lossy()
+        ),
+    )
 }
 
 /// The owner's grammar for the two inhabitation reads (the state path first,
@@ -1894,6 +1931,51 @@ pub fn run_close(
 #[cfg(test)]
 mod owner_tests {
     use super::*;
+
+    fn telemetry_day_args() -> Vec<std::ffi::OsString> {
+        vec![
+            "telemetry".into(),
+            "day".into(),
+            "/fixture/state.json".into(),
+            "--day".into(),
+            "2026-10-08".into(),
+            "--json".into(),
+        ]
+    }
+
+    #[test]
+    fn the_telemetry_day_read_is_bounded_like_the_inhabitation_reads() {
+        assert!(is_bounded_owner_read(&telemetry_day_args()));
+        assert!(is_bounded_owner_read(&[
+            "development".into(),
+            "inhabitation".into(),
+        ]));
+        // Other telemetry reads keep their own (unchanged) call.
+        assert!(!is_bounded_owner_read(&[
+            "telemetry".into(),
+            "status".into(),
+        ]));
+
+        // A stalled owner is named `timeout` at the bound, and the call
+        // returns: `/bin/sleep` stands in for an owner that never answers.
+        let started = std::time::Instant::now();
+        let error = bounded_owner_read_with(
+            Path::new("/bin/sleep"),
+            &["30".into()],
+            &telemetry_day_args(),
+            std::time::Duration::from_millis(300),
+        )
+        .unwrap_err();
+        assert_eq!(error.kind, "timeout", "{error:?}");
+        assert!(
+            error
+                .message
+                .contains("factory telemetry day did not answer within 300 ms"),
+            "{error:?}"
+        );
+        assert!(!error.operation_may_have_run);
+        assert!(started.elapsed() < std::time::Duration::from_secs(10));
+    }
 
     #[test]
     fn a_commission_carries_only_a_factory_commission_request() {

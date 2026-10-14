@@ -29,8 +29,8 @@ use crate::events::KernelEventLog;
 use crate::factory::OwnerRequest;
 use crate::flow::{CentralClient, OwnerCallError};
 use crate::temporal_events::{
-    CivilField, EventKind, TemporalEvent, TemporalEventsAnswer, TemporalEventsError, TemporalQuery,
-    TemporalStreamSource, Window,
+    AbsenceReason, CivilField, EventKind, StreamAbsence, TemporalEvent, TemporalEventsAnswer,
+    TemporalEventsError, TemporalQuery, TemporalStreamSource, Window,
 };
 use serde_json::{json, Value};
 use std::collections::BTreeSet;
@@ -592,9 +592,10 @@ impl TemporalStreamSource for AikitHistorySource {
 
 const FACTORY_STREAM: &str = "factory-runs";
 
-/// The longest the field waits for the Factory stream. The owner call has
-/// no bound of its own (only the inhabitation reads are bounded), so the
-/// field bounds the wait here.
+/// The longest the field waits for the Factory stream. The owner's telemetry
+/// day read is bounded at the owner (the inhabitation read bound, shorter than
+/// this), so this wait is the field's second guard: it holds even if the owner
+/// process does not return.
 const FACTORY_READ_BOUND: std::time::Duration = std::time::Duration::from_secs(30);
 
 /// The civil days one Factory day read is asked for, in the owner's own
@@ -722,6 +723,26 @@ pub(crate) fn telemetry_day_to_events(
     Ok(events)
 }
 
+/// The Factory stream's reading, and the named cause of its silence when it
+/// contributed nothing.
+pub(crate) struct FactoryReading {
+    pub(crate) events: Vec<TemporalEvent>,
+    pub(crate) absence: Option<StreamAbsence>,
+}
+
+/// The named cause of one owner failure, by the kind the owner call reports:
+/// an executable that is not there is `owner-absent`, a bound's stop is
+/// `owner-timeout`, the owner's own refusal is `refused`, and any other
+/// answer the field cannot read is `owner-unreadable`.
+pub(crate) fn owner_failure_reason(error: &crate::material::Error) -> AbsenceReason {
+    match error.kind.as_str() {
+        "unavailable" => AbsenceReason::OwnerAbsent,
+        "timeout" => AbsenceReason::OwnerTimeout,
+        "owner-refused-or-failed" => AbsenceReason::Refused,
+        _ => AbsenceReason::OwnerUnreadable,
+    }
+}
+
 /// The Factory run stream. Read only where the window names days: the owner
 /// locates each Central root's Factory source (`factory project locate`,
 /// through Central's world reading), then asks each located source for its
@@ -729,44 +750,96 @@ pub(crate) fn telemetry_day_to_events(
 /// for the field: no world reading, no located source, a refused or
 /// unreadable answer, or a malformed reading contributes no moments from
 /// that point, and the rest of the field answers as it would without
-/// Factory. The owner's own `absent` state is the ordinary case.
+/// Factory.
+///
+/// The silence is named, not swallowed. The stream records one absence only
+/// when it contributed no moment: a located, readable Factory source that
+/// holds no run in the window is "no moment" and names nothing; an owner
+/// that could not be read, or a root that is not a Factory source, names its
+/// cause (the first in read order; a failure outranks a root with no Factory
+/// state).
 pub(crate) fn factory_runs_read(
     client: &CentralClient,
     window: &Window,
     field: &CivilField,
-) -> Vec<TemporalEvent> {
-    let Ok(Some(days)) = factory_days_for(window, field) else {
-        return Vec::new();
+) -> FactoryReading {
+    let silent = |reason: AbsenceReason, owner_words: String| FactoryReading {
+        events: Vec::new(),
+        absence: Some(StreamAbsence {
+            stream: FACTORY_STREAM.into(),
+            reason,
+            owner_words,
+        }),
     };
-    let Ok(world) = crate::world::read_world(client) else {
-        return Vec::new();
+    let days = match factory_days_for(window, field) {
+        Ok(Some(days)) => days,
+        // No Factory day is named: nothing was asked of the owner, so nothing
+        // is absent.
+        Ok(None) | Err(_) => {
+            return FactoryReading {
+                events: Vec::new(),
+                absence: None,
+            }
+        }
     };
-    let Ok(located) = crate::factory::owner(
+    let world = match crate::world::read_world(client) {
+        Ok(world) => world,
+        Err(words) => return silent(AbsenceReason::OwnerUnreadable, words),
+    };
+    let located = match crate::factory::owner(
         OwnerRequest::Locate {
             project: None,
             all: true,
         },
         Some(&world),
-    ) else {
-        return Vec::new();
+    ) {
+        Ok(located) => located,
+        Err(error) => return silent(owner_failure_reason(&error), error.message),
     };
+
     let mut events = Vec::new();
+    // Named causes in read order: failures, then roots with no Factory state.
+    let mut failures: Vec<(AbsenceReason, String)> = Vec::new();
+    let mut absent_roots: Vec<(AbsenceReason, String)> = Vec::new();
+    // Set once any located source answers its day reading, whatever it holds.
+    let mut readable = false;
     for row in located
         .get("locations")
         .and_then(Value::as_array)
         .into_iter()
         .flatten()
     {
-        if row.get("state").and_then(Value::as_str) != Some("located") {
-            continue;
+        let row_words = row
+            .get("error")
+            .and_then(Value::as_str)
+            .unwrap_or_default()
+            .to_string();
+        match row.get("state").and_then(Value::as_str) {
+            Some("located") => {}
+            Some("absent") => {
+                absent_roots.push((AbsenceReason::OwnerAbsent, row_words));
+                continue;
+            }
+            Some("refused") => {
+                failures.push((AbsenceReason::Refused, row_words));
+                continue;
+            }
+            _ => {
+                failures.push((
+                    AbsenceReason::OwnerUnreadable,
+                    "the owner's locate row names no known state".into(),
+                ));
+                continue;
+            }
         }
-        let Some(location) = row.get("location") else {
-            continue;
-        };
         let (Some(state), Some(source_ref)) = (
-            location.get("statePath").and_then(Value::as_str),
-            location.get("projectRef").and_then(Value::as_str),
+            row.pointer("/location/statePath").and_then(Value::as_str),
+            row.pointer("/location/projectRef").and_then(Value::as_str),
         ) else {
+            failures.push((
+                AbsenceReason::OwnerUnreadable,
+                "the located answer names no state path".into(),
+            ));
             continue;
         };
         let (day, from_day, through_day) = match &days {
@@ -775,7 +848,7 @@ pub(crate) fn factory_runs_read(
                 (None, Some(from.clone()), Some(through.clone()))
             }
         };
-        let Ok(reading) = crate::factory::owner(
+        let reading = match crate::factory::owner(
             OwnerRequest::TelemetryDay {
                 state_path: PathBuf::from(state),
                 day,
@@ -783,14 +856,74 @@ pub(crate) fn factory_runs_read(
                 through_day,
             },
             None,
-        ) else {
-            continue;
+        ) {
+            Ok(reading) => reading,
+            Err(error) => {
+                failures.push((owner_failure_reason(&error), error.message));
+                continue;
+            }
         };
-        if let Ok(mut moments) = telemetry_day_to_events(source_ref, &reading) {
-            events.append(&mut moments);
+        match telemetry_day_to_events(source_ref, &reading) {
+            Ok(mut moments) => {
+                readable = true;
+                events.append(&mut moments);
+            }
+            Err(error) => failures.push((AbsenceReason::OwnerUnreadable, error.to_string())),
         }
     }
-    events
+
+    if !events.is_empty() {
+        return FactoryReading {
+            events,
+            absence: None,
+        };
+    }
+    // A readable source with no run in the window is the owner's own "no
+    // moment": only a root that is not a Factory source is then no cause.
+    let named = if readable {
+        failures.into_iter().next()
+    } else {
+        failures.into_iter().chain(absent_roots).next()
+    };
+    FactoryReading {
+        events,
+        absence: named.map(|(reason, owner_words)| StreamAbsence {
+            stream: FACTORY_STREAM.into(),
+            reason,
+            owner_words,
+        }),
+    }
+}
+
+/// The field's own wait on the Factory stream, as its reading arrives. A
+/// stream that answers later than the bound is named as the owner's timeout,
+/// and a stream whose reader ended without an answer as unreadable. The
+/// words are the field's own: no owner answered them.
+pub(crate) fn awaited_factory(
+    received: Result<FactoryReading, std::sync::mpsc::RecvTimeoutError>,
+) -> FactoryReading {
+    let named = |reason: AbsenceReason, owner_words: String| FactoryReading {
+        events: Vec::new(),
+        absence: Some(StreamAbsence {
+            stream: FACTORY_STREAM.into(),
+            reason,
+            owner_words,
+        }),
+    };
+    match received {
+        Ok(reading) => reading,
+        Err(std::sync::mpsc::RecvTimeoutError::Timeout) => named(
+            AbsenceReason::OwnerTimeout,
+            format!(
+                "the Factory owner did not answer within {} s; the field stopped waiting",
+                FACTORY_READ_BOUND.as_secs()
+            ),
+        ),
+        Err(std::sync::mpsc::RecvTimeoutError::Disconnected) => named(
+            AbsenceReason::OwnerUnreadable,
+            "the Factory read ended without an answer".into(),
+        ),
+    }
 }
 
 fn load_civil_field(client: &CentralClient) -> Result<CivilField, TemporalEventsError> {
@@ -1093,8 +1226,12 @@ pub fn read_field(
             let kernel_events = kernel_events?;
             let aikit_events = aikit.join().expect("aikit reader")?;
             // Bounded: a Factory answer later than the bound is a named absence
-            // for this stream, never a stalled field.
-            let factory_events = factory.recv_timeout(FACTORY_READ_BOUND).unwrap_or_default();
+            // for this stream, never a stalled field. The owner bounds its own
+            // reads; this wait is the second guard.
+            let FactoryReading {
+                events: factory_events,
+                absence: factory_absence,
+            } = awaited_factory(factory.recv_timeout(FACTORY_READ_BOUND));
 
             let now_stream = Collected {
                 name: "central-now",
@@ -1120,7 +1257,7 @@ pub fn read_field(
                 name: FACTORY_STREAM,
                 events: factory_events,
             };
-            let answer = project(
+            let mut answer = project(
                 &[
                     &now_stream,
                     &thoughts_stream,
@@ -1133,6 +1270,9 @@ pub fn read_field(
                 &observed,
                 query,
             )?;
+            // Every stream that swallowed its failure names it here; the five
+            // others fail the whole reading by name and never reach this list.
+            answer.absences = factory_absence.into_iter().collect();
             cache.lock().expect("temporal read cache lock").put(
                 cache_key,
                 serde_json::to_value(&answer).map_err(|error| TemporalEventsError::CivilTime {
@@ -1635,6 +1775,158 @@ mod read_field_tests {
                 owner.directory.display()
             )],
             "an absent source is located once and never read for days"
+        );
+        // The silence is named, in the owner's own words.
+        assert_eq!(
+            answer.absences,
+            vec![StreamAbsence {
+                stream: FACTORY_STREAM.into(),
+                reason: AbsenceReason::OwnerAbsent,
+                owner_words: "No such file or directory".into(),
+            }]
+        );
+    }
+
+    #[test]
+    fn a_refused_factory_locate_names_the_refusal_in_the_owners_words() {
+        let _env = owner_env();
+        let owner = FakeOwner::new("factory-refused", &nowlist(&["ref-a"]), THOUGHTS_REPLY);
+        // A Factory state directory that the locate cannot read is a refusal,
+        // not an absent source.
+        std::fs::create_dir_all(owner.directory.join(".factory")).unwrap();
+        let cache = Mutex::new(crate::read_cache::OwnerReadCache::default());
+        let answer = read_field(
+            &owner.client(),
+            &cache,
+            &[],
+            owner.directory.clone(),
+            &span_window(),
+        )
+        .unwrap();
+        assert_eq!(
+            answer.absences,
+            vec![StreamAbsence {
+                stream: FACTORY_STREAM.into(),
+                reason: AbsenceReason::Refused,
+                owner_words: "No such file or directory".into(),
+            }]
+        );
+    }
+
+    #[test]
+    fn a_factory_day_the_field_cannot_read_names_owner_unreadable() {
+        let _env = owner_env();
+        let owner = FakeOwner::new("factory-unreadable", &nowlist(&["ref-a"]), THOUGHTS_REPLY);
+        std::fs::write(owner.directory.join("factory-locate.json"), LOCATED).unwrap();
+        // A run-bearing signal that names no signal_ref is a reading the field
+        // refuses whole.
+        std::fs::write(
+            owner.directory.join("factory-day.json"),
+            r#"{"schema":"factory.telemetry-day/v1","signals":[{"run_ref":"run:A"}]}"#,
+        )
+        .unwrap();
+        let cache = Mutex::new(crate::read_cache::OwnerReadCache::default());
+        let answer = read_field(
+            &owner.client(),
+            &cache,
+            &[],
+            owner.directory.clone(),
+            &span_window(),
+        )
+        .unwrap();
+        assert_eq!(answer.absences.len(), 1, "{:?}", answer.absences);
+        assert_eq!(answer.absences[0].stream, FACTORY_STREAM);
+        assert_eq!(answer.absences[0].reason, AbsenceReason::OwnerUnreadable);
+        assert!(
+            answer.absences[0].owner_words.contains("signal_ref"),
+            "{:?}",
+            answer.absences
+        );
+    }
+
+    #[test]
+    fn a_readable_factory_source_with_no_run_in_the_window_is_no_moment_not_an_absence() {
+        let _env = owner_env();
+        let owner = FakeOwner::new("factory-quiet", &nowlist(&["ref-a"]), THOUGHTS_REPLY);
+        // Located, and its day reading holds no signal: the owner is readable
+        // and simply has no moment here.
+        std::fs::write(owner.directory.join("factory-locate.json"), LOCATED).unwrap();
+        let cache = Mutex::new(crate::read_cache::OwnerReadCache::default());
+        let answer = read_field(
+            &owner.client(),
+            &cache,
+            &[],
+            owner.directory.clone(),
+            &span_window(),
+        )
+        .unwrap();
+        assert!(answer.absences.is_empty(), "{:?}", answer.absences);
+        assert!(
+            serde_json::to_value(&answer)
+                .unwrap()
+                .get("absences")
+                .is_none(),
+            "no absence keeps the answer's old shape"
+        );
+    }
+
+    #[test]
+    fn owner_failures_name_their_reason_by_the_kind_the_owner_call_reports() {
+        let failure = |kind: &str| crate::material::Error {
+            kind: kind.into(),
+            message: "the owner's words".into(),
+            operation_may_have_run: false,
+        };
+        assert_eq!(
+            owner_failure_reason(&failure("unavailable")),
+            AbsenceReason::OwnerAbsent
+        );
+        assert_eq!(
+            owner_failure_reason(&failure("timeout")),
+            AbsenceReason::OwnerTimeout
+        );
+        assert_eq!(
+            owner_failure_reason(&failure("owner-refused-or-failed")),
+            AbsenceReason::Refused
+        );
+        assert_eq!(
+            owner_failure_reason(&failure("incompatible")),
+            AbsenceReason::OwnerUnreadable
+        );
+        assert_eq!(
+            owner_failure_reason(&failure("process-error")),
+            AbsenceReason::OwnerUnreadable
+        );
+    }
+
+    #[test]
+    fn a_factory_answer_later_than_the_field_bound_is_a_named_timeout() {
+        // The field's own wait: an answer that arrives is read as it stands.
+        let (sender, receiver) = std::sync::mpsc::channel();
+        sender
+            .send(FactoryReading {
+                events: Vec::new(),
+                absence: None,
+            })
+            .unwrap();
+        let answered = awaited_factory(receiver.recv_timeout(FACTORY_READ_BOUND));
+        assert!(answered.absence.is_none());
+
+        // No answer inside the bound: a named owner timeout, in the field's words.
+        let (_held, silent) = std::sync::mpsc::channel::<FactoryReading>();
+        let late = awaited_factory(silent.recv_timeout(std::time::Duration::from_millis(1)));
+        let absence = late.absence.expect("a late answer is named");
+        assert_eq!(absence.stream, FACTORY_STREAM);
+        assert_eq!(absence.reason, AbsenceReason::OwnerTimeout);
+        assert!(absence.owner_words.contains("did not answer within 30 s"));
+
+        // A reader that ended without an answer is unreadable, not a timeout.
+        let (dropped, ended) = std::sync::mpsc::channel::<FactoryReading>();
+        drop(dropped);
+        let lost = awaited_factory(ended.recv_timeout(std::time::Duration::from_millis(1)));
+        assert_eq!(
+            lost.absence.map(|absence| absence.reason),
+            Some(AbsenceReason::OwnerUnreadable)
         );
     }
 }

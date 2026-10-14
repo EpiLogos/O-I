@@ -283,6 +283,35 @@ pub trait TemporalStreamSource {
     fn events(&self) -> Result<Vec<TemporalEvent>, TemporalEventsError>;
 }
 
+/// Why a stream contributed nothing, named by the owner's own state. The
+/// kinds are the shell's vocabulary; the words beside them are the owner's.
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum AbsenceReason {
+    /// The owner is not set up here: its executable is not present, or it
+    /// names the root as having no state.
+    OwnerAbsent,
+    /// The owner answered, and the answer could not be read as its contract
+    /// states.
+    OwnerUnreadable,
+    /// The owner did not answer within its bound.
+    OwnerTimeout,
+    /// The owner answered no.
+    Refused,
+}
+
+/// One stream that contributed nothing to an answer because of a named cause.
+/// The field records the silence instead of hiding it: "owner unreadable"
+/// and "no moment" are different answers.
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub struct StreamAbsence {
+    pub stream: String,
+    pub reason: AbsenceReason,
+    /// The owner's own words (its refusal or diagnostic). Empty when the owner
+    /// stated none.
+    pub owner_words: String,
+}
+
 /// The versioned answer: ordered, evidence-ref'd, and honest about the field
 /// it was read under.
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
@@ -294,6 +323,11 @@ pub struct TemporalEventsAnswer {
     /// The civil field the reading stands under (echoed, not re-derived).
     pub field: CivilField,
     pub events: Vec<TemporalEvent>,
+    /// One entry per stream that contributed nothing because of a named cause.
+    /// Additive: an answer with no absence omits the key, so existing answers
+    /// keep their exact bytes.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub absences: Vec<StreamAbsence>,
 }
 
 /// Why a projection refused.
@@ -406,6 +440,7 @@ pub fn project(
         observed_civil_instant: observed_civil_instant.into(),
         field: field.clone(),
         events: ordered,
+        absences: Vec::new(),
     })
 }
 
@@ -820,6 +855,78 @@ mod tests {
         .unwrap();
         assert_eq!(answer.events.len(), 1);
         assert_eq!(answer.events[0].summary, "the run asked about");
+    }
+
+    #[test]
+    fn an_answer_without_an_absence_keeps_its_old_bytes() {
+        let fixture = Fixture::new(
+            "usage-events",
+            vec![event(
+                "usage-events",
+                EventKind::Run,
+                "seq-1",
+                Some("2026-10-08T09:00:00+01:00"),
+                "only",
+            )],
+        );
+        let answer = project(
+            &[&fixture],
+            &field(),
+            "2026-10-08T13:00:00+01:00",
+            &TemporalQuery::default(),
+        )
+        .unwrap();
+        let wire = serde_json::to_value(&answer).unwrap();
+        assert!(
+            wire.get("absences").is_none(),
+            "an answer that names no absence carries no `absences` key: {wire}"
+        );
+        // An answer from before the field existed still reads, with none.
+        let mut legacy = wire.clone();
+        legacy.as_object_mut().unwrap().remove("absences");
+        let read: TemporalEventsAnswer = serde_json::from_value(legacy).unwrap();
+        assert!(read.absences.is_empty());
+    }
+
+    #[test]
+    fn an_absence_names_its_stream_its_reason_kind_and_the_owners_words() {
+        let absence = StreamAbsence {
+            stream: "factory-runs".into(),
+            reason: AbsenceReason::OwnerTimeout,
+            owner_words: "factory telemetry day did not answer within 20000 ms".into(),
+        };
+        assert_eq!(
+            serde_json::to_value(&absence).unwrap(),
+            serde_json::json!({
+                "stream": "factory-runs",
+                "reason": "owner-timeout",
+                "owner_words": "factory telemetry day did not answer within 20000 ms",
+            })
+        );
+        let spellings: Vec<String> = [
+            AbsenceReason::OwnerAbsent,
+            AbsenceReason::OwnerUnreadable,
+            AbsenceReason::OwnerTimeout,
+            AbsenceReason::Refused,
+        ]
+        .into_iter()
+        .map(|reason| {
+            serde_json::to_value(reason)
+                .unwrap()
+                .as_str()
+                .unwrap()
+                .to_string()
+        })
+        .collect();
+        assert_eq!(
+            spellings,
+            vec![
+                "owner-absent",
+                "owner-unreadable",
+                "owner-timeout",
+                "refused"
+            ]
+        );
     }
 
     #[test]

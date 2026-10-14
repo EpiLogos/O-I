@@ -230,3 +230,46 @@ test('a Return that names no readable material yields no Return fact', () => {
   assert.equal(join.returnFactsOf(REVIEW, {attemptRef: REVIEW, readableReturn: null}), null)
   assert.equal(join.returnFactsOf(REVIEW, undefined), null)
 })
+
+// The Timeline's named absence (SCRIPTED: the reason kinds and words are the temporal reading's own shape, as
+// desktop/cradle/kernel/src/temporal_events.rs `StreamAbsence` serialises them; no kernel read is made here).
+const ABSENCE_WORDS = 'factory telemetry day did not answer within 20000 ms'
+const absenceFor = (reason, owner_words = ABSENCE_WORDS, stream = 'factory-runs') => ({stream, reason, owner_words})
+
+test('the Timeline names a factory-runs absence in the reading\'s own reason and the owner\'s words, and keeps the seam', () => {
+  const row = join.factoryRunJoin(base({absences: [absenceFor('owner-timeout')]})).timeline
+  assert.equal(row.state, 'absent')
+  assert.equal(row.absence.reason, 'owner-timeout')
+  assert.equal(row.absence.ownerWords, ABSENCE_WORDS)
+  assert.match(row.absence.text, /did not answer within its bound: factory telemetry day did not answer within 20000 ms$/)
+  assert.deepEqual(row.seam, join.TIMELINE_SEAM, 'the seam stays as the remedy beside the named reason')
+  assert.deepEqual(join.identityBreaks(join.factoryRunJoin(base({absences: [absenceFor('owner-timeout')]}))), [], 'the reason names the run it was joined from')
+})
+
+test('each owner state kind has its own Timeline words; the owner\'s words are shown, or said to be absent', () => {
+  const kinds = ['owner-absent', 'owner-unreadable', 'owner-timeout', 'refused']
+  const texts = kinds.map(reason => join.factoryRunJoin(base({absences: [absenceFor(reason)]})).timeline.absence.text)
+  assert.equal(new Set(texts).size, kinds.length, 'four kinds, four distinct reasons')
+  kinds.forEach((_, index) => assert.ok(texts[index].endsWith(ABSENCE_WORDS), `${kinds[index]} carries the owner's words`))
+  const wordless = join.factoryRunJoin(base({absences: [absenceFor('owner-absent', '')]})).timeline
+  assert.equal(wordless.absence.ownerWords, '')
+  assert.match(wordless.absence.text, /is absent here; the owner stated no words$/)
+  const unknown = join.timelineRowOf(RUN, [], [absenceFor('owner-future-kind', 'words')])
+  assert.match(unknown.absence.text, /contributed nothing \(owner-future-kind\): words$/, 'an unknown kind is named as it arrives')
+})
+
+test('a reading with no factory-runs absence keeps the Timeline row as it was: no absence key, the same seam', () => {
+  const current = join.factoryRunJoin(base()).timeline
+  assert.deepEqual(current, {state: 'absent', runRef: RUN, seam: join.TIMELINE_SEAM}, 'no reading, no absence: the row is unchanged')
+  const otherStream = join.factoryRunJoin(base({absences: [absenceFor('owner-timeout', ABSENCE_WORDS, 'kernel-event-log')]})).timeline
+  assert.deepEqual(otherStream, current, 'an absence on another stream does not reach the Timeline row')
+  assert.equal(Object.hasOwn(otherStream, 'absence'), false)
+  assert.deepEqual(join.factoryRunJoin(base({absences: []})).timeline, current)
+})
+
+test('a moment the reading holds is selected over a factory-runs absence in the same reading', () => {
+  const event = {stream: 'factory-runs', subject_ref: RUN, instant_unix_ms: Date.parse('2026-10-14T08:30:00Z'), summary: 'placeholder signal', stream_position: 'placeholder-source#signal:S4'}
+  const row = join.factoryRunJoin(base({events: [event], absences: [absenceFor('owner-timeout')]})).timeline
+  assert.equal(row.state, 'selected', 'a held moment is the Timeline\'s answer; the absence names only a silence')
+  assert.equal(row.event.stream_position, 'placeholder-source#signal:S4')
+})
