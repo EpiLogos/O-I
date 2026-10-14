@@ -1,4 +1,6 @@
-import {useEffect, useMemo, useState, type DragEvent} from 'react'
+import {useEffect, useMemo, useState, type DragEvent, type ReactNode} from 'react'
+import {Icon as CutIcon} from '../inhabitants/sdk/Icon'
+import {KindMark} from '../inhabitants/sdk/marks.tsx'
 import {createPortal} from 'react-dom'
 import type {BrowserCategory, BrowserKind, ControlledBrowser} from '../frame/browser/browserKinds'
 import {InstrumentsSection} from '../frame/InstrumentsSection'
@@ -38,7 +40,12 @@ const CONTEXT_TILES = [
 /** Each Factory category's kind in the one browser (F6): sessions and agents are running things (an agent dragged onto an
  * empty track is seated); the context tiles open in a pane; skillsets go on the agent chain; the git seat is material. */
 const AGENT_KINDS: Record<(typeof CATEGORIES)[number]['id'], BrowserKind> = {sess: 'running', agents: 'running', context: 'instruments', skillsets: 'devices', git: 'material'}
-export const AGENT_BROWSER_CATEGORIES: readonly BrowserCategory[] = CATEGORIES.map(category => ({id: category.id, label: category.label, kind: AGENT_KINDS[category.id]}))
+/** Each category's mark from the icon cut (the agents wear the cut's agent kind). */
+const AGENT_MARKS: Record<(typeof CATEGORIES)[number]['id'], ReactNode> = {
+  sess: <CutIcon name="session" size={12} />, context: <CutIcon name="pane" size={12} />, agents: <KindMark kind="agent" size={12} />,
+  skillsets: <CutIcon name="chain" size={12} />, git: <CutIcon name="lib" size={12} />,
+}
+export const AGENT_BROWSER_CATEGORIES: readonly BrowserCategory[] = CATEGORIES.map(category => ({id: category.id, label: category.label, kind: AGENT_KINDS[category.id], mark: AGENT_MARKS[category.id]}))
 
 /** The right-edge action the results header names (mockup .bhead law). */
 const RESULT_HEADER: Record<(typeof CATEGORIES)[number]['id'], string> = {
@@ -255,7 +262,6 @@ export function AgentShellBrowser({rows, error, loading, controlled}: {rows: Age
 
   const shown = needle ? list.filter(item => item.label.toLowerCase().includes(needle) || item.meta.toLowerCase().includes(needle)) : list
   const results = <>
-          <div className="agent-bfilt"><span>○ Filters</span><span>In set</span></div>
           <div className="agent-bhead"><span>Name</span><span>{RESULT_HEADER[category]}</span></div>
           {error && <p className="native-error" role="alert">{error}</p>}
           {shown.map(item => (
@@ -263,6 +269,7 @@ export function AgentShellBrowser({rows, error, loading, controlled}: {rows: Age
               key={item.key}
               type="button"
               className="agent-bitem"
+              aria-current={category === 'sess' && shell.selectedTrackId === item.key ? 'true' : undefined}
               title={item.label}
               draggable={!!item.drag}
               aria-describedby={item.drag ? `chain-drag-hint-${category}` : undefined}
@@ -285,6 +292,7 @@ export function AgentShellBrowser({rows, error, loading, controlled}: {rows: Age
                 }
               }}
             >
+              {category === 'sess' || category === 'agents' ? <span aria-hidden="true"><KindMark kind="agent" size={12} /></span> : null}
               <span style={{overflow: 'hidden', textOverflow: 'ellipsis'}}>{item.label}</span>
               <span className="st">{item.meta}</span>
             </button>
