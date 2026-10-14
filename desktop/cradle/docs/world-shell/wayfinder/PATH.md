@@ -9,7 +9,7 @@ earlier PATH (waves W0–W0e, carries 1–57) is in git at `760fa4916`.
 
 | Role | Who | Count | Does | Never |
 |---|---|---|---|---|
-| **Lead** | the Opus session running the build | 1 | claims tickets, writes briefs, dispatches (no task chips: side work is a builder lane in this seat), converges each return itself (re-runs checks, reads the diff, stages the ticket's files, commits, pushes), keeps PATH, runs the native app and screen checks | spawns any agent other than the builders and the reviewer below; writes product code beyond one-file glue |
+| **Lead** | the Opus session running the build | 1 | claims tickets, writes briefs from `BRIEF-BUILDER.md` (its Target block names the candidate as the product), dispatches (no task chips: side work is a builder lane in this seat), converges each return itself (first: `candidate-reachable.mjs` over every changed file — a file not reachable from the candidate is never committed as product work) (re-runs checks, reads the diff, stages the ticket's files, commits, pushes), keeps PATH, runs the native app and screen checks | spawns any agent other than the builders and the reviewer below; writes product code beyond one-file glue |
 | **Builders** | Haiku subagents (Agent tool, `model: haiku`) | ≤6 at once (owner, 14 Oct), one ticket each, exclusive zones | edit inside the zone, run the ticket's checks, return the receipt | stage, commit, leave the zone, decide design |
 | **Reviewer** | one Sonnet subagent (Agent tool, `model: sonnet`) | 1, only at review points (§6) | reads the wave's commits and refutes the done-claim | edits anything |
 
