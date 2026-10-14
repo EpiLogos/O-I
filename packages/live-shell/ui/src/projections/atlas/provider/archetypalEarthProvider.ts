@@ -1,3 +1,8 @@
+// RETIRED AS A SOURCE (T-N3-ATLAS-SUITE-PROVIDER, 14 Oct 2026). The shell no longer reads Archetypal-Earth's bundled corpus: the
+// atlas host loads the suite provider (provider/suiteProvider.ts, Central's owners, id `suite`). This module stays only as the
+// founding provider's adapter and loaders, which the provider, assets, seam and occurrence suites still exercise; nothing in the
+// shell imports it, and no host registers it.
+//
 // The founding corpus provider — Archetypal-Earth's published bundle, read through Central's file owner
 // [DEVICE-SEMANTICS-LOCK §8.4; C2 §1.2; T-ATLAS-PROVIDER].
 //

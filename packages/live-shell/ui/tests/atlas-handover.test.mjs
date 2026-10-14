@@ -17,7 +17,7 @@ const providerStub = new URL('./fixtures/atlas-provider-stub.mjs', import.meta.u
 register(`data:text/javascript,${encodeURIComponent(`
 import ts from ${JSON.stringify(compiler)};
 import {readFile} from 'node:fs/promises';
-const STUBS = {'./mount': ${JSON.stringify(mountStub)}, './provider/archetypalEarthProvider': ${JSON.stringify(providerStub)}};
+const STUBS = {'./mount': ${JSON.stringify(mountStub)}, './provider/suiteProvider': ${JSON.stringify(providerStub)}};
 export async function resolve(s, c, n) {
   if (c.parentURL && c.parentURL.endsWith('/AtlasProjectionPanel.tsx') && STUBS[s]) return {url: STUBS[s], format: 'module', shortCircuit: true};
   let r = null

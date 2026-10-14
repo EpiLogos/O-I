@@ -1,7 +1,7 @@
 // Indexes over the Field: everything the experience layer looks up by id.
 import type { Archetype, ArchetypeId, Culture, Family, FamilyId, ImageRef, Join, Occurrence, Field, Theoretic, TheoreticId } from '../types/field';
 import type { Symbols, SymbolEntry } from '../types/symbols';
-import { createTimeScale, type TimeScale } from './time';
+import { createTimeScale, UNDATED_U, type TimeScale } from './time';
 import { dirFromLatLon, type Vec3 } from './geo';
 import { hexToRgb, toRgbPalette, type RGB, type RGBPalette } from './palette';
 
@@ -117,7 +117,7 @@ export function buildModel(field: Field, extent?: { from: number; to: number }, 
   for (let i = 0; i < n; i++) {
     const o = occ[i];
     dir[i] = dirFromLatLon(o.lat, o.lon);
-    u[i] = scale.toU(o.year);
+    u[i] = o.dated === false ? UNDATED_U : scale.toU(o.year); // [§8.4 host] an undated occurrence is outside the scale
     located[i] = o.geoPrecision !== 'none' && Number.isFinite(o.lat) && Number.isFinite(o.lon) ? 1 : 0;
     colour[i] = famPalette.get(o.familyId)?.core ?? hexToRgb(FALLBACK_PALETTE.core);
     const fam = famOcc.get(o.familyId);
