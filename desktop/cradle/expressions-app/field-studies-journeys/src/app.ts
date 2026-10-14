@@ -21,7 +21,7 @@ import {updateToolbeltValues,liveValue} from './liveValues';
 import {beltCandidates,pickerHTML} from './beltPicker';
 import {PropertyTrack,sampleTrack,evaluateTracks,readTrackValue,mergeTake,expressionTiming,channelRange,validateCurveEdit,touchesOfKey,type CurveTouch,type ChannelRange,type Interpolation} from './propertyTracks';
 import {curveHit,laneFrame,fromPixel,insertKey,removeKey,moveKey,moveHandle,setSegmentType,channelName,channelStateFor,channelPanelHTML,previewScene,type ChannelView,type HandleEnd,type LaneFrame,type Points} from './curveLane';
-import {transitionKindOf,transitionSpecFor,transitionLabel,dipWeights,wipeHoldRect,seamGlyphHTML,seamChooserHTML,writeSeamTransition,curveProgress,curveOf,type TransitionKind,type TransitionParams,type TransitionSpec,type TransitionCurve,type WipeDirection} from './transitions';
+import {transitionKindOf,transitionSpecFor,transitionLabel,dipWeights,wipeHoldRect,seamGlyphHTML,seamChooserHTML,writeSeamTransition,curveProgress,curveOf,edgeEditLabel,edgeEditRefusal,pendingSwitchStillWaits,seamEdgeSpec,curvePointsOf,transitionCurveHandleEdit,curveGestureWrite,TRANSITION_LANE,type TransitionKind,type TransitionParams,type TransitionSpec,type TransitionCurve,type WipeDirection,type SwitchMode,type CurveType} from './transitions';
 import {journeyTimelineLayout} from './journeyTimelineLayout';
 import {MARKER_COLOURS,MARKER_LIMIT,MARKER_NAME_MAX,sceneBoundaries,sceneAtJourneyTime,markerNamed,markerAdd,markerRename,markerMove,markerRemove,nextMarkerTime,prevMarkerTime,setLoopEdge,dragLoopEdge,moveLoopRegion,playDurations,toPlayClock,loopPlayNotice,type LoopEdge,type LoopRegion} from './journeyMarkers';
 import {snapCandidates,snapTime,closestSnap,nextSnapPoint,prevSnapPoint,type SnapPoint} from './snapModel';
@@ -30,7 +30,7 @@ import {createWikiStandingClient,disclosedOwnerOf,type WikiStandingBasis,type Wi
 import {NOT_FOCUSED,beginFocus,endFocus,focusedLayout,releaseStageFullscreen,requestStageFullscreenOn,type FocusLayout,type FocusSession,type FullscreenHold} from './focusMode';
 import {shuttle,pauseTransport,beginScrub,endScrub,stepFrame,transportRate,transportPlaying,transportReadout,STOPPED_TRANSPORT,type WorkingTransport} from './transport';
 import {durationFromEdgeDrag,sceneAtTime,secondsFromDrag,slipOffsetFromDrag,insertBeforeFor,dragPreviewStep,overlapFromDrag,SCENE_DURATION_MIN,SCENE_DURATION_MAX,type TimelineLayout} from './journeyTimelineLayout';
-import {seamStates,seamCaption,seamBlendHTML,blendLimit,blendLimitMessage} from './journeyPath';
+import {seamStates,seamCaption,seamBlendHTML,blendLimit,blendLimitMessage,planEdgeEdit,applyEdgeWrite,type EdgeEdit} from './journeyPath';
 import {entityTargets} from './nativeParameters';
 import {recordRecent,recentJourneys} from './recentWork';
 import {installPanelResize} from './panelResize';
@@ -135,6 +135,8 @@ let sceneBody:null|{sceneId:string;clip:HTMLElement;startX:number;trackPx:number
 // E09/E10 channel lane: the selected channel and keyframe, the live drag, and the working channel views (solo, mute,
 // show). Declared with the other gesture state, before any top-level code can render the timeline. None of it is saved.
 let curveSel:null|{sceneId:string;trackId:string;index:number|null}=null;
+/** Lane-5 T5: a bezier handle of a seam's curve, held by the drag on the chooser's lane (see beginSeamCurveDrag). */
+let seamCurveDrag:null|{sceneId:string;base:TransitionCurve;index:0|1;end:HandleEnd;frame:LaneFrame;left:number;top:number;preview:TransitionCurve|null;message:string;moved:boolean;refused:boolean;raf:number}=null;
 let curveDrag:null|{sceneId:string;trackId:string;kind:'key'|'handle';index:number;end:HandleEnd;left:number;top:number;frame:LaneFrame;base:Points;range:ChannelRange|undefined;label:string;preview:Points|null;message:string;moved:boolean;raf:number;dragSeq:number}=null;
 /** E09c: the drag revision a curve preview carries to the engine. Serial across drags, so no two previews share one. */
 let curveDragSerial=0;
@@ -439,8 +441,8 @@ function renderTimeline(){if(!timelineOpen)return;const s=scene(),doc=timelineDo
  const toggle=`<button data-action="timeline-track" aria-pressed="${track}" title="${track?'Show the scenes as a compact strip':'Show the scenes on the time track'}">${track?'Collapse to strip':'Show track'}</button>`;
  // E09/E10: the channel rows and the selected channel's curve lane, under the clips in track mode only.
  const curveHTML=track?channelPanelHTML({scene:doc.scenes.find(v=>v.id===s.id)??s,selected:curveSel?.sceneId===s.id?{trackId:curveSel.trackId,index:curveSel.index}:null,views:viewsFor(s.id)}):'';
- const seamScene=track&&seamSceneId?scenes.find(v=>v.id===seamSceneId):undefined;const seamHTML=seamScene?seamChooserHTML(seamScene,{min:SCENE_TRANSITION_MIN,max:SCENE_TRANSITION_MAX}):'';
- $('timeline-panel').innerHTML=`${transportBarHTML()}${body}${curveHTML}${seamHTML}<div class="scene-save-row"><label>Scene name<input id="scene-save-name" value="${esc(sceneNames.get(s.id)??s.name)}" maxlength="160"></label><label>Hold · seconds<input type="number" data-bind="duration" value="${sceneTrim?.moved&&sceneTrim.sceneId===s.id?sceneTrim.duration:s.duration}" min="${SCENE_DURATION_MIN}" max="${SCENE_DURATION_MAX}" step=".1"></label><label>Transition<input type="number" aria-label="Transition seconds" data-bind="transition" value="${s.transition}" min="0" max="30" step=".1"></label><button class="primary" data-action="save-scene">Save scene</button><button data-action="save-next">Save & next</button><button data-action="restore-scene" ${!store.document.savedScenes?.[s.id]?'disabled':''}>Restore</button><button data-action="split-scene" title="Cut this scene in two at the playhead · S">Split</button><button data-action="still-scene" title="Add a still scene after this one: a held frame for a timed void, with no motion">Still scene</button>${ib('move-scene-left','arrowLeft','Move scene earlier',`data-scene-id="${esc(s.id)}"`)}${ib('move-scene-right','arrowRight','Move scene later',`data-scene-id="${esc(s.id)}"`)}${ib('delete-scene','trash','Delete scene',`data-scene-id="${esc(s.id)}"`)}${toggle}${ib('close-timeline','chevronDown','Collapse scenes')}</div><p class="scene-caption">${sceneSaveState(store.document,s)} · ${s.propertyTracks?.length??0} recorded properties · Scrubbing evaluates settings; particle motion continues from its current state.</p>${track?'<p class="scene-gesture-hint">Edge: trim · Shift+edge: roll the seam · Drag a clip: slide or insert (Alt+Shift: overwrite) · Alt+drag a clip: slip</p>':''}`;}
+ const seamScene=track&&seamSceneId?scenes.find(v=>v.id===seamSceneId):undefined;const seamHTML=seamScene?seamChooserHTML(seamScene,{min:SCENE_TRANSITION_MIN,max:SCENE_TRANSITION_MAX},seamCurveDrag?.sceneId===seamScene.id?seamCurveDrag.preview??undefined:undefined):'';
+ $('timeline-panel').innerHTML=`${transportBarHTML()}${pendingSwitchCueHTML()}${body}${curveHTML}${seamHTML}<div class="scene-save-row"><label>Scene name<input id="scene-save-name" value="${esc(sceneNames.get(s.id)??s.name)}" maxlength="160"></label><label>Hold · seconds<input type="number" data-bind="duration" value="${sceneTrim?.moved&&sceneTrim.sceneId===s.id?sceneTrim.duration:s.duration}" min="${SCENE_DURATION_MIN}" max="${SCENE_DURATION_MAX}" step=".1"></label><label>Transition<input type="number" aria-label="Transition seconds" data-bind="transition" value="${s.transition}" min="0" max="30" step=".1"></label><button class="primary" data-action="save-scene">Save scene</button><button data-action="save-next">Save & next</button><button data-action="restore-scene" ${!store.document.savedScenes?.[s.id]?'disabled':''}>Restore</button><button data-action="split-scene" title="Cut this scene in two at the playhead · S">Split</button><button data-action="still-scene" title="Add a still scene after this one: a held frame for a timed void, with no motion">Still scene</button>${ib('move-scene-left','arrowLeft','Move scene earlier',`data-scene-id="${esc(s.id)}"`)}${ib('move-scene-right','arrowRight','Move scene later',`data-scene-id="${esc(s.id)}"`)}${ib('delete-scene','trash','Delete scene',`data-scene-id="${esc(s.id)}"`)}${toggle}${ib('close-timeline','chevronDown','Collapse scenes')}</div><p class="scene-caption">${sceneSaveState(store.document,s)} · ${s.propertyTracks?.length??0} recorded properties · Scrubbing evaluates settings; particle motion continues from its current state.</p>${track?'<p class="scene-gesture-hint">Edge: trim · Shift+edge: roll the seam · Drag a clip: slide or insert (Alt+Shift: overwrite) · Alt+drag a clip: slip</p>':''}`;}
 // E05 · trim: a clip's right edge changes that scene's duration. The drag previews
 // on the timeline only: timelineDocument() reads a shallow copy with the one new
 // duration, so the layout still runs on the single Expression clock. Pointer-up
@@ -606,6 +608,60 @@ function setSeamKind(sceneId:string,kind:TransitionKind){
  const prior=store.document.scenes.find(v=>v.id===sceneId)?.transitionSpec;
  setSeamTransition(sceneId,kind,kind==='wipe'?{direction:prior?.direction}:kind==='dip-to-colour'?{at:prior?.at}:{});
 }
+// Lane-5 T5 · the seam chooser's edge facts. A switch or curve preset is one planned edge write (planEdgeEdit), applied inside one
+// labelled change (applyEdgeWrite). On the native owner's journey the path panel's own edit takes it, as one native edit.
+function editSeamEdge(edit:EdgeEdit){
+ const refusal=edit.kind!=='loop'?edgeEditRefusal(store.document.scenes.find(v=>v.id===edit.enterSceneId)?.transitionSpec,edit):undefined;
+ if(refusal){toast(refusal);renderTimeline();return;}
+ if(journeyInstrument?.editEdge(edit))return;
+ const plan=planEdgeEdit(store.document,edit);
+ if(!plan.ok){toast(plan.reason);renderTimeline();return;}
+ const write=plan.write,label=plan.label;
+ // An edit the edge already has is named, not written: nothing reaches the owner or the undo stack.
+ const probe=JSON.parse(JSON.stringify(store.document.scenes)) as Scene[];
+ applyEdgeWrite(probe,write);
+ if(JSON.stringify(probe.find(v=>v.id===write.sceneId)?.transitionSpec??null)===JSON.stringify(store.document.scenes.find(v=>v.id===write.sceneId)?.transitionSpec??null)){toast(`${label} changed nothing: this edge already has it.`);renderTimeline();return;}
+ try{changed(()=>applyTimelineMove(store.document,scenes=>applyEdgeWrite(scenes,write)),true,label);}catch(err){error(err);renderTimeline();}
+}
+// Lane-5 T5 / E09 · a bezier handle of a seam's curve. The drag is the E09 lane's own maths (curveHit, fromPixel, E08's moveHandle and
+// validateCurveEdit, through transitionCurveHandleEdit). The preview is drawn on the chooser's lane; pointer-up makes ONE labelled edit.
+function beginSeamCurveDrag(ev:PointerEvent,lane:HTMLElement){
+ const scene=store.document.scenes.find(v=>v.id===lane.dataset.sceneId),curve=scene?.transitionSpec?.curve;
+ if(!scene||!curve||curve.type!=='bezier')return;
+ const rect=lane.getBoundingClientRect(),points=curvePointsOf(curve),frame=laneFrame(points,TRANSITION_LANE.duration,TRANSITION_LANE.range,rect.width,rect.height);
+ const hit=curveHit(points,frame,0,ev.clientX-rect.left,ev.clientY-rect.top);
+ if(hit?.kind!=='handle')return;
+ ev.preventDefault();
+ seamCurveDrag={sceneId:scene.id,base:curve,index:hit.index as 0|1,end:hit.end,frame,left:rect.left,top:rect.top,preview:null,message:'',moved:false,refused:false,raf:0};
+ document.addEventListener('pointermove',moveSeamCurveDrag);document.addEventListener('pointerup',upSeamCurveDrag);document.addEventListener('pointercancel',cancelSeamCurveDrag);
+}
+function moveSeamCurveDrag(ev:PointerEvent){
+ const d=seamCurveDrag;if(!d)return;
+ const p=fromPixel(d.frame,ev.clientX-d.left,ev.clientY-d.top);
+ d.moved=true;
+ const next=transitionCurveHandleEdit(d.base,d.index,d.end,p.time,p.value);
+ // A refused position keeps the last valid preview on the lane, so the drag does not snap back. The refusal is named once.
+ const message=next.ok?'':next.reason;
+ if(next.ok)d.preview=next.curve;
+ d.refused=!next.ok;
+ if(message&&message!==d.message)toast(message);
+ d.message=message;
+ if(!d.raf)d.raf=requestAnimationFrame(()=>{d.raf=0;renderTimeline();});
+}
+function endSeamCurveDrag(commit:boolean){
+ const d=seamCurveDrag;if(!d)return;
+ seamCurveDrag=null;if(d.raf)cancelAnimationFrame(d.raf);
+ document.removeEventListener('pointermove',moveSeamCurveDrag);document.removeEventListener('pointerup',upSeamCurveDrag);document.removeEventListener('pointercancel',cancelSeamCurveDrag);
+ const curve=curveGestureWrite(d.base,d.preview,{commit,moved:d.moved,refused:d.refused});
+ if(!curve){renderTimeline();return;}
+ const sceneId=d.sceneId;
+ try{changed(()=>applyTimelineMove(store.document,scenes=>{
+  const s=scenes.find(v=>v.id===sceneId);if(!s)throw new Error('That scene is no longer in this expression.');
+  applyEdgeWrite(scenes,{sceneId,field:'transitionSpec',spec:seamEdgeSpec(s.transitionSpec,{curve})});
+ }),true,edgeEditLabel({kind:'curve',type:'bezier'}));}catch(err){error(err);renderTimeline();}
+}
+function upSeamCurveDrag(){endSeamCurveDrag(true);}
+function cancelSeamCurveDrag(){endSeamCurveDrag(false);}
 // Lane-5 T6 · overlap-to-blend: drag a seam's glyph right to lengthen the blend it authors, left to a cut. The blend is the
 // incoming scene's head, the span the engine plays, so the overlap is that span and the expression clock does not move.
 // Pointer-up is ONE labelled edit through applyTimelineMove and writeSeamTransition. A cut seam that gains time becomes the
@@ -995,6 +1051,12 @@ function setSnapGuide(time:number|null,total:number){
  if(x===snapGuideX)return;snapGuideX=x;overlayDirty=true;needsFrame=true;
 }
 /** The timeline's transport and snap controls. The keys J, K, L, ',' and '.' do the same; Cmd/Ctrl+4 toggles snapping. */
+/** T5: the cue for a jump held until the playing Scene ends. Nothing shows when no jump is held. */
+function pendingSwitchCueHTML(){
+ if(pendingAtEnd===null)return '';
+ const name=store.document.scenes.find(v=>v.id===pendingAtEnd)?.name??'the next scene';
+ return `<p class="pending-switch" role="status">Switch to ${esc(name)} when this scene ends.</p>`;
+}
 function transportBarHTML(){
  const magnet=`<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 3v8a7 7 0 0 0 14 0V3h-4v8a3 3 0 0 1-6 0V3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M5 7h4M15 7h4" stroke="currentColor" stroke-width="2"/></svg>`;
  return `<div class="timeline-toolbar" role="toolbar" aria-label="Transport and snapping">`
@@ -1811,6 +1873,8 @@ $('timeline-panel').addEventListener('pointerdown',ev=>{if(ev.button!==0)return;
 $('timeline-panel').addEventListener('dblclick',ev=>{const handle=(ev.target as Element).closest<HTMLElement>('.scene-trim-edge');if(handle){ev.preventDefault();openExactDuration(handle.dataset.sceneId??'');}});
 // E09: the channel lane's gestures are delegated on the panel too; its keyframes and handles are drawn, not hit.
 $('timeline-panel').addEventListener('pointerdown',ev=>{if(ev.button!==0)return;const lane=(ev.target as Element).closest<HTMLElement>('.curve-lane');if(lane)beginCurveDrag(ev,lane);});
+// Lane-5 T5 · a seam's bezier handles, on the chooser's own lane (timeline or inspector).
+document.addEventListener('pointerdown',ev=>{if(ev.button!==0)return;const lane=(ev.target as Element).closest?.<HTMLElement>('.seam-curve');if(lane)beginSeamCurveDrag(ev,lane);});
 $('timeline-panel').addEventListener('dblclick',ev=>{const lane=(ev.target as Element).closest<HTMLElement>('.curve-lane');if(lane)curveDoubleClick(ev,lane);});
 // lane-3 E12/E13: locator and loop-brace gestures, rename, and the ruler menu (delegated on the timeline panel).
 $('timeline-panel').addEventListener('pointerdown',ev=>{if(ev.button!==0)return;const target=ev.target as Element;if(target.closest('[data-marker-rename]'))return;const brace=target.closest<HTMLElement>('[data-loop-body],[data-loop-edge]');if(brace){beginLocatorDrag(ev,'loop',brace);return;}const marker=target.closest<HTMLElement>('[data-marker-id]');if(marker)beginLocatorDrag(ev,'marker',marker);});
@@ -1824,6 +1888,11 @@ document.addEventListener('pointermove',ev=>{if(locatorDrag)moveLocatorDrag(ev);
 document.addEventListener('pointerup',()=>{if(locatorDrag)endLocatorDrag(true);});
 document.addEventListener('pointercancel',()=>{if(locatorDrag)endLocatorDrag(false);});
 // E11 · the seam chooser's controls commit on change (one labelled edit per release), never on every drag tick.
+// Lane-5 T5 · the seam chooser's switch and curve selects: one edge preset each, through editSeamEdge.
+document.addEventListener('change',ev=>{const el=ev.target as HTMLElement;if(!(el instanceof HTMLSelectElement))return;const id=el.dataset.sceneId??'';
+ if(el.hasAttribute('data-edge-switch'))editSeamEdge({kind:'switch',enterSceneId:id,mode:el.value as SwitchMode});
+ else if(el.hasAttribute('data-edge-curve'))editSeamEdge({kind:'curve',enterSceneId:id,type:el.value as CurveType});
+});
 document.addEventListener('change',ev=>{const el=ev.target as HTMLElement;if(!(el instanceof HTMLInputElement))return;const id=el.dataset.sceneId??'';
  if(el.hasAttribute('data-transition-at')){setSeamTransition(id,'dip-to-colour',{at:Number(el.value)});return;}
  if(el.hasAttribute('data-transition-seconds')){if(el.value.trim()===''||!Number.isFinite(Number(el.value))){toast('Enter a finite number; the previous value is unchanged.');renderTimeline();return;}const spec=store.document.scenes.find(v=>v.id===id)?.transitionSpec;setSeamTransition(id,transitionKindOf(spec),{at:spec?.at,direction:spec?.direction},Number(el.value));}});
@@ -1929,6 +1998,8 @@ function tick(now:number){if(sceneEditHeld||researchInstruments?.active()&&!rese
   }
  }
  sceneElapsed=transportFrame.elapsed_seconds;scenePlaying=transportFrame.scene_playing;
+ // T5: a jump held for a Scene's end is dropped by a pause or a stop, so it cannot fire at a later natural end on its own.
+ if(pendingAtEnd!==null&&!pendingSwitchStillWaits(transportFrame)){pendingAtEnd=null;renderAll();}
  const wasSequence=journeyPlaying;journeyPlaying=transportFrame.saved_sequence_playing;
  // T5 at-end: a jump held to this Scene's natural end lands now, in place of the sequence's next Scene or the stop. The landing
  // is the seam's own (at its start); playback continues as it was.

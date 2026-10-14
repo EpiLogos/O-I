@@ -47,3 +47,7 @@
 .journey-path-stop,.journey-path-stop-toggle{font-size:10px;line-height:1.4;color:var(--ui-muted,var(--muted));overflow-wrap:anywhere;margin:4px 0}
 .journey-path-stop-toggle{display:flex;align-items:center;gap:6px;cursor:pointer}
 .journey-path-stop-toggle input{accent-color:var(--accent);margin:0}
+.seam-edge{display:flex;flex-wrap:wrap;gap:8px;align-items:center;width:100%}
+.seam-curve{position:relative;width:min(100%,220px);height:120px;border:1px solid var(--ui-line,var(--line));border-radius:6px;background:var(--ui-wash,var(--panel));touch-action:none;user-select:none;cursor:crosshair}
+.seam-edge select{font:inherit;font-size:11px}
+.pending-switch{margin:4px 0;font-size:11px;color:var(--ui-muted,var(--muted))}

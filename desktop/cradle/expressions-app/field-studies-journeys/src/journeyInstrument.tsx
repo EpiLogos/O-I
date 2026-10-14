@@ -11,7 +11,7 @@ import {journeyBeatView,reorderSceneRequest,restoredBeatNotice,type JourneyBeatC
 import type {Journey} from './model';
 import {expressionTiming} from './propertyTracks';
 import {walkJourney,edgeRows,nativeEdgeRequest,edgeReplyMessage,edgeErrorMessage,type JourneyPath,type EdgeRow,type EdgeEdit} from './journeyPath';
-import {SWITCH_MODES,CURVE_TYPES,switchLabel,curveLabel,type SwitchMode,type CurveType} from './transitions';
+import {SWITCH_MODES,CURVE_TYPES,switchLabel,curveLabel,transitionKindOf,edgeEditRefusal,type SwitchMode,type CurveType,type TransitionSpec} from './transitions';
 import {beatLoadKey,settleBounded} from './journeyLoadSchedule';
 import {reconcileJourneyPresence,recordJourneyPosition,savedJourneyPosition} from './journeyPresence';
 import {journeyInstrumentBasis,sameJourneyInstrumentBasis,readJourneyInstrument,readJourneySceneFrame,prepareJourneyBeatFocus,type JourneyBeatFocus,type JourneyInstrumentBasis} from './journeyInstrumentModel';
@@ -127,10 +127,14 @@ function JourneyPlaybackPath({read,seek,edit}:{read:()=>JourneyPlaybackClock|und
  const path:JourneyPath=walkJourney(journey,(index,local)=>expressionTiming(journey,index,local),clock.time);
  const rows=edgeRows(journey);
  const send=(next:EdgeEdit)=>{if(edit)edit(next);};
- const edgeControls=(enterSceneId:string,name:string,row:EdgeRow)=>edit?<span className="journey-path-controls">
+ const edgeControls=(enterSceneId:string,name:string,row:EdgeRow)=>{
+  // T5: a cut has no curve, so its path row offers none.
+  const takesCurve=transitionKindOf(journey.scenes.find(v=>v.id===enterSceneId)?.transitionSpec)!=='cut';
+  return edit?<span className="journey-path-controls">
   <select aria-label={`Switch into ${name}`} title="When the switch lands" value={row.switchMode} onChange={ev=>send({kind:'switch',enterSceneId,mode:ev.target.value as SwitchMode})}>{SWITCH_MODES.map(m=><option key={m} value={m}>{switchLabel(m)}</option>)}</select>
-  <select aria-label={`Curve into ${name}`} title="The blend's curve" value={row.curve} onChange={ev=>send({kind:'curve',enterSceneId,type:ev.target.value as CurveType})}>{CURVE_TYPES.map(t=><option key={t} value={t}>{curveLabel(t)}</option>)}</select>
+  {takesCurve?<select aria-label={`Curve into ${name}`} title="The blend's curve" value={row.curve} onChange={ev=>send({kind:'curve',enterSceneId,type:ev.target.value as CurveType})}>{CURVE_TYPES.map(t=><option key={t} value={t}>{curveLabel(t)}</option>)}</select>:null}
  </span>:null;
+ };
  const seamRow=(id:string)=>rows.find(row=>row.kind==='seam'&&row.enterSceneId===id);
  const loopRow=rows.find(row=>row.kind==='loop');
  return <section className="journey-playback-path" aria-label="Journey playback path">
@@ -225,6 +229,13 @@ export function installJourneyInstrument(host:JourneyInstrumentHost,home:HTMLEle
   let routed:ReturnType<typeof nativeEdgeRequest>;
   try{routed=nativeEdgeRequest({expression:view.document,bindings:view.bindings},edit);}catch(error){message(failure(error));return;}
   if(!routed.ok){message(routed.reason);return;}
+  // T5: a cut has no curve, and an edit the edge already has is named rather than sent as a no-op revision.
+  const sceneId=edit.kind==='loop'?edit.exitSceneId:edit.enterSceneId,ref=view.bindings[sceneId]?.scene_ref;
+  const before=(view.document.scenes as unknown as ReadonlyArray<{scene_ref:string;presentation?:{scene?:unknown}|null}>).find(s=>s.scene_ref===ref)?.presentation?.scene;
+  const refusal=edit.kind!=='loop'?edgeEditRefusal((before as {transitionSpec?:TransitionSpec}|undefined)?.transitionSpec,edit):undefined;
+  if(refusal){message(refusal);return;}
+  const after=(routed.request.changes[0] as unknown as {presentation:{scene:unknown}}).presentation.scene;
+  if(JSON.stringify(before)===JSON.stringify(after)){message(`${routed.label} changed nothing: this edge already has it.`);return;}
   const label=routed.label;
   void host.editExpression(routed.request).then(reply=>{
    const outcome=edgeReplyMessage(reply,label);
@@ -356,6 +367,9 @@ export function installJourneyInstrument(host:JourneyInstrumentHost,home:HTMLEle
   });
  }
  return {
+  /** T5: an edge preset from the seam chooser takes the path panel's own native edit (one scene_material_set). False when no native
+   * Expression is open, so the caller writes the local document instead. */
+  editEdge(edit:EdgeEdit):boolean{if(!host.nativeView())return false;submitEdge(edit);return true;},
   /** T9: restore the author's saved Scene once per page, from the first native load that can read it. */
   restorePosition(){restoring??=restoreOnce().finally(()=>{restoring=undefined;});return restoring;},
   /** T9: the strip moved to a Scene; record it as the position, through the same presence owner the instrument reads from. */
