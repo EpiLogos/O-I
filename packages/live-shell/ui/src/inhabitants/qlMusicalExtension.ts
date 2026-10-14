@@ -38,6 +38,7 @@ export function declareQlMusicalExtension(): void {
   declareFamilyExtension('quaternal-logic', {
     id: QL_MUSICAL_EXTENSION_ID,
     by: 'zcode:musical-family-l9 (execution lane, WORLD-SHELL-DESIGN §18; QL-MEF #281 law; ticket L9)',
+    detachedKinds: ['device'],
     faces: [
       {
         id: 'ql-instrument',
@@ -45,7 +46,7 @@ export function declareQlMusicalExtension(): void {
         presentations: ['compact', 'expanded'],
         liveSemantic: 'device-instrument',
         invariant: {generates: 'kernel:native_expression'},
-        dock: ['dock', 'expand'],
+        dock: ['dock', 'expand', 'pop-out'],
         // the M1 field instrument sounds in Expressions: held by the Studio's Body 3:3 on the physics
         // instrument (DEVICE-SEMANTICS-LOCK §2.4, §4.9; lead's ruling, T-HOLDERS 13 Oct 2026)
         modes: ['expressions'],

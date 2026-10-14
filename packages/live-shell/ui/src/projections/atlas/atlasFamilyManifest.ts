@@ -16,13 +16,14 @@
 // [r2 import-depth fix] the manifest door is the package's src/inhabitants/ —
 // two levels up from this directory, not one (the dead hand's fault: the
 // package bundle failed on this file).
-import { admitFamilyManifest } from '../../inhabitants/familyManifest';
+import { admitFamilyManifest, familyManifest } from '../../inhabitants/familyManifest';
 import type { InhabitantManifest } from '../../inhabitants/manifest';
 
 export const ATLAS_FAMILY_ID = 'atlas-earth';
 
 export const atlasFamilyManifest: InhabitantManifest = {
   id: ATLAS_FAMILY_ID,
+  detachedKinds: ['device'],
   browser: [
     // the views the family contributes to the browser's Places/Views grammar
     'earth', // the Earth projection (globe over the bound corpus)
@@ -30,10 +31,10 @@ export const atlasFamilyManifest: InhabitantManifest = {
     'aion', // the Aion epoch view (deep time over the same globe)
   ],
   faces: [
-    { id: 'globe-engine', kind: 'instrument', dock: ['dock', 'expand'], presentations: ['full'], liveSemantic: 'device-instrument', heldBy: ['techne:m0', 'techne:m4'], invariant: { generatesAbsent: 'the corpus provider seam (C2) has no owner op yet; the globe forms from the bound CorpusProvider bundle' }, note: 'the GPU globe (three.js), the projection pane body; its exposed parameters: the whole-field choice and the base texture' },
-    { id: 'graph-tools', dock: ['dock', 'expand'], presentations: ['compact', 'expanded'], liveSemantic: 'detail-device', heldBy: ['techne:m0', 'techne:m1'], note: 'the constellation’s own controls (steps, kinds, relations, forces, sky anchors, reframe)' },
-    { id: 'mode-switch', dock: ['dock', 'expand'], presentations: ['compact'], liveSemantic: 'view-selector', heldBy: ['techne:m4', 'techne:m0'], note: 'Earth ⇄ Graph, the atlas’s own one-control switch' },
-    { id: 'time-control', dock: ['dock', 'expand'], presentations: ['compact', 'expanded'], liveSemantic: 'transport-slot', heldBy: ['techne:m2', 'techne:m0'], note: 'the atlas’s non-linear deep-time scale (data/time.ts): the Earth pane’s clock, and the Timeline’s deep-time face' },
+    { id: 'globe-engine', kind: 'instrument', dock: ['dock', 'expand', 'pop-out'], presentations: ['full'], liveSemantic: 'device-instrument', heldBy: ['techne:m0', 'techne:m4'], invariant: { generatesAbsent: 'the corpus provider seam (C2) has no owner op yet; the globe forms from the bound CorpusProvider bundle' }, note: 'the GPU globe (three.js), the projection pane body; its exposed parameters: the whole-field choice and the base texture' },
+    { id: 'graph-tools', dock: ['dock', 'expand', 'pop-out'], presentations: ['compact', 'expanded'], liveSemantic: 'detail-device', heldBy: ['techne:m0', 'techne:m1'], note: 'the constellation’s own controls (steps, kinds, relations, forces, sky anchors, reframe)' },
+    { id: 'mode-switch', dock: ['dock', 'expand', 'pop-out'], presentations: ['compact'], liveSemantic: 'view-selector', heldBy: ['techne:m4', 'techne:m0'], note: 'Earth ⇄ Graph, the atlas’s own one-control switch' },
+    { id: 'time-control', dock: ['dock', 'expand', 'pop-out'], presentations: ['compact', 'expanded'], liveSemantic: 'transport-slot', heldBy: ['techne:m2', 'techne:m0'], note: 'the atlas’s non-linear deep-time scale (data/time.ts): the Earth pane’s clock, and the Timeline’s deep-time face' },
   ],
   params: { grammar: 'atlas/parameter-address/v1' },
   projections: [
@@ -51,13 +52,10 @@ export const atlasFamilyManifest: InhabitantManifest = {
   telemetry: null, // nothing observable is exposed yet — honestly null
 };
 
-let admitted = false;
-/** Idempotent admission at the neutral door. */
+/** Idempotent admission at the neutral door. Keyed on the door's own state, not a module flag: a door reset clears the
+ * family, and a flag would then stop the loader from admitting it again. */
 export function admitAtlasFamily(): InhabitantManifest {
-  if (!admitted) {
-    admitFamilyManifest(atlasFamilyManifest);
-    admitted = true;
-  }
+  if (!familyManifest(ATLAS_FAMILY_ID)) admitFamilyManifest(atlasFamilyManifest);
   return atlasFamilyManifest;
 }
 
