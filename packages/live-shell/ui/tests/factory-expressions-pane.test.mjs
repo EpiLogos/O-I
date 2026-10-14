@@ -275,9 +275,10 @@ test('the pane module and the frame placement hold no frame, owner, lease or re-
 test('the centre frame keeps its mount and its container element; the placement moves only the container\'s style (source reading)', async () => {
   const panel = await code('../src/panels/expressions.tsx')
   assert.match(panel, /\}, \[qualified, attempt\]\)/, 'the frame\'s mount effect keeps its dependencies: presenting the frame in a pane never re-mounts it')
-  assert.match(panel, /<div ref=\{container\} className="expressions-application" \/>/, 'the container element is the one the frame lives in')
+  assert.match(panel, /<div ref=\{container\} className="expressions-application" data-i="Expressions\|[^"]+" \/>/, 'the container element is the one the frame lives in; its hover words carry the stage\'s Orbit note')
   assert.match(panel, /useEffect\(\(\) => \{\s*const frame = container\.current\s*if \(!frame \|\| !placement\) return\s*return followFrame\(frame, placement\.slot\)\s*\}, \[placement\]\)/)
-  assert.match(panel, /\{!placement && <>/, 'the centre chrome (toolbar, faults, reopen) moves to the pane while a pane holds the frame')
+  assert.doesNotMatch(panel, /\{!placement && <>|NativeStageTools/, 'the residence draws no chrome of its own: faults, stage tools and Reopen ride the published chrome to the Studio and the pane (lane G)')
+  assert.match(panel, /reopen: !host\.current && !starting\.current \? \(\) => retry\(value => value \+ 1\) : null/, 'Reopen is published for the Studio head')
   assert.match(panel, /publishHostedChrome\(\{state: stage, run: host\.current \? stageRun : null/)
   assert.match(panel, /publishHostedExpressions\(\{expression_ref: state\.nativeScene\?\.expression_ref \?\? null, title: state\.document\?\.name \?\? null\}\)/)
   assert.match(panel, /registerExpressionsPaneHost\(\)\n/)

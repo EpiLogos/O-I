@@ -26,7 +26,6 @@ import {stageEngine} from '../native/stageCommands'
 import {answerHostedSummon, sameSummonBasis, SOURCE_PRESENT, summonBasis} from '../native/hostedSummons'
 import type {StudioSection} from '@epilogos/expressions-boundary'
 import type {HostedAppState, StageCommand, StageResult} from '@epilogos/expressions-boundary'
-import {NativeStageTools} from '../components/NativeStageTools'
 import {enumerateWorks, needsListing, setExpressionOwner} from '../components/nativeExpressionCommands'
 import {closedWork, expressionOwner, openListedWork} from '../components/nativeExpressionCommands'
 import {publishFrameTakeLink} from '../native/frameTakes'
@@ -406,7 +405,8 @@ export function ExpressionsPanel() {
   // The pane body reads the frame only while the frame reports ready (T-EXPRESSIONS-PANE-LEASE): a status that is not ready clears it.
   useEffect(() => {if (status !== 'Expressions') publishHostedExpressions(null)}, [status])
   // The frame's chrome is published by value: a Factory pane that holds the frame shows the same toolbar and faults beside its header.
-  useEffect(() => {publishHostedChrome({state: stage, run: host.current ? stageRun : null, faults: [hostFault, surfaceFault, fault].filter((text): text is string => !!text)})}, [stage, hostFault, surfaceFault, fault, attempt])
+  useEffect(() => {publishHostedChrome({state: stage, run: host.current ? stageRun : null, faults: [hostFault, surfaceFault, fault].filter((text): text is string => !!text),
+    reopen: !host.current && !starting.current ? () => retry(value => value + 1) : null})}, [stage, hostFault, surfaceFault, fault, attempt])
   useEffect(() => () => publishHostedChrome(null), [])
   // While a Factory pane holds the frame, the container follows that pane's slot (its own place and state return on release).
   useEffect(() => {
@@ -414,15 +414,10 @@ export function ExpressionsPanel() {
     if (!frame || !placement) return
     return followFrame(frame, placement.slot)
   }, [placement])
+  // The frame alone: its faults, the stage tools and Reopen ride the published chrome to the Studio plate and the pane's slot
+  // (panes are the centre in every mode, F2 — this residence is never shown on its own).
   return <div className="expressions-inhabitant" title={status}>
-    {!placement && <>
-      {hostFault && <div role="alert" className="inhabitant-fault">{hostFault}</div>}
-      {surfaceFault && <div role="alert" className="inhabitant-fault">{surfaceFault}</div>}
-      {fault && <div role="alert" className="inhabitant-fault">{fault}</div>}
-      <NativeStageTools state={stage} run={host.current ? stageRun : null} />
-      {!host.current && !starting.current && <button type="button" onClick={() => retry(value => value + 1)}>Reopen native work</button>}
-    </>}
-    <div ref={container} className="expressions-application" />
+    <div ref={container} className="expressions-application" data-i="Expressions|The field. Orbit is a pointer drag on the stage itself; its tools are the Studio's, in the detail row." />
   </div>
 }
 
