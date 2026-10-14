@@ -12,6 +12,7 @@
 import {useEffect, useRef, useState} from "react";
 import {useKernel} from "../kernel/KernelProvider";
 import {hostedLibraryUrl, relayKernelChannel, trackShellCutout, trackHostedAppState} from "../expressions/hostedApp";
+import {relayedWorkspaceMode} from "./workspaceModeRelay";
 import "../expressions/point-cloud-host.css";
 
 export function LibraryHost() {
@@ -71,12 +72,12 @@ export function LibraryHost() {
   // tab. Nothing here opens a second UI.
   useEffect(() => {
     const handler = (event: MessageEvent) => {
-      const data = event.data as {v?: number; kind?: string; request?: string; mode?: string} | null;
+      const data = event.data as {v?: number; kind?: string; request?: string; mode?: string; ref?: unknown; id?: unknown} | null;
       if (!data || data.v !== 1 || data.kind !== "host-request") return;
       if (event.source !== frame.current?.contentWindow) return;
-      if (data.request === "workspace-mode" && data.mode === "expressions") {
-        window.dispatchEvent(new CustomEvent("oi:host-workspace-mode", {detail: {mode: data.mode}}));
-      }
+      // The Expressions request, with the kernel ref or entry id an adopted Library entry names (both additive; see workspaceModeRelay).
+      const relayed = relayedWorkspaceMode(data);
+      if (relayed) window.dispatchEvent(new CustomEvent("oi:host-workspace-mode", {detail: relayed}));
       if (data.request === "close-library") window.dispatchEvent(new CustomEvent("oi:library-close"));
     };
     window.addEventListener("message", handler);

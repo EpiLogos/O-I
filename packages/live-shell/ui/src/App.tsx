@@ -22,6 +22,7 @@ import {AgentContextDock} from './agent/AgentContextDock'
 import {useAgencySessions, type AgentSessionTrack} from './agent/useAgencySessions'
 import {trackKey} from './agent/agentRunModel'
 import type {KernelTransportStatus} from '../../../../desktop/cradle/src/kernel/types'
+import {workspaceModeDetail} from '../../../../desktop/cradle/src/library/workspaceModeRelay'
 import {AgentShellDeviceDetail} from './agent/AgentShellDeviceDetail'
 import './agent/agentShell.css'
 import './shell/modeSurface.css'
@@ -321,6 +322,22 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
     if (next === 'base' || next === 'techne') { setCenterPanel('world.ground'); setDock(true); return }
     setCenterPanel('native.workbench'); setDock(true)
   }
+  // The Library page's workspace-mode request, relayed by LibraryHost on oi:host-workspace-mode. The mode switch is the mode rail's
+  // own (chooseMode); a kernel ref opens through the shell's one open door (workspace.requestExpression), which the Expressions pane
+  // opens in its one frame. An id-only request (Open browser draft) switches the mode and opens nothing here (see the report).
+  const chooseModeRef = useRef(chooseMode), requestExpressionRef = useRef(workspace.requestExpression)
+  chooseModeRef.current = chooseMode
+  requestExpressionRef.current = workspace.requestExpression
+  useEffect(() => {
+    const onHostMode = (event: Event) => {
+      const request = workspaceModeDetail((event as CustomEvent<unknown>).detail)
+      if (!request) return
+      chooseModeRef.current(request.mode)
+      if (request.ref !== undefined) requestExpressionRef.current(request.ref)
+    }
+    window.addEventListener('oi:host-workspace-mode', onHostMode)
+    return () => window.removeEventListener('oi:host-workspace-mode', onHostMode)
+  }, [])
   const [dock, setDock] = useState(restored?.dock ?? false)
   const [selection, select] = useState<SetSelection>(restored?.selection ?? { track: 0, scene: null })
   const [overrides, setOverrides] = useState<Record<number, string>>({})

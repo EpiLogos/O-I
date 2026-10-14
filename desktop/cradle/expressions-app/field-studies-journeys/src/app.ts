@@ -47,7 +47,7 @@ import {CHAKRA_PROFILE_ID} from '../../src/engine/semantics/chakraProfile';
 import type {SemanticBinding,SemanticColorCoupling,SemanticFieldConfig} from '../../src/engine/semantics/semanticTypes';
 import {Journey,Scene,Entity,EntityLayer,TextLayer,Tool,Shape,Vec3,clone,uid,clamp,fieldStudies,oiMark,rethemeMark,sevenCentres,smallLanguage,blankJourney,blankScene,entity,pin,chakraEntities,validateJourney,AutomationLane,SCENE_TRANSITION_MIN,SCENE_TRANSITION_MAX,type MarkThemeReading} from './model.js';
 import {DocumentStore,readLibrary,readLibraryWithOrigins,saveToLibrary,removeFromLibrary,recordLibraryAdoption,adoptedLocalOrigin,libraryOpenPlan,type LibraryOrigin} from './store.js';
-import {decorateLibraryCard,libraryCardStanding} from './libraryCards.js';
+import {decorateLibraryCard,libraryCardStanding,localCopyIdFor} from './libraryCards.js';
 import {bindingEditLabel,connectActLabel,historyTitle,historyToast,historyWaitReason,KERNEL_UPDATE_LABEL,OUTSIDE_UPDATE_REASON,researchMaterialLabel} from './undoLabels.js';
 import {defaultCamera,cameraForSceneView,project,unproject,facePlane,stageScale,stageCentre,basis,Camera} from './camera.js';
 import {FieldEngineAdapter,EngineFrame} from './engine.js';
@@ -1406,9 +1406,19 @@ function kernelOriginFor(journey:Journey):LibraryOrigin|undefined{
  return {kind:'kernel-ref',ref:view.document.expression_ref};
 }
 /** Opens a kernel copy through the boot's own follow path. A refusal is named, and `fallback` (the browser copy) then opens. */
-function openKernelCopy(ref:string,fallback?:()=>void){
+function openKernelCopy(ref:string,fallback?:()=>void,recovery?:unknown){
  const refused=()=>{toast(`The kernel copy of this Expression could not be opened.${fallback?' The browser copy opens instead.':' The browser copy stays open as local scratch.'}`,7000);fallback?.();};
- void Promise.resolve(nativeWorkspace?.follow(ref)).then(applied=>{if(applied!==true)refused();},refused);
+ void Promise.resolve(nativeWorkspace?.follow(ref,recovery)).then(applied=>{if(applied!==true)refused();},refused);
+}
+/** The browser copy a kernel ref falls back to when the kernel refuses it: the Library entry that holds the ref (libraryCards.localCopyIdFor). */
+function localCopyFallbackFor(ref:string):(()=>void)|undefined{
+ const {read,origins}=readLibraryWithOrigins(),id=localCopyIdFor(ref,origins),copy=id===undefined?undefined:read.journeys.find(j=>j.id===id);
+ return copy?()=>{void loadJourney(copy)}:undefined;
+}
+/** Opens a browser-local document by its id: the in-frame Library's open, and the host command `open-local-draft`. */
+async function openBrowserDraft(id:string){
+ const j=store.document.id===id?store.document:sessionExpressions.get(id)??readLibrary().find(j=>j.id===id);
+ if(j)await loadJourney(j);
 }
 function kernelScratchShows(){return kernelScratchId!==null&&kernelScratchId===store.document.id;}
 /** T22: the first kernel save of a browser-local document. The kernel document it created has its own id, so the local entry is not
@@ -1746,7 +1756,7 @@ case 'timeline-track':timelineTrack=!timelineTrack;renderAll();break;
    const plan=libraryOpenPlan(readLibraryWithOrigins().origins.get(id),kernelExpressionsAvailable());
    if(plan.kind==='kernel-first'){openKernelCopy(plan.ref,()=>{if(j)void loadJourney(j);});break;}
    if(j)await loadJourney(j);break;}
- case 'open-local-draft':{const id=el.dataset.id!;const j=store.document.id===id?store.document:sessionExpressions.get(id)??readLibrary().find(j=>j.id===id);if(j)await loadJourney(j);break;}
+ case 'open-local-draft':await openBrowserDraft(el.dataset.id!);break;
  case 'new-journey':await loadJourney(blankJourney());edit(true,'scene');closeEntryGate();break;
  case 'entry-new':await loadJourney(blankJourney());edit(true,'scene');closeEntryGate();toast('Blank Expression — place a glyph or formation to begin.');break;
  case 'entry-continue':closeEntryGate();toast(store.document.name?'Continued '+store.document.name:'Continued last work');break;
@@ -2190,14 +2200,14 @@ let pendingHostOpen:{ref:string;recovery?:unknown}|null=null,hostOpenArmed=false
 let hostThemeReadingKey='';
 function openHostExpression(ref:string,recovery?:unknown){
  if(typeof ref!=='string'||!ref.startsWith('expression:'))return;
- if(kernelExpressionsAvailable()){void nativeWorkspace?.follow(ref,recovery);return;}
+ if(kernelExpressionsAvailable()){openKernelCopy(ref,localCopyFallbackFor(ref),recovery);return;}
  // Buffer the LATEST ref and arm exactly one announce listener (not one per
  // pre-ready call), so repeated posts before the channel is up converge to a
  // single last-wins open and no message listeners accumulate.
  pendingHostOpen={ref,recovery};
  if(hostOpenArmed)return;
  hostOpenArmed=true;
- window.addEventListener('message',function ready(event){if(event.source===window.parent&&event.data?.v===1&&event.data?.kind==='oi-kernel-channel'){window.removeEventListener('message',ready);hostOpenArmed=false;const r=pendingHostOpen;pendingHostOpen=null;if(r)void nativeWorkspace?.follow(r.ref,r.recovery);}});
+ window.addEventListener('message',function ready(event){if(event.source===window.parent&&event.data?.v===1&&event.data?.kind==='oi-kernel-channel'){window.removeEventListener('message',ready);hostOpenArmed=false;const r=pendingHostOpen;pendingHostOpen=null;if(r)openKernelCopy(r.ref,localCopyFallbackFor(r.ref),r.recovery);}});
 }
 // Stage controls the shell drives (stageCommands.ts). Each runs the application's
 // own action body; the file download or picker stays here, in the frame's gesture.
@@ -2324,6 +2334,7 @@ window.addEventListener('message',ev=>{if(ev.source!==window.parent)return;const
  if(d&&d.v===1&&d.kind==='host-command'){
   if(d.command==='interact'||d.command==='select')activateRail(d.command);
   else if(d.command==='open-expression'&&typeof d.ref==='string'){if((d as {refresh?:unknown}).refresh===true&&kernelExpressionsAvailable())void nativeWorkspace?.refreshReference(d.ref,d.recovery);else openHostExpression(d.ref,d.recovery);}
+  else if(d.command==='open-local-draft'&&typeof (d as {id?:unknown}).id==='string')void openBrowserDraft((d as {id:string}).id);
   else if(d.command==='lens'&&typeof (d as {lens?:unknown}).lens==='string'&&['project','canvas','timeline','journey','place','palace'].includes((d as {lens:string}).lens)){
    const lens=(d as {lens:LensId}).lens,ref=(d as {ref?:unknown}).ref;
    if(hostMode!=='techne')setHostMode('techne');
