@@ -255,6 +255,16 @@ def running(lines, prefixes, app_id):
     return hits
 
 
+def clear_interrupted_claim(final):
+    """An empty directory under the final name is the exclusive claim of an earlier publish that was
+    killed before its rename: nothing was published under it. It is removed so the run can proceed;
+    a directory holding anything is never touched."""
+    if final.is_dir() and not final.is_symlink() and not any(final.iterdir()):
+        final.rmdir()
+        return True
+    return False
+
+
 def publish_directory(parent, name, files):
     """Port of build-source-archive.py's publish: claim the destination exclusively, stage and
     fsync every file aside, verify the staged bytes, then rename into place. A failure removes
@@ -377,6 +387,8 @@ def export_bundle(archive, home, origin=None, lines=None, dry_run=False):
                      'would_move': [{'class': row['class'], 'source_key': row['source_key'], 'target_key': row['target_key'],
                                      'rewrite': row['rewrite']} for row in migrated]})
         final = archive / name
+        if not dry_run:
+            clear_interrupted_claim(final)
         if final.exists() or final.is_symlink():
             _, _, existing = verify_bundle(final)
             require(existing == digest, 'An existing bundle at this digest path does not match its content')
@@ -421,6 +433,8 @@ def admit_bundle(bundle, home, backing=DEFAULT_BACKING, owner_replace=False, lin
     plan = {'operation': 'admit', 'dry_run': dry_run, 'bundle_digest_sha256': digest, 'backing': backing,
             'admission': str(final), 'by_class': meta['counts']['by_class'], 'refusals': [],
             'would_apply': [{'class': row['class'], 'target_key': row['target_key']} for row in rows]}
+    if not dry_run:
+        clear_interrupted_claim(final)
     if final.exists() or final.is_symlink():
         verify_admission(final, digest)
         plan['status'] = 'planned: already admitted' if dry_run else 'already admitted'
