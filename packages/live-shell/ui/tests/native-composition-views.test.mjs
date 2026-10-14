@@ -284,8 +284,9 @@ test('actual devicePresented requires the device cut, exact native access and re
 });
 
 test('actual Deep Return restores the captured exact height and refuses a departed native residence',()=>{
- const element=find(appSource,n=>ts.isJsxSelfClosingElement(n)&&n.tagName.getText(appSource)==='NativeWorldDetail');
- const attribute=name=>find(element,n=>ts.isJsxAttribute(n)&&n.name.getText(appSource)===name).initializer.expression.getText(appSource);
+ // The native detail's expand and collapse ride the one detail host's reading (FOUNDATION F4), not a JSX residence in App.
+ const reading=find(appSource,n=>ts.isVariableDeclaration(n)&&n.name.getText(appSource)==='detailReading').initializer;
+ const attribute=name=>find(reading,n=>ts.isPropertyAssignment(n)&&n.name.getText(appSource)===name).initializer.getText(appSource);
  for(const height of [null,319.997,421]){
   const detailExpansionReturn={current:null},effects=[],workspace={workspaceId:'current-native-residence',accessEpoch:7};
   const bindings={detailExpansionReturn,detailHeight:height,workspace,viewport:[1200,577],resizeDetail:value=>effects.push(value)};

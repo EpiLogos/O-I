@@ -318,9 +318,10 @@ test('the residence hands the Journey to the World cut’s Session only: Technē
   assert.ok(!arrangement.slice(0, arrangement.indexOf(sessionTag)).includes('data-journey-rows'), 'the Arrangement presents no Journey')
 })
 
-test('App threads the Journey door only for Technē’s World cut, and the residence stays a fragment of direct children', async () => {
+test('App threads the Journey door to the Session · Arrangement pane only over the World cut, and the residence stays a fragment of direct children', async () => {
   const app = await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8')
-  assert.match(app, /journey=\{worldCut && frameMode === 'techne' \? \{openExpression: workspace\.requestExpression\} : undefined\}/)
+  // The pane is the centre in every mode (FOUNDATION F2): the door rides the published pane reading when the mode's tracks are the World cut.
+  assert.match(app, /journey: tracks === 'world' \? \{openExpression: workspace\.requestExpression\} : undefined/)
   const residence = await readFile(new URL('../src/projections/timelineResidence.tsx', import.meta.url), 'utf8')
   assert.match(residence, /<Fragment>/, 'the two presentation divs remain direct children of the centre body')
 })

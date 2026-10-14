@@ -90,7 +90,7 @@ export function NativeExpressionCollections({query}: {query: string}) {
     try {
       outcome = await start({
         expression: channel,
-        parent: WORKS_FOLDER === null ? null : async () => (await listFiles(origin.current.transport, WORKS_FOLDER, true)).location,
+        parent: WORKS_FOLDER === null ? null : (folder => async () => (await listFiles(origin.current.transport, folder, true)).location)(WORKS_FOLDER),
         uuid: () => crypto.randomUUID(),
         current,
         refresh: () => channel ? enumerateWorks(channel, works => origin.current.publishWorks(works), current) : Promise.resolve([]),

@@ -1,6 +1,6 @@
 import {createContext, useContext, useMemo, useRef, useState, type ReactNode, type RefObject} from 'react'
 import {useDataIStatusInfo, type DataIStatusInfo} from './statusInfo'
-import {useContinuity} from '../continuity/workspace'
+import {useOptionalContinuity} from '../continuity/workspace'
 
 export type AgentCentreView = 'session' | 'arrangement' | 'thread'
 export type AgentEffort = 'low' | 'medium' | 'high' | 'max'
@@ -86,11 +86,15 @@ export function AgentShellProvider({children, frameRef}: {children: ReactNode; f
   const [centreView, setCentreView] = useState<AgentCentreView>('session')
   // The selected session is THE selection when it is one (FOUNDATION F1): read from the world context, written through
   // the book's one select, and so on the trail.
-  const continuity = useContinuity()
-  const worldSelection = continuity.current.context?.selection
-  const selectedTrackId = worldSelection?.kind === 'agent-session' ? worldSelection.ref : null
-  const select = continuity.select
-  const setSelectedTrackId = (id: string | null, title?: string) => select(id ? {mode: 'factory', kind: 'agent-session', ref: id, title: title ?? id} : null)
+  // With no book mounted (a render test, a detached view) there is no world selection: the session choice is held here only.
+  const continuity = useOptionalContinuity()
+  const [unbooked, holdUnbooked] = useState<string | null>(null)
+  const worldSelection = continuity?.current.context?.selection
+  const selectedTrackId = continuity ? (worldSelection?.kind === 'agent-session' ? worldSelection.ref : null) : unbooked
+  const select = continuity?.select
+  const setSelectedTrackId = (id: string | null, title?: string) => select
+    ? select(id ? {mode: 'factory', kind: 'agent-session', ref: id, title: title ?? id} : null)
+    : holdUnbooked(id)
   const [threadTrackId, setThreadTrackId] = useState<string | null>(null)
   const [openTiles, setOpenTiles] = useState<AgentTileId[]>(['sessions'])
   const [dockWidth, setDockWidth] = useState(300)
@@ -147,7 +151,7 @@ export function AgentShellProvider({children, frameRef}: {children: ReactNode; f
     telemetryOn,
     toggleTelemetry: trackId => setTelemetryOn(current => ({...current, [trackId]: !(current[trackId] !== false)})),
     statusInfo,
-  }), [centreView, selectedTrackId, worldSelection, threadTrackId, openTiles, dockWidth, dockFolded, effort, heartbeat, follow, steer, writeArm, handBackLit, loopOn, quantize, tokenScope, voiceArmed, capturing, tapNote, voiceNote, captureNote, captureLog, expandedDevice, telemetryOn, statusInfo])
+  }), [centreView, selectedTrackId, worldSelection, unbooked, threadTrackId, openTiles, dockWidth, dockFolded, effort, heartbeat, follow, steer, writeArm, handBackLit, loopOn, quantize, tokenScope, voiceArmed, capturing, tapNote, voiceNote, captureNote, captureLog, expandedDevice, telemetryOn, statusInfo])
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }

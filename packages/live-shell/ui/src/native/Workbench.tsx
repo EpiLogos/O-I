@@ -42,7 +42,12 @@ import {NativeAgencyParticipation} from '../components/NativeAgencyParticipation
 import {preparedContextScopeKey,type NativePreparedContextScope} from './preparedContextBinding'
 import {workbenchContextScope} from './workbenchContext'
 import {AgentShellCentre} from '../agent/AgentShellRoot'
-import {AGENT_SHELL_KIND, hasFactoryCentre, seedFactoryCentre} from '../agent/factoryCentre'
+import {AGENT_SHELL_KIND} from '../agent/factoryCentre'
+import {MODE_TREE_SEEDS} from '../shell/modeFrames'
+import {openInstrumentAt} from '../frame/openInstrument'
+import {publishInstrumentOpener} from '../frame/instrumentDoor'
+import {Icon} from '../inhabitants/sdk/Icon'
+import '../frame/paneGrammar.css'
 import type {AgentSubject,AgentAccompanying} from '../../../../../desktop/cradle/src/agent/AgentLayer'
 import {isRetainedCentreKind, WARM_WORKSPACES, type WarmTreeRef} from '../../../../../desktop/cradle/src/surface/warmTrees'
 import {RETAINED_VIEW_BUDGET} from '../../../../../desktop/cradle/src/surface/runtime'
@@ -125,11 +130,18 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
     return () => observer.disconnect()
   }, [])
   useEffect(() => {restore.current = checkpoint(book.current.layout); setMenu(null)}, [book.current.id, book.current.layout.mode])
-  // Factory's centre is the Workbench tree: entering Factory seeds its default agent tab once (pinned, so it cannot be closed).
+  // The pane tree is the centre in every mode (FOUNDATION F2): a mode's first tree is seeded from its registration
+  // (shell/modeFrames.ts MODE_TREE_SEEDS — Factory's pinned agent tab, the others' instruments); a seed never touches a tree
+  // that already holds the mode's own arrangement.
   useEffect(() => {
-    if (book.current.layout.mode !== 'factory') return
-    if (!hasFactoryCentre(book.current.layout)) book.setLayout(layout => seedFactoryCentre(layout))
+    const seed = MODE_TREE_SEEDS[book.current.layout.mode ?? 'base']
+    if (seed && seed(book.current.layout) !== book.current.layout) book.setLayout(layout => seed(layout))
   }, [book.current.id, book.current.layout])
+  // The one door the browser's instruments open through: the presented tree, in the focused pane or where asked.
+  useEffect(() => {
+    publishInstrumentOpener((kind, at, subject) => latest.current.book.setLayout(layout => openInstrumentAt(layout, kind, at, subject)))
+    return () => publishInstrumentOpener(null)
+  }, [])
   useEffect(() => {
     let live = true
     const epoch = workspace.accessEpoch
@@ -827,6 +839,11 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
           current()
           return {ref:reading.agent_session,project:reading.project,space:reading.space}
         }} report={report}/>,
+        paneGrammar: {
+          openInstrument: (kind, groupId, edge) => {if (allowed()) latest.current.book.setLayout(layout => openInstrumentAt(layout, kind, {groupId, edge}))},
+          selectionRef: owner.context?.selection?.ref,
+          mark: name => <Icon name={name === 'pin' ? 'placed' : 'follow'} size={12}/>,
+        },
         host: {project:factoryScope?.project,sourceWorldRef:factoryScope?.sourceWorldRef,current:factoryCurrent,unavailable:factoryUnavailable,accompanying:tree.layout.accompanying,openEncounter:row=>factoryCurrent()?chooseFactory(row):Promise.reject(Error(factoryUnavailable??'The originating Factory owner is concealed or retired.')),onMessage:report}, subject: owner.context?.subject,
       }
       const side = tree.layout.sidePane

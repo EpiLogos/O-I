@@ -146,30 +146,52 @@ export interface ProjectionModuleRegistration {
   id: string;
   /** The one pane kind the module mounts. */
   kind: ProjectionPaneKind;
+  /** One build of the kind's instrument, when the kind has several (manual §10.2); they answer to the same controls. */
+  build?: {id: string; label: string};
   /** Mount one instance. May be async (an engine that resolves on first
    * paint). A rejection must leave the element clean; the host shows the
    * failure as the pane's honest body. */
   create(context: ProjectionModuleContext): ProjectionModuleHandle | Promise<ProjectionModuleHandle>;
 }
 
-const admitted = new Map<ProjectionPaneKind, ProjectionModuleRegistration>();
+const admitted = new Map<ProjectionPaneKind, ProjectionModuleRegistration[]>();
 
-/** Admit a module for a pane kind. One module per kind per host: a second,
- * different registration for a taken kind REFUSES — kinds are not silently
- * replaced (the admission law: declared, never swapped underneath). */
+/** Admit a module for a pane kind (an instrument type). A kind may have several builds (manual §10.2: "Some instruments
+ * come in more than one build … Each build answers to the same controls"): a registration that declares a build joins
+ * the kind's builds, the first admitted standing as its default. Without a build, a second, different registration
+ * for a taken kind REFUSES — kinds are not silently replaced (the admission law: declared, never swapped underneath).
+ * Re-admitting the same id replaces it in place. */
 export function registerProjectionModule(registration: ProjectionModuleRegistration): void {
   if (!isProjectionPaneKind(registration.kind)) {
     throw Error(`"${registration.kind}" is not a projection pane kind`);
   }
-  const prior = admitted.get(registration.kind);
-  if (prior && prior.id !== registration.id) {
-    throw Error(`Projection kind "${registration.kind}" is already admitted by "${prior.id}"; refusing replacement by "${registration.id}"`);
+  const builds = admitted.get(registration.kind) ?? [];
+  const same = builds.findIndex(held => held.id === registration.id && held.build?.id === registration.build?.id);
+  if (same >= 0) { builds[same] = registration; return; }
+  const unbuilt = builds.find(held => !held.build || !registration.build);
+  if (unbuilt) {
+    throw Error(`Projection kind "${registration.kind}" is already admitted by "${unbuilt.id}"; refusing replacement by "${registration.id}"`);
   }
-  admitted.set(registration.kind, registration);
+  if (builds.some(held => held.build!.id === registration.build!.id)) {
+    throw Error(`Projection kind "${registration.kind}" already has a build "${registration.build!.id}"`);
+  }
+  admitted.set(registration.kind, [...builds, registration]);
 }
 
-export function projectionModule(kind: ProjectionPaneKind): ProjectionModuleRegistration | undefined {
-  return admitted.get(kind);
+/** The module for a pane kind: the named build, or the kind's default (its first admitted build). */
+export function projectionModule(kind: ProjectionPaneKind, build?: string): ProjectionModuleRegistration | undefined {
+  const builds = admitted.get(kind);
+  return (build ? builds?.find(held => held.build?.id === build) : undefined) ?? builds?.[0];
+}
+
+/** Every build admitted for a pane kind, default first. */
+export function projectionBuilds(kind: ProjectionPaneKind): readonly ProjectionModuleRegistration[] {
+  return admitted.get(kind) ?? [];
+}
+
+/** Every admitted pane kind (the instrument types the browser lists). */
+export function admittedProjectionKinds(): ProjectionPaneKind[] {
+  return [...admitted.keys()];
 }
 
 /** Test-only: clear the door between cases. */

@@ -46,6 +46,9 @@ const appLines = app.split('\n')
 const nativeWorkbench = await readFile(new URL('../src/native/Workbench.tsx', import.meta.url), 'utf8')
 const agentPanel = await readFile(new URL('../src/panels/agentShell.tsx', import.meta.url), 'utf8')
 const engineTree = await readFile(new URL('../../../../desktop/cradle/src/surface/Workbench.tsx', import.meta.url), 'utf8')
+const modeFrames = await readFile(new URL('../src/shell/modeFrames.ts', import.meta.url), 'utf8')
+const modeDetails = await readFile(new URL('../src/shell/modeDetails.tsx', import.meta.url), 'utf8')
+const detailHost = await readFile(new URL('../src/frame/detail/DetailHost.tsx', import.meta.url), 'utf8')
 
 test('the Factory tree seeds the agent tab once, pinned and active, as the default tab', () => {
   const seeded = seedFactoryCentre(freshLayout())
@@ -88,10 +91,10 @@ test('the focused Earth pane takes the Device side as the 0 instrument; the agen
   assert.equal(deviceInstrumentFor('factory', agentPane.pane, agentPane.presentation, 'graph'), null, 'the agent tab keeps AgentShellDeviceDetail')
 })
 
-test('a Timeline pane beside the agent tab takes the Timeline instrument, and a Graph pane the 0 instrument', () => {
+test('a Session · Arrangement pane beside the agent tab holds no instrument (FOUNDATION F3), and a Graph pane the 0 instrument', () => {
   const withTimeline = activateSurface(openFactoryInstrumentPane(seedFactoryCentre(freshLayout()), 'projection.timeline'), groupsOf(openFactoryInstrumentPane(seedFactoryCentre(freshLayout()), 'projection.timeline').root).flatMap(group => group.tabs).find(id => id !== AGENT_SHELL_ID))
   const timeline = factoryFocusedPane(focusedSurfaceKind(withTimeline))
-  assert.equal(deviceInstrumentFor('factory', timeline.pane, timeline.presentation, 'graph'), 'techne:m2')
+  assert.equal(deviceInstrumentFor('factory', timeline.pane, timeline.presentation, 'graph'), null, 'the tracks pane keeps Factory\'s own chain')
   const graph = openFactoryInstrumentPane(seedFactoryCentre(freshLayout()), 'projection.constellation')
   const graphPane = factoryFocusedPane(focusedSurfaceKind(graph))
   assert.equal(deviceInstrumentFor('factory', graphPane.pane, graphPane.presentation, 'graph'), 'techne:m0')
@@ -115,7 +118,8 @@ test('the Factory tree and its agent tab persist through modeLayouts when the mo
 // Source pins: the centre identity, the Device-side routing and the agent body (the frame is not renderable in a test harness).
 test('Factory centre is the Workbench tree: the centre is native.workbench, and the agent-shell chrome stands on Factory', () => {
   assert.match(app, /const agentShell = isFactoryMode\(frameMode\) && !settingsPresented/, 'the agent-shell chrome stands over every Factory tree')
-  assert.match(app, /if \(next === 'base' \|\| next === 'techne'\) \{ setCenterPanel\('world\.ground'\); setDock\(true\); return \}\s*\n\s*setCenterPanel\('native\.workbench'\); setDock\(true\)/, 'entering Factory presents the Workbench tree')
+  // Every mode's centre is the Workbench tree (FOUNDATION F2); Factory first opens with its dock (shell/modeFrames.ts).
+  assert.match(modeFrames, /factory: \{\.\.\.FRAME, centerPanel: 'native\.workbench', dock: true\}/, 'entering Factory presents the Workbench tree')
   assert.doesNotMatch(app, /setCenterPanel\('native\.agent'\)/, 'the agent centre panel is no longer the Factory centre')
 })
 
@@ -123,19 +127,21 @@ test('the focused Factory tab routes the Device side through the existing device
   const focus = appLines.find(l => l.includes('const focusedInstrument = deviceInstrumentFor('))
   assert.ok(focus, 'the Device side reads the instrument through deviceInstrumentFor')
   assert.match(app, /factoryFocusedPane\(/, 'a Factory tree names its focused pane through factoryFocusedPane')
-  assert.match(app, /const focusedPane = settingsPresented \? 'world\.settings' : factoryFocus \? factoryFocus\.pane : centerPanel/)
-  const agentResidence = appLines.find(l => l.includes('<AgentShellDeviceDetail'))
-  assert.ok(agentResidence, 'the agent Device side is in App')
-  assert.match(agentResidence, /focusedInstrument !== null/, 'the agent Device side yields to a focused instrument pane')
+  assert.match(app, /const focusedPane = settingsPresented \? 'world\.settings' : centerPanel !== 'native\.workbench' \? centerPanel : paneFocus\.pane/)
+  // The one detail host (FOUNDATION F4) gives a focused instrument the Device side over the mode's own chain.
+  assert.match(modeDetails, /factory: \{clip: FactoryClip, device: FactoryChain\}/, 'Factory\'s chain is its registered Device side')
+  assert.match(detailHost, /const instrument = side === 'device' && !registration\.ownsDeviceSide \? reading\.focusedInstrument : null/, 'a focused instrument pane takes the Device side')
 })
 
-test('the lens bar in Factory opens instrument panes inside the tree, never by leaving the centre', () => {
-  assert.match(app, /if \(agentShell\) \{[^}]*factoryLensPane\(lens\)[^}]*openFactoryInstrumentPane\(/, 'a lens press in Factory opens only its admitted pane beside the agent tab')
+test('an instrument opens as a pane inside the tree, never by leaving the centre (the browser\'s Instruments, FOUNDATION F2)', () => {
+  assert.doesNotMatch(app, /TechneLensBar/, 'the lens bar is gone; its instruments are in the browser')
+  assert.match(nativeWorkbench, /publishInstrumentOpener\(\(kind, at, subject\) => latest\.current\.book\.setLayout\(layout => openInstrumentAt\(layout, kind, at, subject\)\)\)/, 'the presented tree is the one door an instrument opens through')
 })
 
 test('the Workbench tree mounts the agent surface from the tree conversation, and admits no kernel surface for it', () => {
   assert.match(nativeWorkbench, /conversation: tree\.layout\.mode === 'factory' \? <AgentShellCentre\/> : <FactoryChat/, 'the Factory tree conversation is the agent surface')
-  assert.match(nativeWorkbench, /seedFactoryCentre\(/, 'the Workbench seeds the Factory tree with its agent tab')
+  assert.match(modeFrames, /factory: seedFactoryCentre,/, 'the Factory tree is seeded with its agent tab from the mode table')
+  assert.match(nativeWorkbench, /MODE_TREE_SEEDS\[book\.current\.layout\.mode \?\? 'base'\]/, 'the Workbench seeds every mode\'s first tree from the table')
   assert.match(nativeWorkbench, /const unowned = new Set\(\['draft', 'blank', 'device', AGENT_SHELL_KIND\]\)/, 'the agent tab (and a popped-out device, seam 8) is not a kernel-owned surface')
   assert.match(engineTree, /if \(binding\.kind === "agent-shell"\) return <>\{conversation\}<\/>;/, 'the engine mounts the agent body from the tree conversation')
 })
@@ -147,9 +153,10 @@ test('the native.agent centre panel no longer mounts a second agent body', () =>
 test('Factory opens with the agent tab focused, and every agent-shell chrome piece stands over the tree', () => {
   const {activeBindingId} = engine
   assert.equal(activeBindingId(seedFactoryCentre(freshLayout())), AGENT_SHELL_ID, 'the agent tab is the focused default')
-  for (const piece of ['<AgentShellTransportBridge', '<AgentStatusBarBridge', '<AgentContextDock', '<FactoryTaskLogDetail', '<AgentShellDeviceDetail', '<AgentShellBrowser']) {
+  for (const piece of ['<AgentShellTransportBridge', '<AgentStatusBarBridge', '<AgentContextDock', '<AgentShellBrowser']) {
     assert.ok(app.includes(piece), `${piece} is still rendered by App`)
   }
+  for (const piece of ['<FactoryTaskLogDetail', '<AgentShellDeviceDetail']) assert.ok(modeDetails.includes(piece), `${piece} is Factory's registered detail`)
   const bridge = appLines.find(l => l.includes('{agentShell ? <AgentStatusBarBridge'))
   assert.ok(bridge, 'the status bar switches on the agent shell, not on the retired centre panel')
   assert.match(app, /const agentShell = isFactoryMode\(frameMode\) && !settingsPresented/)
@@ -220,9 +227,7 @@ test('Timeline and Journey open the one Timeline pane; the lens presentation is 
   assert.equal(groupsOf(once.root).flatMap(group => group.tabs).length, 2, 'the two lenses share one pane, never two')
 })
 
-test('the App lens press reads the factory lens table, and the bar is told it is in Factory', () => {
-  assert.match(app, /factoryLensPane\(lens\)/, 'the press opens the pane the table admits')
-  assert.match(app, /paneKind === 'projection\.timeline'\) setTimelinePanePresentation\(lens\.presentation/, 'the lens carries its presentation to the one Timeline pane')
-  assert.doesNotMatch(app, /factoryLensPane\(lens\)[\s\S]{0,40}'projection\.timeline'/, 'App names no Timeline pane kind beside the table')
-  assert.match(app, /factory=\{isFactoryMode\(frameMode\)\}/, 'the bar carries the Factory reading')
+test('Tab moves the one Session · Arrangement pane between its presentations, in Factory as in every mode', () => {
+  assert.match(app, /presentSettings\(false\); setTab\(view\); setTimelinePanePresentation\(view\)/, 'the pane\'s own presentation moves')
+  assert.match(app, /if \(isFactoryMode\(frameMode\)\) shellCtx\.setCentreView\(view\)/, 'the agent tab carries the same two views of its sessions')
 })

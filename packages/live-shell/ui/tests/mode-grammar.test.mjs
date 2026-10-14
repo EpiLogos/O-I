@@ -135,7 +135,8 @@ test('Rev 5, second table: Session and Arrangement mean what the design says, pe
     base: ['the day as clips', 'today on one ruler'],
     factory: ['sessions and tasks', 'the run viewer'],
     expressions: ['scene rows', 'the scenes over time'],
-    techne: ['journey', 'timeline'],
+    // FOUNDATION F3: views of Technē's material, never its Journey and Timeline instruments.
+    techne: ['walk stops', 'one ruler'],
   }
   for (const [mode, [session, arrangement]] of Object.entries(EXPECT)) {
     const grammar = MODE_GRAMMAR[mode]
@@ -252,7 +253,7 @@ test('the centre compositions per mode × presentation carry the Rev-5 meanings'
     base: ['day as clips', 'today on one ruler'],
     factory: ['sessions, clips are tasks', 'the runs over time'],
     expressions: ['scene rows', 'the scenes over time'],
-    techne: ['walk stops', 'timeline'],
+    techne: ['walk stops', 'one ruler'],
   }
   for (const [mode, [session, arrangement]] of Object.entries(EXPECT)) {
     const centre = MODE_GRAMMAR[mode].centre
@@ -314,19 +315,16 @@ test('the Central title; Technē labels are plain names with their M′ address 
   assert.equal(MODE_GRAMMAR.base.title, 'Central')
   assert.equal(SDK_MODE_DECLARATIONS.find(mode => mode.name === 'base').title, 'Central')
   const techne = MODE_GRAMMAR.techne
-  assert.equal(techne.session.meaning, 'Journey')
-  assert.equal(techne.session.provenance, 'M3′ Journey')
-  assert.equal(techne.arrangement.meaning, 'Timeline')
-  assert.equal(techne.arrangement.provenance, 'M2′ Relation Field')
-  assert.equal(techne.centre.session.label, 'Journey')
-  assert.equal(techne.centre.session.provenance, 'M3′ Journey')
-  assert.equal(techne.centre.arrangement.label, 'Timeline')
-  assert.equal(techne.centre.arrangement.provenance, 'M2′ Relation Field')
+  // Session and Arrangement are views of Technē's material (FOUNDATION F3; lock §9.1), named plainly with their provenance.
+  assert.equal(techne.session.label, 'Session'); assert.match(techne.session.meaning, /walk stops/)
+  assert.equal(techne.session.provenance, 'lock §9.1 Technē row')
+  assert.equal(techne.arrangement.label, 'Arrangement'); assert.match(techne.arrangement.meaning, /one ruler/)
+  assert.equal(techne.centre.session.label, 'Session')
+  assert.equal(techne.centre.arrangement.label, 'Arrangement')
   const sdkTechne = SDK_MODE_DECLARATIONS.find(mode => mode.name === 'techne')
-  assert.equal(sdkTechne.sessionView, 'Journey')
-  assert.equal(sdkTechne.arrangementView, 'Timeline')
-  assert.equal(sdkTechne.viewProvenance.sessionView, 'M3′ Journey')
-  assert.equal(sdkTechne.viewProvenance.arrangementView, 'M2′ Relation Field')
+  assert.doesNotMatch(sdkTechne.sessionView, /Journey/)
+  assert.doesNotMatch(sdkTechne.arrangementView, /Timeline/)
+  assert.equal(sdkTechne.viewProvenance.sessionView, 'lock §9.1 Technē row')
   for (const text of [techne.session.label, techne.arrangement.label, techne.centre.session.label, techne.centre.arrangement.label, techne.centre.session.meaning, techne.centre.arrangement.meaning]) {
     assert.ok(!/M\d′/.test(text), `"${text}" carries a plain name, not an M′ address`)
   }

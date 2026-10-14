@@ -473,6 +473,38 @@ export function splitOff(
   return { ...next, focusedGroupId: ng.id, maximizedGroupId: undefined };
 }
 
+/** Four ways (manual §10.2: "To split a pane, click ⊞. Then select Beside, Below or Four ways."): one pane becomes four
+ * — it keeps its tabs in the upper left, and three empty panes join it. */
+export function splitQuad(state: LayoutState, groupId: string): LayoutState {
+  if (!state.root || !contains(state.root, groupId)) return state;
+  const target = groupsOf(state.root).find((g) => g.id === groupId)!;
+  const gen = idGen(state);
+  const empty = (): TabGroupPane => ({ type: "group", id: gen("g"), tabs: [], pinned: [], active: null, emptySlot: true });
+  const quad: SplitPane = {
+    type: "split", id: gen("sp"), dir: "v",
+    children: [
+      { type: "split", id: gen("sp"), dir: "h", children: [target, empty()] },
+      { type: "split", id: gen("sp"), dir: "h", children: [empty(), empty()] },
+    ],
+  };
+  const replace = (pane: Pane): Pane => pane.type === "group" ? (pane.id === groupId ? quad : pane) : { ...pane, children: pane.children.map(replace) };
+  return { ...withRoot(state, replace(state.root)), focusedGroupId: groupId, maximizedGroupId: undefined };
+}
+
+/** A drop on a pane's edge (manual §10.2: "To make a new split, drag a tab onto the edge of a pane"): the surface leaves
+ * its group, if it has one, and stands alone in a new pane on that edge of the target. A surface not yet placed (one the
+ * caller has just added to `surfaces`) is placed the same way. */
+export function dropOnEdge(state: LayoutState, id: SurfaceId, targetGroupId: string, edge: import("./types").PaneEdge): LayoutState {
+  if (!state.root || !state.surfaces[id] || !contains(state.root, targetGroupId)) return state;
+  const from = groupOf(state, id);
+  if (from && from.id === targetGroupId && from.tabs.length === 1) return state;
+  const gen = idGen(state);
+  const node: TabGroupPane = { type: "group", id: gen("g"), tabs: [id], pinned: from?.pinned.includes(id) ? [id] : [], active: id };
+  let root: Pane = from ? mapPane(state.root, (g) => (g.id === from.id ? removeTab(g, id) : g)) : state.root;
+  root = insertSibling(root, targetGroupId, edge === "left" || edge === "right" ? "h" : "v", node, edge === "right" || edge === "bottom", gen);
+  return { ...withRoot(state, root), focusedGroupId: node.id, maximizedGroupId: undefined };
+}
+
 /** Tile: every open surface in its own group, balanced alternating splits. */
 export function tileSurfaces(state: LayoutState): LayoutState {
   const ids = groupsOf(state.root).flatMap((g) => g.tabs);
@@ -617,6 +649,15 @@ export function jumpToTab(state: LayoutState, n: number): LayoutState {
   if (!id) return state;
   const root = mapPane(state.root!, (x) => (x.id === g.id ? { ...x, active: id } : x));
   return { ...state, root };
+}
+
+/** Follow or pin a projection pane (manual §10.2: "A pane follows what you select, unless you pin it. A pinned pane
+ * keeps its subject while you work elsewhere."): a ref pins the pane's subject; none returns it to following. */
+export function pinSubject(state: LayoutState, id: SurfaceId, ref: string | undefined): LayoutState {
+  const binding = state.surfaces[id];
+  if (!binding?.projection) return state;
+  const { subject_ref: _held, ...projection } = binding.projection;
+  return { ...state, surfaces: { ...state.surfaces, [id]: { ...binding, projection: ref ? { ...projection, subject_ref: ref } : projection } } };
 }
 
 export function togglePin(state: LayoutState, id: SurfaceId): LayoutState {

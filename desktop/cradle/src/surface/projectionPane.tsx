@@ -45,7 +45,7 @@ export function useProjectionEncounter(): ProjectionEncounterSource {
  * a body.
  */
 export function ProjectionSurface({binding}: {binding: SurfaceBinding}) {
-  const registration = isProjectionPaneKind(binding.kind) ? projectionModule(binding.kind) : undefined;
+  const registration = isProjectionPaneKind(binding.kind) ? projectionModule(binding.kind, binding.projection?.build) : undefined;
   const {bridge, publish} = useProjectionEncounter();
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const elementRef = useRef<HTMLDivElement | null>(null);

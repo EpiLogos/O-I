@@ -37,8 +37,9 @@ export function StatusBar({ state, documentError, viewport, selectedTrack, audio
     {/* The run context stands in every mode: which world this shell runs in, from the host's own disclosure. */}
     <RunContextReading />
     <nav className="status-detail-views" aria-label="Detail view">
-      <button aria-label={pair.clip.label} data-i={`${pair.clip.label}|${pair.clip.meaning}`} title={`${pair.clip.label} — ${pair.clip.meaning}`} aria-pressed={detailMode === 'clip'} onClick={() => changeDetailMode('clip')}><Icon name="set" size={12} /><span>{pair.clip.label}</span></button>
-      <button aria-label={pair.device.label} data-i={`${pair.device.label}|${pair.device.meaning}`} title={`${pair.device.label} — ${pair.device.meaning}`} aria-pressed={detailMode === 'device'} onClick={() => changeDetailMode('device')}><Icon name="device" size={12} /><span>{pair.device.label}</span></button>
+      {/* Clip | Device in every mode (manual §10.1, FOUNDATION F4); what each side holds in this kind of work is its tooltip. */}
+      <button aria-label="Clip" data-detail-side="clip" data-i={`Clip|${pair.clip.label === 'Clip' ? '' : `${pair.clip.label}: `}${pair.clip.meaning}`} title={`Clip — ${pair.clip.label === 'Clip' ? '' : `${pair.clip.label}: `}${pair.clip.meaning}`} aria-pressed={detailMode === 'clip'} onClick={() => changeDetailMode('clip')}><Icon name="set" size={12} /><span>Clip</span></button>
+      <button aria-label="Device" data-detail-side="device" data-i={`Device|${pair.device.label === 'Device' ? '' : `${pair.device.label}: `}${pair.device.meaning}`} title={`Device — ${pair.device.label === 'Device' ? '' : `${pair.device.label}: `}${pair.device.meaning}`} aria-pressed={detailMode === 'device'} onClick={() => changeDetailMode('device')}><Icon name="device" size={12} /><span>Device</span></button>
     </nav>
   </footer>
 }

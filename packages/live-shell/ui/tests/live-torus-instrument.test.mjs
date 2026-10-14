@@ -243,14 +243,12 @@ test('the hosted panel publishes every announcement to the one handle and withdr
 
 // ── 11 — Live's centre: the instrument over the Timeline, the audio cut's behaviour kept ──
 
-test('Live centre: the instrument is the centre identity world.expressions; a Timeline view shows the Timeline; other audio panels stay hidden', async () => {
+test('Live centre: the instrument stands in Live\'s first pane beside the set\'s tracks; the stage frame is placed, never remounted', async () => {
   const app = await readFile(new URL('App.tsx', here), 'utf8')
-  // the audio hide rule still hides every panel except knowledge, and now the hosted instrument when the centre is not on it
-  assert.match(app, /workspace\.mode === 'audio' && panel\.id !== 'world\.knowledge' && panel\.id !== 'world\.expressions' \|\|/)
-  // a Timeline view in Live moves the centre identity off the instrument; the Live mode press returns to it (chooseMode)
-  assert.match(app, /if \(frameMode === 'live'\) \{ setCenterPanel\(`native\.\$\{view\}`\); return \}/)
-  // Each mode's frame is its own (FOUNDATION F1): Live first opens on the instrument, and returns to whatever Live held.
-  assert.match(readFileSync(new URL('shell/modeFrames.ts', here), 'utf8'), /live: \{\.\.\.FRAME, centerPanel: 'world\.expressions'/, 'Live opens on the instrument')
+  // The panes are the centre in every mode (FOUNDATION F2): Live's first tree holds the stage (the torus) beside its tracks,
+  // and the one stage frame is placed over whichever pane holds it.
+  assert.match(await readFile(new URL('shell/modeFrames.ts', here), 'utf8'), /live: seedInstruments\(\['projection\.expressions', 'projection\.timeline'\]\)/, 'Live\'s first pane holds the instrument')
+  assert.match(app, /const expressionsPlaced = framePlacement !== null/)
   assert.match(app, /live-centre-torus/)
   const css = await readFile(new URL('live/liveCentre.css', here), 'utf8')
   assert.match(css, /background: var\(--bg-2\)/)

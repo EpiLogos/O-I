@@ -228,9 +228,10 @@ export const SDK_MODE_DECLARATIONS: readonly SdkMode[] = [
     mark: 'techne',
     workspaceMode: 'techne',
     readouts: ['Link 3', 'Now', '6 s', '7 / 8', 'pulse', 'arrive', 'as me', '14:37', '41 ms', '9 %'],
-    sessionView: 'Journey',
-    arrangementView: 'Timeline',
-    viewProvenance: {sessionView: 'M3′ Journey', arrangementView: 'M2′ Relation Field'},
+    // Session and Arrangement are views of Technē's material, never its Journey and Timeline instruments (FOUNDATION F3).
+    sessionView: 'readings, events and walk stops',
+    arrangementView: 'the readings on one ruler',
+    viewProvenance: {sessionView: 'lock §9.1 Technē row', arrangementView: 'lock §9.1 Technē row'},
     rows: [
       {row: 'link-tap', meaning: 'field carrier · back to Now'},
       {row: 'tempo-signature', meaning: 'walk pace · stop n/8'},
