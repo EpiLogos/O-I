@@ -49,7 +49,7 @@ export function hasFactoryCentre(layout: LayoutState): boolean {
 }
 
 /** Open (or reactivate) an instrument pane beside the agent tab, through the engine's projection door. */
-export function openFactoryInstrumentPane(layout: LayoutState, kind: 'projection.earth' | 'projection.constellation' | 'projection.timeline'): LayoutState {
+export function openFactoryInstrumentPane(layout: LayoutState, kind: 'projection.earth' | 'projection.constellation' | 'projection.timeline' | 'projection.expressions'): LayoutState {
   return openProjectionPane(layout, kind)
 }
 

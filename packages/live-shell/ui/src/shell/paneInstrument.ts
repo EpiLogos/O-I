@@ -112,6 +112,10 @@ export function instrumentOfPane(
       return 'knowledge-graph'
     case 'world.expressions':
       return hostedLens ? HOSTED_INSTRUMENT[hostedLens] : null
+    case 'projection.expressions':
+      // The Expressions pane (T-EXPRESSIONS-PANE-LEASE) presents the one hosted frame and holds no instrument of its own: the
+      // frame's hosted lens stands in the centre's bar, never in this pane.
+      return null
     case 'world.ground':
     case 'native.session':
     case 'native.arrangement':
@@ -163,6 +167,7 @@ export function factoryFocusedPane(surfaceKind: string | undefined, timelinePres
   if (surfaceKind === 'projection.earth' || surfaceKind === 'projection.constellation') return {pane: 'projection.earth', presentation: null}
   if (surfaceKind === 'projection.timeline') return {pane: 'projection.timeline', presentation: timelinePresentation}
   if (surfaceKind === 'knowledge') return {pane: 'world.knowledge', presentation: null}
+  if (surfaceKind === 'projection.expressions') return {pane: 'projection.expressions', presentation: null}
   if (surfaceKind === undefined || surfaceKind === 'agent-shell') return {pane: 'native.agent', presentation: null}
   return {pane: 'native.workbench', presentation: null}
 }

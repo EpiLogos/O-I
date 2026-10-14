@@ -26,6 +26,9 @@ import type {StudioSection} from '@epilogos/expressions-boundary'
 import type {HostedAppState, StageCommand, StageResult} from '@epilogos/expressions-boundary'
 import {NativeStageTools} from '../components/NativeStageTools'
 import {publishFrameTakeLink} from '../native/frameTakes'
+import {publishHostedChrome, publishHostedExpressions, useFramePlacement} from '../projections/expressionsPaneHost'
+import {followFrame} from '../projections/framePlacement'
+import {registerExpressionsPaneHost} from '../projections/expressionsPane'
 import {liveTorusFromHost, publishLiveTorusState, setLiveInstrumentCommander} from '../live/torusInstrument'
 import {setLivePerformanceChannel} from '../live/LivePresets'
 
@@ -67,6 +70,8 @@ export function ExpressionsPanel() {
   const qualified = !!workspace.nativeScope
   const starting = useRef(false)
   const [attempt, retry] = useState(0)
+  // The Factory pane that holds the one frame, if any (T-EXPRESSIONS-PANE-LEASE): the container follows its slot; this panel's chrome moves to that pane.
+  const placement = useFramePlacement()
   // The hosted cut for the shell's mode: Live (the 'audio' workspace) is the frame's 'live' cut, the native M1 body.
   const hostCut = (mode: typeof workspace.mode): HostedAppMode => mode === 'audio' ? 'live' : mode
   const modeRef = useRef<HostedAppMode>(hostCut(workspace.mode))
@@ -191,6 +196,8 @@ export function ExpressionsPanel() {
           setStage(previous => JSON.stringify(previous) === JSON.stringify(state) ? previous : state)
           setNativeEngineMounted(!!state.nativeScene)
           workspaceRef.current.publishReading(state)
+          // The Expressions pane body presents this one frame's reading by value (T-EXPRESSIONS-PANE-LEASE); it holds no frame.
+          publishHostedExpressions({expression_ref: state.nativeScene?.expression_ref ?? null, title: state.document?.name ?? null})
           // The one instrument's reading (ticket T-LIVE-TORUS-INSTRUMENT): the frame's announced owner reading, or its withdrawal.
           publishLiveTorusState(liveTorusFromHost(state.instrument))
           if (state.nativeScene) {
@@ -267,7 +274,7 @@ export function ExpressionsPanel() {
     window.addEventListener('oi:epi-examine', examine)
     const observer = new MutationObserver(visible)
     for (let parent: HTMLElement | null = target; parent; parent = parent.parentElement) observer.observe(parent, {attributes: true, attributeFilter: ['hidden', 'inert', 'style', 'class']})
-    return () => {live = false; publishLiveTorusState(null); ++facadeGeneration; openRequest.current = null; requalify.current = null; abort.abort(); observer.disconnect(); window.removeEventListener('oi:epi-examine', examine); window.removeEventListener(NATIVE_OPEN_STUDIO, openStudio); window.removeEventListener(NATIVE_ENGINE_COMMAND, engineCommand);
+    return () => {live = false; publishLiveTorusState(null); publishHostedExpressions(null); ++facadeGeneration; openRequest.current = null; requalify.current = null; abort.abort(); observer.disconnect(); window.removeEventListener('oi:epi-examine', examine); window.removeEventListener(NATIVE_OPEN_STUDIO, openStudio); window.removeEventListener(NATIVE_ENGINE_COMMAND, engineCommand);
       stopSelection.current?.(); stopSelection.current = null; navigator.current?.dispose(); navigator.current = null;
       stopInstruments?.(); stopInstruments = null;
       stopEditor?.(); editor?.dispose(); workspace.attachEditor(null); workspace.publishEditorReading(null);
@@ -332,15 +339,30 @@ export function ExpressionsPanel() {
     try { if (openRequest.current) openRequest.current(workspace.expressionToOpen.ref); else pendingOpen.current = workspace.expressionToOpen.ref; setFault(null) }
     catch (cause) { setFault(cause instanceof Error ? cause.message : String(cause)) }
   }, [workspace.expressionToOpen])
+  // The pane body reads the frame only while the frame reports ready (T-EXPRESSIONS-PANE-LEASE): a status that is not ready clears it.
+  useEffect(() => {if (status !== 'Expressions') publishHostedExpressions(null)}, [status])
+  // The frame's chrome is published by value: a Factory pane that holds the frame shows the same toolbar and faults beside its header.
+  useEffect(() => {publishHostedChrome({state: stage, run: stageRun, faults: [hostFault, surfaceFault, fault].filter((text): text is string => !!text)})}, [stage, hostFault, surfaceFault, fault, attempt])
+  useEffect(() => () => publishHostedChrome(null), [])
+  // While a Factory pane holds the frame, the container follows that pane's slot (its own place and state return on release).
+  useEffect(() => {
+    const frame = container.current
+    if (!frame || !placement) return
+    return followFrame(frame, placement.slot)
+  }, [placement])
   return <div className="expressions-inhabitant" title={status}>
-    {hostFault && <div role="alert" className="inhabitant-fault">{hostFault}</div>}
-    {surfaceFault && <div role="alert" className="inhabitant-fault">{surfaceFault}</div>}
-    {fault && <div role="alert" className="inhabitant-fault">{fault}</div>}
-    <NativeStageTools state={stage} run={host.current ? stageRun : null} />
-    {!host.current && !starting.current && <button type="button" onClick={() => retry(value => value + 1)}>Reopen native work</button>}
+    {!placement && <>
+      {hostFault && <div role="alert" className="inhabitant-fault">{hostFault}</div>}
+      {surfaceFault && <div role="alert" className="inhabitant-fault">{surfaceFault}</div>}
+      {fault && <div role="alert" className="inhabitant-fault">{fault}</div>}
+      <NativeStageTools state={stage} run={host.current ? stageRun : null} />
+      {!host.current && !starting.current && <button type="button" onClick={() => retry(value => value + 1)}>Reopen native work</button>}
+    </>}
     <div ref={container} className="expressions-application" />
   </div>
 }
 
 registerPanel({id: 'world.expressions', title: 'Expressions', slot: 'center', component: ExpressionsPanel,
   order: 10, note: 'The native Expressions application and its deep instruments over one retained document'})
+// The Factory pane body presents this one frame (T-EXPRESSIONS-PANE-LEASE); it never opens a second frame or lease.
+registerExpressionsPaneHost()
