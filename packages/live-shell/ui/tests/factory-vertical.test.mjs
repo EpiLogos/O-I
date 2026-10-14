@@ -11,8 +11,8 @@
 //   values (see the folder's README.md). The key sets of the Return and of the occupant body are
 //   checked against the real capture desktop/cradle/tests/fixtures/factory-live-events.json.
 // - REAL OWNER READER: the desk's inhabitation adapter `runInhabitationView` runs on the shape
-//   fixture, so the claim that the desk's view keeps only the tail of a custody ref is measured,
-//   not assumed.
+//   fixture, so the claim that the desk's view keeps the owner's full custody ref (the tail is a
+//   display label) is measured, not assumed; the join reads that view and matches the raw row.
 // - FIXTURE: the temporal event, the atlas occurrences and the agency tracks are built here. The
 //   event is shaped as desktop/cradle/kernel/src/temporal_sources.rs `history_entry_to_event`
 //   would map an aikit-history `procedure` entry whose subject is the run; no kernel read is made.
@@ -81,12 +81,17 @@ test('SHAPE: the Return and the occupant body keep the owner\'s key sets (real c
 // ---------------------------------------------------------------------------
 // the desk's view and the owner's raw row: the full World object ref
 
-test('REAL OWNER READER: the desk view keeps only the tail of a custody ref; the join reads the full ref from the raw row', () => {
+test('REAL OWNER READER: the desk view keeps the full custody ref beside its tail label; the join reads the view and agrees with the raw row', () => {
   const view = model.runInhabitationView({state: 'read', data: inhabitation, source: 'shape'}, RUN)
-  assert.equal(view.positions[0].custody[0].work, 'placeholder-subject.md',
-    'runInhabitationView applies refTail to work_ref, so the desk view names only the tail')
+  assert.equal(view.positions[0].custody[0].workRef, SUBJECT, 'runInhabitationView keeps the owner\'s full work_ref as the identity')
+  assert.equal(view.positions[0].custody[0].work, 'placeholder-subject.md', 'the tail is a display label only')
   const positions = join.positionsOfRaw(inhabitation.runs[0])
-  assert.equal(positions[0].custody[0].work, SUBJECT, 'the join keeps the full central:path ref from the raw row')
+  assert.equal(positions[0].custody[0].work, SUBJECT, 'the raw row carries the full central:path ref')
+  assert.deepEqual(join.positionsOfView(view), positions, 'the join reads the view: the same Positions, custody refs and sessions as the raw row')
+  const viewOccupants = join.occupantsOfView(view)
+  const rawOccupants = join.occupantsOfRaw(inhabitation.runs[0])
+  const byAttempt = (a, b) => a.attemptRef.localeCompare(b.attemptRef)
+  assert.deepEqual([...viewOccupants].sort(byAttempt), [...rawOccupants].sort(byAttempt), 'every attempt the run names, once, with its session')
 })
 
 // ---------------------------------------------------------------------------
@@ -123,7 +128,7 @@ test('the subject in the Earth: placed only when an occurrence bears the subject
 test('the moment on the Timeline: absent with its owner seam on the real read; selected when the reading carries the run (FIXTURE event)', () => {
   const none = join.factoryRunJoin(base())
   assert.equal(none.timeline.state, 'absent')
-  assert.equal(none.timeline.seam.owner, join.TIMELINE_SEAM.owner, 'no Factory stream: the kernel temporal reading names its owner')
+  assert.equal(none.timeline.seam.owner, join.TIMELINE_SEAM.owner, 'no moment in the window: the kernel temporal reading (factory-runs) names its owner')
   // FIXTURE, shaped as temporal_sources.rs history_entry_to_event maps an aikit-history `procedure` entry about the run.
   const event = {stream: 'aikit-history', subject_ref: RUN, summary: 'placeholder run receipt', instant_unix_ms: 1790000000000}
   const moment = join.factoryRunJoin(base({events: [{stream: 'kernel-event-log', subject_ref: 'oi:kernel-event:other'}, event]}))
@@ -131,6 +136,29 @@ test('the moment on the Timeline: absent with its owner seam on the real read; s
   assert.equal(moment.timeline.event.subject_ref, RUN, 'the moment is the run\'s own identity')
   assert.equal(runTrack.isRunSubject(RUN), true, 'the Timeline\'s run track admits the run ref (runTrackAdapter.isRunSubject)')
   assert.deepEqual(join.identityBreaks(moment), [])
+})
+
+// FIXTURE: shaped as temporal_sources.rs `telemetry_day_to_events` emits a factory-runs signal (subject = the run ref,
+// instant = the signal's updated_at_unix_ms, stream position = source#signal_ref) and as the World's Between window
+// admits it (instant-bearing events only). No kernel read is made here.
+test('the Timeline selects the run\'s moment from the field: the newest factory-runs moment with a stated instant', () => {
+  const earlier = {stream: 'factory-runs', subject_ref: RUN, instant_unix_ms: Date.parse('2026-10-13T09:00:00Z'), summary: 'placeholder signal S1', stream_position: 'placeholder-source#signal:S1'}
+  const other = {stream: 'factory-runs', subject_ref: 'run:placeholder-other', instant_unix_ms: Date.parse('2026-10-14T09:00:00Z'), summary: 'other run', stream_position: 'placeholder-source#signal:O1'}
+  const later = {stream: 'factory-runs', subject_ref: RUN, instant_unix_ms: Date.parse('2026-10-14T08:30:00Z'), summary: 'placeholder signal S2', stream_position: 'placeholder-source#signal:S2'}
+  const moment = join.factoryRunJoin(base({events: [earlier, other, later]}))
+  assert.equal(moment.timeline.state, 'selected')
+  assert.equal(moment.timeline.event.stream_position, 'placeholder-source#signal:S2', 'the newest of this run\'s moments, not the other run\'s')
+  assert.equal(moment.timeline.event.subject_ref, RUN)
+  assert.deepEqual(join.identityBreaks(moment), [], 'the Timeline row names the run it was joined from')
+})
+
+test('an instant-less run signal is not selected: the Timeline names the owner absence in its reasons', () => {
+  const instantless = {stream: 'factory-runs', subject_ref: RUN, instant_unix_ms: null, summary: 'placeholder signal S3', stream_position: 'placeholder-source#signal:S3'}
+  const row = join.factoryRunJoin(base({events: [instantless]})).timeline
+  assert.equal(row.state, 'absent', 'a moment without a stated instant has no place on the instant axis')
+  assert.equal(row.seam.owner, join.TIMELINE_SEAM.owner)
+  assert.match(row.seam.remedy, /no instant/, 'the owner states no instant for the signal')
+  assert.match(row.seam.remedy, /unreadable/, 'or the Factory owner was unreadable for the window')
 })
 
 test('the subject in the Constellation: a wiki node the Return names is opened; a wiki root names none', () => {

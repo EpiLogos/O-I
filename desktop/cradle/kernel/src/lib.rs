@@ -3953,19 +3953,14 @@ impl Kernel {
                 })
             }
             KernelOp::DayRead { day_ref } => {
-                // The Day is a ROOT-register carrier: an explicit null
-                // project is the kernel's own convention for naming the
-                // Central root register (absence would take the configured
-                // project co-reference, which has no today pointer).
-                let mut input = serde_json::Map::new();
-                input.insert("project".to_owned(), serde_json::Value::Null);
-                if let Some(day_ref) = day_ref {
-                    input.insert("day_ref".to_owned(), serde_json::Value::String(day_ref));
-                }
-                let data = self
-                    .client
-                    .run("central.day.read", serde_json::Value::Object(input))
-                    .map_err(|e| e.to_string())?;
+                // The Day is a ROOT-register carrier (project null). The read
+                // goes through the owner's guarded reader, `central::day`: the
+                // schema, the no-automatic-invocation flag, the historical-ref
+                // identity and the stale-today refusal apply on every read path.
+                // It does not require a native document, so an uninitialised
+                // Day is served as read; only the open route refuses one. The
+                // reading is returned verbatim, so the callers' shape is unchanged.
+                let data = central::day(&self.client, None, day_ref.as_deref())?;
                 Ok(KernelOpOutcome {
                     receipts: Vec::new(),
                     result: KernelOpResult::DayReading { data },
@@ -5516,6 +5511,145 @@ fn native_owner_reading<T: Serialize>(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// The desktop's Day route (`src/day/client.ts`, `src/nara/nativeReturn.ts`)
+    /// sends `{op:"day_read"}`; the kernel must decode it to the owner Day read
+    /// (today, or one exact DayRef) and answer with the `day_reading` result.
+    #[test]
+    fn day_read_is_a_handled_owner_read_on_the_wire() {
+        let today: KernelOp =
+            serde_json::from_value(serde_json::json!({"op": "day_read"})).unwrap();
+        assert!(matches!(today, KernelOp::DayRead { day_ref: None }));
+        let exact: KernelOp =
+            serde_json::from_value(serde_json::json!({"op": "day_read", "day_ref": "opaque:day"}))
+                .unwrap();
+        assert!(matches!(
+            exact,
+            KernelOp::DayRead { day_ref: Some(ref day) } if day == "opaque:day"
+        ));
+        let answer = serde_json::to_value(KernelOpResult::DayReading {
+            data: serde_json::json!({"schema": "central.day-reading/v1"}),
+        })
+        .unwrap();
+        assert_eq!(answer["result"], "day_reading");
+        assert_eq!(answer["data"]["schema"], "central.day-reading/v1");
+    }
+
+    /// Serialises the Day-read tests: each writes and execs its own fake ctrl,
+    /// and a concurrent fork could otherwise inherit a half-closed script (ETXTBSY).
+    static DAY_READ_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+    fn day_read_guard() -> std::sync::MutexGuard<'static, ()> {
+        DAY_READ_LOCK
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner())
+    }
+    /// The refusal a guarded read must return; a served reading fails the test.
+    fn refusal_of(result: Result<KernelOpOutcome, String>) -> String {
+        match result {
+            Err(refusal) => refusal,
+            Ok(_) => panic!("the guarded reader served a reading where a refusal was due"),
+        }
+    }
+    const DAY_TODAY_CIVIL: &str = "2026-10-14";
+    const DAY_UNINITIALISED: &str = r#"{"ok":true,"data":{"schema":"central.day-reading/v1","day_ref":"opaque:day","source":{"ref":"central:source:day:2026-10-14","path":"Control/agents/now/day-2026-10-14.md"},"revision":{"revision":"r1"},"content":"","temporal":{"day_ref":"opaque:day","civil_date":"2026-10-14"},"today":{"day_ref":"opaque:day","civil_date":"2026-10-14"},"document_state":"uninitialised","document":null,"automatic_agent_or_model_invocation":false}}"#;
+
+    fn time_reading(civil_date: &str) -> String {
+        format!(
+            r#"{{"ok":true,"data":{{"schema":"central.civil-time-reading/v1","civil_date":"{civil_date}","policy":{{"timezone":"Europe/London"}}}}}}"#
+        )
+    }
+
+    /// A fake Central owner: `central.day.read` and `central.time.policy` answer
+    /// from files the test writes, so the guarded reader's own checks run
+    /// against a real process envelope (`CentralClient::run_envelope`).
+    fn fake_central_for_day(tag: &str, day: &str, time: &str) -> CentralClient {
+        let dir =
+            std::env::temp_dir().join(format!("oi-kernel-day-read-{tag}-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(dir.join("day.json"), day).unwrap();
+        std::fs::write(dir.join("time.json"), time).unwrap();
+        let path = dir.join("central-fake");
+        let script = format!(
+            "#!/bin/sh\ncase \"$4\" in\n  central.day.read) cat '{d}/day.json' ;;\n  central.time.policy) cat '{d}/time.json' ;;\n  *) echo '{{\"ok\":false,\"error\":{{\"message\":\"unexpected action\"}}}}' ;;\nesac\n",
+            d = dir.display()
+        );
+        std::fs::write(&path, script).unwrap();
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o755)).unwrap();
+        }
+        CentralClient::with(path, None, "o-i".to_owned())
+    }
+
+    #[test]
+    fn day_read_serves_an_uninitialised_day_unchanged() {
+        let _serial = day_read_guard();
+        let client = fake_central_for_day(
+            "uninitialised",
+            DAY_UNINITIALISED,
+            &time_reading(DAY_TODAY_CIVIL),
+        );
+        let mut kernel = Kernel::new(client);
+        let outcome = kernel
+            .apply(KernelOp::DayRead { day_ref: None })
+            .expect("the guarded reader serves an uninitialised Day");
+        let KernelOpResult::DayReading { data } = outcome.result else {
+            panic!("expected the day_reading result");
+        };
+        let expected: serde_json::Value = serde_json::from_str(DAY_UNINITIALISED).unwrap();
+        assert_eq!(
+            data, expected["data"],
+            "the owner's reading is carried verbatim, not wrapped"
+        );
+        assert_eq!(data["document_state"], "uninitialised");
+        assert!(data["document"].is_null());
+        assert_eq!(data["source"]["ref"], "central:source:day:2026-10-14");
+    }
+
+    #[test]
+    fn day_read_refuses_a_reading_that_declares_automatic_invocation_by_name() {
+        let _serial = day_read_guard();
+        let invoked = DAY_UNINITIALISED.replace(
+            "\"automatic_agent_or_model_invocation\":false",
+            "\"automatic_agent_or_model_invocation\":true",
+        );
+        let client = fake_central_for_day("automatic", &invoked, &time_reading(DAY_TODAY_CIVIL));
+        let mut kernel = Kernel::new(client);
+        let refusal = refusal_of(kernel.apply(KernelOp::DayRead { day_ref: None }));
+        assert_eq!(refusal, "Unsupported native Day reading");
+    }
+
+    #[test]
+    fn day_read_refuses_a_stale_today_pointer_by_name() {
+        let _serial = day_read_guard();
+        // The owner's time policy has moved to the next civil Day; the today pointer still names the earlier one.
+        let client = fake_central_for_day("stale", DAY_UNINITIALISED, &time_reading("2026-10-15"));
+        let mut kernel = Kernel::new(client);
+        let refusal = refusal_of(kernel.apply(KernelOp::DayRead { day_ref: None }));
+        assert_eq!(
+            refusal,
+            "The native today pointer is stale; explicitly ensure the current Day under the native time policy"
+        );
+    }
+
+    #[test]
+    fn day_read_refuses_a_redirected_historical_day_by_name() {
+        let _serial = day_read_guard();
+        let client = fake_central_for_day(
+            "redirect",
+            DAY_UNINITIALISED,
+            &time_reading(DAY_TODAY_CIVIL),
+        );
+        let mut kernel = Kernel::new(client);
+        let refusal = refusal_of(kernel.apply(KernelOp::DayRead {
+            day_ref: Some("opaque:other-day".to_owned()),
+        }));
+        assert_eq!(
+            refusal,
+            "Native Day reader redirected the requested historical Day"
+        );
+    }
 
     #[test]
     fn personal_current_snapshot_reads_the_complete_actual_admitted_document() {

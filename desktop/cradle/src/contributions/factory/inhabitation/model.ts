@@ -392,7 +392,8 @@ export interface OccupantView {
 export interface RunPositionView {
   positionRef: string; name: string; handle?: string;
   inCustody: boolean;
-  custody: {state: string; work?: string; unitRef?: string}[]; custodyWords?: string;
+  /** `workRef` is the owner's full custody ref (the identity); `work` is its tail, a display label only. */
+  custody: {state: string; workRef?: string; work?: string; unitRef?: string}[]; custodyWords?: string;
   occupants: OccupantView[]; work?: WorkView; ambiguity?: string;
 }
 export interface RunInhabitationView {
@@ -448,7 +449,7 @@ export function runInhabitationView(read: OwnerRead<FactoryInhabitationReading> 
   const placed = new Set<string>();
   const positions: RunPositionView[] = (run?.positions ?? []).filter(position => typeof position?.position_ref === "string").map(position => {
     const names = options.names?.(position.position_ref);
-    const custody = (position.custody ?? []).map(entry => ({state: entry.state ?? "unknown", ...(entry.work_ref ? {work: refTail(entry.work_ref)} : {}), ...(entry.workflow_unit_ref ? {unitRef: entry.workflow_unit_ref} : {})}))
+    const custody = (position.custody ?? []).map(entry => ({state: entry.state ?? "unknown", ...(entry.work_ref ? {workRef: entry.work_ref, work: refTail(entry.work_ref)} : {}), ...(entry.workflow_unit_ref ? {unitRef: entry.workflow_unit_ref} : {})}))
       .sort((a, b) => indexOr(CUSTODY_ORDER, a.state) - indexOr(CUSTODY_ORDER, b.state));
     const custodyWords = custody.length ? custody.map(entry => `${entry.state.replace(/-/g, " ")}${entry.work ? ` · ${entry.work}` : ""}`).join("; ") : undefined;
     const mine = occupants.filter(occupant => facetValue(occupant.participant?.position_ref) === position.position_ref || (position.attempt_refs ?? []).includes(occupant.attempt_ref));

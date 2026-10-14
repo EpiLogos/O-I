@@ -32,7 +32,7 @@ export function RunPositions({view, host}: {view: RunInhabitationView | undefine
         <div className="fpos-who">
           <button type="button" className="fdesk-link fpos-name" onClick={() => host.onOpenObject?.({kind: "position", ref: position.positionRef, label: position.name})}>{position.name}</button>
           {position.handle && <small>{position.handle}</small>}
-          <small data-position-custody>{position.custodyWords ? `custody: ${position.custodyWords}` : "no custody recorded"}</small>
+          <small data-position-custody title={position.custody.map(entry => entry.workRef).filter(Boolean).join("; ") || undefined}>{position.custodyWords ? `custody: ${position.custodyWords}` : "no custody recorded"}</small>
           {position.work && <small data-position-work={position.work.outcome}>{position.work.words}</small>}
         </div>
         <div className="fpos-occupants">
