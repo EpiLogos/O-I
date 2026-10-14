@@ -55,6 +55,7 @@ export interface FactoryControls {
 /** The ops the actions name. The owner addresses the bound harness, never one session, task or row, so each says so. */
 export const FACTORY_STOP_OP = 'harness_agent_control:stop (the bound harness)'
 export const FACTORY_LAUNCH_OP = 'harness_agent_control:restart (a stalled task) · resume (a queued one)'
+export const FACTORY_RETRY_OP = 'harness_agent_control:restart (the stalled task, from its last good step)'
 export const FACTORY_BATCH_OP = 'harness_agent_control:resume (every queued task; the owner takes no row)'
 
 export interface FactorySessionsReading {
@@ -121,6 +122,8 @@ function actionsFor(controls: FactoryControls, tracks: readonly WorldTrack[], cl
       return refused(`${clip.label} is ${word}: the owner has no op that launches a task in that state.`)
     }},
     launchStop: {op: FACTORY_BATCH_OP, run: columnId => columnIds.has(columnId) ? controls.control('resume') : refused(`"${columnId}" is not a batch row of this work.`)},
+    // A stalled lane lights its retry (manual §6); the owner restarts the bound harness's stalled task.
+    retry: {op: FACTORY_RETRY_OP, run: trackId => trackIds.has(trackId) ? controls.control('restart') : refused(`"${trackId}" is not a session of this work.`)},
   }
 }
 
@@ -146,6 +149,7 @@ export const factoryTrackAdapter: WorldTrackAdapter<FactorySessionsReading> = {
         depth: ancestors.length,
         ...(parent ? {parentId: trackKey(parent)} : {}),
         ...(typeof at === 'number' ? {needle: secs(at)} : {}),
+        ...(track.needle?.state === 'stalled' ? {stalled: true} : {}),
       }
     })
 
@@ -171,13 +175,16 @@ export const factoryTrackAdapter: WorldTrackAdapter<FactorySessionsReading> = {
           state: task.state,
           ...(status ? {status} : {}),
           ...(at ? {at} : {}),
+          ...(task.disclosure ? {note: task.disclosure} : {}),
         })
       }
     }
 
     const set: WorldTrackSet = {
       columns, tracks, clips,
-      ruler: {unit: 'seconds', label: at => new Date(axis.startUnixMs + at * 1000).toTimeString().slice(0, 8)},
+      // The run viewer's fixed window: the hour ending now, with now at its edge (agent/AgentArrangementView.tsx:39, :200).
+      ruler: {unit: 'seconds', label: at => new Date(axis.startUnixMs + at * 1000).toTimeString().slice(0, 8),
+        end: secs(axis.endUnixMs), now: secs(axis.endUnixMs), duration: span => `${Math.floor(span / 60)}m ${String(Math.floor(span % 60)).padStart(2, '0')}s`},
     }
     if (controls) set.actions = actionsFor(controls, tracks, clips, columns)
     return set

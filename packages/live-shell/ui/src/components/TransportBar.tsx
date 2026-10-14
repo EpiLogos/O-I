@@ -1,58 +1,15 @@
 import { Icon } from './Icon'
 import { Icon as CutIcon } from '../inhabitants/sdk/Icon'
 import { NativeTransportBar } from './NativeTransportBar'
-import { MODE_GRAMMAR, slotDataI, slotMeaning, surfModeOf, type SurfMode } from '../shell/modeGrammar'
-import { ModeTransportBar, type ModeTransportReadouts } from '../shell/ModeTransportBar'
+import { MODE_GRAMMAR, surfModeOf, type SurfMode } from '../shell/modeGrammar'
+import type { ModeTransportReadouts } from '../shell/ModeTransportBar'
+import { ModeTransport } from '../shell/modeTransports'
 import type { TimeSpine } from '../timeline/timeSpine'
 import type { PaneInstrumentId } from '../shell/paneInstrument'
 import { ModeModeRail } from '../shell/ModeModeRail'
 import type { PanelRegistration } from '../shell/panels'
 import type { NativeCompositionViewSource } from '../shell/compositionViews'
-import { PITCH_CLASS_NAMES } from '../live/modes'
-import { setLiveModeHold, useLiveModeInForce } from '../native/liveModeCatalogue'
-import { MidiMapHost, MidiMapToggles } from '../live/midiMap/midiMapControls'
 
-
-/** The Live transport's key / root / scale slots over the owner's ql.music-modes/v1
- * catalogue (T-LIVE-MODE-SCALES leg 2). Key keeps its established control; Root is
- * the tonic; Scale lists the catalogued modes on that tonic, grouped by basis
- * (scalesOnRoot). Its own component so the catalogue read and the held choice are hooks. */
-function LiveModeSlots() {
-  const { reading, hold, refresh, groups, mode, line } = useLiveModeInForce()
-  const ready = reading.state === 'ready'
-  const choice = mode.state === 'in-force' ? mode.selection : null
-  return <>
-    <NativeControl label="Scale" slot="key">♯</NativeControl>
-    <select aria-label="Root note" data-i={slotDataI(slotMeaning('live', 'root'))} title={`Root — the mode in force's root. ${line}`}
-      disabled={!ready} value={ready ? String(hold.root) : ''} onChange={event => setLiveModeHold({ root: Number(event.target.value) })}>
-      {ready ? PITCH_CLASS_NAMES.map((name, pitch) => <option key={pitch} value={pitch}>{name}</option>) : <option>—</option>}
-    </select>
-    <select aria-label="Scale mode" data-i={slotDataI(slotMeaning('live', 'scale'))} title={`Scale — the mode in force, one of the kernel's scales. ${line}`}
-      disabled={!ready || groups.length === 0} value={choice?.scale.key ?? ''} onChange={event => setLiveModeHold({ key: event.target.value || null })}>
-      <option value="">{!ready ? '—' : groups.length ? 'none chosen' : 'no catalogued mode on this root'}</option>
-      {groups.map(group => <optgroup key={group.label} label={group.label}>
-        {group.scales.map(scale => <option key={scale.key} value={scale.key}>{scale.label}</option>)}
-      </optgroup>)}
-    </select>
-    <output className="transport-mode-line" aria-label="Mode in force" data-i={slotDataI(slotMeaning('live', 'scale'))} title={line}>{line}</output>
-    <button type="button" className="native-control" aria-label="Re-read the mode catalogue" title="Re-read the owner's mode catalogue through the kernel"
-      disabled={reading.state === 'loading'} onClick={refresh}>↻</button>
-  </>
-}
-
-/** A waiting audio control: the Live meaning (from the grammar) with the
- * standing honesty that the audio engine's transport is read-only until its
- * owner lands. The data-i string IS the per-mode meaning (the F2 law). */
-function NativeControl({ children, label, slot, className = '' }: { children: React.ReactNode; label: string; slot?: string; className?: string }) {
-  const meaning = slot ? slotMeaning('live', slot) : null
-  return <button
-    className={'native-control ' + className}
-    disabled
-    aria-label={label}
-    data-i={meaning ? slotDataI(meaning) : `${label}|requires native transport`}
-    title={meaning ? `${meaning.label} — ${meaning.fn} · requires native transport` : `${label} · requires native transport`}
-  >{children}</button>
-}
 
 export function TransportBar({ tempoBpm, name, mode, setView, chooseMode, presentedView, modeReadouts, timeSpine, focusedInstrument, workName, nativeTransport, centerPanels, activeCenter, openCenter, browser, detail, dock, toggleBrowser, toggleDetail, toggleDock }: {
   /** The Expressions Scene transport source; absent until the native reading is admitted. */
@@ -88,15 +45,8 @@ export function TransportBar({ tempoBpm, name, mode, setView, chooseMode, presen
       wear the grammar's meanings as drawn waiting states; every mode's
       texts are the data-i strings. The drawn marks are the icon-cut's, the
       same mark per control in every mode. */}
-    {mode === 'live' ? <><div className="transport-group transport-tempo"><NativeControl label="Link" slot="link">Link</NativeControl><NativeControl label="Tap tempo" slot="tap">Tap</NativeControl><input className="tempo-field" aria-label="Tempo" data-i={slotDataI(slotMeaning('live', 'tempo'))} title="Tempo — the set's tempo · document read-only until editing owner lands" value={tempoBpm?.toFixed(2) ?? '—'} readOnly /><NativeControl label="Tempo nudge down" slot="tempo">‹</NativeControl><NativeControl label="Tempo nudge up" slot="tempo">›</NativeControl><output className="meter-field" data-i={slotDataI(slotMeaning('live', 'signature'))} title="Signature — the set's time signature · not disclosed by the document">— / —</output><NativeControl label="Metronome" slot="metro"><CutIcon name="metro" size={14} /></NativeControl><select aria-label="Global quantization" data-i={slotDataI(slotMeaning('live', 'quantize'))} disabled title="Quantize — global launch quantization · requires native transport"><option>—</option></select></div>
-    <div className="transport-scale"><LiveModeSlots /></div>
-    <div className="transport-spacer" />
-    <div className="transport-group transport-playback"><NativeControl label="Follow arrangement" slot="follow"><CutIcon name="follow" size={14} /></NativeControl><output className="position-field" data-i={slotDataI(slotMeaning('live', 'position'))} title="Position — bars . beats . sixteenths · native transport position unavailable">— . — . —</output>{([['play', 'play'], ['stop', 'stop'], ['record', 'rec']] as const).map(([slot, mark]) => <NativeControl key={slot} label={slot[0].toUpperCase() + slot.slice(1)} slot={slot} className={'transport-btn transport-' + slot}><CutIcon name={mark} size={15} /></NativeControl>)}<NativeControl label="MIDI overdub" slot="overdub"><CutIcon name="plus" size={13} /></NativeControl><NativeControl label="Automation arm" slot="arm"><CutIcon name="arm" size={14} /></NativeControl><NativeControl label="Re-enable automation" slot="re-enable"><CutIcon name="back" size={14} /></NativeControl><NativeControl label="Session record" slot="capture"><CutIcon name="cap" size={14} /></NativeControl></div>
-    <div className="transport-loop transport-group"><output className="position-field" data-i={slotDataI(slotMeaning('live', 'punch-in'))} title="Punch in — record between the in and out points · requires native transport">— . — . —</output><NativeControl label="Punch in" slot="punch-in"><CutIcon name="punchIn" size={14} /></NativeControl><NativeControl label="Loop" slot="loop"><CutIcon name="loop" size={13} /></NativeControl><NativeControl label="Punch out" slot="punch-out"><CutIcon name="punchOut" size={14} /></NativeControl><output className="position-field" data-i={slotDataI(slotMeaning('live', 'loop-length'))} title="Loop length — the loop brace's length · requires native transport">— . — . —</output></div>
-    <div className="transport-spacer" />
-    <div className="transport-system"><NativeControl label="Draw mode" slot="draw"><CutIcon name="draw" size={14} /></NativeControl><NativeControl label="Computer MIDI keyboard" slot="keys"><CutIcon name="keys" size={14} /></NativeControl><MidiMapToggles /><MidiMapHost /><output data-i={slotDataI(slotMeaning('live', 'rate'))} title="Rate — the engine's sample rate · unavailable">— kHz</output><output data-i={slotDataI(slotMeaning('live', 'cpu'))} title="CPU — the engine's CPU load · unavailable">— %</output><span className="cpu-meter" /></div>
-    </> : mode === 'expressions' && nativeTransport?.content ? <NativeTransportBar source={nativeTransport} />
-      : <ModeTransportBar mode={surf} readouts={modeReadouts} timeSpine={timeSpine} focusedInstrument={focusedInstrument} />}
+    {mode === 'expressions' && nativeTransport?.content ? <NativeTransportBar source={nativeTransport} />
+      : <ModeTransport key={surf} mode={surf} reading={{readouts: modeReadouts, timeSpine, focusedInstrument, tempoBpm}} />}
     <nav className="surface-icons" aria-label="Working surface">
       {/* Session and Arrangement first — presentations of the Timeline
         projection, their meanings per mode (Rev 5's second table). */}

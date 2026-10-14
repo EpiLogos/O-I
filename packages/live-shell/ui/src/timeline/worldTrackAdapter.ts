@@ -49,7 +49,13 @@ export interface WorldTrackActions {
   launchStop?: {op: string; run(columnId: string): unknown};
   stopTrack?: {op: string; run(trackId: string): unknown};
   record?: {op: string; run(clipId: string): unknown};
+  /** Restart a stalled lane from its last good step (manual §6: "its track lights a retry"). The Session shows a retry on
+   * each track only where the set carries this, and lights it while the lane has stalled. */
+  retry?: {op: string; run(trackId: string): unknown};
 }
+/** What an owner op answers when it answers in words (the shell's own control receipt): a note, or the refusal. An action's
+ * `run` may return one, or a promise of one; the Session shows it where the action was pressed. Any other return is not shown. */
+export type WorldActionReceipt = {ok: true; note?: string} | {ok: false; error: string};
 export interface WorldTrack {
   id: string;
   name: string;
@@ -57,6 +63,9 @@ export interface WorldTrack {
   color?: string;
   /** Where the track's needle stands on the ruler (Arrangement: "a needle showing where it has got to"), in the ruler's units. */
   needle?: number;
+  /** The lane has stalled, as its owner says (manual §6: "a needle that stops moving is a stall"). The Session lights the
+   * track's retry and the Arrangement draws its needle stalled. A lane that holds a stalled clip reads as stalled without it. */
+  stalled?: boolean;
   /** How deep it sits under a group (manual §6: "each agent's helpers step in beneath it, a coloured rail for every level");
    * 0 or absent at the top. `parentId` names the track it sits under. */
   depth?: number;
@@ -92,8 +101,13 @@ export interface WorldTrackClip {
   launch?: ClipLaunch;
   /** The takes stacked under it (F3). */
   takes?: WorldClipTake[];
-  /** Its place on the set's ruler, in the ruler's units, when the material has one (F3: the Arrangement lays clips by it). */
+  /** Its place on the set's ruler, in the ruler's units, when the material has one (F3: the Arrangement lays clips by it).
+   * On a set with a ruler a clip with no `at` has no place on it. No `end` is a point: a running clip's open edge is its
+   * track's needle, and a waiting clip with no end has no length at all. */
   at?: {start: number; end?: number};
+  /** What its owner discloses is absent about this clip (its state, its length), in the owner's own words. The Session
+   * shows it where the clip stands. */
+  note?: string;
 }
 
 // A transport take exposed by a family. Takes belong to the Transport stratum
@@ -159,8 +173,20 @@ export interface WorldTrackSet {
   /** The rows of the Session grid — Live's scenes, the DLW's stops — in order; and, without a ruler, the Arrangement's
    * blocks laid end to end. */
   columns: WorldTrackColumn[];
-  /** The Arrangement's ruler, when the material has absolute time: its unit and how to label a point on it. */
-  ruler?: {unit: string; label?: (at: number) => string};
+  /** The Arrangement's ruler, when the material has absolute time: its unit and how to label a point on it. It starts at 0.
+   * With a ruler the Arrangement lays only clips that have an `at`. */
+  ruler?: {
+    unit: string;
+    label?: (at: number) => string;
+    /** A fixed window: the ruler spans 0 to `end` whatever the clips hold, and a point past it stands at its edge (the run
+     * viewer's window). Absent, the ruler spans what its clips and needles hold. */
+    end?: number;
+    /** Where now stands on the ruler. A now line is drawn there, and a stalled needle's age counts up to it. Absent: no now
+     * line and no age. */
+    now?: number;
+    /** How a length on the ruler reads ("3m 20s"), for a stalled needle's age. Absent: the number and the unit. */
+    duration?: (span: number) => string;
+  };
   /** The owner operations the shared views may call (F3). */
   actions?: WorldTrackActions;
   tracks: WorldTrack[];
