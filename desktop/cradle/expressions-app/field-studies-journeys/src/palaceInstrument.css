@@ -83,3 +83,11 @@
 .palace-bookmark-list li{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 6px;border:1px solid transparent;border-radius:4px;min-width:0}
 .palace-bookmark-list li:hover{border-color:var(--line);background:var(--wash)}
 .palace-bookmark-list .palace-ref{flex:1 1 auto}
+
+/* lane-5 T16/T17 — the board's derived connections (the canvas's own edges, named by kind) and the walk's focused card. Tokens only. */
+.palace-board-tools button:disabled{opacity:.45;cursor:default}
+.palace-board-canvas .flow-edge-label{font:11px/1.2 var(--sans,system-ui,sans-serif);color:var(--muted)}
+.palace-board-canvas .flow-edge-label strong{font-weight:600;color:var(--ink)}
+.palace-board-canvas g[data-connector-kind="elbow"] path{stroke-dasharray:5 4}
+/* lane-5 T16: a plain guided-path line carries no label (only gap, broken and self are named), so its empty label pill is not drawn. */
+.palace-board-canvas .flow-edge-label:has(.flow-edge-label__text > strong:empty):not(:has(.flow-edge-label__text > span)){display:none}

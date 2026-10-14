@@ -24,6 +24,7 @@
 import type {TechneInstrument, TechneReading} from '../../../src/techne/contract.ts';
 import {palaceAvailability, type PalaceLocus} from '../../../src/techne/m0m5/palace/composition.ts';
 import {deriveComposition, palaceTraversal} from '../../../src/techne/m0m5/palace/palace-state.ts';
+import {recallOver} from '../../../src/techne/m0m5/palace/recall.ts';
 import {
   palaceRegions,
   regionArchaeology,
@@ -131,10 +132,13 @@ export interface PalaceGuidedEdge {
 
 /** The guided path's edges, derived from the region order alone. `live` is the
  * set of Expression refs the owner currently discloses; null while that list is
- * still unknown (then a filled member draws as a plain path). The first region
- * is the named start of the path. Pure: a reorder re-derives the edges. */
+ * still unknown (then a filled member draws as a plain path). `saved` names a
+ * region the owner's document still carries as a Scene: a saved region whose
+ * member is missing is a named-but-missing reference, so it is broken; a region
+ * not yet saved and not yet filled is a gap. The first region is the named
+ * start of the path. Pure: a reorder re-derives the edges. */
 export function palaceGuidedEdges(
-  regions: readonly {name: string; member_ref: string | null}[],
+  regions: readonly {name: string; member_ref: string | null; saved?: boolean}[],
   anchor_ref: string,
   live: ReadonlySet<string> | null,
 ): {start: string | null; edges: PalaceGuidedEdge[]} {
@@ -143,7 +147,9 @@ export function palaceGuidedEdges(
     const from = regions[index - 1].name;
     const target = regions[index];
     const ref = target.member_ref;
-    if (ref === null) {
+    if (ref === null && target.saved === true) {
+      edges.push({from, to: target.name, kind: 'broken', reason: `${target.name} is named in the saved guided path but holds no Expression — the reference is broken`});
+    } else if (ref === null) {
       edges.push({from, to: target.name, kind: 'gap', reason: `${target.name} holds no Expression yet — the guided path has a gap here`});
     } else if (ref === anchor_ref) {
       edges.push({from, to: target.name, kind: 'self', reason: `${target.name} contains this Palace's own Expression — a self reference`});
@@ -179,6 +185,25 @@ export function palaceOpenRoute(entry: PalaceRegionEntry, wired: ReadonlySet<str
     return {kind: 'refused', reason: `Opening a ${entry.open_instrument} object from the Palace is not wired on this surface`};
   }
   return {kind: 'open', instrument: entry.open_instrument, ref: entry.ref};
+}
+
+/** T16 on the board: one region card's Open opens its contained Expression in that object's own instrument (the same route an
+ * Expression member's Open takes in the list). A region with no member, a self reference, or a member the owner no longer
+ * discloses is refused by name; nothing is opened on the Palace's behalf. Pure. */
+export function palaceRegionOpenRoute(
+  name: string,
+  member: {expression_ref: string} | null,
+  anchor_ref: string,
+  live: ReadonlySet<string> | null,
+): {kind: 'open'; instrument: 'expressions'; ref: string} | {kind: 'refused'; reason: string} {
+  if (!member) return {kind: 'refused', reason: `${name} holds no Expression to open yet`};
+  if (member.expression_ref === anchor_ref) {
+    return {kind: 'refused', reason: `${name} contains this Palace's own Expression — a self reference, so it stays here`};
+  }
+  if (live && !live.has(member.expression_ref)) {
+    return {kind: 'refused', reason: `${name} names ${member.expression_ref}, which is no longer disclosed — the reference is broken`};
+  }
+  return {kind: 'open', instrument: 'expressions', ref: member.expression_ref};
 }
 
 /** The instruments a Palace entry can open into from this surface (lane-5 seam B). Each is a deep instrument the shell selects
@@ -238,10 +263,13 @@ export function palaceWalkSteps(reading: TechneReading | null): PalaceWalkStep[]
  * normalisation `recall.ts` applies to the arrangement). An empty walk focuses
  * nothing. */
 export function palaceWalkAt(steps: readonly PalaceWalkStep[], index: number): {index: number; step: PalaceWalkStep | null} {
-  const count = steps.length;
-  if (count === 0) return {index: 0, step: null};
-  const normalised = ((Math.trunc(index) % count) + count) % count;
-  return {index: normalised, step: steps[normalised]};
+  // The walk's normalisation is recall.ts's own (`recallOver`), not a second copy of it.
+  const walk = recallOver(
+    steps.map((step) => step.ref),
+    steps.map((step) => step.locus),
+    index,
+  );
+  return {index: walk.index, step: steps.length === 0 ? null : steps[walk.index]};
 }
 
 /** The locus a returning visitor resumes at: the stored index, wrapped into the

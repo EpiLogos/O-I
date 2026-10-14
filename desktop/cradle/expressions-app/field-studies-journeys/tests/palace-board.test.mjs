@@ -11,6 +11,7 @@ import {register} from 'node:module';
 import {
   BOARD_GRID, BOARD_SNAP_REACH, BOARD_REGION_SIZE, boardPositions, boardNodes, boardSelection, boardSelectionLine,
   defaultBoardPoint, forgetBoardRegion, isBoardPoint, moveBoardRegion, snapBoardPoint, validateBoardPositions,
+  boardEdges, boardFocusName, BOARD_FOCUS_PALETTE,
 } from '../build/palaceBoard.js';
 
 register('../../../../../packages/expressions-boundary/tests/editor-source-loader.mjs', import.meta.url);
@@ -170,4 +171,71 @@ test('the region list stays the walk order beside the board; removing a region f
   assert.match(panel, /aria-label=\{`Move \$\{region\.name\} earlier in the guided path`\}/, 'the walk controls stay');
   assert.match(panel, /setBoard\(forgetBoardRegion\(heldRef\.current,name\)\)/);
   assert.match(panel, /planRegions\(draftDoc,proposed,\[\.\.\.removed\]\)/, 'the save path is untouched');
+});
+
+// lane-5 T16/T17/T18 on the board: the lines are the guided path's own, a broken or self line is named, the walk's focused card
+// is the one holding that Expression, and the board says its arrangement is free composition.
+test('T16: the board draws the guided path as its connections; a line to a card the board does not hold is dropped, never drawn', () => {
+  const guided = [
+    {from: 'Walk', to: 'Gate', kind: 'path', reason: 'Gate stands on the guided path'},
+    {from: 'Gate', to: 'Night', kind: 'broken', reason: 'Night names a missing Expression'},
+    {from: 'Night', to: 'Ghost', kind: 'gap', reason: 'Ghost holds no Expression yet'},
+  ];
+  const lines = boardEdges(guided, ['Walk', 'Gate', 'Night']);
+  assert.deepEqual(lines.map((line) => [line.source, line.target, line.kind]), [['Walk', 'Gate', 'path'], ['Gate', 'Night', 'broken']], 'the line to Ghost is dropped');
+  assert.equal(lines[1].label, 'broken', 'a broken line names itself on the canvas');
+  assert.equal(lines[1].connector, 'elbow', 'a broken line draws as the dashed connector');
+  assert.equal(lines[0].note, '', 'a plain path carries no note');
+  assert.equal(new Set(lines.map((line) => line.id)).size, lines.length, 'every line has its own id');
+});
+
+test('T16: a self reference is named on the board, never hidden', () => {
+  const [line] = boardEdges([{from: 'A', to: 'B', kind: 'self', reason: 'B contains this Palace own Expression'}], ['A', 'B']);
+  assert.equal(line.kind, 'self');
+  assert.equal(line.label, 'self');
+  assert.match(line.note, /own Expression/);
+});
+
+test('T17: the focused walk element is highlighted on the board by its own card; a focus that is no card highlights nothing', () => {
+  const regions = [
+    {name: 'Walk', member: {expression_ref: 'oi.expression:walk'}},
+    {name: 'Gate', member: null},
+    {name: 'Night', member: {expression_ref: 'oi.expression:night'}},
+  ];
+  assert.equal(boardFocusName(regions, 'oi.expression:night'), 'Night');
+  assert.equal(boardFocusName(regions, 'oi.scene:elsewhere'), null, 'a ref that is no card focuses no card');
+  assert.equal(boardFocusName(regions, null), null);
+  const positions = {Walk: defaultBoardPoint(0), Gate: defaultBoardPoint(1), Night: defaultBoardPoint(2)};
+  const nodes = boardNodes(regions, positions, [], 'Night');
+  const focused = nodes.find((node) => node.focused);
+  assert.equal(focused.id, 'Night');
+  assert.equal(focused.bgColour, `var(--canvas-object-${BOARD_FOCUS_PALETTE})`, 'the focused card takes the focus token');
+  assert.match(focused.title, /^Walk focus: Night/, 'the card names its focus');
+  assert.equal(nodes.filter((node) => node.focused).length, 1, 'one focus, one card');
+  assert.ok(nodes.filter((node) => !node.focused).every((node) => node.bgColour === 'var(--canvas-object-stone)'), 'every other card keeps the quiet token');
+  assert.equal(boardNodes(regions, positions, []).some((node) => node.focused), false, 'with no focus argument nothing is highlighted');
+});
+
+test('T16/T17/T18 wiring: the view draws the derived lines, opens on double-click, and the instrument feeds the guided edges and the saved flag', () => {
+  const view = source('palaceBoardView.tsx');
+  assert.match(view, /edges=\{boardLines as unknown as ComponentProps<typeof CanvasView>\['edges'\]\}/, 'the derived lines reach the canvas');
+  assert.doesNotMatch(view, /edges=\{\[\]\}/, 'the board no longer draws an empty edge list');
+  assert.match(view, /onNodeDoubleClick=\{id=>onOpen\(id\)\}/, 'a double-click opens the card');
+  assert.match(view, /Free composition: the arrangement is the author's/, 'the board says its arrangement is free composition');
+  const panel = source('palaceInstrument.tsx');
+  assert.match(panel, /saved:savedNames\.has\(region\.name\)/, 'the guided path knows which regions the document saves');
+  assert.match(panel, /const boardLines=useMemo\(\(\)=>boardEdges\(guided\.edges/, 'the board lines derive from the guided path, not a second set');
+  assert.match(panel, /focused=\{boardFocusName\(boardRegions,focus\?\.ref\?\?null\)\}/, 'the walk focus reaches the board');
+  assert.match(panel, /onOpen=\{openBoardRegion\}/, 'the board Open goes through the region route');
+});
+
+test('a plain path line is unlabelled on the board; gap, broken and self keep their words', async () => {
+  const {boardEdges} = await import('../build/palaceBoard.js');
+  const lines = boardEdges([
+    {from: 'Walk', to: 'Gate', kind: 'path', reason: 'Gate stands on the guided path'},
+    {from: 'Gate', to: 'Night', kind: 'broken', reason: 'Night names a member the whole does not hold'},
+  ], ['Walk', 'Gate', 'Night']);
+  assert.deepEqual(lines.map((line) => [line.kind, line.label]), [['path', ''], ['broken', 'broken']]);
+  const css = readFileSync(join(here, '../src/palaceInstrument.css'), 'utf8');
+  assert.match(css, /\.palace-board-canvas \.flow-edge-label:has\(\.flow-edge-label__text > strong:empty\)/, 'the empty pill is not drawn');
 });

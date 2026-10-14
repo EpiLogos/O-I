@@ -14,8 +14,10 @@ import {
   palaceWalkSteps,
   palaceWalkAt,
   palaceWalkResume,
+  palaceRegionOpenRoute,
   SCENE_REGION_STANDING,
 } from "../src/palaceWhole.ts";
+import {recallOver} from "../../../src/techne/m0m5/palace/recall.ts";
 
 const ANCHOR = "oi.expression:palace";
 
@@ -205,6 +207,35 @@ test("T16: an entry with no instrument surface says its depth stays in the palac
   assert.match(refused.reason, /stays in the palace/);
 });
 
+test("T16: a saved region whose member is missing is a named-but-missing reference, drawn broken; an unsaved empty region is a gap", () => {
+  const regions = [
+    {name: "A", member_ref: "oi.expression:x", saved: true},
+    {name: "B", member_ref: null, saved: true},
+    {name: "C", member_ref: null, saved: false},
+  ];
+  const live = new Set(["oi.expression:x"]);
+  const {edges} = palaceGuidedEdges(regions, ANCHOR, live);
+  assert.deepEqual(edges.map((edge) => [edge.from, edge.to, edge.kind]), [["A", "B", "broken"], ["B", "C", "gap"]]);
+  assert.match(edges[0].reason, /reference is broken/);
+  assert.match(edges[1].reason, /gap/);
+});
+
+test("T16: a board card's Open routes its member to the expression instrument, and refuses what it cannot honestly open", () => {
+  const live = new Set(["oi.expression:x"]);
+  const open = palaceRegionOpenRoute("Gate", {expression_ref: "oi.expression:x"}, ANCHOR, live);
+  assert.deepEqual(open, {kind: "open", instrument: "expressions", ref: "oi.expression:x"}, "the member's own ref travels verbatim");
+  const empty = palaceRegionOpenRoute("Gate", null, ANCHOR, live);
+  assert.equal(empty.kind, "refused");
+  assert.match(empty.reason, /holds no Expression to open yet/);
+  const self = palaceRegionOpenRoute("Gate", {expression_ref: ANCHOR}, ANCHOR, live);
+  assert.equal(self.kind, "refused");
+  assert.match(self.reason, /self reference/);
+  const broken = palaceRegionOpenRoute("Gate", {expression_ref: "oi.expression:gone"}, ANCHOR, live);
+  assert.equal(broken.kind, "refused");
+  assert.match(broken.reason, /no longer disclosed/);
+  assert.equal(palaceRegionOpenRoute("Gate", {expression_ref: "oi.expression:gone"}, ANCHOR, null).kind, "open", "with the live list unknown, nothing is called broken");
+});
+
 // ---- T17: the guided integral walk — method of loci over the whole ---------
 
 test("T17: the walk visits every occupied locus of the whole in order from the named start, and wraps", () => {
@@ -236,6 +267,15 @@ test("T17: leaving mid-walk and returning resumes at the same locus, wrapped int
   assert.equal(palaceWalkResume(2, 5), 2, "the same locus is recovered on return");
   assert.equal(palaceWalkResume(4, 2), 0, "a walk that shrank is clamped, never invented");
   assert.equal(palaceWalkResume(3, 0), 0, "an empty walk stands at nothing");
+});
+
+test("T17: the integral walk's normalisation is recall.ts's own, so the board and the walk can never disagree on a locus", () => {
+  const steps = palaceWalkSteps(FULL);
+  const refs = steps.map((step) => step.ref);
+  const loci = steps.map((step) => step.locus);
+  for (let index = -steps.length - 2; index <= steps.length * 2 + 2; index += 1) {
+    assert.equal(palaceWalkAt(steps, index).index, recallOver(refs, loci, index).index, `index ${index}`);
+  }
 });
 
 // ---- T18: archaeology honesty on every region ------------------------------
