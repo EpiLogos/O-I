@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {blankJourney,blankScene,clone,validateJourney} from '../build/model.js';
+import {supersededDraft,recoveryDiff,recoveryDiffLines,settleHostedDraft,mergeTakeIntoDraft} from '../build/draftStorage.js';
+import {draftStatusLine} from '../build/draftSchedule.js';
 import {recoveryOffer,planRecoveryChoice,draftCopy,readUncleanExit,markSessionOpen,markSessionClosed,offerClock,SESSION_MARK_KEY,TAB_INSTANCE_KEY,tabInstance,recordBootExit,bootWasUnclean,writeRecord,loadRecord,removeRecord,listQuarantine,quarantine,quarantinedCopy,quarantinedName,encodeSlot} from '../build/draftStorage.js';
 
 // lane-3 E19: after an unclean exit, the draft and the last saved copy are both kept and the owner chooses.
@@ -231,9 +233,13 @@ test('E19b: the native open settles its recovery through the same plan, before a
  const app=fs.readFileSync(new URL('../src/app.ts',import.meta.url),'utf8');
  assert.equal(nw.match(/await settleRecovery\(found,current\)/g)?.length,2,'follow and open both settle the recovery');
  const settle=nw.slice(nw.indexOf('const settleRecovery='),nw.indexOf('// Following (host open-expression'));
- assert.match(settle,/if\(!hostedRecovery\(\)\|\|!saved\|\|!bootWasUnclean\(\)\|\|recoveryOffered\.has\(draftId\)\)return found;/,'only a hosted, unclean, not-yet-offered draft is offered');
- assert.ok(settle.indexOf('await applyRecoveryPlan(plan,found.journey)')<settle.indexOf('removeDraft(draftId'),'the draft is kept before its native copy leaves');
- assert.ok(settle.indexOf('requireAdoption(current)')>0,'a superseded choice retains everything');
+ assert.ok(settle.includes('await settleHostedDraft(draftId,found.journey,saved,'),'the hosted decision is the one settleHostedDraft owns');
+ assert.ok(!settle.includes('await applyRecoveryPlan(plan,found.journey)'),'nativeWorkspace no longer applies its own plan');
+ const hosted=fs.readFileSync(new URL('../src/draftStorage.ts',import.meta.url),'utf8');
+ const owner=hosted.slice(hosted.indexOf('export async function settleHostedDraft('),hosted.indexOf('export const SESSION_MARK_KEY'));
+ assert.ok(owner.indexOf('await owners.keepDraft(')<owner.indexOf('await owners.removeNativeDraft()'),'the draft is kept before its native copy leaves');
+ assert.ok(owner.indexOf('owners.requireAdoption()')<owner.indexOf('await owners.removeNativeDraft()'),'a superseded choice retains everything');
+ assert.ok(owner.includes('if(supersededDraft({draft,saved}))'),'a draft not newer than the checkpoint is decided before any offer');
  assert.ok(app.includes('chooseRecovery:request=>askRecoveryChoice(request.draft,{...request.offer,revision:request.revision})'),'the owner is asked with the kernel revision named');
  assert.ok(app.indexOf('recordBootExit(uncleanExit)')<app.indexOf("if(!window.__JOURNEY__&&!qs.has('journey')&&!qsExpression)"),'a hosted boot records its mark too');
  assert.ok(app.includes('let uncleanExit=false;try{uncleanExit=readUncleanExit(localStorage);markSessionOpen(localStorage,new Date());}catch'),'one reading of the tab mark, before this page marks itself open');
@@ -279,4 +285,178 @@ test('T-REVIEW-6: deleting a saved copy cancels the backup only when that copy i
  assert.ok(line,'delete-saved is wired');
  assert.ok(line.includes('if(store.document.id===id)draftSchedule.cancel()'),'cancel only for the open document');
  assert.ok(!/;draftSchedule\.cancel\(\);/.test(line),'no unconditional cancel for another saved copy');
+});
+
+// lane-3 E19: a draft at the saved copy's time, or older, is never offered and never adopted silently. Its saved copy is the basis.
+test('E19: a draft at the same time as its saved copy is not offered; it is superseded, not adopted', ()=>{
+ const saved=expression('e4','Saved',T1),draft=expression('e4','Saved',T1,2);
+ const offer=recoveryOffer({draft,saved,uncleanExit:true});
+ assert.equal(offer.offer,false);
+ assert.match(offer.reason,/not newer/);
+ assert.equal(supersededDraft({draft,saved}),true);
+});
+test('E19: superseded means different and not newer; a newer draft is never superseded, and the same material is nothing to keep', ()=>{
+ const saved=expression('e4','Saved',T1);
+ assert.equal(supersededDraft({draft:expression('e4','Saved',T0,2),saved}),true,'an older draft is superseded');
+ assert.equal(supersededDraft({draft:expression('e4','Saved',T2,2),saved}),false,'a newer draft is offered or adopted, never superseded');
+ assert.equal(supersededDraft({draft:clone(saved),saved}),false,'the same material is nothing to keep');
+ assert.equal(supersededDraft({saved}),false,'no draft');
+ assert.equal(supersededDraft({draft:expression('e5','Other',T0,2),saved}),false,'a different expression');
+});
+test('E19: the diff names each scene that changed by duration, transition, name and addition', ()=>{
+ const saved=expression('e5','Saved',T0,2);
+ const draft=clone(saved);draft.updatedAt=T1;
+ draft.scenes[0].duration=saved.scenes[0].duration+1;
+ draft.scenes[1].transition=saved.scenes[1].transition+0.5;
+ draft.scenes[1].name='Renamed scene';
+ draft.scenes.push(blankScene());
+ const diff=recoveryDiff(validateJourney(draft),saved);
+ assert.deepEqual([diff.scenesAdded,diff.scenesRemoved,diff.durations,diff.transitions,diff.renamed,diff.contents,diff.other],[1,0,1,1,1,0,false]);
+ assert.deepEqual(recoveryDiffLines(diff),['1 scene added in the draft','Durations changed in 1 scene','Transitions changed in 1 scene','1 scene renamed']);
+});
+test('E19: a changed scene parameter is named as a content change; a change to the expression alone is named as details', ()=>{
+ const saved=expression('e6','Saved',T0,1);
+ const moved=clone(saved);moved.updatedAt=T1;moved.scenes[0].field.params.count+=1000;
+ const diff=recoveryDiff(validateJourney(moved),saved);
+ assert.equal(diff.contents,1);
+ assert.deepEqual(recoveryDiffLines(diff),['Scene contents changed in 1 scene']);
+ const details=clone(saved);details.updatedAt=T1;details.name='Renamed expression';
+ const other=recoveryDiff(validateJourney(details),saved);
+ assert.equal(other.other,true);
+ assert.deepEqual(recoveryDiffLines(other),['Expression details changed']);
+});
+test('E19: after an unclean exit, a superseded draft is not offered: the saved copy opens and the draft is kept verbatim in quarantine', async()=>{
+ const session=sessionStore(),lib=library(),drafts=new Map(),quarantineStore=new Map();
+ const keyStore=map=>({get:async k=>map.get(k),put:async(k,v)=>{map.set(k,v);},delete:async k=>{map.delete(k);},keys:async p=>[...map.keys()].filter(k=>k.startsWith(p))});
+ const layout={store:keyStore(drafts),quarantine:keyStore(quarantineStore),prefix:'',paired:false,source:'draft'};
+ const saved=expression('e7','Saved',T1),older=expression('e7','Saved',T0,2);
+ lib.save(saved);markSessionOpen(session,new Date(2026,9,13,9,0));
+ await writeRecord(layout,'e7',JSON.stringify(older),new Date());
+ assert.equal(readUncleanExit(session),true);
+ const stored=(await loadRecord(layout,'e7',validateJourney,new Date())).value;
+ assert.equal(supersededDraft({draft:stored,saved:lib.find('e7')}),true);
+ const rawStored=drafts.get('e7');
+ await quarantine(layout.quarantine,'draft','e7',rawStored,'Not newer than the saved copy, so the saved copy was opened. The draft is kept here verbatim.',new Date());
+ await removeRecord(layout,'e7',new Date());
+ assert.equal(material(lib.find('e7')),material(saved),'the saved copy is opened and never replaced');
+ assert.equal((await loadRecord(layout,'e7',validateJourney,new Date())).value,undefined,'the live draft is gone');
+ const kept=(await listQuarantine(layout.quarantine)).records;
+ assert.equal(kept.length,1);assert.equal(kept[0].raw,rawStored,'kept verbatim');
+ assert.match(kept[0].reason,/Not newer than the saved copy/);
+ markSessionClosed(session,new Date());assert.equal(readUncleanExit(session),false);
+});
+test('E19: the boot decides a superseded draft before any silent adoption, and the dialog and status name the diff', ()=>{
+ const app=fs.readFileSync(new URL('../src/app.ts',import.meta.url),'utf8');
+ const superseded=app.indexOf('else if(draft&&saved&&!hostedRecovery()&&supersededDraft({draft,saved}))'),adopt=app.indexOf('else if(draft&&(!initial.updatedAt');
+ assert.ok(superseded>0&&adopt>superseded,'the superseded branch comes before the silent adoption');
+ assert.ok(app.includes('saved&&!hostedRecovery()&&supersededDraft'),'the browser-only superseded rule never runs against a native draft');
+ assert.ok(app.includes("quarantineReason:'Not newer than the saved copy"),'the quarantined draft says why it was kept');
+ assert.ok(app.includes('recoveryDiffLines(offer.diff)'),'the choice dialog names what changed');
+ assert.match(app,/Restored draft, not yet saved: \$\{recoveryDiffLines\(offer\.diff\)\.join\('; '\)\}/,'a restored draft says it is not yet saved');
+});
+
+// lane-3 E19 (hosted, data safety): settleHostedDraft runs with injected owners, so every branch of the native settle is exercised as written.
+function hostedOwners(overrides={}){
+ const calls=[];
+ const {choice='keep-saved',...rest}=overrides;
+ const owners={hosted:true,uncleanBoot:true,settled:new Set(),revision:7,
+  chooseRecovery:async request=>{calls.push({call:'choose',request});return choice;},
+  requireAdoption:()=>{calls.push({call:'adopt'});},
+  keepDraft:async(plan,draft)=>{calls.push({call:'keep',plan,draft});},
+  removeNativeDraft:async()=>{calls.push({call:'remove'});},
+  ...rest};
+ return {owners,calls,names:()=>calls.map(c=>c.call)};
+}
+test('E19 hosted: an older draft is quarantined, never adopted, and the checkpoint opens, after a clean or an unclean boot', async()=>{
+ const saved=expression('h1','Checkpoint',T1),older=expression('h1','Checkpoint',T0,2);
+ for(const uncleanBoot of [true,false]){
+  const {owners,calls,names}=hostedOwners({uncleanBoot});
+  const out=await settleHostedDraft('h1',older,saved,owners);
+  assert.equal(out.kind,'checkpoint','the checkpoint is what opens');
+  assert.equal(material(out.journey),material(saved),'the saved basis is adopted');
+  assert.deepEqual(names(),['keep','adopt','remove'],'kept first, then the native copy leaves');
+  assert.equal(calls[0].draft,older,'the draft kept is the draft as found');
+  assert.equal(calls[0].plan.quarantineDraft,true);assert.equal(calls[0].plan.removeDraft,true);
+  assert.match(calls[0].plan.quarantineReason,/Not newer than the saved copy/);
+  assert.equal(names().includes('choose'),false,'an older draft is never offered');
+  assert.equal(owners.settled.has('h1'),true);
+ }
+});
+test('E19 hosted: a draft at the checkpoint time with different content is not offered and is not adopted', async()=>{
+ const saved=expression('h3','Checkpoint',T1),same=expression('h3','Checkpoint',T1,2);
+ const {owners,names}=hostedOwners();
+ const out=await settleHostedDraft('h3',same,saved,owners);
+ assert.equal(out.kind,'checkpoint');
+ assert.deepEqual(names(),['keep','adopt','remove']);
+});
+test('E19 hosted: a newer draft is still offered through askRecoveryChoice exactly as before, and each choice keeps both sides', async()=>{
+ const saved=expression('h2','Checkpoint',T0),newer=expression('h2','Checkpoint',T1,2);
+ for(const choice of ['restore-draft','keep-saved','keep-both']){
+  const {owners,calls,names}=hostedOwners({choice});
+  const out=await settleHostedDraft('h2',newer,saved,owners);
+  assert.equal(calls[0].call,'choose','the owner is asked first');
+  const asked=calls[0].request;
+  assert.equal(asked.draft,newer);assert.equal(asked.saved,saved);assert.equal(asked.revision,7,'the kernel revision is named');
+  assert.equal(asked.offer.offer,true);assert.equal(asked.offer.draftAt,T1);assert.equal(asked.offer.savedAt,T0);assert.ok(asked.offer.diff,'the offer carries its diff');
+  if(choice==='restore-draft'){
+   assert.equal(out.kind,'draft','restore adopts the draft as found');
+   assert.deepEqual(names(),['choose','adopt']);
+   assert.equal(owners.settled.has('h2'),true);
+  }else{
+   assert.equal(out.kind,'checkpoint');
+   assert.equal(material(out.journey),material(saved));
+   assert.deepEqual(names(),['choose','adopt','keep','adopt','remove']);
+   if(choice==='keep-saved')assert.equal(calls.find(c=>c.call==='keep').plan.quarantineDraft,true,'the draft is kept verbatim');
+   if(choice==='keep-both')assert.ok(calls.find(c=>c.call==='keep').plan.copy,'the draft becomes a Library copy');
+  }
+ }
+ const clean=hostedOwners({uncleanBoot:false});
+ assert.equal((await settleHostedDraft('h2',newer,saved,clean.owners)).kind,'draft','a clean boot offers nothing and adopts the newer draft');
+ assert.deepEqual(clean.names(),[]);
+});
+test('E19 hosted: a failed quarantine holds the draft and names it: nothing is removed or adopted, and the next open tries again', async()=>{
+ const saved=expression('h4','Checkpoint',T1),older=expression('h4','Checkpoint',T0,2);
+ let refuse=true;
+ const {owners,names}=hostedOwners({keepDraft:async()=>{if(refuse)throw new Error('quarantine store refused');}});
+ await assert.rejects(settleHostedDraft('h4',older,saved,owners),err=>{
+  assert.match(err.message,/The draft "Checkpoint" could not be kept in quarantine/,'the draft is named');
+  assert.match(err.message,/It stays held for the next open/,'the hold is named');
+  assert.match(err.message,/quarantine store refused/,'the cause is named');
+  return true;
+ });
+ assert.equal(names().includes('remove'),false,'the native draft is not removed');
+ assert.equal(names().includes('adopt'),false,'nothing is adopted');
+ assert.equal(owners.settled.has('h4'),false,'the draft is not settled, so the next open tries again');
+ refuse=false;
+ const retry=await settleHostedDraft('h4',older,saved,owners);
+ assert.equal(retry.kind,'checkpoint');
+ assert.ok(names().includes('remove'),'once kept, the native copy leaves');
+});
+test('E19 take: merging a take advances the draft time, so a draft with merged samples is newer and offered; the older-or-equal rule is unchanged', ()=>{
+ const saved=expression('t1','Saved',T0,1);
+ const draft=clone(saved);
+ const track={id:'take-count',bind:'field.params.count',points:[{time:0,value:1000},{time:1,value:2000}]};
+ assert.equal(mergeTakeIntoDraft(draft,{sceneId:draft.scenes[0].id,start:0,elapsed:1,tracks:[track]},new Date(Date.parse(T1))),true);
+ assert.equal(draft.updatedAt,T1,'the merged samples advance the draft time');
+ assert.equal(draft.scenes[0].propertyTracks.length,1,'the samples are in the draft');
+ const offer=recoveryOffer({draft,saved,uncleanExit:true});
+ assert.equal(offer.offer,true,'a draft with merged samples is newer, so it is offered');
+ assert.equal(supersededDraft({draft,saved}),false);
+ const sameTime=clone(saved);sameTime.scenes[0].field.params.count+=5;
+ assert.equal(recoveryOffer({draft:sameTime,saved,uncleanExit:true}).offer,false,'a same-time draft without a merge is still not offered');
+ assert.equal(supersededDraft({draft:sameTime,saved}),true,'and is still superseded');
+ assert.equal(mergeTakeIntoDraft(clone(saved),{sceneId:'missing',start:0,elapsed:1,tracks:[]},new Date()),false,'an absent scene merges nothing');
+});
+test('E17 status: a draft record that did not land never reads as a draft backup', ()=>{
+ assert.equal(draftStatusLine('library-copy',new Date(2026,9,13,9,7),'browser'),'Draft not recorded; a Library copy was saved');
+ const app=fs.readFileSync(new URL('../src/app.ts',import.meta.url),'utf8');
+ assert.ok(app.includes("draftStatusLine('library-copy',new Date(),'browser')"),'the browser fallback names the Library copy');
+ assert.ok(!app.includes("draftStatusLine('backed-up',new Date(),'browser')"),'no browser status claims a draft backup when only the Library copy landed');
+ assert.ok(app.includes('mergeTakeIntoDraft(draft,propertyTake,new Date())'),'the take merge advances the draft time');
+});
+test('E19: the choice dialog names what changed in a style rule that uses tokens only', ()=>{
+ const css=fs.readFileSync(new URL('../src/styles.css',import.meta.url),'utf8');
+ const rules=css.split('\n').filter(line=>line.startsWith('.recovery-diff'));
+ assert.equal(rules.length,3,'the list, its items and their markers are styled');
+ assert.ok(rules.every(rule=>!/#[0-9a-fA-F]{3,8}\b|rgba?\(/.test(rule)),'no literal colours');
 });

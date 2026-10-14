@@ -125,7 +125,7 @@ export async function applyRecoveryPlan(plan:RecoveryPlan,draft:Journey):Promise
  const layout=await draftLayout();
  if(plan.quarantineDraft){
   const raw=(await draftRawText(layout,draft.id))??JSON.stringify(validateJourney(draft));
-  await quarantine(layout.quarantine,'draft',draft.id,raw,'Superseded by the saved copy after an unclean exit. The draft is kept here verbatim.',at);
+  await quarantine(layout.quarantine,'draft',draft.id,raw,plan.quarantineReason??'Superseded by the saved copy after an unclean exit. The draft is kept here verbatim.',at);
  }
  if(plan.removeDraft)await removeRecord(layout,draft.id,at,validateJourney);
 }

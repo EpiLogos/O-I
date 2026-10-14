@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {DraftSchedule,DRAFT_DEBOUNCE_MS,draftStatusLine} from '../build/draftSchedule.js';
+import {writeRecord,loadRecord} from '../build/draftStorage.js';
+import {blankJourney,validateJourney} from '../build/model.js';
 
 // lane-3 E17: one autosave schedule. Time is a fake clock so every bound is exact.
 function fakeTimers(){
@@ -160,4 +162,69 @@ test('T-REVIEW-6: a flush that reports it did not hold (false) is a failed backu
  assert.equal(schedule.pending(),1,'a refused backup keeps its edit pending');
  schedule.flushNow('studio');
  assert.deepEqual(calls,['scene','studio'],'the next context switch tries again');
+});
+
+// lane-3 E17 (scripted crash): the draft is the E18 per-document record. A flush writes the document as it stands when the flush runs.
+// The records are kept in memory with the same read-back rules as the localStorage fallback; `failPut` refuses the next writes.
+function memoryKeyStore(){
+ const map=new Map(),store={map,failPut:false,
+  async get(key){return map.get(key);},
+  async put(key,raw){if(store.failPut)throw new Error('storage refused the write');map.set(key,raw);},
+  async delete(key){map.delete(key);},
+  async keys(prefix){return [...map.keys()].filter(key=>key.startsWith(prefix));}};
+ return store;
+}
+function recordLayout(store){return {store,quarantine:memoryKeyStore(),prefix:'',paired:true,source:'draft'};}
+function namedDraft(name){const j=blankJourney();j.id='e17-crash';j.name=name;return validateJourney(j);}
+const recordName=async layout=>(await loadRecord(layout,'e17-crash',validateJourney,new Date())).value?.name;
+
+test('E17 scripted crash: a host killed mid-edit after a context switch relaunches to that switch, not the last 350 ms window', async()=>{
+ const timers=fakeTimers(),layout=recordLayout(memoryKeyStore());
+ let doc=namedDraft('state 0');
+ const schedule=new DraftSchedule({timers,flush:()=>writeRecord(layout,doc.id,JSON.stringify(doc),new Date(),validateJourney)});
+ doc=namedDraft('state 1');schedule.request();
+ schedule.flushNow('scene');await settle();
+ doc=namedDraft('state 2');schedule.request();
+ // The host dies here: the window never closes and no quit flush runs.
+ assert.equal(await recordName(layout),'state 1','the relaunch recovers to the last context switch');
+ assert.equal(schedule.pending(),1,'the edit inside the window was never written');
+});
+
+test('E17: an edit with no context switch is written when its window closes, and a quit writes at once and drives the pending count to zero', async()=>{
+ const timers=fakeTimers(),layout=recordLayout(memoryKeyStore());
+ let doc=namedDraft('a');
+ const schedule=new DraftSchedule({timers,flush:()=>writeRecord(layout,doc.id,JSON.stringify(doc),new Date(),validateJourney)});
+ doc=namedDraft('b');schedule.request();
+ timers.advance(349);await settle();
+ assert.equal(await recordName(layout),undefined,'nothing is written inside the window');
+ timers.advance(1);await settle();await settle();
+ assert.equal(await recordName(layout),'b','the window closes and writes the edit');
+ doc=namedDraft('c');schedule.request();
+ assert.equal(schedule.pending(),1,'one unflushed edit');
+ await schedule.flushNow('quit');await settle();
+ assert.equal(schedule.pending(),0,'the pending-write count reaches zero after the quit flush');
+ assert.equal(await recordName(layout),'c','the quit flush wrote the document as it stood');
+});
+
+test('E17: a refused save never discards the draft: the last record that landed is still read back, and the edit stays pending until a write lands', async()=>{
+ const backing=memoryKeyStore(),layout=recordLayout(backing);
+ let doc=namedDraft('kept');
+ const schedule=new DraftSchedule({timers:fakeTimers(),flush:()=>writeRecord(layout,doc.id,JSON.stringify(doc),new Date(),validateJourney)});
+ schedule.request();await schedule.flushNow('scene');
+ assert.equal(await recordName(layout),'kept');
+ doc=namedDraft('refused');backing.failPut=true;
+ schedule.request();await schedule.flushNow('scene');
+ assert.equal(schedule.pending(),1,'the refused edit is still pending');
+ assert.equal(await recordName(layout),'kept','the record that landed is not discarded');
+ backing.failPut=false;
+ await schedule.flushNow('scene');
+ assert.equal(schedule.pending(),0);
+ assert.equal(await recordName(layout),'refused','the next context switch lands the edit');
+});
+
+test('E17: the pending-write count is observable to the page, and the property take writes through the one schedule', ()=>{
+ const source=fs.readFileSync(new URL('../src/app.ts',import.meta.url),'utf8');
+ assert.ok(source.includes('draftPending:()=>draftSchedule.pending()'),'the counter is exposed on __FIELD_STUDIES__ for a scripted or native check');
+ assert.ok(!/void flushDraft\(\)/.test(source),'no caller writes the draft outside the schedule');
+ assert.ok(source.includes('draftSchedule.request();'),'the property take interval asks the schedule');
 });

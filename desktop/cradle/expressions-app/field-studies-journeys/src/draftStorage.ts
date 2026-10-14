@@ -16,6 +16,7 @@
  * quarantine), or keep both (the draft becomes a Library copy). Each choice
  * keeps both sides. A clean exit offers nothing. */
 import {Journey,clone,uid,validateJourney} from './model.js';
+import {mergeTake,type PropertyTrack} from './propertyTracks.js';
 export const PAIR_SCHEMA='oi.draft-record/v1';
 export const QUARANTINE_SCHEMA='oi.draft-quarantine/v1';
 /** lane-3 E18: the envelope of one Library document (libraryStore.ts). */
@@ -176,19 +177,78 @@ function material(journey:Journey):string{
  const copy=clone(journey) as Partial<Journey>;delete copy.updatedAt;
  return JSON.stringify(copy,(_key,value)=>value&&typeof value==='object'&&!Array.isArray(value)?Object.fromEntries(Object.keys(value).sort().map(k=>[k,value[k]])):value);
 }
-export type RecoveryOffer={offer:true;draftId:string;draftAt:string;savedAt:string}|{offer:false;reason:string};
-/** Offer only after an unclean exit, when the draft differs from the saved copy of the same expression and is not older than it. */
+/** E19: what the draft changes against the saved copy, counted per scene. Both sides are kept whichever the owner chooses; this only names the difference. */
+export interface RecoveryDiff{scenesAdded:number;scenesRemoved:number;renamed:number;durations:number;transitions:number;contents:number;other:boolean}
+/** Stable text of one scene's content: keys sorted; its id, name, duration and transition excluded (each is counted on its own). */
+function sceneContentText(scene:Journey['scenes'][number]):string{
+ const {id:_id,name:_name,duration:_duration,transition:_transition,...content}=scene;
+ return JSON.stringify(content,(_key,value)=>value&&typeof value==='object'&&!Array.isArray(value)?Object.fromEntries(Object.keys(value).sort().map(k=>[k,value[k]])):value);
+}
+export function recoveryDiff(draft:Journey,saved:Journey):RecoveryDiff{
+ const before=new Map<string,Journey['scenes'][number]>(saved.scenes.map(scene=>[scene.id,scene]));
+ const after=new Set(draft.scenes.map(scene=>scene.id));
+ const diff:RecoveryDiff={scenesAdded:0,scenesRemoved:0,renamed:0,durations:0,transitions:0,contents:0,other:false};
+ for(const scene of draft.scenes){
+  const old=before.get(scene.id);
+  if(!old){diff.scenesAdded++;continue;}
+  if(old.name!==scene.name)diff.renamed++;
+  if(old.duration!==scene.duration)diff.durations++;
+  if(old.transition!==scene.transition)diff.transitions++;
+  if(sceneContentText(old)!==sceneContentText(scene))diff.contents++;
+ }
+ diff.scenesRemoved=saved.scenes.filter(scene=>!after.has(scene.id)).length;
+ const named=diff.scenesAdded+diff.scenesRemoved+diff.renamed+diff.durations+diff.transitions+diff.contents;
+ diff.other=named===0&&material(draft)!==material(saved);
+ return diff;
+}
+/** The diff as lines for the choice dialog and the status line. An empty list means the two are the same material. */
+export function recoveryDiffLines(diff:RecoveryDiff):string[]{
+ const count=(n:number,noun:string)=>`${n} ${noun}${n===1?'':'s'}`;
+ const lines:string[]=[];
+ if(diff.scenesAdded)lines.push(`${count(diff.scenesAdded,'scene')} added in the draft`);
+ if(diff.scenesRemoved)lines.push(`${count(diff.scenesRemoved,'scene')} removed from the draft`);
+ if(diff.durations)lines.push(`Durations changed in ${count(diff.durations,'scene')}`);
+ if(diff.transitions)lines.push(`Transitions changed in ${count(diff.transitions,'scene')}`);
+ if(diff.contents)lines.push(`Scene contents changed in ${count(diff.contents,'scene')}`);
+ if(diff.renamed)lines.push(`${count(diff.renamed,'scene')} renamed`);
+ if(diff.other)lines.push('Expression details changed');
+ return lines;
+}
+export type RecoveryOffer={offer:true;draftId:string;draftAt:string;savedAt:string;diff:RecoveryDiff}|{offer:false;reason:string};
+/** Offer only after an unclean exit, when the draft differs from the saved copy of the same expression and is strictly newer than it.
+ * The content comparison decides whether there is a difference; the order of the two copies only decides whether the draft is newer. */
 export function recoveryOffer(input:{draft?:Journey;saved?:Journey;uncleanExit:boolean}):RecoveryOffer{
  if(!input.uncleanExit)return {offer:false,reason:'The last session closed cleanly.'};
  const {draft,saved}=input;
  if(!draft||!saved)return {offer:false,reason:'There is no draft and saved copy to compare.'};
  if(draft.id!==saved.id)return {offer:false,reason:'The draft and the saved copy are different expressions.'};
  if(material(draft)===material(saved))return {offer:false,reason:'The draft matches the saved copy.'};
- if(Date.parse(draft.updatedAt)<Date.parse(saved.updatedAt))return {offer:false,reason:'The saved copy is newer than the draft.'};
- return {offer:true,draftId:draft.id,draftAt:draft.updatedAt,savedAt:saved.updatedAt};
+ const draftAt=Date.parse(draft.updatedAt),savedAt=Date.parse(saved.updatedAt);
+ if(!(draftAt>savedAt))return {offer:false,reason:draftAt<savedAt?'The saved copy is newer than the draft.':'The draft is not newer than the saved copy.'};
+ return {offer:true,draftId:draft.id,draftAt:draft.updatedAt,savedAt:saved.updatedAt,diff:recoveryDiff(draft,saved)};
+}
+/** E19: a draft that differs from the saved copy and is not newer than it. The saved copy is the basis and the draft is superseded:
+ * it is never offered and never adopted silently, and the owner keeps it in quarantine, verbatim, so nothing is overwritten. */
+export function supersededDraft(input:{draft?:Journey;saved?:Journey}):boolean{
+ const {draft,saved}=input;
+ if(!draft||!saved||draft.id!==saved.id)return false;
+ if(material(draft)===material(saved))return false;
+ return !(Date.parse(draft.updatedAt)>Date.parse(saved.updatedAt));
+}
+/** E17 (take): merge an armed take's samples into a copy of the document. The samples are new content, so the copy's time advances with
+ * them: a draft that holds merged samples is newer than the saved copy it extends. Returns false when the take's scene is absent. */
+export function mergeTakeIntoDraft(draft:Journey,take:{sceneId:string;start:number;elapsed:number;tracks:PropertyTrack[]},at:Date):boolean{
+ const scene=draft.scenes.find(s=>s.id===take.sceneId);
+ if(!scene)return false;
+ const end=Math.min(3600,take.start+take.elapsed);
+ scene.propertyTracks=mergeTake(scene.propertyTracks??[],take.tracks,take.start,end);
+ scene.propertyTakeRange={start:take.start,end};
+ scene.duration=Math.max(scene.duration,end);
+ draft.updatedAt=at.toISOString();
+ return true;
 }
 export type RecoveryChoice='restore-draft'|'keep-saved'|'keep-both';
-export interface RecoveryPlan{open:Journey;copy?:Journey;quarantineDraft:boolean;removeDraft:boolean}
+export interface RecoveryPlan{open:Journey;copy?:Journey;quarantineDraft:boolean;removeDraft:boolean;/** The reason the quarantined draft is listed under; a default names the unclean exit. */quarantineReason?:string}
 /** A Library copy with a new identity: the source's full material, and a name that says where it came from and when. */
 function namedCopy(source:Journey,at:Date,label:string):Journey{
  const copy=clone(source);copy.id=uid('expression');
@@ -220,6 +280,52 @@ export function quarantinedCopy(raw:string,at:Date):Journey{
 export function quarantinedName(raw:string,fallback:string):string{
  try{const value=JSON.parse(recordText(raw)) as {name?:unknown};return typeof value.name==='string'&&value.name.trim()?value.name:fallback;}
  catch{return fallback;}
+}
+/** E19 (hosted): what a native draft becomes against its checkpoint, the saved basis. The owners are injected by nativeWorkspace, so every
+ * branch is testable. `draft` means the draft is adopted as found; `checkpoint` means the saved basis is adopted and the draft has left the owner. */
+export type HostedDraftSettlement={kind:'draft'}|{kind:'checkpoint';journey:Journey};
+export interface HostedDraftOwners{
+ /** The hosted recovery store is in use. */
+ hosted:boolean;
+ /** This boot's own reading of the session mark. */
+ uncleanBoot:boolean;
+ /** Drafts already settled in this session; a settled draft is never offered again. */
+ settled:Set<string>;
+ /** The kernel revision of the checkpoint, named in the choice. */
+ revision:number;
+ chooseRecovery?:(request:{draft:Journey;saved:Journey;offer:{draftAt:string;savedAt:string};revision:number})=>Promise<RecoveryChoice>;
+ /** Stops adoption when another open superseded this one. */
+ requireAdoption:()=>void;
+ /** Keeps the draft verbatim (quarantine), then removes its local copy as the plan says. Rejects when the draft cannot be kept. */
+ keepDraft:(plan:RecoveryPlan,draft:Journey)=>Promise<void>;
+ /** Removes the native draft row, with its scope. */
+ removeNativeDraft:()=>Promise<void>;
+}
+/** A draft that is not newer than its checkpoint is never adopted, after a clean or an unclean exit. It is kept verbatim in quarantine
+ * before its native copy leaves, and a failure to keep it holds the draft and names it: nothing is removed or adopted. A newer draft is
+ * offered on an unclean exit exactly as before, and the owner's choice keeps both sides. */
+export async function settleHostedDraft(draftId:string,draft:Journey,saved:Journey|undefined,owners:HostedDraftOwners):Promise<HostedDraftSettlement>{
+ if(!owners.hosted||!saved||owners.settled.has(draftId))return {kind:'draft'};
+ if(supersededDraft({draft,saved})){
+  try{await owners.keepDraft({open:saved,quarantineDraft:true,removeDraft:true,quarantineReason:'Not newer than the saved copy, so the saved copy was opened. The draft is kept here verbatim.'},draft);}
+  catch(error){throw new Error(`The draft "${draft.name}" could not be kept in quarantine, so it was neither removed nor opened. It stays held for the next open. ${error instanceof Error?error.message:String(error)}`);}
+  owners.requireAdoption();
+  await owners.removeNativeDraft();
+  owners.settled.add(draftId);
+  return {kind:'checkpoint',journey:saved};
+ }
+ if(!owners.uncleanBoot)return {kind:'draft'};
+ const offer=recoveryOffer({draft,saved,uncleanExit:true});
+ if(!offer.offer)return {kind:'draft'};
+ const choice:RecoveryChoice=owners.chooseRecovery?await owners.chooseRecovery({draft,saved,offer,revision:owners.revision}):'keep-both';
+ owners.requireAdoption();
+ if(choice==='restore-draft'){owners.settled.add(draftId);return {kind:'draft'};}
+ const plan=planRecoveryChoice(choice,draft,saved,new Date());
+ await owners.keepDraft(plan,draft);
+ owners.requireAdoption();
+ if(plan.removeDraft)await owners.removeNativeDraft();
+ owners.settled.add(draftId);
+ return {kind:'checkpoint',journey:saved};
 }
 export const SESSION_MARK_KEY='oi.field-studies.session.v1';
 export const TAB_INSTANCE_KEY='oi.field-studies.tab.v1';

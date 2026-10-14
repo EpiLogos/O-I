@@ -6,7 +6,7 @@ import "./native-field/liveCut.css";
 import {SESSION_KEY,SessionState,validateSession,writeDraft,readDraft,readDrafts,removeDraft,applyRecoveryPlan,quarantineView,restoreQuarantinedDraft} from './recovery';
 // lane-3 E17-E19: one draft scheduler, the draft/saved offer and the session mark.
 import {DraftSchedule,draftStatusLine} from './draftSchedule';
-import {recoveryOffer,planRecoveryChoice,readUncleanExit,markSessionOpen,markSessionClosed,offerClock,recordBootExit,type RecoveryChoice} from './draftStorage';
+import {recoveryOffer,supersededDraft,recoveryDiffLines,planRecoveryChoice,mergeTakeIntoDraft,readUncleanExit,markSessionOpen,markSessionClosed,offerClock,recordBootExit,type RecoveryChoice,type RecoveryDiff} from './draftStorage';
 import {foldObjectState} from './foldState';
 import {imageSuiteHTML} from './imageSuite';
 import {initialiseShared,effectiveScene,isShared,writeShared,toggleShared,useLocalPointer,POINTER_PATHS} from './sharedSettings';
@@ -228,10 +228,8 @@ async function flushDraft(){
  if(store.transactionOpen||draftBackupBusy){draftSchedule.request();return;}
  saveSession();if(deletedLibraryIds.has(store.document.id))return;
  const draft=clone(store.document),backupVersion=store.revision;
- if(propertyTake&&propertyTake.elapsed>0){
-  const take=propertyTake,s=draft.scenes.find(s=>s.id===take.sceneId),end=Math.min(3600,take.start+take.elapsed);
-  if(s){s.propertyTracks=mergeTake(s.propertyTracks??[],take.tracks,take.start,end);s.propertyTakeRange={start:take.start,end};s.duration=Math.max(s.duration,end);}
- }
+ // E19: the take's samples are new content, so mergeTakeIntoDraft advances the draft's time with them.
+ if(propertyTake&&propertyTake.elapsed>0)mergeTakeIntoDraft(draft,propertyTake,new Date());
  draftBackupBusy=true;
  try{
   await writeDraft(draft);
@@ -247,7 +245,7 @@ async function flushDraft(){
    if(!autosaveErrorShown){toast(cause instanceof Error?cause.message:'Native recovery is unavailable. Keep this work open or save a file.',7000);autosaveErrorShown=true;}
    return false; // T-REVIEW-6: a backup that did not land keeps its edits pending for the next context switch.
   }
-  try{saveToLibrary(draft);$('save-status').textContent=draftStatusLine('backed-up',new Date(),'browser');}
+  try{saveToLibrary(draft);$('save-status').textContent=draftStatusLine('library-copy',new Date(),'browser');}
   catch{$('save-status').textContent=draftStatusLine('unavailable',new Date(),'browser');if(!autosaveErrorShown){toast('Browser storage is unavailable or full. Export the expression to preserve your work.',7000);autosaveErrorShown=true;}}
   return false; // The draft record did not land (a Library copy may have): the edits stay pending and are retried.
  }finally{draftBackupBusy=false;}
@@ -2141,7 +2139,7 @@ const nativeField=installNativeField(engine,()=>{fieldPaused=false;needsFrame=tr
 // Without a retaining engine there is no native producer to present; the
 // Studio nav offers no dead "Live instrument" entry for it.
 if(!nativeField)document.querySelector('[data-action="studio-section"][data-value="native"]')?.remove();
-window.__FIELD_STUDIES__={getDocument:()=>clone(store.document),getState:()=>({studioOpen,beltOpen,needsFrame,libraryOpen,librarySection,modesOpen,captureOpen,railKey,railExpanded,sceneIndex,selected:[...selected],textId,editing,inspectorOpen,timelineOpen,tool,simTime,sceneElapsed,playing:scenePlaying,scenePlaying,fieldPaused,journeyPlaying,automationLoop,camera:{...camera},fps,recording:recorder.active,pointerActive:pointer.active,engine:engine.capabilities.name,hostMode,activeLens:lensStudio.active()}),project:(v:Vec3)=>project(v,camera,width,height),unproject:(x:number,y:number)=>unproject(x,y,camera,width,height),selectEntity:(id:string)=>selectEntity(id),setScene:(reference:string|number)=>{if(typeof reference==='string')return focusNativeSceneRef(reference);toast('Index-based Scene navigation is a compatibility call; native navigation accepts a Scene reference.');setSceneRef(sceneRefAt(reference));},openEditor:(t:InspectorContext['tab'])=>edit(true,t),pause:()=>{fieldPaused=true;needsFrame=true;renderAll();},play:()=>{fieldPaused=false;needsFrame=true;renderAll();},native:()=>nativeField?.controller.reading,nativeTargets:()=>nativeField?.controller.inspectTargets(),
+window.__FIELD_STUDIES__={getDocument:()=>clone(store.document),draftPending:()=>draftSchedule.pending(),getState:()=>({studioOpen,beltOpen,needsFrame,libraryOpen,librarySection,modesOpen,captureOpen,railKey,railExpanded,sceneIndex,selected:[...selected],textId,editing,inspectorOpen,timelineOpen,tool,simTime,sceneElapsed,playing:scenePlaying,scenePlaying,fieldPaused,journeyPlaying,automationLoop,camera:{...camera},fps,recording:recorder.active,pointerActive:pointer.active,engine:engine.capabilities.name,hostMode,activeLens:lensStudio.active()}),project:(v:Vec3)=>project(v,camera,width,height),unproject:(x:number,y:number)=>unproject(x,y,camera,width,height),selectEntity:(id:string)=>selectEntity(id),setScene:(reference:string|number)=>{if(typeof reference==='string')return focusNativeSceneRef(reference);toast('Index-based Scene navigation is a compatibility call; native navigation accepts a Scene reference.');setSceneRef(sceneRefAt(reference));},openEditor:(t:InspectorContext['tab'])=>edit(true,t),pause:()=>{fieldPaused=true;needsFrame=true;renderAll();},play:()=>{fieldPaused=false;needsFrame=true;renderAll();},native:()=>nativeField?.controller.reading,nativeTargets:()=>nativeField?.controller.inspectTargets(),
  // Acceptance probe: advance resident particle mechanics by fixed steps against
  // the targets already presented. No native request, clock or target write.
  probeSteps:(frames:number,dt:number)=>{if(!Number.isInteger(frames)||frames<1||frames>2000||!(dt>0&&dt<=.1))throw new Error('probe steps: 1–2000 frames of (0, 0.1] s');for(let i=0;i<frames;i++)engine.render(frameData(dt));needsFrame=true;return frames;},dispose:()=>{sceneTransportAlive=false;sceneIntentEpoch++;researchInstruments?.destroy();nativeEditorEndpoint?.dispose();nativeField?.dispose();cancelAnimationFrame(rafId);coverObserver?.disconnect();engine.dispose();},command:(cmd:any)=>{engine.command?.(cmd);needsFrame=true;},capabilities:engine.capabilities,inspect:(read=false)=>engine.inspect?.(read),telemetry:()=>engine.telemetry?.(),nativeProject:(v:Vec3)=>engine.projectNative?.(v),capture:(w:number,h:number)=>engine.capture?.(w,h)};
@@ -2686,12 +2684,12 @@ function openNativeFileDialog(){
  dialog.showModal();
 }
 /** lane-3 E19: the boot choice between the draft and the saved copy. Both timestamps and the revision are named. Dismissing it (Escape) keeps both, so nothing is lost. */
-function askRecoveryChoice(draft:Journey,offer:{draftAt:string;savedAt:string;revision?:number}):Promise<RecoveryChoice>{
+function askRecoveryChoice(draft:Journey,offer:{draftAt:string;savedAt:string;revision?:number;diff?:RecoveryDiff}):Promise<RecoveryChoice>{
  return new Promise<RecoveryChoice>(resolve=>{
   const dialog=document.createElement('dialog');
   dialog.className='confirm-dialog recovery-dialog';dialog.setAttribute('aria-labelledby','recovery-title');
   const now=new Date(),basis=offer.revision===undefined?'Browser copy (no kernel revision)':`Kernel revision ${offer.revision}`;
-  dialog.innerHTML=`<p class="eyebrow">THE LAST SESSION DID NOT CLOSE CLEANLY</p><h2 id="recovery-title">Unsaved edits in “${esc(draft.name)}”</h2><p class="intro">The draft has changes that the saved copy does not have. Whichever you choose, both versions are kept.</p><dl class="recovery-basis"><dt>Draft</dt><dd>${esc(offerClock(offer.draftAt,now))}</dd><dt>Saved copy</dt><dd>${esc(offerClock(offer.savedAt,now))}</dd><dt>Revision</dt><dd>${esc(basis)}</dd></dl><div class="recovery-choices"><button class="secondary" data-choice="keep-saved">Keep saved version</button><button class="secondary" data-choice="keep-both">Keep both</button><button class="primary" data-choice="restore-draft">Restore draft</button></div>`;
+  dialog.innerHTML=`<p class="eyebrow">THE LAST SESSION DID NOT CLOSE CLEANLY</p><h2 id="recovery-title">Unsaved edits in “${esc(draft.name)}”</h2><p class="intro">The draft has changes that the saved copy does not have. Whichever you choose, both versions are kept.</p><dl class="recovery-basis"><dt>Draft</dt><dd>${esc(offerClock(offer.draftAt,now))}</dd><dt>Saved copy</dt><dd>${esc(offerClock(offer.savedAt,now))}</dd><dt>Revision</dt><dd>${esc(basis)}</dd></dl>${offer.diff?`<ul class="recovery-diff" aria-label="What the draft changes">${recoveryDiffLines(offer.diff).map(line=>`<li>${esc(line)}</li>`).join('')}</ul>`:''}<div class="recovery-choices"><button class="secondary" data-choice="keep-saved">Keep saved version</button><button class="secondary" data-choice="keep-both">Keep both</button><button class="primary" data-choice="restore-draft">Restore draft</button></div>`;
   dialog.addEventListener('click',ev=>{const button=(ev.target as Element).closest<HTMLButtonElement>('button[data-choice]');if(button)dialog.close(button.dataset.choice);});
   dialog.addEventListener('cancel',()=>{dialog.returnValue='keep-both';});
   dialog.addEventListener('close',()=>{const choice=dialog.returnValue as RecoveryChoice;dialog.remove();resolve(choice==='restore-draft'||choice==='keep-saved'||choice==='keep-both'?choice:'keep-both');});
@@ -2706,6 +2704,8 @@ async function startWorkspace(){
  recordBootExit(uncleanExit);
  if(!window.__JOURNEY__&&!qs.has('journey')&&!qsExpression){try{for(const draft of await readDrafts())sessionExpressions.set(draft.id,draft);const id=localStorage.getItem('oi.field-studies.last'),draft=id?await readDraft(id):undefined;
  // lane-3 E19: after an unclean exit, a draft that differs from its saved copy is offered as a choice; a clean exit adopts nothing silently either way.
+ // Browser mode only, with no kernel: the saved side is the Library record, a throttled mirror of the autosave (flushDraft). It is not the
+ // product's store of record. The hosted path is, and compares against the kernel checkpoint in nativeWorkspace.settleRecovery.
  const saved=draft?readLibrary().find(j=>j.id===draft.id):undefined;
  const offer=draft&&saved&&!hostedRecovery()?recoveryOffer({draft,saved,uncleanExit}):{offer:false as const,reason:''};
  if(draft&&saved&&offer.offer){
@@ -2714,7 +2714,15 @@ async function startWorkspace(){
  const choice=await askRecoveryChoice(draft,offer);const plan=planRecoveryChoice(choice,draft,saved,new Date());
  try{await applyRecoveryPlan(plan,draft);}catch(error){toast('The recovery choice could not be kept. The draft stays held for the next start; export a file to keep this work.',9000);throw error;}
  recoveryOfferOpen=false;
- if(plan.removeDraft)sessionExpressions.delete(draft.id);if(plan.copy)sessionExpressions.set(plan.copy.id,plan.copy);store.document=initialiseSceneSaves(initialiseBelts(plan.open));store.touch();}
+ if(plan.removeDraft)sessionExpressions.delete(draft.id);if(plan.copy)sessionExpressions.set(plan.copy.id,plan.copy);store.document=initialiseSceneSaves(initialiseBelts(plan.open));store.touch();
+ // E19: a restored draft is the working copy, and it differs from the saved copy until it is saved: the status says so.
+ if(choice==='restore-draft')$('save-status').textContent=`Restored draft, not yet saved: ${recoveryDiffLines(offer.diff).join('; ')}`;}
+ else if(draft&&saved&&!hostedRecovery()&&supersededDraft({draft,saved})){
+ // E19: the draft is not newer than the saved copy. The saved copy opens; the draft is kept verbatim in quarantine, never adopted silently or overwritten.
+ recoveryOfferOpen=true;
+ try{await applyRecoveryPlan({open:saved,quarantineDraft:true,removeDraft:true,quarantineReason:'Not newer than the saved copy, so the saved copy was opened. The draft is kept here verbatim.'},draft);}catch(error){toast('The draft could not be kept in quarantine, so it stays held for the next start. Export a file to keep this work.',9000);throw error;}
+ recoveryOfferOpen=false;
+ sessionExpressions.delete(draft.id);sessionExpressions.set(saved.id,clone(saved));store.document=initialiseSceneSaves(initialiseBelts(clone(saved)));store.touch();}
  else if(draft&&(!initial.updatedAt||draft.id!==initial.id||draft.updatedAt>=initial.updatedAt)){store.document=initialiseSceneSaves(initialiseBelts(draft));store.touch();}recovered=validateSession(JSON.parse(localStorage.getItem(SESSION_KEY)??'null'),store.document);showEntry=!startsInTechne;}catch(e){console.warn('Draft recovery unavailable',e);showEntry=!startsInTechne;}}
  const linkedScene=deepLinkPending?.address.scene;
  if(recovered&&(linkedScene===undefined||linkedScene===recovered.sceneId)){sceneIndex=store.document.scenes.findIndex(s=>s.id===recovered!.sceneId);selected=recovered.selected;stepIndex=recovered.stepIndex;sceneElapsed=recovered.sceneElapsed;simTime=recovered.simTime;scenePlaying=recovered.scenePlaying??recovered.playing;workingTransport=recovered.workingTransport??STOPPED_TRANSPORT;journeyPlaying=recovered.journeyPlaying;if(recovered.fieldPaused!==undefined)fieldPaused=recovered.fieldPaused;if(qs.has('still'))fieldPaused=true;camera=recovered.camera;}else applySceneView();
@@ -2731,7 +2739,7 @@ if(showEntry)openEntryGate(!!recovered||!!localStorage.getItem('oi.field-studies
 if(qsExpression?.startsWith('expression:')){
  // review-5 #6: a refused or missing open still settles the link, so the address is written again instead of staying pending.
  const open=()=>void Promise.resolve(nativeWorkspace?.follow(qsExpression)).then(applied=>settleDeepLink(applied===true),()=>settleDeepLink(false));if(kernelExpressionsAvailable())open();else window.addEventListener('message',function ready(event){if(event.source===window.parent&&event.data?.v===1&&event.data?.kind==='oi-kernel-channel'){window.removeEventListener('message',ready);open();}});}
-setInterval(()=>{saveSession();if(propertyTake&&propertyTake.elapsed>0)void flushDraft();},1000);}
+setInterval(()=>{saveSession();if(propertyTake&&propertyTake.elapsed>0)draftSchedule.request();},1000);}
 /** E22: the Scene's native ref, when the Expression is hosted natively; the address prefers it because the kernel is the owner. */
 function nativeSceneRef(sceneId:string):string|undefined{return nativeWorkspace?.nativeView()?.bindings[sceneId]?.scene_ref;}
 /** E22: once the Expression has settled (local, or the followed native Expression), apply the link's address and name each refusal. */
