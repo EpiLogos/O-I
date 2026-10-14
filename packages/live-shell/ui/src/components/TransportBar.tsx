@@ -39,7 +39,9 @@ export function TransportBar({ tempoBpm, name, mode, setView, chooseMode, presen
 }) {
   const surf = surfModeOf(mode) ?? 'live'
   const grammar = MODE_GRAMMAR[surf]
-  return <header className="transport"><TransportTitle line={MODE_TITLE[surf]} setName={name} workName={workName} timeSpine={timeSpine} /><div className="transport-controls">
+  // The bar is the native window's drag region (its title bar is an overlay): the header, the title line and the controls
+  // row's empty space move the window; a control inside them is pressed as ever (Tauri drags only from the marked element).
+  return <header className="transport" data-tauri-drag-region><TransportTitle line={MODE_TITLE[surf]} setName={name} workName={workName} timeSpine={timeSpine} /><div className="transport-controls" data-tauri-drag-region>
     {/* The chrome toggles wear the cut's marks (the same controls in the
       agent transport draw the same marks — the icon law). */}
     <button className="chrome-toggle" aria-label="Toggle browser" aria-pressed={browser} onClick={toggleBrowser} title="Browser · ⌘⌥B"><CutIcon name="browser" size={15} /></button>
@@ -82,7 +84,7 @@ export function TransportTitle({line, setName, workName, timeSpine}: {line: 'set
   // With no selection standing, the open work in front of you (the hosted frame's document) is what the line names, as before.
   const title = titleLine({line, setName, selection: context?.selection ?? (workName ? {title: workName} : null), world: worldName(context?.world, config), civilDayRef: timeSpine?.now()?.dayRef ?? null})
   const words = [title.lead ?? title.absent, title.context].filter(Boolean).join(' — ')
-  return <div className="set-title" data-region="title-line" title={words} data-i={`${title.lead ?? title.absent ?? ''}|${line === 'set' ? 'The open Live set.' : 'THE selection, its world and the day it stands in.'}`}>
+  return <div className="set-title" data-region="title-line" data-tauri-drag-region title={words} data-i={`${title.lead ?? title.absent ?? ''}|${line === 'set' ? 'The open Live set.' : 'THE selection, its world and the day it stands in.'}`}>
     {title.lead ? <b>{title.lead}</b> : <span className="set-title-absent">{title.absent}</span>}{title.context ? ` — ${title.context}` : null}
   </div>
 }
