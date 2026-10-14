@@ -1,0 +1,11 @@
+seat=/Users/admin/Central/worktrees/env-2/o-i
+branch=
+head=7692eacc786445cb1d2b363dbeae10ca6bd73a59
+stamp=20261013T-wave3
+out=/Users/admin/Central/Work/O-I/target/p0-r1/20261013T-wave3
+target=/Users/admin/Central/Work/O-I/target
+backing=0/1/2
+mode=readback
+runner_sha256=a484aebb94ded10bcfa86f07dcfd0ae7fcc3c30bde6257f4107dedf62c353830
+status:
+?? desktop/cradle/docs/world-shell/evidence/p0-r1/run-20261013T-wave3/

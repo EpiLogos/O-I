@@ -1,0 +1,31 @@
+{
+  "modules": {
+    "actuation": {
+      "docs": "docs/WORLD-BOUND-ROOT-AGENCY.md",
+      "id": "actuation",
+      "install_source": "live-shell-qualified-payload",
+      "modality": "unknown",
+      "native_executable": "/Users/admin/Central/Work/O-I/target/p0-r1/20261013T-wave3/run/oi-desktop-bundle/app/O-I Shell Candidate.app/Contents/Resources/live-shell/native-products/actuation/bin/actuation",
+      "public_name": "Actuation"
+    },
+    "ai-kit": {
+      "docs": "README.md",
+      "id": "ai-kit",
+      "install_source": "live-shell-qualified-payload",
+      "modality": "unknown",
+      "native_executable": "/Users/admin/Central/Work/O-I/target/p0-r1/20261013T-wave3/run/oi-desktop-bundle/app/O-I Shell Candidate.app/Contents/Resources/live-shell/native-products/ai-kit/bin/aikit",
+      "public_name": "AIKit"
+    },
+    "central": {
+      "docs": "README.md",
+      "id": "central",
+      "install_source": "live-shell-qualified-payload",
+      "modality": "unknown",
+      "native_executable": "/Users/admin/Central/Work/O-I/target/p0-r1/20261013T-wave3/run/oi-desktop-bundle/app/O-I Shell Candidate.app/Contents/Resources/live-shell/native-products/central/bin/ctrl",
+      "public_name": "Central"
+    }
+  },
+  "owner_home": "/Users/admin/Library/Application Support/OI-Shell-Candidate-Acceptance/core-independent-20261008/expression-home",
+  "personal_ground": "/Users/admin/Central",
+  "schema": 1
+}

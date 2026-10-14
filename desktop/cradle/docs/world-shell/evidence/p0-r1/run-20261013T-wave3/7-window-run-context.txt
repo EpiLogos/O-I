@@ -1,0 +1,49 @@
+# channel: scripted (accessibility tree), no interaction; pid 25898; 2026-10-13T10:25:58Z; settled=yes at 1595 elements
+# AXIsProcessTrusted: true
+window: O-I Shell Candidate
+AXStaticText | value: Native host · revision 7692eacc7864 | title:  | description:  | help: 
+# windows: 1
+# web areas: 1
+# elements visited: 1595
+# owner readback (status region) searched in the same window:
+# AXIsProcessTrusted: true
+window: O-I Shell Candidate
+AXGroup | value:  | title: — / — | description:  | help: Signature — the set's time signature · not disclosed by the document
+AXTextField | value: — | title: Global groove amount | description: Global groove amount | help: Groove amount not disclosed
+AXGroup | value:  | title: Owners named by the host: 3 admitted of 6. | description: Owners named by the host: 3 admitted of 6. | help: Owners named by the host: 3 admitted of 6.
+AXStaticText | value: 3 of 6 owners admitted | title:  | description:  | help: 
+AXStaticText | value: admitted | title:  | description:  | help: 
+AXStaticText | value: admitted | title:  | description:  | help: 
+AXStaticText | value: admitted | title:  | description:  | help: 
+AXStaticText | value: excluded by footprint | title:  | description:  | help: 
+AXStaticText | value: excluded by footprint | title:  | description:  | help: 
+AXStaticText | value: excluded by footprint | title:  | description:  | help: 
+# windows: 1
+# web areas: 1
+# elements visited: 1595
+# owner-discovery words searched in the same window:
+# AXIsProcessTrusted: true
+window: O-I Shell Candidate
+AXGroup | value:  | title: — . — . — | description:  | help: Position — bars . beats . sixteenths · native transport position unavailable
+AXGroup | value:  | title: — kHz | description:  | help: Rate — the engine's sample rate · unavailable
+AXGroup | value:  | title: — % | description:  | help: CPU — the engine's CPU load · unavailable
+AXCheckBox | value:  | title: Workbench | description: Workbench | help: Native sources, sessions and registered contribution bodies in the continuity workspace
+AXStaticText | value: No clip is selected. Select a clip in Session (a clip slot) or Arrangement (a clip on a lane) — the clip's readings open here read-only; editing waits for the document owner. | title:  | description:  | help: 
+AXStaticText | value: awaiting M3 edit API | title:  | description:  | help: 
+AXStaticText | value: awaiting M3 edit API | title:  | description:  | help: 
+AXStaticText | value: awaiting M3 edit API | title:  | description:  | help: 
+AXStaticText | value: awaiting M3 edit API | title:  | description:  | help: 
+AXStaticText | value: awaiting M3 edit API | title:  | description:  | help: 
+AXStaticText | value: awaiting M3 edit API | title:  | description:  | help: 
+AXStaticText | value: awaiting M3 edit API | title:  | description:  | help: 
+AXStaticText | value: awaiting M3 edit API | title:  | description:  | help: 
+AXStaticText | value: awaiting M3 edit API | title:  | description:  | help: 
+AXStaticText | value: awaiting M3 edit API | title:  | description:  | help: 
+AXStaticText | value: awaiting M3 edit API | title:  | description:  | help: 
+AXStaticText | value: awaiting M3 edit API | title:  | description:  | help: 
+AXStaticText | value: excluded by footprint | title:  | description:  | help: 
+AXStaticText | value: excluded by footprint | title:  | description:  | help: 
+AXStaticText | value: excluded by footprint | title:  | description:  | help: 
+# windows: 1
+# web areas: 1
+# elements visited: 1595
