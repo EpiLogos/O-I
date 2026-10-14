@@ -236,7 +236,7 @@ test('the frame announcement reaches the widget through the boundary reader and 
 test('the hosted panel publishes every announcement to the one handle and withdraws it on unmount; the Live cut is the audio workspace', async () => {
   const panel = await readFile(new URL('panels/expressions.tsx', here), 'utf8')
   assert.match(panel, /publishLiveTorusState\(liveTorusFromHost\(state\.instrument\)\)/)
-  assert.match(panel, /live = false; publishLiveTorusState\(null\)/)
+  assert.match(panel, /live = false;[^}]*publishLiveTorusState\(null\)/)
   assert.match(panel, /mode === 'audio' \? 'live' : mode/, 'the Live workspace stands the frame in its live cut')
   assert.doesNotMatch(panel, /if \(workspace\.mode === 'audio'\) return/, 'the audio early return that kept the frame out of Live is gone')
 })
@@ -249,7 +249,8 @@ test('Live centre: the instrument is the centre identity world.expressions; a Ti
   assert.match(app, /workspace\.mode === 'audio' && panel\.id !== 'world\.knowledge' && panel\.id !== 'world\.expressions' \|\|/)
   // a Timeline view in Live moves the centre identity off the instrument; the Live mode press returns to it (chooseMode)
   assert.match(app, /if \(frameMode === 'live'\) \{ setCenterPanel\(`native\.\$\{view\}`\); return \}/)
-  assert.match(app, /if \(next === 'live' \|\| next === 'expressions'\) \{ setCenterPanel\('world\.expressions'\)/, 'the Live mode press returns the centre to the instrument')
+  // Each mode's frame is its own (FOUNDATION F1): Live first opens on the instrument, and returns to whatever Live held.
+  assert.match(readFileSync(new URL('shell/modeFrames.ts', here), 'utf8'), /live: \{\.\.\.FRAME, centerPanel: 'world\.expressions'/, 'Live opens on the instrument')
   assert.match(app, /live-centre-torus/)
   const css = await readFile(new URL('live/liveCentre.css', here), 'utf8')
   assert.match(css, /background: var\(--bg-2\)/)

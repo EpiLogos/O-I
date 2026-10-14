@@ -115,6 +115,10 @@ function ContinuityBook({children}: {children: ReactNode}) {
   const workspace = useCandidateWorkspace()
   return <Continuity.Provider value={workspace}>{children}</Continuity.Provider>
 }
+/** The book when one is mounted, else null — for a part that can stand without it (it then shows nothing of the book). */
+export function useOptionalContinuity(): CandidateWorkspace | null {
+  return useContext(Continuity)
+}
 export function useContinuity(): CandidateWorkspace {
   const value = useContext(Continuity)
   if (!value) throw Error('The candidate continuity provider is absent')

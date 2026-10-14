@@ -2,13 +2,15 @@
 // the browser." The book holds them (NamedSet: the mode's own tree with its frame); this section saves the arrangement
 // in front of you and lists every set, newest first. Selecting a set stands in its mode and takes its arrangement.
 import {useState} from 'react'
-import {useContinuity} from '../continuity/workspace'
+import {useOptionalContinuity} from '../continuity/workspace'
 import {MODE_CURATION} from '../../../../../desktop/cradle/src/workspace/mode'
 
 export function SetsSection() {
-  const continuity = useContinuity()
-  const sets = continuity.current.sets ?? []
+  const continuity = useOptionalContinuity()
   const [naming, setNaming] = useState<string | null>(null)
+  // Sets live in the book; with no book mounted (a detached view, a render test) there is nothing to list or keep.
+  if (!continuity) return null
+  const sets = continuity.current.sets ?? []
   const save = () => { if (naming?.trim()) continuity.saveSet(naming); setNaming(null) }
   return <section className="browser-sets" aria-label="Sets" data-browser-category="sets">
     <header className="browser-sets-head">
