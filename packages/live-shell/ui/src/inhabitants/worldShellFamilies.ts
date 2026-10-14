@@ -16,6 +16,8 @@
  * declared waiting, honestly. */
 
 import {loadAgentShellFamilies} from './loadAgentShellFamilies.ts'
+import {admitKnowledgeGraphFamily} from './knowledgeGraphFamilyManifest.ts'
+import {admitAtlasFamily} from '../projections/atlas/atlasFamilyManifest.ts'
 import {declareFamilyExtension, inhabitantManifest, type InhabitantManifest} from './manifest.ts'
 import {quaternalLogicFamilyManifest, QUATERNAL_LOGIC_FAMILY_ID} from './quaternalLogicFamilyManifest.ts'
 // [L9 musical family] the QL field/PCM owner's instrument face — an additive
@@ -47,6 +49,7 @@ function declareCentralExtension(): void {
     faces: [
       {
         id: 'ground-hygiene',
+        dock: ['dock', 'pop-out'],
         presentations: ['compact', 'expanded'],
         liveSemantic: 'device-audio-fx',
         invariant: {transforms: 'the ground in focus — analysed, passed unchanged'},
@@ -54,6 +57,7 @@ function declareCentralExtension(): void {
       },
       {
         id: 'impact',
+        dock: ['dock', 'pop-out'],
         presentations: ['compact', 'expanded'],
         liveSemantic: 'device-audio-fx',
         invariant: {transforms: 'the selected folder or note — its neighbourhood read, passed unchanged'},
@@ -106,7 +110,7 @@ function declareCentralExtension(): void {
         note: 'The situated agent conversation: bound over the kernel Nara dialogue binding (op nara_dialogue → oi.nara-dialogue-binding/v1); canonical CAS stays in AIKit. The aperture opens the existing encounter surface — the shell builds no second conversation store.',
       },
     ],
-    detachedKinds: ['flow', 'file', 'encounter'],
+    detachedKinds: ['flow', 'file', 'encounter', 'device'],
     note: 'L2 extension: central\'s clip-view craft — ground/hygiene, impact, and the document/conversation devices. Base manifest (context-world, agent-identity) untouched.',
   })
 }
@@ -123,9 +127,11 @@ function declareSoftwareFactoryExtension(): void {
   declareFamilyExtension('software-factory', {
     id: SOFTWARE_FACTORY_EXTENSION_ID,
     by: 'zcode:rack-manifests-l2 (owner commission, WORLD-SHELL-DESIGN §12)',
+    detachedKinds: ['device'],
     faces: [
       {
         id: 'attempt-review',
+        dock: ['dock', 'pop-out'],
         presentations: ['expanded', 'full'],
         liveSemantic: 'capture',
         note: 'One run\'s attempts and their task trees as readings (op factory_attempt_read, factory_attempt_task_list_read, factory_attempt_task_read; build snapshot via factory_build_snapshot). Review, steer and interrupt writers wait for the Factory owner (the Buzz contract of record names the behaviours, not the writer).',
@@ -140,6 +146,10 @@ function declareSoftwareFactoryExtension(): void {
  * extensions onto the same bases and changes nothing. */
 export function loadWorldShellFamilies(): void {
   loadAgentShellFamilies()
+  // The two self-admitting families (atlas, knowledge graph) admit through their own idempotent admits as well: their
+  // module imports admit them once, but a door reset clears them and an import does not run again.
+  admitAtlasFamily()
+  admitKnowledgeGraphFamily()
   quaternalLogicFamilyManifest()
   declareCentralExtension()
   declareSoftwareFactoryExtension()

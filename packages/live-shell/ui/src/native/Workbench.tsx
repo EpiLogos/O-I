@@ -1,5 +1,5 @@
 import {contributionUnavailable} from './contributions'
-import {deviceBindingId, dropDeviceDetached, nativeDetachedBodySupported, placeDeviceDetached, publishDeviceWindowHost, type DeviceBinding, type DeviceDetachIdentity} from './detachedKinds'
+import {deviceBindingId, nativeDetachedBodySupported, placeDeviceDetached, publishDeviceWindowHost, type DeviceBinding, type DeviceDetachIdentity} from './detachedKinds'
 /** Receiving frame over the original native Workbench and the one continuity book. */
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import {Workbench, GroupPane, type WorkbenchProps} from '../../../../../desktop/cradle/src/surface/Workbench'
@@ -316,7 +316,7 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
       // No open window answers for this device: its detached entry is stale, and the rack shows it docked again.
       if (!String(cause).includes('no matching detached Surface')) throw cause
       current()
-      origin.book.setLayout(layout => dropDeviceDetached(layout, id))
+      origin.book.dropDetached(workspaceId, id)
     }
   }
   // The device door the racks read. Republished when the detached set changes, so each rack re-reads its devices' state.
@@ -569,7 +569,7 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
           // A device returns to its rack, never as a centre tab: its detached entry and binding leave the layout.
           if (binding.kind === 'device') {
             current()
-            latest.current.book.setLayout(layout => dropDeviceDetached(layout, binding.id))
+            latest.current.book.dropDetached(id, binding.id)
             return
           }
           await ownerIO(current, () => latest.current.kernel.apply({op: 'state'}))

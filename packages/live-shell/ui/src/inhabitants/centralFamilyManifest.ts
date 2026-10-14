@@ -1,13 +1,15 @@
 import {admitFamilyManifest, type FamilyManifest} from './familyManifest.ts'
+import type {InhabitantManifest} from './manifest.ts'
 
 /** Central — the ground the agents stand on (identity, context world, ground subjects). */
 export function centralFamilyManifest(): FamilyManifest {
-  return admitFamilyManifest({
+  const manifest: InhabitantManifest = {
     id: 'central',
+    detachedKinds: ['device'],
     browser: ['ground', 'agents'],
     faces: [
-      {id: 'context-world', presentations: ['compact', 'expanded'], liveSemantic: 'device-audio-fx', invariant: {transforms: 'the agent\'s context: Central ground reads and context writes'}, note: 'Context-world device face: reads the Central ground (teal), writes context (amber). Shared face — ai-kit owns the knowledge route, software-factory the write mode and receipts.'},
-      {id: 'agent-identity', presentations: ['compact'], liveSemantic: 'info', note: 'Agent identity read from the kernel roster (central.agent-profile-roster/v1); read-only, never a hardcoded crowd.'},
+      {id: 'context-world', dock: ['dock', 'pop-out'], presentations: ['compact', 'expanded'], liveSemantic: 'device-audio-fx', invariant: {transforms: 'the agent\'s context: Central ground reads and context writes'}, note: 'Context-world device face: reads the Central ground (teal), writes context (amber). Shared face — ai-kit owns the knowledge route, software-factory the write mode and receipts.'},
+      {id: 'agent-identity', dock: ['dock', 'pop-out'], presentations: ['compact'], liveSemantic: 'info', note: 'Agent identity read from the kernel roster (central.agent-profile-roster/v1); read-only, never a hardcoded crowd.'},
     ],
     params: {grammar: 'central/parameter-address/v1'},
     projections: ['central-roster-track-adapter'],
@@ -17,5 +19,6 @@ export function centralFamilyManifest(): FamilyManifest {
       contributes: ['roster-revisions'],
     },
     telemetry: 'central.ground.observations',
-  })
+  }
+  return admitFamilyManifest(manifest)
 }

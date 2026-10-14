@@ -72,7 +72,8 @@ test('loadWorldShellFamilies admits the sixth family and composes the L2 extensi
   const basesBefore = Object.fromEntries(FIVE.map(id => [id, JSON.stringify(door.familyManifest(id))]))
   world.loadWorldShellFamilies()
   // The door now holds six; ids sorted.
-  assert.deepEqual(door.allFamilyManifests().map(m => m.id), [...FIVE, 'quaternal-logic'].sort())
+  // The loader admits the same families the main window does: the atlas and knowledge-graph families join the six (seam 8).
+  assert.deepEqual(door.allFamilyManifests().map(m => m.id), [...FIVE, 'quaternal-logic', 'atlas-earth', 'knowledge-graph'].sort())
   // Every base manifest is byte-identical to before the extensions.
   for (const id of FIVE) {
     assert.equal(JSON.stringify(door.familyManifest(id)), basesBefore[id], `${id}: base unchanged by composition`)

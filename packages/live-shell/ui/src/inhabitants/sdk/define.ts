@@ -28,6 +28,7 @@ import type {DevicePresentation, FamilyManifest, FamilyManifestId} from '../fami
 import {admitFamilyManifest, allFamilyManifests, familyManifest, onFamilyManifestReset} from '../familyManifest.ts'
 import type {
   ConversationBodyDeclaration,
+  DetachedKind,
   DocumentBodyDeclaration,
   FaceDockLifecycle,
   InhabitantFaceDeclaration,
@@ -162,7 +163,13 @@ export interface DeviceDeclaration {
   readonly admission?: 'admitted' | 'waiting'
   /** Absent = `['compact', 'expanded', 'full']` (the agent-shell default). */
   readonly presentations?: readonly DevicePresentation[]
+  /** The face's dock lifecycle. Pop-out is the device default: a device pops out unless it opts out (`popOut: false`) or
+   * waits; see `devicePopsOut`. The author's other lifecycles (`dock`, `expand`) stand as declared. */
   readonly dock?: readonly FaceDockLifecycle[]
+  /** Pop-out opt-out (rack-device lifecycle, seam 8). Absent = a device pops out through the pane engine's detach door
+   * (`'pop-out'` in its dock, and the family carries the `device` detached kind). `false` = this face never pops out.
+   * A waiting face (`admission: 'waiting'`) has no owner to read, so it does not pop out unless it says so. */
+  readonly popOut?: boolean
   readonly document?: DocumentBodyDeclaration
   readonly conversation?: ConversationBodyDeclaration
   /** The face's §14 rows, in plate order. */
@@ -471,6 +478,24 @@ export function allSdkParamRows(): readonly SdkParamRow[] {
 // ---------------------------------------------------------------------------
 // declaration → door shape
 
+/** Whether an SDK device pops out: the default for every device, opted out by `popOut: false`, and withheld from a waiting
+ * face that does not say otherwise (no owner stands to read it, so there is no window to open). */
+export function devicePopsOut(device: DeviceDeclaration): boolean {
+  return device.popOut ?? device.admission !== 'waiting'
+}
+
+/** A device's dock lifecycle with pop-out applied by default (the one SDK-side default; hand-written manifests declare
+ * their own `pop-out` explicitly). Absent when the device declared no dock and opts out. */
+function deviceDock(device: DeviceDeclaration): readonly FaceDockLifecycle[] | undefined {
+  if (!devicePopsOut(device)) return device.popOut === false ? device.dock?.filter(lifecycle => lifecycle !== 'pop-out') : device.dock
+  return [...new Set<FaceDockLifecycle>([...(device.dock ?? ['dock']), 'pop-out'])]
+}
+
+/** The detached kinds a family's devices pop out through: the `device` kind, declared once when any device pops out. */
+function devicePopOutKinds(devices: readonly DeviceDeclaration[]): DetachedKind[] {
+  return devices.some(device => deviceDock(device)?.includes('pop-out')) ? ['device'] : []
+}
+
 function buildFaces(devices: readonly DeviceDeclaration[]): InhabitantFaceDeclaration[] {
   return devices.map(device => ({
     id: device.id,
@@ -482,7 +507,7 @@ function buildFaces(devices: readonly DeviceDeclaration[]): InhabitantFaceDeclar
     ...(device.note ? {note: device.note} : {}),
     ...(device.kind ? {kind: device.kind} : {}),
     ...(device.admission ? {admission: device.admission} : {}),
-    ...(device.dock ? {dock: device.dock} : {}),
+    ...(deviceDock(device) ? {dock: deviceDock(device)} : {}),
     ...(device.document ? {document: device.document} : {}),
     ...(device.conversation ? {conversation: device.conversation} : {}),
   }))
@@ -518,8 +543,10 @@ export function buildFamilyDeclaration(declaration: FamilyDeclaration): {
   manifest: InhabitantManifest
   params: readonly SdkParamRow[]
 } {
+  const popOutKinds = devicePopOutKinds(declaration.devices)
   const manifest: InhabitantManifest = {
     id: declaration.id,
+    ...(popOutKinds.length ? {detachedKinds: popOutKinds} : {}),
     browser: declaration.browser,
     faces: buildFaces(declaration.devices),
     params: {grammar: declaration.paramsGrammar},
@@ -570,11 +597,12 @@ export function admitFamily(declaration: FamilyDeclaration): AdmittedFamily {
  * composes — an extension that would leave the family failing the gate is
  * refused with the fault list. */
 export function declareDeviceExtension(declaration: DeviceExtensionDeclaration): FamilyExtension {
+  const extensionKinds = [...new Set<DetachedKind>([...declaration.detachedKinds ?? [], ...devicePopOutKinds(declaration.devices)])]
   const extension: FamilyExtension = {
     id: declaration.id,
     by: declaration.by,
     ...(declaration.devices.length ? {faces: buildFaces(declaration.devices)} : {}),
-    ...(declaration.detachedKinds ? {detachedKinds: declaration.detachedKinds} : {}),
+    ...(extensionKinds.length ? {detachedKinds: extensionKinds} : {}),
     ...(declaration.note ? {note: declaration.note} : {}),
   }
   const base = familyManifest(declaration.family)
@@ -595,7 +623,7 @@ export function declareDeviceExtension(declaration: DeviceExtensionDeclaration):
     detachedKinds: [
       ...(base as InhabitantManifest).detachedKinds ?? [],
       ...prior.flatMap(carried => carried.detachedKinds ?? []),
-      ...declaration.detachedKinds ?? [],
+      ...extension.detachedKinds ?? [],
     ],
   }
   const rows = buildRows(declaration.family, declaration.devices)

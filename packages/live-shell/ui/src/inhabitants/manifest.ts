@@ -235,10 +235,11 @@ export function inhabitantManifest(familyId: FamilyManifestId): InhabitantManife
     ...(base as InhabitantManifest).panelSlots ?? [],
     ...composed.extensions.flatMap(extension => extension.panelSlots ?? []),
   ]
-  const detachedKinds = [
+  // Deduplicated: a base and an extension may each declare the device kind (the family declares it once, honestly).
+  const detachedKinds = [...new Set([
     ...(base as InhabitantManifest).detachedKinds ?? [],
     ...composed.extensions.flatMap(extension => extension.detachedKinds ?? []),
-  ]
+  ])] as DetachedKind[]
   const capabilities = [
     ...(base as InhabitantManifest).capabilities ?? [],
     ...composed.extensions.flatMap(extension => extension.capabilities ?? []),

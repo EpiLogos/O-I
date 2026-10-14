@@ -91,6 +91,9 @@ export interface SurfaceBinding extends SurfacePresentationBinding {
    * the session runs instead of the login shell. */
   terminal?: {cwd?:string;command?:string[]};
   flow?: {flowRef:string;path:string};
+  /** A popped-out device's identity (seam 8): the family, face and aperture its manifest declares. A device has no kernel
+   * surface; its binding id is `device:{family}/{face}`. Mirrors the native owner's `device` field (windows.rs). */
+  device?: {family:string;face:string;aperture:{day:{project:string|null;sourceRef:string;documentId:string}|null;flow:{location:import("../kernel/types").CentralLocation}|null;conversation:{project:string|null;expressionRef:string|null;conversation?:string|null}|null;instrument:string|null}};
   view?: {fileHistory?:{open:boolean;revision?:string;expectedRevision?:string};constructionFrame?:{ref:string;requestId:string};graphOrigin?:string;knowledgePlane?: "graph"|"page";nativeKnowledge?:import('../knowledge/nativeFocus').NativeKnowledgeContext;encounterPlane?: "Conversation"|"Activity"|"Context"|"Inspect";
     /** The field's presentation state (field/model.ts `FieldPersisted`, plus the encounters of other worlds): restored with the layout, never a source. */
     field?: import("../field/model").FieldPersisted & {others?: Record<string, import("../field/model").FieldPersisted>}};

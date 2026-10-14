@@ -13,6 +13,10 @@ import {allInhabitantManifests} from '../inhabitants/manifest'
 import {loadWorldShellFamilies} from '../inhabitants/worldShellFamilies'
 import {DeviceFace} from '../inhabitants/inhabitantRack'
 
+// The receiving window loads the families the main window loads (ModeDetail calls the same loader at module load): one
+// loader, one door. A device body reads the registry at render, so the registry stands before the first admission.
+loadWorldShellFamilies()
+
 /** Receives the original Windows owner's existing binding; no surface/session
  * is opened again and the original frame owns redock and navigation contracts. */
 export function NativeDetached() {

@@ -47,7 +47,7 @@ export function deviceIdentityFault(identity: DeviceDetachIdentity, manifests: r
 
 /** A device window's binding: the workbench surface binding carrying the identity the native owner admits. The identity is
  * the binding's own `device` field; it is never a kernel surface. */
-export type DeviceBinding = SurfaceBinding & {readonly device?: DeviceDetachIdentity}
+export type DeviceBinding = SurfaceBinding
 
 /** The identity a device window's binding carries, or null where the binding carries none. */
 export function deviceIdentityOf(binding: SurfaceBinding): DeviceDetachIdentity | null {

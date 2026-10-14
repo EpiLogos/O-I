@@ -174,11 +174,13 @@ test("the extension path runs the door's validator too (the F1 escapes refuse)",
     devices: [{id: 'qa-doc', title: 'QA Doc', icon: 'lib', liveSemantic: 'info', kind: 'document', admission: 'waiting', note: 'waits',
                document: {kind: 'x', file: 'x.html', hosting: 'oi.document-frame/v1', saveRouter: ['saved', 'unchanged', 'stale', 'conflict', 'refused'], messages: ['m']}}],
   }), /breaks the device law/)
-  // A pop-out face without the family's detachedKinds refuses.
-  assert.throws(() => sdkDefine.declareDeviceExtension({
+  // A pop-out face through the SDK is a device: the kit declares the device kind for it, so the extension composes (the
+  // device default). A pop-out face the author opts out of with `popOut: false` carries no pop-out at all.
+  const qaPop = sdkDefine.declareDeviceExtension({
     id: 'central:qa-probe2', by: 'qa', family: 'central',
     devices: [{id: 'qa-pop', title: 'QA Pop', icon: 'form', liveSemantic: 'info', dock: ['dock', 'pop-out']}],
-  }), /breaks the device law/)
+  })
+  assert.deepEqual(qaPop.detachedKinds, ['device'])
   // The writers law runs on the extension path (N-A): an invented setter
   // refuses even though the family itself declared honest writers.
   assert.throws(() => sdkDefine.declareDeviceExtension({
