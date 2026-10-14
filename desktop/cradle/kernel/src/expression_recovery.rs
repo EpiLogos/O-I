@@ -764,9 +764,31 @@ fn draft_quarantine(value: &Value, expression_ref: &str) -> Result<(), String> {
     Ok(())
 }
 
+/// The outcome of one quarantine write. A record or scope over its bound is a
+/// named refusal, never an error: the open that keeps a draft must not stop on it.
+#[cfg(unix)]
+enum QuarantineCommit {
+    Written(Record),
+    /// `reason` names the bound: `record_bytes`, `scope_bytes` or `scope_records`.
+    OverSize {
+        reason: &'static str,
+        limit: usize,
+    },
+}
+
+/// What a quarantine write does to its record. A keep may create the record. A
+/// removal only shrinks it, so the scope bound (which it cannot raise) never refuses
+/// it: a removal must stay reachable when other records fill the scope.
+#[cfg(unix)]
+#[derive(Clone, Copy)]
+enum QuarantineMode {
+    Keep { previous_exists: bool },
+    Remove,
+}
+
 /// Write one record as the next revision: the sequence is allocated first, so a
-/// crash can leave a gap but never reissue a revision. Nothing is written when
-/// the record cannot be encoded or the scope would exceed its bounds.
+/// crash can leave a gap but never reissue a revision. Nothing is written when the
+/// record or the scope would exceed its bounds.
 #[cfg(unix)]
 fn commit_quarantine(
     root: &unix::Directory,
@@ -774,18 +796,23 @@ fn commit_quarantine(
     scope: Scope,
     sequence: &mut u64,
     expression_ref: &str,
-    previous_exists: bool,
+    mode: QuarantineMode,
     value: Value,
-) -> Result<Record, String> {
+) -> Result<QuarantineCommit, String> {
     let kind = Kind::DraftQuarantine;
     let id = expression_ref;
+    let (previous_exists, shrinking) = match mode {
+        QuarantineMode::Keep { previous_exists } => (previous_exists, false),
+        QuarantineMode::Remove => (true, true),
+    };
     let entries = inventory(dir)?;
     if !previous_exists && entries.len() >= MAX_RECORDS {
-        return Err(
-            "Native recovery scope exceeds 256 records; no retained work was evicted".into(),
-        );
+        return Ok(QuarantineCommit::OverSize {
+            reason: "scope_records",
+            limit: MAX_RECORDS,
+        });
     }
-    *sequence = sequence
+    let next = sequence
         .checked_add(1)
         .filter(|v| *v <= MAX_REVISION)
         .ok_or("Native recovery revision exhausted")?;
@@ -794,10 +821,20 @@ fn commit_quarantine(
         scope,
         kind,
         id: id.into(),
-        revision: *sequence,
+        revision: next,
         value,
     };
-    let bytes = encode_record(&record)?;
+    let bytes = match encode_record(&record) {
+        Ok(bytes) => bytes,
+        // Only the byte bounds are named refusals; any other encoding failure stays an error.
+        Err(error) if error.contains("MiB") => {
+            return Ok(QuarantineCommit::OverSize {
+                reason: "record_bytes",
+                limit: MAX_RECORD_BYTES,
+            })
+        }
+        Err(error) => return Err(error),
+    };
     let target = filename(kind, id);
     let total = entries
         .iter()
@@ -807,15 +844,26 @@ fn commit_quarantine(
                 .checked_add(*len)
                 .ok_or("Native recovery size overflow")
         })?;
-    if total > MAX_SCOPE_BYTES {
-        return Err("Native recovery scope exceeds 64 MiB; no retained work was evicted".into());
+    if !shrinking && total > MAX_SCOPE_BYTES {
+        return Ok(QuarantineCommit::OverSize {
+            reason: "scope_bytes",
+            limit: MAX_SCOPE_BYTES,
+        });
     }
+    *sequence = next;
     root.atomic(
         ".sequence",
         &serde_json::to_vec(sequence).map_err(|e| e.to_string())?,
     )?;
     dir.atomic(&target, &bytes)?;
-    Ok(record)
+    Ok(QuarantineCommit::Written(record))
+}
+
+/// The named reply for a kept-draft record that cannot be read. Nothing is written
+/// over it: its bytes stay where they are and the caller keeps its draft elsewhere.
+#[cfg(unix)]
+fn quarantine_unreadable(detail: &str) -> Value {
+    json!({"schema":SCHEMA,"state":"quarantine_unreadable","detail":detail})
 }
 
 #[cfg(unix)]
@@ -1435,14 +1483,28 @@ impl Store {
             Request::Read { kind, id, .. } => {
                 safe_id(&id)?;
                 let name = filename(kind, &id);
-                let bytes = snapshot_record(&dir, &name)?;
+                // A kept-draft record that cannot be read is a named reply, never an error the open must stop on.
+                let bytes = match snapshot_record(&dir, &name) {
+                    Ok(bytes) => bytes,
+                    Err(detail) if kind == Kind::DraftQuarantine => {
+                        return Ok(quarantine_unreadable(&detail))
+                    }
+                    Err(detail) => return Err(detail),
+                };
                 // Capture coherent durable bytes while writers are excluded;
                 // expensive decoding and qualification do not hold their lock.
                 drop(lock);
-                let record = bytes
+                let record = match bytes
                     .as_deref()
                     .map(|bytes| qualify_snapshot(scope, &name, sequence, bytes, true))
-                    .transpose()?;
+                    .transpose()
+                {
+                    Ok(record) => record,
+                    Err(detail) if kind == Kind::DraftQuarantine => {
+                        return Ok(quarantine_unreadable(&detail))
+                    }
+                    Err(detail) => return Err(detail),
+                };
                 Ok(ready(record.as_ref()))
             }
             Request::List { kind, .. } => {
@@ -1587,7 +1649,11 @@ impl Store {
                 let draft = verbatim_draft(&text, &draft_id)?;
                 let entry_id = draft_material_digest(&draft)?;
                 let name = filename(Kind::DraftQuarantine, &expression_ref);
-                let previous = read_record(&dir, scope, &name, sequence, true)?;
+                // An unreadable quarantine is named and left as it is: nothing is written over its bytes.
+                let previous = match read_record(&dir, scope, &name, sequence, true) {
+                    Ok(previous) => previous,
+                    Err(detail) => return Ok(quarantine_unreadable(&detail)),
+                };
                 let current = previous.as_ref().map(|r| r.revision);
                 if current != expected_revision {
                     return Ok(conflict(current));
@@ -1610,6 +1676,7 @@ impl Store {
                     return Ok(json!({"schema":SCHEMA,"state":"quarantine_full",
                         "limit":MAX_QUARANTINE_ENTRIES,"kept":entries.len(),"revision":current}));
                 }
+                let kept_before = entries.len();
                 entries.push(json!({
                     "id": entry_id,
                     "draft_id": draft_id,
@@ -1618,19 +1685,26 @@ impl Store {
                     "text": text,
                 }));
                 let value = json!({"schema":QUARANTINE_SCHEMA,"expression_ref":expression_ref,"entries":entries});
-                let record = commit_quarantine(
+                match commit_quarantine(
                     &root,
                     &dir,
                     scope,
                     &mut sequence,
                     &expression_ref,
-                    previous.is_some(),
+                    QuarantineMode::Keep {
+                        previous_exists: previous.is_some(),
+                    },
                     value,
-                )?;
-                Ok(
-                    json!({"schema":SCHEMA,"state":"quarantine_kept","kept":true,
-                    "entry_id":entry_id,"revision":record.revision}),
-                )
+                )? {
+                    QuarantineCommit::Written(record) => Ok(
+                        json!({"schema":SCHEMA,"state":"quarantine_kept","kept":true,
+                        "entry_id":entry_id,"revision":record.revision}),
+                    ),
+                    // Over a byte bound nothing is written and no kept copy moves: the caller keeps its draft elsewhere and names the bound.
+                    QuarantineCommit::OverSize { reason, limit } => Ok(json!({"schema":SCHEMA,
+                        "state":"quarantine_over_size","reason":reason,"limit":limit,
+                        "kept":kept_before,"revision":current})),
+                }
             }
             Request::RemoveDraftQuarantine {
                 expression_ref,
@@ -1641,7 +1715,11 @@ impl Store {
                 reference(&expression_ref)?;
                 safe_id(&entry_id)?;
                 let name = filename(Kind::DraftQuarantine, &expression_ref);
-                let Some(previous) = read_record(&dir, scope, &name, sequence, true)? else {
+                let previous = match read_record(&dir, scope, &name, sequence, true) {
+                    Ok(previous) => previous,
+                    Err(detail) => return Ok(quarantine_unreadable(&detail)),
+                };
+                let Some(previous) = previous else {
                     return Ok(conflict(None));
                 };
                 if previous.revision != expected_revision {
@@ -1658,19 +1736,23 @@ impl Store {
                 }
                 let remaining = entries.len();
                 let value = json!({"schema":QUARANTINE_SCHEMA,"expression_ref":expression_ref,"entries":entries});
-                let record = commit_quarantine(
+                match commit_quarantine(
                     &root,
                     &dir,
                     scope,
                     &mut sequence,
                     &expression_ref,
-                    true,
+                    QuarantineMode::Remove,
                     value,
-                )?;
-                Ok(
-                    json!({"schema":SCHEMA,"state":"quarantine_entry_removed","entry_id":entry_id,
-                    "remaining":remaining,"revision":record.revision}),
-                )
+                )? {
+                    QuarantineCommit::Written(record) => Ok(
+                        json!({"schema":SCHEMA,"state":"quarantine_entry_removed","entry_id":entry_id,
+                        "remaining":remaining,"revision":record.revision}),
+                    ),
+                    QuarantineCommit::OverSize { .. } => Err(
+                        "The owner could not write the kept drafts without the removed entry. Nothing was removed.".into(),
+                    ),
+                }
             }
             Request::OpenConfiguration {
                 scope,
@@ -3027,6 +3109,121 @@ mod tests {
         assert_eq!(
             listed["records"][0]["entries"],
             json!(MAX_QUARANTINE_ENTRIES)
+        );
+    }
+
+    #[test]
+    fn an_over_size_keep_is_named_and_leaves_every_kept_copy_as_it_was() {
+        let home = Home::new();
+        let expression = "expression:quarantine-bytes";
+        // Each draft carries about 5 MiB of verbatim text: two of them exceed the 8 MiB bound of one Expression's quarantine record.
+        let big = |id: &str| {
+            let mut value = draft(id);
+            value["retained"] = json!("x".repeat(5 * 1024 * 1024));
+            serde_json::to_string(&value).unwrap()
+        };
+        let first = home
+            .store()
+            .apply(keep(expression, "b1", &big("b1"), None))
+            .unwrap();
+        assert_eq!(first["state"], "quarantine_kept", "{first}");
+        let revision = first["revision"].as_u64().unwrap();
+        let path = home.path(Scope::Expressions, Kind::DraftQuarantine, expression);
+        let before = fs::read(&path).unwrap();
+        let refused = home
+            .store()
+            .apply(keep(expression, "b2", &big("b2"), Some(revision)))
+            .unwrap();
+        assert_eq!(refused["state"], "quarantine_over_size", "{refused}");
+        assert_eq!(refused["reason"], "record_bytes");
+        assert_eq!(refused["limit"], json!(MAX_RECORD_BYTES));
+        assert_eq!(refused["kept"], json!(1));
+        assert_eq!(
+            fs::read(&path).unwrap(),
+            before,
+            "the kept copy is not rewritten by a refused keep"
+        );
+        let reading = home
+            .store()
+            .apply(read(Scope::Expressions, Kind::DraftQuarantine, expression))
+            .unwrap();
+        assert_eq!(reading["record"]["revision"], json!(revision));
+        assert_eq!(
+            reading["record"]["value"]["entries"]
+                .as_array()
+                .unwrap()
+                .len(),
+            1
+        );
+        // Removing the kept copy frees its bytes: the same draft is then kept.
+        let removed = home
+            .store()
+            .apply(Request::RemoveDraftQuarantine {
+                scope: Scope::Expressions,
+                expression_ref: expression.into(),
+                entry_id: first["entry_id"].as_str().unwrap().into(),
+                expected_revision: revision,
+            })
+            .unwrap();
+        assert_eq!(removed["state"], "quarantine_entry_removed");
+        let kept_now = home
+            .store()
+            .apply(keep(
+                expression,
+                "b2",
+                &big("b2"),
+                Some(removed["revision"].as_u64().unwrap()),
+            ))
+            .unwrap();
+        assert_eq!(kept_now["state"], "quarantine_kept", "{kept_now}");
+    }
+
+    #[test]
+    fn a_kept_record_that_cannot_be_read_is_named_and_is_never_overwritten() {
+        let home = Home::new();
+        let expression = "expression:quarantine-corrupt";
+        let kept = home
+            .store()
+            .apply(keep(
+                expression,
+                "d1",
+                &kept_text("d1", "Draft", 1, false),
+                None,
+            ))
+            .unwrap();
+        let path = home.path(Scope::Expressions, Kind::DraftQuarantine, expression);
+        fs::write(&path, b"{ a torn write").unwrap();
+        let damaged = fs::read(&path).unwrap();
+        let reading = home
+            .store()
+            .apply(read(Scope::Expressions, Kind::DraftQuarantine, expression))
+            .unwrap();
+        assert_eq!(reading["state"], "quarantine_unreadable", "{reading}");
+        assert!(!reading["detail"].as_str().unwrap_or_default().is_empty());
+        let refused = home
+            .store()
+            .apply(keep(
+                expression,
+                "d2",
+                &kept_text("d2", "Other", 2, false),
+                Some(kept["revision"].as_u64().unwrap()),
+            ))
+            .unwrap();
+        assert_eq!(refused["state"], "quarantine_unreadable", "{refused}");
+        let removal = home
+            .store()
+            .apply(Request::RemoveDraftQuarantine {
+                scope: Scope::Expressions,
+                expression_ref: expression.into(),
+                entry_id: kept["entry_id"].as_str().unwrap().into(),
+                expected_revision: 1,
+            })
+            .unwrap();
+        assert_eq!(removal["state"], "quarantine_unreadable", "{removal}");
+        assert_eq!(
+            fs::read(&path).unwrap(),
+            damaged,
+            "the unreadable bytes stay exactly as they were"
         );
     }
 
