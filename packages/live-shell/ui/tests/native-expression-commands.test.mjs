@@ -107,7 +107,7 @@ test('save is the owner save request on the captured basis, and nothing else', a
   assert.deepEqual(sent, [{operation: 'save', basis: content.basis}])
 })
 
-test('collection sections map the app groups to Featured, Starters and Built-in presets, with a disabled open on every row', () => {
+test('collection sections map the app groups to Featured, Starters and Built-in presets', () => {
   const items = [
     {id: 'f1', name: 'Mark', description: 'The mark', group: 'Featured'},
     {id: 's1', name: 'Material scene', description: 'Starter material', group: 'Material'},
@@ -118,8 +118,6 @@ test('collection sections map the app groups to Featured, Starters and Built-in 
   const sections = CMD.collectionSections(items, '')
   assert.deepEqual(sections.map(section => [section.id, section.title, section.rows.map(row => row.id)]), [
     ['featured', 'Featured', ['f1']], ['starters', 'Starters', ['s1', 's2']], ['presets', 'Built-in presets', ['p1', 'p2']]])
-  for (const row of sections.flatMap(section => section.rows)) assert.deepEqual(row.open, {disabled: true, reason: CMD.FORK_REASON})
-  assert.match(CMD.FORK_REASON, /save_as owner operation/)
   assert.deepEqual(CMD.collectionSections(items, 'chakra').map(section => section.rows.length), [0, 0, 1])
   assert.deepEqual(CMD.collectionSections(items, '  CORPUS ').map(section => section.rows.length), [0, 1, 0])
 })
@@ -136,18 +134,6 @@ test('the collection rows are the app own collections: featured, starters and bu
   assert.deepEqual(items.filter(item => item.group === 'Composition' || item.group === 'Native').map(item => item.id), presets.map(point => point.id))
   assert.ok(featured.length >= 1 && presets.length >= 1 && starters.length >= 1, 'the app ships collections in every section')
   assert.equal(COL.appCollectionItems(), items, 'the app collections are read once')
-})
-
-test('the collections render read-only, with each action disabled and its reason on the page', () => {
-  const markup = renderToStaticMarkup(createElement(COL.NativeExpressionCollections, {query: ''}))
-  for (const title of ['Featured', 'Starters', 'Built-in presets']) assert.match(markup, new RegExp(`aria-label="${title}"`))
-  const first = App.featuredExpressions()[0]
-  assert.match(markup, new RegExp(escapeHtml(first.name)))
-  assert.equal((markup.match(/<button[^>]*disabled=""[^>]*>Open<\/button>/g) ?? []).length, COL.appCollectionItems().length)
-  assert.doesNotMatch(markup, /<button(?![^>]*disabled)[^>]*>Open</)
-  assert.ok(markup.includes(escapeHtml(CMD.FORK_REASON)), 'the reason is shown, not only in a title')
-  assert.match(markup, /Fork as variation and Remove saved copy need native owner operations/)
-  assert.match(renderToStaticMarkup(createElement(COL.NativeExpressionCollections, {query: 'zz-no-such-collection'})), /No collections match this search\./)
 })
 
 test('the guide shows the app quick guide, About and the shortcuts the shell binds', () => {

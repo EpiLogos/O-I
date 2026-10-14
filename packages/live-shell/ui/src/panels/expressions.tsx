@@ -27,6 +27,7 @@ import {answerHostedSummon, sameSummonBasis, SOURCE_PRESENT, summonBasis} from '
 import type {StudioSection} from '@epilogos/expressions-boundary'
 import type {HostedAppState, StageCommand, StageResult} from '@epilogos/expressions-boundary'
 import {NativeStageTools} from '../components/NativeStageTools'
+import {enumerateWorks, needsListing, setExpressionOwner} from '../components/nativeExpressionCommands'
 import {publishFrameTakeLink} from '../native/frameTakes'
 import {publishHostedChrome, publishHostedExpressions, useFramePlacement} from '../projections/expressionsPaneHost'
 import {followFrame} from '../projections/framePlacement'
@@ -34,7 +35,6 @@ import {registerExpressionsPaneHost} from '../projections/expressionsPane'
 import {liveTorusFromHost, publishLiveTorusState, setLiveInstrumentCommander} from '../live/torusInstrument'
 import {setLivePerformanceChannel} from '../live/LivePresets'
 
-interface NativeWork {expression_ref: string; title: string; revision: number}
 const expressionDescriptor = registeredHostedSurfaces.find(row => row.descriptor.kind === 'expressions')?.descriptor
 
 /** The one application body carries an ordinary native workbench binding.
@@ -179,22 +179,23 @@ export function ExpressionsPanel() {
       if (transport.kind === 'unavailable') {fail(transport.reason); return}
       const context = (): ChannelContext => ({mode: modeRef.current, bindingId: 'world.expressions', epoch: 0,
         signal: abort.signal, state: mounted?.host.getState() ?? null, current: () => live})
+      // The browser's Open and New reach the owner only through this channel (components/nativeExpressionCommands.ts setExpressionOwner).
+      setExpressionOwner(request => owners.channels['kernel-expression'](request, context()))
       const continued = config.saved_works !== undefined && !(Array.isArray(config.saved_works) && config.saved_works.length === 0)
         ? await reopenConfiguredWorks(owners, context(), config.saved_works) : null
       const knownRef = checkpointRef(expressionBinding(bookRef.current.current))
       const initial = (knownRef ? continued?.works.find(work => work.expression_ref === knownRef) : undefined)
         ?? (knownRef ? undefined : continued?.works.find(work => work.scope === modeRef.current) ?? continued?.works[0])
       if (knownRef && continued && !initial) throw Error('The selected Expression has no configured native recovery address; its workspace checkpoint has been retained')
-      const enumerate = async () => {
+      const enumerate = () => {
         const epoch = workspaceRef.current.accessEpoch
-        const inventory = await owners.channels['kernel-expression']({operation: 'list'}, context()) as {expressions?: NativeWork[]}
-        if (!live || !workspaceRef.current.nativeAccessCurrent(epoch)) return []
-        const existing = inventory.expressions ?? []
-        workspaceRef.current.publishWorks(existing)
-        return existing
+        return enumerateWorks(request => owners.channels['kernel-expression'](request, context()), works => workspaceRef.current.publishWorks(works),
+          () => live && workspaceRef.current.nativeAccessCurrent(epoch))
       }
-      // Known open work takes its owner's direct boot route. Enumeration is
-      // only needed to choose a first work when there is no held address.
+      // The works are listed and published after boot in every case, so the browser and Technē's Sources show them while a work is open:
+      // before mounting when no address is held (the list chooses the first work), after mounting when a known work takes its direct boot route.
+      // A work made later (New, an opened starter, a frame Save) is listed the first time the frame presents it (onState).
+      let listedFor: string | null = null
       const existing = knownRef || initial ? [] : await enumerate()
       if (!live) return
       const initialRef = knownRef ?? initial?.expression_ref ?? existing[0]?.expression_ref
@@ -230,6 +231,8 @@ export function ExpressionsPanel() {
           setStage(previous => JSON.stringify(previous) === JSON.stringify(state) ? previous : state)
           setNativeEngineMounted(!!state.nativeScene)
           workspaceRef.current.publishReading(state)
+          const presentedRef = state.nativeScene?.expression_ref
+          if (needsListing(presentedRef, listedFor, workspaceRef.current.nativeWorks)) {listedFor = presentedRef ?? null; void enumerate().catch(fail)}
           // The Expressions pane body presents this one frame's reading by value (T-EXPRESSIONS-PANE-LEASE); it holds no frame.
           publishHostedExpressions({expression_ref: state.nativeScene?.expression_ref ?? null, title: state.document?.name ?? null})
           // The one instrument's reading (ticket T-LIVE-TORUS-INSTRUMENT): the frame's announced owner reading, or its withdrawal.
@@ -310,7 +313,7 @@ export function ExpressionsPanel() {
     window.addEventListener('oi:epi-examine', examine)
     const observer = new MutationObserver(visible)
     for (let parent: HTMLElement | null = target; parent; parent = parent.parentElement) observer.observe(parent, {attributes: true, attributeFilter: ['hidden', 'inert', 'style', 'class']})
-    return () => {live = false; publishLiveTorusState(null); publishHostedExpressions(null); ++facadeGeneration; openRequest.current = null; openDraftRequest.current = null; requalify.current = null; abort.abort(); observer.disconnect(); window.removeEventListener('oi:epi-examine', examine); window.removeEventListener(NATIVE_OPEN_STUDIO, openStudio); window.removeEventListener(NATIVE_ENGINE_COMMAND, engineCommand);
+    return () => {live = false; setExpressionOwner(null); publishLiveTorusState(null); publishHostedExpressions(null); ++facadeGeneration; openRequest.current = null; openDraftRequest.current = null; requalify.current = null; abort.abort(); observer.disconnect(); window.removeEventListener('oi:epi-examine', examine); window.removeEventListener(NATIVE_OPEN_STUDIO, openStudio); window.removeEventListener(NATIVE_ENGINE_COMMAND, engineCommand);
       stopSelection.current?.(); stopSelection.current = null; navigator.current?.dispose(); navigator.current = null;
       stopInstruments?.(); stopInstruments = null;
       stopEditor?.(); editor?.dispose(); workspace.attachEditor(null); workspace.publishEditorReading(null);
