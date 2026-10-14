@@ -1,0 +1,49 @@
+{
+  "schema": "factory.inhabitation-reading/v1",
+  "project_ref": "project:00000000000PLACEHOLDER0001",
+  "central_project_ref": {"state": "present", "value": "PLACEHOLDER-PROJECT", "source": "factory.developmental-local-provider/v1:centralProjectLinks"},
+  "filter": {"run_ref": "run:01Z0000000000000000000RUN1", "position_ref": null},
+  "runs": [
+    {
+      "run_ref": "run:01Z0000000000000000000RUN1",
+      "lifecycle": "seeded",
+      "journey_refs": ["journey:01Z00000000000000000JRNY1"],
+      "positions": [
+        {
+          "position_ref": "central:position:project:PLACEHOLDER-PROJECT:position-a",
+          "in_custody": true,
+          "custody": [
+            {
+              "custody_ref": "factory:custody:00000000-0000-7000-8000-00000000000a",
+              "position_ref": "central:position:project:PLACEHOLDER-PROJECT:position-a",
+              "work_ref": "central:path:Control:agents/now/placeholder-subject.md",
+              "run_ref": "run:01Z0000000000000000000RUN1",
+              "journey_ref": "journey:01Z00000000000000000JRNY1",
+              "state": "in-progress"
+            }
+          ],
+          "attempt_refs": ["attempt:placeholder-survey-1"],
+          "current_attempt_refs": []
+        }
+      ],
+      "custody": [],
+      "occupants": [
+        {
+          "attempt_ref": "attempt:placeholder-survey-1",
+          "current_attempt": true,
+          "participant": {"position_ref": {"state": "present", "value": "central:position:project:PLACEHOLDER-PROJECT:position-a"}},
+          "body": {
+            "agent_session_ref": {"state": "present", "value": "agent-session/placeholder-survey"},
+            "session_space_ref": {"state": "present", "value": "session-space/placeholder-survey"}
+          }
+        },
+        {
+          "attempt_ref": "attempt:placeholder-review-1",
+          "participant": {"position_ref": {"state": "absent", "reason": "placeholder"}},
+          "body": {"agent_session_ref": {"state": "absent", "reason": "placeholder"}}
+        }
+      ]
+    }
+  ],
+  "custody_outside_runs": []
+}
