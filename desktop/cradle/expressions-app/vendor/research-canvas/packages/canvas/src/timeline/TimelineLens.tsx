@@ -316,7 +316,12 @@ export function TimelineLens({
     () => state.items.map((item) => ({ id: item.graphNodeId, fromMs: item.startMs, toMs: bandExtent(item).toMs })),
     [state.items],
   );
-  const nesting = nestingAt(containment ?? [], nestItems, renderCamera, lod);
+  // A collapsed count is display: children the category chips hide neither count nor hold their parent open.
+  const chipHiddenNestIds = useMemo(
+    () => new Set(state.items.filter((item) => !visibleCategories[deriveTimelineCategory(item.node)]).map((item) => item.graphNodeId)),
+    [state.items, visibleCategories],
+  );
+  const nesting = nestingAt(containment ?? [], nestItems, renderCamera, lod, chipHiddenNestIds);
   const categoryPlaced = allPlaced.filter((p) =>
     visibleCategories[deriveTimelineCategory(p.item.node)] && !nesting.hidden.has(p.item.graphNodeId));
   // Broad tier (lane-2 T12): at the marker band, placements that share an

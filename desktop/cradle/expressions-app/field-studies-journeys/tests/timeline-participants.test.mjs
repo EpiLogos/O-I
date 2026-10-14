@@ -158,3 +158,35 @@ test('a reading with no validity hands the lens no participant spans', ()=>{
  const {spans}=relations.participantSpansFromReading(personReading([]));
  assert.deepEqual(participantSpans.participantMarks(spans,camera),[]);
 });
+
+// lane-2 T14 with T3 — a stated uncertainty is visible temporality on the span, never a hard edge. The class comes from the
+// authority's standing grammar (disputed and mythic words only); any other stated uncertainty softens both ends. No end moves.
+test('a span with a stated uncertainty is marked uncertain; its geometry is the same as the certain span', ()=>{
+ const camera=viewport.timeCamera({centerYear:1900,pixelsPerYear:5,widthPx:1000});
+ const span=uncertainty=>({participant_ref:'person:ada',participant_kind:'subject',fromMs:SPAN_FROM,toMs:SPAN_TO,uncertainty,source_ref:null});
+ const [certain]=participantSpans.participantMarks([span(null)],camera);
+ const [circa]=participantSpans.participantMarks([span('circa')],camera);
+ assert.equal(certain.uncertain,false,'no uncertainty, no softening');
+ assert.equal(circa.uncertain,true,'a circa end is drawn soft');
+ assert.equal(circa.standing,null,'circa names no disputed or mythic class');
+ assert.equal(circa.leftPx,certain.leftPx,'an uncertain end does not move the span');
+ assert.equal(circa.widthPx,certain.widthPx,'nor its width');
+});
+
+test('disputed and mythic uncertainty take the authority standing class; the verbatim string rides in the title', ()=>{
+ const camera=viewport.timeCamera({centerYear:1900,pixelsPerYear:5,widthPx:1000});
+ const span=uncertainty=>({participant_ref:'person:ada',participant_kind:'subject',fromMs:SPAN_FROM,toMs:SPAN_TO,uncertainty,source_ref:null});
+ const [disputed]=participantSpans.participantMarks([span('death disputed by a later editor')],camera);
+ assert.equal(disputed.standing,'disputed');
+ assert.match(disputed.title,/death disputed by a later editor/,'the verbatim uncertainty is never replaced');
+ const [mythic]=participantSpans.participantMarks([span('the legend of his birth')],camera);
+ assert.equal(mythic.standing,'mythic');
+ assert.equal(mythic.uncertain,true);
+});
+
+test('a blank uncertainty is no uncertainty at all', ()=>{
+ const camera=viewport.timeCamera({centerYear:1900,pixelsPerYear:5,widthPx:1000});
+ const [blank]=participantSpans.participantMarks([{participant_ref:'x',participant_kind:'place',fromMs:SPAN_FROM,toMs:SPAN_TO,uncertainty:'   ',source_ref:null}],camera);
+ assert.equal(blank.uncertain,false);
+ assert.equal(blank.standing,null);
+});

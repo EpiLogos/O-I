@@ -2630,3 +2630,15 @@
   color: var(--ob-dim);
   white-space: nowrap;
 }
+/* lane-2 T14 / T3 — a stated uncertainty (circa, uncertain, disputed, mythic) draws its span soft at both ends, never as a hard edge; disputed and mythic also dash. The mask uses only the token's alpha. */
+:where(.research-instrument) .timeline-participant[data-uncertain="true"] .timeline-participant-line {
+  -webkit-mask-image: linear-gradient(to right, transparent, var(--ob-ink) 16px, var(--ob-ink) calc(100% - 16px), transparent);
+  mask-image: linear-gradient(to right, transparent, var(--ob-ink) 16px, var(--ob-ink) calc(100% - 16px), transparent);
+}
+:where(.research-instrument) .timeline-participant[data-standing="disputed"] .timeline-participant-line,
+:where(.research-instrument) .timeline-participant[data-standing="mythic"] .timeline-participant-line {
+  -webkit-mask-image: linear-gradient(to right, transparent, var(--ob-ink) 16px, var(--ob-ink) calc(100% - 16px), transparent), repeating-linear-gradient(to right, var(--ob-ink) 0 4px, transparent 4px 7px);
+  mask-image: linear-gradient(to right, transparent, var(--ob-ink) 16px, var(--ob-ink) calc(100% - 16px), transparent), repeating-linear-gradient(to right, var(--ob-ink) 0 4px, transparent 4px 7px);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+}

@@ -6,9 +6,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {build} from 'esbuild';
 import {fileURLToPath} from 'node:url';
-const compiled=await build({stdin:{contents:"export * as nesting from '../../vendor/research-canvas/packages/canvas/src/timeline/nesting.ts';export * as viewport from '../../vendor/research-canvas/packages/canvas/src/timeline/viewport.ts';export * as relations from '../../../src/techne/m0m5/timeline/relations.ts';",resolveDir:fileURLToPath(new URL('../src/',import.meta.url)),loader:'ts'},tsconfig:fileURLToPath(new URL('../tsconfig.json',import.meta.url)),bundle:true,platform:'node',format:'esm',write:false,logLevel:'silent'});
+const compiled=await build({stdin:{contents:"export * as nesting from '../../vendor/research-canvas/packages/canvas/src/timeline/nesting.ts';export * as viewport from '../../vendor/research-canvas/packages/canvas/src/timeline/viewport.ts';export * as relations from '../../../src/techne/m0m5/timeline/relations.ts';export * as clusters from '../../vendor/research-canvas/packages/canvas/src/timeline/clusters.ts';",resolveDir:fileURLToPath(new URL('../src/',import.meta.url)),loader:'ts'},tsconfig:fileURLToPath(new URL('../tsconfig.json',import.meta.url)),bundle:true,platform:'node',format:'esm',write:false,logLevel:'silent'});
 const api=await import('data:text/javascript;base64,'+Buffer.from(compiled.outputFiles[0].text).toString('base64'));
-const {nesting,viewport,relations}=api;
+const {nesting,viewport,relations,clusters}=api;
 
 const Y=(year)=>Date.UTC(year,0,1);
 const DAY=86_400_000;
@@ -164,4 +164,90 @@ test('same-start children do not keep their parent collapsed once the view is pa
  const state=nesting.nestingAt(pairs,[parent,...kids],camera(DETAIL),'detail');
  assert.deepEqual(state.collapsed,[],'two children at the same instant do not hold their parent closed');
  assert.equal(nesting.nestingAt(pairs,[parent,...kids],camera(MARKER),'marker').collapsed.length,1,'the marker tier still collapses');
+});
+
+// lane-2 T9, bounded loading. The view loads only the window it shows, so a dated child can be missing from the loaded items.
+// A parent with such a child is incomplete: its extent would be measured from part of its children, so it stays expanded.
+test('a parent with a dated child the view has not loaded stays expanded; its loaded children still collapse', ()=>{
+ const loaded=ITEMS.filter(item=>item.id!=='b3');
+ const dated=PAIRS.map(pair=>({...pair,dated:true}));
+ const state=nesting.nestingAt(dated,loaded,camera(MARKER),'marker');
+ assert.equal(state.collapsed.some(span=>span.parent==='war'),false,'the war stays expanded: its battle b3 is dated and not loaded');
+ assert.equal(state.hidden.has('e7')||state.hidden.has('e8')||state.hidden.has('e9'),true,'b3 is loaded-complete, so its own events still collapse under it');
+ assert.deepEqual(state.collapsed.map(span=>span.parent).sort(),['b1','b2','b3'],'each battle with all its children loaded collapses');
+});
+
+test('an undated child that is never placed on the axis does not hold its parent open', ()=>{
+ const loaded=ITEMS.filter(item=>item.id!=='b3');
+ const state=nesting.nestingAt(PAIRS,loaded,camera(MARKER),'marker');
+ assert.deepEqual(state.collapsed.filter(span=>span.parent==='war').map(span=>span.childCount),[2],'the war collapses over the two battles it has on the axis');
+});
+
+test('once the missing dated child is loaded the parent collapses over all of its children again', ()=>{
+ const dated=PAIRS.map(pair=>({...pair,dated:true}));
+ const state=nesting.nestingAt(dated,ITEMS,camera(MARKER),'marker');
+ const war=state.collapsed.find(span=>span.parent==='war');
+ assert.ok(war,'the war collapses');
+ assert.equal(war.childCount,3);
+ assert.equal(war.fromMs,Y(1914));
+ assert.equal(war.toMs,Y(1919),'its extent runs to the latest battle, which is loaded');
+});
+
+// lane-2 T9 with T12: a hidden child is never a cluster member, and every loaded item is counted once.
+test('clustering the visible items never counts a child hidden under a collapsed parent, and nothing is counted twice', ()=>{
+ const crowd=Array.from({length:40},(_,index)=>({id:`crowd${index}`,fromMs:Y(1916)+index*DAY,toMs:Y(1916)+index*DAY+DAY}));
+ const all=[...ITEMS,...crowd];
+ const state=nesting.nestingAt(PAIRS,all,camera(MARKER),'marker');
+ const visible=all.filter(item=>!state.hidden.has(item.id));
+ assert.equal(visible.length+state.hidden.size,all.length,'every loaded item is either visible or hidden under a collapsed parent, never both');
+ const window={fromMs:Y(1900),toMs:Y(1930)};
+ const broad=clusters.clusterBroadItems(visible.map(item=>({fromMs:item.fromMs,toMs:item.toMs,category:'historical-event'})),window);
+ const members=broad.flatMap(cluster=>cluster.memberIndexes.map(index=>visible[index].id));
+ assert.equal(new Set(members).size,members.length,'no item is a member of two clusters');
+ for(const id of members) assert.equal(state.hidden.has(id),false,`${id} is hidden, so it cannot be a cluster member`);
+ assert.ok(broad.some(cluster=>cluster.count>=2),'the crowd forms an honest count cluster');
+ assert.equal(broad.reduce((sum,cluster)=>sum+cluster.count,0),members.length,'each cluster count is its members, nothing added');
+});
+
+// lane-2 T9, the category chips. A collapsed parent's count is the children the chips SHOW. A chip-hidden child neither counts
+// nor holds its parent expanded; a chip-hidden parent never collapses, since its span would hide children the chips show.
+test('a chip hiding one of three children makes the collapsed label read 2', ()=>{
+ const state=nesting.nestingAt(PAIRS,ITEMS,camera(MARKER),'marker',new Set(['b2']));
+ const war=state.collapsed.find(span=>span.parent==='war');
+ assert.ok(war,'the war still collapses');
+ assert.equal(war.childCount,2,'the count is the two battles the chips show');
+ assert.equal(nesting.collapsedSpanLabel('War',war.childCount),'War · 2 items','the label reads 2');
+ assert.equal(war.fromMs,Y(1914),'the extent is the shown battles: b1 starts it');
+ assert.equal(war.toMs,Y(1919),'and b3 ends it');
+});
+
+test('a chip-hidden battle is not hidden by the collapse and its own events stay on the axis', ()=>{
+ const state=nesting.nestingAt(PAIRS,ITEMS,camera(MARKER),'marker',new Set(['b2']));
+ assert.equal(state.hidden.has('b2'),false,'the chip-hidden battle is not reached by the collapse');
+ for(const id of ['e4','e5','e6']) assert.equal(state.hidden.has(id),false,`${id} belongs to a chip-hidden battle, so it is never collapsed away`);
+});
+
+test('a chip-hidden dated child does not hold its parent expanded (the chips decide, not the reading)', ()=>{
+ const dated=PAIRS.map(pair=>({...pair,dated:true}));
+ const state=nesting.nestingAt(dated,ITEMS,camera(MARKER),'marker',new Set(['b2']));
+ assert.equal(state.collapsed.find(span=>span.parent==='war')?.childCount,2,'the war collapses over the two shown battles');
+});
+
+test('the partial-load rule still holds with a chip hiding another child: an unloaded shown dated child keeps the parent open', ()=>{
+ const loaded=ITEMS.filter(item=>item.id!=='b3');
+ const dated=PAIRS.map(pair=>({...pair,dated:true}));
+ const state=nesting.nestingAt(dated,loaded,camera(MARKER),'marker',new Set(['b2']));
+ assert.equal(state.collapsed.some(span=>span.parent==='war'),false,'b3 is shown by the chips and dated, and not loaded: the war stays expanded');
+});
+
+test('a chip-hidden parent never collapses, so it hides no child the chips show', ()=>{
+ const state=nesting.nestingAt(PAIRS,ITEMS,camera(MARKER),'marker',new Set(['war']));
+ assert.equal(state.collapsed.some(span=>span.parent==='war'),false,'the hidden war has no span');
+ assert.equal(state.hidden.has('b1')||state.hidden.has('b2')||state.hidden.has('b3'),false,'and does not hide its battles');
+ assert.deepEqual(state.collapsed.map(span=>span.parent).sort(),['b1','b2','b3'],'each shown battle collapses over its own events');
+});
+
+test('the collapsed label reads the count of the children: one item in the singular, many in the plural', ()=>{
+ assert.equal(nesting.collapsedSpanLabel('War',3),'War · 3 items');
+ assert.equal(nesting.collapsedSpanLabel('Battle',1),'Battle · 1 item');
 });

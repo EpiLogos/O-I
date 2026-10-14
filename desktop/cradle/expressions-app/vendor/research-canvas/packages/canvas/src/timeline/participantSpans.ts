@@ -10,8 +10,21 @@
  * spans stack into rows. Pure: no React, no store.
  */
 import type { ParticipantSpan } from "../../../../../../../src/techne/m0m5/timeline/relations";
+import { standingOf } from "../../../../../../../src/techne/m0m5/timeline/standing";
 import { spanLabel } from "./labels";
 import { msToPixel, pixelToMs, type TimeCamera } from "./viewport";
+
+/**
+ * The T3 class a span's verbatim uncertainty names, through the authority's own
+ * standing grammar: "disputed" and "mythic" words only. Any other stated
+ * uncertainty ("circa", "uncertain") carries no class here and is drawn soft.
+ * The verbatim string is never replaced.
+ */
+export function uncertaintyStanding(uncertainty: string | null): "disputed" | "mythic" | null {
+  if (uncertainty === null || uncertainty.trim().length === 0) return null;
+  const { visual } = standingOf({ standing: uncertainty, source_ref: null, derivation_ref: null });
+  return visual === "disputed" || visual === "mythic" ? visual : null;
+}
 
 export interface ParticipantMark {
   /** The participant ref plus the span's index among that participant's spans. */
@@ -28,6 +41,10 @@ export interface ParticipantMark {
   row: number;
   /** The participant's ref, written once: on its first visible span only. */
   label: string | null;
+  /** T3: the span carries a stated uncertainty. Both ends draw soft, never as hard edges. */
+  uncertain: boolean;
+  /** T3: "disputed" or "mythic" when the uncertainty names one; drawn dashed. */
+  standing: "disputed" | "mythic" | null;
   /** Hover text: the ref, its validity in words, and its uncertainty verbatim. */
   title: string;
 }
@@ -97,6 +114,8 @@ export function participantMarks(spans: readonly ParticipantSpan[], camera: Time
       openEnd: entry.span.toMs === null,
       row: rowOf.get(entry.id) ?? 0,
       label,
+      uncertain: (entry.span.uncertainty?.trim().length ?? 0) > 0,
+      standing: uncertaintyStanding(entry.span.uncertainty),
       title: titleOf(entry.span),
     };
   });

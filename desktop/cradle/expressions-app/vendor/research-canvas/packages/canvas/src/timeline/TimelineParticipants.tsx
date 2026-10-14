@@ -10,7 +10,8 @@ const PARTICIPANT_ROW_PX = 5;
  * before the nodes), so the event cards read against the span of what lived
  * them (lane-2 T14). Static: no transition or animation. The label is written
  * once per participant. An open side fades out at the view edge rather than
- * ending at an invented date.
+ * ending at an invented date. A stated uncertainty (T3) softens both ends, and a
+ * disputed or mythic one also dashes the line; neither is drawn as a hard edge.
  */
 export function TimelineParticipantSpans({ marks }: { marks: readonly ParticipantMark[] }): JSX.Element | null {
   if (marks.length === 0) return null;
@@ -28,6 +29,8 @@ export function TimelineParticipantSpans({ marks }: { marks: readonly Participan
           data-kind={mark.participant_kind}
           data-open-start={mark.openStart ? "true" : "false"}
           data-open-end={mark.openEnd ? "true" : "false"}
+          data-uncertain={mark.uncertain ? "true" : "false"}
+          data-standing={mark.standing ?? undefined}
           title={mark.title}
           style={{
             position: "absolute",
