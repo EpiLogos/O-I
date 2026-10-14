@@ -2,6 +2,7 @@ import { registerPanel } from '../../shell/panels'
 import type { PanelContext } from '../../shell/panels'
 import { DevicePanel } from './DevicePanel'
 import { installDeviceStyles } from './device-styles'
+import { DEVICE_FACE_TITLES } from './faceTitles'
 
 /**
  * Device panels (M3 — device hosting, parameter editing surface): the
@@ -33,12 +34,8 @@ import { installDeviceStyles } from './device-styles'
 
 installDeviceStyles()
 
-/** The set-device faces by the element name the document stores, with their display titles. The Live chain renders one face per
- * device on the selected track from this table (FOUNDATION F0: the chain is the track's devices, never the registry). */
-export const DEVICE_FACE_TITLES = new Map<string, string>()
-
 function devicePanel(elementName: string, displayTitle: string) {
-  DEVICE_FACE_TITLES.set(elementName, displayTitle)
+  if (DEVICE_FACE_TITLES.get(elementName) !== displayTitle) throw Error(`${elementName}: its face title is not in faceTitles.ts`)
   return function DevicePanelFor({ set, loading, error }: PanelContext) {
     return (
       <DevicePanel
