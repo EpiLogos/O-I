@@ -27,6 +27,7 @@ import {allFamilyManifests, familyManifest, onFamilyManifestReset} from './famil
 import {SDK_MODES} from './sdk/modes.ts'
 import type {IconName, KindShapeName} from './sdk/icons.ts'
 import {validateFaceSemantic} from './sdk/semantics.ts'
+import {browserEntryRefusal, browserIdReservation, mockupModesOf} from '../shell/modeGrammar.ts'
 
 // ---------------------------------------------------------------------------
 // face kinds — the rack's residents (WORLD-SHELL-DESIGN §5.1–§5.4)
@@ -162,10 +163,12 @@ export interface InhabitantBrowserEntry {
   readonly modes?: readonly string[]
 }
 
-/** A declared browser entry as the door reads it: the family that declares it and the modes it resolves to. */
+/** A declared browser entry as the door reads it: the family that declares it, the modes it resolves to, and the modes the
+ * family's faces present in (empty when the faces declare none). */
 export interface DeclaredBrowserEntry extends InhabitantBrowserEntry {
   readonly family: FamilyManifestId
   readonly modes: readonly string[]
+  readonly faceModes: readonly string[]
 }
 
 /** The detached-window kinds (desktop/cradle DetachedFrame / surface
@@ -322,16 +325,43 @@ export function allInhabitantManifests(): InhabitantManifest[] {
 }
 
 /** Every declared browser entry across the admitted families, door order then declaration order. A missing `modes` falls
- * back to the modes the family's faces present in; an entry with no mode composes into no browser. */
+ * back to the modes the family's faces present in; an entry with no mode composes into no browser. Every declaration is
+ * listed here, admitted or refused; `browserEntryRefusal` (modeGrammar.ts) says which one composes. */
 export function allInhabitantBrowserEntries(): DeclaredBrowserEntry[] {
   return allInhabitantManifests().flatMap(manifest => {
     const faceModes = [...new Set(manifest.faces.flatMap(face => face.modes ?? []))]
-    return (manifest.browserEntries ?? []).map((entry): DeclaredBrowserEntry => ({
-      ...entry,
-      family: manifest.id,
-      modes: entry.modes ?? faceModes,
-    }))
+    return (manifest.browserEntries ?? []).map((entry): DeclaredBrowserEntry => {
+      // An owner's fill of its own mockup category defaults to the modes the mockup draws it in; a new category to its faces'.
+      const reservation = browserIdReservation(entry.id)
+      const fillsOwn = reservation.reserved && reservation.owner === manifest.id
+      return {
+        ...entry,
+        family: manifest.id,
+        modes: entry.modes ?? (fillsOwn ? mockupModesOf(entry.id) : faceModes),
+        faceModes,
+      }
+    })
   })
+}
+
+/** The panel slot declarations the admitted families make, with the family that makes each, door order then declaration. */
+function declaredPanelSlots(): {family: FamilyManifestId; slot: InhabitantPanelSlot}[] {
+  return allInhabitantManifests().flatMap(manifest => (manifest.panelSlots ?? []).map(slot => ({family: manifest.id, slot})))
+}
+
+/** Panel ids declared by more than one slot entry across the admitted families (one family twice counts): contested. The
+ * door's validator names each; the composition draws none of them. */
+export function contestedPanelIds(): ReadonlyMap<string, readonly FamilyManifestId[]> {
+  const byPanel = new Map<string, FamilyManifestId[]>()
+  for (const {family, slot} of declaredPanelSlots()) byPanel.set(slot.panel, [...(byPanel.get(slot.panel) ?? []), family])
+  return new Map([...byPanel].filter(([, families]) => families.length > 1))
+}
+
+/** The admitted families' panel slots that compose into the registry: a contested panel id composes for no family (named at
+ * the door, never a silent first-wins). */
+export function admittedPanelSlots(): {family: FamilyManifestId; slot: InhabitantPanelSlot}[] {
+  const contested = contestedPanelIds()
+  return declaredPanelSlots().filter(({slot}) => !contested.has(slot.panel))
 }
 
 // ---------------------------------------------------------------------------
@@ -441,12 +471,28 @@ export function validateInhabitantManifest(manifest: InhabitantManifest): readon
   return faults
 }
 
-/** Validate every composed manifest; returns family → faults. Empty map = all valid. */
+/** Validate every composed manifest; returns family → faults. Empty map = all valid. The per-family checks run first; then the
+ * composed-view checks, which no single manifest can see: a browser id reserved for another owner, an explicit mode the
+ * family's faces do not present in, a browser id two entries declare, and a panel id two slot declarations claim
+ * (`browserEntryRefusal`, modeGrammar.ts). Each refusal is named against the family whose declaration it is. */
 export function validateAllInhabitantManifests(): ReadonlyMap<FamilyManifestId, readonly string[]> {
-  const faults = new Map<FamilyManifestId, readonly string[]>()
+  const faults = new Map<FamilyManifestId, string[]>()
+  const fault = (family: FamilyManifestId, message: string): void => {
+    faults.set(family, [...(faults.get(family) ?? []), message])
+  }
   for (const manifest of allInhabitantManifests()) {
-    const found = validateInhabitantManifest(manifest)
-    if (found.length) faults.set(manifest.id, found)
+    for (const found of validateInhabitantManifest(manifest)) fault(manifest.id, found)
+  }
+  const browserEntries = allInhabitantBrowserEntries()
+  for (const entry of browserEntries) {
+    const refusal = browserEntryRefusal(entry, browserEntries)
+    if (refusal) fault(entry.family, `${entry.family}: ${refusal}`)
+  }
+  for (const [panel, families] of contestedPanelIds()) {
+    const claimants = [...new Set(families)]
+    for (const family of claimants) {
+      fault(family, `${family}: panel "${panel}" is declared ${families.length} times (by ${claimants.join(', ')}); a panel id has one owner`)
+    }
   }
   return faults
 }

@@ -1,6 +1,6 @@
 import { createElement, type ComponentType } from 'react'
 
-import { allInhabitantManifests, inhabitantManifest } from '../inhabitants/manifest'
+import { admittedPanelSlots, contestedPanelIds, inhabitantManifest } from '../inhabitants/manifest'
 import type { SetSummary } from './useSet'
 
 /**
@@ -90,21 +90,25 @@ function familyPanelBody(family: string, panel: string): ComponentType<PanelCont
   return body
 }
 
+// A panel id two family slot declarations claim is contested: it composes for neither (the door names it). Reported once.
+const reportedContests = new Set<string>()
+
 function familyPanels(): PanelRegistration[] {
-  const seen = new Set<string>()
+  for (const [panel, families] of contestedPanelIds()) {
+    if (reportedContests.has(panel)) continue
+    reportedContests.add(panel)
+    console.error(`[live-shell/panels] panel "${panel}" is declared by ${[...new Set(families)].join(', ')} — a panel id has one owner; it composes for none`)
+  }
   const composed: PanelRegistration[] = []
-  for (const manifest of allInhabitantManifests()) {
-    for (const entry of manifest.panelSlots ?? []) {
-      if (panels.has(entry.panel) || seen.has(entry.panel)) continue
-      seen.add(entry.panel)
-      composed.push({
-        id: entry.panel,
-        title: entry.title ?? manifest.id,
-        slot: entry.slot,
-        component: familyPanelBody(manifest.id, entry.panel),
-        note: `Declared by the ${manifest.id} family`,
-      })
-    }
+  for (const {family, slot} of admittedPanelSlots()) {
+    if (panels.has(slot.panel)) continue
+    composed.push({
+      id: slot.panel,
+      title: slot.title ?? family,
+      slot: slot.slot,
+      component: familyPanelBody(family, slot.panel),
+      note: `Declared by the ${family} family`,
+    })
   }
   return composed
 }

@@ -30,7 +30,9 @@ Target — the product is the candidate shell, nothing else:
   "NOT" means a change there never reaches the app: find the candidate's own
   site for the behaviour instead (grep the candidate tree), or return
   ZONE: BLOCKED <path> with the reachability output. Put the command's output
-  for every file you edited in your CHECKS.
+  for every source file you edited in your CHECKS. Test files are not product
+  themselves (the script reports them NOT); a test proves product only when the
+  source it imports is product.
 
 Zone — write only under:
 <allowlist>

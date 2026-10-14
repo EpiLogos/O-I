@@ -526,35 +526,115 @@ export function browserCategoriesOf(mode: string): readonly ModeBrowserCategory[
 }
 
 /** A family's declared browser category as the door reads it (manifest.ts `DeclaredBrowserEntry`): the category's standing,
- * the family that declares it, and the modes it belongs to. */
+ * the family that declares it, the modes it belongs to, and the modes the family's faces present in (absent or empty: the
+ * faces declare none, so the modes are checked against the mode vocabulary alone). */
 export type DeclaredBrowserCategory = ModeBrowserCategory & {
   readonly family: string
   readonly modes: readonly string[]
+  readonly faceModes?: readonly string[]
+}
+
+/** The row sources the shell composes for its own category ids: ModeBrowser's `CategoryRows` dispatches on these ids. Each
+ * maps to the owner whose read the rows come from; `null` is the shell's own listing, which no family declares. */
+export const ROW_SOURCE_OWNERS: ReadonlyMap<string, string | null> = new Map([
+  ['central-days', 'central'],
+  ['central-files', null],
+  ['techne-files', null],
+  ['techne-sources', null],
+])
+
+/** Who holds a browser category id. `reserved: false`: no mockup category and no row source carries it, so any family may
+ * declare it. `reserved: true`: it belongs to `owner`, a family id, or to the shell when `owner` is null. */
+export type BrowserIdReservation = {readonly reserved: false} | {readonly reserved: true; readonly owner: string | null}
+
+/** The reservation of a browser id (WORLD-SHELL-DESIGN §12, the one ownership law): an id is reserved when a mockup category
+ * carries it in any mode, or when a row source dispatches on it. The mockup entry's `family` (or the row source's owner)
+ * is the owner. */
+export function browserIdReservation(id: string): BrowserIdReservation {
+  const rowOwner = ROW_SOURCE_OWNERS.get(id)
+  if (rowOwner !== undefined) return {reserved: true, owner: rowOwner}
+  for (const surf of SURF_MODES) {
+    const mockup = MODE_GRAMMAR[surf].browser.find(category => category.id === id)
+    if (mockup) return {reserved: true, owner: mockup.family ?? null}
+  }
+  return {reserved: false}
+}
+
+/** The modes the mockup draws a category id in (empty when no mockup category carries it). */
+export function mockupModesOf(id: string): readonly SurfMode[] {
+  return SURF_MODES.filter(surf => MODE_GRAMMAR[surf].browser.some(category => category.id === id))
+}
+
+/** An entry's own refusal, judged on the entry alone:
+ * - a reserved id composes only for its owner family (a shell-owned id for no family);
+ * - an owner's fill of its own mockup category may name only the modes the mockup draws it in: the mockup already places
+ *   it, so a fill cannot move it;
+ * - a new category's explicit modes must be modes its family's faces present in, when the faces declare any modes.
+ * Null when the entry stands on its own. */
+function ownRefusal(entry: BrowserEntryClaim): string | null {
+  const reservation = browserIdReservation(entry.id)
+  const named = (modes: readonly string[]): string => modes.map(mode => `mode "${mode}"`).join(', ')
+  if (reservation.reserved) {
+    if (reservation.owner !== entry.family) {
+      return reservation.owner === null
+        ? `browser entry "${entry.id}" is one of the shell's own categories; no family declares it`
+        : `browser entry "${entry.id}" belongs to the ${reservation.owner} family (its mockup entry or row source), not ${entry.family}`
+    }
+    const drawn: readonly string[] = mockupModesOf(entry.id)
+    const moved = (entry.modes ?? []).filter(mode => !drawn.includes(mode))
+    return moved.length
+      ? `browser entry "${entry.id}" names ${named(moved)}, where the mockup does not draw it (${drawn.join(', ')})`
+      : null
+  }
+  const faces = entry.faceModes ?? []
+  const outside = faces.length ? (entry.modes ?? []).filter(mode => !faces.includes(mode)) : []
+  return outside.length
+    ? `browser entry "${entry.id}" names ${named(outside)}, which none of the ${entry.family} family's faces presents in (${faces.join(', ')})`
+    : null
+}
+
+/** What the ownership law reads from a declared entry: its id, its family, and the modes it names and its faces present in. */
+export interface BrowserEntryClaim {
+  readonly id: string
+  readonly family: string
+  readonly modes?: readonly string[]
+  readonly faceModes?: readonly string[]
+}
+
+/** The reason a declared browser entry does not compose, or null when it composes. The ownership law over the whole door
+ * view (`declared`, every admitted family's entries in every mode):
+ * - a reserved id composes only for its owner, and an explicit mode composes only where the family's faces present
+ *   (`ownRefusal`);
+ * - an id that two entries which stand on their own both declare composes for neither: a second declaration is a named
+ *   fault, never a silent first-wins.
+ * Composition (`composeModeBrowser`) hides a refused entry; the door's validator (`validateAllInhabitantManifests`) names it. */
+export function browserEntryRefusal(entry: BrowserEntryClaim, declared: readonly BrowserEntryClaim[]): string | null {
+  const refused = ownRefusal(entry)
+  if (refused) return refused
+  const rivals = declared.filter(other => other.id === entry.id && ownRefusal(other) === null)
+  if (rivals.length < 2) return null
+  const families = [...new Set(rivals.map(other => other.family))]
+  return `browser entry "${entry.id}" is declared ${rivals.length} times (by ${families.join(', ')}); a category id has one owner`
 }
 
 /** The composed browser of one mode — the one composition the browser renderer calls. The mockup's static categories come
- * first, exactly as drawn (the floor, in their order). Then, over them:
+ * first, exactly as drawn (the floor, in their order; a declaration never renames, relabels or removes one). Then, over them:
  * - a declared category whose id is a mockup category of the SAME family fills that entry in place: its standing and hint
- *   are the family's; its label, group, mark and position stay as drawn. A declaration by any other family never reaches
- *   a mockup entry (the mockup's owner keys its own rows);
- * - every other declared category that names this mode is appended in declaration order, after the mockup's entries, and
- *   the renderer groups it under its group heading.
- * Declarations for other modes never appear here. A mode that keeps its own browser (an empty static list) composes
- * nothing. */
+ *   are the family's; its label, group, mark and position stay as drawn;
+ * - every other admitted declared category that names this mode is appended in declaration order, after the mockup's
+ *   entries, and the renderer groups it under its group heading.
+ * A refused declaration (`browserEntryRefusal`) composes nowhere. Declarations for other modes never appear here. A mode
+ * that keeps its own browser (an empty static list) composes nothing. */
 export function composeModeBrowser(mode: string, declared: readonly DeclaredBrowserCategory[]): readonly ModeBrowserCategory[] {
   const statics = browserCategoriesOf(mode)
   if (!statics.length) return statics
-  const inMode = declared.filter(category => category.modes.includes(mode))
+  const inMode = declared.filter(category => category.modes.includes(mode) && browserEntryRefusal(category, declared) === null)
   const filled = statics.map(category => {
     const owned = inMode.find(entry => entry.id === category.id && entry.family === category.family)
     return owned ? {...category, state: owned.state, hint: owned.hint} : category
   })
   const mockupIds = new Set(statics.map(category => category.id))
-  const appended: ModeBrowserCategory[] = []
-  for (const entry of inMode) {
-    if (mockupIds.has(entry.id) || appended.some(category => category.id === entry.id)) continue
-    appended.push(entry)
-  }
+  const appended: ModeBrowserCategory[] = inMode.filter(entry => !mockupIds.has(entry.id))
   return [...filled, ...appended]
 }
 
