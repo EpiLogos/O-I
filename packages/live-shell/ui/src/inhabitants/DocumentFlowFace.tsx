@@ -29,7 +29,7 @@ import type {KernelTransportStatus, CentralLocation} from '../../../../../deskto
 import {classifySaveFailure, savedOutcome, unchangedOutcome, type SaveRouterReading} from './documentDeviceModel'
 import {SaveOutcomeChip} from './inhabitantCard.tsx'
 import './inhabitantDevices.css'
-import {documentStateWords, publishDocument, reachedDocument, withdrawDocument, type DocumentInPane} from '../central/documents/documentDoor'
+import {documentStateWords, publishDocument, reachedDocument, revisionShort, withdrawDocument, type DocumentInPane} from '../central/documents/documentDoor'
 
 export interface DocumentFlowFaceProps {
   readonly transport: KernelTransportStatus
@@ -196,7 +196,7 @@ export function FlowFace({transport, location, presentation = 'device'}: Documen
     >
       {inPane ? <div className="document-pane-head" data-document-head="flow">
         <span className="document-pane-form">Flow</span>
-        <span className="document-pane-state" role="status" aria-live="polite">{revision ? `r${revision.slice(0, 8)} · ` : ''}{standing.state}</span>
+        <span className="document-pane-state" role="status" aria-live="polite">{revision ? `r${revisionShort(revision)} · ` : ''}{standing.state}</span>
       </div> : <div className="inhabitant-body-actions">
         <button type="button" className="inhabitant-act" data-action="save" disabled={!face || pending} onClick={() => void saveToOwner()}>Save to native source</button>
         <button type="button" className="inhabitant-act" data-action="reread" disabled={pending} onClick={() => void load()}>Re-read current document</button>

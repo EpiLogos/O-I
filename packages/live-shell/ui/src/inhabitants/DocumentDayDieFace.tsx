@@ -37,7 +37,7 @@ import {
   type DayDocumentField,
 } from '../../../../../desktop/cradle/src/central/dayForm'
 import {receiving} from '../../../../../desktop/cradle/src/receiving/client'
-import {documentStateWords, publishDocument, reachedDocument, withdrawDocument, type DocumentInPane} from '../central/documents/documentDoor'
+import {documentStateWords, publishDocument, reachedDocument, revisionShort, withdrawDocument, type DocumentInPane} from '../central/documents/documentDoor'
 import {readFile} from '../../../../../desktop/cradle/src/files/client'
 import {DOCUMENT_FORMS, resolveDocumentForm} from '../../../../../desktop/cradle/src/flow/documentForms'
 import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
@@ -274,7 +274,7 @@ export function DocumentDayDieFace({transport, project, sourceRef, documentId, p
     >
       {inPane && <div className="document-pane-head" data-document-head="day">
         <span className="document-pane-form">Day · #{open.n} {open.name}</span>
-        <span className="document-pane-state" role="status" aria-live="polite">{revision ? `r${revision.slice(0, 8)} · ` : ''}{standing.state}</span>
+        <span className="document-pane-state" role="status" aria-live="polite">{revision ? `r${revisionShort(revision)} · ` : ''}{standing.state}</span>
       </div>}
       {/* The die net — the device's compact face, a reading of the die's own
           face position (icon-cut's Day-die drawing, the open face inked). */}
