@@ -52,6 +52,8 @@ export function AgentThreadView({tracks}: {tracks: AgentSessionTrack[]}) {
         onError={message => console.warn(message)}
         conversation
         full
+        plane="Chat"
+        onPlane={() => {}}
         mode="base"
       />
     </div>
