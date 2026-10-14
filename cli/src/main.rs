@@ -24,6 +24,7 @@ mod composition {
     include!("omarchy_host.rs");
     include!("development_field_command.rs");
     include!("update_flow.rs");
+    include!("managed_suite_supersede.rs");
     include!("development_field_hardening.rs");
     include!("product_command_route.rs");
     include!("config_command.rs");

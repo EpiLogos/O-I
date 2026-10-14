@@ -559,6 +559,7 @@ fn command_development_where_s0(args: &[std::ffi::OsString]) -> Result<i32, Stri
     let composition = load_composition()?;
     let registration = composition.modules.get(&product.id);
 
+    let mut shadowed_managed_update = None;
     let (authority, modality, executable, receipt_ref, revision, revision_standing, sha256) =
         if let Some(override_path) = explicit_product_override(product) {
             let resolved = override_path
@@ -597,6 +598,7 @@ fn command_development_where_s0(args: &[std::ffi::OsString]) -> Result<i32, Stri
             })?;
             let executable = active_suite_executable_s0(&product.id)?
                 .expect("active receipt was loaded and validated");
+            shadowed_managed_update = suite_shadow_disclosure(&product.id, &receipt)?;
             (
                 "active-suite-receipt",
                 "managed-suite".to_owned(),
@@ -648,6 +650,7 @@ fn command_development_where_s0(args: &[std::ffi::OsString]) -> Result<i32, Stri
         "sha256": sha256,
         "executable": executable,
         "companions": companions,
+        "shadowed_managed_update": shadowed_managed_update,
     });
     if json_mode {
         println!(
@@ -664,6 +667,13 @@ fn command_development_where_s0(args: &[std::ffi::OsString]) -> Result<i32, Stri
         );
         if let Some(receipt_ref) = receipt_ref {
             println!("receipt: {receipt_ref}");
+        }
+        if let Some(shadow) = &shadowed_managed_update {
+            println!(
+                "shadowed: managed install {} is not what this receipt resolves; '{}' brings the suite to it",
+                shadow["revision"].as_str().unwrap_or_default(),
+                shadow["remedy"].as_str().unwrap_or_default(),
+            );
         }
     }
     Ok(0)
@@ -720,5 +730,47 @@ mod development_field_hardening_tests {
         // A product that declares none reads an empty map.
         let central = catalogue.resolve("central").unwrap();
         assert!(s0_companion_locations(central, &bin.join("ql")).unwrap().is_empty());
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn suite_staging_carries_the_companions_beside_the_source_primary() {
+        let catalogue = oi_cli::product_command::product_command_catalogue_from_json(
+            crate::catalog_source::embedded_catalogue_json(),
+            "test-embedded",
+        )
+        .unwrap();
+        let ql = catalogue.resolve("quaternal-logic").unwrap();
+        let temp = tempfile::tempdir().unwrap();
+        let generation = temp.path().join("products/quaternal-logic/abc/bin");
+        executable(&generation.join("ql"), "#!/bin/sh\n");
+        executable(&generation.join("ql-field-host"), "#!/bin/sh\nhost\n");
+        executable(&generation.join("ql-field-worker"), "#!/bin/sh\nworker\n");
+        let bin = temp.path().join("bin");
+        std::fs::create_dir_all(&bin).unwrap();
+        std::os::unix::fs::symlink("../products/quaternal-logic/abc/bin/ql", bin.join("ql")).unwrap();
+        let expected = oi_cli::development_field::ProductIdentity {
+            revision: "3".repeat(40),
+            artifact: "developer-source-executable:ql".into(),
+            sha256: sha256_file(&generation.join("ql")).unwrap(),
+            executable: Some("ql".into()),
+            attestation: None,
+        };
+        let product_root = temp.path().join("suites/receipt/products/quaternal-logic");
+
+        let staged = s0_stage_artifact(ql, &bin.join("ql"), &product_root, &expected).unwrap();
+        assert_eq!(staged, product_root.join("bin/ql"));
+        for name in ["ql-field-host", "ql-field-worker"] {
+            assert_eq!(
+                sha256_file(&product_root.join("bin").join(name)).unwrap(),
+                sha256_file(&generation.join(name)).unwrap(),
+                "{name} is staged beside the suite's primary"
+            );
+        }
+        // An absent companion is not invented; `oi where` names it absent.
+        assert!(!product_root.join("bin/ql-focused-host").exists());
+        let companions = s0_companion_locations(ql, &staged).unwrap();
+        assert_eq!(companions["ql-field-host"]["present"], true);
+        assert_eq!(companions["ql-focused-host"]["present"], false);
     }
 }

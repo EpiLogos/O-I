@@ -320,3 +320,221 @@ fn where_discloses_companions_beside_the_resolved_executable() {
     let reading: Value = serde_json::from_slice(&central.stdout).unwrap();
     assert_eq!(reading["companions"], json!({}));
 }
+
+/// A managed update and the active suite receipt name one install. A product
+/// the managed flow installed while a source suite pinned an older cut is
+/// first disclosed as shadowed by `oi where` and `oi update --check`; an
+/// apply supersedes only that product's suite entry, companions included, so
+/// `oi where` and dispatch resolve the managed cut; `oi suite rollback`
+/// restores the replaced receipt.
+#[cfg(unix)]
+#[test]
+fn managed_update_supersedes_the_active_suite_entry_it_installed() {
+    use sha2::Digest;
+    use std::os::unix::fs::{symlink, PermissionsExt};
+
+    let config = TempDir::new().unwrap();
+    let data = TempDir::new().unwrap();
+    let bin = TempDir::new().unwrap();
+    let home = TempDir::new().unwrap();
+    let ground = TempDir::new().unwrap();
+    write_source_composition(config.path(), bin.path(), "central");
+    let mut composition: Value =
+        serde_json::from_slice(&fs::read(config.path().join("composition.json")).unwrap()).unwrap();
+    composition["personal_ground"] = json!(ground.path());
+    fs::write(
+        config.path().join("composition.json"),
+        serde_json::to_vec_pretty(&composition).unwrap(),
+    )
+    .unwrap();
+    let run = |args: &[&str]| {
+        output(
+            oi(config.path(), data.path(), bin.path())
+                .env("HOME", home.path())
+                .args(args),
+        )
+    };
+
+    assert!(run(&["suite", "channel", "source"]).status.success());
+    let activated = run(&["suite", "update", "--json"]);
+    assert!(activated.status.success(), "{}", stderr(&activated));
+    let suite: Value = serde_json::from_slice(&activated.stdout).unwrap();
+    let first_receipt = suite["active"]["receipt_ref"].as_str().unwrap().to_owned();
+    let first_products = suite["active"]["products"].clone();
+
+    // The QL checkout's committed cut, already installed by the managed flow
+    // with its companions — after the suite was activated.
+    let checkout = ground.path().join("Work/Quaternal-Logic");
+    fs::create_dir_all(&checkout).unwrap();
+    let git = |args: &[&str]| {
+        let result = Command::new("git")
+            .arg("-C")
+            .arg(&checkout)
+            .args(args)
+            .output()
+            .unwrap();
+        assert!(
+            result.status.success(),
+            "{}",
+            String::from_utf8_lossy(&result.stderr)
+        );
+        String::from_utf8(result.stdout).unwrap().trim().to_owned()
+    };
+    git(&["init", "--quiet"]);
+    fs::write(checkout.join("README"), "ql\n").unwrap();
+    git(&["add", "."]);
+    git(&[
+        "-c",
+        "user.email=t@example.invalid",
+        "-c",
+        "user.name=T",
+        "commit",
+        "--quiet",
+        "-m",
+        "cut",
+    ]);
+    let revision = git(&["rev-parse", "HEAD"]);
+    let tree = git(&["rev-parse", "HEAD^{tree}"]);
+
+    let staging = TempDir::new().unwrap();
+    let primary = fake_executable(staging.path(), "ql", "ql-managed");
+    let sha256 = format!("{:x}", sha2::Sha256::digest(fs::read(&primary).unwrap()));
+    let generation = data
+        .path()
+        .join("products/quaternal-logic")
+        .join(&sha256)
+        .join("bin");
+    fs::create_dir_all(&generation).unwrap();
+    fs::copy(&primary, generation.join("ql")).unwrap();
+    let mut companions = serde_json::Map::new();
+    for name in [
+        "ql-field-host",
+        "ql-field-worker",
+        "ql-focused-host",
+        "ql-sky",
+    ] {
+        let path = generation.join(name);
+        fs::write(&path, format!("#!/bin/sh\necho {name}\n")).unwrap();
+        fs::set_permissions(&path, fs::Permissions::from_mode(0o755)).unwrap();
+        companions.insert(
+            name.into(),
+            json!(format!(
+                "{:x}",
+                sha2::Sha256::digest(fs::read(&path).unwrap())
+            )),
+        );
+    }
+    fs::set_permissions(generation.join("ql"), fs::Permissions::from_mode(0o755)).unwrap();
+    fs::create_dir_all(data.path().join("bin")).unwrap();
+    symlink(generation.join("ql"), data.path().join("bin/ql")).unwrap();
+    let activation = home.path().join(".local/bin");
+    fs::create_dir_all(&activation).unwrap();
+    symlink(data.path().join("bin/ql"), activation.join("ql")).unwrap();
+    let receipt = json!({
+        "schema": "oi.managed-update/v1",
+        "channel": "source",
+        "modality": "developer-source",
+        "updated_at_unix_seconds": 1,
+        "products": {"quaternal-logic": {
+            "exe": "ql", "revision": revision, "tree": tree, "branch": "main",
+            "channel": "source", "source_dirty": false,
+            "source_path": checkout, "sha256": sha256,
+            "managed": generation.join("ql"), "bin": data.path().join("bin/ql"),
+            "activation": activation.join("ql"), "provenance": "built",
+            "build_command": [], "gate": "", "installed_at_unix_seconds": 1,
+            "companions": companions,
+        }},
+    });
+    fs::create_dir_all(data.path().join("receipts/updates")).unwrap();
+    fs::write(
+        data.path().join("receipts/updates/active.json"),
+        serde_json::to_vec_pretty(&receipt).unwrap(),
+    )
+    .unwrap();
+
+    // Shadowed: the suite still resolves its own ql, without companions,
+    // and both readings say so with the remedy.
+    let shadowed = run(&["where", "quaternal-logic", "--json"]);
+    assert!(shadowed.status.success(), "{}", stderr(&shadowed));
+    let shadowed: Value = serde_json::from_slice(&shadowed.stdout).unwrap();
+    assert_eq!(shadowed["receipt_ref"], first_receipt);
+    assert_eq!(shadowed["companions"]["ql-field-host"]["present"], false);
+    assert_eq!(
+        shadowed["shadowed_managed_update"]["revision"],
+        json!(revision)
+    );
+    assert_eq!(
+        shadowed["shadowed_managed_update"]["remedy"],
+        "oi update --apply quaternal-logic"
+    );
+    let check = run(&["update", "--check", "--json", "quaternal-logic"]);
+    let check: Value = serde_json::from_slice(&check.stdout).unwrap();
+    assert_eq!(check["products"][0]["action"], "skip");
+    assert_eq!(check["suite_shadowed"][0]["product"], "quaternal-logic");
+
+    // The apply finds QL current and brings the suite receipt to it.
+    let applied = run(&["update", "--apply", "quaternal-logic"]);
+    assert!(
+        applied.status.success(),
+        "{}{}",
+        stdout(&applied),
+        stderr(&applied)
+    );
+    assert!(
+        stdout(&applied).contains(&format!("Active suite receipt {first_receipt} superseded")),
+        "{}",
+        stdout(&applied)
+    );
+
+    let located = run(&["where", "quaternal-logic", "--json"]);
+    assert!(located.status.success(), "{}", stderr(&located));
+    let located: Value = serde_json::from_slice(&located.stdout).unwrap();
+    assert_eq!(located["authority"], "active-suite-receipt");
+    assert_ne!(located["receipt_ref"], first_receipt);
+    assert_eq!(located["revision"], json!(revision));
+    assert_eq!(located["sha256"], json!(sha256));
+    assert!(located["shadowed_managed_update"].is_null());
+    for name in [
+        "ql-field-host",
+        "ql-field-worker",
+        "ql-focused-host",
+        "ql-sky",
+    ] {
+        assert_eq!(located["companions"][name]["present"], true, "{name}");
+    }
+    let dispatched = run(&["ql", "probe"]);
+    assert_eq!(
+        stdout(&dispatched).trim(),
+        "ql-managed:probe",
+        "{}",
+        stderr(&dispatched)
+    );
+
+    // Nothing else moved; the successor's lineage names the replaced receipt.
+    let status = run(&["suite", "status", "--json"]);
+    let status: Value = serde_json::from_slice(&status.stdout).unwrap();
+    assert_eq!(status["active_ok"], true);
+    assert_eq!(status["active"]["previous_receipt_ref"], first_receipt);
+    for (id, _, _) in products() {
+        if id != "quaternal-logic" {
+            assert_eq!(
+                status["active"]["products"][&id], first_products[&id],
+                "{id} is reused"
+            );
+        }
+    }
+
+    // Converged: a second apply supersedes nothing.
+    let again = run(&["update", "--apply", "quaternal-logic"]);
+    assert!(again.status.success(), "{}", stderr(&again));
+    assert!(!stdout(&again).contains("superseded"), "{}", stdout(&again));
+
+    let rolled = run(&["suite", "rollback", "--json"]);
+    assert!(rolled.status.success(), "{}", stderr(&rolled));
+    let rolled: Value = serde_json::from_slice(&rolled.stdout).unwrap();
+    assert_eq!(rolled["active"]["receipt_ref"], first_receipt);
+    assert_eq!(
+        stdout(&run(&["ql", "probe"])).trim(),
+        "quaternal-logic:probe"
+    );
+}

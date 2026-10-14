@@ -162,6 +162,20 @@ fn s0_stage_artifact(descriptor: &oi_cli::product_command::ProductCommandDescrip
         use std::os::unix::fs::PermissionsExt;
         fs::set_permissions(&target, fs::Permissions::from_mode(0o755)).map_err(|error| error.to_string())?;
     }
+    // Declared companions travel with their primary: they are read beside
+    // what the source resolves to (a managed `bin/<exe>` links into its
+    // generation) and staged beside the suite's copy. Absence stays visible
+    // in `oi where`; nothing is substituted from PATH.
+    let generation = fs::canonicalize(source).ok().and_then(|path| path.parent().map(Path::to_path_buf));
+    for companion in &descriptor.source_install.companions {
+        let Some(found) = generation.as_ref().map(|dir| dir.join(&companion.executable)).filter(|path| is_executable(path)) else { continue };
+        let staged = target.with_file_name(&companion.executable);
+        fs::copy(&found, &staged).map_err(|error| format!("cannot stage {} companion {}: {error}", descriptor.id, companion.executable))?;
+        #[cfg(unix)] {
+            use std::os::unix::fs::PermissionsExt;
+            fs::set_permissions(&staged, fs::Permissions::from_mode(0o755)).map_err(|error| error.to_string())?;
+        }
+    }
     Ok(target)
 }
 
