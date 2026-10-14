@@ -8,7 +8,7 @@ import {
   SWITCH_MODES, seamChooserHTML, seamCurveLaneHTML, transitionCurveHandleEdit, curveGestureWrite, curvePointsOf, edgeEditLabel,
   seamEdgeSpec, edgeEditRefusal, pendingSwitchStillWaits, curveProgress, BEZIER_SEED,
 } from '../build/transitions.js';
-import {planEdgeEdit, applyEdgeWrite, nativeEdgeRequest} from '../build/journeyPath.js';
+import {planEdgeEdit, applyEdgeWrite, nativeEdgeRequest, edgeReplyMessage} from '../build/journeyPath.js';
 import {advanceSceneTransport} from '../build/sceneTransport.js';
 
 const app = readFileSync(new URL('../src/app.ts', import.meta.url), 'utf8');
@@ -93,6 +93,61 @@ test('the hosted route takes the same edge facts as the local route: one scene_m
   assert.equal(hosted.request.changes[0].change, 'scene_material_set');
 });
 
+// Lane-5 T5 (14 Oct, handles on the native edge): a bezier release carries the whole curve, so the owner receives the handles.
+const bezierAuthored = {
+  id: 'b', name: 'B', duration: 4, transition: 1, character: 'x', view: {mode: '2d'}, field: {background: '#fff'},
+  transitionSpec: {kind: 'crossfade', switchMode: 'sync', curve: {type: 'bezier', out: {dt: .3, dv: .1}, in: {dt: -.3, dv: -.1}}},
+};
+const bezierView = () => ({
+  expression: {expression_ref: 'expression:j', revision: 7, scenes: [
+    {scene_ref: 'scene:a', presentation: null},
+    {scene_ref: 'scene:b', presentation: {schema: 'oi.journey-scene/v1', saved: null, scene: structuredClone(bezierAuthored)}},
+  ]},
+  bindings: {a: {scene_ref: 'scene:a'}, b: {scene_ref: 'scene:b'}},
+});
+
+test('a bezier release on a hosted journey reaches scene_material_set with both handles, and the local composite is the same spec', () => {
+  const edit = {kind: 'curve', enterSceneId: 'b', type: 'bezier', out: {dt: .2, dv: .6}, in: {dt: -.4, dv: -.3}};
+  const routed = nativeEdgeRequest(bezierView(), edit);
+  assert.equal(routed.ok, true);
+  assert.equal(routed.label, edgeEditLabel({kind: 'curve', type: 'bezier'}));
+  assert.equal(routed.request.operation, 'edit');
+  assert.equal(routed.request.expected_revision, 7, 'the edit is written on the captured revision');
+  assert.equal(routed.request.changes.length, 1, 'one native change: one owner revision');
+  assert.equal(routed.request.changes[0].change, 'scene_material_set');
+  assert.equal(routed.request.changes[0].scene_ref, 'scene:b');
+  const owned = routed.request.changes[0].presentation.scene.transitionSpec;
+  assert.deepEqual(owned.curve, {type: 'bezier', out: {dt: .2, dv: .6}, in: {dt: -.4, dv: -.3}}, 'the owner receives the handles');
+  assert.equal(owned.switchMode, 'sync', 'the edge keeps its switch mode');
+  const local = {scenes: [{id: 'b', transition: 1, transitionSpec: structuredClone(bezierAuthored.transitionSpec)}]};
+  applyEdgeWrite(local.scenes, planEdgeEdit(local, edit).write);
+  assert.deepEqual(owned, local.scenes[0].transitionSpec, 'the hosted and local writes are the same edge');
+  assert.deepEqual(bezierAuthored.transitionSpec.curve.out, {dt: .3, dv: .1}, 'the authored view is not mutated by the request');
+});
+
+test('a bezier handle outside the bounds the owner admits is refused by name before anything is sent', () => {
+  const past = nativeEdgeRequest(bezierView(), {kind: 'curve', enterSceneId: 'b', type: 'bezier', out: {dt: 1.5, dv: .2}});
+  assert.equal(past.ok, false);
+  assert.match(past.reason, /Handle time must stay inside its segment/);
+  const high = nativeEdgeRequest(bezierView(), {kind: 'curve', enterSceneId: 'b', type: 'bezier', in: {dt: -.2, dv: .5}});
+  assert.equal(high.ok, false);
+  assert.match(high.reason, /Handle value is outside the channel range/);
+  const onHold = nativeEdgeRequest(bezierView(), {kind: 'curve', enterSceneId: 'b', type: 'hold', out: {dt: .2, dv: .2}});
+  assert.equal(onHold.ok, false, 'a handle belongs to a bezier only');
+  assert.match(onHold.reason, /Only a bezier curve takes handles/);
+});
+
+test('an owner refusal of a bezier release is named with the owner\'s reason; a revision conflict says nothing was written', () => {
+  const label = edgeEditLabel({kind: 'curve', type: 'bezier'});
+  const refused = edgeReplyMessage({state: 'refused', error: 'Handle value is outside the channel range (0 to 1)'}, label);
+  assert.equal(refused.ok, false);
+  assert.equal(refused.text, `${label} was refused by the native owner: Handle value is outside the channel range (0 to 1)`);
+  const conflict = edgeReplyMessage({state: 'revision_conflict', current_revision: 8}, label);
+  assert.equal(conflict.ok, false);
+  assert.match(conflict.text, /was not written: this Expression changed elsewhere \(now revision 8\)/);
+  assert.deepEqual(edgeReplyMessage({state: 'ready'}, label), {ok: true, text: `${label}: saved.`});
+});
+
 test('a bezier handle dragged to a valid position is the whole curve, validated by E08', () => {
   const base = {type: 'bezier'};
   const out = transitionCurveHandleEdit(base, 0, 'out', .3, .6);
@@ -139,7 +194,7 @@ test('one drag gesture writes at most once: a moved, valid release writes the cu
 
 test('source: the preset path is one planned edge write inside one labelled change, with the hosted edit taken first', () => {
   const edit = bodyOf(app, 'function editSeamEdge(edit:EdgeEdit){');
-  assert.match(edit, /journeyInstrument\?\.editEdge\(edit\)/, 'the path panel\'s own edit is taken first when hosted');
+  assert.match(edit, /journeyInstrument\?\.editEdge\(edit,text=>toast\(text\)\)/, 'the path panel\'s own edit is taken first when hosted');
   assert.match(edit, /planEdgeEdit\(store\.document,edit\)/);
   assert.match(edit, /const write=plan\.write,label=plan\.label;/);
   assert.match(edit, /changed\(\(\)=>applyTimelineMove\(store\.document,scenes=>applyEdgeWrite\(scenes,write\)\),true,label\)/);
@@ -149,7 +204,7 @@ test('source: the preset path is one planned edge write inside one labelled chan
 });
 
 test('source: the hosted instrument exposes its own edge edit, and that edit is the path panel\'s submitEdge', () => {
-  assert.match(instrument, /editEdge\(edit:EdgeEdit\):boolean\{if\(!host\.nativeView\(\)\)return false;submitEdge\(edit\);return true;\}/);
+  assert.match(instrument, /editEdge\(edit:EdgeEdit,notify\?:\(text:string\)=>void\):boolean\{if\(!host\.nativeView\(\)\)return false;submitEdge\(edit,notify\);return true;\}/);
 });
 
 test('source: a bezier drag previews without writing, and pointer-up makes exactly one labelled change', () => {
@@ -158,9 +213,12 @@ test('source: a bezier drag previews without writing, and pointer-up makes exact
   assert.match(move, /transitionCurveHandleEdit\(d\.base,d\.index,d\.end,p\.time,p\.value\)/, 'the drag is validated by E08 through the transition law');
   const end = bodyOf(app, 'function endSeamCurveDrag(commit:boolean){');
   assert.match(end, /curveGestureWrite\(d\.base,d\.preview,\{commit,moved:d\.moved,refused:d\.refused\}\)/);
-  assert.equal((end.match(/changed\(/g) ?? []).length, 1, 'one labelled change per gesture');
-  assert.match(end, /applyEdgeWrite\(scenes,\{sceneId,field:'transitionSpec',spec:seamEdgeSpec\(s\.transitionSpec,\{curve\}\)\}\)/);
-  assert.match(end, /edgeEditLabel\(\{kind:'curve',type:'bezier'\}\)/);
+  // The release is the chooser's one edge edit, with the whole curve (handles included). It writes through editSeamEdge, the one
+  // edge write path (hosted: the native edge request; local: one labelled change), and never its own change.
+  assert.match(end, /editSeamEdge\(\{kind:'curve',enterSceneId:d\.sceneId,type:'bezier',out:curve\.out,in:curve\.in\}\)/);
+  assert.doesNotMatch(end, /changed\(|applyEdgeWrite|applyTimelineMove|seamEdgeSpec/, 'the release does not write on its own path');
+  const chooser = bodyOf(app, 'function editSeamEdge(edit:EdgeEdit){');
+  assert.equal((chooser.match(/changed\(/g) ?? []).length, 1, 'one labelled local change per gesture');
   assert.match(app, /document\.addEventListener\('pointerdown',ev=>\{if\(ev\.button!==0\)return;const lane=\(ev\.target as Element\)\.closest\?\.<HTMLElement>\('\.seam-curve'\);if\(lane\)beginSeamCurveDrag\(ev,lane\);\}\);/);
 });
 
@@ -188,7 +246,7 @@ test('the path panel and the hosted submit refuse a cut curve and never send an 
   assert.match(instrument, /const takesCurve=transitionKindOf\(journey\.scenes\.find\(v=>v\.id===enterSceneId\)\?\.transitionSpec\)!=='cut';/);
   assert.match(instrument, /\{takesCurve\?<select aria-label=\{`Curve into \$\{name\}`\}/, 'the path panel offers the curve only where it applies');
   assert.match(instrument, /const refusal=edit\.kind!=='loop'\?edgeEditRefusal\(/);
-  assert.match(instrument, /if\(JSON\.stringify\(before\)===JSON\.stringify\(after\)\)\{message\(`\$\{routed\.label\} changed nothing/);
+  assert.match(instrument, /if\(JSON\.stringify\(before\)===JSON\.stringify\(after\)\)\{say\(`\$\{routed\.label\} changed nothing/);
   const edit = bodyOf(app, 'function editSeamEdge(edit:EdgeEdit){');
   assert.match(edit, /edgeEditRefusal\(store\.document\.scenes\.find/, 'the chooser refuses a cut curve before it writes');
   assert.match(edit, /changed nothing: this edge already has it/, 'the chooser names a no-op edit');
@@ -226,4 +284,15 @@ test('source: the tick clears a held jump on pause or stop, and the transport sh
   const cue = bodyOf(app, 'function pendingSwitchCueHTML(){');
   assert.match(cue, /role="status"/);
   assert.match(cue, /Switch to \$\{esc\(name\)\} when this scene ends\./);
+});
+
+test('a hosted edge edit from the seam chooser reports its outcome where it was made, even with the Journey instrument closed', async () => {
+ const {readFile} = await import('node:fs/promises');
+ const app = await readFile(new URL('../src/app.ts', import.meta.url), 'utf8');
+ const instrument = await readFile(new URL('../src/journeyInstrument.tsx', import.meta.url), 'utf8');
+ assert.match(app, /if\(journeyInstrument\?\.editEdge\(edit,text=>toast\(text\)\)\)return;/, 'the chooser passes its toast');
+ assert.match(instrument, /editEdge\(edit:EdgeEdit,notify\?:\(text:string\)=>void\):boolean\{if\(!host\.nativeView\(\)\)return false;submitEdge\(edit,notify\);return true;\}/);
+ const submit = instrument.slice(instrument.indexOf('const submitEdge='), instrument.indexOf('const basisKey='));
+ assert.match(submit, /const say=\(text:string\)=>\{message\(text\);notify\?\.\(text\);\};/);
+ assert.doesNotMatch(submit.slice(submit.indexOf('const say=') + 60), /[^.]message\(/, 'every outcome goes through say, so the notifier hears it');
 });

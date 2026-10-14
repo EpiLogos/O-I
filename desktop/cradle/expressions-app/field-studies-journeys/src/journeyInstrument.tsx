@@ -223,25 +223,28 @@ export function installJourneyInstrument(host:JourneyInstrumentHost,home:HTMLEle
  const failure=(cause:unknown)=>cause instanceof Error?cause.message:String(cause);
  // Lane-5 T5 / T8: a hosted edge edit is one native edit through the instrument's own edit channel: one scene_material_set on the
  // captured revision, labelled by its composite. The owner's reply names the outcome; a refusal passes the owner's reason through.
- const submitEdge=(edit:EdgeEdit)=>{
+ // An edit made outside the instrument (the timeline's seam chooser) also reports through `notify`, so its outcome — a refusal
+ // above all — is seen where it was made, even while this instrument's status line is hidden.
+ const submitEdge=(edit:EdgeEdit,notify?:(text:string)=>void)=>{
+  const say=(text:string)=>{message(text);notify?.(text);};
   const view=host.nativeView();
-  if(!view){message('The native Expression is not open, so nothing was written.');return;}
+  if(!view){say('The native Expression is not open, so nothing was written.');return;}
   let routed:ReturnType<typeof nativeEdgeRequest>;
-  try{routed=nativeEdgeRequest({expression:view.document,bindings:view.bindings},edit);}catch(error){message(failure(error));return;}
-  if(!routed.ok){message(routed.reason);return;}
+  try{routed=nativeEdgeRequest({expression:view.document,bindings:view.bindings},edit);}catch(error){say(failure(error));return;}
+  if(!routed.ok){say(routed.reason);return;}
   // T5: a cut has no curve, and an edit the edge already has is named rather than sent as a no-op revision.
   const sceneId=edit.kind==='loop'?edit.exitSceneId:edit.enterSceneId,ref=view.bindings[sceneId]?.scene_ref;
   const before=(view.document.scenes as unknown as ReadonlyArray<{scene_ref:string;presentation?:{scene?:unknown}|null}>).find(s=>s.scene_ref===ref)?.presentation?.scene;
   const refusal=edit.kind!=='loop'?edgeEditRefusal((before as {transitionSpec?:TransitionSpec}|undefined)?.transitionSpec,edit):undefined;
-  if(refusal){message(refusal);return;}
+  if(refusal){say(refusal);return;}
   const after=(routed.request.changes[0] as unknown as {presentation:{scene:unknown}}).presentation.scene;
-  if(JSON.stringify(before)===JSON.stringify(after)){message(`${routed.label} changed nothing: this edge already has it.`);return;}
+  if(JSON.stringify(before)===JSON.stringify(after)){say(`${routed.label} changed nothing: this edge already has it.`);return;}
   const label=routed.label;
   void host.editExpression(routed.request).then(reply=>{
    const outcome=edgeReplyMessage(reply,label);
-   if(!outcome.ok){message(outcome.text);return;}
-   void load().then(()=>message(outcome.text));
-  }).catch(error=>message(edgeErrorMessage(label,failure(error))));
+   if(!outcome.ok){say(outcome.text);return;}
+   void load().then(()=>say(outcome.text));
+  }).catch(error=>say(edgeErrorMessage(label,failure(error))));
  };
  const basisKey=():string|undefined=>{try{return beatLoadKey(journeyInstrumentBasis(host.nativeView(),host.sceneId()));}catch{return undefined;}};
  function load():Promise<void>{
@@ -369,7 +372,7 @@ export function installJourneyInstrument(host:JourneyInstrumentHost,home:HTMLEle
  return {
   /** T5: an edge preset from the seam chooser takes the path panel's own native edit (one scene_material_set). False when no native
    * Expression is open, so the caller writes the local document instead. */
-  editEdge(edit:EdgeEdit):boolean{if(!host.nativeView())return false;submitEdge(edit);return true;},
+  editEdge(edit:EdgeEdit,notify?:(text:string)=>void):boolean{if(!host.nativeView())return false;submitEdge(edit,notify);return true;},
   /** T9: restore the author's saved Scene once per page, from the first native load that can read it. */
   restorePosition(){restoring??=restoreOnce().finally(()=>{restoring=undefined;});return restoring;},
   /** T9: the strip moved to a Scene; record it as the position, through the same presence owner the instrument reads from. */
