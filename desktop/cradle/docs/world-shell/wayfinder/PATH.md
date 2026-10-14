@@ -106,7 +106,7 @@ bullet twice gets one Sonnet diagnostic; never a third builder attempt.
 
 ## 7. Open claims
 
-One branch, one run (`dlw/build`; the open PR is #671). Builders are Haiku, three at a
+One branch, one run (`dlw/build`; the open PR is #673). Builders are Haiku, three at a
 time, each with an exclusive zone; the lead converges, commits and keeps
 this table true. Tickets and resolutions live in `tickets/`.
 
@@ -116,9 +116,11 @@ this table true. Tickets and resolutions live in `tickets/`.
 | Phase 5 gate 2: seam 3 (every encounter linkable, Back walks the trail) | haiku builder | live-shell `projections/encounterBridge.ts`, new `projections/encounterLink.ts`, `App.tsx` mount; cradle `workspace/encounter.ts` | 2026-10-14 |
 | Phase 5 gate 2: seam 5 (clips carry the standing their source states) | haiku builder | live-shell `timeline/timeSpine.ts`, `timeline/*TrackAdapter.ts`, `projections/worldTimelinePresentation.tsx` | 2026-10-14 |
 
-Committed on `dlw/build` after #671's head: the E19 quarantine safety fixes,
-the gate 4 census, the gates 1–2 audit, the gate 3 migration command and the
-candidate's first-run apply (`LEGACY-CRADLE-RETIREMENT.md` §4.1), seam 7 (the transport on the one spine), seam 8's pop-out door, and gate 4's native Live set and device ops.
+#673 carries: the E19 quarantine safety fixes, the gates 1–2 audit, the gate 3
+migration and the candidate's first-run apply (`LEGACY-CRADLE-RETIREMENT.md`
+§4.1), gate 4's native Live set and device ops, seam 7 (the transport on the
+one spine) and seam 8's pop-out door. #671 (lane-5 T3/T9, R2 third wave) is
+on main.
 
 Landed on main through #666 (14 Oct): the torus instrument legs 1–6; the
 Jankó keyboard (the owner's window, presses held by identity); the mode
