@@ -4,10 +4,11 @@ import {deviceBindingId, deviceWindowGone, nativeDetachedBodySupported, placeDev
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import {Workbench, GroupPane, type WorkbenchProps} from '../../../../../desktop/cradle/src/surface/Workbench'
 import {ProjectionEncounterProvider} from '../../../../../desktop/cradle/src/surface/projectionPane'
+import {followsSelection} from '../../../../../desktop/cradle/src/surface/projectionModules'
 import {createSpineEncounterBridge} from '../projections/encounterBridge'
 import {ContextMenu, type MenuState} from '../../../../../desktop/cradle/src/surface/ContextMenu'
 import {bindingDisclosures, frameDisclosures, executeFrameAction} from '../../../../../desktop/cradle/src/surface/registry'
-import {activeBindingId, detachBinding, groupsOf, makeSourceBinding, openBinding} from '../../../../../desktop/cradle/src/surface/engine'
+import {activeBindingId, detachBinding, focusedGroup, groupsOf, makeSourceBinding, openBinding} from '../../../../../desktop/cradle/src/surface/engine'
 import {frameActionForKey} from '../../../../../desktop/cradle/src/surface/keys'
 import type {ActionArg, LayoutState, RestorePoint, SurfaceBinding} from '../../../../../desktop/cradle/src/surface/types'
 import {useKernel} from '../../../../../desktop/cradle/src/kernel/KernelProvider'
@@ -26,7 +27,7 @@ import {bindScopeWriter, publishScope, publishFocusedProject, scopeFromWorkspace
 import {FactoryLiveProvider} from '../../../../../desktop/cradle/src/contributions/factory/FactoryLive'
 import {publishCentreView} from '../../../../../desktop/cradle/src/contributions/factory/desk/deskModel'
 import {registeredHostedSurfaces} from '../../../../../desktop/cradle/src/contributions/generated'
-import {publishWorkbenchAperture, publishWorkbenchOpeners} from './workbenchDoor'
+import {publishFocusedPane, publishWorkbenchAperture, publishWorkbenchOpeners} from './workbenchDoor'
 import {withHostedDescriptor} from '../../../../../desktop/cradle/src/contributions/registry'
 import {DOCUMENT_FORMS} from '../../../../../desktop/cradle/src/flow/documentForms'
 import {createFormInPlace} from '../../../../../desktop/cradle/src/flow/createInPlace'
@@ -137,6 +138,19 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
     const groups = groupsOf(layout.root).filter(group => group.tabs.length > 0)
     const pinned = groups.filter(group => {const id = group.active ?? group.tabs[0]; return !!(id && layout.surfaces[id]?.projection?.subject_ref)}).length
     publishWorkbenchAperture(presented ? {panes: groups.length, pinned} : null)
+  }, [book.current.layout, presented])
+  // The browser's aperture slot reads the focused pane (world-shell-mockup.html renderSlot): its kind and tab, which pane of how
+  // many, its pin — and pins or lets it follow through the pane's own Follow/Pin action (surface.pin-subject).
+  useEffect(() => {
+    const layout = book.current.layout
+    const groups = groupsOf(layout.root).filter(group => group.tabs.length > 0)
+    const group = focusedGroup(layout), id = group?.active ?? group?.tabs[0], binding = id ? layout.surfaces[id] : undefined
+    const index = group ? groups.indexOf(group) : -1
+    publishFocusedPane(presented && id && binding && index >= 0 ? {id, kind: binding.kind, title: binding.title, index: index + 1, count: groups.length,
+      pinned: binding.projection?.subject_ref, follows: !!binding.projection && followsSelection(binding.projection.kind), ref: binding.ref, project: binding.project,
+      worldRef: binding.presentation?.world_ref, fieldRef: binding.presentation?.field_ref,
+      pin: ref => callbacks.current.execute('surface.pin-subject', {surfaceId: id, ref})} : null)
+    return () => publishFocusedPane(null)
   }, [book.current.layout, presented])
   // The pane tree is the centre in every mode (FOUNDATION F2): a mode's first tree is seeded from its registration
   // (shell/modeFrames.ts MODE_TREE_SEEDS — Factory's pinned agent tab, the others' instruments); a seed never touches a tree
