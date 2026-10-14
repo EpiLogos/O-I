@@ -2,6 +2,21 @@ import type {Journey} from './model';
 import {savedSceneIndices} from './sceneWorkflow';
 import type {KernelConversion} from './kernelDocumentBridge';
 import {regionWrap,playDurations,toPlayRegion,sceneLocalRegion,type LoopRegion} from './journeyMarkers';
+import {switchModeOf,type SwitchMode,type TransitionSpec} from './transitions';
+
+/** Lane-5 T5: a request to switch to a Scene while playback runs, decided by the entering seam's switch mode. The automatic
+ * advance at a Scene's natural end is never held (the outgoing has no time left); a request made by the user while playing is
+ * held to the outgoing's natural end when the seam says at-end. Paused playback has no outgoing run, so nothing is held. */
+export function switchHoldsForEnd(spec:TransitionSpec|undefined|null,automatic:boolean,playing:boolean):boolean{
+ return !automatic&&playing&&switchModeOf(spec)==='at-end';
+}
+/** Lane-5 T5: the local time a Scene lands at when it is entered. Only sync carries the outgoing Scene's local time across;
+ * immediate and at-end enter at the Scene's own start, as they always did. The landing never reaches the Scene's end. */
+export function switchLanding(spec:TransitionSpec|undefined|null,outgoingLocal:number,incomingDuration:number):number{
+ const mode:SwitchMode=switchModeOf(spec);
+ if(mode!=='sync'||!Number.isFinite(outgoingLocal)||!(incomingDuration>0))return 0;
+ return Math.max(0,Math.min(outgoingLocal,incomingDuration-.001));
+}
 
 export interface SceneTransportFrame {
   elapsed_seconds: number;
@@ -71,7 +86,10 @@ export function advanceSceneTransport(journey: Journey, sceneIndex: number, elap
   }
   if (nextElapsed < active.duration) return {...held, elapsed_seconds: nextElapsed};
   const current = indices.indexOf(sceneIndex), next = current + 1;
-  if (current < 0 || !indices.length || next >= indices.length && !journey.loop) {
+  // Lane-5 T8: a loop exit on the sequence's last Scene stops playback at its natural end instead of wrapping. Without one the
+  // journey wraps exactly as before.
+  const loopExit = next >= indices.length && journey.loop && !!scene?.breakAtEnd;
+  if (current < 0 || !indices.length || next >= indices.length && !journey.loop || loopExit) {
     return {...held, elapsed_seconds: 0, scene_playing: false, saved_sequence_playing: false, completed: true};
   }
   return {...held, elapsed_seconds: 0, advance_to_scene_index: indices[next % indices.length]};

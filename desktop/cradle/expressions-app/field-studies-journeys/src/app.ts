@@ -21,7 +21,7 @@ import {updateToolbeltValues,liveValue} from './liveValues';
 import {beltCandidates,pickerHTML} from './beltPicker';
 import {PropertyTrack,sampleTrack,evaluateTracks,readTrackValue,mergeTake,expressionTiming,channelRange,validateCurveEdit,touchesOfKey,type CurveTouch,type ChannelRange,type Interpolation} from './propertyTracks';
 import {curveHit,laneFrame,fromPixel,insertKey,removeKey,moveKey,moveHandle,setSegmentType,channelName,channelStateFor,channelPanelHTML,previewScene,type ChannelView,type HandleEnd,type LaneFrame,type Points} from './curveLane';
-import {transitionKindOf,transitionSpecFor,transitionLabel,dipWeights,wipeHoldRect,seamGlyphHTML,seamChooserHTML,writeSeamTransition,type TransitionKind,type TransitionParams,type TransitionSpec,type WipeDirection} from './transitions';
+import {transitionKindOf,transitionSpecFor,transitionLabel,dipWeights,wipeHoldRect,seamGlyphHTML,seamChooserHTML,writeSeamTransition,curveProgress,curveOf,type TransitionKind,type TransitionParams,type TransitionSpec,type TransitionCurve,type WipeDirection} from './transitions';
 import {journeyTimelineLayout} from './journeyTimelineLayout';
 import {MARKER_COLOURS,MARKER_LIMIT,MARKER_NAME_MAX,sceneBoundaries,sceneAtJourneyTime,markerNamed,markerAdd,markerRename,markerMove,markerRemove,nextMarkerTime,prevMarkerTime,setLoopEdge,dragLoopEdge,moveLoopRegion,playDurations,toPlayClock,loopPlayNotice,type LoopEdge,type LoopRegion} from './journeyMarkers';
 import {snapCandidates,snapTime,closestSnap,nextSnapPoint,prevSnapPoint,type SnapPoint} from './snapModel';
@@ -35,7 +35,7 @@ import {entityTargets} from './nativeParameters';
 import {recordRecent,recentJourneys} from './recentWork';
 import {installPanelResize} from './panelResize';
 import {initialiseSceneSaves,sceneSaveState,saveScene,nextSceneFrom,moveScene,retimeScene,removeScene,splitScene,applyTimelineMove,restoreScene,savedSceneIndices,sceneParameterChanges,insertScene,overwriteScene,stillScene,rollSceneSeam,seamRollRange,slipScene} from './sceneWorkflow';
-import {advanceSceneTransport,nativeSceneTransportMaterial} from './sceneTransport';
+import {advanceSceneTransport,nativeSceneTransportMaterial,switchHoldsForEnd,switchLanding} from './sceneTransport';
 import {liveWorkspaceHTML} from './liveWorkspace';
 import {defaultWorkspace,validateWorkspace,WORKSPACE_KEY,moveBeltEntry,syncHeldState} from './workspacePreferences';
 import {physisHost,installPhysis,saveDesktopCapture,type DesktopScene} from './physis';
@@ -116,6 +116,7 @@ function actTransition(seconds:number,easing?:string){
  const c=$<HTMLCanvasElement>('transition-canvas');c.width=engine.canvas.width;c.height=engine.canvas.height;c.getContext('2d')!.drawImage(engine.canvas,0,0);
  transitionBackground=scene().field.background;c.style.background=transitionBackground;c.style.opacity='1';c.hidden=false;
  transitionKind='crossfade';transitionSnapshot=null;transitionStart=simTime;transitionDuration=seconds;transitionSceneId=scene().id;
+ transitionCurveNow=null; // T5: an act passage eases by its own chain easing; a seam's curve applies only to seams.
  transitionEasing=(['smoothstep','linear','kineticSnap','whip'] as const).includes(easing as ChainEasing)?easing as ChainEasing:'smoothstep';
  needsFrame=true;
 }
@@ -142,6 +143,9 @@ const CURVE_DRAG_REVISION_BASE=1e6;
 // E11: the seam transition in flight, and the seam whose chooser is open. 'crossfade' is the overlay the app always had; a
 // painted kind (dip to colour, wipe) keeps a snapshot of the outgoing frame and paints its blend each frame.
 let transitionKind:TransitionKind='crossfade';let transitionSpecNow:TransitionSpec|undefined;let transitionSnapshot:HTMLCanvasElement|null=null;let seamSceneId:string|null=null;
+/** T5: the curve of the seam in flight (null for an act passage, which eases by its chain easing), and a jump held to the
+ * outgoing Scene's natural end by an at-end switch. */
+let transitionCurveNow:TransitionCurve|null=null;let pendingAtEnd:string|null=null;
 // E14: the nested frame and seam last driven, so an overlay starts once per nested boundary crossing.
 let nestedFrameKey:string|null=null,nestedSeamKey:string|null=null;
 const channelViews=new Map<string,ChannelView>();
@@ -659,10 +663,13 @@ function paintSeamBlends(saved:boolean){
 /** E11: paints the transition in flight at fraction f. The crossfade keeps its overlay opacity exactly. A painted kind
  * composes its blend on the transition canvas over the live field: dip to colour fades the outgoing frame into the incoming
  * scene's own background and out again; a wipe holds the outgoing frame only where the mask has not reached. */
+/** T5: a seam's blend progress through its curve. A seam without a curve is linear, the identity, exactly the easing it always used. */
+const LINEAR_SEAM_CURVE:TransitionCurve={type:'linear'};
+function blendProgress(f:number){return transitionCurveNow?curveProgress(transitionCurveNow,f):applyEasing(f,transitionEasing);}
 function paintTransition(f:number){
  const c=$<HTMLCanvasElement>('transition-canvas'),snapshot=transitionSnapshot;
- if(transitionKind==='crossfade'||!snapshot){c.style.opacity=String(1-applyEasing(f,transitionEasing));return;}
- const ctx=c.getContext('2d')!,e=applyEasing(f,transitionEasing),w=c.width,h=c.height;
+ if(transitionKind==='crossfade'||!snapshot){c.style.opacity=String(1-blendProgress(f));return;}
+ const ctx=c.getContext('2d')!,e=blendProgress(f),w=c.width,h=c.height;
  ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=1;ctx.clearRect(0,0,w,h);
  if(transitionKind==='dip-to-colour'){
   const d=dipWeights(e,transitionSpecNow?.at);
@@ -676,8 +683,8 @@ function paintTransition(f:number){
 }
 /** E11: the crossfade seam. The outgoing frame is held on the transition canvas and fades over the incoming Scene; the same
  * statements the Scene change always ran, extracted so a nested occurrence's crossing uses this exact path. */
-function startCrossfadeSeam(target:{id:string;transition:number},outgoingBackground:string){
- const c=$<HTMLCanvasElement>('transition-canvas');c.width=engine.canvas.width;c.height=engine.canvas.height;c.getContext('2d')!.drawImage(engine.canvas,0,0);transitionBackground=outgoingBackground;c.style.background=transitionBackground;c.style.opacity='1';c.hidden=false;transitionStart=simTime;transitionDuration=target.transition;transitionEasing='linear';transitionKind='crossfade';transitionSnapshot=null;transitionSceneId=target.id;
+function startCrossfadeSeam(target:{id:string;transition:number;transitionSpec?:TransitionSpec},outgoingBackground:string){
+ const c=$<HTMLCanvasElement>('transition-canvas');c.width=engine.canvas.width;c.height=engine.canvas.height;c.getContext('2d')!.drawImage(engine.canvas,0,0);transitionBackground=outgoingBackground;c.style.background=transitionBackground;c.style.opacity='1';c.hidden=false;transitionStart=simTime;transitionDuration=target.transition;transitionEasing='linear';transitionCurveNow=curveOf(target.transitionSpec)??LINEAR_SEAM_CURVE;transitionKind='crossfade';transitionSnapshot=null;transitionSceneId=target.id;
 }
 /** E11: a painted seam (dip to colour, wipe) keeps a snapshot of the outgoing frame and paints its blend each frame. */
 function startPaintedSeam(target:Scene){
@@ -685,7 +692,7 @@ function startPaintedSeam(target:Scene){
  const c=$<HTMLCanvasElement>('transition-canvas');c.width=engine.canvas.width;c.height=engine.canvas.height;
  transitionKind=transitionKindOf(target.transitionSpec);transitionSpecNow=target.transitionSpec;transitionSnapshot=snapshot;
  transitionBackground=target.field.background;c.style.background='none';c.style.opacity='1';c.hidden=false;
- transitionStart=simTime;transitionDuration=target.transition;transitionEasing='linear';transitionSceneId=target.id;
+ transitionStart=simTime;transitionDuration=target.transition;transitionEasing='linear';transitionCurveNow=curveOf(target.transitionSpec)??LINEAR_SEAM_CURVE;transitionSceneId=target.id;
  needsFrame=true;paintTransition(0);
 }
 /** Double-click on empty lane: a keyframe at that time, holding the curve's own value there. */
@@ -1025,11 +1032,11 @@ function applySceneView(){const v=activeScene().view;if(v)Object.assign(camera,c
 // so previous/next, the arrow keys and transport frames keep wrap-around.
 function sceneRefAt(index:number){const n=store.document.scenes.length;if(index<0)index=n-1;if(index>=n)index=0;return store.document.scenes[index].id;}
 function sceneIndexOf(sceneId:string){const index=store.document.scenes.findIndex(s=>s.id===sceneId);if(index<0)throw Error('The Scene is no longer present in this Expression');return index;}
-function setSceneRef(sceneId:string,automatic=false){const index=sceneIndexOf(sceneId);draftSchedule.flushNow('scene');if(!automatic)sceneIntentEpoch++;if(propertyTake)finishPropertyTake();trackPreview=false;pointer.active=false;if(index===sceneIndex&&!automatic)return;
+function setSceneRef(sceneId:string,automatic=false){const index=sceneIndexOf(sceneId);const outgoingLocal=sceneElapsed;if(index!==sceneIndex&&switchHoldsForEnd(store.document.scenes[index].transitionSpec,automatic,scenePlaying)){pendingAtEnd=sceneId;renderAll();return;}if(!automatic)pendingAtEnd=null;draftSchedule.flushNow('scene');if(!automatic)sceneIntentEpoch++;if(propertyTake)finishPropertyTake();trackPreview=false;pointer.active=false;if(index===sceneIndex&&!automatic)return;
  if(scenePlaying&&store.document.scenes[index].transition>0&&engine.capabilities.kind==='preview'&&transitionKindOf(store.document.scenes[index].transitionSpec)==='crossfade'){startCrossfadeSeam(store.document.scenes[index],scene().field.background);}else if(scenePlaying&&store.document.scenes[index].transition>0&&engine.capabilities.kind==='preview'&&transitionKindOf(store.document.scenes[index].transitionSpec)!=='cut'){startPaintedSeam(store.document.scenes[index]);}else{transitionDuration=0;transitionSnapshot=null;$('transition-canvas').hidden=true;}
 
  sceneIndex=index;journeyInstrument?.recordPosition(sceneId); // T9: the strip's Scene is the author's presence, through the presence owner.
- if(!automatic)journeyPlaying=false;applySceneView();sceneElapsed=0;selected=[];textId=scene().text[0]?.id??null;saveSession();placementStep=false;shapePickerOpen=false;if(!automatic)journeyPlaying=false;renderAll();void researchInstruments?.refresh();}
+ if(!automatic)journeyPlaying=false;applySceneView();sceneElapsed=automatic?0:switchLanding(store.document.scenes[index].transitionSpec,outgoingLocal,store.document.scenes[index].duration);selected=[];textId=scene().text[0]?.id??null;saveSession();placementStep=false;shapePickerOpen=false;if(!automatic)journeyPlaying=false;renderAll();void researchInstruments?.refresh();}
 /** Saved playback uses the existing frame playhead; native location changes
  * wait for its exact owner acknowledgement before the next Scene is rendered. */
 async function advanceSavedScene(index:number,local=0){if(sceneAdvancePending||!sceneTransportAlive)return;const view=nativeWorkspace?.nativeView(),target=store.document.scenes[index],targetRef=target&&view?.bindings[target.id]?.scene_ref;
@@ -1304,7 +1311,8 @@ async function exportArtifact(){let style=document.getElementById('shell-style')
 function captureTransition():CaptureTransition|undefined{if(engine.capabilities.kind==='production')return undefined;if(!(transitionDuration>0))return undefined;
  // E11: a painted seam already holds its whole blend on the transition canvas, so the recorder composites it at full alpha.
  if(transitionKind!=='crossfade')return {canvas:$<HTMLCanvasElement>('transition-canvas'),alpha:1,background:transitionBackground,painted:true};
- return {canvas:$<HTMLCanvasElement>('transition-canvas'),alpha:1-clamp((simTime-transitionStart)/Math.max(.01,transitionDuration),0,1),background:transitionBackground};}
+ const progress=clamp((simTime-transitionStart)/Math.max(.01,transitionDuration),0,1);
+ return {canvas:$<HTMLCanvasElement>('transition-canvas'),alpha:1-(transitionCurveNow?curveProgress(transitionCurveNow,progress):progress),background:transitionBackground};}
 async function captureImage(){readCapture();engine.render(frameData(0));const out=createOutput(captureSettings,width,height);if(!engine.capture)throw new Error('This renderer does not support native-resolution capture.');const pixels=engine.capture(out.width,out.height);paintNativeCapture(out,pixels,{...scene(),field:{...scene().field,background:engine.telemetry?.()?.background??scene().field.background,palette:engine.telemetry?.()?.palette??scene().field.palette,params:{...scene().field.params,...engine.telemetry?.()?.params}}},captureSettings,width,height);const blob=await png(out),name=slug(scene().name)+'.png';if(await saveDesktopCapture(blob,name,desktopSource(),{...captureSettings,width:out.width,height:out.height}))toast('Image saved to the Physis library.');else{download(blob,name);toast(`Captured ${out.width} × ${out.height} native pixels, without resetting the field.`);}}
 function startRecording(){if(recorder.active){recorder.stop();return;}recordingSource=desktopSource();readCapture();captureSettings.width=Math.min(captureSettings.width,engine.canvas.width,1920);recordingSettings={...captureSettings};recordPerformanceWarned=false;if(fieldPaused){fieldPaused=false;renderAll();}const start=()=>recorder.start(engine.canvas,scene(),captureSettings,width,height,captureTransition());if(engine.withCleanFrame)engine.withCleanFrame(start);else start();closeDialogs();captureOpen=false;renderAll();$('recording-badge').hidden=false;$('record-size').textContent=`${captureSettings.width}px · 30 fps target`;toast('Recording the clean scene. Perform, play the expression, then stop.',3300);}
 recorder.onStop=(blob,mime)=>{transportUI();announceHostState();$('recording-badge').hidden=true;if(currentVideo)URL.revokeObjectURL(currentVideo.url);currentVideo={blob,mime,url:URL.createObjectURL(blob),source:recordingSource??desktopSource(),settings:recordingSettings??captureSettings};$('video-dialog').innerHTML=`${modalCloseButton()}<p class="eyebrow">A PERFORMANCE, KEPT</p><h2>Let it play<br><em>once more.</em></h2><video id="recording-review" preload="auto" controls playsinline style="width:100%;border-radius:8px" src="${currentVideo.url}"></video><p class="capture-footnote">${mime.split(';')[0]} · ${(blob.size/1024/1024).toFixed(1)} MB · silent live capture</p><div class="button-row"><button class="primary" data-action="save-video">${icon('download')} Save recording</button><button class="secondary" data-action="close-dialog">Return to the field</button></div>`;$<HTMLDialogElement>('video-dialog').showModal();};recorder.onError=err=>{transportUI();announceHostState();$('recording-badge').hidden=true;error(err);};recorder.onLimit=m=>toast(m,6500);
@@ -1917,7 +1925,15 @@ function tick(now:number){if(sceneEditHeld||researchInstruments?.active()&&!rese
  }
  sceneElapsed=transportFrame.elapsed_seconds;scenePlaying=transportFrame.scene_playing;
  const wasSequence=journeyPlaying;journeyPlaying=transportFrame.saved_sequence_playing;
- if(transportFrame.advance_to_scene_index!==null)void advanceSavedScene(transportFrame.advance_to_scene_index,transportFrame.seek_local_seconds??0);
+ // T5 at-end: a jump held to this Scene's natural end lands now, in place of the sequence's next Scene or the stop. The landing
+ // is the seam's own (at its start); playback continues as it was.
+ if(pendingAtEnd!==null&&!transportFrame.unavailable_reason&&(transportFrame.completed||transportFrame.advance_to_scene_index!==null)){
+  const landing=pendingAtEnd;pendingAtEnd=null;transportFrame.advance_to_scene_index=null;transportFrame.completed=false;transportFrame.seek_local_seconds=null;
+  scenePlaying=true;journeyPlaying=wasSequence;
+  try{if(wasSequence)void advanceSavedScene(sceneIndexOf(landing),0);else{const target=store.document.scenes[sceneIndexOf(landing)];setSceneRef(target.id,true);sceneElapsed=0;}}
+  catch(cause){scenePlaying=false;journeyPlaying=false;toast(cause instanceof Error?cause.message:String(cause));renderAll();}
+ }
+ else if(transportFrame.advance_to_scene_index!==null)void advanceSavedScene(transportFrame.advance_to_scene_index,transportFrame.seek_local_seconds??0);
  else if(transportFrame.unavailable_reason){if(wasSequence)applySceneView();toast(transportFrame.unavailable_reason);renderAll();}
  else if(transportFrame.completed){if(wasSequence){applySceneView();renderAll();}else transportUI();}
  if(transitionDuration>0){const f=clamp((simTime-transitionStart)/Math.max(.01,transitionDuration),0,1);paintTransition(f);if(f>=1){transitionDuration=0;transitionSnapshot=null;$('transition-canvas').hidden=true;}}

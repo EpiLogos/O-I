@@ -39,3 +39,11 @@
 .journey-path-seam{font-size:10px;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px;opacity:.75}
 .journey-path-seam.is-cut,.journey-path-seam.is-start{opacity:.45}
 .journey-path-edge,.journey-path-next{font-size:10px;line-height:1.4;opacity:.75;overflow-wrap:anywhere;margin:4px 0}
+/* lane-5 T5 / T8 — the per-edge controls (switch, curve) under each seam, the loop row, and where playback stops. Tokens only. */
+.journey-path-controls{grid-column:1/-1;display:flex;gap:4px;flex-wrap:wrap;min-width:0}
+.journey-path-controls select{font:10px/1.4 var(--sans);color:var(--ui-ink,var(--ink));background:var(--panel);border:1px solid var(--ui-line,var(--line));border-radius:3px;padding:1px 4px;max-width:100%}
+.journey-path-controls select:focus-visible,.journey-path-stop-toggle input:focus-visible{outline:1px solid var(--accent);outline-offset:1px}
+.journey-path-loop{display:grid;gap:4px;margin-top:6px;padding-top:6px;border-top:1px dashed var(--ui-line,var(--line))}
+.journey-path-stop,.journey-path-stop-toggle{font-size:10px;line-height:1.4;color:var(--ui-muted,var(--muted));overflow-wrap:anywhere;margin:4px 0}
+.journey-path-stop-toggle{display:flex;align-items:center;gap:6px;cursor:pointer}
+.journey-path-stop-toggle input{accent-color:var(--accent);margin:0}
