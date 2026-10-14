@@ -56,7 +56,25 @@ delivered at 0.1.2 — `evidence/integrated-v012-delivery-receipt.json`):
    served (ground reads/writes, day/now operations, kernel ops, events) is
    served by the candidate kernel at parity; the 8787 seam retires with a
    named replacement for each caller. **Partially proven** (kernel ops and
-   files verified; a caller-by-caller census is owed).
+   files verified). **Census built (scripted), replacements still open.**
+   Scripted census: `tests/conformance/owner-service-census.test.mjs` with
+   register `tests/conformance/owner-service-census.json`; evidence
+   `docs/world-shell/evidence/owner-service-census-20261014.json`; 22 of 22
+   conformance tests pass, including a negative control that a new 8787
+   caller fails. The in-tree 8787 server (`packages/live-shell`) has 8 routes
+   and serves only the Live Set document and device-parameter domain. Its
+   shipping callers: 6, in 3 files (`application.ts` x2, `devices/api.ts` x3,
+   `assets/index.html` x1). Status: 0 replaced, 1 replaceable (`/api/config`,
+   residual ShellConfigRead; not converted, since a conversion would change
+   the result shape), 5 missing (no KernelOp for Live Set or device
+   parameters). Conversions made: 0. Test-tree callers: 11 hits in 6 files.
+   Open owner ops, named in the register: `LiveSetRead` (set, summary),
+   `LiveDeviceDescriptors`, `LiveDeviceParamsRead`, `LiveDeviceParamWrite`,
+   `ShellConfigRead`. The retirement's premise that 8787 served ground, day/now
+   and event routes is not borne out by the in-tree server. The relative
+   `/api/*` routes the frame calls (scenes, media, overlay, state, hardware,
+   events, telemetry) are not on 8787's table, and no in-tree server answers
+   them. Their owner is unresolved, and gate 4 cannot close until it is named.
 5. **Everyday journey acceptance on the successor** — one full owner day
    lived in the candidate (ground work, conversations, Expression editing,
    day close) with identities, drafts and revisions preserved across

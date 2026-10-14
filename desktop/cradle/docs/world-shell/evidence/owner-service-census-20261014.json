@@ -1,0 +1,140 @@
+{
+  "server": {
+    "file": "packages/live-shell/src/main.rs",
+    "port": 8787,
+    "routes": [
+      "GET /",
+      "GET /api/summary",
+      "GET /api/document",
+      "GET /api/set",
+      "GET /api/config",
+      "GET /api/device-descriptors",
+      "GET /api/document/device-params",
+      "POST /api/document/device-param"
+    ]
+  },
+  "shipping": {
+    "packages/live-shell/assets/index.html::/api/summary": 1,
+    "packages/live-shell/ui/src/native/application.ts::/api/config": 1,
+    "packages/live-shell/ui/src/native/application.ts::/api/set": 1,
+    "packages/live-shell/ui/src/panels/devices/api.ts::/api/device-descriptors": 1,
+    "packages/live-shell/ui/src/panels/devices/api.ts::/api/document/device-param": 1,
+    "packages/live-shell/ui/src/panels/devices/api.ts::/api/document/device-params": 1
+  },
+  "shipping_references_in_comments": [
+    "packages/live-dynamics/src/params.rs:7972 /api/device-descriptors"
+  ],
+  "test": {
+    "packages/instrument-editors/tests/visual.mjs:::8787": 2,
+    "packages/live-shell/ui/tests/audit-l6-live-replay.test.mjs::/api/config": 2,
+    "packages/live-shell/ui/tests/live-device-walk.browser.mjs::/api/document/device-params": 1,
+    "packages/live-shell/ui/tests/support/agentShellHarness.mjs::/api/config": 1,
+    "packages/live-shell/ui/tests/support/liveDeviceFixture.mjs::/api/device-descriptors": 1,
+    "packages/live-shell/ui/tests/support/liveDeviceFixture.mjs::/api/document/device-param": 1,
+    "packages/live-shell/ui/tests/support/liveDeviceFixture.mjs::/api/document/device-params": 1,
+    "packages/live-shell/ui/tests/support/liveDeviceFixture.mjs::/api/set": 1,
+    "packages/live-shell/ui/tests/wiki-subject-standing.test.mjs::/api/config": 1
+  },
+  "doc": {
+    "desktop/cradle/docs/world-shell/NATIVE-ACTIONS-AUDIT-20261009.md::/api/config": 1,
+    "desktop/cradle/docs/world-shell/NATIVE-EDITOR-STANDARD.md::/api/document": 1,
+    "desktop/cradle/docs/world-shell/PROGRAMME.md:::8787": 1,
+    "desktop/cradle/docs/world-shell/PROGRAMME.md::/api/summary": 1,
+    "desktop/cradle/docs/world-shell/STARTUP-CONTINUATION.md::/api/config": 1,
+    "desktop/cradle/docs/world-shell/wayfinder/DLW-PLAN-draft-p1.md::/api/document": 1,
+    "desktop/cradle/docs/world-shell/wayfinder/DLW-PLAN-p2-ableton.md::/api/device-descriptors": 1,
+    "desktop/cradle/docs/world-shell/wayfinder/DLW-PLAN-p2-ableton.md::/api/summary": 1,
+    "desktop/cradle/docs/world-shell/wayfinder/DLW-PLAN.md::/api/device-descriptors": 1,
+    "desktop/cradle/docs/world-shell/wayfinder/DLW-PLAN.md::/api/document": 1,
+    "desktop/cradle/docs/world-shell/wayfinder/DLW-PLAN.md::/api/summary": 1,
+    "desktop/cradle/docs/world-shell/wayfinder/tickets/P0-R5-run-context-disclosure.md::/api/config": 2,
+    "packages/expressions-boundary/CHECKPOINT.md::/api/config": 1,
+    "packages/expressions-boundary/CHECKPOINT.md::/api/document": 1,
+    "packages/instrument-editors/evidence/browser-result.json:::8787": 5,
+    "packages/instrument-editors/RETURN.html:::8787": 1,
+    "packages/live-shell/ui/PANELS.md::/api/document": 1,
+    "packages/live-shell/ui/PANELS.md::/api/summary": 1
+  },
+  "derived": {
+    "packages/live-shell/live-shell/ui/ui-dist/assets/index-DjgM1GtR.js::/api/config": 1,
+    "packages/live-shell/live-shell/ui/ui-dist/assets/index-DjgM1GtR.js::/api/summary": 1,
+    "packages/live-shell/ui/ui-dist/assets/index-CtL7jp4v.js::/api/config": 1,
+    "packages/live-shell/ui/ui-dist/assets/index-CtL7jp4v.js::/api/device-descriptors": 1,
+    "packages/live-shell/ui/ui-dist/assets/index-CtL7jp4v.js::/api/document/device-param": 1,
+    "packages/live-shell/ui/ui-dist/assets/index-CtL7jp4v.js::/api/document/device-params": 1,
+    "packages/live-shell/ui/ui-dist/assets/index-CtL7jp4v.js::/api/set": 1
+  },
+  "adjacent_relative_api_not_on_seam": [
+    {
+      "route": "/api/hardware",
+      "bucket": "shipping",
+      "files": [
+        "desktop/cradle/expressions-app/field-studies-journeys/field-studies.html",
+        "desktop/cradle/expressions-app/field-studies-journeys/public/index.html",
+        "desktop/cradle/expressions-app/public/field-studies.html",
+        "desktop/cradle/expressions-app/src/physis/hardware.ts"
+      ]
+    },
+    {
+      "route": "/api/state",
+      "bucket": "shipping",
+      "files": [
+        "desktop/cradle/expressions-app/field-studies-journeys/field-studies.html",
+        "desktop/cradle/expressions-app/field-studies-journeys/public/index.html",
+        "desktop/cradle/expressions-app/public/field-studies.html",
+        "desktop/cradle/expressions-app/src/physis/hardware.ts"
+      ]
+    },
+    {
+      "route": "/api/overlay",
+      "bucket": "shipping",
+      "files": [
+        "desktop/cradle/expressions-app/field-studies-journeys/field-studies.html",
+        "desktop/cradle/expressions-app/field-studies-journeys/public/index.html",
+        "desktop/cradle/expressions-app/field-studies-journeys/src/physis.ts",
+        "desktop/cradle/expressions-app/public/field-studies.html",
+        "desktop/cradle/expressions-app/src/physis/hardware.ts"
+      ]
+    },
+    {
+      "route": "/api/scenes",
+      "bucket": "shipping",
+      "files": [
+        "desktop/cradle/expressions-app/field-studies-journeys/field-studies.html",
+        "desktop/cradle/expressions-app/field-studies-journeys/public/index.html",
+        "desktop/cradle/expressions-app/field-studies-journeys/src/physis.ts",
+        "desktop/cradle/expressions-app/public/field-studies.html"
+      ]
+    },
+    {
+      "route": "/api/media",
+      "bucket": "shipping",
+      "files": [
+        "desktop/cradle/expressions-app/field-studies-journeys/field-studies.html",
+        "desktop/cradle/expressions-app/field-studies-journeys/public/index.html",
+        "desktop/cradle/expressions-app/field-studies-journeys/src/physis.ts",
+        "desktop/cradle/expressions-app/public/field-studies.html"
+      ]
+    },
+    {
+      "route": "/api/events",
+      "bucket": "shipping",
+      "files": [
+        "desktop/cradle/expressions-app/field-studies-journeys/field-studies.html",
+        "desktop/cradle/expressions-app/field-studies-journeys/public/index.html",
+        "desktop/cradle/expressions-app/field-studies-journeys/src/physis.ts",
+        "desktop/cradle/expressions-app/public/field-studies.html",
+        "desktop/cradle/expressions-app/src/physis/render.ts"
+      ]
+    },
+    {
+      "route": "/api/telemetry",
+      "bucket": "shipping",
+      "files": [
+        "desktop/cradle/expressions-app/src/physis/render.ts"
+      ]
+    }
+  ],
+  "generated_by": "tests/conformance/owner-service-census.test.mjs (CENSUS_PRINT=1)",
+  "generated_on": "2026-10-14"
+}
