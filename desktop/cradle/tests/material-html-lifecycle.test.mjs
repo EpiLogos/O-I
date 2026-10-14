@@ -177,3 +177,191 @@ test('acquisition is shared: the renderer consumes the broker, never a second di
  *   and reopen) and remounting restores the chosen view; a first-ever mount
  *   still opens Rendered.
  */
+
+// ---------------------------------------------------------------------------
+// The per-open Source request (a passage opens its file in Source for this
+// open only). Scripted composition: the real request, take, queue and judge
+// primitives, with a model of a mounted MaterialSurface and TextEditor. The
+// React wiring of the real component is pinned against source at the end.
+
+const {requestMaterialViewOpen, peekMaterialViewOpen, takeMaterialViewOpen, MATERIAL_VIEW_OPEN_EVENT} =
+  await import('../src/material/lifecycle.ts');
+const {queueSourcePassageReveal, takeSourcePassageReveal, judgePassageReveal} =
+  await import('../src/expressions/sourceHandoff.ts');
+
+const SOURCE_REF = 'central:notes/ledger.md';
+
+// A browser stand-in: an EventTarget window and an in-memory localStorage that records every write.
+function browser() {
+  const priorWindow = Object.getOwnPropertyDescriptor(globalThis, 'window');
+  const priorStorage = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
+  const store = new Map();
+  const writes = [];
+  const win = new EventTarget();
+  Object.defineProperty(globalThis, 'window', {value: win, configurable: true, writable: true});
+  Object.defineProperty(globalThis, 'localStorage', {
+    value: {
+      getItem: key => (store.has(key) ? store.get(key) : null),
+      setItem: (key, value) => { writes.push([key, value]); store.set(key, value); },
+      removeItem: key => { store.delete(key); },
+    },
+    configurable: true,
+    writable: true,
+  });
+  const restoreGlobal = (name, descriptor) => (descriptor ? Object.defineProperty(globalThis, name, descriptor) : delete globalThis[name]);
+  return {win, store, writes, restore() { restoreGlobal('window', priorWindow); restoreGlobal('localStorage', priorStorage); }};
+}
+
+// A MaterialSurface as the source wires it: the initializer peeks a queued request, the mount effect takes it, and a
+// live arrival of the request applies it. The editor mounts only once the view is Source (after the owner read) and takes
+// a queued reveal at mount; a mounted editor takes an arriving reveal at once. Both gate on the revision they hold.
+function mountSurface(env, bindingId, {saved = 'rendered'} = {}) {
+  const surface = {view: peekMaterialViewOpen(bindingId) ?? saved, editor: null, refusal: undefined};
+  const apply = () => { const next = takeMaterialViewOpen(bindingId); if (next) surface.view = next; };
+  apply();
+  env.win.addEventListener(MATERIAL_VIEW_OPEN_EVENT, event => { if (event.detail?.bindingId === bindingId) apply(); });
+  const judge = (passage, editor) => {
+    const verdict = judgePassageReveal(passage, {bindingId, sourceRef: SOURCE_REF, revision: editor.revision, docLength: editor.docLength});
+    if (verdict.kind === 'reveal') editor.selection = {start: verdict.start, end: verdict.end};
+    else if (verdict.kind === 'refuse') surface.refusal = verdict.reason;
+  };
+  env.win.addEventListener('oi:context-reveal', event => {
+    const passage = event.detail;
+    if (surface.editor && passage?.kind === 'source-passage' && passage.bindingId === bindingId) { takeSourcePassageReveal(bindingId); judge(passage, surface.editor); }
+  });
+  surface.mountEditor = (revision, docLength = 100) => {
+    if (surface.view === 'rendered' || surface.editor) return;
+    surface.editor = {revision, docLength, selection: undefined};
+    const queued = takeSourcePassageReveal(bindingId);
+    if (queued) judge(queued, surface.editor);
+  };
+  surface.chooseRendered = () => { surface.view = 'rendered'; };
+  return surface;
+}
+
+// The Workbench's passage open: the per-open request first, then the reveal is queued (both in one turn).
+function openPassage(bindingId, revision = 'rev-7') {
+  requestMaterialViewOpen(bindingId, 'source');
+  queueSourcePassageReveal({kind: 'source-passage', bindingId, sourceRef: SOURCE_REF, start: 4, end: 9, revision});
+}
+
+test('a per-open request is keyed by binding, peeked without consuming, taken once, announced, and never stored', () => {
+  const env = browser();
+  try {
+    const heard = [];
+    env.win.addEventListener(MATERIAL_VIEW_OPEN_EVENT, event => heard.push(event.detail));
+    requestMaterialViewOpen('req-a', 'source');
+    assert.deepEqual(heard, [{bindingId: 'req-a', view: 'source'}], 'a mounted surface is announced with the binding it names');
+    assert.equal(peekMaterialViewOpen('req-a'), 'source', 'a peek does not consume: StrictMode runs the state initializer twice');
+    assert.equal(takeMaterialViewOpen('req-a'), 'source');
+    assert.equal(takeMaterialViewOpen('req-a'), undefined, 'the request is applied once');
+    assert.equal(peekMaterialViewOpen('req-b'), undefined, 'another binding never receives it');
+    assert.deepEqual(env.writes, [], 'the request writes nothing to storage');
+  } finally { env.restore(); }
+});
+
+test('held Rendered tab: the Source view is switched now, and the reveal lands at the current revision when the editor mounts', () => {
+  const env = browser();
+  try {
+    const surface = mountSurface(env, 'held-1');
+    assert.equal(surface.view, 'rendered');
+    openPassage('held-1', 'rev-7');
+    assert.equal(surface.view, 'source', 'the switch happens for this open, at the passage, not at a later Source click');
+    assert.equal(surface.editor, null, 'the editor has not mounted yet (the owner read is still in flight)');
+    surface.mountEditor('rev-7');
+    assert.deepEqual(surface.editor.selection, {start: 4, end: 9}, 'the reveal lands at mount, judged against the current revision');
+    assert.equal(takeSourcePassageReveal('held-1'), undefined, 'nothing is left queued for a later switch');
+    assert.deepEqual(env.writes, [], 'nothing is remembered');
+  } finally { env.restore(); }
+});
+
+test('held tab whose editor is already mounted: the reveal lands immediately, at the current revision', () => {
+  const env = browser();
+  try {
+    const surface = mountSurface(env, 'held-2');
+    surface.view = 'source';
+    surface.mountEditor('rev-7');
+    surface.chooseRendered();
+    openPassage('held-2', 'rev-7');
+    assert.equal(surface.view, 'source');
+    assert.deepEqual(surface.editor.selection, {start: 4, end: 9}, 'an editor that is already mounted takes the reveal now');
+  } finally { env.restore(); }
+});
+
+test('held tab with a stale revision: the passage is refused by name, never placed, never queued for later', () => {
+  const env = browser();
+  try {
+    const surface = mountSurface(env, 'held-3');
+    openPassage('held-3', 'rev-7');
+    surface.mountEditor('rev-8');
+    assert.equal(surface.editor.selection, undefined);
+    assert.match(surface.refusal, /changed after the passage was disclosed/);
+    assert.equal(takeSourcePassageReveal('held-3'), undefined);
+  } finally { env.restore(); }
+});
+
+test('new tab, surface mounted after the request: the initializer peeks it and the reveal lands at mount', () => {
+  const env = browser();
+  try {
+    openPassage('new-1', 'rev-7');
+    const surface = mountSurface(env, 'new-1');
+    assert.equal(surface.view, 'source', 'a new tab opens in Source for the passage');
+    surface.mountEditor('rev-7');
+    assert.deepEqual(surface.editor.selection, {start: 4, end: 9});
+    assert.deepEqual(env.writes, []);
+  } finally { env.restore(); }
+});
+
+test('new tab, surface mounted before the request: the arriving request switches it and the reveal lands', () => {
+  const env = browser();
+  try {
+    const surface = mountSurface(env, 'new-2');
+    openPassage('new-2', 'rev-7');
+    assert.equal(surface.view, 'source');
+    surface.mountEditor('rev-7');
+    assert.deepEqual(surface.editor.selection, {start: 4, end: 9});
+  } finally { env.restore(); }
+});
+
+test('the remembered view is unchanged by a passage open, held or new', () => {
+  const env = browser();
+  try {
+    const key = 'oi-cradle.material-view:remembered-1';
+    env.store.set(key, JSON.stringify({view: 'rendered', zoom: 1.25}));
+    const held = mountSurface(env, 'remembered-1', {saved: 'rendered'});
+    openPassage('remembered-1', 'rev-7');
+    held.mountEditor('rev-7');
+    assert.equal(env.store.get(key), JSON.stringify({view: 'rendered', zoom: 1.25}), 'the stored record is byte-identical');
+    assert.deepEqual(env.writes, [], 'a passage open performs no storage write');
+
+    openPassage('remembered-2', 'rev-7');
+    mountSurface(env, 'remembered-2');
+    assert.equal(env.store.get('oi-cradle.material-view:remembered-2'), undefined, 'a new tab with a passage leaves no remembered choice behind');
+  } finally { env.restore(); }
+});
+
+// ---------------------------------------------------------------------------
+// The wiring of the real component (source pins). The person's own toggle and zoom are the only writers of the record.
+
+test('MaterialSurface peeks the per-open request in its initializer, takes it in the mount effect, and applies a live arrival', () => {
+  assert.match(materialSource, /useState<MaterialView>\(\(\) => peekMaterialViewOpen\(binding\.id\) \?\? savedView\.view \?\? "rendered"\)/);
+  assert.match(materialSource, /const next = takeMaterialViewOpen\(binding\.id\); if \(next\) setView\(next\);/);
+  assert.match(materialSource, /window\.addEventListener\(MATERIAL_VIEW_OPEN_EVENT, arrived\)/);
+  assert.match(materialSource, /window\.removeEventListener\(MATERIAL_VIEW_OPEN_EVENT, arrived\)/);
+});
+
+test('MaterialSurface persists only the person\'s own toggle and zoom; the per-open view never reaches the record', () => {
+  assert.equal((materialSource.match(/localStorage\.setItem\(/g) ?? []).length, 1, 'one registered write site, inside rememberView');
+  assert.match(materialSource, /const rememberView = \(prefs: \{view: MaterialView; zoom: number\}\) => \{ try \{ localStorage\.setItem\(viewKey, encodeMaterialViewPrefs\(prefs\)\)/);
+  assert.match(materialSource, /const chooseView = \(next: MaterialView\) => \{ setView\(next\); remembered\.current = next; rememberView\(\{view: next, zoom\}\); \};/, 'the person\'s toggle writes the record');
+  assert.match(materialSource, /const chooseZoom = \(next: number\) => \{ setZoom\(next\); rememberView\(\{view: remembered\.current, zoom: next\}\); \};/, 'zoom writes the remembered view, never a per-open one');
+  assert.doesNotMatch(materialSource, /\[viewKey,view,zoom\]/, 'the mount-time persist of the live view is gone');
+  assert.doesNotMatch(materialSource, /onChange=\{setView\}/, 'no toggle writes the view without persisting it');
+  assert.match(materialSource, /onChange=\{e=>chooseZoom\(Number\(e\.target\.value\)\)\}/);
+  assert.equal((materialSource.match(/onChange=\{chooseView\}/g) ?? []).length, 2, 'both toggle sites are the person\'s own choice');
+});
+
+test('lifecycle carries the request and event as pure functions with no storage write', () => {
+  assert.equal(MATERIAL_VIEW_OPEN_EVENT, 'oi:material-view-open');
+  assert.doesNotMatch(lifecycleSource, /localStorage\.setItem/);
+});

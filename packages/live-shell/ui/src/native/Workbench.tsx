@@ -15,7 +15,7 @@ import type {ListedSource, CentralLocation} from '../../../../../desktop/cradle/
 import {acquireFileReading, acquireFileBytes} from '../../../../../desktop/cradle/src/files/resources'
 import {fileOperation, type FileMutation} from '../../../../../desktop/cradle/src/files/client'
 import {detectFormat} from '../../../../../desktop/cradle/src/material/detect'
-import {encodeMaterialViewPrefs, materialViewKey} from '../../../../../desktop/cradle/src/material/lifecycle'
+import {requestMaterialViewOpen} from '../../../../../desktop/cradle/src/material/lifecycle'
 import {queueSourcePassageReveal} from '../../../../../desktop/cradle/src/expressions/sourceHandoff'
 import {passageSpanOf} from './hostedSummons'
 import {encounter, encounterProvision} from '../../../../../desktop/cradle/src/encounter/client'
@@ -568,15 +568,17 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
         // lane-2 T19b: a disclosed passage opens revealed and selected in its source. Only a text span of this file is carried; any
         // other shape was refused upstream and arrives as `note`, which names why the file opens at its top.
         const span = passageSpanOf(request.passage, location.ref)
-        // A Markdown or HTML file opens Rendered, and its editor mounts only in the Source view; a new tab opens there for a passage.
-        if (span && !held && detectFormat({path: location.path}) !== 'text') {
-          try {localStorage.setItem(materialViewKey(binding.id), encodeMaterialViewPrefs({view: 'source', zoom: 1}))} catch {/* Presentation only: the passage waits for the Source view. */}
-        }
+        // A Markdown or HTML passage asks its material surface for the Source view for this open only (its editor mounts there). The
+        // request is not persisted: the person's remembered view is untouched. It is made for a held tab and a new tab alike, before the reveal.
+        const sourceForPassage = !!span && detectFormat({path: location.path}) !== 'text'
         callbacks.current.insert(binding)
         if (span) {
           const reveal = {kind: 'source-passage' as const, bindingId: binding.id, sourceRef: location.ref, start: span.start, end: span.end, revision: span.revision}
           // One turn later, so an already-open tab is laid out before its editor is asked to reveal (the editor takes it at mount otherwise).
-          window.setTimeout(() => queueSourcePassageReveal(reveal), 0)
+          window.setTimeout(() => {
+            if (sourceForPassage) requestMaterialViewOpen(binding.id, 'source')
+            queueSourcePassageReveal(reveal)
+          }, 0)
         }
         if (typeof request.note === 'string' && request.note) callbacks.current.report(request.note)
       } catch (cause) {callbacks.current.report(cause)}
