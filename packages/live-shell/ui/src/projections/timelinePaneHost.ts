@@ -16,6 +16,7 @@ import type {TimelinePresentation} from './timelinePresentation'
 import type {SurfMode} from '../shell/modeGrammar'
 import type {NativeExpressionsContent} from '../shell/nativeContent'
 import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
+import type {TimeSpine} from '../timeline/timeSpine'
 
 /** The props the Session · Arrangement residence reads, for a pane: the mode's tracks (FOUNDATION F2 — the pane is the
  * centre in every mode; which material it shows is the mode's registration, shell/modeFrames.ts MODE_TRACK_SOURCES: the
@@ -23,6 +24,9 @@ import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kern
  * the mode whose designed empty frame stands while the World cut's reading is unread. */
 export type TimelineHostReading = Pick<TimelineResidenceProps, 'set' | 'document' | 'selection' | 'select' | 'colors' | 'setColor' | 'world' | 'journey' | 'session' | 'arrangement'> & {
   mode: SurfMode
+  /** The World cut's time spine in every mode (its civil Now and the occasion stood in), whatever the mode's tracks are — the
+   * aperture slot's occasion reads it in Expressions and Live too (lane F). */
+  spine?: TimeSpine | null
   /** The open Expression's content and title (Expressions' tracks, F3). */
   native?: NativeExpressionsContent | null
   workName?: string

@@ -298,7 +298,8 @@ export function ApertureSlot() {
   const pane = useFocusedPane()
   const context = useOptionalContinuity()?.current.context
   const config = useContext(ShellConfigContext)
-  const spine = useTimelineReading()?.world?.spine ?? null
+  const reading = useTimelineReading()
+  const spine = reading?.spine ?? reading?.world?.spine ?? null
   useSpine(spine)
   const door = useDeviceDoor()
   const device = door.selected ? door.device(door.selected) : undefined

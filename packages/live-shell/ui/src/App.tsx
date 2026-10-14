@@ -504,7 +504,7 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   const browserReading: BrowserReading = {mode: frameMode, ctx, defaultSet: config?.default_set ?? '', selectSubject: selectCentralSubject,
     selectedSubject: centralSubject, agency: {rows: agency.rows, error: agency.error, loading: agency.loading}}
   usePublishTimelineReading({set: state.set, document: deep.document, selection, select: choose, colors, setColor, mode: frameMode,
-    world: tracks === 'world' ? centralWorld : undefined, journey: tracks === 'world' ? {openExpression: workspace.requestExpression} : undefined,
+    world: tracks === 'world' ? centralWorld : undefined, spine: worldView.spine, journey: tracks === 'world' ? {openExpression: workspace.requestExpression} : undefined,
     session: tracks === 'native' ? nativeView('session') : undefined, arrangement: tracks === 'native' ? nativeView('arrangement') : undefined,
     native: tracks === 'native' ? nativeProjection.content : undefined, workName: workspace.reading?.document?.name,
     selectedRef: worldSelection?.ref, selectTrackItem, transport: workspace.transport,
