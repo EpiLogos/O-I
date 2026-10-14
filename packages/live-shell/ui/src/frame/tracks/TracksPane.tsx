@@ -12,17 +12,18 @@ import type {WorldTrackSet} from '../../timeline/worldTrackAdapter'
 
 const NO_TRACKS: WorldTrackSet = {columns: [], tracks: [], clips: []}
 
-export function TracksPane() {
+export function TracksPane({pinnedRef}: {pinnedRef?: string} = {}) {
   const reading = useTimelineReading()
   if (!reading) return <p role="status" className="source-note">The tracks are waiting for the shell to publish this work's reading.</p>
   // Keyed by mode: a mode's tracks are its own hook, and a mode switch mounts the next mode's.
-  return <ModeTracksView key={reading.mode} reading={reading} />
+  return <ModeTracksView key={reading.mode} reading={reading} pinnedRef={pinnedRef} />
 }
 
-function ModeTracksView({reading}: {reading: TimelineHostReading}) {
+/** A pinned pane shows its pinned clip as selected; a following one shows THE selection. */
+function ModeTracksView({reading, pinnedRef}: {reading: TimelineHostReading; pinnedRef?: string}) {
   const presented = useTimelinePanePresentation()
   const set = MODE_TRACKS[reading.mode](reading)
-  const selection = {ref: reading.selectedRef, select: reading.selectTrackItem}
+  const selection = {ref: pinnedRef ?? reading.selectedRef, select: reading.selectTrackItem}
   // The row keys launch the stops drawn here (F9), so they read the set this pane shows.
   useEffect(() => { publishTrackRows(set && !('waiting' in set) ? {set, presented} : null); return () => publishTrackRows(null) })
   // The clip box shows the same tracks (frame/tracks/tracksDoor.ts): published here, never read twice.

@@ -46,7 +46,7 @@ import {AgentShellCentre} from '../agent/AgentShellRoot'
 import {AGENT_SHELL_KIND} from '../agent/factoryCentre'
 import {MODE_TREE_SEEDS} from '../shell/modeFrames'
 import {openInstrumentAt} from '../frame/openInstrument'
-import {publishInstrumentOpener} from '../frame/instrumentDoor'
+import {openInstrument, publishInstrumentOpener} from '../frame/instrumentDoor'
 import {Icon} from '../inhabitants/sdk/Icon'
 import '../frame/paneGrammar.css'
 import type {AgentSubject,AgentAccompanying} from '../../../../../desktop/cradle/src/agent/AgentLayer'
@@ -850,7 +850,8 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
           return {ref:reading.agent_session,project:reading.project,space:reading.space}
         }} report={report}/>,
         paneGrammar: {
-          openInstrument: (kind, groupId, edge) => {if (allowed()) latest.current.book.setLayout(layout => openInstrumentAt(layout, kind, {groupId, edge}))},
+          // Through the instrument door, so a stage-lens row dropped on a pane opens the stage there and turns its lens.
+          openInstrument: (kind, groupId, edge) => {if (allowed()) openInstrument(kind, {groupId, edge})},
           selectionRef: owner.context?.selection?.ref,
           mark: name => <Icon name={name === 'pin' ? 'placed' : 'follow'} size={12}/>,
           // The mockup's panes (world-shell-mockup.html .trail, #375): tabs a compact rail on the pane's left edge, folded until
