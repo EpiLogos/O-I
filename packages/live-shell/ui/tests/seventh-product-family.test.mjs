@@ -215,8 +215,11 @@ test('a family-declared browser category composes into its mode after the mockup
   assert.equal(own.group, 'To hand', 'under its declared group')
   assert.equal(own.family, FAMILY, 'owned by the declaring family')
   assert.equal(own.state, 'waiting', 'declared waiting: its owner has not landed a read')
-  assert.deepEqual(modeGrammar.composeModeBrowser('base', declared), modeGrammar.MODE_GRAMMAR.base.browser, 'base is the mockup, unchanged')
-  assert.deepEqual(modeGrammar.composeModeBrowser('factory', declared), modeGrammar.MODE_GRAMMAR.factory.browser, 'factory is the mockup, unchanged')
+  for (const mode of ['base', 'factory']) {
+    const ids = modeGrammar.composeModeBrowser(mode, declared).map(category => category.id)
+    assert.deepEqual(ids.slice(0, modeGrammar.MODE_GRAMMAR[mode].browser.length), modeGrammar.MODE_GRAMMAR[mode].browser.map(category => category.id), `${mode}: the mockup keeps its positions`)
+    assert.equal(ids.includes(CATEGORY), false, `${mode}: the fixture category never reaches it`)
+  }
   assert.deepEqual(modeGrammar.composeModeBrowser('live', declared), [], 'live keeps its own browser')
 })
 

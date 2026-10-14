@@ -5,7 +5,11 @@ import type {InhabitantManifest} from './manifest.ts'
 export function workcellFamilyManifest(): FamilyManifest {
   const manifest: InhabitantManifest = {
     id: 'workcell',
-    browser: ['git'],
+    browser: [],
+    browserEntries: [
+      {id: 'git', label: 'Git', group: 'Ground', mark: 'chain', modes: ['factory'], state: 'waiting',
+        hint: 'The git seat: branch against main, uncommitted work, push, land. Reads through op workcell_status_read and op git_repository_read; the agent shell\'s Git column reads it, and no row source is composed here yet.'},
+    ],
     faces: [
       {id: 'git-seat', presentations: ['compact', 'expanded', 'full'], liveSemantic: 'return', invariant: {routesTo: 'workcell-cli:git commit'}, note: 'Branch vs main, uncommitted, commit policy, push, Land/draft PR; subagents share lead seat.'},
       {id: 'remote-carrier', presentations: ['compact'], liveSemantic: 'link', note: 'Reach/where; composed or refused — never live in mockup.'},

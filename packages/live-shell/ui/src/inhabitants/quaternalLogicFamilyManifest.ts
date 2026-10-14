@@ -35,6 +35,9 @@ const QUATERNAL_LOGIC_MANIFEST: InhabitantManifest = {
     // The family's browser presence: the retained instrument list the
     // knowledge category already renders (NativeTechneBrowser) — a place
     // held, not a new category.
+    // `knowledge` stays bare: the door validator (manifest.ts) takes an entry's explicit modes only from the modes the
+    // family's own faces present in, and this family records only the musical face's 'expressions' (qlMusicalExtension).
+    // Declaring it in Technē would be refused; the Technē home of the sky, torus and clock faces is the QL owner's to record.
     browser: ['knowledge'],
     faces: [
       {
