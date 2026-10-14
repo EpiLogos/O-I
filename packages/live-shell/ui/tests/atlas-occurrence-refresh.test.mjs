@@ -28,7 +28,7 @@ export async function load(u, c, n) {
     compilerOptions: {target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext, jsx: ts.JsxEmit.ReactJSX}}).outputText};
 }`)}`, import.meta.url)
 
-const founding = await import('../src/projections/atlas/provider/archetypalEarthProvider.ts')
+const {adaptFoundingFixture} = await import('./support/foundingFieldFixture.mjs')
 const {buildModel} = await import('../src/projections/atlas/src/data/model.ts')
 const {replaceModelOccurrence} = await import('../src/projections/atlas/src/data/occurrenceSeam.ts')
 const {buildSearchIndex, refreshOccurrenceEntry, search} = await import('../src/projections/atlas/src/data/search.ts')
@@ -62,7 +62,7 @@ const sunOccurrence = (epochUtc, lat, lon) => {
   return checked.value
 }
 const PLAIN = {...qlSky.QL_SKY_FAMILY, id: 'plain-family', name: 'Plain', oneLine: '', archetypes: [], occurrenceIds: []}
-const fresh = () => buildModel(founding.adaptFoundingField(founded()))
+const fresh = () => buildModel(adaptFoundingFixture(founded()))
 
 /** The index entries and their posting lists, as comparable values (keys and the entries' keys, in posting order). */
 function shapeOf(idx) {

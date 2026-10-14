@@ -40,7 +40,7 @@ const {projectFieldThread, projectRedbookWalk, projectDynamicsRoute} = await imp
 const {fixtureCorpus} = await import('../src/projections/atlas/provider/fixtureCorpus.ts')
 const {buildModel} = await import('../src/projections/atlas/src/data/model.ts')
 const {journeyWalksOf, journeyStopCells, journeyStopFocus} = await import('../src/timeline/journeyWalks.ts')
-const {ModeCentreFrame} = await import('../src/shell/ModeCentre.tsx')
+const {JourneyRows} = await import('../src/timeline/JourneyRows.tsx')
 const {createTimeSpine} = await import('../src/timeline/timeSpine.ts')
 
 const html = (element) => renderToStaticMarkup(element)
@@ -80,7 +80,9 @@ function worldOf(trackSets, eventByClipId = new Map()) {
   }
 }
 
-const journey = (trackSets) => html(createElement(ModeCentreFrame, {mode: 'techne', presentation: 'session', world: worldOf(trackSets)}))
+// The Journey as the shell draws it: JourneyRows over the walks the World's sets carry (the per-mode centre frame that wrapped it,
+// shell/ModeCentre.tsx, is gone; Technē's Session carries the same rows through WorldTimelinePresentation, asserted below).
+const journey = (trackSets) => html(createElement(JourneyRows, {walks: journeyWalksOf(trackSets), eventByClipId: worldOf(trackSets).source.eventByClipId, selectOccasion() {}}))
 
 // ── one source: the same walk objects the Timeline's sets carry ─────────────────────────────────────────────────
 
@@ -162,18 +164,15 @@ test('a stop focuses the occasion the Timeline would focus for its clip; a stop 
 
 // ── honest absence ───────────────────────────────────────────────────────────────────────────────────────────────
 
-test('with no walk carried, the eight designed slots hold their places and the absence is named', () => {
+test('with no walk carried, the Journey draws nothing and invents no stop; Technē\'s Session names the absence (asserted below)', () => {
   assert.deepEqual(journeyWalksOf([]), [])
   assert.deepEqual(journeyWalksOf([{columns: [], tracks: [], clips: []}]), [], 'a set with no walks presents none')
   const out = journey([{columns: [], tracks: [], clips: []}])
-  assert.equal((out.match(/data-stop=/g) ?? []).length, 8, 'eight designed slots')
-  assert.ok(out.includes('data-walks="0"'))
-  assert.ok(out.includes('carries no walks in the World'), 'the absence is named, not left silent')
-  assert.ok(!out.includes('data-walk='), 'no walk block is drawn')
+  assert.equal(out, '', 'no designed placeholder slots: the eight-slot frame of the removed per-mode centre is not carried')
 })
 
 test('the Journey no longer says it waits for the journey owner', async () => {
-  const source = await readFile(new URL('../src/shell/ModeCentre.tsx', import.meta.url), 'utf8')
+  const source = await readFile(new URL('../src/timeline/JourneyRows.tsx', import.meta.url), 'utf8')
   assert.doesNotMatch(source, /waits for the journey owner/)
 })
 
@@ -245,7 +244,6 @@ test('the World reads the atlas Aion reading through the family door: the same s
 
 const {WorldTimelinePresentation} = await import('../src/projections/worldTimelinePresentation.tsx')
 const {TimelineProjectionResidence} = await import('../src/projections/timelineResidence.tsx')
-const {JourneyRows} = await import('../src/timeline/JourneyRows.tsx')
 
 const opened = []
 const door = {openExpression: (ref) => opened.push(ref)}
