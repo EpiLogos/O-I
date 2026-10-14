@@ -7,7 +7,12 @@ use tempfile::TempDir;
 
 fn oi(home: &Path, path: &Path) -> Command {
     let mut command = Command::new(env!("CARGO_BIN_EXE_oi"));
-    command.env("OI_HOME", home).env("PATH", path);
+    // The data root is the fixture's too: without it, dispatch reads the host
+    // machine's active suite receipt instead of the fixture registration.
+    command
+        .env("OI_HOME", home)
+        .env("OI_DATA_HOME", home.join("data"))
+        .env("PATH", path);
     command
 }
 

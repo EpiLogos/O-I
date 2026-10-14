@@ -49,6 +49,7 @@ impl Scene {
         let mut command = Command::new(env!("CARGO_BIN_EXE_oi"));
         command
             .env("OI_HOME", self.home.path())
+            .env("OI_DATA_HOME", self.home.path().join("data"))
             .env("OI_CATALOG", &self.catalogue)
             .env_remove("OI_CONFIG_SURFACE_FIXTURES");
         command

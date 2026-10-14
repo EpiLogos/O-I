@@ -26,7 +26,11 @@ fn oi() -> Command {
     let mut command = Command::new(env!("CARGO_BIN_EXE_oi"));
     command
         .env("OI_CONFIG_SURFACE_FIXTURES", cases_dir())
-        .env("OI_HOME", std::env::temp_dir().join("oi-c5-tests-home"));
+        .env("OI_HOME", std::env::temp_dir().join("oi-c5-tests-home"))
+        .env(
+            "OI_DATA_HOME",
+            std::env::temp_dir().join("oi-c5-tests-data"),
+        );
     command
 }
 
@@ -66,6 +70,7 @@ fn help_screens_are_wired_and_the_real_engine_binds_without_fixtures() {
     command
         .env_remove("OI_CONFIG_SURFACE_FIXTURES")
         .env("OI_HOME", isolated.path().join("oi"))
+        .env("OI_DATA_HOME", isolated.path().join("oi-data"))
         .env("OI_AIKIT_BIN", isolated.path().join("owner-does-not-exist"));
     let output = command.args(["config", "list", "--json"]).output().unwrap();
     assert_eq!(output.status.code(), Some(0));

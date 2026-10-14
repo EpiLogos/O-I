@@ -38,6 +38,7 @@ mod unix {
         Command::new(env!("CARGO_BIN_EXE_oi"))
             .args([selector, "probe", "--json"])
             .env("OI_HOME", home.path())
+            .env("OI_DATA_HOME", home.path().join("data"))
             .env("PATH", bin.path())
             .output()
             .expect("run O:I CLI")
@@ -105,6 +106,7 @@ mod unix {
         let through_oi = Command::new(env!("CARGO_BIN_EXE_oi"))
             .args(["central", "__signal__"])
             .env("OI_HOME", home.path())
+            .env("OI_DATA_HOME", home.path().join("data"))
             .env("PATH", bin.path())
             .output()
             .expect("run native command through O:I");
@@ -119,6 +121,7 @@ mod unix {
         Command::new(env!("CARGO_BIN_EXE_oi"))
             .args(args)
             .env("OI_HOME", home.path())
+            .env("OI_DATA_HOME", home.path().join("data"))
             .env("PATH", bin.path())
             .output()
             .expect("run O:I CLI")

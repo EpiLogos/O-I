@@ -15,6 +15,7 @@ fn run(temp: &TempDir, catalog: &Path, args: &[&str]) -> Output {
     Command::new(oi())
         .args(args)
         .env("OI_HOME", temp.path())
+        .env("OI_DATA_HOME", temp.path().join("oi-data"))
         .env("OI_TEST_SURFACE_CATALOG", catalog)
         .output()
         .expect("oi should run")
