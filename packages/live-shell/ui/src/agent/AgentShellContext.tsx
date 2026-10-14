@@ -1,5 +1,6 @@
 import {createContext, useContext, useMemo, useRef, useState, type ReactNode, type RefObject} from 'react'
 import {useDataIStatusInfo, type DataIStatusInfo} from './statusInfo'
+import {useContinuity} from '../continuity/workspace'
 
 export type AgentCentreView = 'session' | 'arrangement' | 'thread'
 export type AgentEffort = 'low' | 'medium' | 'high' | 'max'
@@ -27,7 +28,8 @@ export interface AgentShellState {
   centreView: AgentCentreView
   setCentreView: (view: AgentCentreView) => void
   selectedTrackId: string | null
-  setSelectedTrackId: (id: string | null) => void
+  /** Moves THE selection (WorldContext.selection) to an agent session — never a store of this context's own. */
+  setSelectedTrackId: (id: string | null, title?: string) => void
   threadTrackId: string | null
   openThread: (trackId: string | null) => void
   openTiles: AgentTileId[]
@@ -82,7 +84,13 @@ const Ctx = createContext<AgentShellState | null>(null)
 
 export function AgentShellProvider({children, frameRef}: {children: ReactNode; frameRef?: RefObject<HTMLElement | null>}) {
   const [centreView, setCentreView] = useState<AgentCentreView>('session')
-  const [selectedTrackId, setSelectedTrackId] = useState<string | null>(null)
+  // The selected session is THE selection when it is one (FOUNDATION F1): read from the world context, written through
+  // the book's one select, and so on the trail.
+  const continuity = useContinuity()
+  const worldSelection = continuity.current.context?.selection
+  const selectedTrackId = worldSelection?.kind === 'agent-session' ? worldSelection.ref : null
+  const select = continuity.select
+  const setSelectedTrackId = (id: string | null, title?: string) => select(id ? {mode: 'factory', kind: 'agent-session', ref: id, title: title ?? id} : null)
   const [threadTrackId, setThreadTrackId] = useState<string | null>(null)
   const [openTiles, setOpenTiles] = useState<AgentTileId[]>(['sessions'])
   const [dockWidth, setDockWidth] = useState(300)
@@ -139,7 +147,7 @@ export function AgentShellProvider({children, frameRef}: {children: ReactNode; f
     telemetryOn,
     toggleTelemetry: trackId => setTelemetryOn(current => ({...current, [trackId]: !(current[trackId] !== false)})),
     statusInfo,
-  }), [centreView, selectedTrackId, threadTrackId, openTiles, dockWidth, dockFolded, effort, heartbeat, follow, steer, writeArm, handBackLit, loopOn, quantize, tokenScope, voiceArmed, capturing, tapNote, voiceNote, captureNote, captureLog, expandedDevice, telemetryOn, statusInfo])
+  }), [centreView, selectedTrackId, worldSelection, threadTrackId, openTiles, dockWidth, dockFolded, effort, heartbeat, follow, steer, writeArm, handBackLit, loopOn, quantize, tokenScope, voiceArmed, capturing, tapNote, voiceNote, captureNote, captureLog, expandedDevice, telemetryOn, statusInfo])
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }

@@ -123,8 +123,8 @@ export function AgentArrangementView({tracks, nowUnixMs, error, temporalError, o
           style={{'--tc': track.group ? 'var(--bg-3)' : 'var(--track-color, var(--track-default))', color: track.group ? 'var(--text)' : undefined, marginLeft: track.depth * 8} as CSSProperties}
           role="button"
           tabIndex={0}
-          onClick={() => shell.setSelectedTrackId(key)}
-          onKeyDown={event => { if (event.key === 'Enter') shell.setSelectedTrackId(key) }}
+          onClick={() => shell.setSelectedTrackId(key, nameOf(track))}
+          onKeyDown={event => { if (event.key === 'Enter') shell.setSelectedTrackId(key, nameOf(track)) }}
         >
           {track.group ? '▾ ' : ''}{nameOf(track)}
         </span>

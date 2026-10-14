@@ -1,4 +1,5 @@
 import {useEffect, useMemo, useState, type DragEvent} from 'react'
+import {SetsSection} from '../shell/SetsSection'
 import type {AgencySessionRow} from '../../../../../desktop/cradle/src/agency/agencyTypes'
 import {AgentDevicePool} from './AgentDevicePool'
 import {useAgentShell} from './AgentShellContext'
@@ -279,7 +280,7 @@ export function AgentShellBrowser({rows, error, loading}: {rows: AgencySessionRo
                 if (category === 'context') shell.toggleTile(item.key as typeof CONTEXT_TILES[number]['id'])
                 if (category === 'git') shell.toggleTile('diff')
                 if (category === 'sess') {
-                  shell.setSelectedTrackId(item.key)
+                  shell.setSelectedTrackId(item.key, item.label)
                   shell.openThread(item.key)
                 }
               }}
@@ -306,6 +307,7 @@ export function AgentShellBrowser({rows, error, loading}: {rows: AgencySessionRo
         skillsNote={skillAdmission.note}
         skillsWaitingOn={skillAdmission.waiting}
       />
+      <SetsSection />
     </aside>
   )
 }

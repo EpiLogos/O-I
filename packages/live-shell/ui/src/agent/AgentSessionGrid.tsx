@@ -188,7 +188,7 @@ export function AgentSessionGrid({tracks, onHardStop, onRetry}: {
                 style={{paddingLeft: 4 + ancestors.length * 4}}
                 data-i={ORACLE.header(track)}
                 title={ORACLE.header(track).split('|')[1]}
-                onClick={() => shell.setSelectedTrackId(key)}
+                onClick={() => shell.setSelectedTrackId(key, track.agentName ?? track.purpose ?? track.sessionRef)}
               >
                 {track.group && (
                   <span
