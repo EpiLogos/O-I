@@ -4,8 +4,12 @@
 // one that is already placed moves it where it was asked for rather than making a second.
 import {dropOnEdge, focusGroup, groupOf, makeProjectionBinding, moveTab, openBinding} from '../../../../../desktop/cradle/src/surface/engine'
 import {isProjectionPaneKind, type LayoutState, type PaneEdge} from '../../../../../desktop/cradle/src/surface/types'
+import {parseInstrumentPayload} from './instruments'
 
-export function openInstrumentAt(layout: LayoutState, kind: string, at?: {groupId: string; edge: PaneEdge | null}, subject?: {ref: string; title: string}): LayoutState {
+/** Open an instrument in the layout. `payload` is the kind, or a stage lens's payload (`kind#lens`): the layout opens the kind
+ * where it was asked for; turning the stage to its lens is the door's act (instrumentDoor.ts), not a layout's. */
+export function openInstrumentAt(layout: LayoutState, payload: string, at?: {groupId: string; edge: PaneEdge | null}, subject?: {ref: string; title: string}): LayoutState {
+  const {kind} = parseInstrumentPayload(payload)
   if (!isProjectionPaneKind(kind)) return layout
   const binding = makeProjectionBinding(layout, kind, subject ? {subject_ref: subject.ref, subject_title: subject.title} : {})
   if (at?.edge) return dropOnEdge({...layout, surfaces: {...layout.surfaces, [binding.id]: layout.surfaces[binding.id] ?? binding}}, binding.id, at.groupId, at.edge)

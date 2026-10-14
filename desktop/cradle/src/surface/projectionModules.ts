@@ -50,6 +50,8 @@ import {isProjectionPaneKind, type ProjectionPaneKind} from "./types";
  * from a host workspace store. `world` is the host's WorldRef spelling
  * ('central' | 'epi-logos' in this shell). */
 export interface EncounterSubject {ref?: string; kind?: string; title: string; project?: string}
+/** THE selection (WorldContext.selection, spelled neutrally): the clip, track, Day or task every following pane moves with. */
+export interface EncounterSelection {mode: string; kind: string; ref: string; title: string; track?: string}
 export interface EncounterSnapshot {
   /** The shell mode standing (the host's WorkspaceMode/ShellMode spelling). */
   mode: string;
@@ -57,6 +59,8 @@ export interface EncounterSnapshot {
   world?: string;
   /** The selection — Atlas Focus. Absent = no subject pinned (World). */
   subject?: EncounterSubject;
+  /** THE selection a following pane moves with (manual §10.2). Absent while the host does not publish it. */
+  selection?: EncounterSelection;
   /** The opened reading — Atlas Manifestation. */
   reading?: {ref: string; position?: string};
   /** The route back — Atlas Thread. */
@@ -114,6 +118,59 @@ export const absentEncounterBridge: EncounterBridge = {
 };
 
 // ---------------------------------------------------------------------------
+// the pane's subject — follow or pin (manual §10.2)
+
+/** What a pane follows: THE selection (WorldContext.selection), else the encounter's subject. */
+export function followedRefOf(snapshot: Pick<EncounterSnapshot, "selection" | "subject">): string | undefined {
+  return snapshot.selection?.ref ?? snapshot.subject?.ref;
+}
+
+/**
+ * The subject one pane holds (manual §10.2: "A pane follows what you select, unless you pin it. A pinned pane keeps its
+ * subject while you work elsewhere."). The pane shows its pin when it has one, else the ref it follows; a selection that
+ * moves while the pane is pinned changes nothing the pane shows. A module reads `shown()` and is told when `pinned()` or
+ * `shown()` changes — through this channel, never by being remounted: a pin must not tear down a retained engine. The
+ * methods are closures: they do not depend on `this`, so `subject.subscribe` may be handed on as it stands.
+ */
+export interface PaneSubject {
+  /** The ref the pane is pinned to (`binding.projection.subject_ref`); absent while it follows. */
+  pinned(): string | undefined;
+  /** The ref the pane shows now: its pin, else the selection it follows. */
+  shown(): string | undefined;
+  /** Notified when the pin or the shown ref changes. Returns the unsubscribe. */
+  subscribe(listener: () => void): () => void;
+}
+
+/** The host's side of a pane's subject: it sets the pin from the binding and the followed ref from the spine. */
+export interface PaneSubjectControl extends PaneSubject {
+  pin(ref: string | undefined): void;
+  follow(ref: string | undefined): void;
+}
+
+export function createPaneSubject(initial: {pinned?: string; followed?: string} = {}): PaneSubjectControl {
+  let pinned = initial.pinned;
+  let followed = initial.followed;
+  const listeners = new Set<() => void>();
+  const shown = () => pinned ?? followed;
+  const change = (apply: () => void) => {
+    const before = [pinned, shown()];
+    apply();
+    if (before[0] === pinned && before[1] === shown()) return;
+    for (const listener of [...listeners]) listener();
+  };
+  return {
+    pinned: () => pinned,
+    shown,
+    subscribe(listener) {
+      listeners.add(listener);
+      return () => {listeners.delete(listener);};
+    },
+    pin(ref) {change(() => {pinned = ref;});},
+    follow(ref) {change(() => {followed = ref;});},
+  };
+}
+
+// ---------------------------------------------------------------------------
 // the module contract
 
 export interface ProjectionModuleContext {
@@ -126,6 +183,9 @@ export interface ProjectionModuleContext {
   element: HTMLElement;
   /** The encounter spine (seam 3). */
   encounter: EncounterBridge;
+  /** The pane's subject: its pin, else the selection it follows. A host with no pin (a standalone harness) omits it, and the
+   * module then follows. A module that declares `follows` reads it and reacts to its changes. */
+  subject?: PaneSubject;
 }
 
 export interface ProjectionModuleHandle {
@@ -148,6 +208,9 @@ export interface ProjectionModuleRegistration {
   kind: ProjectionPaneKind;
   /** One build of the kind's instrument, when the kind has several (manual §10.2); they answer to the same controls. */
   build?: {id: string; label: string};
+  /** The kind's content depends on a subject: a pane of it follows the selection or is pinned to one, and its module reads
+   * `context.subject`. A kind that does not declare it has no follow/pin control — a pin it cannot honour is not offered. */
+  follows?: boolean;
   /** Mount one instance. May be async (an engine that resolves on first
    * paint). A rejection must leave the element clean; the host shows the
    * failure as the pane's honest body. */
@@ -192,6 +255,11 @@ export function projectionBuilds(kind: ProjectionPaneKind): readonly ProjectionM
 /** Every admitted pane kind (the instrument types the browser lists). */
 export function admittedProjectionKinds(): ProjectionPaneKind[] {
   return [...admitted.keys()];
+}
+
+/** Whether panes of a kind follow the selection or pin to a subject: a module of the kind has declared it. */
+export function followsSelection(kind: string): boolean {
+  return isProjectionPaneKind(kind) && (admitted.get(kind) ?? []).some(held => held.follows === true);
 }
 
 /** Test-only: clear the door between cases. */
