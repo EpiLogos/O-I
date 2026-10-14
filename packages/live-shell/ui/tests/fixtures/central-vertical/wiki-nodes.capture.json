@@ -1,0 +1,38 @@
+{
+  "capture": "Control/agents/wiki/wiki.json read directly (14 Oct 2026): the five node objects and the root space node_refs, verbatim refs",
+  "space_ref": "central:wiki:root",
+  "space_node_refs": [
+    "wiki:node:sample-node-e",
+    "wiki:node:sample-node-b",
+    "wiki:node:sample-node-d",
+    "wiki:node:sample-node-c",
+    "wiki:node:sample-node-a"
+  ],
+  "nodes": [
+    {
+      "ref": "wiki:node:sample-node-a",
+      "title": "Sample node A",
+      "type": "intent"
+    },
+    {
+      "ref": "wiki:node:sample-node-b",
+      "title": "Sample node B",
+      "type": "identity"
+    },
+    {
+      "ref": "wiki:node:sample-node-c",
+      "title": "Sample node C",
+      "type": "return"
+    },
+    {
+      "ref": "wiki:node:sample-node-d",
+      "title": "Sample node D",
+      "type": "return"
+    },
+    {
+      "ref": "wiki:node:sample-node-e",
+      "title": "Sample node E",
+      "type": "learning"
+    }
+  ]
+}

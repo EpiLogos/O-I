@@ -1,0 +1,51 @@
+{
+  "ok": true,
+  "status": "success",
+  "action": "central.day.read",
+  "data": {
+    "automatic_agent_or_model_invocation": false,
+    "content": "",
+    "day_ref": "central:day:control:root:2026-10-06",
+    "document": null,
+    "document_state": "uninitialised",
+    "relations_revision": "central.content-fnv1a64/v1:146275:54a54c3094faa373",
+    "revision": {
+      "byte_len": 0,
+      "revision": "central.content-fnv1a64/v1:0:cbf29ce484222325"
+    },
+    "schema": "central.day-reading/v1",
+    "source": {
+      "agent_retrieval_allowed": true,
+      "path": "Control/user/day/2026-10-06/day.md",
+      "provenance": "observed",
+      "ref": "central:source:control:root:Control/user/day/2026-10-06/day.md",
+      "roles": [
+        "human-day",
+        "personal-human-source-aperture"
+      ],
+      "standing": "current-development-state",
+      "treatment": "projectcentral-user"
+    },
+    "temporal": {
+      "civil_date": "2026-10-06",
+      "created_at_unix_seconds": 1791241252,
+      "day_ref": "central:day:control:root:2026-10-06",
+      "lifecycle": "closed",
+      "lifecycle_actor_ref": "central:source:control:root:Control/user/sample-actor",
+      "lifecycle_at_unix_seconds": 1791322408,
+      "preexisting_bytes_retained": false,
+      "project_day_refs": [],
+      "schema": "central.human-day/v1",
+      "template_fidelity": "native-blank-text-not-an-original-HTML-fixture",
+      "time_policy_ref": "central:source:control:root:Control/user/civil-time-policy.json",
+      "time_policy_revision": "central.content-fnv1a64/v1:741:69da4a44ad65b27f",
+      "timezone": "Europe/London"
+    },
+    "today": {
+      "civil_date": "2026-10-13",
+      "day_ref": "central:day:control:root:2026-10-13",
+      "updated_at_unix_seconds": 1791846014
+    }
+  },
+  "capture": "ctrl --json action run central.day.read {day_ref: central:day:control:root:2026-10-06} (14 Oct 2026, read-only)"
+}

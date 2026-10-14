@@ -23,6 +23,7 @@ import {currentIdentity, type CurrentIdentity} from '../../../../../desktop/crad
 import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
 import {KindMark, isKindShape, type KindShapeName} from './sdk/marks.tsx'
 import {Icon} from './sdk/Icon.tsx'
+import {conversationGap} from '../central/centralVertical'
 import './inhabitantDevices.css'
 
 export interface ConversationNaraFaceProps {
@@ -33,6 +34,11 @@ export interface ConversationNaraFaceProps {
   /** Identity handed in by the host; when absent the face reads the module's
    * current identity itself and discloses absence if neither exists. */
   readonly identity?: CurrentIdentity | null
+  /** The conversation (session space) the selected Timeline clip stands for,
+   * when the Central vertical opened this face on a clip. Its binding keys on
+   * an expression no owner read discloses for a space: the no-subject state
+   * then names that owner gap instead of a generic absence. */
+  readonly conversation?: string | null
 }
 
 type Standing =
@@ -55,7 +61,7 @@ const STANDING_MARKS: Readonly<Record<Standing['state'], KindShapeName>> = Objec
   'refused': 'ghost',
 })
 
-export function NaraConversationFace({transport, project, expressionRef, identity}: ConversationNaraFaceProps) {
+export function NaraConversationFace({transport, project, expressionRef, identity, conversation = null}: ConversationNaraFaceProps) {
   const [standing, setStanding] = useState<Standing>({state: expressionRef ? 'resolving' : 'no-expression'})
 
   useEffect(() => {
@@ -122,7 +128,8 @@ export function NaraConversationFace({transport, project, expressionRef, identit
       </>}
       {standing.state === 'unbound' && <p className="inhabitant-device-notice">{standing.detail}</p>}
       {standing.state === 'no-identity' && <p className="inhabitant-device-notice">No Nara identity is current. The binding waits for its person — select an identity through the identity owner; nothing is fabricated here.</p>}
-      {standing.state === 'no-expression' && <p className="inhabitant-device-notice">No expression is selected. A conversation binds to the encounter's subject — select one, and the binding resolves through its owner.</p>}
+      {conversation && !expressionRef && <p className="inhabitant-device-notice" data-conversation-gap={conversation}>{conversationGap(conversation)}</p>}
+      {standing.state === 'no-expression' && !conversation && <p className="inhabitant-device-notice">No expression is selected. A conversation binds to the encounter's subject — select one, and the binding resolves through its owner.</p>}
       {standing.state === 'refused' && <p className="inhabitant-device-fault" role="alert">{standing.detail}</p>}
     </div>
   )

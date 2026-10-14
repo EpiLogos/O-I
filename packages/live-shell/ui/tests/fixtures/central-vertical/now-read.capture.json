@@ -1,0 +1,50 @@
+{
+  "ok": true,
+  "status": "success",
+  "action": "central.now.read",
+  "data": {
+    "automatic_agent_or_model_invocation": false,
+    "pointer_note": "Records are pointers, not authority: follow the governing guidance, and search the native surface before building anything new.",
+    "record": {
+      "archive_ref": null,
+      "continuation_refs": [],
+      "created_at_unix_seconds": 1791322833,
+      "lifecycle": "active",
+      "now_ref": "central:now:control:root:0000000000000000000000000000000000000000000000000000000000000001",
+      "obligations": [],
+      "participant_refs": [],
+      "policy_revision_at_allocation": "central.content-fnv1a64/v1:3775:027b33b9971c5954",
+      "purpose": "Result text (redacted from a real capture), clearing A",
+      "schema": "central.now-clearing/v1",
+      "scope_ref": "control:root",
+      "source_ref": "central:source:control:root:Control/agents/now/clearings/0000000000000000000000000000000000000000000000000000000000000001/now.json",
+      "source_refs": [
+        "central:source:control:root:Control/agents/governance/sample/sample-statement-a.md"
+      ],
+      "task_ref": "central:task:control:root:sample-task-a"
+    },
+    "returns": [],
+    "revision": {
+      "byte_len": 941,
+      "revision": "central.content-fnv1a64/v1:941:496fc2ca4c0e8270"
+    },
+    "schema": "central.now-reading/v1",
+    "source": {
+      "agent_retrieval_allowed": true,
+      "path": "Control/agents/now/clearings/0000000000000000000000000000000000000000000000000000000000000001/now.json",
+      "provenance": "agent-maintained",
+      "ref": "central:source:control:root:Control/agents/now/clearings/0000000000000000000000000000000000000000000000000000000000000001/now.json",
+      "roles": [
+        "now-clearing"
+      ],
+      "standing": "current-development-state",
+      "treatment": "generated-derived"
+    },
+    "t_payload_violations": {
+      "count": 0,
+      "largest": [],
+      "total_bytes": 0
+    }
+  },
+  "capture": "ctrl --json action run central.now.read {now_ref of records[0]} (14 Oct 2026, read-only)"
+}
