@@ -7,7 +7,7 @@ import {draftFromBeats,moveBeat} from '../../../src/techne/m0m5/journey/sequence
 import {beats,sceneTitle} from '../../../src/techne/m0m5/journey/beats';
 import type {NativeTimeWindowReply} from '../../../../../packages/expressions-boundary/src/timeWindow';
 import {journeyReturnNotice} from './sharedTimeWindow.js';
-import {journeyBeatView,reorderSceneRequest,type JourneyBeatCard,type JourneyBeatView,type JourneyEditRequest} from './journeyBeats';
+import {journeyBeatView,reorderSceneRequest,restoredBeatNotice,type JourneyBeatCard,type JourneyBeatView,type JourneyEditRequest} from './journeyBeats';
 import type {Journey} from './model';
 import {expressionTiming} from './propertyTracks';
 import {walkJourney,type JourneyPath} from './journeyPath';
@@ -353,13 +353,17 @@ export function installJourneyInstrument(host:JourneyInstrumentHost,home:HTMLEle
     const reply=await returning(basis,scene,state);
     if(destroyed||!open)return;
     const restoredRef=reply.crossing?.operation==='return'?reply.crossing.scene_ref:null;
-    let moved=false;
-    if(restoredRef&&restoredRef!==basis.scene_ref&&held){
-     const card=journeyBeatView(held.reading,view!.document).cards.find(card=>card.scene_ref===restoredRef);
-     if(card?.onBasis){await host.focusScene(prepareJourneyBeatFocus(card,basis,view!,host.sceneId()));moved=true;}
+    let moved=false,notice=journeyReturnNotice(reply);
+    if(restoredRef!==null){
+     // T11: the restored beat moves the native Scene only when this Journey can present it on the native basis as it stands.
+     // A beat the basis no longer holds (the Expression moved on, or the beat left the reading) is named as a miss, never shown as restored.
+     const card=held?journeyBeatView(held.reading,view!.document).cards.find(card=>card.scene_ref===restoredRef):undefined;
+     const outcome=restoredBeatNotice(restoredRef,basis.scene_ref,!!card?.onBasis);
+     notice=outcome.notice;
+     if(outcome.moves&&card){await host.focusScene(prepareJourneyBeatFocus(card,basis,view!,host.sceneId()));moved=true;}
     }
     if(moved)await load();
-    message(journeyReturnNotice(reply)??`Back in this Journey at "${sceneTitle(restoredRef??basis.scene_ref)}".`);
+    message(notice??`Back in this Journey at "${sceneTitle(basis.scene_ref)}".`);
    }catch(error){if(!destroyed&&open)message(failure(error));}
   },
  /** Seam B: a carried beat ref is focused through the owner's scene focus (focusScene), the same path the beat's own focus uses. A ref
