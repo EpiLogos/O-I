@@ -3,8 +3,8 @@
   "sources": [
     {
       "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/docs/world-shell/PROGRAMME.md",
-      "sha256": "8afb105aa2659b90d0c827d53e90587f4b295ad829c78f43fff8fa721dd8605c",
-      "bytes": 11654
+      "sha256": "6c0b00af19d367b7f9574dc212faf73facc1762cf1bc55dc63b54cd53367712a",
+      "bytes": 12086
     },
     {
       "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/docs/world-shell/CONVERGENCE.md",
@@ -78,6 +78,15 @@
     }
   ],
   "revision_history": [
+    {
+      "previous": {
+        "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/docs/world-shell/PROGRAMME.md",
+        "sha256": "8afb105aa2659b90d0c827d53e90587f4b295ad829c78f43fff8fa721dd8605c",
+        "bytes": 11654
+      },
+      "reconciled_at": "2026-10-14T07:00:00+00:00",
+      "reason": "PROGRAMME.md was edited on 8 Oct after this pin and entered the repository in #650 (12086 bytes). The pinned bytes were not retained, so the edit cannot be itemised here. The 126 target texts are pinned separately, per lane TARGET-SET.md, and verify on their own digests; no target progress was changed by this re-pin."
+    },
     {
       "previous": {
         "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/docs/world-shell/PROGRAMME.md",
