@@ -39,9 +39,11 @@ export const PROJECTION_PANE_KINDS = [
   "projection.constellation",
   "projection.expressions",
 ] as const;
-export type ProjectionPaneKind = (typeof PROJECTION_PANE_KINDS)[number];
+/** An instrument pane kind (FOUNDATION F2): an open set — any `projection.<type>` a host admits a module for, so a new
+ * instrument docks without touching the engine. The four above are the kinds the engine has always known. */
+export type ProjectionPaneKind = `projection.${string}`;
 export function isProjectionPaneKind(kind: string): kind is ProjectionPaneKind {
-  return (PROJECTION_PANE_KINDS as readonly string[]).includes(kind);
+  return /^projection\.[a-z0-9-]+$/.test(kind);
 }
 
 /** Keyboard direction for focus/move operations. */
@@ -118,7 +120,7 @@ export interface SurfaceBinding extends SurfacePresentationBinding {
    * follows the encounter (WorldContext.subject); a present subject_ref pins
    * the pane (its own `Follow` off), which is how two panes hold two
    * projections of one subject. */
-  projection?: {kind: ProjectionPaneKind; subject_ref?: string};
+  projection?: {kind: ProjectionPaneKind; subject_ref?: string; build?: string};
 }
 
 /** A tab group: one tab strip + the surface it presents. */
@@ -235,7 +237,13 @@ export interface ActionArg {
   n?: number;
   splitId?: string;
   weights?: number[];
+  /** The edge of a pane a surface is dropped on (surface.drop-edge): a new pane opens there. */
+  edge?: PaneEdge;
+  /** The subject a projection pane pins (surface.pin-subject); absent = the pane follows the selection again. */
+  ref?: string;
 }
+/** A pane's four edges, where a drop makes a new split (manual §10.2). */
+export type PaneEdge = "left" | "right" | "top" | "bottom";
 
 /** The layout as it was at load — the restore point for `restore-layout`. */
 export type RestorePoint = Pick<

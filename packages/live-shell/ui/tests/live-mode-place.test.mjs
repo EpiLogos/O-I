@@ -122,12 +122,12 @@ test('Live\'s status line names the presented presentation and the live work', (
 
 const fakeCtx = {
   set: {path: '/x/set.als', tempo_bpm: 120, scene_count: 1, arrangement_clips: 0,
-    tracks: [{kind: 'audio', name: 'Drums', devices: ['DrumRack', 'GlueCompressor']}]},
+    tracks: [{kind: 'audio', name: 'Drums', devices: ['DrumRack', 'Saturator']}]},
   loading: false, error: null, openSet: () => {},
 }
 const fakeDocument = {path: '/x/set.als', tempo: 120, scenes: 1, tracks: [{kind: 'audio', name: 'Drums', devices: [
   {name: 'DrumRack', params: [{id: 'Device Params/Drum Decay', value: '400 ms', min: '25 ms', max: '2 s'}]},
-  {name: 'GlueCompressor', params: []},
+  {name: 'Saturator', params: []},
 ], arrangementClips: [], sessionSlots: {}}]}
 
 test('Device face: the document\'s own names, lossless values, disclosed ranges — read-only', () => {
@@ -140,7 +140,8 @@ test('Device face: the document\'s own names, lossless values, disclosed ranges 
   const inputs = [...html.matchAll(/<input[^>]*>/g)].map(input => input[0])
   assert.ok(inputs.length > 0)
   for (const input of inputs) assert.match(input, /readonly/, 'every value input is read-only')
-  assert.match(html, /Glue Compressor[\s\S]*?class="device-empty"/, 'the parameterless device says the document discloses none')
+  // A device with no stored-parameter face keeps its read-only tile (devices with a face get the editor, live-browser-chain).
+  assert.match(html, /Saturator[\s\S]*?class="device-empty"/, 'the parameterless device says the document discloses none')
 })
 
 test('Device face with an empty chain or no track: the designed empty frame, not a bare line', () => {

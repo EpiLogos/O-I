@@ -2,6 +2,9 @@
 // has a saved arrangement of its own. A registration table, read by the frame — never a branch in it. Once a mode has
 // been stood in, its own book layout holds its frame and this table is not read again for it.
 import type {SurfMode} from './modeGrammar'
+import type {LayoutState} from '../../../../../desktop/cradle/src/surface/types'
+import {seedInstruments} from '../frame/openInstrument'
+import {seedFactoryCentre} from '../agent/factoryCentre'
 
 export interface ModeFrame {
   centerPanel: string
@@ -14,10 +17,37 @@ export interface ModeFrame {
 
 const FRAME = {tab: 'session', detailMode: 'clip', browser: true, detail: true} as const
 
+// The centre is the pane tree in every mode (FOUNDATION F2); what each mode holds in it is its seed below.
 export const MODE_FRAMES: Readonly<Record<SurfMode, ModeFrame>> = {
-  live: {...FRAME, centerPanel: 'world.expressions', detailMode: 'device', dock: false},
-  base: {...FRAME, centerPanel: 'world.ground', dock: true},
+  live: {...FRAME, centerPanel: 'native.workbench', detailMode: 'device', dock: false},
+  base: {...FRAME, centerPanel: 'native.workbench', dock: true},
   factory: {...FRAME, centerPanel: 'native.workbench', dock: true},
-  expressions: {...FRAME, centerPanel: 'world.expressions', dock: false},
-  techne: {...FRAME, centerPanel: 'world.ground', dock: true},
+  expressions: {...FRAME, centerPanel: 'native.workbench', dock: false},
+  techne: {...FRAME, centerPanel: 'native.workbench', dock: true},
+}
+
+/** The material a mode's Session · Arrangement pane shows until F3's track adapters: Live's open set, the World cut's
+ * civil field (Central, Technē, Factory), or the open Expression's native sources (Expressions). */
+export type TrackSource = 'set' | 'world' | 'native'
+export const MODE_TRACK_SOURCES: Readonly<Record<SurfMode, TrackSource>> = {
+  live: 'set',
+  base: 'world',
+  factory: 'world',
+  expressions: 'native',
+  techne: 'world',
+}
+
+/** Each mode's first pane tree (FOUNDATION F2: panes are the centre in every mode), by the book mode it stands on. A seed
+ * runs only on a tree with no tab, so a mode's own arrangement — and every named set — stands as it was left. */
+export const MODE_TREE_SEEDS: Readonly<Record<string, (layout: LayoutState) => LayoutState>> = {
+  // Live: the instrument (the torus on the stage) beside the set's tracks.
+  live: seedInstruments(['projection.expressions', 'projection.timeline']),
+  // Central: the day's tracks; documents open beside them from the browser.
+  base: seedInstruments(['projection.timeline']),
+  // Factory: the agent tab, pinned (agent/factoryCentre.ts), instruments open beside it.
+  factory: seedFactoryCentre,
+  // Expressions: the stage beside its tracks.
+  expressions: seedInstruments(['projection.expressions', 'projection.timeline']),
+  // Technē: the world, and the readings' tracks beside it.
+  techne: seedInstruments(['projection.earth', 'projection.timeline']),
 }

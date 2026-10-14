@@ -421,8 +421,9 @@ const techne: SurfModeGrammar = {
   title: 'Technē',
   mark: 'techne',
   hint: 'The deep mode — the six lenses over one encounter',
-  session: {label: 'Session', meaning: 'Journey', provenance: 'M3′ Journey'},
-  arrangement: {label: 'Arrangement', meaning: 'Timeline', provenance: 'M2′ Relation Field'},
+  // Session and Arrangement are views of Technē's material, never its Journey and Timeline instruments (FOUNDATION F3; lock §9.1).
+  session: {label: 'Session', meaning: 'readings and threads as tracks, events as clips, walk stops as rows', provenance: 'lock §9.1 Technē row'},
+  arrangement: {label: 'Arrangement', meaning: 'the same material on one ruler, from deep time to this morning', provenance: 'lock §9.1 Technē row'},
   detail: {
     clip: {label: 'Clip', meaning: 'identity, place and time, disclosure, typed relations, bounded constellation, source'},
     device: {label: 'Instruments', meaning: 'the six lenses — the focused lens\'s instrument expanded, the others folded; clicking one opens it on the focused pane'},
@@ -444,15 +445,15 @@ const techne: SurfModeGrammar = {
     {id: 'techne-locations', label: 'Locations', group: 'World', mark: 'placed', kindMark: 'location', family: 'quaternal-logic', state: 'waiting',
       hint: 'Placed artefacts and their anchors. Waits for the Earth projection\'s owner — designed empty, named.'},
     {id: 'techne-places', label: 'Places', group: 'World', mark: 'map', kindMark: 'place', family: 'quaternal-logic', state: 'waiting',
-      hint: 'Earth places — the Atlas port\'s surface. Waits for the Places owner — designed empty, named.'},
+      hint: 'Earth places — the Atlas port\'s surface. The atlas is registered; what waits is its data (N3) — designed empty, named.'},
     {id: 'techne-palaces', label: 'Palaces', group: 'World', mark: 'palace', kindMark: 'palace', family: 'quaternal-logic', state: 'waiting',
       hint: 'Palaces — M5′ as locations you enter. Waits for the Palace owner — designed empty, named.'},
     {id: 'techne-journeys', label: 'Journeys', group: 'World', mark: 'journey', kindMark: 'journey', family: 'quaternal-logic', state: 'waiting',
       hint: 'Journeys — the walk stops (place · occasion · artefact · narration), read from the World\'s walks; when no walk is carried the stops hold their places, named.'},
   ],
   centre: {
-    session: {label: 'Journey', meaning: 'walk stops — place · occasion · artefact · narration', provenance: 'M3′ Journey'},
-    arrangement: {label: 'Timeline', meaning: 'timeline — authored history beside development on one non-linear ruler, with the declared break into today', provenance: 'M2′ Relation Field'},
+    session: {label: 'Session', meaning: 'the grid of readings, events and walk stops', provenance: 'lock §9.1 Technē row'},
+    arrangement: {label: 'Arrangement', meaning: 'the readings along one ruler, with the declared break into today', provenance: 'lock §9.1 Technē row'},
   },
   status: {label: 'Technē', fn: 'the six lenses over one encounter'},
   transport: [

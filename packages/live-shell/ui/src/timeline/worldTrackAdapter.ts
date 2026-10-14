@@ -27,9 +27,40 @@ export interface WorldTrackColumn {
   name: string;
 }
 
+/** How a clip stands right now (manual §3: "Every clip shows its state — waiting, running, stopped, recording, stalled —
+ * so you can read a whole grid at a glance"). Disclosed by the family from its owner's reading; absent = not disclosed. */
+export type ClipStatus = 'waiting' | 'running' | 'stopped' | 'recording' | 'stalled';
+/** When a launch lands and what comes after (manual §3: launch quantize and follow actions). Words are the family's own. */
+export interface ClipLaunch {
+  quantize?: string;
+  follow?: string;
+}
+/** One take under a clip (manual §3: "Takes stack under a clip so you can choose the one that stands"). */
+export interface WorldClipTake {
+  id: string;
+  name: string;
+  standing?: boolean;
+}
+/** The owner operations the shared Session and Arrangement may call (FOUNDATION F3: "an `actions` port naming owner ops").
+ * Each names the owner op it runs; a family that declares none leaves its grid read-only. Selection is the shell's own
+ * (WorldContext.selection), never an action. */
+export interface WorldTrackActions {
+  launch?: {op: string; run(clipId: string): unknown};
+  launchStop?: {op: string; run(columnId: string): unknown};
+  stopTrack?: {op: string; run(trackId: string): unknown};
+  record?: {op: string; run(clipId: string): unknown};
+}
 export interface WorldTrack {
   id: string;
   name: string;
+  /** The track's colour (a hex), when the family's owner gives one. */
+  color?: string;
+  /** Where the track's needle stands on the ruler (Arrangement: "a needle showing where it has got to"), in the ruler's units. */
+  needle?: number;
+  /** How deep it sits under a group (manual §6: "each agent's helpers step in beneath it, a coloured rail for every level");
+   * 0 or absent at the top. `parentId` names the track it sits under. */
+  depth?: number;
+  parentId?: string;
   // Lane kind, chosen by the family (e.g. 'entity', 'automation', 'walk').
   kind: string;
   // The layer (reading) the lane belongs to, when the family declares layers.
@@ -55,6 +86,14 @@ export interface WorldTrackClip {
   // from the source's own disclosed fields; the presentation only draws it.
   // Absent means nothing was disclosed for this clip.
   standing?: ClipStandingReading;
+  /** How the clip stands now (F3). */
+  status?: ClipStatus;
+  /** When its launch lands and what follows it (F3). */
+  launch?: ClipLaunch;
+  /** The takes stacked under it (F3). */
+  takes?: WorldClipTake[];
+  /** Its place on the set's ruler, in the ruler's units, when the material has one (F3: the Arrangement lays clips by it). */
+  at?: {start: number; end?: number};
 }
 
 // A transport take exposed by a family. Takes belong to the Transport stratum
@@ -117,7 +156,13 @@ export interface WorldWalk {
 }
 
 export interface WorldTrackSet {
+  /** The rows of the Session grid — Live's scenes, the DLW's stops — in order; and, without a ruler, the Arrangement's
+   * blocks laid end to end. */
   columns: WorldTrackColumn[];
+  /** The Arrangement's ruler, when the material has absolute time: its unit and how to label a point on it. */
+  ruler?: {unit: string; label?: (at: number) => string};
+  /** The owner operations the shared views may call (F3). */
+  actions?: WorldTrackActions;
   tracks: WorldTrack[];
   clips: WorldTrackClip[];
   transport?: {takes: WorldTrackTake[]};

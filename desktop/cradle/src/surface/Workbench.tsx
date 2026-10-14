@@ -50,7 +50,20 @@ const AgencySurface=lazy(()=>import("../agency/AgencySurface").then((module)=>({
 import type { ActionArg, LayoutState, Pane, SurfaceId } from "./types";
 import { TAB_LIST_WIDTH_MAX, TAB_LIST_WIDTH_MIN, MODE_CURATION } from "../workspace/mode";
 
+/** The DLW pane grammar (FOUNDATION F2, manual §10.2): a ⊞ menu per pane (Beside, Below, Four ways), a drop on a
+ * pane's edge makes a new split, an instrument dragged in from the browser opens where it lands, and each projection
+ * pane follows the selection or keeps its own. The legacy desktop does not pass it and keeps its toolbar. */
+export interface PaneGrammar {
+  openInstrument: (kind: string, groupId: string, edge: import("./types").PaneEdge | null) => void;
+  /** The selection a pane pins when its Follow is turned off (WorldContext.selection's ref), if anything is selected. */
+  selectionRef?: string;
+  /** The host's own marks for the pane controls (the candidate's specimen icons). */
+  mark: (name: "follow" | "pin") => ReactNode;
+}
+export {dropEdge, INSTRUMENT_DRAG_TYPE} from "./dropEdge";
+import {dropEdge, INSTRUMENT_DRAG_TYPE} from "./dropEdge";
 export interface WorkbenchProps {
+  paneGrammar?: PaneGrammar;
   /** A receiving frame without dedicated mode stages presents centres in panes. */
   centreBodiesInPanes?: boolean;
   /** Exact hosted native World identity, when disclosed by the receiving owner. */
@@ -254,6 +267,14 @@ function PaneNode(props: PaneProps) {
 export function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "group" }> }) {
   const { group, state, execute, openBindingMenu, openFrameMenu } = props;
   const [insertOpen, setInsertOpen] = useState(false);
+  const [splitOpen, setSplitOpen] = useState(false);
+  const [dropAt, setDropAt] = useState<import("./types").PaneEdge | "middle" | null>(null);
+  useEffect(() => {
+    if (!splitOpen) return;
+    const outside = (event: MouseEvent) => { if (!(event.target as HTMLElement).closest('.pane-split-host')) setSplitOpen(false); };
+    document.addEventListener('mousedown', outside);
+    return () => document.removeEventListener('mousedown', outside);
+  }, [splitOpen]);
   useEffect(() => {
     if (!insertOpen) return;
     const outside = (event: MouseEvent) => { if (!(event.target as HTMLElement).closest('.strip-open-host')) setInsertOpen(false); };
@@ -350,6 +371,27 @@ export function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "gro
         </IconTabStrip>
         <div className="pane-tools">
           {props.stripTools}
+          {props.paneGrammar && active && state.surfaces[active]?.projection && (() => {
+            const pinnedTo = state.surfaces[active].projection?.subject_ref;
+            const canPin = !!props.paneGrammar.selectionRef;
+            return <button type="button" className="pane-follow" data-pane-follow={pinnedTo ? "pinned" : "following"} aria-pressed={!pinnedTo}
+              disabled={!pinnedTo && !canPin}
+              title={pinnedTo ? `Pinned to ${pinnedTo}. Follow the selection again` : canPin ? "Following the selection. Pin this pane to what is selected now" : "Following the selection. Select something to pin this pane to it"}
+              onClick={() => execute("surface.pin-subject", { surfaceId: active, ref: pinnedTo ? undefined : props.paneGrammar!.selectionRef })}>
+              {props.paneGrammar!.mark(pinnedTo ? "pin" : "follow")}
+            </button>;
+          })()}
+          {props.paneGrammar && <span className="pane-split-host">
+            <button type="button" className="pane-split" aria-label="Split this pane" aria-haspopup="menu" aria-expanded={splitOpen}
+              title="Split this pane: Beside, Below or Four ways"
+              onClick={() => { execute("surface.focus-group", { groupId: group.id }); setSplitOpen(open => !open); }}>⊞</button>
+            {splitOpen && <div className="oi-menu pane-split-menu" role="menu" aria-label="Split this pane"
+              onKeyDown={event => { if (event.key === 'Escape') { event.stopPropagation(); setSplitOpen(false); } }}>
+              <button type="button" role="menuitem" onClick={() => { setSplitOpen(false); execute("surface.focus-group", { groupId: group.id }); execute("surface.split-right"); }}>Beside</button>
+              <button type="button" role="menuitem" onClick={() => { setSplitOpen(false); execute("surface.focus-group", { groupId: group.id }); execute("surface.split-down"); }}>Below</button>
+              <button type="button" role="menuitem" onClick={() => { setSplitOpen(false); execute("surface.split-quad", { groupId: group.id }); }}>Four ways</button>
+            </div>}
+          </span>}
           {group.emptySlot && <button type="button" className="pane-tool-menu" aria-label="Close empty pane" title="Close empty pane (⌘W)" onClick={() => execute("surface.close-empty-pane", { groupId: group.id })}><Glyph name="close" size={13} /></button>}
           {props.insertMenu
             ? <span className="strip-open-host">
@@ -433,14 +475,25 @@ export function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "gro
         role="tabpanel"
         id={`surface-panel-${group.id}`}
         aria-labelledby={active ? `surface-tab-${active}` : undefined}
+        data-drop-at={dropAt ?? undefined}
         onDragOver={e => {
-          if (e.dataTransfer.types.includes("application/x-oi-surface")) { e.preventDefault(); e.dataTransfer.dropEffect = "move"; }
+          const surface = e.dataTransfer.types.includes("application/x-oi-surface");
+          const instrument = !!props.paneGrammar && e.dataTransfer.types.includes(INSTRUMENT_DRAG_TYPE);
+          if (!surface && !instrument) return;
+          e.preventDefault(); e.dataTransfer.dropEffect = surface ? "move" : "copy";
+          if (props.paneGrammar) setDropAt(dropEdge(e.currentTarget.getBoundingClientRect(), e.clientX, e.clientY) ?? "middle");
         }}
+        onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDropAt(null); }}
         onDrop={e => {
+          setDropAt(null);
+          const edge = props.paneGrammar ? dropEdge(e.currentTarget.getBoundingClientRect(), e.clientX, e.clientY) : null;
+          const kind = props.paneGrammar ? e.dataTransfer.getData(INSTRUMENT_DRAG_TYPE) : "";
+          if (kind) { e.preventDefault(); e.stopPropagation(); props.paneGrammar!.openInstrument(kind, group.id, edge); return; }
           const id = e.dataTransfer.getData("application/x-oi-surface");
           if (!id) return;
           e.preventDefault(); e.stopPropagation();
-          execute("surface.drop", { surfaceId: id, groupId: group.id });
+          if (edge) execute("surface.drop-edge", { surfaceId: id, groupId: group.id, edge });
+          else execute("surface.drop", { surfaceId: id, groupId: group.id });
         }}
 
       >

@@ -17,9 +17,9 @@ const FRAME = join(ui, 'src/frame')
 
 // The ceilings. Lower them as the switchboard is taken apart; never raise them.
 const CEILING = {
-  modeBranches: 54,
-  residences: {browser: 3, dock: 2, detail: 6},
-  perModeBodies: 21,
+  modeBranches: 26,
+  residences: {browser: 3, dock: 2, detail: 1},
+  perModeBodies: 10,
 }
 
 const MODE = '(?:live|base|central|factory|expressions|techne|audio)'
@@ -42,7 +42,7 @@ const PER_MODE_BODIES = [
   'BrowserPane', 'WorldBrowser', 'ModeBrowser', 'AgentShellBrowser',
   'ModeContextDock', 'AgentContextDock',
   'DeviceChainPanel', 'NativeWorldDetail', 'CentralClipChooser', 'BaseDevicesDetail', 'TechneInstrumentsDetail',
-  'InstrumentDeviceDetail', 'TechneClipDetail', 'FactoryTaskLogDetail', 'AgentShellDeviceDetail',
+  'TechneClipDetail', 'FactoryTaskLogDetail', 'AgentShellDeviceDetail',
   'TechneLensBar', 'ModeCentreFrame', 'AgentStatusBarBridge',
 ]
 export function perModeBodies(source) {

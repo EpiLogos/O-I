@@ -45,11 +45,13 @@ test('the pane → instrument table: every centre panel the shell uses maps as d
     ['projection.earth', null, 'earth', 'techne:m0'],
     ['world.knowledge', null, 'graph', 'knowledge-graph'],
     ['world.expressions', null, 'graph', null], // no hosted lens reported yet: the pane holds none until it does
-    ['world.ground', 'arrangement', 'graph', 'techne:m2'],
-    ['world.ground', 'session', 'graph', 'techne:m3'],
-    ['world.ground', null, 'graph', null],
-    ['native.arrangement', 'arrangement', 'graph', 'techne:m2'],
-    ['native.session', 'session', 'graph', 'techne:m3'],
+    // The Session · Arrangement pane is a view of the mode's material, never Technē's Journey or Timeline (FOUNDATION F3).
+    ['world.ground', 'arrangement', 'graph', null],
+    ['world.ground', 'session', 'graph', null],
+    ['projection.timeline', 'arrangement', 'graph', null],
+    ['projection.timeline', 'session', 'graph', null],
+    ['native.arrangement', 'arrangement', 'graph', null],
+    ['native.session', 'session', 'graph', null],
     ['native.workbench', null, 'graph', null],
     ['native.agent', null, 'graph', null],
     ['world.settings', null, 'graph', null],
@@ -80,8 +82,8 @@ test('the Device-side gate: every mode with an instrument pane presents it', () 
   for (const mode of ['base', 'techne', 'factory', 'expressions']) {
     assert.equal(deviceInstrumentFor(mode, 'projection.earth', null, 'graph'), 'techne:m0', `${mode} · projection.earth`)
   }
-  assert.equal(deviceInstrumentFor('base', 'world.ground', 'arrangement', 'graph'), 'techne:m2', 'Central · Timeline')
-  assert.equal(deviceInstrumentFor('techne', 'world.ground', 'session', 'graph'), 'techne:m3', 'Technē · Journey')
+  assert.equal(deviceInstrumentFor('base', 'projection.timeline', 'arrangement', 'graph'), null, 'Central · the tracks pane keeps Central\'s own chain')
+  assert.equal(deviceInstrumentFor('techne', 'projection.expressions', null, 'graph', 'journey'), 'techne:m3', 'Technē · the stage turned to its Journey lens')
   assert.equal(deviceInstrumentFor('base', 'world.knowledge', null, 'graph'), 'knowledge-graph', 'Central · knowledge graph')
 })
 

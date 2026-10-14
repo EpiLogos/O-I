@@ -93,7 +93,7 @@ export function hostedLensOfBarId(barId: string): HostedLens | null {
 }
 
 /** The centre panels whose device side is their own native rack in Expressions. */
-const EXPRESSIONS_OWN_DEVICES: ReadonlySet<string> = new Set(['world.expressions', 'native.session', 'native.arrangement'])
+const EXPRESSIONS_OWN_DEVICES: ReadonlySet<string> = new Set(['world.expressions', 'native.session', 'native.arrangement', 'projection.expressions', 'projection.timeline'])
 
 /** The instrument the focused centre pane holds, or null when it holds none.
  * `hostedLens` is the hosted Expressions lens the frame reports (null until it does). */
@@ -113,16 +113,15 @@ export function instrumentOfPane(
     case 'world.expressions':
       return hostedLens ? HOSTED_INSTRUMENT[hostedLens] : null
     case 'projection.expressions':
-      // The Expressions pane (T-EXPRESSIONS-PANE-LEASE) presents the one hosted frame and holds no instrument of its own: the
-      // frame's hosted lens stands in the centre's bar, never in this pane.
-      return null
+      // The stage pane (T-EXPRESSIONS-PANE-LEASE) presents the one hosted frame: its instrument is the lens the frame stands in.
+      return hostedLens ? HOSTED_INSTRUMENT[hostedLens] : null
     case 'world.ground':
     case 'native.session':
     case 'native.arrangement':
     case 'projection.timeline':
-      // The Timeline pane (T-FACTORY-TIMELINE-PANE) is the same projection: its own presentation picks the lens.
-      if (presentation === 'arrangement') return 'techne:m2'
-      if (presentation === 'session') return 'techne:m3'
+      // The Session · Arrangement pane is a view of the mode's material, never Technē's Journey or Timeline instrument
+      // (FOUNDATION F3): it holds no instrument, so the Device side stays the mode's own chain.
+      void presentation
       return null
     default:
       return null

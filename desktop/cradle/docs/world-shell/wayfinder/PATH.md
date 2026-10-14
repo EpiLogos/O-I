@@ -75,10 +75,12 @@ the evidence is `../audit-20261014/`.
 
 ## 5. Claimable now (in order)
 
-`FOUNDATION.md` §6. Step 1: F0 (lead), the overhaul removals that need no
-replacement (§7), and the first module wave: atlas assets, M6–M7 Expressions
-open, the records ticket. Design N3 (Archetypal-Earth refit onto the suite's
-data model) before F2.
+`FOUNDATION.md` §6. Step 1 is done (F0, the first removals, wave 1 converged,
+N3 designed). Step 2 is under way: F1–F4 are code-landed on `dlw/build` and owe
+their native screen check (the build at F1 runs from the `env-2/o-i` seat, which
+the lead holds as a build seat so `env-1` can keep moving); F5 is next. The mode
+adapters (Central, Factory) are out as module tickets on F3's contract; Technē's
+waits for N3, Expressions' stops and launch for the stage bindings (F7).
 
 ## 6. Review points (Sonnet, one at a time)
 
@@ -95,7 +97,30 @@ this table true. Tickets and resolutions live in `tickets/`.
 
 | Ticket | Who | Zone | Since |
 |---|---|---|---|
-| none — the next run starts at FOUNDATION §6 step 1 | | | |
+| T-N3-ATLAS-SUITE-PROVIDER (the atlas reads the suite) | Sonnet builder | `projections/atlas/provider/**`, the atlas wiring in `AtlasProjectionPanel.tsx`, the atlas dev harness | 14 Oct |
+| T-TRACKS-CENTRAL (Day, Flows, Beings, Things, Goals as tracks) | Sonnet builder | `timeline/centralTrackAdapter.ts`, `frame/tracks/useCentralTracks.ts` | 14 Oct |
+| T-TRACKS-FACTORY (sessions and tasks as tracks) | Sonnet builder | `timeline/factoryTrackAdapter.ts`, `frame/tracks/useFactoryTracks.ts` | 14 Oct |
+| F1–F4 native screen check; F5 the device runtime | lead | the frame, `frame/**`, `shell/**`, `App.tsx`, the cradle engine's pane grammar | 14 Oct |
+
+Landed on `dlw/build` this run (14 Oct): F0 (the switchboard tripwire — App.tsx
+mode branches 58 → 26, detail residences 6 → 1, per-mode bodies 21 → 10 — and
+the Live chain as the selected track's devices, devices-b2 deleted);
+T-ATLAS-ASSETS; T-EXPRESSIONS-OPEN (opened works are committed and opened, not
+yet saved to a file: works have no Central folder until N1); T-RECORDS; F1 (Live's
+own mode, per-mode frames, one selection on the trail, named sets); F2 (panes as
+the centre in every mode, ⊞ Beside / Below / Four ways, edge drops, browser
+instruments, follow/pin, the lens bar removed); F3 (the contract extended, one
+Session grid and one Arrangement ruler, Live's set as the reference adapter,
+Session and Arrangement unbound from Journey and Timeline); F4 (one detail host,
+the clip box, Clip | Device in every mode).
+
+Open, owned by the lead: N1 (the kernel's works need a persistent home before
+Open can save a file); the knowledge panel (`world.knowledge`) still stands over
+the panes rather than in one; the Workbench's insert row and the four browsers'
+Sets and Instruments sections fold into F6's one browser; the Central owner
+reads for Flows, Beings, Things and Goals are not landed (Central adapter shows
+them empty and named); the Graph op reads in 88 s cold (AIKit times out at 20 s).
+The machine ran swap-full most of the day, so builds and type-checks took 10–60 min.
 
 #673 landed on main (14 Oct): Phase 5 gates 1–4 (the audit, the migration
 and its first-run apply, the census and the native Live ops), seams 7 and 8's
