@@ -342,6 +342,25 @@ class ContinuityMigrationTests(unittest.TestCase):
         continuity = self.home / module.CANDIDATE_DATA_ROOT / module.DEFAULT_BACKING / 'continuity'
         self.assertEqual([p.name for p in continuity.iterdir()], [])
 
+    def test_admit_after_a_killed_admit_clears_the_empty_claim_and_publishes(self):
+        bundle = self.exported_bundle()
+        planned = self.admit(bundle, dry_run=True)
+        claim = Path(planned['admission'])
+        claim.mkdir(parents=True, mode=0o700)  # what a kill between the claim and the rename leaves
+        plan = self.admit(bundle)
+        self.assertEqual(plan['status'], 'admitted')
+        self.assertTrue((claim / 'adoption.json').is_file())
+
+    def test_a_non_empty_directory_under_the_admission_name_is_never_cleared(self):
+        bundle = self.exported_bundle()
+        planned = self.admit(bundle, dry_run=True)
+        claim = Path(planned['admission'])
+        claim.mkdir(parents=True, mode=0o700)
+        (claim / 'stray').write_text('kept')
+        with self.assertRaises(Exception):
+            self.admit(bundle)
+        self.assertEqual((claim / 'stray').read_text(), 'kept')
+
     # Command surface ------------------------------------------------------------
 
     def test_cli_dry_run_and_refusal_exit_codes(self):

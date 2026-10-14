@@ -217,6 +217,7 @@ test('a failed confirm after writes holds the workspace; the next run re-verifie
   })
   assert.equal(outcome.status, 'failed')
   assert.match(outcome.reason, /APPLIED could not be recorded/)
+  assert.ok(outcome.written > 0, 'records are in place, so the workspace is held until the owner chooses')
   assert.equal(attempts, 1)
   assert.equal(store.getItem(NS), NEW_BOOK, 'the admitted records stay in place')
   const next = await applyPendingAdmission(deps(store, await verified()))
@@ -232,13 +233,28 @@ test('a write that fails midway is a named failure, and no confirm is sent', asy
   const outcome = await applyPendingAdmission(deps(store, await verified(), confirmations))
   assert.equal(outcome.status, 'failed')
   assert.match(outcome.reason, /could not be applied/)
+  assert.equal(outcome.written, 2, 'the two non-book records landed before the book failed: a partial write, so the workspace is held')
+  assert.match(outcome.reason, /2 admitted record\(s\) were written/)
   assert.equal(confirmations.length, 0)
 })
 
-test('an unreadable native reader holds the workspace rather than mounting over an unknown state', async () => {
-  const outcome = await applyPendingAdmission({store: new FakeStore(), read: async () => { throw new Error('no payload') }, confirm: async () => {}})
+test('a write that fails before any admitted record lands writes nothing, so the workspace mounts', async () => {
+  const store = new FakeStore()
+  store.failOn = () => true
+  const outcome = await applyPendingAdmission(deps(store, await verified()))
   assert.equal(outcome.status, 'failed')
-  assert.match(outcome.reason, /could not be read/)
+  assert.equal(outcome.written, 0)
+  assert.match(outcome.reason, /nothing admitted was written/)
+  assert.equal(store.writes.length, 0)
+})
+
+test('an unreadable native reader writes nothing and does not hold the workspace (a permanent fault must not brick the start)', async () => {
+  const store = new FakeStore()
+  const outcome = await applyPendingAdmission({store, read: async () => { throw new Error('Permission denied') }, confirm: async () => {}})
+  assert.equal(outcome.status, 'failed')
+  assert.equal(outcome.written, 0)
+  assert.match(outcome.reason, /could not be read \(Permission denied\); nothing was applied/)
+  assert.equal(store.writes.length, 0)
 })
 
 test('a snapshot copy that no longer matches its record is refused before any write on retry', async () => {
@@ -251,10 +267,19 @@ test('a snapshot copy that no longer matches its record is refused before any wr
   assert.equal(outcome.status, 'failed')
   assert.match(outcome.reason, /does not match its record/)
   assert.equal(store.writes.length, 0, 'a mismatched snapshot stops the apply before any write')
+  assert.equal(outcome.written, 0)
 })
 
 test('status reports name the outcome once and stay silent when nothing was offered', () => {
   assert.equal(admissionReport({status: 'none'}), null)
   assert.match(admissionReport({status: 'applied', admission: NAME, records: 3, written: 2, preserved: null, confirmed: true}), /3 record\(s\), 2 written, 1 already in place/)
   assert.match(admissionReport({status: 'applied', admission: NAME, records: 3, written: 3, preserved: `${NS}.preserved.x`, confirmed: true}), /preserved under/)
+})
+
+test('the startup gate holds only after a partial write, and the hold offers the owner a start without the admission', async () => {
+  const {readFile} = await import('node:fs/promises')
+  const source = await readFile(new URL('../src/continuity/workspace.tsx', import.meta.url), 'utf8')
+  assert.match(source, /outcome\.status === 'failed' && outcome\.written > 0 && !startWithout/)
+  assert.match(source, /data-action="start-without-admission"/)
+  assert.match(source, /written: 0, reason: `The owner-admitted continuity could not start/)
 })

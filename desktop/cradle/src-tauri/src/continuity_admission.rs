@@ -160,8 +160,13 @@ pub fn pending(data_home: &Path, backing: &str) -> Result<Pending, String> {
             .file_name()
             .to_string_lossy()
             .into_owned();
-        if name.starts_with(ADMISSION_PREFIX) && !continuity.join(&name).join(APPLIED_FILE).exists()
-        {
+        let dir = continuity.join(&name);
+        // An empty admission directory is the claim of an `admit` that was killed before its
+        // rename: nothing was published under it, so it is not pending.
+        let empty = std::fs::read_dir(&dir)
+            .map(|mut entries| entries.next().is_none())
+            .unwrap_or(false);
+        if name.starts_with(ADMISSION_PREFIX) && !empty && !dir.join(APPLIED_FILE).exists() {
             names.push(name);
         }
     }
@@ -630,6 +635,12 @@ mod tests {
         publish(&data, &[book_record()], POLICY_EMPTY, false, &[]);
         let second = data.join("continuity").join("admission-fedcba9876543210");
         std::fs::create_dir_all(&second).unwrap();
+        // An empty directory is an interrupted claim, not an admission: still exactly one pending.
+        assert!(matches!(
+            pending(&data, BACKING).unwrap(),
+            Pending::Verified(_)
+        ));
+        std::fs::write(second.join("adoption.json"), b"{}").unwrap();
         match pending(&data, BACKING).unwrap() {
             Pending::Refused { reason, .. } => {
                 assert!(reason.contains("More than one"), "{reason}")

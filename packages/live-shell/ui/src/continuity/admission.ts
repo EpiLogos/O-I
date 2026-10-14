@@ -61,7 +61,9 @@ export type AdmissionOutcome =
   | {status: 'none'}
   | {status: 'refused'; admission: string; reason: string}
   | {status: 'applied'; admission: string; records: number; written: number; preserved: string | null; confirmed: boolean}
-  | {status: 'failed'; admission: string; reason: string}
+  /** The apply stopped. `written` counts admitted records already written: with none, the namespace is as it was and the
+   * workspace mounts; with some, the workspace is held until the owner chooses to start without the admission. */
+  | {status: 'failed'; admission: string; reason: string; written: number}
 
 /** The Storage subset the apply uses; a fake satisfies it in tests. */
 export interface AdmissionStore {
@@ -146,6 +148,7 @@ export async function applyVerifiedAdmission(
   admission: VerifiedAdmission,
 ): Promise<AdmissionOutcome> {
   const refuse = (reason: string): AdmissionOutcome => ({status: 'refused', admission: admission.admission, reason})
+  let written = 0
   try {
     for (const record of admission.records) {
       if (!migratedTarget(record.target_key)) return refuse(`${record.target_key} is not a continuity key; nothing is written`)
@@ -168,7 +171,6 @@ export async function applyVerifiedAdmission(
     }
     // Non-book records first; the workspace book last, so its presence means the rest landed.
     const ordered = [...admission.records.filter(r => r.class !== 'workspace-book'), ...admission.records.filter(r => r.class === 'workspace-book')]
-    let written = 0
     for (const record of ordered) {
       if (store.getItem(record.target_key) === record.text) continue
       store.setItem(record.target_key, record.text)
@@ -177,7 +179,10 @@ export async function applyVerifiedAdmission(
     }
     return {status: 'applied', admission: admission.admission, records: admission.records.length, written, preserved, confirmed: false}
   } catch (error) {
-    return {status: 'failed', admission: admission.admission, reason: `The admitted continuity could not be applied (${messageOf(error)}). The workspace is held until the next start retries.`}
+    const where = written
+      ? `${written} admitted record(s) were written before it stopped; the next start re-verifies and retries`
+      : 'nothing admitted was written, so the workspace is as it was; the next start retries'
+    return {status: 'failed', admission: admission.admission, written, reason: `The admitted continuity could not be applied (${messageOf(error)}): ${where}.`}
   }
 }
 
@@ -196,11 +201,12 @@ export async function applyPendingAdmission(deps: AdmissionDeps): Promise<Admiss
     try {
       await deps.confirm({admission: pending.admission, applied: pending.records.length, preserved: applied.preserved})
     } catch (error) {
-      return {status: 'failed', admission: pending.admission, reason: `The admitted records are in place but APPLIED could not be recorded (${messageOf(error)}). Quit and reopen to retry.`}
+      return {status: 'failed', admission: pending.admission, written: Math.max(applied.written, 1), reason: `The admitted records are in place but APPLIED could not be recorded (${messageOf(error)}). The next start re-verifies the values in place and confirms.`}
     }
     return {...applied, confirmed: true}
   } catch (error) {
-    return {status: 'failed', admission: '', reason: `The owner-admitted continuity could not be read (${messageOf(error)}). The workspace is held.`}
+    // Nothing is written before the read answers, so a read failure never holds the workspace.
+    return {status: 'failed', admission: '', written: 0, reason: `The owner-admitted continuity could not be read (${messageOf(error)}); nothing was applied, and the next start reads it again.`}
   }
 }
 

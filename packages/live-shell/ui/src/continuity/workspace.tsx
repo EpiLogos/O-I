@@ -57,7 +57,7 @@ function runAdmissionOnce(): Promise<AdmissionOutcome> {
       read: () => tauriInvoke<PendingAdmission>('live_shell_continuity_pending', {}),
       confirm: confirmation => tauriInvoke<void>('live_shell_continuity_confirm', {...confirmation}),
     }))
-    .catch((error: unknown): AdmissionOutcome => ({status: 'failed', admission: '', reason: `The owner-admitted continuity could not start (${error instanceof Error ? error.message : String(error)}). The workspace is held.`}))
+    .catch((error: unknown): AdmissionOutcome => ({status: 'failed', admission: '', written: 0, reason: `The owner-admitted continuity could not start (${error instanceof Error ? error.message : String(error)}); nothing was applied, and the next start tries again.`}))
   return admissionRun
 }
 
@@ -75,6 +75,9 @@ export function ContinuityProvider({children}: {children: ReactNode}) {
   const gated = nativeHost() && !window.__OI_DETACHED__
   const [outcome, setOutcome] = useState<AdmissionOutcome | null>(gated ? null : {status: 'none'})
   const [dismissed, setDismissed] = useState(false)
+  // The owner's way out of a held apply: start on the candidate's own data, leaving the admission pending (unconfirmed),
+  // so the next start re-verifies it and retries.
+  const [startWithout, setStartWithout] = useState(false)
   useEffect(() => {
     if (outcome) return
     let live = true
@@ -82,7 +85,14 @@ export function ContinuityProvider({children}: {children: ReactNode}) {
     return () => { live = false }
   }, [outcome])
   if (!outcome) return <p role="status" data-region="continuity-admission" style={holdStyle}>Reading the owner-admitted continuity…</p>
-  if (outcome.status === 'failed') return <p role="alert" data-region="continuity-admission" data-admission="failed" style={holdStyle}>{outcome.reason}</p>
+  // Hold only after a partial write: a read failure or a stop before any admitted write leaves the namespace as it was.
+  if (outcome.status === 'failed' && outcome.written > 0 && !startWithout) {
+    return <div role="alert" data-region="continuity-admission" data-admission="failed" style={holdStyle}>
+      <p style={{margin: '0 0 8px'}}>{outcome.reason}</p>
+      <p style={{margin: '0 0 8px'}}>The workspace is held so nothing overwrites the half-applied records. Starting without the admission opens the candidate on the records now in place; the admission stays pending and is verified again at the next start.</p>
+      <button type="button" data-action="start-without-admission" onClick={() => setStartWithout(true)}>Start without the admitted continuity</button>
+    </div>
+  }
   const report = dismissed ? null : admissionReport(outcome)
   return (
     <>
