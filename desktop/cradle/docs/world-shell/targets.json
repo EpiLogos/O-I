@@ -3338,8 +3338,14 @@
       "status": "pending",
       "progress": {
         "implemented": {
-          "state": "pending",
-          "evidence": []
+          "state": "yes",
+          "evidence": [
+            "commit d49ed3e28d1314937c67e1af0a8c3ddce3a882aa \u2014 lane-2 T17: the Timeline's window is an explicit act \u2014 \"Read over this window\" \u2014 labelled with the window it will assert",
+            "source desktop/cradle/expressions-app/field-studies-journeys/src/sharedTimeWindow.tsx \u2014 TIMELINE_ACT_LABEL and the window-labelled toggle; the act writes through writeSharedTimeWindow to the native time-window owner (store.setTimeWindow)",
+            "source desktop/cradle/src/techne/session.ts \u2014 windowLabel; the session's time_window validated by validateSession",
+            "scripted desktop/cradle/tests/timeline-window-act.test.mjs \u2014 set window validates; relation-field availability recomputes over it; leave/re-enter keeps it; a co-referenced instrument inherits it; clear returns null",
+            "scripted desktop/cradle/expressions-app/field-studies-journeys/tests/timeline-window-act.test.mjs \u2014 the M2 act's label and the zoom/pan no-writer guarantee"
+          ]
         },
         "exercised": {
           "state": "pending",
@@ -3358,11 +3364,7 @@
           "evidence": []
         }
       },
-      "candidate_revision": {
-        "head": "40de7693050709577716f37a6c8d6b46fedeae82",
-        "working_tree": true,
-        "source_basis": "shared-time-increment.json"
-      },
+      "candidate_revision": "d49ed3e28d1314937c67e1af0a8c3ddce3a882aa",
       "dependencies": [
         "boundary:P1",
         "time:techne:time-axis/v1"
@@ -3382,7 +3384,7 @@
         "No new-shell native exercise or craft acceptance executed for this target at initialization. Earlier model/unit checks are baselines and do not close it.",
         "Explicit time-window ground/setter/navigation/cut carry implemented in the existing session store and exercised against actual native register reading. Mounted Timeline/Places explicit act and dated consumer GUI acceptance pending. No full target pass.",
         "Explicit Apply/Clear/Refresh time context uses the canonical host session, captured selection/session/window CAS and source/Scene/lifetime guards. Native refresh replay47passed; relation-state and Relations/Phase/Activity scope reporting are implemented. Installed host/iframe, dated consumer and GUI activities remain unaccepted. No full T17 pass.",
-"Implemented axis pending: no commit reachable from 525474ee1 names T17 in its subject or body; the only mentions are wayfinder ledger commits (249867e9c) recording it as dispatched. sharedTimeWindow.tsx references session time_window, but no landing commit names the target."
+"Implemented (14 Oct 2026) at d49ed3e28 on dlw/build, not yet on main. Prior candidate_revision, kept here: {head 40de7693050709577716f37a6c8d6b46fedeae82, working_tree true, source_basis shared-time-increment.json}."
       ],
       "partial_progress": {
         "observed_at": "2026-10-08T06:23:20.571383+00:00",
