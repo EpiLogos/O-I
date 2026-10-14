@@ -37,8 +37,11 @@
 #                                          accessibility tree, scoped to the pid;
 #                                          waits for the parent's exit code
 #
-# Backing: the footprint default `0/1/2` (central, actuation, ai-kit). The
-# other three owners are disclosed as excluded, not faked.
+# Backing: `P0R1_BACKING` names a footprint backing: `0/1` or `0/1/2` (the
+# default, central, actuation, ai-kit) or `full-suite`, which adds software
+# factory, workcell and quaternal-logic. A backing that carries QL freezes it
+# from the active managed receipt and needs the QL native inputs below. Owners
+# outside the chosen backing are disclosed as excluded, not faked.
 #
 # Heavy outputs (captures, stage, archive, extracted app) go to $OUT under the
 # target pool. Logs are written to $OUT/logs while the run is live, never into
@@ -59,8 +62,26 @@ OUT="$TARGET/p0-r1/$STAMP"
 LOGS="$OUT/logs"
 EVID_RUN="$EVID/run-$STAMP"
 RE="/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/evidence"
-BACKING="0/1/2"
-CANDIDATE_HOME="$HOME/.config/oi-shell-candidate/0-1-2"
+BACKING="${P0R1_BACKING:-0/1/2}"
+case "$BACKING" in
+  0/1|0/1/2|full-suite) ;;
+  *) echo "P0R1_BACKING must be 0/1, 0/1/2 or full-suite (got $BACKING)" >&2; exit 1 ;;
+esac
+# The candidate's profile is per backing (the host qualifies the same path).
+CANDIDATE_HOME="$HOME/.config/oi-shell-candidate/${BACKING//\//-}"
+# freeze-product-bindings.py requires QL's explicit native inputs when the
+# backing carries quaternal-logic (ql_export, runtime, provider, dependency and
+# source-correspondence records). They default to the integrated v012 inputs;
+# P0R1_QL_INPUTS and P0R1_QL_EXPORT name a refreshed owner export instead. The
+# export receipt must describe the export it names.
+RE_QL="${P0R1_QL_INPUTS:-$RE/full-suite-inputs-20261008/inputs}"
+QL_EXPORT="${P0R1_QL_EXPORT:-/Users/admin/Central/Work/Quaternal-Logic/target/native-composition/ql-sky}"
+FREEZE_QL=()
+if [[ "$BACKING" == full-suite ]]; then
+  FREEZE_QL=(--ql-export "$QL_EXPORT" --ql-export-receipt "$RE_QL/ql-export-receipt.json"
+             --runtime-inventory "$RE_QL/runtime-inventory.json" --provider-sources "$RE_QL/provider-sources.json"
+             --dependency-source "$RE_QL/dependency-source.json" --source-correspondence "$RE_QL/source-correspondence.json")
+fi
 ACTIVE_RECEIPT="/Users/admin/Library/Application Support/OI/receipts/updates/active.json"
 NOTICES_INPUT="$RE/full-suite-inputs-20261008/notices-input-ready.json"
 NODE_ARCHIVES="$RE/application-node-runtime-20261008"
@@ -119,7 +140,8 @@ if [[ "$MODE" == build || "$MODE" == all ]]; then
   run 3-freeze python3 -B packages/live-shell/freeze-product-bindings.py --backing "$BACKING" \
       --receipts "$ACTIVE_RECEIPT" --footprint "$OUT/stage/footprint.json" \
       --suite-cli "$TARGET/release/oi" --suite-source-basis "$OUT/cli-release-basis.json" \
-      --notices "$NOTICES_INPUT" --output "$OUT/core-product-bindings.json"
+      --notices "$NOTICES_INPUT" --output "$OUT/core-product-bindings.json" \
+      ${FREEZE_QL[@]+"${FREEZE_QL[@]}"}
 
   # The SDK package set is unchanged (its lock verifies); only the client the
   # build just regenerated is re-recorded, from the bytes now on disk.
