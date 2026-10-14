@@ -141,3 +141,119 @@ test('the Techne transport steps the Occasion on the World spine, and waits hone
   assert.doesNotMatch(waiting, /data-occasion-step/)
   assert.ok(waiting.includes('data-i="Occasion window|a saved occasion keeps its snapshot and separately qualifies its admission"'))
 })
+
+// Seam 7, host side (UX-SPINE-ALIGNMENT §5 row 7): Back to Now, the two-way Occasion stepper, the loop brace read, the
+// Instrument writes slot, and the one spine the App hands to the transport. Channel: scripted only.
+
+const occasionEvent = (ref, instant) => ({subject_ref: ref, instant_unix_ms: instant, summary: `event ${ref}`, day_ref: null, evidence_refs: [`e:${ref}`]})
+// Every <button> opening tag in a markup string, and the enabled ones (no bare `disabled`; `aria-disabled` is not that).
+const buttonTags = (markup) => markup.split('<button').slice(1).map(rest => '<button' + rest.split('>')[0] + '>')
+const enabledButtons = (markup) => buttonTags(markup).filter(tag => !/\sdisabled[=\s>]/.test(tag))
+const buttonWith = (markup, fragment) => buttonTags(markup).find(tag => tag.includes(fragment))
+
+test('Back to Now clears the selected occasion through the spine, keeps every retained basis, and notifies once', () => {
+  const spine = createTimeSpine()
+  spine.selectOccasion(occasionEvent('occ:a', Date.UTC(1913, 0, 1)), 1000)
+  spine.selectOccasion(occasionEvent('occ:b', Date.UTC(1950, 0, 1)), 2000)
+  let notified = 0
+  const off = spine.subscribe(() => { notified += 1 })
+  spine.returnToNow()
+  assert.equal(spine.occasion(), null, 'the selection is cleared')
+  assert.equal(spine.occasions().length, 2, 'retained occasions stay retained')
+  assert.equal(spine.occasionFor('occ:b').basis.retainedAtUnixMs, 2000, 'the basis is untouched')
+  assert.equal(notified, 1, 'subscribers are told once')
+  spine.returnToNow()
+  assert.equal(notified, 1, 'returning from Now is a no-op and does not notify')
+  off()
+})
+
+test('the Technē tap is Back to Now: disabled with its reason while Now stands, enabled over a selected occasion', () => {
+  const spine = createTimeSpine()
+  const idle = html(createElement(ModeTransportBar, {mode: 'techne', timeSpine: spine}))
+  const idleTap = buttonWith(idle, 'data-i="Back to Now|')
+  assert.match(idleTap, /\sdisabled[=\s>]/)
+  assert.match(idleTap, /title="[^"]*No occasion is selected/)
+  spine.selectOccasion(occasionEvent('occ:a', Date.UTC(1913, 0, 1)), 1000)
+  const selected = html(createElement(ModeTransportBar, {mode: 'techne', timeSpine: spine}))
+  const tap = buttonWith(selected, 'data-i="Back to Now|')
+  assert.doesNotMatch(tap, /\sdisabled[=\s>]/)
+  assert.match(tap, /aria-label="Back to Now"/)
+  assert.match(tap, /Back to Now/)
+  // Without a spine the tap stays the drawn waiting state.
+  const waiting = html(createElement(ModeTransportBar, {mode: 'techne'}))
+  assert.match(buttonWith(waiting, 'data-i="Back to Now|'), /\sdisabled[=\s>]/)
+})
+
+test('the Occasion steps both ways in the spine\'s retention order, wrapping at both ends, and from Now the previous is the last', () => {
+  const spine = createTimeSpine()
+  spine.selectOccasion(occasionEvent('occ:a', Date.UTC(1913, 0, 1)), 1000)
+  spine.selectOccasion(occasionEvent('occ:b', Date.UTC(1950, 0, 1)), 2000)
+  spine.selectOccasion(occasionEvent('occ:c', Date.UTC(1969, 0, 1)), 3000)
+  spine.selectOccasion(occasionEvent('occ:a', 0), 9999)
+  assert.equal(stepOccasion(spine, -1).basis.ref, 'occ:c', 'previous from the first wraps to the last')
+  assert.equal(stepOccasion(spine, -1).basis.ref, 'occ:b')
+  assert.equal(stepOccasion(spine, 1).basis.ref, 'occ:c')
+  assert.equal(stepOccasion(spine, 1).basis.ref, 'occ:a', 'next from the last wraps to the first')
+  spine.returnToNow()
+  assert.equal(stepOccasion(spine, -1).basis.ref, 'occ:c', 'from Now, previous is the last retained')
+  spine.returnToNow()
+  assert.equal(stepOccasion(spine, 1).basis.ref, 'occ:a', 'from Now, next is the first retained')
+  assert.equal(stepOccasion(createTimeSpine(), -1), null, 'no retained occasion, no step either way')
+})
+
+test('the Occasion slot draws both steppers and the selected label, every enabled control named and tagged', () => {
+  const spine = createTimeSpine()
+  const empty = html(createElement(ModeTransportBar, {mode: 'techne', timeSpine: spine}))
+  const emptySteps = buttonTags(empty).filter(tag => tag.includes('data-occasion-step'))
+  assert.equal(emptySteps.length, 2, 'previous and next')
+  assert.ok(emptySteps.every(tag => /\sdisabled[=\s>]/.test(tag)), 'nothing retained, nothing to step to')
+  spine.selectOccasion({...occasionEvent('occ:a', Date.UTC(1913, 0, 1)), summary: 'the 1913 descent'}, 1000)
+  spine.selectOccasion(occasionEvent('occ:b', Date.UTC(1950, 0, 1)), 2000)
+  spine.selectOccasion({...occasionEvent('occ:a', 0), summary: 'the 1913 descent'}, 9999)
+  const drawn = html(createElement(ModeTransportBar, {mode: 'techne', timeSpine: spine}))
+  assert.match(drawn, /<output[^>]*data-occasion-label[^>]*>the 1913 descent<\/output>/)
+  assert.match(drawn, /data-occasion-step="previous"[^>]*aria-label="Occasion window: previous occasion"/)
+  assert.match(drawn, /data-occasion-step="next"[^>]*aria-label="Occasion window: next occasion"/)
+  const enabled = enabledButtons(drawn)
+  assert.ok(enabled.length >= 3, 'tap, previous and next are live')
+  for (const tag of enabled) {
+    assert.match(tag, /aria-label="[^"]+"/, 'an enabled control has an accessible name')
+    assert.match(tag, /data-i="[^"]+"/, 'an enabled control carries the grammar\'s data-i')
+  }
+})
+
+test('punch-in, punch-out and loop-length stay honest waiting states, and loop-length reads the spine\'s brace read-only', () => {
+  const spine = createTimeSpine()
+  spine.selectOccasion(occasionEvent('occ:a', Date.UTC(1913, 0, 1)), 1000)
+  const plain = html(createElement(ModeTransportBar, {mode: 'techne', timeSpine: spine}))
+  assert.match(buttonWith(plain, 'window opens here'), /\sdisabled[=\s>]/)
+  assert.match(plain, /<output[^>]*data-i="Window span\|[^"]*"[^>]*>—<\/output>/)
+  spine.setTransportLoop(['clip:1', 'clip:2'])
+  const braced = html(createElement(ModeTransportBar, {mode: 'techne', timeSpine: spine}))
+  assert.match(braced, /<output[^>]*data-i="Window span\|[^"]*"[^>]*>2 clips<\/output>/)
+  assert.match(buttonWith(braced, 'window opens here'), /\sdisabled[=\s>]/, 'punch-in still waits')
+})
+
+test('Instrument writes names the focused instrument and waits for its writer: no fake toggle, no enabled control', () => {
+  const focused = html(createElement(ModeTransportBar, {mode: 'techne', focusedInstrument: 'techne:m0'}))
+  const arm = buttonWith(focused, 'data-i="Instrument writes|')
+  assert.match(arm, /\sdisabled[=\s>]/)
+  assert.match(focused, /<span> Project<\/span>/, 'the focused instrument\'s name stands in the slot')
+  assert.match(arm, /Quaternal Logic family/, 'the title names the missing writer owner')
+  assert.match(arm, /agent, not to the instrument/, 'the agent\'s write arm is named as not this gate')
+  const none = html(createElement(ModeTransportBar, {mode: 'techne'}))
+  assert.match(buttonWith(none, 'data-i="Instrument writes|'), /No instrument is focused/)
+  assert.equal(enabledButtons(none).length, 0, 'with no spine and no focus, no Technē control is live')
+  const base = html(createElement(ModeTransportBar, {mode: 'base', timeSpine: createTimeSpine()}))
+  assert.equal(enabledButtons(base).length, 0, 'Base keeps every control waiting; the Occasion is Technē\'s slot')
+  assert.doesNotMatch(base, /data-occasion-step/)
+})
+
+test('the App hands the one spine the temporal hook holds to the transport, and makes no second spine', async () => {
+  const app = await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8')
+  const hook = await readFile(new URL('../src/projections/useWorldTemporalReading.ts', import.meta.url), 'utf8')
+  assert.match(app, /<TransportBar[\s\S]*?timeSpine=\{worldView\.spine\}/)
+  assert.match(app, /<TransportBar[\s\S]*?focusedInstrument=\{focusedInstrument\}/)
+  assert.equal(app.match(/createTimeSpine\(/g), null, 'App creates no spine of its own')
+  assert.match(hook, /const spine = useMemo\(\(\) => createTimeSpine\(\), \[\]\);/)
+})
