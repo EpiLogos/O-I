@@ -35,7 +35,7 @@ export interface DaylightHost {
   read(instant: string | null): Promise<DaylightAnswer>;
 }
 
-/** The field a sky reading must carry for the terminator to be drawn. The producer does not state one today. */
+/** The field a sky reading must carry for the terminator to be drawn. The QL producer states one from QL commit 120f093; snapshots from before it carry none. */
 export const SUBSOLAR_FIELD = "subsolar";
 
 /** The layer's standing, said on the surface whenever the terminator is shown. */
@@ -44,7 +44,7 @@ export const DAYLIGHT_LAW =
 
 /** The reason given when the reading carries a sky snapshot but no subsolar point. Verbatim from the producer's own shape. */
 export const SUBSOLAR_NOT_STATED =
-  "the sky snapshot gives body longitudes on the ecliptic and states no subsolar point, and the renderer computes none";
+  "the sky snapshot states no subsolar point (the QL producer states one from commit 120f093; snapshots from before it carry none), and the renderer computes none";
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
