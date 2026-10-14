@@ -1,16 +1,17 @@
 /* The Scene's controls as the mockup's clip properties (world-shell-mockup.html .clipv/.cprops/.cph/.kvs, lines 147-150 and 375):
  * a 230px column with a header carrying the clip's name and key and value rows. Shell tokens only; no native colour. */
-.native-clip-surfaces{display:contents}
-.native-clip-view.has-scene-controls{display:flex;align-items:stretch}
-.native-clip-view.has-scene-controls>.native-clip-surfaces{display:block;flex:1;min-width:0;min-height:0}
-.native-clip-view.has-scene-controls[hidden]{display:none}
 
 .scene-props{width:230px;flex:none;box-sizing:border-box;border-right:1px solid var(--line);overflow:auto;background:var(--bg-1);font-size:10.5px;color:var(--text-dim)}
-.scene-props .cph{height:22px;display:flex;align-items:center;gap:6px;padding:0 7px;background:var(--bg-3);color:var(--text);font-size:11px;font-weight:500;white-space:nowrap;overflow:hidden}
+/* The clip's colour: the head wears its track's colour as the mockup's .cph does; with none given, an accent edge marks the open clip. */
+.scene-props .cph{height:22px;display:flex;align-items:center;gap:6px;padding:0 7px;background:var(--cph,var(--bg-3));color:var(--cph-ink,var(--text));font-size:11px;font-weight:500;white-space:nowrap;overflow:hidden}
+.scene-props .cph:not([style]){border-left:3px solid var(--accent)}
+.scene-props .cph[style] button{color:var(--cph-ink)}
 .scene-props .scene-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
 .scene-props .kvs{display:grid;grid-template-columns:78px 1fr;align-items:center;min-height:22px;padding:1px 10px}
 .scene-props .kvs>span:last-child{display:flex;align-items:center;gap:6px;min-width:0;overflow:hidden;font-family:var(--mono, ui-monospace, 'SF Mono', Menlo, monospace);color:var(--text);white-space:nowrap}
 .scene-props .scene-standing[data-dirty]{color:var(--accent)}
+/* The owner's standing and its Save: the button keeps its place under the word when the column is narrow. */
+.scene-props .scene-state-row>span:last-child{flex-wrap:wrap;row-gap:3px;padding:2px 0}
 .scene-props .sec{display:flex;align-items:center;justify-content:space-between;padding:8px 10px 3px;font-size:10px;color:var(--text-faint)}
 
 /* The mockup's .bt: 20px, 10.5px, a quiet border; a pressed toggle wears the accent (the owner's "edited since save" word does too). */
@@ -32,3 +33,19 @@
 .scene-pins .bar-macro input[type=range]{width:90px}
 .scene-pins input[type=text],.scene-pins select{height:22px;border:1px solid var(--line);border-radius:3px;background:var(--bg-2);color:var(--text);font-size:11px;padding:0 4px}
 .scene-pins select{max-width:104px}
+
+/* The Scenes column (SceneStrip.tsx; the mockup's clip Scenes: .fcell cells, world-shell-mockup.html:318-321): the Expression's Scenes
+   in the owner's order, the open one lit. A cell's well holds what the owner reads of its Scene, never a drawing it does not disclose. */
+.scene-strip{flex:none;max-width:46%}
+.scene-cells{display:flex;gap:6px;margin:0;padding:4px 10px;list-style:none}
+.scene-cell{display:flex;flex-direction:column;width:118px;height:120px;padding:0;background:var(--bg-0);border:1px solid var(--line-strong);color:var(--text-dim);font:inherit;text-align:left;cursor:pointer}
+.scene-cell[aria-pressed=true]{border-color:var(--accent);cursor:default}
+.scene-cell:hover:not(:disabled):not([aria-pressed=true]){border-color:var(--text-faint)}
+.scene-cell:disabled{opacity:.5;cursor:default}
+.scene-cell:focus-visible{outline:1px solid var(--accent);outline-offset:1px}
+.scene-cell-well{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:0;color:var(--text-faint)}
+.scene-cell-well b{font:300 26px/1 var(--mono);color:var(--text-dim)}
+.scene-cell[aria-pressed=true] .scene-cell-well b{color:var(--accent)}
+.scene-cell-well small{font-size:9px}
+.scene-cell-name{height:17px;padding:0 5px;font-size:9.5px;line-height:17px;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.scene-cell-time{padding:0 5px 3px;font:9px var(--mono);color:var(--text-faint)}

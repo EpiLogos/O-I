@@ -116,8 +116,11 @@ test('the Technē rack shows the owner\'s standing and reading when the one read
 
 test('the Technē device chain (InstrumentDeviceDetail) reads the same reader', () => {
   torus.publishLiveTorusState(validState('held'))
-  const out = html(createElement(InstrumentDeviceDetail, {transport, instrument: 'techne:m0', centralDevices: true}))
+  // The owner is Body · 3:3's (sdk/semantics.ts): with no Technē instrument focused it stands after the folds; a Technē instrument that
+  // does not hold it does not draw it.
+  const out = html(createElement(TechneInstrumentsDetail, {transport}))
   assert.match(out, /data-ql-standing="held"/)
+  assert.doesNotMatch(html(createElement(InstrumentDeviceDetail, {transport, instrument: 'techne:m0', centralDevices: true})), /data-ql-standing/)
 })
 
 // ── 2 — with no owner standing, the face shows the reader's named reason ─────

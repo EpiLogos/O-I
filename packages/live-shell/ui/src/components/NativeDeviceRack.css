@@ -7,17 +7,23 @@
 .native-rack-card{display:flex;flex-direction:column;width:176px;min-width:0;border:1px solid var(--line);border-radius:3px;background:var(--bg-1);overflow:hidden}
 .native-rack-card.is-folded{width:auto;min-width:64px;max-width:176px}
 .native-rack-card.is-unavailable{width:auto;min-width:176px;border-style:dashed}
-.native-rack-head{display:flex;align-items:center;gap:2px;height:22px;padding:0 4px 0 0;background:var(--bg-3);border-bottom:1px solid var(--line)}
+.native-rack-head{display:flex;align-items:center;gap:2px;height:22px;padding:0 4px 0 0;background:linear-gradient(var(--bg-3),var(--surface));border-bottom:1px solid var(--line)}
 .native-rack-card.is-folded .native-rack-head{border-bottom:0}
 .native-rack-card button,.native-rack-add,.native-rack-menu button{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;cursor:pointer}
 .native-rack-card button:focus-visible,.native-rack-add:focus-visible,.native-rack-menu button:focus-visible,.native-rack-grip:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
-.native-rack-light{position:relative;flex:0 0 auto;width:22px;height:22px}
-.native-rack-light::before{content:'';position:absolute;left:7px;top:7px;width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:inset 0 0 0 1px var(--line)}
-.native-rack-light.is-off::before{background:var(--text-faint)}
-.native-rack-light.is-unknown::before{background:transparent;box-shadow:inset 0 0 0 1px var(--text-dim)}
+/* The light is the plate's power ring (the mockup's .pw; inhabitants/sdk/sdk.css .sdk-power): lit only on the owner's "on". */
+.native-rack-card .native-rack-light{flex:0 0 auto;width:10px;height:10px;margin:0 2px 0 5px;border-radius:50%;border:2px solid var(--line-strong);background:transparent}
+.native-rack-card .native-rack-light.is-on{border-color:var(--accent)}
+.native-rack-card .native-rack-light.is-off{border-color:var(--text-faint)}
 .native-rack-light:disabled{cursor:default}
-.native-rack-fold,.native-rack-grip,.native-rack-remove{flex:0 0 auto;width:16px;height:22px;font-size:9px;opacity:.75}
-.native-rack-grip{display:inline-flex;align-items:center;justify-content:center;cursor:grab}
+/* The head's marks are the cut's (icon-cut.html device head): fold, pop-out, the device's own mark as its handle, remove. */
+.native-rack-fold,.native-rack-grip,.native-rack-remove,.native-rack-pane{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;width:16px;height:22px;color:var(--text-faint)}
+.native-rack-fold:hover,.native-rack-remove:hover:not(:disabled),.native-rack-grip:hover{color:var(--accent)}
+.native-rack-fold svg{transition:transform .12s}
+.native-rack-fold[aria-expanded=false] svg{transform:rotate(-90deg)}
+.native-rack-grip{cursor:grab;color:var(--text-dim)}
+.native-rack-remove:disabled{opacity:.45;cursor:default}
+.native-rack-remove-mark{display:inline-grid;place-items:center;transform:rotate(45deg)}
 .native-rack-title{flex:1 1 auto;min-width:0;height:22px;padding:0 2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;font-weight:600}
 .native-rack-family{padding:0 4px;font:10px ui-monospace,SFMono-Regular,monospace}
 .native-rack-note{flex:1 1 auto;min-width:0;color:var(--text-dim);font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}

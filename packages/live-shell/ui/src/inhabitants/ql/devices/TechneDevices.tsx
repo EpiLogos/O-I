@@ -4,13 +4,22 @@
 // face's own body is its picture, and up to four controls sit under it. Each device is published to the device door by id, so choosing
 // one shows it whole in the pool under the browser and opening it full puts it in a pane, with the same live settings in all three.
 //
-// A device folds down to its title; click the title to open it again (manual §10.4). The focused instrument's faces start open and
-// the others folded (lock §2.5); with no focus, every admitted face starts open and the waiting ones folded.
+// The rack is the instruments (lock §2.5: "drawn as one instrument frame with sections; the focused lens expanded, the others folded";
+// the mockup's Technē device side, world-shell-mockup.html:1647-1650 and :1442-1461): the six Technē instruments in their order, each
+// folded to its title by the runtime's own fold (FacePlate folded — manual §10.4 "A device can also fold down to its title. Click the
+// title to open it again"), around the ONE open instrument: the focused pane's, drawn as one plate whose columns are the families whose
+// devices it holds. Clicking a folded instrument opens it on the focused pane through the instrument door (the mockup's `data-instr`),
+// and stands it open here whatever the door answers. With no instrument focused, the faces no Technē instrument holds (the QL field/PCM
+// owner and its waiting kin) stand after the folds as they did before: the admitted one open, the waiting ones folded.
 import {useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode} from 'react'
 import {DeviceView} from '../../../frame/devices/DeviceView'
 import {publishDevice, publishedDevice, selectDevice} from '../../../frame/devices/deviceDoor'
 import {DEVICE_PANE_KIND} from '../../../frame/devices/devicePane'
-import {openInstrument} from '../../../frame/instrumentDoor'
+import {driveStageLens, openInstrument, reportInstrumentFault} from '../../../frame/instrumentDoor'
+import {InstrumentPlate, SectionNote} from '../../../frame/devices/InstrumentPlate'
+import {HOSTED_INSTRUMENT, instrumentOfPane, type HostedLens} from '../../../shell/paneInstrument'
+import {HOLDERS, TECHNE_INSTRUMENTS, type HolderDeclaration} from '../../sdk/semantics'
+import type {IconName} from '../../sdk/icons'
 import {lightOf, type DeviceInstance, type DeviceSize} from '../../../frame/devices/deviceRuntime'
 import {commitLiveInstrumentEdit, liveInstrumentWritable, useLiveTorusReading, type LiveTorusState} from '../../../live/torusInstrument'
 import {useAtlasHandle, useAtlasView} from '../../../projections/atlas/AtlasProjectionPanel'
@@ -83,10 +92,7 @@ function WaitingPicture({size, face}: {size: DeviceSize; face: InhabitantFaceDec
 export function techneEntries(manifests: readonly InhabitantManifest[], readings: TechneReadings): TechneEntry[] {
   return manifests.flatMap(manifest => manifest.faces.map((face): TechneEntry => {
     const waiting = face.admission === 'waiting'
-    if (!waiting && manifest.id === QL_FAMILY && face.id === QL_INSTRUMENT_FACE) {
-      return {family: manifest.id, face, device: qlInstrumentDevice(face, readings.torus), status: <StandingChip reading={readings.instrumentReading} />,
-        picture: size => <QlPicture size={size} face={face.id} reading={readings.instrumentReading} torus={readings.torus} />}
-    }
+    if (manifest.id === QL_FAMILY) return qlFaceEntry(face, readings.torus, readings.instrumentReading)
     if (!waiting && manifest.id === ATLAS_FAMILY && isAtlasFaceId(face.id)) {
       const faceId = face.id
       return {family: manifest.id, face, device: atlasDevice(face, readings.atlas), picture: size => <Picture size={size} face={faceId}><AtlasFaceBody faceId={faceId} /></Picture>}
@@ -97,6 +103,16 @@ export function techneEntries(manifests: readonly InhabitantManifest[], readings
     }
     return {family: manifest.id, face, device: waitingDevice(face, manifest.id), picture: size => <WaitingPicture size={size} face={face} />}
   }))
+}
+
+/** One Quaternal Logic face as a device: the field/PCM owner over its reading, any other face as the waiting device it is declared.
+ * The Expressions Studio's Body · 3:3 holds two of them (sdk/semantics.ts STUDIO_SECTIONS) and draws them from here. */
+export function qlFaceEntry(face: InhabitantFaceDeclaration, torus: LiveTorusState | null, instrumentReading: unknown): TechneEntry {
+  if (face.admission !== 'waiting' && face.id === QL_INSTRUMENT_FACE) {
+    return {family: QL_FAMILY, face, device: qlInstrumentDevice(face, torus), status: <StandingChip reading={instrumentReading} />,
+      picture: size => <QlPicture size={size} face={face.id} reading={instrumentReading} torus={torus} />}
+  }
+  return {family: QL_FAMILY, face, device: waitingDevice(face, QL_FAMILY), picture: size => <WaitingPicture size={size} face={face} />}
 }
 
 /** The one mounted atlas and the lens bar's view, re-read on the atlas's own notices (the clock's, the controller's), never on a poll. */
@@ -143,27 +159,97 @@ function usePublished(entries: readonly TechneEntry[]): void {
   }, [])
 }
 
-function TechneDevice({entry, expanded, onToggle}: {entry: TechneEntry; expanded: boolean; onToggle: () => void}) {
+/** The holders the rack stands, in order: the six Technē instruments; or, when the focus is another holder — the knowledge graph, a
+ * standalone instrument and not one of the six (lock §8.1), or a Studio section such as Body · 3:3 — that holder alone, open. */
+export function rackInstruments(focusInstrument: string | null): readonly HolderDeclaration[] {
+  if (!focusInstrument || TECHNE_INSTRUMENTS.some(holder => holder.id === focusInstrument)) return TECHNE_INSTRUMENTS
+  const other = HOLDERS.find(holder => holder.id === focusInstrument)
+  return other ? [other] : TECHNE_INSTRUMENTS
+}
+
+/** The marks of the cut each instrument wears, as the lens bar and the browser's instrument rows give them (shell/ModeDetail.tsx
+ * LENSES, frame/instruments.ts). */
+const INSTRUMENT_MARKS: Readonly<Record<string, IconName>> = {
+  'techne:m0': 'lib', 'techne:m1': 'form', 'techne:m2': 'arrangement', 'techne:m3': 'journey', 'techne:m4': 'placed', 'techne:m5': 'palace',
+  'knowledge-graph': 'search', 'studio:body': 'expr',
+}
+
+/** The plain names of the families whose devices an instrument holds — a family id is not a name. */
+const FAMILY_NAMES: Readonly<Record<string, string>> = {
+  [QL_FAMILY]: 'Quaternal Logic', [ATLAS_FAMILY]: 'Earth atlas', [KNOWLEDGE_FAMILY]: 'Knowledge graph',
+}
+
+/** Where an instrument opens on the focused pane: the pane kind that holds it (shell/paneInstrument.ts — the Earth pane is the 0
+ * instrument) and, for the hosted stage, the lens it turns to (HOSTED_INSTRUMENT, read backwards). */
+export function instrumentDoorOf(id: string): {kind: string; lens?: HostedLens} | null {
+  if (instrumentOfPane('projection.earth', null, 'earth') === id) return {kind: 'projection.earth'}
+  const lens = (Object.keys(HOSTED_INSTRUMENT) as HostedLens[]).find(key => HOSTED_INSTRUMENT[key] === id)
+  return lens ? {kind: 'projection.expressions', lens} : null
+}
+
+/** Open an instrument on the focused pane through the one door; a refusal is said on the door's fault line (the browser's Instruments
+ * section says it, in the owner's words — frame/instrumentDoor.ts). */
+function openOnFocusedPane(id: string): void {
+  const door = instrumentDoorOf(id)
+  if (!door) { reportInstrumentFault('This instrument has no pane to open in yet.'); return }
+  try {
+    reportInstrumentFault(null)
+    openInstrument(door.kind)
+    if (door.lens) driveStageLens(door.lens, reportInstrumentFault)
+  } catch (cause) {
+    reportInstrumentFault(cause instanceof Error ? cause.message : String(cause))
+  }
+}
+
+const holderTitle = (holder: HolderDeclaration) => holder.title
+const holds = (entry: TechneEntry, holder: string) => (entry.face.heldBy ?? []).includes(holder)
+
+/** One device standing open on the chain, compact through the runtime, with the marks its place gives it. */
+function OpenDevice({entry}: {entry: TechneEntry}) {
   const {device, face} = entry
   const title = device.face.title
-  return <div className="techne-device" data-face-id={face.id} data-expanded={String(expanded)} data-family={device.family} data-device-id={device.id}
-    onClick={event => { if ((event.target as HTMLElement).closest('.sdk-face__title')) onToggle() }}>
-    {expanded
-      ? <DeviceView device={device} size="compact" picture={entry.picture('compact')} actions={[
-          {icon: 'detail', label: `Show every setting of ${title} in the pool`, onPress: () => selectDevice(device.id)},
-          {icon: 'pane', label: `Open ${title} full size in a pane`, onPress: () => openInstrument(DEVICE_PANE_KIND, undefined, {ref: device.id, title})},
-        ]} />
-      : <>
-          <FacePlate presentation={{family: device.family, faceId: face.id, title, icon: device.face.icon, owner: device.family}} power={lightOf(device)} admission={face.admission} />
-          {entry.status}
-          <button type="button" className="techne-device-unfold" aria-expanded={false} aria-label={`Open ${title}`} onClick={onToggle} />
-        </>}
+  return <div className="techne-device" data-face-id={face.id} data-expanded="true" data-family={device.family} data-device-id={device.id}>
+    <DeviceView device={device} size="compact" picture={entry.picture('compact')} actions={[
+      {icon: 'detail', label: `Show every setting of ${title} in the pool`, onPress: () => selectDevice(device.id)},
+      {icon: 'pane', label: `Open ${title} full size in a pane`, onPress: () => openInstrument(DEVICE_PANE_KIND, undefined, {ref: device.id, title})},
+    ]} />
+  </div>
+}
+
+/** A device folded to its title by the runtime's own fold: the plate's strip, its light and name; pressing it opens it. */
+function FoldedDevice({entry, onOpen}: {entry: TechneEntry; onOpen: () => void}) {
+  const {device, face} = entry
+  return <div className="techne-device" data-face-id={face.id} data-expanded="false" data-family={device.family} data-device-id={device.id}>
+    <FacePlate presentation={{family: device.family, faceId: face.id, title: device.face.title, icon: device.face.icon, owner: device.family}}
+      power={lightOf(device)} admission={face.admission} folded onFold={onOpen} />
+  </div>
+}
+
+/** The open instrument: one plate, its columns the families whose devices it holds, each family's devices side by side. */
+function OpenInstrument({holder, entries, focused}: {holder: HolderDeclaration; entries: readonly TechneEntry[]; focused: boolean}) {
+  const families = [...new Set(entries.map(entry => entry.family))]
+  const owner = [holder.provenance, TECHNE_INSTRUMENTS.includes(holder) ? 'Technē' : null, focused ? 'open on the focused pane' : 'opened here'].filter(Boolean).join(' · ')
+  return <InstrumentPlate presentation={{family: 'techne', faceId: holder.id, title: holderTitle(holder), icon: INSTRUMENT_MARKS[holder.id] ?? 'techne', owner}}
+    dataAttributes={{'data-instrument': holder.id, 'data-expanded': 'true'}}
+    sections={families.length
+      ? families.map(family => ({id: family, title: FAMILY_NAMES[family] ?? family,
+          note: entries.some(entry => entry.family === family && entry.face.admission === 'waiting') ? 'waiting' : undefined,
+          children: <div className="techne-section-devices">{entries.filter(entry => entry.family === family).map(entry => <OpenDevice key={entry.device.id} entry={entry} />)}</div>}))
+      : [{id: 'none', title: 'Controls', children: <SectionNote>No family declares a device this instrument holds yet.</SectionNote>}]} />
+}
+
+/** An instrument folded to its title: the runtime's fold; pressing it opens it on the focused pane. */
+function InstrumentFold({holder, count, onOpen}: {holder: HolderDeclaration; count: number; onOpen: () => void}) {
+  return <div className="techne-instrument" data-instrument={holder.id} data-expanded="false" data-device-count={count}
+    title={`${holder.provenance ? `${holder.provenance} ` : ''}${holder.title} — ${count ? `${count} device${count === 1 ? '' : 's'}` : 'no device declared yet'}. Click to open it on the focused pane.`}>
+    <FacePlate presentation={{family: 'techne', faceId: holder.id, title: holderTitle(holder), icon: INSTRUMENT_MARKS[holder.id] ?? 'techne', owner: holder.provenance ?? 'Technē'}}
+      folded onFold={onOpen} />
   </div>
 }
 
 export function TechneDevices({manifests, focusInstrument = null, instrumentReading}: {
   manifests: readonly InhabitantManifest[]
-  /** The focused pane's instrument (a `techne:*` holder id, or `knowledge-graph`): the faces it holds start open. */
+  /** The focused pane's instrument (a `techne:*` holder id, or `knowledge-graph`): it stands open, the others fold. */
   focusInstrument?: string | null
   /** The QL owner's reading as the host received it (raw; the body parses it). */
   instrumentReading: unknown
@@ -177,15 +263,23 @@ export function TechneDevices({manifests, focusInstrument = null, instrumentRead
   // otherwise re-publish every device on every render).
   const entries = useMemo(() => techneEntries(manifests, {atlas, surface, torus, instrumentReading}), [manifestKey, atlas, surface, torus])
   usePublished(entries)
-  // The person's folds hold until the focus changes; a new focus stands every face anew.
+  // The instrument opened here (a fold pressed) holds until the focus changes; a new focus stands its own instrument open.
+  const [opened, setOpened] = useState<{focus: string | null; id: string} | null>(null)
+  const open = opened && opened.focus === focusInstrument ? opened.id : focusInstrument
+  // With no instrument open, the faces no instrument holds stand as their own devices; the person's folds of them hold until focus moves.
   const [folds, setFolds] = useState<{focus: string | null; open: Readonly<Record<string, boolean>>}>({focus: focusInstrument, open: {}})
-  const open = folds.focus === focusInstrument ? folds.open : {}
-  const isOpen = (entry: TechneEntry): boolean => open[entry.device.id] ?? startsExpanded(entry.face, focusInstrument)
-  return <div className="techne-devices" data-techne-devices data-device-count={entries.length}>
-    {manifests.map(manifest => <section key={manifest.id} className="techne-family" data-family={manifest.id}>
-      {entries.filter(entry => entry.family === manifest.id).map(entry =>
-        <TechneDevice key={entry.device.id} entry={entry} expanded={isOpen(entry)}
-          onToggle={() => setFolds({focus: focusInstrument, open: {...open, [entry.device.id]: !isOpen(entry)}})} />)}
-    </section>)}
+  const unfolded = folds.focus === focusInstrument ? folds.open : {}
+  const instruments = rackInstruments(focusInstrument)
+  const unheld = open ? [] : entries.filter(entry => !instruments.some(holder => holds(entry, holder.id)))
+  return <div className="techne-devices" data-techne-devices data-device-count={entries.length} data-open-instrument={open ?? undefined}>
+    {instruments.map(holder => {
+      const held = entries.filter(entry => holds(entry, holder.id))
+      return holder.id === open
+        ? <OpenInstrument key={holder.id} holder={holder} entries={held} focused={holder.id === focusInstrument} />
+        : <InstrumentFold key={holder.id} holder={holder} count={held.length} onOpen={() => { setOpened({focus: focusInstrument, id: holder.id}); openOnFocusedPane(holder.id) }} />
+    })}
+    {unheld.map(entry => (unfolded[entry.device.id] ?? startsExpanded(entry.face, null))
+      ? <OpenDevice key={entry.device.id} entry={entry} />
+      : <FoldedDevice key={entry.device.id} entry={entry} onOpen={() => setFolds({focus: focusInstrument, open: {...unfolded, [entry.device.id]: true}})} />)}
   </div>
 }
