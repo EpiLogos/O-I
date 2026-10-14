@@ -106,16 +106,18 @@ bullet twice gets one Sonnet diagnostic; never a third builder attempt.
 
 ## 7. Open claims
 
-One branch, one run (`dlw/build`; the open PR is #667). Builders are Haiku, three at a
+One branch, one run (`dlw/build`; the open PR is #671). Builders are Haiku, three at a
 time, each with an exclusive zone; the lead converges, commits and keeps
 this table true. Tickets and resolutions live in `tickets/`.
 
 | Ticket | Who | Zone | Since |
 |---|---|---|---|
-| T-LIVE-MIDI leg 2 (MIDI map / Key map) | haiku builder | `src-tauri/src/midi.rs` (CC), live-shell `native/liveMidi.ts`, `live/midiMap/*`, `TransportBar.tsx` map slots, parameter faces' map overlay | 2026-10-14 |
-| lane-5 T5 remainder (compositor, seam chooser, bezier handles) | haiku builder | frame `production.ts`, `engine/transitionPass.ts`, `transitions.ts` chooser, app.ts seam sites, the E09 curve editor | 2026-10-14 |
-| lane-3 E21 remainder (wiki register loaded on ask) | haiku builder | live-shell `native/wikiSubjectStanding.ts`, `techne/wikiProjectionStore.ts` load hook | 2026-10-14 |
-| R2 review, second wave | sonnet reviewer | read-only | 2026-10-14 |
+| Phase 5 gate 4: native Live set and device ops (`LiveSetRead`, `LiveDeviceDescriptors`, `LiveDeviceParamsRead`, `LiveDeviceParamWrite`) | haiku builder | kernel `live_set_owner.rs`, `owner_read.rs`, `lib.rs`; `packages/live-set`; live-shell `panels/devices/api.ts`, `native/application.ts`; the census | 2026-10-14 |
+| Phase 5 gate 2: spine seams 7 (transport Now / Occasion / Instrument) and 8 (device pop-out) | haiku builder | live-shell `TransportBar.tsx`, `shell/ModeTransportBar.tsx`, `inhabitants/*`, `native/detachedKinds.ts` | 2026-10-14 |
+
+Committed on `dlw/build` after #671's head: the E19 quarantine safety fixes,
+the gate 4 census, the gates 1–2 audit, the gate 3 migration command and the
+candidate's first-run apply (`LEGACY-CRADLE-RETIREMENT.md` §4.1).
 
 Landed on main through #666 (14 Oct): the torus instrument legs 1–6; the
 Jankó keyboard (the owner's window, presses held by identity); the mode
@@ -128,9 +130,9 @@ lane-3 E15–E22; lane-4 T22–T30; lane-5 T4, T11, T14–T24; the R2 review fix
 owner's widened Scene grammar), T19b (the source opens at its passage), and
 the honest handoff fixes.
 
-Native: the 14 Oct build at `3a619dbb8` was sealed and read back (3 of 6
-owners admitted); computer-use access was refused (third time), so no
-screen pass has run. Every target above is scripted and source-read only.
+Native: the 14 Oct full-suite build at `9c1e41919` (run `20261014T040813Z`)
+was sealed and read back with 6 of 6 owners admitted; computer-use access
+was refused a fourth time, so no screen pass has run. Every target above is scripted and source-read only.
 
 Install seam, what waits on it: the native torus (no ql-field-host in the active suite's QL), the mode
 catalogue (`ql music modes`, QL-MEF #330) and lane-4 T27's terminator (QL's sky snapshot states its
