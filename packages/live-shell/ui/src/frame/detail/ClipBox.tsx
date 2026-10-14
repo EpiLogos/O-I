@@ -3,7 +3,7 @@
 // clip as the mode's tracks give it; it writes nothing until a clip's owner discloses a write, and says so.
 import type {CSSProperties} from 'react'
 import {useTimelineReading, type TimelineHostReading} from '../../projections/timelinePaneHost'
-import {MODE_TRACKS} from '../tracks/modeTracks'
+import {MODE_TRACKS, tracksOf} from '../tracks/modeTracks'
 
 const STATUS_WORD: Record<string, string> = {waiting: 'waiting', running: 'running', stopped: 'stopped', recording: 'recording', stalled: 'stalled'}
 
@@ -13,7 +13,7 @@ export function ClipBox() {
 }
 
 function ModeClipBox({reading}: {reading: TimelineHostReading}) {
-  const set = MODE_TRACKS[reading.mode](reading)
+  const set = tracksOf(MODE_TRACKS[reading.mode](reading))
   const clip = set?.clips.find(item => item.id === reading.selectedRef)
   if (!clip || !set) return null
   const track = set.tracks.find(item => item.id === clip.trackId)

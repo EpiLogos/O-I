@@ -90,9 +90,16 @@ test('the Arrangement lays clips on one ruler: by their own place, else their ro
 test('every mode has its tracks by registration, and the views know no mode', async () => {
   assert.deepEqual(Object.keys(MODE_TRACKS).sort(), [...SURF_MODES].sort())
   assert.equal(MODE_TRACKS.live({set, document}).tracks.length, 2)
-  assert.equal(MODE_TRACKS.base({set: null, document: null}), null, 'no World cut reading, no tracks')
+  assert.equal(MODE_TRACKS.techne({set: null, document: null}), null, 'no World cut reading, no tracks')
   const world = {source: {sets: [{columns: [{id: 'd', name: 'd'}], tracks: [{id: 'day', name: 'Day', kind: 'day'}], clips: []}, {columns: [{id: 'd', name: 'd'}], tracks: [{id: 'run', name: 'Run', kind: 'run'}], clips: []}]}}
-  assert.deepEqual(MODE_TRACKS.base({set: null, document: null, world}).tracks.map(t => t.id), ['day', 'run'])
+  assert.deepEqual(MODE_TRACKS.techne({set: null, document: null, world}).tracks.map(t => t.id), ['day', 'run'])
+  // Central's and Factory's tracks read their owners: hooks, rendered as the pane renders them.
+  const out = {}
+  const Probe = ({mode, reading}) => { out[mode] = MODE_TRACKS[mode](reading); return null }
+  renderToStaticMarkup(React.createElement(Probe, {mode: 'base', reading: {set: null, document: null}}))
+  assert.deepEqual(out.base.tracks.map(t => t.id), ['day', 'flows', 'beings', 'things', 'goals'].map(s => `central:stream:${s}`), 'Central: its five streams, even unread')
+  renderToStaticMarkup(React.createElement(Probe, {mode: 'factory', reading: {set: null, document: null}}))
+  assert.match(out.factory.waiting, /agent sessions/, 'Factory: waiting on the agency, said')
   assert.deepEqual(mergeSets(world.source.sets).columns.map(c => c.id), ['d'])
   assert.equal(nativeTracks(null), null)
   const native = nativeTracks({basis: {expression_ref: 'expression:w'}, scenes: {scenes: [{scene_ref: 's1', title: 'Opening', native_title: 'n', working: {duration: 4, transition: 0}, snapshot: {duration: null}}]}}, 'Work')
