@@ -444,7 +444,8 @@ export function agentChainDevice(slot: AgentDeviceRow, input: AgentChainInput, w
     rows,
     values: slotValues(slot.id, input),
     ...(LIGHT_KEY[slot.id] ? {enabledKey: LIGHT_KEY[slot.id]} : {}),
-    submit: chainSubmit(rows, write),
+    // A door only where a row can be written: a device of readings (the skills rack's admit lights) offers none.
+    ...(rows.some(row => row.writePath) ? {submit: chainSubmit(rows, write)} : {}),
   }
 }
 
