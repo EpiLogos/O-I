@@ -218,6 +218,17 @@ export function decideFrameAction(reading: TechneReading, request: FrameActionRe
   };
 }
 
+// lane-3 E21: the frame asks the owner where its selected subject stands in the wiki projections. One typed request and one
+// reply, matched by req on the boundary channel. The owner answers for the exact basis it holds for the frame's Scene.
+export const WIKI_SUBJECT_STANDING_CHANNEL = 'wiki-subject-standing';
+export interface WikiSubjectStandingRequest {subject_ref: string; expression_ref: string; revision: number;}
+export interface WikiSubjectStandingRow {register_key: string; expression_ref: string; scene_ref: string; scene_title: string; entity_ref: string; entity_title: string; subject_ref: string;}
+export interface WikiSubjectStandingReply {subject_ref: string; expression_ref: string; revision: number; standing_revision: number; rows: WikiSubjectStandingRow[];}
+/** Parse one frame standing request exactly. Anything else is null, and the boundary refuses it by name. */
+export function readWikiSubjectStandingRequest(raw: unknown): WikiSubjectStandingRequest | null {
+  if (!object(raw) || !boundedText(raw.subject_ref, 512) || !expressionRef(raw.expression_ref) || !positiveInteger(raw.revision)) return null;
+  return {subject_ref: raw.subject_ref, expression_ref: raw.expression_ref, revision: raw.revision};
+}
 export interface HostTarget {
   bindingId: string;
   epoch: number;

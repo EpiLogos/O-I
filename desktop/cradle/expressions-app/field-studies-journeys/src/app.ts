@@ -26,6 +26,7 @@ import {journeyTimelineLayout} from './journeyTimelineLayout';
 import {MARKER_COLOURS,MARKER_LIMIT,MARKER_NAME_MAX,sceneBoundaries,sceneAtJourneyTime,markerNamed,markerAdd,markerRename,markerMove,markerRemove,nextMarkerTime,prevMarkerTime,setLoopEdge,dragLoopEdge,moveLoopRegion,playDurations,toPlayClock,loopPlayNotice,type LoopEdge,type LoopRegion} from './journeyMarkers';
 import {snapCandidates,snapTime,closestSnap,nextSnapPoint,prevSnapPoint,type SnapPoint} from './snapModel';
 import {parseDeepLink,formatDeepLink,resolveSceneRef,resolveMarker,clampJourneyTime,markerAtTime,type DeepLinkAddress,shortenRef} from './deepLinks';
+import {createWikiStandingClient,disclosedOwnerOf,type WikiStandingBasis,type WikiStandingState} from './libraryStanding';
 import {NOT_FOCUSED,beginFocus,endFocus,focusedLayout,releaseStageFullscreen,requestStageFullscreenOn,type FocusLayout,type FocusSession,type FullscreenHold} from './focusMode';
 import {shuttle,pauseTransport,beginScrub,endScrub,stepFrame,transportRate,transportPlaying,transportReadout,STOPPED_TRANSPORT,type WorkingTransport} from './transport';
 import {durationFromEdgeDrag,sceneAtTime,secondsFromDrag,slipOffsetFromDrag,insertBeforeFor,dragPreviewStep,overlapFromDrag,SCENE_DURATION_MIN,SCENE_DURATION_MAX,type TimelineLayout} from './journeyTimelineLayout';
@@ -1058,13 +1059,39 @@ function summonGraph(subjectRef:string,nativeOwner:string){const view=nativeWork
 /** The selected occurrence, when exactly one bound entity is selected in the open Scene. */
 function selectedOccurrence(){const view=nativeWorkspace?.nativeView(),binding=view?.bindings[scene().id];if(!view||!binding||selected.length!==1)return null;const occurrence=binding.occurrences.find(o=>o.view_entity_id===selected[0]);return occurrence?{view,occurrence}:null;}
 /** Where the selected occurrence's subject stands in the open Expression: its occurrences, scene by scene. */
-function subjectStandingFor():LibraryStanding|undefined{const found=selectedOccurrence(),subject=found?.occurrence.subject?.subject_ref;if(!found||!subject)return undefined;return {subject,projection:'unread',rows:occurrencesOfSubject(found.view,subject).map(o=>({kind:'scene' as const,title:`${o.entity_title} · ${o.scene_title}`,detail:o.scene_ref,scene_ref:o.scene_ref,entity_ref:o.entity_ref,view_entity_id:o.view_entity_id,subject_ref:subject}))};}
+/** E21 projection side: the basis a selected occurrence stands on (its subject, and the open Expression at its revision). */
+function standingBasisOf(found:NonNullable<ReturnType<typeof selectedOccurrence>>):WikiStandingBasis|null{
+ const subject=found.occurrence.subject?.subject_ref;if(!subject)return null;
+ return {subject_ref:subject,expression_ref:found.view.document.expression_ref,revision:found.view.document.revision};
+}
+/** E21: the wiki standing of the selected subject is the owner's reading, asked through one typed host request (libraryStanding.ts).
+ * A reply for another Expression, revision or subject is dropped; a refusal is named once, in the toast, for the basis that stands. */
+const wikiStanding=createWikiStandingClient({
+ post:message=>{if(window.parent===window)return false;try{window.parent.postMessage(message,'*');return true;}catch{return false;}},
+ current:()=>{const found=selectedOccurrence();return found?standingBasisOf(found):null;},
+ settle:({basis,state})=>{
+  const found=selectedOccurrence(),now=found?standingBasisOf(found):null;
+  if(state.state==='refused'&&now&&now.subject_ref===basis.subject_ref&&now.expression_ref===basis.expression_ref&&now.revision===basis.revision)toast(`Where it stands: ${state.reason}`,7000);
+  if(libraryOpen)renderLibrary();
+ },
+});
+window.addEventListener('message',event=>{if(event.source===window.parent)wikiStanding.receive(event.data);});
+/** Where the selected occurrence's subject stands: its occurrences in this Expression (read here), and its wiki standing (read by the owner). */
+function subjectStandingFor():LibraryStanding|undefined{
+ const found=selectedOccurrence(),subject=found?.occurrence.subject?.subject_ref;if(!found||!subject)return undefined;
+ const native:LibraryStanding['rows']=occurrencesOfSubject(found.view,subject).map(o=>({kind:'scene' as const,title:`${o.entity_title} · ${o.scene_title}`,detail:o.scene_ref,scene_ref:o.scene_ref,entity_ref:o.entity_ref,view_entity_id:o.view_entity_id,subject_ref:subject}));
+ const basis=standingBasisOf(found),projected:WikiStandingState|undefined=basis?wikiStanding.ensure(basis):undefined;
+ if(projected?.state==='read')return {subject,projection:'read',rows:[...native,...projected.rows]};
+ return {subject,projection:'unread',rows:native};
+}
 /** The reveal family for one selected occurrence: source, subject and where it stands share one menu and one grammar. */
+/** The native owner a subject is disclosed under in the selected occurrence. Refused by name when none is disclosed; never 'wiki' by default. */
+function disclosedOwnerOrRefuse(subjectRef:string):string{const verdict=disclosedOwnerOf(selectedOccurrence()?.occurrence.subject,subjectRef);if('refused' in verdict)throw Error(verdict.refused);return verdict.owner;}
 function revealHTML():string{const found=selectedOccurrence(),subject=found?.occurrence.subject;if(!found||!subject)return '';const ref=esc(subject.subject_ref);return `<section class="reveal-group" data-scope="reveal" aria-label="Reveal this occurrence"><button type="button" data-action="reveal-source" data-subject="${ref}">${icon('arrowRight')}<span>Source</span></button><button type="button" data-action="reveal-subject" data-subject="${ref}" data-owner="${esc(subject.native_owner)}">${icon('arrowRight')}<span>Subject</span></button><button type="button" data-action="reveal-stands" data-subject="${ref}">${icon('search')}<span>Where it stands</span></button></section>`;}
 /** A back-reference row jumps: a native occurrence through the kernel focus and the binding selection; a wiki
  * projection through the graph summon that opens its owning register. */
 async function jumpToStanding(el:HTMLElement){
- if(el.dataset.kind==='projection'){summonGraph(el.dataset.subject??'',el.dataset.owner||'wiki');return;}
+ if(el.dataset.kind==='projection'){const subject=el.dataset.subject??'';summonGraph(subject,disclosedOwnerOrRefuse(subject));return;}
  const sceneRef=el.dataset.scene??'',viewId=el.dataset.viewEntity??'',view=nativeWorkspace?.nativeView();
  const sceneId=view?Object.entries(view.bindings).find(([,binding])=>binding.scene_ref===sceneRef)?.[0]:undefined;
  if(!sceneId)throw Error('That Scene is no longer in the open Expression.');
@@ -1538,7 +1565,7 @@ case 'timeline-track':timelineTrack=!timelineTrack;renderAll();break;
  case 'close-library':closeLibrary();break;
  case 'jump-standing':void jumpToStanding(el).catch(cause=>toast(cause instanceof Error?cause.message:String(cause)));break;
  case 'reveal-source':summonSource(el.dataset.subject??'');break;
- case 'reveal-subject':summonGraph(el.dataset.subject??'',el.dataset.owner||'wiki');break;
+ case 'reveal-subject':{const subject=el.dataset.subject??'';try{summonGraph(subject,disclosedOwnerOrRefuse(subject));}catch(cause){toast(cause instanceof Error?cause.message:String(cause));}break;}
  case 'reveal-stands':openLibrary('collection');break;
  case 'set-collections':void assignCollections(el).catch(cause=>toast(cause instanceof Error?cause.message:String(cause)));break;
  case 'library-section':librarySection=el.dataset.section as 'collection'|'about';renderLibrary();$('library-page').scrollTop=0;break;
@@ -2769,6 +2796,8 @@ function applyDeepLinkAddress(address:DeepLinkAddress):string[]{
   if('refused' in found){notes.push(found.refused);return notes;}
   const sceneId=found.id;setSceneRef(sceneId);
   if(found.via==='name')notes.push(`Matched Scene "${shortenRef(address.scene)}" by name; links carry the Scene's ref.`);
+  // E22: an old positional link is converted once; the address is then written back with the Scene's ref.
+  if(found.via==='index')notes.push(`Converted the old scene index ${shortenRef(address.scene,16)} to Scene "${shortenRef(doc.scenes[found.index].name,60)}"; the link now carries its ref.`);
  }
  return notes;
 }
