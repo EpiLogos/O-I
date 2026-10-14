@@ -453,15 +453,21 @@ export function relayKernelChannel(frame: HTMLIFrameElement, transport: KernelTr
 //       absence of anything it does not report.
 //
 //   frame → host  `{v:1, kind:"host-request", request:"summon",
-//                  detail:{kind:"instrument", lens}}`
-//     — the application's Lens Studio chooser summons the deep instruments
-//       (owner direction 2026-09-23): the hosting Technē centre answers by
-//       opening ITS OWN instrument HUD on that lens over the same field —
-//       the one registered M0′–M5′ lens set, the one DisclosureSession, no
-//       second renderer. Fire-and-forget like the other summons; a host
-//       without the centre consumes nothing. `lens` is one of the six deep
-//       instrument ids below; `expressions` is the conjugate 3:3 reading,
-//       never a deep instrument, and is refused here by never matching.
+//                  detail:{kind:"instrument", lens, ref?}}`
+//     — the application summons a deep instrument (owner direction
+//       2026-09-23; the Palace's Open on a project, canvas, timeline,
+//       journey or place region asks the same way, lane-5 seam B, carrying
+//       the object's `ref`). Technē operates inside the hosted application,
+//       so the hosting Technē centre answers in THAT frame: it posts back
+//       the `lens` host-command above, with the `ref`, and the application
+//       opens the lens focused on that object (instrumentLensCommand). The
+//       same answer the new shell's ExpressionsHost.selectInstrument gives.
+//       Fire-and-forget like the other summons; a host without the centre
+//       (the Expressions cut, where the chooser never stands) consumes
+//       nothing. `lens` is one of the six deep instrument ids below;
+//       `expressions` is the conjugate 3:3 reading, never a deep instrument,
+//       and is refused here by never matching. A malformed ref is refused,
+//       never guessed.
 
 /** The cut a hosting surface stands the application in. `live` presents the
  * native M1 body full-stage for Live mode (ticket T-LIVE-TORUS-INSTRUMENT): the same
@@ -503,6 +509,19 @@ export type HostedTechneLens = "project" | "canvas" | "timeline" | "journey" | "
 
 export const isHostedTechneLens = (value: unknown): value is HostedTechneLens =>
   typeof value === "string" && (["project", "canvas", "timeline", "journey", "place", "palace"] as const).includes(value as HostedTechneLens);
+
+/** The Technē centre's answer to an instrument summon: the `lens`
+ * host-command that opens that instrument in the same frame, carrying the
+ * object ref the summon names. Null when this channel does not answer it —
+ * not an instrument summon, an unknown lens, or a ref that is not bounded
+ * text (the new shell's protocol.boundedText law, 512 like its host). */
+export function instrumentLensCommand(detail: unknown): {v: 1; kind: "host-command"; command: "lens"; lens: HostedTechneLens; ref?: string} | null {
+  if (!detail || typeof detail !== "object") return null;
+  const {kind, lens, ref} = detail as {kind?: unknown; lens?: unknown; ref?: unknown};
+  if (kind !== "instrument" || !isHostedTechneLens(lens)) return null;
+  if (ref !== undefined && (typeof ref !== "string" || !ref.trim() || ref.length > 512 || /[\u0000-\u001f\u007f]/.test(ref))) return null;
+  return {v: 1, kind: "host-command", command: "lens", lens, ...(ref !== undefined ? {ref} : {})};
+}
 
 /** Carry one mode into a hosted frame: posted immediately and re-posted on
  * every frame load (the trackShellCutout law — the frame may boot after the
