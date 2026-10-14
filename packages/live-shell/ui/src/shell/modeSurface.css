@@ -163,18 +163,8 @@
 .mode-browser-empty-read { margin: 4px 8px 0; font-size: 10px; color: var(--text-faint); line-height: 1.45 }
 .mode-browser-empty-read b { color: var(--text-dim) }
 .mode-browser-waiting-dot { width: 5px; height: 5px; flex: none; border: 1px dashed var(--text-faint); margin-left: auto }
-.mode-browser-context { padding: 7px 8px; font-size: 11px; color: var(--text-dim); line-height: 1.45 }
-.mode-browser-context strong { color: var(--text); font-weight: 500 }
-.mode-browser-context p { margin: 3px 0 0 }
 .mode-browser-fault { margin: 7px; padding: 6px 8px; border: 1px solid var(--rec); color: #f3b4a0; font-size: 11px; background: var(--bg-1) }
 
-/* The aperture slot (Rev 3) — the encounter concepts the focused pane
-   follows, drawn in the pool beneath the category context. */
-.mode-browser-aperture { margin: 6px 7px 7px; border: 1px solid var(--line-strong); background: var(--bg-1) }
-.mode-browser-aperture-head { display: flex; justify-content: space-between; padding: 4px 8px; border-bottom: 1px solid var(--line); background: var(--bg-0); font-size: 10px; color: var(--text-faint); letter-spacing: .04em }
-.mode-browser-aperture-row { display: grid; grid-template-columns: 64px 1fr; gap: 8px; min-height: 21px; align-items: baseline; padding: 1px 8px; font-size: 10.5px }
-.mode-browser-aperture-name { color: var(--text-faint) }
-.mode-browser-aperture-value { color: var(--text-dim); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px }
 
 /* ——— the per-mode detail frames (device density, the guide's §3.7 chain
    anatomy scaled to the strip) ——— */
