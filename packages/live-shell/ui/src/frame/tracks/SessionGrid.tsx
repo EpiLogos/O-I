@@ -1,10 +1,13 @@
 // The one Session view (manual §3, FOUNDATION F3): "the grid: tracks across, rows down, everything launchable, nothing in
 // any fixed order." Every mode's tracks arrive through its adapter as one WorldTrackSet; this grid knows no mode. A clip
 // shows its state (waiting, running, stopped, recording, stalled); a row's stop launches it whole; a track's square stops
-// it. Launch, stop and record run only through the set's actions port, so a set whose owner gives none stays read-only
-// and says so. Craft floor: world-shell-mockup.html `sessView` and `.sg/.trk/.cs`.
-import type {CSSProperties} from 'react'
-import type {WorldTrackClip, WorldTrackSet} from '../../timeline/worldTrackAdapter'
+// it. Launch, stop, retry and record run only through the set's actions port, so a set whose owner gives none stays
+// read-only and says so; what an owner answers to a press is shown where it was pressed. Everything else comes from the
+// set's data: a track under another (`parentId`) folds under it and steps in behind a rail per ancestor, a group's cells
+// roll up its members' clips, a stalled lane lights its retry. Craft floor: world-shell-mockup.html `sessView` and
+// `.sg/.trk/.cs`, agent-shell-mockup.html `.trk.grp/.cs.grp/.stoprow`; ported from agent/AgentSessionGrid.tsx.
+import {useRef, useState, type CSSProperties} from 'react'
+import type {WorldTrack, WorldTrackClip, WorldTrackSet} from '../../timeline/worldTrackAdapter'
 import './tracks.css'
 
 export interface TracksSelection {
@@ -13,52 +16,221 @@ export interface TracksSelection {
   select(target: {kind: 'clip' | 'track'; ref: string; title: string; track?: string}): void
 }
 
-const STATUS_WORD: Record<string, string> = {waiting: 'Waiting', running: 'Running', stopped: 'Stopped', recording: 'Recording', stalled: 'Stalled'}
+export const STATUS_WORD: Record<string, string> = {waiting: 'Waiting', running: 'Running', stopped: 'Stopped', recording: 'Recording', stalled: 'Stalled'}
 
-export function SessionGrid({set, selection}: {set: WorldTrackSet; selection: TracksSelection}) {
+/** A track's colour as the views draw it: the one the set gives, else the shell's default. */
+export const trackColour = (track: WorldTrack): string => track.color ?? 'var(--track-default, var(--bg-3))'
+
+/** The tracks' parent links, walked: what each track sits under and what sits under it (`parentId`). */
+export interface TrackTree {
+  byId: ReadonlyMap<string, WorldTrack>
+  /** Direct children by parent id, in the set's order; a track with none has no entry. */
+  children: ReadonlyMap<string, readonly WorldTrack[]>
+  /** The groups above a track, outermost first (agent/AgentSessionGrid.tsx:101-111). A parent the set does not hold, or a
+   * cycle in the links, ends the walk. */
+  ancestorsOf(track: WorldTrack): WorldTrack[]
+  /** Everything beneath a track, nearest first; a cycle in the links is walked once. */
+  descendantsOf(track: WorldTrack): WorldTrack[]
+}
+
+export function trackTree(tracks: readonly WorldTrack[]): TrackTree {
+  const byId = new Map(tracks.map(track => [track.id, track]))
+  const children = new Map<string, WorldTrack[]>()
+  for (const track of tracks) {
+    if (track.parentId === undefined || track.parentId === track.id || !byId.has(track.parentId)) continue
+    const siblings = children.get(track.parentId)
+    if (siblings) siblings.push(track)
+    else children.set(track.parentId, [track])
+  }
+  const ancestorsOf = (track: WorldTrack): WorldTrack[] => {
+    const out: WorldTrack[] = []
+    const seen = new Set([track.id])
+    let parent = track.parentId === undefined ? undefined : byId.get(track.parentId)
+    while (parent && !seen.has(parent.id)) {
+      seen.add(parent.id)
+      out.unshift(parent)
+      parent = parent.parentId === undefined ? undefined : byId.get(parent.parentId)
+    }
+    return out
+  }
+  const descendantsOf = (track: WorldTrack): WorldTrack[] => {
+    const out: WorldTrack[] = []
+    const seen = new Set([track.id])
+    const queue = [...(children.get(track.id) ?? [])]
+    while (queue.length) {
+      const next = queue.shift()!
+      if (seen.has(next.id)) continue
+      seen.add(next.id)
+      out.push(next)
+      queue.push(...(children.get(next.id) ?? []))
+    }
+    return out
+  }
+  return {byId, children, ancestorsOf, descendantsOf}
+}
+
+/** Which lanes have stalled. `own`: the lane says so (the track's flag, or one of its clips is stalled) — the Arrangement's
+ * needle. `here`: those and every group above them — the Session's lit retry ("a lane in here has stalled",
+ * agent/AgentSessionGrid.tsx:97-100). */
+export function stalledLanes(set: WorldTrackSet, tree: TrackTree): {own: Set<string>; here: Set<string>} {
+  const own = new Set<string>()
+  for (const track of set.tracks) if (track.stalled === true) own.add(track.id)
+  for (const clip of set.clips) if (clip.status === 'stalled' && tree.byId.has(clip.trackId)) own.add(clip.trackId)
+  const here = new Set(own)
+  for (const id of own) for (const above of tree.ancestorsOf(tree.byId.get(id)!)) here.add(above.id)
+  return {own, here}
+}
+
+/** What the owner answered to a press, in its words. */
+export interface ActionReceipt {
+  ok: boolean
+  text: string
+}
+
+/** The words of an owner's answer: `{ok, note}` or `{ok: false, error}` (agent/AgentShellRoot.tsx:29-32). Anything that is
+ * not that shape says nothing, and nothing is made up for it. */
+export function receiptOf(result: unknown): ActionReceipt | null {
+  if (typeof result !== 'object' || result === null || typeof (result as {ok?: unknown}).ok !== 'boolean') return null
+  const answer = result as {ok: boolean; note?: unknown; error?: unknown}
+  const said = answer.ok ? answer.note : answer.error
+  if (typeof said === 'string' && said) return {ok: answer.ok, text: said}
+  return {ok: answer.ok, text: answer.ok ? 'The owner answered ok and gave no note.' : 'The owner refused and gave no reason.'}
+}
+
+/** Run an action and take its answer, whether it answers now or later; a throw or a rejection is a refusal, said as it was. */
+export async function answerOf(run: () => unknown): Promise<ActionReceipt | null> {
+  try {
+    return receiptOf(await run())
+  } catch (error) {
+    return {ok: false, text: error instanceof Error ? error.message : String(error)}
+  }
+}
+
+/** An answer, with the control it answers: `key` names the pressed element, `what` the press. */
+export interface PressedReceipt extends ActionReceipt {
+  key: string
+  what: string
+}
+
+const receiptMark = (receipt: PressedReceipt | null, key: string): 'ok' | 'refused' | undefined =>
+  receipt?.key === key ? (receipt.ok ? 'ok' : 'refused') : undefined
+
+export interface SessionGridViewProps {
+  set: WorldTrackSet
+  selection: TracksSelection
+  /** The groups folded shut, by track id. */
+  folded: Readonly<Record<string, boolean>>
+  onFold(trackId: string): void
+  receipt: PressedReceipt | null
+  /** An action pressed: `key` names the control, `what` the press, `run` calls the owner. */
+  onPress(key: string, what: string, run: () => unknown): void
+  onDismiss(): void
+}
+
+export function SessionGridView({set, selection, folded, onFold, receipt, onPress, onDismiss}: SessionGridViewProps) {
   const rows = set.columns
   const inRow = new Map<string, WorldTrackClip>()
   for (const clip of set.clips) if (clip.columnId) inRow.set(`${clip.trackId}\u0000${clip.columnId}`, clip)
   // Grouped lanes (sight and sound of one Expression) are one track in the Session grid: the visual lane stands for it.
-  const tracks = set.tracks.filter(track => !track.groupId || !track.lane || track.lane === 'visual')
-  const launch = set.actions?.launch, launchStop = set.actions?.launchStop, stopTrack = set.actions?.stopTrack
-  if (!tracks.length) return <div className="tracks-empty" role="status">No tracks in this work yet.</div>
-  return <div className="sg" role="grid" aria-label="Session" data-tracks-view="session">
-    {tracks.map(track => {
-      const style = {'--tc': track.color ?? 'var(--track-default, var(--bg-3))'} as CSSProperties
-      const selectedTrack = selection.ref === track.id
-      const depth = track.depth ?? 0
-      return <div key={track.id} className={`trk${depth ? ' sub' : ''}`} role="row" style={{...style, ...(depth ? {'--rail': `${depth * 3}px`} : {})} as CSSProperties} data-track={track.id} data-depth={depth || undefined}>
-        {depth > 0 && <span className="rail" aria-hidden="true" />}
-        <button type="button" className={`thd${selectedTrack ? ' sel' : ''}`} title={`${track.name} · ${track.kind}`} aria-pressed={selectedTrack}
-          onClick={() => selection.select({kind: 'track', ref: track.id, title: track.name})}>{track.name}</button>
-        {rows.map(row => {
-          const clip = inRow.get(`${track.id}\u0000${row.id}`) ?? (track.groupId ? set.clips.find(c => c.columnId === row.id && set.tracks.find(t => t.id === c.trackId)?.groupId === track.groupId) : undefined)
-          if (!clip) return <div key={row.id} className="cs" role="gridcell" title={stopTrack ? 'Empty slot · its square stops the track' : 'Empty slot'}>
-            <button type="button" className="sg2" aria-label={`Stop ${track.name}`} disabled={!stopTrack} title={stopTrack ? `Stop ${track.name} (${stopTrack.op})` : 'No stop: the owner discloses no stop for this track'}
-              onClick={() => stopTrack?.run(track.id)} />
-          </div>
-          const selected = selection.ref === clip.id
-          const word = clip.status ? STATUS_WORD[clip.status] : 'State not disclosed'
-          return <div key={row.id} role="gridcell" className={`cs clip${clip.status ? ` ${clip.status}` : ''}${selected ? ' sel' : ''}`} data-clip={clip.id} data-clip-status={clip.status ?? 'undisclosed'}
-            title={`${clip.label} · ${word}${clip.launch?.quantize ? ` · launches ${clip.launch.quantize}` : ''}${clip.launch?.follow ? ` · then ${clip.launch.follow}` : ''}${clip.takes?.length ? ` · ${clip.takes.length} takes` : ''}`}
-            onClick={() => selection.select({kind: 'clip', ref: clip.id, title: clip.label, track: clip.trackId})}>
-            <button type="button" className="tri" aria-label={`Launch ${clip.label}`} disabled={!launch} title={launch ? `Launch (${launch.op})` : 'No launch: the owner discloses no launch for this clip'}
-              onClick={event => { event.stopPropagation(); launch?.run(clip.id) }} />
-            <span className="cs-label">{clip.label}</span>
-            {!!clip.takes?.length && <span className="cs-takes" aria-label={`${clip.takes.length} takes`}>{clip.takes.length}</span>}
+  const lanes = set.tracks.filter(track => !track.groupId || !track.lane || track.lane === 'visual')
+  const tree = trackTree(set.tracks)
+  // A group's members fold away with it (agent/AgentSessionGrid.tsx:92-96); every ancestor folded hides them, not only the parent.
+  const tracks = lanes.filter(track => !tree.ancestorsOf(track).some(above => folded[above.id]))
+  const {here: stalledHere} = stalledLanes(set, tree)
+  const launch = set.actions?.launch, launchStop = set.actions?.launchStop, stopTrack = set.actions?.stopTrack, retry = set.actions?.retry
+  if (!lanes.length) return <div className="tracks-empty" role="status">No tracks in this work yet.</div>
+  return <div className="sg-pane" data-tracks-view="session">
+    <div className="sg" role="grid" aria-label="Session">
+      {tracks.map(track => {
+        const style = {'--tc': trackColour(track)} as CSSProperties
+        const selectedTrack = selection.ref === track.id
+        const ancestors = tree.ancestorsOf(track)
+        const level = Math.max(track.depth ?? 0, ancestors.length)
+        // One rail per ancestor, in that ancestor's colour (agent/AgentSessionGrid.tsx:180-183); a level the set declares
+        // with no parent to name is a rail in the track's own colour.
+        const rails = [...ancestors.map(trackColour), ...Array.from({length: level - ancestors.length}, () => trackColour(track))]
+        const foldable = tree.children.has(track.id)
+        const open = !folded[track.id]
+        const members = foldable ? tree.descendantsOf(track) : []
+        const lit = stalledHere.has(track.id)
+        return <div key={track.id} className={`trk${level ? ' sub' : ''}`} role="row" style={{...style, ...(rails.length ? {'--rails': rails.length} : {})} as CSSProperties}
+          data-track={track.id} data-depth={level || undefined} data-group={foldable ? 'true' : undefined} data-stalled={lit ? 'true' : undefined}>
+          {rails.length > 0 && <span className="rails" aria-hidden="true">{rails.map((colour, i) => <i key={i} style={{background: colour}} />)}</span>}
+          {foldable && <button type="button" className="gf" aria-expanded={open} aria-label={`${open ? 'Fold' : 'Unfold'} ${track.name}`}
+            title={`${open ? 'Fold' : 'Unfold'} the ${members.length} under ${track.name}`} onClick={() => onFold(track.id)}>{open ? '▼' : '▶'}</button>}
+          <button type="button" className={`thd${selectedTrack ? ' sel' : ''}`} title={`${track.name} · ${track.kind}`} aria-pressed={selectedTrack}
+            onClick={() => selection.select({kind: 'track', ref: track.id, title: track.name})}>{track.name}</button>
+          {rows.map(row => {
+            const clip = inRow.get(`${track.id}\u0000${row.id}`) ?? (track.groupId ? set.clips.find(c => c.columnId === row.id && set.tracks.find(t => t.id === c.trackId)?.groupId === track.groupId) : undefined)
+            if (clip) {
+              const selected = selection.ref === clip.id
+              const word = clip.status ? STATUS_WORD[clip.status] : 'State not disclosed'
+              const key = `clip:${clip.id}`
+              return <div key={row.id} role="gridcell" className={`cs clip${clip.status ? ` ${clip.status}` : ''}${selected ? ' sel' : ''}`} data-clip={clip.id} data-clip-status={clip.status ?? 'undisclosed'}
+                data-receipt={receiptMark(receipt, key)}
+                title={`${clip.label} · ${word}${clip.launch?.quantize ? ` · launches ${clip.launch.quantize}` : ''}${clip.launch?.follow ? ` · then ${clip.launch.follow}` : ''}${clip.takes?.length ? ` · ${clip.takes.length} takes` : ''}${clip.note ? ` · ${clip.note}` : ''}`}
+                onClick={() => selection.select({kind: 'clip', ref: clip.id, title: clip.label, track: clip.trackId})}>
+                <button type="button" className="tri" aria-label={`Launch ${clip.label}`} disabled={!launch} title={launch ? `Launch (${launch.op})` : 'No launch: the owner discloses no launch for this clip'}
+                  onClick={event => { event.stopPropagation(); if (launch) onPress(key, `Launch ${clip.label}`, () => launch.run(clip.id)) }} />
+                <span className="cs-label">{clip.label}</span>
+                {clip.note && <span className="cs-note" role="img" aria-label={clip.note} title={clip.note}>⚑</span>}
+                {!!clip.takes?.length && <span className="cs-takes" aria-label={`${clip.takes.length} takes`}>{clip.takes.length}</span>}
+              </div>
+            }
+            // A group with no clip of its own in this row rolls up its members': one cell per member's clip, by its status
+            // (agent/AgentSessionGrid.tsx:214-229). A read of the members, not a clip: nothing here launches.
+            const rolled = members.flatMap(member => { const c = inRow.get(`${member.id}\u0000${row.id}`); return c ? [c] : [] })
+            if (rolled.length) {
+              const stalledCount = rolled.filter(c => c.status === 'stalled').length
+              return <div key={row.id} role="gridcell" className="cs roll" data-rollup={rolled.length}
+                title={`${rolled.length} ${rolled.length === 1 ? 'clip' : 'clips'} from the ${members.length} under ${track.name} in this row${stalledCount ? ` · ${stalledCount} stalled` : ''}`}>
+                {rolled.map(c => <i key={c.id} data-status={c.status ?? 'undisclosed'} />)}
+              </div>
+            }
+            const key = `stop:${track.id}:${row.id}`
+            return <div key={row.id} className="cs" role="gridcell" data-receipt={receiptMark(receipt, key)} title={stopTrack ? 'Empty slot · its square stops the track' : 'Empty slot'}>
+              <button type="button" className="sg2" aria-label={`Stop ${track.name}`} disabled={!stopTrack} title={stopTrack ? `Stop ${track.name} (${stopTrack.op})` : 'No stop: the owner discloses no stop for this track'}
+                onClick={() => { if (stopTrack) onPress(key, `Stop ${track.name}`, () => stopTrack.run(track.id)) }} />
+            </div>
+          })}
+          {retry && <div className="trk-foot">
+            <button type="button" className={`rt${lit ? ' lit' : ''}`} aria-label={`Retry ${track.name}`} data-receipt={receiptMark(receipt, `retry:${track.id}`)}
+              title={`Retry ${track.name} (${retry.op})${lit ? ' · lit: a lane in here has stalled' : ''}`}
+              onClick={() => onPress(`retry:${track.id}`, `Retry ${track.name}`, () => retry.run(track.id))}>↻</button>
+          </div>}
+        </div>
+      })}
+      <div className="sg-fill" />
+      <div className="trk trk-main" role="row" aria-label="Stops">
+        <div className="thd">Main</div>
+        {rows.map((row, index) => {
+          const key = `row:${row.id}`
+          return <div key={row.id} className="cs" role="gridcell" data-receipt={receiptMark(receipt, key)}>
+            <button type="button" className="stop-launch" disabled={!launchStop} title={launchStop ? `Launch the row: every clip in it (${launchStop.op})` : 'No row launch: the owner discloses none'}
+              onClick={() => { if (launchStop) onPress(key, `Launch row ${row.name || index + 1}`, () => launchStop.run(row.id)) }}>▸</button>
+            <span className="cs-label">{row.name || index + 1}</span>
           </div>
         })}
       </div>
-    })}
-    <div className="sg-fill" />
-    <div className="trk trk-main" role="row" aria-label="Stops">
-      <div className="thd">Main</div>
-      {rows.map((row, index) => <div key={row.id} className="cs" role="gridcell">
-        <button type="button" className="stop-launch" disabled={!launchStop} title={launchStop ? `Launch the row: every clip in it (${launchStop.op})` : 'No row launch: the owner discloses none'}
-          onClick={() => launchStop?.run(row.id)}>▸</button>
-        <span className="cs-label">{row.name || index + 1}</span>
-      </div>)}
     </div>
+    {receipt && <p className="sg-receipt" role="status" data-ok={receipt.ok}>
+      <b>{receipt.what}</b>
+      <span>{receipt.text}</span>
+      <button type="button" aria-label="Dismiss" onClick={onDismiss}>×</button>
+    </p>}
   </div>
+}
+
+/** The Session grid: the view, with the state a grid keeps — which groups are folded shut, and the owner's last answer. */
+export function SessionGrid({set, selection}: {set: WorldTrackSet; selection: TracksSelection}) {
+  const [folded, setFolded] = useState<Record<string, boolean>>({})
+  const [receipt, setReceipt] = useState<PressedReceipt | null>(null)
+  const latest = useRef(0)
+  const press = (key: string, what: string, run: () => unknown) => {
+    const turn = ++latest.current
+    setReceipt(null)
+    void answerOf(run).then(answer => { if (answer && turn === latest.current) setReceipt({key, what, ...answer}) })
+  }
+  return <SessionGridView set={set} selection={selection} folded={folded} receipt={receipt} onPress={press}
+    onFold={id => setFolded(current => ({...current, [id]: !current[id]}))} onDismiss={() => { latest.current += 1; setReceipt(null) }} />
 }
