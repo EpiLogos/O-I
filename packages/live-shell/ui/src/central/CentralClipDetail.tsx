@@ -1,22 +1,28 @@
-import {useEffect, useState} from 'react'
+import {useEffect, useState, type ReactNode} from 'react'
 
 /** Central's Clip side: the selected document as data (manual §3; world-shell-mockup.html clipDetail(), its Central branch, :1666-1668)
  * — the Clip view's props column (its form on the head, then file, template, revision, state and its bindings: world, subject,
- * office, sources) beside its named columns (Highlights, Notes, and what the material itself holds). Every value is a reading
- * an owner already gives through the door this file has always used; a row no owner fills shows "—", a column no owner fills
- * says so in one line. Nothing here writes, and no device stands here: the document's devices (the Day die, the
+ * office, sources) beside its named columns (Highlights, Notes, Packet, and what the material itself holds). Every value is a
+ * reading an owner already gives through the door this file has always used; a row no owner fills shows "—", a column no owner
+ * fills says so in one line. Nothing here writes, and no device stands here: the document's devices (the Day die, the
  * conversation) stand on the Device side, from the same selection (shell/ModeDetail.tsx BaseDevicesDetail).
  *
  * Two kinds of selection open here (central/CentralClipChooser.tsx):
  * - a browser subject — a folder, note or day of the ground — read through the owner's file route (`readFile` →
  *   `central.file-reading/v1`, CAS-revised; a folder through `listFiles`). Ported from inhabitants/CentralSubjectDetail.tsx:53-101.
- * - a Timeline clip — the spine's retained occasion: a day reads the owner's `open-day` (useCentralDayStanding); a NOW return
- *   reads `central.now-reading/v1` (`receiving/now` `read`); a wiki return reads its own file through the owner's file route.
+ *   A document file's own payload (its `ql-doc` island) gives the Highlights, Notes and Packet columns (central/documentPayload.ts).
+ * - a Timeline clip — the spine's retained occasion: a day reads the owner's `open-day` (useCentralDayStanding), and its Day
+ *   document's payload through the owner's document reading (`receiving` `document`, as the Day die reads it:
+ *   inhabitants/DocumentDayDieFace.tsx:110-111); a NOW return reads `central.now-reading/v1` (`receiving/now` `read`); a wiki
+ *   return reads its own file through the owner's file route.
  *   Ported from the panes this file drew before (DayDocumentPane, NowReturnPane, WikiReturnPane).
  * A wiki subject is opened only from a `wiki:node:` ref the material names in its own text; the Constellation opens focused
- * on it. No store here: each read is held for its selection and dropped when the selection changes. */
+ * on it. No store here: each read is held for its selection and dropped when the selection changes. The payload's html never
+ * reaches the shell: every row is text the payload reading reduced. */
 
 import {nowReading} from '../../../../../desktop/cradle/src/receiving/now'
+import {receiving} from '../../../../../desktop/cradle/src/receiving/client'
+import {validateDocumentBasis} from '../../../../../desktop/cradle/src/central/dayForm'
 import {listFiles, readFile} from '../../../../../desktop/cradle/src/files/client'
 import type {CentralLocation, KernelTransportStatus, NativeDirectory} from '../../../../../desktop/cradle/src/kernel/types'
 import {casShort, subjectDayRef} from '../inhabitants/centralDayNowModel'
@@ -32,6 +38,16 @@ import {
   type NowReturnFacts,
 } from './centralVertical'
 import {openConstellation} from './constellation'
+import {
+  bounded,
+  packetChars,
+  packetHead,
+  payloadLine,
+  readDayPayload,
+  readDocumentPayload,
+  type DocumentPayloadReading,
+  type PayloadColumn,
+} from './documentPayload'
 import {useCentralDayStanding} from './useCentralDayStanding'
 
 const READ_PREVIEW_CHARS = 4000
@@ -63,11 +79,81 @@ const dayRows = (): ClipRow[] => [
   {key: 'closes', value: null, title: 'The day closes by the owner\'s automation; no reading gives its close here'},
 ]
 
-/** The two columns every Central document has. No reader in the shell discloses a document's highlights or its notes yet. */
+/** The two columns a material with no document payload has (a NOW return, a return of no named kind): no payload is read for
+ * it, so its highlights and its notes are not disclosed. */
 const marksColumns = (last: boolean): ClipColumn[] => [
-  {name: 'Highlights', width: HIGHLIGHTS_W, body: <ClipNone>No highlights reading: the document's owner discloses none.</ClipNone>},
-  {name: 'Notes', width: last ? undefined : NOTES_W, body: <ClipNone>No notes reading: the document's owner discloses none.</ClipNone>},
+  {name: 'Highlights', width: HIGHLIGHTS_W, body: <ClipNone>{NO_READING.highlights}</ClipNone>},
+  {name: 'Notes', width: last ? undefined : NOTES_W, body: <ClipNone>{NO_READING.notes}</ClipNone>},
 ]
+
+/** A column's line when the selection carries no document payload. */
+const NO_READING: Record<PayloadColumn, string> = {
+  highlights: 'No highlights reading: the document\'s owner discloses none.',
+  notes: 'No notes reading: the document\'s owner discloses none.',
+  packet: 'No packet reading: the document\'s owner discloses none.',
+}
+
+/** A document's payload as the Clip side holds it: none to read (no document under the selection), being read, refused by
+ * its owner, or read (central/documentPayload.ts — which may still find no island, or one that does not parse). */
+export type PayloadState =
+  | {readonly phase: 'none'}
+  | {readonly phase: 'reading'}
+  | {readonly phase: 'refused'; readonly message: string}
+  | {readonly phase: 'read'; readonly reading: DocumentPayloadReading}
+
+const MORE = (more: number) => more > 0 ? <ClipNone>… {more} more in the payload</ClipNone> : null
+
+/** One column's body from the payload: its rows (bounded), or its one line. */
+function payloadBody(state: PayloadState, column: PayloadColumn, rows: (reading: Extract<DocumentPayloadReading, {state: 'read'}>) => ReactNode): ReactNode {
+  if (state.phase === 'reading') return <ClipNone>Waiting for the owner's reading.</ClipNone>
+  if (state.phase === 'refused') return <ClipNone>Not read: the owner refused the document reading.</ClipNone>
+  const reading = state.phase === 'read' ? state.reading : null
+  if (!reading || reading.state === 'absent') return <ClipNone>{NO_READING[column]}</ClipNone>
+  const line = payloadLine(reading, column)
+  if (line || reading.state !== 'read') return <ClipNone>{line}</ClipNone>
+  return rows(reading)
+}
+
+/** The document's three columns (clipDetail() :1663): the passages it marks, its notes, its packet — each the payload's own
+ * words, as text. A highlight is the yellow mark and its words, with the entry or face it stands on; a note is its anchor and
+ * its words; a packet item is its size, its kind, where it came from and the words the agent would read. */
+export function documentColumns(state: PayloadState): ClipColumn[] {
+  const reading = state.phase === 'read' ? state.reading : null
+  return [
+    {name: 'Highlights', width: HIGHLIGHTS_W, body: payloadBody(state, 'highlights', read => {
+      const {shown, more} = bounded(read.highlights)
+      return <div data-payload-column="highlights" data-rows={read.highlights.length}>
+        {shown.map((mark, index) => <ClipLine key={index} lead={<i className="hl2-dot" aria-hidden="true" />} right={mark.anchor}
+          title={`Marked in ${mark.where}`}>{mark.text}</ClipLine>)}
+        {MORE(more)}
+      </div>
+    })},
+    {name: 'Notes', width: NOTES_W, body: payloadBody(state, 'notes', read => {
+      const {shown, more} = bounded(read.notes)
+      return <div data-payload-column="notes" data-rows={read.notes.length}>
+        {shown.map((note, index) => <ClipLine key={index} lead={note.anchor ?? '—'}
+          title={[note.where ? `On ${note.where}` : 'The note names no entry', note.quote ? `on “${note.quote}”` : null, note.at].filter(Boolean).join(' · ')}>
+          {note.text || (note.quote ? `“${note.quote}”` : '—')}
+        </ClipLine>)}
+        {MORE(more)}
+      </div>
+    })},
+    {name: reading ? packetHead(reading) : 'Packet', body: payloadBody(state, 'packet', read => {
+      const {shown, more} = bounded(read.packet)
+      return <div data-payload-column="packet" data-rows={read.packet.length}>
+        {shown.map((item, index) => <ClipLine key={index} lead={packetChars(item)} chip={item.kind ?? undefined}
+          title={[`${packetChars(item)} characters`, item.source, item.at].filter(Boolean).join(' · ')}>
+          {`${item.source ? `${item.source} — ` : ''}${item.text || '—'}`}
+        </ClipLine>)}
+        {MORE(more)}
+      </div>
+    })},
+  ]
+}
+
+/** The template a read payload names, as the props column's `template` row. */
+const payloadTemplate = (state: PayloadState): string | null =>
+  state.phase === 'read' && state.reading.state === 'read' ? state.reading.template : null
 
 /** The wiki subjects a text names, each opening the Constellation; one line when the text names none. */
 function NamesColumn({refs, from}: {refs: readonly string[]; from: string}) {
@@ -90,27 +176,30 @@ interface SubjectReading {
   readonly project: string | null
   readonly boundaryOp: string
   readonly directory: NativeDirectory | null
+  /** The file's own payload (its `ql-doc` island), read from the content the owner's file route gave; null for a folder. */
+  readonly payload: DocumentPayloadReading | null
   readonly pending: boolean
   readonly fault: string | null
 }
 
+const UNREAD: SubjectReading = {revision: null, ref: null, byteLen: null, project: null, boundaryOp: '', directory: null, payload: null, pending: true, fault: null}
 
 /** The subject's reading through the owner's file route (ported from inhabitants/CentralSubjectDetail.tsx:53-101). */
 function useSubjectReading(transport: KernelTransportStatus, subject: CentralSubjectSelection): SubjectReading {
   const folder = subject.kind === 'folder'
-  const [state, setState] = useState<SubjectReading>({revision: null, ref: null, byteLen: null, project: null, boundaryOp: '', directory: null, pending: true, fault: null})
+  const [state, setState] = useState<SubjectReading>(UNREAD)
   useEffect(() => {
     let alive = true
-    setState({revision: null, ref: null, byteLen: null, project: null, boundaryOp: '', directory: null, pending: true, fault: null})
+    setState(UNREAD)
     const read = folder
       ? listFiles(transport, subject.path).then(directory => ({
           revision: null, ref: directory.location?.ref ?? null,
           byteLen: directory.entries.reduce((total, entry) => total + (entry.byte_len ?? 0), 0), project: null,
-          boundaryOp: 'op files_list (central.directory-reading/v1)', directory, pending: false, fault: null}))
+          boundaryOp: 'op files_list (central.directory-reading/v1)', directory, payload: null, pending: false, fault: null}))
       : ownerLocation(transport, subject).then(location => readFile(transport, location)).then(reading => ({
           revision: reading.revision, ref: reading.location?.ref ?? null,
           byteLen: reading.byte_len, project: reading.project?.name ?? null,
-          boundaryOp: 'op file_read (central.file-reading/v1)', directory: null, pending: false, fault: null}))
+          boundaryOp: 'op file_read (central.file-reading/v1)', directory: null, payload: readDocumentPayload(reading.content), pending: false, fault: null}))
     read.then(
       next => { if (alive) setState(next) },
       (error: unknown) => { if (alive) setState(held => ({...held, pending: false, fault: error instanceof Error ? error.message : String(error)})) },
@@ -129,9 +218,12 @@ export const centralSubjectName = (subject: CentralSubjectSelection): string => 
 export function CentralSubjectClip({transport, subject, colour}: {transport: KernelTransportStatus; subject: CentralSubjectSelection; colour?: string | null}) {
   const read = useSubjectReading(transport, subject)
   const dayRef = subjectDayRef(subject.path)
+  const payload: PayloadState = read.pending ? {phase: 'reading'} : read.fault ? {phase: 'refused', message: read.fault}
+    : read.payload ? {phase: 'read', reading: read.payload} : {phase: 'none'}
+  const template = payloadTemplate(payload)
   const rows: ClipRow[] = [
     {key: 'file', value: basename(subject.path), title: read.ref ?? subject.path},
-    {key: 'template', value: null, title: 'The file reading names no template'},
+    {key: 'template', value: template, title: template ? 'The template the document\'s own payload names (meta.template)' : 'The file reading names no template'},
     {key: 'revision', value: read.revision ? casShort(read.revision) : null, title: read.revision ?? (read.directory ? 'A listing has no single CAS revision: its entries carry their own' : 'Not read yet')},
     {key: 'state', value: null, title: NO_SAVE},
     ...(subject.kind === 'day' ? dayRows() : bindingRows()),
@@ -141,24 +233,47 @@ export function CentralSubjectClip({transport, subject, colour}: {transport: Ker
     ...(dayRef ? [{key: 'civil day', value: dayRef}] : []),
     {key: 'read via', value: read.boundaryOp || null},
   ]
-  const note = read.pending ? 'Reading the owner…' : read.fault ? <span role="alert" data-detail-fault>The owner refused the read: {read.fault}</span> : null
+  const note = read.pending ? 'Reading the owner…' : read.fault ? <span role="alert" data-detail-fault>The owner refused the read: {read.fault}</span>
+    : read.payload?.state === 'malformed' ? <span data-payload-standing="malformed">The document's payload island does not parse: {read.payload.reason}</span>
+    : null
   const columns: ClipColumn[] = read.directory
     ? [{name: 'Entries', body: read.directory.entries.length
         ? <div data-detail-entries>{read.directory.entries.map(entry => <ClipLine key={entry.name} lead={entry.kind} right={entry.byte_len != null ? `${entry.byte_len} B` : undefined}>{entry.name}</ClipLine>)}</div>
         : <ClipNone>The listing holds no entries.</ClipNone>}]
-    : marksColumns(true)
+    : documentColumns(payload)
   return <ClipView kind={`subject:${subject.kind}`} name={FORM[subject.kind]} colour={colour} rows={rows} columns={columns} note={note} />
 }
 
 // ---------------------------------------------------------------------------
 // a Timeline clip: a day, a return, a conversation
 
+/** The Day document's payload, through the owner's document reading — the read the Day die itself loads from
+ * (inhabitants/DocumentDayDieFace.tsx:110-111: `receiving` `document`, then `validateDocumentBasis`): its `template_payload` is
+ * the die's own payload. Read again when the Day's revision moves; none while no Day document stands. */
+function useDayDocumentPayload(transport: KernelTransportStatus, day: {sourceRef: string; documentId: string; revision: string} | null): PayloadState {
+  const [state, setState] = useState<PayloadState>({phase: 'none'})
+  const sourceRef = day?.sourceRef ?? null, documentId = day?.documentId ?? null, revision = day?.revision ?? null
+  useEffect(() => {
+    if (!sourceRef || !documentId) { setState({phase: 'none'}); return }
+    let alive = true
+    setState({phase: 'reading'})
+    receiving<unknown>(transport, null, {kind: 'document', source_ref: sourceRef, document_id: documentId})
+      .then(reading => validateDocumentBasis(reading, sourceRef, documentId))
+      .then(basis => { if (alive) setState({phase: 'read', reading: readDayPayload(basis.payload)}) })
+      .catch((error: unknown) => { if (alive) setState({phase: 'refused', message: error instanceof Error ? error.message : String(error)}) })
+    return () => { alive = false }
+  }, [transport, sourceRef, documentId, revision])
+  return state
+}
+
 function DayClip({transport, selection, colour}: {transport: KernelTransportStatus; selection: CentralClipSelection; colour?: string | null}) {
   const standing = useCentralDayStanding(transport, selection.dayRef)
   const ready = standing?.state === 'ready' ? standing : null
+  const payload = useDayDocumentPayload(transport, ready)
+  const template = payloadTemplate(payload)
   const rows: ClipRow[] = [
     {key: 'file', value: ready?.sourceRef ?? null, title: 'The Day document\'s source, as the owner\'s open-day names it'},
-    {key: 'template', value: null, title: 'The open-day reading names no template'},
+    {key: 'template', value: template, title: template ? 'The template the Day document\'s own payload names (meta.template)' : 'The open-day reading names no template'},
     {key: 'revision', value: ready?.revision ?? null},
     {key: 'state', value: !standing ? null : standing.state === 'ready' ? 'ready' : standing.state === 'uninitialised' ? 'no Day document yet' : 'refused', title: NO_SAVE},
     ...dayRows(),
@@ -169,8 +284,9 @@ function DayClip({transport, selection, colour}: {transport: KernelTransportStat
     : !standing ? 'Reading the owner\'s Day…'
     : standing.state === 'uninitialised' ? <span data-day-standing="uninitialised">The owner says: “{standing.message}” — {standing.owner} · {standing.op}</span>
     : standing.state === 'refused' ? <span role="alert" data-day-standing="refused">The owner refused the Day document: “{standing.message}”</span>
+    : payload.phase === 'refused' ? <span role="alert" data-day-document="refused">The owner refused the Day document's reading: “{payload.message}”</span>
     : null
-  return <ClipView kind="day" name="Day" colour={colour} rows={rows} columns={marksColumns(true)} note={note} />
+  return <ClipView kind="day" name="Day" colour={colour} rows={rows} columns={documentColumns(payload)} note={note} />
 }
 
 type NowState = {phase: 'reading'} | {phase: 'done'; facts: NowReturnFacts | null; error: string | null}
