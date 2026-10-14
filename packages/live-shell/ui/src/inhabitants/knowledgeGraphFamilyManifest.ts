@@ -20,12 +20,11 @@ export const KNOWLEDGE_GRAPH_FAMILY_ID = 'knowledge-graph'
 
 export const knowledgeGraphFamilyManifest: InhabitantManifest = {
   id: KNOWLEDGE_GRAPH_FAMILY_ID,
-  detachedKinds: ['device'],
   browser: [],
   faces: [
     {
       id: 'knowledge-scope',
-      dock: ['dock', 'expand', 'pop-out'],
+      dock: ['dock', 'expand'],
       heldBy: ['knowledge-graph'],
       presentations: ['compact', 'expanded'],
       liveSemantic: 'detail-device',
@@ -33,7 +32,7 @@ export const knowledgeGraphFamilyManifest: InhabitantManifest = {
     },
     {
       id: 'knowledge-filters',
-      dock: ['dock', 'expand', 'pop-out'],
+      dock: ['dock', 'expand'],
       heldBy: ['knowledge-graph'],
       presentations: ['compact', 'expanded'],
       liveSemantic: 'detail-device',
@@ -41,7 +40,7 @@ export const knowledgeGraphFamilyManifest: InhabitantManifest = {
     },
     {
       id: 'knowledge-display',
-      dock: ['dock', 'expand', 'pop-out'],
+      dock: ['dock', 'expand'],
       heldBy: ['knowledge-graph'],
       presentations: ['compact', 'expanded'],
       liveSemantic: 'detail-device',

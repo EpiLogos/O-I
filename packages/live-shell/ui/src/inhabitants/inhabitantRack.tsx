@@ -25,8 +25,8 @@ import {useEffect, useState, type ReactNode} from 'react'
  * docks it; hosts compose it beside their own registries). */
 
 import type {CentralLocation, KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
-import {faceKind, type InhabitantFaceDeclaration, type InhabitantManifest} from './manifest.ts'
-import {deviceBindingId, deviceIdentityFault, type DeviceDetachIdentity} from '../native/detachedKinds'
+import {faceKind, faceStandsAlone, type InhabitantFaceDeclaration, type InhabitantManifest} from './manifest.ts'
+import {deviceBindingId, deviceIdentityFault, popOutApertureFault, type DeviceDetachIdentity} from '../native/detachedKinds'
 import {DocumentDayDieFace} from './DocumentDayDieFace'
 import {FlowFace} from './DocumentFlowFace'
 import {NaraConversationFace} from './ConversationNaraFace'
@@ -183,8 +183,12 @@ function InhabitantFace({face, manifest, transport, day, flow, conversation, pro
 
   // Seam 8: a popped-out device lives in its own native window. Its identity is the manifest's family and face with the
   // aperture the face reads; the rack holds no second copy of it. While popped out the rack draws no body.
+  // Pop-out is offered only where the face declares it, its family declares the device kind, and the face draws its body
+  // in a window of its own (faceStandsAlone). A face that cannot stand alone never offers it: an empty or inert window is
+  // worse than none. Redock stays available for a device that is popped out.
   const popOutDeclared = (face.dock ?? ['dock']).includes('pop-out')
   const deviceKindDeclared = (manifest.detachedKinds ?? []).includes('device')
+  const offersPopOut = popOutDeclared && deviceKindDeclared && faceStandsAlone(face)
   const identity: DeviceDetachIdentity = {
     family: manifest.id,
     face: face.id,
@@ -196,9 +200,11 @@ function InhabitantFace({face, manifest, transport, day, flow, conversation, pro
     },
   }
   const popped = !waiting && !!deviceWindows && deviceWindows.poppedOut(identity)
-  const popOutHost = !waiting && popOutDeclared && deviceKindDeclared && deviceWindows ? deviceWindows : null
-  const onPopOut = popOutHost && !popped ? () => popOutHost.popOut(identity) : null
-  const onRedock = popOutHost && popped ? () => popOutHost.redock(identity) : null
+  // The aperture a standalone face reads must stand for it to open a window (the Day for the die, the flow for the Flow).
+  const apertureFault = popOutApertureFault(face, identity.aperture)
+  const popOutHost = !waiting && offersPopOut && deviceWindows ? deviceWindows : null
+  const onPopOut = popOutHost && !popped && !apertureFault ? () => popOutHost.popOut(identity) : null
+  const onRedock = popped && deviceKindDeclared && deviceWindows ? () => deviceWindows.redock(identity) : null
 
   const body: ReactNode = !waiting && expanded && !popped
     ? faceBodyFor(face, {transport, day, flow, conversation, projects, instrumentReading})
@@ -235,12 +241,12 @@ function InhabitantFace({face, manifest, transport, day, flow, conversation, pro
         : undefined}
       expanded={expanded}
       onToggle={expandable ? () => setExpanded(value => !value) : null}
-      popOut={popOutDeclared}
+      popOut={offersPopOut}
       onPopOut={onPopOut}
       poppedOut={popped}
       onRedock={onRedock}
       width={faceWidth(face)}
-      data={{'waiting-note': waiting ? face.note : undefined, 'device-binding': popOutDeclared ? deviceBindingId(identity) : undefined}}
+      data={{'waiting-note': waiting ? face.note : undefined, 'device-binding': offersPopOut || popped ? deviceBindingId(identity) : undefined}}
     >
       {emptySlot && <p className="inhabitant-device-notice" role="status">{emptySlot}</p>}
       {body}
@@ -259,7 +265,9 @@ interface FaceReads {
 }
 
 /** One face's expanded body, selected by the face's identity and the aperture it reads (null where the face docks no
- * body). Shared by the rack and by a popped-out device's receiving body, so both draw the same face. */
+ * body). Shared by the rack and by a popped-out device's receiving body, so both draw the same face. Which faces draw in a
+ * window of their own, from the identity alone, is `faceStandsAlone` (manifest.ts): the same faces pop out, and the device
+ * door refuses the rest by name. */
 export function faceBodyFor(face: InhabitantFaceDeclaration, reads: FaceReads): ReactNode | null {
   const {transport, day, flow, conversation, projects, instrumentReading} = reads
   if (face.id === 'day-die' && day) {

@@ -49,6 +49,10 @@ const light = {state: 'admitted', title: 'admitted'}
 const probeFace = {id: 'probe-face', presentations: ['compact', 'expanded'], dock: ['dock', 'expand', 'pop-out'], note: 'probe'}
 const probeFamily = (kinds) => ({id: 'probe', faces: [probeFace], detachedKinds: kinds, telemetry: null})
 const identityFor = (family) => ({family: family.id, face: 'probe-face', aperture: {day: null, flow: null, conversation: null, instrument: null}})
+// A standalone face (seam 8): the Nara conversation draws its body from the identity alone, so its window stands.
+const standingFace = {id: 'nara-conversation', kind: 'conversation', presentations: ['compact', 'expanded'], dock: ['dock', 'expand', 'pop-out'], conversation: {binding: 'oi.nara-dialogue-binding/v1'}, note: 'standing'}
+const standingFamily = (kinds) => ({id: 'probe', faces: [standingFace], detachedKinds: kinds, telemetry: null})
+const standingIdentity = (family) => ({family: family.id, face: 'nara-conversation', aperture: {day: null, flow: null, conversation: null, instrument: null}})
 const buttonTag = (markup, action) => markup.match(new RegExp(`<button[^>]*data-action="${action}"[^>]*>`))[0]
 
 test('the device kind is one the pane engine admits, beside the existing detached kinds', () => {
@@ -56,15 +60,18 @@ test('the device kind is one the pane engine admits, beside the existing detache
   for (const kind of ['source', 'knowledge', 'file', 'encounter', 'browser', 'terminal', 'flow']) assert.ok(DETACHED_KINDS.includes(kind), kind)
 })
 
-test('a device identity stands only where its manifest declares the face, pop-out and the device kind', () => {
-  const declared = probeFamily(['device'])
-  assert.equal(deviceIdentityFault(identityFor(declared), [declared]), null)
-  const undeclared = probeFamily(['flow'])
-  assert.match(deviceIdentityFault(identityFor(undeclared), [undeclared]), /device detached kind/)
-  assert.match(deviceIdentityFault(identityFor(declared), []), /no admitted family/)
-  const noPopOut = {...declared, faces: [{...probeFace, dock: ['dock']}]}
-  assert.match(deviceIdentityFault(identityFor(noPopOut), [noPopOut]), /does not declare pop-out/)
-  assert.match(deviceIdentityFault({...identityFor(declared), face: 'missing'}, [declared]), /declares no face/)
+test('a device identity stands only where its manifest declares the face, pop-out, the device kind and a body of its own', () => {
+  const declared = standingFamily(['device'])
+  assert.equal(deviceIdentityFault(standingIdentity(declared), [declared]), null)
+  const undeclared = standingFamily(['flow'])
+  assert.match(deviceIdentityFault(standingIdentity(undeclared), [undeclared]), /device detached kind/)
+  assert.match(deviceIdentityFault(standingIdentity(declared), []), /no admitted family/)
+  const noPopOut = {...declared, faces: [{...standingFace, dock: ['dock']}]}
+  assert.match(deviceIdentityFault(standingIdentity(noPopOut), [noPopOut]), /does not declare pop-out/)
+  assert.match(deviceIdentityFault({...standingIdentity(declared), face: 'missing'}, [declared]), /declares no face/)
+  // A parameter face has no body of its own: the door refuses it by name, even where its manifest declares pop-out.
+  const parameter = probeFamily(['device'])
+  assert.match(deviceIdentityFault(identityFor(parameter), [parameter]), /does not stand alone/)
 })
 
 test('one device, one binding: the binding id is the family and face, never the aperture', () => {
@@ -86,29 +93,37 @@ test('the card pop-out is honest: disabled without a host door, live with it, an
   assert.doesNotMatch(buttonTag(popped, 'redock'), /disabled/)
 })
 
-test('the rack offers pop-out only where the family declares the device kind and a host door stands', () => {
-  const declared = probeFamily(['device'])
-  const undeclared = probeFamily(['flow'])
+test('the rack offers pop-out only where the face declares it, the family declares the device kind, the face draws alone and a host door stands', () => {
+  const parameter = probeFamily(['device'])
+  const standing = standingFamily(['device'])
+  const undeclared = standingFamily(['flow'])
   const host = (popped = false) => ({popOut() {}, redock() {}, poppedOut: () => popped})
-  assert.match(buttonTag(html(createElement(InhabitantRack, {manifests: [declared], transport})), 'pop-out'), /disabled/)
-  assert.doesNotMatch(buttonTag(html(createElement(InhabitantRack, {manifests: [declared], transport, deviceWindows: host()})), 'pop-out'), /disabled/)
-  assert.match(buttonTag(html(createElement(InhabitantRack, {manifests: [undeclared], transport, deviceWindows: host()})), 'pop-out'), /disabled/)
-  const poppedMarkup = html(createElement(InhabitantRack, {manifests: [declared], transport, deviceWindows: host(true)}))
+  // A parameter face never offers pop-out: no mark at all, even with a host door.
+  assert.doesNotMatch(html(createElement(InhabitantRack, {manifests: [parameter], transport, deviceWindows: host()})), /data-action="pop-out"/)
+  // A standing face declares pop-out: the mark stands disabled without a host door, live with one.
+  assert.match(buttonTag(html(createElement(InhabitantRack, {manifests: [standing], transport})), 'pop-out'), /disabled/)
+  assert.doesNotMatch(buttonTag(html(createElement(InhabitantRack, {manifests: [standing], transport, deviceWindows: host()})), 'pop-out'), /disabled/)
+  assert.doesNotMatch(html(createElement(InhabitantRack, {manifests: [undeclared], transport, deviceWindows: host()})), /data-action="pop-out"/)
+  const poppedMarkup = html(createElement(InhabitantRack, {manifests: [standing], transport, deviceWindows: host(true)}))
   assert.match(poppedMarkup, /popped out/)
-  assert.match(buttonTag(poppedMarkup, 'redock'), /Redock probe-face/)
+  assert.match(buttonTag(poppedMarkup, 'redock'), /Redock/)
   assert.doesNotMatch(poppedMarkup, /data-action="pop-out"/)
-  assert.match(poppedMarkup, /data-device-binding="device:probe\/probe-face"/)
+  assert.match(poppedMarkup, /data-device-binding="device:probe\/nara-conversation"/)
 })
 
-test('the receiving body draws the declared device from its manifest, and refuses a face no manifest declares', () => {
-  const declared = probeFamily(['device'])
-  const refused = html(createElement(DeviceFace, {identity: identityFor(declared), manifests: [probeFamily(['flow'])], transport}))
+test('the receiving body draws the declared device from its manifest, and refuses a face no manifest declares or a body it cannot draw alone', () => {
+  const declared = standingFamily(['device'])
+  const refused = html(createElement(DeviceFace, {identity: standingIdentity(declared), manifests: [standingFamily(['flow'])], transport}))
   assert.match(refused, /data-device-fault/)
   assert.match(refused, /device detached kind/)
   assert.doesNotMatch(refused, /data-device-window/)
-  const drawn = html(createElement(DeviceFace, {identity: identityFor(declared), manifests: [declared], transport}))
+  const drawn = html(createElement(DeviceFace, {identity: standingIdentity(declared), manifests: [declared], transport}))
   assert.match(drawn, /data-device-window/)
-  assert.match(drawn, /data-device-face="probe-face"/)
+  assert.match(drawn, /data-device-face="nara-conversation"/)
+  const parameter = probeFamily(['device'])
+  const byName = html(createElement(DeviceFace, {identity: identityFor(parameter), manifests: [parameter], transport}))
+  assert.match(byName, /data-device-fault/)
+  assert.match(byName, /does not stand alone/)
 })
 
 test('the Occasion steps through the spine\'s retained occasions and keeps each saved basis and admission', () => {
@@ -274,19 +289,19 @@ test('a device is a native detached kind, and its identity alone carries the dev
 })
 
 test('the receiving window draws the declared device for a valid identity, and refuses an invalid one by name', () => {
-  const declared = probeFamily(['device'])
-  const drawn = html(createElement(DeviceWindowBody, {binding: boundDevice(identityFor(declared)), transport, manifests: [declared]}))
+  const declared = standingFamily(['device'])
+  const drawn = html(createElement(DeviceWindowBody, {binding: boundDevice(standingIdentity(declared)), transport, manifests: [declared]}))
   assert.match(drawn, /data-device-window/)
-  assert.match(drawn, /data-device-face="probe-face"/)
+  assert.match(drawn, /data-device-face="nara-conversation"/)
   assert.doesNotMatch(drawn, /data-device-fault/)
-  const undeclared = probeFamily(['flow'])
-  const refused = html(createElement(DeviceWindowBody, {binding: boundDevice(identityFor(undeclared)), transport, manifests: [undeclared]}))
+  const undeclared = standingFamily(['flow'])
+  const refused = html(createElement(DeviceWindowBody, {binding: boundDevice(standingIdentity(undeclared)), transport, manifests: [undeclared]}))
   assert.match(refused, /data-device-fault/)
   assert.match(refused, /device detached kind/)
   assert.doesNotMatch(refused, /data-device-window/)
-  assert.equal(deviceAdmissionFault(boundDevice(identityFor(declared)), [declared]), null)
-  assert.match(deviceAdmissionFault({...boundDevice(identityFor(declared)), id: 'device:probe/other'}, [declared]), /binding id does not name/)
-  assert.match(deviceAdmissionFault({id: 'device:probe/probe-face', kind: 'device', title: 'Probe'}, [declared]), /no device identity/)
+  assert.equal(deviceAdmissionFault(boundDevice(standingIdentity(declared)), [declared]), null)
+  assert.match(deviceAdmissionFault({...boundDevice(standingIdentity(declared)), id: 'device:probe/other'}, [declared]), /binding id does not name/)
+  assert.match(deviceAdmissionFault({id: 'device:probe/nara-conversation', kind: 'device', title: 'Probe'}, [declared]), /no device identity/)
 })
 
 test('the pop-out holds the device in the detached set, never as a centre tab, and a second pop-out finds the first', () => {

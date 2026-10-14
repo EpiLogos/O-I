@@ -35,7 +35,7 @@ import type {
   InhabitantFaceKind,
   InhabitantManifest,
 } from '../manifest.ts'
-import {declareFamilyExtension, familyExtensions, validateInhabitantManifest, type FamilyExtension} from '../manifest.ts'
+import {DEFAULT_FACE_KIND, declareFamilyExtension, familyExtensions, standsAlone, validateInhabitantManifest, type FamilyExtension} from '../manifest.ts'
 import type {AgentParamAddress} from '../agentParamAddresses.ts'
 import {deriveAgentDeviceRows} from '../agentDeviceCatalogue.ts'
 import type {IconName} from './icons.ts'
@@ -166,9 +166,11 @@ export interface DeviceDeclaration {
   /** The face's dock lifecycle. Pop-out is the device default: a device pops out unless it opts out (`popOut: false`) or
    * waits; see `devicePopsOut`. The author's other lifecycles (`dock`, `expand`) stand as declared. */
   readonly dock?: readonly FaceDockLifecycle[]
-  /** Pop-out opt-out (rack-device lifecycle, seam 8). Absent = a device pops out through the pane engine's detach door
-   * (`'pop-out'` in its dock, and the family carries the `device` detached kind). `false` = this face never pops out.
-   * A waiting face (`admission: 'waiting'`) has no owner to read, so it does not pop out unless it says so. */
+  /** Pop-out (rack-device lifecycle, seam 8). Absent = the face pops out only where its window can draw its body alone
+   * (`faceStandsAlone`, manifest.ts): Central's day die, Flow and Nara conversation, and the QL instrument. Every other
+   * face (parameter faces, the atlas and knowledge-graph faces) stays in the main window. `false` = this face never pops
+   * out. `true` = the author asks for pop-out, which is refused at declaration by name unless the face stands alone. A
+   * waiting face does not pop out unless it says so (and only if it stands alone). */
   readonly popOut?: boolean
   readonly document?: DocumentBodyDeclaration
   readonly conversation?: ConversationBodyDeclaration
@@ -478,17 +480,29 @@ export function allSdkParamRows(): readonly SdkParamRow[] {
 // ---------------------------------------------------------------------------
 // declaration → door shape
 
-/** Whether an SDK device pops out: the default for every device, opted out by `popOut: false`, and withheld from a waiting
- * face that does not say otherwise (no owner stands to read it, so there is no window to open). */
-export function devicePopsOut(device: DeviceDeclaration): boolean {
-  return device.popOut ?? device.admission !== 'waiting'
+/** Whether an SDK device's window can draw its body alone: its id and kind name a standalone face (manifest.ts). */
+function deviceStandsAlone(device: DeviceDeclaration): boolean {
+  return standsAlone(device.id, device.kind ?? DEFAULT_FACE_KIND)
 }
 
-/** A device's dock lifecycle with pop-out applied by default (the one SDK-side default; hand-written manifests declare
- * their own `pop-out` explicitly). Absent when the device declared no dock and opts out. */
+/** Whether an SDK device pops out. By default it does only where its window can draw its body alone, and not while it
+ * waits. `popOut: false` opts out. A pop-out the author asks for (`popOut: true`, or `'pop-out'` in its dock) on a face
+ * that cannot stand alone is refused here by name: its window would be empty. */
+export function devicePopsOut(device: DeviceDeclaration): boolean {
+  if (device.popOut === false) return false
+  const asks = device.popOut === true || (device.dock ?? []).includes('pop-out')
+  if (asks && !deviceStandsAlone(device)) {
+    throw new Error(`Device "${device.id}" refuses pop-out — its body draws only in the main window (or it has none), so a window for it would be empty. Pop-out is offered only for faces that draw their body in a window of their own.`)
+  }
+  return device.popOut ?? (deviceStandsAlone(device) && device.admission !== 'waiting')
+}
+
+/** A device's dock lifecycle with the pop-out default applied (hand-written manifests declare their own `pop-out`). An
+ * opt-out drops any `pop-out` from the dock; the other lifecycles stand as declared. */
 function deviceDock(device: DeviceDeclaration): readonly FaceDockLifecycle[] | undefined {
-  if (!devicePopsOut(device)) return device.popOut === false ? device.dock?.filter(lifecycle => lifecycle !== 'pop-out') : device.dock
-  return [...new Set<FaceDockLifecycle>([...(device.dock ?? ['dock']), 'pop-out'])]
+  if (device.popOut === false) return device.dock?.filter(lifecycle => lifecycle !== 'pop-out')
+  if (devicePopsOut(device)) return [...new Set<FaceDockLifecycle>([...(device.dock ?? ['dock']), 'pop-out'])]
+  return device.dock
 }
 
 /** The detached kinds a family's devices pop out through: the `device` kind, declared once when any device pops out. */

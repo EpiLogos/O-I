@@ -167,8 +167,33 @@ base:
 
 ```ts
 declareDeviceExtension({id: 'acme:world-shell', by: '<your lane>', family: 'acme',
-                        devices: [/* … */], detachedKinds: ['object']})
+                        devices: [/* … */]})
 ```
+
+**Pop-out (seam 8).** A device pops out into its own native window only where
+that window can draw the device's body from its identity alone. The rule is
+`faceStandsAlone` (`manifest.ts`), and nothing else decides it. Today the
+standalone faces are Central's day die (`day-die`, a document), the Flow
+(`flow-document`, a document), the Nara conversation (`nara-conversation`, a
+conversation) and the QL instrument (`ql-instrument`, an instrument). Parameter
+faces have no body in the rack. The atlas and knowledge-graph bodies drive the
+main window's mounted globe or graph handle, which a separate window cannot
+reach, so they stay in the main window. A window for any of those would be
+empty or inert.
+
+- The kit's default: a device pops out only where its id and kind name a
+  standalone face, and not while it waits. `popOut: false` opts a face out.
+- `popOut: true`, or `'pop-out'` written in a device's `dock`, on any other
+  face throws at declaration, naming the face. Its window would be empty.
+- A device that pops out puts `'pop-out'` in its dock, and its family
+  declares the `device` detached kind. The kit does both for you.
+- The day die needs a Day in its aperture, and the Flow needs a flow. Without
+  one the device door refuses the window by name, and the rack offers no
+  pop-out.
+- `detachedKinds` names the window kinds a family's document faces pop out
+  through (`flow`, `file`, `encounter`, …). It is not where devices are
+  declared. A hand-written manifest declares `'device'` and `'pop-out'`
+  itself, and the device door refuses a face that does not stand alone.
 
 ### Modes — the mode-specific plugin surface
 
