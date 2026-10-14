@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import type { HostedAppState } from '@epilogos/expressions-boundary'
 import type { KernelReceipt, KernelTransportStatus, NativeFileReading } from '@epilogos/expressions-boundary/cradle'
 import type { NativeEditorController, NativeEditorReading } from '@epilogos/expressions-boundary/editor'
-import { ContinuityResources, ContinuityResidency, useContinuity, type FileResourceAccess, type ResourceIntent } from '../continuity'
+import { ContinuityResources, ContinuityResidency, useContinuity, type FileResourceAccess, type ResourceIntent, type ShellMode } from '../continuity'
 import { groupsOf, openBinding } from '../../../../../desktop/cradle/src/surface/engine'
 import type { CentralLocation } from '../../../../../desktop/cradle/src/kernel/location'
 import { CANDIDATE_WARM_WORKSPACE_LIMIT, retainSourceReading } from '../continuity/resources'
@@ -12,6 +12,11 @@ import type { WorkspaceMode, WorkspaceReading } from './workspaceTypes'
 import type { SurfaceBinding } from '../../../../../desktop/cradle/src/surface/types'
 export type { WorkspaceMode, WorkspaceReading } from './workspaceTypes'
 export { useWorkspace, StubWorkspaceProvider } from './workspaceContext'
+/** The spine's cut each shell mode stands on (a registration, never a branch): Live, Base·Central and settings stand on the
+ * audio cut; Factory's agency surface on the Expressions cut; Expressions and Technē on their own. */
+const CUT_OF_SHELL_MODE: Readonly<Record<ShellMode, WorkspaceMode>> = {
+  audio: 'audio', base: 'audio', settings: 'audio', factory: 'expressions', expressions: 'expressions', techne: 'techne',
+}
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const continuity = useContinuity()
   const current = useRef(continuity)
@@ -44,9 +49,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   // is the Rev-5 mode; Base·Central stands on the audio cut, Factory's
   // agency surface stands on the Expressions cut (as the agent surface
   // always has).
-  const mode: WorkspaceMode = continuity.mode === 'expressions' || continuity.mode === 'techne'
-    ? continuity.mode
-    : continuity.mode === 'factory' ? 'expressions' : 'audio'
+  const mode: WorkspaceMode = CUT_OF_SHELL_MODE[continuity.mode]
   const setMode = (next: WorkspaceMode) => continuity.setMode(next)
   const [transport, setTransport] = useState<KernelTransportStatus>({kind:'unavailable',reason:'Native owner configuration is loading'})
   const transportRef = useRef(transport)

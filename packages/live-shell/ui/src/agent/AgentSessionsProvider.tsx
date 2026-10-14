@@ -56,9 +56,11 @@ export function useAgentSessionsOptional(): AgentSessionsValue | null {
 }
 
 /**
- * The ONE poll source for the agent shell: agency every 3 s, temporal events
- * every 4 s, the roster once, and `encounter_task_read` for the selected
- * session on the agency cadence. Tracks are built here — group containers
+ * The ONE poll source for the agent shell: agency every 3 s, the roster once,
+ * and `encounter_task_read` for the selected session on the agency cadence.
+ * Temporal events are not polled here: they are the frame's one temporal read
+ * (timeline/temporalPoll.ts, every 90 s), which the World cut reads too — this
+ * provider takes its 24 h window of it. Tracks are built here — group containers
  * from spaces, members at depth 1, roster names joined, clips and needles
  * from the readings. Mount it once above every consumer (App's agent-shell
  * tree); a nested mount passes through, so re-wiring a late consumer never
