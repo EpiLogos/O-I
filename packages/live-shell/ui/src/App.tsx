@@ -50,6 +50,8 @@ import './live/LiveInstrumentSection'
 import './live/LivePresets'
 import {registerAtlasHost} from './projections/atlas/registerAtlasHost'
 import {registerTimelineHost} from './projections/timelinePane'
+import {createSpineEncounterBridge} from './projections/encounterBridge'
+import {createEncounterLink, type EncounterLink} from './projections/encounterLink'
 import {setTimelinePanePresentation, useTimelinePanePresentation, usePublishTimelineReading} from './projections/timelinePaneHost'
 import {presentAtlasView, useAtlasView} from './projections/atlas/AtlasProjectionPanel'
 import {deviceInstrumentFor, factoryFocusedPane, hostedLensOfBarId, showsLensBar, type HostedLens} from './shell/paneInstrument'
@@ -72,6 +74,24 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   useEffect(()=>{currentEditorReading.current=workspace.editorReading;return workspace.editor?.subscribe(reading=>{currentEditorReading.current=reading})},[workspace.editor])
   const continuity = useContinuity()
   const currentContinuity=useRef(continuity);currentContinuity.current=continuity
+  // The encounter link (seam 3): the URL projects the spine's encounter, Back walks it, and the store stays the one writer.
+  const encounterSpine = useRef({book: continuity, workspace})
+  encounterSpine.current = {book: continuity, workspace}
+  const [unlinkedSubject, setUnlinkedSubject] = useState<string | null>(null)
+  const encounterLink = useRef<EncounterLink | null>(null)
+  useEffect(() => {
+    const bridge = createSpineEncounterBridge(encounterSpine)
+    const link = createEncounterLink({
+      snapshot: () => bridge.snapshot(),
+      switchMode: next => encounterSpine.current.book.switchMode(next),
+      setContext: change => encounterSpine.current.book.setContext(change),
+    }, window, {onUnresolved: ref => setUnlinkedSubject(ref ?? null)})
+    encounterLink.current = link
+    link.start()
+    return () => { link.dispose(); encounterLink.current = null }
+  }, [])
+  // The render is the publication: the link projects whatever the spine now holds.
+  useEffect(() => { encounterLink.current?.publish() })
   // The World cut's one temporal read (L4): the civil field the Base and
   // Technē presentations stand on — one poller per shell frame.
   const worldView = useWorldTemporalReading(workspace.transport)
@@ -539,7 +559,7 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
     <div className="detail-residence" hidden={!detail || !agentShell || detailMode !== 'device' || focusedInstrument !== null}><AgentShellDeviceDetail tracks={agency.tracks} /></div></NativeInputRetentionProvider>
     {agentShell ? <AgentStatusBarBridge detailMode={detailMode} changeDetailMode={mode => {changeDetailMode(mode); setDetail(true)}} audio={frameMode === 'live'} mode={frameMode} reading={workspace.reading} state={state} documentError={deep.error} viewport={viewport} selectedTrack={agency.tracks[0]?.purpose ?? undefined} presentedView={presentedView} subjectLabel={frameMode === 'base' && centralSubject ? centralSubject.path : undefined} /> : <StatusBar detailMode={detailMode} changeDetailMode={mode => {changeDetailMode(mode); setDetail(true)}} audio={frameMode === 'live'} mode={frameMode} reading={workspace.reading} state={state} documentError={deep.error} viewport={viewport} selectedTrack={state.set?.tracks[selection.track]?.name} presentedView={presentedView} subjectLabel={frameMode === 'base' && centralSubject ? centralSubject.path : undefined} />}
   </>)
-  return <div ref={frameRef} style={{ ...(browserWidth === null ? {} : { '--browser-w': `${browserWidth}px` }), ...(detailHeight === null ? {} : { '--detail-h': `${detailHeight}px` }), ...(agentShell ? {'--dock-w': `${shellCtx.dockWidth}px`} : {}) } as CSSProperties} className={`frame mode-${workspace.mode}${browser ? '' : ' browser-hidden'}${detail ? '' : ' detail-hidden'}${dock ? ' dock-open' : agentShell ? ' no-dock' : ''}${agentShell ? ' agent-shell-frame' : ''}`} data-agent-shell={agentShell ? 'true' : undefined}>{frameBody}</div>
+  return <div ref={frameRef} style={{ ...(browserWidth === null ? {} : { '--browser-w': `${browserWidth}px` }), ...(detailHeight === null ? {} : { '--detail-h': `${detailHeight}px` }), ...(agentShell ? {'--dock-w': `${shellCtx.dockWidth}px`} : {}) } as CSSProperties} className={`frame mode-${workspace.mode}${browser ? '' : ' browser-hidden'}${detail ? '' : ' detail-hidden'}${dock ? ' dock-open' : agentShell ? ' no-dock' : ''}${agentShell ? ' agent-shell-frame' : ''}`} data-agent-shell={agentShell ? 'true' : undefined}>{frameBody}{unlinkedSubject && <p role="status" data-region="encounter-link" style={{position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 10000, margin: 0, padding: '8px 16px', font: '13px system-ui, sans-serif', background: 'Canvas', color: 'CanvasText', borderTop: '1px solid GrayText'}}>The linked subject {unlinkedSubject} could not be opened here; the rest of the link is applied. <button type="button" onClick={() => setUnlinkedSubject(null)}>Dismiss</button></p>}</div>
 }
 
 function AgentStatusBarBridge(props: ComponentProps<typeof StatusBar>) {
