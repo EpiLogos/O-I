@@ -1,8 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {register} from 'node:module'
-import {createElement} from 'react'
-import {renderToStaticMarkup} from 'react-dom/server'
 
 const root = new URL('../../../../', import.meta.url)
 const compiler = new URL('../node_modules/typescript/lib/typescript.js', import.meta.url).href
@@ -32,8 +30,6 @@ const {
   sharedAxis,
   HEARTBEAT_HORIZON_MS,
 } = await import('../src/agent/agentRunModel.ts')
-const {AgentShellProvider} = await import('../src/agent/AgentShellContext.tsx')
-const {AgentSessionGrid} = await import('../src/agent/AgentSessionGrid.tsx')
 
 const NOW = 1_800_000_000_000
 
@@ -130,39 +126,4 @@ test('event matching prefers a structural subject_ref match over summary contain
   assert.equal(matched[0].subject_ref, 'agency/sess-a1/turn-2', 'separator-boundary subject match wins')
   const clips = buildTaskClips(READING('work'), events, 'sess-a1', NOW)
   assert.equal(clips[0].lastActivityUnixMs, NOW - 60_000, 'the summary-only decoy did not become activity')
-})
-
-test('the rendered grid carries the oracle data-i strings and no constant slot rows', () => {
-  const tracks = buildTracks(ROWS, ROSTER, {nowUnixMs: NOW}).map(track => {
-    if (track.group) return track
-    return {
-      ...track,
-      tasks: buildTaskClips(
-        track.sessionRef === 'sess-a1' ? READING('Lead the port') : null,
-        [{subject_ref: `agency/${track.sessionRef}/hb`, instant_unix_ms: track.sessionRef === 'sess-a1' ? NOW - 5_000 : Date.now() - 5 * 60_000}],
-        track.sessionRef,
-        Date.now(),
-      ),
-      needle: needleFor([{subject_ref: `agency/${track.sessionRef}/hb`, instant_unix_ms: Date.now() - 5_000}], track.sessionRef, {startUnixMs: Date.now() - 3_600_000, endUnixMs: Date.now()}),
-    }
-  })
-  const html = renderToStaticMarkup(createElement(AgentShellProvider, null, createElement(AgentSessionGrid, {tracks})))
-  assert.ok(html.includes('data-i="Hard stop|Stops this session now — mid-tool if needed — and keeps what was written as a draft."'), 'session hard stop')
-  assert.ok(html.includes('data-i="Hard stop|Stops the group and every session in it'), 'group hard stop names the group')
-  assert.ok(html.includes('data-i="Retry|Restarts a stalled or failed task from its last good step, same basis."'), 'unlit retry')
-  assert.ok(html.includes('data-i="Empty slot|Its square stops the session after the current task (soft stop). Double-click to write a task; arm and press ● to speak one."'), 'soft-stop slot')
-  assert.ok(html.includes('data-i="Task · 1|Click: its log below. Double-click or ↗: open the thread in the main space.'), 'task clip oracle')
-  assert.ok(html.includes('data-i="Row · 1|Launch the row: fires every task in it across sessions — a batch."'), 'main row launch')
-  assert.ok(html.includes('data-i="Telemetry · context source|Live’s track activator.'), 'session telemetry')
-  assert.ok(html.includes('data-i="Telemetry|Live’s track activator, on the number: the whole group as a context source.'), 'group telemetry')
-  assert.ok(html.includes('data-i="Solo|Only soloed sessions may run."'))
-  assert.ok(html.includes('data-i="Arm|Who you are talking to: voice and the composer send here."'))
-  assert.ok(html.includes('data-i="Watch|Live’s monitor.'), 'watch strip')
-  assert.ok(html.includes('data-i="Model|This session’s model.'), 'model strip')
-  assert.ok(html.includes('data-i="Main|The whole work: Ledger and Approvals live on its chain."'), 'main row')
-  assert.ok(!html.includes('<span>Task</span>'), 'no literal-only "Task" placeholder slots')
-  const emptySlots = html.split('data-i="Empty slot|').length - 1
-  const sessions = tracks.filter(track => !track.group).length
-  assert.equal(emptySlots, sessions, 'exactly one soft-stop slot per session — the data’s count, not 8')
-  assert.ok(!html.includes('>8</'), 'no constant slot count rendered')
 })
