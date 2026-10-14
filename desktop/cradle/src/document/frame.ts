@@ -5,8 +5,9 @@
  * document host (SourceSurface's rendered view) — one set of page-side
  * laws, no per-form variants.
  */
-import { useCallback, useEffect, useRef, type RefObject } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, type RefObject } from "react";
 import {readDocumentIdentity} from './identity';
+import type { KernelTransportStatus } from "../kernel/types";
 import pageContextScript from "../context/page-context.js?raw";
 import documentHostScript from "../context/document-host.js?raw";
 
@@ -26,6 +27,64 @@ export function documentPayloadSource(html:string):string {
  const seam="let D = JSON.parse($('#ql-doc').textContent);";
  if(html.split(seam).length!==2)return html;
  return html.replace(seam,seam+"\nwindow.__OI_DOCUMENT_PAYLOAD_READ__ = () => D;");
+}
+
+/** The native document frame (kernel `document_frame`, served by the host's `oi-material://` protocol). Under Tauri a
+ * srcdoc document inherits the shell window's Content-Security-Policy, whose script-src names a hash and no
+ * 'unsafe-inline', so a hosted form's own scripts never run (seen on screen, native candidate ae9301a1b: the Flow pane's
+ * head over blank paper). The frame page is a document of its own with no policy: it asks its parent once, and the
+ * host writes into it the very projection a srcdoc frame carries — the payload seam and `documentScripts` included —
+ * so the island read, the snapshot bridge and every save run over it exactly as over srcdoc. */
+export const DOCUMENT_FRAME_URL = "oi-material://localhost/__application/document/frame.html";
+export const DOCUMENT_FRAME_READY = "oi:document-frame-ready";
+export const DOCUMENT_FRAME_WRITE = "oi:document-frame-write";
+
+export interface DocumentFrameProps { key: string; src?: string; srcDoc?: string }
+
+/** A cheap, stable digest of a projection (FNV-1a over its UTF-16 units): the native frame's key. */
+function projectionDigest(html: string): string {
+  let hash = 0x811c9dc5;
+  for (let index = 0; index < html.length; index++) { hash ^= html.charCodeAt(index); hash = Math.imul(hash, 0x01000193); }
+  return (hash >>> 0).toString(36);
+}
+
+/** Where a hosted document frame takes its document from — one switch by transport, as MaterialSurface's material URL:
+ * under Tauri the native document frame, written with the projection; over the walk-bridge and in the browser preview
+ * (no such policy there) the projection as srcdoc, as before. The native frame's key follows the projection, so a new
+ * projection is a fresh frame (as a new srcdoc is a fresh document) and an unchanged one never remounts — the person's
+ * edits inside the form stand. */
+export function documentFrameProps(kind: KernelTransportStatus["kind"], html: string): DocumentFrameProps {
+  if (kind !== "tauri") return { key: "srcdoc", srcDoc: html };
+  return { key: `native:${html.length}:${projectionDigest(html)}`, src: DOCUMENT_FRAME_URL };
+}
+
+/** The frame page's one question, answered: the projection — and only to the frame's own window asking. */
+export function documentFrameWrite(event: { data: unknown; source: unknown }, frameWindow: unknown, html: string): { type: typeof DOCUMENT_FRAME_WRITE; html: string } | null {
+  const data = event.data as { type?: unknown } | null | undefined;
+  if (!frameWindow || event.source !== frameWindow || data?.type !== DOCUMENT_FRAME_READY) return null;
+  return { type: DOCUMENT_FRAME_WRITE, html };
+}
+
+/** A layout effect in a window; on a server render (no window, no frame) the plain effect, which does nothing there. */
+const useCommitEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
+
+/** The props of a hosted document's iframe, and under Tauri its write: the listener stands in the commit that mounts the
+ * frame (a layout effect), so the frame's question — a later task — is never posted unheard. */
+export function useDocumentFrame(frame: RefObject<HTMLIFrameElement | null>, html: string | undefined, transport: KernelTransportStatus): DocumentFrameProps | undefined {
+  const kind = transport.kind;
+  const props = useMemo(() => (html === undefined ? undefined : documentFrameProps(kind, html)), [html, kind]);
+  const native = props?.src !== undefined;
+  useCommitEffect(() => {
+    if (!native || html === undefined) return;
+    const receive = (event: MessageEvent) => {
+      const target = frame.current?.contentWindow;
+      const answer = documentFrameWrite(event, target, html);
+      if (answer) target?.postMessage(answer, "*");
+    };
+    window.addEventListener("message", receive);
+    return () => window.removeEventListener("message", receive);
+  }, [frame, html, native]);
+  return props;
 }
 
 export interface FrameIsland { text: string | null; revision: number | null; documentId: string | null }

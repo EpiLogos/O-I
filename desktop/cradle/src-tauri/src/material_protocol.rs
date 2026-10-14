@@ -1,7 +1,8 @@
 //! The `oi-material://` custom protocol (FND-04): the only way rich
 //! material content (HTML, its relative assets, images, PDFs) reaches a
 //! webview. The reserved `/__application/` route serves candidate-owned code
-//! through the application asset owner; every personal-material byte passes
+//! through the application asset owner, and at its one exact path the native
+//! document frame (kernel `document_frame`); every personal-material byte passes
 //! through the Central owner's
 //! `central.files.read` (via the kernel's typed `KernelOp::FilesList` /
 //! `KernelOp::FileBytes` seam) — this module resolves the URL grammar and
@@ -42,6 +43,15 @@ pub fn register<R: Runtime>(builder: tauri::Builder<R>) -> tauri::Builder<R> {
 
 fn handle<R: Runtime>(app_handle: &AppHandle<R>, request: &Request<Vec<u8>>) -> Response<Vec<u8>> {
     let path = request.uri().path();
+    // The native document frame (kernel `document_frame`): candidate-owned code compiled into this binary, answered at
+    // its one exact path before the application asset route below (which admits only the Expressions build). A Central
+    // document face's iframe loads it under Tauri because a srcdoc document inherits the window's CSP; it reads no file.
+    let host = request.uri().host();
+    if let Some(page) =
+        oi_cradle_kernel::document_frame::serve(host, request.method().as_str(), path)
+    {
+        return document_frame(page);
+    }
     // Candidate-owned application code shares the historical material origin
     // so hosted drafts retain their browser storage. Personal file requests
     // still use the Central-owner location grammar below.
@@ -122,6 +132,23 @@ fn handle<R: Runtime>(app_handle: &AppHandle<R>, request: &Request<Vec<u8>>) -> 
         },
         Err(message) => owner_error(&message),
     }
+}
+
+/// The document frame page carries no Content-Security-Policy, deliberately: the form written into it runs its own
+/// scripts (a form that brings its own policy, as the Day die's projection does, keeps it). Never cached.
+fn document_frame(page: oi_cradle_kernel::document_frame::FramePage) -> Response<Vec<u8>> {
+    Response::builder()
+        .status(StatusCode::from_u16(page.status).unwrap_or(StatusCode::NOT_FOUND))
+        .header("Content-Type", page.content_type)
+        .header("Cache-Control", "no-store")
+        .header("X-Content-Type-Options", "nosniff")
+        .body(page.body)
+        .unwrap_or_else(|_| {
+            refuse(
+                StatusCode::NOT_FOUND,
+                "Document frame response could not be built",
+            )
+        })
 }
 
 fn world_file(rest: &str) -> Response<Vec<u8>> {
