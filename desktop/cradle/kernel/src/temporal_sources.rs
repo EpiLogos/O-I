@@ -11,21 +11,29 @@
 //! | [`WikiReturnsPlacementSource`] | wiki returns placement | `central.files.list` |
 //! | [`KernelEventLogSource`] | kernel event log | the in-process log |
 //! | [`AikitHistorySource`] | aikit history evidence | `aikit history --json` |
+//! | [`factory_runs_read`] | Factory run receipts | `factory telemetry day` (`factory.telemetry-day/v1`) |
 //!
 //! Owner readings follow the house law (`history.rs`, `central.rs`): an
 //! envelope flagged `automatic_agent_or_model_invocation` is refused, never
 //! degraded into a reading. A source's own time is inherited verbatim where
 //! the source records one (`created_at`, the fixture's `utc`, an aikit
-//! evidence `occurred_at`, a kernel `observed_at`) and left absent where it
-//! does not — the field never receives an invented time.
+//! evidence `occurred_at`, a kernel `observed_at`, a Factory signal's
+//! `updated_at_unix_ms`) and left absent where it does not — the field never
+//! receives an invented time.
+//!
+//! Not joined: a Central day-open moment. The Day reading
+//! (`central.day-reading/v1`) states a civil date and a document state but
+//! no opened-at instant, so no moment is emitted for it (never a midnight).
 
 use crate::events::KernelEventLog;
+use crate::factory::OwnerRequest;
 use crate::flow::{CentralClient, OwnerCallError};
 use crate::temporal_events::{
     CivilField, EventKind, TemporalEvent, TemporalEventsAnswer, TemporalEventsError, TemporalQuery,
-    TemporalStreamSource,
+    TemporalStreamSource, Window,
 };
 use serde_json::{json, Value};
+use std::collections::BTreeSet;
 use std::path::PathBuf;
 use std::process::Command;
 
@@ -578,6 +586,213 @@ impl TemporalStreamSource for AikitHistorySource {
     }
 }
 
+// ---------------------------------------------------------------------------
+// Factory run receipts — `factory telemetry day` (factory.telemetry-day/v1)
+// ---------------------------------------------------------------------------
+
+const FACTORY_STREAM: &str = "factory-runs";
+
+/// The longest the field waits for the Factory stream. The owner call has
+/// no bound of its own (only the inhabitation reads are bounded), so the
+/// field bounds the wait here.
+const FACTORY_READ_BOUND: std::time::Duration = std::time::Duration::from_secs(30);
+
+/// The civil days one Factory day read is asked for, in the owner's own
+/// grammar: one Day, or a named Day range.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) enum FactoryDays {
+    One(String),
+    Range { from: String, through: String },
+}
+
+/// The civil date (`YYYY-MM-DD`) an instant falls on under the field's
+/// policy — the same derivation the projection uses for `day_ref`.
+fn civil_date_of_ms(field: &CivilField, millis: i64) -> Result<String, TemporalEventsError> {
+    let instant = unix_millis_instant(FACTORY_STREAM, "window", millis)?;
+    let day_ref = field.day_ref_for(&instant)?;
+    Ok(day_ref.rsplit(':').next().unwrap_or_default().to_string())
+}
+
+/// The Factory days a query window names. A registered Day names its one
+/// civil date; a Between window names the civil days its half-open span
+/// touches; `All` names no span, so no Factory day is read for it (no span
+/// is invented to stand in for it).
+pub(crate) fn factory_days_for(
+    window: &Window,
+    field: &CivilField,
+) -> Result<Option<FactoryDays>, TemporalEventsError> {
+    match window {
+        Window::All => Ok(None),
+        Window::Day { day_ref } => {
+            let date = day_ref.rsplit(':').next().unwrap_or_default();
+            Ok(date
+                .parse::<jiff::civil::Date>()
+                .ok()
+                .map(|_| FactoryDays::One(date.to_string())))
+        }
+        Window::Between {
+            from_unix_ms,
+            to_unix_ms,
+        } => {
+            if to_unix_ms <= from_unix_ms {
+                return Ok(None);
+            }
+            let from = civil_date_of_ms(field, *from_unix_ms)?;
+            // The window is half-open: its last instant sits one millisecond
+            // before `to`.
+            let through = civil_date_of_ms(field, to_unix_ms - 1)?;
+            Ok(Some(if from == through {
+                FactoryDays::One(from)
+            } else {
+                FactoryDays::Range { from, through }
+            }))
+        }
+    }
+}
+
+/// Map one located Factory source's day reading into run moments: one per
+/// signal that names a run (`run_ref`). The moment's instant is the signal's
+/// own `updated_at_unix_ms`, inherited verbatim; a signal that states none is
+/// instant-less (it never joins a civil window). A reading whose signal names
+/// no `signal_ref`, or names one twice, is refused whole by the caller.
+pub(crate) fn telemetry_day_to_events(
+    source_ref: &str,
+    reading: &Value,
+) -> Result<Vec<TemporalEvent>, TemporalEventsError> {
+    let signals = reading
+        .get("signals")
+        .and_then(Value::as_array)
+        .ok_or_else(|| TemporalEventsError::InvalidRecord {
+            stream: FACTORY_STREAM.to_string(),
+            position: source_ref.to_string(),
+            reason: "the day reading carries no `signals` array".into(),
+        })?;
+    let mut seen = BTreeSet::new();
+    let mut events = Vec::new();
+    for signal in signals {
+        let Some(run_ref) = signal
+            .get("run_ref")
+            .and_then(Value::as_str)
+            .filter(|run| !run.is_empty())
+        else {
+            continue;
+        };
+        let signal_ref = require_str(FACTORY_STREAM, signal, "signal_ref", source_ref)?;
+        let position = format!("{source_ref}#{signal_ref}");
+        if !seen.insert(position.clone()) {
+            return Err(TemporalEventsError::InvalidRecord {
+                stream: FACTORY_STREAM.to_string(),
+                position,
+                reason: "the day reading names one signal twice".into(),
+            });
+        }
+        let civil_instant = signal
+            .get("updated_at_unix_ms")
+            .and_then(Value::as_i64)
+            .map(|millis| unix_millis_instant(FACTORY_STREAM, &position, millis))
+            .transpose()?;
+        let mut evidence = vec![signal_ref.to_string()];
+        evidence.extend(
+            signal
+                .get("source_refs")
+                .and_then(Value::as_array)
+                .into_iter()
+                .flatten()
+                .filter_map(Value::as_str)
+                .take(7)
+                .map(str::to_string),
+        );
+        events.push(TemporalEvent {
+            stream: FACTORY_STREAM.into(),
+            kind: EventKind::Run,
+            thought_type: None,
+            subject_ref: run_ref.to_string(),
+            civil_instant,
+            instant_unix_ms: None,
+            day_ref: None,
+            stream_position: position,
+            evidence_refs: evidence,
+            summary: signal
+                .get("summary")
+                .and_then(Value::as_str)
+                .unwrap_or_default()
+                .to_string(),
+        });
+    }
+    Ok(events)
+}
+
+/// The Factory run stream. Read only where the window names days: the owner
+/// locates each Central root's Factory source (`factory project locate`,
+/// through Central's world reading), then asks each located source for its
+/// day reading. Factory is a named absence for this stream, never an error
+/// for the field: no world reading, no located source, a refused or
+/// unreadable answer, or a malformed reading contributes no moments from
+/// that point, and the rest of the field answers as it would without
+/// Factory. The owner's own `absent` state is the ordinary case.
+pub(crate) fn factory_runs_read(
+    client: &CentralClient,
+    window: &Window,
+    field: &CivilField,
+) -> Vec<TemporalEvent> {
+    let Ok(Some(days)) = factory_days_for(window, field) else {
+        return Vec::new();
+    };
+    let Ok(world) = crate::world::read_world(client) else {
+        return Vec::new();
+    };
+    let Ok(located) = crate::factory::owner(
+        OwnerRequest::Locate {
+            project: None,
+            all: true,
+        },
+        Some(&world),
+    ) else {
+        return Vec::new();
+    };
+    let mut events = Vec::new();
+    for row in located
+        .get("locations")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+    {
+        if row.get("state").and_then(Value::as_str) != Some("located") {
+            continue;
+        }
+        let Some(location) = row.get("location") else {
+            continue;
+        };
+        let (Some(state), Some(source_ref)) = (
+            location.get("statePath").and_then(Value::as_str),
+            location.get("projectRef").and_then(Value::as_str),
+        ) else {
+            continue;
+        };
+        let (day, from_day, through_day) = match &days {
+            FactoryDays::One(day) => (Some(day.clone()), None, None),
+            FactoryDays::Range { from, through } => {
+                (None, Some(from.clone()), Some(through.clone()))
+            }
+        };
+        let Ok(reading) = crate::factory::owner(
+            OwnerRequest::TelemetryDay {
+                state_path: PathBuf::from(state),
+                day,
+                from_day,
+                through_day,
+            },
+            None,
+        ) else {
+            continue;
+        };
+        if let Ok(mut moments) = telemetry_day_to_events(source_ref, &reading) {
+            events.append(&mut moments);
+        }
+    }
+    events
+}
+
 fn load_civil_field(client: &CentralClient) -> Result<CivilField, TemporalEventsError> {
     let envelope = client
         .run_envelope("central.time.policy", json!({ "project": Value::Null }))
@@ -744,7 +959,8 @@ fn read_thoughts_chunk(
 ///   clearing events (they read the same register);
 /// - the independent owners (civil field, wiki placement, kernel log,
 ///   aikit history) run beside the per-clearing thought fan-out, which is
-///   bounded at [`THOUGHT_WORKERS`];
+///   bounded at [`THOUGHT_WORKERS`]; the Factory run stream follows the
+///   civil field (its window needs the policy) and is non-fatal;
 /// - the Central owner executable is named directly when the host
 ///   provides it (`OI_CENTRAL_CTRL_BIN`), one process per Action instead
 ///   of two;
@@ -847,6 +1063,19 @@ pub fn read_field(
             // clearing events, thoughts (earliest failing ref), wiki
             // placement, kernel log, aikit history.
             let field = policy.join().expect("civil field reader")?;
+            // The Factory run stream needs the civil field for its window. It
+            // runs detached from the scope, so an owner that stalls past the
+            // bound cannot hold the field; its thread ends with its owner call.
+            let factory = {
+                let window = query.window.clone();
+                let field = field.clone();
+                let client = owner.clone();
+                let (sender, receiver) = std::sync::mpsc::channel();
+                std::thread::spawn(move || {
+                    let _ = sender.send(factory_runs_read(&client, &window, &field));
+                });
+                receiver
+            };
             let now_records = now_records?;
             let now_events: Result<Vec<TemporalEvent>, TemporalEventsError> =
                 now_records.iter().map(now_record_to_event).collect();
@@ -863,6 +1092,9 @@ pub fn read_field(
                 log_receipts.iter().map(kernel_receipt_to_event).collect();
             let kernel_events = kernel_events?;
             let aikit_events = aikit.join().expect("aikit reader")?;
+            // Bounded: a Factory answer later than the bound is a named absence
+            // for this stream, never a stalled field.
+            let factory_events = factory.recv_timeout(FACTORY_READ_BOUND).unwrap_or_default();
 
             let now_stream = Collected {
                 name: "central-now",
@@ -884,6 +1116,10 @@ pub fn read_field(
                 name: "aikit-history",
                 events: aikit_events,
             };
+            let factory_stream = Collected {
+                name: FACTORY_STREAM,
+                events: factory_events,
+            };
             let answer = project(
                 &[
                     &now_stream,
@@ -891,6 +1127,7 @@ pub fn read_field(
                     &wiki_stream,
                     &kernel_stream,
                     &aikit_stream,
+                    &factory_stream,
                 ],
                 &field,
                 &observed,
@@ -969,6 +1206,25 @@ mod read_field_tests {
                 "aikit.json",
                 r#"{"ok":true,"data":{"entries":[{"id":"ev-1","kind":"generation","subject":"factory/run-01","summary":"a retained report","occurred_at_unix_ms":1791428384933}]}}"#,
             );
+            // The Factory owner: an empty locate file answers `absent` (the
+            // owner's own "No such file" refusal); a located reading is written
+            // by the test that wants one. Factory calls log to their own file,
+            // so the register counts stay the Central owner's alone.
+            let factory_calls = directory.join("factory-calls.log");
+            let factory_locate = write_file(&directory, "factory-locate.json", "");
+            let factory_day = write_file(
+                &directory,
+                "factory-day.json",
+                r#"{"schema":"factory.telemetry-day/v1","signals":[]}"#,
+            );
+            let world = write_file(
+                &directory,
+                "world.json",
+                format!(
+                    r#"{{"ok":true,"data":{{"schema":"central.world-map/v1","root":"{}","work":{{"projects":[]}}}}}}"#,
+                    directory.display()
+                ),
+            );
             let script = write_file(&directory, "owner.sh", {
                 let mut body = String::from("#!/bin/bash\n");
                 // aikit shape: `-C <cwd> history --json`
@@ -976,6 +1232,20 @@ mod read_field_tests {
                     body,
                     r#"if [ "$1" = "-C" ]; then cat {}; exit 0; fi"#,
                     aikit.display()
+                );
+                // factory shape (OI_FACTORY_BIN, no suite prefix):
+                // `project locate <root> --json` and `telemetry day <state> ... --json`
+                let _ = writeln!(
+                    body,
+                    r#"if [ "$1" = "project" ]; then echo "$*" >> {log}; if [ -s {locate} ]; then cat {locate}; exit 0; fi; echo "No such file or directory" >&2; exit 1; fi"#,
+                    log = factory_calls.display(),
+                    locate = factory_locate.display()
+                );
+                let _ = writeln!(
+                    body,
+                    r#"if [ "$1" = "telemetry" ]; then echo "$*" >> {}; cat {}; exit 0; fi"#,
+                    factory_calls.display(),
+                    factory_day.display()
                 );
                 let _ = writeln!(body, r#"echo "$4" >> {}"#, calls.display());
                 let _ = writeln!(body, r#"case "$4" in"#);
@@ -992,6 +1262,7 @@ mod read_field_tests {
                     thoughts.display()
                 );
                 let _ = writeln!(body, r#"  central.files.list) cat {} ;;"#, files.display());
+                let _ = writeln!(body, r#"  central.world) cat {} ;;"#, world.display());
                 let _ = writeln!(body, r#"  *) printf '{{"ok":false}}' ;;"#);
                 let _ = writeln!(body, "esac");
                 body
@@ -1006,6 +1277,7 @@ mod read_field_tests {
             // fake answers the history branch identically, so parallel
             // tests that re-pin the variable cannot observe a difference.
             std::env::set_var("OI_AIKIT_BIN", self.directory.join("owner.sh"));
+            std::env::set_var("OI_FACTORY_BIN", self.directory.join("owner.sh"));
             CentralClient::with(
                 self.directory.join("owner.sh"),
                 None,
@@ -1019,6 +1291,54 @@ mod read_field_tests {
                 .lines()
                 .map(str::to_owned)
                 .collect()
+        }
+
+        fn factory_calls(&self) -> Vec<String> {
+            std::fs::read_to_string(self.directory.join("factory-calls.log"))
+                .unwrap_or_default()
+                .lines()
+                .map(str::to_owned)
+                .collect()
+        }
+    }
+
+    /// The owner executables are named through process-global variables
+    /// (`OI_AIKIT_BIN`, `OI_FACTORY_BIN`). Each read test holds this lock for
+    /// its whole run, so one test's fake is never removed under another's read.
+    static OWNER_ENV: Mutex<()> = Mutex::new(());
+
+    fn owner_env() -> std::sync::MutexGuard<'static, ()> {
+        OWNER_ENV
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner())
+    }
+
+    /// One located Factory source, as `factory project locate` answers it.
+    const LOCATED: &str = r#"{"contract":"factory.project-location/v1","projectRef":"project:fixture","statePath":"/fixture/state.json"}"#;
+
+    /// A Factory day reading with one run-bearing signal inside the span, one
+    /// signal naming no run, and one run-bearing signal that states no instant.
+    const DAY_READING: &str = r#"{"schema":"factory.telemetry-day/v1","signals":[
+        {"signal_ref":"signal:S1","summary":"run A receipt","source_refs":["github:fixture#1"],"run_ref":"run:A","updated_at_unix_ms":1791460592000},
+        {"signal_ref":"signal:S2","summary":"no run here","source_refs":[],"run_ref":null,"updated_at_unix_ms":1791460600000},
+        {"signal_ref":"signal:S3","summary":"run B, no instant","source_refs":[],"run_ref":"run:B"}
+    ]}"#;
+
+    /// The span 2026-10-08 05:00Z to 2026-10-09 05:00Z (Europe/London days
+    /// 2026-10-08 and 2026-10-09 are the two it touches).
+    fn span_window() -> TemporalQuery {
+        TemporalQuery {
+            window: Window::Between {
+                from_unix_ms: "2026-10-08T05:00:00Z"
+                    .parse::<jiff::Timestamp>()
+                    .unwrap()
+                    .as_millisecond(),
+                to_unix_ms: "2026-10-09T05:00:00Z"
+                    .parse::<jiff::Timestamp>()
+                    .unwrap()
+                    .as_millisecond(),
+            },
+            ..Default::default()
         }
     }
 
@@ -1071,6 +1391,7 @@ mod read_field_tests {
 
     #[test]
     fn one_register_reading_serves_refs_and_events_and_every_ref_is_answered() {
+        let _env = owner_env();
         let owner = FakeOwner::new(
             "dedupe",
             &nowlist(&["ref-a", "ref-b", "ref-c", "ref-d"]),
@@ -1135,6 +1456,7 @@ mod read_field_tests {
 
     #[test]
     fn a_retained_answer_serves_the_horizon_and_a_new_query_rereads() {
+        let _env = owner_env();
         let owner = FakeOwner::new("cache", &nowlist(&["ref-a"]), THOUGHTS_REPLY);
         let cache = Mutex::new(crate::read_cache::OwnerReadCache::default());
         let client = owner.client();
@@ -1162,6 +1484,7 @@ mod read_field_tests {
 
     #[test]
     fn a_refused_thought_reading_fails_the_read_by_name() {
+        let _env = owner_env();
         let owner = FakeOwner::new(
             "refusal",
             &nowlist(&["ok-ref", "unavailable-ref"]),
@@ -1186,6 +1509,7 @@ mod read_field_tests {
 
     #[test]
     fn a_missing_register_reading_is_refused_like_the_source_refuses_it() {
+        let _env = owner_env();
         let owner = FakeOwner::new("no-records", r#"{"ok":true,"data":{}}"#, THOUGHTS_REPLY);
         let cache = Mutex::new(crate::read_cache::OwnerReadCache::default());
         let error = read_field(
@@ -1200,6 +1524,118 @@ mod read_field_tests {
             error,
             TemporalEventsError::InvalidRecord { ref stream, .. } if stream == "central-now"
         ));
+    }
+
+    #[test]
+    fn a_factory_day_reading_joins_its_run_moments_through_the_owner_reads() {
+        let _env = owner_env();
+        let owner = FakeOwner::new(
+            "factory-day",
+            r#"{"ok":true,"data":{"records":[]}}"#,
+            THOUGHTS_REPLY,
+        );
+        std::fs::write(owner.directory.join("factory-locate.json"), LOCATED).unwrap();
+        std::fs::write(owner.directory.join("factory-day.json"), DAY_READING).unwrap();
+        let cache = Mutex::new(crate::read_cache::OwnerReadCache::default());
+        let answer = read_field(
+            &owner.client(),
+            &cache,
+            &[],
+            owner.directory.clone(),
+            &span_window(),
+        )
+        .unwrap();
+
+        // S1 is the one run-bearing signal inside the span; S2 names no run;
+        // S3 names a run but states no instant, so no civil window answers it.
+        let moments: Vec<&TemporalEvent> = answer
+            .events
+            .iter()
+            .filter(|event| event.stream == FACTORY_STREAM)
+            .collect();
+        assert_eq!(moments.len(), 1);
+        assert_eq!(moments[0].subject_ref, "run:A");
+        assert_eq!(moments[0].kind, EventKind::Run);
+        assert_eq!(
+            moments[0].civil_instant.as_deref(),
+            Some("2026-10-08T11:56:32Z")
+        );
+        assert_eq!(
+            moments[0].day_ref.as_deref(),
+            Some("central:day:control:root:2026-10-08")
+        );
+        assert_eq!(moments[0].stream_position, "project:fixture#signal:S1");
+        assert_eq!(
+            moments[0].evidence_refs,
+            vec!["signal:S1".to_string(), "github:fixture#1".to_string()]
+        );
+
+        // The span touches two civil days: one ranged read, located source only.
+        assert_eq!(
+            owner.factory_calls(),
+            vec![
+                format!("project locate {} --json", owner.directory.display()),
+                "telemetry day /fixture/state.json --from-day 2026-10-08 --through-day 2026-10-09 --json"
+                    .to_string(),
+            ]
+        );
+    }
+
+    #[test]
+    fn the_factory_stream_asks_nothing_of_the_owner_for_a_window_without_days() {
+        let _env = owner_env();
+        let owner = FakeOwner::new("factory-all", &nowlist(&["ref-a"]), THOUGHTS_REPLY);
+        std::fs::write(owner.directory.join("factory-locate.json"), LOCATED).unwrap();
+        std::fs::write(owner.directory.join("factory-day.json"), DAY_READING).unwrap();
+        let cache = Mutex::new(crate::read_cache::OwnerReadCache::default());
+        let answer = read_field(
+            &owner.client(),
+            &cache,
+            &[],
+            owner.directory.clone(),
+            &window_all(),
+        )
+        .unwrap();
+        assert!(owner.factory_calls().is_empty());
+        assert!(answer
+            .events
+            .iter()
+            .all(|event| event.stream != FACTORY_STREAM));
+    }
+
+    #[test]
+    fn an_absent_factory_owner_is_a_named_absence_and_the_field_still_answers() {
+        let _env = owner_env();
+        // The locate file stays empty: the owner names the root `absent`.
+        let owner = FakeOwner::new("factory-absent", &nowlist(&["ref-a"]), THOUGHTS_REPLY);
+        let cache = Mutex::new(crate::read_cache::OwnerReadCache::default());
+        let answer = read_field(
+            &owner.client(),
+            &cache,
+            &[],
+            owner.directory.clone(),
+            &span_window(),
+        )
+        .unwrap();
+        assert!(answer
+            .events
+            .iter()
+            .all(|event| event.stream != FACTORY_STREAM));
+        assert!(
+            answer
+                .events
+                .iter()
+                .any(|event| event.stream == "central-now"),
+            "the other streams still join the field"
+        );
+        assert_eq!(
+            owner.factory_calls(),
+            vec![format!(
+                "project locate {} --json",
+                owner.directory.display()
+            )],
+            "an absent source is located once and never read for days"
+        );
     }
 }
 
@@ -1393,5 +1829,132 @@ mod tests {
             history_kind_to_event_kind("knowledge-route"),
             EventKind::Knowledge
         );
+    }
+
+    fn instant(text: &str) -> i64 {
+        text.parse::<jiff::Timestamp>().unwrap().as_millisecond()
+    }
+
+    #[test]
+    fn a_factory_window_names_the_civil_days_its_span_touches() {
+        let field = field();
+        assert_eq!(factory_days_for(&Window::All, &field).unwrap(), None);
+        assert_eq!(
+            factory_days_for(
+                &Window::Day {
+                    day_ref: "central:day:control:root:2026-10-08".into(),
+                },
+                &field
+            )
+            .unwrap(),
+            Some(FactoryDays::One("2026-10-08".into()))
+        );
+        assert_eq!(
+            factory_days_for(
+                &Window::Day {
+                    day_ref: "central:day:control:root:tomorrow".into(),
+                },
+                &field
+            )
+            .unwrap(),
+            None,
+            "a day ref that names no civil date names no Factory day"
+        );
+        let between = |from: &str, to: &str| Window::Between {
+            from_unix_ms: instant(from),
+            to_unix_ms: instant(to),
+        };
+        assert_eq!(
+            factory_days_for(
+                &between("2026-10-08T08:00:00Z", "2026-10-08T20:00:00Z"),
+                &field
+            )
+            .unwrap(),
+            Some(FactoryDays::One("2026-10-08".into()))
+        );
+        assert_eq!(
+            factory_days_for(
+                &between("2026-10-08T05:00:00Z", "2026-10-09T05:00:00Z"),
+                &field
+            )
+            .unwrap(),
+            Some(FactoryDays::Range {
+                from: "2026-10-08".into(),
+                through: "2026-10-09".into(),
+            })
+        );
+        assert_eq!(
+            factory_days_for(
+                &between("2026-10-08T05:00:00Z", "2026-10-08T05:00:00Z"),
+                &field
+            )
+            .unwrap(),
+            None,
+            "an empty span names no day"
+        );
+    }
+
+    #[test]
+    fn a_factory_span_follows_the_civil_day_boundary_not_utc() {
+        // Day boundary at 06:00 local: 04:59Z (05:59 BST) is still the 7th.
+        let field = crate::temporal_events::CivilField::new(
+            "Europe/London".into(),
+            360,
+            "control:root".into(),
+            "rev".into(),
+        )
+        .unwrap();
+        assert_eq!(
+            factory_days_for(
+                &Window::Between {
+                    from_unix_ms: instant("2026-10-08T04:59:00Z"),
+                    to_unix_ms: instant("2026-10-08T05:01:00Z"),
+                },
+                &field
+            )
+            .unwrap(),
+            Some(FactoryDays::Range {
+                from: "2026-10-07".into(),
+                through: "2026-10-08".into(),
+            })
+        );
+    }
+
+    #[test]
+    fn a_factory_day_reading_yields_one_moment_per_run_bearing_signal() {
+        let reading: Value = serde_json::from_str(
+            r#"{"schema":"factory.telemetry-day/v1","signals":[
+                {"signal_ref":"signal:S1","summary":"run A","source_refs":[],"run_ref":"run:A","updated_at_unix_ms":1791460592000},
+                {"signal_ref":"signal:S2","summary":"no run","source_refs":[],"run_ref":null,"updated_at_unix_ms":1791460600000},
+                {"signal_ref":"signal:S3","summary":"run B","source_refs":[],"run_ref":"run:B"}
+            ]}"#,
+        )
+        .unwrap();
+        let events = telemetry_day_to_events("project:fixture", &reading).unwrap();
+        assert_eq!(events.len(), 2);
+        assert_eq!(events[0].subject_ref, "run:A");
+        assert_eq!(
+            events[0].civil_instant.as_deref(),
+            Some("2026-10-08T11:56:32Z")
+        );
+        assert_eq!(events[1].subject_ref, "run:B");
+        assert_eq!(
+            events[1].civil_instant, None,
+            "no stated instant, none invented"
+        );
+        assert!(events.iter().all(|event| event.stream == FACTORY_STREAM));
+
+        let twice: Value = serde_json::from_str(
+            r#"{"signals":[
+                {"signal_ref":"signal:S1","run_ref":"run:A"},
+                {"signal_ref":"signal:S1","run_ref":"run:A"}
+            ]}"#,
+        )
+        .unwrap();
+        assert!(matches!(
+            telemetry_day_to_events("project:fixture", &twice),
+            Err(TemporalEventsError::InvalidRecord { .. })
+        ));
+        assert!(telemetry_day_to_events("project:fixture", &json!({})).is_err());
     }
 }
