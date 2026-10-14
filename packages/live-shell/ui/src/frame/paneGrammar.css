@@ -1,4 +1,12 @@
 /* The DLW pane grammar (FOUNDATION F2, manual §10.2): ⊞ per pane, Follow / pinned per pane, and where a drop lands. */
+
+/* The panes at the mockup's floor (world-shell-mockup.html .pane, .pane.focus, .pb): edge to edge on the shell's ground with
+   a hairline between them, each pane a 1px rule on the panel ground, the focused one in the accent; its body fills it. */
+.candidate-workbench { --oi-shell-gutter: 3px; --oi-shell-ground: var(--bg-0) }
+.candidate-workbench .surface-host { background: var(--bg-0) }
+.candidate-workbench .pane.group { background: var(--bg-2); border: 1px solid var(--line-strong); border-radius: 0; box-shadow: none }
+.candidate-workbench .pane.group.focused { border-color: var(--accent) }
+.candidate-workbench .pane.group > .surface-body { background: var(--bg-2) }
 .pane-split-host { position: relative; display: inline-flex }
 .pane-split, .pane-follow { height: 20px; min-width: 20px; padding: 0 4px; background: none; border: 1px solid transparent; color: var(--text-dim); font-size: 12px; line-height: 1; display: inline-flex; align-items: center; justify-content: center }
 .pane-split:hover, .pane-follow:hover:not(:disabled) { border-color: var(--line); color: var(--text) }

@@ -45,7 +45,7 @@ export function placeClips(set: WorldTrackSet): {placed: Placed[]; end: number} 
 /** A length on the ruler when the set gives no way to say it: the number and the ruler's unit. */
 const plainDuration = (unit: string) => (span: number): string => `${Math.round(span)} ${unit}`
 
-export function ArrangementRuler({set, selection}: {set: WorldTrackSet; selection: TracksSelection}) {
+export function ArrangementRuler({set, selection, empty}: {set: WorldTrackSet; selection: TracksSelection; empty?: string}) {
   const {placed, end} = placeClips(set)
   const held = (at: number) => Math.min(Math.max(at, 0), end)
   const pct = (at: number) => `${(held(at) / end) * 100}%`
@@ -55,7 +55,11 @@ export function ArrangementRuler({set, selection}: {set: WorldTrackSet; selectio
   const tree = trackTree(set.tracks)
   const {own: stalled} = stalledLanes(set, tree)
   const left = set.clips.length - new Set(placed.map(p => p.clip.id)).size
-  if (!set.tracks.length) return <div className="tracks-empty" role="status">No tracks in this work yet.</div>
+  // An empty work draws the ruler and the lane area with the reason in it, as the Session does — never a blank box.
+  if (!set.tracks.length) return <div className="tl" aria-label="Arrangement" data-tracks-view="arrangement" data-empty="true">
+    <div className="tl-ruler" aria-label="Ruler"><span className="tl-head" /><div className="tl-marks">{marks.map((at, i) => <span key={at} className={i === marks.length - 1 ? 'end' : undefined} style={{left: pct(at)}}>{label(at)}</span>)}</div></div>
+    <div className="sg-drop" role="status">{empty ?? 'No tracks in this work yet.'}</div>
+  </div>
   return <div className="tl" aria-label="Arrangement" data-tracks-view="arrangement">
     <div className="tl-ruler" aria-label={`Ruler${set.ruler ? ` in ${set.ruler.unit}` : ''}`}>
       <span className="tl-head" />

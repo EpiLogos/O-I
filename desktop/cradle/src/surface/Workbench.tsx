@@ -59,6 +59,9 @@ export interface PaneGrammar {
   selectionRef?: string;
   /** The host's own marks for the pane controls (the candidate's specimen icons). */
   mark: (name: "follow" | "pin") => ReactNode;
+  /** The host's tab presentation for a group that has not chosen its own (the DLW mockup's compact rail on the pane's edge,
+   * folded until hovered, so no control sits on a pane's face). */
+  tabs?: { presentation: import("../workspace/mode").TabPresentation; orientation: "horizontal" | "vertical" };
 }
 export {dropEdge, INSTRUMENT_DRAG_TYPE} from "./dropEdge";
 import {dropEdge, INSTRUMENT_DRAG_TYPE} from "./dropEdge";
@@ -293,8 +296,8 @@ export function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "gro
   // the geometry it was last pinned in (tabPinOrientation) — that geometry is
   // also what pins record when set. ONE control in the pane tools walks the
   // pin states; ⌘⌥\ cycles the same way (frame.tabs-cycle).
-  const tabPresentation = group.tabPresentation ?? "pinned-horizontal";
-  const pinOrientation = group.tabPinOrientation ?? "horizontal";
+  const tabPresentation = group.tabPresentation ?? props.paneGrammar?.tabs?.presentation ?? "pinned-horizontal";
+  const pinOrientation = group.tabPinOrientation ?? props.paneGrammar?.tabs?.orientation ?? "horizontal";
   const unpinned = tabPresentation === "unpinned";
   const verticalTabs = tabPresentation === "pinned-vertical" || (unpinned && pinOrientation === "vertical");
   const tabListWidth = state.tabListWidth;

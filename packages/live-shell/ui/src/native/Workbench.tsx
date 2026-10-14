@@ -26,6 +26,7 @@ import {bindScopeWriter, publishScope, publishFocusedProject, scopeFromWorkspace
 import {FactoryLiveProvider} from '../../../../../desktop/cradle/src/contributions/factory/FactoryLive'
 import {publishCentreView} from '../../../../../desktop/cradle/src/contributions/factory/desk/deskModel'
 import {registeredHostedSurfaces} from '../../../../../desktop/cradle/src/contributions/generated'
+import {publishWorkbenchOpeners} from './workbenchDoor'
 import {withHostedDescriptor} from '../../../../../desktop/cradle/src/contributions/registry'
 import {DOCUMENT_FORMS} from '../../../../../desktop/cradle/src/flow/documentForms'
 import {createFormInPlace} from '../../../../../desktop/cradle/src/flow/createInPlace'
@@ -773,14 +774,23 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
   for (const key of visitedTrees.current) if (!retainedOwners.has(key.split(':')[0])) visitedTrees.current.delete(key)
   const activeErrors = Object.entries(errors).filter(([id]) => workbenchMembership(book).has(id)).slice(-16)
 
+  // What this Workbench can open is listed in the one browser's Instruments (native/workbenchDoor.ts) — the panes carry no
+  // toolbar of their own (the controls-live-in-device-UI law).
+  const openerActions = useRef({execute, capture, openKind, report})
+  openerActions.current = {execute, capture, openKind, report}
+  const tauri = kernel.transport.kind === 'tauri'
+  useEffect(() => {
+    const run = (open: () => void) => () => { try { open() } catch (cause) { openerActions.current.report(cause) } }
+    const kind = (kind: string) => run(() => { openerActions.current.capture(undefined, true); openerActions.current.openKind(kind) })
+    return publishWorkbenchOpeners([
+      {id: 'surface.new', title: 'New tab', hint: 'an empty tab in the focused pane', open: run(() => openerActions.current.execute('surface.open'))},
+      {id: 'surface.sources', title: 'Sources', hint: 'the native sources of this work', open: run(() => openerActions.current.execute('surface.open-sources'))},
+      ...registeredHostedSurfaces.filter(entry => entry.descriptor.kind !== 'expressions').map(entry => ({id: `hosted.${entry.descriptor.kind}`, title: entry.descriptor.title, hint: 'a surface the suite hosts', open: kind(entry.descriptor.kind)})),
+      ...(tauri ? [{id: 'terminal', title: 'Terminal', hint: 'a shell in a pane', open: kind('terminal')}, {id: 'browser', title: 'Web browser', hint: 'a web page in a pane', open: kind('browser')}] : []),
+    ])
+  }, [tauri])
+
   return <FactoryLiveProvider><section ref={host} className="candidate-workbench" aria-label="Native Workbench">
-    <div className="candidate-workbench-toolbar">
-      <span>{book.current.name}</span>
-      <button type="button" onClick={() => execute('surface.open')}>New tab</button>
-      <button type="button" onClick={() => execute('surface.open-sources')}>Sources</button>
-      {registeredHostedSurfaces.filter(entry => entry.descriptor.kind !== 'expressions').map(entry => <button key={entry.descriptor.descriptor_ref} type="button" onClick={() => {try {capture(undefined, true); openKind(entry.descriptor.kind)} catch (cause) {report(cause)}}}>{entry.descriptor.title}</button>)}
-      {kernel.transport.kind === 'tauri' && <><button type="button" onClick={() => {try {capture(undefined, true); openKind('terminal')} catch (cause) {report(cause)}}}>Terminal</button><button type="button" onClick={() => {try {capture(undefined, true); openKind('browser')} catch (cause) {report(cause)}}}>Browser</button></>}
-    </div>
     {fault && <p role="alert" className="candidate-workbench-fault">{fault}{!config && <button type="button" disabled={!workspace.accessReady} onClick={() => setBackingRetry(value => value + 1)}>Retry backing read</button>}<button type="button" onClick={() => setFault(undefined)}>Dismiss</button></p>}
     {!!failedReleases.current.size && <p role="alert" className="candidate-workbench-fault">Some document views remain mounted because their local checkpoint failed; the normal warm budget may be exceeded.<button type="button" onClick={() => {failedReleases.current.clear(); setReleaseRetry(value => value + 1)}}>Retry local checkpoints</button></p>}
     {returnContext?.origin === 'canvas' && <div className="candidate-workbench-return"><button type="button" disabled={returning || !workspace.accessReady} onClick={returnCanvas}>{returning ? 'Returning…' : 'Return to Canvas'}</button><span>{selected?.title}</span></div>}
@@ -843,6 +853,9 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
           openInstrument: (kind, groupId, edge) => {if (allowed()) latest.current.book.setLayout(layout => openInstrumentAt(layout, kind, {groupId, edge}))},
           selectionRef: owner.context?.selection?.ref,
           mark: name => <Icon name={name === 'pin' ? 'placed' : 'follow'} size={12}/>,
+          // The mockup's panes (world-shell-mockup.html .trail, #375): tabs a compact rail on the pane's left edge, folded until
+          // hovered — no control sits on a pane's face.
+          tabs: {presentation: 'unpinned', orientation: 'vertical'},
         },
         host: {project:factoryScope?.project,sourceWorldRef:factoryScope?.sourceWorldRef,current:factoryCurrent,unavailable:factoryUnavailable,accompanying:tree.layout.accompanying,openEncounter:row=>factoryCurrent()?chooseFactory(row):Promise.reject(Error(factoryUnavailable??'The originating Factory owner is concealed or retired.')),onMessage:report}, subject: owner.context?.subject,
       }
