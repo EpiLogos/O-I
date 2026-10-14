@@ -35,7 +35,6 @@ const here = new URL('../src/', import.meta.url)
 // The device-panel modules inject styles at import time; a minimal document shim stands in (as live-janko.test.mjs does).
 globalThis.document = {getElementById: () => null, createElement: () => ({}), head: {appendChild: () => {}}}
 await import('../src/panels/devices/index.tsx')
-await import('../src/panels/devices-b2/index.tsx')
 await import('../src/panels/devices-pro/index.ts')
 const React = await import('react')
 const modes = await import('../src/live/modes.ts')
