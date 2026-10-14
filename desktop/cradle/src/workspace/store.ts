@@ -63,7 +63,7 @@ export interface Workspace {
  * "return" lands on the same mode, surface and reading position. Refs and
  * positions only — never content, never an authority reading. */
 export type WorldRef = "central" | "epi-logos";
-export interface TrailStop { mode: WorkspaceMode; surfaceRef?: string; surfaceKind?: string; label: string; position?: string }
+export interface TrailStop { mode: WorkspaceMode; surfaceRef?: string; surfaceKind?: string; label: string; position?: string; at?: number }
 /** THE selection (FOUNDATION F1): one value for the whole window — a Day, a document, a clip, a track, a task, a scene.
  * Every pane that follows the selection reads it here; each move is a trail stop. `ref` is the owner's ref (or the
  * Central-relative path for ground material); `track` names the track a clip sits on. Refs only, never content. */
@@ -125,7 +125,7 @@ export function decodeWorldContext(raw: unknown): WorldContext | undefined {
   const reading = readingRaw && typeof readingRaw === "object" && text(readingRaw.ref) ? { ref: text(readingRaw.ref)!, position: text(readingRaw.position) } : undefined;
   const trail = Array.isArray(r.trail) ? r.trail.flatMap((stop): TrailStop[] => {
     const o = stop as Record<string, unknown> | null;
-    return o && typeof o === "object" && isWorkspaceMode(o.mode) && text(o.label) ? [{ mode: o.mode, label: text(o.label)!, surfaceRef: text(o.surfaceRef), surfaceKind: text(o.surfaceKind, 64), position: text(o.position) }] : [];
+    return o && typeof o === "object" && isWorkspaceMode(o.mode) && text(o.label) ? [{ mode: o.mode, label: text(o.label)!, surfaceRef: text(o.surfaceRef), surfaceKind: text(o.surfaceKind, 64), position: text(o.position), at: typeof o.at === "number" && Number.isFinite(o.at) ? o.at : undefined }] : [];
   }).slice(-TRAIL_LIMIT) : undefined;
   const selectionRaw = r.selection as Record<string, unknown> | undefined;
   const selection = selectionRaw && typeof selectionRaw === "object" && isWorkspaceMode(selectionRaw.mode) && text(selectionRaw.kind, 64) && text(selectionRaw.ref, 4096) && text(selectionRaw.title)
@@ -616,7 +616,7 @@ export function useWorkspaces(options: WorkspaceStorageOptions = {}) {
   const select = (selection: WorldSelection | null) => setContext(context => {
     if (!selection) return { ...context, selection: undefined };
     const same = context.selection && context.selection.ref === selection.ref && context.selection.kind === selection.kind && context.selection.mode === selection.mode;
-    const stop: TrailStop = { mode: selection.mode, surfaceRef: selection.ref, surfaceKind: selection.kind, label: selection.title, position: selection.track };
+    const stop: TrailStop = { mode: selection.mode, surfaceRef: selection.ref, surfaceKind: selection.kind, label: selection.title, position: selection.track, at: Date.now() };
     return { ...context, selection, trail: same ? context.trail : [...(context.trail ?? []), stop] };
   });
   const moveSurface=(surfaceId:string,into:"tree"|"side")=>update(w=>moveWorkspaceSurface(w,surfaceId,into));
