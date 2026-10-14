@@ -45,7 +45,7 @@ export interface InhabitantRackProps {
   /** The aperture: the selected flow instance, when one is selected. */
   readonly flow?: {location: CentralLocation} | null
   /** The aperture: the selected conversation subject. */
-  readonly conversation?: {project: string | null; expressionRef: string | null} | null
+  readonly conversation?: {project: string | null; expressionRef: string | null; conversation?: string | null} | null
   /** The navigator's projects, for the form resolver's owner path. */
   readonly projects?: readonly {name?: string; path?: string}[]
   /** [L9] The QL field/PCM owner's reading as the host received it (raw —
@@ -147,8 +147,10 @@ function InhabitantFace({face, manifest, transport, day, flow, conversation, pro
   // every face (held → expanded, the rest folded). Without a focus, a face
   // starts folded, as before.
   const focused = focusInstrument != null && (face.heldBy ?? []).includes(focusInstrument)
-  const [expanded, setExpanded] = useState(focused)
-  useEffect(() => { setExpanded(focused) }, [focusInstrument])
+  // A face whose aperture stands (a Day for the die, a conversation for the Nara face) docks expanded: the selected material's body.
+  const apertureStands = (face.id === 'day-die' && !!day) || (face.id === 'nara-conversation' && !!conversation)
+  const [expanded, setExpanded] = useState(focused || apertureStands)
+  useEffect(() => { setExpanded(focused || apertureStands) }, [focusInstrument, apertureStands])
   const kind = faceKind(face)
   const waiting = face.admission === 'waiting'
   const dockable = (face.dock ?? ['dock']).includes('dock')
@@ -176,7 +178,7 @@ function InhabitantFace({face, manifest, transport, day, flow, conversation, pro
       body = <FlowFace transport={transport} location={flow.location}/>
     } else if (face.id === 'nara-conversation') {
       body = <NaraConversationFace transport={transport} project={conversation?.project ?? null}
-        expressionRef={conversation?.expressionRef ?? null}/>
+        expressionRef={conversation?.expressionRef ?? null} conversation={conversation?.conversation ?? null}/>
     } else if (face.id === 'ql-instrument') {
       // [L9 musical family] the QL field/PCM owner's instrument face. The
       // reading arrives as the host received it (raw); the face parses and

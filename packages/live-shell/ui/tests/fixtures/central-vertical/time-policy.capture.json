@@ -1,0 +1,22 @@
+{
+  "ok": true,
+  "status": "success",
+  "action": "central.time.policy",
+  "data": {
+    "civil_date": "2026-10-14",
+    "local_time": "2026-10-14T02:01:51+01:00",
+    "observed_at_unix_seconds": 1791939711,
+    "policy": {
+      "automatic_day_rollover": true,
+      "day_boundary_minutes": 0,
+      "schema": "central.civil-time-policy/v1",
+      "scope_ref": "control:root",
+      "timezone": "Europe/London"
+    },
+    "revision": "central.content-fnv1a64/v1:741:69da4a44ad65b27f",
+    "schema": "central.civil-time-reading/v1",
+    "source_ref": "central:source:control:root:Control/user/civil-time-policy.json",
+    "source_revision": "central.content-fnv1a64/v1:172:45c4df00122ed21d"
+  },
+  "capture": "ctrl --json action run central.time.policy {} (14 Oct 2026, read-only)"
+}

@@ -40,6 +40,11 @@ const LANES: DayLane[] = [
 const laneFor = (event: TemporalEventRow): DayLane | undefined =>
   LANES.find((lane) => lane.streams.has(event.stream ?? ''));
 
+/** The day-track lane a temporal event lands on, or undefined when the day
+ * track does not draw it. The Central vertical classifies selected clips by
+ * the same rule the projection draws them by (no second lane table). */
+export const dayTrackLaneOf = (event: TemporalEventRow): {id: string; kind: string} | undefined => laneFor(event);
+
 const shortSummary = (summary: string | undefined, ref: string): string => {
   const text = (summary ?? '').trim();
   if (!text) return ref.length > 48 ? `${ref.slice(0, 45)}…` : ref;

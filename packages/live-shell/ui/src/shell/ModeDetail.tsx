@@ -43,6 +43,11 @@ import type {WorldTimelineView} from '../projections/useWorldTemporalReading'
 import {ATLAS_FAMILY_ID} from '../projections/atlas/atlasFamilyManifest'
 import {admitKnowledgeGraphFamily} from '../inhabitants/knowledgeGraphFamilyManifest'
 import {hostedLensOfBarId, type HostedLens, type PaneInstrumentId} from './paneInstrument'
+import type {DayDocumentStanding} from '../central/centralVertical'
+import {centralRackApertures} from '../central/centralRack'
+import {useCentralSelection} from '../central/useCentralSelection'
+import {useCentralDayStanding} from '../central/useCentralDayStanding'
+import {CentralDayNotice} from '../central/CentralDayNotice'
 import './modeSurface.css'
 
 // The door is idempotent (a second identical load composes nothing new);
@@ -67,11 +72,25 @@ const instrumentManifests = (): readonly InhabitantManifest[] => {
   return [...qlManifests(), ...(atlas ? [atlas] : [])]
 }
 
-/** Base · Devices — the ground's family on the chain (Rev 4's table). */
-export function BaseDevicesDetail({transport}: {transport: KernelTransportStatus}) {
+/** Base · Devices — the ground's family on the chain (Rev 4's table). With a
+ * selected Central occasion (a Timeline clip, when no browser subject stands) the
+ * Day die and the conversation take their apertures from the same selection and
+ * owner read the Document row uses (src/central); with none, the chain is unchanged. */
+export function BaseDevicesDetail({transport, world = null, subject = null, standing}: {
+  transport: KernelTransportStatus
+  world?: WorldTimelineView | null
+  subject?: CentralSubjectSelection | null
+  /** A Day standing the caller has already read; absent, the occasion's Day is read here. */
+  standing?: DayDocumentStanding | null
+}) {
+  const selection = useCentralSelection(world, subject)
+  const read = useCentralDayStanding(transport, selection?.dayRef ?? null)
+  const apertures = centralRackApertures(selection, standing !== undefined ? standing : read)
   return (
     <div className="mode-detail" data-mode-detail="base-devices">
-      <InhabitantRack manifests={centralManifests()} transport={transport} />
+      {apertures.dayNotice && <CentralDayNotice notice={apertures.dayNotice} />}
+      <InhabitantRack manifests={centralManifests()} transport={transport}
+        day={apertures.day ?? null} conversation={apertures.conversation ?? null} />
     </div>
   )
 }

@@ -32,10 +32,11 @@ import { configureSettingsHost, openSettings, useSettingsHost } from './settings
 import {createNativeContentActions, readNativeExpressionsContent} from './shell/nativeContent'
 import type {NativeCompositionViewSource} from './shell/compositionViews'
 import {TimelineProjectionResidence, timelinePresentation} from './projections/timelineResidence'
-import {useWorldTemporalReading} from './projections/useWorldTemporalReading'
+import {useWorldTemporalReading, type WorldTimelineView} from './projections/useWorldTemporalReading'
 import {surfModeOf, type SurfMode} from './shell/modeGrammar'
 import type {ModeTransportReadouts} from './shell/ModeTransportBar'
-import {BaseDevicesDetail, BaseDocumentDetail, TechneInstrumentsDetail, InstrumentDeviceDetail, TechneClipDetail, FactoryTaskLogDetail, TechneLensBar, factoryLensPane, worldNowReadout} from './shell/ModeDetail'
+import {CentralClipChooser} from './central/CentralClipChooser'
+import {BaseDevicesDetail, TechneInstrumentsDetail, InstrumentDeviceDetail, TechneClipDetail, FactoryTaskLogDetail, TechneLensBar, factoryLensPane, worldNowReadout} from './shell/ModeDetail'
 import {ModeBrowser} from './shell/ModeBrowser'
 import {ModeCentreFrame} from './shell/ModeCentre'
 import type {CentralSubjectSelection} from './inhabitants/CentralSubjectDetail'
@@ -368,6 +369,12 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   // holds world.ground (in Central as in Technē), so the Earth atlas focused
   // from the lens bar is not drawn over by the Timeline.
   const worldCut = (frameMode === 'base' || frameMode === 'techne') && centerPanel === 'world.ground'
+  // Central's selection route (Central vertical, WORLD-SHELL-DESIGN §17.2): a Timeline clip in Base selects the ONE spine's
+  // occasion, and that selection clears the browser's subject, so exactly one selection stands in the Document row
+  // (CentralClipChooser). Technē and the other modes keep the World cut's view unchanged.
+  const centralWorld: WorldTimelineView = frameMode === 'base'
+    ? {...worldView, selectOccasion: event => { worldView.selectOccasion(event); selectCentralSubject(null) }}
+    : worldView
   const presented = worldCut ? (tab === 'arrangement' ? 'arrangement' as const : 'session' as const) : timelinePresentation(workspace.mode, tab, centerPanel)
   const presentedView = agentShell ? (shellCtx.centreView === 'arrangement' ? 'arrangement' as const : shellCtx.centreView === 'session' ? 'session' as const : null) : presented
   // The focused centre pane's instrument (owner ruling, 13 Oct 2026): the
@@ -475,7 +482,7 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
       <TimelineProjectionResidence set={state.set} document={deep.document} selection={selection} select={choose} colors={colors} setColor={setColor}
         session={worldCut ? undefined : nativeView('session')} arrangement={worldCut ? undefined : nativeView('arrangement')} compactTransport={frameMode === 'expressions'}
         presented={settingsPresented || centreFrameUp ? null : presented}
-        world={worldCut ? worldView : undefined}
+        world={worldCut ? centralWorld : undefined}
         journey={worldCut && frameMode === 'techne' ? {openExpression: workspace.requestExpression} : undefined} />
       {/* The centre's designed frame while the civil reading is absent or in
         flight (the empty-state law): the mode's day-as-clips / Relation
@@ -507,7 +514,7 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
       the pane's own; the native cut's Clip stays native). A focused
       instrument's Device side is handled by the instrument residence below. */}
     <div className="detail-residence" hidden={!detail || agentShell || !(frameMode === 'expressions' || (frameMode === 'techne' && detailMode === 'clip' && !worldCut)) || (detailMode === 'device' && focusedInstrument !== null)}><NativeWorldDetail mode={detailMode} configurationIntent={detailConfiguration} presentMode={mode=>{changeDetailMode(mode);setDetail(true)}} presentNativeEditor={presentNativeEditor} expand={() => {if(!detailExpansionReturn.current)detailExpansionReturn.current={height:detailHeight,workspaceId:workspace.workspaceId,accessEpoch:workspace.accessEpoch};resizeDetail(Math.max(120,viewport[1]-156))}} collapse={() => {const previous=detailExpansionReturn.current;detailExpansionReturn.current=null;if(previous&&previous.workspaceId===workspace.workspaceId&&previous.accessEpoch===workspace.accessEpoch)resizeDetail(previous.height)}}/></div>
-    <div className="detail-residence" hidden={!detail || !(frameMode === 'base' || (frameMode === 'techne' && (detailMode === 'device' || (detailMode === 'clip' && worldCut)))) || (detailMode === 'device' && focusedInstrument !== null)}>{frameMode === 'base' ? (detailMode === 'clip' ? <BaseDocumentDetail transport={workspace.transport} subject={centralSubject} /> : <BaseDevicesDetail transport={workspace.transport} />) : (worldCut && detailMode === 'clip' ? <TechneClipDetail world={worldView} /> : <TechneInstrumentsDetail transport={workspace.transport} />)}</div>
+    <div className="detail-residence" hidden={!detail || !(frameMode === 'base' || (frameMode === 'techne' && (detailMode === 'device' || (detailMode === 'clip' && worldCut)))) || (detailMode === 'device' && focusedInstrument !== null)}>{frameMode === 'base' ? (detailMode === 'clip' ? <CentralClipChooser transport={workspace.transport} subject={centralSubject} world={worldView} /> : <BaseDevicesDetail transport={workspace.transport} world={worldView} subject={centralSubject} />) : (worldCut && detailMode === 'clip' ? <TechneClipDetail world={worldView} /> : <TechneInstrumentsDetail transport={workspace.transport} />)}</div>
     {/* The instrument residence: the focused pane's instrument as the Device side, in any mode but Live. */}
     <div className="detail-residence" hidden={!detail || focusedInstrument === null || detailMode !== 'device'} data-instrument-device={focusedInstrument ?? undefined}>{focusedInstrument !== null && <InstrumentDeviceDetail transport={workspace.transport} instrument={focusedInstrument} centralDevices={frameMode === 'base'} />}</div>
     <div className="detail-residence" hidden={!detail || !agentShell || detailMode !== 'clip'}><FactoryTaskLogDetail taskLabel={factoryTask?.purpose ?? null} task={factoryTask ? {sessionRef: factoryTask.sessionRef, purpose: factoryTask.purpose, agentName: factoryTask.agentName, needleState: factoryTask.needle?.state ?? null, tasks: factoryTask.tasks, budget: factoryTask.budget} : null} /></div>

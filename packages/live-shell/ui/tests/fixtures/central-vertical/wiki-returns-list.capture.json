@@ -1,0 +1,42 @@
+{
+  "ok": true,
+  "status": "success",
+  "action": "central.files.list",
+  "data": {
+    "automatic_agent_or_model_invocation": false,
+    "entries": [
+      {
+        "byte_len": 4904,
+        "kind": "file",
+        "location": {
+          "path": "Control/agents/wiki/returns/return-sample-a-2026-10-07.md",
+          "ref": "central:path:/sample/ground:Control/agents/wiki/returns/return-sample-a-2026-10-07.md",
+          "root": "/sample/ground",
+          "schema": "central.path-ref/v1"
+        },
+        "name": "return-sample-a-2026-10-07.md",
+        "retrieval_allowed": true
+      },
+      {
+        "byte_len": 3799,
+        "kind": "file",
+        "location": {
+          "path": "Control/agents/wiki/returns/return-sample-b-2026-09-16.md",
+          "ref": "central:path:/sample/ground:Control/agents/wiki/returns/return-sample-b-2026-09-16.md",
+          "root": "/sample/ground",
+          "schema": "central.path-ref/v1"
+        },
+        "name": "return-sample-b-2026-09-16.md",
+        "retrieval_allowed": true
+      }
+    ],
+    "location": {
+      "path": "Control/agents/wiki/returns",
+      "ref": "central:path:/sample/ground:Control/agents/wiki/returns",
+      "root": "/sample/ground",
+      "schema": "central.path-ref/v1"
+    },
+    "schema": "central.directory-reading/v1"
+  },
+  "capture": "ctrl --json action run central.files.list {path: Control/agents/wiki/returns} (14 Oct 2026, read-only)"
+}

@@ -1,0 +1,15 @@
+{
+  "ok": false,
+  "status": "unavailable_capability",
+  "action": "central.day.read",
+  "error": {
+    "code": "source_or_scope_unavailable",
+    "message": "DayRef is not recorded in this World",
+    "details": {
+      "automatic_authority_widening": false,
+      "outside_writes_prevented": false,
+      "retry_policy_action": "central.work.policy"
+    }
+  },
+  "capture": "ctrl --json action run central.day.read {day_ref: central:day:control:root:2026-10-14} (14 Oct 2026, read-only): the owner refuses a day it does not record"
+}
