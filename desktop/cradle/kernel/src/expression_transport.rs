@@ -472,8 +472,18 @@ mod endpoint_tests {
         let b = call(&paths[1], &list).unwrap();
         assert_eq!(a["outcome"]["schema"], "oi.expression-list/v1");
         assert_eq!(b["outcome"]["schema"], "oi.expression-list/v1");
-        assert_eq!(a["outcome"]["expressions"].as_array().unwrap().len(), 1);
-        assert_eq!(b["outcome"]["expressions"].as_array().unwrap().len(), 1);
+        // Count the works each endpoint holds open: since N1 the list also names the closed works of the owner's real home.
+        let open = |listing: &serde_json::Value| -> Vec<serde_json::Value> {
+            listing["outcome"]["expressions"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .filter(|entry| entry["open"] != serde_json::Value::Bool(false))
+                .cloned()
+                .collect()
+        };
+        assert_eq!(open(&a).len(), 1);
+        assert_eq!(open(&b).len(), 1);
         assert_eq!(
             a["outcome"]["expressions"][0]["expression_ref"],
             "expression:endpoint-a"

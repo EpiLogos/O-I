@@ -1874,12 +1874,18 @@ impl Application {
             Request::List => {
                 // Most recently touched first — the recency the Library and
                 // the Expressions panel present, now disclosed rather than
-                // invented from ref order.
+                // invented from ref order. Then every work that lives only as
+                // its file in the owner's works home (N1, expression_home):
+                // `open: false` with its location, after the open works.
                 let mut entries: Vec<&Document> = self.documents.values().collect();
                 entries.sort_by_key(|d| {
                     std::cmp::Reverse(self.touched.get(&d.expression_ref).copied().unwrap_or(0))
                 });
-                json!({"schema":"oi.expression-list/v1","expressions":entries.iter().map(|d|json!({"expression_ref":d.expression_ref,"revision":d.revision,"title":d.title,"dirty":self.saved.get(&d.expression_ref)!=Some(&d.revision),"last_touched_unix":self.touched.get(&d.expression_ref).copied().unwrap_or(0)})).collect::<Vec<_>>()})
+                let open = self.documents.keys().map(String::as_str).collect();
+                let home = crate::expression_home::list(client, &open);
+                let mut expressions = entries.iter().map(|d|json!({"expression_ref":d.expression_ref,"revision":d.revision,"title":d.title,"dirty":self.saved.get(&d.expression_ref)!=Some(&d.revision),"last_touched_unix":self.touched.get(&d.expression_ref).copied().unwrap_or(0),"open":true})).collect::<Vec<_>>();
+                expressions.extend(home.closed);
+                json!({"schema":"oi.expression-list/v1","expressions":expressions,"unreadable":home.unreadable,"home":home.home})
             }
             Request::Inspect { expression_ref } => self.inspect(&expression_ref)?,
             Request::Create {
