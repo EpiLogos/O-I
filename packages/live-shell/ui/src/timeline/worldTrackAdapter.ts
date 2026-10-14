@@ -55,6 +55,9 @@ export interface WorldTrackActions {
   /** Seat what is dropped on the empty track (manual §10.3: "To seat an agent, drag it onto an empty track"): the drag type
    * the set accepts, and the owner op that seats it. The dropped payload reaches `run` as the drag carried it. */
   seat?: {op: string; accepts: string; run(payload: string): unknown};
+  /** The grain the owner's ops take when it is coarser than the controls look (Factory: "whole harness" — a Stop on one track
+   * stops the harness). The Session says it on every control it applies to. */
+  grain?: string;
 }
 /** What an owner op answers when it answers in words (the shell's own control receipt): a note, or the refusal. An action's
  * `run` may return one, or a promise of one; the Session shows it where the action was pressed. Any other return is not shown. */
