@@ -25,7 +25,8 @@ export const useFactoryTracks: UseModeTracks = reading => {
   const transport = reading.transport ?? NO_CARRIER
   const agency = useAgencySessions(transport)
   const harness = useHarnessBinding(transport)
-  const owned = transport.kind !== 'unavailable' && harness.error === null
+  // Actions only once the owner has named its harness binding (never the shell's default 'cursor').
+  const owned = transport.kind !== 'unavailable' && harness.error === null && harness.resolved
   const controls = useMemo<FactoryControls | undefined>(
     () => owned ? {control: control => harnessAgentControl(transport, harness.binding, control)} : undefined,
     [owned, transport, harness.binding],

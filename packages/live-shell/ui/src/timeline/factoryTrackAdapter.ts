@@ -131,6 +131,7 @@ function actionsFor(controls: FactoryControls, tracks: readonly WorldTrack[], cl
   const columnById = new Map(columns.map(column => [column.id, column]))
   const clipById = new Map(clips.map(clip => [clip.id, clip]))
   return {
+    grain: FACTORY_GRAIN,
     stopTrack: {op: FACTORY_STOP_OP, run: trackId => {
       const track = trackById.get(trackId)
       return track ? atWholeHarness(controls.control('stop'), `Stop on “${track.name}”`) : refused(`"${trackId}" is not a session of this work.`)

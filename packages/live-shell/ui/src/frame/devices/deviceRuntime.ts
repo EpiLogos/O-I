@@ -26,7 +26,8 @@ export interface DeviceInstance {
 
 /** The compact size's controls: the declared macros, else the rows marked compact, else the first write rows — at most four. */
 export function compactRows(rows: readonly SdkParamRow[]): SdkParamRow[] {
-  const macros = rows.filter(row => row.macro)
+  // A macro is a macro only when it maps at least one row (lock §5.3); a mapping the owner has not declared is not one.
+  const macros = rows.filter(row => (row.macro?.maps.length ?? 0) > 0)
   if (macros.length) return macros.slice(0, 4)
   const marked = rows.filter(row => row.compact)
   if (marked.length) return marked.slice(0, 4)
