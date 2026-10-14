@@ -383,14 +383,14 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
     setTab(presentation); setTimelinePanePresentation(presentation); setCenterPanel(intent?.panel ?? workbenchCentre(view?.centerPanel) ?? opening.centerPanel)
     changeDetailMode(view?.detailMode ?? opening.detailMode); resizeBrowser(view?.browserWidth ?? null); resizeDetail(view?.detailHeight ?? null)
     chooseBrowserCategory(view?.browserCategory)
-    setBrowser(view?.browser ?? opening.browser); setDetail(view?.detail ?? opening.detail); setDock(view?.dock ?? opening.dock)
+    setBrowser(view?.browser ?? opening.browser); setDetail(view?.detail ?? opening.detail); setDock(view?.rail ? view.dock ?? opening.dock : opening.dock)
     holdLive(view?.selection ?? {track: 0, scene: null}); presentSettings(view?.settingsPresented ?? false)
     if (view?.alsPath !== undefined) selectedSet.current = view.alsPath ?? null
     setRestoredKey(restoreKey)
   }, [restoreKey, restoredKey, continuity.applicationView])
   useEffect(() => {
     if (restoredKey !== restoreKey) return
-    continuity.checkpointApplicationView({alsPath: state.path ?? restored?.alsPath ?? null, tab, selection: liveHeld, browserCategory,
+    continuity.checkpointApplicationView({alsPath: state.path ?? restored?.alsPath ?? undefined, rail: true, tab, selection: liveHeld, browserCategory,
       browser, detail:nativeEditorPresented?nativeEditorReturn!.detail:detail, dock, browserWidth, detailHeight:detailExpansionReturn.current?detailExpansionReturn.current.height:detailHeight, centerPanel:nativeEditorPresented?nativeEditorReturn!.centerPanel:centerPanel, detailMode:nativeEditorPresented?nativeEditorReturn!.detailMode:detailMode, settingsPresented, settingsReturn: workspace.mode === 'expressions' || workspace.mode === 'techne' ? workspace.mode : undefined})
   }, [restoredKey, restoreKey, state.path, tab, liveHeld, browserCategory, browser, detail, dock, browserWidth, detailHeight, centerPanel, detailMode, nativeEditorReturn, nativeEditorPresented, settingsPresented, workspace.mode, continuity.checkpointApplicationView])
   useEffect(() => {
