@@ -16,7 +16,9 @@ input { min-width:0; border:1px solid var(--line); background:var(--bg-1); paddi
 .frame.browser-hidden.dock-open { grid-template-columns:0 minmax(0,1fr) var(--dock-w, 260px) }
 .frame.detail-hidden { grid-template-rows:var(--transport-h) minmax(0,1fr) 0 28px }
 .transport { grid-area:transport; display:flex; flex-direction:column }
-.set-title { height:20px; text-align:center; color:var(--text-dim); font-weight:600; overflow:hidden; white-space:nowrap; text-overflow:ellipsis }
+.set-title { height:14px; line-height:14px; text-align:center; color:var(--text-dim); font-size:11px; font-weight:400; overflow:hidden; white-space:nowrap; text-overflow:ellipsis }
+.set-title b { color:var(--text); font-weight:500 }
+.set-title-absent { color:var(--text-faint) }
 .transport-controls { display:flex; align-items:center; flex:1 }
 .transport-group { display:flex; align-items:center }
 .transport-group>button:not(.transport-btn) { background:var(--bg-2) }
@@ -95,7 +97,6 @@ input { min-width:0; border:1px solid var(--line); background:var(--bg-1); paddi
 .panel-hint { color:var(--text-faint); overflow-wrap:anywhere }
 .panel-hint-error,.statusbar-error { color:var(--rec) }
 .statusbar { grid-area:status; border-top:1px solid var(--line); background:var(--bg-1); display:flex; align-items:center; color:var(--text-dim); min-width:0 }
-.statusbar-path { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
 .statusbar-agent-info { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--text-dim) }
 .statusbar-agent-info b { color:var(--text); font-weight:600; margin-right:6px }
 .statusbar-counts { white-space:nowrap }
@@ -110,9 +111,11 @@ input { min-width:0; border:1px solid var(--line); background:var(--bg-1); paddi
 @media(max-width:1000px) { :root { --session-slot-w:80px} .frame.dock-open { grid-template-columns:var(--browser-w) minmax(0,1fr) 210px } .meter-field { display:none } .detail-inspector { width:140px } }
 @media(max-width:760px) { :root { --session-slot-w:68px} .browser-search { padding:3px } .position-field { padding:3px 5px } .detail-inspector { width:118px } .track-reading { height:88px } .mixer-unavailable { height:104px } .track-slots { min-height:208px } .statusbar-counts { font-size:9px } .frame.dock-open { grid-template-columns:0 minmax(0,1fr) 210px } .frame.dock-open .browser { display:none } .arrange-lane-label,.arrange-header-space { width:140px } }
 /* Second evidence pass: complete control geometry, reading values only from native contracts. */
-:root { --transport-h:64px; --session-slot-w:68px; --browser-w:clamp(176px,22.4vw,430px); --detail-h:clamp(180px,27.5vh,330px) }
+:root { --transport-h:46px; --session-slot-w:68px; --browser-w:clamp(176px,22.4vw,430px); --detail-h:clamp(180px,27.5vh,330px) }
 .frame { position:relative; padding:0 6px 0; gap:0; background:var(--bg-1) }
-.transport { margin:0 -6px; padding:3px 10px 8px; background:var(--bg-1); border-bottom:3px solid var(--line) }
+/* The transport at the mockup's floor (.tp): a 14px title line over one row of 19–22px controls — 46px with its 3px rule. */
+.transport { margin:0 -6px; padding:2px 10px 5px; background:var(--bg-1); border-bottom:3px solid var(--line) }
+.transport .surface-icons button { width:24px; height:22px }
 .transport-controls { gap:7px }
 .transport-group { gap:2px; white-space:nowrap }
 .native-control { height:19px; min-width:17px; padding:1px 4px; background:var(--bg-0); border:1px solid #30343a; line-height:14px; font-size:10px }
@@ -274,7 +277,9 @@ input { min-width:0; border:1px solid var(--line); background:var(--bg-1); paddi
 .velocity-lane>div { flex:1; background:repeating-linear-gradient(90deg,transparent 0,transparent 71px,var(--line) 71px,var(--line) 72px) }
 .statusbar { padding:0 4px; gap:8px; border:none; font-size:10px }
 .statusbar-info { width:14px; height:14px; border-radius:50%; background:var(--bg-3); display:grid; place-items:center; font-weight:bold }
-.statusbar-path { background:var(--bg-0); padding:2px 5px }
+/* The Info view (the mockup's .sb .info): what the pointer is over, read in the bar; idle, how to use it. */
+.statusbar-info-line { flex:1; min-width:0; height:20px; padding:2px 8px; line-height:16px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; background:var(--bg-0); color:var(--text-dim) }
+.statusbar-info-line b { color:var(--text); font-weight:500; margin-right:6px }
 .statusbar-track { min-width:90px; max-width:140px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; color:var(--text-dim) }
 .statusbar-mini-meter { color:var(--accent); font-size:17px; line-height:18px }
 .browser-resizer { position:absolute; left:calc(var(--browser-w) + 2px); top:var(--transport-h); bottom:calc(var(--detail-h) + 28px); width:6px; cursor:col-resize; z-index:3; touch-action:none }
@@ -383,7 +388,4 @@ input { min-width:0; border:1px solid var(--line); background:var(--bg-1); paddi
 .frame.agent-shell-frame .one-browser { grid-area: br; }
 .frame.agent-shell-frame .widget-rail { grid-area: dk; }
 .native-foundation-fault { position: fixed; z-index: 90; bottom: 28px; left: 12px; max-width: min(640px, calc(100vw - 24px)); padding: 8px 12px; background: #251e1c; color: #edc9bc; border: 1px solid #705344; font-size: 12px; }
-.native-foundation-pending { position: fixed; z-index: 90; bottom: 3px; left: 32px; color: var(--muted); font-size: 11px; pointer-events: none; }
 
-/* The Expressions bar carries a second row of pinned controls (NativeBarStrip): the header grows to hold it. */
-.frame:has(.native-transport-pins) { --transport-h:98px }

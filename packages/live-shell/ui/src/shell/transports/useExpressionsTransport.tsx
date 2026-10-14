@@ -30,6 +30,7 @@ import {currentCompositionReply, currentNativeSceneReply, type NativeComposition
 import type {NativeContentActions, NativeSceneAction} from '../nativeContent'
 import type {ModeTransportReadouts} from '../ModeTransportBar'
 import type {TransportReading} from '../modeTransports'
+import {holdRatio} from './transportReadings'
 import '../../components/NativeTransportBar.css'
 
 type Actions = NonNullable<NativeContentActions>
@@ -66,6 +67,11 @@ export const useExpressionsTransport = (reading: ExpressionsTransportReading): T
   const editorReading = source?.currentReading?.() ?? null
   const barApply: BarApply = changes => source?.actions ? source.actions.applyChanges(changes) : Promise.resolve({ok: false, error: 'The native editor is not attached.'})
   const timeScale = editorReading ? barParameter(editorReading, 'fluid.timeScale') : null                       // :42
+  // The scene's ratio of hold to change (signature): the field's morph hold share, the dwell readNativeGlyphTiming reads for a
+  // morph clock (shell/nativeContent.ts) — the engine's effective value while automated, else the authored base.
+  const hold = editorReading ? barParameter(editorReading, 'toroidalMorph.holdRatio') : null
+  const holdShare = hold ? hold.effective ?? hold.base : null
+  const ratio = holdRatio(holdShare)
   // The session is one object per parameter, reading the latest runner and automation state at each call, so a re-render never strands a drag (:43-46).
   const liveDeps = useRef<{run: typeof link.run; apply: (value: number) => Promise<boolean>; automated: boolean}>({run: null, apply: async () => false, automated: false})
   liveDeps.current = {run: link.run, automated: timeScale?.automated ?? false,
@@ -189,6 +195,7 @@ export const useExpressionsTransport = (reading: ExpressionsTransportReading): T
 
   return {
     ...readoutBindings(reading.readouts),
+    ...(ratio && hold ? {signature: {readout: {value: ratio, title: `${hold.label} — the scene's ratio of hold to change: the field holds ${Math.round((holdShare ?? 0) * 100)} % of each morph cycle (${hold.automated && hold.effective !== undefined ? 'the engine\'s effective value, automated' : 'the authored value'}).`}}} : {}),
     // Tempo: the field's time scale, the one numeric control the old bar kept in the bar (:176).
     ...(timeScale && timeScaleSession ? {tempo: {
       control: <BarValue parameter={timeScale} session={timeScaleSession} disabled={!ready} reason={ready ? null : 'The native editor is busy or not attached.'} />,

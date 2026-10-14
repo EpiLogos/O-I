@@ -89,7 +89,8 @@ export function occasionStepControl(spine: TimeSpine, meaning: SlotMeaning): Rea
 }
 
 /** Technē's tap slot, Back to Now, over the spine: enabled only while an occasion is selected, and its title says why it
- * is not. Clearing the selection is the spine's own `returnToNow`; retained occasions stay retained. */
+ * is not. Clearing the selection is the spine's own `returnToNow`; retained occasions stay retained. Its face is the mode's
+ * word for the slot (the mockup's `Tap`); its name stays the meaning. */
 export function returnToNowControl(spine: TimeSpine, meaning: SlotMeaning): ReactNode {
   const selected = spine.occasion() !== null
   const reason = selected
@@ -97,7 +98,7 @@ export function returnToNowControl(spine: TimeSpine, meaning: SlotMeaning): Reac
     : 'No occasion is selected, so the transport already stands at Now.'
   return <button type="button" className="native-control" data-i={slotDataI(meaning)} aria-label={meaning.label}
     disabled={!selected} title={`${meaning.label} — ${meaning.fn}. ${reason}`}
-    onClick={() => { spine.returnToNow() }}>{meaning.label}</button>
+    onClick={() => { spine.returnToNow() }}>{meaning.face ?? meaning.label}</button>
 }
 
 /** Technē's arm slot, Instrument writes. No instrument write gate stands in the shell: `shell.setWriteArm` is the AGENT's

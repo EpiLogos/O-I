@@ -2,7 +2,12 @@ import { Icon } from './Icon'
 import { Icon as CutIcon } from '../inhabitants/sdk/Icon'
 import { MODE_GRAMMAR, surfModeOf, type SurfMode } from '../shell/modeGrammar'
 import type { ModeTransportReadouts } from '../shell/ModeTransportBar'
-import { ModeTransport } from '../shell/modeTransports'
+import { MODE_TITLE, ModeTransport } from '../shell/modeTransports'
+import { useContext } from 'react'
+import { useOptionalContinuity } from '../continuity/workspace'
+import { ShellConfigContext } from '../shell/useSet'
+import { useSpineRevision } from '../shell/ModeTransportBar'
+import { titleLine, worldName } from '../shell/transports/transportReadings'
 import type { TimeSpine } from '../timeline/timeSpine'
 import type { PaneInstrumentId } from '../shell/paneInstrument'
 import { ModeModeRail } from '../shell/ModeModeRail'
@@ -34,7 +39,7 @@ export function TransportBar({ tempoBpm, name, mode, setView, chooseMode, presen
 }) {
   const surf = surfModeOf(mode) ?? 'live'
   const grammar = MODE_GRAMMAR[surf]
-  return <header className="transport"><div className="set-title">{mode === 'live' ? name || 'Untitled' : workName || grammar.title}</div><div className="transport-controls">
+  return <header className="transport"><TransportTitle line={MODE_TITLE[surf]} setName={name} workName={workName} timeSpine={timeSpine} /><div className="transport-controls">
     {/* The chrome toggles wear the cut's marks (the same controls in the
       agent transport draw the same marks — the icon law). */}
     <button className="chrome-toggle" aria-label="Toggle browser" aria-pressed={browser} onClick={toggleBrowser} title="Browser · ⌘⌥B"><CutIcon name="browser" size={15} /></button>
@@ -65,3 +70,20 @@ export function TransportBar({ tempoBpm, name, mode, setView, chooseMode, presen
     <button className="chrome-toggle" aria-label="Toggle detail" aria-pressed={detail} onClick={toggleDetail} title="Detail panel · ⌘⌥L"><CutIcon name="detail" size={15} /></button><button className="chrome-toggle" aria-label="Toggle agents and context" aria-pressed={dock} onClick={toggleDock} title="Agents & context"><CutIcon name="dock" size={15} /></button>
   </div></header>
 }
+
+/** The title line (the mockup's `#title`: "<b>Bollingen · the stone carved</b> — Central · 08 Oct"): THE selection (the
+ * book's WorldContext.selection), the world (the book's WorldContext.world, else the World the host discloses) and the civil
+ * day the World cut's spine stands in (`now().dayRef`) — or, in Live, the open set's name. With no selection, the open work. What the line reads is the mode's
+ * registration (shell/modeTransports.tsx MODE_TITLE); with nothing standing it says so. */
+export function TransportTitle({line, setName, workName, timeSpine}: {line: 'set' | 'selection'; setName?: string; workName?: string; timeSpine?: TimeSpine | null}) {
+  const context = useOptionalContinuity()?.current.context
+  const config = useContext(ShellConfigContext)
+  useSpineRevision(timeSpine)
+  // With no selection standing, the open work in front of you (the hosted frame's document) is what the line names, as before.
+  const title = titleLine({line, setName, selection: context?.selection ?? (workName ? {title: workName} : null), world: worldName(context?.world, config), civilDayRef: timeSpine?.now()?.dayRef ?? null})
+  const words = [title.lead ?? title.absent, title.context].filter(Boolean).join(' — ')
+  return <div className="set-title" data-region="title-line" title={words} data-i={`${title.lead ?? title.absent ?? ''}|${line === 'set' ? 'The open Live set.' : 'THE selection, its world and the day it stands in.'}`}>
+    {title.lead ? <b>{title.lead}</b> : <span className="set-title-absent">{title.absent}</span>}{title.context ? ` — ${title.context}` : null}
+  </div>
+}
+
