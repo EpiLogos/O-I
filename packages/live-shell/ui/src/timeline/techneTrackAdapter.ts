@@ -26,8 +26,10 @@
 //   source's years and is not carried: only `at` places a clip;
 // - ids: a clip keeps the id the World cut gave it, so THE selection and the occasion route (`eventByClipId`) resolve it as they
 //   resolve the World cut's own clips. Only a stop with no clip of its own is given one (`techne:stop:<walk>:<n>`);
-// - layers, sections (an epoch's span, moved onto the ruler) and walks ride along as the contract names them (lock §7.2), the
-//   walks re-pointed at the clips this set holds. Takes are not carried: the layers say which reading extends which, and the
+// - layers, sections (an epoch's span, moved onto the ruler; a dynamics route's movement, whose span is in stop indices, laid
+//   over the places its stops stand) and walks ride along as the contract names them (lock §7.2), the walks re-pointed at the
+//   clips this set holds. The ruler also says where a civil instant stands (`ruler.instant`, inside a covered day), so material
+//   known only by its instant — the spine's cron firings — stands where it happened. Takes are not carried: the layers say which reading extends which, and the
 //   sources name no per-clip take;
 // - follow: a stop's launch follows into the walk's next stop (lock §9.4: "follow = the walk's next stop"), read from the walk's
 //   own order. Launch quantize is the shell's armed timing, not a reading of the stop, so it is absent;
@@ -268,10 +270,20 @@ export function projectTechneTracks(reading: TechneReading): WorldTrackSet {
   for (const walk of journeyWalksOf(sets)) if (!walks.some(seen => seen.id === walk.id)) walks.push(walk)
   const layers: WorldTrackLayer[] = []
   const sections: WorldTrackSection[] = []
+  // A section's span is in its family's own units (worldTrackAdapter.ts). An Aion epoch's and a Red Book section's are years; a
+  // dynamics route's movement spans its walk's stop indices (projections/atlas/walkTimeline.ts:85-97), so it is placed through
+  // its stops, never read as years.
+  const stopUnits = new Map<string, string>()
   for (const set of sets) {
     for (const layer of set.layers ?? []) if (!layers.some(seen => seen.id === layer.id)) layers.push(layer)
-    for (const section of set.sections ?? []) if (!sections.some(seen => seen.id === section.id)) sections.push(section)
+    const route = set.walks?.find(walk => walk.kind === DYNAMICS_ROUTE_WALK_KIND)
+    for (const section of set.sections ?? []) {
+      if (sections.some(seen => seen.id === section.id)) continue
+      sections.push(section)
+      if (route) stopUnits.set(section.id, route.id)
+    }
   }
+  const yearSections = sections.filter(section => !stopUnits.has(section.id))
   const layerName = new Map(layers.map(layer => [layer.id, layer.name]))
 
   // ── lanes: the streams that have an owner read ────────────────────────────────────────────────────────────────────────────
@@ -400,7 +412,7 @@ export function projectTechneTracks(reading: TechneReading): WorldTrackSet {
   // ── the ruler ─────────────────────────────────────────────────────────────────────────────────────────────────────────────
   const years: number[] = []
   for (const draft of drafts) if (draft.place.kind === 'year') years.push(draft.place.year)
-  for (const section of sections) years.push(section.span.start, section.span.end)
+  for (const section of yearSections) years.push(section.span.start, section.span.end)
   const civilDays = [...new Set(drafts.flatMap(draft => draft.place.kind === 'civil' ? [draft.place.day] : []))].sort()
   const noTime = drafts.filter(draft => draft.place.kind === 'none').length
   const hasDeep = years.length > 0
@@ -434,6 +446,15 @@ export function projectTechneTracks(reading: TechneReading): WorldTrackSet {
     const index = Math.min(civilDays.length - 1, Math.floor(within / dayWidth))
     return `${shortDay(civilDays[index])} ${clock(clamp(Math.round(((within - index * dayWidth) / dayWidth) * MINUTES_PER_DAY), 0, MINUTES_PER_DAY - 1))}`
   }
+  // Where a civil instant stands: inside a covered day, at its UTC minute (the same placement a run receipt gets); a day the
+  // ruler does not cover has no place.
+  const instant = (unixMs: number): number | undefined => {
+    if (!hasToday || !finite(unixMs)) return undefined
+    const key = new Date(unixMs).toISOString().slice(0, 10)
+    const index = civilDays.indexOf(key)
+    if (index < 0) return undefined
+    return todayStart + (index + clamp(Math.round((unixMs - dayStartMs(key)) / 60000), 0, MINUTES_PER_DAY - 1) / MINUTES_PER_DAY) * dayWidth
+  }
   const unit = [
     noTime ? 'no-time slots' : '',
     hasDeep ? 'deep-time years (the atlas\'s non-linear scale)' : '',
@@ -454,11 +475,20 @@ export function projectTechneTracks(reading: TechneReading): WorldTrackSet {
   // ── walks, re-pointed at the clips this set holds ────────────────────────────────────────────────────────────────────────
   const outWalks: WorldWalk[] = orderedWalks.map(walk => ({...walk, stops: walk.stops.map((stop, index) => ({...stop, clipId: (stopClipIds.get(walk) as string[])[index]}))}))
   const set: WorldTrackSet = {columns, tracks, clips}
-  if (noTime || hasDeep || hasToday) set.ruler = {unit, label}
+  if (noTime || hasDeep || hasToday) set.ruler = {unit, label, ...(hasToday ? {instant} : {})}
   if (layers.length) set.layers = layers
-  if (hasDeep && sections.length) {
-    set.sections = sections.map(section => ({...section, span: {start: yearAt(section.span.start), end: yearAt(section.span.end)}}))
-  }
+  // Sections on the ruler: a year span by the deep-time scale; a stop-index span over the places its stops' clips stand (the last
+  // stop's slot included), and none when no stop of it has a place.
+  const placedAt = new Map(clips.map(clip => [clip.id, clip.at?.start]))
+  const onRuler = sections.flatMap((section): WorldTrackSection[] => {
+    const routeId = stopUnits.get(section.id)
+    if (routeId === undefined) return hasDeep ? [{...section, span: {start: yearAt(section.span.start), end: yearAt(section.span.end)}}] : []
+    const route = orderedWalks.find(walk => walk.id === routeId)
+    const ids = route ? (stopClipIds.get(route) ?? []).slice(section.span.start, section.span.end) : []
+    const starts = ids.map(id => placedAt.get(id)).filter(finite)
+    return starts.length ? [{...section, span: {start: Math.min(...starts), end: Math.max(...starts) + NO_TIME_UNIT}}] : []
+  })
+  if (onRuler.length) set.sections = onRuler
   if (outWalks.length) set.walks = outWalks
   const actions = reading.controls ? actionsFor(reading.controls, outWalks) : undefined
   if (actions) set.actions = actions

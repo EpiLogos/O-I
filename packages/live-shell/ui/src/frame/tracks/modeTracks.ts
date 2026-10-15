@@ -2,6 +2,9 @@
 // reading the frame publishes. A table, never a branch in the frame. Live's adapter is the reference (the open set);
 // Central's are its five streams (useCentralTracks.ts); Factory's its agent sessions and their tasks (useFactoryTracks.ts);
 // Technē's its native streams with the walks' stops as rows (useTechneTracks.ts); Expressions' the open work's scenes.
+// The three modes whose tracks are the World cut (shell/modeFrames.ts MODE_TRACK_SOURCES 'world') are wrapped by `worldCut`
+// (useWorldCut.ts): their sets also carry the time spine's cron firings, the occasion stood in and the rails' stop focus, as the
+// World cut presentation drew them beside its tracks.
 import type {SurfMode} from '../../shell/modeGrammar'
 import type {SetDocument} from '../../shell/document'
 import type {SetSummary} from '../../shell/useSet'
@@ -14,6 +17,7 @@ import {expressionsTrackAdapter} from '../../timeline/expressionsTrackAdapter'
 import {useFactoryTracks} from './useFactoryTracks'
 import {useCentralTracks} from './useCentralTracks'
 import {useTechneTracks} from './useTechneTracks'
+import {worldCut} from './useWorldCut'
 import type {JourneyPresentation} from '../../timeline/journeyWalks'
 
 export interface TracksReading {
@@ -58,8 +62,8 @@ export const tracksOf = (answer: WorldTrackSet | ModeTracksWaiting | null): Worl
 export const MODE_TRACKS: Readonly<Record<SurfMode, UseModeTracks>> = {
   // With no set open Live is waiting — the empty Session says how to open one (the reading's waiting words), not "no tracks".
   live: reading => reading.set ? liveSetTrackAdapter.project({set: reading.set, document: reading.document, colors: reading.colors}) : null,
-  base: useCentralTracks,
-  factory: useFactoryTracks,
-  techne: useTechneTracks,
+  base: worldCut(useCentralTracks),
+  factory: worldCut(useFactoryTracks),
+  techne: worldCut(useTechneTracks),
   expressions: reading => nativeTracks(reading.native, reading.workName),
 }

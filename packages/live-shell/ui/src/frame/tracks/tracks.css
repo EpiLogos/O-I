@@ -109,3 +109,61 @@
 
 /* The owner's grain, when its ops act on more than a control looks (Factory: the whole harness). */
 .sg-grain { margin-left: 4px; font-size: 8.5px; color: var(--text-faint); text-transform: uppercase; letter-spacing: .04em }
+
+/* A clip's standing (trackMarks.ts): the cut's edge standings (icon-cut.html:1659-1664) in shell tokens — fact solid in the text
+   colour, claim dashed in the cut's violet, inferred dotted, disputed broken in the record red, ghost dashed and dim; mythic, which
+   the cut does not draw, dotted in the dim amber. The views draw the edge as a 2px left rule (the old World cut's). */
+.sg-pane, .tl { --standing-fact: var(--text); --standing-claim: var(--parasakti, var(--sel)); --standing-inferred: var(--text); --standing-disputed: var(--rec); --standing-mythic: var(--accent-dim, var(--accent)); --standing-ghost: var(--text-dim) }
+
+/* Sections in the Session (trackSections.ts): a head row across the grid in the section's atmosphere (--atm, from the reading;
+   with none, the strong line), its name, fold and rails in the stops column, and a rail per section on every row under it. */
+.cs.sect-band { height: 16px; padding: 0 6px; background: color-mix(in srgb, var(--atm, var(--line-strong)) 24%, var(--bg-1)); color: var(--text-dim); font-size: 9px }
+.cs.sect-head { height: 16px; gap: 3px; padding-left: calc(6px + var(--rails, 0) * 4px); background: color-mix(in srgb, var(--atm, var(--line-strong)) 38%, var(--bg-1)); color: var(--text); font-size: 9px }
+.cs[data-section-rails] { padding-left: calc(6px + var(--rails, 0) * 4px) }
+.sect-fold { flex: none; width: 10px; padding: 0; background: none; border: 0; color: var(--text-dim); font-size: 7px }
+
+/* The Arrangement's window (rulerWindow.ts): the tools in the ruler's head, the marks row as the slider a drag pans. */
+.tl-ruler .tl-tools { display: flex; align-items: center; gap: 2px; padding: 0 4px; border-left: 0 }
+.tl-tools button { height: 16px; min-width: 16px; padding: 0 4px; font-size: 10px; line-height: 14px; color: var(--text-dim); background: var(--bg-0); border: 1px solid var(--line) }
+.tl-tools button:hover:not(:disabled) { color: var(--accent); border-color: var(--accent) }
+.tl-tools button:disabled { opacity: .4 }
+.tl-tools .tl-snap { margin-left: auto; font-size: 9px }
+.tl-window { cursor: grab; touch-action: none }
+.tl-window:active { cursor: grabbing }
+.tl-window:focus-visible { outline: 1px solid var(--accent); outline-offset: -1px }
+/* The insert marker: the pane's own, a thin line through the lanes and its point read out on the ruler. */
+.tl-marks .tl-marker-mark { top: 3px; transform: translateX(-50%); height: 14px; padding: 0 3px; border-left: 0; background: var(--text-dim); color: var(--bg-0); font: 9px/14px var(--mono); pointer-events: none; z-index: 2 }
+.tl-marker { position: absolute; top: 0; bottom: 0; width: 1px; z-index: 2; pointer-events: none; background: var(--text-dim) }
+
+/* The occasion stood in (mockup .cursor.occ: the accent, 2px), its readout on the ruler and its admission light — lit only when an
+   admission is reported (admitted green, no longer in the reading red); unqualified, dark. */
+.tl-occ { position: absolute; top: 0; bottom: 0; width: 2px; z-index: 2; pointer-events: none; background: var(--accent) }
+.tl-marks .tl-occ-mark { top: 3px; height: 14px; display: inline-flex; align-items: center; gap: 4px; padding: 0 4px; border-left: 2px solid var(--accent); background: var(--bg-0); color: var(--text); font: 9px/14px var(--mono); z-index: 3 }
+.tl-marks .tl-occ-mark.back { transform: none; border-left: 0; border-right: 2px solid var(--accent) }
+.tl-marks .tl-occ-mark.off { left: auto; right: 2px; transform: none; border-left-style: dashed; color: var(--text-dim) }
+.tl-light { width: 7px; height: 7px; border-radius: 50%; border: 1px solid var(--line-strong); display: inline-block; flex: none }
+.tl-light[data-admission="admitted"] { background: var(--green); border-color: var(--green) }
+.tl-light[data-admission="refused"] { background: var(--rec); border-color: var(--rec) }
+.tl-light[data-admission="unqualified"] { background: transparent }
+
+/* Sections on the ruler: one lane per layer, a band per section at its depth, in its atmosphere (the old cut's 3px edge); a clip
+   inside one carries the narrowest one's atmosphere along its foot. */
+.tl-lane.tl-sections { height: calc(var(--levels, 1) * 13px + 4px); background: var(--bg-1) }
+.tl-sections-head, .tl-rail-head { gap: 5px; border-left: 3px solid var(--tc, var(--line-strong)); color: var(--text-dim); font-size: 9.5px }
+.tl-sections-head small, .tl-rail-head small { flex: none; color: var(--text-faint); font-size: 8.5px }
+.tl-lane-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.tl-sect { position: absolute; top: calc(2px + var(--depth, 0) * 13px); height: 12px; min-width: 3px; padding: 0 4px; border: 0; border-left: 3px solid var(--atm, var(--line-strong)); background: color-mix(in srgb, var(--atm, var(--line-strong)) 30%, var(--bg-1)); color: var(--text); font-size: 9px; line-height: 12px; text-align: left; overflow: hidden; white-space: nowrap; text-overflow: ellipsis }
+.tl-sect[data-before] { border-left-width: 0 }
+.tl-sect:hover { box-shadow: inset 0 0 0 1px var(--accent) }
+.tl-clip[data-section]::before { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--atm, transparent); pointer-events: none }
+
+/* A walk's rail (trackRails.ts): under the lane that holds its stops, in that track's colour; its stops numbered in walk order. */
+.tl-lane.tl-rail { height: 18px; background: var(--bg-2) }
+.tl-rail-head { padding-left: 16px }
+.tl-rail-seg { position: absolute; top: 50%; height: 0; border-top: 1px solid var(--tc, var(--text-faint)); opacity: .8; pointer-events: none }
+.tl-stop { position: absolute; top: 2px; width: 14px; height: 14px; margin-left: -7px; padding: 0; border-radius: 50%; border: 1px solid var(--tc, var(--text-faint)); background: var(--bg-0); color: var(--text); font: 8px/12px var(--mono); text-align: center; z-index: 1 }
+button.tl-stop:hover { border-color: var(--accent); color: var(--accent) }
+.tl-stop[data-receipt="ok"] { box-shadow: 0 0 0 1px var(--accent) }
+.tl-stop[data-receipt="refused"] { box-shadow: 0 0 0 1px var(--rec) }
+.tl-receipt { margin-top: auto }
+.tl-receipt + .tl-note { margin-top: 0 }
