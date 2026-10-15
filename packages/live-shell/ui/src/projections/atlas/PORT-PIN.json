@@ -168,7 +168,7 @@
     "shell/filter.ts": "[C2] corpus-neutral seam (C2-CORPUS-SEAM.md): cites (C2-b7); [T-ATLAS-SKY-LOCUS] the sky locus is named Sky in the kind filter (KIND_LABELS); [§8.4] [T-N3-ATLAS-SUITE-PROVIDER] an undated occurrence is in no era (passes)",
     "shell/landing.ts": "[§8.4] host adaptation (DEVICE-SEMANTICS-LOCK §8.4): the landing's seen-flag is host-bound; unbound it counts as seen (the O:I shell is its own front door); T-ATLAS-DISPOSE: its timers through later; the Escape listener through listen, removed on dismiss",
     "shell/panel.ts": "[§8.4] host adaptation (DEVICE-SEMANTICS-LOCK §8.4), T-ATLAS-DISPOSE: the sheet drag listener on window through listen",
-    "shell/shell.ts": "[C2] corpus-neutral seam (C2-CORPUS-SEAM.md): the site is named by the provider (C2-b8); T-ATLAS-DISPOSE: the menu Escape listener through listen",
+    "shell/shell.ts": "[C2] corpus-neutral seam (C2-CORPUS-SEAM.md): the site is named by the provider (C2-b8); T-ATLAS-DISPOSE: the menu Escape listener through listen; [§8.4 host] headerReading reads the header's line, scope and the lens's own Options rows for the M4 plate, each press the header's own button (the header stands down in the pane)",
     "sky/cards.ts": "[§8.4] host adaptation (DEVICE-SEMANTICS-LOCK §8.4): sky cards through the provider's published material (data/published.ts), never public/data",
     "sky/live.ts": "[§8.4] host adaptation (DEVICE-SEMANTICS-LOCK §8.4), T-ATLAS-DISPOSE: the poll and fetch-timeout timers through later (the default timers are the atlas lifetime, so a stopped atlas polls no more)",
     "sky/load.ts": "[C2] corpus-neutral seam (C2-CORPUS-SEAM.md): sky URL provider-supplied (C2-a6)",

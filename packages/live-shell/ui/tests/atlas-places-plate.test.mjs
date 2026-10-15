@@ -126,6 +126,27 @@ test('the plate draws nothing in the pane: the atlas host stands its own chrome 
   assert.doesNotMatch(placesHost, /createElement\(|appendChild|\.append\(/, 'the host binding adds no element to the pane')
 })
 
+test('the atlas header stands down in the pane, and what it held stands on the plate under Lens (seen in the pane, 15 Oct)', async () => {
+  const css = await readFile(new URL('../src/projections/atlas/atlasHost.css', import.meta.url), 'utf8')
+  assert.match(css, /\.atlas-host \.shell,\s*\.atlas-host \.sh-head,/, 'the whole header goes: its line, its scope and the lens\'s Options "≡" with it')
+  const shell = await readFile(new URL('../src/projections/atlas/src/shell/shell.ts', import.meta.url), 'utf8')
+  assert.match(shell, /headerReading\(\): ShellHeaderReading/, 'the atlas\'s own header is read, never copied')
+  assert.match(shell, /press: \(\) => row\.click\(\)/, 'a plate press is the header\'s own Options row pressed')
+  const {LensReadings} = await import('../src/projections/atlas/places/PlacesPlate.tsx')
+  const pressed = []
+  const reading = {context: 'Theory', heading: '', scope: {text: '12 in the Red Book', toggle: {label: 'Show the whole field', press: () => pressed.push('whole')}},
+    options: [{title: 'Open Theory', description: '', pressed: false, disabled: false, press: () => pressed.push('open')},
+      {title: 'Jung\'s theory', description: 'The theory sheet', pressed: true, disabled: false, press: () => pressed.push('jung')},
+      {title: 'Dynamics', description: '', pressed: null, disabled: true, press: () => pressed.push('dynamics')}]}
+  const out = html(createElement(LensReadings, {handle: {ctl: {shell: {headerReading: () => reading}}}}))
+  assert.match(out, /<span class="places-k">Reading<\/span><span class="places-v">Theory<\/span>/, 'the lens\'s line')
+  assert.match(out, /12 in the Red Book · <button type="button" class="places-link">Show the whole field<\/button>/, 'the scope and its toggle')
+  assert.match(out, /<button type="button" class="places-btn"[^>]*>Open Theory<\/button>/)
+  assert.match(out, /class="places-btn places-btn--on" aria-pressed="true" title="The theory sheet">Jung’s theory|class="places-btn places-btn--on" aria-pressed="true" title="The theory sheet">Jung&#x27;s theory/, 'a pressed row is lit, its description its hover')
+  assert.match(out, /disabled=""[^>]*>Dynamics<\/button>/, 'a disabled row stays disabled')
+  assert.equal(html(createElement(LensReadings, {handle: null})), '', 'no Earth mounted: nothing to stand')
+})
+
 test('Technē\'s transport presses the atlas\'s one time button and reads the shared window\'s edges (T14–T16)', () => {
   const unmounted = atlasTimeBindings({mounted: false, walk: null, clockPlaying: false, press() {}, pause() {}}, null)
   assert.match(unmounted.play.refused, /The Earth is not open/)

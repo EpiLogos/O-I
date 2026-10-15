@@ -3,8 +3,11 @@
    guided path dashed and numbered, the focused room in the accent, the objects as small dark plates); and the M5 plate's own rows beside the
    M4 plate's (places/placesPlate.css). Shell tokens only (styles.css :root). */
 
-/* the layer: over the globe, inert until a palace is entered */
-.atlas-palace-layer { position: absolute; inset: 0; z-index: 4; pointer-events: none }
+/* the layer: over the globe, inert until a palace is entered. Inside, the palace is the pane's whole picture: it stands above every
+   overlay that reads the field (its focus label 10, the sky and Aion layers 10, its shell header 22, the menu 40–41, the phone sheets
+   45 — src/style/*.css), so no Earth reading shows through the floor (seen through it by the lead, 15 Oct, at the walk's ground
+   locus); the atlas's own dialogs, its search (⌘K, 60) and its loading veil (100), still stand over it. */
+.atlas-palace-layer { position: absolute; inset: 0; z-index: 48; pointer-events: none }
 .atlas-palace { position: absolute; inset: 0; pointer-events: auto; overflow: hidden;
   background: radial-gradient(ellipse at 50% 40%, color-mix(in srgb, var(--tower) 10%, var(--bg-0)) 0, color-mix(in srgb, var(--tower) 5%, var(--line)) 80%) }
 .atlas-palace__plan { display: block; width: 100%; height: 100%; cursor: grab; touch-action: none; user-select: none }

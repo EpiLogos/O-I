@@ -18,6 +18,7 @@
 
 /* the Place tool and the find */
 .places-row { display: flex; gap: 4px; align-items: center; min-width: 0 }
+.places-row--wrap { flex-wrap: wrap }
 .places-btn { flex: none; display: inline-flex; align-items: center; gap: 4px; height: 20px; padding: 0 7px; font: inherit; font-size: 10px;
   color: var(--text); background: var(--bg-1); border: 1px solid var(--line-strong); cursor: pointer }
 .places-btn:hover { border-color: var(--text-faint) }
