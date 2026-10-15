@@ -1,0 +1,31 @@
+/* The reference devices' own layout inside the gallery's frames. Shell and panel tokens only. */
+.ref-pair { display: flex; gap: 4px; width: 100%; }
+.ref-pair > * { flex: 1 1 0; }
+.ref-tile-counts { flex: 1 1 auto; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: center; }
+.ref-tile-grid { flex: 1 1 auto; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px; align-content: start; justify-items: center; }
+.ref-tile-grid--read { gap: 8px 4px; align-content: center; }
+.ref-tile-side { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: space-around; align-items: center; }
+.ref-meter { position: relative; flex: none; width: 8px; align-self: stretch; background: #121a20; border: 1px solid #0b0f12; }
+.ref-meter > span { position: absolute; left: 0; right: 0; bottom: 0; height: calc(var(--level) * 100%); background: linear-gradient(to top, var(--dp-value, #5cc8bd) 70%, var(--accent, #ffbe00)); }
+
+/* The pane's body: the device's material at pane size. No controls inside it; the pane's own tabs above it. */
+.ref-pane-body { position: absolute; inset: 0; display: flex; flex-direction: column; background: var(--bg-1, #33363b); }
+.ref-pane-body--dark { background: #121a20; }
+.ref-pane-svg { display: block; flex: 1 1 auto; min-height: 0; }
+.ref-pane-tabs { flex: none; display: flex; gap: 1px; height: 22px; background: var(--bg-0, #26292d); }
+.ref-pane-tabs button { padding: 0 12px; border: 0; background: var(--bg-2, #3f4348); color: var(--text-dim, #a2a7ad); font: 11px var(--font-ui, sans-serif); cursor: pointer; }
+.ref-pane-tabs button[aria-selected="true"] { background: var(--bg-1, #33363b); color: var(--text, #d4d7da); }
+.ref-pane-frame { flex: 1 1 auto; width: 100%; border: 0; background: #fff; }
+
+/* A set read as a document. */
+.ref-doc { padding: 18px 22px; overflow: auto; color: var(--text, #d4d7da); font: 12px/1.5 var(--font-ui, sans-serif); }
+.ref-doc h3 { margin: 0 0 12px; font-size: 15px; font-weight: 600; }
+.ref-doc h3 small { margin-left: 8px; font-weight: 400; font-size: 11px; color: var(--text-faint, #71767c); }
+.ref-doc-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 28px; }
+.ref-doc-list li { display: grid; grid-template-columns: 12px auto 1fr; align-items: baseline; gap: 2px 8px; padding-bottom: 8px; border-bottom: 1px solid var(--line, #24262a); }
+.ref-doc-list li[data-dim="true"] b { color: var(--text-faint, #71767c); }
+.ref-doc-list .dp-lamp { align-self: center; }
+.ref-doc-rev { justify-self: end; font-size: 10.5px; color: var(--text-faint, #71767c); font-variant-numeric: tabular-nums; }
+.ref-doc-standing { grid-column: 2 / -1; font-size: 11px; color: var(--text-dim, #a2a7ad); }
+.ref-doc-list p { grid-column: 2 / -1; margin: 0; color: var(--text-dim, #a2a7ad); }
+.ref-tile-grid--boxes { gap: 4px 6px; align-content: center; justify-items: stretch; }

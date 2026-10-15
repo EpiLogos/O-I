@@ -1,0 +1,185 @@
+/* The device panel kit (panel.tsx; docs/dlw/DEVICE-UI.md). Live's device language on the shell's tokens: a flat grey face, a
+   lighter head, hairline rules between sections, one dark well per display, amber for what is on, teal for a value and its arc.
+   Two colours join the shell's tokens here: the well and the value. */
+:root {
+  --dp-head-h: 22px; --dp-body: 168px;
+  --dp-face: var(--bg-3, #4a4e54);
+  --dp-head: color-mix(in srgb, var(--bg-3, #4a4e54) 84%, #fff 9%);
+  --dp-field: #2c3034;
+  --dp-well: #121a20;
+  --dp-grid: rgba(126, 195, 230, .09);
+  --dp-value: #5cc8bd;
+  --dp-value-dim: rgba(92, 200, 189, .42);
+  --dp-on: var(--accent, #ffbe00);
+  --dp-on-text: #1c1d1f;
+}
+.dp, .dp-folded, .dp-tile {
+  font: 10.5px/1.2 var(--font-ui, -apple-system, sans-serif);
+  color: var(--text, #d4d7da);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ---- the plate: head, then the body of one band (chain) or up to two bands (pool) */
+.dp { display: inline-flex; flex-direction: column; flex: none; background: var(--dp-face); border: 1px solid var(--line, #24262a); }
+.dp-head { flex: none; height: var(--dp-head-h); display: flex; align-items: center; gap: 6px; padding: 0 6px 0 5px; background: var(--dp-head); border-bottom: 1px solid var(--line, #24262a); white-space: nowrap; min-width: 0; }
+.dp[data-selected="true"] > .dp-head { background: color-mix(in srgb, var(--dp-head) 72%, var(--sel, #7ec3e6) 28%); }
+.dp-title { font-weight: 600; font-size: 11px; color: var(--text); overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.dp-head-held { font-size: 9.5px; color: var(--stall, #ff9b4a); }
+.dp-head-x { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+.dp-fold, .dp-full { display: inline-grid; place-items: center; width: 16px; height: 16px; padding: 0; background: none; border: 0; color: var(--text-dim); cursor: pointer; }
+.dp-fold:hover, .dp-full:hover { color: var(--text); }
+
+/* The activator: amber when the owner reports on, grey when it reports off, a hollow ring when nobody has said. */
+.dp-activator { flex: none; width: 12px; height: 12px; padding: 0; border-radius: 50%; border: 1px solid rgba(0, 0, 0, .45); background: #61666c; cursor: pointer; }
+.dp-activator[data-light="lit"] { background: var(--dp-on); }
+.dp-activator[data-light="unknown"] { background: transparent; border-color: var(--text-faint, #71767c); }
+.dp-activator:disabled { cursor: default; }
+
+/* Pages in the head (Live's Osc 1 · Osc 2): the shown page joins the body's face. */
+.dp-pages { display: flex; align-self: flex-end; gap: 1px; margin-left: 8px; }
+.dp-pages button { display: inline-flex; align-items: center; gap: 4px; height: 18px; padding: 0 9px; border: 0; background: var(--bg-2, #3f4348); color: var(--text-dim); font: inherit; font-size: 10.5px; cursor: pointer; }
+.dp-pages button[aria-selected="true"] { background: var(--dp-face); color: var(--text); }
+
+.dp-body { display: flex; flex-direction: column; }
+.dp-band { display: flex; height: var(--dp-body); }
+.dp-band + .dp-band { border-top: 1px solid var(--line, #24262a); }
+.dp[data-view="compact"] > .dp-body { height: var(--dp-body); flex-direction: row; }
+
+/* Sections: columns ruled off from each other, named in small capitals. Nothing scrolls. */
+.dp-sec { flex: none; display: flex; flex-direction: column; min-width: 0; padding: 5px 6px 6px; overflow: hidden; }
+.dp-sec + .dp-sec { border-left: 1px solid var(--line, #24262a); }
+.dp-sec[data-grow="true"] { flex: 1 1 auto; }
+.dp-sec-label { flex: none; height: 13px; font-size: 9px; letter-spacing: .07em; text-transform: uppercase; color: var(--text-faint); white-space: nowrap; overflow: hidden; }
+.dp-sec-body { flex: 1 1 auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 5px 4px; align-content: start; justify-items: center; min-height: 0; }
+
+/* ---- controls */
+.dp-cell { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; max-width: 100%; }
+.dp-cell--wide, .dp-cell--rows, .dp-cell--chooser { align-self: stretch; justify-self: stretch; align-items: stretch; }
+.dp-label { max-width: 100%; font-size: 10px; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
+.dp-cell--wide .dp-label, .dp-cell--chooser .dp-label, .dp-cell--rows .dp-label { text-align: left; }
+.dp-value { font-size: 10px; color: var(--text); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.dp [tabindex="0"]:focus-visible, .dp button:focus-visible, .dp select:focus-visible, .dp-tile button:focus-visible { outline: 1px solid var(--accent); outline-offset: 1px; }
+
+/* Dial: a 270° ring, the value arc in teal from the minimum (or from zero when it turns either way). */
+.dp-dial { width: 28px; height: 28px; cursor: ns-resize; touch-action: none; outline: none; }
+.dp-dial[aria-disabled="true"] { cursor: default; }
+.dp-dial path { fill: none; stroke-width: 2.6; }
+.dp-dial-track { stroke: #24282c; }
+.dp-dial-value { stroke: var(--dp-value); }
+.dp-dial-mod { stroke: var(--dp-value); stroke-width: 1.3 !important; opacity: .55; }
+.dp-dial-needle { stroke: var(--text); stroke-width: 1.6; stroke-linecap: round; }
+.dp-dial:focus-visible .dp-dial-track { stroke: var(--accent-dim, #b09035); }
+
+/* Value box: the value in a field that fills to its place in the range. */
+.dp-box { position: relative; min-width: 50px; height: 16px; display: grid; place-items: center; padding: 0 4px; border: 1px solid var(--line); cursor: ns-resize; touch-action: none; outline: none;
+  background: linear-gradient(to right, transparent calc(var(--f0) * 100%), var(--dp-value-dim) calc(var(--f0) * 100%), var(--dp-value-dim) calc(var(--f1) * 100%), transparent calc(var(--f1) * 100%)), var(--dp-field); }
+.dp-box > span { font-size: 10px; font-variant-numeric: tabular-nums; color: var(--text); white-space: nowrap; }
+.dp-box[aria-disabled="true"] { cursor: default; }
+.dp-cell--wide .dp-box { width: 100%; }
+
+/* Toggle and radio: amber when on. */
+.dp-toggle, .dp-radio button, .dp-action { height: 16px; padding: 0 6px; border: 1px solid var(--line); background: var(--dp-field); color: var(--text-dim); font: inherit; font-size: 10px; white-space: nowrap; cursor: pointer; }
+.dp-toggle[aria-pressed="true"] { background: var(--dp-on); color: var(--dp-on-text); }
+.dp-toggle[data-tone="value"][aria-pressed="true"] { background: var(--dp-value); }
+.dp-radio { display: flex; }
+.dp-radio button { flex: 1 1 auto; min-width: 0; padding: 0 5px; }
+.dp-radio button + button { margin-left: -1px; }
+.dp-radio[data-stack="true"] { flex-direction: column; align-self: stretch; }
+.dp-radio[data-stack="true"] button + button { margin-left: 0; margin-top: -1px; }
+.dp-radio button[aria-checked="true"] { background: var(--dp-on); color: var(--dp-on-text); position: relative; }
+.dp-cell--radio { align-self: stretch; justify-self: stretch; align-items: stretch; }
+.dp-toggle:disabled, .dp-radio button:disabled, .dp-action:disabled { cursor: default; }
+
+.dp-chooser { height: 16px; width: 100%; padding: 0 14px 0 5px; border: 1px solid var(--line); color: var(--text); font: inherit; font-size: 10px; appearance: none; -webkit-appearance: none; cursor: pointer;
+  background: var(--dp-field) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='7' height='4'%3E%3Cpath d='M0 0h7L3.5 4z' fill='%23a2a7ad'/%3E%3C/svg%3E") no-repeat right 4px center; }
+
+.dp-action { background: transparent; border-color: var(--text-faint); color: var(--text); }
+.dp-action:active:not(:disabled) { background: var(--dp-on); color: var(--dp-on-text); }
+
+/* Readout: a short value over its name; big for the count that is the point of the view. */
+.dp-cell--readout { gap: 1px; }
+.dp-readout-value { font-size: 11px; color: var(--text); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.dp-cell--big .dp-readout-value { font-size: 20px; font-weight: 300; line-height: 1; }
+.dp-readout-value[data-tone="accent"] { color: var(--dp-on); }
+.dp-readout-value[data-tone="value"] { color: var(--dp-value); }
+.dp-readout-value[data-tone="green"] { color: var(--green, #8fd0a8); }
+.dp-readout-value[data-tone="stall"] { color: var(--stall, #ff9b4a); }
+.dp-readout-press { display: contents; cursor: pointer; }
+
+/* Lights. */
+.dp-lamp { flex: none; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #2a2e32; border: 1px solid rgba(0, 0, 0, .4); }
+.dp-lamp[data-light="lit"] { background: var(--dp-on); }
+.dp-lamp[data-light="lit"][data-tone="value"] { background: var(--dp-value); }
+.dp-lamp[data-light="lit"][data-tone="green"] { background: var(--green, #8fd0a8); }
+.dp-lamp[data-light="lit"][data-tone="stall"] { background: var(--stall, #ff9b4a); }
+.dp-lamp[data-light="unknown"] { background: transparent; border-color: var(--text-faint); }
+
+/* Rows: a rack's chains, a scope's places. Pages, never a scroller. */
+.dp-rows-head { display: flex; align-items: center; justify-content: space-between; gap: 6px; height: 13px; }
+.dp-pager { display: inline-flex; align-items: center; gap: 3px; font-size: 9.5px; color: var(--text-faint); }
+.dp-pager button { padding: 0 2px; background: none; border: 0; color: var(--text-dim); font: inherit; cursor: pointer; }
+.dp-pager button:disabled { opacity: .35; cursor: default; }
+.dp-rows { list-style: none; margin: 0; padding: 0; display: grid; grid-template-rows: repeat(var(--rows), 17px); grid-auto-flow: column; column-gap: 8px; }
+.dp-rows[data-columns="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.dp-row { display: flex; align-items: center; gap: 5px; min-width: 0; height: 17px; border-bottom: 1px solid rgba(0, 0, 0, .18); }
+.dp-row[data-dim="true"] .dp-row-name { color: var(--text-faint); }
+.dp-row-request { flex: none; width: 10px; height: 10px; padding: 0; border: 1px solid var(--text-faint); background: transparent; cursor: pointer; }
+.dp-row-request[aria-pressed="true"] { background: var(--dp-on); border-color: var(--dp-on); }
+.dp-row-name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10.5px; }
+.dp-row-why { flex: none; font-size: 9px; font-weight: 700; color: var(--stall, #ff9b4a); }
+.dp-row-note { flex: none; font-size: 9.5px; color: var(--text-faint); font-variant-numeric: tabular-nums; }
+
+/* ---- the well: the only inset surface. */
+.dp-display { position: relative; flex: none; background: var(--dp-well); border: 1px solid #0b0f12; overflow: hidden; }
+.dp-display > svg { display: block; overflow: hidden; }
+.dp-display-corner { position: absolute; top: 3px; right: 5px; font-size: 9.5px; color: var(--text-dim); font-variant-numeric: tabular-nums; pointer-events: none; }
+.dp-display .dp-grid { stroke: var(--dp-grid); stroke-width: 1; fill: none; }
+.dp-display .dp-curve { stroke: var(--dp-value); stroke-width: 1.5; fill: none; }
+.dp-display .dp-curve-on { stroke: var(--dp-on); stroke-width: 1.5; fill: none; }
+.dp-display .dp-fill { fill: rgba(92, 200, 189, .13); stroke: none; }
+.dp-display .dp-fill-on { fill: rgba(255, 190, 0, .16); stroke: none; }
+.dp-display .dp-faint { stroke: rgba(212, 215, 218, .22); stroke-width: 1; fill: none; }
+.dp-display .dp-axis { font: 8.5px var(--font-ui, sans-serif); fill: rgba(212, 215, 218, .5); }
+.dp-display .dp-ink { font: 9.5px var(--font-ui, sans-serif); fill: var(--text); }
+.dp-display .dp-ink-dim { font: 9px var(--font-ui, sans-serif); fill: var(--text-dim); }
+
+.dp-handle { cursor: grab; outline: none; }
+.dp-handle-hit { fill: transparent; }
+.dp-handle-mark { fill: var(--dp-well); stroke: var(--dp-on); stroke-width: 1.5; }
+.dp-handle[data-tone="value"] .dp-handle-mark { stroke: var(--dp-value); }
+.dp-handle-n { font: 700 6.5px var(--font-ui, sans-serif); fill: var(--dp-on); text-anchor: middle; pointer-events: none; }
+.dp-handle:focus-visible .dp-handle-mark, .dp-handle:hover .dp-handle-mark { fill: var(--dp-on); }
+.dp-handle:focus-visible .dp-handle-n, .dp-handle:hover .dp-handle-n { fill: var(--dp-on-text); }
+
+/* ---- standing */
+.dp-cell[data-automated="on"]::before, .dp-cell[data-automated="overridden"]::before { content: ''; position: absolute; left: 0; top: 2px; width: 5px; height: 5px; border-radius: 50%; background: var(--rec, #e0523f); }
+.dp-cell[data-automated="overridden"]::before { background: transparent; border: 1px solid var(--rec, #e0523f); width: 4px; height: 4px; }
+.dp-cell[data-held="true"] .dp-dial-value { stroke: var(--stall, #ff9b4a); }
+.dp-cell[data-held="true"] .dp-box { --dp-value-dim: rgba(255, 155, 74, .4); }
+.dp-handback { padding: 0 3px; height: 11px; background: none; border: 1px solid var(--stall, #ff9b4a); color: var(--stall, #ff9b4a); font: inherit; font-size: 8.5px; line-height: 9px; cursor: pointer; }
+.dp-cell[data-pending="true"] .dp-value, .dp-cell[data-pending="true"] .dp-box > span { font-style: italic; opacity: .75; }
+.dp-cell[data-pending="true"] .dp-dial-value { stroke-dasharray: 2 2; }
+.dp-cell[data-pending="true"] .dp-radio button[aria-checked="true"] { background: transparent; color: var(--dp-on); outline: 1px dashed var(--dp-on); outline-offset: -2px; }
+.dp-cell[data-disabled="true"] { opacity: .42; }
+
+/* ---- folded: the head on its side, at chain height. */
+.dp-folded { flex: none; width: 22px; height: calc(var(--dp-head-h) + var(--dp-body) + 1px); display: flex; flex-direction: column; align-items: center; gap: 6px; padding-top: 5px; background: var(--dp-head); border: 1px solid var(--line, #24262a); }
+.dp-folded .dp-activator { cursor: default; }
+.dp-folded-title { flex: 1 1 auto; display: flex; gap: 8px; align-items: center; writing-mode: vertical-rl; padding: 0; background: none; border: 0; color: var(--text); font: inherit; font-weight: 600; font-size: 11px; cursor: pointer; white-space: nowrap; overflow: hidden; }
+.dp-folded-reading { font-weight: 400; font-size: 10px; color: var(--text-dim); }
+
+/* ---- a widget tile on the rail: 136 square, or two squares wide. */
+.dp-tile { flex: none; width: 136px; height: 136px; display: flex; flex-direction: column; background: var(--dp-face); border: 1px solid var(--line, #24262a); }
+.dp-tile[data-span="2"] { width: 280px; }
+.dp-tile-head { flex: none; height: 18px; display: flex; align-items: center; gap: 5px; padding: 0 4px 0 6px; background: var(--dp-head); border-bottom: 1px solid var(--line, #24262a); }
+.dp-tile-title { flex: 1 1 auto; min-width: 0; font-weight: 600; font-size: 10.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dp-tile-body { flex: 1 1 auto; min-height: 0; display: flex; gap: 6px; padding: 6px; overflow: hidden; }
+
+@media (prefers-reduced-motion: reduce) { .dp *, .dp-tile * { transition: none !important; animation: none !important; } }
+
+/* Hit areas: a control is drawn 16 px high and answers the hand over 22 px or more. */
+.dp-toggle, .dp-radio button, .dp-action, .dp-box, .dp-row-request { position: relative; }
+.dp-toggle::after, .dp-radio button::after, .dp-action::after, .dp-box::after { content: ''; position: absolute; inset: -3px 0; }
+.dp-row-request::after { content: ''; position: absolute; inset: -6px; }
+.dp-radio[data-stack="true"] button::after { inset: -1px 0; }
