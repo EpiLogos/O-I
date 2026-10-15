@@ -14,7 +14,6 @@ import {withWikiSubjectStanding} from '../native/wikiSubjectStanding'
 import {disclosureSession} from '../../../../../desktop/cradle/src/techne/session'
 import {useContinuity, type Workspace} from '../continuity'
 import {useKernel} from '../../../../../desktop/cradle/src/kernel/KernelProvider'
-import {groupsOf, openBinding} from '../../../../../desktop/cradle/src/surface/engine'
 import {withHostedDescriptor} from '../../../../../desktop/cradle/src/contributions/registry'
 import type {SurfaceBinding} from '../../../../../desktop/cradle/src/surface/types'
 import {registeredHostedSurfaces} from '../../../../../desktop/cradle/src/contributions/generated'
@@ -34,19 +33,13 @@ import {followFrame} from '../projections/framePlacement'
 import {registerExpressionsPaneHost} from '../projections/expressionsPane'
 import {liveTorusFromHost, publishLiveTorusState, setLiveInstrumentCommander} from '../live/torusInstrument'
 import {setLivePerformanceChannel} from '../live/LivePresets'
+import {expressionsBindingOf, holdExpressionsBinding, unplaceExpressionsBinding} from '../native/expressionsBinding'
 
 const expressionDescriptor = registeredHostedSurfaces.find(row => row.descriptor.kind === 'expressions')?.descriptor
 
-/** The one application body carries an ordinary native workbench binding.
- * Closed bindings remain recoverable, but never stand in for an open host. */
-function expressionBinding(owner: Workspace): SurfaceBinding | undefined {
-  for (const layout of [owner.layout, ...Object.values(owner.modeLayouts ?? {})]) {
-    for (const id of [...groupsOf(layout.root).flatMap(group => group.tabs), ...(layout.sidePane?.tabs ?? []), ...(layout.detached ?? []).map(row => row.surfaceId)]) {
-      const binding = layout.surfaces[id]
-      if (binding?.kind === 'expressions') return binding
-    }
-  }
-}
+/** The one application body's book binding, held on no tab (native/expressionsBinding.ts). Closed bindings remain recoverable, but
+ * never stand in for an open host. */
+const expressionBinding = (owner: Workspace): SurfaceBinding | undefined => expressionsBindingOf(owner)?.binding
 const checkpointRef = (binding?: SurfaceBinding) => binding?.engine?.expressionRef.startsWith('expression:') ? binding.engine.expressionRef : undefined
 /** The hosted engine's checkpoint from the frame's own reading: the work, its revision, and where it stands (lane-3 E22, ticket P):
  * the address the frame announced, or — while it announces none (an opening link not yet settled) — the one already kept with
@@ -349,9 +342,11 @@ export function ExpressionsPanel() {
   }, [qualified, attempt])
   useEffect(() => {
     if (!workspace.accessReady || !kernel.operationReady || (book.current.layout.mode !== 'expressions' && book.current.layout.mode !== 'techne')) return
-    const owner = book.current, held = expressionBinding(owner)
+    const owner = book.current, found = expressionsBindingOf(owner), held = found?.binding
     if (held) {
-      if (!owner.layout.surfaces[held.id]) book.moveSurface(held.id, 'tree')
+      // Held, never placed: a binding an older book put on a tab leaves it when its tree stands in front; one held by another mode's
+      // layout stays there (its checkpoint is written wherever it stands — updateWorkspaceBinding).
+      if (found.placed && found.layout === owner.layout) book.setLayout(layout => unplaceExpressionsBinding(layout, held.id))
       const reading = host.current?.getState(), scene = reading?.nativeScene
       const expected = selectionOwner.current.expected
       if (reading && scene && (!expected || expected === scene.expression_ref)) {
@@ -374,7 +369,7 @@ export function ExpressionsPanel() {
         void kernel.apply({op: 'surface_close', surface_id: binding.id}).catch(cause => setFault(String(cause)))
         return
       }
-      current.setLayout(layout => openBinding(layout, binding))
+      current.setLayout(layout => holdExpressionsBinding(layout, binding))
       setSurfaceFault(null)
     }).catch(cause => {
       const current = bookRef.current.current
