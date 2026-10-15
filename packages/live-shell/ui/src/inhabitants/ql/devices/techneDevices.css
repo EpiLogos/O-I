@@ -2,8 +2,8 @@
    the instruments folded to their titles by the runtime's own fold (the SDK's vertical strip, inhabitants/sdk/sdk.css .sdk-face--folded)
    around the one open instrument, a plate whose columns are the families whose devices it holds. Shell tokens only. The runtime's own
    sheet (frame/devices/devices.css) sizes a device's picture for a small drawing; these faces' pictures are their bodies, so the sheet
-   below lets a body show as itself: scrollable in the compact well, whole at its own height in the pool, at the pane's size in a pane. */
-.techne-devices { flex: 1; min-width: 0; min-height: 0; display: flex; gap: 6px; align-items: stretch; padding: 4px }
+   below lets a body show as itself: what fits the compact well, whole at its own height in the pool, at the pane's size in a pane. */
+.techne-devices { flex: 1; min-width: 0; min-height: 0; display: flex; gap: 6px; align-items: stretch; padding: 4px; overflow: hidden }
 .techne-family { display: contents }
 .techne-instrument { flex: none; display: flex; min-height: 0 }
 .techne-instrument > .sdk-face--folded { height: 100% }
@@ -12,18 +12,16 @@
 .techne-instrument .sdk-face__mark { color: var(--accent) }
 .techne-device { position: relative; flex: none; display: flex; min-height: 0 }
 .techne-device > .sdk-face--folded { height: 100% }
-/* Inside the open instrument a family's devices stand side by side, each its own plate on the column. */
-.techne-section-devices { display: flex; gap: 6px; align-items: stretch; min-height: 0; height: 100% }
-.inst-section .techne-device > .device > .sdk-face { background: var(--bg-1) }
 .techne-picture { width: 100%; box-sizing: border-box; align-self: stretch; text-align: left; font-size: 10.5px; color: var(--text-dim) }
 .techne-standing { display: inline-block; margin: 0 0 3px; padding: 0 5px; font-size: 9.5px; color: var(--text-dim); border: 1px solid var(--line) }
 .techne-standing[data-ql-standing="following"] { color: var(--text); border-color: var(--accent) }
 .techne-standing[data-ql-standing="refusing"], .techne-standing[data-ql-standing="unavailable"] { color: var(--stall) }
 .techne-waiting { display: grid; place-items: center; width: 100%; height: 100%; min-height: 48px; color: var(--text-faint); opacity: .7 }
-.device-picture:has(> .techne-picture) { display: block; overflow: auto }
+/* A body is never a scroller in its well (owner, 15 Oct: "no scrollers"): on a chain it shows what fits the well; whole in the pool and
+   full in a pane it stands at its own height (the pool, under the browser, is the place that scrolls). */
+.device-picture:has(> .techne-picture) { display: block; overflow: hidden }
 .device--compact .device-picture:has(> .techne-picture) { padding: 2px 3px }
-.device--whole .device-picture:has(> .techne-picture), .device--full .device-picture:has(> .techne-picture) { height: auto; max-height: 55vh; padding: 4px 6px }
-.device--full .device-picture:has(> .techne-picture) { max-height: none }
+.device--whole .device-picture:has(> .techne-picture), .device--full .device-picture:has(> .techne-picture) { height: auto; max-height: none; padding: 4px 6px }
 .device-picture:has(> .techne-picture[data-picture="mode-switch"]) { height: auto }
 /* A reading's reason (a waiting face's note, the owner's refusal) is read whole in the pool and the pane. */
 :is(.device--whole, .device--full):is([data-device^="quaternal-logic:"], [data-device^="atlas-earth:"], [data-device^="knowledge-graph:"]) .sdk-row--reading .sdk-chip { white-space: normal; max-width: 100% }
@@ -47,9 +45,36 @@
 .techne-source-ref { margin-bottom: 4px; font: 9.5px var(--mono); color: var(--sel); overflow-wrap: anywhere }
 .techne-source-note { margin-top: 4px; font: 9.5px var(--font-ui); color: var(--text-faint) }
 
+/* Inside an open instrument a family's devices stand side by side in its section, drawn flat: the device's own frame stands down so the
+   section reads as one group, one hairline between two devices (DEVICE-UI.md §1 "no box sits inside a box"). */
+.techne-section-devices { display: flex; gap: 0; align-items: stretch; min-height: 0; height: 100% }
+.inst-section .techne-device > .device > .sdk-face { background: transparent; border: 0 }
+.inst-section .techne-device > .device > .sdk-face > .sdk-face__head { height: 18px; padding: 0; border-bottom: 0 }
+.inst-section .techne-device > .device .device-body { padding: 4px 0 0 }
+.inst-section .techne-device + .techne-device { margin-left: 8px; padding-left: 8px; border-left: 1px solid var(--line) }
+
 /* The rack is the row's width (the mockup's .inst fills the chain between its folds, :352 flex:1): the open instrument takes what the
-   folds leave and its columns scroll sideways under its head; the folds stay in reach on both sides. */
+   folds and the Compacts leave, and folds its own sections to fit (frame/devices/plateFit.ts) — the row never scrolls; the folds stay in
+   reach on both sides. */
 .detail-chain .detail-chain-devices:has(> .mode-detail > .techne-devices), .detail-chain .detail-chain-devices:has(> .techne-devices) { flex: 1 1 auto; min-width: 0 }
-.detail-chain .mode-detail:has(> .techne-devices[data-open-instrument]) { flex: 1 1 auto; min-width: 0 }
-.detail-chain .techne-devices[data-techne-devices][data-open-instrument] { flex: 1 1 auto; min-width: 0 }
+.detail-chain .mode-detail:has(> .techne-devices) { flex: 1 1 auto; min-width: 0 }
+.detail-chain .techne-devices[data-techne-devices] { flex: 1 1 auto; min-width: 0; overflow: hidden }
 .techne-devices > .inst-plate { flex: 1 1 auto; min-width: 0 }
+
+/* An instrument at its Compact size (techneCompacts.tsx; manual §16.1 "a small live picture and up to four macros"; DEVICE-UI.md §2–§3):
+   a 22 px head — its light, its mark, its name (pressed, it opens on the focused pane), its M′ address, ⤢ — over one band: the well that
+   draws it, and its four macros in two control columns. One fixed width; no box inside it but the well. */
+.techne-compact { flex: none; width: 228px; display: flex; flex-direction: column; min-height: 0; background: var(--bg-2); border: 1px solid var(--line) }
+.techne-compact-head { flex: none; height: 22px; display: flex; align-items: center; gap: 6px; padding: 0 6px; background: linear-gradient(var(--bg-3), var(--surface)); border-bottom: 1px solid var(--line); white-space: nowrap; min-width: 0 }
+.techne-compact-mark { flex: none; color: var(--accent) }
+.techne-compact-title { min-width: 0; padding: 0; background: none; border: 0; color: var(--text); font: inherit; font-size: 11px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; cursor: pointer }
+.techne-compact-title:hover { color: var(--accent) }
+.techne-compact-k { flex: none; font-size: 9.5px; color: var(--text-faint) }
+.techne-compact-open { margin-left: auto; flex: none; width: 14px; height: 14px; padding: 0; background: none; border: 0; color: var(--text-faint); font-size: 10px; cursor: pointer }
+.techne-compact-open:hover { color: var(--accent) }
+.techne-compact-title:focus-visible, .techne-compact-open:focus-visible { outline: 1px solid var(--accent); outline-offset: 1px }
+.techne-compact-body { flex: 1 1 auto; min-height: 0; display: flex; align-items: flex-start; gap: 6px; padding: 6px; overflow: hidden }
+.techne-compact-macros { flex: none; width: 112px; display: grid; grid-template-columns: repeat(2, 56px); grid-auto-rows: min-content; gap: 6px 0; justify-items: center }
+.techne-compact-macros > :is(.dp-cell--chooser, .dp-cell--radio) { width: 52px; justify-self: center }
+.techne-compact-macros .dp-chooser { padding-right: 12px }
+.techne-compact .dp-display-corner { font-size: 9px }

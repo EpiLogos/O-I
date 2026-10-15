@@ -108,11 +108,14 @@ const expandedOf = (out, faceId) => {
   return match[1]
 }
 
+/** A face the open instrument holds stands as its mark on the plate's section that draws its controls (lane E: one coherent plate). */
+const heldMark = (out, faceId, family = 'atlas-earth') => assert.match(out, new RegExp(`class="plate-held-mark" data-device="${family}:${faceId}"`), `the face ${faceId} is on the open plate`)
+
 test('the focused instrument rack: the 0 instrument stands open with its held faces; the other instruments fold', () => {
   const out = html(createElement(TechneInstrumentsDetail, {transport, focusInstrument: 'techne:m0'}))
   assert.match(out, /data-focus-instrument="techne:m0"/)
-  assert.equal(expandedOf(out, 'graph-tools'), 'true', 'graph-tools is held by techne:m0')
-  assert.equal(expandedOf(out, 'mode-switch'), 'true', 'mode-switch is held by techne:m0')
+  heldMark(out, 'graph-tools')
+  heldMark(out, 'mode-switch')
   assert.doesNotMatch(out, /data-face-id="torus"|data-face-id="sky"/, 'a face the instrument does not hold is not drawn open: it is inside its own instrument\'s fold')
   assert.match(out, /data-instrument="techne:m2" data-expanded="false"/, 'the Timeline folds')
 })
@@ -148,12 +151,13 @@ test('the knowledge graph Device side draws its own family rack, never the 0 rac
 test('the atlas instrument device side goes through the focused rack', () => {
   const out = html(createElement(InstrumentDeviceDetail, {transport, instrument: 'techne:m0'}))
   assert.match(out, /data-focus-instrument="techne:m0"/)
-  assert.equal(expandedOf(out, 'graph-tools'), 'true')
+  heldMark(out, 'graph-tools')
 })
 
-test('the 0 instrument is the Earth and solar system: the globe face docks expanded with it (lock §0.1.3)', () => {
+test('the 0 instrument is the Earth and solar system: the globe face stands with it (lock §0.1.3)', () => {
   const out = html(createElement(InstrumentDeviceDetail, {transport, instrument: 'techne:m0'}))
-  assert.equal(expandedOf(out, 'globe-engine'), 'true', 'the globe is the 0 instrument’s Earth view')
+  heldMark(out, 'globe-engine')
+  assert.match(out, /data-section="view"[\s\S]*?aria-label="View"/, 'the globe\'s Earth view and the graph are one switch on the plate')
 })
 
 test('Central keeps its own devices: they lead the chain, then the focused instrument (never removed)', () => {

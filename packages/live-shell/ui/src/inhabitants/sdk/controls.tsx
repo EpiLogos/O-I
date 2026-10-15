@@ -137,6 +137,9 @@ export interface FacePlateProps {
   readonly folded?: boolean
   /** Fold the plate, or open it again: the ▾ on its head, and the strip itself while folded. */
   readonly onFold?: () => void
+  /** The device's own acts in its head, after its owner and before its marks (the mockup's Studio head, world-shell-mockup.html:1432:
+   * "edited since save" and Save; InstrumentPlate.tsx `head`). */
+  readonly extra?: ReactNode
   readonly children?: ReactNode
 }
 
@@ -157,7 +160,7 @@ function PlateMarkView({mark}: {mark: PlateMark}) {
 
 /** The device plate (world-shell-mockup.html:333-336, `dev()` at :1410; the specimen's device header): the power ring, the
  * device's mark and name, its owner, and the head's marks — ▾ to fold, ⤢ to open full, any others the place offers. */
-export function FacePlate({presentation, power = 'unknown', onPower, admission = 'admitted', actions, selected = false, hint, folded = false, onFold, children}: FacePlateProps) {
+export function FacePlate({presentation, power = 'unknown', onPower, admission = 'admitted', actions, selected = false, hint, folded = false, onFold, extra, children}: FacePlateProps) {
   const classes = `sdk-face${admission === 'waiting' ? ' sdk-face--waiting' : ''}${selected ? ' sdk-face--sel' : ''}${folded ? ' sdk-face--folded' : ''}`
   if (folded) {
     return (
@@ -177,6 +180,7 @@ export function FacePlate({presentation, power = 'unknown', onPower, admission =
         <Icon name={presentation.icon} size={12} className="sdk-face__mark" />
         <h3 className="sdk-face__title">{presentation.title}</h3>
         <span className="sdk-face__owner">{presentation.owner}</span>
+        {extra !== undefined && extra !== null && <span className="sdk-face__extra">{extra}</span>}
         {(onFold || !!actions?.length) && <span className="sdk-face__x">
           {onFold && <button type="button" className="sdk-face__action" data-plate-mark="fold" aria-expanded={true} title="Fold to its title" aria-label={`Fold ${presentation.title} to its title`} onClick={onFold}><ChevronFold size={10} /></button>}
           {actions?.map(action => (

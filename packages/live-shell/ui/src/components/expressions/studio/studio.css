@@ -29,10 +29,9 @@
 .studio-glyph .glyph-editor.compact { width: 300px; min-width: 240px }
 
 /* A section's object and Scene devices (.dli): the light, the name that opens its settings, + to put it on the rack. */
-.studio-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 2px; min-width: 132px }
-.studio-list-row { display: flex; align-items: center; gap: 6px; height: 20px; padding: 0 5px; background: var(--bg-1); border: 1px solid var(--line); font-size: 10px; white-space: nowrap; overflow: hidden }
+.studio-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 0; min-width: 132px }
+.studio-list-row { display: flex; align-items: center; gap: 6px; height: 17px; padding: 0 2px; border-bottom: 1px solid color-mix(in srgb, var(--line) 70%, transparent); font-size: 10px; white-space: nowrap; overflow: hidden }
 .studio-list-row .studio-row-name { flex: 1; font-size: 10px; color: var(--text-dim) }
-.studio-list-row[data-on-rack] { border-color: var(--line-strong) }
 .studio-list-row[data-on-rack] .studio-row-name { color: var(--text) }
 .studio-row-note { font-family: var(--mono); font-size: 9px; color: var(--text-faint) }
 .studio-row-add { display: inline-grid; place-items: center; width: 16px; height: 14px; padding: 0; background: none; border: 1px solid transparent; color: var(--text-faint); cursor: pointer }
@@ -88,3 +87,15 @@
 .studio-edition-field select:focus-visible { outline: 1px solid var(--accent); outline-offset: 1px }
 .studio-edition-check { display: flex; align-items: center; gap: 5px; font-size: 10px; color: var(--text-dim); white-space: nowrap }
 .studio-edition-check input { margin: 0; accent-color: var(--accent) }
+
+/* The head: where the work stands against its last save (the mockup's "edited since save", :1432), then Save, Undo and Redo. */
+.studio-head-standing { font-size: 10px; color: var(--text-faint); white-space: nowrap }
+.studio-head-standing[data-dirty="true"] { color: var(--stall) }
+.inst-plate[data-studio] .sdk-face__extra .frame-chrome { flex-wrap: nowrap }
+/* Your controls (NativeChosenControls) as the section's own controls: its editor's frame and head stand down inside the plate (no box in a
+   box); its dials keep their two rows at the section's width. */
+.inst-plate[data-studio] [data-section="chosen"] .native-chosen-editor { background: none; border: 0 }
+.inst-plate[data-studio] [data-section="chosen"] .native-chosen-editor > header { min-height: 16px; padding: 0 0 3px; background: none; border: 0 }
+.inst-plate[data-studio] [data-section="chosen"] .native-chosen-grid { padding: 0; background: none; overflow: hidden }
+.inst-plate[data-studio] [data-section="chosen"] .native-chosen-empty { min-height: 0; padding: 2px 0; align-items: flex-start; justify-content: flex-start; gap: 6px; white-space: normal; text-align: left; font-size: 10px; color: var(--text-faint) }
+.inst-plate[data-studio] [data-section="chosen"] .native-chain-controls { width: auto; max-width: none }
