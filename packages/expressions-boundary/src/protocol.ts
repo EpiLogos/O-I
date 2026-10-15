@@ -5,8 +5,12 @@
  * vendored app's kernelExpressions.ts/app.ts. */
 import {TECHNE_INSTRUMENTS, type TechneActionRoute, type TechneReading} from '../../../desktop/cradle/src/techne/contract.ts';
 import {resolveActionRoute} from '../../../desktop/cradle/src/techne/m0m5/adapter.ts';
-import type {HostedAppState, HostedAppMode, HostedTechneLens, HostedInstrument, HostedInstrumentDeterminants, HostedInstrumentParameters} from '../../../desktop/cradle/src/expressions/hostedApp';
-export type {HostedAppState, HostedAppMode, HostedTechneLens, HostedInstrument, HostedInstrumentDeterminants, HostedInstrumentParameters};
+import type {HostedAppState, HostedAppMode, HostedTechneLens, HostedInstrument, HostedInstrumentDeterminants, HostedInstrumentParameters, HostedAddress} from '../../../desktop/cradle/src/expressions/hostedApp';
+export type {HostedAppState, HostedAppMode, HostedTechneLens, HostedInstrument, HostedInstrumentDeterminants, HostedInstrumentParameters, HostedAddress};
+/** lane-3 E22: the frame's own deep-link grammar (`?expression=&scene=&t=&marker=`), one parse and one format for frame, boundary
+ * and shell: the announced address is read with it, the shell opens the frame with it and copies the address in it. */
+import {formatDeepLink, parseDeepLink} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/deepLinks.ts';
+export {formatDeepLink, parseDeepLink, DEEP_LINK_KEYS, type DeepLinkAddress} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/deepLinks.ts';
 // The QL instrument reading parser (the owner shape, ql.instrument-reading/v1), owned by this package: the boundary validates the instrument with it.
 import {parseQlInstrumentReading} from './qlInstrumentReading.ts';
 export type {TechneReading, TechneActionRoute, TechneActionReceipt, NativeActionRef} from '../../../desktop/cradle/src/techne/contract.ts';
@@ -96,6 +100,45 @@ export function readHostedInstrument(raw: unknown): HostedInstrument {
   return {ok: true, reading, determinants, parameters};
 }
 
+/** lane-3 E22: the address the frame announces, read with the frame's own deep-link grammar: the link it names must parse back
+ * whole (a ref with whitespace, a negative or overlong time, a marker that is not a ref) or the address is refused. The time is
+ * kept as the link carries it (to the millisecond). The marker's name is words for the shell, never part of the link. */
+export function readHostedAddress(raw: unknown): HostedAddress | null {
+  if (!object(raw)) return null;
+  const {scene, t, marker, markerName} = raw;
+  if (scene !== undefined && typeof scene !== 'string') return null;
+  if (marker !== undefined && typeof marker !== 'string') return null;
+  if (t !== undefined && (typeof t !== 'number' || !Number.isFinite(t) || t < 0)) return null;
+  if (markerName !== undefined && (typeof markerName !== 'string' || markerName.length > 4096 || marker === undefined)) return null;
+  const parsed = parseDeepLink(formatDeepLink('', {scene, t, marker}));
+  if (parsed.refused.length || parsed.address.scene !== scene || parsed.address.marker !== marker || (t === undefined) !== (parsed.address.t === undefined)) return null;
+  return {...(scene !== undefined ? {scene} : {}), ...(parsed.address.t !== undefined ? {t: parsed.address.t} : {}),
+    ...(marker !== undefined ? {marker} : {}), ...(typeof markerName === 'string' ? {markerName} : {})};
+}
+
+/** lane-3 E22: the whole address in the frame's own form — `?expression=…&scene=…&t=…&marker=…` — for copying and for opening
+ * the frame where it stood. Only refs travel; an absent part is absent from the link. */
+export function addressLink(expression: string | undefined, address: HostedAddress | undefined): string {
+  return formatDeepLink('', {expression, scene: address?.scene, t: address?.t, marker: address?.marker});
+}
+
+/** The refs of an address, as the shell keeps it beside the open work (surface/types.ts engine.address): no words. */
+export function addressRefs(address: HostedAddress | undefined): {scene?: string; t?: number; marker?: string} | undefined {
+  if (!address) return undefined;
+  const refs = {...(address.scene !== undefined ? {scene: address.scene} : {}), ...(address.t !== undefined ? {t: address.t} : {}),
+    ...(address.marker !== undefined ? {marker: address.marker} : {})};
+  return Object.keys(refs).length ? refs : undefined;
+}
+
+/** The frame's entry opened at a kept address: its own `scene`, `t` and `marker` parameters set in the entry's query, every
+ * other parameter (mode, world, host-load, expression) kept where it stands. No address, the entry as it was. */
+export function entryAtAddress(entry: string, address: HostedAddress | undefined): string {
+  const refs = addressRefs(address);
+  if (!refs) return entry;
+  const at = entry.indexOf('?');
+  return (at < 0 ? entry : entry.slice(0, at)) + formatDeepLink(at < 0 ? '' : entry.slice(at), refs);
+}
+
 /** Selection is a reading of what the application shows, never a request. */
 export function readHostedState(raw: unknown): HostedAppState | null {
   if (!object(raw)) return null;
@@ -162,6 +205,12 @@ export function readHostedState(raw: unknown): HostedAppState | null {
       selection.push({id: entry.id, ...(typeof entry.name === 'string' ? {name: entry.name} : {})});
     }
     state.selection = selection;
+  }
+  // lane-3 E22: where the frame stands. Absent is valid (a link not yet settled); a malformed address refuses the reading.
+  if (raw.address !== undefined) {
+    const address = readHostedAddress(raw.address);
+    if (!address) return null;
+    state.address = address;
   }
   // A bare {} is not evidence the application started. The real app always
   // announces its cut and concrete scene count, even while native boot waits.

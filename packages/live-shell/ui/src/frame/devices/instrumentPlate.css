@@ -16,6 +16,15 @@
 .inst-section-note { color: var(--text-faint); letter-spacing: .02em; text-transform: none }
 .inst-section-body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 6px; overflow: hidden auto }
 .inst-section-line { margin: 0; max-width: 24ch; font-size: 10.5px; line-height: 1.5; color: var(--text-faint) }
+/* A column folded to its title: the runtime's fold strip (sdk.css .sdk-face__unfold; the mockup's .ifold, :153), 26px wide, its
+   name read upward, pressed to open. An open column that can fold carries its title as the press. */
+.inst-section--folded { width: 26px; padding: 0; gap: 0 }
+.inst-section--folded:last-child { flex: none }
+.inst-section--folded > .sdk-face__unfold { padding: 8px 0 }
+.inst-section--folded:hover { background: var(--bg-3) }
+.inst-section-fold { padding: 0; background: none; border: 0; color: inherit; font: inherit; letter-spacing: inherit; text-transform: inherit; cursor: pointer }
+.inst-section-fold:hover { color: var(--text) }
+.inst-section-fold:focus-visible, .inst-section--folded > .sdk-face__unfold:focus-visible { outline: 1px solid var(--accent); outline-offset: 1px }
 
 /* A section's devices: the selector of marks (one per device it holds), then the shown device drawn flat into the column — its
    own head (ring, name, marks) stays, the plate's frame stands down so the column reads as one group. */

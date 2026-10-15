@@ -214,6 +214,8 @@ let deepLinkPending:{address:DeepLinkAddress;notes:string[]}|null={address:bootL
 // address is never written faster than WKWebView's replaceState throttle allows, and the last position is always written.
 const DEEP_LINK_WRITE_MS=400;
 let deepLinkWriteTimer=0;
+// E22 (ticket P, G3): the address last announced to the host, so a changed address is announced once.
+let announcedAddress='';
 let focusSession:FocusSession=NOT_FOCUSED,focusHold:FullscreenHold|null=null,focusExitedAt=Number.NEGATIVE_INFINITY;
 const featured=featuredExpressions(),starters=startingPoints();
 const covers=new Map<string,string>();
@@ -2139,7 +2141,9 @@ function announceHostState(){
   // The Technē lens the frame stands in (the masthead chooser). Read here, not in the literal: a call before the chooser exists omits it rather than throwing out of the announcement.
   let lens:LensId|undefined;try{lens=lensStudio.active();}catch{lens=undefined;}
   const instrument=announcedInstrument();
-  const state={...(lens?{lens}:{}),...(instrument?{instrument}:{}),nativeScene:view&&binding?{expression_ref:view.document.expression_ref,revision:view.document.revision,scene_ref:binding.scene_ref}:undefined,document:awaitingNativeBoot&&!nativeWorkspace?.nativeView()?undefined:{id:nativeWorkspace?.nativeView()?.document.expression_ref??store.document.id,name:store.document.name},sceneIndex,sceneCount:store.document.scenes.length,sceneName:s.name,sceneState:sceneSaveState(store.document,s),
+  // E22 (ticket P, G3): where the frame stands, as its own link names it; absent until the opening link has settled.
+  const address=hostAddress();announcedAddress=JSON.stringify(address??null);
+  const state={...(lens?{lens}:{}),...(instrument?{instrument}:{}),...(address?{address}:{}),nativeScene:view&&binding?{expression_ref:view.document.expression_ref,revision:view.document.revision,scene_ref:binding.scene_ref}:undefined,document:awaitingNativeBoot&&!nativeWorkspace?.nativeView()?undefined:{id:nativeWorkspace?.nativeView()?.document.expression_ref??store.document.id,name:store.document.name},sceneIndex,sceneCount:store.document.scenes.length,sceneName:s.name,sceneState:sceneSaveState(store.document,s),
    selection:selected.map(id=>{const e=scene().entities.find(v=>v.id===id);return {id,name:e?e.name:undefined};}),tool,playing:scenePlaying,journeyPlaying,fieldPaused,libraryOpen,hostMode,presentsInstrument:hostMode==='live',recording:recorder.active,presenting,automationLoop,propertyRecording:!!propertyTake,propertyPreview:trackPreview,automationHeld:liveOverrides.heldCount(),takeMode:appendTake?'append':'replace',stage:{mode:camera.mode,grid:camera.grid,snap:camera.snap,guides:guidesVisible,tool,repeatPins:pinRepeat,videoTake:!!currentVideo}};
   window.parent.postMessage({v:1,kind:'oi-app-state',state},'*');
   nativeEditorEndpoint?.publish();
@@ -3052,8 +3056,27 @@ function applyDeepLinkAddress(address:DeepLinkAddress):string[]{
  }
  return notes;
 }
-/** E22: the address follows the person. The Scene always; the time and marker while the transport stands still.
- * Only replaceState, so Back and history stay as they were. */
+/** E22: where the frame stands, in its link's terms: the Scene always; the time and marker while the transport stands still.
+ * The URL write and the host's announcement read this one place. */
+function deepLinkAddressNow():{expression?:string;scene:string;t?:number;marker?:string}{
+ const view=nativeWorkspace?.nativeView(),doc=store.document;
+ const timing=expressionTiming(doc,sceneIndex,sceneElapsed),still=!journeyPlaying&&!scenePlaying;
+ const expression=view?.document.expression_ref??(addressKeepsExpression?doc.id:undefined);
+ const marker=still?markerAtTime(doc.markers??[],timing.time):undefined;
+ return {...(expression!==undefined?{expression}:{}),scene:nativeSceneRef(scene().id)??scene().id,...(still?{t:timing.time}:{}),...(marker!==undefined?{marker}:{})};
+}
+/** E22 (ticket P, G3): the address the host is told with the frame's state, once the opening link has settled and the work it
+ * names stands; the marker's name rides beside its ref for the host's words. Absent otherwise: the host keeps what it held. */
+function hostAddress():{scene:string;t?:number;marker?:string;markerName?:string}|undefined{
+ try{
+ if(deepLinkPending||awaitingNativeBoot&&!nativeWorkspace?.nativeView())return undefined;
+ const now=deepLinkAddressNow();
+ const name=now.marker!==undefined?markerNamed(store.document.markers??[],now.marker)?.name:undefined;
+ return {scene:now.scene,...(now.t!==undefined?{t:now.t}:{}),...(now.marker!==undefined?{marker:now.marker}:{}),...(name!==undefined?{markerName:name}:{})};
+ }catch{return undefined;/* a frame still starting names no address rather than a wrong one */}
+}
+/** E22: the address follows the person. Only replaceState, so Back and history stay as they were. A changed address is also
+ * announced to the host (G3), at the same throttled pace. */
 function syncDeepLinkAddress(){
  if(deepLinkPending)return;
  if(deepLinkWriteTimer)return;
@@ -3061,17 +3084,12 @@ function syncDeepLinkAddress(){
   deepLinkWriteTimer=0;
   if(deepLinkPending)return;
   try{
-  const view=nativeWorkspace?.nativeView(),doc=store.document;
-  const timing=expressionTiming(doc,sceneIndex,sceneElapsed),still=!journeyPlaying&&!scenePlaying;
-  const expression=view?.document.expression_ref??(addressKeepsExpression?doc.id:undefined);
-  const next=formatDeepLink(location.search,{
-   ...(expression!==undefined?{expression}:{}),
-   scene:nativeSceneRef(scene().id)??scene().id,
-   t:still?timing.time:undefined,
-   marker:still?markerAtTime(doc.markers??[],timing.time):undefined,
-  });
+  const address=deepLinkAddressNow();
+  const next=formatDeepLink(location.search,{...(address.expression!==undefined?{expression:address.expression}:{}),scene:address.scene,t:address.t,marker:address.marker});
   if(next!==location.search)history.replaceState(history.state,'',location.pathname+next+location.hash);
   }catch{/* a refused history write leaves the address as it was; the page keeps working */}
+  const announced=JSON.stringify(hostAddress()??null);
+  if(announced!==announcedAddress){announcedAddress=announced;announceHostState();}
  },DEEP_LINK_WRITE_MS);
 }
 /** E23: the layout focus hides and restores. Read and written as one record; the pure model is focusMode.ts. */

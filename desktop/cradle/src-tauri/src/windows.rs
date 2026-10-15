@@ -167,7 +167,9 @@ pub fn window_detach(
         .title(format!("{} — O-I", record.binding.title))
         .inner_size(800.0, 650.0)
         .min_inner_size(400.0, 300.0)
-        .initialization_script("window.__OI_DETACHED__ = true;");
+        .initialization_script("window.__OI_DETACHED__ = true;")
+        // A detached pane exports as the main window does (downloads.rs): without a receiver wry cancels the file.
+        .on_download(crate::downloads::receiver());
     #[cfg(target_os = "macos")]
     let builder = if let Some(id) = app
         .config()

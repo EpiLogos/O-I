@@ -517,7 +517,7 @@ test('actual NativeWorldDetail fullscreen open permits only intended restored mo
 
 
 test('actual mounted hosted freshness key is unique per mount and real host hide/reveal/mode changes retain one frame URL',async()=>{
- const panel=await parse('packages/live-shell/ui/src/panels/expressions.tsx'),{mountExpressionsApplication}=await import('../../../expressions-boundary/src/host.ts');
+ const panel=await parse('packages/live-shell/ui/src/panels/expressions.tsx'),{mountExpressionsApplication}=await import('../../../expressions-boundary/src/host.ts'),{entryAtAddress}=await import('../../../expressions-boundary/src/protocol.ts');
  const freshness=find(panel,n=>ts.isVariableDeclaration(n)&&n.name.getText(panel)==='hostLoad').parent.parent.getText(panel);
  const call=find(panel,n=>ts.isCallExpression(n)&&n.expression.getText(panel)==='mountExpressionsApplication');
  const mainEffect=find(panel,n=>ts.isCallExpression(n)&&n.expression.getText(panel)==='useEffect'&&n.arguments[0]?.getText(panel).includes('let mounted:'));
@@ -534,14 +534,16 @@ test('actual mounted hosted freshness key is unique per mount and real host hide
   frame.dataset={};frame.style={};frame.attributes={};frame.setAttribute=(key,value)=>{frame.attributes[key]=value};frame.remove=()=>{frame.removed=true};frame.contentWindow={postMessage:(value,origin)=>{commands.push({value,origin})}};frames.push(frame);return frame;
  }};
  const container={ownerDocument,append:frame=>{frame.attached=true}};
- const invocation=new Function('mountExpressionsApplication','target','config','modeRef','worldLens','initialRef','continued','initial','owners','presented','workspaceRef','bookRef','selectionOwner','refreshEditor','setStatus','setHostFault','workspace','expressionBinding','live','disclosureSession',ts.transpileModule(`${freshness}
+ const invocation=new Function('mountExpressionsApplication','target','config','modeRef','worldLens','initialRef','continued','initial','owners','presented','workspaceRef','bookRef','selectionOwner','refreshEditor','setStatus','setHostFault','workspace','expressionBinding','live','disclosureSession','entryAtAddress','keptAddress',ts.transpileModule(`${freshness}
 return ${call.getText(panel)};`,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText);
  const mounts=[];let visible=true;
  try{
   for(let lease=0;lease<2;lease++){
-   const mounted=invocation(mountExpressionsApplication,container,{expressions_entry:'/__application/expressions/index.html'},{current:'expressions'},{current:'generic'},r.reading.basis.expression_ref,undefined,undefined,{channels:{}},()=>visible,{current:{publishReading:blocked,publishEditorReading:blocked}}, {current:{current:{id:'retained-native-workspace'}}},{current:{workspaceId:'retained-native-workspace',expected:r.reading.basis.expression_ref}},()=>{},()=>{},()=>{},{setMode:blocked},()=>undefined,true,undefined);
+   const mounted=invocation(mountExpressionsApplication,container,{expressions_entry:'/__application/expressions/index.html'},{current:'expressions'},{current:'generic'},r.reading.basis.expression_ref,undefined,undefined,{channels:{}},()=>visible,{current:{publishReading:blocked,publishEditorReading:blocked}}, {current:{current:{id:'retained-native-workspace'}}},{current:{workspaceId:'retained-native-workspace',expected:r.reading.basis.expression_ref}},()=>{},()=>{},()=>{},{setMode:blocked},()=>undefined,true,undefined,entryAtAddress,lease?{scene:'scene:kept',t:7.5,marker:'m1'}:undefined);
    mounts.push(mounted);const url=new URL(mounted.frame.src),original=mounted.frame.src;
-   assert.equal(url.searchParams.get('expression'),r.reading.basis.expression_ref);assert.match(url.searchParams.get('host-load'),/^[0-9a-f-]{36}$/);assert.equal(url.searchParams.get('mode'),'expressions');
+   assert.equal(url.searchParams.get('expression'),r.reading.basis.expression_ref);
+   // ticket P (G3): a kept address reopens the frame there, in the frame's own query; without one the entry is as it was.
+   assert.deepEqual(['scene','t','marker'].map(key=>url.searchParams.get(key)),lease?['scene:kept','7.5','m1']:[null,null,null]);assert.match(url.searchParams.get('host-load'),/^[0-9a-f-]{36}$/);assert.equal(url.searchParams.get('mode'),'expressions');
    visible=false;mounted.host.setPresented();visible=true;mounted.host.setPresented();mounted.host.setMode('techne','generic');mounted.host.setMode('expressions','generic');
    assert.equal(mounted.frame.src,original);assert.equal(mounted.frame.srcWrites,1);assert.equal(mounted.host.frame,mounted.frame);assert.equal(mounted.frame.removed,undefined);
   }
