@@ -93,7 +93,11 @@ export function useHostedChrome(): HostedExpressionsChrome | null {
 
 // --- placement -------------------------------------------------------------------------------------------------------------------
 
-interface PaneRecord {slot: HTMLElement | null; presented: boolean; order: number}
+/** One admission of a pane: the module instance that holds the pane's record. Notices name their admission, so an instance that
+ * is already leaving cannot reach the record a later instance of the same pane holds. */
+export type ExpressionsPaneAdmission = object
+
+interface PaneRecord {slot: HTMLElement | null; presented: boolean; order: number; admission: ExpressionsPaneAdmission}
 const panes = new Map<string, PaneRecord>()
 let registrations = 0
 let preferred: string | null = null
@@ -110,29 +114,42 @@ function settle(): void {
   for (const listener of [...placementListeners]) listener()
 }
 
-/** A pane body is admitted (its module mounted). It holds no slot and is not presented until it says so. */
-export function registerExpressionsPane(paneId: string): void {
-  if (!panes.has(paneId)) panes.set(paneId, {slot: null, presented: false, order: registrations++})
+/** The record a notice may reach: the pane's, when the notice names no admission or names the one that holds it. */
+function heldBy(paneId: string, admission: ExpressionsPaneAdmission | undefined): PaneRecord | undefined {
+  const record = panes.get(paneId)
+  return record && (admission === undefined || record.admission === admission) ? record : undefined
 }
 
-/** The pane body is gone: its slot and presentation go with it, and the frame returns to another presented pane if one stands. */
-export function unregisterExpressionsPane(paneId: string): void {
+/** A pane body is admitted (its module mounted). It holds no slot and is not presented until it says so. The latest admission
+ * holds the pane: a pane's module mounted again before the earlier one has left (React's StrictMode mount, unmount, mount; a
+ * remount within one commit) takes the record over, and the earlier instance's late unmount, slot and presentation notices,
+ * which name their own admission, leave it alone (seen headless, 15 Oct: the earlier instance's unmount deleted the record the
+ * live one shared, so the stage pane was never presented and the frame stayed in its hidden residence). */
+export function registerExpressionsPane(paneId: string, admission: ExpressionsPaneAdmission = {}): ExpressionsPaneAdmission {
+  if (panes.get(paneId)?.admission !== admission) panes.set(paneId, {slot: null, presented: false, order: registrations++, admission})
+  return admission
+}
+
+/** The pane body is gone: its slot and presentation go with it, and the frame returns to another presented pane if one stands.
+ * An admission that no longer holds the pane changes nothing. */
+export function unregisterExpressionsPane(paneId: string, admission?: ExpressionsPaneAdmission): void {
+  if (!heldBy(paneId, admission)) return
   panes.delete(paneId)
   if (preferred === paneId) preferred = null
   settle()
 }
 
 /** The pane's rectangle for the frame: its slot element, or null when the pane has none (its body is leaving). */
-export function attachExpressionsSlot(paneId: string, slot: HTMLElement | null): void {
-  const record = panes.get(paneId)
+export function attachExpressionsSlot(paneId: string, slot: HTMLElement | null, admission?: ExpressionsPaneAdmission): void {
+  const record = heldBy(paneId, admission)
   if (!record) return
   record.slot = slot
   settle()
 }
 
 /** The pane's presentation (its wrapper is shown to the user, or concealed by a tab switch or by Factory being left). */
-export function setExpressionsPanePresented(paneId: string, presented: boolean): void {
-  const record = panes.get(paneId)
+export function setExpressionsPanePresented(paneId: string, presented: boolean, admission?: ExpressionsPaneAdmission): void {
+  const record = heldBy(paneId, admission)
   if (!record || record.presented === presented) return
   record.presented = presented
   settle()
