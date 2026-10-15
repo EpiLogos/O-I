@@ -314,8 +314,10 @@ each foundation item's done-when. The list below comes from FOUNDATION-AUDIT
 - **The duplicate bars, browsers and rails.** Each goes once its controls live
   as bindings or registrations: four transports, four browsers, two rails
   (F6–F8).
-- **Unreached code.** `candidate-reachable.mjs --list` against the tree
-  names it. Delete it, unless the legacy desktop still runs it.
+- **Unreached code.** `candidate-reachable.mjs --unreached` against the tree
+  names it (type-only imports do not reach; the candidate's shipped pages,
+  the hosted frame's included, are its roots). Delete it, unless the legacy
+  desktop still runs it.
 
 Keep what works: Factory's transport and Expressions' transport until their
 bindings land, the pane engine, the book, the contracts, the frame's
