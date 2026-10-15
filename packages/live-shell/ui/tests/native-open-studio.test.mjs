@@ -60,7 +60,10 @@ function aperture(t, options = {}) {
 test('the Studio section list is the nav: unique ids, and only those ids validate', () => {
   const ids = STUDIO_SECTIONS.map(([id]) => id);
   assert.equal(new Set(ids).size, ids.length);
-  assert.equal(ids.length, 20);
+  // 19: the Palace's Studio section retired with the frame's Palace lens (T-PALACES-ONTO-ATLAS; the palace's controls are the shell's M5
+  // plate — atlas-palaces-plate.test.mjs)
+  assert.equal(ids.length, 19);
+  assert.equal(isStudioSection('palace'), false, 'no Studio section is the palace\'s');
   for (const id of ids) assert.equal(isStudioSection(id), true, id);
   for (const hostile of ['', 'Physics', 'physics ', 'constructor', '__proto__', 'toString', 'hasOwnProperty', '../physics', 'physics\n', 4, null, undefined, {}, ['physics']]) {
     assert.equal(isStudioSection(hostile), false, JSON.stringify(hostile));

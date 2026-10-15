@@ -7,7 +7,8 @@
 //   placeFocusFromSession's law): when the session's `spatial_focus_ref` names a place the world holds, the Earth selects the subject
 //   that declares it there, or flies to the point at the atlas's own framing distance for its precision (app/controller.ts frames a
 //   place at 2.25 globe radii and a region at 2.6). A ref the world does not hold turns nothing, and is not an error.
-// - The camera's scale, for the plate's head (system · body · region), read on the globe's own frame and published only on change.
+// - The camera's scale, for the plate's head (system · body · region; palace while one is entered, palaces/palaceSession.ts), read on the
+//   globe's own frame and published only on change.
 // - The Place tool's click (placeTool.ts): while it is armed, the point under a click on the globe is read through the atlas's own
 //   surface maths (globe/zoom.ts surfacePointAt, data/geo.ts latLonFromDir) — the click itself stays the globe's.
 // - The Place tool's owner (placeTool.ts PlaceOwner): the draft is offered to the subject's time-and-place editor
@@ -25,6 +26,7 @@ import type {SuitePlace} from '../provider/suiteStanding';
 import {suitePlaces} from '../provider/suiteStanding';
 import {atlasScaleOf, type AtlasScale} from './placesModel';
 import {bindPlaceOwner, notePlaceTool, placeAnswered, placeAt, placeToolState, subscribePlaceTool, type PlaceOwner, type PlaceToolSubject} from './placeTool';
+import {palaceState} from '../palaces/palaceSession';
 
 // ── the camera's scale ────────────────────────────────────────────────────
 
@@ -191,7 +193,7 @@ export function bindPlaces({handle, transport, session, said = notePlaceTool}: {
   let live = true;
   handle.engine.onFrame(() => {
     if (!live) return;
-    publishScale(atlasScaleOf({sky: !!handle.ctl.state.sky, graph: !!handle.ctl.state.graph, dist: handle.engine.rig.dist}));
+    publishScale(atlasScaleOf({sky: !!handle.ctl.state.sky, graph: !!handle.ctl.state.graph, dist: handle.engine.rig.dist, palace: palaceState().phase === 'inside'}));
   });
   const offFocus = followSpatialFocus(handle, session);
   const offClicks = capturePlaceClicks(handle);

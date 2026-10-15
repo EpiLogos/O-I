@@ -30,7 +30,8 @@ const page = await browser.newPage({viewport: {width: 1200, height: 820}});
 const errors = [];
 page.on('pageerror', error => errors.push(String(error)));
 
-const LENSES = ['project', 'canvas', 'timeline', 'journey', 'place', 'palace'];
+// M4′ Places and M5′ Palace are the shell's Earth atlas now (T-PLACES-ONTO-ATLAS, T-PALACES-ONTO-ATLAS): the frame's chooser offers neither.
+const LENSES = ['project', 'canvas', 'timeline', 'journey'];
 const receipt = {schema: 'oi.techne-lens-studio/v1', standing: 'current-app instrument surface in a real browser; native operations are a separate host-channel proof', passed: false, lenses: []};
 
 const state = () => page.evaluate(() => window.__FIELD_STUDIES__.getState());
@@ -41,10 +42,10 @@ try {
   await page.waitForFunction(() => window.__FIELD_STUDIES__ && window.__FIELD_STUDIES__.getState);
   assert.equal((await state()).hostMode, 'techne', 'the application boots in the Technē cut');
 
-  // The chooser stands in Technē mode with all six instruments in M′ order.
+  // The chooser stands in Technē mode with the frame's instruments in M′ order.
   await page.waitForSelector('#lens-chooser:not([hidden])');
   const choices = await page.locator('#lens-chooser .lens-choice').evaluateAll(nodes => nodes.map(n => n.dataset.lens));
-  assert.deepEqual(choices, LENSES, 'the chooser carries M0′–M5′ in order');
+  assert.deepEqual(choices, LENSES, 'the chooser carries M0′–M3′ in order');
 
   // This standalone CI probe has no native host. It must not fabricate a
   // source field; positive component/owner acceptance belongs to native tests.
@@ -71,19 +72,12 @@ try {
       assert.equal(await page.locator('.research-instrument-body .react-flow__node').count(), 0, 'missing owner never becomes demo graph data');
     } else if (id === 'journey') {
       assert.equal(await page.locator('#timeline-panel:not([hidden])').count(), 1, 'Journey opens the existing Scene strip');
-    } else if (id === 'palace') {
-      await page.waitForSelector('#inspector:not([hidden]) #techne-palace-workspace, #inspector:not([hidden]) .palace-status');
-      assert.equal((await page.locator('#inspector-title').textContent())?.trim(), 'Palace', 'Palace composes inside the existing Studio');
     }
     assert.deepEqual(await page.evaluate(() => window.__FIELD_STUDIES__.getDocument()), documentBefore, 'lens selection retains the same actual Expression draft and Scenes');
     receipt.lenses.push(id);
   }
 
-  // An instrument's Studio section never stays open, empty, over the next one.
-  await active('palace').click();
-  await page.waitForSelector('#inspector:not([hidden])');
-  await active('canvas').click();
-  assert.ok(await page.evaluate(() => document.getElementById('inspector').hidden || document.getElementById('inspector-title').textContent.trim() !== 'Palace'), 'leaving Palace closes its Studio section');
+  // (The Palace's Studio section retired with the frame's Palace lens, T-PALACES-ONTO-ATLAS: palaces are the shell's Earth atlas.)
   // Field continuity (§28): moving through every instrument must not reset the
   // field — camera and selection stand. (This standalone walk has no host, so
   // no native construction is open; the subject-CARRYING continuity — a stale
@@ -97,7 +91,6 @@ try {
   // Saving is the app's own act: one Save control in the masthead (and ⌘S),
   // not a separate native-composition panel.
   assert.equal(await page.locator('#app > .masthead #native-save').count(), 1, 'Save stands in the masthead');
-  await active('palace').click();
 
   // Keyboard: the chooser is a tablist. Selecting keeps focus on the chosen tab
   // (the innerHTML-rebuild focus loss the review caught is fixed), and arrow
@@ -108,13 +101,8 @@ try {
   assert.equal((await state()).activeLens, 'journey', 'ArrowRight roves to the next instrument');
   assert.ok(await page.evaluate(() => document.activeElement?.dataset?.lens === 'journey'), 'the roved instrument takes focus');
 
-  // The Studio closes without disturbing the chooser or the field.
-  await active('palace').click();
-  await page.waitForSelector('#inspector:not([hidden])');
-  await page.locator('#inspector [data-action="close-studio"]').click();
-  await page.waitForSelector('#inspector', {state: 'hidden'});
-  assert.ok(await page.locator('#lens-chooser:not([hidden])').count(), 'closing the Studio leaves the chooser standing');
-  assert.deepEqual((await state()).camera, before.camera, 'closing the Studio does not move the field');
+  // (The Studio-close walk opened the Studio through the frame's Palace lens, which retired with T-PALACES-ONTO-ATLAS; no other lens of
+  // the chooser opens the Studio, so the walk is not repeated here.)
 
   // Negative control: the Expressions cut carries no instrument chooser.
   const lived = await browser.newPage({viewport: {width: 1200, height: 820}});

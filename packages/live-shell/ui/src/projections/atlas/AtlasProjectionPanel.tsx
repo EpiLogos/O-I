@@ -28,6 +28,7 @@ import {sunStanding} from '../../inhabitants/qlSkyEarthAdapter'
 import {bindSharedTimeClock, windowYear} from './sharedClock'
 import {SUITE_PROVIDER_ID, describeProgress, describeStanding, subscribeSuiteStanding, suiteStanding, type SuiteStanding} from './provider/suiteStanding'
 import {bindPlaces, type PlacesBinding} from './places/placesHost'
+import {bindPalaces, type PalacesBinding} from './palaces/palacesHost'
 import './atlasHost.css'
 
 /** The year the Earth shows, from the shared window: null while no window is in force (all time). */
@@ -397,6 +398,7 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {teardown: (
   let unsubscribeStanding: () => void = () => {}
   let unsubscribeView: () => void = () => {}
   let places: PlacesBinding | null = null
+  let palaces: PalacesBinding | null = null
   // The Sun's words stand in the Info view's hover and on the M4 plate's Sky section (T-PLACES-ONTO-ATLAS), the same words in both.
   const setSunLine = (text: string | null) => {
     words.sun(text)
@@ -417,6 +419,7 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {teardown: (
     unsubscribeStanding()
     unsubscribeView()
     places?.dispose()
+    palaces?.dispose()
     cancelReread()
     follower?.dispose()
     // the words directly: a teardown may run before the Sun's first state is made
@@ -439,6 +442,10 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {teardown: (
   // Places is the atlas (T-PLACES-ONTO-ATLAS): the shared spatial focus turns it, the M4 plate reads its scale, and the Place tool
   // reads the point under a click and offers it to the owner's editor (places/placesHost.ts).
   places = bindPlaces({handle: mounted, transport, session: disclosureSession})
+  // Palaces live in the atlas (T-PALACES-ONTO-ATLAS; FOUNDATION §3 N4): a palace is a place on the world you enter, drawn inside this pane
+  // at the atlas's palace scale; its owners read and write through this transport, and its presence through the atlas's workspace memory
+  // (palaces/palacesHost.ts).
+  palaces = bindPalaces({element, transport, storage: atlasMemoryStorage})
 
   // The Sun follows the instant the Earth shows (T-ATLAS-SUN). The window's instant is offered on each change; the Sun is
   // read for it once the window has been still (sunFollow.ts), and each reading replaces the one Sun in place through the

@@ -1,23 +1,23 @@
-// lane-5 T15 x T21: the Palace board's held points and viewport persist through the Palace's own presence owner.
+// lane-5 T15 x T21: the palace's held points and viewport persist through the palace's own presence owner. Moved from the frame's
+// field-studies-journeys/tests/palace-board-presence.test.mjs with its module (T-PALACES-ONTO-ATLAS; board.ts is the owner seam's
+// now, desktop/cradle/src/techne/m0m5/palace/). Retired with the frame's board view, each replaced: 'one board gesture is one apply …'
+// and 'the board saves on the gesture end only …' → atlas-palaces-session.test.mjs 'a floor drag is one move, saved once …' (the floor
+// holds a drag as its own preview and hands the release to the session once); 'the parent saves the board once per gesture, and
+// restores it on mount …' → atlas-palaces-session.test.mjs 'entering restores the saved arrangement …'.
 //   - an entry saved before the board carries no board or viewport, and loads unchanged;
 //   - a move, then reopen, restores the same positions and viewport through the real save and restore;
 //   - a non-finite board point is refused by name, and its entry is not restored;
 //   - one board gesture is one apply (one save), and the kernel document is byte-identical across moves and the save.
-// Run after `npm run build:journeys` (the board's pure module is read from build/).
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
-import {join} from 'node:path';
-import {fileURLToPath} from 'node:url';
-import {provingReading} from '../../../src/techne/m0m5/journey/proving-reading.ts';
-import {deriveComposition, palaceComposition, resetPalaceCompositions, storeComposition} from '../../../src/techne/m0m5/palace/palace-state.ts';
+import {provingReading} from '../../../../desktop/cradle/src/techne/m0m5/journey/proving-reading.ts';
+import {deriveComposition, palaceComposition, resetPalaceCompositions, storeComposition} from '../../../../desktop/cradle/src/techne/m0m5/palace/palace-state.ts';
 import {
   PALACE_PRESENCE_KEY, loadPalacePresence, refusedBoardPoint, restorePalaceComposition, savePalaceComposition,
-} from '../../../src/techne/m0m5/palace/presence.ts';
-import {discoverRegions, planRegions} from '../../../src/techne/m0m5/palace/composition.ts';
-import {boardPositions, commitBatch, moveBoardRegion, snapBoardPoint, validateBoardPositions} from '../build/palaceBoard.js';
+} from '../../../../desktop/cradle/src/techne/m0m5/palace/presence.ts';
+import {discoverRegions, planRegions} from '../../../../desktop/cradle/src/techne/m0m5/palace/composition.ts';
+import {boardPositions, moveBoardRegion, snapBoardPoint, validateBoardPositions} from '../../../../desktop/cradle/src/techne/m0m5/palace/board.ts';
 
-const here = fileURLToPath(new URL('.', import.meta.url));
 const NAMES = ['Walk', 'Gate', 'Night'];
 
 function memoryStorage() {
@@ -153,24 +153,6 @@ test('a non-positive or non-finite viewport zoom is refused as a whole entry', (
   assert.deepEqual(loadPalacePresence(storage), {});
 });
 
-test('one board gesture is one apply, and a preview is never a save', () => {
-  const applied = [];
-  const tasks = [];
-  const batch = commitBatch((points) => applied.push(points), (task) => tasks.push(task));
-  // A three-region release: the canvas commits each dragged region in one synchronous pass.
-  batch('Walk', {x: 700, y: 300});
-  batch('Gate', {x: 412, y: 88});
-  batch('Night', {x: -120, y: 640});
-  assert.equal(applied.length, 0, 'nothing is applied during the release pass');
-  assert.equal(tasks.length, 1, 'one flush is scheduled for the whole gesture');
-  tasks[0]();
-  assert.equal(applied.length, 1, 'the gesture is applied once');
-  assert.deepEqual(applied[0], {Walk: {x: 700, y: 300}, Gate: {x: 412, y: 88}, Night: {x: -120, y: 640}});
-  batch('Gate', {x: 0, y: 0});
-  tasks[1]();
-  assert.equal(applied.length, 2, 'a second gesture is its own apply');
-});
-
 test('the kernel document stays byte-identical across the moves and the save', () => {
   resetPalaceCompositions();
   const reading = provingReading();
@@ -180,19 +162,13 @@ test('the kernel document stays byte-identical across the moves and the save', (
   const before = JSON.stringify(doc);
   const planBefore = planRegions(doc, regions, []);
 
-  // Two gestures on the board: three regions, then one, each applied once.
-  const tasks = [];
+  // Two gestures on the floor: three rooms, then one, each released once.
   let held = {};
-  const apply = (points) => {
+  const release = (points) => {
     for (const [name, point] of Object.entries(points)) held = moveBoardRegion(held, names, name, point);
   };
-  const gesture = commitBatch(apply, (task) => tasks.push(task));
-  gesture('Walk', {x: 700, y: 300});
-  gesture('Gate', snapBoardPoint({x: 412, y: 88}, true));
-  gesture('Night', {x: -120, y: 640});
-  tasks.splice(0).forEach((task) => task());
-  gesture('Walk', {x: 900, y: 40});
-  tasks.splice(0).forEach((task) => task());
+  release({Walk: {x: 700, y: 300}, Gate: snapBoardPoint({x: 412, y: 88}, true), Night: {x: -120, y: 640}});
+  release({Walk: {x: 900, y: 40}});
 
   // The save: the composition with the board is written to the presence owner, then read back in a new session.
   const storage = memoryStorage();
@@ -205,22 +181,6 @@ test('the kernel document stays byte-identical across the moves and the save', (
   assert.equal(JSON.stringify(doc), before, 'the Palace document is byte-identical across the moves and the save');
   assert.equal(JSON.stringify(planBefore), JSON.stringify(planRegions(doc, regions, [])), 'the region plan is unchanged');
   assert.equal(planRegions(doc, regions, []), null, 'nothing is planned to save for the document');
-});
-
-test('the board saves on the gesture end only: the preview path never reaches the save', () => {
-  const view = readFileSync(join(here, '../src/palaceBoardView.tsx'), 'utf8');
-  const preview = view.slice(view.indexOf('const preview='), view.indexOf('const release='));
-  assert.ok(preview.length > 0, 'the preview path is present');
-  assert.doesNotMatch(preview, /movesRef|onMoves|persist/, 'a preview holds the drag and does not save it');
-  assert.match(view, /commit:\(name,point\)=>\{batch\(name,point\);return Promise\.resolve\(\);\}/, 'the commit is batched, one per gesture');
-});
-
-test('the parent saves the board once per gesture, and restores it on mount through the presence owner', () => {
-  const panel = readFileSync(join(here, '../src/palaceInstrument.tsx'), 'utf8');
-  assert.match(panel, /if\(reading\)persist\(\{\.\.\.palaceComposition\(reading\),board:next\},reading\);/);
-  assert.match(panel, /validateBoardPositions\(composition\.board,regions\.map\(region=>region\.name\)\)/);
-  assert.match(panel, /setRestoredViewport\(composition\.viewport\?\?null\)/);
-  assert.match(panel, /persist\(\{\.\.\.palaceComposition\(current\),viewport\},current\)/);
 });
 
 test('an entry the next load would refuse is never saved: the last good entry stands', () => {

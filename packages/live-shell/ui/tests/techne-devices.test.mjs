@@ -397,7 +397,9 @@ test('a fold opens its instrument: the door each instrument opens through is the
   assert.deepEqual(chain.instrumentDoorOf('techne:m1'), {kind: 'projection.expressions', lens: 'canvas'})
   // T-PLACES-ONTO-ATLAS: M4′ World / Places is the atlas, alone (FOUNDATION §4) — it opens the Earth pane, never the stage's lens
   assert.deepEqual(chain.instrumentDoorOf('techne:m4'), {kind: 'projection.earth'}, 'Places is the atlas')
-  assert.deepEqual(chain.instrumentDoorOf('techne:m5'), {kind: 'projection.expressions', lens: 'palace'})
+  // T-PALACES-ONTO-ATLAS: palaces live in the atlas (FOUNDATION §3 N4) — M5′ opens the Earth pane too, never the stage's retired lens
+  // (atlas-palaces-plate.test.mjs pins the press holding across the focus it causes)
+  assert.deepEqual(chain.instrumentDoorOf('techne:m5'), {kind: 'projection.earth'}, 'a palace is a place on the world you enter')
   assert.equal(chain.instrumentDoorOf('knowledge-graph'), null)
   assert.deepEqual(chain.rackInstruments('knowledge-graph').map(holder => holder.id), ['knowledge-graph'], 'the knowledge graph stands alone')
   assert.deepEqual(chain.rackInstruments(null).map(holder => holder.id), ['techne:m0', 'techne:m1', 'techne:m2', 'techne:m3', 'techne:m4', 'techne:m5'])

@@ -24,6 +24,8 @@ import {lightOf, type DeviceInstance, type DeviceSize} from '../../../frame/devi
 import {commitLiveInstrumentEdit, liveInstrumentWritable, useLiveTorusReading, type LiveTorusState} from '../../../live/torusInstrument'
 import {useAtlasHandle, useAtlasView} from '../../../projections/atlas/AtlasProjectionPanel'
 import {PlacesPlate} from '../../../projections/atlas/places/PlacesPlate'
+import {PalacePlate} from '../../../projections/atlas/palaces/PalacePlate'
+import {palaceState, subscribePalace} from '../../../projections/atlas/palaces/palaceSession'
 import {knowledgeGraphSurface, subscribeKnowledgeGraph} from '../../../../../../../desktop/cradle/src/knowledge/knowledgeGraphHandle'
 import type {KnowledgeGraphSurface} from '../../../../../../../desktop/cradle/src/knowledge/knowledgeGraphHandle'
 import {FacePlate} from '../../sdk/controls'
@@ -180,10 +182,17 @@ const FAMILY_NAMES: Readonly<Record<string, string>> = {
   [QL_FAMILY]: 'Quaternal Logic', [ATLAS_FAMILY]: 'Earth atlas', [KNOWLEDGE_FAMILY]: 'Knowledge graph',
 }
 
-/** The instruments the atlas is (T-PLACES-ONTO-ATLAS): the 0 instrument, the Earth and solar system with its graph (shell/
- * paneInstrument.ts), and M4′ World / Places — "Places is the Archetypal-Earth atlas, alone" (owner, 14 Oct; FOUNDATION §4). The
- * frame's own Places lens retires, so M4′ opens the atlas, never the stage. */
-const ATLAS_INSTRUMENTS: readonly string[] = [instrumentOfPane('projection.earth', null, 'earth') ?? 'techne:m0', 'techne:m4']
+/** The instruments the atlas is (T-PLACES-ONTO-ATLAS, T-PALACES-ONTO-ATLAS): the 0 instrument, the Earth and solar system with its graph
+ * (shell/paneInstrument.ts); M4′ World / Places — "Places is the Archetypal-Earth atlas, alone" (owner, 14 Oct; FOUNDATION §4); and M5′
+ * Palace / Integral Whole — "Palaces live in the atlas … There is no separate palace surface" (FOUNDATION §3 N4). The frame's own Places
+ * and Palace lenses retire, so M4′ and M5′ open the atlas, never the stage. */
+const ATLAS_INSTRUMENTS: readonly string[] = [instrumentOfPane('projection.earth', null, 'earth') ?? 'techne:m0', 'techne:m4', 'techne:m5']
+
+/** The atlas instrument the rack stands open while a palace is entered: M5′, whose plate holds the palace's controls (the atlas's palace
+ * scale is M5′'s, lock §2.5 "scales system · body · region · palace"). A registration by the atlas's own state, never a mode branch. */
+export function atlasInstrumentNow(focus: string | null, palace: 'outside' | 'entering' | 'inside'): string | null {
+  return focus && ATLAS_INSTRUMENTS.includes(focus) && palace !== 'outside' ? 'techne:m5' : focus
+}
 
 /** Where an instrument opens on the focused pane: the pane kind that holds it (the Earth pane holds the atlas's instruments) and, for
  * the hosted stage, the lens it turns to (HOSTED_INSTRUMENT, read backwards). */
@@ -253,10 +262,12 @@ function sectionDeviceOf(entry: TechneEntry): SectionDevice & {face: string} {
 }
 
 /** The instruments whose plate is their own (a registration by holder, never a mode branch): M4′ World / Places, the atlas's planet
- * plate in the mockup's six sections (projections/atlas/places/PlacesPlate.tsx). Every other instrument stands as the plate of the
- * families whose devices it holds. */
+ * plate in the mockup's six sections (projections/atlas/places/PlacesPlate.tsx); M5′ Palace / Integral Whole, the palace's controls —
+ * its rooms, path, guide, whole, composition, portals and Return (projections/atlas/palaces/PalacePlate.tsx). Every other instrument
+ * stands as the plate of the families whose devices it holds. */
 const OWN_PLATES: Readonly<Record<string, (props: {held: readonly (SectionDevice & {face: string})[]; focused: boolean}) => ReactNode>> = {
   'techne:m4': props => <PlacesPlate {...props} />,
+  'techne:m5': props => <PalacePlate {...props} />,
 }
 
 /** The open instrument: one plate, its columns the families whose devices it holds, each family's devices side by side. */
@@ -299,9 +310,20 @@ export function TechneDevices({manifests, focusInstrument = null, instrumentRead
   // otherwise re-publish every device on every render).
   const entries = useMemo(() => techneEntries(manifests, {atlas, surface, torus, instrumentReading}), [manifestKey, atlas, surface, torus])
   usePublished(entries)
-  // The instrument opened here (a fold pressed) holds until the focus changes; a new focus stands its own instrument open.
+  // The instrument opened here (a fold pressed) holds until the focus changes; a new focus stands its own instrument open. While a palace
+  // is entered the atlas stands at its palace scale, so the Earth pane's instrument stands as M5′ (atlasInstrumentNow).
+  const palace = useSyncExternalStore(subscribePalace, () => palaceState().phase, () => palaceState().phase)
   const [opened, setOpened] = useState<{focus: string | null; id: string} | null>(null)
-  const open = opened && opened.focus === focusInstrument ? opened.id : focusInstrument
+  // Entering a palace stands M5′ open over whatever atlas fold was pressed; leaving keeps M5′ open, its plate back on the world's palaces.
+  const wasInside = useRef(palace !== 'outside')
+  useEffect(() => {
+    const now = palace !== 'outside'
+    if (now === wasInside.current) return
+    wasInside.current = now
+    if (!focusInstrument || !ATLAS_INSTRUMENTS.includes(focusInstrument)) return
+    setOpened(now ? null : {focus: focusInstrument, id: 'techne:m5'})
+  }, [palace, focusInstrument])
+  const open = opened && opened.focus === focusInstrument ? opened.id : atlasInstrumentNow(focusInstrument, palace)
   // With no instrument open, the faces no instrument holds stand as their own devices; the person's folds of them hold until focus moves.
   const [folds, setFolds] = useState<{focus: string | null; open: Readonly<Record<string, boolean>>}>({focus: focusInstrument, open: {}})
   const unfolded = folds.focus === focusInstrument ? folds.open : {}

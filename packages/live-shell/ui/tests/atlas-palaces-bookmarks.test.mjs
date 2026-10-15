@@ -1,4 +1,7 @@
-// lane-5 T24: palace bookmarks, the named start, region-family Open routes, and Return to ground.
+// lane-5 T24: palace bookmarks, the named start, region-family Open routes, and Return to ground. Moved from the frame's
+// field-studies-journeys/tests/palace-bookmarks.test.mjs with its modules (T-PALACES-ONTO-ATLAS): bookmarks.ts and whole.ts are the owner
+// seam's now (desktop/cradle/src/techne/m0m5/palace/). The frame's host-request builders retired with its lens; how the atlas opens an
+// object through its owner, and leaves for the ground, is pinned in atlas-palaces-session.test.mjs.
 //   - a bookmark (name and board viewport) round-trips through the real presence save and restore, and a session that holds it
 //     restores it unchanged;
 //   - a jump restores board viewport, walk index and focus from one result, and one save keeps all three;
@@ -6,26 +9,25 @@
 //   - the named start is the default landing when no walk position is saved, and a saved position resumes where it stood;
 //   - each region family's Open routes to the instrument its M′ office names, or to the source surface for provenance;
 //   - Return to ground re-opens the M0′ ground with no object ref, and an accepted Return's receipt is kept on the session only.
-// Run after `npm run build:journeys`.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {provingReading} from '../../../src/techne/m0m5/journey/proving-reading.ts';
-import {beats} from '../../../src/techne/m0m5/journey/beats.ts';
+import {provingReading} from '../../../../desktop/cradle/src/techne/m0m5/journey/proving-reading.ts';
+import {beats} from '../../../../desktop/cradle/src/techne/m0m5/journey/beats.ts';
 import {
   addBookmark, deriveComposition, palaceComposition, removeBookmark, renameBookmark, resetPalaceCompositions, storeComposition,
-} from '../../../src/techne/m0m5/palace/palace-state.ts';
+} from '../../../../desktop/cradle/src/techne/m0m5/palace/palace-state.ts';
 import {
   PALACE_PRESENCE_KEY, loadPalacePresence, restorePalaceComposition, savePalaceComposition,
-} from '../../../src/techne/m0m5/palace/presence.ts';
-import {palaceRegions} from '../../../src/techne/m0m5/palace/regions.ts';
-import {returnGroundInstrument} from '../../../src/techne/m0m5/palace/return.ts';
+} from '../../../../desktop/cradle/src/techne/m0m5/palace/presence.ts';
+import {palaceRegions} from '../../../../desktop/cradle/src/techne/m0m5/palace/regions.ts';
+import {returnGroundInstrument} from '../../../../desktop/cradle/src/techne/m0m5/palace/return.ts';
 import {
-  PALACE_WIRED_INSTRUMENTS, palaceInstrumentOpenRequest, palaceOpenRoute, palaceSourceOpenRequest, palaceWalkSteps,
-} from '../src/palaceWhole.ts';
+  PALACE_WIRED_INSTRUMENTS, palaceOpenRoute, palaceWalkSteps,
+} from '../../../../desktop/cradle/src/techne/m0m5/palace/whole.ts';
 import {
   PALACE_BOOKMARK_NAME_LIMIT, palaceBookmarkAdd, palaceBookmarkJump, palaceBookmarkLabel, palaceBookmarkName,
   palaceBookmarkRename, palaceLandingIndex, palaceStartStep,
-} from '../src/palaceBookmarks.ts';
+} from '../../../../desktop/cradle/src/techne/m0m5/palace/bookmarks.ts';
 
 function memoryStorage() {
   const map = new Map();
@@ -226,18 +228,8 @@ test('each region family’s Open lands in the instrument its office names, on t
   assert.equal(palaceOpenRoute({kind: 'agency', ref: 'agent:x', label: 'agent', open_instrument: null}, PALACE_WIRED_INSTRUMENTS).kind, 'refused');
 });
 
-test('the frame asks for an instrument with its ref, and for a source with the Scene it stands in', () => {
-  assert.deepEqual(palaceInstrumentOpenRequest('journey', 'expression:x:scene:one'), {request: 'summon', detail: {kind: 'instrument', lens: 'journey', ref: 'expression:x:scene:one'}});
-  const source = palaceSourceOpenRequest('source:wiki/cite', {expression_ref: 'expression:x', revision: 7, scene_ref: 'expression:x:scene:one', title: 'Probe'});
-  assert.deepEqual(source, {
-    request: 'summon',
-    detail: {
-      kind: 'source',
-      ref: 'source:wiki/cite',
-      subject: {ref: 'expression:x', kind: 'expression', nativeOwner: 'oi', revision: 7, title: 'Probe', sceneRef: 'expression:x:scene:one', entityRef: null, relationRef: null},
-    },
-  });
-});
+// (Retired with the frame's lens: 'the frame asks for an instrument with its ref, and for a source with the Scene it stands in' — its
+// replacement is atlas-palaces-session.test.mjs 'an object opens through its owner …'.)
 
 test('Return to ground re-opens the M0′ ground with no object ref, and only when the reading discloses it', () => {
   const reading = provingReading();
@@ -245,7 +237,8 @@ test('Return to ground re-opens the M0′ ground with no object ref, and only wh
   const hidden = structuredClone(reading);
   for (const entry of hidden.disclosure.instruments) if (entry.instrument === 'project') entry.available = false;
   assert.equal(returnGroundInstrument(hidden), null, 'an undisclosed ground has nothing to return to');
-  assert.deepEqual(palaceInstrumentOpenRequest('project'), {request: 'summon', detail: {kind: 'instrument', lens: 'project'}}, 'the ground names no ref');
+  // (the frame's summon for the ground named no ref; on the atlas the ground is the Earth, and returning is leaving the palace —
+  // atlas-palaces-session.test.mjs 'Return to ground leaves the palace for the Earth …')
 });
 
 test('an accepted Return’s receipt stays on the session and is never saved, so a reload does not carry it', () => {
