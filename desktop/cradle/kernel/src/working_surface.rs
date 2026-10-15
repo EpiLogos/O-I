@@ -8,6 +8,9 @@ pub struct PreparedRead {
     pub client: Client,
     pub central: crate::CentralClient,
     pub world: Option<Value>,
+    /// The agent reads cache the root Project binding is kept in
+    /// (agent_prepared.rs), shared with the kernel.
+    pub(crate) agent_reads: std::sync::Arc<std::sync::Mutex<crate::read_cache::OwnerReadCache>>,
     pub project: String,
     pub agent_session: String,
     pub binding: Option<String>,
@@ -19,45 +22,16 @@ impl PreparedRead {
             Some(value) => value,
             None => crate::world::read_world(&self.central)?,
         };
-        let base = Path::new(
-            world["root"]
-                .as_str()
-                .ok_or("Central root location unavailable")?,
-        );
-        let (cwd, project) = if self.project.is_empty() {
-            let scope = self
-                .client
-                .direct_agent(base, "agent-session-scope", None)?;
-            if scope["schema"] != "aikit.direct-agent-scope/v1"
-                || scope["execution_authority_granted"] != false
-            {
-                return Err("AIKit did not disclose the native root Project binding".into());
-            }
-            (
-                base.to_path_buf(),
-                scope["project_ref"]
-                    .as_str()
-                    .ok_or("No native root Project binding")?
-                    .to_owned(),
-            )
-        } else {
-            let row = world["work"]["projects"]
-                .as_array()
-                .and_then(|rows| rows.iter().find(|r| r["name"] == self.project))
-                .ok_or("Project is outside Central's disclosed ground")?;
-            let cwd = base.join(row["path"].as_str().ok_or("Project location unavailable")?);
-            let inspection = self
-                .central
-                .run("projectcentral.inspect", json!({"project":self.project}))
-                .map_err(|e| e.to_string())?;
-            (
-                cwd,
-                inspection["manifest"]["project_id"]
-                    .as_str()
-                    .ok_or("Central has not bound a canonical ProjectRef")?
-                    .to_owned(),
-            )
-        };
+        // The agent ops' own location and binding law (agent_prepared.rs).
+        let label = (!self.project.is_empty()).then_some(self.project.as_str());
+        let cwd = crate::agent_prepared::location(&world, label)?;
+        let project = crate::agent_prepared::project_ref(
+            &self.central,
+            &self.client,
+            &self.agent_reads,
+            &self.project,
+            &cwd,
+        )?;
         read(
             &self.client,
             &cwd,

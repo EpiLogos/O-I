@@ -465,6 +465,10 @@ impl TemporalStreamSource for KernelEventLogSource<'_> {
 /// curation material, `session-space` is NOW/session material, and the
 /// knowledge-plane kinds (routes, frames, sources, compositions) are
 /// `Knowledge`.
+/// AIKit's history reading (measured 1.6 s on the real ground, 15 Oct); the
+/// bound is the Factory stream's, for an owner that never answers.
+const HISTORY_READ_LIMIT: std::time::Duration = std::time::Duration::from_secs(30);
+
 pub struct AikitHistorySource {
     executable: PathBuf,
     cwd: PathBuf,
@@ -483,16 +487,20 @@ impl AikitHistorySource {
 
     pub fn read(&self) -> Result<Vec<TemporalEvent>, TemporalEventsError> {
         const STREAM: &str = "aikit-history";
-        let output = Command::new(&self.executable)
-            .arg("-C")
-            .arg(&self.cwd)
-            .arg("history")
-            .arg("--json")
-            .output()
-            .map_err(|error| TemporalEventsError::SourceUnavailable {
-                stream: STREAM.to_string(),
-                detail: format!("aikit history owner unavailable: {error}"),
-            })?;
+        // Bounded like every owner call (owner_process.rs).
+        let output = crate::owner_process::output(
+            Command::new(&self.executable)
+                .arg("-C")
+                .arg(&self.cwd)
+                .arg("history")
+                .arg("--json"),
+            None,
+            crate::owner_process::Bound::read("AIKit", "history", HISTORY_READ_LIMIT),
+        )
+        .map_err(|error| TemporalEventsError::SourceUnavailable {
+            stream: STREAM.to_string(),
+            detail: format!("aikit history owner unavailable: {error}"),
+        })?;
         if !output.status.success() {
             return Err(TemporalEventsError::SourceUnavailable {
                 stream: STREAM.to_string(),

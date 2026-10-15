@@ -30,6 +30,7 @@ pub mod action;
 pub mod agency;
 pub mod agent_card;
 pub mod agent_definition;
+pub mod agent_prepared;
 pub mod application_asset;
 pub mod being;
 pub mod central;
@@ -41,6 +42,7 @@ pub mod construction;
 pub mod credentials;
 pub mod decision;
 pub mod dictation;
+pub mod dispatch;
 pub mod document_frame;
 pub mod encounter;
 pub mod events;
@@ -103,6 +105,7 @@ pub mod nara_world_readiness;
 pub mod native_expression;
 pub mod native_owner_transport;
 mod native_wire;
+mod owner_process;
 pub mod owner_read;
 pub mod presentation;
 pub mod protocol;
@@ -120,6 +123,7 @@ pub mod temporal_events;
 pub mod temporal_sources;
 pub mod working_surface;
 pub mod world;
+pub mod world_prepared;
 pub mod world_resolve;
 // --- expression_world (ES1 knowledge side + ES4 joint focus/deixis/portals),
 // lane aikit/es-one-state-relation: the shared selection relation, Surface
@@ -257,6 +261,11 @@ pub struct Kernel {
     // The Graph op's retained readings, shared by the ordered path and the
     // prepared read that runs outside the kernel mutex.
     graph_reads: graph::GraphReads,
+    // The agent-scoped readings (AIKit's root binding per working directory,
+    // the agency reading's spaces and harness disclosure), shared by the
+    // ordered path and the prepared reads that run outside the kernel mutex
+    // (agent_prepared.rs).
+    agent_reads: std::sync::Arc<std::sync::Mutex<read_cache::OwnerReadCache>>,
 }
 
 // ---------------------------------------------------------------------------
@@ -1551,7 +1560,21 @@ impl Kernel {
                 read_cache::OwnerReadCache::default(),
             )),
             graph_reads: graph::GraphReads::default(),
+            agent_reads: std::sync::Arc::new(std::sync::Mutex::new(
+                read_cache::OwnerReadCache::default(),
+            )),
         }
+    }
+
+    /// A ground bind re-based every path a retained reading was read under:
+    /// every cache, and every read in flight, is withdrawn.
+    pub(crate) fn ground_changed(&mut self) {
+        self.reads.clear();
+        self.graph_reads.invalidate();
+        self.agent_reads
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner())
+            .clear();
     }
 
     pub fn discover() -> Self {
@@ -2375,12 +2398,13 @@ impl Kernel {
         ) {
             return Some(owner_read::PreparedRead::graph(&self.client, op, graph));
         }
-        owner_read::PreparedRead::prepare(
-            &self.client,
-            self.reads.get("world", read_cache::WORLD_TTL),
-            op,
-            temporal,
-        )
+        // The retained World, else the one a burst's flight already holds
+        // within the same horizon (read_cache `flight_held`).
+        let world = self
+            .reads
+            .get("world", read_cache::WORLD_TTL)
+            .or_else(|| self.reads.flight_held("world", read_cache::WORLD_TTL));
+        owner_read::PreparedRead::prepare(&self.client, world, op, temporal)
     }
 
     fn presentation_outcome(
@@ -2415,6 +2439,7 @@ impl Kernel {
             client: self.agency.clone(),
             central: self.client.clone(),
             world: self.reads.get("world", read_cache::WORLD_TTL),
+            agent_reads: std::sync::Arc::clone(&self.agent_reads),
             project: project.to_owned(),
             agent_session,
             binding,
@@ -3130,31 +3155,6 @@ impl Kernel {
                     result: KernelOpResult::InhabitationReading { data, warnings },
                 })
             }
-            KernelOp::WorkcellStatusRead => {
-                let workcell = std::env::var_os("OI_WORKCELL_BIN").map(std::path::PathBuf::from);
-                let (executable, namespace): (std::path::PathBuf, Option<&str>) = match workcell {
-                    Some(path) => (path, None),
-                    None => (
-                        std::env::var_os("OI_BIN")
-                            .map(std::path::PathBuf::from)
-                            .unwrap_or_else(|| std::path::PathBuf::from("oi")),
-                        Some("workcell"),
-                    ),
-                };
-                let mut args: Vec<std::ffi::OsString> = Vec::new();
-                if let Some(name) = namespace {
-                    args.push(name.into());
-                }
-                args.extend(["status".into(), "--json".into()]);
-                let data = material::invoke(&executable, &args, None).map_err(|e| {
-                    serde_json::to_string(&e)
-                        .unwrap_or_else(|_| "workcell status read failed".into())
-                })?;
-                Ok(KernelOpOutcome {
-                    receipts: Vec::new(),
-                    result: KernelOpResult::WorkcellStatusReading { data },
-                })
-            }
             KernelOp::TemporalEventsRead { query } => {
                 let cwd = std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("."));
                 let answer = temporal_sources::read_field(
@@ -3305,24 +3305,20 @@ impl Kernel {
                     data: system_composition::reveal(&path)?,
                 },
             }),
-            KernelOp::Ground { request } => {
-                // A ground change re-bases every path the cache holds — but
-                // `Status`/`Recognize` are read-only (their own contract
-                // rejects a mutated/bound reply), and a status poll runs
-                // concurrently with ordinary reads throughout a session.
-                // Clearing the whole cache — and every in-flight read
-                // ticket — for a read-only ground query supersedes
-                // unrelated, unchanged reads on pure coincidence of timing.
-                if request.mutates() {
-                    self.reads.clear();
-                    self.graph_reads.invalidate();
-                }
-                Ok(KernelOpOutcome {
-                    receipts: Vec::new(),
-                    result: KernelOpResult::GroundReading {
-                        reading: ground::operate(request)?,
-                    },
-                })
+            // A ground change re-bases every path the cache holds — but
+            // `Status`/`Recognize` are read-only (their own contract rejects
+            // a mutated/bound reply), and a status poll runs concurrently
+            // with ordinary reads throughout a session. Clearing the whole
+            // cache — and every in-flight read ticket — for a read-only
+            // ground query supersedes unrelated, unchanged reads on pure
+            // coincidence of timing. The prepared form's own steps
+            // (ground.rs `Prepared`), run under the lock.
+            op @ KernelOp::Ground { .. } => {
+                let prepared = self
+                    .prepare_ground(&op)
+                    .ok_or("Cannot prepare the ground operation")?;
+                let answered = prepared.execute();
+                self.finish_ground(answered)
             }
             KernelOp::ConfigDesiredHold { request } => {
                 let root = self.world_map(false).ok();
@@ -3686,24 +3682,19 @@ impl Kernel {
                     },
                 })
             }
-            KernelOp::AgentDefinition { project, request } => {
-                if project.as_deref() == Some("") {
-                    return Err(
-                        "Use explicit null for the Central root Agent definition scope".into(),
-                    );
-                }
-                let cwd = self.agent_location(project.as_deref())?;
-                let data = agent_definition::execute(
-                    &self.client,
-                    &self.agency,
-                    project.as_deref(),
-                    &cwd,
-                    &request,
-                )?;
-                Ok(KernelOpOutcome {
-                    receipts: Vec::new(),
-                    result: KernelOpResult::AgentDefinitionReading { data },
-                })
+            // The agent-scoped reads: the prepared form's own steps
+            // (agent_prepared.rs `PreparedAgent`), run under the lock.
+            op @ (KernelOp::AgentDefinition { .. }
+            | KernelOp::Encounter { .. }
+            | KernelOp::AgencyRead { .. }
+            | KernelOp::EncounterTaskRead { .. }
+            | KernelOp::ModelRoster { .. }
+            | KernelOp::HarnessAgentRead { .. }) => {
+                let prepared = self
+                    .prepare_agent_read(&op)?
+                    .ok_or("Cannot prepare the agent read")?;
+                let answered = prepared.execute();
+                self.finish_agent_read(answered)
             }
             KernelOp::AgentCard {
                 agent_ref,
@@ -3717,42 +3708,6 @@ impl Kernel {
                 Ok(KernelOpOutcome {
                     receipts: Vec::new(),
                     result: KernelOpResult::AgentCardReading { data },
-                })
-            }
-            KernelOp::Encounter { project, request } => {
-                let cwd = self.agent_location((!project.is_empty()).then_some(project.as_str()))?;
-                let owned_ref = self.agent_project_ref(&project, &cwd)?;
-                let project_ref = owned_ref.as_str();
-                let data = self.agency.encounter(&cwd, project_ref, &request)?;
-                if let agency::EncounterRequest::Read { agent_session, .. } = &request {
-                    if data["agent_session"].as_str() != Some(agent_session) {
-                        return Err("AIKit encounter reading identity mismatch".into());
-                    }
-                    let project = focus::ProjectRef::try_from(owner_relation(
-                        project_ref,
-                        "project",
-                        "projectcentral.inspect",
-                    ))
-                    .map_err(|e| e.to_string())?;
-                    self.encounter_refs.insert(
-                        agent_session.clone(),
-                        (
-                            SemanticRef {
-                                ref_id: agent_session.clone(),
-                                kind: "agent-session".into(),
-                                native_owner: "ai-kit".into(),
-                                provenance: refs::RefProvenance {
-                                    source: "aikit.encounter.read".into(),
-                                    revision: None,
-                                },
-                            },
-                            project,
-                        ),
-                    );
-                }
-                Ok(KernelOpOutcome {
-                    receipts: Vec::new(),
-                    result: KernelOpResult::EncounterReading { data },
                 })
             }
             KernelOp::EncounterProvision {
@@ -3838,13 +3793,6 @@ impl Kernel {
                     result: KernelOpResult::WorkingSurfaceReading { document },
                 })
             }
-            KernelOp::HarnessAgentRead { binding } => {
-                let document = self.agency.gateway_agent(None, &binding, "sessions")?;
-                Ok(KernelOpOutcome {
-                    receipts: vec![],
-                    result: KernelOpResult::HarnessAgentReading { binding, document },
-                })
-            }
             KernelOp::HarnessAgentControl { binding, control } => {
                 let document = self
                     .agency
@@ -3870,65 +3818,6 @@ impl Kernel {
                     document: working_surface::recording_capability(),
                 },
             }),
-            KernelOp::AgencyRead { project } => {
-                let cwd = self.agent_location((!project.is_empty()).then_some(project.as_str()))?;
-                let project_ref = self.agent_project_ref(&project, &cwd)?;
-                // The spaces reading spawns the AIKit owner (~100 ms); the
-                // disclosure re-reads it on every branch expansion, so the
-                // short horizon serves the repeat. A fresh stamp is minted
-                // for every answer, cached or not.
-                let cache_key = format!("agency:{}:{project_ref}", cwd.display());
-                let spaces =
-                    if let Some(value) = self.reads.get(&cache_key, read_cache::HORIZON_TTL) {
-                        value
-                    } else {
-                        let spaces = self.agency.read_project(&cwd, &project_ref)?;
-                        self.reads.put(cache_key, spaces.clone());
-                        spaces
-                    };
-                let disclosure_key = format!("harness-disclosure:{}", cwd.display());
-                let harness_disclosure = if let Some(value) =
-                    self.reads.get(&disclosure_key, read_cache::HORIZON_TTL)
-                {
-                    value
-                } else {
-                    let value = match self.agency.harness_disclosure(&cwd) {
-                        Ok(value) => value,
-                        Err(reason) => serde_json::json!({"state":"unavailable","reason":reason}),
-                    };
-                    self.reads.put(disclosure_key, value.clone());
-                    value
-                };
-                let observed_at_unix_ms = std::time::SystemTime::now()
-                    .duration_since(std::time::UNIX_EPOCH)
-                    .map(|d| d.as_millis() as u64)
-                    .unwrap_or(0);
-                Ok(KernelOpOutcome {
-                    receipts: Vec::new(),
-                    result: KernelOpResult::AgencyReading {
-                        project_ref,
-                        spaces,
-                        harness_disclosure,
-                        observed_at_unix_ms,
-                    },
-                })
-            }
-            KernelOp::ModelRoster { project } => {
-                let cwd =
-                    self.agent_location(project.as_deref().filter(|value| !value.is_empty()))?;
-                let key = format!("model-roster:{}", cwd.display());
-                let reading = if let Some(value) = self.reads.get(&key, read_cache::HORIZON_TTL) {
-                    value
-                } else {
-                    let value = self.agency.model_roster(&cwd)?;
-                    self.reads.put(key, value.clone());
-                    value
-                };
-                Ok(KernelOpOutcome {
-                    receipts: Vec::new(),
-                    result: KernelOpResult::ModelRosterReading { reading },
-                })
-            }
             KernelOp::Receiving { project, request } => {
                 // Same disclosure gate as every project-scoped read: a named
                 // project must be inside Central's disclosed ground. `None`
@@ -3976,23 +3865,6 @@ impl Kernel {
                     result: KernelOpResult::NowReading { data },
                 })
             }
-            KernelOp::EncounterTaskRead {
-                project,
-                agent_session,
-            } => {
-                // Use the Encounter's native location law: an empty Project
-                // label selects the actual root; a named Project still passes
-                // the disclosure gate. A root task reading may lawfully be null.
-                let cwd = self.agent_location((!project.is_empty()).then_some(project.as_str()))?;
-                let data = self
-                    .agency
-                    .task_read(&cwd, &agent_session)
-                    .map_err(|e| e.to_string())?;
-                Ok(KernelOpOutcome {
-                    receipts: Vec::new(),
-                    result: KernelOpResult::EncounterTaskReading { data },
-                })
-            }
             KernelOp::DayRead { day_ref } => {
                 // The Day is a ROOT-register carrier (project null). The read
                 // goes through the owner's guarded reader, `central::day`: the
@@ -4007,12 +3879,12 @@ impl Kernel {
                     result: KernelOpResult::DayReading { data },
                 })
             }
-            KernelOp::Central { project, request } => {
-                let data = central::operate(&self.client, project.as_deref(), &request)?;
-                Ok(KernelOpOutcome {
-                    receipts: Vec::new(),
-                    result: KernelOpResult::CentralReading { data },
-                })
+            // Owner reads with nothing kernel-owned to record: the prepared
+            // read's own execution (owner_read.rs `PreparedRead`).
+            op @ (KernelOp::Central { .. } | KernelOp::WorkcellStatusRead) => {
+                owner_read::PreparedRead::prepare(&self.client, None, &op, None)
+                    .ok_or("Cannot prepare the owner read")?
+                    .execute()
             }
             KernelOp::DaySourceOpen { day_ref } => {
                 // The owner's Day route is the only reader of a
@@ -4465,122 +4337,17 @@ impl Kernel {
     // Source buffers — the two state layers
     // -----------------------------------------------------------------------
 
+    /// The ordered navigation: the prepared navigation's own steps
+    /// (world_prepared.rs `PreparedNavigation`), run under the lock.
     fn navigate(
         &mut self,
         project: Option<&str>,
         browse_only: bool,
         fresh: bool,
     ) -> Result<KernelOpOutcome, String> {
-        let before = self.navigator.clone();
-        let old_focus = self.focus.clone();
-        let result = if let Some(query) = project {
-            // Resolve only a project the owner's current root map disclosed.
-            let known = self
-                .navigator
-                .root
-                .as_ref()
-                .and_then(|r| r["work"]["projects"].as_array())
-                .is_some_and(|rows| rows.iter().any(|p| p["name"].as_str() == Some(query)));
-            if !known {
-                return Err(
-                    "Project is outside the disclosed World mapping; refresh World first".into(),
-                );
-            }
-            self.navigate_project(query, fresh)
-        } else {
-            self.navigate_root(fresh)
-        };
-        self.navigator.error = result.err();
-        // Browsing changes the navigation reading, not the semantic subject
-        // currently bound to open work. Explicit focus remains a separate act.
-        if browse_only {
-            self.focus = old_focus.clone();
-        }
-        let mut receipts = Vec::new();
-        if self.navigator != before {
-            receipts.push(self.log.record(KernelEvent::WorldChanged {
-                summary: "Central navigator reading changed".into(),
-            }));
-        }
-        if self.focus != old_focus {
-            receipts.push(self.log.record(KernelEvent::FocusChanged {
-                focus: self.focus.clone(),
-            }));
-        }
-        Ok(KernelOpOutcome {
-            receipts,
-            result: KernelOpResult::WorldRead {
-                snapshot: self.snapshot(),
-            },
-        })
-    }
-
-    /// The root mapping arm of `navigate` — owner calls through the cache,
-    /// state moves exactly as before the cache existed.
-    fn navigate_root(&mut self, fresh: bool) -> Result<(), String> {
-        let reading = self.world_map(fresh)?;
-        if self.navigator.project.is_some() {
-            self.focus.project = None;
-            self.focus.world = None;
-            self.focus.clear_subject();
-        }
-        self.navigator.root = Some(reading);
-        self.navigator.project = None;
-        self.navigator.sources = None;
-        self.navigator.project_ref = None;
-        Ok(())
-    }
-
-    /// The project-mapping arm of `navigate`.
-    fn navigate_project(&mut self, query: &str, fresh: bool) -> Result<(), String> {
-        let reading = self.project_map(query, fresh)?;
-        let bound = reading["project"]["projectcentral"]["state"] != "absent";
-        let sources = bound.then(|| self.participating_sources_cached(Some(query)));
-        let project_ref = if bound {
-            self.inspect_project(query, fresh).and_then(|v| {
-                v["manifest"]["project_id"]
-                    .as_str()
-                    .filter(|id| !id.trim().is_empty())
-                    .map(str::to_owned)
-            })
-        } else {
-            None
-        };
-        self.focus.project = None;
-        self.focus.world = None;
-        self.focus.clear_subject();
-        let semantic = |id: String, kind: &str| SemanticRef {
-            ref_id: id,
-            kind: kind.into(),
-            native_owner: "central".into(),
-            provenance: refs::RefProvenance {
-                source: "projectcentral.inspect".into(),
-                revision: None,
-            },
-        };
-        if let Some(id) = project_ref.as_ref() {
-            let reference = semantic(id.clone(), "project");
-            self.focus.bind_project(
-                focus::ProjectRef::try_from(reference.clone()).expect("owner project ref"),
-            );
-            self.focus
-                .focus_subject(reference)
-                .expect("owner project ref");
-        }
-        if let Some(id) = sources
-            .as_ref()
-            .and_then(|s| s.world_ref.as_ref())
-            .filter(|id| !id.trim().is_empty())
-        {
-            let mut reference = semantic(id.clone(), "world");
-            reference.provenance.source = "projectcentral.change.horizon".into();
-            self.focus
-                .bind_world(focus::WorldRef::try_from(reference).expect("owner world ref"));
-        }
-        self.navigator.project = Some(reading);
-        self.navigator.sources = sources;
-        self.navigator.project_ref = project_ref;
-        Ok(())
+        let prepared = self.prepare_navigation_for(project, browse_only, fresh)?;
+        let answered = prepared.execute();
+        self.finish_navigation(answered)
     }
 
     // -----------------------------------------------------------------------
@@ -4592,57 +4359,24 @@ impl Kernel {
     /// selection, not a native Project id or a fallback to the configured child.
     fn agent_location(&mut self, project: Option<&str>) -> Result<std::path::PathBuf, String> {
         let root = self.world_map(false).map_err(|e| e.to_string())?;
-        let base = std::path::Path::new(
-            root["root"]
-                .as_str()
-                .ok_or("Central root location unavailable")?,
-        );
-        match project {
-            None => Ok(base.to_path_buf()),
-            Some(project) => {
-                let row = root["work"]["projects"]
-                    .as_array()
-                    .and_then(|rows| rows.iter().find(|r| r["name"].as_str() == Some(project)))
-                    .ok_or("Project is outside Central's disclosed ground")?;
-                Ok(base.join(row["path"].as_str().ok_or("Project location unavailable")?))
-            }
-        }
+        agent_prepared::location(&root, project)
     }
     fn agent_project_ref(
         &mut self,
         project: &str,
         cwd: &std::path::Path,
     ) -> Result<String, String> {
-        if !project.is_empty() {
-            let inspection = self
-                .client
-                .run(
-                    "projectcentral.inspect",
-                    serde_json::json!({"project":project}),
-                )
-                .map_err(|e| e.to_string())?;
-            return inspection["manifest"]["project_id"]
-                .as_str()
-                .map(str::to_owned)
-                .ok_or("Central has not bound a canonical ProjectRef".into());
-        }
-        let scope = self.agency.direct_agent(cwd, "agent-session-scope", None)?;
-        if scope["schema"] != "aikit.direct-agent-scope/v1"
-            || scope["execution_authority_granted"] != false
-        {
-            return Err("AIKit did not disclose the native root Project binding".into());
-        }
-        scope["project_ref"]
-            .as_str()
-            .filter(|s| !s.is_empty())
-            .map(str::to_owned)
-            .ok_or("No native root Project binding".into())
+        agent_prepared::project_ref(&self.client, &self.agency, &self.agent_reads, project, cwd)
     }
 
     fn world_map(&mut self, fresh: bool) -> Result<serde_json::Value, String> {
         if fresh {
             self.reads.invalidate("world");
         } else if let Some(value) = self.reads.get("world", read_cache::WORLD_TTL) {
+            return Ok(value);
+        } else if let Some(value) = self.reads.flight_held("world", read_cache::WORLD_TTL) {
+            // The reading a prepared read shared (read_cache `flight`), within
+            // the same horizon: one World reading serves ordered ops too.
             return Ok(value);
         }
         let reading = world::read_world(&self.client)?;
@@ -4678,36 +4412,6 @@ impl Kernel {
             .ok_or("Central has not bound a canonical ProjectRef")?
             .to_owned();
         Ok((cwd, project_ref))
-    }
-
-    fn project_map(&mut self, project: &str, fresh: bool) -> Result<serde_json::Value, String> {
-        let key = format!("project:{project}");
-        if fresh {
-            self.reads.invalidate(&key);
-        } else if let Some(value) = self.reads.get(&key, read_cache::PROJECT_TTL) {
-            return Ok(value);
-        }
-        let reading = world::read_project(&self.client, project)?;
-        self.reads.put(key, reading.clone());
-        Ok(reading)
-    }
-
-    fn inspect_project(&mut self, project: &str, fresh: bool) -> Option<serde_json::Value> {
-        let key = format!("inspect:{project}");
-        if fresh {
-            self.reads.invalidate(&key);
-        } else if let Some(value) = self.reads.get(&key, read_cache::HORIZON_TTL) {
-            return Some(value);
-        }
-        let value = self
-            .client
-            .run(
-                "projectcentral.inspect",
-                serde_json::json!({"project": project}),
-            )
-            .ok()?;
-        self.reads.put(key, value.clone());
-        Some(value)
     }
 
     /// Horizon-served source listings only: a degraded reading is the error
@@ -5790,6 +5494,13 @@ else:
                 None,
                 "test".into(),
             ))
+        }
+        /// This Central stand-in beside a given AIKit owner.
+        pub(crate) fn kernel_with_agency(&self, agency: agency::Client) -> Kernel {
+            Kernel::with_agency(
+                CentralClient::with(self.executable.clone(), None, "test".into()),
+                agency,
+            )
         }
         /// How many times the named action reached the owner executable.
         pub(crate) fn spawns(&self, action: &str) -> usize {

@@ -397,11 +397,15 @@ pub fn owner_executable() -> (PathBuf, bool) {
     }
 }
 
+/// One Factory owner call's wall-clock bound. Action invocations, commissions
+/// and run closes may do real work before answering (no pace is measured);
+/// the bound is for an owner that never answers, not a pace.
+const OWNER_CALL_LIMIT: std::time::Duration = std::time::Duration::from_secs(300);
+
 /// Run one owner command capturing BOTH streams: the workflow family writes
 /// its refusal as a diagnostic document on stdout, so the refusal message is
 /// the diagnostic's own words when present, else stderr.
 fn owner_call(args: &[std::ffi::OsString], input: Option<&[u8]>) -> Result<Value, Error> {
-    use std::io::Write;
     let (executable, suite_route) = owner_executable();
     let mut argv: Vec<std::ffi::OsString> = Vec::new();
     if suite_route {
@@ -413,30 +417,36 @@ fn owner_call(args: &[std::ffi::OsString], input: Option<&[u8]>) -> Result<Value
         // named `timeout`, never a hung panel or a stalled temporal field.
         return bounded_owner_read(&executable, &argv, args);
     }
-    let mut child = std::process::Command::new(&executable)
-        .args(&argv)
-        .stdin(if input.is_some() {
-            std::process::Stdio::piped()
-        } else {
-            std::process::Stdio::null()
-        })
-        .stdout(std::process::Stdio::piped())
-        .stderr(std::process::Stdio::piped())
-        .spawn()
-        .map_err(|e| Error {
-            kind: "unavailable".into(),
-            message: e.to_string(),
-            operation_may_have_run: false,
-        })?;
-    if let Some(input) = input {
-        if let Some(mut stdin) = child.stdin.take() {
-            let _ = stdin.write_all(input);
+    // Bounded like every owner call (owner_process.rs): a stuck owner is
+    // stopped and named; a write stopped at its limit is uncertain.
+    let operation = args
+        .iter()
+        .map(|arg| arg.to_string_lossy())
+        .take_while(|arg| !arg.starts_with('-'))
+        .take(2)
+        .collect::<Vec<_>>()
+        .join(" ");
+    let output = crate::owner_process::output(
+        std::process::Command::new(&executable).args(&argv),
+        input.map(<[u8]>::to_vec),
+        crate::owner_process::Bound {
+            owner: "Software Factory",
+            operation: &operation,
+            limit: OWNER_CALL_LIMIT,
+            effect: crate::owner_process::Effect::Unclassified,
+        },
+    )
+    .map_err(|failure| {
+        let (kind, ran) = match failure.failed {
+            crate::owner_process::Failed::Unavailable => ("unavailable", false),
+            crate::owner_process::Failed::Stopped => ("timeout", true),
+            crate::owner_process::Failed::Process => ("process-error", true),
+        };
+        Error {
+            kind: kind.into(),
+            message: failure.message,
+            operation_may_have_run: ran,
         }
-    }
-    let output = child.wait_with_output().map_err(|e| Error {
-        kind: "process-error".into(),
-        message: e.to_string(),
-        operation_may_have_run: true,
     })?;
     let parsed: Option<Value> = serde_json::from_slice(&output.stdout).ok();
     if !output.status.success() {

@@ -419,33 +419,38 @@ fn observer_reading(request: &Value) -> Result<Value, CallError> {
     Ok(serde_json::json!({"state":"observing"}))
 }
 
+/// One SharedField client call's bound: the client reaches the hosted field
+/// over the network; the bound is for a client that never answers.
+const CLIENT_CALL_LIMIT: Duration = Duration::from_secs(60);
+/// One A2A exchange's bound: the runner waits for the other agent's reply.
+const A2A_EXCHANGE_LIMIT: Duration = Duration::from_secs(300);
+
 fn call_with_executable(request: &Value, executable: &OsString) -> Result<Value, CallError> {
-    let mut child = Command::new(executable)
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .map_err(|e| CallError::Unavailable {
-            detail: format!(
-                "SharedField client could not be launched ({}): {e}",
+    let operation = request["kind"]
+        .as_str()
+        .or_else(|| request["action"].as_str())
+        .unwrap_or("call")
+        .to_owned();
+    // Bounded like every owner call (owner_process.rs).
+    let output = crate::owner_process::output(
+        &mut Command::new(executable),
+        Some(request.to_string().into_bytes()),
+        crate::owner_process::Bound {
+            owner: "SharedField client",
+            operation: &operation,
+            limit: CLIENT_CALL_LIMIT,
+            effect: crate::owner_process::Effect::Unclassified,
+        },
+    )
+    .map_err(|failure| CallError::Unavailable {
+        detail: match failure.failed {
+            crate::owner_process::Failed::Unavailable => format!(
+                "SharedField client could not be launched ({}): {failure}",
                 executable.to_string_lossy()
             ),
-        })?;
-    {
-        let mut stdin = child.stdin.take().ok_or_else(|| CallError::Unavailable {
-            detail: "SharedField client accepted no request on stdin".into(),
-        })?;
-        stdin
-            .write_all(request.to_string().as_bytes())
-            .map_err(|e| CallError::Unavailable {
-                detail: format!("SharedField client refused the request bytes: {e}"),
-            })?;
-    }
-    let output = child
-        .wait_with_output()
-        .map_err(|e| CallError::Unavailable {
-            detail: format!("SharedField client did not complete: {e}"),
-        })?;
+            _ => failure.message,
+        },
+    })?;
     decode_envelope(&output)
 }
 
@@ -561,8 +566,7 @@ const NO_A2A_RUNNER: &str = "the A2A owner floor is unavailable: this installed 
 /// never minted by the renderer or invented here. Node runs the floor; the
 /// renderer sees only the returned `oi.a2a-difference/v1` document.
 pub fn a2a_exchange(request: &Value) -> Result<Value, String> {
-    use std::io::Write;
-    use std::process::{Command, Stdio};
+    use std::process::Command;
 
     let runner = a2a_runner_path().ok_or_else(|| NO_A2A_RUNNER.to_string())?;
     if !runner.is_file() {
@@ -612,29 +616,18 @@ pub fn a2a_exchange(request: &Value) -> Result<Value, String> {
             command
         }
     };
-    let mut child = command
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .map_err(|e| {
-            format!(
-                "the A2A runner could not be launched via node ({}): {e}",
-                node.display()
-            )
-        })?;
-    {
-        let stdin = child
-            .stdin
-            .as_mut()
-            .ok_or_else(|| "the A2A runner accepted no request".to_string())?;
-        stdin
-            .write_all(composed.to_string().as_bytes())
-            .map_err(|e| format!("the A2A runner refused the request bytes: {e}"))?;
-    }
-    let output = child
-        .wait_with_output()
-        .map_err(|e| format!("the A2A runner did not complete: {e}"))?;
+    let output = crate::owner_process::output(
+        &mut command,
+        Some(composed.to_string().into_bytes()),
+        crate::owner_process::Bound::write("the A2A runner", "exchange", A2A_EXCHANGE_LIMIT),
+    )
+    .map_err(|failure| match failure.failed {
+        crate::owner_process::Failed::Unavailable => format!(
+            "the A2A runner could not be launched via node ({}): {failure}",
+            node.display()
+        ),
+        _ => failure.message,
+    })?;
     let parsed: Value = serde_json::from_slice(&output.stdout)
         .map_err(|e| format!("the A2A runner's reply was not JSON: {e}"))?;
     if let Some(message) = parsed.get("a2aError").and_then(|v| v.as_str()) {

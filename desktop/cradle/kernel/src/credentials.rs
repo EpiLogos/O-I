@@ -90,6 +90,9 @@ pub struct MaterialEntry {
     pub missing: Option<String>,
 }
 
+/// One credential command's wall-clock bound: verification may reach the
+/// provider over the network; the bound is for an owner that never answers.
+const CREDENTIAL_LIMIT: std::time::Duration = std::time::Duration::from_secs(60);
 const MISSING_MATERIAL_ENTRY: &str = "Saving a pasted key needs AIKit to read the key from the app (`aikit credential setup <provider> --stdin`); the installed AIKit only reads a key typed into a terminal, so the key was not saved. A stored secret works today.";
 
 #[derive(Clone, Debug)]
@@ -161,6 +164,7 @@ impl Client {
         } else {
             Stdio::null()
         });
+        crate::owner_process::group(&mut command);
         let mut child = command
             .spawn()
             .map_err(|error| format!("AIKit's credential commands are unavailable: {error}"))?;
@@ -186,9 +190,18 @@ impl Client {
                 return Err("The key could not be handed to AIKit; nothing was saved".into());
             }
         }
-        let output = child
-            .wait_with_output()
-            .map_err(|error| format!("AIKit's credential command did not finish: {error}"))?;
+        // Bounded like every owner call (owner_process.rs); a credential
+        // write stopped at its limit is named uncertain.
+        let output = crate::owner_process::wait(
+            child,
+            crate::owner_process::Bound {
+                owner: "AIKit",
+                operation: "credential",
+                limit: CREDENTIAL_LIMIT,
+                effect: crate::owner_process::Effect::Unclassified,
+            },
+        )
+        .map_err(|error| format!("AIKit's credential command did not finish: {error}"))?;
         envelope(&output.stdout, &output.stderr, output.status.success())
     }
 
@@ -201,13 +214,18 @@ impl Client {
             .unwrap_or_else(|poison| poison.into_inner());
         let available = *cached.get_or_insert_with(|| {
             let mut command = self.command(cwd);
-            command
-                .args(["credential", "setup", "--help"])
-                .stdin(Stdio::null());
-            command
-                .output()
-                .map(|output| String::from_utf8_lossy(&output.stdout).contains("--stdin"))
-                .unwrap_or(false)
+            command.args(["credential", "setup", "--help"]);
+            crate::owner_process::output(
+                &mut command,
+                None,
+                crate::owner_process::Bound::read(
+                    "AIKit",
+                    "credential setup --help",
+                    CREDENTIAL_LIMIT,
+                ),
+            )
+            .map(|output| String::from_utf8_lossy(&output.stdout).contains("--stdin"))
+            .unwrap_or(false)
         });
         MaterialEntry {
             available,

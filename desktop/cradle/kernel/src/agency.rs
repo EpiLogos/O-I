@@ -14,61 +14,31 @@ use std::{
 
 /// Keep native refusal detail without exposing a successful payload. A process
 /// killed before writing stderr must still disclose its operation and status.
-/// Run one owner command with a wall-clock bound. The owner's own stdout and
-/// stderr are kept exactly (callers read its diagnostics); a timeout kills
-/// the child and says whether the effect may already have happened.
+/// Run one AIKit owner command with a wall-clock bound (owner_process.rs). The
+/// owner's own stdout and stderr are kept exactly (callers read its
+/// diagnostics); a timeout stops the child and says whether the effect may
+/// already have happened.
 fn output_bounded(
     command: &mut Command,
     timeout: std::time::Duration,
     operation: &str,
     mutating: bool,
 ) -> Result<std::process::Output, String> {
-    use std::io::Read;
-    command
-        .stdin(std::process::Stdio::null())
-        .stdout(std::process::Stdio::piped())
-        .stderr(std::process::Stdio::piped());
-    let mut child = command
-        .spawn()
-        .map_err(|error| format!("AIKit {operation} could not start: {error}"))?;
-    let mut stdout = child.stdout.take().expect("stdout is piped");
-    let mut stderr = child.stderr.take().expect("stderr is piped");
-    let out = std::thread::spawn(move || {
-        let mut bytes = Vec::new();
-        let _ = stdout.read_to_end(&mut bytes);
-        bytes
-    });
-    let err = std::thread::spawn(move || {
-        let mut bytes = Vec::new();
-        let _ = stderr.read_to_end(&mut bytes);
-        bytes
-    });
-    let deadline = std::time::Instant::now() + timeout;
-    let status = loop {
-        match child.try_wait() {
-            Ok(Some(status)) => break status,
-            Ok(None) if std::time::Instant::now() >= deadline => {
-                let _ = child.kill();
-                let _ = child.wait();
-                return Err(format!(
-                    "AIKit {operation} did not answer within {} s{}",
-                    timeout.as_secs(),
-                    if mutating {
-                        "; its effect is uncertain — read the owner's state before retrying"
-                    } else {
-                        ""
-                    }
-                ));
-            }
-            Ok(None) => std::thread::sleep(std::time::Duration::from_millis(20)),
-            Err(error) => return Err(format!("AIKit {operation} could not be observed: {error}")),
-        }
-    };
-    Ok(std::process::Output {
-        status,
-        stdout: out.join().unwrap_or_default(),
-        stderr: err.join().unwrap_or_default(),
-    })
+    crate::owner_process::output(
+        command,
+        None,
+        crate::owner_process::Bound {
+            owner: "AIKit",
+            operation,
+            limit: timeout,
+            effect: if mutating {
+                crate::owner_process::Effect::Write
+            } else {
+                crate::owner_process::Effect::Read
+            },
+        },
+    )
+    .map_err(String::from)
 }
 
 fn owner_process_failure(operation: &str, output: &std::process::Output) -> String {
@@ -524,6 +494,26 @@ pub fn executable() -> PathBuf {
         .unwrap_or_else(|| "aikit".into())
 }
 
+/// SessionSpace discovery is a read of the owner's own records (measured
+/// 0.25 s on the real ground, 15 Oct); the limit is task_read's.
+const DISCOVER_LIMIT: std::time::Duration = std::time::Duration::from_secs(20);
+/// An encounter verb rides the resident owner. A reading answers from its
+/// journal; anything else may open or drive a provider, so it is a write
+/// with the direct-agent preparation's limit. `encounter-start` starts the
+/// resident once (the mint's limit).
+const ENCOUNTER_READ_LIMIT: std::time::Duration = std::time::Duration::from_secs(30);
+const ENCOUNTER_WRITE_LIMIT: std::time::Duration = std::time::Duration::from_secs(120);
+const ENCOUNTER_START_LIMIT: std::time::Duration = std::time::Duration::from_secs(60);
+/// Machine-level AIKit readings (client status, model catalogue) take the
+/// native disclosure's limit; a SessionSpace verb takes the mint's.
+const MACHINE_READ_LIMIT: std::time::Duration = std::time::Duration::from_secs(15);
+const SESSION_SPACE_LIMIT: std::time::Duration = std::time::Duration::from_secs(60);
+/// The resident encounter owner is started by one call at a time: concurrent
+/// callers that found it unreachable (now outside the kernel lock) must not
+/// each start one (ported: knowledge_prepared.rs `Readers`, one slot).
+static ENCOUNTER_STARTS: crate::knowledge_prepared::Readers =
+    crate::knowledge_prepared::Readers::new(1);
+
 fn read_project_with(
     executable: &Path,
     home: Option<&Path>,
@@ -539,11 +529,11 @@ fn read_project_with(
     if let Some(home) = home {
         command.env("AIKIT_HOME", home);
     }
-    let output = command
+    command
         .arg("-C")
         .arg(cwd)
-        .args(["discover", "--project", project_ref])
-        .output()
+        .args(["discover", "--project", project_ref]);
+    let output = output_bounded(&mut command, DISCOVER_LIMIT, "discover", false)
         .map_err(|e| format!("AIKit SessionSpace is unavailable: {e}"))?;
     if !output.status.success() {
         return Err(owner_process_failure("discover", &output));
@@ -737,6 +727,23 @@ pub enum PermissionDecision {
     Cancelled,
 }
 impl EncounterRequest {
+    /// The verbs that only read the owner's journal or standing; every other
+    /// verb may open, drive or address a provider.
+    pub fn reads(&self) -> bool {
+        matches!(
+            self,
+            Self::Providers
+                | Self::Health
+                | Self::ModelRead { .. }
+                | Self::ModeRead { .. }
+                | Self::Read { .. }
+                | Self::View { .. }
+                | Self::Status { .. }
+                | Self::Delivery { .. }
+                | Self::ConversationRead { .. }
+                | Self::ConversationList { .. }
+        )
+    }
     fn sessions(&self) -> Vec<&str> {
         match self {
             Self::Start
@@ -789,6 +796,19 @@ impl Client {
         project_ref: &str,
         request: &EncounterRequest,
     ) -> Result<Value, String> {
+        if matches!(request, EncounterRequest::Start) {
+            return ENCOUNTER_STARTS.run(|| self.encounter_once(cwd, project_ref, request));
+        }
+        self.encounter_once(cwd, project_ref, request)
+    }
+
+    /// One encounter verb; a `Start` reaching here already holds the start slot.
+    fn encounter_once(
+        &self,
+        cwd: &Path,
+        project_ref: &str,
+        request: &EncounterRequest,
+    ) -> Result<Value, String> {
         let sessions = request.sessions();
         if !sessions.is_empty() {
             let spaces = self.read_project(cwd, project_ref)?;
@@ -826,10 +846,30 @@ impl Client {
             command.env("AIKIT_HOME", home);
         }
         command.arg("-C").arg(cwd);
-        if matches!(request, EncounterRequest::Start) {
-            command.arg("encounter-start");
+        let body = if matches!(request, EncounterRequest::Start) {
+            None
         } else {
-            let mut body = serde_json::to_value(request).map_err(|error| error.to_string())?;
+            Some(serde_json::to_value(request).map_err(|error| error.to_string())?)
+        };
+        let action = match &body {
+            None => "encounter-start".to_owned(),
+            Some(body) => format!("encounter {}", body["action"].as_str().unwrap_or_default()),
+        };
+        let bound = crate::owner_process::Bound {
+            owner: "AIKit",
+            operation: &action,
+            limit: match request {
+                EncounterRequest::Start => ENCOUNTER_START_LIMIT,
+                _ if request.reads() => ENCOUNTER_READ_LIMIT,
+                _ => ENCOUNTER_WRITE_LIMIT,
+            },
+            effect: if request.reads() {
+                crate::owner_process::Effect::Read
+            } else {
+                crate::owner_process::Effect::Write
+            },
+        };
+        if let Some(mut body) = body {
             if let EncounterRequest::Context {
                 agent_session,
                 request: operation,
@@ -861,23 +901,33 @@ impl Client {
             command
                 .args(["encounter", "--request-json"])
                 .arg(body.to_string());
+        } else {
+            command.arg("encounter-start");
         }
-        let mut output = command
-            .output()
-            .map_err(|error| format!("AIKit encounter owner unavailable: {error}"))?;
+        let run = |command: &mut Command| {
+            crate::owner_process::output(command, None, bound)
+                .map_err(|error| format!("AIKit encounter owner unavailable: {error}"))
+        };
+        let mut output = run(&mut command)?;
         // Every encounter verb but the start itself rides the resident owner,
         // and the plain verb never spawns one. A caller that arrives before
         // the owner — the day's first chat provisioning, the settings panel's
         // providers read — starts it here, once, and retries: the same enter
-        // the session handle performs when it attaches.
+        // the session handle performs when it attaches. One caller starts it
+        // at a time; a caller that waited asks again first, since the one
+        // before it may already have started the owner.
         if !output.status.success()
             && !matches!(request, EncounterRequest::Start)
             && owner_unreachable(&output)
         {
-            self.encounter(cwd, project_ref, &EncounterRequest::Start)?;
-            output = command
-                .output()
-                .map_err(|error| format!("AIKit encounter owner unavailable: {error}"))?;
+            output = ENCOUNTER_STARTS.run(|| {
+                let again = run(&mut command)?;
+                if again.status.success() || !owner_unreachable(&again) {
+                    return Ok(again);
+                }
+                self.encounter_once(cwd, project_ref, &EncounterRequest::Start)?;
+                run(&mut command)
+            })?;
         }
         if !output.status.success() {
             return Err(owner_process_failure("encounter", &output));
@@ -1304,8 +1354,7 @@ impl Client {
             command.env("AIKIT_HOME", home);
         }
         command.args(["--json", "client", "status"]);
-        let output = command
-            .output()
+        let output = output_bounded(&mut command, MACHINE_READ_LIMIT, "client status", false)
             .map_err(|error| format!("AIKit client status is unavailable: {error}"))?;
         if !output.status.success() {
             return Err(owner_process_failure("client status", &output));
@@ -1334,9 +1383,13 @@ impl Client {
             command.env("AIKIT_HOME", home);
         }
         command.args(["model-catalogue", "show", "--json"]);
-        let output = command
-            .output()
-            .map_err(|error| format!("AIKit model catalogue is unavailable: {error}"))?;
+        let output = output_bounded(
+            &mut command,
+            MACHINE_READ_LIMIT,
+            "model-catalogue show",
+            false,
+        )
+        .map_err(|error| format!("AIKit model catalogue is unavailable: {error}"))?;
         if !output.status.success() {
             return Err(owner_process_failure("model-catalogue show", &output));
         }
@@ -1404,8 +1457,9 @@ impl Client {
         }
         command.arg("-C").arg(cwd);
         command.args(args);
-        let output = command
-            .output()
+        let verb = args.first().copied().unwrap_or("session-space");
+        // `create` and `stage` return write-free previews; `apply` writes.
+        let output = output_bounded(&mut command, SESSION_SPACE_LIMIT, verb, verb == "apply")
             .map_err(|error| format!("AIKit SessionSpace is unavailable: {error}"))?;
         if !output.status.success() {
             return Err(owner_process_failure(

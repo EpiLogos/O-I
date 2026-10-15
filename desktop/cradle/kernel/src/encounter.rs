@@ -406,19 +406,27 @@ fn decode_aikit_envelope(output: &std::process::Output) -> Result<Value, OwnerCa
         })
 }
 
+/// The encounter join's two owner readings (AIKit's lifecycle history,
+/// Actuation's correlation) are reads of their own records; the bound is for
+/// an owner that never answers.
+const JOIN_READ_LIMIT: std::time::Duration = std::time::Duration::from_secs(30);
+
 /// Pull one session's durable lifecycle history through the pinned W3-A
 /// owner operation. Read-only: records nothing.
 fn aikit_lifecycle_history(cwd: &Path, session: &str) -> Result<Value, OwnerCallError> {
-    let output = Command::new(aikit_executable())
-        .arg("-C")
-        .arg(cwd)
-        .args(["session", "lifecycle", "history"])
-        .arg(session)
-        .arg("--json")
-        .output()
-        .map_err(|error| OwnerCallError::Unavailable {
-            detail: format!("AIKit lifecycle owner unavailable: {error}"),
-        })?;
+    let output = crate::owner_process::output(
+        Command::new(aikit_executable())
+            .arg("-C")
+            .arg(cwd)
+            .args(["session", "lifecycle", "history"])
+            .arg(session)
+            .arg("--json"),
+        None,
+        crate::owner_process::Bound::read("AIKit", "session lifecycle history", JOIN_READ_LIMIT),
+    )
+    .map_err(|error| OwnerCallError::Unavailable {
+        detail: format!("AIKit lifecycle owner unavailable: {error}"),
+    })?;
     decode_aikit_envelope(&output)
 }
 
@@ -434,32 +442,18 @@ fn actuation_correlate(cwd: &Path, corpus: &Value) -> Result<Value, OwnerCallErr
         serde_json::to_string(corpus).map_err(|error| OwnerCallError::Unavailable {
             detail: format!("actuation corpus is not serialisable: {error}"),
         })?;
-    let mut child = Command::new(&executable)
-        .arg("correlate")
-        .arg("-")
-        .arg("--json")
-        .current_dir(cwd)
-        .stdin(std::process::Stdio::piped())
-        .stdout(std::process::Stdio::piped())
-        .stderr(std::process::Stdio::piped())
-        .spawn()
-        .map_err(|error| OwnerCallError::Unavailable {
-            detail: format!("Actuation correlate owner unavailable: {error}"),
-        })?;
-    use std::io::Write as _;
-    let mut stdin = child.stdin.take().expect("piped stdin");
-    let write_result = stdin
-        .write_all(corpus_text.as_bytes())
-        .and_then(|()| stdin.flush());
-    drop(stdin);
-    write_result.map_err(|error| OwnerCallError::Unavailable {
-        detail: format!("Actuation correlate corpus could not be delivered: {error}"),
+    let output = crate::owner_process::output(
+        Command::new(&executable)
+            .arg("correlate")
+            .arg("-")
+            .arg("--json")
+            .current_dir(cwd),
+        Some(corpus_text.into_bytes()),
+        crate::owner_process::Bound::read("Actuation", "correlate", JOIN_READ_LIMIT),
+    )
+    .map_err(|error| OwnerCallError::Unavailable {
+        detail: format!("Actuation correlate owner unavailable: {error}"),
     })?;
-    let output = child
-        .wait_with_output()
-        .map_err(|error| OwnerCallError::Unavailable {
-            detail: format!("Actuation correlate owner unavailable: {error}"),
-        })?;
     if !output.status.success() {
         let message = String::from_utf8_lossy(&output.stderr).trim().to_owned();
         return Err(OwnerCallError::Refused {

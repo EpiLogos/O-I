@@ -20,6 +20,12 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::time::{SystemTime, UNIX_EPOCH};
 
+/// One product's system reading bound: a reading of the product's own
+/// records, bounded for an owner that never answers.
+const SYSTEM_READ_LIMIT: std::time::Duration = std::time::Duration::from_secs(30);
+/// One owner-disclosed action's bound: an action may install a product.
+const ACTION_RUN_LIMIT: std::time::Duration = std::time::Duration::from_secs(1800);
+
 pub const SCHEMA: &str = "oi.system-composition/v1";
 pub const CONTRACT_REVISION: &str = "wave-5/system.1";
 pub const DISCLOSURE_SCHEMA: &str = "oi.product-settings-disclosure/v2";
@@ -226,12 +232,31 @@ impl Client {
     }
 
     fn invoke(&self, cwd: &Path, reading_command: &[String]) -> InvokeOutcome {
-        match Command::new(&self.executable)
-            .current_dir(cwd)
-            .args(reading_command)
-            .output()
-        {
-            Err(error) => InvokeOutcome::SpawnFailed(error.to_string()),
+        self.invoke_bounded(cwd, reading_command, false)
+    }
+
+    /// Bounded like every owner call (owner_process.rs): a reading by the
+    /// read limit; an owner-disclosed action (which may install or write) by
+    /// the action limit, and named uncertain when stopped.
+    fn invoke_bounded(&self, cwd: &Path, command: &[String], action: bool) -> InvokeOutcome {
+        let operation = command
+            .iter()
+            .take_while(|arg| !arg.starts_with('-'))
+            .cloned()
+            .collect::<Vec<_>>()
+            .join(" ");
+        match crate::owner_process::output(
+            Command::new(&self.executable)
+                .current_dir(cwd)
+                .args(command),
+            None,
+            if action {
+                crate::owner_process::Bound::write("O:I", &operation, ACTION_RUN_LIMIT)
+            } else {
+                crate::owner_process::Bound::read("O:I", &operation, SYSTEM_READ_LIMIT)
+            },
+        ) {
+            Err(error) => InvokeOutcome::SpawnFailed(error.into()),
             Ok(output) => InvokeOutcome::Completed {
                 exit_code: output.status.code().unwrap_or(-1),
                 stdout: String::from_utf8_lossy(&output.stdout).into_owned(),
@@ -703,7 +728,7 @@ impl Client {
             );
         }
         let command: Vec<String> = std::iter::once(namespace).chain(args).collect();
-        match self.invoke(cwd, &command) {
+        match self.invoke_bounded(cwd, &command, true) {
             InvokeOutcome::Completed {
                 exit_code,
                 stdout,
