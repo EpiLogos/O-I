@@ -99,8 +99,8 @@ objections verbatim and the full validation (`BRIEF-BUILDER.md`); the lead conve
 
 | Ticket | Who | Zone | Since |
 |---|---|---|---|
-| O — Places is the atlas, alone (R1, lane-4 T1–T30 + lane-2 T21): listed in `tickets/T-PLACES-ONTO-ATLAS.md`, ported onto the M4 plate and the transport, then the frame's Places map and lens removed | Opus builder | `src/projections/atlas/**`, `src/inhabitants/ql/devices/**`, `atlasFaceBodies.tsx`, `modeTransports.tsx` (Technē binding), `panels/knowledge.tsx`, the frame's `psychogeographic/**` and Places lens | 15 Oct |
 | S — Technē's subject door completes: the asked Scene opens on the stage (seen natively: asked, stage opened, nothing shown, no fault) | Opus builder | `src/techne/subject/**`, `panels/expressions.tsx` (navigator wiring), `packages/expressions-boundary/src/techne.ts`, `desktop/cradle/src/techne/{wikiProjectionStore,wikiExpression}.ts` if the cause is there | 15 Oct |
+| T — the register follows the code again: lanes N, O and P's targets re-homed through `tools/build_rehome.py` and `acceptance.py rehome`; verify passes | Opus builder | `wayfinder/tools/build_rehome.py`, `targets.json` (through acceptance.py) | 15 Oct |
 | Native screen pass against the mockup renders; N1; the lanes' convergence | lead | `App.tsx`, `native/Workbench.tsx`, `shell/modeFrames.ts`, the book, the register | 14 Oct |
 
 Then: the 126 targets re-homed (lane M, FOUNDATION §8): `acceptance.py rehome` re-opens every cited path:line, runs the
@@ -111,6 +111,19 @@ Palace). Ranked: G1 the stage's file exports have no native receiver (the main w
 cancels `<a download>`: lane-1 B2/B3); G2 the Instruments rail keeps no subject into Graph (D1); G3 the shell carries no
 frame deep-link address (E22); R1 Places onto the atlas (31 targets); R2 palaces onto the atlas (N4, 9); S1 mount N2's
 subject door — 76 homes read their facets only on a Wiki-bound Scene, reached today only by Examine in the Graph pane.
+Then: Places is the atlas, alone (`92a7d38d5`, lane O, R1). The 31 Places targets are listed with their atlas homes in
+`tickets/T-PLACES-ONTO-ATLAS.md`: the M4 World / Places plate (Body, Landmass, Climate, Sky with the QL Sun and the Frames
+ladder, Locations with find and the Place tool through the owner's editor, Relations narrowing the one filter), the transport's
+time on the atlas's one time button and the shared window (no second clock), the globe's gestures with their words in the
+hover; the atlas's own chrome and onboarding stand down in the pane; the frame's Places map, overlays, lens panels and route are
+removed (−10.4k lines), each retired test naming its replacement, and the map's place consumer with them (`235b4771f`). Judged
+not kept (lane O, with reasons in the ticket): pitch and bearing, polygon regions, hierarchy edges, the basemap/terrain choice.
+Gaps: named map views (T20) wait on Technē's Capture writer; tour recording (T25) on the journey owner; T26 is M3′'s. Carried
+from lane O: the draft contract (`psychogeographic/placeAuthoring.ts`) should move to its owner and the folder go; the frame's
+`app.ts` still wires a 'place' lens; dead Places CSS in the frame; the Earth pane could stand M4 open by default (the mockup's
+open plate) — the lead's call under lock §0.1.3; the atlas's focus label and a non-Field lens's own controls still draw in the
+pane. Screen legs UNVERIFIED until the next native pass.
+
 The native pass at `11475cc3d` (computer-use, the owner's real ground): Technē opens on the Earth alone (no stray
 Expressions tab), the atlas draws and says why the owner's subjects stand nowhere ("45 subjects read from their owners, none on
 the Earth"); Locations lists the owner's projects, and choosing O-I names it in the title line, Trail and aperture, answers "in
