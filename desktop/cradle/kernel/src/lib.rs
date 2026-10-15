@@ -3634,38 +3634,11 @@ impl Kernel {
                     directory: self.directory_listing(&path, fresh.unwrap_or(false))?,
                 },
             }),
+            // The same owner call and record a host runs outside and then
+            // under the lock (owner_read.rs `PreparedFiles`).
             KernelOp::FileRead { location } => {
-                let reading = match self.retained_files.read(&self.client, &location) {
-                    Ok(reading) => reading,
-                    Err(error) => {
-                        self.file_refs.remove(&location.ref_id);
-                        return Err(error);
-                    }
-                };
-                let project = reading
-                    .project
-                    .as_ref()
-                    .and_then(|p| p.project_ref.as_ref())
-                    .map(|id| {
-                        focus::ProjectRef::try_from(owner_relation(
-                            id,
-                            "project",
-                            "central.files.read",
-                        ))
-                    })
-                    .transpose()
-                    .map_err(|e| e.to_string())?;
-                self.file_refs.insert(
-                    reading.location.ref_id.clone(),
-                    (
-                        owner_relation(&reading.location.ref_id, "file", "central.files.read"),
-                        project,
-                    ),
-                );
-                Ok(KernelOpOutcome {
-                    receipts: Vec::new(),
-                    result: KernelOpResult::FileRead { reading },
-                })
+                let fetched = retained_files::Store::fetch(&self.client, &location);
+                self.finish_file_read(&location, fetched)
             }
             KernelOp::FileBytes { location } => {
                 let reading = match files::read_bytes(&self.client, &location) {
@@ -4755,20 +4728,11 @@ impl Kernel {
         listing
     }
 
+    /// The ordered listing: the prepared listing's own steps (owner_read.rs
+    /// `PreparedListing`), run under the lock.
     fn directory_listing(&mut self, path: &str, fresh: bool) -> Result<files::Directory, String> {
-        let key = format!("dir:{path}");
-        if fresh {
-            self.reads.invalidate(&key);
-        } else if let Some(value) = self.reads.get(&key, read_cache::DIR_TTL) {
-            if let Ok(directory) = serde_json::from_value(value) {
-                return Ok(directory);
-            }
-        }
-        let directory = files::list(&self.client, path)?;
-        if let Ok(value) = serde_json::to_value(&directory) {
-            self.reads.put(key, value);
-        }
-        Ok(directory)
+        let listing = self.prepare_listing(path, fresh).execute(&self.client);
+        self.finish_listing(listing)
     }
 
     fn source_open(
@@ -5767,6 +5731,15 @@ if action == "central.files.list":
         "location": {"schema": "central.path-ref/v1", "ref": "ref:" + path, "root": "R", "path": path},
         "entries": [{"name": "a.md", "kind": "file", "byte_len": 1, "retrieval_allowed": True,
                      "location": {"schema": "central.path-ref/v1", "ref": "ref:" + path + "/a.md", "root": "R", "path": path + "/a.md"}}]})
+elif action == "central.files.read":
+    location = payload["location"]
+    if location["path"].endswith("refused.md"):
+        print(json.dumps({"ok": False, "status": "refused",
+                          "error": {"message": "Central excludes this file from retrieval"}}))
+        sys.exit(1)
+    ok({"schema": "central.file-reading/v1", "location": location, "revision": "r1",
+        "byte_len": 4, "content_encoding": "utf-8", "content": "kept", "project": None,
+        "source": None, "automatic_agent_or_model_invocation": False})
 elif action == "central.files.write":
     ok({"schema": "central.file-mutation/v1", "outcome": "written", "location": payload["location"]})
 elif action == "central.world":
@@ -5775,8 +5748,9 @@ else:
     ok({})
 "#;
 
+    /// A Central owner stand-in other modules' tests share.
     #[cfg(unix)]
-    struct FakeOwner {
+    pub(crate) struct FakeOwner {
         executable: std::path::PathBuf,
         log: std::path::PathBuf,
     }
@@ -5786,7 +5760,7 @@ else:
         /// One script + one spawn log per test, so parallel tests never
         /// share a counter. The log path is baked into a tiny wrapper so
         /// the count never rides a process environment tests race on.
-        fn spawn_counter(test: &str) -> Self {
+        pub(crate) fn spawn_counter(test: &str) -> Self {
             use std::os::unix::fs::PermissionsExt;
             let stem = format!("oi-cradle-{}-{test}", std::process::id());
             let script = std::env::temp_dir().join(format!("{stem}.py"));
@@ -5810,7 +5784,7 @@ else:
                 log,
             }
         }
-        fn kernel(&self) -> Kernel {
+        pub(crate) fn kernel(&self) -> Kernel {
             Kernel::new(CentralClient::with(
                 self.executable.clone(),
                 None,
@@ -5818,7 +5792,7 @@ else:
             ))
         }
         /// How many times the named action reached the owner executable.
-        fn spawns(&self, action: &str) -> usize {
+        pub(crate) fn spawns(&self, action: &str) -> usize {
             std::fs::read_to_string(&self.log)
                 .map(|text| text.lines().filter(|line| *line == action).count())
                 .unwrap_or(0)

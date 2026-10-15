@@ -207,3 +207,69 @@ fn native_pending_relations_allow_theme_and_read_admission_rejects_stale_complet
     assert_eq!(kernel.knowledge_refs.len(), admitted_before);
     println!("native relations kept exact subject; theme changed while PID{pid} paused; older native read could not replace admission; proof={}", proof.display());
 }
+
+/// Two registers' knowledge reads prepared in one burst while the kernel
+/// holds no World reading read Central's World once between them, and a
+/// register prepared just after takes that reading at preparation. A World
+/// change the owner reports — a fresh World read (lib.rs `world_map`), a
+/// ground change — withdraws it: the next burst reads the World again.
+#[cfg(unix)]
+#[test]
+fn registers_prepared_in_one_burst_share_one_world_reading() {
+    let owner = crate::tests::FakeOwner::spawn_counter("knowledge-world-burst");
+    let mut kernel = owner.kernel();
+    let relations = |space: &str| KernelOp::Knowledge {
+        project: None,
+        request: knowledge::Request::Relations {
+            address: knowledge::Address::Wiki(space.into()),
+        },
+        fresh: false,
+    };
+    let burst: Vec<Prepared> = ["central:wiki:root", "central:wiki:o-i"]
+        .into_iter()
+        .map(|space| {
+            kernel
+                .prepare_knowledge(&relations(space))
+                .unwrap()
+                .unwrap()
+        })
+        .collect();
+    let worlds: Vec<Value> = std::thread::scope(|scope| {
+        let readers: Vec<_> = burst
+            .iter()
+            .map(|prepared| scope.spawn(move || prepared.world()))
+            .collect();
+        readers
+            .into_iter()
+            .map(|reader| reader.join().unwrap().unwrap())
+            .collect()
+    });
+    assert_eq!(owner.spawns("central.world"), 1);
+    assert_eq!(worlds[0], worlds[1]);
+    let late = kernel
+        .prepare_knowledge(&relations("central:wiki:face-rig"))
+        .unwrap()
+        .unwrap();
+    assert!(
+        late.world.is_some(),
+        "a reading just read serves preparation"
+    );
+    late.world().unwrap();
+    assert_eq!(owner.spawns("central.world"), 1);
+    // A fresh World read withdraws the reading the burst shared.
+    kernel.reads.invalidate("world");
+    let next = kernel
+        .prepare_knowledge(&relations("central:wiki:root"))
+        .unwrap()
+        .unwrap();
+    next.world().unwrap();
+    assert_eq!(owner.spawns("central.world"), 2);
+    // So does a ground change.
+    kernel.reads.clear();
+    let next = kernel
+        .prepare_knowledge(&relations("central:wiki:root"))
+        .unwrap()
+        .unwrap();
+    next.world().unwrap();
+    assert_eq!(owner.spawns("central.world"), 3);
+}

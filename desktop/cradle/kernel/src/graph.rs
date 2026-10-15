@@ -1803,12 +1803,17 @@ mod real_ground {
 
     /// The host's own sequence for one op (src-tauri `kernel_op`, the
     /// walk-bridge `/op`): an owner read prepared under the kernel lock runs
-    /// outside it; a knowledge read runs outside and finishes under it;
-    /// everything else applies under the lock.
+    /// outside it; a file listing or reading and a knowledge read run
+    /// outside it and finish under it; everything else applies under the lock.
     fn host(kernel: &Mutex<Kernel>, op: KernelOp) -> Result<KernelOpOutcome, String> {
         let read = kernel.lock().unwrap().prepare_owner_read(&op);
         if let Some(read) = read {
             return read.execute();
+        }
+        let files = kernel.lock().unwrap().prepare_files_read(&op);
+        if let Some(prepared) = files {
+            let answered = prepared.execute();
+            return kernel.lock().unwrap().finish_files_read(answered);
         }
         let knowledge = kernel.lock().unwrap().prepare_knowledge(&op)?;
         if let Some(prepared) = knowledge {
@@ -1816,6 +1821,272 @@ mod real_ground {
             return kernel.lock().unwrap().finish_knowledge(completed);
         }
         kernel.lock().unwrap().apply(op)
+    }
+
+    /// Owner processes logged so far, by what each was asked: Central's
+    /// action name, or AIKit's `knowledge <verb>`.
+    fn actions() -> BTreeMap<String, usize> {
+        let log = std::env::var_os("OI_SHIM_LOG")
+            .and_then(|path| std::fs::read_to_string(path).ok())
+            .unwrap_or_default();
+        let mut counts = BTreeMap::new();
+        for line in log.lines() {
+            // start end status argv…
+            let argv: Vec<&str> = line.split_whitespace().skip(3).collect();
+            let name = match argv.first() {
+                Some(&"central") => argv.get(4).map(|action| action.to_string()),
+                Some(first) if first.starts_with("aikit") => {
+                    let at = argv.iter().position(|arg| *arg == "knowledge");
+                    at.map(|at| {
+                        format!(
+                            "aikit {}",
+                            argv[at..]
+                                .iter()
+                                .take(2)
+                                .copied()
+                                .collect::<Vec<_>>()
+                                .join(" ")
+                        )
+                    })
+                }
+                Some(first) if first.contains("shared-field-client") => Some("shared-field".into()),
+                _ => None,
+            };
+            if let Some(name) = name {
+                *counts.entry(name).or_insert(0) += 1;
+            }
+        }
+        counts
+    }
+
+    fn actions_delta(before: &BTreeMap<String, usize>) -> String {
+        actions()
+            .into_iter()
+            .filter_map(|(name, count)| {
+                let delta = count - before.get(&name).copied().unwrap_or(0);
+                (delta > 0).then(|| format!("{name}={delta}"))
+            })
+            .collect::<Vec<_>>()
+            .join(" ")
+    }
+
+    /// Every wiki register Technē loads: the root's, then each project's
+    /// Central discloses (wikiSubjectStanding.ts `loadRegisters`).
+    fn registers() -> Vec<(Option<String>, String)> {
+        let root = crate::world::read_world(&CentralClient::discover()).expect("world");
+        let mut registers: Vec<(Option<String>, String)> = vec![(None, String::new())];
+        for row in root["work"]["projects"]
+            .as_array()
+            .cloned()
+            .unwrap_or_default()
+        {
+            if let (Some(name), Some(path)) = (row["name"].as_str(), row["path"].as_str()) {
+                registers.push((Some(name.to_owned()), path.to_owned()));
+            }
+        }
+        registers
+    }
+
+    /// One register's load, step by step (seconds each step took).
+    struct Steps {
+        list: f64,
+        read: Option<f64>,
+        relations: Option<(f64, bool)>,
+        stop: Option<&'static str>,
+    }
+
+    impl std::fmt::Display for Steps {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            write!(f, "list {:.2}s", self.list)?;
+            if let Some(read) = self.read {
+                write!(f, " read {read:.2}s")?;
+            }
+            if let Some((relations, ok)) = self.relations {
+                write!(
+                    f,
+                    " relations {relations:.2}s{}",
+                    if ok { "" } else { " ERR" }
+                )?;
+            }
+            if let Some(stop) = self.stop {
+                write!(f, " {stop}")?;
+            }
+            Ok(())
+        }
+    }
+
+    /// Technē's register read (wikiExpression.ts readWikiRegister): its
+    /// files_list, the wiki.json file_read, and the AIKit relations of its
+    /// first space — each through the host's sequence.
+    fn read_register(kernel: &Mutex<Kernel>, project: &Option<String>, path: &str) -> Steps {
+        let directory = if path.is_empty() {
+            "Control/agents/wiki".to_owned()
+        } else {
+            format!("{path}/ProjectCentral/agents/wiki")
+        };
+        let begin = Instant::now();
+        let listed = host(
+            kernel,
+            KernelOp::FilesList {
+                path: directory,
+                fresh: None,
+            },
+        );
+        let mut steps = Steps {
+            list: begin.elapsed().as_secs_f64(),
+            read: None,
+            relations: None,
+            stop: None,
+        };
+        let location = match listed {
+            Ok(KernelOpOutcome {
+                result: KernelOpResult::DirectoryRead { directory },
+                ..
+            }) => directory
+                .entries
+                .into_iter()
+                .find(|entry| entry.name == "wiki.json")
+                .map(|entry| entry.location),
+            _ => None,
+        };
+        let Some(location) = location else {
+            steps.stop = Some("absent");
+            return steps;
+        };
+        let begin = Instant::now();
+        let read = host(kernel, KernelOp::FileRead { location });
+        steps.read = Some(begin.elapsed().as_secs_f64());
+        let space = match read {
+            Ok(KernelOpOutcome {
+                result: KernelOpResult::FileRead { reading },
+                ..
+            }) => serde_json::from_str::<Value>(&reading.content)
+                .ok()
+                .and_then(|wiki| {
+                    wiki["objects"].as_array().and_then(|objects| {
+                        objects
+                            .iter()
+                            .find(|object| object["object"] == "space")
+                            .and_then(|space| space["ref"].as_str().map(str::to_owned))
+                    })
+                }),
+            _ => None,
+        };
+        let Some(space) = space else {
+            steps.stop = Some("no space");
+            return steps;
+        };
+        let begin = Instant::now();
+        let relations = host(
+            kernel,
+            KernelOp::Knowledge {
+                project: project.clone(),
+                request: knowledge::Request::Relations {
+                    address: knowledge::Address::Wiki(space),
+                },
+                fresh: false,
+            },
+        );
+        steps.relations = Some((begin.elapsed().as_secs_f64(), relations.is_ok()));
+        steps
+    }
+
+    fn spread(mut values: Vec<f64>) -> String {
+        if values.is_empty() {
+            return "-".into();
+        }
+        values.sort_by(f64::total_cmp);
+        format!(
+            "max {:.2}s median {:.2}s",
+            values[values.len() - 1],
+            values[values.len() / 2]
+        )
+    }
+
+    /// Technē's whole wiki load as the shell asks it: `world_read`, then
+    /// every register at once — cold (a new kernel), warm (the same kernel
+    /// again), and beside a Graph op's AIKit input asked a moment earlier —
+    /// each op through the host's own sequence (`host`). Reports when the
+    /// registers settle, each step's spread, and the owner processes the
+    /// pass made, by action. AIKit's relations time is AIKit's (its 20 s
+    /// limit); the kernel's share is the listing, the reading and the World.
+    #[test]
+    #[ignore = "measures the real ground: OI_GRAPH_REAL_GROUND=1, never in CI"]
+    fn real_ground_techne_wiki_load_by_owner_call() {
+        if !enabled() {
+            return;
+        }
+        let registers = registers();
+        let kernel = Arc::new(Mutex::new(Kernel::discover()));
+        for pass in ["cold", "warm", "beside a graph aikit read", "world lapsed"] {
+            // The registers ask once the kernel's World reading has lapsed
+            // (as when listings queue past it under load): every World read
+            // this pass counts is the registers' own.
+            let lapsed = pass == "world lapsed";
+            if lapsed {
+                let _ = host(&kernel, KernelOp::WorldRead);
+                std::thread::sleep(read_cache::WORLD_TTL + std::time::Duration::from_millis(500));
+            }
+            let before = actions();
+            let start = Instant::now();
+            let graph = pass.starts_with("beside").then(|| {
+                let kernel = Arc::clone(&kernel);
+                let handle = std::thread::spawn(move || {
+                    let outcome = host(&kernel, graph_op(InputSelection::AikitResolution));
+                    (start.elapsed().as_secs_f64(), describe(&outcome))
+                });
+                std::thread::sleep(std::time::Duration::from_millis(200));
+                handle
+            });
+            let world = match lapsed {
+                true => "asked before the pass",
+                false if host(&kernel, KernelOp::WorldRead).is_ok() => "ok",
+                false => "ERR",
+            };
+            let world_at = start.elapsed().as_secs_f64();
+            let handles: Vec<_> = registers
+                .iter()
+                .cloned()
+                .map(|(project, path)| {
+                    let kernel = Arc::clone(&kernel);
+                    std::thread::spawn(move || {
+                        let steps = read_register(&kernel, &project, &path);
+                        (project, start.elapsed().as_secs_f64(), steps)
+                    })
+                })
+                .collect();
+            let (mut lists, mut reads, mut relations, mut errors, mut settled) =
+                (Vec::new(), Vec::new(), Vec::new(), 0, 0f64);
+            let count = handles.len();
+            for handle in handles {
+                let (project, seconds, steps) = handle.join().unwrap();
+                settled = settled.max(seconds);
+                lists.push(steps.list);
+                reads.extend(steps.read);
+                if let Some((seconds, ok)) = steps.relations {
+                    relations.push(seconds);
+                    errors += usize::from(!ok);
+                }
+                eprintln!(
+                    "MEASURE techne-load {pass} register {}: settled at {seconds:.2}s | {steps}",
+                    project.as_deref().unwrap_or("root")
+                );
+            }
+            eprintln!(
+                "MEASURE techne-load {pass}: world_read {world_at:.2}s {world} | {count} registers settled at {settled:.2}s | list {} | read {} | relations {} ({errors} ERR)",
+                spread(lists),
+                spread(reads),
+                spread(relations)
+            );
+            if let Some(graph) = graph {
+                let (seconds, described) = graph.join().unwrap();
+                eprintln!("MEASURE techne-load {pass}: the graph input answered at {seconds:.2}s | {described}");
+            }
+            eprintln!(
+                "MEASURE techne-load {pass}: owner calls {}",
+                actions_delta(&before)
+            );
+        }
     }
 
     #[test]
@@ -2028,89 +2299,7 @@ mod real_ground {
             delta(before),
             world.is_ok()
         );
-        let root = crate::world::read_world(&CentralClient::discover()).expect("world");
-        let mut registers: Vec<(Option<String>, String)> = vec![(None, String::new())];
-        for row in root["work"]["projects"]
-            .as_array()
-            .cloned()
-            .unwrap_or_default()
-        {
-            if let (Some(name), Some(path)) = (row["name"].as_str(), row["path"].as_str()) {
-                registers.push((Some(name.to_owned()), path.to_owned()));
-            }
-        }
-        let read_register = |kernel: &Mutex<Kernel>, project: &Option<String>, path: &str| {
-            let directory = if path.is_empty() {
-                "Control/agents/wiki".to_owned()
-            } else {
-                format!("{path}/ProjectCentral/agents/wiki")
-            };
-            let mut steps = Vec::new();
-            let begin = Instant::now();
-            let listed = host(
-                kernel,
-                KernelOp::FilesList {
-                    path: directory,
-                    fresh: None,
-                },
-            );
-            steps.push(format!("list {:.2}s", begin.elapsed().as_secs_f64()));
-            let location = match listed {
-                Ok(KernelOpOutcome {
-                    result: KernelOpResult::DirectoryRead { directory },
-                    ..
-                }) => directory
-                    .entries
-                    .into_iter()
-                    .find(|entry| entry.name == "wiki.json")
-                    .map(|entry| entry.location),
-                _ => None,
-            };
-            let Some(location) = location else {
-                steps.push("absent".into());
-                return steps.join(" ");
-            };
-            let begin = Instant::now();
-            let read = host(kernel, KernelOp::FileRead { location });
-            steps.push(format!("read {:.2}s", begin.elapsed().as_secs_f64()));
-            let space = match read {
-                Ok(KernelOpOutcome {
-                    result: KernelOpResult::FileRead { reading },
-                    ..
-                }) => serde_json::from_str::<Value>(&reading.content)
-                    .ok()
-                    .and_then(|wiki| {
-                        wiki["objects"].as_array().and_then(|objects| {
-                            objects
-                                .iter()
-                                .find(|object| object["object"] == "space")
-                                .and_then(|space| space["ref"].as_str().map(str::to_owned))
-                        })
-                    }),
-                _ => None,
-            };
-            let Some(space) = space else {
-                steps.push("no space".into());
-                return steps.join(" ");
-            };
-            let begin = Instant::now();
-            let relations = host(
-                kernel,
-                KernelOp::Knowledge {
-                    project: project.clone(),
-                    request: knowledge::Request::Relations {
-                        address: knowledge::Address::Wiki(space),
-                    },
-                    fresh: false,
-                },
-            );
-            steps.push(format!(
-                "relations {:.2}s{}",
-                begin.elapsed().as_secs_f64(),
-                if relations.is_ok() { "" } else { " ERR" }
-            ));
-            steps.join(" ")
-        };
+        let registers = registers();
         // One register alone, then every register at once as the shell asks.
         let before = calls();
         let begin = Instant::now();

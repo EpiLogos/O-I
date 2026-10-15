@@ -1,10 +1,197 @@
 //! Native configuration disclosures do not mutate kernel state. Prepare their
 //! immutable inputs under the kernel lock, then run owner processes without
 //! holding the ordered mutation/event queue. Admission stays with each owner.
-use crate::{flow::ReceivingRequest, CentralClient, KernelOp, KernelOpOutcome, KernelOpResult};
+use crate::{
+    files, flow::ReceivingRequest, focus, owner_relation, read_cache, retained_files,
+    CentralClient, Kernel, KernelOp, KernelOpOutcome, KernelOpResult,
+};
 use serde_json::Value;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
+
+/// A Central file listing or reading prepared under the kernel lock
+/// (`Kernel::prepare_files_read`). Its owner call runs outside the lock
+/// (`execute`); what the ordered path records — the listing's retention, the
+/// reading's retained copy and the file's registration, which the
+/// `SurfaceOpen` gate requires — is recorded under the lock afterwards
+/// (`Kernel::finish_files_read`): never before the owner answered, never
+/// skipped. A host that does not prepare it applies the op in order.
+pub struct PreparedFiles {
+    client: CentralClient,
+    read: FilesRead,
+}
+
+enum FilesRead {
+    List(PreparedListing),
+    Read(files::Location),
+}
+
+/// A directory listing's retention, captured under the kernel lock: the
+/// listing retained within `DIR_TTL` when one is held, else the pending
+/// ticket its answer is retained under.
+pub(crate) struct PreparedListing {
+    path: String,
+    key: String,
+    held: Option<files::Directory>,
+    ticket: Option<u64>,
+}
+
+pub(crate) struct ListingAnswer {
+    key: String,
+    ticket: Option<u64>,
+    directory: Result<files::Directory, String>,
+}
+
+/// The owner's answer to a prepared file listing or reading, awaiting its
+/// record under the kernel lock (`Kernel::finish_files_read`).
+pub struct FilesAnswered(FilesAnswer);
+
+enum FilesAnswer {
+    Listed(ListingAnswer),
+    Read {
+        location: files::Location,
+        fetched: Box<Result<retained_files::Fetched, String>>,
+    },
+}
+
+impl PreparedListing {
+    /// The owner's listing, unless a retained one was held.
+    pub(crate) fn execute(self, client: &CentralClient) -> ListingAnswer {
+        let directory = match self.held {
+            Some(directory) => Ok(directory),
+            None => files::list(client, &self.path),
+        };
+        ListingAnswer {
+            key: self.key,
+            ticket: self.ticket,
+            directory,
+        }
+    }
+}
+
+impl PreparedFiles {
+    /// The owner calls, outside the kernel lock. Nothing is recorded here.
+    pub fn execute(self) -> FilesAnswered {
+        FilesAnswered(match self.read {
+            FilesRead::List(listing) => FilesAnswer::Listed(listing.execute(&self.client)),
+            FilesRead::Read(location) => FilesAnswer::Read {
+                fetched: Box::new(retained_files::Store::fetch(&self.client, &location)),
+                location,
+            },
+        })
+    }
+}
+
+impl Kernel {
+    /// `FilesList` and `FileRead`, prepared under the kernel lock; every
+    /// other op is not a file read.
+    pub fn prepare_files_read(&mut self, op: &KernelOp) -> Option<PreparedFiles> {
+        let read = match op {
+            KernelOp::FilesList { path, fresh } => {
+                FilesRead::List(self.prepare_listing(path, fresh.unwrap_or(false)))
+            }
+            KernelOp::FileRead { location } => FilesRead::Read(location.clone()),
+            _ => return None,
+        };
+        Some(PreparedFiles {
+            client: self.client.clone(),
+            read,
+        })
+    }
+
+    /// Record a prepared file read's answer under the kernel lock, exactly
+    /// as the ordered `FilesList`/`FileRead` arms record theirs.
+    pub fn finish_files_read(&mut self, done: FilesAnswered) -> Result<KernelOpOutcome, String> {
+        match done.0 {
+            FilesAnswer::Listed(answer) => Ok(KernelOpOutcome {
+                receipts: Vec::new(),
+                result: KernelOpResult::DirectoryRead {
+                    directory: self.finish_listing(answer)?,
+                },
+            }),
+            FilesAnswer::Read { location, fetched } => self.finish_file_read(&location, *fetched),
+        }
+    }
+
+    /// A listing's retention as the ordered path keeps it: a fresh listing
+    /// withdraws the retained one; otherwise one retained within `DIR_TTL`
+    /// answers without the owner.
+    pub(crate) fn prepare_listing(&mut self, path: &str, fresh: bool) -> PreparedListing {
+        let key = format!("dir:{path}");
+        let held = if fresh {
+            self.reads.invalidate(&key);
+            None
+        } else {
+            self.reads
+                .get(&key, read_cache::DIR_TTL)
+                .and_then(|value| serde_json::from_value(value).ok())
+        };
+        let ticket = held.is_none().then(|| self.reads.begin(key.clone()));
+        PreparedListing {
+            path: path.to_owned(),
+            key,
+            held,
+            ticket,
+        }
+    }
+
+    /// Retain an owner listing — unless its directory was invalidated while
+    /// it was read (a write into it, a ground change) or a newer listing
+    /// superseded it: that listing is answered, never retained.
+    pub(crate) fn finish_listing(
+        &mut self,
+        answer: ListingAnswer,
+    ) -> Result<files::Directory, String> {
+        let current = answer
+            .ticket
+            .is_some_and(|ticket| self.reads.finish(&answer.key, ticket));
+        let directory = answer.directory?;
+        if current {
+            if let Ok(value) = serde_json::to_value(&directory) {
+                self.reads.put(answer.key, value);
+            }
+        }
+        Ok(directory)
+    }
+
+    /// Record a file reading: the store keeps the reading (or remembers the
+    /// failure), a refused read withdraws the file's registration and keeps
+    /// the owner's words, and a served read registers the file — the
+    /// `SurfaceOpen` gate's precondition.
+    pub(crate) fn finish_file_read(
+        &mut self,
+        location: &files::Location,
+        fetched: Result<retained_files::Fetched, String>,
+    ) -> Result<KernelOpOutcome, String> {
+        let reading = match fetched.and_then(|fetched| self.retained_files.record(fetched)) {
+            Ok(reading) => reading,
+            Err(error) => {
+                self.file_refs.remove(&location.ref_id);
+                return Err(error);
+            }
+        };
+        let project = reading
+            .project
+            .as_ref()
+            .and_then(|p| p.project_ref.as_ref())
+            .map(|id| {
+                focus::ProjectRef::try_from(owner_relation(id, "project", "central.files.read"))
+            })
+            .transpose()
+            .map_err(|e| e.to_string())?;
+        self.file_refs.insert(
+            reading.location.ref_id.clone(),
+            (
+                owner_relation(&reading.location.ref_id, "file", "central.files.read"),
+                project,
+            ),
+        );
+        Ok(KernelOpOutcome {
+            receipts: Vec::new(),
+            result: KernelOpResult::FileRead { reading },
+        })
+    }
+}
 
 /// The temporal projection's immutable inputs, captured under the kernel
 /// lock: the ordered log's receipts as they stood at preparation, the
@@ -292,6 +479,153 @@ mod tests {
             cache: Arc::new(Mutex::new(crate::read_cache::OwnerReadCache::default())),
         };
         assert!(PreparedRead::prepare(&client, None, &op, Some(inputs)).is_some());
+    }
+
+    #[cfg(unix)]
+    fn location(path: &str) -> files::Location {
+        files::Location {
+            schema: "central.path-ref/v1".into(),
+            ref_id: format!("ref:{path}"),
+            root: "R".into(),
+            path: path.into(),
+        }
+    }
+
+    /// A retained-copy store of this test's own, never the native home.
+    #[cfg(unix)]
+    fn store(test: &str) -> PathBuf {
+        std::env::temp_dir().join(format!("oi-cradle-{}-{test}-retained", std::process::id()))
+    }
+
+    /// A FileRead's owner call answers while an ordered op holds the kernel
+    /// lock, and the file is registered — the SurfaceOpen gate's
+    /// precondition — only when that answer is finished under the lock:
+    /// the same answer and registration as the ordered arm, and no event.
+    #[cfg(unix)]
+    #[test]
+    fn a_prepared_file_read_runs_outside_the_lock_and_registers_the_file_when_finished() {
+        let owner = crate::tests::FakeOwner::spawn_counter("prepared-file-read");
+        let dir = store("prepared-file-read");
+        let mut kernel = owner.kernel();
+        kernel.retained_files = retained_files::Store::at(dir.clone());
+        let events = kernel.event_log().since(0).len();
+        let kernel = Arc::new(Mutex::new(kernel));
+        let read = KernelOp::FileRead {
+            location: location("Work/proj/a.md"),
+        };
+        let prepared = kernel.lock().unwrap().prepare_files_read(&read).unwrap();
+        let held = kernel.lock().unwrap();
+        let (answer, answered) = std::sync::mpsc::channel();
+        std::thread::spawn(move || answer.send(prepared.execute()).unwrap());
+        let answered = answered
+            .recv_timeout(std::time::Duration::from_secs(20))
+            .expect("the owner answers while the kernel lock is held");
+        assert!(
+            !held.file_refs.contains_key("ref:Work/proj/a.md"),
+            "nothing is registered before the owner's answer is finished"
+        );
+        drop(held);
+        let outcome = kernel.lock().unwrap().finish_files_read(answered).unwrap();
+        let kernel = kernel.lock().unwrap();
+        assert!(kernel.file_refs.contains_key("ref:Work/proj/a.md"));
+        assert!(outcome.receipts.is_empty());
+        assert_eq!(
+            kernel.event_log().since(0).len(),
+            events,
+            "a read emits nothing"
+        );
+        assert_eq!(owner.spawns("central.files.read"), 1);
+        let mut ordered = owner.kernel();
+        ordered.retained_files = retained_files::Store::at(dir.clone());
+        let applied = ordered.apply(read).unwrap();
+        assert_eq!(
+            applied.result, outcome.result,
+            "the ordered arm answers the same reading"
+        );
+        assert_eq!(
+            ordered.file_refs.keys().collect::<Vec<_>>(),
+            kernel.file_refs.keys().collect::<Vec<_>>()
+        );
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    /// A refused read answers with the owner's words and withdraws the
+    /// file's registration — under the lock, after the owner answered.
+    #[cfg(unix)]
+    #[test]
+    fn a_refused_prepared_file_read_keeps_the_owner_words_and_withdraws_the_registration() {
+        let owner = crate::tests::FakeOwner::spawn_counter("prepared-file-refused");
+        let dir = store("prepared-file-refused");
+        let mut kernel = owner.kernel();
+        kernel.retained_files = retained_files::Store::at(dir.clone());
+        let refused = location("Work/proj/refused.md");
+        kernel.file_refs.insert(
+            refused.ref_id.clone(),
+            (
+                owner_relation(&refused.ref_id, "file", "central.files.read"),
+                None,
+            ),
+        );
+        let answered = kernel
+            .prepare_files_read(&KernelOp::FileRead {
+                location: refused.clone(),
+            })
+            .unwrap()
+            .execute();
+        assert!(
+            kernel.file_refs.contains_key(&refused.ref_id),
+            "the registration stands until the answer is finished"
+        );
+        assert_eq!(
+            kernel.finish_files_read(answered).unwrap_err(),
+            "Central excludes this file from retrieval"
+        );
+        assert!(!kernel.file_refs.contains_key(&refused.ref_id));
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    /// A prepared listing is retained as the ordered path retains it, and
+    /// served from retention by either path — unless its directory was
+    /// invalidated while it was read (a write into it): that listing is
+    /// answered, never retained. A fresh listing re-asks the owner.
+    #[cfg(unix)]
+    #[test]
+    fn a_prepared_listing_is_retained_unless_its_directory_changed_while_it_was_read() {
+        let owner = crate::tests::FakeOwner::spawn_counter("prepared-listing");
+        let mut kernel = owner.kernel();
+        let list = |fresh| KernelOp::FilesList {
+            path: "Work/proj".into(),
+            fresh,
+        };
+        assert!(kernel.prepare_files_read(&KernelOp::WorldRead).is_none());
+        let answered = kernel.prepare_files_read(&list(None)).unwrap().execute();
+        kernel.reads.invalidate("dir:Work/proj");
+        let outcome = kernel.finish_files_read(answered).unwrap();
+        assert!(matches!(
+            outcome.result,
+            KernelOpResult::DirectoryRead { ref directory } if directory.entries.len() == 1
+        ));
+        let answered = kernel.prepare_files_read(&list(None)).unwrap().execute();
+        assert_eq!(
+            owner.spawns("central.files.list"),
+            2,
+            "a listing invalidated while it was read is not retained"
+        );
+        kernel.finish_files_read(answered).unwrap();
+        let answered = kernel.prepare_files_read(&list(None)).unwrap().execute();
+        kernel.finish_files_read(answered).unwrap();
+        kernel.apply(list(None)).unwrap();
+        assert_eq!(
+            owner.spawns("central.files.list"),
+            2,
+            "a retained listing serves both paths without the owner"
+        );
+        let answered = kernel
+            .prepare_files_read(&list(Some(true)))
+            .unwrap()
+            .execute();
+        kernel.finish_files_read(answered).unwrap();
+        assert_eq!(owner.spawns("central.files.list"), 3);
     }
 
     /// The Live document owner's ops run outside the kernel lock, the device
