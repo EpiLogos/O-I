@@ -99,9 +99,9 @@ objections verbatim and the full validation (`BRIEF-BUILDER.md`); the lead conve
 
 | Ticket | Who | Zone | Since |
 |---|---|---|---|
-| S — Technē's subject door completes: the asked Scene opens on the stage (seen natively: asked, stage opened, nothing shown, no fault) | Opus builder | `src/techne/subject/**`, `panels/expressions.tsx` (navigator wiring), `packages/expressions-boundary/src/techne.ts`, `desktop/cradle/src/techne/{wikiProjectionStore,wikiExpression}.ts` if the cause is there | 15 Oct |
 | U — Palaces live in the atlas (N4, R2): the 9 palace targets listed in `tickets/T-PALACES-ONTO-ATLAS.md`, ported onto the atlas and the M5 plate, then the frame's Palace lens removed | Opus builder | `src/projections/atlas/**` (a new `palaces/`), `src/inhabitants/ql/devices/**`, `modeTransports.tsx` (Technē), `desktop/cradle/src/techne/m0m5/palace/**`, the frame's palace files and wiring | 15 Oct |
 | V — the register's progress axis follows the code: `acceptance.py reprogress` re-checks every `implemented` claim's evidence, re-points moved quotes, returns rows whose evidence vanished to pending with the reason; a gap cannot stay implemented | Opus builder | `acceptance.py`, `acceptance.test.py`, `targets.json` (through acceptance.py) | 15 Oct |
+| W — a native Expression the candidate opens can open: decide from the authored recovery law whether the host selects a recovery address for works it opens itself (the works home, New/fork, the door's wiki Expression), build it if the ground admits it, else OPEN for the owner | Opus builder | `packages/expressions-boundary/src/{host,recoveryBinding}.ts`, `panels/expressions.tsx` (recovery wiring), `recoveryTypes.ts`, the frame's recovery files and the kernel recovery owner as the decision requires | 15 Oct |
 | Native screen pass against the mockup renders; N1; the lanes' convergence | lead | `App.tsx`, `native/Workbench.tsx`, `shell/modeFrames.ts`, the book, the register | 14 Oct |
 
 Then: the 126 targets re-homed (lane M, FOUNDATION §8): `acceptance.py rehome` re-opens every cited path:line, runs the
@@ -112,6 +112,16 @@ Palace). Ranked: G1 the stage's file exports have no native receiver (the main w
 cancels `<a download>`: lane-1 B2/B3); G2 the Instruments rail keeps no subject into Graph (D1); G3 the shell carries no
 frame deep-link address (E22); R1 Places onto the atlas (31 targets); R2 palaces onto the atlas (N4, 9); S1 mount N2's
 subject door — 76 homes read their facets only on a Wiki-bound Scene, reached today only by Examine in the Graph pane.
+Then: Technē's subject door traced (lane S, headless against the real ground): two breaks in series. (1) The stage pane's
+placement record was erased by a remounted instance's late unmount, so the frame never stood over the stage and no navigator
+took the ask — fixed (`989f27921`: a pane's record belongs to the instance that admitted it). (2) The frame then refuses the
+Expression the host opened — "No host-selected native recovery address is attached" — because the candidate selects recovery
+addresses only from a `saved-work.json` the owner's config does not hold; by code-reading this blocks every native Expression
+open in the candidate (the browser's Open too), not only the door (lane W). The door is never silent now (`02e9f0370`): a taken
+ask settles shown or refused, the row reads "asking for <Scene>…" until the frame shows it, and a stalled ask says why on the
+row and the pane's fault line. The register's progress axis follows the code (`7f6d706e6`, lane V: implemented 125 → 106, all
+lane 4, the frame map's evidence gone with the map).
+
 Then: the register follows the code again (`c1b203e4c`, lane T): 123 homed, 3 gaps (G4 Capture into a Scene, G5 Record a walk,
 G6 M3′'s beat), homes on a retiring home 40 → 9 (R2, palaces onto the atlas); the Wiki-Scene rows reach through N2's door beside
 Examine. Seen on screen: 0. Carried from lane T: the progress axis disagrees with the re-home columns (T20/T25/T26 are gaps but
