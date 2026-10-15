@@ -99,9 +99,13 @@ objections verbatim and the full validation (`BRIEF-BUILDER.md`); the lead conve
 
 | Ticket | Who | Zone | Since |
 |---|---|---|---|
-| The shared grid and ruler regain what the World-cut presentation drew: standing marks, sections by atmosphere, cron firings, the retained occasion, walk rails, ruler zoom/pan/snap (port source `09a573a1d`) | Opus builder | `frame/tracks/**`, `timeline/worldTrackAdapter.ts` (additive), `techneTrackAdapter.ts`, `journeyWalks.ts` | 15 Oct |
 | The browser's rows at the mockup's `bi()` in every mode: mark · name in words · standing, Central's NOW section | Opus builder | `shell/ModeBrowser.tsx`, `shell/modeBrowsers.tsx`, `frame/browser/**` rows, the Factory/Live/Expressions row bodies | 15 Oct |
+| FOUNDATION §8: the 126 targets re-homed — each gains its home and owner op with evidence, or a named gap; the gaps ranked into the next tickets | Opus builder | `desktop/cradle/docs/world-shell/targets.json`, `acceptance.py` (additive) | 15 Oct |
 | Native screen pass against the mockup renders; N1; mounting N2's subject door | lead | the frame, `App.tsx`, `native/Workbench.tsx`, `shell/modeFrames.ts`, the book | 14 Oct |
+
+Then: the shared grid and ruler regained what the World-cut presentation drew (`c89cb9ab1`, lane K: standing edges,
+sections by atmosphere, cron firings — at their instant on Central's ruler too —, the retained occasion with its admission
+light, walk rails, ruler zoom/pan/snap; ported from `09a573a1d`).
 
 Then (15 Oct, early): Central's document forms run natively (`b860eb8a4`, lane I: a document frame served by the material
 protocol and written by its face — the srcdoc frame had inherited the window's script-src and run nothing; seen on screen
