@@ -238,6 +238,9 @@ test('a number key launches that row through the set\'s own launchStop, in the S
   assert.equal(planKey({id: 'row', row: 3}, doors({rows: () => grid()})), null, 'there is no fourth row')
   assert.equal(planKey({id: 'row', row: 0}, doors({rows: () => grid({}, 'arrangement')})), null, 'rows exist in the Session grid, not the Arrangement ruler')
   assert.equal(planKey({id: 'row', row: 0}, doors({rows: () => grid({actions: {}})})), null, 'a set whose owner gives no row launch stays read-only')
+  // A row whose every clip stands on a read-only track (the cron firings) is read, not launched — the grid's row button says so.
+  const cron = grid({tracks: [{id: 'cron', name: 'cron · firings', readOnly: true}], clips: [{id: 'f1', trackId: 'cron', columnId: 'c3', label: 'firing'}]})
+  assert.deepEqual(await planKey({id: 'row', row: 2}, doors({rows: () => cron})).run(), {ok: false, what: 'Launch row 3', text: 'every clip in this row is read, not launched'})
   assert.equal(planKey({id: 'row', row: 0}, doors({rows: () => grid({actions: undefined})})), null)
   assert.equal(planKey({id: 'row', row: 0}, doors()), null, 'no Session grid')
   const refused = await planKey({id: 'row', row: 0}, doors({rows: () => grid({actions: {launchStop: {op: 'x', run: () => { throw new Error('No agent is free') }}}})})).run()

@@ -247,11 +247,19 @@ export function projectCentralTracks(reading: CentralReading): WorldTrackSet {
     const within = Math.round(at - segment.start)
     return segment.key === null ? `no time · ${within + 1}` : `${shortDay(segment.key)} ${clock(Math.min(MINUTES_PER_DAY - 1, Math.max(0, within)))}`
   }
+  // A moment on this ruler (lane K): its day's segment plus its minute, so the spine's cron firings stand at their instant; a
+  // moment on a day the ruler does not cover has no place.
+  const instant = (unixMs: number): number | undefined => {
+    if (!Number.isFinite(unixMs)) return undefined
+    const key = new Date(unixMs).toISOString().slice(0, 10)
+    const start = startOfDay.get(key)
+    return start === undefined ? undefined : start + Math.min(MINUTES_PER_DAY - 1, Math.max(0, Math.round((unixMs - dayStartMs(key)) / 60000)))
+  }
   return {
     columns,
     tracks,
     clips,
-    ...(segments.length ? {ruler: {unit: 'minutes (UTC) over the covered days, end to end', label}} : {}),
+    ...(segments.length ? {ruler: {unit: 'minutes (UTC) over the covered days, end to end', label, instant}} : {}),
     ...(walks.length ? {walks} : {}),
   }
 }
