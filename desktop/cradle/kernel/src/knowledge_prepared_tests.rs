@@ -273,3 +273,44 @@ fn registers_prepared_in_one_burst_share_one_world_reading() {
     next.world().unwrap();
     assert_eq!(owner.spawns("central.world"), 3);
 }
+
+/// N+1 knowledge requests at once against a bound of N: at most N owner
+/// calls are in flight, the last waits for a slot, and every request is
+/// answered by its own owner call.
+#[cfg(unix)]
+#[test]
+fn concurrent_owner_calls_hold_to_the_readers_bound() {
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    const N: usize = 2;
+    let owner = crate::tests::FakeOwner::spawn_counter("knowledge-readers-bound");
+    let client = owner.kernel().client.clone();
+    let readers = Readers::new(N);
+    let (in_flight, most) = (AtomicUsize::new(0), AtomicUsize::new(0));
+    let together = std::sync::Barrier::new(N + 1);
+    std::thread::scope(|scope| {
+        let requests: Vec<_> = (0..=N)
+            .map(|_| {
+                scope.spawn(|| {
+                    together.wait();
+                    readers.run(|| {
+                        let now = in_flight.fetch_add(1, Ordering::SeqCst) + 1;
+                        most.fetch_max(now, Ordering::SeqCst);
+                        std::thread::sleep(Duration::from_millis(100));
+                        let answer = crate::world::read_world(&client);
+                        in_flight.fetch_sub(1, Ordering::SeqCst);
+                        answer
+                    })
+                })
+            })
+            .collect();
+        for request in requests {
+            assert!(request.join().unwrap().is_ok());
+        }
+    });
+    assert_eq!(
+        most.load(Ordering::SeqCst),
+        N,
+        "at most N owner calls in flight"
+    );
+    assert_eq!(owner.spawns("central.world"), N + 1);
+}

@@ -6,7 +6,59 @@ use crate::{
 };
 use serde_json::Value;
 use std::path::PathBuf;
-use std::sync::Arc;
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::{Arc, Condvar, Mutex};
+
+/// AIKit knowledge reads in flight at once, process-wide; each is its own
+/// owner process (ported: graph.rs / expression_home.rs `READERS`). A burst
+/// of registers (Technē's seventeen) queues its AIKit calls instead of
+/// sharing AIKit's 20 s limit seventeen ways.
+const READERS: usize = 5;
+static AIKIT_READERS: Readers = Readers::new(READERS);
+
+/// A bound on owner calls in flight. A prepared knowledge read takes a slot
+/// for its AIKit call only: after preparation released the kernel lock, and
+/// gives it back before its finish takes the lock again — a slot is never
+/// held while the kernel lock is taken.
+pub(crate) struct Readers {
+    limit: AtomicUsize,
+    busy: Mutex<usize>,
+    freed: Condvar,
+}
+impl Readers {
+    pub(crate) const fn new(limit: usize) -> Self {
+        Self {
+            limit: AtomicUsize::new(limit),
+            busy: Mutex::new(0),
+            freed: Condvar::new(),
+        }
+    }
+    /// Run one owner call in a slot, waiting while the limit is in flight.
+    pub(crate) fn run<T>(&self, call: impl FnOnce() -> T) -> T {
+        struct Slot<'a>(&'a Readers);
+        impl Drop for Slot<'_> {
+            fn drop(&mut self) {
+                *self.0.busy.lock().unwrap_or_else(|e| e.into_inner()) -= 1;
+                self.0.freed.notify_one();
+            }
+        }
+        let mut busy = self.busy.lock().unwrap_or_else(|e| e.into_inner());
+        while *busy >= self.limit.load(Ordering::SeqCst) {
+            busy = self.freed.wait(busy).unwrap_or_else(|e| e.into_inner());
+        }
+        *busy += 1;
+        drop(busy);
+        let _slot = Slot(self);
+        call()
+    }
+}
+/// Set the process-wide bound (the real-ground sweep; `usize::MAX` is
+/// unbounded).
+#[cfg(test)]
+pub(crate) fn set_aikit_readers(limit: usize) {
+    AIKIT_READERS.limit.store(limit, Ordering::SeqCst);
+    AIKIT_READERS.freed.notify_all();
+}
 pub struct Prepared {
     client: CentralClient,
     world: Option<Value>,
@@ -184,7 +236,7 @@ impl Prepared {
         let retained = self.held.is_some() && cacheable;
         let data = match self.held {
             Some(data) if cacheable => data,
-            _ => knowledge::call(&cwd, &self.request)?,
+            _ => AIKIT_READERS.run(|| knowledge::call(&cwd, &self.request))?,
         };
         if let knowledge::Request::Relations { address } = &self.request {
             if data["query"]["focus"].as_str() != Some(address.reference()) {
