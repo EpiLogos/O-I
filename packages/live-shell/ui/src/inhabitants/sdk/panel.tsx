@@ -218,6 +218,10 @@ export interface RowItem {
   readonly why?: string
   /** A short value at the right (a revision, a count). */
   readonly note?: string
+  /** The row's kind mark, before the name (a practice's woodcut mark). */
+  readonly mark?: ReactNode
+  /** A small meter after the name (a member's evidence ladder). */
+  readonly meter?: ReactNode
 }
 
 /** Rows with lights (a rack's chains, a scope's places). A long list pages; it never scrolls. */
@@ -238,8 +242,9 @@ export function Rows({label, does, items, onRequest, size = 6, page = 0, onPage,
         data-i={said(item.name, item.why ?? (item.light === 'lit' ? 'Admitted.' : item.light === 'unknown' ? 'No reading yet.' : undefined))}>
         {onRequest && item.request !== undefined && <button type="button" className="dp-row-request" aria-pressed={item.request}
           aria-label={`${item.request ? 'Withhold' : 'Request'} ${item.name}`} onClick={() => onRequest(item.id, !item.request)} />}
-        <Lamp state={item.light} tone={item.tone} />
+        {item.mark ?? <Lamp state={item.light} tone={item.tone} />}
         <span className="dp-row-name">{item.name}</span>
+        {item.meter}
         {item.why && <span className="dp-row-why" aria-label={item.why}>!</span>}
         {item.note && <span className="dp-row-note">{item.note}</span>}
       </li>)}
@@ -304,11 +309,13 @@ export interface PanelProps {
   readonly selected?: boolean
   /** Someone else holds values on this device. */
   readonly heldBy?: string
+  /** The device's kind mark before its name (a practice's woodcut mark). */
+  readonly mark?: ReactNode
   readonly children: ReactNode
 }
 
 /** One device panel: the head, then the body — one band on a chain, up to two bands in the pool. */
-export function Panel({title, view, light, onLight, pages, page, onPage, onFold, onFull, onSelect, selected, heldBy, children}: PanelProps) {
+export function Panel({title, view, light, onLight, pages, page, onPage, onFold, onFull, onSelect, selected, heldBy, mark, children}: PanelProps) {
   return <section className="dp" data-view={view} data-selected={selected ? 'true' : undefined} aria-label={title}
     onPointerDownCapture={onSelect}>
     <header className="dp-head">
@@ -317,6 +324,7 @@ export function Panel({title, view, light, onLight, pages, page, onPage, onFold,
         data-i={said('Device on/off', light === 'unknown' ? 'No reading from the owner yet.' : 'Asks the owner to turn the device on or off. The light shows what the owner reports.')}
         onClick={onLight} />
       {onFold && <button type="button" className="dp-fold" aria-label={`Fold ${title}`} data-i={said('Fold', 'Fold the device to its title.')} onClick={onFold}><ChevronFold size={10} /></button>}
+      {mark}
       <span className="dp-title">{title}</span>
       {heldBy && <span className="dp-head-held" data-i={said('Held', `${heldBy} holds values on this device.`)}>{heldBy}</span>}
       {pages && <nav className="dp-pages" role="tablist" aria-label={`${title} pages`}>
@@ -365,4 +373,17 @@ export function Tile({title, light, span = 1, onFull, children}: {readonly title
     </header>
     <div className="dp-tile-body">{children}</div>
   </section>
+}
+
+/** A ladder of evidence: one step for each rung, lit when it is established, dark when it is not, hollow when nobody has
+ * observed it. Nothing is inferred upward. `row` draws it as ticks after a name; `tall` as a labelled column. */
+export function Ladder({rungs, labels, size = 'row', label}: {readonly rungs: readonly (boolean | null)[]; readonly labels: readonly string[]; readonly size?: 'row' | 'tall'; readonly label?: string}) {
+  const top = rungs.reduce<number>((at, rung, i) => (rung === true ? i : at), -1)
+  return <span className="dp-ladder" data-size={size} role="img"
+    aria-label={`${label ?? 'Evidence'}: ${top < 0 ? 'none established' : `up to ${labels[top]}`}`}
+    data-i={`${label ?? 'Evidence'}|${rungs.map((rung, i) => `${labels[i]} ${rung === true ? 'yes' : rung === false ? 'no' : '—'}`).join(' · ')}`}>
+    {rungs.map((rung, i) => <span key={labels[i]} className="dp-ladder-rung" data-rung={rung === true ? 'yes' : rung === false ? 'no' : 'unseen'}>
+      {size === 'tall' && <span className="dp-ladder-label">{labels[i]}</span>}
+    </span>)}
+  </span>
 }

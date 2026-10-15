@@ -29,3 +29,8 @@ html, body { height: auto; overflow: auto; background: var(--bg-0, #26292d); }
 .cat-rail--ref { height: auto; min-height: 180px; }
 .cat-rail-tiles { display: flex; flex-wrap: wrap; gap: 8px; padding: 8px; }
 .cat-status { position: sticky; bottom: 0; margin-top: 14px; padding: 5px 10px; font-size: 11px; color: var(--text-dim, #a2a7ad); background: var(--bg-1, #33363b); border-top: 1px solid var(--line, #24262a); }
+/* The fixture switch: the readings a reference device is shown on. */
+.cat-fixtures { display: flex; align-items: center; gap: 4px; margin-bottom: 12px; font-size: 10.5px; color: var(--text-faint, #71767c); }
+.cat-fixtures span { margin-right: 6px; text-transform: uppercase; letter-spacing: .08em; font: 600 10px var(--mono, monospace); }
+.cat-fixtures button { height: 20px; padding: 0 9px; border: 1px solid var(--line-strong, #3d4147); background: var(--bg-1, #33363b); color: var(--text-dim, #a2a7ad); font: inherit; cursor: pointer; }
+.cat-fixtures button[aria-pressed="true"] { background: var(--accent, #ffbe00); color: #1c1d1f; border-color: var(--accent, #ffbe00); }

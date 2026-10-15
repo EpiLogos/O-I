@@ -183,3 +183,16 @@
 .dp-toggle::after, .dp-radio button::after, .dp-action::after, .dp-box::after { content: ''; position: absolute; inset: -3px 0; }
 .dp-row-request::after { content: ''; position: absolute; inset: -6px; }
 .dp-radio[data-stack="true"] button::after { inset: -1px 0; }
+
+/* A ladder of evidence: green where established, dark where not, hollow where nobody has observed it. */
+.dp-ladder { flex: none; display: inline-flex; gap: 1px; align-items: center; }
+.dp-ladder-rung { width: 3px; height: 8px; background: #2a2e32; border: 1px solid rgba(0, 0, 0, .35); }
+.dp-ladder-rung[data-rung="yes"] { background: var(--green, #8fd0a8); }
+.dp-ladder-rung[data-rung="unseen"] { background: transparent; border-color: var(--text-faint, #71767c); }
+.dp-ladder[data-size="tall"] { flex-direction: column-reverse; align-items: stretch; gap: 2px; }
+.dp-ladder[data-size="tall"] .dp-ladder-rung { position: relative; width: 10px; height: 10px; }
+.dp-ladder-label { position: absolute; left: 15px; top: -1px; font-size: 9px; line-height: 10px; color: var(--text-dim); white-space: nowrap; }
+.dp-ladder-rung[data-rung="yes"] .dp-ladder-label { color: var(--text); }
+.dp-row .wood { flex: none; color: var(--text); }
+.dp-row[data-dim="true"] .wood:not(.dim) { color: var(--text-dim); }
+.dp-head .wood { flex: none; color: var(--text); }
