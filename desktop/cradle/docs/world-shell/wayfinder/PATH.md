@@ -10,7 +10,7 @@ earlier PATH (waves W0–W0e, carries 1–57) is in git at `760fa4916`.
 | Role | Who | Count | Does | Never |
 |---|---|---|---|---|
 | **Lead** | the Opus session running the build | 1 | builds the foundation (FOUNDATION F0–F9, N1–N3) itself and checks each item on screen; claims module tickets, writes briefs from `BRIEF-BUILDER.md` (its Target block names the candidate as the product), dispatches (no task chips: side work is a builder lane in this seat), converges each return itself (first: `candidate-reachable.mjs` over every changed file — a file not reachable from the candidate is never committed as product work) (re-runs checks, reads the diff, stages the ticket's files, commits, pushes), keeps PATH, runs the native app and screen checks | spawns any agent other than the builders and the reviewer below; writes product code beyond one-file glue |
-| **Builders** | module builders (Agent tool), Opus only (owner, 14 Oct evening) | ≤3 at once, one ticket each, exclusive zones | build to the brief (`BRIEF-BUILDER.md`): the mockup PNG, the binding objections, the full validation | commit, stage, ask the owner, or leave the zone |
+| **Builders** | module builders (Agent tool), Opus only (owner, 14 Oct evening) | ≤4 at once (owner, 15 Oct), one ticket each, exclusive zones | build to the brief (`BRIEF-BUILDER.md`): the mockup PNG, the binding objections, the full validation | commit, stage, ask the owner, or leave the zone |
 | **Reviewer** | the lead first (re-runs checks, reads the diff, sees UI on screen beside the mockup); a Sonnet subagent only when the lead asks for a second reading at a wave's end | 0–1 | refutes the done-claim | edits anything |
 
 No Workflow tool, no Opus subagents, no research fan-outs. A ticket that
@@ -92,14 +92,42 @@ bullet twice gets one Sonnet diagnostic; never a third builder attempt.
 ## 7. Open claims
 
 One branch, one run (`dlw/build`; #675 landed; PR #677 open for F0–F5 and the waves after). Builders are Opus, at most
-three at a time, driven from the lead session (owner, 14 Oct evening: "run like 3 opus subagents and drive from the main
+four at a time (owner, 15 Oct: "lead + ≤4 Opus builders"), driven from the lead session (owner, 14 Oct evening: "run like 3 opus subagents and drive from the main
 session … get work done well first time round"); type-checks serialised through one lock because the machine runs
 swap-full; no task chips. Each builder has an exclusive zone and a brief carrying the mockup rendered to PNG, the
 objections verbatim and the full validation (`BRIEF-BUILDER.md`); the lead converges, commits and keeps this table true.
 
 | Ticket | Who | Zone | Since |
 |---|---|---|---|
-| Native screen pass against the mockup renders; N1; the lanes' convergence | lead | `App.tsx`, `native/Workbench.tsx`, `shell/modeFrames.ts`, the book, the register | 14 Oct |
+| Native screen passes, convergence, PATH | lead | `App.tsx`, `shell/modeFrames.ts`, the book, the register, PATH | 14 Oct |
+| R — the device runtime on the owner's panel kit: five views from one binding, release-to-send, the generic plate on the kit, own-view registration, the widget view on the rail, the kit's colours as shell tokens | builder | `frame/devices/**`, `frame/widgets/**`, `inhabitants/sdk/panel.*`, `controls.tsx`, `define.ts` (additive), `inhabitants/catalogue/**` | 16 Oct |
+| F — Wave 0's defects: pane content follows its pane (the owner's report), palace entry from a frame pane, Expressions' transport overflow, the status bar's info line, the panes' tab reveal | builder | `projections/atlas/**` (not the plates), `frame/transport/**`, `components/StatusBar.tsx`, `native/workbench.css`, `native/Workbench.tsx`, `projections/framePlacement.ts`, `shell/ModeBrowser.tsx`, `techne/subject/worldRows.ts`, `frame/instrumentDoor.ts` | 16 Oct |
+| D — the door's revision_conflict the shell never hears; the Studio's false "edited since save"; a fault line that outlives its mode | builder | `desktop/cradle/expressions-app/**`, `techne/subject/**` (not `worldRows.ts`), `components/expressions/studio/**` | 16 Oct |
+| B0 — Wave B measured before it is briefed: the door kernel-direct post-install, idle processes, AIKit cold/warm, `oi` dispatch and shadowing, the writes under the lock, told-not-polled seams, Central's stale Day | investigator (read-only) | scratch only | 16 Oct |
+
+Then: Wave 0, the native pass of the m4 build (`2de90416e`, stamp 20261015T-m4; product equal to HEAD; 16 Oct 00:33–00:45,
+computer-use, full-screen control, the window brought out of Stage Manager's strip). Seen working: Locations › O-I expands its
+three Scenes within ~5 s of the double-click (the installed AIKit batch); M1′ Canvas draws the O-I card with no chrome in the pane
+(only the minimap, which M1′'s Minimap switch owns); the canvas frame re-lays itself out when the browser toggles; with the Earth in
+the pane the O-I palace floor draws (two rooms on a dashed path) with no atlas label or "≡"; M0′, M4′ (Body, Landmass, Climate, Sky
+drawn waiting; Locations paged; Relations) and M5′ (Rooms, Path, Board, Return, Bookmarks) stand; the Studio carries Save, Undo and
+Redo in its head, Your controls opens with + Parameter and a chosen control; ⌘⌥Enter brings the frame's own chrome into the pane
+and restores it; Factory and Live load (Live's M1 torus device draws its picture). Seen broken — lanes F and D: (1) the owner's
+report, "the resizing of the pane content per the changes to viewport size with sidebar toggle changes": the Earth draws as an
+ellipse whenever its pane changes size without a window resize — the ported atlas re-measures on `window` resize only
+(`projections/atlas/src/globe/engine.ts:135`, `src/app/controller.ts:299`, `src/ui/walk-strip.ts:47`); (2) the door, with a restored
+work in the pane, asks Scene "O I" in `techne-m0.central…` — the frame toasts "revision_conflict: the native Expression changed",
+the row stays "asking for O I…", and after 30 s the fault line says the frame "gave the shell no reason"; (3) the Studio reads
+"edited since save" over a work the status bar and the frame's scene bar call saved; (4) the Technē fault line still stands in
+Expressions' pane; (5) entering a palace from a pane that holds the frame starts the walk and says "entered on the Earth" but the
+Earth never comes into view; (6) Expressions' transport overflows at 1372 px (Repeat/Pulse/Global truncated, a "Running" readout
+over Map and the mode icons); (7) the status bar's info line is crushed to one letter by the admission list; (8) the panes' tab
+strips and ⊞ never reveal by pointing (Technē's frame pane, Expressions, Central's Day/Flow), and ⌘⌥\ shows nothing — so Central's
+day tracks behind the Flow were not reached again; (9) the Studio overflows its band (TOOLS and the nested Glyph Sequence box with
+its own Save cut at the plate's foot); (10) Central's Day still reads the owner's refusal "The native today pointer is stale"
+(the Days stop at 13 Oct: no ensure has run since the scheduled rollover was disabled on 13 Oct), and the Day device offers no
+ensure. Not seen: a Compact device on Technē's row (M4′ and M5′ open left no room). (9) and the plates' density go to Wave A; (10)
+to B0's reading, then the Central device lane.
 
 Then: the 126 targets re-homed (lane M, FOUNDATION §8): `acceptance.py rehome` re-opens every cited path:line, runs the
 reachability script over every home and records home, owner op and evidence — or a named gap — on each row; `verify` holds
