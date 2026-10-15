@@ -6,7 +6,7 @@
 // Replaces components/DeviceChainPanel.tsx:64's device side (its read-only tiles, its DevicePanel faces and the empty card).
 import type {PanelContext} from '../shell/panels'
 import type {SetDocument} from '../shell/document'
-import type {SetSelection} from '../components/SessionView'
+import type {SetSelection} from '../shell/liveSelection'
 import {useLiveTorusReading} from './torusInstrument'
 import {KeyboardOnChain} from './KeyboardOnChain'
 import {NoteDeviceChain} from './noteDevices/NoteDeviceChain'

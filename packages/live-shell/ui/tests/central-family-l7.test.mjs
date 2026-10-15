@@ -34,7 +34,7 @@ const l7 = await import('../src/inhabitants/centralFamilyL7.ts')
 const hygiene = await import('../src/inhabitants/centralHygieneModel.ts')
 const impact = await import('../src/inhabitants/centralImpactModel.ts')
 const daynow = await import('../src/inhabitants/centralDayNowModel.ts')
-const categories = await import('../src/inhabitants/centralBrowserCategories.ts')
+const {MODE_GRAMMAR} = await import('../src/shell/modeGrammar.ts')
 
 // ---------------------------------------------------------------------------
 // 1 — the extension composes additively; the L2 bases stay verbatim
@@ -271,22 +271,17 @@ test('subjectDayRef: the civil day a day-record path stands in', () => {
 })
 
 // ---------------------------------------------------------------------------
-// 5 — the browser categories: admitted rows from owner data, refusals as rows
+// 5 — the browser categories: the mode grammar's, each landed or waiting by name
+// L7's own category module (inhabitants/centralBrowserCategories.ts) was read by nothing and was deleted on 15 Oct (FOUNDATION §7):
+// Central's categories are the mode grammar's base browser (shell/modeGrammar.ts), and a refused Days read is drawn by the browser
+// as its named absence (shell/ModeBrowser.tsx, "The day-records read refused").
 
-test('the browser categories name their reads; the wiki category waits honestly', () => {
-  const admitted = categories.CENTRAL_BROWSER_CATEGORIES.filter(category => category.admission === 'admitted')
-  assert.ok(admitted.length >= 4)
-  for (const category of categories.CENTRAL_BROWSER_CATEGORIES) {
-    assert.ok(category.reads.every(read => /^(op |seat |git )/.test(read)), `${category.id} names its owner operations`)
+test('Central\'s browser categories are the grammar\'s: Days and Files compose from landed owners, the rest wait by name', () => {
+  const browser = MODE_GRAMMAR.base.browser
+  assert.deepEqual(browser.map(category => category.id), ['central-days', 'central-flows', 'central-beings', 'central-things', 'central-goals', 'central-files', 'central-wiki'])
+  assert.deepEqual(browser.filter(category => category.state === 'cut').map(category => category.id), ['central-days', 'central-files'])
+  for (const category of browser.filter(category => category.state === 'waiting')) {
+    assert.match(category.hint, /not landed|does not answer/, `${category.id} names what it waits for`)
   }
-  const wiki = categories.CENTRAL_BROWSER_CATEGORIES.find(category => category.id === 'central-wiki')
-  assert.equal(wiki.admission, 'waiting')
-  const rows = categories.centralBrowserRows(wiki, {})
-  assert.match(rows[0].label, /Waiting/)
 })
 
-test('a refused read renders as the row — an honest empty names itself', () => {
-  const days = categories.CENTRAL_BROWSER_CATEGORIES.find(category => category.id === 'central-days')
-  const rows = categories.centralBrowserRows(days, {}, [{read: 'op files_list', refusal: 'Central owner Action refused: no connector'}])
-  assert.match(rows[0].label, /refused — Central owner Action refused/)
-})

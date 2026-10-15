@@ -6,7 +6,7 @@ import {NativeInputRetentionProvider,nativeInputBinding} from './components/Nati
 import { useWorkspace } from './shell/workspace'
 import type { DetailMode } from './components/DeviceChainPanel'
 import { carrierOf } from './shell/runContext'
-import type { SetSelection } from './components/SessionView'
+import type { SetSelection } from './shell/liveSelection'
 import { StatusBar } from './components/StatusBar'
 import { TransportBar } from './components/TransportBar'
 import {AgentShellProvider, useAgentShell} from './agent/AgentShellContext'

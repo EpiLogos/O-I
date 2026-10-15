@@ -26,12 +26,10 @@ export async function load(url,context,next){
 const author = new URL('desktop/cradle/expressions-app/field-studies-journeys/src/', root);
 const [{kernelDocumentToJourney}, {prepareCompositionEdit}, {DocumentStore}, {createRetainedNativeEditor, applyNativeGlyphChanges},
   {toNativeEntity}, {readNativeExpressionsContent, createNativeContentActions},
-  {nativeSourceLanes, readNativeSourceTimeline, selectNativeSource, editNativeSourceTiming, currentCompositionReply, createNativeCompositionPresentationGuard},
-  {SessionView}, {ArrangementView}, React, {renderToStaticMarkup}] = await Promise.all([
+  {nativeSourceLanes, readNativeSourceTimeline, selectNativeSource, editNativeSourceTiming, currentCompositionReply, createNativeCompositionPresentationGuard}] = await Promise.all([
   import(new URL('kernelDocumentBridge.ts',author)), import(new URL('kernelComposition.ts',author)), import(new URL('store.ts',author)),
   import(new URL('hostEditor.ts',author)), import(new URL('nativeBridge.ts',author)), import('../src/shell/nativeContent.ts'),
-  import('../src/shell/compositionViews.ts'), import('../src/components/SessionView.tsx'), import('../src/components/ArrangementView.tsx'),
-  import('react'), import('react-dom/server'),
+  import('../src/shell/compositionViews.ts'),
 ]);
 
 // The rich Glyph rack at native revision 8, as an actual read-only inspection
@@ -187,40 +185,10 @@ test('real sequence clock edit exposes morph cycles and refuses a seconds edit o
   assert.equal(reply.ok,false);assert.match(reply.error,/shared Field dwell/);assert.equal(requests.length,0);
 });
 
-const audioProps = {set:null,document:null,selection:{track:0,scene:null},select:blocked,colors:[],setColor:blocked};
-test('actual resident SSR displays exact native membership and authored states without audio transport controls',()=>{
-  const content = readNativeExpressionsContent(retained().reading),{source,requests} = boundary(content);
-  const session = renderToStaticMarkup(React.createElement(SessionView,{...audioProps,native:source}));
-  const arrangement = renderToStaticMarkup(React.createElement(ArrangementView,{...audioProps,native:source}));
-  const objects=[...new Set(content.scenes.scenes.flatMap(row=>row.member_refs))];
-  assert.equal((session.match(/data-native-object=/g)??[]).length,objects.length);
-  for(const ref of objects)assert.ok(session.includes(`data-native-object="${ref}"`));
-  const members=content.scenes.scenes.reduce((count,row)=>count+row.members.length,0);
-  assert.equal((session.match(/class="clip-slot[^"\n]*occupied-slot/g)??[]).length,members);
-  for(const row of content.scenes.scenes)for(const ref of objects){
-    const member=row.members.find(member=>member.entity_ref===ref);
-    const label=`${content.scenes.object_titles[ref]}, ${row.title}${member?`, ${member.state}`:', absent'}`;
-    const escaped=renderToStaticMarkup(React.createElement('span',null,label)).slice(6,-7);
-    assert.ok(session.includes(`aria-label="${escaped}"`),`exact native matrix cell: ${ref} in ${row.scene_ref}`);
-  }
-  assert.equal((arrangement.match(/class="arrange-clip native-state-span"/g)??[]).length,3);
-  assert.match(session,/>Scenes</);assert.match(session,/>Field</);assert.match(arrangement,/Glyph source timing/);
-  assert.match(arrangement,/Authored source time in seconds/);assert.match(arrangement,/>Layers</);
-  for(const html of [session,arrangement])assert.doesNotMatch(html,/MIDI From|Audio From|Launch scene|track-stop|arrange-loop-brace|Arm requires/);
-  assert.equal(requests.length,0);
-});
-test('existing audio empty-state route remains the DESIGNED empty state when no native owner is supplied',()=>{
-  // The audio cut's empty route was the bare sentence `view-empty`; the
-  // live lane's designed empty states replaced it (the empty-state law).
-  // The guard now holds the DESIGNED state: a styled disclosure inside the
-  // frame, never a floating sentence — and no native content appears.
-  for(const Component of [SessionView,ArrangementView]){
-    const out=renderToStaticMarkup(React.createElement(Component,audioProps));
-    assert.match(out,/live-empty-disclosure/,'the designed empty disclosure stands');
-    assert.ok(!out.includes('native.session')&&!out.includes('data-scene-ref'),'no native content without a native owner');
-  }
-});
-
+// The Session and Arrangement views that drew this material resident (SessionView, ArrangementView) were drawn by nothing once
+// the tracks pane became the centre (FOUNDATION F3) and were deleted on 15 Oct (§7): the open Expression's scenes are clips of its
+// track in the one Session grid (frame/tracks/modeTracks.ts nativeTracks), and its source timing is edited in the Clip editor
+// (components/GlyphSequenceEditor.tsx).
 // Execute the exact production presentation closures. Setter observations
 // are UI effects, not substitute native owners or fabricated native replies.
 const ts=(await import(compiler)).default;

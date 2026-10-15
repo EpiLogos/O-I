@@ -46,7 +46,7 @@
  */
 
 import type {AtlasView} from '../projections/atlas/AtlasProjectionPanel'
-import type {TimelinePresentation} from '../projections/timelinePresentation'
+import type {TimelinePresentation} from '../projections/timelinePaneHost'
 
 /** The six Technē instrument holders (sdk/semantics.ts TECHNE_INSTRUMENTS). */
 export type TechneInstrumentId = 'techne:m0' | 'techne:m1' | 'techne:m2' | 'techne:m3' | 'techne:m4' | 'techne:m5'

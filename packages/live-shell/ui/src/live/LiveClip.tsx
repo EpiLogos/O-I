@@ -9,7 +9,7 @@
 // disabled buttons, and its empty note grid).
 import type {SetDocument} from '../shell/document'
 import type {SetSummary} from '../shell/useSet'
-import type {SetSelection} from '../components/SessionView'
+import type {SetSelection} from '../shell/liveSelection'
 import {ClipNone, ClipView, ClipWaiting, type ClipRow} from '../frame/detail/ClipView'
 import {clipBoxRows, useSelectedClip} from '../frame/detail/ClipBox'
 import {useLiveModeInForce} from '../native/liveModeCatalogue'

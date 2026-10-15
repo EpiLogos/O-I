@@ -14,7 +14,7 @@ import {expressionsTrackAdapter} from '../../timeline/expressionsTrackAdapter'
 import {useFactoryTracks} from './useFactoryTracks'
 import {useCentralTracks} from './useCentralTracks'
 import {useTechneTracks} from './useTechneTracks'
-import type {JourneyPresentation} from '../../timeline/JourneyRows'
+import type {JourneyPresentation} from '../../timeline/journeyWalks'
 
 export interface TracksReading {
   /** The kernel carrier, for a mode whose tracks read their own owner. */
@@ -56,7 +56,8 @@ export const tracksOf = (answer: WorldTrackSet | ModeTracksWaiting | null): Worl
   answer && !('waiting' in answer) ? answer : null
 
 export const MODE_TRACKS: Readonly<Record<SurfMode, UseModeTracks>> = {
-  live: reading => liveSetTrackAdapter.project({set: reading.set, document: reading.document, colors: reading.colors}),
+  // With no set open Live is waiting — the empty Session says how to open one (the reading's waiting words), not "no tracks".
+  live: reading => reading.set ? liveSetTrackAdapter.project({set: reading.set, document: reading.document, colors: reading.colors}) : null,
   base: useCentralTracks,
   factory: useFactoryTracks,
   techne: useTechneTracks,

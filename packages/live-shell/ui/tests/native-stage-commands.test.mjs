@@ -27,12 +27,11 @@ export async function load(url,context,next){
 }`)}`, import.meta.url);
 
 const app = new URL('desktop/cradle/expressions-app/field-studies-journeys/src/', root);
-const [frame, boundary, protocol, shell, tools, engine] = await Promise.all([
+const [frame, boundary, protocol, shell, engine] = await Promise.all([
   import(new URL('stageCommands.ts', app)),
   import(new URL('packages/expressions-boundary/src/host.ts', root)),
   import(new URL('packages/expressions-boundary/src/protocol.ts', root)),
   import('../src/native/stageCommands.ts'),
-  import('../src/components/NativeStageTools.tsx'),
   import('../src/native/engineCommand.ts'),
 ]);
 const studioStage = await import('../src/components/expressions/studio/StudioStage.tsx');
@@ -329,19 +328,28 @@ test('toggle readings are undefined unless the hosted state carries them, and ev
 });
 
 // The stage controls moved out of the Expressions pane into the Studio's Tools and Capture sections (14 Oct; PATH §1: controls in the
-// device, never chrome in a pane). The centre residence's strip (NativeStageTools) draws the same two section bodies over one sender.
+// device, never chrome in a pane). The Studio draws the two section bodies over one sender (ExpressionsStudio.tsx: useStageSender, then
+// StageViewTools under studio:tools and StageCaptureTools under studio:capture); `studio` below composes them the same way. The
+// centre residence's strip that drew the same two bodies (NativeStageTools) was drawn by nothing and was deleted on 15 Oct.
 // Every stage control carries data-stage="<its id>", its owner's reason or what it does in its hover words, and a pressed state only
 // where the hosted state reads one.
 const stageButtons = html => Object.fromEntries([...html.matchAll(/<button([^>]*)>/g)].map(([, attrs]) => attrs).filter(attrs => attrs.includes('data-stage="'))
   .map(attrs => [attrs.match(/data-stage="([^"]+)"/)[1], attrs]));
+/** The Studio's stage sections over one sender, as ExpressionsStudio composes them. */
+function StudioStageSections({state, run}) {
+  const sender = studioStage.useStageSender(state, run);
+  return createElement('div', null, createElement(studioStage.StageViewTools, {sender}), createElement(studioStage.StageCaptureTools, {sender}));
+}
+const studio = props => renderToStaticMarkup(createElement(StudioStageSections, props));
 const captureBody = (state, over = {}) => renderToStaticMarkup(createElement(studioStage.StageCaptureBody, {
   sender: {reason: shell.stageDisabledReason({mounted: true, state, busy: false}), readings: shell.stageReadings(state), refusal: null, send: () => {}},
   chosen: 'still', options: shell.STAGE_CAPTURE_DEFAULTS, edition: false, editionId: 'edition', onChoose: () => {}, onOptions: () => {}, onEdition: () => {}, ...over}));
 
 test('the stage controls name every control, disable it with its reason, and read toggles from the hosted state', () => {
-  const unmounted = renderToStaticMarkup(createElement(tools.NativeStageTools, {state: null, run: null}));
-  assert.match(unmounted, /role="toolbar" aria-label="Stage controls"/);
-  assert.match(unmounted, /No Expressions application is mounted\./);
+  const unmounted = studio({state: null, run: null});
+  assert.match(unmounted, /role="group" aria-label="Stage view"/);
+  assert.match(unmounted, /role="group" aria-label="Capture"/);
+  assert.match(unmounted, /<p class="inst-section-line studio-stage-reason">No Expressions application is mounted\.<\/p>/, 'the shared reason is said once, in Capture');
   const off = stageButtons(unmounted);
   assert.deepEqual(Object.keys(off).sort(), [...ALL_VIEW, 'capture-png', 'present'].sort(), 'the view, the still capture and Present stand; the rest are one choice away');
   for (const [id, attrs] of Object.entries(off)) {
@@ -350,14 +358,14 @@ test('the stage controls name every control, disable it with its reason, and rea
     assert.match(attrs, /title="No Expressions application is mounted\."/, `${id} keeps its owner's reason in its hover words`);
   }
   assert.doesNotMatch(unmounted, /aria-label="Tool"/, 'the tool rail is in the top bar, not here');
-  const bare = stageButtons(renderToStaticMarkup(createElement(tools.NativeStageTools, {state: READY_STATE, run: async () => ({ok: true})})));
+  const bare = stageButtons(studio({state: READY_STATE, run: async () => ({ok: true})}));
   assert.doesNotMatch(bare['view-2d'], /aria-pressed/, 'no camera reading, no pressed claim');
   assert.doesNotMatch(bare.present, /disabled/);
 
-  const ready = renderToStaticMarkup(createElement(tools.NativeStageTools, {
+  const ready = studio({
     state: {...READY_STATE, stage: {mode: '3d', grid: true, snap: false, guides: true}, recording: true, presenting: false},
     run: async () => ({ok: true}),
-  }));
+  });
   const on = stageButtons(ready);
   // A take records, so the capture is video: Stop is the one capture that can run, and Save video waits for it to finish.
   assert.deepEqual(Object.keys(on).sort(), [...ALL_VIEW, 'record', 'present', 'save-video'].sort());
