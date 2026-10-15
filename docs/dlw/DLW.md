@@ -829,34 +829,48 @@ up. It cannot approve its own work.
 
 ## 14. A day
 
-The day opens. You stand on your own world, the field around you, the sky
-turning over. In Central you read, one tangent held open beside the main
-line. You mark three passages, note one, put all three in the packet and
-press Play. The agent answers into the page with its sources, and you follow
-one of them back to the text it came from.
+The question you woke with is a small one. Why do *whole*, *health* and *holy*
+grow from the same root, and does it matter? Most days have no room for a
+question like that.
 
-The reading suggests a repair. You move to Factory and set it going, with a
-window drawn so nothing is written before you approve the plan. A small new
-world starts turning; agents work around it. When the changes and their
-checks come back, you read them and let them land.
+Your planet is turning when you open the DLW, yesterday's walk still worn into
+its surface. In Central you find the dictionary entry you saved last week and
+read it beside an essay on medieval medicine, with a second essay open at the
+edge for when the first runs dry. Three passages matter. You mark them, add a
+note to one, and tag all three with the alias you made for the agent that
+helps you with words. Its answer comes back into the page with every source
+attached, and one source leads you to a sermon you have never read.
 
-Later you open yesterday's scene in Expressions. You add a third voice, pin
-its force, turn on the plate and sweep it until the figure says what the
-claim says. The new voice sounds its own pitch. You take the swell, layer
-the next section, capture the figure, and save.
+One sermon is not a pattern. In Factory you say what you want — every use of
+the root in your library and the archives you can reach, in order, with its
+context — and draw a window so that nothing enters your knowledge until you
+have seen the plan. A small world forms and begins to turn. Two agents work
+around it, one reading Old English, one searching the archives, and a smaller
+orbit appears when the first hands a cross-check to a helper. You leave them to
+it.
 
-Toward the close of the day you are in Technē. You gather what the day
-touched, lay it on the ruler, and record a walk across the places it passed
-through. You build a room for it in your palace and offer the whole back to
-your knowledge.
+By the time they report, you have something to listen to. In Expressions you
+set the three words in a scene, each with its own voice, and turn the plate on.
+For a while they sound apart. Then you pin *holy* a little closer to *whole*,
+sweep the plate again, and the figure on its surface settles into one shape
+with three lobes. You keep that take. In Live you find the chord that draws the
+same shape on the torus, and play it slowly, three times.
 
-Before the day ends you visit another world. Its owner has shown some of it
-and clouded the rest. You open a conversation with the agent that keeps it,
-and it gives you one thing you did not have. You take it home under their
-name.
+The agents' findings go onto the ruler: the root in a law code, in a
+leechbook, in a hymn, each at its year and its place, each marked for how sure
+anyone can be of it. You walk them in order across the map, from a monastery
+in Northumbria to a printing house in London, and at the last stop the scene
+you made earlier plays. You record the walk and give it a room in your palace.
 
-The day closes. What you learned is filed, what you made is kept, the walk
-is there for anyone you show it to.
+Someone in the field has built a world around Old English. Most of it is
+clouded, but the part its owner has shown holds a gloss from a manuscript you
+could not reach. You ask the agent that keeps that world, and the gloss arrives
+in yours under its owner's name.
+
+Then the day closes. It has already gathered itself into one page: the
+passages, the run, the take, the chord, the walk, the gloss and where it came
+from. You add two lines of your own. Tomorrow someone you have never met plays
+the walk, stands in the monastery, and hears the three words come together.
 
 ## 15. What the game warns
 
