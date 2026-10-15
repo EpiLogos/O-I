@@ -22,6 +22,7 @@ pub struct PreparedRead {
     world: Option<Value>,
     op: KernelOp,
     temporal: Option<TemporalReadInputs>,
+    graph: Option<crate::graph::PreparedGraph>,
 }
 
 impl PreparedRead {
@@ -41,6 +42,7 @@ impl PreparedRead {
                 world,
                 op: op.clone(),
                 temporal: Some(temporal),
+                graph: None,
             });
         }
         match op {
@@ -66,12 +68,31 @@ impl PreparedRead {
                 world,
                 op: op.clone(),
                 temporal: None,
+                graph: None,
             }),
             _ => None,
         }
     }
 
+    /// The Graph op, prepared under the kernel lock (graph.rs `PreparedGraph`).
+    pub(crate) fn graph(
+        client: &CentralClient,
+        op: &KernelOp,
+        graph: crate::graph::PreparedGraph,
+    ) -> Self {
+        Self {
+            client: client.clone(),
+            world: None,
+            op: op.clone(),
+            temporal: None,
+            graph: Some(graph),
+        }
+    }
+
     pub fn execute(self) -> Result<KernelOpOutcome, String> {
+        if let Some(graph) = self.graph {
+            return graph.execute();
+        }
         // The temporal projection: all owner processes over captured
         // inputs. It runs here — never under the kernel mutex — and
         // answers with the same document the ordered path would build.
