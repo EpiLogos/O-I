@@ -100,7 +100,6 @@ objections verbatim and the full validation (`BRIEF-BUILDER.md`); the lead conve
 | Ticket | Who | Zone | Since |
 |---|---|---|---|
 | Native screen pass against the mockup renders; N1; the lanes' convergence | lead | `App.tsx`, `native/Workbench.tsx`, `shell/modeFrames.ts`, the book, the register | 14 Oct |
-| E — Technē's instruments as Ableton devices: the plate grammar raised (sections fit or fold, never scroll; no boxes in boxes; knobs, switches and live pictures first; a head slot), M0′–M5′ laid out from the manual's groups and the mockup, the Compact presentation (live picture + four macros) | Opus builder | `frame/devices/**`, `inhabitants/sdk/**`, `inhabitants/ql/devices/**`, the atlas places/palaces plate parts, `projections/stageInstruments/**`, the Studio's plate presentation, `shell/paneInstrument.ts` | 15 Oct |
 
 Then: the 126 targets re-homed (lane M, FOUNDATION §8): `acceptance.py rehome` re-opens every cited path:line, runs the
 reachability script over every home and records home, owner op and evidence — or a named gap — on each row; `verify` holds
@@ -110,6 +109,17 @@ Palace). Ranked: G1 the stage's file exports have no native receiver (the main w
 cancels `<a download>`: lane-1 B2/B3); G2 the Instruments rail keeps no subject into Graph (D1); G3 the shell carries no
 frame deep-link address (E22); R1 Places onto the atlas (31 targets); R2 palaces onto the atlas (N4, 9); S1 mount N2's
 subject door — 76 homes read their facets only on a Wiki-bound Scene, reached today only by Examine in the Graph pane.
+Then: lane E landed (`1f40feefe`), drawn to docs/dlw/DEVICE-UI.md — the owner's device standard, which landed on main the same
+evening with its panel kit and five reference devices (`2fdfe6606`, `79d5b4c36`, committed in this seat by the owner's session): the
+plate grammar fits or folds, never scrolls, one hairline between sections, no box in a box, a head slot (the Studio's Save, Undo,
+Redo); M4′ Body/Landmass/Climate/Sky as dials and switches drawn waiting with Earth's reason, Locations and Relations as paged rows;
+M5′ Rooms, Path, Board, Return; M1′–M3′ on the kit's styling; M0′ one plate (View, Graph, Forces, Deep time) and the stage's
+Expression controls while its project lens stands; Compact devices (a live well and four manual-named macros) where the row has room.
+Headless, GPU on: no overflow and no scrolling element in the device row in 20 shots. Beside Live's Operator the plates are closer,
+not there: fewer, larger controls and no live picture at their heart — the next pass, to DEVICE-UI.md. Lane R3 (`a113536f3`): the
+register follows Y and E — every cited home resolves at HEAD (9 re-quoted, 8 moved), implemented 105 holds. The native build at
+`2de90416e` (stamp 20261015T-m4) waits for the owner's screen approval (three requests timed out today).
+
 Then: lane Y landed (`14a713f89`): the hosted frame draws only its field in a pane. The frame learns its presentation from the host
 (devices | frame) and stands its own chrome down; presentedChrome.ts reads and presses its own controls for the plates (the atlas
 header door's move). The Studio carries the masthead's work, Nara and Your controls (the curated toolbar, + Parameter); new M1′
