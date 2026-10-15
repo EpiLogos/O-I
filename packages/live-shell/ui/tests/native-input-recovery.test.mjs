@@ -31,7 +31,8 @@ const saved=()=>Array.from({length:localStorage.length},(_,i)=>localStorage.key(
 const ts=tsModule.default,sourceText=await readFile(new URL('packages/live-shell/ui/src/components/NativeInputRetention.tsx',root),'utf8'),ast=ts.createSourceFile('NativeInputRetention.tsx',sourceText,ts.ScriptTarget.Latest,true,ts.ScriptKind.TSX);
 const find=(node,predicate)=>{const matches=[];const walk=n=>{if(predicate(n))matches.push(n);ts.forEachChild(n,walk)};walk(node);assert.equal(matches.length,1);return matches[0];};
 const execute=(text,bindings)=>new Function(...Object.keys(bindings),ts.transpileModule(`const selected=${text.replace(/^export /,'')};`,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText+'\nreturn selected;')(...Object.values(bindings));
-const nativeInputBinding=execute(find(ast,n=>ts.isFunctionDeclaration(n)&&n.name?.text==='nativeInputBinding').getText(ast),{groupsOf:engine.groupsOf});
+const {expressionsBindingOf}=await import(new URL('packages/live-shell/ui/src/native/expressionsBinding.ts',root));
+const nativeInputBinding=execute(find(ast,n=>ts.isFunctionDeclaration(n)&&n.name?.text==='nativeInputBinding').getText(ast),{expressionsBindingOf});
 const provider=find(ast,n=>ts.isFunctionDeclaration(n)&&n.name?.text==='NativeInputRetentionProvider'),providerEffect=find(provider,n=>ts.isCallExpression(n)&&n.expression.getText(ast)==='useEffect').arguments[0].getText(ast);
 const component=find(ast,n=>ts.isFunctionDeclaration(n)&&n.name?.text==='NativeInputRecovery'),applyCopy=find(component,n=>ts.isVariableDeclaration(n)&&n.name.getText(ast)==='applyCopy').initializer.getText(ast);
 beforeEach(()=>localStorage.clear());
