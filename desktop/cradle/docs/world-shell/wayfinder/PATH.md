@@ -101,6 +101,7 @@ objections verbatim and the full validation (`BRIEF-BUILDER.md`); the lead conve
 |---|---|---|---|
 | S — Technē's subject door completes: the asked Scene opens on the stage (seen natively: asked, stage opened, nothing shown, no fault) | Opus builder | `src/techne/subject/**`, `panels/expressions.tsx` (navigator wiring), `packages/expressions-boundary/src/techne.ts`, `desktop/cradle/src/techne/{wikiProjectionStore,wikiExpression}.ts` if the cause is there | 15 Oct |
 | U — Palaces live in the atlas (N4, R2): the 9 palace targets listed in `tickets/T-PALACES-ONTO-ATLAS.md`, ported onto the atlas and the M5 plate, then the frame's Palace lens removed | Opus builder | `src/projections/atlas/**` (a new `palaces/`), `src/inhabitants/ql/devices/**`, `modeTransports.tsx` (Technē), `desktop/cradle/src/techne/m0m5/palace/**`, the frame's palace files and wiring | 15 Oct |
+| V — the register's progress axis follows the code: `acceptance.py reprogress` re-checks every `implemented` claim's evidence, re-points moved quotes, returns rows whose evidence vanished to pending with the reason; a gap cannot stay implemented | Opus builder | `acceptance.py`, `acceptance.test.py`, `targets.json` (through acceptance.py) | 15 Oct |
 | Native screen pass against the mockup renders; N1; the lanes' convergence | lead | `App.tsx`, `native/Workbench.tsx`, `shell/modeFrames.ts`, the book, the register | 14 Oct |
 
 Then: the 126 targets re-homed (lane M, FOUNDATION §8): `acceptance.py rehome` re-opens every cited path:line, runs the
@@ -116,7 +117,9 @@ G6 M3′'s beat), homes on a retiring home 40 → 9 (R2, palaces onto the atlas)
 Examine. Seen on screen: 0. Carried from lane T: the progress axis disagrees with the re-home columns (T20/T25/T26 are gaps but
 `implemented: yes`; D1 is homed but pending; 47 rows' `implemented` evidence cites files no longer in the tree) — `rehome`
 leaves progress alone by design, so the progress axis needs its own re-record. Fixed from its code-reading (`d6b5aa672`): pressing
-M4′ from another pane opened the Earth and then folded M4′ again.
+M4′ from another pane opened the Earth and then folded M4′ again. Decided (lock §0.1.3: M0′ is "the Earth and solar system ⇄
+Graph", M4′ the planet builder acting on it): the Earth pane stands M0′, and M4′ opens by its fold — the mockup's open M4 plate
+is the craft floor for M4′'s plate, not which instrument the pane is.
 
 Then: Places is the atlas, alone (`92a7d38d5`, lane O, R1). The 31 Places targets are listed with their atlas homes in
 `tickets/T-PLACES-ONTO-ATLAS.md`: the M4 World / Places plate (Body, Landmass, Climate, Sky with the QL Sun and the Frames
