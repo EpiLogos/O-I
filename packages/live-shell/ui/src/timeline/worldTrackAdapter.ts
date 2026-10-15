@@ -58,6 +58,9 @@ export interface WorldTrackActions {
   /** The grain the owner's ops take when it is coarser than the controls look (e.g. "whole harness": a Stop on one track
    * stops the harness). The Session says it on every control it applies to. */
   grain?: string;
+  /** Stand a walk's stop (T-TIMELINE-WALKS leg 3: a stop focuses its occasion, or the epoch of the reading its walk belongs
+   * to): the Arrangement's walk rails press it. `walkId` and the stop's index in that walk name the stop. Absent, a rail's stops are read, not pressed. */
+  focusStop?: {op: string; run(walkId: string, stopIndex: number): unknown};
 }
 /** What an owner op answers when it answers in words (the shell's own control receipt): a note, or the refusal. An action's
  * `run` may return one, or a promise of one; the Session shows it where the action was pressed. Any other return is not shown. */
@@ -84,6 +87,9 @@ export interface WorldTrack {
   groupId?: string;
   // Which side of a grouped track this lane is: sight ('visual') or sound ('audio').
   lane?: 'visual' | 'audio';
+  /** No owner op of the set reaches this track: a track merged in from another reading (the time spine's cron firings beside a
+   * mode's own tracks). The shared views offer none of the set's actions on it. Absent: the set's actions apply. */
+  readOnly?: boolean;
 }
 
 export interface WorldTrackClip {
@@ -192,7 +198,14 @@ export interface WorldTrackSet {
     now?: number;
     /** How a length on the ruler reads ("3m 20s"), for a stalled needle's age. Absent: the number and the unit. */
     duration?: (span: number) => string;
+    /** Where a civil instant (unix ms) stands on this ruler, when the ruler lays civil time; undefined for an instant it has no
+     * place for (a day it does not cover). Absent: the ruler places no instant, and material known only by its instant (a
+     * cron firing) is left to the Session. */
+    instant?: (unixMs: number) => number | undefined;
   };
+  /** The occasion the time spine stands in (WORLD-SHELL-DESIGN §15.5: a retained basis and, separately, its current
+   * admission), as a reading for the views. Absent: no occasion is stood in. */
+  occasion?: WorldTrackOccasion;
   /** The owner operations the shared views may call (F3). */
   actions?: WorldTrackActions;
   tracks: WorldTrack[];
@@ -201,6 +214,21 @@ export interface WorldTrackSet {
   layers?: WorldTrackLayer[];
   sections?: WorldTrackSection[];
   walks?: WorldWalk[];
+}
+
+/** The retained occasion as the shared views read it: its basis words exactly as first read, where it stands on this set's
+ * ruler (the clip that draws its event), and its current admission — a separate qualification that is null until a fresh
+ * reading has qualified it. Filled from the spine by the World cut's registration; a view only draws it. */
+export interface WorldTrackOccasion {
+  ref: string;
+  /** The basis's summary, else its ref. */
+  label: string;
+  /** The year of the basis's instant, when it has one (for the readout). */
+  year?: number;
+  /** The clip of this set that stands the occasion's event, and its place on the ruler; absent when none here does. */
+  clipId?: string;
+  at?: number;
+  admission: {admitted: boolean; disclosure: string} | null;
 }
 
 export interface WorldTrackAdapter<T> {

@@ -6,7 +6,7 @@
 // - the Earth's standing: the plain observable store the atlas host and the Places browser already read
 //   (provider/suiteStanding.ts `subscribeSuiteStanding` / `suiteStanding`), for the words a stream without an owner read gives.
 // It returns the six streams always — a read that has not landed is named in the tracks' `kind` text, and a stream without an owner
-// read stands as a named, empty track (timeline/techneTrackAdapter.ts). Registered by the lead as `techne: useTechneTracks` in
+// read stands as a named, empty track (timeline/techneTrackAdapter.ts). Registered as `techne: worldCut(useTechneTracks)` in
 // modeTracks.ts.
 //
 // Its actions go through the owners that exist: a walk stop is stood by the rule the Timeline and the Journey share

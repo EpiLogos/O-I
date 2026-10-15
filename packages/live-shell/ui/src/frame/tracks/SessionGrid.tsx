@@ -6,8 +6,14 @@
 // set's data: a track under another (`parentId`) folds under it and steps in behind a rail per ancestor, a group's cells
 // roll up its members' clips, a stalled lane lights its retry. Craft floor: world-shell-mockup.html `sessView` and
 // `.sg/.trk/.cs`, agent-shell-mockup.html `.trk.grp/.cs.grp/.stoprow`; ported from agent/AgentSessionGrid.tsx.
+// From the World cut presentation it replaced (git 09a573a1d:.../projections/worldTimelinePresentation.tsx): each clip carries
+// its standing mark (trackMarks.ts), and the rows nest under the sections they stand in, each head in its section's atmosphere
+// and folding as a group folds (trackSections.ts). A track the set marks read-only (one merged in from another reading, the
+// spine's cron firings) is offered none of the set's actions.
 import {useRef, useState, type CSSProperties} from 'react'
-import type {WorldTrack, WorldTrackClip, WorldTrackColumn, WorldTrackSet} from '../../timeline/worldTrackAdapter'
+import type {WorldTrack, WorldTrackClip, WorldTrackColumn, WorldTrackSection, WorldTrackSet} from '../../timeline/worldTrackAdapter'
+import {clipStandingAttributes, clipStandingEdge, clipStandingMark, clipStandingTag, clipStandingTitle} from './trackMarks'
+import {sectionFoldKey, sessionRowLayout, shownRowLayout} from './trackSections'
 import './tracks.css'
 
 export interface TracksSelection {
@@ -129,6 +135,10 @@ export interface SessionGridViewProps {
   empty?: string
 }
 
+/** A section's rails: one per section it sits under and its own, each in that section's atmosphere, else the strong line. */
+const sectionRails = (chain: readonly WorldTrackSection[]) => chain.length > 0 &&
+  <span className="rails" aria-hidden="true">{chain.map(section => <i key={section.id} style={{background: section.atmosphere ?? 'var(--line-strong)'}} />)}</span>
+
 /** The stops an empty Session shows, as a new Live set does. */
 const EMPTY_STOPS: readonly WorldTrackColumn[] = Array.from({length: 8}, (_, i) => ({id: `empty:${i}`, name: String(i + 1)}))
 
@@ -143,6 +153,15 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
   const tracks = lanes.filter(track => !tree.ancestorsOf(track).some(above => folded[above.id]))
   const {here: stalledHere} = stalledLanes(set, tree)
   const launch = set.actions?.launch, launchStop = set.actions?.launchStop, stopTrack = set.actions?.stopTrack, retry = set.actions?.retry, seat = set.actions?.seat
+  // The rows, nested under the sections they stand in (a set with no sections lays them as they come), less what is folded.
+  const layout = shownRowLayout(sessionRowLayout(set), folded)
+  const spanWords = (section: WorldTrackSection) => {
+    const say = set.ruler?.label ?? ((at: number) => String(Math.round(at * 10) / 10))
+    return `${say(section.span.start)} – ${say(section.span.end)}`
+  }
+  // A row whose every clip sits on a read-only track is not the owner's to launch (the spine's firings row).
+  const readOnlyTrack = new Set(set.tracks.filter(track => track.readOnly).map(track => track.id))
+  const readOnlyRow = (rowId: string) => { const held = set.clips.filter(clip => clip.columnId === rowId); return held.length > 0 && held.every(clip => readOnlyTrack.has(clip.trackId)) }
   // What the owner's ops act on when it is coarser than a control looks, said on each control and over the stops.
   const grain = set.actions?.grain ? ` (${set.actions.grain})` : ''
   // An empty work draws Live's empty Session: the stops down the right and the drop area where tracks will stand, with the
@@ -161,7 +180,7 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
   </div>
   return <div className="sg-pane" data-tracks-view="session">
     <div className="sg" role="grid" aria-label="Session">
-      {tracks.map(track => {
+      {tracks.map((track, column) => {
         const style = {'--tc': trackColour(track)} as CSSProperties
         const selectedTrack = selection.ref === track.id
         const ancestors = tree.ancestorsOf(track)
@@ -173,6 +192,9 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
         const open = !folded[track.id]
         const members = foldable ? tree.descendantsOf(track) : []
         const lit = stalledHere.has(track.id)
+        // A track merged from another reading takes none of the set's actions.
+        const owned = !track.readOnly
+        const trackLaunch = owned ? launch : undefined, trackStop = owned ? stopTrack : undefined
         return <div key={track.id} className={`trk${level ? ' sub' : ''}`} role="row" style={{...style, ...(rails.length ? {'--rails': rails.length} : {})} as CSSProperties}
           data-track={track.id} data-depth={level || undefined} data-group={foldable ? 'true' : undefined} data-stalled={lit ? 'true' : undefined}>
           {rails.length > 0 && <span className="rails" aria-hidden="true">{rails.map((colour, i) => <i key={i} style={{background: colour}} />)}</span>}
@@ -180,19 +202,28 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
             title={`${open ? 'Fold' : 'Unfold'} the ${members.length} under ${track.name}`} onClick={() => onFold(track.id)}>{open ? '▼' : '▶'}</button>}
           <button type="button" className={`thd${selectedTrack ? ' sel' : ''}`} title={`${track.name} · ${track.kind}`} aria-pressed={selectedTrack}
             onClick={() => selection.select({kind: 'track', ref: track.id, title: track.name})}>{track.name}</button>
-          {rows.map(row => {
+          {layout.map((item, at) => {
+            // A section's head row: a band in the section's atmosphere across every track (its name stands in the stops column).
+            // The first track's band carries the section's name too, so the head reads from the left however wide the grid is.
+            if (item.kind === 'head') return <div key={`head:${at}:${item.section.id}`} className="cs sect-band" role="presentation" aria-hidden="true"
+              data-section-head={item.section.id} style={item.section.atmosphere ? {'--atm': item.section.atmosphere} as CSSProperties : undefined}>
+              {column === 0 && <span className="cs-label">{item.section.name}</span>}</div>
+            const row = item.column
             const clip = inRow.get(`${track.id}\u0000${row.id}`) ?? (track.groupId ? set.clips.find(c => c.columnId === row.id && set.tracks.find(t => t.id === c.trackId)?.groupId === track.groupId) : undefined)
             if (clip) {
               const selected = selection.ref === clip.id
               const word = clip.status ? STATUS_WORD[clip.status] : 'State not disclosed'
               const key = `clip:${clip.id}`
+              // Its standing, as the source discloses it (trackMarks.ts); a clip with no standing reading draws none.
+              const mark = clipStandingMark(clip)
               return <div key={row.id} role="gridcell" className={`cs clip${clip.status ? ` ${clip.status}` : ''}${selected ? ' sel' : ''}`} data-clip={clip.id} data-clip-status={clip.status ?? 'undisclosed'}
                 data-receipt={receiptMark(receipt, key)}
-                title={`${clip.label} · ${word}${clip.launch?.quantize ? ` · launches ${clip.launch.quantize}` : ''}${clip.launch?.follow ? ` · then ${clip.launch.follow}` : ''}${clip.takes?.length ? ` · ${clip.takes.length} takes` : ''}${clip.note ? ` · ${clip.note}` : ''}`}
+                title={`${clip.label} · ${word}${clip.launch?.quantize ? ` · launches ${clip.launch.quantize}` : ''}${clip.launch?.follow ? ` · then ${clip.launch.follow}` : ''}${clip.takes?.length ? ` · ${clip.takes.length} takes` : ''}${clip.note ? ` · ${clip.note}` : ''}${clipStandingTitle(mark)}`}
+                {...clipStandingAttributes(mark)} style={mark ? {borderLeft: clipStandingEdge(mark)} : undefined}
                 onClick={() => selection.select({kind: 'clip', ref: clip.id, title: clip.label, track: clip.trackId})}>
-                <button type="button" className="tri" aria-label={`Launch ${clip.label}${grain}`} disabled={!launch} title={launch ? `Launch (${launch.op})` : 'No launch: the owner discloses no launch for this clip'}
-                  onClick={event => { event.stopPropagation(); if (launch) onPress(key, `Launch ${clip.label}`, () => launch.run(clip.id)) }} />
-                <span className="cs-label">{clip.label}</span>
+                <button type="button" className="tri" aria-label={`Launch ${clip.label}${grain}`} disabled={!trackLaunch} title={trackLaunch ? `Launch (${trackLaunch.op})` : owned ? 'No launch: the owner discloses no launch for this clip' : 'No launch: this track is read, not launched'}
+                  onClick={event => { event.stopPropagation(); if (trackLaunch) onPress(key, `Launch ${clip.label}`, () => trackLaunch.run(clip.id)) }} />
+                <span className="cs-label">{clip.label}{clipStandingTag(mark)}</span>
                 {clip.note && <span className="cs-note" role="img" aria-label={clip.note} title={clip.note}>⚑</span>}
                 {!!clip.takes?.length && <span className="cs-takes" aria-label={`${clip.takes.length} takes`}>{clip.takes.length}</span>}
               </div>
@@ -208,12 +239,12 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
               </div>
             }
             const key = `stop:${track.id}:${row.id}`
-            return <div key={row.id} className="cs" role="gridcell" data-receipt={receiptMark(receipt, key)} title={stopTrack ? 'Empty slot · its square stops the track' : 'Empty slot'}>
-              <button type="button" className="sg2" aria-label={`Stop ${track.name}${grain}`} disabled={!stopTrack} title={stopTrack ? `Stop ${track.name} (${stopTrack.op})` : 'No stop: the owner discloses no stop for this track'}
-                onClick={() => { if (stopTrack) onPress(key, `Stop ${track.name}`, () => stopTrack.run(track.id)) }} />
+            return <div key={row.id} className="cs" role="gridcell" data-receipt={receiptMark(receipt, key)} title={trackStop ? 'Empty slot · its square stops the track' : 'Empty slot'}>
+              <button type="button" className="sg2" aria-label={`Stop ${track.name}${grain}`} disabled={!trackStop} title={trackStop ? `Stop ${track.name} (${trackStop.op})` : owned ? 'No stop: the owner discloses no stop for this track' : 'No stop: this track is read, not stopped'}
+                onClick={() => { if (trackStop) onPress(key, `Stop ${track.name}`, () => trackStop.run(track.id)) }} />
             </div>
           })}
-          {retry && <div className="trk-foot">
+          {retry && owned && <div className="trk-foot">
             <button type="button" className={`rt${lit ? ' lit' : ''}`} aria-label={`Retry ${track.name}${grain}`} data-receipt={receiptMark(receipt, `retry:${track.id}`)}
               title={`Retry ${track.name} (${retry.op})${lit ? ' · lit: a lane in here has stalled' : ''}`}
               onClick={() => onPress(`retry:${track.id}`, `Retry ${track.name}`, () => retry.run(track.id))}>↻</button>
@@ -227,11 +258,28 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
         onDrop={seat ? event => { const payload = event.dataTransfer.getData(seat.accepts); if (!payload) return; event.preventDefault(); onPress('seat', 'Seat', () => seat.run(payload)) } : undefined} />
       <div className="trk trk-main" role="row" aria-label="Stops">
         <div className="thd" title={grain ? `Every control here acts on the${grain.replace(/[()]/g, '')}: the owner takes nothing finer` : undefined}>Main{grain && <span className="sg-grain">{set.actions?.grain}</span>}</div>
-        {rows.map((row, index) => {
+        {layout.map((item, at) => {
+          // A section's head: its rails, its fold, its name — the rows under it carry its rail (worldTimelinePresentation.tsx:418-430).
+          if (item.kind === 'head') {
+            const {section} = item
+            const open = !folded[sectionFoldKey(section.id)]
+            return <div key={`head:${at}:${section.id}`} className="cs sect-head" role="gridcell" data-section={section.id} data-depth={item.depth}
+              style={{'--rails': item.chain.length, ...(section.atmosphere ? {'--atm': section.atmosphere} : {})} as CSSProperties}
+              title={`${section.name} · ${item.rows} ${item.rows === 1 ? 'stop stands' : 'stops stand'} in it · ${spanWords(section)}`}>
+              {sectionRails(item.chain)}
+              <button type="button" className="sect-fold" aria-expanded={open} aria-label={`${open ? 'Fold' : 'Unfold'} ${section.name}`}
+                onClick={() => onFold(sectionFoldKey(section.id))}>{open ? '▼' : '▶'}</button>
+              <span className="cs-label">{section.name}</span>
+            </div>
+          }
+          const {column: row, index} = item
           const key = `row:${row.id}`
-          return <div key={row.id} className="cs" role="gridcell" data-receipt={receiptMark(receipt, key)}>
-            <button type="button" className="stop-launch" disabled={!launchStop} title={launchStop ? `Launch the row: every clip in it (${launchStop.op})` : 'No row launch: the owner discloses none'}
-              onClick={() => { if (launchStop) onPress(key, `Launch row ${row.name || index + 1}`, () => launchStop.run(row.id)) }}>▸</button>
+          const rowLaunch = readOnlyRow(row.id) ? undefined : launchStop
+          return <div key={row.id} className="cs" role="gridcell" data-receipt={receiptMark(receipt, key)}
+            style={item.chain.length ? {'--rails': item.chain.length} as CSSProperties : undefined} data-section-rails={item.chain.length || undefined}>
+            {sectionRails(item.chain)}
+            <button type="button" className="stop-launch" disabled={!rowLaunch} title={rowLaunch ? `Launch the row: every clip in it (${rowLaunch.op})` : launchStop ? 'No row launch: every clip in this row is read, not launched' : 'No row launch: the owner discloses none'}
+              onClick={() => { if (rowLaunch) onPress(key, `Launch row ${row.name || index + 1}`, () => rowLaunch.run(row.id)) }}>▸</button>
             <span className="cs-label">{row.name || index + 1}</span>
           </div>
         })}

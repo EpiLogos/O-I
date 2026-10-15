@@ -6,8 +6,8 @@
 // - the day's entries: the World cut's one temporal read, which the frame already publishes as `reading.world` — the hook
 //   calls no `useWorldTemporalReading` of its own (one poller per frame).
 // It returns the five streams always — a read that has not landed, or was refused, is named in the Day track's `kind` text, and the
-// four streams without an owner read stand as named, empty tracks (timeline/centralTrackAdapter.ts). Registered by the lead as
-// `base: useCentralTracks` in modeTracks.ts.
+// four streams without an owner read stand as named, empty tracks (timeline/centralTrackAdapter.ts). Registered as
+// `base: worldCut(useCentralTracks)` in modeTracks.ts.
 import {useEffect, useMemo, useState} from 'react'
 import {listFiles} from '../../../../../../desktop/cradle/src/files/client'
 import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
