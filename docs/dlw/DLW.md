@@ -829,48 +829,50 @@ up. It cannot approve its own work.
 
 ## 14. A day
 
-The question you woke with is a small one. Why do *whole*, *health* and *holy*
-grow from the same root, and does it matter? Most days have no room for a
-question like that.
+You have a talk to give on Friday, about how your city has lived with its
+river, and the material is everywhere: forty notes taken over two months, a
+folder of scanned maps, a half-finished outline, and a small website that is
+meant to go with the talk and won't build.
 
-Your planet is turning when you open the DLW, yesterday's walk still worn into
-its surface. In Central you find the dictionary entry you saved last week and
-read it beside an essay on medieval medicine, with a second essay open at the
-edge for when the first runs dry. Three passages matter. You mark them, add a
-note to one, and tag all three with the alias you made for the agent that
-helps you with words. Its answer comes back into the page with every source
-attached, and one source leads you to a sermon you have never read.
+Your planet is turning when you open the DLW, and the day has already started
+a page for itself. In Central you open yesterday's notes beside the outline.
+Each note links to others, and the backlinks show you which ones the outline
+never mentions; two of them belong in the second section. You rewrite a
+paragraph, highlight a claim about the 1953 flood that you can't source, and
+tag it with the alias for your research agent. A few minutes later the answer
+is in the page: a council report and a newspaper archive, each linked to the
+line it supports, and a note that the date in your draft is wrong.
 
-One sermon is not a pattern. In Factory you say what you want — every use of
-the root in your library and the archives you can reach, in order, with its
-context — and draw a window so that nothing enters your knowledge until you
-have seen the plan. A small world forms and begins to turn. Two agents work
-around it, one reading Old English, one searching the archives, and a smaller
-orbit appears when the first hands a cross-check to a helper. You leave them to
-it.
+The website can't wait. In Factory you describe what is broken and what you
+want — the map page loading the new scans, the build passing, nothing pushed
+until you have looked. An agent takes the task, reads the code, finds the
+failing test and makes the change. You keep half an eye on its thread while
+you work on the outline, and when the diff comes back with the tests green you
+read it line by line, ask for one rename, and let it land.
 
-By the time they report, you have something to listen to. In Expressions you
-set the three words in a scene, each with its own voice, and turn the plate on.
-For a while they sound apart. Then you pin *holy* a little closer to *whole*,
-sweep the plate again, and the figure on its surface settles into one shape
-with three lobes. You keep that take. In Live you find the chord that draws the
-same shape on the torus, and play it slowly, three times.
+The outline still doesn't hold. You pull every note onto the canvas and drag
+them into clusters until three groups make sense, then draw a line from the
+flood to the barrier built thirty years later, and the shape of the talk
+appears. On the timeline the same notes fall into order, each marked for how
+sure you can be of it. The knowledge graph shows a note on the old ferry
+crossing that nothing links to, and you link it.
 
-The agents' findings go onto the ruler: the root in a law code, in a
-leechbook, in a hymn, each at its year and its place, each marked for how sure
-anyone can be of it. You walk them in order across the map, from a monastery
-in Northumbria to a printing house in London, and at the last stop the scene
-you made earlier plays. You record the walk and give it a room in your palace.
+A talk is a walk. You set its stops along the river on the map — the old
+quay, the flood line painted on the church wall, the barrier — and for each
+stop you build a scene in Expressions: a scanned map filling with water at
+the speed it rose, the names of the streets that went under surfacing as the
+field darkens, a low tone beneath it that climbs with the water. Play the walk
+and the talk runs stop by stop.
 
-Someone in the field has built a world around Old English. Most of it is
-clouded, but the part its owner has shown holds a gloss from a manuscript you
-could not reach. You ask the agent that keeps that world, and the gloss arrives
-in yours under its owner's name.
+A colleague who works on the same coast has shown part of their world in the
+field. Most of it is clouded, but their survey of the 1953 tide readings is
+open, and the agent that keeps it gives you the reading for your second stop.
+It arrives in your walk under your colleague's name.
 
-Then the day closes. It has already gathered itself into one page: the
-passages, the run, the take, the chord, the walk, the gloss and where it came
-from. You add two lines of your own. Tomorrow someone you have never met plays
-the walk, stands in the monastery, and hears the three words come together.
+Then the day closes. Its page is already written: the notes you changed, the
+claim you sourced, the fix that landed, the new outline, the walk. You add two
+lines about what still bothers you in the second section. On Friday you press
+Play, and the room walks the river with you.
 
 ## 15. What the game warns
 
