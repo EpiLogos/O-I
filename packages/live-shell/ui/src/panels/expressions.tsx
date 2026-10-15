@@ -235,7 +235,6 @@ export function ExpressionsPanel() {
       const knownRef = checkpointRef(expressionBinding(bookRef.current.current))
       const initial = (knownRef ? continued?.works.find(work => work.expression_ref === knownRef) : undefined)
         ?? (knownRef ? undefined : continued?.works.find(work => work.scope === modeRef.current) ?? continued?.works[0])
-      if (knownRef && continued && !initial) throw Error('The selected Expression has no configured native recovery address; its workspace checkpoint has been retained')
       const enumerate = () => {
         const epoch = workspaceRef.current.accessEpoch
         return enumerateWorks(request => owners.channels['kernel-expression'](request, context()), works => workspaceRef.current.publishWorks(works),
@@ -284,6 +283,9 @@ export function ExpressionsPanel() {
       mounted = mountExpressionsApplication(target, entryAtAddress(`${config.expressions_entry ?? '/__application/expressions/index.html'}?mode=${modeRef.current}&world=${worldLens.current}&host-load=${hostLoad}${initialRef ? `&expression=${encodeURIComponent(initialRef)}` : ''}`, keptAddress), {
         bindingId: 'world.expressions', owners, mode: modeRef.current, world: worldLens.current,
         recoveryBindings: continued?.works, initialRecoveryBinding: initial,
+        // T-RECOVERY-FOR-OPENED-WORKS: every Expression this host opens (the boot work, the browser's Open and New, a starter,
+        // Technē's door) without a configured saved-work address is routed to its canonical checkpoint; a configured one wins.
+        selectOpenedWorks: true,
         isPresented: presented,
         // T-FRAME-TIME-PUSH: the session's shared window nudges the presented frame to re-read it (never a value carried).
         sharedWindow: disclosureSession,
