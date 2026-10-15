@@ -385,7 +385,8 @@ test('with no focus the six fold and the faces no instrument holds stand after t
 test('a fold opens its instrument: the door each instrument opens through is the pane that holds it', () => {
   assert.deepEqual(chain.instrumentDoorOf('techne:m0'), {kind: 'projection.earth'}, 'the Earth pane is the 0 instrument')
   assert.deepEqual(chain.instrumentDoorOf('techne:m1'), {kind: 'projection.expressions', lens: 'canvas'})
-  assert.deepEqual(chain.instrumentDoorOf('techne:m4'), {kind: 'projection.expressions', lens: 'place'})
+  // T-PLACES-ONTO-ATLAS: M4′ World / Places is the atlas, alone (FOUNDATION §4) — it opens the Earth pane, never the stage's lens
+  assert.deepEqual(chain.instrumentDoorOf('techne:m4'), {kind: 'projection.earth'}, 'Places is the atlas')
   assert.deepEqual(chain.instrumentDoorOf('techne:m5'), {kind: 'projection.expressions', lens: 'palace'})
   assert.equal(chain.instrumentDoorOf('knowledge-graph'), null)
   assert.deepEqual(chain.rackInstruments('knowledge-graph').map(holder => holder.id), ['knowledge-graph'], 'the knowledge graph stands alone')

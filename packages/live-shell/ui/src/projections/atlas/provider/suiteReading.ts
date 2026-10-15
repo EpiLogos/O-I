@@ -36,12 +36,12 @@ import type {Archetype, Cite, Family, Field, GeoPrecision, Join, LocusType, Occu
 import {basisOf} from '../../occurrence';
 import {
   IDLE_STANDING, NO_COUNTS, SUITE_INPUTS, SUITE_INPUT_LABELS, SUITE_INPUT_OPERATIONS, SUITE_PROVIDER_ID, SUITE_PROVIDER_NAME, idleInputs,
-  type SuiteCounts, type SuiteInputName, type SuiteInputState, type SuitePlace, type SuiteStanding,
+  type SuiteBody, type SuiteCounts, type SuiteInputName, type SuiteInputState, type SuitePlace, type SuiteStanding,
 } from './suiteStanding';
 
 export {
   IDLE_STANDING, SUITE_INPUTS, SUITE_INPUT_LABELS, SUITE_INPUT_OPERATIONS, SUITE_PROVIDER_ID, SUITE_PROVIDER_NAME,
-  type SuiteCounts, type SuiteInputName, type SuiteInputState, type SuitePlace, type SuiteStanding,
+  type SuiteBody, type SuiteCounts, type SuiteInputName, type SuiteInputState, type SuitePlace, type SuiteStanding,
 };
 
 // ── the inputs ────────────────────────────────────────────────────────────
@@ -181,6 +181,21 @@ export function locateFacet(facet: TechnePlaceFacet): Located | Unlocated {
 
 const placeNameOf = (facet: TechnePlaceFacet): string => facet.identity?.names?.find(entry => entry.name)?.name ?? facet.place_ref;
 
+const said = (value: string | null | undefined): value is string => typeof value === 'string' && value.trim() !== '';
+
+/** [T-PLACES-ONTO-ATLAS] The facet's own fields a place row carries, verbatim and only when the owner declares them: its uncertainty
+ * words, the evidence it cites (`source_ref`), its validity edges and the places it sits in (`hierarchy`). Nothing is derived. */
+export function facetFieldsOf(facet: TechnePlaceFacet): Pick<SuitePlace, 'uncertainty' | 'evidence' | 'valid_from' | 'valid_to' | 'within'> {
+  const within = (facet.hierarchy ?? []).filter(entry => said(entry.place_ref) && said(entry.relation)).map(entry => ({place_ref: entry.place_ref, relation: entry.relation}));
+  return {
+    ...(said(facet.uncertainty) ? {uncertainty: facet.uncertainty} : {}),
+    ...(said(facet.source_ref) ? {evidence: facet.source_ref} : {}),
+    ...(said(facet.valid_from) ? {valid_from: facet.valid_from} : {}),
+    ...(said(facet.valid_to) ? {valid_to: facet.valid_to} : {}),
+    ...(within.length ? {within} : {}),
+  };
+}
+
 /** The locus a place relation gives an occurrence. MYTH_LOCATED_AT is a myth episode and is never a historical event (the legend is
  * the consumer's own: world.ts relationStandingClass). The other hard relations of the occurrence kind are historical, and being
  * located IN a place is a placed thing. Any other relation is the owner's own vocabulary, kept verbatim in the body, and gives the
@@ -247,6 +262,8 @@ interface Register {
 export interface SuiteComposition {
   field: Field;
   places: SuitePlace[];
+  /** the field's bodies: Central's root and each hosted world, as the registers name them */
+  bodies: SuiteBody[];
   counts: SuiteCounts;
   /** subjects the occurrence contract refused, each named with its reason (never dropped silently) */
   refused: string[];
@@ -425,6 +442,7 @@ export function composeSuite(sources: SuiteSources): SuiteComposition {
         ref: entry.facet.place_ref, name: placeNameOf(entry.facet), kind: 'declared', owner: node.native_owner, source: node.provenance.source,
         ...(revision !== undefined ? {revision} : {}), subject_ref: node.ref, relation: entry.facet.relation ?? null, located: where.located,
         precision: entry.facet.precision, ...(where.located ? {lat: where.lat, lon: where.lon} : {}), reason: where.located ? null : where.reason,
+        ...facetFieldsOf(entry.facet),
       });
     }
     const time = declarations.times[node.ref] ?? placeTime(declared);
@@ -495,6 +513,7 @@ export function composeSuite(sources: SuiteSources): SuiteComposition {
         places.push({
           ref: facet.place_ref, name, kind: 'declared', owner: reading.native_owner, source: 'ql.techne/v1', subject_ref: reading.subject_ref, relation,
           located: where.located, precision: facet.precision, ...(where.located ? {lat: where.lat, lon: where.lon} : {}), reason: where.located ? null : where.reason,
+          ...facetFieldsOf(facet),
         });
       });
     }
@@ -599,8 +618,11 @@ export function composeSuite(sources: SuiteSources): SuiteComposition {
     archetypes, theoretics: [], families: familyList, occurrences, cultures: [], joins,
   };
   const locatedCount = occurrences.filter(occurrence => occurrence.geoPrecision !== 'none').length;
+  // the field's bodies (T-PLACES-ONTO-ATLAS, for the browser's Bodies): Central's root and each hosted world, as the registers name them
+  const bodies: SuiteBody[] = [...registers.values()].filter((register): register is Register & {kind: 'root' | 'world'} => register.kind === 'root' || register.kind === 'world')
+    .map(register => ({ref: register.ref, name: register.name, kind: register.kind, owner: register.owner, source: register.source}));
   return {
-    field, places: allPlaces, refused,
+    field, places: allPlaces, bodies, refused,
     counts: {
       registers: archetypes.length, families: familyList.length, subjects: occurrences.length, located: locatedCount, unlocated: occurrences.length - locatedCount,
       dated: dated.length, undated: occurrences.length - dated.length, places: allPlaces.length, unlocatedPlaces: allPlaces.filter(place => !place.located).length, joins: joins.length,
@@ -630,6 +652,7 @@ export function standingOf(phase: SuiteStanding['phase'], sources: SuiteSources,
   const declarations = sources.declarations ?? NO_DECLARATIONS;
   return {
     phase, provider: {id: SUITE_PROVIDER_ID, name: SUITE_PROVIDER_NAME}, readAt: sources.readAt.toISOString(), inputs,
-    declarations: {state: declarations.state, detail: declarations.detail}, counts: composition?.counts ?? NO_COUNTS, places: composition?.places ?? [], refused: composition?.refused ?? [],
+    declarations: {state: declarations.state, detail: declarations.detail}, counts: composition?.counts ?? NO_COUNTS, places: composition?.places ?? [],
+    bodies: composition?.bodies ?? [], refused: composition?.refused ?? [],
   };
 }

@@ -36,6 +36,9 @@ test('zoom and pan never write the window: the Timeline view-state path is a pre
   const handler = instruments.slice(start, instruments.indexOf('onOpenCanvasNode=', start));
   assert.match(handler, /onViewStateChange=\{value=>\{const moved=/);
   assert.doesNotMatch(handler, /writeSharedTimeWindow|writeSharedSpatialFocus|writeSharedTraversalHop|setTimeWindow|timeControls/, 'the camera view-state handler writes nothing to the session');
+  // T-PLACES-ONTO-ATLAS: the Places set and the place-view restore retired with the frame's Places map; the Earth atlas writes the window
+  // only by its own explicit acts (its clock's commit and the M4 plate's "Window to its validity": packages/live-shell/ui/src/projections/
+  // atlas/sharedClock.ts). Here the one writer left is the Timeline's explicit carry ("Show on the globe").
   const writers = [...instruments.matchAll(/writeSharedTimeWindow\(request,nativeReading,'(timeline|place)'/g)].map(match => match[1]);
-  assert.ok(writers.length >= 2, 'the window is written only by explicit acts (carry, Places set, plan restore)');
+  assert.deepEqual(writers, ['timeline'], 'the window is written only by an explicit act (the Timeline\'s carry)');
 });

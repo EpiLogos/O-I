@@ -112,7 +112,8 @@ test('the stage focus ends at install scope: unmount ends it, every load (a lens
  const unmountLine=instruments.split('\n').find(line=>/function unmount\(\)/.test(line))??'';
  assert.match(unmountLine,/endTimelineFocus\(\);/,'unmount() ends the stage focus, so the shared tools come back');
  assert.match(unmountLine,/timelineFocusOff\?\.\(\);timelineFocusOff=null;/,'unmount() releases the stage key listener; the M2′ load re-attaches it');
- assert.match(instruments,/async function load\(selected:ResearchInstrument\)\{\s*flushPlaceLayers\(\);\s*const generation=\+\+epoch;unmount\(\);/,'a lens change unmounts before it reads');
+ // T-PLACES-ONTO-ATLAS: the Places layers flush that came first retired with the frame's Places map; a lens change still unmounts first
+ assert.match(instruments,/async function load\(selected:ResearchInstrument\)\{\s*const generation=\+\+epoch;unmount\(\);/,'a lens change unmounts before it reads');
  assert.match(instruments,/destroy\(\)\{[^\n]*unmount\(\);/,'destroy unmounts, so the stage focus and its listener are released');
  assert.doesNotMatch(instruments,/state\.timelineFocusOff/,'the listener is held once, at install scope');
 });

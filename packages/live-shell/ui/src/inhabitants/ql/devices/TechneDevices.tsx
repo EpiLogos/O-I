@@ -16,13 +16,14 @@ import {DeviceView} from '../../../frame/devices/DeviceView'
 import {publishDevice, publishedDevice, selectDevice} from '../../../frame/devices/deviceDoor'
 import {DEVICE_PANE_KIND} from '../../../frame/devices/devicePane'
 import {driveStageLens, openInstrument, reportInstrumentFault} from '../../../frame/instrumentDoor'
-import {InstrumentPlate, SectionNote} from '../../../frame/devices/InstrumentPlate'
+import {InstrumentPlate, SectionNote, type SectionDevice} from '../../../frame/devices/InstrumentPlate'
 import {HOSTED_INSTRUMENT, instrumentOfPane, type HostedLens} from '../../../shell/paneInstrument'
 import {HOLDERS, TECHNE_INSTRUMENTS, type HolderDeclaration} from '../../sdk/semantics'
 import type {IconName} from '../../sdk/icons'
 import {lightOf, type DeviceInstance, type DeviceSize} from '../../../frame/devices/deviceRuntime'
 import {commitLiveInstrumentEdit, liveInstrumentWritable, useLiveTorusReading, type LiveTorusState} from '../../../live/torusInstrument'
 import {useAtlasHandle, useAtlasView} from '../../../projections/atlas/AtlasProjectionPanel'
+import {PlacesPlate} from '../../../projections/atlas/places/PlacesPlate'
 import {knowledgeGraphSurface, subscribeKnowledgeGraph} from '../../../../../../../desktop/cradle/src/knowledge/knowledgeGraphHandle'
 import type {KnowledgeGraphSurface} from '../../../../../../../desktop/cradle/src/knowledge/knowledgeGraphHandle'
 import {FacePlate} from '../../sdk/controls'
@@ -179,10 +180,15 @@ const FAMILY_NAMES: Readonly<Record<string, string>> = {
   [QL_FAMILY]: 'Quaternal Logic', [ATLAS_FAMILY]: 'Earth atlas', [KNOWLEDGE_FAMILY]: 'Knowledge graph',
 }
 
-/** Where an instrument opens on the focused pane: the pane kind that holds it (shell/paneInstrument.ts — the Earth pane is the 0
- * instrument) and, for the hosted stage, the lens it turns to (HOSTED_INSTRUMENT, read backwards). */
+/** The instruments the atlas is (T-PLACES-ONTO-ATLAS): the 0 instrument, the Earth and solar system with its graph (shell/
+ * paneInstrument.ts), and M4′ World / Places — "Places is the Archetypal-Earth atlas, alone" (owner, 14 Oct; FOUNDATION §4). The
+ * frame's own Places lens retires, so M4′ opens the atlas, never the stage. */
+const ATLAS_INSTRUMENTS: readonly string[] = [instrumentOfPane('projection.earth', null, 'earth') ?? 'techne:m0', 'techne:m4']
+
+/** Where an instrument opens on the focused pane: the pane kind that holds it (the Earth pane holds the atlas's instruments) and, for
+ * the hosted stage, the lens it turns to (HOSTED_INSTRUMENT, read backwards). */
 export function instrumentDoorOf(id: string): {kind: string; lens?: HostedLens} | null {
-  if (instrumentOfPane('projection.earth', null, 'earth') === id) return {kind: 'projection.earth'}
+  if (ATLAS_INSTRUMENTS.includes(id)) return {kind: 'projection.earth'}
   const lens = (Object.keys(HOSTED_INSTRUMENT) as HostedLens[]).find(key => HOSTED_INSTRUMENT[key] === id)
   return lens ? {kind: 'projection.expressions', lens} : null
 }
@@ -225,8 +231,27 @@ function FoldedDevice({entry, onOpen}: {entry: TechneEntry; onOpen: () => void})
   </div>
 }
 
+/** A device the open instrument holds, as a section of its plate draws it: its picture, its mark and the place's marks. */
+function sectionDeviceOf(entry: TechneEntry): SectionDevice & {face: string} {
+  const {device, face} = entry
+  const title = device.face.title
+  return {device, face: face.id, mark: TECHNE_FACE_ICONS[face.id] ?? 'form', picture: entry.picture('compact'), actions: [
+    {icon: 'detail', label: `Show every setting of ${title} in the pool`, onPress: () => selectDevice(device.id)},
+    {icon: 'pane', label: `Open ${title} full size in a pane`, onPress: () => openInstrument(DEVICE_PANE_KIND, undefined, {ref: device.id, title})},
+  ]}
+}
+
+/** The instruments whose plate is their own (a registration by holder, never a mode branch): M4′ World / Places, the atlas's planet
+ * plate in the mockup's six sections (projections/atlas/places/PlacesPlate.tsx). Every other instrument stands as the plate of the
+ * families whose devices it holds. */
+const OWN_PLATES: Readonly<Record<string, (props: {held: readonly (SectionDevice & {face: string})[]; focused: boolean}) => ReactNode>> = {
+  'techne:m4': props => <PlacesPlate {...props} />,
+}
+
 /** The open instrument: one plate, its columns the families whose devices it holds, each family's devices side by side. */
 function OpenInstrument({holder, entries, focused}: {holder: HolderDeclaration; entries: readonly TechneEntry[]; focused: boolean}) {
+  const own = OWN_PLATES[holder.id]
+  if (own) return <>{own({held: entries.map(sectionDeviceOf), focused})}</>
   const families = [...new Set(entries.map(entry => entry.family))]
   const owner = [holder.provenance, TECHNE_INSTRUMENTS.includes(holder) ? 'Technē' : null, focused ? 'open on the focused pane' : 'opened here'].filter(Boolean).join(' · ')
   return <InstrumentPlate presentation={{family: 'techne', faceId: holder.id, title: holderTitle(holder), icon: INSTRUMENT_MARKS[holder.id] ?? 'techne', owner}}
