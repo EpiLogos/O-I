@@ -141,7 +141,7 @@ use events::{KernelEvent, KernelEventLog, KernelEventReceipt};
 use flow::{SourceReading, SourceWriteFailure, CRADLE_ACTOR, CRADLE_ACTOR_KIND};
 use focus::GlobalFocus;
 use refs::{source_semantic_ref, SemanticRef};
-use world::{participating_sources, SourceListing};
+use world::SourceListing;
 
 // ---------------------------------------------------------------------------
 // State
@@ -2399,11 +2399,18 @@ impl Kernel {
             return Some(owner_read::PreparedRead::graph(&self.client, op, graph));
         }
         // The retained World, else the one a burst's flight already holds
-        // within the same horizon (read_cache `flight_held`).
-        let world = self
-            .reads
-            .get("world", read_cache::WORLD_TTL)
-            .or_else(|| self.reads.flight_held("world", read_cache::WORLD_TTL));
+        // within the same horizon (read_cache `flight_held`). An owner read
+        // the World scopes shares its burst's one reading (`flight`).
+        let world = if owner_read::PreparedRead::reads_world(op) {
+            self.prepare_world_reading()
+        } else {
+            agent_prepared::PreparedWorld::held_only(
+                self.client.clone(),
+                self.reads
+                    .get("world", read_cache::WORLD_TTL)
+                    .or_else(|| self.reads.flight_held("world", read_cache::WORLD_TTL)),
+            )
+        };
         owner_read::PreparedRead::prepare(&self.client, world, op, temporal)
     }
 
@@ -2890,132 +2897,42 @@ impl Kernel {
                     result: KernelOpResult::Expression { data },
                 })
             }
-            KernelOp::MaterialRead { target } => {
-                native_owner_reading("workcell", material::Client::discover().read(&target))
+            // Owner reads with nothing kernel-owned to record (lane K2): the
+            // prepared read's own steps (owner_read.rs `PreparedRead`), run
+            // under the lock.
+            op @ (KernelOp::MaterialRead { .. }
+            | KernelOp::FactoryBuildSnapshot { .. }
+            | KernelOp::FactoryDevelopmentRead { .. }
+            | KernelOp::FactoryAttemptRead { .. }
+            | KernelOp::FactoryAttemptTaskListRead { .. }
+            | KernelOp::FactoryAttemptTaskRead { .. }
+            | KernelOp::InhabitationRead { .. }
+            | KernelOp::WikiProjectionRead { .. }
+            | KernelOp::WikiProjectionSources
+            | KernelOp::ChatDefaultRead
+            | KernelOp::CredentialList
+            | KernelOp::CredentialDiscover
+            | KernelOp::HarnessAuthDescribe { .. }
+            | KernelOp::ProfileList
+            | KernelOp::ProfileRead { .. }
+            | KernelOp::ConfigReceipts
+            | KernelOp::AgentCard { .. }
+            | KernelOp::EncounterJoin { .. }
+            | KernelOp::FlowChangedSince { .. }) => self
+                .prepare_owner_read(&op)
+                .ok_or("Cannot prepare the owner read")?
+                .execute(),
+            // A Factory owner read or a SharedField read likewise; their
+            // writes stay ordered below.
+            op @ (KernelOp::FactoryOwner { .. } | KernelOp::SharedField { .. })
+                if owner_read::PreparedRead::reads_owner(&op) =>
+            {
+                self.prepare_owner_read(&op)
+                    .ok_or("Cannot prepare the owner read")?
+                    .execute()
             }
-            KernelOp::FactoryBuildSnapshot {
-                project,
-                state_path,
-                project_ref,
-                run_ref,
-            } => {
-                if let Some(project) = &project {
-                    let root = self.world_map(false).map_err(|e| e.to_string())?;
-                    root["work"]["projects"]
-                        .as_array()
-                        .and_then(|rows| {
-                            rows.iter()
-                                .find(|r| r["name"].as_str() == Some(project.as_str()))
-                        })
-                        .ok_or("Project is outside Central's disclosed ground")?;
-                }
-                let direct = std::env::var_os("OI_FACTORY_BIN").map(std::path::PathBuf::from);
-                let (executable, suite_route) = match direct {
-                    Some(path) => (path, false),
-                    None => (
-                        std::env::var_os("OI_BIN")
-                            .map(std::path::PathBuf::from)
-                            .unwrap_or_else(|| std::path::PathBuf::from("oi")),
-                        true,
-                    ),
-                };
-                let data = factory::Client::with(executable)
-                    .build_snapshot(&state_path, &project_ref, &run_ref, suite_route)
-                    .map_err(|e| {
-                        serde_json::to_string(&e)
-                            .unwrap_or_else(|_| "factory build snapshot failed".into())
-                    })?;
-                Ok(KernelOpOutcome {
-                    receipts: Vec::new(),
-                    result: KernelOpResult::FactoryDevelopmentReading { data },
-                })
-            }
-            KernelOp::FactoryDevelopmentRead {
-                project,
-                state_path,
-                read,
-                subject,
-            } => {
-                if let Some(project) = &project {
-                    let root = self.world_map(false).map_err(|e| e.to_string())?;
-                    root["work"]["projects"]
-                        .as_array()
-                        .and_then(|rows| {
-                            rows.iter()
-                                .find(|r| r["name"].as_str() == Some(project.as_str()))
-                        })
-                        .ok_or("Project is outside Central's disclosed ground")?;
-                }
-                // The allowlist holds on this path too: the dispatch arm builds
-                // the owner grammar itself, so it must not bypass the list the
-                // client enforces.
-                if !factory::is_development_read(&read) {
-                    return Err(format!("Unsupported Factory development read ({read})"));
-                }
-                let direct = std::env::var_os("OI_FACTORY_BIN").map(std::path::PathBuf::from);
-                let (executable, suite_route) = match direct {
-                    Some(path) => (path, false),
-                    None => (
-                        std::env::var_os("OI_BIN")
-                            .map(std::path::PathBuf::from)
-                            .unwrap_or_else(|| std::path::PathBuf::from("oi")),
-                        true,
-                    ),
-                };
-                let args = factory::development_read_args(
-                    &state_path,
-                    &read,
-                    subject.as_deref(),
-                    suite_route,
-                );
-                let data = material::invoke(&executable, &args, None).map_err(|e| {
-                    serde_json::to_string(&e)
-                        .unwrap_or_else(|_| "factory development read failed".into())
-                })?;
-                Ok(KernelOpOutcome {
-                    receipts: Vec::new(),
-                    result: KernelOpResult::FactoryDevelopmentReading { data },
-                })
-            }
-            KernelOp::FactoryAttemptRead {
-                state_path,
-                run_ref,
-            } => {
-                let direct = std::env::var_os("OI_FACTORY_BIN").map(std::path::PathBuf::from);
-                let (executable, suite_route) = match direct {
-                    Some(path) => (path, false),
-                    None => (
-                        std::env::var_os("OI_BIN")
-                            .map(std::path::PathBuf::from)
-                            .unwrap_or_else(|| std::path::PathBuf::from("oi")),
-                        true,
-                    ),
-                };
-                let mut args: Vec<std::ffi::OsString> = Vec::new();
-                if suite_route {
-                    args.push("factory".into());
-                }
-                args.extend([
-                    "attempt".into(),
-                    "read".into(),
-                    state_path.as_os_str().to_string_lossy().into_owned().into(),
-                    run_ref.into(),
-                    "--json".into(),
-                ]);
-                let data = material::invoke(&executable, &args, None).map_err(|e| {
-                    serde_json::to_string(&e)
-                        .unwrap_or_else(|_| "factory attempt read failed".into())
-                })?;
-                if data.get("contract").and_then(serde_json::Value::as_str)
-                    != Some("factory.attempt-reading/v1")
-                {
-                    return Err("Factory returned incompatible attempt reading".into());
-                }
-                Ok(KernelOpOutcome {
-                    receipts: Vec::new(),
-                    result: KernelOpResult::FactoryAttemptReading { data },
-                })
-            }
+            // A Factory owner write — an action, a recognition, a commission,
+            // a Run's close — in order under the lock.
             KernelOp::FactoryOwner { request } => {
                 let world = if request.needs_world() {
                     Some(self.world_map(false)?)
@@ -3029,130 +2946,6 @@ impl Kernel {
                 Ok(KernelOpOutcome {
                     receipts: Vec::new(),
                     result: KernelOpResult::FactoryDevelopmentReading { data },
-                })
-            }
-            KernelOp::FactoryAttemptTaskListRead {
-                state_path,
-                run_ref,
-            } => {
-                let direct = std::env::var_os("OI_FACTORY_BIN").map(std::path::PathBuf::from);
-                let (executable, suite_route) = match direct {
-                    Some(path) => (path, false),
-                    None => (
-                        std::env::var_os("OI_BIN")
-                            .map(std::path::PathBuf::from)
-                            .unwrap_or_else(|| std::path::PathBuf::from("oi")),
-                        true,
-                    ),
-                };
-                let mut args: Vec<std::ffi::OsString> = Vec::new();
-                if suite_route {
-                    args.push("factory".into());
-                }
-                args.extend([
-                    "attempt".into(),
-                    "list".into(),
-                    state_path.as_os_str().to_string_lossy().into_owned().into(),
-                    run_ref.into(),
-                    "--json".into(),
-                ]);
-                let data = material::invoke(&executable, &args, None).map_err(|e| {
-                    serde_json::to_string(&e)
-                        .unwrap_or_else(|_| "factory attempt list failed".into())
-                })?;
-                if data.get("contract").and_then(serde_json::Value::as_str)
-                    != Some("factory.attempt-task-list-reading/v1")
-                {
-                    return Err("Factory returned incompatible attempt-task list reading".into());
-                }
-                Ok(KernelOpOutcome {
-                    receipts: Vec::new(),
-                    result: KernelOpResult::FactoryAttemptTaskListReading { data },
-                })
-            }
-            KernelOp::FactoryAttemptTaskRead {
-                state_path,
-                run_ref,
-                task_ref,
-                limit,
-                cursor,
-            } => {
-                let direct = std::env::var_os("OI_FACTORY_BIN").map(std::path::PathBuf::from);
-                let (executable, suite_route) = match direct {
-                    Some(path) => (path, false),
-                    None => (
-                        std::env::var_os("OI_BIN")
-                            .map(std::path::PathBuf::from)
-                            .unwrap_or_else(|| std::path::PathBuf::from("oi")),
-                        true,
-                    ),
-                };
-                let mut args: Vec<std::ffi::OsString> = Vec::new();
-                if suite_route {
-                    args.push("factory".into());
-                }
-                args.extend([
-                    "attempt".into(),
-                    "task".into(),
-                    state_path.as_os_str().to_string_lossy().into_owned().into(),
-                    run_ref.into(),
-                    task_ref.into(),
-                    "--json".into(),
-                ]);
-                if let Some(limit) = limit {
-                    args.push("--limit".into());
-                    args.push(limit.to_string().into());
-                }
-                if let Some(cursor) = cursor {
-                    args.push("--cursor".into());
-                    args.push(
-                        serde_json::to_string(&cursor)
-                            .map_err(|e| e.to_string())?
-                            .into(),
-                    );
-                }
-                let data = material::invoke(&executable, &args, None).map_err(|e| {
-                    serde_json::to_string(&e)
-                        .unwrap_or_else(|_| "factory attempt task failed".into())
-                })?;
-                if data.get("contract").and_then(serde_json::Value::as_str)
-                    != Some("factory.attempt-task-reading/v1")
-                {
-                    return Err("Factory returned incompatible attempt-task reading".into());
-                }
-                Ok(KernelOpOutcome {
-                    receipts: Vec::new(),
-                    result: KernelOpResult::FactoryAttemptTaskReading { data },
-                })
-            }
-            KernelOp::InhabitationRead { request } => {
-                // The scope's ground comes from Central's own disclosure: a
-                // project's working directory and canonical ProjectRef, or the
-                // Central root for a root-scope read (best effort — AIKit
-                // resolves its own root when Central's world is unreadable).
-                let ground: Option<(std::path::PathBuf, Option<String>)> = match request.project() {
-                    Some(project) => {
-                        let (cwd, project_id) = self.project_ground(project)?;
-                        Some((cwd, Some(format!("project:{project_id}"))))
-                    }
-                    None => self
-                        .world_map(false)
-                        .ok()
-                        .and_then(|world| world["root"].as_str().map(std::path::PathBuf::from))
-                        .map(|root| (root, None)),
-                };
-                let (data, warnings) = inhabitation::read(
-                    &request,
-                    ground
-                        .as_ref()
-                        .map(|(cwd, world)| (cwd.as_path(), world.as_deref())),
-                )
-                .map_err(|e| {
-                    serde_json::to_string(&e).unwrap_or_else(|_| "inhabitation read failed".into())
-                })?;
-                Ok(KernelOpOutcome {
-                    receipts: Vec::new(),
-                    result: KernelOpResult::InhabitationReading { data, warnings },
                 })
             }
             KernelOp::TemporalEventsRead { query } => {
@@ -3173,78 +2966,6 @@ impl Kernel {
                     },
                 })
             }
-            KernelOp::WikiProjectionRead { root, path } => {
-                let aikit = std::env::var_os("OI_AIKIT_BIN")
-                    .map(std::path::PathBuf::from)
-                    .unwrap_or_else(|| std::path::PathBuf::from("aikit"));
-                let args: Vec<std::ffi::OsString> = vec![
-                    "--json".into(),
-                    "-C".into(),
-                    root.as_os_str().to_string_lossy().into_owned().into(),
-                    "wiki".into(),
-                    "projection".into(),
-                    "read".into(),
-                    "--file".into(),
-                    path.into(),
-                ];
-                let data = material::invoke(&aikit, &args, None).map_err(|e| {
-                    serde_json::to_string(&e)
-                        .unwrap_or_else(|_| "wiki projection read failed".into())
-                })?;
-                if data
-                    .get("state")
-                    .and_then(serde_json::Value::as_str)
-                    .is_none()
-                    || data.get("projection").is_none()
-                {
-                    return Err("AIKit returned an incompatible wiki projection reading".into());
-                }
-                Ok(KernelOpOutcome {
-                    receipts: Vec::new(),
-                    result: KernelOpResult::WikiProjectionReading { data },
-                })
-            }
-            KernelOp::WikiProjectionSources => {
-                let aikit = std::env::var_os("OI_AIKIT_BIN")
-                    .map(std::path::PathBuf::from)
-                    .unwrap_or_else(|| std::path::PathBuf::from("aikit"));
-                let args: Vec<std::ffi::OsString> =
-                    vec!["--json".into(), "context".into(), "current".into()];
-                let data = material::invoke(&aikit, &args, None).map_err(|e| {
-                    serde_json::to_string(&e)
-                        .unwrap_or_else(|_| "wiki projection sources read failed".into())
-                })?;
-                if data.get("continuity").is_none() {
-                    return Err("AIKit returned a context reading without continuity".into());
-                }
-                Ok(KernelOpOutcome {
-                    receipts: Vec::new(),
-                    result: KernelOpResult::WikiProjectionSourcesReading { data },
-                })
-            }
-            KernelOp::HarnessStatus => {
-                // Machine-level read: no project disclosure is consulted —
-                // the harnesses are the machine's own facts.
-                let data = self.agency.harness_status()?;
-                Ok(KernelOpOutcome {
-                    receipts: Vec::new(),
-                    result: KernelOpResult::HarnessStatusReading { data },
-                })
-            }
-            KernelOp::ModelCatalogue => {
-                let data = self.agency.model_catalogue()?;
-                Ok(KernelOpOutcome {
-                    receipts: Vec::new(),
-                    result: KernelOpResult::ModelCatalogueReading { data },
-                })
-            }
-            KernelOp::ChatDefaultRead => {
-                let document = chat_defaults::read()?;
-                Ok(KernelOpOutcome {
-                    receipts: Vec::new(),
-                    result: KernelOpResult::ChatDefaultReading { document },
-                })
-            }
             KernelOp::ChatDefaultHold { provider } => {
                 let document = chat_defaults::hold(&provider)?;
                 Ok(KernelOpOutcome {
@@ -3259,14 +2980,11 @@ impl Kernel {
                     result: KernelOpResult::ChatDefaultDiscarded { document },
                 })
             }
-            KernelOp::CredentialList
-            | KernelOp::CredentialDiscover
-            | KernelOp::CredentialSetup { .. }
+            KernelOp::CredentialSetup { .. }
             | KernelOp::CredentialRotate { .. }
             | KernelOp::CredentialVerify { .. }
             | KernelOp::CredentialRevoke { .. }
-            | KernelOp::ClientInstall { .. }
-            | KernelOp::HarnessAuthDescribe { .. } => {
+            | KernelOp::ClientInstall { .. } => {
                 let root = self.world_map(false).ok();
                 let cwd = root
                     .as_ref()
@@ -3468,36 +3186,6 @@ impl Kernel {
                     },
                 })
             }
-            KernelOp::ProfileList => {
-                let root = self.world_map(false).ok();
-                let cwd = root
-                    .as_ref()
-                    .and_then(|value| value["root"].as_str())
-                    .map(std::path::PathBuf::from)
-                    .unwrap_or(std::env::current_dir().map_err(|e| e.to_string())?);
-                let listing = configuration::Client::discover().profile_list(&cwd)?;
-                Ok(KernelOpOutcome {
-                    receipts: Vec::new(),
-                    result: KernelOpResult::ProfileListing {
-                        active_profile_ref: listing.active_profile_ref,
-                        profiles: listing.profiles,
-                        degraded: listing.degraded,
-                    },
-                })
-            }
-            KernelOp::ProfileRead { profile_ref } => {
-                let root = self.world_map(false).ok();
-                let cwd = root
-                    .as_ref()
-                    .and_then(|value| value["root"].as_str())
-                    .map(std::path::PathBuf::from)
-                    .unwrap_or(std::env::current_dir().map_err(|e| e.to_string())?);
-                let profile = configuration::Client::discover().profile_read(&cwd, &profile_ref)?;
-                Ok(KernelOpOutcome {
-                    receipts: Vec::new(),
-                    result: KernelOpResult::ProfileReading { profile },
-                })
-            }
             KernelOp::ProfileUsePlan { profile_ref } => {
                 let root = self.world_map(false).ok();
                 let cwd = root
@@ -3563,19 +3251,6 @@ impl Kernel {
                     result: KernelOpResult::ProfileEdited { document },
                 })
             }
-            KernelOp::ConfigReceipts => {
-                let root = self.world_map(false).ok();
-                let cwd = root
-                    .as_ref()
-                    .and_then(|value| value["root"].as_str())
-                    .map(std::path::PathBuf::from)
-                    .unwrap_or(std::env::current_dir().map_err(|e| e.to_string())?);
-                let document = configuration::Client::discover().config_receipts(&cwd)?;
-                Ok(KernelOpOutcome {
-                    receipts: Vec::new(),
-                    result: KernelOpResult::ConfigReceipts { document },
-                })
-            }
             KernelOp::FileOperation { location, request } => {
                 let data = files::operate(&self.client, &location, &request)?;
                 // A write changed what a directory contains; the parent
@@ -3633,54 +3308,15 @@ impl Kernel {
             // The same owner call and record a host runs outside and then
             // under the lock (owner_read.rs `PreparedFiles`).
             KernelOp::FileRead { location } => {
-                let fetched = retained_files::Store::fetch(&self.client, &location);
-                self.finish_file_read(&location, fetched)
+                let reading = retained_files::Store::fetch(&self.client, &location)
+                    .and_then(|fetched| self.retained_files.record(fetched));
+                self.finish_file_read(&location, reading)
             }
+            // The same owner call and record a host runs outside and then
+            // under the lock (owner_read.rs `PreparedFiles`).
             KernelOp::FileBytes { location } => {
-                let reading = match files::read_bytes(&self.client, &location) {
-                    Ok(reading) => reading,
-                    Err(error) => {
-                        self.file_refs.remove(&location.ref_id);
-                        return Err(error);
-                    }
-                };
-                // FND-04: a binary material file (image/pdf/unsupported) is
-                // opened as a surface through this op, never `FileRead` — the
-                // `SurfaceOpen` gate ("File must be read successfully
-                // through Central before opening its surface") checks
-                // `file_refs` regardless of which read resolved the ref, so
-                // this registration is required exactly as `FileRead`'s is.
-                let project = reading
-                    .project
-                    .as_ref()
-                    .and_then(|p| p.project_ref.as_ref())
-                    .map(|id| {
-                        focus::ProjectRef::try_from(owner_relation(
-                            id,
-                            "project",
-                            "central.files.read",
-                        ))
-                    })
-                    .transpose()
-                    .map_err(|e| e.to_string())?;
-                self.file_refs.insert(
-                    reading.location.ref_id.clone(),
-                    (
-                        owner_relation(&reading.location.ref_id, "file", "central.files.read"),
-                        project,
-                    ),
-                );
-                Ok(KernelOpOutcome {
-                    receipts: Vec::new(),
-                    result: KernelOpResult::FileBytes {
-                        location: reading.location,
-                        revision: reading.revision,
-                        byte_len: reading.byte_len,
-                        mime_hint: reading.mime_hint,
-                        content_base64: reading.content_base64,
-                        source: reading.source,
-                    },
-                })
+                let reading = files::read_bytes(&self.client, &location);
+                self.finish_file_bytes(&location, reading)
             }
             // The agent-scoped reads: the prepared form's own steps
             // (agent_prepared.rs `PreparedAgent`), run under the lock.
@@ -3689,26 +3325,14 @@ impl Kernel {
             | KernelOp::AgencyRead { .. }
             | KernelOp::EncounterTaskRead { .. }
             | KernelOp::ModelRoster { .. }
-            | KernelOp::HarnessAgentRead { .. }) => {
+            | KernelOp::HarnessAgentRead { .. }
+            | KernelOp::HarnessStatus
+            | KernelOp::ModelCatalogue) => {
                 let prepared = self
                     .prepare_agent_read(&op)?
                     .ok_or("Cannot prepare the agent read")?;
                 let answered = prepared.execute();
                 self.finish_agent_read(answered)
-            }
-            KernelOp::AgentCard {
-                agent_ref,
-                world_ref,
-            } => {
-                let data = agent_card::read(
-                    &agent_card::oi_executable(),
-                    &agent_ref,
-                    world_ref.as_deref(),
-                )?;
-                Ok(KernelOpOutcome {
-                    receipts: Vec::new(),
-                    result: KernelOpResult::AgentCardReading { data },
-                })
             }
             KernelOp::EncounterProvision {
                 project,
@@ -3882,9 +3506,14 @@ impl Kernel {
             // Owner reads with nothing kernel-owned to record: the prepared
             // read's own execution (owner_read.rs `PreparedRead`).
             op @ (KernelOp::Central { .. } | KernelOp::WorkcellStatusRead) => {
-                owner_read::PreparedRead::prepare(&self.client, None, &op, None)
-                    .ok_or("Cannot prepare the owner read")?
-                    .execute()
+                owner_read::PreparedRead::prepare(
+                    &self.client,
+                    agent_prepared::PreparedWorld::held_only(self.client.clone(), None),
+                    &op,
+                    None,
+                )
+                .ok_or("Cannot prepare the owner read")?
+                .execute()
             }
             KernelOp::DaySourceOpen { day_ref } => {
                 // The owner's Day route is the only reader of a
@@ -4089,33 +3718,14 @@ impl Kernel {
                 })
             }
             KernelOp::SharedField { request } => {
-                // The kernel passes the request through on the desktop's own
-                // account; the client resolves its target and token from its
-                // own environment. Nothing is recorded, nothing is emitted.
+                // A SharedField write, in order under the lock. The kernel
+                // passes the request through on the desktop's own account;
+                // the client resolves its target and token from its own
+                // environment. Nothing is recorded, nothing is emitted.
                 let data = shared_field::reading(&request)?;
                 Ok(KernelOpOutcome {
                     receipts: Vec::new(),
                     result: KernelOpResult::SharedFieldReading { data },
-                })
-            }
-            KernelOp::EncounterJoin {
-                session,
-                request_ref,
-                reply,
-            } => {
-                // Central discloses the context anchor, exactly as the
-                // Graph/Knowledge arms; the lifecycle store itself is the
-                // AIKit owner's (AIKIT_HOME), never renderer-supplied.
-                let root = self.world_map(false).map_err(|e| e.to_string())?;
-                let cwd = std::path::PathBuf::from(
-                    root["root"]
-                        .as_str()
-                        .ok_or("Central root location unavailable")?,
-                );
-                let reading = encounter::assemble(&cwd, &session, &request_ref, reply.as_ref());
-                Ok(KernelOpOutcome {
-                    receipts: Vec::new(),
-                    result: KernelOpResult::EncounterJoined { reading },
                 })
             }
             KernelOp::InvokeAction {
@@ -4175,38 +3785,6 @@ impl Kernel {
                 Ok(KernelOpOutcome {
                     receipts,
                     result: KernelOpResult::ActionDispatched { dispatch },
-                })
-            }
-            KernelOp::FlowChangedSince { project, thought } => {
-                // The changed-since compose resolves its owner cwd exactly as
-                // the InvokeAction arm: Central discloses the scope,
-                // renderer-supplied paths never become context.
-                let root = self.world_map(false).map_err(|e| e.to_string())?;
-                let base = root["root"]
-                    .as_str()
-                    .ok_or("Central root location unavailable")?;
-                let cwd = if let Some(project) = project.as_ref() {
-                    let row = root["work"]["projects"]
-                        .as_array()
-                        .and_then(|rows| rows.iter().find(|r| r["name"].as_str() == Some(project)))
-                        .ok_or("Project is outside Central's disclosed ground")?;
-                    std::path::Path::new(base)
-                        .join(row["path"].as_str().ok_or("Project location unavailable")?)
-                } else {
-                    std::path::PathBuf::from(base)
-                };
-                let reading = flow_cognition::changed_since(
-                    &self.client,
-                    project
-                        .as_deref()
-                        .unwrap_or_else(|| self.client.configured_project()),
-                    &cwd,
-                    &thought,
-                )
-                .map_err(|e| e.to_string())?;
-                Ok(KernelOpOutcome {
-                    receipts: Vec::new(),
-                    result: KernelOpResult::FlowChangedSince { reading },
                 })
             }
             KernelOp::InstanceCommission {
@@ -4416,20 +3994,11 @@ impl Kernel {
 
     /// Horizon-served source listings only: a degraded reading is the error
     /// path, and the error path is never cached.
+    /// The prepared listing's own steps (owner_read.rs `PreparedSources`),
+    /// run under the lock.
     fn participating_sources_cached(&mut self, project: Option<&str>) -> SourceListing {
-        let key = format!("horizon:{}", project.unwrap_or(""));
-        if let Some(value) = self.reads.get(&key, read_cache::HORIZON_TTL) {
-            if let Ok(listing) = serde_json::from_value(value) {
-                return listing;
-            }
-        }
-        let listing = participating_sources(&self.client, project);
-        if matches!(listing.availability, world::ListingAvailability::Horizon) {
-            if let Ok(value) = serde_json::to_value(&listing) {
-                self.reads.put(key, value);
-            }
-        }
-        listing
+        let answer = self.prepare_sources(project).execute(&self.client);
+        self.finish_sources(answer)
     }
 
     /// The ordered listing: the prepared listing's own steps (owner_read.rs
@@ -5441,6 +5010,12 @@ elif action == "central.files.read":
         print(json.dumps({"ok": False, "status": "refused",
                           "error": {"message": "Central excludes this file from retrieval"}}))
         sys.exit(1)
+    if payload.get("encoding") == "base64":
+        ok({"schema": "central.file-reading/v1", "location": location, "revision": "r1",
+            "byte_len": 4, "content_encoding": "base64", "content": "a2VwdA==",
+            "mime_hint": "text/markdown", "project": None, "source": None,
+            "automatic_agent_or_model_invocation": False})
+        sys.exit(0)
     ok({"schema": "central.file-reading/v1", "location": location, "revision": "r1",
         "byte_len": 4, "content_encoding": "utf-8", "content": "kept", "project": None,
         "source": None, "automatic_agent_or_model_invocation": False})

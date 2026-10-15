@@ -125,6 +125,28 @@ fn development_repository() -> Option<PathBuf> {
     None
 }
 
+/// A request the client answers by reading the hosted field (or the
+/// kernel-side observation lease) and changing nothing there: it may run
+/// outside the kernel lock (owner_read.rs `PreparedRead`). Named one by one:
+/// every other kind — a publish, a contribution, presence, a stage move, a
+/// grant, a lease release — is applied in order under the lock.
+pub fn is_read(request: &Value) -> bool {
+    matches!(
+        request["kind"].as_str(),
+        Some(
+            "status"
+                | "identity"
+                | "receipt"
+                | "observe"
+                | "snapshot"
+                | "read"
+                | "stage"
+                | "field-now"
+                | "field-day"
+        )
+    )
+}
+
 /// Send one request to the SharedField client and return the owner `data`.
 pub fn call(request: &Value) -> Result<Value, CallError> {
     if request.get("token_label").is_some() || request.get("hold_presence").is_some() {

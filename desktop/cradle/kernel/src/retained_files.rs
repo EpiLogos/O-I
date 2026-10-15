@@ -47,6 +47,25 @@ pub struct Store {
     path: Option<PathBuf>,
     failures: BTreeMap<String, Failure>,
 }
+/// Where the store keeps its retained copies, captured under the kernel lock
+/// (`Store::retainer`) so a copy is written and read outside it; what the
+/// store records about a reading (`Store::note`) stays under the lock.
+#[derive(Clone, Debug, Default)]
+pub(crate) struct Retainer {
+    path: Option<PathBuf>,
+}
+/// Retained copies are written one at a time, process-wide: the bound's
+/// eviction reads and prunes the directory it writes into.
+static RETAINING: std::sync::Mutex<()> = std::sync::Mutex::new(());
+/// A last-reading recovery's owner work, done outside the kernel lock
+/// (`Retainer::recover`): the current reading fetched and its copy kept,
+/// and the retained copy the answer may need, read.
+pub(crate) struct Recovering {
+    location: Location,
+    epoch: String,
+    fetched: Result<Fetched, String>,
+    loaded: Option<Result<Option<Retained>, String>>,
+}
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Recovery {
     pub retained: Option<Retained>,
@@ -59,15 +78,7 @@ fn key(epoch: &str, location: &Location) -> Result<String, String> {
         Sha256::digest(serde_json::to_vec(&(epoch, location)).map_err(|e| e.to_string())?)
     ))
 }
-impl Store {
-    /// A store kept in `path`, never the native home (tests only).
-    #[cfg(test)]
-    pub(crate) fn at(path: PathBuf) -> Self {
-        Self {
-            path: Some(path),
-            ..Self::default()
-        }
-    }
+impl Retainer {
     fn directory(&self) -> Result<PathBuf, String> {
         if let Some(path) = &self.path {
             return Ok(path.clone());
@@ -80,6 +91,7 @@ impl Store {
     }
     fn remember(&self, epoch: &str, reading: &Reading) -> Result<(), String> {
         use std::os::unix::fs::{OpenOptionsExt, PermissionsExt};
+        let _one_at_a_time = RETAINING.lock().unwrap_or_else(|e| e.into_inner());
         let record = Record {
             schema: "oi.retained-file-reading/v1".into(),
             owner_epoch: epoch.into(),
@@ -181,6 +193,61 @@ impl Store {
         );
         Ok(Some(record.retained))
     }
+    /// Keep a fetched reading as the last native reading (a refusal keeps
+    /// nothing). Disk only: what the store records is `Store::note`'s.
+    pub(crate) fn keep(&self, fetched: &Fetched) {
+        if let Ok(reading) = &fetched.reading {
+            if let Err(error) = self.remember(&fetched.epoch, reading) {
+                eprintln!("Native file retention unavailable: {error}");
+            }
+        }
+    }
+    /// The owner work of a last-reading recovery (`Store::recovery`): the
+    /// current reading, its copy kept, and the retained copy read whenever
+    /// the answer can include it — a served reading or a recoverable refusal.
+    pub(crate) fn recover(&self, client: &CentralClient, location: &Location) -> Recovering {
+        let fetched = Store::fetch(client, location);
+        let epoch = client.retained_resource_epoch();
+        let loaded = match &fetched {
+            Ok(fetched) => {
+                self.keep(fetched);
+                let recoverable = fetched.failure.as_ref().is_some_and(|f| f.allowed);
+                (fetched.reading.is_ok() || recoverable).then(|| self.load(&epoch, location))
+            }
+            Err(_) => None,
+        };
+        Recovering {
+            location: location.clone(),
+            epoch,
+            fetched,
+            loaded,
+        }
+    }
+}
+impl Store {
+    /// A store kept in `path`, never the native home (tests only).
+    #[cfg(test)]
+    pub(crate) fn at(path: PathBuf) -> Self {
+        Self {
+            path: Some(path),
+            ..Self::default()
+        }
+    }
+    /// Where this store keeps its copies, to write and read them outside the
+    /// kernel lock.
+    pub(crate) fn retainer(&self) -> Retainer {
+        Retainer {
+            path: self.path.clone(),
+        }
+    }
+    #[cfg(test)]
+    fn remember(&self, epoch: &str, reading: &Reading) -> Result<(), String> {
+        self.retainer().remember(epoch, reading)
+    }
+    #[cfg(test)]
+    fn load(&self, epoch: &str, location: &Location) -> Result<Option<Retained>, String> {
+        self.retainer().load(epoch, location)
+    }
     pub fn read(&mut self, client: &CentralClient, location: &Location) -> Result<Reading, String> {
         let fetched = Self::fetch(client, location)?;
         self.record(fetched)
@@ -230,20 +297,24 @@ impl Store {
         })
     }
     /// Keep a fetched answer: a reading is retained as the last native
-    /// reading, a failure is remembered for recovery. The reading (or the
-    /// owner's refusal) is answered unchanged.
+    /// reading (`Retainer::keep`), a failure is remembered for recovery
+    /// (`note`). The reading (or the owner's refusal) is answered unchanged.
     pub(crate) fn record(&mut self, fetched: Fetched) -> Result<Reading, String> {
+        self.retainer().keep(&fetched);
+        self.note(fetched)
+    }
+    /// What the store records of a fetched answer whose copy was kept
+    /// (`Retainer::keep`): a served reading clears the file's remembered
+    /// failure, a refusal is remembered for recovery.
+    pub(crate) fn note(&mut self, fetched: Fetched) -> Result<Reading, String> {
         let Fetched {
-            epoch,
+            epoch: _,
             cache_key,
             reading,
             failure,
         } = fetched;
-        if let Ok(reading) = &reading {
+        if reading.is_ok() {
             self.failures.remove(&cache_key);
-            if let Err(error) = self.remember(&epoch, reading) {
-                eprintln!("Native file retention unavailable: {error}");
-            }
         } else {
             if self.failures.len() >= MAX_FILES {
                 self.failures.clear();
@@ -263,18 +334,28 @@ impl Store {
         client: &CentralClient,
         location: &Location,
     ) -> Result<Recovery, String> {
-        // Permission is checked again at the moment recovery is requested; a
-        // previous allowed failure never authorises a later recovery.
-        let current = self.read(client, location);
-        let epoch = client.retained_resource_epoch();
-        let cache_key = key(&epoch, location)?;
+        let recovering = self.retainer().recover(client, location);
+        self.recovered(recovering)
+    }
+    /// A recovery's answer from its owner work (`Retainer::recover`), under
+    /// the kernel lock: the current reading noted, then the file's
+    /// remembered failure decides. Permission is checked again at the moment
+    /// recovery is requested; a previous allowed failure never authorises a
+    /// later recovery.
+    pub(crate) fn recovered(&mut self, recovering: Recovering) -> Result<Recovery, String> {
+        let Recovering {
+            location,
+            epoch,
+            fetched,
+            loaded,
+        } = recovering;
+        let current = fetched.and_then(|fetched| self.note(fetched));
+        let cache_key = key(&epoch, &location)?;
+        let retainer = self.retainer();
+        let retained = || loaded.unwrap_or_else(|| retainer.load(&epoch, &location));
         let Some(failure) = self.failures.get(&cache_key) else {
             return Ok(Recovery {
-                retained: if current.is_ok() {
-                    self.load(&epoch, location)?
-                } else {
-                    None
-                },
+                retained: if current.is_ok() { retained()? } else { None },
                 migration_allowed: current.is_ok(),
                 reason: "The source is readable again; retry its current reading".into(),
             });
@@ -286,10 +367,11 @@ impl Store {
                 reason: failure.reason.clone(),
             });
         }
+        let reason = failure.reason.clone();
         Ok(Recovery {
-            retained: self.load(&epoch, location)?,
+            retained: retained()?,
             migration_allowed: true,
-            reason: failure.reason.clone(),
+            reason,
         })
     }
 }
