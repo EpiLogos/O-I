@@ -30,7 +30,9 @@ export function DetailHost({side}: {side: 'clip' | 'device'}) {
     {waiting && <div className="detail-body detail-body--clip" data-detail-waiting="true"><ClipWaiting line={registration.clipWaits} /></div>}
     {[...visited.current].map(held => {
       const shown = held === key && !waiting
-      if (held === 'instrument') return <div key={held} className="detail-body" hidden={!shown}><div className="detail-chain">{instrument && <InstrumentDeviceDetail transport={reading.transport} instrument={instrument} centralDevices={!!registration.devicesLeadInstrument} />}<div className="dropz">Drop a device here</div></div></div>
+      // The focused pane's instrument takes the whole row (lane E): its rack folds and stands Compact to fit, and no drop strip ends it —
+      // the strip it carried received nothing (no drop handler), and the mockup's instrument row has none (world-shell-mockup.html:1461).
+      if (held === 'instrument') return <div key={held} className="detail-body" hidden={!shown}><div className="detail-chain">{instrument && <InstrumentDeviceDetail transport={reading.transport} instrument={instrument} centralDevices={!!registration.devicesLeadInstrument} />}</div></div>
       const [mode, which] = held.split(':') as [SurfMode, 'clip' | 'device']
       const table = MODE_DETAILS[mode]
       const Body = table[which]

@@ -346,18 +346,19 @@ test('a face declared waiting is a dark device with no control: its standing and
 
 // ── the chain: compact devices, no text-only card ──────────────────────────────────────────────────────────────────
 
-test('the focused 0 instrument stands open as one plate of its families\' devices, the other five fold by the runtime\'s fold, in rack order', () => {
+test('the focused 0 instrument stands open as one plate of the faces it holds, the other five fold by the runtime\'s fold, in rack order', () => {
   const out = html(createElement(TechneInstrumentsDetail, {transport, focusInstrument: 'techne:m0'}))
   assert.match(out, /data-focus-instrument="techne:m0"/)
   assert.match(out, /data-open-instrument="techne:m0"/)
-  assert.match(out, /class="inst-plate" data-instrument="techne:m0" data-expanded="true"/, 'the open instrument is one plate')
+  assert.match(out, /class="inst-plate" data-instrument="techne:m0" data-expanded="true" data-project-plate="true"/, 'the open instrument is one plate')
   assert.match(out, /<h3 class="sdk-face__title">Project<\/h3>/, 'its plain name, never its M′ address (lock §9.4)')
-  assert.match(out, /data-section="atlas-earth"/, 'its column is the family whose devices it holds')
+  // lane E: the globe, Graph tools, Earth ⇄ Graph and Deep time are its sections' controls, not three boxed sub-devices
+  const sections = ['view', 'graph', 'forces', 'time'].map(id => out.indexOf(`data-section="${id}"`))
+  assert.ok(sections.every((at, index) => at > 0 && (index === 0 || at > sections[index - 1])), 'View, Graph, Forces, Deep time, in order')
   for (const id of ['globe-engine', 'graph-tools', 'mode-switch', 'time-control']) {
-    assert.match(out, new RegExp(`data-face-id="${id}"[^>]*data-expanded="true"`), `${id} is open`)
-    assert.match(out, new RegExp(`data-device="atlas-earth:${id}" data-device-size="compact"`), `${id} is a compact device through DeviceView`)
-    assert.match(out, new RegExp(`data-atlas-face="${id}"`), `${id}: its body is its picture`)
+    assert.match(out, new RegExp(`class="plate-held-mark" data-device="atlas-earth:${id}"`), `${id} stands as its mark: every setting in the pool, full size in a pane`)
   }
+  assert.doesNotMatch(out, /data-device-size="compact"/, 'no device plate is boxed inside the instrument')
   const order = ['techne:m0', 'techne:m1', 'techne:m2', 'techne:m3', 'techne:m4', 'techne:m5'].map(id => out.indexOf(`data-instrument="${id}"`))
   assert.ok(order.every((at, index) => at >= 0 && (index === 0 || at > order[index - 1])), 'the six stand in their order')
   for (const id of ['techne:m1', 'techne:m2', 'techne:m3', 'techne:m4', 'techne:m5']) {

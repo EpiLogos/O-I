@@ -187,8 +187,10 @@ test('ported, not recreated: one sender, the same builders, the Studio draws the
   assert.match(stage, /const why = sender\.reason \?\? blocked \?\? null/, 'the shared reason wins over a control\'s own, as before')
   const studioSource = await source('components/expressions/studio/ExpressionsStudio.tsx')
   assert.match(studioSource, /const chrome = useHostedChrome\(\)\s*const stage = useStageSender\(chrome\?\.state \?\? null, chrome\?\.run \?\? null\)/)
-  // T-FRAME-CHROME-ONTO-PLATES: Tools stands the work's own acts and the frame's tools no other device carries before the stage's view.
-  assert.match(studioSource, /if \(section\.id === 'studio:tools'\) parts\.push\(<FrameControls key="frame-work"[^\n]*\n\s*<FrameControls key="frame-tools"[^\n]*<StageViewTools key="stage" sender=\{stage\} \/>\)/)
+  // T-FRAME-CHROME-ONTO-PLATES: Tools stands the frame's tools no other device carries before the stage's view; the work's own acts
+  // (Save, Undo, Redo) stand in the Studio's head, where the mockup draws Save (lane E, InstrumentPlate `head`).
+  assert.match(studioSource, /if \(section\.id === 'studio:tools'\) parts\.push\(<FrameControls key="frame-tools"[^\n]*\n\s*<StageViewTools key="stage" sender=\{stage\} \/>\)/)
+  assert.match(studioSource, /const work = frameAt\('work'\)[\s\S]*<FrameControls label="Work" controls=\{work\} view=\{frame\} \/>[\s\S]*head=\{head\}/, 'Save, Undo and Redo in the head')
   assert.match(studioSource, /if \(section\.id === 'studio:capture'\) parts\.push\(<StageCaptureTools key="stage" sender=\{stage\} \/>\)/)
   // The centre residence's strip (components/NativeStageTools.tsx) drew the same two bodies; it was drawn by nothing and was deleted on
   // 15 Oct (FOUNDATION §7), so the Studio is the one place the stage's controls stand.

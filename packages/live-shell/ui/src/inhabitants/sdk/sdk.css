@@ -84,6 +84,18 @@
   text-overflow: ellipsis;
 }
 
+/* The device's own acts in its head (FacePlate `extra`): at the right, before the marks. */
+.sdk-face__extra {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  margin-left: auto;
+  min-width: 0;
+}
+
+.sdk-face__extra + .sdk-face__x { margin-left: 6px; }
+
 .sdk-face__x {
   display: flex;
   align-items: center;

@@ -6,12 +6,15 @@
 // sent back as one `chrome` command through the frame's one runner, which presses the frame's own control: nothing here holds a value of
 // a control, re-implements one, or reaches into the frame.
 //
-// Drawn in the device craft (owner, 15 Oct: "the ableton UI approach … no scrollers, no overuse of internal boxes"): a toggle is a lit
-// key, a press a key, a choice a compact menu under its name, a value a small field that commits on Enter or leaving it, a reading a
-// line of mono words — keys flow in rows at the section's width, never in a box of their own.
+// Drawn in the device craft (owner, 15 Oct: "the ableton UI approach … no scrollers, no overuse of internal boxes"; docs/dlw/DEVICE-UI.md
+// §5, the panel kit's controls, inhabitants/sdk/panel.tsx): a toggle is the kit's toggle, lit amber while the frame reads it pressed; a
+// press the kit's action; a choice the kit's chooser under its small name; a number the frame bounds a value box (a range a dial) that
+// sends on release; any other value a small field that commits on Enter or leaving it; a reading a line of mono words — keys flow in
+// rows at the section's width, never in a box of their own.
 import {useEffect, useRef, useState, type ReactNode} from 'react'
 import type {FrameChromeControl, FrameChromeHome, FrameChromeReading, FramePresentation, HostedAppState} from '@epilogos/expressions-boundary'
 import {useHostedChrome} from '../../../projections/expressionsPaneHost'
+import {OwnerDial, OwnerValueBox} from '../../../frame/devices/plateControls'
 import type {StageRun} from './StudioStage'
 import './frameChrome.css'
 
@@ -69,27 +72,36 @@ function ValueField({control, view, disabled}: {control: FrameChromeControl; vie
   // A new value from the frame replaces an unsent draft (the frame's reading stands; the draft is presentation only).
   useEffect(() => {if (field.current && document.activeElement !== field.current) field.current.value = control.value ?? ''}, [control.value])
   const commit = () => {const value = field.current?.value ?? ''; if (value !== (control.value ?? '')) view.send(control, value)}
-  return <label className="frame-chrome-field" title={hoverWords(control, view.reason)}>
-    <span className="frame-chrome-name">{keyWord(control)}</span>
-    <input ref={field} type={control.kind === 'number' ? 'number' : 'text'} defaultValue={control.value ?? ''} disabled={disabled} aria-label={control.label}
+  return <label className="dp-cell frame-chrome-field" title={hoverWords(control, view.reason)} data-i={`${control.label}|${hoverWords(control, view.reason)}`}>
+    <span className="dp-label">{keyWord(control)}</span>
+    <input ref={field} className="plate-field-input" type={control.kind === 'number' ? 'number' : 'text'} defaultValue={control.value ?? ''} disabled={disabled} aria-label={control.label}
       min={control.min} max={control.max} step={control.step} onBlur={commit} onKeyDown={event => {if (event.key === 'Enter') {event.preventDefault(); commit()}}} />
   </label>
 }
 
-/** One control of the frame, drawn by its kind. */
+/** A number the frame bounds, swept: the kit's value box or dial (inhabitants/sdk/panel.tsx), the frame's value shown, the new value sent
+ * as one press when the hand lets go (docs/dlw/DEVICE-UI.md §5.2). */
+function sweepable(control: FrameChromeControl): {min: number; max: number; step?: number} | null {
+  const min = Number(control.min), max = Number(control.max)
+  return control.min !== undefined && control.max !== undefined && Number.isFinite(min) && Number.isFinite(max) && max > min
+    ? {min, max, ...(control.step !== undefined && Number.isFinite(Number(control.step)) && Number(control.step) > 0 ? {step: Number(control.step)} : {})} : null
+}
+
+/** One control of the frame, drawn by its kind in the device craft: a toggle is the kit's toggle (amber when the frame reads it pressed),
+ * a press the kit's action, a choice its chooser under a small name, a bounded number a value box or a dial, a reading a line. */
 export function FrameControl({control, view}: {control: FrameChromeControl; view: FrameChromeView}) {
   const disabled = !!view.reason || !!control.disabled
   const words = hoverWords(control, view.reason)
   switch (control.kind) {
     case 'reading':
-      return <span className="frame-chrome-reading" data-chrome={control.id} title={control.title ?? control.label}>
+      return <span className="frame-chrome-reading" data-chrome={control.id} title={control.title ?? control.label} data-i={`${control.label}|${control.title ?? control.value ?? control.label}`}>
         {control.value && control.value !== control.label ? <><span className="frame-chrome-name">{control.label}</span> {control.value}</> : control.label}
       </span>
     case 'select': {
       const groups = [...new Set((control.options ?? []).map(option => option.group ?? ''))]
-      return <label className="frame-chrome-choice" data-chrome={control.id} title={words}>
-        <span className="frame-chrome-name">{keyWord(control)}</span>
-        <select value={control.value ?? ''} disabled={disabled} aria-label={control.label} onChange={event => view.send(control, event.target.value)}>
+      return <label className="dp-cell dp-cell--chooser frame-chrome-choice" data-chrome={control.id} title={words} data-i={`${control.label}|${words}`}>
+        <span className="dp-label">{keyWord(control)}</span>
+        <select className="dp-chooser" value={control.value ?? ''} disabled={disabled} aria-label={control.label} onChange={event => view.send(control, event.target.value)}>
           {groups.map(group => {
             const options = (control.options ?? []).filter(option => (option.group ?? '') === group).map(option => <option key={`${group}|${option.value}`} value={option.value}>{option.label}</option>)
             return group ? <optgroup key={group} label={group}>{options}</optgroup> : options
@@ -98,22 +110,29 @@ export function FrameControl({control, view}: {control: FrameChromeControl; view
       </label>
     }
     case 'color':
-      return <label className="frame-chrome-swatch" data-chrome={control.id} title={words}>
+      return <label className="dp-cell frame-chrome-swatch" data-chrome={control.id} title={words} data-i={`${control.label}|${words}`}>
         <input type="color" value={control.value || '#808080'} disabled={disabled} aria-label={control.label} onChange={event => view.send(control, event.target.value)} />
-        <span className="frame-chrome-name">{keyWord(control)}</span>
+        <span className="dp-label">{keyWord(control)}</span>
       </label>
     case 'range':
-      return <label className="frame-chrome-field" data-chrome={control.id} title={words}>
-        <span className="frame-chrome-name">{keyWord(control)}</span>
-        <input type="range" value={control.value ?? ''} min={control.min} max={control.max} step={control.step} disabled={disabled} aria-label={control.label}
-          onChange={event => view.send(control, event.target.value)} />
-      </label>
+    case 'number': {
+      const range = sweepable(control)
+      const value = Number(control.value)
+      if (!range || control.value === undefined || control.value === '' || !Number.isFinite(value)) return <span data-chrome={control.id}><ValueField control={control} view={view} disabled={disabled} /></span>
+      const scale = {min: range.min, max: range.max, ...(range.step ? {step: range.step} : {})}
+      const format = (v: number) => `${+v.toFixed(range.step && range.step < 1 ? 2 : 0)}`
+      const commit = disabled ? undefined : (v: number) => view.send(control, String(v))
+      return <span className="frame-chrome-sweep" data-chrome={control.id} title={words}>
+        {control.kind === 'range'
+          ? <OwnerDial label={keyWord(control)} does={words} value={value} def={value} scale={scale} format={format} onCommit={commit} why={disabled ? words : undefined} />
+          : <OwnerValueBox label={keyWord(control)} does={words} value={value} def={value} scale={scale} format={format} onCommit={commit} why={disabled ? words : undefined} />}
+      </span>
+    }
     case 'text':
-    case 'number':
       return <span data-chrome={control.id}><ValueField control={control} view={view} disabled={disabled} /></span>
     case 'toggle':
     case 'button':
-      return <button type="button" className="frame-chrome-key" data-chrome={control.id} disabled={disabled} title={words} data-i={`${control.label}|${words}`}
+      return <button type="button" className={`${control.kind === 'toggle' ? 'dp-toggle' : 'dp-action'} frame-chrome-key`} data-chrome={control.id} disabled={disabled} title={words} data-i={`${control.label}|${words}`}
         aria-label={control.label} aria-pressed={control.kind === 'toggle' ? !!control.pressed : undefined} onClick={() => view.send(control)}>{keyWord(control)}</button>
   }
 }
@@ -126,9 +145,15 @@ export function FrameControls({controls, view, label}: {controls: readonly Frame
   </div>
 }
 
-/** A parameter the manual names that no owner carries yet: drawn dim with why, never as a working control (the mockup's waiting rows). */
+/** A parameter the manual names that no owner carries yet: drawn as its switch with nothing lit, dim, its reason on the status line —
+ * never as a working control (the mockup's waiting rows). */
 export function WaitingRow({name, values, why}: {name: string; values: string; why: string}) {
-  return <div className="frame-chrome-waiting" data-waiting="true" title={`${name} — ${why}`}>
-    <span className="frame-chrome-name">{name}</span><span className="frame-chrome-values">{values}</span>
+  const choices = values.split(' · ').map(value => value.trim()).filter(Boolean)
+  const kind = choices.length > 5 ? 'chooser' : choices.length > 1 ? 'radio' : 'reading'
+  return <div className={`dp-cell dp-cell--${kind} frame-chrome-waiting`} data-waiting="true" title={`${name} — ${why}`} data-disabled="true" data-i={`${name}|${why}`}>
+    <span className="dp-label">{name}</span>
+    {kind === 'radio' ? <div className="dp-radio" role="radiogroup" aria-label={name}>{choices.map(choice => <button key={choice} type="button" role="radio" aria-checked={false} disabled>{choice}</button>)}</div>
+      : kind === 'chooser' ? <select className="dp-chooser" aria-label={name} value="" disabled><option value="">—</option>{choices.map(choice => <option key={choice} value={choice}>{choice}</option>)}</select>
+      : <span className="frame-chrome-values">{values}</span>}
   </div>
 }

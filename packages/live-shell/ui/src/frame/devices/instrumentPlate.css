@@ -1,21 +1,34 @@
-/* An instrument as one plate, its controls grouped in columns: the mockup's .inst / .insth / .isecs / .isec
-   (world-shell-mockup.html:352-359) drawn on the SDK's plate (inhabitants/sdk/sdk.css). Shell and SDK tokens only. */
+/* An instrument as one plate, its controls grouped in sections side by side: the mockup's .inst / .insth / .isecs / .isec
+   (world-shell-mockup.html:352-359) drawn on the SDK's plate (inhabitants/sdk/sdk.css) at the device UI standard's measures
+   (docs/dlw/DEVICE-UI.md §3: a 22 px head, a band of sections, 56 px control columns, 9 px small capitals 13 px high; §1: "Sections are
+   columns, ruled off from each other by a hairline … Nothing scrolls, and no box sits inside a box"). Shell and SDK tokens only. */
 .inst-plate { flex: none; display: flex; flex-direction: column; min-width: 0; min-height: 0; height: 100%; max-height: 100% }
 .inst-plate > .sdk-face { flex: 1 1 auto; min-height: 0; background: var(--bg-2) }
-/* The head (.insth): 22px, the plate's gradient, the ring, the mark, the name, the owner faint, the marks at the right. */
+/* The head (.insth): 22px, the plate's gradient, the ring, the mark, the name, the owner faint, the device's own acts, the marks. */
 .inst-plate > .sdk-face > .sdk-face__head { height: 22px; gap: 7px; padding: 0 7px; background: linear-gradient(var(--bg-3), var(--surface)) }
 .inst-plate > .sdk-face > .sdk-face__head .sdk-face__title { font-weight: 500 }
 .inst-plate > .sdk-face > .sdk-face__head .sdk-face__owner { font-size: 9.5px }
 .inst-plate > .sdk-face > .sdk-face__head .sdk-face__x { gap: 8px }
 
-/* The sections (.isecs, .isec): a row of columns, each ruled off from the next; the last takes what is left. */
-.inst-sections { flex: 1 1 auto; display: flex; min-height: 0; min-width: 0; overflow-x: auto; overflow-y: hidden }
-.inst-section { flex: none; width: var(--section-w, auto); min-width: 0; display: flex; flex-direction: column; gap: 6px; padding: 6px 8px; border-right: 1px solid var(--line); overflow: hidden }
+/* The sections (.isecs, .isec): one row of columns at the widths their controls take, each ruled off from the next by a hairline. The
+   row never scrolls: what does not fit folds to its title (plateFit.ts). */
+.inst-sections { flex: 1 1 auto; display: flex; min-height: 0; min-width: 0; overflow: hidden }
+.inst-section { flex: none; width: var(--section-w, auto); min-width: 0; display: flex; flex-direction: column; gap: 4px; padding: 5px 6px 6px; border-right: 1px solid var(--line); overflow: hidden }
 .inst-section:last-child { border-right: none; flex: 1 0 auto }
-.inst-section-head { flex: none; margin: 0; display: flex; justify-content: space-between; gap: 8px; font-weight: 400; font-size: 9.5px; line-height: 1.3; color: var(--text-faint); letter-spacing: .06em; text-transform: uppercase; white-space: nowrap }
-.inst-section-note { color: var(--text-faint); letter-spacing: .02em; text-transform: none }
-.inst-section-body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 6px; overflow: hidden auto }
-.inst-section-line { margin: 0; max-width: 24ch; font-size: 10.5px; line-height: 1.5; color: var(--text-faint) }
+.inst-section-head { flex: none; height: 13px; margin: 0; display: flex; align-items: center; justify-content: space-between; gap: 8px; font-weight: 400; font-size: 9px; line-height: 13px;
+  color: var(--text-faint); letter-spacing: .07em; text-transform: uppercase; white-space: nowrap; overflow: hidden }
+.inst-section-head > :first-child { flex: none }
+.inst-section-note { min-width: 0; overflow: hidden; text-overflow: ellipsis; color: var(--text-faint); letter-spacing: .02em; text-transform: none; font-size: 9.5px }
+/* The body never scrolls: a list pages (plateControls.tsx PlateRows), a section too wide folds. */
+.inst-section-body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 5px; overflow: hidden }
+.inst-section-body > * { flex: none }
+/* Control columns (DEVICE-UI §3 "Control column 56 wide"): dials and toggles side by side; a radio, a list, a chooser, a field or a line
+   across the section. */
+.inst-section-body[data-cols] { display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); gap: 5px 0; align-content: start; justify-items: center }
+.inst-section-body[data-cols] > :is(.dp-cell--radio, .dp-cell--rows, .dp-cell--chooser, .dp-cell--wide, .plate-field, .plate-line, .plate-span, .inst-section-line, .frame-chrome, .inst-devices, p) { grid-column: 1 / -1; justify-self: stretch }
+.inst-section-body[data-cols] > .plate-half { grid-column: span 2; justify-self: stretch }
+/* A group's line when its owner discloses nothing: short, faint, three lines at most; its whole words on the status line. */
+.inst-section-line { margin: 0; max-width: 30ch; font-size: 10px; line-height: 1.4; color: var(--text-faint); display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden }
 /* A column folded to its title: the runtime's fold strip (sdk.css .sdk-face__unfold; the mockup's .ifold, :153), 26px wide, its
    name read upward, pressed to open. An open column that can fold carries its title as the press. */
 .inst-section--folded { width: 26px; padding: 0; gap: 0 }
@@ -26,13 +39,17 @@
 .inst-section-fold:hover { color: var(--text) }
 .inst-section-fold:focus-visible, .inst-section--folded > .sdk-face__unfold:focus-visible { outline: 1px solid var(--accent); outline-offset: 1px }
 
+/* The device's own acts in the head: a short state, then its keys (the mockup's Studio head: "edited since save", Save). */
+.inst-plate .sdk-face__extra { font-size: 10px; color: var(--text-dim) }
+.inst-plate .sdk-face__extra .dp-toggle, .inst-plate .sdk-face__extra .dp-action, .inst-plate .sdk-face__extra .frame-chrome-key { height: 16px }
+
 /* A section's devices: the selector of marks (one per device it holds), then the shown device drawn flat into the column — its
    own head (ring, name, marks) stays, the plate's frame stands down so the column reads as one group. */
 .inst-devices { display: flex; flex-direction: column; gap: 4px; min-width: 0 }
-.inst-selector { display: flex; flex-wrap: wrap; gap: 2px }
-.inst-selector-mark { position: relative; display: inline-grid; place-items: center; width: 22px; height: 18px; padding: 0; background: var(--bg-1); border: 1px solid var(--line); color: var(--text-faint); cursor: pointer }
+.inst-selector { display: flex; flex-wrap: wrap; gap: 0 }
+.inst-selector-mark { position: relative; display: inline-grid; place-items: center; width: 20px; height: 16px; padding: 0; background: none; border: 0; border-bottom: 1px solid transparent; color: var(--text-faint); cursor: pointer }
 .inst-selector-mark:hover { color: var(--text) }
-.inst-selector-mark[aria-selected="true"] { border-color: var(--accent); color: var(--text) }
+.inst-selector-mark[aria-selected="true"] { border-bottom-color: var(--accent); color: var(--text) }
 .inst-selector-mark:focus-visible { outline: 1px solid var(--accent); outline-offset: 1px }
 /* The device's light on its mark: lit only when the owner reports on (a reading, never a default). */
 .inst-selector-mark[data-device-light="on"]::after { content: ''; position: absolute; right: 2px; top: 2px; width: 4px; height: 4px; border-radius: 50%; background: var(--accent) }

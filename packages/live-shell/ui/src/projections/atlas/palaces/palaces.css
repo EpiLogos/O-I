@@ -40,23 +40,13 @@
 .palace-steps text { font-size: 9.5px; fill: var(--tower); text-anchor: middle; font-family: var(--font-ui) }
 .palace-marquee { fill: var(--accent-soft); stroke: var(--accent); stroke-dasharray: 4 3 }
 
-/* the M5 plate: the M4 plate's rows (placesPlate.css), and what only a palace has */
-[data-palace-plate] .inst-section-body { gap: 4px }
-[data-palace-plate] .inst-section-body > * { flex: none }
-.places-list--rooms { max-height: 128px }
-.places-list--whole { max-height: 150px }
-.palace-room-row { cursor: pointer }
-.palace-room-row[data-focused="true"] { border-color: var(--accent-dim); color: var(--text) }
-.palace-room-row[data-kind="region"] .n { color: var(--tower) }
-.palace-room-acts { flex: none; display: inline-flex; gap: 1px }
-.palace-room-acts button { width: 14px; height: 14px; font-size: 9.5px; color: var(--text-dim); background: var(--bg-2) }
-.palace-room-acts button:hover:not(:disabled) { color: var(--text) }
-.palace-whole-region { display: flex; flex-direction: column; gap: 2px }
-.palace-whole-region + .palace-whole-region { margin-top: 3px; padding-top: 3px; border-top: 1px solid var(--line) }
-.palace-standing { flex: none; margin-left: 4px; padding: 0 3px; font-size: 8.5px; color: var(--text-faint); border: 1px solid var(--line-strong) }
-.palace-standing[data-standing="warranted"] { color: var(--green); border-color: var(--green) }
-.palace-standing[data-standing="owner"] { color: var(--sel); border-color: var(--sel) }
-.places-item[data-walk-focus="true"] { border-color: var(--accent-dim); color: var(--text) }
-.palace-guide { color: var(--tower) }
-.palace-plate-line { margin: 0; padding: 3px 10px 4px; border-top: 1px solid var(--line) }
-.palace-ground .n { color: var(--text) }
+/* the M5 plate (PalacePlate.tsx): rows and switches of the plate's controls (frame/devices/plateControls.css); what only a palace has */
+.palace-room-n { width: 14px; text-align: right; flex: none }
+.palace-standing-mark { flex: none; width: 7px; height: 7px; border-radius: 50%; border: 1px solid var(--text-faint) }
+.palace-standing-mark[data-standing="warranted"] { background: var(--green); border-color: var(--green) }
+.palace-standing-mark[data-standing="owner"] { background: var(--sel); border-color: var(--sel) }
+.palace-entry-indent { flex: none; width: 8px }
+.palace-entry-indent[data-walk-focus="true"] { box-shadow: inset 2px 0 0 var(--accent-dim) }
+.palace-compose-act { width: auto !important; padding: 0 3px !important; color: var(--sel) !important }
+.plate-line[data-tone="guide"] { color: var(--tower) }
+.palace-plate-line { padding: 2px 8px 3px; border-top: 1px solid var(--line) }
