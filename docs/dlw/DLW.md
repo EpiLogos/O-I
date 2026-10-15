@@ -827,61 +827,14 @@ up. It cannot approve its own work.
 *The Truth's as much what ever was*
 *As what's ever anew.*
 
-## 14. A day
-
-You have a talk to give on Friday, about how your city has lived with its
-river, and the material is everywhere: forty notes taken over two months, a
-folder of scanned maps, a half-finished outline, and a small website that is
-meant to go with the talk and won't build.
-
-Your planet is turning when you open the DLW, and the day has already started
-a page for itself. In Central you open yesterday's notes beside the outline.
-Each note links to others, and the backlinks show you which ones the outline
-never mentions; two of them belong in the second section. You rewrite a
-paragraph, highlight a claim about the 1953 flood that you can't source, and
-tag it with the alias for your research agent. A few minutes later the answer
-is in the page: a council report and a newspaper archive, each linked to the
-line it supports, and a note that the date in your draft is wrong.
-
-The website can't wait. In Factory you describe what is broken and what you
-want — the map page loading the new scans, the build passing, nothing pushed
-until you have looked. An agent takes the task, reads the code, finds the
-failing test and makes the change. You keep half an eye on its thread while
-you work on the outline, and when the diff comes back with the tests green you
-read it line by line, ask for one rename, and let it land.
-
-The outline still doesn't hold. You pull every note onto the canvas and drag
-them into clusters until three groups make sense, then draw a line from the
-flood to the barrier built thirty years later, and the shape of the talk
-appears. On the timeline the same notes fall into order, each marked for how
-sure you can be of it. The knowledge graph shows a note on the old ferry
-crossing that nothing links to, and you link it.
-
-A talk is a walk. You set its stops along the river on the map — the old
-quay, the flood line painted on the church wall, the barrier — and for each
-stop you build a scene in Expressions: a scanned map filling with water at
-the speed it rose, the names of the streets that went under surfacing as the
-field darkens, a low tone beneath it that climbs with the water. Play the walk
-and the talk runs stop by stop.
-
-A colleague who works on the same coast has shown part of their world in the
-field. Most of it is clouded, but their survey of the 1953 tide readings is
-open, and the agent that keeps it gives you the reading for your second stop.
-It arrives in your walk under your colleague's name.
-
-Then the day closes. Its page is already written: the notes you changed, the
-claim you sourced, the fix that landed, the new outline, the walk. You add two
-lines about what still bothers you in the second section. On Friday you press
-Play, and the room walks the river with you.
-
-## 15. What the game warns
+## 14. What the game warns
 
 Hesse wrote the game's decline into its history, and three of his warnings
 apply to anything built in its image.
 
 A form can grow more beautiful than what it carries, and then it is glass.
-The DLW meets that by playing the day in Chapter 14: whatever cannot do its
-part in that day is ornament.
+The DLW meets that by asking of every part what work it does in a real day:
+whatever cannot do its part is ornament.
 
 A device that judges for the player — scores the scene, picks the reading —
 takes the silence away. The DLW's companions answer and explain; you decide.
@@ -894,7 +847,7 @@ taught, work landed, an expression shown, a reader who understood, a pupil
 who no longer needs the teacher. Hesse's novel ends with its Magister leaving
 the Order to teach a single pupil.
 
-## 16. Still to decide
+## 15. Still to decide
 
 - What the units of time beyond the day are — a week, a season, a year — and
   how they close.
