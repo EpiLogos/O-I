@@ -108,16 +108,29 @@ test('a pane concealed before its module stands is told once, at mount, and neve
   session.dispose();
 });
 
+const slowEarth = log => ({
+  id: 'slow-earth', kind: 'projection.earth',
+  create() {
+    log.push('create');
+    return new Promise(resolve => setTimeout(() => resolve({setVisible() { log.push('visible'); }, unmount() { log.push('unmount'); }}), 5));
+  },
+});
+
+test('a session disposed before its module began to mount never mounts it, and no fault is raised', async () => {
+  // React's development double-invoke disposes the first session in the task that made it; mounting its module anyway built the
+  // Earth's whole globe only to lose its WebGL context as soon as it stood (ticket D, measured headless on software GL: 15–40 s on the main thread).
+  const log = [];
+  const session = new ProjectionPaneSession(slowEarth(log), context, message => log.push(`fault:${message}`));
+  session.dispose();
+  await session.ready;
+  session.setVisible(false);
+  assert.deepEqual(log, []);
+});
+
 test('a session disposed while its module is still mounting unmounts the late module once, and no fault is raised', async () => {
   const log = [];
-  const registration = {
-    id: 'slow-earth', kind: 'projection.earth',
-    create() {
-      log.push('create');
-      return new Promise(resolve => setTimeout(() => resolve({setVisible() { log.push('visible'); }, unmount() { log.push('unmount'); }}), 5));
-    },
-  };
-  const session = new ProjectionPaneSession(registration, context, message => log.push(`fault:${message}`));
+  const session = new ProjectionPaneSession(slowEarth(log), context, message => log.push(`fault:${message}`));
+  await Promise.resolve(); // the module has begun to mount
   session.dispose();
   await session.ready;
   session.dispose();
