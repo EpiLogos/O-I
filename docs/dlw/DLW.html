@@ -107,6 +107,8 @@ figure.ui figcaption{font-size:12.5px;color:var(--dim);padding:8px 12px;border-t
 <li class="toc-part"><a href="#part-three-the-catalogue">Part Three — The catalogue</a></li>
 <li><a href="#16-how-devices-work">16. How devices work</a></li>
 <li><a href="#17-central">17. Central</a></li>
+<li><a href="#18-factory-and-the-agent-chain">18. Factory and the agent chain</a></li>
+<li><a href="#19-widgets">19. Widgets</a></li>
 </ol>
 </nav>
 <main><article>
@@ -3764,6 +3766,4543 @@ use it, type <code>@name</code>. A <code>?</code> in the search is a gap that th
 <li>To pick the right agent for a task, read the character line on each card.</li>
 <li>To find out who wrote an entry, select the name of its author.</li>
 <li>To change who an agent is, say what you want changed and accept the new profile when it is proposed.</li>
+</ul>
+<h2 id="18-factory-and-the-agent-chain"><a class="anchor" href="#18-factory-and-the-agent-chain" aria-hidden="true">#</a>18. Factory and the agent chain</h2>
+<p>Factory is where you work with AI agents. Each agent session is a track. Its chain is the road the work travels: in through a gateway, to the agent, through its skills, into the part of the world it may touch, and out where its work lands. You set how much an agent decides alone, what it may read and write, and what waits for your approval. The agent does not write behind your back, and every write carries a receipt.</p>
+<h3 id="18-1-gateway"><a class="anchor" href="#18-1-gateway" aria-hidden="true">#</a>18.1 Gateway</h3>
+<p><strong>Product:</strong> Actuation · <strong>Kind:</strong> effect · <strong>Chain:</strong> first device on a Factory session&#39;s chain</p>
+<p>You need to decide how an agent reaches its harness, when it must ask you, and when a silent agent counts as stalled. The Gateway is the way in to the session.</p>
+<figure class="ui"><iframe src="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" loading="lazy" style="height:720px" sandbox="allow-scripts allow-same-origin" title="The session's chain in Device view. The Gateway is the first device on the left, with its link diagram and three controls. Click a Transport or Approvals value to change it. Select a session under Fizz to see the folded Gateway."></iframe><figcaption>The session's chain in Device view. The Gateway is the first device on the left, with its link diagram and three controls. Click a Transport or Approvals value to change it. Select a session under Fizz to see the folded Gateway. · <a href="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<h4 id="the-link-diagram"><a class="anchor" href="#the-link-diagram" aria-hidden="true">#</a>The link diagram</h4>
+<p>The diagram shows the shell on the left and the harness on the right. Dots on the line are frames in flight. A dot moves faster when more turns run. The arc around the harness is the replay ring. The outer pulse is the heartbeat. Under the diagram, the readout shows the epoch, the last sequence number, the number of peers and the age of the last heartbeat. A new epoch means the gateway restarted, and the shell syncs again.</p>
+<p>A child session shows a folded Gateway that reads &quot;via lead&quot;. It uses the connection of the session that spawned it.</p>
+<h4 id="parameters-15"><a class="anchor" href="#parameters-15" aria-hidden="true">#</a>Parameters</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Connect</td>
+<td>On · Off</td>
+<td>On</td>
+<td>Attaches or detaches the session. A detached session keeps running and attaches again later.</td>
+</tr>
+<tr>
+<td>Transport</td>
+<td>Local · Network · Remote</td>
+<td>Local</td>
+<td>How the shell reaches the harness. Local is a trusted child process. Network uses a token. Remote uses a short-lived ticket and goes through a connected machine.</td>
+</tr>
+<tr>
+<td>Approvals</td>
+<td>Ask · Session · Always</td>
+<td>Ask</td>
+<td>The default answer to an approval request: ask you each time, allow for this session, or allow always. You always give Deny yourself.</td>
+</tr>
+<tr>
+<td>Stall after</td>
+<td>30 s · 90 s · 5 min · 30 min</td>
+<td>90 s</td>
+<td>The time without progress, with work pending, after which the session counts as stalled and Retry lights.</td>
+</tr>
+<tr>
+<td>Submit</td>
+<td>One at a time · Queue (up to 32)</td>
+<td>One at a time</td>
+<td>Whether the harness takes one message at a time or holds a queue.</td>
+</tr>
+<tr>
+<td>Auto-continue</td>
+<td>On (up to 15 min) · Off</td>
+<td>On</td>
+<td>Lets the gateway continue a turn that stopped on its own, for up to 15 minutes.</td>
+</tr>
+<tr>
+<td>Fan-out</td>
+<td>0–8 observers</td>
+<td>2</td>
+<td>The number of observers allowed per session. A slow observer loses only its own feed.</td>
+</tr>
+<tr>
+<td>Readiness</td>
+<td>Ready · Composed · Refused (reading)</td>
+<td>Read from the harness</td>
+<td>Shows the state of the harness: its database, its settings, its model and its disk.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="presentations-15"><a class="anchor" href="#presentations-15" aria-hidden="true">#</a>Presentations</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Presentation</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>The title &quot;Gateway&quot; and the harness name. A child session shows &quot;via lead&quot;.</td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>The link diagram. Four macros: Transport, Approvals, Stall after, Connect.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>All parameters, in four groups: Link, Approval, Liveness, Readiness.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>The frame monitor, in a pane. See the Frames monitor.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>The link diagram, the readiness state and a count of frames in flight. Click it to open the Frames widget.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="transport-15"><a class="anchor" href="#transport-15" aria-hidden="true">#</a>Transport</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Control</th>
+<th>Effect on the Gateway</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Link</td>
+<td>Joins the sessions of this gateway to agents on other machines and harnesses.</td>
+</tr>
+<tr>
+<td>Tap</td>
+<td>Asks every running agent for a status line now. The answers arrive through the gateway.</td>
+</tr>
+<tr>
+<td>Metronome</td>
+<td>Sets the heartbeat. Each check-in moves the needle of its thread. A needle that stops is a stall.</td>
+</tr>
+<tr>
+<td>Rate</td>
+<td>Shows how fast the agents write through the gateway.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="to-use-the-gateway"><a class="anchor" href="#to-use-the-gateway" aria-hidden="true">#</a>To use the Gateway</h4>
+<ol>
+<li>Select a session track. Open Device view.</li>
+<li>Check the light on the Gateway title. A lit light means the harness reports it is ready.</li>
+<li>Choose a Transport. Choose Remote only for an agent on another machine.</li>
+<li>Choose how the agent asks you. Choose Ask for new work. Choose Session for work you trust.</li>
+<li>Turn Stall after to a time that fits the work. Use a long time for slow tools.</li>
+<li>Click the arrow on the Gateway title to open the Frames monitor.</li>
+</ol>
+<h4 id="rules-15"><a class="anchor" href="#rules-15" aria-hidden="true">#</a>Rules</h4>
+<ul>
+<li>The light shows a reading. It is dark when the harness does not report a state.</li>
+<li>Deny is always yours. No setting gives it away.</li>
+<li>Settings that the harness refuses to change show as read-only, with the reason.</li>
+<li>A session that detaches keeps running in its harness. Connect attaches it again.</li>
+</ul>
+<h4 id="tips-15"><a class="anchor" href="#tips-15" aria-hidden="true">#</a>Tips</h4>
+<ul>
+<li>To keep a slow build from being flagged, set Stall after to 5 min for that session.</li>
+<li>To see what a stalled session did last, open the Frames monitor and filter to that session.</li>
+<li>To let a trusted agent work without prompts, set Approvals to Session before you press Play.</li>
+</ul>
+<h3 id="18-2-gateways-rack"><a class="anchor" href="#18-2-gateways-rack" aria-hidden="true">#</a>18.2 Gateways rack</h3>
+<p><strong>Product:</strong> Actuation · <strong>Kind:</strong> rack · <strong>Track:</strong> Factory&#39;s Main track</p>
+<p>You need to see every gateway your work can reach, and what state each is in. The Gateways rack lists them as chains, so you can see which one a session uses.</p>
+<figure class="ui"><iframe src="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" loading="lazy" style="height:720px" sandbox="allow-scripts allow-same-origin" title="Select the Main track in Session view, then open Device view. The Gateways rack is the first device. Each row has a dot:green is ready, amber is composed, faint is refused."></iframe><figcaption>Select the Main track in Session view, then open Device view. The Gateways rack is the first device. Each row has a dot:green is ready, amber is composed, faint is refused. · <a href="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<h4 id="the-chains"><a class="anchor" href="#the-chains" aria-hidden="true">#</a>The chains</h4>
+<p>The rack has four chains. Three gateways have similar names, and each keeps its own row.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Chain</th>
+<th>What it reaches</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Hermes gateway</td>
+<td>The Hermes harness on this machine, over a local socket or a network link.</td>
+</tr>
+<tr>
+<td>AIKit agency gateway</td>
+<td>The agents that AIKit attaches. It carries messages from you to an agent, and from one agent to another.</td>
+</tr>
+<tr>
+<td>Actuation gateway</td>
+<td>The Actuation service on another machine of yours.</td>
+</tr>
+<tr>
+<td>Remote carrier</td>
+<td>The connected machine that carries a remote session. See the Remote carrier.</td>
+</tr>
+</tbody></table>
+</div>
+<p>Each chain shows its transport and its state. The state comes from a reading. The rack does not assume it.</p>
+<h4 id="parameters-16"><a class="anchor" href="#parameters-16" aria-hidden="true">#</a>Parameters</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Chain</td>
+<td>Hermes · AIKit agency · Actuation · Remote carrier</td>
+<td>Hermes</td>
+<td>The selector. It chooses the chain whose gateway the whole rack shows.</td>
+</tr>
+<tr>
+<td>Chain state</td>
+<td>Ready · Composed · Refused (reading)</td>
+<td>Read from each gateway</td>
+<td>Shows whether the gateway can carry a session now.</td>
+</tr>
+<tr>
+<td>Fan-out</td>
+<td>0–8 observers</td>
+<td>2</td>
+<td>The observers allowed per session. A slow observer loses only its own feed.</td>
+</tr>
+<tr>
+<td>Open</td>
+<td>Per chain</td>
+<td>—</td>
+<td>Opens that gateway in a pane.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="presentations-16"><a class="anchor" href="#presentations-16" aria-hidden="true">#</a>Presentations</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Presentation</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>The title &quot;Gateways&quot; and the number of ready chains.</td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>The four chains with their state dots. One macro: Fan-out.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>All parameters, in two groups: Chains, Observers.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>The selected gateway in a pane, with its frames and readiness.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>One line per chain with its state dot.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="transport-16"><a class="anchor" href="#transport-16" aria-hidden="true">#</a>Transport</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Control</th>
+<th>Effect on the Gateways rack</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Link</td>
+<td>Adds the gateways of other machines to the rack.</td>
+</tr>
+<tr>
+<td>Tap</td>
+<td>Asks every ready gateway for a status line.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="to-use-the-gateways-rack"><a class="anchor" href="#to-use-the-gateways-rack" aria-hidden="true">#</a>To use the Gateways rack</h4>
+<ol>
+<li>Select the Main track. Open Device view.</li>
+<li>Read the dot of each chain. Green means a session can use it now.</li>
+<li>Click a chain to show it whole in the pool.</li>
+<li>Click the arrow on a chain to open that gateway in a pane.</li>
+</ol>
+<h4 id="rules-16"><a class="anchor" href="#rules-16" aria-hidden="true">#</a>Rules</h4>
+<ul>
+<li>A chain in the Composed state is declared and not in use. The rack shows it as it is.</li>
+<li>A Refused chain names the reason. The reason stays visible.</li>
+<li>Chains with similar names stay as separate rows. The rack does not merge them.</li>
+</ul>
+<h4 id="tips-16"><a class="anchor" href="#tips-16" aria-hidden="true">#</a>Tips</h4>
+<ul>
+<li>To find out why a remote session does not start, read the state of the Remote carrier chain first.</li>
+<li>To check that two machines share one ledger, turn Link on and look for the second gateway in the rack.</li>
+</ul>
+<h3 id="18-3-agent"><a class="anchor" href="#18-3-agent" aria-hidden="true">#</a>18.3 Agent</h3>
+<p><strong>Product:</strong> Actuation · <strong>Kind:</strong> instrument · <strong>Chain:</strong> second device on a Factory session&#39;s chain</p>
+<p>You need an agent that works on your task at the pace, effort and budget you choose. The Agent device is that agent. It answers, it works through its tasks, and you can steer it while it runs.</p>
+<figure class="ui"><iframe src="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" loading="lazy" style="height:720px" sandbox="allow-scripts allow-same-origin" title="The Agent device is the second card in Device view, with the agent's face, its state and four knobs. Click the title to open it whole. Click the arrow to open the thread in a pane. Click a task in Session view to see its log in Clip view."></iframe><figcaption>The Agent device is the second card in Device view, with the agent's face, its state and four knobs. Click the title to open it whole. Click the arrow to open the thread in a pane. Click a task in Session view to see its log in Clip view. · <a href="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<h4 id="one-face-three-owners"><a class="anchor" href="#one-face-three-owners" aria-hidden="true">#</a>One face, three owners</h4>
+<p>The Agent device shows one face and joins settings from three places. Actuation owns the model, effort, budget, heartbeat and input. Software Factory owns autonomy and the review gate. See Custody. Central owns who the agent is. The agent comes from your roster, so no crowd is fixed in advance.</p>
+<h4 id="parameters-17"><a class="anchor" href="#parameters-17" aria-hidden="true">#</a>Parameters</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Power</td>
+<td>On · Benched</td>
+<td>On</td>
+<td>Benched keeps the agent on the chain but gives it no work.</td>
+</tr>
+<tr>
+<td>Agent</td>
+<td>A name from your roster</td>
+<td>The seated agent</td>
+<td>Shows who the agent is. Drag another agent from the browser to replace it.</td>
+</tr>
+<tr>
+<td>Model</td>
+<td>The models the harness offers</td>
+<td>The harness default</td>
+<td>The model for this session. A group can set another model for its subagents.</td>
+</tr>
+<tr>
+<td>Harness</td>
+<td>The harnesses found on this machine</td>
+<td>The one the gateway uses</td>
+<td>The program that runs the agent.</td>
+</tr>
+<tr>
+<td>Effort</td>
+<td>Low · Medium · High · Max</td>
+<td>Medium</td>
+<td>How hard the agent thinks in each turn. A task can set its own effort.</td>
+</tr>
+<tr>
+<td>Budget</td>
+<td>1–40 turns</td>
+<td>12</td>
+<td>The turns allowed for one task. The device shows the turns used.</td>
+</tr>
+<tr>
+<td>Heartbeat</td>
+<td>On · Off, with a beat in seconds</td>
+<td>On, 15 s</td>
+<td>The agent checks in on each beat. Each check-in moves its needle.</td>
+</tr>
+<tr>
+<td>Input</td>
+<td>Steer · Queue</td>
+<td>Steer</td>
+<td>Steer: what you send reaches the turn that runs. Queue: it waits as the next task.</td>
+</tr>
+<tr>
+<td>On stall</td>
+<td>Ask · Retry once · Stop</td>
+<td>Ask</td>
+<td>What the device does when the session stalls.</td>
+</tr>
+<tr>
+<td>Autonomy</td>
+<td>Suggest · Review · Auto</td>
+<td>Review</td>
+<td>Shown here. Custody sets it.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="presentations-17"><a class="anchor" href="#presentations-17" aria-hidden="true">#</a>Presentations</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Presentation</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>The agent&#39;s name and a power light.</td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>The agent&#39;s face. It spins while the agent works. It also shows turns used, turns allowed and state. Four macros: Autonomy, Effort, Budget, Input.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>All parameters, in four groups: Identity, Effort, Liveness, Input.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>The thread, in a pane: your messages, the agent&#39;s messages, tool rows, steer lines, proposal cards and the stall card. Controls stay in Device view.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>The agent you are talking to: its thread, its state and a composer.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="transport-17"><a class="anchor" href="#transport-17" aria-hidden="true">#</a>Transport</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Control</th>
+<th>Effect on the Agent</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Tempo ‹ ›</td>
+<td>Sets the effort of the selected agent.</td>
+</tr>
+<tr>
+<td>Time signature</td>
+<td>Shows turns used of turns allowed.</td>
+</tr>
+<tr>
+<td>Metronome</td>
+<td>Turns the heartbeat on or off.</td>
+</tr>
+<tr>
+<td>Quantize</td>
+<td>Sets when Stop and Steer land: now, at the next tool, or at the next turn.</td>
+</tr>
+<tr>
+<td>Play</td>
+<td>Runs the selected task, or every queued task.</td>
+</tr>
+<tr>
+<td>Stop</td>
+<td>Pauses at the next safe point and keeps what the agent has in mind. Press twice to cancel the turn.</td>
+</tr>
+<tr>
+<td>Record</td>
+<td>Speaks a new task onto the armed track.</td>
+</tr>
+<tr>
+<td>Overdub</td>
+<td>Switches Input between Steer and Queue.</td>
+</tr>
+<tr>
+<td>Load</td>
+<td>Shows how full the agent&#39;s context is.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="to-use-the-agent"><a class="anchor" href="#to-use-the-agent" aria-hidden="true">#</a>To use the Agent</h4>
+<ol>
+<li>Drag an agent from the browser onto an empty track. The agent takes the seat.</li>
+<li>Select the track. Open Device view.</li>
+<li>Choose Effort and Budget. Use a low budget for a short task.</li>
+<li>Type the task in the composer. Press Enter to run it.</li>
+<li>To change course, type a note and press Option-Enter. The agent hears it at the next safe point.</li>
+<li>Click the arrow on the title to read the thread.</li>
+</ol>
+<h4 id="rules-17"><a class="anchor" href="#rules-17" aria-hidden="true">#</a>Rules</h4>
+<ul>
+<li>The light on the title is a reading. It is lit only when the harness reports the agent is on.</li>
+<li>Subagents get their own chains. They share the lead&#39;s gateway and git seat.</li>
+<li>A stopped needle means a stall. The track lights Retry. The stall card names what the last tool waits for.</li>
+<li>A value moved by an agent shows that agent&#39;s name.</li>
+</ul>
+<h4 id="tips-17"><a class="anchor" href="#tips-17" aria-hidden="true">#</a>Tips</h4>
+<ul>
+<li>To cut cost on a simple task, lower Effort and Budget before you press Play.</li>
+<li>To add a note without a break in the turn, set Input to Steer.</li>
+<li>To queue several jobs for one agent, set Input to Queue and send each job as its own task.</li>
+</ul>
+<h3 id="18-4-experiment"><a class="anchor" href="#18-4-experiment" aria-hidden="true">#</a>18.4 Experiment</h3>
+<p><strong>Product:</strong> Actuation · <strong>Kind:</strong> instrument · <strong>Track:</strong> any Factory track; Arrangement view draws it as a track of its own</p>
+<p>You need to find out which setup of agents works best, and to keep the evidence. An Experiment is a declared run: you state the question, what varies and what to record. The device then runs it and keeps the readings.</p>
+<h4 id="the-declared-run"><a class="anchor" href="#the-declared-run" aria-hidden="true">#</a>The declared run</h4>
+<p>An Experiment holds five statements. The question says what you want to learn. The variable says what changes between runs, such as the model, the effort or the skills. The agents say who takes part. The stop condition says when the run ends. The readings say what to record. Once you press Play, the statements do not change. A change starts a new Experiment.</p>
+<h4 id="parameters-18"><a class="anchor" href="#parameters-18" aria-hidden="true">#</a>Parameters</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Question</td>
+<td>Text</td>
+<td>Empty</td>
+<td>The question the run answers.</td>
+</tr>
+<tr>
+<td>Variable</td>
+<td>Model · Effort · Skillset · Budget · Autonomy</td>
+<td>Effort</td>
+<td>The setting that changes from one run to the next.</td>
+</tr>
+<tr>
+<td>Levels</td>
+<td>2–8 values</td>
+<td>Two</td>
+<td>The values the variable takes. Each value is one run.</td>
+</tr>
+<tr>
+<td>Agents</td>
+<td>One or more sessions</td>
+<td>The selected session</td>
+<td>The sessions that take part.</td>
+</tr>
+<tr>
+<td>Repeats</td>
+<td>1–20</td>
+<td>3</td>
+<td>The number of runs for each level.</td>
+</tr>
+<tr>
+<td>Stop when</td>
+<td>Turn cap · Time cap · Task done · Test pass</td>
+<td>Task done</td>
+<td>The condition that ends each run.</td>
+</tr>
+<tr>
+<td>Readings</td>
+<td>Tokens · Time · Tool calls · Test results · Spend · Stalls</td>
+<td>Tokens, Time</td>
+<td>What the Experiment records on each beat.</td>
+</tr>
+<tr>
+<td>Beat</td>
+<td>5 s–5 min</td>
+<td>15 s</td>
+<td>How often a reading is taken.</td>
+</tr>
+<tr>
+<td>Compare with</td>
+<td>None, or an earlier Experiment</td>
+<td>None</td>
+<td>Draws the earlier run beside this run.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="presentations-18"><a class="anchor" href="#presentations-18" aria-hidden="true">#</a>Presentations</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Presentation</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>The question and the number of runs finished.</td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>A small plot of one reading over the runs. Four macros: Variable, Levels, Repeats, Stop when.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>All parameters, in four groups: Question, Runs, Readings, Compare.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>The result, in a pane: one line for each run, the readings as lanes, and the runs side by side.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>The question, runs finished and runs in the plan, and the best reading so far.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="transport-18"><a class="anchor" href="#transport-18" aria-hidden="true">#</a>Transport</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Control</th>
+<th>Effect on the Experiment</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Play</td>
+<td>Starts the next run. With Overdub off, it starts every run in turn.</td>
+</tr>
+<tr>
+<td>Stop</td>
+<td>Pauses after the current tool. Press twice to cancel the run and keep its readings.</td>
+</tr>
+<tr>
+<td>Record</td>
+<td>Keeps the readings as clips on the Experiment&#39;s track.</td>
+</tr>
+<tr>
+<td>Metronome</td>
+<td>Sets the beat of the readings.</td>
+</tr>
+<tr>
+<td>Loop and punch</td>
+<td>Sets the window of each run.</td>
+</tr>
+<tr>
+<td>Capture</td>
+<td>Keeps the run as a take under its clip.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="to-use-the-experiment"><a class="anchor" href="#to-use-the-experiment" aria-hidden="true">#</a>To use the Experiment</h4>
+<ol>
+<li>Select the sessions that take part.</li>
+<li>Add an Experiment to the chain. Write the question.</li>
+<li>Choose the Variable and its Levels.</li>
+<li>Choose the Readings. Choose a Stop when condition that every run can reach.</li>
+<li>Press Play. Watch the Experiment&#39;s track in Arrangement view.</li>
+<li>When the runs end, open the Experiment in a pane. Compare the lanes.</li>
+</ol>
+<h4 id="rules-18"><a class="anchor" href="#rules-18" aria-hidden="true">#</a>Rules</h4>
+<ul>
+<li>The Experiment records readings. It does not judge the result. You choose the run that stands.</li>
+<li>A reading that has no source shows as absent. The device does not fill it in.</li>
+<li>Each run is a take under the Experiment&#39;s clip. A retry makes a new take. It does not replace the old one.</li>
+<li>Arrangement view shows the Experiment as a track. The track has one lane for each reading.</li>
+</ul>
+<h4 id="tips-18"><a class="anchor" href="#tips-18" aria-hidden="true">#</a>Tips</h4>
+<ul>
+<li>To compare two models on one task, set Variable to Model and Repeats to 3.</li>
+<li>To check a new skill, run the same task with the Skillset on and then off.</li>
+<li>To stop a run that costs too much, set Stop when to a Time cap.</li>
+</ul>
+<h3 id="18-5-frames-monitor"><a class="anchor" href="#18-5-frames-monitor" aria-hidden="true">#</a>18.5 Frames monitor</h3>
+<p><strong>Product:</strong> Actuation · <strong>Kind:</strong> effect · <strong>Pane:</strong> a pane in Factory; also the Frames widget</p>
+<p>You need to see exactly what passed between the shell and the harness. The Frames monitor shows every frame the gateway sends or receives, per session, in order. It works like the MIDI monitor in Live.</p>
+<figure class="ui"><iframe src="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" loading="lazy" style="height:720px" sandbox="allow-scripts allow-same-origin" title="Click the arrow on the Gateway title in Device view. The pane shows the frames on the left and the Readiness, Liveness, Replay and Upstream readings on the right. Use the buttons above the frames to filter by session."></iframe><figcaption>Click the arrow on the Gateway title in Device view. The pane shows the frames on the left and the Readiness, Liveness, Replay and Upstream readings on the right. Use the buttons above the frames to filter by session. · <a href="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<h4 id="parameters-19"><a class="anchor" href="#parameters-19" aria-hidden="true">#</a>Parameters</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Session</td>
+<td>All sessions · The lead · One session</td>
+<td>All sessions</td>
+<td>Shows the frames of one session, or of all.</td>
+</tr>
+<tr>
+<td>Direction</td>
+<td>Both · Sent · Received</td>
+<td>Both</td>
+<td>Shows frames the shell sent, frames it received, or both.</td>
+</tr>
+<tr>
+<td>Kinds</td>
+<td>Messages · Tools · Heartbeat · Approvals · Errors</td>
+<td>All</td>
+<td>The kinds of frame to show.</td>
+</tr>
+<tr>
+<td>Follow</td>
+<td>On · Off</td>
+<td>On</td>
+<td>Scrolls with new frames.</td>
+</tr>
+<tr>
+<td>Pause</td>
+<td>On · Off</td>
+<td>Off</td>
+<td>Holds the list still. The gateway keeps the frames.</td>
+</tr>
+<tr>
+<td>Keep</td>
+<td>100–5000 frames</td>
+<td>1000</td>
+<td>The number of frames in the list.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="presentations-19"><a class="anchor" href="#presentations-19" aria-hidden="true">#</a>Presentations</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Presentation</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>The title &quot;Frames&quot; and the frame rate.</td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>The last four frames of the selected session. Four macros: Session, Kinds, Direction, Pause.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>All parameters, in two groups: Filter, Display.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>The frame list, with four readings beside it: Readiness, Liveness, Replay, Upstream.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>The last frames of the selected session, in a tile.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="transport-19"><a class="anchor" href="#transport-19" aria-hidden="true">#</a>Transport</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Control</th>
+<th>Effect on the Frames monitor</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Follow</td>
+<td>Keeps the list on the selected session.</td>
+</tr>
+<tr>
+<td>Position</td>
+<td>Shows the task, turn and step of the frame you select.</td>
+</tr>
+<tr>
+<td>Tap</td>
+<td>Adds a status frame from every running agent.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="to-use-the-frames-monitor"><a class="anchor" href="#to-use-the-frames-monitor" aria-hidden="true">#</a>To use the Frames monitor</h4>
+<ol>
+<li>Select the session whose lane stalled.</li>
+<li>Open the Frames monitor from the Gateway, or from the Frames widget.</li>
+<li>Set Session to that session. Set Kinds to Tools and Errors.</li>
+<li>Read the last frames. They show what the lane did last.</li>
+<li>Select a frame. The Position field shows its task, turn and step.</li>
+</ol>
+<h4 id="rules-19"><a class="anchor" href="#rules-19" aria-hidden="true">#</a>Rules</h4>
+<ul>
+<li>The monitor only reads. It sends nothing and changes no frame.</li>
+<li>The Replay reading shows the events in the ring and its size. A new epoch resets the cursor.</li>
+<li>A frame carries its session, its direction and its time. The list keeps this order.</li>
+</ul>
+<h4 id="tips-19"><a class="anchor" href="#tips-19" aria-hidden="true">#</a>Tips</h4>
+<ul>
+<li>To find the tool that stalled a session, filter to Tools and read the last frame.</li>
+<li>To check that a note reached the agent, filter to Messages and look for the steer line.</li>
+</ul>
+<h3 id="18-6-skillset-rack"><a class="anchor" href="#18-6-skillset-rack" aria-hidden="true">#</a>18.6 Skillset rack</h3>
+<p><strong>Product:</strong> AIKit · <strong>Kind:</strong> rack · <strong>Chain:</strong> third device on a Factory session&#39;s chain</p>
+<p>You need to choose which skills an agent may use, and to turn several of them up or down at once. The Skillset rack holds one chain for each skill. Each chain has a light that shows whether the skill is admitted.</p>
+<figure class="ui"><iframe src="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" loading="lazy" style="height:720px" sandbox="allow-scripts allow-same-origin" title="The Porting rack is the third card in Device view. The list on the left has one chain for each skill, with a light. The four knobs on the right are the macros. Click a light to turn a skill on or off. Turn a knob and watch the skills it moves."></iframe><figcaption>The Porting rack is the third card in Device view. The list on the left has one chain for each skill, with a light. The four knobs on the right are the macros. Click a light to turn a skill on or off. Turn a knob and watch the skills it moves. · <a href="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<h4 id="the-chains-and-the-lights"><a class="anchor" href="#the-chains-and-the-lights" aria-hidden="true">#</a>The chains and the lights</h4>
+<p>Each chain holds one skill. The skill sits in the chain and works on the agent&#39;s turn as the turn passes. A dark chain is dimmed. The light shows what AIKit reports. You request a skill on or off. AIKit answers. A skill that you turned on stays dark when AIKit holds it back. The rack then says why. The reason can be a revision nobody has reviewed, or a skill that its author has retired.</p>
+<h4 id="parameters-20"><a class="anchor" href="#parameters-20" aria-hidden="true">#</a>Parameters</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Skillset</td>
+<td>A named set</td>
+<td>The set on the chain</td>
+<td>Chooses the set of skills in the rack. Drag a set from the browser to replace it.</td>
+</tr>
+<tr>
+<td>Skill</td>
+<td>On · Off, one for each chain</td>
+<td>As the set declares</td>
+<td>Your request to admit or to withhold a skill.</td>
+</tr>
+<tr>
+<td>Admit light</td>
+<td>Lit · Dark (reading)</td>
+<td>Read from AIKit</td>
+<td>Shows whether the skill is admitted now.</td>
+</tr>
+<tr>
+<td>Thoroughness</td>
+<td>0–100 %</td>
+<td>60 %</td>
+<td>How exhaustive the skills are.</td>
+</tr>
+<tr>
+<td>Test depth</td>
+<td>None · Unit · Unit and integration · Full</td>
+<td>Unit</td>
+<td>How deep the skills test.</td>
+</tr>
+<tr>
+<td>Reach</td>
+<td>Object · Scene · Expression · Central</td>
+<td>Scene</td>
+<td>How far beyond the scope the skills look.</td>
+</tr>
+<tr>
+<td>Risk</td>
+<td>Low · Medium · High</td>
+<td>Low</td>
+<td>How bold the skills are before they ask you.</td>
+</tr>
+<tr>
+<td>Steward</td>
+<td>A name (reading)</td>
+<td>Read from the set</td>
+<td>Who looks after the set.</td>
+</tr>
+<tr>
+<td>Revision</td>
+<td>A number (reading)</td>
+<td>Read from the set</td>
+<td>The revision of the set that is in use.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="presentations-20"><a class="anchor" href="#presentations-20" aria-hidden="true">#</a>Presentations</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Presentation</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>The set name and the count of lit chains.</td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>The chains with their lights, and the four macros: Thoroughness, Test depth, Reach, Risk.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>All parameters, in three groups: Skills, Macros, Details.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>The set in a pane: each skill with its text, its revision and its standing.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>The chains with their lights, and the four macros.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="transport-20"><a class="anchor" href="#transport-20" aria-hidden="true">#</a>Transport</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Control</th>
+<th>Effect on the Skillset rack</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Keys and maps</td>
+<td>Letter keys turn the macros. You can bind a word to a macro.</td>
+</tr>
+<tr>
+<td>Capture</td>
+<td>Turns a task you did by hand into a skill proposal. See Capture skill.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="to-use-the-skillset-rack"><a class="anchor" href="#to-use-the-skillset-rack" aria-hidden="true">#</a>To use the Skillset rack</h4>
+<ol>
+<li>Drag a skillset from the browser onto the chain of a session.</li>
+<li>Read the lights. Click a dark light to ask for the skill.</li>
+<li>If the light stays dark, read the reason on the chain.</li>
+<li>Turn Test depth up for work that you must trust.</li>
+<li>Turn Risk down when the agent must ask more often.</li>
+<li>To add one skill, drag it onto the rack. It makes a new chain.</li>
+</ol>
+<h4 id="rules-20"><a class="anchor" href="#rules-20" aria-hidden="true">#</a>Rules</h4>
+<ul>
+<li>A macro moves several skills at once. Each skill keeps its own range.</li>
+<li>The light is a reading. The shell does not light it.</li>
+<li>A skill added to the rack does not change another chain.</li>
+<li>A set that you reorder, rename or save keeps its revision history.</li>
+</ul>
+<h4 id="tips-20"><a class="anchor" href="#tips-20" aria-hidden="true">#</a>Tips</h4>
+<ul>
+<li>To make a review stricter, turn Thoroughness and Test depth up together.</li>
+<li>To keep an agent in one project, set Reach to Object or Scene.</li>
+<li>To try a skill for one task only, add it to the rack and remove it when the task ends.</li>
+</ul>
+<h3 id="18-7-skill"><a class="anchor" href="#18-7-skill" aria-hidden="true">#</a>18.7 Skill</h3>
+<p><strong>Product:</strong> AIKit · <strong>Kind:</strong> effect · <strong>Chain:</strong> one chain inside a Skillset rack</p>
+<p>You need one reusable way of working that an agent can follow. A Skill is that way of working. It changes the agent&#39;s turn as the turn passes and leaves the rest of the turn as it was.</p>
+<h4 id="parameters-21"><a class="anchor" href="#parameters-21" aria-hidden="true">#</a>Parameters</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Skill</td>
+<td>A name</td>
+<td>—</td>
+<td>Which skill the chain holds.</td>
+</tr>
+<tr>
+<td>Admit</td>
+<td>On · Off</td>
+<td>On</td>
+<td>Your request to use the skill.</td>
+</tr>
+<tr>
+<td>Admit light</td>
+<td>Lit · Dark (reading)</td>
+<td>Read from AIKit</td>
+<td>Shows whether AIKit admits the skill for this session.</td>
+</tr>
+<tr>
+<td>Standing</td>
+<td>Reviewed · Unreviewed · Retired (reading)</td>
+<td>Read from AIKit</td>
+<td>The state of the skill&#39;s current revision. Only a reviewed skill is admitted.</td>
+</tr>
+<tr>
+<td>Revision</td>
+<td>A number (reading)</td>
+<td>Read from AIKit</td>
+<td>The revision in use.</td>
+</tr>
+<tr>
+<td>Use</td>
+<td>Always · When it applies · When asked</td>
+<td>When it applies</td>
+<td>When the agent loads the skill.</td>
+</tr>
+<tr>
+<td>Macro ranges</td>
+<td>Four ranges</td>
+<td>The full range</td>
+<td>How far each rack macro may move this skill: Thoroughness, Test depth, Reach, Risk.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="presentations-21"><a class="anchor" href="#presentations-21" aria-hidden="true">#</a>Presentations</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Presentation</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>The skill name and its light.</td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>The skill&#39;s glyph and name, its standing and four macros: Admit, Use, Thoroughness range, Risk range.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>All parameters, in three groups: Admit, Use, Ranges.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>The skill&#39;s text in a pane, with its revisions and the sessions that use it.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>The skill&#39;s name, light and standing, on the rail.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="transport-21"><a class="anchor" href="#transport-21" aria-hidden="true">#</a>Transport</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Control</th>
+<th>Effect on the Skill</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Keys and maps</td>
+<td>A key or a spoken word can turn Admit on or off.</td>
+</tr>
+<tr>
+<td>Capture</td>
+<td>Makes a new skill proposal from a task you did by hand.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="to-use-the-skill"><a class="anchor" href="#to-use-the-skill" aria-hidden="true">#</a>To use the Skill</h4>
+<ol>
+<li>Find the skill in the browser. Select it to read it whole in the pool.</li>
+<li>Drag it onto the rack of a session.</li>
+<li>Read the light and the Standing. If the skill is Unreviewed, ask for a review.</li>
+<li>Set Use to When asked if the skill is rare.</li>
+<li>Narrow a Macro range if the rack should not move this skill far.</li>
+</ol>
+<h4 id="rules-21"><a class="anchor" href="#rules-21" aria-hidden="true">#</a>Rules</h4>
+<ul>
+<li>A skill is admitted only when AIKit says so. A skill that is not reviewed stays dark.</li>
+<li>A skill is not copied into the prompt. The agent finds it and reads it when it applies.</li>
+<li>A change to a skill makes a new revision. The old revision stays.</li>
+</ul>
+<h4 id="tips-21"><a class="anchor" href="#tips-21" aria-hidden="true">#</a>Tips</h4>
+<ul>
+<li>To keep a risky skill out of an unattended run, set its Risk range to Low.</li>
+<li>To find out why a skill is dark, select its chain and read the Standing.</li>
+</ul>
+<h3 id="18-8-knowledge-route"><a class="anchor" href="#18-8-knowledge-route" aria-hidden="true">#</a>18.8 Knowledge route</h3>
+<p><strong>Product:</strong> AIKit · <strong>Kind:</strong> effect · <strong>Chain:</strong> inside the Scope device, in a Factory session&#39;s chain</p>
+<p>You need to choose which knowledge an agent can look up, and how far it may follow links. The Knowledge route sets the sources and the bounds. The agent then finds what it needs on demand.</p>
+<figure class="ui"><iframe src="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" loading="lazy" style="height:720px" sandbox="allow-scripts allow-same-origin" title="The Scope card in Device view shows the reads in teal. The Knowledge route adds the knowledge sources to the same card. Click the Scope title to open its reads and writes whole in the pool."></iframe><figcaption>The Scope card in Device view shows the reads in teal. The Knowledge route adds the knowledge sources to the same card. Click the Scope title to open its reads and writes whole in the pool. · <a href="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<h4 id="parameters-22"><a class="anchor" href="#parameters-22" aria-hidden="true">#</a>Parameters</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Sources</td>
+<td>Wiki · Project knowledge · Code · Web</td>
+<td>Wiki, Project knowledge</td>
+<td>The places the agent may search.</td>
+</tr>
+<tr>
+<td>Reach</td>
+<td>Object · Scene · Expression · Central</td>
+<td>As Scope</td>
+<td>The widest part of the world whose knowledge the agent may read. The Scope device holds the same value.</td>
+</tr>
+<tr>
+<td>Search first</td>
+<td>On · Off</td>
+<td>On</td>
+<td>The agent searches before it reads a file.</td>
+</tr>
+<tr>
+<td>Link depth</td>
+<td>0–4</td>
+<td>2</td>
+<td>The number of links the agent follows from a hit.</td>
+</tr>
+<tr>
+<td>Read budget</td>
+<td>1–200 pages</td>
+<td>40</td>
+<td>The most pages the agent reads in one task.</td>
+</tr>
+<tr>
+<td>Route</td>
+<td>Ready · Composed · Refused (reading)</td>
+<td>Read from AIKit</td>
+<td>Shows whether the route answers.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="presentations-22"><a class="anchor" href="#presentations-22" aria-hidden="true">#</a>Presentations</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Presentation</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>The title &quot;Knowledge&quot; and the count of sources.</td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>A small graph of the sources in reach. Four macros: Sources, Reach, Link depth, Read budget.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>All parameters, in two groups: Sources, Bounds.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>The knowledge in reach, in a pane, as a list and as a graph.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>The pages the agent read in this task, with their sources.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="transport-22"><a class="anchor" href="#transport-22" aria-hidden="true">#</a>Transport</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Control</th>
+<th>Effect on the Knowledge route</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Key, root and scale</td>
+<td>Shows tokens in and out, which includes the pages the agent read.</td>
+</tr>
+<tr>
+<td>Draw</td>
+<td>Points the agent at a page or a node.</td>
+</tr>
+<tr>
+<td>Follow</td>
+<td>Keeps the Graph and Wiki widgets on what the agent reads.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="to-use-the-knowledge-route"><a class="anchor" href="#to-use-the-knowledge-route" aria-hidden="true">#</a>To use the Knowledge route</h4>
+<ol>
+<li>Select a session. Open Device view.</li>
+<li>Open the Scope device whole in the pool.</li>
+<li>Choose the Sources.</li>
+<li>Set the Reach. Use a small Reach for a narrow task.</li>
+<li>Set Link depth. Use 0 when the agent must stay on the page you pointed at.</li>
+</ol>
+<h4 id="rules-22"><a class="anchor" href="#rules-22" aria-hidden="true">#</a>Rules</h4>
+<ul>
+<li>Sources are not copied into the prompt. The agent finds them and reads them on demand.</li>
+<li>The route cannot reach farther than Scope allows.</li>
+<li>A page that the agent read is shown with its source. You can open the source.</li>
+<li>A route that is Refused names the reason. The agent then works without that source.</li>
+</ul>
+<h4 id="tips-22"><a class="anchor" href="#tips-22" aria-hidden="true">#</a>Tips</h4>
+<ul>
+<li>To keep the agent on topic, lower Link depth.</li>
+<li>To let an agent check the wiki first, keep Search first on.</li>
+</ul>
+<h3 id="18-9-agency-gateway"><a class="anchor" href="#18-9-agency-gateway" aria-hidden="true">#</a>18.9 Agency gateway</h3>
+<p><strong>Product:</strong> AIKit · <strong>Kind:</strong> effect · <strong>Chain:</strong> one chain in the Gateways rack</p>
+<p>You need messages to reach an agent from any surface you use, and from one agent to another, under rules you set. The Agency gateway carries those messages. It is a service that keeps running while you work.</p>
+<figure class="ui"><iframe src="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" loading="lazy" style="height:720px" sandbox="allow-scripts allow-same-origin" title="Select the Main track and open Device view. The second row of the Gateways rack is the AIKit agency gateway. Click the row to read its state."></iframe><figcaption>Select the Main track and open Device view. The second row of the Gateways rack is the AIKit agency gateway. Click the row to read its state. · <a href="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<h4 id="parameters-23"><a class="anchor" href="#parameters-23" aria-hidden="true">#</a>Parameters</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Service</td>
+<td>On · Off</td>
+<td>On</td>
+<td>Starts or stops the gateway.</td>
+</tr>
+<tr>
+<td>Surfaces</td>
+<td>A list of surfaces</td>
+<td>The ones you use</td>
+<td>The places that may send a message to an agent: this window, a terminal, a chat.</td>
+</tr>
+<tr>
+<td>Agent to agent</td>
+<td>Allow · Ask · Deny</td>
+<td>Ask</td>
+<td>Whether one agent may call another. Ask puts the call in Approvals.</td>
+</tr>
+<tr>
+<td>Harnesses</td>
+<td>A list (reading)</td>
+<td>Found on this machine</td>
+<td>The harnesses that the gateway can reach.</td>
+</tr>
+<tr>
+<td>Inbox</td>
+<td>A count (reading)</td>
+<td>Read from the gateway</td>
+<td>The messages that wait for an agent.</td>
+</tr>
+<tr>
+<td>State</td>
+<td>Ready · Composed · Refused (reading)</td>
+<td>Read from the gateway</td>
+<td>Whether the gateway carries messages now.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="presentations-23"><a class="anchor" href="#presentations-23" aria-hidden="true">#</a>Presentations</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Presentation</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>The title &quot;Agency gateway&quot; and its state dot.</td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>The surfaces on the left, the agents on the right, and the messages between them. Four macros: Service, Surfaces, Agent to agent, State.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>All parameters, in three groups: Service, Rules, Readings.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>The gateway in a pane: the messages that passed, and the refusals with their reasons.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>The count of messages that wait, and the state dot.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="transport-23"><a class="anchor" href="#transport-23" aria-hidden="true">#</a>Transport</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Control</th>
+<th>Effect on the Agency gateway</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Link</td>
+<td>Adds the gateways of your other machines.</td>
+</tr>
+<tr>
+<td>Tap</td>
+<td>Sends a status request through the gateway to every running agent.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="to-use-the-agency-gateway"><a class="anchor" href="#to-use-the-agency-gateway" aria-hidden="true">#</a>To use the Agency gateway</h4>
+<ol>
+<li>Select the Main track. Open Device view.</li>
+<li>Click the Agency gateway row in the Gateways rack.</li>
+<li>Check that Service is On and the state is Ready.</li>
+<li>Choose which Surfaces may send messages.</li>
+<li>Set Agent to agent to Ask until you trust the agents.</li>
+</ol>
+<h4 id="rules-23"><a class="anchor" href="#rules-23" aria-hidden="true">#</a>Rules</h4>
+<ul>
+<li>A refused call becomes an event in the activity record. It does not vanish.</li>
+<li>The gateway carries a message. It does not act for the agent.</li>
+<li>An agent that you did not seat receives no message.</li>
+</ul>
+<h4 id="tips-23"><a class="anchor" href="#tips-23" aria-hidden="true">#</a>Tips</h4>
+<ul>
+<li>To let a planner agent hand work to a builder, set Agent to agent to Allow for that pair.</li>
+<li>To keep a session private, turn off all Surfaces except this window.</li>
+</ul>
+<h3 id="18-10-capture-skill"><a class="anchor" href="#18-10-capture-skill" aria-hidden="true">#</a>18.10 Capture skill</h3>
+<p><strong>Product:</strong> AIKit · <strong>Kind:</strong> instrument · <strong>Chain:</strong> on the armed Factory track</p>
+<p>You need an agent to learn something you did by hand. Capture skill turns a worked example into a skill. You do the task once. The device writes a skill from it and sends the skill to you as a proposal.</p>
+<h4 id="parameters-24"><a class="anchor" href="#parameters-24" aria-hidden="true">#</a>Parameters</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Source</td>
+<td>The last minutes · A selected clip</td>
+<td>The last 10 minutes</td>
+<td>The part of your work that the skill learns from.</td>
+</tr>
+<tr>
+<td>Name</td>
+<td>Text</td>
+<td>A name from the example</td>
+<td>The skill&#39;s name.</td>
+</tr>
+<tr>
+<td>Fit</td>
+<td>Exact · Light · Broad</td>
+<td>Light</td>
+<td>How far the skill generalises. Exact repeats your steps. Broad adapts them to new cases.</td>
+</tr>
+<tr>
+<td>Scope</td>
+<td>This project · All my work</td>
+<td>This project</td>
+<td>Where the skill may be used.</td>
+</tr>
+<tr>
+<td>Steps</td>
+<td>A list (reading)</td>
+<td>Read from the example</td>
+<td>The steps the device found. You can remove a step.</td>
+</tr>
+<tr>
+<td>Lands as</td>
+<td>Proposal</td>
+<td>Proposal</td>
+<td>Where the skill goes. It goes to Approvals.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="presentations-24"><a class="anchor" href="#presentations-24" aria-hidden="true">#</a>Presentations</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Presentation</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>The title &quot;Capture skill&quot; and a dot. The dot is red while it records.</td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>The steps found so far, as a short list. Four macros: Source, Fit, Scope, Name.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>All parameters, in two groups: Example, Skill.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>The proposed skill in a pane: its text, its steps, and the example beside it.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>The proposal that waits, with Accept and Remove.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="transport-24"><a class="anchor" href="#transport-24" aria-hidden="true">#</a>Transport</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Control</th>
+<th>Effect on Capture skill</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Capture</td>
+<td>Starts and ends the record of what you do by hand.</td>
+</tr>
+<tr>
+<td>Record</td>
+<td>Adds your spoken notes to the example.</td>
+</tr>
+<tr>
+<td>Arm</td>
+<td>Chooses the track whose agent will use the skill.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="to-use-capture-skill"><a class="anchor" href="#to-use-capture-skill" aria-hidden="true">#</a>To use Capture skill</h4>
+<ol>
+<li>Select the track whose agent should learn the task.</li>
+<li>Press Capture. Do the task by hand.</li>
+<li>Press Capture again. The device lists the steps it found.</li>
+<li>Remove any step that does not belong. Choose a Fit.</li>
+<li>Open Approvals. Read the proposal. Accept it or remove it.</li>
+<li>Drag the accepted skill onto a Skillset rack.</li>
+</ol>
+<h4 id="rules-24"><a class="anchor" href="#rules-24" aria-hidden="true">#</a>Rules</h4>
+<ul>
+<li>The skill arrives as a proposal. It is not admitted until a person has reviewed it.</li>
+<li>The device records only what you do while Capture is on.</li>
+<li>The example stays with the skill, so a reader can see where it came from.</li>
+</ul>
+<h4 id="tips-24"><a class="anchor" href="#tips-24" aria-hidden="true">#</a>Tips</h4>
+<ul>
+<li>To teach a release routine, do one release by hand with Capture on.</li>
+<li>To make a safe skill, choose Exact for the first revision. Widen it later.</li>
+</ul>
+<h3 id="18-11-runs"><a class="anchor" href="#18-11-runs" aria-hidden="true">#</a>18.11 Runs</h3>
+<p><strong>Product:</strong> Software Factory · <strong>Kind:</strong> instrument · <strong>Pane:</strong> a pane in Factory; also the Runs category in the browser</p>
+<p>You need to see every attempt made on a piece of work, and which one stands. Runs lists the attempts and the task tree of each. A retry is a new attempt. It does not replace the old one.</p>
+<figure class="ui"><iframe src="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" loading="lazy" style="height:720px" sandbox="allow-scripts allow-same-origin" title="Press Tab to switch to Arrangement view. Each thread runs along one ruler with a needle at its last check-in. Click the Runs button on a thread header to see that thread among its siblings."></iframe><figcaption>Press Tab to switch to Arrangement view. Each thread runs along one ruler with a needle at its last check-in. Click the Runs button on a thread header to see that thread among its siblings. · <a href="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<h4 id="parameters-25"><a class="anchor" href="#parameters-25" aria-hidden="true">#</a>Parameters</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Work</td>
+<td>A piece of work</td>
+<td>The selected session&#39;s work</td>
+<td>The request whose attempts the device lists.</td>
+</tr>
+<tr>
+<td>Attempt</td>
+<td>A list of attempts</td>
+<td>The latest</td>
+<td>The attempt you read.</td>
+</tr>
+<tr>
+<td>Show</td>
+<td>All · Running · Stalled · Done</td>
+<td>All</td>
+<td>Filters the tasks in the tree.</td>
+</tr>
+<tr>
+<td>Group by</td>
+<td>Attempt · Agent · Day</td>
+<td>Attempt</td>
+<td>How the list is grouped.</td>
+</tr>
+<tr>
+<td>View</td>
+<td>Tree · Ruler</td>
+<td>Tree</td>
+<td>Tree: tasks as nested rows. Ruler: attempts along one ruler.</td>
+</tr>
+<tr>
+<td>Compare</td>
+<td>None, or a second attempt</td>
+<td>None</td>
+<td>Draws two attempts side by side.</td>
+</tr>
+<tr>
+<td>Stands</td>
+<td>An attempt</td>
+<td>None</td>
+<td>The attempt you accept. When you choose it, you review it.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="presentations-25"><a class="anchor" href="#presentations-25" aria-hidden="true">#</a>Presentations</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Presentation</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>The work name and the number of attempts.</td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>One bar for each attempt, coloured by state. Four macros: Attempt, Show, Group by, Compare.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>All parameters, in three groups: Work, Display, Review.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>The attempts and their task trees in a pane. Select a task to open its log in Clip view.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>The latest attempt and its tasks, with a state light on each.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="transport-25"><a class="anchor" href="#transport-25" aria-hidden="true">#</a>Transport</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Control</th>
+<th>Effect on Runs</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Position</td>
+<td>Shows the task, turn and step of the selected attempt.</td>
+</tr>
+<tr>
+<td>Follow</td>
+<td>Keeps the view on the needle of the running attempt.</td>
+</tr>
+<tr>
+<td>Loop and punch</td>
+<td>Sets the write window for the attempt you launch.</td>
+</tr>
+<tr>
+<td>Play</td>
+<td>Launches a new attempt of the selected task.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="to-use-runs"><a class="anchor" href="#to-use-runs" aria-hidden="true">#</a>To use Runs</h4>
+<ol>
+<li>Select a session. Open Runs from the browser.</li>
+<li>Read the tree of the latest attempt.</li>
+<li>Set Show to Stalled to find the task that stopped.</li>
+<li>Set Compare to an earlier attempt. Read what changed.</li>
+<li>Set Stands to the attempt you accept.</li>
+</ol>
+<h4 id="rules-25"><a class="anchor" href="#rules-25" aria-hidden="true">#</a>Rules</h4>
+<ul>
+<li>An attempt is a record. A retry makes a new attempt.</li>
+<li>You choose the attempt that stands. The device does not choose for you.</li>
+<li>A running task has no drawn end, because nobody knows how long it takes.</li>
+</ul>
+<h4 id="tips-25"><a class="anchor" href="#tips-25" aria-hidden="true">#</a>Tips</h4>
+<ul>
+<li>To find the first failure of a long run, set Show to Stalled and read the top row.</li>
+<li>To keep a good attempt, set Stands before you launch another.</li>
+</ul>
+<h3 id="18-12-tasks"><a class="anchor" href="#18-12-tasks" aria-hidden="true">#</a>18.12 Tasks</h3>
+<p><strong>Product:</strong> Software Factory · <strong>Kind:</strong> instrument · <strong>Track:</strong> each Factory session; tasks are its clips</p>
+<p>You need a list of what an agent is asked to do, with the state of each task. Tasks are the clips on a session&#39;s track. Each task shows how it stands, and Clip view shows its log.</p>
+<figure class="ui"><iframe src="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" loading="lazy" style="height:720px" sandbox="allow-scripts allow-same-origin" title="Session view. Each column is a session, and each square is a task. A running square has no end. A queued square has no length. A striped square is stalled. Click a task to read its log in Clip view. Double-click it to open the thread."></iframe><figcaption>Session view. Each column is a session, and each square is a task. A running square has no end. A queued square has no length. A striped square is stalled. Click a task to read its log in Clip view. Double-click it to open the thread. · <a href="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<h4 id="how-a-task-is-drawn"><a class="anchor" href="#how-a-task-is-drawn" aria-hidden="true">#</a>How a task is drawn</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>State</th>
+<th>Drawn as</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Done</td>
+<td>Dim and settled.</td>
+</tr>
+<tr>
+<td>Running</td>
+<td>A blinking triangle and a fill that has no end.</td>
+</tr>
+<tr>
+<td>Queued</td>
+<td>A fast blink and no length.</td>
+</tr>
+<tr>
+<td>Stopped</td>
+<td>Ready, in full colour.</td>
+</tr>
+<tr>
+<td>Stalled</td>
+<td>A striped bar and an orange triangle, frozen where the output stopped.</td>
+</tr>
+</tbody></table>
+</div>
+<p>An empty square names what a click does: it stops the session after the current task. Double-click an empty square to write a task. Arm the track and press Record to speak one.</p>
+<h4 id="parameters-26"><a class="anchor" href="#parameters-26" aria-hidden="true">#</a>Parameters</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Name</td>
+<td>Text</td>
+<td>From the first message</td>
+<td>The task&#39;s name.</td>
+</tr>
+<tr>
+<td>State</td>
+<td>Queued · Running · Stalled · Stopped · Done (reading)</td>
+<td>Read from the session</td>
+<td>Shows how the task stands.</td>
+</tr>
+<tr>
+<td>Launch</td>
+<td>Once · Hold · Loop</td>
+<td>Once</td>
+<td>Once: run one time. Hold: stay ready. Loop: repeat until the stop condition or the cap.</td>
+</tr>
+<tr>
+<td>Then</td>
+<td>Next task · Hand off to an agent · Stop</td>
+<td>Next task</td>
+<td>What follows the task. This is the follow action.</td>
+</tr>
+<tr>
+<td>Launch quantize</td>
+<td>Now · Next tool · Next turn</td>
+<td>Next tool</td>
+<td>When a launch or a steer lands.</td>
+</tr>
+<tr>
+<td>Output style</td>
+<td>Plain, warm or terse · Technical, narrative or list</td>
+<td>Plain, technical</td>
+<td>How the agent writes for this task.</td>
+</tr>
+<tr>
+<td>Effort</td>
+<td>Inherit · Low · Medium · High · Max</td>
+<td>Inherit</td>
+<td>Sets the effort for this task only.</td>
+</tr>
+<tr>
+<td>Autonomy</td>
+<td>Inherit · Suggest · Review · Auto</td>
+<td>Inherit</td>
+<td>Sets the autonomy for this task only.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="presentations-26"><a class="anchor" href="#presentations-26" aria-hidden="true">#</a>Presentations</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Presentation</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>The task name and its state.</td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>The task square with its progress, and four macros: Launch, Then, Effort, Autonomy.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>All parameters, in three groups: Task, Launch, Style.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>The task log in a pane: each tool the agent used, laid along the task&#39;s time, with the steers marked.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>The tasks of the selected session with a state light on each.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="transport-26"><a class="anchor" href="#transport-26" aria-hidden="true">#</a>Transport</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Control</th>
+<th>Effect on Tasks</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Play</td>
+<td>Launches the selected task, or every queued task.</td>
+</tr>
+<tr>
+<td>Stop</td>
+<td>Pauses at the next safe point. Press twice to cancel.</td>
+</tr>
+<tr>
+<td>Record</td>
+<td>Speaks a new task onto the armed track.</td>
+</tr>
+<tr>
+<td>Loop and punch</td>
+<td>Repeats the task, and sets the window in which the agent may write.</td>
+</tr>
+<tr>
+<td>Keys and maps</td>
+<td>Number keys launch rows. You can bind a word to a task.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="to-use-tasks"><a class="anchor" href="#to-use-tasks" aria-hidden="true">#</a>To use Tasks</h4>
+<ol>
+<li>Select a session. Double-click an empty square.</li>
+<li>Write the task. Press Enter.</li>
+<li>Set Then to Hand off if another agent should continue.</li>
+<li>Press the number key of the row to launch the task.</li>
+<li>Click the task. Read the log in Clip view.</li>
+</ol>
+<h4 id="rules-26"><a class="anchor" href="#rules-26" aria-hidden="true">#</a>Rules</h4>
+<ul>
+<li>A row across sessions is a stop. A launch of a stop starts one task on each session.</li>
+<li>A loop ends at its stop condition or its cap.</li>
+<li>A stalled task keeps its place. Retry restarts it from its last good step.</li>
+</ul>
+<h4 id="tips-26"><a class="anchor" href="#tips-26" aria-hidden="true">#</a>Tips</h4>
+<ul>
+<li>To run a batch, queue a task on each session and launch the row.</li>
+<li>To keep a long task from holding up others, set Launch quantize to Next turn.</li>
+</ul>
+<h3 id="18-13-custody"><a class="anchor" href="#18-13-custody" aria-hidden="true">#</a>18.13 Custody</h3>
+<p><strong>Product:</strong> Software Factory · <strong>Kind:</strong> effect · <strong>Chain:</strong> on the Agent device; the Agent&#39;s face shows it</p>
+<p>You need to decide how much an agent decides alone, what you must check, and who holds each thing the agent touches. Custody sets the agent&#39;s autonomy and the review gate. It also lights when you take hold of something the agent held.</p>
+<figure class="ui"><iframe src="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" loading="lazy" style="height:720px" sandbox="allow-scripts allow-same-origin" title="The Autonomy knob on the Agent device is Custody's main control. Turn it from Suggest to Review to Auto. Edit something an agent holds, and the Hand back button in the transport lights."></iframe><figcaption>The Autonomy knob on the Agent device is Custody's main control. Turn it from Suggest to Review to Auto. Edit something an agent holds, and the Hand back button in the transport lights. · <a href="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<h4 id="parameters-27"><a class="anchor" href="#parameters-27" aria-hidden="true">#</a>Parameters</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Autonomy</td>
+<td>Suggest · Review · Auto</td>
+<td>Review</td>
+<td>Suggest: the agent proposes only. Review: the agent works and you check each result. Auto: the agent works and lands changes with receipts.</td>
+</tr>
+<tr>
+<td>Review gate</td>
+<td>Diffs · Approvals · Both</td>
+<td>Both</td>
+<td>What waits for you before a change lands.</td>
+</tr>
+<tr>
+<td>Escalate to</td>
+<td>A person</td>
+<td>You</td>
+<td>Who the agent asks when it needs a decision.</td>
+</tr>
+<tr>
+<td>Wait</td>
+<td>15 min–24 h</td>
+<td>4 h</td>
+<td>How long a request waits before it counts as unanswered.</td>
+</tr>
+<tr>
+<td>On no answer</td>
+<td>Hold · Deny</td>
+<td>Hold</td>
+<td>What the agent does when nobody answers.</td>
+</tr>
+<tr>
+<td>Write mode</td>
+<td>Propose · Draft · Direct</td>
+<td>Propose</td>
+<td>The most the agent may do with a write. The Scope device sets the limit for each part of the world. The stricter value stands.</td>
+</tr>
+<tr>
+<td>Held</td>
+<td>A list (reading)</td>
+<td>Read from the agent</td>
+<td>The things the agent holds now, such as a file or a setting.</td>
+</tr>
+<tr>
+<td>Hand back</td>
+<td>Lit · Dark (reading)</td>
+<td>Dark</td>
+<td>Lit when you edited something an agent holds.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="presentations-27"><a class="anchor" href="#presentations-27" aria-hidden="true">#</a>Presentations</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Presentation</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>The title &quot;Custody&quot; and the autonomy value.</td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>The agent&#39;s held items, as dots. Four macros: Autonomy, Review gate, Write mode, Hand back.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>All parameters, in three groups: Autonomy, Review, Held.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>A pane with every item the agent holds, who last changed it, and its receipts.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>The count of held items, the Hand back light and the Autonomy value.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="transport-27"><a class="anchor" href="#transport-27" aria-hidden="true">#</a>Transport</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Control</th>
+<th>Effect on Custody</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Arm</td>
+<td>Lets the agent write directly, with receipts. Off: every write is a proposal.</td>
+</tr>
+<tr>
+<td>Re-enable</td>
+<td>Gives back what the agent held. It is lit only when you edited a held item.</td>
+</tr>
+<tr>
+<td>Loop and punch</td>
+<td>Sets the window in which the agent may write.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="to-use-custody"><a class="anchor" href="#to-use-custody" aria-hidden="true">#</a>To use Custody</h4>
+<ol>
+<li>Select a session. Open Device view.</li>
+<li>Turn Autonomy to Suggest for a new agent.</li>
+<li>Read the proposals in Approvals. Approve those you trust.</li>
+<li>When you trust the agent, set Autonomy to Review. Later, set it to Auto.</li>
+<li>To change what an agent holds, edit it. The Hand back light comes on.</li>
+<li>Press Hand back to give control to the agent again.</li>
+</ol>
+<h4 id="rules-27"><a class="anchor" href="#rules-27" aria-hidden="true">#</a>Rules</h4>
+<ul>
+<li>Direct writes need Arm on. With Arm off, every write is a proposal.</li>
+<li>Every write carries a receipt. The receipt names the agent.</li>
+<li>Deny is always yours. No Autonomy value takes it away.</li>
+<li>When you edit a held item, the agent does not overwrite your edit. The light stays on until you press Hand back.</li>
+</ul>
+<h4 id="tips-27"><a class="anchor" href="#tips-27" aria-hidden="true">#</a>Tips</h4>
+<ul>
+<li>To try an unknown agent safely, set Autonomy to Suggest.</li>
+<li>To review only the risky files, set the Review gate to Diffs and Auto for the rest.</li>
+<li>To take over a file for an hour, edit it. Press Hand back when you finish.</li>
+</ul>
+<h3 id="18-14-scope"><a class="anchor" href="#18-14-scope" aria-hidden="true">#</a>18.14 Scope</h3>
+<p><strong>Product:</strong> Software Factory · <strong>Kind:</strong> effect · <strong>Chain:</strong> fourth device on a Factory session&#39;s chain</p>
+<p>You need to limit the part of your world an agent may touch, and decide how its writes arrive. Scope is the world device. It sets the reach from one object up to everything you own. It also sets whether a write arrives as a proposal, a draft or a direct change.</p>
+<figure class="ui"><iframe src="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" loading="lazy" style="height:720px" sandbox="allow-scripts allow-same-origin" title="The World card in Device view. The rings show the reach. Teal marks what the agent may read. Amber marks what it may write. Turn the Reach knob, and change Writes between prop, draft and dir."></iframe><figcaption>The World card in Device view. The rings show the reach. Teal marks what the agent may read. Amber marks what it may write. Turn the Reach knob, and change Writes between prop, draft and dir. · <a href="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<h4 id="the-rings"><a class="anchor" href="#the-rings" aria-hidden="true">#</a>The rings</h4>
+<p>The picture shows nested rings. The smallest ring is one object. The next rings are a scene, an Expression, and everything in Central. The teal arc shows the reach for reads. The amber arc shows the reach for writes. A basis readout shows the revision the agent works from and the revision of its edits, for example r15 to r17.</p>
+<h4 id="parameters-28"><a class="anchor" href="#parameters-28" aria-hidden="true">#</a>Parameters</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Reach</td>
+<td>Object · Scene · Expression · Central</td>
+<td>Scene</td>
+<td>The widest part of the world the agent may touch.</td>
+</tr>
+<tr>
+<td>Reads</td>
+<td>A list of places, each with a light</td>
+<td>This scene and its registers</td>
+<td>The places the agent may read. A teal light marks a place in reach.</td>
+</tr>
+<tr>
+<td>Writes</td>
+<td>A list of places, each with a light</td>
+<td>This scene&#39;s layers</td>
+<td>The places the agent may write. An amber light marks a place in reach.</td>
+</tr>
+<tr>
+<td>Write mode</td>
+<td>Propose · Draft · Direct</td>
+<td>Propose</td>
+<td>How a write arrives. Propose: as a proposal that waits. Draft: in a draft that you review. Direct: in the thing itself, with a receipt.</td>
+</tr>
+<tr>
+<td>Knowledge</td>
+<td>See Knowledge route</td>
+<td>As Knowledge route</td>
+<td>The knowledge sources and bounds.</td>
+</tr>
+<tr>
+<td>Basis</td>
+<td>A revision pair (reading)</td>
+<td>Read from the world</td>
+<td>The revision the agent started from and the revision of its edits.</td>
+</tr>
+<tr>
+<td>Receipts</td>
+<td>A list (reading)</td>
+<td>Read from the agent</td>
+<td>One receipt for each write.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="presentations-28"><a class="anchor" href="#presentations-28" aria-hidden="true">#</a>Presentations</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Presentation</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>The title &quot;Scope&quot; and the Reach value.</td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>The rings, with the reads in teal and the writes in amber. Four macros: Reach, Reads, Writes, Write mode.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>All parameters, in four groups: Reach, Reads and Writes, Knowledge, Receipts.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>A pane that shows the world the agent may touch, with its places drawn as they are, and the agent&#39;s receipts on them.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>The Reach, the Write mode and the count of receipts.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="transport-28"><a class="anchor" href="#transport-28" aria-hidden="true">#</a>Transport</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Control</th>
+<th>Effect on Scope</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Arm</td>
+<td>Direct writes land only when Arm is on. With Arm off, Direct acts as Propose.</td>
+</tr>
+<tr>
+<td>Loop and punch</td>
+<td>Sets the window in which writes may land.</td>
+</tr>
+<tr>
+<td>Re-enable</td>
+<td>Gives back what the agent held in this scope.</td>
+</tr>
+<tr>
+<td>Draw</td>
+<td>Marks a place or a tile as a reference for the agent.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="to-use-scope"><a class="anchor" href="#to-use-scope" aria-hidden="true">#</a>To use Scope</h4>
+<ol>
+<li>Select a session. Open Device view.</li>
+<li>Turn Reach to the smallest part of the world the task needs.</li>
+<li>Open Scope whole in the pool. Check the lists of Reads and Writes.</li>
+<li>Choose a Write mode. Start with Propose.</li>
+<li>After you trust the result, choose Draft or Direct.</li>
+<li>Read the receipts in the Ledger.</li>
+</ol>
+<h4 id="rules-28"><a class="anchor" href="#rules-28" aria-hidden="true">#</a>Rules</h4>
+<ul>
+<li>Scope limits the agent. A place outside the Reach is not readable and not writable.</li>
+<li>The agent does not write behind your back. Off, Propose and Write are your setting.</li>
+<li>Every write carries a receipt.</li>
+<li>Direct needs Arm on.</li>
+<li>A place that you raise into wider reach asks you first.</li>
+</ul>
+<h4 id="tips-28"><a class="anchor" href="#tips-28" aria-hidden="true">#</a>Tips</h4>
+<ul>
+<li>To keep an agent in one file, set Reach to Object.</li>
+<li>To let an agent read widely but write little, raise Reach and keep Writes short.</li>
+<li>To try a risky change, set Write mode to Draft and review the draft.</li>
+</ul>
+<h3 id="18-15-ledger"><a class="anchor" href="#18-15-ledger" aria-hidden="true">#</a>18.15 Ledger</h3>
+<p><strong>Product:</strong> Software Factory · <strong>Kind:</strong> instrument · <strong>Track:</strong> Factory&#39;s Main track</p>
+<p>You need a record of what the agents did and what came of it. The Ledger lists every task with its receipt. It shows what landed, what was approved and what drew a comment.</p>
+<figure class="ui"><iframe src="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" loading="lazy" style="height:720px" sandbox="allow-scripts allow-same-origin" title="Select the Main track and open Device view. The Ledger card lists the tasks of every session with their state. Open the Ledger tile in the dock to read the receipts."></iframe><figcaption>Select the Main track and open Device view. The Ledger card lists the tasks of every session with their state. Open the Ledger tile in the dock to read the receipts. · <a href="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<h4 id="parameters-29"><a class="anchor" href="#parameters-29" aria-hidden="true">#</a>Parameters</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Period</td>
+<td>This run · Today · All</td>
+<td>Today</td>
+<td>The span of tasks in the list.</td>
+</tr>
+<tr>
+<td>Agent</td>
+<td>All, or one agent</td>
+<td>All</td>
+<td>Shows the tasks of one agent.</td>
+</tr>
+<tr>
+<td>Outcome</td>
+<td>All · Landed · Approved · Commented · Refused</td>
+<td>All</td>
+<td>Shows tasks with one outcome.</td>
+</tr>
+<tr>
+<td>Order</td>
+<td>Newest first · By agent · By task</td>
+<td>Newest first</td>
+<td>The order of the list.</td>
+</tr>
+<tr>
+<td>Receipt</td>
+<td>Open · Closed</td>
+<td>Closed</td>
+<td>Opens the receipt of the selected task.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="what-a-receipt-holds"><a class="anchor" href="#what-a-receipt-holds" aria-hidden="true">#</a>What a receipt holds</h4>
+<p>A receipt holds the number of the task, its name, the agent, the outcome, the revision it started from and who accepted it. It also lists the files that changed. A receipt is made when the task writes. The Ledger does not edit a receipt.</p>
+<h4 id="presentations-29"><a class="anchor" href="#presentations-29" aria-hidden="true">#</a>Presentations</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Presentation</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>The title &quot;Ledger&quot; and the count of tasks today.</td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>One line for each task: the agent&#39;s mark, the task and its state. Four macros: Period, Agent, Outcome, Order.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>All parameters, in two groups: Filter, Receipt.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>The Ledger in a pane, with each receipt open beside its task.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>The last receipts, for example &quot;#212 re-plan port · landed&quot;.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="transport-29"><a class="anchor" href="#transport-29" aria-hidden="true">#</a>Transport</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Control</th>
+<th>Effect on the Ledger</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Position</td>
+<td>Shows the task of the receipt you selected.</td>
+</tr>
+<tr>
+<td>Follow</td>
+<td>Keeps the list on the newest receipt.</td>
+</tr>
+<tr>
+<td>Capture</td>
+<td>Keeps a receipt as an example.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="to-use-the-ledger"><a class="anchor" href="#to-use-the-ledger" aria-hidden="true">#</a>To use the Ledger</h4>
+<ol>
+<li>Select the Main track. Open Device view.</li>
+<li>Read the Ledger card. Each line is a task.</li>
+<li>Set Outcome to Commented to find tasks that need an answer.</li>
+<li>Select a task. Open its receipt.</li>
+<li>Click the task to open its log in Clip view.</li>
+</ol>
+<h4 id="rules-29"><a class="anchor" href="#rules-29" aria-hidden="true">#</a>Rules</h4>
+<ul>
+<li>Every write has a receipt, and every receipt is in the Ledger.</li>
+<li>The Ledger only reads. It changes no receipt.</li>
+<li>The list follows the sessions of the Main track, so a new session appears on its own.</li>
+</ul>
+<h4 id="tips-29"><a class="anchor" href="#tips-29" aria-hidden="true">#</a>Tips</h4>
+<ul>
+<li>To prepare the Day&#39;s face 2, read today&#39;s Ledger first.</li>
+<li>To audit one agent, set Agent to that agent and Period to All.</li>
+</ul>
+<h3 id="18-16-approvals"><a class="anchor" href="#18-16-approvals" aria-hidden="true">#</a>18.16 Approvals</h3>
+<p><strong>Product:</strong> Software Factory · <strong>Kind:</strong> effect · <strong>Track:</strong> Factory&#39;s Main track</p>
+<p>You need one place to answer what the agents ask. Approvals holds every proposal and every request that waits for you. Nothing in it lands until you answer.</p>
+<figure class="ui"><iframe src="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" loading="lazy" style="height:720px" sandbox="allow-scripts allow-same-origin" title="Select the Main track and open Device view. The Approvals card shows the proposals that wait. Click Approve to accept one. Click Open to read it first."></iframe><figcaption>Select the Main track and open Device view. The Approvals card shows the proposals that wait. Click Approve to accept one. Click Open to read it first. · <a href="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<h4 id="parameters-30"><a class="anchor" href="#parameters-30" aria-hidden="true">#</a>Parameters</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Queue</td>
+<td>A count (reading)</td>
+<td>Read from the agents</td>
+<td>The number of proposals and requests that wait.</td>
+</tr>
+<tr>
+<td>Show</td>
+<td>Proposals · Requests · Both</td>
+<td>Both</td>
+<td>Proposals hold changes. Requests ask for a decision, for example a deploy.</td>
+</tr>
+<tr>
+<td>Default answer</td>
+<td>Ask · Session · Always</td>
+<td>Ask</td>
+<td>The default answer to a request. The Gateway holds the same setting for each session.</td>
+</tr>
+<tr>
+<td>Wait</td>
+<td>15 min–24 h</td>
+<td>4 h</td>
+<td>How long a request waits before it counts as unanswered.</td>
+</tr>
+<tr>
+<td>On no answer</td>
+<td>Hold · Deny</td>
+<td>Hold</td>
+<td>What happens when nobody answers.</td>
+</tr>
+<tr>
+<td>Order</td>
+<td>Oldest first · By agent · By risk</td>
+<td>Oldest first</td>
+<td>The order of the queue.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="presentations-30"><a class="anchor" href="#presentations-30" aria-hidden="true">#</a>Presentations</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Presentation</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>The title &quot;Approvals&quot; and the count.</td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>One line for each item: the agent&#39;s mark, the item and a button. Four macros: Show, Default answer, Wait, On no answer.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>All parameters, in two groups: Queue, Defaults.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>The queue in a pane, with the diff of the selected proposal beside it.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>The proposal cards, each with Approve.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="transport-30"><a class="anchor" href="#transport-30" aria-hidden="true">#</a>Transport</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Control</th>
+<th>Effect on Approvals</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Arm</td>
+<td>With Arm on, writes inside the Scope land directly. They do not enter the queue.</td>
+</tr>
+<tr>
+<td>Re-enable</td>
+<td>Gives back what the agent held.</td>
+</tr>
+<tr>
+<td>Metronome</td>
+<td>Shows the beat at which waiting requests count their time.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="to-use-approvals"><a class="anchor" href="#to-use-approvals" aria-hidden="true">#</a>To use Approvals</h4>
+<ol>
+<li>Select the Main track. Open Device view. A number on the title shows the queue.</li>
+<li>Read the first item. Click Open to read its diff.</li>
+<li>Click Approve to accept it. Click Changes to ask for a different result.</li>
+<li>For a request, read the question. Choose Approve or Deny.</li>
+<li>Empty the queue before you end the day.</li>
+</ol>
+<h4 id="rules-30"><a class="anchor" href="#rules-30" aria-hidden="true">#</a>Rules</h4>
+<ul>
+<li>Deny is always yours. Only the On no answer setting can deny for you, and you set it.</li>
+<li>An approved proposal lands with a receipt.</li>
+<li>A request that is not answered stays in the queue. It does not land.</li>
+<li>The queue shows the author of each item.</li>
+</ul>
+<h4 id="tips-30"><a class="anchor" href="#tips-30" aria-hidden="true">#</a>Tips</h4>
+<ul>
+<li>To clear many proposals fast, set Order to By risk and read the risky ones first.</li>
+<li>To stop a deploy from leaving at night, leave On no answer at Hold.</li>
+</ul>
+<h3 id="18-17-run"><a class="anchor" href="#18-17-run" aria-hidden="true">#</a>18.17 Run</h3>
+<p><strong>Product:</strong> Software Factory · <strong>Kind:</strong> instrument · <strong>Track:</strong> one lane for each session in Arrangement view</p>
+<p>You need to see the course of one session along the clock. A Run is one session&#39;s stream of tasks, drawn on a ruler. A needle shows where the session has got to.</p>
+<figure class="ui"><iframe src="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" loading="lazy" style="height:720px" sandbox="allow-scripts allow-same-origin" title="Press Tab to switch to Arrangement view. Each thread has a lane, with a needle at its last check-in. A needle that stops moving is a stall. Expand a lane to see its messages, files, terminal, web and graph events."></iframe><figcaption>Press Tab to switch to Arrangement view. Each thread has a lane, with a needle at its last check-in. A needle that stops moving is a stall. Expand a lane to see its messages, files, terminal, web and graph events. · <a href="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<h4 id="the-lanes"><a class="anchor" href="#the-lanes" aria-hidden="true">#</a>The lanes</h4>
+<p>A lane has task blocks. A done block is solid. A running block fades out at the right and has no end. A stalled block is striped, and the needle stops where the output stopped. A queued block is dashed and has no length. Under each lane, the event lanes show Messages, Files, Terminal, Web and Graph. Click an event to open it in the matching widget. A line marks the present moment.</p>
+<h4 id="parameters-31"><a class="anchor" href="#parameters-31" aria-hidden="true">#</a>Parameters</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Session</td>
+<td>A session</td>
+<td>The selected session</td>
+<td>The session the lane shows.</td>
+</tr>
+<tr>
+<td>Watch</td>
+<td>In · Auto · Off</td>
+<td>Auto</td>
+<td>In: always stream this session into the widgets. Auto: stream it when it is armed or selected. Off: do not stream it.</td>
+</tr>
+<tr>
+<td>Telemetry</td>
+<td>On · Off</td>
+<td>On</td>
+<td>On: the session feeds the widgets, the Ledger and other agents. Off: it works in silence.</td>
+</tr>
+<tr>
+<td>Solo</td>
+<td>On · Off</td>
+<td>Off</td>
+<td>Only soloed sessions may run.</td>
+</tr>
+<tr>
+<td>Event lanes</td>
+<td>Messages · Files · Terminal · Web · Graph</td>
+<td>Messages</td>
+<td>The event lanes under the thread.</td>
+</tr>
+<tr>
+<td>Overview</td>
+<td>On · Off</td>
+<td>On</td>
+<td>Shows the strip above the ruler.</td>
+</tr>
+<tr>
+<td>Needle</td>
+<td>A time (reading)</td>
+<td>Read from the session</td>
+<td>The time of the last check-in.</td>
+</tr>
+<tr>
+<td>Takes</td>
+<td>A list of attempts</td>
+<td>The latest</td>
+<td>The attempts under the lane.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="presentations-31"><a class="anchor" href="#presentations-31" aria-hidden="true">#</a>Presentations</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Presentation</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>The session name and the needle time.</td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>The lane, with a needle and a state light. Four macros: Watch, Telemetry, Solo, Event lanes.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>All parameters, in three groups: Feed, Lanes, Takes.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>The thread as a pane: tasks, tool rows, steer lines, proposal cards and the stall card.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>The session&#39;s state, its needle time and its task now.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="transport-31"><a class="anchor" href="#transport-31" aria-hidden="true">#</a>Transport</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Control</th>
+<th>Effect on the Run</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Record</td>
+<td>Lays what the session did into Arrangement view as clips, with takes under them.</td>
+</tr>
+<tr>
+<td>Follow</td>
+<td>Scrolls the ruler with the needles.</td>
+</tr>
+<tr>
+<td>Position</td>
+<td>Shows the task, turn and step of the needle.</td>
+</tr>
+<tr>
+<td>Metronome</td>
+<td>Sets how often the needle moves.</td>
+</tr>
+<tr>
+<td>Arm</td>
+<td>Records your moves of the agent&#39;s settings as lanes under the track.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="to-use-the-run"><a class="anchor" href="#to-use-the-run" aria-hidden="true">#</a>To use the Run</h4>
+<ol>
+<li>Press Tab to open Arrangement view.</li>
+<li>Find the lane of the session. Read its needle.</li>
+<li>If the needle has stopped, read the stall readout. It names how long the lane has stalled.</li>
+<li>Expand the lane. Click an event to open it in its widget.</li>
+<li>Press Retry on the track to restart a stalled task from its last good step.</li>
+</ol>
+<h4 id="rules-31"><a class="anchor" href="#rules-31" aria-hidden="true">#</a>Rules</h4>
+<ul>
+<li>The needle shows the last check-in. It does not predict the end.</li>
+<li>A stalled needle freezes where the output stopped.</li>
+<li>A new attempt is a take under the same lane. The earlier take stays.</li>
+</ul>
+<h4 id="tips-31"><a class="anchor" href="#tips-31" aria-hidden="true">#</a>Tips</h4>
+<ul>
+<li>To watch only the sessions that matter, set Watch to Off on the others.</li>
+<li>To keep a loud session out of the Ledger, set its Telemetry to Off.</li>
+</ul>
+<h3 id="18-18-agentset-rack"><a class="anchor" href="#18-18-agentset-rack" aria-hidden="true">#</a>18.18 Agentset rack</h3>
+<p><strong>Product:</strong> Software Factory · <strong>Kind:</strong> rack · <strong>Chain:</strong> a group&#39;s chain in Factory</p>
+<p>You need a team of agents to work as one unit. The Agentset rack holds one chain for each member. Members nest as they were spawned.</p>
+<figure class="ui"><iframe src="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" loading="lazy" style="height:720px" sandbox="allow-scripts allow-same-origin" title="Select the group header &quot;Port bridge-2&quot; in Session view and open Device view. The Port crew rack lists the lead and its helpers, each with a model. A stalled member has an orange outline. Click a member to open its thread."></iframe><figcaption>Select the group header &quot;Port bridge-2&quot; in Session view and open Device view. The Port crew rack lists the lead and its helpers, each with a model. A stalled member has an orange outline. Click a member to open its thread. · <a href="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<h4 id="the-members"><a class="anchor" href="#the-members" aria-hidden="true">#</a>The members</h4>
+<p>Each chain is one agent. The lead is at the top. Its helpers sit below it, with one step of indent for each level. A chip on a chain names the member&#39;s model. A stalled member has an outline in the stall colour. A group header folds the crew. When you fold it, its slots still show the tasks of the children. A launch of the group fires them all.</p>
+<h4 id="parameters-32"><a class="anchor" href="#parameters-32" aria-hidden="true">#</a>Parameters</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Members</td>
+<td>A list of agents</td>
+<td>The lead</td>
+<td>The chains of the rack. Drag an agent from the browser to add one.</td>
+</tr>
+<tr>
+<td>Selected member</td>
+<td>One member</td>
+<td>The lead</td>
+<td>The chain whose device shows in the pool.</td>
+</tr>
+<tr>
+<td>Fan-out</td>
+<td>1–8</td>
+<td>2</td>
+<td>The most helpers that run at once.</td>
+</tr>
+<tr>
+<td>Depth</td>
+<td>1–4</td>
+<td>2</td>
+<td>How deep helpers may spawn their own helpers.</td>
+</tr>
+<tr>
+<td>Hand-back</td>
+<td>Raw · Digest · Summary</td>
+<td>Summary</td>
+<td>What a helper returns to its parent.</td>
+</tr>
+<tr>
+<td>Subagent model</td>
+<td>A model</td>
+<td>The lead&#39;s model</td>
+<td>The default model for everything the group spawns. A member can set its own.</td>
+</tr>
+<tr>
+<td>Member state</td>
+<td>Working · Idle · Stalled · Done (reading)</td>
+<td>Read from each session</td>
+<td>The state of each chain.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="presentations-32"><a class="anchor" href="#presentations-32" aria-hidden="true">#</a>Presentations</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Presentation</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>The crew name and the count of members.</td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>The chains, nested, with a model chip on each. Four macros: Fan-out, Depth, Hand-back, Subagent model.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>All parameters, in three groups: Members, Limits, Return.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>The crew in a pane as a tree, with each member&#39;s thread and the files it touched.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>The crew tree with a light on each member.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="transport-32"><a class="anchor" href="#transport-32" aria-hidden="true">#</a>Transport</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Control</th>
+<th>Effect on the Agentset rack</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Play</td>
+<td>Launches every queued task of the crew.</td>
+</tr>
+<tr>
+<td>Stop</td>
+<td>Pauses every member at its next safe point. Press twice to cancel.</td>
+</tr>
+<tr>
+<td>Tap</td>
+<td>Asks every member for a status line.</td>
+</tr>
+<tr>
+<td>Quantize</td>
+<td>Sets when Stop and Steer land for the crew.</td>
+</tr>
+<tr>
+<td>Keys and maps</td>
+<td>Number keys launch rows across the members.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="to-use-the-agentset-rack"><a class="anchor" href="#to-use-the-agentset-rack" aria-hidden="true">#</a>To use the Agentset rack</h4>
+<ol>
+<li>Drag an agentset from the browser onto the track of the lead.</li>
+<li>Select the group header. Open Device view.</li>
+<li>Set Fan-out to the number of helpers that may run together.</li>
+<li>Set Depth to 1 if helpers must not spawn others.</li>
+<li>Choose Hand-back. Choose Summary to keep the lead&#39;s context short.</li>
+<li>Click a member to read its thread.</li>
+</ol>
+<h4 id="rules-32"><a class="anchor" href="#rules-32" aria-hidden="true">#</a>Rules</h4>
+<ul>
+<li>Each member keeps its own chain. A helper shares the lead&#39;s gateway and git seat.</li>
+<li>A stalled member does not stop the others. The group lights Retry.</li>
+<li>Hard stop on the group stops every session in it. The work written so far stays as a draft.</li>
+</ul>
+<h4 id="tips-32"><a class="anchor" href="#tips-32" aria-hidden="true">#</a>Tips</h4>
+<ul>
+<li>To keep a lead&#39;s context small, set Hand-back to Summary.</li>
+<li>To save cost, set Subagent model to a smaller model for the group.</li>
+<li>To find the slow member, look for the orange outline.</li>
+</ul>
+<h3 id="18-19-git-landing"><a class="anchor" href="#18-19-git-landing" aria-hidden="true">#</a>18.19 Git / landing</h3>
+<p><strong>Product:</strong> Workcell · <strong>Kind:</strong> effect · <strong>Chain:</strong> last device on a Factory session&#39;s chain</p>
+<p>You need the agent&#39;s work to land safely in the project, with checks you can read. Git / landing is the place where the work ends. It commits the work, pushes it and lands it as a merge request.</p>
+<figure class="ui"><iframe src="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" loading="lazy" style="height:720px" sandbox="allow-scripts allow-same-origin" title="The Git card is the last card in Device view. The diagram shows the branch against main. A pulsing hollow dot is work that is not yet committed. Choose a commit cadence, then press Land."></iframe><figcaption>The Git card is the last card in Device view. The diagram shows the branch against main. A pulsing hollow dot is work that is not yet committed. Choose a commit cadence, then press Land. · <a href="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<h4 id="the-branch-diagram"><a class="anchor" href="#the-branch-diagram" aria-hidden="true">#</a>The branch diagram</h4>
+<p>The line at the bottom is main. The branch leaves it and runs to the right. Each dot is a commit. A pulsing hollow dot at the end is uncommitted work. Text above the branch shows lines added and removed, and the number of files. Text below shows how far the branch is ahead of main.</p>
+<h4 id="parameters-33"><a class="anchor" href="#parameters-33" aria-hidden="true">#</a>Parameters</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Branch</td>
+<td>A name (reading)</td>
+<td>The seat&#39;s branch</td>
+<td>The branch the agent works on.</td>
+</tr>
+<tr>
+<td>Seat</td>
+<td>A seat (reading)</td>
+<td>The seat of the session</td>
+<td>The checkout where the agent works. See Seat.</td>
+</tr>
+<tr>
+<td>Commit</td>
+<td>Per turn · Per task · Manual</td>
+<td>Per task</td>
+<td>When the agent commits.</td>
+</tr>
+<tr>
+<td>Push</td>
+<td>Off · On land</td>
+<td>Off</td>
+<td>Off: the work stays on this machine. On land: the branch goes to the remote when you land it.</td>
+</tr>
+<tr>
+<td>Land as</td>
+<td>Draft merge request · Merge request · Merge</td>
+<td>Draft merge request</td>
+<td>How the work lands.</td>
+</tr>
+<tr>
+<td>Checks</td>
+<td>A count (reading)</td>
+<td>Read from the remote</td>
+<td>The checks that passed, of all the checks, and those that still run.</td>
+</tr>
+<tr>
+<td>Changes</td>
+<td>Lines and files (reading)</td>
+<td>Read from the seat</td>
+<td>Lines added and removed, and files changed.</td>
+</tr>
+<tr>
+<td>Uncommitted</td>
+<td>A count (reading)</td>
+<td>Read from the seat</td>
+<td>The files that have no commit.</td>
+</tr>
+<tr>
+<td>Land</td>
+<td>A button</td>
+<td>—</td>
+<td>Lands the branch as set in Land as.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="presentations-33"><a class="anchor" href="#presentations-33" aria-hidden="true">#</a>Presentations</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Presentation</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>The title &quot;Git&quot; and the branch name. A child session shows &quot;shared with lead&quot;.</td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>The branch diagram. Four macros: Commit, Push, Land as, Land.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>All parameters, in three groups: Seat, Cadence, Landing.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>The branch in a pane: commits, files and checks, with the diff beside them.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>The branch, the changes, the checks and the Land button.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="transport-33"><a class="anchor" href="#transport-33" aria-hidden="true">#</a>Transport</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Control</th>
+<th>Effect on Git / landing</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Play</td>
+<td>With Land as set, lands the work when the last task ends and the checks pass.</td>
+</tr>
+<tr>
+<td>Loop and punch</td>
+<td>Sets the step before which nothing is committed, and the step after which nothing is.</td>
+</tr>
+<tr>
+<td>Arm</td>
+<td>With Arm off, the commits wait as proposals for your approval.</td>
+</tr>
+<tr>
+<td>Capture</td>
+<td>Keeps the diff as an example.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="to-use-git-landing"><a class="anchor" href="#to-use-git-landing" aria-hidden="true">#</a>To use Git / landing</h4>
+<ol>
+<li>Select a session. Open Device view. Read the Git card.</li>
+<li>Choose Commit. Use Per task for work you review task by task.</li>
+<li>Leave Push on Off while you test.</li>
+<li>When the work is ready, choose Land as. Press Land.</li>
+<li>Read the checks. Open the merge request when they pass.</li>
+</ol>
+<h4 id="rules-33"><a class="anchor" href="#rules-33" aria-hidden="true">#</a>Rules</h4>
+<ul>
+<li>The agent commits only from a seat. The device does not create a new checkout.</li>
+<li>Land does not merge by itself unless Land as is Merge.</li>
+<li>A child session shares the lead&#39;s seat and branch.</li>
+<li>The checks come from the remote. The device does not make them up.</li>
+<li>After the work lands, the seat returns to the main branch.</li>
+</ul>
+<h4 id="tips-33"><a class="anchor" href="#tips-33" aria-hidden="true">#</a>Tips</h4>
+<ul>
+<li>To keep the history small, set Commit to Per task.</li>
+<li>To test a change before anyone sees it, keep Push on Off and read the diff.</li>
+<li>To get a second view, land as a draft merge request and ask a reviewer.</li>
+</ul>
+<h3 id="18-20-seat"><a class="anchor" href="#18-20-seat" aria-hidden="true">#</a>18.20 Seat</h3>
+<p><strong>Product:</strong> Workcell · <strong>Kind:</strong> effect · <strong>Chain:</strong> inside the Git / landing device; whole in the pool</p>
+<p>You need a place where an agent can change a project without touching other work. A seat is a checkout of a project that agents share. The Seat device claims one for a session, and releases it when the work has landed.</p>
+<h4 id="parameters-34"><a class="anchor" href="#parameters-34" aria-hidden="true">#</a>Parameters</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Product</td>
+<td>A project</td>
+<td>The session&#39;s project</td>
+<td>The project that the seat holds.</td>
+</tr>
+<tr>
+<td>Seat</td>
+<td>The seats of this machine</td>
+<td>The free seat</td>
+<td>The seat the session joins.</td>
+</tr>
+<tr>
+<td>Lane</td>
+<td>A branch name</td>
+<td>A new branch from main</td>
+<td>The line of work that the seat holds.</td>
+</tr>
+<tr>
+<td>Claim</td>
+<td>Free · Yours · Another agent&#39;s (reading)</td>
+<td>Read from the register</td>
+<td>Who holds the seat.</td>
+</tr>
+<tr>
+<td>Join</td>
+<td>Attach to the lane · Start a new lane</td>
+<td>Attach to the lane</td>
+<td>Attach: work beside the agents on the standing lane. New lane: replace the standing lane.</td>
+</tr>
+<tr>
+<td>Co-workers</td>
+<td>A list (reading)</td>
+<td>Read from the claim</td>
+<td>The agents that share this lane.</td>
+</tr>
+<tr>
+<td>Uncommitted</td>
+<td>A count (reading)</td>
+<td>Read from the seat</td>
+<td>The files that have no commit.</td>
+</tr>
+<tr>
+<td>Release</td>
+<td>A button</td>
+<td>—</td>
+<td>Releases the seat after the work has landed.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="presentations-34"><a class="anchor" href="#presentations-34" aria-hidden="true">#</a>Presentations</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Presentation</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>The title &quot;Seat&quot; and the claim.</td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>The seat name, the lane and the co-workers. Four macros: Seat, Join, Lane, Release.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>All parameters, in two groups: Claim, Work.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>The seats of the machine in a pane, with their lanes, claims and uncommitted work.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>The seat name, the lane and the claim.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="transport-34"><a class="anchor" href="#transport-34" aria-hidden="true">#</a>Transport</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Control</th>
+<th>Effect on the Seat</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Link</td>
+<td>Shows the seats of your other machines.</td>
+</tr>
+<tr>
+<td>Play</td>
+<td>Joins the seat when the first task starts.</td>
+</tr>
+<tr>
+<td>Stop</td>
+<td>Keeps the claim. Release gives the seat up.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="to-use-the-seat"><a class="anchor" href="#to-use-the-seat" aria-hidden="true">#</a>To use the Seat</h4>
+<ol>
+<li>Select a session. Open the Git card whole in the pool.</li>
+<li>Read Claim. If another agent holds the seat, choose Attach to join as a co-worker.</li>
+<li>To start different work on the same project, choose Start a new lane.</li>
+<li>Work. Land the branch.</li>
+<li>Press Release. The seat returns to the main branch and the claim clears.</li>
+</ol>
+<h4 id="rules-34"><a class="anchor" href="#rules-34" aria-hidden="true">#</a>Rules</h4>
+<ul>
+<li>A seat holds one lane at a time. Several agents can work in one lane.</li>
+<li>The device does not create a new checkout. If every seat is busy, attach to a lane or take one over.</li>
+<li>A new lane does not replace uncommitted work.</li>
+<li>A commit from a place that is not a seat is refused.</li>
+<li>A seat left on a landed branch is not finished work.</li>
+</ul>
+<h4 id="tips-34"><a class="anchor" href="#tips-34" aria-hidden="true">#</a>Tips</h4>
+<ul>
+<li>To work next to another agent, choose Attach.</li>
+<li>To clear a seat after a merge, press Release.</li>
+</ul>
+<h3 id="18-21-remote-carrier"><a class="anchor" href="#18-21-remote-carrier" aria-hidden="true">#</a>18.21 Remote carrier</h3>
+<p><strong>Product:</strong> Workcell · <strong>Kind:</strong> effect · <strong>Chain:</strong> the fourth chain of the Gateways rack</p>
+<p>You need to choose where a session runs. The Remote carrier moves a session from this machine to another machine of yours. It shows whether that machine can carry the session now.</p>
+<figure class="ui"><iframe src="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" loading="lazy" style="height:720px" sandbox="allow-scripts allow-same-origin" title="Select the Main track and open Device view. The last row of the Gateways rack is the Remote carrier. Its dot shows its state. Open the Gateway and set Transport to Remote to see the carrier in the Reach row."></iframe><figcaption>Select the Main track and open Device view. The last row of the Gateways rack is the Remote carrier. Its dot shows its state. Open the Gateway and set Transport to Remote to see the carrier in the Reach row. · <a href="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<h4 id="parameters-35"><a class="anchor" href="#parameters-35" aria-hidden="true">#</a>Parameters</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Where</td>
+<td>This machine · A connected machine</td>
+<td>This machine</td>
+<td>The place where the session runs.</td>
+</tr>
+<tr>
+<td>Machine</td>
+<td>The machines you connected</td>
+<td>None</td>
+<td>The connected machine that carries the session.</td>
+</tr>
+<tr>
+<td>Standing</td>
+<td>Ready · Composed · Refused (reading)</td>
+<td>Read from the machine</td>
+<td>Whether the machine can carry the session now. A refused machine names the reason.</td>
+</tr>
+<tr>
+<td>Grant</td>
+<td>The operations allowed (reading)</td>
+<td>Read from the machine</td>
+<td>What this machine may do for you.</td>
+</tr>
+<tr>
+<td>Credential</td>
+<td>Valid · Expired · Revoked (reading)</td>
+<td>Read from the machine</td>
+<td>Whether the machine accepts you. An expired credential is not the same as a revoked one.</td>
+</tr>
+<tr>
+<td>Round trip</td>
+<td>Milliseconds (reading)</td>
+<td>Read from the link</td>
+<td>The time for a message to go and return.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="presentations-35"><a class="anchor" href="#presentations-35" aria-hidden="true">#</a>Presentations</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Presentation</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>The title &quot;Remote carrier&quot; and its state dot.</td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>The machines, each with a dot. Four macros: Where, Machine, Standing, Round trip.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>All parameters, in two groups: Place, Readings.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>The machine in a pane: its readiness, its sessions and its grant.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>The machine name, its dot and the round trip.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="transport-35"><a class="anchor" href="#transport-35" aria-hidden="true">#</a>Transport</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Control</th>
+<th>Effect on the Remote carrier</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Link</td>
+<td>Adds the machines that share your ground.</td>
+</tr>
+<tr>
+<td>Rate</td>
+<td>Shows the round trip of the link.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="to-use-the-remote-carrier"><a class="anchor" href="#to-use-the-remote-carrier" aria-hidden="true">#</a>To use the Remote carrier</h4>
+<ol>
+<li>Select the Main track. Open Device view.</li>
+<li>Click the Remote carrier row. Read its Standing.</li>
+<li>Choose Where. Choose a machine.</li>
+<li>Open the Gateway of the session. Set Transport to Remote.</li>
+<li>Press Play. The session runs on the other machine.</li>
+</ol>
+<h4 id="rules-35"><a class="anchor" href="#rules-35" aria-hidden="true">#</a>Rules</h4>
+<ul>
+<li>A refused or composed carrier does not show as live.</li>
+<li>The carrier does not create a machine. It uses a machine you connected.</li>
+<li>A session on another machine keeps its own seat and its own receipts.</li>
+<li>Secrets stay on the machine that holds them. The carrier sends a reference.</li>
+</ul>
+<h4 id="tips-35"><a class="anchor" href="#tips-35" aria-hidden="true">#</a>Tips</h4>
+<ul>
+<li>To run a long job away from your laptop, choose a connected machine and set Transport to Remote.</li>
+<li>To find out why a carrier is refused, read its reason in the Standing row.</li>
+</ul>
+<h3 id="18-22-link"><a class="anchor" href="#18-22-link" aria-hidden="true">#</a>18.22 Link</h3>
+<p><strong>Product:</strong> Workcell · <strong>Kind:</strong> effect · <strong>Track:</strong> Factory&#39;s Main track</p>
+<p>You need your sessions on several machines to keep one ledger and one clock. Link joins them. Agents on other machines and in other harnesses then show beside your own.</p>
+<figure class="ui"><iframe src="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" loading="lazy" style="height:720px" sandbox="allow-scripts allow-same-origin" title="The Link button in the transport joins the sessions to agents on other machines. Hover over it to read what it does. Open the Gateways rack on the Main track to see the gateways that Link adds."></iframe><figcaption>The Link button in the transport joins the sessions to agents on other machines. Hover over it to read what it does. Open the Gateways rack on the Main track to see the gateways that Link adds. · <a href="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<h4 id="parameters-36"><a class="anchor" href="#parameters-36" aria-hidden="true">#</a>Parameters</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Link</td>
+<td>On · Off</td>
+<td>Off</td>
+<td>Joins this machine to your others.</td>
+</tr>
+<tr>
+<td>Share</td>
+<td>Ledger · Clock · Both</td>
+<td>Both</td>
+<td>What the machines keep in common.</td>
+</tr>
+<tr>
+<td>Machines</td>
+<td>The machines you connected</td>
+<td>All</td>
+<td>The machines in the link.</td>
+</tr>
+<tr>
+<td>Peers</td>
+<td>A count (reading)</td>
+<td>Read from the link</td>
+<td>The agents and machines that joined.</td>
+</tr>
+<tr>
+<td>Lag</td>
+<td>Milliseconds (reading)</td>
+<td>Read from the link</td>
+<td>The time for a change to reach the others.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="presentations-36"><a class="anchor" href="#presentations-36" aria-hidden="true">#</a>Presentations</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Presentation</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>The title &quot;Link&quot; and the number of peers.</td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>The machines as dots joined by lines. Four macros: Link, Share, Machines, Lag.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>All parameters, in two groups: Link, Readings.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>The machines in a pane, each with its sessions and its seats.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>The peers and the link state.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="transport-36"><a class="anchor" href="#transport-36" aria-hidden="true">#</a>Transport</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Control</th>
+<th>Effect on the Link</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Link</td>
+<td>Turns the link on or off.</td>
+</tr>
+<tr>
+<td>Tap</td>
+<td>Asks the agents on all machines for a status line.</td>
+</tr>
+<tr>
+<td>Rate</td>
+<td>Shows the lag of the link.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="to-use-the-link"><a class="anchor" href="#to-use-the-link" aria-hidden="true">#</a>To use the Link</h4>
+<ol>
+<li>Press Link in the transport.</li>
+<li>Open Device view on the Main track. Read the Peers.</li>
+<li>Choose what to Share.</li>
+<li>Select a session of another machine. Read its thread.</li>
+</ol>
+<h4 id="rules-36"><a class="anchor" href="#rules-36" aria-hidden="true">#</a>Rules</h4>
+<ul>
+<li>Linked machines keep one ledger. A receipt made on one machine shows on all.</li>
+<li>A machine that is not reachable is shown as such. It does not leave the list.</li>
+<li>Link shares the ledger and the clock. It does not share a seat.</li>
+</ul>
+<h4 id="tips-36"><a class="anchor" href="#tips-36" aria-hidden="true">#</a>Tips</h4>
+<ul>
+<li>To follow a run on a far machine, turn Link on and select its session.</li>
+<li>To keep a machine private for a while, remove it from Machines.</li>
+</ul>
+<h2 id="19-widgets"><a class="anchor" href="#19-widgets" aria-hidden="true">#</a>19. Widgets</h2>
+<p>The rail on the right keeps context at hand in every mode. Each widget is a device in its rail presentation.</p>
+<h3 id="19-1-how-widgets-work"><a class="anchor" href="#19-1-how-widgets-work" aria-hidden="true">#</a>19.1 How widgets work</h3>
+<p><strong>Product:</strong> Central · <strong>Kind:</strong> rack · <strong>Rail:</strong> the widget rail on the right</p>
+<p>You need the context of your work at hand, in every kind of work. The widget rail holds small live views, and each view is a device. A widget stays on the rail when you change mode.</p>
+<figure class="ui"><iframe src="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" loading="lazy" style="height:720px" sandbox="allow-scripts allow-same-origin" title="The right side of the window is the rail. Tiles are open at the top, and the launcher is below them. Click a launcher square to open or close a tile. Click the arrows to widen the rail. Use the search field to find a widget."></iframe><figcaption>The right side of the window is the rail. Tiles are open at the top, and the launcher is below them. Click a launcher square to open or close a tile. Click the arrows to widen the rail. Use the search field to find a widget. · <a href="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<h4 id="the-rail"><a class="anchor" href="#the-rail" aria-hidden="true">#</a>The rail</h4>
+<p>Open tiles sit at the top of the rail. The launcher sits below them, as a grid of squares. Each square has a small preview of its widget, and a dot when the widget is open. A tile has a title, a pin and a close mark. The close mark closes the tile, and the widget stays in the launcher. Each widget holds a piece of context that belongs to your whole world. A terminal that you open in Factory is still there in Central.</p>
+<h4 id="parameters-37"><a class="anchor" href="#parameters-37" aria-hidden="true">#</a>Parameters</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Open</td>
+<td>The widgets in the launcher</td>
+<td>By mode</td>
+<td>The tiles shown at the top of the rail.</td>
+</tr>
+<tr>
+<td>Pin</td>
+<td>On · Off, for each tile</td>
+<td>Off</td>
+<td>On: the tile keeps its subject while you select other things. Off: it follows your selection.</td>
+</tr>
+<tr>
+<td>Width</td>
+<td>260–900 px</td>
+<td>300 px</td>
+<td>The width of the rail. Tiles move into two columns when the rail is wide.</td>
+</tr>
+<tr>
+<td>Launcher</td>
+<td>Open · Folded</td>
+<td>Open</td>
+<td>A folded launcher shows only its search field, and the tiles get the height.</td>
+</tr>
+<tr>
+<td>Search</td>
+<td>Text</td>
+<td>Empty</td>
+<td>Filters the launcher by name.</td>
+</tr>
+<tr>
+<td>Preset</td>
+<td>A named group of tiles</td>
+<td>None</td>
+<td>A saved group of open tiles.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="presentations-37"><a class="anchor" href="#presentations-37" aria-hidden="true">#</a>Presentations</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Presentation</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>A closed tile shows as a launcher square.</td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>A launcher square with a small preview and a dot when open.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>The widget&#39;s settings, in the pool, when you select its square in the browser.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>The widget at pane size. A widget that has a full form opens it in a pane.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>The tile, on the rail.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="transport-37"><a class="anchor" href="#transport-37" aria-hidden="true">#</a>Transport</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Control</th>
+<th>Effect on the rail</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Follow</td>
+<td>Keeps the open tiles on what the selected agent touches.</td>
+</tr>
+<tr>
+<td>Tap</td>
+<td>Adds the answers of the running agents to the Agents tile.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="to-use-the-rail"><a class="anchor" href="#to-use-the-rail" aria-hidden="true">#</a>To use the rail</h4>
+<ol>
+<li>Click a square in the launcher. The widget opens at the top.</li>
+<li>Click the pin on a tile to stop it from following your selection.</li>
+<li>Click the left arrow to widen the rail. Click the right arrow to narrow it.</li>
+<li>Click &quot;Save current tiles as preset&quot; and give the preset a name.</li>
+<li>To add a widget, open the browser. Install it from the Context category. A badge marks widgets from outside.</li>
+</ol>
+<h4 id="rules-37"><a class="anchor" href="#rules-37" aria-hidden="true">#</a>Rules</h4>
+<ul>
+<li>A widget is a plugin. You can set it up for your work, and anyone can build a new one.</li>
+<li>A light on a widget is a reading. It is dark when the state is not known.</li>
+<li>Close removes the tile. The widget remains in the launcher.</li>
+<li>A widget from outside shows a badge, and it shows only what its provider supplies.</li>
+</ul>
+<h4 id="tips-37"><a class="anchor" href="#tips-37" aria-hidden="true">#</a>Tips</h4>
+<ul>
+<li>To keep a terminal while you move between kinds of work, leave its tile open.</li>
+<li>To compare two sessions, pin one tile on the first and open a second tile on the other.</li>
+<li>To start a day with the same tiles, save them as a preset.</li>
+</ul>
+<h3 id="19-2-sessions"><a class="anchor" href="#19-2-sessions" aria-hidden="true">#</a>19.2 Sessions</h3>
+<p><strong>Product:</strong> AIKit and Central · <strong>Kind:</strong> instrument · <strong>Rail:</strong> the widget rail on the right</p>
+<p>You need to find any session or helper and open its thread. Sessions lists every session, with its helpers nested as they were spawned.</p>
+<figure class="ui"><iframe src="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" loading="lazy" style="height:720px" sandbox="allow-scripts allow-same-origin" title="Sessions is open at the top of the rail. Click the filter buttons to show all, running or stalled sessions. Click a session to select its track. Double-click it to open its thread."></iframe><figcaption>Sessions is open at the top of the rail. Click the filter buttons to show all, running or stalled sessions. Click a session to select its track. Double-click it to open its thread. · <a href="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<h4 id="parameters-38"><a class="anchor" href="#parameters-38" aria-hidden="true">#</a>Parameters</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Filter</td>
+<td>All · Running · Stalled</td>
+<td>All</td>
+<td>Shows the sessions in one state.</td>
+</tr>
+<tr>
+<td>Nest</td>
+<td>On · Off</td>
+<td>On</td>
+<td>Shows helpers under the session that spawned them.</td>
+</tr>
+<tr>
+<td>Pin</td>
+<td>On · Off</td>
+<td>Off</td>
+<td>Keeps the list on its subject.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="presentations-38"><a class="anchor" href="#presentations-38" aria-hidden="true">#</a>Presentations</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Presentation</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>A closed tile shows as a launcher square.</td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>Each session with its state, its helpers indented.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>Filter, nest and pin.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>The list at pane size.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>The tree of sessions, with a count of sessions, running and stalled.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="transport-38"><a class="anchor" href="#transport-38" aria-hidden="true">#</a>Transport</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Control</th>
+<th>Effect on Sessions</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Follow</td>
+<td>Keeps the list on the selected session.</td>
+</tr>
+<tr>
+<td>Position</td>
+<td>Shows the task, turn and step of the selected session.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="to-use-sessions"><a class="anchor" href="#to-use-sessions" aria-hidden="true">#</a>To use Sessions</h4>
+<ol>
+<li>Open Sessions from the launcher.</li>
+<li>Set the Filter to Stalled to find the sessions that need you.</li>
+<li>Click a session to select its track.</li>
+<li>Double-click a session to open its thread.</li>
+</ol>
+<h4 id="rules-38"><a class="anchor" href="#rules-38" aria-hidden="true">#</a>Rules</h4>
+<ul>
+<li>A helper shows one step of indent for each level.</li>
+<li>A session in the list is the same session as its track.</li>
+</ul>
+<h4 id="tips-38"><a class="anchor" href="#tips-38" aria-hidden="true">#</a>Tips</h4>
+<ul>
+<li>To find a lost session, filter to Running and read the names.</li>
+</ul>
+<h3 id="19-3-terminal"><a class="anchor" href="#19-3-terminal" aria-hidden="true">#</a>19.3 Terminal</h3>
+<p><strong>Product:</strong> Workcell · <strong>Kind:</strong> instrument · <strong>Rail:</strong> the widget rail on the right</p>
+<p>You need to see and use the shells of your sessions. Terminal shows the live shells. It follows the agent that you select.</p>
+<figure class="ui"><iframe src="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" loading="lazy" style="height:720px" sandbox="allow-scripts allow-same-origin" title="Terminal is open at the top of the rail. It follows the selected agent and shows its commands and results. A prompt that waits for an answer shows in orange."></iframe><figcaption>Terminal is open at the top of the rail. It follows the selected agent and shows its commands and results. A prompt that waits for an answer shows in orange. · <a href="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<h4 id="parameters-39"><a class="anchor" href="#parameters-39" aria-hidden="true">#</a>Parameters</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Follow</td>
+<td>Selected agent · Pinned shell</td>
+<td>Selected agent</td>
+<td>Which shell the tile shows.</td>
+</tr>
+<tr>
+<td>Shell</td>
+<td>A list of live shells</td>
+<td>The agent&#39;s shell</td>
+<td>Chooses the shell.</td>
+</tr>
+<tr>
+<td>Prompts</td>
+<td>Show · Hide</td>
+<td>Show</td>
+<td>Marks a shell that waits for an answer, in the stall colour.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="presentations-39"><a class="anchor" href="#presentations-39" aria-hidden="true">#</a>Presentations</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Presentation</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>A closed tile shows as a launcher square.</td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>The last lines of the shell and its prompt.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>Follow, shell and prompts.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>A full terminal in a pane.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>The live shell, with the line &quot;following&quot; and the name of the agent.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="transport-39"><a class="anchor" href="#transport-39" aria-hidden="true">#</a>Transport</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Control</th>
+<th>Effect on Terminal</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Follow</td>
+<td>Moves the tile to the shell of the selected agent.</td>
+</tr>
+<tr>
+<td>Stop</td>
+<td>Pauses the agent. It does not close the shell.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="to-use-terminal"><a class="anchor" href="#to-use-terminal" aria-hidden="true">#</a>To use Terminal</h4>
+<ol>
+<li>Open Terminal from the launcher.</li>
+<li>Select an agent. The tile follows its shell.</li>
+<li>If a shell waits for an answer, read the prompt.</li>
+<li>Type your answer in the shell.</li>
+</ol>
+<h4 id="rules-39"><a class="anchor" href="#rules-39" aria-hidden="true">#</a>Rules</h4>
+<ul>
+<li>A shell that waits for a yes or no shows in the stall colour.</li>
+<li>A terminal stays on the rail when you change mode.</li>
+</ul>
+<h4 id="tips-39"><a class="anchor" href="#tips-39" aria-hidden="true">#</a>Tips</h4>
+<ul>
+<li>To stop a stuck command, pin the shell and press Control-C.</li>
+</ul>
+<h3 id="19-4-files"><a class="anchor" href="#19-4-files" aria-hidden="true">#</a>19.4 Files</h3>
+<p><strong>Product:</strong> Workcell · <strong>Kind:</strong> instrument · <strong>Rail:</strong> the widget rail on the right</p>
+<p>You need to see which files an agent read and which it changed. Files shows them as a tree, with the lines added and removed.</p>
+<figure class="ui"><iframe src="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" loading="lazy" style="height:720px" sandbox="allow-scripts allow-same-origin" title="Files is open at the top of the rail. M marks a changed file, with the lines added and removed. An arrow marks a file the agent read. A red line marks a blocked place."></iframe><figcaption>Files is open at the top of the rail. M marks a changed file, with the lines added and removed. An arrow marks a file the agent read. A red line marks a blocked place. · <a href="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<h4 id="parameters-40"><a class="anchor" href="#parameters-40" aria-hidden="true">#</a>Parameters</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Show</td>
+<td>Read and changed · Changed only · All</td>
+<td>Read and changed</td>
+<td>Chooses which files the tree lists.</td>
+</tr>
+<tr>
+<td>Blocked</td>
+<td>Show · Hide</td>
+<td>Show</td>
+<td>Marks places the agent may not reach.</td>
+</tr>
+<tr>
+<td>Follow</td>
+<td>On · Off</td>
+<td>On</td>
+<td>Keeps the tree on the selected agent.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="presentations-40"><a class="anchor" href="#presentations-40" aria-hidden="true">#</a>Presentations</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Presentation</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>A closed tile shows as a launcher square.</td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>The changed files, with lines added and removed.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>Show, blocked and follow.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>The file in a pane.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>The tree: M marks a changed file, and an arrow marks a file the agent read.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="transport-40"><a class="anchor" href="#transport-40" aria-hidden="true">#</a>Transport</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Control</th>
+<th>Effect on Files</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Follow</td>
+<td>Keeps the tree on what the selected agent touches.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="to-use-files"><a class="anchor" href="#to-use-files" aria-hidden="true">#</a>To use Files</h4>
+<ol>
+<li>Open Files from the launcher.</li>
+<li>Read the changed files and their counts.</li>
+<li>Click a file to open it in a pane.</li>
+<li>Click a blocked place to read why it is blocked.</li>
+</ol>
+<h4 id="rules-40"><a class="anchor" href="#rules-40" aria-hidden="true">#</a>Rules</h4>
+<ul>
+<li>The tree shows what the agent did. It does not change a file.</li>
+<li>A blocked place stays visible, with its reason.</li>
+</ul>
+<h4 id="tips-40"><a class="anchor" href="#tips-40" aria-hidden="true">#</a>Tips</h4>
+<ul>
+<li>To review a run fast, set Show to Changed only.</li>
+</ul>
+<h3 id="19-5-web"><a class="anchor" href="#19-5-web" aria-hidden="true">#</a>19.5 Web</h3>
+<p><strong>Product:</strong> Central · <strong>Kind:</strong> instrument · <strong>Rail:</strong> the widget rail on the right</p>
+<p>You need to see the pages an agent read, and the text it used. Web shows each page, with the used text marked.</p>
+<figure class="ui"><iframe src="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" loading="lazy" style="height:720px" sandbox="allow-scripts allow-same-origin" title="Open Web from the launcher. The tile shows the page the agent fetched, and the used text is marked."></iframe><figcaption>Open Web from the launcher. The tile shows the page the agent fetched, and the used text is marked. · <a href="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<h4 id="parameters-41"><a class="anchor" href="#parameters-41" aria-hidden="true">#</a>Parameters</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Page</td>
+<td>A list of pages</td>
+<td>The latest page</td>
+<td>Chooses the page.</td>
+</tr>
+<tr>
+<td>Mark used text</td>
+<td>On · Off</td>
+<td>On</td>
+<td>Highlights the text the agent used.</td>
+</tr>
+<tr>
+<td>Follow</td>
+<td>On · Off</td>
+<td>On</td>
+<td>Shows the page the selected agent read last.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="presentations-41"><a class="anchor" href="#presentations-41" aria-hidden="true">#</a>Presentations</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Presentation</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>A closed tile shows as a launcher square.</td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>The address and the first lines of the page.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>Page, mark and follow.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>The page in a pane.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>The page, with used text marked.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="to-use-web"><a class="anchor" href="#to-use-web" aria-hidden="true">#</a>To use Web</h4>
+<ol>
+<li>Open Web from the launcher.</li>
+<li>Select an agent. Read the page it fetched.</li>
+<li>Read the marked text. It is the text the agent used.</li>
+<li>Click the address to open the page in a pane.</li>
+</ol>
+<h4 id="rules-41"><a class="anchor" href="#rules-41" aria-hidden="true">#</a>Rules</h4>
+<ul>
+<li>The tile shows the page as the agent got it.</li>
+<li>A page opens in a pane only when you ask.</li>
+</ul>
+<h4 id="tips-41"><a class="anchor" href="#tips-41" aria-hidden="true">#</a>Tips</h4>
+<ul>
+<li>To check a claim, open the page and read the marked text.</li>
+</ul>
+<h3 id="19-6-graph"><a class="anchor" href="#19-6-graph" aria-hidden="true">#</a>19.6 Graph</h3>
+<p><strong>Product:</strong> Central · <strong>Kind:</strong> instrument · <strong>Rail:</strong> the widget rail on the right</p>
+<p>You need to see what is linked to the thing in play. Graph shows the neighbourhood of the selected thing in your knowledge graph.</p>
+<figure class="ui"><iframe src="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" loading="lazy" style="height:720px" sandbox="allow-scripts allow-same-origin" title="Open Graph from the launcher. The node at the middle is the selection. The coloured nodes are the ones the agent touched."></iframe><figcaption>Open Graph from the launcher. The node at the middle is the selection. The coloured nodes are the ones the agent touched. · <a href="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<h4 id="parameters-42"><a class="anchor" href="#parameters-42" aria-hidden="true">#</a>Parameters</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Centre</td>
+<td>The selection · A pinned node</td>
+<td>The selection</td>
+<td>The node at the middle.</td>
+</tr>
+<tr>
+<td>Depth</td>
+<td>0–3 links</td>
+<td>1</td>
+<td>How many links the tile draws from the centre.</td>
+</tr>
+<tr>
+<td>Kinds</td>
+<td>All · Notes · Files · Agents</td>
+<td>All</td>
+<td>Which kinds of node to draw.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="presentations-42"><a class="anchor" href="#presentations-42" aria-hidden="true">#</a>Presentations</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Presentation</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>A closed tile shows as a launcher square.</td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>The centre and the nodes around it.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>Centre, depth and kinds.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>The Obsidian-style knowledge graph in a pane.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>The neighbourhood, with the centre marked.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="to-use-graph"><a class="anchor" href="#to-use-graph" aria-hidden="true">#</a>To use Graph</h4>
+<ol>
+<li>Open Graph from the launcher.</li>
+<li>Select a note or a file. It becomes the centre.</li>
+<li>Click a node to move the centre.</li>
+<li>Click the open mark to open the full graph in a pane.</li>
+</ol>
+<h4 id="rules-42"><a class="anchor" href="#rules-42" aria-hidden="true">#</a>Rules</h4>
+<ul>
+<li>A node that the agent touched has a colour. A link that does not resolve shows as a ghost node.</li>
+<li>The tile is small. The full graph is a separate instrument.</li>
+</ul>
+<h4 id="tips-42"><a class="anchor" href="#tips-42" aria-hidden="true">#</a>Tips</h4>
+<ul>
+<li>To find what depends on a file, set Depth to 2 and read the links.</li>
+</ul>
+<h3 id="19-7-diff"><a class="anchor" href="#19-7-diff" aria-hidden="true">#</a>19.7 Diff</h3>
+<p><strong>Product:</strong> Software Factory · <strong>Kind:</strong> effect · <strong>Rail:</strong> the widget rail on the right</p>
+<p>You need to read what changed before you approve it. Diff shows the uncommitted changes and the changes that an agent proposes.</p>
+<figure class="ui"><iframe src="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" loading="lazy" style="height:720px" sandbox="allow-scripts allow-same-origin" title="Open Diff from the launcher. The tile shows the lines added and removed in the selected session."></iframe><figcaption>Open Diff from the launcher. The tile shows the lines added and removed in the selected session. · <a href="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<h4 id="parameters-43"><a class="anchor" href="#parameters-43" aria-hidden="true">#</a>Parameters</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Show</td>
+<td>Uncommitted · Proposed · Both</td>
+<td>Both</td>
+<td>Chooses which changes the tile lists.</td>
+</tr>
+<tr>
+<td>Session</td>
+<td>The selected session · All</td>
+<td>The selected session</td>
+<td>Chooses whose changes to show.</td>
+</tr>
+<tr>
+<td>Layout</td>
+<td>Unified · Side by side</td>
+<td>Unified</td>
+<td>How the lines are set out.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="presentations-43"><a class="anchor" href="#presentations-43" aria-hidden="true">#</a>Presentations</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Presentation</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>A closed tile shows as a launcher square.</td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>The first lines of the diff.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>Show, session and layout.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>The diff in a pane.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>The files, with lines added in green and removed in red.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="transport-41"><a class="anchor" href="#transport-41" aria-hidden="true">#</a>Transport</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Control</th>
+<th>Effect on Diff</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Loop and punch</td>
+<td>Shows only the changes inside the write window.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="to-use-diff"><a class="anchor" href="#to-use-diff" aria-hidden="true">#</a>To use Diff</h4>
+<ol>
+<li>Open Diff from the launcher.</li>
+<li>Read the first lines of each file.</li>
+<li>Click a file to open its diff in a pane.</li>
+<li>Go to Approvals to accept the proposal.</li>
+</ol>
+<h4 id="rules-43"><a class="anchor" href="#rules-43" aria-hidden="true">#</a>Rules</h4>
+<ul>
+<li>Diff only reads. It changes no file.</li>
+<li>A proposed change shows its author.</li>
+</ul>
+<h4 id="tips-43"><a class="anchor" href="#tips-43" aria-hidden="true">#</a>Tips</h4>
+<ul>
+<li>To review a big change, set Layout to Side by side.</li>
+</ul>
+<h3 id="19-8-frames"><a class="anchor" href="#19-8-frames" aria-hidden="true">#</a>19.8 Frames</h3>
+<p><strong>Product:</strong> Actuation · <strong>Kind:</strong> effect · <strong>Rail:</strong> the widget rail on the right</p>
+<p>You need to read the live events between the shell and the harness. Frames is the Frames monitor on the rail.</p>
+<figure class="ui"><iframe src="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" loading="lazy" style="height:720px" sandbox="allow-scripts allow-same-origin" title="Open Frames from the launcher. The tile shows the last frames of the selected session, such as tool.start and approval.request."></iframe><figcaption>Open Frames from the launcher. The tile shows the last frames of the selected session, such as tool.start and approval.request. · <a href="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<h4 id="parameters-44"><a class="anchor" href="#parameters-44" aria-hidden="true">#</a>Parameters</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Session</td>
+<td>All · One session</td>
+<td>Selected session</td>
+<td>Chooses whose frames to show.</td>
+</tr>
+<tr>
+<td>Kinds</td>
+<td>Messages · Tools · Heartbeat · Approvals · Errors</td>
+<td>All</td>
+<td>Chooses the frames to show.</td>
+</tr>
+<tr>
+<td>Pause</td>
+<td>On · Off</td>
+<td>Off</td>
+<td>Holds the list still.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="presentations-44"><a class="anchor" href="#presentations-44" aria-hidden="true">#</a>Presentations</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Presentation</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>A closed tile shows as a launcher square.</td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>The last frames of the selected session.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>Session, kinds and pause.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>The Frames monitor in a pane.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>The last eleven frames, newest at the bottom.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="to-use-frames"><a class="anchor" href="#to-use-frames" aria-hidden="true">#</a>To use Frames</h4>
+<ol>
+<li>Open Frames from the launcher.</li>
+<li>Select a session. Read its last frames.</li>
+<li>Set Kinds to Errors to find a fault.</li>
+<li>Click the open mark to open the monitor in a pane.</li>
+</ol>
+<h4 id="rules-44"><a class="anchor" href="#rules-44" aria-hidden="true">#</a>Rules</h4>
+<ul>
+<li>The tile only reads. It sends no frame.</li>
+<li>The tile shows the same frames as the Frames monitor.</li>
+</ul>
+<h4 id="tips-44"><a class="anchor" href="#tips-44" aria-hidden="true">#</a>Tips</h4>
+<ul>
+<li>To see why a session stalled, filter to Tools and read the last frame.</li>
+</ul>
+<h3 id="19-9-ledger"><a class="anchor" href="#19-9-ledger" aria-hidden="true">#</a>19.9 Ledger</h3>
+<p><strong>Product:</strong> Software Factory · <strong>Kind:</strong> instrument · <strong>Rail:</strong> the widget rail on the right</p>
+<p>You need to see what each task produced. Ledger shows every task with its receipt.</p>
+<figure class="ui"><iframe src="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" loading="lazy" style="height:720px" sandbox="allow-scripts allow-same-origin" title="Open Ledger from the launcher. Each line is a task and its receipt, for example #212 re-plan port, landed."></iframe><figcaption>Open Ledger from the launcher. Each line is a task and its receipt, for example #212 re-plan port, landed. · <a href="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<h4 id="parameters-45"><a class="anchor" href="#parameters-45" aria-hidden="true">#</a>Parameters</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Period</td>
+<td>This run · Today · All</td>
+<td>Today</td>
+<td>The span of tasks in the list.</td>
+</tr>
+<tr>
+<td>Outcome</td>
+<td>All · Landed · Approved · Commented</td>
+<td>All</td>
+<td>Shows tasks with one outcome.</td>
+</tr>
+<tr>
+<td>Agent</td>
+<td>All · One agent</td>
+<td>All</td>
+<td>Shows the tasks of one agent.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="presentations-45"><a class="anchor" href="#presentations-45" aria-hidden="true">#</a>Presentations</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Presentation</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>A closed tile shows as a launcher square.</td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>One line for each task, with its number and outcome.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>Period, outcome and agent.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>The Ledger in a pane, with each receipt open.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>The last receipts, for example &quot;#212 re-plan port · landed&quot;.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="to-use-ledger"><a class="anchor" href="#to-use-ledger" aria-hidden="true">#</a>To use Ledger</h4>
+<ol>
+<li>Open Ledger from the launcher.</li>
+<li>Read the last receipts.</li>
+<li>Select a receipt to read it in full.</li>
+<li>Click the task to open its log.</li>
+</ol>
+<h4 id="rules-45"><a class="anchor" href="#rules-45" aria-hidden="true">#</a>Rules</h4>
+<ul>
+<li>Every write has a receipt. Every receipt is in the Ledger.</li>
+<li>The Ledger changes no receipt.</li>
+</ul>
+<h4 id="tips-45"><a class="anchor" href="#tips-45" aria-hidden="true">#</a>Tips</h4>
+<ul>
+<li>To see what an agent did today, set Agent to that agent.</li>
+</ul>
+<h3 id="19-10-approvals"><a class="anchor" href="#19-10-approvals" aria-hidden="true">#</a>19.10 Approvals</h3>
+<p><strong>Product:</strong> Software Factory · <strong>Kind:</strong> effect · <strong>Rail:</strong> the widget rail on the right</p>
+<p>You need to answer the agents when they ask. Approvals shows the proposals that wait for you, each with a button to approve.</p>
+<figure class="ui"><iframe src="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" loading="lazy" style="height:720px" sandbox="allow-scripts allow-same-origin" title="Open Approvals from the launcher. Each card names the agent and the change. Click Approve to accept it."></iframe><figcaption>Open Approvals from the launcher. Each card names the agent and the change. Click Approve to accept it. · <a href="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<h4 id="parameters-46"><a class="anchor" href="#parameters-46" aria-hidden="true">#</a>Parameters</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Show</td>
+<td>Proposals · Requests · Both</td>
+<td>Both</td>
+<td>Chooses what the tile lists.</td>
+</tr>
+<tr>
+<td>Order</td>
+<td>Oldest first · By agent · By risk</td>
+<td>Oldest first</td>
+<td>The order of the queue.</td>
+</tr>
+<tr>
+<td>Wait</td>
+<td>15 min–24 h</td>
+<td>4 h</td>
+<td>How long a request waits before it counts as unanswered.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="presentations-46"><a class="anchor" href="#presentations-46" aria-hidden="true">#</a>Presentations</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Presentation</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>A closed tile shows as a launcher square.</td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>One line for each item, with a button.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>Show, order and wait.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>The queue in a pane, with the diff beside it.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>The proposal cards. Each has Approve, Changes and Open.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="transport-42"><a class="anchor" href="#transport-42" aria-hidden="true">#</a>Transport</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Control</th>
+<th>Effect on Approvals</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Arm</td>
+<td>With Arm on, writes in scope land directly and do not enter the queue.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="to-use-approvals-1"><a class="anchor" href="#to-use-approvals-1" aria-hidden="true">#</a>To use Approvals</h4>
+<ol>
+<li>Open Approvals from the launcher.</li>
+<li>Read a card. Click Open to read its diff.</li>
+<li>Click Approve to accept it.</li>
+<li>Click Changes to ask for a different result.</li>
+</ol>
+<h4 id="rules-46"><a class="anchor" href="#rules-46" aria-hidden="true">#</a>Rules</h4>
+<ul>
+<li>Deny is always yours.</li>
+<li>Nothing in the queue lands until you answer.</li>
+</ul>
+<h4 id="tips-46"><a class="anchor" href="#tips-46" aria-hidden="true">#</a>Tips</h4>
+<ul>
+<li>To clear the queue fast, order it by risk and read the risky items first.</li>
+</ul>
+<h3 id="19-11-agents"><a class="anchor" href="#19-11-agents" aria-hidden="true">#</a>19.11 Agents</h3>
+<p><strong>Product:</strong> Central and AIKit · <strong>Kind:</strong> instrument · <strong>Rail:</strong> the widget rail on the right</p>
+<p>You need to see all your agents at once, and what each is doing. Agents is the hive: each agent sits at a station, with its helpers around it.</p>
+<figure class="ui"><iframe src="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" loading="lazy" style="height:720px" sandbox="allow-scripts allow-same-origin" title="Open Agents from the launcher. Each agent has a station. The lines under the hive say what each agent does."></iframe><figcaption>Open Agents from the launcher. Each agent has a station. The lines under the hive say what each agent does. · <a href="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<h4 id="parameters-47"><a class="anchor" href="#parameters-47" aria-hidden="true">#</a>Parameters</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Telemetry</td>
+<td>On · Off, for each agent</td>
+<td>On</td>
+<td>An agent with telemetry Off is muted. It works in silence.</td>
+</tr>
+<tr>
+<td>Relations</td>
+<td>Show · Hide</td>
+<td>Show</td>
+<td>Draws dashed lines from an agent to its helpers.</td>
+</tr>
+<tr>
+<td>Doing lines</td>
+<td>Show · Hide</td>
+<td>Show</td>
+<td>Shows one line of text for each agent that says what it does.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="presentations-47"><a class="anchor" href="#presentations-47" aria-hidden="true">#</a>Presentations</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Presentation</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>A closed tile shows as a launcher square.</td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>Each agent at a station.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>Telemetry, relations and doing lines.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>The hive in a pane.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>The hive. Click an agent to select its session. Double-click to open its thread.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="transport-43"><a class="anchor" href="#transport-43" aria-hidden="true">#</a>Transport</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Control</th>
+<th>Effect on Agents</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Tap</td>
+<td>Asks every running agent for a status line. The answers arrive here.</td>
+</tr>
+<tr>
+<td>Link</td>
+<td>Adds the agents of other machines.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="to-use-agents"><a class="anchor" href="#to-use-agents" aria-hidden="true">#</a>To use Agents</h4>
+<ol>
+<li>Open Agents from the launcher.</li>
+<li>Read the doing line of each agent.</li>
+<li>Click an agent to select its session.</li>
+<li>Press Tap in the transport to ask for a status line from each.</li>
+</ol>
+<h4 id="rules-47"><a class="anchor" href="#rules-47" aria-hidden="true">#</a>Rules</h4>
+<ul>
+<li>A muted agent keeps working. It stops sending to the tiles.</li>
+<li>The roster comes from your agents. No agent is fixed in advance.</li>
+</ul>
+<h4 id="tips-47"><a class="anchor" href="#tips-47" aria-hidden="true">#</a>Tips</h4>
+<ul>
+<li>To see who is stuck, look for the amber stations.</li>
+</ul>
+<h3 id="19-12-packet"><a class="anchor" href="#19-12-packet" aria-hidden="true">#</a>19.12 Packet</h3>
+<p><strong>Product:</strong> Central · <strong>Kind:</strong> effect · <strong>Rail:</strong> the widget rail on the right</p>
+<p>You need to know exactly what the agent will read. Packet shows it whole, with its size, before anything is sent.</p>
+<figure class="ui"><iframe src="../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=base" loading="lazy" style="height:720px" sandbox="allow-scripts allow-same-origin" title="The Packet tile is open at the top of the rail in Central. Each line names the source and the text. The size shows beside the Answer button."></iframe><figcaption>The Packet tile is open at the top of the rail in Central. Each line names the source and the text. The size shows beside the Answer button. · <a href="../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=base" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<h4 id="parameters-48"><a class="anchor" href="#parameters-48" aria-hidden="true">#</a>Parameters</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Items</td>
+<td>Selection · Entry · Document</td>
+<td>Selection</td>
+<td>What the packet holds.</td>
+</tr>
+<tr>
+<td>Size</td>
+<td>Tokens (reading)</td>
+<td>Read from the packet</td>
+<td>The size of what the agent will read.</td>
+</tr>
+<tr>
+<td>Send</td>
+<td>A button</td>
+<td>—</td>
+<td>Sends the packet. The answer arrives as an entry.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="presentations-48"><a class="anchor" href="#presentations-48" aria-hidden="true">#</a>Presentations</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Presentation</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>A closed tile shows as a launcher square.</td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>The first lines of each item.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>Items, size and send.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>The packet in a pane.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>The list of items, with their size and the Answer button.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="transport-44"><a class="anchor" href="#transport-44" aria-hidden="true">#</a>Transport</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Control</th>
+<th>Effect on Packet</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Capture</td>
+<td>Puts the selection in the packet.</td>
+</tr>
+<tr>
+<td>Play</td>
+<td>Sends the packet.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="to-use-packet"><a class="anchor" href="#to-use-packet" aria-hidden="true">#</a>To use Packet</h4>
+<ol>
+<li>Open Packet from the launcher.</li>
+<li>Select a passage. Press Capture to put it in the packet.</li>
+<li>Read the list. Remove any item you do not want to send.</li>
+<li>Press Play. The agent answers.</li>
+</ol>
+<h4 id="rules-48"><a class="anchor" href="#rules-48" aria-hidden="true">#</a>Rules</h4>
+<ul>
+<li>The packet is exactly what the agent receives. Nothing else goes with it.</li>
+<li>You see the size before you send.</li>
+</ul>
+<h4 id="tips-48"><a class="anchor" href="#tips-48" aria-hidden="true">#</a>Tips</h4>
+<ul>
+<li>To cut cost, remove the items that the question does not need.</li>
+</ul>
+<h3 id="19-13-trail"><a class="anchor" href="#19-13-trail" aria-hidden="true">#</a>19.13 Trail</h3>
+<p><strong>Product:</strong> Central · <strong>Kind:</strong> effect · <strong>Rail:</strong> the widget rail on the right</p>
+<p>You need to go back to a place you were. Trail keeps every place you went, newest first. Select a stop to return to it.</p>
+<figure class="ui"><iframe src="../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=base" loading="lazy" style="height:720px" sandbox="allow-scripts allow-same-origin" title="The Trail tile is open in Central. Each stop shows its time, the kind of work and the place. Click a stop to return to it."></iframe><figcaption>The Trail tile is open in Central. Each stop shows its time, the kind of work and the place. Click a stop to return to it. · <a href="../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=base" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<h4 id="parameters-49"><a class="anchor" href="#parameters-49" aria-hidden="true">#</a>Parameters</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Stops</td>
+<td>A list (reading)</td>
+<td>Read from your moves</td>
+<td>The places you went, with time and kind of work.</td>
+</tr>
+<tr>
+<td>Return</td>
+<td>A stop</td>
+<td>—</td>
+<td>Returns to the same place, page and point in the reading.</td>
+</tr>
+<tr>
+<td>Limit</td>
+<td>8–100 stops</td>
+<td>8</td>
+<td>The stops shown in the tile.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="presentations-49"><a class="anchor" href="#presentations-49" aria-hidden="true">#</a>Presentations</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Presentation</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>A closed tile shows as a launcher square.</td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>The last stops.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>Stops, return and limit.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>The trail in a pane.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>The stops, newest first, each with its time and kind of work.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="transport-45"><a class="anchor" href="#transport-45" aria-hidden="true">#</a>Transport</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Control</th>
+<th>Effect on Trail</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Position</td>
+<td>Shows the stop you are on.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="to-use-trail"><a class="anchor" href="#to-use-trail" aria-hidden="true">#</a>To use Trail</h4>
+<ol>
+<li>Open Trail from the launcher.</li>
+<li>Find the stop.</li>
+<li>Click the stop.</li>
+<li>You return to the same place.</li>
+</ol>
+<h4 id="rules-49"><a class="anchor" href="#rules-49" aria-hidden="true">#</a>Rules</h4>
+<ul>
+<li>A change of mode does not close anything.</li>
+<li>Every place can be linked to and opened again.</li>
+</ul>
+<h4 id="tips-49"><a class="anchor" href="#tips-49" aria-hidden="true">#</a>Tips</h4>
+<ul>
+<li>To undo a wrong turn, select the stop before it.</li>
+</ul>
+<h3 id="19-14-nows"><a class="anchor" href="#19-14-nows" aria-hidden="true">#</a>19.14 NOWs</h3>
+<p><strong>Product:</strong> Central · <strong>Kind:</strong> instrument · <strong>Rail:</strong> the widget rail on the right</p>
+<p>You need to see the moments of today that are still open. NOWs shows the day and the present moment, with the open moments of each machine.</p>
+<figure class="ui"><iframe src="../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=base" loading="lazy" style="height:720px" sandbox="allow-scripts allow-same-origin" title="The NOWs tile lists the machines and the agent at work on each, with a state. Open it from the launcher if it is not on the rail."></iframe><figcaption>The NOWs tile lists the machines and the agent at work on each, with a state. Open it from the launcher if it is not on the rail. · <a href="../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=base" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<h4 id="parameters-50"><a class="anchor" href="#parameters-50" aria-hidden="true">#</a>Parameters</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Day</td>
+<td>A date (reading)</td>
+<td>Today</td>
+<td>The day in force.</td>
+</tr>
+<tr>
+<td>Now</td>
+<td>A time (reading)</td>
+<td>The present</td>
+<td>The present moment.</td>
+</tr>
+<tr>
+<td>Machines</td>
+<td>All · One machine</td>
+<td>All</td>
+<td>Shows the open moments of one machine.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="presentations-50"><a class="anchor" href="#presentations-50" aria-hidden="true">#</a>Presentations</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Presentation</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>A closed tile shows as a launcher square.</td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>One line for each open moment, with its state.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>Machines and day.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>The day&#39;s moments in a pane.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>The day, the time and the open moments.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="to-use-nows"><a class="anchor" href="#to-use-nows" aria-hidden="true">#</a>To use NOWs</h4>
+<ol>
+<li>Open NOWs from the launcher.</li>
+<li>Read the open moments.</li>
+<li>Click a moment to open it.</li>
+<li>Close the moments you have finished.</li>
+</ol>
+<h4 id="rules-50"><a class="anchor" href="#rules-50" aria-hidden="true">#</a>Rules</h4>
+<ul>
+<li>The tile shows the day and the time that the ground reports. It shows nothing when the ground reports nothing.</li>
+<li>The day opens and closes by itself.</li>
+</ul>
+<h4 id="tips-50"><a class="anchor" href="#tips-50" aria-hidden="true">#</a>Tips</h4>
+<ul>
+<li>To end the day clean, close each open moment before the day closes.</li>
+</ul>
+<h3 id="19-15-results"><a class="anchor" href="#19-15-results" aria-hidden="true">#</a>19.15 Results</h3>
+<p><strong>Product:</strong> Software Factory · <strong>Kind:</strong> instrument · <strong>Rail:</strong> the widget rail on the right</p>
+<p>You need to read what a run produced. Results shows the results and the diffs of the selected run.</p>
+<figure class="ui"><iframe src="../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=factory" loading="lazy" style="height:720px" sandbox="allow-scripts allow-same-origin" title="The Results tile is open at the top of the rail in Factory. It shows the results of the run you selected."></iframe><figcaption>The Results tile is open at the top of the rail in Factory. It shows the results of the run you selected. · <a href="../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=factory" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<h4 id="parameters-51"><a class="anchor" href="#parameters-51" aria-hidden="true">#</a>Parameters</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Run</td>
+<td>A run</td>
+<td>The selected run</td>
+<td>The run whose results show.</td>
+</tr>
+<tr>
+<td>Show</td>
+<td>Results · Diffs · Both</td>
+<td>Both</td>
+<td>Chooses what the tile lists.</td>
+</tr>
+<tr>
+<td>Accept</td>
+<td>A button</td>
+<td>—</td>
+<td>Accepts the result. The result goes to review.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="presentations-51"><a class="anchor" href="#presentations-51" aria-hidden="true">#</a>Presentations</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Presentation</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>A closed tile shows as a launcher square.</td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>The latest result and its state.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>Run, show and accept.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>The results in a pane.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>The results and diffs of the run, with Accept.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="to-use-results"><a class="anchor" href="#to-use-results" aria-hidden="true">#</a>To use Results</h4>
+<ol>
+<li>Open Results from the launcher.</li>
+<li>Read the result.</li>
+<li>Open the diff if it has one.</li>
+<li>Press Accept, or ask for changes.</li>
+</ol>
+<h4 id="rules-51"><a class="anchor" href="#rules-51" aria-hidden="true">#</a>Rules</h4>
+<ul>
+<li>Accept sends the result to review. It does not decide the review.</li>
+<li>A result shows its author.</li>
+</ul>
+<h4 id="tips-51"><a class="anchor" href="#tips-51" aria-hidden="true">#</a>Tips</h4>
+<ul>
+<li>To compare two attempts, open Runs and set Compare.</li>
+</ul>
+<h3 id="19-16-wiki"><a class="anchor" href="#19-16-wiki" aria-hidden="true">#</a>19.16 Wiki</h3>
+<p><strong>Product:</strong> Central · <strong>Kind:</strong> instrument · <strong>Rail:</strong> the widget rail on the right</p>
+<p>You need to read the wiki pages that an agent may use. Wiki shows the pages inside the reads of the world.</p>
+<figure class="ui"><iframe src="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" loading="lazy" style="height:720px" sandbox="allow-scripts allow-same-origin" title="Open Wiki from the launcher. The tile lists the wiki pages inside the reads of the selected session."></iframe><figcaption>Open Wiki from the launcher. The tile lists the wiki pages inside the reads of the selected session. · <a href="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<h4 id="parameters-52"><a class="anchor" href="#parameters-52" aria-hidden="true">#</a>Parameters</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Page</td>
+<td>A list of pages</td>
+<td>The latest page</td>
+<td>Chooses the page.</td>
+</tr>
+<tr>
+<td>Reads only</td>
+<td>On · Off</td>
+<td>On</td>
+<td>Shows only pages inside the scope&#39;s reads.</td>
+</tr>
+<tr>
+<td>Follow</td>
+<td>On · Off</td>
+<td>On</td>
+<td>Shows the page the selected agent read last.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="presentations-52"><a class="anchor" href="#presentations-52" aria-hidden="true">#</a>Presentations</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Presentation</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>A closed tile shows as a launcher square.</td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>The title and the first lines of a page.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>Page, reads and follow.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>The page in a pane.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>The page, with its links.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="to-use-wiki"><a class="anchor" href="#to-use-wiki" aria-hidden="true">#</a>To use Wiki</h4>
+<ol>
+<li>Open Wiki from the launcher.</li>
+<li>Select a session. Read the pages in its reads.</li>
+<li>Click a link to follow it.</li>
+<li>Click the open mark to read the page in a pane.</li>
+</ol>
+<h4 id="rules-52"><a class="anchor" href="#rules-52" aria-hidden="true">#</a>Rules</h4>
+<ul>
+<li>The wiki is read here. It is not edited here.</li>
+<li>A link that does not resolve shows as it is.</li>
+</ul>
+<h4 id="tips-52"><a class="anchor" href="#tips-52" aria-hidden="true">#</a>Tips</h4>
+<ul>
+<li>To check what an agent knew, open the page it read.</li>
+</ul>
+<h3 id="19-17-calendar"><a class="anchor" href="#19-17-calendar" aria-hidden="true">#</a>19.17 Calendar</h3>
+<p><strong>Product:</strong> a third party · <strong>Kind:</strong> instrument · <strong>Rail:</strong> the widget rail on the right</p>
+<p>You need to see what is due around your work. Calendar is a widget from a third party. Its provider supplies the events.</p>
+<figure class="ui"><iframe src="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" loading="lazy" style="height:720px" sandbox="allow-scripts allow-same-origin" title="Calendar is a widget from a third party. Open it from the launcher. The badge on its square marks it as supplied from outside."></iframe><figcaption>Calendar is a widget from a third party. Open it from the launcher. The badge on its square marks it as supplied from outside. · <a href="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<h4 id="parameters-53"><a class="anchor" href="#parameters-53" aria-hidden="true">#</a>Parameters</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Calendar</td>
+<td>The calendars the provider offers</td>
+<td>All</td>
+<td>Chooses which calendars show.</td>
+</tr>
+<tr>
+<td>Range</td>
+<td>Day · Week</td>
+<td>Day</td>
+<td>The span the tile shows.</td>
+</tr>
+<tr>
+<td>This work only</td>
+<td>On · Off</td>
+<td>Off</td>
+<td>Shows only events tied to the work in front of you.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="presentations-53"><a class="anchor" href="#presentations-53" aria-hidden="true">#</a>Presentations</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Presentation</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>A closed tile shows as a launcher square.</td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>The next events.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>Calendar, range and this work only.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>The calendar in a pane, if the provider supplies a full form.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>The events due around this work.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="to-use-calendar"><a class="anchor" href="#to-use-calendar" aria-hidden="true">#</a>To use Calendar</h4>
+<ol>
+<li>Open the browser. Install Calendar from the Context category.</li>
+<li>Open Calendar from the launcher.</li>
+<li>Choose the calendars and the range.</li>
+<li>Click an event to read it.</li>
+</ol>
+<h4 id="rules-53"><a class="anchor" href="#rules-53" aria-hidden="true">#</a>Rules</h4>
+<ul>
+<li>A badge marks Calendar as a widget from outside.</li>
+<li>It shows only what its provider supplies. It cannot read your other widgets.</li>
+</ul>
+<h4 id="tips-53"><a class="anchor" href="#tips-53" aria-hidden="true">#</a>Tips</h4>
+<ul>
+<li>To plan a task around a deadline, set Range to Week.</li>
 </ul>
 
 </article></main>

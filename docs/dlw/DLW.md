@@ -2161,3 +2161,2062 @@ caption: The Agents list at the top left. Each card shows the name, the characte
 - To pick the right agent for a task, read the character line on each card.
 - To find out who wrote an entry, select the name of its author.
 - To change who an agent is, say what you want changed and accept the new profile when it is proposed.
+
+## 18. Factory and the agent chain
+
+Factory is where you work with AI agents. Each agent session is a track. Its chain is the road the work travels: in through a gateway, to the agent, through its skills, into the part of the world it may touch, and out where its work lands. You set how much an agent decides alone, what it may read and write, and what waits for your approval. The agent does not write behind your back, and every write carries a receipt.
+
+### 18.1 Gateway
+
+**Product:** Actuation · **Kind:** effect · **Chain:** first device on a Factory session's chain
+
+You need to decide how an agent reaches its harness, when it must ask you, and when a silent agent counts as stalled. The Gateway is the way in to the session.
+
+```ui
+src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
+height: 720
+caption: The session's chain in Device view. The Gateway is the first device on the left, with its link diagram and three controls. Click a Transport or Approvals value to change it. Select a session under Fizz to see the folded Gateway.
+```
+
+#### The link diagram
+
+The diagram shows the shell on the left and the harness on the right. Dots on the line are frames in flight. A dot moves faster when more turns run. The arc around the harness is the replay ring. The outer pulse is the heartbeat. Under the diagram, the readout shows the epoch, the last sequence number, the number of peers and the age of the last heartbeat. A new epoch means the gateway restarted, and the shell syncs again.
+
+A child session shows a folded Gateway that reads "via lead". It uses the connection of the session that spawned it.
+
+#### Parameters
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Connect | On · Off | On | Attaches or detaches the session. A detached session keeps running and attaches again later. |
+| Transport | Local · Network · Remote | Local | How the shell reaches the harness. Local is a trusted child process. Network uses a token. Remote uses a short-lived ticket and goes through a connected machine. |
+| Approvals | Ask · Session · Always | Ask | The default answer to an approval request: ask you each time, allow for this session, or allow always. You always give Deny yourself. |
+| Stall after | 30 s · 90 s · 5 min · 30 min | 90 s | The time without progress, with work pending, after which the session counts as stalled and Retry lights. |
+| Submit | One at a time · Queue (up to 32) | One at a time | Whether the harness takes one message at a time or holds a queue. |
+| Auto-continue | On (up to 15 min) · Off | On | Lets the gateway continue a turn that stopped on its own, for up to 15 minutes. |
+| Fan-out | 0–8 observers | 2 | The number of observers allowed per session. A slow observer loses only its own feed. |
+| Readiness | Ready · Composed · Refused (reading) | Read from the harness | Shows the state of the harness: its database, its settings, its model and its disk. |
+
+#### Presentations
+| Presentation | What it shows |
+|---|---|
+| Folded | The title "Gateway" and the harness name. A child session shows "via lead". |
+| Compact | The link diagram. Four macros: Transport, Approvals, Stall after, Connect. |
+| Whole | All parameters, in four groups: Link, Approval, Liveness, Readiness. |
+| Full | The frame monitor, in a pane. See the Frames monitor. |
+| Widget | The link diagram, the readiness state and a count of frames in flight. Click it to open the Frames widget. |
+
+#### Transport
+| Control | Effect on the Gateway |
+|---|---|
+| Link | Joins the sessions of this gateway to agents on other machines and harnesses. |
+| Tap | Asks every running agent for a status line now. The answers arrive through the gateway. |
+| Metronome | Sets the heartbeat. Each check-in moves the needle of its thread. A needle that stops is a stall. |
+| Rate | Shows how fast the agents write through the gateway. |
+
+#### To use the Gateway
+1. Select a session track. Open Device view.
+2. Check the light on the Gateway title. A lit light means the harness reports it is ready.
+3. Choose a Transport. Choose Remote only for an agent on another machine.
+4. Choose how the agent asks you. Choose Ask for new work. Choose Session for work you trust.
+5. Turn Stall after to a time that fits the work. Use a long time for slow tools.
+6. Click the arrow on the Gateway title to open the Frames monitor.
+
+#### Rules
+- The light shows a reading. It is dark when the harness does not report a state.
+- Deny is always yours. No setting gives it away.
+- Settings that the harness refuses to change show as read-only, with the reason.
+- A session that detaches keeps running in its harness. Connect attaches it again.
+
+#### Tips
+- To keep a slow build from being flagged, set Stall after to 5 min for that session.
+- To see what a stalled session did last, open the Frames monitor and filter to that session.
+- To let a trusted agent work without prompts, set Approvals to Session before you press Play.
+
+### 18.2 Gateways rack
+
+**Product:** Actuation · **Kind:** rack · **Track:** Factory's Main track
+
+You need to see every gateway your work can reach, and what state each is in. The Gateways rack lists them as chains, so you can see which one a session uses.
+
+```ui
+src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
+height: 720
+caption: Select the Main track in Session view, then open Device view. The Gateways rack is the first device. Each row has a dot: green is ready, amber is composed, faint is refused.
+```
+
+#### The chains
+
+The rack has four chains. Three gateways have similar names, and each keeps its own row.
+
+| Chain | What it reaches |
+|---|---|
+| Hermes gateway | The Hermes harness on this machine, over a local socket or a network link. |
+| AIKit agency gateway | The agents that AIKit attaches. It carries messages from you to an agent, and from one agent to another. |
+| Actuation gateway | The Actuation service on another machine of yours. |
+| Remote carrier | The connected machine that carries a remote session. See the Remote carrier. |
+
+Each chain shows its transport and its state. The state comes from a reading. The rack does not assume it.
+
+#### Parameters
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Chain | Hermes · AIKit agency · Actuation · Remote carrier | Hermes | The selector. It chooses the chain whose gateway the whole rack shows. |
+| Chain state | Ready · Composed · Refused (reading) | Read from each gateway | Shows whether the gateway can carry a session now. |
+| Fan-out | 0–8 observers | 2 | The observers allowed per session. A slow observer loses only its own feed. |
+| Open | Per chain | — | Opens that gateway in a pane. |
+
+#### Presentations
+| Presentation | What it shows |
+|---|---|
+| Folded | The title "Gateways" and the number of ready chains. |
+| Compact | The four chains with their state dots. One macro: Fan-out. |
+| Whole | All parameters, in two groups: Chains, Observers. |
+| Full | The selected gateway in a pane, with its frames and readiness. |
+| Widget | One line per chain with its state dot. |
+
+#### Transport
+| Control | Effect on the Gateways rack |
+|---|---|
+| Link | Adds the gateways of other machines to the rack. |
+| Tap | Asks every ready gateway for a status line. |
+
+#### To use the Gateways rack
+1. Select the Main track. Open Device view.
+2. Read the dot of each chain. Green means a session can use it now.
+3. Click a chain to show it whole in the pool.
+4. Click the arrow on a chain to open that gateway in a pane.
+
+#### Rules
+- A chain in the Composed state is declared and not in use. The rack shows it as it is.
+- A Refused chain names the reason. The reason stays visible.
+- Chains with similar names stay as separate rows. The rack does not merge them.
+
+#### Tips
+- To find out why a remote session does not start, read the state of the Remote carrier chain first.
+- To check that two machines share one ledger, turn Link on and look for the second gateway in the rack.
+
+### 18.3 Agent
+
+**Product:** Actuation · **Kind:** instrument · **Chain:** second device on a Factory session's chain
+
+You need an agent that works on your task at the pace, effort and budget you choose. The Agent device is that agent. It answers, it works through its tasks, and you can steer it while it runs.
+
+```ui
+src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
+height: 720
+caption: The Agent device is the second card in Device view, with the agent's face, its state and four knobs. Click the title to open it whole. Click the arrow to open the thread in a pane. Click a task in Session view to see its log in Clip view.
+```
+
+#### One face, three owners
+
+The Agent device shows one face and joins settings from three places. Actuation owns the model, effort, budget, heartbeat and input. Software Factory owns autonomy and the review gate. See Custody. Central owns who the agent is. The agent comes from your roster, so no crowd is fixed in advance.
+
+#### Parameters
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Power | On · Benched | On | Benched keeps the agent on the chain but gives it no work. |
+| Agent | A name from your roster | The seated agent | Shows who the agent is. Drag another agent from the browser to replace it. |
+| Model | The models the harness offers | The harness default | The model for this session. A group can set another model for its subagents. |
+| Harness | The harnesses found on this machine | The one the gateway uses | The program that runs the agent. |
+| Effort | Low · Medium · High · Max | Medium | How hard the agent thinks in each turn. A task can set its own effort. |
+| Budget | 1–40 turns | 12 | The turns allowed for one task. The device shows the turns used. |
+| Heartbeat | On · Off, with a beat in seconds | On, 15 s | The agent checks in on each beat. Each check-in moves its needle. |
+| Input | Steer · Queue | Steer | Steer: what you send reaches the turn that runs. Queue: it waits as the next task. |
+| On stall | Ask · Retry once · Stop | Ask | What the device does when the session stalls. |
+| Autonomy | Suggest · Review · Auto | Review | Shown here. Custody sets it. |
+
+#### Presentations
+| Presentation | What it shows |
+|---|---|
+| Folded | The agent's name and a power light. |
+| Compact | The agent's face. It spins while the agent works. It also shows turns used, turns allowed and state. Four macros: Autonomy, Effort, Budget, Input. |
+| Whole | All parameters, in four groups: Identity, Effort, Liveness, Input. |
+| Full | The thread, in a pane: your messages, the agent's messages, tool rows, steer lines, proposal cards and the stall card. Controls stay in Device view. |
+| Widget | The agent you are talking to: its thread, its state and a composer. |
+
+#### Transport
+| Control | Effect on the Agent |
+|---|---|
+| Tempo ‹ › | Sets the effort of the selected agent. |
+| Time signature | Shows turns used of turns allowed. |
+| Metronome | Turns the heartbeat on or off. |
+| Quantize | Sets when Stop and Steer land: now, at the next tool, or at the next turn. |
+| Play | Runs the selected task, or every queued task. |
+| Stop | Pauses at the next safe point and keeps what the agent has in mind. Press twice to cancel the turn. |
+| Record | Speaks a new task onto the armed track. |
+| Overdub | Switches Input between Steer and Queue. |
+| Load | Shows how full the agent's context is. |
+
+#### To use the Agent
+1. Drag an agent from the browser onto an empty track. The agent takes the seat.
+2. Select the track. Open Device view.
+3. Choose Effort and Budget. Use a low budget for a short task.
+4. Type the task in the composer. Press Enter to run it.
+5. To change course, type a note and press Option-Enter. The agent hears it at the next safe point.
+6. Click the arrow on the title to read the thread.
+
+#### Rules
+- The light on the title is a reading. It is lit only when the harness reports the agent is on.
+- Subagents get their own chains. They share the lead's gateway and git seat.
+- A stopped needle means a stall. The track lights Retry. The stall card names what the last tool waits for.
+- A value moved by an agent shows that agent's name.
+
+#### Tips
+- To cut cost on a simple task, lower Effort and Budget before you press Play.
+- To add a note without a break in the turn, set Input to Steer.
+- To queue several jobs for one agent, set Input to Queue and send each job as its own task.
+
+### 18.4 Experiment
+
+**Product:** Actuation · **Kind:** instrument · **Track:** any Factory track; Arrangement view draws it as a track of its own
+
+You need to find out which setup of agents works best, and to keep the evidence. An Experiment is a declared run: you state the question, what varies and what to record. The device then runs it and keeps the readings.
+
+#### The declared run
+
+An Experiment holds five statements. The question says what you want to learn. The variable says what changes between runs, such as the model, the effort or the skills. The agents say who takes part. The stop condition says when the run ends. The readings say what to record. Once you press Play, the statements do not change. A change starts a new Experiment.
+
+#### Parameters
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Question | Text | Empty | The question the run answers. |
+| Variable | Model · Effort · Skillset · Budget · Autonomy | Effort | The setting that changes from one run to the next. |
+| Levels | 2–8 values | Two | The values the variable takes. Each value is one run. |
+| Agents | One or more sessions | The selected session | The sessions that take part. |
+| Repeats | 1–20 | 3 | The number of runs for each level. |
+| Stop when | Turn cap · Time cap · Task done · Test pass | Task done | The condition that ends each run. |
+| Readings | Tokens · Time · Tool calls · Test results · Spend · Stalls | Tokens, Time | What the Experiment records on each beat. |
+| Beat | 5 s–5 min | 15 s | How often a reading is taken. |
+| Compare with | None, or an earlier Experiment | None | Draws the earlier run beside this run. |
+
+#### Presentations
+| Presentation | What it shows |
+|---|---|
+| Folded | The question and the number of runs finished. |
+| Compact | A small plot of one reading over the runs. Four macros: Variable, Levels, Repeats, Stop when. |
+| Whole | All parameters, in four groups: Question, Runs, Readings, Compare. |
+| Full | The result, in a pane: one line for each run, the readings as lanes, and the runs side by side. |
+| Widget | The question, runs finished and runs in the plan, and the best reading so far. |
+
+#### Transport
+| Control | Effect on the Experiment |
+|---|---|
+| Play | Starts the next run. With Overdub off, it starts every run in turn. |
+| Stop | Pauses after the current tool. Press twice to cancel the run and keep its readings. |
+| Record | Keeps the readings as clips on the Experiment's track. |
+| Metronome | Sets the beat of the readings. |
+| Loop and punch | Sets the window of each run. |
+| Capture | Keeps the run as a take under its clip. |
+
+#### To use the Experiment
+1. Select the sessions that take part.
+2. Add an Experiment to the chain. Write the question.
+3. Choose the Variable and its Levels.
+4. Choose the Readings. Choose a Stop when condition that every run can reach.
+5. Press Play. Watch the Experiment's track in Arrangement view.
+6. When the runs end, open the Experiment in a pane. Compare the lanes.
+
+#### Rules
+- The Experiment records readings. It does not judge the result. You choose the run that stands.
+- A reading that has no source shows as absent. The device does not fill it in.
+- Each run is a take under the Experiment's clip. A retry makes a new take. It does not replace the old one.
+- Arrangement view shows the Experiment as a track. The track has one lane for each reading.
+
+#### Tips
+- To compare two models on one task, set Variable to Model and Repeats to 3.
+- To check a new skill, run the same task with the Skillset on and then off.
+- To stop a run that costs too much, set Stop when to a Time cap.
+
+### 18.5 Frames monitor
+
+**Product:** Actuation · **Kind:** effect · **Pane:** a pane in Factory; also the Frames widget
+
+You need to see exactly what passed between the shell and the harness. The Frames monitor shows every frame the gateway sends or receives, per session, in order. It works like the MIDI monitor in Live.
+
+```ui
+src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
+height: 720
+caption: Click the arrow on the Gateway title in Device view. The pane shows the frames on the left and the Readiness, Liveness, Replay and Upstream readings on the right. Use the buttons above the frames to filter by session.
+```
+
+#### Parameters
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Session | All sessions · The lead · One session | All sessions | Shows the frames of one session, or of all. |
+| Direction | Both · Sent · Received | Both | Shows frames the shell sent, frames it received, or both. |
+| Kinds | Messages · Tools · Heartbeat · Approvals · Errors | All | The kinds of frame to show. |
+| Follow | On · Off | On | Scrolls with new frames. |
+| Pause | On · Off | Off | Holds the list still. The gateway keeps the frames. |
+| Keep | 100–5000 frames | 1000 | The number of frames in the list. |
+
+#### Presentations
+| Presentation | What it shows |
+|---|---|
+| Folded | The title "Frames" and the frame rate. |
+| Compact | The last four frames of the selected session. Four macros: Session, Kinds, Direction, Pause. |
+| Whole | All parameters, in two groups: Filter, Display. |
+| Full | The frame list, with four readings beside it: Readiness, Liveness, Replay, Upstream. |
+| Widget | The last frames of the selected session, in a tile. |
+
+#### Transport
+| Control | Effect on the Frames monitor |
+|---|---|
+| Follow | Keeps the list on the selected session. |
+| Position | Shows the task, turn and step of the frame you select. |
+| Tap | Adds a status frame from every running agent. |
+
+#### To use the Frames monitor
+1. Select the session whose lane stalled.
+2. Open the Frames monitor from the Gateway, or from the Frames widget.
+3. Set Session to that session. Set Kinds to Tools and Errors.
+4. Read the last frames. They show what the lane did last.
+5. Select a frame. The Position field shows its task, turn and step.
+
+#### Rules
+- The monitor only reads. It sends nothing and changes no frame.
+- The Replay reading shows the events in the ring and its size. A new epoch resets the cursor.
+- A frame carries its session, its direction and its time. The list keeps this order.
+
+#### Tips
+- To find the tool that stalled a session, filter to Tools and read the last frame.
+- To check that a note reached the agent, filter to Messages and look for the steer line.
+
+### 18.6 Skillset rack
+
+**Product:** AIKit · **Kind:** rack · **Chain:** third device on a Factory session's chain
+
+You need to choose which skills an agent may use, and to turn several of them up or down at once. The Skillset rack holds one chain for each skill. Each chain has a light that shows whether the skill is admitted.
+
+```ui
+src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
+height: 720
+caption: The Porting rack is the third card in Device view. The list on the left has one chain for each skill, with a light. The four knobs on the right are the macros. Click a light to turn a skill on or off. Turn a knob and watch the skills it moves.
+```
+
+#### The chains and the lights
+
+Each chain holds one skill. The skill sits in the chain and works on the agent's turn as the turn passes. A dark chain is dimmed. The light shows what AIKit reports. You request a skill on or off. AIKit answers. A skill that you turned on stays dark when AIKit holds it back. The rack then says why. The reason can be a revision nobody has reviewed, or a skill that its author has retired.
+
+#### Parameters
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Skillset | A named set | The set on the chain | Chooses the set of skills in the rack. Drag a set from the browser to replace it. |
+| Skill | On · Off, one for each chain | As the set declares | Your request to admit or to withhold a skill. |
+| Admit light | Lit · Dark (reading) | Read from AIKit | Shows whether the skill is admitted now. |
+| Thoroughness | 0–100 % | 60 % | How exhaustive the skills are. |
+| Test depth | None · Unit · Unit and integration · Full | Unit | How deep the skills test. |
+| Reach | Object · Scene · Expression · Central | Scene | How far beyond the scope the skills look. |
+| Risk | Low · Medium · High | Low | How bold the skills are before they ask you. |
+| Steward | A name (reading) | Read from the set | Who looks after the set. |
+| Revision | A number (reading) | Read from the set | The revision of the set that is in use. |
+
+#### Presentations
+| Presentation | What it shows |
+|---|---|
+| Folded | The set name and the count of lit chains. |
+| Compact | The chains with their lights, and the four macros: Thoroughness, Test depth, Reach, Risk. |
+| Whole | All parameters, in three groups: Skills, Macros, Details. |
+| Full | The set in a pane: each skill with its text, its revision and its standing. |
+| Widget | The chains with their lights, and the four macros. |
+
+#### Transport
+| Control | Effect on the Skillset rack |
+|---|---|
+| Keys and maps | Letter keys turn the macros. You can bind a word to a macro. |
+| Capture | Turns a task you did by hand into a skill proposal. See Capture skill. |
+
+#### To use the Skillset rack
+1. Drag a skillset from the browser onto the chain of a session.
+2. Read the lights. Click a dark light to ask for the skill.
+3. If the light stays dark, read the reason on the chain.
+4. Turn Test depth up for work that you must trust.
+5. Turn Risk down when the agent must ask more often.
+6. To add one skill, drag it onto the rack. It makes a new chain.
+
+#### Rules
+- A macro moves several skills at once. Each skill keeps its own range.
+- The light is a reading. The shell does not light it.
+- A skill added to the rack does not change another chain.
+- A set that you reorder, rename or save keeps its revision history.
+
+#### Tips
+- To make a review stricter, turn Thoroughness and Test depth up together.
+- To keep an agent in one project, set Reach to Object or Scene.
+- To try a skill for one task only, add it to the rack and remove it when the task ends.
+
+### 18.7 Skill
+
+**Product:** AIKit · **Kind:** effect · **Chain:** one chain inside a Skillset rack
+
+You need one reusable way of working that an agent can follow. A Skill is that way of working. It changes the agent's turn as the turn passes and leaves the rest of the turn as it was.
+
+#### Parameters
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Skill | A name | — | Which skill the chain holds. |
+| Admit | On · Off | On | Your request to use the skill. |
+| Admit light | Lit · Dark (reading) | Read from AIKit | Shows whether AIKit admits the skill for this session. |
+| Standing | Reviewed · Unreviewed · Retired (reading) | Read from AIKit | The state of the skill's current revision. Only a reviewed skill is admitted. |
+| Revision | A number (reading) | Read from AIKit | The revision in use. |
+| Use | Always · When it applies · When asked | When it applies | When the agent loads the skill. |
+| Macro ranges | Four ranges | The full range | How far each rack macro may move this skill: Thoroughness, Test depth, Reach, Risk. |
+
+#### Presentations
+| Presentation | What it shows |
+|---|---|
+| Folded | The skill name and its light. |
+| Compact | The skill's glyph and name, its standing and four macros: Admit, Use, Thoroughness range, Risk range. |
+| Whole | All parameters, in three groups: Admit, Use, Ranges. |
+| Full | The skill's text in a pane, with its revisions and the sessions that use it. |
+| Widget | The skill's name, light and standing, on the rail. |
+
+#### Transport
+| Control | Effect on the Skill |
+|---|---|
+| Keys and maps | A key or a spoken word can turn Admit on or off. |
+| Capture | Makes a new skill proposal from a task you did by hand. |
+
+#### To use the Skill
+1. Find the skill in the browser. Select it to read it whole in the pool.
+2. Drag it onto the rack of a session.
+3. Read the light and the Standing. If the skill is Unreviewed, ask for a review.
+4. Set Use to When asked if the skill is rare.
+5. Narrow a Macro range if the rack should not move this skill far.
+
+#### Rules
+- A skill is admitted only when AIKit says so. A skill that is not reviewed stays dark.
+- A skill is not copied into the prompt. The agent finds it and reads it when it applies.
+- A change to a skill makes a new revision. The old revision stays.
+
+#### Tips
+- To keep a risky skill out of an unattended run, set its Risk range to Low.
+- To find out why a skill is dark, select its chain and read the Standing.
+
+### 18.8 Knowledge route
+
+**Product:** AIKit · **Kind:** effect · **Chain:** inside the Scope device, in a Factory session's chain
+
+You need to choose which knowledge an agent can look up, and how far it may follow links. The Knowledge route sets the sources and the bounds. The agent then finds what it needs on demand.
+
+```ui
+src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
+height: 720
+caption: The Scope card in Device view shows the reads in teal. The Knowledge route adds the knowledge sources to the same card. Click the Scope title to open its reads and writes whole in the pool.
+```
+
+#### Parameters
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Sources | Wiki · Project knowledge · Code · Web | Wiki, Project knowledge | The places the agent may search. |
+| Reach | Object · Scene · Expression · Central | As Scope | The widest part of the world whose knowledge the agent may read. The Scope device holds the same value. |
+| Search first | On · Off | On | The agent searches before it reads a file. |
+| Link depth | 0–4 | 2 | The number of links the agent follows from a hit. |
+| Read budget | 1–200 pages | 40 | The most pages the agent reads in one task. |
+| Route | Ready · Composed · Refused (reading) | Read from AIKit | Shows whether the route answers. |
+
+#### Presentations
+| Presentation | What it shows |
+|---|---|
+| Folded | The title "Knowledge" and the count of sources. |
+| Compact | A small graph of the sources in reach. Four macros: Sources, Reach, Link depth, Read budget. |
+| Whole | All parameters, in two groups: Sources, Bounds. |
+| Full | The knowledge in reach, in a pane, as a list and as a graph. |
+| Widget | The pages the agent read in this task, with their sources. |
+
+#### Transport
+| Control | Effect on the Knowledge route |
+|---|---|
+| Key, root and scale | Shows tokens in and out, which includes the pages the agent read. |
+| Draw | Points the agent at a page or a node. |
+| Follow | Keeps the Graph and Wiki widgets on what the agent reads. |
+
+#### To use the Knowledge route
+1. Select a session. Open Device view.
+2. Open the Scope device whole in the pool.
+3. Choose the Sources.
+4. Set the Reach. Use a small Reach for a narrow task.
+5. Set Link depth. Use 0 when the agent must stay on the page you pointed at.
+
+#### Rules
+- Sources are not copied into the prompt. The agent finds them and reads them on demand.
+- The route cannot reach farther than Scope allows.
+- A page that the agent read is shown with its source. You can open the source.
+- A route that is Refused names the reason. The agent then works without that source.
+
+#### Tips
+- To keep the agent on topic, lower Link depth.
+- To let an agent check the wiki first, keep Search first on.
+
+### 18.9 Agency gateway
+
+**Product:** AIKit · **Kind:** effect · **Chain:** one chain in the Gateways rack
+
+You need messages to reach an agent from any surface you use, and from one agent to another, under rules you set. The Agency gateway carries those messages. It is a service that keeps running while you work.
+
+```ui
+src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
+height: 720
+caption: Select the Main track and open Device view. The second row of the Gateways rack is the AIKit agency gateway. Click the row to read its state.
+```
+
+#### Parameters
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Service | On · Off | On | Starts or stops the gateway. |
+| Surfaces | A list of surfaces | The ones you use | The places that may send a message to an agent: this window, a terminal, a chat. |
+| Agent to agent | Allow · Ask · Deny | Ask | Whether one agent may call another. Ask puts the call in Approvals. |
+| Harnesses | A list (reading) | Found on this machine | The harnesses that the gateway can reach. |
+| Inbox | A count (reading) | Read from the gateway | The messages that wait for an agent. |
+| State | Ready · Composed · Refused (reading) | Read from the gateway | Whether the gateway carries messages now. |
+
+#### Presentations
+| Presentation | What it shows |
+|---|---|
+| Folded | The title "Agency gateway" and its state dot. |
+| Compact | The surfaces on the left, the agents on the right, and the messages between them. Four macros: Service, Surfaces, Agent to agent, State. |
+| Whole | All parameters, in three groups: Service, Rules, Readings. |
+| Full | The gateway in a pane: the messages that passed, and the refusals with their reasons. |
+| Widget | The count of messages that wait, and the state dot. |
+
+#### Transport
+| Control | Effect on the Agency gateway |
+|---|---|
+| Link | Adds the gateways of your other machines. |
+| Tap | Sends a status request through the gateway to every running agent. |
+
+#### To use the Agency gateway
+1. Select the Main track. Open Device view.
+2. Click the Agency gateway row in the Gateways rack.
+3. Check that Service is On and the state is Ready.
+4. Choose which Surfaces may send messages.
+5. Set Agent to agent to Ask until you trust the agents.
+
+#### Rules
+- A refused call becomes an event in the activity record. It does not vanish.
+- The gateway carries a message. It does not act for the agent.
+- An agent that you did not seat receives no message.
+
+#### Tips
+- To let a planner agent hand work to a builder, set Agent to agent to Allow for that pair.
+- To keep a session private, turn off all Surfaces except this window.
+
+### 18.10 Capture skill
+
+**Product:** AIKit · **Kind:** instrument · **Chain:** on the armed Factory track
+
+You need an agent to learn something you did by hand. Capture skill turns a worked example into a skill. You do the task once. The device writes a skill from it and sends the skill to you as a proposal.
+
+#### Parameters
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Source | The last minutes · A selected clip | The last 10 minutes | The part of your work that the skill learns from. |
+| Name | Text | A name from the example | The skill's name. |
+| Fit | Exact · Light · Broad | Light | How far the skill generalises. Exact repeats your steps. Broad adapts them to new cases. |
+| Scope | This project · All my work | This project | Where the skill may be used. |
+| Steps | A list (reading) | Read from the example | The steps the device found. You can remove a step. |
+| Lands as | Proposal | Proposal | Where the skill goes. It goes to Approvals. |
+
+#### Presentations
+| Presentation | What it shows |
+|---|---|
+| Folded | The title "Capture skill" and a dot. The dot is red while it records. |
+| Compact | The steps found so far, as a short list. Four macros: Source, Fit, Scope, Name. |
+| Whole | All parameters, in two groups: Example, Skill. |
+| Full | The proposed skill in a pane: its text, its steps, and the example beside it. |
+| Widget | The proposal that waits, with Accept and Remove. |
+
+#### Transport
+| Control | Effect on Capture skill |
+|---|---|
+| Capture | Starts and ends the record of what you do by hand. |
+| Record | Adds your spoken notes to the example. |
+| Arm | Chooses the track whose agent will use the skill. |
+
+#### To use Capture skill
+1. Select the track whose agent should learn the task.
+2. Press Capture. Do the task by hand.
+3. Press Capture again. The device lists the steps it found.
+4. Remove any step that does not belong. Choose a Fit.
+5. Open Approvals. Read the proposal. Accept it or remove it.
+6. Drag the accepted skill onto a Skillset rack.
+
+#### Rules
+- The skill arrives as a proposal. It is not admitted until a person has reviewed it.
+- The device records only what you do while Capture is on.
+- The example stays with the skill, so a reader can see where it came from.
+
+#### Tips
+- To teach a release routine, do one release by hand with Capture on.
+- To make a safe skill, choose Exact for the first revision. Widen it later.
+
+### 18.11 Runs
+
+**Product:** Software Factory · **Kind:** instrument · **Pane:** a pane in Factory; also the Runs category in the browser
+
+You need to see every attempt made on a piece of work, and which one stands. Runs lists the attempts and the task tree of each. A retry is a new attempt. It does not replace the old one.
+
+```ui
+src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
+height: 720
+caption: Press Tab to switch to Arrangement view. Each thread runs along one ruler with a needle at its last check-in. Click the Runs button on a thread header to see that thread among its siblings.
+```
+
+#### Parameters
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Work | A piece of work | The selected session's work | The request whose attempts the device lists. |
+| Attempt | A list of attempts | The latest | The attempt you read. |
+| Show | All · Running · Stalled · Done | All | Filters the tasks in the tree. |
+| Group by | Attempt · Agent · Day | Attempt | How the list is grouped. |
+| View | Tree · Ruler | Tree | Tree: tasks as nested rows. Ruler: attempts along one ruler. |
+| Compare | None, or a second attempt | None | Draws two attempts side by side. |
+| Stands | An attempt | None | The attempt you accept. When you choose it, you review it. |
+
+#### Presentations
+| Presentation | What it shows |
+|---|---|
+| Folded | The work name and the number of attempts. |
+| Compact | One bar for each attempt, coloured by state. Four macros: Attempt, Show, Group by, Compare. |
+| Whole | All parameters, in three groups: Work, Display, Review. |
+| Full | The attempts and their task trees in a pane. Select a task to open its log in Clip view. |
+| Widget | The latest attempt and its tasks, with a state light on each. |
+
+#### Transport
+| Control | Effect on Runs |
+|---|---|
+| Position | Shows the task, turn and step of the selected attempt. |
+| Follow | Keeps the view on the needle of the running attempt. |
+| Loop and punch | Sets the write window for the attempt you launch. |
+| Play | Launches a new attempt of the selected task. |
+
+#### To use Runs
+1. Select a session. Open Runs from the browser.
+2. Read the tree of the latest attempt.
+3. Set Show to Stalled to find the task that stopped.
+4. Set Compare to an earlier attempt. Read what changed.
+5. Set Stands to the attempt you accept.
+
+#### Rules
+- An attempt is a record. A retry makes a new attempt.
+- You choose the attempt that stands. The device does not choose for you.
+- A running task has no drawn end, because nobody knows how long it takes.
+
+#### Tips
+- To find the first failure of a long run, set Show to Stalled and read the top row.
+- To keep a good attempt, set Stands before you launch another.
+
+### 18.12 Tasks
+
+**Product:** Software Factory · **Kind:** instrument · **Track:** each Factory session; tasks are its clips
+
+You need a list of what an agent is asked to do, with the state of each task. Tasks are the clips on a session's track. Each task shows how it stands, and Clip view shows its log.
+
+```ui
+src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
+height: 720
+caption: Session view. Each column is a session, and each square is a task. A running square has no end. A queued square has no length. A striped square is stalled. Click a task to read its log in Clip view. Double-click it to open the thread.
+```
+
+#### How a task is drawn
+
+| State | Drawn as |
+|---|---|
+| Done | Dim and settled. |
+| Running | A blinking triangle and a fill that has no end. |
+| Queued | A fast blink and no length. |
+| Stopped | Ready, in full colour. |
+| Stalled | A striped bar and an orange triangle, frozen where the output stopped. |
+
+An empty square names what a click does: it stops the session after the current task. Double-click an empty square to write a task. Arm the track and press Record to speak one.
+
+#### Parameters
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Name | Text | From the first message | The task's name. |
+| State | Queued · Running · Stalled · Stopped · Done (reading) | Read from the session | Shows how the task stands. |
+| Launch | Once · Hold · Loop | Once | Once: run one time. Hold: stay ready. Loop: repeat until the stop condition or the cap. |
+| Then | Next task · Hand off to an agent · Stop | Next task | What follows the task. This is the follow action. |
+| Launch quantize | Now · Next tool · Next turn | Next tool | When a launch or a steer lands. |
+| Output style | Plain, warm or terse · Technical, narrative or list | Plain, technical | How the agent writes for this task. |
+| Effort | Inherit · Low · Medium · High · Max | Inherit | Sets the effort for this task only. |
+| Autonomy | Inherit · Suggest · Review · Auto | Inherit | Sets the autonomy for this task only. |
+
+#### Presentations
+| Presentation | What it shows |
+|---|---|
+| Folded | The task name and its state. |
+| Compact | The task square with its progress, and four macros: Launch, Then, Effort, Autonomy. |
+| Whole | All parameters, in three groups: Task, Launch, Style. |
+| Full | The task log in a pane: each tool the agent used, laid along the task's time, with the steers marked. |
+| Widget | The tasks of the selected session with a state light on each. |
+
+#### Transport
+| Control | Effect on Tasks |
+|---|---|
+| Play | Launches the selected task, or every queued task. |
+| Stop | Pauses at the next safe point. Press twice to cancel. |
+| Record | Speaks a new task onto the armed track. |
+| Loop and punch | Repeats the task, and sets the window in which the agent may write. |
+| Keys and maps | Number keys launch rows. You can bind a word to a task. |
+
+#### To use Tasks
+1. Select a session. Double-click an empty square.
+2. Write the task. Press Enter.
+3. Set Then to Hand off if another agent should continue.
+4. Press the number key of the row to launch the task.
+5. Click the task. Read the log in Clip view.
+
+#### Rules
+- A row across sessions is a stop. A launch of a stop starts one task on each session.
+- A loop ends at its stop condition or its cap.
+- A stalled task keeps its place. Retry restarts it from its last good step.
+
+#### Tips
+- To run a batch, queue a task on each session and launch the row.
+- To keep a long task from holding up others, set Launch quantize to Next turn.
+
+### 18.13 Custody
+
+**Product:** Software Factory · **Kind:** effect · **Chain:** on the Agent device; the Agent's face shows it
+
+You need to decide how much an agent decides alone, what you must check, and who holds each thing the agent touches. Custody sets the agent's autonomy and the review gate. It also lights when you take hold of something the agent held.
+
+```ui
+src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
+height: 720
+caption: The Autonomy knob on the Agent device is Custody's main control. Turn it from Suggest to Review to Auto. Edit something an agent holds, and the Hand back button in the transport lights.
+```
+
+#### Parameters
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Autonomy | Suggest · Review · Auto | Review | Suggest: the agent proposes only. Review: the agent works and you check each result. Auto: the agent works and lands changes with receipts. |
+| Review gate | Diffs · Approvals · Both | Both | What waits for you before a change lands. |
+| Escalate to | A person | You | Who the agent asks when it needs a decision. |
+| Wait | 15 min–24 h | 4 h | How long a request waits before it counts as unanswered. |
+| On no answer | Hold · Deny | Hold | What the agent does when nobody answers. |
+| Write mode | Propose · Draft · Direct | Propose | The most the agent may do with a write. The Scope device sets the limit for each part of the world. The stricter value stands. |
+| Held | A list (reading) | Read from the agent | The things the agent holds now, such as a file or a setting. |
+| Hand back | Lit · Dark (reading) | Dark | Lit when you edited something an agent holds. |
+
+#### Presentations
+| Presentation | What it shows |
+|---|---|
+| Folded | The title "Custody" and the autonomy value. |
+| Compact | The agent's held items, as dots. Four macros: Autonomy, Review gate, Write mode, Hand back. |
+| Whole | All parameters, in three groups: Autonomy, Review, Held. |
+| Full | A pane with every item the agent holds, who last changed it, and its receipts. |
+| Widget | The count of held items, the Hand back light and the Autonomy value. |
+
+#### Transport
+| Control | Effect on Custody |
+|---|---|
+| Arm | Lets the agent write directly, with receipts. Off: every write is a proposal. |
+| Re-enable | Gives back what the agent held. It is lit only when you edited a held item. |
+| Loop and punch | Sets the window in which the agent may write. |
+
+#### To use Custody
+1. Select a session. Open Device view.
+2. Turn Autonomy to Suggest for a new agent.
+3. Read the proposals in Approvals. Approve those you trust.
+4. When you trust the agent, set Autonomy to Review. Later, set it to Auto.
+5. To change what an agent holds, edit it. The Hand back light comes on.
+6. Press Hand back to give control to the agent again.
+
+#### Rules
+- Direct writes need Arm on. With Arm off, every write is a proposal.
+- Every write carries a receipt. The receipt names the agent.
+- Deny is always yours. No Autonomy value takes it away.
+- When you edit a held item, the agent does not overwrite your edit. The light stays on until you press Hand back.
+
+#### Tips
+- To try an unknown agent safely, set Autonomy to Suggest.
+- To review only the risky files, set the Review gate to Diffs and Auto for the rest.
+- To take over a file for an hour, edit it. Press Hand back when you finish.
+
+### 18.14 Scope
+
+**Product:** Software Factory · **Kind:** effect · **Chain:** fourth device on a Factory session's chain
+
+You need to limit the part of your world an agent may touch, and decide how its writes arrive. Scope is the world device. It sets the reach from one object up to everything you own. It also sets whether a write arrives as a proposal, a draft or a direct change.
+
+```ui
+src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
+height: 720
+caption: The World card in Device view. The rings show the reach. Teal marks what the agent may read. Amber marks what it may write. Turn the Reach knob, and change Writes between prop, draft and dir.
+```
+
+#### The rings
+
+The picture shows nested rings. The smallest ring is one object. The next rings are a scene, an Expression, and everything in Central. The teal arc shows the reach for reads. The amber arc shows the reach for writes. A basis readout shows the revision the agent works from and the revision of its edits, for example r15 to r17.
+
+#### Parameters
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Reach | Object · Scene · Expression · Central | Scene | The widest part of the world the agent may touch. |
+| Reads | A list of places, each with a light | This scene and its registers | The places the agent may read. A teal light marks a place in reach. |
+| Writes | A list of places, each with a light | This scene's layers | The places the agent may write. An amber light marks a place in reach. |
+| Write mode | Propose · Draft · Direct | Propose | How a write arrives. Propose: as a proposal that waits. Draft: in a draft that you review. Direct: in the thing itself, with a receipt. |
+| Knowledge | See Knowledge route | As Knowledge route | The knowledge sources and bounds. |
+| Basis | A revision pair (reading) | Read from the world | The revision the agent started from and the revision of its edits. |
+| Receipts | A list (reading) | Read from the agent | One receipt for each write. |
+
+#### Presentations
+| Presentation | What it shows |
+|---|---|
+| Folded | The title "Scope" and the Reach value. |
+| Compact | The rings, with the reads in teal and the writes in amber. Four macros: Reach, Reads, Writes, Write mode. |
+| Whole | All parameters, in four groups: Reach, Reads and Writes, Knowledge, Receipts. |
+| Full | A pane that shows the world the agent may touch, with its places drawn as they are, and the agent's receipts on them. |
+| Widget | The Reach, the Write mode and the count of receipts. |
+
+#### Transport
+| Control | Effect on Scope |
+|---|---|
+| Arm | Direct writes land only when Arm is on. With Arm off, Direct acts as Propose. |
+| Loop and punch | Sets the window in which writes may land. |
+| Re-enable | Gives back what the agent held in this scope. |
+| Draw | Marks a place or a tile as a reference for the agent. |
+
+#### To use Scope
+1. Select a session. Open Device view.
+2. Turn Reach to the smallest part of the world the task needs.
+3. Open Scope whole in the pool. Check the lists of Reads and Writes.
+4. Choose a Write mode. Start with Propose.
+5. After you trust the result, choose Draft or Direct.
+6. Read the receipts in the Ledger.
+
+#### Rules
+- Scope limits the agent. A place outside the Reach is not readable and not writable.
+- The agent does not write behind your back. Off, Propose and Write are your setting.
+- Every write carries a receipt.
+- Direct needs Arm on.
+- A place that you raise into wider reach asks you first.
+
+#### Tips
+- To keep an agent in one file, set Reach to Object.
+- To let an agent read widely but write little, raise Reach and keep Writes short.
+- To try a risky change, set Write mode to Draft and review the draft.
+
+### 18.15 Ledger
+
+**Product:** Software Factory · **Kind:** instrument · **Track:** Factory's Main track
+
+You need a record of what the agents did and what came of it. The Ledger lists every task with its receipt. It shows what landed, what was approved and what drew a comment.
+
+```ui
+src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
+height: 720
+caption: Select the Main track and open Device view. The Ledger card lists the tasks of every session with their state. Open the Ledger tile in the dock to read the receipts.
+```
+
+#### Parameters
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Period | This run · Today · All | Today | The span of tasks in the list. |
+| Agent | All, or one agent | All | Shows the tasks of one agent. |
+| Outcome | All · Landed · Approved · Commented · Refused | All | Shows tasks with one outcome. |
+| Order | Newest first · By agent · By task | Newest first | The order of the list. |
+| Receipt | Open · Closed | Closed | Opens the receipt of the selected task. |
+
+#### What a receipt holds
+
+A receipt holds the number of the task, its name, the agent, the outcome, the revision it started from and who accepted it. It also lists the files that changed. A receipt is made when the task writes. The Ledger does not edit a receipt.
+
+#### Presentations
+| Presentation | What it shows |
+|---|---|
+| Folded | The title "Ledger" and the count of tasks today. |
+| Compact | One line for each task: the agent's mark, the task and its state. Four macros: Period, Agent, Outcome, Order. |
+| Whole | All parameters, in two groups: Filter, Receipt. |
+| Full | The Ledger in a pane, with each receipt open beside its task. |
+| Widget | The last receipts, for example "#212 re-plan port · landed". |
+
+#### Transport
+| Control | Effect on the Ledger |
+|---|---|
+| Position | Shows the task of the receipt you selected. |
+| Follow | Keeps the list on the newest receipt. |
+| Capture | Keeps a receipt as an example. |
+
+#### To use the Ledger
+1. Select the Main track. Open Device view.
+2. Read the Ledger card. Each line is a task.
+3. Set Outcome to Commented to find tasks that need an answer.
+4. Select a task. Open its receipt.
+5. Click the task to open its log in Clip view.
+
+#### Rules
+- Every write has a receipt, and every receipt is in the Ledger.
+- The Ledger only reads. It changes no receipt.
+- The list follows the sessions of the Main track, so a new session appears on its own.
+
+#### Tips
+- To prepare the Day's face 2, read today's Ledger first.
+- To audit one agent, set Agent to that agent and Period to All.
+
+### 18.16 Approvals
+
+**Product:** Software Factory · **Kind:** effect · **Track:** Factory's Main track
+
+You need one place to answer what the agents ask. Approvals holds every proposal and every request that waits for you. Nothing in it lands until you answer.
+
+```ui
+src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
+height: 720
+caption: Select the Main track and open Device view. The Approvals card shows the proposals that wait. Click Approve to accept one. Click Open to read it first.
+```
+
+#### Parameters
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Queue | A count (reading) | Read from the agents | The number of proposals and requests that wait. |
+| Show | Proposals · Requests · Both | Both | Proposals hold changes. Requests ask for a decision, for example a deploy. |
+| Default answer | Ask · Session · Always | Ask | The default answer to a request. The Gateway holds the same setting for each session. |
+| Wait | 15 min–24 h | 4 h | How long a request waits before it counts as unanswered. |
+| On no answer | Hold · Deny | Hold | What happens when nobody answers. |
+| Order | Oldest first · By agent · By risk | Oldest first | The order of the queue. |
+
+#### Presentations
+| Presentation | What it shows |
+|---|---|
+| Folded | The title "Approvals" and the count. |
+| Compact | One line for each item: the agent's mark, the item and a button. Four macros: Show, Default answer, Wait, On no answer. |
+| Whole | All parameters, in two groups: Queue, Defaults. |
+| Full | The queue in a pane, with the diff of the selected proposal beside it. |
+| Widget | The proposal cards, each with Approve. |
+
+#### Transport
+| Control | Effect on Approvals |
+|---|---|
+| Arm | With Arm on, writes inside the Scope land directly. They do not enter the queue. |
+| Re-enable | Gives back what the agent held. |
+| Metronome | Shows the beat at which waiting requests count their time. |
+
+#### To use Approvals
+1. Select the Main track. Open Device view. A number on the title shows the queue.
+2. Read the first item. Click Open to read its diff.
+3. Click Approve to accept it. Click Changes to ask for a different result.
+4. For a request, read the question. Choose Approve or Deny.
+5. Empty the queue before you end the day.
+
+#### Rules
+- Deny is always yours. Only the On no answer setting can deny for you, and you set it.
+- An approved proposal lands with a receipt.
+- A request that is not answered stays in the queue. It does not land.
+- The queue shows the author of each item.
+
+#### Tips
+- To clear many proposals fast, set Order to By risk and read the risky ones first.
+- To stop a deploy from leaving at night, leave On no answer at Hold.
+
+### 18.17 Run
+
+**Product:** Software Factory · **Kind:** instrument · **Track:** one lane for each session in Arrangement view
+
+You need to see the course of one session along the clock. A Run is one session's stream of tasks, drawn on a ruler. A needle shows where the session has got to.
+
+```ui
+src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
+height: 720
+caption: Press Tab to switch to Arrangement view. Each thread has a lane, with a needle at its last check-in. A needle that stops moving is a stall. Expand a lane to see its messages, files, terminal, web and graph events.
+```
+
+#### The lanes
+
+A lane has task blocks. A done block is solid. A running block fades out at the right and has no end. A stalled block is striped, and the needle stops where the output stopped. A queued block is dashed and has no length. Under each lane, the event lanes show Messages, Files, Terminal, Web and Graph. Click an event to open it in the matching widget. A line marks the present moment.
+
+#### Parameters
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Session | A session | The selected session | The session the lane shows. |
+| Watch | In · Auto · Off | Auto | In: always stream this session into the widgets. Auto: stream it when it is armed or selected. Off: do not stream it. |
+| Telemetry | On · Off | On | On: the session feeds the widgets, the Ledger and other agents. Off: it works in silence. |
+| Solo | On · Off | Off | Only soloed sessions may run. |
+| Event lanes | Messages · Files · Terminal · Web · Graph | Messages | The event lanes under the thread. |
+| Overview | On · Off | On | Shows the strip above the ruler. |
+| Needle | A time (reading) | Read from the session | The time of the last check-in. |
+| Takes | A list of attempts | The latest | The attempts under the lane. |
+
+#### Presentations
+| Presentation | What it shows |
+|---|---|
+| Folded | The session name and the needle time. |
+| Compact | The lane, with a needle and a state light. Four macros: Watch, Telemetry, Solo, Event lanes. |
+| Whole | All parameters, in three groups: Feed, Lanes, Takes. |
+| Full | The thread as a pane: tasks, tool rows, steer lines, proposal cards and the stall card. |
+| Widget | The session's state, its needle time and its task now. |
+
+#### Transport
+| Control | Effect on the Run |
+|---|---|
+| Record | Lays what the session did into Arrangement view as clips, with takes under them. |
+| Follow | Scrolls the ruler with the needles. |
+| Position | Shows the task, turn and step of the needle. |
+| Metronome | Sets how often the needle moves. |
+| Arm | Records your moves of the agent's settings as lanes under the track. |
+
+#### To use the Run
+1. Press Tab to open Arrangement view.
+2. Find the lane of the session. Read its needle.
+3. If the needle has stopped, read the stall readout. It names how long the lane has stalled.
+4. Expand the lane. Click an event to open it in its widget.
+5. Press Retry on the track to restart a stalled task from its last good step.
+
+#### Rules
+- The needle shows the last check-in. It does not predict the end.
+- A stalled needle freezes where the output stopped.
+- A new attempt is a take under the same lane. The earlier take stays.
+
+#### Tips
+- To watch only the sessions that matter, set Watch to Off on the others.
+- To keep a loud session out of the Ledger, set its Telemetry to Off.
+
+### 18.18 Agentset rack
+
+**Product:** Software Factory · **Kind:** rack · **Chain:** a group's chain in Factory
+
+You need a team of agents to work as one unit. The Agentset rack holds one chain for each member. Members nest as they were spawned.
+
+```ui
+src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
+height: 720
+caption: Select the group header "Port bridge-2" in Session view and open Device view. The Port crew rack lists the lead and its helpers, each with a model. A stalled member has an orange outline. Click a member to open its thread.
+```
+
+#### The members
+
+Each chain is one agent. The lead is at the top. Its helpers sit below it, with one step of indent for each level. A chip on a chain names the member's model. A stalled member has an outline in the stall colour. A group header folds the crew. When you fold it, its slots still show the tasks of the children. A launch of the group fires them all.
+
+#### Parameters
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Members | A list of agents | The lead | The chains of the rack. Drag an agent from the browser to add one. |
+| Selected member | One member | The lead | The chain whose device shows in the pool. |
+| Fan-out | 1–8 | 2 | The most helpers that run at once. |
+| Depth | 1–4 | 2 | How deep helpers may spawn their own helpers. |
+| Hand-back | Raw · Digest · Summary | Summary | What a helper returns to its parent. |
+| Subagent model | A model | The lead's model | The default model for everything the group spawns. A member can set its own. |
+| Member state | Working · Idle · Stalled · Done (reading) | Read from each session | The state of each chain. |
+
+#### Presentations
+| Presentation | What it shows |
+|---|---|
+| Folded | The crew name and the count of members. |
+| Compact | The chains, nested, with a model chip on each. Four macros: Fan-out, Depth, Hand-back, Subagent model. |
+| Whole | All parameters, in three groups: Members, Limits, Return. |
+| Full | The crew in a pane as a tree, with each member's thread and the files it touched. |
+| Widget | The crew tree with a light on each member. |
+
+#### Transport
+| Control | Effect on the Agentset rack |
+|---|---|
+| Play | Launches every queued task of the crew. |
+| Stop | Pauses every member at its next safe point. Press twice to cancel. |
+| Tap | Asks every member for a status line. |
+| Quantize | Sets when Stop and Steer land for the crew. |
+| Keys and maps | Number keys launch rows across the members. |
+
+#### To use the Agentset rack
+1. Drag an agentset from the browser onto the track of the lead.
+2. Select the group header. Open Device view.
+3. Set Fan-out to the number of helpers that may run together.
+4. Set Depth to 1 if helpers must not spawn others.
+5. Choose Hand-back. Choose Summary to keep the lead's context short.
+6. Click a member to read its thread.
+
+#### Rules
+- Each member keeps its own chain. A helper shares the lead's gateway and git seat.
+- A stalled member does not stop the others. The group lights Retry.
+- Hard stop on the group stops every session in it. The work written so far stays as a draft.
+
+#### Tips
+- To keep a lead's context small, set Hand-back to Summary.
+- To save cost, set Subagent model to a smaller model for the group.
+- To find the slow member, look for the orange outline.
+
+### 18.19 Git / landing
+
+**Product:** Workcell · **Kind:** effect · **Chain:** last device on a Factory session's chain
+
+You need the agent's work to land safely in the project, with checks you can read. Git / landing is the place where the work ends. It commits the work, pushes it and lands it as a merge request.
+
+```ui
+src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
+height: 720
+caption: The Git card is the last card in Device view. The diagram shows the branch against main. A pulsing hollow dot is work that is not yet committed. Choose a commit cadence, then press Land.
+```
+
+#### The branch diagram
+
+The line at the bottom is main. The branch leaves it and runs to the right. Each dot is a commit. A pulsing hollow dot at the end is uncommitted work. Text above the branch shows lines added and removed, and the number of files. Text below shows how far the branch is ahead of main.
+
+#### Parameters
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Branch | A name (reading) | The seat's branch | The branch the agent works on. |
+| Seat | A seat (reading) | The seat of the session | The checkout where the agent works. See Seat. |
+| Commit | Per turn · Per task · Manual | Per task | When the agent commits. |
+| Push | Off · On land | Off | Off: the work stays on this machine. On land: the branch goes to the remote when you land it. |
+| Land as | Draft merge request · Merge request · Merge | Draft merge request | How the work lands. |
+| Checks | A count (reading) | Read from the remote | The checks that passed, of all the checks, and those that still run. |
+| Changes | Lines and files (reading) | Read from the seat | Lines added and removed, and files changed. |
+| Uncommitted | A count (reading) | Read from the seat | The files that have no commit. |
+| Land | A button | — | Lands the branch as set in Land as. |
+
+#### Presentations
+| Presentation | What it shows |
+|---|---|
+| Folded | The title "Git" and the branch name. A child session shows "shared with lead". |
+| Compact | The branch diagram. Four macros: Commit, Push, Land as, Land. |
+| Whole | All parameters, in three groups: Seat, Cadence, Landing. |
+| Full | The branch in a pane: commits, files and checks, with the diff beside them. |
+| Widget | The branch, the changes, the checks and the Land button. |
+
+#### Transport
+| Control | Effect on Git / landing |
+|---|---|
+| Play | With Land as set, lands the work when the last task ends and the checks pass. |
+| Loop and punch | Sets the step before which nothing is committed, and the step after which nothing is. |
+| Arm | With Arm off, the commits wait as proposals for your approval. |
+| Capture | Keeps the diff as an example. |
+
+#### To use Git / landing
+1. Select a session. Open Device view. Read the Git card.
+2. Choose Commit. Use Per task for work you review task by task.
+3. Leave Push on Off while you test.
+4. When the work is ready, choose Land as. Press Land.
+5. Read the checks. Open the merge request when they pass.
+
+#### Rules
+- The agent commits only from a seat. The device does not create a new checkout.
+- Land does not merge by itself unless Land as is Merge.
+- A child session shares the lead's seat and branch.
+- The checks come from the remote. The device does not make them up.
+- After the work lands, the seat returns to the main branch.
+
+#### Tips
+- To keep the history small, set Commit to Per task.
+- To test a change before anyone sees it, keep Push on Off and read the diff.
+- To get a second view, land as a draft merge request and ask a reviewer.
+
+### 18.20 Seat
+
+**Product:** Workcell · **Kind:** effect · **Chain:** inside the Git / landing device; whole in the pool
+
+You need a place where an agent can change a project without touching other work. A seat is a checkout of a project that agents share. The Seat device claims one for a session, and releases it when the work has landed.
+
+#### Parameters
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Product | A project | The session's project | The project that the seat holds. |
+| Seat | The seats of this machine | The free seat | The seat the session joins. |
+| Lane | A branch name | A new branch from main | The line of work that the seat holds. |
+| Claim | Free · Yours · Another agent's (reading) | Read from the register | Who holds the seat. |
+| Join | Attach to the lane · Start a new lane | Attach to the lane | Attach: work beside the agents on the standing lane. New lane: replace the standing lane. |
+| Co-workers | A list (reading) | Read from the claim | The agents that share this lane. |
+| Uncommitted | A count (reading) | Read from the seat | The files that have no commit. |
+| Release | A button | — | Releases the seat after the work has landed. |
+
+#### Presentations
+| Presentation | What it shows |
+|---|---|
+| Folded | The title "Seat" and the claim. |
+| Compact | The seat name, the lane and the co-workers. Four macros: Seat, Join, Lane, Release. |
+| Whole | All parameters, in two groups: Claim, Work. |
+| Full | The seats of the machine in a pane, with their lanes, claims and uncommitted work. |
+| Widget | The seat name, the lane and the claim. |
+
+#### Transport
+| Control | Effect on the Seat |
+|---|---|
+| Link | Shows the seats of your other machines. |
+| Play | Joins the seat when the first task starts. |
+| Stop | Keeps the claim. Release gives the seat up. |
+
+#### To use the Seat
+1. Select a session. Open the Git card whole in the pool.
+2. Read Claim. If another agent holds the seat, choose Attach to join as a co-worker.
+3. To start different work on the same project, choose Start a new lane.
+4. Work. Land the branch.
+5. Press Release. The seat returns to the main branch and the claim clears.
+
+#### Rules
+- A seat holds one lane at a time. Several agents can work in one lane.
+- The device does not create a new checkout. If every seat is busy, attach to a lane or take one over.
+- A new lane does not replace uncommitted work.
+- A commit from a place that is not a seat is refused.
+- A seat left on a landed branch is not finished work.
+
+#### Tips
+- To work next to another agent, choose Attach.
+- To clear a seat after a merge, press Release.
+
+### 18.21 Remote carrier
+
+**Product:** Workcell · **Kind:** effect · **Chain:** the fourth chain of the Gateways rack
+
+You need to choose where a session runs. The Remote carrier moves a session from this machine to another machine of yours. It shows whether that machine can carry the session now.
+
+```ui
+src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
+height: 720
+caption: Select the Main track and open Device view. The last row of the Gateways rack is the Remote carrier. Its dot shows its state. Open the Gateway and set Transport to Remote to see the carrier in the Reach row.
+```
+
+#### Parameters
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Where | This machine · A connected machine | This machine | The place where the session runs. |
+| Machine | The machines you connected | None | The connected machine that carries the session. |
+| Standing | Ready · Composed · Refused (reading) | Read from the machine | Whether the machine can carry the session now. A refused machine names the reason. |
+| Grant | The operations allowed (reading) | Read from the machine | What this machine may do for you. |
+| Credential | Valid · Expired · Revoked (reading) | Read from the machine | Whether the machine accepts you. An expired credential is not the same as a revoked one. |
+| Round trip | Milliseconds (reading) | Read from the link | The time for a message to go and return. |
+
+#### Presentations
+| Presentation | What it shows |
+|---|---|
+| Folded | The title "Remote carrier" and its state dot. |
+| Compact | The machines, each with a dot. Four macros: Where, Machine, Standing, Round trip. |
+| Whole | All parameters, in two groups: Place, Readings. |
+| Full | The machine in a pane: its readiness, its sessions and its grant. |
+| Widget | The machine name, its dot and the round trip. |
+
+#### Transport
+| Control | Effect on the Remote carrier |
+|---|---|
+| Link | Adds the machines that share your ground. |
+| Rate | Shows the round trip of the link. |
+
+#### To use the Remote carrier
+1. Select the Main track. Open Device view.
+2. Click the Remote carrier row. Read its Standing.
+3. Choose Where. Choose a machine.
+4. Open the Gateway of the session. Set Transport to Remote.
+5. Press Play. The session runs on the other machine.
+
+#### Rules
+- A refused or composed carrier does not show as live.
+- The carrier does not create a machine. It uses a machine you connected.
+- A session on another machine keeps its own seat and its own receipts.
+- Secrets stay on the machine that holds them. The carrier sends a reference.
+
+#### Tips
+- To run a long job away from your laptop, choose a connected machine and set Transport to Remote.
+- To find out why a carrier is refused, read its reason in the Standing row.
+
+### 18.22 Link
+
+**Product:** Workcell · **Kind:** effect · **Track:** Factory's Main track
+
+You need your sessions on several machines to keep one ledger and one clock. Link joins them. Agents on other machines and in other harnesses then show beside your own.
+
+```ui
+src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
+height: 720
+caption: The Link button in the transport joins the sessions to agents on other machines. Hover over it to read what it does. Open the Gateways rack on the Main track to see the gateways that Link adds.
+```
+
+#### Parameters
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Link | On · Off | Off | Joins this machine to your others. |
+| Share | Ledger · Clock · Both | Both | What the machines keep in common. |
+| Machines | The machines you connected | All | The machines in the link. |
+| Peers | A count (reading) | Read from the link | The agents and machines that joined. |
+| Lag | Milliseconds (reading) | Read from the link | The time for a change to reach the others. |
+
+#### Presentations
+| Presentation | What it shows |
+|---|---|
+| Folded | The title "Link" and the number of peers. |
+| Compact | The machines as dots joined by lines. Four macros: Link, Share, Machines, Lag. |
+| Whole | All parameters, in two groups: Link, Readings. |
+| Full | The machines in a pane, each with its sessions and its seats. |
+| Widget | The peers and the link state. |
+
+#### Transport
+| Control | Effect on the Link |
+|---|---|
+| Link | Turns the link on or off. |
+| Tap | Asks the agents on all machines for a status line. |
+| Rate | Shows the lag of the link. |
+
+#### To use the Link
+1. Press Link in the transport.
+2. Open Device view on the Main track. Read the Peers.
+3. Choose what to Share.
+4. Select a session of another machine. Read its thread.
+
+#### Rules
+- Linked machines keep one ledger. A receipt made on one machine shows on all.
+- A machine that is not reachable is shown as such. It does not leave the list.
+- Link shares the ledger and the clock. It does not share a seat.
+
+#### Tips
+- To follow a run on a far machine, turn Link on and select its session.
+- To keep a machine private for a while, remove it from Machines.
+
+## 19. Widgets
+
+The rail on the right keeps context at hand in every mode. Each widget is a device in its rail presentation.
+
+### 19.1 How widgets work
+
+**Product:** Central · **Kind:** rack · **Rail:** the widget rail on the right
+
+You need the context of your work at hand, in every kind of work. The widget rail holds small live views, and each view is a device. A widget stays on the rail when you change mode.
+
+```ui
+src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
+height: 720
+caption: The right side of the window is the rail. Tiles are open at the top, and the launcher is below them. Click a launcher square to open or close a tile. Click the arrows to widen the rail. Use the search field to find a widget.
+```
+
+#### The rail
+
+Open tiles sit at the top of the rail. The launcher sits below them, as a grid of squares. Each square has a small preview of its widget, and a dot when the widget is open. A tile has a title, a pin and a close mark. The close mark closes the tile, and the widget stays in the launcher. Each widget holds a piece of context that belongs to your whole world. A terminal that you open in Factory is still there in Central.
+
+#### Parameters
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Open | The widgets in the launcher | By mode | The tiles shown at the top of the rail. |
+| Pin | On · Off, for each tile | Off | On: the tile keeps its subject while you select other things. Off: it follows your selection. |
+| Width | 260–900 px | 300 px | The width of the rail. Tiles move into two columns when the rail is wide. |
+| Launcher | Open · Folded | Open | A folded launcher shows only its search field, and the tiles get the height. |
+| Search | Text | Empty | Filters the launcher by name. |
+| Preset | A named group of tiles | None | A saved group of open tiles. |
+
+#### Presentations
+| Presentation | What it shows |
+|---|---|
+| Folded | A closed tile shows as a launcher square. |
+| Compact | A launcher square with a small preview and a dot when open. |
+| Whole | The widget's settings, in the pool, when you select its square in the browser. |
+| Full | The widget at pane size. A widget that has a full form opens it in a pane. |
+| Widget | The tile, on the rail. |
+
+#### Transport
+| Control | Effect on the rail |
+|---|---|
+| Follow | Keeps the open tiles on what the selected agent touches. |
+| Tap | Adds the answers of the running agents to the Agents tile. |
+
+#### To use the rail
+1. Click a square in the launcher. The widget opens at the top.
+2. Click the pin on a tile to stop it from following your selection.
+3. Click the left arrow to widen the rail. Click the right arrow to narrow it.
+4. Click "Save current tiles as preset" and give the preset a name.
+5. To add a widget, open the browser. Install it from the Context category. A badge marks widgets from outside.
+
+#### Rules
+- A widget is a plugin. You can set it up for your work, and anyone can build a new one.
+- A light on a widget is a reading. It is dark when the state is not known.
+- Close removes the tile. The widget remains in the launcher.
+- A widget from outside shows a badge, and it shows only what its provider supplies.
+
+#### Tips
+- To keep a terminal while you move between kinds of work, leave its tile open.
+- To compare two sessions, pin one tile on the first and open a second tile on the other.
+- To start a day with the same tiles, save them as a preset.
+
+### 19.2 Sessions
+
+**Product:** AIKit and Central · **Kind:** instrument · **Rail:** the widget rail on the right
+
+You need to find any session or helper and open its thread. Sessions lists every session, with its helpers nested as they were spawned.
+
+```ui
+src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
+height: 720
+caption: Sessions is open at the top of the rail. Click the filter buttons to show all, running or stalled sessions. Click a session to select its track. Double-click it to open its thread.
+```
+
+#### Parameters
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Filter | All · Running · Stalled | All | Shows the sessions in one state. |
+| Nest | On · Off | On | Shows helpers under the session that spawned them. |
+| Pin | On · Off | Off | Keeps the list on its subject. |
+
+#### Presentations
+| Presentation | What it shows |
+|---|---|
+| Folded | A closed tile shows as a launcher square. |
+| Compact | Each session with its state, its helpers indented. |
+| Whole | Filter, nest and pin. |
+| Full | The list at pane size. |
+| Widget | The tree of sessions, with a count of sessions, running and stalled. |
+
+#### Transport
+| Control | Effect on Sessions |
+|---|---|
+| Follow | Keeps the list on the selected session. |
+| Position | Shows the task, turn and step of the selected session. |
+
+#### To use Sessions
+1. Open Sessions from the launcher.
+2. Set the Filter to Stalled to find the sessions that need you.
+3. Click a session to select its track.
+4. Double-click a session to open its thread.
+
+#### Rules
+- A helper shows one step of indent for each level.
+- A session in the list is the same session as its track.
+
+#### Tips
+- To find a lost session, filter to Running and read the names.
+
+### 19.3 Terminal
+
+**Product:** Workcell · **Kind:** instrument · **Rail:** the widget rail on the right
+
+You need to see and use the shells of your sessions. Terminal shows the live shells. It follows the agent that you select.
+
+```ui
+src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
+height: 720
+caption: Terminal is open at the top of the rail. It follows the selected agent and shows its commands and results. A prompt that waits for an answer shows in orange.
+```
+
+#### Parameters
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Follow | Selected agent · Pinned shell | Selected agent | Which shell the tile shows. |
+| Shell | A list of live shells | The agent's shell | Chooses the shell. |
+| Prompts | Show · Hide | Show | Marks a shell that waits for an answer, in the stall colour. |
+
+#### Presentations
+| Presentation | What it shows |
+|---|---|
+| Folded | A closed tile shows as a launcher square. |
+| Compact | The last lines of the shell and its prompt. |
+| Whole | Follow, shell and prompts. |
+| Full | A full terminal in a pane. |
+| Widget | The live shell, with the line "following" and the name of the agent. |
+
+#### Transport
+| Control | Effect on Terminal |
+|---|---|
+| Follow | Moves the tile to the shell of the selected agent. |
+| Stop | Pauses the agent. It does not close the shell. |
+
+#### To use Terminal
+1. Open Terminal from the launcher.
+2. Select an agent. The tile follows its shell.
+3. If a shell waits for an answer, read the prompt.
+4. Type your answer in the shell.
+
+#### Rules
+- A shell that waits for a yes or no shows in the stall colour.
+- A terminal stays on the rail when you change mode.
+
+#### Tips
+- To stop a stuck command, pin the shell and press Control-C.
+
+### 19.4 Files
+
+**Product:** Workcell · **Kind:** instrument · **Rail:** the widget rail on the right
+
+You need to see which files an agent read and which it changed. Files shows them as a tree, with the lines added and removed.
+
+```ui
+src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
+height: 720
+caption: Files is open at the top of the rail. M marks a changed file, with the lines added and removed. An arrow marks a file the agent read. A red line marks a blocked place.
+```
+
+#### Parameters
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Show | Read and changed · Changed only · All | Read and changed | Chooses which files the tree lists. |
+| Blocked | Show · Hide | Show | Marks places the agent may not reach. |
+| Follow | On · Off | On | Keeps the tree on the selected agent. |
+
+#### Presentations
+| Presentation | What it shows |
+|---|---|
+| Folded | A closed tile shows as a launcher square. |
+| Compact | The changed files, with lines added and removed. |
+| Whole | Show, blocked and follow. |
+| Full | The file in a pane. |
+| Widget | The tree: M marks a changed file, and an arrow marks a file the agent read. |
+
+#### Transport
+| Control | Effect on Files |
+|---|---|
+| Follow | Keeps the tree on what the selected agent touches. |
+
+#### To use Files
+1. Open Files from the launcher.
+2. Read the changed files and their counts.
+3. Click a file to open it in a pane.
+4. Click a blocked place to read why it is blocked.
+
+#### Rules
+- The tree shows what the agent did. It does not change a file.
+- A blocked place stays visible, with its reason.
+
+#### Tips
+- To review a run fast, set Show to Changed only.
+
+### 19.5 Web
+
+**Product:** Central · **Kind:** instrument · **Rail:** the widget rail on the right
+
+You need to see the pages an agent read, and the text it used. Web shows each page, with the used text marked.
+
+```ui
+src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
+height: 720
+caption: Open Web from the launcher. The tile shows the page the agent fetched, and the used text is marked.
+```
+
+#### Parameters
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Page | A list of pages | The latest page | Chooses the page. |
+| Mark used text | On · Off | On | Highlights the text the agent used. |
+| Follow | On · Off | On | Shows the page the selected agent read last. |
+
+#### Presentations
+| Presentation | What it shows |
+|---|---|
+| Folded | A closed tile shows as a launcher square. |
+| Compact | The address and the first lines of the page. |
+| Whole | Page, mark and follow. |
+| Full | The page in a pane. |
+| Widget | The page, with used text marked. |
+
+#### To use Web
+1. Open Web from the launcher.
+2. Select an agent. Read the page it fetched.
+3. Read the marked text. It is the text the agent used.
+4. Click the address to open the page in a pane.
+
+#### Rules
+- The tile shows the page as the agent got it.
+- A page opens in a pane only when you ask.
+
+#### Tips
+- To check a claim, open the page and read the marked text.
+
+### 19.6 Graph
+
+**Product:** Central · **Kind:** instrument · **Rail:** the widget rail on the right
+
+You need to see what is linked to the thing in play. Graph shows the neighbourhood of the selected thing in your knowledge graph.
+
+```ui
+src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
+height: 720
+caption: Open Graph from the launcher. The node at the middle is the selection. The coloured nodes are the ones the agent touched.
+```
+
+#### Parameters
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Centre | The selection · A pinned node | The selection | The node at the middle. |
+| Depth | 0–3 links | 1 | How many links the tile draws from the centre. |
+| Kinds | All · Notes · Files · Agents | All | Which kinds of node to draw. |
+
+#### Presentations
+| Presentation | What it shows |
+|---|---|
+| Folded | A closed tile shows as a launcher square. |
+| Compact | The centre and the nodes around it. |
+| Whole | Centre, depth and kinds. |
+| Full | The Obsidian-style knowledge graph in a pane. |
+| Widget | The neighbourhood, with the centre marked. |
+
+#### To use Graph
+1. Open Graph from the launcher.
+2. Select a note or a file. It becomes the centre.
+3. Click a node to move the centre.
+4. Click the open mark to open the full graph in a pane.
+
+#### Rules
+- A node that the agent touched has a colour. A link that does not resolve shows as a ghost node.
+- The tile is small. The full graph is a separate instrument.
+
+#### Tips
+- To find what depends on a file, set Depth to 2 and read the links.
+
+### 19.7 Diff
+
+**Product:** Software Factory · **Kind:** effect · **Rail:** the widget rail on the right
+
+You need to read what changed before you approve it. Diff shows the uncommitted changes and the changes that an agent proposes.
+
+```ui
+src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
+height: 720
+caption: Open Diff from the launcher. The tile shows the lines added and removed in the selected session.
+```
+
+#### Parameters
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Show | Uncommitted · Proposed · Both | Both | Chooses which changes the tile lists. |
+| Session | The selected session · All | The selected session | Chooses whose changes to show. |
+| Layout | Unified · Side by side | Unified | How the lines are set out. |
+
+#### Presentations
+| Presentation | What it shows |
+|---|---|
+| Folded | A closed tile shows as a launcher square. |
+| Compact | The first lines of the diff. |
+| Whole | Show, session and layout. |
+| Full | The diff in a pane. |
+| Widget | The files, with lines added in green and removed in red. |
+
+#### Transport
+| Control | Effect on Diff |
+|---|---|
+| Loop and punch | Shows only the changes inside the write window. |
+
+#### To use Diff
+1. Open Diff from the launcher.
+2. Read the first lines of each file.
+3. Click a file to open its diff in a pane.
+4. Go to Approvals to accept the proposal.
+
+#### Rules
+- Diff only reads. It changes no file.
+- A proposed change shows its author.
+
+#### Tips
+- To review a big change, set Layout to Side by side.
+
+### 19.8 Frames
+
+**Product:** Actuation · **Kind:** effect · **Rail:** the widget rail on the right
+
+You need to read the live events between the shell and the harness. Frames is the Frames monitor on the rail.
+
+```ui
+src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
+height: 720
+caption: Open Frames from the launcher. The tile shows the last frames of the selected session, such as tool.start and approval.request.
+```
+
+#### Parameters
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Session | All · One session | Selected session | Chooses whose frames to show. |
+| Kinds | Messages · Tools · Heartbeat · Approvals · Errors | All | Chooses the frames to show. |
+| Pause | On · Off | Off | Holds the list still. |
+
+#### Presentations
+| Presentation | What it shows |
+|---|---|
+| Folded | A closed tile shows as a launcher square. |
+| Compact | The last frames of the selected session. |
+| Whole | Session, kinds and pause. |
+| Full | The Frames monitor in a pane. |
+| Widget | The last eleven frames, newest at the bottom. |
+
+#### To use Frames
+1. Open Frames from the launcher.
+2. Select a session. Read its last frames.
+3. Set Kinds to Errors to find a fault.
+4. Click the open mark to open the monitor in a pane.
+
+#### Rules
+- The tile only reads. It sends no frame.
+- The tile shows the same frames as the Frames monitor.
+
+#### Tips
+- To see why a session stalled, filter to Tools and read the last frame.
+
+### 19.9 Ledger
+
+**Product:** Software Factory · **Kind:** instrument · **Rail:** the widget rail on the right
+
+You need to see what each task produced. Ledger shows every task with its receipt.
+
+```ui
+src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
+height: 720
+caption: Open Ledger from the launcher. Each line is a task and its receipt, for example #212 re-plan port, landed.
+```
+
+#### Parameters
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Period | This run · Today · All | Today | The span of tasks in the list. |
+| Outcome | All · Landed · Approved · Commented | All | Shows tasks with one outcome. |
+| Agent | All · One agent | All | Shows the tasks of one agent. |
+
+#### Presentations
+| Presentation | What it shows |
+|---|---|
+| Folded | A closed tile shows as a launcher square. |
+| Compact | One line for each task, with its number and outcome. |
+| Whole | Period, outcome and agent. |
+| Full | The Ledger in a pane, with each receipt open. |
+| Widget | The last receipts, for example "#212 re-plan port · landed". |
+
+#### To use Ledger
+1. Open Ledger from the launcher.
+2. Read the last receipts.
+3. Select a receipt to read it in full.
+4. Click the task to open its log.
+
+#### Rules
+- Every write has a receipt. Every receipt is in the Ledger.
+- The Ledger changes no receipt.
+
+#### Tips
+- To see what an agent did today, set Agent to that agent.
+
+### 19.10 Approvals
+
+**Product:** Software Factory · **Kind:** effect · **Rail:** the widget rail on the right
+
+You need to answer the agents when they ask. Approvals shows the proposals that wait for you, each with a button to approve.
+
+```ui
+src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
+height: 720
+caption: Open Approvals from the launcher. Each card names the agent and the change. Click Approve to accept it.
+```
+
+#### Parameters
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Show | Proposals · Requests · Both | Both | Chooses what the tile lists. |
+| Order | Oldest first · By agent · By risk | Oldest first | The order of the queue. |
+| Wait | 15 min–24 h | 4 h | How long a request waits before it counts as unanswered. |
+
+#### Presentations
+| Presentation | What it shows |
+|---|---|
+| Folded | A closed tile shows as a launcher square. |
+| Compact | One line for each item, with a button. |
+| Whole | Show, order and wait. |
+| Full | The queue in a pane, with the diff beside it. |
+| Widget | The proposal cards. Each has Approve, Changes and Open. |
+
+#### Transport
+| Control | Effect on Approvals |
+|---|---|
+| Arm | With Arm on, writes in scope land directly and do not enter the queue. |
+
+#### To use Approvals
+1. Open Approvals from the launcher.
+2. Read a card. Click Open to read its diff.
+3. Click Approve to accept it.
+4. Click Changes to ask for a different result.
+
+#### Rules
+- Deny is always yours.
+- Nothing in the queue lands until you answer.
+
+#### Tips
+- To clear the queue fast, order it by risk and read the risky items first.
+
+### 19.11 Agents
+
+**Product:** Central and AIKit · **Kind:** instrument · **Rail:** the widget rail on the right
+
+You need to see all your agents at once, and what each is doing. Agents is the hive: each agent sits at a station, with its helpers around it.
+
+```ui
+src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
+height: 720
+caption: Open Agents from the launcher. Each agent has a station. The lines under the hive say what each agent does.
+```
+
+#### Parameters
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Telemetry | On · Off, for each agent | On | An agent with telemetry Off is muted. It works in silence. |
+| Relations | Show · Hide | Show | Draws dashed lines from an agent to its helpers. |
+| Doing lines | Show · Hide | Show | Shows one line of text for each agent that says what it does. |
+
+#### Presentations
+| Presentation | What it shows |
+|---|---|
+| Folded | A closed tile shows as a launcher square. |
+| Compact | Each agent at a station. |
+| Whole | Telemetry, relations and doing lines. |
+| Full | The hive in a pane. |
+| Widget | The hive. Click an agent to select its session. Double-click to open its thread. |
+
+#### Transport
+| Control | Effect on Agents |
+|---|---|
+| Tap | Asks every running agent for a status line. The answers arrive here. |
+| Link | Adds the agents of other machines. |
+
+#### To use Agents
+1. Open Agents from the launcher.
+2. Read the doing line of each agent.
+3. Click an agent to select its session.
+4. Press Tap in the transport to ask for a status line from each.
+
+#### Rules
+- A muted agent keeps working. It stops sending to the tiles.
+- The roster comes from your agents. No agent is fixed in advance.
+
+#### Tips
+- To see who is stuck, look for the amber stations.
+
+### 19.12 Packet
+
+**Product:** Central · **Kind:** effect · **Rail:** the widget rail on the right
+
+You need to know exactly what the agent will read. Packet shows it whole, with its size, before anything is sent.
+
+```ui
+src: ../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=base
+height: 720
+caption: The Packet tile is open at the top of the rail in Central. Each line names the source and the text. The size shows beside the Answer button.
+```
+
+#### Parameters
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Items | Selection · Entry · Document | Selection | What the packet holds. |
+| Size | Tokens (reading) | Read from the packet | The size of what the agent will read. |
+| Send | A button | — | Sends the packet. The answer arrives as an entry. |
+
+#### Presentations
+| Presentation | What it shows |
+|---|---|
+| Folded | A closed tile shows as a launcher square. |
+| Compact | The first lines of each item. |
+| Whole | Items, size and send. |
+| Full | The packet in a pane. |
+| Widget | The list of items, with their size and the Answer button. |
+
+#### Transport
+| Control | Effect on Packet |
+|---|---|
+| Capture | Puts the selection in the packet. |
+| Play | Sends the packet. |
+
+#### To use Packet
+1. Open Packet from the launcher.
+2. Select a passage. Press Capture to put it in the packet.
+3. Read the list. Remove any item you do not want to send.
+4. Press Play. The agent answers.
+
+#### Rules
+- The packet is exactly what the agent receives. Nothing else goes with it.
+- You see the size before you send.
+
+#### Tips
+- To cut cost, remove the items that the question does not need.
+
+### 19.13 Trail
+
+**Product:** Central · **Kind:** effect · **Rail:** the widget rail on the right
+
+You need to go back to a place you were. Trail keeps every place you went, newest first. Select a stop to return to it.
+
+```ui
+src: ../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=base
+height: 720
+caption: The Trail tile is open in Central. Each stop shows its time, the kind of work and the place. Click a stop to return to it.
+```
+
+#### Parameters
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Stops | A list (reading) | Read from your moves | The places you went, with time and kind of work. |
+| Return | A stop | — | Returns to the same place, page and point in the reading. |
+| Limit | 8–100 stops | 8 | The stops shown in the tile. |
+
+#### Presentations
+| Presentation | What it shows |
+|---|---|
+| Folded | A closed tile shows as a launcher square. |
+| Compact | The last stops. |
+| Whole | Stops, return and limit. |
+| Full | The trail in a pane. |
+| Widget | The stops, newest first, each with its time and kind of work. |
+
+#### Transport
+| Control | Effect on Trail |
+|---|---|
+| Position | Shows the stop you are on. |
+
+#### To use Trail
+1. Open Trail from the launcher.
+2. Find the stop.
+3. Click the stop.
+4. You return to the same place.
+
+#### Rules
+- A change of mode does not close anything.
+- Every place can be linked to and opened again.
+
+#### Tips
+- To undo a wrong turn, select the stop before it.
+
+### 19.14 NOWs
+
+**Product:** Central · **Kind:** instrument · **Rail:** the widget rail on the right
+
+You need to see the moments of today that are still open. NOWs shows the day and the present moment, with the open moments of each machine.
+
+```ui
+src: ../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=base
+height: 720
+caption: The NOWs tile lists the machines and the agent at work on each, with a state. Open it from the launcher if it is not on the rail.
+```
+
+#### Parameters
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Day | A date (reading) | Today | The day in force. |
+| Now | A time (reading) | The present | The present moment. |
+| Machines | All · One machine | All | Shows the open moments of one machine. |
+
+#### Presentations
+| Presentation | What it shows |
+|---|---|
+| Folded | A closed tile shows as a launcher square. |
+| Compact | One line for each open moment, with its state. |
+| Whole | Machines and day. |
+| Full | The day's moments in a pane. |
+| Widget | The day, the time and the open moments. |
+
+#### To use NOWs
+1. Open NOWs from the launcher.
+2. Read the open moments.
+3. Click a moment to open it.
+4. Close the moments you have finished.
+
+#### Rules
+- The tile shows the day and the time that the ground reports. It shows nothing when the ground reports nothing.
+- The day opens and closes by itself.
+
+#### Tips
+- To end the day clean, close each open moment before the day closes.
+
+### 19.15 Results
+
+**Product:** Software Factory · **Kind:** instrument · **Rail:** the widget rail on the right
+
+You need to read what a run produced. Results shows the results and the diffs of the selected run.
+
+```ui
+src: ../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=factory
+height: 720
+caption: The Results tile is open at the top of the rail in Factory. It shows the results of the run you selected.
+```
+
+#### Parameters
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Run | A run | The selected run | The run whose results show. |
+| Show | Results · Diffs · Both | Both | Chooses what the tile lists. |
+| Accept | A button | — | Accepts the result. The result goes to review. |
+
+#### Presentations
+| Presentation | What it shows |
+|---|---|
+| Folded | A closed tile shows as a launcher square. |
+| Compact | The latest result and its state. |
+| Whole | Run, show and accept. |
+| Full | The results in a pane. |
+| Widget | The results and diffs of the run, with Accept. |
+
+#### To use Results
+1. Open Results from the launcher.
+2. Read the result.
+3. Open the diff if it has one.
+4. Press Accept, or ask for changes.
+
+#### Rules
+- Accept sends the result to review. It does not decide the review.
+- A result shows its author.
+
+#### Tips
+- To compare two attempts, open Runs and set Compare.
+
+### 19.16 Wiki
+
+**Product:** Central · **Kind:** instrument · **Rail:** the widget rail on the right
+
+You need to read the wiki pages that an agent may use. Wiki shows the pages inside the reads of the world.
+
+```ui
+src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
+height: 720
+caption: Open Wiki from the launcher. The tile lists the wiki pages inside the reads of the selected session.
+```
+
+#### Parameters
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Page | A list of pages | The latest page | Chooses the page. |
+| Reads only | On · Off | On | Shows only pages inside the scope's reads. |
+| Follow | On · Off | On | Shows the page the selected agent read last. |
+
+#### Presentations
+| Presentation | What it shows |
+|---|---|
+| Folded | A closed tile shows as a launcher square. |
+| Compact | The title and the first lines of a page. |
+| Whole | Page, reads and follow. |
+| Full | The page in a pane. |
+| Widget | The page, with its links. |
+
+#### To use Wiki
+1. Open Wiki from the launcher.
+2. Select a session. Read the pages in its reads.
+3. Click a link to follow it.
+4. Click the open mark to read the page in a pane.
+
+#### Rules
+- The wiki is read here. It is not edited here.
+- A link that does not resolve shows as it is.
+
+#### Tips
+- To check what an agent knew, open the page it read.
+
+### 19.17 Calendar
+
+**Product:** a third party · **Kind:** instrument · **Rail:** the widget rail on the right
+
+You need to see what is due around your work. Calendar is a widget from a third party. Its provider supplies the events.
+
+```ui
+src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
+height: 720
+caption: Calendar is a widget from a third party. Open it from the launcher. The badge on its square marks it as supplied from outside.
+```
+
+#### Parameters
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Calendar | The calendars the provider offers | All | Chooses which calendars show. |
+| Range | Day · Week | Day | The span the tile shows. |
+| This work only | On · Off | Off | Shows only events tied to the work in front of you. |
+
+#### Presentations
+| Presentation | What it shows |
+|---|---|
+| Folded | A closed tile shows as a launcher square. |
+| Compact | The next events. |
+| Whole | Calendar, range and this work only. |
+| Full | The calendar in a pane, if the provider supplies a full form. |
+| Widget | The events due around this work. |
+
+#### To use Calendar
+1. Open the browser. Install Calendar from the Context category.
+2. Open Calendar from the launcher.
+3. Choose the calendars and the range.
+4. Click an event to read it.
+
+#### Rules
+- A badge marks Calendar as a widget from outside.
+- It shows only what its provider supplies. It cannot read your other widgets.
+
+#### Tips
+- To plan a task around a deadline, set Range to Week.
