@@ -11,24 +11,42 @@
 //   - the projection: techne/wikiProjectionStore.ts `wikiProjectionOf` over `getWikiProjectionState().standings`;
 //   - the ask: techne/wikiProjectionStore.ts `requestWikiSelection`, consumed by `createNativeTechneNavigator.connectSelectionRequests`
 //     (packages/expressions-boundary/src/techne.ts:110) while Technē is presented;
-//   - the hop: `oi:epi-examine`, which panels/expressions.tsx:312-313 answers with `workspace.setMode('techne')`.
+//   - the hop: `oi:epi-examine`, which panels/expressions.tsx answers (`const examine = () => {if (live) workspace.setMode('techne')}`);
+//   - the stage: the navigator consumes the ask only while the one Expressions stage is presented in Technē (panels/expressions.tsx
+//     `visible`, its `deepPresented`), and Technē's first tree holds the Earth, not the stage (shell/modeFrames.ts
+//     `seedInstruments(['projection.earth'])`). So presenting opens the stage through the one instrument door (frame/instrumentDoor.ts
+//     `openInstrument`) — which brings a stage already in the tree forward rather than making a second (frame/openInstrument.ts,
+//     surface/engine.ts `openBinding`) — then hops.
+//
+// Callers: the browser's Technē World rows (shell/ModeBrowser.tsx, through subjectOpenings.ts `openHeldSubject`).
 
 import {getWikiProjectionState, requestWikiSelection, wikiProjectionOf} from '../../../../../../desktop/cradle/src/techne/wikiProjectionStore'
 import {liveWikiStandingSource} from '../../native/wikiSubjectStanding'
+import {openInstrument} from '../../frame/instrumentDoor'
 import {openSubjectScene, resolveSubject, type SubjectAbsence, type SubjectScene, type SubjectSource, type WorldSubject} from './subjectScenes'
 
 /** The window event the owner's hand-off dispatches to enter Technē (desktop/cradle/src/knowledge/techneHandoff.ts:43); the candidate answers
- * it in panels/expressions.tsx:313. */
+ * it in panels/expressions.tsx (`addEventListener('oi:epi-examine', examine)`). */
 export const TECHNE_EXAMINE_EVENT = 'oi:epi-examine'
 
-/** The candidate's live source: the owner's projection state, the owner's ask, and the owner's hop. */
+/** The pane kind of the one Expressions stage, where a Scene is shown (frame/instruments.ts NAMED). */
+export const STAGE_KIND = 'projection.expressions'
+
+/** Present Technē's stage: open it (or bring it forward) through the instrument door, then the owner's hop. With no pane tree
+ * mounted the door refuses, and the hop alone enters Technē. */
+export function presentStage(open: (payload: string) => void = openInstrument, events: EventTarget = window): void {
+  try { open(STAGE_KIND) } catch { /* no pane tree is mounted: the hop below still enters Technē */ }
+  events.dispatchEvent(new CustomEvent(TECHNE_EXAMINE_EVENT, {detail: {}}))
+}
+
+/** The candidate's live source: the owner's projection state, the owner's ask, and the stage presented with the owner's hop. */
 export const liveSubjectSource: SubjectSource = {
   loadRegisters: () => liveWikiStandingSource.loadRegisters(),
   unreadRegisters: () => liveWikiStandingSource.unreadRegisters(),
   standingsOf: subjectRef => liveWikiStandingSource.standingsOf(subjectRef),
   projectionOf: registerKey => wikiProjectionOf(getWikiProjectionState().standings[registerKey]),
   ask: request => requestWikiSelection(request),
-  present: () => { window.dispatchEvent(new CustomEvent(TECHNE_EXAMINE_EVENT, {detail: {}})) },
+  present: () => presentStage(),
 }
 
 /** What the call did. `asked` means the owner's selection ask was posted and Technē was presented: not that the frame has opened the Scene

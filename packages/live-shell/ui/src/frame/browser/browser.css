@@ -100,6 +100,9 @@
    row's hover). */
 .one-browser .world-browser-results :is(.mode-browser-row-meta, .agent-bitem .st) { max-width: 50%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
 .one-browser .world-browser-results :is(.mode-browser-row-meta, .agent-bitem .st):empty { display: none }
+/* A row one step in (the mockup's .bitem.ind1): the Scenes that carry an opened World subject, under its row. */
+.one-browser .world-browser-results .mode-browser-row.ind1 { padding-left: 18px }
+.one-browser .world-browser-results .mode-browser-rows ul ul { list-style: none; margin: 0; padding: 0 }
 /* A row that stands for something read, not a control (the NOW section's machines): the row's rhythm, no hover. */
 .one-browser .world-browser-results div.mode-browser-row:hover { background: transparent; color: var(--text-dim) }
 

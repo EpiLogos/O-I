@@ -18,7 +18,7 @@
 // native Expression whose Scenes are constellations and whose entities are the subjects (techne/wikiExpression.ts:261
 // `WikiProjection`). The owner's reverse query answers "which Scenes carry this subject" (techne/wikiProjectionStore.ts:597
 // `wikiSubjectStandings`, read from the standing document, authored edits included). This module chooses among those rows and posts the
-// owner's own selection ask (`requestWikiSelection`), which the candidate's Technē navigator consumes (panels/expressions.tsx:173, :307, :374, through
+// owner's own selection ask (`requestWikiSelection`), which the candidate's Technē navigator consumes (panels/expressions.tsx, its three `connectSelectionRequests()` calls, through
 // `createNativeTechneNavigator.connectSelectionRequests`, expressions-boundary/src/techne.ts:110) and opens in the one hosted frame.
 //
 // It creates no Scene, reads no date or place, and keeps no store. A subject no register's standing carries is a named absence in the

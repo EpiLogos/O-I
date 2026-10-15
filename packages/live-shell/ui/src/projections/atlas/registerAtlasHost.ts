@@ -11,6 +11,7 @@ import {registerPanel} from '../../shell/panels'
 import {detectTransport} from '../../../../../../desktop/cradle/src/kernel/bridge'
 import {registerProjectionModule, type PaneSubject, type ProjectionModuleContext, type ProjectionModuleHandle} from '../../../../../../desktop/cradle/src/surface/projectionModules'
 import {AtlasEarthPane, atlasHandle, attachAtlas, type AtlasAttachment, type AtlasView} from './AtlasProjectionPanel'
+import {focusGraphOnOpen} from '../../techne/subject/graphFocus'
 import type {Model} from './src/data/model'
 import type {AppState} from './src/state/store'
 import type {Occurrence} from './src/types/field'
@@ -44,6 +45,8 @@ async function mountKind(context: ProjectionModuleContext, view: AtlasView): Pro
   context.element.classList?.add('atlas-host')
   const attachment = await attachAtlas({element: context.element, transport: detectTransport(), follow: false, view})
   const turning = turnWithSubject(context.subject, attachment)
+  // G2: the Graph opens on the subject the instruments hold, through the atlas's own focus (techne/subject/graphFocus.ts).
+  if (view === 'graph') focusGraphOnOpen({subject: context.subject, encounter: context.encounter, held: attachment.held, atlas: atlasHandle(), stateFor: stateForSubject})
   return {
     setVisible: visible => { attachment.setVisible(visible); turning.visible(visible) },
     unmount: () => { turning.stop(); attachment.unmount() },
