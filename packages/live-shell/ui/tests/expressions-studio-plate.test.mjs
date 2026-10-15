@@ -107,7 +107,13 @@ test('the Device side is one Studio plate: its head the owner\'s standing and th
   }
   const order = Semantics.STUDIO_SECTIONS.map(holder => html.indexOf(`data-section="${holder.id}"`))
   assert.ok(order.every((at, index) => at >= 0 && (index === 0 || at > order[index - 1])), 'the sections stand in the table\'s order')
-  assert.doesNotMatch(html, /native-detail-header|>Configure<|Deep edit ↗|Chosen controls<\/strong>/, 'the old chrome is gone from the body')
+  assert.doesNotMatch(html, /native-detail-header|>Configure<|Deep edit ↗/, 'the old chrome is gone from the body')
+  // T-FRAME-CHROME-ONTO-PLATES (owner, 15 Oct: "the rack device view was meant to be the toolbar, which should be letting you curate the
+  // settings and macros"): the chosen controls — the frame's toolbelt — always stand, as the Studio's own Your controls, with + Parameter.
+  const yours = html.slice(html.indexOf('data-section="chosen"'))
+  assert.ok(html.indexOf('data-section="chosen"') > html.indexOf('data-section="studio:capture"'), 'Your controls stand after the eight sections')
+  assert.match(yours, /<strong>Chosen controls<\/strong><button[^>]*>\+ Parameter<\/button>/, 'the curation stands on the Studio, its browse one press away')
+  assert.equal((html.match(/Chosen controls<\/strong>/g) ?? []).length, 1, 'once')
 })
 
 test('a field section stands its devices through the runtime, one shown behind its mark, the one on the rack first', () => {

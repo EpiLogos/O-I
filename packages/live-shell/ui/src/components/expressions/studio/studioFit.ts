@@ -20,13 +20,15 @@ export interface FitInput {
   /** The columns the person folded, and the ones they opened. */
   readonly folded: ReadonlySet<string>
   readonly opened: ReadonlySet<string>
+  /** The columns that may fold to make room, in the order they fold; the Studio's own when absent. */
+  readonly order?: readonly string[]
 }
 
 /** The columns that stand folded: the person's own, then as few of the fold order as bring the row within its width. */
-export function foldsToFit({columns, widths, strip, available, folded, opened}: FitInput): Set<string> {
+export function foldsToFit({columns, widths, strip, available, folded, opened, order = STUDIO_FOLD_ORDER}: FitInput): Set<string> {
   const folds = new Set([...folded].filter(id => columns.includes(id)))
   let total = columns.reduce((sum, id) => sum + (folds.has(id) ? strip : widths.get(id) ?? strip), 0)
-  for (const id of STUDIO_FOLD_ORDER) {
+  for (const id of order) {
     if (total <= available) break
     if (!columns.includes(id) || folds.has(id) || opened.has(id)) continue
     folds.add(id)

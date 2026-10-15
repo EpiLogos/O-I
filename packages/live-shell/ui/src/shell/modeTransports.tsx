@@ -28,7 +28,7 @@ import {useCentralTransport} from './transports/useCentralTransport'
 import {civilDayLabel} from './transports/transportReadings'
 import {civilDateOfDayRef} from '../central/centralVertical'
 import {useAtlasTimeBindings} from '../projections/atlas/places/placesTransport'
-import {usePalaceWalkBindings} from '../projections/atlas/palaces/palaceTransport'
+import {usePalaceWalkBindings} from '../projections/atlas/palaces/palaceTransport'; import {useFramePresentation} from '../components/expressions/studio/framePresentation'
 
 /** What the bindings read from the frame: the mode's real readouts, the World's time spine, the focused instrument, Live's set. */
 export interface TransportReading {
@@ -126,6 +126,9 @@ export const MODE_TRANSPORT: Readonly<Record<SurfMode, UseModeTransport>> = {
 /** The mode's bar: its bindings over the one transport. Keyed by mode where it is mounted, so each mode keeps its hook order. */
 export function ModeTransport({mode, reading}: {mode: SurfMode; reading: TransportReading}) {
   const bindings = MODE_TRANSPORT[mode](reading)
+  // The hosted frame's presentation (T-FRAME-CHROME-ONTO-PLATES): its controls on the devices in a pane, its own at full size. Declared
+  // from here because the transport stands in every mode, as the frame can stand in a pane of any mode; one hook, no mode branch.
+  useFramePresentation()
   // The keys press the same slots (F9: Space plays or stops, Esc stops), so they read the bindings drawn here.
   useEffect(() => { publishTransportKeys(bindings); return () => publishTransportKeys(null) })
   return <Transport bindings={bindings} words={id => slotWords(mode, id)} />

@@ -169,7 +169,8 @@ test('every control the pane carried still stands and writes through the stage c
 
 test('the Studio\'s one alert line carries the stage\'s refusal, and the frame\'s faults while no pane holds the frame', async () => {
   const studioSource = await source('components/expressions/studio/ExpressionsStudio.tsx')
-  assert.match(studioSource, /const said = \[fault \?\? paneFault \?\? editor\.error, stage\.refusal, \.\.\.\(placement === null \? chrome\?\.faults \?\? \[\] : \[\]\)\]/)
+  // T-FRAME-CHROME-ONTO-PLATES: the frame's refusal of a chrome press joins the one line.
+  assert.match(studioSource, /const said = \[fault \?\? paneFault \?\? editor\.error, stage\.refusal, frame\.refusal, \.\.\.\(placement === null \? chrome\?\.faults \?\? \[\] : \[\]\)\]/)
   Door.publishHostedChrome({state: null, run: null, faults: ['The host failed.']})
   assert.match(studio(), /class="studio-fault" role="alert">The host failed\.<\/p>/, 'no pane holds the frame: the Studio says it')
   Door.registerExpressionsPane('stage-a'); Door.attachExpressionsSlot('stage-a', {name: 'a'}); Door.setExpressionsPanePresented('stage-a', true)
@@ -186,7 +187,8 @@ test('ported, not recreated: one sender, the same builders, the Studio draws the
   assert.match(stage, /const why = sender\.reason \?\? blocked \?\? null/, 'the shared reason wins over a control\'s own, as before')
   const studioSource = await source('components/expressions/studio/ExpressionsStudio.tsx')
   assert.match(studioSource, /const chrome = useHostedChrome\(\)\s*const stage = useStageSender\(chrome\?\.state \?\? null, chrome\?\.run \?\? null\)/)
-  assert.match(studioSource, /if \(section\.id === 'studio:tools'\) parts\.push\(<StageViewTools key="stage" sender=\{stage\} \/>\)/)
+  // T-FRAME-CHROME-ONTO-PLATES: Tools stands the work's own acts and the frame's tools no other device carries before the stage's view.
+  assert.match(studioSource, /if \(section\.id === 'studio:tools'\) parts\.push\(<FrameControls key="frame-work"[^\n]*\n\s*<FrameControls key="frame-tools"[^\n]*<StageViewTools key="stage" sender=\{stage\} \/>\)/)
   assert.match(studioSource, /if \(section\.id === 'studio:capture'\) parts\.push\(<StageCaptureTools key="stage" sender=\{stage\} \/>\)/)
   // The centre residence's strip (components/NativeStageTools.tsx) drew the same two bodies; it was drawn by nothing and was deleted on
   // 15 Oct (FOUNDATION §7), so the Studio is the one place the stage's controls stand.

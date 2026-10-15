@@ -5,8 +5,8 @@
  * vendored app's kernelExpressions.ts/app.ts. */
 import {TECHNE_INSTRUMENTS, type TechneActionRoute, type TechneReading} from '../../../desktop/cradle/src/techne/contract.ts';
 import {resolveActionRoute} from '../../../desktop/cradle/src/techne/m0m5/adapter.ts';
-import type {HostedAppState, HostedAppMode, HostedTechneLens, HostedInstrument, HostedInstrumentDeterminants, HostedInstrumentParameters, HostedAddress} from '../../../desktop/cradle/src/expressions/hostedApp';
-export type {HostedAppState, HostedAppMode, HostedTechneLens, HostedInstrument, HostedInstrumentDeterminants, HostedInstrumentParameters, HostedAddress};
+import type {HostedAppState as CradleHostedAppState, HostedAppMode, HostedTechneLens, HostedInstrument, HostedInstrumentDeterminants, HostedInstrumentParameters, HostedAddress} from '../../../desktop/cradle/src/expressions/hostedApp'; import type {FramePresentation, FrameChromeReading} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/stageCommands.ts';
+export type {HostedAppMode, HostedTechneLens, HostedInstrument, HostedInstrumentDeterminants, HostedInstrumentParameters, HostedAddress}; /** The cradle's reading and (T-FRAME-CHROME-ONTO-PLATES) the presentation the shell declared and the frame's chrome as data. */ export type HostedAppState = CradleHostedAppState & {presentation?: FramePresentation; chrome?: FrameChromeReading};
 /** lane-3 E22: the frame's own deep-link grammar (`?expression=&scene=&t=&marker=`), one parse and one format for frame, boundary
  * and shell: the announced address is read with it, the shell opens the frame with it and copies the address in it. */
 import {formatDeepLink, parseDeepLink} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/deepLinks.ts';
@@ -34,11 +34,11 @@ export {STUDIO_SECTIONS, isStudioSection, studioPlacement, type StudioSection} f
 import {isStudioSection, type StudioSection} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/studioSections.ts';
 /** The stage-control vocabulary (view, capture, present, export, import, tool, engine): one closed list for host, frame and shell. */
 export {STAGE_COMMANDS, STAGE_VIEW_ACTIONS, STAGE_CAPTURE_WIDTHS, STAGE_CAPTURE_ASPECTS, STAGE_EXPORT_FORMATS, STAGE_TOOLS, STAGE_TOOL_READINGS, STAGE_ENGINE_ACTIONS, STAGE_TAKE_MODES, STAGE_TRACK_ACTIONS, stageOneOf, stageRefusal,
-  readStageRequest, stageRequestMessage, stageReplyMessage, readStageResult, readInstrumentEdit, STAGE_INSTRUMENT_CADENCES, STAGE_INSTRUMENT_LEVEL, STAGE_INSTRUMENT_SCALE_MAX,
+  readStageRequest, stageRequestMessage, stageReplyMessage, readStageResult, readInstrumentEdit, STAGE_INSTRUMENT_CADENCES, STAGE_INSTRUMENT_LEVEL, STAGE_INSTRUMENT_SCALE_MAX, FRAME_PRESENTATIONS, FRAME_CHROME_HOMES, FRAME_CHROME_KINDS, FRAME_CHROME_LIMITS, readFrameChrome, type FramePresentation, type FrameChromeHome, type FrameChromeKind, type FrameChromeControl, type FrameChromeOption, type FrameChromeReading,
   type StageCommand, type StageCommandName, type StageResult, type StageViewAction, type StageCaptureSettings, type StageCaptureWidth, type StageCaptureAspect, type StageExportFormat, type StageTakeMode, type StageTrackAction,
   type StageTool, type StageToolReading, type StageEngineAction, type InstrumentEdit,
 } from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/stageCommands.ts';
-import {stageOneOf, STAGE_TAKE_MODES, STAGE_TOOL_READINGS} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/stageCommands.ts';
+import {stageOneOf, STAGE_TAKE_MODES, STAGE_TOOL_READINGS, FRAME_PRESENTATIONS, readFrameChrome} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/stageCommands.ts';
 /** Host→frame command that opens one Studio section. The frame answers with a
  * host-command-result, which carries no request id: its command name is its key. */
 export const OPEN_STUDIO_COMMAND = 'open-studio';
@@ -191,6 +191,17 @@ export function readHostedState(raw: unknown): HostedAppState | null {
   if (raw.hostMode !== undefined) {
     if (!isHostedAppMode(raw.hostMode)) return null;
     state.hostMode = raw.hostMode;
+  }
+  // T-FRAME-CHROME-ONTO-PLATES: the presentation the shell declared, and the chrome as the frame reads it. A malformed one refuses the
+  // reading like every field here; absent is valid (a frame before its chrome stands, or one that predates the door).
+  if (raw.presentation !== undefined) {
+    if (!stageOneOf(FRAME_PRESENTATIONS, raw.presentation)) return null;
+    state.presentation = raw.presentation;
+  }
+  if (raw.chrome !== undefined) {
+    const chrome = readFrameChrome(raw.chrome);
+    if (!chrome) return null;
+    state.chrome = chrome;
   }
   // The property take's append/replace mode, as the frame's own take-mode reading.
   if (raw.takeMode !== undefined) {
