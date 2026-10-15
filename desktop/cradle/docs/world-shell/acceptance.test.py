@@ -182,18 +182,30 @@ class Rehome(unittest.TestCase):
 
 
 HOMED = 'lane-1:A1'
+PLACE = 'lane-4:T2'
 GAPPED = 'lane-4:T20'
 SHA = 'c' * 40
 FILE = 'desktop/cradle/fake/seam.ts'
 TEST = 'desktop/cradle/fake/seam.test.mjs'
 
 
+def home_of(row):
+    path, line = row['home']['component']['at'].rsplit(':', 1)
+    return path, int(line), row['home']['component']['quote']
+
+
+def at_line(line, quote):
+    return '\n' * (line - 1) + quote + '\n'
+
+
 class FakeTree:
-    """One revision's files and history, in memory: what `reprogress` reads through git."""
+    """One revision's files and history, in memory: what `reprogress` and `prove-at-home` read through git."""
     head = 'f' * 40
 
-    def __init__(self, files, commits=(SHA,), removed=None):
+    def __init__(self, files, commits=(SHA,), removed=None, touched=None, ancestors=None):
         self.files, self.commits, self.removed = files, set(commits), removed or {}
+        self.changed = touched or {}
+        self.ancestors = set(commits) if ancestors is None else set(ancestors)
 
     def text(self, path):
         return self.files.get(path)
@@ -203,6 +215,18 @@ class FakeTree:
 
     def removed_by(self, path, quote=None):
         return self.removed.get((path, quote) if quote else path)
+
+    def in_history(self, sha):
+        return any(commit.startswith(sha) for commit in self.ancestors)
+
+    def full(self, sha):
+        return next(commit for commit in self.commits if commit.startswith(sha))
+
+    def subject(self, sha):
+        return 'lands the home'
+
+    def touched(self, sha):
+        return self.changed.get(self.full(sha), set())
 
 
 class Reprogress(unittest.TestCase):
@@ -279,7 +303,7 @@ class Reprogress(unittest.TestCase):
         self.assertIn(f"homed at {row['home']['component']['at']}", note)
         self.assertIn('implemented to be re-proven there', note)
         self.assertEqual(report['returned_to_pending'], {'lane-1': 1})
-        self.assertEqual(report['returned_by_cause'], {'evidence gone': 1})
+        self.assertEqual(report['returned_by_cause'], {'no citation of its own holds': 1})
 
     def test_commit_evidence_alone_never_keeps_implemented(self):
         # The commit stands in history; the quote is no longer in the file and the test is gone: commit-only, so pending.
@@ -342,6 +366,63 @@ class Reprogress(unittest.TestCase):
         self.assertFalse(a.held(f'scripted {TEST}, other.test.mjs — both', tree)['holds'])
         self.assertTrue(a.held(f'scripted {TEST} — one', tree)['holds'])
 
+    def test_a_quote_naming_another_target_is_not_this_targets_evidence(self):
+        # lane-1:A1 cites a line that names A10 only: another target's code, so it does not hold for A1, and A1 returns to pending.
+        self.claim(HOMED, [f'commit {SHA} — lands it', f'source {FILE}:1 — /* lane-1 A10 — embeds over their box */'])
+        self.run_it(FakeTree({FILE: '/* lane-1 A10 — embeds over their box */\n'}))
+        row = self.row(self.read(), HOMED)
+        self.assertEqual(row['progress']['implemented']['state'], 'pending')
+        self.assertIn('the quote names lane-1 A10, not this target', row['notes'][-1])
+        # A quote that names this target among others, or within a range, is its own; the stray one is withdrawn beside it.
+        body = '/* lane-1 A1-A3: guides */\n/** B2/B3 — one download */\n'
+        self.claim(HOMED, [f'source {FILE}:1 — /* lane-1 A1-A3: guides */', f'source {FILE}:2 — /** B2/B3 — one download */'])
+        self.run_it(FakeTree({FILE: body}))
+        row = self.row(self.read(), HOMED)
+        self.assertEqual(row['progress']['implemented'], {'state': 'yes', 'evidence': [f'source {FILE}:1 — /* lane-1 A1-A3: guides */']})
+        self.assertIn('the quote names B2, B3, not this target', row['notes'][-1])
+
+    def test_a_target_id_is_read_with_its_lane(self):
+        row = {'target_id': 'T15', 'lane': 4}
+        self.assertEqual(a.names_other_targets('lane-4 T14–T16: the transport', row), [])
+        self.assertEqual(a.names_other_targets('T15: the window plays', row), [])
+        self.assertEqual(a.names_other_targets('lane-2 T15-T18 — named timeline views', row), ['lane-2 T15', 'lane-2 T16', 'lane-2 T17', 'lane-2 T18'])
+        self.assertEqual(a.names_other_targets('lane-2 T12 + T13: clusters', row), ['lane-2 T12', 'lane-2 T13'])
+        self.assertEqual(a.names_other_targets('export function atlasTimeBindings(', row), [], 'a quote that names no target is held as before')
+
+    def test_a_run_can_be_held_to_some_lanes(self):
+        self.claim(HOMED, [f'source {FILE}:1 — the seam holds'])
+        self.claim(PLACE, [f'source {FILE}:1 — the seam holds'])
+        with contextlib.redirect_stdout(io.StringIO()):
+            a.reprogress(apply=True, tree=FakeTree({}), day='2026-10-15', lanes=[4])
+        document = self.read()
+        self.assertEqual(self.row(document, HOMED)['progress']['implemented']['state'], 'yes', 'lane 1 is not in the run')
+        self.assertEqual(self.row(document, PLACE)['progress']['implemented']['state'], 'pending')
+        self.assertEqual(document['reprogress_basis']['runs'][-1]['lanes'], [4])
+
+    def test_at_home_returns_a_row_whose_evidence_is_beside_its_home(self):
+        self.claim(PLACE, [f'commit {SHA} — lands it', f'source {FILE}:1 — the seam holds'])
+        self.run_it(FakeTree({FILE: 'the seam holds\n'}))
+        self.assertEqual(self.row(self.read(), PLACE)['progress']['implemented']['state'], 'yes', 'without --at-home the frame code holds')
+        with contextlib.redirect_stdout(io.StringIO()):
+            report = a.reprogress(apply=True, tree=FakeTree({FILE: 'the seam holds\n'}), day='2026-10-15', at_home=True)
+        row = self.row(self.read(), PLACE)
+        self.assertEqual(row['progress']['implemented']['state'], 'pending')
+        self.assertIn(f"none cites its home {row['home']['component']['at']}", row['notes'][-1])
+        self.assertEqual(report['returned_by_cause'], {'beside its home': 1})
+        # Evidence that cites the home's own file stays.
+        home, line, quote = home_of(row)
+        self.claim(PLACE, [f'source {home}:{line} — {quote}'])
+        with contextlib.redirect_stdout(io.StringIO()):
+            a.reprogress(apply=True, tree=FakeTree({home: at_line(line, quote)}), day='2026-10-15', at_home=True)
+        self.assertEqual(self.row(self.read(), PLACE)['progress']['implemented']['state'], 'yes')
+
+    def test_a_cited_test_title_must_still_stand(self):
+        self.claim(HOMED, [f'scripted {TEST} — test "it flies"; its imports reach x'])
+        self.run_it(FakeTree({TEST: "test('it walks', () => {})\n"}))
+        row = self.row(self.read(), HOMED)
+        self.assertEqual(row['progress']['implemented']['state'], 'pending')
+        self.assertIn('no test "it flies" stands in the file', row['notes'][-1])
+
     def test_the_tree_reads_git_at_a_revision(self):
         tree = a.Tree('HEAD')
         self.assertTrue(tree.text('desktop/cradle/docs/world-shell/acceptance.py').startswith('#!/usr/bin/env python3'))
@@ -349,6 +430,121 @@ class Reprogress(unittest.TestCase):
         self.assertTrue(tree.removed_by('desktop/cradle/expressions-app/field-studies-journeys/src/placeTourPanel.css').startswith('92a7d38d5'))
         self.assertTrue(tree.has_commit('92a7d38d5'))
         self.assertFalse(tree.has_commit('0' * 40))
+        self.assertTrue(tree.in_history('92a7d38d5'))
+        self.assertIn('packages/live-shell/ui/src/projections/atlas/places/PlacesPlate.tsx', tree.touched('92a7d38d5'))
+
+    def test_the_import_walk_reads_the_revision_and_says_which_tests_reach_a_home(self):
+        tree = a.Tree('92a7d38d5')
+        root = tree.materialize()
+        try:
+            plate = root / 'packages/live-shell/ui/src/projections/atlas/places/PlacesPlate.tsx'
+            self.assertEqual(plate.read_text(), tree.text('packages/live-shell/ui/src/projections/atlas/places/PlacesPlate.tsx'), 'the revision\'s bytes')
+            tests = 'packages/live-shell/ui/tests/atlas-places-plate.test.mjs', 'packages/live-shell/ui/tests/atlas-places-model.test.mjs'
+            self.assertEqual(a.test_reaches(list(tests), 'packages/live-shell/ui/src/projections/atlas/places/PlacesPlate.tsx', root), {tests[0]: True, tests[1]: False})
+        finally:
+            shutil.rmtree(root)
+
+
+class ProveAtHome(unittest.TestCase):
+    """`prove-at-home` records implemented only at the row's home, on evidence it checks: the home's cited line, tests whose imports
+    reach the home (each named title in its file), commits in the revision's history that touched them. `pending` says why not."""
+
+    def setUp(self):
+        self.dir = Path(tempfile.mkdtemp())
+        for name in ('targets.json', 'references.json', 'sources.json'):
+            shutil.copy(HERE / name, self.dir / name)
+        self.saved_out = a.OUT
+        a.OUT = self.dir
+        document = self.read()
+        for row in document['targets']:
+            row['progress']['implemented'] = {'state': 'pending', 'evidence': []}
+        (self.dir / 'targets.json').write_text(json.dumps(document, indent=2, ensure_ascii=False) + '\n')
+        self.home, self.line, self.quote = home_of(next(row for row in document['targets'] if row['id'] == PLACE))
+
+    def tearDown(self):
+        a.OUT = self.saved_out
+        shutil.rmtree(self.dir)
+
+    def read(self):
+        return json.loads((self.dir / 'targets.json').read_text())
+
+    def row(self, target=PLACE):
+        return next(row for row in self.read()['targets'] if row['id'] == target)
+
+    def tree(self, **over):
+        files = {self.home: at_line(self.line, self.quote), TEST: "test('it flies by precision', () => {})\n"}
+        return FakeTree(over.pop('files', files), touched=over.pop('touched', {SHA: {self.home}}), **over)
+
+    def prove(self, tree=None, targets=(PLACE,), commits=(SHA,), scripted=(f'{TEST}::it flies by precision',), reach=None):
+        reach = reach or (lambda tests, home: {test: True for test in tests})
+        with contextlib.redirect_stdout(io.StringIO()):
+            return a.prove_at_home(list(targets), list(commits), list(scripted), tree=tree or self.tree(), day='2026-10-15', reach=reach)
+
+    def test_it_records_the_home_citation_the_tests_and_the_commit(self):
+        self.prove()
+        row = self.row()
+        self.assertEqual(row['progress']['implemented'], {'state': 'yes', 'evidence': [
+            f'commit {SHA} — lands the home',
+            f'source {self.home}:{self.line} — {self.quote}',
+            f'scripted {TEST} — test "it flies by precision"; its imports reach {self.home}']})
+        self.assertEqual(row['candidate_revision'], 'f' * 40)
+        self.assertTrue(row['notes'][-1].startswith(f"2026-10-15 prove-at-home: implemented at its home {self.home}:{self.line}"))
+        self.assertEqual(self.read()['reprogress_basis']['runs'][-1]['verb'], 'prove-at-home')
+        # The proof is held by reprogress, home and all.
+        with contextlib.redirect_stdout(io.StringIO()):
+            a.reprogress(apply=True, tree=self.tree(), day='2026-10-15', at_home=True)
+        self.assertEqual(self.row()['progress']['implemented']['state'], 'yes')
+
+    def test_it_names_the_evidence_it_replaces(self):
+        document = self.read()
+        row = next(row for row in document['targets'] if row['id'] == PLACE)
+        row['progress']['implemented'] = {'state': 'yes', 'evidence': [f'source {FILE}:1 — beside the home']}
+        row['candidate_revision'] = 'a' * 40
+        (self.dir / 'targets.json').write_text(json.dumps(document, indent=2, ensure_ascii=False) + '\n')
+        self.prove()
+        self.assertIn(f'Replaces its earlier evidence: source {FILE}:1.', self.row()['notes'][-1])
+
+    def refused(self, **kwargs):
+        before = (self.dir / 'targets.json').read_bytes()
+        with self.assertRaises(ValueError) as caught:
+            self.prove(**kwargs)
+        self.assertEqual((self.dir / 'targets.json').read_bytes(), before, 'a refusal writes nothing')
+        return str(caught.exception)
+
+    def test_a_home_that_no_longer_holds_its_quote_is_refused(self):
+        self.assertIn('does not hold its quote', self.refused(tree=self.tree(files={self.home: 'moved\n', TEST: "test('it flies by precision')"})))
+
+    def test_a_test_that_is_missing_untitled_or_never_reaches_the_home_is_refused(self):
+        self.assertIn('no test file', self.refused(tree=self.tree(files={self.home: at_line(self.line, self.quote)})))
+        self.assertIn('no test "it walks"', self.refused(scripted=(f'{TEST}::it walks',)))
+        self.assertIn('never reaches its home', self.refused(reach=lambda tests, home: {test: False for test in tests}))
+
+    def test_a_commit_outside_the_history_or_touching_neither_is_refused(self):
+        self.assertIn('is not in the history', self.refused(tree=self.tree(ancestors=())))
+        self.assertIn('touched neither', self.refused(tree=self.tree(touched={SHA: {'elsewhere.ts'}})))
+        self.prove(tree=self.tree(touched={SHA: {TEST}}))
+        self.assertEqual(self.row()['progress']['implemented']['state'], 'yes', 'a commit that touched a cited test is the tests\' landing')
+
+    def test_a_gap_has_no_home_to_prove_at(self):
+        self.assertIn('no home to prove at (a named gap', self.refused(targets=(GAPPED,)))
+
+    def test_pending_says_why_and_returns_a_claim(self):
+        document = self.read()
+        row = next(row for row in document['targets'] if row['id'] == PLACE)
+        row['progress']['implemented'] = {'state': 'yes', 'evidence': [f'commit {SHA} — lands it', f'source {FILE}:1 — beside the home']}
+        row['candidate_revision'] = 'a' * 40
+        (self.dir / 'targets.json').write_text(json.dumps(document, indent=2, ensure_ascii=False) + '\n')
+        runs = len((document.get('reprogress_basis') or {}).get('runs', []))
+        with contextlib.redirect_stdout(io.StringIO()):
+            a.hold_pending([PLACE, HOMED], 'not kept (lane O): the atlas rig is north-up', day='2026-10-15')
+            a.hold_pending([HOMED], 'not kept (lane O): the atlas rig is north-up', day='2026-10-15')
+        row = self.row()
+        self.assertEqual(row['progress']['implemented'], {'state': 'pending', 'evidence': []})
+        self.assertEqual(row['notes'][-1], f'2026-10-15 pending: not kept (lane O): the atlas rig is north-up. Implemented returns to pending; its evidence is withdrawn: commit {SHA}; source {FILE}:1.')
+        self.assertEqual(sum(note.startswith('2026-10-15 pending:') for note in self.row(HOMED)['notes']), 1, 'the same reason is said once')
+        self.assertEqual([run['returned_to_pending'] for run in self.read()['reprogress_basis']['runs'][runs:]], [[PLACE]], 'a repeat that says nothing new records no run')
+        with self.assertRaises(ValueError):
+            a.hold_pending([PLACE], '  ', day='2026-10-15')
 
 
 if __name__ == '__main__':

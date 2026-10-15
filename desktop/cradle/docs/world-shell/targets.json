@@ -2,7 +2,7 @@
   "schema": "techne.new-shell-target-register/v1",
   "recorded_on": "2026-10-07",
   "recorded_at_utc": "2026-10-08T06:23:20.571383+00:00",
-  "standing": "agent-maintained acceptance continuation, source-bound to owner-commissioned target sets; no authored source edited. 2026-10-14 (PORT-AUDIT §E, FOUNDATION §8): the 'implemented: 125' count (PATH §7, '125 of 126') counts code in the frame, mostly unreachable from the candidate (PORT-AUDIT B2); it is not a measure of the product. No target carries home or owner_op yet; each is re-homed with both after F2–F5, verified on screen. No per-target value is changed by this note. 2026-10-15 (FOUNDATION §8, ticket M): every target carries home and owner_op, read from the code and held to candidate-reachable.mjs, or home null with a named gap and its build ticket (rehome_tickets, counts.rehome); the screen leg is the lead's and stands UNVERIFIED until a computer-use record replaces it. 2026-10-15 (lane V): the implemented axis follows the code: `reprogress` re-holds every implemented claim's evidence at one revision (commits in history, each source quote in its file, re-pointed to its line and never rewritten, each test file present) and returns a row to pending, with a dated note, when no source or test citation holds or the row is a named gap; commit evidence alone never keeps implemented.",
+  "standing": "agent-maintained acceptance continuation, source-bound to owner-commissioned target sets; no authored source edited. 2026-10-14 (PORT-AUDIT §E, FOUNDATION §8): the 'implemented: 125' count (PATH §7, '125 of 126') counts code in the frame, mostly unreachable from the candidate (PORT-AUDIT B2); it is not a measure of the product. No target carries home or owner_op yet; each is re-homed with both after F2–F5, verified on screen. No per-target value is changed by this note. 2026-10-15 (FOUNDATION §8, ticket M): every target carries home and owner_op, read from the code and held to candidate-reachable.mjs, or home null with a named gap and its build ticket (rehome_tickets, counts.rehome); the screen leg is the lead's and stands UNVERIFIED until a computer-use record replaces it. 2026-10-15 (lane V): the implemented axis follows the code: `reprogress` re-holds every implemented claim's evidence at one revision (commits in history, each source quote in its file, re-pointed to its line and never rewritten, each test file present) and returns a row to pending, with a dated note, when no source or test citation holds or the row is a named gap; commit evidence alone never keeps implemented. 2026-10-15 (lane V, the lead's rulings): a quote that names another target is not this target's evidence; implemented counts only at a reachable home — `prove-at-home` records it only on the home's own cited line, test files whose imports reach that home, and a commit in the revision's history that touched them; `reprogress --at-home` returns a homed row whose evidence never cites its home.",
   "candidate_basis": {
     "checkout": "/Users/admin/Central/worktrees/env-1/o-i",
     "head": "03b021c952610c7a749ca71cd5f07b779d3281dc",
@@ -5361,7 +5361,6 @@
           "state": "yes",
           "evidence": [
             "commit 95c2f72d212ec013011cb791949b3e95cee67bd9 — lane-2 T23–T25: the Timeline speaks its capability, takes the stage in focus, and keeps its colours lawful and still",
-            "source desktop/cradle/expressions-app/field-studies-journeys/src/focusMode.ts:1 — // lane-3 E23: focus mode is the app's presenting mode, extended, not a second mode.",
             "scripted desktop/cradle/expressions-app/field-studies-journeys/tests/timeline-stage-focus.test.mjs — a stage focus restores exactly the chrome it began from, and beginning while focused keeps the first snapshot"
           ]
         },
@@ -5400,7 +5399,8 @@
       "notes": [
         "No new-shell native exercise or craft acceptance executed for this target at initialization. Earlier model/unit checks are baselines and do not close it.",
         "Implemented axis: landed at candidate revision (naming commit plus seam found in the tree; see evidence). exercised, passed, failed and blocked are untouched.",
-        "2026-10-15 re-home: the Wiki-bound Scene this home reads has a second door (lane N, 3a8fbc2d6; S1 closed): Technē › browser › Locations or Places › a subject (double-click or Enter) opens the Scene that carries it, through the owner's reverse query and selection ask (techne/subject/openSubject.ts openWorldSubject); Examine in the Graph and source pane stays the other door. Seen natively at 11475cc3d: choosing a subject opened the stage, but the asked Scene did not open and nothing said so (lane S, open). Screen leg UNVERIFIED."
+        "2026-10-15 re-home: the Wiki-bound Scene this home reads has a second door (lane N, 3a8fbc2d6; S1 closed): Technē › browser › Locations or Places › a subject (double-click or Enter) opens the Scene that carries it, through the owner's reverse query and selection ask (techne/subject/openSubject.ts openWorldSubject); Examine in the Graph and source pane stays the other door. Seen natively at 11475cc3d: choosing a subject opened the stage, but the asked Scene did not open and nothing said so (lane S, open). Screen leg UNVERIFIED.",
+        "2026-10-15 reprogress: evidence withdrawn, no longer held at 02e9f0370 — desktop/cradle/expressions-app/field-studies-journeys/src/focusMode.ts:1 (the quote names lane-3 E23, not this target). Implemented stands on one source or test citation that still holds."
       ],
       "home": {
         "component": {
@@ -9323,11 +9323,8 @@
       "status": "pending",
       "progress": {
         "implemented": {
-          "state": "yes",
-          "evidence": [
-            "commit bc7e9e1a4e0d54f1f0abdfa374a0b0c5dcd5ff31 — lane-4 T1 persistence: a tilted, rotated Places view saves and restores through the kernel's validated viewport",
-            "source desktop/cradle/expressions-app/field-studies-journeys/src/researchMaterial.ts:36 — export interface ResearchViewport {x:number;y:number;zoom:number;/** lane-4 T1: a tilted, rotated Places view (absent = untilted, "
-          ]
+          "state": "pending",
+          "evidence": []
         },
         "exercised": {
           "state": "pending",
@@ -9378,7 +9375,8 @@
       "notes": [
         "No new-shell native exercise or craft acceptance executed for this target at initialization. Earlier model/unit checks are baselines and do not close it.",
         "Implemented axis: landed at candidate revision (naming commit plus seam found in the tree; see evidence). exercised, passed, failed and blocked are untouched.",
-        "2026-10-15 re-home: re-homed on the atlas (lane O, 92a7d38d5; R1 closed: the frame's Places map is removed, so this home no longer retires): spin is the atlas's own drag, its words in the Info view's hover (GLOBE_GESTURES). Not kept, lane O's judgement: pitch and bearing — the atlas's rig is north-up by its own law (src/globe/controls.ts:1-5) and MapLibre's camera does not port onto the three.js rig; a roll would be new code, not a port."
+        "2026-10-15 re-home: re-homed on the atlas (lane O, 92a7d38d5; R1 closed: the frame's Places map is removed, so this home no longer retires): spin is the atlas's own drag, its words in the Info view's hover (GLOBE_GESTURES). Not kept, lane O's judgement: pitch and bearing — the atlas's rig is north-up by its own law (src/globe/controls.ts:1-5) and MapLibre's camera does not port onto the three.js rig; a roll would be new code, not a port.",
+        "2026-10-15 pending: not kept in part (lane O, T-PLACES-ONTO-ATLAS): pitch and bearing are not kept, the atlas rig being north-up by its own law (src/globe/controls.ts:1); the spin that is kept is the atlas's own drag, which no test exercises (atlas-suite-provider-panel.test.mjs asserts only the gestures' words, GLOBE_GESTURES, in the Info view's hover). Implemented returns to pending; its evidence is withdrawn: commit bc7e9e1a4e0d54f1f0abdfa374a0b0c5dcd5ff31; source desktop/cradle/expressions-app/field-studies-journeys/src/researchMaterial.ts:36."
       ],
       "home": {
         "component": {
@@ -9437,8 +9435,12 @@
       "status": "pending",
       "progress": {
         "implemented": {
-          "state": "pending",
-          "evidence": []
+          "state": "yes",
+          "evidence": [
+            "commit 92a7d38d521f72609a15402cffda9387bac6fa92 — Places is the atlas, alone: the frame's Places behaviour re-homed onto the M4 plate and the one transport, then the frame's map removed (lane O, R1)",
+            "source packages/live-shell/ui/src/projections/atlas/places/placesHost.ts:70 — export function turnAtlasTo(",
+            "scripted packages/live-shell/ui/tests/atlas-places-plate.test.mjs — test \"the shared spatial focus turns the Earth\"; its imports reach packages/live-shell/ui/src/projections/atlas/places/placesHost.ts"
+          ]
         },
         "exercised": {
           "state": "pending",
@@ -9457,7 +9459,7 @@
           "evidence": []
         }
       },
-      "candidate_revision": "525474ee162f2b0e0dd38191cb4478d74da37d50",
+      "candidate_revision": "02e9f03709d666ba69bf18a98bd8d5373ecaa48d",
       "dependencies": [
         "boundary:P1"
       ],
@@ -9497,7 +9499,8 @@
         "No new-shell native exercise or craft acceptance executed for this target at initialization. Earlier model/unit checks are baselines and do not close it.",
         "Implemented axis: landed at candidate revision (naming commit plus seam found in the tree; see evidence). exercised, passed, failed and blocked are untouched.",
         "2026-10-15 re-home: re-homed on the atlas (lane O, 92a7d38d5; R1 closed: the frame's Places map is removed, so this home no longer retires): a place chosen on the plate's Locations, or named by the session's spatial focus, turns the Earth through places/placesHost.ts turnAtlasTo at the atlas's own framing for its precision (2.25 or 2.6 globe radii); an unlocated place turns nothing.",
-        "2026-10-15 reprogress: implemented returns to pending — no source or test citation holds at fdc302870: desktop/cradle/expressions-app/vendor/research-canvas/packages/canvas/src/psychogeographic/PsychogeographicMap.tsx:186 (deleted in 92a7d38d5); desktop/cradle/expressions-app/field-studies-journeys/tests/places-navigation.test.mjs (deleted in 92a7d38d5). Its commit 68a4964c3 stands in history, but commit evidence alone never keeps implemented. Its behaviour is homed at packages/live-shell/ui/src/projections/atlas/places/placesHost.ts:70 (route atlas:plate); implemented to be re-proven there."
+        "2026-10-15 reprogress: implemented returns to pending — no source or test citation holds at fdc302870: desktop/cradle/expressions-app/vendor/research-canvas/packages/canvas/src/psychogeographic/PsychogeographicMap.tsx:186 (deleted in 92a7d38d5); desktop/cradle/expressions-app/field-studies-journeys/tests/places-navigation.test.mjs (deleted in 92a7d38d5). Its commit 68a4964c3 stands in history, but commit evidence alone never keeps implemented. Its behaviour is homed at packages/live-shell/ui/src/projections/atlas/places/placesHost.ts:70 (route atlas:plate); implemented to be re-proven there.",
+        "2026-10-15 prove-at-home: implemented at its home packages/live-shell/ui/src/projections/atlas/places/placesHost.ts:70 (route atlas:plate), held at 02e9f0370: the home's line holds its quote; packages/live-shell/ui/tests/atlas-places-plate.test.mjs (\"the shared spatial focus turns the Earth\") reaches it; commit 92a7d38d5 in its history."
       ],
       "home": {
         "component": {
@@ -9609,7 +9612,8 @@
         "No new-shell native exercise or craft acceptance executed for this target at initialization. Earlier model/unit checks are baselines and do not close it.",
         "Implemented axis: landed at candidate revision (naming commit plus seam found in the tree; see evidence). exercised, passed, failed and blocked are untouched.",
         "2026-10-15 re-home: re-homed on the atlas (lane O, 92a7d38d5; R1 closed: the frame's Places map is removed, so this home no longer retires): Not kept as a control, lane O's judgement: the rig never leaves north (src/globe/controls.ts:1), so there is no bearing to reset; \"home\" is the atlas's own world view, and Escape steps back to it.",
-        "2026-10-15 reprogress: implemented returns to pending — no source or test citation holds at fdc302870: desktop/cradle/expressions-app/vendor/research-canvas/packages/canvas/src/psychogeographic/PsychogeographicMap.tsx:58 (deleted in 92a7d38d5); desktop/cradle/expressions-app/field-studies-journeys/tests/places-chrome.test.mjs (deleted in 92a7d38d5). Its commit 6df635afa stands in history, but commit evidence alone never keeps implemented. Its behaviour is homed at packages/live-shell/ui/src/projections/atlas/src/globe/controls.ts:1 (route atlas:globe); implemented to be re-proven there."
+        "2026-10-15 reprogress: implemented returns to pending — no source or test citation holds at fdc302870: desktop/cradle/expressions-app/vendor/research-canvas/packages/canvas/src/psychogeographic/PsychogeographicMap.tsx:58 (deleted in 92a7d38d5); desktop/cradle/expressions-app/field-studies-journeys/tests/places-chrome.test.mjs (deleted in 92a7d38d5). Its commit 6df635afa stands in history, but commit evidence alone never keeps implemented. Its behaviour is homed at packages/live-shell/ui/src/projections/atlas/src/globe/controls.ts:1 (route atlas:globe); implemented to be re-proven there.",
+        "2026-10-15 pending: not kept (lane O, T-PLACES-ONTO-ATLAS): the atlas rig never leaves north, so there is no bearing to reset, and home is the atlas's own world view (Escape); there is no control to prove."
       ],
       "home": {
         "component": {
@@ -9668,11 +9672,8 @@
       "status": "pending",
       "progress": {
         "implemented": {
-          "state": "yes",
-          "evidence": [
-            "commit 316ded7fbe70a363f677d86feaddfec45b6739c9 — lane-4 T4+T5: layered basemap with an honest offline core; opt-in terrain",
-            "source desktop/cradle/expressions-app/field-studies-journeys/src/researchInstrumentStyles.css:2334 — /* lane-4 T4/T5: the basemap stack's layer rows (imagery, terrain) and the live-sources switch. */"
-          ]
+          "state": "pending",
+          "evidence": []
         },
         "exercised": {
           "state": "pending",
@@ -9732,7 +9733,8 @@
         "Implemented axis: landed at candidate revision (naming commit plus seam found in the tree; see evidence). exercised, passed, failed and blocked are untouched.",
         "2026-10-15 re-home: The offline core is bundled; live imagery and terrain come from tile providers, which are not suite owners.",
         "2026-10-15 re-home: re-homed on the atlas (lane O, 92a7d38d5; R1 closed: the frame's Places map is removed, so this home no longer retires): the plate's Landmass names the imagery the atlas draws (NASA Blue Marble, NASA GIBS tiles close in). Not kept, lane O's judgement: the opt-in stack of live providers (OSM, Esri, Sentinel-2) over an offline pack — the providers are not suite owners and the MapLibre stack does not port to the atlas's globe.",
-        "2026-10-15 reprogress: evidence withdrawn, no longer held at fdc302870 — desktop/cradle/expressions-app/field-studies-journeys/tests/places-basemap.test.mjs (deleted in 92a7d38d5). Implemented stands on one source or test citation that still holds."
+        "2026-10-15 reprogress: evidence withdrawn, no longer held at fdc302870 — desktop/cradle/expressions-app/field-studies-journeys/tests/places-basemap.test.mjs (deleted in 92a7d38d5). Implemented stands on one source or test citation that still holds.",
+        "2026-10-15 pending: not kept (lane O, T-PLACES-ONTO-ATLAS): the frame's live raster providers are not suite owners and its MapLibre stack does not port to the atlas's globe; the imagery the atlas does draw is named on the plate (T7). Implemented returns to pending; its evidence is withdrawn: commit 316ded7fbe70a363f677d86feaddfec45b6739c9; source desktop/cradle/expressions-app/field-studies-journeys/src/researchInstrumentStyles.css:2334."
       ],
       "home": {
         "component": {
@@ -9791,11 +9793,8 @@
       "status": "pending",
       "progress": {
         "implemented": {
-          "state": "yes",
-          "evidence": [
-            "commit 316ded7fbe70a363f677d86feaddfec45b6739c9 — lane-4 T4+T5: layered basemap with an honest offline core; opt-in terrain",
-            "source desktop/cradle/expressions-app/field-studies-journeys/src/researchInstrumentStyles.css:2334 — /* lane-4 T4/T5: the basemap stack's layer rows (imagery, terrain) and the live-sources switch. */"
-          ]
+          "state": "pending",
+          "evidence": []
         },
         "exercised": {
           "state": "pending",
@@ -9847,7 +9846,8 @@
         "No new-shell native exercise or craft acceptance executed for this target at initialization. Earlier model/unit checks are baselines and do not close it.",
         "Implemented axis: landed at candidate revision (naming commit plus seam found in the tree; see evidence). exercised, passed, failed and blocked are untouched.",
         "2026-10-15 re-home: re-homed on the atlas (lane O, 92a7d38d5; R1 closed: the frame's Places map is removed, so this home no longer retires): its honesty clause stands on the plate's Landmass (\"no terrain source is disclosed\", never a fake horizon). Not kept, lane O's judgement: the terrain layer itself — no terrain source is in the suite.",
-        "2026-10-15 reprogress: evidence withdrawn, no longer held at fdc302870 — desktop/cradle/expressions-app/field-studies-journeys/tests/places-basemap.test.mjs (deleted in 92a7d38d5). Implemented stands on one source or test citation that still holds."
+        "2026-10-15 reprogress: evidence withdrawn, no longer held at fdc302870 — desktop/cradle/expressions-app/field-studies-journeys/tests/places-basemap.test.mjs (deleted in 92a7d38d5). Implemented stands on one source or test citation that still holds.",
+        "2026-10-15 pending: not kept (lane O, T-PLACES-ONTO-ATLAS): the suite has no terrain source; only the honesty clause stands on the plate (PlacesPlate.tsx:290, \"no terrain source is disclosed\"), and no test asserts it. Implemented returns to pending; its evidence is withdrawn: commit 316ded7fbe70a363f677d86feaddfec45b6739c9; source desktop/cradle/expressions-app/field-studies-journeys/src/researchInstrumentStyles.css:2334."
       ],
       "home": {
         "component": {
@@ -9959,7 +9959,8 @@
         "No new-shell native exercise or craft acceptance executed for this target at initialization. Earlier model/unit checks are baselines and do not close it.",
         "Implemented axis: landed at candidate revision (naming commit plus seam found in the tree; see evidence). exercised, passed, failed and blocked are untouched.",
         "2026-10-15 re-home: re-homed on the atlas (lane O, 92a7d38d5; R1 closed: the frame's Places map is removed, so this home no longer retires): the globe's own atmosphere shell and aura (src/globe/engine.ts), tinted by the field's palette; nothing to port.",
-        "2026-10-15 reprogress: implemented returns to pending — no source or test citation holds at fdc302870: desktop/cradle/expressions-app/vendor/research-canvas/packages/canvas/src/psychogeographic/mapStyle.ts:84 (deleted in 92a7d38d5); desktop/cradle/expressions-app/field-studies-journeys/tests/places-chrome.test.mjs (deleted in 92a7d38d5). Its commit 6df635afa stands in history, but commit evidence alone never keeps implemented. Its behaviour is homed at packages/live-shell/ui/src/projections/atlas/src/globe/engine.ts:79 (route atlas:globe); implemented to be re-proven there."
+        "2026-10-15 reprogress: implemented returns to pending — no source or test citation holds at fdc302870: desktop/cradle/expressions-app/vendor/research-canvas/packages/canvas/src/psychogeographic/mapStyle.ts:84 (deleted in 92a7d38d5); desktop/cradle/expressions-app/field-studies-journeys/tests/places-chrome.test.mjs (deleted in 92a7d38d5). Its commit 6df635afa stands in history, but commit evidence alone never keeps implemented. Its behaviour is homed at packages/live-shell/ui/src/projections/atlas/src/globe/engine.ts:79 (route atlas:globe); implemented to be re-proven there.",
+        "2026-10-15 pending: no test exercises its home: the atlas's atmosphere shell (src/globe/engine.ts:79) is the globe's own, and no test names or asserts it."
       ],
       "home": {
         "component": {
@@ -10018,11 +10019,8 @@
       "status": "pending",
       "progress": {
         "implemented": {
-          "state": "yes",
-          "evidence": [
-            "commit 6df635afa2bbf57b67c2f2a68743edcb52e49f8e — lane-4 T3+T6+T7+T29: the Places map resets north and home, wears its atmosphere, credits every source, and stays still",
-            "source desktop/cradle/expressions-app/field-studies-journeys/src/researchInstruments.tsx:159 — * the disclosed O:I connection as a typed knowledge relation through the"
-          ]
+          "state": "pending",
+          "evidence": []
         },
         "exercised": {
           "state": "pending",
@@ -10060,7 +10058,8 @@
         "No new-shell native exercise or craft acceptance executed for this target at initialization. Earlier model/unit checks are baselines and do not close it.",
         "Implemented axis: landed at candidate revision (naming commit plus seam found in the tree; see evidence). exercised, passed, failed and blocked are untouched.",
         "2026-10-15 re-home: re-homed on the atlas (lane O, 92a7d38d5; R1 closed: the frame's Places map is removed, so this home no longer retires): the imagery the atlas draws is named on the plate's Landmass, never over the globe.",
-        "2026-10-15 reprogress: evidence withdrawn, no longer held at fdc302870 — desktop/cradle/expressions-app/field-studies-journeys/tests/places-chrome.test.mjs (deleted in 92a7d38d5). Implemented stands on one source or test citation that still holds."
+        "2026-10-15 reprogress: evidence withdrawn, no longer held at fdc302870 — desktop/cradle/expressions-app/field-studies-journeys/tests/places-chrome.test.mjs (deleted in 92a7d38d5). Implemented stands on one source or test citation that still holds.",
+        "2026-10-15 pending: no test exercises its home: the plate's Imagery reading (PlacesPlate.tsx:289) renders, but no test asserts its words. Implemented returns to pending; its evidence is withdrawn: commit 6df635afa2bbf57b67c2f2a68743edcb52e49f8e; source desktop/cradle/expressions-app/field-studies-journeys/src/researchInstruments.tsx:159."
       ],
       "home": {
         "component": {
@@ -10172,7 +10171,8 @@
         "No new-shell native exercise or craft acceptance executed for this target at initialization. Earlier model/unit checks are baselines and do not close it.",
         "Implemented axis: landed at candidate revision (naming commit plus seam found in the tree; see evidence). exercised, passed, failed and blocked are untouched.",
         "2026-10-15 re-home: re-homed on the atlas (lane O, 92a7d38d5; R1 closed: the frame's Places map is removed, so this home no longer retires): the legend is the plate's Relations rows (places/placesModel.ts relationRows: the hard geography order, then the owner's own vocabulary); a press narrows the globe to the relation's locus through the atlas's one filter — presentation only, the reading is never rewritten; a relation shares its locus with others of its kind, and the row says which.",
-        "2026-10-15 reprogress: implemented returns to pending — no source or test citation holds at fdc302870: desktop/cradle/expressions-app/vendor/research-canvas/packages/canvas/src/psychogeographic/PsychogeographicMap.tsx:188 (deleted in 92a7d38d5); desktop/cradle/expressions-app/field-studies-journeys/tests/places-layers.test.mjs (deleted in 92a7d38d5). Its commit 788655fbb stands in history, but commit evidence alone never keeps implemented. Its behaviour is homed at packages/live-shell/ui/src/projections/atlas/places/PlacesPlate.tsx:246 (route atlas:plate); implemented to be re-proven there."
+        "2026-10-15 reprogress: implemented returns to pending — no source or test citation holds at fdc302870: desktop/cradle/expressions-app/vendor/research-canvas/packages/canvas/src/psychogeographic/PsychogeographicMap.tsx:188 (deleted in 92a7d38d5); desktop/cradle/expressions-app/field-studies-journeys/tests/places-layers.test.mjs (deleted in 92a7d38d5). Its commit 788655fbb stands in history, but commit evidence alone never keeps implemented. Its behaviour is homed at packages/live-shell/ui/src/projections/atlas/places/PlacesPlate.tsx:246 (route atlas:plate); implemented to be re-proven there.",
+        "2026-10-15 pending: its home's narrowing is not exercised: the Relations press calls the atlas's setFilter (PlacesPlate.tsx:246), but atlas-places-plate.test.mjs renders the legend with no atlas mounted, where a relation narrows nothing."
       ],
       "home": {
         "component": {
@@ -10284,7 +10284,8 @@
         "No new-shell native exercise or craft acceptance executed for this target at initialization. Earlier model/unit checks are baselines and do not close it.",
         "Implemented axis: landed at candidate revision (naming commit plus seam found in the tree; see evidence). exercised, passed, failed and blocked are untouched.",
         "2026-10-15 re-home: re-homed on the atlas (lane O, 92a7d38d5; R1 closed: the frame's Places map is removed, so this home no longer retires): a region is listed on the plate's Locations with the owner's reason, never drawn as a point (provider/suiteReading.ts locateFacet holds a polygon facet with its reason). Not kept, lane O's judgement: drawing regions as polygons — a polygon layer on the globe would be new geometry, not a port.",
-        "2026-10-15 reprogress: implemented returns to pending — no source or test citation holds at fdc302870: desktop/cradle/expressions-app/vendor/research-canvas/packages/canvas/src/psychogeographic/PsychogeographicMap.tsx:188 (deleted in 92a7d38d5); desktop/cradle/expressions-app/field-studies-journeys/tests/places-layers.test.mjs (deleted in 92a7d38d5). Its commit 788655fbb stands in history, but commit evidence alone never keeps implemented. Its behaviour is homed at packages/live-shell/ui/src/projections/atlas/places/placesModel.ts:77 (route atlas:plate); implemented to be re-proven there."
+        "2026-10-15 reprogress: implemented returns to pending — no source or test citation holds at fdc302870: desktop/cradle/expressions-app/vendor/research-canvas/packages/canvas/src/psychogeographic/PsychogeographicMap.tsx:188 (deleted in 92a7d38d5); desktop/cradle/expressions-app/field-studies-journeys/tests/places-layers.test.mjs (deleted in 92a7d38d5). Its commit 788655fbb stands in history, but commit evidence alone never keeps implemented. Its behaviour is homed at packages/live-shell/ui/src/projections/atlas/places/placesModel.ts:77 (route atlas:plate); implemented to be re-proven there.",
+        "2026-10-15 pending: the drawing is not kept (lane O, T-PLACES-ONTO-ATLAS): a polygon layer on the globe would be new geometry, not a port; the place is listed with the owner's reason instead (placesModel.ts placeRows), so regions drawn as regions are not built."
       ],
       "home": {
         "component": {
@@ -10343,8 +10344,12 @@
       "status": "pending",
       "progress": {
         "implemented": {
-          "state": "pending",
-          "evidence": []
+          "state": "yes",
+          "evidence": [
+            "commit 92a7d38d521f72609a15402cffda9387bac6fa92 — Places is the atlas, alone: the frame's Places behaviour re-homed onto the M4 plate and the one transport, then the frame's map removed (lane O, R1)",
+            "source packages/live-shell/ui/src/projections/atlas/places/PlacesPlate.tsx:217 — <PrecisionMark marker={row.marker}",
+            "scripted packages/live-shell/ui/tests/atlas-places-plate.test.mjs — test \"Locations and Relations read the owners\"; its imports reach packages/live-shell/ui/src/projections/atlas/places/PlacesPlate.tsx"
+          ]
         },
         "exercised": {
           "state": "pending",
@@ -10363,7 +10368,7 @@
           "evidence": []
         }
       },
-      "candidate_revision": "525474ee162f2b0e0dd38191cb4478d74da37d50",
+      "candidate_revision": "02e9f03709d666ba69bf18a98bd8d5373ecaa48d",
       "dependencies": [
         "boundary:P1"
       ],
@@ -10390,7 +10395,8 @@
         "Implemented axis: landed at candidate revision (naming commit plus seam found in the tree; see evidence). exercised, passed, failed and blocked are untouched.",
         "2026-10-15 re-home: The register's implemented evidence cites PsychogeographicMap.tsx at the lane-4 T24 prop; the precision grammar itself is placeNavigation.ts markerKindFor over the cradle authority precisionMarker.",
         "2026-10-15 re-home: re-homed on the atlas (lane O, 92a7d38d5; R1 closed: the frame's Places map is removed, so this home no longer retires): every Locations row wears the cradle authority's marker (solid · halo · outline · no-coordinate: places/placesModel.ts placeRows over project.ts precisionMarker), with the precision chips, never upgraded; the Earth draws each occurrence by its precision (src/globe/presences.ts).",
-        "2026-10-15 reprogress: implemented returns to pending — no source or test citation holds at fdc302870: desktop/cradle/expressions-app/vendor/research-canvas/packages/canvas/src/psychogeographic/PsychogeographicMap.tsx:208 (deleted in 92a7d38d5); desktop/cradle/expressions-app/field-studies-journeys/tests/places-navigation.test.mjs (deleted in 92a7d38d5). Its commit 68a4964c3 stands in history, but commit evidence alone never keeps implemented. Its behaviour is homed at packages/live-shell/ui/src/projections/atlas/places/PlacesPlate.tsx:217 (route atlas:plate); implemented to be re-proven there."
+        "2026-10-15 reprogress: implemented returns to pending — no source or test citation holds at fdc302870: desktop/cradle/expressions-app/vendor/research-canvas/packages/canvas/src/psychogeographic/PsychogeographicMap.tsx:208 (deleted in 92a7d38d5); desktop/cradle/expressions-app/field-studies-journeys/tests/places-navigation.test.mjs (deleted in 92a7d38d5). Its commit 68a4964c3 stands in history, but commit evidence alone never keeps implemented. Its behaviour is homed at packages/live-shell/ui/src/projections/atlas/places/PlacesPlate.tsx:217 (route atlas:plate); implemented to be re-proven there.",
+        "2026-10-15 prove-at-home: implemented at its home packages/live-shell/ui/src/projections/atlas/places/PlacesPlate.tsx:217 (route atlas:plate), held at 02e9f0370: the home's line holds its quote; packages/live-shell/ui/tests/atlas-places-plate.test.mjs (\"Locations and Relations read the owners\") reaches it; commit 92a7d38d5 in its history."
       ],
       "home": {
         "component": {
@@ -10502,7 +10508,8 @@
         "No new-shell native exercise or craft acceptance executed for this target at initialization. Earlier model/unit checks are baselines and do not close it.",
         "Implemented axis: landed at candidate revision (naming commit plus seam found in the tree; see evidence). exercised, passed, failed and blocked are untouched.",
         "2026-10-15 re-home: re-homed on the atlas (lane O, 92a7d38d5; R1 closed: the frame's Places map is removed, so this home no longer retires): each subject's TRAVELLED_TO places are listed on the plate's Relations as its walk, walkable at two stops (places/placesModel.ts routeRows); the Earth draws it as its own thread walk.",
-        "2026-10-15 reprogress: implemented returns to pending — no source or test citation holds at fdc302870: desktop/cradle/expressions-app/field-studies-journeys/src/placeFacetsPanel.css:22 (deleted in 92a7d38d5); desktop/cradle/expressions-app/field-studies-journeys/tests/places-routes-provenance.test.mjs (deleted in 92a7d38d5). Its commit adadacaee stands in history, but commit evidence alone never keeps implemented. Its behaviour is homed at packages/live-shell/ui/src/projections/atlas/places/PlacesPlate.tsx:264 (route atlas:plate); implemented to be re-proven there."
+        "2026-10-15 reprogress: implemented returns to pending — no source or test citation holds at fdc302870: desktop/cradle/expressions-app/field-studies-journeys/src/placeFacetsPanel.css:22 (deleted in 92a7d38d5); desktop/cradle/expressions-app/field-studies-journeys/tests/places-routes-provenance.test.mjs (deleted in 92a7d38d5). Its commit adadacaee stands in history, but commit evidence alone never keeps implemented. Its behaviour is homed at packages/live-shell/ui/src/projections/atlas/places/PlacesPlate.tsx:264 (route atlas:plate); implemented to be re-proven there.",
+        "2026-10-15 pending: no test exercises its home: the plate's route rows (PlacesPlate.tsx:264) are rendered by no test; routeRows is tested in atlas-places-model.test.mjs, which never loads the plate."
       ],
       "home": {
         "component": {
@@ -10600,7 +10607,8 @@
         "No new-shell native exercise or craft acceptance executed for this target at initialization. Earlier model/unit checks are baselines and do not close it.",
         "Implemented axis: landed at candidate revision (naming commit plus seam found in the tree; see evidence). exercised, passed, failed and blocked are untouched.",
         "2026-10-15 re-home: re-homed on the atlas (lane O, 92a7d38d5; R1 closed: the frame's Places map is removed, so this home no longer retires): the declared LOCATED_IN hierarchy is carried verbatim and listed on the plate's Relations, \"listed honestly but not drawn\" (the target's own clause). Not kept, lane O's judgement: drawing the edges — the atlas's arcs are walk arcs.",
-        "2026-10-15 reprogress: implemented returns to pending — no source or test citation holds at fdc302870: desktop/cradle/expressions-app/field-studies-journeys/src/placeFacetsPanel.css:18 (deleted in 92a7d38d5); desktop/cradle/expressions-app/field-studies-journeys/tests/places-routes-provenance.test.mjs (deleted in 92a7d38d5). Its commit adadacaee stands in history, but commit evidence alone never keeps implemented. Its behaviour is homed at packages/live-shell/ui/src/projections/atlas/places/PlacesPlate.tsx:261 (route atlas:plate); implemented to be re-proven there."
+        "2026-10-15 reprogress: implemented returns to pending — no source or test citation holds at fdc302870: desktop/cradle/expressions-app/field-studies-journeys/src/placeFacetsPanel.css:18 (deleted in 92a7d38d5); desktop/cradle/expressions-app/field-studies-journeys/tests/places-routes-provenance.test.mjs (deleted in 92a7d38d5). Its commit adadacaee stands in history, but commit evidence alone never keeps implemented. Its behaviour is homed at packages/live-shell/ui/src/projections/atlas/places/PlacesPlate.tsx:261 (route atlas:plate); implemented to be re-proven there.",
+        "2026-10-15 pending: drawing the edges is not kept (lane O, T-PLACES-ONTO-ATLAS): the atlas's arcs are walk arcs; the hierarchy is listed on the plate's Relations (PlacesPlate.tsx:261), which no test renders (withinRows is tested in atlas-places-model.test.mjs, which never loads the plate)."
       ],
       "home": {
         "component": {
@@ -10659,8 +10667,13 @@
       "status": "pending",
       "progress": {
         "implemented": {
-          "state": "pending",
-          "evidence": []
+          "state": "yes",
+          "evidence": [
+            "commit 92a7d38d521f72609a15402cffda9387bac6fa92 — Places is the atlas, alone: the frame's Places behaviour re-homed onto the M4 plate and the one transport, then the frame's map removed (lane O, R1)",
+            "source packages/live-shell/ui/src/projections/atlas/places/placesModel.ts:60 — export function provenanceLine(",
+            "scripted packages/live-shell/ui/tests/atlas-places-model.test.mjs — test \"provenance says where a place came from\"; its imports reach packages/live-shell/ui/src/projections/atlas/places/placesModel.ts",
+            "scripted packages/live-shell/ui/tests/atlas-places-plate.test.mjs — test \"Locations and Relations read the owners\"; its imports reach packages/live-shell/ui/src/projections/atlas/places/placesModel.ts"
+          ]
         },
         "exercised": {
           "state": "pending",
@@ -10679,7 +10692,7 @@
           "evidence": []
         }
       },
-      "candidate_revision": "525474ee162f2b0e0dd38191cb4478d74da37d50",
+      "candidate_revision": "02e9f03709d666ba69bf18a98bd8d5373ecaa48d",
       "dependencies": [
         "boundary:P1"
       ],
@@ -10698,7 +10711,8 @@
         "No new-shell native exercise or craft acceptance executed for this target at initialization. Earlier model/unit checks are baselines and do not close it.",
         "Implemented axis: landed at candidate revision (naming commit plus seam found in the tree; see evidence). exercised, passed, failed and blocked are untouched.",
         "2026-10-15 re-home: re-homed on the atlas (lane O, 92a7d38d5; R1 closed: the frame's Places map is removed, so this home no longer retires): each Locations row says owner · reading · revision · evidence, naming an absence rather than inventing a source (places/placesModel.ts provenanceLine); the chosen row shows it in full.",
-        "2026-10-15 reprogress: implemented returns to pending — no source or test citation holds at fdc302870: desktop/cradle/expressions-app/field-studies-journeys/src/placeFacetsPanel.css:38 (deleted in 92a7d38d5); desktop/cradle/expressions-app/field-studies-journeys/tests/places-routes-provenance.test.mjs (deleted in 92a7d38d5). Its commit adadacaee stands in history, but commit evidence alone never keeps implemented. Its behaviour is homed at packages/live-shell/ui/src/projections/atlas/places/placesModel.ts:60 (route atlas:plate); implemented to be re-proven there."
+        "2026-10-15 reprogress: implemented returns to pending — no source or test citation holds at fdc302870: desktop/cradle/expressions-app/field-studies-journeys/src/placeFacetsPanel.css:38 (deleted in 92a7d38d5); desktop/cradle/expressions-app/field-studies-journeys/tests/places-routes-provenance.test.mjs (deleted in 92a7d38d5). Its commit adadacaee stands in history, but commit evidence alone never keeps implemented. Its behaviour is homed at packages/live-shell/ui/src/projections/atlas/places/placesModel.ts:60 (route atlas:plate); implemented to be re-proven there.",
+        "2026-10-15 prove-at-home: implemented at its home packages/live-shell/ui/src/projections/atlas/places/placesModel.ts:60 (route atlas:plate), held at 02e9f0370: the home's line holds its quote; packages/live-shell/ui/tests/atlas-places-model.test.mjs (\"provenance says where a place came from\"), packages/live-shell/ui/tests/atlas-places-plate.test.mjs (\"Locations and Relations read the owners\") reach it; commit 92a7d38d5 in its history."
       ],
       "home": {
         "component": {
@@ -10759,8 +10773,9 @@
         "implemented": {
           "state": "yes",
           "evidence": [
-            "commit ffd607370bd04c0defb6fcc6e37a31f8fb6c46a6 — lane-1 A2 + lane-4 T14–T16/T17c-map + review-2 fixes",
-            "source desktop/cradle/expressions-app/field-studies-journeys/src/researchInstrumentStyles.css:2229 — /* lane-2 T12 + T13: broad-tier clusters and the scale-window minimap. A cluster takes"
+            "commit 92a7d38d521f72609a15402cffda9387bac6fa92 — Places is the atlas, alone: the frame's Places behaviour re-homed onto the M4 plate and the one transport, then the frame's map removed (lane O, R1)",
+            "source packages/live-shell/ui/src/projections/atlas/places/placesTransport.ts:55 — export function atlasTimeBindings(",
+            "scripted packages/live-shell/ui/tests/atlas-places-plate.test.mjs — test \"transport presses the atlas\"; its imports reach packages/live-shell/ui/src/projections/atlas/places/placesTransport.ts"
           ]
         },
         "exercised": {
@@ -10780,7 +10795,7 @@
           "evidence": []
         }
       },
-      "candidate_revision": "525474ee162f2b0e0dd38191cb4478d74da37d50",
+      "candidate_revision": "02e9f03709d666ba69bf18a98bd8d5373ecaa48d",
       "dependencies": [
         "boundary:P1",
         "time:techne:time-axis/v1",
@@ -10823,7 +10838,9 @@
         "No new-shell native exercise or craft acceptance executed for this target at initialization. Earlier model/unit checks are baselines and do not close it.",
         "Implemented axis: landed at candidate revision (naming commit plus seam found in the tree; see evidence). exercised, passed, failed and blocked are untouched.",
         "2026-10-15 re-home: FOUNDATION §4 names placeTimeControl.ts among the overlays that retire: the atlas's own time control (ui/time-control.ts) is the re-home.",
-        "2026-10-15 re-home: re-homed on the atlas (lane O, 92a7d38d5; R1 closed: the frame's Places map is removed, so this home no longer retires): the atlas's one deep-time clock is a face of the shared window (sharedClock.ts bindSharedTimeClock); the window's two edges are read on the transport's punch-in and punch-out (places/placesTransport.ts atlasTimeBindings); the scrubber is M0's Deep time device. The frame's docked time control is removed."
+        "2026-10-15 re-home: re-homed on the atlas (lane O, 92a7d38d5; R1 closed: the frame's Places map is removed, so this home no longer retires): the atlas's one deep-time clock is a face of the shared window (sharedClock.ts bindSharedTimeClock); the window's two edges are read on the transport's punch-in and punch-out (places/placesTransport.ts atlasTimeBindings); the scrubber is M0's Deep time device. The frame's docked time control is removed.",
+        "2026-10-15 reprogress: implemented returns to pending — no source or test citation holds at 02e9f0370: desktop/cradle/expressions-app/field-studies-journeys/src/researchInstrumentStyles.css:2229 (the quote names lane-2 T12, lane-2 T13, not this target). Its commit ffd607370 stands in history, but commit evidence alone never keeps implemented. Its behaviour is homed at packages/live-shell/ui/src/projections/atlas/places/placesTransport.ts:55 (route atlas:transport); implemented to be re-proven there.",
+        "2026-10-15 prove-at-home: implemented at its home packages/live-shell/ui/src/projections/atlas/places/placesTransport.ts:55 (route atlas:transport), held at 02e9f0370: the home's line holds its quote; packages/live-shell/ui/tests/atlas-places-plate.test.mjs (\"transport presses the atlas\") reaches it; commit 92a7d38d5 in its history."
       ],
       "home": {
         "component": {
@@ -10884,8 +10901,9 @@
         "implemented": {
           "state": "yes",
           "evidence": [
-            "commit ffd607370bd04c0defb6fcc6e37a31f8fb6c46a6 — lane-1 A2 + lane-4 T14–T16/T17c-map + review-2 fixes",
-            "source desktop/cradle/expressions-app/field-studies-journeys/src/canvasShapes.ts:22 — /** Where each choice lands in the material record, with its default label and display size (canvas units). */"
+            "commit 92a7d38d521f72609a15402cffda9387bac6fa92 — Places is the atlas, alone: the frame's Places behaviour re-homed onto the M4 plate and the one transport, then the frame's map removed (lane O, R1)",
+            "source packages/live-shell/ui/src/projections/atlas/places/placesTransport.ts:55 — export function atlasTimeBindings(",
+            "scripted packages/live-shell/ui/tests/atlas-places-plate.test.mjs — test \"transport presses the atlas\"; its imports reach packages/live-shell/ui/src/projections/atlas/places/placesTransport.ts"
           ]
         },
         "exercised": {
@@ -10905,7 +10923,7 @@
           "evidence": []
         }
       },
-      "candidate_revision": "525474ee162f2b0e0dd38191cb4478d74da37d50",
+      "candidate_revision": "02e9f03709d666ba69bf18a98bd8d5373ecaa48d",
       "dependencies": [
         "boundary:P1",
         "time:techne:time-axis/v1",
@@ -10933,7 +10951,8 @@
       "notes": [
         "No new-shell native exercise or craft acceptance executed for this target at initialization. Earlier model/unit checks are baselines and do not close it.",
         "Implemented axis: landed at candidate revision (naming commit plus seam found in the tree; see evidence). exercised, passed, failed and blocked are untouched.",
-        "2026-10-15 re-home: re-homed on the atlas (lane O, 92a7d38d5; R1 closed: the frame's Places map is removed, so this home no longer retires): Technē's Walk (Play) presses the atlas's one time button — the walk that stands, else the Earth's clock, which commits the window as it plays — and Stop pauses what plays (places/placesTransport.ts); refused, by name, while the Earth is not open."
+        "2026-10-15 re-home: re-homed on the atlas (lane O, 92a7d38d5; R1 closed: the frame's Places map is removed, so this home no longer retires): Technē's Walk (Play) presses the atlas's one time button — the walk that stands, else the Earth's clock, which commits the window as it plays — and Stop pauses what plays (places/placesTransport.ts); refused, by name, while the Earth is not open.",
+        "2026-10-15 prove-at-home: implemented at its home packages/live-shell/ui/src/projections/atlas/places/placesTransport.ts:55 (route atlas:transport), held at 02e9f0370: the home's line holds its quote; packages/live-shell/ui/tests/atlas-places-plate.test.mjs (\"transport presses the atlas\") reaches it; commit 92a7d38d5 in its history. Replaces its earlier evidence: commit ffd607370bd04c0defb6fcc6e37a31f8fb6c46a6; source desktop/cradle/expressions-app/field-studies-journeys/src/canvasShapes.ts:22."
       ],
       "home": {
         "component": {
@@ -10992,11 +11011,8 @@
       "status": "pending",
       "progress": {
         "implemented": {
-          "state": "yes",
-          "evidence": [
-            "commit ffd607370bd04c0defb6fcc6e37a31f8fb6c46a6 — lane-1 A2 + lane-4 T14–T16/T17c-map + review-2 fixes",
-            "source desktop/cradle/expressions-app/field-studies-journeys/src/researchInstrumentStyles.css:2334 — /* lane-4 T4/T5: the basemap stack's layer rows (imagery, terrain) and the live-sources switch. */"
-          ]
+          "state": "pending",
+          "evidence": []
         },
         "exercised": {
           "state": "pending",
@@ -11051,7 +11067,9 @@
         "No new-shell native exercise or craft acceptance executed for this target at initialization. Earlier model/unit checks are baselines and do not close it.",
         "Implemented axis: landed at candidate revision (naming commit plus seam found in the tree; see evidence). exercised, passed, failed and blocked are untouched.",
         "2026-10-15 re-home: re-homed on the atlas (lane O, 92a7d38d5; R1 closed: the frame's Places map is removed, so this home no longer retires): \"One season: the time window narrows what is placed, never the imagery\" on the plate's Landmass.",
-        "2026-10-15 reprogress: evidence withdrawn, no longer held at fdc302870 — desktop/cradle/expressions-app/field-studies-journeys/tests/places-chrome.test.mjs (deleted in 92a7d38d5). Implemented stands on one source or test citation that still holds."
+        "2026-10-15 reprogress: evidence withdrawn, no longer held at fdc302870 — desktop/cradle/expressions-app/field-studies-journeys/tests/places-chrome.test.mjs (deleted in 92a7d38d5). Implemented stands on one source or test citation that still holds.",
+        "2026-10-15 reprogress: implemented returns to pending — no source or test citation holds at 02e9f0370: desktop/cradle/expressions-app/field-studies-journeys/src/researchInstrumentStyles.css:2334 (the quote names lane-4 T4, lane-4 T5, not this target). Its commit ffd607370 stands in history, but commit evidence alone never keeps implemented. Its behaviour is homed at packages/live-shell/ui/src/projections/atlas/places/PlacesPlate.tsx:291 (route atlas:plate); implemented to be re-proven there.",
+        "2026-10-15 pending: no test exercises its home: the plate's 'One season' line (PlacesPlate.tsx:291) is asserted by no test; the plate test's transport case names T14–T16 but touches placesTransport.ts only."
       ],
       "home": {
         "component": {
@@ -11110,12 +11128,8 @@
       "status": "pending",
       "progress": {
         "implemented": {
-          "state": "yes",
-          "evidence": [
-            "commit f845f928c8e124165a7b4c22d288f9c01d4fa484 — lane-4 T17–T19: placemark authoring through the owner's route",
-            "source desktop/cradle/expressions-app/vendor/research-canvas/packages/canvas/src/psychogeographic/placeAuthoring.ts:2 — * Placemark authoring — lane-4 T17 (click to create), T18 (saved places carry",
-            "scripted desktop/cradle/expressions-app/field-studies-journeys/tests/places-authoring.test.mjs — with no authoring route both items are disabled and name the reason"
-          ]
+          "state": "pending",
+          "evidence": []
         },
         "exercised": {
           "state": "pending",
@@ -11166,7 +11180,8 @@
       "notes": [
         "No new-shell native exercise or craft acceptance executed for this target at initialization. Earlier model/unit checks are baselines and do not close it.",
         "Implemented axis: landed at candidate revision (naming commit plus seam found in the tree; see evidence). exercised, passed, failed and blocked are untouched.",
-        "2026-10-15 re-home: re-homed on the atlas (lane O, 92a7d38d5; R1 closed: the frame's Places map is removed, so this home no longer retires): the plate's ✎ Place arms the tool for the subject the Earth has selected; the next click on the globe (places/placesHost.ts pointUnder) becomes the frame's own draft (places/placeTool.ts draftAt over psychogeographic/placeAuthoring.ts), offered only to the Wiki's time-and-place editor (WikiFactsEditor offerConstellationRoute), where the person chooses a source and saves. No Scene is needed: the subject's own node owns the facts; a save rereads the world and redraws the subject in place."
+        "2026-10-15 re-home: re-homed on the atlas (lane O, 92a7d38d5; R1 closed: the frame's Places map is removed, so this home no longer retires): the plate's ✎ Place arms the tool for the subject the Earth has selected; the next click on the globe (places/placesHost.ts pointUnder) becomes the frame's own draft (places/placeTool.ts draftAt over psychogeographic/placeAuthoring.ts), offered only to the Wiki's time-and-place editor (WikiFactsEditor offerConstellationRoute), where the person chooses a source and saves. No Scene is needed: the subject's own node owns the facts; a save rereads the world and redraws the subject in place.",
+        "2026-10-15 pending: its home is exercised only in its waiting state: atlas-places-plate.test.mjs asserts the plate's Place (PlacesPlate.tsx:203) says \"Choose a subject on the Earth first\"; the click → draft → owner offer is tested on placeTool.ts (atlas-places-tool.test.mjs), which never loads the plate, and the round trip to a saved place is not exercised. Implemented returns to pending; its evidence is withdrawn: commit f845f928c8e124165a7b4c22d288f9c01d4fa484; source desktop/cradle/expressions-app/vendor/research-canvas/packages/canvas/src/psychogeographic/placeAuthoring.ts:2; scripted desktop/cradle/expressions-app/field-studies-journeys/tests/places-authoring.test.mjs."
       ],
       "home": {
         "component": {
@@ -11227,8 +11242,10 @@
         "implemented": {
           "state": "yes",
           "evidence": [
-            "commit f845f928c8e124165a7b4c22d288f9c01d4fa484 — lane-4 T17–T19: placemark authoring through the owner's route",
-            "source desktop/cradle/expressions-app/field-studies-journeys/src/researchInstruments.tsx:60 — /** B2/B3 — one download: the file is saved by the browser, nothing is uploaded or stored. */"
+            "commit 92a7d38d521f72609a15402cffda9387bac6fa92 — Places is the atlas, alone: the frame's Places behaviour re-homed onto the M4 plate and the one transport, then the frame's map removed (lane O, R1)",
+            "source packages/live-shell/ui/src/projections/atlas/places/placeTool.ts:141 — export function placeAnswered(",
+            "scripted packages/live-shell/ui/tests/atlas-places-tool.test.mjs — test \"answer: a refusal in its own words\"; its imports reach packages/live-shell/ui/src/projections/atlas/places/placeTool.ts",
+            "scripted packages/live-shell/ui/tests/atlas-places-tool.test.mjs — test \"cites its evidence, and is refused by name without one\"; its imports reach packages/live-shell/ui/src/projections/atlas/places/placeTool.ts"
           ]
         },
         "exercised": {
@@ -11248,7 +11265,7 @@
           "evidence": []
         }
       },
-      "candidate_revision": "525474ee162f2b0e0dd38191cb4478d74da37d50",
+      "candidate_revision": "02e9f03709d666ba69bf18a98bd8d5373ecaa48d",
       "dependencies": [
         "boundary:P1"
       ],
@@ -11266,7 +11283,9 @@
       "notes": [
         "No new-shell native exercise or craft acceptance executed for this target at initialization. Earlier model/unit checks are baselines and do not close it.",
         "Implemented axis: landed at candidate revision (naming commit plus seam found in the tree; see evidence). exercised, passed, failed and blocked are untouched.",
-        "2026-10-15 re-home: re-homed on the atlas (lane O, 92a7d38d5; R1 closed: the frame's Places map is removed, so this home no longer retires): the editor's save refuses a missing or stale basis, and the plate shows the owner's words unchanged (places/placeTool.ts placeAnswered over placeAuthoring.ts constellationResultNotice)."
+        "2026-10-15 re-home: re-homed on the atlas (lane O, 92a7d38d5; R1 closed: the frame's Places map is removed, so this home no longer retires): the editor's save refuses a missing or stale basis, and the plate shows the owner's words unchanged (places/placeTool.ts placeAnswered over placeAuthoring.ts constellationResultNotice).",
+        "2026-10-15 reprogress: implemented returns to pending — no source or test citation holds at 02e9f0370: desktop/cradle/expressions-app/field-studies-journeys/src/researchInstruments.tsx:60 (the quote names B2, B3, not this target). Its commit f845f928c stands in history, but commit evidence alone never keeps implemented. Its behaviour is homed at packages/live-shell/ui/src/projections/atlas/places/placeTool.ts:141 (route atlas:plate); implemented to be re-proven there.",
+        "2026-10-15 prove-at-home: implemented at its home packages/live-shell/ui/src/projections/atlas/places/placeTool.ts:141 (route atlas:plate), held at 02e9f0370: the home's line holds its quote; packages/live-shell/ui/tests/atlas-places-tool.test.mjs (\"answer: a refusal in its own words\"), packages/live-shell/ui/tests/atlas-places-tool.test.mjs (\"cites its evidence, and is refused by name without one\") reach it; commit 92a7d38d5 in its history."
       ],
       "home": {
         "component": {
@@ -11327,8 +11346,9 @@
         "implemented": {
           "state": "yes",
           "evidence": [
-            "commit f845f928c8e124165a7b4c22d288f9c01d4fa484 — lane-4 T17–T19: placemark authoring through the owner's route",
-            "source desktop/cradle/expressions-app/field-studies-journeys/src/researchInstruments.tsx:84 — /** lane-1 A10 — an embed or media card drawn over its occurrence's own box. The overlay passes pointer events through, so selecti"
+            "commit 92a7d38d521f72609a15402cffda9387bac6fa92 — Places is the atlas, alone: the frame's Places behaviour re-homed onto the M4 plate and the one transport, then the frame's map removed (lane O, R1)",
+            "source packages/live-shell/ui/src/projections/atlas/places/placeTool.ts:96 — export function draftAt(",
+            "scripted packages/live-shell/ui/tests/atlas-places-tool.test.mjs — test \"cites its evidence, and is refused by name without one\"; its imports reach packages/live-shell/ui/src/projections/atlas/places/placeTool.ts"
           ]
         },
         "exercised": {
@@ -11348,7 +11368,7 @@
           "evidence": []
         }
       },
-      "candidate_revision": "525474ee162f2b0e0dd38191cb4478d74da37d50",
+      "candidate_revision": "02e9f03709d666ba69bf18a98bd8d5373ecaa48d",
       "dependencies": [
         "boundary:P1"
       ],
@@ -11366,7 +11386,9 @@
       "notes": [
         "No new-shell native exercise or craft acceptance executed for this target at initialization. Earlier model/unit checks are baselines and do not close it.",
         "Implemented axis: landed at candidate revision (naming commit plus seam found in the tree; see evidence). exercised, passed, failed and blocked are untouched.",
-        "2026-10-15 re-home: re-homed on the atlas (lane O, 92a7d38d5; R1 closed: the frame's Places map is removed, so this home no longer retires): choose one of the subject's located places in Locations, then Place: the click is a move proposal at the place's own precision, citing its evidence, refused by name without one and never for an exact fix (places/placeTool.ts draftAt over placeAuthoring.ts moveProposal). A click, not a drag: the atlas's drag is its own orbit."
+        "2026-10-15 re-home: re-homed on the atlas (lane O, 92a7d38d5; R1 closed: the frame's Places map is removed, so this home no longer retires): choose one of the subject's located places in Locations, then Place: the click is a move proposal at the place's own precision, citing its evidence, refused by name without one and never for an exact fix (places/placeTool.ts draftAt over placeAuthoring.ts moveProposal). A click, not a drag: the atlas's drag is its own orbit.",
+        "2026-10-15 reprogress: implemented returns to pending — no source or test citation holds at 02e9f0370: desktop/cradle/expressions-app/field-studies-journeys/src/researchInstruments.tsx:84 (the quote names lane-1 A10, not this target). Its commit f845f928c stands in history, but commit evidence alone never keeps implemented. Its behaviour is homed at packages/live-shell/ui/src/projections/atlas/places/placeTool.ts:96 (route atlas:plate); implemented to be re-proven there.",
+        "2026-10-15 prove-at-home: implemented at its home packages/live-shell/ui/src/projections/atlas/places/placeTool.ts:96 (route atlas:plate), held at 02e9f0370: the home's line holds its quote; packages/live-shell/ui/tests/atlas-places-tool.test.mjs (\"cites its evidence, and is refused by name without one\") reaches it; commit 92a7d38d5 in its history."
       ],
       "home": {
         "component": {
@@ -11554,7 +11576,8 @@
         "No new-shell native exercise or craft acceptance executed for this target at initialization. Earlier model/unit checks are baselines and do not close it.",
         "Implemented axis: landed at candidate revision (naming commit plus seam found in the tree; see evidence). exercised, passed, failed and blocked are untouched.",
         "2026-10-15 re-home: re-homed on the atlas (lane O, 92a7d38d5; R1 closed: the frame's Places map is removed, so this home no longer retires): the plate's Relations rows narrow the atlas's one filter (T8's control), which the atlas keeps as its own state on its linkable address (src/app/controller.ts syncHash). Not ported, lane O's judgement: persistence per Scene — no Scene stands under the atlas; Scenes saved before keep their layers record as inert, validated data.",
-        "2026-10-15 reprogress: implemented returns to pending — no source or test citation holds at fdc302870: desktop/cradle/expressions-app/field-studies-journeys/src/placeViews.ts:4 (deleted in 92a7d38d5); desktop/cradle/expressions-app/field-studies-journeys/tests/places-basemap.test.mjs (deleted in 92a7d38d5). Its commit 0c9309e23 stands in history, but commit evidence alone never keeps implemented. Its behaviour is homed at packages/live-shell/ui/src/projections/atlas/places/PlacesPlate.tsx:246 (route atlas:plate); implemented to be re-proven there."
+        "2026-10-15 reprogress: implemented returns to pending — no source or test citation holds at fdc302870: desktop/cradle/expressions-app/field-studies-journeys/src/placeViews.ts:4 (deleted in 92a7d38d5); desktop/cradle/expressions-app/field-studies-journeys/tests/places-basemap.test.mjs (deleted in 92a7d38d5). Its commit 0c9309e23 stands in history, but commit evidence alone never keeps implemented. Its behaviour is homed at packages/live-shell/ui/src/projections/atlas/places/PlacesPlate.tsx:246 (route atlas:plate); implemented to be re-proven there.",
+        "2026-10-15 pending: per-Scene persistence is not ported (lane O, T-PLACES-ONTO-ATLAS): no Scene stands under the atlas; the Relations rows narrow the atlas's own filter, which it keeps as its own state."
       ],
       "home": {
         "component": {
@@ -11666,7 +11689,8 @@
         "No new-shell native exercise or craft acceptance executed for this target at initialization. Earlier model/unit checks are baselines and do not close it.",
         "Implemented axis: landed at candidate revision (naming commit plus seam found in the tree; see evidence). exercised, passed, failed and blocked are untouched.",
         "2026-10-15 re-home: re-homed on the atlas (lane O, 92a7d38d5; R1 closed: the frame's Places map is removed, so this home no longer retires): the plate's Find narrows the world's own places (places/placesModel.ts findPlaceRows) and lists the field's own search results beneath, each chosen through the controller's chooseResult; ⌘K still opens the atlas's own search.",
-        "2026-10-15 reprogress: implemented returns to pending — no source or test citation holds at fdc302870: desktop/cradle/expressions-app/field-studies-journeys/src/placeSearch.ts:2 (deleted in 92a7d38d5); desktop/cradle/expressions-app/field-studies-journeys/tests/places-search.test.mjs (deleted in 92a7d38d5). Its commit b16994955 stands in history, but commit evidence alone never keeps implemented. Its behaviour is homed at packages/live-shell/ui/src/projections/atlas/places/PlacesPlate.tsx:223 (route atlas:plate); implemented to be re-proven there."
+        "2026-10-15 reprogress: implemented returns to pending — no source or test citation holds at fdc302870: desktop/cradle/expressions-app/field-studies-journeys/src/placeSearch.ts:2 (deleted in 92a7d38d5); desktop/cradle/expressions-app/field-studies-journeys/tests/places-search.test.mjs (deleted in 92a7d38d5). Its commit b16994955 stands in history, but commit evidence alone never keeps implemented. Its behaviour is homed at packages/live-shell/ui/src/projections/atlas/places/PlacesPlate.tsx:223 (route atlas:plate); implemented to be re-proven there.",
+        "2026-10-15 pending: no test exercises its home: the plate's Find (PlacesPlate.tsx:223) is driven by no test; findPlaceRows is tested in atlas-places-model.test.mjs, which never loads the plate."
       ],
       "home": {
         "component": {
@@ -11767,7 +11791,8 @@
         "No new-shell native exercise or craft acceptance executed for this target at initialization. Earlier model/unit checks are baselines and do not close it.",
         "Implemented axis: landed at candidate revision (naming commit plus seam found in the tree; see evidence). exercised, passed, failed and blocked are untouched.",
         "2026-10-15 re-home: re-homed on the atlas (lane O, 92a7d38d5; R1 closed: the frame's Places map is removed, so this home no longer retires): the chosen place's \"Window to its validity\" writes the place's own validity to the shared window through the session's compare-and-set writer (sharedClock.ts writeSharedWindow), so the Timeline and the Earth stand in it; with no session standing the writer says so. \"Open source\" is the subject's own page in Graph and source.",
-        "2026-10-15 reprogress: implemented returns to pending — no source or test citation holds at fdc302870: desktop/cradle/expressions-app/field-studies-journeys/src/placeFacetsPanel.tsx:120 (deleted in 92a7d38d5); desktop/cradle/expressions-app/field-studies-journeys/tests/places-subject-identity.test.mjs (deleted in 92a7d38d5). Its commit 29e4f1942 stands in history, but commit evidence alone never keeps implemented. Its behaviour is homed at packages/live-shell/ui/src/projections/atlas/places/PlacesPlate.tsx:231 (route atlas:plate); implemented to be re-proven there."
+        "2026-10-15 reprogress: implemented returns to pending — no source or test citation holds at fdc302870: desktop/cradle/expressions-app/field-studies-journeys/src/placeFacetsPanel.tsx:120 (deleted in 92a7d38d5); desktop/cradle/expressions-app/field-studies-journeys/tests/places-subject-identity.test.mjs (deleted in 92a7d38d5). Its commit 29e4f1942 stands in history, but commit evidence alone never keeps implemented. Its behaviour is homed at packages/live-shell/ui/src/projections/atlas/places/PlacesPlate.tsx:231 (route atlas:plate); implemented to be re-proven there.",
+        "2026-10-15 pending: no test exercises its home: the chosen place's 'Window to its validity' (PlacesPlate.tsx:231) is pressed by no test; the compare-and-set writer is tested in atlas-time-binding.test.mjs, which never loads the plate."
       ],
       "home": {
         "component": {
@@ -11828,8 +11853,10 @@
         "implemented": {
           "state": "yes",
           "evidence": [
-            "commit 41952831800b885cf22a9d3f59f4f327d9c81461 — lane-4 T22–T24 (search-and-fly, place → timeline identity, focus reopen) — cradle and map legs; cradle tsc green",
-            "scripted desktop/cradle/tests/place-navigation-identity.test.mjs — T24: the spatial focus names the facet the Places lens selects on open; a stale ref is null"
+            "commit 92a7d38d521f72609a15402cffda9387bac6fa92 — Places is the atlas, alone: the frame's Places behaviour re-homed onto the M4 plate and the one transport, then the frame's map removed (lane O, R1)",
+            "source packages/live-shell/ui/src/projections/atlas/places/placesHost.ts:85 — function followSpatialFocus(",
+            "scripted packages/live-shell/ui/tests/atlas-places-plate.test.mjs — test \"the shared spatial focus turns the Earth\"; its imports reach packages/live-shell/ui/src/projections/atlas/places/placesHost.ts",
+            "scripted packages/live-shell/ui/tests/atlas-handover.test.mjs — test \"a clean attach and close leave no observer or subscription behind\"; its imports reach packages/live-shell/ui/src/projections/atlas/places/placesHost.ts"
           ]
         },
         "exercised": {
@@ -11849,7 +11876,7 @@
           "evidence": []
         }
       },
-      "candidate_revision": "525474ee162f2b0e0dd38191cb4478d74da37d50",
+      "candidate_revision": "02e9f03709d666ba69bf18a98bd8d5373ecaa48d",
       "dependencies": [
         "boundary:P1"
       ],
@@ -11868,7 +11895,8 @@
         "No new-shell native exercise or craft acceptance executed for this target at initialization. Earlier model/unit checks are baselines and do not close it.",
         "Implemented axis: landed at candidate revision (naming commit plus seam found in the tree; see evidence). exercised, passed, failed and blocked are untouched.",
         "2026-10-15 re-home: re-homed on the atlas (lane O, 92a7d38d5; R1 closed: the frame's Places map is removed, so this home no longer retires): the Earth honours the spatial focus standing when it mounts, and every change after (places/placesHost.ts followSpatialFocus); a ref the world does not hold turns nothing, with no error.",
-        "2026-10-15 reprogress: evidence withdrawn, no longer held at fdc302870 — desktop/cradle/expressions-app/vendor/research-canvas/packages/canvas/src/psychogeographic/PsychogeographicMap.tsx:208 (deleted in 92a7d38d5). Implemented stands on one source or test citation that still holds."
+        "2026-10-15 reprogress: evidence withdrawn, no longer held at fdc302870 — desktop/cradle/expressions-app/vendor/research-canvas/packages/canvas/src/psychogeographic/PsychogeographicMap.tsx:208 (deleted in 92a7d38d5). Implemented stands on one source or test citation that still holds.",
+        "2026-10-15 prove-at-home: implemented at its home packages/live-shell/ui/src/projections/atlas/places/placesHost.ts:85 (route atlas:globe), held at 02e9f0370: the home's line holds its quote; packages/live-shell/ui/tests/atlas-places-plate.test.mjs (\"the shared spatial focus turns the Earth\"), packages/live-shell/ui/tests/atlas-handover.test.mjs (\"a clean attach and close leave no observer or subscription behind\") reach it; commit 92a7d38d5 in its history. Replaces its earlier evidence: commit 41952831800b885cf22a9d3f59f4f327d9c81461; scripted desktop/cradle/tests/place-navigation-identity.test.mjs."
       ],
       "home": {
         "component": {
@@ -12180,7 +12208,8 @@
         "Implemented axis: landed at candidate revision (naming commit plus seam found in the tree; see evidence). exercised, passed, failed and blocked are untouched.",
         "2026-10-15 re-home: The owner states the subsolar point only once the active suite carries QL main (PATH §7, install seam: QL-MEF #328); until then the reading says it is unavailable, by its own reason. The atlas carries the QL Sun (inhabitants/qlSkyEarthAdapter.ts), the re-home for day and night (R1).",
         "2026-10-15 re-home: re-homed on the atlas (lane O, 92a7d38d5; R1 closed: the frame's Places map is removed, so this home no longer retires): the plate's Sky says the Sun's words — placed where the QL owner states it, or the owner's reason — and whether the Earth is lit by the sky's Sun; the same words stand in the Info view's hover (AtlasProjectionPanel.tsx earthWords), never over the globe. The owner read is the atlas's own (inhabitants/qlSkyEarthAdapter.ts admitDatedSubsolar, kernel nara_identity · transit), no longer the frame's Nara facade.",
-        "2026-10-15 reprogress: implemented returns to pending — no source or test citation holds at fdc302870: desktop/cradle/expressions-app/field-studies-journeys/src/researchInstruments.tsx:32 (the quote was taken out in 92a7d38d5); desktop/cradle/expressions-app/field-studies-journeys/tests/places-terminator.test.mjs (deleted in 92a7d38d5). Its commit 4f9e9577d stands in history, but commit evidence alone never keeps implemented. Its behaviour is homed at packages/live-shell/ui/src/projections/atlas/places/PlacesPlate.tsx:153 (route atlas:plate); implemented to be re-proven there."
+        "2026-10-15 reprogress: implemented returns to pending — no source or test citation holds at fdc302870: desktop/cradle/expressions-app/field-studies-journeys/src/researchInstruments.tsx:32 (the quote was taken out in 92a7d38d5); desktop/cradle/expressions-app/field-studies-journeys/tests/places-terminator.test.mjs (deleted in 92a7d38d5). Its commit 4f9e9577d stands in history, but commit evidence alone never keeps implemented. Its behaviour is homed at packages/live-shell/ui/src/projections/atlas/places/PlacesPlate.tsx:153 (route atlas:plate); implemented to be re-proven there.",
+        "2026-10-15 pending: no test exercises its home: the plate's Sun reading (PlacesPlate.tsx:153) is asserted by no test; the Earth's day and night is tested through qlSkyEarthAdapter in atlas-time-binding.test.mjs, which never loads the plate."
       ],
       "home": {
         "component": {
@@ -12239,8 +12268,12 @@
       "status": "pending",
       "progress": {
         "implemented": {
-          "state": "pending",
-          "evidence": []
+          "state": "yes",
+          "evidence": [
+            "commit 92a7d38d521f72609a15402cffda9387bac6fa92 — Places is the atlas, alone: the frame's Places behaviour re-homed onto the M4 plate and the one transport, then the frame's map removed (lane O, R1)",
+            "source packages/live-shell/ui/src/projections/atlas/places/PlacesPlate.tsx:155 — <ol className=\"places-ladder\" aria-label=\"Frames\">",
+            "scripted packages/live-shell/ui/tests/atlas-places-plate.test.mjs — test \"Locations and Relations read the owners\"; its imports reach packages/live-shell/ui/src/projections/atlas/places/PlacesPlate.tsx"
+          ]
         },
         "exercised": {
           "state": "pending",
@@ -12259,7 +12292,7 @@
           "evidence": []
         }
       },
-      "candidate_revision": "525474ee162f2b0e0dd38191cb4478d74da37d50",
+      "candidate_revision": "02e9f03709d666ba69bf18a98bd8d5373ecaa48d",
       "dependencies": [
         "boundary:P1"
       ],
@@ -12278,7 +12311,8 @@
         "No new-shell native exercise or craft acceptance executed for this target at initialization. Earlier model/unit checks are baselines and do not close it.",
         "Implemented axis: landed at candidate revision (naming commit plus seam found in the tree; see evidence). exercised, passed, failed and blocked are untouched.",
         "2026-10-15 re-home: re-homed on the atlas (lane O, 92a7d38d5; R1 closed: the frame's Places map is removed, so this home no longer retires): the five rungs by world.ts's labels on the plate's Sky (\"Frames\"), each read from what the Earth holds — the QL Sun, the window, the places declared, those drawn and their walks, and Nara, which no owner discloses here; none is shown present that is not.",
-        "2026-10-15 reprogress: implemented returns to pending — no source or test citation holds at fdc302870: desktop/cradle/expressions-app/field-studies-journeys/src/researchInstruments.tsx:35 (the quote was taken out in 92a7d38d5); desktop/cradle/expressions-app/field-studies-journeys/tests/places-ladder.test.mjs (deleted in 92a7d38d5). Its commit 4f9e9577d stands in history, but commit evidence alone never keeps implemented. Its behaviour is homed at packages/live-shell/ui/src/projections/atlas/places/PlacesPlate.tsx:155 (route atlas:plate); implemented to be re-proven there."
+        "2026-10-15 reprogress: implemented returns to pending — no source or test citation holds at fdc302870: desktop/cradle/expressions-app/field-studies-journeys/src/researchInstruments.tsx:35 (the quote was taken out in 92a7d38d5); desktop/cradle/expressions-app/field-studies-journeys/tests/places-ladder.test.mjs (deleted in 92a7d38d5). Its commit 4f9e9577d stands in history, but commit evidence alone never keeps implemented. Its behaviour is homed at packages/live-shell/ui/src/projections/atlas/places/PlacesPlate.tsx:155 (route atlas:plate); implemented to be re-proven there.",
+        "2026-10-15 prove-at-home: implemented at its home packages/live-shell/ui/src/projections/atlas/places/PlacesPlate.tsx:155 (route atlas:plate), held at 02e9f0370: the home's line holds its quote; packages/live-shell/ui/tests/atlas-places-plate.test.mjs (\"Locations and Relations read the owners\") reaches it; commit 92a7d38d5 in its history."
       ],
       "home": {
         "component": {
@@ -12378,7 +12412,8 @@
         "No new-shell native exercise or craft acceptance executed for this target at initialization. Earlier model/unit checks are baselines and do not close it.",
         "Implemented axis: landed at candidate revision (naming commit plus seam found in the tree; see evidence). exercised, passed, failed and blocked are untouched.",
         "2026-10-15 re-home: re-homed on the atlas (lane O, 92a7d38d5; R1 closed: the frame's Places map is removed, so this home no longer retires): the atlas's own stillness is kept: it turns slowly only until first touched, and never under reduced motion (src/globe/controls.ts); flights ease and finish. Lane O judged it against the manual (DLW.md §2: a planet turning slowly under its star).",
-        "2026-10-15 reprogress: implemented returns to pending — no source or test citation holds at fdc302870: desktop/cradle/expressions-app/field-studies-journeys/src/researchInstruments.tsx:298 (the quote was taken out in 92a7d38d5); desktop/cradle/expressions-app/field-studies-journeys/tests/places-chrome.test.mjs (deleted in 92a7d38d5). Its commit 6df635afa stands in history, but commit evidence alone never keeps implemented. Its behaviour is homed at packages/live-shell/ui/src/projections/atlas/src/globe/controls.ts:643 (route atlas:globe); implemented to be re-proven there."
+        "2026-10-15 reprogress: implemented returns to pending — no source or test citation holds at fdc302870: desktop/cradle/expressions-app/field-studies-journeys/src/researchInstruments.tsx:298 (the quote was taken out in 92a7d38d5); desktop/cradle/expressions-app/field-studies-journeys/tests/places-chrome.test.mjs (deleted in 92a7d38d5). Its commit 6df635afa stands in history, but commit evidence alone never keeps implemented. Its behaviour is homed at packages/live-shell/ui/src/projections/atlas/src/globe/controls.ts:643 (route atlas:globe); implemented to be re-proven there.",
+        "2026-10-15 pending: no test exercises its home: the atlas's stillness (src/globe/controls.ts:643, turning only until first touched and never under reduced motion) is asserted by no test."
       ],
       "home": {
         "component": {
@@ -12437,8 +12472,12 @@
       "status": "pending",
       "progress": {
         "implemented": {
-          "state": "pending",
-          "evidence": []
+          "state": "yes",
+          "evidence": [
+            "commit 92a7d38d521f72609a15402cffda9387bac6fa92 — Places is the atlas, alone: the frame's Places behaviour re-homed onto the M4 plate and the one transport, then the frame's map removed (lane O, R1)",
+            "source packages/live-shell/ui/src/projections/atlas/places/PlacesPlate.tsx:218 — <StandingTag standing={row.standing} />",
+            "scripted packages/live-shell/ui/tests/atlas-places-plate.test.mjs — test \"Locations and Relations read the owners\"; its imports reach packages/live-shell/ui/src/projections/atlas/places/PlacesPlate.tsx"
+          ]
         },
         "exercised": {
           "state": "pending",
@@ -12457,7 +12496,7 @@
           "evidence": []
         }
       },
-      "candidate_revision": "525474ee162f2b0e0dd38191cb4478d74da37d50",
+      "candidate_revision": "02e9f03709d666ba69bf18a98bd8d5373ecaa48d",
       "dependencies": [
         "boundary:P1"
       ],
@@ -12476,7 +12515,8 @@
         "No new-shell native exercise or craft acceptance executed for this target at initialization. Earlier model/unit checks are baselines and do not close it.",
         "Implemented axis: landed at candidate revision (naming commit plus seam found in the tree; see evidence). exercised, passed, failed and blocked are untouched.",
         "2026-10-15 re-home: re-homed on the atlas (lane O, 92a7d38d5; R1 closed: the frame's Places map is removed, so this home no longer retires): one grammar on the plate — a dashed swatch and a \"mythic\" tag wherever a mythic place or relation is named (PlacesPlate.tsx, placesPlate.css); the suite provider reads MYTH_LOCATED_AT as a myth episode, never a historical event (provider/suiteReading.ts locusOfRelation).",
-        "2026-10-15 reprogress: implemented returns to pending — no source or test citation holds at fdc302870: desktop/cradle/expressions-app/vendor/research-canvas/packages/canvas/src/psychogeographic/LocationPanel.tsx:13 (deleted in 92a7d38d5); desktop/cradle/expressions-app/field-studies-journeys/tests/places-mythic-marker.test.mjs (deleted in 92a7d38d5). Its commit b24ee514c stands in history, but commit evidence alone never keeps implemented. Its behaviour is homed at packages/live-shell/ui/src/projections/atlas/places/PlacesPlate.tsx:218 (route atlas:plate); implemented to be re-proven there."
+        "2026-10-15 reprogress: implemented returns to pending — no source or test citation holds at fdc302870: desktop/cradle/expressions-app/vendor/research-canvas/packages/canvas/src/psychogeographic/LocationPanel.tsx:13 (deleted in 92a7d38d5); desktop/cradle/expressions-app/field-studies-journeys/tests/places-mythic-marker.test.mjs (deleted in 92a7d38d5). Its commit b24ee514c stands in history, but commit evidence alone never keeps implemented. Its behaviour is homed at packages/live-shell/ui/src/projections/atlas/places/PlacesPlate.tsx:218 (route atlas:plate); implemented to be re-proven there.",
+        "2026-10-15 prove-at-home: implemented at its home packages/live-shell/ui/src/projections/atlas/places/PlacesPlate.tsx:218 (route atlas:plate), held at 02e9f0370: the home's line holds its quote; packages/live-shell/ui/tests/atlas-places-plate.test.mjs (\"Locations and Relations read the owners\") reaches it; commit 92a7d38d5 in its history."
       ],
       "home": {
         "component": {
@@ -16685,10 +16725,327 @@
           "gap": 3
         },
         "rows_with_evidence_withdrawn": 8
+      },
+      {
+        "recorded_on": "2026-10-15",
+        "candidate_head": "02e9f03709d666ba69bf18a98bd8d5373ecaa48d",
+        "verb": "reprogress",
+        "lanes": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "at_home": false,
+        "implemented_yes": {
+          "before": 106,
+          "after": 102,
+          "by_lane_before": {
+            "1": 20,
+            "2": 25,
+            "3": 26,
+            "4": 11,
+            "5": 24
+          },
+          "by_lane_after": {
+            "1": 20,
+            "2": 25,
+            "3": 26,
+            "4": 7,
+            "5": 24
+          }
+        },
+        "rows_repointed": 0,
+        "citations_repointed": 0,
+        "returned_to_pending": {
+          "lane-4": 4
+        },
+        "returned_by_cause": {
+          "no citation of its own holds": 4
+        },
+        "rows_with_evidence_withdrawn": 1
+      },
+      {
+        "recorded_on": "2026-10-15",
+        "candidate_head": "02e9f03709d666ba69bf18a98bd8d5373ecaa48d",
+        "verb": "prove-at-home",
+        "targets": [
+          "lane-4:T2"
+        ],
+        "commits": [
+          "92a7d38d521f72609a15402cffda9387bac6fa92"
+        ],
+        "tests": [
+          "packages/live-shell/ui/tests/atlas-places-plate.test.mjs"
+        ],
+        "implemented_yes": {
+          "before": 102,
+          "after": 103
+        }
+      },
+      {
+        "recorded_on": "2026-10-15",
+        "candidate_head": "02e9f03709d666ba69bf18a98bd8d5373ecaa48d",
+        "verb": "prove-at-home",
+        "targets": [
+          "lane-4:T24"
+        ],
+        "commits": [
+          "92a7d38d521f72609a15402cffda9387bac6fa92"
+        ],
+        "tests": [
+          "packages/live-shell/ui/tests/atlas-places-plate.test.mjs",
+          "packages/live-shell/ui/tests/atlas-handover.test.mjs"
+        ],
+        "implemented_yes": {
+          "before": 103,
+          "after": 103
+        }
+      },
+      {
+        "recorded_on": "2026-10-15",
+        "candidate_head": "02e9f03709d666ba69bf18a98bd8d5373ecaa48d",
+        "verb": "prove-at-home",
+        "targets": [
+          "lane-4:T10",
+          "lane-4:T28",
+          "lane-4:T30"
+        ],
+        "commits": [
+          "92a7d38d521f72609a15402cffda9387bac6fa92"
+        ],
+        "tests": [
+          "packages/live-shell/ui/tests/atlas-places-plate.test.mjs"
+        ],
+        "implemented_yes": {
+          "before": 103,
+          "after": 106
+        }
+      },
+      {
+        "recorded_on": "2026-10-15",
+        "candidate_head": "02e9f03709d666ba69bf18a98bd8d5373ecaa48d",
+        "verb": "prove-at-home",
+        "targets": [
+          "lane-4:T13"
+        ],
+        "commits": [
+          "92a7d38d521f72609a15402cffda9387bac6fa92"
+        ],
+        "tests": [
+          "packages/live-shell/ui/tests/atlas-places-model.test.mjs",
+          "packages/live-shell/ui/tests/atlas-places-plate.test.mjs"
+        ],
+        "implemented_yes": {
+          "before": 106,
+          "after": 107
+        }
+      },
+      {
+        "recorded_on": "2026-10-15",
+        "candidate_head": "02e9f03709d666ba69bf18a98bd8d5373ecaa48d",
+        "verb": "prove-at-home",
+        "targets": [
+          "lane-4:T14",
+          "lane-4:T15"
+        ],
+        "commits": [
+          "92a7d38d521f72609a15402cffda9387bac6fa92"
+        ],
+        "tests": [
+          "packages/live-shell/ui/tests/atlas-places-plate.test.mjs"
+        ],
+        "implemented_yes": {
+          "before": 107,
+          "after": 108
+        }
+      },
+      {
+        "recorded_on": "2026-10-15",
+        "candidate_head": "02e9f03709d666ba69bf18a98bd8d5373ecaa48d",
+        "verb": "prove-at-home",
+        "targets": [
+          "lane-4:T18"
+        ],
+        "commits": [
+          "92a7d38d521f72609a15402cffda9387bac6fa92"
+        ],
+        "tests": [
+          "packages/live-shell/ui/tests/atlas-places-tool.test.mjs",
+          "packages/live-shell/ui/tests/atlas-places-tool.test.mjs"
+        ],
+        "implemented_yes": {
+          "before": 108,
+          "after": 109
+        }
+      },
+      {
+        "recorded_on": "2026-10-15",
+        "candidate_head": "02e9f03709d666ba69bf18a98bd8d5373ecaa48d",
+        "verb": "prove-at-home",
+        "targets": [
+          "lane-4:T19"
+        ],
+        "commits": [
+          "92a7d38d521f72609a15402cffda9387bac6fa92"
+        ],
+        "tests": [
+          "packages/live-shell/ui/tests/atlas-places-tool.test.mjs"
+        ],
+        "implemented_yes": {
+          "before": 109,
+          "after": 110
+        }
+      },
+      {
+        "recorded_on": "2026-10-15",
+        "verb": "pending",
+        "returned_to_pending": [
+          "lane-4:T1"
+        ],
+        "noted": [
+          "lane-4:T1"
+        ]
+      },
+      {
+        "recorded_on": "2026-10-15",
+        "verb": "pending",
+        "returned_to_pending": [],
+        "noted": [
+          "lane-4:T3"
+        ]
+      },
+      {
+        "recorded_on": "2026-10-15",
+        "verb": "pending",
+        "returned_to_pending": [
+          "lane-4:T4"
+        ],
+        "noted": [
+          "lane-4:T4"
+        ]
+      },
+      {
+        "recorded_on": "2026-10-15",
+        "verb": "pending",
+        "returned_to_pending": [
+          "lane-4:T5"
+        ],
+        "noted": [
+          "lane-4:T5"
+        ]
+      },
+      {
+        "recorded_on": "2026-10-15",
+        "verb": "pending",
+        "returned_to_pending": [],
+        "noted": [
+          "lane-4:T9"
+        ]
+      },
+      {
+        "recorded_on": "2026-10-15",
+        "verb": "pending",
+        "returned_to_pending": [],
+        "noted": [
+          "lane-4:T12"
+        ]
+      },
+      {
+        "recorded_on": "2026-10-15",
+        "verb": "pending",
+        "returned_to_pending": [],
+        "noted": [
+          "lane-4:T21"
+        ]
+      },
+      {
+        "recorded_on": "2026-10-15",
+        "verb": "pending",
+        "returned_to_pending": [],
+        "noted": [
+          "lane-4:T6"
+        ]
+      },
+      {
+        "recorded_on": "2026-10-15",
+        "verb": "pending",
+        "returned_to_pending": [
+          "lane-4:T7"
+        ],
+        "noted": [
+          "lane-4:T7"
+        ]
+      },
+      {
+        "recorded_on": "2026-10-15",
+        "verb": "pending",
+        "returned_to_pending": [],
+        "noted": [
+          "lane-4:T8"
+        ]
+      },
+      {
+        "recorded_on": "2026-10-15",
+        "verb": "pending",
+        "returned_to_pending": [],
+        "noted": [
+          "lane-4:T11"
+        ]
+      },
+      {
+        "recorded_on": "2026-10-15",
+        "verb": "pending",
+        "returned_to_pending": [],
+        "noted": [
+          "lane-4:T16"
+        ]
+      },
+      {
+        "recorded_on": "2026-10-15",
+        "verb": "pending",
+        "returned_to_pending": [
+          "lane-4:T17"
+        ],
+        "noted": [
+          "lane-4:T17"
+        ]
+      },
+      {
+        "recorded_on": "2026-10-15",
+        "verb": "pending",
+        "returned_to_pending": [],
+        "noted": [
+          "lane-4:T22"
+        ]
+      },
+      {
+        "recorded_on": "2026-10-15",
+        "verb": "pending",
+        "returned_to_pending": [],
+        "noted": [
+          "lane-4:T23"
+        ]
+      },
+      {
+        "recorded_on": "2026-10-15",
+        "verb": "pending",
+        "returned_to_pending": [],
+        "noted": [
+          "lane-4:T27"
+        ]
+      },
+      {
+        "recorded_on": "2026-10-15",
+        "verb": "pending",
+        "returned_to_pending": [],
+        "noted": [
+          "lane-4:T29"
+        ]
       }
     ],
     "recorded_on": "2026-10-15",
-    "candidate_head": "fdc302870a97090cd15d0082470ddf7092a36978",
-    "law": "An implemented claim stands only on evidence that still holds at a named revision: its commits in history, each source quote in its file (the line re-pointed, never the quote), each described source file and each test file present. A row with no source or test citation left, or a named gap, returns to pending with a dated note naming what vanished and where its behaviour went. Commit evidence alone never keeps implemented. exercised, passed, failed and blocked are untouched."
+    "candidate_head": "02e9f03709d666ba69bf18a98bd8d5373ecaa48d",
+    "law": "An implemented claim stands only on evidence that still holds at a named revision: its commits in history, each source quote in its file (the line re-pointed, never the quote) and naming no other target in place of this one, each described source file and each test file present (a cited test title still in it). A row with no source or test citation left, or a named gap, returns to pending with a dated note naming what vanished and where its behaviour went; with --at-home, so does a homed row whose evidence never cites its home (FOUNDATION §8: implemented counts only at a reachable home). Commit evidence alone never keeps implemented. exercised, passed, failed and blocked are untouched."
   }
 }

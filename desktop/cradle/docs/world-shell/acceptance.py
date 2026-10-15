@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Initialize, verify or re-home the source-bound new-shell acceptance register.
+"""Initialize, verify, re-home or re-prove the source-bound new-shell acceptance register.
 
 This instrument checks identity, provenance and closure evidence. It does not
 claim functionality from structural validity, existing tests or imported code.
@@ -25,7 +25,23 @@ evidence withdrawn and named in an appended dated note with where its behaviour
 went (its home, or its gap), when no source or scripted citation holds — commit
 evidence alone never keeps implemented — or when the row is a named gap. Without
 --apply it reports and writes nothing. exercised, passed, failed and blocked are
-never touched.
+never touched. A source quote that names other targets and never this one is
+another target's evidence and does not hold for this row (the lead, 15 Oct).
+`--lane N` (repeatable) scopes a run; `--at-home` also returns a homed row whose
+evidence never cites its home's file (FOUNDATION §8: implemented counts only at
+a reachable home).
+
+`prove-at-home <id>… --commit SHA… --scripted FILE[::TITLE]…` records
+`implemented: yes` at the row's re-homed home, and only on what it checks: the
+home's own cited path:line still holds its quote at the revision; each test file
+stands there (each named test title in it) and its imports reach the home's file
+(candidate-reachable.mjs's walk, the test as root, over the revision's own files
+written to a scratch tree); each commit is in the revision's history and
+touched the home's file or a cited test. The evidence entries are exactly the
+home citation, the tests and the commits.
+
+`pending <id>… --reason TEXT` records why a row stands (or returns to) pending,
+as a dated note; a `yes` returns to pending with its evidence withdrawn and named.
 """
 from __future__ import annotations
 
@@ -37,8 +53,10 @@ import json
 import os
 from pathlib import Path
 import re
+import shutil
 import subprocess
 import sys
+import tempfile
 
 # Home: O-I desktop/cradle/docs/world-shell (moved from the reverse-engineering campaign, 12 Oct 2026).
 CAMPAIGN = Path(__file__).resolve().parent
@@ -68,7 +86,13 @@ EVIDENCE_COMMIT = re.compile(r"^commit ([0-9a-f]{7,40}) — ")
 EVIDENCE_QUOTE = re.compile(r"^source ([^\s:]+):([1-9]\d*) — (.+)$", re.S)
 EVIDENCE_FILE = re.compile(r"^source ([^\s:]+)(?::([1-9]\d*)-([1-9]\d*))? — (.+)$", re.S)
 EVIDENCE_SCRIPTED = re.compile(r"^scripted (.+?) — (.+)$", re.S)
-TARGET_NAMED = re.compile(r"\b([A-D]\d{1,2}|T\d{1,2}|E\d{2})\b")
+# A target id a quote names (A–D, T and E ids, a range like `T15-T18` or `T14–T16`), and the `lane-N` that scopes those after it.
+TARGET_TOKEN = re.compile(r"\blane-([1-5])\b|\b([A-DET])(\d{1,2})\b(?:\s*[-–]\s*\2?(\d{1,2})\b)?")
+# A scripted citation that names its test: `scripted <file> — test "<title>"; …`.
+SCRIPTED_TITLE = re.compile(r'^test "([^"]+)"')
+# What prove-at-home's import walk reads at a revision: the source trees a test can import, and the walk itself.
+WALKED_DIRS = ("packages", "desktop/cradle/src", "desktop/cradle/expressions-app")
+WALKED_FILES = re.compile(r"\.(?:tsx?|mts|cts|mjs|cjs|jsx?|css|json|html)$")
 
 
 def digest(data: bytes) -> str:
@@ -498,6 +522,44 @@ class Tree:
         result = self.git("log", "-1", "--format=%h", "--abbrev=9", *selector, self.head, "--", path)
         return result.stdout.decode().strip() or None
 
+    def in_history(self, sha: str) -> bool:
+        """The commit is this revision or one of its ancestors."""
+        return self.has_commit(sha) and self.git("merge-base", "--is-ancestor", sha, self.head).returncode == 0
+
+    def full(self, sha: str) -> str:
+        return self.git("rev-parse", f"{sha}^{{commit}}").stdout.decode().strip()
+
+    def subject(self, sha: str) -> str:
+        return self.git("log", "-1", "--format=%s", sha).stdout.decode().strip()
+
+    def touched(self, sha: str) -> set[str]:
+        return {line for line in self.git("show", "--name-only", "--format=", sha).stdout.decode().splitlines() if line}
+
+    def materialize(self, dirs: tuple[str, ...] = WALKED_DIRS) -> Path:
+        """This revision's own source files under the dirs, written into a scratch tree: the import walk reads files from disk, and
+        the seat's working tree carries other lanes' edits. The cradle's node_modules (for TypeScript) is linked in, not copied."""
+        root = Path(tempfile.mkdtemp(prefix="acceptance-walk-"))
+        listing = self.git("ls-tree", "-r", "-z", self.head, "--", *dirs).stdout.decode()
+        blobs = []
+        for line in filter(None, listing.split("\0")):
+            meta, path = line.split("\t", 1)
+            _, kind, sha = meta.split()
+            if kind == "blob" and WALKED_FILES.search(path):
+                blobs.append((sha, path))
+        batch = subprocess.run(["git", "-C", str(self.repo), "cat-file", "--batch"], input="".join(f"{sha}\n" for sha, _ in blobs).encode(),
+                               capture_output=True, check=True).stdout
+        at = 0
+        for _, path in blobs:
+            header_end = batch.index(b"\n", at)
+            size = int(batch[at:header_end].split()[2])
+            target = root / path
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(batch[header_end + 1:header_end + 1 + size])
+            at = header_end + 1 + size + 1
+        (root / "desktop/cradle").mkdir(parents=True, exist_ok=True)
+        (root / "desktop/cradle/node_modules").symlink_to(self.repo / "desktop/cradle/node_modules")
+        return root
+
 
 def evidence_kind(entry) -> str | None:
     """The form of one implemented-axis evidence entry, or None when it is none of the register's forms."""
@@ -521,23 +583,54 @@ def scripted_files(names: str) -> list[str]:
     return files
 
 
+def targets_named(text: str) -> list[tuple[int | None, str]]:
+    """The target ids a text names, each with the lane a preceding `lane-N` gives it (None when none does). Ranges expand:
+    `lane-2 T15-T18` names lane-2 T15, T16, T17 and T18. A–D ids are lane 1's, E ids lane 3's, T ids lanes 2, 4 and 5's."""
+    named, lane = [], None
+    for match in TARGET_TOKEN.finditer(text):
+        if match.group(1):
+            lane = int(match.group(1))
+            continue
+        prefix, start, end = match.group(2), int(match.group(3)), match.group(4)
+        width = len(match.group(3))
+        if prefix == "E" and width != 2:
+            continue
+        last = int(end) if end and 0 < int(end) - start <= 30 else start
+        for number in range(start, last + 1):
+            named.append((lane, f"{prefix}{number:0{width}d}" if prefix == "E" else f"{prefix}{number}"))
+    return named
+
+
+def names_other_targets(quote: str, row: dict) -> list[str]:
+    """The targets a quote names when it names some and never this row's own: such a quote is another target's evidence."""
+    named = targets_named(quote)
+    if not named or any(key == row["target_id"] and lane in (None, row["lane"]) for lane, key in named):
+        return []
+    return list(dict.fromkeys(f"lane-{lane} {key}" if lane else key for lane, key in named))
+
+
 def gone_from(tree: Tree, path: str) -> str:
     removed = tree.removed_by(path)
     return f"deleted in {removed}" if removed else "not in the tree"
 
 
-def held(entry, tree: Tree) -> dict:
-    """Re-hold one evidence entry at the tree's revision: {kind, holds, entry (re-pointed when its quote moved), cited, why}."""
+def held(entry, tree: Tree, row: dict | None = None) -> dict:
+    """Re-hold one evidence entry at the tree's revision: {kind, holds, entry (re-pointed when its quote moved), cited, why}.
+    With the row, a quote that names other targets and never this one does not hold for it."""
     kind = evidence_kind(entry)
     if kind == "commit":
         sha = EVIDENCE_COMMIT.match(entry).group(1)
         holds = tree.has_commit(sha)
         return {"kind": kind, "holds": holds, "entry": entry, "cited": f"commit {sha[:9]}", "why": None if holds else "not in this repository's history"}
     if kind == "scripted":
-        files = scripted_files(EVIDENCE_SCRIPTED.match(entry).group(1))
+        names, described = EVIDENCE_SCRIPTED.match(entry).groups()
+        files = scripted_files(names)
         missing = [path for path in files if tree.text(path) is None]
         why = "; ".join(gone_from(tree, path) if len(files) == 1 else f"{path} {gone_from(tree, path)}" for path in missing) or None
-        return {"kind": kind, "holds": not missing, "entry": entry, "cited": ", ".join(files), "why": why}
+        titled = SCRIPTED_TITLE.match(described)
+        if not missing and titled and len(files) == 1 and not any(titled.group(1) in line for line in tree.text(files[0]).split("\n") if "test(" in line):
+            why = f'no test "{titled.group(1)}" stands in the file'
+        return {"kind": kind, "holds": why is None, "entry": entry, "cited": ", ".join(files), "why": why}
     match = EVIDENCE_QUOTE.match(entry) if kind == "source" else None
     if match:
         path, line, quote = match.group(1), int(match.group(2)), match.group(3)
@@ -550,6 +643,9 @@ def held(entry, tree: Tree) -> dict:
             removed = tree.removed_by(path, quote)
             why = f"the quote was taken out in {removed}" if removed else "the quote never stood in the file: a description, not a quote"
             return {**verdict, "why": why}
+        others = names_other_targets(quote, row) if row is not None else []
+        if others:
+            return {**verdict, "why": f"the quote names {', '.join(others)}, not this target"}
         nearest = min(lines, key=lambda number: (abs(number - line), number))
         verdict["holds"] = True
         if nearest != line:
@@ -576,34 +672,60 @@ def where_now(row: dict) -> str:
     return "It has no recorded home; implemented to be re-proven where it is built."
 
 
+def home_file(row: dict) -> str | None:
+    home = row.get("home")
+    return home["component"]["at"].rsplit(":", 1)[0] if home else None
+
+
 REPROGRESS_LAW = ("An implemented claim stands only on evidence that still holds at a named revision: its commits in history, each source "
-                  "quote in its file (the line re-pointed, never the quote), each described source file and each test file present. A row "
-                  "with no source or test citation left, or a named gap, returns to pending with a dated note naming what vanished and where "
-                  "its behaviour went. Commit evidence alone never keeps implemented. exercised, passed, failed and blocked are untouched.")
+                  "quote in its file (the line re-pointed, never the quote) and naming no other target in place of this one, each described "
+                  "source file and each test file present (a cited test title still in it). A row with no source or test citation left, "
+                  "or a named gap, returns to pending with a dated note naming what vanished and where its behaviour went; with --at-home, "
+                  "so does a homed row whose evidence never cites its home (FOUNDATION §8: implemented counts only at a reachable home). "
+                  "Commit evidence alone never keeps implemented. exercised, passed, failed and blocked are untouched.")
 REPROGRESS_STANDING = ("2026-10-15 (lane V): the implemented axis follows the code: `reprogress` re-holds every implemented claim's "
                        "evidence at one revision (commits in history, each source quote in its file, re-pointed to its line and never "
                        "rewritten, each test file present) and returns a row to pending, with a dated note, when no source or test "
                        "citation holds or the row is a named gap; commit evidence alone never keeps implemented.")
+AT_HOME_STANDING = ("2026-10-15 (lane V, the lead's rulings): a quote that names another target is not this target's evidence; implemented "
+                    "counts only at a reachable home — `prove-at-home` records it only on the home's own cited line, test files whose "
+                    "imports reach that home, and a commit in the revision's history that touched them; `reprogress --at-home` returns "
+                    "a homed row whose evidence never cites its home.")
 
 
-def reprogress(apply: bool = False, tree: Tree | None = None, day: str | None = None) -> dict:
+def record_run(document: dict, tree: Tree | None, day: str, run: dict) -> None:
+    """Append one changing run of the progress verbs; `pending` reads no code, so it names no revision."""
+    basis = document.get("reprogress_basis") or {"tool": "acceptance.py reprogress --apply", "runs": []}
+    basis.update(recorded_on=day, law=REPROGRESS_LAW, **({"candidate_head": tree.head} if tree else {}))
+    basis["runs"].append({"recorded_on": day, **({"candidate_head": tree.head} if tree else {}), **run})
+    document["reprogress_basis"] = basis
+    for standing in (REPROGRESS_STANDING, AT_HOME_STANDING):
+        if standing not in document["standing"]:
+            document["standing"] = f"{document['standing']} {standing}"
+
+
+def reprogress(apply: bool = False, tree: Tree | None = None, day: str | None = None, lanes: list[int] | None = None, at_home: bool = False) -> dict:
     tree = tree or Tree()
     day = day or datetime.now().date().isoformat()
     document = json.loads((OUT / "targets.json").read_text())
     rows = document["targets"]
     yes = lambda: {str(lane): sum(row["lane"] == lane and row["progress"]["implemented"]["state"] == "yes" for row in rows) for lane in LANES}
     before = yes()
-    repointed, withdrawn, returned, described, elsewhere = [], [], [], [], []
+    repointed, withdrawn, returned, described = [], [], [], []
     for row in rows:
+        if lanes and row["lane"] not in lanes:
+            continue
         axis = row["progress"]["implemented"]
         if axis["state"] != "yes":
             continue
-        verdicts = [held(entry, tree) for entry in axis["evidence"]]
+        verdicts = [held(entry, tree, row) for entry in axis["evidence"]]
         kept = [verdict for verdict in verdicts if verdict["holds"]]
         lost = [verdict for verdict in verdicts if not verdict["holds"]]
         code = [verdict for verdict in kept if verdict["kind"] in ("source", "scripted")]
         lost_text = "; ".join(f"{verdict['cited']} ({verdict['why']})" for verdict in lost)
-        if row.get("gap") is not None or not code:
+        beside = at_home and row.get("home") is not None and code and not any(
+            verdict["kind"] == "source" and verdict["cited"].split(":")[0] == home_file(row) for verdict in code)
+        if row.get("gap") is not None or not code or beside:
             if row.get("gap") is not None:
                 cause = "gap"
                 gap = row["gap"]
@@ -612,12 +734,18 @@ def reprogress(apply: bool = False, tree: Tree | None = None, day: str | None = 
                     reason += f" Its evidence no longer held at {tree.head[:9]}: {lost_text}."
                 if kept:
                     reason += f" What still held ({', '.join(verdict['cited'] for verdict in kept)}) does not make a home."
-            else:
-                cause = "evidence gone"
+            elif not code:
+                cause = "no citation of its own holds"
                 reason = f"no source or test citation holds at {tree.head[:9]}: {lost_text}."
                 commits = [verdict["cited"].split()[1] for verdict in kept if verdict["kind"] == "commit"]
                 if commits:
                     reason += f" Its commit{'s' if len(commits) > 1 else ''} {', '.join(commits)} stand{'' if len(commits) > 1 else 's'} in history, but commit evidence alone never keeps implemented."
+            else:
+                cause = "beside its home"
+                reason = (f"implemented counts only at a reachable home (FOUNDATION §8), and its evidence is code beside its home: "
+                          f"{', '.join(verdict['cited'] for verdict in code)}; none cites its home {row['home']['component']['at']}.")
+                if lost:
+                    reason += f" Its evidence no longer held at {tree.head[:9]}: {lost_text}."
             axis.update(state="pending", evidence=[])
             row["notes"].append(f"{day} reprogress: implemented returns to pending — {reason} {where_now(row)}")
             returned.append({"id": row["id"], "lane": row["lane"], "cause": cause, "lost": [f"{verdict['cited']} ({verdict['why']})" for verdict in lost],
@@ -629,10 +757,6 @@ def reprogress(apply: bool = False, tree: Tree | None = None, day: str | None = 
                 repointed.append({"id": row["id"], "cited": verdict["cited"], "to": verdict["repointed"]["to"]})
             if verdict.get("form") == "file":
                 described.append({"id": row["id"], "cited": verdict["cited"]})
-            quoted = EVIDENCE_QUOTE.match(verdict["entry"])
-            names = sorted(set(TARGET_NAMED.findall(quoted.group(3)))) if quoted else []
-            if names and row["target_id"] not in names:
-                elsewhere.append({"id": row["id"], "cited": verdict["entry"].split(" — ")[0][len("source "):], "names": names, "only_code_citation": len(code) == 1})
         if lost:
             standing = f"{len(code)} source or test citations that still hold" if len(code) > 1 else "one source or test citation that still holds"
             row["notes"].append(f"{day} reprogress: evidence withdrawn, no longer held at {tree.head[:9]} — {lost_text}. Implemented stands on {standing}.")
@@ -640,6 +764,7 @@ def reprogress(apply: bool = False, tree: Tree | None = None, day: str | None = 
     after = yes()
     returned_ids = {item["id"] for item in returned}
     result = {
+        "verb": "reprogress", "lanes": sorted(lanes) if lanes else "all", "at_home": at_home,
         "implemented_yes": {"before": sum(before.values()), "after": sum(after.values()), "by_lane_before": before, "by_lane_after": after},
         "rows_repointed": len({item["id"] for item in repointed}), "citations_repointed": len(repointed),
         "returned_to_pending": dict(sorted(Counter(f"lane-{item['lane']}" for item in returned).items())),
@@ -649,23 +774,147 @@ def reprogress(apply: bool = False, tree: Tree | None = None, day: str | None = 
     report = {
         "schema": "techne.new-shell-reprogress/v1", "applied": apply, "recorded_on": day, "candidate_head": tree.head, **result,
         "returned": returned, "withdrawn": withdrawn, "repointed": repointed,
-        # Reported, never acted on: a description held only to its file, a held quote that names other targets and not this one,
-        # and a homed row whose implemented is pending (allowed: implementation proof comes with exercise; never flipped without evidence).
-        "held_to_file_only": described, "quotes_naming_other_targets": elsewhere,
-        "homed_pending": [row["id"] for row in rows if row.get("home") is not None and row["progress"]["implemented"]["state"] == "pending" and row["id"] not in returned_ids],
+        # Reported, never acted on: a description held only to its file, and a homed row whose implemented is pending (allowed:
+        # implementation proof comes with exercise, through prove-at-home; never flipped without evidence).
+        "held_to_file_only": described,
+        "homed_pending": [row["id"] for row in rows if (not lanes or row["lane"] in lanes) and row.get("home") is not None
+                          and row["progress"]["implemented"]["state"] == "pending" and row["id"] not in returned_ids],
     }
     if apply:
-        basis = document.get("reprogress_basis") or {"tool": "acceptance.py reprogress --apply", "runs": []}
-        basis.update(recorded_on=day, candidate_head=tree.head, law=REPROGRESS_LAW)
         if returned or withdrawn or repointed:
-            basis["runs"].append({"recorded_on": day, "candidate_head": tree.head, **result})
-        document["reprogress_basis"] = basis
-        if REPROGRESS_STANDING not in document["standing"]:
-            document["standing"] = f"{document['standing']} {REPROGRESS_STANDING}"
+            record_run(document, tree, day, result)
         save("targets.json", document)
         verify()
     print(json.dumps(report, indent=1, ensure_ascii=False))
     return report
+
+
+def test_reaches(tests: list[str], home: str, root: Path = REPO) -> dict[str, bool]:
+    """Whether each test's imports reach the home's file: candidate-reachable.mjs's own walk, with the test as its root, over the
+    files under root (a revision's materialized tree, or the repository)."""
+    script = (f"import {{walk}} from {json.dumps((root / REACHABILITY_SCRIPT).as_uri())};import {{resolve}} from 'node:path';"
+              "const [home, ...tests] = process.argv.slice(1);"
+              "for (const test of tests) console.log(JSON.stringify([test, walk([[resolve(test), test]]).has(resolve(home))]));")
+    result = subprocess.run(["node", "--input-type=module", "-e", script, home, *tests], cwd=root, capture_output=True, text=True, check=False)
+    verdicts = dict(json.loads(line) for line in result.stdout.splitlines() if line.startswith("["))
+    if set(verdicts) != set(tests):
+        raise ValueError(f"the import walk gave no verdict for {sorted(set(tests) - set(verdicts))}: {result.stderr.strip()[:400]}")
+    return verdicts
+
+
+def prove_at_home(ids: list[str], commits: list[str], scripted: list[str], tree: Tree | None = None, day: str | None = None, reach=None) -> dict:
+    """Record `implemented: yes` at the row's home, on evidence this verb checks: the home's own cited line still holds its quote at
+    the revision; each test file stands there (and each named test title in it) and its imports reach the home's file, walked over
+    the revision's own files; each commit is in the revision's history and touched the home's file or a cited test. The evidence
+    is exactly those, never more."""
+    tree = tree or Tree()
+    if reach is None:
+        root = tree.materialize()
+        try:
+            return prove_at_home(ids, commits, scripted, tree=tree, day=day, reach=lambda tests, home: test_reaches(tests, home, root))
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+    day = day or datetime.now().date().isoformat()
+    if not ids or not commits or not scripted:
+        raise ValueError("prove-at-home needs targets, at least one --commit and at least one --scripted test file")
+    tests = [(path.strip(), title.strip() or None) for path, _, title in (spec.partition("::") for spec in scripted)]
+    if any(title and '"' in title for _, title in tests):
+        raise ValueError('a test title is cited between double quotes, so it cannot hold one')
+    document = json.loads((OUT / "targets.json").read_text())
+    rows = {row["id"]: row for row in document["targets"]}
+    refusals, plans = [], {}
+    for target in ids:
+        row = rows.get(target)
+        if row is None:
+            refusals.append(f"{target}: no such target")
+            continue
+        if row.get("home") is None:
+            refusals.append(f"{target}: no home to prove at" + (f" (a named gap, {row['gap']['ticket']})" if row.get("gap") else ""))
+            continue
+        path, line, quote = home_file(row), int(row["home"]["component"]["at"].rsplit(":", 1)[1]), row["home"]["component"]["quote"]
+        text = tree.text(path)
+        lines = text.split("\n") if text is not None else []
+        if line > len(lines) or quote not in lines[line - 1]:
+            refusals.append(f"{target}: its home {path}:{line} does not hold its quote at {tree.head[:9]}")
+            continue
+        entries = []
+        for sha in commits:
+            if not tree.in_history(sha):
+                refusals.append(f"{target}: commit {sha} is not in the history of {tree.head[:9]}")
+            elif path not in tree.touched(sha) and not any(test in tree.touched(sha) for test, _ in tests):
+                refusals.append(f"{target}: commit {sha} touched neither its home's file nor a cited test")
+            else:
+                entries.append(f"commit {tree.full(sha)} — {tree.subject(sha)}")
+        entries.append(f"source {path}:{line} — {quote}")
+        verdicts = reach([test for test, _ in tests], path)
+        for test, title in tests:
+            body = tree.text(test)
+            if body is None:
+                refusals.append(f"{target}: no test file {test} at {tree.head[:9]}")
+            elif title and not any(title in text_line for text_line in body.split("\n") if "test(" in text_line):
+                refusals.append(f'{target}: no test "{title}" in {test}')
+            elif not verdicts.get(test):
+                refusals.append(f"{target}: {test} never reaches its home {path} (a test that never touches the home is not its evidence)")
+            else:
+                entries.append(f"scripted {test} — " + (f'test "{title}"; ' if title else "") + f"its imports reach {path}")
+        plans[target] = entries
+    if refusals:
+        raise ValueError("prove-at-home refused: " + "; ".join(refusals))
+    yes_before = sum(row["progress"]["implemented"]["state"] == "yes" for row in rows.values())
+    for target, entries in plans.items():
+        row = rows[target]
+        axis = row["progress"]["implemented"]
+        replaced = [entry.split(" — ")[0] for entry in (axis["evidence"] if axis["state"] == "yes" else []) if entry not in entries]
+        axis.update(state="yes", evidence=entries)
+        row["candidate_revision"] = tree.head
+        named = ", ".join(f'{test} ("{title}")' if title else test for test, title in tests)
+        note = (f"{day} prove-at-home: implemented at its home {row['home']['component']['at']} (route {row['home']['route']}), held at "
+                f"{tree.head[:9]}: the home's line holds its quote; {named} reach{'' if len(tests) > 1 else 'es'} it; "
+                f"commit{'s' if len(commits) > 1 else ''} {', '.join(sha[:9] for sha in commits)} in its history.")
+        if replaced:
+            note += f" Replaces its earlier evidence: {'; '.join(replaced)}."
+        row["notes"].append(note)
+    result = {"verb": "prove-at-home", "targets": list(plans), "commits": [tree.full(sha) for sha in commits], "tests": [test for test, _ in tests],
+              "implemented_yes": {"before": yes_before, "after": sum(row["progress"]["implemented"]["state"] == "yes" for row in rows.values())}}
+    record_run(document, tree, day, result)
+    save("targets.json", document)
+    verify()
+    print(json.dumps(result, indent=1, ensure_ascii=False))
+    return result
+
+
+def hold_pending(ids: list[str], reason: str, day: str | None = None) -> dict:
+    """Record why a row's implemented stands (or returns to) pending: a dated note with the reason; a `yes` returns to pending and
+    its evidence is withdrawn, named in the note. Pending claims nothing, so the reason is the caller's reading, said as such."""
+    day = day or datetime.now().date().isoformat()
+    if not reason or not reason.strip():
+        raise ValueError("pending needs its --reason")
+    document = json.loads((OUT / "targets.json").read_text())
+    rows = {row["id"]: row for row in document["targets"]}
+    unknown = [target for target in ids if target not in rows]
+    if not ids or unknown:
+        raise ValueError(f"pending needs known targets: {unknown or 'none named'}")
+    returned, noted = [], []
+    for target in ids:
+        row = rows[target]
+        axis = row["progress"]["implemented"]
+        note = f"{day} pending: {reason.strip().rstrip('.')}."
+        if axis["state"] == "yes":
+            withdrawn = [entry.split(" — ")[0] for entry in axis["evidence"]]
+            axis.update(state="pending", evidence=[])
+            note += f" Implemented returns to pending; its evidence is withdrawn: {'; '.join(withdrawn)}."
+            returned.append(target)
+        elif note in row["notes"]:
+            continue
+        row["notes"].append(note)
+        noted.append(target)
+    result = {"verb": "pending", "returned_to_pending": returned, "noted": noted}
+    if noted:
+        record_run(document, None, day, result)
+    save("targets.json", document)
+    verify()
+    print(json.dumps(result, ensure_ascii=False))
+    return result
 
 
 def verify() -> None:
@@ -726,21 +975,30 @@ def verify() -> None:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("operation", choices=("initialize", "verify", "rehome", "reprogress"))
-    parser.add_argument("input", nargs="?", help="rehome: the re-homing input (rows, notes, tickets)")
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("operation", choices=("initialize", "verify", "rehome", "reprogress", "prove-at-home", "pending"))
+    parser.add_argument("args", nargs="*", help="rehome: the re-homing input (rows, notes, tickets); prove-at-home, pending: target ids")
     parser.add_argument("--apply", action="store_true", help="reprogress: record the result (default: report only)")
-    parser.add_argument("--at", default="HEAD", help="reprogress: the revision the evidence is held to (default HEAD)")
+    parser.add_argument("--at", default="HEAD", help="reprogress, prove-at-home: the revision the evidence is held to (default HEAD)")
+    parser.add_argument("--lane", type=int, action="append", choices=sorted(LANES), help="reprogress: only this lane (repeatable)")
+    parser.add_argument("--at-home", action="store_true", help="reprogress: a homed row's evidence must cite its home")
+    parser.add_argument("--commit", action="append", default=[], help="prove-at-home: a commit that landed the home or its tests")
+    parser.add_argument("--scripted", action="append", default=[], help="prove-at-home: a test file, optionally FILE::TEST TITLE")
+    parser.add_argument("--reason", help="pending: why the rows stand pending")
     args = parser.parse_args()
     try:
         if args.operation == "initialize":
             initialize()
         elif args.operation == "rehome":
-            if not args.input:
+            if len(args.args) != 1:
                 raise ValueError("rehome needs its input file")
-            rehome(Path(args.input))
+            rehome(Path(args.args[0]))
         elif args.operation == "reprogress":
-            reprogress(apply=args.apply, tree=Tree(args.at))
+            reprogress(apply=args.apply, tree=Tree(args.at), lanes=args.lane, at_home=args.at_home)
+        elif args.operation == "prove-at-home":
+            prove_at_home(args.args, args.commit, args.scripted, tree=Tree(args.at))
+        elif args.operation == "pending":
+            hold_pending(args.args, args.reason)
         else:
             verify()
     except (ValueError, AssertionError, OSError, KeyError) as error:
