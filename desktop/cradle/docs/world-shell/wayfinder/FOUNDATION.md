@@ -277,6 +277,9 @@ as a device or a pane control, and is listed before the frame map is removed.
   evidence under `evidence/`.
   - No foundation item and no UI module is done without that.
   - If screen access fails, stop building UI and fix the access first.
+  - A window listed at about 116×120 at a negative x, captured as a tilted thumbnail with no accessibility windows, is the
+    candidate parked in Stage Manager's strip, not a broken host: bring it to the current stage
+    (`app_bring_to_current_space`), which needs the screen unlocked — while the Mac is locked no screen pass can run.
 - **Scripted checks** remain the floor (all three tsc roots, the suites,
   conformance, kernel fmt/clippy). They are never the claim.
 - **A Sonnet review** at the end of each foundation item and each module wave.
