@@ -22,7 +22,7 @@ import {createRoot} from 'react-dom/client'
 import {registerProjectionModule, type ProjectionModuleHandle} from '../../../../../desktop/cradle/src/surface/projectionModules'
 import {
   attachExpressionsSlot, preferExpressionsPane, registerExpressionsPane, setExpressionsPanePresented,
-  unregisterExpressionsPane, useFramePlacement, useHostedChrome, useHostedExpressions,
+  unregisterExpressionsPane, useFramePlacement, useHostedChrome, useHostedExpressions, type ExpressionsPaneAdmission,
 } from './expressionsPaneHost'
 
 export const EXPRESSIONS_MODULE_ID = 'expressions-hosted-presenter'
@@ -53,8 +53,9 @@ const EMPTY_LINE: CSSProperties = {position: 'absolute', inset: 0, display: 'gri
 const FAULT_LINE: CSSProperties = {flex: 'none', margin: 0, padding: '3px 8px', borderTop: '1px solid var(--line)', background: 'var(--bg-1)',
   color: 'var(--rec)', fontSize: 10, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}
 
-/** The pane body: the slot the frame is drawn over while this pane holds it, edge to edge. */
-export function ExpressionsPaneBody({paneId}: {paneId: string}) {
+/** The pane body: the slot the frame is drawn over while this pane holds it, edge to edge. `admission` is the module instance's
+ * own (mountExpressionsPane); its slot notices reach only the record that admission holds. */
+export function ExpressionsPaneBody({paneId, admission}: {paneId: string; admission?: ExpressionsPaneAdmission}) {
   const reading = useHostedExpressions()
   const chrome = useHostedChrome()
   const placement = useFramePlacement()
@@ -63,9 +64,9 @@ export function ExpressionsPaneBody({paneId}: {paneId: string}) {
   const slot = useRef<HTMLDivElement | null>(null)
   // The slot is this pane's rectangle for the frame. It is attached while the body is mounted and released when it leaves.
   useLayoutEffect(() => {
-    attachExpressionsSlot(paneId, slot.current)
-    return () => attachExpressionsSlot(paneId, null)
-  }, [paneId])
+    attachExpressionsSlot(paneId, slot.current, admission)
+    return () => attachExpressionsSlot(paneId, null, admission)
+  }, [paneId, admission])
   const heading = expressionsHeading(reading)
   const waiting = elsewhere ? EXPRESSIONS_ELSEWHERE : expressionsWaiting(reading)
   const faults = chrome?.faults ?? []
@@ -85,15 +86,17 @@ export function ExpressionsPaneBody({paneId}: {paneId: string}) {
 
 /** Mount the body into a pane element. The module owns the element's content and leaves it clean on unmount. */
 function mountExpressionsPane(element: HTMLElement, paneId: string): ProjectionModuleHandle {
-  registerExpressionsPane(paneId)
+  // This instance's own admission: a second instance of the same pane (StrictMode, a remount in one commit) takes the record
+  // over, and this one's late unmount and notices no longer reach it (expressionsPaneHost.ts registerExpressionsPane).
+  const admission = registerExpressionsPane(paneId, {})
   const root = createRoot(element)
-  root.render(<ExpressionsPaneBody paneId={paneId} />)
+  root.render(<ExpressionsPaneBody paneId={paneId} admission={admission} />)
   return {
     unmount: () => {
-      unregisterExpressionsPane(paneId)
+      unregisterExpressionsPane(paneId, admission)
       queueMicrotask(() => root.unmount())
     },
-    setVisible: visible => setExpressionsPanePresented(paneId, visible),
+    setVisible: visible => setExpressionsPanePresented(paneId, visible, admission),
   }
 }
 
