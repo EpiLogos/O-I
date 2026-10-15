@@ -99,8 +99,20 @@ objections verbatim and the full validation (`BRIEF-BUILDER.md`); the lead conve
 
 | Ticket | Who | Zone | Since |
 |---|---|---|---|
-| FOUNDATION §8: the 126 targets re-homed — each gains its home and owner op with evidence, or a named gap; the gaps ranked into the next tickets | Opus builder | `desktop/cradle/docs/world-shell/targets.json`, `acceptance.py` (additive) | 15 Oct |
 | Native screen pass against the mockup renders; N1; mounting N2's subject door | lead | the frame, `App.tsx`, `native/Workbench.tsx`, `shell/modeFrames.ts`, the book | 14 Oct |
+
+Then: the 126 targets re-homed (lane M, FOUNDATION §8): `acceptance.py rehome` re-opens every cited path:line, runs the
+reachability script over every home and records home, owner op and evidence — or a named gap — on each row; `verify` holds
+the new columns; the input is rebuilt by `tools/build_rehome.py` from any seat. 122 homed, 4 gaps; 0 seen on screen (all
+code-reading plus the reachability script); 40 homed on homes FOUNDATION §4 and N4 retire (the frame's Places map and
+Palace). Ranked: G1 the stage's file exports have no native receiver (the main window sets no download handler and wry
+cancels `<a download>`: lane-1 B2/B3); G2 the Instruments rail keeps no subject into Graph (D1); G3 the shell carries no
+frame deep-link address (E22); R1 Places onto the atlas (31 targets); R2 palaces onto the atlas (N4, 9); S1 mount N2's
+subject door — 76 homes read their facets only on a Wiki-bound Scene, reached today only by Examine in the Graph pane.
+The native pass at `2f5c1bcf6` (computer-use): Central's Days read the owner's surface; every day was named "day.md" in the
+title line, trail and detail head (fixed, `3b66dcc3e`); the Expressions centre still read blank because the one frame keeps
+its instrument session open in every cut — the frame now says when its cut draws (`f2ef25b0f`); Technē's rack reads its
+plates; Sources and the Expressions browser say no works are disclosed, truly — the works home holds no work yet.
 
 Then: the browser's rows at the mockup's `bi()` in every mode (`5604207b9`, lane L: mark · name in words · standing from
 the owner; Central's NOW section; a New… grid that makes the four document forms; Beings over the roster); Central's Days
@@ -283,10 +295,6 @@ walk-bridge 4179.
   no element carries "Base · Central" / "08:30" / "21:00"; quit exit 0
   (`evidence/p0-r1/run-20261013T-phase1b/`; channel scripted). Screencapture
   still refused — the pixel legs stay owed.
-- The target register refuses verify: `PROGRAMME.md` was edited (8 Oct) after the
-  register recorded its hash — true before the move too. Re-record the basis
-  (`python3 acceptance.py`) only with a dated note of what changed; the 0/126
-  progress stands either way.
 
 ## 10. Wave log
 
