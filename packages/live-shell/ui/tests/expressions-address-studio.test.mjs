@@ -114,8 +114,9 @@ test('a plate column folds to its title as the runtime\'s strip; an open column 
   const html = renderToStaticMarkup(createElement(Plate.InstrumentPlate, {presentation: {family: 'expressions', faceId: 'studio', title: 'Studio', icon: 'expr', owner: 'x'},
     sections: [{id: 'a', title: 'Motion', children: 'open body', onFold: noop}, {id: 'b', title: 'Body · 3:3', children: 'hidden body', folded: true, onFold: noop},
       {id: 'c', title: 'Capture', children: 'capture body'}]}))
-  assert.match(html, /<h5 class="inst-section-head"><button type="button" class="inst-section-fold" aria-expanded="true" title="Fold to its title" aria-label="Fold Motion to its title">Motion<\/button><\/h5>/)
-  assert.match(html, /<section class="inst-section inst-section--folded" data-section="b" data-folded="true" aria-label="Body · 3:3"><button type="button" class="sdk-face__unfold" aria-expanded="false" aria-label="Open Body · 3:3" title="Body · 3:3 — open"><span class="sdk-face__fold-title">Body · 3:3<\/span><\/button><\/section>/)
+  // Each press also says what it does on the status line (data-i, docs/dlw/DEVICE-UI.md §5.1 "Point at it").
+  assert.match(html, /<h5 class="inst-section-head"><button type="button" class="inst-section-fold" aria-expanded="true" title="Fold to its title" aria-label="Fold Motion to its title" data-i="Motion\|Click the title to fold the section\.">Motion<\/button><\/h5>/)
+  assert.match(html, /<section class="inst-section inst-section--folded" data-section="b" data-folded="true" aria-label="Body · 3:3"><button type="button" class="sdk-face__unfold" aria-expanded="false" aria-label="Open Body · 3:3" title="Body · 3:3 — open" data-i="Body · 3:3\|Folded to its title\. Click to open it\."><span class="sdk-face__fold-title">Body · 3:3<\/span><\/button><\/section>/)
   assert.doesNotMatch(html, /hidden body/, 'a folded column draws only its strip')
   assert.match(html, /<h5 class="inst-section-head"><span>Capture<\/span><\/h5>/, 'a column without a fold is drawn as before')
 })

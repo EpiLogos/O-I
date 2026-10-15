@@ -147,7 +147,7 @@ test('Selected · the glyph holds the Object chooser, the Force card\'s modes fo
 
 test('a section whose owner discloses nothing says so in one line; no work open, no field device and no default values', () => {
   const html = studio(reading())
-  assert.match(sectionOf(html, 'studio:nara-m4'), /class="inst-section-line">No owner discloses the Nara layer/)
+  assert.match(sectionOf(html, 'studio:nara-m4'), /class="inst-section-line" data-i="\|No owner discloses the Nara layer[^"]*">No owner discloses the Nara layer/, 'one line; its whole words on the status line')
   // Capture is no longer empty: the stage's capture moved here from the Expressions pane (14 Oct; expressions-pane-studio-stage.test.mjs).
   assert.match(sectionOf(html, 'studio:capture'), /role="group" aria-label="Capture"/)
   assert.doesNotMatch(sectionOf(html, 'studio:capture'), /No owner discloses capture/)

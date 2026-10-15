@@ -11,12 +11,13 @@
 // devices it holds. Clicking a folded instrument opens it on the focused pane through the instrument door (the mockup's `data-instr`),
 // and stands it open here whatever the door answers. With no instrument focused, the faces no Technē instrument holds (the QL field/PCM
 // owner and its waiting kin) stand after the folds as they did before: the admitted one open, the waiting ones folded.
-import {useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode} from 'react'
+import {useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode, type RefObject} from 'react'
 import {DeviceView} from '../../../frame/devices/DeviceView'
 import {publishDevice, publishedDevice, selectDevice} from '../../../frame/devices/deviceDoor'
 import {DEVICE_PANE_KIND} from '../../../frame/devices/devicePane'
 import {driveStageLens, openInstrument, reportInstrumentFault} from '../../../frame/instrumentDoor'
 import {InstrumentPlate, SectionNote, type PlateSection, type SectionDevice} from '../../../frame/devices/InstrumentPlate'
+import {sameSet} from '../../../frame/devices/plateFit'
 import {HOSTED_INSTRUMENT, instrumentOfPane, type HostedLens} from '../../../shell/paneInstrument'
 import {HOLDERS, TECHNE_INSTRUMENTS, type HolderDeclaration} from '../../sdk/semantics'
 import type {IconName} from '../../sdk/icons'
@@ -38,6 +39,8 @@ import {atlasDevice, atlasReading, ATLAS_FAMILY, type AtlasReading} from './atla
 import {knowledgeDevice, KNOWLEDGE_FAMILY} from './knowledgeDevices'
 import {qlInstrumentDevice, waitingDevice, QL_FAMILY, QL_INSTRUMENT_FACE} from './qlDevices'
 import {startsExpanded, TECHNE_FACE_ICONS} from './faces'
+import {ProjectPlate} from './ProjectPlate'
+import {InstrumentCompact, hasCompact} from './techneCompacts'
 import './techneDevices.css'
 
 /** What the devices are read from: the one mounted atlas, the open graph, the QL owner's reading — each the same reader its body reads. */
@@ -261,17 +264,22 @@ function sectionDeviceOf(entry: TechneEntry): SectionDevice & {face: string} {
   ]}
 }
 
-/** The instruments whose plate is their own (a registration by holder, never a mode branch): M1′–M3′, the hosted stage's instruments in the
+/** The instruments whose plate is their own (a registration by holder, never a mode branch): M0′ Project, the Earth and its graph as one
+ * plate — the globe, Graph tools, Earth ⇄ Graph and Deep time drawn as its sections, and the stage's own controls while the stage stands in
+ * its project lens (ProjectPlate.tsx); M1′–M3′, the hosted stage's instruments in the
  * manual's groups (projections/stageInstruments/StageInstrumentPlate.tsx STAGE_OWN_PLATES); M4′ World / Places, the atlas's planet plate
  * (projections/atlas/places/PlacesPlate.tsx); M5′ Palace / Integral Whole, the palace's controls — its rooms, path, guide, whole,
  * composition, portals and Return (projections/atlas/palaces/PalacePlate.tsx). Every other instrument stands as its families' plate. */
 const OWN_PLATES: Readonly<Record<string, (props: {held: readonly (SectionDevice & {face: string})[]; focused: boolean; families: readonly PlateSection[]}) => ReactNode>> = {
+  'techne:m0': props => <ProjectPlate {...props} />,
   'techne:m4': props => <PlacesPlate {...props} />,
   'techne:m5': props => <PalacePlate {...props} />, ...STAGE_OWN_PLATES,
 }
 
 /** The open instrument: one plate, its columns the families whose devices it holds, each family's devices side by side. */
 function OpenInstrument({holder, entries, focused}: {holder: HolderDeclaration; entries: readonly TechneEntry[]; focused: boolean}) {
+  // Each family's devices stand side by side in its section, drawn flat there (techneDevices.css: the device's frame stands down, one
+  // hairline between two devices) — never a boxed plate inside the plate.
   const families = [...new Set(entries.map(entry => entry.family))].map(family => ({id: family, title: FAMILY_NAMES[family] ?? family,
     note: entries.some(entry => entry.family === family && entry.face.admission === 'waiting') ? 'waiting' : undefined,
     children: <div className="techne-section-devices">{entries.filter(entry => entry.family === family).map(entry => <OpenDevice key={entry.device.id} entry={entry} />)}</div>}))
@@ -287,11 +295,59 @@ function OpenInstrument({holder, entries, focused}: {holder: HolderDeclaration; 
 
 /** An instrument folded to its title: the runtime's fold; pressing it opens it on the focused pane. */
 function InstrumentFold({holder, count, onOpen}: {holder: HolderDeclaration; count: number; onOpen: () => void}) {
-  return <div className="techne-instrument" data-instrument={holder.id} data-expanded="false" data-device-count={count}
+  return <div className="techne-instrument" data-instrument={holder.id} data-expanded="false" data-device-count={count} data-rack="strip"
     title={`${holder.provenance ? `${holder.provenance} ` : ''}${holder.title} — ${count ? `${count} device${count === 1 ? '' : 's'}` : 'no device declared yet'}. Click to open it on the focused pane.`}>
     <FacePlate presentation={{family: 'techne', faceId: holder.id, title: holderTitle(holder), icon: INSTRUMENT_MARKS[holder.id] ?? 'techne', owner: holder.provenance ?? 'Technē'}}
       folded onFold={onOpen} />
   </div>
+}
+
+/** The width a Compact instrument stands at before it is measured (techneDevices.css .techne-compact). */
+const COMPACT_WIDTH = 228
+
+/** Which instruments stand at their Compact size (manual §16.1 "Compact | In a chain | Play the device"), the rest folded to their titles:
+ * the open plate first at the width its sections ask (InstrumentPlate.tsx `data-natural-width`), every other device as it stands, then
+ * the Compacts nearest the open plate — or in their order when none is open — while the row has room. The row never scrolls: a Compact
+ * that does not fit is its fold, pressed to open the instrument as before. Measured where the row stands, again on any resize. */
+function useRackFit(compacts: readonly string[], order: readonly string[]): {ref: RefObject<HTMLDivElement>; shown: ReadonlySet<string>} {
+  const ref = useRef<HTMLDivElement>(null)
+  const widths = useRef(new Map<string, number>())
+  const [shown, setShown] = useState<ReadonlySet<string>>(() => new Set())
+  const key = `${compacts.join('|')}>${order.join('|')}`
+  useEffect(() => {
+    const row = ref.current
+    if (!row) return
+    const fit = () => {
+      const style = getComputedStyle(row)
+      const gap = Number.parseFloat(style.columnGap) || 0
+      const available = row.clientWidth - (Number.parseFloat(style.paddingLeft) || 0) - (Number.parseFloat(style.paddingRight) || 0)
+      let fixed = 0, strip = 26
+      const items = [...row.children] as HTMLElement[]
+      for (const item of items) {
+        const width = item.getBoundingClientRect().width
+        if (item.dataset.rack === 'compact' && item.dataset.instrument) { widths.current.set(item.dataset.instrument, width); continue }
+        if (item.dataset.rack === 'strip') { if (compacts.includes(item.dataset.instrument ?? '')) { strip = width || strip; continue } }
+        const natural = item.classList.contains('inst-plate') ? Number(item.dataset.naturalWidth) : NaN
+        fixed += Number.isFinite(natural) && natural > 0 ? natural + 2 : width
+      }
+      let total = fixed + compacts.length * strip + Math.max(0, items.length - 1) * gap
+      const next = new Set<string>()
+      for (const id of order) {
+        const width = widths.current.get(id) ?? COMPACT_WIDTH
+        if (total + width - strip <= available) { next.add(id); total += width - strip }
+      }
+      setShown(previous => sameSet(previous, next) ? previous : next)
+    }
+    fit()
+    if (typeof ResizeObserver === 'undefined') return
+    const resized = new ResizeObserver(fit)
+    resized.observe(row)
+    // the open plate's natural width arrives with its own fit, as an attribute
+    const asked = typeof MutationObserver === 'undefined' ? null : new MutationObserver(fit)
+    asked?.observe(row, {subtree: true, attributes: true, attributeFilter: ['data-natural-width']})
+    return () => { resized.disconnect(); asked?.disconnect() }
+  }, [key])
+  return {ref, shown}
 }
 
 export function TechneDevices({manifests, focusInstrument = null, instrumentReading}: {
@@ -329,12 +385,20 @@ export function TechneDevices({manifests, focusInstrument = null, instrumentRead
   const unfolded = folds.focus === focusInstrument ? folds.open : {}
   const instruments = rackInstruments(focusInstrument)
   const unheld = open ? [] : entries.filter(entry => !instruments.some(holder => holds(entry, holder.id)))
-  return <div className="techne-devices" data-techne-devices data-device-count={entries.length} data-open-instrument={open ?? undefined}>
+  // The instruments not open stand Compact where the row has room (nearest the open plate first), folded to their titles elsewhere.
+  const compacts = instruments.filter(holder => holder.id !== open && hasCompact(holder.id)).map(holder => holder.id)
+  const openAt = instruments.findIndex(holder => holder.id === open)
+  const order = openAt < 0 ? compacts : [...compacts].sort((a, b) => Math.abs(instruments.findIndex(h => h.id === a) - openAt) - Math.abs(instruments.findIndex(h => h.id === b) - openAt))
+  const rack = useRackFit(compacts, order)
+  return <div ref={rack.ref} className="techne-devices" data-techne-devices data-device-count={entries.length} data-open-instrument={open ?? undefined}>
     {instruments.map(holder => {
       const held = entries.filter(entry => holds(entry, holder.id))
+      const press = () => { setOpened({focus: focusAfterOpening(holder.id, focusInstrument), id: holder.id}); openOnFocusedPane(holder.id) }
       return holder.id === open
         ? <OpenInstrument key={holder.id} holder={holder} entries={held} focused={holder.id === focusInstrument} />
-        : <InstrumentFold key={holder.id} holder={holder} count={held.length} onOpen={() => { setOpened({focus: focusAfterOpening(holder.id, focusInstrument), id: holder.id}); openOnFocusedPane(holder.id) }} />
+        : rack.shown.has(holder.id)
+          ? <InstrumentCompact key={holder.id} holder={holder} mark={INSTRUMENT_MARKS[holder.id] ?? 'techne'} light="unknown" onOpen={press} />
+          : <InstrumentFold key={holder.id} holder={holder} count={held.length} onOpen={press} />
     })}
     {unheld.map(entry => (unfolded[entry.device.id] ?? startsExpanded(entry.face, null))
       ? <OpenDevice key={entry.device.id} entry={entry} />

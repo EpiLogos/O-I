@@ -5,13 +5,15 @@
 // over it — the research tools dock, the canvas's zoom keys and minimap toggle, the selected card's panel, the scene bar, the masthead —
 // stands here in the manual's groups (stageInstrumentModel.ts), read from the frame's published chrome and pressed through its one
 // runner (components/expressions/studio/frameChrome.tsx). Ported, not recreated: each key is the frame's own control
-// (expressions-app field-studies-journeys/src/researchInstruments.tsx, journeyInstrument.tsx, shell.ts, app.ts), pressed.
+// (expressions-app field-studies-journeys/src/researchInstruments.tsx, journeyInstrument.tsx, shell.ts, app.ts), pressed. Drawn in the
+// device craft (frameChrome.tsx on the panel kit, docs/dlw/DEVICE-UI.md): keys lit by the frame's reading, bounded numbers swept, a
+// parameter the manual names that no owner carries drawn as its switch with nothing lit and its reason on the status line.
 import type {ReactNode} from 'react'
 import {InstrumentPlate, SectionNote, type PlateSection, type SectionDevice} from '../../frame/devices/InstrumentPlate'
 import type {FacePresentation} from '../../inhabitants/sdk/define'
 import type {IconName} from '../../inhabitants/sdk/icons'
 import {FrameControls, WaitingRow, controlsAt, useFrameChrome, type FrameChromeView} from '../../components/expressions/studio/frameChrome'
-import {usePlateFit} from '../../components/expressions/studio/plateFit'
+import {usePlateFit} from '../../frame/devices/plateFit'
 import {EXPRESSION_SECTION, STAGE_PLATES, type StageInstrumentId, type StageSection} from './stageInstrumentModel'
 import './stageInstrumentPlate.css'
 
@@ -62,8 +64,8 @@ export function StageInstrumentPlate({id, focused, families = []}: {id: StageIns
         : <SectionNote>{view.reason ?? 'The stage has not reported its controls yet.'}</SectionNote>}),
     ...families.map(section => fold(section)),
   ]
-  return <InstrumentPlate presentation={presentation} sections={sections}
-    dataAttributes={{'data-instrument': id, 'data-expanded': 'true', 'data-stage-plate': meta.lens, 'data-presentation': view.presentation ?? undefined, 'data-studio-fit': fit.fitId}}
+  return <InstrumentPlate presentation={presentation} sections={sections} fit={fit}
+    dataAttributes={{'data-instrument': id, 'data-expanded': 'true', 'data-stage-plate': meta.lens, 'data-presentation': view.presentation ?? undefined}}
     footer={view.refusal ? <p className="stage-plate-fault" role="alert">{view.refusal}</p> : undefined} />
 }
 

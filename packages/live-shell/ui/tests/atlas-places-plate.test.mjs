@@ -78,20 +78,29 @@ test('the focused M4′ stands as one plate in the mockup\'s six sections; the o
   assert.ok(order.every(at => at > 0), 'every section stands')
   assert.deepEqual([...order].sort((a, b) => a - b), order, 'in the mockup\'s order')
   assert.match(out, />World \/ Places</)
-  assert.match(out, /M4′ · Technē · Earth · root anchor · open on the focused pane · scale —/, 'the head names the body and the scale (no atlas mounted: no scale)')
+  assert.match(out, /M4′ · Technē · Earth · root anchor · open on the focused pane/, 'the head names the body')
+  assert.match(out, /class="inst-head-reading"[^>]*>scale <b>—<\/b>/, 'the scale stands in the head\'s slot (no atlas mounted: no scale)')
   for (const id of ['techne:m0', 'techne:m1', 'techne:m2', 'techne:m3', 'techne:m5']) assert.match(out, new RegExp(`data-instrument="${id}" data-expanded="false"`), `${id} folds`)
-  // each device M4′ holds stands in its section: one shown at a time, the others behind their marks (InstrumentPlate SectionDevices)
+  // each device M4′ holds stands as its mark on the section that draws its controls: every setting in the pool, full size in a pane
   const body = out.slice(out.indexOf('data-section="body"'), out.indexOf('data-section="landmass"'))
-  assert.match(body, /data-device-shown="atlas-earth:globe-engine"/, 'the globe stands in Body')
-  assert.match(body, /role="tab"[^>]*aria-label="Earth ⇄ Graph"/, 'the Earth ⇄ Graph switch stands behind its mark in Body')
+  assert.match(body, /class="plate-held-mark" data-device="atlas-earth:globe-engine"/, 'the globe stands in Body')
+  assert.match(body, /class="plate-held-mark" data-device="atlas-earth:mode-switch"/, 'the Earth ⇄ Graph switch stands in Body')
   const sky = out.slice(out.indexOf('data-section="sky"'), out.indexOf('data-section="locations"'))
-  assert.match(sky, /data-device-shown="quaternal-logic:sky"/, 'the QL sky stands in Sky')
+  assert.match(sky, /class="plate-held-mark" data-device="quaternal-logic:sky"/, 'the QL sky stands in Sky')
+  // the planet builder in the device craft (the mockup's knobs, :1385-1397): on Earth each waits with the mockup's own words, never a value
+  for (const [section, dials] of [['landmass', ['Sea level', 'Continents', 'Relief']], ['climate', ['Warmth', 'Moisture', 'Ice caps']], ['sky', ['Atmosphere', 'Clouds', 'Axial tilt']]]) {
+    const at = out.slice(out.indexOf(`data-section="${section}"`), out.indexOf('</section>', out.indexOf(`data-section="${section}"`)))
+    for (const dial of dials) assert.match(at, new RegExp(`data-waiting="true" data-i="${dial}\\|[^"]+"><span class="dp-label">${dial}</span><svg class="dp-dial"`), `${dial} is a dial with no reading`)
+    assert.doesNotMatch(at, /dp-dial-value|dp-dial-needle/, `${section}: no value drawn that no owner holds`)
+  }
   assert.match(out, /Earth is given — its land is not built\. Place and name locations on it; anchor your body’s locations to it\./, 'the mockup\'s own Earth words')
-  assert.match(out, /aria-checked="true" class="sdk-seg__opt sdk-seg__opt--on"[^>]*>Earth</, 'the body is Earth, the one world nobody built')
-  assert.match(out, /title="Your own body has no builder in this suite yet: the atlas draws Earth\."[^>]*>Central</, 'Central waits, and says why')
+  assert.match(out, /aria-label="Coast"[^>]*>(<button[^>]*aria-checked="false"[^>]*disabled=""[^>]*>[a-z]+<\/button>){3}/, 'Coast is a switch with nothing lit')
+  assert.match(body, /role="radio" aria-checked="true"[^>]*>Earth</, 'the body is Earth, the one world nobody built')
+  assert.match(body, /data-i="Central\|Your own body has no builder in this suite yet: the atlas draws Earth\." disabled="">Central</, 'Central waits, and says why')
   assert.match(out, /No owner declares a place yet\./, 'no standing read: no place, said')
   assert.match(out, /Choose a subject on the Earth first/, 'Place waits for a subject')
-  assert.match(out, /<span class="places-k">Lens<\/span><select class="places-select" disabled=""/, 'the atlas\'s lens chooser stands on the plate, waiting for the Earth')
+  assert.match(out, /<select class="dp-chooser" aria-label="Lens"[^>]*disabled=""/, 'the atlas\'s lens chooser stands on the plate, waiting for the Earth')
+  assert.doesNotMatch(out, /overflow: ?(auto|scroll)|places-list/, 'no list scrolls inside the plate')
 })
 
 test('Locations and Relations read the owners\' places: precision marks, the mythic named, absences said, the legend by relation', () => {
@@ -99,15 +108,15 @@ test('Locations and Relations read the owners\' places: precision marks, the myt
   try {
     const out = M4()
     assert.match(out, /data-section="locations"[^>]*>.*2 on the Earth · 1 not/s, 'the section counts what the Earth draws and what it cannot')
-    assert.match(out, /data-marker="solid"[^>]*><\/span><span class="n">Tower Coast/, 'an exact place is a solid mark')
-    assert.match(out, /data-marker="halo"[^>]*><\/span><span class="n">Folio Isles<\/span><span class="places-tag" data-standing="mythic"/, 'approximate is a halo; the mythic is named')
-    assert.match(out, /data-located="false"[^>]*title="Nowhere[^"]*the owner declares a polygon; the Earth draws points/, 'the owner\'s reason, verbatim')
-    assert.match(out, /title="Tower Coast[^"]*wiki · Central wiki · revision r3 · evidence wiki:source:letters"/, 'provenance on every place (T13)')
+    assert.match(out, /data-marker="solid"[^>]*><\/span><span class="dp-row-name">Tower Coast/, 'an exact place is a solid mark')
+    assert.match(out, /data-marker="halo"[^>]*><\/span><span class="dp-row-name">Folio Isles<\/span><span class="places-tag" data-standing="mythic"/, 'approximate is a halo; the mythic is named')
+    assert.match(out, /data-row="wiki:place:nowhere" data-dim="true" data-i="Nowhere\|[^"]*the owner declares a polygon; the Earth draws points/, 'the owner\'s reason, verbatim')
+    assert.match(out, /data-i="Tower Coast\|[^"]*wiki · Central wiki · revision r3 · evidence wiki:source:letters"/, 'provenance on every place (T13)')
     const relations = out.slice(out.indexOf('data-section="relations"'))
     assert.ok(relations.indexOf('OCCURRED_AT') < relations.indexOf('MYTH_LOCATED_AT') && relations.indexOf('MYTH_LOCATED_AT') < relations.indexOf('DREAMT_AT'), 'the legend order')
-    assert.match(relations, /disabled=""[^>]*title="OCCURRED_AT: 1 place, 1 on the Earth/, 'no atlas mounted: a relation narrows nothing')
-    assert.match(out, /historical \/ current geography[^]*3 places declared/, 'the frames, rung by rung')
-    assert.match(out, /Nara \/ current situated body[^]*no owner discloses it here/)
+    assert.match(relations, /data-i="OCCURRED_AT\|OCCURRED_AT: 1 place, 1 on the Earth[^"]*"><button type="button" class="plate-row-press" disabled=""/, 'no atlas mounted: a relation narrows nothing')
+    assert.match(out, /historical \/ current geography: 3 places declared/, 'the frames, rung by rung')
+    assert.match(out, /Nara \/ current situated body: no owner discloses it here/)
   } finally {
     resetSuiteStanding()
   }
@@ -139,11 +148,11 @@ test('the atlas header stands down in the pane, and what it held stands on the p
       {title: 'Jung\'s theory', description: 'The theory sheet', pressed: true, disabled: false, press: () => pressed.push('jung')},
       {title: 'Dynamics', description: '', pressed: null, disabled: true, press: () => pressed.push('dynamics')}]}
   const out = html(createElement(LensReadings, {handle: {ctl: {shell: {headerReading: () => reading}}}}))
-  assert.match(out, /<span class="places-k">Reading<\/span><span class="places-v">Theory<\/span>/, 'the lens\'s line')
-  assert.match(out, /12 in the Red Book · <button type="button" class="places-link">Show the whole field<\/button>/, 'the scope and its toggle')
-  assert.match(out, /<button type="button" class="places-btn"[^>]*>Open Theory<\/button>/)
-  assert.match(out, /class="places-btn places-btn--on" aria-pressed="true" title="The theory sheet">Jung’s theory|class="places-btn places-btn--on" aria-pressed="true" title="The theory sheet">Jung&#x27;s theory/, 'a pressed row is lit, its description its hover')
-  assert.match(out, /disabled=""[^>]*>Dynamics<\/button>/, 'a disabled row stays disabled')
+  assert.match(out, /<p class="plate-line" role="status" data-i="Theory" title="Theory">Theory<\/p>/, 'the lens\'s line')
+  assert.match(out, /title="12 in the Red Book">12 in the Red Book<button type="button">Show the whole field<\/button>/, 'the scope and its toggle')
+  assert.match(out, /aria-pressed="false"[^>]*>Open Theory<\/button>/, 'a row the lens reads off stands dark')
+  assert.match(out, /data-i="Jung(’|&#x27;)s theory\|The theory sheet"><button type="button" class="dp-toggle" data-tone="accent" aria-pressed="true">Jung(’|&#x27;)s theory<\/button>/, 'a pressed row is lit, its description its status words')
+  assert.match(out, /class="dp-action" disabled="">Dynamics<\/button>/, 'a disabled row stays disabled')
   assert.equal(html(createElement(LensReadings, {handle: null})), '', 'no Earth mounted: nothing to stand')
 })
 

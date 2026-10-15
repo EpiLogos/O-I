@@ -44,7 +44,7 @@ import type {RackDevice} from '../../nativeDeviceCatalogue'
 import {GlyphSequenceEditor, type RetainedGlyphInput} from '../../GlyphSequenceEditor'
 import {firstShown, onRack, studioFieldFamilies, studioOwner, studioPlace, studioSections, type StudioSection} from './studioModel'
 import {STUDIO_FOLD_ORDER} from './studioFit'
-import {usePlateFit} from './plateFit'
+import {usePlateFit} from '../../../frame/devices/plateFit'
 import {StageCaptureTools, StageViewTools, useStageSender} from './StudioStage'
 import {FrameControls, controlsAt, useFrameChromeOver} from './frameChrome'
 import {STUDIO_CARRIED} from './studioModel'
@@ -144,11 +144,12 @@ export function ExpressionsStudio({reading, request, selectEntity, drafts, onExp
     const devices = fieldDevices(section)
     const listed = [...section.entity.filter(device => device.family !== 'force'), ...section.scene]
     const parts: ReactNode[] = []
-    // Tools: the work's own acts (Save, Undo, Redo — the frame's masthead, app.ts :2814 and its history menu), the frame's rail tools
-    // and workspace (shell.ts mountShell #tool-rail, #workspace-menu), the scene bar's Acts and Save scene (actPanel.ts :59, shell.ts
-    // nav.instrument), then the stage's view.
-    if (section.id === 'studio:tools') parts.push(<FrameControls key="frame-work" label="Work" controls={frameAt('work')} view={frame} />,
-      <FrameControls key="frame-tools" label="Frame tools" controls={frameAt(['tools', 'scene', 'side'])} view={frame} />, <StageViewTools key="stage" sender={stage} />)
+    // Tools: the frame's rail tools and workspace (shell.ts mountShell #tool-rail, #workspace-menu), the scene bar's Acts and Save scene
+    // (actPanel.ts :59, shell.ts nav.instrument), then the stage's view. The work's own acts (Save, Undo, Redo — the frame's masthead,
+    // app.ts :2814 and its history menu) stand in the head.
+    // The work's own acts (Save, Undo, Redo) stand in the Studio's head, as the mockup draws Save there (:1432).
+    if (section.id === 'studio:tools') parts.push(<FrameControls key="frame-tools" label="Frame tools" controls={frameAt(['tools', 'scene', 'side'])} view={frame} />,
+      <StageViewTools key="stage" sender={stage} />)
     // Nara: the frame's own Nara instrument (naraInstrument.tsx :307), opened from here.
     if (section.id === 'studio:nara-m4') parts.push(<FrameControls key="frame-nara" label="Nara" controls={frameAt('nara')} view={frame} />)
     if (section.id === 'studio:capture') parts.push(<StageCaptureTools key="stage" sender={stage} />)
@@ -173,11 +174,21 @@ export function ExpressionsStudio({reading, request, selectEntity, drafts, onExp
     : [{id: 'chosen', title: 'Your controls', children: <div className="native-chain-controls"><NativeChosenControls reading={reading} request={request} configure={false} /></div>}, ...own]
   // The columns fit the row by the plate's fold (plateFit.ts, moved out of here whole): measured there, decided by studioFit.ts over the
   // Studio's own fold order.
-  const fit = usePlateFit((configure ? settings : [...SECTIONS, ...yours]).map(section => section.id).join('|'), STUDIO_FOLD_ORDER, configure)
+  // The person's own columns (Your controls, their macros) fold first, then the Studio's own from the one nearest Capture: the mockup's
+  // eight groups stand longest (:1432-1441); a folded column is one press from open.
+  const fit = usePlateFit((configure ? settings : [...SECTIONS, ...yours]).map(section => section.id).join('|'), [...yours.map(section => section.id).reverse(), ...STUDIO_FOLD_ORDER], configure)
+  // The head: where the work stands against its last save (the mockup's "edited since save", :1432), then the work's own acts — the
+  // frame's Save, Undo and Redo, each its own control pressed (frameChrome.tsx).
+  const work = frameAt('work')
+  const head = reading || work.length ? <>
+    {reading && <span className="studio-head-standing" data-dirty={reading.standing.dirty ? 'true' : undefined}
+      data-i={`Standing|${reading.standing.dirty ? 'Edited since the last save.' : 'As saved.'}`}>{reading.standing.dirty ? 'edited since save' : 'saved'}</span>}
+    <FrameControls label="Work" controls={work} view={frame} />
+  </> : undefined
   const sections: PlateSection[] = configure ? [...settings] : [...SECTIONS.map(section => ({
     id: section.id, title: section.title, note: section.note ?? undefined, children: sectionBody(section),
     folded: fit.folded.has(section.id), onFold: () => fit.press(section.id),
-  })), ...yours]
+  })), ...yours.map(section => section.folded !== undefined || section.onFold ? section : {...section, folded: fit.folded.has(section.id), onFold: () => fit.press(section.id)})]
 
   // A device dragged from the browser goes on the rack, appended after the last widget — the rack's own drop, one device-add. Over the
   // rack itself (in the settings) the rack takes the drop at its gap and the plate stands aside: one drop, one add.
@@ -193,9 +204,8 @@ export function ExpressionsStudio({reading, request, selectEntity, drafts, onExp
   const said = [fault ?? paneFault ?? editor.error, stage.refusal, frame.refusal, ...(placement === null ? chrome?.faults ?? [] : [])].filter((text): text is string => !!text)
   const shown = said.length ? said.join(' · ') : null
   return <InstrumentPlate presentation={{family: 'expressions', faceId: 'studio', title: 'Studio', icon: 'expr', owner: studioOwner(reading, place)}}
-    actions={actions} sections={sections} bodyClassName="native-device-view"
-    dataAttributes={{'data-studio': configure ? 'settings' : 'sections', 'data-dropping': dropping ? 'true' : undefined, 'data-dirty': reading?.standing.dirty ? 'true' : undefined,
-      'data-studio-fit': fit.fitId}}
+    head={head} actions={actions} sections={sections} bodyClassName="native-device-view" fit={configure ? undefined : fit}
+    dataAttributes={{'data-studio': configure ? 'settings' : 'sections', 'data-dropping': dropping ? 'true' : undefined, 'data-dirty': reading?.standing.dirty ? 'true' : undefined}}
     onDragOver={event => { if (!isDeviceDrag(event)) return; event.preventDefault(); event.dataTransfer.dropEffect = 'copy'; setDropping(true) }}
     onDragLeave={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDropping(false) }}
     onDrop={event => {

@@ -13,7 +13,8 @@ export interface StageSection {
   readonly id: string
   readonly title: string
   readonly homes: readonly FrameChromeHome[]
-  /** The column's width at the device row's density (the mockup's section widths, :1457). */
+  /** The column's width at the device row's density (the mockup's section widths, :1457). Absent where the frame's run of keys is long
+   * and varies: the section takes the columns the run needs (frameChrome.css), and the plate folds what does not fit. */
   readonly width?: number
   readonly waiting?: readonly WaitingParameter[]
   /** The waiting rows stand only while the frame places nothing here (a parameter one of the frame's views carries when it is shown). */
@@ -27,18 +28,18 @@ export type StageInstrumentId = 'techne:m1' | 'techne:m2' | 'techne:m3'
  * bar and the toolbelt handle (shell.ts mountShell; app.ts :2814; actPanel.ts :59; naraInstrument.tsx :307). The lens chooser is not
  * here: the rack's instrument folds carry it (inhabitants/ql/devices/TechneDevices.tsx InstrumentFold → frame/instrumentDoor.ts
  * driveStageLens). */
-export const EXPRESSION_SECTION: StageSection = {id: 'expression', title: 'Expression', homes: ['work', 'scene', 'tools', 'nara', 'capture', 'side'], width: 240}
+export const EXPRESSION_SECTION: StageSection = {id: 'expression', title: 'Expression', homes: ['work', 'scene', 'tools', 'nara', 'capture', 'side']}
 
 export const STAGE_PLATES: Readonly<Record<StageInstrumentId, readonly StageSection[]>> = {
   'techne:m1': [
-    {id: 'tools', title: 'Tools', homes: ['canvas:tools'], width: 200, waiting: [
+    {id: 'tools', title: 'Tools', homes: ['canvas:tools'], waiting: [
       {name: 'Tool', values: 'Select · Frame · Relate · Note · Shape · Text', why: 'The canvas holds no standing tool: each tool here is one act — a note, an object, a frame around the selection — and a line is drawn from a card’s handle.'},
       {name: 'Layout', values: 'Free · Radial · Form', why: 'No owner arranges the cards around a centre or in the form of a whole yet: cards stand where they are placed.'},
     ]},
-    {id: 'lines', title: 'Lines', homes: ['canvas:lines'], width: 130, empty: 'Select a line to set its kind, its label and the sides it binds to.', waiting: [
+    {id: 'lines', title: 'Lines', homes: ['canvas:lines'], width: 176, empty: 'Select a line to set its kind, its label and the sides it binds to.', waiting: [
       {name: 'Line kind', values: 'Straight · Curved · Elbow', why: 'The next line has no kind of its own until it is drawn: select a drawn line to set its kind.'},
     ]},
-    {id: 'relation', title: 'Relation', homes: ['canvas:relation'], width: 160, empty: 'Select a line drawn between two sources to promote it to the relation’s owner.', waiting: [
+    {id: 'relation', title: 'Relation', homes: ['canvas:relation'], width: 216, empty: 'Select a line drawn between two sources to promote it to the relation’s owner.', waiting: [
       {name: 'Relation type', values: 'Echo · Influence · Cause · Transform', why: 'The next line’s type has no owner: a drawn line’s relation is named when it is promoted.'},
       {name: 'Standing', values: 'Fact · Claim · Inference · Guess', why: 'No owner gives a drawn line a standing yet: a drawn line stays a proposal until its owner accepts it.'},
     ]},
@@ -54,7 +55,7 @@ export const STAGE_PLATES: Readonly<Record<StageInstrumentId, readonly StageSect
     {id: 'window', title: 'Window', homes: ['timeline:window'], width: 170},
   ],
   'techne:m3': [
-    {id: 'stops', title: 'Stops', homes: ['journey:stops'], width: 280},
+    {id: 'stops', title: 'Stops', homes: ['journey:stops']},
     {id: 'pace', title: 'Pace', homes: ['journey:pace'], width: 170},
     {id: 'transitions', title: 'Transitions', homes: ['journey:transitions'], width: 170, empty: 'Each transition’s switch and curve stand on its row in the walk.'},
     {id: 'takes', title: 'Takes', homes: ['journey:takes'], width: 150, waiting: [

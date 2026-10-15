@@ -1,10 +1,16 @@
-// An instrument as one plate with its controls grouped in columns (manual §10.4 "Whole — every setting, grouped"; the
-// mockup's `instFrame()` at world-shell-mockup.html:1411 and its CSS .inst/.insth/.isecs/.isec at :352-359). The plate is the
-// SDK's own (inhabitants/sdk/controls.tsx FacePlate: the power ring, the mark, the name, the owner, the head's marks); its body
-// is a row of sections, each headed in small capitals, each holding what that group of the instrument does. The Expressions
-// Studio and the open Technē instrument both stand this way. A section holds devices of the runtime (`SectionDevices`): one
-// device at a time, chosen by its mark when the section holds several (Live's rack: "several chains side by side under one
-// device, with a selector to choose between them", manual §10.4), each drawn by DeviceView at its compact size.
+// An instrument as one plate with its controls grouped in sections side by side (manual §10.4 "Whole — every setting, grouped"; the
+// mockup's `instFrame()` at world-shell-mockup.html:1411 and its CSS .inst/.insth/.isecs/.isec at :352-359; the device UI standard,
+// docs/dlw/DEVICE-UI.md §1: "Sections are columns, ruled off from each other by a hairline and named in small capitals. The well is the
+// only inset surface … Nothing scrolls, and no box sits inside a box"). The plate is the SDK's own (inhabitants/sdk/controls.tsx
+// FacePlate: the power ring, the mark, the name, the owner, the device's own acts, the head's marks); its body is one row of sections at
+// the widths their controls take, each headed in small capitals. A row too narrow for every section folds sections to their titles —
+// the runtime's strip, pressed to open (manual §10.4 "A device can also fold down to its title") — never a scroller: the host's own fit
+// when it gives one (the Studio's, the stage plates'), else the plate's, from the last section back. The controls are the device panel
+// kit's (inhabitants/sdk/panel.tsx) and plateControls.tsx: a dial for a value you sweep, a radio for one of a few, rows for items.
+//
+// A section can still hold devices of the runtime (`SectionDevices`): one device at a time, chosen by its mark when the section holds
+// several (Live's rack: "several chains side by side under one device, with a selector to choose between them", manual §10.4), each
+// drawn by DeviceView at its compact size, its own frame stood down so it reads as the section's controls.
 import {useState, type CSSProperties, type DragEvent, type ReactNode} from 'react'
 import {FacePlate, type PlateMark, type PowerStanding} from '../../inhabitants/sdk/controls'
 import {Icon} from '../../inhabitants/sdk/Icon'
@@ -12,21 +18,31 @@ import type {FacePresentation} from '../../inhabitants/sdk/define'
 import type {IconName} from '../../inhabitants/sdk/icons'
 import {DeviceView} from './DeviceView'
 import {lightOf, type DeviceInstance} from './deviceRuntime'
+import {usePlateFit, type PlateFit} from './plateFit'
+import type {HeldDevice} from './plateControls'
+import './plateControls.css'
 import './instrumentPlate.css'
+
+/** One control column of a section (DEVICE-UI.md §3 "Control column 56 wide"). */
+export const PLATE_COLUMN = 56
 
 export interface PlateSection {
   readonly id: string
   /** The group's name, as the head of its column (the mockup's `.isec h5`). */
   readonly title: string
-  /** What stands at the right of the heading (the mockup's `h5 span`: a provenance, a count, a scale). */
+  /** What stands at the right of the heading (the mockup's `h5 span`: a provenance, a count, a scale, the marks of held devices). */
   readonly note?: ReactNode
   /** The column's own width where the mockup gives one; absent, the column takes what it holds. */
   readonly width?: number
+  /** The section's controls stand in this many control columns (56 px each, DEVICE-UI.md §3): dials side by side, a radio, a list or
+   * a field across them all. Absent, the controls stand one under the next. */
+  readonly cols?: number
   readonly children: ReactNode
   /** Folded to its title (manual §10.4 "A device can also fold down to its title. Click the title to open it again"; the
-   * mockup's folded strip .ifold, :153): the column stands as the runtime's fold strip, its name read upward. */
+   * mockup's folded strip .ifold, :153): the column stands as the runtime's fold strip, its name read upward. Absent on every
+   * section, the plate folds what does not fit by its own fit. */
   readonly folded?: boolean
-  /** The fold's press: on the strip it opens the column, on an open column's title it folds it. Absent, the column never folds. */
+  /** The fold's press: on the strip it opens the column, on an open column's title it folds it. */
   readonly onFold?: () => void
 }
 
@@ -35,10 +51,15 @@ export interface InstrumentPlateProps {
   /** The instrument's light: a reading, dark while unknown. */
   readonly power?: PowerStanding
   readonly onPower?: () => void
+  /** The device's own acts in its head, before its marks (the mockup's Studio head: "edited since save" and Save, :1432). */
+  readonly head?: ReactNode
   /** The marks on the plate's head (settings, open full, read again …), each with its label. */
   readonly actions?: readonly {readonly icon: PlateMark; readonly label: string; readonly onPress?: () => void}[]
   readonly sections: readonly PlateSection[]
-  /** The plate's body scroller class, for hosts that restore a scroll position (the Expressions detail's Return). */
+  /** The host's own fit (plateFit.ts usePlateFit), where the host decides what folds (its own order, sections that wait folded). Absent,
+   * the plate fits itself: sections fold from the last back to the second while the row is too narrow; a press holds. */
+  readonly fit?: PlateFit
+  /** The plate's body class, for hosts that restore a position (the Expressions detail's Return). */
   readonly bodyClassName?: string
   /** A drop onto the plate (a device dragged from the browser), handled by the host's own owner path. */
   readonly onDragOver?: (event: DragEvent<HTMLElement>) => void
@@ -49,23 +70,30 @@ export interface InstrumentPlateProps {
   readonly footer?: ReactNode
 }
 
-export function InstrumentPlate({presentation, power = 'unknown', onPower, actions, sections, bodyClassName, onDragOver, onDrop, onDragLeave, dataAttributes, footer}: InstrumentPlateProps) {
-  return <div className="inst-plate" {...dataAttributes} onDragOver={onDragOver} onDrop={onDrop} onDragLeave={onDragLeave}>
-    <FacePlate presentation={presentation} power={power} onPower={onPower} actions={actions}>
+export function InstrumentPlate({presentation, power = 'unknown', onPower, head, actions, sections, fit, bodyClassName, onDragOver, onDrop, onDragLeave, dataAttributes, footer}: InstrumentPlateProps) {
+  // The plate's own fit, standing down where the host fits it: the sections whose fold the host does not decide may fold, from the last.
+  const free = sections.filter(section => section.folded === undefined && section.onFold === undefined).map(section => section.id)
+  const foldable = fit ? [] : free.slice(1)
+  const own = usePlateFit(sections.map(section => section.id).join('|'), [...foldable].reverse(), !foldable.length)
+  const fitted = fit ?? own
+  const shown = sections.map(section => foldable.includes(section.id) ? {...section, folded: own.folded.has(section.id), onFold: () => own.press(section.id)} : section)
+  return <div className="inst-plate" {...dataAttributes} data-studio-fit={dataAttributes?.['data-studio-fit'] ?? fitted.fitId}
+    data-natural-width={fitted.natural ?? undefined} onDragOver={onDragOver} onDrop={onDrop} onDragLeave={onDragLeave}>
+    <FacePlate presentation={presentation} power={power} onPower={onPower} actions={actions} extra={head}>
       <div className={`inst-sections${bodyClassName ? ` ${bodyClassName}` : ''}`}>
-        {sections.map(section => section.folded
+        {shown.map(section => section.folded
           // The runtime's fold strip (inhabitants/sdk/controls.tsx FacePlate folded: .sdk-face__unfold), pressed to open.
           ? <section key={section.id} className="inst-section inst-section--folded" data-section={section.id} data-folded="true" aria-label={section.title}>
               <button type="button" className="sdk-face__unfold" aria-expanded={false} aria-label={`Open ${section.title}`} title={`${section.title} — open`}
-                onClick={section.onFold}><span className="sdk-face__fold-title">{section.title}</span></button>
+                data-i={`${section.title}|Folded to its title. Click to open it.`} onClick={section.onFold}><span className="sdk-face__fold-title">{section.title}</span></button>
             </section>
           : <section key={section.id} className="inst-section" data-section={section.id} aria-label={section.title}
-              style={section.width ? {'--section-w': `${section.width}px`} as CSSProperties : undefined}>
+              style={section.width || section.cols ? {'--section-w': `${section.width ?? (section.cols! * PLATE_COLUMN + 12)}px`} as CSSProperties : undefined}>
               <h5 className="inst-section-head">{section.onFold
                 ? <button type="button" className="inst-section-fold" aria-expanded={true} title="Fold to its title" aria-label={`Fold ${section.title} to its title`}
-                    onClick={section.onFold}>{section.title}</button>
+                    data-i={`${section.title}|Click the title to fold the section.`} onClick={section.onFold}>{section.title}</button>
                 : <span>{section.title}</span>}{section.note !== undefined && <span className="inst-section-note">{section.note}</span>}</h5>
-              <div className="inst-section-body">{section.children}</div>
+              <div className="inst-section-body" data-cols={section.cols} style={section.cols ? {'--cols': section.cols} as CSSProperties : undefined}>{section.children}</div>
             </section>)}
       </div>
       {footer}
@@ -111,7 +139,14 @@ export function SectionDevices({devices, initial, label}: {devices: readonly Sec
   </div>
 }
 
-/** A group whose owner discloses nothing here says so in one line. */
+/** The devices a section holds as its marks (plateControls.tsx HeldMarks): the acts their boxed plates offered — every setting in the
+ * pool, full size in a pane — kept, where the section's own controls are drawn from the same owner. */
+export function heldMarksOf(entries: readonly SectionDevice[]): HeldDevice[] {
+  const act = (entry: SectionDevice, icon: 'detail' | 'pane') => () => entry.actions?.find(action => action.icon === icon)?.onPress()
+  return entries.map(entry => ({id: entry.device.id, title: entry.device.face.title, mark: entry.mark, light: lightOf(entry.device), onPool: act(entry, 'detail'), onPane: act(entry, 'pane')}))
+}
+
+/** A group whose owner discloses nothing here says so in one short line; its whole words are the status line's. */
 export function SectionNote({children}: {children: ReactNode}) {
-  return <p className="inst-section-line">{children}</p>
+  return <p className="inst-section-line" data-i={typeof children === 'string' ? `|${children}` : undefined}>{children}</p>
 }
