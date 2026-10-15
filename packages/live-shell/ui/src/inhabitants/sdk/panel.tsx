@@ -223,6 +223,20 @@ export function Chooser<T extends string>({label, does, value, options, onChange
   </Cell>
 }
 
+/** A short line of text you type (a label, a name, a message): it sends on Enter or when you leave it; Escape restores it. */
+export function TextField({label, does, value, onChange, placeholder, wide, ...standing}: Standing & {readonly label?: string; readonly does?: string; readonly value: string; readonly onChange?: (v: string) => void; readonly placeholder?: string; readonly wide?: boolean}) {
+  return <Cell kind="text" label={label} does={does} standing={standing} className={wide ? 'dp-cell--wide' : undefined}>
+    {label && <span className="dp-label">{label}</span>}
+    <input className="dp-text" type="text" aria-label={label ?? placeholder} defaultValue={value} key={value} placeholder={placeholder}
+      disabled={!onChange || !!standing.disabled}
+      onKeyDown={event => {
+        if (event.key === 'Enter') { event.preventDefault(); onChange?.(event.currentTarget.value) }
+        if (event.key === 'Escape') { event.currentTarget.value = value; event.currentTarget.blur() }
+      }}
+      onBlur={event => { if (event.currentTarget.value !== value) onChange?.(event.currentTarget.value) }} />
+  </Cell>
+}
+
 /** A reading: a name and a short value. `big` for a count that is the point of the view. */
 export function Readout({label, does, value, big, tone, onPress}: {readonly label: string; readonly does?: string; readonly value: ReactNode; readonly big?: boolean; readonly tone?: Tone; readonly onPress?: () => void}) {
   // A reading the owner has not reported shows "—", never NaN, "undefined" or zero (DEVICE-UI §7).
@@ -357,15 +371,19 @@ export interface PanelProps {
   readonly onRail?: () => void
   /** Marks the place gives the head, before ⤢. */
   readonly marks?: ReactNode
+  /** The place's own words for ⤢ (absent: "Open <title> full in a pane"). */
+  readonly fullLabel?: string
+  /** What pressing the plate does, said on the status bar when you point at its head ("Show every setting in the pool"). */
+  readonly hint?: string
   readonly children: ReactNode
 }
 
 /** One device panel: the head, then the body — one band on a chain, up to two bands in the pool. */
-export function Panel({title, view, light: reported, onLight, pages, page, onPage, onFold, onFull, onSelect, selected, heldBy, mark, onRail, marks, children}: PanelProps) {
+export function Panel({title, view, light: reported, onLight, pages, page, onPage, onFold, onFull, onSelect, selected, heldBy, mark, onRail, marks, fullLabel, hint, children}: PanelProps) {
   const light = lightIn(reported)
   return <section className="dp" data-view={view} data-selected={selected ? 'true' : undefined} aria-label={title}
     onPointerDownCapture={onSelect}>
-    <header className="dp-head">
+    <header className="dp-head" data-i={hint ? said(title, hint) : undefined}>
       <button type="button" className="dp-activator" data-light={light} aria-pressed={light === 'lit'} disabled={!onLight}
         aria-label={`${title}: ${light === 'unknown' ? 'no reading' : light === 'lit' ? 'on' : 'off'}`}
         data-i={said('Device on/off', light === 'unknown' ? 'No reading from the owner yet.' : 'Asks the owner to turn the device on or off. The light shows what the owner reports.')}
@@ -381,8 +399,8 @@ export function Panel({title, view, light: reported, onLight, pages, page, onPag
       </nav>}
       <span className="dp-head-x">
         {marks}
-        {onRail && <button type="button" className="dp-full dp-rail" aria-label={`Keep ${title} on the widget rail`} data-i={said('On the rail', 'Keep this device on the widget rail, in every mode.')} onClick={onRail}><Icon name="dock" size={10} /></button>}
-        {onFull && <button type="button" className="dp-full" aria-label={`Open ${title} full in a pane`} data-i={said('Open full', 'Open the device full size in a pane.')} onClick={onFull}><PopOut size={10} /></button>}
+        {onRail && <button type="button" className="dp-full dp-rail" aria-label={`Keep ${title} on the widget rail`} data-i={said('On the rail', 'Keep this device on the widget rail, in every mode.')} onClick={onRail}><Icon name="placed" size={10} /></button>}
+        {onFull && <button type="button" className="dp-full" aria-label={fullLabel ?? `Open ${title} full in a pane`} data-i={said('Open full', 'Open the device full size in a pane.')} onClick={onFull}><PopOut size={10} /></button>}
       </span>
     </header>
     <div className="dp-body">{children}</div>
