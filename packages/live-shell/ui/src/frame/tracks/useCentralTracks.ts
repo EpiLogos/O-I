@@ -5,18 +5,22 @@
 //   stay in step without a second timer;
 // - the day's entries: the World cut's one temporal read, which the frame already publishes as `reading.world` — the hook
 //   calls no `useWorldTemporalReading` of its own (one poller per frame).
-// It returns the five streams always — a read that has not landed, or was refused, is named in the Day track's `kind` text, and the
-// four streams without an owner read stand as named, empty tracks (timeline/centralTrackAdapter.ts). Registered as
+// - the Flows: `files_list` at Control/user/flows (the browser's Flows rows' read), re-read with the day records.
+// It returns the five streams always — a read that has not landed, or was refused, is named in its track's `kind` text, and the
+// three streams without an owner read stand as named, empty tracks (timeline/centralTrackAdapter.ts). Registered as
 // `base: worldCut(useCentralTracks)` in modeTracks.ts.
 import {useEffect, useMemo, useState} from 'react'
 import {listFiles} from '../../../../../../desktop/cradle/src/files/client'
 import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import {
   CENTRAL_DAY_RECORDS_PATH,
+  CENTRAL_FLOWS_PATH,
   civilReadingOf,
   dayRecordsOf,
+  flowRecordsOf,
   projectCentralTracks,
   type CentralDayRecordsReading,
+  type CentralFlowsReading,
 } from '../../timeline/centralTrackAdapter'
 import type {WorldTrackSet} from '../../timeline/worldTrackAdapter'
 import type {TracksReading} from './modeTracks'
@@ -32,16 +36,31 @@ export async function readDayRecords(transport: KernelTransportStatus | undefine
   }
 }
 
+/** The Flows through the same listing route the browser's Flows rows read (shell/ModeBrowser.tsx FlowsRows). A folder the owner
+ * refuses because it does not exist is "no Flow written yet" (flow/instances.ts listFlowInstances); any other refusal is named. */
+export async function readFlows(transport: KernelTransportStatus | undefined): Promise<CentralFlowsReading> {
+  if (!transport) return {state: 'unavailable', reason: 'the shell published no kernel carrier to this pane'}
+  if (transport.kind === 'unavailable') return {state: 'unavailable', reason: transport.reason}
+  try {
+    return {state: 'read', records: flowRecordsOf(await listFiles(transport, CENTRAL_FLOWS_PATH), CENTRAL_FLOWS_PATH)}
+  } catch (cause) {
+    if (/No such file or directory/i.test(String(cause))) return {state: 'read', records: []}
+    return {state: 'unavailable', reason: cause instanceof Error ? cause.message : String(cause)}
+  }
+}
+
 export function useCentralTracks(reading: TracksReading): WorldTrackSet {
   const transport = reading.transport
   const source = reading.world?.source
   const readAt = source?.readAtUnixMs ?? null
   const [records, setRecords] = useState<CentralDayRecordsReading>({state: 'reading'})
+  const [flows, setFlows] = useState<CentralFlowsReading>({state: 'reading'})
   useEffect(() => {
     let live = true
     void readDayRecords(transport).then(next => { if (live) setRecords(next) })
+    void readFlows(transport).then(next => { if (live) setFlows(next) })
     return () => { live = false }
   }, [transport, readAt])
   const civil = useMemo(() => civilReadingOf(source), [source])
-  return useMemo(() => projectCentralTracks({records, civil}), [records, civil])
+  return useMemo(() => projectCentralTracks({records, civil, flows}), [records, civil, flows])
 }
