@@ -12,6 +12,20 @@ or no home and a named gap with the build ticket that would home it. Every
 cited path:line is re-opened and must hold its quote; every home is run through
 packages/live-shell/ui/scripts/candidate-reachable.mjs and refused when the
 candidate does not load it. It changes no progress axis and no target text.
+
+`reprogress [--apply] [--at REV]` (lane V, added 15 Oct 2026) re-holds the
+implemented axis to the code, as `rehome` re-holds homes. Every `implemented:
+yes` claim's evidence is read again at one revision (HEAD by default, never the
+shared seat's working tree): a `commit` must be in this repository's history; a
+`source path:line — quote` must still stand in its file, at its line or the
+nearest line holding the quote (the line is re-pointed, never the quote); a
+`source path — description` (or `path:a-b`) must still find its file; a
+`scripted` test file must exist. A row returns to `implemented: pending`, its
+evidence withdrawn and named in an appended dated note with where its behaviour
+went (its home, or its gap), when no source or scripted citation holds — commit
+evidence alone never keeps implemented — or when the row is a named gap. Without
+--apply it reports and writes nothing. exercised, passed, failed and blocked are
+never touched.
 """
 from __future__ import annotations
 
@@ -49,6 +63,12 @@ REHOME_CONDITIONS = ("none", "open-work", "open-work+wiki-scene")
 GAP_KINDS = ("unreachable", "no-owner-read", "no-native-receiver", "not-built")
 TICKET_KINDS = ("gap", "re-home", "door")
 CITED_AT = re.compile(r"^[^\s:]+:[1-9]\d*$")
+# The implemented axis's evidence forms (lane V): a commit, a quoted source line, a described source file (or line range), a test file.
+EVIDENCE_COMMIT = re.compile(r"^commit ([0-9a-f]{7,40}) — ")
+EVIDENCE_QUOTE = re.compile(r"^source ([^\s:]+):([1-9]\d*) — (.+)$", re.S)
+EVIDENCE_FILE = re.compile(r"^source ([^\s:]+)(?::([1-9]\d*)-([1-9]\d*))? — (.+)$", re.S)
+EVIDENCE_SCRIPTED = re.compile(r"^scripted (.+?) — (.+)$", re.S)
+TARGET_NAMED = re.compile(r"\b([A-D]\d{1,2}|T\d{1,2}|E\d{2})\b")
 
 
 def digest(data: bytes) -> str:
@@ -445,6 +465,209 @@ def rehome(input_path: Path, reachability=candidate_reachability) -> None:
     verify()
 
 
+class Tree:
+    """The candidate's files and history at one revision, read through git. The seat is shared with other lanes' uncommitted
+    edits, so the progress axis is held to a commit, never to the working tree."""
+
+    def __init__(self, revision: str = "HEAD", repo: Path = REPO):
+        self.repo = repo
+        result = self.git("rev-parse", "--verify", f"{revision}^{{commit}}")
+        if result.returncode != 0:
+            raise ValueError(f"No such revision: {revision}")
+        self.head = result.stdout.decode().strip()
+        self._text: dict[str, str | None] = {}
+        self._commits: dict[str, bool] = {}
+
+    def git(self, *args: str) -> subprocess.CompletedProcess:
+        return subprocess.run(["git", "-C", str(self.repo), *args], capture_output=True, check=False)
+
+    def text(self, path: str) -> str | None:
+        if path not in self._text:
+            result = self.git("cat-file", "blob", f"{self.head}:{path}")
+            self._text[path] = result.stdout.decode("utf-8", errors="replace") if result.returncode == 0 else None
+        return self._text[path]
+
+    def has_commit(self, sha: str) -> bool:
+        if sha not in self._commits:
+            self._commits[sha] = self.git("cat-file", "-e", f"{sha}^{{commit}}").returncode == 0
+        return self._commits[sha]
+
+    def removed_by(self, path: str, quote: str | None = None) -> str | None:
+        """The latest commit (to this revision) that deleted the file, or that took the quote out of it."""
+        selector = ["--diff-filter=D"] if quote is None else ["-S", quote]
+        result = self.git("log", "-1", "--format=%h", "--abbrev=9", *selector, self.head, "--", path)
+        return result.stdout.decode().strip() or None
+
+
+def evidence_kind(entry) -> str | None:
+    """The form of one implemented-axis evidence entry, or None when it is none of the register's forms."""
+    if not isinstance(entry, str):
+        return None
+    if EVIDENCE_COMMIT.match(entry):
+        return "commit"
+    if EVIDENCE_QUOTE.match(entry) or EVIDENCE_FILE.match(entry):
+        return "source"
+    if EVIDENCE_SCRIPTED.match(entry):
+        return "scripted"
+    return None
+
+
+def scripted_files(names: str) -> list[str]:
+    """`a/b/x.test.mjs, y.test.mjs; c/z.test.mjs`: a bare name sits in the directory of the file named before it."""
+    files = []
+    for name in (part.strip() for part in re.split(r"[,;]", names)):
+        if name:
+            files.append(name if "/" in name or not files else str(Path(files[-1]).parent / name))
+    return files
+
+
+def gone_from(tree: Tree, path: str) -> str:
+    removed = tree.removed_by(path)
+    return f"deleted in {removed}" if removed else "not in the tree"
+
+
+def held(entry, tree: Tree) -> dict:
+    """Re-hold one evidence entry at the tree's revision: {kind, holds, entry (re-pointed when its quote moved), cited, why}."""
+    kind = evidence_kind(entry)
+    if kind == "commit":
+        sha = EVIDENCE_COMMIT.match(entry).group(1)
+        holds = tree.has_commit(sha)
+        return {"kind": kind, "holds": holds, "entry": entry, "cited": f"commit {sha[:9]}", "why": None if holds else "not in this repository's history"}
+    if kind == "scripted":
+        files = scripted_files(EVIDENCE_SCRIPTED.match(entry).group(1))
+        missing = [path for path in files if tree.text(path) is None]
+        why = "; ".join(gone_from(tree, path) if len(files) == 1 else f"{path} {gone_from(tree, path)}" for path in missing) or None
+        return {"kind": kind, "holds": not missing, "entry": entry, "cited": ", ".join(files), "why": why}
+    match = EVIDENCE_QUOTE.match(entry) if kind == "source" else None
+    if match:
+        path, line, quote = match.group(1), int(match.group(2)), match.group(3)
+        verdict = {"kind": kind, "holds": False, "entry": entry, "cited": f"{path}:{line}", "why": None}
+        text = tree.text(path)
+        if text is None:
+            return {**verdict, "why": gone_from(tree, path)}
+        lines = [number for number, body in enumerate(text.split("\n"), 1) if quote in body]
+        if not lines:
+            removed = tree.removed_by(path, quote)
+            why = f"the quote was taken out in {removed}" if removed else "the quote never stood in the file: a description, not a quote"
+            return {**verdict, "why": why}
+        nearest = min(lines, key=lambda number: (abs(number - line), number))
+        verdict["holds"] = True
+        if nearest != line:
+            verdict.update(entry=f"source {path}:{nearest} — {quote}", repointed={"from": line, "to": nearest})
+        return verdict
+    if kind == "source":
+        path, start, end, _ = EVIDENCE_FILE.match(entry).groups()
+        verdict = {"kind": kind, "holds": False, "entry": entry, "cited": path + (f":{start}-{end}" if start else ""), "why": None, "form": "file"}
+        text = tree.text(path)
+        if text is None:
+            return {**verdict, "why": gone_from(tree, path)}
+        if end and int(end) > len(text.split("\n")):
+            return {**verdict, "why": "the cited range runs past the file's end"}
+        return {**verdict, "holds": True}
+    return {"kind": None, "holds": False, "entry": entry, "cited": repr(entry)[:80], "why": "not a commit, source or scripted citation"}
+
+
+def where_now(row: dict) -> str:
+    home, gap = row.get("home"), row.get("gap")
+    if home is not None:
+        return f"Its behaviour is homed at {home['component']['at']} (route {home['route']}); implemented to be re-proven there."
+    if gap is not None:
+        return f"It is a named gap ({gap['ticket']}, {gap['kind']}); implemented to be re-proven when {gap['ticket']} builds its home."
+    return "It has no recorded home; implemented to be re-proven where it is built."
+
+
+REPROGRESS_LAW = ("An implemented claim stands only on evidence that still holds at a named revision: its commits in history, each source "
+                  "quote in its file (the line re-pointed, never the quote), each described source file and each test file present. A row "
+                  "with no source or test citation left, or a named gap, returns to pending with a dated note naming what vanished and where "
+                  "its behaviour went. Commit evidence alone never keeps implemented. exercised, passed, failed and blocked are untouched.")
+REPROGRESS_STANDING = ("2026-10-15 (lane V): the implemented axis follows the code: `reprogress` re-holds every implemented claim's "
+                       "evidence at one revision (commits in history, each source quote in its file, re-pointed to its line and never "
+                       "rewritten, each test file present) and returns a row to pending, with a dated note, when no source or test "
+                       "citation holds or the row is a named gap; commit evidence alone never keeps implemented.")
+
+
+def reprogress(apply: bool = False, tree: Tree | None = None, day: str | None = None) -> dict:
+    tree = tree or Tree()
+    day = day or datetime.now().date().isoformat()
+    document = json.loads((OUT / "targets.json").read_text())
+    rows = document["targets"]
+    yes = lambda: {str(lane): sum(row["lane"] == lane and row["progress"]["implemented"]["state"] == "yes" for row in rows) for lane in LANES}
+    before = yes()
+    repointed, withdrawn, returned, described, elsewhere = [], [], [], [], []
+    for row in rows:
+        axis = row["progress"]["implemented"]
+        if axis["state"] != "yes":
+            continue
+        verdicts = [held(entry, tree) for entry in axis["evidence"]]
+        kept = [verdict for verdict in verdicts if verdict["holds"]]
+        lost = [verdict for verdict in verdicts if not verdict["holds"]]
+        code = [verdict for verdict in kept if verdict["kind"] in ("source", "scripted")]
+        lost_text = "; ".join(f"{verdict['cited']} ({verdict['why']})" for verdict in lost)
+        if row.get("gap") is not None or not code:
+            if row.get("gap") is not None:
+                cause = "gap"
+                gap = row["gap"]
+                reason = f"a named gap cannot stay implemented: {gap['what'].rstrip('.')}."
+                if lost:
+                    reason += f" Its evidence no longer held at {tree.head[:9]}: {lost_text}."
+                if kept:
+                    reason += f" What still held ({', '.join(verdict['cited'] for verdict in kept)}) does not make a home."
+            else:
+                cause = "evidence gone"
+                reason = f"no source or test citation holds at {tree.head[:9]}: {lost_text}."
+                commits = [verdict["cited"].split()[1] for verdict in kept if verdict["kind"] == "commit"]
+                if commits:
+                    reason += f" Its commit{'s' if len(commits) > 1 else ''} {', '.join(commits)} stand{'' if len(commits) > 1 else 's'} in history, but commit evidence alone never keeps implemented."
+            axis.update(state="pending", evidence=[])
+            row["notes"].append(f"{day} reprogress: implemented returns to pending — {reason} {where_now(row)}")
+            returned.append({"id": row["id"], "lane": row["lane"], "cause": cause, "lost": [f"{verdict['cited']} ({verdict['why']})" for verdict in lost],
+                             "held": [verdict["cited"] for verdict in kept], "now": where_now(row)})
+            continue
+        axis["evidence"] = [verdict["entry"] for verdict in kept]
+        for verdict in kept:
+            if "repointed" in verdict:
+                repointed.append({"id": row["id"], "cited": verdict["cited"], "to": verdict["repointed"]["to"]})
+            if verdict.get("form") == "file":
+                described.append({"id": row["id"], "cited": verdict["cited"]})
+            quoted = EVIDENCE_QUOTE.match(verdict["entry"])
+            names = sorted(set(TARGET_NAMED.findall(quoted.group(3)))) if quoted else []
+            if names and row["target_id"] not in names:
+                elsewhere.append({"id": row["id"], "cited": verdict["entry"].split(" — ")[0][len("source "):], "names": names, "only_code_citation": len(code) == 1})
+        if lost:
+            standing = f"{len(code)} source or test citations that still hold" if len(code) > 1 else "one source or test citation that still holds"
+            row["notes"].append(f"{day} reprogress: evidence withdrawn, no longer held at {tree.head[:9]} — {lost_text}. Implemented stands on {standing}.")
+            withdrawn.append({"id": row["id"], "lost": [f"{verdict['cited']} ({verdict['why']})" for verdict in lost]})
+    after = yes()
+    returned_ids = {item["id"] for item in returned}
+    result = {
+        "implemented_yes": {"before": sum(before.values()), "after": sum(after.values()), "by_lane_before": before, "by_lane_after": after},
+        "rows_repointed": len({item["id"] for item in repointed}), "citations_repointed": len(repointed),
+        "returned_to_pending": dict(sorted(Counter(f"lane-{item['lane']}" for item in returned).items())),
+        "returned_by_cause": dict(sorted(Counter(item["cause"] for item in returned).items())),
+        "rows_with_evidence_withdrawn": len(withdrawn),
+    }
+    report = {
+        "schema": "techne.new-shell-reprogress/v1", "applied": apply, "recorded_on": day, "candidate_head": tree.head, **result,
+        "returned": returned, "withdrawn": withdrawn, "repointed": repointed,
+        # Reported, never acted on: a description held only to its file, a held quote that names other targets and not this one,
+        # and a homed row whose implemented is pending (allowed: implementation proof comes with exercise; never flipped without evidence).
+        "held_to_file_only": described, "quotes_naming_other_targets": elsewhere,
+        "homed_pending": [row["id"] for row in rows if row.get("home") is not None and row["progress"]["implemented"]["state"] == "pending" and row["id"] not in returned_ids],
+    }
+    if apply:
+        basis = document.get("reprogress_basis") or {"tool": "acceptance.py reprogress --apply", "runs": []}
+        basis.update(recorded_on=day, candidate_head=tree.head, law=REPROGRESS_LAW)
+        if returned or withdrawn or repointed:
+            basis["runs"].append({"recorded_on": day, "candidate_head": tree.head, **result})
+        document["reprogress_basis"] = basis
+        if REPROGRESS_STANDING not in document["standing"]:
+            document["standing"] = f"{document['standing']} {REPROGRESS_STANDING}"
+        save("targets.json", document)
+        verify()
+    print(json.dumps(report, indent=1, ensure_ascii=False))
+    return report
+
+
 def verify() -> None:
     document = json.loads((OUT / "targets.json").read_text())
     refs = json.loads((OUT / "references.json").read_text())
@@ -469,6 +692,12 @@ def verify() -> None:
             assert state["state"] in ("pending", "yes", "no"), f"Invalid {axis} status: {row['id']}"
             if state["state"] == "yes":
                 assert row["candidate_revision"] and state["evidence"], f"Evidence required for {axis}: {row['id']}"
+        implemented = row["progress"]["implemented"]
+        if implemented["state"] == "yes":
+            kinds = [evidence_kind(entry) for entry in implemented["evidence"]]
+            assert None not in kinds, f"Implemented evidence is a commit, source or scripted citation: {row['id']}"
+            assert "source" in kinds or "scripted" in kinds, f"Commit evidence alone never keeps implemented: {row['id']}"
+            assert row.get("gap") is None, f"A named gap cannot stay implemented: {row['id']}"
         if row["progress"]["passed"]["state"] == "yes":
             assert row["progress"]["exercised"]["state"] == "yes", f"Passing requires exercise: {row['id']}"
         if row["progress"]["failed"]["state"] == "yes":
@@ -498,8 +727,10 @@ def verify() -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("operation", choices=("initialize", "verify", "rehome"))
+    parser.add_argument("operation", choices=("initialize", "verify", "rehome", "reprogress"))
     parser.add_argument("input", nargs="?", help="rehome: the re-homing input (rows, notes, tickets)")
+    parser.add_argument("--apply", action="store_true", help="reprogress: record the result (default: report only)")
+    parser.add_argument("--at", default="HEAD", help="reprogress: the revision the evidence is held to (default HEAD)")
     args = parser.parse_args()
     try:
         if args.operation == "initialize":
@@ -508,6 +739,8 @@ if __name__ == "__main__":
             if not args.input:
                 raise ValueError("rehome needs its input file")
             rehome(Path(args.input))
+        elif args.operation == "reprogress":
+            reprogress(apply=args.apply, tree=Tree(args.at))
         else:
             verify()
     except (ValueError, AssertionError, OSError, KeyError) as error:
