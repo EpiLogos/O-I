@@ -54,6 +54,8 @@
 .detail-chain-devices { flex: none; min-width: 0; min-height: 0; display: flex; gap: 6px; align-items: stretch; overflow: visible }
 .detail-chain-devices:empty { display: none }
 .dropz { width: 140px; flex: none; border: 1px dashed var(--line-strong); display: flex; align-items: center; justify-content: center; text-align: center; color: var(--text-faint); font-size: 10.5px; padding: 10px }
+/* A chain end that receives arms while a drag it accepts is held over it (Factory's own end is the idiom, agentShell.css). */
+.dropz.armed { border-color: var(--accent); color: var(--text) }
 /* The Clip side while nothing is selected: one line saying what it waits for, in the well the clip would fill — the mockup's
    empty idiom (deviceDetail() :1444, a dashed .dropz standing the row). */
 .clip-empty { margin: 0; padding: 18px; color: var(--text-faint); font-size: 11px }

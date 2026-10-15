@@ -11,6 +11,8 @@ import {ClipWaiting} from '../frame/detail/ClipView'
 import {DeviceChainPanel, LIVE_CLIP_WAITS} from '../components/DeviceChainPanel'
 import {liveClipOf} from '../live/LiveClip'
 import {trackDeviceFaceTitle} from '../live/liveChain'
+import {addNoteDevice} from '../live/noteDevices/noteDeviceHold'
+import {NOTE_DEVICE_MIME, parseNoteDeviceDrag} from '../live/noteDevices/noteDeviceDrag'
 import {displayDeviceName} from './document'
 import {NativeWorldDetail} from '../components/NativeWorldDetail'
 import {CentralClipChooser} from '../central/CentralClipChooser'
@@ -47,6 +49,10 @@ export interface ModeDetail {
   /** The chain's end: what can be dropped onto it (Live's "Drop Instruments or Samples Here"; the mockup's .dropz). Null when
    * the chain draws its own drop receiver (Factory's, which arms while a drag is held and answers through the owner). */
   dropHint: string | null
+  /** What the chain's end receives: the drag type it accepts, and the one call a drop makes — the same call the browser row's
+   * double-click makes, so a drop and a double-click land the same device. `receive` answers null when the device landed, else
+   * the refusal in words. Absent: the end is a hint only (its owner has no add yet). */
+  drop?: ChainDrop
   /** The one line the Clip side shows while nothing is selected — what it waits for, in the mode's own words. */
   clipWaits: string
   /** The Clip side opens without a selection: the mode's clip is not chosen from its tracks (Expressions: the open
@@ -54,6 +60,11 @@ export interface ModeDetail {
   clipUngated?: boolean
   /** The row's head line, per side. */
   head: {clip: (reading: DetailHeadReading) => DetailHead; device: (reading: DetailHeadReading) => DetailHead}
+}
+
+export interface ChainDrop {
+  readonly accepts: string
+  readonly receive: (payload: string) => string | null
 }
 
 /** An instrument by the plain name its holder declares (inhabitants/sdk/semantics.ts; its M′ address is provenance, never
@@ -115,6 +126,12 @@ export const MODE_DETAILS: Readonly<Record<SurfMode, ModeDetail>> = {
   // "<b>Drums</b> — Drum Rack → Glue Compressor → Reverb" and "<b>Kit 1</b> — Drums · clip" — read from the open set alone, so a
   // head never names what the row does not show: the instrument's own plates (keyboard, note devices, torus) stand in the row.
   live: {clip: LiveClip, device: LiveChain, ownsDeviceSide: true, dropHint: 'Drop an instrument or effect here',
+    drop: {accepts: NOTE_DEVICE_MIME, receive: payload => {
+      const kind = parseNoteDeviceDrag(payload)
+      if (!kind) return 'Only a note device lands on this chain.'
+      addNoteDevice(kind)
+      return null
+    }},
     clipWaits: LIVE_CLIP_WAITS,
     head: {
       clip: ({detail, selected}) => {
