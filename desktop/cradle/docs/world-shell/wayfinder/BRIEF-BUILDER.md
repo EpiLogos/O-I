@@ -42,6 +42,9 @@ Target — the product is the candidate shell, nothing else:
   is shared engine code: a file there is product only if the candidate imports
   it. The everyday desktop's own frame (e.g. desktop/cradle/src/CradleFrame.tsx)
   is legacy and is never a target.
+  The hosted frame's files are product only when a page the candidate opens
+  loads them (its index.html and library.html); legacy.html and render.html
+  are not. A type-only import does not make a file product.
 - Before editing ANY file, prove it is product:
     node packages/live-shell/ui/scripts/candidate-reachable.mjs <file>
   "NOT" means a change there never reaches the app: find the candidate's own
