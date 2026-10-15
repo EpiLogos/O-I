@@ -12,6 +12,7 @@ import {useAgentSessionsOptional, type AgentSessionsValue} from './AgentSessions
 import {agentState, sessionState, type SessionWord} from '../frame/browser/rowWords'
 import {useWorkspace} from '../shell/workspaceContext'
 import {useHarnessBinding} from './useHarnessBinding'
+import {useRosterAnswer, useWorkcellAnswer} from '../owners/readers'
 import {kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
 import {refusalLine, safeJson} from './RefusalCard'
 import {AGENT_CHAIN_MIME, encodeChainDrag, setActiveChainDrag, type AgentChainDrag} from './agentChainDrag'
@@ -230,10 +231,15 @@ export function AgentShellBrowser({rows, error, loading, controlled}: {rows: Age
   const {binding} = useHarnessBinding(transport)
   const [gateway, setGateway] = useState<{line: string; receipt: string | null; refused: boolean}>({line: 'Reading gateway…', receipt: null, refused: false})
   const [git, setGit] = useState<{line: string; receipt: string | null; refused: boolean}>({line: 'Reading seat…', receipt: null, refused: false})
-  const [rosterOutcome, setRosterOutcome] = useState<KernelOutcome>(null)
-  const [rosterError, setRosterError] = useState<string | null>(null)
-  const [seatOutcome, setSeatOutcome] = useState<KernelOutcome>(null)
-  const [seatError, setSeatError] = useState<string | null>(null)
+  // The roster and the seat are the window's shared answers (owners/readers.ts): the same ones the Factory chain, the sessions
+  // provider and the Central devices read — one owner read between them, a refusal remembered for its epoch.
+  const rosterAnswer = useRosterAnswer(transport, null).reading
+  const seatAnswer = useWorkcellAnswer(transport).reading
+  const unreached = transport.kind === 'unavailable' ? transport.reason ?? 'Transport unavailable' : null
+  const rosterOutcome = useMemo<KernelOutcome>(() => rosterAnswer.status === 'answered' ? {result: 'agent_definition_reading', data: rosterAnswer.value} : null, [rosterAnswer])
+  const rosterError = unreached ?? (rosterAnswer.status === 'refused' ? rosterAnswer.error : null)
+  const seatOutcome = useMemo<KernelOutcome>(() => seatAnswer.status === 'answered' ? {result: 'workcell_status_reading', data: seatAnswer.value} : null, [seatAnswer])
+  const seatError = unreached ?? (seatAnswer.status === 'refused' ? seatAnswer.error : null)
 
   useEffect(() => {
     let live = true
@@ -243,10 +249,6 @@ export function AgentShellBrowser({rows, error, loading, controlled}: {rows: Age
           const reason = transport.reason ?? 'Transport unavailable'
           setGateway({line: ownerRefusalLine('gateway', reason, 'not-reached'), receipt: null, refused: true})
           setGit({line: ownerRefusalLine('workcell', reason, 'not-reached'), receipt: null, refused: true})
-          setRosterOutcome(null)
-          setRosterError(reason)
-          setSeatOutcome(null)
-          setSeatError(reason)
         }
         return
       }
@@ -257,19 +259,8 @@ export function AgentShellBrowser({rows, error, loading, controlled}: {rows: Age
           ? {line: `binding ${reading.binding} answered — receipt holds the document`, receipt: safeJson(reading.document), refused: false}
           : {line: ownerRefusalLine('gateway', refusalLine(gatewayOp.error, 'Harness gateway reading unavailable')), receipt: gatewayOp.error ? safeJson(gatewayOp.error) : null, refused: true})
       }
-      // The Skillsets rows' admitted source: the roster reading the chain's
-      // skillset admit light consumes (accepted profiles' skill_refs).
-      const roster = await kernelOp(transport, {op: 'agent_definition', project: null, request: {action: 'roster'}})
-      if (live) {
-        setRosterOutcome(roster.error ? null : roster.outcome)
-        setRosterError(roster.error ?? null)
-      }
-      // The Git rows' admitted source: the workcell family's seat reading.
-      const seat = await kernelOp(transport, {op: 'workcell_status_read'})
-      if (live) {
-        setSeatOutcome(seat.error ? null : seat.outcome)
-        setSeatError(seat.error ?? null)
-      }
+      // The Skillsets rows' admitted source (the roster reading the chain's skillset admit light consumes) and the Git rows'
+      // (the workcell family's seat reading) are the shared answers above.
       const gitOp = await kernelOp(transport, {op: 'git_repository_read', project: 'O-I'})
       if (live) {
         const doc = gitOp.outcome?.result === 'git_repository_reading' ? gitOp.outcome.document : null

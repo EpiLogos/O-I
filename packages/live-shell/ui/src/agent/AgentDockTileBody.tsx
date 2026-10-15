@@ -6,6 +6,7 @@ import {useWorkspace} from '../shell/workspaceContext'
 import {scalarEntries, safeJson} from './RefusalCard'
 import type {AgentTileId} from './AgentShellContext'
 import {useHarnessBinding} from './useHarnessBinding'
+import {useTaskAnswer} from '../owners/readers'
 
 /** Tile marks, every one from the icon cut through the SDK Icon (icon-cut.html; inhabitants/sdk/icons.ts): the rail draws
  * them in the tile's head and, at preview scale, in its launcher cell. */
@@ -83,37 +84,21 @@ function ReadingRows({label, text, loading}: {label: string; text: string | null
 export function AgentDockTileBody({id, sessionRef}: {id: AgentTileId; sessionRef: string | null}) {
   const {transport} = useWorkspace()
   const {binding} = useHarnessBinding(transport)
-  const [ledger, setLedger] = useState<string | null>(null)
-  const [ledgerLoading, setLedgerLoading] = useState(false)
+  // The ledger is the selected session's task record — the window's shared answer (owners/readers.ts), read once between this
+  // tile, the sessions provider, the Factory chain and the transport's metrics; only the ledger and approvals tiles subscribe.
+  const ledgerTile = id === 'ledger' || id === 'approvals'
+  const task = useTaskAnswer(transport, ledgerTile && transport.kind !== 'unavailable' ? sessionRef : null).reading
+  const ledger = !ledgerTile ? null
+    : transport.kind === 'unavailable' ? transport.reason ?? 'Unavailable'
+      : !sessionRef ? 'Select a session track'
+        : task.status === 'answered' ? safeJson(task.value)
+          : task.status === 'refused' ? task.error ?? 'Task reading unavailable' : null
+  const ledgerLoading = ledgerTile && transport.kind !== 'unavailable' && !!sessionRef && task.status === 'reading'
   const [diff, setDiff] = useState<string | null>(null)
   const [diffLoading, setDiffLoading] = useState(false)
   const [frames, setFrames] = useState<string | null>(null)
   const [framesLoading, setFramesLoading] = useState(false)
   const [gitNote, setGitNote] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (id !== 'ledger' && id !== 'approvals') return
-    let live = true
-    setLedgerLoading(true)
-    void (async () => {
-      if (transport.kind === 'unavailable' || !sessionRef) {
-        if (live) {
-          setLedger(transport.kind === 'unavailable' ? transport.reason ?? 'Unavailable' : 'Select a session track')
-          setLedgerLoading(false)
-        }
-        return
-      }
-      const task = await kernelOp(transport, {op: 'encounter_task_read', project: 'O-I', agent_session: sessionRef})
-      if (!live) return
-      if (task.error || task.outcome?.result !== 'encounter_task_reading') {
-        setLedger(task.error ?? 'Task reading unavailable')
-      } else {
-        setLedger(safeJson(task.outcome.data))
-      }
-      setLedgerLoading(false)
-    })()
-    return () => { live = false }
-  }, [id, sessionRef, transport])
 
   useEffect(() => {
     if (id !== 'diff') return

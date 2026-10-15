@@ -236,8 +236,10 @@ test('the chain earns every lamp from a reading and names who an unlit lamp wait
   const pictures = await read('devices/AgentDevicePictures.tsx')
   assert.match(model, /gatewayAdmitted: null,/, 'the gateway lamp is dark until a reading answers — no default-on lamp')
   assert.match(model, /put\('admitted', reading\.gatewayAdmitted\)/, 'the device carries the earned gateway admission, not an assumed one')
-  assert.match(readings, /waiting\('gateway', gatewayAnswered \? null : OWNER_BINDINGS\.gateway\.owner\)/, 'the gateway names AIKit until its reading answers')
-  assert.match(readings, /waiting\('git', seatReading != null \? null : OWNER_BINDINGS\.workcell\.owner\)/, 'the git seat names Workcell until its reading answers')
+  // Lane Q: the roster, the task record and the seat are the shared owner answers (owners/readers.ts); the lamps are composed
+  // over them, with the same waits.
+  assert.match(readings, /gatewayWaiting: gatewayAnswered \? null : OWNER_BINDINGS\.gateway\.owner/, 'the gateway names AIKit until its reading answers')
+  assert.match(readings, /next\.waitingOn\.git = seatAnswered \? null : OWNER_BINDINGS\.workcell\.owner/, 'the git seat names Workcell until its reading answers')
   assert.match(pictures, /carried, not admitted/, 'an unlit skill chain says it is carried, not admitted')
   assert.match(pictures, /Waiting on/, 'and the skillset picture names who it waits on')
   assert.doesNotMatch(chain, /'unadmitted'/, 'no bare unadmitted wall')

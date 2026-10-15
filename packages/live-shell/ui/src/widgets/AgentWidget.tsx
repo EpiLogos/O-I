@@ -13,7 +13,7 @@ import {useMemo, useState} from 'react'
 import {NativeAgencyParticipation} from '../components/NativeAgencyParticipation'
 import {useWorkspace} from '../shell/workspaceContext'
 import {useAgencySessions} from '../agent/useAgencySessions'
-import {useAgentRoster} from '../../../../../desktop/cradle/src/agency/roster'
+import {useRosterAgents} from '../owners/readers'
 import {useEncounterSession} from '../../../../../desktop/cradle/src/encounter/session'
 import type {AgentAccompanying} from '../../../../../desktop/cradle/src/agent/AgentLayer'
 import type {WorkspaceMode} from '../../../../../desktop/cradle/src/workspace/mode'
@@ -40,7 +40,8 @@ export function AgentWidget({subject, glance}: WidgetBodyProps) {
   const [opened, setOpened] = useState<AgentAccompanying | null>(null)
   const track = found.track
   const accompanying = track ? {ref: track.sessionRef, project: CONVERSATION_PROJECT, space: track.spaceRef} : opened ?? undefined
-  const roster = useAgentRoster(CONVERSATION_PROJECT, !accompanying)
+  // The companion's body, from the window's shared roster answer (owners/readers.ts) — read only while no conversation stands.
+  const roster = useRosterAgents(workspace.transport, CONVERSATION_PROJECT, !accompanying)
   const body = roster.agents.find(agent => agent.name.trim().toLocaleLowerCase() === companion.toLocaleLowerCase())
   const session = useEncounterSession(accompanying)
   useGlance(glance, conversationGlance(session?.state.reading, companion))

@@ -138,7 +138,7 @@
     "packages/live-shell/ui/tests/support/liveDeviceFixture.mjs::/api/document/device-param": 1,
     "packages/live-shell/ui/tests/support/liveDeviceFixture.mjs::/api/document/device-params": 1,
     "packages/live-shell/ui/tests/support/liveDeviceFixture.mjs::/api/set": 1,
-    "packages/live-shell/ui/tests/wiki-subject-standing.test.mjs::/api/config": 1
+    "packages/live-shell/ui/tests/wiki-subject-standing.test.mjs::/api/config": 2
   },
   "informational": {
     "shipping_comment_references": [
