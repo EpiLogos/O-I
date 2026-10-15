@@ -16,6 +16,7 @@ import {ModeBrowser, modeBrowserCategories} from './ModeBrowser'
 import {AgentShellBrowser, AGENT_BROWSER_CATEGORIES} from '../agent/AgentShellBrowser'
 import {SetsSection} from './SetsSection'
 import {Icon} from '../inhabitants/sdk/Icon'
+import type {IconName} from '../inhabitants/sdk/icons'
 import {InstrumentsSection} from '../frame/InstrumentsSection'
 import {useWorkbenchOpeners} from '../native/workbenchDoor'
 
@@ -51,19 +52,26 @@ function AgentRows({controlled}: {controlled: ControlledBrowser}) {
   return reading ? <AgentShellBrowser rows={reading.agency.rows} error={reading.agency.error} loading={reading.agency.loading} controlled={controlled} /> : null
 }
 function SetsRows() { return <SetsSection /> }
-/** The surfaces the Workbench can open (native/workbenchDoor.ts): a row each; double-click or Enter opens it in the focused
- * pane (manual §10.3: "To open it, double-click it or drag it into a pane"). */
+/** A surface's mark, from the cut, by the opener's id; every other surface opens as a pane. */
+const SURFACE_MARKS: Readonly<Record<string, IconName>> = {browser: 'browser', 'surface.sources': 'search'}
+/** The openers that make a new document of a form (`form.<kind>`) belong to Central's New… grid (shell/ModeBrowser.tsx NewForms),
+ * not to the surfaces. */
+const isFormOpener = (id: string): boolean => id.startsWith('form.')
+
+/** The surfaces the Workbench can open (native/workbenchDoor.ts): a row each — the cut's mark, the surface's name, its hint as
+ * hover words; double-click or Enter opens it in the focused pane (manual §10.3: "To open it, double-click it or drag it into
+ * a pane"). */
 function SurfacesRows({controlled}: {controlled: ControlledBrowser}) {
-  const openers = useWorkbenchOpeners()
+  const openers = useWorkbenchOpeners().filter(opener => !isFormOpener(opener.id))
   const needle = controlled.query.trim().toLowerCase()
   const shown = needle ? openers.filter(opener => opener.title.toLowerCase().includes(needle)) : openers
   if (!openers.length) return <p className="browser-empty">The Workbench is not mounted, so there is nothing to open here yet.</p>
   return <div className="browser-results" data-browser-surfaces>
-    <div className="browser-list-heading">Name <span>Opens</span></div>
+    <div className="browser-list-heading">Name <span /></div>
     {shown.map(opener => <button key={opener.id} type="button" className="browser-item" data-surface={opener.id}
       title={`${opener.title} — ${opener.hint}. Double-click or Enter opens it in the focused pane.`}
       onDoubleClick={opener.open} onKeyDown={event => { if (event.key === 'Enter') { event.preventDefault(); opener.open() } }}>
-      <span>▸</span><span>{opener.title}</span>
+      <Icon name={SURFACE_MARKS[opener.id] ?? 'pane'} size={12} /><span>{opener.title}</span>
     </button>)}
     {!shown.length && <p className="browser-empty">No surface matches.</p>}
   </div>

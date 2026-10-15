@@ -114,12 +114,14 @@ test('the dock: the agents tile reads the agency surface — and discloses its a
 // aperture slot is the one browser's (frame/browser/apertureViews.tsx,
 // tests/aperture-slot-context.test.mjs): the focused pane's own context.
 
-test('the browser: results header, the New affordance on the Project group; the rows draw no aperture of their own', () => {
+test('the browser: results header, the New… category in the Project group; the rows draw no aperture of their own', () => {
   const out = html(createElement(StubWorkspaceProvider, {transport: UNAVAILABLE},
     createElement(ModeBrowser, {mode: 'base', onSelectSubject: () => {}, selectedSubject: null})))
   assert.ok(out.includes('mode-browser-resulthead'), 'the results header drawn')
   assert.ok(out.includes('>Name</span>'), 'the header names the column')
-  assert.ok(out.includes('mode-browser-new'), 'the New affordance drawn')
+  // Lane L (15 Oct): the disabled New button that held its place in the Project group is the mockup's New… category, its rows
+  // the four forms grid (tests/browser-rows-ssr.test.mjs).
+  assert.match(out, /<h3>Project<\/h3>.*data-i="New…\|New document — exactly Day · Flow · Beings · Things/, 'the New… category in the Project group')
   assert.ok(out.includes('exactly Day · Flow · Beings · Things'), 'New names the four forms')
   assert.ok(!out.includes('mode-browser-aperture') && !out.includes('aria-label="Aperture"'), 'the slot stands in the one browser\'s pool, not in the rows')
 })

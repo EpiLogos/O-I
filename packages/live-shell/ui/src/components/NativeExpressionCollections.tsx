@@ -2,6 +2,8 @@ import {useRef, useState} from 'react'
 import {featuredExpressions, forkExpression, startingPoints, type Expression} from '../../../../../desktop/cradle/expressions-app/field-studies-journeys/src/expressions'
 import {blankJourney} from '../../../../../desktop/cradle/expressions-app/field-studies-journeys/src/model'
 import {useWorkspace} from '../shell/workspaceContext'
+import {Icon} from '../inhabitants/sdk/Icon'
+import {KindMark} from '../inhabitants/sdk/marks.tsx'
 import {collectionSections, enumerateWorks, expressionOwner, freshTitle, newExpression, openStarter, worksHome,
   type CollectionItem, type CollectionRow, type CollectionSection, type OpenOutcome, type OpenPorts} from './nativeExpressionCommands'
 import './NativeExpressionCollections.css'
@@ -47,10 +49,13 @@ export function CollectionList({sections, query, busy, report, onOpen, onNew}: {
   sections: readonly CollectionSection[]; query: string; busy: string | null; report: RowReport | null
   onOpen: (id: string) => void; onNew: () => void
 }) {
-  // Manual 10.3: a row opens by double-click; the button is the same act, for the keyboard and the pointer.
-  const row = (item: CollectionRow, label: string, name: string, act: () => void) => <li key={item.id} className="world-collection-row" data-collection-row={item.id} onDoubleClick={busy === null ? act : undefined}>
+  // Manual 10.3: a row opens by double-click; the button is the same act, for the keyboard and the pointer. The row is drawn at
+  // the browser's floor (world-shell-mockup.html bi() :1478): its mark, its name, and its act where the standing stands; the
+  // description is the row's hover words.
+  const row = (item: CollectionRow, label: string, name: string, act: () => void) => <li key={item.id} className="world-collection-row" data-collection-row={item.id}
+    title={item.description ? `${item.name} — ${item.description}` : item.name} data-i={`${item.name}|${item.description ? `${item.description.replace(/\.$/, '')}. ` : ''}Double-click it, or press ${label}, to open it.`} onDoubleClick={busy === null ? act : undefined}>
+    <span className="world-collection-mark" aria-hidden="true">{item.id === NEW_ROW.id ? <Icon name="plus" size={12} /> : <KindMark kind="expression" size={12} />}</span>
     <span className="world-collection-name">{item.name}</span>
-    {item.description && <small className="world-collection-description">{item.description}</small>}
     <button type="button" data-browser-row disabled={busy !== null} aria-busy={busy === item.id ? 'true' : undefined} aria-label={name} onClick={act}>{busy === item.id ? 'Opening…' : label}</button>
     {report?.id === item.id && (report.kind === 'error'
       ? <p className="native-error" role="alert">{report.text}</p>
