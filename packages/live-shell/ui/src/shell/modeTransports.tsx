@@ -28,6 +28,7 @@ import {useCentralTransport} from './transports/useCentralTransport'
 import {civilDayLabel} from './transports/transportReadings'
 import {civilDateOfDayRef} from '../central/centralVertical'
 import {useAtlasTimeBindings} from '../projections/atlas/places/placesTransport'
+import {usePalaceWalkBindings} from '../projections/atlas/palaces/palaceTransport'
 
 /** What the bindings read from the frame: the mode's real readouts, the World's time spine, the focused instrument, Live's set. */
 export interface TransportReading {
@@ -95,11 +96,14 @@ const useTechneTransport: UseModeTransport = ({readouts, timeSpine, focusedInstr
   // Places is the atlas (T-PLACES-ONTO-ATLAS): Play and Stop press the atlas's one time button (the walk that stands, else the Earth's
   // clock through the shared window), and punch-in and punch-out read the window's edges (projections/atlas/places/placesTransport.ts).
   const atlasTime = useAtlasTimeBindings()
+  // While a palace is entered its walk takes the one button (T-PALACES-ONTO-ATLAS, lane-5 T17): Play walks the palace locus by locus, Stop
+  // holds it still, Walk pace and Stop n/8 read its dwell and its locus (projections/atlas/palaces/palaceTransport.ts); outside, none.
+  const palaceWalk = usePalaceWalkBindings()
   // The clock that drives the panes (the mockup's `14:37 · 08 Oct`): the civil Now the World cut reads, with the civil day the
   // spine's own civil reading stands in (timeline/timeSpine.ts `now().dayRef`).
   const now = readouts?.position, day = civilDayLabel(civilDateOfDayRef(timeSpine?.now()?.dayRef))
   const clock = now && day && /\d/.test(now.value) ? {position: {readout: {value: `${now.value} · ${day}`, title: now.title}}} : {}
-  const bindings: TransportBindings = {...readoutsOf(readouts), ...clock, ...atlasTime, arm: {control: instrumentArmControl(slotMeaning('techne', 'arm'), focusedInstrument)}}
+  const bindings: TransportBindings = {...readoutsOf(readouts), ...clock, ...atlasTime, ...palaceWalk, arm: {control: instrumentArmControl(slotMeaning('techne', 'arm'), focusedInstrument)}}
   if (!timeSpine) return bindings
   const brace = timeSpine.transport().loopClipIds
   const length = slotMeaning('techne', 'loop-length')

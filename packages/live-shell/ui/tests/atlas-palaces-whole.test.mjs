@@ -1,12 +1,14 @@
 // Palace integral whole (lane-5 T14, T16, T17, T18) — the pure model the
-// mounted Palace draws from: the reading's real facets as integral regions,
+// atlas's palace draws from (T-PALACES-ONTO-ATLAS: moved from the frame's
+// field-studies-journeys/tests/palace-whole.test.mjs with its module, now the
+// owner seam desktop/cradle/src/techne/m0m5/palace/whole.ts; unchanged): the reading's real facets as integral regions,
 // the guided path's derived edges (broken and self named, never hidden), the
 // open route (wired or refused by name), the integral walk with wrap and
 // resume, and each region's own standing (warranted, owner or free).
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import {validateReading} from "../../../src/techne/contract.ts";
+import {validateReading} from "../../../../desktop/cradle/src/techne/contract.ts";
 import {
   palaceWholeView,
   palaceGuidedEdges,
@@ -16,8 +18,8 @@ import {
   palaceWalkResume,
   palaceRegionOpenRoute,
   SCENE_REGION_STANDING,
-} from "../src/palaceWhole.ts";
-import {recallOver} from "../../../src/techne/m0m5/palace/recall.ts";
+} from "../../../../desktop/cradle/src/techne/m0m5/palace/whole.ts";
+import {recallOver} from "../../../../desktop/cradle/src/techne/m0m5/palace/recall.ts";
 
 const ANCHOR = "oi.expression:palace";
 

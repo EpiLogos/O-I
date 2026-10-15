@@ -17,7 +17,10 @@ test('the lens host-command reads the carried ref and passes it to the instrumen
   assert.match(app, /let carriedFocus:\{lens:LensId;ref:string\}\|null=null;/, 'the carried focus is declared once');
   assert.match(app, /function activateInstrument\(lens:LensId\)\{\n const carried=carriedFocus\?\.lens===lens\?carriedFocus\.ref:undefined;/, 'activateInstrument reads the carried ref for the lens it activates');
   assert.match(app, /researchInstruments\?\.open\(lens==='canvas'\?'m1':lens==='timeline'\?'m2':'m4',carried\)/, 'the canvas, timeline and place instruments receive the ref');
-  assert.match(app, /void palaceInstrument\.open\(carried\)/, 'the palace receives the ref');
+  // T-PALACES-ONTO-ATLAS: the Palace lens retired; asked for, it says where palaces went (a carried room is entered on the atlas:
+  // packages/live-shell/ui/tests/atlas-palaces-session.test.mjs pins the walk standing at the carried room, and the named refusal).
+  assert.match(app, /if\(lens==='palace'\)toast\(PALACE_MOVED,8000\);/, 'the palace lens says where palaces went');
+  assert.doesNotMatch(app, /palaceInstrument/, 'no frame palace receives a ref any more');
   assert.match(app, /\.then\(\(\)=>carried===undefined\?undefined:journeyInstrument\?\.focusBeat\(carried\)\)/, 'the journey focuses the carried beat after its crossing return');
 });
 
@@ -59,19 +62,10 @@ test('the journey instrument focuses a carried beat through its scene focus, and
   assert.match(body, /Not focused: \$\{ref\} is not a beat of this Journey\./, 'a ref that is not a beat is named');
 });
 
-test('the palace focuses a carried walk locus through its own walk index, and names a ref the walk does not hold', async () => {
-  const src = await read('palaceInstrument.tsx');
-  assert.match(src, /async open\(focusRef\?:string\)\{/, 'the palace accepts the carried ref');
-  assert.match(src, /carried=\{carriedFocus\}/, 'the carried ref reaches the panel');
-  assert.match(src, /carriedApplied\.current===carried\.nonce/, 'a carried focus is applied once per open');
-  assert.match(src, /const index=walkSteps\.findIndex\(step=>step\.ref===carried\.ref\);/, 'the walk is searched for the exact ref');
-  assert.match(src, /Not focused: \$\{carried\.ref\} is not a step of this Palace walk\./, 'a ref the walk does not hold is named');
-  assert.match(src, /setWalkMoved\(index\)/, 'the focus moves the walk index');
-});
-
-test('the Palace status line says the object is in focus for the wired instruments, and keeps the honest line for the unwired project lens', async () => {
-  const src = await read('palaceInstrument.tsx');
-  assert.match(src, /const FOCUS_CARRIED_INSTRUMENTS:ReadonlySet<TechneInstrument>=new Set<TechneInstrument>\(\['canvas','timeline','place','journey'\]\);/, 'the wired instruments are named');
-  assert.match(src, /FOCUS_CARRIED_INSTRUMENTS\.has\(instrument\)\s*\?`Asked the shell for the \$\{instrument\} instrument with \$\{ref\} in focus/, 'a wired instrument is said to carry the focus');
-  assert.match(src, /:`Asked the shell for the \$\{instrument\} instrument\. \$\{ref\} is not carried into it yet\.`\);/, 'the unwired project lens keeps its honest line');
+// T-PALACES-ONTO-ATLAS: the frame's Palace lens retired (FOUNDATION §3 N4 "Palaces live in the atlas … There is no separate palace
+// surface"). Its two pins move to the atlas's palace: entering at a carried room stands the walk there, and a room the walk does not hold
+// is named (packages/live-shell/ui/tests/atlas-palaces-session.test.mjs); an object opens through its owner's door, saying whether it is
+// carried (atlas-palaces-session.test.mjs, the openers).
+test('the palace lens is gone from the frame: no palace instrument file stands', async () => {
+  await assert.rejects(read('palaceInstrument.tsx'), /ENOENT/);
 });

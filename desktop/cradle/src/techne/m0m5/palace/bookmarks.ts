@@ -1,6 +1,9 @@
 /**
  * Palace bookmarks and the named start (lane-5 T24) — pure presentation over the Palace's own composition. No DOM, no store.
  *
+ * Moved here verbatim from the frame's `expressions-app/field-studies-journeys/src/palaceBookmarks.ts` (at fdc302870) when palaces
+ * moved onto the atlas (T-PALACES-ONTO-ATLAS, FOUNDATION §3 N4); the atlas's M5 plate reads it through this owner seam.
+ *
  * Laws carried here:
  *   - a bookmark is a NAMED POSITION of the palace: the region and native ref that stood there (its locus rides with it), and the
  *     board's viewport. It is the `PalaceBookmark` floor from `palace-state.ts`, extended by name and viewport, never a second type;
@@ -18,8 +21,8 @@ import {
   type PalaceBoardViewport,
   type PalaceBookmark,
   type PalaceComposition,
-} from '../../../src/techne/m0m5/palace/palace-state.ts';
-import {palaceWalkAt, palaceWalkResume, type PalaceWalkStep} from './palaceWhole.ts';
+} from './palace-state.ts';
+import {palaceWalkAt, palaceWalkResume, type PalaceWalkStep} from './whole.ts';
 
 /** The longest name a bookmark takes. A longer one is refused by name, never cut. */
 export const PALACE_BOOKMARK_NAME_LIMIT = 80;

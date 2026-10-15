@@ -1,4 +1,12 @@
-// lane-5 palace seams A and B.
+// lane-5 palace seams A and B, moved from the frame's field-studies-journeys/tests/palace-open-route.test.mjs (T-PALACES-ONTO-ATLAS).
+// The frame recorded its trail step through the boundary's palace route (packages/expressions-boundary/src/timeWindow.ts palaceHop,
+// reached by the retired palaceHop.ts over the techne-time-window channel); the atlas records it on the shared session directly
+// (desktop/cradle/src/techne/m0m5/palace/basis.ts palaceTrailStep, the port of that route's law). The boundary's own route is pinned
+// here unchanged, beside the atlas's port, which records the same hop. Retired: 'the frame addresses the owner with the basis, reading and
+// target only, and qualifies the reply it gets back' (palaceHopRequest / qualifyPalaceHopReply, the frame's channel) → 'the atlas's trail
+// step records exactly the hop the boundary's palace route records'; 'seam B: the frame asks for a non-Expression instrument through the
+// existing host-request summon' → atlas-palaces-session.test.mjs 'an object opens through its owner …' (the instrument door).
+//
 //   A  an Open on a Palace Expression records ONE endpoint hop on the session's one history, through the owner's
 //      palace route. The hop carries the session's own subject and selection; a session off the Expression reading
 //      records nothing, refused by name, and a Palace not admitted at this Scene is refused by name.
@@ -10,13 +18,13 @@ import {register} from 'node:module';
 
 // The owner route is app TypeScript with extensionless siblings and type-only imports: register the boundary's own
 // production-source loader (the one packages/expressions-boundary/tests uses), then load the sources dynamically.
-register('../../../../../packages/expressions-boundary/tests/editor-source-loader.mjs', import.meta.url);
-const {createDisclosureSessionStore} = await import('../../../src/techne/session.ts');
-const {provingReading} = await import('../../../src/techne/m0m5/journey/proving-reading.ts');
-const {createNativeTimeWindowOwner} = await import('../../../../../packages/expressions-boundary/src/timeWindow.ts');
-const {isDeepInstrument} = await import('../../../../../packages/expressions-boundary/src/protocol.ts');
-const {PALACE_WIRED_INSTRUMENTS, palaceInstrumentOpenRequest, palaceOpenRoute} = await import('../src/palaceWhole.ts');
-const {palaceHopRequest, qualifyPalaceHopReply} = await import('../src/palaceHop.ts');
+register('../../../expressions-boundary/tests/editor-source-loader.mjs', import.meta.url);
+const {createDisclosureSessionStore} = await import('../../../../desktop/cradle/src/techne/session.ts');
+const {provingReading} = await import('../../../../desktop/cradle/src/techne/m0m5/journey/proving-reading.ts');
+const {createNativeTimeWindowOwner} = await import('../../../expressions-boundary/src/timeWindow.ts');
+const {isDeepInstrument} = await import('../../../expressions-boundary/src/protocol.ts');
+const {PALACE_WIRED_INSTRUMENTS, palaceOpenRoute} = await import('../../../../desktop/cradle/src/techne/m0m5/palace/whole.ts');
+const {palaceTrailStep} = await import('../../../../desktop/cradle/src/techne/m0m5/palace/basis.ts');
 
 const EXPRESSION = 'expression:journey-probe';
 const ONE = `${EXPRESSION}:scene:one`;
@@ -93,16 +101,34 @@ test('seam A: a Palace that is not admitted at this native Scene is refused by n
   assert.equal(JSON.stringify(state.store.get()), before);
 });
 
-test('the frame addresses the owner with the basis, reading and target only, and qualifies the reply it gets back', () => {
-  const basis = basisAt(TWO);
-  const reading = expressionReading();
-  assert.deepEqual(palaceHopRequest(basis, reading, CONTAINED), {...basis, operation: 'palace', reading_ref: reading.reading_ref,
-    instrument: 'expressions', target_ref: CONTAINED});
+test('the atlas\'s trail step records exactly the hop the boundary\'s palace route records, and changes no identity', () => {
+  const boundary = owner(TWO);
+  cross(boundary, acknowledge(boundary), TWO);
+  palaceOpen(boundary, CONTAINED);
+  const atlas = owner(TWO);
+  cross(atlas, acknowledge(atlas), TWO);
+  const before = structuredClone(atlas.store.get());
+  // the reading the session stands on (the boundary admitted the Journey's whole-Expression reading at this basis)
+  const reading = {...expressionReading(), reading_ref: before.reading_ref, subject: {...expressionReading().subject, subject_ref: before.subject_ref}};
+  palaceTrailStep(atlas.store, reading, CONTAINED);
+  const after = atlas.store.get();
+  assert.equal(after.navigation.length, before.navigation.length + 1, 'exactly one hop is appended');
+  assert.deepEqual(after.navigation.at(-1), boundary.store.get().navigation.at(-1), 'the same endpoint hop the boundary records');
+  assert.equal(after.session_ref, before.session_ref);
+  assert.deepEqual(after.selection, before.selection, 'the selection is carried byte-equal');
+});
+
+test('the atlas\'s trail step on a session off the Expression reading, or on another reading, records nothing and says so by name', () => {
   const state = owner(TWO);
-  cross(state, acknowledge(state), TWO);
-  const reply = palaceOpen(state, CONTAINED);
-  assert.equal(qualifyPalaceHopReply(reply, basis, reading).session.navigation.at(-1).ref, CONTAINED);
-  assert.throws(() => qualifyPalaceHopReply({...reply, reading_ref: 'ql.techne:reading:other'}, basis, reading), /does not address/);
+  acknowledge(state);
+  const before = JSON.stringify(state.store.get());
+  const session = state.store.get();
+  const reading = {...expressionReading(), reading_ref: session.reading_ref, subject: {...expressionReading().subject, subject_ref: session.subject_ref}};
+  assert.throws(() => palaceTrailStep(state.store, reading, CONTAINED), /not on the Expression reading/);
+  assert.throws(() => palaceTrailStep(state.store, {...reading, reading_ref: 'ql.techne:reading:other'}, CONTAINED), /another subject or reading/);
+  assert.throws(() => palaceTrailStep(createDisclosureSessionStore(), reading, CONTAINED), /No shared session stands/);
+  assert.throws(() => palaceTrailStep(state.store, reading, '   '), /one object ref/);
+  assert.equal(JSON.stringify(state.store.get()), before, 'a refused step changes nothing');
 });
 
 test('seam B: the palace wires the five non-Expression instruments and refuses the rest by name', () => {
@@ -115,13 +141,4 @@ test('seam B: the palace wires the five non-Expression instruments and refuses t
   assert.equal(palace.kind, 'refused');
   assert.match(palace.reason, /palace/);
   assert.equal(palaceOpenRoute({kind: 'ground', ref: 'r', label: 'l', open_instrument: null}, PALACE_WIRED_INSTRUMENTS).kind, 'refused');
-});
-
-test('seam B: the frame asks for a non-Expression instrument through the existing host-request summon, naming its ref', () => {
-  const request = palaceInstrumentOpenRequest('timeline', 'ql.techne:ref:x');
-  assert.deepEqual(request, {request: 'summon', detail: {kind: 'instrument', lens: 'timeline', ref: 'ql.techne:ref:x'}});
-  // The host admits exactly this shape: a summon whose detail is an instrument with a deep lens.
-  assert.equal(request.request, 'summon');
-  assert.equal(request.detail.kind, 'instrument');
-  assert.ok(isDeepInstrument(request.detail.lens));
 });

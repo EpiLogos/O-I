@@ -489,7 +489,8 @@ try {
       const target = document.getElementById('research-workspace');
       if (target) new MutationObserver(muts => {if (muts.some(m => m.type === 'childList' && (m.addedNodes.length || m.removedNodes.length))) window.__REMOUNTS__++;}).observe(target, {childList: true});
     });
-    const order = ['project', 'canvas', 'timeline', 'journey', 'place', 'palace', 'project'];
+    // M4′ Places and M5′ Palace are the shell's Earth atlas now (T-PLACES-ONTO-ATLAS, T-PALACES-ONTO-ATLAS): the frame's chooser offers neither
+    const order = ['project', 'canvas', 'timeline', 'journey', 'project'];
     const trail = [];
     const errorsBefore = errors.length;
     for (const lens of order) {

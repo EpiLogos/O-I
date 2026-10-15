@@ -9,7 +9,9 @@ import {readFile} from 'node:fs/promises';
 export async function resolve(s,c,n){if(s.startsWith('@research-canvas/'))return n(new URL('packages/'+s.slice('@research-canvas/'.length)+'/src/index.ts',${JSON.stringify(new URL('desktop/cradle/expressions-app/vendor/research-canvas/',root).href)}).href,c);try{return await n(s,c)}catch(e){if(!s.startsWith('.'))throw e;for(const suffix of ['.ts','.tsx'])try{return await n(s.endsWith('.js')?s.slice(0,-3)+suffix:s+suffix,c)}catch{}throw e}}
 export async function load(u,c,n){if(u.endsWith('.css'))return {format:'module',shortCircuit:true,source:'export {}'};if(!/\\.tsx?$/.test(u))return n(u,c);return {format:'module',shortCircuit:true,source:ts.transpileModule(await readFile(new URL(u),'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext,jsx:ts.JsxEmit.ReactJSX},fileName:new URL(u).pathname}).outputText}}
 `)}`,import.meta.url);
-const [journey,palace,{kernelDocumentToJourney}]=await Promise.all([import(new URL('journeyInstrumentModel.ts',author)),import(new URL('palaceInstrumentBasis.ts',author)),import(new URL('kernelDocumentBridge.ts',author))]);
+// T-PALACES-ONTO-ATLAS: the Palace's basis checks moved with the palace from the frame (palaceInstrumentBasis.ts) to the owner seam the
+// atlas reads (desktop/cradle/src/techne/m0m5/palace/basis.ts): the basis is the owner's document at one of its own Scenes, not the frame's view.
+const [journey,palace,{kernelDocumentToJourney}]=await Promise.all([import(new URL('journeyInstrumentModel.ts',author)),import(new URL('desktop/cradle/src/techne/m0m5/palace/basis.ts',root)),import(new URL('kernelDocumentBridge.ts',author))]);
 const path=process.env.OI_NATIVE_COMPOSITION_RECEIPT??new URL('./fixtures/native-rich-glyph-rack-r8.receipt.json',import.meta.url);
 const receipt=JSON.parse(await readFile(path,'utf8')),document=receipt.after.document;
 assert.deepEqual(document,receipt.before.document);
@@ -39,14 +41,15 @@ test('Journey rejects absent, stale, foreign and undisclosed beat identity',()=>
  assert.throws(()=>journey.readJourneyInstrument(null,view,sceneId),/invalid/);
 });
 test('Palace reads qualify actual owner source and Scene; stale, wrong source and duplicate Scene rows refuse',()=>{
- const captured=palace.palaceInstrumentBasis(view,sceneId);
- assert.equal(palace.samePalaceInstrumentBasis(captured,view,sceneId),true);
+ const captured=palace.palaceBasisOf(palace.palaceSnapshot(document),nativeScene.scene_ref);
+ assert.deepEqual(captured,{expression_ref:document.expression_ref,revision:document.revision,scene_ref:nativeScene.scene_ref});
  palace.assertPalaceSource(document,captured);
  assert.throws(()=>palace.assertPalaceSource({...document,revision:document.revision+1},captured),/another/);
  assert.throws(()=>palace.assertPalaceSource({...document,expression_ref:'expression:foreign'},captured),/another/);
  assert.throws(()=>palace.assertPalaceSource({...document,scenes:[]},captured),/another/);
  assert.throws(()=>palace.assertPalaceSource({...document,scenes:[...document.scenes,nativeScene]},captured),/another/);
- assert.equal(palace.samePalaceInstrumentBasis(captured,undefined,sceneId),false);
+ assert.throws(()=>palace.palaceBasisOf(palace.palaceSnapshot(document),'scene:absent'),/Open a native Scene/);
+ assert.equal(JSON.stringify(document),bytes);
 });
 test('Palace readback checks explicit region order and exact contained target, rather than set membership',()=>{
  const actual=document.scenes.map(scene=>({name:scene.title,scene_ref:scene.scene_ref,member:scene.body?.carrier==='expression_ref'?{expression_ref:scene.body.subject_ref,title:scene.title}:null}));

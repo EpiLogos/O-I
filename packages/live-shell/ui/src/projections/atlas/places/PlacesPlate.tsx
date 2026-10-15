@@ -28,15 +28,19 @@ import {windowEdgeYear, writeSharedWindow} from '../sharedClock'
 import {atlasScale, subscribeAtlasScale, turnAtlasTo} from './placesHost'
 import {findPlaceRows, placeRows, precisionCounts, relationRows, routeRows, withinRows, type PlaceRow, type RelationRow} from './placesModel'
 import {armPlaceTool, disarmPlaceTool, draftLine, openOfferedEditor, placeToolState, subscribePlaceTool, type PlaceToolSubject} from './placeTool'
+import {palaceLocationRows} from '../palaces/palacesModel'
+import {palacesWaiting, readPalaces, usePalaces} from '../palaces/palacesWorld'
+import {enterPalace} from '../palaces/palaceSession'
 import './placesPlate.css'
 
 /** The QL family's Sun is drawn on the Earth but is no subject a place can be declared for. */
 const SKY_FAMILY = 'ql-sky-subsolar'
 
-/** The mockup's location kinds (`pl.kind`): only a place has an owner that declares it; the others say why they wait. */
+/** The mockup's location kinds (`pl.kind`): a place has an owner that declares it, and a palace stands where its rooms' subjects are
+ * placed (T-PALACES-ONTO-ATLAS: the world's palaces are listed here, entered from here or the M5 plate); the others say why they wait. */
 const KINDS: readonly {id: string; mark: IconName; why: string | null}[] = [
   {id: 'place', mark: 'placed', why: null},
-  {id: 'palace', mark: 'palace', why: 'A palace is a place you enter (N4): no owner builds one on the atlas yet.'},
+  {id: 'palace', mark: 'palace', why: null},
   {id: 'portal', mark: 'direct', why: 'A portal leads through to another world: no owner opens one yet.'},
   {id: 'route', mark: 'journey', why: 'A route is the walk of a subject\'s TRAVELLED_TO places, each declared as a place.'},
 ]
@@ -71,8 +75,9 @@ export function selectedSubject(handle: AtlasHandle | null): {ref: string; title
   return {ref: occ.subject_ref, title: occ.title}
 }
 
-/** One segmented reading or choice in the SDK's own look (sdk.css .sdk-seg): each choice lit only when it is the reading. */
-function Segmented({title, values, on, hint, onChoose}: {title: string; values: readonly {id: string; label: ReactNode; why?: string | null}[]; on: string | null; hint?: string; onChoose?: (id: string) => void}) {
+/** One segmented reading or choice in the SDK's own look (sdk.css .sdk-seg): each choice lit only when it is the reading. The M5 Palace
+ * plate stands its choices the same way (palaces/PalacePlate.tsx). */
+export function Segmented({title, values, on, hint, onChoose}: {title: string; values: readonly {id: string; label: ReactNode; why?: string | null}[]; on: string | null; hint?: string; onChoose?: (id: string) => void}) {
   return <div className="sdk-row sdk-row--tog places-seg" title={hint}>
     <span className="sdk-row__name">{title}</span>
     <div className="sdk-seg" role="radiogroup" aria-label={title}>
@@ -84,7 +89,7 @@ function Segmented({title, values, on, hint, onChoose}: {title: string; values: 
 }
 
 /** A reading: its name, and its value in the owner's words. */
-function Reading({name, value, title}: {name: string; value: ReactNode; title?: string}) {
+export function Reading({name, value, title}: {name: string; value: ReactNode; title?: string}) {
   return <div className="places-kv" title={title}><span className="places-k">{name}</span><span className="places-v">{value}</span></div>
 }
 
@@ -159,9 +164,31 @@ function SkySection({handle, entries}: {handle: AtlasHandle | null; entries: rea
   </>
 }
 
+/** The Locations under the kind `palace` (T-PALACES-ONTO-ATLAS): the world's palaces, each where its door stands — the first room on its
+ * path whose subjects are placed (palaces/palacesModel.ts palaceLocationRows). A press turns the Earth to the door; a double-click enters. */
+function PalaceLocations({handle, query}: {handle: AtlasHandle | null; query: string}) {
+  const standing = useSuiteStanding()
+  const {rows, load} = usePalaces()
+  const [chosen, setChosen] = useState<string | null>(null)
+  useEffect(() => { readPalaces() }, [])
+  const words = query.toLocaleLowerCase().split(/\s+/).filter(Boolean)
+  const shown = palaceLocationRows(rows, standing.places).filter(row => words.every(word => row.name.toLocaleLowerCase().includes(word)))
+  const waiting = palacesWaiting(load, rows.length)
+  return <div className="places-list" role="list" aria-label="Palaces">
+    {shown.map(row => <button key={row.key} type="button" role="listitem" className={`places-item${row.key === chosen ? ' on' : ''}`} data-located={row.door ? 'true' : 'false'}
+      title={`${row.name} — ${row.line}. Press to turn the Earth to its door; double-click to enter it.`}
+      onClick={() => { setChosen(row.key); if (handle && row.door) turnAtlasTo(handle, row.door.place) }}
+      onDoubleClick={() => { const palace = rows.find(candidate => candidate.key === row.key); if (palace) void enterPalace(palace) }}>
+      <Icon name="palace" size={10} /><span className="n">{row.name}</span><span className="d">{row.door ? `↧ ${row.door.place.name}` : 'not on the Earth'}</span>
+    </button>)}
+    {!shown.length && <SectionNote>{waiting ?? 'No palace of your world matches.'}</SectionNote>}
+  </div>
+}
+
 function LocationsSection({handle}: {handle: AtlasHandle | null}) {
   const standing = useSuiteStanding()
   const tool = useSyncExternalStore(subscribePlaceTool, placeToolState, placeToolState)
+  const [kind, setKind] = useState<'place' | 'palace'>('place')
   const [query, setQuery] = useState('')
   const [chosen, setChosen] = useState<string | null>(null)
   const [windowSaid, setWindowSaid] = useState<string | null>(null)
@@ -195,13 +222,15 @@ function LocationsSection({handle}: {handle: AtlasHandle | null}) {
     ? `Click the Earth to place ${tool.subject.moving ? `${tool.subject.moving.name} anew` : 'a point'} for ${tool.subject.title}. Esc stops.`
     : tool.phase === 'offered' ? `${draftLine(tool.draft)}. ${tool.notice}` : tool.notice
   return <>
-    <Segmented title="Kind" values={KINDS.map(kind => ({id: kind.id, label: <><Icon name={kind.mark} size={10} /> {kind.id}</>, why: kind.why}))} on="place"
-      hint="What the next placed location is: a place, declared by its subject." />
+    <Segmented title="Kind" values={KINDS.map(entry => ({id: entry.id, label: <><Icon name={entry.mark} size={10} /> {entry.id}</>, why: entry.why}))} on={kind}
+      onChoose={id => { if (id === 'place' || id === 'palace') setKind(id) }}
+      hint="What the locations list: places, declared by their subjects; or palaces, each standing where its rooms' subjects are placed." />
     <div className="places-row">
       <button type="button" className={`places-btn${tool.phase === 'armed' ? ' places-btn--on' : ''}`} aria-pressed={tool.phase === 'armed'}
-        title={subject ? `Place a point for ${subject.title}: the next click on the Earth is offered to its time-and-place editor, never written here.` : 'Choose a subject on the Earth first: a place is declared by a subject.'}
+        title={(kind === 'palace' ? 'A palace stands where its rooms\' subjects are placed: placing a subject a room holds places that room. ' : '')
+          + (subject ? `Place a point for ${subject.title}: the next click on the Earth is offered to its time-and-place editor, never written here.` : 'Choose a subject on the Earth first: a place is declared by a subject.')}
         onClick={press}><Icon name="draw" size={11} /> Place</button>
-      <input className="places-find" type="search" placeholder="Find a place…" value={query} aria-label="Find a place or anything in the field"
+      <input className="places-find" type="search" placeholder={kind === 'palace' ? 'Find a palace…' : 'Find a place…'} value={query} aria-label="Find a place or anything in the field"
         onChange={event => setQuery(event.target.value)} />
     </div>
     {counts.length > 0 && <div className="places-chips" aria-label="Precision">
@@ -210,7 +239,7 @@ function LocationsSection({handle}: {handle: AtlasHandle | null}) {
     {line && <p className="places-line" role="status" data-tone={tool.phase === 'idle' ? tool.tone ?? undefined : tool.phase}>
       {line}{tool.phase === 'offered' && <> <button type="button" className="places-link" onClick={openOfferedEditor}>Open the editor</button></>}
     </p>}
-    <div className="places-list" role="list" aria-label="Locations">
+    {kind === 'palace' ? <PalaceLocations handle={handle} query={query} /> : <div className="places-list" role="list" aria-label="Locations">
       {shown.map(row => <button key={row.ref} type="button" role="listitem" className={`places-item${row.ref === chosen ? ' on' : ''}`} data-located={row.located ? 'true' : 'false'}
         data-standing={row.standing} onClick={() => turn(row)}
         title={[row.name, row.relation ?? '', row.markerNote, row.uncertainty ?? '', row.validity ? `valid ${row.validity}` : '', row.reason ?? '', row.provenance].filter(Boolean).join('\n')}>
@@ -224,7 +253,7 @@ function LocationsSection({handle}: {handle: AtlasHandle | null}) {
           <Icon name="search" size={10} /><span className="n">{result.label}</span><span className="d">{result.sub}</span>
         </button>)}
       </div>}
-    </div>
+    </div>}
     {standing.phase !== 'idle' && describeStanding(standing) && <p className="places-prov" data-places-standing title="What the owners returned: the world's standing (said here, never over the globe)">{describeStanding(standing)}</p>}
     {chosenRow && <p className="places-prov" title="Where it came from">{chosenRow.provenance}{chosenRow.validity ? ` · valid ${chosenRow.validity}` : ''}{chosenRow.reason ? ` · ${chosenRow.reason}` : ''}
       {chosenRow.validity && <> <button type="button" className="places-link" title="Set this work's shared window to the place's own validity: the Timeline and the Earth stand in it (lane-4 T23)"
