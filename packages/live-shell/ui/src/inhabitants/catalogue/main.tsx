@@ -100,8 +100,11 @@ function StatusLine() {
 
 /** A designed device in its five views, all on one set of values: move a macro on the chain and the pool, the pane and the rail
  * move with it. */
-function DesignedViews({design, views}: {design: DesignedDevice; views: readonly View[]}) {
-  const [values, setValues] = useState<Record<string, Value>>({...design.defaults})
+function DesignedViews({design, views, fixture: first}: {design: DesignedDevice; views: readonly View[]; fixture?: string | null}) {
+  const names = Object.keys(design.fixtures ?? {})
+  const [fixture, setFixture] = useState(first && names.includes(first) ? first : names[0] ?? '')
+  const over = (name: string) => ({...design.defaults, ...(design.fixtures?.[name] ?? {})})
+  const [values, setValues] = useState<Record<string, Value>>(over(fixture))
   const [page, setPage] = useState(design.firstPage ?? '')
   const [folded, setFolded] = useState(false)
   const pane = useRef<HTMLDivElement>(null)
@@ -121,7 +124,13 @@ function DesignedViews({design, views}: {design: DesignedDevice; views: readonly
       case 'widget': return <div className="cat-rail cat-rail--ref"><div className="cat-rail-head">Rail</div><div className="cat-rail-tiles">{design.widget(props)}</div></div>
     }
   }
-  return <div className="cat-views cat-views--ref">{views.map(view => <ViewFrame key={view} view={view}>{one(view)}</ViewFrame>)}</div>
+  return <>
+    {names.length > 0 && <div className="cat-fixtures" role="group" aria-label="Fixture">
+      <span>Fixture</span>
+      {names.map(name => <button key={name} type="button" aria-pressed={name === fixture} onClick={() => { setFixture(name); setValues(over(name)) }}>{name}</button>)}
+    </div>}
+    <div className="cat-views cat-views--ref">{views.map(view => <ViewFrame key={view} view={view}>{one(view)}</ViewFrame>)}</div>
+  </>
 }
 
 function Index() {
@@ -161,7 +170,7 @@ function Gallery() {
   const design = DESIGNED[id]
   if (design && query.get('generic') !== '1') {
     const views = viewParam === 'all' ? VIEWS : (VIEWS as readonly string[]).includes(viewParam) ? [viewParam as View] : VIEWS
-    return <main className="cat-device"><DesignedViews design={design} views={views} /><StatusLine /></main>
+    return <main className="cat-device"><DesignedViews design={design} views={views} fixture={query.get('fixture')} /><StatusLine /></main>
   }
   if (!found) return <main className="cat-missing"><p><b>{id}</b> is not declared at the door.</p><p>Its catalogue entry is the specification for its declaration.</p></main>
   const views = viewParam === 'all' ? VIEWS : (VIEWS as readonly string[]).includes(viewParam) ? [viewParam as View] : VIEWS

@@ -1,80 +1,112 @@
-// The Skillset rack (manual §19.6): one chain for each skill, each with your request and AIKit's admit light, and four macros
-// over all of them. Live's nearest: an Audio Effect Rack — the chain list with each chain's activator, and the macro dials.
-// A rack's picture is its chain list; the light is AIKit's answer, the square is your request, and they can differ.
+// The Skillset rack (manual §19.6): a SkillSet is the repertoire an agent carries — Methodologies, Methods, Skills and child
+// sets, each wearing its kind's woodcut mark in the set in use (icon-cut.html §7: the blade or the pen). Live's nearest: a rack
+// and its chain list, with nested racks for child sets. Membership grants no trust, authority or loading, so the picture is
+// the chain list with each member's evidence ladder: carried is not loaded, and loaded is not used. Every control here is an
+// AIKit operation: enable or disable through the profile, the scope a composition applies at, preview then apply, package.
 import {useState} from 'react'
-import {Band, Chooser, Dial, Folded, Panel, Readout, Rows, Section, Tile, type LightState, type RowItem} from '../../sdk/panel'
-import {num, pct, str, type DesignedDevice, type ViewProps} from './design'
+import {WoodMark} from '../../sdk/marks'
+import type {WoodSet} from '../../sdk/icons'
+import {Action, Band, Chooser, Folded, Ladder, Panel, Radio, Readout, Rows, Section, Tile, type LightState, type RowItem} from '../../sdk/panel'
+import {str, type DesignedDevice, type ViewProps} from './design'
+import {DOCUMENTATION, FORM_NAME, ORDER, RUNGS, markState, reaching, type Member} from './practice'
 
 type V = ViewProps['v']
-const DEPTH = ['None', 'Unit', 'Unit + int.', 'Full'], REACH = ['Object', 'Scene', 'Expression', 'Central'], RISK = ['Low', 'Medium', 'High']
+const SCOPES = [{value: 'home', label: 'Home', does: 'Every session on this machine.'}, {value: 'project', label: 'Project', does: 'Every session in this project.'},
+  {value: 'session', label: 'Session', does: 'This session only.'}] as const
+const TARGETS = [{value: 'claude', label: 'Claude'}, {value: 'codex', label: 'Codex'}, {value: 'pi', label: 'Pi'}, {value: 'openai', label: 'OpenAI'}] as const
+/** What a target cannot carry, from AIKit's target table (Pi has no MCP). */
+const UNSUPPORTED: Record<string, number> = {claude: 0, codex: 0, pi: 1, openai: 0}
 
-/** The set's skills (readings from AIKit, with your requests). */
-const SKILLS: readonly {id: string; name: string; rev: string; admitted: boolean; why?: string; text: string}[] = [
-  {id: 'engineering-methodology', name: 'Engineering method', rev: 'r7', admitted: true, text: 'Implement, repair, verify and land a change.'},
-  {id: 'test-driven-development', name: 'Test first', rev: 'r3', admitted: true, text: 'Write the failing test before the code.'},
-  {id: 'systematic-debugging', name: 'Systematic debugging', rev: 'r5', admitted: true, text: 'Find the cause before proposing a fix.'},
-  {id: 'verification-before-completion', name: 'Verify before done', rev: 'r2', admitted: true, text: 'Run the proof before you say it is done.'},
-  {id: 'requesting-code-review', name: 'Ask for review', rev: 'r4', admitted: false, why: 'Held back: a revision nobody has reviewed.', text: 'Ask a reviewer before you merge.'},
-  {id: 'writing-plans', name: 'Write the plan', rev: 'r6', admitted: false, text: 'Turn a spec into steps before you touch code.'},
-  {id: 'design-taste-frontend', name: 'Frontend taste', rev: 'r9', admitted: true, text: 'Hold an interface to a high visual standard.'},
-  {id: 'brainstorming', name: 'Brainstorm', rev: 'r2', admitted: false, text: 'Open the space before you choose.'},
-  {id: 'legacy-release', name: 'Legacy release', rev: 'r11', admitted: false, why: 'Held back: its author retired it.', text: 'The old release practice.'},
-]
+const marks = (v: V) => str(v, 'marks') as WoodSet
+const requested = (v: V, m: Member) => v[`req:${m.id}`] !== false
+const sorted = [...DOCUMENTATION].sort((a, b) => ORDER.indexOf(a.form) - ORDER.indexOf(b.form))
+const effective = (v: V) => sorted.map(m => (requested(v, m) ? m : {...m, rungs: m.rungs.map((r, i) => (i < 2 ? r : false))}))
 
 function chains(v: V): RowItem[] {
-  return SKILLS.map(skill => {
-    const request = v[`req:${skill.id}`] !== false
-    const lit = request && skill.admitted
-    return {id: skill.id, name: skill.name, request, light: (lit ? 'lit' : 'dark') as LightState, tone: 'green' as const,
-      why: request && !skill.admitted ? skill.why ?? 'Held back by AIKit.' : undefined, note: skill.rev}
+  return sorted.map(m => {
+    const want = requested(v, m), state = markState(m, want)
+    return {id: m.id, name: m.form === 'skillset' ? `${m.name} · ${m.holds}` : m.name, request: want,
+      light: (state === 'whole' ? 'lit' : 'dark') as LightState, why: want ? m.withheld?.why : 'Turned off: your request, through the profile.',
+      mark: <WoodMark kind={m.form} size={14} state={state} set={marks(v)} title={FORM_NAME[m.form]} />,
+      meter: <Ladder rungs={want ? m.rungs : m.rungs.map((r, i) => (i < 2 ? r : false))} labels={RUNGS} label={m.name} />, note: m.rev}
   })
 }
-const admitted = (v: V) => chains(v).filter(c => c.light === 'lit').length
 
-function Macros({p}: {p: ViewProps}) {
+/** Your requests, the scope and the profile change the composition; Preview shows what would apply, Apply applies it. */
+function Compose({p, stack = true}: {p: ViewProps; stack?: boolean}) {
+  const state = str(p.v, 'compose')
   return <>
-    <Dial label="Thorough" does="How exhaustive the skills are." value={num(p.v, 'thoroughness')} def={60} scale={{min: 0, max: 100}} format={pct} onChange={x => p.set('thoroughness', x)} />
-    <Dial label="Tests" does="How deep the skills test." value={num(p.v, 'testDepth')} def={1} scale={{min: 0, max: 3, step: 1}} format={x => DEPTH[x]!} onChange={x => p.set('testDepth', x)} />
-    <Dial label="Reach" does="How far beyond the scope the skills look." value={num(p.v, 'reach')} def={1} scale={{min: 0, max: 3, step: 1}} format={x => REACH[x]!} onChange={x => p.set('reach', x)} />
-    <Dial label="Risk" does="How bold the skills are before they ask you." value={num(p.v, 'risk')} def={0} scale={{min: 0, max: 2, step: 1}} format={x => RISK[x]!} onChange={x => p.set('risk', x)} />
+    <Radio label="Scope" does="Where the composition applies." value={str(p.v, 'scope')} options={SCOPES} stack={stack} onChange={x => { p.set('scope', x); p.set('compose', 'changed') }} />
+    {state === 'previewed'
+      ? <div className="ref-pair">
+          <Action label="Apply" does="Apply the previewed composition. AIKit projects it into the harness trees." onPress={() => p.set('compose', 'applied')} />
+          <Action label="Cancel" does="Keep the composition as it is." onPress={() => p.set('compose', 'changed')} />
+        </div>
+      : <Action label="Preview" does={state === 'changed' ? 'Show what the change would apply: members, withheld reasons, harness effects.' : 'Nothing has changed since the last apply.'}
+          onPress={state === 'changed' ? () => p.set('compose', 'previewed') : undefined} pending={state === 'changed'} />}
   </>
 }
 
-/** The chain list, paged. */
 function ChainList({p, size, columns}: {p: ViewProps; size: number; columns: 1 | 2}) {
   const [page, setPage] = useState(0)
-  return <Rows label={`Chains · ${admitted(p.v)} of ${SKILLS.length} lit`} does="The square is your request. The light is AIKit's answer. A dark chain with ! says why on hover."
-    items={chains(p.v)} onRequest={(id, x) => p.set(`req:${id}`, x)} size={size} page={page} onPage={setPage} columns={columns} />
+  return <Rows label={`Members · ${reaching(effective(p.v), 2)} of ${sorted.length} available`}
+    does="The square is your request. The mark is the member's kind, dim when withheld, orange when you can clear what holds it. The ticks are its evidence, carried to verified."
+    items={chains(p.v)} onRequest={(id, x) => { p.set(`req:${id}`, x); p.set('compose', 'changed') }} size={size} page={page} onPage={setPage} columns={columns} />
+}
+
+/** The set by kind: each kind's mark and how many members it has. */
+function KindCounts({v, size}: {v: V; size: number}) {
+  return <div className="ref-kinds" data-size={size > 20 ? 'big' : undefined}>
+    {ORDER.map(form => <span key={form} className="ref-kind" data-i={`${FORM_NAME[form]}s|${sorted.filter(m => m.form === form).length} in this set.`}>
+      <WoodMark kind={form} size={size} set={marks(v)} /><b>{sorted.filter(m => m.form === form).length}</b>
+    </span>)}
+  </div>
 }
 
 const light = (v: V) => str(v, 'light') as LightState
-const title = (v: V) => `Skills · ${str(v, 'skillset')}`
+const short = (v: V) => str(v, 'set').split(':')[1] ?? str(v, 'set')
+const headMark = (v: V) => <WoodMark kind="skillset" size={14} set={marks(v)} title="Skillset" />
 
 export const skills: DesignedDevice = {
   id: 'ai-kit:skillset-rack',
   title: 'Skillset rack',
   kind: 'rack',
-  defaults: {light: 'lit', skillset: 'build-lane', thoroughness: 60, testDepth: 1, reach: 1, risk: 0, steward: 'Flint', revision: 'r12', 'req:writing-plans': false, 'req:brainstorming': false},
+  defaults: {light: 'lit', set: 'central:documentation', scope: 'project', profile: 'baseline', compose: 'applied', target: 'claude',
+    marks: 'blade', revision: 'b3:9f2c41', author: 'Epi-Logos', 'req:experimental-development': false},
+  fixtures: {'The blade': {marks: 'blade'}, 'The pen': {marks: 'pen'}},
 
-  folded: p => <Folded title={title(p.v)} light={light(p.v)} readings={[`${admitted(p.v)} lit`]} onUnfold={p.nav.unfold} />,
+  folded: p => <Folded title={short(p.v)} light={light(p.v)} readings={[`${reaching(effective(p.v), 5)} loaded`]} onUnfold={p.nav.unfold} />,
 
-  compact: p => <Panel title={title(p.v)} view="compact" light={light(p.v)} onFold={p.nav.fold} onFull={p.nav.full} onSelect={p.nav.select}>
-    <Section width={168}><ChainList p={p} size={8} columns={1} /></Section>
-    <Section label="Macros" cols={2}><Macros p={p} /></Section>
+  compact: p => <Panel title={short(p.v)} mark={headMark(p.v)} view="compact" light={light(p.v)} onFold={p.nav.fold} onFull={p.nav.full} onSelect={p.nav.select}>
+    <Section width={244}><ChainList p={p} size={8} columns={1} /></Section>
+    <Section label="Repertoire" width={92}>
+      <Compose p={p} />
+      <Readout label="loaded" does="Members whose body entered the agent's context in this session." value={`${reaching(effective(p.v), 5)}/${sorted.length}`} tone="green" />
+    </Section>
   </Panel>,
 
-  whole: p => <Panel title={title(p.v)} view="whole" light={light(p.v)} onFold={p.nav.fold} onFull={p.nav.full}>
+  whole: p => <Panel title={str(p.v, 'set')} mark={headMark(p.v)} view="whole" light={light(p.v)} onFold={p.nav.fold} onFull={p.nav.full}>
     <Band>
-      <Section label="Set" width={128}>
-        <Chooser does="The set of skills in the rack. Drag a set from the browser to replace it." value={str(p.v, 'skillset')}
-          options={[{value: 'build-lane', label: 'build-lane'}, {value: 'review-lane', label: 'review-lane'}, {value: 'docs-lane', label: 'docs-lane'}]} onChange={x => p.set('skillset', x)} />
+      <Section label="Set" width={136}>
+        <Chooser does="The set in the rack. Drag a set from the browser to replace it." value={str(p.v, 'set')}
+          options={[{value: 'central:documentation', label: 'central:documentation'}, {value: 'central:core-development', label: 'central:core-development'}, {value: 'aikit:project-author', label: 'aikit:project-author'}]}
+          onChange={x => { p.set('set', x); p.set('compose', 'changed') }} />
+        <KindCounts v={p.v} size={18} />
         <div className="ref-pair">
-          <Readout label="steward" does="Who looks after the set." value={str(p.v, 'steward')} />
-          <Readout label="revision" does="The revision of the set in use." value={str(p.v, 'revision')} />
+          <Readout label="revision" does="A digest over the revisions of every member." value={str(p.v, 'revision')} />
+          <Readout label="author" does="The set's author, from its package metadata." value={str(p.v, 'author')} />
         </div>
-        <Readout big label="admitted" does="Skills AIKit admits now, of all in the set." value={`${admitted(p.v)}/${SKILLS.length}`} tone="accent" />
       </Section>
-      <Section label="Macros" cols={4} grow><Macros p={p} /></Section>
+      <Section label="Compose" width={104}>
+        <Compose p={p} />
+        <Chooser label="Profile" does="The governance profile the composition applies under. Profiles keep their precedence." value={str(p.v, 'profile')}
+          options={[{value: 'baseline', label: 'Baseline'}, {value: 'core', label: 'core'}, {value: 'review', label: 'review'}]} onChange={x => { p.set('profile', x); p.set('compose', 'changed') }} />
+      </Section>
+      <Section label="Package" grow>
+        <Radio does="The harness to package the set for. The set itself does not change." value={str(p.v, 'target')} options={TARGETS} stack onChange={x => p.set('target', x)} />
+        <Action label="Export" does="Write the native package and its receipt." onPress={() => p.set('exported', str(p.v, 'target'))} />
+        <Readout label="unsupported" does="Relations the target cannot carry. The receipt names each one." value={UNSUPPORTED[str(p.v, 'target')]} tone={UNSUPPORTED[str(p.v, 'target')] ? 'stall' : undefined} />
+      </Section>
     </Band>
     <Band>
       <Section grow><ChainList p={p} size={16} columns={2} /></Section>
@@ -82,27 +114,30 @@ export const skills: DesignedDevice = {
   </Panel>,
 
   full: p => <div className="ref-pane-body ref-doc">
-    <h3>{str(p.v, 'skillset')} <small>{str(p.v, 'revision')} · steward {str(p.v, 'steward')}</small></h3>
-    <ol className="ref-doc-list">
-      {SKILLS.map(skill => {
-        const chain = chains(p.v).find(c => c.id === skill.id)!
-        return <li key={skill.id} data-dim={chain.light !== 'lit' ? 'true' : undefined}>
-          <span className="dp-lamp" data-light={chain.light} />
-          <b>{skill.name}</b><span className="ref-doc-rev">{skill.rev}</span>
-          <span className="ref-doc-standing">{chain.light === 'lit' ? 'Admitted' : chain.request ? chain.why : 'Not requested'}</span>
-          <p>{skill.text}</p>
-        </li>
-      })}
-    </ol>
+    <h3>{str(p.v, 'set')} <small>{str(p.v, 'revision')} · {sorted.length} members · applied at {str(p.v, 'scope')} scope</small></h3>
+    {ORDER.map(form => <section key={form} className="ref-doc-kind">
+      <h4><WoodMark kind={form} size={24} set={marks(p.v)} /> {FORM_NAME[form]}s</h4>
+      <ol className="ref-doc-list">
+        {sorted.filter(m => m.form === form).map(m => {
+          const want = requested(p.v, m), state = markState(m, want)
+          return <li key={m.id} data-dim={state !== 'whole' ? 'true' : undefined}>
+            <WoodMark kind={m.form} size={14} state={state} set={marks(p.v)} />
+            <b>{m.name}</b><span className="ref-doc-rev">{m.rev}</span>
+            <span className="ref-doc-standing"><Ladder rungs={m.rungs} labels={RUNGS} label={m.name} /> {!want ? 'Turned off by you.' : m.withheld ? m.withheld.why : 'Available.'}</span>
+            <p>{m.says}</p>
+          </li>
+        })}
+      </ol>
+    </section>)}
   </div>,
 
-  widget: p => <Tile title={title(p.v)} light={light(p.v)} span={2} onFull={p.nav.full}>
-    <div style={{width: 150}}><ChainList p={p} size={5} columns={1} /></div>
-    <div className="ref-tile-grid ref-tile-grid--read">
-      <Readout label="thorough" value={pct(num(p.v, 'thoroughness'))} />
-      <Readout label="tests" value={DEPTH[num(p.v, 'testDepth')]} />
-      <Readout label="reach" value={REACH[num(p.v, 'reach')]} />
-      <Readout label="risk" value={RISK[num(p.v, 'risk')]} />
+  widget: p => <Tile title={short(p.v)} light={light(p.v)} span={2} onFull={p.nav.full}>
+    <KindCounts v={p.v} size={28} />
+    <div className="ref-tile-side">
+      <Readout label="available" value={`${reaching(effective(p.v), 2)}/${sorted.length}`} />
+      <Readout label="loaded" value={reaching(effective(p.v), 5)} tone="green" />
+      <Readout label="invoked" value={reaching(effective(p.v), 6)} tone="green" />
     </div>
   </Tile>,
 }
+

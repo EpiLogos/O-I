@@ -30,6 +30,8 @@ export interface DesignedDevice {
   readonly title: string
   readonly kind: 'instrument' | 'effect' | 'rack'
   readonly defaults: Values
+  /** Named readings to try the device on, each laid over the defaults (the gallery's fixture switch). */
+  readonly fixtures?: Readonly<Record<string, Values>>
   readonly firstPage?: string
   readonly folded: (p: ViewProps) => ReactNode
   readonly compact: (p: ViewProps) => ReactNode
