@@ -8356,9 +8356,109 @@ use it, type <code>@name</code>. A <code>?</code> in the search is a gap that th
 </ul>
 <h3 id="19-6-skillset-rack"><a class="anchor" href="#19-6-skillset-rack" aria-hidden="true">#</a>19.6 Skillset rack</h3>
 <p><strong>Product:</strong> AIKit · <strong>Kind:</strong> rack · <strong>Chain:</strong> third device on a Factory session&#39;s chain</p>
-<p>You need to choose which skills an agent may use, and to turn several of them up or down at once. The Skillset rack holds one chain for each skill. Each chain has a light that shows whether the skill is admitted.</p>
-<h4 id="the-chains-and-the-lights"><a class="anchor" href="#the-chains-and-the-lights" aria-hidden="true">#</a>The chains and the lights</h4>
-<p>Each chain holds one skill. The skill sits in the chain and works on the agent&#39;s turn as the turn passes. A dark chain is dimmed. The light shows what AIKit reports. You request a skill on or off. AIKit answers. A skill that you turned on stays dark when AIKit holds it back. The rack then says why. The reason can be a revision nobody has reviewed, or a skill that its author has retired.</p>
+<p>An agent works from what it carries: what it can do, how it acts, and how it
+finds its bearings in a field. The Skillset rack holds that repertoire. Use it
+to see what the agent carries, what is really available to it now, and what it
+has used.</p>
+<h4 id="four-kinds-of-carried-practice"><a class="anchor" href="#four-kinds-of-carried-practice" aria-hidden="true">#</a>Four kinds of carried practice</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kind</th>
+<th>It answers</th>
+<th>What it is</th>
+<th>Its mark: the blade · the pen</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Skill</td>
+<td>What can I do?</td>
+<td>One capability.</td>
+<td>One blade · one pen</td>
+</tr>
+<tr>
+<td>Method</td>
+<td>How do I act?</td>
+<td>How one piece of work goes from claim to return: the skills, sources and checks it composes. A step that the work does not touch is skipped.</td>
+<td>The forge · the compass and the set square</td>
+</tr>
+<tr>
+<td>Methodology</td>
+<td>How do I orient?</td>
+<td>The whole practice of a field: which kinds of work exist there, which Method applies when, and where the return goes. It is loaded before work in its field.</td>
+<td>The book with the sword in the stone · the drawing board</td>
+</tr>
+<tr>
+<td>Skillset</td>
+<td>What do I carry?</td>
+<td>A repertoire of skills, methods, methodologies and other sets.</td>
+<td>Blades in a rack · instruments in a pot</td>
+</tr>
+</tbody></table>
+</div>
+<p>A Method and a Methodology are skills whose text states their form. AIKit
+trusts, enables and delivers them as it does every skill. Choose the marks in
+Settings: the blade or the pen. The whole shell uses the one set.</p>
+<p>A mark has three states, and the drawing does not change between them. A full
+line: AIKit makes the member available. A line in orange: AIKit holds the
+member back for a reason that you can clear, such as a revision that nobody
+has reviewed. A dim line: the member is withheld, because you turned it off,
+its author retired it, or a policy refuses it.</p>
+<h4 id="what-a-member-has-done"><a class="anchor" href="#what-a-member-has-done" aria-hidden="true">#</a>What a member has done</h4>
+<p>Each member shows ten steps of evidence, from carried to verified. A step is
+lit only when there is evidence for it. A step that nobody observed stays
+hollow. Nothing is inferred upward.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Step</th>
+<th>It is lit when</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Carried</td>
+<td>The agent&#39;s sets hold the member.</td>
+</tr>
+<tr>
+<td>Catalogued</td>
+<td>AIKit finds the member in its catalogue.</td>
+</tr>
+<tr>
+<td>Available</td>
+<td>The member passes its trust and policy checks here.</td>
+</tr>
+<tr>
+<td>Selected</td>
+<td>The member is chosen for the act in hand.</td>
+</tr>
+<tr>
+<td>Projected</td>
+<td>The member is written into the harness for this context.</td>
+</tr>
+<tr>
+<td>Loaded</td>
+<td>The member&#39;s text entered the agent&#39;s context.</td>
+</tr>
+<tr>
+<td>Invoked</td>
+<td>The agent called the member in this session.</td>
+</tr>
+<tr>
+<td>Relied on</td>
+<td>The return names the member as material to the result.</td>
+</tr>
+<tr>
+<td>Succeeded</td>
+<td>The act that it served produced its expected return.</td>
+</tr>
+<tr>
+<td>Verified</td>
+<td>An independent check passed.</td>
+</tr>
+</tbody></table>
+</div>
+<p>Carried is not loaded, and loaded is not used. A set holds a member. It does
+not make the agent use it.</p>
 <h4 id="parameters-31"><a class="anchor" href="#parameters-31" aria-hidden="true">#</a>Parameters</h4>
 <div class="table-wrap"><table>
 <thead>
@@ -8370,122 +8470,136 @@ use it, type <code>@name</code>. A <code>?</code> in the search is a gap that th
 </tr>
 </thead>
 <tbody><tr>
-<td>Skillset</td>
-<td>A named set</td>
+<td>Set</td>
+<td>A set, by its name</td>
 <td>The set on the chain</td>
-<td>Chooses the set of skills in the rack. Drag a set from the browser to replace it.</td>
+<td>Chooses the repertoire. Drag a set from the browser to replace it.</td>
 </tr>
 <tr>
-<td>Skill</td>
-<td>On · Off, one for each chain</td>
-<td>As the set declares</td>
-<td>Your request to admit or to withhold a skill.</td>
+<td>Member</td>
+<td>On · Off, one for each member</td>
+<td>On</td>
+<td>Your request to use the member, through the profile in use. On grants no trust and loads nothing.</td>
 </tr>
 <tr>
-<td>Admit light</td>
-<td>Lit · Dark (reading)</td>
+<td>Scope</td>
+<td>Home · Project · Session</td>
+<td>Project</td>
+<td>Where the composition applies: every session on this machine, every session in this project, or this session only.</td>
+</tr>
+<tr>
+<td>Profile</td>
+<td>A governance profile</td>
+<td>Baseline</td>
+<td>The profile that the composition applies under.</td>
+</tr>
+<tr>
+<td>Apply</td>
+<td>Preview, then Apply</td>
+<td>—</td>
+<td>Shows what a change would apply, then applies it. A new change cancels the preview.</td>
+</tr>
+<tr>
+<td>Package target</td>
+<td>Claude · Codex · Pi · OpenAI</td>
+<td>Claude</td>
+<td>The harness to package the set for.</td>
+</tr>
+<tr>
+<td>Export</td>
+<td>An action</td>
+<td>—</td>
+<td>Writes the native package and its receipt. The set does not change.</td>
+</tr>
+<tr>
+<td>Mark state</td>
+<td>Available · Held · Withheld (reading)</td>
 <td>Read from AIKit</td>
-<td>Shows whether the skill is admitted now.</td>
+<td>The state of each member, with the reason.</td>
 </tr>
 <tr>
-<td>Thoroughness</td>
-<td>0–100 %</td>
-<td>60 %</td>
-<td>How exhaustive the skills are.</td>
-</tr>
-<tr>
-<td>Test depth</td>
-<td>None · Unit · Unit and integration · Full</td>
-<td>Unit</td>
-<td>How deep the skills test.</td>
-</tr>
-<tr>
-<td>Reach</td>
-<td>Object · Scene · Expression · Central</td>
-<td>Scene</td>
-<td>How far beyond the scope the skills look.</td>
-</tr>
-<tr>
-<td>Risk</td>
-<td>Low · Medium · High</td>
-<td>Low</td>
-<td>How bold the skills are before they ask you.</td>
-</tr>
-<tr>
-<td>Steward</td>
-<td>A name (reading)</td>
-<td>Read from the set</td>
-<td>Who looks after the set.</td>
+<td>Evidence</td>
+<td>Ten steps for each member (reading)</td>
+<td>Read from AIKit</td>
+<td>What each member has done in this session.</td>
 </tr>
 <tr>
 <td>Revision</td>
-<td>A number (reading)</td>
-<td>Read from the set</td>
-<td>The revision of the set that is in use.</td>
+<td>A digest (reading)</td>
+<td>Read from AIKit</td>
+<td>The revision of the whole set.</td>
+</tr>
+<tr>
+<td>Unsupported</td>
+<td>A count (reading)</td>
+<td>Read from the receipt</td>
+<td>The relations that the package target cannot carry. The receipt names each one.</td>
 </tr>
 </tbody></table>
 </div>
 <h4 id="views-32"><a class="anchor" href="#views-32" aria-hidden="true">#</a>Views</h4>
 <p>The Skillset rack is one device with five views. All five show the same live settings.</p>
-<figure class="ui"><div class="ui-stage" data-w="1100" data-h="760"><iframe src="http://127.0.0.1:5208/?device=ai-kit:skillset-rack&amp;view=all" loading="lazy" style="width:1100px;height:760px" sandbox="allow-scripts allow-same-origin" title="The Skillset rack as the shell draws it now, in its five views. The readings are a fixture."></iframe></div><figcaption>The Skillset rack as the shell draws it now, in its five views. The readings are a fixture. · <a href="http://127.0.0.1:5208/?device=ai-kit:skillset-rack&amp;view=all" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<figure class="ui"><div class="ui-stage" data-w="1500" data-h="1000"><iframe src="http://127.0.0.1:5208/?device=ai-kit:skillset-rack&amp;view=all" loading="lazy" style="width:1500px;height:1000px" sandbox="allow-scripts allow-same-origin" title="The Skillset rack on Central's documentation set. Turn a member off and the Preview lights. Point at a mark or at the ticks to read them. Switch the fixture to see the pen marks."></iframe></div><figcaption>The Skillset rack on Central's documentation set. Turn a member off and the Preview lights. Point at a mark or at the ticks to read them. Switch the fixture to see the pen marks. · <a href="http://127.0.0.1:5208/?device=ai-kit:skillset-rack&amp;view=all" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
 <h5 id="folded-31"><a class="anchor" href="#folded-31" aria-hidden="true">#</a>Folded</h5>
-<p>Where: on a Factory session&#39;s chain, as the third device. The folded rack shows the set name and the count of lit chains. Click the title to unfold it.</p>
+<p>Where: on a Factory session&#39;s chain, as the third device. The folded rack shows
+the set&#39;s name and how many members are loaded. Click the title to unfold it.</p>
 <h5 id="compact-31"><a class="anchor" href="#compact-31" aria-hidden="true">#</a>Compact</h5>
-<p>Where: on a Factory session&#39;s chain. The compact rack shows one chain for each skill, with an admit light. It has four macros.</p>
+<p>Where: on a Factory session&#39;s chain. The compact rack shows its members as a
+chain list: your request as a square, the member&#39;s mark in its state, its name
+and its ten steps of evidence. Methodologies come first, then methods, skills
+and child sets. A long list pages.</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
-<th>Macro</th>
+<th>Control</th>
 <th>What it does</th>
 </tr>
 </thead>
 <tbody><tr>
-<td>Thoroughness</td>
-<td>Sets how exhaustive the skills are, from 0 to 100 %.</td>
+<td>Scope</td>
+<td>Sets Home, Project or Session.</td>
 </tr>
 <tr>
-<td>Test depth</td>
-<td>Sets how deep the skills test.</td>
+<td>Preview, Apply</td>
+<td>Shows the change, then applies it.</td>
 </tr>
 <tr>
-<td>Reach</td>
-<td>Sets how far beyond the scope the skills look.</td>
-</tr>
-<tr>
-<td>Risk</td>
-<td>Sets how bold the skills are before they ask you.</td>
+<td>Loaded</td>
+<td>Shows how many members are loaded, of all that the set carries.</td>
 </tr>
 </tbody></table>
 </div>
-<p>Click a light to turn a skill on or off. Turn a knob to move the skills it controls. Click the plate to show the rack whole in the pool. Click ⤢ to open the set full in a pane.</p>
+<p>Click a square to turn a member on or off. Click the plate to show the rack
+whole in the pool. Click ⤢ to open the set full in a pane.</p>
 <h5 id="whole-31"><a class="anchor" href="#whole-31" aria-hidden="true">#</a>Whole</h5>
-<p>Where: the pool under the browser. The whole rack shows every parameter, in three groups.</p>
+<p>Where: the pool under the browser. The whole rack has two bands.</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
-<th>Group</th>
-<th>Parameters</th>
+<th>Band</th>
+<th>Sections</th>
 </tr>
 </thead>
 <tbody><tr>
-<td>Skills</td>
-<td>Skillset, Skill, Admit light</td>
+<td>One</td>
+<td>Set: the set, its members by kind, the revision, the author. Compose: Scope, Preview and Apply, Profile. Package: the target, Export, the unsupported count.</td>
 </tr>
 <tr>
-<td>Macros</td>
-<td>Thoroughness, Test depth, Reach, Risk</td>
-</tr>
-<tr>
-<td>Details</td>
-<td>Steward, Revision</td>
+<td>Two</td>
+<td>Every member, in two columns, with its square, mark, evidence and revision.</td>
 </tr>
 </tbody></table>
 </div>
-<p>Drag a set from the browser onto the rack to replace the set. Drag one skill onto the rack to make a new chain.</p>
+<p>Select a member to show it whole in the pool (see §19.7).</p>
 <h5 id="full-31"><a class="anchor" href="#full-31" aria-hidden="true">#</a>Full</h5>
-<p>Where: a pane. The full rack shows the set. It lists each skill with its text, its revision and its standing. A dark chain gives the reason that AIKit holds the skill back. The controls stay in Device view, below the pane.</p>
+<p>Where: a pane. The full rack is the set as a page, grouped by kind:
+methodologies, methods, skills and sets. Each member shows its mark, its
+revision, its evidence, its state and what it is for. The controls stay in
+Device view, below the pane.</p>
 <h5 id="widget-31"><a class="anchor" href="#widget-31" aria-hidden="true">#</a>Widget</h5>
-<p>Where: the rail on the right. The widget shows the chains with their lights, and the four macros. The widget stays when you change mode.</p>
+<p>Where: the rail on the right. The widget shows the four marks with a count
+under each, and three counts: available, loaded and invoked. The widget stays
+when you change mode.</p>
 <h4 id="transport-31"><a class="anchor" href="#transport-31" aria-hidden="true">#</a>Transport</h4>
 <div class="table-wrap"><table>
 <thead>
@@ -8496,39 +8610,72 @@ use it, type <code>@name</code>. A <code>?</code> in the search is a gap that th
 </thead>
 <tbody><tr>
 <td>Keys and maps</td>
-<td>Letter keys turn the macros. You can bind a word to a macro.</td>
+<td>A key or a spoken word can turn a member on or off.</td>
 </tr>
 <tr>
 <td>Capture</td>
-<td>Turns a task you did by hand into a skill proposal. See Capture skill.</td>
+<td>Turns a task you did by hand into a proposal for a new method. See Capture skill.</td>
 </tr>
 </tbody></table>
 </div>
 <h4 id="to-use-the-skillset-rack"><a class="anchor" href="#to-use-the-skillset-rack" aria-hidden="true">#</a>To use the Skillset rack</h4>
 <ol>
-<li>Drag a skillset from the browser onto the chain of a session.</li>
-<li>Read the lights. Click a dark light to ask for the skill.</li>
-<li>If the light stays dark, read the reason on the chain.</li>
-<li>Turn Test depth up for work that you must trust.</li>
-<li>Turn Risk down when the agent must ask more often.</li>
-<li>To add one skill, drag it onto the rack. It makes a new chain.</li>
+<li>Drag a set from the browser onto the chain of a session.</li>
+<li>Read the marks. Point at a dim mark to read why it is withheld.</li>
+<li>Select a member with an orange mark. Review its revision to make it
+available.</li>
+<li>Click a member&#39;s square to turn it on or off. Click Preview, read the
+change, then click Apply.</li>
+<li>Read the evidence. A member that is carried but never loaded costs the
+agent nothing. A member that is loaded but never invoked costs it context.</li>
+<li>To give the set to another harness, choose the target and click Export.</li>
 </ol>
 <h4 id="rules-31"><a class="anchor" href="#rules-31" aria-hidden="true">#</a>Rules</h4>
 <ul>
-<li>A macro moves several skills at once. Each skill keeps its own range.</li>
-<li>The light is a reading. The shell does not light it.</li>
-<li>A skill added to the rack does not change another chain.</li>
-<li>A set that you reorder, rename or save keeps its revision history.</li>
+<li>Membership grants no trust, no authority and no loading.</li>
+<li>The marks and the evidence are readings. The shell does not light them.</li>
+<li>A set carries a child set by reference. A change to the child reaches every
+set that carries it.</li>
+<li>A change applies only after Preview and Apply.</li>
 </ul>
 <h4 id="tips-31"><a class="anchor" href="#tips-31" aria-hidden="true">#</a>Tips</h4>
 <ul>
-<li>To make a review stricter, turn Thoroughness and Test depth up together.</li>
-<li>To keep an agent in one project, set Reach to Object or Scene.</li>
-<li>To try a skill for one task only, add it to the rack and remove it when the task ends.</li>
+<li>To keep an agent&#39;s context light, turn off members that it loads and never
+invokes.</li>
+<li>To share a set with a team on another harness, read the unsupported count
+before you export it.</li>
 </ul>
-<h3 id="19-7-skill"><a class="anchor" href="#19-7-skill" aria-hidden="true">#</a>19.7 Skill</h3>
+<h3 id="19-7-skill-method-methodology"><a class="anchor" href="#19-7-skill-method-methodology" aria-hidden="true">#</a>19.7 Skill, Method, Methodology</h3>
 <p><strong>Product:</strong> AIKit · <strong>Kind:</strong> effect · <strong>Chain:</strong> one chain inside a Skillset rack</p>
-<p>You need one reusable way of working that an agent can follow. A Skill is that way of working. It changes the agent&#39;s turn as the turn passes and leaves the rest of the turn as it was.</p>
+<p>You need to see one member of a repertoire closely: what it is for, whether
+the agent can use it now, and what it did. One device shows all three forms,
+and its face changes with the form.</p>
+<h4 id="three-faces"><a class="anchor" href="#three-faces" aria-hidden="true">#</a>Three faces</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Form</th>
+<th>The face shows</th>
+<th>You can</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Skill</td>
+<td>Its mark, its evidence, the harnesses it reaches and the sets that carry it.</td>
+<td>Turn it on or off. Review its revision.</td>
+</tr>
+<tr>
+<td>Method</td>
+<td>Its mark, its evidence, and the path that it composes, from claim to return, with the members that each step uses.</td>
+<td>Run it once, after a preflight. Prove the last run.</td>
+</tr>
+<tr>
+<td>Methodology</td>
+<td>Its mark, its evidence, its field, and which Method applies when.</td>
+<td>Read whether the act in hand needs it.</td>
+</tr>
+</tbody></table>
+</div>
 <h4 id="parameters-32"><a class="anchor" href="#parameters-32" aria-hidden="true">#</a>Parameters</h4>
 <div class="table-wrap"><table>
 <thead>
@@ -8540,28 +8687,28 @@ use it, type <code>@name</code>. A <code>?</code> in the search is a gap that th
 </tr>
 </thead>
 <tbody><tr>
-<td>Skill</td>
-<td>A name</td>
+<td>Member</td>
+<td>A member of the rack</td>
 <td>—</td>
-<td>Which skill the chain holds.</td>
+<td>Which member the chain holds.</td>
 </tr>
 <tr>
-<td>Admit</td>
+<td>Enabled</td>
 <td>On · Off</td>
 <td>On</td>
-<td>Your request to use the skill.</td>
+<td>Your request, through the profile in use.</td>
 </tr>
 <tr>
-<td>Admit light</td>
-<td>Lit · Dark (reading)</td>
+<td>Trust</td>
+<td>Trusted · Unseen (reading)</td>
 <td>Read from AIKit</td>
-<td>Shows whether AIKit admits the skill for this session.</td>
+<td>AIKit does not deliver an unseen revision until you review it.</td>
 </tr>
 <tr>
-<td>Standing</td>
-<td>Reviewed · Unreviewed · Retired (reading)</td>
-<td>Read from AIKit</td>
-<td>The state of the skill&#39;s current revision. Only a reviewed skill is admitted.</td>
+<td>Review</td>
+<td>An action</td>
+<td>—</td>
+<td>Records that you reviewed the revision. You confirm it first.</td>
 </tr>
 <tr>
 <td>Revision</td>
@@ -8570,116 +8717,127 @@ use it, type <code>@name</code>. A <code>?</code> in the search is a gap that th
 <td>The revision in use.</td>
 </tr>
 <tr>
-<td>Use</td>
-<td>Always · When it applies · When asked</td>
-<td>When it applies</td>
-<td>When the agent loads the skill.</td>
+<td>Evidence</td>
+<td>Ten steps (reading)</td>
+<td>Read from AIKit</td>
+<td>What the member has done in this session. See §19.6.</td>
 </tr>
 <tr>
-<td>Macro ranges</td>
-<td>Four ranges</td>
-<td>The full range</td>
-<td>How far each rack macro may move this skill: Thoroughness, Test depth, Reach, Risk.</td>
+<td>Run</td>
+<td>An action, Method only</td>
+<td>—</td>
+<td>Runs the Method once and keeps a receipt. A preflight checks first: a missing condition refuses the run before any effect and names itself.</td>
+</tr>
+<tr>
+<td>Prove</td>
+<td>An action, Method only</td>
+<td>—</td>
+<td>Checks the receipt of the last run. A run that did not verify is refused.</td>
+</tr>
+<tr>
+<td>Instantiate</td>
+<td>Needed · Not needed (reading), Methodology only</td>
+<td>Read for each act</td>
+<td>Whether the act in hand needs the Methodology, or the invoked skill carries enough.</td>
+</tr>
+<tr>
+<td>Reach</td>
+<td>Harnesses (reading), Skill only</td>
+<td>Read from AIKit</td>
+<td>The harnesses that the skill is written into in this context.</td>
 </tr>
 </tbody></table>
 </div>
 <h4 id="views-33"><a class="anchor" href="#views-33" aria-hidden="true">#</a>Views</h4>
-<p>The Skill is one device with five views. All five show the same live settings.</p>
-<figure class="ui"><div class="ui-stage" data-w="1100" data-h="760"><iframe src="http://127.0.0.1:5208/?device=ai-kit:skill-device&amp;view=all" loading="lazy" style="width:1100px;height:760px" sandbox="allow-scripts allow-same-origin" title="The Skill as the shell draws it now, in its five views. The readings are a fixture."></iframe></div><figcaption>The Skill as the shell draws it now, in its five views. The readings are a fixture. · <a href="http://127.0.0.1:5208/?device=ai-kit:skill-device&amp;view=all" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<p>The member device is one device with five views. All five show the same live settings.</p>
+<figure class="ui"><div class="ui-stage" data-w="1500" data-h="1000"><iframe src="http://127.0.0.1:5208/?device=ai-kit:skill-device&amp;view=all" loading="lazy" style="width:1500px;height:1000px" sandbox="allow-scripts allow-same-origin" title="One member device, three forms. Switch the fixture:a Method and its path, a Methodology and its table, a Skill, and a Method whose revision nobody has reviewed."></iframe></div><figcaption>One member device, three forms. Switch the fixture:a Method and its path, a Methodology and its table, a Skill, and a Method whose revision nobody has reviewed. · <a href="http://127.0.0.1:5208/?device=ai-kit:skill-device&amp;view=all" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
 <h5 id="folded-32"><a class="anchor" href="#folded-32" aria-hidden="true">#</a>Folded</h5>
-<p>Where: on one chain inside a Skillset rack. The folded Skill shows the skill name and its light. Click the title to unfold it.</p>
+<p>Where: on one chain inside a Skillset rack. The folded member shows its name,
+its form and its revision. Click the title to unfold it.</p>
 <h5 id="compact-32"><a class="anchor" href="#compact-32" aria-hidden="true">#</a>Compact</h5>
-<p>Where: on one chain inside a Skillset rack. The compact Skill shows the skill&#39;s glyph and name, and its standing. It has four macros.</p>
+<p>Where: on one chain inside a Skillset rack. The compact member shows its mark
+large, its form and the question the form answers, and its evidence.</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
-<th>Macro</th>
+<th>Control</th>
 <th>What it does</th>
 </tr>
 </thead>
 <tbody><tr>
-<td>Admit</td>
-<td>Requests that the skill is used or withheld.</td>
+<td>Enabled</td>
+<td>Your request to use it.</td>
 </tr>
 <tr>
-<td>Use</td>
-<td>Sets Always, When it applies or When asked.</td>
+<td>Trust or Review</td>
+<td>Shows Trusted, or offers Review for an unseen revision.</td>
 </tr>
 <tr>
-<td>Thoroughness range</td>
-<td>Sets how far the rack macro Thoroughness may move this skill.</td>
+<td>Run (Method)</td>
+<td>Runs the Method after a preflight.</td>
 </tr>
 <tr>
-<td>Risk range</td>
-<td>Sets how far the rack macro Risk may move this skill.</td>
+<td>Instantiate (Methodology) · Reach (Skill)</td>
+<td>Shows the reading for the form.</td>
 </tr>
 </tbody></table>
 </div>
-<p>Click the plate to show the Skill whole in the pool. Click ⤢ to open the skill&#39;s text full in a pane.</p>
 <h5 id="whole-32"><a class="anchor" href="#whole-32" aria-hidden="true">#</a>Whole</h5>
-<p>Where: the pool under the browser. The whole Skill shows every parameter, in three groups.</p>
-<div class="table-wrap"><table>
-<thead>
-<tr>
-<th>Group</th>
-<th>Parameters</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>Admit</td>
-<td>Skill, Admit, Admit light, Standing, Revision</td>
-</tr>
-<tr>
-<td>Use</td>
-<td>Use</td>
-</tr>
-<tr>
-<td>Ranges</td>
-<td>Macro ranges</td>
-</tr>
-</tbody></table>
-</div>
-<p>Only a Reviewed skill is admitted. A skill that is not reviewed stays dark.</p>
+<p>Where: the pool under the browser. Band one holds the mark with the ten steps
+named, then Standing (Enabled, Trust, Revision), then the form&#39;s own section:
+Run for a Method, Orients for a Methodology, Reach for a Skill. Band two holds
+the form&#39;s body: the path that a Method composes, the table of which Method
+applies when for a Methodology, or what a Skill is for.</p>
 <h5 id="full-32"><a class="anchor" href="#full-32" aria-hidden="true">#</a>Full</h5>
-<p>Where: a pane. The full Skill is the skill&#39;s text. It fills the pane with the text, its revisions and the sessions that use it. A change makes a new revision. The old revision stays. The controls stay in Device view, below the pane.</p>
+<p>Where: a pane. The full member is its text: its form, what it says, a Method&#39;s
+steps, a Methodology&#39;s table. Its evidence and state stand under the text. The
+controls stay in Device view, below the pane.</p>
 <h5 id="widget-32"><a class="anchor" href="#widget-32" aria-hidden="true">#</a>Widget</h5>
-<p>Where: the rail on the right. The widget shows the skill&#39;s name, its light and its standing. The widget stays when you change mode.</p>
+<p>Where: the rail on the right. The widget shows the mark, the evidence, and Run
+for a Method. The widget stays when you change mode.</p>
 <h4 id="transport-32"><a class="anchor" href="#transport-32" aria-hidden="true">#</a>Transport</h4>
 <div class="table-wrap"><table>
 <thead>
 <tr>
 <th>Control</th>
-<th>Effect on the Skill</th>
+<th>Effect on the member</th>
 </tr>
 </thead>
 <tbody><tr>
-<td>Keys and maps</td>
-<td>A key or a spoken word can turn Admit on or off.</td>
+<td>Play</td>
+<td>Runs a selected Method, after its preflight.</td>
 </tr>
 <tr>
-<td>Capture</td>
-<td>Makes a new skill proposal from a task you did by hand.</td>
+<td>Keys and maps</td>
+<td>A key or a spoken word can turn the member on or off.</td>
 </tr>
 </tbody></table>
 </div>
-<h4 id="to-use-the-skill"><a class="anchor" href="#to-use-the-skill" aria-hidden="true">#</a>To use the Skill</h4>
+<h4 id="to-use-the-member-device"><a class="anchor" href="#to-use-the-member-device" aria-hidden="true">#</a>To use the member device</h4>
 <ol>
-<li>Find the skill in the browser. Select it to read it whole in the pool.</li>
-<li>Drag it onto the rack of a session.</li>
-<li>Read the light and the Standing. If the skill is Unreviewed, ask for a review.</li>
-<li>Set Use to When asked if the skill is rare.</li>
-<li>Narrow a Macro range if the rack should not move this skill far.</li>
+<li>Select a member in the Skillset rack. It shows whole in the pool.</li>
+<li>Read its mark and its evidence.</li>
+<li>If the mark is orange, read the reason. Click Review, read the revision,
+then confirm.</li>
+<li>For a Method, click Run. Read the preflight. Confirm to run it.</li>
+<li>After a run, click Prove to check the receipt.</li>
 </ol>
 <h4 id="rules-32"><a class="anchor" href="#rules-32" aria-hidden="true">#</a>Rules</h4>
 <ul>
-<li>A skill is admitted only when AIKit says so. A skill that is not reviewed stays dark.</li>
-<li>A skill is not copied into the prompt. The agent finds it and reads it when it applies.</li>
-<li>A change to a skill makes a new revision. The old revision stays.</li>
+<li>The form comes from the member&#39;s own text. To change the form, change the
+text.</li>
+<li>A Method composes. It does not order its steps, and it skips a step that the
+work does not touch.</li>
+<li>A Methodology points at its Methods. It does not hold their text.</li>
+<li>A change to a member makes a new revision. The old revision stays. A new
+revision is unseen until you review it.</li>
 </ul>
 <h4 id="tips-32"><a class="anchor" href="#tips-32" aria-hidden="true">#</a>Tips</h4>
 <ul>
-<li>To keep a risky skill out of an unattended run, set its Risk range to Low.</li>
-<li>To find out why a skill is dark, select its chain and read the Standing.</li>
+<li>To learn a field quickly, open its Methodology full in a pane and read its
+table of Methods.</li>
+<li>To find a Method that nobody runs, read the evidence: carried, never
+selected.</li>
 </ul>
 <h3 id="19-8-knowledge-route"><a class="anchor" href="#19-8-knowledge-route" aria-hidden="true">#</a>19.8 Knowledge route</h3>
 <p><strong>Product:</strong> AIKit · <strong>Kind:</strong> effect · <strong>Chain:</strong> inside the Scope device, in a Factory session&#39;s chain</p>

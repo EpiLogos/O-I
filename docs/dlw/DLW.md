@@ -4878,24 +4878,67 @@ Where: the rail on the right. The widget is the Frames widget. It shows the last
 
 **Product:** AIKit · **Kind:** rack · **Chain:** third device on a Factory session's chain
 
-You need to choose which skills an agent may use, and to turn several of them up or down at once. The Skillset rack holds one chain for each skill. Each chain has a light that shows whether the skill is admitted.
+An agent works from what it carries: what it can do, how it acts, and how it
+finds its bearings in a field. The Skillset rack holds that repertoire. Use it
+to see what the agent carries, what is really available to it now, and what it
+has used.
 
-#### The chains and the lights
+#### Four kinds of carried practice
 
-Each chain holds one skill. The skill sits in the chain and works on the agent's turn as the turn passes. A dark chain is dimmed. The light shows what AIKit reports. You request a skill on or off. AIKit answers. A skill that you turned on stays dark when AIKit holds it back. The rack then says why. The reason can be a revision nobody has reviewed, or a skill that its author has retired.
+| Kind | It answers | What it is | Its mark: the blade · the pen |
+|---|---|---|---|
+| Skill | What can I do? | One capability. | One blade · one pen |
+| Method | How do I act? | How one piece of work goes from claim to return: the skills, sources and checks it composes. A step that the work does not touch is skipped. | The forge · the compass and the set square |
+| Methodology | How do I orient? | The whole practice of a field: which kinds of work exist there, which Method applies when, and where the return goes. It is loaded before work in its field. | The book with the sword in the stone · the drawing board |
+| Skillset | What do I carry? | A repertoire of skills, methods, methodologies and other sets. | Blades in a rack · instruments in a pot |
+
+A Method and a Methodology are skills whose text states their form. AIKit
+trusts, enables and delivers them as it does every skill. Choose the marks in
+Settings: the blade or the pen. The whole shell uses the one set.
+
+A mark has three states, and the drawing does not change between them. A full
+line: AIKit makes the member available. A line in orange: AIKit holds the
+member back for a reason that you can clear, such as a revision that nobody
+has reviewed. A dim line: the member is withheld, because you turned it off,
+its author retired it, or a policy refuses it.
+
+#### What a member has done
+
+Each member shows ten steps of evidence, from carried to verified. A step is
+lit only when there is evidence for it. A step that nobody observed stays
+hollow. Nothing is inferred upward.
+
+| Step | It is lit when |
+|---|---|
+| Carried | The agent's sets hold the member. |
+| Catalogued | AIKit finds the member in its catalogue. |
+| Available | The member passes its trust and policy checks here. |
+| Selected | The member is chosen for the act in hand. |
+| Projected | The member is written into the harness for this context. |
+| Loaded | The member's text entered the agent's context. |
+| Invoked | The agent called the member in this session. |
+| Relied on | The return names the member as material to the result. |
+| Succeeded | The act that it served produced its expected return. |
+| Verified | An independent check passed. |
+
+Carried is not loaded, and loaded is not used. A set holds a member. It does
+not make the agent use it.
 
 #### Parameters
+
 | Parameter | Values | Default | What it does |
 |---|---|---|---|
-| Skillset | A named set | The set on the chain | Chooses the set of skills in the rack. Drag a set from the browser to replace it. |
-| Skill | On · Off, one for each chain | As the set declares | Your request to admit or to withhold a skill. |
-| Admit light | Lit · Dark (reading) | Read from AIKit | Shows whether the skill is admitted now. |
-| Thoroughness | 0–100 % | 60 % | How exhaustive the skills are. |
-| Test depth | None · Unit · Unit and integration · Full | Unit | How deep the skills test. |
-| Reach | Object · Scene · Expression · Central | Scene | How far beyond the scope the skills look. |
-| Risk | Low · Medium · High | Low | How bold the skills are before they ask you. |
-| Steward | A name (reading) | Read from the set | Who looks after the set. |
-| Revision | A number (reading) | Read from the set | The revision of the set that is in use. |
+| Set | A set, by its name | The set on the chain | Chooses the repertoire. Drag a set from the browser to replace it. |
+| Member | On · Off, one for each member | On | Your request to use the member, through the profile in use. On grants no trust and loads nothing. |
+| Scope | Home · Project · Session | Project | Where the composition applies: every session on this machine, every session in this project, or this session only. |
+| Profile | A governance profile | Baseline | The profile that the composition applies under. |
+| Apply | Preview, then Apply | — | Shows what a change would apply, then applies it. A new change cancels the preview. |
+| Package target | Claude · Codex · Pi · OpenAI | Claude | The harness to package the set for. |
+| Export | An action | — | Writes the native package and its receipt. The set does not change. |
+| Mark state | Available · Held · Withheld (reading) | Read from AIKit | The state of each member, with the reason. |
+| Evidence | Ten steps for each member (reading) | Read from AIKit | What each member has done in this session. |
+| Revision | A digest (reading) | Read from AIKit | The revision of the whole set. |
+| Unsupported | A count (reading) | Read from the receipt | The relations that the package target cannot carry. The receipt names each one. |
 
 #### Views
 
@@ -4903,155 +4946,200 @@ The Skillset rack is one device with five views. All five show the same live set
 
 ```ui
 device: ai-kit:skillset-rack
-caption: The Skillset rack as the shell draws it now, in its five views. The readings are a fixture.
+width: 1500
+height: 1000
+caption: The Skillset rack on Central's documentation set. Turn a member off and the Preview lights. Point at a mark or at the ticks to read them. Switch the fixture to see the pen marks.
 ```
 
 ##### Folded
 
-Where: on a Factory session's chain, as the third device. The folded rack shows the set name and the count of lit chains. Click the title to unfold it.
+Where: on a Factory session's chain, as the third device. The folded rack shows
+the set's name and how many members are loaded. Click the title to unfold it.
 
 ##### Compact
 
-Where: on a Factory session's chain. The compact rack shows one chain for each skill, with an admit light. It has four macros.
+Where: on a Factory session's chain. The compact rack shows its members as a
+chain list: your request as a square, the member's mark in its state, its name
+and its ten steps of evidence. Methodologies come first, then methods, skills
+and child sets. A long list pages.
 
-| Macro | What it does |
+| Control | What it does |
 |---|---|
-| Thoroughness | Sets how exhaustive the skills are, from 0 to 100 %. |
-| Test depth | Sets how deep the skills test. |
-| Reach | Sets how far beyond the scope the skills look. |
-| Risk | Sets how bold the skills are before they ask you. |
+| Scope | Sets Home, Project or Session. |
+| Preview, Apply | Shows the change, then applies it. |
+| Loaded | Shows how many members are loaded, of all that the set carries. |
 
-Click a light to turn a skill on or off. Turn a knob to move the skills it controls. Click the plate to show the rack whole in the pool. Click ⤢ to open the set full in a pane.
+Click a square to turn a member on or off. Click the plate to show the rack
+whole in the pool. Click ⤢ to open the set full in a pane.
 
 ##### Whole
 
-Where: the pool under the browser. The whole rack shows every parameter, in three groups.
+Where: the pool under the browser. The whole rack has two bands.
 
-| Group | Parameters |
+| Band | Sections |
 |---|---|
-| Skills | Skillset, Skill, Admit light |
-| Macros | Thoroughness, Test depth, Reach, Risk |
-| Details | Steward, Revision |
+| One | Set: the set, its members by kind, the revision, the author. Compose: Scope, Preview and Apply, Profile. Package: the target, Export, the unsupported count. |
+| Two | Every member, in two columns, with its square, mark, evidence and revision. |
 
-Drag a set from the browser onto the rack to replace the set. Drag one skill onto the rack to make a new chain.
+Select a member to show it whole in the pool (see §19.7).
 
 ##### Full
 
-Where: a pane. The full rack shows the set. It lists each skill with its text, its revision and its standing. A dark chain gives the reason that AIKit holds the skill back. The controls stay in Device view, below the pane.
+Where: a pane. The full rack is the set as a page, grouped by kind:
+methodologies, methods, skills and sets. Each member shows its mark, its
+revision, its evidence, its state and what it is for. The controls stay in
+Device view, below the pane.
 
 ##### Widget
 
-Where: the rail on the right. The widget shows the chains with their lights, and the four macros. The widget stays when you change mode.
+Where: the rail on the right. The widget shows the four marks with a count
+under each, and three counts: available, loaded and invoked. The widget stays
+when you change mode.
 
 #### Transport
+
 | Control | Effect on the Skillset rack |
 |---|---|
-| Keys and maps | Letter keys turn the macros. You can bind a word to a macro. |
-| Capture | Turns a task you did by hand into a skill proposal. See Capture skill. |
+| Keys and maps | A key or a spoken word can turn a member on or off. |
+| Capture | Turns a task you did by hand into a proposal for a new method. See Capture skill. |
 
 #### To use the Skillset rack
-1. Drag a skillset from the browser onto the chain of a session.
-2. Read the lights. Click a dark light to ask for the skill.
-3. If the light stays dark, read the reason on the chain.
-4. Turn Test depth up for work that you must trust.
-5. Turn Risk down when the agent must ask more often.
-6. To add one skill, drag it onto the rack. It makes a new chain.
+
+1. Drag a set from the browser onto the chain of a session.
+2. Read the marks. Point at a dim mark to read why it is withheld.
+3. Select a member with an orange mark. Review its revision to make it
+   available.
+4. Click a member's square to turn it on or off. Click Preview, read the
+   change, then click Apply.
+5. Read the evidence. A member that is carried but never loaded costs the
+   agent nothing. A member that is loaded but never invoked costs it context.
+6. To give the set to another harness, choose the target and click Export.
 
 #### Rules
-- A macro moves several skills at once. Each skill keeps its own range.
-- The light is a reading. The shell does not light it.
-- A skill added to the rack does not change another chain.
-- A set that you reorder, rename or save keeps its revision history.
+
+- Membership grants no trust, no authority and no loading.
+- The marks and the evidence are readings. The shell does not light them.
+- A set carries a child set by reference. A change to the child reaches every
+  set that carries it.
+- A change applies only after Preview and Apply.
 
 #### Tips
-- To make a review stricter, turn Thoroughness and Test depth up together.
-- To keep an agent in one project, set Reach to Object or Scene.
-- To try a skill for one task only, add it to the rack and remove it when the task ends.
 
-### 19.7 Skill
+- To keep an agent's context light, turn off members that it loads and never
+  invokes.
+- To share a set with a team on another harness, read the unsupported count
+  before you export it.
+
+### 19.7 Skill, Method, Methodology
 
 **Product:** AIKit · **Kind:** effect · **Chain:** one chain inside a Skillset rack
 
-You need one reusable way of working that an agent can follow. A Skill is that way of working. It changes the agent's turn as the turn passes and leaves the rest of the turn as it was.
+You need to see one member of a repertoire closely: what it is for, whether
+the agent can use it now, and what it did. One device shows all three forms,
+and its face changes with the form.
+
+#### Three faces
+
+| Form | The face shows | You can |
+|---|---|---|
+| Skill | Its mark, its evidence, the harnesses it reaches and the sets that carry it. | Turn it on or off. Review its revision. |
+| Method | Its mark, its evidence, and the path that it composes, from claim to return, with the members that each step uses. | Run it once, after a preflight. Prove the last run. |
+| Methodology | Its mark, its evidence, its field, and which Method applies when. | Read whether the act in hand needs it. |
 
 #### Parameters
+
 | Parameter | Values | Default | What it does |
 |---|---|---|---|
-| Skill | A name | — | Which skill the chain holds. |
-| Admit | On · Off | On | Your request to use the skill. |
-| Admit light | Lit · Dark (reading) | Read from AIKit | Shows whether AIKit admits the skill for this session. |
-| Standing | Reviewed · Unreviewed · Retired (reading) | Read from AIKit | The state of the skill's current revision. Only a reviewed skill is admitted. |
+| Member | A member of the rack | — | Which member the chain holds. |
+| Enabled | On · Off | On | Your request, through the profile in use. |
+| Trust | Trusted · Unseen (reading) | Read from AIKit | AIKit does not deliver an unseen revision until you review it. |
+| Review | An action | — | Records that you reviewed the revision. You confirm it first. |
 | Revision | A number (reading) | Read from AIKit | The revision in use. |
-| Use | Always · When it applies · When asked | When it applies | When the agent loads the skill. |
-| Macro ranges | Four ranges | The full range | How far each rack macro may move this skill: Thoroughness, Test depth, Reach, Risk. |
+| Evidence | Ten steps (reading) | Read from AIKit | What the member has done in this session. See §19.6. |
+| Run | An action, Method only | — | Runs the Method once and keeps a receipt. A preflight checks first: a missing condition refuses the run before any effect and names itself. |
+| Prove | An action, Method only | — | Checks the receipt of the last run. A run that did not verify is refused. |
+| Instantiate | Needed · Not needed (reading), Methodology only | Read for each act | Whether the act in hand needs the Methodology, or the invoked skill carries enough. |
+| Reach | Harnesses (reading), Skill only | Read from AIKit | The harnesses that the skill is written into in this context. |
 
 #### Views
 
-The Skill is one device with five views. All five show the same live settings.
+The member device is one device with five views. All five show the same live settings.
 
 ```ui
 device: ai-kit:skill-device
-caption: The Skill as the shell draws it now, in its five views. The readings are a fixture.
+width: 1500
+height: 1000
+caption: One member device, three forms. Switch the fixture: a Method and its path, a Methodology and its table, a Skill, and a Method whose revision nobody has reviewed.
 ```
 
 ##### Folded
 
-Where: on one chain inside a Skillset rack. The folded Skill shows the skill name and its light. Click the title to unfold it.
+Where: on one chain inside a Skillset rack. The folded member shows its name,
+its form and its revision. Click the title to unfold it.
 
 ##### Compact
 
-Where: on one chain inside a Skillset rack. The compact Skill shows the skill's glyph and name, and its standing. It has four macros.
+Where: on one chain inside a Skillset rack. The compact member shows its mark
+large, its form and the question the form answers, and its evidence.
 
-| Macro | What it does |
+| Control | What it does |
 |---|---|
-| Admit | Requests that the skill is used or withheld. |
-| Use | Sets Always, When it applies or When asked. |
-| Thoroughness range | Sets how far the rack macro Thoroughness may move this skill. |
-| Risk range | Sets how far the rack macro Risk may move this skill. |
-
-Click the plate to show the Skill whole in the pool. Click ⤢ to open the skill's text full in a pane.
+| Enabled | Your request to use it. |
+| Trust or Review | Shows Trusted, or offers Review for an unseen revision. |
+| Run (Method) | Runs the Method after a preflight. |
+| Instantiate (Methodology) · Reach (Skill) | Shows the reading for the form. |
 
 ##### Whole
 
-Where: the pool under the browser. The whole Skill shows every parameter, in three groups.
-
-| Group | Parameters |
-|---|---|
-| Admit | Skill, Admit, Admit light, Standing, Revision |
-| Use | Use |
-| Ranges | Macro ranges |
-
-Only a Reviewed skill is admitted. A skill that is not reviewed stays dark.
+Where: the pool under the browser. Band one holds the mark with the ten steps
+named, then Standing (Enabled, Trust, Revision), then the form's own section:
+Run for a Method, Orients for a Methodology, Reach for a Skill. Band two holds
+the form's body: the path that a Method composes, the table of which Method
+applies when for a Methodology, or what a Skill is for.
 
 ##### Full
 
-Where: a pane. The full Skill is the skill's text. It fills the pane with the text, its revisions and the sessions that use it. A change makes a new revision. The old revision stays. The controls stay in Device view, below the pane.
+Where: a pane. The full member is its text: its form, what it says, a Method's
+steps, a Methodology's table. Its evidence and state stand under the text. The
+controls stay in Device view, below the pane.
 
 ##### Widget
 
-Where: the rail on the right. The widget shows the skill's name, its light and its standing. The widget stays when you change mode.
+Where: the rail on the right. The widget shows the mark, the evidence, and Run
+for a Method. The widget stays when you change mode.
 
 #### Transport
-| Control | Effect on the Skill |
-|---|---|
-| Keys and maps | A key or a spoken word can turn Admit on or off. |
-| Capture | Makes a new skill proposal from a task you did by hand. |
 
-#### To use the Skill
-1. Find the skill in the browser. Select it to read it whole in the pool.
-2. Drag it onto the rack of a session.
-3. Read the light and the Standing. If the skill is Unreviewed, ask for a review.
-4. Set Use to When asked if the skill is rare.
-5. Narrow a Macro range if the rack should not move this skill far.
+| Control | Effect on the member |
+|---|---|
+| Play | Runs a selected Method, after its preflight. |
+| Keys and maps | A key or a spoken word can turn the member on or off. |
+
+#### To use the member device
+
+1. Select a member in the Skillset rack. It shows whole in the pool.
+2. Read its mark and its evidence.
+3. If the mark is orange, read the reason. Click Review, read the revision,
+   then confirm.
+4. For a Method, click Run. Read the preflight. Confirm to run it.
+5. After a run, click Prove to check the receipt.
 
 #### Rules
-- A skill is admitted only when AIKit says so. A skill that is not reviewed stays dark.
-- A skill is not copied into the prompt. The agent finds it and reads it when it applies.
-- A change to a skill makes a new revision. The old revision stays.
+
+- The form comes from the member's own text. To change the form, change the
+  text.
+- A Method composes. It does not order its steps, and it skips a step that the
+  work does not touch.
+- A Methodology points at its Methods. It does not hold their text.
+- A change to a member makes a new revision. The old revision stays. A new
+  revision is unseen until you review it.
 
 #### Tips
-- To keep a risky skill out of an unattended run, set its Risk range to Low.
-- To find out why a skill is dark, select its chain and read the Standing.
+
+- To learn a field quickly, open its Methodology full in a pane and read its
+  table of Methods.
+- To find a Method that nobody runs, read the evidence: carried, never
+  selected.
 
 ### 19.8 Knowledge route
 

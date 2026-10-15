@@ -384,8 +384,14 @@ a meaning of the material, as a track&#39;s colour does.</p>
 <tr>
 <td>Rows</td>
 <td>A list: a rack&#39;s chains, a scope&#39;s places</td>
-<td>One row each: your request as a square, the owner&#39;s answer as a light, the name, a short note. A long list pages.</td>
+<td>One row each: your request as a square; the owner&#39;s answer as a light, or the member&#39;s kind mark in its state; the name; a short meter; a short note. A long list pages.</td>
 <td>A rack&#39;s chain list.</td>
+</tr>
+<tr>
+<td>Ladder</td>
+<td>Evidence in steps</td>
+<td>One tick for each step: lit where it is established, dark where it is not, hollow where nobody has observed it.</td>
+<td>A level meter&#39;s segments.</td>
 </tr>
 <tr>
 <td>Readout</td>
@@ -544,8 +550,34 @@ standing of each parameter: its automation, its modulator, its holder.</p>
 <p>The panel kit is <code>packages/live-shell/ui/src/inhabitants/sdk/panel.tsx</code>. A
 device without views of its own is drawn by the generic plate: its parameters,
 grouped, in the order the device declares them.</p>
+<h3 id="8-1-a-parameter-earns-its-place"><a class="anchor" href="#8-1-a-parameter-earns-its-place" aria-hidden="true">#</a>8.1 A parameter earns its place</h3>
+<p>A parameter stays on a device only when all of these are true:</p>
+<ul>
+<li>An owner operation stands behind it: a write that the owner exposes, or a
+reading that the owner reports. A word for a quality, such as thoroughness
+or boldness, is not a parameter unless such an operation stands behind it.</li>
+<li>Its control fits its values. Use a dial or a value box for a quantity that
+varies smoothly. Use a stepped dial, a radio or a chooser for a few states,
+and a toggle for two. Do not draw a range or a step that the owner does not
+have.</li>
+<li>When you move it, something that you can see or hear changes: the display,
+the material or a reading.</li>
+<li>Its default is the owner&#39;s default.</li>
+<li>A macro moves real parameters, each within its own range.</li>
+</ul>
+<p>A device whose owner has no smooth quantity has no dials. Its compact controls
+are its real discrete ones. A rack of skills has no risk knob: it has your
+requests, a scope, and a preview that you apply.</p>
+<h3 id="8-2-kind-marks"><a class="anchor" href="#8-2-kind-marks" aria-hidden="true">#</a>8.2 Kind marks</h3>
+<p>A device that holds things of several kinds shows each thing&#39;s kind, not a
+picture of its name. Carried practice has four kinds, each with its woodcut
+mark: a skill, a method, a methodology and a skillset (manual §19.6). The
+person chooses one of the two sets of marks, the blade or the pen, and the
+whole shell uses it. A mark has three states, and its drawing does not change:
+a full line for available, the line in orange for held back for a reason that
+you can clear, a dim line for withheld.</p>
 <h2 id="9-the-reference-devices"><a class="anchor" href="#9-the-reference-devices" aria-hidden="true">#</a>9. The reference devices</h2>
-<p>Five devices show the whole pattern. Each runs on a labelled fixture. Move a
+<p>Six devices show the whole pattern. Each runs on a labelled fixture. Move a
 control in one view and the other four follow. Point at a control to read what
 it does, in the line under the views.</p>
 <div class="table-wrap"><table>
@@ -578,8 +610,14 @@ it does, in the line under the views.</p>
 <tr>
 <td>Skillset rack</td>
 <td>Rack</td>
-<td>The chain list as the picture. Your request beside the owner&#39;s answer. Pages instead of a scroller.</td>
+<td>The chain list as the picture. Each member&#39;s kind mark and evidence. Your request beside the owner&#39;s answer. Preview, then apply.</td>
 <td>Audio Effect Rack</td>
+</tr>
+<tr>
+<td>Skill, Method, Methodology</td>
+<td>Effect</td>
+<td>One device with three faces, one for each form. A Method&#39;s path as its display. A review that you confirm.</td>
+<td>A device whose panel changes with its mode, as Simpler&#39;s Classic, One-Shot and Slice</td>
 </tr>
 <tr>
 <td>Scope</td>
@@ -707,7 +745,7 @@ dot.</p>
 <p>In the shell, the display is the field&#39;s own diagram, drawn from the engine&#39;s
 readings by the same law.</p>
 <h3 id="9-4-skillset-rack"><a class="anchor" href="#9-4-skillset-rack" aria-hidden="true">#</a>9.4 Skillset rack</h3>
-<figure class="ui"><div class="ui-stage" data-w="1500" data-h="940"><iframe src="http://127.0.0.1:5208/?device=ai-kit:skillset-rack&amp;view=all" loading="lazy" style="width:1500px;height:940px" sandbox="allow-scripts allow-same-origin" title="The Skillset rack in its five views. The square is your request, the light is AIKit's answer. Point at a dark chain to read why."></iframe></div><figcaption>The Skillset rack in its five views. The square is your request, the light is AIKit's answer. Point at a dark chain to read why. · <a href="http://127.0.0.1:5208/?device=ai-kit:skillset-rack&amp;view=all" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<figure class="ui"><div class="ui-stage" data-w="1500" data-h="1000"><iframe src="http://127.0.0.1:5208/?device=ai-kit:skillset-rack&amp;view=all" loading="lazy" style="width:1500px;height:1000px" sandbox="allow-scripts allow-same-origin" title="The Skillset rack on Central's documentation set:one methodology, eight methods, nine skills and a child set. Turn a member off and Preview lights."></iframe></div><figcaption>The Skillset rack on Central's documentation set:one methodology, eight methods, nine skills and a child set. Turn a member off and Preview lights. · <a href="http://127.0.0.1:5208/?device=ai-kit:skillset-rack&amp;view=all" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -718,34 +756,74 @@ readings by the same law.</p>
 </thead>
 <tbody><tr>
 <td>Folded</td>
-<td>The set&#39;s name, the lit chains.</td>
+<td>The set&#39;s name, the loaded count.</td>
 <td></td>
 </tr>
 <tr>
 <td>Compact</td>
-<td>The chain list and the four macros: Thoroughness, Tests, Reach, Risk.</td>
-<td>A rack has no wave to draw. Its chains are its picture.</td>
+<td>The members as a chain list: request, kind mark, name, ten ticks of evidence. Scope, Preview and Apply, the loaded count.</td>
+<td>A rack has no wave to draw. Its members, and what each has done, are its picture.</td>
 </tr>
 <tr>
 <td>Whole</td>
-<td>Band one: Set (the set, the steward, the revision, the admitted count) and the macros. Band two: every chain, in two columns, paged.</td>
-<td></td>
+<td>Band one: Set, Compose, Package. Band two: every member in two columns, paged.</td>
+<td>Each control is an AIKit operation: enable through the profile, scope, preview and apply, export.</td>
 </tr>
 <tr>
 <td>Full</td>
-<td>The set as a page: each skill, its revision, its standing and what it does.</td>
+<td>The set as a page, grouped by kind.</td>
 <td>The set is a document that you read.</td>
 </tr>
 <tr>
 <td>Widget</td>
-<td>The first chains and the four macro values.</td>
+<td>The four marks with their counts; available, loaded, invoked.</td>
+<td>Carried is not loaded, and loaded is not used.</td>
+</tr>
+</tbody></table>
+</div>
+<p>A member that you turn off dims and its evidence goes dark. A member held back
+for an unreviewed revision draws in orange with a ! that gives the reason.</p>
+<h3 id="9-5-skill-method-methodology"><a class="anchor" href="#9-5-skill-method-methodology" aria-hidden="true">#</a>9.5 Skill, Method, Methodology</h3>
+<figure class="ui"><div class="ui-stage" data-w="1500" data-h="1000"><iframe src="http://127.0.0.1:5208/?device=ai-kit:skill-device&amp;view=all" loading="lazy" style="width:1500px;height:1000px" sandbox="allow-scripts allow-same-origin" title="One member device in three forms. Switch the fixture:a Method and its path, a Methodology and its table, a Skill, and a Method whose revision nobody has reviewed."></iframe></div><figcaption>One member device in three forms. Switch the fixture:a Method and its path, a Methodology and its table, a Skill, and a Method whose revision nobody has reviewed. · <a href="http://127.0.0.1:5208/?device=ai-kit:skill-device&amp;view=all" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>View</th>
+<th>Holds</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>The name, the form, the revision.</td>
+<td></td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>The mark large, the form and its question, the evidence. Enabled, Trust or Review, and the form&#39;s one control: Run, Instantiate or Reach.</td>
+<td>The form decides what you most need: to run a Method, to know whether a Methodology applies.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>Band one: the mark with the ten steps named, Standing, the form&#39;s section. Band two: a Method&#39;s path, a Methodology&#39;s table, a Skill&#39;s purpose.</td>
+<td>AIKit keeps one identity for all three forms. One device with three faces keeps it too.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>The member&#39;s text.</td>
+<td>The text is the member.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>The mark, the evidence, Run for a Method.</td>
 <td></td>
 </tr>
 </tbody></table>
 </div>
-<p>A chain that you request and AIKit holds back stays dark, with a ! that gives
-the reason.</p>
-<h3 id="9-5-scope"><a class="anchor" href="#9-5-scope" aria-hidden="true">#</a>9.5 Scope</h3>
+<p>A Method&#39;s path draws each step as a node and the members it uses as marks
+under it. The line between steps is dashed, because a step that the work does
+not touch is skipped.</p>
+<h3 id="9-6-scope"><a class="anchor" href="#9-6-scope" aria-hidden="true">#</a>9.6 Scope</h3>
 <figure class="ui"><div class="ui-stage" data-w="1500" data-h="940"><iframe src="http://127.0.0.1:5208/?device=software-factory:context-write-mode&amp;view=all" loading="lazy" style="width:1500px;height:940px" sandbox="allow-scripts allow-same-origin" title="Scope in its five views. Raise the reach and it waits for you to confirm. Teal is what the agent may read; amber is what it may write."></iframe></div><figcaption>Scope in its five views. Raise the reach and it waits for you to confirm. Teal is what the agent may read; amber is what it may write. · <a href="http://127.0.0.1:5208/?device=software-factory:context-write-mode&amp;view=all" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
 <div class="table-wrap"><table>
 <thead>

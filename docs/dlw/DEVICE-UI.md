@@ -141,7 +141,8 @@ A panel uses these controls and no others.
 | Toggle | On or off | The name in a box, amber when on. | Auto Filter's Hz button. |
 | Radio | One of two to five | Buttons side by side or stacked; the chosen one amber. | Auto Filter's filter types. |
 | Chooser | One of many | The value and ▾; a menu. | Wavetable's wavetable menu. |
-| Rows | A list: a rack's chains, a scope's places | One row each: your request as a square, the owner's answer as a light, the name, a short note. A long list pages. | A rack's chain list. |
+| Rows | A list: a rack's chains, a scope's places | One row each: your request as a square; the owner's answer as a light, or the member's kind mark in its state; the name; a short meter; a short note. A long list pages. | A rack's chain list. |
+| Ladder | Evidence in steps | One tick for each step: lit where it is established, dark where it is not, hollow where nobody has observed it. | A level meter's segments. |
 | Readout | A reading | A short value over its name. A large readout is the count that the view is for. | Hybrid Reverb's "100 % / 285 ms". |
 | Action | Something done once | The name in an outlined box. | A momentary button. |
 | Light | A state that the owner reports | A small round light. | A chain's activator. |
@@ -224,9 +225,39 @@ The panel kit is `packages/live-shell/ui/src/inhabitants/sdk/panel.tsx`. A
 device without views of its own is drawn by the generic plate: its parameters,
 grouped, in the order the device declares them.
 
+### 8.1 A parameter earns its place
+
+A parameter stays on a device only when all of these are true:
+
+- An owner operation stands behind it: a write that the owner exposes, or a
+  reading that the owner reports. A word for a quality, such as thoroughness
+  or boldness, is not a parameter unless such an operation stands behind it.
+- Its control fits its values. Use a dial or a value box for a quantity that
+  varies smoothly. Use a stepped dial, a radio or a chooser for a few states,
+  and a toggle for two. Do not draw a range or a step that the owner does not
+  have.
+- When you move it, something that you can see or hear changes: the display,
+  the material or a reading.
+- Its default is the owner's default.
+- A macro moves real parameters, each within its own range.
+
+A device whose owner has no smooth quantity has no dials. Its compact controls
+are its real discrete ones. A rack of skills has no risk knob: it has your
+requests, a scope, and a preview that you apply.
+
+### 8.2 Kind marks
+
+A device that holds things of several kinds shows each thing's kind, not a
+picture of its name. Carried practice has four kinds, each with its woodcut
+mark: a skill, a method, a methodology and a skillset (manual §19.6). The
+person chooses one of the two sets of marks, the blade or the pen, and the
+whole shell uses it. A mark has three states, and its drawing does not change:
+a full line for available, the line in orange for held back for a reason that
+you can clear, a dim line for withheld.
+
 ## 9. The reference devices
 
-Five devices show the whole pattern. Each runs on a labelled fixture. Move a
+Six devices show the whole pattern. Each runs on a labelled fixture. Move a
 control in one view and the other four follow. Point at a control to read what
 it does, in the line under the views.
 
@@ -235,7 +266,8 @@ it does, in the line under the views.
 | Day | Instrument | A display that you click. Pages that are two things at once: today's Day and tomorrow's. Macros of four kinds. | Hybrid Reverb |
 | Torus | Instrument | A picture drawn by the law that it plays. Handles on the picture. An envelope display. A modulation arc and an automation dot. | Wavetable |
 | Physics | Effect | A law drawn as a diagram with a two-way handle. Pages for a long set of parameters. Macros on the widget. | Auto Filter, Corpus |
-| Skillset rack | Rack | The chain list as the picture. Your request beside the owner's answer. Pages instead of a scroller. | Audio Effect Rack |
+| Skillset rack | Rack | The chain list as the picture. Each member's kind mark and evidence. Your request beside the owner's answer. Preview, then apply. | Audio Effect Rack |
+| Skill, Method, Methodology | Effect | One device with three faces, one for each form. A Method's path as its display. A review that you confirm. | A device whose panel changes with its mode, as Simpler's Classic, One-Shot and Slice |
 | Scope | Effect | A change that asks you first. Two reaches on one picture. A list where you request places. | Utility |
 
 ### 9.1 Day
@@ -303,22 +335,43 @@ readings by the same law.
 ```ui
 device: ai-kit:skillset-rack
 width: 1500
-height: 940
-caption: The Skillset rack in its five views. The square is your request, the light is AIKit's answer. Point at a dark chain to read why.
+height: 1000
+caption: The Skillset rack on Central's documentation set: one methodology, eight methods, nine skills and a child set. Turn a member off and Preview lights.
 ```
 
 | View | Holds | Why |
 |---|---|---|
-| Folded | The set's name, the lit chains. | |
-| Compact | The chain list and the four macros: Thoroughness, Tests, Reach, Risk. | A rack has no wave to draw. Its chains are its picture. |
-| Whole | Band one: Set (the set, the steward, the revision, the admitted count) and the macros. Band two: every chain, in two columns, paged. | |
-| Full | The set as a page: each skill, its revision, its standing and what it does. | The set is a document that you read. |
-| Widget | The first chains and the four macro values. | |
+| Folded | The set's name, the loaded count. | |
+| Compact | The members as a chain list: request, kind mark, name, ten ticks of evidence. Scope, Preview and Apply, the loaded count. | A rack has no wave to draw. Its members, and what each has done, are its picture. |
+| Whole | Band one: Set, Compose, Package. Band two: every member in two columns, paged. | Each control is an AIKit operation: enable through the profile, scope, preview and apply, export. |
+| Full | The set as a page, grouped by kind. | The set is a document that you read. |
+| Widget | The four marks with their counts; available, loaded, invoked. | Carried is not loaded, and loaded is not used. |
 
-A chain that you request and AIKit holds back stays dark, with a ! that gives
-the reason.
+A member that you turn off dims and its evidence goes dark. A member held back
+for an unreviewed revision draws in orange with a ! that gives the reason.
 
-### 9.5 Scope
+### 9.5 Skill, Method, Methodology
+
+```ui
+device: ai-kit:skill-device
+width: 1500
+height: 1000
+caption: One member device in three forms. Switch the fixture: a Method and its path, a Methodology and its table, a Skill, and a Method whose revision nobody has reviewed.
+```
+
+| View | Holds | Why |
+|---|---|---|
+| Folded | The name, the form, the revision. | |
+| Compact | The mark large, the form and its question, the evidence. Enabled, Trust or Review, and the form's one control: Run, Instantiate or Reach. | The form decides what you most need: to run a Method, to know whether a Methodology applies. |
+| Whole | Band one: the mark with the ten steps named, Standing, the form's section. Band two: a Method's path, a Methodology's table, a Skill's purpose. | AIKit keeps one identity for all three forms. One device with three faces keeps it too. |
+| Full | The member's text. | The text is the member. |
+| Widget | The mark, the evidence, Run for a Method. | |
+
+A Method's path draws each step as a node and the members it uses as marks
+under it. The line between steps is dashed, because a step that the work does
+not touch is skipped.
+
+### 9.6 Scope
 
 ```ui
 device: software-factory:context-write-mode
