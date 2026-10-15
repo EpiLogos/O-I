@@ -958,6 +958,8 @@ shown live beside its entry.
 
 ## 17. Central
 
+Central keeps the day's work, your documents and your ground in one place. It works like a code editor: your files down the left, documents side by side, and the day as one of the documents. Everything you do in the other modes leaves a mark here, so the evening does not have to rebuild the morning. Agents read only what you give them and write only where you allow.
+
 ### 17.1 Day
 
 **Product:** Central · **Kind:** instrument · **Track:** Central's Main track
@@ -1052,3 +1054,1110 @@ closes.
   is still open.
 - To keep a long run off your list of tasks, let it show on face 2 only. Face 1
   holds what you decided to do.
+
+### 17.2 Workspace
+
+**Product:** Central · **Kind:** instrument · **Track:** a workspace, in Central
+
+Use the Workspace to pick up a project, a book or a practice exactly where you left it, in every mode. It holds the documents and files of that work as clips, and it sends its work to the Day.
+
+#### What a workspace holds
+
+| Part | What it holds |
+|---|---|
+| Clips | One clip for each document and file. Each clip shows its state: Draft, Saved or Edited since save. |
+| Context | The panes, instruments, widgets and set that you used, kept for each mode. |
+| Place | The place on your world where the workspace stands. |
+| Route to the Day | The link that sends the work of the workspace to the Day, the Main track. |
+
+#### What the workspace remembers
+
+| Item | What it keeps |
+|---|---|
+| Panes | Which panes are open, how they are split and which are pinned. |
+| Instruments | Which instrument each pane holds, and its build. |
+| Widgets | Which widgets are open on the rail, which are pinned and which preset is in use. |
+| Sets | The saved set that each mode opens with. |
+
+#### Parameters
+
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Name | Text | New workspace | The name on the track and in the browser. |
+| Kind | Project · Book · Practice · Other | Project | Chooses the starting set of a new workspace. |
+| Folder | A folder of your ground, or none | None | The folder whose files show as clips. |
+| Place | A place on your world, or none | Its own place | The place where the workspace stands on your planet. A new project gets its own place. |
+| Remember | Panes · Instruments · Widgets · Sets: each On or Off | All On | Which parts of your context the workspace keeps. |
+| Remember in | Every mode · Open mode only | Every mode | Keeps context for all five modes, or only for the mode that is open. |
+| On launch | Restore all modes · Restore open mode · Restore nothing | Restore all modes | What comes back when you launch the workspace. |
+| Open in | Last mode · Central · Factory · Expressions · Technē · Live | Last mode | The mode that comes forward after a launch. |
+| Keep context | On change · On leave · Manual | On change | When the workspace stores your context. |
+| Send to Day | On · Off | On | Sends the work of the workspace to the Day. |
+
+#### Presentations
+
+| Presentation | What it shows |
+|---|---|
+| Folded | The name of the workspace and the number of open documents. |
+| Compact | The panes of the open mode, drawn as small boxes. A mark shows each mode that has a remembered set. Four macros: Launch, On launch, Keep context, Send to Day. |
+| Whole | All parameters, in four groups: Identity, Remember, Launch, Day. |
+| Full | The clips of the workspace, with their states. One row for each mode shows the set that the mode opens with. |
+| Widget | The name of the workspace, its open documents and a Launch button. It stays when you change mode. |
+
+#### Transport
+
+| Control | Effect on the Workspace |
+|---|---|
+| Link | Keeps the workspace and its remembered context in step on your other machines. |
+| Rate | Shows which machine serves the files of the workspace. |
+| Keys and maps | Binds a key or a phrase to Launch. |
+
+#### To use the Workspace
+
+1. Drag a folder from the browser onto an empty track. The track becomes a workspace.
+2. Set the Name. Choose the Kind and the Place.
+3. Arrange the panes, instruments and widgets in any mode.
+4. Select another workspace. Your arrangement stays with the first workspace.
+5. Launch the first workspace. Every mode returns as you left it.
+6. To keep the work out of the Day, set Send to Day to Off.
+
+#### Rules
+
+- The workspace stores context. It does not store content. The files stay in the folder as ordinary files.
+- You can change the files in any editor. The clips show the change.
+- A launch restores context. It does not change a document.
+- A set that you save in a mode belongs to the workspace that is open.
+- Every workspace routes to the Day. The Day is the Main track and has no workspace of its own.
+- A clip shows its state on the clip: Draft, Saved or Edited since save.
+
+#### Tips
+
+- To resume a book after a month, launch its workspace.
+- To keep a side project out of the Day, set Send to Day to Off.
+- To work on one project on two machines, turn Link on.
+- To start a new project in your usual layout, copy a workspace and change its Folder.
+
+### 17.3 Flow
+
+**Product:** Central · **Kind:** instrument · **Chain:** first on a Flow document, before the document effects
+
+Use a Flow for a running conversation or journal that keeps who said what. The page names its participants, people and agents, at the top.
+
+```ui
+src: ../../desktop/cradle/documents/ql-flow.html
+height: 640
+caption: The Flow template, blank. Add a participant, write an entry, then switch the view.
+```
+
+#### Three views
+
+| View | What it shows |
+|---|---|
+| Dialogue | The exchange between the participants, entry by entry, in order. |
+| Flow | The same entries as threads, with the relations drawn between them. |
+| Journal | One person, one page at a time. Earlier pages are listed below the page. |
+
+#### Relations
+
+A new entry connects to the entry that you select. The relation says how.
+
+| Relation | What it says |
+|---|---|
+| Reply | The entry answers the selected entry. |
+| Branch | The entry starts a second line of talk from the selected entry. |
+| Converge | The entry joins two lines into one. |
+| Correct | The entry says what an earlier entry should have said. The earlier entry stays. |
+| Source | The entry names where a statement comes from. |
+| Artifact | The entry names something that the talk made. |
+
+#### Participants
+
+A participant is a person or an agent. A person is drawn solid. An agent is drawn as points. An agent can be tied to a session. A participant that you add does not start. It is not proof of who wrote.
+
+#### Parameters
+
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| View | Dialogue · Flow · Journal | Dialogue | How the page shows the entries. |
+| Participants | A list of names. Each is a Person or an Agent. | You | Who is in the exchange. Each has a name and an initial. |
+| Speak as | A participant | You | Who the next entry belongs to. |
+| Relation | Reply · Branch · Converge · Correct · Source · Artifact | Reply | How the next entry connects to the selected entry. |
+| Journal page | A date | Today | The page of the Journal that you read. |
+| Media | Image, video or audio files, up to 12 MB each | None | Files attached to an entry. The page keeps them inside itself. |
+| Template | A template, at a version | The standard Flow | The page design. Each Flow keeps the template version it opened with. |
+
+#### Presentations
+
+| Presentation | What it shows |
+|---|---|
+| Folded | The name of the Flow and the initials of its participants. |
+| Compact | A strip of small bars, one for each entry, coloured by participant. Four macros: View, Speak as, Relation, Journal page. |
+| Whole | All parameters, in three groups: Page, People, Entries. |
+| Full | The Flow in the open view, as the template draws it. In a pane, you read and write here. |
+| Widget | The last entries of the Flow you work in, and a line to write the next entry. |
+
+#### Transport
+
+| Control | Effect on the Flow |
+|---|---|
+| Tap | Stamps the moment as a dated line in the Flow. |
+| Record | Dictates into the open entry. |
+| Overdub | Adds your words as a new entry, or replaces the selected entry. |
+| Quantize | Sets when a save lands: on pause, or by hand. |
+| Position | Shows the entry and the paragraph that you are in. |
+| Load | Shows whether the Flow is saved. |
+
+#### To use the Flow
+
+1. Open a Flow from the browser, or make a new Flow from the template.
+2. Add the participants. Mark each one as a person or an agent.
+3. Choose who speaks. Write the entry.
+4. To answer an earlier entry, select it and choose a relation. Then write.
+5. Set the View to Journal to read one person's page at a time.
+6. To ask an agent about a passage, select the passage and use Answer.
+
+#### Rules
+
+- Each entry shows its author. An agent entry shows the name of the agent and, when it is known, the session.
+- A correction is a new entry with the relation Correct. The old entry is not deleted.
+- A save names its outcome: saved, unchanged, stale, conflict or refused. After a conflict, the device shows the file as it now stands.
+- Agent entries follow the Agent writes setting of the Answer device.
+- Media stays inside the page. It does not leave your ground.
+- A Flow keeps the template version it opened with. A new template version does not change an old Flow.
+
+#### Tips
+
+- To keep a thinking journal, set the View to Journal and Speak as to you.
+- To follow a second idea without losing the first, select the entry and set Relation to Branch.
+- To correct an agent, write a Correct entry. The text of the agent stays on the page.
+- To prepare for a meeting, set the View to Flow and read the threads that have no reply.
+
+### 17.4 Beings
+
+**Product:** Central · **Kind:** instrument · **Chain:** first on a Beings document, before the document effects
+
+Use Beings for a page about a person in your work, or an agent you work with. The page is tied to its world, its subject, its sources and a real place.
+
+```ui
+src: ../../desktop/cradle/documents/oi-beings.html
+height: 640
+caption: The Beings template, blank. Press Edit, then open Source & form to see the ties that the page keeps.
+```
+
+#### The page and its ties
+
+The page has a title, a line of introduction, an opening, numbered sections and a side list named In relation. The ties belong to the page, not to the design.
+
+| Tie | What it says |
+|---|---|
+| World | The world that the being belongs to. |
+| Subject | The person or agent that the page is about. |
+| Office | Which of the four subject offices the page takes up. |
+| Sources | Where the claims of the page come from. Each source is at a revision. |
+| Place | Where the being stands in your world. |
+| Anchor | The real place on Earth that the page is tied to. |
+| Expression | An Expression that the page shows. |
+
+#### Parameters
+
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| World | A world | Your world | The world that the page belongs to. |
+| Subject | A person or an agent in the world, or none | None | The being that the page is about. |
+| Kind | Person · Agent | Person | Says what sort of being the page holds. |
+| Office | One or more of 1 to 4 | 2 | Chooses the subject offices that the page takes up. |
+| Sources | A list. Each source is at a revision. | None | The sources that the page rests on. |
+| Place | A place in your world, or none | None | Where the being stands in your world. |
+| Anchor | A real place on Earth, or none | None | Ties the page to a real place. |
+| Expression | An Expression, or none | None | The Expression that the page shows. |
+| Layout | Portrait · Editorial | Portrait | How the page is composed. |
+| Tone | Paper · Ink | Paper | The ground of the page: light or dark. |
+| Template | A template, at a version | The standard Beings page | The page design. Each page keeps the template version it opened with. |
+
+#### Presentations
+
+| Presentation | What it shows |
+|---|---|
+| Folded | The title of the page and the name of its world. |
+| Compact | The mark of the page. A pin shows when the page has a place. Four macros: Office, Layout, Tone, Place. |
+| Whole | All parameters, in four groups: Page, Ties, Place, Look. |
+| Full | The page as the template draws it. In a pane, you read and write here. |
+| Widget | The card of the selected being: its title, its world and its place. |
+
+#### Transport
+
+| Control | Effect on Beings |
+|---|---|
+| Tap | Stamps the moment as a dated line in the page. |
+| Record | Dictates into the open section. |
+| Capture | Puts the selected passage in the packet. |
+| Draw | Turns on the highlight pen. |
+| Load | Shows whether the page is saved. |
+
+#### To use Beings
+
+1. Make a new Beings page from the template.
+2. Write the title and the opening.
+3. Set the World and the Subject.
+4. Add the sources that the page rests on.
+5. Choose the Place. Then choose the Anchor, a real place on Earth.
+6. To describe an agent, set Kind to Agent and set the Subject to that agent.
+
+#### Rules
+
+- The ties belong to the page. A page that you redesign keeps its ties.
+- An empty Place stays empty. The device does not guess a place.
+- A relation in the side list shows its standing (fact, claim, inferred or hypothesis) and who stated it.
+- The page of an agent reads its card from Agent identity. The page does not keep a copy.
+- Each page keeps the template version it opened with.
+
+#### Tips
+
+- To see where a person stands, set the Place and open the world instrument.
+- To read a page at night, set Tone to Ink.
+- To keep a claim honest, add its source and the revision that you read.
+- To give each colleague a page in one world, set the same World on every page.
+
+### 17.5 Things
+
+**Product:** Central · **Kind:** instrument · **Chain:** first on a Things document, before the document effects
+
+Use Things for a page about an object in your work: a stone, a book, a collection. The page is tied to its world, its subject, its sources and a real place.
+
+```ui
+src: ../../desktop/cradle/documents/oi-things.html
+height: 640
+caption: The Things template, blank. Press Edit, then open Source & form to see the ties that the page keeps.
+```
+
+#### The page and its ties
+
+The page has a title, a line of introduction, an opening, numbered sections and a side list named In relation. The ties belong to the page, not to the design.
+
+| Tie | What it says |
+|---|---|
+| World | The world that the object belongs to. |
+| Subject | The subject that the page describes. |
+| Office | Which of the four subject offices the page takes up. |
+| Sources | Where the claims of the page come from. Each source is at a revision. |
+| Place | Where the object stands in your world. |
+| Anchor | The real place on Earth where the object stands. |
+| Expression | An Expression that the page shows. |
+
+#### Parameters
+
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| World | A world | Your world | The world that the page belongs to. |
+| Subject | A subject in the world, or none | None | The object that the page describes. |
+| Office | One or more of 1 to 4 | 2 | Chooses the subject offices that the page takes up. |
+| Sources | A list. Each source is at a revision. | None | The sources that the page rests on. |
+| Place | A place in your world, or none | None | Where the object stands in your world. |
+| Anchor | A real place on Earth, or none | None | Ties the object to a real place. |
+| Expression | An Expression, or none | None | The Expression that the page shows. |
+| Layout | Portrait · Editorial | Editorial | How the page is composed. |
+| Tone | Paper · Ink | Paper | The ground of the page: light or dark. |
+| Template | A template, at a version | The standard Things page | The page design. Each page keeps the template version it opened with. |
+
+#### Presentations
+
+| Presentation | What it shows |
+|---|---|
+| Folded | The title of the page and the name of its world. |
+| Compact | The mark of the page. A pin shows when the page has a place. Four macros: Office, Layout, Tone, Place. |
+| Whole | All parameters, in four groups: Page, Ties, Place, Look. |
+| Full | The page as the template draws it. In a pane, you read and write here. |
+| Widget | The card of the selected object: its title, its world and its place. |
+
+#### Transport
+
+| Control | Effect on Things |
+|---|---|
+| Tap | Stamps the moment as a dated line in the page. |
+| Record | Dictates into the open section. |
+| Capture | Puts the selected passage in the packet. |
+| Draw | Turns on the highlight pen. |
+| Load | Shows whether the page is saved. |
+
+#### To use Things
+
+1. Make a new Things page from the template.
+2. Write the title and the opening.
+3. Set the World and the Subject.
+4. Add the sources that the page rests on.
+5. Choose the Place. Then choose the Anchor, the real place on Earth where the object stands.
+6. Add a section for each part of the object that you want to describe.
+
+#### Rules
+
+- The ties belong to the page. A page that you redesign keeps its ties and still knows where it stands on the map.
+- Earth does not change when you anchor an object to it. You place the object. The place stays as it is.
+- An empty Place stays empty. The device does not guess a place.
+- A relation in the side list shows its standing (fact, claim, inferred or hypothesis) and who stated it.
+- Each page keeps the template version it opened with.
+
+#### Tips
+
+- To record where an object stands, set the Place. Then set the Anchor to the real place.
+- To keep a claim honest, add its source and the revision that you read.
+- To show an object as a form, set Expression to an Expression of it.
+- To read a page at night, set Tone to Ink.
+
+### 17.6 Text
+
+**Product:** Central · **Kind:** effect · **Chain:** a document's chain, after the form device
+
+Use Text to shape the words on a page without leaving the page. It sets the style, the emphasis and the size, and it leaves the words whole.
+
+```ui
+src: ../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=base
+height: 720
+caption: Base mode. Text is the first device in the row along the bottom. Select a passage in a pane, then change its style.
+```
+
+#### Parameters
+
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Style | Body · Head · Quote · List | Body | The paragraph style of the selection. |
+| Emphasis | None · Bold · Italic · Strike | None | The emphasis of the selected words. |
+| Size | 13 to 22 pt | 15 pt | The type size in which you see the document. |
+
+#### Presentations
+
+| Presentation | What it shows |
+|---|---|
+| Folded | The name Text and the style of the selection. |
+| Compact | A sample of type in the chosen style, emphasis and size. Three macros: Style, Emphasis, Size. |
+| Whole | All parameters, in three groups: Paragraph, Emphasis, View. |
+| Full | The text of the open document at full size, with its styles showing. In a pane, you write here. |
+| Widget | Style, Emphasis and Size as three small controls. They stay when you change mode. |
+
+#### Transport
+
+| Control | Effect on Text |
+|---|---|
+| Record | Dictates text into the open document at the cursor. |
+| Keys and maps | Binds a key to a style or an emphasis. |
+| Load | Shows whether the document is saved. |
+
+#### To use Text
+
+1. Open a document.
+2. Select a paragraph or a few words.
+3. Select Text in Device view.
+4. Choose a Style for the paragraph.
+5. Choose an Emphasis for the selected words.
+6. Move Size to change the type size of the view.
+
+#### Rules
+
+- Text does not change a word. It changes only how the words are set.
+- Style and emphasis are kept in the page. Size changes only how you see the page.
+- The editor stays in the pane. The controls are in Device view.
+- Keys do not act as controls while you type in a document.
+
+#### Tips
+
+- To read a long page with less strain, raise Size.
+- To mark a pull quote, select the passage and set Style to Quote.
+- To turn lines into a list, select them and set Style to List.
+
+### 17.7 Highlight
+
+**Product:** Central · **Kind:** effect · **Chain:** a document's chain, after Text
+
+Use Highlight to mark the passages that matter as you read. It marks a passage and leaves the passage whole.
+
+```ui
+src: ../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=base
+height: 720
+caption: Base mode. In the Flow pane, a passage is selected and the selection tool stands above it. Highlight is the second device in the row along the bottom.
+```
+
+#### The selection tool
+
+Select a passage and four actions appear above it. Highlight, Notes, Packet and Answer share this tool.
+
+| Action | What it does |
+|---|---|
+| Highlight | Marks the passage in the chosen colour. |
+| Note | Opens a note anchored to the passage. |
+| To packet | Adds the passage to the packet. |
+| Answer this | Sends the packet to the agent and asks about the passage. |
+
+#### Parameters
+
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Colour | Yellow · Green · Blue · Pink | Yellow | The colour of the next highlight. |
+| Show | All · Highlights only | All | Fades everything except the highlights. |
+| Pen | On · Off | Off | Makes a drag over text a highlight. |
+| Selection tool | On · Off | On | Shows the four actions when you select a passage. |
+
+#### Presentations
+
+| Presentation | What it shows |
+|---|---|
+| Folded | A dot in the chosen colour and the number of highlights. |
+| Compact | Lines of text with the highlighted lines marked. Four macros: Colour, Show, Pen, Selection tool. |
+| Whole | All parameters, in three groups: Colour, View, Pen. |
+| Full | The open document at full size, with its highlights showing. In a pane, you read and mark here. |
+| Widget | The list of highlights in the open document. Click one to go to its passage. |
+
+#### Transport
+
+| Control | Effect on Highlight |
+|---|---|
+| Draw | Turns the pen on. Drag over text to highlight it. |
+| Keys and maps | Binds a key to a colour, or a phrase to the highlight action. |
+
+#### To use Highlight
+
+1. Select Highlight in Device view.
+2. Choose a Colour.
+3. Select a passage in a pane.
+4. Choose Highlight in the selection tool.
+5. To read only your marks, set Show to Highlights only.
+6. To remove a highlight, select it and choose Highlight again.
+
+#### Rules
+
+- A highlight marks a passage and leaves the passage whole.
+- Highlights stay in the document. They are not only in an export.
+- A highlight does not enter the packet unless you add it with To packet.
+- A colour has only the meaning that you give it.
+
+#### Tips
+
+- To skim a long entry, set Show to Highlights only.
+- To mark passages as you read, turn on the pen with Draw.
+- To keep two readings apart, use one colour for each reading.
+
+### 17.8 Notes
+
+**Product:** Central · **Kind:** effect · **Chain:** a document's chain, after Highlight
+
+Use Notes to keep your own thoughts beside a passage. Each note is anchored to the place it is about.
+
+```ui
+src: ../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=base
+height: 720
+caption: Base mode. Notes is the third device in the row along the bottom. Each note shows its anchor and its text.
+```
+
+#### Parameters
+
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Timing | During reading · After reading | During reading | Records whether you wrote the note while you read or afterwards. |
+| Anchor to | Selection · Entry · Document | Selection | The part of the document that the next note is about. |
+| Show | All notes · Open entry · Off | All notes | Which notes appear beside the document. |
+| Order | By place in the page · By time | By place in the page | The order of the list of notes. |
+
+#### Presentations
+
+| Presentation | What it shows |
+|---|---|
+| Folded | The name Notes and the number of notes. |
+| Compact | The first notes, each with its anchor. Four macros: Timing, Anchor to, Show, Order. |
+| Whole | All parameters, in three groups: Write, Place, View. |
+| Full | The notes beside the open document, each with its anchor, its time and its text. |
+| Widget | The notes of the open document. Click a note to go to its anchor. |
+
+#### Transport
+
+| Control | Effect on Notes |
+|---|---|
+| Record | Dictates into the open note. |
+| Keys and maps | Binds a key to a new note. |
+
+#### To use Notes
+
+1. Select a passage in a pane.
+2. Choose Note in the selection tool.
+3. Write the note.
+4. Set Timing if you wrote the note after you read.
+5. To find a note later, open the list in Device view.
+6. To give a note to an agent, add it to the packet.
+
+#### Rules
+
+- A note is yours. An agent does not read it unless you add it to the packet.
+- A note stays with the place that it is anchored to.
+- A note shows its anchor, for example an entry or a face and a paragraph.
+- Notes stay in the document.
+
+#### Tips
+
+- To keep ideas that come after a reading, set Timing to After reading.
+- To find a thought again, anchor the note to the passage and not to the document.
+- To read the page without distraction, set Show to Off.
+
+### 17.9 Packet
+
+**Product:** Central · **Kind:** effect · **Chain:** a document's chain, after Notes
+
+Use the Packet to choose exactly what an agent reads from you. You see it whole, and its size, before anything is sent.
+
+```ui
+src: ../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=base
+height: 720
+caption: Base mode. Packet is the fourth device in the row along the bottom. Each item shows where it came from and its size in tokens.
+```
+
+#### What the packet holds
+
+Each item in the packet shows three things: where it came from, a line of its text and its size. The total size is always in view. The packet holds what you add, and nothing else.
+
+#### Parameters
+
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Add | Selection · Entry · Document | Selection | What To packet takes from the page. |
+| Size | A count of tokens (reading only) | 0 | The total size of the packet. This is the size of what the agent receives. |
+| Limit | Off, or a count of tokens | Off | Stops the packet at this size. An item that does not fit waits for your decision. |
+| After sending | Clear · Keep | Clear | Whether the packet empties when it is sent. |
+
+#### Presentations
+
+| Presentation | What it shows |
+|---|---|
+| Folded | The name Packet and its size in tokens. |
+| Compact | The items as short bars, each as long as its size. Four macros: Add, Limit, After sending, Clear now. |
+| Whole | All parameters, in three groups: Contents, Add, Limit. |
+| Full | Every item in full, with its source, its size and a mark to remove it. The total is at the foot. |
+| Widget | The items and the total size, with an Answer this button. It stays when you change mode. |
+
+#### Transport
+
+| Control | Effect on the Packet |
+|---|---|
+| Play | Sends the packet to the agent. The answer arrives as an entry. |
+| Capture | Adds the selection to the packet. |
+| Key, root and scale | Shows the size and the scope of the packet. |
+| Keys and maps | Binds a phrase such as "to packet" to the Capture action. |
+
+#### To use the Packet
+
+1. Select a passage in a pane.
+2. Choose To packet in the selection tool.
+3. Repeat for each passage that the agent needs.
+4. Read the list and the total size.
+5. Remove each item that the agent does not need.
+6. Press Play.
+
+#### Rules
+
+- Nothing enters the packet unless you add it.
+- The agent reads the packet and the places that Context & world allows. It reads nothing else of yours.
+- The packet shows the same items in every place it appears: the device, the widget and the conversation.
+- An answer shows the packet that it came from.
+- You can copy the packet out as data. Copying sends nothing.
+
+#### Tips
+
+- To keep an answer on one point, add only the passages about that point.
+- To keep a cost low, set a Limit before you add long entries.
+- To ask again with the same material, set After sending to Keep.
+
+### 17.10 Answer
+
+**Product:** Central · **Kind:** instrument · **Chain:** last on a document's chain, after the Packet
+
+Use Answer to ask an agent about a passage and get the reply in the page. The agent reads the packet and answers as a new entry, with its sources.
+
+```ui
+src: ../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=base
+height: 720
+caption: Base mode. Answer is the fifth device in the row along the bottom. Select the passage in the Flow pane, then press Answer this.
+```
+
+#### What an answer carries
+
+| Part | What it shows |
+|---|---|
+| Author | The name of the agent. |
+| Packet | The items that the agent was given, and their size. |
+| Sources | Where each claim comes from. Follow a source and you land on the line it came from. |
+| Receipt | When the agent writes with Write, the time, the place and the change. |
+
+#### Parameters
+
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Agent | An agent from your roster | The agent of the document | Who answers. |
+| Answer as | New entry · Replace selection | New entry | Whether the answer joins as a new entry or replaces the selected entry. |
+| Agent writes | Off · Propose · Write | Propose | Off: the answer shows in the conversation only. Propose: the answer waits in the page for you to accept it. Write: the answer goes in directly, with a receipt. |
+| Effort | Low · Medium · High · Max | Medium | How hard the agent thinks on each answer. |
+
+#### Presentations
+
+| Presentation | What it shows |
+|---|---|
+| Folded | The name of the agent and the Agent writes setting. |
+| Compact | The face of the agent, and its state: idle, reading or answering. Four macros: Agent, Answer as, Agent writes, Effort. |
+| Whole | All parameters, in three groups: Agent, Answer, Writes. |
+| Full | The exchange: what you sent, the answer with its sources, and the receipts of what the agent wrote. |
+| Widget | The agent you talk to: its last answer and a line to write the next question. It stays when you change mode. |
+
+#### Transport
+
+| Control | Effect on Answer |
+|---|---|
+| Play | Sends the packet. The answer arrives as an entry. |
+| Stop | Stops an answer that is in progress. Press it twice to discard the answer. |
+| Overdub | On: the answer joins as a new entry. Off: the answer replaces the selected entry. |
+| Arm | On: Agent writes is Write. Off: Agent writes is Propose. Arm does not change Off. |
+| Re-enable | Lights when you change a passage that the agent wrote. Press it to hand the passage back. |
+
+#### To use Answer
+
+1. Select a passage in a pane.
+2. Choose To packet. Add any other passage that the agent needs.
+3. Choose the Agent and the Effort.
+4. Check the size of the packet.
+5. Press Play, or choose Answer this in the selection tool.
+6. Accept the proposal, or read the entry that arrives. Follow a source to check it.
+
+#### Rules
+
+- The agent does not write behind your back. Off, Propose and Write are your setting.
+- With Write, every change carries a receipt.
+- An agent entry shows its author on the page.
+- The agent reads the packet and the places that Context & world allows. It reads nothing else.
+- When you change a passage that the agent wrote, the hand-back light comes on. Press it to give the passage back.
+- An answer that you stop is not written. A discarded answer leaves the page unchanged.
+
+#### Tips
+
+- To keep the page clean while you test an agent, set Agent writes to Off.
+- To replace a weak entry, select it, set Answer as to Replace selection, and press Play.
+- To check a claim, follow its source back to the line.
+- To get a deeper answer on a hard passage, raise Effort.
+
+### 17.11 Search (@)
+
+**Product:** Central · **Kind:** instrument · **Pane:** a pane (⌘F), or the line that opens where you type @ in a document
+
+Use Search to find any person, agent, place, document or passage you can reach, and to send what you selected there. It is Central's own language. You learn it a step at a time, and it rewards practice.
+
+#### The language
+
+Type @ in a document, or press ⌘F in a pane. Then type a search. Plain words
+with no mark search everything you can reach and offer what could fit. Marks
+make the search exact.
+
+| Mark | Example | What it does |
+|---|---|---|
+| `@` | `@ariadne` | Addresses anything you can reach whose name matches. |
+| `@0` to `@5` | `@1 founding positions` | Looks in one horizon. 0: the knowledge you hold. 1: original sources. 2: readings and meanings. 3: language and forms. 4: worlds and contexts. 5: tools, powers and practices. |
+| `@#` | `@# @5` | Opens a question: what could serve here? Shows possibilities, not one answer. |
+| `+` | `+ @1 source:ground` | Includes a term in the search. |
+| `-` | `- @2 summary` | Leaves a term out, or marks a difference. |
+| `x` | `@1 source:ground x @2 wiki:reading` | Relates two terms: one by, as or through the other. |
+| `/` | `@4 world:project / @4 world:shared` | Holds two terms together in context: this and that, this or that. |
+| `=` | `@2 reading:notes = @3 form:brief` | Expresses one term as another: the notes as a brief. |
+| `( )` | `( + @0 knowledge + @4 world:current )` | Frames several parts as one expression. |
+
+A kind narrows a term: `source:`, `wiki:`, `reading:`, `world:`, `form:`,
+`agent:`, `person:`, `place:`, `doc:`.
+
+#### What a tag sends
+
+Select a passage, type @, choose a result and press Enter. The passage goes to the result. Before it goes, a line shows what is sent, to whom, and its size.
+
+| Target | What the tag does |
+|---|---|
+| Person | Sends a message that carries the passage and where it came from. A person in another world gets a request, which waits until they accept it. |
+| Agent | Starts the agent on the passage, through Answer. The agent reads the passage and the packet. |
+| Place | Files the passage on that spot of your world, with a link back to the page. |
+| Document | Adds the passage to the document with a link back. A Flow takes it as a new entry. Another document takes it as a quote at the end. |
+| Passage | Opens the passage. A tag does not send to a passage. |
+
+With no selection, Enter opens the result. Press Shift and Enter to open a result without sending. Press Esc to close the line.
+
+#### Your own aliases
+
+An alias is a short name that stands for a long search. It uses the same `=`
+mark: a name expressed as a search. Type `@name = search` and press Enter. To
+use it, type `@name`. A `?` in the search is a gap that the next word fills.
+
+| You type | The alias stands for |
+|---|---|
+| `@stone = ( + @4 world:bollingen + doc:thing )` | A fixed search. Type `@stone` to run it. |
+| `@why = @# ( ? x @1 source:ground )` | A question with a gap. Type `@why barrier` to ask what grounds the barrier. |
+| `@team = @ariadne / @fizz` | A group of targets. Type `@team` to tag both. |
+
+#### Five steps to fluency
+
+| Step | Practice |
+|---|---|
+| 1. Find | Type @ and a word. Open the result. |
+| 2. Aim | Add a horizon, `@0` to `@5`, and a kind. |
+| 3. Shape | Use `+` and `-` to include and leave out. |
+| 4. Relate | Use `x`, `/` and `=` to relate terms, and `( )` to frame them. |
+| 5. Keep | Turn each search that you repeat into an alias. Bind the best ones to keys. |
+
+#### Parameters
+
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Reach | Your world · Projects and agents · Shared field · Joined fields | Projects and agents | How far a search looks. |
+| Kinds | People · Agents · Places · Documents · Passages: each On or Off | All On | Which kinds of result appear. |
+| Order | Best match · Newest · Name | Best match | The order of the results. |
+| Results shown | 5 to 30 | 12 | The number of results in the list. |
+| On Enter | Send · Open | Send | What Enter does when text is selected. |
+| Aliases | A list. Each has a name and a search. | None | Your own short names for long searches. |
+
+#### Presentations
+
+| Presentation | What it shows |
+|---|---|
+| Folded | The @ mark and your last search. |
+| Compact | The search line, a chip for each kind that is On, and the number of results. Four macros: Reach, Kinds, Order, On Enter. |
+| Whole | All parameters, in four groups: Reach, Kinds, Results, Aliases. |
+| Full | The search pane: the line at the top, the results in groups by kind, and the selected passage at the side with the place where each tag would send it. |
+| Widget | The search line, the last results and your aliases. Type @ in the widget from any mode. |
+
+#### Transport
+
+| Control | Effect on Search |
+|---|---|
+| Capture | When you tag an agent, adds the selected passage to the packet. |
+| Keys and maps | Binds an alias or a phrase to a key. |
+
+#### To use Search
+
+1. Select a passage that you want to send.
+2. Type @ and the first letters of a name.
+3. Add a horizon or a kind, for example `agent:`, to narrow the list.
+4. Read the line that shows what is sent, to whom, and its size.
+5. Press Enter to send. Press Shift and Enter to open the result only.
+6. To keep a search, type `@name = search`.
+
+#### Rules
+
+- Search finds only what you can reach. A world shows only what its owner has shown.
+- To be found is not to be reachable. To be reachable is not to be in touch. Each step belongs to its owner.
+- A tag always shows what it sends, and its size, before it goes.
+- A tag to an agent follows the Agent writes setting of Answer.
+- A message from another world arrives under the name of its sender. It stays theirs until you make it your own.
+- An alias is yours. Another person's alias does not run in your Search.
+
+#### Tips
+
+- To send a paragraph to a colleague, select it, type @ and their name, and press Enter.
+- To start an agent on a passage, select it and tag the agent.
+- To file a quote on the place it is about, tag the place.
+- To ask what could serve a task, type `@# @5` and the task. Then include the tools you want with `+`.
+
+### 17.12 Ground hygiene
+
+**Product:** Central · **Kind:** effect · **Chain:** a workspace track whose folder holds code
+
+Use Ground hygiene to find the branches, worktrees and seats that no longer belong to any work, and to clear them. It reads the ground, shows what each one is, and tends the ones you approve.
+
+#### What it reads
+
+A seat is a shared checkout where one lane of work stands.
+
+| Reading | What it shows |
+|---|---|
+| Seats | Each seat of each product: free, claimed or held by another lane. Its branch, the uncommitted files, and any drift between the register and the checkout. |
+| Worktrees | Every checkout of the project and the branch that it stands on. |
+| Branches | Every lane branch, and the checkout that holds it. |
+
+#### What it finds
+
+A finding is a reading. It is not a verdict.
+
+| Finding | What it means |
+|---|---|
+| Seat claimed | A lane holds the seat. This is not a fault. |
+| Seat on a landed branch | The seat stands on a branch that is already merged. |
+| Seat drift | The register and the checkout disagree. |
+| Checkout missing | The register names a checkout that is not on disk. |
+| Disk below floor | A seat has less free disk than the floor. |
+| Stray branch | A lane branch that no seat holds and no claim accounts for. |
+| Worktree outside the register | A checkout that no seat names. |
+| Foreign lane | Unmerged work of another lane stands in a seat. The decision is yours. |
+
+#### What it tends
+
+| Tender | What it does |
+|---|---|
+| Release seat | Refreshes the seat to the main branch and clears its claim. |
+| Prune worktree | Removes a checkout that no seat names. |
+| Sweep branch | Removes a stray branch. |
+
+Each tender returns a receipt.
+
+#### Parameters
+
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Look at | Seats · Worktrees · Branches: each On or Off | All On | Which readings the device takes. |
+| Show | Everything · Faults only | Faults only | Hides the findings that are not faults. |
+| Machine | This machine · a linked machine | This machine | The machine whose ground the device reads. |
+| Refresh | Manual · On open · Every 5 minutes | On open | When the device reads again. |
+| Tending | Off · Propose · Write | Propose | Off: the device only reads. Propose: each tender waits for your approval. Write: an allowed tender runs when you press it, with a receipt. |
+| Allowed tenders | Release seat · Prune worktree · Sweep branch: each On or Off | All On | Which tenders the device may offer. |
+
+#### Presentations
+
+| Presentation | What it shows |
+|---|---|
+| Folded | The number of findings. |
+| Compact | Three small rings for seats, worktrees and branches, with a dot for each finding. Four macros: Look at, Show, Tending, Refresh. |
+| Whole | All parameters, in four groups: Look, Show, Tend, Machine. |
+| Full | Three lists: seats, worktrees and branches. Each row shows its finding, what it rests on and the tender that fits. |
+| Widget | The number of findings and the first three. Click one to open the list. It stays when you change mode. |
+
+#### Transport
+
+| Control | Effect on Ground hygiene |
+|---|---|
+| Link | Lets the device read the seats and branches of your other linked machines. |
+| Rate | Shows which machine serves the readings. |
+
+#### To use Ground hygiene
+
+1. Select a workspace track that holds code.
+2. Read the findings. A claimed seat is not a fault.
+3. Select a finding. Read what it rests on and which tender fits.
+4. Press the tender. In Propose, read what it will do and confirm.
+5. Read the receipt.
+6. To read again, press Refresh.
+
+#### Rules
+
+- Reading changes nothing. Only a tender changes the ground.
+- The device does not tend the unmerged work of another lane. It lists it as a foreign lane for you to decide.
+- The device does not release a seat that holds uncommitted files.
+- The device does not create a worktree or a seat.
+- Each tender carries a receipt that names what it did and when.
+- If a source cannot be read, the device shows the refusal word for word and leaves the row empty. It does not guess.
+
+#### Tips
+
+- To free a seat after a merge, find the seat on a landed branch and press Release seat.
+- To clear old lane branches, set Show to Faults only and sweep the stray branches.
+- To keep disk free, watch the disk reading on each seat.
+- To check two machines, turn Link on and set Machine to the other one.
+
+### 17.13 Impact
+
+**Product:** Central · **Kind:** effect · **Chain:** a folder or a note on a workspace track
+
+Use Impact to see what a change to a folder or a note will touch. It shows the neighbourhood of what you select: its references, its links and the sessions that touch it.
+
+#### What it shows
+
+| List | What it holds |
+|---|---|
+| References | The files and pages that mention the subject. |
+| Links | The notes that the subject connects to in your knowledge graph. Each link shows its relation and where it comes from. Direct links come first. |
+| Sessions | The sessions whose records name the subject. Each shows its purpose, its state and its branch. |
+
+#### Parameters
+
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Subject | A folder, a note or a Day | The selection | The thing whose neighbourhood the device shows. |
+| Pin | On · Off | Off | Keeps the subject when you select something else. |
+| Depth | 1 to 4 links | 2 | How many links away the neighbourhood reaches. |
+| Show | References · Links · Sessions: each On or Off | All On | Which lists appear. |
+| Sessions | Open only · Open and closed | Open only | Which sessions the Sessions list holds. |
+| Relation | All · one kind of link | All | Limits the Links list to one kind of relation. |
+
+#### Presentations
+
+| Presentation | What it shows |
+|---|---|
+| Folded | The name of the subject and the number of items around it. |
+| Compact | A small graph with the subject at the centre, and three counts: references, links, sessions. Four macros: Depth, Show, Sessions, Pin. |
+| Whole | All parameters, in three groups: Subject, Reach, Lists. |
+| Full | The neighbourhood as a graph, and the three lists beside it. Click an item to open it beside. |
+| Widget | The subject, its three counts and the first session. It stays when you change mode. |
+
+#### Transport
+
+| Control | Effect on Impact |
+|---|---|
+| Follow | Keeps Impact with the open document. Turn it off to hold the subject. |
+
+#### To use Impact
+
+1. Select a folder or a note in the browser.
+2. Select Impact in Device view.
+3. Read the Links. Direct links come first.
+4. Raise Depth to see further.
+5. Open the Sessions list to see who works near the subject.
+6. Click any item to open it beside the subject.
+
+#### Rules
+
+- Impact reads. It changes nothing.
+- Impact keeps no index of its own. It reads your knowledge graph, your wiki and your sessions when you select a subject.
+- A session touches the subject when its work records name the folder or the project that holds the subject.
+- Each list names the source it comes from. If a source cannot be read, the list shows the refusal and stays empty.
+- The device does not guess a link. A link shows only when the graph holds it.
+
+#### Tips
+
+- To check a move before you make it, select the folder and read References.
+- To find who works near a note, read Sessions.
+- To keep one view while you browse, turn Pin on.
+- To see only the notes that cite a subject, set Relation to that kind of link.
+
+### 17.14 Context & world
+
+**Product:** Central · **Kind:** effect · **Chain:** after the agent, on any track the agent works on
+
+Use Context & world to say what an agent may read and where it may write. It shows each place in your world, and each write with its receipt.
+
+```ui
+src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
+height: 720
+caption: The agent chain along the bottom. The World device is the fourth. Teal marks what the agent reads. Amber marks where it writes.
+```
+
+#### Two colours
+
+Teal marks what the agent may read. Amber marks where the agent may write. A place can be both.
+
+#### Reach
+
+Reach is the widest area that the agent can read from. A place outside the Reach is closed to the agent, even when it is on the Reads list.
+
+| Reach | What the agent can read from |
+|---|---|
+| One object | The open document or item. |
+| Scene | The scene that holds the object. |
+| Expression | The whole Expression that holds the object. |
+| All of Central | Everything that you own. |
+
+#### Parameters
+
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Reach | One object · Scene · Expression · All of Central | One object | The widest area the agent can read from. |
+| Reads | A list of places | The open document and the packet | The places the agent may read inside its Reach. |
+| Writes to | A list of places | None | The places the agent may write. A place that is not on the list is read-only. |
+| Writes elsewhere | Off · Propose · Write | Propose | Off: the agent does not write. Propose: each change waits for your approval. Write: changes go in directly, each with a receipt. |
+| Knowledge search | On · Off | Off | Lets the agent search your knowledge for passages. |
+
+#### Presentations
+
+| Presentation | What it shows |
+|---|---|
+| Folded | The Reach, and the number of places read and written. |
+| Compact | Three rings for the Reach, a teal arc for the reads and an amber arc for the writes. Three macros: Reach, Writes elsewhere, Knowledge search. |
+| Whole | All parameters, in four groups: Reach, Reads, Writes, Receipts. |
+| Full | Your ground as a tree, with each place marked teal, amber or both. The receipts of the agent's writes are below. |
+| Widget | The three rings, the counts and the last receipts. It stays when you change mode. |
+
+#### Transport
+
+| Control | Effect on Context & world |
+|---|---|
+| Arm | On: Writes elsewhere is Write. Off: Writes elsewhere is Propose. Arm does not change Off. |
+| Re-enable | Lights when you change something that the agent wrote. Press it to hand it back. |
+| Key, root and scale | Shows what the agent will read: its size and scope. |
+
+#### To use Context & world
+
+1. Select the track of an agent.
+2. Select Context & world in Device view.
+3. Set Reach to the smallest area that does the job.
+4. Add places to Reads.
+5. Add a place to Writes to only if the agent must write there.
+6. Choose Writes elsewhere. After a run, read the receipts.
+
+#### Rules
+
+- The agent does not write behind your back. Off, Propose and Write are your setting.
+- Every write carries a receipt. The receipt names the agent, the time, the place and the change.
+- A place in the Reach is available to the agent. It is not loaded into every prompt.
+- The agent cannot widen its own Reach or its own Writes to list. Only you change them.
+- The open document follows the Agent writes setting of Answer. Context & world governs every other place.
+- A place that you do not allow stays closed. The device does not open it for one task.
+
+#### Tips
+
+- To keep an agent to one file, set Reach to One object and leave Writes to empty.
+- To let an agent edit one project only, add that project to Writes to and keep Writes elsewhere on Propose.
+- To let an agent search your notes, turn Knowledge search on.
+- To check what an agent changed, read the receipts.
+
+### 17.15 Agent identity
+
+**Product:** Central · **Kind:** effect · **Chain:** before the agent, on any track an agent works on
+
+Use Agent identity to know who an agent is before you give it work. It reads the agent from your own roster and shows its card.
+
+```ui
+src: ../../desktop/cradle/docs/world-shell/agent-native-mockup.html
+height: 720
+caption: The Agents list at the top left. Each card shows the name, the character, the program it runs on and whether the agent is accepted.
+```
+
+#### What the card shows
+
+| Part | What it shows |
+|---|---|
+| Name | The name of the agent and its colour. |
+| Character | One line that says who the agent is. |
+| Runs on | The program that runs the agent. |
+| Skills | The number of skills that the agent carries. |
+| World | The world where the agent stands. |
+| Standing | Accepted or proposed. |
+| Revision | The revision of your roster that the card comes from. |
+
+#### Parameters
+
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Agent | An agent from your roster | The agent you talk to | Whose identity the device shows. |
+| Roster | Accepted only · Accepted and proposed | Accepted only | Which agents the list holds. |
+| Detail | Name · Card · Full profile | Card | How much of the identity the device shows. |
+
+#### Presentations
+
+| Presentation | What it shows |
+|---|---|
+| Folded | The name of the agent and its standing. |
+| Compact | The face of the agent and its character line. Three macros: Agent, Roster, Detail. |
+| Whole | All parameters, in two groups: Agent, Roster. |
+| Full | The full profile of the agent, as your roster holds it. |
+| Widget | The card of the agent you talk to. It stays when you change mode. |
+
+#### Transport
+
+| Control | Effect on Agent identity |
+|---|---|
+| Rate | Shows which machine serves your roster. |
+
+#### To use Agent identity
+
+1. Open the Agents list in the browser.
+2. Select an agent.
+3. Read its card.
+4. To seat the agent, drag it onto an empty track.
+5. To see a proposed agent, set Roster to Accepted and proposed.
+6. Accept or reject a proposed agent in the changes that wait for your approval.
+
+#### Rules
+
+- The roster is yours. The device reads it. It does not add, change or invent an agent.
+- An agent enters the roster when you accept a profile that was proposed from your stated intent.
+- If the roster cannot be read, the device shows the reason word for word and lists no agents.
+- Identity gives an agent no right. What an agent may read and write comes from Context & world.
+- The Beings page of an agent reads its card from this device. The page keeps no copy.
+
+#### Tips
+
+- To pick the right agent for a task, read the character line on each card.
+- To find out who wrote an entry, select the name of its author.
+- To change who an agent is, say what you want changed and accept the new profile when it is proposed.

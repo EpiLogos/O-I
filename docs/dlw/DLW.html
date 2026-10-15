@@ -1195,6 +1195,7 @@ parameters, its five presentations, what the transport does to it, how to use
 it, its rules, and tips. Where the device already has a working face, it is
 shown live beside its entry.</p>
 <h2 id="17-central"><a class="anchor" href="#17-central" aria-hidden="true">#</a>17. Central</h2>
+<p>Central keeps the day&#39;s work, your documents and your ground in one place. It works like a code editor: your files down the left, documents side by side, and the day as one of the documents. Everything you do in the other modes leaves a mark here, so the evening does not have to rebuild the morning. Agents read only what you give them and write only where you allow.</p>
 <h3 id="17-1-day"><a class="anchor" href="#17-1-day" aria-hidden="true">#</a>17.1 Day</h3>
 <p><strong>Product:</strong> Central · <strong>Kind:</strong> instrument · <strong>Track:</strong> Central&#39;s Main track</p>
 <p>The Day collects the work of one day from every workspace and every mode into
@@ -1405,6 +1406,2364 @@ not change an old Day.</li>
 is still open.</li>
 <li>To keep a long run off your list of tasks, let it show on face 2 only. Face 1
 holds what you decided to do.</li>
+</ul>
+<h3 id="17-2-workspace"><a class="anchor" href="#17-2-workspace" aria-hidden="true">#</a>17.2 Workspace</h3>
+<p><strong>Product:</strong> Central · <strong>Kind:</strong> instrument · <strong>Track:</strong> a workspace, in Central</p>
+<p>Use the Workspace to pick up a project, a book or a practice exactly where you left it, in every mode. It holds the documents and files of that work as clips, and it sends its work to the Day.</p>
+<h4 id="what-a-workspace-holds"><a class="anchor" href="#what-a-workspace-holds" aria-hidden="true">#</a>What a workspace holds</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Part</th>
+<th>What it holds</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Clips</td>
+<td>One clip for each document and file. Each clip shows its state: Draft, Saved or Edited since save.</td>
+</tr>
+<tr>
+<td>Context</td>
+<td>The panes, instruments, widgets and set that you used, kept for each mode.</td>
+</tr>
+<tr>
+<td>Place</td>
+<td>The place on your world where the workspace stands.</td>
+</tr>
+<tr>
+<td>Route to the Day</td>
+<td>The link that sends the work of the workspace to the Day, the Main track.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="what-the-workspace-remembers"><a class="anchor" href="#what-the-workspace-remembers" aria-hidden="true">#</a>What the workspace remembers</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Item</th>
+<th>What it keeps</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Panes</td>
+<td>Which panes are open, how they are split and which are pinned.</td>
+</tr>
+<tr>
+<td>Instruments</td>
+<td>Which instrument each pane holds, and its build.</td>
+</tr>
+<tr>
+<td>Widgets</td>
+<td>Which widgets are open on the rail, which are pinned and which preset is in use.</td>
+</tr>
+<tr>
+<td>Sets</td>
+<td>The saved set that each mode opens with.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="parameters-1"><a class="anchor" href="#parameters-1" aria-hidden="true">#</a>Parameters</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Name</td>
+<td>Text</td>
+<td>New workspace</td>
+<td>The name on the track and in the browser.</td>
+</tr>
+<tr>
+<td>Kind</td>
+<td>Project · Book · Practice · Other</td>
+<td>Project</td>
+<td>Chooses the starting set of a new workspace.</td>
+</tr>
+<tr>
+<td>Folder</td>
+<td>A folder of your ground, or none</td>
+<td>None</td>
+<td>The folder whose files show as clips.</td>
+</tr>
+<tr>
+<td>Place</td>
+<td>A place on your world, or none</td>
+<td>Its own place</td>
+<td>The place where the workspace stands on your planet. A new project gets its own place.</td>
+</tr>
+<tr>
+<td>Remember</td>
+<td>Panes · Instruments · Widgets · Sets: each On or Off</td>
+<td>All On</td>
+<td>Which parts of your context the workspace keeps.</td>
+</tr>
+<tr>
+<td>Remember in</td>
+<td>Every mode · Open mode only</td>
+<td>Every mode</td>
+<td>Keeps context for all five modes, or only for the mode that is open.</td>
+</tr>
+<tr>
+<td>On launch</td>
+<td>Restore all modes · Restore open mode · Restore nothing</td>
+<td>Restore all modes</td>
+<td>What comes back when you launch the workspace.</td>
+</tr>
+<tr>
+<td>Open in</td>
+<td>Last mode · Central · Factory · Expressions · Technē · Live</td>
+<td>Last mode</td>
+<td>The mode that comes forward after a launch.</td>
+</tr>
+<tr>
+<td>Keep context</td>
+<td>On change · On leave · Manual</td>
+<td>On change</td>
+<td>When the workspace stores your context.</td>
+</tr>
+<tr>
+<td>Send to Day</td>
+<td>On · Off</td>
+<td>On</td>
+<td>Sends the work of the workspace to the Day.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="presentations-1"><a class="anchor" href="#presentations-1" aria-hidden="true">#</a>Presentations</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Presentation</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>The name of the workspace and the number of open documents.</td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>The panes of the open mode, drawn as small boxes. A mark shows each mode that has a remembered set. Four macros: Launch, On launch, Keep context, Send to Day.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>All parameters, in four groups: Identity, Remember, Launch, Day.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>The clips of the workspace, with their states. One row for each mode shows the set that the mode opens with.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>The name of the workspace, its open documents and a Launch button. It stays when you change mode.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="transport-1"><a class="anchor" href="#transport-1" aria-hidden="true">#</a>Transport</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Control</th>
+<th>Effect on the Workspace</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Link</td>
+<td>Keeps the workspace and its remembered context in step on your other machines.</td>
+</tr>
+<tr>
+<td>Rate</td>
+<td>Shows which machine serves the files of the workspace.</td>
+</tr>
+<tr>
+<td>Keys and maps</td>
+<td>Binds a key or a phrase to Launch.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="to-use-the-workspace"><a class="anchor" href="#to-use-the-workspace" aria-hidden="true">#</a>To use the Workspace</h4>
+<ol>
+<li>Drag a folder from the browser onto an empty track. The track becomes a workspace.</li>
+<li>Set the Name. Choose the Kind and the Place.</li>
+<li>Arrange the panes, instruments and widgets in any mode.</li>
+<li>Select another workspace. Your arrangement stays with the first workspace.</li>
+<li>Launch the first workspace. Every mode returns as you left it.</li>
+<li>To keep the work out of the Day, set Send to Day to Off.</li>
+</ol>
+<h4 id="rules-1"><a class="anchor" href="#rules-1" aria-hidden="true">#</a>Rules</h4>
+<ul>
+<li>The workspace stores context. It does not store content. The files stay in the folder as ordinary files.</li>
+<li>You can change the files in any editor. The clips show the change.</li>
+<li>A launch restores context. It does not change a document.</li>
+<li>A set that you save in a mode belongs to the workspace that is open.</li>
+<li>Every workspace routes to the Day. The Day is the Main track and has no workspace of its own.</li>
+<li>A clip shows its state on the clip: Draft, Saved or Edited since save.</li>
+</ul>
+<h4 id="tips-1"><a class="anchor" href="#tips-1" aria-hidden="true">#</a>Tips</h4>
+<ul>
+<li>To resume a book after a month, launch its workspace.</li>
+<li>To keep a side project out of the Day, set Send to Day to Off.</li>
+<li>To work on one project on two machines, turn Link on.</li>
+<li>To start a new project in your usual layout, copy a workspace and change its Folder.</li>
+</ul>
+<h3 id="17-3-flow"><a class="anchor" href="#17-3-flow" aria-hidden="true">#</a>17.3 Flow</h3>
+<p><strong>Product:</strong> Central · <strong>Kind:</strong> instrument · <strong>Chain:</strong> first on a Flow document, before the document effects</p>
+<p>Use a Flow for a running conversation or journal that keeps who said what. The page names its participants, people and agents, at the top.</p>
+<figure class="ui"><iframe src="../../desktop/cradle/documents/ql-flow.html" loading="lazy" style="height:640px" sandbox="allow-scripts allow-same-origin" title="The Flow template, blank. Add a participant, write an entry, then switch the view."></iframe><figcaption>The Flow template, blank. Add a participant, write an entry, then switch the view. · <a href="../../desktop/cradle/documents/ql-flow.html" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<h4 id="three-views"><a class="anchor" href="#three-views" aria-hidden="true">#</a>Three views</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>View</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Dialogue</td>
+<td>The exchange between the participants, entry by entry, in order.</td>
+</tr>
+<tr>
+<td>Flow</td>
+<td>The same entries as threads, with the relations drawn between them.</td>
+</tr>
+<tr>
+<td>Journal</td>
+<td>One person, one page at a time. Earlier pages are listed below the page.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="relations"><a class="anchor" href="#relations" aria-hidden="true">#</a>Relations</h4>
+<p>A new entry connects to the entry that you select. The relation says how.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Relation</th>
+<th>What it says</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Reply</td>
+<td>The entry answers the selected entry.</td>
+</tr>
+<tr>
+<td>Branch</td>
+<td>The entry starts a second line of talk from the selected entry.</td>
+</tr>
+<tr>
+<td>Converge</td>
+<td>The entry joins two lines into one.</td>
+</tr>
+<tr>
+<td>Correct</td>
+<td>The entry says what an earlier entry should have said. The earlier entry stays.</td>
+</tr>
+<tr>
+<td>Source</td>
+<td>The entry names where a statement comes from.</td>
+</tr>
+<tr>
+<td>Artifact</td>
+<td>The entry names something that the talk made.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="participants"><a class="anchor" href="#participants" aria-hidden="true">#</a>Participants</h4>
+<p>A participant is a person or an agent. A person is drawn solid. An agent is drawn as points. An agent can be tied to a session. A participant that you add does not start. It is not proof of who wrote.</p>
+<h4 id="parameters-2"><a class="anchor" href="#parameters-2" aria-hidden="true">#</a>Parameters</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>View</td>
+<td>Dialogue · Flow · Journal</td>
+<td>Dialogue</td>
+<td>How the page shows the entries.</td>
+</tr>
+<tr>
+<td>Participants</td>
+<td>A list of names. Each is a Person or an Agent.</td>
+<td>You</td>
+<td>Who is in the exchange. Each has a name and an initial.</td>
+</tr>
+<tr>
+<td>Speak as</td>
+<td>A participant</td>
+<td>You</td>
+<td>Who the next entry belongs to.</td>
+</tr>
+<tr>
+<td>Relation</td>
+<td>Reply · Branch · Converge · Correct · Source · Artifact</td>
+<td>Reply</td>
+<td>How the next entry connects to the selected entry.</td>
+</tr>
+<tr>
+<td>Journal page</td>
+<td>A date</td>
+<td>Today</td>
+<td>The page of the Journal that you read.</td>
+</tr>
+<tr>
+<td>Media</td>
+<td>Image, video or audio files, up to 12 MB each</td>
+<td>None</td>
+<td>Files attached to an entry. The page keeps them inside itself.</td>
+</tr>
+<tr>
+<td>Template</td>
+<td>A template, at a version</td>
+<td>The standard Flow</td>
+<td>The page design. Each Flow keeps the template version it opened with.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="presentations-2"><a class="anchor" href="#presentations-2" aria-hidden="true">#</a>Presentations</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Presentation</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>The name of the Flow and the initials of its participants.</td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>A strip of small bars, one for each entry, coloured by participant. Four macros: View, Speak as, Relation, Journal page.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>All parameters, in three groups: Page, People, Entries.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>The Flow in the open view, as the template draws it. In a pane, you read and write here.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>The last entries of the Flow you work in, and a line to write the next entry.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="transport-2"><a class="anchor" href="#transport-2" aria-hidden="true">#</a>Transport</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Control</th>
+<th>Effect on the Flow</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Tap</td>
+<td>Stamps the moment as a dated line in the Flow.</td>
+</tr>
+<tr>
+<td>Record</td>
+<td>Dictates into the open entry.</td>
+</tr>
+<tr>
+<td>Overdub</td>
+<td>Adds your words as a new entry, or replaces the selected entry.</td>
+</tr>
+<tr>
+<td>Quantize</td>
+<td>Sets when a save lands: on pause, or by hand.</td>
+</tr>
+<tr>
+<td>Position</td>
+<td>Shows the entry and the paragraph that you are in.</td>
+</tr>
+<tr>
+<td>Load</td>
+<td>Shows whether the Flow is saved.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="to-use-the-flow"><a class="anchor" href="#to-use-the-flow" aria-hidden="true">#</a>To use the Flow</h4>
+<ol>
+<li>Open a Flow from the browser, or make a new Flow from the template.</li>
+<li>Add the participants. Mark each one as a person or an agent.</li>
+<li>Choose who speaks. Write the entry.</li>
+<li>To answer an earlier entry, select it and choose a relation. Then write.</li>
+<li>Set the View to Journal to read one person&#39;s page at a time.</li>
+<li>To ask an agent about a passage, select the passage and use Answer.</li>
+</ol>
+<h4 id="rules-2"><a class="anchor" href="#rules-2" aria-hidden="true">#</a>Rules</h4>
+<ul>
+<li>Each entry shows its author. An agent entry shows the name of the agent and, when it is known, the session.</li>
+<li>A correction is a new entry with the relation Correct. The old entry is not deleted.</li>
+<li>A save names its outcome: saved, unchanged, stale, conflict or refused. After a conflict, the device shows the file as it now stands.</li>
+<li>Agent entries follow the Agent writes setting of the Answer device.</li>
+<li>Media stays inside the page. It does not leave your ground.</li>
+<li>A Flow keeps the template version it opened with. A new template version does not change an old Flow.</li>
+</ul>
+<h4 id="tips-2"><a class="anchor" href="#tips-2" aria-hidden="true">#</a>Tips</h4>
+<ul>
+<li>To keep a thinking journal, set the View to Journal and Speak as to you.</li>
+<li>To follow a second idea without losing the first, select the entry and set Relation to Branch.</li>
+<li>To correct an agent, write a Correct entry. The text of the agent stays on the page.</li>
+<li>To prepare for a meeting, set the View to Flow and read the threads that have no reply.</li>
+</ul>
+<h3 id="17-4-beings"><a class="anchor" href="#17-4-beings" aria-hidden="true">#</a>17.4 Beings</h3>
+<p><strong>Product:</strong> Central · <strong>Kind:</strong> instrument · <strong>Chain:</strong> first on a Beings document, before the document effects</p>
+<p>Use Beings for a page about a person in your work, or an agent you work with. The page is tied to its world, its subject, its sources and a real place.</p>
+<figure class="ui"><iframe src="../../desktop/cradle/documents/oi-beings.html" loading="lazy" style="height:640px" sandbox="allow-scripts allow-same-origin" title="The Beings template, blank. Press Edit, then open Source &amp; form to see the ties that the page keeps."></iframe><figcaption>The Beings template, blank. Press Edit, then open Source &amp; form to see the ties that the page keeps. · <a href="../../desktop/cradle/documents/oi-beings.html" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<h4 id="the-page-and-its-ties"><a class="anchor" href="#the-page-and-its-ties" aria-hidden="true">#</a>The page and its ties</h4>
+<p>The page has a title, a line of introduction, an opening, numbered sections and a side list named In relation. The ties belong to the page, not to the design.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Tie</th>
+<th>What it says</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>World</td>
+<td>The world that the being belongs to.</td>
+</tr>
+<tr>
+<td>Subject</td>
+<td>The person or agent that the page is about.</td>
+</tr>
+<tr>
+<td>Office</td>
+<td>Which of the four subject offices the page takes up.</td>
+</tr>
+<tr>
+<td>Sources</td>
+<td>Where the claims of the page come from. Each source is at a revision.</td>
+</tr>
+<tr>
+<td>Place</td>
+<td>Where the being stands in your world.</td>
+</tr>
+<tr>
+<td>Anchor</td>
+<td>The real place on Earth that the page is tied to.</td>
+</tr>
+<tr>
+<td>Expression</td>
+<td>An Expression that the page shows.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="parameters-3"><a class="anchor" href="#parameters-3" aria-hidden="true">#</a>Parameters</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>World</td>
+<td>A world</td>
+<td>Your world</td>
+<td>The world that the page belongs to.</td>
+</tr>
+<tr>
+<td>Subject</td>
+<td>A person or an agent in the world, or none</td>
+<td>None</td>
+<td>The being that the page is about.</td>
+</tr>
+<tr>
+<td>Kind</td>
+<td>Person · Agent</td>
+<td>Person</td>
+<td>Says what sort of being the page holds.</td>
+</tr>
+<tr>
+<td>Office</td>
+<td>One or more of 1 to 4</td>
+<td>2</td>
+<td>Chooses the subject offices that the page takes up.</td>
+</tr>
+<tr>
+<td>Sources</td>
+<td>A list. Each source is at a revision.</td>
+<td>None</td>
+<td>The sources that the page rests on.</td>
+</tr>
+<tr>
+<td>Place</td>
+<td>A place in your world, or none</td>
+<td>None</td>
+<td>Where the being stands in your world.</td>
+</tr>
+<tr>
+<td>Anchor</td>
+<td>A real place on Earth, or none</td>
+<td>None</td>
+<td>Ties the page to a real place.</td>
+</tr>
+<tr>
+<td>Expression</td>
+<td>An Expression, or none</td>
+<td>None</td>
+<td>The Expression that the page shows.</td>
+</tr>
+<tr>
+<td>Layout</td>
+<td>Portrait · Editorial</td>
+<td>Portrait</td>
+<td>How the page is composed.</td>
+</tr>
+<tr>
+<td>Tone</td>
+<td>Paper · Ink</td>
+<td>Paper</td>
+<td>The ground of the page: light or dark.</td>
+</tr>
+<tr>
+<td>Template</td>
+<td>A template, at a version</td>
+<td>The standard Beings page</td>
+<td>The page design. Each page keeps the template version it opened with.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="presentations-3"><a class="anchor" href="#presentations-3" aria-hidden="true">#</a>Presentations</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Presentation</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>The title of the page and the name of its world.</td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>The mark of the page. A pin shows when the page has a place. Four macros: Office, Layout, Tone, Place.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>All parameters, in four groups: Page, Ties, Place, Look.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>The page as the template draws it. In a pane, you read and write here.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>The card of the selected being: its title, its world and its place.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="transport-3"><a class="anchor" href="#transport-3" aria-hidden="true">#</a>Transport</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Control</th>
+<th>Effect on Beings</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Tap</td>
+<td>Stamps the moment as a dated line in the page.</td>
+</tr>
+<tr>
+<td>Record</td>
+<td>Dictates into the open section.</td>
+</tr>
+<tr>
+<td>Capture</td>
+<td>Puts the selected passage in the packet.</td>
+</tr>
+<tr>
+<td>Draw</td>
+<td>Turns on the highlight pen.</td>
+</tr>
+<tr>
+<td>Load</td>
+<td>Shows whether the page is saved.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="to-use-beings"><a class="anchor" href="#to-use-beings" aria-hidden="true">#</a>To use Beings</h4>
+<ol>
+<li>Make a new Beings page from the template.</li>
+<li>Write the title and the opening.</li>
+<li>Set the World and the Subject.</li>
+<li>Add the sources that the page rests on.</li>
+<li>Choose the Place. Then choose the Anchor, a real place on Earth.</li>
+<li>To describe an agent, set Kind to Agent and set the Subject to that agent.</li>
+</ol>
+<h4 id="rules-3"><a class="anchor" href="#rules-3" aria-hidden="true">#</a>Rules</h4>
+<ul>
+<li>The ties belong to the page. A page that you redesign keeps its ties.</li>
+<li>An empty Place stays empty. The device does not guess a place.</li>
+<li>A relation in the side list shows its standing (fact, claim, inferred or hypothesis) and who stated it.</li>
+<li>The page of an agent reads its card from Agent identity. The page does not keep a copy.</li>
+<li>Each page keeps the template version it opened with.</li>
+</ul>
+<h4 id="tips-3"><a class="anchor" href="#tips-3" aria-hidden="true">#</a>Tips</h4>
+<ul>
+<li>To see where a person stands, set the Place and open the world instrument.</li>
+<li>To read a page at night, set Tone to Ink.</li>
+<li>To keep a claim honest, add its source and the revision that you read.</li>
+<li>To give each colleague a page in one world, set the same World on every page.</li>
+</ul>
+<h3 id="17-5-things"><a class="anchor" href="#17-5-things" aria-hidden="true">#</a>17.5 Things</h3>
+<p><strong>Product:</strong> Central · <strong>Kind:</strong> instrument · <strong>Chain:</strong> first on a Things document, before the document effects</p>
+<p>Use Things for a page about an object in your work: a stone, a book, a collection. The page is tied to its world, its subject, its sources and a real place.</p>
+<figure class="ui"><iframe src="../../desktop/cradle/documents/oi-things.html" loading="lazy" style="height:640px" sandbox="allow-scripts allow-same-origin" title="The Things template, blank. Press Edit, then open Source &amp; form to see the ties that the page keeps."></iframe><figcaption>The Things template, blank. Press Edit, then open Source &amp; form to see the ties that the page keeps. · <a href="../../desktop/cradle/documents/oi-things.html" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<h4 id="the-page-and-its-ties-1"><a class="anchor" href="#the-page-and-its-ties-1" aria-hidden="true">#</a>The page and its ties</h4>
+<p>The page has a title, a line of introduction, an opening, numbered sections and a side list named In relation. The ties belong to the page, not to the design.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Tie</th>
+<th>What it says</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>World</td>
+<td>The world that the object belongs to.</td>
+</tr>
+<tr>
+<td>Subject</td>
+<td>The subject that the page describes.</td>
+</tr>
+<tr>
+<td>Office</td>
+<td>Which of the four subject offices the page takes up.</td>
+</tr>
+<tr>
+<td>Sources</td>
+<td>Where the claims of the page come from. Each source is at a revision.</td>
+</tr>
+<tr>
+<td>Place</td>
+<td>Where the object stands in your world.</td>
+</tr>
+<tr>
+<td>Anchor</td>
+<td>The real place on Earth where the object stands.</td>
+</tr>
+<tr>
+<td>Expression</td>
+<td>An Expression that the page shows.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="parameters-4"><a class="anchor" href="#parameters-4" aria-hidden="true">#</a>Parameters</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>World</td>
+<td>A world</td>
+<td>Your world</td>
+<td>The world that the page belongs to.</td>
+</tr>
+<tr>
+<td>Subject</td>
+<td>A subject in the world, or none</td>
+<td>None</td>
+<td>The object that the page describes.</td>
+</tr>
+<tr>
+<td>Office</td>
+<td>One or more of 1 to 4</td>
+<td>2</td>
+<td>Chooses the subject offices that the page takes up.</td>
+</tr>
+<tr>
+<td>Sources</td>
+<td>A list. Each source is at a revision.</td>
+<td>None</td>
+<td>The sources that the page rests on.</td>
+</tr>
+<tr>
+<td>Place</td>
+<td>A place in your world, or none</td>
+<td>None</td>
+<td>Where the object stands in your world.</td>
+</tr>
+<tr>
+<td>Anchor</td>
+<td>A real place on Earth, or none</td>
+<td>None</td>
+<td>Ties the object to a real place.</td>
+</tr>
+<tr>
+<td>Expression</td>
+<td>An Expression, or none</td>
+<td>None</td>
+<td>The Expression that the page shows.</td>
+</tr>
+<tr>
+<td>Layout</td>
+<td>Portrait · Editorial</td>
+<td>Editorial</td>
+<td>How the page is composed.</td>
+</tr>
+<tr>
+<td>Tone</td>
+<td>Paper · Ink</td>
+<td>Paper</td>
+<td>The ground of the page: light or dark.</td>
+</tr>
+<tr>
+<td>Template</td>
+<td>A template, at a version</td>
+<td>The standard Things page</td>
+<td>The page design. Each page keeps the template version it opened with.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="presentations-4"><a class="anchor" href="#presentations-4" aria-hidden="true">#</a>Presentations</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Presentation</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>The title of the page and the name of its world.</td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>The mark of the page. A pin shows when the page has a place. Four macros: Office, Layout, Tone, Place.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>All parameters, in four groups: Page, Ties, Place, Look.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>The page as the template draws it. In a pane, you read and write here.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>The card of the selected object: its title, its world and its place.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="transport-4"><a class="anchor" href="#transport-4" aria-hidden="true">#</a>Transport</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Control</th>
+<th>Effect on Things</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Tap</td>
+<td>Stamps the moment as a dated line in the page.</td>
+</tr>
+<tr>
+<td>Record</td>
+<td>Dictates into the open section.</td>
+</tr>
+<tr>
+<td>Capture</td>
+<td>Puts the selected passage in the packet.</td>
+</tr>
+<tr>
+<td>Draw</td>
+<td>Turns on the highlight pen.</td>
+</tr>
+<tr>
+<td>Load</td>
+<td>Shows whether the page is saved.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="to-use-things"><a class="anchor" href="#to-use-things" aria-hidden="true">#</a>To use Things</h4>
+<ol>
+<li>Make a new Things page from the template.</li>
+<li>Write the title and the opening.</li>
+<li>Set the World and the Subject.</li>
+<li>Add the sources that the page rests on.</li>
+<li>Choose the Place. Then choose the Anchor, the real place on Earth where the object stands.</li>
+<li>Add a section for each part of the object that you want to describe.</li>
+</ol>
+<h4 id="rules-4"><a class="anchor" href="#rules-4" aria-hidden="true">#</a>Rules</h4>
+<ul>
+<li>The ties belong to the page. A page that you redesign keeps its ties and still knows where it stands on the map.</li>
+<li>Earth does not change when you anchor an object to it. You place the object. The place stays as it is.</li>
+<li>An empty Place stays empty. The device does not guess a place.</li>
+<li>A relation in the side list shows its standing (fact, claim, inferred or hypothesis) and who stated it.</li>
+<li>Each page keeps the template version it opened with.</li>
+</ul>
+<h4 id="tips-4"><a class="anchor" href="#tips-4" aria-hidden="true">#</a>Tips</h4>
+<ul>
+<li>To record where an object stands, set the Place. Then set the Anchor to the real place.</li>
+<li>To keep a claim honest, add its source and the revision that you read.</li>
+<li>To show an object as a form, set Expression to an Expression of it.</li>
+<li>To read a page at night, set Tone to Ink.</li>
+</ul>
+<h3 id="17-6-text"><a class="anchor" href="#17-6-text" aria-hidden="true">#</a>17.6 Text</h3>
+<p><strong>Product:</strong> Central · <strong>Kind:</strong> effect · <strong>Chain:</strong> a document&#39;s chain, after the form device</p>
+<p>Use Text to shape the words on a page without leaving the page. It sets the style, the emphasis and the size, and it leaves the words whole.</p>
+<figure class="ui"><iframe src="../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=base" loading="lazy" style="height:720px" sandbox="allow-scripts allow-same-origin" title="Base mode. Text is the first device in the row along the bottom. Select a passage in a pane, then change its style."></iframe><figcaption>Base mode. Text is the first device in the row along the bottom. Select a passage in a pane, then change its style. · <a href="../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=base" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<h4 id="parameters-5"><a class="anchor" href="#parameters-5" aria-hidden="true">#</a>Parameters</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Style</td>
+<td>Body · Head · Quote · List</td>
+<td>Body</td>
+<td>The paragraph style of the selection.</td>
+</tr>
+<tr>
+<td>Emphasis</td>
+<td>None · Bold · Italic · Strike</td>
+<td>None</td>
+<td>The emphasis of the selected words.</td>
+</tr>
+<tr>
+<td>Size</td>
+<td>13 to 22 pt</td>
+<td>15 pt</td>
+<td>The type size in which you see the document.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="presentations-5"><a class="anchor" href="#presentations-5" aria-hidden="true">#</a>Presentations</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Presentation</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>The name Text and the style of the selection.</td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>A sample of type in the chosen style, emphasis and size. Three macros: Style, Emphasis, Size.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>All parameters, in three groups: Paragraph, Emphasis, View.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>The text of the open document at full size, with its styles showing. In a pane, you write here.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>Style, Emphasis and Size as three small controls. They stay when you change mode.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="transport-5"><a class="anchor" href="#transport-5" aria-hidden="true">#</a>Transport</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Control</th>
+<th>Effect on Text</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Record</td>
+<td>Dictates text into the open document at the cursor.</td>
+</tr>
+<tr>
+<td>Keys and maps</td>
+<td>Binds a key to a style or an emphasis.</td>
+</tr>
+<tr>
+<td>Load</td>
+<td>Shows whether the document is saved.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="to-use-text"><a class="anchor" href="#to-use-text" aria-hidden="true">#</a>To use Text</h4>
+<ol>
+<li>Open a document.</li>
+<li>Select a paragraph or a few words.</li>
+<li>Select Text in Device view.</li>
+<li>Choose a Style for the paragraph.</li>
+<li>Choose an Emphasis for the selected words.</li>
+<li>Move Size to change the type size of the view.</li>
+</ol>
+<h4 id="rules-5"><a class="anchor" href="#rules-5" aria-hidden="true">#</a>Rules</h4>
+<ul>
+<li>Text does not change a word. It changes only how the words are set.</li>
+<li>Style and emphasis are kept in the page. Size changes only how you see the page.</li>
+<li>The editor stays in the pane. The controls are in Device view.</li>
+<li>Keys do not act as controls while you type in a document.</li>
+</ul>
+<h4 id="tips-5"><a class="anchor" href="#tips-5" aria-hidden="true">#</a>Tips</h4>
+<ul>
+<li>To read a long page with less strain, raise Size.</li>
+<li>To mark a pull quote, select the passage and set Style to Quote.</li>
+<li>To turn lines into a list, select them and set Style to List.</li>
+</ul>
+<h3 id="17-7-highlight"><a class="anchor" href="#17-7-highlight" aria-hidden="true">#</a>17.7 Highlight</h3>
+<p><strong>Product:</strong> Central · <strong>Kind:</strong> effect · <strong>Chain:</strong> a document&#39;s chain, after Text</p>
+<p>Use Highlight to mark the passages that matter as you read. It marks a passage and leaves the passage whole.</p>
+<figure class="ui"><iframe src="../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=base" loading="lazy" style="height:720px" sandbox="allow-scripts allow-same-origin" title="Base mode. In the Flow pane, a passage is selected and the selection tool stands above it. Highlight is the second device in the row along the bottom."></iframe><figcaption>Base mode. In the Flow pane, a passage is selected and the selection tool stands above it. Highlight is the second device in the row along the bottom. · <a href="../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=base" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<h4 id="the-selection-tool"><a class="anchor" href="#the-selection-tool" aria-hidden="true">#</a>The selection tool</h4>
+<p>Select a passage and four actions appear above it. Highlight, Notes, Packet and Answer share this tool.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Action</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Highlight</td>
+<td>Marks the passage in the chosen colour.</td>
+</tr>
+<tr>
+<td>Note</td>
+<td>Opens a note anchored to the passage.</td>
+</tr>
+<tr>
+<td>To packet</td>
+<td>Adds the passage to the packet.</td>
+</tr>
+<tr>
+<td>Answer this</td>
+<td>Sends the packet to the agent and asks about the passage.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="parameters-6"><a class="anchor" href="#parameters-6" aria-hidden="true">#</a>Parameters</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Colour</td>
+<td>Yellow · Green · Blue · Pink</td>
+<td>Yellow</td>
+<td>The colour of the next highlight.</td>
+</tr>
+<tr>
+<td>Show</td>
+<td>All · Highlights only</td>
+<td>All</td>
+<td>Fades everything except the highlights.</td>
+</tr>
+<tr>
+<td>Pen</td>
+<td>On · Off</td>
+<td>Off</td>
+<td>Makes a drag over text a highlight.</td>
+</tr>
+<tr>
+<td>Selection tool</td>
+<td>On · Off</td>
+<td>On</td>
+<td>Shows the four actions when you select a passage.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="presentations-6"><a class="anchor" href="#presentations-6" aria-hidden="true">#</a>Presentations</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Presentation</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>A dot in the chosen colour and the number of highlights.</td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>Lines of text with the highlighted lines marked. Four macros: Colour, Show, Pen, Selection tool.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>All parameters, in three groups: Colour, View, Pen.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>The open document at full size, with its highlights showing. In a pane, you read and mark here.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>The list of highlights in the open document. Click one to go to its passage.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="transport-6"><a class="anchor" href="#transport-6" aria-hidden="true">#</a>Transport</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Control</th>
+<th>Effect on Highlight</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Draw</td>
+<td>Turns the pen on. Drag over text to highlight it.</td>
+</tr>
+<tr>
+<td>Keys and maps</td>
+<td>Binds a key to a colour, or a phrase to the highlight action.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="to-use-highlight"><a class="anchor" href="#to-use-highlight" aria-hidden="true">#</a>To use Highlight</h4>
+<ol>
+<li>Select Highlight in Device view.</li>
+<li>Choose a Colour.</li>
+<li>Select a passage in a pane.</li>
+<li>Choose Highlight in the selection tool.</li>
+<li>To read only your marks, set Show to Highlights only.</li>
+<li>To remove a highlight, select it and choose Highlight again.</li>
+</ol>
+<h4 id="rules-6"><a class="anchor" href="#rules-6" aria-hidden="true">#</a>Rules</h4>
+<ul>
+<li>A highlight marks a passage and leaves the passage whole.</li>
+<li>Highlights stay in the document. They are not only in an export.</li>
+<li>A highlight does not enter the packet unless you add it with To packet.</li>
+<li>A colour has only the meaning that you give it.</li>
+</ul>
+<h4 id="tips-6"><a class="anchor" href="#tips-6" aria-hidden="true">#</a>Tips</h4>
+<ul>
+<li>To skim a long entry, set Show to Highlights only.</li>
+<li>To mark passages as you read, turn on the pen with Draw.</li>
+<li>To keep two readings apart, use one colour for each reading.</li>
+</ul>
+<h3 id="17-8-notes"><a class="anchor" href="#17-8-notes" aria-hidden="true">#</a>17.8 Notes</h3>
+<p><strong>Product:</strong> Central · <strong>Kind:</strong> effect · <strong>Chain:</strong> a document&#39;s chain, after Highlight</p>
+<p>Use Notes to keep your own thoughts beside a passage. Each note is anchored to the place it is about.</p>
+<figure class="ui"><iframe src="../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=base" loading="lazy" style="height:720px" sandbox="allow-scripts allow-same-origin" title="Base mode. Notes is the third device in the row along the bottom. Each note shows its anchor and its text."></iframe><figcaption>Base mode. Notes is the third device in the row along the bottom. Each note shows its anchor and its text. · <a href="../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=base" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<h4 id="parameters-7"><a class="anchor" href="#parameters-7" aria-hidden="true">#</a>Parameters</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Timing</td>
+<td>During reading · After reading</td>
+<td>During reading</td>
+<td>Records whether you wrote the note while you read or afterwards.</td>
+</tr>
+<tr>
+<td>Anchor to</td>
+<td>Selection · Entry · Document</td>
+<td>Selection</td>
+<td>The part of the document that the next note is about.</td>
+</tr>
+<tr>
+<td>Show</td>
+<td>All notes · Open entry · Off</td>
+<td>All notes</td>
+<td>Which notes appear beside the document.</td>
+</tr>
+<tr>
+<td>Order</td>
+<td>By place in the page · By time</td>
+<td>By place in the page</td>
+<td>The order of the list of notes.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="presentations-7"><a class="anchor" href="#presentations-7" aria-hidden="true">#</a>Presentations</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Presentation</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>The name Notes and the number of notes.</td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>The first notes, each with its anchor. Four macros: Timing, Anchor to, Show, Order.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>All parameters, in three groups: Write, Place, View.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>The notes beside the open document, each with its anchor, its time and its text.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>The notes of the open document. Click a note to go to its anchor.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="transport-7"><a class="anchor" href="#transport-7" aria-hidden="true">#</a>Transport</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Control</th>
+<th>Effect on Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Record</td>
+<td>Dictates into the open note.</td>
+</tr>
+<tr>
+<td>Keys and maps</td>
+<td>Binds a key to a new note.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="to-use-notes"><a class="anchor" href="#to-use-notes" aria-hidden="true">#</a>To use Notes</h4>
+<ol>
+<li>Select a passage in a pane.</li>
+<li>Choose Note in the selection tool.</li>
+<li>Write the note.</li>
+<li>Set Timing if you wrote the note after you read.</li>
+<li>To find a note later, open the list in Device view.</li>
+<li>To give a note to an agent, add it to the packet.</li>
+</ol>
+<h4 id="rules-7"><a class="anchor" href="#rules-7" aria-hidden="true">#</a>Rules</h4>
+<ul>
+<li>A note is yours. An agent does not read it unless you add it to the packet.</li>
+<li>A note stays with the place that it is anchored to.</li>
+<li>A note shows its anchor, for example an entry or a face and a paragraph.</li>
+<li>Notes stay in the document.</li>
+</ul>
+<h4 id="tips-7"><a class="anchor" href="#tips-7" aria-hidden="true">#</a>Tips</h4>
+<ul>
+<li>To keep ideas that come after a reading, set Timing to After reading.</li>
+<li>To find a thought again, anchor the note to the passage and not to the document.</li>
+<li>To read the page without distraction, set Show to Off.</li>
+</ul>
+<h3 id="17-9-packet"><a class="anchor" href="#17-9-packet" aria-hidden="true">#</a>17.9 Packet</h3>
+<p><strong>Product:</strong> Central · <strong>Kind:</strong> effect · <strong>Chain:</strong> a document&#39;s chain, after Notes</p>
+<p>Use the Packet to choose exactly what an agent reads from you. You see it whole, and its size, before anything is sent.</p>
+<figure class="ui"><iframe src="../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=base" loading="lazy" style="height:720px" sandbox="allow-scripts allow-same-origin" title="Base mode. Packet is the fourth device in the row along the bottom. Each item shows where it came from and its size in tokens."></iframe><figcaption>Base mode. Packet is the fourth device in the row along the bottom. Each item shows where it came from and its size in tokens. · <a href="../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=base" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<h4 id="what-the-packet-holds"><a class="anchor" href="#what-the-packet-holds" aria-hidden="true">#</a>What the packet holds</h4>
+<p>Each item in the packet shows three things: where it came from, a line of its text and its size. The total size is always in view. The packet holds what you add, and nothing else.</p>
+<h4 id="parameters-8"><a class="anchor" href="#parameters-8" aria-hidden="true">#</a>Parameters</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Add</td>
+<td>Selection · Entry · Document</td>
+<td>Selection</td>
+<td>What To packet takes from the page.</td>
+</tr>
+<tr>
+<td>Size</td>
+<td>A count of tokens (reading only)</td>
+<td>0</td>
+<td>The total size of the packet. This is the size of what the agent receives.</td>
+</tr>
+<tr>
+<td>Limit</td>
+<td>Off, or a count of tokens</td>
+<td>Off</td>
+<td>Stops the packet at this size. An item that does not fit waits for your decision.</td>
+</tr>
+<tr>
+<td>After sending</td>
+<td>Clear · Keep</td>
+<td>Clear</td>
+<td>Whether the packet empties when it is sent.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="presentations-8"><a class="anchor" href="#presentations-8" aria-hidden="true">#</a>Presentations</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Presentation</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>The name Packet and its size in tokens.</td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>The items as short bars, each as long as its size. Four macros: Add, Limit, After sending, Clear now.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>All parameters, in three groups: Contents, Add, Limit.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>Every item in full, with its source, its size and a mark to remove it. The total is at the foot.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>The items and the total size, with an Answer this button. It stays when you change mode.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="transport-8"><a class="anchor" href="#transport-8" aria-hidden="true">#</a>Transport</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Control</th>
+<th>Effect on the Packet</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Play</td>
+<td>Sends the packet to the agent. The answer arrives as an entry.</td>
+</tr>
+<tr>
+<td>Capture</td>
+<td>Adds the selection to the packet.</td>
+</tr>
+<tr>
+<td>Key, root and scale</td>
+<td>Shows the size and the scope of the packet.</td>
+</tr>
+<tr>
+<td>Keys and maps</td>
+<td>Binds a phrase such as &quot;to packet&quot; to the Capture action.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="to-use-the-packet"><a class="anchor" href="#to-use-the-packet" aria-hidden="true">#</a>To use the Packet</h4>
+<ol>
+<li>Select a passage in a pane.</li>
+<li>Choose To packet in the selection tool.</li>
+<li>Repeat for each passage that the agent needs.</li>
+<li>Read the list and the total size.</li>
+<li>Remove each item that the agent does not need.</li>
+<li>Press Play.</li>
+</ol>
+<h4 id="rules-8"><a class="anchor" href="#rules-8" aria-hidden="true">#</a>Rules</h4>
+<ul>
+<li>Nothing enters the packet unless you add it.</li>
+<li>The agent reads the packet and the places that Context &amp; world allows. It reads nothing else of yours.</li>
+<li>The packet shows the same items in every place it appears: the device, the widget and the conversation.</li>
+<li>An answer shows the packet that it came from.</li>
+<li>You can copy the packet out as data. Copying sends nothing.</li>
+</ul>
+<h4 id="tips-8"><a class="anchor" href="#tips-8" aria-hidden="true">#</a>Tips</h4>
+<ul>
+<li>To keep an answer on one point, add only the passages about that point.</li>
+<li>To keep a cost low, set a Limit before you add long entries.</li>
+<li>To ask again with the same material, set After sending to Keep.</li>
+</ul>
+<h3 id="17-10-answer"><a class="anchor" href="#17-10-answer" aria-hidden="true">#</a>17.10 Answer</h3>
+<p><strong>Product:</strong> Central · <strong>Kind:</strong> instrument · <strong>Chain:</strong> last on a document&#39;s chain, after the Packet</p>
+<p>Use Answer to ask an agent about a passage and get the reply in the page. The agent reads the packet and answers as a new entry, with its sources.</p>
+<figure class="ui"><iframe src="../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=base" loading="lazy" style="height:720px" sandbox="allow-scripts allow-same-origin" title="Base mode. Answer is the fifth device in the row along the bottom. Select the passage in the Flow pane, then press Answer this."></iframe><figcaption>Base mode. Answer is the fifth device in the row along the bottom. Select the passage in the Flow pane, then press Answer this. · <a href="../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=base" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<h4 id="what-an-answer-carries"><a class="anchor" href="#what-an-answer-carries" aria-hidden="true">#</a>What an answer carries</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Part</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Author</td>
+<td>The name of the agent.</td>
+</tr>
+<tr>
+<td>Packet</td>
+<td>The items that the agent was given, and their size.</td>
+</tr>
+<tr>
+<td>Sources</td>
+<td>Where each claim comes from. Follow a source and you land on the line it came from.</td>
+</tr>
+<tr>
+<td>Receipt</td>
+<td>When the agent writes with Write, the time, the place and the change.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="parameters-9"><a class="anchor" href="#parameters-9" aria-hidden="true">#</a>Parameters</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Agent</td>
+<td>An agent from your roster</td>
+<td>The agent of the document</td>
+<td>Who answers.</td>
+</tr>
+<tr>
+<td>Answer as</td>
+<td>New entry · Replace selection</td>
+<td>New entry</td>
+<td>Whether the answer joins as a new entry or replaces the selected entry.</td>
+</tr>
+<tr>
+<td>Agent writes</td>
+<td>Off · Propose · Write</td>
+<td>Propose</td>
+<td>Off: the answer shows in the conversation only. Propose: the answer waits in the page for you to accept it. Write: the answer goes in directly, with a receipt.</td>
+</tr>
+<tr>
+<td>Effort</td>
+<td>Low · Medium · High · Max</td>
+<td>Medium</td>
+<td>How hard the agent thinks on each answer.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="presentations-9"><a class="anchor" href="#presentations-9" aria-hidden="true">#</a>Presentations</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Presentation</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>The name of the agent and the Agent writes setting.</td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>The face of the agent, and its state: idle, reading or answering. Four macros: Agent, Answer as, Agent writes, Effort.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>All parameters, in three groups: Agent, Answer, Writes.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>The exchange: what you sent, the answer with its sources, and the receipts of what the agent wrote.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>The agent you talk to: its last answer and a line to write the next question. It stays when you change mode.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="transport-9"><a class="anchor" href="#transport-9" aria-hidden="true">#</a>Transport</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Control</th>
+<th>Effect on Answer</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Play</td>
+<td>Sends the packet. The answer arrives as an entry.</td>
+</tr>
+<tr>
+<td>Stop</td>
+<td>Stops an answer that is in progress. Press it twice to discard the answer.</td>
+</tr>
+<tr>
+<td>Overdub</td>
+<td>On: the answer joins as a new entry. Off: the answer replaces the selected entry.</td>
+</tr>
+<tr>
+<td>Arm</td>
+<td>On: Agent writes is Write. Off: Agent writes is Propose. Arm does not change Off.</td>
+</tr>
+<tr>
+<td>Re-enable</td>
+<td>Lights when you change a passage that the agent wrote. Press it to hand the passage back.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="to-use-answer"><a class="anchor" href="#to-use-answer" aria-hidden="true">#</a>To use Answer</h4>
+<ol>
+<li>Select a passage in a pane.</li>
+<li>Choose To packet. Add any other passage that the agent needs.</li>
+<li>Choose the Agent and the Effort.</li>
+<li>Check the size of the packet.</li>
+<li>Press Play, or choose Answer this in the selection tool.</li>
+<li>Accept the proposal, or read the entry that arrives. Follow a source to check it.</li>
+</ol>
+<h4 id="rules-9"><a class="anchor" href="#rules-9" aria-hidden="true">#</a>Rules</h4>
+<ul>
+<li>The agent does not write behind your back. Off, Propose and Write are your setting.</li>
+<li>With Write, every change carries a receipt.</li>
+<li>An agent entry shows its author on the page.</li>
+<li>The agent reads the packet and the places that Context &amp; world allows. It reads nothing else.</li>
+<li>When you change a passage that the agent wrote, the hand-back light comes on. Press it to give the passage back.</li>
+<li>An answer that you stop is not written. A discarded answer leaves the page unchanged.</li>
+</ul>
+<h4 id="tips-9"><a class="anchor" href="#tips-9" aria-hidden="true">#</a>Tips</h4>
+<ul>
+<li>To keep the page clean while you test an agent, set Agent writes to Off.</li>
+<li>To replace a weak entry, select it, set Answer as to Replace selection, and press Play.</li>
+<li>To check a claim, follow its source back to the line.</li>
+<li>To get a deeper answer on a hard passage, raise Effort.</li>
+</ul>
+<h3 id="17-11-search"><a class="anchor" href="#17-11-search" aria-hidden="true">#</a>17.11 Search (@)</h3>
+<p><strong>Product:</strong> Central · <strong>Kind:</strong> instrument · <strong>Pane:</strong> a pane (⌘F), or the line that opens where you type @ in a document</p>
+<p>Use Search to find any person, agent, place, document or passage you can reach, and to send what you selected there. It is Central&#39;s own language. You learn it a step at a time, and it rewards practice.</p>
+<h4 id="the-language"><a class="anchor" href="#the-language" aria-hidden="true">#</a>The language</h4>
+<p>Type @ in a document, or press ⌘F in a pane. Then type a search. Plain words
+with no mark search everything you can reach and offer what could fit. Marks
+make the search exact.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Mark</th>
+<th>Example</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>@</code></td>
+<td><code>@ariadne</code></td>
+<td>Addresses anything you can reach whose name matches.</td>
+</tr>
+<tr>
+<td><code>@0</code> to <code>@5</code></td>
+<td><code>@1 founding positions</code></td>
+<td>Looks in one horizon. 0: the knowledge you hold. 1: original sources. 2: readings and meanings. 3: language and forms. 4: worlds and contexts. 5: tools, powers and practices.</td>
+</tr>
+<tr>
+<td><code>@#</code></td>
+<td><code>@# @5</code></td>
+<td>Opens a question: what could serve here? Shows possibilities, not one answer.</td>
+</tr>
+<tr>
+<td><code>+</code></td>
+<td><code>+ @1 source:ground</code></td>
+<td>Includes a term in the search.</td>
+</tr>
+<tr>
+<td><code>-</code></td>
+<td><code>- @2 summary</code></td>
+<td>Leaves a term out, or marks a difference.</td>
+</tr>
+<tr>
+<td><code>x</code></td>
+<td><code>@1 source:ground x @2 wiki:reading</code></td>
+<td>Relates two terms: one by, as or through the other.</td>
+</tr>
+<tr>
+<td><code>/</code></td>
+<td><code>@4 world:project / @4 world:shared</code></td>
+<td>Holds two terms together in context: this and that, this or that.</td>
+</tr>
+<tr>
+<td><code>=</code></td>
+<td><code>@2 reading:notes = @3 form:brief</code></td>
+<td>Expresses one term as another: the notes as a brief.</td>
+</tr>
+<tr>
+<td><code>( )</code></td>
+<td><code>( + @0 knowledge + @4 world:current )</code></td>
+<td>Frames several parts as one expression.</td>
+</tr>
+</tbody></table>
+</div>
+<p>A kind narrows a term: <code>source:</code>, <code>wiki:</code>, <code>reading:</code>, <code>world:</code>, <code>form:</code>,
+<code>agent:</code>, <code>person:</code>, <code>place:</code>, <code>doc:</code>.</p>
+<h4 id="what-a-tag-sends"><a class="anchor" href="#what-a-tag-sends" aria-hidden="true">#</a>What a tag sends</h4>
+<p>Select a passage, type @, choose a result and press Enter. The passage goes to the result. Before it goes, a line shows what is sent, to whom, and its size.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Target</th>
+<th>What the tag does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Person</td>
+<td>Sends a message that carries the passage and where it came from. A person in another world gets a request, which waits until they accept it.</td>
+</tr>
+<tr>
+<td>Agent</td>
+<td>Starts the agent on the passage, through Answer. The agent reads the passage and the packet.</td>
+</tr>
+<tr>
+<td>Place</td>
+<td>Files the passage on that spot of your world, with a link back to the page.</td>
+</tr>
+<tr>
+<td>Document</td>
+<td>Adds the passage to the document with a link back. A Flow takes it as a new entry. Another document takes it as a quote at the end.</td>
+</tr>
+<tr>
+<td>Passage</td>
+<td>Opens the passage. A tag does not send to a passage.</td>
+</tr>
+</tbody></table>
+</div>
+<p>With no selection, Enter opens the result. Press Shift and Enter to open a result without sending. Press Esc to close the line.</p>
+<h4 id="your-own-aliases"><a class="anchor" href="#your-own-aliases" aria-hidden="true">#</a>Your own aliases</h4>
+<p>An alias is a short name that stands for a long search. It uses the same <code>=</code>
+mark: a name expressed as a search. Type <code>@name = search</code> and press Enter. To
+use it, type <code>@name</code>. A <code>?</code> in the search is a gap that the next word fills.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>You type</th>
+<th>The alias stands for</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>@stone = ( + @4 world:bollingen + doc:thing )</code></td>
+<td>A fixed search. Type <code>@stone</code> to run it.</td>
+</tr>
+<tr>
+<td><code>@why = @# ( ? x @1 source:ground )</code></td>
+<td>A question with a gap. Type <code>@why barrier</code> to ask what grounds the barrier.</td>
+</tr>
+<tr>
+<td><code>@team = @ariadne / @fizz</code></td>
+<td>A group of targets. Type <code>@team</code> to tag both.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="five-steps-to-fluency"><a class="anchor" href="#five-steps-to-fluency" aria-hidden="true">#</a>Five steps to fluency</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Practice</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1. Find</td>
+<td>Type @ and a word. Open the result.</td>
+</tr>
+<tr>
+<td>2. Aim</td>
+<td>Add a horizon, <code>@0</code> to <code>@5</code>, and a kind.</td>
+</tr>
+<tr>
+<td>3. Shape</td>
+<td>Use <code>+</code> and <code>-</code> to include and leave out.</td>
+</tr>
+<tr>
+<td>4. Relate</td>
+<td>Use <code>x</code>, <code>/</code> and <code>=</code> to relate terms, and <code>( )</code> to frame them.</td>
+</tr>
+<tr>
+<td>5. Keep</td>
+<td>Turn each search that you repeat into an alias. Bind the best ones to keys.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="parameters-10"><a class="anchor" href="#parameters-10" aria-hidden="true">#</a>Parameters</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Reach</td>
+<td>Your world · Projects and agents · Shared field · Joined fields</td>
+<td>Projects and agents</td>
+<td>How far a search looks.</td>
+</tr>
+<tr>
+<td>Kinds</td>
+<td>People · Agents · Places · Documents · Passages: each On or Off</td>
+<td>All On</td>
+<td>Which kinds of result appear.</td>
+</tr>
+<tr>
+<td>Order</td>
+<td>Best match · Newest · Name</td>
+<td>Best match</td>
+<td>The order of the results.</td>
+</tr>
+<tr>
+<td>Results shown</td>
+<td>5 to 30</td>
+<td>12</td>
+<td>The number of results in the list.</td>
+</tr>
+<tr>
+<td>On Enter</td>
+<td>Send · Open</td>
+<td>Send</td>
+<td>What Enter does when text is selected.</td>
+</tr>
+<tr>
+<td>Aliases</td>
+<td>A list. Each has a name and a search.</td>
+<td>None</td>
+<td>Your own short names for long searches.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="presentations-10"><a class="anchor" href="#presentations-10" aria-hidden="true">#</a>Presentations</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Presentation</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>The @ mark and your last search.</td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>The search line, a chip for each kind that is On, and the number of results. Four macros: Reach, Kinds, Order, On Enter.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>All parameters, in four groups: Reach, Kinds, Results, Aliases.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>The search pane: the line at the top, the results in groups by kind, and the selected passage at the side with the place where each tag would send it.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>The search line, the last results and your aliases. Type @ in the widget from any mode.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="transport-10"><a class="anchor" href="#transport-10" aria-hidden="true">#</a>Transport</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Control</th>
+<th>Effect on Search</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Capture</td>
+<td>When you tag an agent, adds the selected passage to the packet.</td>
+</tr>
+<tr>
+<td>Keys and maps</td>
+<td>Binds an alias or a phrase to a key.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="to-use-search"><a class="anchor" href="#to-use-search" aria-hidden="true">#</a>To use Search</h4>
+<ol>
+<li>Select a passage that you want to send.</li>
+<li>Type @ and the first letters of a name.</li>
+<li>Add a horizon or a kind, for example <code>agent:</code>, to narrow the list.</li>
+<li>Read the line that shows what is sent, to whom, and its size.</li>
+<li>Press Enter to send. Press Shift and Enter to open the result only.</li>
+<li>To keep a search, type <code>@name = search</code>.</li>
+</ol>
+<h4 id="rules-10"><a class="anchor" href="#rules-10" aria-hidden="true">#</a>Rules</h4>
+<ul>
+<li>Search finds only what you can reach. A world shows only what its owner has shown.</li>
+<li>To be found is not to be reachable. To be reachable is not to be in touch. Each step belongs to its owner.</li>
+<li>A tag always shows what it sends, and its size, before it goes.</li>
+<li>A tag to an agent follows the Agent writes setting of Answer.</li>
+<li>A message from another world arrives under the name of its sender. It stays theirs until you make it your own.</li>
+<li>An alias is yours. Another person&#39;s alias does not run in your Search.</li>
+</ul>
+<h4 id="tips-10"><a class="anchor" href="#tips-10" aria-hidden="true">#</a>Tips</h4>
+<ul>
+<li>To send a paragraph to a colleague, select it, type @ and their name, and press Enter.</li>
+<li>To start an agent on a passage, select it and tag the agent.</li>
+<li>To file a quote on the place it is about, tag the place.</li>
+<li>To ask what could serve a task, type <code>@# @5</code> and the task. Then include the tools you want with <code>+</code>.</li>
+</ul>
+<h3 id="17-12-ground-hygiene"><a class="anchor" href="#17-12-ground-hygiene" aria-hidden="true">#</a>17.12 Ground hygiene</h3>
+<p><strong>Product:</strong> Central · <strong>Kind:</strong> effect · <strong>Chain:</strong> a workspace track whose folder holds code</p>
+<p>Use Ground hygiene to find the branches, worktrees and seats that no longer belong to any work, and to clear them. It reads the ground, shows what each one is, and tends the ones you approve.</p>
+<h4 id="what-it-reads"><a class="anchor" href="#what-it-reads" aria-hidden="true">#</a>What it reads</h4>
+<p>A seat is a shared checkout where one lane of work stands.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Reading</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Seats</td>
+<td>Each seat of each product: free, claimed or held by another lane. Its branch, the uncommitted files, and any drift between the register and the checkout.</td>
+</tr>
+<tr>
+<td>Worktrees</td>
+<td>Every checkout of the project and the branch that it stands on.</td>
+</tr>
+<tr>
+<td>Branches</td>
+<td>Every lane branch, and the checkout that holds it.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="what-it-finds"><a class="anchor" href="#what-it-finds" aria-hidden="true">#</a>What it finds</h4>
+<p>A finding is a reading. It is not a verdict.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Finding</th>
+<th>What it means</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Seat claimed</td>
+<td>A lane holds the seat. This is not a fault.</td>
+</tr>
+<tr>
+<td>Seat on a landed branch</td>
+<td>The seat stands on a branch that is already merged.</td>
+</tr>
+<tr>
+<td>Seat drift</td>
+<td>The register and the checkout disagree.</td>
+</tr>
+<tr>
+<td>Checkout missing</td>
+<td>The register names a checkout that is not on disk.</td>
+</tr>
+<tr>
+<td>Disk below floor</td>
+<td>A seat has less free disk than the floor.</td>
+</tr>
+<tr>
+<td>Stray branch</td>
+<td>A lane branch that no seat holds and no claim accounts for.</td>
+</tr>
+<tr>
+<td>Worktree outside the register</td>
+<td>A checkout that no seat names.</td>
+</tr>
+<tr>
+<td>Foreign lane</td>
+<td>Unmerged work of another lane stands in a seat. The decision is yours.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="what-it-tends"><a class="anchor" href="#what-it-tends" aria-hidden="true">#</a>What it tends</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Tender</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Release seat</td>
+<td>Refreshes the seat to the main branch and clears its claim.</td>
+</tr>
+<tr>
+<td>Prune worktree</td>
+<td>Removes a checkout that no seat names.</td>
+</tr>
+<tr>
+<td>Sweep branch</td>
+<td>Removes a stray branch.</td>
+</tr>
+</tbody></table>
+</div>
+<p>Each tender returns a receipt.</p>
+<h4 id="parameters-11"><a class="anchor" href="#parameters-11" aria-hidden="true">#</a>Parameters</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Look at</td>
+<td>Seats · Worktrees · Branches: each On or Off</td>
+<td>All On</td>
+<td>Which readings the device takes.</td>
+</tr>
+<tr>
+<td>Show</td>
+<td>Everything · Faults only</td>
+<td>Faults only</td>
+<td>Hides the findings that are not faults.</td>
+</tr>
+<tr>
+<td>Machine</td>
+<td>This machine · a linked machine</td>
+<td>This machine</td>
+<td>The machine whose ground the device reads.</td>
+</tr>
+<tr>
+<td>Refresh</td>
+<td>Manual · On open · Every 5 minutes</td>
+<td>On open</td>
+<td>When the device reads again.</td>
+</tr>
+<tr>
+<td>Tending</td>
+<td>Off · Propose · Write</td>
+<td>Propose</td>
+<td>Off: the device only reads. Propose: each tender waits for your approval. Write: an allowed tender runs when you press it, with a receipt.</td>
+</tr>
+<tr>
+<td>Allowed tenders</td>
+<td>Release seat · Prune worktree · Sweep branch: each On or Off</td>
+<td>All On</td>
+<td>Which tenders the device may offer.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="presentations-11"><a class="anchor" href="#presentations-11" aria-hidden="true">#</a>Presentations</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Presentation</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>The number of findings.</td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>Three small rings for seats, worktrees and branches, with a dot for each finding. Four macros: Look at, Show, Tending, Refresh.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>All parameters, in four groups: Look, Show, Tend, Machine.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>Three lists: seats, worktrees and branches. Each row shows its finding, what it rests on and the tender that fits.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>The number of findings and the first three. Click one to open the list. It stays when you change mode.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="transport-11"><a class="anchor" href="#transport-11" aria-hidden="true">#</a>Transport</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Control</th>
+<th>Effect on Ground hygiene</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Link</td>
+<td>Lets the device read the seats and branches of your other linked machines.</td>
+</tr>
+<tr>
+<td>Rate</td>
+<td>Shows which machine serves the readings.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="to-use-ground-hygiene"><a class="anchor" href="#to-use-ground-hygiene" aria-hidden="true">#</a>To use Ground hygiene</h4>
+<ol>
+<li>Select a workspace track that holds code.</li>
+<li>Read the findings. A claimed seat is not a fault.</li>
+<li>Select a finding. Read what it rests on and which tender fits.</li>
+<li>Press the tender. In Propose, read what it will do and confirm.</li>
+<li>Read the receipt.</li>
+<li>To read again, press Refresh.</li>
+</ol>
+<h4 id="rules-11"><a class="anchor" href="#rules-11" aria-hidden="true">#</a>Rules</h4>
+<ul>
+<li>Reading changes nothing. Only a tender changes the ground.</li>
+<li>The device does not tend the unmerged work of another lane. It lists it as a foreign lane for you to decide.</li>
+<li>The device does not release a seat that holds uncommitted files.</li>
+<li>The device does not create a worktree or a seat.</li>
+<li>Each tender carries a receipt that names what it did and when.</li>
+<li>If a source cannot be read, the device shows the refusal word for word and leaves the row empty. It does not guess.</li>
+</ul>
+<h4 id="tips-11"><a class="anchor" href="#tips-11" aria-hidden="true">#</a>Tips</h4>
+<ul>
+<li>To free a seat after a merge, find the seat on a landed branch and press Release seat.</li>
+<li>To clear old lane branches, set Show to Faults only and sweep the stray branches.</li>
+<li>To keep disk free, watch the disk reading on each seat.</li>
+<li>To check two machines, turn Link on and set Machine to the other one.</li>
+</ul>
+<h3 id="17-13-impact"><a class="anchor" href="#17-13-impact" aria-hidden="true">#</a>17.13 Impact</h3>
+<p><strong>Product:</strong> Central · <strong>Kind:</strong> effect · <strong>Chain:</strong> a folder or a note on a workspace track</p>
+<p>Use Impact to see what a change to a folder or a note will touch. It shows the neighbourhood of what you select: its references, its links and the sessions that touch it.</p>
+<h4 id="what-it-shows"><a class="anchor" href="#what-it-shows" aria-hidden="true">#</a>What it shows</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>List</th>
+<th>What it holds</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>References</td>
+<td>The files and pages that mention the subject.</td>
+</tr>
+<tr>
+<td>Links</td>
+<td>The notes that the subject connects to in your knowledge graph. Each link shows its relation and where it comes from. Direct links come first.</td>
+</tr>
+<tr>
+<td>Sessions</td>
+<td>The sessions whose records name the subject. Each shows its purpose, its state and its branch.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="parameters-12"><a class="anchor" href="#parameters-12" aria-hidden="true">#</a>Parameters</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Subject</td>
+<td>A folder, a note or a Day</td>
+<td>The selection</td>
+<td>The thing whose neighbourhood the device shows.</td>
+</tr>
+<tr>
+<td>Pin</td>
+<td>On · Off</td>
+<td>Off</td>
+<td>Keeps the subject when you select something else.</td>
+</tr>
+<tr>
+<td>Depth</td>
+<td>1 to 4 links</td>
+<td>2</td>
+<td>How many links away the neighbourhood reaches.</td>
+</tr>
+<tr>
+<td>Show</td>
+<td>References · Links · Sessions: each On or Off</td>
+<td>All On</td>
+<td>Which lists appear.</td>
+</tr>
+<tr>
+<td>Sessions</td>
+<td>Open only · Open and closed</td>
+<td>Open only</td>
+<td>Which sessions the Sessions list holds.</td>
+</tr>
+<tr>
+<td>Relation</td>
+<td>All · one kind of link</td>
+<td>All</td>
+<td>Limits the Links list to one kind of relation.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="presentations-12"><a class="anchor" href="#presentations-12" aria-hidden="true">#</a>Presentations</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Presentation</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>The name of the subject and the number of items around it.</td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>A small graph with the subject at the centre, and three counts: references, links, sessions. Four macros: Depth, Show, Sessions, Pin.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>All parameters, in three groups: Subject, Reach, Lists.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>The neighbourhood as a graph, and the three lists beside it. Click an item to open it beside.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>The subject, its three counts and the first session. It stays when you change mode.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="transport-12"><a class="anchor" href="#transport-12" aria-hidden="true">#</a>Transport</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Control</th>
+<th>Effect on Impact</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Follow</td>
+<td>Keeps Impact with the open document. Turn it off to hold the subject.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="to-use-impact"><a class="anchor" href="#to-use-impact" aria-hidden="true">#</a>To use Impact</h4>
+<ol>
+<li>Select a folder or a note in the browser.</li>
+<li>Select Impact in Device view.</li>
+<li>Read the Links. Direct links come first.</li>
+<li>Raise Depth to see further.</li>
+<li>Open the Sessions list to see who works near the subject.</li>
+<li>Click any item to open it beside the subject.</li>
+</ol>
+<h4 id="rules-12"><a class="anchor" href="#rules-12" aria-hidden="true">#</a>Rules</h4>
+<ul>
+<li>Impact reads. It changes nothing.</li>
+<li>Impact keeps no index of its own. It reads your knowledge graph, your wiki and your sessions when you select a subject.</li>
+<li>A session touches the subject when its work records name the folder or the project that holds the subject.</li>
+<li>Each list names the source it comes from. If a source cannot be read, the list shows the refusal and stays empty.</li>
+<li>The device does not guess a link. A link shows only when the graph holds it.</li>
+</ul>
+<h4 id="tips-12"><a class="anchor" href="#tips-12" aria-hidden="true">#</a>Tips</h4>
+<ul>
+<li>To check a move before you make it, select the folder and read References.</li>
+<li>To find who works near a note, read Sessions.</li>
+<li>To keep one view while you browse, turn Pin on.</li>
+<li>To see only the notes that cite a subject, set Relation to that kind of link.</li>
+</ul>
+<h3 id="17-14-context-world"><a class="anchor" href="#17-14-context-world" aria-hidden="true">#</a>17.14 Context &amp; world</h3>
+<p><strong>Product:</strong> Central · <strong>Kind:</strong> effect · <strong>Chain:</strong> after the agent, on any track the agent works on</p>
+<p>Use Context &amp; world to say what an agent may read and where it may write. It shows each place in your world, and each write with its receipt.</p>
+<figure class="ui"><iframe src="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" loading="lazy" style="height:720px" sandbox="allow-scripts allow-same-origin" title="The agent chain along the bottom. The World device is the fourth. Teal marks what the agent reads. Amber marks where it writes."></iframe><figcaption>The agent chain along the bottom. The World device is the fourth. Teal marks what the agent reads. Amber marks where it writes. · <a href="../../desktop/cradle/docs/world-shell/agent-shell-mockup.html" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<h4 id="two-colours"><a class="anchor" href="#two-colours" aria-hidden="true">#</a>Two colours</h4>
+<p>Teal marks what the agent may read. Amber marks where the agent may write. A place can be both.</p>
+<h4 id="reach"><a class="anchor" href="#reach" aria-hidden="true">#</a>Reach</h4>
+<p>Reach is the widest area that the agent can read from. A place outside the Reach is closed to the agent, even when it is on the Reads list.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Reach</th>
+<th>What the agent can read from</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>One object</td>
+<td>The open document or item.</td>
+</tr>
+<tr>
+<td>Scene</td>
+<td>The scene that holds the object.</td>
+</tr>
+<tr>
+<td>Expression</td>
+<td>The whole Expression that holds the object.</td>
+</tr>
+<tr>
+<td>All of Central</td>
+<td>Everything that you own.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="parameters-13"><a class="anchor" href="#parameters-13" aria-hidden="true">#</a>Parameters</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Reach</td>
+<td>One object · Scene · Expression · All of Central</td>
+<td>One object</td>
+<td>The widest area the agent can read from.</td>
+</tr>
+<tr>
+<td>Reads</td>
+<td>A list of places</td>
+<td>The open document and the packet</td>
+<td>The places the agent may read inside its Reach.</td>
+</tr>
+<tr>
+<td>Writes to</td>
+<td>A list of places</td>
+<td>None</td>
+<td>The places the agent may write. A place that is not on the list is read-only.</td>
+</tr>
+<tr>
+<td>Writes elsewhere</td>
+<td>Off · Propose · Write</td>
+<td>Propose</td>
+<td>Off: the agent does not write. Propose: each change waits for your approval. Write: changes go in directly, each with a receipt.</td>
+</tr>
+<tr>
+<td>Knowledge search</td>
+<td>On · Off</td>
+<td>Off</td>
+<td>Lets the agent search your knowledge for passages.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="presentations-13"><a class="anchor" href="#presentations-13" aria-hidden="true">#</a>Presentations</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Presentation</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>The Reach, and the number of places read and written.</td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>Three rings for the Reach, a teal arc for the reads and an amber arc for the writes. Three macros: Reach, Writes elsewhere, Knowledge search.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>All parameters, in four groups: Reach, Reads, Writes, Receipts.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>Your ground as a tree, with each place marked teal, amber or both. The receipts of the agent&#39;s writes are below.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>The three rings, the counts and the last receipts. It stays when you change mode.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="transport-13"><a class="anchor" href="#transport-13" aria-hidden="true">#</a>Transport</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Control</th>
+<th>Effect on Context &amp; world</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Arm</td>
+<td>On: Writes elsewhere is Write. Off: Writes elsewhere is Propose. Arm does not change Off.</td>
+</tr>
+<tr>
+<td>Re-enable</td>
+<td>Lights when you change something that the agent wrote. Press it to hand it back.</td>
+</tr>
+<tr>
+<td>Key, root and scale</td>
+<td>Shows what the agent will read: its size and scope.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="to-use-context-world"><a class="anchor" href="#to-use-context-world" aria-hidden="true">#</a>To use Context &amp; world</h4>
+<ol>
+<li>Select the track of an agent.</li>
+<li>Select Context &amp; world in Device view.</li>
+<li>Set Reach to the smallest area that does the job.</li>
+<li>Add places to Reads.</li>
+<li>Add a place to Writes to only if the agent must write there.</li>
+<li>Choose Writes elsewhere. After a run, read the receipts.</li>
+</ol>
+<h4 id="rules-13"><a class="anchor" href="#rules-13" aria-hidden="true">#</a>Rules</h4>
+<ul>
+<li>The agent does not write behind your back. Off, Propose and Write are your setting.</li>
+<li>Every write carries a receipt. The receipt names the agent, the time, the place and the change.</li>
+<li>A place in the Reach is available to the agent. It is not loaded into every prompt.</li>
+<li>The agent cannot widen its own Reach or its own Writes to list. Only you change them.</li>
+<li>The open document follows the Agent writes setting of Answer. Context &amp; world governs every other place.</li>
+<li>A place that you do not allow stays closed. The device does not open it for one task.</li>
+</ul>
+<h4 id="tips-13"><a class="anchor" href="#tips-13" aria-hidden="true">#</a>Tips</h4>
+<ul>
+<li>To keep an agent to one file, set Reach to One object and leave Writes to empty.</li>
+<li>To let an agent edit one project only, add that project to Writes to and keep Writes elsewhere on Propose.</li>
+<li>To let an agent search your notes, turn Knowledge search on.</li>
+<li>To check what an agent changed, read the receipts.</li>
+</ul>
+<h3 id="17-15-agent-identity"><a class="anchor" href="#17-15-agent-identity" aria-hidden="true">#</a>17.15 Agent identity</h3>
+<p><strong>Product:</strong> Central · <strong>Kind:</strong> effect · <strong>Chain:</strong> before the agent, on any track an agent works on</p>
+<p>Use Agent identity to know who an agent is before you give it work. It reads the agent from your own roster and shows its card.</p>
+<figure class="ui"><iframe src="../../desktop/cradle/docs/world-shell/agent-native-mockup.html" loading="lazy" style="height:720px" sandbox="allow-scripts allow-same-origin" title="The Agents list at the top left. Each card shows the name, the character, the program it runs on and whether the agent is accepted."></iframe><figcaption>The Agents list at the top left. Each card shows the name, the character, the program it runs on and whether the agent is accepted. · <a href="../../desktop/cradle/docs/world-shell/agent-native-mockup.html" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<h4 id="what-the-card-shows"><a class="anchor" href="#what-the-card-shows" aria-hidden="true">#</a>What the card shows</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Part</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Name</td>
+<td>The name of the agent and its colour.</td>
+</tr>
+<tr>
+<td>Character</td>
+<td>One line that says who the agent is.</td>
+</tr>
+<tr>
+<td>Runs on</td>
+<td>The program that runs the agent.</td>
+</tr>
+<tr>
+<td>Skills</td>
+<td>The number of skills that the agent carries.</td>
+</tr>
+<tr>
+<td>World</td>
+<td>The world where the agent stands.</td>
+</tr>
+<tr>
+<td>Standing</td>
+<td>Accepted or proposed.</td>
+</tr>
+<tr>
+<td>Revision</td>
+<td>The revision of your roster that the card comes from.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="parameters-14"><a class="anchor" href="#parameters-14" aria-hidden="true">#</a>Parameters</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Agent</td>
+<td>An agent from your roster</td>
+<td>The agent you talk to</td>
+<td>Whose identity the device shows.</td>
+</tr>
+<tr>
+<td>Roster</td>
+<td>Accepted only · Accepted and proposed</td>
+<td>Accepted only</td>
+<td>Which agents the list holds.</td>
+</tr>
+<tr>
+<td>Detail</td>
+<td>Name · Card · Full profile</td>
+<td>Card</td>
+<td>How much of the identity the device shows.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="presentations-14"><a class="anchor" href="#presentations-14" aria-hidden="true">#</a>Presentations</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Presentation</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>The name of the agent and its standing.</td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>The face of the agent and its character line. Three macros: Agent, Roster, Detail.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>All parameters, in two groups: Agent, Roster.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>The full profile of the agent, as your roster holds it.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>The card of the agent you talk to. It stays when you change mode.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="transport-14"><a class="anchor" href="#transport-14" aria-hidden="true">#</a>Transport</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Control</th>
+<th>Effect on Agent identity</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Rate</td>
+<td>Shows which machine serves your roster.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="to-use-agent-identity"><a class="anchor" href="#to-use-agent-identity" aria-hidden="true">#</a>To use Agent identity</h4>
+<ol>
+<li>Open the Agents list in the browser.</li>
+<li>Select an agent.</li>
+<li>Read its card.</li>
+<li>To seat the agent, drag it onto an empty track.</li>
+<li>To see a proposed agent, set Roster to Accepted and proposed.</li>
+<li>Accept or reject a proposed agent in the changes that wait for your approval.</li>
+</ol>
+<h4 id="rules-14"><a class="anchor" href="#rules-14" aria-hidden="true">#</a>Rules</h4>
+<ul>
+<li>The roster is yours. The device reads it. It does not add, change or invent an agent.</li>
+<li>An agent enters the roster when you accept a profile that was proposed from your stated intent.</li>
+<li>If the roster cannot be read, the device shows the reason word for word and lists no agents.</li>
+<li>Identity gives an agent no right. What an agent may read and write comes from Context &amp; world.</li>
+<li>The Beings page of an agent reads its card from this device. The page keeps no copy.</li>
+</ul>
+<h4 id="tips-14"><a class="anchor" href="#tips-14" aria-hidden="true">#</a>Tips</h4>
+<ul>
+<li>To pick the right agent for a task, read the character line on each card.</li>
+<li>To find out who wrote an entry, select the name of its author.</li>
+<li>To change who an agent is, say what you want changed and accept the new profile when it is proposed.</li>
 </ul>
 
 </article></main>
