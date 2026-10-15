@@ -6,7 +6,6 @@
  * same way — see ui/PANELS.md.
  */
 
-import './context'
 import './expressions'
 import './knowledge'
 import './settings'

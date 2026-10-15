@@ -47,7 +47,8 @@ const modeGrammar = await import('../src/shell/modeGrammar.ts')
 const panels = await import('../src/shell/panels.ts')
 const {ModeBrowser} = await import('../src/shell/ModeBrowser.tsx')
 const {StubWorkspaceProvider} = await import('../src/shell/workspaceContext.tsx')
-const {RightDock} = await import('../src/components/RightDock.tsx')
+const {panelWidgets} = await import('../src/frame/widgets/panelWidgets.tsx')
+const {WidgetReadingProvider} = await import('../src/widgets/widgetReading.tsx')
 
 const SIX = ['central', 'actuation', 'ai-kit', 'software-factory', 'workcell', 'quaternal-logic']
 const FAMILY = 'fixture-seventh'
@@ -264,14 +265,23 @@ test('the browser draws the family\'s category in the Technē browser after the 
   assert.ok(!render('base').includes('Fixture Shelf'), 'the Central browser never carries it')
 })
 
-test('the declared panel slot reads through the panel registry and renders in the right dock, named for its family', () => {
+/** The rail's widget for a panel id, its body drawn over a reading that carries the open set's context. */
+function railWidget(id) {
+  const widget = panelWidgets(panels.getPanels('right-dock'), new Set()).find(item => item.id === id)
+  const reading = {mode: 'techne', world: null, transport: UNAVAILABLE, subject: null, panel: PANEL_CTX}
+  return {widget, markup: widget ? renderToStaticMarkup(createElement(WidgetReadingProvider, {value: reading}, createElement(widget.Body))) : ''}
+}
+
+test('the declared panel slot reads through the panel registry and stands in the widget rail, named for its family', () => {
   admitSevenPlusSix()
   const slot = panels.getPanels('right-dock').find(panel => panel.id === PANEL)
   assert.ok(slot, 'the declared slot reads through the registry\'s right-dock view')
   assert.equal(slot.title, FAMILY, 'with the family\'s name')
   assert.equal(panels.getPanels('center').some(panel => panel.id === PANEL), false, 'and only in the slot it declares')
-  const markup = renderToStaticMarkup(createElement(RightDock, {ctx: PANEL_CTX}))
-  assert.match(markup, /class="dock-panel-title">fixture-seventh</, 'the right dock draws the family\'s slot under its name')
+  // The widget docking contract (FOUNDATION §4): a panel in the slot is a widget of the one rail (the right dock retired, 15 Oct).
+  const {widget, markup} = railWidget(PANEL)
+  assert.ok(widget, 'the rail lists the family\'s slot as a widget')
+  assert.equal(widget.name, 'fixture-seventh', 'under the family\'s name')
   assert.match(markup, /data-panel="fixture-seventh.context" data-admission="declared"/, 'an admitted family whose body is not registered is declared')
 })
 
@@ -290,7 +300,7 @@ test('a waiting family\'s declared slot shows as waiting, and a panel the code r
     by: 'SDK test fixture',
     panelSlots: [{slot: 'right-dock', panel: `${WAITING}.context`}],
   })
-  const markup = renderToStaticMarkup(createElement(RightDock, {ctx: PANEL_CTX}))
+  const {markup} = railWidget(`${WAITING}.context`)
   assert.match(markup, /data-family="fixture-waiting" data-panel="fixture-waiting.context" data-admission="waiting"/, 'no admitted face: the slot shows as waiting')
 
   const codeBody = () => null
