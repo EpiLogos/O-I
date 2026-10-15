@@ -16,13 +16,22 @@ export interface InstrumentEntry {
   note: string
   /** A lens of the hosted stage: the entry opens the stage and turns it to this lens. */
   lens?: HostedLens
+  /** What opening it does with the subject held now (THE selection), `{subject}` standing for its words; absent when it opens
+   * where it was. The Graph turns to the held subject as it opens (techne/subject/graphFocus.ts, G2). */
+  holds?: string
 }
 
 const NAMED: Readonly<Record<string, Omit<InstrumentEntry, 'kind'>>> = {
   'projection.timeline': {label: 'Session · Arrangement', mark: 'session', note: 'The tracks of this work as a grid of clips, or along one ruler (Tab moves between them)'},
   'projection.expressions': {label: 'Expressions stage', mark: 'expr', note: 'The living field: the open Expression, its scenes and their sound'},
   'projection.earth': {label: 'Earth', mark: 'earth', note: 'Your world on the Earth, under its sky, in the field of worlds'},
-  'projection.constellation': {label: 'Graph', mark: 'orbit', note: 'The same material laid out by connection, coloured by what each thing is'},
+  'projection.constellation': {label: 'Graph', mark: 'orbit', note: 'The same material laid out by connection, coloured by what each thing is',
+    holds: 'It opens on {subject}, where the Graph draws it.'},
+}
+
+/** What opening an entry does with the held subject, in words; null when it does nothing with it or nothing is held. */
+export function heldSubjectWords(entry: Pick<InstrumentEntry, 'holds'>, held: {title: string} | null | undefined): string | null {
+  return entry.holds && held?.title ? entry.holds.replace('{subject}', held.title) : null
 }
 
 /** The hosted stage's lenses (the frame's own instruments). */

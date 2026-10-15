@@ -28,6 +28,16 @@
  * - Sources (Technē) — the retained app's own work list
  *   (`nativeWorks`); a row opens the work in the instrument
  *   (`requestExpression` — the existing door).
+ * - World (Technē: Bodies, Locations, Places, Journeys) — the landed owners'
+ *   own subjects (techne/subject/worldRows.ts): the project spaces and the
+ *   declared places the suite reading publishes (provider/suiteStanding.ts),
+ *   the World's walks. Selecting a row makes it THE selection (the book's one
+ *   writer, so the title line, the trail and the aperture name it in words);
+ *   double-click or Enter opens it through N2's subject door
+ *   (techne/subject/openSubject.ts `openWorldSubject`): the Scene asked for and
+ *   the others that carry it stand under the row, an absence in the owner's
+ *   words in its standing. A group its owners have not answered says what it
+ *   waits on, in the standing's words.
  * - New — the four document forms (the mockup's `.newforms`), each made
  *   through the Workbench's own opener when it publishes one.
  * - Family-declared categories compose after the mockup's own entries in the modes they name
@@ -45,7 +55,14 @@
 
 import {InstrumentsSection} from '../frame/InstrumentsSection'
 import {SetsSection} from './SetsSection'
-import {useContext, useEffect, useMemo, useState} from 'react'
+import {useContext, useEffect, useMemo, useState, useSyncExternalStore} from 'react'
+import {subscribeSuiteStanding, suiteStanding} from '../projections/atlas/provider/suiteStanding'
+import {useTimelineReading} from '../projections/timelinePaneHost'
+import {worldReadingOf} from '../timeline/techneTrackAdapter'
+import {techneControls} from '../frame/tracks/useTechneTracks'
+import {useOptionalContinuity} from '../continuity/workspace'
+import {isWorldGroup, openingWords, sceneRowsOf, worldGroupOf, type SceneRow, type WorldGroup, type WorldGroupId, type WorldRow} from '../techne/subject/worldRows'
+import {chooseHeldScene, openHeldSubject, useSubjectOpenings, type SubjectOpening} from '../techne/subject/subjectOpenings'
 import type {NativeDirectory, NativeFileEntry, KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
 import {listFiles} from '../../../../../desktop/cradle/src/files/client'
 import {dayRead} from '../../../../../desktop/cradle/src/day/client'
@@ -143,7 +160,7 @@ export function ModeBrowser({mode, onSelectSubject, selectedSubject, controlled}
           <span>Name</span>
           <span>{activeCategory ? RESULT_HEAD[activeCategory.id] ?? '' : ''}</span>
         </div>
-        {activeCategory && <CategoryRows category={activeCategory} needle={needle}
+        {activeCategory && <CategoryRows category={activeCategory} needle={needle} mode={mode}
           onSelectSubject={onSelectSubject} selectedSubject={selectedSubject} />}
   </>
   // The browser's lower panel is the focused pane's own context (the aperture slot, frame/browser/apertureViews.tsx), in every
@@ -179,9 +196,11 @@ export function ModeBrowser({mode, onSelectSubject, selectedSubject, controlled}
 // ————————————————————————————————————————————————————————————————————————
 // One category's rows — composed from the landed owner, or designed empty.
 
-function CategoryRows({category, needle, onSelectSubject, selectedSubject}: {
+function CategoryRows({category, needle, mode, onSelectSubject, selectedSubject}: {
   category: ModeBrowserCategory
   needle: string
+  /** The mode the browser stands in: a row it selects is THE selection in this mode. */
+  mode: SurfMode
   onSelectSubject: (subject: CentralSubjectSelection | null) => void
   selectedSubject: CentralSubjectSelection | null
 }) {
@@ -191,6 +210,9 @@ function CategoryRows({category, needle, onSelectSubject, selectedSubject}: {
   if (rowOwner !== undefined && rowOwner !== (category.family ?? null)) {
     return <div className="mode-browser-fault" role="alert">The {category.label} category is declared by {category.family ?? 'the shell'}, but its rows belong to {rowOwner ?? 'the shell'} — the composition refuses the declaration.</div>
   }
+  // Technē's World groups draw from their owners whenever those answer, and say what they wait on while they do not — whatever
+  // the grammar declares, so a waiting group still names its input in the standing's words.
+  if (isWorldGroup(category.id)) return <WorldGroupRows category={category} id={category.id} mode={mode} needle={needle} />
   if (category.state === 'waiting') {
     return <DesignedEmptyCategory category={category} />
   }
@@ -569,6 +591,105 @@ function SourceRows({needle}: {needle: string}) {
       </button>
     </li>)}
   </ul></section>
+}
+
+/** Technē's World groups (the ticket N; manual §8 "Everything starts from the world"): the owners' own subjects as rows, read from
+ * the suite reading's standing (the store the atlas and the tracks read; the suite is read once per session, sharing a read in
+ * flight — provider/suiteProvider.ts `ensureSuiteStanding`) and from the World reading's walks. A row selects THE selection
+ * through the book's one writer; it opens through N2's subject door, and the door's answer is held for every face
+ * (techne/subject/subjectOpenings.ts). A journey opens by standing its first stop, the Session grid's own act
+ * (frame/tracks/useTechneTracks.ts `techneControls`). */
+function WorldGroupRows({category, id, mode, needle}: {category: ModeBrowserCategory; id: WorldGroupId; mode: SurfMode; needle: string}) {
+  const {transport} = useWorkspace()
+  const standing = useSyncExternalStore(subscribeSuiteStanding, suiteStanding, suiteStanding)
+  const reading = useTimelineReading()
+  const continuity = useOptionalContinuity()
+  const openings = useSubjectOpenings()
+  const [stood, setStood] = useState<ReadonlyMap<string, string>>(new Map())
+  useEffect(() => {
+    if (transport.kind === 'unavailable' || suiteStanding().phase !== 'idle') return
+    // The provider is loaded on demand, as the atlas loads it: the shell's import of the standing stays light.
+    void import('../projections/atlas/provider/suiteProvider').then(provider => provider.ensureSuiteStanding(transport))
+  }, [transport])
+  const world = reading?.world
+  const group = worldGroupOf(id, {
+    standing, world: worldReadingOf(world?.source),
+    carrier: transport.kind === 'unavailable' ? {available: false, reason: transport.reason} : {available: true},
+  }, category.hint)
+  const selection = continuity?.current.context?.selection ?? null
+  const select = (row: WorldRow) => continuity?.select({mode, kind: row.kind, ref: row.subject.ref, title: row.subject.title})
+  const open = (row: WorldRow) => {
+    select(row)
+    if (row.opens === 'subject') { void openHeldSubject(row.subject); return }
+    const walk = row.walk, first = walk?.stops[0]
+    if (!walk || !first) { setStood(before => new Map(before).set(row.key, 'This walk has no stop to stand.')); return }
+    const controls = techneControls(() => ({view: world, door: reading?.journey?.openExpression}))
+    void controls.stand(walk, first).then(absence => setStood(before => new Map(before).set(row.key, absence ?? 'at stop 1')))
+  }
+  const choose = (row: WorldRow, scene: SceneRow) => { select(row); chooseHeldScene(row.subject.ref, scene.scene, row.subject.title) }
+  return <WorldGroupBody category={category} group={group} needle={needle} openings={openings} stood={stood}
+    selected={selection ? {ref: selection.ref, kind: selection.kind} : null} onSelect={select} onOpen={open} onChoose={choose} />
+}
+
+/** A World group as drawn (the mockup's `bi()` rows, renderBrowser :1501–1505): each row its kind mark, its name in words and its standing —
+ * the owner's own, or the door's answer once asked (the Scene asked for; an absence in the owner's words). The Scenes that carry an
+ * opened subject stand under its row, one step in; pressing one opens it instead. While the owners have not answered, the group
+ * says on what it waits, at the designed empty category's rhythm. */
+export function WorldGroupBody({category, group, needle, openings, stood, selected, onSelect, onOpen, onChoose}: {
+  category: ModeBrowserCategory
+  group: WorldGroup
+  needle: string
+  openings: ReadonlyMap<string, SubjectOpening>
+  /** What standing a journey's first stop answered (null: stood), by row. */
+  stood: ReadonlyMap<string, string>
+  /** THE selection, to mark its row. */
+  selected: {ref: string; kind: string} | null
+  onSelect: (row: WorldRow) => void
+  onOpen: (row: WorldRow) => void
+  onChoose: (row: WorldRow, scene: SceneRow) => void
+}) {
+  if (group.state === 'waiting') {
+    return <section className="mode-browser-empty" data-waiting={category.id} data-world-group={category.id} aria-label={`${category.label} — ${group.word}`}>
+      <header className="mode-browser-empty-head">
+        <span className="mode-browser-empty-mark"><CategoryMark category={category} size={15} /></span>
+        <strong>{category.label}</strong>
+        <span className="mode-browser-empty-state">{group.word}</span>
+      </header>
+      <p className="mode-browser-empty-owner">{group.words}</p>
+      {group.detail && <p className="mode-browser-empty-read" role="note">{group.detail}</p>}
+    </section>
+  }
+  const needleText = needle.trim().toLocaleLowerCase()
+  const rows = group.rows.filter(row => !needleText || row.name.toLocaleLowerCase().includes(needleText))
+  return <section className="mode-browser-rows" aria-label={category.label} data-world-group={category.id}>
+    <ul>{rows.map(row => {
+      const opening = openings.get(row.subject.ref)
+      const answered = row.opens === 'subject' ? openingWords(opening, row.name) : stood.has(row.key) ? {standing: stood.get(row.key)!, hover: stood.get(row.key)!} : null
+      const standing = answered?.standing ?? row.standing
+      const hover = answered ? `${answered.hover} ${row.hover}` : row.hover
+      const isSelected = !!selected && selected.ref === row.subject.ref && selected.kind === row.kind
+      const scenes = row.opens === 'subject' ? sceneRowsOf(opening, row.name) : []
+      return <li key={row.key}>
+        <button type="button" data-browser-row className={`mode-browser-row${isSelected ? ' selected' : ''}`} aria-current={isSelected || undefined}
+          data-world-subject={row.key} data-opening={opening?.state}
+          data-i={`${row.name}|${hover}`} title={hover}
+          onClick={() => onSelect(row)} onDoubleClick={() => onOpen(row)}
+          onKeyDown={event => { if (event.key === 'Enter') onOpen(row) }}>
+          <span aria-hidden="true"><KindMark kind={row.mark} size={12} /></span><span>{row.name}</span>
+          <span className="mode-browser-row-meta">{standing}</span>
+        </button>
+        {scenes.length > 0 && <ul aria-label={`Scenes that carry ${row.name}`}>{scenes.map(scene => <li key={scene.key}>
+          <button type="button" data-browser-row className={`mode-browser-row ind1${scene.asked ? ' selected' : ''}`} data-subject-scene={scene.scene.scene_ref}
+            data-i={`${scene.name}|${scene.hover}`} title={scene.hover} onClick={() => onChoose(row, scene)}>
+            <span aria-hidden="true"><KindMark kind="expression" size={12} /></span><span>{scene.name}</span>
+            <span className="mode-browser-row-meta">{scene.standing}</span>
+          </button>
+        </li>)}</ul>}
+      </li>
+    })}</ul>
+    {!rows.length && <p className="native-empty">No {category.label.toLocaleLowerCase()} match this search.</p>}
+    {group.note && <p className="native-empty" role="status">{group.note}</p>}
+  </section>
 }
 
 /** The four document forms the New grid offers, in the mockup's order (Day · Flow · Beings · Things), by their kinds in the

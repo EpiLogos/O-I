@@ -438,9 +438,12 @@ const techne: SurfModeGrammar = {
   },
   // The mockup's Technē column (Rev 3): To hand — sources, files; World —
   // bodies, locations, earth places, palaces, journeys. Sources and Files
-  // compose from landed owners; the World groups wait for theirs — drawn as
-  // designed empty categories that name their owners, never another mode's
-  // content.
+  // compose from landed owners. Of the World groups, Locations and Places
+  // compose from the suite reading (N3, provider/suiteStanding.ts `places`;
+  // rows in techne/subject/worldRows.ts); Bodies and Journeys draw from their
+  // owners when those carry them and otherwise wait, saying on what; Palaces
+  // waits for its owner (N4) — each drawn as a designed empty category that
+  // names its owner, never another mode's content.
   browser: [
     {id: 'techne-sources', label: 'Sources', group: 'To hand', mark: 'form',
       state: 'cut',
@@ -449,11 +452,11 @@ const techne: SurfModeGrammar = {
       state: 'cut',
       hint: 'Reference files from the ground\'s listing — add a reference to the lens from here.'},
     {id: 'techne-bodies', label: 'Bodies', group: 'World', mark: 'earth', kindMark: 'world', family: 'quaternal-logic', state: 'waiting',
-      hint: 'The field\'s bodies — your planet and the Worlds around it. The Earth projection\'s adapter is the family\'s to land (the atlas port refused the merge) — designed empty until it is.'},
-    {id: 'techne-locations', label: 'Locations', group: 'World', mark: 'placed', kindMark: 'location', family: 'quaternal-logic', state: 'waiting',
-      hint: 'Placed artefacts and their anchors. Waits for the Earth projection\'s owner — designed empty, named.'},
-    {id: 'techne-places', label: 'Places', group: 'World', mark: 'map', kindMark: 'place', family: 'quaternal-logic', state: 'waiting',
-      hint: 'Earth places — the Atlas port\'s surface. The atlas is registered; what waits is its data (N3) — designed empty, named.'},
+      hint: 'The field\'s bodies — your planet and the Worlds around it: the registers the suite reading composes, Central\'s root from Central\'s wiki and each hosted World from the shared field. Its standing publishes their places, not the bodies, so the group waits, naming those inputs.'},
+    {id: 'techne-locations', label: 'Locations', group: 'World', mark: 'placed', kindMark: 'location', family: 'quaternal-logic', state: 'cut',
+      hint: 'Locations on your planet — the project spaces the suite reading names (projects are places on Central\'s surface). Select one to hold it as the subject; double-click or Enter opens it in the Scene that carries it.'},
+    {id: 'techne-places', label: 'Places', group: 'World', mark: 'map', kindMark: 'place', family: 'quaternal-logic', state: 'cut',
+      hint: 'Earth places — the places your owners declare, each at the owner\'s own precision or named unlocated. Select one to hold it as the subject; double-click or Enter opens it in the Scene that carries it.'},
     {id: 'techne-palaces', label: 'Palaces', group: 'World', mark: 'palace', kindMark: 'palace', family: 'quaternal-logic', state: 'waiting',
       hint: 'Palaces — M5′ as locations you enter. Waits for the Palace owner — designed empty, named.'},
     {id: 'techne-journeys', label: 'Journeys', group: 'World', mark: 'journey', kindMark: 'journey', family: 'quaternal-logic', state: 'waiting',
