@@ -60,6 +60,25 @@ export interface SuitePlace {
   lon?: number;
   /** why the place is not located, in plain words; null when it is */
   reason: string | null;
+  /** [T-PLACES-ONTO-ATLAS] the facet's own fields, verbatim, for the M4 plate's Locations and Relations (absent when the owner
+   * declares none): its uncertainty words, the evidence it cites, its validity, and the places it sits in (LOCATED_IN and the
+   * like, as the owner relates them). */
+  uncertainty?: string;
+  evidence?: string;
+  valid_from?: string;
+  valid_to?: string;
+  within?: readonly {readonly place_ref: string; readonly relation: string}[];
+}
+
+/** A body of the field (manual §2 "every world is drawn as a body in space"): Central's root, or a hosted world, as the suite composed
+ * its registers (suiteReading.ts composeSuite). A project space is a place on a body, not a body. For the browser's Bodies group. */
+export interface SuiteBody {
+  /** the owner's ref of the register, verbatim */
+  ref: string;
+  name: string;
+  kind: 'root' | 'world';
+  owner: string;
+  source: string;
 }
 
 export interface SuiteCounts {
@@ -95,6 +114,8 @@ export interface SuiteStanding {
   declarations: {state: 'available' | 'unavailable' | 'absent'; detail: string};
   counts: SuiteCounts;
   places: readonly SuitePlace[];
+  /** the field's bodies: Central's root and each hosted world (T-PLACES-ONTO-ATLAS, for lane N's Bodies rows) */
+  bodies: readonly SuiteBody[];
   refused: readonly string[];
 }
 
@@ -108,7 +129,7 @@ export function idleInputs(): Record<SuiteInputName, SuiteInputStanding> {
 
 export const IDLE_STANDING: SuiteStanding = {
   phase: 'idle', provider: {id: SUITE_PROVIDER_ID, name: SUITE_PROVIDER_NAME}, readAt: null, inputs: idleInputs(),
-  declarations: {state: 'absent', detail: 'Central’s wiki file was not read'}, counts: NO_COUNTS, places: [], refused: [],
+  declarations: {state: 'absent', detail: 'Central’s wiki file was not read'}, counts: NO_COUNTS, places: [], bodies: [], refused: [],
 };
 
 const plural = (n: number, one: string, many: string): string => `${n} ${n === 1 ? one : many}`;

@@ -2,18 +2,11 @@
 import React,{Component,useEffect,useRef,useState,type ReactNode} from 'react';
 import {createPortal} from 'react-dom';
 import {clone,uid,type Scene} from './model.js';
-import {notePlainText,type CanvasImportLink,type CanvasImportOutcome,type PlaceViewRecord,type ResearchCard,type ResearchMaterialAction,type ResearchStroke,type TimelineViewRecord} from './researchMaterial.js';
+import {notePlainText,type CanvasImportLink,type CanvasImportOutcome,type ResearchCard,type ResearchMaterialAction,type ResearchStroke,type TimelineViewRecord} from './researchMaterial.js';
 import {canvasImportLabel} from './undoLabels.js';
 import {exportObsidianCanvas,noteBlocksFromText,parseObsidianCanvas,planObsidianImport,type CanvasExportEdge,type CanvasExportFrame,type CanvasExportNode,type ImportPlan} from './obsidianCanvas.js';
 import {frameBounds,renderFrameStage,type StageEdge} from './frameImage.js';
 import {download} from './capture';
-import {capturePlaceView,layersKey,layersRecordOf,placeViewNameProblem,restoreLayers,restorePlaceView,sameTimeWindow} from './placeViews.js';
-import {appendTourStop,captureTourStop,placeTourNameProblem,removeTourStop,withStopBinding,type PlaceTourRecord} from './placeTours.js';
-import {placeTourSessionOf} from './placeTourSession.js';
-import {playPlaceTour,type PlaceTourPlayback} from './placeTourPlayback.js';
-import {PlaceTourPanel} from './placeTourPanel.js';
-import {beats as journeyBeatsOf} from '../../../src/techne/m0m5/journey/beats';
-import type {PlaceViewState} from '../../vendor/research-canvas/packages/canvas/src/psychogeographic/placeNavigation';
 import {createStageFocus,releaseStageFullscreen,requestStageFullscreenOn} from './focusMode';
 import type {FullscreenHold} from './focusMode';
 import {openTimelinePresentation,timelineRestoreNote,timelineStyleLoaded,timelineStyleOf,timelineViewNameProblem,timelineViewOf,timelineViewRestorePlan,type TimelinePresentation} from './timelineViews.js';
@@ -23,16 +16,9 @@ import {frameHeadings,FRAME_TITLE_HIT_HEIGHT,FRAME_TITLE_MAX,type FrameHeading} 
 import {viewDrift,viewNotice,type ViewBasis} from './viewDrift.js';
 import {EMBED_CARD_SIZE,EMBED_GLYPH,canvasEmbedNodes,cardOverlayBox,embedCardLabel,embedHost,embedUrlRecord,isEmbedCardType,mediaFileName,mediaSourceUrl,type CentralPathRef} from './canvasEmbeds.js';
 import {createRoot,type Root} from 'react-dom/client';
-import {CanvasView,TimelineSurface,PsychogeographicMap,StreetViewSurface,loadBundledGeographyPack,createLiveServicePolicy,type LiveServicePolicy,type TimelineViewState} from '../../vendor/research-canvas/components';
-import {defaultPlaceView,placeRecordFromViewState,viewStateFromPlaceRecord} from '../../vendor/research-canvas/packages/canvas/src/psychogeographic/placeNavigation';
-import type {PlaceViewRestoreTarget} from '../../vendor/research-canvas/packages/canvas/src/psychogeographic/PsychogeographicMap';
-import {defaultBasemapStack,type BasemapStack} from '../../vendor/research-canvas/packages/canvas/src/psychogeographic/basemapLayers';
+import {CanvasView,TimelineSurface,type TimelineViewState} from '../../vendor/research-canvas/components';
 import type {KernelConversion} from './kernelDocumentBridge.js';
-import {techneConstellationRequest,techneTimeWindowRequest,naraInstrumentRequest,openExternalLink,type TechneSceneReadingRequest,type TechneConstellationRequest} from './kernelExpressions.js';
-import {daylightFromSky,skyRequestEpoch,type DaylightAnswer,type DaylightHost} from '../../vendor/research-canvas/packages/canvas/src/psychogeographic/terminator';
-import type {NaraIdentityResult} from '../../../src/nara/identity/types';
-import type {SkyRequest} from '../../../src/nara/identity/types';
-import {ladderRungSummaries,referenceFrameLadder} from '../../../src/techne/m0m5/place/world';
+import {techneConstellationRequest,techneTimeWindowRequest,openExternalLink,type TechneSceneReadingRequest,type TechneConstellationRequest} from './kernelExpressions.js';
 import {evidenceAnchorOf,evidenceControlOf,type EvidenceAnchor} from '../../../src/techne/m0m5/timeline/navigationIdentity';
 import {nativeInstrumentCanvas,nativeInstrumentTitles,nativeInstrumentPreviews,nativeInstrumentNodeTags,nativeInstrumentSourceRelations,readingInstruments,CANVAS_UNITS,assertInstrumentReadingScope,expressionTextFromNote,type InstrumentCanvas,type NativeRelationDirectionReading} from './researchInstrumentsData.js';
 import {createGestureTransaction,withGesturePreviews,type GestureTransaction} from './canvasGesture.js';
@@ -41,12 +27,7 @@ import {
  semanticZoomLevel,trackModifiers,type AlignMode,type RepertoireMove,
 } from './canvasRepertoire.js';
 import {RelationFieldView} from './relationFieldView.js';
-import {PlaceFacetsPanel} from './placeFacetsPanel.js';
-import {searchChoiceWrite,placeMountFocus} from './placeSearch.js';
-import {PlaceSearch} from './placeSearchPanel.js';
-import {OPEN_PLACE_FILTER,filteredPlacesRepository,subjectEntityRef,type PlaceFilterState} from './placeReading.js';
-import type {TechneReading,TechnePlaceFacet} from '../../../src/techne/contract';
-import {timelineOpenPlan,type PlaceOffer} from '../../../src/techne/m0m5/place/navigation';
+import type {TechneReading} from '../../../src/techne/contract';
 import {readSharedTimeWindow,writeSharedTimeWindow,writeSharedTraversalHop,followSharedTimeNudges,trackOwnSharedTimeWrite,qualifyTimeWindowReply,SharedTimeWindowControls,TIMELINE_ACT_LABEL,type SharedTimeDraft} from './sharedTimeWindow.js';
 import {sharedTimelinePresentation} from './sharedTimeProjection.js';
 import {timeAxisProjection,relativeTimeAxisProjection} from '../../../src/techne/m0m5/timeline/timeAxis';
@@ -58,8 +39,6 @@ import {chronologyVoice,NO_DATES_SENTENCE} from '../../vendor/research-canvas/pa
 import type {NativeTimeWindowBasis,NativeTimeWindowReply,NativeTimeWindowRequest} from '../../../../../packages/expressions-boundary/src/timeWindow';
 import {blueprintMember,type SceneBlueprint,type BlueprintTransform} from './blueprintGeometry.js';
 import {icon} from './icons.js';
-import {addRouteNotice,moveRouteNotice,placeDraftForAdd,placeDraftForMove,constellationResultNotice,type PlaceAuthoringHost,type PlaceDraft,type PlaceRouteResult} from '../../vendor/research-canvas/packages/canvas/src/psychogeographic/placeAuthoring';
-import {extentOf,type PlaceTimeHost} from '../../vendor/research-canvas/packages/canvas/src/psychogeographic/placeTimeControl';
 import './researchInstrumentStyles.css';
 import './researchInstruments.css';
 import {CanvasNavigationOverview} from './canvasNavigationOverview';
@@ -149,28 +128,6 @@ function CanvasObjectControls({kind,card,onLabel,onStyle}:{kind:CanvasObjectKind
   {kind==='sticky'&&<ObjectSwatches label="Sticky colour" value={card.palette??STICKY_DEFAULT_PALETTE} options={PALETTE_KEYS} onPick={key=>onStyle({palette:key as PaletteKey})}/>}
   {kind==='shape'&&<ObjectSwatches label="Shape fill" value={card.fill??'none'} options={SHAPE_FILLS} onPick={key=>onStyle({fill:key as ShapeFill})}/>}
  </>;
-}
-
-/** Lane-4 T17b: the owner's constellation routes this instrument opened, by frame ref, each with the marker it may move. */
-const placeRoutes=new Map<string,{graphNodeId?:string}>();
-/** The live places host's answer handler; the latest reading of the Places instrument replaces it. */
-let placeRouteHandler:((frameRef:string,outcome:{kind:'saved'}|{kind:'refused';reason?:string})=>void)|undefined;
-let placeRouteListening=false;
-/** Lane-4 T17c: the Places maps that asked for the owner's answers. Each receives every answer to a route this instrument opened. */
-const placeRouteListeners=new Set<(result:PlaceRouteResult)=>void>();
-/** The stable subscription a Places map is given. It returns the unsubscribe. */
-function subscribePlaceRouteResults(listener:(result:PlaceRouteResult)=>void){placeRouteListeners.add(listener);return()=>{placeRouteListeners.delete(listener)};}
-/** Listens once for the cradle's answer to a route this instrument opened. Only the parent host may answer. */
-function listenForPlaceRouteResults(){
- if(placeRouteListening||typeof window==='undefined')return;placeRouteListening=true;
- window.addEventListener('message',event=>{
-  const data=event.data as {v?:unknown;kind?:unknown;target?:{frame_ref?:unknown};result?:unknown;reason?:unknown}|null;
-  if(event.source!==window.parent||!data||data.v!==1||data.kind!=='constellation-result')return;
-  const frameRef=data.target?.frame_ref;
-  if(typeof frameRef!=='string'||!placeRoutes.has(frameRef))return;
-  if(data.result==='saved')placeRouteHandler?.(frameRef,{kind:'saved'});
-  else if(data.result==='refused')placeRouteHandler?.(frameRef,{kind:'refused',reason:typeof data.reason==='string'?data.reason:undefined});
- });
 }
 
 /** Visibility comes from the current native frame binding, not a card title. */
@@ -271,31 +228,15 @@ function TrailControl({initial,listen,control}:{initial:TraversalFold|null;liste
  useEffect(()=>{listen(setTrail);},[]);
  return <>{control(trail)}</>;
 }
+/** 'm4' stays the app's instrument id while the frame's app.ts still names it; it opens no map (T-PLACES-ONTO-ATLAS, below). */
 export type ResearchInstrument='m1'|'m2'|'m4';
-function ImageryPanel(props:React.ComponentProps<typeof StreetViewSurface>&{tools:HTMLElement}){
- const [open,setOpen]=useState(false),toggle=useRef<HTMLButtonElement>(null),panel=useRef<HTMLElement>(null);
- useEffect(()=>{if(open)panel.current?.querySelector<HTMLButtonElement>('button')?.focus();},[open]);
- const close=()=>{setOpen(false);toggle.current?.focus();};
- return <>{createPortal(<div className="research-tool-actions"><button ref={toggle} aria-expanded={open} aria-controls="research-imagery" onClick={()=>setOpen(value=>!value)}>Images</button></div>,props.tools)}
-  <aside ref={panel} id="research-imagery" className="research-street-view" aria-label="Scene imagery" hidden={!open} onKeyDown={event=>{if(event.key==='Escape'){event.preventDefault();event.stopPropagation();close();}}}>
-   <header><h3>Scene imagery</h3><button type="button" onClick={close} aria-label="Close scene imagery">Close</button></header>
-   <StreetViewSurface {...props}/>
-  </aside></>;
-}
-/** Lane-4 T27: the day/night reading, asked through the native instrument route the dated sky uses (NaraCurrentSky), in its
- * identity-free transit form. An open window asks for now (`current`); a bounded one asks for its instant (`historical`).
- * Nothing here computes the sun: the answer is the reading's own stated subsolar point, or the reading's own reason. */
-async function readPlacesDaylight(instant:string|null):Promise<DaylightAnswer> {
- const request:SkyRequest={schema:'ql.sky-request/v1',epoch:skyRequestEpoch(instant)+'Z',timezone:'UTC',mode:instant===null?'current':'historical',perspective:'Apparent Geocentric',zodiac:'Tropical',ayanamsha:null,observer:null,max_age_seconds:300,backend_policy:'allow-moshier'};
- const reply=await naraInstrumentRequest({operation:'identity',request:{operation:'transit',request}}) as NaraIdentityResult;
- if(reply.error)return {status:'unavailable',reason:reply.error};
- if(!reply.transit)return {status:'unavailable',reason:'the native sky reading returned no transit reading'};
- if(!reply.transit.sky)return {status:'unavailable',reason:`the dated sky is unavailable (transit status: ${reply.transit.status})`};
- return daylightFromSky(reply.transit.sky);
-}
-const PLACES_DAYLIGHT:DaylightHost={read:readPlacesDaylight};
-/** Lane-4 T23: the Places facet's place becomes the shared session's spatial focus through the owner's compare-and-set write
- * (null clears it). Same discipline as writeSharedTimeWindow: the acknowledged reply must still address this source and Scene. */
+/** T-PLACES-ONTO-ATLAS: Places is the Archetypal-Earth atlas, alone (owner, 14 Oct; FOUNDATION §4). The frame's Places map, its overlays
+ * and its lens retired; M4′ World / Places is the shell's Earth pane, its controls on the M4 plate and the one transport
+ * (packages/live-shell/ui/src/projections/atlas/places/). What this lens says when it is asked for. */
+export const PLACES_MOVED='Places is the Earth atlas now: open Earth (M4′ World · Places) from the browser\'s Instruments. It follows the place and window this work shares.';
+/** Lane-2 T21's carry: the event's place becomes the shared session's spatial focus through the owner's compare-and-set write (null
+ * clears it), and the Earth atlas, which follows that focus, turns to it. Same discipline as writeSharedTimeWindow: the acknowledged
+ * reply must still address this source and Scene. */
 async function writeSharedSpatialFocus(basis:NativeTimeWindowBasis,reading:TechneReading,instrument:'timeline'|'place',acknowledged:NativeTimeWindowReply,placeRef:string|null):Promise<NativeTimeWindowReply> {
  // T-FRAME-TIME-PUSH: a spatial write is this frame's own write too, so its nudge echo costs nothing.
  return trackOwnSharedTimeWrite(writeSharedSpatialFocusNow(basis,reading,instrument,acknowledged,placeRef));
@@ -314,7 +255,7 @@ async function writeSharedSpatialFocusNow(basis:NativeTimeWindowBasis,reading:Te
 export interface ResearchInstrumentsHost {
  container:HTMLElement;
  tools:HTMLElement; inspector:HTMLElement;
- /** The Studio's Places section: M4′ place facets and filters render here. */
+ /** No longer read: the frame's Places lens retired (T-PLACES-ONTO-ATLAS). Kept while the frame's app.ts still passes it. */
  placesHome?:HTMLElement;
  /** The Studio's Canvas section: source focus, frames and saved views. */
  canvasHome?:HTMLElement;
@@ -340,8 +281,8 @@ export interface ResearchInstrumentsHost {
   * gesture, but N native writes — the host should implement this). */
  moveMany?:(sceneId:string,moves:{entityId:string;position:{x:number;y:number}}[])=>Promise<void>;
  openSubject:(ref:string)=>void;
- /** Lane-4 T23 — the app's instrument activation. Places' "Open in Timeline" records the Timeline instrument through it, so the
-  * app's instrument state matches the lens. OPTIONAL: undeclared hosts load the Timeline lens directly. */
+ /** The app's instrument activation (lane-4 T23). Only the Timeline is activated from here now: Places is the shell's Earth atlas
+  * (T-PLACES-ONTO-ATLAS). 'place' stays in the type while the frame's app.ts still names it. */
  activateInstrument?:(lens:'timeline'|'place')=>void;
  /** OPTIONAL — declared for the empty-field creation path (Wayfinder §21:
   * choosing a frame can create an incomplete working draft; creation must
@@ -400,11 +341,7 @@ interface ViewState {
  /** A1 — alignment guides for the card being dragged: presentation only,
   * flow-unit geometry drawn against the live viewport, cleared on release. */
  snapGuides?:{guides:GuideLine[];boxes:Box[]};
- canvas?:{x:number;y:number;zoom:number};timeline?:TimelineViewState;place?:{latitude:number;longitude:number;zoom:number};selectedNode?:string|null;selectedEdge?:string|null;selectedPlace?:string|null;placeFilter?:PlaceFilterState;livePlaces?:{allowed:boolean;policy:LiveServicePolicy;stack:BasemapStack};
- /** Lane-4 T21: the Places layers change waiting to settle (its timer and the write it will make now). */
- placeLayersSave?:{timer:ReturnType<typeof setTimeout>;write:()=>void};
- /** T-REVIEW-4 #3: the layers key this view last wrote or adopted from the Scene (its lastWrittenKey), and the writes still in flight. */
- placeLayersKey?:string;placeLayersWrites?:number;
+ canvas?:{x:number;y:number;zoom:number};timeline?:TimelineViewState;selectedNode?:string|null;selectedEdge?:string|null;
  /** M2′: chronology (the vendored TimelineSurface) vs. the relation-field
   * projections (relationFieldView.tsx) — session-local presentation state,
   * never a second store. */
@@ -1109,12 +1046,11 @@ host.tools.append(saveGlyph);
    </div>
   </div></>;
  }
- /** T-REVIEW-4 #7: a settled Places layers change not yet written is written before the Scene it belongs to is left. */
- function flushPlaceLayers(){for(const pending of views.values())pending.placeLayersSave?.write();}
  async function load(selected:ResearchInstrument){
-  flushPlaceLayers();
   const generation=++epoch;unmount();mount.hidden=false;message('Reading…');
   const focusRef=pendingFocus;pendingFocus=undefined;
+  // T-PLACES-ONTO-ATLAS: the Places lens retired with the frame's map; asked for, it says where Places went, and reads nothing.
+  if(selected==='m4'){message(PLACES_MOVED);render(<p className="research-instrument-message" role="note">{PLACES_MOVED}</p>);return;}
   try{
    const view=host.nativeView(),sceneId=host.sceneId();
    const sameBasis=()=>{const now=host.nativeView();return host.sceneId()===sceneId&&now?.document.expression_ref===view?.document.expression_ref&&now?.document.revision===view?.document.revision;};
@@ -1176,7 +1112,7 @@ host.tools.append(saveGlyph);
    const timeCurrent=()=>epoch===generation&&!destroyed&&lens===selected&&sameBasis();
    let sharedTime:NativeTimeWindowReply|null=null;
    let timeReason:string|undefined;
-   if(selected==='m2'||selected==='m4') {
+   if(selected==='m2') {
     try{sharedTime=await readSharedTimeWindow(request,nativeReading,selected==='m2'?'timeline':'place',timeCurrent);}
     catch(error){if(!timeCurrent())return;timeReason=error instanceof Error?error.message:String(error);message(timeReason);}
     if(!timeCurrent())return;
@@ -1288,8 +1224,9 @@ host.tools.append(saveGlyph);
      sharedTime=await writeSharedSpatialFocus(request,nativeReading,'timeline',sharedTime,carry.place_ref);
      refuse(sharedTime.session);
      if(carry.window)sharedTime=await writeSharedTimeWindow(request,nativeReading,'timeline',sharedTime,carry.window);
-     if(host.activateInstrument)host.activateInstrument('place');
-     else{lens='m4';await load('m4');}
+     // T-PLACES-ONTO-ATLAS: the Earth atlas follows the shared spatial focus and window just written (its places/placesHost.ts);
+     // the frame's own Places map, which this once opened, retired.
+     message(carry.place_ref?'The place and its window are this work\'s shared focus now: the Earth atlas turns to it (Technē › Earth).':'The event\'s window is this work\'s shared window now: the Earth atlas stands in it (Technē › Earth).');
     };
     // lane-2 T19: an event's evidence is read from the relation that carries its temporal facet, through the one rule
     // (evidenceAnchorOf). More than one facet on the event is named, never chosen between: its source opens at its top.
@@ -1462,280 +1399,11 @@ host.tools.append(saveGlyph);
     if(sharedTime)followSharedTime(()=>render(canvasNode2()));
     render(canvasNode2());return;
    }
-   const places=await data.places.getLocatedNodes(data.reading.subject.subject_ref);if(epoch!==generation||destroyed)return;
-   if(!sameBasis())throw Error('The native Scene changed while loading its places');
-   // The shipped basemap is geographic context, never personal graph nodes.
-   // Located subject markers come only from the current native reading.
-   const pack=loadBundledGeographyPack();
-   const tileSource={kind:'geojson' as const,url:'data:application/json,'+encodeURIComponent(JSON.stringify(pack.basemap)),attribution:pack.manifest.tileSource.attribution};
-   message(places.length?'Places · offline':'No locations disclosed by this source');
-   const scene=view?host.sceneMaterial(sceneId):undefined,assets=new Map<string,string>();
-   const images=(scene?.entities??[]).flatMap(entity=>{const card=scene?.research?.cards[entity.id];if(entity.source?.kind!=='image'||!entity.source.image.dataUrl)return [];const artifactPath=`scene-image:${entity.id}`;assets.set(artifactPath,entity.source.image.dataUrl);return [{id:entity.id,profileScope:data.reading.subject.subject_ref,artifactPath,capturedAt:null,latitude:null,longitude:null,headingDegrees:null,redactionStatus:'pending' as const,redactionRegions:[],redactedArtifactPath:null,createdAt:card?.importedAt,updatedAt:card?.importedAt}];});
-   const importImagery=scene?()=>{const picker=document.createElement('input');picker.type='file';picker.accept='image/png,image/jpeg,image/webp';picker.onchange=async()=>{const file=picker.files?.[0];if(!file)return;try{if(file.size>196608)throw new Error('Choose an image smaller than 192 KiB for this native document.');const bytes=await new Promise<string>((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result));reader.onerror=()=>reject(reader.error);reader.readAsDataURL(file);});await host.material(sceneId,{type:'create-card',kind:'image',position:{x:0,y:0},title:file.name.slice(0,160),dataUrl:bytes});if(lens==='m4')await load('m4');}catch(error){message(String(error));}};picker.click();}:undefined;
-   const savedPlace=scene?.research?.views.place;state.place??=viewStateFromPlaceRecord(savedPlace)??undefined;
-   // W3 — "Edit place/time" reopens the SAME native constellation route
-   // "Edit constellation" already uses, for the Scene entity that carries
-   // this reading's own subject; absent when no such entity is bound (an
-   // honest absence, never a locally-invented edit path).
-   const placeEntityRef=view?subjectEntityRef(view.document.entities,data.reading.subject.subject_ref):null;
-   const placeEditRequest=view&&binding&&placeEntityRef?{expression_ref:view.document.expression_ref,revision:view.document.revision,scene_ref:binding.scene_ref,entity_ref:placeEntityRef}:undefined;
-   // Lane-4 T21: the Scene's saved layers restore on a first visit in this session (absent = today's defaults). Later visits keep
-   // the session's own state, which the last settled change already wrote. The owner's live-source allowance is never restored.
-   const restoredLayers=restoreLayers((()=>{try{return host.sceneMaterial(sceneId).research?.placeLayers;}catch{return undefined;}})());
-   state.placeFilter??=restoredLayers.filter;
-   // Lane-4 T4/T5: the owner's live choice is session view state, held with the placeFilter. It is off until the owner allows it here, and only then does the policy's tile_refresh gate open.
-   state.livePlaces??={allowed:false,policy:createLiveServicePolicy(),stack:restoredLayers.stack};
-   // T-REVIEW-4 #3: the Scene's stored layers are the record. When they differ from the key this view last wrote or adopted, and no
-   // write is pending or in flight, the Scene moved under the view (an undo or redo of "Set map layers"): the toggles and the basemap
-   // rows re-adopt from the Scene. The owner's live-source allowance is session state and is never re-adopted.
-   const sceneLayersKey=layersKey(restoredLayers.filter,restoredLayers.stack);
-   if(state.placeLayersKey===undefined)state.placeLayersKey=sceneLayersKey;
-   else if(!state.placeLayersSave&&!state.placeLayersWrites&&sceneLayersKey!==state.placeLayersKey){
-    state.placeFilter=restoredLayers.filter;state.livePlaces={...state.livePlaces!,stack:restoredLayers.stack};state.placeLayersKey=sceneLayersKey;
-   }
-   // Lane-4 T17–T19: the map's authoring surface asks this host for the owner's route. "Edit place/time" opens
-   // the same constellation editor, and the map never writes a coordinate: the save, its basis check and its
-   // refusals all happen in that editor, and their own message is the one shown here.
-   // T17b: the route carries the map's draft (a draft only, never a write) and registers the constellation it opened,
-   // so the owner's save or refusal comes back to this instrument.
-   const openPlaceRoute=(notice?:string,draft?:PlaceDraft,graphNodeId?:string)=>{
-    if(!placeEditRequest)return;
-    void techneConstellationRequest({...placeEditRequest,operation:'open',...(draft?{placeDraft:draft}:{})}).then(target=>{placeRoutes.set(target.frame_ref,{graphNodeId});if(notice)message(notice);},error=>message(error instanceof Error?error.message:String(error)));
-   };
-   placeRouteHandler=(frameRef,outcome)=>{
-    // Lane-4 T17c: the owner's answer goes to the map that opened the route, so its marker returns and its notice shows
-    // the owner's words there. Without a mounted map the words are shown here. A save re-reads the reading first, so the
-    // new or moved marker renders from the owner's saved facts, and the words are delivered after that re-read.
-    const result:PlaceRouteResult={graphNodeId:placeRoutes.get(frameRef)?.graphNodeId??null,outcome:outcome.kind==='saved'?{kind:'saved'}:{kind:'refused',reason:outcome.reason}};
-    const deliver=()=>{
-     if(placeRouteListeners.size)placeRouteListeners.forEach(listener=>listener(result));
-     else message(constellationResultNotice(result.outcome).text);
-    };
-    // A closed or destroyed instrument, or one on another lens, is not reopened by a late answer: only the words are kept.
-    if(destroyed||lens!=='m4'){if(!destroyed)message(constellationResultNotice(result.outcome).text);return;}
-    if(outcome.kind==='saved')void load('m4').then(deliver);
-    else deliver();
-   };
-   listenForPlaceRouteResults();
-   const placeAuthoring:PlaceAuthoringHost={
-    canAuthor:!!placeEditRequest,
-    unavailableReason:placeEditRequest?null:'This reading has no native Scene entity bound, so there is no authoring route here.',
-    onAddPlace:prefill=>openPlaceRoute(addRouteNotice(prefill),placeDraftForAdd(prefill)),
-    onEditPlace:graphNodeId=>openPlaceRoute(undefined,undefined,graphNodeId),
-    onProposeMove:proposal=>openPlaceRoute(moveRouteNotice(proposal),placeDraftForMove(proposal),proposal.graphNodeId),
-    subscribeRouteResults:subscribePlaceRouteResults,
-   };
-   // W2 — the SAME filter state drives both the map's own repository
-   // (presentation-only: `filteredPlacesRepository` never rewrites the
-   // wrapped repository's reads) and the panel's facet list, so the markers
-   // and the panel always agree.
-   // Lane-4 T20: named Places views. A view is the camera, the layer toggles, the basemap rows and the shared time window,
-   // kept with the Scene as refs and presentation only. Save and remove are each one labelled undo entry. Going to a view sets
-   // the camera (it flies; reduced motion jumps), the layers, the basemap rows and the shared window. It never sets the owner's
-   // live-source switch, so going to a view grants no network.
-   let restoreViewOnMap:((target:PlaceViewRestoreTarget)=>void)|null=null;
-   const savedPlaceViews=():Record<string,PlaceViewRecord>=>{try{return host.sceneMaterial(sceneId).research?.placeViews??{};}catch{return {};}};
-   const savePlaceView=()=>{
-    if(!scene)return;
-    const entered=window.prompt('Name this place view');
-    if(entered===null)return;
-    const problem=placeViewNameProblem(entered,savedPlaceViews());
-    if(problem){message(problem);return;}
-    const name=entered.trim();
-    const record=capturePlaceView({viewState:state.place??defaultPlaceView(),filter:state.placeFilter!,stack:state.livePlaces!.stack,window:sharedTime?.axis.window??null});
-    void host.material(sceneId,{type:'place-view-save',name,place:record}).then(()=>{message(`View "${name}" saved`);render(renderPlaces());},error=>message(error instanceof Error?error.message:String(error)));
-   };
-   const applyPlaceView=async(name:string)=>{
-    const saved=savedPlaceViews()[name];
-    if(!saved){message(`No place view named "${name}"`);return;}
-    const plan=restorePlaceView(saved);
-    // The layers and the basemap rows are session view state. The map takes the same stack, and its own change report keeps this host in step.
-    state.placeFilter=plan.filter;
-    state.livePlaces!.stack=plan.stack;
-    scheduleLayersSave();
-    restoreViewOnMap?.({viewState:plan.viewState,stack:plan.stack});
-    if(timeCurrent())render(renderPlaces());
-    let note=`View "${name}" restored`;
-    if(sharedTime&&timeCurrent()&&!sameTimeWindow(sharedTime.axis.window,plan.window)){
-     try{sharedTime=await writeSharedTimeWindow(request,nativeReading,'place',sharedTime,plan.window);if(timeCurrent())render(renderPlaces());}
-     catch(error){note=error instanceof Error?error.message:String(error);}
-    }else if(!sharedTime&&plan.window)note='Shared time is not available for this reading, so the saved window was not restored.';
-    message(note);
-   };
-   // Lane-4 T21: the layer toggles and basemap rows persist per Scene. A change is written once the person settles (600 ms idle),
-   // never per slider tick, and a settle that restates what the Scene already keeps writes nothing. Only the layers are written:
-   // the owner's live-source allowance is session state and is never part of the record.
-   const persistPlaceLayers=()=>{
-    if(!scene||!state.placeFilter||!state.livePlaces)return;
-    const kept=restoreLayers((()=>{try{return host.sceneMaterial(sceneId).research?.placeLayers;}catch{return undefined;}})());
-    if(layersKey(state.placeFilter,state.livePlaces.stack)===layersKey(kept.filter,kept.stack))return;
-    // The key becomes the Scene's when the owner acknowledges the write; until then the write counts as in flight.
-    const key=layersKey(state.placeFilter,state.livePlaces.stack);
-    state.placeLayersWrites=(state.placeLayersWrites??0)+1;
-    void host.material(sceneId,{type:'place-layers-set',value:layersRecordOf(state.placeFilter,state.livePlaces.stack)})
-     .then(()=>{state.placeLayersKey=key;},error=>message(error instanceof Error?error.message:String(error)))
-     .finally(()=>{state.placeLayersWrites=(state.placeLayersWrites??1)-1;});
-   };
-   const scheduleLayersSave=()=>{
-    if(state.placeLayersSave)clearTimeout(state.placeLayersSave.timer);
-    const write=()=>{if(state.placeLayersSave){clearTimeout(state.placeLayersSave.timer);state.placeLayersSave=undefined;}persistPlaceLayers();};
-    state.placeLayersSave={timer:setTimeout(write,600),write};
-   };
-   const removePlaceView=(name:string)=>{void host.material(sceneId,{type:'place-view-remove',name}).then(()=>{message(`View "${name}" removed`);render(renderPlaces());},error=>message(error instanceof Error?error.message:String(error)));};
-   // Lane-4 T25–T26: a tour is recorded from the camera the map shows, saved to the Scene through the material path (as named views
-   // are), and played as flights. Only the recording in progress lives in this session, and it is discarded when recording stops
-   // unsaved. A stop's journey binding is written as withStopBinding plus a save; the journey's own beats are read on every render.
-   let flyOnMap:((camera:PlaceViewState,durationMs:number)=>void)|null=null;
-   let tourPlayback:PlaceTourPlayback|null=null;
-   let playingTour:string|null=null;
-   const tourSession=()=>placeTourSessionOf(sceneId);
-   const savedPlaceTours=():Record<string,PlaceTourRecord>=>{try{return host.sceneMaterial(sceneId).research?.placeTours??{};}catch{return {};}};
-   const reducedMotionNow=()=>{try{return window.matchMedia('(prefers-reduced-motion: reduce)').matches;}catch{return false;}};
-   const stopTour=()=>{tourPlayback?.stop();tourPlayback=null;playingTour=null;};
-   const refusal=(error:unknown)=>message(error instanceof Error?error.message:String(error));
-   const toggleTourRecording=()=>{
-    if(!scene){message('Open a Scene to record a tour.');return;}
-    const session=tourSession();
-    if(session.recording){session.recording=false;session.record={stops:[]};message('Recording stopped; the unsaved tour was discarded.');}
-    else{session.recording=true;session.record={stops:[]};message('Recording: each stop is the camera the map shows.');}
-    render(renderPlaces());
-   };
-   const addTourStop=(caption:string,holdSeconds:number)=>{
-    if(!scene)return;
-    const session=tourSession();
-    const selected=state.selectedPlace??null;
-    // The place a stop names is the selected place only when this reading discloses it; no ref is minted for a stop.
-    const placeRef=selected!==null&&(nativeReading.spatial??[]).some(facet=>facet.place_ref===selected)?selected:null;
-    const stop=captureTourStop({viewState:state.place??defaultPlaceView(),placeRef,caption,holdMs:Math.round(holdSeconds*1000)});
-    const next=appendTourStop(session.record,stop);
-    if(next.problem){message(next.problem);return;}
-    session.record=next.record;
-    message(`Stop ${session.record.stops.length} recorded`);
-    render(renderPlaces());
-   };
-   const removeTourStopAt=(index:number)=>{const session=tourSession();session.record=removeTourStop(session.record,index);render(renderPlaces());};
-   // Save writes the recording to the Scene under its trimmed name; a refusal names the reason and keeps the recording.
-   const saveTour=(entered:string)=>{
-    if(!scene)return;
-    const session=tourSession();
-    const problem=placeTourNameProblem(entered,savedPlaceTours());
-    if(problem){message(problem);return;}
-    if(session.record.stops.length===0){message('Record at least one stop before saving the tour.');return;}
-    const name=entered.trim();
-    const tour=session.record;
-    void host.material(sceneId,{type:'place-tour-save',name,tour}).then(()=>{session.recording=false;session.record={stops:[]};message(`Tour "${name}" saved`);render(renderPlaces());},refusal);
-   };
-   const playSavedTour=(name:string)=>{
-    const tour=savedPlaceTours()[name];
-    if(!scene||!tour)return;
-    stopTour();
-    playingTour=name;
-    tourPlayback=playPlaceTour(tour,{
-     reducedMotion:reducedMotionNow(),
-     fly:(camera,durationMs)=>{if(destroyed||lens!=='m4'){stopTour();return;}flyOnMap?.(camera,durationMs);},
-     onArrive:(caption,index)=>{if(destroyed||lens!=='m4')return;message(caption??`Stop ${index+1} of ${tour.stops.length}`);},
-     onDone:()=>{tourPlayback=null;playingTour=null;if(!destroyed&&lens==='m4'){message('Tour finished');render(renderPlaces());}},
-    });
-    render(renderPlaces());
-   };
-   const stopPlayingTour=()=>{stopTour();message('Tour stopped');render(renderPlaces());};
-   const removeSavedTour=(name:string)=>{
-    if(playingTour===name)stopTour();
-    void host.material(sceneId,{type:'place-tour-remove',name}).then(()=>{message(`Tour "${name}" removed`);render(renderPlaces());},refusal);
-   };
-   // A binding is a pair of refs from the journey's own beat; the saved tour is rewritten through the same save.
-   const bindTourStop=(name:string,index:number,beat:{expression_ref:string;scene_ref:string}|null)=>{
-    const saved=savedPlaceTours()[name];
-    if(!scene||!saved)return;
-    const tour=withStopBinding(saved,index,beat);
-    void host.material(sceneId,{type:'place-tour-save',name,tour}).then(()=>{message(beat?`Stop ${index+1} bound to ${beat.scene_ref}`:`Stop ${index+1} unbound`);render(renderPlaces());},refusal);
-   };
-   // Seam B: a carried place is the opening selection and the framed focus, through the same two props. A place the reading does not disclose is named.
-   let carriedPlace=focusRef!==undefined&&(nativeReading.spatial??[]).some(facet=>facet.place_ref===focusRef)?focusRef:undefined;
-   const placeNote=focusRef!==undefined&&carriedPlace===undefined?`Not focused: ${focusRef} is not a disclosed place in this reading.`:null;
-   const renderPlaces=():ReactNode=>{
-    const filter={...state.placeFilter!,window:sharedTime?.axis.window??null};
-    const placeViewsNow=savedPlaceViews();
-    // The window is not applied to the repository: the map applies it to every frame from the same filter (T14–T16), so a
-    // live window never needs a repository reload. The relation and standing filters still narrow here.
-    const filteredRepository=filteredPlacesRepository(data.places,nativeReading,{...filter,window:null});
-    // Lane-4 T14–T16: the docked time control spans the reading's own dated events (the T6 projection) and writes the
-    // shared window through the same setter as the popover.
-    // A reading the projection refuses names its reason on the control; the Places lens itself still renders.
-    const placeExtent=(()=>{try{return extentOf(timeAxisProjection(nativeReading,sharedTime?.session??null).events);}catch(error){return {extent:null,reason:error instanceof Error?error.message:String(error)};}})();
-    const placeTime:PlaceTimeHost={extent:placeExtent.extent,extentReason:placeExtent.reason,
-     unavailableReason:sharedTime?null:(timeReason??'Shared time is not available for this reading, so the window cannot be changed here.'),
-     window:sharedTime?.axis.window??null,
-     onWindowCommit:async next=>{
-      if(!sharedTime||!timeCurrent())throw Error('The shared time window is no longer presented, so it was not changed.');
-      const reply=await writeSharedTimeWindow(request,nativeReading,'place',sharedTime,next);
-      sharedTime=reply;
-      const draft=state.timeDraft;if(draft){draft.captured=null;draft.from=reply.axis.window?.from??'';draft.to=reply.axis.window?.to??'';}
-      if(timeCurrent())render(renderPlaces());
-     },
-    };
-    // Lane-4 T24: the shared session's spatial focus (or a focused selection naming a disclosed place) is the place selected and
-    // framed on open. A ref the reading does not disclose resolves to null: the lens opens unselected, with no error.
-    // A focus the session declares governs the opening even when it is stale (then the lens opens unselected); see openingPlaceSelection.
-    // Lane-4 T23: "Open in Timeline" writes the facet's place as the shared spatial focus (so Places reopens on this facet) and the
-    // facet's validity as the shared window, each through the owner's compare-and-set write, then opens the Timeline lens through the
-    // app's instrument activation so the recorded instrument matches. A facet with no validity leaves the window unchanged.
-    // lane-2 T22: the crossing is planned when the action is offered (this render), not when it is pressed, so a session that
-    // drifted in between refuses by name instead of being re-planned on itself (as showOnGlobe does).
-    const offeredCrossing=sharedTime?sessionCrossingIdentity(sharedTime.session):null;
-    const openInTimeline=async(facet:TechnePlaceFacet,planned:ReturnType<typeof sessionCrossingIdentity>|null)=>{
-      const plan=timelineOpenPlan(facet);
-      if(sharedTime&&timeCurrent()){
-        if(!planned)throw Error('The shared session was not presented when this was offered, so the timeline was not changed.');
-        const refuse=()=>{const reason=handoffRefusal(planned,sharedTime?.session??null);if(reason)throw Error(reason);};
-        refuse();
-        sharedTime=await writeSharedSpatialFocus(request,nativeReading,'place',sharedTime,plan.spatial_focus_ref);
-        refuse();
-        if(plan.window)sharedTime=await writeSharedTimeWindow(request,nativeReading,'place',sharedTime,plan.window);
-      }else if(plan.window)throw Error('The shared time window is no longer presented, so it was not changed.');
-      if(host.activateInstrument)host.activateInstrument('timeline');
-      else{lens='m2';await load('m2');}
-    };
-    // Lane-4 T22: a searched place is written as the native shared session's spatial focus (the same compare-and-set write
-    // openInTimeline and showOnGlobe use), and the mounted map is then re-rendered over that session. Nothing here reads or writes
-    // the cradle's local session store.
-    // The map is re-rendered in place when it is mounted: the same props path every other Places update uses. The vendor map's
-    // focus latch honours each distinct ref once, so the new ref flies it. Only when no Places map is presented does the search
-    // open the lens (the fallback).
-    const mapFocus=placeMountFocus({carried:carriedPlace,session:sharedTime?.session??null,facets:nativeReading.spatial??[],remembered:state.selectedPlace??null});
-    const flyToSearchedPlace=async(offer:PlaceOffer)=>{
-     const plan=searchChoiceWrite(offer);
-     if(!sharedTime||!timeCurrent())throw Error('The shared spatial focus is no longer presented, so it was not changed.');
-     const mapPresented=root!==null;
-     sharedTime=await writeSharedSpatialFocus(request,nativeReading,plan.instrument,sharedTime,plan.spatial_focus_ref);
-     if(!mapPresented){await load('m4');return;}
-     if(!timeCurrent())throw Error('The Places instrument changed while the place was chosen; the globe was not re-focused.');
-     // A carried ref was the opening focus only; the search's own native focus now decides the globe.
-     carriedPlace=undefined;
-     render(renderPlaces());
-    };
-    const facets=<><PlaceSearch reading={nativeReading} onChoose={offer=>{void flyToSearchedPlace(offer).catch(error=>message(error instanceof Error?error.message:String(error)));}}/><PlaceFacetsPanel reading={nativeReading} selectedRef={state.selectedPlace??null} filter={filter} onOpenSource={ref=>host.inspectSubject(ref)} sharedTime
-      onFilterChange={next=>{state.placeFilter={...next,window:null};scheduleLayersSave();render(renderPlaces());}}
-      editRequest={placeEditRequest} onError={message}/></>;
-    return <>{createPortal(<div className="research-tool-actions"><button aria-label="Refresh geography" title="Refresh geography" onClick={()=>void load('m4')}><ToolIcon name="history"/></button>{scene&&<button aria-label="Save map view" title="Save map view" onClick={()=>{if(state.place)void host.material(sceneId,{type:'viewport',key:'place',value:placeRecordFromViewState(state.place)}).then(()=>message('View saved'),error=>message(String(error)));}}><ToolIcon name="save"/></button>}{scene&&<button type="button" className="research-places-view-save" aria-label="Save view…" title="Save this place view: camera, layers, basemap and time window" onClick={savePlaceView}>Save view…</button>}{scene&&Object.keys(placeViewsNow).length>0&&<select className="research-places-view-select" aria-label="Saved place views" value="" onChange={event=>{const [op,name]=event.target.value.split('\u0000');if(op==='apply')void applyPlaceView(name);if(op==='remove')removePlaceView(name);event.target.value='';}}><option value="">Views…</option>{Object.keys(placeViewsNow).map(name=><optgroup key={name} label={name}><option value={`apply\u0000${name}`}>Go to</option><option value={`remove\u0000${name}`}>Remove</option></optgroup>)}</select>}{timeControls(()=>render(renderPlaces()))}</div>,host.tools)}
-    <div className="research-places"><PsychogeographicMap inspectorContainer={host.inspector} toolbarContainer={host.placesHome??host.tools} repository={filteredRepository} projectId={data.reading.subject.subject_ref} tileSource={tileSource} offlineOnly={!state.livePlaces!.allowed} policy={state.livePlaces!.policy} basemapStack={state.livePlaces!.stack} onBasemapStackChange={next=>{state.livePlaces!.stack=next;scheduleLayersSave();}} onLiveSourcesAllowedChange={allowed=>{const live=state.livePlaces!;if(allowed)live.policy.optIn('tile_refresh','show live basemap sources the owner allowed in Places');else live.policy.optOut('tile_refresh');live.allowed=allowed;render(renderPlaces());}} placeFacets={nativeReading.spatial} placeAuthoring={placeAuthoring} placeTime={placeTime} daylight={PLACES_DAYLIGHT} ladder={ladderRungSummaries(referenceFrameLadder(nativeReading))} onRegisterPlaceViewRestore={restore=>{restoreViewOnMap=restore;}} onRegisterPlaceFlight={flight=>{flyOnMap=flight;}} layerFilter={filter} onLayerFilterChange={next=>{state.placeFilter={...next,window:null};scheduleLayersSave();render(renderPlaces());}} sourceAttributions={pack.manifest.sources.map(source=>`${source.name} (${source.license})`)}
-     initialViewState={state.place} initialSelectedGraphNodeId={mapFocus.selected} initialFocusGraphNodeId={mapFocus.focus}
-     onOpenInTimeline={facet=>{void openInTimeline(facet,offeredCrossing).catch(error=>message(error instanceof Error?error.message:String(error)));}} onOpenSource={ref=>host.inspectSubject(ref)}
-     onViewStateChange={value=>{state.place=value;}} onSelectedGraphNodeIdChange={value=>{state.selectedPlace=value;render(renderPlaces());}}
-     onOpenCanvasNode={ref=>{const node=data.bundle.nodes.find(node=>node.graphNodeId===ref&&node.place);if(node)host.inspectSubject(ref,{node});}}/>
-     <ImageryPanel tools={host.placesHome??host.tools} toolbarContainer={host.placesHome??host.tools} images={images} offlineOnly imageTitle={image=>scene?.entities.find(entity=>entity.id===image.id)?.name??'Scene image'} resolveAsset={path=>{const value=assets.get(path);if(!value)throw new Error('Image is not bound to this native Scene');return value;}} onImport={importImagery}/>
-     <PlaceTourPanel sceneOpen={!!scene} recording={tourSession().recording} draft={tourSession().record} saved={savedPlaceTours()} beats={journeyBeatsOf(nativeReading).beats} playingName={playingTour} onToggleRecording={toggleTourRecording} onAddStop={addTourStop} onRemoveStop={removeTourStopAt} onSave={saveTour} onPlaySaved={playSavedTour} onStopPlaying={stopPlayingTour} onRemoveSaved={removeSavedTour} onBind={bindTourStop}/>
-     {!host.placesHome&&facets}
-    </div>{host.placesHome&&createPortal(facets,host.placesHome)}</>;
-   };
-   if(sharedTime)followSharedTime(()=>render(renderPlaces()));
-   render(renderPlaces());
-   if(placeNote)message(placeNote);
   }catch(error){if(epoch!==generation||destroyed)return;message(error instanceof Error?error.message:String(error));body.replaceChildren();}
  }
  return {
   async open(selected:ResearchInstrument,focusRef?:string){if(destroyed)throw new Error('Research instrument workspace is closed');lens=selected;pendingFocus=focusRef;await load(selected);},
-  close(){flushPlaceLayers();++epoch;lens=null;unmount();mount.hidden=true;},
+  close(){++epoch;lens=null;unmount();mount.hidden=true;},
   async refresh(){
    if(materialInFlight){deferredRefresh=true;return;}
    if(!lens)return;
@@ -1751,7 +1419,7 @@ host.tools.append(saveGlyph);
    }
    await load(lens);
   },
-  destroy(){flushPlaceLayers();++epoch;offSharedTimeNudges?.();offSharedTimeNudges=null;lens=null;destroyed=true;unmount();mount.remove();status.remove();views.clear();window.removeEventListener('keydown',onWindowKeydown);window.removeEventListener('keydown',onZoomKeydown);window.removeEventListener('keydown',onPresentStartKey);window.removeEventListener('pagehide',quitGestures);readoutRoot.unmount();readoutHost.remove();modifiers.dispose();},
+  destroy(){++epoch;offSharedTimeNudges?.();offSharedTimeNudges=null;lens=null;destroyed=true;unmount();mount.remove();status.remove();views.clear();window.removeEventListener('keydown',onWindowKeydown);window.removeEventListener('keydown',onZoomKeydown);window.removeEventListener('keydown',onPresentStartKey);window.removeEventListener('pagehide',quitGestures);readoutRoot.unmount();readoutHost.remove();modifiers.dispose();},
   active(){return lens;},
  };
 }

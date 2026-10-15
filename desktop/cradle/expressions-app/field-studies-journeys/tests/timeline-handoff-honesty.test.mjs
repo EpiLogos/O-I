@@ -52,12 +52,16 @@ test('T19: the evidence control exists only for a disclosed passage; otherwise t
   assert.match(css, /\.research-evidence-absent\)\{color:var\(--ui-muted\)/, 'the absence is styled as instrument status text');
 });
 
-test("the globe's Open in Timeline plans its crossing when offered, not when pressed, so a drifted session refuses", async () => {
+// T-PLACES-ONTO-ATLAS: the frame map's "Open in Timeline" retired with the map; a place carries its window to the Timeline from the
+// shell's Earth atlas ("Window to its validity" on the M4 plate, through the session's compare-and-set writer:
+// packages/live-shell/ui/src/projections/atlas/sharedClock.ts writeSharedWindow). The Timeline's own crossing keeps the law.
+test("the Timeline's Show on the globe plans its crossing when offered, not when pressed, so a drifted session refuses", async () => {
   const {readFile} = await import('node:fs/promises');
   const source = await readFile(new URL('../src/researchInstruments.tsx', import.meta.url), 'utf8');
-  const render = source.slice(source.indexOf('const renderPlaces=():ReactNode=>{'));
-  assert.match(render, /const offeredCrossing=sharedTime\?sessionCrossingIdentity\(sharedTime\.session\):null;/, 'planned at render, the moment it is offered');
-  assert.match(render, /const openInTimeline=async\(facet:TechnePlaceFacet,planned:/);
-  assert.doesNotMatch(render.slice(render.indexOf('const openInTimeline'), render.indexOf('const openInTimeline') + 600), /const planned=sessionCrossingIdentity/, 'never re-planned at press time');
-  assert.match(render, /onOpenInTimeline=\{facet=>\{void openInTimeline\(facet,offeredCrossing\)/);
+  const control = source.slice(source.indexOf('const globeControl=(eventRef:string|null)=>{'));
+  assert.match(control, /const planned=sessionCrossingIdentity\(sharedTime\.session\);/, 'planned at render, the moment it is offered');
+  assert.match(control, /void showOnGlobe\(settled,planned\)/, 'the press carries the plan made when it was offered');
+  const press = source.slice(source.indexOf('const showOnGlobe=async'), source.indexOf('const eventEvidence='));
+  assert.doesNotMatch(press, /sessionCrossingIdentity\(/, 'never re-planned at press time');
+  assert.doesNotMatch(source, /openInTimeline|offeredCrossing/, 'the retired map\'s crossing is gone');
 });

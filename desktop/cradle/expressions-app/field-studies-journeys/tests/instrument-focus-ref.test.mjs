@@ -39,14 +39,14 @@ test('the timeline instrument focuses the carried event as the chronology select
   assert.match(src, /message\(focusNote\?`\$\{focusNote\} \$\{timelineStatus\}`:timelineStatus\)/, 'the timeline status line names the refusal');
 });
 
-test('the place instrument frames the carried place through the opening selection, and names a place it does not disclose', async () => {
+// T-PLACES-ONTO-ATLAS: the frame's Places lens retired with its map (FOUNDATION §4 "Places is the Archetypal-Earth atlas, alone"). A
+// carried place is the shared session's spatial focus, which the shell's Earth atlas turns to (packages/live-shell/ui/src/projections/
+// atlas/places/placesHost.ts followSpatialFocus; packages/live-shell/ui/tests/atlas-places-plate.test.mjs pins the turn). Asked for, the
+// frame's lens says where Places went and reads nothing.
+test('the place instrument says where Places went, and reads nothing', async () => {
   const src = await read('researchInstruments.tsx');
-  assert.match(src, /let carriedPlace=focusRef!==undefined&&\(nativeReading\.spatial\?\?\[\]\)\.some\(facet=>facet\.place_ref===focusRef\)\?focusRef:undefined;/, 'the carried place is admitted only when the reading discloses it');
-  assert.match(src, /const mapFocus=placeMountFocus\(\{carried:carriedPlace,session:sharedTime\?\.session\?\?null,facets:nativeReading\.spatial\?\?\[\],remembered:state\.selectedPlace\?\?null\}\);/, 'the carried place is the opening selection through the one mount-focus rule');
-  assert.match(src, /initialSelectedGraphNodeId=\{mapFocus\.selected\}/, 'the mount opens on the resolved selection');
-  assert.match(src, /initialFocusGraphNodeId=\{mapFocus\.focus\}/, 'the carried place is the framed focus');
-  assert.match(src, /const placeNote=focusRef!==undefined&&carriedPlace===undefined\?`Not focused: \$\{focusRef\} is not a disclosed place in this reading\.`:null;/, 'an undisclosed place is named');
-  assert.match(src, /if\(placeNote\)message\(placeNote\);/, 'the place status line names the refusal');
+  assert.match(src, /if\(selected==='m4'\)\{message\(PLACES_MOVED\);render\(<p className="research-instrument-message" role="note">\{PLACES_MOVED\}<\/p>\);return;\}/, 'the lens names the Earth atlas');
+  assert.doesNotMatch(src, /carriedPlace|placeMountFocus|PsychogeographicMap/, 'no frame map frames a carried place any more');
 });
 
 test('the journey instrument focuses a carried beat through its scene focus, and names a ref that is not a beat', async () => {

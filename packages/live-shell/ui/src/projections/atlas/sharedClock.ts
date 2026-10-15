@@ -56,6 +56,18 @@ export function windowYear(window: SharedWindow | null): number | null {
   return null;
 }
 
+/** [T-PLACES-ONTO-ATLAS] The year one edge of the window stands at (the transport's window readouts, Technē's punch-in and punch-out),
+ * read through the same time authority as the window's own year; null for an open edge or one that does not parse. */
+export function windowEdgeYear(value: string | null | undefined): number | null {
+  if (!value) return null;
+  try {
+    const ms = parseTimestamp(value);
+    return Number.isFinite(ms) ? Math.floor(yearOfMs(ms)) : null;
+  } catch {
+    return null;
+  }
+}
+
 const sameWindow = (a: SharedWindow | null, b: SharedWindow | null): boolean => a === null || b === null
   ? a === b : a.from === b.from && a.to === b.to;
 
@@ -64,6 +76,21 @@ const snapshotOf = (session: DisclosureSession): CapturedSharedWindow => ({
   selection: structuredClone(session.selection) as DisclosureSelection,
   window: session.time_window ? {from: session.time_window.from, to: session.time_window.to} : null,
 });
+
+/** [T-PLACES-ONTO-ATLAS] Set the shared window to a place's own validity (lane-4 T23: a place carries its window to the Timeline), through
+ * the session's compare-and-set writer over the window just read — the same owner write the clock's moves go through. Returns the
+ * refusal in the writer's words, or null once written. With no session standing there is no window to write. */
+export function writeSharedWindow(store: DisclosureSessionStore, window: SharedWindow | null): string | null {
+  const session = store.get();
+  if (!session) return 'No shared session stands (no work is open in Technē), so there is no window to set.';
+  if (sameWindow(session.time_window ?? null, window)) return null;
+  try {
+    writeSharedWindowCompareAndSet(store, snapshotOf(session), window);
+    return null;
+  } catch (error) {
+    return error instanceof Error ? error.message : String(error);
+  }
+}
 
 export interface SharedClockBinding extends SharedClockLink {
   /** Stop following the window and release the clock (the pane is destroyed). */
