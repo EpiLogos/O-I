@@ -109,6 +109,21 @@ Palace). Ranked: G1 the stage's file exports have no native receiver (the main w
 cancels `<a download>`: lane-1 B2/B3); G2 the Instruments rail keeps no subject into Graph (D1); G3 the shell carries no
 frame deep-link address (E22); R1 Places onto the atlas (31 targets); R2 palaces onto the atlas (N4, 9); S1 mount N2's
 subject door — 76 homes read their facets only on a Wiki-bound Scene, reached today only by Examine in the Graph pane.
+Then, closing the 15 Oct session (owner: "all good to commit and update and install latest versions and remove old builds"):
+ai-kit #509 (`7af8d11d0`), Central #273 (`4a3e423a7`) and Workcell #116 (`102307181`) squash-merged; their seats released to
+main; the suite installed from origin/main (`oi update --apply --channel mainline`: oi, Central, ai-kit, Software Factory, Workcell,
+QL; Actuation current; a second apply under the new `oi` superseded the stale active suite receipt, which had shadowed every
+product); the AIKit gateway upgraded onto the new build; `workcell identity set workcell:mac --rebind` declared the Mac's cell (the
+registry's prior bytes kept) — `oi workcell status` answers (exit 7 → 0), `aikit knowledge relations-batch` and Central's
+`thoughts.read-batch` answer through `oi`. The old native build stamps under
+Work/O-I/target/p0-r1 removed (30 stamps; m4, the build at `2de90416e`, kept for the screen pass — its space returns as Time
+Machine thins tonight's two local snapshots). The measuring tools moved into the repo (`tools/lead-kit/`, `69824a5df`). Next
+waves (owner): devices — DEVICE-UI.md across the plates, Live's density and a live picture at each device's heart, the five
+presentations — and a more performant, robust core and kernel. Open for them: the native screen pass of lanes Y, E, K, K2, Q
+and D (never seen natively); the door natively after the install; the writes still ordered under the kernel lock; kernel
+receipts for NOW/receiving/Day writes and an AIKit session change event (so the shell's floors can go); AIKit streaming or
+splitting a cold batch (35–58 s); Central's Day "today pointer stale"; ten lane-5 rows' evidence beside their homes.
+
 Then: lane E landed (`1f40feefe`), drawn to docs/dlw/DEVICE-UI.md — the owner's device standard, which landed on main the same
 evening with its panel kit and five reference devices (`2fdfe6606`, `79d5b4c36`, committed in this seat by the owner's session): the
 plate grammar fits or folds, never scrolls, one hairline between sections, no box in a box, a head slot (the Studio's Save, Undo,
