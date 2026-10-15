@@ -28,7 +28,7 @@ import {Browser} from './frame/browser/Browser'
 import {FrameKeys} from './frame/keys/FrameKeys'
 import {WidgetRail} from './frame/widgets/WidgetRail'
 import type {WidgetRailBook} from './frame/widgets/widgets'
-import {WIDGETS, WidgetReadingProvider} from './shell/widgets'
+import {worldWidgets, WidgetReadingProvider} from './shell/widgets'
 import {DEFAULT_WIDGETS} from './shell/widgetDefaults'
 import {BrowserReadingProvider, browserSourcesOf, type BrowserReading} from './shell/modeBrowsers'
 import {openInstrument, publishStageLensDriver} from './frame/instrumentDoor'
@@ -538,8 +538,8 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
       below, the wedge that dies with the toggle) carries the non-agency
       modes; the agency surface keeps its own dock. */}
     {/* The one widget rail (F8): every widget of the world, one open set in the book, pins and presets. */}
-    <div className="dock-residence" hidden={!dock}><WidgetReadingProvider value={{mode: frameMode, world: worldView, transport: workspace.transport, subject: centralSubject}}>
-      <WidgetRail widgets={WIDGETS} book={widgetBook} selectionRef={worldSelection?.ref ?? null} /></WidgetReadingProvider></div>
+    <div className="dock-residence" hidden={!dock}><WidgetReadingProvider value={{mode: frameMode, world: worldView, transport: workspace.transport, subject: centralSubject, panel: ctx}}>
+      <WidgetRail widgets={worldWidgets()} book={widgetBook} selectionRef={worldSelection?.ref ?? null} /></WidgetReadingProvider></div>
     {detail && <div className="detail-resizer" role="separator" aria-label="Resize detail" aria-orientation="horizontal" tabIndex={0} onKeyDown={event => { if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {event.preventDefault(); resizeDetail(Math.max(120, Math.min(viewport[1] - 240, (detailHeight ?? document.querySelector('.detail-residence:not([hidden]) .chain,.detail-residence:not([hidden]) .native-world-detail')?.getBoundingClientRect().height ?? 330) + (event.key === 'ArrowUp' ? 10 : -10))))} }} onPointerDown={event => event.currentTarget.setPointerCapture(event.pointerId)} onPointerMove={event => { if (event.currentTarget.hasPointerCapture(event.pointerId)) resizeDetail(Math.max(120, Math.min(viewport[1] - 240, viewport[1] - 28 - event.clientY))) }} />}
     {/* The detail row (manual §3, §10.1; FOUNDATION F4): one host for every mode. The mode's clip editor and chain come from
       its registration (shell/modeDetails.tsx); a pane holding an instrument takes the Device side in every mode but Live. */}

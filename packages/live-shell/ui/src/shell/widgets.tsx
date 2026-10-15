@@ -15,6 +15,8 @@ import {useAgencySessions} from '../agent/useAgencySessions'
 import {useWidgetReading} from '../widgets/widgetReading'
 import {AgentWidget, AgentWidgetName} from '../widgets/AgentWidget'
 import {PacketWidget} from '../widgets/PacketWidget'
+import {getPanels} from './panels'
+import {panelWidgets} from '../frame/widgets/panelWidgets'
 
 export {WidgetReadingProvider, type WidgetReading} from '../widgets/widgetReading'
 
@@ -50,6 +52,12 @@ export const WIDGETS: readonly WidgetDeclaration[] = [
   ...MODE_TILES.map((id): WidgetDeclaration => ({id, name: TILES[id].name, mark: TILES[id].mark, hint: HINTS[id], Body: OWN_BODIES[id] ?? modeTile(id)})),
   ...AGENT_TILES.map((id): WidgetDeclaration => ({id, name: tileTitle(id), mark: TILE_ICONS[id], hint: HINTS[id], Body: agentTile(id)})),
 ]
+
+/** Every widget of the world: the rail's own, then each panel a family registers in the widget slot (frame/widgets/
+ * panelWidgets.ts) — read when the rail draws, so a family admitted after boot stands in the rail too. */
+export function worldWidgets(): readonly WidgetDeclaration[] {
+  return [...WIDGETS, ...panelWidgets(getPanels('right-dock'), new Set(WIDGETS.map(widget => widget.id)))]
+}
 
 export {DEFAULT_WIDGETS} from './widgetDefaults'
 

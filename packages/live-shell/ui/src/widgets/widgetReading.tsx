@@ -1,5 +1,6 @@
 // What the App hands every widget body (FOUNDATION F8): the mode in front of you, the World cut's temporal reading, the
 // kernel carrier and the selected Central subject. The bodies read it here; nothing here stores or writes.
+import type {PanelContext} from '../shell/panels'
 import {createContext, useContext, type ReactNode} from 'react'
 import type {SurfMode} from '../shell/modeGrammar'
 import type {WorldTimelineView} from '../projections/useWorldTemporalReading'
@@ -11,6 +12,8 @@ export interface WidgetReading {
   world: WorldTimelineView | null
   transport: KernelTransportStatus
   subject: CentralSubjectSelection | null
+  /** The open set's context a registered panel reads (shell/panels.ts PanelContext) — the same one every panel slot gets. */
+  panel?: PanelContext
 }
 
 const WidgetReadingContext = createContext<WidgetReading | null>(null)
