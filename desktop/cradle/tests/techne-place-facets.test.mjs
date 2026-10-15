@@ -12,9 +12,11 @@
  *      (gate G3's two required spatial cases);
  *   2. the payload emits `spatial`, validates against the contract, and
  *      discloses `place` available;
- *   3. the consumer (place/modes.ts, place/world.ts) reads them as present,
- *      projects the georeferenced point and slots the unlocated place, and
- *      keeps the factual/mythic relation classes distinct;
+ *   3. the consumer reads them (place/world.ts — the relation classes; since
+ *      15 Oct the atlas is the one map, packages/live-shell/ui
+ *      projections/atlas/provider/suiteReading.ts, tested beside it — the
+ *      frame map's place/modes.ts retired with T-PLACES-ONTO-ATLAS), keeping
+ *      the factual/mythic relation classes distinct;
  *   4. honest absence — no place data → no `spatial`, place unavailable with
  *      its real reason, the aperture empty;
  *   5. §41 negative — removing the producer's source (the declaration and the
@@ -32,7 +34,6 @@ import assert from "node:assert/strict";
 const {wikiReadingPayload} = await import("../src/techne/wikiReadingProvider.ts");
 const {placeFacetsFromReading} = await import("../src/techne/placeFacets.ts");
 const {validateReading} = await import("../src/techne/contract.ts");
-const {placeState, renderMapModel} = await import("../src/techne/m0m5/place/modes.ts");
 const {placeRelations, relationStandingClass} = await import("../src/techne/m0m5/place/world.ts");
 
 const REGISTER = {key: "central", title: "Central"};
@@ -111,18 +112,13 @@ test("the payload emits spatial, validates against the contract, and discloses p
   assert.equal(place.reason, undefined, "an available instrument names no absence reason");
 });
 
-test("the consumer reads the facets as present, projects the point, slots the unlocated place, and keeps relation classes distinct", () => {
+test("the consumer reads the facets, the georeferenced place carries a point and the unlocated none, and relation classes stay distinct", () => {
   const payload = wikiReadingPayload({register: REGISTER, subject: SUBJECT, reading: placeReading()});
-  const state = placeState(payload);
-  assert.equal(state.status, "present");
-  assert.equal(state.facets.length, 2);
-
-  const model = renderMapModel(payload.spatial);
-  assert.equal(model.projection.places.length, 2);
-  const londinium = model.projection.places.find(place => place.place_ref === "central:wiki:londinium");
-  assert.equal(londinium.shape, "point", "the georeferenced place projects to a real point");
-  const avalon = model.projection.places.find(place => place.place_ref === "central:wiki:avalon");
-  assert.equal(avalon.shape, "none", "the unlocated place is slotted, not given a coordinate");
+  assert.equal(payload.spatial.length, 2)
+  const londinium = payload.spatial.find(facet => facet.place_ref === "central:wiki:londinium") ?? payload.spatial.find(facet => facet.identity?.place_ref === "central:wiki:londinium")
+  assert.ok(londinium?.geometry, "the georeferenced place carries the owner's geometry")
+  const avalon = payload.spatial.find(facet => facet !== londinium)
+  assert.equal(avalon.geometry, undefined, "the unlocated place is carried without a coordinate")
 
   const groups = placeRelations(payload.spatial);
   assert.equal(groups.length, 2, "the two native relations stay distinct groups");
@@ -139,18 +135,18 @@ test("honest absence — no place ground leaves place unavailable and omits spat
   const place = payload.disclosure.instruments.find(entry => entry.instrument === "place");
   assert.equal(place.available, false);
   assert.match(place.reason, /no spatial facets/);
-  assert.equal(placeState(payload).status, "unavailable");
 });
 
 test("§41 negative: removing the place source makes the 'place present' observation fail", () => {
   const withPlace = wikiReadingPayload({register: REGISTER, subject: SUBJECT, reading: placeReading()});
-  assert.equal(placeState(withPlace).status, "present");
-  assert.equal(renderMapModel(withPlace.spatial ?? []).projection.places.length, 2);
+  const available = payload => payload.disclosure.instruments.find(entry => entry.instrument === "place").available
+  assert.equal(available(withPlace), true);
+  assert.equal((withPlace.spatial ?? []).length, 2);
 
   // Sever the producer's source: no declaration, no geography relations.
   const withoutPlace = wikiReadingPayload({register: REGISTER, subject: SUBJECT, reading: bareReading()});
-  assert.notEqual(placeState(withoutPlace).status, "present", "no place source → the aperture is not present");
-  assert.equal(renderMapModel(withoutPlace.spatial ?? []).projection.places.length, 0, "nothing renders once the binding is removed");
+  assert.equal(available(withoutPlace), false, "no place source → place is not present");
+  assert.equal((withoutPlace.spatial ?? []).length, 0, "nothing stands for a consumer to draw once the binding is removed");
 });
 
 test("no fabrication — a declared place with no geometry stays unlocated; coordinates and uncertainty are never invented", () => {
