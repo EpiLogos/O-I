@@ -2003,13 +2003,94 @@ mod real_ground {
         )
     }
 
-    /// Technē's whole wiki load as the shell asks it: `world_read`, then
-    /// every register at once — cold (a new kernel), warm (the same kernel
-    /// again), and beside a Graph op's AIKit input asked a moment earlier —
-    /// each op through the host's own sequence (`host`). Reports when the
-    /// registers settle, each step's spread, and the owner processes the
-    /// pass made, by action. AIKit's relations time is AIKit's (its 20 s
-    /// limit); the kernel's share is the listing, the reading and the World.
+    /// One pass of Technē's whole wiki load as the shell asks it:
+    /// `world_read`, then every register at once, each op through the
+    /// host's own sequence (`host`) — optionally beside a Graph op's AIKit
+    /// input asked a moment earlier, or once the kernel's World reading has
+    /// lapsed. Reports when the registers settle, each step's spread, how
+    /// many registers' relations were read, and the owner processes the
+    /// pass made, by action.
+    fn load_pass(
+        kernel: &Arc<Mutex<Kernel>>,
+        registers: &[(Option<String>, String)],
+        pass: &str,
+        beside_graph: bool,
+        lapsed: bool,
+    ) {
+        // The registers ask once the kernel's World reading has lapsed
+        // (as when listings queue past it under load): every World read
+        // this pass counts is the registers' own.
+        if lapsed {
+            let _ = host(kernel, KernelOp::WorldRead);
+            std::thread::sleep(read_cache::WORLD_TTL + std::time::Duration::from_millis(500));
+        }
+        let before = actions();
+        let start = Instant::now();
+        let graph = beside_graph.then(|| {
+            let kernel = Arc::clone(kernel);
+            let handle = std::thread::spawn(move || {
+                let outcome = host(&kernel, graph_op(InputSelection::AikitResolution));
+                (start.elapsed().as_secs_f64(), describe(&outcome))
+            });
+            std::thread::sleep(std::time::Duration::from_millis(200));
+            handle
+        });
+        let world = match lapsed {
+            true => "asked before the pass",
+            false if host(kernel, KernelOp::WorldRead).is_ok() => "ok",
+            false => "ERR",
+        };
+        let world_at = start.elapsed().as_secs_f64();
+        let handles: Vec<_> = registers
+            .iter()
+            .cloned()
+            .map(|(project, path)| {
+                let kernel = Arc::clone(kernel);
+                std::thread::spawn(move || {
+                    let steps = read_register(&kernel, &project, &path);
+                    (project, start.elapsed().as_secs_f64(), steps)
+                })
+            })
+            .collect();
+        let (mut lists, mut reads, mut relations, mut errors, mut settled) =
+            (Vec::new(), Vec::new(), Vec::new(), 0, 0f64);
+        let count = handles.len();
+        for handle in handles {
+            let (project, seconds, steps) = handle.join().unwrap();
+            settled = settled.max(seconds);
+            lists.push(steps.list);
+            reads.extend(steps.read);
+            if let Some((seconds, ok)) = steps.relations {
+                relations.push(seconds);
+                errors += usize::from(!ok);
+            }
+            eprintln!(
+                "MEASURE techne-load {pass} register {}: settled at {seconds:.2}s | {steps}",
+                project.as_deref().unwrap_or("root")
+            );
+        }
+        let asked = relations.len();
+        eprintln!(
+            "MEASURE techne-load {pass}: world_read {world_at:.2}s {world} | {count} registers settled at {settled:.2}s | list {} | read {} | relations {} ({errors} ERR, {} of {asked} read)",
+            spread(lists),
+            spread(reads),
+            spread(relations),
+            asked - errors
+        );
+        if let Some(graph) = graph {
+            let (seconds, described) = graph.join().unwrap();
+            eprintln!("MEASURE techne-load {pass}: the graph input answered at {seconds:.2}s | {described}");
+        }
+        eprintln!(
+            "MEASURE techne-load {pass}: owner calls {}",
+            actions_delta(&before)
+        );
+    }
+
+    /// Technē's whole wiki load: cold (a new kernel), warm (the same kernel
+    /// again), beside a Graph op's AIKit input, and once the World lapsed.
+    /// AIKit's relations time is AIKit's (its 20 s limit); the kernel's
+    /// share is the listing, the reading and the World.
     #[test]
     #[ignore = "measures the real ground: OI_GRAPH_REAL_GROUND=1, never in CI"]
     fn real_ground_techne_wiki_load_by_owner_call() {
@@ -2018,74 +2099,44 @@ mod real_ground {
         }
         let registers = registers();
         let kernel = Arc::new(Mutex::new(Kernel::discover()));
-        for pass in ["cold", "warm", "beside a graph aikit read", "world lapsed"] {
-            // The registers ask once the kernel's World reading has lapsed
-            // (as when listings queue past it under load): every World read
-            // this pass counts is the registers' own.
-            let lapsed = pass == "world lapsed";
-            if lapsed {
-                let _ = host(&kernel, KernelOp::WorldRead);
-                std::thread::sleep(read_cache::WORLD_TTL + std::time::Duration::from_millis(500));
-            }
-            let before = actions();
-            let start = Instant::now();
-            let graph = pass.starts_with("beside").then(|| {
-                let kernel = Arc::clone(&kernel);
-                let handle = std::thread::spawn(move || {
-                    let outcome = host(&kernel, graph_op(InputSelection::AikitResolution));
-                    (start.elapsed().as_secs_f64(), describe(&outcome))
-                });
-                std::thread::sleep(std::time::Duration::from_millis(200));
-                handle
-            });
-            let world = match lapsed {
-                true => "asked before the pass",
-                false if host(&kernel, KernelOp::WorldRead).is_ok() => "ok",
-                false => "ERR",
+        load_pass(&kernel, &registers, "cold", false, false);
+        load_pass(&kernel, &registers, "warm", false, false);
+        load_pass(
+            &kernel,
+            &registers,
+            "beside a graph aikit read",
+            true,
+            false,
+        );
+        load_pass(&kernel, &registers, "world lapsed", false, true);
+    }
+
+    /// The bound on AIKit knowledge reads in flight, swept: Technē's load
+    /// cold (a new kernel) then warm at each limit in
+    /// `OI_KNOWLEDGE_READERS_SWEEP` (comma-separated, 0 = unbounded;
+    /// default `0,3,5,8`).
+    #[test]
+    #[ignore = "measures the real ground: OI_GRAPH_REAL_GROUND=1, never in CI"]
+    fn real_ground_techne_wiki_load_by_knowledge_readers() {
+        if !enabled() {
+            return;
+        }
+        let registers = registers();
+        let sweep =
+            std::env::var("OI_KNOWLEDGE_READERS_SWEEP").unwrap_or_else(|_| "0,3,5,8".into());
+        for limit in sweep.split(',') {
+            let limit: usize = limit.trim().parse().expect("a readers limit");
+            let label = match limit {
+                0 => "unbounded".to_owned(),
+                limit => format!("readers {limit}"),
             };
-            let world_at = start.elapsed().as_secs_f64();
-            let handles: Vec<_> = registers
-                .iter()
-                .cloned()
-                .map(|(project, path)| {
-                    let kernel = Arc::clone(&kernel);
-                    std::thread::spawn(move || {
-                        let steps = read_register(&kernel, &project, &path);
-                        (project, start.elapsed().as_secs_f64(), steps)
-                    })
-                })
-                .collect();
-            let (mut lists, mut reads, mut relations, mut errors, mut settled) =
-                (Vec::new(), Vec::new(), Vec::new(), 0, 0f64);
-            let count = handles.len();
-            for handle in handles {
-                let (project, seconds, steps) = handle.join().unwrap();
-                settled = settled.max(seconds);
-                lists.push(steps.list);
-                reads.extend(steps.read);
-                if let Some((seconds, ok)) = steps.relations {
-                    relations.push(seconds);
-                    errors += usize::from(!ok);
-                }
-                eprintln!(
-                    "MEASURE techne-load {pass} register {}: settled at {seconds:.2}s | {steps}",
-                    project.as_deref().unwrap_or("root")
-                );
-            }
-            eprintln!(
-                "MEASURE techne-load {pass}: world_read {world_at:.2}s {world} | {count} registers settled at {settled:.2}s | list {} | read {} | relations {} ({errors} ERR)",
-                spread(lists),
-                spread(reads),
-                spread(relations)
-            );
-            if let Some(graph) = graph {
-                let (seconds, described) = graph.join().unwrap();
-                eprintln!("MEASURE techne-load {pass}: the graph input answered at {seconds:.2}s | {described}");
-            }
-            eprintln!(
-                "MEASURE techne-load {pass}: owner calls {}",
-                actions_delta(&before)
-            );
+            crate::knowledge_prepared::set_aikit_readers(match limit {
+                0 => usize::MAX,
+                limit => limit,
+            });
+            let kernel = Arc::new(Mutex::new(Kernel::discover()));
+            load_pass(&kernel, &registers, &format!("{label} cold"), false, false);
+            load_pass(&kernel, &registers, &format!("{label} warm"), false, false);
         }
     }
 
