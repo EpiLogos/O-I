@@ -77,6 +77,11 @@ export function planKey(intent: KeyIntent, doors: KeyDoors, options: KeyOptions 
       const column = grid?.set.columns[intent.row]
       if (!launch || !column) return null
       const what = `Launch row ${column.name || intent.row + 1}`
+      // A row whose every clip stands on a read-only track (the cron firings) is read, not launched — as the grid's row button
+      // says (frame/tracks/SessionGrid.tsx readOnlyRow); its number key refuses in the same words.
+      const readOnly = new Set(grid!.set.tracks.filter(track => track.readOnly).map(track => track.id))
+      const held = grid!.set.clips.filter(clip => clip.columnId === column.id)
+      if (held.length > 0 && held.every(clip => readOnly.has(clip.trackId))) return {run: async () => refusal(what, 'every clip in this row is read, not launched')}
       return {run: async () => {
         const answer = await answerOf(() => launch.run(column.id))
         return answer && {...answer, what}
