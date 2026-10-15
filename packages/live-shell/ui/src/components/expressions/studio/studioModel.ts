@@ -4,6 +4,7 @@
 // what each holds are the holder table's (inhabitants/sdk/semantics.ts STUDIO_SECTIONS, lock §4.8): this module only sorts the
 // catalogue's devices (components/nativeDeviceCatalogue.ts) into those sections, in the table's order. Pure: no React, no owner call.
 import type {NativeEditorReading} from '@epilogos/expressions-boundary/editor'
+import type {HostedAppState} from '@epilogos/expressions-boundary'
 import {STUDIO_SECTIONS} from '../../../inhabitants/sdk/semantics'
 import {deviceCatalogue, type RackDevice} from '../../nativeDeviceCatalogue'
 import {standingWord} from '../clip/sceneClip'
@@ -59,10 +60,28 @@ export function firstShown(families: readonly string[], reading: NativeEditorRea
   return families.find(family => placed.has(family)) ?? families.find(lit) ?? families[0]!
 }
 
-/** The Studio's owner line: the engine, the open Scene, and the owner's standing in its own words — never a claim of the shell's. */
-export function studioOwner(reading: NativeEditorReading | null): string {
-  if (!reading) return 'Expressions engine · no work is open'
-  return `Expressions engine · ${reading.scene.name} · ${standingWord(reading.standing)}`
+/** The Studio's owner line: the engine, the open Scene — where the frame says it stands, when it says — and the owner's standing
+ * in its own words; never a claim of the shell's. */
+export function studioOwner(reading: NativeEditorReading | null, place: string | null = null): string {
+  if (!reading) return place ? `Expressions engine · ${place}` : 'Expressions engine · no work is open'
+  return `Expressions engine · ${place ?? reading.scene.name} · ${standingWord(reading.standing)}`
+}
+
+/** A time on the Expression's clock, in words: minutes and seconds, tenths when the address carries them (12.346 → 0:12.3). */
+export function addressClock(seconds: number): string {
+  const tenths = Math.round(seconds * 10), whole = Math.floor(tenths / 10), rest = tenths % 10
+  return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, '0')}${rest ? `.${rest}` : ''}`
+}
+
+/** lane-3 E22 (ticket P, G3): where the work stands, in words — the Scene's name, the time, the marker's name — read only from
+ * the frame's own announcement (its address and Scene name). Null while the frame names no address. */
+export function studioPlace(state: HostedAppState | null | undefined): string | null {
+  const address = state?.address
+  if (!address) return null
+  const scene = state.sceneName?.trim() ? `“${state.sceneName.trim()}”` : 'the Scene'
+  const at = address.t !== undefined ? ` at ${addressClock(address.t)}` : ''
+  const marker = address.marker !== undefined ? ` · marker “${address.markerName?.trim() || address.marker}”` : ''
+  return `${scene}${at}${marker}`
 }
 
 /** Whether a device the person can place stands on the rack now (the owner's `devices` reading). */

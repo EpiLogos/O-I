@@ -106,7 +106,10 @@ export interface SurfaceBinding extends SurfacePresentationBinding {
    * own `?expression=` boot grammar resolves — never a copy of app content.
    * On a restart the stage slot deep-links the remounted application to it,
    * after — never gating — the app's own boot recovery. */
-  engine?: {expressionRef: string; documentId?: string; revision?: string};
+  engine?: {expressionRef: string; documentId?: string; revision?: string;
+    /** lane-3 E22 (ticket P, G3): where the work stood — the frame's own announced address, its link's refs (`?scene=&t=&marker=`),
+     * kept beside the work it addresses so a restart opens the frame there. Never app content. */
+    address?: {scene?: string; t?: number; marker?: string}};
   location?: import("../kernel/types").CentralLocation;
   /** SF1: a projected subject pinned as its own Surface (kind
    * 'presentation') carries the exact World/Projection/Presentation/

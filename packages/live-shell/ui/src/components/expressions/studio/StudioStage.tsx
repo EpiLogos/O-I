@@ -8,7 +8,8 @@
 //   • TOOLS: the camera (2D | 3D, Face plane), the guides (Grid, Snap, Guides) and the view (Fit, Keep, Restore).
 //   • CAPTURE: still | video (the mockup's x.cap), ◉ Capture (a PNG, or a video take started and stopped), Save video, Present, and
 //     Edition… — the capture options (width, frame, text, background), Export (Expression JSON, Native configuration, Living HTML)
-//     and Import.
+//     and Import; under them the last export as the native host received it — the file and the folder it landed in, or why not
+//     (ticket P, G1: studioExports.ts).
 // Orbit stays a pointer drag on the stage: the pane's hover words say so (projections/expressionsPane.tsx), not a control here.
 import {useEffect, useId, useState, type ReactNode} from 'react'
 import {STAGE_CAPTURE_ASPECTS, STAGE_CAPTURE_WIDTHS, type HostedAppState, type StageCaptureAspect, type StageCaptureSettings, type StageCommand,
@@ -17,6 +18,7 @@ import {STAGE_CAPTURE_DEFAULTS, STAGE_EXPORT_LABELS, STAGE_IMPORT, STAGE_SAVE_VI
   stageExport, stagePresent, stageReadings, stageRecord, stageView} from '../../../native/stageCommands'
 import {Icon} from '../../../inhabitants/sdk/Icon'
 import type {IconName} from '../../../inhabitants/sdk/icons'
+import {exportWords, useLastExport, type ExportNotice} from './studioExports'
 
 /** The frame's one runner: one typed command, one answer. */
 export type StageRun = (command: StageCommand) => Promise<StageResult>
@@ -108,13 +110,17 @@ export function StageCaptureTools({sender}: {sender: StageSender}) {
   const editionId = useId()
   // Capture is the plate's last column, often scrolled past: an opened Edition is brought into view (presentation only).
   useEffect(() => {if (edition) document.getElementById(editionId)?.scrollIntoView?.({block: 'nearest', inline: 'nearest'})}, [edition, editionId])
+  // The last export as the native host received it (studioExports.ts): where the file landed, or why it did not.
+  const exported = useLastExport()
   return <StageCaptureBody sender={sender} chosen={chosen} options={options} edition={edition} editionId={editionId}
-    onChoose={setChosen} onOptions={setOptions} onEdition={() => setEdition(open => !open)} />
+    onChoose={setChosen} onOptions={setOptions} onEdition={() => setEdition(open => !open)} exported={exported} />
 }
 
 /** The Capture section's body over its choices (held by StageCaptureTools): drawn from them, every press one call back or one command. */
-export function StageCaptureBody({sender, chosen, options, edition, editionId, onChoose, onOptions, onEdition}: {sender: StageSender; chosen: CaptureKind
-  options: CaptureOptions; edition: boolean; editionId: string; onChoose: (kind: CaptureKind) => void; onOptions: (options: CaptureOptions) => void; onEdition: () => void}) {
+export function StageCaptureBody({sender, chosen, options, edition, editionId, onChoose, onOptions, onEdition, exported = null}: {sender: StageSender; chosen: CaptureKind
+  options: CaptureOptions; edition: boolean; editionId: string; onChoose: (kind: CaptureKind) => void; onOptions: (options: CaptureOptions) => void; onEdition: () => void
+  /** The last export the native host received (ticket P, G1): its file and folder, or its fault. */
+  exported?: ExportNotice | null}) {
   const {readings, reason} = sender
   const recording = readings.recording === true
   // While a take records, the choice is video: Stop is the one capture that can run.
@@ -145,6 +151,8 @@ export function StageCaptureBody({sender, chosen, options, edition, editionId, o
         <StageButton sender={sender} id="save-video" label="Save video" words="Save the take you recorded." command={STAGE_SAVE_VIDEO} blocked={recordBlocked} />
       </div>}
       {reason && <p className="inst-section-line studio-stage-reason">{reason}</p>}
+      {exported && <p className="studio-export-line" role="status" data-export={exported.state}
+        title={exported.folder && exported.file ? `${exported.folder}/${exported.file}` : exported.reason ?? undefined}>{exportWords(exported)}</p>}
     </div>
     {edition && <div className="studio-edition" id={editionId} role="group" aria-label="Edition">
       <div className="studio-edition-col" role="group" aria-label="Capture options">

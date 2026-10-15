@@ -23,6 +23,11 @@ export interface PlateSection {
   /** The column's own width where the mockup gives one; absent, the column takes what it holds. */
   readonly width?: number
   readonly children: ReactNode
+  /** Folded to its title (manual §10.4 "A device can also fold down to its title. Click the title to open it again"; the
+   * mockup's folded strip .ifold, :153): the column stands as the runtime's fold strip, its name read upward. */
+  readonly folded?: boolean
+  /** The fold's press: on the strip it opens the column, on an open column's title it folds it. Absent, the column never folds. */
+  readonly onFold?: () => void
 }
 
 export interface InstrumentPlateProps {
@@ -48,11 +53,20 @@ export function InstrumentPlate({presentation, power = 'unknown', onPower, actio
   return <div className="inst-plate" {...dataAttributes} onDragOver={onDragOver} onDrop={onDrop} onDragLeave={onDragLeave}>
     <FacePlate presentation={presentation} power={power} onPower={onPower} actions={actions}>
       <div className={`inst-sections${bodyClassName ? ` ${bodyClassName}` : ''}`}>
-        {sections.map(section => <section key={section.id} className="inst-section" data-section={section.id} aria-label={section.title}
-          style={section.width ? {'--section-w': `${section.width}px`} as CSSProperties : undefined}>
-          <h5 className="inst-section-head"><span>{section.title}</span>{section.note !== undefined && <span className="inst-section-note">{section.note}</span>}</h5>
-          <div className="inst-section-body">{section.children}</div>
-        </section>)}
+        {sections.map(section => section.folded
+          // The runtime's fold strip (inhabitants/sdk/controls.tsx FacePlate folded: .sdk-face__unfold), pressed to open.
+          ? <section key={section.id} className="inst-section inst-section--folded" data-section={section.id} data-folded="true" aria-label={section.title}>
+              <button type="button" className="sdk-face__unfold" aria-expanded={false} aria-label={`Open ${section.title}`} title={`${section.title} — open`}
+                onClick={section.onFold}><span className="sdk-face__fold-title">{section.title}</span></button>
+            </section>
+          : <section key={section.id} className="inst-section" data-section={section.id} aria-label={section.title}
+              style={section.width ? {'--section-w': `${section.width}px`} as CSSProperties : undefined}>
+              <h5 className="inst-section-head">{section.onFold
+                ? <button type="button" className="inst-section-fold" aria-expanded={true} title="Fold to its title" aria-label={`Fold ${section.title} to its title`}
+                    onClick={section.onFold}>{section.title}</button>
+                : <span>{section.title}</span>}{section.note !== undefined && <span className="inst-section-note">{section.note}</span>}</h5>
+              <div className="inst-section-body">{section.children}</div>
+            </section>)}
       </div>
       {footer}
     </FacePlate>

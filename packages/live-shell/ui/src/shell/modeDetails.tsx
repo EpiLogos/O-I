@@ -171,7 +171,9 @@ export const MODE_DETAILS: Readonly<Record<SurfMode, ModeDetail>> = {
           line: 'the agent\'s path: gateway → agent → skills → world → git'}
       },
     }},
-  expressions: {clip: ExpressionsClip, device: ExpressionsChain, dropHint: 'Drop a field device here',
+  // The Studio receives a dragged field device itself (ExpressionsStudio.tsx, DEVICE_MIME), and the mockup's Expressions row
+  // ends at the Studio — no separate box (lane P, 15 Oct: the box took ~150px the Studio's columns need at 1440).
+  expressions: {clip: ExpressionsClip, device: ExpressionsChain, dropHint: null,
     clipWaits: 'Open an Expression to see its scene here.', clipUngated: true,
     head: {
       clip: ({selected}) => ({name: selected.clip?.label ?? 'Scene', line: selected.set?.tracks[0]?.name ?? 'the open Expression\'s scene'}),
