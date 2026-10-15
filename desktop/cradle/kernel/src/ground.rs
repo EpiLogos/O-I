@@ -32,10 +32,27 @@ impl Request {
     }
 }
 
+/// A ground reading (status, recognition) answers from records; a bind
+/// writes the suite's binding. Neither has a measured pace beyond a second;
+/// the bounds are for an owner that never answers.
+const GROUND_READ_LIMIT: std::time::Duration = std::time::Duration::from_secs(30);
+const GROUND_BIND_LIMIT: std::time::Duration = std::time::Duration::from_secs(60);
+
 pub fn operate(request: Request) -> Result<Value, String> {
     let executable = std::env::var_os("OI_BIN")
         .map(PathBuf::from)
         .unwrap_or_else(|| "oi".into());
+    let bound = match &request {
+        Request::Status => {
+            crate::owner_process::Bound::read("O:I", "ground status", GROUND_READ_LIMIT)
+        }
+        Request::Recognize { .. } => {
+            crate::owner_process::Bound::read("Central", "central.recognize", GROUND_READ_LIMIT)
+        }
+        Request::Bind { .. } => {
+            crate::owner_process::Bound::write("O:I", "ground bind", GROUND_BIND_LIMIT)
+        }
+    };
     let (args, schema, envelope) = match request {
         Request::Status => (
             vec!["ground".into(), "status".into(), "--json".into()],
@@ -70,9 +87,7 @@ pub fn operate(request: Request) -> Result<Value, String> {
             false,
         ),
     };
-    let output = Command::new(executable)
-        .args(args)
-        .output()
+    let output = crate::owner_process::output(Command::new(executable).args(args), None, bound)
         .map_err(|e| format!("Suite ground operation unavailable: {e}"))?;
     let value: Value = serde_json::from_slice(&output.stdout).map_err(|e| {
         format!(
@@ -105,9 +120,113 @@ pub fn operate(request: Request) -> Result<Value, String> {
     Ok(reading)
 }
 
+/// A ground operation prepared under the kernel lock; its suite call runs
+/// outside it (dispatch.rs). A bind re-bases every path the kernel's caches
+/// hold, so they are withdrawn when it is prepared — as the ordered arm did
+/// before its owner call — and again when it is finished: a read begun while
+/// the suite was binding is withdrawn with them and never retained. Status
+/// and recognition are reads and withdraw nothing.
+pub struct Prepared {
+    request: Request,
+}
+/// The suite's answer to a prepared ground operation, awaiting its finish.
+pub struct Answered {
+    mutates: bool,
+    reading: Result<Value, String>,
+}
+impl Prepared {
+    /// The suite call, outside the kernel lock. Nothing is recorded here.
+    pub fn execute(self) -> Answered {
+        Answered {
+            mutates: self.request.mutates(),
+            reading: operate(self.request),
+        }
+    }
+}
+impl crate::Kernel {
+    pub fn prepare_ground(&mut self, op: &crate::KernelOp) -> Option<Prepared> {
+        let crate::KernelOp::Ground { request } = op else {
+            return None;
+        };
+        if request.mutates() {
+            self.ground_changed();
+        }
+        Some(Prepared {
+            request: request.clone(),
+        })
+    }
+    pub fn finish_ground(&mut self, answered: Answered) -> Result<crate::KernelOpOutcome, String> {
+        if answered.mutates {
+            self.ground_changed();
+        }
+        Ok(crate::KernelOpOutcome {
+            receipts: Vec::new(),
+            result: crate::KernelOpResult::GroundReading {
+                reading: answered.reading?,
+            },
+        })
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// A bind withdraws the kernel's retained readings when it is prepared
+    /// and again when it is finished; a status reading withdraws nothing.
+    #[cfg(unix)]
+    #[test]
+    fn a_bind_withdraws_retained_readings_before_and_after_its_suite_call() {
+        let owner = crate::tests::FakeOwner::spawn_counter("ground-bind");
+        let mut kernel = owner.kernel();
+        kernel.reads.put("world".into(), json!({"root": "/tmp"}));
+        let status = kernel
+            .prepare_ground(&crate::KernelOp::Ground {
+                request: Request::Status,
+            })
+            .unwrap();
+        assert!(kernel
+            .reads
+            .get("world", crate::read_cache::WORLD_TTL)
+            .is_some());
+        assert!(!status.request.mutates());
+        let bind = crate::KernelOp::Ground {
+            request: Request::Bind {
+                request: BindingRequest {
+                    expected_previous: None,
+                    canonical_path: "/x".into(),
+                    identity: Identity {
+                        device: "d".into(),
+                        inode: "i".into(),
+                    },
+                },
+            },
+        };
+        kernel.prepare_ground(&bind).unwrap();
+        assert!(kernel
+            .reads
+            .get("world", crate::read_cache::WORLD_TTL)
+            .is_none());
+        // A read begun while the suite was binding is withdrawn at finish.
+        let ticket = kernel.reads.begin("dir:Work".into());
+        let outcome = kernel
+            .finish_ground(Answered {
+                mutates: true,
+                reading: Ok(json!({"schema": "oi.ground-binding/v1"})),
+            })
+            .unwrap();
+        assert!(!kernel.reads.finish("dir:Work", ticket));
+        assert!(matches!(
+            outcome.result,
+            crate::KernelOpResult::GroundReading { .. }
+        ));
+        assert!(kernel
+            .finish_ground(Answered {
+                mutates: false,
+                reading: Err("refused".into()),
+            })
+            .is_err());
+    }
 
     #[test]
     fn only_bind_is_a_mutation() {

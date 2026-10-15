@@ -102,6 +102,15 @@ impl OwnerReadCache {
             .insert(key.to_owned(), (ticket, Arc::clone(&flight)));
         flight
     }
+    /// The reading a current flight of `key` already holds within `ttl`;
+    /// never starts a flight and never waits for one in flight.
+    pub(crate) fn flight_held(&self, key: &str, ttl: Duration) -> Option<serde_json::Value> {
+        let (ticket, flight) = self.flights.get(key)?;
+        if !self.current(key, *ticket) {
+            return None;
+        }
+        flight.held(ttl)
+    }
     /// A pending owner read is a distinct observation, not a cache entry.
     /// Latest request wins, and source invalidation also withdraws pending reads.
     pub(crate) fn begin(&mut self, key: String) -> u64 {
