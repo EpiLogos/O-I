@@ -1,6 +1,6 @@
 import {useEffect, useRef, useState} from 'react'
 import {externalHttpsUrl} from '../../../../../desktop/cradle/src/shared/externalLink'
-import {mountExpressionsApplication, reopenConfiguredWorks,
+import {mountExpressionsApplication, reopenConfiguredWorks, addressRefs, entryAtAddress,
   type ExpressionsHost, type HostedAppMode, type ChannelContext} from '@epilogos/expressions-boundary'
 import {createCradleOwners, type KernelTransportStatus} from '@epilogos/expressions-boundary/cradle'
 import {createNativeTechneNavigator} from '@epilogos/expressions-boundary/techne'
@@ -48,6 +48,13 @@ function expressionBinding(owner: Workspace): SurfaceBinding | undefined {
   }
 }
 const checkpointRef = (binding?: SurfaceBinding) => binding?.engine?.expressionRef.startsWith('expression:') ? binding.engine.expressionRef : undefined
+/** The hosted engine's checkpoint from the frame's own reading: the work, its revision, and where it stands (lane-3 E22, ticket P):
+ * the address the frame announced, or — while it announces none (an opening link not yet settled) — the one already kept with
+ * this same work. One shape for every writer, so no writer strips what another kept. */
+function engineCheckpoint(state: HostedAppState, scene: NonNullable<HostedAppState['nativeScene']>, held?: SurfaceBinding): NonNullable<SurfaceBinding['engine']> {
+  const address = addressRefs(state.address) ?? (held?.engine?.expressionRef === scene.expression_ref ? held.engine.address : undefined)
+  return {expressionRef: scene.expression_ref, documentId: state.document?.id, revision: String(scene.revision), ...(address ? {address} : {})}
+}
 
 /** The real application is mounted once. The deep cut changes disclosure;
  * both cuts read/edit/save the same owner's document through the boundary. */
@@ -237,7 +244,11 @@ export function ExpressionsPanel() {
           clear: () => {if (live) setFault(null)},
         })
       }
-      mounted = mountExpressionsApplication(target, `${config.expressions_entry ?? '/__application/expressions/index.html'}?mode=${modeRef.current}&world=${worldLens.current}&host-load=${hostLoad}${initialRef ? `&expression=${encodeURIComponent(initialRef)}` : ''}`, {
+      // lane-3 E22 (ticket P, G3): the work reopens where it stood — the address kept beside it, in the frame's own query
+      // (?scene=&t=&marker=); the frame applies it once the work has settled and names any part it refuses.
+      const keptEngine = expressionBinding(bookRef.current.current)?.engine
+      const keptAddress = initialRef && keptEngine?.expressionRef === initialRef ? keptEngine.address : undefined
+      mounted = mountExpressionsApplication(target, entryAtAddress(`${config.expressions_entry ?? '/__application/expressions/index.html'}?mode=${modeRef.current}&world=${worldLens.current}&host-load=${hostLoad}${initialRef ? `&expression=${encodeURIComponent(initialRef)}` : ''}`, keptAddress), {
         bindingId: 'world.expressions', owners, mode: modeRef.current, world: worldLens.current,
         recoveryBindings: continued?.works, initialRecoveryBinding: initial,
         isPresented: presented,
@@ -258,7 +269,7 @@ export function ExpressionsPanel() {
             const owner = bookRef.current, selected = selectionOwner.current
             const binding = expressionBinding(owner.current), scene = state.nativeScene
             if (workspaceRef.current.accessReady && selected.workspaceId === owner.current.id && (!selected.expected || selected.expected === scene.expression_ref) && binding) {
-              const engine = {expressionRef: scene.expression_ref, documentId: state.document?.id, revision: String(scene.revision)}
+              const engine = engineCheckpoint(state, scene, binding)
               if (JSON.stringify(binding.engine) !== JSON.stringify(engine)) owner.surfaceEngine(owner.current.id, binding.id, engine)
             }
             refreshEditor()
@@ -341,10 +352,10 @@ export function ExpressionsPanel() {
     const owner = book.current, held = expressionBinding(owner)
     if (held) {
       if (!owner.layout.surfaces[held.id]) book.moveSurface(held.id, 'tree')
-      const scene = host.current?.getState()?.nativeScene
+      const reading = host.current?.getState(), scene = reading?.nativeScene
       const expected = selectionOwner.current.expected
-      if (scene && (!expected || expected === scene.expression_ref)) {
-        const engine = {expressionRef: scene.expression_ref, documentId: host.current?.getState()?.document?.id, revision: String(scene.revision)}
+      if (reading && scene && (!expected || expected === scene.expression_ref)) {
+        const engine = engineCheckpoint(reading, scene, held)
         if (JSON.stringify(held.engine) !== JSON.stringify(engine)) book.surfaceEngine(owner.id, held.id, engine)
       }
       return

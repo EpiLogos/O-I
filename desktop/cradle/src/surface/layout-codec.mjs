@@ -53,6 +53,21 @@ export function validApplicationView(raw) {
   } catch { return undefined; }
 }
 
+// lane-3 E22 (ticket P, G3): the address kept beside the work (surface/types.ts engine.address) — the frame's announced refs,
+// each part well-typed or dropped. The frame reads it again through its own deep-link grammar on reopen (deepLinks.ts
+// parseDeepLink) and names any refusal there, so only the shape is decided here (a ref no longer than the frame's
+// DEEP_LINK_REF_MAX, a time in seconds from the start).
+const addressRef = (value) => typeof value === 'string' && value.length > 0 && value.length <= 256;
+function engineAddress(raw) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return undefined;
+  const address = {
+    ...(addressRef(raw.scene) ? { scene: raw.scene } : {}),
+    ...(typeof raw.t === 'number' && Number.isFinite(raw.t) && raw.t >= 0 ? { t: raw.t } : {}),
+    ...(addressRef(raw.marker) ? { marker: raw.marker } : {}),
+  };
+  return Object.keys(address).length ? address : undefined;
+}
+
 export function validBinding(raw) {
   if (!raw || typeof raw !== 'object') return null;
   const o = raw;
@@ -156,6 +171,7 @@ export function validBinding(raw) {
         expressionRef: engineRaw.expressionRef,
         ...(typeof engineRaw.documentId === 'string' ? { documentId: engineRaw.documentId } : {}),
         ...(typeof engineRaw.revision === 'string' ? { revision: engineRaw.revision } : {}),
+        ...(engineAddress(engineRaw.address) ? { address: engineAddress(engineRaw.address) } : {}),
       }
     : undefined;
   return {

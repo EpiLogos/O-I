@@ -16,6 +16,7 @@ mod app_assets;
 mod native_shell;
 mod walk_diagnostics;
 mod midi;
+mod downloads;
 use std::sync::Mutex;
 
 use oi_cradle_kernel::events::{KernelEventReplay, KERNEL_EVENT_TOPIC};
@@ -191,6 +192,26 @@ fn main() {
     for window in &mut context.config_mut().app.windows {
         window.data_store_identifier=Some([79,73,83,72,69,76,76,67,65,78,68,73,68,65,84,69]);
     }
+    // Every window the config would create is built in setup instead, from
+    // the same config through the same `from_config` Tauri's own auto-create
+    // uses, so it carries the download receiver (wry cancels a download when
+    // a webview has none: every export vanished). Its WebKit store is the one
+    // auto-create gave it: the pinned `from_config` does not apply the
+    // config's identifier, so only a store applied before (the isolated run
+    // below) is applied here — the main window keeps the store its workspace
+    // book lives in.
+    #[cfg_attr(not(debug_assertions), allow(unused_mut))]
+    let mut seated: Vec<(String, Option<[u8; 16]>)> = context
+        .config_mut()
+        .app
+        .windows
+        .iter_mut()
+        .filter(|window| window.create)
+        .map(|window| {
+            window.create = false;
+            (window.label.clone(), None)
+        })
+        .collect();
     // A development/native acceptance run can use an isolated persistent
     // WebKit store while exercising the real owner ground and kernel.
     #[cfg(debug_assertions)]
@@ -198,12 +219,19 @@ fn main() {
         assert!(raw.len()==32 && raw.bytes().all(|b|b.is_ascii_hexdigit()),"OI_CRADLE_DATA_STORE_ID must be 32 hex digits");
         let mut id=[0u8;16];for (i,byte) in id.iter_mut().enumerate(){*byte=u8::from_str_radix(&raw[i*2..i*2+2],16).expect("validated hex");}
         for window in &mut context.config_mut().app.windows {window.data_store_identifier=Some(id);window.create=false;}
+        seated = context
+            .config()
+            .app
+            .windows
+            .iter()
+            .map(|window| (window.label.clone(), Some(id)))
+            .collect();
     }
     let builder = material_protocol::register(tauri::Builder::default());
     builder
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
-        .setup(|app| {
+        .setup(move |app| {
             app.manage(windows::Windows::default());
             #[cfg(feature = "native_shell")]
             app.manage(native_shell::ApplicationClose::default());
@@ -282,13 +310,20 @@ fn main() {
                 }
             }
 
-            #[cfg(target_os="macos")]
-            for config in &app.config().app.windows {
-                if !config.create {
-                    if let Some(id)=config.data_store_identifier {
-                        tauri::WebviewWindowBuilder::from_config(app,config)?.data_store_identifier(id).build()?;
-                    }
-                }
+            // The windows main() took from auto-create: each built from its own config, with the download receiver.
+            for (label, store) in &seated {
+                let Some(config) = app.config().app.windows.iter().find(|window| &window.label == label).cloned() else {
+                    continue;
+                };
+                let builder = tauri::WebviewWindowBuilder::from_config(app, &config)?;
+                #[cfg(target_os = "macos")]
+                let builder = match store {
+                    Some(id) => builder.data_store_identifier(*id),
+                    None => builder,
+                };
+                #[cfg(not(target_os = "macos"))]
+                let _ = store;
+                builder.on_download(downloads::receiver()).build()?;
             }
             midi::start(app.handle());
             menus::install(app.handle(), &[], "")?;

@@ -16,8 +16,13 @@
 //   • Tools and Capture hold the stage's own controls, moved out of the Expressions pane (PATH §1: controls in the device, never chrome
 //     in a pane): the view in Tools, still | video, ◉ Capture, Present and Edition… in Capture (StudioStage.tsx). They read the frame's
 //     chrome as the pane did (projections/expressionsPaneHost.ts useHostedChrome) and send through the frame's one runner.
+//   • the head says where the work stands — the Scene, the time, the marker, as the frame announces its address (lane-3 E22) — and
+//     its link mark copies that address whole, in the frame's own form (ticket P, G3); Capture says where the last export landed (G1);
+//   • the columns fit the detail row by the plate's fold: before Capture, they fold to their titles until Capture is in view
+//     (studioFit.ts); a title folds or opens its column, and the person's choice holds.
 // Every write leaves through the owner path it used before: the retained editor's one apply, the device's own submit, the stage's runner.
-import {useMemo, useState, type DragEvent, type ReactNode} from 'react'
+import {useEffect, useId, useMemo, useRef, useState, type DragEvent, type ReactNode} from 'react'
+import {addressLink} from '@epilogos/expressions-boundary'
 import type {NativeEditorReading, NativeEditorReply, NativeEditorRequest} from '@epilogos/expressions-boundary/editor'
 import {InstrumentPlate, SectionDevices, SectionNote, type PlateSection, type SectionDevice} from '../../../frame/devices/InstrumentPlate'
 import {selectDevice} from '../../../frame/devices/deviceDoor'
@@ -37,7 +42,8 @@ import {deviceAddChange} from '../../nativeDeviceRackModel'
 import {DEVICE_MIME, afterIdFor, dispatchOpenDevice, parseDeviceDrag} from '../../nativeDrag'
 import type {RackDevice} from '../../nativeDeviceCatalogue'
 import {GlyphSequenceEditor, type RetainedGlyphInput} from '../../GlyphSequenceEditor'
-import {firstShown, onRack, studioFieldFamilies, studioOwner, studioSections, type StudioSection} from './studioModel'
+import {firstShown, onRack, studioFieldFamilies, studioOwner, studioPlace, studioSections, type StudioSection} from './studioModel'
+import {foldsToFit, pressFold, sameSet} from './studioFit'
 import {StageCaptureTools, StageViewTools, useStageSender} from './StudioStage'
 import {useFramePlacement, useHostedChrome} from '../../../projections/expressionsPaneHost'
 import './studio.css'
@@ -87,6 +93,23 @@ export function ExpressionsStudio({reading, request, selectEntity, drafts, onExp
   const stage = useStageSender(chrome?.state ?? null, chrome?.run ?? null)
   // The frame's faults stand at the foot of the pane that holds it; while no pane holds it, they stand here — never lost.
   const placement = useFramePlacement()
+  // lane-3 E22 (ticket P, G3): where the work stands, only as the frame announces it; the link mark copies it whole.
+  const hosted = chrome?.state ?? null
+  const place = studioPlace(hosted)
+  const link = hosted?.address ? addressLink(hosted.nativeScene?.expression_ref ?? hosted.document?.id, hosted.address) : null
+  const [copyNote, setCopyNote] = useState<string | null>(null)
+  useEffect(() => {if (!copyNote) return; const timer = setTimeout(() => setCopyNote(null), 4000); return () => clearTimeout(timer)}, [copyNote])
+  const copyAddress = () => {
+    if (!link) return
+    // The clipboard write of RunPage.tsx:163: its answer, or its refusal, in one line.
+    if (!navigator.clipboard) {setCopyNote('This window offers no clipboard; the address is in the link mark\'s words.'); return}
+    void navigator.clipboard.writeText(link).then(() => setCopyNote(`Address copied: ${link}`), () => setCopyNote('The clipboard refused the address.'))
+  }
+  // The columns fit the row by the plate's fold (studioFit.ts): measured here, decided there.
+  const fitId = useId()
+  const openWidths = useRef(new Map<string, number>())
+  const [chosen, setChosen] = useState<{folded: ReadonlySet<string>; opened: ReadonlySet<string>}>({folded: new Set(), opened: new Set()})
+  const [fitted, setFitted] = useState<ReadonlySet<string>>(new Set())
 
   const fieldDevices = (section: StudioSection): SectionDevice[] => [
     ...section.field.flatMap(entry => {
@@ -135,7 +158,34 @@ export function ExpressionsStudio({reading, request, selectEntity, drafts, onExp
 
   const sections: PlateSection[] = configure ? [...settings] : [...SECTIONS.map(section => ({
     id: section.id, title: section.title, note: section.note ?? undefined, children: sectionBody(section),
+    folded: fitted.has(section.id), onFold: () => setChosen(state => pressFold(section.id, fitted.has(section.id), state)),
   })), ...own]
+  const columnKey = sections.map(section => section.id).join('|')
+  useEffect(() => {
+    const plate = [...document.querySelectorAll<HTMLElement>('.inst-plate[data-studio-fit]')].find(element => element.dataset.studioFit === fitId)
+    const row = plate?.querySelector<HTMLElement>('.inst-sections')
+    if (configure || !row) {setFitted(previous => previous.size ? new Set() : previous); return}
+    let strip = 28
+    const fit = () => {
+      const columns: string[] = []
+      for (const column of row.querySelectorAll<HTMLElement>(':scope > .inst-section')) {
+        const id = column.dataset.section
+        if (!id) continue
+        columns.push(id)
+        const width = column.getBoundingClientRect().width
+        if (column.dataset.folded) strip = width || strip
+        else openWidths.current.set(id, width)
+      }
+      const next = foldsToFit({columns, widths: openWidths.current, strip, available: row.clientWidth, folded: chosen.folded, opened: chosen.opened})
+      setFitted(previous => sameSet(previous, next) ? previous : next)
+    }
+    fit()
+    if (typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver(fit)
+    observer.observe(row)
+    for (const column of row.querySelectorAll(':scope > .inst-section')) observer.observe(column)
+    return () => observer.disconnect()
+  }, [configure, chosen, columnKey, fitted, fitId])
 
   // A device dragged from the browser goes on the rack, appended after the last widget — the rack's own drop, one device-add. Over the
   // rack itself (in the settings) the rack takes the drop at its gap and the plate stands aside: one drop, one add.
@@ -145,13 +195,15 @@ export function ExpressionsStudio({reading, request, selectEntity, drafts, onExp
     ...(deep.available ? [{icon: 'full' as const, label: deep.open ? 'Return the Studio to its place' : 'Deep edit: the Studio at full height', onPress: deep.onPress}] : []),
     ...(refresh.available ? [{icon: 'orbit' as const, label: 'Read the retained editor again', onPress: refresh.onPress}] : []),
     ...(chrome?.reopen ? [{icon: 'orbit' as const, label: 'Reopen the native work: the frame\'s host is gone', onPress: chrome.reopen}] : []),
+    ...(link ? [{icon: 'link' as const, label: `Copy address: ${link}`, onPress: copyAddress}] : []),
   ]
   // One line: the editor's refusal, the stage's refusal, and the frame's faults while no pane holds the frame.
   const said = [fault ?? paneFault ?? editor.error, stage.refusal, ...(placement === null ? chrome?.faults ?? [] : [])].filter((text): text is string => !!text)
   const shown = said.length ? said.join(' · ') : null
-  return <InstrumentPlate presentation={{family: 'expressions', faceId: 'studio', title: 'Studio', icon: 'expr', owner: studioOwner(reading)}}
+  return <InstrumentPlate presentation={{family: 'expressions', faceId: 'studio', title: 'Studio', icon: 'expr', owner: studioOwner(reading, place)}}
     actions={actions} sections={sections} bodyClassName="native-device-view"
-    dataAttributes={{'data-studio': configure ? 'settings' : 'sections', 'data-dropping': dropping ? 'true' : undefined, 'data-dirty': reading?.standing.dirty ? 'true' : undefined}}
+    dataAttributes={{'data-studio': configure ? 'settings' : 'sections', 'data-dropping': dropping ? 'true' : undefined, 'data-dirty': reading?.standing.dirty ? 'true' : undefined,
+      'data-studio-fit': fitId}}
     onDragOver={event => { if (!isDeviceDrag(event)) return; event.preventDefault(); event.dataTransfer.dropEffect = 'copy'; setDropping(true) }}
     onDragLeave={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDropping(false) }}
     onDrop={event => {
@@ -161,7 +213,10 @@ export function ExpressionsStudio({reading, request, selectEntity, drafts, onExp
       const family = parseDeviceDrag(event.dataTransfer.getData(DEVICE_MIME))
       if (family) void editor.apply([{kind: 'device-add', family, after_id: afterIdFor(reading.devices.length, reading.devices.map(device => device.id))}])
     }}
-    footer={shown ? <p className="studio-fault" role="alert">{shown}</p> : undefined} />
+    footer={shown || copyNote ? <>
+      {shown && <p className="studio-fault" role="alert">{shown}</p>}
+      {copyNote && <p className="studio-note" role="status">{copyNote}</p>}
+    </> : undefined} />
 }
 
 /** Selected · the glyph: which object the Studio acts on, and what it does to it — the Force card's modes, the glyph's clip compact. */
