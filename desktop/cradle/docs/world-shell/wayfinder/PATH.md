@@ -100,7 +100,6 @@ objections verbatim and the full validation (`BRIEF-BUILDER.md`); the lead conve
 | Ticket | Who | Zone | Since |
 |---|---|---|---|
 | S — Technē's subject door completes: the asked Scene opens on the stage (seen natively: asked, stage opened, nothing shown, no fault) | Opus builder | `src/techne/subject/**`, `panels/expressions.tsx` (navigator wiring), `packages/expressions-boundary/src/techne.ts`, `desktop/cradle/src/techne/{wikiProjectionStore,wikiExpression}.ts` if the cause is there | 15 Oct |
-| T — the register follows the code again: lanes N, O and P's targets re-homed through `tools/build_rehome.py` and `acceptance.py rehome`; verify passes | Opus builder | `wayfinder/tools/build_rehome.py`, `targets.json` (through acceptance.py) | 15 Oct |
 | Native screen pass against the mockup renders; N1; the lanes' convergence | lead | `App.tsx`, `native/Workbench.tsx`, `shell/modeFrames.ts`, the book, the register | 14 Oct |
 
 Then: the 126 targets re-homed (lane M, FOUNDATION §8): `acceptance.py rehome` re-opens every cited path:line, runs the
@@ -111,6 +110,13 @@ Palace). Ranked: G1 the stage's file exports have no native receiver (the main w
 cancels `<a download>`: lane-1 B2/B3); G2 the Instruments rail keeps no subject into Graph (D1); G3 the shell carries no
 frame deep-link address (E22); R1 Places onto the atlas (31 targets); R2 palaces onto the atlas (N4, 9); S1 mount N2's
 subject door — 76 homes read their facets only on a Wiki-bound Scene, reached today only by Examine in the Graph pane.
+Then: the register follows the code again (`c1b203e4c`, lane T): 123 homed, 3 gaps (G4 Capture into a Scene, G5 Record a walk,
+G6 M3′'s beat), homes on a retiring home 40 → 9 (R2, palaces onto the atlas); the Wiki-Scene rows reach through N2's door beside
+Examine. Seen on screen: 0. Carried from lane T: the progress axis disagrees with the re-home columns (T20/T25/T26 are gaps but
+`implemented: yes`; D1 is homed but pending; 47 rows' `implemented` evidence cites files no longer in the tree) — `rehome`
+leaves progress alone by design, so the progress axis needs its own re-record. Fixed from its code-reading (`d6b5aa672`): pressing
+M4′ from another pane opened the Earth and then folded M4′ again.
+
 Then: Places is the atlas, alone (`92a7d38d5`, lane O, R1). The 31 Places targets are listed with their atlas homes in
 `tickets/T-PLACES-ONTO-ATLAS.md`: the M4 World / Places plate (Body, Landmass, Climate, Sky with the QL Sun and the Frames
 ladder, Locations with find and the Place tool through the owner's editor, Relations narrowing the one filter), the transport's
