@@ -100,7 +100,6 @@ objections verbatim and the full validation (`BRIEF-BUILDER.md`); the lead conve
 | Ticket | Who | Zone | Since |
 |---|---|---|---|
 | O — Places is the atlas, alone (R1, lane-4 T1–T30 + lane-2 T21): listed in `tickets/T-PLACES-ONTO-ATLAS.md`, ported onto the M4 plate and the transport, then the frame's Places map and lens removed | Opus builder | `src/projections/atlas/**`, `src/inhabitants/ql/devices/**`, `atlasFaceBodies.tsx`, `modeTransports.tsx` (Technē binding), `panels/knowledge.tsx`, the frame's `psychogeographic/**` and Places lens | 15 Oct |
-| Q — the Graph op answers in seconds: each input measured cold and warm against the real ground, then cut at the cause (parallel and revision-cached owner reads, inputs that never wait on each other) | Opus builder | `desktop/cradle/kernel/src/graph.rs`, `files.rs` (read helpers), the OwnerReadCache and AIKit resolution client modules, `desktop/cradle/src/knowledge/graph.ts` if needed | 15 Oct |
 | Native screen pass against the mockup renders; N1; the lanes' convergence | lead | `App.tsx`, `native/Workbench.tsx`, `shell/modeFrames.ts`, the book, the register | 14 Oct |
 
 Then: the 126 targets re-homed (lane M, FOUNDATION §8): `acceptance.py rehome` re-opens every cited path:line, runs the
@@ -111,6 +110,16 @@ Palace). Ranked: G1 the stage's file exports have no native receiver (the main w
 cancels `<a download>`: lane-1 B2/B3); G2 the Instruments rail keeps no subject into Graph (D1); G3 the shell carries no
 frame deep-link address (E22); R1 Places onto the atlas (31 targets); R2 palaces onto the atlas (N4, 9); S1 mount N2's
 subject door — 76 homes read their facets only on a Wiki-bound Scene, reached today only by Examine in the Graph pane.
+Then: the Graph op reads outside the kernel lock (`09a260655`, lane Q, measured on the real ground). Each Graph request had
+held the kernel lock through its owner calls, so AIKit's 20 s resolve held every other op (a Technē file listing waited 22 s;
+0.29 s now); an `all` request's inputs read at once (22.8 s → 8.1 s); input 4 (wikilinks) derives for the first time, its
+documents read eight at a time and kept by Central's revision. Carried: AIKit's own `knowledge resolve` is the remaining 20 s
+(12–30 s under load; every call rediscovers the Central tree and gives no revision to cache by) — AIKit's to cut; Technē's wiki
+load (17 registers, 27–30 s cold) is AIKit `knowledge relations` timing out for 12–13 of them, plus 17 re-reads of
+`central.world` and file listings still under the lock — the kernel half (prepared FilesList/FileRead, one shared World read
+for the prepared knowledge read) is the next kernel ticket; the dev walk-bridge runs its owners unpinned (~1 s per call through
+`oi`), so headless timings overstate the candidate's.
+
 Then: Technē starts from the world (`3a8fbc2d6`, lane N, S1 + G2). N2's subject door is mounted: Locations and Places list
 the owner's subjects from the atlas's suite standing (Bodies and Journeys say which input they wait on), double-click or Enter
 opens a subject in the Scene that carries it through the owner's reverse query and selection ask, the subject is named in the
