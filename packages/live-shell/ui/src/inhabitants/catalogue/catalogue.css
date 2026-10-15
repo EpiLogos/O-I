@@ -1,0 +1,23 @@
+/* The catalogue gallery's own layout. Every colour resolves a shell token (styles.css); nothing here restyles a device. */
+html, body { height: auto; overflow: auto; background: var(--bg-0, #26292d); }
+#root { padding: 14px; }
+.cat-views { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-start; }
+.cat-view { display: flex; flex-direction: column; gap: 6px; }
+.cat-view-title { font: 600 10px/1 var(--mono, ui-monospace, monospace); letter-spacing: .08em; text-transform: uppercase; color: var(--text-faint, #71767c); }
+.cat-view-body { display: flex; }
+.cat-view--whole .cat-view-body { width: 520px; }
+.cat-pane { position: relative; width: 720px; height: 380px; overflow: hidden; border: 1px solid var(--line-strong, #3d4147); background: var(--bg-1, #33363b); padding: 10px; }
+.cat-rail { width: 300px; border: 1px solid var(--line-strong, #3d4147); background: var(--bg-1, #33363b); }
+.cat-rail-head { padding: 6px 8px; font-size: 11px; color: var(--text-dim, #a2a7ad); border-bottom: 1px solid var(--line, #24262a); }
+.cat-rail .device { width: 100%; }
+.cat-note { margin-top: 10px; font-size: 11px; color: var(--text-faint, #71767c); }
+.cat-index { color: var(--text, #d4d7da); font-size: 12px; }
+.cat-index h1 { font-size: 16px; margin-bottom: 6px; }
+.cat-index h2 { font-size: 12px; margin: 14px 0 4px; color: var(--accent, #ffbe00); }
+.cat-index ul { list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 2px 14px; }
+.cat-index a { color: var(--text, #d4d7da); }
+.cat-semantic { margin-left: 6px; color: var(--text-faint, #71767c); font-family: var(--mono, monospace); font-size: 10px; }
+.cat-missing { color: var(--text-dim, #a2a7ad); font-size: 13px; padding: 20px; line-height: 1.6; }
+/* A folded plate stands at chain height; give it one. */
+.cat-view--folded .cat-view-body, .cat-view--compact .cat-view-body { height: 200px; }
+.cat-rail { height: 230px; display: flex; flex-direction: column; }
