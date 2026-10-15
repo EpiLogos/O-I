@@ -1,6 +1,6 @@
-// Renders DLW.md into the standalone DLW.html beside it.
-// The Markdown is the source; run `node docs/dlw/render.mjs` from the repo
-// root after editing it (needs `npm ci` in site/ for the marked parser).
+// Renders a page of the manual (DLW.md by default, or the name given: `node docs/dlw/render.mjs DEVICE-UI`) into the
+// standalone HTML beside it. The Markdown is the source; run this from the repo root after editing it (needs `npm ci` in
+// site/ for the marked parser).
 import {readFileSync, writeFileSync} from 'node:fs'
 import {dirname, join} from 'node:path'
 import {fileURLToPath} from 'node:url'
@@ -9,7 +9,12 @@ import {Marked} from '../../site/node_modules/marked/lib/marked.esm.js'
 const here = dirname(fileURLToPath(import.meta.url))
 // The device gallery (packages/live-shell/ui/src/inhabitants/catalogue, on the build branch). Override with DLW_GALLERY.
 const GALLERY = process.env.DLW_GALLERY || 'http://127.0.0.1:5208/'
-const source = readFileSync(join(here, 'DLW.md'), 'utf8')
+const name = process.argv[2] || 'DLW'
+const source = readFileSync(join(here, `${name}.md`), 'utf8')
+const heading = (source.match(/^# (.+)$/m) ?? [null, name])[1]
+const title = name === 'DLW' ? 'Digital Logos Workstation' : heading
+const description = name === 'DLW' ? 'The Digital Logos Workstation: a reference for the instrument, and an account of what it is for.'
+  : `${heading}: how every device of the Digital Logos Workstation looks and answers the hand, with live reference devices.`
 
 const plain = html => html.replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/&quot;/g, '"')
 const slugs = new Map()
@@ -68,8 +73,8 @@ const page = `<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Digital Logos Workstation</title>
-<meta name="description" content="The Digital Logos Workstation: a reference for the instrument, and an account of what it is for.">
+<title>${title}</title>
+<meta name="description" content="${description}">
 <style>
 :root{
   --bg:#f4f3f1;--panel:#ffffff;--ink:#1d1f21;--dim:#5b6066;--faint:#8b9096;
@@ -150,8 +155,8 @@ figure.ui figcaption{font-size:12.5px;color:var(--dim);padding:8px 12px;border-t
 <button class="theme" type="button" aria-label="Toggle colour theme">Theme</button>
 <div class="layout">
 <nav aria-label="Contents">
-<p class="brand">Digital Logos Workstation</p>
-<p class="sub">Reference · O:I</p>
+<p class="brand">${title}</p>
+<p class="sub">${name === 'DLW' ? 'Reference · O:I' : '<a href="DLW.html">Digital Logos Workstation</a> · O:I'}</p>
 <ol>
 ${tocHtml}
 </ol>
@@ -183,5 +188,5 @@ ${body}
 </html>
 `
 
-writeFileSync(join(here, 'DLW.html'), page)
-console.log(`DLW.html written: ${page.length} bytes, ${toc.length} contents entries`)
+writeFileSync(join(here, `${name}.html`), page)
+console.log(`${name}.html written: ${page.length} bytes, ${toc.length} contents entries`)

@@ -903,6 +903,10 @@ A pane is a device at full size. Its controls stay out of the pane and appear
 in Device view below it. A widget is a device on the rail. It stays when you
 change mode.
 
+Every device is drawn the same way, after Live's own: one head, one height, a
+picture with handles, and the same few controls round it. [Device UI](DEVICE-UI.html)
+sets out how each view looks and how it answers your hand.
+
 ### 16.2 Chains on tracks
 
 A track holds one stream of material. Its chain holds the devices that the
