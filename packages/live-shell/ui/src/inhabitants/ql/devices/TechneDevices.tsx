@@ -207,6 +207,17 @@ function openOnFocusedPane(id: string): void {
   }
 }
 
+/** The instrument the focused pane stands once a fold's press has opened its door: the Earth pane's for the atlas's instruments (the
+ * one already focused when it is the atlas's), the pressed lens itself on the stage. A press holds across the focus change it causes —
+ * lane T, 15 Oct (code-reading): pressing M4′ while another pane was focused opened the Earth, the focus moved to M0, and M4′ folded
+ * again, so a second press was needed. */
+export function focusAfterOpening(id: string, current: string | null): string | null {
+  const door = instrumentDoorOf(id)
+  if (!door) return current
+  if (door.kind === 'projection.earth') return current && ATLAS_INSTRUMENTS.includes(current) ? current : instrumentOfPane('projection.earth', null, 'earth') ?? current
+  return id
+}
+
 const holderTitle = (holder: HolderDeclaration) => holder.title
 const holds = (entry: TechneEntry, holder: string) => (entry.face.heldBy ?? []).includes(holder)
 
@@ -301,7 +312,7 @@ export function TechneDevices({manifests, focusInstrument = null, instrumentRead
       const held = entries.filter(entry => holds(entry, holder.id))
       return holder.id === open
         ? <OpenInstrument key={holder.id} holder={holder} entries={held} focused={holder.id === focusInstrument} />
-        : <InstrumentFold key={holder.id} holder={holder} count={held.length} onOpen={() => { setOpened({focus: focusInstrument, id: holder.id}); openOnFocusedPane(holder.id) }} />
+        : <InstrumentFold key={holder.id} holder={holder} count={held.length} onOpen={() => { setOpened({focus: focusAfterOpening(holder.id, focusInstrument), id: holder.id}); openOnFocusedPane(holder.id) }} />
     })}
     {unheld.map(entry => (unfolded[entry.device.id] ?? startsExpanded(entry.face, null))
       ? <OpenDevice key={entry.device.id} entry={entry} />
