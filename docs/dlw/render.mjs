@@ -7,6 +7,8 @@ import {fileURLToPath} from 'node:url'
 import {Marked} from '../../site/node_modules/marked/lib/marked.esm.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
+// The device gallery (packages/live-shell/ui/src/inhabitants/catalogue, on the build branch). Override with DLW_GALLERY.
+const GALLERY = process.env.DLW_GALLERY || 'http://127.0.0.1:5208/'
 const source = readFileSync(join(here, 'DLW.md'), 'utf8')
 
 const plain = html => html.replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/&quot;/g, '"')
@@ -38,6 +40,8 @@ const marked = new Marked({
     code({text, lang}) {
       if (lang !== 'ui') return false
       const f = Object.fromEntries(text.split('\n').map(l => l.split(/:\s*/)).filter(([k, v]) => k && v).map(([k, ...v]) => [k.trim(), v.join(':').trim()]))
+      // device: <family>:<face> embeds the device gallery (the shell's own runtime, every view) instead of a page.
+      if (f.device) Object.assign(f, {src: `${GALLERY}?device=${f.device}&view=${f.view || 'all'}`, width: f.width || '1100', height: f.height || '760'})
       const esc = v => String(v ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')
       // Drawn at its design width (default 1440 px), scaled to fit the column.
       const w = parseInt(f.width || '1440', 10), h = parseInt(f.height || '560', 10)

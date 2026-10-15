@@ -2205,13 +2205,6 @@ The Day collects the work of one day from every workspace and every mode into
 one document. Use it to set the day going, see what runs, notice what repeats,
 and say what the day taught.
 
-```ui
-src: ../../desktop/cradle/documents/ql-daily-die.html
-height: 760
-width: 1100
-caption: The Day's page, as its template draws it today. Drag to turn the die; click a face to open it.
-```
-
 #### The six faces
 
 The Day has six faces. Faces 1 to 4 are the working faces. Faces 0 and 5 are
@@ -2246,15 +2239,71 @@ closes.
 | Sources | Per mode: On · Off | All On | Which modes send entries to faces 2 and 4. |
 | Template | A template, at a version | The standard Day | The page design. Each Day keeps the template version it opened with. |
 
-#### Presentations
+#### Views
 
-| Presentation | What it shows |
+The Day is one device with five views. All five show the same live settings.
+
+```ui
+device: central:day-die
+caption: The Day device as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: on the Main track's chain. The folded Day shows its name, the date and
+the number of the open face. Click the title to unfold it.
+
+##### Compact
+
+Where: on the Main track's chain. The compact Day shows the net of the die,
+with the open face filled, and four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The date and the number of the open face. |
-| Compact | The net of the die, with the open face marked. Four macros: Face, Agent writes, Rollover, Close now. |
-| Whole | All parameters, in four groups: Time, Faces, Agent, Close. |
-| Full | The open face, as the template draws it. In a pane, you read and write here. |
-| Widget | Today's die and three counts: open tasks, running sessions, new patterns. Click a count to open that face. |
+| Face | Turns the die. |
+| Agent writes | Sets Off, Propose or Write. |
+| Rollover | Sets the rollover time, or Off. |
+| Close now | Runs the close routine. |
+
+Click the plate to show the Day whole in the pool. Click ⤢ to open it full in a
+pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Day shows every parameter, in
+four groups.
+
+| Group | Parameters |
+|---|---|
+| Time | Day start, Rollover |
+| Faces | Face, View, Template |
+| Agent | Agent writes, Sources |
+| Close | Close routine |
+
+Each face also shows a count: tasks on face 1, sessions on face 2, patterns on
+face 3. A change you make in the pool applies at once. It does not add the Day
+to your rack.
+
+##### Full
+
+Where: a pane. The full Day shows the open face as the template draws it. Read
+and write here. The controls stay in Device view, below the pane.
+
+```ui
+src: ../../desktop/cradle/documents/ql-daily-die.html
+width: 1100
+height: 760
+caption: The Day's page as the template draws it. Drag to turn the die. Click a face to open it.
+```
+
+After rollover, two tabs show at the top of the pane: today and tomorrow. Click
+a tab to open that Day.
+
+##### Widget
+
+Where: the rail on the right. The widget shows today's die and three counts:
+open tasks, running sessions and new patterns. Click a count to open that face
+in the pane that has focus. The widget stays when you change mode.
 
 #### Transport
 
@@ -4434,8 +4483,8 @@ Each chain is one agent. The lead is at the top. Its helpers sit below it, with 
 |---|---|---|---|
 | Members | A list of agents | The lead | The chains of the rack. Drag an agent from the browser to add one. |
 | Selected member | One member | The lead | The chain whose device shows in the pool. |
-| Fan-out | 1–8 | 2 | The most helpers that run at once. |
-| Depth | 1–4 | 2 | How deep helpers may spawn their own helpers. |
+| Fan-out | A number · No limit | 2 | The most helpers that run at once. The default is a start value, not a limit. |
+| Depth | A number · No limit | 2 | How deep helpers may spawn their own helpers. The default is a start value, not a limit. |
 | Hand-back | Raw · Digest · Summary | Summary | What a helper returns to its parent. |
 | Subagent model | A model | The lead's model | The default model for everything the group spawns. A member can set its own. |
 | Member state | Working · Idle · Stalled · Done (reading) | Read from each session | The state of each chain. |
@@ -4444,7 +4493,7 @@ Each chain is one agent. The lead is at the top. Its helpers sit below it, with 
 | Presentation | What it shows |
 |---|---|
 | Folded | The crew name and the count of members. |
-| Compact | The chains, nested, with a model chip on each. Four macros: Fan-out, Depth, Hand-back, Subagent model. |
+| Compact | The chains, nested, with a model chip on each. Four macros: Fan-out, Depth, Hand-back, Subagent model. With many members, the chains group by state and each group shows its count. |
 | Whole | All parameters, in three groups: Members, Limits, Return. |
 | Full | The crew in a pane as a tree, with each member's thread and the files it touched. |
 | Widget | The crew tree with a light on each member. |
@@ -4467,6 +4516,7 @@ Each chain is one agent. The lead is at the top. Its helpers sit below it, with 
 6. Click a member to read its thread.
 
 #### Rules
+- The rack sets no upper limit on members, Fan-out or Depth. A limit is a value you set.
 - Each member keeps its own chain. A helper shares the lead's gateway and git seat.
 - A stalled member does not stop the others. The group lights Retry.
 - Hard stop on the group stops every session in it. The work written so far stays as a draft.
