@@ -39,12 +39,15 @@ import {dayClipEventIndex, dayTrackLaneOf, projectDayTracks} from './dayTrackAda
 import {eventDayKey, type TemporalEventRow, type TemporalStreamAbsence} from './timeSpine'
 import type {WorldTrack, WorldTrackAdapter, WorldTrackClip, WorldTrackColumn, WorldTrackSet, WorldWalk, WorldWalkStop} from './worldTrackAdapter'
 import type {WorldTimelineSource} from '../projections/useWorldTemporalReading'
+import {CENTRAL_DAYS_PATH, dateOfDayPath, dayEntriesOf} from '../central/daySurface'
+import type {NativeFileEntry} from '../../../../../desktop/cradle/src/kernel/types'
 
 export const CENTRAL_TRACK_ADAPTER_ID = 'central-stream-tracks'
 
 /** The root register's day surface — where the civil calendar's records live. Ported from shell/ModeBrowser.tsx
  * `DAY_RECORDS_PATH` (line 52); tests/central-tracks.test.mjs holds the two together. */
-export const CENTRAL_DAY_RECORDS_PATH = 'Control/agents/now/day'
+/** The owner's day surface (central/daySurface.ts); the legacy agent records stopped at 12 Sep. */
+export const CENTRAL_DAY_RECORDS_PATH = CENTRAL_DAYS_PATH
 
 /** The day-track lane kind the World cut gives Central's own day (dayTrackAdapter.ts LANES: 'central-day'). A Day clip is an
  * event that lane draws — the lane table is the World cut's, not a second one here. */
@@ -98,9 +101,8 @@ export interface CentralReading {
  * only `YYYY-MM-DD.md` files are day records (line 200), newest first (line 202), and a record's path is the listing's own
  * location path (line 211). */
 export function dayRecordsOf(directory: {entries: readonly {name: string; byte_len?: number | null; location?: {path?: string} | null}[]}): CentralDayRecord[] {
-  return directory.entries
-    .filter(entry => /^\d{4}-\d{2}-\d{2}\.md$/.test(entry.name))
-    .map(entry => ({name: entry.name, path: entry.location?.path ?? `${CENTRAL_DAY_RECORDS_PATH}/${entry.name}`, byteLen: entry.byte_len ?? null}))
+  return dayEntriesOf(directory.entries as NativeFileEntry[])
+    .map(entry => ({name: entry.name, path: entry.location?.path ?? `${CENTRAL_DAY_RECORDS_PATH}/${entry.name}`, byteLen: entry.byte_len || null}))
     .sort((a, b) => b.name.localeCompare(a.name))
 }
 
@@ -108,7 +110,7 @@ export function dayRecordsOf(directory: {entries: readonly {name: string; byte_l
  * (CentralSubjectSelection, inhabitants/CentralSubjectDetail.tsx). The regular expression is the browser's own
  * (shell/ModeBrowser.tsx line 295). An entry's clip id (an occasion) is not a ground subject: null. */
 export function centralSubjectOfClip(ref: string): {kind: 'day'; path: string} | null {
-  return /\/now\/day\/\d{4}-\d{2}-\d{2}\.md$/.test(ref) ? {kind: 'day', path: ref} : null
+  return dateOfDayPath(ref) ? {kind: 'day', path: ref} : null
 }
 
 const isDate = (key: string): boolean => /^\d{4}-\d{2}-\d{2}$/.test(key)

@@ -85,7 +85,7 @@ test('a Days row opens its Day, a Flow instance in the Files rows opens its Flow
   assert.equal(docs.flowOfEntry(entry('Work/O-I/docs/flow-2026-10-14-2050.html')), null, 'a Flow-shaped name outside the flows folder is a file')
   assert.equal(docs.flowOfEntry(entry(FLOW.path, {kind: 'directory'})), null)
   assert.equal(docs.dayDateOfPath('Control/agents/now/day/2026-10-08.md'), '2026-10-08')
-  assert.equal(docs.dayDateOfPath('Control/user/day/2026-09-25/day.md'), null)
+  assert.equal(docs.dayDateOfPath('Control/user/day/2026-09-25/day.md'), '2026-09-25', 'the owner\'s day surface names its date by its folder (central/daySurface.ts)')
   assert.deepEqual(docs.subjectOf({form: 'day', date: '2026-10-08'}), {ref: 'central:day:control:root:2026-10-08', title: 'Day · 2026-10-08'})
   assert.deepEqual(docs.subjectOf({form: 'day', date: null}), {ref: docs.TODAY_REF, title: 'Day'})
   assert.deepEqual(docs.subjectOf({form: 'flow', location: FLOW}), {ref: FLOW.ref, title: 'Flow · flow-2026-10-14-2050'})
