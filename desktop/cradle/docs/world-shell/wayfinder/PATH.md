@@ -101,6 +101,8 @@ objections verbatim and the full validation (`BRIEF-BUILDER.md`); the lead conve
 |---|---|---|---|
 | Native screen pass against the mockup renders; N1; the lanes' convergence | lead | `App.tsx`, `native/Workbench.tsx`, `shell/modeFrames.ts`, the book, the register | 14 Oct |
 | Y — the hosted frame shows only its field in a pane; its chrome's controls onto the Studio, the M1′–M3′ plates and the transport (`tickets/T-FRAME-CHROME-ONTO-PLATES.md`) | Opus builder | the frame's chrome and host-mode handling, `protocol.ts` (commands/state only), `components/expressions/studio/**`, the M1′–M3′ plates, `shell/modeTransports.tsx` | 15 Oct |
+| K — the kernel never holds its lock while an owner process runs: polled owner reads prepared outside the lock, one shared host dispatch, every owner call bounded | Opus builder | `desktop/cradle/kernel/src/**`, `src-tauri/src/main.rs` (op path) | 15 Oct |
+| A — an AIKit knowledge read costs what the question costs: the runtime kept between calls on a change key, wiki relations without tree discovery, a batch form (ai-kit, branch `speed/knowledge-resident-runtime`, seat env-1/ai-kit) | Opus builder | ai-kit `crates/aikit-cli/src/app/knowledge.rs` and the knowledge modules | 15 Oct |
 
 Then: the 126 targets re-homed (lane M, FOUNDATION §8): `acceptance.py rehome` re-opens every cited path:line, runs the
 reachability script over every home and records home, owner op and evidence — or a named gap — on each row; `verify` holds
@@ -110,6 +112,23 @@ Palace). Ranked: G1 the stage's file exports have no native receiver (the main w
 cancels `<a download>`: lane-1 B2/B3); G2 the Instruments rail keeps no subject into Graph (D1); G3 the shell carries no
 frame deep-link address (E22); R1 Places onto the atlas (31 targets); R2 palaces onto the atlas (N4, 9); S1 mount N2's
 subject door — 76 homes read their facets only on a Wiki-bound Scene, reached today only by Examine in the Graph pane.
+Then: speed, measured (15 Oct, two investigators; artefacts in the lead's scratch `inv-speed/` and `ph/`). The software, not only
+the machine: (1) every AIKit knowledge read rebuilds its runtime — walks the project tree, rewrites a SQLite index, calls Central six
+times — 5.7–55 s a read, so 10 of the door's 17 register reads die at the kernel's 20 s limit (ai-kit `knowledge.rs` :690/:1570/:2944);
+(2) the kernel holds its one lock while owner processes run for polled reads (`agency_read` every 3 s holds it ~1.5 s of every 3;
+lock-probe p95 1.6–1.8 s; two hosts duplicate ~12 lock steps; `read_project` and `encounter` have no timeout); (3) the shell polls
+instead of being told, its caches expire before the next poll (2 s horizons, 3 s and 90 s polls), the temporal read spawns 136
+processes every 90 s (one `thoughts.read` per NOW clearing), and every `oi` dispatch without an `OI_*_BIN` override hashes the suite
+(~2 s; the native candidate sets all six, the dev recipe two). The spine (mode × world context × kernel epoch) retires stale replies
+as designed; the "told, not polled" half is missing for owner state. Lanes K and A are out (the table); next, a shell lane (agency on
+focus/visibility, temporal on a Day/NOW change, the register load through the knowledge coordinator, one store for task/definition/
+workcell readings, Settings read when opened), the `oi` router's verification cached, a batch `thoughts.read` in Central's `ctrl`,
+and the `workcell:local`/`workcell:mac` binding refused on every boot. The dev harness's browser traces overstate kernel time (six
+HTTP/1.1 connections, a preflight per op). Load: the live work alone exceeds the 16 GB (Claude desktop 8.6 GB, Kev 3.1, six CLI
+sessions 2.2, Playwright 1.7, a build 1); 12 proven orphans were stopped (~1.8 GB); the owner's calls are listed in the lead's report
+(restart Claude desktop, Cursor workers, keyboxd, Kev idle, `rea` per project, the `ls` alias that strands `eza` on open stdin, the
+process-hygiene job's `set -e` bug that has never let its gateway checks run).
+
 Then: the native pass at `e37198c2d` (computer-use, the owner's real ground; the window parks in Stage Manager's strip until
 clicked onto its stage, FOUNDATION §5). Seen working: Technē's subject door — Locations › O-I reads "opening…" while the wiki
 registers project (~1 min natively), then "in O I · +2" with its three Scenes as rows, the Expressions panel naming Scene "O I"
