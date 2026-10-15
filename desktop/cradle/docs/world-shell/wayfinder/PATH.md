@@ -99,9 +99,13 @@ objections verbatim and the full validation (`BRIEF-BUILDER.md`); the lead conve
 
 | Ticket | Who | Zone | Since |
 |---|---|---|---|
-| The browser's rows at the mockup's `bi()` in every mode: mark · name in words · standing, Central's NOW section | Opus builder | `shell/ModeBrowser.tsx`, `shell/modeBrowsers.tsx`, `frame/browser/**` rows, the Factory/Live/Expressions row bodies | 15 Oct |
 | FOUNDATION §8: the 126 targets re-homed — each gains its home and owner op with evidence, or a named gap; the gaps ranked into the next tickets | Opus builder | `desktop/cradle/docs/world-shell/targets.json`, `acceptance.py` (additive) | 15 Oct |
 | Native screen pass against the mockup renders; N1; mounting N2's subject door | lead | the frame, `App.tsx`, `native/Workbench.tsx`, `shell/modeFrames.ts`, the book | 14 Oct |
+
+Then: the browser's rows at the mockup's `bi()` in every mode (`5604207b9`, lane L: mark · name in words · standing from
+the owner; Central's NOW section; a New… grid that makes the four document forms; Beings over the roster); Central's Days
+and Day track read the owner's own day surface, `Control/user/day/<date>/day.md`, not the legacy agent records that
+stopped at 12 Sep (`826c26d79`).
 
 Then: the shared grid and ruler regained what the World-cut presentation drew (`c89cb9ab1`, lane K: standing edges,
 sections by atmosphere, cron firings — at their instant on Central's ruler too —, the retained occasion with its admission
