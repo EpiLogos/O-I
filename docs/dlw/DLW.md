@@ -966,12 +966,6 @@ These instruments are the panes of the DLW. Each one is a way to look at your ma
 
 You need to see where things are and how far apart they stand. The World draws your work as a planet under its star, with Earth and other people's worlds near it. You can come down to one exact place on the ground, or turn the whole view into a graph.
 
-```ui
-src: ../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=techne&lens=M4&scale=body&body=earth&ap=3
-height: 900
-caption: The World on the Body scale, looking at Earth with the widest aperture. Drag to turn the body. Use the scale buttons and the body names in the slot under the browser to move in and out.
-```
-
 #### The five scales
 
 The scale sets how much of the sky and the ground fills the pane. Each scale keeps the thing you selected in view.
@@ -1053,14 +1047,67 @@ The graph view has its own controls. Set how many hops it reaches, how far nodes
 | Place kind | Place · Palace · Portal · Route | Place | Chooses what the next click on the body places. |
 | Earth layers | Imagery: Offline · Live. Terrain: Off · On. Day and night: Off · On. Place layers: each relation, On · Off | Offline, Off, Off, all On | Adds layers to Earth. Live imagery and terrain need your consent and show their source. |
 
-#### Presentations
-| Presentation | What it shows |
+#### Views
+
+The World is one device with five views. All five show the same live settings.
+
+```ui
+device: atlas-earth:globe-engine
+caption: The World as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: on a chain. The folded World shows the name of the body, the scale and the aperture. Click the title to unfold it.
+
+##### Compact
+
+Where: on a chain. The compact World shows a small live picture of the body, with its phase, and four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The body name, the scale and the aperture. |
-| Compact | A small live picture of the body, with its phase. Four macros: Scale, Aperture, View as, Occasion. |
-| Whole | All parameters, in seven groups: View, Body, Landmass, Climate, Sky, Locations, Earth layers. |
-| Full | The body or the graph, at the chosen scale. In a pane, you turn the body, select a place and place new ones. The controls stay in Device view. |
-| Widget | Your planet, small and turning, with today's sky. Click it to open the World in a pane at the same scale. |
+| Scale | Sets how close you look: Field, System, Body, Region or Place. |
+| Aperture | Sets how far you look: World, Local, Shared or Federated. |
+| View as | Shows your world as Me, Field or Public sees it. |
+| Occasion | Sets the moment: Now, a date or a stop. |
+
+Set a macro and the picture changes at once. Click the plate to show the World whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole World shows every parameter, in seven groups.
+
+| Group | Parameters |
+|---|---|
+| View | Scale, View, Aperture, View as, Occasion, Relations shown |
+| Body | Body |
+| Landmass | Landmass |
+| Climate | Climate |
+| Sky | Sky |
+| Locations | Place kind |
+| Earth layers | Earth layers |
+
+A change you make in the pool applies at once. It does not add the World to your rack. Click ⤢ to open the World full in a pane.
+
+##### Full
+
+Where: a pane. The full World shows the body, or the graph, at the chosen scale. The controls stay in Device view, below the pane.
+
+On the Space side, a star lights the body and the body shows its phase. Locations stand on the body at their names. Anchor lines run to real places on Earth. Relations show as lines across the dark.
+
+The sky shows the planets at the moment of the occasion. If the owner of the sky is not available, the sky layer says why and draws nothing.
+
+At Field scale, the pane shows the worlds of the shared field as planets around a shared star. At Place scale, it shows one place with its position, its precision and its frame.
+
+On the Graph side, the same material lays out by connection. Each node takes the colour of what it is. Choose Space to return to the body.
+
+Drag to turn the body. Click a location to select it. Select an object in orbit to open it. Choose a place kind in Device view, click the body and name the new location. The idle body is still.
+
+The World edits no clip. It draws the place of the stop that you select.
+
+##### Widget
+
+Where: the rail on the right. The widget shows your planet, small, with its phase and today's sky. Click it to open the World in a pane at the same scale. The widget stays when you change mode.
 
 #### Transport
 | Control | Effect on the World |
@@ -1115,12 +1162,6 @@ The graph view has its own controls. Set how many hops it reaches, how far nodes
 
 You need to read your notes and a wiki link by link, and see what they hold. The Knowledge graph draws each note as a node and each link as a line. A link that leads nowhere shows as a ghost, so you see what is missing.
 
-```ui
-src: ../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=techne&lens=M0
-height: 900
-caption: The nearest drawn form: the bounded graph of one subject, with ghosts for links that do not resolve. In the slot under the browser, choose graph under View. Change Depth and Budget and watch the whole grow.
-```
-
 #### Nodes, lines and ghosts
 
 | Part | What it shows |
@@ -1170,14 +1211,60 @@ Every filter you apply stays on screen as a chip. Remove a chip to remove the fi
 | Arrows | On · Off | Off | Shows the direction of each line. |
 | Minimap | On · Off | On | Shows the overview in the corner. |
 
-#### Presentations
-| Presentation | What it shows |
+#### Views
+
+The Knowledge graph is one device with five views. All five show the same live settings.
+
+```ui
+device: knowledge-graph:graph
+caption: The Knowledge graph as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: on a chain. The folded Knowledge graph shows the scope, the depth and the node count. Click the title to unfold it.
+
+##### Compact
+
+Where: on a chain. The compact Knowledge graph shows the graph of the selected note, small and live, and four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The scope, the depth and the node count. |
-| Compact | The graph of the selected note, small and live. Four macros: Depth, Scope, Ghosts, Labels. |
-| Whole | All parameters, in four groups: Reach, Filters, Display, Groups. |
-| Full | The graph in the pane, with the minimap. The reader opens beside it. The controls stay in Device view. |
-| Widget | The neighbourhood of the note you hold, small. Click a node to open the note. |
+| Depth | Sets how many hops the graph reaches: 1 to 3. |
+| Scope | Chooses the selected note or the whole wiki. |
+| Ghosts | Shows or hides links that have no target. |
+| Labels | Sets Automatic, All or Focus. |
+
+Click the plate to show the Knowledge graph whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Knowledge graph shows every parameter, in four groups.
+
+| Group | Parameters |
+|---|---|
+| Reach | Scope, Depth, Budget |
+| Filters | Kinds, Relation types, Standing floor, Filter mode |
+| Display | View, Ghosts, Labels, Arrows, Minimap |
+| Groups | The highlighted groups that you coloured |
+
+A change you make in the pool applies at once. It does not add the Knowledge graph to your rack. Click ⤢ to open it full in a pane.
+
+##### Full
+
+Where: a pane. The full Knowledge graph shows the notes as nodes and the links as lines, with the minimap in the corner. The controls stay in Device view, below the pane.
+
+A small node is quiet. Its label shows as you zoom in, or when you select it. A ghost is a dashed, hollow node. Its label says how many sources hold the link and that none opens. Each filter that you apply stays on screen as a chip.
+
+Select a node. Its note opens in the reader beside the graph, with its backlinks and its typed relations. Point at a node for a preview. Double-click a node to open its source.
+
+Click the minimap to jump. Choose Back or Forward to return to an earlier view. Set View to List, Tree or Form to read the same notes in another shape.
+
+The Knowledge graph edits no clip. It starts from the note that you select.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the neighbourhood of the note you hold, small. Click a node to open the note. The widget stays when you change mode.
 
 #### Transport
 | Control | Effect on the Knowledge graph |
@@ -1215,12 +1302,6 @@ Every filter you apply stays on screen as a chip. Remove a chip to remove the fi
 **Product:** Technē · **Kind:** instrument · **Pane:** any pane, in every mode
 
 You need a table to think out loud on. The Canvas holds real things that you can open. Move them into clusters, frame them, and draw a line from one to another. A line you draw stays a proposal until the owner of that relation accepts it.
-
-```ui
-src: ../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=techne&lens=M1
-height: 900
-caption: The Canvas with the stone, its related things and the drawn relations. Drag a card to move it. Choose the Relate tool in Device view, draw a line between two cards, and see that it stays a proposal.
-```
 
 #### What lies on the Canvas
 
@@ -1274,14 +1355,61 @@ The Canvas imports and exports a file that other note tools open. Presentation i
 | Autosave | On · Off | On | Saves a short time after a gesture, and at once after a delete. A small glyph shows saved, saving or held. |
 | View | A saved view, or none | None | Applies a saved view. |
 
-#### Presentations
-| Presentation | What it shows |
+#### Views
+
+The Canvas is one device with five views. All five show the same live settings.
+
+```ui
+device: techne:canvas
+caption: The Canvas as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: on a chain. The folded Canvas shows the title of the Canvas and the number of proposals that wait. Click the title to unfold it.
+
+##### Compact
+
+Where: on a chain. The compact Canvas shows a small live map of the Canvas and four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The title of the Canvas and the number of proposals that wait. |
-| Compact | A small live map of the Canvas. Four macros: Tool, Snap, Relation type, Standing. |
-| Whole | All parameters, in five groups: Tools, Lines, Relation, Look, Views. |
-| Full | The Canvas in the pane, with the minimap. The controls stay in Device view. |
-| Widget | The map of the Canvas you hold, and the count of proposals that wait. Click it to open the Canvas. |
+| Tool | Chooses what a click or a drag makes. |
+| Snap | Sets Off, Grid or Guides. |
+| Relation type | Sets Echo, Influence, Cause or Transform for the next line. |
+| Standing | Sets Fact, Claim, Inference or Guess for the next line. |
+
+Click the plate to show the Canvas whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Canvas shows every parameter, in five groups.
+
+| Group | Parameters |
+|---|---|
+| Tools | Tool, Snap, Shape, Sticky colour |
+| Lines | Line kind, Line label |
+| Relation | Relation type, Standing |
+| Look | Layout, Minimap |
+| Views | View, Autosave |
+
+A change you make in the pool applies at once. It does not add the Canvas to your rack. Click ⤢ to open the Canvas full in a pane.
+
+##### Full
+
+Where: a pane. The full Canvas shows cards, sticky notes, shapes, text, embeds, frames and lines on one board, with the minimap in the corner. The controls stay in Device view, below the pane.
+
+Pan and zoom the board. Drag a card to move it. Guide lines show where it aligns with other items. Double-click a card to open its thing in its own instrument. Drag a note or a source from the browser onto the board to add a card.
+
+Choose a tool in Device view. With the Relate tool, draw a line between two cards. The line is a proposal. Its type and standing show when you point at it. Choose Promote to send it to its owner.
+
+Find selects a match and centres it. Fit brings every item into view. Present shows the frames in order, full screen.
+
+The Canvas edits no clip. It holds references to real things.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the map of the Canvas you hold and the count of proposals that wait. Click it to open the Canvas. The widget stays when you change mode.
 
 #### Transport
 | Control | Effect on the Canvas |
@@ -1322,12 +1450,6 @@ The Canvas imports and exports a file that other note tools open. Presentation i
 **Product:** Technē · **Kind:** instrument · **Pane:** any pane, in every mode
 
 You need to see what came before, what followed and what happened at once. The Timeline lays history on one ruler, from deep time to this morning, and sets it beside the work that studied it. It keeps the weight of every claim and does not turn a coincidence into a cause.
-
-```ui
-src: ../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=techne&lens=M2
-height: 900
-caption: The Timeline on its ruler, with events drawn at their standing. In the slot under the browser, choose chronology, causal, recurrence or concurrency. Hover an event to read its standing.
-```
 
 #### The ruler
 
@@ -1393,14 +1515,60 @@ Edges between events take the colour and line of their standing, with a legend t
 | Overview strip | On · Off | On | Shows the whole domain with the view marked. |
 | View | A saved view, or none | None | Applies a saved view. |
 
-#### Presentations
-| Presentation | What it shows |
+#### Views
+
+The Timeline is one device with five views. All five show the same live settings.
+
+```ui
+device: techne:timeline
+caption: The Timeline as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: on a chain. The folded Timeline shows the lens and the window. Click the title to unfold it.
+
+##### Compact
+
+Where: on a chain. The compact Timeline shows the ruler in miniature, with the density of events, and four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The lens and the window. |
-| Compact | The ruler in miniature, with the density of events. Four macros: Lens, Window, Standing floor, Readings. |
-| Whole | All parameters, in four groups: Lens, Readings, Standing, Window. |
-| Full | The ruler with its tracks, epochs and events. In a pane, you zoom, select and open events. The controls stay in Device view. |
-| Widget | A thin ruler with a marker at the present window. Click it to open the Timeline. |
+| Lens | Chooses Chronology, Cause, Recurrence or Concurrency. |
+| Window | Sets the span you read over: all time, or a start and an end. |
+| Standing floor | Hides events that stand below the chosen level. |
+| Readings | Shows or hides each layer. |
+
+Click the plate to show the Timeline whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Timeline shows every parameter, in four groups.
+
+| Group | Parameters |
+|---|---|
+| Lens | Lens, Edges, Nesting |
+| Readings | Readings, Epoch bands, Spans, Your work |
+| Standing | Standing floor |
+| Window | Window, Time scale, Overview strip, View |
+
+A change you make in the pool applies at once. It does not add the Timeline to your rack. Click ⤢ to open the Timeline full in a pane.
+
+##### Full
+
+Where: a pane. The full Timeline shows the ruler with its tracks, epoch bands, events and spans. The overview strip shows the whole domain, with the view marked. The controls stay in Device view, below the pane.
+
+The major unit shows in one row. The minor unit shows in the row below. Both rows change as you zoom. Where events crowd, the ruler draws a count. Click the count to zoom in once.
+
+Each event draws at its standing. Fact is solid, and claim is solid in a lighter tone. Inference is dashed and guess is dotted. Dispute is hatched. A gap is an empty slot.
+
+Drag the overview strip to move the view. Resize it to zoom. Scroll on the ruler to zoom. Select an event to read its evidence. The source opens at the passage. Select a thread and press Play to walk it.
+
+An event is a clip. In Clip view, the event that you select opens with its passages and its material.
+
+##### Widget
+
+Where: the rail on the right. The widget shows a thin ruler with a marker at the present window. Click it to open the Timeline. The widget stays when you change mode.
 
 #### Transport
 | Control | Effect on the Timeline |
@@ -1449,12 +1617,6 @@ Edges between events take the colour and line of their standing, with a legend t
 **Product:** Technē · **Kind:** instrument · **Pane:** any pane, in every mode
 
 You need to take someone through a subject in an order that makes sense. A Journey is a walk of stops, each with a place, a moment, a scene and a few words. It has a pace, a way of arriving at each stop and a voice that tells it. You can record a walk as you go.
-
-```ui
-src: ../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=techne&lens=M3
-height: 900
-caption: A walk as rows of stops, with the narration and the way each stop arrives. Press Play in the transport to walk it. Press Record, visit places, and see each visit become a stop.
-```
 
 #### A stop
 
@@ -1505,14 +1667,60 @@ Press Record and go somewhere new. Each place, moment or thing you visit becomes
 | Narration | On · Off | On | Speaks or shows the words of each stop. |
 | Take | A recorded take | The latest take | Chooses the take that stands. |
 
-#### Presentations
-| Presentation | What it shows |
+#### Views
+
+The Journey is one device with five views. All five show the same live settings.
+
+```ui
+device: techne:journey
+caption: The Journey as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: on a chain. The folded Journey shows the name of the walk and the stop you are on. Click the title to unfold it.
+
+##### Compact
+
+Where: on a chain. The compact Journey shows the stops as small cells, with the current stop marked, and four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The name of the walk and the stop you are on. |
-| Compact | The stops as small cells, with the current stop marked. Four macros: Pace, Arrival, Loop, Narration. |
-| Whole | All parameters, in four groups: Stops, Pace, Transitions, Takes. |
-| Full | The walk as rows of stops, with narration and arrival. In a pane, you reorder stops, trim them and play the walk. The controls stay in Device view. |
-| Widget | The stop you are on, the narration and a play button. |
+| Pace | Sets how long the walk stays at a stop: 2 to 12 seconds. |
+| Arrival | Sets Fly, Cut or Fade. |
+| Loop | Sets Off, On, or On with leave at end of scene. |
+| Narration | Speaks or shows the words of each stop, or not. |
+
+Click the plate to show the Journey whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Journey shows every parameter, in four groups.
+
+| Group | Parameters |
+|---|---|
+| Stops | Path, Start stop |
+| Pace | Pace, Arrival, Follow action, Loop, Narration |
+| Transitions | Transition time, Curve, Switch |
+| Takes | Take |
+
+A change you make in the pool applies at once. It does not add the Journey to your rack. Click ⤢ to open the Journey full in a pane.
+
+##### Full
+
+Where: a pane. The full Journey shows the walk as rows of stops. Each row holds the place, the moment, the thing, the scene, the narration and the arrival of one stop. The controls stay in Device view, below the pane.
+
+A stop with no place, no moment or no scene shows that it holds none. Each transition shows its length and its curve between its two stops. While the walk plays, the transition shows its progress. The next stop and the path ahead stay visible.
+
+Drag a stop to put it in order. Drag it to overlap the end of the stop before it. The overlap is the transition. Pull stops apart to get a cut. Type the narration of a stop.
+
+Press Play to walk the stops. Select a stop and choose Enter to go into its scene. Choose Return to come back to the same stop.
+
+A stop is a row, not a clip. The scene that a stop carries is a clip of its Expression.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the stop you are on, its narration and a play button. Click the play button to walk the stops. The widget stays when you change mode.
 
 #### Transport
 | Control | Effect on the Journey |
@@ -1563,12 +1771,6 @@ Press Record and go somewhere new. Each place, moment or thing you visit becomes
 
 You need a building to keep a whole subject in. A Palace is a place on the World that you enter. Its rooms each hold a part of the subject, a path leads through them, and a guide says why each room stands where it does. What you conclude there goes back to the owners of the sources as proposals with your name on them.
 
-```ui
-src: ../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=techne&lens=M5
-height: 900
-caption: A palace seen from above, with its rooms, its path and its portals. The Annex is a private room, clouded to every viewer but you. Select a room in Device view to read why it stands where it does.
-```
-
 #### Rooms, path, guide, portals
 
 | Part | What it is |
@@ -1617,14 +1819,60 @@ If the reading names no route, the Palace gives a receipt that says nothing was 
 | Return route | The routes that the reading names | The first route | Chooses where Return sends its proposal. |
 | Bookmark | A saved position, or none | None | Jumps to a saved position. |
 
-#### Presentations
-| Presentation | What it shows |
+#### Views
+
+The Palace is one device with five views. All five show the same live settings.
+
+```ui
+device: techne:palace
+caption: The Palace as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: on a chain. The folded Palace shows the name of the Palace and the room you stand in. Click the title to unfold it.
+
+##### Compact
+
+Where: on a chain. The compact Palace shows the plan of the rooms, with the path drawn and your room marked, and four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The name of the Palace and the room you stand in. |
-| Compact | The plan of the rooms with the path drawn and your room marked. Four macros: Path, Guide, Audience, Return. |
-| Whole | All parameters, in four groups: Rooms, Path, Board, Return. |
-| Full | The Palace in the pane: the board, the rooms, the walk. In a pane, you walk, open objects and use portals. The controls stay in Device view. |
-| Widget | The plan of the Palace you hold, small, with the room you stand in. Click a room to enter it. |
+| Path | Walks the rooms in the set order (Guided), or lets you walk anywhere (Free). |
+| Guide | Lets the companion explain each room, or not. |
+| Audience | Shows the Palace as Me, Field or Public sees it. |
+| Return | Chooses the route that receives the proposal of Return. |
+
+Click the plate to show the Palace whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Palace shows every parameter, in four groups.
+
+| Group | Parameters |
+|---|---|
+| Rooms | Room, Guide |
+| Path | Path, Walk order, Start room, Bookmark |
+| Board | Arrangement, Snap, Connections, Audience |
+| Return | Return route |
+
+A change you make in the pool applies at once. It does not add the Palace to your rack. Click ⤢ to open the Palace full in a pane.
+
+##### Full
+
+Where: a pane. The full Palace shows the board with its rooms, its objects and its walk. The controls stay in Device view, below the pane.
+
+Each room holds objects. A line joins an object to the object it is part of. A named member that is missing draws as broken. Each room shows whether it rests on a warranted structure, with its source, or on free composition. A private room stays under cloud for every audience but you. A portal draws as a door in a wall.
+
+Pan and zoom the board. Drag a room or an object to move it. Select several with a marquee. Open an object, and it opens in its own instrument. The guide says why the selected room stands where it does.
+
+Press Play to walk the rooms. Bookmark a position to jump back to it. Walk through a portal to leave the Palace. Choose Return to send your arrangement to the route as a proposal with your name on it.
+
+The Palace edits no clip. Each object opens in its own instrument, at its own revision.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the plan of the Palace you hold, small, with the room you stand in. Click a room to enter it. The widget stays when you change mode.
 
 #### Transport
 | Control | Effect on the Palace |
@@ -1671,12 +1919,6 @@ If the reading names no route, the Palace gives a receipt that says nothing was 
 **Product:** Central · **Kind:** instrument · **Pane:** any pane, in every mode
 
 You need to read and write a page, and keep it tied to the thing it is about. The Document shows a Central page as its template draws it. The page may be a Day, a Flow, a Being or a Thing, or a page of a kind you made. You select a passage and the rest is close at hand.
-
-```ui
-src: ../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=base&doc=thing&layout=solo
-height: 900
-caption: A Thing, drawn from its template on paper. Select a passage to see Highlight, Note, To packet and Answer this. In Device view, read the bindings that tie the page to its world and its place.
-```
 
 #### Pages and templates
 
@@ -1728,14 +1970,60 @@ A save has one of five outcomes, and the Document names it: saved, unchanged, st
 | Pin | Follows · Pinned | Follows | A pinned pane keeps its page while you select elsewhere. |
 | Paper | Template default · Light · Dark | Template default | Sets the paper tone of the page. |
 
-#### Presentations
-| Presentation | What it shows |
+#### Views
+
+The Document is one device with five views. All five show the same live settings.
+
+```ui
+device: central:document
+caption: The Document as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: on a chain. The folded Document shows the title of the page and its save state. Click the title to unfold it.
+
+##### Compact
+
+Where: on a chain. The compact Document shows a small preview of the page, the size of its packet and four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The title of the page and its save state. |
-| Compact | A small preview of the page and its packet size. Four macros: Agent writes, Overdub, Packet scope, Selection act. |
-| Whole | All parameters, in four groups: Page, Selection, Agent, Save. |
-| Full | The page, as its template draws it. In a pane, you read and write here. The controls stay in Device view. |
-| Widget | The page you hold, small, with its save state and the size of its packet. Click it to open the page. |
+| Agent writes | Sets Off, Propose or Write. |
+| Overdub | Sets whether an answer joins as a new entry or replaces the selection. |
+| Packet scope | Sets Selection, Page, or Page and linked. |
+| Selection act | Sets what a plain selection does: Highlight, Note, To packet or Answer this. |
+
+Click the plate to show the Document whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Document shows every parameter, in four groups.
+
+| Group | Parameters |
+|---|---|
+| Page | Template, View, Flow view, Paper, Pin |
+| Selection | Selection act, Packet scope |
+| Agent | Agent writes, Overdub |
+| Save | Autosave |
+
+A change you make in the pool applies at once. It does not add the Document to your rack. Click ⤢ to open the Document full in a pane.
+
+##### Full
+
+Where: a pane. The full Document shows the page as its template draws it. Read and write here. The controls stay in Device view, below the pane.
+
+The page may be a Day, a Flow, a Being or a Thing. A Day shows its six faces. Use the form device to turn the die. A Flow names its people and agents at the top. Choose Dialogue, Flow or Journal to change how it reads. A Being or a Thing shows the bindings that tie it to its world, its sources and its place.
+
+Select a passage. Highlight, Note, To packet and Answer this are close at hand. The answer arrives as a new entry, with its author and its sources. Follow a source and you land on the line it came from.
+
+Type @ to search everything you can reach. Press Record and talk, and your words go into the page. The save state shows next to the page.
+
+In Clip view, the clip that you select in Central is an entry or a document. The Document shows that page.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the page you hold, small, with its save state and the size of its packet. Click it to open the page. The widget stays when you change mode.
 
 #### Transport
 | Control | Effect on the Document |
@@ -1790,12 +2078,6 @@ A save has one of five outcomes, and the Document names it: saved, unchanged, st
 
 You need to try things, fire them, and put this beside that without a fixed order. The Session grid shows the tracks of the mode across the pane and their clips in rows below. Every clip can launch, and a row launches one clip on every track.
 
-```ui
-src: ../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=factory
-height: 900
-caption: The grid in Factory: tracks are agent sessions and clips are tasks. Fire a clip, then fire a row. Read the state of each clip from how it is drawn.
-```
-
 #### What the grid holds in each mode
 
 The grid is the same in every mode. Only the material changes.
@@ -1849,14 +2131,60 @@ Launch mode says how a clip plays: once, while you hold it, or in a loop. Launch
 | Main track | Shown · Hidden | Shown | Shows the Main track at the end of the grid. |
 | Row keys | On · Off | On | Lets the number keys launch rows. |
 
-#### Presentations
-| Presentation | What it shows |
+#### Views
+
+The Session grid is one device with five views. All five show the same live settings.
+
+```ui
+device: dlw:session-grid
+caption: The Session grid as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: on a chain. The folded Session grid shows the mode and the number of tracks. Click the title to unfold it.
+
+##### Compact
+
+Where: on a chain. The compact Session grid shows a small grid of coloured cells, one for each clip state, and four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The mode and the number of tracks. |
-| Compact | A small grid of coloured cells, one for each clip state. Four macros: Launch quantize, Follow action, Launch mode, Armed track. |
-| Whole | All parameters, in four groups: Tracks, Launch, Follow, Takes. |
-| Full | The grid in the pane, with the row launchers and the Main track. In a pane, you launch, stop and select clips. The controls stay in Device view. |
-| Widget | The grid of the mode in small cells. Click a cell to select the clip. A lit retry opens its track. |
+| Launch quantize | Sets when a launch lands: Now, Next bar, or After the current step. |
+| Follow action | Sets what comes after a clip: None, Next, First or Stop. |
+| Launch mode | Sets how a clip plays: Once, Hold or Loop. |
+| Armed track | Sets the track that voice and the composer address. |
+
+Click the plate to show the Session grid whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Session grid shows every parameter, in four groups.
+
+| Group | Parameters |
+|---|---|
+| Tracks | Tracks shown, Groups, Solo, Main track |
+| Launch | Launch mode, Launch quantize, Armed track, Row keys |
+| Follow | Follow action |
+| Takes | Takes |
+
+A change you make in the pool applies at once. It does not add the Session grid to your rack. Click ⤢ to open the grid full in a pane.
+
+##### Full
+
+Where: a pane. The full Session grid shows the tracks of the mode across the pane and their clips in rows below. The controls stay in Device view, below the pane.
+
+A track header shows the identity colour and the name. In Factory, it also shows the agent. Each track has a stop button. Groups fold under one header, with one coloured rail for each level.
+
+Each clip shows its state: waiting, running, stopped, recording, stalled or done. An empty slot is a place to write. Each row has a launcher. The Main track sits at the end of the grid.
+
+Select a clip. Press Play to launch it. Press a row's number key to launch the row. Press a track's stop button to stop it. Double-click an empty slot to start a clip. When a track lights a retry, press retry.
+
+Select a clip, and its editor opens in Clip view.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the grid of the mode in small cells. Click a cell to select the clip. A lit retry opens its track. The widget stays when you change mode.
 
 #### Transport
 | Control | Effect on the Session grid |
@@ -1903,12 +2231,6 @@ Launch mode says how a clip plays: once, while you hold it, or in a loop. Launch
 **Product:** DLW, every mode · **Kind:** instrument · **Pane:** any pane, in every mode
 
 You need to see the course of your material over time. The Arrangement ruler lays the tracks of the mode along one ruler. You see today from first entry to last, or each thread of agent work with a needle. You see an Expression's scenes in order, or history from deep time to this morning.
-
-```ui
-src: ../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=techne&lens=M2
-height: 900
-caption: The ruler in Technē, with readings as layers and events at their dates. Drag the overview strip to move, resize it to zoom, and read the standing of each clip from how it is drawn.
-```
 
 #### What the ruler holds in each mode
 
@@ -1972,14 +2294,60 @@ Snap pulls the playhead and the edges you drag to clip edges, markers, loop edge
 | Overview strip | On · Off | On | Shows the whole ruler with the view marked. |
 | Standing floor | Facts only · Plus claims · Plus inferences · Plus guesses · All | All | Hides clips that stand below the level. It applies in Technē. |
 
-#### Presentations
-| Presentation | What it shows |
+#### Views
+
+The Arrangement ruler is one device with five views. All five show the same live settings.
+
+```ui
+device: dlw:arrangement-ruler
+caption: The Arrangement ruler as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: on a chain. The folded Arrangement ruler shows the mode and the span in view. Click the title to unfold it.
+
+##### Compact
+
+Where: on a chain. The compact Arrangement ruler shows a small ruler, with the clips as bars and the playhead, and four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The mode and the span in view. |
-| Compact | A small ruler with the clips as bars and the playhead. Four macros: Zoom, Snap, Move mode, Lanes. |
-| Whole | All parameters, in four groups: Tracks, Lanes, Edit, Loop. |
-| Full | The ruler with its tracks, lanes, needles and sections. In a pane, you select, edit and play. The controls stay in Device view. |
-| Widget | A thin ruler with the playhead and the loop region. Click it to open the ruler at that moment. |
+| Zoom | Sets the span in view. |
+| Snap | Aligns dragged items to edges, markers and the playhead, or not. |
+| Move mode | Sets Insert or Overwrite. |
+| Lanes | Shows or hides Takes, Automation and Events under the tracks. |
+
+Click the plate to show the Arrangement ruler whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Arrangement ruler shows every parameter, in four groups.
+
+| Group | Parameters |
+|---|---|
+| Tracks | Tracks shown, Time scale, Zoom, Needles, Overview strip, Standing floor |
+| Lanes | Lanes |
+| Edit | Snap, Move mode, Trim mode |
+| Loop | Markers, Loop region |
+
+A change you make in the pool applies at once. It does not add the Arrangement ruler to your rack. Click ⤢ to open the ruler full in a pane.
+
+##### Full
+
+Where: a pane. The full Arrangement ruler shows the tracks of the mode along one ruler, with their clips, lanes, needles and sections. The controls stay in Device view, below the pane.
+
+Named sections run along the top. A marker is a named, coloured point. The loop region shows between its in point and its out point. The playhead shows where you are. Under the clips of a track lie the lanes of its devices. In Factory, each thread shows a needle at its last check-in. A needle that does not move marks a stall.
+
+Select a clip. Drag it to move it. Drag an edge to change its length. Choose a Trim mode to roll, slip or slide. Split a clip at the playhead. Drag the playhead to scrub.
+
+Drag the overview strip to move the view. Resize it to zoom. Press Play to play from the playhead.
+
+Select a clip, and its editor opens in Clip view.
+
+##### Widget
+
+Where: the rail on the right. The widget shows a thin ruler with the playhead and the loop region. Click it to open the ruler at that moment. The widget stays when you change mode.
 
 #### Transport
 | Control | Effect on the Arrangement ruler |
@@ -2030,12 +2398,6 @@ The playhead can also scrub: drag it and the material follows. Shuttle plays bac
 
 You need to read what an agent did, and to talk to it while it works. The Thread shows one session's conversation and its tool use, full width, in the order they happened. Sub-agents spawned by the session each have a thread of their own.
 
-```ui
-src: ../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=factory
-height: 900
-caption: Factory with the session grid on the left and a Thread on the right. Select a session in the grid and the Thread follows it. Read the tool rows, the steer lines and the proposal cards.
-```
-
 #### What the stream holds
 
 | Item | What it shows |
@@ -2071,14 +2433,61 @@ The agent does not write behind your back. With Arm off, each change arrives as 
 | Voice | On · Off | Off | Turns speech into words in the composer. |
 | Steer lines | Highlighted · Plain | Highlighted | Marks the words you sent in the middle of a turn. |
 
-#### Presentations
-| Presentation | What it shows |
+#### Views
+
+The Thread is one device with five views. All five show the same live settings.
+
+```ui
+device: software-factory:thread
+caption: The Thread as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: on a chain. The folded Thread shows the session name and its state. Click the title to unfold it.
+
+##### Compact
+
+Where: on a chain. The compact Thread shows the last lines of the stream, the working line and four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The session name and its state. |
-| Compact | The last lines of the stream and the working line. Four macros: Input, Follow, Tool rows, Voice. |
-| Whole | All parameters, in three groups: Session, Stream, Input. |
-| Full | The whole stream, full width, with the composer. In a pane, you read, expand a tool, approve a proposal and talk. The controls stay in Device view. |
-| Widget | The conversation with the agent you talk to, small, with its composer. It stays when you change mode. |
+| Input | Sends your words into the running turn (Steer), or holds them for the next task (Queue). |
+| Follow | Keeps the Thread on the selected session (Follows), or on one session (Pinned). |
+| Tool rows | Sets Collapsed, Expanded or Hidden. |
+| Voice | Turns speech into words in the composer, or not. |
+
+Click the plate to show the Thread whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Thread shows every parameter, in three groups.
+
+| Group | Parameters |
+|---|---|
+| Session | Session, Follow |
+| Stream | Tool rows, Sub-agents, Messages, Steer lines |
+| Input | Input, Voice |
+
+A change you make in the pool applies at once. It does not add the Thread to your rack. Click ⤢ to open the Thread full in a pane.
+
+##### Full
+
+Where: a pane. The full Thread shows one session, full width, in the order things happened. The controls stay in Device view, below the pane.
+
+The header shows a back link to the session grid, the chain of parent sessions, the model and the turns used. It also holds the stop and retry buttons and the list of runs. The retry lights only when the session has stalled.
+
+The stream holds task dividers, messages with avatars, tool rows, spawn rows, steer lines, proposal cards, stall cards and the working line. A steer line stays amber until the agent hears it. A stall card has an orange border and names the prompt that the agent waits for.
+
+Click a tool row to open its output. Click a spawn row to open the thread of the sub-agent. Choose Approve, Changes or Diff on a proposal card. Choose Retry, Hard stop, Steer or Tell parent on a stall card.
+
+The composer is at the bottom. Press Enter to send. Press Option and Enter to steer the running turn. Press Esc to stop. Press the voice button and the composer shows a waveform.
+
+In Factory, a clip is a task and its track is a session. In Clip view, the Thread shows the session that runs the task.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the conversation with the agent you talk to, small, with its composer. The widget stays when you change mode.
 
 #### Transport
 | Control | Effect on the Thread |
@@ -2130,12 +2539,6 @@ The agent does not write behind your back. With Arm off, each change arrives as 
 
 You need a shell next to your work. The Terminal runs the shell of the scope you selected, live, and it follows the run you select. It stays at hand in every mode, as a pane or as a widget.
 
-```ui
-src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
-height: 900
-caption: The Terminal tile on the right rail follows the selected session and shows its shell. The pane holds the same body at full size. Select another session and watch the tile follow.
-```
-
 #### Scope and follow
 
 A Terminal has a folder and a command. The folder is the scope you selected. The command is your shell, unless you set another. A Terminal that follows moves to the shell of the run you select. A pinned Terminal keeps its shell while you select elsewhere.
@@ -2155,14 +2558,57 @@ The Terminal is a reading surface. It has no devices of its own. It holds no set
 | Font size | 10–18 points | 12 points | Sets the size of the text. |
 | Wrap | On · Off | On | Wraps long lines. |
 
-#### Presentations
-| Presentation | What it shows |
+#### Views
+
+The Terminal is one device with five views. All five show the same live settings.
+
+```ui
+device: widgets:terminal
+caption: The Terminal as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: on a chain. The folded Terminal shows the folder and the name of the shell. Click the title to unfold it.
+
+##### Compact
+
+Where: on a chain. The compact Terminal shows the last lines of output and four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The folder and the name of the shell. |
-| Compact | The last lines of output. Four macros: Follow, Input, Font size, Wrap. |
-| Whole | All parameters, in three groups: Shell, Input, Display. |
-| Full | The shell, at full size. In a pane, you type and read. The controls stay in Device view. |
-| Widget | The shell on the rail, small. It stays when you change mode. Open a Terminal in Factory and it is still there in Central. |
+| Follow | Keeps the Terminal on the run you select (Follows), or on one shell (Pinned). |
+| Input | Lets keys reach the shell (Type), or not (Watch only). |
+| Font size | Sets the size of the text: 10 to 18 points. |
+| Wrap | Wraps long lines, or not. |
+
+Click the plate to show the Terminal whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Terminal shows every parameter, in three groups.
+
+| Group | Parameters |
+|---|---|
+| Shell | Scope, Follow, Command |
+| Input | Input |
+| Display | Scrollback, Font size, Wrap |
+
+A change you make in the pool applies at once. It does not add the Terminal to your rack. Click ⤢ to open the Terminal full in a pane.
+
+##### Full
+
+Where: a pane. The full Terminal shows the shell at full size, live. The controls stay in Device view, below the pane.
+
+The shell starts in the folder of its scope. When the Terminal follows an agent's run, it shows that shell and the name of the agent. A command that an agent ran shows as the agent's, not as yours. Output stays in the scrollback.
+
+Type to send keys to the shell. Keys do not play notes while you type. Set Input to Watch only to read an agent's run. Select another session in the grid, and a Terminal that follows moves to its shell.
+
+The Terminal edits no clip. It follows the run of the clip that you select.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the shell, small. The widget and the pane show the same shell. Closing one does not close the shell. The widget stays when you change mode. Open a Terminal in Factory and it is still there in Central.
 
 #### Transport
 | Control | Effect on the Terminal |
@@ -2381,15 +2827,54 @@ Use the Workspace to pick up a project, a book or a practice exactly where you l
 | Keep context | On change · On leave · Manual | On change | When the workspace stores your context. |
 | Send to Day | On · Off | On | Sends the work of the workspace to the Day. |
 
-#### Presentations
+#### Views
 
-| Presentation | What it shows |
+The Workspace is one device with five views. All five show the same live settings.
+
+```ui
+device: central:workspace
+caption: The Workspace as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: on a workspace track's chain. The folded Workspace shows the name of the workspace and the number of open documents. Click the title to unfold it.
+
+##### Compact
+
+Where: on a workspace track's chain. The compact Workspace shows the panes of the open mode as small boxes. A mark shows each mode that has a remembered set. It has four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The name of the workspace and the number of open documents. |
-| Compact | The panes of the open mode, drawn as small boxes. A mark shows each mode that has a remembered set. Four macros: Launch, On launch, Keep context, Send to Day. |
-| Whole | All parameters, in four groups: Identity, Remember, Launch, Day. |
-| Full | The clips of the workspace, with their states. One row for each mode shows the set that the mode opens with. |
-| Widget | The name of the workspace, its open documents and a Launch button. It stays when you change mode. |
+| Launch | Restores the remembered context of the workspace. |
+| On launch | Sets Restore all modes, Restore open mode or Restore nothing. |
+| Keep context | Sets On change, On leave or Manual. |
+| Send to Day | Sets On or Off. |
+
+Click the plate to show the Workspace whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Workspace shows every parameter, in four groups.
+
+| Group | Parameters |
+|---|---|
+| Identity | Name, Kind, Folder, Place |
+| Remember | Remember, Remember in, Keep context |
+| Launch | On launch, Open in |
+| Day | Send to Day |
+
+A change you make in the pool applies at once. It does not add the Workspace to your rack.
+
+##### Full
+
+Where: a pane. The full Workspace shows the clips of the workspace, one row for each document and file. Each row shows the state of its clip: Draft, Saved or Edited since save. One more row for each mode shows the set that the mode opens with. Click a clip to open its document in a pane. The controls stay in Device view, below the pane.
+
+In Clip view, each clip of the workspace is a document or a file. The Workspace does not edit it. The clip shows its state.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the name of the workspace, its open documents and a Launch button. Click Launch to restore the remembered context of the workspace. The widget stays when you change mode.
 
 #### Transport
 
@@ -2430,13 +2915,6 @@ Use the Workspace to pick up a project, a book or a practice exactly where you l
 
 Use a Flow for a running conversation or journal that keeps who said what. The page names its participants, people and agents, at the top.
 
-```ui
-src: ../../desktop/cradle/documents/ql-flow.html
-height: 760
-width: 1100
-caption: The Flow template, blank. Add a participant, write an entry, then switch the view.
-```
-
 #### Three views
 
 | View | What it shows |
@@ -2474,15 +2952,60 @@ A participant is a person or an agent. A person is drawn solid. An agent is draw
 | Media | Image, video or audio files, up to 12 MB each | None | Files attached to an entry. The page keeps them inside itself. |
 | Template | A template, at a version | The standard Flow | The page design. Each Flow keeps the template version it opened with. |
 
-#### Presentations
+#### Views
 
-| Presentation | What it shows |
+The Flow is one device with five views. All five show the same live settings.
+
+```ui
+device: central:flow-document
+caption: The Flow as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: first on a Flow document's chain, before the document effects. The folded Flow shows the name of the Flow and the initials of its participants. Click the title to unfold it.
+
+##### Compact
+
+Where: first on a Flow document's chain, before the document effects. The compact Flow shows a strip of small bars, one for each entry. Each bar has the colour of its participant. It has four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The name of the Flow and the initials of its participants. |
-| Compact | A strip of small bars, one for each entry, coloured by participant. Four macros: View, Speak as, Relation, Journal page. |
-| Whole | All parameters, in three groups: Page, People, Entries. |
-| Full | The Flow in the open view, as the template draws it. In a pane, you read and write here. |
-| Widget | The last entries of the Flow you work in, and a line to write the next entry. |
+| View | Sets Dialogue, Flow or Journal. |
+| Speak as | Chooses who the next entry belongs to. |
+| Relation | Sets how the next entry connects to the selected entry. |
+| Journal page | Chooses the date of the page to read. |
+
+Click the plate to show the Flow whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Flow shows every parameter, in three groups.
+
+| Group | Parameters |
+|---|---|
+| Page | View, Journal page, Template |
+| People | Participants, Speak as |
+| Entries | Relation, Media |
+
+A change you make in the pool applies at once. It does not add the Flow to your rack.
+
+##### Full
+
+Where: a pane. The full Flow shows the open view as the template draws it: the Dialogue, the threads of the Flow, or a page of the Journal. The participants are at the top of the page. A person is drawn solid. An agent is drawn as points. Read and write here. The controls stay in Device view, below the pane.
+
+```ui
+src: ../../desktop/cradle/documents/ql-flow.html
+width: 1100
+height: 760
+caption: The Flow template, blank. Add a participant, write an entry, then switch the view.
+```
+
+In Clip view, the clip is the Flow document. The Flow is first on its chain.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the last entries of the Flow you work in. Under them, a line takes the next entry. The entry uses the Speak as and Relation values. The widget stays when you change mode.
 
 #### Transport
 
@@ -2526,13 +3049,6 @@ A participant is a person or an agent. A person is drawn solid. An agent is draw
 
 Use Beings for a page about a person in your work, or an agent you work with. The page is tied to its world, its subject, its sources and a real place.
 
-```ui
-src: ../../desktop/cradle/documents/oi-beings.html
-height: 760
-width: 1100
-caption: The Beings template, blank. Press Edit, then open Source & form to see the ties that the page keeps.
-```
-
 #### The page and its ties
 
 The page has a title, a line of introduction, an opening, numbered sections and a side list named In relation. The ties belong to the page, not to the design.
@@ -2563,15 +3079,61 @@ The page has a title, a line of introduction, an opening, numbered sections and 
 | Tone | Paper · Ink | Paper | The ground of the page: light or dark. |
 | Template | A template, at a version | The standard Beings page | The page design. Each page keeps the template version it opened with. |
 
-#### Presentations
+#### Views
 
-| Presentation | What it shows |
+The Beings is one device with five views. All five show the same live settings.
+
+```ui
+device: central:beings
+caption: The Beings as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: first on a Beings document's chain, before the document effects. The folded Beings shows the title of the page and the name of its world. Click the title to unfold it.
+
+##### Compact
+
+Where: first on a Beings document's chain, before the document effects. The compact Beings shows the mark of the page. A pin shows when the page has a place. It has four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The title of the page and the name of its world. |
-| Compact | The mark of the page. A pin shows when the page has a place. Four macros: Office, Layout, Tone, Place. |
-| Whole | All parameters, in four groups: Page, Ties, Place, Look. |
-| Full | The page as the template draws it. In a pane, you read and write here. |
-| Widget | The card of the selected being: its title, its world and its place. |
+| Office | Chooses the subject offices that the page takes up. |
+| Layout | Sets Portrait or Editorial. |
+| Tone | Sets Paper or Ink. |
+| Place | Sets where the being stands in your world. |
+
+Click the plate to show the Beings whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Beings shows every parameter, in four groups.
+
+| Group | Parameters |
+|---|---|
+| Page | World, Kind, Template |
+| Ties | Subject, Office, Sources, Expression |
+| Place | Place, Anchor |
+| Look | Layout, Tone |
+
+A change you make in the pool applies at once. It does not add Beings to your rack.
+
+##### Full
+
+Where: a pane. The full Beings shows the page as the template draws it. It has a title, an introduction, an opening, numbered sections and the side list In relation. Read and write here. The controls stay in Device view, below the pane.
+
+```ui
+src: ../../desktop/cradle/documents/oi-beings.html
+width: 1100
+height: 760
+caption: The Beings template, blank. Press Edit, then open Source & form to see the ties that the page keeps.
+```
+
+In Clip view, the clip is the Beings page. Beings is first on its chain.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the card of the selected being: its title, its world and its place. Click the card to open the page in the pane that has focus. The widget stays when you change mode.
 
 #### Transport
 
@@ -2613,13 +3175,6 @@ The page has a title, a line of introduction, an opening, numbered sections and 
 
 Use Things for a page about an object in your work: a stone, a book, a collection. The page is tied to its world, its subject, its sources and a real place.
 
-```ui
-src: ../../desktop/cradle/documents/oi-things.html
-height: 760
-width: 1100
-caption: The Things template, blank. Press Edit, then open Source & form to see the ties that the page keeps.
-```
-
 #### The page and its ties
 
 The page has a title, a line of introduction, an opening, numbered sections and a side list named In relation. The ties belong to the page, not to the design.
@@ -2649,15 +3204,61 @@ The page has a title, a line of introduction, an opening, numbered sections and 
 | Tone | Paper · Ink | Paper | The ground of the page: light or dark. |
 | Template | A template, at a version | The standard Things page | The page design. Each page keeps the template version it opened with. |
 
-#### Presentations
+#### Views
 
-| Presentation | What it shows |
+The Things is one device with five views. All five show the same live settings.
+
+```ui
+device: central:things
+caption: The Things as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: first on a Things document's chain, before the document effects. The folded Things shows the title of the page and the name of its world. Click the title to unfold it.
+
+##### Compact
+
+Where: first on a Things document's chain, before the document effects. The compact Things shows the mark of the page. A pin shows when the page has a place. It has four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The title of the page and the name of its world. |
-| Compact | The mark of the page. A pin shows when the page has a place. Four macros: Office, Layout, Tone, Place. |
-| Whole | All parameters, in four groups: Page, Ties, Place, Look. |
-| Full | The page as the template draws it. In a pane, you read and write here. |
-| Widget | The card of the selected object: its title, its world and its place. |
+| Office | Chooses the subject offices that the page takes up. |
+| Layout | Sets Portrait or Editorial. |
+| Tone | Sets Paper or Ink. |
+| Place | Sets where the object stands in your world. |
+
+Click the plate to show the Things whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Things shows every parameter, in four groups.
+
+| Group | Parameters |
+|---|---|
+| Page | World, Template |
+| Ties | Subject, Office, Sources, Expression |
+| Place | Place, Anchor |
+| Look | Layout, Tone |
+
+A change you make in the pool applies at once. It does not add Things to your rack.
+
+##### Full
+
+Where: a pane. The full Things shows the page as the template draws it. It has a title, an introduction, an opening, numbered sections and the side list In relation. Read and write here. The controls stay in Device view, below the pane.
+
+```ui
+src: ../../desktop/cradle/documents/oi-things.html
+width: 1100
+height: 760
+caption: The Things template, blank. Press Edit, then open Source & form to see the ties that the page keeps.
+```
+
+In Clip view, the clip is the Things page. Things is first on its chain.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the card of the selected object: its title, its world and its place. Click the card to open the page in the pane that has focus. The widget stays when you change mode.
 
 #### Transport
 
@@ -2699,12 +3300,6 @@ The page has a title, a line of introduction, an opening, numbered sections and 
 
 Use Text to shape the words on a page without leaving the page. It sets the style, the emphasis and the size, and it leaves the words whole.
 
-```ui
-src: ../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=base
-height: 900
-caption: Base mode. Text is the first device in the row along the bottom. Select a passage in a pane, then change its style.
-```
-
 #### Parameters
 
 | Parameter | Values | Default | What it does |
@@ -2713,15 +3308,52 @@ caption: Base mode. Text is the first device in the row along the bottom. Select
 | Emphasis | None · Bold · Italic · Strike | None | The emphasis of the selected words. |
 | Size | 13 to 22 pt | 15 pt | The type size in which you see the document. |
 
-#### Presentations
+#### Views
 
-| Presentation | What it shows |
+The Text is one device with five views. All five show the same live settings.
+
+```ui
+device: central:text
+caption: The Text as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: a document's chain, after the form device. The folded Text shows the name Text and the style of the selection. Click the title to unfold it.
+
+##### Compact
+
+Where: a document's chain, after the form device. The compact Text shows a sample of type in the chosen style, emphasis and size. It has three macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The name Text and the style of the selection. |
-| Compact | A sample of type in the chosen style, emphasis and size. Three macros: Style, Emphasis, Size. |
-| Whole | All parameters, in three groups: Paragraph, Emphasis, View. |
-| Full | The text of the open document at full size, with its styles showing. In a pane, you write here. |
-| Widget | Style, Emphasis and Size as three small controls. They stay when you change mode. |
+| Style | Sets Body, Head, Quote or List. |
+| Emphasis | Sets None, Bold, Italic or Strike. |
+| Size | Sets the type size, from 13 to 22 pt. |
+
+Click the plate to show the Text whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Text shows every parameter, in three groups.
+
+| Group | Parameters |
+|---|---|
+| Paragraph | Style |
+| Emphasis | Emphasis |
+| View | Size |
+
+A change you make in the pool applies at once. It does not add Text to your rack.
+
+##### Full
+
+Where: a pane. The full Text shows the text of the open document at full size, with its styles showing. Write here. Select a passage to change its style. The controls stay in Device view, below the pane.
+
+In Clip view, Text sets the words of the document clip. It does not change a word.
+
+##### Widget
+
+Where: the rail on the right. The widget shows Style, Emphasis and Size as three small controls. Change a control to set the selection. The widget stays when you change mode.
 
 #### Transport
 
@@ -2759,12 +3391,6 @@ caption: Base mode. Text is the first device in the row along the bottom. Select
 
 Use Highlight to mark the passages that matter as you read. It marks a passage and leaves the passage whole.
 
-```ui
-src: ../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=base
-height: 900
-caption: Base mode. In the Flow pane, a passage is selected and the selection tool stands above it. Highlight is the second device in the row along the bottom.
-```
-
 #### The selection tool
 
 Select a passage and four actions appear above it. Highlight, Notes, Packet and Answer share this tool.
@@ -2785,15 +3411,53 @@ Select a passage and four actions appear above it. Highlight, Notes, Packet and 
 | Pen | On · Off | Off | Makes a drag over text a highlight. |
 | Selection tool | On · Off | On | Shows the four actions when you select a passage. |
 
-#### Presentations
+#### Views
 
-| Presentation | What it shows |
+The Highlight is one device with five views. All five show the same live settings.
+
+```ui
+device: central:highlight
+caption: The Highlight as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: a document's chain, after Text. The folded Highlight shows a dot in the chosen colour and the number of highlights. Click the title to unfold it.
+
+##### Compact
+
+Where: a document's chain, after Text. The compact Highlight shows lines of text. The highlighted lines are marked. It has four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | A dot in the chosen colour and the number of highlights. |
-| Compact | Lines of text with the highlighted lines marked. Four macros: Colour, Show, Pen, Selection tool. |
-| Whole | All parameters, in three groups: Colour, View, Pen. |
-| Full | The open document at full size, with its highlights showing. In a pane, you read and mark here. |
-| Widget | The list of highlights in the open document. Click one to go to its passage. |
+| Colour | Sets Yellow, Green, Blue or Pink. |
+| Show | Sets All or Highlights only. |
+| Pen | Turns the pen On or Off. |
+| Selection tool | Turns the four actions On or Off. |
+
+Click the plate to show the Highlight whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Highlight shows every parameter, in three groups.
+
+| Group | Parameters |
+|---|---|
+| Colour | Colour |
+| View | Show, Selection tool |
+| Pen | Pen |
+
+A change you make in the pool applies at once. It does not add Highlight to your rack.
+
+##### Full
+
+Where: a pane. The full Highlight shows the open document at full size, with its highlights showing. Read and mark here. The selection tool stands above a selected passage. The controls stay in Device view, below the pane.
+
+In Clip view, Highlight marks the passages of the document clip. It leaves the words whole.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the list of highlights in the open document. Each line shows the marked passage in its colour. Click a line to go to its passage. The widget stays when you change mode.
 
 #### Transport
 
@@ -2830,12 +3494,6 @@ Select a passage and four actions appear above it. Highlight, Notes, Packet and 
 
 Use Notes to keep your own thoughts beside a passage. Each note is anchored to the place it is about.
 
-```ui
-src: ../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=base
-height: 900
-caption: Base mode. Notes is the third device in the row along the bottom. Each note shows its anchor and its text.
-```
-
 #### Parameters
 
 | Parameter | Values | Default | What it does |
@@ -2845,15 +3503,53 @@ caption: Base mode. Notes is the third device in the row along the bottom. Each 
 | Show | All notes · Open entry · Off | All notes | Which notes appear beside the document. |
 | Order | By place in the page · By time | By place in the page | The order of the list of notes. |
 
-#### Presentations
+#### Views
 
-| Presentation | What it shows |
+The Notes is one device with five views. All five show the same live settings.
+
+```ui
+device: central:notes
+caption: The Notes as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: a document's chain, after Highlight. The folded Notes shows the name Notes and the number of notes. Click the title to unfold it.
+
+##### Compact
+
+Where: a document's chain, after Highlight. The compact Notes shows the first notes. Each note shows its anchor. It has four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The name Notes and the number of notes. |
-| Compact | The first notes, each with its anchor. Four macros: Timing, Anchor to, Show, Order. |
-| Whole | All parameters, in three groups: Write, Place, View. |
-| Full | The notes beside the open document, each with its anchor, its time and its text. |
-| Widget | The notes of the open document. Click a note to go to its anchor. |
+| Timing | Sets During reading or After reading. |
+| Anchor to | Sets Selection, Entry or Document. |
+| Show | Sets All notes, Open entry or Off. |
+| Order | Sets By place in the page or By time. |
+
+Click the plate to show the Notes whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Notes shows every parameter, in three groups.
+
+| Group | Parameters |
+|---|---|
+| Write | Timing |
+| Place | Anchor to |
+| View | Show, Order |
+
+A change you make in the pool applies at once. It does not add Notes to your rack.
+
+##### Full
+
+Where: a pane. The full Notes shows the notes beside the open document. Each note shows its anchor, its time and its text. Write and edit a note here. The controls stay in Device view, below the pane.
+
+In Clip view, Notes keeps your thoughts beside the document clip. Each note stays with its anchor.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the notes of the open document. Click a note to go to its anchor. The widget stays when you change mode.
 
 #### Transport
 
@@ -2890,12 +3586,6 @@ caption: Base mode. Notes is the third device in the row along the bottom. Each 
 
 Use the Packet to choose exactly what an agent reads from you. You see it whole, and its size, before anything is sent.
 
-```ui
-src: ../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=base
-height: 900
-caption: Base mode. Packet is the fourth device in the row along the bottom. Each item shows where it came from and its size in tokens.
-```
-
 #### What the packet holds
 
 Each item in the packet shows three things: where it came from, a line of its text and its size. The total size is always in view. The packet holds what you add, and nothing else.
@@ -2909,15 +3599,53 @@ Each item in the packet shows three things: where it came from, a line of its te
 | Limit | Off, or a count of tokens | Off | Stops the packet at this size. An item that does not fit waits for your decision. |
 | After sending | Clear · Keep | Clear | Whether the packet empties when it is sent. |
 
-#### Presentations
+#### Views
 
-| Presentation | What it shows |
+The Packet is one device with five views. All five show the same live settings.
+
+```ui
+device: central:packet
+caption: The Packet as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: a document's chain, after Notes. The folded Packet shows the name Packet and its size in tokens. Click the title to unfold it.
+
+##### Compact
+
+Where: a document's chain, after Notes. The compact Packet shows the items as short bars. Each bar is as long as the size of its item. It has four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The name Packet and its size in tokens. |
-| Compact | The items as short bars, each as long as its size. Four macros: Add, Limit, After sending, Clear now. |
-| Whole | All parameters, in three groups: Contents, Add, Limit. |
-| Full | Every item in full, with its source, its size and a mark to remove it. The total is at the foot. |
-| Widget | The items and the total size, with an Answer this button. It stays when you change mode. |
+| Add | Sets Selection, Entry or Document. |
+| Limit | Sets a size in tokens, or Off. |
+| After sending | Sets Clear or Keep. |
+| Clear now | Empties the packet. |
+
+Click the plate to show the Packet whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Packet shows every parameter, in three groups.
+
+| Group | Parameters |
+|---|---|
+| Contents | Size, After sending |
+| Add | Add |
+| Limit | Limit |
+
+A change you make in the pool applies at once. It does not add the Packet to your rack.
+
+##### Full
+
+Where: a pane. The full Packet shows every item in full. Each item shows its source, its size and a mark to remove it. The total size is at the foot. Read the whole packet here, before you send it. The controls stay in Device view, below the pane.
+
+In Clip view, the Packet holds passages of the document clip and of other clips. It sends nothing until you press Play.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the items and the total size. It has an Answer this button. The widget shows the same items as the device and the conversation. The widget stays when you change mode.
 
 #### Transport
 
@@ -2957,12 +3685,6 @@ Each item in the packet shows three things: where it came from, a line of its te
 
 Use Answer to ask an agent about a passage and get the reply in the page. The agent reads the packet and answers as a new entry, with its sources.
 
-```ui
-src: ../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=base
-height: 900
-caption: Base mode. Answer is the fifth device in the row along the bottom. Select the passage in the Flow pane, then press Answer this.
-```
-
 #### What an answer carries
 
 | Part | What it shows |
@@ -2981,15 +3703,53 @@ caption: Base mode. Answer is the fifth device in the row along the bottom. Sele
 | Agent writes | Off · Propose · Write | Propose | Off: the answer shows in the conversation only. Propose: the answer waits in the page for you to accept it. Write: the answer goes in directly, with a receipt. |
 | Effort | Low · Medium · High · Max | Medium | How hard the agent thinks on each answer. |
 
-#### Presentations
+#### Views
 
-| Presentation | What it shows |
+The Answer is one device with five views. All five show the same live settings.
+
+```ui
+device: central:nara-conversation
+caption: The Answer as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: last on a document's chain, after the Packet. The folded Answer shows the name of the agent and the Agent writes value. Click the title to unfold it.
+
+##### Compact
+
+Where: last on a document's chain, after the Packet. The compact Answer shows the face of the agent and its state: idle, reading or answering. It has four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The name of the agent and the Agent writes setting. |
-| Compact | The face of the agent, and its state: idle, reading or answering. Four macros: Agent, Answer as, Agent writes, Effort. |
-| Whole | All parameters, in three groups: Agent, Answer, Writes. |
-| Full | The exchange: what you sent, the answer with its sources, and the receipts of what the agent wrote. |
-| Widget | The agent you talk to: its last answer and a line to write the next question. It stays when you change mode. |
+| Agent | Chooses who answers. |
+| Answer as | Sets New entry or Replace selection. |
+| Agent writes | Sets Off, Propose or Write. |
+| Effort | Sets Low, Medium, High or Max. |
+
+Click the plate to show the Answer whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Answer shows every parameter, in three groups.
+
+| Group | Parameters |
+|---|---|
+| Agent | Agent, Effort |
+| Answer | Answer as |
+| Writes | Agent writes |
+
+A change you make in the pool applies at once. It does not add Answer to your rack.
+
+##### Full
+
+Where: a pane. The full Answer shows the exchange: what you sent, the answer with its sources, and the receipts of what the agent wrote. Follow a source to land on its line. The controls stay in Device view, below the pane.
+
+In Clip view, Answer adds its entries to the document clip. It is the last device on the chain.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the agent you talk to. It shows the last answer and a line for the next question. Write a question and press Enter to ask. The widget stays when you change mode.
 
 #### Transport
 
@@ -3100,15 +3860,54 @@ use it, type `@name`. A `?` in the search is a gap that the next word fills.
 | On Enter | Send · Open | Send | What Enter does when text is selected. |
 | Aliases | A list. Each has a name and a search. | None | Your own short names for long searches. |
 
-#### Presentations
+#### Views
 
-| Presentation | What it shows |
+The Search is one device with five views. All five show the same live settings.
+
+```ui
+device: central:search
+caption: The Search as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: on a chain. The folded Search shows the @ mark and your last search. Click the title to unfold it.
+
+##### Compact
+
+Where: on a chain. The compact Search shows the search line, a chip for each kind that is On, and the number of results. It has four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The @ mark and your last search. |
-| Compact | The search line, a chip for each kind that is On, and the number of results. Four macros: Reach, Kinds, Order, On Enter. |
-| Whole | All parameters, in four groups: Reach, Kinds, Results, Aliases. |
-| Full | The search pane: the line at the top, the results in groups by kind, and the selected passage at the side with the place where each tag would send it. |
-| Widget | The search line, the last results and your aliases. Type @ in the widget from any mode. |
+| Reach | Sets how far a search looks. |
+| Kinds | Turns each kind of result On or Off. |
+| Order | Sets Best match, Newest or Name. |
+| On Enter | Sets Send or Open. |
+
+Click the plate to show the Search whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Search shows every parameter, in four groups.
+
+| Group | Parameters |
+|---|---|
+| Reach | Reach |
+| Kinds | Kinds |
+| Results | Order, Results shown, On Enter |
+| Aliases | Aliases |
+
+A change you make in the pool applies at once. It does not add Search to your rack.
+
+##### Full
+
+Where: a pane. The full Search is the search pane. The search line is at the top. The results are below it, in groups by kind. The selected passage is at the side, with the place where each tag would send it. Press ⌘F in a pane to open it. The controls stay in Device view, below the pane.
+
+In Clip view, Search sends the passage that you selected in the document clip. The clip stays unchanged.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the search line, the last results and your aliases. Type @ in the widget to search from any mode. Click an alias to run it. The widget stays when you change mode.
 
 #### Transport
 
@@ -3194,15 +3993,54 @@ Each tender returns a receipt.
 | Tending | Off · Propose · Write | Propose | Off: the device only reads. Propose: each tender waits for your approval. Write: an allowed tender runs when you press it, with a receipt. |
 | Allowed tenders | Release seat · Prune worktree · Sweep branch: each On or Off | All On | Which tenders the device may offer. |
 
-#### Presentations
+#### Views
 
-| Presentation | What it shows |
+The Ground hygiene is one device with five views. All five show the same live settings.
+
+```ui
+device: central:ground-hygiene
+caption: The Ground hygiene as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: on the chain of a workspace track whose folder holds code. The folded Ground hygiene shows the number of findings. Click the title to unfold it.
+
+##### Compact
+
+Where: on the chain of a workspace track whose folder holds code. The compact Ground hygiene shows three small rings, for seats, worktrees and branches. A dot on a ring marks each finding. It has four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The number of findings. |
-| Compact | Three small rings for seats, worktrees and branches, with a dot for each finding. Four macros: Look at, Show, Tending, Refresh. |
-| Whole | All parameters, in four groups: Look, Show, Tend, Machine. |
-| Full | Three lists: seats, worktrees and branches. Each row shows its finding, what it rests on and the tender that fits. |
-| Widget | The number of findings and the first three. Click one to open the list. It stays when you change mode. |
+| Look at | Turns Seats, Worktrees and Branches On or Off. |
+| Show | Sets Everything or Faults only. |
+| Tending | Sets Off, Propose or Write. |
+| Refresh | Sets Manual, On open or Every 5 minutes. |
+
+Click the plate to show the Ground hygiene whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Ground hygiene shows every parameter, in four groups.
+
+| Group | Parameters |
+|---|---|
+| Look | Look at, Refresh |
+| Show | Show |
+| Tend | Tending, Allowed tenders |
+| Machine | Machine |
+
+A change you make in the pool applies at once. It does not add Ground hygiene to your rack.
+
+##### Full
+
+Where: a pane. The full Ground hygiene shows three lists: seats, worktrees and branches. Each row shows its finding, what the finding rests on and the tender that fits. Select a row to read it. Press a tender to run it. The controls stay in Device view, below the pane.
+
+In Clip view, Ground hygiene edits no clip. It reads the folder of the workspace track.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the number of findings and the first three. Click a finding to open the list in a pane. The widget stays when you change mode.
 
 #### Transport
 
@@ -3261,15 +4099,53 @@ Use Impact to see what a change to a folder or a note will touch. It shows the n
 | Sessions | Open only · Open and closed | Open only | Which sessions the Sessions list holds. |
 | Relation | All · one kind of link | All | Limits the Links list to one kind of relation. |
 
-#### Presentations
+#### Views
 
-| Presentation | What it shows |
+The Impact is one device with five views. All five show the same live settings.
+
+```ui
+device: central:impact
+caption: The Impact as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: on the chain of a folder or a note on a workspace track. The folded Impact shows the name of the subject and the number of items around it. Click the title to unfold it.
+
+##### Compact
+
+Where: on the chain of a folder or a note on a workspace track. The compact Impact shows a small graph with the subject at the centre. Three counts show references, links and sessions. It has four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The name of the subject and the number of items around it. |
-| Compact | A small graph with the subject at the centre, and three counts: references, links, sessions. Four macros: Depth, Show, Sessions, Pin. |
-| Whole | All parameters, in three groups: Subject, Reach, Lists. |
-| Full | The neighbourhood as a graph, and the three lists beside it. Click an item to open it beside. |
-| Widget | The subject, its three counts and the first session. It stays when you change mode. |
+| Depth | Sets how many links away the neighbourhood reaches, from 1 to 4. |
+| Show | Turns the References, Links and Sessions lists On or Off. |
+| Sessions | Sets Open only or Open and closed. |
+| Pin | Keeps the subject when you select something else. |
+
+Click the plate to show the Impact whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Impact shows every parameter, in three groups.
+
+| Group | Parameters |
+|---|---|
+| Subject | Subject, Pin |
+| Reach | Depth, Relation |
+| Lists | Show, Sessions |
+
+A change you make in the pool applies at once. It does not add Impact to your rack.
+
+##### Full
+
+Where: a pane. The full Impact shows the neighbourhood of the subject as a graph. The three lists stand beside it: references, links and sessions. Click an item to open it beside the graph. The controls stay in Device view, below the pane.
+
+In Clip view, Impact reads the subject of the clip and changes nothing.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the subject, its three counts and the first session. Click the first session to open it. The widget stays when you change mode.
 
 #### Transport
 
@@ -3307,12 +4183,6 @@ Use Impact to see what a change to a folder or a note will touch. It shows the n
 
 Use Context & world to say what an agent may read and where it may write. It shows each place in your world, and each write with its receipt.
 
-```ui
-src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
-height: 900
-caption: The agent chain along the bottom. The World device is the fourth. Teal marks what the agent reads. Amber marks where it writes.
-```
-
 #### Two colours
 
 Teal marks what the agent may read. Amber marks where the agent may write. A place can be both.
@@ -3338,15 +4208,53 @@ Reach is the widest area that the agent can read from. A place outside the Reach
 | Writes elsewhere | Off · Propose · Write | Propose | Off: the agent does not write. Propose: each change waits for your approval. Write: changes go in directly, each with a receipt. |
 | Knowledge search | On · Off | Off | Lets the agent search your knowledge for passages. |
 
-#### Presentations
+#### Views
 
-| Presentation | What it shows |
+The Context & world is one device with five views. All five show the same live settings.
+
+```ui
+device: central:context-world
+caption: The Context & world as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: after the agent, on any track the agent works on. The folded Context & world shows the Reach, and the number of places read and written. Click the title to unfold it.
+
+##### Compact
+
+Where: after the agent, on any track the agent works on. The compact Context & world shows three rings for the Reach. A teal arc shows the reads. An amber arc shows the writes. It has three macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The Reach, and the number of places read and written. |
-| Compact | Three rings for the Reach, a teal arc for the reads and an amber arc for the writes. Three macros: Reach, Writes elsewhere, Knowledge search. |
-| Whole | All parameters, in four groups: Reach, Reads, Writes, Receipts. |
-| Full | Your ground as a tree, with each place marked teal, amber or both. The receipts of the agent's writes are below. |
-| Widget | The three rings, the counts and the last receipts. It stays when you change mode. |
+| Reach | Sets One object, Scene, Expression or All of Central. |
+| Writes elsewhere | Sets Off, Propose or Write. |
+| Knowledge search | Sets On or Off. |
+
+Click the plate to show the Context & world whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Context & world shows every parameter, in four groups.
+
+| Group | Parameters |
+|---|---|
+| Reach | Reach |
+| Reads | Reads, Knowledge search |
+| Writes | Writes to, Writes elsewhere |
+| Receipts | None. The group shows the receipts of the agent's writes. |
+
+A change you make in the pool applies at once. It does not add Context & world to your rack.
+
+##### Full
+
+Where: a pane. The full Context & world shows your ground as a tree. Teal marks a place that the agent reads. Amber marks a place that the agent writes. A place can have both marks. The receipts of the agent's writes are below the tree. The controls stay in Device view, below the pane.
+
+In Clip view, Context & world sets what the agent may read and write around the clip. The open document follows the Agent writes value of Answer.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the three rings, the counts of places and the last receipts. Click a receipt to read it in full. The widget stays when you change mode.
 
 #### Transport
 
@@ -3387,12 +4295,6 @@ Reach is the widest area that the agent can read from. A place outside the Reach
 
 Use Agent identity to know who an agent is before you give it work. It reads the agent from your own roster and shows its card.
 
-```ui
-src: ../../desktop/cradle/docs/world-shell/agent-native-mockup.html
-height: 900
-caption: The Agents list at the top left. Each card shows the name, the character, the program it runs on and whether the agent is accepted.
-```
-
 #### What the card shows
 
 | Part | What it shows |
@@ -3413,15 +4315,51 @@ caption: The Agents list at the top left. Each card shows the name, the characte
 | Roster | Accepted only · Accepted and proposed | Accepted only | Which agents the list holds. |
 | Detail | Name · Card · Full profile | Card | How much of the identity the device shows. |
 
-#### Presentations
+#### Views
 
-| Presentation | What it shows |
+The Agent identity is one device with five views. All five show the same live settings.
+
+```ui
+device: central:agent-identity
+caption: The Agent identity as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: before the agent, on any track an agent works on. The folded Agent identity shows the name of the agent and its standing. Click the title to unfold it.
+
+##### Compact
+
+Where: before the agent, on any track an agent works on. The compact Agent identity shows the face of the agent and its character line. It has three macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The name of the agent and its standing. |
-| Compact | The face of the agent and its character line. Three macros: Agent, Roster, Detail. |
-| Whole | All parameters, in two groups: Agent, Roster. |
-| Full | The full profile of the agent, as your roster holds it. |
-| Widget | The card of the agent you talk to. It stays when you change mode. |
+| Agent | Chooses whose identity the device shows. |
+| Roster | Sets Accepted only or Accepted and proposed. |
+| Detail | Sets Name, Card or Full profile. |
+
+Click the plate to show the Agent identity whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Agent identity shows every parameter, in two groups.
+
+| Group | Parameters |
+|---|---|
+| Agent | Agent, Detail |
+| Roster | Roster |
+
+A change you make in the pool applies at once. It does not add Agent identity to your rack.
+
+##### Full
+
+Where: a pane. The full Agent identity shows the full profile of the agent, as your roster holds it. Read it here. You cannot edit it here. The controls stay in Device view, below the pane.
+
+In Clip view, Agent identity edits no clip. It shows who the agent is for the track.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the card of the agent you talk to: its name, character, program, skills, world and standing. The widget stays when you change mode.
 
 #### Transport
 
@@ -3462,12 +4400,6 @@ Factory is where you work with AI agents. Each agent session is a track. Its cha
 
 You need to decide how an agent reaches its harness, when it must ask you, and when a silent agent counts as stalled. The Gateway is the way in to the session.
 
-```ui
-src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
-height: 900
-caption: The session's chain in Device view. The Gateway is the first device on the left, with its link diagram and three controls. Click a Transport or Approvals value to change it. Select a session under Fizz to see the folded Gateway.
-```
-
 #### The link diagram
 
 The diagram shows the shell on the left and the harness on the right. Dots on the line are frames in flight. A dot moves faster when more turns run. The arc around the harness is the replay ring. The outer pulse is the heartbeat. Under the diagram, the readout shows the epoch, the last sequence number, the number of peers and the age of the last heartbeat. A new epoch means the gateway restarted, and the shell syncs again.
@@ -3486,14 +4418,52 @@ A child session shows a folded Gateway that reads "via lead". It uses the connec
 | Fan-out | 0–8 observers | 2 | The number of observers allowed per session. A slow observer loses only its own feed. |
 | Readiness | Ready · Composed · Refused (reading) | Read from the harness | Shows the state of the harness: its database, its settings, its model and its disk. |
 
-#### Presentations
-| Presentation | What it shows |
+#### Views
+
+The Gateway is one device with five views. All five show the same live settings.
+
+```ui
+device: actuation:gateway
+caption: The Gateway as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: on a Factory session's chain, as the first device. The folded Gateway shows the title "Gateway" and the harness name. A child session shows "via lead". Click the title to unfold it.
+
+##### Compact
+
+Where: on a Factory session's chain. The compact Gateway shows the link diagram, with the frames in flight, the replay ring and the heartbeat pulse. It also shows the readout of epoch, sequence, peers and heartbeat age. It has four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The title "Gateway" and the harness name. A child session shows "via lead". |
-| Compact | The link diagram. Four macros: Transport, Approvals, Stall after, Connect. |
-| Whole | All parameters, in four groups: Link, Approval, Liveness, Readiness. |
-| Full | The frame monitor, in a pane. See the Frames monitor. |
-| Widget | The link diagram, the readiness state and a count of frames in flight. Click it to open the Frames widget. |
+| Transport | Sets Local, Network or Remote. |
+| Approvals | Sets Ask, Session or Always. |
+| Stall after | Sets the time without progress after which the session counts as stalled. |
+| Connect | Attaches or detaches the session. |
+
+Click a Transport or Approvals value to change it. Click the plate to show the Gateway whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Gateway shows every parameter, in four groups.
+
+| Group | Parameters |
+|---|---|
+| Link | Connect, Transport, Submit, Fan-out |
+| Approval | Approvals |
+| Liveness | Stall after, Auto-continue |
+| Readiness | Readiness |
+
+A setting that the harness refuses to change shows as read-only, with the reason. A change you make in the pool applies at once.
+
+##### Full
+
+Where: a pane. The full Gateway is the frame monitor. It fills the pane with the frames the gateway sent and received, in order. Beside the frames, four readings show: Readiness, Liveness, Replay and Upstream. Filter the frames by session. The controls stay in Device view, below the pane. See the Frames monitor.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the link diagram, the readiness state and the count of frames in flight. Click it to open the Frames widget. The widget stays when you change mode.
 
 #### Transport
 | Control | Effect on the Gateway |
@@ -3528,12 +4498,6 @@ A child session shows a folded Gateway that reads "via lead". It uses the connec
 
 You need to see every gateway your work can reach, and what state each is in. The Gateways rack lists them as chains, so you can see which one a session uses.
 
-```ui
-src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
-height: 900
-caption: Select the Main track in Session view, then open Device view. The Gateways rack is the first device. Each row has a dot: green is ready, amber is composed, faint is refused.
-```
-
 #### The chains
 
 The rack has four chains. Three gateways have similar names, and each keeps its own row.
@@ -3555,14 +4519,47 @@ Each chain shows its transport and its state. The state comes from a reading. Th
 | Fan-out | 0–8 observers | 2 | The observers allowed per session. A slow observer loses only its own feed. |
 | Open | Per chain | — | Opens that gateway in a pane. |
 
-#### Presentations
-| Presentation | What it shows |
+#### Views
+
+The Gateways rack is one device with five views. All five show the same live settings.
+
+```ui
+device: actuation:gateways-rack
+caption: The Gateways rack as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: on the Main track's chain, as the first device. The folded rack shows the title "Gateways" and the number of ready chains. Click the title to unfold it.
+
+##### Compact
+
+Where: on the Main track's chain. The compact rack shows the four chains, each with a state dot. Green is ready, amber is composed and faint is refused. It has one macro.
+
+| Macro | What it does |
 |---|---|
-| Folded | The title "Gateways" and the number of ready chains. |
-| Compact | The four chains with their state dots. One macro: Fan-out. |
-| Whole | All parameters, in two groups: Chains, Observers. |
-| Full | The selected gateway in a pane, with its frames and readiness. |
-| Widget | One line per chain with its state dot. |
+| Fan-out | Sets the observers allowed for each session, from 0 to 8. |
+
+Click a chain to show its gateway whole in the pool. Click ⤢ to open the selected gateway full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole rack shows every parameter, in two groups.
+
+| Group | Parameters |
+|---|---|
+| Chains | Chain, Chain state, Open |
+| Observers | Fan-out |
+
+A Refused chain shows its reason. The reason stays visible.
+
+##### Full
+
+Where: a pane. The full rack shows the selected gateway at full size, with its frames and its readiness. Open a different chain to see its gateway. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows one line for each chain, with its state dot. Click a line to open that gateway in the pane that has focus. The widget stays when you change mode.
 
 #### Transport
 | Control | Effect on the Gateways rack |
@@ -3591,12 +4588,6 @@ Each chain shows its transport and its state. The state comes from a reading. Th
 
 You need an agent that works on your task at the pace, effort and budget you choose. The Agent device is that agent. It answers, it works through its tasks, and you can steer it while it runs.
 
-```ui
-src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
-height: 900
-caption: The Agent device is the second card in Device view, with the agent's face, its state and four knobs. Click the title to open it whole. Click the arrow to open the thread in a pane. Click a task in Session view to see its log in Clip view.
-```
-
 #### One face, three owners
 
 The Agent device shows one face and joins settings from three places. Actuation owns the model, effort, budget, heartbeat and input. Software Factory owns autonomy and the review gate. See Custody. Central owns who the agent is. The agent comes from your roster, so no crowd is fixed in advance.
@@ -3615,14 +4606,54 @@ The Agent device shows one face and joins settings from three places. Actuation 
 | On stall | Ask · Retry once · Stop | Ask | What the device does when the session stalls. |
 | Autonomy | Suggest · Review · Auto | Review | Shown here. Custody sets it. |
 
-#### Presentations
-| Presentation | What it shows |
+#### Views
+
+The Agent device is one device with five views. All five show the same live settings.
+
+```ui
+device: actuation:harness-model
+caption: The Agent device as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: on a Factory session's chain, as the second device. The folded Agent shows the agent's name and a power light. The light is lit only when the harness reports that the agent is on. Click the title to unfold it.
+
+##### Compact
+
+Where: on a Factory session's chain. The compact Agent shows the agent's face. The face spins while the agent works. It also shows the turns used, the turns allowed and the state. It has four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The agent's name and a power light. |
-| Compact | The agent's face. It spins while the agent works. It also shows turns used, turns allowed and state. Four macros: Autonomy, Effort, Budget, Input. |
-| Whole | All parameters, in four groups: Identity, Effort, Liveness, Input. |
-| Full | The thread, in a pane: your messages, the agent's messages, tool rows, steer lines, proposal cards and the stall card. Controls stay in Device view. |
-| Widget | The agent you are talking to: its thread, its state and a composer. |
+| Autonomy | Sets Suggest, Review or Auto. Custody owns this value. |
+| Effort | Sets how hard the agent thinks in each turn. |
+| Budget | Sets the turns allowed for one task. |
+| Input | Sets Steer or Queue. |
+
+Type a task in the composer and press Enter to run it. Click the plate to show the Agent whole in the pool. Click ⤢ to open the thread in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Agent shows every parameter, in four groups.
+
+| Group | Parameters |
+|---|---|
+| Identity | Power, Agent, Model, Harness |
+| Effort | Effort, Budget, Autonomy |
+| Liveness | Heartbeat, On stall |
+| Input | Input |
+
+Drag another agent from the browser onto the Agent parameter to replace the agent. A value that an agent moved shows that agent's name.
+
+##### Full
+
+Where: a pane. The full Agent is the thread. It fills the pane with your messages, the agent's messages, tool rows, steer lines, proposal cards and the stall card. The stall card names what the last tool waits for. The controls stay in Device view, below the pane.
+
+In Clip view, a task of this agent shows its log.
+
+##### Widget
+
+Where: the rail on the right. The widget is the agent you are talking to. It shows the agent's thread, its state and a composer. Type in the composer to send a message. The widget stays when you change mode.
 
 #### Transport
 | Control | Effect on the Agent |
@@ -3679,14 +4710,54 @@ An Experiment holds five statements. The question says what you want to learn. T
 | Beat | 5 s–5 min | 15 s | How often a reading is taken. |
 | Compare with | None, or an earlier Experiment | None | Draws the earlier run beside this run. |
 
-#### Presentations
-| Presentation | What it shows |
+#### Views
+
+The Experiment is one device with five views. All five show the same live settings.
+
+```ui
+device: actuation:experiment
+caption: The Experiment as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: on any Factory track's chain. The folded Experiment shows the question and the number of runs finished. Click the title to unfold it.
+
+##### Compact
+
+Where: on any Factory track's chain. The compact Experiment shows a small plot of one reading over the runs. It has four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The question and the number of runs finished. |
-| Compact | A small plot of one reading over the runs. Four macros: Variable, Levels, Repeats, Stop when. |
-| Whole | All parameters, in four groups: Question, Runs, Readings, Compare. |
-| Full | The result, in a pane: one line for each run, the readings as lanes, and the runs side by side. |
-| Widget | The question, runs finished and runs in the plan, and the best reading so far. |
+| Variable | Chooses the setting that changes between runs. |
+| Levels | Sets the values the variable takes. |
+| Repeats | Sets the number of runs for each level. |
+| Stop when | Sets the condition that ends each run. |
+
+Click the plate to show the Experiment whole in the pool. Click ⤢ to open the result full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Experiment shows every parameter, in four groups.
+
+| Group | Parameters |
+|---|---|
+| Question | Question, Agents |
+| Runs | Variable, Levels, Repeats, Stop when |
+| Readings | Readings, Beat |
+| Compare | Compare with |
+
+After you press Play, the declared statements do not change. A change starts a new Experiment.
+
+##### Full
+
+Where: a pane. The full Experiment is the result. It fills the pane with one line for each run, the readings as lanes, and the runs side by side. A reading that has no source shows as absent. The controls stay in Device view, below the pane.
+
+In Clip view, the Experiment's clip shows each run as a take. Arrangement view draws the Experiment as a track with one lane for each reading.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the question, the runs finished and the runs in the plan, and the best reading so far. The widget stays when you change mode.
 
 #### Transport
 | Control | Effect on the Experiment |
@@ -3723,12 +4794,6 @@ An Experiment holds five statements. The question says what you want to learn. T
 
 You need to see exactly what passed between the shell and the harness. The Frames monitor shows every frame the gateway sends or receives, per session, in order. It works like the MIDI monitor in Live.
 
-```ui
-src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
-height: 900
-caption: Click the arrow on the Gateway title in Device view. The pane shows the frames on the left and the Readiness, Liveness, Replay and Upstream readings on the right. Use the buttons above the frames to filter by session.
-```
-
 #### Parameters
 | Parameter | Values | Default | What it does |
 |---|---|---|---|
@@ -3739,14 +4804,48 @@ caption: Click the arrow on the Gateway title in Device view. The pane shows the
 | Pause | On · Off | Off | Holds the list still. The gateway keeps the frames. |
 | Keep | 100–5000 frames | 1000 | The number of frames in the list. |
 
-#### Presentations
-| Presentation | What it shows |
+#### Views
+
+The Frames monitor is one device with five views. All five show the same live settings.
+
+```ui
+device: actuation:frames-monitor
+caption: The Frames monitor as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: in a pane of Factory. The folded monitor shows the title "Frames" and the frame rate. Click the title to unfold it.
+
+##### Compact
+
+Where: in a pane of Factory. The compact monitor shows the last four frames of the selected session. It has four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The title "Frames" and the frame rate. |
-| Compact | The last four frames of the selected session. Four macros: Session, Kinds, Direction, Pause. |
-| Whole | All parameters, in two groups: Filter, Display. |
-| Full | The frame list, with four readings beside it: Readiness, Liveness, Replay, Upstream. |
-| Widget | The last frames of the selected session, in a tile. |
+| Session | Chooses All sessions, the lead or one session. |
+| Kinds | Chooses Messages, Tools, Heartbeat, Approvals or Errors. |
+| Direction | Chooses Both, Sent or Received. |
+| Pause | Holds the list still. The gateway keeps the frames. |
+
+Click the plate to show the monitor whole in the pool. Click ⤢ to open the full frame list in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole monitor shows every parameter, in two groups.
+
+| Group | Parameters |
+|---|---|
+| Filter | Session, Direction, Kinds |
+| Display | Follow, Pause, Keep |
+
+##### Full
+
+Where: a pane. The full monitor is the frame list. Each frame shows its session, its direction and its time. Beside the list, four readings show: Readiness, Liveness, Replay and Upstream. Select a frame to see its task, turn and step. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget is the Frames widget. It shows the last frames of the selected session in a tile. The widget stays when you change mode.
 
 #### Transport
 | Control | Effect on the Frames monitor |
@@ -3777,12 +4876,6 @@ caption: Click the arrow on the Gateway title in Device view. The pane shows the
 
 You need to choose which skills an agent may use, and to turn several of them up or down at once. The Skillset rack holds one chain for each skill. Each chain has a light that shows whether the skill is admitted.
 
-```ui
-src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
-height: 900
-caption: The Porting rack is the third card in Device view. The list on the left has one chain for each skill, with a light. The four knobs on the right are the macros. Click a light to turn a skill on or off. Turn a knob and watch the skills it moves.
-```
-
 #### The chains and the lights
 
 Each chain holds one skill. The skill sits in the chain and works on the agent's turn as the turn passes. A dark chain is dimmed. The light shows what AIKit reports. You request a skill on or off. AIKit answers. A skill that you turned on stays dark when AIKit holds it back. The rack then says why. The reason can be a revision nobody has reviewed, or a skill that its author has retired.
@@ -3800,14 +4893,51 @@ Each chain holds one skill. The skill sits in the chain and works on the agent's
 | Steward | A name (reading) | Read from the set | Who looks after the set. |
 | Revision | A number (reading) | Read from the set | The revision of the set that is in use. |
 
-#### Presentations
-| Presentation | What it shows |
+#### Views
+
+The Skillset rack is one device with five views. All five show the same live settings.
+
+```ui
+device: ai-kit:skillset-rack
+caption: The Skillset rack as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: on a Factory session's chain, as the third device. The folded rack shows the set name and the count of lit chains. Click the title to unfold it.
+
+##### Compact
+
+Where: on a Factory session's chain. The compact rack shows one chain for each skill, with an admit light. It has four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The set name and the count of lit chains. |
-| Compact | The chains with their lights, and the four macros: Thoroughness, Test depth, Reach, Risk. |
-| Whole | All parameters, in three groups: Skills, Macros, Details. |
-| Full | The set in a pane: each skill with its text, its revision and its standing. |
-| Widget | The chains with their lights, and the four macros. |
+| Thoroughness | Sets how exhaustive the skills are, from 0 to 100 %. |
+| Test depth | Sets how deep the skills test. |
+| Reach | Sets how far beyond the scope the skills look. |
+| Risk | Sets how bold the skills are before they ask you. |
+
+Click a light to turn a skill on or off. Turn a knob to move the skills it controls. Click the plate to show the rack whole in the pool. Click ⤢ to open the set full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole rack shows every parameter, in three groups.
+
+| Group | Parameters |
+|---|---|
+| Skills | Skillset, Skill, Admit light |
+| Macros | Thoroughness, Test depth, Reach, Risk |
+| Details | Steward, Revision |
+
+Drag a set from the browser onto the rack to replace the set. Drag one skill onto the rack to make a new chain.
+
+##### Full
+
+Where: a pane. The full rack shows the set. It lists each skill with its text, its revision and its standing. A dark chain gives the reason that AIKit holds the skill back. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the chains with their lights, and the four macros. The widget stays when you change mode.
 
 #### Transport
 | Control | Effect on the Skillset rack |
@@ -3851,14 +4981,51 @@ You need one reusable way of working that an agent can follow. A Skill is that w
 | Use | Always · When it applies · When asked | When it applies | When the agent loads the skill. |
 | Macro ranges | Four ranges | The full range | How far each rack macro may move this skill: Thoroughness, Test depth, Reach, Risk. |
 
-#### Presentations
-| Presentation | What it shows |
+#### Views
+
+The Skill is one device with five views. All five show the same live settings.
+
+```ui
+device: ai-kit:skill-device
+caption: The Skill as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: on one chain inside a Skillset rack. The folded Skill shows the skill name and its light. Click the title to unfold it.
+
+##### Compact
+
+Where: on one chain inside a Skillset rack. The compact Skill shows the skill's glyph and name, and its standing. It has four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The skill name and its light. |
-| Compact | The skill's glyph and name, its standing and four macros: Admit, Use, Thoroughness range, Risk range. |
-| Whole | All parameters, in three groups: Admit, Use, Ranges. |
-| Full | The skill's text in a pane, with its revisions and the sessions that use it. |
-| Widget | The skill's name, light and standing, on the rail. |
+| Admit | Requests that the skill is used or withheld. |
+| Use | Sets Always, When it applies or When asked. |
+| Thoroughness range | Sets how far the rack macro Thoroughness may move this skill. |
+| Risk range | Sets how far the rack macro Risk may move this skill. |
+
+Click the plate to show the Skill whole in the pool. Click ⤢ to open the skill's text full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Skill shows every parameter, in three groups.
+
+| Group | Parameters |
+|---|---|
+| Admit | Skill, Admit, Admit light, Standing, Revision |
+| Use | Use |
+| Ranges | Macro ranges |
+
+Only a Reviewed skill is admitted. A skill that is not reviewed stays dark.
+
+##### Full
+
+Where: a pane. The full Skill is the skill's text. It fills the pane with the text, its revisions and the sessions that use it. A change makes a new revision. The old revision stays. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the skill's name, its light and its standing. The widget stays when you change mode.
 
 #### Transport
 | Control | Effect on the Skill |
@@ -3888,12 +5055,6 @@ You need one reusable way of working that an agent can follow. A Skill is that w
 
 You need to choose which knowledge an agent can look up, and how far it may follow links. The Knowledge route sets the sources and the bounds. The agent then finds what it needs on demand.
 
-```ui
-src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
-height: 900
-caption: The Scope card in Device view shows the reads in teal. The Knowledge route adds the knowledge sources to the same card. Click the Scope title to open its reads and writes whole in the pool.
-```
-
 #### Parameters
 | Parameter | Values | Default | What it does |
 |---|---|---|---|
@@ -3904,14 +5065,50 @@ caption: The Scope card in Device view shows the reads in teal. The Knowledge ro
 | Read budget | 1–200 pages | 40 | The most pages the agent reads in one task. |
 | Route | Ready · Composed · Refused (reading) | Read from AIKit | Shows whether the route answers. |
 
-#### Presentations
-| Presentation | What it shows |
+#### Views
+
+The Knowledge route is one device with five views. All five show the same live settings.
+
+```ui
+device: ai-kit:knowledge-route
+caption: The Knowledge route as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: inside the Scope device, in a Factory session's chain. The folded route shows the title "Knowledge" and the count of sources. Click the title to unfold it.
+
+##### Compact
+
+Where: inside the Scope device. The compact route shows a small graph of the sources in reach. It has four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The title "Knowledge" and the count of sources. |
-| Compact | A small graph of the sources in reach. Four macros: Sources, Reach, Link depth, Read budget. |
-| Whole | All parameters, in two groups: Sources, Bounds. |
-| Full | The knowledge in reach, in a pane, as a list and as a graph. |
-| Widget | The pages the agent read in this task, with their sources. |
+| Sources | Chooses Wiki, Project knowledge, Code or Web. |
+| Reach | Sets the widest part of the world whose knowledge the agent may read. |
+| Link depth | Sets the number of links the agent follows from a hit. |
+| Read budget | Sets the most pages the agent reads in one task. |
+
+Click the Scope title to open its reads and writes whole in the pool. Click ⤢ to open the knowledge full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole route shows every parameter, in two groups.
+
+| Group | Parameters |
+|---|---|
+| Sources | Sources, Reach, Route |
+| Bounds | Search first, Link depth, Read budget |
+
+The route cannot reach farther than Scope allows.
+
+##### Full
+
+Where: a pane. The full route shows the knowledge in reach, as a list and as a graph. A page that the agent read shows with its source. Open the source from the page. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the pages that the agent read in this task, with their sources. The widget stays when you change mode.
 
 #### Transport
 | Control | Effect on the Knowledge route |
@@ -3943,12 +5140,6 @@ caption: The Scope card in Device view shows the reads in teal. The Knowledge ro
 
 You need messages to reach an agent from any surface you use, and from one agent to another, under rules you set. The Agency gateway carries those messages. It is a service that keeps running while you work.
 
-```ui
-src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
-height: 900
-caption: Select the Main track and open Device view. The second row of the Gateways rack is the AIKit agency gateway. Click the row to read its state.
-```
-
 #### Parameters
 | Parameter | Values | Default | What it does |
 |---|---|---|---|
@@ -3959,14 +5150,49 @@ caption: Select the Main track and open Device view. The second row of the Gatew
 | Inbox | A count (reading) | Read from the gateway | The messages that wait for an agent. |
 | State | Ready · Composed · Refused (reading) | Read from the gateway | Whether the gateway carries messages now. |
 
-#### Presentations
-| Presentation | What it shows |
+#### Views
+
+The Agency gateway is one device with five views. All five show the same live settings.
+
+```ui
+device: ai-kit:agency-gateway
+caption: The Agency gateway as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: as one chain in the Gateways rack, on the Main track. The folded gateway shows the title "Agency gateway" and its state dot. Click the title to unfold it.
+
+##### Compact
+
+Where: as one chain in the Gateways rack. The compact gateway shows the surfaces on the left, the agents on the right, and the messages between them. It has four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The title "Agency gateway" and its state dot. |
-| Compact | The surfaces on the left, the agents on the right, and the messages between them. Four macros: Service, Surfaces, Agent to agent, State. |
-| Whole | All parameters, in three groups: Service, Rules, Readings. |
-| Full | The gateway in a pane: the messages that passed, and the refusals with their reasons. |
-| Widget | The count of messages that wait, and the state dot. |
+| Service | Starts or stops the gateway. |
+| Surfaces | Chooses the places that may send a message to an agent. |
+| Agent to agent | Sets Allow, Ask or Deny for a call from one agent to another. |
+| State | Shows Ready, Composed or Refused. |
+
+Click the row to read its state. Click the plate to show the gateway whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole gateway shows every parameter, in three groups.
+
+| Group | Parameters |
+|---|---|
+| Service | Service |
+| Rules | Surfaces, Agent to agent |
+| Readings | Harnesses, Inbox, State |
+
+##### Full
+
+Where: a pane. The full gateway shows the messages that passed. It also lists the refusals with their reasons. A refused call is also an event in the activity record. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the count of messages that wait, and the state dot. The widget stays when you change mode.
 
 #### Transport
 | Control | Effect on the Agency gateway |
@@ -4006,14 +5232,50 @@ You need an agent to learn something you did by hand. Capture skill turns a work
 | Steps | A list (reading) | Read from the example | The steps the device found. You can remove a step. |
 | Lands as | Proposal | Proposal | Where the skill goes. It goes to Approvals. |
 
-#### Presentations
-| Presentation | What it shows |
+#### Views
+
+The Capture skill is one device with five views. All five show the same live settings.
+
+```ui
+device: ai-kit:capture-skill
+caption: The Capture skill as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: on the armed Factory track's chain. The folded device shows the title "Capture skill" and a dot. The dot is red while it records. Click the title to unfold it.
+
+##### Compact
+
+Where: on the armed Factory track's chain. The compact device shows the steps found so far, as a short list. It has four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The title "Capture skill" and a dot. The dot is red while it records. |
-| Compact | The steps found so far, as a short list. Four macros: Source, Fit, Scope, Name. |
-| Whole | All parameters, in two groups: Example, Skill. |
-| Full | The proposed skill in a pane: its text, its steps, and the example beside it. |
-| Widget | The proposal that waits, with Accept and Remove. |
+| Source | Chooses the last minutes or a selected clip. |
+| Fit | Sets Exact, Light or Broad. |
+| Scope | Sets This project or All my work. |
+| Name | Sets the skill's name. |
+
+Remove a step that does not belong. Click the plate to show the device whole in the pool. Click ⤢ to open the proposed skill full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole device shows every parameter, in two groups.
+
+| Group | Parameters |
+|---|---|
+| Example | Source, Steps |
+| Skill | Name, Fit, Scope, Lands as |
+
+##### Full
+
+Where: a pane. The full device shows the proposed skill. It fills the pane with the skill's text and its steps, with the example beside them. The skill goes to Approvals as a proposal. The controls stay in Device view, below the pane.
+
+In Clip view, a clip that you select can serve as the Source.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the proposal that waits, with Accept and Remove. The widget stays when you change mode.
 
 #### Transport
 | Control | Effect on Capture skill |
@@ -4045,12 +5307,6 @@ You need an agent to learn something you did by hand. Capture skill turns a work
 
 You need to see every attempt made on a piece of work, and which one stands. Runs lists the attempts and the task tree of each. A retry is a new attempt. It does not replace the old one.
 
-```ui
-src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
-height: 900
-caption: Press Tab to switch to Arrangement view. Each thread runs along one ruler with a needle at its last check-in. Click the Runs button on a thread header to see that thread among its siblings.
-```
-
 #### Parameters
 | Parameter | Values | Default | What it does |
 |---|---|---|---|
@@ -4062,14 +5318,51 @@ caption: Press Tab to switch to Arrangement view. Each thread runs along one rul
 | Compare | None, or a second attempt | None | Draws two attempts side by side. |
 | Stands | An attempt | None | The attempt you accept. When you choose it, you review it. |
 
-#### Presentations
-| Presentation | What it shows |
+#### Views
+
+Runs is one device with five views. All five show the same live settings.
+
+```ui
+device: software-factory:attempt-review
+caption: Runs as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: in a pane of Factory, and in the Runs category of the browser. The folded Runs shows the work name and the number of attempts. Click the title to unfold it.
+
+##### Compact
+
+Where: in a pane of Factory. The compact Runs shows one bar for each attempt, coloured by state. It has four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The work name and the number of attempts. |
-| Compact | One bar for each attempt, coloured by state. Four macros: Attempt, Show, Group by, Compare. |
-| Whole | All parameters, in three groups: Work, Display, Review. |
-| Full | The attempts and their task trees in a pane. Select a task to open its log in Clip view. |
-| Widget | The latest attempt and its tasks, with a state light on each. |
+| Attempt | Chooses the attempt you read. |
+| Show | Filters the tasks to All, Running, Stalled or Done. |
+| Group by | Groups the list by Attempt, Agent or Day. |
+| Compare | Draws a second attempt beside the first. |
+
+Click the plate to show Runs whole in the pool. Click ⤢ to open the attempts full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Runs shows every parameter, in three groups.
+
+| Group | Parameters |
+|---|---|
+| Work | Work, Attempt |
+| Display | Show, Group by, View |
+| Review | Compare, Stands |
+
+Set Stands to the attempt you accept. The device does not choose for you.
+
+##### Full
+
+Where: a pane. The full Runs shows the attempts and the task tree of each, as a tree or along one ruler. Select a task to open its log in Clip view. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the latest attempt and its tasks, with a state light on each. The widget stays when you change mode.
 
 #### Transport
 | Control | Effect on Runs |
@@ -4101,12 +5394,6 @@ caption: Press Tab to switch to Arrangement view. Each thread runs along one rul
 
 You need a list of what an agent is asked to do, with the state of each task. Tasks are the clips on a session's track. Each task shows how it stands, and Clip view shows its log.
 
-```ui
-src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
-height: 900
-caption: Session view. Each column is a session, and each square is a task. A running square has no end. A queued square has no length. A striped square is stalled. Click a task to read its log in Clip view. Double-click it to open the thread.
-```
-
 #### How a task is drawn
 
 | State | Drawn as |
@@ -4131,14 +5418,51 @@ An empty square names what a click does: it stops the session after the current 
 | Effort | Inherit · Low · Medium · High · Max | Inherit | Sets the effort for this task only. |
 | Autonomy | Inherit · Suggest · Review · Auto | Inherit | Sets the autonomy for this task only. |
 
-#### Presentations
-| Presentation | What it shows |
+#### Views
+
+Tasks is one device with five views. All five show the same live settings.
+
+```ui
+device: software-factory:tasks
+caption: Tasks as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: on a Factory session's track, as a clip. The folded Tasks shows the task name and its state. Click the title to unfold it.
+
+##### Compact
+
+Where: on a Factory session's track. The compact Tasks shows the task square with its progress. It has four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The task name and its state. |
-| Compact | The task square with its progress, and four macros: Launch, Then, Effort, Autonomy. |
-| Whole | All parameters, in three groups: Task, Launch, Style. |
-| Full | The task log in a pane: each tool the agent used, laid along the task's time, with the steers marked. |
-| Widget | The tasks of the selected session with a state light on each. |
+| Launch | Sets Once, Hold or Loop. |
+| Then | Sets what follows the task: Next task, Hand off to an agent or Stop. |
+| Effort | Sets the effort for this task only. |
+| Autonomy | Sets the autonomy for this task only. |
+
+Click the task to read its log in Clip view. Click the plate to show the task whole in the pool. Click ⤢ to open the task log full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Tasks shows every parameter, in three groups.
+
+| Group | Parameters |
+|---|---|
+| Task | Name, State |
+| Launch | Launch, Then, Launch quantize |
+| Style | Output style, Effort, Autonomy |
+
+##### Full
+
+Where: a pane. The full Tasks is the task log. It lays each tool that the agent used along the task's time, and marks the steers. The controls stay in Device view, below the pane.
+
+In Clip view, the task is the clip. Its log shows there. Session view draws each task as a square in the column of its session.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the tasks of the selected session, with a state light on each. The widget stays when you change mode.
 
 #### Transport
 | Control | Effect on Tasks |
@@ -4171,12 +5495,6 @@ An empty square names what a click does: it stops the session after the current 
 
 You need to decide how much an agent decides alone, what you must check, and who holds each thing the agent touches. Custody sets the agent's autonomy and the review gate. It also lights when you take hold of something the agent held.
 
-```ui
-src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
-height: 900
-caption: The Autonomy knob on the Agent device is Custody's main control. Turn it from Suggest to Review to Auto. Edit something an agent holds, and the Hand back button in the transport lights.
-```
-
 #### Parameters
 | Parameter | Values | Default | What it does |
 |---|---|---|---|
@@ -4189,14 +5507,51 @@ caption: The Autonomy knob on the Agent device is Custody's main control. Turn i
 | Held | A list (reading) | Read from the agent | The things the agent holds now, such as a file or a setting. |
 | Hand back | Lit · Dark (reading) | Dark | Lit when you edited something an agent holds. |
 
-#### Presentations
-| Presentation | What it shows |
+#### Views
+
+The Custody is one device with five views. All five show the same live settings.
+
+```ui
+device: software-factory:agent-custody
+caption: The Custody as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: on the Agent device, in a Factory session's chain. The folded Custody shows the title "Custody" and the autonomy value. Click the title to unfold it.
+
+##### Compact
+
+Where: on the Agent device. The compact Custody shows the items that the agent holds, as dots. It has four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The title "Custody" and the autonomy value. |
-| Compact | The agent's held items, as dots. Four macros: Autonomy, Review gate, Write mode, Hand back. |
-| Whole | All parameters, in three groups: Autonomy, Review, Held. |
-| Full | A pane with every item the agent holds, who last changed it, and its receipts. |
-| Widget | The count of held items, the Hand back light and the Autonomy value. |
+| Autonomy | Sets Suggest, Review or Auto. |
+| Review gate | Chooses Diffs, Approvals or Both. |
+| Write mode | Sets Propose, Draft or Direct. |
+| Hand back | Lights when you edited a held item. Press it to give control to the agent again. |
+
+Click the plate to show Custody whole in the pool. Click ⤢ to open the held items full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Custody shows every parameter, in three groups.
+
+| Group | Parameters |
+|---|---|
+| Autonomy | Autonomy, Write mode |
+| Review | Review gate, Escalate to, Wait, On no answer |
+| Held | Held, Hand back |
+
+The Scope device sets a limit for each part of the world. The stricter Write mode stands.
+
+##### Full
+
+Where: a pane. The full Custody lists every item that the agent holds. Each item shows who last changed it, with its receipts. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the count of held items, the Hand back light and the Autonomy value. The widget stays when you change mode.
 
 #### Transport
 | Control | Effect on Custody |
@@ -4230,12 +5585,6 @@ caption: The Autonomy knob on the Agent device is Custody's main control. Turn i
 
 You need to limit the part of your world an agent may touch, and decide how its writes arrive. Scope is the world device. It sets the reach from one object up to everything you own. It also sets whether a write arrives as a proposal, a draft or a direct change.
 
-```ui
-src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
-height: 900
-caption: The World card in Device view. The rings show the reach. Teal marks what the agent may read. Amber marks what it may write. Turn the Reach knob, and change Writes between prop, draft and dir.
-```
-
 #### The rings
 
 The picture shows nested rings. The smallest ring is one object. The next rings are a scene, an Expression, and everything in Central. The teal arc shows the reach for reads. The amber arc shows the reach for writes. A basis readout shows the revision the agent works from and the revision of its edits, for example r15 to r17.
@@ -4251,14 +5600,52 @@ The picture shows nested rings. The smallest ring is one object. The next rings 
 | Basis | A revision pair (reading) | Read from the world | The revision the agent started from and the revision of its edits. |
 | Receipts | A list (reading) | Read from the agent | One receipt for each write. |
 
-#### Presentations
-| Presentation | What it shows |
+#### Views
+
+The Scope is one device with five views. All five show the same live settings.
+
+```ui
+device: software-factory:context-write-mode
+caption: The Scope as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: on a Factory session's chain, as the fourth device. The folded Scope shows the title "Scope" and the Reach value. Click the title to unfold it.
+
+##### Compact
+
+Where: on a Factory session's chain. The compact Scope shows the nested rings. Teal marks what the agent may read. Amber marks what it may write. It has four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The title "Scope" and the Reach value. |
-| Compact | The rings, with the reads in teal and the writes in amber. Four macros: Reach, Reads, Writes, Write mode. |
-| Whole | All parameters, in four groups: Reach, Reads and Writes, Knowledge, Receipts. |
-| Full | A pane that shows the world the agent may touch, with its places drawn as they are, and the agent's receipts on them. |
-| Widget | The Reach, the Write mode and the count of receipts. |
+| Reach | Sets Object, Scene, Expression or Central. |
+| Reads | Chooses the places the agent may read. |
+| Writes | Chooses the places the agent may write. |
+| Write mode | Sets Propose, Draft or Direct. |
+
+Click the Scope title to show it whole in the pool. Click ⤢ to open the world full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Scope shows every parameter, in four groups.
+
+| Group | Parameters |
+|---|---|
+| Reach | Reach, Basis |
+| Reads and Writes | Reads, Writes, Write mode |
+| Knowledge | Knowledge |
+| Receipts | Receipts |
+
+A place that you raise into wider reach asks you first.
+
+##### Full
+
+Where: a pane. The full Scope shows the world that the agent may touch. The places show as they are, and the agent's receipts sit on them. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the Reach, the Write mode and the count of receipts. The widget stays when you change mode.
 
 #### Transport
 | Control | Effect on Scope |
@@ -4294,12 +5681,6 @@ The picture shows nested rings. The smallest ring is one object. The next rings 
 
 You need a record of what the agents did and what came of it. The Ledger lists every task with its receipt. It shows what landed, what was approved and what drew a comment.
 
-```ui
-src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
-height: 900
-caption: Select the Main track and open Device view. The Ledger card lists the tasks of every session with their state. Open the Ledger tile in the dock to read the receipts.
-```
-
 #### Parameters
 | Parameter | Values | Default | What it does |
 |---|---|---|---|
@@ -4313,14 +5694,48 @@ caption: Select the Main track and open Device view. The Ledger card lists the t
 
 A receipt holds the number of the task, its name, the agent, the outcome, the revision it started from and who accepted it. It also lists the files that changed. A receipt is made when the task writes. The Ledger does not edit a receipt.
 
-#### Presentations
-| Presentation | What it shows |
+#### Views
+
+The Ledger is one device with five views. All five show the same live settings.
+
+```ui
+device: software-factory:ledger
+caption: The Ledger as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: on the Main track's chain. The folded Ledger shows the title "Ledger" and the count of tasks today. Click the title to unfold it.
+
+##### Compact
+
+Where: on the Main track's chain. The compact Ledger shows one line for each task: the agent's mark, the task and its state. It has four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The title "Ledger" and the count of tasks today. |
-| Compact | One line for each task: the agent's mark, the task and its state. Four macros: Period, Agent, Outcome, Order. |
-| Whole | All parameters, in two groups: Filter, Receipt. |
-| Full | The Ledger in a pane, with each receipt open beside its task. |
-| Widget | The last receipts, for example "#212 re-plan port · landed". |
+| Period | Sets This run, Today or All. |
+| Agent | Shows the tasks of all agents or of one agent. |
+| Outcome | Shows tasks with one outcome. |
+| Order | Sets Newest first, By agent or By task. |
+
+Click a task to open its log in Clip view. Click the plate to show the Ledger whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Ledger shows every parameter, in two groups.
+
+| Group | Parameters |
+|---|---|
+| Filter | Period, Agent, Outcome, Order |
+| Receipt | Receipt |
+
+##### Full
+
+Where: a pane. The full Ledger shows the list of tasks, with each receipt open beside its task. A receipt holds the task number, the agent, the outcome, the start revision, who accepted it, and the files that changed. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the last receipts, for example "#212 re-plan port · landed". The widget stays when you change mode.
 
 #### Transport
 | Control | Effect on the Ledger |
@@ -4351,12 +5766,6 @@ A receipt holds the number of the task, its name, the agent, the outcome, the re
 
 You need one place to answer what the agents ask. Approvals holds every proposal and every request that waits for you. Nothing in it lands until you answer.
 
-```ui
-src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
-height: 900
-caption: Select the Main track and open Device view. The Approvals card shows the proposals that wait. Click Approve to accept one. Click Open to read it first.
-```
-
 #### Parameters
 | Parameter | Values | Default | What it does |
 |---|---|---|---|
@@ -4367,14 +5776,48 @@ caption: Select the Main track and open Device view. The Approvals card shows th
 | On no answer | Hold · Deny | Hold | What happens when nobody answers. |
 | Order | Oldest first · By agent · By risk | Oldest first | The order of the queue. |
 
-#### Presentations
-| Presentation | What it shows |
+#### Views
+
+The Approvals is one device with five views. All five show the same live settings.
+
+```ui
+device: software-factory:approvals
+caption: The Approvals as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: on the Main track's chain. The folded Approvals shows the title "Approvals" and the count of items that wait. Click the title to unfold it.
+
+##### Compact
+
+Where: on the Main track's chain. The compact Approvals shows one line for each item: the agent's mark, the item and a button. It has four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The title "Approvals" and the count. |
-| Compact | One line for each item: the agent's mark, the item and a button. Four macros: Show, Default answer, Wait, On no answer. |
-| Whole | All parameters, in two groups: Queue, Defaults. |
-| Full | The queue in a pane, with the diff of the selected proposal beside it. |
-| Widget | The proposal cards, each with Approve. |
+| Show | Chooses Proposals, Requests or Both. |
+| Default answer | Sets Ask, Session or Always. |
+| Wait | Sets how long a request waits before it counts as unanswered. |
+| On no answer | Sets Hold or Deny. |
+
+Click Open to read an item. Click Approve to accept it. Click the plate to show Approvals whole in the pool. Click ⤢ to open the queue full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Approvals shows every parameter, in two groups.
+
+| Group | Parameters |
+|---|---|
+| Queue | Queue, Show, Order |
+| Defaults | Default answer, Wait, On no answer |
+
+##### Full
+
+Where: a pane. The full Approvals shows the queue. Beside it, the diff of the selected proposal shows. The queue shows the author of each item. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the proposal cards, each with Approve. The widget stays when you change mode.
 
 #### Transport
 | Control | Effect on Approvals |
@@ -4406,12 +5849,6 @@ caption: Select the Main track and open Device view. The Approvals card shows th
 
 You need to see the course of one session along the clock. A Run is one session's stream of tasks, drawn on a ruler. A needle shows where the session has got to.
 
-```ui
-src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
-height: 900
-caption: Press Tab to switch to Arrangement view. Each thread has a lane, with a needle at its last check-in. A needle that stops moving is a stall. Expand a lane to see its messages, files, terminal, web and graph events.
-```
-
 #### The lanes
 
 A lane has task blocks. A done block is solid. A running block fades out at the right and has no end. A stalled block is striped, and the needle stops where the output stopped. A queued block is dashed and has no length. Under each lane, the event lanes show Messages, Files, Terminal, Web and Graph. Click an event to open it in the matching widget. A line marks the present moment.
@@ -4428,14 +5865,51 @@ A lane has task blocks. A done block is solid. A running block fades out at the 
 | Needle | A time (reading) | Read from the session | The time of the last check-in. |
 | Takes | A list of attempts | The latest | The attempts under the lane. |
 
-#### Presentations
-| Presentation | What it shows |
+#### Views
+
+The Run is one device with five views. All five show the same live settings.
+
+```ui
+device: software-factory:run-device
+caption: The Run as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: as one lane of the Run track in Arrangement view, and on the session's chain. The folded Run shows the session name and the needle time. Click the title to unfold it.
+
+##### Compact
+
+Where: on the session's chain. The compact Run shows the lane, with a needle and a state light. It has four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The session name and the needle time. |
-| Compact | The lane, with a needle and a state light. Four macros: Watch, Telemetry, Solo, Event lanes. |
-| Whole | All parameters, in three groups: Feed, Lanes, Takes. |
-| Full | The thread as a pane: tasks, tool rows, steer lines, proposal cards and the stall card. |
-| Widget | The session's state, its needle time and its task now. |
+| Watch | Sets In, Auto or Off for the stream into the widgets. |
+| Telemetry | Turns on or off the feed to the widgets, the Ledger and other agents. |
+| Solo | Lets only soloed sessions run. |
+| Event lanes | Chooses the lanes under the thread. |
+
+Click the plate to show the Run whole in the pool. Click ⤢ to open the thread full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Run shows every parameter, in three groups.
+
+| Group | Parameters |
+|---|---|
+| Feed | Session, Watch, Telemetry, Solo |
+| Lanes | Event lanes, Overview, Needle |
+| Takes | Takes |
+
+##### Full
+
+Where: a pane. The full Run is the thread. It shows tasks, tool rows, steer lines, proposal cards and the stall card. The needle shows the last check-in. The controls stay in Device view, below the pane.
+
+In Clip view, the lane holds the clips of the session. A new attempt is a take under the same lane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the session's state, its needle time and its task now. The widget stays when you change mode.
 
 #### Transport
 | Control | Effect on the Run |
@@ -4468,12 +5942,6 @@ A lane has task blocks. A done block is solid. A running block fades out at the 
 
 You need a team of agents to work as one unit. The Agentset rack holds one chain for each member. Members nest as they were spawned.
 
-```ui
-src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
-height: 900
-caption: Select the group header "Port bridge-2" in Session view and open Device view. The Port crew rack lists the lead and its helpers, each with a model. A stalled member has an orange outline. Click a member to open its thread.
-```
-
 #### The members
 
 Each chain is one agent. The lead is at the top. Its helpers sit below it, with one step of indent for each level. A chip on a chain names the member's model. A stalled member has an outline in the stall colour. A group header folds the crew. When you fold it, its slots still show the tasks of the children. A launch of the group fires them all.
@@ -4489,14 +5957,51 @@ Each chain is one agent. The lead is at the top. Its helpers sit below it, with 
 | Subagent model | A model | The lead's model | The default model for everything the group spawns. A member can set its own. |
 | Member state | Working · Idle · Stalled · Done (reading) | Read from each session | The state of each chain. |
 
-#### Presentations
-| Presentation | What it shows |
+#### Views
+
+The Agentset rack is one device with five views. All five show the same live settings.
+
+```ui
+device: software-factory:agentset-rack
+caption: The Agentset rack as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: on a group's chain in Factory. The folded rack shows the crew name and the count of members. Click the title to unfold it.
+
+##### Compact
+
+Where: on a group's chain. The compact rack shows the member chains, nested as they were spawned. A chip on each chain names the member's model. A stalled member has an orange outline. It has four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The crew name and the count of members. |
-| Compact | The chains, nested, with a model chip on each. Four macros: Fan-out, Depth, Hand-back, Subagent model. With many members, the chains group by state and each group shows its count. |
-| Whole | All parameters, in three groups: Members, Limits, Return. |
-| Full | The crew in a pane as a tree, with each member's thread and the files it touched. |
-| Widget | The crew tree with a light on each member. |
+| Fan-out | Sets the most helpers that run at once. |
+| Depth | Sets how deep helpers may spawn their own helpers. |
+| Hand-back | Sets Raw, Digest or Summary for what a helper returns. |
+| Subagent model | Sets the default model for everything the group spawns. |
+
+With many members, the chains group by state, and each group shows its count. Click a member to open its thread. Click the plate to show the rack whole in the pool. Click ⤢ to open the crew full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole rack shows every parameter, in three groups.
+
+| Group | Parameters |
+|---|---|
+| Members | Members, Selected member, Member state |
+| Limits | Fan-out, Depth |
+| Return | Hand-back, Subagent model |
+
+Drag an agent from the browser onto the rack to add a member. The rack sets no upper limit on members.
+
+##### Full
+
+Where: a pane. The full rack shows the crew as a tree. Each member shows its thread and the files it touched. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the crew tree with a light on each member. The widget stays when you change mode.
 
 #### Transport
 | Control | Effect on the Agentset rack |
@@ -4532,12 +6037,6 @@ Each chain is one agent. The lead is at the top. Its helpers sit below it, with 
 
 You need the agent's work to land safely in the project, with checks you can read. Git / landing is the place where the work ends. It commits the work, pushes it and lands it as a merge request.
 
-```ui
-src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
-height: 900
-caption: The Git card is the last card in Device view. The diagram shows the branch against main. A pulsing hollow dot is work that is not yet committed. Choose a commit cadence, then press Land.
-```
-
 #### The branch diagram
 
 The line at the bottom is main. The branch leaves it and runs to the right. Each dot is a commit. A pulsing hollow dot at the end is uncommitted work. Text above the branch shows lines added and removed, and the number of files. Text below shows how far the branch is ahead of main.
@@ -4555,14 +6054,51 @@ The line at the bottom is main. The branch leaves it and runs to the right. Each
 | Uncommitted | A count (reading) | Read from the seat | The files that have no commit. |
 | Land | A button | — | Lands the branch as set in Land as. |
 
-#### Presentations
-| Presentation | What it shows |
+#### Views
+
+The Git / landing is one device with five views. All five show the same live settings.
+
+```ui
+device: workcell:git-seat
+caption: The Git / landing as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: on a Factory session's chain, as the last device. The folded device shows the title "Git" and the branch name. A child session shows "shared with lead". Click the title to unfold it.
+
+##### Compact
+
+Where: on a Factory session's chain. The compact device shows the branch diagram. The line at the bottom is main. Each dot is a commit. A pulsing hollow dot is uncommitted work. It has four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The title "Git" and the branch name. A child session shows "shared with lead". |
-| Compact | The branch diagram. Four macros: Commit, Push, Land as, Land. |
-| Whole | All parameters, in three groups: Seat, Cadence, Landing. |
-| Full | The branch in a pane: commits, files and checks, with the diff beside them. |
-| Widget | The branch, the changes, the checks and the Land button. |
+| Commit | Sets Per turn, Per task or Manual. |
+| Push | Sets Off or On land. |
+| Land as | Sets Draft merge request, Merge request or Merge. |
+| Land | Lands the branch as set in Land as. |
+
+Click the plate to show the device whole in the pool. Click ⤢ to open the branch full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole device shows every parameter, in three groups.
+
+| Group | Parameters |
+|---|---|
+| Seat | Branch, Seat, Uncommitted |
+| Cadence | Commit, Push |
+| Landing | Land as, Checks, Changes, Land |
+
+The checks come from the remote. The device does not make them up.
+
+##### Full
+
+Where: a pane. The full device shows the branch. It lists the commits, the files and the checks, with the diff beside them. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the branch, the changes, the checks and the Land button. The widget stays when you change mode.
 
 #### Transport
 | Control | Effect on Git / landing |
@@ -4609,14 +6145,50 @@ You need a place where an agent can change a project without touching other work
 | Uncommitted | A count (reading) | Read from the seat | The files that have no commit. |
 | Release | A button | — | Releases the seat after the work has landed. |
 
-#### Presentations
-| Presentation | What it shows |
+#### Views
+
+The Seat is one device with five views. All five show the same live settings.
+
+```ui
+device: workcell:seat
+caption: The Seat as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: inside the Git / landing device. The folded Seat shows the title "Seat" and the claim. Click the title to unfold it.
+
+##### Compact
+
+Where: inside the Git / landing device. The compact Seat shows the seat name, the lane and the co-workers. It has four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The title "Seat" and the claim. |
-| Compact | The seat name, the lane and the co-workers. Four macros: Seat, Join, Lane, Release. |
-| Whole | All parameters, in two groups: Claim, Work. |
-| Full | The seats of the machine in a pane, with their lanes, claims and uncommitted work. |
-| Widget | The seat name, the lane and the claim. |
+| Seat | Chooses the seat the session joins. |
+| Join | Sets Attach to the lane or Start a new lane. |
+| Lane | Sets the branch name of the line of work. |
+| Release | Releases the seat after the work has landed. |
+
+Click the Git title to show the Seat whole in the pool. Click ⤢ to open the seats full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Seat shows every parameter, in two groups.
+
+| Group | Parameters |
+|---|---|
+| Claim | Product, Seat, Claim, Co-workers |
+| Work | Lane, Join, Uncommitted, Release |
+
+A new lane does not replace uncommitted work.
+
+##### Full
+
+Where: a pane. The full Seat shows the seats of the machine. Each seat shows its lane, its claim and its uncommitted work. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the seat name, the lane and the claim. The widget stays when you change mode.
 
 #### Transport
 | Control | Effect on the Seat |
@@ -4649,12 +6221,6 @@ You need a place where an agent can change a project without touching other work
 
 You need to choose where a session runs. The Remote carrier moves a session from this machine to another machine of yours. It shows whether that machine can carry the session now.
 
-```ui
-src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
-height: 900
-caption: Select the Main track and open Device view. The last row of the Gateways rack is the Remote carrier. Its dot shows its state. Open the Gateway and set Transport to Remote to see the carrier in the Reach row.
-```
-
 #### Parameters
 | Parameter | Values | Default | What it does |
 |---|---|---|---|
@@ -4665,14 +6231,50 @@ caption: Select the Main track and open Device view. The last row of the Gateway
 | Credential | Valid · Expired · Revoked (reading) | Read from the machine | Whether the machine accepts you. An expired credential is not the same as a revoked one. |
 | Round trip | Milliseconds (reading) | Read from the link | The time for a message to go and return. |
 
-#### Presentations
-| Presentation | What it shows |
+#### Views
+
+The Remote carrier is one device with five views. All five show the same live settings.
+
+```ui
+device: workcell:remote-carrier
+caption: The Remote carrier as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: as the fourth chain of the Gateways rack. The folded carrier shows the title "Remote carrier" and its state dot. Click the title to unfold it.
+
+##### Compact
+
+Where: as the fourth chain of the Gateways rack. The compact carrier shows the machines, each with a dot. It has four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The title "Remote carrier" and its state dot. |
-| Compact | The machines, each with a dot. Four macros: Where, Machine, Standing, Round trip. |
-| Whole | All parameters, in two groups: Place, Readings. |
-| Full | The machine in a pane: its readiness, its sessions and its grant. |
-| Widget | The machine name, its dot and the round trip. |
+| Where | Chooses This machine or a connected machine. |
+| Machine | Chooses the connected machine that carries the session. |
+| Standing | Shows Ready, Composed or Refused. |
+| Round trip | Shows the time for a message to go and return. |
+
+Click the row to read its Standing. Click the plate to show the carrier whole in the pool. Click ⤢ to open the machine full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole carrier shows every parameter, in two groups.
+
+| Group | Parameters |
+|---|---|
+| Place | Where, Machine |
+| Readings | Standing, Grant, Credential, Round trip |
+
+A refused carrier shows its reason. An expired credential and a revoked credential show as different states.
+
+##### Full
+
+Where: a pane. The full carrier shows one machine. The pane shows its readiness, its sessions and its grant. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the machine name, its dot and the round trip. The widget stays when you change mode.
 
 #### Transport
 | Control | Effect on the Remote carrier |
@@ -4703,12 +6305,6 @@ caption: Select the Main track and open Device view. The last row of the Gateway
 
 You need your sessions on several machines to keep one ledger and one clock. Link joins them. Agents on other machines and in other harnesses then show beside your own.
 
-```ui
-src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
-height: 900
-caption: The Link button in the transport joins the sessions to agents on other machines. Hover over it to read what it does. Open the Gateways rack on the Main track to see the gateways that Link adds.
-```
-
 #### Parameters
 | Parameter | Values | Default | What it does |
 |---|---|---|---|
@@ -4718,14 +6314,50 @@ caption: The Link button in the transport joins the sessions to agents on other 
 | Peers | A count (reading) | Read from the link | The agents and machines that joined. |
 | Lag | Milliseconds (reading) | Read from the link | The time for a change to reach the others. |
 
-#### Presentations
-| Presentation | What it shows |
+#### Views
+
+The Link is one device with five views. All five show the same live settings.
+
+```ui
+device: workcell:link
+caption: The Link as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: on the Main track's chain. The folded Link shows the title "Link" and the number of peers. Click the title to unfold it.
+
+##### Compact
+
+Where: on the Main track's chain. The compact Link shows the machines as dots joined by lines. It has four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The title "Link" and the number of peers. |
-| Compact | The machines as dots joined by lines. Four macros: Link, Share, Machines, Lag. |
-| Whole | All parameters, in two groups: Link, Readings. |
-| Full | The machines in a pane, each with its sessions and its seats. |
-| Widget | The peers and the link state. |
+| Link | Turns the link on or off. |
+| Share | Chooses Ledger, Clock or Both. |
+| Machines | Chooses the machines in the link. |
+| Lag | Shows the time for a change to reach the others. |
+
+Click the plate to show the Link whole in the pool. Click ⤢ to open the machines full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Link shows every parameter, in two groups.
+
+| Group | Parameters |
+|---|---|
+| Link | Link, Share, Machines |
+| Readings | Peers, Lag |
+
+A machine that is not reachable shows as such. It stays in the list.
+
+##### Full
+
+Where: a pane. The full Link shows the machines. Each machine shows its sessions and its seats. Select a session of another machine to read its thread. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the peers and the link state. The widget stays when you change mode.
 
 #### Transport
 | Control | Effect on the Link |
@@ -4759,12 +6391,6 @@ Expressions is where the DLW makes things you can see and hear. Particles and sy
 
 The Field is the medium that you see and hear. Use it to give an idea a form that moves and sounds, so that you can stay with it and listen.
 
-```ui
-src: ../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=expressions
-height: 900
-caption: The Field in the centre pane, with the Studio below it. Turn the Body switches in the Studio on and off to add and remove the rings. Press Play in the transport.
-```
-
 #### What the field holds
 
 The field holds three things in one state. Sound and picture both come from this one state. When one changes, the other changes.
@@ -4792,15 +6418,53 @@ The pitch rides the lines where the plate stands still. A symbol with a voice so
 | Pulse | On · Off | Off | Pulses the field on the beat. |
 | Lights | Dim · Full | Full | Turns the lights down so that one symbol stands alone. |
 
-#### Presentations
+#### Views
 
-| Presentation | What it shows |
+The Field is one device with five views. All five show the same live settings.
+
+```ui
+device: expressions:field
+caption: The Field as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+In Clip view, the Field plays the scene clip that you select. The clip sets how long the scene holds and how it changes to the next.
+
+##### Folded
+
+Where: on the chain of an Expression, as its first device. The folded Field shows its name and the sound light. The light is on only when the field sounds. Click the title to unfold it.
+
+##### Compact
+
+Where: on the chain of an Expression, as its first device. The compact Field shows a small live picture of the plate and the particles, and four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The name and the sound light. The light is on only when the field sounds. |
-| Compact | A small live picture of the plate and the particles. Four macros: Level, Tempo, Resonance, Hold to change. |
-| Whole | All parameters, in three groups: Sound, Time, Voices. |
-| Full | The field itself: particles, symbols and plate. There are no controls in the pane. The controls are in Device view. |
-| Widget | A small copy of the field with a level meter. It stays when you change mode. |
+| Level | Sets the loudness of the whole field. |
+| Tempo | Sets how fast the field forms and breathes. |
+| Resonance | Sets the frequency that the field is tuned to. |
+| Hold to change | Sets how long a scene holds a figure compared with how long it changes. |
+
+Click the plate to show the Field whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Field shows every parameter, in three groups.
+
+| Group | Parameters |
+|---|---|
+| Sound | Sound, Level, Medium, Key source, Resonance |
+| Time | Tempo, Hold to change, Pulse |
+| Voices | Symbol voices, Lights |
+
+A change you make in the pool applies at once. It does not add the Field to a chain.
+
+##### Full
+
+Where: a pane. The full Field is the living field stage. Particles gather into the shapes of the symbols. The plate shows the pattern that you hear. Press Play in the transport. Move the pointer through the field to stir the particles. Set Lights to Dim in Device view to let one symbol stand alone. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows a small copy of the field and a level meter. The meter shows the level of the whole field. Click the copy to open the Field in the pane that has focus. The widget stays when you change mode.
 
 #### Transport
 
@@ -4847,12 +6511,6 @@ The pitch rides the lines where the plate stands still. A symbol with a voice so
 
 The Studio holds the controls that shape the field. Use it to pick a tool, act on the symbol you selected, and shape the form, the material and the motion.
 
-```ui
-src: ../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=expressions
-height: 900
-caption: The Studio in Device view, below the Field. Its sections run from Tools to Capture. Select a symbol and watch the Selected section change.
-```
-
 #### The sections
 
 The Studio has eight sections. Each section is one chain of controls. Select a section to open it in the pane.
@@ -4887,15 +6545,58 @@ Behind the sections stand the devices that govern the field. Each is a whole dev
 | Nara | On · Off, then Private · Circle | On, Private | Shows your personal layer. Private keeps it to you. |
 | Capture | Still · Video | Still | The kind of take that Capture makes. |
 
-#### Presentations
+#### Views
 
-| Presentation | What it shows |
+The Studio is one device with five views. All five show the same live settings.
+
+```ui
+device: expressions:studio
+caption: The Studio as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+In Clip view, the Capture section keeps your last gestures as a new scene clip.
+
+##### Folded
+
+Where: in Device view, in Expressions. The folded Studio shows its name, the open section and the save state: Draft, Saved, or Edited since save. Click the title to unfold it.
+
+##### Compact
+
+Where: in Device view, in Expressions. The compact Studio shows a strip of the eight section names, with the open one marked, and four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The name, the open section and the save state: Draft, Saved, or Edited since save. |
-| Compact | A strip of the eight section names with the open one marked. Four macros: Density, Glow, Speed, Turbulence. |
-| Whole | All sections in one list, with every control. |
-| Full | The open section at full size in a pane. There are no controls in the pane body. |
-| Widget | The tool you hold and the selected symbol. |
+| Density | Sets how many points make the formation. |
+| Glow | Sets how bright the marks shine. |
+| Speed | Sets how fast the field moves. |
+| Turbulence | Sets how much the field stirs. |
+
+Click the plate to show the Studio whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Studio shows every parameter, in eight groups, one for each section.
+
+| Group | Parameters |
+|---|---|
+| Tools | Tool |
+| Selected | Selected action |
+| Formation | Density, Symmetry, Shape |
+| Material | Glow and grain |
+| Motion | Speed, Turbulence, Follow |
+| Body | Body |
+| Nara | Nara |
+| Capture | Capture |
+
+A change you make in the pool applies at once. It does not add the Studio to a chain.
+
+##### Full
+
+Where: a pane. The full Studio shows the open section at full size, as a surface to work on. Formation shows the form, Material the palette, Motion the flow, and Body the layers of the field. Select a section name to open that section in the pane. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the tool that you hold and the selected symbol. Click the symbol to open the Selected section in Device view. The widget stays when you change mode.
 
 #### Transport
 
@@ -4955,15 +6656,52 @@ The Physics device sets how the particles move: how they swirl, slow down, fall 
 
 The device also has a Medium plane switch (Vertical · Horizontal, default Vertical) and three actions: Pause, Disperse and Reset.
 
-#### Presentations
+#### Views
 
-| Presentation | What it shows |
+The Physics device is one device with five views. All five show the same live settings.
+
+```ui
+device: expressions:physics
+caption: The Physics device as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: on the chain of an Expression, after the Field. The folded Physics device shows its name, the viscosity and the vortex force. Click the title to unfold it.
+
+##### Compact
+
+Where: on the chain of an Expression, after the Field. The compact Physics device shows a small picture of the swirl, and four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The name, the viscosity and the vortex force. |
-| Compact | A small picture of the swirl. Four macros: Viscosity, Vortex force, Gravity Y, Time scale. |
-| Whole | All parameters, in two groups: Fluid and Physics+. |
-| Full | The field, with the swirls drawn on it. There are no controls in the pane. |
-| Widget | The swirl picture with the four macros. |
+| Viscosity | Sets the share of speed that a particle keeps each step. |
+| Vortex force | Sets the strength of the swirl. |
+| Gravity Y | Sets the vertical push on every particle. |
+| Time scale | Sets the pace of the whole simulation. 0 holds the field. |
+
+Click the plate to show the Physics device whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Physics device shows every parameter, in two groups.
+
+| Group | Parameters |
+|---|---|
+| Fluid | Viscosity, Vortex force, Vortex radius, Return spring, Spring scale, Curl, Turbulence, Dispersion |
+| Physics+ | Gravity, Drag and jitter, Speed limit and confinement, Time scale, Medium plane |
+
+The whole Physics device also has three actions: Pause, Disperse and Reset.
+
+A change you make in the pool applies at once. It does not add the Physics device to a chain.
+
+##### Full
+
+Where: a pane. The full Physics device fills the pane with the field. Each swirl shows as a ring that has the size of Vortex radius. An arrow shows the push of Gravity. Press Play and watch the particles move through the swirls. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the swirl picture and the four macros. Turn a macro on the widget to set the same value as the macro on the chain. The widget stays when you change mode.
 
 #### Transport
 
@@ -5016,15 +6754,50 @@ The Pointer device sets what your pointer does to the field. Use it to push, pul
 | Click radius | 20 to 800 pixels | 200 | The reach of a click. |
 | Scope | Global · Local | Global | Global shares the pointer parameters across scenes. Local keeps them in this scene. |
 
-#### Presentations
+#### Views
 
-| Presentation | What it shows |
+The Pointer device is one device with five views. All five show the same live settings.
+
+```ui
+device: expressions:pointer
+caption: The Pointer device as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: on the chain of an Expression, after the Field. The folded Pointer device shows its mode, the radius and the strength. Click the title to unfold it.
+
+##### Compact
+
+Where: on the chain of an Expression, after the Field. The compact Pointer device shows a disc with a falloff curve, and four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The mode, the radius and the strength. |
-| Compact | A disc with a falloff curve. Four macros: Radius, Strength, Falloff, Click strength. |
-| Whole | All parameters, in two groups: Click effect and Pointer. |
-| Full | The field, with the pointer disc drawn at your pointer. There are no controls in the pane. |
-| Widget | The disc and the four macros. |
+| Radius | Sets the size of the disc that the pointer acts on. |
+| Strength | Sets the amount and the sign of the force. |
+| Falloff | Sets how fast the force fades from the centre of the disc to its edge. |
+| Click strength | Sets the punch of a click. |
+
+Click the plate to show the Pointer device whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Pointer device shows every parameter, in two groups.
+
+| Group | Parameters |
+|---|---|
+| Pointer | Mode, Radius, Strength, Falloff, Velocity inject, Scope |
+| Click effect | Click effect, Click strength, Click radius |
+
+A change you make in the pool applies at once. It does not add the Pointer device to a chain.
+
+##### Full
+
+Where: a pane. The full Pointer device fills the pane with the field. The disc of the pointer shows at your pointer, with its radius and its falloff. Move the pointer through the field. The particles answer the disc. Click to try the click effect. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the disc and the four macros. Turn a macro on the widget to set the same value as the macro on the chain. The widget stays when you change mode.
 
 #### Transport
 
@@ -5079,15 +6852,51 @@ The Relational device makes symbols pull on one another. Use it to set centres t
 | Swirl radius | 20 to 3000 pixels | 500 | The reach of the whirl. |
 | Chaos factor | 0 to 30 | 0.2 | How much turbulence the centres add. |
 
-#### Presentations
+#### Views
 
-| Presentation | What it shows |
+The Relational device is one device with five views. All five show the same live settings.
+
+```ui
+device: expressions:relational
+caption: The Relational device as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: on the chain of an Expression, after the Field. The folded Relational device shows its law, the number of centres and the gravity pull. Click the title to unfold it.
+
+##### Compact
+
+Where: on the chain of an Expression, after the Field. The compact Relational device shows the centres and their paths, and four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The law, the number of centres and the gravity pull. |
-| Compact | The centres and their paths. Four macros: Gravity pull, Orbit speed, Spin, Chaos factor. |
-| Whole | All parameters, in three groups: Attractor law, Placement, Swirl and turbulence. |
-| Full | The field, with the centres and their paths drawn on it. There are no controls in the pane. |
-| Widget | The centres with the four macros and the light. |
+| Gravity pull | Sets the strength of each centre. |
+| Orbit speed | Sets how fast the centres circle. |
+| Spin | Sets the strength of the whirl around each centre. |
+| Chaos factor | Sets how much turbulence the centres add. |
+
+Click the plate to show the Relational device whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Relational device shows every parameter, in three groups.
+
+| Group | Parameters |
+|---|---|
+| Attractor law | On, Law, Centres, Gravity pull, Gravity shape |
+| Placement | Orbit speed, Orbit radius, Wander speed |
+| Swirl and turbulence | Spin, Swirl radius, Chaos factor |
+
+A change you make in the pool applies at once. It does not add the Relational device to a chain.
+
+##### Full
+
+Where: a pane. The full Relational device fills the pane with the field. Each centre shows as a mark, with the path that it follows. Watch the particles gather round the centres and follow their paths. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the centres, the four macros and the light. Click the light to turn the centres on or off. Turn a macro on the widget to set the same value as the macro on the chain. The widget stays when you change mode.
 
 #### Transport
 
@@ -5141,15 +6950,49 @@ The Medium device gives the particles a shared fluid to move through. Use it whe
 | Extent | 200 to 5000 pixels | 1400 | The width of the world that the grid covers. |
 | Dimension | 2D · 3D | 2D | A flat fluid or a fluid with depth. |
 
-#### Presentations
+#### Views
 
-| Presentation | What it shows |
+The Medium device is one device with five views. All five show the same live settings.
+
+```ui
+device: expressions:medium
+caption: The Medium device as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: on the chain of an Expression, after the Field. The folded Medium device shows its name, the light, the pressure and the coupling. Click the title to unfold it.
+
+##### Compact
+
+Where: on the chain of an Expression, after the Field. The compact Medium device shows a small picture of the flow, and four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The name, the light, the pressure and the coupling. |
-| Compact | A small picture of the flow. Four macros: Pressure, Coupling, Persistence, Splat gain. |
-| Whole | All parameters, in one group: Shared collision medium. |
-| Full | The field, with the flow drawn on it. There are no controls in the pane. |
-| Widget | The flow picture, the four macros and the light. |
+| Pressure | Sets how hard crowded particles push each other away. |
+| Coupling | Sets how strongly particles follow the flow. |
+| Persistence | Sets the share of the flow that remains each frame. |
+| Splat gain | Sets how much motion the particles give to the flow. |
+
+Click the plate to show the Medium device whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Medium device shows every parameter, in one group.
+
+| Group | Parameters |
+|---|---|
+| Shared collision medium | On, Pressure, Coupling, Persistence, Splat gain, Pressure iterations, Grid, Extent, Dimension |
+
+A change you make in the pool applies at once. It does not add the Medium device to a chain.
+
+##### Full
+
+Where: a pane. The full Medium device fills the pane with the field. The flow shows as lines that follow the movement of the fluid. Move the pointer through the field and watch the flow that the particles leave behind. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the flow picture, the four macros and the light. Click the light to turn the shared fluid on or off. Turn a macro on the widget to set the same value as the macro on the chain. The widget stays when you change mode.
 
 #### Transport
 
@@ -5201,15 +7044,50 @@ The Contacts device sets what happens when things touch. Use it to make particle
 | Contact bounce | 0 to 1 | 0.12 | How much speed touching particles keep. |
 | Contact viscosity and extent | Viscosity 0 to 1 · Extent 200 to 5000 pixels | 0.06 · 1400 | The sliding drag between particles, and the width of the contact grid. |
 
-#### Presentations
+#### Views
 
-| Presentation | What it shows |
+The Contacts device is one device with five views. All five show the same live settings.
+
+```ui
+device: expressions:contacts
+caption: The Contacts device as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: on the chain of an Expression, after the Field. The folded Contacts device shows its name, the wall mode and the bounce. Click the title to unfold it.
+
+##### Compact
+
+Where: on the chain of an Expression, after the Field. The compact Contacts device shows a particle that touches a wall and a pair of particles, and four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The name, the wall mode and the bounce. |
-| Compact | A particle touching a wall and a pair of particles. Four macros: Wall bounce, Wall band, Contact radius, Contact stiffness. |
-| Whole | All parameters, in two groups: Glyph colliders and Pairwise contacts. |
-| Full | The field, with the walls and the contact reach drawn on it. There are no controls in the pane. |
-| Widget | The two pictures, the four macros and the light. |
+| Wall bounce | Sets how much speed a particle keeps when it hits a wall. |
+| Wall band | Sets how far from the wall the push reaches. |
+| Contact radius | Sets how close two particles must be to touch. |
+| Contact stiffness | Sets the spring that pushes touching particles apart. |
+
+Click the plate to show the Contacts device whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Contacts device shows every parameter, in two groups.
+
+| Group | Parameters |
+|---|---|
+| Glyph colliders | Glyph walls, Wall mode, Wall bounce, Wall friction, Wall band, Wall strength, Wall integrity |
+| Pairwise contacts | Particle contacts, Contact radius, Contact stiffness, Contact bounce, Contact viscosity and extent |
+
+A change you make in the pool applies at once. It does not add the Contacts device to a chain.
+
+##### Full
+
+Where: a pane. The full Contacts device fills the pane with the field. The walls of the letter strokes show as lines. A ring shows the contact reach of a particle. Watch the particles bounce off the walls and off each other. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the two pictures, the four macros and the light. Click the light to turn the walls or the contacts on or off. Turn a macro on the widget to set the same value as the macro on the chain. The widget stays when you change mode.
 
 #### Transport
 
@@ -5263,15 +7141,53 @@ The Morph device moves the field between two forms along a torus. Use it to make
 | Winding | Toroidal p 0 to 48 · Poloidal q 0 to 48 · Fibre offset −12.56 to 12.56 · Chiral coupling −4 to 4 | 3 · 2 · 0 · 0.75 | How many times the path winds round each circle, and how the twist couples. |
 | Manifold | Radius 10 to 1200 pixels · Volumetric depth 0 to 6 | 180 · 1 | The size of the torus and its depth in the field. |
 
-#### Presentations
+#### Views
 
-| Presentation | What it shows |
+The Morph device is one device with five views. All five show the same live settings.
+
+```ui
+device: expressions:morph
+caption: The Morph device as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: on the chain of an Expression, after the Field. The folded Morph device shows its name and the two rates. Click the title to unfold it.
+
+##### Compact
+
+Where: on the chain of an Expression, after the Field. The compact Morph device shows the drive curve and a phase handle, and four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The name, and the two rates. |
-| Compact | The drive curve and a phase handle. Four macros: Toroidal rate, Poloidal rate, Drive depth, Breathing depth. |
-| Whole | All parameters, in three groups: Conjugate phases, Physical morph, Manifold detail. |
-| Full | The field, with the torus drawn on it. There are no controls in the pane. |
-| Widget | The drive curve with the four macros and the light. |
+| Toroidal rate | Sets the speed round the torus. |
+| Poloidal rate | Sets the speed round the tube of the torus. |
+| Drive depth | Sets how far the drive swings. |
+| Breathing depth | Sets how much the torus swells and shrinks with each breath. |
+
+Drag the phase handle to set both phases.
+
+Click the plate to show the Morph device whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Morph device shows every parameter, in three groups.
+
+| Group | Parameters |
+|---|---|
+| Conjugate phases | Law, Rates, Phases |
+| Physical morph | On, Oscillating drive, Scrub, Trajectory, Drive shape, Drive depth and dwell, Breathing |
+| Manifold detail | Winding, Manifold |
+
+A change you make in the pool applies at once. It does not add the Morph device to a chain.
+
+##### Full
+
+Where: a pane. The full Morph device fills the pane with the field. The torus shows as a wire, with a mark at the point where the field stands between its two forms. Press Play and watch the field move from the first form to the second form along the torus. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the drive curve, the four macros and the light. Click the light to turn the morph on or off. Turn a macro on the widget to set the same value as the macro on the chain. The widget stays when you change mode.
 
 #### Transport
 
@@ -5325,15 +7241,51 @@ The Focus device walks attention through the formations of a scene in order. Use
 | Carry tint | On · Off | Off | Carries the tint of the focus along the route. |
 | Carry station | On · Off | Off | Links the focus to the stations of the resonator. |
 
-#### Presentations
+#### Views
 
-| Presentation | What it shows |
+The Focus device is one device with five views. All five show the same live settings.
+
+```ui
+device: expressions:focus
+caption: The Focus device as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: on the chain of an Expression, after the Field. The folded Focus device shows its mode, the number of formations on the route, the dwell and the glide. Click the title to unfold it.
+
+##### Compact
+
+Where: on the chain of an Expression, after the Field. The compact Focus device shows the route as a row of steps, with the loop length, and three macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The mode, the number of formations on the route, the dwell and the glide. |
-| Compact | The route as a row of steps, with the loop length. Three macros: Dwell, Glide, Focus tint. |
-| Whole | All parameters, in two groups: Timing and direction, Visible contributions. The route list shows above them. |
-| Full | The field, with the route and the held formation marked. There are no controls in the pane. |
-| Widget | The route with the three macros. |
+| Dwell | Sets how long a formation holds the focus. |
+| Glide | Sets how long the focus takes to travel to the next formation. |
+| Focus tint | Sets how strongly the focus colours the formation that it holds. |
+
+Click the plate to show the Focus device whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Focus device shows every parameter, in two groups.
+
+| Group | Parameters |
+|---|---|
+| Timing and direction | Mode, Order, Dwell, Glide, Carry station |
+| Visible contributions | Focus tint, Entity tint, Carry tint |
+
+The route list shows above the groups. Drag a row to move it. Turn a formation off to skip it.
+
+A change you make in the pool applies at once. It does not add the Focus device to a chain.
+
+##### Full
+
+Where: a pane. The full Focus device fills the pane with the field. The route shows as a line from formation to formation. A mark shows the formation that holds the focus. Set Mode to Travelling and press Play. Watch the focus visit each formation. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the route and the three macros. Turn a macro on the widget to set the same value as the macro on the chain. The widget stays when you change mode.
 
 #### Transport
 
@@ -5392,15 +7344,52 @@ The Colour device paints the field. Use it to choose a palette, set how it moves
 | Contrast | 0.1 to 5 | 1.0 | The contrast of the palette response. |
 | Glow and paper grain | Glow 0 to 3 · Paper grain 0 to 0.2 | 0.45 · 0 | The glow behind the field, and the grain of the paper. |
 
-#### Presentations
+#### Views
 
-| Presentation | What it shows |
+The Colour device is one device with five views. All five show the same live settings.
+
+```ui
+device: expressions:colour
+caption: The Colour device as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: on the chain of an Expression, after the Field. The folded Colour device shows its name, the number of colours and the distribution. Click the title to unfold it.
+
+##### Compact
+
+Where: on the chain of an Expression, after the Field. The compact Colour device shows the palette across a small field, with a centre handle and an angle handle, and four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The name, the number of colours and the distribution. |
-| Compact | The palette across a small field, with a centre handle and an angle handle. Four macros: Cycle speed, Hue shift speed, Wave frequency, Contrast. |
-| Whole | All parameters, in four groups: Palette, Dynamics, Geometry, Atmosphere and paper. |
-| Full | The field in colour, with the geometry handles drawn on it. There are no controls in the pane. |
-| Widget | The palette strip with the four macros and the light. |
+| Cycle speed | Sets how fast the palette moves through the field. |
+| Hue shift speed | Sets how fast the hues turn. |
+| Wave frequency | Sets how many bands of the palette cross the field. |
+| Contrast | Sets the contrast of the palette response. |
+
+Click the plate to show the Colour device whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Colour device shows every parameter, in four groups.
+
+| Group | Parameters |
+|---|---|
+| Palette | On, Distribution, Palette |
+| Dynamics | Cycle speed, Hue shift speed, Response, Contrast |
+| Geometry | Wave frequency, Gradient angle, Palette centre |
+| Atmosphere and paper | Background, Glow and paper grain |
+
+A change you make in the pool applies at once. It does not add the Colour device to a chain.
+
+##### Full
+
+Where: a pane. The full Colour device fills the pane with the field in colour. The handles of the geometry show on the field: one for the centre of the bands, and one for their angle. Drag the centre handle to move the bands. Drag the angle handle to turn them. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the palette strip, the four macros and the light. Click the light to turn the palette on or off. Turn a macro on the widget to set the same value as the macro on the chain. The widget stays when you change mode.
 
 #### Transport
 
@@ -5457,15 +7446,50 @@ The Ink device shapes the marks that the particles make. Use it to set how many 
 | Density bands | Scale 0.1 to 3 · Phase 0 to 6.28 radians | 1 · 0.3 | The size and the offset of the bands in the density. |
 | Edge and halo | Edge emphasis 0 to 1 · Peripheral ink 0 to 0.6 | 0 · 0.13 | How strong the outline is, and how much faint source ink shows. |
 
-#### Presentations
+#### Views
 
-| Presentation | What it shows |
+The Ink device is one device with five views. All five show the same live settings.
+
+```ui
+device: expressions:ink
+caption: The Ink device as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: on the chain of an Expression, after the Field. The folded Ink device shows the count and the size range. Click the title to unfold it.
+
+##### Compact
+
+Where: on the chain of an Expression, after the Field. The compact Ink device shows a patch of marks at true size, and four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The count and the size range. |
-| Compact | A patch of marks at true size. Four macros: Size distribution, Roundness, Softness, Max size. |
-| Whole | All parameters, in two groups: Size and opacity, Mark profile. |
-| Full | The field, zoomed to show the marks. There are no controls in the pane. |
-| Widget | The patch of marks with the four macros. |
+| Size distribution | Sets how sizes spread between the smallest and the largest mark. |
+| Roundness | Sets how round a mark is. |
+| Softness | Sets how soft the edge of a mark is. |
+| Max size | Sets the size of the largest mark. |
+
+Click the plate to show the Ink device whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Ink device shows every parameter, in two groups.
+
+| Group | Parameters |
+|---|---|
+| Size and opacity | Particle count, Mark size, Opacity, Mark shape |
+| Mark profile | Extended grain profile, Size distribution, Roundness and softness, Imperfect edges and elongation, Orientation, Density contrast, Density bands, Edge and halo |
+
+A change you make in the pool applies at once. It does not add the Ink device to a chain.
+
+##### Full
+
+Where: a pane. The full Ink device fills the pane with the field, zoomed so that single marks show. You see the size, the edge and the density of each mark. Read the marks at their size. Compare thin areas with dense areas. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the patch of marks and the four macros. Turn a macro on the widget to set the same value as the macro on the chain. The widget stays when you change mode.
 
 #### Transport
 
@@ -5522,15 +7546,50 @@ The Depth device gives symbols a true three-dimensional body and sets the lens t
 
 The device has one more switch: Occlusion (On · Off, default Off). It has two more shares: Depth in the swirl and Depth in the bridge (0 to 1). The body sets these shares until you set them.
 
-#### Presentations
+#### Views
 
-| Presentation | What it shows |
+The Depth device is one device with five views. All five show the same live settings.
+
+```ui
+device: expressions:depth
+caption: The Depth device as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: on the chain of an Expression, after the Field. The folded Depth device shows the profile, the body depth and the projection. Click the title to unfold it.
+
+##### Compact
+
+Where: on the chain of an Expression, after the Field. The compact Depth device shows a cross-section of the body and a lens cone, and four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The profile, the body depth and the projection. |
-| Compact | A cross-section of the body and a lens cone. Four macros: Body depth, Flank share, Aerial fade, Field of view. |
-| Whole | All parameters, in two groups: 3D body and Projection and aerial depth. |
-| Full | The field, turned to show depth. There are no controls in the pane. |
-| Widget | The cross-section with the four macros and the light. |
+| Body depth | Sets the thickness of the body. |
+| Flank share | Sets how much of the body lies on the side walls. |
+| Aerial fade | Sets how far distance dims the ink. |
+| Field of view | Sets the width of the lens. |
+
+Click the plate to show the Depth device whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Depth device shows every parameter, in two groups.
+
+| Group | Parameters |
+|---|---|
+| 3D body | 3D body, Profile, Body depth, Flank share, Face and fill, Sheet and band, Taper and reach, Density to depth and jitter, Occlusion |
+| Projection and aerial depth | Projection, Lens, Size with distance, Aerial depth, Depth in the swirl, Depth in the bridge |
+
+A change you make in the pool applies at once. It does not add the Depth device to a chain.
+
+##### Full
+
+Where: a pane. The full Depth device fills the pane with the field, turned so that the bodies show their thickness. Distant marks are smaller and dimmer. Turn the view and watch the thickness of each symbol. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the cross-section, the four macros and the light. Click the light to turn the 3D body on or off. Turn a macro on the widget to set the same value as the macro on the chain. The widget stays when you change mode.
 
 #### Transport
 
@@ -5588,15 +7647,51 @@ The Resonance device tunes the plate that the field sounds on. Use it to set the
 
 The device also has a Compatibility switch: Resonator · Template (default Resonator). Template keeps the older fixed pattern.
 
-#### Presentations
+#### Views
 
-| Presentation | What it shows |
+The Resonance device is one device with five views. All five show the same live settings.
+
+```ui
+device: expressions:resonance
+caption: The Resonance device as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: on the chain of an Expression, after the Field. The folded Resonance device shows the drive frequency and the Q factor. Click the title to unfold it.
+
+##### Compact
+
+Where: on the chain of an Expression, after the Field. The compact Resonance device shows the plate with its nodal lines and the nearest mode, and four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The drive frequency and the Q factor. |
-| Compact | The plate with its nodal lines and the nearest mode. Four macros: Drive frequency, Q factor, Drive strength, Dominance. |
-| Whole | All parameters, in three groups: Tuning band and mix, Resonator and drive, Station sweep. |
-| Full | The field on the plate, with the nodal lines drawn on it. There are no controls in the pane. |
-| Widget | The plate picture with the four macros and the light. |
+| Drive frequency | Sets the tone that drives the plate. |
+| Q factor | Sets how sharply the plate rings. |
+| Drive strength | Sets how hard the drive shakes the plate. |
+| Dominance | Sets how far the plate takes over from the formation springs. |
+
+Click the plate to show the Resonance device whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Resonance device shows every parameter, in three groups.
+
+| Group | Parameters |
+|---|---|
+| Tuning band and mix | On, Drive frequency, Frequency driver, Dominance, Q factor |
+| Resonator and drive | Drive strength and scale, Transport and agitation, Plate, Mode count, Dimension, Compatibility |
+| Station sweep | Sweep, Sweep time |
+
+A change you make in the pool applies at once. It does not add the Resonance device to a chain.
+
+##### Full
+
+Where: a pane. The full Resonance device fills the pane with the field on the plate. The nodal lines show where the plate stands still. The particles settle on those lines. Press Play. Sweep Drive frequency in Device view, and watch the pattern change. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the plate picture, the four macros and the light. Click the light to turn the plate on or off. Turn a macro on the widget to set the same value as the macro on the chain. The widget stays when you change mode.
 
 #### Transport
 
@@ -5648,15 +7743,49 @@ The Force device sets how the selected symbol pushes or pulls the particles arou
 | Radius | 20 to 2000 pixels | 200 | The reach of the force. |
 | Centre | X, Y, Z in stage units | The place of the symbol | Where the force acts. Move it to pin the force away from the symbol. |
 
-#### Presentations
+#### Views
 
-| Presentation | What it shows |
+The Force device is one device with five views. All five show the same live settings.
+
+```ui
+device: expressions:force
+caption: The Force device as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: on the chain of the selected symbol, in an Expression. The folded Force device shows the kind, the strength and the radius of the selected symbol. With no symbol selected, it asks you to select one. Click the title to unfold it.
+
+##### Compact
+
+Where: on the chain of the selected symbol, in an Expression. The compact Force device shows the symbol with its force disc, and three macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The kind, the strength and the radius of the selected symbol. With no symbol selected, it asks you to select one. |
-| Compact | The symbol with its force disc. Three macros: Strength, Radius, Spin. |
-| Whole | All parameters, in two groups: Force and Centre. |
-| Full | The field, with the force disc drawn on the symbol. There are no controls in the pane. |
-| Widget | The force disc and the three macros. |
+| Strength | Sets the amount of force. A negative value reverses it. |
+| Radius | Sets the reach of the force. |
+| Spin | Sets the whirl around the symbol. |
+
+Click the plate to show the Force device whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Force device shows every parameter, in two groups.
+
+| Group | Parameters |
+|---|---|
+| Force | Kind, Strength, Spin, Radius |
+| Centre | Centre |
+
+A change you make in the pool applies at once. It does not add the Force device to a chain.
+
+##### Full
+
+Where: a pane. The full Force device fills the pane with the field. The force disc shows on the selected symbol, with the size of its radius. Select another symbol to show the force of that symbol. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the force disc and the three macros. Turn a macro on the widget to set the same value as the macro on the chain. The widget stays when you change mode.
 
 #### Transport
 
@@ -5710,15 +7839,53 @@ The Formation device places and sizes the selected symbol, and sets how many par
 
 The shape and the stored colour show as read-only lines. Change the shape in the glyph editor.
 
-#### Presentations
+#### Views
 
-| Presentation | What it shows |
+The Formation device is one device with five views. All five show the same live settings.
+
+```ui
+device: expressions:formation
+caption: The Formation device as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: on the chain of the selected symbol, in an Expression. The folded Formation device shows the name, the position and the particle share. Click the title to unfold it.
+
+##### Compact
+
+Where: on the chain of the selected symbol, in an Expression. The compact Formation device shows the box of the symbol on the field, with handles, and four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The name, the position and the particle share. |
-| Compact | The symbol's box on the field, with handles. Four macros: X, Y, Scale, Particle share. |
-| Whole | All parameters, in three groups: Placement, Size and share, Appearance. The list of formations shows above them. |
-| Full | The field, with the selected formation's box drawn on it. There are no controls in the pane. |
-| Widget | The box picture and the four macros. |
+| X | Sets the horizontal place of the symbol. |
+| Y | Sets the vertical place of the symbol. |
+| Scale | Scales the symbol about its centre. |
+| Particle share | Sets the weight of this formation when the particles are shared. |
+
+Click the plate to show the Formation device whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Formation device shows every parameter, in three groups.
+
+| Group | Parameters |
+|---|---|
+| Placement | Position, Rotation |
+| Size and share | Width and height, Scale, Particle share |
+| Appearance | Tint weight, Name, Enabled, Locked |
+
+The list of formations shows above the groups. The shape and the stored colour show as read-only lines.
+
+A change you make in the pool applies at once. It does not add the Formation device to a chain.
+
+##### Full
+
+Where: a pane. The full Formation device fills the pane with the field. The box of the selected formation shows on the field, with its handles. Drag a handle to move or scale the box. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the box picture and the four macros. Turn a macro on the widget to set the same value as the macro on the chain. The widget stays when you change mode.
 
 #### Transport
 
@@ -5770,15 +7937,50 @@ The Sound device gives the selected symbol a voice. Use it to tune a symbol to i
 | Release | 0 to 30 s | 0.8 | How long the voice takes to fade. |
 | Pan | −1 to 1 | 0 | The place of the voice. −1 is left. 1 is right. |
 
-#### Presentations
+#### Views
 
-| Presentation | What it shows |
+The Sound device is one device with five views. All five show the same live settings.
+
+```ui
+device: expressions:sound
+caption: The Sound device as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: on the chain of the selected symbol, in an Expression. The folded Sound device shows the frequency or "follows plate", and the gain. Click the title to unfold it.
+
+##### Compact
+
+Where: on the chain of the selected symbol, in an Expression. The compact Sound device shows the envelope curve with three handles, and three macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The frequency or "follows plate", and the gain. |
-| Compact | The envelope curve with three handles. Three macros: Gain, Frequency, Waveform. |
-| Whole | All parameters, in three groups: Voice, Envelope, Placement. |
-| Full | The field, with the voice of the selected symbol marked. There are no controls in the pane. |
-| Widget | The envelope curve and the three macros. |
+| Gain | Sets the loudness of the voice. |
+| Frequency | Sets the pitch of the voice. Follow plate turns off. |
+| Waveform | Sets the tone of the voice. |
+
+Click the plate to show the Sound device whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Sound device shows every parameter, in three groups.
+
+| Group | Parameters |
+|---|---|
+| Voice | Voice, Follow plate, Frequency, Gain, Waveform |
+| Envelope | Attack, Release |
+| Placement | Pan |
+
+A change you make in the pool applies at once. It does not add the Sound device to a chain.
+
+##### Full
+
+Where: a pane. The full Sound device fills the pane with the field. A mark on the selected symbol shows its voice, with its gain. Press Play and listen to the voice of the symbol in the field. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the envelope curve and the three macros. Turn a macro on the widget to set the same value as the macro on the chain. The widget stays when you change mode.
 
 #### Transport
 
@@ -5838,15 +8040,48 @@ The Meaning device ties the selected symbol to a centre of the body and lets tha
 
 A modulation takes one signal: Resonant affinity, Travelling focus, Carrier speed, Force strength or Force spin. It moves one target: Colour gain, Colour radius or Hue phase. It has an amount and an offset, each from −100 to 100.
 
-#### Presentations
+#### Views
 
-| Presentation | What it shows |
+The Meaning device is one device with five views. All five show the same live settings.
+
+```ui
+device: expressions:meaning
+caption: The Meaning device as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: on the chain of the selected symbol, in an Expression. The folded Meaning device shows the centre and the activation. Click the title to unfold it.
+
+##### Compact
+
+Where: on the chain of the selected symbol, in an Expression. The compact Meaning device shows the symbol with its colour disc. It has no macros. A summary line shows the centre and the activation.
+
+Click the plate to show the Meaning device whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Meaning device shows every parameter, in five groups.
+
+| Group | Parameters |
 |---|---|
-| Folded | The centre and the activation. |
-| Compact | The symbol with its colour disc. The compact face shows the summary. |
-| Whole | All parameters, in groups for the binding, the colour, the activation, the radius and the modulations. |
-| Full | The field, with the colour discs drawn on it. There are no controls in the pane. |
-| Widget | The colour disc and the summary line. |
+| Binding | Meaning |
+| Colour | Colour source, Colour gain, Resonance gain, Global colour gain, Blend |
+| Activation | Activation |
+| Radius | Radius source, Independent radius, Falloff, Metric |
+| Modulations | Modulations |
+
+Each modulation has a signal, a target, an amount and an offset.
+
+A change you make in the pool applies at once. It does not add the Meaning device to a chain.
+
+##### Full
+
+Where: a pane. The full Meaning device fills the pane with the field. The colour disc of each bound symbol shows on the field. Its colour is the colour of its centre. Press Play and watch the discs change with their activation. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the colour disc and the summary line. Click the disc to select the symbol that it belongs to. The widget stays when you change mode.
 
 #### Transport
 
@@ -5894,15 +8129,45 @@ The Scene device names the scene and the Expression and sets how long a scene la
 | Expression title | Text, 1 to 160 characters | The Expression's title | The name of the whole Expression. |
 | Expression description | Text, up to 5000 characters | Empty | A note about the Expression. An empty note is a real value. |
 
-#### Presentations
+#### Views
 
-| Presentation | What it shows |
+The Scene device is one device with five views. All five show the same live settings.
+
+```ui
+device: expressions:scene
+caption: The Scene device as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+The Scene device edits the scene clip that is open in Clip view: its name, its length and its change to the next scene.
+
+##### Folded
+
+Where: on the chain of the open scene, in an Expression. The folded Scene device shows the scene name, the duration and the transition. Click the title to unfold it.
+
+##### Compact
+
+Where: on the chain of the open scene, in an Expression. The compact Scene device shows one summary line: the name, the duration and the transition. It has no macros.
+
+Click the plate to show the Scene device whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Scene device shows every parameter, in two groups.
+
+| Group | Parameters |
 |---|---|
-| Folded | The scene name, the duration and the transition. |
-| Compact | The summary line: name, duration, transition. |
-| Whole | Two groups: Scene and Expression. |
-| Full | The scene, as the field plays it. There are no controls in the pane. |
-| Widget | The scene name and the clock. |
+| Scene | Scene name, Duration, Transition |
+| Expression | Expression title, Expression description |
+
+A change you make in the pool applies at once. It does not add the Scene device to a chain.
+
+##### Full
+
+Where: a pane. The full Scene device fills the pane with the scene, as the field plays it. The scene holds for its duration. Then it changes to the next scene over the transition time. Press Play and watch the scene from its start to its change. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the scene name and the clock. Click the clock to open the scene in the pane that has focus. The widget stays when you change mode.
 
 #### Transport
 
@@ -5956,15 +8221,45 @@ The Text device lays words on the page of a scene. Use it to add a heading, a ti
 | Page position | X and Y: −0.5 to 1.5 | 0.07 · 0.24 | The place of the block on the page, as a share of the page. |
 | Alignment | Left · Centre · Right | Left | How lines line up in the block. |
 
-#### Presentations
+#### Views
 
-| Presentation | What it shows |
+The Text device is one device with five views. All five show the same live settings.
+
+```ui
+device: expressions:text
+caption: The Text device as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+The layers belong to the scene clip that is open in Clip view.
+
+##### Folded
+
+Where: on the chain of the open scene, in an Expression. The folded Text device shows the number of layers and the first title. Click the title to unfold it.
+
+##### Compact
+
+Where: on the chain of the open scene, in an Expression. The compact Text device shows the page with the layer boxes. It has one action: Add layer.
+
+Click the plate to show the Text device whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Text device shows every parameter, in two groups.
+
+| Group | Parameters |
 |---|---|
-| Folded | The number of layers and the first title. |
-| Compact | The page with the layer boxes. One action: Add layer. |
-| Whole | Two groups: Text layers and Selected layer. |
-| Full | The scene page, with the layer boxes drawn on it. There are no controls in the pane. |
-| Widget | The page with the layer boxes. |
+| Text layers | Layers, Visible |
+| Selected layer | Small heading, Title, Italic line, Supporting text, Type size, Block width, Page position, Alignment |
+
+A change you make in the pool applies at once. It does not add the Text device to a chain.
+
+##### Full
+
+Where: a pane. The full Text device fills the pane with the page of the scene. Each layer shows as a box where its block stands, over the field. Select a box to select its layer in Device view. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the page with the layer boxes. Click a box to select its layer. The widget stays when you change mode.
 
 #### Transport
 
@@ -6022,15 +8317,47 @@ The Automation device moves parameters over a scene. Use it to make a field devi
 
 A lane can follow another lane. The follower takes the type, the wave, the rate, the phase, the duration, the delay, the loop and the easing of the leader. It keeps its own enabled state, blend and range.
 
-#### Presentations
+#### Views
 
-| Presentation | What it shows |
+The Automation device is one device with five views. All five show the same live settings.
+
+```ui
+device: expressions:automation
+caption: The Automation device as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+The lanes belong to the scene clip that is open in Clip view.
+
+##### Folded
+
+Where: on the chain of the open scene, in an Expression. The folded Automation device shows the number of lanes and the number that run. Click the title to unfold it.
+
+##### Compact
+
+Where: on the chain of the open scene, in an Expression. The compact Automation device shows one summary line. It has no macros. The lanes show in the whole view.
+
+Click the plate to show the Automation device whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Automation device shows every parameter, in two groups.
+
+| Group | Parameters |
 |---|---|
-| Folded | The number of lanes and the number that run. |
-| Compact | The summary line. The lanes show in the whole presentation. |
-| Whole | Two groups: Lanes and Selected lane. A curve shows the shape of the selected lane. |
-| Full | The scene, with a curve for each lane drawn on it. There are no controls in the pane. |
-| Widget | The count of lanes and a curve of the selected lane. |
+| Lanes | Lanes, Target, Enabled |
+| Selected lane | Type, Wave, Rate, Phase, Minimum and maximum, Blend, Duration and delay, Loop, Easing |
+
+A curve shows the shape of the selected lane.
+
+A change you make in the pool applies at once. It does not add the Automation device to a chain.
+
+##### Full
+
+Where: a pane. The full Automation device fills the pane with the scene. A curve for each lane shows on the field, next to the parameter that the lane moves. Press Play and watch each parameter follow its curve. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the count of lanes and a curve of the selected lane. Click the curve to open the lane in Device view. The widget stays when you change mode.
 
 #### Transport
 
@@ -6081,15 +8408,47 @@ The Blueprint device ties the symbols of a scene into a sixfold constellation an
 | Rotation | X, Y, Z in degrees | 0 · 0 · 0 | Turns the whole figure. |
 | Relative size | 0.0001 to 14 | 1 | Scales the whole figure. A handle in the plan moves it. |
 
-#### Presentations
+#### Views
 
-| Presentation | What it shows |
+The Blueprint device is one device with five views. All five show the same live settings.
+
+```ui
+device: expressions:blueprint
+caption: The Blueprint device as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+The figure belongs to the scene clip that is open in Clip view.
+
+##### Folded
+
+Where: on the chain of the open scene, in an Expression. The folded Blueprint device shows "Bound" with the number of members, or "not bound". Click the title to unfold it.
+
+##### Compact
+
+Where: on the chain of the open scene, in an Expression. The compact Blueprint device shows one summary line. It has no macros.
+
+Click the plate to show the Blueprint device whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Blueprint device shows every parameter, in two groups.
+
+| Group | Parameters |
 |---|---|
-| Folded | "Bound" with the number of members, or "not bound". |
-| Compact | The summary line. |
-| Whole | Two groups: Sixfold roles and Whole transform. The plan view shows between them. |
-| Full | The scene, with the plan of the figure drawn on it. There are no controls in the pane. |
-| Widget | The plan of the figure. |
+| Sixfold roles | Binding |
+| Whole transform | Position, Rotation, Relative size |
+
+The plan view shows between the two groups.
+
+A change you make in the pool applies at once. It does not add the Blueprint device to a chain.
+
+##### Full
+
+Where: a pane. The full Blueprint device fills the pane with the scene. The plan of the sixfold figure shows on the field, with its six symbols in their roles. Drag a handle in the plan to move the figure. Drag another handle to scale the figure. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the plan of the figure. Click the plan to open the Blueprint device in Device view. The widget stays when you change mode.
 
 #### Transport
 
@@ -6140,15 +8499,45 @@ The Body & triggers device sets what a scene carries and what the scene does whe
 | Operation | Inspect · List · Export | Inspect | What a read trigger does. |
 | Triggers | Up to 8 | None | The triggers of the scene. |
 
-#### Presentations
+#### Views
 
-| Presentation | What it shows |
+The Body & triggers device is one device with five views. All five show the same live settings.
+
+```ui
+device: expressions:body-triggers
+caption: The Body & triggers device as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+The body and the triggers belong to the scene clip that is open in Clip view.
+
+##### Folded
+
+Where: on the chain of the open scene, in an Expression. The folded Body & triggers device shows the carrier and the number of triggers. Click the title to unfold it.
+
+##### Compact
+
+Where: on the chain of the open scene, in an Expression. The compact Body & triggers device shows one summary line: the body, and the number of triggers. It has no macros.
+
+Click the plate to show the Body & triggers device whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Body & triggers device shows every parameter, in two groups.
+
+| Group | Parameters |
 |---|---|
-| Folded | The carrier and the number of triggers. |
-| Compact | The summary line: body, and number of triggers. |
-| Whole | Two groups: Scene body and Jump triggers. |
-| Full | The scene, with its body and its trigger marks drawn on it. There are no controls in the pane. |
-| Widget | The carrier and the list of triggers. |
+| Scene body | Carrier, Presentation, Reference, Span |
+| Jump triggers | Occasion, Target, Portal placement, Operation, Triggers |
+
+A change you make in the pool applies at once. It does not add the Body & triggers device to a chain.
+
+##### Full
+
+Where: a pane. The full Body & triggers device fills the pane with the scene. The body that the scene carries shows on the field. A mark shows each trigger. Press Play and watch the triggers run when the scene enters or leaves. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the carrier and the list of triggers. Click a trigger to open it in Device view. The widget stays when you change mode.
 
 #### Transport
 
@@ -6198,15 +8587,47 @@ The Arrange device sets the positions of the symbols of a scene by a rule. Use i
 
 The scene records the last arrangement that you applied.
 
-#### Presentations
+#### Views
 
-| Presentation | What it shows |
+The Arrange device is one device with five views. All five show the same live settings.
+
+```ui
+device: expressions:arrange
+caption: The Arrange device as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+The arrangement belongs to the scene clip that is open in Clip view.
+
+##### Folded
+
+Where: on the chain of the open scene, in an Expression. The folded Arrange device shows the number of objects and the plane. Click the title to unfold it.
+
+##### Compact
+
+Where: on the chain of the open scene, in an Expression. The compact Arrange device shows one summary line: the number of objects, and the plane. It has no macros.
+
+Click the plate to show the Arrange device whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Arrange device shows every parameter, in two groups.
+
+| Group | Parameters |
 |---|---|
-| Folded | The number of objects and the plane. |
-| Compact | The summary line: number of objects, and plane. |
-| Whole | Two groups: Objects and Arrangement. A plan shows the symbols and the places they will take. |
-| Full | The scene, with the new places drawn as ghosts. There are no controls in the pane. |
-| Widget | The plan with the ghosts. |
+| Objects | Objects |
+| Arrangement | Arrangement, Plane |
+
+A plan shows the symbols and the places that they will take.
+
+A change you make in the pool applies at once. It does not add the Arrange device to a chain.
+
+##### Full
+
+Where: a pane. The full Arrange device fills the pane with the scene. The new places show as ghosts, one for each object, next to the symbols. Compare each ghost with its symbol before you apply the arrangement. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the plan with the ghosts. Click the plan to open the Arrange device in Device view. The widget stays when you change mode.
 
 #### Transport
 
@@ -6247,12 +8668,6 @@ Live holds one instrument. A torus makes the sound, and you play it from a keybo
 
 The Torus is the one instrument of Live. Use it to play a sound that you can see. Touch the surface and it rings. Play a note and a point on the ring lights.
 
-```ui
-src: ../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=expressions
-height: 900
-caption: The torus body as the drawing shows it: the ring that winds at the centre. In the Studio's Body section, switch M1 topology off and on to see the ring go and return.
-```
-
 #### How the Torus sounds
 
 The Torus is a ring with a tube. Two pulses drive it and beat against each other. The first pulse divides six into three and three. The second divides six into four and two. Everything you hear comes from these two pulses.
@@ -6286,15 +8701,54 @@ The torus has two helices, which wind round it. A full return takes two turns. A
 | Level and pan | Level −60 to 6 dB · Pan −1 to 1 | −6 dB · 0 | The loudness and the place of the sound. |
 | View | Surface · Wire · Both, and Receiver On · Off | Surface · Off | What the pane draws. Receiver On makes your camera the place where the torus is heard. |
 
-#### Presentations
+#### Views
 
-| Presentation | What it shows |
+The Torus is one device with five views. All five show the same live settings.
+
+```ui
+device: quaternal-logic:torus
+caption: The Torus as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+In Clip view, the Torus plays the notes of the clip that you select. The piano roll edits those notes. A clip can carry its own mode.
+
+##### Folded
+
+Where: on the chain of a Live part, after the note devices. The folded Torus shows its name, the level and the number of notes that sound. Click the title to unfold it.
+
+##### Compact
+
+Where: on the chain of a Live part, after the note devices. The compact Torus shows a small live torus, and four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The name, the level and the number of notes that sound. |
-| Compact | A small live torus. Four macros: Pulse mix, Damping, Drive, Release. |
-| Whole | All parameters, in four groups: Pulses, Body, Envelope, Voices and output. |
-| Full | The torus in the centre of the pane, turning, and playable by touch. There are no controls in the pane. |
-| Widget | The small live torus with a level meter. It stays when you change mode. |
+| Pulse mix | Sets the balance of the two pulses. |
+| Damping | Sets how sharply the body rings. |
+| Drive | Sets how hard the pulses shake the body. |
+| Release | Sets how long a note takes to fade. |
+
+Click the plate to show the Torus whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Torus shows every parameter, in four groups.
+
+| Group | Parameters |
+|---|---|
+| Pulses | Pulse mix, Helix balance, Drive |
+| Body | Strike, Damping, Modes, Agitation |
+| Envelope | Attack, Release |
+| Voices and output | Voices, Level and pan, View |
+
+A change you make in the pool applies at once. It does not add the Torus to a chain.
+
+##### Full
+
+Where: a pane. The full Torus is the playable torus simulation. It fills the pane and turns at the centre. The surface shows the pattern of the vibration. The Jankó keyboard is beneath it. Touch the surface and it rings. Press a key on the keyboard and a point on the torus lights. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the small live torus with a level meter. Click the torus to open it full in the pane that has focus. The widget stays when you change mode.
 
 #### Transport
 
@@ -6377,15 +8831,53 @@ The same note can have more than one key. Each key is a separate touch point.
 
 The Partition overlay shows the black and white colours of a traditional keyboard. The Pair family overlay marks the relations A, B and C. The Completion overlay marks the degrees D1 to D3.
 
-#### Presentations
+#### Views
 
-| Presentation | What it shows |
+The Jankó keyboard is one device with five views. All five show the same live settings.
+
+```ui
+device: live:janko
+caption: The Jankó keyboard as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+In Clip view, the keyboard records the notes that you play into the clip that is open. The piano roll shows them.
+
+##### Folded
+
+Where: on the chain of a Live part, before the torus. The folded Jankó keyboard shows its name and the number of notes that sound. Click the title to unfold it.
+
+##### Compact
+
+Where: on the chain of a Live part, before the torus. The compact Jankó keyboard shows six short rows, and four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The name and the number of notes that sound. |
-| Compact | Six short rows. Four macros: Transpose, Range, Velocity, Sustain. |
-| Whole | All parameters, in three groups: Layout, Overlay, Input. |
-| Full | The keyboard in the pane, at full size. The torus lights at each key that you press. There are no controls in the pane. |
-| Widget | A short keyboard and the notes that sound. |
+| Transpose | Moves every key. The fingering stays. |
+| Range | Sets the size of the keyboard in octaves. |
+| Velocity | Sets where the strength of a note comes from. |
+| Sustain | Holds notes after you lift the key. |
+
+Click the plate to show the Jankó keyboard whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Jankó keyboard shows every parameter, in three groups.
+
+| Group | Parameters |
+|---|---|
+| Layout | Layout, Range, Transpose |
+| Overlay | Overlay, Basis |
+| Input | Input, Velocity, Pressure, Sustain, Repeat touch |
+
+A change you make in the pool applies at once. It does not add the Jankó keyboard to a chain.
+
+##### Full
+
+Where: a pane. The full Jankó keyboard fills the pane with the six rows at full size. The overlay colours the keys. The torus lights at each key that you press. Play a chord with the pointer, the computer keys or a MIDI controller. Move the same fingering to another key. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows a short keyboard and the notes that sound. Play the short keyboard with the pointer. The widget stays when you change mode.
 
 #### Transport
 
@@ -6453,15 +8945,52 @@ The planetary scales were composed to draw the quality of each planet into the p
 | Snap | Nearest · Up · Down · Off | Nearest | How a note outside the mode moves onto the mode. Off passes the note through. |
 | Show | Highlight · Fold · Off | Highlight | Highlight marks the notes of the mode. Fold hides the other notes in the roll and the keyboard. |
 
-#### Presentations
+#### Views
 
-| Presentation | What it shows |
+The Scale mapping device is one device with five views. All five show the same live settings.
+
+```ui
+device: live:scale-mapping
+caption: The Scale mapping device as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+In Clip view, the device follows the mode of the open clip. When the clip has no mode, it follows the mode of the set.
+
+##### Folded
+
+Where: on the chain of a Live part, before the torus. The folded Scale mapping device shows the root and the mode name. Click the title to unfold it.
+
+##### Compact
+
+Where: on the chain of a Live part, before the torus. The compact Scale mapping device shows the notes of the mode on a small ring, and four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The root and the mode name. |
-| Compact | The notes of the mode on a small ring. Four macros: Root, Mode name, Snap, Show. |
-| Whole | All parameters, in two groups: Mode and Mapping. |
-| Full | The notes of the mode on the torus, marked on the helices. There are no controls in the pane. |
-| Widget | The mode name and the ring. |
+| Root | Sets the root of the mode. |
+| Mode name | Sets the mode of the root. |
+| Snap | Sets how a note outside the mode moves onto the mode. |
+| Show | Sets how the roll and the keyboard show the mode: highlight, fold or off. |
+
+Click the plate to show the Scale mapping device whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Scale mapping device shows every parameter, in two groups.
+
+| Group | Parameters |
+|---|---|
+| Mode | Follow, Family, Root, Mode name, Source scale, Basis |
+| Mapping | Snap, Show |
+
+A change you make in the pool applies at once. It does not add the Scale mapping device to a chain.
+
+##### Full
+
+Where: a pane. The full Scale mapping device fills the pane with the torus. The notes of the mode show on the two helices. The other notes stay dim. Play a key that is outside the mode and watch the note move onto the mode. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the mode name and the ring. Click the ring to open the device in the pane that has focus. The widget stays when you change mode.
 
 #### Transport
 
@@ -6516,15 +9045,50 @@ The Exact-ratio tuning device sets the pitch of every note as an exact ratio. Us
 
 Chromatic stack builds the notes from whole tones of 9:8. Fifths stack builds them from fifths of 3:2. Source ratios use the intervals of the source scale in force, such as the planetary just intervals.
 
-#### Presentations
+#### Views
 
-| Presentation | What it shows |
+The Exact-ratio tuning device is one device with five views. All five show the same live settings.
+
+```ui
+device: live:exact-ratio
+caption: The Exact-ratio tuning device as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: on the chain of a Live part, before the torus. The folded Exact-ratio tuning device shows the reference note and frequency, and the ratio set. Click the title to unfold it.
+
+##### Compact
+
+Where: on the chain of a Live part, before the torus. The compact Exact-ratio tuning device shows the twelve notes on a ring, each with its ratio, and four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The reference note and frequency, and the ratio set. |
-| Compact | The twelve notes on a ring, each with its ratio. Four macros: Reference frequency, Ratio set, Comma, Readout. |
-| Whole | All parameters, in two groups: Tuning and Export. |
-| Full | The twelve notes on the torus, with ratios and errors. There are no controls in the pane. |
-| Widget | The reference note and a short list of ratios. |
+| Reference frequency | Sets the frequency of the reference note. |
+| Ratio set | Sets how the twelve notes get their ratios. |
+| Comma | Keeps the gap that twelve fifths leave open, or folds it into the octave. |
+| Readout | Sets how the tuning of a note shows: ratio, cents or hertz. |
+
+Click the plate to show the Exact-ratio tuning device whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Exact-ratio tuning device shows every parameter, in two groups.
+
+| Group | Parameters |
+|---|---|
+| Tuning | Reference note, Reference frequency, Ratio set, Octave, Comma, Readout, Error |
+| Export | Export, Bend range |
+
+A change you make in the pool applies at once. It does not add the Exact-ratio tuning device to a chain.
+
+##### Full
+
+Where: a pane. The full Exact-ratio tuning device fills the pane with the torus. The twelve notes show on the helices. Each note has its ratio and its error from the equal scale. Play a chord and read the ratio of each note. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the reference note and a short list of ratios. Click the list to open the device in the pane that has focus. The widget stays when you change mode.
 
 #### Transport
 
@@ -6580,15 +9144,50 @@ The Sky modulation device hands parts of the sound to the planets overhead. Use 
 
 The planets have these intervals: Sun 1:1, Moon 4:3, Mercury 5:4, Venus 9:8, Mars 15:8, Jupiter 5:3, Saturn 3:2, Neptune 9:5, Pluto 9:4. Uranus has no interval, so it moves a target by position only.
 
-#### Presentations
+#### Views
 
-| Presentation | What it shows |
+The Sky modulation device is one device with five views. All five show the same live settings.
+
+```ui
+device: live:sky-modulation
+caption: The Sky modulation device as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: on the chain of a Live part, before the torus. The folded Sky modulation device shows the date and the number of assignments. Click the title to unfold it.
+
+##### Compact
+
+Where: on the chain of a Live part, before the torus. The compact Sky modulation device shows a small ring with the planets, and four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The date and the number of assignments. |
-| Compact | A small ring with the planets. Four macros: Amount of the first four assignments. |
-| Whole | All parameters, in two groups: Sky and Assignments. |
-| Full | The sky ring with a line from each planet to the parameter it moves. There are no controls in the pane. |
-| Widget | The planets, with their degrees. |
+| Amount 1 | Sets how far the planet of the first assignment moves its target. |
+| Amount 2 | Sets the amount of the second assignment. |
+| Amount 3 | Sets the amount of the third assignment. |
+| Amount 4 | Sets the amount of the fourth assignment. |
+
+Click the plate to show the Sky modulation device whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Sky modulation device shows every parameter, in two groups.
+
+| Group | Parameters |
+|---|---|
+| Sky | Date, Observer |
+| Assignments | Assignments, Planet, Target, Use, Amount, Scope, Smoothing |
+
+A change you make in the pool applies at once. It does not add the Sky modulation device to a chain.
+
+##### Full
+
+Where: a pane. The full Sky modulation device fills the pane with the sky ring. A line leads from each planet to the parameter that it moves. Play a note and watch the lines move with the planets. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the planets, with their degrees. Click a planet to open its assignment in Device view. The widget stays when you change mode.
 
 #### Transport
 
@@ -6629,12 +9228,6 @@ The planets have these intervals: Sun 1:1, Moon 4:3, Mercury 5:4, Venus 9:8, Mar
 
 The Effects are four effects for the torus: a filter, a dynamics effect, a delay and a reverb. Use them to shape the torus, to even out its level, to echo it, and to give it a room to sound in.
 
-```ui
-src: ../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=live
-height: 900
-caption: Device view in Live mode. A compressor and a reverb sit in a chain after the instrument. Press Device and Clip in the status bar to switch the detail area.
-```
-
 #### The four effects
 
 Each effect is a separate device with its own light. Put any of them on the chain, in any order. The sound passes through them from left to right.
@@ -6665,15 +9258,66 @@ Each effect is a separate device with its own light. Put any of them on the chai
 
 Each effect also has an On · Off light, default On.
 
-#### Presentations
+#### Views
 
-| Presentation | What it shows |
+The Effects are four devices: a filter, a dynamics effect, a delay and a reverb. Each has five views. All five show the same live settings.
+
+```ui
+device: live:effects
+caption: The Effects as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: on the chain of a Live part, after the torus. The folded Effects show the names of the effects on the chain and their lights. Click the title to unfold it.
+
+##### Compact
+
+Where: on the chain of a Live part, after the torus. The compact Effects show one small picture for each effect, and four macros for each effect.
+
+| Effect | Macro | What it does |
+|---|---|---|
+| Filter | Cutoff | Sets the frequency of the cut. |
+| Filter | Resonance | Sets how much the cut rings. |
+| Filter | Drive | Sets how hard the filter is pushed. |
+| Filter | Mix | Sets the share of filtered sound that you hear. |
+| Dynamics | Threshold | Sets the level above which the effect acts. |
+| Dynamics | Ratio | Sets how much it lowers sound above the threshold. |
+| Dynamics | Attack | Sets how fast the effect starts. |
+| Dynamics | Makeup | Sets the gain that it adds after it lowers the level. |
+| Delay | Time | Sets the time between repeats. |
+| Delay | Feedback | Sets how much of each repeat returns. |
+| Delay | Tone | Sets how dark the repeats are. |
+| Delay | Mix | Sets how loud the repeats are. |
+| Reverb | Decay | Sets the length of the tail. |
+| Reverb | Size | Sets the size of the room. |
+| Reverb | Damping | Sets how soft the tail is. |
+| Reverb | Dry/wet | Sets how much of the tail you hear. |
+
+Click the plate to show the effects whole in the pool. Click ⤢ to open them full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Effects show every parameter, in four groups.
+
+| Group | Parameters |
 |---|---|
-| Folded | The names of the effects on the chain and their lights. |
-| Compact | One small picture for each effect. Four macros for each: Filter: Cutoff, Resonance, Drive, Mix. Dynamics: Threshold, Ratio, Attack, Makeup. Delay: Time, Feedback, Tone, Mix. Reverb: Decay, Size, Damping, Dry/wet. |
-| Whole | All parameters, in four groups: Filter, Dynamics, Delay, Reverb. |
-| Full | The sound of the torus with the effect drawn on it: the curve of the filter, the level, the repeats, the tail. There are no controls in the pane. |
-| Widget | A meter and the lights of the four effects. |
+| Filter | Filter type, Cutoff, Resonance and drive |
+| Dynamics | Threshold, Ratio, Attack and release, Makeup |
+| Delay | Delay time, Feedback, Delay tone and mix |
+| Reverb | Reverb size and decay, Reverb damping, pre-delay and mix |
+
+Each effect also has an On light.
+
+A change you make in the pool applies at once. It does not add the effects to a chain.
+
+##### Full
+
+Where: a pane. The full Effects fill the pane with the sound of the torus. Each effect on the chain draws its own mark: the curve of the filter, the level of the dynamics effect, the repeats of the delay and the tail of the reverb. Play the torus and watch each mark change. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows a meter and the lights of the four effects. Click a light to turn that effect on or off. The widget stays when you change mode.
 
 #### Transport
 
@@ -6718,12 +9362,6 @@ The planets stand where they really stand, and they move the sound, the field an
 
 The Sky shows where the planets stand over your world, now or on any day. Use it to see the sky that you worked under, and to use the planets as sources that move other devices.
 
-```ui
-src: ../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=expressions
-height: 900
-caption: The ring of seven bodies in the field, and the Sky widget in the rail on the right with the degree of each body. In the Studio's Body section, switch M2 resonance off and on.
-```
-
 #### What the Sky holds
 
 The sky is ten bodies and the Earth. The bodies stand where the real planets stand. The Earth is the anchor. It is not an eleventh planet.
@@ -6756,15 +9394,53 @@ The positions come from a calculated sky. They are not an observed sky. The sky 
 | Natal ring | Off · On | Off | Draws the sky of your birth round the sky of the date. Only you see it. |
 | Moves | A list | Filled by use | The parameters that each body moves now. |
 
-#### Presentations
+#### Views
 
-| Presentation | What it shows |
+The Sky is one device with five views. All five show the same live settings.
+
+```ui
+device: quaternal-logic:sky
+caption: The Sky as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: on the chain of a Technē reading. The folded Sky shows the date and the sky name. Click the title to unfold it.
+
+##### Compact
+
+Where: on the chain of a Technē reading. The compact Sky shows a small ring with the bodies, and four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The date and the sky name. |
-| Compact | A small ring with the bodies. Four macros: Date, Day clock, Run speed, Natal ring. |
-| Whole | All parameters, in three groups: Time, Bodies, Overlay. The list of what each body moves shows below. |
-| Full | The sky at full size in the pane, with the Earth at the centre. There are no controls in the pane. |
-| Widget | Each body with its degree. A tap returns the date to now. |
+| Date | Sets the sky to show. |
+| Day clock | Sets Hold or Run. |
+| Run speed | Sets how fast the sky moves when the clock runs. |
+| Natal ring | Draws the sky of your birth round the sky of the date. |
+
+Click the plate to show the Sky whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Sky shows every parameter, in three groups.
+
+| Group | Parameters |
+|---|---|
+| Time | Date, Day clock, Run speed |
+| Bodies | Bodies, Observer |
+| Overlay | Aspects, Natal ring |
+
+The list of what each body moves shows below the groups.
+
+A change you make in the pool applies at once. It does not add the Sky to a chain.
+
+##### Full
+
+Where: a pane. The full Sky fills the pane. The Earth stands at the centre. The ten bodies stand on the ring, each at its degree. Set Day clock to Run in Device view and watch the bodies move. Set Aspects to On to draw the angles between bodies. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows each body with its degree. The Sky widget is on the rail in every mode. Tap the widget to return the date to now. The widget stays when you change mode.
 
 #### Transport
 
@@ -6804,12 +9480,6 @@ The positions come from a calculated sky. They are not an observed sky. The sky 
 **Product:** Quaternal Logic · **Kind:** instrument · **Track:** Any track. It is a device in the chain of a reading and in the Body section of the Studio.
 
 The M3 clock shows a turning wheel of 360 degrees that lenses can cut in many ways. Use it to read where a moment stands on the wheel, and to open the wheel to see what it is made of.
-
-```ui
-src: ../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=expressions
-height: 900
-caption: The amber and blue arcs on the outer ring are the clock. In the Studio's Body section, switch M3 clock off and on.
-```
 
 #### What the wheel holds
 
@@ -6852,15 +9522,50 @@ The 16 even cuts come in eight reciprocal pairs. In each pair, the size of one p
 | 7 | 12° × 30 and 30° × 12 |
 | 8 | 15° × 24 and 24° × 15 |
 
-#### Presentations
+#### Views
 
-| Presentation | What it shows |
+The M3 clock is one device with five views. All five show the same live settings.
+
+```ui
+device: quaternal-logic:m3-clock
+caption: The M3 clock as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: on the chain of a reading. The folded M3 clock shows the position and the aperture. Click the title to unfold it.
+
+##### Compact
+
+Where: on the chain of a reading. The compact M3 clock shows the wheel with a needle, and four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The position and the aperture. |
-| Compact | The wheel with a needle. Four macros: Aperture, Position, Rate, Turn. |
-| Whole | All parameters, in two groups: Cut and Position. |
-| Full | The wheel at full size in the pane, which can open while the subject stays. There are no controls in the pane. |
-| Widget | A small wheel with its position. |
+| Aperture | Sets how the wheel is cut. |
+| Position | Sets the degree to read. |
+| Rate | Sets how fast the wheel runs. |
+| Turn | Sets which turn of the wheel to show: first, second or both. |
+
+Click the plate to show the M3 clock whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole M3 clock shows every parameter, in two groups.
+
+| Group | Parameters |
+|---|---|
+| Cut | Aperture, Reciprocal, Turn, Open |
+| Position | Position, Run, Rate, Readout |
+
+A change you make in the pool applies at once. It does not add the M3 clock to a chain.
+
+##### Full
+
+Where: a pane. The full M3 clock fills the pane with the wheel at full size. The four directions, the governors and the chambers show on the wheel. A needle marks the position. Set Open to Exploded in Device view. The parts of the wheel draw apart and the subject stays. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows a small wheel with its position. Click the wheel to open the M3 clock in the pane that has focus. The widget stays when you change mode.
 
 #### Transport
 
@@ -6939,15 +9644,50 @@ For the I Ching, the Deck shows one hexagram, its six lines, the moving lines, t
 | Agent reads | Off · Propose · Write | Propose | Off: the agent does not read. Propose: each reading waits for you to accept it. Write: readings go in directly, each with a receipt. |
 | Journey | The open journey | The open journey | The journey that the reading joins. |
 
-#### Presentations
+#### Views
 
-| Presentation | What it shows |
+The Deck is one device with five views. All five show the same live settings.
+
+```ui
+device: quaternal-logic:deck
+caption: The Deck as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: on the chain of a reading. The folded Deck shows the deck and the spread. Click the title to unfold it.
+
+##### Compact
+
+Where: on the chain of a reading. The compact Deck shows the positions as small cards, and four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The deck and the spread. |
-| Compact | The positions as small cards. Four macros: Deck, Spread, Draw, Agent reads. |
-| Whole | All parameters, in two groups: Reading and Agent. |
-| Full | The spread laid out in the pane, with the readings under the cards. There are no controls in the pane. |
-| Widget | The last spread, with its theme. |
+| Deck | Sets Tarot or I Ching. |
+| Spread | Sets the size of the tarot spread. |
+| Draw | Sets how the cards or the lines come: random or by hand. |
+| Agent reads | Sets Off, Propose or Write. |
+
+Click the plate to show the Deck whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Deck shows every parameter, in two groups.
+
+| Group | Parameters |
+|---|---|
+| Reading | Deck, Spread, Draw, Theme, Pairs, Lemniscate, Moving lines, Journey |
+| Agent | Agent reads |
+
+A change you make in the pool applies at once. It does not add the Deck to a chain.
+
+##### Full
+
+Where: a pane. The full Deck fills the pane with the spread. The six positions P0 to P5 lie out, each with its question. The reading of each position shows under its card. Read the pairs: P0 with P5, P1 with P4, and P2 with P3. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the last spread, with its theme. Click the spread to open the Deck in the pane that has focus. The widget stays when you change mode.
 
 #### Transport
 
@@ -6988,12 +9728,6 @@ For the I Ching, the Deck shows one hexagram, its six lines, the moving lines, t
 
 The Chakra shows the seven centres of the body and what the sky does to each. Use it to see which planets reach which centre today, and how your own centres answer.
 
-```ui
-src: ../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=expressions
-height: 900
-caption: The seven centres at the right edge of the field, shown when Nara is on in the Studio. Two centres are lit. Turn Nara off and on.
-```
-
 #### The centres
 
 There are seven centres and the Earth under them. The Earth grounds the Root. It is not an eighth centre.
@@ -7025,15 +9759,50 @@ The centres rise from the Root to the Crown. The Crown dissolves into the source
 
 A route has a source for each centre. The own planet of each centre is in the table above. The decan ruler is the planet that rules the part of the sky where a body stands. The Sun reaches all seven centres.
 
-#### Presentations
+#### Views
 
-| Presentation | What it shows |
+The Chakra is one device with five views. All five show the same live settings.
+
+```ui
+device: quaternal-logic:chakra
+caption: The Chakra as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: on the chain of a reading. The folded Chakra shows the centre that has the most hits today. Click the title to unfold it.
+
+##### Compact
+
+Where: on the chain of a reading. The compact Chakra shows seven small discs, lit by their hits, and four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The centre that has the most hits today. |
-| Compact | Seven small discs, lit by their hits. Four macros: View, Routes, Colour source, Natal distribution. |
-| Whole | All parameters, in two groups: Sky and Personal. |
-| Full | The centres at full size, with the route lines drawn from the planets. There are no controls in the pane. |
-| Widget | Seven discs with the planet of each. |
+| View | Sets Seven rows or Body figure. |
+| Routes | Sets which paths from the sky to the centres show. |
+| Colour source | Sets where the colour of a centre comes from. |
+| Natal distribution | Shows how your birth sky spreads over the centres. |
+
+Click the plate to show the Chakra whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Chakra shows every parameter, in two groups.
+
+| Group | Parameters |
+|---|---|
+| Sky | View, Date, Routes, Hits, Colour source, Detail |
+| Personal | Natal distribution, Privacy |
+
+A change you make in the pool applies at once. It does not add the Chakra to a chain.
+
+##### Full
+
+Where: a pane. The full Chakra fills the pane with the seven centres at full size. Route lines run from the planets to the centres that they reach. The Earth stands under the Root. Follow a route line from a planet to its centre. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows seven discs with the planet of each. Click a disc to open its centre in the pane that has focus. The widget stays when you change mode.
 
 #### Transport
 
@@ -7098,15 +9867,52 @@ The four matrices are stacked. Each layer feeds the next. Only the first makes s
 | Follow | Notes · Sky · Off | Notes | Notes moves the cell with the notes you play. Sky moves it with the planets. Off pins the cell. |
 | Context | World · Personal · Shared | World | The occasion the Situation matrix shows. Each context keeps its own state. |
 
-#### Presentations
+#### Views
 
-| Presentation | What it shows |
+The M′ matrices are one device with five views. All five show the same live settings.
+
+```ui
+device: quaternal-logic:m-prime-matrices
+caption: The M′ matrices as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: on the chain of a reading. The folded M′ matrices show the matrix name and the cell. Click the title to unfold it.
+
+##### Compact
+
+Where: on the chain of a reading. The compact M′ matrices show a small grid of the matrix, and four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | The matrix name and the cell. |
-| Compact | A small grid of the matrix. Four macros: Matrix, Basis, Lens, Follow. |
-| Whole | All parameters, in two groups: Matrix and Cell. The grid shows with every value. |
-| Full | The matrix at full size in the pane. A line from a cell leads to the parameter it moves. There are no controls in the pane. |
-| Widget | The small grid with the cell marked. |
+| Matrix | Sets which of the four matrices to show. |
+| Basis | Sets the order of the twelve notes. |
+| Lens | Sets the lens that anchors the reading. |
+| Follow | Sets what moves the cell: the notes that you play, the sky, or nothing. |
+
+Click the plate to show the M′ matrices whole in the pool. Click ⤢ to open them full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole M′ matrices show every parameter, in two groups.
+
+| Group | Parameters |
+|---|---|
+| Matrix | Matrix, Basis, Lens, Context frame, Value form, Context |
+| Cell | Cell, Follow |
+
+The grid shows with every value.
+
+A change you make in the pool applies at once. It does not add the M′ matrices to a chain.
+
+##### Full
+
+Where: a pane. The full M′ matrices fill the pane with the matrix at full size. A line leads from a cell to the parameter that it moves. Follow the line from a cell to its parameter. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the small grid with the cell marked. Click the grid to open the matrices in the pane that has focus. The widget stays when you change mode.
 
 #### Transport
 
@@ -7151,12 +9957,6 @@ The rail on the right keeps context at hand in every mode. Each widget is a devi
 
 You need the context of your work at hand, in every kind of work. The widget rail holds small live views, and each view is a device. A widget stays on the rail when you change mode.
 
-```ui
-src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
-height: 900
-caption: The right side of the window is the rail. Tiles are open at the top, and the launcher is below them. Click a launcher square to open or close a tile. Click the arrows to widen the rail. Use the search field to find a widget.
-```
-
 #### The rail
 
 Open tiles sit at the top of the rail. The launcher sits below them, as a grid of squares. Each square has a small preview of its widget, and a dot when the widget is open. A tile has a title, a pin and a close mark. The close mark closes the tile, and the widget stays in the launcher. Each widget holds a piece of context that belongs to your whole world. A terminal that you open in Factory is still there in Central.
@@ -7171,14 +9971,51 @@ Open tiles sit at the top of the rail. The launcher sits below them, as a grid o
 | Search | Text | Empty | Filters the launcher by name. |
 | Preset | A named group of tiles | None | A saved group of open tiles. |
 
-#### Presentations
-| Presentation | What it shows |
+#### Views
+
+The Rail is one device with five views. All five show the same live settings.
+
+```ui
+device: widgets:rail
+caption: The Rail as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: the launcher on the rail, and on a chain. The folded rail shows as a launcher square with its search field. A dot marks an open tile. Click the square to open the tile on the rail.
+
+##### Compact
+
+Where: on a chain. The compact rail shows the launcher as a grid of squares. Each square has a small preview of its widget. A dot marks an open widget. It has four macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | A closed tile shows as a launcher square. |
-| Compact | A launcher square with a small preview and a dot when open. |
-| Whole | The widget's settings, in the pool, when you select its square in the browser. |
-| Full | The widget at pane size. A widget that has a full form opens it in a pane. |
-| Widget | The tile, on the rail. |
+| Width | Sets the width of the rail, from 260 to 900 px. |
+| Launcher | Sets Open or Folded. |
+| Search | Filters the launcher by name. |
+| Preset | Opens a saved group of tiles. |
+
+Click the plate to show the Rail whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole rail shows every parameter, in three groups.
+
+| Group | Parameters |
+|---|---|
+| Tiles | Open, Pin |
+| Rail | Width, Launcher |
+| Find | Search, Preset |
+
+A change you make in the pool applies at once. Select the square of a widget in the browser to show the settings of that widget in the pool.
+
+##### Full
+
+Where: a pane. The full rail shows the open tiles in two columns at pane size. The launcher is below them, with the preview of each widget. A widget that has a full form opens it in a pane. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The rail is on the right of the window in every mode. Open tiles sit at the top. Each tile has a title, a pin and a close mark. The launcher is below the tiles. Click a square to open or close a tile. Click the arrows to widen or narrow the rail. Click Save current tiles as preset to keep the group of open tiles. The rail stays when you change mode.
 
 #### Transport
 | Control | Effect on the rail |
@@ -7210,12 +10047,6 @@ Open tiles sit at the top of the rail. The launcher sits below them, as a grid o
 
 You need to find any session or helper and open its thread. Sessions lists every session, with its helpers nested as they were spawned.
 
-```ui
-src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
-height: 900
-caption: Sessions is open at the top of the rail. Click the filter buttons to show all, running or stalled sessions. Click a session to select its track. Double-click it to open its thread.
-```
-
 #### Parameters
 | Parameter | Values | Default | What it does |
 |---|---|---|---|
@@ -7223,14 +10054,49 @@ caption: Sessions is open at the top of the rail. Click the filter buttons to sh
 | Nest | On · Off | On | Shows helpers under the session that spawned them. |
 | Pin | On · Off | Off | Keeps the list on its subject. |
 
-#### Presentations
-| Presentation | What it shows |
+#### Views
+
+The Sessions is one device with five views. All five show the same live settings.
+
+```ui
+device: widgets:sessions
+caption: The Sessions as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: the launcher on the rail, and on a chain. The folded Sessions shows as a launcher square with the name Sessions. A dot marks an open tile. Click the square to open the tile on the rail.
+
+##### Compact
+
+Where: on a chain. The compact Sessions shows each session with its state. Helpers are indented below the session that spawned them. It has three macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | A closed tile shows as a launcher square. |
-| Compact | Each session with its state, its helpers indented. |
-| Whole | Filter, nest and pin. |
-| Full | The list at pane size. |
-| Widget | The tree of sessions, with a count of sessions, running and stalled. |
+| Filter | Sets All, Running or Stalled. |
+| Nest | Shows helpers under their parent, or in one flat list. |
+| Pin | Keeps the list on its subject. |
+
+Click the plate to show the Sessions whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Sessions shows every parameter, in two groups.
+
+| Group | Parameters |
+|---|---|
+| List | Filter, Nest |
+| Subject | Pin |
+
+A change you make in the pool applies at once.
+
+##### Full
+
+Where: a pane. The full Sessions shows the tree of sessions at pane size. Each row shows the name of the session, its state and its helpers. A helper has one step of indent for each level. Double-click a row to open its thread. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the tree of sessions. Three counts show the sessions, the running sessions and the stalled sessions. Three filter buttons show All, Running or Stalled. Click a session to select its track. Double-click a session to open its thread. The widget stays when you change mode.
 
 #### Transport
 | Control | Effect on Sessions |
@@ -7257,12 +10123,6 @@ caption: Sessions is open at the top of the rail. Click the filter buttons to sh
 
 You need to see and use the shells of your sessions. Terminal shows the live shells. It follows the agent that you select.
 
-```ui
-src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
-height: 900
-caption: Terminal is open at the top of the rail. It follows the selected agent and shows its commands and results. A prompt that waits for an answer shows in orange.
-```
-
 #### Parameters
 | Parameter | Values | Default | What it does |
 |---|---|---|---|
@@ -7270,14 +10130,49 @@ caption: Terminal is open at the top of the rail. It follows the selected agent 
 | Shell | A list of live shells | The agent's shell | Chooses the shell. |
 | Prompts | Show · Hide | Show | Marks a shell that waits for an answer, in the stall colour. |
 
-#### Presentations
-| Presentation | What it shows |
+#### Views
+
+The Terminal is one device with five views. All five show the same live settings.
+
+```ui
+device: widgets:terminal
+caption: The Terminal as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: the launcher on the rail, and on a chain. The folded Terminal shows as a launcher square with the name Terminal. A dot marks an open tile. Click the square to open the tile on the rail.
+
+##### Compact
+
+Where: on a chain. The compact Terminal shows the last lines of the shell and its prompt. It has three macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | A closed tile shows as a launcher square. |
-| Compact | The last lines of the shell and its prompt. |
-| Whole | Follow, shell and prompts. |
-| Full | A full terminal in a pane. |
-| Widget | The live shell, with the line "following" and the name of the agent. |
+| Follow | Sets Selected agent or Pinned shell. |
+| Shell | Chooses a live shell. |
+| Prompts | Sets Show or Hide. |
+
+Click the plate to show the Terminal whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Terminal shows every parameter, in two groups.
+
+| Group | Parameters |
+|---|---|
+| Shell | Follow, Shell |
+| Prompts | Prompts |
+
+A change you make in the pool applies at once.
+
+##### Full
+
+Where: a pane. The full Terminal is a full terminal in a pane. It shows the shell that the tile follows. Type here. A shell that waits for an answer shows in the stall colour. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the live shell. A line below it says "following" and shows the name of the agent. It follows the agent that you select. A shell that waits for a yes or no shows in the stall colour. Type your answer in the shell. The widget stays when you change mode.
 
 #### Transport
 | Control | Effect on Terminal |
@@ -7304,12 +10199,6 @@ caption: Terminal is open at the top of the rail. It follows the selected agent 
 
 You need to see which files an agent read and which it changed. Files shows them as a tree, with the lines added and removed.
 
-```ui
-src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
-height: 900
-caption: Files is open at the top of the rail. M marks a changed file, with the lines added and removed. An arrow marks a file the agent read. A red line marks a blocked place.
-```
-
 #### Parameters
 | Parameter | Values | Default | What it does |
 |---|---|---|---|
@@ -7317,14 +10206,49 @@ caption: Files is open at the top of the rail. M marks a changed file, with the 
 | Blocked | Show · Hide | Show | Marks places the agent may not reach. |
 | Follow | On · Off | On | Keeps the tree on the selected agent. |
 
-#### Presentations
-| Presentation | What it shows |
+#### Views
+
+The Files is one device with five views. All five show the same live settings.
+
+```ui
+device: widgets:files
+caption: The Files as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: the launcher on the rail, and on a chain. The folded Files shows as a launcher square with the name Files. A dot marks an open tile. Click the square to open the tile on the rail.
+
+##### Compact
+
+Where: on a chain. The compact Files shows the changed files. Each file shows the lines added and removed. It has three macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | A closed tile shows as a launcher square. |
-| Compact | The changed files, with lines added and removed. |
-| Whole | Show, blocked and follow. |
-| Full | The file in a pane. |
-| Widget | The tree: M marks a changed file, and an arrow marks a file the agent read. |
+| Show | Sets Read and changed, Changed only or All. |
+| Blocked | Sets Show or Hide. |
+| Follow | Sets On or Off. |
+
+Click the plate to show the Files whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Files shows every parameter, in two groups.
+
+| Group | Parameters |
+|---|---|
+| Tree | Show, Blocked |
+| Agent | Follow |
+
+A change you make in the pool applies at once.
+
+##### Full
+
+Where: a pane. The full Files shows one file at pane size: the file that you clicked in the tree. Read it here. The tree stays on the rail. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the tree of the files that the selected agent touched. M marks a changed file, with the lines added and removed. An arrow marks a file that the agent read. A red line marks a blocked place. Click a file to open it in a pane. Click a blocked place to read why it is blocked. The widget stays when you change mode.
 
 #### Transport
 | Control | Effect on Files |
@@ -7350,12 +10274,6 @@ caption: Files is open at the top of the rail. M marks a changed file, with the 
 
 You need to see the pages an agent read, and the text it used. Web shows each page, with the used text marked.
 
-```ui
-src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
-height: 900
-caption: Open Web from the launcher. The tile shows the page the agent fetched, and the used text is marked.
-```
-
 #### Parameters
 | Parameter | Values | Default | What it does |
 |---|---|---|---|
@@ -7363,14 +10281,49 @@ caption: Open Web from the launcher. The tile shows the page the agent fetched, 
 | Mark used text | On · Off | On | Highlights the text the agent used. |
 | Follow | On · Off | On | Shows the page the selected agent read last. |
 
-#### Presentations
-| Presentation | What it shows |
+#### Views
+
+The Web is one device with five views. All five show the same live settings.
+
+```ui
+device: widgets:web
+caption: The Web as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: the launcher on the rail, and on a chain. The folded Web shows as a launcher square with the name Web. A dot marks an open tile. Click the square to open the tile on the rail.
+
+##### Compact
+
+Where: on a chain. The compact Web shows the address and the first lines of the page. It has three macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | A closed tile shows as a launcher square. |
-| Compact | The address and the first lines of the page. |
-| Whole | Page, mark and follow. |
-| Full | The page in a pane. |
-| Widget | The page, with used text marked. |
+| Page | Chooses a page from the list. |
+| Mark used text | Sets On or Off. |
+| Follow | Sets On or Off. |
+
+Click the plate to show the Web whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Web shows every parameter, in two groups.
+
+| Group | Parameters |
+|---|---|
+| Page | Page, Follow |
+| Marks | Mark used text |
+
+A change you make in the pool applies at once.
+
+##### Full
+
+Where: a pane. The full Web shows the page in a pane, as the agent got it. The text that the agent used is marked. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the page that the selected agent read last. The text that the agent used is marked. Click the address to open the page in a pane. The widget stays when you change mode.
 
 #### To use Web
 1. Open Web from the launcher.
@@ -7391,12 +10344,6 @@ caption: Open Web from the launcher. The tile shows the page the agent fetched, 
 
 You need to see what is linked to the thing in play. Graph shows the neighbourhood of the selected thing in your knowledge graph.
 
-```ui
-src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
-height: 900
-caption: Open Graph from the launcher. The node at the middle is the selection. The coloured nodes are the ones the agent touched.
-```
-
 #### Parameters
 | Parameter | Values | Default | What it does |
 |---|---|---|---|
@@ -7404,14 +10351,49 @@ caption: Open Graph from the launcher. The node at the middle is the selection. 
 | Depth | 0–3 links | 1 | How many links the tile draws from the centre. |
 | Kinds | All · Notes · Files · Agents | All | Which kinds of node to draw. |
 
-#### Presentations
-| Presentation | What it shows |
+#### Views
+
+The Graph is one device with five views. All five show the same live settings.
+
+```ui
+device: widgets:graph
+caption: The Graph as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: the launcher on the rail, and on a chain. The folded Graph shows as a launcher square with the name Graph. A dot marks an open tile. Click the square to open the tile on the rail.
+
+##### Compact
+
+Where: on a chain. The compact Graph shows the centre and the nodes around it. It has three macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | A closed tile shows as a launcher square. |
-| Compact | The centre and the nodes around it. |
-| Whole | Centre, depth and kinds. |
-| Full | The Obsidian-style knowledge graph in a pane. |
-| Widget | The neighbourhood, with the centre marked. |
+| Centre | Sets The selection or A pinned node. |
+| Depth | Sets how many links to draw, from 0 to 3. |
+| Kinds | Sets All, Notes, Files or Agents. |
+
+Click the plate to show the Graph whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Graph shows every parameter, in two groups.
+
+| Group | Parameters |
+|---|---|
+| Centre | Centre |
+| Reach | Depth, Kinds |
+
+A change you make in the pool applies at once.
+
+##### Full
+
+Where: a pane. The full Graph shows the Obsidian-style knowledge graph at pane size. It is the Knowledge graph instrument. Click a node to move the centre. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the neighbourhood of the selection. The centre is marked. A coloured node is a node that the agent touched. A link that does not resolve shows as a ghost node. Click a node to move the centre. Click the open mark to open the full graph in a pane. The widget stays when you change mode.
 
 #### To use Graph
 1. Open Graph from the launcher.
@@ -7432,12 +10414,6 @@ caption: Open Graph from the launcher. The node at the middle is the selection. 
 
 You need to read what changed before you approve it. Diff shows the uncommitted changes and the changes that an agent proposes.
 
-```ui
-src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
-height: 900
-caption: Open Diff from the launcher. The tile shows the lines added and removed in the selected session.
-```
-
 #### Parameters
 | Parameter | Values | Default | What it does |
 |---|---|---|---|
@@ -7445,14 +10421,49 @@ caption: Open Diff from the launcher. The tile shows the lines added and removed
 | Session | The selected session · All | The selected session | Chooses whose changes to show. |
 | Layout | Unified · Side by side | Unified | How the lines are set out. |
 
-#### Presentations
-| Presentation | What it shows |
+#### Views
+
+The Diff is one device with five views. All five show the same live settings.
+
+```ui
+device: widgets:diff
+caption: The Diff as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: the launcher on the rail, and on a chain. The folded Diff shows as a launcher square with the name Diff. A dot marks an open tile. Click the square to open the tile on the rail.
+
+##### Compact
+
+Where: on a chain. The compact Diff shows the first lines of the diff. It has three macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | A closed tile shows as a launcher square. |
-| Compact | The first lines of the diff. |
-| Whole | Show, session and layout. |
-| Full | The diff in a pane. |
-| Widget | The files, with lines added in green and removed in red. |
+| Show | Sets Uncommitted, Proposed or Both. |
+| Session | Sets The selected session or All. |
+| Layout | Sets Unified or Side by side. |
+
+Click the plate to show the Diff whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Diff shows every parameter, in two groups.
+
+| Group | Parameters |
+|---|---|
+| Changes | Show, Session |
+| Layout | Layout |
+
+A change you make in the pool applies at once.
+
+##### Full
+
+Where: a pane. The full Diff shows the diff of one file in a pane. Lines added are green. Lines removed are red. A proposed change shows its author. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget lists the files that changed in the selected session. Each file shows its lines added in green and removed in red. Click a file to open its diff in a pane. Go to Approvals to accept a proposal. The widget stays when you change mode.
 
 #### Transport
 | Control | Effect on Diff |
@@ -7478,12 +10489,6 @@ caption: Open Diff from the launcher. The tile shows the lines added and removed
 
 You need to read the live events between the shell and the harness. Frames is the Frames monitor on the rail.
 
-```ui
-src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
-height: 900
-caption: Open Frames from the launcher. The tile shows the last frames of the selected session, such as tool.start and approval.request.
-```
-
 #### Parameters
 | Parameter | Values | Default | What it does |
 |---|---|---|---|
@@ -7491,14 +10496,49 @@ caption: Open Frames from the launcher. The tile shows the last frames of the se
 | Kinds | Messages · Tools · Heartbeat · Approvals · Errors | All | Chooses the frames to show. |
 | Pause | On · Off | Off | Holds the list still. |
 
-#### Presentations
-| Presentation | What it shows |
+#### Views
+
+The Frames is one device with five views. All five show the same live settings.
+
+```ui
+device: actuation:frames-monitor
+caption: The Frames as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: the launcher on the rail, and on a chain. The folded Frames shows as a launcher square with the name Frames. A dot marks an open tile. Click the square to open the tile on the rail.
+
+##### Compact
+
+Where: on a chain. The compact Frames shows the last frames of the selected session. It has three macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | A closed tile shows as a launcher square. |
-| Compact | The last frames of the selected session. |
-| Whole | Session, kinds and pause. |
-| Full | The Frames monitor in a pane. |
-| Widget | The last eleven frames, newest at the bottom. |
+| Session | Sets Selected session, One session or All. |
+| Kinds | Turns Messages, Tools, Heartbeat, Approvals and Errors On or Off. |
+| Pause | Holds the list still. |
+
+Click the plate to show the Frames whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Frames shows every parameter, in two groups.
+
+| Group | Parameters |
+|---|---|
+| Source | Session |
+| Frames | Kinds, Pause |
+
+A change you make in the pool applies at once.
+
+##### Full
+
+Where: a pane. The full Frames is the Frames monitor in a pane. It shows the live events between the shell and the harness. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the last eleven frames of the selected session, newest at the bottom. A frame is an event such as tool.start or approval.request. The widget only reads. It sends no frame. Click the open mark to open the monitor in a pane. The widget stays when you change mode.
 
 #### To use Frames
 1. Open Frames from the launcher.
@@ -7519,12 +10559,6 @@ caption: Open Frames from the launcher. The tile shows the last frames of the se
 
 You need to see what each task produced. Ledger shows every task with its receipt.
 
-```ui
-src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
-height: 900
-caption: Open Ledger from the launcher. Each line is a task and its receipt, for example #212 re-plan port, landed.
-```
-
 #### Parameters
 | Parameter | Values | Default | What it does |
 |---|---|---|---|
@@ -7532,14 +10566,49 @@ caption: Open Ledger from the launcher. Each line is a task and its receipt, for
 | Outcome | All · Landed · Approved · Commented | All | Shows tasks with one outcome. |
 | Agent | All · One agent | All | Shows the tasks of one agent. |
 
-#### Presentations
-| Presentation | What it shows |
+#### Views
+
+The Ledger is one device with five views. All five show the same live settings.
+
+```ui
+device: software-factory:ledger
+caption: The Ledger as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: the launcher on the rail, and on a chain. The folded Ledger shows as a launcher square with the name Ledger. A dot marks an open tile. Click the square to open the tile on the rail.
+
+##### Compact
+
+Where: on a chain. The compact Ledger shows one line for each task, with its number and outcome. It has three macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | A closed tile shows as a launcher square. |
-| Compact | One line for each task, with its number and outcome. |
-| Whole | Period, outcome and agent. |
-| Full | The Ledger in a pane, with each receipt open. |
-| Widget | The last receipts, for example "#212 re-plan port · landed". |
+| Period | Sets This run, Today or All. |
+| Outcome | Sets All, Landed, Approved or Commented. |
+| Agent | Sets All or One agent. |
+
+Click the plate to show the Ledger whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Ledger shows every parameter, in two groups.
+
+| Group | Parameters |
+|---|---|
+| Span | Period |
+| Filter | Outcome, Agent |
+
+A change you make in the pool applies at once.
+
+##### Full
+
+Where: a pane. The full Ledger shows the Ledger in a pane, with each receipt open. Read what each task produced. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the last receipts. Each line is a task and its receipt, for example "#212 re-plan port · landed". Select a receipt to read it in full. Click the task to open its log. The widget stays when you change mode.
 
 #### To use Ledger
 1. Open Ledger from the launcher.
@@ -7560,12 +10629,6 @@ caption: Open Ledger from the launcher. Each line is a task and its receipt, for
 
 You need to answer the agents when they ask. Approvals shows the proposals that wait for you, each with a button to approve.
 
-```ui
-src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
-height: 900
-caption: Open Approvals from the launcher. Each card names the agent and the change. Click Approve to accept it.
-```
-
 #### Parameters
 | Parameter | Values | Default | What it does |
 |---|---|---|---|
@@ -7573,14 +10636,49 @@ caption: Open Approvals from the launcher. Each card names the agent and the cha
 | Order | Oldest first · By agent · By risk | Oldest first | The order of the queue. |
 | Wait | 15 min–24 h | 4 h | How long a request waits before it counts as unanswered. |
 
-#### Presentations
-| Presentation | What it shows |
+#### Views
+
+The Approvals is one device with five views. All five show the same live settings.
+
+```ui
+device: software-factory:approvals
+caption: The Approvals as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: the launcher on the rail, and on a chain. The folded Approvals shows as a launcher square with the name Approvals. A dot marks an open tile. Click the square to open the tile on the rail.
+
+##### Compact
+
+Where: on a chain. The compact Approvals shows one line for each item, with a button. It has three macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | A closed tile shows as a launcher square. |
-| Compact | One line for each item, with a button. |
-| Whole | Show, order and wait. |
-| Full | The queue in a pane, with the diff beside it. |
-| Widget | The proposal cards. Each has Approve, Changes and Open. |
+| Show | Sets Proposals, Requests or Both. |
+| Order | Sets Oldest first, By agent or By risk. |
+| Wait | Sets how long a request waits, from 15 minutes to 24 hours. |
+
+Click the plate to show the Approvals whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Approvals shows every parameter, in two groups.
+
+| Group | Parameters |
+|---|---|
+| Queue | Show, Order |
+| Time | Wait |
+
+A change you make in the pool applies at once.
+
+##### Full
+
+Where: a pane. The full Approvals shows the queue in a pane, with the diff of the selected item beside it. Approve, ask for changes or deny here. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the proposal cards. Each card names the agent and the change. Each card has Approve, Changes and Open. Click Open to read the diff. Click Approve to accept the proposal. Click Changes to ask for a different result. Nothing lands until you answer. The widget stays when you change mode.
 
 #### Transport
 | Control | Effect on Approvals |
@@ -7606,12 +10704,6 @@ caption: Open Approvals from the launcher. Each card names the agent and the cha
 
 You need to see all your agents at once, and what each is doing. Agents is the hive: each agent sits at a station, with its helpers around it.
 
-```ui
-src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
-height: 900
-caption: Open Agents from the launcher. Each agent has a station. The lines under the hive say what each agent does.
-```
-
 #### Parameters
 | Parameter | Values | Default | What it does |
 |---|---|---|---|
@@ -7619,14 +10711,49 @@ caption: Open Agents from the launcher. Each agent has a station. The lines unde
 | Relations | Show · Hide | Show | Draws dashed lines from an agent to its helpers. |
 | Doing lines | Show · Hide | Show | Shows one line of text for each agent that says what it does. |
 
-#### Presentations
-| Presentation | What it shows |
+#### Views
+
+The Agents is one device with five views. All five show the same live settings.
+
+```ui
+device: widgets:agents
+caption: The Agents as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: the launcher on the rail, and on a chain. The folded Agents shows as a launcher square with the name Agents. A dot marks an open tile. Click the square to open the tile on the rail.
+
+##### Compact
+
+Where: on a chain. The compact Agents shows each agent at a station. It has three macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | A closed tile shows as a launcher square. |
-| Compact | Each agent at a station. |
-| Whole | Telemetry, relations and doing lines. |
-| Full | The hive in a pane. |
-| Widget | The hive. Click an agent to select its session. Double-click to open its thread. |
+| Telemetry | Sets On or Off for each agent. |
+| Relations | Sets Show or Hide. |
+| Doing lines | Sets Show or Hide. |
+
+Click the plate to show the Agents whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Agents shows every parameter, in two groups.
+
+| Group | Parameters |
+|---|---|
+| Agents | Telemetry |
+| Hive | Relations, Doing lines |
+
+A change you make in the pool applies at once.
+
+##### Full
+
+Where: a pane. The full Agents shows the hive in a pane. Each agent sits at a station, with its helpers around it. Dashed lines join an agent to its helpers. A doing line under the hive says what each agent does. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the hive. Each agent has a station. An amber station marks an agent that is stuck. Click an agent to select its session. Double-click an agent to open its thread. The widget stays when you change mode.
 
 #### Transport
 | Control | Effect on Agents |
@@ -7653,12 +10780,6 @@ caption: Open Agents from the launcher. Each agent has a station. The lines unde
 
 You need to know exactly what the agent will read. Packet shows it whole, with its size, before anything is sent.
 
-```ui
-src: ../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=base
-height: 900
-caption: The Packet tile is open at the top of the rail in Central. Each line names the source and the text. The size shows beside the Answer button.
-```
-
 #### Parameters
 | Parameter | Values | Default | What it does |
 |---|---|---|---|
@@ -7666,14 +10787,49 @@ caption: The Packet tile is open at the top of the rail in Central. Each line na
 | Size | Tokens (reading) | Read from the packet | The size of what the agent will read. |
 | Send | A button | — | Sends the packet. The answer arrives as an entry. |
 
-#### Presentations
-| Presentation | What it shows |
+#### Views
+
+The Packet is one device with five views. All five show the same live settings.
+
+```ui
+device: central:packet
+caption: The Packet as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: the launcher on the rail, and on a chain. The folded Packet shows as a launcher square with the name Packet. A dot marks an open tile. Click the square to open the tile on the rail.
+
+##### Compact
+
+Where: on a chain. The compact Packet shows the first lines of each item. It has two macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | A closed tile shows as a launcher square. |
-| Compact | The first lines of each item. |
-| Whole | Items, size and send. |
-| Full | The packet in a pane. |
-| Widget | The list of items, with their size and the Answer button. |
+| Items | Sets Selection, Entry or Document. |
+| Send | Sends the packet. The answer arrives as an entry. |
+
+Click the plate to show the Packet whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Packet shows every parameter, in three groups.
+
+| Group | Parameters |
+|---|---|
+| Contents | Items |
+| Size | Size |
+| Send | Send |
+
+A change you make in the pool applies at once.
+
+##### Full
+
+Where: a pane. The full Packet shows the packet in a pane. Each item shows its source, its text and its size. Remove an item you do not want to send. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the list of items. Each line names the source and the text. The size shows beside the Answer button. Press Capture to put the selection in the packet. Press Play to send it. The widget stays when you change mode.
 
 #### Transport
 | Control | Effect on Packet |
@@ -7700,12 +10856,6 @@ caption: The Packet tile is open at the top of the rail in Central. Each line na
 
 You need to go back to a place you were. Trail keeps every place you went, newest first. Select a stop to return to it.
 
-```ui
-src: ../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=base
-height: 900
-caption: The Trail tile is open in Central. Each stop shows its time, the kind of work and the place. Click a stop to return to it.
-```
-
 #### Parameters
 | Parameter | Values | Default | What it does |
 |---|---|---|---|
@@ -7713,14 +10863,48 @@ caption: The Trail tile is open in Central. Each stop shows its time, the kind o
 | Return | A stop | — | Returns to the same place, page and point in the reading. |
 | Limit | 8–100 stops | 8 | The stops shown in the tile. |
 
-#### Presentations
-| Presentation | What it shows |
+#### Views
+
+The Trail is one device with five views. All five show the same live settings.
+
+```ui
+device: widgets:trail
+caption: The Trail as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: the launcher on the rail, and on a chain. The folded Trail shows as a launcher square with the name Trail. A dot marks an open tile. Click the square to open the tile on the rail.
+
+##### Compact
+
+Where: on a chain. The compact Trail shows the last stops. It has two macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | A closed tile shows as a launcher square. |
-| Compact | The last stops. |
-| Whole | Stops, return and limit. |
-| Full | The trail in a pane. |
-| Widget | The stops, newest first, each with its time and kind of work. |
+| Limit | Sets how many stops show, from 8 to 100. |
+| Return | Returns to the stop that you select. |
+
+Click the plate to show the Trail whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Trail shows every parameter, in two groups.
+
+| Group | Parameters |
+|---|---|
+| Stops | Stops, Limit |
+| Return | Return |
+
+A change you make in the pool applies at once.
+
+##### Full
+
+Where: a pane. The full Trail shows the trail in a pane. Each stop shows its time, the kind of work and the place. Select a stop to return to it. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the stops, newest first. Each stop shows its time and the kind of work. Click a stop to return to the same place, the same page and the same point in the reading. The widget stays when you change mode.
 
 #### Transport
 | Control | Effect on Trail |
@@ -7746,12 +10930,6 @@ caption: The Trail tile is open in Central. Each stop shows its time, the kind o
 
 You need to see the moments of today that are still open. NOWs shows the day and the present moment, with the open moments of each machine.
 
-```ui
-src: ../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=base
-height: 900
-caption: The NOWs tile lists the machines and the agent at work on each, with a state. Open it from the launcher if it is not on the rail.
-```
-
 #### Parameters
 | Parameter | Values | Default | What it does |
 |---|---|---|---|
@@ -7759,14 +10937,47 @@ caption: The NOWs tile lists the machines and the agent at work on each, with a 
 | Now | A time (reading) | The present | The present moment. |
 | Machines | All · One machine | All | Shows the open moments of one machine. |
 
-#### Presentations
-| Presentation | What it shows |
+#### Views
+
+The NOWs is one device with five views. All five show the same live settings.
+
+```ui
+device: widgets:nows
+caption: The NOWs as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: the launcher on the rail, and on a chain. The folded NOWs shows as a launcher square with the name NOWs. A dot marks an open tile. Click the square to open the tile on the rail.
+
+##### Compact
+
+Where: on a chain. The compact NOWs shows one line for each open moment, with its state. It has one macro.
+
+| Macro | What it does |
 |---|---|
-| Folded | A closed tile shows as a launcher square. |
-| Compact | One line for each open moment, with its state. |
-| Whole | Machines and day. |
-| Full | The day's moments in a pane. |
-| Widget | The day, the time and the open moments. |
+| Machines | Sets All or One machine. |
+
+Click the plate to show the NOWs whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole NOWs shows every parameter, in two groups.
+
+| Group | Parameters |
+|---|---|
+| Day | Day, Now |
+| Machines | Machines |
+
+A change you make in the pool applies at once. Day and Now are readings. You cannot set them.
+
+##### Full
+
+Where: a pane. The full NOWs shows the moments of the day in a pane. Each moment shows its machine, the agent at work on it and its state. Click a moment to open it. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the day, the time and the open moments. It lists the machines and the agent at work on each, with a state. Click a moment to open it. Close each moment that you have finished. The widget stays when you change mode.
 
 #### To use NOWs
 1. Open NOWs from the launcher.
@@ -7787,12 +10998,6 @@ caption: The NOWs tile lists the machines and the agent at work on each, with a 
 
 You need to read what a run produced. Results shows the results and the diffs of the selected run.
 
-```ui
-src: ../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=factory
-height: 900
-caption: The Results tile is open at the top of the rail in Factory. It shows the results of the run you selected.
-```
-
 #### Parameters
 | Parameter | Values | Default | What it does |
 |---|---|---|---|
@@ -7800,14 +11005,49 @@ caption: The Results tile is open at the top of the rail in Factory. It shows th
 | Show | Results · Diffs · Both | Both | Chooses what the tile lists. |
 | Accept | A button | — | Accepts the result. The result goes to review. |
 
-#### Presentations
-| Presentation | What it shows |
+#### Views
+
+The Results is one device with five views. All five show the same live settings.
+
+```ui
+device: widgets:results
+caption: The Results as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: the launcher on the rail, and on a chain. The folded Results shows as a launcher square with the name Results. A dot marks an open tile. Click the square to open the tile on the rail.
+
+##### Compact
+
+Where: on a chain. The compact Results shows the latest result and its state. It has three macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | A closed tile shows as a launcher square. |
-| Compact | The latest result and its state. |
-| Whole | Run, show and accept. |
-| Full | The results in a pane. |
-| Widget | The results and diffs of the run, with Accept. |
+| Run | Chooses the run whose results show. |
+| Show | Sets Results, Diffs or Both. |
+| Accept | Accepts the result. The result goes to review. |
+
+Click the plate to show the Results whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Results shows every parameter, in two groups.
+
+| Group | Parameters |
+|---|---|
+| Run | Run, Show |
+| Review | Accept |
+
+A change you make in the pool applies at once.
+
+##### Full
+
+Where: a pane. The full Results shows the results of the run in a pane. Each result shows its author and its diff. Accept a result or ask for changes. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the results and the diffs of the selected run. Each result shows its author. Open a diff to read it. Press Accept to send a result to review. The widget stays when you change mode.
 
 #### To use Results
 1. Open Results from the launcher.
@@ -7828,12 +11068,6 @@ caption: The Results tile is open at the top of the rail in Factory. It shows th
 
 You need to read the wiki pages that an agent may use. Wiki shows the pages inside the reads of the world.
 
-```ui
-src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
-height: 900
-caption: Open Wiki from the launcher. The tile lists the wiki pages inside the reads of the selected session.
-```
-
 #### Parameters
 | Parameter | Values | Default | What it does |
 |---|---|---|---|
@@ -7841,14 +11075,49 @@ caption: Open Wiki from the launcher. The tile lists the wiki pages inside the r
 | Reads only | On · Off | On | Shows only pages inside the scope's reads. |
 | Follow | On · Off | On | Shows the page the selected agent read last. |
 
-#### Presentations
-| Presentation | What it shows |
+#### Views
+
+The Wiki is one device with five views. All five show the same live settings.
+
+```ui
+device: widgets:wiki
+caption: The Wiki as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: the launcher on the rail, and on a chain. The folded Wiki shows as a launcher square with the name Wiki. A dot marks an open tile. Click the square to open the tile on the rail.
+
+##### Compact
+
+Where: on a chain. The compact Wiki shows the title and the first lines of a page. It has three macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | A closed tile shows as a launcher square. |
-| Compact | The title and the first lines of a page. |
-| Whole | Page, reads and follow. |
-| Full | The page in a pane. |
-| Widget | The page, with its links. |
+| Page | Chooses a page from the list. |
+| Reads only | Sets On or Off. |
+| Follow | Sets On or Off. |
+
+Click the plate to show the Wiki whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Wiki shows every parameter, in two groups.
+
+| Group | Parameters |
+|---|---|
+| Page | Page, Follow |
+| Scope | Reads only |
+
+A change you make in the pool applies at once.
+
+##### Full
+
+Where: a pane. The full Wiki shows the page in a pane, with its links. Read the page here. You cannot edit it. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the wiki page that the selected agent read last, with its links. Click a link to follow it. A link that does not resolve shows as it is. Click the open mark to read the page in a pane. The widget stays when you change mode.
 
 #### To use Wiki
 1. Open Wiki from the launcher.
@@ -7869,12 +11138,6 @@ caption: Open Wiki from the launcher. The tile lists the wiki pages inside the r
 
 You need to see what is due around your work. Calendar is a widget from a third party. Its provider supplies the events.
 
-```ui
-src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
-height: 900
-caption: Calendar is a widget from a third party. Open it from the launcher. The badge on its square marks it as supplied from outside.
-```
-
 #### Parameters
 | Parameter | Values | Default | What it does |
 |---|---|---|---|
@@ -7882,14 +11145,49 @@ caption: Calendar is a widget from a third party. Open it from the launcher. The
 | Range | Day · Week | Day | The span the tile shows. |
 | This work only | On · Off | Off | Shows only events tied to the work in front of you. |
 
-#### Presentations
-| Presentation | What it shows |
+#### Views
+
+The Calendar is one device with five views. All five show the same live settings.
+
+```ui
+device: widgets:calendar
+caption: The Calendar as the shell draws it now, in its five views. The readings are a fixture.
+```
+
+##### Folded
+
+Where: the launcher on the rail, and on a chain. The folded Calendar shows as a launcher square with the name Calendar. A dot marks an open tile. A badge marks it as a widget from outside. Click the square to open the tile on the rail.
+
+##### Compact
+
+Where: on a chain. The compact Calendar shows the next events. It has three macros.
+
+| Macro | What it does |
 |---|---|
-| Folded | A closed tile shows as a launcher square. |
-| Compact | The next events. |
-| Whole | Calendar, range and this work only. |
-| Full | The calendar in a pane, if the provider supplies a full form. |
-| Widget | The events due around this work. |
+| Calendar | Chooses which calendars show. |
+| Range | Sets Day or Week. |
+| This work only | Sets On or Off. |
+
+Click the plate to show the Calendar whole in the pool. Click ⤢ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Calendar shows every parameter, in two groups.
+
+| Group | Parameters |
+|---|---|
+| Source | Calendar |
+| View | Range, This work only |
+
+A change you make in the pool applies at once.
+
+##### Full
+
+Where: a pane. The full Calendar shows the calendar in a pane, if the provider supplies a full form. If the provider supplies none, Calendar has no Full view. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the events that are due around this work. Click an event to read it. A badge on the widget marks it as supplied from outside. The widget shows only what its provider supplies. The widget stays when you change mode.
 
 #### To use Calendar
 1. Open the browser. Install Calendar from the Context category.
