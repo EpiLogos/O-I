@@ -112,7 +112,8 @@ Palace). Ranked: G1 the stage's file exports have no native receiver (the main w
 cancels `<a download>`: lane-1 B2/B3); G2 the Instruments rail keeps no subject into Graph (D1); G3 the shell carries no
 frame deep-link address (E22); R1 Places onto the atlas (31 targets); R2 palaces onto the atlas (N4, 9); S1 mount N2's
 subject door — 76 homes read their facets only on a Wiki-bound Scene, reached today only by Examine in the Graph pane.
-The native pass at `2f5c1bcf6` (computer-use): Central's Days read the owner's surface; every day was named "day.md" in the
+The chain's end receives (`1dd808990`): a mode registers what lands on it (`MODE_DETAILS.drop`), and Live's note-device
+rows drag onto it, landing what their double-click lands. The native pass at `2f5c1bcf6` (computer-use): Central's Days read the owner's surface; every day was named "day.md" in the
 title line, trail and detail head (fixed, `3b66dcc3e`); the Expressions centre still read blank because the one frame keeps
 its instrument session open in every cut — the frame now says when its cut draws (`f2ef25b0f`); Technē's rack reads its
 plates; Sources and the Expressions browser say no works are disclosed, truly — the works home holds no work yet.
@@ -134,7 +135,8 @@ J — gaps in the shared grid against what the deleted World-cut presentation dr
 coloured by atmosphere, the cron chip, the retained occasion with its admission light, walk rails) and the native
 Arrangement's ruler zoom/pan and snap; the port source is `09a573a1d`. `right-dock` panel registrations have no renderer
 since the widget rail (RightDock.tsx is their only reader); `agentNativeP0` rows are never loaded by main.tsx (superseded by
-the F7 bindings, or missing — to read); factoryEarthOccurrence (spine seam 6, Factory's half) is unwired. From lane I: the
+the F7 bindings, or missing — to read); factoryEarthOccurrence (spine seam 6, Factory's half) has nothing to admit: the Factory owner declares no Earth binding for
+a run (`EARTH_SEAM`), so the Factory half waits on its owner, not on a wire. From lane I: the
 candidate's `/__application/` route can never match (app_assets.rs:13 compares against `expressions/…`).
 
 The native pass at `ae9301a1b` (computer-use, 15 Oct): every mode at the mockup's anatomy — Central's paper documents,
@@ -153,15 +155,15 @@ to open works; at boot the frame's recovery checkpoint still wins over the file,
 the aperture slot as the focused pane's own context (`e951e8f66`, lane F); the Expressions centre as the field, its stage
 tools in the Studio (`66f3fa86a`, lane G); from their proposals the cut's palette on the shell's root, the document pane's
 pin guarded, the occasion in every mode, the aperture matching the focused pane's own document, Reopen on the Studio's head.
-Carried: NativeStageTools.tsx is now drawn only by its tests (move them to StudioStage, then delete it); `list` makes 1 + N
-owner calls under the kernel lock (about 0.36 s each); a work's edits after its first save reach the file only through
+Carried: `list` reads each home file through the owner, eight at a time under the kernel lock (about 0.36 s a read) — a
+cache needs the file's revision in Central's own listing (`central.files.list` entries carry none; a size is not a
+revision), so it is the Central owner's to add; a work's edits after its first save reach the file only through
 the frame's own Save; the Studio's Capture column sits past the visible width at 1440px.
 
 Then: the transport and status bar (`80d5beb0c`, lane C: 46px, a title line, words and owner readings, the Info view)
 and Live at the mockup's floor (`ebc5f8cc7`, lane D: the rail in Live, the chain as plates in note order, the clip in the
 Clip view, Live's tree healed); from their proposals the atlas contained in its pane (`beca86c5b`), a fresh book opening in
-Central (`a7cbcb195`), plates never narrower than their heads, dead CSS removed. Carried from lane D: the chain's drop zone
-has no drop receiver yet (a browser row cannot land on Live's chain); the device side's head names only the track's own
+Central (`a7cbcb195`), plates never narrower than their heads, dead CSS removed. Carried from lane D: the device side's head names only the track's own
 devices. From the native pass at `14cb8a1bb`: the Flow pane draws blank paper although the Flow holds entries (to inspect);
 Central's Day is refused by its owner ("the native today pointer is stale") until the owner ensures the current Day.
 
