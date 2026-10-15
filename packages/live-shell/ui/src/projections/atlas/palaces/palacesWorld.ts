@@ -9,6 +9,7 @@ import {useMemo, useSyncExternalStore} from 'react'
 import {getWikiProjectionState, subscribeWikiProjection} from '../../../../../../../desktop/cradle/src/techne/wikiProjectionStore'
 import {liveWikiStandingSource} from '../../../native/wikiSubjectStanding'
 import {palaceRows, type PalaceRow} from './palacesModel'
+import {enterPalace, palaceOwnersBound, subscribePalaceOwners} from './palaceSession'
 
 export type PalacesLoad = {readonly phase: 'idle' | 'reading' | 'read'} | {readonly phase: 'refused'; readonly reason: string}
 
@@ -51,4 +52,24 @@ export function palacesWaiting(load: PalacesLoad, count: number): string | null 
   if (load.phase === 'reading') return 'Reading the palaces of your world…'
   if (load.phase === 'read') return 'No register of your world holds a palace yet.'
   return 'The palaces of your world are not read yet.'
+}
+
+/** How long a palace waits for the Earth it asked to open before saying so. */
+export const EARTH_OPENS_WITHIN_MS = 20_000
+
+/** Enter a palace from outside the Earth — the browser's World › Palaces (FOUNDATION N4: a palace is a place on the world you enter):
+ * open the Earth through the one instrument door, wait for its palace owners to bind, then enter. Null once entering began; the words
+ * said instead when the Earth did not open in time (never a silent wait). `open` and `within` are the door and the wait, for tests. */
+export async function enterFromOutside(palace: PalaceRow, open: () => void, within = EARTH_OPENS_WITHIN_MS): Promise<string | null> {
+  if (!palaceOwnersBound()) {
+    open()
+    const bound = await new Promise<boolean>(resolve => {
+      if (palaceOwnersBound()) { resolve(true); return }
+      const timer = setTimeout(() => { stop(); resolve(false) }, within)
+      const stop = subscribePalaceOwners(() => { if (palaceOwnersBound()) { clearTimeout(timer); stop(); resolve(true) } })
+    })
+    if (!bound) return `The Earth did not open within ${Math.round(within / 1000)} s, so ${palace.title} was not entered. Open Earth from the browser's Instruments, then the palace.`
+  }
+  void enterPalace(palace)
+  return null
 }

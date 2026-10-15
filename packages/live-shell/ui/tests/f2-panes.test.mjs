@@ -86,7 +86,7 @@ test('the Instruments list names instruments: an admitted pane kind that is not 
   const kinds = entries.map(entry => entry.kind)
   assert.ok(!kinds.includes('projection.device'), 'projection.device holds a device the rack shows; it is not an instrument')
   for (const kind of ['projection.timeline', 'projection.earth', 'projection.constellation', 'projection.expressions']) assert.ok(kinds.includes(kind), kind)
-  assert.deepEqual(entries.filter(entry => entry.lens).map(entry => entry.lens), ['canvas', 'timeline', 'journey', 'palace'], 'the stage carries its four lenses')
+  assert.deepEqual(entries.filter(entry => entry.lens).map(entry => entry.lens), ['canvas', 'timeline', 'journey'], 'the stage carries its three lenses; a palace is entered on the Earth (N4)')
   assert.ok(entries.every(entry => entry.label && entry.note), 'every row is named and says what it is for')
 })
 
@@ -108,7 +108,7 @@ test('a stage lens travels with its kind in one payload, and a layout opens the 
 test('the door opens the instrument where asked and then turns the stage: a double-click and a drop do the same thing', () => {
   const opened = [], turned = []
   door.publishInstrumentOpener((kind, at) => opened.push([kind, at?.groupId ?? null]))
-  door.publishStageLensDriver((lens, refused) => { turned.push(lens); if (lens === 'palace') refused('The stage owner takes no palace here.') })
+  door.publishStageLensDriver((lens, refused) => { turned.push(lens); if (lens === 'journey') refused('The stage owner takes no journey here.') })
   door.reportInstrumentFault(null)
   door.openInstrument('projection.earth')
   assert.deepEqual(turned, [], 'a plain instrument turns nothing')
@@ -116,8 +116,8 @@ test('the door opens the instrument where asked and then turns the stage: a doub
   assert.deepEqual(opened.at(-1), ['projection.expressions', 'g2'], 'the stage opens in the pane it was dropped on, by its kind alone')
   assert.deepEqual(turned, ['canvas'], 'and is turned to the lens the payload carried')
   assert.equal(door.instrumentFault(), null)
-  door.openInstrument('projection.expressions#palace')
-  assert.equal(door.instrumentFault(), 'The stage owner takes no palace here.', 'the owner\'s refusal is said in the fault line, whichever road opened it')
+  door.openInstrument('projection.expressions#journey')
+  assert.equal(door.instrumentFault(), 'The stage owner takes no journey here.', 'the owner\'s refusal is said in the fault line, whichever road opened it')
   door.reportInstrumentFault(null)
   door.publishInstrumentOpener(null)
   turned.length = 0

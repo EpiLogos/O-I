@@ -35,13 +35,14 @@ export const isWorldGroup = (id: string): id is WorldGroupId => (WORLD_GROUP_IDS
 export interface WorldRow {
   key: string
   subject: WorldSubject & {title: string}
-  kind: 'location' | 'place' | 'journey'
+  kind: 'location' | 'place' | 'journey' | 'palace'
   mark: KindShapeName
   name: string
   standing: string
   hover: string
-  /** A journey opens by standing its first stop (the tracks' own rule); a subject opens through the subject door. */
-  opens: 'subject' | 'walk'
+  /** A journey opens by standing its first stop (the tracks' own rule); a subject opens through the subject door; a palace is entered on
+   * the Earth (FOUNDATION N4). */
+  opens: 'subject' | 'walk' | 'palace'
   /** The walk a journey row stands for. */
   walk?: WorldWalk
 }
@@ -261,4 +262,16 @@ export function worldGroupOf(id: WorldGroupId, readings: WorldReadings, hint: st
   // The mockup's World rows stand under no separator (renderBrowser :1501–1505); while the owners are still read, the provider's
   // own progress words stand under the rows that have arrived.
   return {state: 'rows', rows, note: standing.phase === 'reading' ? describeProgress(standing) : null}
+}
+
+/** The browser's World › Palaces (FOUNDATION N4; the atlas's palaces, projections/atlas/palaces/palacesModel.ts palaceRows): one row per
+ * register palace — its name and the owner's standing of it — entered on the Earth when opened; while there is none, the words the
+ * palace list says (palacesWorld.ts palacesWaiting), at the designed empty rhythm. */
+export function palaceWorldGroup(rows: readonly {key: string; title: string; standing: string; expression_ref: string | null}[], waiting: string | null): WorldGroup {
+  if (!rows.length) return {state: 'waiting', word: waiting?.startsWith('Reading') ? 'reading' : waiting?.startsWith('No ') ? 'none' : 'waiting', words: waiting ?? 'No palace is read yet.', detail: null}
+  return {state: 'rows', note: null, rows: rows.map((row): WorldRow => ({
+    key: `palace:${row.key}`, subject: {ref: row.expression_ref ?? `palace:${row.key}`, title: row.title},
+    kind: 'palace', mark: 'palace', name: row.title, standing: row.standing,
+    hover: `${row.title} — a palace on the Earth: its rooms are its Scenes. Double-click or Enter to enter it.`, opens: 'palace',
+  }))}
 }

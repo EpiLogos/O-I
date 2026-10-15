@@ -39,7 +39,8 @@ export const STAGE_LENSES: readonly InstrumentEntry[] = [
   {kind: 'projection.expressions', lens: 'canvas', label: 'Canvas', mark: 'form', note: 'Think out loud: throw ideas down, cluster them, draw what joins them'},
   {kind: 'projection.expressions', lens: 'timeline', label: 'Timeline', mark: 'arrangement', note: 'History beside the work that studied it, on one ruler from deep time to this morning'},
   {kind: 'projection.expressions', lens: 'journey', label: 'Journey', mark: 'journey', note: 'An ordered walk through places, moments and things'},
-  {kind: 'projection.expressions', lens: 'palace', label: 'Palace', mark: 'palace', note: 'A building for a whole subject: rooms, a path, a guide'},
+  // The stage's Palace lens retired with the frame's Palace (b5a935661): a palace is a place on the world you enter — the Earth
+  // (its M5 plate, M4's Locations, the browser's World › Palaces), never a separate surface (FOUNDATION N4).
 ]
 
 /** Every instrument a pane can hold now: the admitted kinds that are named instruments, then the stage's lenses. */
