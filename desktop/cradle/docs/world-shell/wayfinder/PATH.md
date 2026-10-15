@@ -99,9 +99,18 @@ objections verbatim and the full validation (`BRIEF-BUILDER.md`); the lead conve
 
 | Ticket | Who | Zone | Since |
 |---|---|---|---|
-| Central's document forms run natively: the Flow and the Day die served through `oi-material://` with the host's seam as an external script (the srcdoc frame inherits the window's script-src hash and runs nothing) | Opus builder | `desktop/cradle/src-tauri/src/material_protocol.rs`, a pure kernel module, `desktop/cradle/src/document/frame.ts` (one seam source), the two document faces | 15 Oct |
-| FOUNDATION §7, unreached code: the reachability measure made true (type-only imports do not reach; the hosted frame's entry is a root), then the old Session/Arrangement views, the shell's Technē Timeline, the unrendered timeline residence and NativeStageTools deleted, each with its replacement named | Opus builder | `packages/live-shell/ui/scripts/candidate-reachable.mjs`, deletions under `packages/live-shell/ui/src` and `tests` | 15 Oct |
 | Native screen pass against the mockup renders; N1; mounting N2's subject door | lead | the frame, `App.tsx`, `native/Workbench.tsx`, `shell/modeFrames.ts`, the book | 14 Oct |
+
+Then (15 Oct, early): Central's document forms run natively (`b860eb8a4`, lane I: a document frame served by the material
+protocol and written by its face — the srcdoc frame had inherited the window's script-src and run nothing; seen on screen
+at b860eb8a4, computer-use: the Flow's form draws and its island answers); unreached code removed (`6855f56d3`, lane J: the
+reachability measure made true, 21 files deleted with their replacements, the runtime graph unchanged). Carried from lane
+J — gaps in the shared grid against what the deleted World-cut presentation drew (clip standing marks, sections nested and
+coloured by atmosphere, the cron chip, the retained occasion with its admission light, walk rails) and the native
+Arrangement's ruler zoom/pan and snap; the port source is `09a573a1d`. `right-dock` panel registrations have no renderer
+since the widget rail (RightDock.tsx is their only reader); `agentNativeP0` rows are never loaded by main.tsx (superseded by
+the F7 bindings, or missing — to read); factoryEarthOccurrence (spine seam 6, Factory's half) is unwired. From lane I: the
+candidate's `/__application/` route can never match (app_assets.rs:13 compares against `expressions/…`).
 
 The native pass at `ae9301a1b` (computer-use, 15 Oct): every mode at the mockup's anatomy — Central's paper documents,
 plates and aperture; Factory's grid, thread and one-line clip side; Live's rail, Keyboard and M1 torus plates with real
