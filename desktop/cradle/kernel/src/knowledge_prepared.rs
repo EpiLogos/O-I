@@ -6,9 +6,13 @@ use crate::{
 };
 use serde_json::Value;
 use std::path::PathBuf;
+use std::sync::Arc;
 pub struct Prepared {
     client: CentralClient,
     world: Option<Value>,
+    /// The World reading this read shares with every other prepared read of
+    /// its burst, when the kernel held none at preparation.
+    world_flight: Option<Arc<read_cache::Flight>>,
     project: Option<String>,
     request: knowledge::Request,
     held: Option<Value>,
@@ -82,7 +86,17 @@ impl Kernel {
         if matches!(request, knowledge::Request::Use { .. }) {
             return Ok(None);
         }
-        let world = self.reads.get("world", read_cache::WORLD_TTL);
+        // One World reading serves every register a burst prepares: the
+        // retained one, else the one in flight or just read (read_cache
+        // `flight`) — never one World read per register.
+        let mut world = self.reads.get("world", read_cache::WORLD_TTL);
+        let world_flight = if world.is_none() {
+            let flight = self.reads.flight("world", read_cache::WORLD_TTL);
+            world = flight.held(read_cache::WORLD_TTL);
+            world.is_none().then_some(flight)
+        } else {
+            None
+        };
         let held = if let Some(world) = &world {
             let (cwd, _) = scope(world, project.clone(), request)?;
             let key = key(&cwd, request)?;
@@ -105,6 +119,7 @@ impl Kernel {
         Ok(Some(Prepared {
             client: self.client.clone(),
             world,
+            world_flight,
             project: project.clone(),
             request: request.clone(),
             held,
@@ -146,11 +161,20 @@ impl Kernel {
     }
 }
 impl Prepared {
+    /// The World this read is scoped by: the reading held at preparation,
+    /// else its burst's shared reading — read through the owner once, by
+    /// whichever read of the burst gets there first.
+    fn world(&self) -> Result<Value, String> {
+        match (&self.world, &self.world_flight) {
+            (Some(world), _) => Ok(world.clone()),
+            (None, Some(flight)) => flight.read(read_cache::WORLD_TTL, || {
+                crate::world::read_world(&self.client)
+            }),
+            (None, None) => crate::world::read_world(&self.client),
+        }
+    }
     pub fn execute(self) -> Result<Completed, String> {
-        let world = match self.world {
-            Some(w) => w,
-            None => crate::world::read_world(&self.client)?,
-        };
+        let world = self.world()?;
         let (cwd, project) = scope(&world, self.project, &self.request)?;
         let key = key(&cwd, &self.request)?;
         let cacheable = matches!(

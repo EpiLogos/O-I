@@ -33,6 +33,15 @@ struct Failure {
     allowed: bool,
     reason: String,
 }
+/// The owner's answer to one file reading (`Store::fetch`), before the store
+/// records it (`Store::record`).
+#[derive(Debug)]
+pub struct Fetched {
+    epoch: String,
+    cache_key: String,
+    reading: Result<Reading, String>,
+    failure: Option<Failure>,
+}
 #[derive(Debug, Default)]
 pub struct Store {
     path: Option<PathBuf>,
@@ -51,6 +60,14 @@ fn key(epoch: &str, location: &Location) -> Result<String, String> {
     ))
 }
 impl Store {
+    /// A store kept in `path`, never the native home (tests only).
+    #[cfg(test)]
+    pub(crate) fn at(path: PathBuf) -> Self {
+        Self {
+            path: Some(path),
+            ..Self::default()
+        }
+    }
     fn directory(&self) -> Result<PathBuf, String> {
         if let Some(path) = &self.path {
             return Ok(path.clone());
@@ -165,6 +182,14 @@ impl Store {
         Ok(Some(record.retained))
     }
     pub fn read(&mut self, client: &CentralClient, location: &Location) -> Result<Reading, String> {
+        let fetched = Self::fetch(client, location)?;
+        self.record(fetched)
+    }
+    /// The owner's answer to one reading — `central.files.read`, and for a
+    /// refused missing file the parent listing that decides whether it may
+    /// be recovered. Owner calls only: nothing is recorded, so it may run
+    /// outside the kernel lock; `record` keeps the answer as `read` does.
+    pub(crate) fn fetch(client: &CentralClient, location: &Location) -> Result<Fetched, String> {
         let epoch = client.retained_resource_epoch();
         let cache_key = key(&epoch, location)?;
         let result = client.run_envelope("central.files.read", json!({"location":location}));
@@ -197,6 +222,23 @@ impl Store {
                 }),
             ),
         };
+        Ok(Fetched {
+            epoch,
+            cache_key,
+            reading,
+            failure,
+        })
+    }
+    /// Keep a fetched answer: a reading is retained as the last native
+    /// reading, a failure is remembered for recovery. The reading (or the
+    /// owner's refusal) is answered unchanged.
+    pub(crate) fn record(&mut self, fetched: Fetched) -> Result<Reading, String> {
+        let Fetched {
+            epoch,
+            cache_key,
+            reading,
+            failure,
+        } = fetched;
         if let Ok(reading) = &reading {
             self.failures.remove(&cache_key);
             if let Err(error) = self.remember(&epoch, reading) {

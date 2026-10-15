@@ -567,6 +567,16 @@ fn handle_with_diagnostic(
                 if let Some(read) = read {
                     return read.execute();
                 }
+                // A file listing or reading runs its owner call outside the
+                // lock and records its answer (the file's registration) under it.
+                let files = kernel.lock().expect("kernel mutex").prepare_files_read(&op);
+                if let Some(prepared) = files {
+                    let answered = prepared.execute();
+                    return kernel
+                        .lock()
+                        .expect("kernel mutex")
+                        .finish_files_read(answered);
+                }
                 let dictation = kernel
                     .lock()
                     .expect("kernel mutex")

@@ -102,6 +102,10 @@ async fn kernel_op(app: AppHandle, op: KernelOp) -> Result<KernelOpOutcome, Stri
         if let Some(prepared)=compose{let composed=prepared.execute()?;return host.0.lock().map_err(|_|"kernel lock unavailable")?.finish_native_compose(composed);}
         let prepared = host.0.lock().map_err(|_| "kernel lock unavailable")?.prepare_owner_read(&op);
         if let Some(read) = prepared { return read.execute(); }
+        // A file listing or reading runs its owner call outside the lock and
+        // records its answer (the file's registration) under it.
+        let files=host.0.lock().map_err(|_|"kernel lock unavailable")?.prepare_files_read(&op);
+        if let Some(prepared)=files{let answered=prepared.execute();return host.0.lock().map_err(|_|"kernel lock unavailable")?.finish_files_read(answered);}
         let working=match &op {
             KernelOp::WorkingSurfaceRead {project,agent_session,binding}=>Some(host.0.lock().map_err(|_|"kernel lock unavailable")?.prepare_working_surface_read(project,agent_session.clone(),binding.clone(),false)?),
             KernelOp::WorkingSurfaceAttachment {project,agent_session,binding}=>Some(host.0.lock().map_err(|_|"kernel lock unavailable")?.prepare_working_surface_read(project,agent_session.clone(),Some(binding.clone()),true)?),
