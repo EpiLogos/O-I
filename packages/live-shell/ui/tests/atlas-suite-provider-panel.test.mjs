@@ -2,8 +2,9 @@
 // real suite provider, reading the recorded 14 Oct 2026 owner readings (tests/fixtures/atlas-suite-reading.json) through the real
 // kernel client over a stand-in fetch. Only the WebGL mount is stood in for (fixtures/atlas-mount-stub.mjs). What is claimed:
 //   - the panel registers the suite as the default corpus provider and mounts it by id;
-//   - the Earth side names how many of the owners' subjects it does not draw, above the Sun's line, in one column;
-//   - the Graph side does not say it (the Graph draws every subject), and the line returns on the Earth;
+//   - the Earth side names how many of the owners' subjects it does not draw, before the Sun's words, in the Info view's hover —
+//     the globe's data-i — never over the globe (T-PLACES-ONTO-ATLAS; the lead saw the paragraph over the globe at 11475cc3d);
+//   - the Graph side does not say it (the Graph draws every subject), and the words return on the Earth;
 //   - an owner that does not answer is named in the pane with its own detail, and the mount fails by name when none does;
 //   - closing the pane removes the line.
 // What is NOT claimed here: that the real globe draws. The harness over the recorded fixture is run in a browser (see the ticket receipt).
@@ -112,12 +113,11 @@ const standingStore = await import(new URL('../src/projections/atlas/provider/su
 panel.bindAtlasScope({namespace: 'test.atlas-suite-panel', workspaceId: 'w1'})
 
 const pane = () => new FakeNode('div')
-/** The pane's status column, and the lines in it with their text. */
-const lines = element => {
-  const column = element.children.find(child => child.tagName === 'div' && /flex-direction:column/.test(child.attrs.style ?? ''))
-  return {column, lines: (column?.children ?? []).map(line => ({text: line.textContent, style: line.attrs.style, standing: line.dataset.atlasStanding ?? null, role: line.attrs.role, className: line.className}))}
-}
-const standingOf = element => lines(element).lines.find(line => line.standing === 'suite')
+/** What the Earth says of itself: its globe's Info view words (`data-i`, "Earth|…"). */
+const said = element => element.children.find(child => child.id === 'globe')?.attrs['data-i'] ?? ''
+const standingOf = element => /Your world: /.test(said(element)) ? said(element) : undefined
+/** Anything drawn over the globe as a line of text (the pane's old status lines). */
+const linesOver = element => element.children.filter(child => child.className === 'atlas-host-status' || /flex-direction:column/.test(child.attrs.style ?? ''))
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
 
 test('the pane reads the suite, registers it as the default corpus provider, and mounts it by id', async () => {
@@ -135,24 +135,17 @@ test('the pane reads the suite, registers it as the default corpus provider, and
   attachment.unmount()
 })
 
-test('the Earth side names how many subjects it does not draw, above the Sun, in one column', async () => {
+test('the Earth side names how many subjects it does not draw, before the Sun, in the Info view\'s hover — never over the globe', async () => {
   const element = pane()
   const attachment = await panel.attachAtlas({element, transport, follow: true})
-  const {column} = lines(element)
-  assert.ok(column, 'the status lines stand in one column')
-  assert.match(column.attrs.style, /position:absolute;left:12px;bottom:72px;.*pointer-events:none/, 'above the atlas time control, and it takes no click')
+  assert.deepEqual(linesOver(element), [], 'no line of text stands over the globe')
   const standing = standingOf(element)
   assert.ok(standing, 'the world\'s standing is said on the Earth')
-  assert.match(standing.text, /^Your world: 45 subjects read from their owners, none on the Earth\. No owner declares where they are, so the Earth draws them nowhere\. 15 places are unlocated too\. 45 are undated\. AIKit knowledge: unavailable — AIKit is unavailable: AIKit knowledge read did not return within 20 seconds\.$/)
-  assert.equal(standing.role, 'status')
-  assert.equal(standing.className, 'atlas-host-status')
-  assert.match(standing.style, /order:-1/, 'it is first in the column')
-  assert.match(standing.style, /position:static/, 'the column places it, not the stylesheet\'s foot rule')
+  assert.match(standing, /^Earth\|Your world: 45 subjects read from their owners, none on the Earth\. No owner declares where they are, so the Earth draws them nowhere\. 15 places are unlocated too\. 45 are undated\. AIKit knowledge: unavailable — AIKit is unavailable: AIKit knowledge read did not return within 20 seconds\. /)
   await sleep(50)
-  const sun = lines(element).lines.find(line => /^The Sun /.test(line.text))
-  assert.ok(sun, 'the Sun\'s line is still said')
-  assert.match(sun.style, /position:static/, 'in the same column, so neither overlaps the other')
-  assert.equal(standingStore.suiteStanding().counts.unlocated, 45, 'the line says what the standing holds')
+  assert.match(said(element), /seconds\. The Sun /, 'the Sun\'s words follow the standing\'s')
+  assert.ok(said(element).endsWith(panel.GLOBE_GESTURES), 'and the globe\'s own gestures close them')
+  assert.equal(standingStore.suiteStanding().counts.unlocated, 45, 'the words say what the standing holds')
   attachment.unmount()
 })
 
@@ -165,7 +158,7 @@ test('the Graph side is silent about it, the Earth says it again, and closing th
   panel.presentAtlasView('earth')
   assert.ok(standingOf(element), 'back on the Earth, the line returns')
   attachment.unmount()
-  assert.equal(standingOf(element), undefined, 'closing the pane removes the line')
+  assert.equal(standingOf(element), undefined, 'closing the pane removes the words')
 })
 
 test('an owner input that does not answer is named in the pane, and a mount with no owner answering fails by name', async () => {

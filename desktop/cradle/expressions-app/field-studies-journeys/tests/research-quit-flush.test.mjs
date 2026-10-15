@@ -52,7 +52,9 @@ test('the instrument flushes held gestures before it disposes them, on every lea
  assert.ok(flushAt>0&&disposeAt>flushAt,'unmount flushes held gestures before it disposes them');
  // unmount is the one leave path for a lens switch, a reload (load) and close/destroy: each reaches it.
  assert.match(researchSource,/async function load\([^)]*\)\{[\s\S]*?unmount\(\);/,'a reload leaves through unmount');
- assert.match(researchSource,/close\(\)\{flushPlaceLayers\(\);\+\+epoch;lens=null;unmount\(\);/,'close leaves through unmount');
+ // T-PLACES-ONTO-ATLAS: the Places layers write close flushed first retired with the frame's Places map (Places is the shell's Earth
+ // atlas: packages/live-shell/ui/tests/atlas-places-plate.test.mjs); close still leaves through unmount.
+ assert.match(researchSource,/close\(\)\{\+\+epoch;lens=null;unmount\(\);/,'close leaves through unmount');
  assert.match(researchSource,/destroy\(\)\{[\s\S]*?unmount\(\);/,'destroy leaves through unmount');
 });
 

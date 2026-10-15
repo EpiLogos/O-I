@@ -35,7 +35,9 @@ const {createDisclosureSessionStore} = await import('../../../../desktop/cradle/
 const {groundSelection} = await import('../../../../desktop/cradle/src/techne/m0m5/reading.ts')
 const {provingReading} = await import('../../../../desktop/cradle/src/techne/m0m5/journey/proving-reading.ts')
 const {parseTimestamp, yearStartMs} = await import('../../../../desktop/cradle/src/techne/m0m5/timeline/scale.ts')
-const {windowInstant} = await import('../../../../desktop/cradle/expressions-app/vendor/research-canvas/packages/canvas/src/psychogeographic/terminator.ts')
+// T-PLACES-ONTO-ATLAS: the frame's day/night layer (psychogeographic/terminator.ts) retired with its map; the Earth's day and night
+// is the QL Sun, read for the window's own year (inhabitants/qlSkyEarthAdapter.ts shownInstantOf over sharedClock.windowYear).
+const {shownInstantOf} = await import('../src/inhabitants/qlSkyEarthAdapter.ts')
 const {writeSharedWindowCompareAndSet} = await import('@epilogos/expressions-boundary/time-window')
 const {TimeModel} = await import('../src/projections/atlas/src/state/timeModel.ts')
 const {createTimeScale} = await import('../src/projections/atlas/src/data/time.ts')
@@ -81,9 +83,9 @@ test('an instant is read only through the time authority, deep years included', 
   assert.equal(/Date\.parse/.test(source), false, 'the binding never calls Date.parse')
 })
 
-test('the window the Earth writes stands at the same instant the day/night layer reads for it', () => {
+test('the window the Earth writes stands at the same year the Sun is read for', () => {
   const window = {from: null, to: instantOfYear(1800)}
-  assert.equal(windowInstant(window), instantOfYear(1800).replace('-01-01T00:00:00Z', '-01-01T00:00:00.000Z'))
+  assert.deepEqual(shownInstantOf(windowYear(window), new Date(0)), {present: false, year: 1800})
   assert.equal(windowYear(window), 1800)
   // A bounded window: the day/night layer's midpoint and the Earth's cursor are the same year.
   const span = {from: instantOfYear(1700), to: instantOfYear(1900)}
@@ -237,11 +239,13 @@ test('with no shared session standing the clock keeps its own presentation, and 
   assert.equal(time.link, null, 'a disposed binding releases the clock')
 })
 
-test('the Places day/night layer and the Earth read the window through one authority', () => {
+test('the Earth\'s day and night and its clock read the window through one authority', () => {
   const window = {from: instantOfYear(1700), to: instantOfYear(1900)}
-  const dayNight = windowInstant(window)
-  assert.equal(parseTimestamp(dayNight) >= parseTimestamp(window.from) && parseTimestamp(dayNight) <= parseTimestamp(window.to), true)
+  const sun = shownInstantOf(windowYear(window), new Date(0))
+  assert.equal(sun.present, false)
+  assert.equal(parseTimestamp(instantOfYear(sun.year)) >= parseTimestamp(window.from) && parseTimestamp(instantOfYear(sun.year)) <= parseTimestamp(window.to), true)
   assert.equal(windowYear(window), 1800)
+  assert.equal(shownInstantOf(windowYear(null), new Date(0)).present, true, 'all time: the present sky')
 })
 
 test('the atlas family declares its occasion consumption, restored with the binding', () => {

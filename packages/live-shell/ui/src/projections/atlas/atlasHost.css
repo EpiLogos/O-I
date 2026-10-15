@@ -46,3 +46,25 @@
 .atlas-host-status[role="alert"] {
   color: var(--rec);
 }
+
+/* Nothing of the atlas's own chrome stands in the pane where the shell gives it a home (T-PLACES-ONTO-ATLAS; owner, 14 Oct: controls
+   live in device UI, never as chrome inside a pane; lock §7.1 "one transport"; seen over the globe by the lead at 11475cc3d): the
+   lens chooser ("Field ▾") is the M4 plate's Lens row, its menu and filter chips with it (the plate's Relations narrow the one
+   filter); the time control's button and readings are the transport's (Play, the window's edges) and its scrubber is the Deep time
+   device; the Earth ⇄ Graph switch is the device of that name (and the G key); the corner's search is the M4 plate's find (⌘K still
+   opens the atlas's own); its GitHub link is the standalone site's, not the suite's. The elements stay mounted, so the atlas's own
+   state and keys are unchanged. */
+.atlas-host .sh-head,
+.atlas-host .shell-menu,
+.atlas-host .sm-scrim,
+.atlas-host .sh-chips,
+.atlas-host .time,
+.atlas-host .mode-switch,
+.atlas-host .sh-corner {
+  display: none;
+}
+
+/* The Place tool armed (places/placeTool.ts): the globe takes the next click as a point, and its pointer says so. */
+.atlas-host canvas[data-placing="true"] {
+  cursor: crosshair;
+}

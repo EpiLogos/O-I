@@ -4,12 +4,13 @@ import {useWorkspace} from '../shell/workspace';
 import {captureTechneInstrumentOpen, currentTechneInstrumentOpen, TECHNE_INSTRUMENT_OPEN, type TechneInstrumentEvent} from '../native/techneInstrumentOpen';
 import './NativeTechneBrowser.css';
 
+// Places is not the frame's: it is the shell's Earth atlas, alone (T-PLACES-ONTO-ATLAS; owner, 14 Oct; FOUNDATION §4) — opened from the
+// browser's Instruments (Earth), so the retained application is never asked for a Places lens.
 export const NATIVE_TECHNE_DEFINITIONS: readonly {id: 'graph' | HostedTechneLens; title: string; icon: string; purpose: string}[] = [
   {id:'graph',title:'Graph',icon:'⌘',purpose:'Explore the selected subject and its disclosed relationships.'},
   {id:'canvas',title:'Canvas',icon:'▧',purpose:'Construct, connect and arrange native source occurrences.'},
   {id:'timeline',title:'Timeline',icon:'↔',purpose:'Explore source dates, periods and their qualified time window.'},
   {id:'journey',title:'Journey',icon:'▸',purpose:'Compose and navigate the work’s native Scenes and passages.'},
-  {id:'place',title:'Places',icon:'⌖',purpose:'Explore disclosed locations, imagery and temporal facets.'},
   {id:'palace',title:'Palace',icon:'▦',purpose:'Compose regions, contained Expressions and their guided path.'},
 ];
 

@@ -8,19 +8,21 @@ import {IconTab, IconTabStrip} from '../../../src/workspace/primitives/IconTabSt
 import './lensChooser.css';
 import {icon} from './icons.js';
 
+/** 'place' stays an id while the app (app.ts) and the host protocol still name it; the chooser no longer offers it: Places is the
+ * shell's Earth atlas, alone (T-PLACES-ONTO-ATLAS; owner, 14 Oct; FOUNDATION §4). */
 export type LensId = 'project' | 'canvas' | 'timeline' | 'journey' | 'place' | 'palace';
 
 interface LensDef {id: LensId; office: string; label: string; name: string; icon: string}
 
-/** The six instruments in canonical M′ order, with the wayfinder's suggested
+/** The instruments in canonical M′ order, with the wayfinder's suggested
  * icon families (§13): M0′ library/web, M1′ grid/formation, M2′ branch, M3′
- * sequence, M4′ globe, M5′ frame/layers. */
+ * sequence, M5′ frame/layers. M4′ World · Places is not the frame's: it is the
+ * shell's Earth atlas (T-PLACES-ONTO-ATLAS), so the chooser does not offer it. */
 export const LENSES: LensDef[] = [
   {id: 'project', office: 'M0′', label: 'Web · Project · Wiki', name: 'Web', icon: 'library'},
   {id: 'canvas', office: 'M1′', label: 'Canvas · Constellation', name: 'Constellation', icon: 'formation'},
   {id: 'timeline', office: 'M2′', label: 'Relation field · Timeline', name: 'Relations', icon: 'branch'},
   {id: 'journey', office: 'M3′', label: 'Journey · Scenes', name: 'Journey', icon: 'sequence'},
-  {id: 'place', office: 'M4′', label: 'World · Places', name: 'Places', icon: 'globe'},
   {id: 'palace', office: 'M5′', label: 'Palace · Integral whole', name: 'Palace', icon: 'frame'},
 ];
 

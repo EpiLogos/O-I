@@ -27,6 +27,7 @@ import {disclosureSession} from '../../../../../../desktop/cradle/src/techne/ses
 import {sunStanding} from '../../inhabitants/qlSkyEarthAdapter'
 import {bindSharedTimeClock, windowYear} from './sharedClock'
 import {SUITE_PROVIDER_ID, describeProgress, describeStanding, subscribeSuiteStanding, suiteStanding, type SuiteStanding} from './provider/suiteStanding'
+import {bindPlaces, type PlacesBinding} from './places/placesHost'
 import './atlasHost.css'
 
 /** The year the Earth shows, from the shared window: null while no window is in force (all time). */
@@ -35,62 +36,31 @@ function shownYearNow(): number | null {
   return year === null ? null : Math.round(year)
 }
 
-/** The pane's status lines stand in one column at the pane's foot, so that none overlaps another (the world's standing above the
- * Sun's), and above the atlas's time control (fixed in the pane, 20px up and 46px tall: src/style/main.css:323 `.time`, :331 `.t-track`). The column is
- * made when the first line is. Its rules are inline (setAttribute), since the atlas host's stylesheet places each
- * `atlas-host-status` line alone at the pane's foot, and it does not take a click: the lines are said, not used. */
-function statusColumn(element: HTMLElement): () => HTMLElement {
-  let column: HTMLElement | null = null
-  return () => {
-    if (!column) {
-      column = document.createElement('div')
-      column.setAttribute('style', 'position:absolute;left:12px;bottom:72px;display:flex;flex-direction:column;gap:3px;max-width:calc(100% - 24px);pointer-events:none')
-      element.append(column)
-    }
-    return column
-  }
+/** The globe's own gestures, in plain words (the stage carries no buttons; T-PLACES-ONTO-ATLAS). */
+export const GLOBE_GESTURES = 'Drag to turn it (north stays up); wheel or pinch to come in; double-click to dive; G turns it to its graph. With Place armed on the M4 plate, a click is a point offered to its subject\'s editor.'
+
+/** What the Earth says of itself, in the Info view's hover (the globe's `data-i`, "Earth|…") rather than over the globe (owner, 14 Oct:
+ * nothing drawn in the pane as chrome; the lead's native pass at 11475cc3d saw the standing paragraph over the globe): the world's
+ * standing — how many of the owners' subjects it does not draw, and every owner input that did not answer, in the owner's own words
+ * (provider/suiteStanding.ts) — then the Sun's words, then its gestures. The M4 plate says the same (places/PlacesPlate.tsx). */
+export interface EarthWords {
+  standing(text: string | null): void
+  sun(text: string | null): void
+  /** the globe's whole `data-i`, as written last */
+  readonly said: string
 }
 
-/** The Earth's own status line for the Sun: the existing `atlas-host-status` surface, one element per attachment. */
-function sunLine(column: () => HTMLElement): (text: string | null) => void {
-  let line: HTMLParagraphElement | null = null
-  return text => {
-    if (text === null) {
-      line?.remove()
-      line = null
-      return
-    }
-    if (!line) {
-      line = document.createElement('p')
-      line.className = 'atlas-host-status'
-      line.setAttribute('role', 'status')
-      line.setAttribute('style', 'position:static')
-      column().append(line)
-    }
-    line.textContent = text
+export function earthWords(globe: Pick<HTMLElement, 'setAttribute'>): EarthWords {
+  let standing: string | null = null, sun: string | null = null, said = ''
+  const write = () => {
+    said = `Earth|${[standing, sun, GLOBE_GESTURES].filter((text): text is string => !!text).join(' ')}`
+    globe.setAttribute('data-i', said)
   }
-}
-
-/** The Earth's status line for the world it reads: how many of the owners' subjects it does not draw, and every owner input that did
- * not answer, with the owner's own detail (provider/suiteStanding.ts). It stands above the Sun's line in the same column. Hidden
- * while the Graph is the view (the Graph draws every subject); null removes it. */
-function standingLine(column: () => HTMLElement): (text: string | null) => void {
-  let line: HTMLParagraphElement | null = null
-  return text => {
-    if (text === null || text === '') {
-      line?.remove()
-      line = null
-      return
-    }
-    if (!line) {
-      line = document.createElement('p')
-      line.className = 'atlas-host-status'
-      line.setAttribute('role', 'status')
-      line.setAttribute('style', 'position:static;order:-1')
-      line.dataset.atlasStanding = 'suite'
-      column().append(line)
-    }
-    line.textContent = text
+  write()
+  return {
+    standing(text) { standing = text || null; write() },
+    sun(text) { sun = text; write() },
+    get said() { return said },
   }
 }
 
@@ -366,12 +336,14 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {teardown: (
   const globe = document.createElement('div')
   globe.id = 'globe'
   globe.className = 'atlas-host-globe'
+  // What the Earth says of itself stands in the Info view's hover, never over the globe (earthWords, above)
+  const words = earthWords(globe)
   const app = document.createElement('div')
   app.id = 'app'
   app.className = 'atlas-host-app'
   element.append(globe, app)
 
-  // Graph settings and the landing flag read their store at each call, so they follow this binding. The practice store is
+  // Graph settings read their store at each call, so they follow this binding (the landing's flag is left unbound, below). The practice store is
   // not so: practice/store.ts builds its singleton, and probes storage, when that module first evaluates. The import of
   // it below precedes setPracticeStorage, so the singleton stays in memory for the session. A rebinding seam is needed
   // in the port (OPEN: T-ATLAS-HOST, practice persistence).
@@ -381,7 +353,9 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {teardown: (
     import('./src/practice/store'),
   ])
   settings.setGraphSettingsStore(sharedStorage)
-  landing.setLandingStore(sharedStorage)
+  // The found app's onboarding never stands over the shell's world (T-PLACES-ONTO-ATLAS; the lead saw it over the globe at 11475cc3d):
+  // unbound, the landing counts as seen — the O:I shell is its own front door (src/shell/landing.ts, the port's own adaptation note).
+  landing.setLandingStore(null)
   practice.setPracticeStorage(sharedStorage)
   const [{registerCorpusProvider}, {suiteProvider}, {mountAtlas}] = await Promise.all([
     import('./provider/corpusProvider'),
@@ -422,11 +396,14 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {teardown: (
   let observer: MutationObserver | null = null
   let unsubscribeStanding: () => void = () => {}
   let unsubscribeView: () => void = () => {}
-  const column = statusColumn(element)
-  const setSunLine = sunLine(column)
-  const setStandingLine = standingLine(column)
-  // The standing line is said on the Earth, where an unlocated subject is not drawn, and is silent on the Graph, which draws every one.
-  const paintStanding = () => setStandingLine(target() === 'earth' ? describeStanding(suiteStanding()) : null)
+  let places: PlacesBinding | null = null
+  // The Sun's words stand in the Info view's hover and on the M4 plate's Sky section (T-PLACES-ONTO-ATLAS), the same words in both.
+  const setSunLine = (text: string | null) => {
+    words.sun(text)
+    publishAtlasSun({placed: drawn.placed, line: text})
+  }
+  // The standing is said on the Earth, where an unlocated subject is not drawn, and is silent on the Graph, which draws every one.
+  const paintStanding = () => words.standing(target() === 'earth' ? describeStanding(suiteStanding()) : null)
   const reconcile = () => {
     if (retired || !visible) return
     const current: AtlasView = mounted.ctl.state.graph ? 'graph' : 'earth'
@@ -439,10 +416,13 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {teardown: (
     unsubscribeSun()
     unsubscribeStanding()
     unsubscribeView()
+    places?.dispose()
     cancelReread()
     follower?.dispose()
-    setSunLine(null)
-    setStandingLine(null)
+    // the words directly: a teardown may run before the Sun's first state is made
+    words.sun(null)
+    words.standing(null)
+    publishAtlasSun(null)
     publishAtlasAionReading(null)
     publishAtlasHandle(null)
     observer?.disconnect()
@@ -456,6 +436,9 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {teardown: (
   }
   progress.teardown = unmount
   publishAtlasHandle(mounted)
+  // Places is the atlas (T-PLACES-ONTO-ATLAS): the shared spatial focus turns it, the M4 plate reads its scale, and the Place tool
+  // reads the point under a click and offers it to the owner's editor (places/placesHost.ts).
+  places = bindPlaces({handle: mounted, transport, session: disclosureSession})
 
   // The Sun follows the instant the Earth shows (T-ATLAS-SUN). The window's instant is offered on each change; the Sun is
   // read for it once the window has been still (sunFollow.ts), and each reading replaces the one Sun in place through the
@@ -520,6 +503,33 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {teardown: (
     if (next) reconcile()
   }
   return {held: null, setVisible, unmount}
+}
+
+// ── the Sun, as the M4 plate's Sky section reads it (T-PLACES-ONTO-ATLAS) ──
+
+/** The Sun the Earth draws: whether the QL owner's stated point is placed, and the pane's own words about it (null when the Sun is
+ * drawn for the instant shown and nothing needs saying). Null while no atlas stands. */
+export interface AtlasSunReading {
+  readonly placed: boolean
+  readonly line: string | null
+}
+
+let sunReading: AtlasSunReading | null = null
+const sunListeners = new Set<() => void>()
+
+/** Publish (or withdraw, null) the Sun's reading. Called by the attach; exported for the host tests. */
+export function publishAtlasSun(next: AtlasSunReading | null): void {
+  if (next === sunReading || (next && sunReading && next.placed === sunReading.placed && next.line === sunReading.line)) return
+  sunReading = next
+  for (const listener of [...sunListeners]) listener()
+}
+
+export function atlasSun(): AtlasSunReading | null {
+  return sunReading
+}
+
+export function useAtlasSun(): AtlasSunReading | null {
+  return useSyncExternalStore(listener => { sunListeners.add(listener); return () => { sunListeners.delete(listener) } }, atlasSun, atlasSun)
 }
 
 // ── the Aion reading and the epoch jump (T-TIMELINE-WALKS leg 3) ──────────

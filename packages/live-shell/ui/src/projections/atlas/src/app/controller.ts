@@ -6,7 +6,7 @@ import { scopeOf } from '../data/scope';
 import { archetypesOfFamily, selfSubject, subjectExists, subjectLine, subjectName, subjectOccurrences, subjectPalette } from '../data/model';
 import { angleBetween, dirFromLatLon, fitDistance, latLonFromDir, spreadOf, worldDistance, type Vec3 } from '../data/geo';
 import { averagePalettes, rgbToHex, WORLD_PALETTE, type RGBPalette } from '../data/palette';
-import { buildSearchIndex, refreshOccurrenceEntry, type SearchResult } from '../data/search';
+import { buildSearchIndex, refreshOccurrenceEntry, type SearchIndex, type SearchResult } from '../data/search';
 import { planThread, type ThreadStep } from '../data/thread';
 import { FOV, type GlobeEngine } from '../globe/engine';
 import { chronologyPath } from '../globe/chronology';
@@ -95,14 +95,16 @@ export class Controller {
   /** a birth from an old link, in memory until the Astrology form takes it */
   private birthPrefill: BirthPrefill | null = null;
   private rel: Float32Array;
-  private searchIndex;
+  /** [§8.4 host] the field's one search index, read by the M4 plate's Locations find (T-PLACES-ONTO-ATLAS) */
+  readonly searchIndex: SearchIndex;
   private floats: Floats;
   private label: FocusLabel;
   private reveal: Reveal;
   private deep: DeepSheet;
   private strip: Strip;
   private hover: HoverLabel;
-  private timeControl: TimeControl;
+  /** [§8.4 host] the one time control: the shell's transport presses its button and reads its walk (T-PLACES-ONTO-ATLAS) */
+  readonly timeControl: TimeControl;
   private search: SearchUI;
   private tour: Tour | null = null;
   private timeSnap: TimeSnapshot | null = null;
@@ -226,6 +228,8 @@ export class Controller {
     this.hover = new HoverLabel(root);
     this.timeControl = new TimeControl(root, m, time, () => this.onUserTime());
     this.timeControl.setTour(null, () => this.tourToggle());
+    // [§8.4 host] the transport reads the walk that holds the one button: its changes are face notices
+    this.timeControl.onWalkChange = () => this.emitFaces();
     this.search = new SearchUI(root, this.searchIndex, (r) => this.chooseResult(r), (open) => {
       document.body.classList.toggle('search-open', open);
       if (open) this.hover.hide();
@@ -633,7 +637,8 @@ export class Controller {
     if (v.kind === 'manifest') this.navigate(startThread(this.state, { type: 'parallels', id: v.occId }));
   }
 
-  private chooseResult(r: SearchResult) {
+  /** [§8.4 host] public: the M4 plate's Locations find chooses through it, as the search field does (T-PLACES-ONTO-ATLAS) */
+  chooseResult(r: SearchResult) {
     const a = r.action;
     // from the sky a pick is a descent like any other: the sky stays behind (See in sky), the reading opens on the landing
     if (a.type === 'subject') {
@@ -971,7 +976,8 @@ export class Controller {
   }
 
   /** A filter chosen in the menu, a chip removed, or a link's filter: the globe's mask, the walks, the hash. */
-  private setFilter(f: FieldFilter) {
+  /** [§8.4 host] public: the M4 plate's Relations rows narrow the globe through the one filter (T-PLACES-ONTO-ATLAS) */
+  setFilter(f: FieldFilter) {
     if (filterEq(f, this.filter)) return;
     this.applyFilter(f);
     // the engine re-masks by itself; what reads the field's membership (a focus's framing and images, a walk) is re-entered
@@ -1022,6 +1028,8 @@ export class Controller {
     this.shell.setFilter(f);
     this.setCache.key = '';
     document.body.classList.toggle('filtered', !isEmpty(f));
+    // [§8.4 host] the M4 plate's Relations rows read the filter in force
+    this.emitFaces();
   }
 
   /** Does occurrence `i` pass the field filter? */
@@ -1223,6 +1231,13 @@ export class Controller {
   private apply(next: AppState) {
     this.applying = true;
     try { this.applyState(next); } finally { this.applying = false; }
+    // [§8.4 host] the M4 plate reads the state it stands in (its subject, the sky), so a new state is a face notice
+    this.emitFaces();
+  }
+
+  /** [§8.4 host] the field filter in force, read by the M4 plate's Relations rows (T-PLACES-ONTO-ATLAS) */
+  get fieldFilter(): FieldFilter {
+    return this.filter;
   }
 
   private applyState(next: AppState) {
