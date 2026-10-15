@@ -3,7 +3,8 @@ import {externalHttpsUrl} from '../../../../../desktop/cradle/src/shared/externa
 import {mountExpressionsApplication, reopenConfiguredWorks, addressRefs, entryAtAddress,
   type ExpressionsHost, type HostedAppMode, type ChannelContext} from '@epilogos/expressions-boundary'
 import {createCradleOwners, type KernelTransportStatus} from '@epilogos/expressions-boundary/cradle'
-import {createNativeTechneNavigator} from '@epilogos/expressions-boundary/techne'
+import {createNativeTechneNavigator, type NativeTechneSettlement} from '@epilogos/expressions-boundary/techne'
+import {answerAsk, notShownWords, onAskAnswer, SCENE_SHOWN_WITHIN_MS} from '../techne/subject/subjectAsks'
 import {createNativeEditorClient} from '@epilogos/expressions-boundary/editor-host'
 import type {NativeEditorController} from '@epilogos/expressions-boundary/editor'
 import {registerPanel} from '../shell/panels'
@@ -124,6 +125,44 @@ export function ExpressionsPanel() {
     }
     const fail = (cause: unknown) => {if (live) setFault(cause instanceof Error ? cause.message : String(cause))}
     const presented = () => !!target.getClientRects().length && !target.closest('[hidden],[inert]')
+    // The stage's answer to a Technē selection ask (techne/subject/subjectAsks.ts; ticket S): the navigator settles each ask it
+    // takes; an opened one is answered `shown` when this frame announces the owner's Expression (onState below), and refused by
+    // its deadline when the frame does not. A refusal — the stage's, or the door's for an ask nobody took — stands on the fault
+    // line the pane draws (the published chrome's faults), and leaves it when the asked Scene is shown.
+    let awaitingScene: {registerKey: string; sceneRef: string; title: string; expression_ref: string; timer?: ReturnType<typeof setTimeout>} | null = null
+    const askFaults = new Set<string>()
+    const askFault = (reason: string) => {askFaults.add(reason); fail(reason)}
+    const stopAskFaults = onAskAnswer(answer => {
+      if (!live) return
+      if (answer.state === 'refused' && answer.by === 'door') askFault(answer.reason)
+      if (answer.state === 'shown') setFault(current => current !== null && askFaults.has(current) ? null : current)
+    })
+    const sceneShown = (state: HostedAppState) => {
+      const waiting = awaitingScene
+      if (!waiting || state.nativeScene?.expression_ref !== waiting.expression_ref) return
+      clearTimeout(waiting.timer); awaitingScene = null
+      answerAsk({state: 'shown', registerKey: waiting.registerKey, sceneRef: waiting.sceneRef, expression_ref: waiting.expression_ref})
+    }
+    const settleAsk = (settlement: NativeTechneSettlement) => {
+      const {request} = settlement
+      if (settlement.state === 'refused') {
+        answerAsk({state: 'refused', registerKey: request.registerKey, sceneRef: request.sceneRef, reason: settlement.reason, by: 'stage'})
+        return
+      }
+      if (awaitingScene) clearTimeout(awaitingScene.timer)
+      const waiting: NonNullable<typeof awaitingScene> = {registerKey: request.registerKey, sceneRef: request.sceneRef,
+        title: request.title ?? request.sceneRef, expression_ref: settlement.open.expression_ref}
+      waiting.timer = setTimeout(() => {
+        if (!live || awaitingScene !== waiting) return
+        awaitingScene = null
+        const reason = notShownWords(waiting.title, waiting.expression_ref, mounted?.host.getState()?.nativeScene?.expression_ref)
+        askFault(reason)
+        answerAsk({state: 'refused', registerKey: waiting.registerKey, sceneRef: waiting.sceneRef, reason, by: 'stage'})
+      }, SCENE_SHOWN_WITHIN_MS)
+      awaitingScene = waiting
+      const reading = mounted?.host.getState()
+      if (reading) sceneShown(reading)
+    }
     const openNative = (ref: string) => {
       if (!presented() || !mounted) {pendingOpen.current = ref; pendingDraft.current = null; return}
       selectionOwner.current = {workspaceId: bookRef.current.current.id, expected: ref}
@@ -176,7 +215,8 @@ export function ExpressionsPanel() {
           if (JSON.stringify([current.world_scope, current.backing_id, current.profile_scope]) !== JSON.stringify([config.world_scope, config.backing_id, config.profile_scope])) throw Error('This retained Expression belongs to another native ground or installation profile')
           if (facade) stopFacade = createCradleOwners(access.transport, {project: 'O-I', retainSelectionOnDispose: true, isCurrent}).attach?.(facade.frame, facade.state) ?? null
           navigator.current = createNativeTechneNavigator({transport: access.transport, host: mounted.host,
-            isPresented: () => isCurrent() && modeRef.current === 'techne' && presented(), onError: cause => {if (isCurrent()) fail(cause)}})
+            isPresented: () => isCurrent() && modeRef.current === 'techne' && presented(), onError: cause => {if (isCurrent()) fail(cause)},
+            onSettled: settlement => {if (live) settleAsk(settlement)}})
           stopInstruments = connectTechneInstrumentRequests({host:mounted.host,current:()=>workspaceRef.current,
             isPresented:()=>isCurrent()&&presented()})
           if (modeRef.current === 'techne' && presented()) stopSelection.current = navigator.current.connectSelectionRequests()
@@ -249,6 +289,7 @@ export function ExpressionsPanel() {
         sharedWindow: disclosureSession,
         onState: state => {
           if (!live) return
+          sceneShown(state)
           setStage(previous => JSON.stringify(previous) === JSON.stringify(state) ? previous : state)
           setNativeEngineMounted(!!state.nativeScene)
           workspaceRef.current.publishReading(state)
@@ -334,7 +375,7 @@ export function ExpressionsPanel() {
     window.addEventListener('oi:epi-examine', examine)
     const observer = new MutationObserver(visible)
     for (let parent: HTMLElement | null = target; parent; parent = parent.parentElement) observer.observe(parent, {attributes: true, attributeFilter: ['hidden', 'inert', 'style', 'class']})
-    return () => {live = false; setExpressionOwner(null); publishLiveTorusState(null); publishHostedExpressions(null); ++facadeGeneration; openRequest.current = null; openDraftRequest.current = null; requalify.current = null; abort.abort(); observer.disconnect(); window.removeEventListener('oi:epi-examine', examine); window.removeEventListener(NATIVE_OPEN_STUDIO, openStudio); window.removeEventListener(NATIVE_ENGINE_COMMAND, engineCommand);
+    return () => {live = false; setExpressionOwner(null); stopAskFaults(); if (awaitingScene) clearTimeout(awaitingScene.timer); awaitingScene = null; publishLiveTorusState(null); publishHostedExpressions(null); ++facadeGeneration; openRequest.current = null; openDraftRequest.current = null; requalify.current = null; abort.abort(); observer.disconnect(); window.removeEventListener('oi:epi-examine', examine); window.removeEventListener(NATIVE_OPEN_STUDIO, openStudio); window.removeEventListener(NATIVE_ENGINE_COMMAND, engineCommand);
       stopSelection.current?.(); stopSelection.current = null; navigator.current?.dispose(); navigator.current = null;
       stopInstruments?.(); stopInstruments = null;
       stopEditor?.(); editor?.dispose(); workspace.attachEditor(null); workspace.publishEditorReading(null);

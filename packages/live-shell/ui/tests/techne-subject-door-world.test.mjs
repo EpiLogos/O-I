@@ -225,18 +225,28 @@ test('the door\'s answer is held for every face: asked with the Scenes that carr
   const oi = locations.find(row => row.name === 'O-I')
   const chapel = places.find(row => row.name === 'The Chapel')
   const chartres = places.find(row => row.name === 'Chartres')
-  const pending = openings.openHeldSubject(oi.subject, door)
+  // The stage's answer is followed per ask (subjectAsks.ts); here a recorder stands in for the live seam, and answers by hand.
+  const follows = []
+  const follower = (asked, title, onAnswer) => { const row = {asked, title, onAnswer, stopped: false}; follows.push(row); return () => { row.stopped = true } }
+  const pending = openings.openHeldSubject(oi.subject, door, follower)
   assert.deepEqual(openings.subjectOpenings().get(oi.subject.ref), {state: 'opening'}, 'opening… while the owner is asked')
   const asked = await pending
   assert.equal(asked.state, 'asked')
   assert.deepEqual(asked.scenes.map(scene => scene.scene_title), ['O I', 'Central — wiki overview'], 'its own constellation first, then the overview that also stands it')
   assert.equal(asked.opened, asked.scenes[0])
-  assert.deepEqual(rows.openingWords(asked, 'O-I'), {standing: 'in O I · +1',
-    hover: 'Technē was asked to open O I, the Scene that carries O-I; the stage shows it when the frame opens it. 1 more Scene carries it, listed under the row.'})
-  const one = await openings.openHeldSubject(chapel.subject, door)
+  assert.deepEqual(rows.openingWords(asked, 'O-I'), {standing: 'asking for O I…',
+    hover: 'Technē was asked to open O I, the Scene that carries O-I; the stage has not answered yet. 1 more Scene carries it, listed under the row.'},
+    'asked is not yet open: the row says the stage has not answered')
+  assert.deepEqual([follows.length, follows[0].asked, follows[0].title], [1, {registerKey: 'central', sceneRef: asked.opened.scene_ref}, 'O-I'], 'the ask is followed')
+  follows[0].onAnswer({state: 'shown', registerKey: 'central', sceneRef: asked.opened.scene_ref, expression_ref: asked.opened.expression_ref})
+  const shown = openings.subjectOpenings().get(oi.subject.ref)
+  assert.equal(shown.state, 'shown')
+  assert.deepEqual(rows.openingWords(shown, 'O-I'), {standing: 'in O I · +1',
+    hover: `Technē's stage shows O I, the Scene that carries O-I (${asked.opened.expression_ref}). 1 more Scene carries it, listed under the row.`})
+  const one = await openings.openHeldSubject(chapel.subject, door, follower)
   assert.deepEqual([one.state, one.scenes.map(scene => scene.scene_title)], ['asked', ['Central']], 'a declared place that is a wiki node opens in the Scene that stands it')
-  assert.equal(rows.openingWords(one, 'The Chapel').standing, 'in Central')
-  const absent = await openings.openHeldSubject(chartres.subject, door)
+  assert.equal(rows.openingWords(one, 'The Chapel').standing, 'asking for Central…')
+  const absent = await openings.openHeldSubject(chartres.subject, door, follower)
   assert.deepEqual(absent, {state: 'absent', reason: UNSTOOD_WORDS}, 'a place no Scene stands is the owner\'s absence, verbatim')
   assert.deepEqual(rows.openingWords(absent, 'Chartres'), {standing: UNSTOOD_WORDS, hover: UNSTOOD_WORDS})
   const thrown = await openings.openHeldSubject({ref: 'x', title: 'X'}, async () => { throw new Error('the owner refused') })
@@ -244,10 +254,15 @@ test('the door\'s answer is held for every face: asked with the Scenes that carr
   // another Scene, chosen: the door's own act, and it is held as the one asked for
   const chosen = []
   const other = asked.scenes[1]
-  assert.equal(openings.chooseHeldScene(oi.subject.ref, other, 'O-I', (scene, title) => chosen.push([scene.scene_ref, title])), true)
+  const before = follows.length
+  assert.equal(openings.chooseHeldScene(oi.subject.ref, other, 'O-I', (scene, title) => chosen.push([scene.scene_ref, title]), follower), true)
   assert.deepEqual(chosen, [[other.scene_ref, 'O-I']])
   assert.equal(openings.subjectOpenings().get(oi.subject.ref).opened, other)
-  assert.equal(openings.chooseHeldScene('place:chartres', other, 'Chartres', () => chosen.push('no')), false, 'nothing is chosen for a subject the door did not ask')
+  assert.equal(openings.subjectOpenings().get(oi.subject.ref).state, 'asked', 'the chosen Scene is asked for, until the stage answers it')
+  assert.deepEqual([follows.length - before, follows[before].asked.sceneRef], [1, other.scene_ref], 'the new ask is followed')
+  follows[0].onAnswer({state: 'refused', registerKey: 'central', sceneRef: asked.opened.scene_ref, reason: 'late', by: 'stage'})
+  assert.equal(openings.subjectOpenings().get(oi.subject.ref).state, 'asked', 'an answer to the superseded ask changes nothing')
+  assert.equal(openings.chooseHeldScene('place:chartres', other, 'Chartres', () => chosen.push('no'), follower), false, 'nothing is chosen for a subject the door did not ask')
   const scenes = rows.sceneRowsOf(openings.subjectOpenings().get(oi.subject.ref), 'O-I')
   assert.deepEqual(scenes.map(scene => [scene.name, scene.standing, scene.asked]), [['O I', 'its own constellation', false], ['Central — wiki overview', 'asked', true]])
   openings.resetSubjectOpenings()
@@ -277,8 +292,13 @@ test('SSR: the World rows as drawn — mark · name in words · standing, the do
   const drawn = cells(markup)
   assert.deepEqual(drawn.slice(0, 3), [['Actuation', UNSTOOD_WORDS], ['Archetypal-Earth', 'project'], ['Central', 'project']], 'the owner\'s standing, or the door\'s absence in its place')
   const at = drawn.findIndex(([name]) => name === 'O-I')
-  assert.deepEqual(drawn.slice(at, at + 3), [['O-I', 'in O I · +1'], ['O I', 'asked'], ['Central — wiki overview', 'the register’s overview']],
-    'the opened subject stands on the Scene asked for, its Scenes under it, one step in')
+  assert.deepEqual(drawn.slice(at, at + 3), [['O-I', 'asking for O I…'], ['O I', 'asked'], ['Central — wiki overview', 'the register’s overview']],
+    'the asked subject stands on the Scene asked for, its Scenes under it, one step in')
+  const answered = opening => cells(html(createElement(WorldGroupBody, {category: categoryOf('techne-locations'), group, needle: '',
+    openings: new Map([[ref, opening]]), stood: new Map(), selected: null, onSelect() {}, onOpen() {}, onChoose() {}}))).filter(([name]) => ['O-I', 'O I'].includes(name))
+  assert.deepEqual(answered({...asked, state: 'shown', expression_ref: asked.opened.expression_ref}), [['O-I', 'in O I · +1'], ['O I', 'open']], 'shown: the stage shows it')
+  assert.deepEqual(answered({...asked, state: 'refused', reason: 'The stage refused it.'}), [['O-I', 'The stage refused it.'], ['O I', 'not open']],
+    'refused: the stage\'s own words stand in the row, the Scenes stay listed')
   assert.match(markup, new RegExp(`data-i="Actuation\\|${UNSTOOD_WORDS.replace(/[.?*+^$()|[\]\\]/g, '\\$&').replace(/'/g, '&#x27;')}`), 'an absence is the row\'s Info words too')
   assert.match(markup, /class="mode-browser-row selected"[^>]*aria-current="true"[^>]*data-world-subject="central:wiki:project:O-I"/, 'THE selection\'s row is marked')
   assert.match(markup, /class="mode-browser-row ind1 selected"[^>]*data-subject-scene="[^"]+"[^>]*>(?:(?!<\/button>).)*O I</, 'the asked Scene is marked under it')
@@ -303,6 +323,10 @@ test('SSR: Technē\'s Clip side for a held World subject names it and lists the 
   assert.match(markup, /<div class="cph" title="O-I">O-I<\/div>/, 'the subject in words heads it')
   assert.match(markup, /location · a project space on your planet/)
   assert.match(markup, /asked · O I/)
+  assert.match(html(createElement(WorldSubjectClipView, {subject, opening: {...asked, state: 'shown', expression_ref: asked.opened.expression_ref}, onChoose() {}})), /open · O I/)
+  const refusedClip = html(createElement(WorldSubjectClipView, {subject, opening: {...asked, state: 'refused', reason: 'The stage refused it.'}, onChoose() {}}))
+  assert.match(refusedClip, /not open · O I/)
+  assert.match(refusedClip, /The stage refused it\./, 'the refusal, in its words, on the Clip side')
   assert.match(markup, /Central — wiki overview/, 'the other Scene that carries it, listed')
   assert.equal((markup.match(/<button type="button" class="hl2"/g) ?? []).length, asked.scenes.length - 1, 'each other Scene is a press that opens it')
   const absent = html(createElement(WorldSubjectClipView, {subject: {kind: 'place', ref: 'place:chartres', title: 'Chartres'}, opening: {state: 'absent', reason: UNSTOOD_WORDS}, onChoose() {}}))
