@@ -206,8 +206,14 @@ impl CentralThoughtsSource {
         }
     }
 
+    /// Every named clearing's fixtures: Central's NOW batch in one call when
+    /// the owner has it ([`read_thoughts_batch`]), else one read per clearing
+    /// in order, stopping at the first that fails.
     pub fn read(&self) -> Result<Vec<TemporalEvent>, TemporalEventsError> {
         const STREAM: &str = "central-now-thoughts";
+        if let Some(answer) = read_thoughts_batch(&self.client, &self.now_refs, self.limit) {
+            return answer;
+        }
         let mut events = Vec::new();
         for now_ref in &self.now_refs {
             let envelope = self
@@ -222,25 +228,177 @@ impl CentralThoughtsSource {
                     }),
                 )
                 .map_err(|error| unavailable(STREAM, error))?;
-            if envelope.pointer("/data/automatic_agent_or_model_invocation")
-                == Some(&Value::Bool(true))
-            {
-                return Err(refused_reading(STREAM));
-            }
-            let directory = envelope
-                .pointer("/data/directory")
-                .and_then(Value::as_str)
-                .unwrap_or_default();
-            for fixture in envelope
-                .pointer("/data/fixtures")
-                .and_then(Value::as_array)
-                .unwrap_or(&Vec::new())
-            {
-                events.push(thought_fixture_to_event(now_ref, directory, fixture)?);
-            }
+            events.append(&mut thoughts_from_envelope(now_ref, &envelope)?);
         }
         Ok(events)
     }
+}
+
+/// One clearing's `central.now.thoughts.read` envelope — a single read's,
+/// or one item of Central's NOW batch, which is exactly that envelope — as
+/// thought events: an automatic or model-invoked reading is refused by name;
+/// a refusal of the clearing (an envelope with no reading) adds no events,
+/// as it always has; each fixture maps through [`thought_fixture_to_event`].
+fn thoughts_from_envelope(
+    now_ref: &str,
+    envelope: &Value,
+) -> Result<Vec<TemporalEvent>, TemporalEventsError> {
+    const STREAM: &str = "central-now-thoughts";
+    if envelope.pointer("/data/automatic_agent_or_model_invocation") == Some(&Value::Bool(true)) {
+        return Err(refused_reading(STREAM));
+    }
+    let directory = envelope
+        .pointer("/data/directory")
+        .and_then(Value::as_str)
+        .unwrap_or_default();
+    envelope
+        .pointer("/data/fixtures")
+        .and_then(Value::as_array)
+        .unwrap_or(&Vec::new())
+        .iter()
+        .map(|fixture| thought_fixture_to_event(now_ref, directory, fixture))
+        .collect()
+}
+
+/// Central's NOW batch (`central.now.thoughts.read-batch`, Central #273):
+/// many clearings' thought streams in one owner call, each item exactly the
+/// `central.now.thoughts.read` envelope for its ref, in request order.
+const THOUGHTS_BATCH: &str = "central.now.thoughts.read-batch";
+/// Central's own bound on one batch's refs.
+const THOUGHTS_BATCH_MAX: usize = 4096;
+
+/// The Central owner a thought read reaches, as far as the kernel can see it:
+/// the client's own route (`retained_resource_epoch`: its executables, root
+/// and route) and the executables the host names — the suite (`OI_BIN`, else
+/// `oi`) and the pinned Central owner (`OI_CENTRAL_CTRL_BIN`) — each by path
+/// and file identity. A replaced owner is another identity.
+fn central_identity(client: &CentralClient) -> CentralIdentity {
+    (
+        client.retained_resource_epoch(),
+        crate::knowledge::AikitIdentity::pinned(
+            &std::env::var_os("OI_BIN").unwrap_or_else(|| "oi".into()),
+            std::env::var_os("OI_CENTRAL_CTRL_BIN").filter(|value| !value.is_empty()),
+        ),
+    )
+}
+
+type CentralIdentity = (String, crate::knowledge::AikitIdentity);
+
+/// The Central owners that refused the NOW batch as an unknown Action.
+static WITHOUT_THOUGHTS_BATCH: std::sync::OnceLock<
+    std::sync::Mutex<std::collections::HashSet<CentralIdentity>>,
+> = std::sync::OnceLock::new();
+
+fn without_thoughts_batch(
+) -> std::sync::MutexGuard<'static, std::collections::HashSet<CentralIdentity>> {
+    WITHOUT_THOUGHTS_BATCH
+        .get_or_init(Default::default)
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner())
+}
+
+/// Every clearing's thoughts through Central's NOW batch: the same events,
+/// in the same order, with the same error precedence (the earliest failing
+/// clearing) as one read per clearing. `None` when this Central owner has no
+/// batch — its own refusal names the Action unknown — remembered for its
+/// identity, so the caller reads one clearing at a time, as before.
+fn read_thoughts_batch(
+    client: &CentralClient,
+    now_refs: &[String],
+    limit: u64,
+) -> Option<Result<Vec<TemporalEvent>, TemporalEventsError>> {
+    const STREAM: &str = "central-now-thoughts";
+    if now_refs.is_empty() {
+        return Some(Ok(Vec::new()));
+    }
+    let identity = central_identity(client);
+    if without_thoughts_batch().contains(&identity) {
+        return None;
+    }
+    let invalid = |reason: &str| TemporalEventsError::InvalidRecord {
+        stream: STREAM.to_string(),
+        position: String::new(),
+        reason: reason.to_string(),
+    };
+    let mut events = Vec::new();
+    for refs in now_refs.chunks(THOUGHTS_BATCH_MAX) {
+        let envelope = match client.run_envelope(
+            THOUGHTS_BATCH,
+            json!({
+                "project": Value::Null,
+                "now_refs": refs,
+                "include_content": true,
+                "limit": limit,
+            }),
+        ) {
+            Ok(envelope) => envelope,
+            Err(error) => return Some(Err(unavailable(STREAM, error))),
+        };
+        if envelope["ok"] != true {
+            if envelope
+                .pointer("/error/message")
+                .and_then(Value::as_str)
+                .is_some_and(|message| message.starts_with("Unknown Action"))
+            {
+                without_thoughts_batch().insert(identity);
+                return None;
+            }
+            // A request, scope or register fault refuses the whole call, as
+            // it would refuse every single read: a refused clearing adds no
+            // events.
+            continue;
+        }
+        if envelope_refused(&envelope) {
+            return Some(Err(refused_reading(STREAM)));
+        }
+        let items = match envelope.pointer("/data/items").and_then(Value::as_array) {
+            Some(items) if items.len() == refs.len() => items,
+            _ => {
+                return Some(Err(invalid(
+                    "Central's NOW batch did not answer each clearing it was asked",
+                )))
+            }
+        };
+        for (now_ref, item) in refs.iter().zip(items) {
+            if item["now_ref"].as_str() != Some(now_ref.as_str()) {
+                return Some(Err(invalid(
+                    "Central's NOW batch answered a clearing out of request order",
+                )));
+            }
+            match thoughts_from_envelope(now_ref, &item["result"]) {
+                Ok(mut part) => events.append(&mut part),
+                Err(error) => return Some(Err(error)),
+            }
+        }
+    }
+    Some(Ok(events))
+}
+
+/// The register's thought stream for the assembled field: Central's NOW
+/// batch when the owner has it, else the bounded per-clearing fan-out
+/// ([`read_thoughts_chunk`]), earliest failing clearing first either way.
+fn read_thoughts(
+    client: &CentralClient,
+    now_refs: &[String],
+) -> Result<Vec<TemporalEvent>, TemporalEventsError> {
+    if let Some(answer) = read_thoughts_batch(client, now_refs, THOUGHT_LIMIT) {
+        return answer;
+    }
+    let chunk = now_refs.len().div_ceil(THOUGHT_WORKERS).max(1);
+    std::thread::scope(|scope| {
+        let readers: Vec<_> = now_refs
+            .chunks(chunk)
+            .map(|part| scope.spawn(move || read_thoughts_chunk(client, part)))
+            .collect();
+        let mut events = Vec::new();
+        for reader in readers {
+            match reader.join().expect("thought reader") {
+                Ok(mut part) => events.append(&mut part),
+                Err((_, error)) => return Err(error),
+            }
+        }
+        Ok(events)
+    })
 }
 
 /// Map one thought fixture as `central.now.thoughts.read` returns it.
@@ -1122,23 +1280,9 @@ fn read_thoughts_chunk(
                 }),
             )
             .map_err(|error| (index, unavailable(STREAM, error)))?;
-        if envelope.pointer("/data/automatic_agent_or_model_invocation") == Some(&Value::Bool(true))
-        {
-            return Err((index, refused_reading(STREAM)));
-        }
-        let directory = envelope
-            .pointer("/data/directory")
-            .and_then(Value::as_str)
-            .unwrap_or_default();
-        for fixture in envelope
-            .pointer("/data/fixtures")
-            .and_then(Value::as_array)
-            .unwrap_or(&Vec::new())
-        {
-            let mapped = thought_fixture_to_event(now_ref, directory, fixture)
-                .map_err(|error| (index, error))?;
-            events.push(mapped);
-        }
+        events.append(
+            &mut thoughts_from_envelope(now_ref, &envelope).map_err(|error| (index, error))?,
+        );
     }
     Ok(events)
 }
@@ -1154,9 +1298,11 @@ fn read_thoughts_chunk(
 /// - ONE `central.now.list` reading serves both the clearing refs and the
 ///   clearing events (they read the same register);
 /// - the independent owners (civil field, wiki placement, kernel log,
-///   aikit history) run beside the per-clearing thought fan-out, which is
-///   bounded at [`THOUGHT_WORKERS`]; the Factory run stream follows the
-///   civil field (its window needs the policy) and is non-fatal;
+///   aikit history) run beside the thought stream, which is ONE call to
+///   Central's NOW batch (`central.now.thoughts.read-batch`) — or, for a
+///   Central without it, the per-clearing fan-out bounded at
+///   [`THOUGHT_WORKERS`]; the Factory run stream follows the civil field
+///   (its window needs the policy) and is non-fatal;
 /// - the Central owner executable is named directly when the host
 ///   provides it (`OI_CENTRAL_CTRL_BIN`), one process per Action instead
 ///   of two;
@@ -1231,29 +1377,19 @@ pub fn read_field(
                 Err(error) => Err(error.clone()),
             };
 
-            let thoughts = now_records
-                .as_ref()
-                .map(|records| {
-                    let now_refs: Vec<String> = records
-                        .iter()
-                        .filter_map(|record| {
-                            record
-                                .get("now_ref")
-                                .and_then(Value::as_str)
-                                .map(str::to_string)
-                        })
-                        .collect();
-                    let chunk = now_refs.len().div_ceil(THOUGHT_WORKERS).max(1);
-                    now_refs
-                        .chunks(chunk)
-                        .map(|part| {
-                            let client = owner.clone();
-                            let part = part.to_vec();
-                            scope.spawn(move || read_thoughts_chunk(&client, &part))
-                        })
-                        .collect::<Vec<_>>()
-                })
-                .unwrap_or_default();
+            let thoughts = now_records.as_ref().ok().map(|records| {
+                let now_refs: Vec<String> = records
+                    .iter()
+                    .filter_map(|record| {
+                        record
+                            .get("now_ref")
+                            .and_then(Value::as_str)
+                            .map(str::to_string)
+                    })
+                    .collect();
+                let client = owner.clone();
+                scope.spawn(move || read_thoughts(&client, &now_refs))
+            });
 
             // Sequential error precedence: civil field, register reading,
             // clearing events, thoughts (earliest failing ref), wiki
@@ -1276,13 +1412,10 @@ pub fn read_field(
             let now_events: Result<Vec<TemporalEvent>, TemporalEventsError> =
                 now_records.iter().map(now_record_to_event).collect();
             let now_events = now_events?;
-            let mut thought_events = Vec::new();
-            for handle in thoughts {
-                match handle.join().expect("thought reader") {
-                    Ok(mut part) => thought_events.append(&mut part),
-                    Err((_, error)) => return Err(error),
-                }
-            }
+            let thought_events = match thoughts {
+                Some(reader) => reader.join().expect("thought reader")?,
+                None => Vec::new(),
+            };
             let wiki_events = wiki.join().expect("wiki reader")?;
             let kernel_events: Result<Vec<TemporalEvent>, TemporalEventsError> =
                 log_receipts.iter().map(kernel_receipt_to_event).collect();
@@ -1394,10 +1527,44 @@ mod read_field_tests {
             );
             let nowlist = write_file(&directory, "nowlist.json", nowlist);
             let thoughts = write_file(&directory, "thoughts.json", thoughts_reply);
-            let refused = write_file(
+            const REFUSED: &str =
+                r#"{"ok":true,"data":{"automatic_agent_or_model_invocation":true}}"#;
+            const DENIED: &str = r#"{"ok":false,"status":"forbidden","action":"central.now.thoughts.read","error":{"code":"forbidden","message":"outside the agent aperture"}}"#;
+            let refused = write_file(&directory, "refused.json", REFUSED);
+            let denied = write_file(&directory, "denied.json", DENIED);
+            // Central's NOW batch over the register's own refs: each item is
+            // exactly the envelope the single read answers for that ref.
+            let items: Vec<Value> = std::fs::read_to_string(&nowlist)
+                .ok()
+                .and_then(|text| serde_json::from_str::<Value>(&text).ok())
+                .and_then(|list| list.pointer("/data/records").cloned())
+                .and_then(|records| records.as_array().cloned())
+                .unwrap_or_default()
+                .iter()
+                .filter_map(|record| record["now_ref"].as_str().map(str::to_owned))
+                .map(|now_ref| {
+                    let result = if now_ref.contains("unavailable-ref") {
+                        REFUSED
+                    } else if now_ref.contains("denied-ref") {
+                        DENIED
+                    } else {
+                        thoughts_reply
+                    };
+                    json!({"now_ref": now_ref, "result": serde_json::from_str::<Value>(result).unwrap()})
+                })
+                .collect();
+            let refusals = items
+                .iter()
+                .filter(|item| item["result"]["ok"] != true)
+                .count();
+            let batch = write_file(
                 &directory,
-                "refused.json",
-                r#"{"ok":true,"data":{"automatic_agent_or_model_invocation":true}}"#,
+                "batch.json",
+                json!({"ok": true, "status": "success", "action": "central.now.thoughts.read-batch", "data": {
+                    "schema": "central.thoughts-batch-reading/v1", "scope_ref": "control:root",
+                    "requested": items.len(), "answered": items.len() - refusals, "refused": refusals,
+                    "items": items, "automatic_agent_or_model_invocation": false}})
+                .to_string(),
             );
             let files = write_file(
                 &directory,
@@ -1470,9 +1637,15 @@ mod read_field_tests {
                 let _ = writeln!(body, r#"  central.now.list) cat {} ;;"#, nowlist.display());
                 let _ = writeln!(
                     body,
-                    r#"  central.now.thoughts.read) sleep 0.03; case "$5" in *unavailable-ref*) cat {};; *) cat {};; esac ;;"#,
+                    r#"  central.now.thoughts.read) sleep 0.03; case "$5" in *unavailable-ref*) cat {};; *denied-ref*) cat {};; *) cat {};; esac ;;"#,
                     refused.display(),
+                    denied.display(),
                     thoughts.display()
+                );
+                let _ = writeln!(
+                    body,
+                    r#"  central.now.thoughts.read-batch) sleep 0.03; cat {} ;;"#,
+                    batch.display()
                 );
                 let _ = writeln!(body, r#"  central.files.list) cat {} ;;"#, files.display());
                 let _ = writeln!(body, r#"  central.world) cat {} ;;"#, world.display());
@@ -1637,10 +1810,10 @@ mod read_field_tests {
             vec![
                 ("central.files.list".to_owned(), 1),
                 ("central.now.list".to_owned(), 1),
-                ("central.now.thoughts.read".to_owned(), 4),
+                ("central.now.thoughts.read-batch".to_owned(), 1),
                 ("central.time.policy".to_owned(), 1),
             ],
-            "the register reading is shared, and every clearing is asked once"
+            "the register reading is shared, and every clearing is asked in one batch"
         );
 
         // Every stream joined the field: 4 clearings + 4 thoughts + 1 wiki
@@ -1665,6 +1838,80 @@ mod read_field_tests {
                 .iter()
                 .any(|event| event.stream_position == format!("{reference}#T/a.json")));
         }
+    }
+
+    /// A Central without the NOW batch refuses it as an unknown Action: the
+    /// thought stream is read one clearing at a time, as before, with the
+    /// same events — a clearing the owner refuses adds none either way — and
+    /// the absence is remembered for that owner: the next read asks no batch.
+    #[test]
+    fn an_owner_without_the_batch_is_read_one_clearing_at_a_time_with_the_same_events() {
+        let _env = owner_env();
+        let refs = ["ref-a", "denied-ref", "ref-c"];
+        let thoughts = |answer: &TemporalEventsAnswer| -> Vec<TemporalEvent> {
+            answer
+                .events
+                .iter()
+                .filter(|event| event.stream == "central-now-thoughts")
+                .cloned()
+                .collect()
+        };
+        let batched = FakeOwner::new("with-batch", &nowlist(&refs), THOUGHTS_REPLY);
+        let cache = Mutex::new(crate::read_cache::OwnerReadCache::default());
+        let with_batch = read_field(
+            &batched.client(),
+            &cache,
+            &[],
+            batched.directory.clone(),
+            &window_all(),
+        )
+        .unwrap();
+        assert_eq!(
+            batched
+                .calls()
+                .iter()
+                .filter(|call| call.starts_with("central.now.thoughts"))
+                .collect::<Vec<_>>(),
+            vec!["central.now.thoughts.read-batch"]
+        );
+
+        let single = FakeOwner::new("without-batch", &nowlist(&refs), THOUGHTS_REPLY);
+        std::fs::write(
+            single.directory.join("batch.json"),
+            r#"{"ok":false,"status":"invalid_input","action":"central.now.thoughts.read-batch","error":{"code":"invalid_input","message":"Unknown Action: central.now.thoughts.read-batch"}}"#,
+        )
+        .unwrap();
+        let client = single.client();
+        let cache = Mutex::new(crate::read_cache::OwnerReadCache::default());
+        let one_by_one = read_field(
+            &client,
+            &cache,
+            &[],
+            single.directory.clone(),
+            &window_all(),
+        )
+        .unwrap();
+        assert_eq!(thoughts(&one_by_one), thoughts(&with_batch));
+        assert_eq!(
+            thoughts(&with_batch).len(),
+            2,
+            "the denied clearing adds none"
+        );
+        let asked = |name: &str| single.calls().iter().filter(|call| *call == name).count();
+        assert_eq!(asked("central.now.thoughts.read-batch"), 1);
+        assert_eq!(asked("central.now.thoughts.read"), 3);
+
+        let narrowed = TemporalQuery {
+            subject: Some("ref-a".to_owned()),
+            ..window_all()
+        };
+        read_field(&client, &cache, &[], single.directory.clone(), &narrowed).unwrap();
+        assert_eq!(
+            asked("central.now.thoughts.read-batch"),
+            1,
+            "the owner's absence is remembered"
+        );
+        assert_eq!(asked("central.now.thoughts.read"), 6);
     }
 
     #[test]
