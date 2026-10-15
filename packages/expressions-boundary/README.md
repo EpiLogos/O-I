@@ -45,6 +45,12 @@ every open/refresh carry that same refs-only binding; mode changes never alter
 it. A selected checkpoint owner read proves the draft id before draft traffic
 is admitted. Requested and returned scopes must agree. Unknown addresses and
 generic duplicate-checkpoint discovery refuse without an owner operation.
+A host built with `selectOpenedWorks` also selects the address of every work it
+opens itself and has no configured address for — `{scope:'expressions',
+checkpoint_id: <ref>, expression_ref: <ref>}`, the owner's own id-equals-ref law
+— before the frame asks; a configured saved work keeps its address, and the
+first checkpoint is created through the owner's absent-basis CAS
+(wayfinder/tickets/T-RECOVERY-FOR-OPENED-WORKS.md, 15 Oct).
 See [RECOVERY-OWNERSHIP.md](./RECOVERY-OWNERSHIP.md) for the actual native bases,
 remaining app integration and executed read-only acceptance.
 
