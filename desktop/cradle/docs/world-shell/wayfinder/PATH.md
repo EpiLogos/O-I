@@ -100,9 +100,7 @@ objections verbatim and the full validation (`BRIEF-BUILDER.md`); the lead conve
 | Ticket | Who | Zone | Since |
 |---|---|---|---|
 | Native screen pass against the mockup renders; N1; the lanes' convergence | lead | `App.tsx`, `native/Workbench.tsx`, `shell/modeFrames.ts`, the book, the register | 14 Oct |
-| Y — the hosted frame shows only its field in a pane; its chrome's controls onto the Studio, the M1′–M3′ plates and the transport (`tickets/T-FRAME-CHROME-ONTO-PLATES.md`) | Opus builder | the frame's chrome and host-mode handling, `protocol.ts` (commands/state only), `components/expressions/studio/**`, the M1′–M3′ plates, `shell/modeTransports.tsx` | 15 Oct |
-| K2 — the door's register reads coalesce into AIKit's relations batch (fallback to singles when the verb is absent), the remaining pure owner reads leave the lock, FileRead's retained write leaves it, `oi` caches its suite verification; the temporal read adopts Central's `thoughts.read-batch` with the same fallback | Opus builder | `desktop/cradle/kernel/src/**`, `cli/src/product_command_route.rs` | 15 Oct |
-| D — Technē's door never freezes the shell: the ~60 s main-thread stall after the double-click profiled and broken up (the projection's answers unchanged), register standings that stay "reading" settled | Opus builder | `desktop/cradle/src/techne/**` (not m0m5/palace), `ui/src/techne/subject/**`, `native/wikiSubjectStanding.ts` (standing transitions) | 15 Oct |
+| E — Technē's instruments as Ableton devices: the plate grammar raised (sections fit or fold, never scroll; no boxes in boxes; knobs, switches and live pictures first; a head slot), M0′–M5′ laid out from the manual's groups and the mockup, the Compact presentation (live picture + four macros) | Opus builder | `frame/devices/**`, `inhabitants/sdk/**`, `inhabitants/ql/devices/**`, the atlas places/palaces plate parts, `projections/stageInstruments/**`, the Studio's plate presentation, `shell/paneInstrument.ts` | 15 Oct |
 
 Then: the 126 targets re-homed (lane M, FOUNDATION §8): `acceptance.py rehome` re-opens every cited path:line, runs the
 reachability script over every home and records home, owner op and evidence — or a named gap — on each row; `verify` holds
@@ -112,6 +110,19 @@ Palace). Ranked: G1 the stage's file exports have no native receiver (the main w
 cancels `<a download>`: lane-1 B2/B3); G2 the Instruments rail keeps no subject into Graph (D1); G3 the shell carries no
 frame deep-link address (E22); R1 Places onto the atlas (31 targets); R2 palaces onto the atlas (N4, 9); S1 mount N2's
 subject door — 76 homes read their facets only on a Wiki-bound Scene, reached today only by Examine in the Graph pane.
+Then: lane Y landed (`14a713f89`): the hosted frame draws only its field in a pane. The frame learns its presentation from the host
+(devices | frame) and stands its own chrome down; presentedChrome.ts reads and presses its own controls for the plates (the atlas
+header door's move). The Studio carries the masthead's work, Nara and Your controls (the curated toolbar, + Parameter); new M1′
+Canvas, M2′ Timeline and M3′ Journey plates carry the research instruments' tools; the pane menu's Full size brings the frame's
+own chrome back inside the pane. Headless: Technē canvas 40 → 0 controls in the pane, Expressions 0. Lane D landed (`90f16590d`):
+the door's ~40 s main-thread hold was a disposed Earth pane session mounting the globe anyway under React's development double
+invoke and losing its WebGL context on software GL — a session disposed before its module mounts no longer mounts it; register
+standings never stay "reading" with nothing reading them; the wiki pipeline costs ~18 ms for all 17 registers. Most of the native
+door's minute is AIKit relations reads the installed AIKit cannot batch yet (ai-kit #509 not installed). Lane K2's last step
+(`0608d1c41`): the temporal read asks Central once (`thoughts.read-batch`, 114 → 5 processes, 18.6 → 6.7 s), falling back on
+Central's own refusal. The native oi-material:// route reads through the one dispatch (`7696be561`). Waiting on the owner: merge
+and install ai-kit #509, Central #273, Workcell #116 (all green), then `workcell identity set workcell:mac --rebind`.
+
 Then: lane Q landed (`50dda0ccb`): the shell reads an owner when told — one held answer per owner read (src/owners/), agency on the
 spine's epoch/world context, focus/visibility and its own acts with a 30 s floor while visible and nothing hidden, the temporal field
 on the kernel receipts that can move it with a 5-minute floor, one store each for task/roster/workcell readings, the register load
