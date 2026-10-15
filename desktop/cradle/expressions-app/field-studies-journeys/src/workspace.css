@@ -603,3 +603,38 @@ body.moving-scene,body.moving-scene *{cursor:grabbing!important;user-select:none
 .scene-track .scene-clip[data-readout]::after{content:attr(data-readout);position:absolute;top:-16px;left:0;font-size:10px;white-space:nowrap;color:var(--ui-ink);pointer-events:none}
 .scene-track-lane .scene-insert-line{position:absolute;top:0;bottom:0;width:2px;margin-left:-1px;background:var(--ui-ink);border-radius:1px;pointer-events:none;z-index:4}
 .scene-track-lane .scene-insert-line[hidden]{display:none}
+/* T-FRAME-CHROME-ONTO-PLATES — the shell presents the frame in a pane (presentedChrome.ts, 'devices'; manual §16.1 "Its controls stay
+   out of the pane and appear in Device view below it"): the frame draws only its field. Its chrome stands down — the masthead and tool
+   rail, the instrument tools dock, the canvas's zoom keys, minimap toggle and zoom readout, the selected card's panel, the scene bar,
+   the toolbelt handle, the relation field's projection and standing keys, the placement bar and the rail's hint, the coordinate readout, Present's return and the recording badge, the
+   journey's reading panel, the crossing's return and the library attribution. Concealed, never removed: each control stays mounted with its own handler and state,
+   is read and pressed through the chrome door, and keeps its keys. The masthead's overflow menus stand laid out so every control in
+   them is read at any pane width. The canvas's minimap stays: the manual's Full Canvas is "the Canvas in the pane, with the minimap". */
+body.oi-chrome-devices #app>.masthead,
+body.oi-chrome-devices #instrument-tools-dock,
+body.oi-chrome-devices .research-canvas .canvas-zoom-controls,
+body.oi-chrome-devices .research-canvas .research-minimap-toggle,
+body.oi-chrome-devices .research-instrument .canvas-zoom-readout-host,
+body.oi-chrome-devices #research-inspector,
+body.oi-chrome-devices nav.instrument,
+body.oi-chrome-devices #toolbelt-button,
+body.oi-chrome-devices .journey-reading-home,
+body.oi-chrome-devices .crossing-return,
+body.oi-chrome-devices #view-controls,
+body.oi-chrome-devices .relation-field-modes,
+body.oi-chrome-devices .relation-field-filters,
+body.oi-chrome-devices #tool-hint,
+body.oi-chrome-devices #coordinates,
+body.oi-chrome-devices #present-return,
+body.oi-chrome-devices #recording-badge,
+body.oi-chrome-devices .react-flow__attribution{visibility:hidden!important;pointer-events:none!important}
+body.oi-chrome-devices #app>.masthead .header-menu{display:flex!important;position:static!important;animation:none!important}
+body.oi-chrome-devices #research-workspace{inset:0}
+/* The journey's rows: in the journey lens the scenes panel is the walk (manual §17.5 Full), so it stands in the pane while the scene
+   bar around it stands down; its toolbar, save row and choosers fold out of the way, still laid out for the chrome door to read. */
+body.oi-chrome-devices[data-active-instrument="journey"] nav.instrument #timeline-panel{visibility:visible!important;pointer-events:auto!important}
+body.oi-chrome-devices #timeline-panel .timeline-toolbar,
+body.oi-chrome-devices #timeline-panel .scene-save-row,
+body.oi-chrome-devices #timeline-panel .seam-chooser,
+body.oi-chrome-devices #timeline-panel .curve-tools,
+body.oi-chrome-devices #timeline-panel .pending-switch{visibility:hidden!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;border:0!important;overflow:hidden!important}

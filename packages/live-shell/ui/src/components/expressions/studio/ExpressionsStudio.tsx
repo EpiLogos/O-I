@@ -21,7 +21,7 @@
 //   • the columns fit the detail row by the plate's fold: before Capture, they fold to their titles until Capture is in view
 //     (studioFit.ts); a title folds or opens its column, and the person's choice holds.
 // Every write leaves through the owner path it used before: the retained editor's one apply, the device's own submit, the stage's runner.
-import {useEffect, useId, useMemo, useRef, useState, type DragEvent, type ReactNode} from 'react'
+import {useEffect, useMemo, useState, type DragEvent, type ReactNode} from 'react'
 import {addressLink} from '@epilogos/expressions-boundary'
 import type {NativeEditorReading, NativeEditorReply, NativeEditorRequest} from '@epilogos/expressions-boundary/editor'
 import {InstrumentPlate, SectionDevices, SectionNote, type PlateSection, type SectionDevice} from '../../../frame/devices/InstrumentPlate'
@@ -43,8 +43,12 @@ import {DEVICE_MIME, afterIdFor, dispatchOpenDevice, parseDeviceDrag} from '../.
 import type {RackDevice} from '../../nativeDeviceCatalogue'
 import {GlyphSequenceEditor, type RetainedGlyphInput} from '../../GlyphSequenceEditor'
 import {firstShown, onRack, studioFieldFamilies, studioOwner, studioPlace, studioSections, type StudioSection} from './studioModel'
-import {foldsToFit, pressFold, sameSet} from './studioFit'
+import {STUDIO_FOLD_ORDER} from './studioFit'
+import {usePlateFit} from './plateFit'
 import {StageCaptureTools, StageViewTools, useStageSender} from './StudioStage'
+import {FrameControls, controlsAt, useFrameChromeOver} from './frameChrome'
+import {STUDIO_CARRIED} from './studioModel'
+import {NativeChosenControls} from '../../NativeChosenControls'
 import {useFramePlacement, useHostedChrome} from '../../../projections/expressionsPaneHost'
 import './studio.css'
 
@@ -91,6 +95,10 @@ export function ExpressionsStudio({reading, request, selectEntity, drafts, onExp
   // The stage's controls read the frame's chrome by value and send through its one runner (one sender for Tools and Capture).
   const chrome = useHostedChrome()
   const stage = useStageSender(chrome?.state ?? null, chrome?.run ?? null)
+  // The frame's own chrome (T-FRAME-CHROME-ONTO-PLATES): what its masthead and scene bar drew in the pane and no other device carries
+  // stands here, each press the frame's own control pressed through the same runner (frameChrome.tsx).
+  const frame = useFrameChromeOver(chrome?.state ?? null, chrome?.run ?? null)
+  const frameAt = (homes: Parameters<typeof controlsAt>[1]) => controlsAt(frame.reading, homes, STUDIO_CARRIED)
   // The frame's faults stand at the foot of the pane that holds it; while no pane holds it, they stand here — never lost.
   const placement = useFramePlacement()
   // lane-3 E22 (ticket P, G3): where the work stands, only as the frame announces it; the link mark copies it whole.
@@ -105,11 +113,6 @@ export function ExpressionsStudio({reading, request, selectEntity, drafts, onExp
     if (!navigator.clipboard) {setCopyNote('This window offers no clipboard; the address is in the link mark\'s words.'); return}
     void navigator.clipboard.writeText(link).then(() => setCopyNote(`Address copied: ${link}`), () => setCopyNote('The clipboard refused the address.'))
   }
-  // The columns fit the row by the plate's fold (studioFit.ts): measured here, decided there.
-  const fitId = useId()
-  const openWidths = useRef(new Map<string, number>())
-  const [chosen, setChosen] = useState<{folded: ReadonlySet<string>; opened: ReadonlySet<string>}>({folded: new Set(), opened: new Set()})
-  const [fitted, setFitted] = useState<ReadonlySet<string>>(new Set())
 
   const fieldDevices = (section: StudioSection): SectionDevice[] => [
     ...section.field.flatMap(entry => {
@@ -141,7 +144,13 @@ export function ExpressionsStudio({reading, request, selectEntity, drafts, onExp
     const devices = fieldDevices(section)
     const listed = [...section.entity.filter(device => device.family !== 'force'), ...section.scene]
     const parts: ReactNode[] = []
-    if (section.id === 'studio:tools') parts.push(<StageViewTools key="stage" sender={stage} />)
+    // Tools: the work's own acts (Save, Undo, Redo — the frame's masthead, app.ts :2814 and its history menu), the frame's rail tools
+    // and workspace (shell.ts mountShell #tool-rail, #workspace-menu), the scene bar's Acts and Save scene (actPanel.ts :59, shell.ts
+    // nav.instrument), then the stage's view.
+    if (section.id === 'studio:tools') parts.push(<FrameControls key="frame-work" label="Work" controls={frameAt('work')} view={frame} />,
+      <FrameControls key="frame-tools" label="Frame tools" controls={frameAt(['tools', 'scene', 'side'])} view={frame} />, <StageViewTools key="stage" sender={stage} />)
+    // Nara: the frame's own Nara instrument (naraInstrument.tsx :307), opened from here.
+    if (section.id === 'studio:nara-m4') parts.push(<FrameControls key="frame-nara" label="Nara" controls={frameAt('nara')} view={frame} />)
     if (section.id === 'studio:capture') parts.push(<StageCaptureTools key="stage" sender={stage} />)
     if (section.id === 'studio:selected') parts.push(<SelectedGlyph key="selected" reading={reading} selectEntity={selectEntity} locked={editor.locked}
       send={changes => void editor.apply(changes)} drafts={drafts} request={request} onExpandGlyph={onExpandGlyph} glyphPresented={glyphPresented} />)
@@ -150,42 +159,25 @@ export function ExpressionsStudio({reading, request, selectEntity, drafts, onExp
     else if (section.field.length) parts.push(<SectionNote key="closed">Open a native Expression to see its {section.field.map(device => device.name).join(', ')}.</SectionNote>)
     if (listed.length) parts.push(<StudioDeviceList key="listed" devices={listed} reading={reading} locked={editor.locked}
       add={family => void editor.apply([deviceAddChange(family)])} />)
-    if (!parts.length) parts.push(<SectionNote key="none">{section.id === 'studio:nara-m4'
-      ? 'No owner discloses the Nara layer in this shell, so nothing here can turn it on.'
-      : 'No owner discloses a device here.'}</SectionNote>)
+    if (section.id === 'studio:nara-m4' && !devices.length && !listed.length) parts.push(<SectionNote key="none">No owner discloses the Nara layer in this shell, so nothing here can turn it on.</SectionNote>)
+    if (!parts.filter(Boolean).length) parts.push(<SectionNote key="none">No owner discloses a device here.</SectionNote>)
     return parts
   }
 
+  // The toolbar is curated (owner, 15 Oct: "the rack device view was meant to be the toolbar, which should be letting you curate the
+  // settings and macros which you are adding to the toolbar, just like it works in the current expressions app"): the person's chosen
+  // controls — the frame's own toolbelt, Journey.shared.toolbelt, through the boundary's chosen controls — always stand on the Studio
+  // with their + Parameter, as the toolbelt stood behind its handle (shell.ts #toolbelt-panel "Add properties"); with none chosen yet,
+  // the section says so and offers the browse. The macros of the person's racks stand beside them while held (NativeWorldDetail.tsx).
+  const yours: readonly PlateSection[] = own.some(section => section.id === 'chosen') ? own
+    : [{id: 'chosen', title: 'Your controls', children: <div className="native-chain-controls"><NativeChosenControls reading={reading} request={request} configure={false} /></div>}, ...own]
+  // The columns fit the row by the plate's fold (plateFit.ts, moved out of here whole): measured there, decided by studioFit.ts over the
+  // Studio's own fold order.
+  const fit = usePlateFit((configure ? settings : [...SECTIONS, ...yours]).map(section => section.id).join('|'), STUDIO_FOLD_ORDER, configure)
   const sections: PlateSection[] = configure ? [...settings] : [...SECTIONS.map(section => ({
     id: section.id, title: section.title, note: section.note ?? undefined, children: sectionBody(section),
-    folded: fitted.has(section.id), onFold: () => setChosen(state => pressFold(section.id, fitted.has(section.id), state)),
-  })), ...own]
-  const columnKey = sections.map(section => section.id).join('|')
-  useEffect(() => {
-    const plate = [...document.querySelectorAll<HTMLElement>('.inst-plate[data-studio-fit]')].find(element => element.dataset.studioFit === fitId)
-    const row = plate?.querySelector<HTMLElement>('.inst-sections')
-    if (configure || !row) {setFitted(previous => previous.size ? new Set() : previous); return}
-    let strip = 28
-    const fit = () => {
-      const columns: string[] = []
-      for (const column of row.querySelectorAll<HTMLElement>(':scope > .inst-section')) {
-        const id = column.dataset.section
-        if (!id) continue
-        columns.push(id)
-        const width = column.getBoundingClientRect().width
-        if (column.dataset.folded) strip = width || strip
-        else openWidths.current.set(id, width)
-      }
-      const next = foldsToFit({columns, widths: openWidths.current, strip, available: row.clientWidth, folded: chosen.folded, opened: chosen.opened})
-      setFitted(previous => sameSet(previous, next) ? previous : next)
-    }
-    fit()
-    if (typeof ResizeObserver === 'undefined') return
-    const observer = new ResizeObserver(fit)
-    observer.observe(row)
-    for (const column of row.querySelectorAll(':scope > .inst-section')) observer.observe(column)
-    return () => observer.disconnect()
-  }, [configure, chosen, columnKey, fitted, fitId])
+    folded: fit.folded.has(section.id), onFold: () => fit.press(section.id),
+  })), ...yours]
 
   // A device dragged from the browser goes on the rack, appended after the last widget — the rack's own drop, one device-add. Over the
   // rack itself (in the settings) the rack takes the drop at its gap and the plate stands aside: one drop, one add.
@@ -198,12 +190,12 @@ export function ExpressionsStudio({reading, request, selectEntity, drafts, onExp
     ...(link ? [{icon: 'link' as const, label: `Copy address: ${link}`, onPress: copyAddress}] : []),
   ]
   // One line: the editor's refusal, the stage's refusal, and the frame's faults while no pane holds the frame.
-  const said = [fault ?? paneFault ?? editor.error, stage.refusal, ...(placement === null ? chrome?.faults ?? [] : [])].filter((text): text is string => !!text)
+  const said = [fault ?? paneFault ?? editor.error, stage.refusal, frame.refusal, ...(placement === null ? chrome?.faults ?? [] : [])].filter((text): text is string => !!text)
   const shown = said.length ? said.join(' · ') : null
   return <InstrumentPlate presentation={{family: 'expressions', faceId: 'studio', title: 'Studio', icon: 'expr', owner: studioOwner(reading, place)}}
     actions={actions} sections={sections} bodyClassName="native-device-view"
     dataAttributes={{'data-studio': configure ? 'settings' : 'sections', 'data-dropping': dropping ? 'true' : undefined, 'data-dirty': reading?.standing.dirty ? 'true' : undefined,
-      'data-studio-fit': fitId}}
+      'data-studio-fit': fit.fitId}}
     onDragOver={event => { if (!isDeviceDrag(event)) return; event.preventDefault(); event.dataTransfer.dropEffect = 'copy'; setDropping(true) }}
     onDragLeave={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDropping(false) }}
     onDrop={event => {

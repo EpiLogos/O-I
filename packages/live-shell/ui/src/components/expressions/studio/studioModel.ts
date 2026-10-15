@@ -88,3 +88,24 @@ export function studioPlace(state: HostedAppState | null | undefined): string | 
 export function onRack(reading: NativeEditorReading | null, family: string): boolean {
   return !!reading?.devices.some(device => device.family === family)
 }
+
+/** The frame's chrome controls (T-FRAME-CHROME-ONTO-PLATES; their ids as the frame's chrome door reads them, presentedChrome.ts
+ * `region/key`) that another device of Expressions already carries, so the Studio does not stand them twice. Each names its carrier:
+ *   • rail/a:pointer-options — the transport's Draw slot pointer group (shell/transports/useExpressionsTransport.tsx `draw`, BarPointerGroup);
+ *   • rail/a:objects — Selected's Object chooser (ExpressionsStudio.tsx SelectedGlyph);
+ *   • workspace/a:studio — this Studio; workspace/a:blueprint — the Studio's Blueprint device (Scene devices, studioSections);
+ *   • workspace/a:quick-guide — the Clip side's Guide (components/expressions/clip/SceneControls.tsx :87);
+ *   • save/a:capture-image, save/a:record-video, save/a:capture-options — Capture (StudioStage.tsx StageCaptureTools: ◉ Capture still |
+ *     video, Edition… with the Image suite's options);
+ *   • scene/a:previous, scene/a:next, scene/a:timeline, scene/a:play-journey — the Clip side's Scene ‹ › selector, Scene strip and Saved
+ *     scenes (SceneControls.tsx :63-66, :82); scene/a:toggle-play — the transport's Play and Stop (useExpressionsTransport.tsx `play`);
+ *     scene/a:present — Capture's Present;
+ *   • side/a:toolbelt — Your controls, the toolbelt's own entries with + Parameter (NativeChosenControls.tsx :225);
+ *   • view/a:grid, view/a:snap, view/a:face-plane, view/a:guides — Tools' Guides and snap and Camera (StudioStage.tsx StageViewTools);
+ *   • present/a:exit-present, recording/a:stop-record — Capture's Present and its Stop. */
+export const STUDIO_CARRIED: ReadonlySet<string> = new Set([
+  'rail/a:pointer-options', 'rail/a:objects', 'workspace/a:studio', 'workspace/a:blueprint', 'workspace/a:quick-guide',
+  'save/a:capture-image', 'save/a:record-video', 'save/a:capture-options',
+  'scene/a:previous', 'scene/a:next', 'scene/a:timeline', 'scene/a:play-journey', 'scene/a:toggle-play', 'scene/a:present',
+  'side/a:toolbelt', 'view/a:grid', 'view/a:snap', 'view/a:face-plane', 'view/a:guides', 'present/a:exit-present', 'recording/a:stop-record',
+])

@@ -60,7 +60,7 @@ import {inspectorHTML,InspectorContext} from './inspector.js';
 import {sourceVisual,describeAnalysis} from './sourcePreview.js';
 import {isStudioSection,studioPlacement,type StudioSection} from './studioSections.js';
 import {LiveOverrides} from './liveOverrides.js';
-import {STAGE_COMMANDS,readStageRequest,stageReplyMessage,stageRefusal,type StageCommand,type StageCaptureSettings} from './stageCommands.js';
+import {STAGE_COMMANDS,readStageRequest,stageReplyMessage,stageRefusal,type StageCommand,type StageCaptureSettings} from './stageCommands.js';import {installPresentedChrome,frameChromeRegions,type PresentedChrome} from './presentedChrome.js';
 import {DEFAULT_SOURCE_THRESHOLD} from '../../src/engine/sourceSampling';
 import {PARAMETERS,parameter} from './registry.js';
 import {evaluateParameters,phases,sequenceAt,focusAt,arrange,reorderFocus} from './timeline.js';
@@ -2120,7 +2120,7 @@ let hostMode:'expressions'|'techne'|'live'=new URLSearchParams(location.search).
 // The world lens the host stands in (workspace.current.context.world). Read
 // from ?world= or an optional host-mode `world`; the Epi-Logos world opens the
 // Studio on the live instrument the first time, never overriding a choice.
-let worldLens:string|null=new URLSearchParams(location.search).get('world');let instrumentOffered=false;
+let worldLens:string|null=new URLSearchParams(location.search).get('world');let instrumentOffered=false;let presentedChrome:PresentedChrome|undefined; // T-FRAME-CHROME-ONTO-PLATES: how the shell presents this frame (a pane: the chrome on its devices; at full size: here) and the chrome read as data for them (presentedChrome.ts), installed once its regions stand (below).
 let livedRailHTML='';
 // One rail in both modes: Technē keeps the Expressions tools; the active
 // instrument's own tools sit beside them in #instrument-tools.
@@ -2139,11 +2139,11 @@ function announceHostState(){
   // E22 (ticket P, G3): where the frame stands, as its own link names it; absent until the opening link has settled.
   const address=hostAddress();announcedAddress=JSON.stringify(address??null);
   const state={...(lens?{lens}:{}),...(instrument?{instrument}:{}),...(address?{address}:{}),nativeScene:view&&binding?{expression_ref:view.document.expression_ref,revision:view.document.revision,scene_ref:binding.scene_ref}:undefined,document:awaitingNativeBoot&&!nativeWorkspace?.nativeView()?undefined:{id:nativeWorkspace?.nativeView()?.document.expression_ref??store.document.id,name:store.document.name},sceneIndex,sceneCount:store.document.scenes.length,sceneName:s.name,sceneState:sceneSaveState(store.document,s),
-   selection:selected.map(id=>{const e=scene().entities.find(v=>v.id===id);return {id,name:e?e.name:undefined};}),tool,playing:scenePlaying,journeyPlaying,fieldPaused,libraryOpen,hostMode,presentsInstrument:hostMode==='live',recording:recorder.active,presenting,automationLoop,propertyRecording:!!propertyTake,propertyPreview:trackPreview,automationHeld:liveOverrides.heldCount(),takeMode:appendTake?'append':'replace',stage:{mode:camera.mode,grid:camera.grid,snap:camera.snap,guides:guidesVisible,tool,repeatPins:pinRepeat,videoTake:!!currentVideo}};
+   selection:selected.map(id=>{const e=scene().entities.find(v=>v.id===id);return {id,name:e?e.name:undefined};}),tool,playing:scenePlaying,journeyPlaying,fieldPaused,libraryOpen,hostMode,presentsInstrument:hostMode==='live',recording:recorder.active,presenting,automationLoop,propertyRecording:!!propertyTake,propertyPreview:trackPreview,automationHeld:liveOverrides.heldCount(),takeMode:appendTake?'append':'replace',stage:{mode:camera.mode,grid:camera.grid,snap:camera.snap,guides:guidesVisible,tool,repeatPins:pinRepeat,videoTake:!!currentVideo},...chromeState()};
   window.parent.postMessage({v:1,kind:'oi-app-state',state},'*');
   nativeEditorEndpoint?.publish();
  }catch{/* nothing is announced rather than a wrong position */}
-}
+}/** T-FRAME-CHROME-ONTO-PLATES: the presentation and the chrome reading for the announcement; absent before the door stands, never a throw out of it. */function chromeState(){try{return presentedChrome?{presentation:presentedChrome.presentation(),chrome:presentedChrome.reading()}:{};}catch{return {};}}
 /** The native instrument as the frame announces it (ticket T-LIVE-TORUS-INSTRUMENT). Read here, never from a stale copy; absent while no session is open, and never a throw out of the announcement. */
 function announcedInstrument(){
  try{return nativeField?announceInstrument(nativeField.controller.reading):undefined;}catch{return undefined;}
@@ -2231,7 +2231,7 @@ async function runStageCommand(command:StageCommand){
   case 'present':await action(command.on?'present':'exit-present',body);break;
   case 'export':await action({json:'export-json',native:'export-native',html:'export-artifact'}[command.format],body);break;
   case 'import':await action('import',body);break;
-  case 'janko':
+  /* T-FRAME-CHROME-ONTO-PLATES: the shell's declaration of how it presents this frame (the chrome stands down or returns, nothing else moves), and one control of the chrome pressed from a device: the frame's own control, through its own handler (presentedChrome.ts). */case 'presentation':if(!presentedChrome)throw new Error('This application has not drawn its chrome yet.');presentedChrome.setPresentation(command.chrome);break;case 'chrome':if(!presentedChrome)throw new Error('This application has not drawn its chrome yet.');presentedChrome.press(command.id,command.value);break;case 'janko':
    // A Jankó chord: the owner's own played voices, struck through the native owner (nativeField.ts playJanko). Never synthesised.
    if(!nativeField)throw new Error('This application has no native instrument.');
    await nativeField.playJanko(command.pitch_classes,command.amplitude);
@@ -2825,7 +2825,7 @@ const naraInstrument=installNaraInstrument({nativeView:()=>nativeWorkspace?.nati
   const applied=nativeWorkspace?.nativeView()?.document;
   if(applied?.expression_ref!==native.expression_ref||applied.revision!==native.revision)throw Error('The coordinate was adopted natively; resolve the retained local draft before displaying the new revision.');
  }});
-if(qs.get('nara')==='1')naraInstrument.open();
+if(qs.get('nara')==='1')naraInstrument.open();presentedChrome=installPresentedChrome({lens:()=>hostMode==='techne'?lensStudio.active():hostMode,changed:()=>announceHostState(),regions:()=>frameChromeRegions({canvasHome})}); // T-FRAME-CHROME-ONTO-PLATES: every region of the chrome now stands (the masthead with Nara and Save, the scene bar with Acts, the tools dock, the selected card, the Canvas section).
 const disposeFieldStudies=window.__FIELD_STUDIES__.dispose;
 window.__FIELD_STUDIES__.dispose=()=>{naraInstrument.destroy();journeyInstrument?.destroy();wikiStanding.dispose();disposeFieldStudies();};
 // A hosted deep link (the app's own ?journey/?scene idiom): open a named

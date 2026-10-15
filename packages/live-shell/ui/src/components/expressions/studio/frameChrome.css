@@ -1,0 +1,25 @@
+/* The frame's controls on a device (frameChrome.tsx): the mockup's .bt keys and .tog segments (world-shell-mockup.html:128-130,
+   :343-344) at the device row's density — keys flow in rows at the section's width, a choice or a value stands under its small
+   name, a reading is a mono line. No box of their own, no scroller. Shell and SDK tokens only. */
+.frame-chrome { display: flex; flex-wrap: wrap; align-content: flex-start; gap: 3px; min-width: 0 }
+.frame-chrome-key { height: 18px; max-width: 100%; padding: 0 6px; background: var(--bg-1); border: 1px solid var(--line); color: var(--text-dim);
+  font: inherit; font-size: 10px; line-height: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer }
+.frame-chrome-key:hover:not(:disabled) { color: var(--text); border-color: var(--text-faint) }
+.frame-chrome-key[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--bg-1) }
+.frame-chrome-key:disabled { cursor: default; opacity: .45 }
+.frame-chrome-key:focus-visible, .frame-chrome select:focus-visible, .frame-chrome input:focus-visible { outline: 1px solid var(--accent); outline-offset: 1px }
+.frame-chrome-name { font-size: 9px; color: var(--text-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+/* A choice or a value stands on one line with its small name before it, as a device row's parameter does. */
+.frame-chrome-choice, .frame-chrome-field { display: inline-flex; align-items: center; gap: 4px; min-width: 0; max-width: 100% }
+.frame-chrome-choice select, .frame-chrome-field input:not([type=range]) { height: 18px; min-width: 0; max-width: 150px; padding: 0 3px; background: var(--bg-1);
+  border: 1px solid var(--line); color: var(--text); font: inherit; font-size: 10px }
+.frame-chrome-field input[type=number] { width: 52px }
+.frame-chrome-field input:not([type=range]):not([type=number]) { width: 120px }
+.frame-chrome-field input[type=range] { width: 96px; margin: 0; accent-color: var(--accent) }
+.frame-chrome-swatch { display: inline-flex; align-items: center; gap: 3px; height: 18px }
+.frame-chrome-swatch input { width: 18px; height: 16px; padding: 0; background: none; border: 1px solid var(--line); cursor: pointer }
+.frame-chrome-reading { flex-basis: 100%; min-width: 0; font: 9.5px/1.35 var(--mono); color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.frame-chrome-reading .frame-chrome-name { font-family: inherit }
+/* A parameter the manual names that no owner carries yet: its name and values, dim, the why in its hover words. */
+.frame-chrome-waiting { display: flex; align-items: baseline; gap: 6px; min-width: 0; opacity: .55 }
+.frame-chrome-waiting .frame-chrome-values { font: 9.5px var(--mono); color: var(--text-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
