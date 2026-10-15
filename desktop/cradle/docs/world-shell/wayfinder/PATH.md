@@ -99,7 +99,10 @@ objections verbatim and the full validation (`BRIEF-BUILDER.md`); the lead conve
 
 | Ticket | Who | Zone | Since |
 |---|---|---|---|
-| Native screen pass against the mockup renders; N1; mounting N2's subject door | lead | the frame, `App.tsx`, `native/Workbench.tsx`, `shell/modeFrames.ts`, the book | 14 Oct |
+| N — Technē starts from the world: the World groups list the owner's subjects, choosing one opens it (N2's door mounted, S1) and the instruments keep it (G2) | Opus builder | `src/techne/subject/**`, the browser's Technē World rows (`ModeBrowser.tsx`, `frame/browser/**`, `modeGrammar.ts` Technē World entries), `frame/InstrumentsSection.tsx`, `frame/instruments.ts`, `frame/instrumentDoor.ts`, the Graph's focus call in `registerAtlasHost.ts` | 15 Oct |
+| O — Places is the atlas, alone (R1, lane-4 T1–T30 + lane-2 T21): listed in `tickets/T-PLACES-ONTO-ATLAS.md`, ported onto the M4 plate and the transport, then the frame's Places map and lens removed | Opus builder | `src/projections/atlas/**`, `src/inhabitants/ql/devices/**`, `atlasFaceBodies.tsx`, `modeTransports.tsx` (Technē binding), `panels/knowledge.tsx`, the frame's `psychogeographic/**` and Places lens | 15 Oct |
+| P — every stage export lands (G1: the main window gains a download receiver; Capture PNG, Save video, Export ▾, the canvas exports are all cancelled natively today) and the frame's address is kept, restored and copied (G3) | Opus builder | `desktop/cradle/src-tauri/src/{main.rs,downloads.rs}`, the frame's `app.ts` address/E22 block, `hostedApp.ts` (address), `packages/expressions-boundary/**`, `panels/expressions.tsx`, `components/expressions/studio/**` | 15 Oct |
+| Native screen pass against the mockup renders; N1; the lanes' convergence | lead | `App.tsx`, `native/Workbench.tsx`, `shell/modeFrames.ts`, the book, the register | 14 Oct |
 
 Then: the 126 targets re-homed (lane M, FOUNDATION §8): `acceptance.py rehome` re-opens every cited path:line, runs the
 reachability script over every home and records home, owner op and evidence — or a named gap — on each row; `verify` holds
