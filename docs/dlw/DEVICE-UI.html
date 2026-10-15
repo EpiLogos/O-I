@@ -1,0 +1,918 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Device UI</title>
+<meta name="description" content="Device UI: how every device of the Digital Logos Workstation looks and answers the hand, with live reference devices.">
+<style>
+:root{
+  --bg:#f4f3f1;--panel:#ffffff;--ink:#1d1f21;--dim:#5b6066;--faint:#8b9096;
+  --line:#dcdad6;--line-strong:#c4c1bb;--accent:#d98e00;--accent-ink:#8a5a00;
+  --sel:#2f6fb3;--th:#ecebe8;--code:#efeeeb;--built:#3f8f5a;--part:#c08400;--designed:#8b9096;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#1e2023;--panel:#26292d;--ink:#e3e5e7;--dim:#a2a7ad;--faint:#71767c;
+  --line:#3a3e43;--line-strong:#4b5056;--accent:#ffbe00;--accent-ink:#ffbe00;
+  --sel:#7ec3e6;--th:#2e3135;--code:#2e3135;--built:#6cc28a;--part:#ffbe00;--designed:#71767c;
+}}
+:root[data-theme="dark"]{
+  --bg:#1e2023;--panel:#26292d;--ink:#e3e5e7;--dim:#a2a7ad;--faint:#71767c;
+  --line:#3a3e43;--line-strong:#4b5056;--accent:#ffbe00;--accent-ink:#ffbe00;
+  --sel:#7ec3e6;--th:#2e3135;--code:#2e3135;--built:#6cc28a;--part:#ffbe00;--designed:#71767c;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:16px}
+body{margin:0;background:var(--bg);color:var(--ink);font:15.5px/1.62 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.layout{display:grid;grid-template-columns:280px minmax(0,1fr);max-width:1320px;margin:0 auto}
+nav{position:sticky;top:0;height:100vh;overflow:auto;padding:28px 18px 40px 24px;border-right:1px solid var(--line);font-size:13px}
+nav .brand{font-weight:650;letter-spacing:.02em;margin:0 0 4px}
+nav .sub{color:var(--faint);margin:0 0 18px;font-size:12px}
+nav ol{list-style:none;margin:0;padding:0}
+nav li a{display:block;padding:3px 8px;border-left:2px solid transparent;color:var(--dim);text-decoration:none;border-radius:0 4px 4px 0}
+nav li a:hover{color:var(--ink);background:var(--th)}
+nav li a.on{color:var(--ink);border-left-color:var(--accent)}
+nav .toc-part a{margin-top:14px;color:var(--ink);font-weight:600;text-transform:uppercase;font-size:11px;letter-spacing:.08em}
+main{padding:40px 48px 120px;min-width:0}
+article{max-width:980px}
+h1,h2,h3,h4{line-height:1.25;position:relative}
+h1{font-size:34px;font-weight:700;letter-spacing:-.01em;margin:0 0 10px}
+h1.title{font-size:38px;margin-top:8px}
+h1.part{margin-top:80px;padding-top:28px;border-top:3px solid var(--accent);font-size:28px}
+h2{font-size:23px;font-weight:650;margin:56px 0 12px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+h3{font-size:17px;font-weight:650;margin:32px 0 8px}
+h4{font-size:15px;margin:24px 0 6px}
+.anchor{position:absolute;left:-20px;color:var(--faint);text-decoration:none;opacity:0;font-weight:400}
+h1:hover .anchor,h2:hover .anchor,h3:hover .anchor{opacity:1}
+p,li{max-width:74ch}
+a{color:var(--sel)}
+strong{font-weight:640}
+em{font-style:italic}
+hr{border:0;border-top:1px solid var(--line);margin:36px 0}
+code{font:12.5px/1.4 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:var(--code);padding:1px 5px;border-radius:4px;overflow-wrap:anywhere}
+blockquote{margin:16px 0;padding:4px 16px;border-left:3px solid var(--accent);color:var(--dim)}
+.table-wrap{overflow-x:auto;margin:14px 0 20px;border:1px solid var(--line);border-radius:8px;background:var(--panel)}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:13.5px;line-height:1.45}
+th,td{text-align:left;vertical-align:top;padding:7px 11px;border-bottom:1px solid var(--line)}
+th{background:var(--th);font-weight:620;font-size:12px;letter-spacing:.02em;white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td:first-child{font-weight:560}
+td p{margin:0}
+.mark{display:inline-block;font-size:.85em;line-height:1;margin:0 .1em;vertical-align:.05em}
+.mark-built{color:var(--built)}.mark-part{color:var(--part)}.mark-designed{color:var(--designed)}
+h2 .mark,h3 .mark{font-weight:400}
+.theme{position:fixed;right:16px;top:12px;border:1px solid var(--line-strong);background:var(--panel);color:var(--dim);border-radius:6px;font-size:12px;padding:4px 9px;cursor:pointer}
+.menu{display:none}
+@media (max-width:900px){
+  .layout{display:block}
+  nav{position:fixed;inset:0 30% 0 0;max-width:320px;background:var(--panel);z-index:5;transform:translateX(-102%);transition:transform .2s;height:100%}
+  nav.open{transform:none;box-shadow:0 0 40px #0005}
+  .menu{display:block;position:fixed;left:16px;top:12px;z-index:6;border:1px solid var(--line-strong);background:var(--panel);color:var(--ink);border-radius:6px;font-size:12px;padding:4px 9px}
+  main{padding:56px 16px 80px}
+  h1{font-size:27px}h1.title{font-size:38px;margin-top:8px}
+h1.part{font-size:23px}h2{font-size:20px}
+  .anchor{display:none}
+}
+figure.ui{margin:18px 0 26px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--panel)}
+figure.ui .ui-stage{position:relative;overflow:hidden;background:#fff}
+figure.ui iframe{display:block;border:0;background:#fff;transform-origin:0 0;position:absolute;left:0;top:0}
+figure.ui figcaption{font-size:12.5px;color:var(--dim);padding:8px 12px;border-top:1px solid var(--line)}
+@media print{nav,.theme,.menu{display:none}.layout{display:block}main{padding:0}}
+</style>
+</head>
+<body>
+<button class="menu" type="button" aria-label="Contents">Contents</button>
+<button class="theme" type="button" aria-label="Toggle colour theme">Theme</button>
+<div class="layout">
+<nav aria-label="Contents">
+<p class="brand">Device UI</p>
+<p class="sub"><a href="DLW.html">Digital Logos Workstation</a> · O:I</p>
+<ol>
+<li><a href="#1-what-a-device-panel-is">1. What a device panel is</a></li>
+<li><a href="#2-one-device-five-views">2. One device, five views</a></li>
+<li><a href="#3-measures">3. Measures</a></li>
+<li><a href="#4-anatomy">4. Anatomy</a></li>
+<li><a href="#5-controls">5. Controls</a></li>
+<li><a href="#6-standing">6. Standing</a></li>
+<li><a href="#7-the-display">7. The display</a></li>
+<li><a href="#8-what-a-device-supplies">8. What a device supplies</a></li>
+<li><a href="#9-the-reference-devices">9. The reference devices</a></li>
+<li><a href="#10-when-a-device-s-ui-is-done">10. When a device's UI is done</a></li>
+<li><a href="#11-the-runtime">11. The runtime</a></li>
+</ol>
+</nav>
+<main><article>
+<h1 id="device-ui" class="title"><a class="anchor" href="#device-ui" aria-hidden="true">#</a>Device UI</h1>
+<p>You play a device while your attention is on the material. The agent runs, the
+field moves, the torus rings, and your eyes are there, not on the device. So a
+device must show its state at a glance, answer the hand at once, and never ask
+you to read. Live solved this. Every Live device is one panel of one height:
+a picture of what the device does, with handles on it, and the controls set
+round the picture. You learn one panel and you can read all of them.</p>
+<p>The DLW draws every device the same way: one head, one height, a picture with
+handles, and the same few controls round it. What a device does is in its
+catalogue entry. How it looks and how it answers your hand is set out here,
+and five reference devices run live in §9.</p>
+<h2 id="1-what-a-device-panel-is"><a class="anchor" href="#1-what-a-device-panel-is" aria-hidden="true">#</a>1. What a device panel is</h2>
+<p><strong>A designed face, not a form.</strong> A device&#39;s parameters are its contract with
+its owner. Its panel is drawn by hand for that device, as every Live device
+is. A list of parameters drawn one under the other is the fallback, and only
+for a device that ships no panel of its own. Live does the same for a plug-in
+that has no editor.</p>
+<p><strong>The picture comes first.</strong> Most panels have a display: a dark well that
+draws the device&#39;s state from its live values. EQ Eight draws its curve,
+Auto Filter its filter, Wavetable its wave. Handles in the well are controls:
+drag the picture and the parameter moves. The other controls stand round the
+display, in sections.</p>
+<p><strong>One height, many widths.</strong> On a chain, every device has the same height.
+The width comes from what the device holds. A small effect is narrow, and an
+instrument with two displays is wide.</p>
+<p><strong>Nothing scrolls, and no box sits inside a box.</strong> Sections are columns,
+ruled off from each other by a hairline and named in small capitals. The well
+is the only inset surface. When a panel holds more than fits, it gets pages in
+its head, as Wavetable has Osc 1 and Osc 2.</p>
+<p><strong>Values are short.</strong> A control shows a number, a unit or a word. A sentence
+never appears in a panel. What a control does is said in the status bar when
+you point at it.</p>
+<h2 id="2-one-device-five-views"><a class="anchor" href="#2-one-device-five-views" aria-hidden="true">#</a>2. One device, five views</h2>
+<p>A device has one set of values and five views. All five show the same values.
+A change in one view shows in the other four at once.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>View</th>
+<th>Where</th>
+<th>Size</th>
+<th>What it holds</th>
+<th>Live&#39;s nearest</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>A chain</td>
+<td>22 px wide, chain height</td>
+<td>The activator, the name, up to two short readings, read downward.</td>
+<td>A folded device.</td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>A chain</td>
+<td>Chain height. The width comes from its sections.</td>
+<td>The display and up to four macros.</td>
+<td>A rack with only its macros showing; a small device such as Utility.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>The pool under the browser</td>
+<td>The pool&#39;s width, one or two bands high. Pages when more is needed.</td>
+<td>Every parameter, grouped, and the display with all its handles.</td>
+<td>The full panel of a device, with its pages.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>A pane</td>
+<td>The pane</td>
+<td>The material itself: the page, the field, the torus, the world. No controls.</td>
+<td>Wavetable&#39;s expanded view; a plug-in window.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>The rail</td>
+<td>A tile of 136 × 136 px, or 280 × 136 px</td>
+<td>A small display and up to three readings or macros.</td>
+<td>Live has none. Push&#39;s display is the nearest.</td>
+</tr>
+</tbody></table>
+</div>
+<ul>
+<li>Press a plate on a chain to show its device whole in the pool.</li>
+<li>Press ⤢ to open the device full in a pane.</li>
+<li>Press ▾ in the head to fold the device. Press the folded title to open it.</li>
+<li>A pane holds no device controls. They stay in Device view under the pane.
+When you maximise the pane to the window, the device can show its own
+controls inside it.</li>
+<li>A widget stays on the rail when you change mode. You choose what its tile
+shows.</li>
+</ul>
+<h2 id="3-measures"><a class="anchor" href="#3-measures" aria-hidden="true">#</a>3. Measures</h2>
+<p>All measures are in pixels at 100 %. The grid is 4 px.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Part</th>
+<th>Measure</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Head</td>
+<td>22 high</td>
+</tr>
+<tr>
+<td>Band (the body on a chain)</td>
+<td>168 high</td>
+</tr>
+<tr>
+<td>Plate on a chain</td>
+<td>191 high: head, band and borders</td>
+</tr>
+<tr>
+<td>Control column</td>
+<td>56 wide</td>
+</tr>
+<tr>
+<td>Dial</td>
+<td>28 square, a 270° ring</td>
+</tr>
+<tr>
+<td>Value box</td>
+<td>16 high, 50 wide or more</td>
+</tr>
+<tr>
+<td>Toggle, radio button, chooser, action</td>
+<td>16 high</td>
+</tr>
+<tr>
+<td>Hit area of any control</td>
+<td>22 or more in each direction</td>
+</tr>
+<tr>
+<td>Row of a list</td>
+<td>17 high</td>
+</tr>
+<tr>
+<td>Display on a compact plate</td>
+<td>140 × 146</td>
+</tr>
+<tr>
+<td>Display on a whole plate</td>
+<td>up to 194 × 146</td>
+</tr>
+<tr>
+<td>Section label</td>
+<td>9 px capitals, 13 high</td>
+</tr>
+<tr>
+<td>Names and values</td>
+<td>10 to 11 px</td>
+</tr>
+<tr>
+<td>Folded strip</td>
+<td>22 wide</td>
+</tr>
+<tr>
+<td>Widget tile</td>
+<td>136 × 136, or 280 × 136</td>
+</tr>
+<tr>
+<td>Pool</td>
+<td>400 wide</td>
+</tr>
+</tbody></table>
+</div>
+<p>The plate does not reflow. When the detail area is shorter or taller, the
+whole plate scales between 80 % and 125 %, as Live&#39;s zoom scales its devices.</p>
+<h2 id="4-anatomy"><a class="anchor" href="#4-anatomy" aria-hidden="true">#</a>4. Anatomy</h2>
+<h3 id="4-1-the-head"><a class="anchor" href="#4-1-the-head" aria-hidden="true">#</a>4.1 The head</h3>
+<p>From left to right:</p>
+<ol>
+<li><strong>Activator.</strong> A round light. Amber: the owner reports the device on.
+Grey: the owner reports it off. A hollow ring: the owner has not said. Press
+it to ask the owner to turn the device on or off. The light changes only
+when the owner answers.</li>
+<li><strong>Fold</strong> ▾.</li>
+<li><strong>Name.</strong> A rack shows its set&#39;s name: &quot;Skills · build-lane&quot;.</li>
+<li><strong>Held mark.</strong> The name of whoever holds values on this device, in the
+stall colour.</li>
+<li><strong>Pages.</strong> One tab for each page. The shown page joins the body&#39;s face. A
+page can carry its own light, as Hybrid Reverb&#39;s EQ tab does.</li>
+<li><strong>Open full</strong> ⤢, at the right.</li>
+</ol>
+<p>Right-click the head for Save as preset, Hot-swap, Show automation and Map.</p>
+<h3 id="4-2-the-body"><a class="anchor" href="#4-2-the-body" aria-hidden="true">#</a>4.2 The body</h3>
+<p>The body is one band on a chain and one or two bands in the pool. A band is a
+row of sections. A section is a column of controls with a label. The display
+stands in a section of its own, at the left.</p>
+<h3 id="4-3-colours"><a class="anchor" href="#4-3-colours" aria-hidden="true">#</a>4.3 Colours</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Colour</th>
+<th>Means</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Face</td>
+<td>The body of the plate.</td>
+</tr>
+<tr>
+<td>Head</td>
+<td>Lighter than the face. Tinted blue when the device is selected.</td>
+</tr>
+<tr>
+<td>Field</td>
+<td>The ground of value boxes, toggles and choosers.</td>
+</tr>
+<tr>
+<td>Well</td>
+<td>The display. Near black.</td>
+</tr>
+<tr>
+<td>Teal</td>
+<td>A value: a dial&#39;s arc, a value box&#39;s fill, a curve, a reach for reading.</td>
+</tr>
+<tr>
+<td>Amber</td>
+<td>On: a toggle, a chosen radio button, the activator, a handle, a reach for writing.</td>
+</tr>
+<tr>
+<td>Green</td>
+<td>An owner&#39;s yes: a skill admitted, a task done.</td>
+</tr>
+<tr>
+<td>Orange</td>
+<td>Someone else holds this value.</td>
+</tr>
+<tr>
+<td>Red</td>
+<td>Automation, and the record button.</td>
+</tr>
+</tbody></table>
+</div>
+<p>A device does not bring colours of its own. A colour inside a display carries
+a meaning of the material, as a track&#39;s colour does.</p>
+<h2 id="5-controls"><a class="anchor" href="#5-controls" aria-hidden="true">#</a>5. Controls</h2>
+<p>A panel uses these controls and no others.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Control</th>
+<th>Use it for</th>
+<th>It shows</th>
+<th>Live&#39;s nearest</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Dial</td>
+<td>A number that you sweep</td>
+<td>The name above, a 270° ring with a teal arc, the value below. A value that can turn either way starts its arc at zero.</td>
+<td>A knob.</td>
+</tr>
+<tr>
+<td>Value box</td>
+<td>A number where space is short, or one you set exactly</td>
+<td>The value in a field that fills teal to its place in the range.</td>
+<td>A slider, such as Wavetable&#39;s Volume.</td>
+</tr>
+<tr>
+<td>Toggle</td>
+<td>On or off</td>
+<td>The name in a box, amber when on.</td>
+<td>Auto Filter&#39;s Hz button.</td>
+</tr>
+<tr>
+<td>Radio</td>
+<td>One of two to five</td>
+<td>Buttons side by side or stacked; the chosen one amber.</td>
+<td>Auto Filter&#39;s filter types.</td>
+</tr>
+<tr>
+<td>Chooser</td>
+<td>One of many</td>
+<td>The value and ▾; a menu.</td>
+<td>Wavetable&#39;s wavetable menu.</td>
+</tr>
+<tr>
+<td>Rows</td>
+<td>A list: a rack&#39;s chains, a scope&#39;s places</td>
+<td>One row each: your request as a square; the owner&#39;s answer as a light, or the member&#39;s kind mark in its state; the name; a short meter; a short note. A long list pages.</td>
+<td>A rack&#39;s chain list.</td>
+</tr>
+<tr>
+<td>Ladder</td>
+<td>Evidence in steps</td>
+<td>One tick for each step: lit where it is established, dark where it is not, hollow where nobody has observed it.</td>
+<td>A level meter&#39;s segments.</td>
+</tr>
+<tr>
+<td>Readout</td>
+<td>A reading</td>
+<td>A short value over its name. A large readout is the count that the view is for.</td>
+<td>Hybrid Reverb&#39;s &quot;100 % / 285 ms&quot;.</td>
+</tr>
+<tr>
+<td>Action</td>
+<td>Something done once</td>
+<td>The name in an outlined box.</td>
+<td>A momentary button.</td>
+</tr>
+<tr>
+<td>Light</td>
+<td>A state that the owner reports</td>
+<td>A small round light.</td>
+<td>A chain&#39;s activator.</td>
+</tr>
+<tr>
+<td>Handle</td>
+<td>A parameter that you move on the picture</td>
+<td>An amber ring, numbered in order of importance.</td>
+<td>EQ Eight&#39;s band dots.</td>
+</tr>
+</tbody></table>
+</div>
+<h3 id="5-1-the-hand"><a class="anchor" href="#5-1-the-hand" aria-hidden="true">#</a>5.1 The hand</h3>
+<p>The same moves work on every control that holds a number.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Do</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Drag up or down</td>
+<td>The value moves. The whole range is 160 px. A stepped value moves one step for each 14 px.</td>
+</tr>
+<tr>
+<td>Hold Shift while you drag</td>
+<td>The value moves ten times more slowly.</td>
+</tr>
+<tr>
+<td>Double-click</td>
+<td>The value returns to its default.</td>
+</tr>
+<tr>
+<td>Focus it and press ↑ ↓ or ← →</td>
+<td>One step, or 1 % of the range.</td>
+</tr>
+<tr>
+<td>Page Up, Page Down</td>
+<td>10 % of the range.</td>
+</tr>
+<tr>
+<td>Home, End</td>
+<td>The minimum, the maximum.</td>
+</tr>
+<tr>
+<td>Delete</td>
+<td>The default.</td>
+</tr>
+<tr>
+<td>Point at it</td>
+<td>The status bar says its name and what it does.</td>
+</tr>
+</tbody></table>
+</div>
+<p>A handle moves in the directions that its picture shows. A handle for two
+parameters, such as gravity across and up, moves in two directions. The arrow
+keys move a focused handle 2 px, or 0.5 px with Shift.</p>
+<h3 id="5-2-a-change-and-its-answer"><a class="anchor" href="#5-2-a-change-and-its-answer" aria-hidden="true">#</a>5.2 A change and its answer</h3>
+<p>While you drag, the control shows the value you set. When you release it, the
+new value goes to the owner; a key press sends at once. Until the owner
+confirms the value, it shows in italics. If the owner refuses, the control
+returns to the owner&#39;s value, and the status bar gives the owner&#39;s reason.</p>
+<p>Some changes ask you first. When you raise a scope&#39;s reach, the new reach
+waits, drawn dashed, with Confirm and Cancel beside it. Nothing is sent until
+you confirm.</p>
+<h2 id="6-standing"><a class="anchor" href="#6-standing" aria-hidden="true">#</a>6. Standing</h2>
+<p>Besides its value, a control shows who moves it.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Standing</th>
+<th>How it shows</th>
+<th>What you do</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Automated</td>
+<td>A red dot at the control&#39;s top left.</td>
+<td>Move it to override the lane.</td>
+</tr>
+<tr>
+<td>Overridden</td>
+<td>A hollow red dot. The transport&#39;s Re-enable lights.</td>
+<td>Press Re-enable to give the value back to its lane.</td>
+</tr>
+<tr>
+<td>Modulated</td>
+<td>A thin outer arc on the dial: the range that the modulator moves the value through. The status bar names the modulator.</td>
+<td>Set the centre of the range with the dial.</td>
+</tr>
+<tr>
+<td>Held</td>
+<td>The arc or the fill in orange, and the holder&#39;s name under the control.</td>
+<td>Press the name to give the value back.</td>
+</tr>
+<tr>
+<td>Waiting</td>
+<td>The value in italics, the arc dashed.</td>
+<td>Wait for the owner, or move it again.</td>
+</tr>
+<tr>
+<td>Disabled</td>
+<td>The control at 40 % strength. The status bar says why.</td>
+<td>Do what the reason says.</td>
+</tr>
+<tr>
+<td>No reading</td>
+<td>A hollow light.</td>
+<td>Nothing. The owner has not said.</td>
+</tr>
+</tbody></table>
+</div>
+<h2 id="7-the-display"><a class="anchor" href="#7-the-display" aria-hidden="true">#</a>7. The display</h2>
+<ul>
+<li>Draw every mark from the device&#39;s values or readings, by the device&#39;s own
+law. Do not draw a likely picture.</li>
+<li>When a reading is missing, say which one in the well. Do not draw it as zero.</li>
+<li>Give a compact display at least one handle: the one parameter that you most
+often move. Give a whole display a handle for each parameter that the
+picture can show.</li>
+<li>Number the handles 1, 2 and on, in order of importance.</li>
+<li>Put axis labels inside the well, small and faint. Put one short reading at
+the top right.</li>
+<li>Move the picture only when its readings move. Respect a request for reduced
+motion.</li>
+<li>A rack&#39;s picture is its chain list.</li>
+</ul>
+<h2 id="8-what-a-device-supplies"><a class="anchor" href="#8-what-a-device-supplies" aria-hidden="true">#</a>8. What a device supplies</h2>
+<p>A device brings these to the shell:</p>
+<ol>
+<li><strong>Its parameters</strong>, each declared under the device&#39;s own id: key, name,
+kind, range or values, default, unit, group, whether it is a macro, and its
+write path. A parameter without a write path is a reading.</li>
+<li><strong>Its five views</strong>, built from the panel kit: folded, compact, whole, full
+and widget.</li>
+<li><strong>Its displays and their handles.</strong></li>
+</ol>
+<p>The shell brings the values, the writes, the navigation between views, and the
+standing of each parameter: its automation, its modulator, its holder.</p>
+<p>The panel kit is <code>packages/live-shell/ui/src/inhabitants/sdk/panel.tsx</code>. A
+device without views of its own is drawn by the generic plate: its parameters,
+grouped, in the order the device declares them.</p>
+<h3 id="8-1-a-parameter-earns-its-place"><a class="anchor" href="#8-1-a-parameter-earns-its-place" aria-hidden="true">#</a>8.1 A parameter earns its place</h3>
+<p>A parameter stays on a device only when all of these are true:</p>
+<ul>
+<li>An owner operation stands behind it: a write that the owner exposes, or a
+reading that the owner reports. A word for a quality, such as thoroughness
+or boldness, is not a parameter unless such an operation stands behind it.</li>
+<li>Its control fits its values. Use a dial or a value box for a quantity that
+varies smoothly. Use a stepped dial, a radio or a chooser for a few states,
+and a toggle for two. Do not draw a range or a step that the owner does not
+have.</li>
+<li>When you move it, something that you can see or hear changes: the display,
+the material or a reading.</li>
+<li>Its default is the owner&#39;s default.</li>
+<li>A macro moves real parameters, each within its own range.</li>
+</ul>
+<p>A device whose owner has no smooth quantity has no dials. Its compact controls
+are its real discrete ones. A rack of skills has no risk knob: it has your
+requests, a scope, and a preview that you apply.</p>
+<h3 id="8-2-kind-marks"><a class="anchor" href="#8-2-kind-marks" aria-hidden="true">#</a>8.2 Kind marks</h3>
+<p>A device that holds things of several kinds shows each thing&#39;s kind, not a
+picture of its name. Carried practice has four kinds, each with its woodcut
+mark: a skill, a method, a methodology and a skillset (manual §19.6). The
+person chooses one of the two sets of marks, the blade or the pen, and the
+whole shell uses it. A mark has three states, and its drawing does not change:
+a full line for available, the line in orange for held back for a reason that
+you can clear, a dim line for withheld.</p>
+<h2 id="9-the-reference-devices"><a class="anchor" href="#9-the-reference-devices" aria-hidden="true">#</a>9. The reference devices</h2>
+<p>Six devices show the whole pattern. Each runs on a labelled fixture. Move a
+control in one view and the other four follow. Point at a control to read what
+it does, in the line under the views.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Device</th>
+<th>Kind</th>
+<th>It shows</th>
+<th>Live&#39;s nearest</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Day</td>
+<td>Instrument</td>
+<td>A display that you click. Pages that are two things at once: today&#39;s Day and tomorrow&#39;s. Macros of four kinds.</td>
+<td>Hybrid Reverb</td>
+</tr>
+<tr>
+<td>Torus</td>
+<td>Instrument</td>
+<td>A picture drawn by the law that it plays. Handles on the picture. An envelope display. A modulation arc and an automation dot.</td>
+<td>Wavetable</td>
+</tr>
+<tr>
+<td>Physics</td>
+<td>Effect</td>
+<td>A law drawn as a diagram with a two-way handle. Pages for a long set of parameters. Macros on the widget.</td>
+<td>Auto Filter, Corpus</td>
+</tr>
+<tr>
+<td>Skillset rack</td>
+<td>Rack</td>
+<td>The chain list as the picture. Each member&#39;s kind mark and evidence. Your request beside the owner&#39;s answer. Preview, then apply.</td>
+<td>Audio Effect Rack</td>
+</tr>
+<tr>
+<td>Skill, Method, Methodology</td>
+<td>Effect</td>
+<td>One device with three faces, one for each form. A Method&#39;s path as its display. A review that you confirm.</td>
+<td>A device whose panel changes with its mode, as Simpler&#39;s Classic, One-Shot and Slice</td>
+</tr>
+<tr>
+<td>Scope</td>
+<td>Effect</td>
+<td>A change that asks you first. Two reaches on one picture. A list where you request places.</td>
+<td>Utility</td>
+</tr>
+</tbody></table>
+</div>
+<h3 id="9-1-day"><a class="anchor" href="#9-1-day" aria-hidden="true">#</a>9.1 Day</h3>
+<figure class="ui"><div class="ui-stage" data-w="1500" data-h="940"><iframe src="http://127.0.0.1:5208/?device=central:day-die&amp;view=all" loading="lazy" style="width:1500px;height:940px" sandbox="allow-scripts allow-same-origin" title="The Day in its five views, on one set of values. Click a face of the die, or turn the Face dial."></iframe></div><figcaption>The Day in its five views, on one set of values. Click a face of the die, or turn the Face dial. · <a href="http://127.0.0.1:5208/?device=central:day-die&amp;view=all" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>View</th>
+<th>Holds</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>Day, the date, the open face.</td>
+<td>The date and the face are what you look for.</td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>The die&#39;s net, the open face lit, a dot on a face where the agent waits for you. Macros: Face, Rollover, Agent, Close now.</td>
+<td>The net is the die&#39;s own fold round face 0: 2 above, 4, 0, 1 and 5 across, 3 below. Opposite faces add to five.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>Pages Today and Tomorrow. Band one: the net with names and counts, Face, View, Template, the waiting and running counts. Band two: Time, Agent, Sources, Close.</td>
+<td>A Day after rollover is two Days. The pages make that plain.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>The template&#39;s page, with the pane&#39;s own tabs for the two Days.</td>
+<td>The page is the Day&#39;s material.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>A small net and three counts: tasks, running, patterns. Press a count to open its face.</td>
+<td>The three counts are the day&#39;s pulse.</td>
+</tr>
+</tbody></table>
+</div>
+<p>Rollover and Day start are value boxes whose lowest step is Off. Close now is
+an action, because it runs once.</p>
+<h3 id="9-2-torus"><a class="anchor" href="#9-2-torus" aria-hidden="true">#</a>9.2 Torus</h3>
+<figure class="ui"><div class="ui-stage" data-w="1500" data-h="940"><iframe src="http://127.0.0.1:5208/?device=quaternal-logic:torus&amp;view=all" loading="lazy" style="width:1500px;height:940px" sandbox="allow-scripts allow-same-origin" title="The Torus in its five views. Drag handle 1 along the line to mix the pulses; drag handle 2 out from the ring to drive the body."></iframe></div><figcaption>The Torus in its five views. Drag handle 1 along the line to mix the pulses; drag handle 2 out from the ring to drive the body. · <a href="http://127.0.0.1:5208/?device=quaternal-logic:torus&amp;view=all" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>View</th>
+<th>Holds</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>Torus, the level, the notes that sound.</td>
+<td></td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>The torus: the ring, the surface wave and the two helices. Handle 1 on the pulse line, handle 2 on the wave&#39;s crest. Macros: Pulse mix, Damping, Drive, Release.</td>
+<td>You hear what you see: the wave is the sound&#39;s pattern.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>Band one: the torus, Pulses, Output. Band two: Body, the Envelope display with its two squares, Voices and View.</td>
+<td>Two displays, as Wavetable has its oscillator and its envelope.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>The torus at pane size and the Jankó keyboard under it. A sounding note lights its key and its point on the ring.</td>
+<td>The pane is the instrument that you play.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>The small torus and a level meter.</td>
+<td></td>
+</tr>
+</tbody></table>
+</div>
+<p>Drive carries a modulation arc: the sky moves it. Level carries an automation
+dot.</p>
+<h3 id="9-3-physics"><a class="anchor" href="#9-3-physics" aria-hidden="true">#</a>9.3 Physics</h3>
+<figure class="ui"><div class="ui-stage" data-w="1500" data-h="1000"><iframe src="http://127.0.0.1:5208/?device=expressions:physics&amp;view=all" loading="lazy" style="width:1500px;height:1000px" sandbox="allow-scripts allow-same-origin" title="Physics in its five views. Drag handle 1 to set the swirl's reach and handle 2 to push the field. Turn to the Physics+ page for gravity in depth."></iframe></div><figcaption>Physics in its five views. Drag handle 1 to set the swirl's reach and handle 2 to push the field. Turn to the Physics+ page for gravity in depth. · <a href="http://127.0.0.1:5208/?device=expressions:physics&amp;view=all" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>View</th>
+<th>Holds</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>Physics, viscosity, vortex.</td>
+<td></td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>The swirl: stream lines stepped through the swirl and gravity, the reach ring, the gravity arrow. Macros: Viscosity, Vortex, Gravity Y, Time.</td>
+<td>A stream line shows what the law does to a particle.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>Pages Fluid and Physics+. Fluid: the swirl, Swirl, Spring, Curl and stir, Field. Physics+: the gravity pad with depth, Gravity, Medium, Drag, Limit, Time.</td>
+<td>Twenty parameters do not fit in two bands. Pages do not scroll.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>The field&#39;s law at pane size.</td>
+<td>In the shell, the pane is the field itself.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>The swirl and the four macros as value boxes.</td>
+<td>A macro on the widget is the macro on the chain.</td>
+</tr>
+</tbody></table>
+</div>
+<p>In the shell, the display is the field&#39;s own diagram, drawn from the engine&#39;s
+readings by the same law.</p>
+<h3 id="9-4-skillset-rack"><a class="anchor" href="#9-4-skillset-rack" aria-hidden="true">#</a>9.4 Skillset rack</h3>
+<figure class="ui"><div class="ui-stage" data-w="1500" data-h="1000"><iframe src="http://127.0.0.1:5208/?device=ai-kit:skillset-rack&amp;view=all" loading="lazy" style="width:1500px;height:1000px" sandbox="allow-scripts allow-same-origin" title="The Skillset rack on Central's documentation set:one methodology, eight methods, nine skills and a child set. Turn a member off and Preview lights."></iframe></div><figcaption>The Skillset rack on Central's documentation set:one methodology, eight methods, nine skills and a child set. Turn a member off and Preview lights. · <a href="http://127.0.0.1:5208/?device=ai-kit:skillset-rack&amp;view=all" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>View</th>
+<th>Holds</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>The set&#39;s name, the loaded count.</td>
+<td></td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>The members as a chain list: request, kind mark, name, ten ticks of evidence. Scope, Preview and Apply, the loaded count.</td>
+<td>A rack has no wave to draw. Its members, and what each has done, are its picture.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>Band one: Set, Compose, Package. Band two: every member in two columns, paged.</td>
+<td>Each control is an AIKit operation: enable through the profile, scope, preview and apply, export.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>The set as a page, grouped by kind.</td>
+<td>The set is a document that you read.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>The four marks with their counts; available, loaded, invoked.</td>
+<td>Carried is not loaded, and loaded is not used.</td>
+</tr>
+</tbody></table>
+</div>
+<p>A member that you turn off dims and its evidence goes dark. A member held back
+for an unreviewed revision draws in orange with a ! that gives the reason.</p>
+<h3 id="9-5-skill-method-methodology"><a class="anchor" href="#9-5-skill-method-methodology" aria-hidden="true">#</a>9.5 Skill, Method, Methodology</h3>
+<figure class="ui"><div class="ui-stage" data-w="1500" data-h="1000"><iframe src="http://127.0.0.1:5208/?device=ai-kit:skill-device&amp;view=all" loading="lazy" style="width:1500px;height:1000px" sandbox="allow-scripts allow-same-origin" title="One member device in three forms. Switch the fixture:a Method and its path, a Methodology and its table, a Skill, and a Method whose revision nobody has reviewed."></iframe></div><figcaption>One member device in three forms. Switch the fixture:a Method and its path, a Methodology and its table, a Skill, and a Method whose revision nobody has reviewed. · <a href="http://127.0.0.1:5208/?device=ai-kit:skill-device&amp;view=all" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>View</th>
+<th>Holds</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>The name, the form, the revision.</td>
+<td></td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>The mark large, the form and its question, the evidence. Enabled, Trust or Review, and the form&#39;s one control: Run, Instantiate or Reach.</td>
+<td>The form decides what you most need: to run a Method, to know whether a Methodology applies.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>Band one: the mark with the ten steps named, Standing, the form&#39;s section. Band two: a Method&#39;s path, a Methodology&#39;s table, a Skill&#39;s purpose.</td>
+<td>AIKit keeps one identity for all three forms. One device with three faces keeps it too.</td>
+</tr>
+<tr>
+<td>Full</td>
+<td>The member&#39;s text.</td>
+<td>The text is the member.</td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>The mark, the evidence, Run for a Method.</td>
+<td></td>
+</tr>
+</tbody></table>
+</div>
+<p>A Method&#39;s path draws each step as a node and the members it uses as marks
+under it. The line between steps is dashed, because a step that the work does
+not touch is skipped.</p>
+<h3 id="9-6-scope"><a class="anchor" href="#9-6-scope" aria-hidden="true">#</a>9.6 Scope</h3>
+<figure class="ui"><div class="ui-stage" data-w="1500" data-h="940"><iframe src="http://127.0.0.1:5208/?device=software-factory:context-write-mode&amp;view=all" loading="lazy" style="width:1500px;height:940px" sandbox="allow-scripts allow-same-origin" title="Scope in its five views. Raise the reach and it waits for you to confirm. Teal is what the agent may read; amber is what it may write."></iframe></div><figcaption>Scope in its five views. Raise the reach and it waits for you to confirm. Teal is what the agent may read; amber is what it may write. · <a href="http://127.0.0.1:5208/?device=software-factory:context-write-mode&amp;view=all" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>View</th>
+<th>Holds</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Folded</td>
+<td>Scope, the reach.</td>
+<td></td>
+</tr>
+<tr>
+<td>Compact</td>
+<td>The rings, teal over the top for reads and amber under the bottom for writes; the basis. Macros: Reach, Writes, and the counts of read and write places.</td>
+<td>Both reaches show even when they are on one ring.</td>
+</tr>
+<tr>
+<td>Whole</td>
+<td>Band one: the rings with the reach handle, Reach with Confirm and Cancel, how writes arrive, the receipts. Band two: Reads, Writes, Knowledge and the basis.</td>
+<td></td>
+</tr>
+<tr>
+<td>Full</td>
+<td>The world the agent may touch, with its receipts on the places it wrote.</td>
+<td></td>
+</tr>
+<tr>
+<td>Widget</td>
+<td>Small rings, the reach, the write mode, the receipts.</td>
+<td></td>
+</tr>
+</tbody></table>
+</div>
+<h2 id="10-when-a-device-s-ui-is-done"><a class="anchor" href="#10-when-a-device-s-ui-is-done" aria-hidden="true">#</a>10. When a device&#39;s UI is done</h2>
+<p>A device&#39;s UI is done when all of these are true:</p>
+<ul>
+<li>All five views draw in the device gallery on the device&#39;s declared
+parameters.</li>
+<li>The five views move together.</li>
+<li>Every control says what it does in the status bar.</li>
+<li>Nothing scrolls inside a plate, and no box sits inside a box.</li>
+<li>The compact view has four macros or fewer.</li>
+<li>The display draws from values, and its handles move the parameters they
+show.</li>
+<li>Every control works from the keyboard.</li>
+<li>The views match the device&#39;s catalogue entry.</li>
+<li>Beside its Live nearest, the plate reads as a Live device.</li>
+</ul>
+<p>To see a device in the gallery, run the gallery from <code>packages/live-shell/ui</code>:</p>
+<pre><code class="language-bash">npx vite --config src/inhabitants/catalogue/vite.config.mjs
+</code></pre>
+<p>Then open <code>?device=&lt;family&gt;:&lt;face&gt;&amp;view=all</code>. Add <code>&amp;generic=1</code> to see the
+generic plate of the same device.</p>
+<h2 id="11-the-runtime"><a class="anchor" href="#11-the-runtime" aria-hidden="true">#</a>11. The runtime</h2>
+<ul>
+<li>The device runtime draws a device&#39;s own views when it has them, and the
+generic plate when it does not.</li>
+<li>The runtime has one size for each of the five views. Whole holds the
+controls. Full holds the material.</li>
+<li>The panel kit draws the head, the sections and the controls of every plate,
+generic plates included. An instrument&#39;s sections are bands and sections.</li>
+<li>A change goes to the owner when you release the control, as §5.2 says. No
+plate has a Send button.</li>
+<li>A field device of Expressions uses its field diagram as its display.</li>
+</ul>
+
+</article></main>
+</div>
+<script>
+(()=>{
+  const root=document.documentElement
+  try{const t=localStorage.getItem('dlw-theme');if(t)root.dataset.theme=t}catch(e){}
+  document.querySelector('.theme').onclick=()=>{
+    const dark=root.dataset.theme?root.dataset.theme==='dark':matchMedia('(prefers-color-scheme: dark)').matches
+    root.dataset.theme=dark?'light':'dark'
+    try{localStorage.setItem('dlw-theme',root.dataset.theme)}catch(e){}
+  }
+  const fit=()=>document.querySelectorAll('.ui-stage').forEach(st=>{const w=+st.dataset.w,h=+st.dataset.h,k=Math.min(1,st.clientWidth/w);st.style.height=(h*k)+'px';st.firstElementChild.style.transform='scale('+k+')'})
+  fit();addEventListener('resize',fit)
+  const nav=document.querySelector('nav')
+  document.querySelector('.menu').onclick=()=>nav.classList.toggle('open')
+  nav.addEventListener('click',e=>{if(e.target.closest('a'))nav.classList.remove('open')})
+  const links=[...nav.querySelectorAll('a')],byId=new Map(links.map(a=>[a.hash.slice(1),a]))
+  const seen=new IntersectionObserver(es=>{for(const e of es)if(e.isIntersecting){links.forEach(a=>a.classList.remove('on'));byId.get(e.target.id)?.classList.add('on')}},{rootMargin:'0px 0px -75% 0px'})
+  document.querySelectorAll('article h1[id],article h2[id]').forEach(h=>seen.observe(h))
+})()
+</script>
+</body>
+</html>
