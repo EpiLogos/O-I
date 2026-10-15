@@ -1,3 +1,4 @@
+import {tellOwnerChanged} from '../owners/notices'
 import {kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
 import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
 
@@ -79,6 +80,9 @@ async function controlOutcome(
   if (outcome.outcome?.result !== 'harness_agent_outcome') {
     return {ok: false, error: `Unexpected harness control outcome: ${outcome.outcome?.result ?? 'no result named'}`}
   }
+  // The control changed the harness's sessions (new, stop, resume, restart, configure): on its receipt the agency readers are
+  // told, rather than waiting for the agency floor (owners/notices.ts).
+  tellOwnerChanged({topic: 'agency', cause: `a harness control: ${String(call.control)}`})
   return {ok: true, note: controlLine(String(call.control), outcome.outcome.document), document: outcome.outcome.document}
 }
 

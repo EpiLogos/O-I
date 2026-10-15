@@ -8,7 +8,9 @@ import {renderToStaticMarkup} from 'react-dom/server'
 
 // The frame's ONE temporal read (timeline/temporalPoll.ts; R2 objection 13): Factory's run needles
 // (agent/useTemporalEvents.ts) and the World cut (projections/useWorldTemporalReading.ts) both ask the kernel's
-// `temporal_events_read`, whose own cost is ~70 s of owner time per call. They share one poll, and each keeps its own shape.
+// `temporal_events_read`, whose own cost is ~70 s of owner time per call (136 owner processes, 15 Oct). They share one read,
+// and each keeps its own shape. Lane Q: it is read when told the field may have moved — a receipt, an act, the epoch, the
+// window regained — and otherwise at a slow floor while the window is seen; the 90 s poll is gone.
 // Channel: scripted over the poll with the bridge's fetch stubbed (the hook effects' wiring is source-pinned here and
 // UNVERIFIED on screen).
 const compiler = new URL('../node_modules/typescript/lib/typescript.js', import.meta.url).href
@@ -30,7 +32,7 @@ export async function load(u, c, n) {
     compilerOptions: {target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext, jsx: ts.JsxEmit.ReactJSX}}).outputText};
 }`)}`, import.meta.url)
 
-const {createTemporalPoll, temporalPollFor, civilWeekWindow, eventsBetween, eventsOfSubject, TEMPORAL_POLL_MS} = await import('../src/timeline/temporalPoll.ts')
+const {createTemporalPoll, temporalPollFor, civilWeekWindow, eventsBetween, eventsOfSubject, nextWindowBoundary, TEMPORAL_FLOOR_MS, TEMPORAL_ATTENTION_MIN_AGE_MS} = await import('../src/timeline/temporalPoll.ts')
 const {agentTemporalEvents, useTemporalEvents, AGENT_WINDOW_MS} = await import('../src/agent/useTemporalEvents.ts')
 
 const HOUR = 60 * 60 * 1000
@@ -52,8 +54,8 @@ function bridge(url, document = {events: []}) {
 
 const event = (subject_ref, instant_unix_ms, extra = {}) => ({stream: 's', kind: 'k', subject_ref, instant_unix_ms, summary: subject_ref, ...extra})
 
-test('two readers of one transport are served by ONE temporal_events_read, at mount and on each cadence', async (t) => {
-  t.mock.timers.enable({apis: ['setInterval']})
+test('two readers of one transport are served by ONE temporal_events_read, at mount and at the floor — no 90 s poll', async (t) => {
+  t.mock.timers.enable({apis: ['setTimeout', 'Date'], now: Date.UTC(2026, 9, 14, 6, 0, 0)})
   const transport = {kind: 'bridge', url: 'http://bridge.test/two-readers'}
   const calls = bridge(transport.url, {events: [event('run:a', Date.now() - HOUR)]})
   // The agent shell's reader and the World cut's reader each take the frame's poll for the transport (useTemporalReading).
@@ -71,28 +73,32 @@ test('two readers of one transport are served by ONE temporal_events_read, at mo
   assert.equal(agentSeen.length, 1)
   assert.equal(agentPoll.snapshot().events.length, 1, 'and both read the same standing reading')
 
-  t.mock.timers.tick(TEMPORAL_POLL_MS - 1)
+  t.mock.timers.tick(90_000)
   await settle()
-  assert.equal(calls.length, 1, 'no read before the 90 s cadence')
+  assert.equal(calls.length, 1, 'no 90 s cadence: nothing told the poll the field moved')
+  assert.ok(TEMPORAL_FLOOR_MS >= 300_000, 'the floor is slow: the read costs the owner a minute')
+  t.mock.timers.tick(TEMPORAL_FLOOR_MS - 90_000 - 1)
+  await settle()
+  assert.equal(calls.length, 1, 'no read before the floor')
   t.mock.timers.tick(1)
   await settle()
-  assert.equal(calls.length, 2, 'one read per cadence, however many readers')
+  assert.equal(calls.length, 2, 'one read at the floor, however many readers')
   assert.deepEqual(agentSeen, worldSeen)
 
   offAgent()
   await settle()
-  t.mock.timers.tick(TEMPORAL_POLL_MS)
+  t.mock.timers.tick(TEMPORAL_FLOOR_MS)
   await settle()
-  assert.equal(calls.length, 3, 'a reader remains: the poll runs')
+  assert.equal(calls.length, 3, 'a reader remains: the floor runs')
   offWorld()
   await settle()
-  t.mock.timers.tick(TEMPORAL_POLL_MS * 3)
+  t.mock.timers.tick(TEMPORAL_FLOOR_MS * 3)
   await settle()
   assert.equal(calls.length, 3, 'the last reader leaving stops the poll: no timer, no read')
 })
 
-test('a read in flight is awaited, never doubled: refresh and the cadence share it', async (t) => {
-  t.mock.timers.enable({apis: ['setInterval']})
+test('a read in flight is awaited, never doubled: refresh and the floor share it; a notice during it asks once more after it', async (t) => {
+  t.mock.timers.enable({apis: ['setTimeout']})
   const calls = []
   let release
   const poll = createTemporalPoll({kind: 'bridge', url: 'http://bridge.test/in-flight'}, {
@@ -103,15 +109,24 @@ test('a read in flight is awaited, never doubled: refresh and the cadence share 
   const first = poll.refresh()
   const second = poll.refresh()
   assert.equal(first, second, 'a refresh while a read stands is the read itself')
-  t.mock.timers.tick(TEMPORAL_POLL_MS)
-  assert.equal(calls.length, 1, 'the cadence does not pile a second read behind the first')
+  assert.equal(calls.length, 1, 'nothing piles a second read behind the first')
   release()
   await first
   assert.equal(poll.snapshot().status, 'ready')
   void poll.refresh()
   assert.equal(calls.length, 2, 'once settled, a refresh reads again')
+  // A notice while this read runs: the read may have started before the change, so one more read follows it — one, however
+  // many notices arrive.
+  poll.notice('kernel receipt working_surface_driving')
+  poll.notice('a told act')
+  assert.equal(calls.length, 2)
   release()
   await settle()
+  assert.equal(calls.length, 3, 'exactly one read follows the read in flight')
+  release()
+  await settle()
+  assert.equal(calls.length, 3)
+  assert.equal(poll.snapshot().cause, 'a told act', 'the reading says what asked for it')
   off()
 })
 
@@ -222,7 +237,7 @@ test('each completed execution moves the revision once, a refusal included; the 
 })
 
 test('React\'s replay of an effect (unsubscribe, then subscribe, in one task) does not restart the poll; a real stop does', async (t) => {
-  t.mock.timers.enable({apis: ['setInterval']})
+  t.mock.timers.enable({apis: ['setTimeout']})
   const transport = {kind: 'bridge', url: 'http://bridge.test/replay'}
   const calls = bridge(transport.url)
   const poll = createTemporalPoll(transport)
@@ -233,7 +248,7 @@ test('React\'s replay of an effect (unsubscribe, then subscribe, in one task) do
   assert.equal(calls.length, 1, 'a replayed mount reads once')
   off()
   await settle()
-  t.mock.timers.tick(TEMPORAL_POLL_MS * 2)
+  t.mock.timers.tick(TEMPORAL_FLOOR_MS * 2)
   await settle()
   assert.equal(calls.length, 1, 'stopped: nothing more is read')
   assert.equal(poll.snapshot().status, 'reading', 'and nothing stale stands for the next reader to take as fresh')
@@ -267,6 +282,107 @@ test('the agent shell\'s hook reads the poll: rendered before any read it is emp
   assert.match(renderToStaticMarkup(createElement(Probe, {transport: {kind: 'bridge', url: 'http://bridge.test/ssr'}})), /0\|none/)
 })
 
+/** A poll over a counted owner with a fake window: visibility, the window's return and the shell's told acts are the harness's. */
+function toldPoll(t, start = Date.UTC(2026, 9, 14, 6, 0, 0)) {
+  t.mock.timers.enable({apis: ['setTimeout', 'Date'], now: start})
+  const calls = []
+  let visible = true
+  const attention = new Set()
+  const told = new Set()
+  const poll = createTemporalPoll({kind: 'bridge', url: 'http://bridge.test/told'}, {
+    kernelOp: async (_transport, op) => { calls.push(op); return reading({events: []}) },
+    visible: () => visible,
+    onAttention: listener => { attention.add(listener); return () => attention.delete(listener) },
+    onTold: listener => { told.add(listener); return () => told.delete(listener) },
+  })
+  return {
+    poll, calls,
+    setVisible: next => { visible = next },
+    regain: () => { for (const listener of attention) listener() },
+    tell: cause => { for (const listener of told) listener(cause) },
+    listeners: () => attention.size + told.size,
+  }
+}
+
+test('hidden, the floor reads nothing; coming back reads when the standing reading is older than a minute', async (t) => {
+  const h = toldPoll(t)
+  const off = h.poll.subscribe(() => {})
+  await settle()
+  assert.equal(h.calls.length, 1)
+  h.setVisible(false)
+  t.mock.timers.tick(TEMPORAL_FLOOR_MS * 4)
+  await settle()
+  assert.equal(h.calls.length, 1, 'twenty minutes hidden: not one read')
+  h.setVisible(true)
+  h.regain()
+  await settle()
+  assert.equal(h.calls.length, 2, 'the window regained, the reading twenty minutes old: read')
+  assert.equal(h.poll.snapshot().cause, 'window regained')
+  t.mock.timers.tick(TEMPORAL_ATTENTION_MIN_AGE_MS - 1_000)
+  h.regain()
+  await settle()
+  assert.equal(h.calls.length, 2, 'a return within the minute reads nothing: the reading is that fresh')
+  off()
+  await settle()
+  assert.equal(h.listeners(), 0, 'the last reader leaving lets go of the window\'s notices')
+})
+
+test('the kernel\'s receipts and the spine\'s epoch tell the poll; a receipt that cannot move the field does not', async (t) => {
+  const h = toldPoll(t)
+  const off = h.poll.subscribe(() => {})
+  await settle()
+  const receipt = (seq, event, extra = {}) => ({seq, schema: 'oi.kernel-event/v1', version: 1, event, ...extra})
+  const standing = [receipt(1, 'focus_changed'), receipt(2, 'working_surface_driving')]
+  h.poll.observe(standing, '1|central')
+  await settle()
+  assert.equal(h.calls.length, 1, 'the receipts already standing when the reader arrived are not news')
+  h.poll.observe([...standing, receipt(3, 'surface_changed'), receipt(4, 'file_changed', {path: 'Work/O-I/docs/x.md'})], '1|central')
+  await settle()
+  assert.equal(h.calls.length, 1, 'receipts that cannot move the field ask nothing')
+  h.poll.observe([...standing, receipt(5, 'file_changed', {path: 'Control/agents/now/clearings/abc/T/thought.json'})], '1|central')
+  await settle()
+  assert.equal(h.calls.length, 2, 'a write under the NOW field reads')
+  assert.equal(h.poll.snapshot().cause, 'kernel receipt file_changed')
+  h.poll.observe([...standing, receipt(5, 'file_changed', {path: 'Control/agents/now/clearings/abc/T/thought.json'})], '1|central')
+  await settle()
+  assert.equal(h.calls.length, 2, 'every reader passes the same receipts: each is taken once')
+  h.poll.observe([], '2|central')
+  await settle()
+  assert.equal(h.calls.length, 3, 'the spine\'s epoch moved: read')
+  h.tell('the agency reading moved (window regained)')
+  await settle()
+  assert.equal(h.calls.length, 4, 'a told act reads')
+  off()
+})
+
+test('the floor counts from the last completed read, and a reading is never held past the window\'s own boundary', async (t) => {
+  // 23:58 UTC: the floor would fall after midnight, when the civil week's window has already moved.
+  const h = toldPoll(t, Date.UTC(2026, 9, 14, 23, 58, 0))
+  const off = h.poll.subscribe(() => {})
+  await settle()
+  assert.equal(h.calls.length, 1)
+  t.mock.timers.tick(2 * 60_000 - 1)
+  await settle()
+  assert.equal(h.calls.length, 1)
+  t.mock.timers.tick(1)
+  await settle()
+  assert.equal(h.calls.length, 2, 'read at the UTC midnight the window moves at')
+  assert.equal(h.calls[1].query.window.from_unix_ms, Date.UTC(2026, 9, 8), 'and it asks the new day\'s window')
+  assert.equal(nextWindowBoundary(Date.UTC(2026, 9, 14, 23, 58)), Date.UTC(2026, 9, 15))
+  // A told read resets the floor: it counts from that read.
+  t.mock.timers.tick(TEMPORAL_FLOOR_MS - 60_000)
+  h.tell('a told act')
+  await settle()
+  assert.equal(h.calls.length, 3)
+  t.mock.timers.tick(TEMPORAL_FLOOR_MS - 1)
+  await settle()
+  assert.equal(h.calls.length, 3, 'the floor waits a whole floor after the told read')
+  t.mock.timers.tick(1)
+  await settle()
+  assert.equal(h.calls.length, 4)
+  off()
+})
+
 // The wiring, pinned on source (the hooks' effects need a DOM this suite does not have).
 const src = new URL('../src/', import.meta.url).pathname
 async function sourceFiles(dir) {
@@ -289,7 +405,8 @@ test('both readers consume the poll and run no timer or kernel read of their own
     assert.doesNotMatch(source, /op: 'temporal_events_read'/, `${name} does not read the op itself`)
   }
   assert.doesNotMatch(agent, /kernelOp/, 'the agent shell\'s reader makes no kernel call')
-  assert.match(world, /kernelOp\(transport, \{op: 'agency_read'/, 'the World cut still reads the agency, a different op')
+  assert.doesNotMatch(world, /kernelOp/, 'the World cut makes no kernel call of its own')
+  assert.match(world, /agencyEntry\(transport, 'O-I'\)/, 'its run lanes are the window\'s one agency answer (owners/agency.ts), never an agency read of its own')
 })
 
 test('the op is read in one place: the poll. A third call site is a third poller', async () => {

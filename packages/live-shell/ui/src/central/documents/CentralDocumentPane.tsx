@@ -28,7 +28,8 @@ import {FlowFace} from '../../inhabitants/DocumentFlowFace'
 import type {DayDocumentStanding} from '../centralVertical'
 import {CentralDayNotice} from '../CentralDayNotice'
 import {CENTRAL_DOCUMENT_PANE_KIND, parseDocumentSubject} from './centralDocuments'
-import {readDayStanding, readLatestFlow, type FlowReading} from './documentReadings'
+import {readLatestFlow, type FlowReading} from './documentReadings'
+import {useDayAnswer} from '../../owners/day'
 import './centralDocuments.css'
 import {DocumentPaneContext} from './documentDoor'
 
@@ -46,17 +47,11 @@ function useWindowReturns(): number {
   return count
 }
 
-/** The owner's standing for one Day (`dayRef` null: the current Day); null while the owner answers. */
+/** The owner's standing for one Day (`dayRef` null: the current Day); null while the owner answers. The window's shared Day
+ * answer (owners/day.ts): an answered Day is read again when the window is regained; a refusal (the stale-today pointer,
+ * refused on every boot) is remembered for the spine's epoch, which this pane's own root reads as published by the shell. */
 export function useDayStanding(transport: KernelTransportStatus, dayRef: string | null): DayDocumentStanding | null {
-  const returns = useWindowReturns()
-  const key = dayRef ?? 'current'
-  const [held, setHeld] = useState<{key: string; standing: DayDocumentStanding} | null>(null)
-  useEffect(() => {
-    let alive = true
-    void readDayStanding(transport, dayRef).then(standing => { if (alive) setHeld({key, standing}) })
-    return () => { alive = false }
-  }, [transport, dayRef, key, returns])
-  return held?.key === key ? held.standing : null
+  return useDayAnswer(transport, dayRef).standing
 }
 
 /** The most recent Flow the owner lists; null while the owner answers. It is chosen once and held — a Flow written while this
