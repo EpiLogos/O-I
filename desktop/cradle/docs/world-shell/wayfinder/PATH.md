@@ -101,8 +101,8 @@ objections verbatim and the full validation (`BRIEF-BUILDER.md`); the lead conve
 |---|---|---|---|
 | Native screen pass against the mockup renders; N1; the lanes' convergence | lead | `App.tsx`, `native/Workbench.tsx`, `shell/modeFrames.ts`, the book, the register | 14 Oct |
 | Y — the hosted frame shows only its field in a pane; its chrome's controls onto the Studio, the M1′–M3′ plates and the transport (`tickets/T-FRAME-CHROME-ONTO-PLATES.md`) | Opus builder | the frame's chrome and host-mode handling, `protocol.ts` (commands/state only), `components/expressions/studio/**`, the M1′–M3′ plates, `shell/modeTransports.tsx` | 15 Oct |
-| Q — the shell reads an owner when told: agency on focus and its own acts (never hidden), temporal on a Day/NOW change, one store each for task/definition/workcell readings, the register load through the knowledge coordinator, Settings read when opened, a refusal remembered for its epoch | Opus builder | `ui/src/agent/**`, `timeline/temporalPoll.ts`, `native/wikiSubjectStanding.ts` + the coordinator, `settings/**`, a new owners store | 15 Oct |
-| K2 — the door's register reads coalesce into AIKit's relations batch (fallback to singles when the verb is absent), the remaining pure owner reads leave the lock, FileRead's retained write leaves it, `oi` caches its suite verification | Opus builder | `desktop/cradle/kernel/src/**`, `cli/src/product_command_route.rs` | 15 Oct |
+| K2 — the door's register reads coalesce into AIKit's relations batch (fallback to singles when the verb is absent), the remaining pure owner reads leave the lock, FileRead's retained write leaves it, `oi` caches its suite verification; the temporal read adopts Central's `thoughts.read-batch` with the same fallback | Opus builder | `desktop/cradle/kernel/src/**`, `cli/src/product_command_route.rs` | 15 Oct |
+| D — Technē's door never freezes the shell: the ~60 s main-thread stall after the double-click profiled and broken up (the projection's answers unchanged), register standings that stay "reading" settled | Opus builder | `desktop/cradle/src/techne/**` (not m0m5/palace), `ui/src/techne/subject/**`, `native/wikiSubjectStanding.ts` (standing transitions) | 15 Oct |
 
 Then: the 126 targets re-homed (lane M, FOUNDATION §8): `acceptance.py rehome` re-opens every cited path:line, runs the
 reachability script over every home and records home, owner op and evidence — or a named gap — on each row; `verify` holds
@@ -112,6 +112,17 @@ Palace). Ranked: G1 the stage's file exports have no native receiver (the main w
 cancels `<a download>`: lane-1 B2/B3); G2 the Instruments rail keeps no subject into Graph (D1); G3 the shell carries no
 frame deep-link address (E22); R1 Places onto the atlas (31 targets); R2 palaces onto the atlas (N4, 9); S1 mount N2's
 subject door — 76 homes read their facets only on a Wiki-bound Scene, reached today only by Examine in the Graph pane.
+Then: lane Q landed (`50dda0ccb`): the shell reads an owner when told — one held answer per owner read (src/owners/), agency on the
+spine's epoch/world context, focus/visibility and its own acts with a 30 s floor while visible and nothing hidden, the temporal field
+on the kernel receipts that can move it with a 5-minute floor, one store each for task/roster/workcell readings, the register load
+through the knowledge coordinator, Settings read on first open, refusals remembered for their epoch. Measured headless: idle visible
+212.7 → 14.0 owner processes/min, hidden 205.7 → 0, boot 308 → 185; the door spread (last register +151 s against +64 s) behind a
+~60 s renderer stall — lane D. Lane C landed in the owners: Central #273 (`central.now.thoughts.read-batch`: 110 single reads
+9.6–32.6 s → one batch 0.083 s, items equal 110/110; `effective-sources` answers a Project with no declared World its inherited root
+lineage, per world.rs's own convention) and Workcell #116 (a declared identity, `workcell identity set REF --rebind`: O:I's
+`workcell status --json` exit 7 → 0 on a copy of the Mac's state). After they land and install, the owner's machine step: `workcell
+identity set workcell:mac --rebind` (not before). AIKit should read `data.inherited_root_lineage` (one spawn fewer per read).
+
 Then: lane K landed (`98385f92d`): one kernel dispatch for both hosts — prepare under the lock, owner work outside it, finish under
 it — with prepared forms for agency, encounter, task, definition, roster, harness, World/project reads and browses (a superseded
 navigation retired), Central/workcell/day/NOW reads; one bounded runner gives every owner call a limit and a named refusal; the
