@@ -10,6 +10,7 @@ import type {IconName} from '../inhabitants/sdk/icons'
 import type {BrowserCategory, ControlledBrowser} from '../frame/browser/browserKinds'
 import {SET_INSTRUMENT_ELEMENTS, NOTE_DEVICE_KEPT} from '../live/liveChainDevices'
 import {addNoteDevice} from '../live/noteDevices/noteDeviceHold'
+import {NOTE_DEVICE_MIME} from '../live/noteDevices/noteDeviceDrag'
 import {trackDeviceFaceTitle} from '../live/liveChain'
 import {NOTE_DEVICE_LABEL, NOTE_DEVICES_WAITING, type NoteDeviceKind} from '../live/noteDevices/noteDevices'
 import {withoutExtension} from '../frame/browser/rowWords'
@@ -52,7 +53,8 @@ function NoteDeviceRows({filter}: {filter: string}) {
   const waiting = NOTE_DEVICES_WAITING.filter(item => item.label.toLowerCase().includes(filter))
   return <>
     {kinds.map(kind => <button key={kind} type="button" className="browser-item" data-browser-note-device={kind}
-      title={`${NOTE_DEVICE_LABEL[kind]} — a note device before the torus. Double-click or Enter puts it on the chain. ${NOTE_DEVICE_KEPT}`}
+      title={`${NOTE_DEVICE_LABEL[kind]} — a note device before the torus. Double-click, Enter or a drag onto the chain's end puts it on the chain. ${NOTE_DEVICE_KEPT}`}
+      draggable onDragStart={event => { event.dataTransfer.effectAllowed = 'copy'; event.dataTransfer.setData(NOTE_DEVICE_MIME, kind); event.dataTransfer.setData('text/plain', NOTE_DEVICE_LABEL[kind]) }}
       onDoubleClick={() => addNoteDevice(kind)} onKeyDown={event => { if (event.key === 'Enter') { event.preventDefault(); addNoteDevice(kind) } }}>
       <Mark name="direct" size={12} /><span>{NOTE_DEVICE_LABEL[kind]}</span><span className="mode-browser-row-meta">note device</span>
     </button>)}

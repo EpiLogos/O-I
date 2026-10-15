@@ -6,11 +6,11 @@
 // saying what it waits for (the mode's own words) and no body under it; a mode whose clip is not chosen from its tracks
 // registers that, and its body stands. Bodies are mounted on first use and kept mounted-concealed after (the
 // hidden-inhabitant law), so a mode's detail returns as it was left.
-import {useRef} from 'react'
+import {useRef, useState, type DragEvent} from 'react'
 import {useDetailReading} from './detailReading'
 import {ClipBox, useSelectedClip} from './ClipBox'
 import {ClipWaiting} from './ClipView'
-import {MODE_DETAILS} from '../../shell/modeDetails'
+import {MODE_DETAILS, type ChainDrop} from '../../shell/modeDetails'
 import {InstrumentDeviceDetail} from '../../shell/ModeDetail'
 import type {SurfMode} from '../../shell/modeGrammar'
 import './detail.css'
@@ -39,8 +39,28 @@ export function DetailHost({side}: {side: 'clip' | 'device'}) {
       // wherever the editor is a Clip view (ClipBox.tsx clipBoxRows; detail.css hides the strip over a .clipv).
       return <div key={held} className={`detail-body${which === 'clip' ? ' detail-body--clip' : ''}`} hidden={!shown} data-detail-body={held}>
         {which === 'clip' && <ClipBox />}
-        {which === 'clip' ? <Body /> : <div className="detail-chain"><div className="detail-chain-devices"><Body /></div>{table.dropHint !== null && <div className="dropz">{table.dropHint}</div>}</div>}
+        {which === 'clip' ? <Body /> : <div className="detail-chain"><div className="detail-chain-devices"><Body /></div>{table.dropHint !== null && <ChainEnd hint={table.dropHint} drop={table.drop} />}</div>}
       </div>
     })}
   </div>
+}
+
+/** The chain's end (the mockup's .dropz): a hint, and — where the mode registers a receiver — the place a dragged device lands.
+ * It arms while a drag it accepts is held over it (Factory's own end, agent/devices/FactoryDeviceChain.tsx, is the idiom) and
+ * says a refusal in place until the next drag. */
+function ChainEnd({hint, drop}: {hint: string; drop?: ChainDrop}) {
+  const [armed, setArmed] = useState(false)
+  const [refused, setRefused] = useState<string | null>(null)
+  if (!drop) return <div className="dropz">{hint}</div>
+  const accepted = (event: DragEvent<HTMLElement>) => event.dataTransfer.types.includes(drop.accepts)
+  return <div className={'dropz' + (armed ? ' armed' : '')} data-chain-end="receives" data-i={`Chain end|${hint}: drag a device from the browser and let go here.`}
+    onDragEnter={event => {if (accepted(event)) {event.preventDefault(); setArmed(true); setRefused(null)}}}
+    onDragOver={event => {if (accepted(event)) {event.preventDefault(); event.dataTransfer.dropEffect = 'copy'}}}
+    onDragLeave={() => setArmed(false)}
+    onDrop={event => {
+      if (!accepted(event)) return
+      event.preventDefault()
+      setArmed(false)
+      setRefused(drop.receive(event.dataTransfer.getData(drop.accepts)))
+    }}>{refused ?? hint}</div>
 }

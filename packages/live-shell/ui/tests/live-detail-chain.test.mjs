@@ -171,8 +171,26 @@ test('in the host: one head over the row, the plates, and the drop zone the regi
   const markup = renderToStaticMarkup(createElement(DetailContext.Provider, {value: detail}, createElement(DetailHost, {side: 'device'})))
   assert.equal((markup.match(/class="detail-head"/g) ?? []).length, 1, 'one head')
   assert.match(markup, /<header class="detail-head"[^>]*><b>Torus<\/b><span class="detail-head-line"> — Glue Compressor → Plug-in → Reverb<\/span><\/header>/)
-  assert.ok(at(markup, 'data-chain-device="Reverb"') < at(markup, '<div class="dropz">Drop an instrument or effect here</div>'), 'the chain ends in the drop zone')
+  assert.ok(at(markup, 'data-chain-device="Reverb"') < at(markup, '<div class="dropz" data-chain-end="receives"'), 'the chain ends in the drop zone')
+  assert.match(markup, /<div class="dropz" data-chain-end="receives" data-i="[^"]*">Drop an instrument or effect here<\/div>/, 'the end receives: Live registers what lands on it')
 }))
+
+test('a note device dropped on the chain\'s end lands as the row\'s double-click lands it; anything else is refused in words (lane D\'s carry, 15 Oct)', async () => {
+  const {NOTE_DEVICE_MIME, parseNoteDeviceDrag} = await import('../src/live/noteDevices/noteDeviceDrag.ts')
+  const {noteDeviceChain, resetNoteDeviceChain} = await import('../src/live/noteDevices/noteDeviceHold.ts')
+  const {drop} = MODE_DETAILS.live
+  assert.equal(drop.accepts, NOTE_DEVICE_MIME, 'the end accepts the browser row\'s drag type')
+  assert.equal(parseNoteDeviceDrag('scale'), 'scale')
+  assert.equal(parseNoteDeviceDrag('constructor'), null, 'a payload is a kind the chain can take, never a property of the table')
+  resetNoteDeviceChain()
+  assert.equal(drop.receive('scale'), null, 'it landed')
+  assert.deepEqual(noteDeviceChain().map(device => device.kind), ['scale'], 'the same device the double-click adds')
+  assert.equal(drop.receive('reverb'), 'Only a note device lands on this chain.')
+  assert.equal(noteDeviceChain().length, 1, 'a refused drop changes nothing')
+  resetNoteDeviceChain()
+  const browser = await readFile(new URL('../src/components/BrowserPane.tsx', import.meta.url), 'utf8')
+  assert.match(browser, /draggable onDragStart=\{event => \{ event\.dataTransfer\.effectAllowed = 'copy'; event\.dataTransfer\.setData\(NOTE_DEVICE_MIME, kind\)/, 'the row carries its kind')
+})
 
 test('code-reading: the chain draws through the runtime, holds no mode branch, and the panel is the registration\'s thin pair', async () => {
   const sources = await Promise.all(['live/LiveDeviceChain.tsx', 'live/SetDeviceOnChain.tsx', 'live/KeyboardOnChain.tsx', 'live/noteDevices/NoteDeviceChain.tsx', 'live/liveChainDevices.ts', 'live/LiveClip.tsx', 'components/DeviceChainPanel.tsx']
