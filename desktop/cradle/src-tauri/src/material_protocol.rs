@@ -20,7 +20,7 @@
 //! reached, and `..`/absolute segments are refused outright before any
 //! owner call is made.
 use oi_cradle_kernel::files::MaterialRouteError;
-use oi_cradle_kernel::{KernelOp, KernelOpResult};
+use oi_cradle_kernel::KernelOpResult;
 use tauri::http::{Request, Response, StatusCode};
 use tauri::{AppHandle, Manager, Runtime};
 
@@ -81,19 +81,16 @@ fn handle<R: Runtime>(app_handle: &AppHandle<R>, request: &Request<Vec<u8>>) -> 
         }
     }
 
+    // Through the kernel's one dispatch (files::read_material), as the dev bridge's /material route already reads: the listing and
+    // the bytes are prepared owner reads, so a document's material never holds the kernel lock while Central answers.
     let host = app_handle.state::<KernelHost>();
-    let mut kernel = match host.0.lock() {
-        Ok(kernel) => kernel,
-        Err(_) => return refuse(StatusCode::NOT_FOUND, "Kernel is unavailable"),
-    };
-
-    let target = match oi_cradle_kernel::files::resolve_material(&mut kernel, &location, &relative) {
-        Ok(resolved) => resolved,
+    let (target, bytes) = match oi_cradle_kernel::files::read_material(&host.0, &location, &relative) {
+        Ok(read) => read,
         Err(MaterialRouteError::Forbidden(message)) => return refuse(StatusCode::FORBIDDEN, &message),
         Err(MaterialRouteError::NotFound(message)) => return owner_error(&message),
     };
 
-    match kernel.apply(KernelOp::FileBytes { location: target.clone() }) {
+    match bytes {
         Ok(outcome) => match outcome.result {
             KernelOpResult::FileBytes { byte_len: _, mime_hint, content_base64, .. } => {
                 match base64_decode(&content_base64) {
