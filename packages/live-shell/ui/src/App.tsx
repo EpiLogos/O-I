@@ -59,6 +59,7 @@ import {useAtlasView} from './projections/atlas/AtlasProjectionPanel'
 import {deviceInstrumentFor, factoryFocusedPane, type HostedLens} from './shell/paneInstrument'
 import {focusedSurfaceKind, isFactoryMode} from './agent/factoryCentre'
 import {subjectWords} from './central/daySurface'
+import {worldSubjectOf} from './techne/subject/worldRows'
 registerAtlasHost()
 registerTimelineHost()
 registerCentralDocumentPane()
@@ -515,7 +516,7 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   // The one stage frame is placed over the pane that holds it, in every mode — unless the large native editor holds the centre.
   const expressionsPlaced = framePlacement !== null && centerPanel !== 'world.expressions'
   const detailReading: DetailReading = {
-    mode: frameMode, transport: workspace.transport, world: worldView, worldCut, centralSubject, focusedInstrument,
+    mode: frameMode, transport: workspace.transport, world: worldView, worldCut, centralSubject, worldSubject: worldSubjectOf(worldSelection), focusedInstrument,
     live: {ctx, document: deep.document, selection},
     native: {configurationIntent: detailConfiguration, presentMode: mode => {changeDetailMode(mode); setDetail(true)}, presentNativeEditor,
       expand: () => {if(!detailExpansionReturn.current)detailExpansionReturn.current={height:detailHeight,workspaceId:workspace.workspaceId,accessEpoch:workspace.accessEpoch};resizeDetail(Math.max(120,viewport[1]-156))},

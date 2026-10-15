@@ -20,6 +20,8 @@ export interface DetailReading {
   /** The focused pane is the Session · Arrangement pane over the World cut. */
   worldCut: boolean
   centralSubject: CentralSubjectSelection | null
+  /** The World subject the browser's Technē rows hold (techne/subject/worldRows.ts worldSubjectOf), or none. */
+  worldSubject?: {kind: string; ref: string; title: string} | null
   live: {ctx: PanelContext; document: SetDocument | null; selection: SetSelection}
   native: Omit<ComponentProps<typeof NativeWorldDetail>, 'mode'>
   factory: {tracks: AgentSessionTrack[]}

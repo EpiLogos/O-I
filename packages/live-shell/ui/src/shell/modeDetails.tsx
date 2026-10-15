@@ -19,6 +19,7 @@ import {CentralClipChooser} from '../central/CentralClipChooser'
 import {centralSubjectName} from '../central/CentralClipDetail'
 import {BaseDevicesDetail, FactoryTaskLogDetail, TechneClipDetail, TechneInstrumentsDetail} from './ModeDetail'
 import {AgentShellDeviceDetail} from '../agent/AgentShellDeviceDetail'
+import {WorldSubjectClip} from '../techne/subject/WorldSubjectClip'
 import {useAgentSessionsOptional} from '../agent/AgentSessionsProvider'
 import {eventsForSession, trackKey, type AgentSessionTrack} from '../agent/agentRunModel'
 import {parseFactoryTaskRef} from '../timeline/factoryTrackAdapter'
@@ -118,7 +119,7 @@ function FactoryChain() { const {factory} = useDetailReading(); return <AgentShe
 function ExpressionsClip() { const {native} = useDetailReading(); return <NativeWorldDetail mode="clip" sceneControls {...native} /> }
 function ExpressionsChain() { const {native} = useDetailReading(); return <NativeWorldDetail mode="device" {...native} /> }
 // Technē's clips are World cut events while the tracks pane stands over the World cut, else the open work's native clip.
-function TechneClip() { const {worldCut, world, native} = useDetailReading(); return worldCut ? <TechneClipDetail world={world} /> : <NativeWorldDetail mode="clip" {...native} /> }
+function TechneClip() { const {worldCut, world, native, worldSubject} = useDetailReading(); return worldSubject ? <WorldSubjectClip subject={worldSubject} /> : worldCut ? <TechneClipDetail world={world} /> : <NativeWorldDetail mode="clip" {...native} /> }
 function TechneChain() { const {transport} = useDetailReading(); return <TechneInstrumentsDetail transport={transport} /> }
 
 export const MODE_DETAILS: Readonly<Record<SurfMode, ModeDetail>> = {
@@ -183,7 +184,7 @@ export const MODE_DETAILS: Readonly<Record<SurfMode, ModeDetail>> = {
   techne: {clip: TechneClip, device: TechneChain, dropHint: 'Drop a device here',
     clipWaits: 'Select an event or a stop to see what is in focus here.',
     head: {
-      clip: ({selected}) => selected.clip ? {name: selected.clip.label, line: 'what is in focus'} : {name: 'Clip'},
+      clip: ({selected, detail}) => selected.clip ? {name: selected.clip.label, line: 'what is in focus'} : detail.worldSubject ? {name: detail.worldSubject.title, line: 'what is in focus'} : {name: 'Clip'},
       device: ({instrument}) => instrument ? instrumentHead(instrument) : {name: 'Instruments', line: 'none open on the focused pane'},
     }},
 }
