@@ -136,7 +136,19 @@ export function configureWikiProjectionAccess(scope: string, epoch: string, isCu
     [key, standing.phase === 'reading' ? {phase: 'idle'} : {...standing, readingInvalidated: true}])), revision: state.revision + 1};
   emit();
 }
-export function retireWikiProjectionAccess() {managedAccess = true; ++accessGeneration; emit();}
+/** A retired access drops the reads it started (their access is no longer current), so a standing still "reading" under it
+ * is read by nothing: it returns to "idle", as a new access's standings do, and the next ensure reads it again. Kept as it
+ * was, it said "reading" until the next access was configured — and for ever when that access kept its epoch, since the
+ * ensure path never re-reads a standing that is not idle. Settled standings keep their projection and documents. */
+export function retireWikiProjectionAccess() {
+  managedAccess = true; ++accessGeneration;
+  rereadGenerations.clear(); rereadsInFlight.clear();
+  const standings: Record<string, RegisterStanding> = {...state.standings};
+  let settled = false;
+  for (const [key, standing] of Object.entries(standings)) if (standing.phase === 'reading') {standings[key] = {phase: 'idle'}; settled = true;}
+  if (settled) state = {...state, standings, revision: state.revision + 1};
+  emit();
+}
 export function captureWikiProjectionAccess() {
   const generation = accessGeneration, access = ownerAccess;
   return {identity: JSON.stringify([access?.scope, access?.epoch, generation]),
@@ -496,8 +508,15 @@ async function rereadWikiRegisterOnce(register: WikiRegister, transport: KernelT
         ? {phase: "ready", reading: fresh, projection, document: standing.document}
         : {phase: "drift", reading: fresh, projection, document: standing.document, reason: "The source revision changed; the native composition was retained"});
     } else setStanding(register.key, {phase: "projected", reading: fresh, projection});
-  } catch {
-    // The standing generation stays exactly as it was.
+  } catch (cause) {
+    // The standing generation stays exactly as it was — unless nothing stands yet: a re-read that superseded a first read
+    // still in flight (that read's answer is dropped as stale) is the only read left to settle the standing, so a projection
+    // that throws settles it as the named unavailable reading, as the first read's own path does. Left "reading", it waited
+    // for an answer no read would give.
+    const standing = state.standings[register.key];
+    if (standing?.phase === "reading" && current() && rereadGenerations.get(register.key) === generation) {
+      setStanding(register.key, {phase: "unavailable", reason: text(cause)});
+    }
   }
 }
 
