@@ -4,9 +4,11 @@
 // stop = the day's face standing its entries, takes = revisions).
 //
 // Projection, over two reads Central mode already makes — nothing is copied into a second store, nothing is written:
-// - tracks: Day, Flows, Beings, Things, Goals, always in that order (`central:stream:<name>`). Only Day has an owner read
-//   today; the other four are `waiting` in the mode grammar (shell/modeGrammar.ts, the `base` browser) and stand as named,
+// - tracks: Day, Flows, Beings, Things, Goals, always in that order (`central:stream:<name>`). Day and Flows have owner reads;
+//   Beings, Things and Goals are `waiting` in the mode grammar (shell/modeGrammar.ts, the `base` browser) and stand as named,
 //   empty tracks whose owner's absence is in the track's `kind` text (the grid's name tooltip), never a fabricated clip;
+// - Flows' clips (15 Oct): the owner's Flow documents (`files_list` at Control/user/flows — the browser's Flows rows' read), each in
+//   its civil day's row at the moment its minted name gives, held inside that day as an entry is; one named by hand in "no time";
 // - Day's clips: the day records (the browser's Days rows: `files_list` at the root register's day surface, ported from
 //   shell/ModeBrowser.tsx DaysRows) and the day's entries (the World cut's own day lane — timeline/dayTrackAdapter.ts — the
 //   same clips under the same ids, so the shell's existing occasion route opens an entry in the Clip side);
@@ -60,7 +62,7 @@ const MINUTES_PER_DAY = 1440
  * the shell's tokens (shell/modeSurface.css `--mode-*`), falling back to the track default where a scope does not define them. */
 const STREAMS = [
   {id: 'day', name: 'Day', category: 'central-days', readable: true, colour: 'var(--mode-day, var(--track-default, var(--bg-3)))'},
-  {id: 'flows', name: 'Flows', category: 'central-flows', readable: false, colour: 'var(--mode-flows, var(--track-default, var(--bg-3)))'},
+  {id: 'flows', name: 'Flows', category: 'central-flows', readable: true, colour: 'var(--mode-flows, var(--track-default, var(--bg-3)))'},
   {id: 'beings', name: 'Beings', category: 'central-beings', readable: false, colour: 'var(--mode-beings, var(--track-default, var(--bg-3)))'},
   {id: 'things', name: 'Things', category: 'central-things', readable: false, colour: 'var(--mode-things, var(--track-default, var(--bg-3)))'},
   {id: 'goals', name: 'Goals', category: 'central-goals', readable: false, colour: 'var(--mode-goals, var(--track-default, var(--bg-3)))'},
@@ -92,9 +94,50 @@ export type CentralCivilReading =
   | {state: 'unavailable'; reason: string}
   | {state: 'live'; events: TemporalEventRow[]; absences: readonly TemporalStreamAbsence[]}
 
+/** One Flow document the owner lists in its Flows folder (`Control/user/flows`, flow/instances.ts USER_FLOWS_DIR). `instantMs`
+ * is when it was made, read from its minted name (flow/placement.ts mints `YYYY-MM-DD-HHMM` from this machine's local clock;
+ * reading it back through the same clock is its inverse); null for a Flow named by hand — no time is invented for it. */
+export interface CentralFlowRecord {
+  name: string
+  path: string
+  /** The civil day the name stamps (`YYYY-MM-DD`), or null. */
+  day: string | null
+  instantMs: number | null
+}
+
+/** The Flows, as the owner's listing stands. */
+export type CentralFlowsReading =
+  | {state: 'reading'}
+  | {state: 'unavailable'; reason: string}
+  | {state: 'read'; records: readonly CentralFlowRecord[]}
+
 export interface CentralReading {
   records: CentralDayRecordsReading
   civil: CentralCivilReading
+  /** The Flows track's read (absent: not read by this caller — the track says so). */
+  flows?: CentralFlowsReading
+}
+
+/** The owner's Flows folder: flow/instances.ts USER_FLOWS_DIR, named here because that module's imports reach the Flow document
+ * template (a test loader cannot load it); tests/central-tracks.test.mjs holds the two equal. */
+export const CENTRAL_FLOWS_PATH = 'Control/user/flows'
+
+/** A minted Flow name (flow/instance.ts instanceFileName; the rank documentReadings.ts latestFlowOf and rowWords.ts flowOrder read). */
+const MINTED_FLOW = /^flow-(\d{4})-(\d{2})-(\d{2})-(\d{2})(\d{2})(?:-(\d+))?\.html$/i
+/** A Flow document's path (the owner's Flows folder, flow/instances.ts USER_FLOWS_DIR). */
+const FLOW_PATH = /(?:^|\/)Control\/user\/flows\/[^/]+\.html$/i
+
+/** The Flows in an owner directory listing: the folder's `.html` files (flow/instances.ts listFlowInstances), each with the day and
+ * moment its minted name gives, oldest first (the grid's slot shows the one listed last: a day's newest Flow). */
+export function flowRecordsOf(directory: {entries: readonly {name: string; kind?: string; location?: {path?: string} | null}[]}, folder: string): CentralFlowRecord[] {
+  return directory.entries
+    .filter(entry => (entry.kind ?? 'file') === 'file' && /\.html$/i.test(entry.name))
+    .map(entry => {
+      const minted = MINTED_FLOW.exec(entry.name)
+      const instantMs = minted ? new Date(Number(minted[1]), Number(minted[2]) - 1, Number(minted[3]), Number(minted[4]), Number(minted[5])).getTime() : null
+      return {name: entry.name, path: entry.location?.path ?? `${folder}/${entry.name}`, day: minted ? `${minted[1]}-${minted[2]}-${minted[3]}` : null, instantMs}
+    })
+    .sort((a, b) => (a.instantMs ?? Infinity) - (b.instantMs ?? Infinity) || a.name.localeCompare(b.name))
 }
 
 /** The day records in an owner directory listing (`central.directory-reading/v1`). Ported from shell/ModeBrowser.tsx DaysRows:
@@ -109,8 +152,10 @@ export function dayRecordsOf(directory: {entries: readonly {name: string; byte_l
 /** The Central ground subject a clip id names, when it is a day record's path — the subject the Document detail opens
  * (CentralSubjectSelection, inhabitants/CentralSubjectDetail.tsx). The regular expression is the browser's own
  * (shell/ModeBrowser.tsx line 295). An entry's clip id (an occasion) is not a ground subject: null. */
-export function centralSubjectOfClip(ref: string): {kind: 'day'; path: string} | null {
-  return dateOfDayPath(ref) ? {kind: 'day', path: ref} : null
+export function centralSubjectOfClip(ref: string): {kind: 'day' | 'note'; path: string} | null {
+  if (dateOfDayPath(ref)) return {kind: 'day', path: ref}
+  // A Flow on the Flows track selects as the browser's Flows row does (shell/ModeBrowser.tsx FlowRowList: a `note` subject).
+  return FLOW_PATH.test(ref) ? {kind: 'note', path: ref} : null
 }
 
 const isDate = (key: string): boolean => /^\d{4}-\d{2}-\d{2}$/.test(key)
@@ -165,6 +210,16 @@ function dayKindText(reading: CentralReading, records: number, entries: number):
   return `stream · ${parts.join(' · ')}`
 }
 
+/** The Flows track's read, in words. */
+function flowsKindText(reading: CentralFlowsReading | undefined, placed: number, unstamped: number): string {
+  if (!reading) return 'stream · Flows unread by this Session'
+  if (reading.state === 'reading') return 'stream · Flows being read'
+  if (reading.state === 'unavailable') return `stream · Flows unread (${reading.reason})`
+  const parts = [plural(placed + unstamped, 'Flow', 'Flows') + ' from your Flows folder']
+  if (unstamped) parts.push(`${plural(unstamped, 'is', 'are')} named by hand and stand${unstamped === 1 ? 's' : ''} in "no time"`)
+  return `stream · ${parts.join(' · ')}`
+}
+
 /** A stream with no reader here: its owner's absence, in the mode grammar's own words. */
 function waitingKindText(category: ModeBrowserCategory | undefined, label: string): string {
   if (!category) return 'stream · waiting — no owner read is declared for this stream'
@@ -184,6 +239,10 @@ export function projectCentralTracks(reading: CentralReading): WorldTrackSet {
   const records = reading.records.state === 'read' ? reading.records.records : []
   const entries = reading.civil.state === 'live' ? dayEntries(reading.civil.events) : []
   const categories = browserCategoriesOf('base')
+  // The Flows: a minted one stands in its civil day's row at its moment; one named by hand in "no time" (no time invented).
+  const flows = reading.flows?.state === 'read' ? reading.flows.records : []
+  const stamped = flows.filter((flow): flow is CentralFlowRecord & {day: string; instantMs: number} => flow.day !== null && flow.instantMs !== null)
+  const unstamped = flows.filter(flow => flow.day === null || flow.instantMs === null)
 
   // Every day the reading names: the days that have a record, and the days that have entries.
   const recordByDay = new Map<string, CentralDayRecord>()
@@ -194,18 +253,29 @@ export function projectCentralTracks(reading: CentralReading): WorldTrackSet {
     if (group) group.push(entry)
     else entriesByDay.set(entry.key, [entry])
   }
-  const dayKeys = [...new Set<string>([...recordByDay.keys(), ...[...entriesByDay.keys()].filter((key): key is string => key !== null)])]
+  const dayKeys = [...new Set<string>([...recordByDay.keys(), ...[...entriesByDay.keys()].filter((key): key is string => key !== null), ...stamped.map(flow => flow.day)])]
 
   // The ruler: an optional first segment for entries with no instant, then each day that has a record or a placed entry.
   const unplaced = entries.filter(entry => entry.minute === null)
-  const rulerKeys = [...new Set<string>([...recordByDay.keys(), ...entries.filter(entry => entry.minute !== null && entry.key !== null).map(entry => entry.key as string)])].sort()
+  const rulerKeys = [...new Set<string>([...recordByDay.keys(), ...entries.filter(entry => entry.minute !== null && entry.key !== null).map(entry => entry.key as string),
+    ...stamped.map(flow => flow.day)])].sort()
   const segments: {key: string | null; start: number}[] = []
-  if (unplaced.length) segments.push({key: null, start: 0})
+  if (unplaced.length || unstamped.length) segments.push({key: null, start: 0})
   for (const key of rulerKeys) segments.push({key, start: segments.length * MINUTES_PER_DAY})
   const startOfDay = new Map(segments.filter(segment => segment.key !== null).map(segment => [segment.key as string, segment.start]))
-  const unplacedAt = new Map(unplaced.map((entry, order) => [entry.clip.id, order]))
+  const unplacedAt = new Map([...unplaced.map(entry => entry.clip.id), ...unstamped.map(flow => flow.path)].map((id, order) => [id, order]))
 
   const dayTrack = centralStreamTrackId('day')
+  const flowsTrack = centralStreamTrackId('flows')
+  const flowClip = (flow: CentralFlowRecord, columnId: string): WorldTrackClip => {
+    const placed = flow.day !== null && flow.instantMs !== null
+    const minted = MINTED_FLOW.exec(flow.name)
+    // Held inside its day, as an entry is: its moment's minutes from the civil day's UTC midnight (the ruler's own clock).
+    const start = placed ? (startOfDay.get(flow.day!) ?? 0) + Math.min(MINUTES_PER_DAY - 1, Math.max(0, Math.round((flow.instantMs! - dayStartMs(flow.day!)) / 60000)))
+      : unplacedAt.get(flow.path) ?? 0
+    return {id: flow.path, trackId: flowsTrack, columnId, label: minted ? `Flow ${minted[4]}:${minted[5]}` : flow.name.replace(/\.html$/i, ''), at: {start},
+      ...(placed ? {} : {note: 'no time: this Flow was named by hand, so its name gives no moment, and it stands in the ruler\'s "no time" segment'})}
+  }
   const columns: WorldTrackColumn[] = []
   const clips: WorldTrackClip[] = []
   const stops: WorldWalkStop[] = []
@@ -216,7 +286,7 @@ export function projectCentralTracks(reading: CentralReading): WorldTrackSet {
       ...(entry.minute === null ? {note: 'no time: the reading gives this entry no instant on a dated day, so it stands in the ruler\'s "no time" segment'} : {})}
   }
   // Days newest first, as the browser's Days rows list them; the entries that name no day close the set as one "no day" stop.
-  const days: (string | null)[] = [...dayKeys.sort((a, b) => b.localeCompare(a)), ...(entriesByDay.has(null) ? [null] : [])]
+  const days: (string | null)[] = [...dayKeys.sort((a, b) => b.localeCompare(a)), ...(entriesByDay.has(null) || unstamped.length ? [null] : [])]
   for (const key of days) {
     const record = key === null ? undefined : recordByDay.get(key)
     // Within a day, the entries as the day went: the timed ones by instant, then the untimed in the order read.
@@ -225,7 +295,11 @@ export function projectCentralTracks(reading: CentralReading): WorldTrackSet {
     const columnId = `central:day-row:${key ?? 'none'}`
     columns.push({id: columnId, name: key ?? 'no day'})
     const entryClips = ordered.map(entry => entryClip(entry, columnId))
-    // The day's face: its record when the owner lists one, else its first entry. It is the Session's slot.
+    // The day's Flows, oldest first: the Flows track's slot in the row shows the day's newest.
+    clips.push(...(key === null ? unstamped : stamped.filter(flow => flow.day === key)).map(flow => flowClip(flow, columnId)))
+    // The day's face: its record when the owner lists one, else its first entry. It is the Session's slot. A row only Flows
+    // stand in has no face on the Day track.
+    if (!record && !entryClips.length) continue
     const face: WorldTrackClip = record
       ? {id: record.path, trackId: dayTrack, columnId, label: `${shortDay(key!)}${entryClips.length ? ` · ${plural(entryClips.length, 'entry', 'entries')}` : ''}`, at: {start: startOfDay.get(key!) ?? 0}}
       : entryClips[0]!
@@ -239,7 +313,8 @@ export function projectCentralTracks(reading: CentralReading): WorldTrackSet {
     id: centralStreamTrackId(stream.id),
     name: stream.name,
     color: stream.colour,
-    kind: stream.readable ? dayKindText(reading, records.length, entries.length)
+    kind: stream.id === 'day' ? dayKindText(reading, records.length, entries.length)
+      : stream.id === 'flows' ? flowsKindText(reading.flows, stamped.length, unstamped.length)
       : waitingKindText(categories.find(category => category.id === stream.category), stream.name),
   }))
 
