@@ -63,7 +63,9 @@ export function StatusBar({ state, documentError, viewport, selectedTrack, audio
   const hovered = useInfoView()
   const pending = useFoundationPending()
   const info = hovered ?? agentInfo ?? null
-  const track = audio ? selectedTrack : status?.line === 'work' ? reading?.sceneName : undefined
+  // A work's Scene, by name — only while a native work stands: with none open the frame's own scene is no work's (seen on screen
+  // 15 Oct: "1 · Origin" beside the Info line with no work open), as the snapshot beside it already is.
+  const track = audio ? selectedTrack : status?.line === 'work' && reading?.nativeScene ? reading.sceneName : undefined
   return <footer className="statusbar" data-region="status-bar" role="status" title={`Viewport ${viewport[0]} × ${viewport[1]} · ${audio ? documentError ?? 'Summary and deep document readings' : reading?.nativeScene?.expression_ref ?? 'Native Expressions owner'} `}>
     <span className="statusbar-info">i</span>
     <div className="statusbar-info-line" data-region="info-view" data-info={info ? 'reading' : pending ? 'reading-world' : 'idle'}>{info
