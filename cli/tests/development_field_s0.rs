@@ -538,3 +538,71 @@ fn managed_update_supersedes_the_active_suite_entry_it_installed() {
         "quaternal-logic:probe"
     );
 }
+
+/// A dispatch remembers the suite it verified and does not hash it again
+/// while nothing moved; an active executable rewritten in place — same size,
+/// its modification time set back — is hashed again and refused, never
+/// served from the remembered verification.
+#[cfg(unix)]
+#[test]
+fn a_dispatch_remembers_its_verified_suite_and_never_serves_a_changed_binary() {
+    let config = TempDir::new().unwrap();
+    let data = TempDir::new().unwrap();
+    let bin = TempDir::new().unwrap();
+    write_source_composition(config.path(), bin.path(), "central-v1");
+    let run = |args: &[&str]| output(oi(config.path(), data.path(), bin.path()).args(args));
+    assert!(run(&["suite", "channel", "source"]).status.success());
+    let update = run(&["suite", "update", "--json"]);
+    assert!(update.status.success(), "{}", stderr(&update));
+    let cache = data.path().join("cache/suite-verification.json");
+    assert!(!cache.exists());
+
+    let first = run(&["central", "probe"]);
+    assert_eq!(
+        stdout(&first).trim(),
+        "central-v1:probe",
+        "{}",
+        stderr(&first)
+    );
+    let remembered: Value = serde_json::from_slice(&fs::read(&cache).unwrap()).unwrap();
+    assert_eq!(remembered["schema"], "oi.suite-verification-cache/v1");
+    assert_eq!(remembered["products"].as_object().unwrap().len(), 6);
+    let stamp = fs::metadata(&cache).unwrap().modified().unwrap();
+    std::thread::sleep(std::time::Duration::from_millis(20));
+    assert_eq!(
+        stdout(&run(&["central", "probe"])).trim(),
+        "central-v1:probe"
+    );
+    assert_eq!(
+        fs::metadata(&cache).unwrap().modified().unwrap(),
+        stamp,
+        "an unmoved suite is not verified again"
+    );
+
+    let status: Value =
+        serde_json::from_slice(&run(&["suite", "status", "--json"]).stdout).unwrap();
+    let executable = PathBuf::from(
+        status["active"]["products"]["central"]["executable"]
+            .as_str()
+            .unwrap(),
+    );
+    let before = fs::metadata(&executable).unwrap();
+    let body = fs::read_to_string(&executable).unwrap();
+    let altered = body.replace("central-v1", "central-v9");
+    assert_eq!(altered.len(), body.len());
+    fs::write(&executable, altered).unwrap();
+    fs::File::options()
+        .write(true)
+        .open(&executable)
+        .unwrap()
+        .set_modified(before.modified().unwrap())
+        .unwrap();
+    let refused = run(&["central", "probe"]);
+    assert!(!refused.status.success());
+    assert!(
+        stderr(&refused).contains("active central executable digest drift"),
+        "{}",
+        stderr(&refused)
+    );
+    assert!(!stdout(&refused).contains("central-v9"));
+}

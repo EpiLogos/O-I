@@ -1,7 +1,8 @@
 //! Agent-scoped owner reads prepared under the kernel lock and run outside it
 //! (dispatch.rs): the agency reading the shell polls, encounter verbs, an
-//! encounter's task, the Agent definition family, the model roster and a
-//! harness binding's gateway sessions. Ported from the
+//! encounter's task, the Agent definition family, the model roster, a
+//! harness binding's gateway sessions, the machine's harness status and
+//! AIKit's model catalogue. Ported from the
 //! knowledge read (knowledge_prepared.rs): preparation captures the World the
 //! op is scoped by — the retained reading, else the one its burst shares —
 //! and the owner processes run without the lock. What the ordered arms
@@ -42,9 +43,23 @@ pub(crate) struct PreparedWorld {
 }
 
 impl PreparedWorld {
+    /// The reading held at preparation — the retained one, or one a burst
+    /// already shares — and no flight: an op that finds none reads the World
+    /// itself, as the ordered path read it.
+    pub(crate) fn held_only(client: CentralClient, held: Option<Value>) -> Self {
+        Self {
+            client,
+            held,
+            flight: None,
+        }
+    }
     /// A reading was retained (or already shared) at preparation.
     pub(crate) fn is_held(&self) -> bool {
         self.held.is_some()
+    }
+    /// The reading held at preparation, never read for this.
+    pub(crate) fn held(&self) -> Option<&Value> {
+        self.held.as_ref()
     }
     pub(crate) fn read(&self) -> Result<Value, String> {
         match (&self.held, &self.flight) {
@@ -190,6 +205,10 @@ enum AgentRead {
     Harness {
         binding: String,
     },
+    /// The machine's harnesses (`HarnessStatus`) and AIKit's model
+    /// catalogue: machine-level reads, no World, no directory.
+    HarnessStatus,
+    ModelCatalogue,
 }
 
 /// One agent-scoped op prepared under the kernel lock
@@ -237,6 +256,27 @@ impl PreparedAgent {
                     binding: binding.clone(),
                 },
             });
+        }
+        // Machine-level reads: no project disclosure is consulted — the
+        // harnesses and the catalogue are the machine's own facts.
+        match &self.read {
+            AgentRead::HarnessStatus => {
+                return Ok(KernelOpOutcome {
+                    receipts: Vec::new(),
+                    result: KernelOpResult::HarnessStatusReading {
+                        data: self.aikit.harness_status()?,
+                    },
+                })
+            }
+            AgentRead::ModelCatalogue => {
+                return Ok(KernelOpOutcome {
+                    receipts: Vec::new(),
+                    result: KernelOpResult::ModelCatalogueReading {
+                        data: self.aikit.model_catalogue()?,
+                    },
+                })
+            }
+            _ => {}
         }
         let world = self.world.read()?;
         let label = self.project.as_deref().filter(|p| !p.is_empty());
@@ -326,7 +366,9 @@ impl PreparedAgent {
                     || self.aikit.model_roster(&cwd),
                 )?,
             },
-            AgentRead::Harness { .. } => unreachable!("answered before the World is read"),
+            AgentRead::Harness { .. } | AgentRead::HarnessStatus | AgentRead::ModelCatalogue => {
+                unreachable!("answered before the World is read")
+            }
             AgentRead::Definition(request) => KernelOpResult::AgentDefinitionReading {
                 data: agent_definition::execute(
                     &self.client,
@@ -346,8 +388,9 @@ impl PreparedAgent {
 
 impl Kernel {
     /// `AgencyRead`, `Encounter`, `EncounterTaskRead`, `AgentDefinition`,
-    /// `ModelRoster` and `HarnessAgentRead`, prepared under the kernel lock;
-    /// every other op is not an agent read.
+    /// `ModelRoster`, `HarnessAgentRead`, `HarnessStatus` and
+    /// `ModelCatalogue`, prepared under the kernel lock; every other op is
+    /// not an agent read.
     pub fn prepare_agent_read(&mut self, op: &KernelOp) -> Result<Option<PreparedAgent>, String> {
         let (project, read) = match op {
             KernelOp::AgencyRead { project } => (Some(project.clone()), AgentRead::Agency),
@@ -370,6 +413,8 @@ impl Kernel {
                     binding: binding.clone(),
                 },
             ),
+            KernelOp::HarnessStatus => (None, AgentRead::HarnessStatus),
+            KernelOp::ModelCatalogue => (None, AgentRead::ModelCatalogue),
             KernelOp::AgentDefinition { project, request } => {
                 if project.as_deref() == Some("") {
                     return Err(
@@ -380,13 +425,13 @@ impl Kernel {
             }
             _ => return Ok(None),
         };
-        // A harness binding's sessions need no World: none is prepared.
-        let world = if matches!(read, AgentRead::Harness { .. }) {
-            PreparedWorld {
-                client: self.client.clone(),
-                held: None,
-                flight: None,
-            }
+        // A harness binding's sessions, the harnesses' status and the model
+        // catalogue need no World: none is prepared.
+        let world = if matches!(
+            read,
+            AgentRead::Harness { .. } | AgentRead::HarnessStatus | AgentRead::ModelCatalogue
+        ) {
+            PreparedWorld::held_only(self.client.clone(), None)
         } else {
             self.prepare_world_reading()
         };

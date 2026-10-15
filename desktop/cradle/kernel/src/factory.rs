@@ -381,6 +381,30 @@ impl OwnerRequest {
     pub fn needs_world(&self) -> bool {
         matches!(self, OwnerRequest::Locate { .. })
     }
+    /// A reading of the owner's state, which may run outside the kernel lock
+    /// (owner_read.rs `PreparedRead`). Named one by one: a request not named
+    /// here — an action, a recognition, a commission, a close, and any
+    /// request added later — is applied in order under the lock.
+    pub fn is_read(&self) -> bool {
+        matches!(
+            self,
+            OwnerRequest::Locate { .. }
+                | OwnerRequest::WorkflowInspect { .. }
+                | OwnerRequest::TelemetryStatus { .. }
+                | OwnerRequest::TelemetryInspect { .. }
+                | OwnerRequest::TelemetryWatch { .. }
+                | OwnerRequest::TelemetryField { .. }
+                | OwnerRequest::TelemetryCurrent { .. }
+                | OwnerRequest::TelemetrySignal { .. }
+                | OwnerRequest::TelemetryDigest { .. }
+                | OwnerRequest::TelemetryLookback { .. }
+                | OwnerRequest::TelemetryDay { .. }
+                | OwnerRequest::AttemptReturn { .. }
+                | OwnerRequest::ActionList { .. }
+                | OwnerRequest::Inhabitation { .. }
+                | OwnerRequest::CurrentWork { .. }
+        )
+    }
 }
 
 /// The owner executable and whether the suite route prefixes `factory` —

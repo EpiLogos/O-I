@@ -367,6 +367,30 @@ mod tests {
             }),
             "ground"
         );
+        // Lane K2: the owner reads lane K left under the lock.
+        assert_eq!(form(KernelOp::HarnessStatus), "agent");
+        assert_eq!(form(KernelOp::ModelCatalogue), "agent");
+        assert_eq!(form(KernelOp::ConfigReceipts), "owner-read");
+        assert_eq!(form(KernelOp::ChatDefaultRead), "owner-read");
+        assert_eq!(
+            form(KernelOp::FileBytes {
+                location: crate::files::Location {
+                    schema: "central.path-ref/v1".into(),
+                    ref_id: "ref:a".into(),
+                    root: "R".into(),
+                    path: "a".into(),
+                }
+            }),
+            "files"
+        );
+        assert_eq!(form(KernelOp::SourcesList { project: None }), "files");
+        // A source not open keeps the ordered arm's refusal.
+        assert_eq!(
+            form(KernelOp::SourceHistory {
+                source_ref: "source:unopened".into()
+            }),
+            "ordered"
+        );
         assert_eq!(form(KernelOp::State), "ordered");
         // The dispatch itself: a navigation served by its owner outside the
         // lock, holding it only to prepare and finish.

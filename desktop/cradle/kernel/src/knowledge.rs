@@ -58,13 +58,18 @@ pub enum CallError {
     Malformed { detail: String },
 }
 
+/// The suite executable every knowledge call is handed to (`OI_BIN`, else
+/// `oi` on the PATH).
+pub(crate) fn executable() -> std::ffi::OsString {
+    std::env::var_os("OI_BIN").unwrap_or_else(|| "oi".into())
+}
+
 /// Run one `aikit` application subcommand through the pinned suite
 /// executable and return the owner `data` payload. The envelope law below
 /// is the thin transport's contract, shared by every knowledge operation
 /// and by the Action dispatch adapter — the kernel invents nothing on top.
 pub fn run(cwd: &Path, args: &[&str]) -> Result<Value, CallError> {
-    let executable = std::env::var_os("OI_BIN").unwrap_or_else(|| "oi".into());
-    run_with_executable(cwd, args, &executable)
+    run_with_executable(cwd, args, &executable())
 }
 
 /// Structured input goes on stdin, never shell-expanded argv or a temp source file.
@@ -77,8 +82,7 @@ pub fn run_input(cwd: &Path, args: &[&str], input: &Value) -> Result<Value, Call
             detail: "Native Action exceeds its 16 MiB input budget".into(),
         });
     }
-    let executable = std::env::var_os("OI_BIN").unwrap_or_else(|| "oi".into());
-    let mut command = Command::new(executable);
+    let mut command = Command::new(executable());
     command.args(["aikit", "--json", "-C"]).arg(cwd).args(args);
     let operation = args
         .iter()
@@ -258,13 +262,18 @@ fn decode_envelope(output: &std::process::Output) -> Result<Value, CallError> {
                 String::from_utf8_lossy(&output.stderr)
             ),
         })?;
-    if !output.status.success() || envelope["ok"] != true {
-        return Err(CallError::Refused {
-            message: envelope["error"]["message"]
-                .as_str()
-                .unwrap_or("AIKit refused this knowledge operation")
-                .to_owned(),
-        });
+    if !output.status.success() {
+        return Err(refusal(&envelope));
+    }
+    decode_answer(&envelope)
+}
+
+/// One envelope the owner printed — a whole call's, or one relations batch
+/// item's (each item is exactly the envelope its single read prints): its
+/// reading, or the owner's refusal verbatim.
+fn decode_answer(envelope: &Value) -> Result<Value, CallError> {
+    if envelope["ok"] != true {
+        return Err(refusal(envelope));
     }
     envelope
         .get("data")
@@ -272,6 +281,199 @@ fn decode_envelope(output: &std::process::Output) -> Result<Value, CallError> {
         .ok_or_else(|| CallError::Malformed {
             detail: "AIKit response is missing its reading".into(),
         })
+}
+
+fn refusal(envelope: &Value) -> CallError {
+    CallError::Refused {
+        message: envelope["error"]["message"]
+            .as_str()
+            .unwrap_or("AIKit refused this knowledge operation")
+            .to_owned(),
+    }
+}
+
+/// The relation-view bounds every knowledge relations read asks for: the
+/// single read's flags and each relations batch item carry the same three.
+const RELATIONS_DEPTH: u8 = 2;
+const RELATIONS_MAX_NODES: usize = 96;
+const RELATIONS_MAX_EDGES: usize = 192;
+
+/// AIKit's relations batch (`aikit knowledge relations-batch`, ai-kit #509):
+/// many relation views in one owner process, each answered — in request
+/// order — with exactly the envelope its single `knowledge relations` prints.
+const RELATIONS_BATCH_SCHEMA: &str = "aikit.knowledge-relations-batch/v1";
+/// A batch's own limit, never the single read's 20 s: a fully cold batch of
+/// a door's registers measured 35 s (ai-kit #509, 15 Oct). Like every owner
+/// call's, it is for an owner that never answers.
+pub(crate) const RELATIONS_BATCH_LIMIT: std::time::Duration = std::time::Duration::from_secs(90);
+/// AIKit's own bound on one batch's items.
+pub(crate) const RELATIONS_BATCH_MAX_ITEMS: usize = 256;
+
+/// One relations read as a batch item: the working directory and the
+/// address its single read would run with.
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) struct RelationsItem {
+    pub cwd: std::path::PathBuf,
+    pub address: Address,
+}
+
+/// What AIKit answered a relations batch.
+#[derive(Clone, Debug)]
+pub(crate) enum RelationsBatch {
+    /// Each item's answer, in request order, decoded as its single read's
+    /// envelope is (`decode_answer`): its reading or its own refusal.
+    Answered(Vec<Result<Value, CallError>>),
+    /// AIKit refused the verb itself (its own parser named
+    /// `relations-batch` an unrecognized subcommand): this AIKit has no batch.
+    Absent,
+    /// The batch as a whole has no answer — stopped at its limit, refused,
+    /// unreadable. No item was answered.
+    Failed(CallError),
+}
+
+/// Ask AIKit for every item's relations in one process, rooted at the
+/// Central root `root` (each item carries its own working directory).
+pub(crate) fn relations_batch(
+    executable: &OsStr,
+    root: &Path,
+    items: &[RelationsItem],
+) -> RelationsBatch {
+    let mut rows = Vec::with_capacity(items.len());
+    for item in items {
+        let (Some(cwd), Ok(address)) = (item.cwd.to_str(), serde_json::to_string(&item.address))
+        else {
+            return RelationsBatch::Failed(CallError::Malformed {
+                detail: "A relations batch item has no textual working directory or address".into(),
+            });
+        };
+        rows.push(serde_json::json!({
+            "cwd": cwd,
+            "address": address,
+            "depth": RELATIONS_DEPTH,
+            "max_nodes": RELATIONS_MAX_NODES,
+            "max_edges": RELATIONS_MAX_EDGES,
+        }));
+    }
+    let request = serde_json::json!({"schema": RELATIONS_BATCH_SCHEMA, "items": rows});
+    let mut command = Command::new(executable);
+    command
+        .args(["aikit", "--json", "-C"])
+        .arg(root)
+        .args(["knowledge", "relations-batch"]);
+    let output = match crate::owner_process::output(
+        &mut command,
+        Some(request.to_string().into_bytes()),
+        crate::owner_process::Bound::read(
+            "AIKit",
+            "knowledge relations-batch",
+            RELATIONS_BATCH_LIMIT,
+        ),
+    ) {
+        Ok(output) => output,
+        Err(failure) => {
+            return RelationsBatch::Failed(CallError::Unavailable {
+                detail: failure.message,
+            })
+        }
+    };
+    // AIKit's own parser refusing the verb by name — never a version guess.
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    if !output.status.success()
+        && output.stdout.iter().all(u8::is_ascii_whitespace)
+        && stderr.contains("unrecognized subcommand")
+        && stderr.contains("relations-batch")
+    {
+        return RelationsBatch::Absent;
+    }
+    let data = match decode_envelope(&output) {
+        Ok(data) => data,
+        Err(error) => return RelationsBatch::Failed(error),
+    };
+    match data["answers"].as_array() {
+        Some(answers)
+            if data["schema"] == RELATIONS_BATCH_SCHEMA && answers.len() == items.len() =>
+        {
+            RelationsBatch::Answered(answers.iter().map(decode_answer).collect())
+        }
+        _ => RelationsBatch::Failed(CallError::Malformed {
+            detail: "AIKit's relations batch did not answer each item it was asked".into(),
+        }),
+    }
+}
+
+/// Which AIKit a knowledge call reaches, as far as the kernel can see it:
+/// the suite executable the call is handed to, and the AIKit executable
+/// pinned for it (`OI_AIKIT_BIN`, which the suite dispatches before its own
+/// resolution), each by path and file identity (size, modification and
+/// change times, inode). A replaced or rewritten executable is another
+/// identity. An AIKit the suite resolves itself (no pin) is seen through
+/// the suite executable alone.
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+pub(crate) struct AikitIdentity(Vec<(std::ffi::OsString, Option<FileIdentity>)>);
+
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub(crate) struct FileIdentity {
+    len: u64,
+    modified: (i64, i64),
+    changed: (i64, i64),
+    inode: (u64, u64),
+}
+
+impl AikitIdentity {
+    /// The AIKit `executable` reaches from this process's environment.
+    pub(crate) fn of(executable: &OsStr) -> Self {
+        Self::pinned(
+            executable,
+            std::env::var_os("OI_AIKIT_BIN").filter(|v| !v.is_empty()),
+        )
+    }
+    /// The AIKit `executable` reaches with `pin` as its AIKit pin.
+    pub(crate) fn pinned(executable: &OsStr, pin: Option<std::ffi::OsString>) -> Self {
+        let mut parts = vec![(executable.to_owned(), file_identity(executable))];
+        if let Some(pin) = pin {
+            let identity = file_identity(&pin);
+            parts.push((pin, identity));
+        }
+        Self(parts)
+    }
+}
+
+/// The file a program name runs — a path as given, a bare name through the
+/// PATH — followed through links, and its identity.
+fn file_identity(program: &OsStr) -> Option<FileIdentity> {
+    let named = Path::new(program);
+    let path = if named.components().count() > 1 {
+        named.to_path_buf()
+    } else {
+        std::env::split_paths(&std::env::var_os("PATH")?)
+            .map(|dir| dir.join(named))
+            .find(|candidate| candidate.is_file())?
+    };
+    let metadata = std::fs::metadata(path).ok()?;
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::MetadataExt;
+        Some(FileIdentity {
+            len: metadata.len(),
+            modified: (metadata.mtime(), metadata.mtime_nsec()),
+            changed: (metadata.ctime(), metadata.ctime_nsec()),
+            inode: (metadata.dev(), metadata.ino()),
+        })
+    }
+    #[cfg(not(unix))]
+    {
+        let modified = metadata
+            .modified()
+            .ok()?
+            .duration_since(std::time::UNIX_EPOCH)
+            .ok()?;
+        Some(FileIdentity {
+            len: metadata.len(),
+            modified: (modified.as_secs() as i64, modified.subsec_nanos() as i64),
+            changed: (0, 0),
+            inode: (0, 0),
+        })
+    }
 }
 
 /// Transport only: the owner parser decides what every query means. Keeping
@@ -320,11 +522,11 @@ fn request_args(request: &Request) -> Result<Vec<String>, String> {
             if matches!(request, Request::Relations { .. }) {
                 args.extend([
                     "--depth".into(),
-                    "2".into(),
+                    RELATIONS_DEPTH.to_string(),
                     "--max-nodes".into(),
-                    "96".into(),
+                    RELATIONS_MAX_NODES.to_string(),
                     "--max-edges".into(),
-                    "192".into(),
+                    RELATIONS_MAX_EDGES.to_string(),
                 ]);
             }
             args.push("--".into());
@@ -335,12 +537,37 @@ fn request_args(request: &Request) -> Result<Vec<String>, String> {
 }
 
 pub fn call(cwd: &Path, request: &Request) -> Result<Value, String> {
+    call_with(&executable(), cwd, request)
+}
+
+/// `call` through a named suite executable.
+pub(crate) fn call_with(
+    executable: &OsStr,
+    cwd: &Path,
+    request: &Request,
+) -> Result<Value, String> {
     let args = request_args(request)?;
-    run(cwd, &args.iter().map(String::as_str).collect::<Vec<_>>()).map_err(|error| match error {
+    run_with_executable(
+        cwd,
+        &args.iter().map(String::as_str).collect::<Vec<_>>(),
+        executable,
+    )
+    .map_err(describe)
+}
+
+/// A request the transport would refuse before any owner is asked (an
+/// empty address), refused in the same words.
+pub(crate) fn admissible(request: &Request) -> Result<(), String> {
+    request_args(request).map(|_| ())
+}
+
+/// A knowledge call's failure in the words `call` answers with.
+pub(crate) fn describe(error: CallError) -> String {
+    match error {
         CallError::Unavailable { detail } => format!("AIKit is unavailable: {detail}"),
         CallError::Refused { message } => message,
         CallError::Malformed { detail } => detail,
-    })
+    }
 }
 
 pub fn not_fresh(value: &bool) -> bool {

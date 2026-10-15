@@ -633,16 +633,15 @@ fn material(kernel: &Mutex<Kernel>, rest: &str) -> BridgeResponse {
             None => return json_error(403, "Material path segment is not validly encoded"),
         }
     }
-    let mut kernel = kernel.lock().expect("kernel mutex");
-    let target = match oi_cradle_kernel::files::resolve_material(&mut kernel, &location, &relative)
+    // The kernel's one dispatch serves each listing and the bytes: their
+    // owner calls run outside the kernel lock (files.rs `read_material`).
+    let (target, bytes) = match oi_cradle_kernel::files::read_material(kernel, &location, &relative)
     {
         Ok(resolved) => resolved,
         Err(MaterialRouteError::Forbidden(message)) => return json_error(403, message),
         Err(MaterialRouteError::NotFound(message)) => return json_error(404, message),
     };
-    match kernel.apply(KernelOp::FileBytes {
-        location: target.clone(),
-    }) {
+    match bytes {
         Ok(outcome) => match outcome.result {
             KernelOpResult::FileBytes {
                 mime_hint,
