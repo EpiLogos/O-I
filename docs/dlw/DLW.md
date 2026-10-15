@@ -4220,3 +4220,1240 @@ caption: Calendar is a widget from a third party. Open it from the launcher. The
 
 #### Tips
 - To plan a task around a deadline, set Range to Week.
+
+## 20. Instruments that open in any mode
+
+These instruments are the panes of the DLW. Each one is a way to look at your material. You get a world to stand on, a graph of linked notes and a table to think on. You get a ruler of time, a walk and a palace. You also get a page, a grid of launchable clips, a thread and a terminal. They belong to no single mode. Drag one into any pane, in any mode, and it brings its own controls to Device view.
+
+### 20.1 World
+
+**Product:** Technē · **Kind:** instrument · **Pane:** any pane, in every mode
+
+You need to see where things are and how far apart they stand. The World draws your work as a planet under its star, with Earth and other people's worlds near it. You can come down to one exact place on the ground, or turn the whole view into a graph.
+
+```ui
+src: ../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=techne&lens=M4&scale=body&body=earth&ap=3
+height: 760
+caption: The World on the Body scale, looking at Earth with the widest aperture. Drag to turn the body. Use the scale buttons and the body names in the slot under the browser to move in and out.
+```
+
+#### The five scales
+
+The scale sets how much of the sky and the ground fills the pane. Each scale keeps the thing you selected in view.
+
+| Scale | What fills the pane | What you can do |
+|---|---|---|
+| Field | The worlds of a shared field as planets around a shared star. Joined fields stand at a remove. Contributions cross the gap as particles. | See who is near. See each relation between worlds. |
+| System | Your planet under its star. The agents at work, the open moments of today and your recent scenes circle it. The files and context you hold drift in orbit. | Start here. Open any object in orbit. Choose a body. |
+| Body | One body whole, with its locations, its anchor and its moons. | Turn the body. Place, name and select locations. Follow an anchor line to its place on Earth. |
+| Region | A close view over a coast, with locations at their names. | Move along a route. Select a place by its name. |
+| Place | One place with its exact position, its precision, and the frame in which it was measured. | Read where a thing stands and how sure that is. Open its source. Enter a palace. |
+
+Fly to a place from anywhere. The flight ends at a scale that fits the precision of the place. An exact place gets a street, an approximate place gets a city, and a region gets the whole region. A place with no position does not fly. The World lists it in a separate register.
+
+#### Build a planet
+
+Your own world is a body you build. Earth is given, so you only place things on it.
+
+- Choose how much sea, how many continents, how rugged the relief and how the coast runs.
+- Choose how warm and wet the climate is, and how far the ice caps reach.
+- Choose the atmosphere, the clouds and the tilt of the axis.
+- Click the body to place a place, a palace, a portal or a route. The World suggests a name from the seed. Keep it or type your own.
+- Reroll the seed to get a new body from the same settings. Your locations keep their names and settle on the new land.
+
+Most building happens without your notice. Every project you start becomes a place. Every walk you take wears a path between places.
+
+The body is lit by its star, so it shows phases. A place you anchor to Earth draws a line to the real place on the ground, such as a house, a town or a coast.
+
+#### The sky and its occasions
+
+Every world has a sky, and the sky belongs to the world. The planets move as the real ones do. The sky comes from its owner. The World does not compute it. If the owner is not available, the sky layer says why and draws nothing in its place.
+
+An occasion is the moment you stand in. It is Now, a date you choose, or the moment of the stop you are on in a walk. Choose a past occasion and the sky, the shading of day and night on Earth, and the places that were valid then all follow it. Press Tap to return to Now.
+
+To mark a window of a past moment, set the occasion window. Only the places that were valid in that window show on the body.
+
+#### Aperture and view as
+
+Aperture sets how far you look. View as sets who you look as.
+
+| Aperture | What you see |
+|---|---|
+| World | Your world alone. |
+| Local | Your world and the project and agent worlds it holds. |
+| Shared | The shared field. Other worlds show only what they have shown. |
+| Federated | The fields that field is joined to, at one more remove. |
+
+What lies just past the edge of your view is counted and offered. Widen the aperture to see it.
+
+| View as | What you see |
+|---|---|
+| Me | Your world as you know it. |
+| Field | Your world as the shared field sees it. What you have not shown lies under cloud. |
+| Public | Your world as the public sees it. |
+
+Visit another world and you land on what its owner has shown, tinted and clouded as they left it. The agent that keeps that world is there to talk to. If it gives you something, it arrives in your world under their name. It stays theirs until you make it your own.
+
+Relations between bodies are lines across the dark: anchor, participate, contribution, watch, projection and federate. A line for an open contact shows while the contact lasts.
+
+#### The graph view
+
+Turn the World to its graph side and the same material lays out by connection. Each node takes the colour of what it is. The ties between nodes show what joins them. The graph is a second view of the same field and holds no data of its own.
+
+The graph view has its own controls. Set how many hops it reaches, how far nodes spread and how strongly they pull together. Choose which occurrences show as dust around a node. Choose which ties show: from a source, inferred, or from a site. Choose whether nodes hold to their sky anchors. Fit brings the whole graph into the pane. Choose Space to return to the body.
+
+#### Parameters
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Scale | Field · System · Body · Region · Place | System | Sets how close you look. |
+| Body | Your world · Earth · another world | Your world | Chooses the body to show. Your world has a name and a seed. Reroll gives a new body from the same seed settings. |
+| View | Space · Graph | Space | Shows the bodies in space, or the same material as a graph. |
+| Aperture | World · Local · Shared · Federated | World | Sets how far you look. |
+| View as | Me · Field · Public | Me | Shows your world as the chosen audience sees it. |
+| Occasion | Now, a date, or a stop | Now | Sets the moment whose sky and valid places you see. |
+| Relations shown | All · Anchors · Field · None | All | Chooses which relations between bodies show. |
+| Landmass | Sea level 0–100 %, continents 0.6–3.6 times, relief 0–100 %, coast smooth · fjord · archipelago | 50 %, 1.7 times, 55 %, smooth | Shapes the land of your body. Earth and other worlds are read-only. |
+| Climate | Warmth, moisture and ice caps, each 0–100 % | 58 %, 60 %, 30 % | Sets the climate of your body. |
+| Sky | Atmosphere and clouds 0–100 %, axial tilt 0–45° | 60 %, 35 %, 18° | Sets the air and the tilt of your body. |
+| Place kind | Place · Palace · Portal · Route | Place | Chooses what the next click on the body places. |
+| Earth layers | Imagery: Offline · Live. Terrain: Off · On. Day and night: Off · On. Place layers: each relation, On · Off | Offline, Off, Off, all On | Adds layers to Earth. Live imagery and terrain need your consent and show their source. |
+
+#### Presentations
+| Presentation | What it shows |
+|---|---|
+| Folded | The body name, the scale and the aperture. |
+| Compact | A small live picture of the body, with its phase. Four macros: Scale, Aperture, View as, Occasion. |
+| Whole | All parameters, in seven groups: View, Body, Landmass, Climate, Sky, Locations, Earth layers. |
+| Full | The body or the graph, at the chosen scale. In a pane, you turn the body, select a place and place new ones. The controls stay in Device view. |
+| Widget | Your planet, small and turning, with today's sky. Click it to open the World in a pane at the same scale. |
+
+#### Transport
+| Control | Effect on the World |
+|---|---|
+| Link | Joins the shared field. |
+| Tap | Returns the occasion to Now. |
+| Tempo | Sets how long the walk dwells at each stop. |
+| Time signature | Shows which stop of how many you are on. |
+| Metronome | Shows who else is present in the field. |
+| Quantize | Sets how a stop arrives: fly, cut or fade. |
+| Key | Sets the aperture and the view as. |
+| Follow | Keeps other panes with the place you select. |
+| Position | Shows the clock that drives the panes. |
+| Play | Walks the stops in order. The World flies from place to place. |
+| Record | Records a walk. Each place you visit becomes a stop. |
+| Capture | Keeps the present view as a scene. |
+| Draw | Places the next location on the body. |
+| Loop and punch | Marks the window of a past moment you stand in. |
+| Load | Shows how much of your world you show. |
+
+#### To use the World
+1. Open the World in a pane. It opens on the System scale, on your planet.
+2. Select a body or an object in orbit. Select a scale to move in.
+3. To build your planet, select Your world. Change the land, the climate and the sky in Device view.
+4. Select a place kind. Click the body, then name the new location.
+5. To anchor a location to Earth, select Earth and place the location there. The World draws the anchor line.
+6. To look at another day, choose an occasion. The sky and the valid places follow it.
+7. To check what others see, set View as to Field or Public.
+8. To visit another world, widen the aperture and select its planet.
+
+#### Rules
+- Earth is given. You cannot change its land. You place things on it and anchor your places to its real places.
+- Another world's body is read-only. You see what its owner shows.
+- A place keeps the precision that its source states. An approximate place does not look exact.
+- A click on the body makes an approximate place. A drag does not make it exact. A change goes to the owner of the place as a proposal.
+- A mythic place looks mythic in every view. It does not take the look of a factual place.
+- Raising a thing into wider view always asks you first.
+- Being findable is not being reachable. Being reachable is not being in touch. Being in touch is not being trusted. The owner of a world gives each step.
+- The idle body is still. It does not spin by itself.
+- Live imagery and terrain need your consent. The World names the source of each layer. Imagery does not turn back in time. The occasion filters the places, not the pictures.
+
+#### Tips
+- To plan a trip through a subject, place the stops on Earth, choose Route as the place kind and join them in order.
+- To see what a collaborator can see of your work, set View as to Public and widen the aperture to Shared.
+- To read how a week of work moved, set an occasion at its start and press Play.
+- To find a place in a source, select the place in Place scale and open its source.
+- To keep a view for a walk, press Capture.
+
+### 20.2 Knowledge graph
+
+**Product:** Technē · **Kind:** instrument · **Pane:** any pane, in every mode
+
+You need to read your notes and a wiki link by link, and see what they hold. The Knowledge graph draws each note as a node and each link as a line. A link that leads nowhere shows as a ghost, so you see what is missing.
+
+```ui
+src: ../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=techne&lens=M0
+height: 700
+caption: The nearest drawn form: the bounded graph of one subject, with ghosts for links that do not resolve. In the slot under the browser, choose graph under View. Change Depth and Budget and watch the whole grow.
+```
+
+#### Nodes, lines and ghosts
+
+| Part | What it shows |
+|---|---|
+| Node | One note, person, place or source. A small node is quiet. Its label appears as you zoom in, or when you select it. |
+| Line | A relation. The kind of relation shows when you point at the line. |
+| Ghost | A link in a note that has no target. A ghost is a dashed, hollow node. Its label says how many sources hold the link and that none opens. |
+| Highlighted group | A set of nodes that you coloured. A group changes the look of nodes and does not change what the nodes are. |
+
+The Knowledge graph draws these families of relation, and it keeps them apart:
+
+- links that a note holds in its text;
+- tags and properties that notes share;
+- relations that the wiki names and types;
+- members of a constellation, with their roles;
+- relations that you draw as proposals.
+
+A filter may combine families. A filter cannot hide where a relation comes from.
+
+#### Read and move
+
+Select a node and its note opens in the reader beside the graph, with its backlinks and the typed relations in and out. Point at a node for a preview. Double-click a node to open its source.
+
+A selected note starts with one hop. Add hops one at a time. Choose Whole wiki to see the entire wiki. Fit changes only the camera. Clear filters does not change the camera or the selection.
+
+The minimap shows all nodes and a frame for the view. Click it to jump. Back and Forward return you to an earlier view with the same camera, selection and filters.
+
+#### Filters
+
+The Knowledge graph separates three things: matches, context and display. A normal filter keeps the context of a match and dims the rest. Matches only hides the rest, and the graph says that it shows part of the whole. A node with hidden neighbours is not called unrelated.
+
+Every filter you apply stays on screen as a chip. Remove a chip to remove the filter. A hidden private note does not show in a label, a count or a line.
+
+#### Parameters
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Scope | Selected note · Whole wiki | Selected note | Chooses the notes the graph reads. |
+| Depth | 1–3 hops | 1 hop | Sets how many links away the graph reaches. |
+| Budget | 8–4096 nodes | 64 | Sets the most nodes that show. The graph says when it hides more. |
+| View | List · Tree · Graph · Form | Graph | Shows the same notes as a list, a tree, a graph, or the form of a whole. |
+| Kinds | All, or any set of note kinds | All | Shows only the kinds you choose. |
+| Relation types | All, or any set of families and types | All | Shows only the relations you choose. |
+| Standing floor | Fact · Claim · Inference · Guess · All | All | Hides relations that stand below the chosen level. |
+| Ghosts | Show · Hide | Show | Shows links that have no target. |
+| Filter mode | Context · Matches only | Context | Dims the rest, or hides the rest. |
+| Labels | Automatic · All · Focus | Automatic | Shows labels as you zoom, all labels, or only the labels near the selection. |
+| Arrows | On · Off | Off | Shows the direction of each line. |
+| Minimap | On · Off | On | Shows the overview in the corner. |
+
+#### Presentations
+| Presentation | What it shows |
+|---|---|
+| Folded | The scope, the depth and the node count. |
+| Compact | The graph of the selected note, small and live. Four macros: Depth, Scope, Ghosts, Labels. |
+| Whole | All parameters, in four groups: Reach, Filters, Display, Groups. |
+| Full | The graph in the pane, with the minimap. The reader opens beside it. The controls stay in Device view. |
+| Widget | The neighbourhood of the note you hold, small. Click a node to open the note. |
+
+#### Transport
+| Control | Effect on the Knowledge graph |
+|---|---|
+| Follow | Keeps the graph on the note you select in other panes. |
+| Capture | Keeps the present view as a scene. In Central, it puts the selected node in the packet. |
+| Arm | Lets an agent write a relation directly, with a receipt. When Arm is off, the agent proposes. |
+| Re-enable | Gives back a relation that an agent holds. |
+
+#### To use the Knowledge graph
+1. Open a note. Open the Knowledge graph in a pane beside it.
+2. Select a node. The note opens in the reader.
+3. To reach farther, raise Depth by one hop.
+4. To find a gap, set Ghosts to Show. Select a ghost to see which notes hold the link.
+5. To narrow the graph, choose a kind or a relation type. A chip shows each filter.
+6. To keep this view, save it. A saved view keeps the filters and the camera.
+7. To arrange the same notes by hand, choose Hand to Canvas in the node menu.
+
+#### Rules
+- The graph shows what the wiki holds. It does not store nodes of its own.
+- A ghost does not take a placeholder.
+- A line that you draw here is a proposal. It does not state a fact until its owner accepts it.
+- A hidden private note leaks nothing: not a label, not a count, not a line.
+- An empty result, an incomplete read and a failed provider show different messages.
+- The graph does not load a note into an agent's context. Add a node to the packet to do that.
+
+#### Tips
+- To find broken links in a folder, set Scope to Whole wiki, filter by the folder and show Ghosts.
+- To prepare an answer for an agent, select the nodes and add them to the packet.
+- To see how two notes connect, select one and raise Depth until the other appears.
+- To follow a line of thought, turn Arrows on and read along the lines.
+
+### 20.3 Canvas
+
+**Product:** Technē · **Kind:** instrument · **Pane:** any pane, in every mode
+
+You need a table to think out loud on. The Canvas holds real things that you can open. Move them into clusters, frame them, and draw a line from one to another. A line you draw stays a proposal until the owner of that relation accepts it.
+
+```ui
+src: ../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=techne&lens=M1
+height: 700
+caption: The Canvas with the stone, its related things and the drawn relations. Drag a card to move it. Choose the Relate tool in Device view, draw a line between two cards, and see that it stays a proposal.
+```
+
+#### What lies on the Canvas
+
+| Item | What it is |
+|---|---|
+| Card | A real thing: a note, a source, a place, a person, a scene or an image. Double-click it to open the thing in its own instrument. |
+| Sticky note | A short note in your own words. It is not a source. Choose its colour from the palette of the app. |
+| Shape | A rectangle, an ellipse or a diamond. Use it to mark a group. |
+| Text | A line of text with no frame. |
+| Embed | A web page or a media file shown on the Canvas. The Canvas keeps the link, not a copy. |
+| Frame | A border around a group. A frame may have a title, which shows at its top edge. |
+| Line | A connection between two items. It is straight, curved or elbowed, and it may carry a label. |
+
+The position of an item, a frame and the look of a line are presentation. They do not change what the items are.
+
+#### Lines are proposals
+
+A line has a relation type and a standing. The types are echo, influence, cause and transform. The standing is fact, claim, inference or guess. A line shows its type and standing when you point at it.
+
+A line you draw is a proposal. It becomes a relation when the owner of the relation accepts it. Until then, no other instrument sees it as a fact. Choose Promote on a line to send it to its owner. The owner may accept, change or refuse it. A refusal changes nothing on the Canvas except the line's mark.
+
+A line may bind to a side of a card. The line then stays on that side when you move the card. An elbow line reroutes by itself around a moved card.
+
+#### Move and find
+
+While you drag an item, guide lines show where it aligns with other items, and it settles on them. Grid snap is a separate choice. Fit brings every item, or the selection, into view with a margin. A minimap in the corner shows all items and the view. Click it to jump.
+
+Find searches the text of cards, the titles of frames and the shapes. It selects the match and centres it. Press Enter for the next match.
+
+#### Views
+
+A saved view keeps the camera, the frames, the selection and the subject of the Canvas. Apply a saved view and the Canvas restores them. If an item left since you saved, the Canvas says which one. The view still applies.
+
+Present shows the frames in order, full screen. The arrow key moves the camera to the next frame. Esc leaves and restores the Canvas as it was. Export a frame as an image if you need a picture of it.
+
+The Canvas imports and exports a file that other note tools open. Presentation items that the other tool does not know are listed in the file header. An exported relation always carries a note of its native identity.
+
+#### Parameters
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Tool | Select · Frame · Relate · Note · Shape · Text | Select | Chooses what a click or a drag makes. |
+| Snap | Off · Grid · Guides | Guides | Sets how a dragged item aligns. |
+| Layout | Free · Radial · Form | Free | Arranges the items by hand, around a centre, or in the form of a whole. |
+| Line kind | Straight · Curved · Elbow | Straight | Sets the path of the next line. |
+| Relation type | Echo · Influence · Cause · Transform | Echo | Sets the type of the next line. |
+| Standing | Fact · Claim · Inference · Guess | Claim | Sets the standing of the next line. |
+| Shape | Rectangle · Ellipse · Diamond | Rectangle | Sets the shape of the next shape. |
+| Sticky colour | A colour from the palette | First colour | Sets the colour of the next sticky note. |
+| Line label | Text, or none | None | Writes a label at the middle of the selected line. |
+| Minimap | On · Off | On | Shows the overview in the corner. |
+| Autosave | On · Off | On | Saves a short time after a gesture, and at once after a delete. A small glyph shows saved, saving or held. |
+| View | A saved view, or none | None | Applies a saved view. |
+
+#### Presentations
+| Presentation | What it shows |
+|---|---|
+| Folded | The title of the Canvas and the number of proposals that wait. |
+| Compact | A small live map of the Canvas. Four macros: Tool, Snap, Relation type, Standing. |
+| Whole | All parameters, in five groups: Tools, Lines, Relation, Look, Views. |
+| Full | The Canvas in the pane, with the minimap. The controls stay in Device view. |
+| Widget | The map of the Canvas you hold, and the count of proposals that wait. Click it to open the Canvas. |
+
+#### Transport
+| Control | Effect on the Canvas |
+|---|---|
+| Draw | Places the next card, note or shape where you click. |
+| Capture | Keeps the present view as a scene. |
+| Follow | Keeps the Canvas on the thing that you select in other panes. |
+| Arm | Lets an agent move items and frames directly, with a receipt. Relations still wait for their owners. |
+| Re-enable | Gives back an item that an agent holds. |
+
+#### To use the Canvas
+1. Open the Canvas in a pane. Drag a note or a source from the browser onto it.
+2. Add more things. Drag them into clusters.
+3. To mark a group, choose the Frame tool and drag a border around it. Type a title if you want one.
+4. To say that two things belong together, choose the Relate tool. Draw a line from one to the other.
+5. Set the relation type and the standing in Device view.
+6. To make the line a relation, choose Promote. The owner of the relation decides.
+7. To see an item in the wiki, choose Show in graph. The Knowledge graph opens on the same subject, and Back returns you here.
+8. To save the arrangement, save a view and give it a name.
+
+#### Rules
+- Every card is a real thing. Double-click it and it opens at its own revision. Remove a card and the thing stays.
+- Position, grouping, frames and the look of lines are presentation. They do not change a source.
+- A line is a proposal. Only the owner of the relation makes it a relation.
+- A note on the Canvas is presentation. It is not a source.
+- A saved view keeps the references of its items, not copies. When an item leaves, the view says so.
+- Moving two items close together does not state a relation.
+
+#### Tips
+- To start from a question, drop the question as a sticky note in the middle and drag related sources around it.
+- To test a theory, draw the lines as guesses and promote only the ones you can support.
+- To walk a colleague through an argument, put one idea in each frame and choose Present.
+- To share a map with someone who uses another tool, export the file.
+- To find a card in a large map, use Find, then Fit.
+
+### 20.4 Timeline
+
+**Product:** Technē · **Kind:** instrument · **Pane:** any pane, in every mode
+
+You need to see what came before, what followed and what happened at once. The Timeline lays history on one ruler, from deep time to this morning, and sets it beside the work that studied it. It keeps the weight of every claim and does not turn a coincidence into a cause.
+
+```ui
+src: ../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=techne&lens=M2
+height: 700
+caption: The Timeline on its ruler, with events drawn at their standing. In the slot under the browser, choose chronology, causal, recurrence or concurrency. Hover an event to read its standing.
+```
+
+#### The ruler
+
+One ruler holds every reading. It runs from deep time to today and stretches so that old ages and recent days both stay readable. A marked break joins the long past to today. The major unit, such as the year, shows in one row. The minor unit, such as the month, the day or the hour, shows in a row below. Both rows change as you zoom.
+
+The ruler can reach far past any calendar. Beyond the range of dates, it counts years, and its ticks step by a million years, ten million, a hundred million and a billion.
+
+An overview strip over the whole domain shows where the view sits. Drag the strip to move the view. Resize it to zoom.
+
+#### Readings, epochs, events and threads
+
+| Part | What it is |
+|---|---|
+| Reading | One author's view of time, drawn as a layer of tracks. A later reading extends an earlier one and lies over it. It does not erase it. |
+| Epoch | A named age drawn as a band on the ruler. Epochs nest. The narrowest epoch colours everything inside it. |
+| Event | A clip at its year and place. It carries the passages and the material it gathers. A parent event holds child events, and zooming out folds them into the parent. |
+| Span | The life of a person, a place or an institution, drawn thin behind its events. |
+| Thread | An ordered path through events. The walk of a whole reading is derived in date order and is not stored. A field thread follows one subject through its located occurrences. |
+
+An epoch shows the label that its source gives it.
+
+#### Standing
+
+Every event keeps the weight it has. The ruler draws it, and placement does not raise it.
+
+| Standing | How it looks |
+|---|---|
+| Fact | Solid. |
+| Claim | Solid, in a lighter tone. |
+| Inference | Dashed outline. |
+| Guess | Dotted outline. |
+| Dispute | Hatched. Each side is named. |
+| Gap | An empty slot with an honest label. Nothing fills it. |
+
+A precise date draws as a point. A year draws as the year. An uncertain date draws as a band, hatched when the source says "circa". A date with only a millennium draws as a band a thousand years wide. The label states the precision in the words of the source, such as "12th c." or "1963". An undated event that has an order can sit on a relative axis, such as Day 0, Day 1. No calendar year then shows.
+
+Where events crowd at a broad zoom, the ruler draws a count, such as "7 events, 1601 to 1650". Click the count to zoom in once. A count is not drawn as an event.
+
+#### Four lenses
+
+| Lens | What it shows |
+|---|---|
+| Chronology | The events by date, on the ruler. |
+| Cause | Chains of cause and influence. Select a chain and its hops light in order, each with its time offset. A hop with no date says so. |
+| Recurrence | What keeps returning, with each return marked. |
+| Concurrency | What happened at once, across readings and across your own work. |
+
+Edges between events take the colour and line of their standing, with a legend that shows whenever edges show. Placing two events side by side draws no edge.
+
+#### Parameters
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Lens | Chronology · Cause · Recurrence · Concurrency | Chronology | Chooses how the events relate on the ruler. |
+| Readings | Each reading, On · Off | All On | Shows or hides the layers. |
+| Time scale | Stretched · Even · Relative | Stretched | Sets how the ruler maps time. Relative shows only when a source gives a starting point. |
+| Window | All time, or a start and an end | All time | Sets the span you read over. Other instruments take the same window. |
+| Standing floor | Facts only · Plus claims · Plus inferences · Plus guesses · All | All | Hides events that stand below the chosen level. |
+| Epoch bands | On · Off | On | Shows the named ages behind the events. |
+| Spans | On · Off | On | Shows the lives and validity spans behind the events. |
+| Edges | On · Off | On | Shows the relations between events. |
+| Nesting | Auto · Open all | Auto | Folds children into the parent at a broad zoom, or keeps them open. |
+| Your work | Days · Runs · Receipts, each On · Off | All Off | Adds the strata of your own work to the ruler. |
+| Overview strip | On · Off | On | Shows the whole domain with the view marked. |
+| View | A saved view, or none | None | Applies a saved view. |
+
+#### Presentations
+| Presentation | What it shows |
+|---|---|
+| Folded | The lens and the window. |
+| Compact | The ruler in miniature, with the density of events. Four macros: Lens, Window, Standing floor, Readings. |
+| Whole | All parameters, in four groups: Lens, Readings, Standing, Window. |
+| Full | The ruler with its tracks, epochs and events. In a pane, you zoom, select and open events. The controls stay in Device view. |
+| Widget | A thin ruler with a marker at the present window. Click it to open the Timeline. |
+
+#### Transport
+| Control | Effect on the Timeline |
+|---|---|
+| Tap | Returns the window to now. |
+| Tempo | Sets how long a walk stays at each stop. |
+| Time signature | Shows which stop of how many you are on. |
+| Quantize | Sets how a stop arrives. |
+| Follow | Moves the World to the place and the year of the event you select. |
+| Position | Shows the moment that drives the panes. |
+| Play | Walks the selected thread. Each stop sets the clock to its year and the World to its place. |
+| Record | Records a walk of the events you meet. |
+| Capture | Keeps the present view as a scene. |
+| Loop and punch | Marks the window you read over. |
+| Draw | Places a new event at the point you click. |
+
+#### To use the Timeline
+1. Open the Timeline in a pane. It opens on the subject you selected.
+2. Zoom with the overview strip, or scroll on the ruler.
+3. To add a reading, choose Readings and switch on a second layer. The layers stack.
+4. To see why an event is dated, select it and choose its evidence. The source opens at the passage.
+5. To trace a cause, choose the Cause lens and select a chain.
+6. To read over a span, set the Window. The World and the other panes take the same window.
+7. To walk a thread, select it and press Play.
+8. To keep this arrangement, save a view and give it a name.
+
+#### Rules
+- Standing does not rise because of placement. Two events side by side are not cause and effect.
+- A precise mark needs a precise source. A low-precision date draws as a band.
+- An event without a date does not get a made-up date. The Timeline says "No dates disclosed" and puts nothing on the ruler.
+- A later reading extends an earlier one. It does not rewrite it.
+- The narrowest epoch sets the colour inside it.
+- Colour changes only when meaning changes. The ruler does not animate by itself.
+- Every event opens its source at the passage that gives its date.
+- A view that you save keeps the camera, the lens, the filters, the open frame and the stack of events you held.
+
+#### Tips
+- To compare two historians, add each reading as a layer and look for the dispute marks.
+- To check a story, switch on the Cause lens and look for hops with no date.
+- To prepare a talk, record a walk along a thread and add one scene to each stop.
+- To see what you did on the day a book was written, set Your work to Days and zoom to that year.
+- To read in peace, press F for focus mode and Esc to return.
+
+### 20.5 Journey
+
+**Product:** Technē · **Kind:** instrument · **Pane:** any pane, in every mode
+
+You need to take someone through a subject in an order that makes sense. A Journey is a walk of stops, each with a place, a moment, a scene and a few words. It has a pace, a way of arriving at each stop and a voice that tells it. You can record a walk as you go.
+
+```ui
+src: ../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=techne&lens=M3
+height: 700
+caption: A walk as rows of stops, with the narration and the way each stop arrives. Press Play in the transport to walk it. Press Record, visit places, and see each visit become a stop.
+```
+
+#### A stop
+
+A stop stands several things together. When the walk reaches a stop, the clock goes to its moment, the World goes to its place, and the scenes it carries launch.
+
+| Part of a stop | What it holds |
+|---|---|
+| Place | Where the World goes. |
+| Moment | The year or the date. The sky and the Timeline go there. |
+| Thing | The note, source or person the stop is about. |
+| Scene | The Expression scene that launches, such as an image, a film or a living field. |
+| Narration | The words the guide speaks at this stop. |
+| Arrival | How the walk gets here: fly, cut or fade. |
+
+A stop with no place, no moment or no scene shows that it holds none. The Journey does not invent one.
+
+#### Two shapes of walk
+
+| Shape | What happens at each stop |
+|---|---|
+| Through Expressions | Each stop launches a scene on a different Expression. The walk changes track at each stop. |
+| Through one Expression | The stops step down the scenes of one Expression, clip to clip. |
+
+A walk may mix the two. A walk made from a reading starts as one stop for each scene that the reading's Expressions hold. A reading with no scenes shows why it has none.
+
+#### Pace, arrival and transitions
+
+Pace is the time the walk stays at a stop. Arrival is how the walk reaches the next one. Each pair of stops has its own transition: its length in seconds, its curve, and when it switches. A transition can switch at once, in step with the beat of the scene, or when the outgoing scene ends. Drag a stop so that it overlaps the end of the one before it. The overlap is the transition. Pull the stops apart to get a cut.
+
+While the walk plays, each transition shows its progress on the line between the two stops. The next stop and the path ahead stay visible, also when the walk loops.
+
+#### Record a walk
+
+Press Record and go somewhere new. Each place, moment or thing you visit becomes a stop. Stop recording and the walk lies along the ruler, ready to edit and ready to give away. Press Overdub to add stops to a walk that exists. A recorded walk keeps its takes, and you choose the one that stands.
+
+#### Parameters
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Path | Through Expressions · Through one Expression · Mixed | Through Expressions | Sets how the walk chooses its scenes. |
+| Pace | 2–12 seconds | 6 seconds | Sets how long the walk stays at a stop. |
+| Arrival | Fly · Cut · Fade | Fly | Sets how the walk reaches a stop. |
+| Transition time | 0–10 seconds | 1 second | Sets the length of the selected transition. |
+| Curve | Linear · Ease in · Ease out · Ease both | Linear | Sets the shape of the selected transition. |
+| Switch | At once · In step · At end of scene | At once | Sets when the next scene takes over. |
+| Follow action | Next stop · Stay · Return to start | Next stop | Sets what happens when a stop ends. |
+| Loop | Off · On · On, leave at end of scene | Off | Repeats the walk. |
+| Start stop | Any stop | The first stop | Sets where the walk begins and where Return goes. |
+| Narration | On · Off | On | Speaks or shows the words of each stop. |
+| Take | A recorded take | The latest take | Chooses the take that stands. |
+
+#### Presentations
+| Presentation | What it shows |
+|---|---|
+| Folded | The name of the walk and the stop you are on. |
+| Compact | The stops as small cells, with the current stop marked. Four macros: Pace, Arrival, Loop, Narration. |
+| Whole | All parameters, in four groups: Stops, Pace, Transitions, Takes. |
+| Full | The walk as rows of stops, with narration and arrival. In a pane, you reorder stops, trim them and play the walk. The controls stay in Device view. |
+| Widget | The stop you are on, the narration and a play button. |
+
+#### Transport
+| Control | Effect on the Journey |
+|---|---|
+| Tempo | Sets the pace. |
+| Time signature | Shows which stop of how many you are on. |
+| Quantize | Sets how each stop arrives. |
+| Follow | Keeps the other panes on the stop you are on. |
+| Position | Shows the stop and the clock. |
+| Play | Walks the stops. |
+| Stop | Stops the walk. |
+| Record | Records a new walk from the places you visit. |
+| Overdub | Adds stops to the walk. |
+| Capture | Keeps the present view as a scene and adds a stop that carries it. |
+| Loop and punch | Marks the window of a past moment you walk in. |
+| Draw | Places a new stop on the World. |
+
+#### To use the Journey
+1. Open the Journey in a pane. Select a reading, or start an empty walk.
+2. To add a stop, choose Capture while you stand on a place, or choose Draw and click the World.
+3. Drag stops to put them in order.
+4. Type the narration of a stop. Choose its arrival.
+5. To add a scene, choose a stop and choose Compose scene. The Expression's owner receives a proposal.
+6. Set the pace. Press Play to walk it.
+7. To enter a scene, select its stop and choose Enter. Choose Return to come back to the same stop.
+8. To keep a walk, press Record while you walk. Choose the take that stands.
+
+#### Rules
+- A scene has one identity: the one the Expression gives it. The Journey makes no second store of scenes.
+- A new scene is a proposal to the Expression's owner. The Journey refuses a name that exists.
+- A new order must keep every scene. The Journey refuses an order that adds or drops one.
+- If the Expression changed since you opened it, the change is refused and your draft stays.
+- A stop with no scene, no place or no moment shows that it has none.
+- Enter a scene from the Journey and your subject, reading and selection come with you. Return finds the same stop by its scene, not by its number.
+- A walk that you start is local work. It stays local until you save it to its Expression.
+- Reload brings you back to the stop where you stood.
+
+#### Tips
+- To teach a topic, record a walk through the places it happened, and speak one line at each stop.
+- To tell a story through sound, make each stop launch a different Expression.
+- To rehearse a long walk, loop three stops and turn the pace down.
+- To show a source, open it from its stop and choose Return to scene when you finish.
+- To compare two tellings, record both and keep each as a take.
+
+### 20.6 Palace
+
+**Product:** Technē · **Kind:** instrument · **Pane:** any pane, in every mode
+
+You need a building to keep a whole subject in. A Palace is a place on the World that you enter. Its rooms each hold a part of the subject, a path leads through them, and a guide says why each room stands where it does. What you conclude there goes back to the owners of the sources as proposals with your name on them.
+
+```ui
+src: ../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=techne&lens=M5
+height: 700
+caption: A palace seen from above, with its rooms, its path and its portals. The Annex is a private room, clouded to every viewer but you. Select a room in Device view to read why it stands where it does.
+```
+
+#### Rooms, path, guide, portals
+
+| Part | What it is |
+|---|---|
+| Room | One curated part of a body of material: an epoch, a folio, a chapter, a concept, a planet. It holds objects. |
+| Object | A real thing, such as a note, a source, a scene, a walk or a canvas. It opens in its own instrument, at its own revision. The corpus owns it, not the room. |
+| Path | The order in which the rooms are walked. |
+| Guide | The companion. It explains why each room stands where it does. |
+| Private room | A room that holds your own practice. It stays under cloud to every audience but you. |
+| Portal | A door out to another place, another palace or another person's world. Walking through a portal is an encounter like any other. |
+
+A Palace is a curated system over one corpus or one project. It stands on the World at a place. To enter, select the palace on the World and choose Enter. The Palace pane then shows the same place from inside. The palace has no home apart from the World.
+
+#### The board
+
+The rooms and objects sit on a board that you pan, zoom and drag. Their positions are presentation. Select several with a marquee. Grid snap helps you align them. Nothing about a thing changes when you move it.
+
+Where one object is declared as part of another, the board draws a line between them. A member that is named but missing draws as broken. It does not vanish.
+
+A fixed floor is also available: six rooms with four places in each, for the old art of memory. Choose Method of loci to use it.
+
+Each room shows what its structure rests on. A room built on a warranted structure shows that structure and its source. A room that you arranged freely says so. The Palace does not show free composition as warranted structure.
+
+#### Walk and bookmark
+
+A walk visits one place after another, in the order you chose or in the order of the board, and wraps at the end. It starts at the named start room. Bookmark any position. A bookmark keeps the room, the place in the walk and the object in focus. Choose a bookmark to jump back.
+
+#### Return
+
+When you have a result, choose Return. The Palace sends the objects in the order you arranged them, with your intent for each room. It sends them to the route that the reading names for new knowledge. The owner of the sources receives a proposal that carries your name. The owner accepts it or not.
+
+If the reading names no route, the Palace gives a receipt that says nothing was sent. A refused route does the same. In both cases nothing changes in the sources. After a Return that goes through, the ground opens again on the same subject.
+
+#### Parameters
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Room | Any room | The start room | Chooses the room you stand in. |
+| Arrangement | Board · Method of loci | Board | Sets the free board, or the fixed floor of six rooms. |
+| Path | Guided · Free | Guided | Walks the rooms in the set order, or lets you walk anywhere. |
+| Walk order | Authored · Spatial | Authored | Sets the order of the walk. |
+| Start room | Any room | The first room | Sets where the walk begins and where Return to ground leads. |
+| Guide | On · Off | On | Lets the companion explain each room. |
+| Snap | Off · Grid | Grid | Aligns dragged rooms and objects. |
+| Connections | Shown · Hidden | Shown | Draws the lines between related objects. |
+| Audience | Me · Field · Public | Me | Shows the Palace as that audience sees it. A private room stays under cloud for Field and Public. |
+| Return route | The routes that the reading names | The first route | Chooses where Return sends its proposal. |
+| Bookmark | A saved position, or none | None | Jumps to a saved position. |
+
+#### Presentations
+| Presentation | What it shows |
+|---|---|
+| Folded | The name of the Palace and the room you stand in. |
+| Compact | The plan of the rooms with the path drawn and your room marked. Four macros: Path, Guide, Audience, Return. |
+| Whole | All parameters, in four groups: Rooms, Path, Board, Return. |
+| Full | The Palace in the pane: the board, the rooms, the walk. In a pane, you walk, open objects and use portals. The controls stay in Device view. |
+| Widget | The plan of the Palace you hold, small, with the room you stand in. Click a room to enter it. |
+
+#### Transport
+| Control | Effect on the Palace |
+|---|---|
+| Tempo | Sets how long the walk stays in a room. |
+| Time signature | Shows which room of how many you are in. |
+| Quantize | Sets how the walk reaches the next room. |
+| Follow | Keeps the other panes on the room you stand in. |
+| Play | Walks the rooms in the chosen order. The guide speaks at each room. |
+| Stop | Stops the walk. |
+| Record | Records your visit as a walk. |
+| Arm | Lets the Palace's agent move objects directly, with a receipt. The agent proposes while Arm is off. |
+| Re-enable | Gives back an object that an agent holds. |
+| Draw | Places a room, an object or a portal. |
+
+#### To use the Palace
+1. On the World, select a palace and choose Enter.
+2. Read the plan. Select a room. The guide says why it stands there.
+3. Open an object. It opens in its own instrument. Choose Return to room when you finish.
+4. Drag rooms and objects to arrange the board. Change Arrangement to Method of loci if you want the fixed floor.
+5. Press Play to walk the rooms. Bookmark a position you want to keep.
+6. To add a door, choose Draw, then Portal, and click the wall. Name the place it leads to.
+7. When you have a result, choose Return. Check the proposal, then send it.
+
+#### Rules
+- An object belongs to the corpus. The room only points to it.
+- Arrangement is presentation. It does not change any object.
+- A room says whether it rests on a warranted structure or on free composition.
+- A private room is under cloud for every audience but you, and for every portal and every export.
+- Return is a proposal. It does not write to a source. It carries the name of its author.
+- A Return with no route, or with a refused route, gives a receipt and changes nothing.
+- A Palace is not performed. It is entered, walked and returned from.
+- Every object stays open on its own. A missing object shows as broken.
+
+#### Tips
+- To teach a book, make one room for each chapter and walk the rooms in order.
+- To remember a long argument, put one idea in each room and take the fixed floor.
+- To keep dreams or notes to yourself, put them in a private room.
+- To bring a reader to a related place, add a portal from the room that mentions it.
+- To report a finding, arrange the objects in the order of your argument and choose Return.
+
+### 20.7 Document
+
+**Product:** Central · **Kind:** instrument · **Pane:** any pane, in every mode
+
+You need to read and write a page, and keep it tied to the thing it is about. The Document shows a Central page as its template draws it. The page may be a Day, a Flow, a Being or a Thing, or a page of a kind you made. You select a passage and the rest is close at hand.
+
+```ui
+src: ../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=base&doc=thing&layout=solo
+height: 700
+caption: A Thing, drawn from its template on paper. Select a passage to see Highlight, Note, To packet and Answer this. In Device view, read the bindings that tie the page to its world and its place.
+```
+
+#### Pages and templates
+
+Every page starts from a template, and every template is yours to change. The template draws the page. It holds no logic. Turning, filling, agent intake and saving are functions of the instrument.
+
+| Page | What it is | What the form device shows |
+|---|---|---|
+| Day | The page of one day, a die with six faces. | The six faces. Click a face to turn the die to it. |
+| Flow | A running conversation or journal. The people and agents in it are named at the top. | The participants, and the view: Dialogue, Flow or Journal. |
+| Being | A person or an agent that your work is about, tied to its world, its sources and its place. | The bindings: world, subject, office and sources. |
+| Thing | An object that your work is about, tied in the same way. | The bindings. |
+
+A page keeps its connections however you restyle it. A Day that you redesigned still fills itself. A Thing that you rearranged still knows where it stands on the map. A page keeps the version of the template it opened with. A new version of the template does not change an old page.
+
+The agent's entries show their author on the page. An accepted entry shows on its face, not only in an export.
+
+#### Work on a passage
+
+Select a passage. Four acts are close at hand.
+
+| Act | What it does |
+|---|---|
+| Highlight | Marks the passage and leaves it whole. |
+| Note | Attaches a note to the passage. A note is not a source. |
+| To packet | Adds the passage to the packet. |
+| Answer this | Sends the packet and the passage to the agent. The answer arrives as a new entry, with its sources. |
+
+The packet is exactly what the agent receives. You see it whole, and its size, before anything is sent. Follow a source in an answer and you land on the line it came from.
+
+Type @ in a page to search everything you can reach: a person, an agent, a place, a document, a passage. Highlight a paragraph and tag a colleague, and they receive the passage and where it came from. Tag an agent and it starts to work on it. Tag a place and the passage is filed on that place in your world.
+
+Press Record and talk. Your words go into the page. Overdub chooses whether what comes back joins as a new entry or replaces the passage you selected.
+
+#### Save
+
+A save has one of five outcomes, and the Document names it: saved, unchanged, stale, conflict or refused. A stale or conflicting save keeps your draft and shows what changed. The save state shows next to the page: saved, or edited since save.
+
+#### Parameters
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Template | A template at a version | The page's own template | Chooses the template that draws the page. The page keeps its version until you change it. |
+| View | Page · Source | Page | Shows the drawn page, or its source text. |
+| Flow view | Dialogue · Flow · Journal | Dialogue | Chooses how a Flow reads. It applies to a Flow only. |
+| Selection act | Highlight · Note · To packet · Answer this | Highlight | Sets what a plain selection does. |
+| Agent writes | Off · Propose · Write | Propose | Off: the agent does not write. Propose: each agent entry waits for you to accept it. Write: entries go in directly, each with a receipt. |
+| Overdub | New entry · Replace selection | New entry | Sets how an answer or a dictation joins the page. |
+| Packet scope | Selection · Page · Page and linked | Selection | Sets what Answer this reads. |
+| Autosave | On · Off | On | Saves a short time after you stop. |
+| Pin | Follows · Pinned | Follows | A pinned pane keeps its page while you select elsewhere. |
+| Paper | Template default · Light · Dark | Template default | Sets the paper tone of the page. |
+
+#### Presentations
+| Presentation | What it shows |
+|---|---|
+| Folded | The title of the page and its save state. |
+| Compact | A small preview of the page and its packet size. Four macros: Agent writes, Overdub, Packet scope, Selection act. |
+| Whole | All parameters, in four groups: Page, Selection, Agent, Save. |
+| Full | The page, as its template draws it. In a pane, you read and write here. The controls stay in Device view. |
+| Widget | The page you hold, small, with its save state and the size of its packet. Click it to open the page. |
+
+#### Transport
+| Control | Effect on the Document |
+|---|---|
+| Link | Keeps your ground in step on other machines. |
+| Tap | Stamps the moment into the page. |
+| Metronome | Saves as you go. |
+| Quantize | Sets when a save lands. |
+| Key | Shows what the agent will read: its size and its scope. |
+| Follow | Keeps other views on the page you read. |
+| Position | Shows the moment of the day. |
+| Play | Sends the packet. The answer arrives as an entry. |
+| Stop | Stops dictation. |
+| Record | Dictates into the page. |
+| Overdub | Adds a new entry, or replaces the selection. |
+| Arm | Lets the agent write directly, with receipts. |
+| Re-enable | Gives back a passage that the agent holds. |
+| Capture | Puts the selection in the packet. |
+| Draw | Highlights. |
+| Load | Shows whether the page is saved. |
+
+#### To use the Document
+1. Open a page from the browser, or drag it into a pane.
+2. Read it. Select a passage.
+3. Choose Highlight or Note to mark it. Choose To packet to collect it.
+4. Check the packet and its size in Device view.
+5. Press Play. The agent answers into the page as a new entry with its sources.
+6. Accept or remove each entry that the agent proposes.
+7. To turn a Day, use the form device. To change the view of a Flow, choose Dialogue, Flow or Journal.
+8. Save the page.
+
+#### Rules
+- The template draws the page and holds no logic.
+- A page keeps the template version it opened with.
+- The agent does not write behind your back. With Agent writes at Propose, every entry waits for you.
+- Every write carries a receipt, and every agent entry shows its author.
+- When you change a passage the agent wrote, the hand-back light comes on. Press it to give the passage back.
+- A note is presentation. A highlight leaves the passage whole.
+- Keys do not play notes while you type in a page.
+- A closed Day is kept. You can open it and read it again.
+
+#### Tips
+- To prepare a long question, add the passages to the packet and check the size before you press Play.
+- To brief a colleague, highlight a paragraph and tag them with @.
+- To keep a thought with its place, tag a place and let the passage file itself there.
+- To draft by voice, press Record, talk, and set Overdub to New entry.
+- To redesign your Things, change the template once. Every Thing then follows it.
+
+### 20.8 Session grid
+
+**Product:** DLW, every mode · **Kind:** instrument · **Pane:** any pane, in every mode
+
+You need to try things, fire them, and put this beside that without a fixed order. The Session grid shows the tracks of the mode across the pane and their clips in rows below. Every clip can launch, and a row launches one clip on every track.
+
+```ui
+src: ../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=factory
+height: 700
+caption: The grid in Factory: tracks are agent sessions and clips are tasks. Fire a clip, then fire a row. Read the state of each clip from how it is drawn.
+```
+
+#### What the grid holds in each mode
+
+The grid is the same in every mode. Only the material changes.
+
+| Mode | Track | Clip | Stop (a row) | Takes under a clip |
+|---|---|---|---|---|
+| Central | A stream: the Day, Flows, Beings, Things, Goals. | An entry or a document. | The face of the Day, which stands its entries together. | Revisions: draft, saved, edited since save. |
+| Factory | An agent session. | A task. | A batch of tasks that launch together. | Attempts. You choose the attempt that lands. |
+| Expressions | An Expression. | A scene. | A moment across several Expressions. | Captured takes of a scene. |
+| Technē | A reading, a journey or the occurrences of a subject. | An event, an occurrence or a revision at its time and place. | A stop of a walk: it stands its event and launches the scenes it carries. | Readings that extend a reading. |
+| Live | A part. | A note clip or an audio clip. | A row of clips. | Take lanes. |
+
+The word scene always means an Expression's scene. A row of clips is a stop.
+
+#### How a clip is drawn
+
+| State | How it looks |
+|---|---|
+| Waiting | A fast blink. It has no length, because nobody knows how long it will take. |
+| Running | A slow blink and a fill that grows. It has no end drawn. |
+| Stopped | Ready, in full colour. |
+| Recording | Marked with the record light. |
+| Stalled | Striped and frozen where its output stopped. The track lights a retry. |
+| Done | Dimmed and settled. |
+
+An empty slot is a place to write. Double-click it to start a clip there.
+
+#### Tracks and groups
+
+A track header shows the identity colour, the name and, in Factory, the agent. Groups fold under one header. The members of a group step in below it, with one coloured rail for each level. A row in a group launches all its children at once.
+
+Each track has a stop button. In Factory, the track also lights a retry when one of its clips has stalled. The retry starts again from the last good step on the same basis.
+
+The Main track sits at the end of the grid, where Live keeps the Main track. In Central, the Day is the Main track. Each workspace sends its work there.
+
+#### Launch, follow and take
+
+Launch mode says how a clip plays: once, while you hold it, or in a loop. Launch quantize says when a launch lands: at once, at the next bar, or after the agent finishes its current step. A follow action says what comes after a clip: the next clip, the first clip, or nothing. Takes stack under a clip. Choose the one that stands.
+
+#### Parameters
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Tracks shown | Any set of the mode's tracks | All | Chooses the tracks that fill the grid. |
+| Groups | Each group, Open · Folded | Open | Folds a group under its header. |
+| Launch mode | Once · Hold · Loop | Once | Sets how a clip plays. |
+| Launch quantize | Now · Next bar · After the current step | Now | Sets when a launch lands. |
+| Follow action | None · Next · First · Stop | None | Sets what comes after a clip. |
+| Armed track | One track, or none | None | Sets the track that voice and the composer address. |
+| Solo | Each track, On · Off | All Off | Lets only the soloed tracks run. |
+| Takes | Hidden · Shown | Hidden | Shows the takes under each clip. |
+| Main track | Shown · Hidden | Shown | Shows the Main track at the end of the grid. |
+| Row keys | On · Off | On | Lets the number keys launch rows. |
+
+#### Presentations
+| Presentation | What it shows |
+|---|---|
+| Folded | The mode and the number of tracks. |
+| Compact | A small grid of coloured cells, one for each clip state. Four macros: Launch quantize, Follow action, Launch mode, Armed track. |
+| Whole | All parameters, in four groups: Tracks, Launch, Follow, Takes. |
+| Full | The grid in the pane, with the row launchers and the Main track. In a pane, you launch, stop and select clips. The controls stay in Device view. |
+| Widget | The grid of the mode in small cells. Click a cell to select the clip. A lit retry opens its track. |
+
+#### Transport
+| Control | Effect on the Session grid |
+|---|---|
+| Play | Launches the selected clip, or every queued clip in the selected row. |
+| Stop | Stops the playing clips at the next safe point. Press again to cancel. |
+| Record | Lays what plays into Arrangement view as clips, with takes under them. |
+| Overdub | Adds to what is recorded, or steers a running clip. |
+| Arm | Records the moves of any parameter as an automation lane on that track. |
+| Re-enable | Gives a parameter back to its lane, or to the agent or instrument that held it. |
+| Capture | Keeps what you did by hand as a new clip. |
+| Quantize | Sets Launch quantize. |
+| Follow | Keeps views on the clip that runs. |
+| Position | Shows the place in the running clip. |
+| Tap | Asks what each running clip has done. In Central, it stamps the moment. |
+
+#### To use the Session grid
+1. Open the Session grid in a pane, or press Tab from Arrangement view.
+2. Read the states of the clips.
+3. Select a clip. Press Play to launch it.
+4. To launch a row, press its number key.
+5. To try one thing against another, launch clips on two tracks together.
+6. To order work, set a follow action on a clip.
+7. When a track lights a retry, select the track and press retry.
+8. Press Record while clips play. Press Tab to see the result in Arrangement view.
+
+#### Rules
+- A track holds the stream of its owner. The grid shows it and does not copy it.
+- A clip that is running shows no end. A waiting clip shows no length.
+- A stalled clip shows where it stopped. It does not look done.
+- A row launches only what is in it. It adds nothing.
+- Stop pressed twice cancels at once. Launch quantize does not delay it.
+- The grid in every mode uses the same states, the same stop buttons and the same keys.
+
+#### Tips
+- To start a batch of tasks together, put them in one row and press its number key.
+- To test two ideas, put each on its own track and launch the row.
+- To keep the best attempt, show Takes and choose the attempt that lands.
+- To keep a run off your list of work, leave it in the grid and out of the Day's tasks.
+- To clear a stall, select the track and press retry.
+
+### 20.9 Arrangement ruler
+
+**Product:** DLW, every mode · **Kind:** instrument · **Pane:** any pane, in every mode
+
+You need to see the course of your material over time. The Arrangement ruler lays the tracks of the mode along one ruler. You see today from first entry to last, or each thread of agent work with a needle. You see an Expression's scenes in order, or history from deep time to this morning.
+
+```ui
+src: ../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=techne&lens=M2
+height: 700
+caption: The ruler in Technē, with readings as layers and events at their dates. Drag the overview strip to move, resize it to zoom, and read the standing of each clip from how it is drawn.
+```
+
+#### What the ruler holds in each mode
+
+| Mode | Tracks along the ruler | The ruler measures |
+|---|---|---|
+| Central | The streams of the day: the Day, Flows, Beings, Things. | Today, from first entry to last. |
+| Factory | One thread for each agent session. Each thread has a needle. | Time of the run. |
+| Expressions | One track for each Expression, with the picture lane over the sound lane. | The scenes in order, in seconds. |
+| Technē | Readings, as layers of tracks. | Time from deep time to today. |
+| Live | The parts of the set. | Bars and beats. |
+
+The ruler shows each track's clips. Under the clips lie the lanes of the track's devices, such as an agent's effort or a field device's value.
+
+#### Needles and lanes
+
+In Factory, each thread has one needle at its last check-in. The needle jumps each time its agent checks in. A needle that does not move marks a stall, and the thread freezes where its output stopped. A line marks now. Follow keeps now in view.
+
+Under a thread run its events: messages, files, terminal, and pages read. Click an event and it opens beside the ruler.
+
+Under any track, a lane shows the recorded moves of one parameter. Arm a track and move a parameter. The move becomes a lane. A lane that is modulated shows the source that moves it.
+
+Record in Session view and the clips lay out here, with their takes under them.
+
+#### Sections, markers and loop
+
+Named sections run along the top. In Technē they are epochs. They nest, and the narrowest colours the clips inside it. A marker is a named, coloured point. Jump from marker to marker with the next and previous keys.
+
+A loop region has an in point and an out point. The transport plays, and repeats, only between them. In Factory, the same brace is the window in which agents may write.
+
+#### Edit clips on the ruler
+
+A clip stays the same thing wherever you move it. A move changes only when it stands in time.
+
+| Edit | What it does |
+|---|---|
+| Move, insert | Moves the clip and shifts the clips after it. |
+| Move, overwrite | Moves the clip and replaces what was there. |
+| Trim | Drags an edge to change the length. |
+| Roll | Moves the seam between two clips. One grows by what the other loses. |
+| Slip | Changes where the clip starts inside its own content. |
+| Slide | Moves a clip between fixed neighbours. |
+| Split | Cuts the clip in two at the playhead. The lengths add up to the original. |
+
+A void is a still clip, not a gap. Every edit is one step in the undo list, with a label. A split or a roll is one step, not three.
+
+Snap pulls the playhead and the edges you drag to clip edges, markers, loop edges and the playhead. Hold Alt to turn snap off while you drag.
+
+#### Parameters
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Tracks shown | Any set of the mode's tracks | All | Chooses the tracks on the ruler. |
+| Lanes | Takes, Automation, Events, each On · Off | Takes On, Automation On, Events Off | Shows the lanes under the tracks. |
+| Time scale | Even · Stretched | Even | Stretched keeps deep time readable beside today. |
+| Zoom | Any span | Fit all | Sets the span in view. |
+| Snap | On · Off | On | Aligns dragged items to edges, markers and the playhead. |
+| Move mode | Insert · Overwrite | Insert | Sets what a move does to its neighbours. |
+| Trim mode | Trim · Roll · Slip · Slide | Trim | Sets what an edge drag does. |
+| Markers | Any set | None | Shows named points. Add one at the playhead. |
+| Loop region | Off · In to out | Off | Plays and repeats only between the points. |
+| Needles | On · Off | On | Shows the needle of each thread. It applies in Factory. |
+| Overview strip | On · Off | On | Shows the whole ruler with the view marked. |
+| Standing floor | Facts only · Plus claims · Plus inferences · Plus guesses · All | All | Hides clips that stand below the level. It applies in Technē. |
+
+#### Presentations
+| Presentation | What it shows |
+|---|---|
+| Folded | The mode and the span in view. |
+| Compact | A small ruler with the clips as bars and the playhead. Four macros: Zoom, Snap, Move mode, Lanes. |
+| Whole | All parameters, in four groups: Tracks, Lanes, Edit, Loop. |
+| Full | The ruler with its tracks, lanes, needles and sections. In a pane, you select, edit and play. The controls stay in Device view. |
+| Widget | A thin ruler with the playhead and the loop region. Click it to open the ruler at that moment. |
+
+#### Transport
+| Control | Effect on the Arrangement ruler |
+|---|---|
+| Play | Plays from the playhead. Each clip's track runs through its chain. |
+| Stop | Stops at the playhead. Press again to return to the start. |
+| Record | Lays the take into the ruler. |
+| Overdub | Adds to the take on the ruler. |
+| Arm | Records the moves of any parameter as a lane. |
+| Re-enable | Gives a parameter back to its lane, or to the agent that held it. |
+| Loop and punch | Sets the loop region and the window of the take. |
+| Follow | Keeps now or the playhead in view. |
+| Position | Shows the playhead. |
+| Quantize | Sets how the playhead and edits align. |
+| Capture | Keeps the span in view as a new clip. |
+
+The playhead can also scrub: drag it and the material follows. Shuttle plays back or forward at a chosen speed. Frame stepping moves by one step.
+
+#### To use the Arrangement ruler
+1. Press Tab to change from Session view to Arrangement view, or open the ruler in a pane.
+2. Drag the overview strip to move. Resize it to zoom.
+3. Select a clip. Its editor opens in Clip view.
+4. To change a length, drag an edge. To move a clip, drag it.
+5. To mark a moment, add a marker at the playhead and name it.
+6. To repeat a span, set the loop region and press Play.
+7. To record a parameter, press Arm, play, and move the parameter. Read the new lane under the track.
+8. To give a parameter back, press Re-enable.
+
+#### Rules
+- The ruler shows the material of its owner. It does not copy it.
+- A move does not change what a clip is. It changes only where the clip stands.
+- Placement does not raise a claim to a fact.
+- A needle that stops is a stall. The ruler shows it and does not hide it.
+- Every edit is one labelled step. The step can be undone alone.
+- A modulated parameter shows what moves it.
+- A recorded lane gives control back only when you press Re-enable.
+
+#### Tips
+- To find where an agent got stuck, look for the needle that stopped, then open its last events.
+- To rehearse a section, set the loop region around it and press Play.
+- To cut a scene in two, put the playhead where you want the cut and split.
+- To make a smooth change, record the move of one parameter over a scene with Arm.
+- To compare two days, show both in one view and look for the same shape.
+
+### 20.10 Thread
+
+**Product:** Factory · **Kind:** instrument · **Pane:** any pane, in every mode
+
+You need to read what an agent did, and to talk to it while it works. The Thread shows one session's conversation and its tool use, full width, in the order they happened. Sub-agents spawned by the session each have a thread of their own.
+
+```ui
+src: ../../desktop/cradle/docs/world-shell/world-shell-mockup.html?mode=factory
+height: 700
+caption: Factory with the session grid on the left and a Thread on the right. Select a session in the grid and the Thread follows it. Read the tool rows, the steer lines and the proposal cards.
+```
+
+#### What the stream holds
+
+| Item | What it shows |
+|---|---|
+| Task divider | The name of a task and how it stands. |
+| Message | What you said and what the agent said, each with its avatar. |
+| Tool row | One tool the agent used: a key chip and a summary. Click it to open the output. |
+| Spawn row | A sub-agent that the session started, with a link to its thread and its live state. |
+| Steer line | Words you sent in the middle of a turn. It reads "heard at next tool" until the agent takes it. |
+| Proposal card | A change the agent proposes. It offers Approve, Changes and Diff. |
+| Stall card | A card with an orange border. It names the prompt that the agent waits for. It offers Retry, Hard stop, Steer and Tell parent. |
+| Working line | A pulsing dot with what the agent is doing now. |
+
+The Thread header shows a back link to the session grid, the chain of parent sessions, the model and the turns used. It also holds the stop and retry buttons and the list of runs. The retry lights only when the session has stalled.
+
+#### Talk to the agent
+
+The composer is at the bottom. Enter sends your words. Option and Enter steer the running turn. Esc stops. Press the voice button and the composer shows a waveform. Your words go in as you speak.
+
+Whether your words steer or queue is your choice. With steer on, they reach the agent in the middle of its turn. With steer off, they wait as the next task.
+
+The agent does not write behind your back. With Arm off, each change arrives as a proposal card. With Arm on, changes land directly, each with a receipt.
+
+#### Parameters
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Session | Any session | The selected session | Chooses the conversation to show. |
+| Follow | Follows · Pinned | Follows | A pinned Thread keeps its session while you select elsewhere. |
+| Tool rows | Collapsed · Expanded · Hidden | Collapsed | Shows each tool as one line, with output, or not at all. |
+| Sub-agents | Linked · Inline | Linked | Shows a spawn row with a link, or the sub-agent's stream inside this one. |
+| Messages | All · Yours · Agent's · Tools only | All | Filters the stream. |
+| Input | Steer · Queue | Steer | Sends your words into the running turn, or waits for the next task. |
+| Voice | On · Off | Off | Turns speech into words in the composer. |
+| Steer lines | Highlighted · Plain | Highlighted | Marks the words you sent in the middle of a turn. |
+
+#### Presentations
+| Presentation | What it shows |
+|---|---|
+| Folded | The session name and its state. |
+| Compact | The last lines of the stream and the working line. Four macros: Input, Follow, Tool rows, Voice. |
+| Whole | All parameters, in three groups: Session, Stream, Input. |
+| Full | The whole stream, full width, with the composer. In a pane, you read, expand a tool, approve a proposal and talk. The controls stay in Device view. |
+| Widget | The conversation with the agent you talk to, small, with its composer. It stays when you change mode. |
+
+#### Transport
+| Control | Effect on the Thread |
+|---|---|
+| Play | Runs the task, or every queued task. |
+| Stop | Pauses at the next safe point and keeps what the agent had in mind. Press again to cancel. |
+| Record | Speaks a new task. |
+| Overdub | Steers the running turn. |
+| Arm | Lets the agent write directly, with receipts. |
+| Re-enable | Gives back what the agent held. |
+| Quantize | Sets when Stop and Steer land: now, at the next tool, or at the next turn. |
+| Tap | Asks the agent where it has got to. |
+| Capture | Turns what you did by hand into an example that an agent can learn. |
+| Position | Shows task, turn and step. |
+| Time signature | Shows turns used of turns allowed. |
+| Key | Counts tokens in and out. |
+| Load | Shows how full the agent's context is. |
+
+#### To use the Thread
+1. Select a session in the grid, or open the Thread from the browser.
+2. Read the stream. Click a tool row to open its output.
+3. To follow a sub-agent, click its spawn row.
+4. To correct the agent, type in the composer and press Option and Enter.
+5. To queue a task for later, set Input to Queue and press Enter.
+6. When a proposal card appears, choose Approve, or choose Changes and say what to change.
+7. When a stall card appears, read the prompt it names. Retry with the missing flag, or choose Steer.
+8. Press Esc to stop. Press Esc again to cancel.
+
+#### Rules
+- The Thread shows what happened and in what order. It does not edit the record.
+- A proposal does not write until you approve it, unless Arm is on.
+- Every write carries a receipt. Every entry shows its author.
+- A steer line stays amber until the agent hears it.
+- A stalled session shows a stall card. It does not look idle.
+- A sub-agent's thread is nested under its parent, one rail for each level.
+- A control for effort, autonomy or budget sits on the agent device. The Thread does not hold it.
+- The transcript is material for the Timeline.
+
+#### Tips
+- To keep a long run off your task list, read it in the Thread and leave it out of the Day's tasks.
+- To find why a run failed, filter Messages to Tools only and read the last rows.
+- To hand a stall back to its parent, choose Tell parent on the stall card.
+- To give an agent an example, press Capture and do the task by hand once.
+- To follow three layers of delegation, keep Sub-agents on Linked and click down.
+
+### 20.11 Terminal
+
+**Product:** Central · **Kind:** instrument · **Pane:** any pane, in every mode
+
+You need a shell next to your work. The Terminal runs the shell of the scope you selected, live, and it follows the run you select. It stays at hand in every mode, as a pane or as a widget.
+
+```ui
+src: ../../desktop/cradle/docs/world-shell/agent-shell-mockup.html
+height: 700
+caption: The Terminal tile on the right rail follows the selected session and shows its shell. The pane holds the same body at full size. Select another session and watch the tile follow.
+```
+
+#### Scope and follow
+
+A Terminal has a folder and a command. The folder is the scope you selected. The command is your shell, unless you set another. A Terminal that follows moves to the shell of the run you select. A pinned Terminal keeps its shell while you select elsewhere.
+
+When the Terminal follows an agent's run, it shows that shell live and shows the name of the agent. You read what the agent ran. You type there only when you choose to.
+
+The Terminal is a reading surface. It has no devices of its own. It holds no settings that change the work.
+
+#### Parameters
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Scope | A folder of your ground | The selected scope | Sets the folder where the shell starts. |
+| Follow | Follows · Pinned | Follows | A pinned Terminal keeps its shell while you select elsewhere. |
+| Command | A shell or a command | Your shell | Sets what starts in the Terminal. |
+| Input | Type · Watch only | Type for your shell, Watch only for an agent's run | Sets whether keys reach the shell. |
+| Scrollback | 1000–100000 lines | 10000 lines | Sets how much output the Terminal keeps. |
+| Font size | 10–18 points | 12 points | Sets the size of the text. |
+| Wrap | On · Off | On | Wraps long lines. |
+
+#### Presentations
+| Presentation | What it shows |
+|---|---|
+| Folded | The folder and the name of the shell. |
+| Compact | The last lines of output. Four macros: Follow, Input, Font size, Wrap. |
+| Whole | All parameters, in three groups: Shell, Input, Display. |
+| Full | The shell, at full size. In a pane, you type and read. The controls stay in Device view. |
+| Widget | The shell on the rail, small. It stays when you change mode. Open a Terminal in Factory and it is still there in Central. |
+
+#### Transport
+| Control | Effect on the Terminal |
+|---|---|
+| Follow | Keeps the Terminal on the run you select. |
+| Capture | Turns the commands you ran by hand into an example that an agent can learn. |
+
+#### To use the Terminal
+1. Open the Terminal in a pane, or open its widget on the rail.
+2. Select a session in the grid. The Terminal moves to its shell.
+3. To work in a fixed place, set Follow to Pinned.
+4. To start in another folder, change the Scope.
+5. To read an agent's run, set Input to Watch only.
+6. To make an example, press Capture and run the commands once by hand.
+7. To free the pane for other work, move the Terminal to the rail as a widget.
+
+#### Rules
+- The Terminal shows the shell of its scope and does not copy it.
+- Keys do not play notes while you type in a Terminal.
+- A Terminal that follows an agent's run shows the agent's name.
+- A pinned Terminal does not move when the selection moves.
+- The widget and the pane show the same shell. Closing one does not close the shell.
+- A command that an agent ran is shown as the agent's, not as yours.
+
+#### Tips
+- To watch an agent run its tests, follow its session and keep Input on Watch only.
+- To keep a server in view, pin a Terminal to its folder and move it to the rail.
+- To search a long log, raise Scrollback before you start the command.
+- To hand a routine to an agent, press Capture, run it once, and give the example to the agent.
