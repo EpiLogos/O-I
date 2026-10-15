@@ -99,6 +99,8 @@ objections verbatim and the full validation (`BRIEF-BUILDER.md`); the lead conve
 
 | Ticket | Who | Zone | Since |
 |---|---|---|---|
+| The shared grid and ruler regain what the World-cut presentation drew: standing marks, sections by atmosphere, cron firings, the retained occasion, walk rails, ruler zoom/pan/snap (port source `09a573a1d`) | Opus builder | `frame/tracks/**`, `timeline/worldTrackAdapter.ts` (additive), `techneTrackAdapter.ts`, `journeyWalks.ts` | 15 Oct |
+| The browser's rows at the mockup's `bi()` in every mode: mark · name in words · standing, Central's NOW section | Opus builder | `shell/ModeBrowser.tsx`, `shell/modeBrowsers.tsx`, `frame/browser/**` rows, the Factory/Live/Expressions row bodies | 15 Oct |
 | Native screen pass against the mockup renders; N1; mounting N2's subject door | lead | the frame, `App.tsx`, `native/Workbench.tsx`, `shell/modeFrames.ts`, the book | 14 Oct |
 
 Then (15 Oct, early): Central's document forms run natively (`b860eb8a4`, lane I: a document frame served by the material
