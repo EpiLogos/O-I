@@ -12,7 +12,7 @@ const cradleDocuments = join(uiRoot, '..', '..', '..', 'desktop', 'cradle', 'doc
 
 export default defineConfig({
   root: here,
-  server: {port: 5208, strictPort: true, host: '127.0.0.1', cors: true, fs: {allow: [uiRoot, cradleSrc, cradleDocuments]}},
+  server: {port: 5208, strictPort: true, host: '127.0.0.1', cors: true, hmr: {overlay: false}, fs: {allow: [uiRoot, cradleSrc, cradleDocuments]}},
   define: {__CRADLE_DOCUMENTS__: JSON.stringify(`/@fs${cradleDocuments}`)},
   build: {target: 'es2022'},
 });
