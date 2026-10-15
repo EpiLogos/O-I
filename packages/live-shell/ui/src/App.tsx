@@ -58,6 +58,7 @@ import {setTimelinePanePresentation, useTimelinePanePresentation, usePublishTime
 import {useAtlasView} from './projections/atlas/AtlasProjectionPanel'
 import {deviceInstrumentFor, factoryFocusedPane, type HostedLens} from './shell/paneInstrument'
 import {focusedSurfaceKind, isFactoryMode} from './agent/factoryCentre'
+import {subjectWords} from './central/daySurface'
 registerAtlasHost()
 registerTimelineHost()
 registerCentralDocumentPane()
@@ -245,7 +246,7 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   const centralSubject: CentralSubjectSelection | null = worldSelection && CENTRAL_SUBJECT_KINDS.has(worldSelection.kind)
     ? {kind: worldSelection.kind as CentralSubjectSelection['kind'], path: worldSelection.ref} : null
   const selectCentralSubject = (subject: CentralSubjectSelection | null) => continuity.select(subject
-    ? {mode: 'base', kind: subject.kind, ref: subject.path, title: subject.path.split('/').filter(Boolean).pop() ?? subject.path} : null)
+    ? {mode: 'base', kind: subject.kind, ref: subject.path, title: subjectWords(subject.path)} : null)
   // The Session · Arrangement pane's material is the mode's registration (shell/modeFrames.ts), never a branch here.
   const tracks = MODE_TRACK_SOURCES[frameMode]
   const nativeProjection = useMemo(() => {

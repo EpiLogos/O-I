@@ -4,6 +4,7 @@
 // bridge). Both shapes read as the same day entries here, so every reader downstream — the rows, the Day track, the openers,
 // the path parsers — takes one shape: a file entry named `<date>.md` whose location is the day's document.
 import type {CentralLocation, NativeFileEntry} from '../../../../../desktop/cradle/src/kernel/types'
+import {dayWords} from '../frame/browser/rowWords'
 
 export const CENTRAL_DAYS_PATH = 'Control/user/day'
 
@@ -32,4 +33,13 @@ export function dayEntriesOf(entries: readonly NativeFileEntry[]): NativeFileEnt
     }
     return entry.kind !== 'directory' && DAY_FILE.test(entry.name) ? [entry] : []
   })
+}
+
+/** A Central subject's name in words: a day by its date ("Tue 13 Oct" — every day on the surface is a `day.md`, so the file's
+ * name says nothing), anything else by its file name. Seen on screen 15 Oct: the title line, the trail and the detail head read
+ * "day.md" for every day. */
+export function subjectWords(path: string): string {
+  const date = dateOfDayPath(path)
+  if (date) return dayWords(date) ?? date
+  return path.split('/').filter(Boolean).pop() ?? path
 }
