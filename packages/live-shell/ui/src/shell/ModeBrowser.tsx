@@ -61,7 +61,9 @@ import {useTimelineReading} from '../projections/timelinePaneHost'
 import {worldReadingOf} from '../timeline/techneTrackAdapter'
 import {techneControls} from '../frame/tracks/useTechneTracks'
 import {useOptionalContinuity} from '../continuity/workspace'
-import {isWorldGroup, openingWords, sceneRowsOf, worldGroupOf, type SceneRow, type WorldGroup, type WorldGroupId, type WorldRow} from '../techne/subject/worldRows'
+import {isWorldGroup, openingWords, palaceWorldGroup, sceneRowsOf, worldGroupOf, type SceneRow, type WorldGroup, type WorldGroupId, type WorldRow} from '../techne/subject/worldRows'
+import {enterFromOutside, palacesWaiting, readPalaces, usePalaces} from '../projections/atlas/palaces/palacesWorld'
+import {openInstrument} from '../frame/instrumentDoor'
 import {chooseHeldScene, openHeldSubject, useSubjectOpenings, type SubjectOpening} from '../techne/subject/subjectOpenings'
 import type {NativeDirectory, NativeFileEntry, KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
 import {listFiles} from '../../../../../desktop/cradle/src/files/client'
@@ -212,6 +214,7 @@ function CategoryRows({category, needle, mode, onSelectSubject, selectedSubject}
   }
   // Technē's World groups draw from their owners whenever those answer, and say what they wait on while they do not — whatever
   // the grammar declares, so a waiting group still names its input in the standing's words.
+  if (category.id === PALACES_GROUP) return <PalaceGroupRows category={category} mode={mode} needle={needle} />
   if (isWorldGroup(category.id)) return <WorldGroupRows category={category} id={category.id} mode={mode} needle={needle} />
   if (category.state === 'waiting') {
     return <DesignedEmptyCategory category={category} />
@@ -599,6 +602,29 @@ function SourceRows({needle}: {needle: string}) {
  * through the book's one writer; it opens through N2's subject door, and the door's answer is held for every face
  * (techne/subject/subjectOpenings.ts). A journey opens by standing its first stop, the Session grid's own act
  * (frame/tracks/useTechneTracks.ts `techneControls`). */
+/** The browser's World › Palaces: the atlas's palaces (FOUNDATION N4), read on demand and entered on the Earth. */
+const PALACES_GROUP = 'techne-palaces'
+const NO_OPENINGS: ReadonlyMap<string, SubjectOpening> = new Map()
+function PalaceGroupRows({category, mode, needle}: {category: ModeBrowserCategory; mode: SurfMode; needle: string}) {
+  const {rows, load} = usePalaces()
+  const continuity = useOptionalContinuity()
+  const [stood, setStood] = useState<ReadonlyMap<string, string>>(new Map())
+  useEffect(() => { readPalaces() }, [])
+  const group = palaceWorldGroup(rows, palacesWaiting(load, rows.length))
+  const selection = continuity?.current.context?.selection ?? null
+  const select = (row: WorldRow) => continuity?.select({mode, kind: row.kind, ref: row.subject.ref, title: row.subject.title})
+  const open = (row: WorldRow) => {
+    select(row)
+    const palace = rows.find(candidate => `palace:${candidate.key}` === row.key)
+    if (!palace) return
+    setStood(before => new Map(before).set(row.key, 'entering…'))
+    void enterFromOutside(palace, () => openInstrument('projection.earth'))
+      .then(said => setStood(before => new Map(before).set(row.key, said ?? 'entered on the Earth')))
+  }
+  return <WorldGroupBody category={category} group={group} needle={needle} openings={NO_OPENINGS} stood={stood}
+    selected={selection ? {ref: selection.ref, kind: selection.kind} : null} onSelect={select} onOpen={open} onChoose={() => {}} />
+}
+
 function WorldGroupRows({category, id, mode, needle}: {category: ModeBrowserCategory; id: WorldGroupId; mode: SurfMode; needle: string}) {
   const {transport} = useWorkspace()
   const standing = useSyncExternalStore(subscribeSuiteStanding, suiteStanding, suiteStanding)

@@ -393,6 +393,27 @@ test('source: the World dispatch, the one Graph focus call, no mode branch, and 
     assert.doesNotMatch(await source(file), MODE, `${file} adds no mode branch`)
   }
   const states = Object.fromEntries(browserCategoriesOf('techne').filter(category => category.group === 'World').map(category => [category.id, category.state]))
-  assert.deepEqual(states, {'techne-bodies': 'waiting', 'techne-locations': 'cut', 'techne-places': 'cut', 'techne-palaces': 'waiting', 'techne-journeys': 'waiting'},
-    'Locations and Places compose from the suite reading; Bodies and Journeys draw when their owners carry them; Palaces waits for N4')
+  assert.deepEqual(states, {'techne-bodies': 'waiting', 'techne-locations': 'cut', 'techne-places': 'cut', 'techne-palaces': 'cut', 'techne-journeys': 'waiting'},
+    'Locations and Places compose from the suite reading; Bodies and Journeys draw when their owners carry them; Palaces are the atlas\'s (N4, b5a935661)')
+})
+
+test('World › Palaces lists the atlas\'s palaces and enters one on the Earth; with none, it says what the palace list says (N4)', async () => {
+  const rows = await import('../src/techne/subject/worldRows.ts')
+  const none = rows.palaceWorldGroup([], 'Reading the palaces of your world…')
+  assert.deepEqual([none.state, none.word, none.words], ['waiting', 'reading', 'Reading the palaces of your world…'])
+  const group = rows.palaceWorldGroup([{key: 'central', title: 'Central', standing: 'open', expression_ref: 'expression:techne-m0.central'}], null)
+  assert.equal(group.state, 'rows')
+  const [row] = group.rows
+  assert.deepEqual([row.key, row.kind, row.mark, row.name, row.standing, row.opens, row.subject.ref], ['palace:central', 'palace', 'palace', 'Central', 'open', 'palace', 'expression:techne-m0.central'])
+  assert.match(row.hover, /a palace on the Earth/)
+})
+
+test('a palace entered from outside the Earth opens the Earth, waits for its owners, and says so when they never bind', async () => {
+  const world = await import('../src/projections/atlas/palaces/palacesWorld.ts')
+  const session = await import('../src/projections/atlas/palaces/palaceSession.ts')
+  session.bindPalaceOwners(null)
+  let opened = 0
+  const said = await world.enterFromOutside({key: 'central', title: 'Central'}, () => { opened++ }, 30)
+  assert.equal(opened, 1, 'the Earth is asked to open through the one door')
+  assert.match(said, /The Earth did not open within 0 s, so Central was not entered/, 'a wait that ends says why, never silence')
 })

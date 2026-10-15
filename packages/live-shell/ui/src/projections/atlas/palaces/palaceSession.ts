@@ -80,6 +80,18 @@ let owners: PalaceOwners | null = null
 export function bindPalaceOwners(next: PalaceOwners | null): void {
   owners = next
   if (!next && state.phase !== 'outside') set({phase: 'outside', line: 'The Earth closed, so the palace was left.'})
+  for (const listener of [...ownerListeners]) listener()
+}
+
+const ownerListeners = new Set<() => void>()
+/** Whether the Earth is open with its palace owners bound: a palace can be entered. */
+export function palaceOwnersBound(): boolean {
+  return owners !== null
+}
+/** Called whenever the palace owners are bound or released (the Earth opens or closes). */
+export function subscribePalaceOwners(listener: () => void): () => void {
+  ownerListeners.add(listener)
+  return () => { ownerListeners.delete(listener) }
 }
 
 // ── the state ─────────────────────────────────────────────────────────────
