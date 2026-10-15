@@ -3069,7 +3069,9 @@ function deepLinkAddressNow():{expression?:string;scene:string;t?:number;marker?
  * names stands; the marker's name rides beside its ref for the host's words. Absent otherwise: the host keeps what it held. */
 function hostAddress():{scene:string;t?:number;marker?:string;markerName?:string}|undefined{
  try{
- if(deepLinkPending||awaitingNativeBoot&&!nativeWorkspace?.nativeView())return undefined;
+ // Only a native work has an address: with none open, the frame's own scene is no work's place (seen on screen 15 Oct: the Studio's
+ // head named "1 · Origin" at 0:00 with no work open).
+ if(deepLinkPending||!nativeWorkspace?.nativeView())return undefined;
  const now=deepLinkAddressNow();
  const name=now.marker!==undefined?markerNamed(store.document.markers??[],now.marker)?.name:undefined;
  return {scene:now.scene,...(now.t!==undefined?{t:now.t}:{}),...(now.marker!==undefined?{marker:now.marker}:{}),...(name!==undefined?{markerName:name}:{})};
