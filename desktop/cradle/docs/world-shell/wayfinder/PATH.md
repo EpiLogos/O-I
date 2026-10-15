@@ -99,7 +99,6 @@ objections verbatim and the full validation (`BRIEF-BUILDER.md`); the lead conve
 
 | Ticket | Who | Zone | Since |
 |---|---|---|---|
-| X — the register follows lane U: the 9 palace rows re-homed on the atlas's palaces (R2 closes) and re-proven at home with lane U's tests | Opus builder | `wayfinder/tools/build_rehome.py`, `targets.json` (through acceptance.py) | 15 Oct |
 | Native screen pass against the mockup renders; N1; the lanes' convergence | lead | `App.tsx`, `native/Workbench.tsx`, `shell/modeFrames.ts`, the book, the register | 14 Oct |
 
 Then: the 126 targets re-homed (lane M, FOUNDATION §8): `acceptance.py rehome` re-opens every cited path:line, runs the
@@ -129,7 +128,8 @@ entered from M4's Locations (kind palace), the M5 fold, or the browser's World �
 its owners, enters — a wait that ends says so); the M5 Palace / Integral Whole plate carries Rooms, Path and Portals, the walk rides
 the transport, the pane draws only the floor. The frame's Palace lens, board and hop are removed (−2.9k lines), with the
 instrument-editors packet's Palace editor (`82eb45f4d`); the stage keeps three lenses. Lane 5's palace evidence went with the frame
-(`c0fc49da7`: implemented 105 → 98) — lane X re-homes and re-proves them. Carried from lane U: no owner discloses a Scene's privacy
+(`c0fc49da7`: implemented 105 → 98); lane X re-homed the nine on the atlas's palaces and re-proved them there (`4d8de2be3`:
+R2 closes, homes on a retiring home 0, implemented 105). Carried from lane U: no owner discloses a Scene's privacy
 or shape (no clouded room, one room size); no owner sets a walk pace (a fixed 6 s, said); a live register's Return discloses
 `oi.expression.edit`, not governed-write, so a Propose Return honestly comes back "not routed"; the boundary's `palaceHop` route
 has no caller left but stays pinned as the trail step's reference law; `TechneLensBar` in ModeDetail.tsx is unrendered since F2
