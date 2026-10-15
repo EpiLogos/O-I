@@ -99,7 +99,6 @@ objections verbatim and the full validation (`BRIEF-BUILDER.md`); the lead conve
 
 | Ticket | Who | Zone | Since |
 |---|---|---|---|
-| W — a native Expression the candidate opens can open: decide from the authored recovery law whether the host selects a recovery address for works it opens itself (the works home, New/fork, the door's wiki Expression), build it if the ground admits it, else OPEN for the owner | Opus builder | `packages/expressions-boundary/src/{host,recoveryBinding}.ts`, `panels/expressions.tsx` (recovery wiring), `recoveryTypes.ts`, the frame's recovery files and the kernel recovery owner as the decision requires | 15 Oct |
 | X — the register follows lane U: the 9 palace rows re-homed on the atlas's palaces (R2 closes) and re-proven at home with lane U's tests | Opus builder | `wayfinder/tools/build_rehome.py`, `targets.json` (through acceptance.py) | 15 Oct |
 | Native screen pass against the mockup renders; N1; the lanes' convergence | lead | `App.tsx`, `native/Workbench.tsx`, `shell/modeFrames.ts`, the book, the register | 14 Oct |
 
@@ -111,6 +110,19 @@ Palace). Ranked: G1 the stage's file exports have no native receiver (the main w
 cancels `<a download>`: lane-1 B2/B3); G2 the Instruments rail keeps no subject into Graph (D1); G3 the shell carries no
 frame deep-link address (E22); R1 Places onto the atlas (31 targets); R2 palaces onto the atlas (N4, 9); S1 mount N2's
 subject door — 76 homes read their facets only on a Wiki-bound Scene, reached today only by Examine in the Graph pane.
+Then: a native Expression the candidate opens can open (`5bacd1d8c`, lane W; `14fb4913d`). Decided from the authored ground
+(`tickets/T-RECOVERY-FOR-OPENED-WORKS.md`: "The host chooses native identities"; an address is "routing metadata only"): the host
+selects `{scope: expressions, checkpoint_id = the ref}` for every work it opens with no configured address, before the frame
+asks; a configured saved work keeps its own; an empty checkpoint reads as "none yet" and the first is created through the
+owner's absent-basis CAS; and an untouched opening canvas is no longer retained as a draft, so the door's Scene and New open
+straight from the frame's blank canvas. Headless on the real ground (lane W's stack): the door reached "shown" ("in O I · +2")
+and reopened from revision 1 after a restart; New opened its work (in a scratch Central root). Carried from lane W: the owner
+quarantine ops (`keep/remove_draft_quarantine`) are refused by the admission ("Unsupported native recovery operation"); the
+boot read of the opening canvas's checkpoint is refused ("Native recovery was not adopted…"); an edited local draft in a hosted
+frame has no address, so opening something else from it is refused; the panel never retries a failed boot `list`; the wiki
+registers took 200–300 s under this machine's load, so an early door ask settles absent and must be asked again. Screen leg
+UNVERIFIED.
+
 Then: palaces live in the atlas (`b5a935661`, lane U, N4): a palace is a register's native Expression standing on the world —
 its rooms its Scenes in owner order (the path), a room's objects the subjects its Scenes bind, its door the first placed room;
 entered from M4's Locations (kind palace), the M5 fold, or the browser's World › Palaces (`30ba8692f`: opens the Earth, waits for
