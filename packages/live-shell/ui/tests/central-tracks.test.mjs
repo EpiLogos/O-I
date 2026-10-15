@@ -141,14 +141,15 @@ test('the Day track\'s entries are the World cut\'s own day-lane clips, under th
 
 // ── 3 — streams whose owner read has not landed ──────────────────────────────────────────────────
 
-test('Flows, Beings, Things and Goals stand as named, empty tracks; the absence is in the name tooltip, never a clip', () => {
+test('Beings, Things and Goals stand as named, empty tracks; Flows unread by a caller says so; the absence is in the name tooltip, never a clip', () => {
   const categories = browserCategoriesOf('base')
   assert.equal(categories.find(category => category.id === 'central-days').state, 'cut', 'Days has an owner read')
-  // Lane L (15 Oct): the browser's Flows compose from the owner's Flow listing; this adapter still reads none of it, and says so.
+  // Lane L (15 Oct): the browser's Flows compose from the owner's Flow listing; the Flows track reads the same listing (its own
+  // test below). A reading that carries no Flows read says so — never an empty track that looks read.
   assert.equal(categories.find(category => category.id === 'central-flows').state, 'cut', 'Flows list in the browser')
   const flows = set.tracks.find(item => item.id === 'central:stream:flows')
   assert.equal(set.clips.filter(clip => clip.trackId === flows.id).length, 0, 'flows has no clip')
-  assert.equal(flows.kind, 'stream · Flows lists in the browser, but this Session reads none of it yet')
+  assert.equal(flows.kind, 'stream · Flows unread by this Session')
   for (const [stream, category] of [['beings', 'central-beings'], ['things', 'central-things'], ['goals', 'central-goals']]) {
     const declared = categories.find(item => item.id === category)
     assert.equal(declared.state, 'waiting', `${category} is waiting in the mode grammar: this adapter has no reader for it`)
@@ -284,7 +285,7 @@ test('the shared Session grid draws the five streams, a row per day, and the Day
   assert.equal((markup.match(/data-track="/g) ?? []).length, 5)
   assert.deepEqual([...markup.matchAll(/class="thd[^"]*" title="([^"]*)"/g)].map(match => match[1].split(' · ')[0]).slice(0, 5), ['Day', 'Flows', 'Beings', 'Things', 'Goals'])
   assert.match(markup, /title="Beings · stream · waiting — /, 'the owner\'s absence is in the name tooltip')
-  assert.match(markup, /title="Flows · stream · Flows lists in the browser, but this Session reads none of it yet"/, 'Flows list in the browser (lane L); the grid reads none yet')
+  assert.match(markup, /title="Flows · stream · Flows unread by this Session"/, 'a reading with no Flows read names it on the track')
   assert.match(markup, /data-clip="Control\/agents\/now\/day\/2026-09-12\.md"/)
   assert.match(markup, /class="cs clip sel"/, 'the selected day record stands lit')
   const drawn = [...markup.matchAll(/data-clip="([^"]*)"/g)].map(match => match[1])
@@ -368,4 +369,31 @@ test('a day subject is named by its date — every day on the surface is a day.m
   assert.equal(surface.subjectWords('Control/user/day/2026-10-13/day.md'), 'Tue 13 Oct')
   assert.equal(surface.subjectWords('Control/agents/now/day/2026-09-12.md'), 'Sat 12 Sep')
   assert.equal(surface.subjectWords('Control/user/flows/flow-1.html'), 'flow-1.html', 'anything else by its file name')
+})
+
+test('the Flows track reads the owner\'s Flow documents: each in its civil day\'s row at its minted moment, one named by hand in "no time" (15 Oct)', async () => {
+  const listing = {entries: [
+    {name: 'flow-2026-10-07-1343.html', kind: 'file', location: {path: 'Control/user/flows/flow-2026-10-07-1343.html'}},
+    {name: 'flow-2026-10-07-1350.html', kind: 'file', location: {path: 'Control/user/flows/flow-2026-10-07-1350.html'}},
+    {name: 'oi203-multiagent-20260930.html', kind: 'file', location: {path: 'Control/user/flows/oi203-multiagent-20260930.html'}},
+    {name: 'notes.md', kind: 'file', location: {path: 'Control/user/flows/notes.md'}},
+    {name: 'archive', kind: 'directory', location: {path: 'Control/user/flows/archive'}},
+  ]}
+  const records = adapter.flowRecordsOf(listing, adapter.CENTRAL_FLOWS_PATH)
+  assert.deepEqual(records.map(record => [record.name, record.day]), [['flow-2026-10-07-1343.html', '2026-10-07'], ['flow-2026-10-07-1350.html', '2026-10-07'],
+    ['oi203-multiagent-20260930.html', null]], 'the folder\'s .html files, minted ones oldest first, the hand-named after')
+  assert.equal(records[0].instantMs, new Date(2026, 9, 7, 13, 43).getTime(), 'read back through the clock that minted it (flow/placement.ts)')
+  const set = adapter.projectCentralTracks({records: {state: 'read', records: []}, civil: {state: 'reading'}, flows: {state: 'read', records}})
+  const flowsTrack = adapter.centralStreamTrackId('flows')
+  const flowClips = set.clips.filter(clip => clip.trackId === flowsTrack)
+  assert.deepEqual(flowClips.map(clip => [clip.label, clip.columnId]), [['Flow 13:43', 'central:day-row:2026-10-07'], ['Flow 13:50', 'central:day-row:2026-10-07'],
+    ['oi203-multiagent-20260930', 'central:day-row:none']], 'the day\'s newest Flow is listed last, so the row\'s slot shows it')
+  assert.ok(flowClips[1].at.start > flowClips[0].at.start, 'on the ruler at their moments')
+  assert.match(flowClips[2].note, /named by hand/)
+  assert.equal(set.clips.filter(clip => clip.trackId === adapter.centralStreamTrackId('day')).length, 0, 'a row only Flows stand in has no Day face')
+  assert.equal(set.tracks.find(track => track.id === flowsTrack).kind, 'stream · 3 Flows from your Flows folder · 1 is named by hand and stands in "no time"')
+  assert.deepEqual(adapter.centralSubjectOfClip('Control/user/flows/flow-2026-10-07-1343.html'), {kind: 'note', path: 'Control/user/flows/flow-2026-10-07-1343.html'},
+    'a Flow clip selects as the browser\'s Flows row does')
+  const instances = await readFile(new URL('../../../../desktop/cradle/src/flow/instances.ts', import.meta.url), 'utf8')
+  assert.match(instances, new RegExp(`export const USER_FLOWS_DIR = "${adapter.CENTRAL_FLOWS_PATH}"`), 'the adapter\'s folder is the Flow owner\'s')
 })
