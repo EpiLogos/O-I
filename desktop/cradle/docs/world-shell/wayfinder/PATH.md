@@ -101,7 +101,6 @@ objections verbatim and the full validation (`BRIEF-BUILDER.md`); the lead conve
 |---|---|---|---|
 | N — Technē starts from the world: the World groups list the owner's subjects, choosing one opens it (N2's door mounted, S1) and the instruments keep it (G2) | Opus builder | `src/techne/subject/**`, the browser's Technē World rows (`ModeBrowser.tsx`, `frame/browser/**`, `modeGrammar.ts` Technē World entries), `frame/InstrumentsSection.tsx`, `frame/instruments.ts`, `frame/instrumentDoor.ts`, the Graph's focus call in `registerAtlasHost.ts` | 15 Oct |
 | O — Places is the atlas, alone (R1, lane-4 T1–T30 + lane-2 T21): listed in `tickets/T-PLACES-ONTO-ATLAS.md`, ported onto the M4 plate and the transport, then the frame's Places map and lens removed | Opus builder | `src/projections/atlas/**`, `src/inhabitants/ql/devices/**`, `atlasFaceBodies.tsx`, `modeTransports.tsx` (Technē binding), `panels/knowledge.tsx`, the frame's `psychogeographic/**` and Places lens | 15 Oct |
-| P — every stage export lands (G1: the main window gains a download receiver; Capture PNG, Save video, Export ▾, the canvas exports are all cancelled natively today) and the frame's address is kept, restored and copied (G3) | Opus builder | `desktop/cradle/src-tauri/src/{main.rs,downloads.rs}`, the frame's `app.ts` address/E22 block, `hostedApp.ts` (address), `packages/expressions-boundary/**`, `panels/expressions.tsx`, `components/expressions/studio/**` | 15 Oct |
 | Native screen pass against the mockup renders; N1; the lanes' convergence | lead | `App.tsx`, `native/Workbench.tsx`, `shell/modeFrames.ts`, the book, the register | 14 Oct |
 
 Then: the 126 targets re-homed (lane M, FOUNDATION §8): `acceptance.py rehome` re-opens every cited path:line, runs the
@@ -112,6 +111,17 @@ Palace). Ranked: G1 the stage's file exports have no native receiver (the main w
 cancels `<a download>`: lane-1 B2/B3); G2 the Instruments rail keeps no subject into Graph (D1); G3 the shell carries no
 frame deep-link address (E22); R1 Places onto the atlas (31 targets); R2 palaces onto the atlas (N4, 9); S1 mount N2's
 subject door — 76 homes read their facets only on a Wiki-bound Scene, reached today only by Examine in the Graph pane.
+Then: every stage export lands and the frame's address is kept (`6f82c20d6`, lane P, G1 + G3). The main window had been
+auto-created with no download receiver, so wry cancelled every `<a download>` — Capture PNG, Save video, Export ▾, the
+quarantine export, the canvas's .canvas and frame PNG all vanished natively; windows are now built in setup with
+`downloads.rs`'s receiver (detached surfaces too), files land in the platform's Downloads (placement.json rules no export
+home), and the Studio's Capture section says where. The frame announces its address with its state, the book keeps it with
+the open work, the frame reopens there, and the Studio's head names and copies it. The Studio's columns fold to fit the row
+at 1440px; Expressions' chain ends at the Studio (its drop box gone). Screen legs UNVERIFIED until the next native pass.
+Carried from lane P: the main window has always stood on WebKit's default store (the pinned `from_config` ignores the
+config's identifier) while detached windows use the configured one — moving main would empty the workspace book without a
+migration; no OS URL scheme is registered, so an address opens only from inside the app.
+
 The widget slot reaches the rail (`79ee6a608`): a panel a family registers in `right-dock` — FOUNDATION §4's widget
 contract — is a widget of the one rail; the right dock and the duplicate "Agents & context" registration retire. The chain's end receives (`1dd808990`): a mode registers what lands on it (`MODE_DETAILS.drop`), and Live's note-device
 rows drag onto it, landing what their double-click lands. The native pass at `2f5c1bcf6` (computer-use): Central's Days read the owner's surface; every day was named "day.md" in the
