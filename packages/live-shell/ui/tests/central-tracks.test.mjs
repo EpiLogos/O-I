@@ -116,7 +116,8 @@ test('a day record\'s clip id is the Central-relative path the browser\'s Days r
   // The two places this adapter ports from still say what it says: the browser's day surface and ground-subject test, and the
   // shell's selection writing the subject's path as THE ref.
   const browser = await source('../src/shell/ModeBrowser.tsx')
-  assert.ok(browser.includes(`const DAY_RECORDS_PATH = '${adapter.CENTRAL_DAY_RECORDS_PATH}'`), 'ModeBrowser reads the same day surface')
+  assert.ok(browser.includes('const DAY_RECORDS_PATH = CENTRAL_DAYS_PATH'), 'ModeBrowser reads the same day surface')
+  assert.equal(adapter.CENTRAL_DAY_RECORDS_PATH, 'Control/user/day', 'the owner\'s day surface, not the legacy agent records')
   assert.ok(browser.includes('/\\/now\\/day\\/\\d{4}-\\d{2}-\\d{2}\\.md$/'), 'ModeBrowser tells a day record from a note by the same expression')
   assert.match(await source('../src/App.tsx'), /ref: subject\.path/, 'selectCentralSubject writes the subject\'s path as the ref')
 })
@@ -336,7 +337,7 @@ test('the day records are read through the owner\'s listing route, and a refusal
     // FIXTURE: the bridge's answers. The recorded listing above stands in for the owner's directory reading.
     globalThis.fetch = async (url, init) => { sent.push([url, JSON.parse(init.body)]); return {json: async () => ({ok: true, outcome: {result: 'directory_read', directory: {...listing, schema: 'central.directory-reading/v1'}}})} }
     const read = await readDayRecords({kind: 'bridge', url: 'http://bridge.fixture'})
-    assert.deepEqual(sent, [['http://bridge.fixture/op', {op: 'files_list', path: 'Control/agents/now/day'}]], 'one files_list at the root register\'s day surface — the browser\'s own route')
+    assert.deepEqual(sent, [['http://bridge.fixture/op', {op: 'files_list', path: 'Control/user/day'}]], 'one files_list at the owner\'s day surface — the browser\'s own route')
     assert.equal(read.state, 'read')
     assert.deepEqual(read.records.map(record => record.name), records.map(record => record.name))
     globalThis.fetch = async () => ({json: async () => ({ok: false, error: 'the owner refused the listing'})})
@@ -346,4 +347,18 @@ test('the day records are read through the owner\'s listing route, and a refusal
   } finally {
     globalThis.fetch = realFetch
   }
+})
+
+test('the owner\'s day surface (one folder per date holding day.md) reads as day records beside the legacy files', async () => {
+  const surface = await import('../src/central/daySurface.ts')
+  const location = path => ({schema: 'central.path-ref/v1', ref: `central:path:/ground:${path}`, root: '/ground', path})
+  const folder = date => ({name: date, kind: 'directory', byte_len: 96, retrieval_allowed: true, location: location(`Control/user/day/${date}`)})
+  const made = adapter.dayRecordsOf({entries: [folder('2026-10-12'), folder('2026-10-13'), {name: 'notes.md', kind: 'file', byte_len: 3, location: location('Control/user/day/notes.md')}, {name: 'scratch', kind: 'directory', byte_len: 1, location: location('Control/user/day/scratch')}]})
+  assert.deepEqual(made.map(record => [record.name, record.path]), [['2026-10-13.md', 'Control/user/day/2026-10-13/day.md'], ['2026-10-12.md', 'Control/user/day/2026-10-12/day.md']], 'date folders only, newest first, each its day.md')
+  const [entry] = surface.dayEntriesOf([folder('2026-10-13')])
+  assert.deepEqual([entry.kind, entry.location.ref], ['file', 'central:path:/ground:Control/user/day/2026-10-13/day.md'], 'the day document\'s own location, in the owner\'s ref grammar')
+  assert.equal(surface.dateOfDayPath('Control/user/day/2026-10-13/day.md'), '2026-10-13')
+  assert.equal(surface.dateOfDayPath('Control/agents/now/day/2026-09-12.md'), '2026-09-12', 'legacy records still name their date')
+  assert.equal(surface.dateOfDayPath('Control/user/day/2026-10-13/notes.md'), null)
+  assert.deepEqual(adapter.centralSubjectOfClip('Control/user/day/2026-10-13/day.md'), {kind: 'day', path: 'Control/user/day/2026-10-13/day.md'})
 })

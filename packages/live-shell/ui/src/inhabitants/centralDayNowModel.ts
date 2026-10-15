@@ -24,6 +24,7 @@
 import type {SaveRouterReading} from './documentDeviceModel.ts'
 import {SAVE_ROUTER_OUTCOMES} from './manifest.ts'
 import type {BoundaryOpSource} from './centralHygieneModel.ts'
+import {dateOfDayPath} from '../central/daySurface'
 
 export {SAVE_ROUTER_OUTCOMES}
 
@@ -213,6 +214,8 @@ export function parseDayRecord(content: string): Pick<DayWalkReading, 'carryForw
 /** The civil day key a subject stands in, when its path carries one
  * (`…/now/day/2026-10-08.md` → `2026-10-08`). */
 export function subjectDayRef(path: string): string | null {
+  const surface = dateOfDayPath(path)
+  if (surface) return surface
   const match = path.match(/(\d{4}-\d{2}-\d{2})\.md$/)
   return match ? match[1] : null
 }
