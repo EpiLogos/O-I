@@ -99,7 +99,6 @@ objections verbatim and the full validation (`BRIEF-BUILDER.md`); the lead conve
 
 | Ticket | Who | Zone | Since |
 |---|---|---|---|
-| N — Technē starts from the world: the World groups list the owner's subjects, choosing one opens it (N2's door mounted, S1) and the instruments keep it (G2) | Opus builder | `src/techne/subject/**`, the browser's Technē World rows (`ModeBrowser.tsx`, `frame/browser/**`, `modeGrammar.ts` Technē World entries), `frame/InstrumentsSection.tsx`, `frame/instruments.ts`, `frame/instrumentDoor.ts`, the Graph's focus call in `registerAtlasHost.ts` | 15 Oct |
 | O — Places is the atlas, alone (R1, lane-4 T1–T30 + lane-2 T21): listed in `tickets/T-PLACES-ONTO-ATLAS.md`, ported onto the M4 plate and the transport, then the frame's Places map and lens removed | Opus builder | `src/projections/atlas/**`, `src/inhabitants/ql/devices/**`, `atlasFaceBodies.tsx`, `modeTransports.tsx` (Technē binding), `panels/knowledge.tsx`, the frame's `psychogeographic/**` and Places lens | 15 Oct |
 | Q — the Graph op answers in seconds: each input measured cold and warm against the real ground, then cut at the cause (parallel and revision-cached owner reads, inputs that never wait on each other) | Opus builder | `desktop/cradle/kernel/src/graph.rs`, `files.rs` (read helpers), the OwnerReadCache and AIKit resolution client modules, `desktop/cradle/src/knowledge/graph.ts` if needed | 15 Oct |
 | Native screen pass against the mockup renders; N1; the lanes' convergence | lead | `App.tsx`, `native/Workbench.tsx`, `shell/modeFrames.ts`, the book, the register | 14 Oct |
@@ -112,6 +111,18 @@ Palace). Ranked: G1 the stage's file exports have no native receiver (the main w
 cancels `<a download>`: lane-1 B2/B3); G2 the Instruments rail keeps no subject into Graph (D1); G3 the shell carries no
 frame deep-link address (E22); R1 Places onto the atlas (31 targets); R2 palaces onto the atlas (N4, 9); S1 mount N2's
 subject door — 76 homes read their facets only on a Wiki-bound Scene, reached today only by Examine in the Graph pane.
+Then: Technē starts from the world (`3a8fbc2d6`, lane N, S1 + G2). N2's subject door is mounted: Locations and Places list
+the owner's subjects from the atlas's suite standing (Bodies and Journeys say which input they wait on), double-click or Enter
+opens a subject in the Scene that carries it through the owner's reverse query and selection ask, the subject is named in the
+title line, Trail, aperture and Clip side, and the Graph opens turned to it. Headless, the door's wiki load took 144–188 s and
+answered absent (ensureWikiStanding 16–40 s per register, 17 registers) — passed to lane Q with the Graph op. Carried from
+lane N: one atlas per session, so a Graph opened beside Technē's Earth is held and takes nothing when the Earth closes (to lane
+O). Found while converging it: the Expressions panel had been opening its engine-checkpoint binding as a tab into whichever
+tree stood in front, 20–140 s after entering a mode, and moving it into the tree in front on every switch — the empty
+Expressions pane seen natively in Technē and Live; the binding is now held on no tab (`10d17bf49`, headless: three minutes
+in Technē, the Earth alone, the binding kept). The native pass at `a8ec87dda` could not run: the Mac was locked with the
+candidate in Stage Manager's strip (FOUNDATION §5).
+
 Then: every stage export lands and the frame's address is kept (`6f82c20d6`, lane P, G1 + G3). The main window had been
 auto-created with no download receiver, so wry cancelled every `<a download>` — Capture PNG, Save video, Export ▾, the
 quarantine export, the canvas's .canvas and frame PNG all vanished natively; windows are now built in setup with
@@ -156,7 +167,7 @@ readings; Expressions' Studio; Technē's rack. Found and fixed: the traffic ligh
 at the 46px bar, and the window had no drag region; the empty hosted Expressions frame painted over the pane's waiting
 line; Expressions' aperture named the frame's own scene as a work. Found and given a lane: the Flow's form never starts
 natively (lane I above). Seen, not ours to change: the owner's saved trees hold an Automations surface in Live (its own icon
-tabs and Refresh inside the pane) and an Expressions pane in Technē; Central's Day waits on the owner ensuring the
+tabs and Refresh inside the pane) and an Expressions pane in Technē (the latter was ours, not the owner's: fixed in `10d17bf49`); Central's Day waits on the owner ensuring the
 current Day. Also landed: Central's Clip view reads Highlights, Notes and Packet from the document's own payload
 (`0fcd51006`, lane H).
 
