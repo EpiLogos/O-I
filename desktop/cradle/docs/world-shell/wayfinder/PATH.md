@@ -244,8 +244,8 @@ Open, owned by the lead: N1 (the kernel's works need a persistent home before
 Open can save a file); the knowledge panel (`world.knowledge`) still stands over
 the panes rather than in one; the Workbench's insert row still stands; the four old browsers keep their standalone chrome for the
 source-reading tests until those move to the one browser (the candidate mounts only their row bodies); the Central owner
-reads for Flows, Beings, Things and Goals are not landed (Central adapter shows
-them empty and named); the Graph op reads in 88 s cold (AIKit times out at 20 s).
+reads for Beings, Things and Goals are not landed (Central adapter shows them
+empty and named; Flows reads the owner's Flow documents since `818c18a15`); the Graph op reads in 88 s cold (AIKit times out at 20 s).
 F6's gestures stand where their owners do: preview/open on the Expressions works, drag-to-chain on the agent chain and
 the Expressions rack; an agent dropped on the shared grid's empty track is seated through `harness_agent_control new`
 (the agent chain's own drop), anything else refused by name; Live's set devices browse but cannot be inserted (no
