@@ -10,6 +10,11 @@ onto the atlas): their rows re-homed, the closed tickets gone, and each changed 
 Re-run by ticket X (15 Oct) after lane U (b5a935661, and 30ba8692f's World › Palaces: R2, palaces onto the atlas): the nine palace
 rows homed on the atlas's palaces, the frame's Palace lens and its retiring homes gone, R2 closed.
 
+Re-run by ticket R3 (15 Oct) after lanes Y (14a713f89: the hosted frame draws only its field in a pane, its controls on the Studio, the
+M1′–M3′ plates and inside at Full size) and E (1f40feefe: the M0′–M5′ plates redrawn in the device craft, Compact instruments on the
+rack): every quote re-read where the same behaviour lives now, the reaches that changed said again, and each changed row's note naming
+the lane and what moved (MOVED_HOMES, ROW_REACH and ROUTE_FOLLOWS, after the door notes).
+
 Every citation is read at one revision (HEAD by default; `--at REV` after the output path), never from the seat's working tree: the
 seat is shared with other lanes' uncommitted edits, as acceptance.py's progress verbs hold (its Tree). `rehome` re-opens the files
 on disk, so it records this input from a tree whose files are that revision's.
@@ -110,12 +115,18 @@ ATLAS_EARTH = [
     cite(AT + 'AtlasProjectionPanel.tsx', 'places = bindPlaces({handle: mounted, transport, session: disclosureSession})'),
 ]
 TD = UI + 'inhabitants/ql/devices/TechneDevices.tsx'
-# The device side's atlas folds (M4′, M5′): a press opens the Earth on the focused pane, and holds across the focus it causes (d6b5aa672).
+TC = UI + 'inhabitants/ql/devices/techneCompacts.tsx'
+# The device side's atlas instruments (M4′, M5′): a press opens the Earth on the focused pane, and holds across the focus it causes
+# (d6b5aa672). Since lane E (1f40feefe) an instrument not open stands on the rack as its Compact where the row has room, else its fold:
+# the Compact's name (or ⤢) and the fold carry the one press (ticket R3: the fold's own onOpen became the rack's `press`).
 ATLAS_RACK = [
     cite(UI + 'shell/paneInstrument.ts', "case 'projection.earth':"),
     cite(UI + 'shell/modeDetails.tsx', 'techne: {clip: TechneClip, device: TechneChain,'),
     cite(UI + 'shell/ModeDetail.tsx', '<TechneDevices manifests={manifests} focusInstrument={focusInstrument ?? null} instrumentReading={instrumentReading} />'),
-    cite(TD, 'onOpen={() => { setOpened({focus: focusAfterOpening(holder.id, focusInstrument), id: holder.id}); openOnFocusedPane(holder.id) }}'),
+    cite(TD, 'const press = () => { setOpened({focus: focusAfterOpening(holder.id, focusInstrument), id: holder.id}); openOnFocusedPane(holder.id) }'),
+    cite(TD, "? <InstrumentCompact key={holder.id} holder={holder} mark={INSTRUMENT_MARKS[holder.id] ?? 'techne'} light=\"unknown\" onOpen={press} />"),
+    cite(TC, '<button type="button" className="techne-compact-title" onClick={onOpen}'),
+    cite(TD, ': <InstrumentFold key={holder.id} holder={holder} count={held.length} onOpen={press} />'),
     cite(TD, "if (ATLAS_INSTRUMENTS.includes(id)) return {kind: 'projection.earth'}"),
 ]
 ATLAS_PLATE = [*ATLAS_RACK, cite(TD, "'techne:m4': props => <PlacesPlate {...props} />,")]
@@ -134,11 +145,14 @@ PO = PL + 'palaceOwners.ts'
 PALACE_DOORS = [
     *ATLAS_EARTH, *ATLAS_RACK,
     cite(TD, "'techne:m5': props => <PalacePlate {...props} />,"),
-    cite(PL + 'PalacePlate.tsx', 'onClick={() => turn(row.key)} onDoubleClick={() => void enterPalace(palace)}>'),
-    cite(PL + 'PalacePlate.tsx', 'onClick={() => void enterPalace(palace, {roomKey: room.key})}>'),
+    # lane E (1f40feefe): the palaces are the plate's paged rows — a press turns the Earth to the door, a double-click (or the Enter key
+    # under the rows) enters; a door the Earth's selection stands at is its own key.
+    cite(PL + 'PalacePlate.tsx', '<PlateRows label="Palaces of your world" size={5} active={chosen} onPress={turn} onOpen={enter}'),
+    cite(PL + 'PalacePlate.tsx', 'const enter = (key: string) => { const palace = rows.find(candidate => candidate.key === key); if (palace) void enterPalace(palace) }'),
+    cite(PL + 'PalacePlate.tsx', 'onPress={() => void enterPalace(palace, {roomKey: room.key})}'),
     cite(TD, "'techne:m4': props => <PlacesPlate {...props} />,"),
     cite(AT + 'places/PlacesPlate.tsx', "{kind === 'palace' ? <PalaceLocations handle={handle} query={query} />"),
-    cite(AT + 'places/PlacesPlate.tsx', 'if (palace) void enterPalace(palace) }}>'),
+    cite(AT + 'places/PlacesPlate.tsx', 'onOpen={key => { const palace = rows.find(candidate => candidate.key === key); if (palace) void enterPalace(palace) }}'),
     cite(UI + 'shell/ModeBrowser.tsx', 'if (category.id === PALACES_GROUP) return <PalaceGroupRows'),
     cite(UI + 'shell/ModeBrowser.tsx', "void enterFromOutside(palace, () => openInstrument('projection.earth'))"),
     cite(PL + 'palacesWorld.ts', 'export async function enterFromOutside('),
@@ -193,20 +207,45 @@ GRAPH_CHAIN = [
     cite(CR + 'knowledge/KnowledgeSurface.tsx', 'void loadGraph(transport,binding.project,visit.query'),
 ]
 
-PALACE_IN = ('Technē › a palace, entered on the Earth: the device side\'s M5′ Palace fold (it opens the Earth on the focused pane; its plate '
-             'lists the world\'s palaces — press one to turn the Earth to its door, double-click to enter — and the doors the Earth\'s '
-             'selection stands at), or the M4′ World / Places plate\'s Locations under the kind palace (double-click), or the browser\'s '
-             'World › Palaces (double-click or Enter: it opens the Earth, waits for it, and enters)')
+# lane Y (14a713f89; T-FRAME-CHROME-ONTO-PLATES): in a pane the hosted frame draws only its field — the shell declares the presentation
+# and the frame stands its own chrome down — and its controls stand on the device side, each the frame's own control pressed through its
+# one runner; at Full size (the pane's ⊞ menu) the frame's whole chrome stands inside the pane again.
+FRAME_IN_PANE = [
+    cite(UI + 'shell/modeTransports.tsx', 'useFramePresentation()'),
+    cite(UI + 'components/expressions/studio/framePresentation.ts', "return maximised ? 'frame' : 'devices'"),
+    cite(FSJ + 'presentedChrome.ts', "const apply = () => {document.body.classList.toggle('oi-chrome-devices', presentation === 'devices')}"),
+    cite(UI + 'components/expressions/studio/frameChrome.tsx', "try {answer = run({command: 'chrome', id: control.id,"),
+    cite(CR + 'surface/Workbench.tsx', '{state.maximizedGroupId === group.id ? "Restore panes" : "Full size"}'),
+]
+# Technē's lens plates (M1′ Canvas, M2′ Timeline, M3′ Journey), registered by holder beside M4′ and M5′ (lane Y).
+LENS_PLATES = [
+    cite(TD, "'techne:m5': props => <PalacePlate {...props} />, ...STAGE_OWN_PLATES,"),
+    cite(UI + 'projections/stageInstruments/StageInstrumentPlate.tsx', 'export const STAGE_OWN_PLATES:'),
+]
+# Expressions' Studio carries the frame's work, tools, scene bar and Nara (lane Y), each read from the frame's published chrome.
+STUDIO_CARRIES = [
+    *STUDIO_CHAIN,
+    cite(UI + 'components/expressions/studio/ExpressionsStudio.tsx', "<FrameControls key=\"frame-tools\" label=\"Frame tools\" controls={frameAt(['tools', 'scene', 'side'])} view={frame} />"),
+]
+LENS_PLATE = {'canvas': 'M1′ Canvas', 'timeline': 'M2′ Timeline', 'journey': 'M3′ Journey'}
+FULL_SIZE = 'the frame\'s whole chrome stands inside the pane at Full size (the pane\'s ⊞ › Full size)'
+
+PALACE_IN = ('Technē › a palace, entered on the Earth: the device side\'s M5′ Palace — its fold, or its Compact\'s name where the rack has room '
+             '(it opens the Earth on the focused pane; its plate lists the world\'s palaces — press one to turn the Earth to its door, '
+             'double-click to enter, or choose one and press Enter — and the doors the Earth\'s selection stands at), or the M4′ World / '
+             'Places plate\'s Locations under the kind palace (double-click), or the browser\'s World › Palaces (double-click or Enter: it '
+             'opens the Earth, waits for it, and enters)')
 PALACE_NO_WORK = (' No open work is needed: a palace is a register\'s own native Expression, read through the suite\'s owners; Escape, or '
                   'the plate\'s Portals › ↩ the Earth, leaves it.')
+M4_DOOR = 'the device side\'s M4′ World — its fold, or its Compact\'s name where the rack has room —'
 REACH_TEXT = {
-    'lens': 'Any mode → browser › Instruments › {L} (double-click, or drag into a pane) → the Expressions stage pane opens and turns to its {L} lens → the frame\'s {L} instrument{X}. First an open native Expression: Expressions › browser › Expressions › a work (or New).',
-    'stage': 'Expressions › the centre\'s Expressions stage pane (the hosted frame, edge to edge) → the frame\'s own {L}{X}. Its owner writes need an open native Expression (Expressions › browser › Expressions › a work, or New); on the frame\'s local draft they stay local.',
+    'lens': 'Any mode → browser › Instruments › {L} (double-click, or drag into a pane) → the Expressions stage pane opens and turns to its {L} lens → the frame\'s {L} instrument{X}. In a pane the frame draws only its field: the instrument\'s controls stand on Technē\'s device side, its {P} plate, each the frame\'s own control pressed through it, and ' + FULL_SIZE + '. First an open native Expression: Expressions › browser › Expressions › a work (or New).',
+    'stage': 'Expressions › the centre\'s Expressions stage pane (the hosted frame, edge to edge) → the frame\'s own {L}{X}. In a pane the frame draws only its field: the frame\'s controls the Studio carries (Expressions › the detail row\'s Device side) stand there, each the frame\'s own pressed through it — a summoned panel (the scenes panel, the library, Acts) opens over the field — and ' + FULL_SIZE + '. Its owner writes need an open native Expression (Expressions › browser › Expressions › a work, or New); on the frame\'s local draft they stay local.',
     'graph': 'The Graph and source pane (world.knowledge): Central › a Day clip › Clip view › names, or Expressions › browser › Knowledge › Graph (with an open work), or a frame card\'s Show in graph → the knowledge graph{X}.',
-    'atlas': 'Technē › the Earth pane, the atlas (browser › Instruments › Earth, double-click or drag into a pane; or the device side\'s M4′ World fold, which opens the Earth on the focused pane) → with the Earth focused, the device side\'s M4′ World fold stands the M4 World / Places plate open → {X}. No open work is needed: the atlas reads the suite\'s owners.',
-    'globe': 'Technē › the Earth pane, the atlas (browser › Instruments › Earth, double-click or drag into a pane; or the device side\'s M4′ World fold, which opens the Earth on the focused pane) → {X}. No open work is needed: the atlas reads the suite\'s owners.',
-    'atlas-transport': 'Technē › the Earth pane, the atlas (browser › Instruments › Earth, or the device side\'s M4′ World fold) → Technē\'s transport over the atlas\'s time: {X}. No open work is needed; the shared window is written only while a session stands (a work open in Technē).',
-    'carry': 'Any mode → browser › Instruments › Timeline (double-click, or drag into a pane) → the stage turns to its Timeline lens → an event › Show on the globe (the event\'s place becomes the session\'s spatial focus, its validity the window) → Technē › the Earth pane, the atlas (browser › Instruments › Earth, or the device side\'s M4′ World fold){X}. First an open native Expression: Expressions › browser › Expressions › a work (or New).',
+    'atlas': 'Technē › the Earth pane, the atlas (browser › Instruments › Earth, double-click or drag into a pane; or ' + M4_DOOR + ' which opens the Earth on the focused pane) → with the Earth focused, pressing M4′ there stands the M4 World / Places plate open → {X}. No open work is needed: the atlas reads the suite\'s owners.',
+    'globe': 'Technē › the Earth pane, the atlas (browser › Instruments › Earth, double-click or drag into a pane; or ' + M4_DOOR + ' which opens the Earth on the focused pane) → {X}. No open work is needed: the atlas reads the suite\'s owners.',
+    'atlas-transport': 'Technē › the Earth pane, the atlas (browser › Instruments › Earth, or ' + M4_DOOR[:-2] + ') → Technē\'s transport over the atlas\'s time: {X}. No open work is needed; the shared window is written only while a session stands (a work open in Technē).',
+    'carry': 'Any mode → browser › Instruments › Timeline (double-click, or drag into a pane) → the stage turns to its Timeline lens → an event › Show on the globe (on Technē\'s M2′ Timeline plate, or inside the pane at Full size; the event\'s place becomes the session\'s spatial focus, its validity the window) → Technē › the Earth pane, the atlas (browser › Instruments › Earth, or ' + M4_DOOR[:-2] + '){X}. First an open native Expression: Expressions › browser › Expressions › a work (or New).',
     'studio': 'Expressions › the detail row\'s Device side, the Studio plate → its {L}{X}. First an open native Expression: Expressions › browser › Expressions › a work (or New).',
     'rail': 'Any mode → browser › Instruments › Canvas or Timeline (the one stage turns and keeps its open Scene), then › Graph (double-click, or drag into a pane) → the Graph, the atlas\'s graph view, opens turned to the subject held now (THE selection){X}. First an open native Expression: Expressions › browser › Expressions › a work (or New).',
     'palace-plate': PALACE_IN + ' → inside, the device side stands the M5′ Palace / Integral Whole plate open → {X}.' + PALACE_NO_WORK,
@@ -221,9 +260,9 @@ ROUTES = {}
 
 def reach(kind, label, extra='', chain_extra=(), condition='open-work'):
     if kind == 'lens':
-        route, chain = f'lens:{label.lower()}', [LENS_ROW[label.lower()], *LENS_CHAIN, LENS_FRAME[label.lower()], *OPEN_WORK]
+        route, chain = f'lens:{label.lower()}', [LENS_ROW[label.lower()], *LENS_CHAIN, LENS_FRAME[label.lower()], *OPEN_WORK, *FRAME_IN_PANE, *LENS_PLATES]
     elif kind == 'stage':
-        route, chain = 'stage', [*STAGE_CHAIN, *OPEN_WORK]
+        route, chain = 'stage', [*STAGE_CHAIN, *OPEN_WORK, *FRAME_IN_PANE, *STUDIO_CARRIES]
     elif kind == 'atlas':
         route, chain = 'atlas:plate', [*ATLAS_EARTH, *ATLAS_PLATE]
     elif kind == 'globe':
@@ -231,7 +270,7 @@ def reach(kind, label, extra='', chain_extra=(), condition='open-work'):
     elif kind == 'atlas-transport':
         route, chain = 'atlas:transport', [*ATLAS_EARTH, *ATLAS_TRANSPORT]
     elif kind == 'carry':
-        route, chain = 'carry:timeline-to-atlas', [LENS_ROW['timeline'], *LENS_CHAIN, LENS_FRAME['timeline'], *OPEN_WORK, *CARRY, *ATLAS_EARTH]
+        route, chain = 'carry:timeline-to-atlas', [LENS_ROW['timeline'], *LENS_CHAIN, LENS_FRAME['timeline'], *OPEN_WORK, *FRAME_IN_PANE, *LENS_PLATES, *CARRY, *ATLAS_EARTH]
     elif kind == 'studio':
         route, chain = 'studio', [*STUDIO_CHAIN, *OPEN_WORK]
     elif kind == 'rail':
@@ -244,7 +283,7 @@ def reach(kind, label, extra='', chain_extra=(), condition='open-work'):
         route, chain = 'atlas:palace-transport', [*PALACE_DOORS, *PALACE_TRANSPORT]
     else:
         route, chain = 'graph', [*GRAPH_CHAIN]
-    text = REACH_TEXT[kind].format(L=label, X=extra)
+    text = REACH_TEXT[kind].format(L=label, X=extra, P=LENS_PLATE.get(label.lower(), ''))
     chain = chain + list(chain_extra)
     if condition == 'open-work+wiki-scene':
         route += '+wiki-scene'
@@ -565,17 +604,17 @@ place('lane-4:T2', cite(AT + 'places/placesHost.ts', 'export function turnAtlasT
 place('lane-4:T3', cite(AT + 'src/globe/controls.ts', 'A north-up, inertial orbit rig'),
       'the globe itself: Escape steps back to the atlas\'s world view', 'atlas-own', kind='globe',
       note='Not kept as a control, lane O\'s judgement: the rig never leaves north (src/globe/controls.ts:1), so there is no bearing to reset; "home" is the atlas\'s own world view, and Escape steps back to it.')
-place('lane-4:T4', cite(PP, '<Reading name="Imagery"'),
-      'the plate\'s Landmass › Imagery', 'atlas-own',
+place('lane-4:T4', cite(PP, '<PlateRadio inline label="Imagery"'),
+      'the plate\'s Earth layers › Imagery (Offline; Live waits, with why)', 'atlas-own',
       note='the plate\'s Landmass names the imagery the atlas draws (NASA Blue Marble, NASA GIBS tiles close in). Not kept, lane O\'s judgement: the opt-in stack of live providers (OSM, Esri, Sentinel-2) over an offline pack — the providers are not suite owners and the MapLibre stack does not port to the atlas\'s globe.')
 place('lane-4:T5', cite(PP, 'no terrain source is disclosed'),
-      'the plate\'s Landmass › Terrain', 'atlas-own',
+      'the plate\'s Earth layers › Terrain (Off; On waits, with why)', 'atlas-own',
       note='its honesty clause stands on the plate\'s Landmass ("no terrain source is disclosed", never a fake horizon). Not kept, lane O\'s judgement: the terrain layer itself — no terrain source is in the suite.')
 place('lane-4:T6', cite(AT + 'src/globe/engine.ts', 'private shell: AtmosphereShell;'),
       'the globe itself: its atmosphere and limb', 'atlas-own', kind='globe',
       note='the globe\'s own atmosphere shell and aura (src/globe/engine.ts), tinted by the field\'s palette; nothing to port.')
 place('lane-4:T7', cite(PP, 'NASA Blue Marble, with NASA GIBS tiles close in'),
-      'the plate\'s Landmass › Imagery', 'atlas-own',
+      'the plate\'s Earth layers › Imagery, its words in the Info view\'s hover', 'atlas-own',
       note='the imagery the atlas draws is named on the plate\'s Landmass, never over the globe.')
 place('lane-4:T8', cite(PP, 'handle.ctl.setFilter(narrowed(row) ? rest : {...rest, kinds: [row.locus]})'),
       'the plate\'s Relations › a relation (a press narrows the Earth to its locus; "all" clears it)', 'suite-reading',
@@ -583,28 +622,28 @@ place('lane-4:T8', cite(PP, 'handle.ctl.setFilter(narrowed(row) ? rest : {...res
 place('lane-4:T9', cite(AT + 'places/placesModel.ts', 'export function placeRows('),
       'the plate\'s Locations › a region\'s row ("not on the Earth", with the owner\'s reason)', 'suite-reading',
       note='a region is listed on the plate\'s Locations with the owner\'s reason, never drawn as a point (provider/suiteReading.ts locateFacet holds a polygon facet with its reason). Not kept, lane O\'s judgement: drawing regions as polygons — a polygon layer on the globe would be new geometry, not a port.')
-place('lane-4:T10', cite(PP, '<PrecisionMark marker={row.marker}'),
-      'the plate\'s Locations › each row\'s precision mark, and the precision chips', 'suite-reading',
+place('lane-4:T10', cite(PP, 'mark: <PrecisionMark marker={row.marker}'),
+      'the plate\'s Locations › each row\'s precision mark, and the precision counts over the rows', 'suite-reading',
       note='every Locations row wears the cradle authority\'s marker (solid · halo · outline · no-coordinate: places/placesModel.ts placeRows over project.ts precisionMarker), with the precision chips, never upgraded; the Earth draws each occurrence by its precision (src/globe/presences.ts).')
-place('lane-4:T11', cite(PP, '{routes.map(row =>'),
+place('lane-4:T11', cite(PP, '...routes.map(row =>'),
       'the plate\'s Relations › a subject\'s walk (walkable at two stops)', 'suite-reading',
       note='each subject\'s TRAVELLED_TO places are listed on the plate\'s Relations as its walk, walkable at two stops (places/placesModel.ts routeRows); the Earth draws it as its own thread walk.')
-place('lane-4:T12', cite(PP, '{within.map(row =>'),
+place('lane-4:T12', cite(PP, '...within.map(row =>'),
       'the plate\'s Relations › "a in b" (listed, not drawn)', 'suite-reading',
       note='the declared LOCATED_IN hierarchy is carried verbatim and listed on the plate\'s Relations, "listed honestly but not drawn" (the target\'s own clause). Not kept, lane O\'s judgement: drawing the edges — the atlas\'s arcs are walk arcs.')
 place('lane-4:T13', cite(AT + 'places/placesModel.ts', 'export function provenanceLine('),
-      'the plate\'s Locations › a row\'s title, and the chosen row\'s provenance line', 'suite-reading',
+      'the plate\'s Locations › a row\'s words in the Info view\'s hover, and the chosen row\'s provenance line', 'suite-reading',
       note='each Locations row says owner · reading · revision · evidence, naming an absence rather than inventing a source (places/placesModel.ts provenanceLine); the chosen row shows it in full.')
 place('lane-4:T14', cite(AT + 'places/placesTransport.ts', 'export function atlasTimeBindings('),
-      'punch-in and punch-out read the window\'s two edges; M0\'s Deep time device scrubs it', 'atlas-window', kind='atlas-transport',
+      'punch-in and punch-out read the window\'s two edges; the M0′ Project plate\'s Deep time scrubs it', 'atlas-window', kind='atlas-transport',
       note='the atlas\'s one deep-time clock is a face of the shared window (sharedClock.ts bindSharedTimeClock); the window\'s two edges are read on the transport\'s punch-in and punch-out (places/placesTransport.ts atlasTimeBindings); the scrubber is M0\'s Deep time device. The frame\'s docked time control is removed.')
 place('lane-4:T15', cite(AT + 'places/placesTransport.ts', 'export function atlasTimeBindings('),
       'Walk (Play) and Stop press the atlas\'s one time button', 'atlas-window', kind='atlas-transport',
       note='Technē\'s Walk (Play) presses the atlas\'s one time button — the walk that stands, else the Earth\'s clock, which commits the window as it plays — and Stop pauses what plays (places/placesTransport.ts); refused, by name, while the Earth is not open.')
 place('lane-4:T16', cite(PP, 'One season: the time window narrows what is placed, never the imagery'),
-      'the plate\'s Landmass › One season', 'atlas-own',
+      'the plate\'s Earth layers › Imagery, its words in the Info view\'s hover (One season)', 'atlas-own',
       note='"One season: the time window narrows what is placed, never the imagery" on the plate\'s Landmass.')
-place('lane-4:T17', cite(PP, 'onClick={press}><Icon name="draw" size={11} /> Place'),
+place('lane-4:T17', cite(PP, '<Toggle label="✎ Place"'),
       'the plate\'s Locations › ✎ Place (a subject selected on the Earth), then a click on the globe → the draft offered to the Wiki\'s time-and-place editor (Open the editor)', 'wiki-facts',
       note='the plate\'s ✎ Place arms the tool for the subject the Earth has selected; the next click on the globe (places/placesHost.ts pointUnder) becomes the frame\'s own draft (places/placeTool.ts draftAt over psychogeographic/placeAuthoring.ts), offered only to the Wiki\'s time-and-place editor (WikiFactsEditor offerConstellationRoute), where the person chooses a source and saves. No Scene is needed: the subject\'s own node owns the facts; a save rereads the world and redraws the subject in place.')
 place('lane-4:T18', cite(AT + 'places/placeTool.ts', 'export function placeAnswered('),
@@ -620,7 +659,7 @@ gap('lane-4:T20', 'not-built',
 place('lane-4:T21', cite(PP, 'handle.ctl.setFilter(narrowed(row) ? rest : {...rest, kinds: [row.locus]})'),
       'the plate\'s Relations › a relation (the atlas\'s one filter)', 'suite-reading',
       note='the plate\'s Relations rows narrow the atlas\'s one filter (T8\'s control), which the atlas keeps as its own state on its linkable address (src/app/controller.ts syncHash). Not ported, lane O\'s judgement: persistence per Scene — no Scene stands under the atlas; Scenes saved before keep their layers record as inert, validated data.')
-place('lane-4:T22', cite(PP, '{field.map(result =>'),
+place('lane-4:T22', cite(PP, '...field.map(result =>'),
       'the plate\'s Locations › Find a place…', 'suite-reading',
       note='the plate\'s Find narrows the world\'s own places (places/placesModel.ts findPlaceRows) and lists the field\'s own search results beneath, each chosen through the controller\'s chooseResult; ⌘K still opens the atlas\'s own search.')
 place('lane-4:T23', cite(PP, 'setWindowSaid(writeSharedWindow(disclosureSession,'),
@@ -637,16 +676,16 @@ gap('lane-4:T26', 'not-built',
     'No tour stop is bound to a Journey beat: binding a stop to a beat is M3′ Journey\'s, not M4′\'s, and no stop is recorded on the atlas to bind.',
     'G6', where=cite(FSJ + 'placeTourRecord.ts', 'export function resolveTourBindings('),
     note='a gap now (lane O, 92a7d38d5; was homed on the frame\'s Places map, removed). Not kept on M4′, lane O\'s judgement: the binding is M3′ Journey\'s, and the target itself says M4′ "renders nothing journey-owned"; the binding law stays in the Scene material (fsj/src/placeTourRecord.ts).')
-place('lane-4:T27', cite(PP, '<Reading name="Sun" value={sunWords} />'),
-      'the plate\'s Sky › Sun, and Day and night', 'ql-sun',
+place('lane-4:T27', cite(PP, '<PlateReading label="Sun"'),
+      'the plate\'s Sky › Sun (its words in the Info view\'s hover), and its Earth layers › Day/night', 'ql-sun',
       note='the plate\'s Sky says the Sun\'s words — placed where the QL owner states it, or the owner\'s reason — and whether the Earth is lit by the sky\'s Sun; the same words stand in the Info view\'s hover (AtlasProjectionPanel.tsx earthWords), never over the globe. The owner read is the atlas\'s own (inhabitants/qlSkyEarthAdapter.ts admitDatedSubsolar, kernel nara_identity · transit), no longer the frame\'s Nara facade.')
-place('lane-4:T28', cite(PP, '<ol className="places-ladder" aria-label="Frames">'),
-      'the plate\'s Sky › Frames', 'suite-reading', 'ql-sun', 'atlas-window',
+place('lane-4:T28', cite(PP, 'const ladder = ['),
+      'the plate\'s Frames', 'suite-reading', 'ql-sun', 'atlas-window',
       note='the five rungs by world.ts\'s labels on the plate\'s Sky ("Frames"), each read from what the Earth holds — the QL Sun, the window, the places declared, those drawn and their walks, and Nara, which no owner discloses here; none is shown present that is not.')
 place('lane-4:T29', cite(AT + 'src/globe/controls.ts', 'if (this.autoRotate && !this.interacted && !this.opts.reduced) {'),
       'the globe itself: it turns slowly only until first touched, never under reduced motion', 'atlas-own', kind='globe',
       note='the atlas\'s own stillness is kept: it turns slowly only until first touched, and never under reduced motion (src/globe/controls.ts); flights ease and finish. Lane O judged it against the manual (DLW.md §2: a planet turning slowly under its star).')
-place('lane-4:T30', cite(PP, '<StandingTag standing={row.standing} />', 218),
+place('lane-4:T30', cite(PP, 'tag: <StandingTag standing={row.standing} />'),
       'the plate\'s Locations and Relations › the "mythic" tag and the dashed swatch', 'suite-reading',
       note='one grammar on the plate — a dashed swatch and a "mythic" tag wherever a mythic place or relation is named (PlacesPlate.tsx, placesPlate.css); the suite provider reads MYTH_LOCATED_AT as a myth episode, never a historical event (provider/suiteReading.ts locusOfRelation).')
 
@@ -676,22 +715,22 @@ UNSEEN = ' Screen leg UNVERIFIED.'
 def palace(target, component, kind, extra, *owners_, note=''):
     homed(target, component, reach(kind, 'Palace', extra=extra, condition='none'), owner(*owners_), note=U + note + UNSEEN)
 palace('lane-5:T14', cite(PL + 'PalacePlate.tsx', 'function WholeSection({here}: {here: PalaceInside}) {'), 'palace-plate',
-       'its Integral whole (folded to its strip until pressed): each region in M′ order with its office and standing, each entry with Open', 'palace-reading',
+       'its Integral whole (folded to its title until pressed): each region in M′ order with its office and standing; a region pressed shows its entries, each pressed to open in its own instrument, ‹ back to the regions', 'palace-reading',
        note='the integral whole is read through the owner the frame\'s Palace reached — the boundary\'s techne-reading channel, readWikiSceneTechne scope "expression" (palaces/palaceOwners.ts) — at the register\'s overview Scene, and refused by name unless it answers for this palace\'s own Expression at this revision (palaceSession.ts readWhole); palaceWholeView moved verbatim to m0m5/palace/whole.ts. The floor\'s rooms are the whole\'s journey region, the palace\'s own Scenes.')
 palace('lane-5:T15', cite(PS, 'export function moveRooms(points: Record<string, BoardPoint>): void {'), 'palace-floor',
-       'drag a room (one gesture, one save); shift-drag a marquee to select rooms (the plate\'s Rooms shows them); drag the floor to pan, wheel to zoom; Snap off · grid on the plate\'s Rooms', 'palace-presence',
+       'drag a room (one gesture, one save); shift-drag a marquee to select rooms (the plate\'s Rooms shows them); drag the floor to pan, wheel to zoom; Snap off · grid on the plate\'s Board', 'palace-presence',
        note='the arrangement law moved to m0m5/palace/board.ts (the frame\'s own snap copied unchanged), keyed by the room\'s Scene ref; the floor plan is the board — a drag is one move saved once through the presence owner (palaceSession.ts moveRooms), the viewport saved once settled; nothing reaches the plan or the kernel. Replaced, not ported (lane U): the Research Canvas\'s card vocabulary — the floor draws the mockup\'s rooms instead.')
 palace('lane-5:T16', cite(PS, 'export function openRoom(key: string): void {'), 'palace-floor',
-       'double-click a room (a region opens its one Expression, any other room its own Scene), click an object it holds (the subject door); the plate\'s Rooms (double-click), Integral whole (each entry) and Portals open the same way', 'palace-doors',
+       'double-click a room (a region opens its one Expression, any other room its own Scene), click an object it holds (the subject door); the plate\'s Rooms (double-click), Integral whole (a region pressed, then its entry) and Portals open the same way', 'palace-doors',
        note='an object opens through its owner (palaceSession.ts openRoom, openObject, openEntry, openMember over palaceOwners.ts open): a region\'s one Expression in the stage, a room\'s Scene through the owner\'s selection ask, a subject through the subject door, an entry with its ref as its instrument pane\'s subject, a source on Graph and source; what its route refuses is named (m0m5/palace/whole.ts palaceOpenRoute). The trail step records on the shared session only while it stands on this palace\'s reading, else says why (m0m5/palace/basis.ts palaceTrailStep); the floor draws the guided path\'s honest edges (palacesModel.ts floorEdges).')
 palace('lane-5:T17', cite(PL + 'palaceTransport.ts', 'export function palaceWalkBindings(state: PalaceState,'), 'palace-transport',
        'Walk (Play) walks one locus per dwell and wraps, Stop holds it still; Walk pace reads the dwell, Stop n/N the locus of how many; the plate\'s Path holds Start, ← and →; the floor accents the room the walk stands in', 'palace-reading', 'palace-presence',
        note='the walk is the one transport\'s while a palace stands (palaceTransport.ts palaceWalkBindings, bound in shell/modeTransports.tsx); outside a palace the atlas\'s own time serves the button. The walk visits the whole\'s loci from the named start (m0m5/palace/whole.ts palaceWalkSteps over recall.ts), and its position persists through the presence owner (palaceSession.ts moveWalk). No owner sets a pace yet: the dwell is the walk\'s own, and the transport\'s title says so.')
 palace('lane-5:T18', cite(PL + 'PalaceFloor.tsx', 'export function roomWhy(room: PalaceRoom, standing: PalaceStandingView | null): string {'), 'palace-floor',
-       'each room says why it stands where it does in the Info view\'s hover; the plate\'s Path › Guide on · off says it for the room the walk stands in, and its Integral whole tags each region\'s standing', 'palace-reading',
+       'each room says why it stands where it does in the Info view\'s hover; the plate\'s Rooms › Guide on · off says it for the room the walk stands in, in a line under the rooms, and its Integral whole tags each region\'s standing', 'palace-reading',
        note='the standing law moved verbatim to m0m5/palace/whole.ts (palaceStanding: warranted QL structure with its warrant class and provenance, an Expression owner\'s composition, or free mnemonic composition; every hand-made region free); the guide is these words (PalaceFloor.tsx roomWhy, PalacePlate.tsx PathSection).')
 palace('lane-5:T19', cite(PS, 'export async function acceptReturn(): Promise<void> {'), 'palace-plate',
-       'its Return (folded until pressed): Propose Return writes nothing; Accept and return · Refuse; the owner\'s answer in one line', 'ke-invoke',
+       'its Return (it folds to its title only when the row has no room): Propose Return writes nothing; Accept and return · Refuse; the owner\'s answer in one line', 'ke-invoke',
        note='the atlas calls the boundary\'s routed Return itself — the cradle owners\' kernel-expression channel with operation invoke_action (palaceOwners.ts invoke → expressions-boundary cradle.ts frameAction): the owner re-reads the reading the proposal came from and decides, and only then dispatches through the kernel\'s action seam; an invoked receipt returns to the Earth, the M0′ ground (palaceSession.ts returnToGround). The proposal law stays m0m5/palace/return.ts.')
 palace('lane-5:T20', cite(PS, 'export async function save(): Promise<void> {'), 'palace-plate',
        'its Compose (folded until pressed): a new region; the kernel\'s Expressions, each into a region or as a region; Save composition · Revert; its Rooms › ↑ ↓ along the path, ○ empty, × remove; the floor dashes an unsaved region', 'ke-compose',
@@ -702,7 +741,7 @@ palace('lane-5:T21', cite(PS, 'function persist(next: PalaceComposition, reading
 homed('lane-5:T22', cite(FSJ + 'app.ts', '// T22: each saved card names its origin'), stage('Library'), owner('library'))
 homed('lane-5:T23', cite(EB + 'timeWindow.ts', 'const crossed = crossToExpression(session, target);'), JN, owner('crossing', 'techne-reading'))
 palace('lane-5:T24', cite(PS, 'export function bookmarkHere(name: string): boolean {'), 'palace-plate',
-       'its Path: Start (the named start), a name and Bookmark, each bookmark (press to jump, ✎ rename, × delete); its Portals › ↩ the Earth (the return to ground); entering at a door stands the walk in that room', 'palace-presence',
+       'its Path: Start (the named start); its Bookmarks: a name and Bookmark, each bookmark (press to jump, ✎ rename, × delete); its Portals › ↩ the Earth (the return to ground); entering at a door stands the walk in that room', 'palace-presence',
        note='the bookmark law moved verbatim (m0m5/palace/bookmarks.ts); the acts are palaceSession.ts bookmarkHere, jumpBookmark, renameBookmark, deleteBookmark and walkToStart, each through the presence owner; the frame\'s Return to ground is the return to the Earth (palaceSession.ts returnToGround), and entering at a door names a room the walk does not hold (palaceSession.ts enterPalace).')
 
 # ── what changed for the Wiki-bound homes (ticket T) ─────────────────────────
@@ -721,6 +760,67 @@ NOTES['lane-2:T21'] = ('re-homed on the atlas (lane O, 92a7d38d5; R1 closed: the
                        'and now ends by saying the Earth atlas turns to it; the atlas follows the focus (places/placesHost.ts followSpatialFocus → '
                        'turnAtlasTo) and its clock stands in the one shared window. The target\'s other half, a place on the Earth framing the '
                        'Timeline, is lane-4 T23\'s "Window to its validity". ' + DOOR_NOTE)
+
+# ── what lanes Y and E changed (ticket R3, 15 Oct) ───────────────────────────
+# Each row whose home or reach changed carries one note naming the lane and what moved; the earlier notes stand in the register.
+Y, E = 'lane Y (14a713f89)', 'lane E (1f40feefe)'
+SHIFTED = ' (6f8c25dc5 had shifted the file first)'
+MOVED_HOMES = {
+    'lane-3:E22': f'the head\'s link mark moved twice — {Y} to ExpressionsStudio.tsx:190, then {E} to :201 — its quote unchanged; the reach is unchanged.',
+    'lane-4:T4': f'{E} redrew the M4′ plate: the imagery the atlas draws is named by its Earth layers › Imagery, a switch standing at Offline (Live waits, with why), its words in the hover — re-quoted at PlacesPlate.tsx:332 `<PlateRadio inline label="Imagery"` (was a Landmass reading).',
+    'lane-4:T5': f'{E}: the honesty clause moved with Terrain to the plate\'s Earth layers (Off; On waits, with why), PlacesPlate.tsx:334, quote unchanged{SHIFTED}.',
+    'lane-4:T7': f'{E}: the imagery is named in the words of the plate\'s Earth layers › Imagery, PlacesPlate.tsx:332, quote unchanged{SHIFTED}.',
+    'lane-4:T8': f'{E}: a Relations row is the plate rows\' press, the same narrowing, PlacesPlate.tsx:307, quote unchanged{SHIFTED}.',
+    'lane-4:T10': f'{E}: each Locations row\'s precision mark is the plate row\'s mark, re-quoted at PlacesPlate.tsx:265 `mark: <PrecisionMark marker={{row.marker}}`; the precision chips are now the counts over the rows (their label), without a mark each.',
+    'lane-4:T11': f'{E}: a subject\'s walk is a Relations row, re-quoted at PlacesPlate.tsx:316 `...routes.map(row =>`.',
+    'lane-4:T12': f'{E}: "a in b" is a Relations row, listed and never pressed, re-quoted at PlacesPlate.tsx:314 `...within.map(row =>`.',
+    'lane-4:T16': f'{E}: "One season" moved into the words of the plate\'s Earth layers › Imagery, PlacesPlate.tsx:332, quote unchanged{SHIFTED}.',
+    'lane-4:T17': f'{E}: ✎ Place is the plate\'s toggle, the same press (arm the tool, or give it back), re-quoted at PlacesPlate.tsx:275 `<Toggle label="✎ Place"`.',
+    'lane-4:T21': f'{E}: the Relations rows narrow the one filter through the same press, PlacesPlate.tsx:307, quote unchanged{SHIFTED}.',
+    'lane-4:T22': f'{E}: the field\'s own search results are rows under the places, each chosen through chooseResult, re-quoted at PlacesPlate.tsx:268 `...field.map(result =>`.',
+    'lane-4:T23': f'Window to its validity stands on the chosen row\'s line at PlacesPlate.tsx:288, quote unchanged: 6f8c25dc5 moved the line, {E} redrew the section around it.',
+    'lane-4:T27': f'{E}: the Sun is the plate\'s Sky › Sun reading (placed · not placed, its words in the hover), re-quoted at PlacesPlate.tsx:203 `<PlateReading label="Sun"`; Day and night moved to Earth layers › Day/night, a reading of the sky the plate does not switch.',
+    'lane-4:T28': f'{E}: the Frames ladder is its own section, the plate\'s Frames, each rung a row lit or dark, re-quoted at PlacesPlate.tsx:349 `const ladder = [`.',
+    'lane-4:T30': f'{E}: the "mythic" tag is the plate row\'s tag, re-quoted at PlacesPlate.tsx:265 `tag: <StandingTag standing={{row.standing}} />` (Locations; the Relations rows carry the same at :311).',
+    'lane-5:T14': f'{E} moved WholeSection to PalacePlate.tsx:184, quote unchanged: the whole pages its regions, a region pressed shows its entries, each pressed to open in its own instrument, ‹ back.',
+}
+ROW_REACH = {
+    'lane-4:T13': f'{E}: a row\'s title is now its words in the Info view\'s hover.',
+    'lane-4:T14': f'{E}: M0′ is one plate, so the scrubber is the M0′ Project plate\'s Deep time, no longer its own device.',
+    'lane-5:T15': f'{E}: Snap moved to the plate\'s Board.',
+    'lane-5:T16': f'{E}: the Integral whole opens an entry once its region is pressed.',
+    'lane-5:T18': f'{E}: the Guide moved to the plate\'s Rooms, its line under the rooms.',
+    'lane-5:T19': f'{E}: the Return no longer starts folded; it folds to its title only when the row has no room.',
+    'lane-5:T24': f'{E}: the bookmarks moved from the Path to their own section, Bookmarks.',
+}
+FRAME_Y = f'the reach follows {Y}: in a pane the frame draws only its field'
+ROUTE_FOLLOWS = {
+    'lens': FRAME_Y + '; this instrument\'s controls stand on Technē\'s {P} plate, each the frame\'s own control pressed through it, and the frame\'s whole chrome stands inside the pane at Full size (T-FRAME-CHROME-ONTO-PLATES).',
+    'stage': FRAME_Y + '; the frame\'s controls the Studio carries stand there, each the frame\'s own pressed through it, a summoned panel (the scenes panel, the library, Acts) opening over the field, and the frame\'s whole chrome stands inside the pane at Full size (T-FRAME-CHROME-ONTO-PLATES).',
+    'atlas': f'the reach follows {E}: M4′ stands on the rack as its Compact where the row has room, else its fold, and either press opens the Earth on the focused pane — the rack\'s one press (TechneDevices.tsx), which replaced the fold\'s own onOpen the route cited.',
+    'palace': f'the reach follows {E}: M5′ stands on the rack as its Compact where the row has room, else its fold, and either press opens the Earth on the focused pane — the rack\'s one press (TechneDevices.tsx), which replaced the fold\'s own onOpen the route cited; outside a palace the plate lists the world\'s palaces as paged rows — a press turns the Earth to the door, a double-click (or Enter under the rows) enters.',
+    'carry': FRAME_Y + f', and Show on the globe stands on Technē\'s M2′ Timeline plate (or inside the pane at Full size); and with {E} M4′ stands on the rack as its Compact where the row has room, else its fold, either press opening the Earth.',
+}
+
+
+def route_follows(route):
+    if route.startswith('lens:'):
+        return ROUTE_FOLLOWS['lens'].format(P=LENS_PLATE[route.split(':')[1].split('+')[0]])
+    if route == 'stage':
+        return ROUTE_FOLLOWS['stage']
+    if route.startswith('carry:'):
+        return ROUTE_FOLLOWS['carry']
+    if route.startswith('atlas:palace'):
+        return ROUTE_FOLLOWS['palace']
+    if route.startswith('atlas:'):
+        return ROUTE_FOLLOWS['atlas']
+    return None
+
+
+for target, row in ROWS.items():
+    parts = [MOVED_HOMES.get(target), ROW_REACH.get(target), route_follows(row['home']['route']) if row['home'] else None]
+    if any(parts):
+        NOTES[target] = 'ticket R3, following lanes Y and E: ' + ' '.join(part[0].upper() + part[1:] for part in parts if part) + ' Screen leg UNVERIFIED.'
 
 # ── the build tickets (ticket T, 15 Oct): G1, G2, G3, R1 and S1 closed in code (lanes N, O, P) and leave the list; ticket X, 15 Oct:
 # R2 closed in code (lane U, b5a935661; 30ba8692f) and leaves it too ──────────
