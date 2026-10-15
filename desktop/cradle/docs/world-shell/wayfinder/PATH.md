@@ -112,7 +112,8 @@ Palace). Ranked: G1 the stage's file exports have no native receiver (the main w
 cancels `<a download>`: lane-1 B2/B3); G2 the Instruments rail keeps no subject into Graph (D1); G3 the shell carries no
 frame deep-link address (E22); R1 Places onto the atlas (31 targets); R2 palaces onto the atlas (N4, 9); S1 mount N2's
 subject door — 76 homes read their facets only on a Wiki-bound Scene, reached today only by Examine in the Graph pane.
-The chain's end receives (`1dd808990`): a mode registers what lands on it (`MODE_DETAILS.drop`), and Live's note-device
+The widget slot reaches the rail (`79ee6a608`): a panel a family registers in `right-dock` — FOUNDATION §4's widget
+contract — is a widget of the one rail; the right dock and the duplicate "Agents & context" registration retire. The chain's end receives (`1dd808990`): a mode registers what lands on it (`MODE_DETAILS.drop`), and Live's note-device
 rows drag onto it, landing what their double-click lands. The native pass at `2f5c1bcf6` (computer-use): Central's Days read the owner's surface; every day was named "day.md" in the
 title line, trail and detail head (fixed, `3b66dcc3e`); the Expressions centre still read blank because the one frame keeps
 its instrument session open in every cut — the frame now says when its cut draws (`f2ef25b0f`); Technē's rack reads its
@@ -133,8 +134,7 @@ at b860eb8a4, computer-use: the Flow's form draws and its island answers); unrea
 reachability measure made true, 21 files deleted with their replacements, the runtime graph unchanged). Carried from lane
 J — gaps in the shared grid against what the deleted World-cut presentation drew (clip standing marks, sections nested and
 coloured by atmosphere, the cron chip, the retained occasion with its admission light, walk rails) and the native
-Arrangement's ruler zoom/pan and snap; the port source is `09a573a1d`. `right-dock` panel registrations have no renderer
-since the widget rail (RightDock.tsx is their only reader); `agentNativeP0` rows are never loaded by main.tsx (superseded by
+Arrangement's ruler zoom/pan and snap; the port source is `09a573a1d`. `agentNativeP0` rows are never loaded by main.tsx (superseded by
 the F7 bindings, or missing — to read); factoryEarthOccurrence (spine seam 6, Factory's half) has nothing to admit: the Factory owner declares no Earth binding for
 a run (`EARTH_SEAM`), so the Factory half waits on its owner, not on a wire. From lane I: the
 candidate's `/__application/` route can never match (app_assets.rs:13 compares against `expressions/…`).
@@ -164,8 +164,7 @@ Then: the transport and status bar (`80d5beb0c`, lane C: 46px, a title line, wor
 and Live at the mockup's floor (`ebc5f8cc7`, lane D: the rail in Live, the chain as plates in note order, the clip in the
 Clip view, Live's tree healed); from their proposals the atlas contained in its pane (`beca86c5b`), a fresh book opening in
 Central (`a7cbcb195`), plates never narrower than their heads, dead CSS removed. Carried from lane D: the device side's head names only the track's own
-devices. From the native pass at `14cb8a1bb`: the Flow pane draws blank paper although the Flow holds entries (to inspect);
-Central's Day is refused by its owner ("the native today pointer is stale") until the owner ensures the current Day.
+devices. From the native pass at `14cb8a1bb`: Central's Day is refused by its owner ("the native today pointer is stale") until the owner ensures the current Day.
 
 Landed later the same evening: the detail row's one head, the shared Clip view and Central's and Factory's two sides
 (`cdbf9e6ae`, lane A); Expressions' Studio plate and scene clip, Technē's instruments rack and event clip (`14cb8a1bb`,
