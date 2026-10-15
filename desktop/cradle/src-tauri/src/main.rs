@@ -37,101 +37,18 @@ struct NativeOwnerServer {
 #[tauri::command]
 async fn kernel_op(app: AppHandle, op: KernelOp) -> Result<KernelOpOutcome, String> {
     // Native owner reads may scan a large World. Keep them off the UI thread;
-    // the kernel mutex still serialises mutations and event order.
+    // the kernel mutex still serialises mutations and event order. The one
+    // dispatch the walk-bridge also calls (kernel dispatch.rs): owner work
+    // runs outside the kernel lock wherever the op has a prepared form.
     tauri::async_runtime::spawn_blocking(move || {
-        if let KernelOp::ExpressionRecovery { request } = op {
-            return oi_cradle_kernel::expression_recovery::execute(request);
-        }
-        if let KernelOp::NaraCoordinate { request } = op {
-            return oi_cradle_kernel::nara_coordinate::execute(request);
-        }
-        if let KernelOp::WorldResolve { world_id, verify } = op {
-            return oi_cradle_kernel::world_resolve::execute(oi_cradle_kernel::world_resolve::Request { world_id, verify });
-        }
         let host = app.state::<KernelHost>();
-        let epii = host.0.lock().map_err(|_| "kernel lock unavailable")?.prepare_nara_epii(&op)?;
-        if let Some(prepared) = epii {
-            let completed = prepared.execute()?;
-            let outcome = host.0.lock().map_err(|_| "kernel lock unavailable")?.finish_nara_epii(completed)?;
-            for receipt in &outcome.receipts { let _ = app.emit(KERNEL_EVENT_TOPIC, receipt); }
-            return Ok(outcome);
-        }
-        let voice = host.0.lock().map_err(|_| "kernel lock unavailable")?.prepare_nara_voice(&op)?;
-        let act = host.0.lock().map_err(|_| "kernel lock unavailable")?.prepare_nara_expressive_act(&op)?;
-        if let Some(prepared) = act {
-            let completed = prepared.execute()?;
-            let outcome = host.0.lock().map_err(|_| "kernel lock unavailable")?.finish_nara_expressive_act(completed)?;
-            for receipt in &outcome.receipts { let _ = app.emit(KERNEL_EVENT_TOPIC, receipt); }
-            return Ok(outcome);
-        }
-        let presence=host.0.lock().map_err(|_|"kernel lock unavailable")?.prepare_nara_presence(&op)?;
-        if let Some(prepared)=presence {
-            let completed=prepared.execute()?;
-            return host.0.lock().map_err(|_|"kernel lock unavailable")?.finish_nara_presence(completed);
-        }
-        let m3=host.0.lock().map_err(|_|"kernel lock unavailable")?.prepare_m3_reception(&op)?;
-        if let Some(prepared)=m3 {
-            let completed=prepared.execute()?;
-            return host.0.lock().map_err(|_|"kernel lock unavailable")?.finish_m3_reception(completed);
-        }
-        let current=host.0.lock().map_err(|_|"kernel lock unavailable")?.prepare_nara_current(&op)?;
-        if let Some(prepared)=current {
-            let completed=prepared.execute()?;
-            return host.0.lock().map_err(|_|"kernel lock unavailable")?.finish_nara_current(completed);
-        }
-        if let Some(prepared) = voice { return prepared.execute(); }
-        let dialogue = host
-            .0
-            .lock()
-            .map_err(|_| "kernel lock unavailable")?
-            .prepare_nara_dialogue(&op)?;
-        if let Some(prepared) = dialogue {
-            return prepared.execute();
-        }
-        let identity = host
-            .0
-            .lock()
-            .map_err(|_| "kernel lock unavailable")?
-            .prepare_nara_identity(&op);
-        if let Some(prepared) = identity {
-            return prepared.execute();
-        }
-        // Composing may provision QL's dated sky for tens of seconds: run it
-        // outside the lock; only the single-owner open is serialised.
-        let compose=host.0.lock().map_err(|_|"kernel lock unavailable")?.prepare_native_compose(&op)?;
-        if let Some(prepared)=compose{let composed=prepared.execute()?;return host.0.lock().map_err(|_|"kernel lock unavailable")?.finish_native_compose(composed);}
-        let prepared = host.0.lock().map_err(|_| "kernel lock unavailable")?.prepare_owner_read(&op);
-        if let Some(read) = prepared { return read.execute(); }
-        // A file listing or reading runs its owner call outside the lock and
-        // records its answer (the file's registration) under it.
-        let files=host.0.lock().map_err(|_|"kernel lock unavailable")?.prepare_files_read(&op);
-        if let Some(prepared)=files{let answered=prepared.execute();return host.0.lock().map_err(|_|"kernel lock unavailable")?.finish_files_read(answered);}
-        let working=match &op {
-            KernelOp::WorkingSurfaceRead {project,agent_session,binding}=>Some(host.0.lock().map_err(|_|"kernel lock unavailable")?.prepare_working_surface_read(project,agent_session.clone(),binding.clone(),false)?),
-            KernelOp::WorkingSurfaceAttachment {project,agent_session,binding}=>Some(host.0.lock().map_err(|_|"kernel lock unavailable")?.prepare_working_surface_read(project,agent_session.clone(),Some(binding.clone()),true)?),
-            _=>None,
-        };
-        if let Some(read)=working{return Ok(KernelOpOutcome {receipts:vec![],result:oi_cradle_kernel::KernelOpResult::WorkingSurfaceReading{document:read.execute()?}});}
-        let dictation=host.0.lock().map_err(|_|"kernel lock unavailable")?.prepare_dictation(&op)?;
-        if let Some(prepared)=dictation{return prepared.execute();}
-        let knowledge=host.0.lock().map_err(|_|"kernel lock unavailable")?.prepare_knowledge(&op)?;
-        if let Some(prepared)=knowledge{let completed=prepared.execute()?;return host.0.lock().map_err(|_|"kernel lock unavailable")?.finish_knowledge(completed);}
-        let decision = host.0.lock().map_err(|_| "kernel lock unavailable")?.prepare_decision(&op)?;
-        let decision_receipt = match decision { Some(prepared) => Some(prepared.execute()?), None => None };
-        let (outcome, receipts) = {
-            let mut kernel = host.0.lock().map_err(|_| "kernel lock unavailable")?;
-            let outcome = match decision_receipt {
-                Some(receipt) => kernel.finish_decision(receipt, matches!(&op, KernelOp::InvokeAction { .. }))?,
-                None => kernel.apply(op)?,
-            };
-            let receipts = outcome.receipts.clone();
-            (outcome, receipts)
-        };
-        for receipt in receipts {
+        let (result, _timing) = oi_cradle_kernel::dispatch::dispatch(&host.0, op);
+        let outcome = result?;
+        for receipt in &outcome.receipts {
             if let oi_cradle_kernel::events::KernelEvent::PresentationChanged { theme, .. } = &receipt.envelope.event {
                 apply_native_appearance(&app, &theme.appearance);
             }
-            let _ = app.emit(KERNEL_EVENT_TOPIC, &receipt);
+            let _ = app.emit(KERNEL_EVENT_TOPIC, receipt);
         }
         Ok(outcome)
     }).await.map_err(|e| e.to_string())?

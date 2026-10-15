@@ -248,6 +248,13 @@ impl PreparedRead {
             | KernelOp::LiveDeviceParamsRead { .. }
             | KernelOp::LiveDeviceParamWrite { .. }
             | KernelOp::CompositionRead { .. }
+            // Central's own route and Workcell's status record nothing in the
+            // kernel; their owners order their own writes.
+            | KernelOp::Central { .. }
+            | KernelOp::WorkcellStatusRead
+            // Central's Day and NOW readings, through its guarded readers.
+            | KernelOp::DayRead { .. }
+            | KernelOp::Now { .. }
             // The bounded telemetry follow waits on the owner for its whole
             // window; it reads only the owner's state file, never the kernel's.
             | KernelOp::FactoryOwner { request: crate::factory::OwnerRequest::TelemetryWatch { .. } } => Some(Self {
@@ -353,6 +360,59 @@ impl PreparedRead {
                 result: KernelOpResult::FactoryDevelopmentReading { data },
             });
         }
+        // Central's route, its Day reading and Workcell's status need no
+        // World, so none pays for its discovery; a NOW reading reads it only
+        // to gate a named project.
+        if let KernelOp::Central { project, request } = &self.op {
+            return Ok(KernelOpOutcome {
+                receipts: vec![],
+                result: KernelOpResult::CentralReading {
+                    data: crate::central::operate(&self.client, project.as_deref(), request)?,
+                },
+            });
+        }
+        if let KernelOp::DayRead { day_ref } = &self.op {
+            return Ok(KernelOpOutcome {
+                receipts: vec![],
+                result: KernelOpResult::DayReading {
+                    data: crate::central::day(&self.client, None, day_ref.as_deref())?,
+                },
+            });
+        }
+        // The same disclosure gate as the ordered arm: a named project must
+        // be inside Central's disclosed ground; `None` is the root register.
+        if let KernelOp::Now { project, request } = &self.op {
+            if let Some(project) = project {
+                let world = match &self.world {
+                    Some(world) => world.clone(),
+                    None => crate::world::read_world(&self.client)?,
+                };
+                world["work"]["projects"]
+                    .as_array()
+                    .and_then(|rows| {
+                        rows.iter()
+                            .find(|row| row["name"].as_str() == Some(project.as_str()))
+                    })
+                    .ok_or("Project is outside Central's disclosed ground")?;
+            }
+            return Ok(KernelOpOutcome {
+                receipts: vec![],
+                result: KernelOpResult::NowReading {
+                    data: self
+                        .client
+                        .now(project.as_deref(), request)
+                        .map_err(|error| error.to_string())?,
+                },
+            });
+        }
+        if matches!(&self.op, KernelOp::WorkcellStatusRead) {
+            return Ok(KernelOpOutcome {
+                receipts: vec![],
+                result: KernelOpResult::WorkcellStatusReading {
+                    data: workcell_status()?,
+                },
+            });
+        }
         // The Live document owner (the 8787 seam's replacements). None of these
         // needs the World, so none pays for its discovery.
         if let Some(result) = crate::live_set_owner::execute(&self.op) {
@@ -445,6 +505,29 @@ impl PreparedRead {
             result,
         })
     }
+}
+
+/// Workcell's own status reading (`workcell status --json`, or the suite's
+/// `oi workcell status --json`).
+fn workcell_status() -> Result<Value, String> {
+    let workcell = std::env::var_os("OI_WORKCELL_BIN").map(PathBuf::from);
+    let (executable, namespace): (PathBuf, Option<&str>) = match workcell {
+        Some(path) => (path, None),
+        None => (
+            std::env::var_os("OI_BIN")
+                .map(PathBuf::from)
+                .unwrap_or_else(|| PathBuf::from("oi")),
+            Some("workcell"),
+        ),
+    };
+    let mut args: Vec<std::ffi::OsString> = Vec::new();
+    if let Some(name) = namespace {
+        args.push(name.into());
+    }
+    args.extend(["status".into(), "--json".into()]);
+    crate::material::invoke(&executable, &args, None).map_err(|e| {
+        serde_json::to_string(&e).unwrap_or_else(|_| "workcell status read failed".into())
+    })
 }
 
 #[cfg(test)]

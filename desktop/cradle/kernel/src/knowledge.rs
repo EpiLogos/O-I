@@ -69,8 +69,6 @@ pub fn run(cwd: &Path, args: &[&str]) -> Result<Value, CallError> {
 
 /// Structured input goes on stdin, never shell-expanded argv or a temp source file.
 pub fn run_input(cwd: &Path, args: &[&str], input: &Value) -> Result<Value, CallError> {
-    use std::io::Write;
-    use std::process::Stdio;
     let bytes = serde_json::to_vec(input).map_err(|e| CallError::Malformed {
         detail: e.to_string(),
     })?;
@@ -80,35 +78,35 @@ pub fn run_input(cwd: &Path, args: &[&str], input: &Value) -> Result<Value, Call
         });
     }
     let executable = std::env::var_os("OI_BIN").unwrap_or_else(|| "oi".into());
-    let mut child = Command::new(executable)
-        .args(["aikit", "--json", "-C"])
-        .arg(cwd)
-        .args(args)
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .map_err(|e| CallError::Unavailable {
-            detail: e.to_string(),
-        })?;
-    let write = child
-        .stdin
-        .take()
-        .ok_or_else(|| CallError::Malformed {
-            detail: "Native Action stdin is absent".into(),
-        })?
-        .write_all(&bytes);
-    if let Err(e) = write {
-        let _ = child.kill();
-        let _ = child.wait();
-        return Err(CallError::Malformed {
-            detail: e.to_string(),
-        });
-    }
-    decode_envelope(&child.wait_with_output().map_err(|e| CallError::Malformed {
-        detail: e.to_string(),
-    })?)
+    let mut command = Command::new(executable);
+    command.args(["aikit", "--json", "-C"]).arg(cwd).args(args);
+    let operation = args
+        .iter()
+        .take_while(|arg| !arg.starts_with('-'))
+        .copied()
+        .collect::<Vec<_>>()
+        .join(" ");
+    // Bounded like every owner call (owner_process.rs); a construction write
+    // stopped at its limit is named uncertain.
+    let output = crate::owner_process::output(
+        &mut command,
+        Some(bytes),
+        crate::owner_process::Bound::write("AIKit", &operation, INPUT_ACTION_LIMIT),
+    )
+    .map_err(|failure| match failure.failed {
+        crate::owner_process::Failed::Unavailable => CallError::Unavailable {
+            detail: failure.message,
+        },
+        _ => CallError::Malformed {
+            detail: failure.message,
+        },
+    })?;
+    decode_envelope(&output)
 }
+
+/// A construction Action applied from a file: a write; the bound is for an
+/// owner that never answers.
+const INPUT_ACTION_LIMIT: std::time::Duration = std::time::Duration::from_secs(120);
 
 fn run_with_executable(cwd: &Path, args: &[&str], executable: &OsStr) -> Result<Value, CallError> {
     let mut command = Command::new(executable);

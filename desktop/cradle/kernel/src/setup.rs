@@ -1,9 +1,13 @@
 //! Thin adoption adapter. The installed `oi setup` owns plans, authority checks,
 //! journal durability, installation and readback. Nothing is retried here.
 use serde_json::Value;
-use std::io::Write;
 use std::path::{Path, PathBuf};
-use std::process::{Command, Stdio};
+use std::process::Command;
+
+/// Setup's reading verbs answer from its journal; an installation may take
+/// minutes. Both bounds are for an owner that never answers.
+const SETUP_READ_LIMIT: std::time::Duration = std::time::Duration::from_secs(60);
+const SETUP_WRITE_LIMIT: std::time::Duration = std::time::Duration::from_secs(1800);
 
 pub struct Client {
     executable: PathBuf,
@@ -21,30 +25,38 @@ impl Client {
     }
     pub fn request(&self, cwd: &Path, request: &Value) -> Result<Value, String> {
         let bytes = encode_request(request)?;
-        let mut child = Command::new(&self.executable)
+        let writes = matches!(
+            request.get("action").and_then(Value::as_str),
+            Some("apply" | "prepare_desktop")
+        );
+        let mut command = Command::new(&self.executable);
+        command
             .args(["setup", "--request-file", "-", "--json"])
-            .current_dir(cwd)
-            .stdin(Stdio::piped())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .spawn()
-            .map_err(|_| {
+            .current_dir(cwd);
+        // Bounded like every owner call (owner_process.rs). An installation
+        // may take minutes; a write stopped at its limit is named uncertain
+        // and its journal decides recovery — nothing is retried here.
+        let output = crate::owner_process::output(
+            &mut command,
+            Some(bytes),
+            if writes {
+                crate::owner_process::Bound::write("O:I", "setup", SETUP_WRITE_LIMIT)
+            } else {
+                crate::owner_process::Bound::read("O:I", "setup", SETUP_READ_LIMIT)
+            },
+        )
+        .map_err(|failure| match failure.failed {
+            crate::owner_process::Failed::Unavailable => {
                 "The installed O:I setup command could not start. No request was sent.".to_owned()
-            })?;
-        let mut stdin = child
-            .stdin
-            .take()
-            .ok_or("Native setup input was unavailable")?;
-        if stdin.write_all(&bytes).is_err() {
-            drop(stdin);
-            // Do not re-send or call a second installer. The owner may already
-            // have received enough input to begin; its journal decides recovery.
-            let _ = child.wait();
-            return Err("Native setup lost its input channel. Recheck its journal; do not replay the write.".into());
-        }
-        drop(stdin);
-        let output = child.wait_with_output().map_err(|_| {
-            "Native setup reply was lost. Recheck its journal; no write was retried.".to_owned()
+            }
+            crate::owner_process::Failed::Stopped => format!(
+                "{} Recheck its journal; do not replay the write.",
+                failure.message
+            ),
+            crate::owner_process::Failed::Process => {
+                "Native setup lost its input channel. Recheck its journal; do not replay the write."
+                    .to_owned()
+            }
         })?;
         decode_reply(output.status.code(), &output.stdout)
     }
