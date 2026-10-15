@@ -9,7 +9,7 @@
 // Drawn through the shared Clip view (frame/detail/ClipView.tsx). Mounted by Technē's detail registration (shell/modeDetails.tsx).
 
 import {ClipLine, ClipNone, ClipView, type ClipRow} from '../../frame/detail/ClipView'
-import {chooseHeldScene, useSubjectOpenings, type SubjectOpening} from './subjectOpenings'
+import {chooseHeldScene, hasScenes, useSubjectOpenings, type SubjectOpening} from './subjectOpenings'
 import {sceneRowsOf, type SceneRow} from './worldRows'
 
 /** A World subject as THE selection holds it. */
@@ -21,11 +21,12 @@ export interface HeldWorldSubject {
 
 const KIND_WORDS: Readonly<Record<string, string>> = {location: 'location · a project space on your planet', place: 'Earth place · declared by its owner'}
 
-/** The door's answer in a word, for the props column. */
+/** The door's answer in a word, for the props column: the Scene asked for, then the stage's answer to it. */
 function doorWord(opening: SubjectOpening | undefined): string {
   if (!opening) return 'not opened yet'
   if (opening.state === 'opening') return 'opening…'
-  return opening.state === 'asked' ? `asked · ${opening.opened.scene_title}` : 'stands in no Scene'
+  if (opening.state === 'absent') return 'stands in no Scene'
+  return `${opening.state === 'shown' ? 'open' : opening.state === 'refused' ? 'not open' : 'asked'} · ${opening.opened.scene_title}`
 }
 
 export function WorldSubjectClip({subject}: {subject: HeldWorldSubject}) {
@@ -37,10 +38,10 @@ export function WorldSubjectClip({subject}: {subject: HeldWorldSubject}) {
 /** The Clip view of a World subject, drawn from the door's answer (a fixture may feed it). */
 export function WorldSubjectClipView({subject, opening, onChoose}: {subject: HeldWorldSubject; opening: SubjectOpening | undefined; onChoose: (scene: SceneRow) => void}) {
   const scenes = sceneRowsOf(opening, subject.title)
-  const asked = opening?.state === 'asked' ? opening.opened : null
+  const asked = hasScenes(opening) ? opening.opened : null
   const rows: ClipRow[] = [
     {key: 'kind', value: KIND_WORDS[subject.kind] ?? subject.kind, title: 'What it is, as the suite reading names it'},
-    {key: 'door', value: doorWord(opening), title: opening?.state === 'absent' ? opening.reason : 'The subject door: the owner\'s reverse query, and the Scene asked for'},
+    {key: 'door', value: doorWord(opening), title: opening?.state === 'absent' || opening?.state === 'refused' ? opening.reason : 'The subject door: the owner\'s reverse query, the Scene asked for, and the stage\'s answer'},
     {key: 'register', value: asked?.registerKey ?? null, title: 'The wiki register whose Scene carries it'},
     {key: 'source', value: <span className="mono">{subject.ref}</span>, title: 'The owner\'s ref of the subject'},
   ]
@@ -51,7 +52,7 @@ export function WorldSubjectClipView({subject, opening, onChoose}: {subject: Hel
       : opening.state === 'opening' ? 'Asking the owner where it stands in the wiki…' : 'No Scene carries it.'}</ClipNone>
   return <div className="mode-detail" data-mode-detail="techne-world-subject">
     <ClipView kind="techne-world-subject" name={subject.title} rows={rows}
-      note={opening?.state === 'absent' ? opening.reason : undefined}
+      note={opening?.state === 'absent' || opening?.state === 'refused' ? opening.reason : undefined}
       columns={[{name: 'Scenes · that carry it', width: 360, body}]} />
   </div>
 }

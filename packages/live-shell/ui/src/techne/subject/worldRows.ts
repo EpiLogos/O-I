@@ -21,6 +21,9 @@ import type {KindShapeName} from '../../inhabitants/sdk/icons'
 import type {SubjectScene, WorldSubject} from './subjectScenes'
 import type {SubjectOpening} from './subjectOpenings'
 
+/** An answer that carries Scenes (the door found where the subject stands), whatever the stage has answered since. */
+const hasScenes = (opening: SubjectOpening | undefined): opening is Extract<SubjectOpening, {opened: SubjectScene}> => !!opening && 'opened' in opening
+
 /** The World groups that have a row source here, by their browser category id (shell/modeGrammar.ts, the `techne` browser).
  * Palaces has none: its owner (N4, palaces on the atlas) has not landed, and the browser draws it designed empty. */
 export const WORLD_GROUP_IDS = ['techne-bodies', 'techne-locations', 'techne-places', 'techne-journeys'] as const
@@ -119,16 +122,23 @@ function unreadWords(readings: WorldReadings, what: string): {word: 'reading' | 
 
 // ── the subject door's answer, in a row ─────────────────────────────────────────────────────────────────────────────────────
 
-/** A row's standing and hover once the door has answered for its subject: the Scene asked for (and how many more carry it), or
- * the owner's absence words verbatim. Null while the door has not been asked. */
+/** A row's standing and hover once the door has answered for its subject: the Scene asked for while the stage has not answered,
+ * the Scene shown (and how many more carry it), the stage's refusal in its own words, or the owner's absence words verbatim.
+ * Null while the door has not been asked. */
 export function openingWords(opening: SubjectOpening | undefined, name: string): {standing: string; hover: string} | null {
   if (!opening) return null
   if (opening.state === 'opening') return {standing: 'opening…', hover: `Asking where ${name} stands in the wiki — the owner's reverse query over its registers.`}
   if (opening.state === 'absent') return {standing: opening.reason, hover: opening.reason}
   const more = opening.scenes.length - 1
+  const others = more > 0 ? ` ${plural(more, 'more Scene carries', 'more Scenes carry')} it, listed under the row.` : ''
+  if (opening.state === 'asked') return {
+    standing: `asking for ${opening.opened.scene_title}…`,
+    hover: `Technē was asked to open ${opening.opened.scene_title}, the Scene that carries ${name}; the stage has not answered yet.${others}`,
+  }
+  if (opening.state === 'refused') return {standing: opening.reason, hover: `${opening.reason}${others}`}
   return {
     standing: `in ${opening.opened.scene_title}${more > 0 ? ` · +${more}` : ''}`,
-    hover: `Technē was asked to open ${opening.opened.scene_title}, the Scene that carries ${name}; the stage shows it when the frame opens it.${more > 0 ? ` ${plural(more, 'more Scene carries', 'more Scenes carry')} it, listed under the row.` : ''}`,
+    hover: `Technē's stage shows ${opening.opened.scene_title}, the Scene that carries ${name} (${opening.expression_ref}).${others}`,
   }
 }
 
@@ -142,16 +152,22 @@ export interface SceneRow {
   asked: boolean
 }
 
-/** The Scenes under an opened row: the one asked for first, then the others in the door's order. Empty unless the door asked. */
+/** The asked Scene's word under its row, by the stage's answer. */
+const ASKED_WORD = {asked: 'asked', shown: 'open', refused: 'not open'} as const
+const ASKED_HOVER = {asked: 'Technē was asked to open it; the stage has not answered yet.', shown: 'Technē\'s stage shows it.',
+  refused: 'Technē was asked to open it and the stage did not; the row says why.'} as const
+
+/** The Scenes under an opened row: the one asked for first, then the others in the door's order. Empty unless the door found
+ * where the subject stands. */
 export function sceneRowsOf(opening: SubjectOpening | undefined, subjectName: string): SceneRow[] {
-  if (!opening || opening.state !== 'asked') return []
+  if (!hasScenes(opening)) return []
   return opening.scenes.map(scene => {
     const asked = scene.scene_ref === opening.opened.scene_ref
     const what = scene.whole ? 'its own constellation' : scene.overview ? 'the register’s overview' : 'carries it'
     return {
       key: `${scene.registerKey}\u0000${scene.scene_ref}`, scene, name: scene.scene_title, asked,
-      standing: asked ? 'asked' : what,
-      hover: `${scene.scene_title} — ${scene.whole ? `the constellation ${subjectName} is the whole of` : scene.overview ? `the ${scene.registerKey} register's overview, which stands ${subjectName}` : `a Scene that carries ${subjectName}`} (${scene.registerKey} register). ${asked ? 'Technē was asked to open it.' : 'Press to open it instead.'}`,
+      standing: asked ? ASKED_WORD[opening.state] : what,
+      hover: `${scene.scene_title} — ${scene.whole ? `the constellation ${subjectName} is the whole of` : scene.overview ? `the ${scene.registerKey} register's overview, which stands ${subjectName}` : `a Scene that carries ${subjectName}`} (${scene.registerKey} register). ${asked ? ASKED_HOVER[opening.state] : 'Press to open it instead.'}`,
     }
   })
 }

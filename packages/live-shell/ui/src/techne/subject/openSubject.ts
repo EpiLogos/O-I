@@ -16,7 +16,9 @@
 //     `visible`, its `deepPresented`), and Technē's first tree holds the Earth, not the stage (shell/modeFrames.ts
 //     `seedInstruments(['projection.earth'])`). So presenting opens the stage through the one instrument door (frame/instrumentDoor.ts
 //     `openInstrument`) — which brings a stage already in the tree forward rather than making a second (frame/openInstrument.ts,
-//     surface/engine.ts `openBinding`) — then hops.
+//     surface/engine.ts `openBinding`) — then hops;
+//   - the answer: the stage settles the ask (shown, or refused in the owner's words) through subjectAsks.ts, which the stage's
+//     wiring writes (panels/expressions.tsx); `followLiveAsk` follows it, and answers an ask still untaken at its deadline.
 //
 // Callers: the browser's Technē World rows (shell/ModeBrowser.tsx, through subjectOpenings.ts `openHeldSubject`).
 
@@ -24,6 +26,7 @@ import {getWikiProjectionState, requestWikiSelection, wikiProjectionOf} from '..
 import {liveWikiStandingSource} from '../../native/wikiSubjectStanding'
 import {openInstrument} from '../../frame/instrumentDoor'
 import {openSubjectScene, resolveSubject, type SubjectAbsence, type SubjectScene, type SubjectSource, type WorldSubject} from './subjectScenes'
+import {followAsk, type AskAnswer, type AskEnv, type AskedScene} from './subjectAsks'
 
 /** The window event the owner's hand-off dispatches to enter Technē (desktop/cradle/src/knowledge/techneHandoff.ts:43); the candidate answers
  * it in panels/expressions.tsx (`addEventListener('oi:epi-examine', examine)`). */
@@ -68,3 +71,21 @@ export async function openWorldSubject(subject: WorldSubject, source: SubjectSou
 export function openChosenScene(scene: SubjectScene, title: string | undefined, source: SubjectSource = liveSubjectSource): void {
   openSubjectScene(scene, title, source)
 }
+
+/** The live seam a follower reads: the ask is still the projection store's untaken request. */
+export const liveAskEnv: AskEnv = {
+  pending: asked => {
+    const request = getWikiProjectionState().request
+    return !!request && request.registerKey === asked.registerKey && request.sceneRef === asked.sceneRef
+  },
+  setTimer: (run, ms) => {
+    const timer = setTimeout(run, ms)
+    ;(timer as {unref?: () => void}).unref?.()
+    return timer
+  },
+  clearTimer: timer => clearTimeout(timer as ReturnType<typeof setTimeout>),
+}
+
+/** Follow the stage's answer to an ask the door posted (subjectAsks.ts `followAsk` over the live seam). */
+export type AskFollower = (asked: AskedScene, title: string, onAnswer: (answer: AskAnswer) => void) => () => void
+export const followLiveAsk: AskFollower = (asked, title, onAnswer) => followAsk(asked, title, onAnswer, liveAskEnv)
