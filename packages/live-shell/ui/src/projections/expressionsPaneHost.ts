@@ -39,8 +39,13 @@ export interface FramePlacement {
 }
 
 /** The centre residence while the frame is placed in a pane: out of flow, zero-size, with no hit area. The container inside it is
- * the one that moves (framePlacement.ts). It is applied only while a pane holds the frame, and never removes the frame. */
-export const PLACED_RESIDENCE_STYLE: CSSProperties = {position: 'fixed', left: 0, top: 0, width: 0, height: 0, overflow: 'visible', pointerEvents: 'none'}
+ * the one that moves (framePlacement.ts). It is applied only while a pane holds the frame, and never removes the frame.
+ *
+ * It stands at the placement's own height (framePlacement.ts PLACED_Z_INDEX, "above the Factory tree's panes, below its popovers").
+ * A fixed residence is a stacking context of its own, so the container's height counts only inside it: at the default height the
+ * pane tree, a later panel in the centre, painted its opaque pane body over the frame, and a work opened in a pane drew nothing
+ * (seen by the lead, 15 Oct, native at e37198c2d and headless: the frame laid out its Scene behind a blank pane). */
+export const PLACED_RESIDENCE_STYLE: CSSProperties = {position: 'fixed', left: 0, top: 0, width: 0, height: 0, overflow: 'visible', pointerEvents: 'none', zIndex: 20}
 
 let reading: HostedExpressionsReading | null = null
 const readingListeners = new Set<() => void>()

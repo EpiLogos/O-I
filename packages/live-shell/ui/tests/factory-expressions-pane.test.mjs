@@ -297,7 +297,16 @@ test('the Expressions residence is placed while a pane holds the frame, and is o
   assert.match(app, /const framePlacement = useFramePlacement\(\)\n[\s\S]{0,400}const expressionsPlaced = framePlacement !== null && centerPanel !== 'world\.expressions'/, 'a pane holds the frame in any mode (F2)')
   assert.match(app, /style=\{placed \? PLACED_RESIDENCE_STYLE : undefined\} hidden=\{placed \? false : panel\.id === 'world\.settings'/)
   const style = await source('../src/projections/expressionsPaneHost.ts')
-  assert.match(style, /export const PLACED_RESIDENCE_STYLE: CSSProperties = \{position: 'fixed', left: 0, top: 0, width: 0, height: 0, overflow: 'visible', pointerEvents: 'none'\}/, 'the residence is zero-size and out of flow: the container, not the residence, is the one placed')
+  assert.match(style, /export const PLACED_RESIDENCE_STYLE: CSSProperties = \{position: 'fixed', left: 0, top: 0, width: 0, height: 0, overflow: 'visible', pointerEvents: 'none', zIndex: 20\}/, 'the residence is zero-size and out of flow: the container, not the residence, is the one placed')
+})
+
+test('the placed residence stands at the placement\'s height, so the frame paints over the pane that holds it (seen blank, 15 Oct)', async () => {
+  const {PLACED_RESIDENCE_STYLE} = await import('../src/projections/expressionsPaneHost.ts')
+  const {PLACED_Z_INDEX} = await import('../src/projections/framePlacement.ts')
+  // A fixed element is its own stacking context: the container's PLACED_Z_INDEX counts only inside the residence, so the residence
+  // itself must stand at that height among the centre's panels, or the pane tree painted after it covers the frame.
+  assert.equal(PLACED_RESIDENCE_STYLE.position, 'fixed')
+  assert.equal(String(PLACED_RESIDENCE_STYLE.zIndex), PLACED_Z_INDEX)
 })
 
 test('the Factory Expressions entry is enabled with its real behaviour, and the bar of every other mode keeps its six lenses', () => {
