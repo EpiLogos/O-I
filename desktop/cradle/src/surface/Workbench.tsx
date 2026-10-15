@@ -50,7 +50,7 @@ const AgencySurface=lazy(()=>import("../agency/AgencySurface").then((module)=>({
 import type { ActionArg, LayoutState, Pane, SurfaceId } from "./types";
 import { TAB_LIST_WIDTH_MAX, TAB_LIST_WIDTH_MIN, MODE_CURATION } from "../workspace/mode";
 
-/** The DLW pane grammar (FOUNDATION F2, manual §10.2): a ⊞ menu per pane (Beside, Below, Four ways), a drop on a
+/** The DLW pane grammar (FOUNDATION F2, manual §10.2): a ⊞ menu per pane (Beside, Below, Four ways, Full size), a drop on a
  * pane's edge makes a new split, an instrument dragged in from the browser opens where it lands, and each projection
  * pane follows the selection or keeps its own. The legacy desktop does not pass it and keeps its toolbar. */
 export interface PaneGrammar {
@@ -389,13 +389,17 @@ export function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "gro
           })()}
           {props.paneGrammar && <span className="pane-split-host">
             <button type="button" className="pane-split" aria-label="Split this pane" aria-haspopup="menu" aria-expanded={splitOpen}
-              title="Split this pane: Beside, Below or Four ways"
+              title="Split this pane: Beside, Below or Four ways; or stand it at full size"
               onClick={() => { execute("surface.focus-group", { groupId: group.id }); setSplitOpen(open => !open); }}>⊞</button>
             {splitOpen && <div className="oi-menu pane-split-menu" role="menu" aria-label="Split this pane"
               onKeyDown={event => { if (event.key === 'Escape') { event.stopPropagation(); setSplitOpen(false); } }}>
               <button type="button" role="menuitem" onClick={() => { setSplitOpen(false); execute("surface.focus-group", { groupId: group.id }); execute("surface.split-right"); }}>Beside</button>
               <button type="button" role="menuitem" onClick={() => { setSplitOpen(false); execute("surface.focus-group", { groupId: group.id }); execute("surface.split-down"); }}>Below</button>
               <button type="button" role="menuitem" onClick={() => { setSplitOpen(false); execute("surface.split-quad", { groupId: group.id }); }}>Four ways</button>
+              {/* T-FRAME-CHROME-ONTO-PLATES (owner, 15 Oct: "a proper fullscreen mode for a given pane"): the pane at full size is the
+                  grammar's own maximise (registry.ts surface.maximize, the group's data-maximized); the same item restores. */}
+              <button type="button" role="menuitem" data-pane-full={state.maximizedGroupId === group.id ? "restore" : "full"}
+                onClick={() => { setSplitOpen(false); execute("surface.focus-group", { groupId: group.id }); execute("surface.maximize"); }}>{state.maximizedGroupId === group.id ? "Restore panes" : "Full size"}</button>
             </div>}
           </span>}
           {group.emptySlot && <button type="button" className="pane-tool-menu" aria-label="Close empty pane" title="Close empty pane (⌘W)" onClick={() => execute("surface.close-empty-pane", { groupId: group.id })}><Glyph name="close" size={13} /></button>}

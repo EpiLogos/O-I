@@ -73,3 +73,20 @@ test('a pane\'s edges are its outer fifths; the middle opens into the pane', () 
   assert.equal(dropEdge(rect, 50, 5), 'top'); assert.equal(dropEdge(rect, 50, 95), 'bottom');
   assert.equal(dropEdge(rect, 21, 50), null, 'just inside the fifth is the middle');
 });
+
+test('Full size: the ⊞ menu stands a pane at full size through the grammar\'s own maximise, and the same item restores it', async () => {
+  // T-FRAME-CHROME-ONTO-PLATES (owner, 15 Oct: "a proper fullscreen mode for a given pane"): the pane at full size is the group maximise
+  // (registry.ts surface.maximize, the group's data-maximized) — the presentation in which a hosted frame draws its own controls inside.
+  const split = splitQuad(layout(), 'g1');
+  const [first, second] = groupsOf(split.root);
+  const full = executeFrameAction({...split, focusedGroupId: second.id}, 'surface.maximize');
+  assert.equal(full.maximizedGroupId, second.id, 'the focused pane stands at full size');
+  assert.equal(executeFrameAction(full, 'surface.maximize').maximizedGroupId, undefined, 'the same action restores the panes');
+  assert.notEqual(first.id, second.id);
+  const {readFile} = await import('node:fs/promises');
+  const workbench = await readFile(new URL('../src/surface/Workbench.tsx', import.meta.url), 'utf8');
+  const menu = workbench.slice(workbench.indexOf('className="oi-menu pane-split-menu"'), workbench.indexOf('{group.emptySlot &&'));
+  assert.match(menu, /data-pane-full=\{state\.maximizedGroupId === group\.id \? "restore" : "full"\}/, 'one item, its word read from the layout');
+  assert.match(menu, /execute\("surface\.focus-group", \{ groupId: group\.id \}\); execute\("surface\.maximize"\)/, 'it focuses this pane, then maximises or restores it');
+  assert.match(menu, />\{state\.maximizedGroupId === group\.id \? "Restore panes" : "Full size"\}</);
+});

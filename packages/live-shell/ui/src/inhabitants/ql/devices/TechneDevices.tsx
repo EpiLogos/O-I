@@ -16,7 +16,7 @@ import {DeviceView} from '../../../frame/devices/DeviceView'
 import {publishDevice, publishedDevice, selectDevice} from '../../../frame/devices/deviceDoor'
 import {DEVICE_PANE_KIND} from '../../../frame/devices/devicePane'
 import {driveStageLens, openInstrument, reportInstrumentFault} from '../../../frame/instrumentDoor'
-import {InstrumentPlate, SectionNote, type SectionDevice} from '../../../frame/devices/InstrumentPlate'
+import {InstrumentPlate, SectionNote, type PlateSection, type SectionDevice} from '../../../frame/devices/InstrumentPlate'
 import {HOSTED_INSTRUMENT, instrumentOfPane, type HostedLens} from '../../../shell/paneInstrument'
 import {HOLDERS, TECHNE_INSTRUMENTS, type HolderDeclaration} from '../../sdk/semantics'
 import type {IconName} from '../../sdk/icons'
@@ -24,7 +24,7 @@ import {lightOf, type DeviceInstance, type DeviceSize} from '../../../frame/devi
 import {commitLiveInstrumentEdit, liveInstrumentWritable, useLiveTorusReading, type LiveTorusState} from '../../../live/torusInstrument'
 import {useAtlasHandle, useAtlasView} from '../../../projections/atlas/AtlasProjectionPanel'
 import {PlacesPlate} from '../../../projections/atlas/places/PlacesPlate'
-import {PalacePlate} from '../../../projections/atlas/palaces/PalacePlate'
+import {PalacePlate} from '../../../projections/atlas/palaces/PalacePlate'; import {STAGE_OWN_PLATES} from '../../../projections/stageInstruments/StageInstrumentPlate'
 import {palaceState, subscribePalace} from '../../../projections/atlas/palaces/palaceSession'
 import {knowledgeGraphSurface, subscribeKnowledgeGraph} from '../../../../../../../desktop/cradle/src/knowledge/knowledgeGraphHandle'
 import type {KnowledgeGraphSurface} from '../../../../../../../desktop/cradle/src/knowledge/knowledgeGraphHandle'
@@ -261,28 +261,28 @@ function sectionDeviceOf(entry: TechneEntry): SectionDevice & {face: string} {
   ]}
 }
 
-/** The instruments whose plate is their own (a registration by holder, never a mode branch): M4′ World / Places, the atlas's planet
- * plate in the mockup's six sections (projections/atlas/places/PlacesPlate.tsx); M5′ Palace / Integral Whole, the palace's controls —
- * its rooms, path, guide, whole, composition, portals and Return (projections/atlas/palaces/PalacePlate.tsx). Every other instrument
- * stands as the plate of the families whose devices it holds. */
-const OWN_PLATES: Readonly<Record<string, (props: {held: readonly (SectionDevice & {face: string})[]; focused: boolean}) => ReactNode>> = {
+/** The instruments whose plate is their own (a registration by holder, never a mode branch): M1′–M3′, the hosted stage's instruments in the
+ * manual's groups (projections/stageInstruments/StageInstrumentPlate.tsx STAGE_OWN_PLATES); M4′ World / Places, the atlas's planet plate
+ * (projections/atlas/places/PlacesPlate.tsx); M5′ Palace / Integral Whole, the palace's controls — its rooms, path, guide, whole,
+ * composition, portals and Return (projections/atlas/palaces/PalacePlate.tsx). Every other instrument stands as its families' plate. */
+const OWN_PLATES: Readonly<Record<string, (props: {held: readonly (SectionDevice & {face: string})[]; focused: boolean; families: readonly PlateSection[]}) => ReactNode>> = {
   'techne:m4': props => <PlacesPlate {...props} />,
-  'techne:m5': props => <PalacePlate {...props} />,
+  'techne:m5': props => <PalacePlate {...props} />, ...STAGE_OWN_PLATES,
 }
 
 /** The open instrument: one plate, its columns the families whose devices it holds, each family's devices side by side. */
 function OpenInstrument({holder, entries, focused}: {holder: HolderDeclaration; entries: readonly TechneEntry[]; focused: boolean}) {
+  const families = [...new Set(entries.map(entry => entry.family))].map(family => ({id: family, title: FAMILY_NAMES[family] ?? family,
+    note: entries.some(entry => entry.family === family && entry.face.admission === 'waiting') ? 'waiting' : undefined,
+    children: <div className="techne-section-devices">{entries.filter(entry => entry.family === family).map(entry => <OpenDevice key={entry.device.id} entry={entry} />)}</div>}))
+  // An own plate gets the family columns too, to stand after its own sections: the stage instruments' held faces stay open beside the
+  // frame's controls (T-FRAME-CHROME-ONTO-PLATES), as they stood when the family columns were the whole plate.
   const own = OWN_PLATES[holder.id]
-  if (own) return <>{own({held: entries.map(sectionDeviceOf), focused})}</>
-  const families = [...new Set(entries.map(entry => entry.family))]
+  if (own) return <>{own({held: entries.map(sectionDeviceOf), focused, families})}</>
   const owner = [holder.provenance, TECHNE_INSTRUMENTS.includes(holder) ? 'Technē' : null, focused ? 'open on the focused pane' : 'opened here'].filter(Boolean).join(' · ')
   return <InstrumentPlate presentation={{family: 'techne', faceId: holder.id, title: holderTitle(holder), icon: INSTRUMENT_MARKS[holder.id] ?? 'techne', owner}}
     dataAttributes={{'data-instrument': holder.id, 'data-expanded': 'true'}}
-    sections={families.length
-      ? families.map(family => ({id: family, title: FAMILY_NAMES[family] ?? family,
-          note: entries.some(entry => entry.family === family && entry.face.admission === 'waiting') ? 'waiting' : undefined,
-          children: <div className="techne-section-devices">{entries.filter(entry => entry.family === family).map(entry => <OpenDevice key={entry.device.id} entry={entry} />)}</div>}))
-      : [{id: 'none', title: 'Controls', children: <SectionNote>No family declares a device this instrument holds yet.</SectionNote>}]} />
+    sections={families.length ? families : [{id: 'none', title: 'Controls', children: <SectionNote>No family declares a device this instrument holds yet.</SectionNote>}]} />
 }
 
 /** An instrument folded to its title: the runtime's fold; pressing it opens it on the focused pane. */
