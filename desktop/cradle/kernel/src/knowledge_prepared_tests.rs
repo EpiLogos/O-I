@@ -314,3 +314,221 @@ fn concurrent_owner_calls_hold_to_the_readers_bound() {
     );
     assert_eq!(owner.spawns("central.world"), N + 1);
 }
+
+/// An AIKit stand-in reached the way the kernel reaches it
+/// (`<suite> aikit --json -C <cwd> knowledge …`): every process logs itself;
+/// a wiki address ending `:missing` is refused exactly as AIKit refuses an
+/// unindexed object, in the single read's envelope and in a batch item's.
+/// `with_batch: false` answers `relations-batch` as AIKit's parser answers a
+/// verb it does not have.
+#[cfg(unix)]
+struct FakeAikit {
+    dir: PathBuf,
+    executable: PathBuf,
+    log: PathBuf,
+}
+
+#[cfg(unix)]
+impl FakeAikit {
+    fn new(test: &str, with_batch: bool) -> Self {
+        let dir = std::env::temp_dir().join(format!(
+            "oi-cradle-{}-{test}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir_all(&dir).unwrap();
+        let fake = Self {
+            executable: dir.join("oi"),
+            log: dir.join("processes.log"),
+            dir,
+        };
+        fake.write(with_batch);
+        fake
+    }
+    fn write(&self, with_batch: bool) {
+        use std::os::unix::fs::PermissionsExt;
+        let script = format!(
+            r#"#!/usr/bin/env python3
+import json, sys, time
+LOG, WITH_BATCH = {log:?}, {with_batch}
+args = sys.argv[1:]
+cwd = args[args.index("-C") + 1]
+def answer(cwd, address):
+    value = json.loads(address)["value"]
+    if value.endswith(":missing"):
+        return {{"ok": False, "error": {{"code": "knowledge.wiki_object_missing", "message": "Wiki object or relation endpoint " + value + " is not indexed", "details": {{}}}}}}
+    return {{"ok": True, "context": {{"project_root": cwd}}, "data": {{"query": {{"focus": value, "depth": 2, "max_nodes": 96, "max_edges": 192}}, "cwd": cwd, "edges": []}}, "warnings": []}}
+if args[-1] == "relations-batch":
+    if not WITH_BATCH:
+        open(LOG, "a").write("batch-refused\n")
+        sys.stderr.write("error: unrecognized subcommand 'relations-batch'\n\n  tip: a similar subcommand exists: 'relations'\n")
+        sys.exit(2)
+    request = json.load(sys.stdin)
+    assert request["schema"] == "aikit.knowledge-relations-batch/v1"
+    open(LOG, "a").write("batch %d %s\n" % (len(request["items"]), cwd))
+    time.sleep(0.1)
+    answers = [answer(item["cwd"], item["address"]) for item in request["items"]]
+    print(json.dumps({{"schema": 1, "ok": True, "context": {{}}, "data": {{"schema": "aikit.knowledge-relations-batch/v1", "answers": answers}}, "warnings": []}}))
+else:
+    open(LOG, "a").write("single\n")
+    envelope = answer(cwd, args[-1])
+    print(json.dumps(envelope))
+    sys.exit(0 if envelope["ok"] else 1)
+"#,
+            log = self.log.display().to_string(),
+            with_batch = if with_batch { "True" } else { "False" },
+        );
+        std::fs::write(&self.executable, script).unwrap();
+        std::fs::set_permissions(&self.executable, std::fs::Permissions::from_mode(0o755)).unwrap();
+        crate::test_stub::settle_stub(&self.executable);
+    }
+    /// Its identity with no AIKit pin: this test's, whatever another test
+    /// sets in the process environment.
+    fn identity(&self) -> knowledge::AikitIdentity {
+        knowledge::AikitIdentity::pinned(self.executable.as_os_str(), None)
+    }
+    fn processes(&self) -> Vec<String> {
+        std::fs::read_to_string(&self.log)
+            .unwrap_or_default()
+            .lines()
+            .map(str::to_owned)
+            .collect()
+    }
+}
+
+#[cfg(unix)]
+impl Drop for FakeAikit {
+    fn drop(&mut self) {
+        let _ = std::fs::remove_dir_all(&self.dir);
+    }
+}
+
+#[cfg(unix)]
+fn relations_item(cwd: &std::path::Path, space: &str) -> knowledge::RelationsItem {
+    knowledge::RelationsItem {
+        cwd: cwd.to_path_buf(),
+        address: knowledge::Address::Wiki(space.into()),
+    }
+}
+
+/// Relations reads of one Central root arriving within the window go to
+/// AIKit as ONE batch process (an identical read shares its item; another
+/// root is its own batch), and each read is answered with exactly what its
+/// single read answers — its reading, or its own refusal in the same words.
+#[cfg(unix)]
+#[test]
+fn relations_reads_in_one_window_are_one_batch_and_each_gets_its_single_answer() {
+    let aikit = FakeAikit::new("relations-batch", true);
+    let relations = Relations::new(Duration::from_millis(400));
+    let readers = Readers::new(5);
+    let root = aikit.dir.join("Central");
+    let other_root = aikit.dir.join("Other");
+    let project = root.join("Work/O-I");
+    let reads: Vec<(PathBuf, PathBuf, &str)> = vec![
+        (root.clone(), root.clone(), "central:wiki:root"),
+        (root.clone(), project.clone(), "central:wiki:project:O-I"),
+        (root.clone(), project.clone(), "central:wiki:project:O-I"),
+        (
+            root.clone(),
+            root.clone(),
+            "central:wiki:project:gone:missing",
+        ),
+        (root.clone(), root.clone(), "central:wiki:project:ai-kit"),
+        (other_root.clone(), other_root.clone(), "central:wiki:root"),
+    ];
+    let together = std::sync::Barrier::new(reads.len());
+    let answers: Vec<Result<Value, String>> = std::thread::scope(|scope| {
+        let handles: Vec<_> = reads
+            .iter()
+            .map(|(root, cwd, space)| {
+                let (relations, readers, together, aikit) =
+                    (&relations, &readers, &together, &aikit);
+                scope.spawn(move || {
+                    together.wait();
+                    match relations.read(
+                        readers,
+                        aikit.executable.as_os_str(),
+                        aikit.identity(),
+                        root,
+                        relations_item(cwd, space),
+                    ) {
+                        Gathered::Answer(answer) => answer.map_err(knowledge::describe),
+                        Gathered::Single => panic!("an AIKit with the batch never reads alone"),
+                    }
+                })
+            })
+            .collect();
+        handles.into_iter().map(|h| h.join().unwrap()).collect()
+    });
+    let mut processes = aikit.processes();
+    processes.sort();
+    assert_eq!(
+        processes,
+        vec![
+            format!("batch 1 {}", other_root.display()),
+            format!("batch 4 {}", root.display()),
+        ],
+        "one process per root; the duplicate read shared its item"
+    );
+    for ((_, cwd, space), answer) in reads.iter().zip(&answers) {
+        let single = knowledge::call_with(
+            aikit.executable.as_os_str(),
+            cwd,
+            &knowledge::Request::Relations {
+                address: knowledge::Address::Wiki((*space).into()),
+            },
+        );
+        assert_eq!(answer, &single, "{space} answers as its single read");
+    }
+    assert!(answers[3]
+        .as_ref()
+        .unwrap_err()
+        .contains("central:wiki:project:gone:missing is not indexed"));
+    assert_eq!(
+        answers[1].as_ref().unwrap()["cwd"],
+        project.display().to_string()
+    );
+}
+
+/// An AIKit without the batch is asked once: its own refusal of the verb
+/// sends the gathering's reads to single reads, and its identity is
+/// remembered — the next read is single without asking. A replaced AIKit
+/// is another identity, asked again.
+#[cfg(unix)]
+#[test]
+fn an_aikit_without_the_batch_is_asked_once_per_identity_and_reads_alone() {
+    let aikit = FakeAikit::new("relations-batch-absent", false);
+    let relations = Relations::new(Duration::from_millis(50));
+    let readers = Readers::new(5);
+    let root = aikit.dir.join("Central");
+    let read = |space: &str| {
+        relations.read(
+            &readers,
+            aikit.executable.as_os_str(),
+            aikit.identity(),
+            &root,
+            relations_item(&root, space),
+        )
+    };
+    assert!(matches!(read("central:wiki:root"), Gathered::Single));
+    assert_eq!(aikit.processes(), vec!["batch-refused"]);
+    assert!(matches!(read("central:wiki:project:O-I"), Gathered::Single));
+    assert_eq!(
+        aikit.processes(),
+        vec!["batch-refused"],
+        "the absence is remembered for this AIKit"
+    );
+    // The same path, rewritten with the batch: a new identity, asked again.
+    aikit.write(true);
+    assert!(matches!(read("central:wiki:root"), Gathered::Answer(Ok(_))));
+    assert_eq!(
+        aikit.processes(),
+        vec![
+            "batch-refused".to_owned(),
+            format!("batch 1 {}", root.display())
+        ]
+    );
+}
