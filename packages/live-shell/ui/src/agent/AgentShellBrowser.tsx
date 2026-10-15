@@ -1,6 +1,6 @@
 import {useEffect, useMemo, useState, type DragEvent, type ReactNode} from 'react'
 import {Icon as CutIcon} from '../inhabitants/sdk/Icon'
-import {KindMark} from '../inhabitants/sdk/marks.tsx'
+import {KindMark, WoodMark} from '../inhabitants/sdk/marks.tsx'
 import {createPortal} from 'react-dom'
 import type {BrowserCategory, BrowserKind, ControlledBrowser} from '../frame/browser/browserKinds'
 import {InstrumentsSection} from '../frame/InstrumentsSection'
@@ -8,6 +8,8 @@ import {SetsSection} from '../shell/SetsSection'
 import type {AgencySessionRow} from '../../../../../desktop/cradle/src/agency/agencyTypes'
 import {AgentDevicePool} from './AgentDevicePool'
 import {useAgentShell} from './AgentShellContext'
+import {useAgentSessionsOptional, type AgentSessionsValue} from './AgentSessionsProvider'
+import {agentState, sessionState, type SessionWord} from '../frame/browser/rowWords'
 import {useWorkspace} from '../shell/workspaceContext'
 import {useHarnessBinding} from './useHarnessBinding'
 import {kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
@@ -47,11 +49,24 @@ const AGENT_MARKS: Record<(typeof CATEGORIES)[number]['id'], ReactNode> = {
 }
 export const AGENT_BROWSER_CATEGORIES: readonly BrowserCategory[] = CATEGORIES.map(category => ({id: category.id, label: category.label, kind: AGENT_KINDS[category.id], mark: AGENT_MARKS[category.id]}))
 
+/** Each category's row mark, from the cut (the mockup's bee for sessions and agents is the cut's agent kind). */
+const ROW_MARKS: Record<(typeof CATEGORIES)[number]['id'], ReactNode> = {
+  sess: <KindMark kind="agent" size={12} />, agents: <KindMark kind="agent" size={12} />, context: <CutIcon name="pane" size={12} />,
+  skillsets: <WoodMark kind="skillset" size={12} />, git: <CutIcon name="lib" size={12} />,
+}
+
+/** A skillset or git row's standing, by the row its reading gave (skillsetRowsFromRoster, gitRowsFromWorkcell): what was admitted
+ * or seated, or how the reading failed — the row's label carries the owner's words. */
+const READING_STANDING: Readonly<Record<string, string>> = {
+  'skillsets-unadmitted': 'refused', 'skillsets-empty': 'waiting',
+  seat: 'seat', 'seat-unavailable': 'refused', 'seat-no-ref': 'no ref', 'seat-unread': 'unread',
+}
+
 /** The right-edge action the results header names (mockup .bhead law). */
 const RESULT_HEADER: Record<(typeof CATEGORIES)[number]['id'], string> = {
   sess: 'State',
   context: 'Open',
-  agents: 'Seated',
+  agents: 'State',
   skillsets: 'Admitted',
   git: 'Seat',
 }
@@ -60,6 +75,11 @@ export interface BrowserRow {
   readonly key: string
   readonly label: string
   readonly meta: string
+  /** The row's standing in words (the mockup's .st: running / done / stalled, working / idle, open, admitted …) where it is not
+   * the meta itself; '—' when no reading discloses one. */
+  readonly standing?: string
+  /** The row's hover words (refs, the space, what the standing was read from). */
+  readonly hover?: string
   /** Set when the row is a real disclosed item and may start a chain drag.
    * Refusal and empty rows never carry one — nothing to drop. */
   readonly drag?: AgentChainDrag
@@ -149,12 +169,63 @@ export function gitRowsFromWorkcell(
   }]
 }
 
+/** What the Sessions and Agents rows read of the one agent-sessions provider (AgentSessionsProvider): each session's track (its
+ * task clips from encounter_task_read, its needle from the temporal read), the roster's names, and whether the temporal read
+ * answered. Null where no provider is mounted: the rows then disclose no state. */
+export type SessionsReading = Pick<AgentSessionsValue, 'tracks' | 'roster' | 'temporalError'> | null
+
+/** Each session's state word by its ref (rowWords.ts sessionState); a needle says nothing when the temporal read refused. */
+function sessionStates(sessions: SessionsReading): ReadonlyMap<string, SessionWord | null> {
+  const states = new Map<string, SessionWord | null>()
+  const needleKnown = !sessions?.temporalError
+  for (const track of sessions?.tracks ?? []) if (!track.group) states.set(track.sessionRef, sessionState(track, needleKnown))
+  return states
+}
+
+/** The Sessions rows (the mockup's `SESS` rows, renderBrowser() :1492): the agent's mark, the session by its purpose (the name
+ * its track wears on the grid), else its agent's roster name or its space's label; its state — running, stalled, done, queued,
+ * idle — from its own readings, '—' when none discloses one. */
+export function sessionBrowserRows(rows: readonly AgencySessionRow[], sessions: SessionsReading): BrowserRow[] {
+  const states = sessionStates(sessions)
+  return rows.map(row => {
+    const state = states.get(row.sessionRef) ?? null
+    const agent = row.agentRef ? sessions?.roster.get(row.agentRef)?.name ?? null : null
+    const label = row.purpose ?? agent ?? row.spaceLabel ?? row.sessionRef
+    return {
+      key: `${row.spaceRef}:${row.sessionRef}`,
+      label,
+      meta: row.agentRef ?? row.spaceLabel ?? '',
+      standing: state ?? '—',
+      hover: [label, row.spaceLabel && row.spaceLabel !== label ? `in ${row.spaceLabel}` : null, agent ? `agent ${agent}` : row.agentRef ? `agent ${row.agentRef}` : null,
+        state ? `${state}, from the session's task reads and its needle` : 'no reading discloses its state', row.sessionRef].filter(Boolean).join(' · '),
+      drag: {family: 'session' as const, ref: `${row.spaceRef}:${row.sessionRef}`, label: row.purpose ?? row.sessionRef},
+    }
+  })
+}
+
+/** The Agents rows (the mockup's agents, renderBrowser() :1493): the agent's mark, its roster name (else its ref), and its state
+ * over its own sessions — working, stalled, idle — '—' when none of them discloses one. */
+export function agentBrowserRows(rows: readonly AgencySessionRow[], sessions: SessionsReading, loading: boolean): BrowserRow[] {
+  const states = sessionStates(sessions)
+  const refs = [...new Set(rows.map(row => row.agentRef).filter((value): value is string => !!value))]
+  if (!refs.length) return [{key: 'empty-agents', label: loading ? 'Reading…' : 'No agent_ref disclosed yet.', meta: '', standing: ''}]
+  return refs.map((ref): BrowserRow => {
+    const name = sessions?.roster.get(ref)?.name ?? ref
+    const state = agentState(rows.filter(row => row.agentRef === ref).map(row => states.get(row.sessionRef) ?? null))
+    return {key: ref, label: name, meta: 'agent', standing: state ?? '—',
+      hover: `${name}${name !== ref ? ` (${ref})` : ''} · ${state ? `${state}, over its sessions' states` : 'no reading discloses its sessions\' states'}`,
+      drag: {family: 'agent' as const, ref, label: name}}
+  })
+}
+
 export function AgentShellBrowser({rows, error, loading, controlled}: {rows: AgencySessionRow[]; error: string | null; loading: boolean; controlled?: ControlledBrowser}) {
   const [ownCategory, setCategory] = useState<(typeof CATEGORIES)[number]['id']>('sess')
   // Held by the one browser (F6), the category and the search are its.
   const category = (controlled?.category as (typeof CATEGORIES)[number]['id'] | undefined) ?? ownCategory
   const needle = controlled?.query.trim().toLowerCase() ?? ''
   const shell = useAgentShell()
+  // The sessions' states and the agents' names, from the one agent-sessions provider (its task reads, its needles, its roster).
+  const sessions = useAgentSessionsOptional()
   const {transport} = useWorkspace()
   const {binding} = useHarnessBinding(transport)
   const [gateway, setGateway] = useState<{line: string; receipt: string | null; refused: boolean}>({line: 'Reading gateway…', receipt: null, refused: false})
@@ -215,18 +286,13 @@ export function AgentShellBrowser({rows, error, loading, controlled}: {rows: Age
   // skillsets (the accepted skill refs), git (the workcell seat). Refusal and
   // empty rows drag nothing — nothing to drop.
   const list = useMemo((): BrowserRow[] => {
-    if (category === 'sess') return rows.map(row => ({
-      key: `${row.spaceRef}:${row.sessionRef}`,
-      label: row.purpose ?? row.sessionRef,
-      meta: row.agentRef ?? row.spaceLabel ?? '',
-      drag: {family: 'session' as const, ref: `${row.spaceRef}:${row.sessionRef}`, label: row.purpose ?? row.sessionRef},
-    }))
-    if (category === 'context') return CONTEXT_TILES.map((tile): BrowserRow => ({key: tile.id, label: tile.name, meta: shell.openTiles.includes(tile.id) ? '● open' : ''}))
+    if (category === 'sess') return sessionBrowserRows(rows, sessions)
+    if (category === 'context') return CONTEXT_TILES.map((tile): BrowserRow => ({key: tile.id, label: tile.name, meta: shell.openTiles.includes(tile.id) ? '● open' : '', standing: shell.openTiles.includes(tile.id) ? 'open' : ''}))
     if (category === 'git') {
       const seat = seatOutcome?.result === 'workcell_status_reading' && isObj(seatOutcome.data)
         ? seatOutcome.data as {workcell_ref?: unknown} : null
       const workcellRef = typeof seat?.workcell_ref === 'string' && seat.workcell_ref ? seat.workcell_ref : null
-      return gitRowsFromWorkcell(seatOutcome, seatError).map(row => row.key === 'seat' && workcellRef
+      return gitRowsFromWorkcell(seatOutcome, seatError).map(row => ({...row, standing: READING_STANDING[row.key] ?? row.meta})).map(row => row.key === 'seat' && workcellRef
         ? {...row, drag: {family: 'git' as const, ref: workcellRef, label: row.label}}
         : row)
     }
@@ -234,15 +300,12 @@ export function AgentShellBrowser({rows, error, loading, controlled}: {rows: Age
       const answered = rosterOutcome?.result === 'agent_definition_reading'
       return skillsetRowsFromRoster(rosterOutcome, rosterError).map(row =>
         answered && row.meta === 'skillset'
-          ? {...row, drag: {family: 'skillset' as const, ref: row.key, label: row.label}}
-          : row)
+          ? {...row, standing: 'admitted', drag: {family: 'skillset' as const, ref: row.key, label: row.label}}
+          : {...row, standing: READING_STANDING[row.key] ?? row.meta})
     }
-    if (category === 'agents') {
-      const names = [...new Set(rows.map(row => row.agentRef).filter((value): value is string => !!value))]
-      return names.length ? names.map((name): BrowserRow => ({key: name, label: name, meta: 'agent', drag: {family: 'agent' as const, ref: name, label: name}})) : [{key: 'empty-agents', label: loading ? 'Reading…' : 'No agent_ref disclosed yet.', meta: ''}]
-    }
-    return [{key: 'empty', label: loading ? 'Reading…' : 'Nothing disclosed for this category yet.', meta: ''}]
-  }, [category, rows, shell.openTiles, loading, rosterOutcome, rosterError, seatOutcome, seatError])
+    if (category === 'agents') return agentBrowserRows(rows, sessions, loading)
+    return [{key: 'empty', label: loading ? 'Reading…' : 'Nothing disclosed for this category yet.', meta: '', standing: ''}]
+  }, [category, rows, shell.openTiles, loading, rosterOutcome, rosterError, seatOutcome, seatError, sessions])
 
   // The pool's skillset rows read the same roster the Skillsets rows do —
   // admitted when accepted profiles carry skill refs, else waiting on the
@@ -270,7 +333,7 @@ export function AgentShellBrowser({rows, error, loading, controlled}: {rows: Age
               type="button"
               className="agent-bitem"
               aria-current={category === 'sess' && shell.selectedTrackId === item.key ? 'true' : undefined}
-              title={item.label}
+              title={item.hover ?? item.label}
               draggable={!!item.drag}
               aria-describedby={item.drag ? `chain-drag-hint-${category}` : undefined}
               onDragStart={item.drag ? (event: DragEvent<HTMLElement>) => {
@@ -292,9 +355,9 @@ export function AgentShellBrowser({rows, error, loading, controlled}: {rows: Age
                 }
               }}
             >
-              {category === 'sess' || category === 'agents' ? <span aria-hidden="true"><KindMark kind="agent" size={12} /></span> : null}
+              {item.key.startsWith('empty') ? null : <span aria-hidden="true">{ROW_MARKS[category]}</span>}
               <span style={{overflow: 'hidden', textOverflow: 'ellipsis'}}>{item.label}</span>
-              <span className="st">{item.meta}</span>
+              <span className="st">{item.standing ?? item.meta}</span>
             </button>
           ))}
           <p id={`chain-drag-hint-${category}`} hidden>Drag onto the device chain: through → who → how → where → lands.</p>

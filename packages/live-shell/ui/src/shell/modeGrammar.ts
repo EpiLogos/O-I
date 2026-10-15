@@ -247,14 +247,16 @@ const base: SurfModeGrammar = {
     device: {label: 'Devices', meaning: 'Text · Highlight · Notes · Packet · Answer · the form devices (the ground\'s family docks here)'},
   },
   // The mockup's Base column (Rev 3): Central — Days, Flows, Beings, Things,
-  // Goals; Project — Files, Wiki. These rows are Central's browser
+  // Goals; Project — Files, Wiki; then New…. These rows are Central's browser
   // categories (L7's own module retired into them on 15 Oct). Entries compose
-  // through the L4 civil reading for Days and the ground listing for Files.
+  // through the day records and the owner's Day reading for Days, the owner's
+  // Flow listing for Flows, the ground listing for Files and the form roster
+  // for New.
   browser: [
     {id: 'central-days', label: 'Days', group: 'Central', mark: 'die', kindMark: 'day', family: 'central', state: 'cut',
       hint: 'The civil calendar: a day per row, its record beneath — rows from the kernel\'s temporal read (L4) and the day records.'},
-    {id: 'central-flows', label: 'Flows', group: 'Central', mark: 'trav', kindMark: 'doc', family: 'central', state: 'waiting',
-      hint: 'The flow documents (Dialogue · Flow · Journal). The Flow document device is declared; the flow listing\'s owner read is not landed — designed empty until it is.'},
+    {id: 'central-flows', label: 'Flows', group: 'Central', mark: 'trav', kindMark: 'doc', family: 'central', state: 'cut',
+      hint: 'The flow documents (Dialogue · Flow · Journal), from the owner\'s Flow listing at Control/user/flows — each Flow by its own title, its agents and its revision.'},
     {id: 'central-beings', label: 'Beings', group: 'Central', mark: 'bind', kindMark: 'agent', family: 'central', state: 'waiting',
       hint: 'Beings with their bindings (world, subject, office, sources). The oi-beings form\'s owner has not landed its listing read — designed empty until it is.'},
     {id: 'central-things', label: 'Things', group: 'Central', mark: 'chain', kindMark: 'source', family: 'central', state: 'waiting',
@@ -266,6 +268,9 @@ const base: SurfModeGrammar = {
       hint: 'The ground\'s listing — folders and notes as rows; selecting one opens its craft in the Document detail.'},
     {id: 'central-wiki', label: 'Wiki', group: 'Project', mark: 'lib', kindMark: 'source', family: 'central', state: 'waiting',
       hint: 'The wiki projects through its Expression owner (§6); the projection read does not answer in every boot — designed empty, named.'},
+    // The mockup's New… (world-shell-mockup.html BCATS.base, renderBrowser() :1491): the four document forms as a grid.
+    {id: 'central-new', label: 'New…', group: 'Project', mark: 'plus', state: 'cut',
+      hint: 'New document — exactly Day · Flow · Beings · Things, the four document forms of the owner\'s form roster; each is made through the Workbench\'s own opener for it.'},
   ],
   centre: {
     session: {label: 'Day · Session', meaning: 'the day as clips — Day, Flows, Beings, Things, Goals as tracks; documents and entries as clips'},
@@ -542,7 +547,10 @@ export type DeclaredBrowserCategory = ModeBrowserCategory & {
  * maps to the owner whose read the rows come from; `null` is the shell's own listing, which no family declares. */
 export const ROW_SOURCE_OWNERS: ReadonlyMap<string, string | null> = new Map([
   ['central-days', 'central'],
+  ['central-flows', 'central'],
+  ['central-beings', 'central'],
   ['central-files', null],
+  ['central-new', null],
   ['techne-files', null],
   ['techne-sources', null],
 ])

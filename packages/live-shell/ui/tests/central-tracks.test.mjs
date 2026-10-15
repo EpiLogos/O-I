@@ -143,7 +143,12 @@ test('the Day track\'s entries are the World cut\'s own day-lane clips, under th
 test('Flows, Beings, Things and Goals stand as named, empty tracks; the absence is in the name tooltip, never a clip', () => {
   const categories = browserCategoriesOf('base')
   assert.equal(categories.find(category => category.id === 'central-days').state, 'cut', 'Days has an owner read')
-  for (const [stream, category] of [['flows', 'central-flows'], ['beings', 'central-beings'], ['things', 'central-things'], ['goals', 'central-goals']]) {
+  // Lane L (15 Oct): the browser's Flows compose from the owner's Flow listing; this adapter still reads none of it, and says so.
+  assert.equal(categories.find(category => category.id === 'central-flows').state, 'cut', 'Flows list in the browser')
+  const flows = set.tracks.find(item => item.id === 'central:stream:flows')
+  assert.equal(set.clips.filter(clip => clip.trackId === flows.id).length, 0, 'flows has no clip')
+  assert.equal(flows.kind, 'stream · Flows lists in the browser, but this Session reads none of it yet')
+  for (const [stream, category] of [['beings', 'central-beings'], ['things', 'central-things'], ['goals', 'central-goals']]) {
     const declared = categories.find(item => item.id === category)
     assert.equal(declared.state, 'waiting', `${category} is waiting in the mode grammar: this adapter has no reader for it`)
     const track = set.tracks.find(item => item.id === `central:stream:${stream}`)
@@ -186,6 +191,9 @@ test('rows are days newest first — one stop per day; the day\'s face stands it
   assert.equal(made.clips.every(clip => clip.at.end === undefined), true, 'no span is invented')
   assert.equal(made.ruler.label(starts['entry A']), '10-13 09:30')
   assert.equal(made.ruler.label(starts['entry C']), '10-14 08:15')
+  // A moment on the ruler (lane K's proposal): the spine's cron firings stand at their instant; a day the ruler does not cover has none.
+  assert.equal(made.ruler.label(made.ruler.instant(at(14, 8, 15))), '10-14 08:15')
+  assert.equal(made.ruler.instant(at(1, 8, 0)), undefined, 'a day the ruler does not cover has no place')
   assert.equal(made.ruler.label(starts['return.md']), 'no time · 1', 'no date is invented for an instant-less entry')
   // The Arrangement lays every entry by its own place, in order, on one ruler — the entries the Session folds into a day's face.
   const {placed} = placeClips(made)
@@ -274,7 +282,8 @@ test('the shared Session grid draws the five streams, a row per day, and the Day
   const markup = renderToStaticMarkup(React.createElement(SessionGrid, {set, selection: {ref: records[0].path, select() {}}}))
   assert.equal((markup.match(/data-track="/g) ?? []).length, 5)
   assert.deepEqual([...markup.matchAll(/class="thd[^"]*" title="([^"]*)"/g)].map(match => match[1].split(' · ')[0]).slice(0, 5), ['Day', 'Flows', 'Beings', 'Things', 'Goals'])
-  assert.match(markup, /title="Flows · stream · waiting — /, 'the owner\'s absence is in the name tooltip')
+  assert.match(markup, /title="Beings · stream · waiting — /, 'the owner\'s absence is in the name tooltip')
+  assert.match(markup, /title="Flows · stream · Flows lists in the browser, but this Session reads none of it yet"/, 'Flows list in the browser (lane L); the grid reads none yet')
   assert.match(markup, /data-clip="Control\/agents\/now\/day\/2026-09-12\.md"/)
   assert.match(markup, /class="cs clip sel"/, 'the selected day record stands lit')
   const drawn = [...markup.matchAll(/data-clip="([^"]*)"/g)].map(match => match[1])

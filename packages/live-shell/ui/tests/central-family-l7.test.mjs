@@ -276,10 +276,11 @@ test('subjectDayRef: the civil day a day-record path stands in', () => {
 // Central's categories are the mode grammar's base browser (shell/modeGrammar.ts), and a refused Days read is drawn by the browser
 // as its named absence (shell/ModeBrowser.tsx, "The day-records read refused").
 
-test('Central\'s browser categories are the grammar\'s: Days and Files compose from landed owners, the rest wait by name', () => {
+test('Central\'s browser categories are the grammar\'s: Days, Flows, Files and New compose from landed owners, the rest wait by name', () => {
+  // Lane L (15 Oct): Flows compose from the owner's Flow listing (the route the Flow pane reads) and the mockup's New… joins.
   const browser = MODE_GRAMMAR.base.browser
-  assert.deepEqual(browser.map(category => category.id), ['central-days', 'central-flows', 'central-beings', 'central-things', 'central-goals', 'central-files', 'central-wiki'])
-  assert.deepEqual(browser.filter(category => category.state === 'cut').map(category => category.id), ['central-days', 'central-files'])
+  assert.deepEqual(browser.map(category => category.id), ['central-days', 'central-flows', 'central-beings', 'central-things', 'central-goals', 'central-files', 'central-wiki', 'central-new'])
+  assert.deepEqual(browser.filter(category => category.state === 'cut').map(category => category.id), ['central-days', 'central-flows', 'central-files', 'central-new'])
   for (const category of browser.filter(category => category.state === 'waiting')) {
     assert.match(category.hint, /not landed|does not answer/, `${category.id} names what it waits for`)
   }

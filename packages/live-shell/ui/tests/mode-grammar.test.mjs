@@ -214,9 +214,9 @@ test('the browser table: Live and Expressions keep their own browsers; the other
   assert.deepEqual(MODE_GRAMMAR.expressions.browser, [], 'expressions keeps its own browser')
   const byId = mode => Object.fromEntries(MODE_GRAMMAR[mode].browser.map(category => [category.id, category]))
   // Base·Central — the mockup's Base column: Days, Flows, Beings, Things,
-  // Goals; Files, Wiki.
+  // Goals; Files, Wiki; New….
   const base = byId('base')
-  assert.deepEqual(Object.keys(base), ['central-days', 'central-flows', 'central-beings', 'central-things', 'central-goals', 'central-files', 'central-wiki'])
+  assert.deepEqual(Object.keys(base), ['central-days', 'central-flows', 'central-beings', 'central-things', 'central-goals', 'central-files', 'central-wiki', 'central-new'])
   assert.deepEqual(base['central-days'].group, 'Central')
   assert.deepEqual(base['central-files'].group, 'Project')
   // Factory — per its manifest: Sessions · Agents · Runs · Knowledge.

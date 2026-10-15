@@ -45,8 +45,29 @@
 /* The old browsers' filter rows (○ Filters · In set) are static words with no control behind them; the floor has none. */
 .one-browser .world-browser-results :is(.agent-bfilt, .browser-filters) { display: none }
 
-/* Separators inside a category's rows (.bsep): 9.5px, faint. */
+/* Separators inside a category's rows (.bsep): 9.5px, faint; a separator with two words holds them at either end. */
 .one-browser .world-browser-results :is(.mode-browser-rows > h3, .world-files-heading) { margin: 0; padding: 7px 6px 2px; font-size: 9.5px; font-weight: 400; color: var(--text-faint) }
+.one-browser .world-browser-results .mode-browser-sep { display: flex; justify-content: space-between; gap: 6px; padding: 7px 6px 2px; font-size: 9.5px; color: var(--text-faint); white-space: nowrap; overflow: hidden }
+.one-browser .world-browser-results .mode-browser-rows ul { list-style: none; margin: 0; padding: 0 }
+
+/* New — the four forms (.newforms): a 4-column grid of 44px cells, the form's mark over its name. A cell whose opener the
+   Workbench does not publish stands drawn and dimmed. */
+.one-browser .world-browser-results .mode-browser-newforms { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 3px; padding: 5px }
+.one-browser .world-browser-results .mode-browser-newforms button { height: 44px; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  padding: 0; border: 1px solid var(--line); border-radius: 0; background: var(--bg-1); color: var(--text-dim); font-size: 10px; box-shadow: none }
+.one-browser .world-browser-results .mode-browser-newforms button:not(:disabled):hover { border-color: var(--text-faint); color: var(--text) }
+.one-browser .world-browser-results .mode-browser-newforms button:disabled { opacity: .55 }
+.one-browser .world-browser-results .mode-browser-newforms button > b { display: grid; place-items: center; height: 17px; font-weight: 400; color: var(--text) }
+
+/* The designed empty category and a refused read, at the rows' rhythm rather than as a card: the head is a row (mark, name, its
+   standing at the right), the owner's words under it, faint. */
+.one-browser .world-browser-results .mode-browser-empty { margin: 0; padding: 0 0 6px; border: 0; background: transparent }
+.one-browser .world-browser-results .mode-browser-empty-head { min-height: 23px; gap: 6px; padding: 2px 5px; border: 0; background: transparent; color: var(--text-dim) }
+.one-browser .world-browser-results .mode-browser-empty-mark { flex: none; width: 12px; color: var(--text-faint) }
+.one-browser .world-browser-results .mode-browser-empty-mark svg { width: 12px; height: 12px }
+.one-browser .world-browser-results .mode-browser-empty-head strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; font-weight: 400 }
+.one-browser .world-browser-results .mode-browser-empty-state { flex: none; margin-left: auto; padding: 0 0 0 6px; border: 0; font-size: 9.5px; letter-spacing: 0; color: var(--text-faint) }
+.one-browser .world-browser-results :is(.mode-browser-empty-owner, .mode-browser-empty-read) { margin: 1px 6px 0 23px; font-size: 10px; line-height: 1.4; color: var(--text-faint) }
 .one-browser .world-browser-results .world-files-heading h3 { font-size: 9.5px; font-weight: 400 }
 .one-browser .world-browser-results :is(.browser-sets, .browser-instruments) { padding: 0; border: 0; background: transparent }
 
@@ -75,6 +96,28 @@
 /* the status (.st) */
 .one-browser .world-browser-results :is(.mode-browser-row-meta, .agent-bitem .st, .native-material-mark, .world-file-status, .browser-instruments li > button > span, .browser-sets li > button > span) {
   flex: none; margin-left: auto; padding-left: 6px; font-size: 9.5px; color: var(--text-faint) }
+/* A standing never takes the name's room: it holds at most half the row, cut short with an ellipsis (its whole words are the
+   row's hover). */
+.one-browser .world-browser-results :is(.mode-browser-row-meta, .agent-bitem .st) { max-width: 50%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.one-browser .world-browser-results :is(.mode-browser-row-meta, .agent-bitem .st):empty { display: none }
+/* A row that stands for something read, not a control (the NOW section's machines): the row's rhythm, no hover. */
+.one-browser .world-browser-results div.mode-browser-row:hover { background: transparent; color: var(--text-dim) }
+
+/* The Expressions collections (New, Featured, Starters, Built-in presets) at the row's floor: mark · name · the row's own action
+   word in the standing's place; the description is hover words. */
+/* One column, never wider than the results: a grid track would grow to its longest name. */
+.one-browser .world-browser-results .native-expression-collections { display: block; gap: 0; padding: 0; min-width: 0 }
+.one-browser .world-browser-results .world-collection { margin: 0; padding: 0; border: 0; background: transparent }
+.one-browser .world-browser-results .world-collection > h3 { margin: 0; padding: 7px 6px 2px; font-size: 9.5px; font-weight: 400; color: var(--text-faint); letter-spacing: 0; text-transform: none }
+.one-browser .world-browser-results .world-collection ul { list-style: none; margin: 0; padding: 0 }
+.one-browser .world-browser-results .world-collection-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0 6px; min-height: 23px; padding: 2px 5px; border: 0; background: transparent; color: var(--text-dim); font-size: 11px }
+.one-browser .world-browser-results .world-collection-row:hover { background: var(--bg-3); color: var(--text) }
+.one-browser .world-browser-results .world-collection-row > .world-collection-mark { flex: none; width: 12px; display: grid; place-items: center; color: var(--text-faint) }
+.one-browser .world-browser-results .world-collection-row > .world-collection-name { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; color: inherit }
+.one-browser .world-browser-results .world-collection-row > button { flex: none; margin-left: auto; height: 17px; min-height: 0; padding: 0 0 0 6px; border: 0; border-radius: 0; background: transparent; box-shadow: none;
+  font-size: 9.5px; color: var(--text-faint) }
+.one-browser .world-browser-results .world-collection-row > button:not(:disabled):hover { color: var(--accent) }
+.one-browser .world-browser-results .world-collection-row > :is(.native-error, .native-empty) { flex: 1 0 100%; margin: 0; padding: 1px 0 2px 18px; font-size: 10px }
 .one-browser .world-browser-results :is(.browser-empty, .native-empty) { padding: 8px 6px; margin: 0; font-size: 10.5px; color: var(--text-faint) }
 
 /* ——— the pool (.slot): 46% of the column under a 5px rule, bg-2; the aperture slot (apertureViews.css), then a body's pool

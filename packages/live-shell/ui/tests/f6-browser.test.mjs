@@ -19,6 +19,7 @@ export async function resolve(specifier,context,next){
 }
 export async function load(url,context,next){
   if(url.endsWith('.css'))return {format:'module',shortCircuit:true,source:'export default null'};
+  if(url.endsWith('.json'))return {format:'module',shortCircuit:true,source:'export default '+await readFile(new URL(url).pathname,'utf8')};
   if(['.html','.svg','.png','.md'].some(ext=>url.split('?')[0].endsWith(ext))||url.endsWith('?raw'))return {format:'module',shortCircuit:true,source:'export default ""'};
   if(url.endsWith('.ts')||url.endsWith('.tsx')){
     const source=await readFile(new URL(url).pathname,'utf8');
