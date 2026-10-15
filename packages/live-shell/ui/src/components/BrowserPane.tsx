@@ -12,6 +12,7 @@ import {SET_INSTRUMENT_ELEMENTS, NOTE_DEVICE_KEPT} from '../live/liveChainDevice
 import {addNoteDevice} from '../live/noteDevices/noteDeviceHold'
 import {trackDeviceFaceTitle} from '../live/liveChain'
 import {NOTE_DEVICE_LABEL, NOTE_DEVICES_WAITING, type NoteDeviceKind} from '../live/noteDevices/noteDevices'
+import {withoutExtension} from '../frame/browser/rowWords'
 const RECENTS_KEY = 'live-shell.recent.sets'
 function loadRecents(): string[] {
   try { const value: unknown = JSON.parse(localStorage.getItem(RECENTS_KEY) ?? '[]'); return Array.isArray(value) ? value.filter((p): p is string => typeof p === 'string').slice(0, 8) : [] } catch { return [] }
@@ -81,7 +82,14 @@ export function BrowserPane({ defaultSet, ctx, controlled }: { defaultSet: strin
   // plug-ins included, under Chain devices. Nothing the set contains is hidden by the instrument's categories.
   const filtered = devices.filter(name => category === 'Instruments' ? INSTRUMENTS.has(name) : category === 'Chain devices' && !INSTRUMENTS.has(name)).filter(name => (trackDeviceFaceTitle(name) ?? displayDeviceName(name)).toLowerCase().includes(filter.toLowerCase()))
   const results = <div className="browser-results"><div className="browser-list-heading">Name <span>▴</span></div>
-      {category === 'Sets' && sets.filter(p => p.toLowerCase().includes(filter.toLowerCase())).map(p => <button key={p} className={'browser-item' + (p === ctx.set?.path ? ' browser-item-active' : '')} onClick={() => ctx.openSet(p)} title={p}><Mark name="lib" size={12} /><span>{p.split('/').pop()}</span></button>)}
+      {category === 'Sets' && sets.filter(p => p.toLowerCase().includes(filter.toLowerCase())).map(p => {
+        // A set by its name (the file's, without the extension), standing on what this browser holds of it: the set open now, the
+        // host's default set, or one of this device's recent sets. The path is hover words.
+        const standing = p === ctx.set?.path ? 'open' : p === defaultSet ? 'default' : 'recent'
+        return <button key={p} className={'browser-item' + (p === ctx.set?.path ? ' browser-item-active' : '')} onClick={() => ctx.openSet(p)}
+          title={`${p} — ${standing === 'open' ? 'the set open now' : standing === 'default' ? 'the host\'s default set' : 'a set this device opened recently'}; select opens it`}>
+          <Mark name="lib" size={12} /><span>{withoutExtension(p.split('/').pop() ?? p)}</span><span className="mode-browser-row-meta">{standing}</span></button>
+      })}
       {category === 'Chain devices' && <NoteDeviceRows filter={filter.toLowerCase()} />}
       {(category === 'Chain devices' || category === 'Instruments') && filtered.map(name => <div key={name} className="browser-item" data-browser-set-device={name} title={`${name} · present in this set · insertion requires native device owner`}><Mark name={INSTRUMENTS.has(name) ? 'keys' : 'chain'} size={12} /><span>{trackDeviceFaceTitle(name) ?? displayDeviceName(name)}</span><span className="mode-browser-row-meta">in this set</span></div>)}
       {(category === 'Chain devices' || category === 'Instruments' || category === 'Samples') && !filtered.length && <div className="browser-empty">{filter ? 'No matching material.' : `No ${category === 'Samples' ? 'samples' : category === 'Instruments' ? 'instruments' : 'other chain devices'} disclosed by this set.`}</div>}

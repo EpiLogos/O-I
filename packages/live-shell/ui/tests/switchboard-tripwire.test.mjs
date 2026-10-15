@@ -62,7 +62,6 @@ const CEILING = {
     'src/projections/encounterBridge.ts': 1,
     'src/projections/useWorldTemporalReading.ts': 1,
     'src/shell/liveSelection.ts': 1,
-    'src/shell/ModeBrowser.tsx': 2,
     'src/shell/ModeContextDock.tsx': 2,
     'src/shell/ModeDetail.tsx': 3,
     'src/shell/ModeTransportBar.tsx': 4,
