@@ -100,6 +100,7 @@ objections verbatim and the full validation (`BRIEF-BUILDER.md`); the lead conve
 | Ticket | Who | Zone | Since |
 |---|---|---|---|
 | S — Technē's subject door completes: the asked Scene opens on the stage (seen natively: asked, stage opened, nothing shown, no fault) | Opus builder | `src/techne/subject/**`, `panels/expressions.tsx` (navigator wiring), `packages/expressions-boundary/src/techne.ts`, `desktop/cradle/src/techne/{wikiProjectionStore,wikiExpression}.ts` if the cause is there | 15 Oct |
+| U — Palaces live in the atlas (N4, R2): the 9 palace targets listed in `tickets/T-PALACES-ONTO-ATLAS.md`, ported onto the atlas and the M5 plate, then the frame's Palace lens removed | Opus builder | `src/projections/atlas/**` (a new `palaces/`), `src/inhabitants/ql/devices/**`, `modeTransports.tsx` (Technē), `desktop/cradle/src/techne/m0m5/palace/**`, the frame's palace files and wiring | 15 Oct |
 | Native screen pass against the mockup renders; N1; the lanes' convergence | lead | `App.tsx`, `native/Workbench.tsx`, `shell/modeFrames.ts`, the book, the register | 14 Oct |
 
 Then: the 126 targets re-homed (lane M, FOUNDATION §8): `acceptance.py rehome` re-opens every cited path:line, runs the
