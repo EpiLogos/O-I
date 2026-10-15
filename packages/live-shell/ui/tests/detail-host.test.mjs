@@ -103,7 +103,7 @@ test('the Device side\'s head: the session\'s path in Factory, the focused instr
   assert.deepEqual(MODE_DETAILS.factory.head.device({detail: reading('factory'), selected: none, instrument: 'techne:m2'}),
     {name: 'Instruments', line: 'Timeline open on the focused pane; its controls are its own'})
   assert.deepEqual(MODE_DETAILS.base.head.device({detail: reading('base', {centralSubject: {kind: 'day', path: 'Control/agents/now/day/2026-10-08.md'}}), selected: none, instrument: null}),
-    {name: 'Day · 2026-10-08.md', line: 'document devices: each modifies the open document'})
+    {name: 'Day · Thu 08 Oct', line: 'document devices: each modifies the open document'})
   // Live's head names the track and its devices in order (the mockup's liveDetail() head; live-detail-chain.test.mjs): with no set,
   // no track, as Factory says no session and Central no document.
   assert.deepEqual(MODE_DETAILS.live.head.device({detail: reading('live'), selected: none, instrument: null}), {name: 'No track selected'})
