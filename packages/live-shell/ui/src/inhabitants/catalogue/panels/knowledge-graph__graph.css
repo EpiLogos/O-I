@@ -1,0 +1,25 @@
+/* The Knowledge graph's own layout: the Find box in the whole view, and the pane's graph with its reader. Shell and panel tokens only. */
+.kg-find { box-sizing: border-box; width: 100%; height: 16px; padding: 0 5px; background: var(--dp-field); border: 1px solid var(--line); color: var(--text); font: 10.5px var(--font-ui); }
+.kg-find::placeholder { color: var(--text-faint); }
+.kg-find:focus-visible { outline: 1px solid var(--accent); outline-offset: 1px; }
+.kg-find:disabled { opacity: .4; }
+
+.kg-pane { position: absolute; inset: 0; display: flex; background: var(--bg-1); color: var(--text); font: 11px/1.45 var(--font-ui); overflow: hidden; }
+.kg-field { position: relative; flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; background: var(--dp-well); }
+.kg-chips { flex: none; display: flex; flex-wrap: wrap; gap: 4px; min-height: 26px; padding: 5px 10px; align-items: center; border-bottom: 1px solid var(--line); }
+.kg-chip { height: 16px; padding: 0 6px; display: inline-flex; align-items: center; border: 1px solid var(--line); background: var(--dp-field); color: var(--text-dim); font-size: 10px; white-space: nowrap; }
+.kg-chip[data-on="true"] { color: var(--dp-on); border-color: var(--dp-on); }
+.kg-field > svg { display: block; flex: 1 1 auto; min-height: 0; width: 100%; }
+.kg-summary { flex: none; padding: 4px 10px; border-top: 1px solid var(--line); font-size: 10.5px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.kg-reader { flex: none; width: 230px; display: flex; flex-direction: column; gap: 10px; padding: 14px 14px; background: var(--bg-2); border-left: 1px solid var(--line); overflow: hidden; }
+.kg-reader h3 { margin: 0; font-size: 13px; font-weight: 600; line-height: 1.3; }
+.kg-reader h3 small { display: block; margin-top: 2px; font-size: 10px; font-weight: 400; color: var(--text-faint); }
+.kg-reader h4 { margin: 0 0 3px; font-size: 9px; font-weight: 500; letter-spacing: .07em; text-transform: uppercase; color: var(--text-faint); }
+.kg-reader ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.kg-reader li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; height: 17px; align-items: center; border-bottom: 1px solid var(--line); font-size: 10.5px; }
+.kg-reader li span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kg-reader li i { font-style: normal; font-size: 9.5px; color: var(--text-faint); white-space: nowrap; }
+.kg-reader li[data-ghost="true"] span { color: var(--text-dim); font-style: italic; }
+.kg-reader p { margin: 0; font-size: 10.5px; color: var(--text-dim); }
+.kg-field svg .dp-faint { fill: none; stroke: color-mix(in srgb, var(--text) 22%, transparent); stroke-width: 1; }
+.kg-field svg .dp-axis { font: 12px var(--font-ui); fill: var(--text-faint); }
