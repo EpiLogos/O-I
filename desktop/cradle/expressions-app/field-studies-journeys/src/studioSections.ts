@@ -6,7 +6,7 @@ export const STUDIO_SECTIONS = [
   ['relational', 'Relational forces'], ['collision', 'Collision & medium'], ['motion', 'Morph'], ['focus', 'Travelling focus'],
   ['appearance', 'Colour & material'], ['volume', '3D body & depth'], ['resonance', 'Resonance'], ['automation', 'Automation'],
   ['layout', 'Arrangement'], ['text', 'Page text'], ['native', 'Live instrument'], ['blueprint', 'Blueprint'],
-  ['canvas', 'Canvas views'], ['places', 'Places'], ['palace', 'Palace'], ['scene', 'Scene settings'],
+  ['canvas', 'Canvas views'], ['places', 'Places'], ['scene', 'Scene settings'],
 ] as const
 export type StudioSection = (typeof STUDIO_SECTIONS)[number][0]
 

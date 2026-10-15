@@ -1,12 +1,15 @@
-// lane-5 T19 Accept. The Accept request is built from the proposal the Palace made, names the reading it came from, and
+// lane-5 T19 Accept — moved from the frame's field-studies-journeys/tests/palace-accept.test.mjs (T-PALACES-ONTO-ATLAS); return.ts is
+// unchanged at the owner seam. Its last pin, 'the Palace Accept control is wired to the invoke route, not left disabled', read the
+// frame's palaceInstrument.tsx; it is replaced by atlas-palaces-session.test.mjs 'Accept sends the proposal through the owner's
+// invoke_action …' (the session's acceptReturn over the owners) and atlas-palaces-plate.test.mjs (the M5 plate's Return section).
+// The Accept request is built from the proposal the Palace made, names the reading it came from, and
 // carries the reading request the owner re-reads. Its reply is qualified into one status line; only an invoked receipt
 // crosses back to M0′. A proposal the law did not route is never sent.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFile} from 'node:fs/promises';
-import {provingReading} from '../../../src/techne/m0m5/journey/proving-reading.ts';
-import {deriveComposition} from '../../../src/techne/m0m5/palace/palace-state.ts';
-import {palaceReturnProposal, returnCrossing, palaceAcceptRequest, palaceAcceptOutcome} from '../../../src/techne/m0m5/palace/return.ts';
+import {provingReading} from '../../../../desktop/cradle/src/techne/m0m5/journey/proving-reading.ts';
+import {deriveComposition} from '../../../../desktop/cradle/src/techne/m0m5/palace/palace-state.ts';
+import {palaceReturnProposal, returnCrossing, palaceAcceptRequest, palaceAcceptOutcome} from '../../../../desktop/cradle/src/techne/m0m5/palace/return.ts';
 
 const readingRequest = {expression_ref: 'expression:palace-probe', revision: 3, scene_ref: 'scene:one'};
 const bound = reading => ({...deriveComposition(reading), bound: true});
@@ -56,10 +59,4 @@ test('a refusal the frame route makes (stale or not offered) and a missing reply
   const empty = palaceAcceptOutcome(reading, proposal, null);
   assert.equal(empty.accepted, false);
   assert.match(empty.line, /no dispatch receipt/);
-});
-
-test('the Palace Accept control is wired to the invoke route, not left disabled', async () => {
-  const source = await readFile(new URL('../src/palaceInstrument.tsx', import.meta.url), 'utf8');
-  assert.doesNotMatch(source, /Accepting runs the native owner's action; this surface cannot invoke it yet/);
-  assert.match(source, /onClick=\{\(\)=>void acceptReturn\(\)\}/);
 });

@@ -1,7 +1,12 @@
 /**
- * The Palace integral whole, as the mounted surface reads it (lane-5 T14,
- * T16, T17, T18) — pure presentation over the reading the Palace already
- * owns in `src/techne/m0m5/palace/`. No DOM, no store, no second graph.
+ * The Palace integral whole, as a surface reads it (lane-5 T14, T16, T17, T18) — pure presentation over the reading the Palace
+ * already owns here. No DOM, no store, no second graph.
+ *
+ * Moved here verbatim from the frame's `expressions-app/field-studies-journeys/src/palaceWhole.ts` (at fdc302870) when palaces
+ * moved onto the atlas (T-PALACES-ONTO-ATLAS, FOUNDATION §3 N4): the frame's Palace lens retired, and the atlas's M5 plate
+ * (`packages/live-shell/ui/src/projections/atlas/palaces/`) reads the whole through this owner seam. The frame's host-request
+ * builders (`palaceInstrumentOpenRequest`, `palaceSourceOpenRequest`) retired with the lens: the atlas opens an object through
+ * the shell's own owners, never a frame summon.
  *
  * Laws carried here:
  *   - the integral regions ARE `palaceRegions(reading)` and the walk IS
@@ -21,17 +26,17 @@
  *
  * Erasable TypeScript: loadable by the renderer, Vite, and `node --test`.
  */
-import type {TechneInstrument, TechneReading} from '../../../src/techne/contract.ts';
-import {palaceAvailability, type PalaceLocus} from '../../../src/techne/m0m5/palace/composition.ts';
-import {deriveComposition, palaceTraversal} from '../../../src/techne/m0m5/palace/palace-state.ts';
-import {recallOver} from '../../../src/techne/m0m5/palace/recall.ts';
+import type {TechneInstrument, TechneReading} from '../../contract.ts';
+import {palaceAvailability, type PalaceLocus} from './composition.ts';
+import {deriveComposition, palaceTraversal} from './palace-state.ts';
+import {recallOver} from './recall.ts';
 import {
   palaceRegions,
   regionArchaeology,
   type PalaceRegion,
   type PalaceRegionEntry,
   type PalaceRegionKey,
-} from '../../../src/techne/m0m5/palace/regions.ts';
+} from './regions.ts';
 
 // ---------------------------------------------------------------------------
 // T18 — each region's own standing
@@ -172,10 +177,10 @@ export type PalaceOpenRoute =
   | {kind: 'refused'; reason: string};
 
 /** The route for one entry's Open. `wired` names the instruments this surface
- * can summon. A provenance entry opens the source surface (lane-5 T24): the
- * frame's own source summon, which the host resolves against the current
- * Scene. An entry with no instrument surface says its depth stays in the
- * palace; an unwired instrument is refused by name. */
+ * can open. A provenance entry opens the source surface (lane-5 T24), which
+ * the surface resolves through its source owner. An entry with no instrument
+ * surface says its depth stays in the palace; an unwired instrument is
+ * refused by name. */
 export function palaceOpenRoute(entry: PalaceRegionEntry, wired: ReadonlySet<string>): PalaceOpenRoute {
   if (entry.kind === 'sources') return {kind: 'source', ref: entry.ref};
   if (!entry.open_instrument) {
@@ -206,33 +211,9 @@ export function palaceRegionOpenRoute(
   return {kind: 'open', instrument: 'expressions', ref: member.expression_ref};
 }
 
-/** The instruments a Palace entry can open into from this surface (lane-5 seam B). Each is a deep instrument the shell selects
- * through the host's own instrument path; `expressions` is the Expression summon. The Palace never opens itself. */
+/** The instruments a Palace entry can open into (lane-5 seam B). Each is a deep instrument the shell opens through its own owner
+ * path; `expressions` is the Expression's own opening. The Palace never opens itself. */
 export const PALACE_WIRED_INSTRUMENTS: ReadonlySet<string> = new Set(['expressions', 'project', 'canvas', 'timeline', 'journey', 'place']);
-
-/** The frame's request for a non-Expression instrument: the existing host-request instrument summon, which the host turns into its
- * own selectInstrument (expressions-boundary host.ts) with the ref it names. A request with no ref asks for the instrument alone
- * (the return to M0′ ground names no object), so no `ref` key is sent. */
-export function palaceInstrumentOpenRequest(instrument: TechneInstrument, ref?: string): {request: 'summon'; detail: {kind: 'instrument'; lens: TechneInstrument; ref?: string}} {
-  return {request: 'summon', detail: {kind: 'instrument', lens: instrument, ...(ref !== undefined ? {ref} : {})}};
-}
-
-/** The Palace's Expression subject a source summon carries: the same subject the frame's own source summon names
- * (app.ts `summonSource`), so the host resolves the source inside the Scene the Palace is standing in. */
-export interface PalaceSourceSubject {expression_ref: string; revision: number; scene_ref: string; title: string}
-
-/** The frame's request for a provenance entry's source surface: the existing source summon, the same shape the frame sends from
- * its own source affordances. The host resolves the ref against the current Scene; a ref outside it is refused by the owner. */
-export function palaceSourceOpenRequest(ref: string, subject: PalaceSourceSubject): {request: 'summon'; detail: {kind: 'source'; ref: string; subject: Record<string, unknown>}} {
-  return {
-    request: 'summon',
-    detail: {
-      kind: 'source',
-      ref,
-      subject: {ref: subject.expression_ref, kind: 'expression', nativeOwner: 'oi', revision: subject.revision, title: subject.title, sceneRef: subject.scene_ref, entityRef: null, relationRef: null},
-    },
-  };
-}
 
 // ---------------------------------------------------------------------------
 // T17 — the guided integral walk, method of loci over the whole

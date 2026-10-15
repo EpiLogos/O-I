@@ -1,0 +1,59 @@
+/* Palaces on the atlas (T-PALACES-ONTO-ATLAS): the palace drawn inside, at the atlas's palace scale (PalaceFloor.tsx), after the mockup's
+   palace interior (world-shell-mockup.html:307-308 .palace, :1222-1249 palaceSVG: the floor's warm dark, the rooms in the tower's tone, the
+   guided path dashed and numbered, the focused room in the accent, the objects as small dark plates); and the M5 plate's own rows beside the
+   M4 plate's (places/placesPlate.css). Shell tokens only (styles.css :root). */
+
+/* the layer: over the globe, inert until a palace is entered */
+.atlas-palace-layer { position: absolute; inset: 0; z-index: 4; pointer-events: none }
+.atlas-palace { position: absolute; inset: 0; pointer-events: auto; overflow: hidden;
+  background: radial-gradient(ellipse at 50% 40%, color-mix(in srgb, var(--tower) 10%, var(--bg-0)) 0, color-mix(in srgb, var(--tower) 5%, var(--line)) 80%) }
+.atlas-palace__plan { display: block; width: 100%; height: 100%; cursor: grab; touch-action: none; user-select: none }
+.atlas-palace__plan:active { cursor: grabbing }
+.atlas-palace__line { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); margin: 0; font-size: 11px; color: var(--text-dim) }
+
+/* a room: its walls in the tower's tone, the focused room in the accent, a selected room in the selection's colour */
+.palace-room { cursor: move }
+.palace-room__wall { fill: color-mix(in srgb, var(--tower) 10%, transparent); stroke: var(--tower); stroke-width: 1.2 }
+.palace-room[data-focused="true"] .palace-room__wall { fill: color-mix(in srgb, var(--tower) 22%, transparent); stroke: var(--accent); stroke-width: 2 }
+.palace-room[data-selected="true"] .palace-room__wall { stroke: var(--sel); stroke-width: 1.6 }
+.palace-room[data-saved="false"] .palace-room__wall { stroke-dasharray: 5 3 }
+.palace-room__name { font-size: 12px; fill: var(--tower); font-family: var(--font-ui) }
+.palace-room[data-focused="true"] .palace-room__name { fill: var(--accent) }
+.palace-room__empty, .palace-room__more { font-size: 10px; fill: var(--text-faint); font-family: var(--font-ui) }
+
+/* an object a room holds: a small dark plate, opened through its owner */
+.palace-object { cursor: pointer }
+.palace-object rect { fill: var(--bg-0); fill-opacity: .85; stroke: var(--line-strong) }
+.palace-object:hover rect { stroke: var(--text-dim) }
+.palace-object text { font-size: 10.5px; fill: var(--text); font-family: var(--font-ui) }
+.palace-object--portal text { fill: var(--tower) }
+
+/* the guided path: dashed through the rooms in their order; a gap, a broken edge or a self reference named, never hidden */
+.palace-path line { stroke: var(--tower); stroke-width: 1.5; stroke-dasharray: 3 5; opacity: .7 }
+.palace-path [data-edge="gap"] line, .palace-path [data-edge="broken"] line, .palace-path [data-edge="self"] line { stroke: var(--stall); opacity: 1 }
+.palace-path text { font-size: 10px; fill: var(--stall); text-anchor: middle; font-family: var(--font-ui) }
+.palace-steps circle { fill: var(--bg-0); stroke: var(--tower) }
+.palace-steps [data-focused="true"] circle { stroke: var(--accent); stroke-width: 2 }
+.palace-steps text { font-size: 9.5px; fill: var(--tower); text-anchor: middle; font-family: var(--font-ui) }
+.palace-marquee { fill: var(--accent-soft); stroke: var(--accent); stroke-dasharray: 4 3 }
+
+/* the M5 plate: the M4 plate's rows (placesPlate.css), and what only a palace has */
+[data-palace-plate] .inst-section-body { gap: 4px }
+[data-palace-plate] .inst-section-body > * { flex: none }
+.places-list--rooms { max-height: 128px }
+.places-list--whole { max-height: 150px }
+.palace-room-row { cursor: pointer }
+.palace-room-row[data-focused="true"] { border-color: var(--accent-dim); color: var(--text) }
+.palace-room-row[data-kind="region"] .n { color: var(--tower) }
+.palace-room-acts { flex: none; display: inline-flex; gap: 1px }
+.palace-room-acts button { width: 14px; height: 14px; font-size: 9.5px; color: var(--text-dim); background: var(--bg-2) }
+.palace-room-acts button:hover:not(:disabled) { color: var(--text) }
+.palace-whole-region { display: flex; flex-direction: column; gap: 2px }
+.palace-whole-region + .palace-whole-region { margin-top: 3px; padding-top: 3px; border-top: 1px solid var(--line) }
+.palace-standing { flex: none; margin-left: 4px; padding: 0 3px; font-size: 8.5px; color: var(--text-faint); border: 1px solid var(--line-strong) }
+.palace-standing[data-standing="warranted"] { color: var(--green); border-color: var(--green) }
+.palace-standing[data-standing="owner"] { color: var(--sel); border-color: var(--sel) }
+.places-item[data-walk-focus="true"] { border-color: var(--accent-dim); color: var(--text) }
+.palace-guide { color: var(--tower) }
+.palace-plate-line { margin: 0; padding: 3px 10px 4px; border-top: 1px solid var(--line) }
+.palace-ground .n { color: var(--text) }

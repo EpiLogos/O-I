@@ -70,7 +70,7 @@ const $=<T extends HTMLElement=HTMLElement>(id:string)=>document.getElementById(
 import {mountShell,iconButton as ib} from './shell.js';
 import {RailItem,railPressed} from './rail.js';
 import {featuredExpressions,startingPoints,nativeSeven,forkExpression,libraryHTML,modesHTML,compositionCover,collectionBinsOf,collectionsWith,parseCollectionFilter,type CollectionBins,type CollectionFilter,type LibraryStanding} from './expressions.js';
-import {installKernelExpressions,kernelExpressionsAvailable,readTechneReading,techneConstellationRelate,listKernelExpressions,readKernelExpression,nativeExpressionRequest,invertEdit} from './kernelExpressions.js';
+import {installKernelExpressions,kernelExpressionsAvailable,readTechneReading,techneConstellationRelate,listKernelExpressions,nativeExpressionRequest,invertEdit} from './kernelExpressions.js';
 import {hostedRecovery} from './nativeRecovery.js';
 import {entryGateHTML} from './entryGate.js';
 import {AUTHORED_CHAKRA_STARTER,STANDING_LABEL} from './centreStanding.js';
@@ -86,10 +86,8 @@ import {sameEditorBasis} from '../../../../../packages/expressions-boundary/src/
 import {createNativeMaterialController} from '../../../../../packages/expressions-boundary/src/nativeMaterials';
 import {requestNativeMaterialEditor} from '../../../../../packages/expressions-boundary/src/materialEditor';
 import {worldRequest} from './worldChannel';
-import {installLensStudio,type LensId} from './lensStudio.js';
+import {installLensStudio,PALACE_MOVED,type LensId} from './lensStudio.js';
 import {installResearchInstruments} from './researchInstruments.js';
-import {installPalaceInstrument} from './palaceInstrument.js';
-import {palaceInstrumentOpenRequest} from './palaceWhole.js';
 import {installJourneyInstrument} from './journeyInstrument.js';
 import {writeJourneyCrossing,writeJourneyReturn} from './sharedTimeWindow.js';
 import {composeSceneRequest} from './journeyBeats.js';
@@ -98,7 +96,6 @@ import {installNaraInstrument} from './naraInstrument.js';
 import {naraFormGeometry} from './naraFormField.js';
 import type {NativeM3Reading} from '../../../src/nara/nativeM3';
 import {createEvidenceField,type PrivateEvidenceField} from './naraEvidenceField.js';
-import type {PalaceDocumentSnapshot} from '../../../src/techne/m0m5/palace/composition';
 import {applyResearchMaterial,applyConnectorRecord,pruneResearchOccurrence,runCanvasImport,type CanvasImportHost,type ResearchMaterialAction} from './researchMaterial.js';
 import type {ConnectionBinding} from '../../../../../packages/oi-design-system/expressions-engine/oi/expressionBindings.mjs';
 import type {KernelConversion,KernelSceneBody} from './kernelDocumentBridge.js';
@@ -315,7 +312,6 @@ function renderInspector(){const content=$('inspector-content');if(!inspectorOpe
 // listeners), replacing the generic detail-groups content above.
 if(studioSection==='native'&&nativeField)content.replaceChildren(nativeField.panel);
 if(studioSection==='blueprint'&&!search)content.replaceChildren(blueprintHome);
-if(studioSection==='palace'&&!search)content.replaceChildren(palaceHome);
 if(studioSection==='places'&&!search)content.replaceChildren(placesHome);
 if(studioSection==='canvas'&&!search)content.replaceChildren(canvasHome);
 $('inspector-title').textContent=document.querySelector<HTMLElement>('[data-action="studio-section"][aria-current="page"]')?.textContent??'Studio';
@@ -957,7 +953,7 @@ function renderLive(){const parts=liveWorkspaceHTML(liveContext(),workspace);con
 // Docking swaps the studio's anchor side, so a width/height transition would teleport it: invert the layout change, then play the transform back.
 function flipPanel(el:HTMLElement,mutate:()=>void){el.style.transition='none';el.style.transform='';const a=el.getBoundingClientRect();mutate();const b=el.getBoundingClientRect(),dx=a.left-b.left,dy=a.top-b.top,sx=b.width?a.width/b.width:1,sy=b.height?a.height/b.height:1;if(!b.width||!b.height||(!dx&&!dy&&Math.abs(sx-1)<.002&&Math.abs(sy-1)<.002)){el.style.transition='';return;}const done=(ev:TransitionEvent)=>{if(ev.target!==el||ev.propertyName!=='transform')return;el.removeEventListener('transitionend',done);el.style.transition='';el.style.transformOrigin='';};el.addEventListener('transitionend',done);el.style.transformOrigin='top left';el.style.transform=`translate(${dx}px,${dy}px) scale(${sx},${sy})`;void el.offsetWidth;el.style.transition='transform .25s cubic-bezier(.2,.8,.2,1)';el.style.transform='';}
 function setStudio(open:boolean){if(!open)draftSchedule.flushNow('studio');pointer.active=false;if(open)journeyPlaying=false;studioOpen=open;inspectorOpen=open;editing=open||cursorTool==='select';renderAll();}
-function renderAll(){syncDeepLinkAddress();blueprintHUD?.refresh();if(studioDocked&&studioOpen&&beltOpen){beltWasOpen=true;beltOpen=false;}if(!studioDocked&&beltWasOpen){beltWasOpen=false;beltOpen=true;}if((inspectorOpen||contextKind)&&(tool==='pin'||tool==='formation')){tool=cursorTool;railExpanded=false;}if(beltPickerOpen){inspectorOpen=false;contextKind='';timelineOpen=false;shapePickerOpen=false;modesOpen=false;captureOpen=false;}else if(inspectorOpen){contextKind='';timelineOpen=false;shapePickerOpen=false;modesOpen=false;captureOpen=false;}else if(contextKind){timelineOpen=false;shapePickerOpen=false;modesOpen=false;captureOpen=false;}else if(timelineOpen){shapePickerOpen=false;modesOpen=false;captureOpen=false;}sanitiseSelection();sceneBodies?.refresh();workspace.entries=clone(store.document.shared!.toolbelt);if(tab==='motion')studioSection=motionTab==='automation'?'automation':motionTab==='sequence'?'sequence':motionTab==='focus'?'focus':'motion';else if(tab==='objects'&&!['formations','layout'].includes(studioSection))studioSection='formations';else if(tab==='scene'&&!['scene','text'].includes(studioSection))studioSection='scene';else if(tab==='field'&&!['physics','pointer','relational','collision','appearance','volume','resonance','native','blueprint','palace','places','canvas'].includes(studioSection))studioSection='physics';studioOpen=inspectorOpen&&editing;if(railKey!=='objects'||tool!=='select')railKey=tool;if(transitionDuration&&transitionSceneId!==scene().id){transitionDuration=0;$('transition-canvas').hidden=true;}theme();document.body.classList.toggle('studio-open',studioOpen);$('inspector').classList.toggle('is-studio',studioOpen);$('inspector').classList.toggle('docked',studioDocked);const dockButton=$('dock-studio');if(dockButton){dockButton.setAttribute('aria-pressed',String(studioDocked));dockButton.title=studioDocked?'Return the studio to full size':'Dock the studio where the toolbelt sits';dockButton.innerHTML=icon(studioDocked?'expand':'collapse');}$<HTMLSelectElement>('workspace-appearance').value=workspace.appearance;document.querySelectorAll<HTMLElement>('[data-action="studio-section"]').forEach(b=>b.setAttribute('aria-current',b.dataset.value===studioSection?'page':'false'));document.body.classList.toggle('editing',editing);document.body.classList.toggle('presentation',presenting);document.body.classList.toggle('editing-text',editing&&tool==='text');
+function renderAll(){syncDeepLinkAddress();blueprintHUD?.refresh();if(studioDocked&&studioOpen&&beltOpen){beltWasOpen=true;beltOpen=false;}if(!studioDocked&&beltWasOpen){beltWasOpen=false;beltOpen=true;}if((inspectorOpen||contextKind)&&(tool==='pin'||tool==='formation')){tool=cursorTool;railExpanded=false;}if(beltPickerOpen){inspectorOpen=false;contextKind='';timelineOpen=false;shapePickerOpen=false;modesOpen=false;captureOpen=false;}else if(inspectorOpen){contextKind='';timelineOpen=false;shapePickerOpen=false;modesOpen=false;captureOpen=false;}else if(contextKind){timelineOpen=false;shapePickerOpen=false;modesOpen=false;captureOpen=false;}else if(timelineOpen){shapePickerOpen=false;modesOpen=false;captureOpen=false;}sanitiseSelection();sceneBodies?.refresh();workspace.entries=clone(store.document.shared!.toolbelt);if(tab==='motion')studioSection=motionTab==='automation'?'automation':motionTab==='sequence'?'sequence':motionTab==='focus'?'focus':'motion';else if(tab==='objects'&&!['formations','layout'].includes(studioSection))studioSection='formations';else if(tab==='scene'&&!['scene','text'].includes(studioSection))studioSection='scene';else if(tab==='field'&&!['physics','pointer','relational','collision','appearance','volume','resonance','native','blueprint','places','canvas'].includes(studioSection))studioSection='physics';studioOpen=inspectorOpen&&editing;if(railKey!=='objects'||tool!=='select')railKey=tool;if(transitionDuration&&transitionSceneId!==scene().id){transitionDuration=0;$('transition-canvas').hidden=true;}theme();document.body.classList.toggle('studio-open',studioOpen);$('inspector').classList.toggle('is-studio',studioOpen);$('inspector').classList.toggle('docked',studioDocked);const dockButton=$('dock-studio');if(dockButton){dockButton.setAttribute('aria-pressed',String(studioDocked));dockButton.title=studioDocked?'Return the studio to full size':'Dock the studio where the toolbelt sits';dockButton.innerHTML=icon(studioDocked?'expand':'collapse');}$<HTMLSelectElement>('workspace-appearance').value=workspace.appearance;document.querySelectorAll<HTMLElement>('[data-action="studio-section"]').forEach(b=>b.setAttribute('aria-current',b.dataset.value===studioSection?'page':'false'));document.body.classList.toggle('editing',editing);document.body.classList.toggle('presentation',presenting);document.body.classList.toggle('editing-text',editing&&tool==='text');
  if(!$('inspector').hidden)studioScroll=$('inspector-content').scrollTop;$('inspector').hidden=!inspectorOpen||!editing;$('tool-rail').hidden=presenting;$('view-controls').hidden=!editing||!(tool==='pin'||shapePickerOpen||placementStep)||!!contextKind||inspectorOpen;$('coordinates').hidden=presenting||libraryOpen;$('timeline-panel').hidden=!timelineOpen;$('shape-picker').hidden=!shapePickerOpen||!editing;$('present-return').hidden=!presenting;
  $('scene-number').textContent=String(sceneIndex+1).padStart(2,'0');$('scene-name').textContent=scene().name;
  $('scene-picker').setAttribute('aria-expanded',String(timelineOpen));$('scene-state').textContent=sceneSaveState(store.document,scene());
@@ -1372,7 +1368,6 @@ let sceneBodies:ReturnType<typeof installSceneBodies>|undefined;
 let blueprintHUD:ReturnType<typeof installBlueprintHUD>|undefined;
 // Studio-owned homes for instrument controls (re-parented, never re-rendered).
 const blueprintHome=document.createElement('div');blueprintHome.className='blueprint-home';
-const palaceHome=document.createElement('div');palaceHome.className='palace-home';
 const journeyHome=document.createElement('div');journeyHome.className='journey-reading-home';journeyHome.hidden=true;$('app').append(journeyHome);
 const placesHome=document.createElement('div');placesHome.className='places-home';
 const canvasHome=document.createElement('div');canvasHome.className='canvas-home';
@@ -2187,7 +2182,7 @@ function setHostMode(mode:'expressions'|'techne'|'live'){
  document.body.classList.toggle('oi-host-live',mode==='live');
  renderRail();
  lensStudio.setMode(mode==='techne'?'techne':'expressions');
- if(mode!=='techne'){researchInstruments?.close();palaceInstrument.close();journeyInstrument?.close();journeyHome.hidden=true;setInstrumentSurface(null);}else activateInstrument(lensStudio.active());
+ if(mode!=='techne'){researchInstruments?.close();journeyInstrument?.close();journeyHome.hidden=true;setInstrumentSurface(null);}else activateInstrument(lensStudio.active());
  if(mode==='live'&&nativeField){studioSection='native';tab='field';setStudio(true);nativeField.openLive();}
  if(mode!=='live')nativeField?.leaveLive();
  renderAll();
@@ -2422,7 +2417,7 @@ function applyNativeView(view:KernelConversion,preservePosition=false,adoptionHi
  sceneIndex=Math.max(0,store.document.scenes.findIndex(s=>s.id===desired));
  if(preservePosition){camera=oldCamera;sceneElapsed=oldTime;selected=oldSelection.filter(id=>scene().entities.some(e=>e.id===id));journeyPlaying=oldPlaying;}
  else {applySceneView();const nativeRef=view.document.selection?.entity_ref;const occurrence=view.bindings[scene().id]?.occurrences.find(o=>o.entity_ref===nativeRef);selected=occurrence?[occurrence.view_entity_id]:[];}
- markSaved();renderAll();announceHostState();void researchInstruments?.refresh();void journeyInstrument?.refresh();void palaceInstrument.refresh();
+ markSaved();renderAll();announceHostState();void researchInstruments?.refresh();void journeyInstrument?.refresh();
 }
 // The M0′–M5′ Lens Studio stands on the SAME native construction the native
 // workspace holds; refreshing it when the construction changes keeps the
@@ -2432,7 +2427,6 @@ let researchSuspension:symbol|null=null;
 function setInstrumentSurface(lens:LensId|null){
  const research=lens==='canvas'||lens==='timeline'||lens==='place';
  document.body.classList.toggle('research-active',research);
- document.body.classList.toggle('palace-active',lens==='palace');
  document.body.dataset.activeInstrument=lens??'expression';
  $('stage').inert=research;
  $('stage').setAttribute('aria-hidden',String(research));
@@ -2450,7 +2444,7 @@ function activateInstrument(lens:LensId){
  const carried=carriedFocus?.lens===lens?carriedFocus.ref:undefined;
  // A Studio section that belongs to the instrument being left does not stay
  // open, empty, over the next one.
- const owned:Record<string,LensId>={places:'place',palace:'palace',canvas:'canvas'};
+ const owned:Record<string,LensId>={places:'place',canvas:'canvas'};
  if(owned[studioSection]&&owned[studioSection]!==lens){inspectorOpen=false;studioSection='formations';tab='objects';}
  setInstrumentSurface(lens);
  pointer.active=false;
@@ -2467,8 +2461,8 @@ function activateInstrument(lens:LensId){
  if(lens==='journey')void journeyInstrument?.open().then(()=>journeyInstrument?.returnFromCrossing()).then(()=>carried===undefined?undefined:journeyInstrument?.focusBeat(carried)); // T11: a crossed beat returns by ref, through the owner.
  else journeyInstrument?.close();
  if(lens==='place'){editing=true;inspectorOpen=true;contextKind='';tab='field';studioSection='places';}
- if(lens==='palace'){if(propertyTake)finishPropertyTake();editing=true;inspectorOpen=true;contextKind='';tab='field';studioSection='palace';void palaceInstrument.open(carried);}
- else palaceInstrument.close();
+ // M5′ Palace is the shell's Earth atlas now (T-PALACES-ONTO-ATLAS; FOUNDATION §3 N4): asked for, the frame says where it went.
+ if(lens==='palace')toast(PALACE_MOVED,8000);
  renderAll();announceHostState();
 }
 const masthead=document.querySelector<HTMLElement>('#app > .masthead')!;
@@ -2724,21 +2718,6 @@ researchInstruments=installResearchInstruments({
   },
  updateConnectionKind:async(sceneId,ref,kind)=>{researchScene(sceneId);const binding=ownResearchConnection(ref);await nativeWorkspace?.edit([{change:'relation_bind',binding:{...binding,relation:{...binding.relation,ref:`${ref}:${connectionKind(kind)}`,revision:String(Number(binding.relation.revision)+1)}}}],'Set connection type');},
 });
-// M5′ Palace: regions are Scenes of the Palace Expression, each disclosing one
-// contained Expression as its body with a portal; the guided path is Scene
-// order. Everything goes through the kernel Expression owner with CAS.
-const palaceSnapshot=(raw:unknown):PalaceDocumentSnapshot&{title:string}=>{const doc=raw as {expression_ref:string;revision:number;title?:string;scenes?:{scene_ref:string;title?:string;body?:{carrier?:string;subject_ref?:string}|null;triggers?:{trigger_ref:string;target?:{kind?:string;subject_ref?:string}}[]}[]};return {expression_ref:doc.expression_ref,revision:doc.revision,title:doc.title??doc.expression_ref,scenes:(doc.scenes??[]).map(scene=>({scene_ref:scene.scene_ref,title:scene.title??'',body:scene.body?{carrier:scene.body.carrier,subject_ref:scene.body.subject_ref}:null,triggers:(scene.triggers??[]).map(trigger=>({trigger_ref:trigger.trigger_ref,target:trigger.target?{kind:trigger.target.kind,subject_ref:trigger.target.subject_ref}:undefined}))}))};};
-const palaceInstrument=installPalaceInstrument({
- nativeView:()=>nativeWorkspace?.nativeView(),sceneId:()=>scene().id,
- authoredRevision:()=>store.revision,
- canCompose:()=>{const reading=retainedEditor.read();return !store.transactionOpen&&!reading.standing.pending&&!reading.standing.dirty;},
- listExpressions:()=>listKernelExpressions(),
- readExpression:async ref=>palaceSnapshot(await readKernelExpression(ref)),
- composeExpression:async({expression_ref,expected_revision,changes})=>{const data=await nativeExpressionRequest({operation:'edit',expression_ref,expected_revision,actor:'human:techne-palace',changes}) as {state?:string;current_revision?:number;document?:unknown}|null;if(data?.state==='revision_conflict')return {ok:false,reason:`This Palace changed elsewhere (now revision ${data.current_revision}). Nothing was saved; reopen it and try again.`};if(!data?.document||data.state!=='ready')return {ok:false,reason:`The Expression owner did not accept the composition (${String(data?.state)}).`};return {ok:true,document:palaceSnapshot(data.document)};},
- openExpression:ref=>{void nativeWorkspace?.open(ref);},
- // Lane-5 seam B: a non-Expression palace entry asks for its instrument through the frame's existing host-request summon.
- openInstrument:(instrument,ref)=>{hostRequest(palaceInstrumentOpenRequest(instrument,ref));},
-},palaceHome);
 /** lane-5 T8: the journey as the expression clock runs it: a saved sequence runs on its saved durations, otherwise the working ones. */
 function playbackJourney():Journey{
  const working=store.document;
@@ -2846,7 +2825,7 @@ const naraInstrument=installNaraInstrument({nativeView:()=>nativeWorkspace?.nati
  }});
 if(qs.get('nara')==='1')naraInstrument.open();
 const disposeFieldStudies=window.__FIELD_STUDIES__.dispose;
-window.__FIELD_STUDIES__.dispose=()=>{naraInstrument.destroy();journeyInstrument?.destroy();palaceInstrument.destroy();wikiStanding.dispose();disposeFieldStudies();};
+window.__FIELD_STUDIES__.dispose=()=>{naraInstrument.destroy();journeyInstrument?.destroy();wikiStanding.dispose();disposeFieldStudies();};
 // A hosted deep link (the app's own ?journey/?scene idiom): open a named
 // expression from the browser library, the featured set or the starters —
 // the Technè M0 instrument opens onto the Epii face this way

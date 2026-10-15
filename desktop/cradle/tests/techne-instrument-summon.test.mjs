@@ -1,5 +1,6 @@
-// The legacy cradle host answers an instrument summon from its hosted frame. The application asks with
-// {request:'summon', detail:{kind:'instrument', lens, ref?}} (the Palace's Open on a region, palaceWhole.palaceInstrumentOpenRequest);
+// The legacy cradle host answers an instrument summon from its hosted frame. The application asked with
+// {request:'summon', detail:{kind:'instrument', lens, ref?}} (the Palace's Open on a region — the frame's Palace lens retired with
+// T-PALACES-ONTO-ATLAS, its builder `palaceInstrumentOpenRequest` with it; the wire it sent is written out below, unchanged);
 // the presented Technē centre answers in that same frame with the `lens` host-command carrying the ref — the answer the new
 // shell's ExpressionsHost.selectInstrument gives. 28266fefb dropped the cradle's branch, so the summon landed nowhere; this
 // pins the wire (instrumentLensCommand), its parity with the new shell, and the PointCloudHost branch (source-level: it is a
@@ -9,7 +10,11 @@ import {test} from 'node:test';
 import {readFile} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import {instrumentLensCommand} from '../src/expressions/hostedApp.ts';
-import {palaceInstrumentOpenRequest} from '../expressions-app/field-studies-journeys/src/palaceWhole.ts';
+/** The summon the frame's Palace sent (the retired palaceWhole.ts palaceInstrumentOpenRequest, at fdc302870, verbatim): the instrument
+ * alone when no ref travels, so no `ref` key is invented. */
+function palaceInstrumentOpenRequest(lens, ref) {
+  return {request: 'summon', detail: {kind: 'instrument', lens, ...(ref !== undefined ? {ref} : {})}};
+}
 // The boundary's own production-source loader (TypeScript transpile, type-only imports elided), as frame-time-push uses it.
 import {register} from 'node:module';
 register('../../../packages/expressions-boundary/tests/editor-source-loader.mjs', import.meta.url);

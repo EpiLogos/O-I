@@ -534,12 +534,13 @@ body:has(#inspector-content>.native-field-panel) .native-domain-output{display:n
 .instrument{left:calc(var(--uncovered-width)/2);max-width:calc(var(--uncovered-width) - 24px)}
 .instrument{width:min(600px,calc(var(--uncovered-width) - 24px))}
 .instrument.expanded{width:min(1050px,calc(var(--uncovered-width) - 24px))}
-/* Outside the scene-composing instruments (M3′ journey, M5′ palace) the
-   transport ghosts: still there on hover, never competing with the field.
-   This is the owner's minimal/see-through ruling for the scenes bar. */
-body.oi-host-techne:not(.palace-active):not([data-active-instrument="journey"]) nav.instrument{background:transparent;border-color:transparent;box-shadow:none;backdrop-filter:none;opacity:.3;transition:opacity .25s ease,background-color .25s ease}
-body.oi-host-techne:not(.palace-active):not([data-active-instrument="journey"]) nav.instrument:hover,
-body.oi-host-techne:not(.palace-active):not([data-active-instrument="journey"]) nav.instrument:focus-within{background:var(--hud-solid);border-color:var(--ui-line);opacity:1}
+/* Outside the scene-composing instrument (M3′ journey) the transport ghosts:
+   still there on hover, never competing with the field. This is the owner's
+   minimal/see-through ruling for the scenes bar. (M5′ Palace composed scenes
+   here too until it moved onto the shell's Earth atlas, T-PALACES-ONTO-ATLAS.) */
+body.oi-host-techne:not([data-active-instrument="journey"]) nav.instrument{background:transparent;border-color:transparent;box-shadow:none;backdrop-filter:none;opacity:.3;transition:opacity .25s ease,background-color .25s ease}
+body.oi-host-techne:not([data-active-instrument="journey"]) nav.instrument:hover,
+body.oi-host-techne:not([data-active-instrument="journey"]) nav.instrument:focus-within{background:var(--hud-solid);border-color:var(--ui-line);opacity:1}
 .transport-row{justify-content:safe center;overflow-x:auto}
 body.library-open #lens-chooser{display:none!important}
 /* Creation-first entry gate — New / Continue / Open */

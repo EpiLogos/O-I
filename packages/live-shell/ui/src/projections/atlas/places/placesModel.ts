@@ -167,12 +167,13 @@ export function routeRows(places: readonly SuitePlace[]): RouteRow[] {
 
 /** The scale the atlas stands at, as the plate's head names it (lock §2.5: system · body · region · palace). The sky is the system;
  * a camera at or inside the atlas's own regional framing distance is a region (app/controller.ts frames a regional occurrence at
- * 2.6 globe radii and a place at 2.25); the Graph is not a scale of the Earth and says so. A palace is a place you enter (N4), which
- * the atlas does not hold yet. */
-export type AtlasScale = 'system' | 'body' | 'region' | 'graph';
+ * 2.6 globe radii and a place at 2.25); the Graph is not a scale of the Earth and says so. A palace is a place you enter (N4): while
+ * one is entered the atlas stands inside it (palaces/PalaceFloor.tsx), whatever the camera does beneath. */
+export type AtlasScale = 'system' | 'body' | 'region' | 'palace' | 'graph';
 export const REGION_DISTANCE = 2.6;
 
-export function atlasScaleOf(view: {readonly sky: boolean; readonly graph: boolean; readonly dist: number}): AtlasScale {
+export function atlasScaleOf(view: {readonly sky: boolean; readonly graph: boolean; readonly dist: number; readonly palace?: boolean}): AtlasScale {
+  if (view.palace) return 'palace';
   if (view.graph) return 'graph';
   if (view.sky) return 'system';
   return view.dist <= REGION_DISTANCE ? 'region' : 'body';
