@@ -69,6 +69,6 @@ test('the frame\'s rail names no mode, and App has one dock residence holding th
   }
   const app = await source('App.tsx')
   assert.equal((app.match(/className="dock-residence"/g) ?? []).length, 1)
-  assert.ok(app.includes('<WidgetRail widgets={WIDGETS} book={widgetBook}'), 'App mounts the one rail')
+  assert.ok(app.includes('<WidgetRail widgets={worldWidgets()} book={widgetBook}'), 'App mounts the one rail: its own widgets and every panel in the widget slot')
   for (const old of ['<ModeContextDock', '<AgentContextDock']) assert.ok(!app.includes(old), `${old} is gone from App`)
 })
