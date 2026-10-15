@@ -1,5 +1,5 @@
 /* Scene transport scrubber, time domains and the session playing/standing markers. */
-/* Two-class selector: NativeCompositionViews.css sets nowrap on the bare class and loads later. */
+/* Two-class selector: it outranked the bare-class nowrap of the Session view's stylesheet (deleted 15 Oct). */
 .native-scene-transport .native-scene-controls{flex-wrap:wrap;row-gap:3px}
 .native-scene-controls button{min-height:22px}
 .native-scene-controls .native-scene-scrub{flex:1 1 120px;min-width:80px;height:22px;margin:0;padding:0;accent-color:var(--accent);background:transparent;border:0;cursor:pointer}

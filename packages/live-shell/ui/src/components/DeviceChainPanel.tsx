@@ -3,7 +3,7 @@
 // (live/LiveClip.tsx). The host draws the one head and the drop zone; nothing here draws a head, a card or a hint of its own.
 import type { PanelContext } from '../shell/panels'
 import type { SetDocument } from '../shell/document'
-import type { SetSelection } from './SessionView'
+import type { SetSelection } from '../shell/liveSelection'
 import { LiveDeviceChain } from '../live/LiveDeviceChain'
 import { LiveClip } from '../live/LiveClip'
 export type DetailMode = 'clip' | 'device'

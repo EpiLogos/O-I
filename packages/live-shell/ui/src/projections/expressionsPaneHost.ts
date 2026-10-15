@@ -9,9 +9,9 @@
 // - the centre residence's style while the frame is placed (zero-size, out of flow; the frame's own container is what moves).
 
 import {useSyncExternalStore} from 'react'
-import type {ComponentProps, CSSProperties} from 'react'
+import type {CSSProperties} from 'react'
 import type {HostedAppState} from '@epilogos/expressions-boundary'
-import type {NativeStageTools} from '../components/NativeStageTools'
+import type {StageRun} from '../components/expressions/studio/StudioStage'
 import {NATIVE_PRESENT_EXPRESSIONS} from '../native/openStudio'
 
 /** What the one hosted frame presents: the native Expression's ref and its document's name, or null when no native Expression
@@ -21,10 +21,11 @@ export interface HostedExpressionsReading {
   title: string | null
 }
 
-/** The frame's chrome, published by value: the stage state and runner the toolbar reads, and the faults the panel shows. */
+/** The frame's chrome, published by value: the stage state and runner the Studio's stage sections read, and the faults the
+ * panel shows. */
 export interface HostedExpressionsChrome {
   state: HostedAppState | null
-  run: ComponentProps<typeof NativeStageTools>['run']
+  run: StageRun | null
   faults: readonly string[]
   /** Reopen the native work when the frame's host is gone (the old centre residence's "Reopen native work", hidden since
    * F2): the Studio carries it as a mark on its head. */

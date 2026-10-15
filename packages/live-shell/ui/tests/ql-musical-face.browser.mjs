@@ -11,9 +11,10 @@ import {fileURLToPath} from 'node:url'
 //      owner reading (the honest refusing state naming the launch contract),
 //      then bound to an owner-shaped fixture reading (labelled: shaped like
 //      the native contracts — NOT a live owner);
-//   2. both QL track adapters rendering on the Timeline projection's
-//      arrangement presentation, through the same World-cut presentation the
-//      L4 cut renders;
+//   2. both QL track adapters rendering on the one Arrangement ruler
+//      (frame/tracks/ArrangementRuler.tsx), the view the tracks pane draws
+//      every mode's tracks in (the World-cut presentation this walk first
+//      used was deleted on 15 Oct, FOUNDATION §7);
 //   3. the sample-clock stratum's mapping demonstrated on-page (declared
 //      table rows, an anchor conversion, the spine chronos binding).
 // No native effects, no audio, no sounding claim anywhere.
@@ -30,7 +31,7 @@ import {createRoot} from 'react-dom/client'
 import {loadWorldShellFamilies} from './src/inhabitants/worldShellFamilies'
 import {inhabitantManifest} from './src/inhabitants/manifest'
 import {InhabitantRack} from './src/inhabitants/inhabitantRack'
-import {TimelineProjectionResidence} from './src/projections/timelineResidence'
+import {ArrangementRuler} from './src/frame/tracks/ArrangementRuler'
 import {createTimeSpine} from './src/timeline/timeSpine'
 import {projectQlAudioTracks} from './src/timeline/qlAudioTrackAdapter'
 import {projectQlPhysicsTracks} from './src/timeline/qlPhysicsTrackAdapter'
@@ -121,21 +122,8 @@ demonstration.civil_day = demonstration.instant_at_samples.ok
 window.__demonstration = demonstration
 
 const transport = {kind: 'unavailable', reason: 'scripted capture (no kernel transport in this harness)'}
-const world = {
-  source: {
-    status: 'live', error: null,
-    now: {instantUnixMs: Date.UTC(2026, 9, 9, 12, 0, 0), dayRef: '2026-10-09', source: 'capture fixture (no kernel read)'},
-    events: [],
-    sets: [audioSet, physicsSet],
-    eventByClipId: new Map(),
-    admittedRuns: [],
-    admittedRunsError: null,
-    readAtUnixMs: Date.UTC(2026, 9, 9, 12, 0, 0),
-    readCadence: null,
-  },
-  spine,
-  selectOccasion: () => {},
-}
+// The two sets side by side, as the tracks pane lays several sets (frame/tracks/modeTracks.ts mergeSets).
+const qlSets = {columns: audioSet.columns, tracks: [...audioSet.tracks, ...physicsSet.tracks], clips: [...audioSet.clips, ...physicsSet.clips]}
 
 function Harness() {
   const mode = params.get('view') === 'timeline' ? 'timeline' : 'rack'
@@ -144,11 +132,7 @@ function Harness() {
       {mode === 'rack'
         ? <InhabitantRack manifests={[inhabitantManifest('quaternal-logic')]} transport={transport}
             instrumentReading={reading}/>
-        : <TimelineProjectionResidence set={null} document={null}
-            selection={{track: 0, scene: null}} select={() => {}}
-            colors={[]} setColor={() => {}}
-            session={undefined} arrangement={undefined}
-            compactTransport={false} presented="arrangement" world={world}/>}
+        : <ArrangementRuler set={qlSets} selection={{select: () => {}}}/>}
       <pre data-sample-clock-demonstration style={{color: '#8a8f98', fontSize: 11, padding: 12}}>
         {JSON.stringify(demonstration, null, 2)}
       </pre>
@@ -250,26 +234,22 @@ try {
 
   // ── step 3: both adapters on the Timeline (arrangement presentation) ────
   await page.goto(`${page_.url}/?view=timeline&reading=fixture`, {waitUntil: 'domcontentloaded'})
-  await page.locator('.world-timeline.wt-arrangement').waitFor({timeout: 20000})
-  const audioGroup = await page.locator('.wt-arrangement .wt-group-head', {hasText: 'QL · audio'}).count()
-  const physicsGroup = await page.locator('.wt-arrangement .wt-group-head', {hasText: 'QL · physics'}).count()
-  assert.equal(audioGroup, 1, 'the QL audio group renders')
-  assert.equal(physicsGroup, 1, 'the QL physics group renders')
-  const audioRows = await page.locator(".wt-arrangement .wt-row[data-track-row^='ql-audio:']").count()
-  const physicsRows = await page.locator(".wt-arrangement .wt-row[data-track-row^='ql-physics:']").count()
+  await page.locator('.tl[data-tracks-view="arrangement"]').waitFor({timeout: 20000})
+  const audioRows = await page.locator(".tl .tl-lane[data-track^='ql-audio:']").count()
+  const physicsRows = await page.locator(".tl .tl-lane[data-track^='ql-physics:']").count()
   assert.equal(audioRows, 2, 'the resonator and emitter lanes render')
   assert.equal(physicsRows, 3, 'the resonator, visual-only and collision-trigger lanes render')
-  const audioClips = await page.locator(".wt-arrangement .wt-row[data-track-row^='ql-audio:'] .wt-clip").count()
-  const physicsClips = await page.locator(".wt-arrangement .wt-row[data-track-row^='ql-physics:'] .wt-clip").count()
+  const audioClips = await page.locator(".tl .tl-lane[data-track^='ql-audio:'] .tl-clip").count()
+  const physicsClips = await page.locator(".tl .tl-lane[data-track^='ql-physics:'] .tl-clip").count()
   assert.equal(audioClips, 2, 'both audio clips place')
   assert.equal(physicsClips, 3, 'all three physics clips place')
-  const ghostClip = page.locator(".wt-arrangement .wt-row[data-track-row^='ql-physics:glyph'] .wt-clip").first()
+  const ghostClip = page.locator(".tl .tl-lane[data-track^='ql-physics:glyph'] .tl-clip").first()
   assert.match(await ghostClip.innerText(), /visual-only/, 'the visual-only glyph keeps its honest standing on the Timeline')
   const capture3 = await shot('03-ql-audio-and-physics-adapters-on-timeline.png')
   steps.push({
-    name: 'both adapters render on the Timeline: QL · audio (resonator + emitter lanes) and QL · physics (resonator + visual-only + collision-trigger), role standing carried on every clip',
+    name: 'both adapters render on the one Arrangement ruler: the QL audio lanes (resonator + emitter) and the QL physics lanes (resonator + visual-only + collision-trigger), role standing carried on every clip',
     capture: capture3,
-    assertions: {audioGroup, physicsGroup, audioRows, physicsRows, audioClips, physicsClips},
+    assertions: {audioRows, physicsRows, audioClips, physicsClips},
   })
 
   // ── step 4: the sample-clock mapping demonstration ───────────────────────

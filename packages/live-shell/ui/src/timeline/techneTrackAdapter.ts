@@ -19,7 +19,7 @@
 //   the clip the source walk names (`clipId`), else the stop itself as a clip, labelled and placed as the stop is. A reading's
 //   event clip stands in the row of the derived whole-reading walk's stop for the same event (same label, same year); an event the
 //   walk does not stand has a row of its own. A run receipt is one row each, newest first;
-// - ruler: one, with the declared break into today (worldTimelinePresentation.tsx TODAY_BREAK, 61%): material with no time
+// - ruler: one, with the declared break into today (61%, TECHNE_DEEP_SHARE below): material with no time
 //   first ("no time" slots, in order, no date invented), then deep history on the atlas's non-linear scale
 //   (projections/atlas/src/data/time.ts createTimeScale, adopted by import, never re-ported), then the covered civil days'
 //   hours (UTC), end to end. The ruler starts at 0, so a year is placed by the scale and never by its sign. A clip's `span` is the
@@ -62,8 +62,9 @@ export const TECHNE_TRACK_ADAPTER_ID = 'techne-stream-tracks'
 /** The ruler's length, in its own units. Large enough that the row-end-to-end fallback the shared Arrangement keeps for a clip
  * with no place can never outrun it. */
 export const TECHNE_RULER_UNITS = 10_000
-/** The declared break into today: deep history keeps this share of the ruler, the covered civil days take the rest
- * (projections/worldTimelinePresentation.tsx `TODAY_BREAK = 61`; tests/techne-tracks.test.mjs holds the two together). */
+/** The declared break into today: deep history keeps this share of the ruler, the covered civil days take the rest. The World
+ * cut's own presentation declared it first (`TODAY_BREAK = 61`, deleted with that presentation on 15 Oct); this is now the one
+ * declaration. */
 export const TECHNE_DEEP_SHARE = 0.61
 /** Ruler units one "no time" slot takes. */
 const NO_TIME_UNIT = 10
@@ -83,8 +84,8 @@ export const DYNAMICS_ROUTE_WALK_KIND = 'dynamics-route'
 export const RUN_TRACK_KINDS: ReadonlySet<string> = new Set(['run', 'run-overflow'])
 const RUN_OVERFLOW_KIND = 'run-overflow'
 
-/** A stop launches only what the Expression door opens: an `expression:` ref (timeline/JourneyRows.tsx `isExpressionRef`, line
- * 19). Any other scene ref a family carries is named, never handed to the door as if it were an Expression. */
+/** A stop launches only what the Expression door opens: an `expression:` ref. Any other scene ref a family carries is named,
+ * never handed to the door as if it were an Expression. */
 export const isExpressionRef = (ref: string): boolean => ref.startsWith('expression:')
 
 const STREAMS = [

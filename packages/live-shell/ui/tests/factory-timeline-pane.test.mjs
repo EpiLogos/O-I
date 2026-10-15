@@ -36,7 +36,6 @@ export async function load(u, c, n) {
 const {fixtureCorpus} = await import('../src/projections/atlas/provider/fixtureCorpus.ts')
 const {projectAionReading} = await import('../src/projections/atlas/aionTimeline.ts')
 const {createTimeSpine} = await import('../src/timeline/timeSpine.ts')
-const {TimelineProjectionResidence} = await import('../src/projections/timelineResidence.tsx')
 const host = await import('../src/projections/timelinePaneHost.ts')
 const pane = await import('../src/projections/timelinePane.tsx')
 const {projectionModule} = await import('../../../../desktop/cradle/src/surface/projectionModules.ts')
@@ -137,12 +136,13 @@ test('a focus without a presentation names none: the agent tab and an Earth pane
   assert.equal(pane.factoryFocusedPane('projection.timeline', 'session').presentation, 'session')
 })
 
-test('the World cut mounts one World presentation per retained view — never a residence-level duplicate', async () => {
-  const {readFile} = await import('node:fs/promises')
-  const residence = await readFile(new URL('../src/projections/timelineResidence.tsx', import.meta.url), 'utf8')
-  assert.doesNotMatch(residence, /<WorldTimelinePresentation/, 'the residence renders no World presentation of its own')
-  for (const view of ['SessionView', 'ArrangementView']) {
-    const src = await readFile(new URL(`../src/components/${view}.tsx`, import.meta.url), 'utf8')
-    assert.match(src, /if \(world\) return <WorldTimelinePresentation/, `${view} presents the World cut itself`)
+// FOUNDATION §7 (15 Oct): the World cut's residence and the views it retained were drawn by nothing once the tracks pane became
+// the centre; they are deleted, and the pane body above is the one Session and Arrangement.
+test('the World cut residence, its Session and Arrangement views and the World presentation are deleted: the tracks pane is the one Session and Arrangement', async () => {
+  const {existsSync} = await import('node:fs')
+  for (const name of ['projections/timelineResidence.tsx', 'projections/timelinePresentation.ts', 'components/SessionView.tsx',
+    'components/ArrangementView.tsx', 'projections/worldTimelinePresentation.tsx', 'timeline/JourneyRows.tsx']) {
+    assert.ok(!existsSync(new URL(`../src/${name}`, import.meta.url)), `${name} is deleted`)
   }
+  assert.equal(pane.TimelinePaneBody.name, 'TracksPane')
 })

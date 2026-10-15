@@ -19,8 +19,7 @@
 // set does not carry the atlas pane's module graph.
 import {useMemo, useRef, useSyncExternalStore} from 'react'
 import {subscribeSuiteStanding, suiteStanding} from '../../projections/atlas/provider/suiteStanding'
-import {walkStopFocus, type WalkStopFocus} from '../../timeline/journeyWalks'
-import type {JourneyPresentation} from '../../timeline/JourneyRows'
+import {walkStopFocus, type JourneyPresentation, type WalkStopFocus} from '../../timeline/journeyWalks'
 import type {TemporalEventRow} from '../../timeline/timeSpine'
 import {projectTechneTracks, worldReadingOf, type TechneControls} from '../../timeline/techneTrackAdapter'
 import type {WorldTrackSet} from '../../timeline/worldTrackAdapter'
