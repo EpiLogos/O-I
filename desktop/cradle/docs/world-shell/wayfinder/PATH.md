@@ -100,7 +100,6 @@ objections verbatim and the full validation (`BRIEF-BUILDER.md`); the lead conve
 | Ticket | Who | Zone | Since |
 |---|---|---|---|
 | O — Places is the atlas, alone (R1, lane-4 T1–T30 + lane-2 T21): listed in `tickets/T-PLACES-ONTO-ATLAS.md`, ported onto the M4 plate and the transport, then the frame's Places map and lens removed | Opus builder | `src/projections/atlas/**`, `src/inhabitants/ql/devices/**`, `atlasFaceBodies.tsx`, `modeTransports.tsx` (Technē binding), `panels/knowledge.tsx`, the frame's `psychogeographic/**` and Places lens | 15 Oct |
-| R — Technē's wiki load stops waiting on the kernel: FilesList and FileRead as prepared reads (registration in a finish step under the lock), one shared `central.world` reading for the prepared knowledge read; measured before and after with lane Q's harness | Opus builder | `desktop/cradle/kernel/src/{lib.rs (FilesList/FileRead, prepare_owner_read), owner_read.rs, knowledge_prepared.rs, read_cache.rs, files.rs}` | 15 Oct |
 | Native screen pass against the mockup renders; N1; the lanes' convergence | lead | `App.tsx`, `native/Workbench.tsx`, `shell/modeFrames.ts`, the book, the register | 14 Oct |
 
 Then: the 126 targets re-homed (lane M, FOUNDATION §8): `acceptance.py rehome` re-opens every cited path:line, runs the
@@ -111,6 +110,13 @@ Palace). Ranked: G1 the stage's file exports have no native receiver (the main w
 cancels `<a download>`: lane-1 B2/B3); G2 the Instruments rail keeps no subject into Graph (D1); G3 the shell carries no
 frame deep-link address (E22); R1 Places onto the atlas (31 targets); R2 palaces onto the atlas (N4, 9); S1 mount N2's
 subject door — 76 homes read their facets only on a Wiki-bound Scene, reached today only by Examine in the Graph pane.
+Then: Technē's wiki load stops waiting on the kernel (`8c6c1e5fd`, `faecfa772`, lane R, measured on the real ground): file
+listings and reads are prepared reads (owner outside the lock, the file's registration recorded after it answers; list max
+2.4 → 0.2 s), the 17 registers share one `central.world` reading (17 → 1), and at most five AIKit knowledge reads run at once,
+so 16 of 17 registers read (unbounded: 9) and the load settles in ~32 s. Carried: AIKit's 5–20 s per relations call — the rest
+of the load — is AIKit's; FileBytes (the material route) still reads under the lock; the Graph's prepared read keeps its own
+World reading beside the knowledge read's.
+
 Then: the Graph op reads outside the kernel lock (`09a260655`, lane Q, measured on the real ground). Each Graph request had
 held the kernel lock through its owner calls, so AIKit's 20 s resolve held every other op (a Technē file listing waited 22 s;
 0.29 s now); an `all` request's inputs read at once (22.8 s → 8.1 s); input 4 (wikilinks) derives for the first time, its
