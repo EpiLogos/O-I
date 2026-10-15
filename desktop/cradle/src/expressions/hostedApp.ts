@@ -578,6 +578,9 @@ export interface HostedAppState {
   stage?: {mode: '2d' | '3d'; grid: boolean; snap: boolean; guides: boolean;
     tool?: 'select' | 'interact' | 'pin' | 'text' | 'formation' | 'orbit'; repeatPins?: boolean; videoTake?: boolean};
   hostMode?: HostedAppMode;
+  /** The frame's cut presents its native instrument full-stage (the Live cut's torus): it draws with no Expression open. In
+   * every other cut a frame with no native scene draws nothing, and the pane it stands over says what it waits for. */
+  presentsInstrument?: boolean;
 }
 
 /** Follow one frame's oi-app-state announcements. Only envelopes from that
