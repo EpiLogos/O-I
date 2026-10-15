@@ -55,7 +55,11 @@ The parent owns matching application changes in `nativeRecovery.ts`,
 address, read the exact checkpoint before first autosave, pass explicit scope
 to every draft helper, retain old work through its old binding, and never
 change a work's address when changing modes. A new/unconfigured work needs an
-explicit creation/selection route before hosted recovery can operate.
+explicit creation/selection route before hosted recovery can operate — since 15
+Oct the host is that route: with `selectOpenedWorks` it selects
+`{scope:'expressions', checkpoint_id: <ref>}` for a work it opens itself, and the
+first checkpoint is created through the owner's absent-basis CAS
+(wayfinder/tickets/T-RECOVERY-FOR-OPENED-WORKS.md).
 
 ## Native evidence
 
