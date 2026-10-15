@@ -144,7 +144,9 @@ test('the panel writes one checkpoint shape from both writers and reopens the fr
 test('the frame announces its address with its state, from the one place its link is written from', async () => {
   const app = await repo('desktop/cradle/expressions-app/field-studies-journeys/src/app.ts')
   const host = functionBody(app, 'hostAddress')
-  assert.match(host, /if\(deepLinkPending\|\|awaitingNativeBoot&&!nativeWorkspace\?\.nativeView\(\)\)return undefined;/, 'nothing before the opening link has settled')
+  // Only a native work has an address: nothing before the opening link has settled, and nothing while no native work stands (seen on
+  // screen 15 Oct: with no work open the Studio's head named the frame's own scene, "1 · Origin" at 0:00).
+  assert.match(host, /if\(deepLinkPending\|\|!nativeWorkspace\?\.nativeView\(\)\)return undefined;/, 'nothing before the opening link has settled, nor without a native work')
   assert.match(host, /const now=deepLinkAddressNow\(\);/)
   assert.match(host, /markerNamed\(store\.document\.markers\?\?\[\],now\.marker\)\?\.name/, 'the marker\'s name rides beside its ref')
   const sync = functionBody(app, 'syncDeepLinkAddress')
