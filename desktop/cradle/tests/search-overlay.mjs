@@ -89,6 +89,9 @@ try {
       check(await writing.evaluate(el=>document.activeElement===el && el.selectionStart===4 && el.selectionEnd===14),`${name}: Escape restores exact writing focus/selection`);
       await open();
       await fill('keyboard');
+      // `settled` can read the previous query's resting list before the new search starts (CI, 15 Oct: ArrowDown landed on the
+      // stale rows and the active row never became knowledge-search-1). The keyboard step waits for this query's own rows.
+      await page.waitForFunction(()=>[...document.querySelectorAll('.search-aperture li strong')].some(el=>el.textContent.includes('keyboard')));
       await input.press('ArrowDown');
       await page.waitForFunction(()=>document.querySelector('.search-query input')?.getAttribute('aria-activedescendant')==='knowledge-search-1');
       check(await input.getAttribute('aria-activedescendant')==='knowledge-search-1',`${name}: arrows select the native-order row`);
