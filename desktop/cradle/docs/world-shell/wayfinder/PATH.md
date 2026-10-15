@@ -104,7 +104,30 @@ objections verbatim and the full validation (`BRIEF-BUILDER.md`); the lead conve
 | The catalogue of designed devices (owner, 16 Oct: "the parallel lanes are developing the high end device component specs in the documentation lane, you can directly work from its … catalogue of pre designed UI, the wiring and UX integration should be somewhat trivial wiring"): `catalogue/panels/design.ts` is the contract, `panels/<family>__<face>.tsx` (exporting `design`, loaded through `loadDesign`) the designs. The runtime hosts each published device's design when one exists, else the generic plate; a device lane writes the binding (owner readings and writes on the design's value keys), never a panel | the owner's documentation lane | `inhabitants/catalogue/**` — read-only for every builder | 16 Oct |
 | F — Wave 0's defects: pane content follows its pane (the owner's report), palace entry from a frame pane, Expressions' transport overflow, the status bar's info line, the panes' tab reveal | builder | `projections/atlas/**` (not the plates), `frame/transport/**`, `components/StatusBar.tsx`, `native/workbench.css`, `native/Workbench.tsx`, `projections/framePlacement.ts`, `shell/ModeBrowser.tsx`, `techne/subject/worldRows.ts`, `frame/instrumentDoor.ts` | 16 Oct |
 | D — the door's revision_conflict the shell never hears; the Studio's false "edited since save"; a fault line that outlives its mode | builder | `desktop/cradle/expressions-app/**`, `techne/subject/**` (not `worldRows.ts`), `components/expressions/studio/**` | 16 Oct |
-| B0 — Wave B measured before it is briefed: the door kernel-direct post-install, idle processes, AIKit cold/warm, `oi` dispatch and shadowing, the writes under the lock, told-not-polled seams, Central's stale Day | investigator (read-only) | scratch only | 16 Oct |
+| W1 — AIKit's root register stays warm: the generic walk skips the live NOW field, `.central` and any `CACHEDIR.TAG` directory; the wiki projection cache prunes; Central writes `source-change-control.json` only on change; git_diff's test repos get unique paths | builder | ai-kit `env-1` (`speed/root-register-stays-warm`): `crates/aikit-cli/src/app/knowledge.rs`, `knowledge/**`, `tests/**`; Central `env-2` (`speed/source-horizon-writes-on-change`): `ctrl/src/source_horizon.rs`, `connectors/git-sync/src/git_diff.rs`, `ctrl/tests/**` | 16 Oct |
+
+Then: B0, Wave B measured (read-only investigator, 16 Oct, installed suite, kernel-direct on its own bridge; raw in the lead's
+scratch `wave-b/`). The kernel lock is no longer the cost: per-op lock_wait p95 < 8 ms, lock_held < 3 ms, the lock probe p95 0 ms;
+0 of 1,480 event pulls refused (the 15 Oct "Kernel replay refused (200)" was the browser's own failed body read,
+`desktop/cradle/src/kernel/bridge.ts:178-183`). The door is 23.6–24.3 s all at once, 31.7 s the way the shell loads it; a warm batch
+is 6.4 s. Causes, ranked by measured share: (1) AIKit's root register goes cold constantly — its walk covers `Control/agents/now`,
+`.central` and a cargo target (7,566 observations; ai-kit `knowledge.rs:3507-3640`, skips `:4604-4607`), and Central rewrites
+`.central/source-change-control.json` on every reconcile (`ctrl/src/source_horizon.rs:1049-1050`) — ~17 s of the door; (2) a batch
+answers only when its slowest item does (`knowledge_prepared.rs:208-224`; ai-kit `main.rs:4136-4170`); (3) the shell's 4-slot knowledge
+coordinator against the kernel's 250 ms gather window, +7.4–8.1 s (`desktop/cradle/src/knowledge/requests.ts:35`,
+`native/wikiSubjectStanding.ts:44-65`); (4) two `central.world.here` calls per batch item (~1.1 s each); (5) the graph's
+aikit_resolution killed at 20 s in every door (`knowledge.rs:118`, `graph.rs:362-372`); (6) visible idle ≈ 16.9 owner processes/min,
+13 refused Factory `project locate` per temporal read; no kernel receipts for NOW, receiving or Day writes; AIKit has no session
+change event; (7) the installed `oi` lacks K2 (unpinned dispatch 1.7–3.9 s, 6 shasum; `oi where` bypasses the cache even with K2);
+(8) by code-reading, ordered writes can hold the lock 60–1,800 s (receiving, SharedField and observe-stop, A2A, Factory acts,
+credentials, ProductActionRun, Setup, config, InvokeAction, provisioning). The native host logs no per-op timing
+(`src-tauri/src/main.rs:45`). Central's Day pointer reads 13 Oct against a civil 16 Oct (automatic rollover allowed by the policy; the
+routine disabled 13 Oct; days 13–15 never closed — the owner's ensure and archive recovery, offered as a press on the Day device, not
+run by the build). Lanes in order: W1 (out); W2 the door answers per register (ai-kit batch per item + `knowledge_prepared.rs` + the
+shell coordinator + the graph's resolution slot); W3 kernel receipts and dispatch (NOW/receiving/Day receipts so the floors can go,
+the Factory `locate` memo, the ordered writes as prepared or free forms, the native host's timing line, bridge.ts aborted vs
+refused); W4 `oi` (K2 lands with #677; `active_suite_executable_s0`, `world_heads.rs`, `oi where` on
+`verify_active_suite_receipt`; an update under an older `oi` supersedes regardless).
 
 Then: Wave 0, the native pass of the m4 build (`2de90416e`, stamp 20261015T-m4; product equal to HEAD; 16 Oct 00:33–00:45,
 computer-use, full-screen control, the window brought out of Stage Manager's strip). Seen working: Locations › O-I expands its
