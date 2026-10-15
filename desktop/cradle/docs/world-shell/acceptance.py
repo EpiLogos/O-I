@@ -1,9 +1,17 @@
 #!/usr/bin/env python3
-"""Initialize or verify the source-bound new-shell acceptance register.
+"""Initialize, verify or re-home the source-bound new-shell acceptance register.
 
 This instrument checks identity, provenance and closure evidence. It does not
 claim functionality from structural validity, existing tests or imported code.
 Initialization refuses to replace any previously recorded target progress.
+
+`rehome <input.json>` (FOUNDATION §8, added 15 Oct 2026) records, for every
+target, its home in the candidate (the component that draws or performs it and
+how a person reaches it) and its owner op (the suite operation its home calls),
+or no home and a named gap with the build ticket that would home it. Every
+cited path:line is re-opened and must hold its quote; every home is run through
+packages/live-shell/ui/scripts/candidate-reachable.mjs and refused when the
+candidate does not load it. It changes no progress axis and no target text.
 """
 from __future__ import annotations
 
@@ -32,6 +40,15 @@ LANES = {
     5: ("lane-5-journey-palace", "Journey / Palace", [f"T{i}" for i in range(1, 25)]),
 }
 AXES = ("implemented", "exercised", "passed", "failed", "blocked")
+# FOUNDATION §8 re-homing: the repository the cited paths are relative to, and the reachability measure the candidate is held to.
+REPO = CAMPAIGN.parents[3]
+REACHABILITY_SCRIPT = "packages/live-shell/ui/scripts/candidate-reachable.mjs"
+REHOME_FIELDS = ("home", "owner_op", "gap", "home_evidence")
+REHOME_CHANNELS = ("code-reading", "scripted via candidate-reachable", "headless", "computer-use")
+REHOME_CONDITIONS = ("none", "open-work", "open-work+wiki-scene")
+GAP_KINDS = ("unreachable", "no-owner-read", "no-native-receiver", "not-built")
+TICKET_KINDS = ("gap", "re-home", "door")
+CITED_AT = re.compile(r"^[^\s:]+:[1-9]\d*$")
 
 
 def digest(data: bytes) -> str:
@@ -268,6 +285,166 @@ def initialize() -> None:
     verify()
 
 
+def candidate_reachability(paths: list[str]) -> dict[str, str]:
+    """The candidate's own verdict per file: `product …`, `NOT …` (or `types …`), from candidate-reachable.mjs run at REPO."""
+    if not paths:
+        return {}
+    result = subprocess.run(["node", REACHABILITY_SCRIPT, *paths], cwd=REPO, capture_output=True, text=True, check=False)
+    verdicts = {}
+    for line in result.stdout.splitlines():
+        parts = line.split()
+        if len(parts) >= 2 and parts[1] in paths:
+            verdicts[parts[1]] = " ".join(line.split())
+    missing = [path for path in paths if path not in verdicts]
+    if missing:
+        raise ValueError(f"candidate-reachable gave no verdict for {missing}: {result.stderr.strip()[:400]}")
+    return verdicts
+
+
+def cited(record: dict) -> dict:
+    """Re-open a cited file and hold the line to its quote; the citation is stored as {at: path:line, quote}."""
+    if not isinstance(record, dict) or not isinstance(record.get("path"), str) or not isinstance(record.get("quote"), str) or not record["quote"]:
+        raise ValueError(f"A citation needs a path, a line and a quote: {record!r}")
+    line = record.get("line")
+    if not isinstance(line, int) or line < 1:
+        raise ValueError(f"A citation needs a positive line: {record!r}")
+    lines = (REPO / record["path"]).read_text().split("\n")
+    if line > len(lines) or record["quote"] not in lines[line - 1]:
+        raise ValueError(f"{record['path']}:{line} does not hold the cited quote {record['quote']!r}")
+    return {"at": f"{record['path']}:{line}", "quote": record["quote"]}
+
+
+def rehome_counts(rows: list[dict]) -> dict:
+    homed = [row for row in rows if row["home"] is not None]
+    gaps = [row for row in rows if row["gap"] is not None]
+    return {
+        "homed": len(homed), "gap": len(gaps),
+        "by_lane": {str(lane): {"homed": sum(row["lane"] == lane for row in homed), "gap": sum(row["lane"] == lane for row in gaps)} for lane in LANES},
+        "gap_by_kind": dict(sorted(Counter(row["gap"]["kind"] for row in gaps).items())),
+        "homed_by_condition": dict(sorted(Counter(row["home"]["condition"] for row in homed).items())),
+        "homed_on_a_retiring_home": sum("retires" in row["home"] for row in homed),
+        "screen_verified": sum(isinstance(row["home_evidence"]["screen"], dict) for row in rows),
+    }
+
+
+def verify_rehome(document: dict) -> dict | None:
+    """Structural law of the re-homing columns. Absent columns are the register before FOUNDATION §8 and pass as before."""
+    rows = document["targets"]
+    present = [row["id"] for row in rows if any(field in row for field in REHOME_FIELDS)]
+    if not present:
+        return None
+    assert len(present) == len(rows), "Re-homing is whole: every target carries home, owner_op, gap and home_evidence, or none does"
+    tickets = document.get("rehome_tickets")
+    assert isinstance(tickets, list) and tickets, "Re-homing names its build tickets (rehome_tickets)"
+    routes, chains = document.get("rehome_routes"), document.get("rehome_owner_ops")
+    assert isinstance(routes, dict) and routes and isinstance(chains, dict) and chains, "Re-homing names its routes and owner chains"
+    for name, route in routes.items():
+        assert route["condition"] in REHOME_CONDITIONS and route["chain"] and all(CITED_AT.match(step["at"]) and step["quote"] for step in route["chain"]), f"Route cited: {name}"
+    for name, chain in chains.items():
+        assert chain["op"] and chain["calls"] and all(CITED_AT.match(call["at"]) and call["quote"] for call in chain["calls"]), f"Owner chain cited: {name}"
+    ids = {row["id"] for row in rows}
+    by_ticket = {}
+    for ticket in tickets:
+        assert ticket["id"] not in by_ticket, f"Duplicate ticket: {ticket['id']}"
+        assert ticket["kind"] in TICKET_KINDS and ticket["title"] and ticket["what"] and isinstance(ticket["rank"], int), f"Ticket incomplete: {ticket['id']}"
+        assert ticket["targets"] and set(ticket["targets"]) <= ids, f"Ticket names an unknown target: {ticket['id']}"
+        by_ticket[ticket["id"]] = ticket
+    assert sorted(ticket["rank"] for ticket in tickets) == list(range(1, len(tickets) + 1)), "Ticket ranks run 1..n"
+    for row in rows:
+        assert all(field in row for field in REHOME_FIELDS), f"Re-homing incomplete: {row['id']}"
+        home, owner, gap, evidence = (row[field] for field in REHOME_FIELDS)
+        assert (home is None) != (gap is None), f"A target is homed or a named gap, never both nor neither: {row['id']}"
+        channels = evidence["channels"]
+        assert channels and set(channels) <= set(REHOME_CHANNELS) and "code-reading" in channels, f"Evidence channels: {row['id']}"
+        screen = evidence["screen"]
+        assert (isinstance(screen, str) and screen.startswith("UNVERIFIED")) or (isinstance(screen, dict) and screen.get("channel") == "computer-use" and screen.get("evidence")), f"Screen leg is UNVERIFIED or a computer-use record: {row['id']}"
+        assert evidence["recorded_on"] and evidence["candidate_head"], f"Evidence basis: {row['id']}"
+        if owner is not None:
+            assert owner["op"] and CITED_AT.match(owner["call"]["at"]) and owner["call"]["quote"], f"Owner op cites its call: {row['id']}"
+            assert owner["chains"] and set(owner["chains"]) <= set(chains), f"Owner op names known owner chains: {row['id']}"
+        if home is not None:
+            assert owner is not None, f"A home reads its owner: {row['id']}"
+            assert CITED_AT.match(home["component"]["at"]) and home["component"]["quote"], f"Home component cited: {row['id']}"
+            assert home["reach"] and home["route"] in routes, f"Home reach names a known route: {row['id']}"
+            assert home["condition"] == routes[home["route"]]["condition"], f"Home condition is its route's: {row['id']}"
+            assert evidence["reachability"].startswith("product "), f"A home the candidate does not load is no home: {row['id']}"
+            assert "scripted via candidate-reachable" in channels, f"A home names its reachability verdict: {row['id']}"
+        else:
+            assert gap["kind"] in GAP_KINDS and gap["what"], f"Gap named: {row['id']}"
+            assert gap["ticket"] in by_ticket and by_ticket[gap["ticket"]]["kind"] == "gap", f"A gap names its build ticket: {row['id']}"
+            assert row["id"] in by_ticket[gap["ticket"]]["targets"], f"The gap's ticket lists it: {row['id']}"
+    for ticket in tickets:
+        if ticket["kind"] == "gap":
+            assert all(next(row for row in rows if row["id"] == target)["gap"] is not None for target in ticket["targets"]), f"A gap ticket lists only gaps: {ticket['id']}"
+    counts = rehome_counts(rows)
+    assert document["counts"].get("rehome") == counts, "counts.rehome differs from the rows; re-run rehome"
+    return counts
+
+
+REHOME_STANDING = ("2026-10-15 (FOUNDATION §8, ticket M): every target carries home and owner_op, read from the code and held to "
+                   "candidate-reachable.mjs, or home null with a named gap and its build ticket (rehome_tickets, counts.rehome); "
+                   "the screen leg is the lead's and stands UNVERIFIED until a computer-use record replaces it.")
+
+
+def rehome(input_path: Path, reachability=candidate_reachability) -> None:
+    document = json.loads((OUT / "targets.json").read_text())
+    data = json.loads(Path(input_path).read_text())
+    rows = document["targets"]
+    entries, notes, tickets = data["rows"], data.get("notes", {}), data["tickets"]
+    expected = {row["id"] for row in rows}
+    if set(entries) != expected:
+        raise ValueError(f"Re-homing is whole: missing {sorted(expected - set(entries))[:5]}, unknown {sorted(set(entries) - expected)[:5]}")
+    if not data.get("recorded_on") or not data.get("candidate_head"):
+        raise ValueError("A re-homing names the day and the candidate revision it read")
+    # The person's routes to the homes and the owner chains the homes call are shared by many targets: each is cited once.
+    routes = {name: {"chain": [cited(step) for step in route["chain"]], "condition": route["condition"]} for name, route in data["routes"].items()}
+    chains = {name: {"op": chain["op"], "calls": [cited(call) for call in chain["calls"]]} for name, chain in data["owner_ops"].items()}
+    homes = sorted({entry["home"]["component"]["path"] for entry in entries.values() if entry["home"]})
+    verdicts = reachability(homes)
+    for row in rows:
+        entry = entries[row["id"]]
+        home, owner, gap = entry["home"], entry["owner_op"], entry["gap"]
+        if (home is None) == (gap is None):
+            raise ValueError(f"{row['id']}: homed or a named gap, never both nor neither")
+        if owner is not None and not set(owner["chains"]) <= set(chains):
+            raise ValueError(f"{row['id']}: an owner chain the input does not name")
+        recorded_owner = None if owner is None else {"op": owner["op"], "call": cited(owner["call"]), "chains": owner["chains"], **({"note": owner["note"]} if owner.get("note") else {})}
+        evidence = {"channels": ["code-reading"], "screen": "UNVERIFIED — the lead's computer-use leg", "recorded_on": data["recorded_on"], "candidate_head": data["candidate_head"]}
+        if home is not None:
+            verdict = verdicts[home["component"]["path"]]
+            if not verdict.startswith("product "):
+                raise ValueError(f"{row['id']}: the candidate does not load its home ({verdict})")
+            if home["route"] not in routes:
+                raise ValueError(f"{row['id']}: a route the input does not name")
+            recorded_home = {"component": cited(home["component"]), "reach": home["reach"], "route": home["route"], "condition": home["condition"]}
+            if home.get("retires"):
+                recorded_home["retires"] = home["retires"]
+            evidence["channels"].append("scripted via candidate-reachable")
+            evidence["reachability"] = verdict
+            row["home"], row["gap"] = recorded_home, None
+        else:
+            recorded_gap = {"kind": gap["kind"], "what": gap["what"], "ticket": gap["ticket"]}
+            if gap.get("where"):
+                recorded_gap["where"] = cited(gap["where"])
+            row["home"], row["gap"] = None, recorded_gap
+        row["owner_op"], row["home_evidence"] = recorded_owner, evidence
+        if row["id"] in notes:
+            note = f"{data['recorded_on']} re-home: {notes[row['id']]}"
+            if note not in row["notes"]:
+                row["notes"].append(note)
+    document["rehome_routes"] = routes
+    document["rehome_owner_ops"] = chains
+    document["rehome_tickets"] = tickets
+    document["rehome_basis"] = {"recorded_on": data["recorded_on"], "candidate_head": data["candidate_head"], "tool": "acceptance.py rehome",
+                                "law": "A target counts as implemented only when its home is reachable in the candidate and reads its real owner (FOUNDATION §8). Homes are read from the code (each path:line re-opened against its quote) and held to candidate-reachable.mjs; the person's path to each home is code-read; the screen leg is the lead's."}
+    if REHOME_STANDING not in document["standing"]:
+        document["standing"] = f"{document['standing']} {REHOME_STANDING}"
+    document["counts"]["rehome"] = rehome_counts(rows)
+    verify_rehome(document)
+    save("targets.json", document)
+    verify()
+
+
 def verify() -> None:
     document = json.loads((OUT / "targets.json").read_text())
     refs = json.loads((OUT / "references.json").read_text())
@@ -312,17 +489,25 @@ def verify() -> None:
             assert ref["classification"] == "interface-only" and not ref["code_entered"], f"Uncleared adoption: {ref['id']}"
     counts = {str(lane): sum(row["lane"] == lane for row in rows) for lane in LANES}
     result = {"schema": "techne.new-shell-register-verification/v1", "result": "passed", "scope": "identity / source revision / target text / dependency / licence / evidence-record integrity only; no target functionality asserted", "total": len(rows), "by_lane": counts, "by_status": dict(Counter(row["status"] for row in rows)), "progress_yes": {axis: sum(row["progress"][axis]["state"] == "yes" for row in rows) for axis in AXES}, "licence_text_absent_no_code_entered": licence_text_absent}
+    rehomed = verify_rehome(document)
+    if rehomed is not None:
+        result["rehome"] = rehomed
     save("register-verification.json", result)
     print(json.dumps(result, ensure_ascii=False))
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("operation", choices=("initialize", "verify"))
+    parser.add_argument("operation", choices=("initialize", "verify", "rehome"))
+    parser.add_argument("input", nargs="?", help="rehome: the re-homing input (rows, notes, tickets)")
     args = parser.parse_args()
     try:
         if args.operation == "initialize":
             initialize()
+        elif args.operation == "rehome":
+            if not args.input:
+                raise ValueError("rehome needs its input file")
+            rehome(Path(args.input))
         else:
             verify()
     except (ValueError, AssertionError, OSError, KeyError) as error:
