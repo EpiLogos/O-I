@@ -101,8 +101,8 @@ objections verbatim and the full validation (`BRIEF-BUILDER.md`); the lead conve
 |---|---|---|---|
 | Native screen pass against the mockup renders; N1; the lanes' convergence | lead | `App.tsx`, `native/Workbench.tsx`, `shell/modeFrames.ts`, the book, the register | 14 Oct |
 | Y — the hosted frame shows only its field in a pane; its chrome's controls onto the Studio, the M1′–M3′ plates and the transport (`tickets/T-FRAME-CHROME-ONTO-PLATES.md`) | Opus builder | the frame's chrome and host-mode handling, `protocol.ts` (commands/state only), `components/expressions/studio/**`, the M1′–M3′ plates, `shell/modeTransports.tsx` | 15 Oct |
-| K — the kernel never holds its lock while an owner process runs: polled owner reads prepared outside the lock, one shared host dispatch, every owner call bounded | Opus builder | `desktop/cradle/kernel/src/**`, `src-tauri/src/main.rs` (op path) | 15 Oct |
-| A — an AIKit knowledge read costs what the question costs: the runtime kept between calls on a change key, wiki relations without tree discovery, a batch form (ai-kit, branch `speed/knowledge-resident-runtime`, seat env-1/ai-kit) | Opus builder | ai-kit `crates/aikit-cli/src/app/knowledge.rs` and the knowledge modules | 15 Oct |
+| Q — the shell reads an owner when told: agency on focus and its own acts (never hidden), temporal on a Day/NOW change, one store each for task/definition/workcell readings, the register load through the knowledge coordinator, Settings read when opened, a refusal remembered for its epoch | Opus builder | `ui/src/agent/**`, `timeline/temporalPoll.ts`, `native/wikiSubjectStanding.ts` + the coordinator, `settings/**`, a new owners store | 15 Oct |
+| K2 — the door's register reads coalesce into AIKit's relations batch (fallback to singles when the verb is absent), the remaining pure owner reads leave the lock, FileRead's retained write leaves it, `oi` caches its suite verification | Opus builder | `desktop/cradle/kernel/src/**`, `cli/src/product_command_route.rs` | 15 Oct |
 
 Then: the 126 targets re-homed (lane M, FOUNDATION §8): `acceptance.py rehome` re-opens every cited path:line, runs the
 reachability script over every home and records home, owner op and evidence — or a named gap — on each row; `verify` holds
@@ -112,6 +112,18 @@ Palace). Ranked: G1 the stage's file exports have no native receiver (the main w
 cancels `<a download>`: lane-1 B2/B3); G2 the Instruments rail keeps no subject into Graph (D1); G3 the shell carries no
 frame deep-link address (E22); R1 Places onto the atlas (31 targets); R2 palaces onto the atlas (N4, 9); S1 mount N2's
 subject door — 76 homes read their facets only on a Wiki-bound Scene, reached today only by Examine in the Graph pane.
+Then: lane K landed (`98385f92d`): one kernel dispatch for both hosts — prepare under the lock, owner work outside it, finish under
+it — with prepared forms for agency, encounter, task, definition, roster, harness, World/project reads and browses (a superseded
+navigation retired), Central/workcell/day/NOW reads; one bounded runner gives every owner call a limit and a named refusal; the
+session scope is kept per working directory. Measured on its own bridge: lock-probe p95 2090 → 10 ms (load ~23) and 930 → 0 ms (load
+~8), agency_read p50 1680 → 700 ms; the native host's runtime is the next candidate pass. Lane A (ai-kit PR #509, branch
+`speed/knowledge-resident-runtime`, seat env-1/ai-kit claimed): a discovery ledger reused while nothing it observed changed, relation
+views that build only what they read, the wiki projection written only on change, and `knowledge relations-batch`. Measured: O-I
+relations warm 19.6–31 s → 0.67–0.95 s, root 8.8–14.1 s → 0.52–0.78 s, the 17 registers ≈81 s → a 7.2–7.9 s warm batch (35 s
+cold); relations byte-equal 17/17 with context_id masked. Not done by design: a register-only read (today's answers carry the root
+register and sibling spaces). Open: Central's `effective-sources` refuses a convention-inherited Project (rc=2); the root walk stops
+at the live NOW field, so a NOW write re-walks it; `~/.aikit/cache/knowledge/wiki` holds 2.3 GB unpruned.
+
 Then: speed, measured (15 Oct, two investigators; artefacts in the lead's scratch `inv-speed/` and `ph/`). The software, not only
 the machine: (1) every AIKit knowledge read rebuilds its runtime — walks the project tree, rewrites a SQLite index, calls Central six
 times — 5.7–55 s a read, so 10 of the door's 17 register reads die at the kernel's 20 s limit (ai-kit `knowledge.rs` :690/:1570/:2944);
