@@ -34,7 +34,9 @@ const {renderToStaticMarkup} = await import('react-dom/server')
 const React = await import('react')
 const {MODE_GRAMMAR, SURF_MODES, TRANSPORT_SLOT_IDS, slotMeaning, slotDataI} = await import('../src/shell/modeGrammar.ts')
 const {ModeModeRail} = await import('../src/shell/ModeModeRail.tsx')
-const {LiveSessionEmpty, LiveArrangementEmpty} = await import('../src/shell/live/LiveEmptyStates.tsx')
+const {liveSetTrackAdapter} = await import('../src/timeline/liveSetTrackAdapter.ts')
+const {TracksPane} = await import('../src/frame/tracks/TracksPane.tsx')
+const paneHost = await import('../src/projections/timelinePaneHost.ts')
 const {StatusBar} = await import('../src/components/StatusBar.tsx')
 const {DeviceChainPanel} = await import('../src/components/DeviceChainPanel.tsx')
 
@@ -70,34 +72,45 @@ test('every other mode keeps Live\'s transport meanings as re-meanings, never re
 })
 
 // ————————————————————————————————————————————————————————————————————————
-// The designed empty states (the widget law: framed grid + browser
-// affordances visible, never sparse floats; structure, never set content).
+// The designed empty states (the widget law: a framed grid, never a sparse
+// float; structure, never set content). Live's own empty Session and
+// Arrangement (shell/live/LiveEmptyStates.tsx) stood inside the retired
+// SessionView and ArrangementView and were deleted with them on 15 Oct
+// (FOUNDATION §7): the one Session grid and Arrangement ruler draw Live's
+// empty set now, over Live's own adapter, in the tracks pane the App
+// publishes Live's reading to.
+const noSet = liveSetTrackAdapter.project({set: null, document: null})
+const liveWithNoSet = {mode: 'live', set: null, document: null, selection: {track: 0, scene: null}, select() {}, colors: [], setColor() {},
+  session: undefined, arrangement: undefined, selectTrackItem() {}, waiting: 'Open a Live set from the browser to see its tracks.'}
+const paneOf = presentation => {
+  paneHost.publishTimelineReading(liveWithNoSet)
+  paneHost.setTimelinePanePresentation(presentation)
+  return htmlOf(React.createElement(TracksPane))
+}
+/** The reason the empty frame states, as drawn (its words are the pane's; that they are there is the law). */
+const dropReason = html => html.match(/<div class="sg-drop" role="status">([^<]+)<\/div>/)?.[1]
 
-test('Live · Session with no set: the framed clips-and-scenes grid, not a floating sentence', () => {
-  const html = htmlOf(React.createElement(LiveSessionEmpty))
-  assert.match(html, /data-live-empty="session"/)
-  assert.match(html, /class="session-view live-empty"/, 'the presentation\'s own density classes')
-  assert.match(html, /live-empty-disclosure/, 'the disclosure stands INSIDE the frame')
-  assert.match(html, /Open a Live set from the <b>browser<\/b>/, 'the browser affordance is the named fill')
-  assert.match(html, /class="track-header"/, 'track header columns are drawn')
-  assert.match(html, /Main/, 'the Main scene rail is drawn')
-  assert.match(html, /track-stop-row/, 'the stop row is drawn')
-  const slots = [...html.matchAll(/class="clip-slot[^"]*"/g)]
-  assert.ok(slots.length >= 5, 'clip slots drawn across the ready columns')
-  assert.match(html, /Track 1/, 'structural track names (never set content)')
+test('Live · Session with no set: the framed grid — the stops down the right and the drop area with the reason, not a floating sentence', () => {
+  assert.deepEqual(noSet, {columns: [], tracks: [], clips: []}, 'Live\'s adapter reads no set as no tracks, invents none')
+  const html = paneOf('session')
+  assert.match(html, /data-tracks-mode="live"/)
+  assert.match(html, /data-tracks-view="session" data-empty="true"/)
+  assert.match(html, /role="grid" aria-label="Session"/, 'the grid frame stands')
+  assert.ok(dropReason(html), 'a reason stands inside the frame, where the tracks will stand')
+  assert.match(html, /aria-label="Stops"><div class="thd">Main<\/div>/, 'the Main stop column is drawn')
+  assert.equal((html.match(/class="stop-launch" disabled=""/g) ?? []).length, 8, 'eight stops, as a new Live set has, none launchable')
   assert.doesNotMatch(html, /view-empty/, 'the sparse float is gone')
 })
 
-test('Live · Arrangement with no set: overview ABOVE the ruler, framed lanes, honest disabled controls', () => {
-  const html = htmlOf(React.createElement(LiveArrangementEmpty))
-  assert.match(html, /data-live-empty="arrangement"/)
-  assert.match(html, /class="arrange-view live-empty"/)
-  const overviewAt = html.indexOf('arrange-overview')
-  const rulerAt = html.indexOf('arrange-ruler-row')
-  assert.ok(overviewAt > -1 && rulerAt > overviewAt, 'the integrated overview stands above the ruler (the measured Live structure)')
-  assert.match(html, /the whole song draws here/, 'the overview names what fills it — no fabricated content')
-  assert.match(html, /<button disabled="" title="Locators set when the document owner reads a set">Set<\/button>/, 'the locator affordance is drawn honest-disabled')
-  assert.match(html, /Track 1/, 'ready lane labels')
+test('Live · Arrangement with no set: the ruler stands above the lane area, with the reason in it', () => {
+  const html = paneOf('arrangement')
+  assert.match(html, /aria-label="Arrangement" data-tracks-view="arrangement" data-empty="true"/)
+  const rulerAt = html.indexOf('class="tl-ruler"')
+  const dropAt = html.indexOf('class="sg-drop"')
+  assert.ok(rulerAt > -1 && dropAt > rulerAt, 'the ruler stands above the lane area')
+  assert.equal((html.match(/<span (class="end" )?style="left:/g) ?? []).length, 9, 'the ruler carries its marks')
+  assert.ok(dropReason(html), 'the reason stands in the lane area')
+  paneHost.setTimelinePanePresentation('session')
 })
 
 // ————————————————————————————————————————————————————————————————————————

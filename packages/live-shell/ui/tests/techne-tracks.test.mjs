@@ -9,8 +9,9 @@
 // - FIXTURE: the run receipts, a day-lane event, a conversation receipt, the Earth's standing and the BCE and Expression-bearing
 //   walks. Run receipts are projected by the real run, day and conversation adapters (timeline/*TrackAdapter.ts); no kernel read
 //   is made. Fields follow the kernel's temporal row (timeline/timeSpine.ts TemporalEventRow).
-// - SOURCE TEXT: the places this adapter mirrors a constant from (JourneyRows.tsx, worldTimelinePresentation.tsx,
-//   suiteProvider.ts) are read and held to what is mirrored.
+// - SOURCE TEXT: the place this adapter mirrors a constant from (suiteProvider.ts) is read and held to what is mirrored. The
+//   ruler's break and the Expression rule were mirrored from the World cut presentation and JourneyRows until those were
+//   deleted (15 Oct); the adapter is now their one declaration.
 // - SCRIPTED: the shared views (SessionGrid, ArrangementRuler) rendered to static markup; the hook rendered once on the server.
 // No computer-use pass, no browser: the on-screen legs are not covered here.
 import test from 'node:test'
@@ -303,7 +304,6 @@ test('the runs are the World cut\'s run lanes, newest first; Central\'s day, the
 })
 
 test('the declared break into today: deep history keeps 61% of the ruler, the covered civil days take the rest, hours in UTC', async () => {
-  assert.match(await source('../src/projections/worldTimelinePresentation.tsx'), /const TODAY_BREAK = 61;/, 'the World cut\'s break is the one mirrored')
   assert.equal(adapter.TECHNE_DEEP_SHARE, 0.61)
   const set = project(worldSets, {}, eventByClipId)
   const byLabel = Object.fromEntries(set.clips.map(clip => [clip.label, clip]))
@@ -591,7 +591,6 @@ test('the hook is a read of the frame\'s own reading: no poller, no transport, n
     assert.doesNotMatch(code, forbidden, String(forbidden))
   }
   assert.match(code, /subscribeSuiteStanding, suiteStanding/, 'the Earth\'s standing is the existing store')
-  assert.match(await source('../src/timeline/JourneyRows.tsx'), /const isExpressionRef = \(ref: string\) => ref\.startsWith\('expression:'\)/, 'JourneyRows tells an Expression by the rule mirrored here')
   assert.equal(adapter.isExpressionRef('expression:folio'), true)
   assert.equal(adapter.isExpressionRef('field-glyph'), false)
 })

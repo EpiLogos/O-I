@@ -146,7 +146,7 @@ export function TechneInstrumentsDetail({focusInstrument}: {
  * thread activity along the task's time — each row the owner's own event (time · kind · what it says), from the one temporal
  * read the task's span is derived from (agent/agentRunModel.ts buildTaskClips, eventsForSession). A fact no owner discloses is
  * "—". Legacy: this function's own task-identity rows, task list and log rows over the session's clips (and the Desk's run
- * join beneath, factory/FactoryRunJoin.tsx — retired from this side: nothing in the candidate selects a Desk run). */
+ * join beneath — retired, and deleted on 15 Oct: nothing in the candidate selects a Desk run). */
 export function FactoryTaskLogDetail({track, n, name, colour, box = [], events}: {
   /** The task's session: the agency reading's own track. */
   track: AgentSessionTrack

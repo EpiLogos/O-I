@@ -2,8 +2,10 @@
 // written into WorldContext.selection with a ref the set's own path anchors, and read back the same way. Live's views
 // keep their index-based SetSelection; this is the only translation between the two.
 import type {WorldSelection} from '../../../../../desktop/cradle/src/workspace/store'
-import type {SetSelection} from '../components/SessionView'
 import type {SetSummary} from './useSet'
+
+/** Live's own selection in the open set, by index: a track, and on it a session slot (`scene`) or an arrangement clip. */
+export type SetSelection = { track: number; scene: number | null; clip?: number }
 
 const REF = /^als:(.+)#track\/(\d+)(?:\/(slot|clip)\/(\d+))?$/
 

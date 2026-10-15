@@ -119,7 +119,7 @@ const detailRow = () => {
   const resolved = vertical.resolveCentralOccasion(encounter.occasion(), events)
   return resolved.state === 'selected' ? {source: 'timeline', selection: resolved.selection} : {source: 'none'}
 }
-// The projection's own `selected` flag (worldTimelinePresentation.tsx:152): a clip is selected when the
+// The World cut presentation's `selected` rule (worldTimelinePresentation.tsx:152, deleted 15 Oct): a clip is selected when the
 // occasion retains its event's subject.
 const selectedClipSubjects = () => {
   const retained = new Set(encounter.occasions().map((entry) => entry.basis.ref))

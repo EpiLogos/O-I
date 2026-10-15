@@ -28,12 +28,11 @@ export async function load(url,context,next){
 const root = new URL('../../../../', import.meta.url)
 const author = new URL('desktop/cradle/expressions-app/field-studies-journeys/src/', root)
 const boundary = new URL('packages/expressions-boundary/src/', root)
-const [P, C, SC, EXT, AT, NSE, Scenes, Host, Retained, Bridge, Model, Store] = await Promise.all([
+const [P, C, SC, EXT, NSE, Scenes, Host, Retained, Bridge, Model, Store] = await Promise.all([
   import('../src/components/nativeScenePlayback.ts'),
   import('../src/shell/nativeContent.ts'),
   import('../src/components/expressions/clip/SceneControls.tsx'),
   import('../src/shell/transports/useExpressionsTransport.tsx'),
-  import('../src/components/nativeArrangementTimeline.tsx'),
   import('../src/components/NativeSceneEditor.tsx'),
   import(new URL('scenes.ts', boundary)),
   import(new URL('editorHost.ts', boundary)),
@@ -237,7 +236,9 @@ test('the Scene controls stand on the Clip side with their reasons; the bar keep
   assert.match(bindings.overdub.title, /Replace last take/)
 })
 
-test('the bar\'s Loop slot, Arrangement chip and Scene editor switch show the same loop value', () => {
+// The Arrangement's loop chip (nativeArrangementTimeline.tsx) showed the same value; the Arrangement it stood in was drawn by nothing
+// once the tracks pane became the centre and was deleted on 15 Oct (FOUNDATION §7): the bar's Loop slot is the loop's one control.
+test('the bar\'s Loop slot and the Scene editor switch show the same loop value', () => {
   for (const loop of [true, false]) {
     const reading = ownerReading(loop)
     const content = C.readNativeExpressionsContent(reading)
@@ -245,13 +246,11 @@ test('the bar\'s Loop slot, Arrangement chip and Scene editor switch show the sa
     const bar = source(reading, content, actions)
     const control = P.sceneLoopControl({loop: content.scenes.loop, ready: true, focused: P.sceneFocused(content.native_selection, content.basis.scene_ref),
       savedAvailable: content.scenes.timing.saved.available})
-    const chip = renderToStaticMarkup(createElement(AT.NativeArrangementTimeline, {content, clock: 'seconds', unit: 'seconds', duration: 0,
-      lanes: [], ready: true, perform: async () => {}, loop: {on: control.on, reason: control.reason, toggle: () => {}}}))
     const editor = renderToStaticMarkup(createElement(NSE.NativeSceneEditor, {reading, request: async () => ({ok: true, reading})}))
     const pressed = value => value === null ? null : value === 'true'
     const barLoop = bound(bar).loop.lit
-    const chipLoop = pressed(chip.match(/class="nar-chip nar-loop"[^>]*aria-pressed="(true|false)"/)?.[1] ?? null)
     const switchLoop = pressed(editor.match(/role="switch" aria-checked="(true|false)"/)?.[1] ?? null)
-    assert.deepEqual([barLoop, chipLoop, switchLoop], [loop, loop, loop], `loop ${loop} is shown identically`)
+    assert.deepEqual([barLoop, switchLoop], [loop, loop], `loop ${loop} is shown identically`)
+    assert.equal(control.on, loop, 'the loop control reads the owner flag')
   }
 })

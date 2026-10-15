@@ -179,7 +179,7 @@ test('the Studio\'s one alert line carries the stage\'s refusal, and the frame\'
   Door.publishHostedChrome(null)
 })
 
-test('ported, not recreated: one sender, the same builders, the strip and the Studio draw the same two bodies (source reading)', async () => {
+test('ported, not recreated: one sender, the same builders, the Studio draws the two bodies (source reading)', async () => {
   const stage = await source('components/expressions/studio/StudioStage.tsx')
   assert.match(stage, /stageDisabledReason\(\{mounted: !!run, state, busy: busy !== null\}\)/, 'the shared reason, as the toolbar computed it')
   assert.match(stage, /try \{answer = run\(command\)\} catch \(cause\) \{setBusy\(null\); setRefusal\(reasonOf\(cause\)\); return\}/, 'the toolbar\'s send, moved whole')
@@ -188,8 +188,10 @@ test('ported, not recreated: one sender, the same builders, the strip and the St
   assert.match(studioSource, /const chrome = useHostedChrome\(\)\s*const stage = useStageSender\(chrome\?\.state \?\? null, chrome\?\.run \?\? null\)/)
   assert.match(studioSource, /if \(section\.id === 'studio:tools'\) parts\.push\(<StageViewTools key="stage" sender=\{stage\} \/>\)/)
   assert.match(studioSource, /if \(section\.id === 'studio:capture'\) parts\.push\(<StageCaptureTools key="stage" sender=\{stage\} \/>\)/)
-  const strip = await source('components/NativeStageTools.tsx')
-  assert.match(strip, /<StageViewTools sender=\{sender\} \/>\s*<StageCaptureTools sender=\{sender\} \/>/)
+  // The centre residence's strip (components/NativeStageTools.tsx) drew the same two bodies; it was drawn by nothing and was deleted on
+  // 15 Oct (FOUNDATION §7), so the Studio is the one place the stage's controls stand.
+  const {existsSync} = await import('node:fs')
+  assert.ok(!existsSync(new URL('../src/components/NativeStageTools.tsx', import.meta.url)), 'the strip is deleted')
   const pane = (await source('projections/expressionsPane.tsx')).replace(/^\s*\/\/.*$/gm, '')
   assert.doesNotMatch(pane, /NativeStageTools|StudioStage|presentHostedExpressions|<button/, 'the pane carries no control')
 })

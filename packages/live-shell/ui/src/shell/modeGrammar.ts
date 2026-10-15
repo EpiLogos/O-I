@@ -79,8 +79,8 @@ export interface DetailPair {
 // per-mode conditional sprawl in components). The CATEGORIES are the
 // grammar's data (Revision 3's left-column table, mode by mode); their
 // ENTRIES are not invented here — the frame composes them through the
-// families' declared surfaces (§12/§16): the L7 central browser categories,
-// the L4 temporal reading, the ground listing. `cut` names a category whose
+// families' declared surfaces (§12/§16): the L4 temporal reading, the
+// ground listing. `cut` names a category whose
 // rows compose from a landed owner today; `waiting` names one the owner has
 // not landed — the browser draws it as a designed empty category that names
 // its owner, never another mode's content.
@@ -247,9 +247,9 @@ const base: SurfModeGrammar = {
     device: {label: 'Devices', meaning: 'Text · Highlight · Notes · Packet · Answer · the form devices (the ground\'s family docks here)'},
   },
   // The mockup's Base column (Rev 3): Central — Days, Flows, Beings, Things,
-  // Goals; Project — Files, Wiki. Entries compose through the central
-  // family's declared surfaces: L7's browser categories + the L4 civil
-  // reading for Days, the ground listing for Files.
+  // Goals; Project — Files, Wiki. These rows are Central's browser
+  // categories (L7's own module retired into them on 15 Oct). Entries compose
+  // through the L4 civil reading for Days and the ground listing for Files.
   browser: [
     {id: 'central-days', label: 'Days', group: 'Central', mark: 'die', kindMark: 'day', family: 'central', state: 'cut',
       hint: 'The civil calendar: a day per row, its record beneath — rows from the kernel\'s temporal read (L4) and the day records.'},

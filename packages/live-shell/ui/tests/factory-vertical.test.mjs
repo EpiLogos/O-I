@@ -20,7 +20,8 @@
 // What is NOT claimed: no live Factory agent ran; no owner read was invoked; the native walk
 // (computer use) is open. The Earth and Timeline states of the REAL state (unmounted Earth, no Factory
 // stream) are scripted as reported by the source reading, not observed in a running shell.
-// The React face (FactoryRunJoin.tsx) is checked by tsc, not here.
+// The React face that drew this join (FactoryRunJoin.tsx) was retired from the Clip side on 14 Oct and deleted on 15 Oct
+// (FOUNDATION §7): nothing in the candidate selects a Desk run. The join model and its Earth occurrence stand, unwired.
 
 import test from 'node:test'
 import assert from 'node:assert/strict'

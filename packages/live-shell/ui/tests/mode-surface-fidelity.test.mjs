@@ -44,7 +44,7 @@ const UNAVAILABLE = {kind: 'unavailable', reason: 'the test carrier is down'}
 // The per-mode centre frames (shell/ModeCentre.tsx: Base's session grid and hour ruler, Technē's designed Journey and relation field)
 // are gone: the centre is the pane engine's tracks pane in every mode (FOUNDATION F2–F3). Base's day tracks, session grid and
 // ruler are asserted in central-tracks.test.mjs and f3-tracks.test.mjs (frame/tracks SessionGrid, ArrangementRuler, TracksPane
-// over useCentralTracks); Technē's walks are asserted in journey-walks.test.mjs (JourneyRows) and techne-tracks.test.mjs.
+// over useCentralTracks); Technē's walks are asserted in journey-walks.test.mjs and techne-tracks.test.mjs (Technē's tracks).
 
 // ————————————————————————————————————————————————————————————————————————
 // The detail row — device cards, the clip craft, the task log.
