@@ -1,17 +1,20 @@
 /* The device panel kit (panel.tsx; docs/dlw/DEVICE-UI.md). Live's device language on the shell's tokens: a flat grey face, a
    lighter head, hairline rules between sections, one dark well per display, amber for what is on, teal for a value and its arc.
-   Two colours join the shell's tokens here: the well and the value. */
+   Every colour resolves the shell's own tokens (styles.css :root, the mockup's palette) at :root, so a plate brings no colour of
+   its own anywhere it stands — the chain, the pool, a pane, the rail, the gallery (DEVICE-UI §4.3). The mockup's plate is the
+   basis: the face bg-2 (.dev), the head bg-3 (.insth), the field and the well bg-0 (.tog .tg span, .vis). A raw value appears only
+   as a token's own fallback. */
 :root {
   --dp-head-h: 22px; --dp-body: 168px;
-  --dp-face: var(--bg-3, #4a4e54);
-  --dp-head: color-mix(in srgb, var(--bg-3, #4a4e54) 84%, #fff 9%);
-  --dp-field: #2c3034;
-  --dp-well: #121a20;
-  --dp-grid: rgba(126, 195, 230, .09);
-  --dp-value: #5cc8bd;
-  --dp-value-dim: rgba(92, 200, 189, .42);
+  --dp-face: var(--bg-2, #3f4348);
+  --dp-head: var(--bg-3, #4a4e54);
+  --dp-field: var(--bg-0, #26292d);
+  --dp-well: color-mix(in srgb, var(--bg-0, #26292d) 55%, var(--line, #24262a));
+  --dp-grid: color-mix(in srgb, var(--sel, #7ec3e6) 10%, transparent);
+  --dp-value: var(--fizz, #5cc6b4);
+  --dp-value-dim: color-mix(in srgb, var(--fizz, #5cc6b4) 42%, transparent);
   --dp-on: var(--accent, #ffbe00);
-  --dp-on-text: #1c1d1f;
+  --dp-on-text: var(--bg-0, #26292d);
 }
 .dp, .dp-folded, .dp-tile {
   font: 10.5px/1.2 var(--font-ui, -apple-system, sans-serif);
@@ -31,7 +34,7 @@
 .dp-fold:hover, .dp-full:hover { color: var(--text); }
 
 /* The activator: amber when the owner reports on, grey when it reports off, a hollow ring when nobody has said. */
-.dp-activator { flex: none; width: 12px; height: 12px; padding: 0; border-radius: 50%; border: 1px solid rgba(0, 0, 0, .45); background: #61666c; cursor: pointer; }
+.dp-activator { flex: none; width: 12px; height: 12px; padding: 0; border-radius: 50%; border: 1px solid var(--line, #24262a); background: var(--text-faint, #71767c); cursor: pointer; }
 .dp-activator[data-light="lit"] { background: var(--dp-on); }
 .dp-activator[data-light="unknown"] { background: transparent; border-color: var(--text-faint, #71767c); }
 .dp-activator:disabled { cursor: default; }
@@ -65,7 +68,7 @@
 .dp-dial { width: 28px; height: 28px; cursor: ns-resize; touch-action: none; outline: none; }
 .dp-dial[aria-disabled="true"] { cursor: default; }
 .dp-dial path { fill: none; stroke-width: 2.6; }
-.dp-dial-track { stroke: #24282c; }
+.dp-dial-track { stroke: var(--line, #24262a); }
 .dp-dial-value { stroke: var(--dp-value); }
 .dp-dial-mod { stroke: var(--dp-value); stroke-width: 1.3 !important; opacity: .55; }
 .dp-dial-needle { stroke: var(--text); stroke-width: 1.6; stroke-linecap: round; }
@@ -92,7 +95,9 @@
 .dp-toggle:disabled, .dp-radio button:disabled, .dp-action:disabled { cursor: default; }
 
 .dp-chooser { height: 16px; width: 100%; padding: 0 14px 0 5px; border: 1px solid var(--line); color: var(--text); font: inherit; font-size: 10px; appearance: none; -webkit-appearance: none; cursor: pointer;
-  background: var(--dp-field) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='7' height='4'%3E%3Cpath d='M0 0h7L3.5 4z' fill='%23a2a7ad'/%3E%3C/svg%3E") no-repeat right 4px center; }
+  /* The ▾ in the field's text colour: two half-squares side by side (a token colour, where the owner's first cut drew an svg). */
+  background: linear-gradient(45deg, transparent 50%, var(--text-dim, #a2a7ad) 50%) no-repeat right 8px top 6px / 4px 4px,
+    linear-gradient(135deg, var(--text-dim, #a2a7ad) 50%, transparent 50%) no-repeat right 4px top 6px / 4px 4px, var(--dp-field); }
 
 .dp-action { background: transparent; border-color: var(--text-faint); color: var(--text); }
 .dp-action:active:not(:disabled) { background: var(--dp-on); color: var(--dp-on-text); }
@@ -108,7 +113,7 @@
 .dp-readout-press { display: contents; cursor: pointer; }
 
 /* Lights. */
-.dp-lamp { flex: none; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #2a2e32; border: 1px solid rgba(0, 0, 0, .4); }
+.dp-lamp { flex: none; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--bg-0, #26292d); border: 1px solid var(--line, #24262a); }
 .dp-lamp[data-light="lit"] { background: var(--dp-on); }
 .dp-lamp[data-light="lit"][data-tone="value"] { background: var(--dp-value); }
 .dp-lamp[data-light="lit"][data-tone="green"] { background: var(--green, #8fd0a8); }
@@ -122,7 +127,7 @@
 .dp-pager button:disabled { opacity: .35; cursor: default; }
 .dp-rows { list-style: none; margin: 0; padding: 0; display: grid; grid-template-rows: repeat(var(--rows), 17px); grid-auto-flow: column; column-gap: 8px; }
 .dp-rows[data-columns="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.dp-row { display: flex; align-items: center; gap: 5px; min-width: 0; height: 17px; border-bottom: 1px solid rgba(0, 0, 0, .18); }
+.dp-row { display: flex; align-items: center; gap: 5px; min-width: 0; height: 17px; border-bottom: 1px solid color-mix(in srgb, var(--line, #24262a) 70%, transparent); }
 .dp-row[data-dim="true"] .dp-row-name { color: var(--text-faint); }
 .dp-row-request { flex: none; width: 10px; height: 10px; padding: 0; border: 1px solid var(--text-faint); background: transparent; cursor: pointer; }
 .dp-row-request[aria-pressed="true"] { background: var(--dp-on); border-color: var(--dp-on); }
@@ -131,16 +136,19 @@
 .dp-row-note { flex: none; font-size: 9.5px; color: var(--text-faint); font-variant-numeric: tabular-nums; }
 
 /* ---- the well: the only inset surface. */
-.dp-display { position: relative; flex: none; background: var(--dp-well); border: 1px solid #0b0f12; overflow: hidden; }
+.dp-display { position: relative; flex: none; background: var(--dp-well); border: 1px solid var(--line, #24262a); overflow: hidden; }
 .dp-display > svg { display: block; overflow: hidden; }
+/* A picture the device draws itself (Display raw): it fills the well and is clipped to it. */
+.dp-display[data-raw="true"] { display: grid; place-items: center; }
+.dp-display[data-raw="true"] > * { max-width: 100%; max-height: 100%; }
 .dp-display-corner { position: absolute; top: 3px; right: 5px; font-size: 9.5px; color: var(--text-dim); font-variant-numeric: tabular-nums; pointer-events: none; }
 .dp-display .dp-grid { stroke: var(--dp-grid); stroke-width: 1; fill: none; }
 .dp-display .dp-curve { stroke: var(--dp-value); stroke-width: 1.5; fill: none; }
 .dp-display .dp-curve-on { stroke: var(--dp-on); stroke-width: 1.5; fill: none; }
-.dp-display .dp-fill { fill: rgba(92, 200, 189, .13); stroke: none; }
-.dp-display .dp-fill-on { fill: rgba(255, 190, 0, .16); stroke: none; }
-.dp-display .dp-faint { stroke: rgba(212, 215, 218, .22); stroke-width: 1; fill: none; }
-.dp-display .dp-axis { font: 8.5px var(--font-ui, sans-serif); fill: rgba(212, 215, 218, .5); }
+.dp-display .dp-fill { fill: color-mix(in srgb, var(--dp-value) 13%, transparent); stroke: none; }
+.dp-display .dp-fill-on { fill: color-mix(in srgb, var(--dp-on) 16%, transparent); stroke: none; }
+.dp-display .dp-faint { stroke: color-mix(in srgb, var(--text, #d4d7da) 22%, transparent); stroke-width: 1; fill: none; }
+.dp-display .dp-axis { font: 8.5px var(--font-ui, sans-serif); fill: var(--text-faint, #71767c); }
 .dp-display .dp-ink { font: 9.5px var(--font-ui, sans-serif); fill: var(--text); }
 .dp-display .dp-ink-dim { font: 9px var(--font-ui, sans-serif); fill: var(--text-dim); }
 
@@ -156,15 +164,28 @@
 .dp-cell[data-automated="on"]::before, .dp-cell[data-automated="overridden"]::before { content: ''; position: absolute; left: 0; top: 2px; width: 5px; height: 5px; border-radius: 50%; background: var(--rec, #e0523f); }
 .dp-cell[data-automated="overridden"]::before { background: transparent; border: 1px solid var(--rec, #e0523f); width: 4px; height: 4px; }
 .dp-cell[data-held="true"] .dp-dial-value { stroke: var(--stall, #ff9b4a); }
-.dp-cell[data-held="true"] .dp-box { --dp-value-dim: rgba(255, 155, 74, .4); }
+.dp-cell[data-held="true"] .dp-box { --dp-value-dim: color-mix(in srgb, var(--stall, #ff9b4a) 40%, transparent); }
 .dp-handback { padding: 0 3px; height: 11px; background: none; border: 1px solid var(--stall, #ff9b4a); color: var(--stall, #ff9b4a); font: inherit; font-size: 8.5px; line-height: 9px; cursor: pointer; }
 .dp-cell[data-pending="true"] .dp-value, .dp-cell[data-pending="true"] .dp-box > span { font-style: italic; opacity: .75; }
 .dp-cell[data-pending="true"] .dp-dial-value { stroke-dasharray: 2 2; }
 .dp-cell[data-pending="true"] .dp-radio button[aria-checked="true"] { background: transparent; color: var(--dp-on); outline: 1px dashed var(--dp-on); outline-offset: -2px; }
+/* Waiting on the owner (DEVICE-UI §5.2, §6): a toggle and a chooser as a radio — italics, the edge dashed. */
+.dp-cell[data-pending="true"] .dp-toggle, .dp-cell[data-pending="true"] .dp-chooser { font-style: italic; outline: 1px dashed var(--dp-on); outline-offset: -2px; }
+.dp-cell[data-pending="true"] .dp-toggle[aria-pressed="true"] { background: transparent; color: var(--dp-on); }
 .dp-cell[data-disabled="true"] { opacity: .42; }
+/* Refused: the value is the owner's again; the name stays in the stall colour until the next move, and says why. */
+.dp-cell[data-refused="true"] > .dp-label { color: var(--stall, #ff9b4a); }
+/* A toggle the owner has not read: neither on nor off, a hollow face. */
+.dp-toggle[data-unknown="true"] { background: transparent; border-style: dashed; color: var(--text-faint, #71767c); }
+/* No reading (DEVICE-UI §6): the value is "—" in the faint ink, the ring or field empty — never NaN, never zero. */
+.dp-cell[data-unread="true"] .dp-value, .dp-cell[data-unread="true"] .dp-box > span, .dp-cell[data-unread="true"] .dp-readout-value { color: var(--text-faint, #71767c); }
 
 /* ---- folded: the head on its side, at chain height. */
 .dp-folded { flex: none; width: 22px; height: calc(var(--dp-head-h) + var(--dp-body) + 1px); display: flex; flex-direction: column; align-items: center; gap: 6px; padding-top: 5px; background: var(--dp-head); border: 1px solid var(--line, #24262a); }
+/* On a chain a plate is 191 high (DEVICE-UI §3: head 22, band 168, one rule): the plate's foot is the chain's own edge, so the
+   compact plate and the folded strip stand at one height, side by side. */
+.dp[data-view="compact"] { border-bottom-width: 0; }
+.dp-folded { border-bottom-width: 0; }
 .dp-folded .dp-activator { cursor: default; }
 .dp-folded-title { flex: 1 1 auto; display: flex; gap: 8px; align-items: center; writing-mode: vertical-rl; padding: 0; background: none; border: 0; color: var(--text); font: inherit; font-weight: 600; font-size: 11px; cursor: pointer; white-space: nowrap; overflow: hidden; }
 .dp-folded-reading { font-weight: 400; font-size: 10px; color: var(--text-dim); }
@@ -183,10 +204,18 @@
 .dp-toggle::after, .dp-radio button::after, .dp-action::after, .dp-box::after { content: ''; position: absolute; inset: -3px 0; }
 .dp-row-request::after { content: ''; position: absolute; inset: -6px; }
 .dp-radio[data-stack="true"] button::after { inset: -1px 0; }
+/* The head's marks (▾, ⤢, the rail's pin) are drawn 16 px and the activator 12 px; each answers over 22 (DEVICE-UI §3). */
+.dp-fold, .dp-full, .dp-activator { position: relative; }
+.dp-fold::after, .dp-full::after { content: ''; position: absolute; inset: -3px; }
+.dp-activator::after { content: ''; position: absolute; inset: -6px; border-radius: 50%; }
+/* A chooser is a native menu, which draws no ::after: it stands 22 high, its 16 px field drawn inside a transparent border. */
+.dp-chooser { height: 22px; margin: -3px 0; border-style: solid; border-width: 3px 0; border-color: transparent; background-clip: padding-box; box-shadow: inset 0 0 0 1px var(--line, #24262a); }
+.dp .dp-chooser:focus-visible { outline: none; box-shadow: inset 0 0 0 1px var(--accent, #ffbe00); }
+.dp-cell[data-pending="true"] .dp-chooser { outline: 1px dashed var(--dp-on); outline-offset: -3px; }
 
 /* A ladder of evidence: green where established, dark where not, hollow where nobody has observed it. */
 .dp-ladder { flex: none; display: inline-flex; gap: 1px; align-items: center; }
-.dp-ladder-rung { width: 3px; height: 8px; background: #2a2e32; border: 1px solid rgba(0, 0, 0, .35); }
+.dp-ladder-rung { width: 3px; height: 8px; background: var(--bg-0, #26292d); border: 1px solid var(--line, #24262a); }
 .dp-ladder-rung[data-rung="yes"] { background: var(--green, #8fd0a8); }
 .dp-ladder-rung[data-rung="unseen"] { background: transparent; border-color: var(--text-faint, #71767c); }
 .dp-ladder[data-size="tall"] { flex-direction: column-reverse; align-items: stretch; gap: 2px; }
@@ -196,3 +225,10 @@
 .dp-row .wood { flex: none; color: var(--text); }
 .dp-row[data-dim="true"] .wood:not(.dim) { color: var(--text-dim); }
 .dp-head .wood { flex: none; color: var(--text); }
+
+/* Text field: a line you type, sent on Enter or when you leave it. */
+.dp-cell--text { align-self: stretch; justify-self: stretch; align-items: stretch; }
+.dp-text { height: 16px; width: 100%; min-width: 50px; padding: 0 5px; border: 1px solid var(--line); background: var(--dp-field); color: var(--text); font: inherit; font-size: 10px; outline: none; }
+.dp-text::placeholder { color: var(--text-faint); }
+.dp-text:focus-visible { outline: 1px solid var(--accent); outline-offset: 1px; }
+.dp-cell[data-pending="true"] .dp-text { font-style: italic; }
