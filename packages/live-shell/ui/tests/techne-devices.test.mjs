@@ -382,6 +382,16 @@ test('with no focus the six fold and the faces no instrument holds stand after t
   assert.doesNotMatch(out, /data-face-id="sky"/, 'the sky is the Timeline\'s and the World\'s, inside their folds')
 })
 
+test('a fold\'s press holds across the focus change it causes: M4′ pressed from another pane stays open once the Earth takes focus (lane T, 15 Oct)', () => {
+  // Pressing M4′ while the stage (M1) is focused opens the Earth pane; the focus then stands the Earth's own instrument (M0). The press
+  // is recorded against that focus, so M4′ is the open plate when it arrives — not folded again behind M0.
+  assert.equal(chain.focusAfterOpening('techne:m4', 'techne:m1'), 'techne:m0')
+  assert.equal(chain.focusAfterOpening('techne:m4', null), 'techne:m0', 'from no focused instrument, too')
+  assert.equal(chain.focusAfterOpening('techne:m4', 'techne:m0'), 'techne:m0', 'the Earth already focused keeps its focus')
+  assert.equal(chain.focusAfterOpening('techne:m2', 'techne:m0'), 'techne:m2', 'a stage lens stands itself once the stage takes it')
+  assert.equal(chain.focusAfterOpening('knowledge-graph', 'techne:m1'), 'techne:m1', 'an instrument with no door leaves the focus as it is')
+})
+
 test('a fold opens its instrument: the door each instrument opens through is the pane that holds it', () => {
   assert.deepEqual(chain.instrumentDoorOf('techne:m0'), {kind: 'projection.earth'}, 'the Earth pane is the 0 instrument')
   assert.deepEqual(chain.instrumentDoorOf('techne:m1'), {kind: 'projection.expressions', lens: 'canvas'})
