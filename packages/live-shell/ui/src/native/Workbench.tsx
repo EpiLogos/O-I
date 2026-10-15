@@ -30,6 +30,8 @@ import {registeredHostedSurfaces} from '../../../../../desktop/cradle/src/contri
 import {publishFocusedPane, publishWorkbenchAperture, publishWorkbenchOpeners} from './workbenchDoor'
 import {withHostedDescriptor} from '../../../../../desktop/cradle/src/contributions/registry'
 import {DOCUMENT_FORMS} from '../../../../../desktop/cradle/src/flow/documentForms'
+/** The four forms the browser's New… grid makes (shell/ModeBrowser.tsx NEW_FORMS). */
+const NEW_DOCUMENT_FORMS: readonly string[] = ['document-42', 'document-01', 'document-beings', 'document-things']
 import {createFormInPlace} from '../../../../../desktop/cradle/src/flow/createInPlace'
 import {userFlowsArea} from '../../../../../desktop/cradle/src/flow/instances'
 import {mintBlankInstance, mintInstance, instanceFileName, parseInstance} from '../../../../../desktop/cradle/src/flow/instance'
@@ -810,6 +812,14 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
       {id: 'surface.sources', title: 'Sources', hint: 'the native sources of this work', open: run(() => openerActions.current.execute('surface.open-sources'))},
       ...registeredHostedSurfaces.filter(entry => entry.descriptor.kind !== 'expressions').map(entry => ({id: `hosted.${entry.descriptor.kind}`, title: entry.descriptor.title, hint: 'a surface the suite hosts', open: kind(entry.descriptor.kind)})),
       ...(tauri ? [{id: 'terminal', title: 'Terminal', hint: 'a shell in a pane', open: kind('terminal')}, {id: 'browser', title: 'Web browser', hint: 'a web page in a pane', open: kind('browser')}] : []),
+      // The browser's New… grid (lane L): each of the four document forms opens a new tab and makes the form in it through the
+      // same fresh choice a blank tab's form picker uses — the owner writes the new document.
+      ...DOCUMENT_FORMS.filter(form => NEW_DOCUMENT_FORMS.includes(form.kind)).map(form => ({id: `form.${form.kind}`, title: form.label, hint: form.hint,
+        open: run(() => {
+          const id = crypto.randomUUID()
+          callbacks.current.insert({id, kind: 'blank', title: 'New tab', project: latest.current.book.current.project})
+          void callbacks.current.freshChoice(id, form.kind).catch(openerActions.current.report)
+        })})),
     ])
   }, [tauri])
 
