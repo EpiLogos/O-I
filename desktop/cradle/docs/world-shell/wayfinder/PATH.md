@@ -100,7 +100,6 @@ objections verbatim and the full validation (`BRIEF-BUILDER.md`); the lead conve
 | Ticket | Who | Zone | Since |
 |---|---|---|---|
 | U — Palaces live in the atlas (N4, R2): the 9 palace targets listed in `tickets/T-PALACES-ONTO-ATLAS.md`, ported onto the atlas and the M5 plate, then the frame's Palace lens removed | Opus builder | `src/projections/atlas/**` (a new `palaces/`), `src/inhabitants/ql/devices/**`, `modeTransports.tsx` (Technē), `desktop/cradle/src/techne/m0m5/palace/**`, the frame's palace files and wiring | 15 Oct |
-| V — the register's progress axis follows the code: `acceptance.py reprogress` re-checks every `implemented` claim's evidence, re-points moved quotes, returns rows whose evidence vanished to pending with the reason; a gap cannot stay implemented | Opus builder | `acceptance.py`, `acceptance.test.py`, `targets.json` (through acceptance.py) | 15 Oct |
 | W — a native Expression the candidate opens can open: decide from the authored recovery law whether the host selects a recovery address for works it opens itself (the works home, New/fork, the door's wiki Expression), build it if the ground admits it, else OPEN for the owner | Opus builder | `packages/expressions-boundary/src/{host,recoveryBinding}.ts`, `panels/expressions.tsx` (recovery wiring), `recoveryTypes.ts`, the frame's recovery files and the kernel recovery owner as the decision requires | 15 Oct |
 | Native screen pass against the mockup renders; N1; the lanes' convergence | lead | `App.tsx`, `native/Workbench.tsx`, `shell/modeFrames.ts`, the book, the register | 14 Oct |
 
@@ -120,7 +119,11 @@ addresses only from a `saved-work.json` the owner's config does not hold; by cod
 open in the candidate (the browser's Open too), not only the door (lane W). The door is never silent now (`02e9f0370`): a taken
 ask settles shown or refused, the row reads "asking for <Scene>…" until the frame shows it, and a stalled ask says why on the
 row and the pane's fault line. The register's progress axis follows the code (`7f6d706e6`, lane V: implemented 125 → 106, all
-lane 4, the frame map's evidence gone with the map).
+lane 4, the frame map's evidence gone with the map); implemented is proven at a target's home (`8b0ed7afd`: an off-target
+quote no longer holds; `prove-at-home` checks the home's own line, tests that reach it and the commit; lane 4 re-proven on the
+atlas — 105 implemented). Carried from lane V: after lane U lands, `reprogress --apply --lane 4 --lane 5 --at-home`; 53 rows in
+lanes 1–3 and 5 cite evidence outside their home's file — re-prove at home lane by lane as the exercised column is worked
+(FOUNDATION §6 step 4), not by a blanket return; T14/T15/T24/T10's proofs cover their behaviour in part.
 
 Then: the register follows the code again (`c1b203e4c`, lane T): 123 homed, 3 gaps (G4 Capture into a Scene, G5 Record a walk,
 G6 M3′'s beat), homes on a retiring home 40 → 9 (R2, palaces onto the atlas); the Wiki-Scene rows reach through N2's door beside
