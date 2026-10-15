@@ -5,7 +5,7 @@
 //   (no device)                                                          the index of every declared device
 // Readings are a labelled fixture (?values=none shows the owner-less state): the gallery writes no owner.
 import {createRoot} from 'react-dom/client'
-import {useMemo, type ReactNode} from 'react'
+import {useEffect, useMemo, useRef, useState, type ReactNode} from 'react'
 import '../../styles.css'
 import {loadWorldShellFamilies, worldShellFamilyManifests} from '../worldShellFamilies'
 import {sdkParamRows, type DeviceDeclaration, type SdkParamRow} from '../sdk/define'
@@ -15,7 +15,10 @@ import {FacePlate} from '../sdk/controls'
 import {DeviceView} from '../../frame/devices/DeviceView'
 import type {DeviceInstance, ParamValue} from '../../frame/devices/deviceRuntime'
 import {centralDevice, CENTRAL_FAMILY} from '../../central/devices/centralDeviceModel'
+import {DESIGNED, type DesignedDevice} from './panels'
+import type {Value} from './panels/design'
 import './catalogue.css'
+import './panels/panels.css'
 
 loadWorldShellFamilies()
 
@@ -79,11 +82,59 @@ function DeviceViews({device, views}: {device: DeviceInstance; views: readonly V
   return <div className="cat-views">{views.map(view => <ViewFrame key={view} view={view}>{one(view)}</ViewFrame>)}</div>
 }
 
+/** The status bar's line: what the control under the pointer (or in focus) does, from its data-i (WIDGET-GUIDE §1, the hover law). */
+function StatusLine() {
+  const [said, setSaid] = useState<string>('')
+  useEffect(() => {
+    const read = (event: Event) => {
+      const at = (event.target as Element | null)?.closest?.('[data-i]')
+      const [name, does] = (at?.getAttribute('data-i') ?? '').split('|')
+      setSaid(name ? (does ? `${name} — ${does}` : name) : '')
+    }
+    document.addEventListener('mouseover', read)
+    document.addEventListener('focusin', read)
+    return () => { document.removeEventListener('mouseover', read); document.removeEventListener('focusin', read) }
+  }, [])
+  return <div className="cat-status" role="status">{said || 'Point at a control to read what it does.'}</div>
+}
+
+/** A designed device in its five views, all on one set of values: move a macro on the chain and the pool, the pane and the rail
+ * move with it. */
+function DesignedViews({design, views}: {design: DesignedDevice; views: readonly View[]}) {
+  const [values, setValues] = useState<Record<string, Value>>({...design.defaults})
+  const [page, setPage] = useState(design.firstPage ?? '')
+  const [folded, setFolded] = useState(false)
+  const pane = useRef<HTMLDivElement>(null)
+  const set = (key: string, value: Value | undefined) => setValues(was => {
+    const next = {...was}
+    if (value === undefined) delete next[key]; else next[key] = value
+    return next
+  })
+  const props = {v: values, set, page, setPage,
+    nav: {fold: () => setFolded(true), unfold: () => setFolded(false), full: () => pane.current?.scrollIntoView({block: 'nearest', behavior: 'smooth'})}}
+  const one = (view: View): ReactNode => {
+    switch (view) {
+      case 'folded': return design.folded({...props, nav: {}})
+      case 'compact': return folded ? design.folded(props) : design.compact(props)
+      case 'whole': return <div className="cat-pool">{design.whole(props)}</div>
+      case 'full': return <div className="cat-pane cat-pane--ref" ref={pane}>{design.full(props)}</div>
+      case 'widget': return <div className="cat-rail cat-rail--ref"><div className="cat-rail-head">Rail</div><div className="cat-rail-tiles">{design.widget(props)}</div></div>
+    }
+  }
+  return <div className="cat-views cat-views--ref">{views.map(view => <ViewFrame key={view} view={view}>{one(view)}</ViewFrame>)}</div>
+}
+
 function Index() {
   const manifests = worldShellFamilyManifests()
   return <main className="cat-index">
     <h1>Device catalogue</h1>
     <p className="cat-note">Every device the families declare, drawn by the shell's runtime. Readings are a labelled fixture.</p>
+    <section>
+      <h2>Reference devices</h2>
+      <ul>{Object.values(DESIGNED).map(design => <li key={design.id}>
+        <a href={`?device=${design.id}&view=all`}>{design.title}</a><span className="cat-semantic">{design.kind} · designed</span>
+      </li>)}</ul>
+    </section>
     {manifests.map(manifest => <section key={manifest.id}>
       <h2>{manifest.id}</h2>
       <ul>{manifest.faces.map(face => <li key={face.id}>
@@ -107,6 +158,11 @@ function Gallery() {
     return manifest && face ? instanceOf(manifest, face, fixture) : undefined
   }, [id, fixture])
   if (!id) return <Index />
+  const design = DESIGNED[id]
+  if (design && query.get('generic') !== '1') {
+    const views = viewParam === 'all' ? VIEWS : (VIEWS as readonly string[]).includes(viewParam) ? [viewParam as View] : VIEWS
+    return <main className="cat-device"><DesignedViews design={design} views={views} /><StatusLine /></main>
+  }
   if (!found) return <main className="cat-missing"><p><b>{id}</b> is not declared at the door.</p><p>Its catalogue entry is the specification for its declaration.</p></main>
   const views = viewParam === 'all' ? VIEWS : (VIEWS as readonly string[]).includes(viewParam) ? [viewParam as View] : VIEWS
   return <main className="cat-device">
