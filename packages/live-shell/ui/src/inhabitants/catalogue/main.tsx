@@ -15,7 +15,7 @@ import {FacePlate} from '../sdk/controls'
 import {DeviceView} from '../../frame/devices/DeviceView'
 import type {DeviceInstance, ParamValue} from '../../frame/devices/deviceRuntime'
 import {centralDevice, CENTRAL_FAMILY} from '../../central/devices/centralDeviceModel'
-import {DESIGNED, type DesignedDevice} from './panels'
+import {DESIGNED, DESIGNED_IDS, loadDesign, type DesignedDevice} from './panels'
 import type {Value} from './panels/design'
 import './catalogue.css'
 import './panels/panels.css'
@@ -141,8 +141,10 @@ function Index() {
     <section>
       <h2>Reference devices</h2>
       <ul>{Object.values(DESIGNED).map(design => <li key={design.id}>
-        <a href={`?device=${design.id}&view=all`}>{design.title}</a><span className="cat-semantic">{design.kind} · designed</span>
+        <a href={`?device=${design.id}&view=all`}>{design.title}</a><span className="cat-semantic">{design.kind} · reference</span>
       </li>)}</ul>
+      <h2>Designed devices</h2>
+      <ul>{DESIGNED_IDS.map(id => <li key={id}><a href={`?device=${id}&view=all`}>{id}</a><span className="cat-semantic">designed</span></li>)}</ul>
     </section>
     {manifests.map(manifest => <section key={manifest.id}>
       <h2>{manifest.id}</h2>
@@ -159,6 +161,14 @@ function Gallery() {
   const id = query.get('device')
   const viewParam = query.get('view') ?? 'all'
   const fixture = query.get('values') !== 'none'
+  // A designed device draws in place of the generic plate; one in its own module loads on demand. A module that fails to
+  // load says so and leaves the generic plate.
+  const [design, setDesign] = useState<DesignedDevice | 'loading' | undefined>(() => (id && DESIGNED[id]) || (id && DESIGNED_IDS.includes(id) ? 'loading' : undefined))
+  const [loadError, setLoadError] = useState<string | null>(null)
+  useEffect(() => {
+    if (!id || DESIGNED[id] || !DESIGNED_IDS.includes(id)) return
+    loadDesign(id).then(found => setDesign(found), cause => { setLoadError(String(cause)); setDesign(undefined) })
+  }, [id])
   const found = useMemo(() => {
     if (!id) return null
     const [family, faceId] = id.split(':')
@@ -167,11 +177,12 @@ function Gallery() {
     return manifest && face ? instanceOf(manifest, face, fixture) : undefined
   }, [id, fixture])
   if (!id) return <Index />
-  const design = DESIGNED[id]
+  if (design === 'loading') return <main className="cat-missing"><p>Loading <b>{id}</b>…</p></main>
   if (design && query.get('generic') !== '1') {
     const views = viewParam === 'all' ? VIEWS : (VIEWS as readonly string[]).includes(viewParam) ? [viewParam as View] : VIEWS
     return <main className="cat-device"><DesignedViews design={design} views={views} fixture={query.get('fixture')} /><StatusLine /></main>
   }
+  if (loadError) return <main className="cat-missing"><p><b>{id}</b>: its designed views did not load.</p><pre>{loadError}</pre></main>
   if (!found) return <main className="cat-missing"><p><b>{id}</b> is not declared at the door.</p><p>Its catalogue entry is the specification for its declaration.</p></main>
   const views = viewParam === 'all' ? VIEWS : (VIEWS as readonly string[]).includes(viewParam) ? [viewParam as View] : VIEWS
   return <main className="cat-device">
