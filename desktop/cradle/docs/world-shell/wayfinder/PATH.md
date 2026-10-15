@@ -100,6 +100,7 @@ objections verbatim and the full validation (`BRIEF-BUILDER.md`); the lead conve
 | Ticket | Who | Zone | Since |
 |---|---|---|---|
 | O — Places is the atlas, alone (R1, lane-4 T1–T30 + lane-2 T21): listed in `tickets/T-PLACES-ONTO-ATLAS.md`, ported onto the M4 plate and the transport, then the frame's Places map and lens removed | Opus builder | `src/projections/atlas/**`, `src/inhabitants/ql/devices/**`, `atlasFaceBodies.tsx`, `modeTransports.tsx` (Technē binding), `panels/knowledge.tsx`, the frame's `psychogeographic/**` and Places lens | 15 Oct |
+| R — Technē's wiki load stops waiting on the kernel: FilesList and FileRead as prepared reads (registration in a finish step under the lock), one shared `central.world` reading for the prepared knowledge read; measured before and after with lane Q's harness | Opus builder | `desktop/cradle/kernel/src/{lib.rs (FilesList/FileRead, prepare_owner_read), owner_read.rs, knowledge_prepared.rs, read_cache.rs, files.rs}` | 15 Oct |
 | Native screen pass against the mockup renders; N1; the lanes' convergence | lead | `App.tsx`, `native/Workbench.tsx`, `shell/modeFrames.ts`, the book, the register | 14 Oct |
 
 Then: the 126 targets re-homed (lane M, FOUNDATION §8): `acceptance.py rehome` re-opens every cited path:line, runs the
