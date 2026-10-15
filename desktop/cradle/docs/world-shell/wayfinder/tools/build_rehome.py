@@ -6,6 +6,13 @@ output carries {path, line, quote=needle}; acceptance.py `rehome` re-opens each 
 
 Re-run by ticket T (15 Oct) after lanes P (6f82c20d6: G1, G3), N (3a8fbc2d6: S1, G2) and O (92a7d38d5, 235b4771f: R1, Places
 onto the atlas): their rows re-homed, the closed tickets gone, and each changed row's note saying what changed.
+
+Re-run by ticket X (15 Oct) after lane U (b5a935661, and 30ba8692f's World › Palaces: R2, palaces onto the atlas): the nine palace
+rows homed on the atlas's palaces, the frame's Palace lens and its retiring homes gone, R2 closed.
+
+Every citation is read at one revision (HEAD by default; `--at REV` after the output path), never from the seat's working tree: the
+seat is shared with other lanes' uncommitted edits, as acceptance.py's progress verbs hold (its Tree). `rehome` re-opens the files
+on disk, so it records this input from a tree whose files are that revision's.
 """
 import json
 import subprocess
@@ -15,6 +22,18 @@ from pathlib import Path
 # The checkout this script stands in (never a machine path): re-run from any seat as the code moves.
 REPO = Path(subprocess.run(['git', 'rev-parse', '--show-toplevel'], cwd=Path(__file__).parent, capture_output=True, text=True, check=True).stdout.strip())
 OUT = Path(sys.argv[1])
+REV = sys.argv[3] if len(sys.argv) > 3 and sys.argv[2] == '--at' else 'HEAD'
+_TEXT = {}
+
+
+def text_at(path):
+    """The file as the revision holds it."""
+    if path not in _TEXT:
+        shown = subprocess.run(['git', '-C', str(REPO), 'show', f'{REV}:{path}'], capture_output=True, text=True, check=False)
+        if shown.returncode != 0:
+            raise SystemExit(f'not in {REV}: {path}')
+        _TEXT[path] = shown.stdout
+    return _TEXT[path]
 
 FSJ = 'desktop/cradle/expressions-app/field-studies-journeys/src/'
 RC = 'desktop/cradle/expressions-app/vendor/research-canvas/packages/canvas/src/'
@@ -25,7 +44,7 @@ LIB = 'desktop/cradle/kernel/src/lib.rs'
 
 
 def cite(path, needle, near=None):
-    lines = (REPO / path).read_text().split('\n')
+    lines = text_at(path).split('\n')
     hits = [i + 1 for i, line in enumerate(lines) if needle in line]
     if not hits:
         raise SystemExit(f'unresolved: {path} :: {needle!r}')
@@ -38,13 +57,13 @@ LENS_ROW = {
     'canvas': cite(UI + 'frame/instruments.ts', "lens: 'canvas'"),
     'timeline': cite(UI + 'frame/instruments.ts', "lens: 'timeline'"),
     'journey': cite(UI + 'frame/instruments.ts', "lens: 'journey'"),
-    'palace': cite(UI + 'frame/instruments.ts', "lens: 'palace'"),
 }
+# The stage carries three lenses: its Palace lens retired with the frame's Palace (lane U, b5a935661; 30ba8692f) — palaces are entered
+# on the Earth (PALACE_DOORS below).
 LENS_FRAME = {
     'canvas': cite(FSJ + 'app.ts', "void researchInstruments?.open(lens==='canvas'?'m1'"),
     'timeline': cite(FSJ + 'app.ts', "void researchInstruments?.open(lens==='canvas'?'m1'"),
     'journey': cite(FSJ + 'app.ts', "if(lens==='journey')void journeyInstrument?.open()"),
-    'palace': cite(FSJ + 'app.ts', "if(lens==='palace'){if(propertyTake)finishPropertyTake();editing=true;"),
 }
 LENS_CHAIN = [
     cite(UI + 'shell/modeBrowsers.tsx', "{id: 'instruments', categories: [{id: 'instruments', label: 'Instruments'"),
@@ -90,17 +109,55 @@ ATLAS_EARTH = [
     cite(AT + 'registerAtlasHost.ts', "registerProjectionModule({id: ATLAS_MODULE_ID, kind: 'projection.earth'"),
     cite(AT + 'AtlasProjectionPanel.tsx', 'places = bindPlaces({handle: mounted, transport, session: disclosureSession})'),
 ]
-ATLAS_PLATE = [
+TD = UI + 'inhabitants/ql/devices/TechneDevices.tsx'
+# The device side's atlas folds (M4′, M5′): a press opens the Earth on the focused pane, and holds across the focus it causes (d6b5aa672).
+ATLAS_RACK = [
     cite(UI + 'shell/paneInstrument.ts', "case 'projection.earth':"),
     cite(UI + 'shell/modeDetails.tsx', 'techne: {clip: TechneClip, device: TechneChain,'),
     cite(UI + 'shell/ModeDetail.tsx', '<TechneDevices manifests={manifests} focusInstrument={focusInstrument ?? null} instrumentReading={instrumentReading} />'),
-    cite(UI + 'inhabitants/ql/devices/TechneDevices.tsx', 'onOpen={() => { setOpened({focus: focusInstrument, id: holder.id}); openOnFocusedPane(holder.id) }}'),
-    cite(UI + 'inhabitants/ql/devices/TechneDevices.tsx', "if (ATLAS_INSTRUMENTS.includes(id)) return {kind: 'projection.earth'}"),
-    cite(UI + 'inhabitants/ql/devices/TechneDevices.tsx', "'techne:m4': props => <PlacesPlate {...props} />,"),
+    cite(TD, 'onOpen={() => { setOpened({focus: focusAfterOpening(holder.id, focusInstrument), id: holder.id}); openOnFocusedPane(holder.id) }}'),
+    cite(TD, "if (ATLAS_INSTRUMENTS.includes(id)) return {kind: 'projection.earth'}"),
 ]
+ATLAS_PLATE = [*ATLAS_RACK, cite(TD, "'techne:m4': props => <PlacesPlate {...props} />,")]
 ATLAS_TRANSPORT = [
     cite(UI + 'shell/modeTransports.tsx', 'const atlasTime = useAtlasTimeBindings()'),
     cite(AT + 'places/placesTransport.ts', 'export function atlasTimeBindings('),
+]
+# Palaces live in the atlas (ticket X: lane U, b5a935661, with 30ba8692f's World › Palaces; R2 closed). A palace is a register's native
+# Expression standing on the Earth; three doors enter it there — the device side's M5′ fold (its plate lists the world's palaces and the
+# doors the Earth's selection stands at), M4′'s Locations under the kind `palace`, and the browser's World › Palaces, which opens the
+# Earth through the one instrument door and enters once the atlas has bound its palace owners. Inside, the M5′ plate holds the palace's
+# controls, the Earth pane draws its floor, and Technē's transport walks it. The frame's Palace lens is removed.
+PL = AT + 'palaces/'
+PS = PL + 'palaceSession.ts'
+PO = PL + 'palaceOwners.ts'
+PALACE_DOORS = [
+    *ATLAS_EARTH, *ATLAS_RACK,
+    cite(TD, "'techne:m5': props => <PalacePlate {...props} />,"),
+    cite(PL + 'PalacePlate.tsx', 'onClick={() => turn(row.key)} onDoubleClick={() => void enterPalace(palace)}>'),
+    cite(PL + 'PalacePlate.tsx', 'onClick={() => void enterPalace(palace, {roomKey: room.key})}>'),
+    cite(TD, "'techne:m4': props => <PlacesPlate {...props} />,"),
+    cite(AT + 'places/PlacesPlate.tsx', "{kind === 'palace' ? <PalaceLocations handle={handle} query={query} />"),
+    cite(AT + 'places/PlacesPlate.tsx', 'if (palace) void enterPalace(palace) }}>'),
+    cite(UI + 'shell/ModeBrowser.tsx', 'if (category.id === PALACES_GROUP) return <PalaceGroupRows'),
+    cite(UI + 'shell/ModeBrowser.tsx', "void enterFromOutside(palace, () => openInstrument('projection.earth'))"),
+    cite(PL + 'palacesWorld.ts', 'export async function enterFromOutside('),
+    cite(PL + 'palacesWorld.ts', 'void enterPalace(palace)'),
+    cite(AT + 'AtlasProjectionPanel.tsx', 'palaces = bindPalaces({element, transport, storage: atlasMemoryStorage})'),
+    cite(PL + 'palacesHost.ts', 'bindPalaceOwners(livePalaceOwners({transport, storage, said, live: () => live}))'),
+    cite(PS, 'export async function enterPalace('),
+]
+PALACE_PLATE = [
+    cite(TD, "return focus && ATLAS_INSTRUMENTS.includes(focus) && palace !== 'outside' ? 'techne:m5' : focus"),
+    cite(PL + 'PalacePlate.tsx', 'const sections: PlateSection[] = here ? ['),
+]
+PALACE_FLOOR = [
+    cite(PL + 'palacesHost.ts', 'root.render(createElement(PalaceFloor))'),
+    cite(PL + 'PalaceFloor.tsx', 'export function PalaceFloor() {'),
+]
+PALACE_TRANSPORT = [
+    cite(UI + 'shell/modeTransports.tsx', 'const palaceWalk = usePalaceWalkBindings()'),
+    cite(PL + 'palaceTransport.ts', 'export function usePalaceWalkBindings(): TransportBindings {'),
 ]
 # lane-2 T21: the Timeline's "Show on the globe" writes the session's focus and window, and the atlas follows them.
 CARRY = [
@@ -136,6 +193,12 @@ GRAPH_CHAIN = [
     cite(CR + 'knowledge/KnowledgeSurface.tsx', 'void loadGraph(transport,binding.project,visit.query'),
 ]
 
+PALACE_IN = ('Technē › a palace, entered on the Earth: the device side\'s M5′ Palace fold (it opens the Earth on the focused pane; its plate '
+             'lists the world\'s palaces — press one to turn the Earth to its door, double-click to enter — and the doors the Earth\'s '
+             'selection stands at), or the M4′ World / Places plate\'s Locations under the kind palace (double-click), or the browser\'s '
+             'World › Palaces (double-click or Enter: it opens the Earth, waits for it, and enters)')
+PALACE_NO_WORK = (' No open work is needed: a palace is a register\'s own native Expression, read through the suite\'s owners; Escape, or '
+                  'the plate\'s Portals › ↩ the Earth, leaves it.')
 REACH_TEXT = {
     'lens': 'Any mode → browser › Instruments › {L} (double-click, or drag into a pane) → the Expressions stage pane opens and turns to its {L} lens → the frame\'s {L} instrument{X}. First an open native Expression: Expressions › browser › Expressions › a work (or New).',
     'stage': 'Expressions › the centre\'s Expressions stage pane (the hosted frame, edge to edge) → the frame\'s own {L}{X}. Its owner writes need an open native Expression (Expressions › browser › Expressions › a work, or New); on the frame\'s local draft they stay local.',
@@ -146,6 +209,9 @@ REACH_TEXT = {
     'carry': 'Any mode → browser › Instruments › Timeline (double-click, or drag into a pane) → the stage turns to its Timeline lens → an event › Show on the globe (the event\'s place becomes the session\'s spatial focus, its validity the window) → Technē › the Earth pane, the atlas (browser › Instruments › Earth, or the device side\'s M4′ World fold){X}. First an open native Expression: Expressions › browser › Expressions › a work (or New).',
     'studio': 'Expressions › the detail row\'s Device side, the Studio plate → its {L}{X}. First an open native Expression: Expressions › browser › Expressions › a work (or New).',
     'rail': 'Any mode → browser › Instruments › Canvas or Timeline (the one stage turns and keeps its open Scene), then › Graph (double-click, or drag into a pane) → the Graph, the atlas\'s graph view, opens turned to the subject held now (THE selection){X}. First an open native Expression: Expressions › browser › Expressions › a work (or New).',
+    'palace-plate': PALACE_IN + ' → inside, the device side stands the M5′ Palace / Integral Whole plate open → {X}.' + PALACE_NO_WORK,
+    'palace-floor': PALACE_IN + ' → inside, the Earth pane draws the palace\'s floor plan, its rooms along the path → {X}.' + PALACE_NO_WORK,
+    'palace-transport': PALACE_IN + ' → inside, Technē\'s transport walks the palace → {X}.' + PALACE_NO_WORK,
 }
 WIKI_TEXT = ' Its dated and placed facets read only a Scene bound to a Wiki register, and two doors open one in the stage: Technē › browser › Locations or Places › a subject (double-click or Enter) opens the Scene that carries it (N2\'s subject door); or the Graph and source pane › a subject › Examine in Technē opens the register\'s Scene. Any other work is refused by the owner read, by name.'
 
@@ -170,6 +236,12 @@ def reach(kind, label, extra='', chain_extra=(), condition='open-work'):
         route, chain = 'studio', [*STUDIO_CHAIN, *OPEN_WORK]
     elif kind == 'rail':
         route, chain = 'rail', [*RAIL_CHAIN, *OPEN_WORK]
+    elif kind == 'palace-plate':
+        route, chain = 'atlas:palace-plate', [*PALACE_DOORS, *PALACE_PLATE]
+    elif kind == 'palace-floor':
+        route, chain = 'atlas:palace-floor', [*PALACE_DOORS, *PALACE_FLOOR]
+    elif kind == 'palace-transport':
+        route, chain = 'atlas:palace-transport', [*PALACE_DOORS, *PALACE_TRANSPORT]
     else:
         route, chain = 'graph', [*GRAPH_CHAIN]
     text = REACH_TEXT[kind].format(L=label, X=extra)
@@ -208,11 +280,22 @@ OWNERS = {
     'ke-index': ('kernel `expression` op · index, then edit with `collections_set` (KernelOp::Expression)', [
         cite(FSJ + 'app.ts', "nativeExpressionRequest({operation:'index'})"),
         cite(FSJ + 'app.ts', 'async function assignCollections(el:HTMLElement){'), *KE_RELAY]),
-    'ke-compose': ('kernel `expression` op · edit, Palace composition (KernelOp::Expression)', [
-        cite(FSJ + 'app.ts', "composeExpression:async({expression_ref,expected_revision,changes})=>{const data=await nativeExpressionRequest({operation:'edit'"), *KE_RELAY]),
-    'ke-invoke': ('kernel `expression` op · invoke_action, the routed Return (KernelOp::Expression)', [
+    # ticket X (15 Oct): the palace's composition and Return are written by the atlas's palace owners (palaces/palaceOwners.ts
+    # livePalaceOwners, bound while the Earth stands), through the cradle owners' kernel-expression channel — the frame's Palace is removed.
+    'ke-compose': ('kernel `expression` op · edit, the palace\'s composition: one CAS-gated edit of the register\'s Expression (m0m5/palace/basis.ts palaceEditRequest), its readback checked (KernelOp::Expression)', [
+        cite(PS, 'const result = palaceComposeReply(await owners.edit(palaceEditRequest(here.draftDoc.expression_ref, here.draftDoc.revision, changes)))'),
+        cite(CR + 'techne/m0m5/palace/basis.ts', 'export function palaceEditRequest('),
+        cite(PO, 'edit: request => expression(request),'),
+        cite(PO, "const expression = async (request: Record<string, unknown>) => (await channel('kernel-expression'))(request, context())"),
+        *KE_RELAY[3:]]),
+    'ke-invoke': ('the kernel-expression channel · invoke_action, the routed Return (expressions-boundary cradle.ts frameAction): the owner re-reads the reading the proposal came from and decides; only then kernel `invoke_action` (KernelOp::InvokeAction) dispatches it', [
+        cite(PS, 'const raw = await owners.invoke(request as unknown as Record<string, unknown>)'),
+        cite(PO, 'invoke: request => expression(request),'),
+        cite(PO, "const expression = async (request: Record<string, unknown>) => (await channel('kernel-expression'))(request, context())"),
         cite(EB + 'cradle.ts', "'kernel-expression': (request, context) => object(request) && request.operation === 'invoke_action'"),
-        cite(EB + 'host.ts', "if (request.operation === 'invoke_action' && !readFrameActionRequest(request))"), *KE_RELAY[2:]]),
+        cite(EB + 'cradle.ts', 'const reading = assertReading(await readWikiSceneTechne(transport, request.reading_request));'),
+        cite(EB + 'cradle.ts', "const call = await kernelOp(transport, {op: 'invoke_action', invocation: {action: verdict.action"),
+        cite(LIB, '    InvokeAction {', 513)]),
     'techne-reading': ('techne-reading → kernel `expression` op · inspect + the Wiki register reading (Central files, kernel `knowledge`)', [
         cite(FSJ + 'kernelExpressions.ts', 'export const readTechneReading = (request:TechneSceneReadingRequest)'),
         cite(UI + 'native/expressionOwners.ts', "if(channel==='techne-reading'&&object(request)&&request.facet===undefined&&request.scope===undefined"),
@@ -248,9 +331,40 @@ OWNERS = {
         cite(EB + 'cradle.ts', "'central-subject-text': async request => {")]),
     'journey-presence': ('the Journey presence store (desktop/cradle/src/techne/m0m5/journey/presence.ts): webview storage, presentation by the target\'s own design — not a suite owner', [
         cite(FSJ + 'journeyInstrument.tsx', 'recordPosition(sceneId:string){')]),
-    'palace-presence': ('the Palace presence store (desktop/cradle/src/techne/m0m5/palace/presence.ts): webview storage, presentation by the target\'s own design — not a suite owner', [
-        cite(FSJ + 'palaceInstrument.tsx', 'palacePresenceStorage,PALACE_UNPERSISTED_NOTICE'),
-        cite(CR + 'techne/m0m5/palace/presence.ts', 'export function palacePresenceStorage(): PresenceStorage | null {')]),
+    # ticket X: the presence owner unchanged, over the atlas's workspace memory instead of the webview's raw storage (lane U).
+    'palace-presence': ('the Palace presence store (desktop/cradle/src/techne/m0m5/palace/presence.ts) over the atlas\'s workspace memory (AtlasProjectionPanel.tsx atlasMemoryStorage, bound by palaces/palacesHost.ts): presentation by the target\'s own design — not a suite owner', [
+        cite(PS, 'if (!savePalaceComposition(owners?.storage() ?? null, next, reading) && !persistFailed) {'),
+        cite(PS, 'const restored = restorePalaceComposition(whole.reading, owners.storage())'),
+        cite(CR + 'techne/m0m5/palace/presence.ts', 'export function savePalaceComposition('),
+        cite(CR + 'techne/m0m5/palace/presence.ts', 'export function restorePalaceComposition('),
+        cite(PL + 'palacesHost.ts', 'bindPalaceOwners(livePalaceOwners({transport, storage, said, live: () => live}))'),
+        cite(AT + 'AtlasProjectionPanel.tsx', 'palaces = bindPalaces({element, transport, storage: atlasMemoryStorage})'),
+        cite(AT + 'AtlasProjectionPanel.tsx', 'export function atlasMemoryStorage(): Storage {')]),
+    # ticket X: the palace's whole, read by the atlas itself through the owner the frame's Palace reached.
+    'palace-reading': ('techne-reading through the atlas\'s palace owners: the owner\'s Expression-wide reading (readWikiSceneTechne, scope "expression") over the register\'s own Expression, its document read with kernel `expression` op · inspect, opened by its owner first when the kernel does not hold it (KernelOp::Expression, KernelOp::Knowledge) — read only', [
+        cite(PO, "readWhole: async basis => (await channel('techne-reading'))({...basis, scope: 'expression'}, context()),"),
+        cite(PO, "const data = await expression({operation: 'inspect', expression_ref: ref}) as {document?: unknown} | null"),
+        cite(PO, 'const held = await ensureWikiNativeExpression(transport, register)'),
+        cite(PO, "module.createCradleOwners(transport, {project: 'O-I', personal: false, isCurrent: live})"),
+        cite(EB + 'cradle.ts', "'techne-reading': request => readWikiSceneTechne(transport, request)"),
+        cite(CR + 'techne/wikiReadingProvider.ts', 'export async function readWikiSceneTechne(transport: KernelTransportStatus, input: unknown)'),
+        cite(CR + 'techne/wikiReadingProvider.ts', 'const inspected = await kernelOp(transport, {op: "expression", request: {operation: "inspect", expression_ref: request.expression_ref}});'),
+        cite(CR + 'techne/wikiExpression.ts', 'kernelOp(transport, {op: "knowledge", project: register.project'),
+        cite(EB + 'cradle.ts', ": data({op: 'expression', request} as KernelOp, 'expression', context)"),
+        cite(LIB, '    Expression {', 379),
+        cite(LIB, '    Knowledge {', 447)]),
+    # ticket X: an object a palace holds opens through the shell's own doors; the Open's trail step rides the shared session.
+    'palace-doors': ('the shell\'s own doors, through the atlas\'s palace owners (palaces/palaceOwners.ts open): a region\'s one Expression through the App\'s Expression door (timelinePaneHost journey.openExpression), a room\'s Scene through the owner\'s selection ask (requestWikiSelection, then the stage presented), a subject through the subject door (openWorldSubject), an entry through the instrument door with its ref as the subject, a source on Graph and source; the Open\'s trail step on the shared session (m0m5/palace/basis.ts palaceTrailStep → disclosureSession recordTraversal) — no kernel write', [
+        cite(PS, 'const words = opened(() => owners!.open.scene(here.palace, room))'),
+        cite(PS, 'const words = opened(() => owners!.open.expression(ref))'),
+        cite(PO, 'const door = timelineReading()?.journey?.openExpression'),
+        cite(PO, "requestWikiSelection({registerKey: palace.key, sceneRef: room.key, entityRef: null, subjectRef: null, title: room.name, origin: 'external'})"),
+        cite(PO, 'void openWorldSubject({ref, title})'),
+        cite(PO, 'openInstrument(payload, undefined, {ref, title: ref})'),
+        cite(PO, "window.dispatchEvent(new CustomEvent('oi:epi-open-knowledge'"),
+        cite(PS, 'palaceTrailStep(owners.session, here.reading, ref)'),
+        cite(CR + 'techne/m0m5/palace/basis.ts', "store.recordTraversal({kind: 'traversal', instrument: 'expressions', step: 'endpoint'"),
+        cite(CR + 'techne/session.ts', 'export const disclosureSession: DisclosureSessionStore = createDisclosureSessionStore();')]),
     'library': ('kernel `expression` op · list/inspect for kernel-bound entries + the frame\'s browser-local library store (libraryStore.ts)', [
         cite(FSJ + 'app.ts', "// T22: a kernel-bound library entry is opened from the kernel once the native channel is up"), *KE_RELAY]),
     'graph-hop': ('kernel `expression` op · inspect (the card\'s subject basis) → the Graph and source pane centred on it, which reads kernel `graph`', [
@@ -314,10 +428,9 @@ ROWS = {}
 NOTES = {}
 
 
-def homed(target, component, reach_, owner_, note=None, retires=None):
+def homed(target, component, reach_, owner_, note=None):
+    # No home retires (ticket X: R2 closed with the palaces on the atlas, as R1 closed with Places).
     row = {'home': {'component': component, 'reach': reach_['text'], 'route': reach_['route'], 'condition': reach_['condition']}, 'owner_op': owner_, 'gap': None}
-    if retires:
-        row['home']['retires'] = retires
     ROWS[target] = row
     if note:
         NOTES[target] = note
@@ -334,7 +447,6 @@ def gap(target, kind, what, ticket, where=None, owner_=None, note=None):
 
 RI = FSJ + 'researchInstruments.tsx'
 CANVAS = reach('lens', 'Canvas')
-N4_RETIRES = 'FOUNDATION §3 N4: palaces live in the atlas, with no separate palace surface; this frame Palace home moves onto the atlas (ticket R2).'
 
 # ── lane 1 ───────────────────────────────────────────────────────────────────
 homed('lane-1:A1', cite(RI, '/** A1 — alignment guides for the card being dragged'), CANVAS, owner('ke-research', note='The guides are presentation; the settled card position is the owner write.'))
@@ -540,9 +652,7 @@ place('lane-4:T30', cite(PP, '<StandingTag standing={row.standing} />', 218),
 
 # ── lane 5 (Journey and Palace) ──────────────────────────────────────────────
 JN = reach('lens', 'Journey', condition='open-work+wiki-scene')
-PA = reach('lens', 'Palace', condition='open-work+wiki-scene')
 JI = FSJ + 'journeyInstrument.tsx'
-PI = FSJ + 'palaceInstrument.tsx'
 homed('lane-5:T1', cite(JI, 'export function installJourneyInstrument'), JN, owner('techne-reading'))
 homed('lane-5:T2', cite(FSJ + 'app.ts', '// lane-5 T2 · compose a scene from the journey lens.'), JN, owner('ke-edit'))
 homed('lane-5:T3', cite(FSJ + 'app.ts', "// lane-5 T3 · the pace draft's save."), JN, owner('ke-edit'))
@@ -556,19 +666,44 @@ homed('lane-5:T10', cite(JI, "/** T10: enter the presented beat's Scene from the
 homed('lane-5:T11', cite(FSJ + 'app.ts', '// T11: the in-frame return from a journey crossing.'), JN, owner('crossing'))
 homed('lane-5:T12', cite(JI, "/** T12: the Scene's own explicit activation portals"), JN, owner('techne-reading', note='A portal opens through the frame\'s scene-portal summon to the host\'s surface seam; the beat\'s portals are the Scene\'s own triggers.'))
 homed('lane-5:T13', cite(FSJ + 'journeyBeats.ts', '/** Present exactly when there are no cards'), JN, owner('techne-reading'))
-def palace(target, component, *owners_, note=None):
-    homed(target, component, PA, owner(*owners_), note=note, retires=N4_RETIRES)
-palace('lane-5:T14', cite(PI, '/** T14: the Expression-wide Technè reading the integral whole composes from.'), 'techne-reading')
-palace('lane-5:T15', cite(FSJ + 'palaceBoardView.tsx', "/** The Palace board's face (lane-5 T15)"), 'palace-presence', 'techne-reading')
-palace('lane-5:T16', cite(FSJ + 'palaceBoardView.tsx', "/** lane-5 T16: one card's Open"), 'techne-reading')
-palace('lane-5:T17', cite(FSJ + 'palaceBoardView.tsx', "/** lane-5 T17: the region card the walk's focused element"), 'techne-reading', 'palace-presence')
-palace('lane-5:T18', cite(FSJ + 'palaceWhole.ts', "export type PalaceStanding = 'warranted' | 'owner' | 'free';"), 'techne-reading')
-palace('lane-5:T19', cite(PI, '// T19: the Return proposal the Palace shows'), 'ke-invoke', 'techne-reading')
-palace('lane-5:T20', cite(FSJ + 'palaceHop.ts', "(`techne-time-window`, operation `palace`)"), 'time-window', 'ke-compose')
-palace('lane-5:T21', cite(PI, '// T21: the saved arrangement, walk position and bookmarks come back'), 'palace-presence')
+# The nine Palace targets' homes on the atlas, as tickets/T-PALACES-ONTO-ATLAS.md lists them (lane U, b5a935661; 30ba8692f's World ›
+# Palaces): the M5′ plate, the palace's floor in the Earth pane, and Technē's transport, every act through palaces/palaceSession.ts to
+# its owner. The frame's Palace lens is removed, so no home here retires; lane U judged nothing not worth keeping.
+U = ('re-homed on the atlas (lane U, b5a935661, with 30ba8692f\'s World › Palaces; R2 closed: the frame\'s Palace lens is removed, so '
+     'this home no longer retires and no longer needs an open work or a Wiki-bound Scene — a palace is a register\'s own native '
+     'Expression, entered on the Earth from the M5′ fold, M4′\'s Locations kind palace or the browser\'s World › Palaces): ')
+UNSEEN = ' Screen leg UNVERIFIED.'
+def palace(target, component, kind, extra, *owners_, note=''):
+    homed(target, component, reach(kind, 'Palace', extra=extra, condition='none'), owner(*owners_), note=U + note + UNSEEN)
+palace('lane-5:T14', cite(PL + 'PalacePlate.tsx', 'function WholeSection({here}: {here: PalaceInside}) {'), 'palace-plate',
+       'its Integral whole (folded to its strip until pressed): each region in M′ order with its office and standing, each entry with Open', 'palace-reading',
+       note='the integral whole is read through the owner the frame\'s Palace reached — the boundary\'s techne-reading channel, readWikiSceneTechne scope "expression" (palaces/palaceOwners.ts) — at the register\'s overview Scene, and refused by name unless it answers for this palace\'s own Expression at this revision (palaceSession.ts readWhole); palaceWholeView moved verbatim to m0m5/palace/whole.ts. The floor\'s rooms are the whole\'s journey region, the palace\'s own Scenes.')
+palace('lane-5:T15', cite(PS, 'export function moveRooms(points: Record<string, BoardPoint>): void {'), 'palace-floor',
+       'drag a room (one gesture, one save); shift-drag a marquee to select rooms (the plate\'s Rooms shows them); drag the floor to pan, wheel to zoom; Snap off · grid on the plate\'s Rooms', 'palace-presence',
+       note='the arrangement law moved to m0m5/palace/board.ts (the frame\'s own snap copied unchanged), keyed by the room\'s Scene ref; the floor plan is the board — a drag is one move saved once through the presence owner (palaceSession.ts moveRooms), the viewport saved once settled; nothing reaches the plan or the kernel. Replaced, not ported (lane U): the Research Canvas\'s card vocabulary — the floor draws the mockup\'s rooms instead.')
+palace('lane-5:T16', cite(PS, 'export function openRoom(key: string): void {'), 'palace-floor',
+       'double-click a room (a region opens its one Expression, any other room its own Scene), click an object it holds (the subject door); the plate\'s Rooms (double-click), Integral whole (each entry) and Portals open the same way', 'palace-doors',
+       note='an object opens through its owner (palaceSession.ts openRoom, openObject, openEntry, openMember over palaceOwners.ts open): a region\'s one Expression in the stage, a room\'s Scene through the owner\'s selection ask, a subject through the subject door, an entry with its ref as its instrument pane\'s subject, a source on Graph and source; what its route refuses is named (m0m5/palace/whole.ts palaceOpenRoute). The trail step records on the shared session only while it stands on this palace\'s reading, else says why (m0m5/palace/basis.ts palaceTrailStep); the floor draws the guided path\'s honest edges (palacesModel.ts floorEdges).')
+palace('lane-5:T17', cite(PL + 'palaceTransport.ts', 'export function palaceWalkBindings(state: PalaceState,'), 'palace-transport',
+       'Walk (Play) walks one locus per dwell and wraps, Stop holds it still; Walk pace reads the dwell, Stop n/N the locus of how many; the plate\'s Path holds Start, ← and →; the floor accents the room the walk stands in', 'palace-reading', 'palace-presence',
+       note='the walk is the one transport\'s while a palace stands (palaceTransport.ts palaceWalkBindings, bound in shell/modeTransports.tsx); outside a palace the atlas\'s own time serves the button. The walk visits the whole\'s loci from the named start (m0m5/palace/whole.ts palaceWalkSteps over recall.ts), and its position persists through the presence owner (palaceSession.ts moveWalk). No owner sets a pace yet: the dwell is the walk\'s own, and the transport\'s title says so.')
+palace('lane-5:T18', cite(PL + 'PalaceFloor.tsx', 'export function roomWhy(room: PalaceRoom, standing: PalaceStandingView | null): string {'), 'palace-floor',
+       'each room says why it stands where it does in the Info view\'s hover; the plate\'s Path › Guide on · off says it for the room the walk stands in, and its Integral whole tags each region\'s standing', 'palace-reading',
+       note='the standing law moved verbatim to m0m5/palace/whole.ts (palaceStanding: warranted QL structure with its warrant class and provenance, an Expression owner\'s composition, or free mnemonic composition; every hand-made region free); the guide is these words (PalaceFloor.tsx roomWhy, PalacePlate.tsx PathSection).')
+palace('lane-5:T19', cite(PS, 'export async function acceptReturn(): Promise<void> {'), 'palace-plate',
+       'its Return (folded until pressed): Propose Return writes nothing; Accept and return · Refuse; the owner\'s answer in one line', 'ke-invoke',
+       note='the atlas calls the boundary\'s routed Return itself — the cradle owners\' kernel-expression channel with operation invoke_action (palaceOwners.ts invoke → expressions-boundary cradle.ts frameAction): the owner re-reads the reading the proposal came from and decides, and only then dispatches through the kernel\'s action seam; an invoked receipt returns to the Earth, the M0′ ground (palaceSession.ts returnToGround). The proposal law stays m0m5/palace/return.ts.')
+palace('lane-5:T20', cite(PS, 'export async function save(): Promise<void> {'), 'palace-plate',
+       'its Compose (folded until pressed): a new region; the kernel\'s Expressions, each into a region or as a region; Save composition · Revert; its Rooms › ↑ ↓ along the path, ○ empty, × remove; the floor dashes an unsaved region', 'ke-compose',
+       note='one Save is one CAS-gated edit of the palace\'s Expression through the kernel `expression` op (m0m5/palace/basis.ts palaceEditRequest), planned against the document the draft began at (m0m5/palace/composition.ts planRegions); a replay sends nothing, a conflict keeps the draft, the readback is checked, and the palace then stands at the owner\'s new revision with its whole read again. The Open\'s trail step its frame home carried (palaceHop.ts, removed) is lane-5 T16\'s.')
+palace('lane-5:T21', cite(PS, 'function persist(next: PalaceComposition, reading: TechneReading): void {'), 'palace-plate',
+       'its line under the sections (a refused store, told once); entering restores the arrangement, walk position, bookmarks and viewport before the palace is drawn', 'palace-presence',
+       note='the same presence owner, unchanged (m0m5/palace/presence.ts, its keys and state-registry entry as they were), over the atlas\'s workspace memory instead of the webview\'s raw storage (palacesHost.ts bindPalaces, AtlasProjectionPanel.tsx atlasMemoryStorage); entering restores before the palace is drawn and says a notice once (palaceSession.ts enterPalace); a refused store degrades to an unpersisted palace, told once (palaceSession.ts persist).')
 homed('lane-5:T22', cite(FSJ + 'app.ts', '// T22: each saved card names its origin'), stage('Library'), owner('library'))
 homed('lane-5:T23', cite(EB + 'timeWindow.ts', 'const crossed = crossToExpression(session, target);'), JN, owner('crossing', 'techne-reading'))
-palace('lane-5:T24', cite(FSJ + 'palaceBookmarks.ts', 'Palace bookmarks and the named start (lane-5 T24)'), 'palace-presence')
+palace('lane-5:T24', cite(PS, 'export function bookmarkHere(name: string): boolean {'), 'palace-plate',
+       'its Path: Start (the named start), a name and Bookmark, each bookmark (press to jump, ✎ rename, × delete); its Portals › ↩ the Earth (the return to ground); entering at a door stands the walk in that room', 'palace-presence',
+       note='the bookmark law moved verbatim (m0m5/palace/bookmarks.ts); the acts are palaceSession.ts bookmarkHere, jumpBookmark, renameBookmark, deleteBookmark and walkToStart, each through the presence owner; the frame\'s Return to ground is the return to the Earth (palaceSession.ts returnToGround), and entering at a door names a room the walk does not hold (palaceSession.ts enterPalace).')
 
 # ── what changed for the Wiki-bound homes (ticket T) ─────────────────────────
 DOOR_NOTE = ('the Wiki-bound Scene this home reads has a second door (lane N, 3a8fbc2d6; S1 closed): Technē › browser › Locations or Places '
@@ -587,25 +722,23 @@ NOTES['lane-2:T21'] = ('re-homed on the atlas (lane O, 92a7d38d5; R1 closed: the
                        'turnAtlasTo) and its clock stands in the one shared window. The target\'s other half, a place on the Earth framing the '
                        'Timeline, is lane-4 T23\'s "Window to its validity". ' + DOOR_NOTE)
 
-# ── the build tickets (ticket T, 15 Oct): G1, G2, G3, R1 and S1 closed in code (lanes N, O, P) and leave the list ──────────
-# Ranked by what can be built now: G4 writes through an owner that stands; R2 ports onto owners that stand; G5 and G6 wait on the
-# journey owner (G6 after G5, and it is M3′'s).
+# ── the build tickets (ticket T, 15 Oct): G1, G2, G3, R1 and S1 closed in code (lanes N, O, P) and leave the list; ticket X, 15 Oct:
+# R2 closed in code (lane U, b5a935661; 30ba8692f) and leaves it too ──────────
+# Ranked by what can be built now: G4 writes through an owner that stands; G5 and G6 wait on the journey owner (G6 after G5, and it
+# is M3′'s).
 TICKETS = [
     {'id': 'G4', 'rank': 1, 'kind': 'gap', 'title': 'Technē\'s Capture keeps the atlas\'s view in a Scene',
      'what': 'Bind Technē\'s Capture ("View → scene", shell/modeGrammar.ts) to an owner write that keeps the atlas\'s view — its camera, the filter in force and the window — as a named view in a Scene (the Scene\'s research material through the kernel `expression` op edit, which still admits the frame\'s place views), and restore one from the M4 plate. Homes lane-4 T20; the same writer would carry the per-Scene layer state lane-4 T21 does not keep.',
      'targets': ['lane-4:T20']},
-    {'id': 'R2', 'rank': 2, 'kind': 're-home', 'title': 'Palaces move onto the atlas (N4)',
-     'what': 'FOUNDATION N4: a palace is a place on the world you can enter; move the Palace instrument\'s whole, board, walk, Return and presence onto the atlas, then retire the frame\'s Palace lens.',
-     'targets': ['lane-5:T14', 'lane-5:T15', 'lane-5:T16', 'lane-5:T17', 'lane-5:T18', 'lane-5:T19', 'lane-5:T20', 'lane-5:T21', 'lane-5:T24']},
-    {'id': 'G5', 'rank': 3, 'kind': 'gap', 'title': 'Record a walk on the atlas (the journey owner\'s writer)',
+    {'id': 'G5', 'rank': 2, 'kind': 'gap', 'title': 'Record a walk on the atlas (the journey owner\'s writer)',
      'what': 'Technē\'s Record ("Record walk", shell/modeGrammar.ts) waits for the journey owner: once it stands, bind Record to capture the atlas\'s camera waypoints with their holds and captions — presentation, never a dated-place claim or a minted route — as a walk the owner keeps, replayed on the atlas\'s one time button (Technē\'s Walk). Homes lane-4 T25; a subject\'s thread already walks.',
      'targets': ['lane-4:T25']},
-    {'id': 'G6', 'rank': 4, 'kind': 'gap', 'title': 'M3′ Journey binds a walk\'s stop to its beat',
+    {'id': 'G6', 'rank': 3, 'kind': 'gap', 'title': 'M3′ Journey binds a walk\'s stop to its beat',
      'what': 'Binding a stop to a Journey beat is M3′ Journey\'s (lane O\'s judgement; M4′ renders nothing journey-owned): once G5 records walks, let the Journey lens bind a stop to a beat by ref, under the material\'s own law (fsj/src/placeTourRecord.ts resolveTourBindings: a deleted beat leaves the stop intact and unbound). Homes lane-4 T26.',
      'targets': ['lane-4:T26']},
 ]
 
-head = subprocess.run(['git', '-C', str(REPO), 'rev-parse', 'HEAD'], capture_output=True, text=True, check=True).stdout.strip()
+head = subprocess.run(['git', '-C', str(REPO), 'rev-parse', f'{REV}^{{commit}}'], capture_output=True, text=True, check=True).stdout.strip()
 assert len(ROWS) == 126, len(ROWS)
 used = sorted({key for r in ROWS.values() if r['owner_op'] for key in r['owner_op']['chains']})
 OWNER_OPS = {key: {'op': OWNERS[key][0], 'calls': OWNERS[key][1]} for key in used}
