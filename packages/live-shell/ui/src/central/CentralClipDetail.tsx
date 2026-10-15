@@ -49,6 +49,7 @@ import {
   type PayloadColumn,
 } from './documentPayload'
 import {useCentralDayStanding} from './useCentralDayStanding'
+import {subjectWords} from './daySurface'
 
 const READ_PREVIEW_CHARS = 4000
 /** A subject's owner location: the one the browser's row carried (the owner's own `files_list` entry), else the entry the
@@ -212,7 +213,7 @@ function useSubjectReading(transport: KernelTransportStatus, subject: CentralSub
 const FORM: Record<CentralSubjectSelection['kind'], string> = {folder: 'Folder', note: 'Note', day: 'Day'}
 
 /** A browser subject by its form and its file's name ("Day · 2026-10-08.md"), as the row's head names it. */
-export const centralSubjectName = (subject: CentralSubjectSelection): string => `${FORM[subject.kind]} · ${basename(subject.path)}`
+export const centralSubjectName = (subject: CentralSubjectSelection): string => `${FORM[subject.kind]} · ${subjectWords(subject.path)}`
 
 /** A browser subject as data. Legacy: inhabitants/CentralSubjectDetail.tsx:112-182 (the reading rows under "Central detail"). */
 export function CentralSubjectClip({transport, subject, colour}: {transport: KernelTransportStatus; subject: CentralSubjectSelection; colour?: string | null}) {
