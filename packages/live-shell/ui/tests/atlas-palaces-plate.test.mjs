@@ -218,3 +218,22 @@ test('publishing a standing does not disturb a palace: the suite\'s places only 
     session.resetPalaceSession()
   }
 })
+
+test('inside a palace the floor is the pane\'s whole picture: it stands above every overlay the atlas places in the pane (seen through, 15 Oct)', async () => {
+  const {readFile, readdir} = await import('node:fs/promises')
+  const styleDir = new URL('../src/projections/atlas/src/style/', import.meta.url)
+  // The atlas's own dialogs stand over everything in the pane on purpose — its search (⌘K, z 60) and its loading veil (z 100) — and
+  // stay above a palace too. Every other overlay reads the field (labels, sky, Aion, the header and its menu): all below 50.
+  const DIALOGS = 50
+  let highest = 0
+  for (const name of (await readdir(styleDir)).filter(file => file.endsWith('.css'))) {
+    for (const match of (await readFile(new URL(name, styleDir), 'utf8')).matchAll(/z-index:\s*(\d+)/g)) if (Number(match[1]) < DIALOGS) highest = Math.max(highest, Number(match[1]))
+  }
+  const palaces = await readFile(new URL('../src/projections/atlas/palaces/palaces.css', import.meta.url), 'utf8')
+  const layer = /\.atlas-palace-layer \{[^}]*z-index:\s*(\d+)/.exec(palaces)
+  assert.ok(layer, 'the palace layer names its height')
+  assert.ok(Number(layer[1]) > highest, `the palace layer (${layer[1]}) stands above the atlas's highest field overlay (${highest}): no focus label, sky or header shows through the floor`)
+  assert.ok(Number(layer[1]) < DIALOGS, 'the atlas\'s search and loading veil still stand over a palace')
+  const floor = await readFile(new URL('../src/projections/atlas/palaces/PalaceFloor.tsx', import.meta.url), 'utf8')
+  assert.match(floor, /if \(state\.phase !== 'inside'\) return null/, 'outside a palace the layer draws nothing, so its height covers nothing of the Earth')
+})

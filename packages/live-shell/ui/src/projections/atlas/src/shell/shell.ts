@@ -30,7 +30,19 @@ export interface ShellHooks {
   theoretics: { id: string; name: string }[];
 }
 
-const FILTER_KINDS: LocusType[] = ['dream', 'vision', 'artifact', 'myth-episode', 'ritual', 'text-passage'];
+/** [§8.4 host] The header's readings and the lens's own Options, for a host that stands them outside the pane (Shell.headerReading). */
+export interface ShellHeaderReading {
+  /** the one line under the lens (the reading, the folio, the subject); empty when none */
+  context: string;
+  /** a lens's own heading beside its Options (Aion, Dynamics, the Red Book), in words; empty when none */
+  heading: string;
+  /** what the globe shows in this mode, and the whole field back on request; null when the whole field shows */
+  scope: { text: string; toggle: { label: string; press: () => void } | null } | null;
+  /** the lens's Options rows, in its order */
+  options: { title: string; description: string; pressed: boolean | null; disabled: boolean; press: () => void }[];
+}
+
+const FILTER_KINDS: LocusType[] =['dream', 'vision', 'artifact', 'myth-episode', 'ritual', 'text-passage'];
 
 export class Shell {
   readonly root: HTMLElement;
@@ -136,6 +148,37 @@ export class Shell {
     clear(this.controls);
     if (nodes?.length) this.controls.append(...nodes);
     this.controls.hidden = !nodes?.length;
+  }
+
+  /**
+   * [§8.4 host] public: what the header holds, read by the M4 plate, which stands it on the rack while the header stands down in the
+   * pane (atlasHost.css; owner, 14 Oct: "controls live in device UI, never as chrome inside a pane"). The lens's line, its scope and
+   * its own Options rows; each press is the header's own button pressed, so the lens acts exactly as it does when the header shows.
+   */
+  headerReading(): ShellHeaderReading {
+    const toggle = this.scopeLine.querySelector<HTMLButtonElement>('.sh-scope-toggle');
+    const rows = this.controls.hidden ? [] : [...this.controls.querySelectorAll<HTMLButtonElement>('button.mode-opt-row')];
+    const heading = this.controls.hidden ? '' : [...this.controls.children].filter((node) => !node.classList.contains('mode-options'))
+      .map((node) => [...node.childNodes].filter((child) => !(child instanceof HTMLElement && child.classList.contains('mode-options')))
+        .map((child) => child.textContent ?? '').join(' ')).join(' ').replace(/\s+/g, ' ').trim();
+    return {
+      context: this.title.hidden ? '' : this.context,
+      heading,
+      scope: this.scopeLine.hidden ? null : {
+        text: this.scopeLine.querySelector('span')?.textContent ?? '',
+        toggle: toggle ? { label: toggle.textContent ?? '', press: () => toggle.click() } : null,
+      },
+      options: rows.map((row) => {
+        const pressed = row.getAttribute('aria-pressed');
+        return {
+          title: row.querySelector('.mode-opt-title')?.textContent ?? row.textContent ?? '',
+          description: row.querySelector('.mode-opt-desc')?.textContent ?? '',
+          pressed: pressed === null ? null : pressed === 'true',
+          disabled: row.disabled,
+          press: () => row.click(),
+        };
+      }),
+    };
   }
 
   /** Something that sits beside the lens button (the Field's Earth ⇄ Graph pill). */

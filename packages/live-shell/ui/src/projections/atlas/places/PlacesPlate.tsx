@@ -125,6 +125,33 @@ function LensRow({handle}: {handle: AtlasHandle | null}) {
   </label>
 }
 
+/** What the atlas's header holds (src/shell/shell.ts headerReading — its line, its scope, the lens's own Options "≡"), stood here while
+ * the header stands down in the pane (atlasHost.css; seen in the pane by the lead, 15 Oct: the Theory lens's "Jung's theory ·
+ * Dynamics" under a "≡"). Each press is the header's own button pressed, so the lens acts as it always has; the plate keeps no copy. */
+export function LensReadings({handle}: {handle: Pick<AtlasHandle, 'ctl'> | null}) {
+  const [, setTick] = useState(0)
+  const header = handle?.ctl.shell.headerReading()
+  if (!header) return null
+  const press = (act: () => void) => { act(); setTick(n => n + 1) }
+  const line = [header.context, header.heading].filter(Boolean).join(' · ')
+  return <>
+    {line && <Reading name="Reading" value={line} />}
+    {header.scope && <div className="places-kv">
+      <span className="places-k">Shows</span>
+      <span className="places-v">{header.scope.text}{header.scope.toggle && <> · <button type="button" className="places-link"
+        onClick={() => press(header.scope!.toggle!.press)}>{header.scope.toggle.label}</button></>}</span>
+    </div>}
+    {header.options.length > 0 && <div className="places-kv">
+      <span className="places-k">Open</span>
+      <span className="places-row places-row--wrap" role="group" aria-label="The lens's own readings">
+        {header.options.map(option => <button key={option.title} type="button" disabled={option.disabled}
+          className={`places-btn${option.pressed ? ' places-btn--on' : ''}`} aria-pressed={option.pressed ?? undefined}
+          title={option.description || undefined} onClick={() => press(option.press)}>{option.title}</button>)}
+      </span>
+    </div>}
+  </>
+}
+
 function BodySection({handle, entries}: {handle: AtlasHandle | null; entries: readonly SectionDevice[]}) {
   return <>
     <Segmented title="Body" values={[{id: 'central', label: 'Central', why: 'Your own body has no builder in this suite yet: the atlas draws Earth.'}, {id: 'earth', label: 'Earth'}]}
@@ -132,6 +159,7 @@ function BodySection({handle, entries}: {handle: AtlasHandle | null; entries: re
     <Reading name="Name" value="Earth" />
     <Reading name="Seed" value="—" title="Earth is given, so it has no seed to reroll." />
     <LensRow handle={handle} />
+    <LensReadings handle={handle} />
     {entries.length > 0 && <SectionDevices label="Body" devices={entries} />}
   </>
 }
