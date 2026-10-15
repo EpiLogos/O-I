@@ -33,6 +33,16 @@ const marked = new Marked({
     table(token) {
       return `<div class="table-wrap">${this.constructor.prototype.table.call(this, token)}</div>\n`
     },
+    // A ```ui block embeds the device's real UI beside its spec:
+    //   src: path relative to this folder · height: px · caption: text
+    code({text, lang}) {
+      if (lang !== 'ui') return false
+      const f = Object.fromEntries(text.split('\n').map(l => l.split(/:\s*/)).filter(([k, v]) => k && v).map(([k, ...v]) => [k.trim(), v.join(':').trim()]))
+      const esc = v => String(v ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')
+      // Drawn at its design width (default 1440 px), scaled to fit the column.
+      const w = parseInt(f.width || '1440', 10), h = parseInt(f.height || '560', 10)
+      return `<figure class="ui"><div class="ui-stage" data-w="${w}" data-h="${h}"><iframe src="${esc(f.src)}" loading="lazy" style="width:${w}px;height:${h}px" sandbox="allow-scripts allow-same-origin" title="${esc(f.caption)}"></iframe></div><figcaption>${esc(f.caption)} · <a href="${esc(f.src)}" target="_blank" rel="noopener">open on its own</a></figcaption></figure>\n`
+    },
   },
 })
 
@@ -124,6 +134,10 @@ h2 .mark,h3 .mark{font-weight:400}
 h1.part{font-size:23px}h2{font-size:20px}
   .anchor{display:none}
 }
+figure.ui{margin:18px 0 26px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--panel)}
+figure.ui .ui-stage{position:relative;overflow:hidden;background:#fff}
+figure.ui iframe{display:block;border:0;background:#fff;transform-origin:0 0;position:absolute;left:0;top:0}
+figure.ui figcaption{font-size:12.5px;color:var(--dim);padding:8px 12px;border-top:1px solid var(--line)}
 @media print{nav,.theme,.menu{display:none}.layout{display:block}main{padding:0}}
 </style>
 </head>
@@ -151,6 +165,8 @@ ${body}
     root.dataset.theme=dark?'light':'dark'
     try{localStorage.setItem('dlw-theme',root.dataset.theme)}catch(e){}
   }
+  const fit=()=>document.querySelectorAll('.ui-stage').forEach(st=>{const w=+st.dataset.w,h=+st.dataset.h,k=Math.min(1,st.clientWidth/w);st.style.height=(h*k)+'px';st.firstElementChild.style.transform='scale('+k+')'})
+  fit();addEventListener('resize',fit)
   const nav=document.querySelector('nav')
   document.querySelector('.menu').onclick=()=>nav.classList.toggle('open')
   nav.addEventListener('click',e=>{if(e.target.closest('a'))nav.classList.remove('open')})
