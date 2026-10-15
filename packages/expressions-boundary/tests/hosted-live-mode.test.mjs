@@ -152,3 +152,11 @@ test('parameters are exact or refused: a missing, out-of-range or unknown owner 
   refused({...parameters(), cadence: {rate: 13, playing: true, source: 'x'}}, /cadence/);
   refused({...parameters(), refusal: 7}, /refusal/);
 });
+
+test('the frame says when its cut presents the instrument — an announced instrument is not a drawn one (seen on screen 15 Oct)', () => {
+  // The one frame keeps its instrument session open in every cut, so the shell reads the cut's own word, not the announcement.
+  assert.equal(readHostedState(base({presentsInstrument: true}))?.presentsInstrument, true);
+  assert.equal(readHostedState(base({hostMode: 'expressions', presentsInstrument: false}))?.presentsInstrument, false);
+  assert.equal(readHostedState(base())?.presentsInstrument, undefined, 'absent is valid: a frame that has not said draws nothing of its own');
+  assert.equal(readHostedState(base({presentsInstrument: 'yes'})), null, 'a non-boolean refuses the reading, like every flag here');
+});
