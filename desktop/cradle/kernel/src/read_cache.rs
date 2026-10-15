@@ -3,6 +3,11 @@
 //! that a source stayed unchanged. Explicit refresh/authority-sensitive reads
 //! bypass retention, known native writes invalidate derived knowledge, and a
 //! ground change clears every entry. Nothing authored is stored only here.
+//!
+//! A reading the owner gives a revision for may instead be retained by that
+//! revision (`put_at`): it is served only while the owner still discloses
+//! the same revision (`get_at`) and never because of its age. A size or a
+//! time is never a revision.
 use std::collections::HashMap;
 use std::time::{Duration, Instant};
 
@@ -20,6 +25,8 @@ struct Entry {
     at: Instant,
     value: serde_json::Value,
     bytes: usize,
+    /// The owner's own revision of the retained reading, when it gave one.
+    revision: Option<String>,
 }
 #[derive(Debug, Default)]
 pub struct OwnerReadCache {
@@ -65,6 +72,22 @@ impl OwnerReadCache {
         (entry.at.elapsed() < ttl).then(|| entry.value.clone())
     }
     pub fn put(&mut self, key: String, value: serde_json::Value) {
+        self.retain(key, None, value);
+    }
+    /// The retained reading only while the owner still discloses `revision`.
+    pub fn get_at(&self, key: &str, revision: &str) -> Option<serde_json::Value> {
+        let entry = self.entries.get(key)?;
+        (entry.revision.as_deref() == Some(revision)).then(|| entry.value.clone())
+    }
+    /// The owner revision a retained reading was put at, if any.
+    pub fn revision_of(&self, key: &str) -> Option<&str> {
+        self.entries.get(key)?.revision.as_deref()
+    }
+    /// Retain an owner reading by the revision the owner gave for it.
+    pub fn put_at(&mut self, key: String, revision: String, value: serde_json::Value) {
+        self.retain(key, Some(revision), value);
+    }
+    fn retain(&mut self, key: String, revision: Option<String>, value: serde_json::Value) {
         let bytes = key.len() + value.to_string().len();
         self.invalidate(&key);
         if bytes > MAX_BYTES {
@@ -89,6 +112,7 @@ impl OwnerReadCache {
                 at: Instant::now(),
                 value,
                 bytes,
+                revision,
             },
         );
     }
@@ -126,6 +150,27 @@ mod tests {
         cache.put("dir:Work".into(), json!({"entries":3}));
         assert_eq!(cache.get("dir:Work", DIR_TTL), Some(json!({"entries":3})));
         assert_eq!(cache.get("dir:Work", Duration::ZERO), None);
+    }
+    #[test]
+    fn a_revisioned_reading_serves_while_its_revision_holds_and_never_by_age() {
+        let mut cache = OwnerReadCache::default();
+        cache.put_at("doc:a".into(), "rev-1".into(), json!("first"));
+        assert_eq!(cache.revision_of("doc:a"), Some("rev-1"));
+        // An unmoved revision serves the retained reading, whatever its age.
+        assert_eq!(cache.get_at("doc:a", "rev-1"), Some(json!("first")));
+        // A moved revision does not: the caller re-reads.
+        assert_eq!(cache.get_at("doc:a", "rev-2"), None);
+        // A reading retained by time alone is never served as revisioned.
+        cache.put("doc:b".into(), json!("timed"));
+        assert_eq!(cache.revision_of("doc:b"), None);
+        assert_eq!(cache.get_at("doc:b", ""), None);
+        // Re-reading at the moved revision replaces the retained one.
+        cache.put_at("doc:a".into(), "rev-2".into(), json!("second"));
+        assert_eq!(cache.get_at("doc:a", "rev-1"), None);
+        assert_eq!(cache.get_at("doc:a", "rev-2"), Some(json!("second")));
+        cache.invalidate_prefix("doc:");
+        assert_eq!(cache.get_at("doc:a", "rev-2"), None);
+        assert_eq!(cache.bytes, 0);
     }
     #[test]
     fn invalidate_removes_one_entry_and_clear_removes_every_entry() {
