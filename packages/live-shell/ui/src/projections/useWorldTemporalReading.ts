@@ -2,10 +2,11 @@
 // reader (WORLD-SHELL-DESIGN §6, §10 seams 5/7).
 //
 // The read itself is the frame's, not this hook's: timeline/temporalPoll.ts
-// polls the kernel's 'temporal_events_read' once for every reader (this cut
+// reads the kernel's 'temporal_events_read' once for every reader (this cut
 // and the agent shell's run needles), over the civil week through tomorrow
-// bounded at UTC midnights, behind one in-flight guard, at the K1-measured
-// 90 s cadence. This hook consumes that reading and binds the time spine to
+// bounded at UTC midnights, behind one in-flight guard — when told the field
+// may have moved (a receipt, an act, the window regained, the epoch), else at
+// its slow floor while seen. This hook consumes that reading and binds the time spine to
 // it (declare/arm/fire the read cadence; qualify the retained occasions) — a
 // different concern over the same owner read. It ports the receiving pattern
 // the agent shell's poller had (src/agent/useTemporalEvents.ts) into the one
@@ -19,7 +20,6 @@
 // second store.
 
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge';
 import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types';
 import {
   createTimeSpine,
@@ -33,15 +33,17 @@ import {projectDayTracks, dayClipEventIndex} from '../timeline/dayTrackAdapter';
 import {projectRunTracks, runClipEventIndex, type AdmittedRun} from '../timeline/runTrackAdapter';
 import {projectConversationTracks, conversationClipEventIndex} from '../timeline/conversationTrackAdapter';
 import {projectLaneWorldTracks, projectWorldTracks} from '../timeline/registerWorldTrackAdapters';
-import {TEMPORAL_POLL_MS, useTemporalReading} from '../timeline/temporalPoll';
+import {TEMPORAL_FLOOR_MS, useTemporalReading} from '../timeline/temporalPoll';
+import {agencyEntry, useAgencyAnswer} from '../owners/agency';
+import {useSpineEpoch} from '../owners/spine';
 import type {WorldTrackSet} from '../timeline/worldTrackAdapter';
 import {useAtlasAionReading} from './atlas/AtlasProjectionPanel';
 
 // The read's real cost is the owner's (K1: the temporal read walks every
-// stream; the 2 s answer cache makes repeats identical) — the needle
-// cadence serves that cost: once at mount, then every 90 s, the frame's one
-// poll's own cadence.
-const READ_CADENCE_MS = TEMPORAL_POLL_MS;
+// stream; the 2 s answer cache makes repeats identical) — so it is read when
+// told, and the declared cadence is the frame's one read's floor: the longest
+// a seen reading waits for the writers nothing tells the shell about.
+const READ_CADENCE_MS = TEMPORAL_FLOOR_MS;
 const READ_CADENCE_ID = 'central-temporal-read';
 
 export interface WorldTimelineSource {
@@ -81,10 +83,11 @@ export interface WorldTimelineView {
   selectOccasion: (event: TemporalEventRow) => void;
 }
 
-/** Read the civil field (the frame's one temporal read: once now, then every
- * 90 s), arm the read cadence, and project the World track sets. This hook
- * polls nothing of its own — the Timeline projection is mounted once per
- * shell frame, and the poll is shared with the agent shell. */
+/** Read the civil field (the frame's one temporal read: once now, then when
+ * told, else at its floor), arm the read cadence, and project the World track
+ * sets. This hook polls nothing of its own — the Timeline projection is
+ * mounted once per shell frame, and the read is shared with the agent shell;
+ * its run lanes are the window's one agency answer (owners/agency.ts). */
 export function useWorldTemporalReading(transport: KernelTransportStatus): WorldTimelineView {
   const spine = useMemo(() => createTimeSpine(), []);
   const [events, setEvents] = useState<TemporalEventRow[]>([]);
@@ -120,7 +123,7 @@ export function useWorldTemporalReading(transport: KernelTransportStatus): World
       id: READ_CADENCE_ID,
       everyMs: READ_CADENCE_MS,
       label: 'civil-field read',
-      declaredBy: 'timeline projection (K1-measured owner cost: the temporal read walks every stream)',
+      declaredBy: 'timeline projection (K1-measured owner cost: the temporal read walks every stream) — read when told, this is its floor',
     });
     spine.armCadence(READ_CADENCE_ID, true);
     return spine.subscribe(() => bumpRevision((value) => value + 1));
@@ -129,6 +132,9 @@ export function useWorldTemporalReading(transport: KernelTransportStatus): World
   // The frame's one temporal read (timeline/temporalPoll.ts). Each completed execution lands here once, by its revision;
   // an execution the owner refused, or a transport that cannot serve, is named, never silently empty.
   const {reading} = useTemporalReading(transport);
+  // The run lanes' source: the window's one agency answer, held while this cut stands.
+  useAgencyAnswer(transport, 'O-I');
+  const epoch = useSpineEpoch();
   const processed = useRef(-1);
   const mounted = useRef(true);
   useEffect(() => {
@@ -153,13 +159,15 @@ export function useWorldTemporalReading(transport: KernelTransportStatus): World
       // temporal read. A refused agency read is named, never silently empty.
       let admittedRuns: AdmittedRun[] | null = null;
       let admittedRunsError: string | null = null;
-      const agency = await kernelOp(transport, {op: 'agency_read', project: 'O-I'});
-      if (agency.error || agency.outcome?.result !== 'agency_reading') {
-        admittedRunsError = agency.error ?? 'The agency reading is unavailable; run lanes come only from the temporal read.';
+      // The window's one agency answer (owners/agency.ts): the standing answer when one stands for this epoch, else the one
+      // shared read — never a read of this cut's own.
+      const agency = agencyEntry(transport, 'O-I');
+      await agency.ensure(epoch);
+      const answer = agency.snapshot();
+      if (answer.status !== 'answered' || !answer.value) {
+        admittedRunsError = (transport.kind === 'unavailable' ? transport.reason : answer.error) ?? 'The agency reading is unavailable; run lanes come only from the temporal read.';
       } else {
-        const spaces = (agency.outcome as {spaces?: unknown[]}).spaces ?? [];
-        admittedRuns = spaces.flatMap((space) => Object.keys((space as {agent_sessions?: Record<string, unknown>}).agent_sessions ?? {}))
-          .map((sessionRef) => ({sessionRef}));
+        admittedRuns = answer.value.rows.map((row) => ({sessionRef: row.sessionRef}));
       }
       if (!mounted.current) return;
       // The execution's own instant (never the window bound): the firing
@@ -191,7 +199,7 @@ export function useWorldTemporalReading(transport: KernelTransportStatus): World
       setError(null);
       setReadAtUnixMs(readAt);
     })();
-  }, [reading, transport, spine]);
+  }, [reading, transport, spine, epoch]);
 
   // The World stands on a reading only while one is live; otherwise it states the absence (status + error), never a set.
   const live = status === 'live';

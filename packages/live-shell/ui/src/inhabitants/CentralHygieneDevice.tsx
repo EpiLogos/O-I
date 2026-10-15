@@ -20,6 +20,9 @@ import {useCallback, useState} from 'react'
  * always in scope, repair is a separate act). */
 
 import {kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
+import {ownerReadings} from '../owners/ownerReading'
+import {readWorkcellOf, workcellReadingKey} from '../owners/readers'
+import {useSpineEpoch} from '../owners/spine'
 import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
 import {
   assembleCensus,
@@ -56,6 +59,7 @@ interface ReadState {
 
 export function CentralHygieneDevice({transport, machineRead, seatPaths = [], expanded = false}: CentralHygieneDeviceProps) {
   const [state, setState] = useState<ReadState>({census: null, findings: [], pending: false, fault: null})
+  const epoch = useSpineEpoch()
 
   const read = useCallback(async () => {
     setState(prev => ({...prev, pending: true, fault: null}))
@@ -65,10 +69,14 @@ export function CentralHygieneDevice({transport, machineRead, seatPaths = [], ex
     let branches: ReturnType<typeof parseBranchRefs> = []
     let machineRef: string | null = null
 
-    // The kernel's workcell read — the primary owner. A refusal is a reading.
-    const workcellAt = new Date().toISOString()
-    const workcell = await kernelOp(transport, {op: 'workcell_status_read'})
-    if (workcell.error || workcell.outcome?.result !== 'workcell_status_reading') {
+    // The kernel's workcell read — the primary owner, through the window's shared workcell answer (owners/readers.ts): the
+    // person asked, so it is read again even after a refusal, and every other reader of it sees the same answer. A refusal is
+    // a reading; its instant is when the owner answered.
+    const workcellEntry = ownerReadings.entry(workcellReadingKey(transport), readWorkcellOf(transport))
+    await workcellEntry.retry(epoch)
+    const workcell = workcellEntry.snapshot()
+    const workcellAt = new Date(workcell.readAtUnixMs ?? Date.now()).toISOString()
+    if (workcell.status !== 'answered') {
       sources.push({
         boundaryOp: 'op workcell_status_read',
         channel: 'kernel-op',
@@ -77,7 +85,7 @@ export function CentralHygieneDevice({transport, machineRead, seatPaths = [], ex
       })
     } else {
       sources.push({boundaryOp: 'op workcell_status_read', channel: 'kernel-op', at: workcellAt})
-      const data = (workcell.outcome as {data?: {machine_ref?: string; register?: unknown}}).data
+      const data = workcell.value as {machine_ref?: string; register?: unknown} | null
       machineRef = data?.machine_ref ?? null
     }
 
@@ -126,7 +134,7 @@ export function CentralHygieneDevice({transport, machineRead, seatPaths = [], ex
     // seatPaths prop, when supplied, is admitted alongside them.
     const registered = [...new Set([...seatPaths, ...registeredSeatPaths(census)])]
     setState({census, findings: hygieneFindings(census, registered), pending: false, fault: null})
-  }, [machineRead, seatPaths, transport])
+  }, [machineRead, seatPaths, transport, epoch])
 
   const strip = state.census
     ? `${state.census.worktrees.length} worktrees · ${state.census.branches.length} branches · ${state.census.seats.length} seats`

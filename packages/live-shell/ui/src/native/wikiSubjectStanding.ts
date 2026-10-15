@@ -11,6 +11,7 @@
  * projection store (`ensureWikiStanding`, which is `ensureWikiProjection`). Nothing here reads wiki.json or keeps a loader.
  */
 import {kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
+import {boundedKnowledgeChain} from '../../../../../desktop/cradle/src/knowledge/client'
 import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
 import {publishWikiNativeRegisters, wikiNativeRegisters} from '../../../../../desktop/cradle/src/techne/wikiNativeExpression'
 import {captureWikiProjectionAccess, ensureWikiStanding, getWikiProjectionState, wikiSubjectStandings, type ProjectedSubjectStanding} from '../../../../../desktop/cradle/src/techne/wikiProjectionStore'
@@ -30,7 +31,14 @@ export interface WikiStandingSource {
 }
 
 /** The owner's register load, as the Technē centre runs it: the World's projects are published as the registers (unless the
- * centre has already published them), then every register's reading is ensured through the store. Reads nothing twice. */
+ * centre has already published them), then every register's reading is ensured through the store. Reads nothing twice.
+ * Each register's reading — a listing, its wiki file and its AIKit relations, three owner reads — runs through the realm's
+ * knowledge read coordinator (desktop/cradle/src/knowledge/client.ts `boundedKnowledgeChain`) with its bound, never all at once:
+ * 17 registers fired 51 reads together (measured 15 Oct), past the kernel's five AIKit readers.
+ * A slot is held while the register's reads run — until its standing settles, or REGISTER_SLOT_MS at most (the kernel bounds
+ * the AIKit relations read at 20 s; the listing and the file are sub-second) — never for the whole wait on a standing held up
+ * elsewhere: measured 15 Oct, four registers whose standing did not settle held all four slots for the full 120 s wait, and the
+ * other thirteen waited behind them. The load still waits for every standing, as before. */
 export async function loadWikiStandingRegisters(transport: KernelTransportStatus): Promise<void> {
   if (transport.kind === 'unavailable') throw new Error(transport.reason)
   if (getWikiProjectionState().registers.length === 0) {
@@ -39,8 +47,21 @@ export async function loadWikiStandingRegisters(transport: KernelTransportStatus
     const projects = reply.outcome.snapshot.navigator?.root?.work.projects ?? []
     publishWikiNativeRegisters(projects.map(row => ({name: row.name, path: row.path})))
   }
-  await Promise.all(wikiNativeRegisters().map(register => ensureWikiStanding(register, transport)))
+  const access = captureWikiProjectionAccess().identity
+  await Promise.all(wikiNativeRegisters().map(register => {
+    let standing: Promise<unknown> | null = null
+    return boundedKnowledgeChain(JSON.stringify(['wiki-register-standing', transport, register.key, access]), () => {
+      standing = ensureWikiStanding(register, transport)
+      const settled = standing.then(() => undefined, () => undefined)
+      let timer: ReturnType<typeof setTimeout> | undefined
+      const slot = new Promise<void>(resolve => { timer = setTimeout(resolve, REGISTER_SLOT_MS) })
+      return Promise.race([settled, slot]).finally(() => clearTimeout(timer))
+    }).then(() => standing)
+  }))
 }
+
+/** The longest one register's reading holds a knowledge read slot: the kernel's AIKit read bound (20 s) and its two file reads. */
+export const REGISTER_SLOT_MS = 30_000
 
 let sharedLoad: {identity: string; load: Promise<void>} | null = null
 

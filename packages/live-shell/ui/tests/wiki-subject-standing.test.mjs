@@ -186,6 +186,32 @@ test('registers the Technē centre already published are not read from the World
   } finally {stub.restore()}
 })
 
+test('the register load goes through the knowledge coordinator: never more register readings in flight than its bound (lane Q)', async () => {
+  configureWikiProjectionAccess('scope-bounded', 'epoch-bounded', () => true)
+  const projects = Array.from({length: 16}, (_, index) => ({name: `Project-${index}`, path: `Work/Project-${index}`}))
+  const original = globalThis.fetch
+  const reply = body => ({ok: true, status: 200, json: async () => body})
+  let inFlight = 0, most = 0, reads = 0
+  globalThis.fetch = async (input, init) => {
+    const url = String(input)
+    if (url === '/api/config') return reply({default_set: 'test', kernel_bridge: 'http://owner.test'})
+    if (url !== 'http://owner.test/op') throw Error(`unexpected request ${url}`)
+    const op = JSON.parse(init.body)
+    if (op.op === 'world_read') return reply({ok: true, outcome: {result: 'world_read', snapshot: {navigator: {root: {work: {projects}}}}}})
+    reads++; inFlight++; most = Math.max(most, inFlight)
+    await new Promise(resolve => setTimeout(resolve, 15))
+    inFlight--
+    return reply({ok: false, error: `stub kernel: no ${op.op} reading`})
+  }
+  try {
+    await assert.rejects(answerWikiSubjectStanding(REQUEST, HELD), /could not be read/)
+    assert.equal(getWikiProjectionState().registers.length, 17, 'Central and the sixteen projects')
+    assert.equal(reads, 17, 'every register read once')
+    assert.ok(most <= 4, `at most the coordinator's four register readings at once (saw ${most}); the kernel bounds AIKit readers at five`)
+    assert.ok(most >= 2, 'and they do run beside each other, not one by one')
+  } finally { globalThis.fetch = original }
+})
+
 test('the pane owners gain exactly the one channel; every other channel and the attach hook are kept', () => {
   const base = {channels: {'kernel-expression': async () => 'kernel', 'central-read': async () => 'read'}, unavailableReason: undefined}
   const owners = withWikiSubjectStanding(base, source())

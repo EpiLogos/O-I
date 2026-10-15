@@ -4,15 +4,14 @@
 //     (inhabitants/DocumentDayDieFace.tsx:105-106);
 //   - the Nara conversation: the dialogue binding (`lookupNativeDialogue`) once an identity and an expression stand
 //     (inhabitants/ConversationNaraFace.tsx:67-90);
-//   - the roster: Central's accepted agents (`readRoster`, central.agent-profile-roster/v1; the first accepted agent is the
-//     identity, agent/AgentDeviceChain.tsx:38-46);
-//   - the workcell: `workcell_status_read` (inhabitants/CentralHygieneDevice.tsx:70-80);
+//   - the roster: Central's accepted agents (the shared roster answer, owners/readers.ts; central.agent-profile-roster/v1; the
+//     first accepted agent is the identity, agent/AgentDeviceChain.tsx:38-46);
+//   - the workcell: `workcell_status_read` (the shared workcell answer, owners/readers.ts);
 //   - the Flow: the owner's revision of the selected flow document (`readFlowInstance`).
 import {useCallback, useEffect, useMemo, useState} from 'react'
-import {kernelOp} from '../../../../../../desktop/cradle/src/kernel/bridge'
 import {receiving} from '../../../../../../desktop/cradle/src/receiving/client'
 import {validateDocumentBasis} from '../../../../../../desktop/cradle/src/central/dayForm'
-import {readRoster} from '../../../../../../desktop/cradle/src/agency/roster'
+import {useRosterAgents, useWorkcellAnswer} from '../../owners/readers'
 import {readFlowInstance} from '../../../../../../desktop/cradle/src/flow/instances'
 import {lookupNativeDialogue, type NativeDialogue} from '../../../../../../desktop/cradle/src/nara/nativeDialogue'
 import {currentIdentity} from '../../../../../../desktop/cradle/src/nara/identity/current'
@@ -20,8 +19,6 @@ import type {CentralLocation, KernelTransportStatus} from '../../../../../../des
 import {conversationGap} from '../centralVertical'
 import {dieFaceOf} from './dayDie'
 import type {CentralReads, NaraState} from './centralDeviceModel'
-
-const message = (error: unknown): string => error instanceof Error ? error.message : String(error)
 
 export interface DayDieAperture {
   readonly project: string | null
@@ -92,44 +89,34 @@ export function useNaraReading(transport: KernelTransportStatus, project: string
   }), [standing.state, conversation, expressionRef, dialogue, refresh])
 }
 
-/** Central's accepted agents. The first accepted agent is the identity the agent face shows. */
+/** Central's accepted agents (the root register), from the window's shared roster answer (owners/readers.ts) — the same one
+ * the agent browser, the Factory chain and the sessions provider read. The first accepted agent is the identity the agent
+ * face shows. */
 export function useRosterReading(transport: KernelTransportStatus): NonNullable<CentralReads['roster']> {
-  const [state, setState] = useState<NonNullable<CentralReads['roster']>>({answer: 'reading', identity: null, accepted: 0, total: 0, fault: null})
-  useEffect(() => {
-    let alive = true
-    readRoster(transport)
-      .then(agents => {
-        const accepted = agents.filter(agent => agent.accepted)
-        if (alive) setState({answer: 'read', identity: accepted[0]?.ref ?? null, accepted: accepted.length, total: agents.length, fault: null})
-      })
-      .catch(error => { if (alive) setState({answer: 'refused', identity: null, accepted: 0, total: 0, fault: message(error)}) })
-    return () => { alive = false }
-  }, [transport])
-  return state
+  const roster = useRosterAgents(transport)
+  return useMemo((): NonNullable<CentralReads['roster']> => {
+    if (roster.state === 'reading') return {answer: 'reading', identity: null, accepted: 0, total: 0, fault: null}
+    if (roster.state === 'error') return {answer: 'refused', identity: null, accepted: 0, total: 0, fault: roster.error ?? 'The agent roster did not answer'}
+    const accepted = roster.agents.filter(agent => agent.accepted)
+    return {answer: 'read', identity: accepted[0]?.ref ?? null, accepted: accepted.length, total: roster.agents.length, fault: null}
+  }, [roster])
 }
 
-/** The workcell status the ground hygiene stands on: its ref and health, or the owner's refusal. */
+/** The workcell status the ground hygiene stands on: its ref and health, or the owner's refusal — the window's shared
+ * workcell answer (owners/readers.ts), a refusal remembered for its epoch. */
 export function useWorkcellReading(transport: KernelTransportStatus): NonNullable<CentralReads['workcell']> {
-  const [state, setState] = useState<NonNullable<CentralReads['workcell']>>({answer: 'reading', ref: null, health: null, ok: null, fault: null})
-  useEffect(() => {
-    let alive = true
-    kernelOp(transport, {op: 'workcell_status_read'}).then(result => {
-      if (!alive) return
-      if (result.error || result.outcome?.result !== 'workcell_status_reading') {
-        setState({answer: 'refused', ref: null, health: null, ok: null, fault: result.error ?? 'the workcell status reading did not answer'})
-        return
-      }
-      const data = (result.outcome.data ?? {}) as {workcell_ref?: unknown; health?: unknown; ok?: unknown}
-      setState({
-        answer: 'read', fault: null,
-        ref: typeof data.workcell_ref === 'string' && data.workcell_ref ? data.workcell_ref : null,
-        health: typeof data.health === 'string' && data.health ? data.health : null,
-        ok: typeof data.ok === 'boolean' ? data.ok : null,
-      })
-    })
-    return () => { alive = false }
-  }, [transport])
-  return state
+  const {reading} = useWorkcellAnswer(transport)
+  return useMemo((): NonNullable<CentralReads['workcell']> => {
+    if (reading.status === 'reading') return {answer: 'reading', ref: null, health: null, ok: null, fault: null}
+    if (reading.status === 'refused') return {answer: 'refused', ref: null, health: null, ok: null, fault: reading.error ?? 'the workcell status reading did not answer'}
+    const data = (reading.value ?? {}) as {workcell_ref?: unknown; health?: unknown; ok?: unknown}
+    return {
+      answer: 'read', fault: null,
+      ref: typeof data.workcell_ref === 'string' && data.workcell_ref ? data.workcell_ref : null,
+      health: typeof data.health === 'string' && data.health ? data.health : null,
+      ok: typeof data.ok === 'boolean' ? data.ok : null,
+    }
+  }, [reading])
 }
 
 /** The owner's revision of the selected flow document, when an aperture selects one. */

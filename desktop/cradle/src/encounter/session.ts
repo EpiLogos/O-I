@@ -116,6 +116,14 @@ export interface EncounterSessionActions {
 export interface EncounterSessionHandle {state:EncounterSessionState;actions:EncounterSessionActions}
 
 const hidden=()=>document.visibilityState!=="visible";
+/** A session at rest — no turn in flight, its reading unchanged twice — is read again on its receipts (this window's own acts,
+ *  the window regained) and otherwise at this floor, for a turn another window or the agent itself starts. */
+export const ENCOUNTER_REST_MS=15000;
+/** The window's return arrives as `visibilitychange` and `focus` together: one read for both. */
+const WAKE_COALESCE_MS=500;
+/** After an act that changes sessions, the shell's agency readers are told (packages/live-shell/ui/src/owners/notices.ts
+ *  OWNER_CHANGED_EVENT, the same literal): they read the agency answer again instead of waiting for its floor. */
+const tellAgency=(cause:string,agentSession:string)=>{if(typeof window!=="undefined")window.dispatchEvent(new CustomEvent("oi:owner-changed",{detail:{topic:"agency",cause,agentSession}}));};
 
 class EncounterSession implements EncounterSessionActions {
  private state:EncounterSessionState;
@@ -178,6 +186,7 @@ class EncounterSession implements EncounterSessionActions {
  private start() {
   const run=++this.run;this.observing=true;this.quietReads=0;this.lastFingerprint="";
   document.addEventListener("visibilitychange",this.onVisible);
+  window.addEventListener("focus",this.onVisible);
   // A named hosted session already belongs to its native owner. Enter by
   // reading that subject, never by bootstrapping the owner's general runtime.
   if(this.state.sourceWorldRef)this.restartChain();
@@ -197,18 +206,23 @@ class EncounterSession implements EncounterSessionActions {
  private stop() {
   this.run++;this.chain++;this.observing=false;clearTimeout(this.timer);
   document.removeEventListener("visibilitychange",this.onVisible);
+  window.removeEventListener("focus",this.onVisible);
  }
  /** Exactly one chain: a restart retires the previous one, whose in-flight
   * read is dropped when it lands instead of scheduling a second timer. */
  private restartChain(){const chain=++this.chain;clearTimeout(this.timer);void this.poll(chain);}
- private onVisible=()=>{if(this.observing&&!hidden()){void this.refreshProviders();this.restartChain();}};
+ private lastWake=0;
+ private onVisible=()=>{if(this.observing&&!hidden()&&Date.now()-this.lastWake>=WAKE_COALESCE_MS){this.lastWake=Date.now();void this.refreshProviders();this.restartChain();}};
+ /** A receipt of this window's own act: the session may have moved, so it is read now and at live pace again. */
+ private wake(cause:string){this.quietReads=0;if(this.observing)this.restartChain();tellAgency(cause,this.state.agentSession);}
  // Honesty law + SELF-OTHER-FIELD-UX "view disposal": a hidden document
- // (backgrounded app, minimized window) pauses network polling rather than
- // spending cycles on a transcript nobody can see. Structural pausing is the
- // subscriber count: no presenter mounted, no loop.
+ // (backgrounded app, minimized window) stops network reads rather than
+ // spending them on a transcript nobody can see — no timer runs while hidden;
+ // becoming visible again (onVisible) restarts the chain. Structural pausing
+ // is the subscriber count: no presenter mounted, no loop.
  private poll=async(chain:number)=>{
   if(chain!==this.chain)return;
-  if(hidden()){this.timer=setTimeout(()=>void this.poll(chain),1000);return;}
+  if(hidden())return;
   try{
    this.polls++;
    const next=await this.read();if(chain!==this.chain)return;
@@ -238,11 +252,13 @@ class EncounterSession implements EncounterSessionActions {
    }
   }
   // A running provider turn is read at a streaming cadence so the transcript
-  // grows in small steps. A resting session relaxes stepwise — 750 ms while
-  // it last moved, then 1.5 s and 3 s once the reading stops changing; a
-  // turn starting, another window's activity or any change resets the pace.
+  // grows in small steps. A session that is not running relaxes — 750 ms
+  // while it last moved, then 1.5 s — and once its reading has stopped
+  // changing it is at rest: read again on its receipts (this window's acts
+  // wake it; the window regained wakes it) and otherwise at the rest floor.
+  // A turn starting or any change resets the pace.
   const inFlight=this.state.status?.state==="TurnInFlight"||this.state.status?.state==="InterruptRequested";
-  if(chain===this.chain)this.timer=setTimeout(()=>void this.poll(chain),inFlight?300:this.quietReads===0?750:this.quietReads===1?1500:3000);
+  if(chain===this.chain)this.timer=setTimeout(()=>void this.poll(chain),inFlight?300:this.quietReads===0?750:this.quietReads===1?1500:ENCOUNTER_REST_MS);
  };
 
  // --- the draft CAS machine (typing is never lost) -----------------------
@@ -273,6 +289,7 @@ class EncounterSession implements EncounterSessionActions {
    if(context)void nativeContext(this.transport,this.state.project,this.state.agentSession,{operation:"read"},this.state.sourceWorldRef).then(value=>announceContext(this.state.project,value,this.state.sourceWorldRef)).catch(()=>{});
    this.canonical=response.draft;
    if(this.input===submitted){this.input=response.draft.text;this.set({draft:response.draft.text});}else{this.dirty=true;}
+   this.wake("a conversation turn was sent");
    // The Prompt reply already confirms acceptance. A later observation fault
    // cannot turn that accepted delivery into a failed or uncertain send.
    try{this.set({status:await this.call<EncounterStatus>({action:"status",agent_session:this.state.agentSession})});}
@@ -365,6 +382,7 @@ class EncounterSession implements EncounterSessionActions {
   this.begin();this.set({error:undefined});
   try{
    await this.call({action:"open",space:this.state.space??"",agent_session:this.state.agentSession,provider});
+   this.wake("a conversation was connected");
    this.set({status:await this.call<EncounterStatus>({action:"status",agent_session:this.state.agentSession})});
   }catch(error){
    // The owner's own law: a recorded native session exists, so a fresh open
@@ -381,14 +399,15 @@ class EncounterSession implements EncounterSessionActions {
   try{
    const opened=await this.call<{native_session_id?:string}>({action:"reconnect",space:this.state.space??"",agent_session:this.state.agentSession,provider});
    this.set({resume:undefined,reconnected:opened.native_session_id});
+   this.wake("a conversation was reconnected");
    this.set({status:await this.call<EncounterStatus>({action:"status",agent_session:this.state.agentSession})});
   }catch(error){this.set({error:String(error)});}finally{this.end();}
  };
- cancel=()=>{if(!this.allowed("cancel"))return;void this.call({action:"cancel",agent_session:this.state.agentSession,reason:"User stopped the encounter"}).catch(error=>this.set({error:String(error)}));};
+ cancel=()=>{if(!this.allowed("cancel"))return;void this.call({action:"cancel",agent_session:this.state.agentSession,reason:"User stopped the encounter"}).then(()=>this.wake("a conversation turn was stopped"),error=>this.set({error:String(error)}));};
  permission=async(request_id:string,decision:PermissionDecision)=>{
   if(!this.allowed("permission"))return;
   this.begin();this.set({error:undefined});
-  try{await this.call({action:"permission",agent_session:this.state.agentSession,request_id,decision});const next=await this.read();this.set({reading:next,status:next.connection});}
+  try{await this.call({action:"permission",agent_session:this.state.agentSession,request_id,decision});const next=await this.read();this.set({reading:next,status:next.connection});this.wake("a permission was decided");}
   catch(error){this.set({error:String(error)});}finally{this.end();}
  };
  earlier=()=>{const first=this.state.reading?.blocks[0]?.id;this.set({before:first});if(this.observing)this.restartChain();};
