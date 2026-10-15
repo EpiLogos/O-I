@@ -362,3 +362,10 @@ test('the owner\'s day surface (one folder per date holding day.md) reads as day
   assert.equal(surface.dateOfDayPath('Control/user/day/2026-10-13/notes.md'), null)
   assert.deepEqual(adapter.centralSubjectOfClip('Control/user/day/2026-10-13/day.md'), {kind: 'day', path: 'Control/user/day/2026-10-13/day.md'})
 })
+
+test('a day subject is named by its date — every day on the surface is a day.md (seen on screen 15 Oct)', async () => {
+  const surface = await import('../src/central/daySurface.ts')
+  assert.equal(surface.subjectWords('Control/user/day/2026-10-13/day.md'), 'Tue 13 Oct')
+  assert.equal(surface.subjectWords('Control/agents/now/day/2026-09-12.md'), 'Sat 12 Sep')
+  assert.equal(surface.subjectWords('Control/user/flows/flow-1.html'), 'flow-1.html', 'anything else by its file name')
+})
