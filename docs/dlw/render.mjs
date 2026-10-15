@@ -33,6 +33,14 @@ const marked = new Marked({
     table(token) {
       return `<div class="table-wrap">${this.constructor.prototype.table.call(this, token)}</div>\n`
     },
+    // A ```ui block embeds the device's real UI beside its spec:
+    //   src: path relative to this folder · height: px · caption: text
+    code({text, lang}) {
+      if (lang !== 'ui') return false
+      const f = Object.fromEntries(text.split('\n').map(l => l.split(/:\s*/)).filter(([k, v]) => k && v).map(([k, ...v]) => [k.trim(), v.join(':').trim()]))
+      const esc = v => String(v ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')
+      return `<figure class="ui"><iframe src="${esc(f.src)}" loading="lazy" style="height:${parseInt(f.height || '560', 10)}px" sandbox="allow-scripts allow-same-origin" title="${esc(f.caption)}"></iframe><figcaption>${esc(f.caption)} · <a href="${esc(f.src)}" target="_blank" rel="noopener">open on its own</a></figcaption></figure>\n`
+    },
   },
 })
 
@@ -124,6 +132,9 @@ h2 .mark,h3 .mark{font-weight:400}
 h1.part{font-size:23px}h2{font-size:20px}
   .anchor{display:none}
 }
+figure.ui{margin:18px 0 26px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--panel)}
+figure.ui iframe{display:block;width:100%;border:0;background:#fff}
+figure.ui figcaption{font-size:12.5px;color:var(--dim);padding:8px 12px;border-top:1px solid var(--line)}
 @media print{nav,.theme,.menu{display:none}.layout{display:block}main{padding:0}}
 </style>
 </head>

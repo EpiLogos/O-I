@@ -124,9 +124,10 @@ not change from one kind of work to the next. Only what it holds changes.
 
 Start with a **track**. In Live a track is a lane for one kind of sound —
 drums, a bassline, a voice — and it plays one clip at a time. In the DLW a
-track is a lane for one stream of your work. In Central the day is a track,
-and so are your Flows, the people and things you are writing about, and your
-goals. In Factory each agent session is a track. In Expressions each
+track is a lane for one stream of your work. In Central each workspace is a
+track — a project, a book, a practice — and every workspace sends its work to
+the Day, the way every Live track sends its sound to the Main track. In
+Factory each agent session is a track. In Expressions each
 Expression is one. In Technē a track might be the thread of a single reading
 of history, or every place a subject turned up, in order.
 
@@ -223,6 +224,13 @@ into one structured page, and you add what only you can — what you noticed,
 what didn't work and why, what you want to remember. The work and your account
 of the work end up in the same place, and the evening never has to reconstruct
 the morning.
+
+Each workspace is a track. A project, a book you are writing, a practice you
+keep: each holds its own documents and files as clips, and each remembers how
+you like to work on it in every mode — which panes are open, which
+instruments, which widgets. Launch a workspace and all of that comes back at
+once, in Central and in every other mode. Every workspace sends its work to the
+Day, which sits at the end of the session grid where Live keeps its Main track.
 
 Every document in Central starts from a template, and every template is yours
 to change. A **Day** is shaped like a die, four faces for the work and two at
@@ -860,3 +868,187 @@ the Order to teach a single pupil.
 - Whether the cycle of the word maps onto the kinds of work at all.
 - How someone who is not the corpus's author enters the corpus itself, and
   what its discipline asks of them.
+
+---
+
+# Part Three — The catalogue
+
+## 16. How devices work
+
+Everything you work with in the DLW is a device. Live has one kind of object
+in its chains, and so does the DLW, in the same three kinds.
+
+An **instrument** makes something. An agent answers, the field moves and
+sounds, the world draws its places, the timeline lays out time, the Day
+gathers the day, the torus rings. An **effect** changes what passes through it
+and keeps the rest: a highlight marks a passage and leaves it whole, a filter
+shapes the torus, a scope limits what an agent may touch. A **rack** holds
+several chains under one device: the skills an agent may use, the agents of a
+team, the rooms of a palace.
+
+### 16.1 Five presentations
+
+Every device has one set of parameters and five ways to show them. All five
+show the same live values.
+
+| Presentation | Where | Use it to |
+|---|---|---|
+| Folded | In a chain | Keep the device present in little space. |
+| Compact | In a chain | Play the device: a small live picture and up to four macros. |
+| Whole | The pool under the browser | Set the device up: every parameter, grouped. |
+| Full | A pane | Work in the device's body: the material in front of you. |
+| Widget | The rail on the right | Keep the device at hand in every mode. |
+
+A pane is a device at full size. Its controls stay out of the pane and appear
+in Device view below it. A widget is a device on the rail. It stays when you
+change mode.
+
+### 16.2 Chains on tracks
+
+A track holds one stream of material. Its chain holds the devices that the
+material passes through, from left to right.
+
+| Mode | Track | Chain, left to right |
+|---|---|---|
+| Central | A workspace. The Day is the Main track. | The document effects, then the agent that answers. On the Main track: the Day. |
+| Factory | An agent session. | Gateway, agent, skills rack, scope, landing. |
+| Expressions | An Expression. | The field, then its field, entity and scene devices. |
+| Technē | A reading. | The instrument it plays through, then its lens and filter effects. |
+| Live | A part. | Note devices, the torus, then its effects. |
+
+A device is not tied to a mode. It goes wherever its material is. An agent and
+its skills work on a Central document as well as on a Factory session. The
+world draws any track that has places. The sky can move a parameter in any
+mode.
+
+### 16.3 Clip view and Device view
+
+Select a clip and the area at the bottom of the window shows it. Clip view
+shows the clip itself and its editor. Device view shows the chain of the
+clip's track. Switch between them in the status bar.
+
+### 16.4 The browser
+
+In every mode the browser holds four kinds of thing. Material comes from the
+mode's owners: workspaces and documents in Central, sessions in Factory,
+scenes in Expressions, sources in Technē, sets in Live. Instruments, devices
+and widgets are the same in every mode, grouped by the product that makes
+them. Select a device to show it whole in the pool. Drag it onto a chain to
+add it. Drag an instrument into a pane to open it.
+
+### 16.5 Play, record and automation
+
+Play launches clips. Each clip's track runs through its chain, and the
+instrument makes its part: the agent runs, the field plays, the walk walks.
+Record lays what played into Arrangement view as clips, with takes under them.
+
+Arm, then move any parameter of any device, and the move is recorded as an
+automation lane on that track. You can automate an agent's effort over a run,
+the pace of a walk, a field device over a scene, the sky's pull on a filter.
+Arrangement view shows each track's clips, and under them the lanes of its
+devices. Re-enable gives a parameter back to its lane, or to the agent or
+instrument that held it. A modulated parameter shows what moves it.
+
+### 16.6 The entries that follow
+
+Each device below has the same parts: what it is for, where it lives, its
+parameters, its five presentations, what the transport does to it, how to use
+it, its rules, and tips. Where the device already has a working face, it is
+shown live beside its entry.
+
+## 17. Central
+
+### 17.1 Day
+
+**Product:** Central · **Kind:** instrument · **Track:** Central's Main track
+
+The Day collects the work of one day from every workspace and every mode into
+one document. Use it to set the day going, see what runs, notice what repeats,
+and say what the day taught.
+
+```ui
+src: ../../desktop/cradle/documents/ql-daily-die.html
+height: 640
+caption: The Day's page, as its template draws it today. Drag to turn the die; click a face to open it.
+```
+
+#### The six faces
+
+The Day has six faces. Faces 1 to 4 are the working faces. Faces 0 and 5 are
+the poles. Opposite faces add to five.
+
+| Face | Name | What it holds | Who writes it |
+|---|---|---|---|
+| 0 | Ground | Your prompts for the day: what you want, what worries you, what arrived. | You. |
+| 1 | Definition | The tasks that come from your prompts on face 0, in three tiers: must, should, could. | The agent proposes tasks from face 0. You accept, re-tier or remove them. |
+| 2 | Operation | The sessions of the day, in three lists: done, running, queued. Each entry links to its session. | The device fills it from every session in every mode. |
+| 3 | Pattern | The patterns that appear across the day's work, with the items that show each pattern. | The agent proposes patterns. You keep or discard them. |
+| 4 | Context | Where the day sat: the moments, people, places and files it touched. | You and the agent together. Each entry shows its author. |
+| 5 | Synthesis | What the day taught, what stays open, and a proposal for tomorrow's face 0. | You and the agent together. Each entry shows its author. |
+
+#### Two Days at a time
+
+The device keeps two Days active. At the rollover time, the device opens
+tomorrow's Day beside today's Day. Use tomorrow's face 0 to prepare the next
+day. At the day start time, tomorrow's Day becomes today, and the old Day
+closes.
+
+#### Parameters
+
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Face | 0–5 | 0 | Turns the die to this face. |
+| View | Die · Flat | Die | Shows the die, or one face unfolded flat. |
+| Day start | Off, or a time | Off | The time when tomorrow becomes today. Off uses Central's civil day boundary. |
+| Rollover | Off, or a time | Off | The time when tomorrow's Day opens beside today's Day. |
+| Close routine | On · Off | On | When the day closes, the device summarises it, sends what you learned to your knowledge, and carries face 5's proposal to tomorrow's face 0. |
+| Agent writes | Off · Propose · Write | Propose | Off: the agent does not write. Propose: each agent entry waits for you to accept it. Write: agent entries go in directly, each with a receipt. |
+| Sources | Per mode: On · Off | All On | Which modes send entries to faces 2 and 4. |
+| Template | A template, at a version | The standard Day | The page design. Each Day keeps the template version it opened with. |
+
+#### Presentations
+
+| Presentation | What it shows |
+|---|---|
+| Folded | The date and the number of the open face. |
+| Compact | The net of the die, with the open face marked. Four macros: Face, Agent writes, Rollover, Close now. |
+| Whole | All parameters, in four groups: Time, Faces, Agent, Close. |
+| Full | The open face, as the template draws it. In a pane, you read and write here. |
+| Widget | Today's die and three counts: open tasks, running sessions, new patterns. Click a count to open that face. |
+
+#### Transport
+
+| Control | Effect on the Day |
+|---|---|
+| Tempo ‹ › | Turns the die one face. |
+| Time signature | Shows the 4 + 2 shape and the open face. |
+| Punch in | Shows the day start. |
+| Loop | Shows the close routine. Click it to run the routine now. |
+| Punch out | Shows the rollover time. |
+| Record | Dictates into the open face. |
+
+#### To use the Day
+
+1. Open face 0. Write what you want from the day.
+2. Turn to face 1. Accept, re-tier or remove the tasks that the agent proposes.
+3. Work in any mode. Face 2 fills as sessions start, run and finish.
+4. At the end of the day, open face 5. Write what the day taught. Read the
+   agent's proposal for tomorrow.
+5. After rollover, open tomorrow's Day. Prepare its face 0.
+
+#### Rules
+
+- The template draws the page. The template does not contain logic. Turning,
+  filling, agent intake, rollover and close are functions of the device.
+- An agent entry shows its author on the page. An accepted entry shows on its
+  face, not only in an export.
+- A closed Day is kept. You can open it, read it and walk through it again.
+- A Day keeps the template version it opened with. A new template version does
+  not change an old Day.
+
+#### Tips
+
+- To start tomorrow well, write tomorrow's face 0 after rollover, while today
+  is still open.
+- To keep a long run off your list of tasks, let it show on face 2 only. Face 1
+  holds what you decided to do.
