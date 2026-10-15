@@ -9,8 +9,8 @@ export function centralFamilyManifest(): FamilyManifest {
     // family), `ground` is the hygiene readings (worktrees, seats, branches) — distinct from the shell's Files listing.
     browser: [],
     browserEntries: [
-      {id: 'central-beings', label: 'Beings', group: 'Central', mark: 'bind', kindMark: 'agent', modes: ['base'], state: 'waiting',
-        hint: 'Agent identities from the kernel roster (central.agent-profile-roster/v1, read-only). The Beings listing (oi-beings form) is not read in this browser yet — designed empty until it is.'},
+      {id: 'central-beings', label: 'Beings', group: 'Central', mark: 'bind', kindMark: 'agent', modes: ['base'], state: 'cut',
+        hint: 'Agent identities from the kernel roster (central.agent-profile-roster/v1, read-only), as the agent-sessions provider reads it.'},
       {id: 'central-ground', label: 'Ground', group: 'Project', mark: 'pane', modes: ['base'], state: 'waiting',
         hint: 'Worktrees, seats and branches as readings — ops ground and git_repository_read, and workcell_status_read for seats. No row source is composed in this browser yet; tenders (prune, sweep) wait for their writer.'},
     ],
