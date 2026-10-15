@@ -434,7 +434,9 @@ test('actual acknowledged native open presentation ensures Source, Layers or Pla
 async function nativeEditorResidence(){
  const app=await parse('packages/live-shell/ui/src/App.tsx'),retention=await parse('packages/live-shell/ui/src/components/NativeInputRetention.tsx');
  const engine=await import(new URL('desktop/cradle/src/surface/engine.ts',root)),{freshLayout}=await import(new URL('desktop/cradle/src/surface/types.ts',root));
- const nativeInputBinding=execute(find(retention,n=>ts.isFunctionDeclaration(n)&&n.name?.text==='nativeInputBinding').getText(retention).replace(/^export /,''),{groupsOf:engine.groupsOf});
+ // The finder is the shared one (native/expressionsBinding.ts): a placed binding, as this book holds, is found as before.
+ const {expressionsBindingOf}=await import(new URL('packages/live-shell/ui/src/native/expressionsBinding.ts',root));
+ const nativeInputBinding=execute(find(retention,n=>ts.isFunctionDeclaration(n)&&n.name?.text==='nativeInputBinding').getText(retention).replace(/^export /,''),{expressionsBindingOf});
  const r=retained(),book={layout:engine.openBinding(freshLayout(),{id:'world.expressions',kind:'expressions',title:'Expressions'}),modeLayouts:{}},continuity={current:book},currentContinuity={current:continuity};
  const state={workspaceId:'native-residence-source',accessEpoch:7,editor:r.owner,mode:'techne',centerPanel:'native.arrangement',settingsPresented:false,epoch:0},presentation={current:state};
  const effects=[],queued=[],currentEditorReading={current:r.owner.read()};let returned=null;
