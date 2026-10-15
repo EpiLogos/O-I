@@ -20,6 +20,10 @@ export interface ExpressionsHostOptions {
    * no native work; omission preserves legacy non-recovery hosting only. */
   recoveryBindings?: readonly RecoveryBinding[];
   initialRecoveryBinding?: RecoveryBinding;
+  /** T-RECOVERY-FOR-OPENED-WORKS: an Expression this host opens itself (openExpression, the boot deep link) and holds no
+   * configured address for gets the host-selected address `{scope: 'expressions', checkpoint_id: ref, expression_ref: ref}`
+   * before the frame asks. A configured address is never replaced. */
+  selectOpenedWorks?: boolean;
   world?: string;
   expectedOrigin?: string;
   /** The composition root knows which retained host is presented. */
@@ -79,7 +83,7 @@ export class ExpressionsHost {
     this.frame = frame;
     this.bindingId = options.bindingId;
     this.options = options;
-    this.recovery = new RecoveryAdmission(options.recoveryBindings);
+    this.recovery = new RecoveryAdmission(options.recoveryBindings, {selectOpened: options.selectOpenedWorks});
     this.recovery.initial(options.initialRecoveryBinding);
     this.initialNavigationPending = options.initialNavigationPending ?? false;
     this.mode = options.mode ?? 'expressions';
@@ -455,7 +459,7 @@ export function mountExpressionsApplication(container: HTMLElement, applicationU
   frame.title = 'Expressions';
   frame.dataset.expressionsBinding = options.bindingId;
   const url = new URL(applicationUrl, container.ownerDocument.baseURI);
-  const admission = new RecoveryAdmission(options.recoveryBindings);
+  const admission = new RecoveryAdmission(options.recoveryBindings, {selectOpened: options.selectOpenedWorks});
   const initial = admission.initial(options.initialRecoveryBinding)
     ?? (url.searchParams.has('expression') ? admission.binding(url.searchParams.get('expression')!) : undefined);
   if (initial) {

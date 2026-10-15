@@ -34,6 +34,14 @@ export function acceptRecoveryDraft(binding:RecoveryBinding,record:RecoveryRecor
  if(old&&(old.scope!==binding.scope||old.checkpoint_id!==binding.checkpoint_id))throw new Error('This draft has a different native recovery address; both records were retained');
  drafts.set(value.draft_id,{...binding});return value.draft_id;
 }
+/** None yet (T-RECOVERY-FOR-OPENED-WORKS): the owner answered that no checkpoint stands at this selected address. The
+ * checkpoint the first working write creates there holds the draft its own id names (the owner keeps a checkpoint's id
+ * and its draft id equal), so that draft is addressed here, as a read checkpoint's draft is (acceptRecoveryDraft). */
+export function acceptAbsentRecoveryCheckpoint(binding:RecoveryBinding):void {
+ const old=drafts.get(binding.checkpoint_id);
+ if(old&&(old.scope!==binding.scope||old.checkpoint_id!==binding.checkpoint_id))throw new Error('This draft has a different native recovery address; both records were retained');
+ drafts.set(binding.checkpoint_id,{...binding});
+}
 /** The address the host selected for this reference, or null when none was.
  * An Expression the person opens from inside the frame has none: it is
  * addressed in the aperture's own scope (see draftRecoveryAddress). */

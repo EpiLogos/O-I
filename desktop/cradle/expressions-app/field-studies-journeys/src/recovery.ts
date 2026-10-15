@@ -1,5 +1,5 @@
 import {Journey,validateJourney} from './model';
-import {hostedRecovery,nativeRead,nativeWrite,nativeList,nativeFind,nativeRemove,recoveryScope,draftRecoveryAddress,acceptRecoveryDraft,validateNativeRecoveryBasis,acceptNativeRecoveryBasis} from './nativeRecovery.js';
+import {hostedRecovery,nativeRead,nativeWrite,nativeList,nativeFind,nativeRemove,recoveryScope,draftRecoveryAddress,acceptRecoveryDraft,acceptAbsentRecoveryCheckpoint,validateNativeRecoveryBasis,acceptNativeRecoveryBasis} from './nativeRecovery.js';
 import type {RecoveryBinding,RecoveryScope} from './nativeRecovery.js';
 import {Camera} from './camera';
 import {validateWorkingRecord} from './nativeWorking.js';
@@ -203,11 +203,20 @@ export function listOwnerQuarantine(expressionRef:string,scope:RecoveryScope):Pr
 export function removeOwnerKeptDraft(expressionRef:string,scope:RecoveryScope,entryId:string):Promise<number>{return removeOwnerQuarantineEntry(ownerQuarantine,expressionRef,scope,entryId);}
 
 /** Read only the host-selected checkpoint address. A same-ref duplicate is
- * not permission to choose another scope, revision or authoring draft. */
+ * not permission to choose another scope, revision or authoring draft.
+ * Undefined is the owner's "none yet" (T-RECOVERY-FOR-OPENED-WORKS): no
+ * checkpoint stands at a canonical address (id = ref), so the work opens on the
+ * owner's own Document and its first working checkpoint creates this one
+ * through the owner's compare-and-set. Any other absent address stays refused:
+ * the owner keeps a checkpoint's id, draft id and Journey id equal, and an
+ * owner Document's Journey is named by its ref. */
 export async function readBoundWorkingDraft(binding:RecoveryBinding){
  if(!hostedRecovery())throw new Error('The selected recovery address requires its native host');
  const row=await nativeRead('checkpoint',binding.checkpoint_id,binding.scope);
- if(!row)throw new Error('The selected native working checkpoint is absent');
+ if(!row){
+  if(binding.checkpoint_id!==binding.expression_ref)throw new Error('The selected native working checkpoint is absent');
+  acceptAbsentRecoveryCheckpoint(binding);return;
+ }
  const draftId=acceptRecoveryDraft(binding,row),raw=row.value as import('./nativeWorking').NativeWorkingRecord;
  const draft=await nativeRead('draft',draftId,binding.scope);
  const journey=draft?draftJourney(draft.value):validateJourney(raw.view!.journey);

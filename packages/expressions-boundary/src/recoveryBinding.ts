@@ -13,14 +13,29 @@ export function assertRecoveryBinding(value: unknown): asserts value is Recovery
   }
 }
 
+/** The canonical native Expression reference: the configured-work grammar (continuation.ts) and the owner's own
+ * (expression_recovery.rs `reference`). */
+const canonicalRef = (value: string) => /^expression:[a-zA-Z0-9_.-]{1,128}$/.test(value);
+/** Configured plus selected addresses one retained host holds: the frame's own binding inventory (nativeRecovery.ts). */
+const MAX_ADDRESSES = 256;
+
+export interface RecoveryAdmissionOptions {
+  /** T-RECOVERY-FOR-OPENED-WORKS: the host selects the address of an Expression it opens itself and holds no configured
+   * address for — its canonical checkpoint in the Expressions scope, `{scope: 'expressions', checkpoint_id: ref,
+   * expression_ref: ref}`. A configured address always wins and is never replaced. */
+  selectOpened?: boolean;
+}
+
 /** Routing metadata only. The native owner retains every byte and CAS basis. */
 export class RecoveryAdmission {
   readonly configured: boolean;
+  private readonly selectsOpened: boolean;
   private readonly bindings = new Map<string, RecoveryBinding>();
   private readonly drafts = new Map<string, RecoveryBinding>();
 
-  constructor(bindings?: readonly RecoveryBinding[]) {
-    this.configured = bindings !== undefined;
+  constructor(bindings?: readonly RecoveryBinding[], options: RecoveryAdmissionOptions = {}) {
+    this.selectsOpened = options.selectOpened === true;
+    this.configured = bindings !== undefined || this.selectsOpened;
     if (bindings !== undefined && (!Array.isArray(bindings) || bindings.length > 64)) {
       throw Error('A retained host accepts at most 64 selected recovery addresses');
     }
@@ -38,9 +53,27 @@ export class RecoveryAdmission {
   }
 
   binding(reference: string): RecoveryBinding | undefined {
-    const binding = this.bindings.get(reference);
+    const binding = this.bindings.get(reference) ?? this.selectOpened(reference);
     if (!binding && this.configured) throw Error('This native Expression has no host-selected recovery address');
     return binding ? {...binding} : undefined;
+  }
+
+  /** The address of an Expression this host opens itself with no configured address: its canonical checkpoint (id = ref)
+   * in the Expressions scope. Deterministic, so the boot query and the host agree without a table and the same work
+   * meets its own checkpoint after a restart. The owner keeps a checkpoint's id, its draft id and its Journey id equal
+   * (expression_recovery.rs `validate`), and the frame names an owner Document's Journey by its ref, so this is the one
+   * address the frame's first checkpoint of that Document can be written at. Whether a checkpoint stands there is the
+   * owner's answer, read before anything is written. */
+  private selectOpened(reference: string): RecoveryBinding | undefined {
+    if (!this.selectsOpened || !canonicalRef(reference)) return;
+    const address = this.key('expressions', reference);
+    if ([...this.bindings.values()].some(binding => this.key(binding.scope, binding.checkpoint_id) === address)) {
+      throw Error('The opened Expression\'s canonical recovery address is held by another selected work');
+    }
+    if (this.bindings.size >= MAX_ADDRESSES) throw Error(`A retained host selects at most ${MAX_ADDRESSES} recovery addresses; reopen the application`);
+    const selected: RecoveryBinding = Object.freeze({scope: 'expressions', checkpoint_id: reference, expression_ref: reference});
+    this.bindings.set(reference, selected);
+    return selected;
   }
 
   initial(value?: RecoveryBinding): RecoveryBinding | undefined {
@@ -129,7 +162,16 @@ export class RecoveryAdmission {
     if (result.state !== (request.operation === 'write' ? 'written' : 'ready')) {
       throw Error('The native recovery owner did not acknowledge the addressed operation');
     }
-    if (result.record === null && request.operation === 'read') return result;
+    if (result.record === null && request.operation === 'read') {
+      // None yet: no checkpoint stands at this selected address. The checkpoint a first write creates here can hold only
+      // the draft its own id names (the owner's identity law), so that draft is granted to this address now.
+      if (request.kind === 'checkpoint') {
+        const address = this.key(binding.scope, binding.checkpoint_id), held = this.drafts.get(address);
+        if (held && !this.sameAddress(held, binding)) throw Error('The native draft is already bound to another selected work');
+        this.drafts.set(address, binding);
+      }
+      return result;
+    }
     const record = result.record;
     if (!object(record) || record.scope !== binding.scope || record.kind !== request.kind
       || record.id !== request.id || !positiveInteger(record.revision)) {
