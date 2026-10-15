@@ -284,9 +284,15 @@ fn graph_reading_counts_equal_owner_fixture_counts_and_refs_round_trip() {
         reading.counts.knowledge_rows, owner_hits,
         "rows equal the C2 owner count"
     );
+    // The wiki's own edges equal the C1 owner count; a reachable hosted field adds its own, named by their provenance.
     assert_eq!(
-        reading.counts.edges, owner_edges,
-        "edges equal the C1 owner count"
+        reading
+            .edges
+            .iter()
+            .filter(|edge| edge.provenance.source == "projectcentral.wiki.read")
+            .count(),
+        owner_edges,
+        "the wiki's edges equal the C1 owner count"
     );
     assert_eq!(
         reading.counts.nodes,
@@ -313,7 +319,8 @@ fn graph_reading_counts_equal_owner_fixture_counts_and_refs_round_trip() {
         assert!(!node.ref_id.is_empty());
         assert!(!node.label.is_empty());
         match node.native_owner.as_str() {
-            "central" => {
+            // The wiki's nodes are owned by the wiki (graph.rs, since #635).
+            "wiki" => {
                 assert!(
                     wiki_refs.contains(&node.ref_id.as_str()),
                     "{} round-trips through projectcentral.wiki.read",

@@ -254,6 +254,9 @@ pub struct Kernel {
     // The temporal projection's answer horizon, shared by the ordered path
     // and the prepared read that runs outside the kernel mutex.
     temporal_reads: std::sync::Arc<std::sync::Mutex<read_cache::OwnerReadCache>>,
+    // The Graph op's retained readings, shared by the ordered path and the
+    // prepared read that runs outside the kernel mutex.
+    graph_reads: graph::GraphReads,
 }
 
 // ---------------------------------------------------------------------------
@@ -1547,6 +1550,7 @@ impl Kernel {
             temporal_reads: std::sync::Arc::new(std::sync::Mutex::new(
                 read_cache::OwnerReadCache::default(),
             )),
+            graph_reads: graph::GraphReads::default(),
         }
     }
 
@@ -2361,6 +2365,16 @@ impl Kernel {
             }),
             _ => None,
         };
+        // The Graph op's owner reads run outside the ordered queue too: one
+        // input's slow owner never holds another input, or any other op.
+        if let Some(graph) = graph::PreparedGraph::prepare(
+            &self.client,
+            self.reads.get("world", read_cache::WORLD_TTL),
+            op,
+            &self.graph_reads,
+        ) {
+            return Some(owner_read::PreparedRead::graph(&self.client, op, graph));
+        }
         owner_read::PreparedRead::prepare(
             &self.client,
             self.reads.get("world", read_cache::WORLD_TTL),
@@ -3301,6 +3315,7 @@ impl Kernel {
                 // unrelated, unchanged reads on pure coincidence of timing.
                 if request.mutates() {
                     self.reads.clear();
+                    self.graph_reads.invalidate();
                 }
                 Ok(KernelOpOutcome {
                     receipts: Vec::new(),
@@ -3577,6 +3592,7 @@ impl Kernel {
                         .invalidate(&format!("dir:{}", files::parent_path(&location.path)));
                     self.reads.invalidate_prefix("knowledge:");
                     self.reads.invalidate_prefix("graph:");
+                    self.graph_reads.invalidate();
                 }
                 // One state change, one event (the seam's law): a write or
                 // restore the owner actually recorded (`created`/`written`)
@@ -4216,93 +4232,10 @@ impl Kernel {
                     result: KernelOpResult::Knowledge { data },
                 })
             }
-            KernelOp::Graph {
-                project,
-                query,
-                options,
-            } => {
-                let options = options.unwrap_or_default();
-                options.validate()?;
-                // Central discloses the scope; the wiki read register and the
-                // AIKit project context both come from the owner root map.
-                let root = self.world_map(false).map_err(|e| e.to_string())?;
-                let base = root["root"]
-                    .as_str()
-                    .ok_or("Central root location unavailable")?;
-                let (wiki_action, wiki_input, cwd) = if let Some(project) = project.as_ref() {
-                    let row = root["work"]["projects"]
-                        .as_array()
-                        .and_then(|rows| rows.iter().find(|r| r["name"].as_str() == Some(project)))
-                        .ok_or("Project is outside Central's disclosed ground")?;
-                    let cwd = std::path::Path::new(base)
-                        .join(row["path"].as_str().ok_or("Project location unavailable")?);
-                    (
-                        "projectcentral.wiki.read",
-                        serde_json::json!({ "project": project }),
-                        cwd,
-                    )
-                } else {
-                    (
-                        "central.wiki.read",
-                        serde_json::json!({}),
-                        std::path::PathBuf::from(base),
-                    )
-                };
-                let key = format!(
-                    "graph:{}:{:?}:{}:{}:{}",
-                    cwd.display(),
-                    options.input,
-                    options.max_nodes,
-                    options.max_edges,
-                    query
-                );
-                if options.fresh {
-                    self.reads.invalidate(&key);
-                }
-                // Hosted access/projection changes are always checked at its owner.
-                let cacheable = matches!(
-                    options.input,
-                    graph::InputSelection::CentralWiki | graph::InputSelection::AikitResolution
-                );
-                let held = if cacheable && !options.fresh {
-                    self.reads
-                        .get(&key, read_cache::GRAPH_TTL)
-                        .and_then(|value| serde_json::from_value(value).ok())
-                } else {
-                    None
-                };
-                let reading = if let Some(reading) = held {
-                    reading
-                } else {
-                    let reading = graph::assemble_selected(
-                        &self.client,
-                        wiki_action,
-                        &wiki_input,
-                        &cwd,
-                        &query,
-                        &options,
-                    );
-                    let available = match options.input {
-                        graph::InputSelection::CentralWiki => {
-                            reading.inputs.central_wiki.is_available()
-                        }
-                        graph::InputSelection::AikitResolution => {
-                            reading.inputs.aikit_resolution.is_available()
-                        }
-                        _ => false,
-                    };
-                    if cacheable && available {
-                        if let Ok(value) = serde_json::to_value(&reading) {
-                            self.reads.put(key, value);
-                        }
-                    }
-                    reading
-                };
-                Ok(KernelOpOutcome {
-                    receipts: Vec::new(),
-                    result: KernelOpResult::GraphReading { reading },
-                })
-            }
+            op @ KernelOp::Graph { .. } => self
+                .prepare_owner_read(&op)
+                .ok_or("Cannot prepare the Graph read")?
+                .execute(),
             KernelOp::A2aExchange { request } => {
                 let data = shared_field::a2a_exchange(&request)?;
                 Ok(KernelOpOutcome {
@@ -4363,6 +4296,7 @@ impl Kernel {
                 let dispatch = action::invoke(&self.client, &cwd, project.as_deref(), &invocation);
                 self.reads.invalidate_prefix("knowledge:");
                 self.reads.invalidate_prefix("graph:");
+                self.graph_reads.invalidate();
                 let mut receipts = Vec::new();
                 if matches!(
                     invocation.action.as_str(),
@@ -4450,6 +4384,7 @@ impl Kernel {
                     .invalidate(&format!("dir:{}", files::parent_path(&location.path)));
                 self.reads.invalidate_prefix("knowledge:");
                 self.reads.invalidate_prefix("graph:");
+                self.graph_reads.invalidate();
                 Ok(KernelOpOutcome {
                     receipts: Vec::new(),
                     result: KernelOpResult::InstanceCommissioned { outcome },
@@ -5019,6 +4954,7 @@ impl Kernel {
                 if changed {
                     self.reads.invalidate_prefix("knowledge:");
                     self.reads.invalidate_prefix("graph:");
+                    self.graph_reads.invalidate();
                 }
                 // Sync both layers to the canonical state the owner recorded.
                 // One state change — the save — one event: SourceChanged
