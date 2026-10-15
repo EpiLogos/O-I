@@ -21,6 +21,7 @@ import type {CentralLocation, NativeFileEntry} from '../../../../../../desktop/c
 import {USER_FLOWS_DIR} from '../../../../../../desktop/cradle/src/flow/instances'
 import {openInstrumentAt} from '../../frame/openInstrument'
 import {parseCentralPathRef} from '../centralVertical'
+import {dateOfDayPath} from '../daySurface'
 
 export const CENTRAL_DOCUMENT_PANE_KIND = 'projection.central-document'
 
@@ -38,8 +39,8 @@ export function dayRefOfDate(date: string): string {
 /** The civil date a day record's path names (`…/now/day/2026-10-08.md`). The same expression the browser's Files rows use to
  * tell a day record from a note (shell/ModeBrowser.tsx). */
 export function dayDateOfPath(path: string): string | null {
-  const match = path.match(/\/now\/day\/(\d{4}-\d{2}-\d{2})\.md$/)
-  return match ? match[1] : null
+  // The owner's `…/user/day/<date>/day.md` and a legacy record's `…/now/day/<date>.md` (central/daySurface.ts).
+  return dateOfDayPath(path)
 }
 
 const FLOW_FILE = new RegExp(`(?:^|/)${USER_FLOWS_DIR}/[^/]+\\.html$`, 'i')

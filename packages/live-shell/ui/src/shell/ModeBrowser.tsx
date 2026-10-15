@@ -11,7 +11,7 @@
  *
  * - Days — the day records listed through the same owner route the L7
  *   detail craft reads (`listFiles` → central.directory-reading/v1), at the
- *   root register's day surface (`Control/agents/now/day`). Each row reads as
+ *   owner's day surface (`Control/user/day`, central/daySurface.ts). Each row reads as
  *   the mockup's `bi()` (world-shell-mockup.html :1478, :1484): the day in
  *   words ("Thu 08 Oct"), its standing from the owner's own Day reading
  *   (`day_read`: open / closed, the Day document's short revision), read once
@@ -66,10 +66,11 @@ import {civilDateOfDayFile, dayStandingHover, dayStandingOf, dayStandingWords, d
   nowRows, sessionState, sizeWords, type DayStanding, type FlowReading, type NowRow} from '../frame/browser/rowWords'
 import './modeSurface.css'
 import type {BrowserCategory, ControlledBrowser} from '../frame/browser/browserKinds'
+import {CENTRAL_DAYS_PATH, dayEntriesOf} from '../central/daySurface'
 
 /** The root register's day surface — where the civil calendar's records
  * live (`centralDayNowModel`'s subjectDayRef reads this shape). */
-const DAY_RECORDS_PATH = 'Control/agents/now/day'
+const DAY_RECORDS_PATH = CENTRAL_DAYS_PATH
 /** How many listed rows a category reads its owner for, once per listing (the newest first); rows past it keep their listed words. */
 const ROWS_READ = 31
 
@@ -263,7 +264,7 @@ function DaysRows({needle, onSelectSubject, selectedSubject}: {
       .catch(reason => {if (live) setFault(message(reason))})
     return () => {live = false}
   }, [transport])
-  const records = useMemo(() => (directory?.entries ?? [])
+  const records = useMemo(() => dayEntriesOf(directory?.entries ?? [])
     .filter(entry => civilDateOfDayFile(entry.name) !== null)
     .sort((a, b) => b.name.localeCompare(a.name)), [directory])
   const dates = useMemo(() => records.slice(0, ROWS_READ).map(entry => civilDateOfDayFile(entry.name) as string), [records])
