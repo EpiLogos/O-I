@@ -9,6 +9,7 @@
 //! the same revision (`get_at`) and never because of its age. A size or a
 //! time is never a revision.
 use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 pub const WORLD_TTL: Duration = Duration::from_millis(4000);
@@ -28,14 +29,79 @@ struct Entry {
     /// The owner's own revision of the retained reading, when it gave one.
     revision: Option<String>,
 }
+/// One owner reading shared by the prepared reads that ask for it while it
+/// is in flight or just read (`OwnerReadCache::flight`): the first to
+/// execute reads it through the owner, the others wait for that reading and
+/// take it. It is held for its key's TTL from the moment it was read — the
+/// cache's own retention, never a revision. A failed read is not shared:
+/// the next reader asks the owner itself.
+#[derive(Debug, Default)]
+pub struct Flight(Mutex<Option<(Instant, serde_json::Value)>>);
+impl Flight {
+    /// The shared reading, read with `read` only when none is held within `ttl`.
+    pub fn read(
+        &self,
+        ttl: Duration,
+        read: impl FnOnce() -> Result<serde_json::Value, String>,
+    ) -> Result<serde_json::Value, String> {
+        let mut held = self.0.lock().unwrap_or_else(|e| e.into_inner());
+        if let Some((at, value)) = held.as_ref() {
+            if at.elapsed() < ttl {
+                return Ok(value.clone());
+            }
+        }
+        let value = read()?;
+        *held = Some((Instant::now(), value.clone()));
+        Ok(value)
+    }
+    /// The reading already held within `ttl`; never waits for one in flight.
+    pub fn held(&self, ttl: Duration) -> Option<serde_json::Value> {
+        let held = self.0.try_lock().ok()?;
+        held.as_ref()
+            .filter(|(at, _)| at.elapsed() < ttl)
+            .map(|(_, value)| value.clone())
+    }
+    /// Read once and since let go by its TTL. A flight still reading (or
+    /// whose read failed) has not lapsed: a later ask joins it.
+    fn lapsed(&self, ttl: Duration) -> bool {
+        match self.0.try_lock() {
+            Ok(held) => held.as_ref().is_some_and(|(at, _)| at.elapsed() >= ttl),
+            Err(std::sync::TryLockError::Poisoned(held)) => held
+                .into_inner()
+                .as_ref()
+                .is_some_and(|(at, _)| at.elapsed() >= ttl),
+            Err(std::sync::TryLockError::WouldBlock) => false,
+        }
+    }
+}
 #[derive(Debug, Default)]
 pub struct OwnerReadCache {
     entries: HashMap<String, Entry>,
     bytes: usize,
     request_clock: u64,
     requests: HashMap<String, u64>,
+    /// Shared readings by key, each a pending read under its `requests`
+    /// ticket: whatever withdraws the ticket withdraws the flight.
+    flights: HashMap<String, (u64, Arc<Flight>)>,
 }
 impl OwnerReadCache {
+    /// The reading of `key` every prepared read shares while it is in flight
+    /// or was read within `ttl`; otherwise a new one. A flight is a pending
+    /// owner read like any other (`begin`): invalidating its key, retaining
+    /// a newer reading of it (`put`) or a ground change (`clear`) withdraws
+    /// it, so a later ask never joins a reading the cache has let go of.
+    pub(crate) fn flight(&mut self, key: &str, ttl: Duration) -> Arc<Flight> {
+        if let Some((ticket, flight)) = self.flights.get(key) {
+            if self.current(key, *ticket) && !flight.lapsed(ttl) {
+                return Arc::clone(flight);
+            }
+        }
+        let ticket = self.begin(key.to_owned());
+        let flight = Arc::new(Flight::default());
+        self.flights
+            .insert(key.to_owned(), (ticket, Arc::clone(&flight)));
+        flight
+    }
     /// A pending owner read is a distinct observation, not a cache entry.
     /// Latest request wins, and source invalidation also withdraws pending reads.
     pub(crate) fn begin(&mut self, key: String) -> u64 {
@@ -118,12 +184,14 @@ impl OwnerReadCache {
     }
     pub fn invalidate(&mut self, key: &str) {
         self.requests.remove(key);
+        self.flights.remove(key);
         if let Some(entry) = self.entries.remove(key) {
             self.bytes = self.bytes.saturating_sub(entry.bytes);
         }
     }
     pub fn invalidate_prefix(&mut self, prefix: &str) {
         self.requests.retain(|key, _| !key.starts_with(prefix));
+        self.flights.retain(|key, _| !key.starts_with(prefix));
         let keys: Vec<_> = self
             .entries
             .keys()
@@ -136,6 +204,7 @@ impl OwnerReadCache {
     }
     pub fn clear(&mut self) {
         self.requests.clear();
+        self.flights.clear();
         self.entries.clear();
         self.bytes = 0;
     }
@@ -221,6 +290,65 @@ mod tests {
         let after_ground = cache.begin(key.into());
         assert!(!cache.finish(key, before_ground));
         assert!(cache.finish(key, after_ground));
+    }
+    #[test]
+    fn a_flight_is_shared_while_in_flight_or_just_read_and_withdrawn_by_the_cache() {
+        let mut cache = OwnerReadCache::default();
+        let first = cache.flight("world", WORLD_TTL);
+        assert!(Arc::ptr_eq(&first, &cache.flight("world", WORLD_TTL)));
+        assert_eq!(first.read(WORLD_TTL, || Ok(json!(1))), Ok(json!(1)));
+        assert_eq!(first.held(WORLD_TTL), Some(json!(1)));
+        assert!(
+            Arc::ptr_eq(&first, &cache.flight("world", WORLD_TTL)),
+            "a reading just read is shared"
+        );
+        assert!(
+            !Arc::ptr_eq(&first, &cache.flight("world", Duration::ZERO)),
+            "a reading past its TTL is read again"
+        );
+        // A world change withdraws the flight: invalidation, a newer
+        // retained reading, a ground change.
+        let flight = cache.flight("world", WORLD_TTL);
+        cache.invalidate("world");
+        assert!(!Arc::ptr_eq(&flight, &cache.flight("world", WORLD_TTL)));
+        let flight = cache.flight("world", WORLD_TTL);
+        cache.put("world".into(), json!(2));
+        assert!(!Arc::ptr_eq(&flight, &cache.flight("world", WORLD_TTL)));
+        let flight = cache.flight("world", WORLD_TTL);
+        cache.clear();
+        assert!(!Arc::ptr_eq(&flight, &cache.flight("world", WORLD_TTL)));
+    }
+    #[test]
+    fn one_flight_reads_once_for_its_readers_and_never_shares_a_failure() {
+        use std::sync::atomic::{AtomicUsize, Ordering};
+        let flight = Arc::new(Flight::default());
+        let reads = Arc::new(AtomicUsize::new(0));
+        let readers: Vec<_> = (0..4)
+            .map(|_| {
+                let (flight, reads) = (Arc::clone(&flight), Arc::clone(&reads));
+                std::thread::spawn(move || {
+                    flight.read(WORLD_TTL, || {
+                        reads.fetch_add(1, Ordering::SeqCst);
+                        std::thread::sleep(Duration::from_millis(50));
+                        Ok(json!("world"))
+                    })
+                })
+            })
+            .collect();
+        for reader in readers {
+            assert_eq!(reader.join().unwrap(), Ok(json!("world")));
+        }
+        assert_eq!(reads.load(Ordering::SeqCst), 1);
+        let failing = Flight::default();
+        assert!(failing
+            .read(WORLD_TTL, || Err("owner unavailable".into()))
+            .is_err());
+        assert_eq!(failing.held(WORLD_TTL), None);
+        assert_eq!(
+            failing.read(WORLD_TTL, || Ok(json!(1))),
+            Ok(json!(1)),
+            "the next reader asks the owner itself"
+        );
     }
     #[test]
     fn unrelated_reads_do_not_cancel_each_other_and_tickets_are_bounded() {
