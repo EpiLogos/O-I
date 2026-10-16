@@ -5630,7 +5630,7 @@ to r17.
 | Reach | Object · Scene · Expression · Central | Object in Central; Scene in Factory and Expressions | The widest part of the world the agent may touch. A place outside it is closed, even when it is on a list. |
 | Reads | A list of places, each with a light | The open object, the packet, and the scene's registers | The places the agent may read inside its Reach. A teal light marks a place in reach. |
 | Writes | A list of places, each with a light | None in Central; the scene's layers in Factory | The places the agent may write. A place not on the list is read-only. An amber light marks a place in reach. |
-| Write mode | Off · Propose · Draft · Direct | Propose | How a write arrives. Off: the agent writes nowhere. Propose: as a proposal that waits. Draft: in a draft that you review. Direct: in the thing itself, with a receipt. |
+| Write mode | Propose · Draft · Direct | Propose | How a write arrives. Propose: as a proposal that waits. Draft: in a draft that you review. Direct: in the thing itself, with a receipt. With Writes empty, the agent writes nowhere. |
 | Knowledge | See Knowledge route | As Knowledge route | The knowledge sources and bounds. |
 | Basis | A revision pair (reading) | Read from the world | The revision the agent started from and the revision of its edits. |
 | Receipts | A list (reading) | Read from the agent | One receipt for each write: the agent, the time, the place and the change. |
@@ -5647,14 +5647,14 @@ caption: Scope, on a fixture of readings.
 | Folded | Scope and the Reach. |
 | Compact | The rings, teal over the top for reads and amber under the bottom for writes; the basis. Macros: Reach, Write mode, and the counts of read and write places. |
 | Whole | Band one: the rings with the reach handle, Reach with Confirm and Cancel, Write mode, the receipts. Band two: Reads, Writes, Knowledge and the basis. |
-| Full | The world the agent may touch, as a tree of your ground: teal on the places it reads, amber on the places it writes, its receipts on the places it wrote. |
+| Full | The rings at pane size: the world the agent may touch, teal where it reads and amber where it writes, with each receipt numbered on the place it wrote. |
 | Widget | Small rings, the Reach, the Write mode and the last receipts. Press a receipt to read it whole. |
 
 #### Transport
 
 | Control | Effect on Scope |
 |---|---|
-| Arm | Direct writes land only when Arm is on. With Arm off, Direct acts as Propose. Arm never changes Off. |
+| Arm | Direct writes land only when Arm is on. With Arm off, Direct acts as Propose. |
 | Loop and punch | Sets the window in which writes may land. |
 | Re-enable | Lights when you change something the agent wrote. Press it to hand it back. |
 | Draw | Marks a place or a tile as a reference for the agent. |
