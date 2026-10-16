@@ -1,6 +1,6 @@
 // THE WALK STRIP: "follow the thread" for a walk through plates (the Red Book's folios, Aion's chapters and events).
 // A row of small plate thumbnails inside the walk's rail: the current one raised and centred, a tap on one jumps there.
-import { listen } from './lifetime';
+import { followSize, listen } from './lifetime';
 import type { ImageRef, Palette } from '../types/field';
 import { clear, el, plate } from './dom';
 
@@ -38,13 +38,16 @@ export class WalkStrip {
       el('div', { class: 'ws-head' }, [this.progress, this.section]),
       el('div', { class: 'ws-row' }, [prev, this.viewport, next]),
     );
-    // a resize re-centres the current frame; the listener retires once the strip has left the page
+    // a resize re-centres the current frame; the listener retires once the strip has left the page. The window's resize, and
+    // the strip's own width (hosted, the pane narrows or widens without the window: ui/lifetime.ts followSize)
     let stopResize: () => void = () => {};
+    let stopFollow: () => void = () => {};
     const onResize = () => {
       if (this.viewport.isConnected) this.recenter();
-      else stopResize();
+      else { stopResize(); stopFollow(); }
     };
     stopResize = listen(window, 'resize', onResize);
+    stopFollow = followSize(this.viewport, onResize);
   }
 
   /** Show `items` with `index` current. The frames are rebuilt only when the ids change; a step moves the classes and scrolls. */

@@ -63,7 +63,7 @@ import {techneControls} from '../frame/tracks/useTechneTracks'
 import {useOptionalContinuity} from '../continuity/workspace'
 import {isWorldGroup, openingWords, palaceWorldGroup, sceneRowsOf, worldGroupOf, type SceneRow, type WorldGroup, type WorldGroupId, type WorldRow} from '../techne/subject/worldRows'
 import {enterFromOutside, palacesWaiting, readPalaces, usePalaces} from '../projections/atlas/palaces/palacesWorld'
-import {openInstrument} from '../frame/instrumentDoor'
+import {bringInstrumentIntoView} from '../frame/instrumentDoor'
 import {chooseHeldScene, openHeldSubject, useSubjectOpenings, type SubjectOpening} from '../techne/subject/subjectOpenings'
 import type {NativeDirectory, NativeFileEntry, KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
 import {listFiles} from '../../../../../desktop/cradle/src/files/client'
@@ -618,7 +618,8 @@ function PalaceGroupRows({category, mode, needle}: {category: ModeBrowserCategor
     const palace = rows.find(candidate => `palace:${candidate.key}` === row.key)
     if (!palace) return
     setStood(before => new Map(before).set(row.key, 'entering…'))
-    void enterFromOutside(palace, () => openInstrument('projection.earth'))
+    // the Earth into view, never behind the focused pane's held Canvas or document (instrumentDoor.ts bringInstrumentIntoView)
+    void enterFromOutside(palace, () => bringInstrumentIntoView('projection.earth'))
       .then(said => setStood(before => new Map(before).set(row.key, said ?? 'entered on the Earth')))
   }
   return <WorldGroupBody category={category} group={group} needle={needle} openings={NO_OPENINGS} stood={stood}

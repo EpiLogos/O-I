@@ -124,8 +124,14 @@ test('the transport stylesheet holds the floor and leaves the shell\'s narrow-wi
   // `display: none`; a display set here would outrank them. Only an owner's slot, and a cell's icon, set one.
   const displayed = [...css.replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/([^{}]+)\{([^}]*)\}/g)].filter(([, , body]) => /(^|[\s;])display:/.test(body)).map(([, selector]) => selector.trim())
   // Ticket C: the owner's stage tool rail swaps to its own abbreviations inside the bar (a display on its labels, never a group).
+  // Lane F (F3): a marked slot's fold sets displays on its own mark and body (never a group), and opened beneath the mark the rail
+  // has the room for its names (transport-fold.test.mjs).
   assert.deepEqual(displayed, ['.one-transport .transport-slot', '.mode-transport.one-transport .native-control svg',
-    '.mode-transport.one-transport .bar-tool-full', '.mode-transport.one-transport .bar-tool-abbr'])
+    '.mode-transport.one-transport .bar-tool-full', '.mode-transport.one-transport .bar-tool-abbr',
+    '.one-transport .transport-fold-body', '.mode-transport.one-transport .transport-fold-mark',
+    '.mode-transport.one-transport .transport-slot[data-fold] > .transport-fold-mark', '.one-transport .transport-slot[data-fold] > .transport-fold-body',
+    '.one-transport .transport-slot[data-fold=open] > .transport-fold-body',
+    '.mode-transport.one-transport .transport-slot[data-fold=open] .bar-tool-full', '.mode-transport.one-transport .transport-slot[data-fold=open] .bar-tool-abbr'])
   assert.doesNotMatch(css.replace(/\/\*[\s\S]*?\*\//g, ''), /#[0-9a-f]{3,8}\b/i, 'shell tokens only (the comments may name the mockup\'s colours)')
 })
 

@@ -58,11 +58,14 @@ export function palacesWaiting(load: PalacesLoad, count: number): string | null 
 export const EARTH_OPENS_WITHIN_MS = 20_000
 
 /** Enter a palace from outside the Earth — the browser's World › Palaces (FOUNDATION N4: a palace is a place on the world you enter):
- * open the Earth through the one instrument door, wait for its palace owners to bind, then enter. Null once entering began; the words
+ * bring the Earth into view through the one instrument door (always), wait for its palace owners to bind, then enter. Null once entering began; the words
  * said instead when the Earth did not open in time (never a silent wait). `open` and `within` are the door and the wait, for tests. */
 export async function enterFromOutside(palace: PalaceRow, open: () => void, within = EARTH_OPENS_WITHIN_MS): Promise<string | null> {
+  // The Earth comes into view every time (lane F, F2): its owners can be bound while it stands behind another tab — the lead saw
+  // the walk start on the transport ("Locus 2/5") while the focused pane kept the hosted frame's Canvas — so the door is asked
+  // even when the palace could be entered at once.
+  open()
   if (!palaceOwnersBound()) {
-    open()
     const bound = await new Promise<boolean>(resolve => {
       if (palaceOwnersBound()) { resolve(true); return }
       const timer = setTimeout(() => { stop(); resolve(false) }, within)
