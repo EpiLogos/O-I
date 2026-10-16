@@ -1,73 +1,39 @@
-/* One device in three sizes (FOUNDATION F5), drawn as the mockup's plate (world-shell-mockup.html:331-347; `dev()` at :1410):
-   the SDK draws the plate's head and controls (inhabitants/sdk/sdk.css); this sheet lays out its body at each size. Shell and
-   SDK tokens only (the --sdk-* names resolve the shell's own tokens on the plate). */
-.device { display: flex; flex-direction: column; min-width: 0; min-height: 0 }
-.device > .sdk-face { flex: 1 1 auto; min-height: 0 }
+/* One device in its places (DEVICE-UI §2, §3): the panel kit draws every plate (inhabitants/sdk/panel.css); this sheet only places
+   it — on a chain at its own width and the chain's one height, whole in the pool at 400 wide, full in a pane, a tile on the rail —
+   and lays a generic plate's controls into the kit's sections. Nothing here scrolls; shell and kit tokens only. */
 
-/* Compact, on the chain: a fixed width the device's own rows give it (deviceRuntime.ts plateWidth), the chain's height. */
-.device--compact { flex: none; width: var(--plate-w, 180px); max-height: 100% }
-.device--compact.device--folded { width: auto }
+/* A place: the plate at its own size, scaled as a whole (plateScale.ts: CSS zoom, 80–125 % with the detail area's height). */
+.device-place { flex: none; display: flex; align-items: flex-start; min-width: 0; min-height: 0 }
+.device { flex: none; display: flex; min-width: 0; min-height: 0 }
 
-/* The body (.db, :338): the picture box beside the controls. */
-.device-body { flex: 1 1 auto; display: flex; gap: 10px; padding: 7px; min-height: 0; min-width: 0; overflow: hidden }
+/* The plate the pool shows wears the selection's tint in its head, a design's head as the generic plate's (§4.3). */
+.device[data-device-selected="true"] > .dp > .dp-head { background: color-mix(in srgb, var(--dp-head) 72%, var(--sel) 28%) }
 
-/* The picture box (.vis, :339): the device's own live picture on the well, 104 square on the chain. */
-.device-picture { position: relative; flex: none; width: 104px; height: 104px; display: grid; place-items: center; overflow: hidden; background: var(--sdk-well); border: 1px solid var(--sdk-line) }
-/* A device with no controls lets its picture take the body (the mockup's list devices: Notes, Packet, the die's faces). */
-.device-body[data-layout="picture"] > .device-picture { flex: 1 1 auto; width: auto; height: auto; min-height: 104px; align-self: stretch }
+/* A generic plate's control: its key and holder on a wrapper that adds no box; a wide control spans two control columns. */
+.dv-param { display: contents }
+.dv-param[data-span="2"] > * { grid-column: span 2; justify-self: stretch }
+.dv-param[data-span="2"] > .dp-cell--dial, .dv-param[data-span="2"] > .dp-cell--readout, .dv-param[data-span="2"] > .dp-cell--toggle { justify-self: center }
+.dv-param[data-control="readout"] .dp-readout-value { max-width: 100%; overflow: hidden; text-overflow: ellipsis }
+.dv-param > .dp-cell--readout { max-width: 100% }
+.dv-empty { font-size: 10px; color: var(--text-faint) }
 
-/* The controls (.ctrls, :340): a two-column grid; a cell spans one column or both (.tog, .tog.half). */
-.device-controls { flex: 1 1 auto; min-width: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 6px; align-content: start; overflow: hidden auto }
-.device-controls:has(> .device-cell:only-child[data-span="1"]) { grid-template-columns: minmax(0, 1fr) }
-.device-cell { min-width: 0; display: flex; flex-direction: column }
-.device-cell[data-span="2"] { grid-column: span 2 }
-.device-cell > * { min-width: 0 }
+/* The device's own picture in the well (Display raw): centred, clipped to the well. */
+.dv-picture { display: grid; place-items: center; width: 100%; height: 100%; overflow: hidden }
+.dv-picture--mini { zoom: .55; width: auto; height: auto }
 
-/* Each row stands as the mockup's .knob / .tog: its name above, its control, its value below, centred. */
-.device-row { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0 }
-.device-row > .sdk-row { flex-direction: column; align-items: center; justify-content: flex-start; gap: 3px; min-height: 0; width: 100%; min-width: 0 }
-.device-row > .sdk-row > .sdk-row__name { max-width: 100%; font-size: 9.5px }
-.device-row .sdk-enum { max-width: 100% }
-/* A reading: its name over its value in mono (the mockup's read-only .tog). */
-.device-row > .sdk-row--reading .sdk-chip { max-width: 100%; padding: 0; background: none; border: 0; font-size: 10px; color: var(--sdk-text) }
-.device-row > .sdk-row--reading .sdk-chip__absent { color: var(--sdk-faint) }
-
-/* What moves a value: its modulator's name under it (§14 — every modulated parameter shows its modulator). */
-.device-moved { max-width: 100%; font-size: 9px; color: var(--sdk-accent); overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
-/* Who moved a value: the holder's name under it, and the hand-back light (the specimen's `back` mark, stall-lit). */
-.device-held { display: flex; align-items: center; gap: 3px; max-width: 100%; font-size: 9px; color: var(--sdk-stall) }
-.device-handback { display: inline-grid; place-items: center; flex: none; width: 14px; height: 12px; padding: 0; background: none; border: 1px solid currentColor; color: var(--sdk-stall); cursor: pointer }
-.device-handback:disabled { opacity: .5; cursor: default }
-.device-holder { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
-
-/* The owner's words when a change or the ring is refused; Send and Cancel while a change is unsent. */
-.device-refusal { margin: 0; padding: 3px 7px; font-size: 10px; color: var(--sdk-rec); border-top: 1px solid var(--sdk-line) }
-.device-commit { flex: none; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 4px 7px 6px; border-top: 1px solid var(--sdk-line); font-size: 10px; color: var(--sdk-dim) }
-.device-commit button { background: var(--sdk-well); border: 1px solid var(--sdk-line); color: var(--sdk-text); font-size: 10px; padding: 1px 8px }
-.device-commit button:hover { border-color: var(--sdk-accent) }
-.device-commit [role="alert"] { color: var(--sdk-rec) }
-.device[data-unsent] .sdk-face__title { color: var(--sdk-accent) }
-
-/* Whole, in the pool: the same plate, larger — the picture, then every row grouped under its heading (.isec h5, :358). */
-.device--whole { width: 100% }
-.device--whole .device-body { flex-wrap: wrap; overflow: visible }
-.device--whole .device-picture { flex: 1 1 140px; width: auto; height: auto; min-height: 140px; min-width: 140px }
-.device-groups { flex: 1 1 160px; min-width: 0; display: flex; flex-direction: column; gap: 8px }
-.device-group { min-width: 0; margin: 0; padding: 0; border: 0 }
-.device-group legend { padding: 0; margin: 0 0 6px; font-size: 9.5px; color: var(--sdk-faint); letter-spacing: .06em; text-transform: uppercase }
-.device-group .device-controls { overflow: visible; gap: 7px 4px }
-
-/* Full, in a pane: the picture takes the pane's height; the groups stand beside it as the Studio's sections (.isec, :356). */
-.device--full { position: absolute; inset: 0; overflow: auto; background: var(--bg-1) }
-.device--full > .sdk-face { min-height: 100% }
-.device--full .device-body { flex-wrap: wrap; align-items: stretch; overflow: visible }
-.device--full .device-picture { flex: 1 1 320px; width: auto; height: auto; min-height: 240px; align-self: stretch }
-.device--full .device-groups { flex: 0 1 380px; flex-flow: row wrap; align-content: flex-start; gap: 0 }
-.device--full .device-group { flex: 1 1 150px; padding: 0 8px 8px; border-left: 1px solid var(--sdk-line) }
-.device--full .sdk-knob { width: 38px; height: 38px }
-
-.device-pool { padding: 6px; overflow: auto; height: 100% }
+/* Whole, in the pool: the plate is 400 wide (§3), one or two bands, pages in its head. */
+.device--whole > .dp { width: 400px }
+.device-pool { height: 100%; padding: 6px; overflow: hidden }
 .device-pool-empty { margin: 6px; font-size: 10.5px; color: var(--text-faint) }
-.torus-picture { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 10px; color: var(--text-dim) }
-.torus-picture b { color: var(--text); font-weight: 500 }
-.torus-picture small { color: var(--text-faint); font-size: 9px; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+
+/* Full, in a pane: the material at the pane's size, no controls (DLW §16.1). */
+.device-place--full, .device--full { position: absolute; inset: 0 }
+.dv-full { position: absolute; inset: 0; display: flex; align-items: stretch; justify-content: stretch; overflow: hidden; background: var(--bg-1) }
+.dv-full > * { flex: 1 1 auto; min-width: 0; min-height: 0 }
+.dv-full > .dv-full-none { flex: none; margin: auto; max-width: 40ch; font-size: 11px; line-height: 1.5; color: var(--text-faint); text-align: center }
+
+/* The widget: the kit's tile, its controls in one column beside the small picture. */
+.dv-tile-controls { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 5px }
+.dv-tile-controls .dp-cell { align-items: stretch; align-self: stretch }
+.dv-tile-controls .dp-cell--readout { align-items: flex-start }
+.device-widget-away { margin: 0; padding: 8px; font-size: 10px; line-height: 1.4; color: var(--text-faint) }

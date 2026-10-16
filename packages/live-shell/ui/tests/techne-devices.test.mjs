@@ -135,6 +135,19 @@ const validState = (standing = 'following', parameters = {}) => ({
 const readings = (over = {}) => ({atlas: atlasDevs.atlasReading(null, 'earth'), surface: null, torus: null, instrumentReading: torus.qlInstrumentFeed(null), ...over})
 const entryOf = (entries, family, id) => entries.find(entry => entry.family === family && entry.face.id === id)
 const params = markup => [...markup.matchAll(/data-param="([^"]+)"/g)].map(match => match[1])
+const deviceHost = await import('../src/frame/devices/deviceHost.tsx')
+/** A whole plate on every one of its pages (DEVICE-UI §1: pages in its head, never a scroller), turned through the host. */
+const everyPage = (id, draw) => {
+  const pages = []
+  for (let at = 1; at <= 8; at++) {
+    deviceHost.setHostPage(id, `p${at}`)
+    const markup = draw()
+    pages.push(markup)
+    if ((markup.match(/role="tab"/g) ?? []).length <= at) break
+  }
+  deviceHost.setHostPage(id, 'p1')
+  return pages.join('\n')
+}
 
 beforeEach(() => {
   torus.publishLiveTorusState(null)
@@ -421,7 +434,7 @@ test('the knowledge graph\'s devices stand open on its own chain, each with its 
     assert.match(out, new RegExp(`data-face-id="${id}"[^>]*data-expanded="true"`))
     assert.match(out, new RegExp(`data-device="knowledge-graph:${id}" data-device-size="compact"`))
     assert.match(out, new RegExp(`data-knowledge-face="${id}"`))
-    assert.match(out, new RegExp(`<h3 class="sdk-face__title">${title}</h3>`))
+    assert.match(out, new RegExp(`<span class="dp-title">${title}</span>`))
   }
   assert.doesNotMatch(out, /graph-tools|data-mode-detail="techne-instruments"/)
   const led = html(createElement(InstrumentDeviceDetail, {transport, instrument: 'techne:m2', centralDevices: true}))
@@ -462,17 +475,18 @@ test('a device is published by id: chosen, it is whole in the pool; opened, it i
     const entry = entryOf(entries, 'atlas-earth', 'graph-tools')
     assert.equal(deviceDoor.publishedDevice(id).device, entry.device, 'the door holds the very device the chain draws')
     deviceDoor.selectDevice(id)
-    const pool = html(createElement(DevicePool))
+    const pool = everyPage(id, () => html(createElement(DevicePool)))
     assert.match(pool, new RegExp(`data-device-pool="${id}"`))
     assert.match(pool, /data-device-size="whole"/)
     assert.match(pool, /data-atlas-face="graph-tools"/, 'the body is the picture in the pool')
-    assert.deepEqual(params(pool), entry.device.rows.map(row => row.key), 'the pool shows every setting, grouped')
+    assert.deepEqual(params(pool), entry.device.rows.filter(row => row.key !== entry.device.enabledKey).map(row => row.key), 'the pool shows every setting, grouped, on its pages')
     const pane = html(createElement(DeviceFullPane, {id}))
     assert.match(pane, /data-device-size="full"/)
-    assert.deepEqual(params(pane), params(pool), 'the pane shows the same settings')
+    assert.match(pane, /data-atlas-face="graph-tools"/, 'the pane is the device\'s own body')
+    assert.deepEqual(params(pane), [], 'and holds no controls: they stay in Device view (DLW §16.1)')
     const compact = params(html(createElement(DeviceView, {device: entry.device, size: 'compact'})))
     assert.ok(compact.every(key => params(pool).includes(key)), 'every compact control is a setting of the whole device')
-    for (const group of ['Steps', 'Kinds', 'Relations', 'Sky', 'Forces']) assert.match(pool, new RegExp(`<legend>${group}</legend>`))
+    for (const group of ['Steps', 'Kinds', 'Relations', 'Sky', 'Forces']) assert.match(pool, new RegExp(`class="dp-sec-label">${group}<`))
     chain.withdrawTechneEntries(mine)
     assert.equal(deviceDoor.publishedDevice(id), undefined, 'withdrawn with the chain')
     deviceDoor.selectDevice(null)

@@ -29,6 +29,8 @@ export interface WidgetBodyProps {
   pinned: boolean
   /** Hand the rail what the body read (null when it reads nothing). The rail clears it when the widget closes. */
   glance?: (glance: WidgetGlance | null) => void
+  /** Close the widget (a bare widget draws its own ✕). */
+  close?: () => void
 }
 
 export interface WidgetDeclaration {
@@ -41,6 +43,8 @@ export interface WidgetDeclaration {
   /** A name that follows the world (the agent of the mode in front of you): drawn in the head and the cell for `name`. */
   Name?: ComponentType
   Body: ComponentType<WidgetBodyProps>
+  /** The body draws its own tile, head and all (a device's widget is the kit's Tile): the rail adds no head of its own. */
+  bare?: boolean
 }
 
 /** The rail's state as the book holds it (desktop/cradle/src/workspace/store.ts WidgetRail). */

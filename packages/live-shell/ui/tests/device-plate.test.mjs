@@ -3,11 +3,11 @@ import assert from 'node:assert/strict'
 import {register} from 'node:module'
 import {readFile} from 'node:fs/promises'
 
-// The device plate at the mockup's floor (world-shell-mockup.html:331-347, `dev()` at :1410, knobSVG at :835): one runtime
-// draws every family's device as the mockup's plate — a head of power ring, mark, name, owner, ▾ fold and ⤢ open full; a body
-// of the picture box beside a two-column grid of controls; a fixed width per device derived from its rows. Knobs are rings,
-// short choices and switches are segmented toggles, readings are a name over a mono value. A light is the owner's reading and
-// turns the device only through the owner's write. The chain is one row of plates that scrolls sideways (frame/detail).
+// The device plate on the owner's panel kit (docs/dlw/DEVICE-UI.md §3–§6, §11; inhabitants/sdk/panel.tsx): one runtime draws every
+// family's device through the kit — a head of activator, ▾ fold, name, held mark and ⤢ open full; a band of sections; the device's
+// picture in the well beside its controls. A ranged number is a dial, a few choices a radio, a switch a toggle, a reading a readout.
+// A light is the owner's reading and turns the device only through the owner's write. No plate has a Send button. The chain is one
+// row of plates that scrolls sideways (frame/detail).
 // Loader as f5-devices.test.mjs.
 const compiler = new URL('../node_modules/typescript/lib/typescript.js', import.meta.url).href
 register(`data:text/javascript,${encodeURIComponent(`
@@ -46,49 +46,24 @@ const face = {id: 'probe', title: 'Probe', icon: 'form', liveSemantic: 'device-a
 const device = (extra = {}) => ({id: 'f:probe', family: 'f', face, rows: [], values: {}, ...extra})
 const actions = [{icon: 'detail', label: 'Show every setting in the pool', onPress: () => {}}, {icon: 'pane', label: 'Open Probe full size in a pane', onPress: () => {}}]
 
-// ── the model: width, span, presentation, the ring's press ─────────────────────────────────────────────────────────────────
 
-test('a plate\'s width comes from what it shows: its picture box beside one or two columns of controls, within the mockup\'s range', () => {
-  const {plateWidth, PLATE} = runtime
-  assert.equal(plateWidth([], true), PLATE.body, 'no controls: the picture takes the body (the mockup\'s list devices, 236)')
-  assert.equal(plateWidth([], false), PLATE.min, 'nothing but its head: the narrowest plate')
-  assert.equal(plateWidth([row('a')], true), 2 + 14 + 104 + 10 + 62, 'one knob beside the picture: one 62px column (.ctrls minmax(62px,auto))')
-  assert.equal(plateWidth([row('a'), row('b')], true), 2 + 14 + 104 + 10 + 62 * 2 + 6, 'two knobs: two columns and their gap')
-  assert.equal(plateWidth([row('a'), row('b')], false), 2 + 14 + 62 * 2 + 6, 'no picture box: the controls alone')
-  const style = row('style', {type: 'enumerated', title: 'Style', values: ['Body', 'Head', 'Quote', 'List']})
-  assert.ok(plateWidth([style, row('size')], true) > plateWidth([row('a'), row('b')], true), 'a wide segmented toggle widens its plate')
-  for (const rows of [[], [row('a')], [style, style, style, style], [row('r', {writePath: undefined, title: 'a very long reading title indeed'})]]) {
-    const width = plateWidth(rows, true)
-    assert.ok(width >= PLATE.min && width <= PLATE.max, `${width} stands within ${PLATE.min}–${PLATE.max}`)
-  }
-})
+const host = await import('../src/frame/devices/deviceHost.tsx')
+const designed = await import('../src/frame/devices/designed.ts')
 
-test('a control takes one column or both: a knob, a switch, a two-word choice one; a longer choice and a reading both', () => {
-  const {rowSpan, enumPresentation} = runtime
-  assert.equal(rowSpan(row('a')), 1, 'a knob')
-  assert.equal(rowSpan(row('b', {type: 'boolean'})), 1, 'a toggle of two (.tog.half)')
-  assert.equal(rowSpan(row('m', {type: 'enumerated', values: ['DNA', 'RNA']})), 1, 'two short choices')
-  assert.equal(rowSpan(row('i', {type: 'enumerated', values: ['steer', 'queue']})), 2, 'two longer choices take both columns rather than ellipsize')
-  assert.equal(rowSpan(row('s', {type: 'enumerated', values: ['low', 'medium', 'high', 'max']})), 2, 'four choices (.tog)')
-  assert.equal(rowSpan(row('r', {writePath: undefined})), 2, 'a reading: its name over its value, the plate\'s width')
-  assert.equal(enumPresentation({values: ['ask', 'session', 'always']}), 'segmented')
-  assert.equal(enumPresentation({values: ['L0', 'L0′', 'L1', 'L1′', 'L2', 'L2′']}), 'cycle', 'a long list steps through one value box')
-  assert.equal(enumPresentation({values: []}), 'cycle', 'no choices published: one box, showing none')
-  assert.equal(rowSpan(row('l', {type: 'enumerated', values: ['L0', 'L1', 'L2', 'L3', 'L4']})), 1)
-})
+// ── the light's press ───────────────────────────────────────────────────────────────────────────────────────────────────
 
-test('the power ring turns the device only through the owner\'s write of the light\'s own row, from the owner\'s reading', () => {
-  const {powerToggle} = runtime
+test('the activator turns the device only through the owner\'s write of the light\'s own row, from the owner\'s reading', () => {
+  const {activatorChange, bindingOf} = designed
   const submit = async () => {}
   const on = row('on', {type: 'boolean'})
-  assert.deepEqual(powerToggle({enabledKey: 'on', rows: [on], values: {on: true}, submit}), {key: 'on', value: false})
-  assert.deepEqual(powerToggle({enabledKey: 'on', rows: [on], values: {on: 'off'}, submit}), {key: 'on', value: 'on'}, 'in the owner\'s own form')
-  assert.deepEqual(powerToggle({enabledKey: 'on', rows: [on], values: {on: 0}, submit}), {key: 'on', value: 1})
-  assert.equal(powerToggle({enabledKey: 'on', rows: [on], values: {}, submit}), null, 'no reading: nothing to turn — the ring stays dark and inert')
-  assert.equal(powerToggle({enabledKey: 'on', rows: [{...on, writePath: undefined}], values: {on: true}, submit}), null, 'a reading row: a light only')
-  assert.equal(powerToggle({enabledKey: 'on', rows: [], values: {on: true}, submit}), null, 'the light is not a row of the device (the torus): a light only')
-  assert.equal(powerToggle({enabledKey: 'on', rows: [on], values: {on: true}}), null, 'no owner write')
-  assert.equal(powerToggle({rows: [on], values: {on: true}, submit}), null, 'no light')
+  const of = (extra) => activatorChange(bindingOf({id: 'f:probe', family: 'f', face, rows: [on], values: {}, enabledKey: 'on', submit, ...extra}))
+  assert.deepEqual(of({values: {on: true}}), {key: 'on', value: false})
+  assert.deepEqual(of({values: {on: 'off'}}), {key: 'on', value: 'on'}, 'in the owner\'s own form')
+  assert.deepEqual(of({values: {on: 0}}), {key: 'on', value: 1})
+  assert.equal(of({values: {}}), null, 'no reading: nothing to turn — the light stays hollow and inert')
+  assert.equal(of({rows: [{...on, writePath: undefined}], values: {on: true}}), null, 'a reading row: a light only')
+  assert.equal(of({values: {on: true}, submit: undefined}), null, 'no owner write')
+  assert.equal(of({values: {on: true}, enabledKey: undefined}), null, 'no light')
 })
 
 test('the knob is the mockup\'s knobSVG ported: 270° of travel, the same arc path, the needle on the cap', () => {
@@ -101,6 +76,7 @@ test('the knob is the mockup\'s knobSVG ported: 270° of travel, the same arc pa
   assert.equal(knobArc(-135, 0), 'M7.2 22.8A11 11 0 0 1 15.0 4.0', 'the half arc takes the short sweep')
 })
 
+
 // ── compact: the plate on the chain ────────────────────────────────────────────────────────────────────────────────────
 
 const probe = device({
@@ -110,97 +86,105 @@ const probe = device({
   values: {on: true, size: 15, style: 'Body', bound: false, count: '3 highlights'}, enabledKey: 'on', submit: async () => {},
 })
 
-test('compact is the mockup\'s plate: ring, mark, name, owner, ▾ and ⤢ on the head; the picture box beside the controls', () => {
+test('compact is the kit\'s plate: activator, ▾, name and ⤢ on the head; the picture in its 140 × 146 well beside the controls; no Send', () => {
   const out = html(createElement(DeviceView, {device: probe, size: 'compact', picture: createElement('i', {id: 'pic'}), actions}))
-  assert.match(out, /^<div class="device device--compact" data-device="f:probe" data-device-size="compact" data-device-light="on" style="--plate-w:\d+px">/, 'a fixed width per device')
-  const head = out.match(/<header class="sdk-face__head"[\s\S]*?<\/header>/)[0]
-  assert.match(head, /title="Show every setting in the pool"/, 'pressing the plate shows it in the pool, and its head says so')
-  assert.match(head, /^<header[^>]*><button type="button" class="sdk-power sdk-power--on" aria-pressed="true"/, 'the ring leads the head: lit, and a switch, since the owner writes it')
-  assert.match(head, /<h3 class="sdk-face__title">Probe<\/h3><span class="sdk-face__owner">f<\/span>/, 'the name, then the owner')
-  assert.match(head, /data-plate-mark="fold"[^>]*aria-label="Fold Probe to its title"/, '▾ folds')
-  assert.match(head, /data-plate-mark="full"[^>]*aria-label="Open Probe full size in a pane"/, '⤢ opens full')
-  assert.doesNotMatch(head, /data-plate-mark="detail"/, 'the pool is the plate\'s own press, not a third button')
-  assert.ok(head.indexOf('data-plate-mark="fold"') < head.indexOf('data-plate-mark="full"'), '▾ then ⤢, as the mockup draws them')
-  assert.match(out, /<div class="device-body" data-layout="beside"><div class="device-picture"><i id="pic"><\/i><\/div><div class="device-controls">/, 'the picture box beside the grid')
+  assert.match(out, /<div class="device device--compact" data-device="f:probe" data-device-size="compact" data-device-light="on"/)
+  const head = out.match(/<header class="dp-head"[^>]*>[\s\S]*?<\/header>/)[0]
+  assert.match(head, /^<header class="dp-head" data-i="Probe\|Show every setting in the pool"><button type="button" class="dp-activator" data-light="lit" aria-pressed="true"/,
+    'the head says what pressing the plate does; the activator leads it, lit')
+  assert.doesNotMatch(head.match(/<button type="button" class="dp-activator"[^>]*>/)[0], /disabled/, 'and a switch, since the owner writes it')
+  assert.match(head, /<span class="dp-title">Probe<\/span>/)
+  assert.ok(head.indexOf('aria-label="Fold Probe"') > 0 && head.indexOf('aria-label="Fold Probe"') < head.indexOf('aria-label="Open Probe full size in a pane"'), '▾ then ⤢, in the place\'s own words')
+  assert.match(out, /<div class="dp-display" data-raw="true" style="width:140px;height:146px"[^>]*><div class="dv-picture"><i id="pic"><\/i><\/div><\/div>/, 'the picture in the well')
+  assert.doesNotMatch(out, />Send<|>Cancel<|device-commit/, 'no Send button: a change goes when you let go (§5.2, §11)')
 })
 
-test('compact draws a knob as a ring, a short choice and a switch as segmented toggles, a reading as its name over its value', () => {
+test('compact draws a ranged number as a dial, a few choices as a radio, a switch as a toggle, a reading as a readout — at most four', () => {
   const out = html(createElement(DeviceView, {device: probe, size: 'compact', picture: null}))
-  const cell = key => out.match(new RegExp(`<div class="device-cell" data-span="(\\d)"><div class="device-row" data-param="${key}">[\\s\\S]*?(?=<div class="device-cell"|</div></div></section>)`))
-  const size = cell('size'), style = cell('style'), bound = cell('bound'), count = cell('count')
-  assert.equal(size[1], '1'); assert.match(size[0], /sdk-row--knob/); assert.match(size[0], /role="slider"[^>]*>\s*<svg class="sdk-knob" width="30" height="30" viewBox="0 0 30 30"/, 'the knob ring, 30 square')
-  assert.match(size[0], /class="sdk-knob__base"/, 'the owner\'s value is an arc'); assert.match(size[0], /class="sdk-knob__needle"/); assert.match(size[0], /15 pt/)
-  assert.equal(style[1], '2'); assert.match(style[0], /class="sdk-seg" role="radiogroup"/)
-  assert.match(style[0], /aria-checked="true" class="sdk-seg__opt sdk-seg__opt--on"[^>]*>Body</, 'the acknowledged choice is lit')
-  assert.equal(bound[1], '1'); assert.equal((bound[0].match(/<button type="button" class="sdk-bool sdk-seg__opt/g) ?? []).length, 2, 'a switch is a toggle of two')
-  assert.match(bound[0], /class="sdk-bool sdk-seg__opt sdk-seg__opt--on"[^>]*>off</, 'off, as the owner reads it')
-  assert.equal(count[1], '2'); assert.match(count[0], /sdk-row--reading[^>]*><span class="sdk-row__name">In this document<\/span><span class="sdk-chip">3 highlights<\/span>/)
-  assert.doesNotMatch(out, /data-param="on"/, 'the light\'s row is the ring, not one of the four')
+  const param = key => out.match(new RegExp(`<div class="dv-param" data-param="${key}"[^>]*>[\\s\\S]*?(?=<div class="dv-param"|</div></div></div></section>)`))[0]
+  assert.match(param('size'), /data-control="dial"/); assert.match(param('size'), /<svg class="dp-dial" viewBox="0 0 28 28" role="slider"[^>]*aria-valuenow="15"/)
+  assert.match(param('size'), /class="dp-dial-value"/, 'the owner\'s value is the teal arc'); assert.match(param('size'), /<span class="dp-value">15 pt<\/span>/)
+  assert.match(param('style'), /data-control="radio(-stack)?"/); assert.match(param('style'), /role="radio" aria-checked="true">Body</, 'the owner\'s choice is lit')
+  assert.match(param('bound'), /class="dp-toggle"[^>]*aria-pressed="false">Bound</, 'off, as the owner reads it')
+  assert.match(param('count'), /<output class="dp-readout-value">3 highlights<\/output><span class="dp-label">In this document<\/span>/)
+  assert.doesNotMatch(out, /data-param="on"/, 'the light\'s row is the activator, not one of the four')
+  assert.ok((out.match(/data-param=/g) ?? []).length <= 4)
 })
 
-test('with no reading nothing is lit: the ring dark and inert, no arc and no needle, no choice lit, every control inert', () => {
+test('with no reading nothing is lit: the activator hollow and inert, no arc and no needle, no choice lit, "—" for every value', () => {
   const dark = device({rows: probe.rows, values: {}, enabledKey: 'on'})
   const out = html(createElement(DeviceView, {device: dark, size: 'compact', picture: null, actions}))
   assert.match(out, /data-device-light="unknown"/)
-  assert.match(out, /<span class="sdk-power sdk-power--unknown" role="img"/, 'a light only: nothing to turn')
-  assert.doesNotMatch(out, /sdk-knob__base|sdk-knob__needle/, 'no default drawn as a value')
-  assert.doesNotMatch(out, /sdk-seg__opt--on|aria-checked="true"|aria-pressed="true"/)
-  assert.match(out, /role="slider" tabindex="-1"[^>]*aria-disabled="true"/)
-  assert.match(out, />—<\/button>/, 'the knob\'s value says there is none')
+  assert.match(out, /<button type="button" class="dp-activator" data-light="unknown"[^>]*disabled=""/, 'a light only: nothing to turn')
+  assert.doesNotMatch(out, /dp-dial-value|dp-dial-needle/, 'no default drawn as a value')
+  assert.doesNotMatch(out, /aria-checked="true"|aria-pressed="true"/)
+  assert.match(out, /data-unread="true"/); assert.match(out, /<span class="dp-value">—<\/span>/, 'the dial says there is no reading')
+  assert.match(out, /class="dp-toggle"[^>]*data-unknown="true"/, 'a switch the owner has not read is neither on nor off')
+  assert.match(out, /aria-disabled="true"/, 'and nothing to move from')
 })
 
-test('a held value shows who holds it, by name, with the hand-back light (the specimen\'s back mark) that gives it back', () => {
+test('a held value shows who holds it in the head and under the control, with the hand-back that gives it back; a modulator is named', () => {
   const held = device({rows: [row('depth', {title: 'Depth'})], values: {depth: 0.4}, heldBy: {depth: 'Fizz'}, handBack: async () => {}, submit: async () => {}})
   const out = html(createElement(DeviceView, {device: held, size: 'compact', picture: null}))
-  assert.match(out, /<span class="sdk-face__owner">f · held by Fizz<\/span>/)
+  assert.match(out, /<span class="dp-head-held"[^>]*>Fizz<\/span>/, 'the held mark in the head (§4.1)')
   assert.match(out, /data-param="depth" data-held-by="Fizz"/)
-  assert.match(out, /class="device-handback"[^>]*aria-label="Give Depth back to Fizz"><svg[^>]*><path d="M19 12H8.5/, 'the back mark from the cut, not a glyph')
-  assert.match(out, /<span class="device-holder"[^>]*>Fizz<\/span>/)
+  assert.match(out, /data-held="true"/, 'the arc in the stall colour (§6)')
+  assert.match(out, /<button type="button" class="dp-handback" aria-label="Give Depth back to Fizz"[^>]*>Fizz<\/button>/, 'press the name to give it back')
   const moved = html(createElement(DeviceView, {device: device({rows: [row('turns', {title: 'Turns', modulatedBy: 'Mars'})], values: {turns: 0.5}}), size: 'compact', picture: null}))
-  assert.match(moved, /<span class="device-moved"[^>]*>Mars<\/span>/, 'a knob the sky turns shows the planet that turns it')
+  assert.match(moved, /data-i="Turns\|[^"]*Mars moves this value\.[^"]*"[^>]*data-modulated="true"/, 'the status bar names the modulator')
 })
 
-test('the plate the pool shows wears the accent outline; a folded plate is its light and name, pressed to open', () => {
+test('the plate the pool shows is marked selected on the chain; ▾ folds every chain view of the device to its strip', () => {
   door.selectDevice('f:probe')
   try {
-    assert.match(html(createElement(DeviceView, {device: probe, size: 'compact', picture: null, actions})), /<section class="sdk-face sdk-face--sel"/)
-    assert.doesNotMatch(html(createElement(DeviceView, {device: probe, size: 'whole', picture: null})), /sdk-face--sel/, 'the pool itself is not outlined')
+    assert.match(html(createElement(DeviceView, {device: probe, size: 'compact', picture: null, actions})), /data-device-selected="true"/)
+    assert.doesNotMatch(html(createElement(DeviceView, {device: probe, size: 'whole', picture: null})), /data-device-selected/, 'the pool itself is not marked')
   } finally { door.selectDevice(null) }
-  const folded = html(createElement(controls.FacePlate, {presentation: {family: 'f', faceId: 'probe', title: 'Probe', icon: 'form', owner: 'f'}, power: 'off', folded: true, onFold: () => {}}, createElement('i', {id: 'body'})))
-  assert.match(folded, /<section class="sdk-face sdk-face--folded" aria-label="Probe"><button type="button" class="sdk-face__unfold" aria-expanded="false" aria-label="Open Probe"/)
-  assert.match(folded, /sdk-power--off/, 'the light stays a reading while folded')
-  assert.doesNotMatch(folded, /id="body"/, 'folded: the title alone')
+  host.setHostFolded('f:probe', true)
+  try {
+    const folded = html(createElement(DeviceView, {device: probe, size: 'compact', picture: null, actions}))
+    assert.match(folded, /class="device device--compact device--folded"/)
+    assert.match(folded, /<section class="dp-folded" aria-label="Probe, folded"><span class="dp-activator" data-light="lit"><\/span><button type="button" class="dp-folded-title"[^>]*aria-label="Unfold Probe"/)
+    assert.match(folded, /class="dp-folded-reading">15 pt</, 'up to two readings, read downward')
+  } finally { host.setHostFolded('f:probe', false) }
+  const plate = html(createElement(controls.FacePlate, {presentation: {family: 'f', faceId: 'probe', title: 'Probe', icon: 'form', owner: 'f'}, power: 'off', folded: true, onFold: () => {}}, createElement('i', {id: 'body'})))
+  assert.match(plate, /<section class="sdk-face sdk-face--folded" aria-label="Probe">/, 'the SDK\'s own plate still folds for the families that draw it')
 })
 
-test('whole and full are the same plate, larger: every row under its group\'s heading, no fold, the same live settings', () => {
+test('whole is every row by its group, in declared order, beside the picture in its 194 × 146 well; full is the material and no controls', () => {
   const grouped = device({...probe, rows: probe.rows.map(r => r.key === 'size' ? {...r, group: 'Type'} : r)})
   const whole = html(createElement(DeviceView, {device: grouped, size: 'whole', picture: createElement('i', {id: 'pic'})}))
   const full = html(createElement(DeviceView, {device: grouped, size: 'full', picture: createElement('i', {id: 'pic'})}))
-  for (const out of [whole, full]) {
-    assert.match(out, /<div class="device-groups"><fieldset class="device-group"><legend>Probe<\/legend><div class="device-controls">/)
-    assert.match(out, /<fieldset class="device-group"><legend>Type<\/legend>/)
-    assert.doesNotMatch(out, /data-plate-mark="fold"|--plate-w/, 'only the chain folds; the pool and a pane take their own width')
-    assert.match(out, /class="sdk-knob"/, 'a knob is a ring at every size')
-  }
-  const params = out => [...out.matchAll(/data-param="([^"]+)"/g)].map(match => match[1])
-  assert.deepEqual(params(whole), params(full))
-  assert.deepEqual([...params(whole)].sort(), grouped.rows.map(r => r.key).sort(), 'every row, the light\'s own among them')
+  assert.match(whole, /<section class="dp" data-view="whole"/)
+  assert.match(whole, /<div class="dp-display" data-raw="true" style="width:194px;height:146px"/)
+  const labels = [...whole.matchAll(/<div class="dp-sec-label">([^<]+)<\/div>/g)].map(match => match[1])
+  assert.deepEqual(labels, ['Type', 'Probe'], 'a section per group, in the order the device declares them')
+  assert.doesNotMatch(whole, /aria-label="Fold Probe"/, 'only the chain folds')
+  const params = [...whole.matchAll(/data-param="([^"]+)"/g)].map(match => match[1])
+  assert.deepEqual([...params].sort(), grouped.rows.map(r => r.key).filter(key => key !== 'on').sort(), 'every row but the activator\'s own')
+  assert.match(full, /data-device-size="full"/); assert.match(full, /<div class="dv-full"[^>]*><i id="pic"><\/i><\/div>/, 'the material at pane size')
+  assert.doesNotMatch(full, /data-param=|role="slider"|class="dp-head"/, 'a pane holds no device controls (DLW §16.1)')
 })
 
-// ── the sheets: the plate's measures and the one row ───────────────────────────────────────────────────────────────────
+// ── the sheets: the kit's measures, its tokens, the places ─────────────────────────────────────────────────────────────
 
 const css = async path => (await readFile(new URL(path, import.meta.url), 'utf8'))
 
-test('the sheets hold the mockup\'s measures: the 104 picture box, the two-column grid, the 21px head, the 10px ring', async () => {
-  const devices = await css('../src/frame/devices/devices.css'), sdk = await css('../src/inhabitants/sdk/sdk.css')
-  assert.match(devices, /\.device-picture \{[^}]*width: 104px; height: 104px[^}]*background: var\(--sdk-well\)/)
-  assert.match(devices, /\.device-controls \{[^}]*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\); gap: 8px 6px/)
-  assert.match(devices, /\.device-cell\[data-span="2"\] \{ grid-column: span 2 \}/)
-  assert.match(devices, /\.device--compact \{[^}]*width: var\(--plate-w/)
-  assert.match(sdk, /\.sdk-face__head \{[^}]*height: 21px/)
-  assert.match(sdk, /\.sdk-power \{[^}]*width: 10px;[^}]*height: 10px;[^}]*border: 2px solid/)
-  assert.match(sdk, /\.sdk-power--on \{ border-color: var\(--sdk-accent\); \}/, 'lit only on the owner\'s on')
-  for (const sheet of [devices, sdk]) assert.doesNotMatch(sheet.replace(/var\([^;]*\)/g, ''), /#[0-9a-fA-F]{3,8}\b(?![^{]*--sdk-)/, 'no raw colour outside a token\'s own fallback')
+test('the sheets hold DEVICE-UI §3\'s measures and the shell\'s tokens; nothing in a place scrolls', async () => {
+  const devices = await css('../src/frame/devices/devices.css'), kit = await css('../src/inhabitants/sdk/panel.css')
+  assert.match(kit, /--dp-head-h: 22px; --dp-body: 168px;/, 'head 22, band 168')
+  assert.match(kit, /\.dp-dial \{ width: 28px; height: 28px;/)
+  assert.match(kit, /\.dp-box \{[^}]*min-width: 50px; height: 16px;/)
+  assert.match(kit, /\.dp-row \{[^}]*height: 17px;/)
+  assert.match(kit, /\.dp-sec-label \{[^}]*height: 13px; font-size: 9px;[^}]*text-transform: uppercase;/)
+  assert.match(kit, /\.dp-folded \{[^}]*width: 22px;/)
+  assert.match(kit, /\.dp-tile \{[^}]*width: 136px; height: 136px;/); assert.match(kit, /\.dp-tile\[data-span="2"\] \{ width: 280px; \}/)
+  assert.match(devices, /\.device--whole > \.dp \{ width: 400px \}/, 'the pool\'s plate is 400 wide')
+  assert.match(kit, /:root \{[^}]*--dp-face: var\(--bg-2[^}]*--dp-well: color-mix\(in srgb, var\(--bg-0[^}]*--dp-value: var\(--fizz[^}]*--dp-on: var\(--accent/, 'the kit\'s colours are the shell\'s tokens, at :root')
+  for (const sheet of [devices, kit]) {
+    assert.doesNotMatch(sheet.replace(/var\([^;]*\)/g, ''), /#[0-9a-fA-F]{3,8}\b|rgba?\(/, 'no raw colour outside a token\'s own fallback')
+    assert.doesNotMatch(sheet, /overflow(-[xy])?: (auto|scroll)/, 'no scroller')
+  }
 })
 
 test('the chain is one row in the frame\'s detail area: fixed plates scrolling sideways, every family\'s body laid into it', async () => {
@@ -215,14 +199,4 @@ test('the chain is one row in the frame\'s detail area: fixed plates scrolling s
   }
   assert.match(detail, /\.detail-chain \.chain\[data-detail-density="device"\] \{ display: contents \}/, 'Live\'s chain panel stands down to its plates')
   assert.match(detail, /\.dropz \{ width: 140px; flex: none; border: 1px dashed var\(--line-strong\)/, 'the row ends where a device can be dropped')
-})
-
-test('a plate is never narrower than its head: a long name and owner widen it, up to the mockup\'s maximum', async () => {
-  const {plateWidth, headWidth, PLATE} = await import('../src/frame/devices/deviceRuntime.ts')
-  const knob = {family: 'f', deviceInstance: 'd', key: 'k', type: 'number', title: 'K', range: {min: 0, max: 1}, writePath: 'kernel:x'}
-  const narrow = plateWidth([knob], false)
-  const head = {title: 'Glue Compressor', owner: 'audio effect', marks: 2}
-  assert.ok(plateWidth([knob], false, head) >= Math.min(PLATE.max, Math.round(headWidth(head))), 'the head sets the floor')
-  assert.ok(plateWidth([knob], false, head) > narrow, 'the long head widens a one-knob plate')
-  assert.equal(plateWidth([knob], false, {title: 'x'.repeat(200), owner: 'y', marks: 1}), PLATE.max, 'clamped to the mockup\'s range')
 })
