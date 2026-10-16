@@ -315,12 +315,24 @@ fn concurrent_owner_calls_hold_to_the_readers_bound() {
     assert_eq!(owner.spawns("central.world"), N + 1);
 }
 
+/// Which relations batch an AIKit stand-in has.
+#[cfg(unix)]
+#[derive(Clone, Copy)]
+enum Batch {
+    /// None: its parser refuses the verb.
+    Absent,
+    /// The whole-document batch only (v1): it refuses the streamed form by
+    /// name, as an AIKit before W2 does.
+    Whole,
+    /// Both forms; the streamed one prints each item as it is answered.
+    Streamed,
+}
+
 /// An AIKit stand-in reached the way the kernel reaches it
 /// (`<suite> aikit --json -C <cwd> knowledge …`): every process logs itself;
 /// a wiki address ending `:missing` is refused exactly as AIKit refuses an
-/// unindexed object, in the single read's envelope and in a batch item's.
-/// `with_batch: false` answers `relations-batch` as AIKit's parser answers a
-/// verb it does not have.
+/// unindexed object, in the single read's envelope and in a batch item's,
+/// and one ending `:slow` takes a batch two seconds to answer.
 #[cfg(unix)]
 struct FakeAikit {
     dir: PathBuf,
@@ -330,7 +342,7 @@ struct FakeAikit {
 
 #[cfg(unix)]
 impl FakeAikit {
-    fn new(test: &str, with_batch: bool) -> Self {
+    fn new(test: &str, batch: Batch) -> Self {
         let dir = std::env::temp_dir().join(format!(
             "oi-cradle-{}-{test}-{}",
             std::process::id(),
@@ -345,15 +357,16 @@ impl FakeAikit {
             log: dir.join("processes.log"),
             dir,
         };
-        fake.write(with_batch);
+        fake.write(batch);
         fake
     }
-    fn write(&self, with_batch: bool) {
+    fn write(&self, batch: Batch) {
         use std::os::unix::fs::PermissionsExt;
         let script = format!(
             r#"#!/usr/bin/env python3
-import json, sys, time
-LOG, WITH_BATCH = {log:?}, {with_batch}
+import json, sys, threading, time
+LOG, MODE = {log:?}, {mode:?}
+V1, V2 = "aikit.knowledge-relations-batch/v1", "aikit.knowledge-relations-batch/v2"
 args = sys.argv[1:]
 cwd = args[args.index("-C") + 1]
 def answer(cwd, address):
@@ -361,17 +374,42 @@ def answer(cwd, address):
     if value.endswith(":missing"):
         return {{"ok": False, "error": {{"code": "knowledge.wiki_object_missing", "message": "Wiki object or relation endpoint " + value + " is not indexed", "details": {{}}}}}}
     return {{"ok": True, "context": {{"project_root": cwd}}, "data": {{"query": {{"focus": value, "depth": 2, "max_nodes": 96, "max_edges": 192}}, "cwd": cwd, "edges": []}}, "warnings": []}}
+def slow(item):
+    if json.loads(item["address"])["value"].endswith(":slow"):
+        time.sleep(2)
 if args[-1] == "relations-batch":
-    if not WITH_BATCH:
+    if MODE == "absent":
         open(LOG, "a").write("batch-refused\n")
         sys.stderr.write("error: unrecognized subcommand 'relations-batch'\n\n  tip: a similar subcommand exists: 'relations'\n")
         sys.exit(2)
     request = json.load(sys.stdin)
-    assert request["schema"] == "aikit.knowledge-relations-batch/v1"
+    if request["schema"] == V2 and MODE == "whole":
+        open(LOG, "a").write("stream-refused\n")
+        print(json.dumps({{"schema": 1, "ok": False, "error": {{"code": "knowledge.relations_batch_input", "message": "unsupported relations batch schema " + V2 + "; expected " + V1, "details": {{}}}}}}))
+        sys.exit(1)
+    assert request["schema"] in (V1, V2)
     open(LOG, "a").write("batch %d %s\n" % (len(request["items"]), cwd))
-    time.sleep(0.1)
-    answers = [answer(item["cwd"], item["address"]) for item in request["items"]]
-    print(json.dumps({{"schema": 1, "ok": True, "context": {{}}, "data": {{"schema": "aikit.knowledge-relations-batch/v1", "answers": answers}}, "warnings": []}}))
+    if request["schema"] == V1:
+        time.sleep(0.1)
+        for item in request["items"]:
+            slow(item)
+        answers = [answer(item["cwd"], item["address"]) for item in request["items"]]
+        print(json.dumps({{"schema": 1, "ok": True, "context": {{}}, "data": {{"schema": V1, "answers": answers}}, "warnings": []}}))
+    else:
+        lock = threading.Lock()
+        def one(index, item):
+            time.sleep(0.1)
+            slow(item)
+            line = json.dumps({{"schema": V2, "index": index, "answer": answer(item["cwd"], item["address"])}})
+            with lock:
+                sys.stdout.write(line + "\n")
+                sys.stdout.flush()
+        workers = [threading.Thread(target=one, args=(index, item)) for index, item in enumerate(request["items"])]
+        for worker in workers:
+            worker.start()
+        for worker in workers:
+            worker.join()
+        print(json.dumps({{"schema": 1, "ok": True, "context": {{}}, "data": {{"schema": V2, "answered": len(request["items"])}}, "warnings": []}}))
 else:
     open(LOG, "a").write("single\n")
     envelope = answer(cwd, args[-1])
@@ -379,7 +417,11 @@ else:
     sys.exit(0 if envelope["ok"] else 1)
 "#,
             log = self.log.display().to_string(),
-            with_batch = if with_batch { "True" } else { "False" },
+            mode = match batch {
+                Batch::Absent => "absent",
+                Batch::Whole => "whole",
+                Batch::Streamed => "streamed",
+            },
         );
         std::fs::write(&self.executable, script).unwrap();
         std::fs::set_permissions(&self.executable, std::fs::Permissions::from_mode(0o755)).unwrap();
@@ -421,9 +463,11 @@ fn relations_item(cwd: &std::path::Path, space: &str) -> knowledge::RelationsIte
 #[cfg(unix)]
 #[test]
 fn relations_reads_in_one_window_are_one_batch_and_each_gets_its_single_answer() {
-    let aikit = FakeAikit::new("relations-batch", true);
-    let relations = Relations::new(Duration::from_millis(400));
-    let readers = Readers::new(5);
+    let aikit = FakeAikit::new("relations-batch", Batch::Streamed);
+    // `read` borrows both for the batch thread it spawns: this test's, for the process.
+    let relations: &'static Relations =
+        Box::leak(Box::new(Relations::new(Duration::from_millis(400))));
+    let readers: &'static Readers = Box::leak(Box::new(Readers::new(5)));
     let root = aikit.dir.join("Central");
     let other_root = aikit.dir.join("Other");
     let project = root.join("Work/O-I");
@@ -444,8 +488,7 @@ fn relations_reads_in_one_window_are_one_batch_and_each_gets_its_single_answer()
         let handles: Vec<_> = reads
             .iter()
             .map(|(root, cwd, space)| {
-                let (relations, readers, together, aikit) =
-                    (&relations, &readers, &together, &aikit);
+                let (relations, readers, together, aikit) = (relations, readers, &together, &aikit);
                 scope.spawn(move || {
                     together.wait();
                     match relations.read(
@@ -500,13 +543,15 @@ fn relations_reads_in_one_window_are_one_batch_and_each_gets_its_single_answer()
 #[cfg(unix)]
 #[test]
 fn an_aikit_without_the_batch_is_asked_once_per_identity_and_reads_alone() {
-    let aikit = FakeAikit::new("relations-batch-absent", false);
-    let relations = Relations::new(Duration::from_millis(50));
-    let readers = Readers::new(5);
+    let aikit = FakeAikit::new("relations-batch-absent", Batch::Absent);
+    // `read` borrows both for the batch thread it spawns: this test's, for the process.
+    let relations: &'static Relations =
+        Box::leak(Box::new(Relations::new(Duration::from_millis(50))));
+    let readers: &'static Readers = Box::leak(Box::new(Readers::new(5)));
     let root = aikit.dir.join("Central");
     let read = |space: &str| {
         relations.read(
-            &readers,
+            readers,
             aikit.executable.as_os_str(),
             aikit.identity(),
             &root,
@@ -522,7 +567,7 @@ fn an_aikit_without_the_batch_is_asked_once_per_identity_and_reads_alone() {
         "the absence is remembered for this AIKit"
     );
     // The same path, rewritten with the batch: a new identity, asked again.
-    aikit.write(true);
+    aikit.write(Batch::Streamed);
     assert!(matches!(read("central:wiki:root"), Gathered::Answer(Ok(_))));
     assert_eq!(
         aikit.processes(),
@@ -530,5 +575,113 @@ fn an_aikit_without_the_batch_is_asked_once_per_identity_and_reads_alone() {
             "batch-refused".to_owned(),
             format!("batch 1 {}", root.display())
         ]
+    );
+}
+
+/// A streamed batch answers each read the moment AIKit streams its item: a
+/// fast register is never held for a slow one in the same process, and each
+/// read still gets exactly its single read's answer.
+#[cfg(unix)]
+#[test]
+fn a_streamed_item_answers_its_read_before_a_slower_item_of_its_batch() {
+    let aikit = FakeAikit::new("relations-batch-streamed", Batch::Streamed);
+    // `read` borrows both for the batch thread it spawns: this test's, for the process.
+    let relations: &'static Relations =
+        Box::leak(Box::new(Relations::new(Duration::from_millis(200))));
+    let readers: &'static Readers = Box::leak(Box::new(Readers::new(5)));
+    let root = aikit.dir.join("Central");
+    let spaces = ["central:wiki:project:cold:slow", "central:wiki:project:O-I"];
+    let together = std::sync::Barrier::new(spaces.len());
+    let started = Instant::now();
+    let answered: Vec<(Result<Value, String>, Duration)> = std::thread::scope(|scope| {
+        let handles: Vec<_> = spaces
+            .iter()
+            .map(|space| {
+                let (relations, readers, together, aikit, root) =
+                    (relations, readers, &together, &aikit, &root);
+                scope.spawn(move || {
+                    together.wait();
+                    let answer = match relations.read(
+                        readers,
+                        aikit.executable.as_os_str(),
+                        aikit.identity(),
+                        root,
+                        relations_item(root, space),
+                    ) {
+                        Gathered::Answer(answer) => answer.map_err(knowledge::describe),
+                        Gathered::Single => panic!("an AIKit with the batch never reads alone"),
+                    };
+                    (answer, started.elapsed())
+                })
+            })
+            .collect();
+        handles.into_iter().map(|h| h.join().unwrap()).collect()
+    });
+    assert_eq!(
+        aikit.processes(),
+        vec![format!("batch 2 {}", root.display())],
+        "one process for the burst"
+    );
+    assert!(
+        answered[1].1 < Duration::from_millis(1500),
+        "the fast register answered as AIKit streamed it, not with the slow one: {:?}",
+        answered[1].1
+    );
+    assert!(answered[0].1 >= Duration::from_secs(2));
+    for (space, (answer, _)) in spaces.iter().zip(&answered) {
+        let single = knowledge::call_with(
+            aikit.executable.as_os_str(),
+            &root,
+            &knowledge::Request::Relations {
+                address: knowledge::Address::Wiki((*space).into()),
+            },
+        );
+        assert_eq!(answer, &single, "{space} answers as its single read");
+    }
+}
+
+/// An AIKit whose batch answers only the whole document (installed before
+/// the streamed form) refuses the streamed form by name once: that gathering
+/// is asked again for the whole document at once, every read is answered,
+/// and its identity is remembered — the next gathering asks for the whole
+/// document without asking for the stream.
+#[cfg(unix)]
+#[test]
+fn an_aikit_without_the_streamed_batch_is_asked_for_the_whole_document() {
+    let aikit = FakeAikit::new("relations-batch-whole", Batch::Whole);
+    // `read` borrows both for the batch thread it spawns: this test's, for the process.
+    let relations: &'static Relations =
+        Box::leak(Box::new(Relations::new(Duration::from_millis(50))));
+    let readers: &'static Readers = Box::leak(Box::new(Readers::new(5)));
+    let root = aikit.dir.join("Central");
+    let read = |space: &str| {
+        relations.read(
+            readers,
+            aikit.executable.as_os_str(),
+            aikit.identity(),
+            &root,
+            relations_item(&root, space),
+        )
+    };
+    assert!(matches!(read("central:wiki:root"), Gathered::Answer(Ok(_))));
+    assert_eq!(
+        aikit.processes(),
+        vec![
+            "stream-refused".to_owned(),
+            format!("batch 1 {}", root.display())
+        ]
+    );
+    assert!(matches!(
+        read("central:wiki:project:O-I"),
+        Gathered::Answer(Ok(_))
+    ));
+    assert_eq!(
+        aikit.processes(),
+        vec![
+            "stream-refused".to_owned(),
+            format!("batch 1 {}", root.display()),
+            format!("batch 1 {}", root.display())
+        ],
+        "the whole-document batch is remembered for this AIKit"
     );
 }

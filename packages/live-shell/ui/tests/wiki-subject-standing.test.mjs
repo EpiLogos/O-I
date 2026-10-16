@@ -55,7 +55,7 @@ function source({rows = [STANDING], loaded = true, revision = 9, unread = [], fa
 
 /** A scripted owner kernel behind fetch: the shell config, and the World's projects. Every other native read is refused by
  * name, so no wiki is ever read; each register then stands unavailable, which is exactly what the load must report. */
-function kernelStub({worldFails = false, projects = [{name: 'Factory', path: 'Work/Factory'}]} = {}) {
+function kernelStub({worldFails = false, projects = [{name: 'Factory', path: 'Work/Factory'}], hold = null} = {}) {
   const ops = []
   const state = {worldFails}
   const original = globalThis.fetch
@@ -71,6 +71,7 @@ function kernelStub({worldFails = false, projects = [{name: 'Factory', path: 'Wo
         if (state.worldFails) return reply({ok: false, error: 'the owner refused the World'})
         return reply({ok: true, outcome: {result: 'world_read', snapshot: {navigator: {root: {work: {projects}}}}}})
       }
+      if (hold) await hold
       return reply({ok: false, error: `stub kernel: no ${op.op} reading`})
     }
     throw Error(`unexpected request ${url}`)
@@ -186,7 +187,7 @@ test('registers the Technē centre already published are not read from the World
   } finally {stub.restore()}
 })
 
-test('the register load goes through the knowledge coordinator: never more register readings in flight than its bound (lane Q)', async () => {
+test('the register load reaches the kernel as one burst: every register reading in flight together, inside one gather window (lane W2)', async () => {
   configureWikiProjectionAccess('scope-bounded', 'epoch-bounded', () => true)
   const projects = Array.from({length: 16}, (_, index) => ({name: `Project-${index}`, path: `Work/Project-${index}`}))
   const original = globalThis.fetch
@@ -207,9 +208,28 @@ test('the register load goes through the knowledge coordinator: never more regis
     await assert.rejects(answerWikiSubjectStanding(REQUEST, HELD), /could not be read/)
     assert.equal(getWikiProjectionState().registers.length, 17, 'Central and the sixteen projects')
     assert.equal(reads, 17, 'every register read once')
-    assert.ok(most <= 4, `at most the coordinator's four register readings at once (saw ${most}); the kernel bounds AIKit readers at five`)
-    assert.ok(most >= 2, 'and they do run beside each other, not one by one')
+    assert.equal(most, 17, `all seventeen register readings reach the kernel together (saw ${most}): the kernel gathers their relations into one AIKit batch and bounds its AIKit readers at five`)
   } finally { globalThis.fetch = original }
+})
+
+test('the register burst holds one knowledge read slot, never the realm\'s whole bound (lane Q kept)', async () => {
+  configureWikiProjectionAccess('scope-one-slot', 'epoch-one-slot', () => true)
+  const {boundedKnowledgeChain} = await import('../../../../desktop/cradle/src/knowledge/client.ts')
+  const projects = Array.from({length: 16}, (_, index) => ({name: `Slot-${index}`, path: `Work/Slot-${index}`}))
+  let release
+  const stub = kernelStub({projects, hold: new Promise(resolve => { release = resolve })})
+  const held = () => stub.ops.filter(op => op !== 'world_read').length
+  try {
+    const answer = assert.rejects(answerWikiSubjectStanding(REQUEST, HELD), /could not be read/)
+    for (const deadline = Date.now() + 2000; held() < 17 && Date.now() < deadline;) await new Promise(resolve => setTimeout(resolve, 1))
+    assert.equal(held(), 17, 'every register reading reached the kernel together')
+    let others = 0
+    const reads = [1, 2, 3].map(index => boundedKnowledgeChain(`other-read-${index}`, async () => { others++ }))
+    await Promise.all(reads)
+    assert.equal(others, 3, 'the other three slots stay free for the realm\'s own knowledge reads while the burst is in flight')
+    release()
+    await answer
+  } finally { stub.restore() }
 })
 
 test('the pane owners gain exactly the one channel; every other channel and the attach hook are kept', () => {

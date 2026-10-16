@@ -113,9 +113,31 @@ pub fn run_input(cwd: &Path, args: &[&str], input: &Value) -> Result<Value, Call
 const INPUT_ACTION_LIMIT: std::time::Duration = std::time::Duration::from_secs(120);
 
 fn run_with_executable(cwd: &Path, args: &[&str], executable: &OsStr) -> Result<Value, CallError> {
+    run_within(cwd, args, executable, READ_LIMIT)
+}
+
+/// One knowledge read's limit: a single register's question.
+const READ_LIMIT: std::time::Duration = std::time::Duration::from_secs(20);
+
+/// `run`, bounded by `limit` instead of a single read's 20 s — for a read
+/// whose question is the whole world (the Graph's native knowledge graph).
+pub(crate) fn run_bounded(
+    cwd: &Path,
+    args: &[&str],
+    limit: std::time::Duration,
+) -> Result<Value, CallError> {
+    run_within(cwd, args, &executable(), limit)
+}
+
+fn run_within(
+    cwd: &Path,
+    args: &[&str],
+    executable: &OsStr,
+    limit: std::time::Duration,
+) -> Result<Value, CallError> {
     let mut command = Command::new(executable);
     command.args(["aikit", "--json", "-C"]).arg(cwd).args(args);
-    let output = bounded_output(command, std::time::Duration::from_secs(20))?;
+    let output = bounded_output(command, limit)?;
     decode_envelope(&output)
 }
 
@@ -302,6 +324,11 @@ const RELATIONS_MAX_EDGES: usize = 192;
 /// many relation views in one owner process, each answered — in request
 /// order — with exactly the envelope its single `knowledge relations` prints.
 const RELATIONS_BATCH_SCHEMA: &str = "aikit.knowledge-relations-batch/v1";
+/// The same batch streamed (ai-kit W2): one stdout line per item the moment
+/// AIKit answered it — `{"schema", "index", "answer"}`, `answer` exactly the
+/// envelope v1 carries for that item — then the closing envelope, whose data
+/// is `{"schema", "answered"}`.
+const RELATIONS_BATCH_STREAM_SCHEMA: &str = "aikit.knowledge-relations-batch/v2";
 /// A batch's own limit, never the single read's 20 s: a fully cold batch of
 /// a door's registers measured 35 s (ai-kit #509, 15 Oct). Like every owner
 /// call's, it is for an owner that never answers.
@@ -326,17 +353,28 @@ pub(crate) enum RelationsBatch {
     /// AIKit refused the verb itself (its own parser named
     /// `relations-batch` an unrecognized subcommand): this AIKit has no batch.
     Absent,
+    /// AIKit has the batch but refused its streamed form by name (its own
+    /// refusal of the v2 schema): this AIKit answers the whole document only.
+    Unstreamed,
     /// The batch as a whole has no answer — stopped at its limit, refused,
-    /// unreadable. No item was answered.
+    /// unreadable. No item was answered, beyond any it streamed already.
     Failed(CallError),
 }
 
+/// Hears each item of a streamed batch the moment AIKit answers it: its
+/// index in the request and its answer, decoded as its single read's is.
+pub(crate) type ItemAnswered = Box<dyn FnMut(usize, Result<Value, CallError>) + Send>;
+
 /// Ask AIKit for every item's relations in one process, rooted at the
-/// Central root `root` (each item carries its own working directory).
+/// Central root `root` (each item carries its own working directory). With
+/// `streamed`, each item is handed to it as AIKit answers it, under the
+/// batch's one limit on the whole run; the answer then carries every item
+/// heard, and the batch's failure for any it did not reach.
 pub(crate) fn relations_batch(
     executable: &OsStr,
     root: &Path,
     items: &[RelationsItem],
+    streamed: Option<ItemAnswered>,
 ) -> RelationsBatch {
     let mut rows = Vec::with_capacity(items.len());
     for item in items {
@@ -354,21 +392,38 @@ pub(crate) fn relations_batch(
             "max_edges": RELATIONS_MAX_EDGES,
         }));
     }
-    let request = serde_json::json!({"schema": RELATIONS_BATCH_SCHEMA, "items": rows});
+    let schema = if streamed.is_some() {
+        RELATIONS_BATCH_STREAM_SCHEMA
+    } else {
+        RELATIONS_BATCH_SCHEMA
+    };
+    let request = serde_json::json!({"schema": schema, "items": rows});
     let mut command = Command::new(executable);
     command
         .args(["aikit", "--json", "-C"])
         .arg(root)
         .args(["knowledge", "relations-batch"]);
-    let output = match crate::owner_process::output(
-        &mut command,
-        Some(request.to_string().into_bytes()),
-        crate::owner_process::Bound::read(
-            "AIKit",
-            "knowledge relations-batch",
-            RELATIONS_BATCH_LIMIT,
+    let bound = crate::owner_process::Bound::read(
+        "AIKit",
+        "knowledge relations-batch",
+        RELATIONS_BATCH_LIMIT,
+    );
+    let input = Some(request.to_string().into_bytes());
+    let count = items.len();
+    let output = match streamed {
+        Some(mut answered) => crate::owner_process::output_lines(
+            &mut command,
+            input,
+            bound,
+            Box::new(move |line| {
+                if let Some((index, answer)) = streamed_item(line, count) {
+                    answered(index, answer);
+                }
+            }),
         ),
-    ) {
+        None => crate::owner_process::output(&mut command, input, bound),
+    };
+    let output = match output {
         Ok(output) => output,
         Err(failure) => {
             return RelationsBatch::Failed(CallError::Unavailable {
@@ -385,6 +440,9 @@ pub(crate) fn relations_batch(
     {
         return RelationsBatch::Absent;
     }
+    if schema == RELATIONS_BATCH_STREAM_SCHEMA {
+        return streamed_batch(output, count);
+    }
     let data = match decode_envelope(&output) {
         Ok(data) => data,
         Err(error) => return RelationsBatch::Failed(error),
@@ -399,6 +457,67 @@ pub(crate) fn relations_batch(
             detail: "AIKit's relations batch did not answer each item it was asked".into(),
         }),
     }
+}
+
+/// One streamed item line: its index (one the request has) and its answer.
+fn streamed_item(line: &[u8], count: usize) -> Option<(usize, Result<Value, CallError>)> {
+    let line: Value = serde_json::from_slice(line).ok()?;
+    if line["schema"] != RELATIONS_BATCH_STREAM_SCHEMA {
+        return None;
+    }
+    let index = usize::try_from(line["index"].as_u64()?).ok()?;
+    let answer = line.get("answer")?;
+    (index < count).then(|| (index, decode_answer(answer)))
+}
+
+/// A streamed batch's whole answer: every item line it printed, and its
+/// closing envelope — AIKit's refusal of the streamed form by name, the
+/// batch's failure, or its count of what it answered.
+fn streamed_batch(output: std::process::Output, count: usize) -> RelationsBatch {
+    let mut answers: Vec<Option<Result<Value, CallError>>> = vec![None; count];
+    let mut closing: &[u8] = &[];
+    for line in output.stdout.split(|byte| *byte == b'\n') {
+        if line.iter().all(u8::is_ascii_whitespace) {
+            continue;
+        }
+        match streamed_item(line, count) {
+            Some((index, answer)) => answers[index] = Some(answer),
+            None => closing = line,
+        }
+    }
+    if let Ok(envelope) = serde_json::from_slice::<Value>(closing) {
+        // AIKit's own refusal of the v2 schema by name — never a version guess.
+        if envelope["ok"] == false
+            && envelope["error"]["code"] == "knowledge.relations_batch_input"
+            && envelope["error"]["message"]
+                .as_str()
+                .is_some_and(|message| message.contains("unsupported relations batch schema"))
+            && answers.iter().all(Option::is_none)
+        {
+            return RelationsBatch::Unstreamed;
+        }
+    }
+    let closed = std::process::Output {
+        status: output.status,
+        stdout: closing.to_vec(),
+        stderr: output.stderr,
+    };
+    // An item the stream did not carry has the batch's own failure, or —
+    // when the batch closed as answered — the batch's broken promise.
+    let unanswered = decode_envelope(&closed)
+        .err()
+        .unwrap_or_else(|| CallError::Malformed {
+            detail: "AIKit's relations batch did not answer each item it was asked".into(),
+        });
+    if answers.iter().all(Option::is_none) {
+        return RelationsBatch::Failed(unanswered);
+    }
+    RelationsBatch::Answered(
+        answers
+            .into_iter()
+            .map(|answer| answer.unwrap_or_else(|| Err(unanswered.clone())))
+            .collect(),
+    )
 }
 
 /// Which AIKit a knowledge call reaches, as far as the kernel can see it:
@@ -599,6 +718,67 @@ mod tests {
             matches!(error,CallError::Unavailable{detail} if detail.contains("bounded output"))
         );
         assert!(start.elapsed() < std::time::Duration::from_secs(5));
+    }
+
+    /// A streamed batch that stopped part-way keeps every item it streamed;
+    /// an item it never reached carries the batch's own failure. A closing
+    /// envelope that refuses the streamed form by name, with nothing
+    /// streamed, is an AIKit that answers the whole document only.
+    #[cfg(unix)]
+    #[test]
+    fn a_streamed_batch_keeps_what_it_streamed_and_fails_only_what_it_did_not_reach() {
+        use std::os::unix::process::ExitStatusExt;
+        let item = |index: usize, value: &str| {
+            serde_json::json!({"schema": RELATIONS_BATCH_STREAM_SCHEMA, "index": index,
+                "answer": {"ok": true, "data": {"query": {"focus": value}}}})
+            .to_string()
+        };
+        let refused = serde_json::json!({"ok": false, "error": {
+            "code": "knowledge.walk_failed", "message": "the walk was interrupted"}})
+        .to_string();
+        let output = std::process::Output {
+            status: std::process::ExitStatus::from_raw(1 << 8),
+            stdout: format!("{}\n{refused}\n", item(1, "b")).into_bytes(),
+            stderr: Vec::new(),
+        };
+        let RelationsBatch::Answered(answers) = streamed_batch(output, 2) else {
+            panic!("a batch that streamed an item answered it");
+        };
+        assert_eq!(
+            answers[0],
+            Err(CallError::Refused {
+                message: "the walk was interrupted".into()
+            })
+        );
+        assert_eq!(answers[1].as_ref().unwrap()["query"]["focus"], "b");
+
+        let unstreamed = serde_json::json!({"schema": 1, "ok": false, "error": {
+            "code": "knowledge.relations_batch_input",
+            "message": format!("unsupported relations batch schema {RELATIONS_BATCH_STREAM_SCHEMA}; expected {RELATIONS_BATCH_SCHEMA}")}})
+        .to_string();
+        let output = std::process::Output {
+            status: std::process::ExitStatus::from_raw(1 << 8),
+            stdout: format!("{unstreamed}\n").into_bytes(),
+            stderr: Vec::new(),
+        };
+        assert!(matches!(
+            streamed_batch(output, 2),
+            RelationsBatch::Unstreamed
+        ));
+
+        let closed = serde_json::json!({"schema": 1, "ok": true,
+            "data": {"schema": RELATIONS_BATCH_STREAM_SCHEMA, "answered": 2}})
+        .to_string();
+        let output = std::process::Output {
+            status: std::process::ExitStatus::from_raw(0),
+            stdout: format!("{}\n{}\n{closed}\n", item(1, "b"), item(0, "a")).into_bytes(),
+            stderr: Vec::new(),
+        };
+        let RelationsBatch::Answered(answers) = streamed_batch(output, 2) else {
+            panic!("a closed stream is answered");
+        };
+        assert_eq!(answers[0].as_ref().unwrap()["query"]["focus"], "a");
+        assert_eq!(answers[1].as_ref().unwrap()["query"]["focus"], "b");
     }
 
     #[derive(Deserialize)]
