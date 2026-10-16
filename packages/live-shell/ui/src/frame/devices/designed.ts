@@ -3,6 +3,7 @@
 // navigation; a view only reads them and asks for changes"); this module re-exports it for the shell's callers and adds what the
 // shell brings a view (§8 "The shell brings the values, the writes, the navigation between views, and the standing of each
 // parameter"): the binding a device is hosted on, the standing of each value, and the places' own marks. Pure.
+import type {ReactNode} from 'react'
 import type {DesignedDevice, Nav, Value, Values, ViewProps} from '../../inhabitants/catalogue/panels/design'
 import type {Standing} from '../../inhabitants/sdk/panel'
 import type {DeviceInstance, ParamValue} from './deviceRuntime'
@@ -13,12 +14,11 @@ export type {DesignedDevice, Nav, Value, Values, ViewProps, Standing}
 export type DeviceViewName = 'folded' | 'compact' | 'whole' | 'full' | 'widget'
 export const DEVICE_VIEWS: readonly DeviceViewName[] = ['folded', 'compact', 'whole', 'full', 'widget']
 
-/** The navigation a place gives a view: the catalogue's Nav, and the rail's two marks. */
+/** The navigation a place gives a view: the catalogue's Nav (select, full, fold, unfold, rail, close), and the place's own marks. */
 export interface HostNav extends Nav {
-  /** Keep the device on the widget rail. */
-  readonly rail?: () => void
-  /** Take the device off the rail (its tile's ✕). */
-  readonly close?: () => void
+  /** The marks the place gives the device's head, before ⤢ (a pop-out, a redock; DEVICE-UI §4.1): the generic plate draws them in its
+   * head, and the host hands them to a design's kit head when the design draws none of its own (deviceHost.tsx withPlaceMarks). */
+  readonly marks?: ReactNode
 }
 
 /** What the host hands a view: the catalogue's ViewProps, the standing of each value (DEVICE-UI §6: waiting, refused, held,
@@ -30,6 +30,9 @@ export interface HostedViewProps extends ViewProps {
   /** The owner's readings alone, without what the hand holds or what waits on the owner: a light reads these (DEVICE-UI §4.1 "The
    * light changes only when the owner answers"). */
   readonly owner?: Values
+  /** Why this view stands in for the device's own: its design's view did not draw (deviceHost.tsx ViewBoundary). The generic plate
+   * says it on the status bar's Info line. */
+  readonly fault?: string
 }
 
 /** One change a view asks the owner for. */
@@ -60,6 +63,10 @@ export interface DesignBinding {
   readonly modulatedBy?: Readonly<Record<string, string>>
   /** Standing the owner reports beyond the shell's own (automation, a reason a value cannot act now), by key. */
   readonly standing?: Readonly<Record<string, Standing>>
+  /** Keys the view holds, not the owner (a raised reach before Confirm, an ask before Trust), each with the binding's own hand. Every
+   * set of one — a value, or its drop (`set(key, undefined)`, a Cancel) — goes to that hand at once: never to `write`, never drawn
+   * waiting or refused. Its reading is in `values`, as the hand left it. */
+  readonly local?: Readonly<Record<string, (value: Value | undefined) => void>>
 }
 
 /** The shell's earlier name for the binding (the ticket's DeviceBinding). */

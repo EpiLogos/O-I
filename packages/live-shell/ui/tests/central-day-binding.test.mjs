@@ -1,5 +1,5 @@
 // Lane BC: Central's Day draws the catalogue's Day design (inhabitants/catalogue/panels/day.tsx, `central:day-die`) on Central's own
-// readings and writes (central/devices/dayBinding.ts, dayDesign.tsx, CentralDevices.tsx). Owners write, faces read: a design key the
+// readings and writes (central/devices/dayBinding.ts, CentralDevices.tsx). Owners write, faces read: a design key the
 // owner reports is a reading, a key no owner reports is absent (never the design's default), a key is written only through an owner
 // op — the die's turn (receiving mutate-field) and the person's "Open today" (the `central` op ensure-day), never on a timer.
 //
@@ -14,6 +14,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {readFile} from 'node:fs/promises'
+import {existsSync} from 'node:fs'
 import {register} from 'node:module'
 import {createElement} from 'react'
 import {renderToStaticMarkup} from 'react-dom/server'
@@ -48,7 +49,6 @@ const bind = await import('../src/central/devices/dayBinding.ts')
 const writes = await import('../src/central/devices/centralDeviceWrites.ts')
 const readings = await import('../src/central/devices/useCentralReadings.ts')
 const chain = await import('../src/central/devices/CentralDevices.tsx')
-const shell = await import('../src/central/devices/dayDesign.tsx')
 const {day: catalogueDay} = await import('../src/inhabitants/catalogue/panels/day.tsx')
 const designs = await import('../src/frame/devices/designs.ts')
 const door = await import('../src/frame/devices/deviceDoor.ts')
@@ -151,6 +151,10 @@ async function withOwner(owner, run) {
 const factsOf = (ground, selected = null) => bind.dayFactsOf({ground, groundError: null, selected})
 /** Every key the design reads (its defaults), so a test can say which ones the owner fills and which stay absent. */
 const DESIGN_KEYS = Object.keys(catalogueDay.defaults)
+
+// The catalogue's own Day, as the runtime's loader hands it to a published, bound Day (designs.ts requestDesign → the catalogue's
+// loadDesign, which is Vite's import.meta.glob and does not run under Node): registered here in the loader's place, unchanged.
+designs.registerDesignedDevice(catalogueDay)
 
 // ── the readings ────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -287,16 +291,16 @@ test('every other key of the design is a reading or has no owner: the runtime re
 // ── the five views, hosted by the runtime on this binding ─────────────────────────────────────────────────────────────────────
 
 const input = (extra = {}) => ({transport: unavailable, faces: central.faces, manifest: central, reads: {}, day: null, conversation: null, flow: null, impact: null, deviceWindows: null, ...extra})
-const dayEntryOf = facts => chain.centralDeviceEntries(input({reads: {day: {standing: facts.standing, face: null, revision: null}}, day: facts.aperture, dayStanding: facts.standing}))
+const dayEntryOf = (facts, extra = {}) => chain.centralDeviceEntries(input({reads: {day: {standing: facts.standing, face: null, revision: null}}, day: facts.aperture, dayStanding: facts.standing, ...extra}))
   .find(entry => entry.id === ID)
 
-function hosting(facts, values, run) {
-  const entry = dayEntryOf(facts)
+/** The Day published as the chain publishes it (CentralDevices.tsx centralPublication): its picture, its marks, its binding and its
+ * own Full. */
+function hosting(facts, values, run, extra = {}) {
+  const entry = dayEntryOf(facts, extra)
   const binding = bind.dayDesignBinding(ID, facts, values, {turn: async () => {}, openToday: async () => {}})
-  const chainHolder = {}
-  shell.standDayDesign(chainHolder, shell.shellDayDesign(catalogueDay))
-  door.publishDevice(ID, {device: entry.device, picture: entry.picture, binding})
-  try { return run(entry, binding) } finally { shell.standDayDesign(chainHolder, null); door.publishDevice(ID, null); door.selectDevice(null); host.resetHost(ID) }
+  door.publishDevice(ID, chain.centralPublication(entry, binding))
+  try { return run(entry, binding) } finally { door.publishDevice(ID, null); door.selectDevice(null); host.resetHost(ID) }
 }
 
 test('the Day draws its catalogue design on the chain, in the pool, on the rail and folded — on the stale ground\'s own values', () => {
@@ -375,26 +379,41 @@ test('with no Day selected the Day device stands on today as Central\'s ground r
   assert.equal(read.values.canOpenToday, true)
   assert.match(read.values.refusal, /earlier civil Day/)
   assert.deepEqual(read.writes, [true, true, false])
-  // The chain's own plate (SSR draws no effects, so the generic plate of the Day's rows stands): today's date, the light off.
+  // The chain's own plate: the binding stands as soon as the ground answers (no shell design to wait for), so the Day's design draws
+  // on today's date, the light off.
   const markup = html(createElement(chain.CentralDevicesChain, {transport: bridge, dayStanding: null}))
   const day = markup.slice(markup.indexOf(`data-device="${ID}"`), markup.indexOf('data-device="central:nara-conversation"'))
   assert.match(day, /data-device-light="off"/, 'the owner says no Day stands for today: off')
-  assert.match(day, /2026-10-16/, 'the Day row reads civil today')
+  assert.match(day, /data-device-design="central:day-die"/, 'the design draws on the chain')
+  assert.match(day, /<span class="dp-display-corner">Fri 16<\/span>/, 'on civil today')
   assert.equal(owner.sent.length, 1, 'rendering asked the owner nothing more: no ensure, no close, no lifecycle')
 })
 
-test('the Day design is the catalogue\'s own: the shell supplies only Full, and the old die pictures are gone from the source', async () => {
-  const hosted = shell.shellDayDesign(catalogueDay)
-  for (const view of ['folded', 'compact', 'whole', 'widget']) assert.equal(hosted[view], catalogueDay[view], `${view} is the catalogue's`)
-  assert.notEqual(hosted.full, catalogueDay.full)
-  assert.equal(hosted.id, ID)
+test('the Day design is the catalogue\'s own in all five views; its Full is the Day\'s page, published with the device (MOVED: dayDesign.tsx → PublishedDevice.full)', async () => {
+  assert.equal(designs.designFor(ID), catalogueDay, 'the runtime draws the catalogue\'s own Day')
+  assert.equal(existsSync(new URL('../src/central/devices/dayDesign.tsx', import.meta.url)), false, 'the shell\'s Day design is gone')
+  const facts = factsOf(STALE)
+  const entry = dayEntryOf(facts)
+  const published = chain.centralPublication(entry, null)
+  assert.equal(typeof published.full.draw, 'function', 'the Day carries its own Full')
+  assert.match(html(published.full.draw()), /data-central-absence="refused"/, 'its page as the owner stands it')
+  for (const other of chain.centralDeviceEntries(input()).filter(candidate => candidate.id !== ID)) assert.equal(chain.centralPublication(other, null).full, undefined, `${other.id}: its design's Full`)
   const source = await readFile(new URL('../src/central/devices/CentralDevices.tsx', import.meta.url), 'utf8')
-  assert.doesNotMatch(source, /DayDieNet|DieFaceList/, 'the net and face list the design replaces are not drawn')
-  assert.equal(designs.isRegisteredDesign(ID), false, 'the shell\'s Day stands only while its binding is published')
-  const one = {}, two = {}
-  shell.standDayDesign(one, hosted); shell.standDayDesign(two, hosted)
-  shell.standDayDesign(one, null)
-  assert.equal(designs.isRegisteredDesign(ID), true, 'a second chain still publishing the binding keeps the design standing')
-  shell.standDayDesign(two, null)
-  assert.equal(designs.isRegisteredDesign(ID), false, 'withdrawn when no chain holds it')
+  assert.doesNotMatch(source, /DayDieNet|DieFaceList|\/dayDesign'|registerDesignedDevice/, 'the net and face list the design replaces are not drawn, and the shell stands no Day of its own')
+})
+
+test('the Day\'s designed head carries its place\'s pop-out — on the chain and in the pool — as the generic plate\'s does; out, its redock', () => {
+  const ready = factsOf(READY)
+  const windows = popped => ({popOut() {}, redock() {}, poppedOut: () => popped})
+  hosting(ready, bind.dayValuesOf(ready, {face: 2, payload: PAYLOAD}), (entry, binding) => {
+    const compact = html(createElement(DeviceView, {device: entry.device, size: 'compact', picture: entry.picture('compact'), binding, marks: entry.marks}))
+    assert.match(compact, /data-device-design="central:day-die"/, 'the design draws')
+    assert.match(compact, /<header class="dp-head"[\s\S]*<span class="dp-head-x"><button type="button" class="dp-full" data-action="pop-out"[^>]*aria-label="Pop out day-die"/,
+      'the pop-out stands in the design\'s kit head, before the rail mark and ⤢')
+    door.selectDevice(ID)
+    assert.match(html(createElement(DevicePool)), /data-device-design="central:day-die"[\s\S]*data-action="pop-out"/, 'the pool\'s head carries it too')
+  }, {deviceWindows: windows(false), manifest: central})
+  hosting(ready, bind.dayValuesOf(ready, {face: 2, payload: PAYLOAD}), (entry, binding) => {
+    assert.match(html(createElement(DeviceView, {device: entry.device, size: 'compact', picture: entry.picture('compact'), binding, marks: entry.marks})), /data-action="redock"/)
+  }, {deviceWindows: windows(true), manifest: central})
 })

@@ -10,11 +10,12 @@
 //   • the designs' own `defaults` and `fixtures` are never passed as readings: nothing here imports them;
 //   • some changes ask first (DEVICE-UI §5.2): what the hand holds before an owner is asked — a raised reach before Confirm, a
 //     composition before Preview and Apply, a review before Trust, the composer's text — is held here, and nothing is sent until
-//     the person confirms.
+//     the person confirms. The raised reach and the review ask are the view's own keys (DesignBinding.local): the runtime hands
+//     each set of them — Cancel's drop included — to the hold at once, never to an owner.
 //
 // Pure, except the one hold store at the end (the shell's own state, never an owner reading).
 import {useSyncExternalStore} from 'react'
-import type {DesignBinding, DesignedDevice, Value, ValueChange, Values} from '../../frame/devices/designed'
+import type {DesignBinding, DesignedDevice, Standing, Value, ValueChange, Values} from '../../frame/devices/designed'
 import type {SdkParamRow} from '../../inhabitants/sdk/define'
 import type {DispatchReceipt} from '../../inhabitants/sdk/shellSetters'
 import type {Form, Member, Rung} from '../../inhabitants/catalogue/panels/practice'
@@ -48,11 +49,11 @@ export const SLOT_DESIGN_FACE: Readonly<Record<string, {family: string; faceId: 
 export const MEMBER_DEVICE_ID = 'factory:skillset:member'
 
 /** The material a design must read from its values for its picture to be the owner's (catalogue/panels/design.ts:5-10, the
- * bindable contract: "Material the picture shows … is a value key — a JSON string for structured content"). Each of these designs
- * still draws material of its own: skills.tsx:22 and member.tsx:13 read practice.ts DOCUMENTATION; scope.tsx:13-19 its READS and
- * WRITES; actuation__harness-model.tsx its thread (:139-157), its models (:20) and its harnesses (:21). A design that declares
+ * bindable contract: "Material the picture shows … is a value key — a JSON string for structured content"). A design that declares
  * none of these keys in its `defaults` would draw that material as if an owner had reported it, so its binding waits and the kit's
- * generic plate draws the owner's rows. The key names are the ones proposed to the documentation lane (lane BF's return). */
+ * generic plate draws the owner's rows. Since the documentation lane's retrofits (3a97afb10 Scope, 4a6c051b9 the Agent, the rack and
+ * the member) every chain design reads them from its values (actuation__harness-model.tsx:257, skills.tsx:86, member.tsx:170,
+ * scope.tsx:89), so all five are hosted; the guard stays for a design that would draw its own list again. */
 export const OWNER_LISTS: Readonly<Record<string, readonly string[]>> = {
   [GATEWAY_DESIGN]: ['frames'],
   [AGENT_DESIGN]: ['thread', 'models', 'harnesses'],
@@ -95,6 +96,23 @@ const REFUSE = {
   scope: 'Choose where the composition applies — Home, Project or Session — then Preview.',
   noPlan: 'Nothing is previewed: press Preview, read the change, then Apply.',
   noKernel: 'The configuration plane is not reachable here: the kernel transport is unavailable.',
+  heartbeat: missing('Heartbeat', 'the cron-stratum heartbeat cadence (WO-A3)', 'Actuation'),
+  writeMode: missing('Write mode', 'write-arm enforcement on the device apply path (WO-SF2)', 'Software Factory'),
+}
+
+/** The writes a design's controls ask for that no owner carries, each with the owner's missing operation: the host draws each
+ * control disabled with its reason (DesignBinding.standing; DEVICE-UI §6 "disabled"), so nothing is pressed only to be refused. */
+const disabled = (reasons: Readonly<Record<string, string>>): Record<string, Standing> =>
+  Object.fromEntries(Object.entries(reasons).map(([key, why]) => [key, {disabled: why}]))
+
+/** Each chain design's refused writes, by key (the refusals its binding's write gives, below). The Agent's light is not among them:
+ * the kit's activator has no words for why it cannot be pressed (inhabitants/sdk/panel.tsx Panel `onLight`), so its press goes to
+ * the binding and comes back as the owner's refusal (REFUSE.power) on the Info line. */
+export const REFUSED_WRITES: Readonly<Record<string, Readonly<Record<string, string>>>> = {
+  [AGENT_DESIGN]: {cap: REFUSE.budget, heartbeat: REFUSE.heartbeat},
+  [RACK_DESIGN]: {set: REFUSE.set, exported: REFUSE.export},
+  [MEMBER_DESIGN]: {reviewed: REFUSE.trust, run: REFUSE.run, proved: REFUSE.prove},
+  [SCOPE_DESIGN]: {reach: REFUSE.reach, writeMode: REFUSE.writeMode, knowledge: REFUSE.knowledge},
 }
 
 // ---------------------------------------------------------------------------------------------------------------- the hold store
@@ -298,6 +316,7 @@ export function agentBinding(id: string, input: AgentInput, rows: AgentRows, wri
   return {
     id,
     values: agentValues(input),
+    standing: disabled(REFUSED_WRITES[AGENT_DESIGN]!),
     writes: key => AGENT_WRITES.has(key),
     write: async (changes: readonly ValueChange[]) => {
       for (const {key, value} of changes) {
@@ -538,7 +557,9 @@ async function compose(change: ValueChange, ports: ComposePorts | null, place: {
   return true
 }
 
-const RACK_WRITES = (key: string) => key.startsWith('req:') || ['scope', 'profile', 'compose', 'target', 'exported', 'set'].includes(key)
+// `members` stands for the chain list's request squares (skills.tsx ChainList reads st(p, 'members')): each request is its own
+// `req:<id>` key, so `members` is no reading the host should draw disabled; a write of the list itself is refused as a reading.
+const RACK_WRITES = (key: string) => key.startsWith('req:') || ['scope', 'profile', 'compose', 'target', 'exported', 'set', 'members'].includes(key)
 
 export interface RackPlace {readonly project: string; readonly sessionRef: string | null}
 
@@ -547,6 +568,7 @@ export function rackBinding(id: string, input: RackInput, ports: ComposePorts | 
   return {
     id,
     values: rackValues(input),
+    standing: disabled(REFUSED_WRITES[RACK_DESIGN]!),
     writes: RACK_WRITES,
     write: async changes => {
       for (const change of changes) {
@@ -583,14 +605,17 @@ export function memberChains(rack: Values): {ref: string}[] | null {
   return typeof rack.members === 'string' ? (JSON.parse(rack.members) as Member[]).map(m => ({ref: m.id})) : null
 }
 
-const MEMBER_WRITES = new Set(['requested', 'reviewAsk', 'reviewed', 'run', 'proved'])
+const MEMBER_WRITES = new Set(['requested', 'reviewed', 'run', 'proved'])
 
-/** The member's binding: Enabled is your request in the rack's composition (Preview and Apply carry it); Review is asked first;
- * Trust, Run and Prove are AIKit's and refused by name until the kernel carries them. */
+/** The member's binding: Enabled is your request in the rack's composition (Preview and Apply carry it); Review is asked first —
+ * the ask is the view's own key, held here until Trust or Cancel drops it; Trust, Run and Prove are AIKit's and refused by name
+ * until the kernel carries them. */
 export function memberBinding(id: string, rack: Values, chosen: string | null, held: ChainHolds): DesignBinding {
   return {
     id,
     values: memberValues(rack, chosen, held),
+    local: {reviewAsk: value => updateHolds(was => ({...was, member: {...was.member, reviewAsk: value === true ? true : undefined}}))},
+    standing: disabled(REFUSED_WRITES[MEMBER_DESIGN]!),
     writes: key => MEMBER_WRITES.has(key),
     write: async changes => {
       for (const {key, value} of changes) {
@@ -599,7 +624,6 @@ export function memberBinding(id: string, rack: Values, chosen: string | null, h
             if (!chosen) throw Error('No member is chosen in the rack.')
             updateHolds(was => ({...was, compose: {...was.compose, plan: undefined, requests: {...was.compose.requests, [chosen]: value === true}}}))
             break
-          case 'reviewAsk': updateHolds(was => ({...was, member: {...was.member, reviewAsk: value === true ? true : undefined}})); break
           case 'reviewed':
             updateHolds(was => ({...was, member: {...was.member, reviewAsk: undefined}}))
             throw Error(REFUSE.trust)
@@ -627,18 +651,26 @@ export function scopeValues(held: ChainHolds): Values {
   return values
 }
 
-const SCOPE_WRITES = (key: string) => ['reachPending', 'reach', 'writeMode', 'knowledge'].includes(key) || key.startsWith('w:')
+const SCOPE_WRITES = (key: string) => ['reach', 'writeMode', 'knowledge'].includes(key) || key.startsWith('w:')
 
-/** Scope's binding: a raised reach is held until Confirm — nothing is sent before — and Confirm goes to the owner; the write mode
- * goes through the world row's own write path (the shell write arm, which its dispatcher refuses until WO-SF2 reads it). */
+/** A raised reach the view holds: a ring, or none (Cancel's drop). */
+const reachOf = (value: Value | undefined): number | undefined => {
+  const ring = typeof value === 'number' ? value : value === undefined ? NaN : Number(value)
+  return Number.isFinite(ring) ? ring : undefined
+}
+
+/** Scope's binding: a raised reach is the view's own key, held until Confirm — nothing is sent before, and Cancel drops it — and
+ * Confirm goes to the owner; the write mode goes through the world row's own write path (the shell write arm, which its dispatcher
+ * refuses until WO-SF2 reads it). */
 export function scopeBinding(id: string, held: ChainHolds, writeModeRow: SdkParamRow | undefined, write: RowWrite): DesignBinding {
   return {
     id,
     values: scopeValues(held),
+    local: {reachPending: value => updateHolds(was => (was.reachPending === reachOf(value) ? was : {...was, reachPending: reachOf(value)}))},
+    standing: disabled(REFUSED_WRITES[SCOPE_DESIGN]!),
     writes: SCOPE_WRITES,
     write: async changes => {
       for (const {key, value} of changes) {
-        if (key === 'reachPending') { updateHolds(was => ({...was, reachPending: typeof value === 'number' ? value : Number(value)})); continue }
         if (key === 'reach') {
           // Confirmed (or lowered): the hold ends, and the reach goes to its owner.
           updateHolds(was => (was.reachPending === undefined ? was : {...was, reachPending: undefined}))

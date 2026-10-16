@@ -15,11 +15,13 @@
 // inhabitants/catalogue/panels/day.tsx) on Central's own readings and writes (dayBinding.ts): the Day the person selected, else
 // today as Central's ground reads it — the civil-time policy and the Day pointer, whose stale state the well is given in the
 // owner's words, with "Open today" offered as the person's press on the owner's ensure. Its Full is the Day's own page as the
-// owner stands it (dayDesign.tsx); its chain picture — the net and the face list it drew before — is the design's now.
-import {useEffect, useMemo, useRef, type ReactNode} from 'react'
+// owner stands it — the hosted form, or the Day pane's DayView — published as the device's own Full (deviceDoor.ts PublishedDevice
+// `full`), which the pane draws over the design's; its chain picture — the net and the face list it drew before — is the design's.
+// A device's pop-out (or redock) is a mark of its place: it stands in the device's head, the generic plate's and the design's alike.
+import {useEffect, useMemo, type ReactNode} from 'react'
 import type {CentralLocation, KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import {DeviceView} from '../../frame/devices/DeviceView'
-import {publishDevice, selectDevice} from '../../frame/devices/deviceDoor'
+import {publishDevice, selectDevice, type PublishedDevice} from '../../frame/devices/deviceDoor'
 import {DEVICE_PANE_KIND} from '../../frame/devices/devicePane'
 import type {DesignBinding} from '../../frame/devices/designed'
 import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
@@ -41,7 +43,6 @@ import {DayView} from '../documents/CentralDocumentPane'
 import {CENTRAL_FAMILY, centralDevice, centralDeviceId, centralPicture, chainFaces, type CentralReads, type CentralWriters} from './centralDeviceModel'
 import {centralWriters, openToday, turnDieFace} from './centralDeviceWrites'
 import {dayDesignBinding, dayFactsOf, dayValuesOf, type DayFacts} from './dayBinding'
-import {DAY_DESIGN_ID, standDayDesign, useShellDayDesign} from './dayDesign'
 import {useCentralGroundAnswer, useDayDieReading, useNaraReading, useRosterReading, useWorkcellReading, type DayDieAperture} from './useCentralReadings'
 import './centralDevices.css'
 
@@ -78,6 +79,22 @@ export interface CentralDeviceEntry {
   readonly id: string
   readonly device: DeviceInstance
   readonly picture: (size: Size) => ReactNode
+  /** The device's pop-out, or its redock once out: a mark of its place, in its head. */
+  readonly marks?: ReactNode
+}
+
+/** The Day device's id on the chain (its design is `central:day-die`, inhabitants/catalogue/panels/day.tsx). */
+export const DAY_DEVICE_ID = centralDeviceId('day-die')
+
+/** What the chain publishes for one device (deviceDoor.ts PublishedDevice): its picture and marks; the Day its binding, where one
+ * stands, and its page as its own Full — the Day the owner stands, never the design's template. */
+export function centralPublication(entry: CentralDeviceEntry, binding: DesignBinding | null): PublishedDevice {
+  return {
+    device: entry.device, picture: entry.picture,
+    ...(entry.marks ? {marks: entry.marks} : {}),
+    ...(binding ? {binding} : {}),
+    ...(entry.id === DAY_DEVICE_ID ? {full: {draw: () => entry.picture('full')}} : {}),
+  }
 }
 
 /** The device's pop-out, where its face declares one: the native device window the host offers (seam 8). Its identity is the
@@ -127,7 +144,7 @@ export function centralDeviceEntries(input: CentralDeviceInput): CentralDeviceEn
     const popOut = popOutOf(face, input)
     const device = centralDevice(face, input.reads, writers)
     // The Day's chain picture is its design's (day.tsx: the net, the face dial); the generic plate that stands while no Day binding
-    // does keeps only its pop-out here.
+    // does draws its rows alone.
     const designed = face.id === 'day-die'
     return {
       id: centralDeviceId(face.id),
@@ -141,14 +158,12 @@ export function centralDeviceEntries(input: CentralDeviceInput): CentralDeviceEn
               : body ?? <SmallPicture faceId={face.id} reads={input.reads} size="full" />}
           </div>
         }
-        if (designed && !popOut) return null
-        return <div className="central-picture-slot">
-          {!designed && <SmallPicture faceId={face.id} reads={input.reads} size={size} />}
-          {popOut && (popOut.popped
-            ? <button type="button" className="central-popout" data-action="redock" title="Redock — bring this device back from its own window" aria-label={`Redock ${face.id}`} onClick={() => input.deviceWindows?.redock(popOut.identity)}><PopOut size={10} /></button>
-            : <button type="button" className="central-popout" data-action="pop-out" disabled={!!popOut.fault} title={popOut.fault ?? 'Pop out into its own native window'} aria-label={`Pop out ${face.id}`} onClick={() => input.deviceWindows?.popOut(popOut.identity)}><PopOut size={10} /></button>)}
-        </div>
+        return designed ? null : <SmallPicture faceId={face.id} reads={input.reads} size={size} />
       },
+      // The kit's head mark (inhabitants/sdk/panel.tsx `dp-full`), before ⤢: the pop-out the face declares, or its redock once out.
+      ...(popOut ? {marks: popOut.popped
+        ? <button type="button" className="dp-full" data-action="redock" aria-label={`Redock ${face.id}`} data-i="Redock|Bring this device back from its own window." onClick={() => input.deviceWindows?.redock(popOut.identity)}><PopOut size={10} /></button>
+        : <button type="button" className="dp-full" data-action="pop-out" disabled={!!popOut.fault} aria-label={`Pop out ${face.id}`} data-i={`Pop out|${popOut.fault ?? 'Pop out into its own native window.'}`} onClick={() => input.deviceWindows?.popOut(popOut.identity)}><PopOut size={10} /></button>} : {}),
     }
   })
 }
@@ -186,7 +201,7 @@ export function useDayDevice(transport: KernelTransportStatus, selected: {standi
   const binding = useMemo(() => {
     if (!facts.civilDate) return null
     const values = dayValuesOf(facts, facts.aperture && document.face !== null ? {face: document.face, payload: document.payload} : null)
-    return dayDesignBinding(DAY_DESIGN_ID, facts, values, {
+    return dayDesignBinding(DAY_DEVICE_ID, facts, values, {
       turn: async (aperture, face) => { await turnDieFace(transport, aperture, face); refreshDocument() },
       openToday: async () => {
         try { await openToday(transport) } finally {
@@ -206,9 +221,7 @@ export function useDayDevice(transport: KernelTransportStatus, selected: {standi
 export function CentralDevicesChain({transport, dayStanding, day = null, conversation = null, flow = null, impact = null, projects, deviceWindows = null}: CentralDevicesProps) {
   const manifest = inhabitantManifest(CENTRAL_FAMILY)
   const dayDevice = useDayDevice(transport, dayStanding ? {standing: dayStanding, aperture: day} : null)
-  const dayDesign = useShellDayDesign(!!dayDevice.binding)
-  const holder = useRef({})
-  const dayBinding = dayDesign ? dayDevice.binding : null
+  const dayBinding = dayDevice.binding
   const dayAperture = dayDevice.facts.aperture
   const nara = useNaraReading(transport, conversation?.project ?? null, conversation?.expressionRef ?? null, conversation?.conversation ?? null)
   const roster = useRosterReading(transport)
@@ -229,20 +242,14 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
     [transport, manifest, reads, afterWrite, dayAperture?.sourceRef, dayAperture?.documentId, dayAperture?.project, conversation?.conversation, conversation?.expressionRef, conversation?.project, flow?.location.ref, impact?.path, impact?.kind, projects, deviceWindows],
   )
   useEffect(() => {
-    // The Day's design stands over the catalogue's before its binding is published, and goes when the binding does.
-    standDayDesign(holder.current, dayBinding ? dayDesign : null)
-    for (const entry of entries) {
-      const binding = entry.id === DAY_DESIGN_ID ? dayBinding ?? undefined : undefined
-      publishDevice(entry.id, {device: entry.device, picture: entry.picture, ...(binding ? {binding} : {})})
-    }
-  }, [entries, dayBinding, dayDesign])
+    for (const entry of entries) publishDevice(entry.id, centralPublication(entry, entry.id === DAY_DEVICE_ID ? dayBinding : null))
+  }, [entries, dayBinding])
   useEffect(() => () => {
-    standDayDesign(holder.current, null)
     for (const face of manifest?.faces ?? []) publishDevice(centralDeviceId(face.id), null)
   }, [manifest])
   return <div className="central-devices-chain" data-central-devices={entries.length}>
     {entries.map(entry => <div key={entry.id} className="central-device-slot" data-face-id={entry.id.slice(CENTRAL_FAMILY.length + 1)}><DeviceView device={entry.device} size="compact" picture={entry.picture('compact')}
-      binding={entry.id === DAY_DESIGN_ID ? dayBinding ?? undefined : undefined} actions={[
+      marks={entry.marks} binding={entry.id === DAY_DEVICE_ID ? dayBinding ?? undefined : undefined} actions={[
         {icon: 'detail', label: 'Show every setting in the pool', onPress: () => selectDevice(entry.id)},
         {icon: 'pane', label: `Open ${entry.device.face.title} full size in a pane`, onPress: () => openInstrument(DEVICE_PANE_KIND, undefined, {ref: entry.id, title: entry.device.face.title})},
       ]} /></div>)}

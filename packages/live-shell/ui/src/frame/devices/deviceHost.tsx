@@ -12,9 +12,14 @@
 //     that moves to anything else ends the wait and the owner's value stands; a write that resolves with no new reading ends it
 //     after a short grace, and the owner's value stands;
 //   • a refusal returns the control to the owner's value and gives the owner's reason to the status bar's Info line.
-// No Send button anywhere (§11).
-import {Component, useCallback, useEffect, useMemo, useRef, useSyncExternalStore, type CSSProperties, type ReactNode} from 'react'
-import type {Standing} from '../../inhabitants/sdk/panel'
+// No Send button anywhere (§11). A key the view holds itself (DesignBinding.local: a raised reach, an ask) is no draft: each set of
+// it, its drop included, goes to the binding's own hand at once.
+//
+// Each view is drawn as its own component inside the place's boundary: a view that throws stands down for the generic plate's view
+// of the same device, which says why on the status bar's Info line — never a blank place.
+import {Component, cloneElement, isValidElement, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ComponentProps,
+  type CSSProperties, type ReactElement, type ReactNode} from 'react'
+import {Panel, Tile, type PanelProps, type Standing} from '../../inhabitants/sdk/panel'
 import type {DesignBinding, DesignedDevice, DeviceViewName, HostNav, HostedViewProps, Value, ValueChange, Values} from './designed'
 
 // ---------------------------------------------------------------------------------------------------------------- the host's state
@@ -86,7 +91,9 @@ export function hostedStanding(state: HostState, binding: DesignBinding, keys: I
   const out: Record<string, Standing> = {}
   for (const key of all) {
     const holder = binding.heldBy?.[key]
-    const disabled = !binding.write ? 'No owner takes a change here.' : binding.writes && !binding.writes(key) ? 'A reading: the owner reports it; nothing here changes it.' : undefined
+    // A key the view holds is the binding's own: it neither waits on an owner nor is a reading.
+    const local = !!binding.local?.[key]
+    const disabled = local ? undefined : !binding.write ? 'No owner takes a change here.' : binding.writes && !binding.writes(key) ? 'A reading: the owner reports it; nothing here changes it.' : undefined
     const standing: Standing = {
       ...binding.standing?.[key],
       ...(key in state.sent && !(key in state.drafts) ? {pending: true} : {}),
@@ -145,6 +152,16 @@ function refuse(binding: DesignBinding, changes: readonly ValueChange[], reason:
   })
 }
 
+/** A view's set on its binding: a key the view holds goes to the binding's own hand at once, its drop (undefined) included
+ * (designed.ts DesignBinding.local) — nothing waits for the hand's release and nothing reaches the owner; any other key is a draft,
+ * or the drop of one. Whether a draft moved (the host sends drafts when the hand lets go). */
+export function setHosted(binding: DesignBinding, key: string, value: Value | undefined): boolean {
+  const hand = binding.local?.[key]
+  if (hand) { hand(value); return false }
+  setDraft(binding.id, key, value)
+  return true
+}
+
 /** Set a value from a view: a draft, or a drop of the draft (undefined). The refusal of a key ends with its next move. */
 export function setDraft(id: string, key: string, value: Value | undefined): void {
   update(id, was => {
@@ -183,13 +200,51 @@ export function sayOnInfoLine(from: Element | null, label: string, words: string
 
 // ---------------------------------------------------------------------------------------------------------------- one view, hosted
 
-/** A view that throws stands down for the generic plate's view of the same device: one design that does not draw never takes the
- * device off the chain (the catalogue's own rule, panels/index.ts: "one device that does not build never stops another"). */
-class ViewBoundary extends Component<{fallback: () => ReactNode; children: ReactNode; id: string}, {failed: boolean}> {
-  state = {failed: false}
-  static getDerivedStateFromError() { return {failed: true} }
-  componentDidCatch(cause: unknown) { console.warn(`A designed view of ${this.props.id} failed; the generic plate draws it.`, cause) }
-  render() { return this.state.failed ? this.props.fallback() : this.props.children }
+/** The words for a view that did not draw, for the status bar's Info line. */
+export function faultWords(view: DeviceViewName, cause: string, standsIn: boolean): string {
+  return `Its own ${view} view did not draw: ${cause}.${standsIn ? ' The generic plate stands in.' : ''}`
+}
+
+const causeOf = (cause: unknown): string => (cause instanceof Error ? cause.message : String(cause)).replace(/\.$/, '')
+
+/** A view that throws stands down for `fallback` (the generic plate's view of the same device): one design that does not draw
+ * never takes the device off its place (the catalogue's own rule, panels/index.ts: "one device that does not build never stops
+ * another"). */
+export class ViewBoundary extends Component<{id: string; fallback: (cause: string) => ReactNode; onFault?: (cause: string) => void; children: ReactNode},
+  {failed: string | null}> {
+  state: {failed: string | null} = {failed: null}
+  static getDerivedStateFromError(cause: unknown) { return {failed: causeOf(cause)} }
+  componentDidCatch(cause: unknown) {
+    console.warn(`A view of ${this.props.id} did not draw; the generic plate draws it.`, cause)
+    this.props.onFault?.(causeOf(cause))
+  }
+  render() { return this.state.failed === null ? this.props.children : this.props.fallback(this.state.failed) }
+}
+
+/** Hand a design's kit head the place's marks it does not draw itself — the place's marks and the rail mark on a Panel, the ✕ on
+ * a Tile — through the kit's own props, as the generic plate passes them (genericDevice.tsx `head`). A design that draws them is
+ * left as it is. */
+export function withPlaceMarks(node: ReactNode, nav: HostNav): ReactNode {
+  if (!isValidElement(node)) return node
+  if (node.type === Panel) {
+    const given = node.props as PanelProps
+    const fill: Partial<PanelProps> = {
+      ...(given.marks === undefined && nav.marks !== undefined && nav.marks !== null ? {marks: nav.marks} : {}),
+      ...(given.onRail === undefined && nav.rail ? {onRail: nav.rail} : {}),
+    }
+    return Object.keys(fill).length ? cloneElement(node as ReactElement<PanelProps>, fill) : node
+  }
+  if (node.type === Tile) {
+    const given = node.props as ComponentProps<typeof Tile>
+    return given.onClose === undefined && nav.close ? cloneElement(node as ReactElement<ComponentProps<typeof Tile>>, {onClose: nav.close}) : node
+  }
+  return node
+}
+
+/** One view of a device, drawn as its own component: what it throws is caught by the boundary around it, never in the host's
+ * render. */
+function DrawnView({device, view, props}: {device: DesignedDevice; view: DeviceViewName; props: HostedViewProps}) {
+  return <>{withPlaceMarks(device[view](props), props.nav)}</>
 }
 
 export interface HostedDeviceProps {
@@ -237,9 +292,8 @@ export function HostedDevice({designed, fallback, binding, view: asked, nav: giv
     })
   }, [title])
   const set = useCallback((key: string, value: Value | undefined) => {
-    setDraft(id, key, value)
-    if (!dragging.current) send()
-  }, [id, send])
+    if (setHosted(live.current, key, value) && !dragging.current) send()
+  }, [send])
   const props: HostedViewProps = useMemo(() => ({
     v: hostedValues(state, binding.values),
     set,
@@ -250,8 +304,16 @@ export function HostedDevice({designed, fallback, binding, view: asked, nav: giv
     owner: binding.values,
   }), [state, binding, set, nav, designed.firstPage, id, keys])
   const release = () => { if (!dragging.current) return; dragging.current = false; send() }
-  const draw = (device: DesignedDevice) => device[view](props)
+  // The place's boundary: the device's own view, else the generic plate's with the reason, else the reason alone.
+  const plain = fallback && fallback !== designed ? fallback : null
+  // A design and the generic plate share the device's id: the boundary starts afresh when either takes the place, or the view changes.
+  const at = `${plain ? 'own' : 'generic'}:${designed.id}:${view}`
+  const [fault, setFault] = useState<{at: string; words: string} | null>(null)
+  const name = title ?? designed.title
+  const note = (words: string) => <p className="device-fault" data-i={`${name}|${words}`}>{name}: {words}</p>
+  const shown = fault?.at === at ? fault.words : undefined
   return <div ref={root} className={`${className ?? ''}${view === 'folded' ? ' device--folded' : ''}`} style={style} {...data} data-device-view={view}
+    data-device-fault={shown} data-i={shown ? `${name}|${shown}` : undefined}
     onPointerDownCapture={event => {
       if (event.button !== 0) return
       dragging.current = true
@@ -260,8 +322,13 @@ export function HostedDevice({designed, fallback, binding, view: asked, nav: giv
       window.addEventListener('pointercancel', end)
     }}
     onClickCapture={() => queueMicrotask(send)} onChangeCapture={() => queueMicrotask(send)}>
-    {fallback && fallback !== designed
-      ? <ViewBoundary key={`${designed.id}:${view}`} id={designed.id} fallback={() => draw(fallback)}>{draw(designed)}</ViewBoundary>
-      : draw(designed)}
+    <ViewBoundary key={at} id={designed.id} onFault={cause => setFault({at, words: faultWords(view, cause, !!plain)})}
+      fallback={cause => plain
+        ? <ViewBoundary id={plain.id} fallback={again => note(faultWords(view, again, false))}>
+          <DrawnView device={plain} view={view} props={{...props, fault: faultWords(view, cause, true)}} />
+        </ViewBoundary>
+        : note(faultWords(view, cause, false))}>
+      <DrawnView device={designed} view={view} props={props} />
+    </ViewBoundary>
   </div>
 }

@@ -38,10 +38,8 @@
 import {useEffect, useRef, useState} from 'react'
 import type {DispatchReceipt} from '../inhabitants/sdk/shellSetters.ts'
 import {registerShellSetter} from '../inhabitants/sdk/shellSetters.ts'
-import {fireHarnessControlByKey, familyParamRows} from './agentNativeDispatch.ts'
+import {fireHarnessControlByKey} from './agentNativeDispatch.ts'
 import {recordOwnerAccepted} from './devices/ownerAccepted.ts'
-import {AGENT_P0_ROWS} from './devices/designBindings.ts'
-import {agentAddress} from '../inhabitants/agentParamAddresses.ts'
 import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
 import type {AgentShellState} from './AgentShellContext.tsx'
 import {atlasHandle, presentAtlasView} from '../projections/atlas/AtlasProjectionPanel.tsx'
@@ -60,19 +58,19 @@ import {
   KNOWLEDGE_RELATIONS, KNOWLEDGE_SCOPES, TEXT_LIMIT, ZOOM_RANGE, setFilters, setZoom as setKnowledgeZoom,
 } from '../inhabitants/knowledgeGraphFaceActions.ts'
 
-/** The rows the bridge's setters dispatch through — resolved from the kit
- * registries by (family, deviceInstance, key), so the dispatch always
- * carries the row's own declared writePath. The shell never adopts the
- * kit's rows at boot (only tests call adoptVerifiedRows / loadAgentNativeP0;
- * ql/devices/atlasDevices.ts:7-9), so where the registry holds none the
- * grammar checked is the declared one itself: the verified address table
- * (agentParamAddresses.ts) and the P0 rows the Agent design writes through
- * (devices/designBindings.ts AGENT_P0_ROWS, drift-tested against the batch). */
-function agentRow(family: string, key: string): {readonly family: string; readonly key: string} | undefined {
-  return familyParamRows(family).find(row => row.deviceInstance === 'agent' && row.key === key)
-    ?? familyParamRows(family).find(row => row.key === key)
-    ?? [agentAddress('agent', key), agentAddress('world', key), ...Object.values(AGENT_P0_ROWS)]
-      .find(row => row !== undefined && row.family === family && row.key === key && !!row.writePath)
+/** The setters' grammar is the dispatcher's one map (agentNativeDispatch.ts fireHarnessKey): each setter below names its
+ * declared row's key, and the dispatcher carries the key or refuses it in its owner's words — heartbeat (the cron stratum), the
+ * write arm (WO-SF2), and any key with no carrier field ("declare the field with the kernel patch, never a silent drop"). A second
+ * look-up of the row before it (the §14 check this bridge carried until 16 Oct) read only whether the row existed, never its
+ * fields, and the kit registry it read holds no rows at boot (the shell admits the families and adopts none: shell/ModeDetail.tsx
+ * loadWorldShellFamilies; adoptVerifiedRows would not cover Interrupt either, whose row is the P0 batch's, agentNativeP0.ts). That
+ * each setter's key is a declared row with this setter as its write path is held by tests/factory-design-binding.test.mjs. */
+export const AGENT_SHELL_SETTERS: Readonly<Record<string, {readonly family: string; readonly key: string}>> = {
+  'shell.setEffort': {family: 'actuation', key: 'effort'},
+  'shell.setSteer': {family: 'actuation', key: 'input'},
+  'shell.setQuantize': {family: 'actuation', key: 'interrupt-quantize'},
+  'shell.setHeartbeat': {family: 'actuation', key: 'heartbeat'},
+  'shell.setWriteArm': {family: 'software-factory', key: 'write-mode'},
 }
 
 export interface ShellSetterBridgeConfig {
@@ -94,16 +92,8 @@ export interface ShellSetterBridgeConfig {
 /** Register the agent shell's setters into the SDK registry. Idempotent per
  * path (registration replaces); returns an unregister (tests use it). */
 export function registerAgentShellSetters(config: ShellSetterBridgeConfig): () => void {
-  const dispatchFor = async (family: string, key: string, presentation: () => void, value: unknown): Promise<DispatchReceipt> => {
-    const row = agentRow(family, key)
-    if (!row) {
-      const receipt: DispatchReceipt = {
-        kind: 'refused', channel: 'none', writePath: '(unresolved)',
-        reason: `No §14 row for ${family}/agent/${key} — the setter refuses rather than dispatch past the grammar.`,
-      }
-      config.onReceipt?.(receipt)
-      return receipt
-    }
+  const dispatchFor = async (path: string, presentation: () => void, value: unknown): Promise<DispatchReceipt> => {
+    const {key} = AGENT_SHELL_SETTERS[path]!
     // A registered setter IS the shell channel's terminal: dispatch the
     // harness-carrier semantics for its KEY directly — re-entering
     // fireWritePath would recurse through this very registry (the row's
@@ -120,12 +110,12 @@ export function registerAgentShellSetters(config: ShellSetterBridgeConfig): () =
     config.onReceipt?.(receipt)
     return receipt
   }
-  registerShellSetter('shell.setEffort', value => dispatchFor('actuation', 'effort', () => config.shell.setEffort(value as never), value))
+  registerShellSetter('shell.setEffort', value => dispatchFor('shell.setEffort', () => config.shell.setEffort(value as never), value))
   // The shell holds steer as a boolean; the harness carrier's input mode is a word (harnessAgentControl.ts input_mode).
-  registerShellSetter('shell.setSteer', value => dispatchFor('actuation', 'input', () => config.shell.setSteer(value as never), typeof value === 'boolean' ? (value ? 'steer' : 'queue') : value))
-  registerShellSetter('shell.setQuantize', value => dispatchFor('actuation', 'interrupt-quantize', () => config.shell.setQuantize(value as never), value))
-  registerShellSetter('shell.setHeartbeat', value => dispatchFor('actuation', 'heartbeat', () => config.shell.setHeartbeat(value as never), value))
-  registerShellSetter('shell.setWriteArm', value => dispatchFor('software-factory', 'write-mode', () => config.shell.setWriteArm(value as never), value))
+  registerShellSetter('shell.setSteer', value => dispatchFor('shell.setSteer', () => config.shell.setSteer(value as never), typeof value === 'boolean' ? (value ? 'steer' : 'queue') : value))
+  registerShellSetter('shell.setQuantize', value => dispatchFor('shell.setQuantize', () => config.shell.setQuantize(value as never), value))
+  registerShellSetter('shell.setHeartbeat', value => dispatchFor('shell.setHeartbeat', () => config.shell.setHeartbeat(value as never), value))
+  registerShellSetter('shell.setWriteArm', value => dispatchFor('shell.setWriteArm', () => config.shell.setWriteArm(value as never), value))
   return () => {}
 }
 
