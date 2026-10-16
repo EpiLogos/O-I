@@ -1,7 +1,8 @@
 // The catalogue gallery (npx vite --config src/inhabitants/catalogue/vite.config.mjs, port 5208). It draws every device the
 // families declare at the door, through the shell's own runtime (frame/devices/DeviceView.tsx), in each view the manual names
-// (docs/dlw/DLW.md §16.1): folded, compact, whole, full and widget. The DLW manual embeds it beside each device's spec:
-//   ?device=<family>:<face>&view=all|folded|compact|whole|full|widget   one device
+// (docs/dlw/DLW.md §16.1): folded, compact, whole (in the pool, and flipped up over the chain), full, pop-out and widget. The
+// DLW manual embeds it beside each device's spec:
+//   ?device=<family>:<face>&view=all|folded|compact|whole|flip|full|popout|widget   one device
 //   (no device)                                                          the index of every declared device
 // Readings are a labelled fixture (?values=none shows the owner-less state): the gallery writes no owner.
 import {createRoot} from 'react-dom/client'
@@ -17,12 +18,16 @@ import type {DeviceInstance, ParamValue} from '../../frame/devices/deviceRuntime
 import {centralDevice, CENTRAL_FAMILY} from '../../central/devices/centralDeviceModel'
 import {DESIGNED, DESIGNED_IDS, loadDesign, type DesignedDevice} from './panels'
 import type {Value} from './panels/design'
+import {flippedOf, popoutOf} from './panels/popout'
+import {PlaceContext} from '../sdk/panel'
 import './catalogue.css'
 import './panels/panels.css'
 
 loadWorldShellFamilies()
 
-const VIEWS = ['folded', 'compact', 'whole', 'full', 'widget'] as const
+const VIEWS = ['folded', 'compact', 'whole', 'flip', 'full', 'popout', 'widget'] as const
+/** What each frame shows, as its title: the view, and where it stands when that is not the view's only place. */
+const FRAME_TITLE: Readonly<Record<View, string>> = {folded: 'folded', compact: 'compact', whole: 'whole · the pool', flip: 'whole · flipped up over the chain', full: 'full · a pane', popout: 'pop-out · its own window', widget: 'widget · the rail'}
 type View = typeof VIEWS[number]
 
 const humanise = (key: string): string => key.split(/[-_]/).map(part => (part ? part[0]!.toUpperCase() + part.slice(1) : '')).join(' ')
@@ -63,7 +68,7 @@ function instanceOf(manifest: InhabitantManifest, face: InhabitantFaceDeclaratio
 
 function ViewFrame({view, children}: {view: View; children: ReactNode}) {
   return <section className={`cat-view cat-view--${view}`} data-view={view}>
-    <h2 className="cat-view-title">{view}</h2>
+    <h2 className="cat-view-title">{FRAME_TITLE[view]}</h2>
     <div className="cat-view-body">{children}</div>
   </section>
 }
@@ -76,6 +81,9 @@ function DeviceViews({device, views}: {device: DeviceInstance; views: readonly V
       case 'compact': return <DeviceView device={device} size="compact" />
       case 'whole': return <DeviceView device={device} size="whole" />
       case 'full': return <div className="cat-pane"><DeviceView device={device} size="full" /></div>
+      // The generic plate has no wide frame or window of its own: a device without a design shows Whole in both.
+      case 'flip': return <DeviceView device={device} size="whole" />
+      case 'popout': return <div className="cat-pane"><DeviceView device={device} size="full" /></div>
       case 'widget': return <div className="cat-rail"><div className="cat-rail-head">{device.face.title}</div><DeviceView device={device} size="compact" /></div>
     }
   }
@@ -98,8 +106,8 @@ function StatusLine() {
   return <div className="cat-status" role="status">{said || 'Point at a control to read what it does.'}</div>
 }
 
-/** A designed device in its five views, all on one set of values: move a macro on the chain and the pool, the pane and the rail
- * move with it. */
+/** A designed device in its six views, all on one set of values: move a macro on the chain and the pool, the flipped-up panel,
+ * the pane, the window and the rail move with it. */
 function DesignedViews({design, views, fixture: first}: {design: DesignedDevice; views: readonly View[]; fixture?: string | null}) {
   const names = Object.keys(design.fixtures ?? {})
   const [fixture, setFixture] = useState(first && names.includes(first) ? first : names[0] ?? '')
@@ -109,20 +117,34 @@ function DesignedViews({design, views, fixture: first}: {design: DesignedDevice;
   const [values, setValues] = useState<Record<string, Value>>(over(fixture))
   const [page, setPage] = useState(design.firstPage ?? '')
   const [folded, setFolded] = useState(false)
-  const pane = useRef<HTMLDivElement>(null)
+  const pane = useRef<HTMLDivElement>(null), flip = useRef<HTMLDivElement>(null), win = useRef<HTMLDivElement>(null)
+  const [expanded, setExpanded] = useState(false)
+  const show = (at: {current: HTMLElement | null}) => at.current?.scrollIntoView({block: 'nearest', behavior: 'smooth'})
   const set = (key: string, value: Value | undefined) => setValues(was => {
     const next = {...was}
     if (value === undefined) delete next[key]; else next[key] = value
     return next
   })
   const props = {v: values, set, page, setPage,
-    nav: {fold: () => setFolded(true), unfold: () => setFolded(false), full: () => pane.current?.scrollIntoView({block: 'nearest', behavior: 'smooth'})}}
+    nav: {fold: () => setFolded(true), unfold: () => setFolded(false), full: () => show(pane), expand: () => show(flip), popout: () => show(win)}}
+  const place = {onExpand: () => { setExpanded(was => !was); show(flip) }, expanded, onPopout: () => show(win)}
   const one = (view: View): ReactNode => {
     switch (view) {
       case 'folded': return design.folded({...props, nav: {}})
       case 'compact': return folded ? design.folded(props) : design.compact(props)
-      case 'whole': return <div className="cat-pool">{design.whole(props)}</div>
-      case 'full': return <div className="cat-pane cat-pane--ref" ref={pane}>{design.full(props)}</div>
+      case 'whole': return <div className="cat-pool">{design.whole({...props, frame: 'pool', room: {w: 400, h: 360}})}</div>
+      // Live's expanded view: the whole panel rises from the chain over the lower panes; the chain stays under it.
+      case 'flip': return <div className="cat-flip" ref={flip}>
+        <div className="cat-flip-panes" aria-hidden="true">Panes</div>
+        {flippedOf(design, {...props, room: undefined}, {w: 1180, h: 192})}
+        <div className="cat-flip-chain"><PlaceContext.Provider value={{...place, expanded: true}}>{design.compact(props)}</PlaceContext.Provider></div>
+      </div>
+      case 'full': return <div className="cat-pane cat-pane--ref" ref={pane}>{design.full({...props, frame: 'pane', room: {w: 760, h: 420}})}</div>
+      // Live's plug-in window: the device's own window, the material over every control.
+      case 'popout': return <div className="cat-window" ref={win}>
+        <div className="cat-window-bar"><i /><i /><i /><span>{design.title}</span></div>
+        <div className="cat-window-room">{popoutOf(design, props, {w: 1180, h: 620})}</div>
+      </div>
       case 'widget': return <div className="cat-rail cat-rail--ref"><div className="cat-rail-head">Rail</div><div className="cat-rail-tiles">{design.widget(props)}</div></div>
     }
   }
@@ -131,7 +153,9 @@ function DesignedViews({design, views, fixture: first}: {design: DesignedDevice;
       <span>Fixture</span>
       {names.map(name => <button key={name} type="button" aria-pressed={name === fixture} onClick={() => { setFixture(name); setValues(over(name)) }}>{name}</button>)}
     </div>}
-    <div className="cat-views cat-views--ref">{views.map(view => <ViewFrame key={view} view={view}>{one(view)}</ViewFrame>)}</div>
+    <PlaceContext.Provider value={place}>
+      <div className="cat-views cat-views--ref">{views.map(view => <ViewFrame key={view} view={view}>{one(view)}</ViewFrame>)}</div>
+    </PlaceContext.Provider>
   </>
 }
 

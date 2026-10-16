@@ -1,6 +1,7 @@
-// A designed device: its five views, each drawn from one set of values (docs/dlw/DEVICE-UI.md §2). The host owns the values
-// and the navigation; a view only reads them and asks for changes. The gallery hosts the reference devices on a labelled
-// fixture; the shell hosts the same views on the owner's values and writes (frame/devices/designed.ts, the DesignBinding).
+// A designed device: its six views, each drawn from one set of values (manual §16.1). The host owns the values, the navigation
+// and the room each view stands in; a view only reads them and asks for changes. The gallery hosts the reference devices on a
+// labelled fixture; the shell hosts the same views on the owner's values and writes (frame/devices/designed.ts, the
+// DesignBinding).
 //
 // Two rules make a design bindable:
 // - Everything a view draws comes from `v`. Material the picture shows (entries, rows, names, lists) is a value key — a JSON
@@ -17,8 +18,12 @@ export type Values = Readonly<Record<string, Value>>
 export interface Nav {
   /** Show the device whole in the pool (the press on a chain plate). */
   readonly select?: () => void
+  /** Flip the device's whole panel up from the chain, over the panes (Live's expanded view); pressed again, it folds back. */
+  readonly expand?: () => void
   /** Open the device full size in a pane. */
   readonly full?: () => void
+  /** Pop the device out into its own window: its material with every control (Live's plug-in window). */
+  readonly popout?: () => void
   readonly fold?: () => void
   readonly unfold?: () => void
   /** Keep the device on the widget rail. */
@@ -41,7 +46,18 @@ export interface ViewProps {
   readonly standing?: Readonly<Record<string, Standing>>
   /** The owner's readings alone, without what the hand holds or what waits on the owner: a light reads these. */
   readonly owner?: Values
+  /** The room the host gives this view, in px at 100 %. Whole stands in the pool (400 wide) or flipped up over the chain (the
+   * detail area's width, up to the panes' height); Full in a pane; Pop-out in its window. A view may grow its display into the
+   * room; its controls keep their size. Absent: draw at the standard measures. */
+  readonly room?: Room
+  /** Where this view stands, for a view that arranges itself differently in each (Whole in the pool or flipped up). */
+  readonly frame?: Frame
 }
+
+export interface Room {readonly w: number; readonly h: number}
+export type Frame = 'chain' | 'pool' | 'flip' | 'pane' | 'window' | 'rail'
+/** The six views (manual §16.1). */
+export type ViewName = 'folded' | 'compact' | 'whole' | 'full' | 'popout' | 'widget'
 
 export interface DesignedDevice {
   /** `<family>:<face>`, as the manual's catalogue embeds it. */
@@ -57,6 +73,10 @@ export interface DesignedDevice {
   readonly compact: (p: ViewProps) => ReactNode
   readonly whole: (p: ViewProps) => ReactNode
   readonly full: (p: ViewProps) => ReactNode
+  /** The device in its own window, which can fill the screen: the material, with every control docked under it. Absent, the
+   * host draws Full over Whole (`popout.tsx`), which most devices need; a device writes its own only where its controls
+   * belong beside the material rather than under it. */
+  readonly popout?: (p: ViewProps) => ReactNode
   readonly widget: (p: ViewProps) => ReactNode
 }
 
