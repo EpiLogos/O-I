@@ -665,6 +665,25 @@
   },
   {
     "family": "software-factory",
+    "face": "agentset-rack",
+    "kind": "parameter",
+    "liveSemantic": "rack",
+    "modes": [
+      "factory"
+    ],
+    "formats": {},
+    "invariant": {
+      "chains": [
+        "agent-session"
+      ],
+      "chainSelector": "member (state light)"
+    },
+    "writePaths": [],
+    "heldBy": [],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/racks-session-model.md"
+  },
+  {
+    "family": "software-factory",
     "face": "approvals",
     "kind": "parameter",
     "liveSemantic": "return",
@@ -744,6 +763,40 @@
     "writePaths": [],
     "heldBy": [],
     "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/session-model.md#3"
+  },
+  {
+    "family": "software-factory",
+    "face": "tasks",
+    "kind": "parameter",
+    "liveSemantic": "track",
+    "modes": [
+      "factory"
+    ],
+    "formats": {},
+    "invariant": {
+      "stream": "one session's tasks (agency_read, encounter_task_read, temporal_events_read)"
+    },
+    "writePaths": [],
+    "heldBy": [],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/session-model.md#3"
+  },
+  {
+    "family": "software-factory",
+    "face": "thread",
+    "kind": "parameter",
+    "liveSemantic": "device-instrument",
+    "modes": [
+      "factory"
+    ],
+    "formats": {},
+    "invariant": {
+      "generates": "kernel:harness_agent_control"
+    },
+    "writePaths": [
+      "kernel:harness_agent_control"
+    ],
+    "heldBy": [],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/operator-voice.md"
   },
   {
     "family": "workcell",

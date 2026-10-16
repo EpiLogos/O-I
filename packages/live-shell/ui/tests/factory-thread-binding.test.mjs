@@ -50,6 +50,11 @@ const {designKey} = await import('../src/frame/devices/designs.ts')
 const host = await import('../src/frame/devices/deviceHost.tsx')
 const bind = await import('../src/agent/devices/designBindings.ts')
 const thread = await import('../src/agent/devices/threadBinding.ts')
+// The devices are of the families' admitted faces (lane BF3: the thread, tasks and attempt-review faces are admitted).
+const familyDoor = await import('../src/inhabitants/familyManifest.ts')
+familyDoor.resetFamilyManifestsForTest()
+;(await import('../src/inhabitants/loadAgentShellFamilies.ts')).loadAgentShellFamilies()
+;(await import('../src/inhabitants/worldShellFamilies.ts')).loadWorldShellFamilies()
 const {foundHarnesses} = await import('../src/agent/useHarnessBinding.ts')
 const {catalogueModels} = await import('../src/agent/devices/useModelCatalogue.ts')
 const {design: threadDesign} = await import('../src/inhabitants/catalogue/panels/software-factory__thread.tsx')
@@ -293,9 +298,9 @@ test('the Agent\'s light only reads: its standing names Power, so its activator 
 
 test('the chain draws the Thread beside the Agent on the session\'s conversation, and the Agent\'s ⤢ opens the Thread\'s Full', () => {
   const view = read('devices/FactoryDeviceChain.tsx')
-  assert.match(view, /slot\.id === 'agent' && \(/, 'the Thread stands inside the Agent\'s slot')
+  assert.match(view, /slot\.id === 'agent' && thread && \(/, 'the Thread stands inside the Agent\'s slot (where its family admits the face)')
   assert.match(view, /<DeviceView device=\{thread\} size="compact" binding=\{threadDesignBinding\}/)
-  assert.match(view, /publishDevice\(THREAD_DEVICE_ID, \{device: thread, binding: threadDesignBinding\}\)/, 'the pool, a pane and the rail read the same binding')
+  assert.match(view, /publishDevice\(THREAD_DEVICE_ID, thread \? \{device: thread, binding: threadDesignBinding\} : null\)/, 'the pool, a pane and the rail read the same binding')
   assert.match(view, /const openAgentThread = \(\) => openDevice\(THREAD_DEVICE_ID, 'Thread'\)/)
   assert.match(view, /threadTrackOf\(tracks, shell\.selectedTrackId, shell\.threadTrackId\)/, 'the session the thread pane shows (AgentThreadView.tsx)')
   assert.match(view, /useEncounterSessions\(observed\)/, 'through the pane\'s own encounter observer')

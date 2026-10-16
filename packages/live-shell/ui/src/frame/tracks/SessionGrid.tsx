@@ -10,7 +10,7 @@
 // its standing mark (trackMarks.ts), and the rows nest under the sections they stand in, each head in its section's atmosphere
 // and folding as a group folds (trackSections.ts). A track the set marks read-only (one merged in from another reading, the
 // spine's cron firings) is offered none of the set's actions.
-import {useRef, useState, type CSSProperties} from 'react'
+import {useRef, useState, type CSSProperties, type ReactNode} from 'react'
 import type {WorldTrack, WorldTrackClip, WorldTrackColumn, WorldTrackSection, WorldTrackSet} from '../../timeline/worldTrackAdapter'
 import {clipStandingAttributes, clipStandingEdge, clipStandingMark, clipStandingTag, clipStandingTitle} from './trackMarks'
 import {sectionFoldKey, sessionRowLayout, shownRowLayout} from './trackSections'
@@ -23,6 +23,18 @@ export interface TracksSelection {
 }
 
 export const STATUS_WORD: Record<string, string> = {waiting: 'Waiting', running: 'Running', stopped: 'Stopped', recording: 'Recording', stalled: 'Stalled'}
+
+/** The Main track's ref (Live's Main track: the stops column's head is a track you select, and the Device side then shows its chain).
+ * One ref for every set: what a mode's Main track holds is its own detail's (shell/modeDetails.tsx), never a branch here. */
+export const MAIN_TRACK_REF = 'main'
+
+/** The Main track's head: a button that selects the Main track, as a track's head selects its track. */
+export function MainHead({selection, title, children}: {selection: TracksSelection; title?: string; children: ReactNode}) {
+  const selected = selection.ref === MAIN_TRACK_REF
+  return <button type="button" className={`thd${selected ? ' sel' : ''}`} aria-pressed={selected} data-track-head="main"
+    title={title ? `Main · ${title}` : 'Main · select the Main track: the Device side shows its chain'}
+    onClick={() => selection.select({kind: 'track', ref: MAIN_TRACK_REF, title: 'Main'})}>{children}</button>
+}
 
 /** A track's colour as the views draw it: the one the set gives, else the shell's default. */
 export const trackColour = (track: WorldTrack): string => track.color ?? 'var(--track-default, var(--bg-3))'
@@ -170,7 +182,7 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
     <div className="sg" role="grid" aria-label="Session">
       <div className="sg-drop" role="status">{empty ?? 'No tracks in this work yet.'}</div>
       <div className="trk trk-main" role="row" aria-label="Stops">
-        <div className="thd">Main</div>
+        <MainHead selection={selection}>Main</MainHead>
         {(rows.length ? rows : EMPTY_STOPS).map((row, index) => <div key={row.id} className="cs" role="gridcell">
           <button type="button" className="stop-launch" disabled title="No row launch: this work has no tracks yet">▸</button>
           <span className="cs-label">{row.name || index + 1}</span>
@@ -257,7 +269,7 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
         onDragOver={seat ? event => { if (event.dataTransfer.types.includes(seat.accepts)) { event.preventDefault(); event.dataTransfer.dropEffect = 'copy' } } : undefined}
         onDrop={seat ? event => { const payload = event.dataTransfer.getData(seat.accepts); if (!payload) return; event.preventDefault(); onPress('seat', 'Seat', () => seat.run(payload)) } : undefined} />
       <div className="trk trk-main" role="row" aria-label="Stops">
-        <div className="thd" title={grain ? `Every control here acts on the${grain.replace(/[()]/g, '')}: the owner takes nothing finer` : undefined}>Main{grain && <span className="sg-grain">{set.actions?.grain}</span>}</div>
+        <MainHead selection={selection} title={grain ? `every control here acts on the${grain.replace(/[()]/g, '')}: the owner takes nothing finer` : undefined}>Main{grain && <span className="sg-grain">{set.actions?.grain}</span>}</MainHead>
         {layout.map((item, at) => {
           // A section's head: its rails, its fold, its name — the rows under it carry its rail (worldTimelinePresentation.tsx:418-430).
           if (item.kind === 'head') {
