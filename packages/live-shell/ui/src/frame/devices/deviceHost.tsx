@@ -19,7 +19,7 @@
 // of the same device, which says why on the status bar's Info line — never a blank place.
 import {Component, cloneElement, isValidElement, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ComponentProps,
   type CSSProperties, type ReactElement, type ReactNode} from 'react'
-import {Panel, Tile, type PanelProps, type Standing} from '../../inhabitants/sdk/panel'
+import {Panel, PlaceContext, Tile, type PanelProps, type Standing} from '../../inhabitants/sdk/panel'
 import type {DesignBinding, DesignedDevice, DeviceViewName, HostNav, HostedViewProps, Value, ValueChange, Values} from './designed'
 
 // ---------------------------------------------------------------------------------------------------------------- the host's state
@@ -244,7 +244,10 @@ export function withPlaceMarks(node: ReactNode, nav: HostNav): ReactNode {
 /** One view of a device, drawn as its own component: what it throws is caught by the boundary around it, never in the host's
  * render. */
 function DrawnView({device, view, props}: {device: DesignedDevice; view: DeviceViewName; props: HostedViewProps}) {
-  return <>{withPlaceMarks(device[view](props), props.nav)}</>
+  // The place reaches every Panel, PanelHead and Tile inside the view through the kit's PlaceContext (sdk/panel.tsx, the
+  // documentation lane's c5afc4aa0) — a view whose root is a component too; a part's own props still win.
+  const {nav} = props
+  return <PlaceContext.Provider value={{marks: nav.marks ?? undefined, onRail: nav.rail, onClose: nav.close}}>{withPlaceMarks(device[view](props), nav)}</PlaceContext.Provider>
 }
 
 export interface HostedDeviceProps {
