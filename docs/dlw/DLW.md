@@ -927,7 +927,7 @@ So a capability lives in one place:
 - **One job is one device, in every mode.** The agent that answers in a
   Central page and the agent that runs a Factory task is one Agent (§19.3):
   who it is, how it works, how much it decides alone, and its thread. What
-  an agent may read and where it may write is one Scope (§19.14), with the
+  an agent may read and where it may write is one Scope (§19.13), with the
   Knowledge route inside it, on any track an agent works on.
 - **How a write arrives is set in two places only.** Scope sets the most an
   agent may do in each part of the world: propose, draft or write. Arm, in
@@ -1754,7 +1754,7 @@ The Knowledge graph edits no clip. It starts from the note that you select.
 
 ##### Widget
 
-Where: the rail on the right. The widget shows the neighbourhood of the note you hold, small. Click a node to open the note. The widget stays when you change mode.
+Where: the rail on the right. The widget shows the neighbourhood of the selection. The centre is marked. A coloured node is a node that the agent touched. A link that does not resolve shows as a ghost node. Click a node to move the centre. Click the open mark to open the full graph in a pane. The widget stays when you change mode.
 
 #### Transport
 | Control | Effect on the Knowledge graph |
@@ -2868,146 +2868,7 @@ The playhead can also scrub: drag it and the material follows. Shuttle plays bac
 - To make a smooth change, record the move of one parameter over a scene with Arm.
 - To compare two days, show both in one view and look for the same shape.
 
-### 17.10 Thread
-
-**Product:** Factory · **Kind:** instrument · **Pane:** any pane, in every mode
-
-You need to read what an agent did, and to talk to it while it works. The Thread shows one session's conversation and its tool use, full width, in the order they happened. Sub-agents spawned by the session each have a thread of their own.
-
-#### What the stream holds
-
-| Item | What it shows |
-|---|---|
-| Task divider | The name of a task and how it stands. |
-| Message | What you said and what the agent said, each with its avatar. |
-| Tool row | One tool the agent used: a key chip and a summary. Click it to open the output. |
-| Spawn row | A sub-agent that the session started, with a link to its thread and its live state. |
-| Steer line | Words you sent in the middle of a turn. It reads "heard at next tool" until the agent takes it. |
-| Proposal card | A change the agent proposes. It offers Approve, Changes and Diff. |
-| Stall card | A card with an orange border. It names the prompt that the agent waits for. It offers Retry, Hard stop, Steer and Tell parent. |
-| Working line | A pulsing dot with what the agent is doing now. |
-
-The Thread header shows a back link to the session grid, the chain of parent sessions, the model and the turns used. It also holds the stop and retry buttons and the list of runs. The retry lights only when the session has stalled.
-
-#### Talk to the agent
-
-The composer is at the bottom. Enter sends your words. Option and Enter steer the running turn. Esc stops. Press the voice button and the composer shows a waveform. Your words go in as you speak.
-
-Whether your words steer or queue is your choice. With steer on, they reach the agent in the middle of its turn. With steer off, they wait as the next task.
-
-The agent does not write behind your back. With Arm off, each change arrives as a proposal card. With Arm on, changes land directly, each with a receipt.
-
-#### Parameters
-| Parameter | Values | Default | What it does |
-|---|---|---|---|
-| Session | Any session | The selected session | Chooses the conversation to show. |
-| Follow | Follows · Pinned | Follows | A pinned Thread keeps its session while you select elsewhere. |
-| Tool rows | Collapsed · Expanded · Hidden | Collapsed | Shows each tool as one line, with output, or not at all. |
-| Sub-agents | Linked · Inline | Linked | Shows a spawn row with a link, or the sub-agent's stream inside this one. |
-| Messages | All · Yours · Agent's · Tools only | All | Filters the stream. |
-| Input | Steer · Queue | Steer | Sends your words into the running turn, or waits for the next task. |
-| Voice | On · Off | Off | Turns speech into words in the composer. |
-| Steer lines | Highlighted · Plain | Highlighted | Marks the words you sent in the middle of a turn. |
-
-#### Views
-
-```ui
-device: software-factory:thread
-caption: Thread, on a fixture of readings.
-```
-
-##### Folded
-
-Where: on a chain. The folded Thread shows the session name and its state. Click the title to unfold it.
-
-##### Compact
-
-Where: on a chain. The compact Thread shows the last lines of the stream, the working line and four macros.
-
-| Macro | What it does |
-|---|---|
-| Input | Sends your words into the running turn (Steer), or holds them for the next task (Queue). |
-| Follow | Keeps the Thread on the selected session (Follows), or on one session (Pinned). |
-| Tool rows | Sets Collapsed, Expanded or Hidden. |
-| Voice | Turns speech into words in the composer, or not. |
-
-Click the plate to show the Thread whole in the pool. Click ⤢ to open it full in a pane.
-
-##### Whole
-
-Where: the pool under the browser. The whole Thread shows every parameter, in three groups.
-
-| Group | Parameters |
-|---|---|
-| Session | Session, Follow |
-| Stream | Tool rows, Sub-agents, Messages, Steer lines |
-| Input | Input, Voice |
-
-A change you make in the pool applies at once. It does not add the Thread to your rack. Click ⤢ to open the Thread full in a pane.
-
-##### Full
-
-Where: a pane. The full Thread shows one session, full width, in the order things happened. The controls stay in Device view, below the pane.
-
-The header shows a back link to the session grid, the chain of parent sessions, the model and the turns used. It also holds the stop and retry buttons and the list of runs. The retry lights only when the session has stalled.
-
-The stream holds task dividers, messages with avatars, tool rows, spawn rows, steer lines, proposal cards, stall cards and the working line. A steer line stays amber until the agent hears it. A stall card has an orange border and names the prompt that the agent waits for.
-
-Click a tool row to open its output. Click a spawn row to open the thread of the sub-agent. Choose Approve, Changes or Diff on a proposal card. Choose Retry, Hard stop, Steer or Tell parent on a stall card.
-
-The composer is at the bottom. Press Enter to send. Press Option and Enter to steer the running turn. Press Esc to stop. Press the voice button and the composer shows a waveform.
-
-In Factory, a clip is a task and its track is a session. In Clip view, the Thread shows the session that runs the task.
-
-##### Widget
-
-Where: the rail on the right. The widget shows the conversation with the agent you talk to, small, with its composer. The widget stays when you change mode.
-
-#### Transport
-| Control | Effect on the Thread |
-|---|---|
-| Play | Runs the task, or every queued task. |
-| Stop | Pauses at the next safe point and keeps what the agent had in mind. Press again to cancel. |
-| Record | Speaks a new task. |
-| Overdub | Steers the running turn. |
-| Arm | Lets the agent write directly, with receipts. |
-| Re-enable | Gives back what the agent held. |
-| Quantize | Sets when Stop and Steer land: now, at the next tool, or at the next turn. |
-| Tap | Asks the agent where it has got to. |
-| Capture | Turns what you did by hand into an example that an agent can learn. |
-| Position | Shows task, turn and step. |
-| Time signature | Shows turns used of turns allowed. |
-| Key | Counts tokens in and out. |
-| Load | Shows how full the agent's context is. |
-
-#### To use the Thread
-1. Select a session in the grid, or open the Thread from the browser.
-2. Read the stream. Click a tool row to open its output.
-3. To follow a sub-agent, click its spawn row.
-4. To correct the agent, type in the composer and press Option and Enter.
-5. To queue a task for later, set Input to Queue and press Enter.
-6. When a proposal card appears, choose Approve, or choose Changes and say what to change.
-7. When a stall card appears, read the prompt it names. Retry with the missing flag, or choose Steer.
-8. Press Esc to stop. Press Esc again to cancel.
-
-#### Rules
-- The Thread shows what happened and in what order. It does not edit the record.
-- A proposal does not write until you approve it, unless Arm is on.
-- Every write carries a receipt. Every entry shows its author.
-- A steer line stays amber until the agent hears it.
-- A stalled session shows a stall card. It does not look idle.
-- A sub-agent's thread is nested under its parent, one rail for each level.
-- A control for effort, autonomy or budget sits on the agent device. The Thread does not hold it.
-- The transcript is material for the Timeline.
-
-#### Tips
-- To keep a long run off your task list, read it in the Thread and leave it out of the Day's tasks.
-- To find why a run failed, filter Messages to Tools only and read the last rows.
-- To hand a stall back to its parent, choose Tell parent on the stall card.
-- To give an agent an example, press Capture and do the task by hand once.
-- To follow three layers of delegation, keep Sub-agents on Linked and click down.
-
-### 17.11 Terminal
+### 17.10 Terminal
 
 **Product:** Central · **Kind:** instrument · **Pane:** any pane, in every mode
 
@@ -3080,7 +2941,7 @@ The Terminal edits no clip. It follows the run of the clip that you select.
 
 ##### Widget
 
-Where: the rail on the right. The widget shows the shell, small. The widget and the pane show the same shell. Closing one does not close the shell. The widget stays when you change mode. Open a Terminal in Factory and it is still there in Central.
+Where: the rail on the right. The widget shows the live shell. A line below it says "following" and shows the name of the agent. It follows the agent that you select. A shell that waits for a yes or no shows in the stall colour. Type your answer in the shell. The widget stays when you change mode.
 
 #### Transport
 | Control | Effect on the Terminal |
@@ -3491,14 +3352,14 @@ Where: the rail on the right. The widget shows the last entries of the Flow you 
 3. Choose who speaks. Write the entry.
 4. To answer an earlier entry, select it and choose a relation. Then write.
 5. Set the View to Journal to read one person's page at a time.
-6. To ask an agent about a passage, select the passage and use Answer.
+6. To ask an agent about a passage, select the passage and choose Answer this.
 
 #### Rules
 
 - Each entry shows its author. An agent entry shows the name of the agent and, when it is known, the session.
 - A correction is a new entry with the relation Correct. The old entry is not deleted.
 - A save names its outcome: saved, unchanged, stale, conflict or refused. After a conflict, the device shows the file as it now stands.
-- Agent entries follow the Agent writes setting of the Answer device.
+- Agent entries land as Scope and Arm allow: as proposals that wait on the page, or directly with receipts.
 - Media stays inside the page. It does not leave your ground.
 - A Flow keeps the template version it opened with. A new template version does not change an old Flow.
 
@@ -3623,7 +3484,7 @@ Where: the rail on the right. The widget shows the card of the selected being: i
 - The ties belong to the page. A page that you redesign keeps its ties.
 - An empty Place stays empty. The device does not guess a place.
 - A relation in the side list shows its standing (fact, claim, inferred or hypothesis) and who stated it.
-- The page of an agent reads its card from Agent identity. The page does not keep a copy.
+- The page of an agent reads its card from your roster, as the Agent device does. The page does not keep a copy.
 - Each page keeps the template version it opened with.
 
 #### Tips
@@ -3853,7 +3714,7 @@ Use Highlight to mark the passages that matter as you read. It marks a passage a
 
 #### The selection tool
 
-Select a passage and four actions appear above it. Highlight, Notes, Packet and Answer share this tool.
+Select a passage and four actions appear above it. Highlight, Notes, the packet and the agent share this tool.
 
 | Action | What it does |
 |---|---|
@@ -4099,7 +3960,7 @@ In Clip view, the Packet holds passages of the document clip and of other clips.
 
 ##### Widget
 
-Where: the rail on the right. The widget shows the items and the total size. It has an Answer this button. The widget shows the same items as the device and the conversation. The widget stays when you change mode.
+Where: the rail on the right. The widget shows the list of items. Each line names the source and the text. The size shows beside the Answer button. Press Capture to put the selection in the packet. Press Play to send it. The widget stays when you change mode.
 
 #### Transport
 
@@ -4122,7 +3983,7 @@ Where: the rail on the right. The widget shows the items and the total size. It 
 #### Rules
 
 - Nothing enters the packet unless you add it.
-- The agent reads the packet and the places that Context & world allows. It reads nothing else of yours.
+- The agent reads the packet and the places that Scope allows. It reads nothing else of yours.
 - The packet shows the same items in every place it appears: the device, the widget and the conversation.
 - An answer shows the packet that it came from.
 - You can copy the packet out as data. Copying sends nothing.
@@ -4133,112 +3994,7 @@ Where: the rail on the right. The widget shows the items and the total size. It 
 - To keep a cost low, set a Limit before you add long entries.
 - To ask again with the same material, set After sending to Keep.
 
-### 18.10 Answer
-
-**Product:** Central · **Kind:** instrument · **Chain:** last on a document's chain, after the Packet
-
-Use Answer to ask an agent about a passage and get the reply in the page. The agent reads the packet and answers as a new entry, with its sources.
-
-#### What an answer carries
-
-| Part | What it shows |
-|---|---|
-| Author | The name of the agent. |
-| Packet | The items that the agent was given, and their size. |
-| Sources | Where each claim comes from. Follow a source and you land on the line it came from. |
-| Receipt | When the agent writes with Write, the time, the place and the change. |
-
-#### Parameters
-
-| Parameter | Values | Default | What it does |
-|---|---|---|---|
-| Agent | An agent from your roster | The agent of the document | Who answers. |
-| Answer as | New entry · Replace selection | New entry | Whether the answer joins as a new entry or replaces the selected entry. |
-| Agent writes | Off · Propose · Write | Propose | Off: the answer shows in the conversation only. Propose: the answer waits in the page for you to accept it. Write: the answer goes in directly, with a receipt. |
-| Effort | Low · Medium · High · Max | Medium | How hard the agent thinks on each answer. |
-
-#### Views
-
-```ui
-device: central:nara-conversation
-caption: Answer, on a fixture of readings.
-```
-
-##### Folded
-
-Where: last on a document's chain, after the Packet. The folded Answer shows the name of the agent and the Agent writes value. Click the title to unfold it.
-
-##### Compact
-
-Where: last on a document's chain, after the Packet. The compact Answer shows the face of the agent and its state: idle, reading or answering. It has four macros.
-
-| Macro | What it does |
-|---|---|
-| Agent | Chooses who answers. |
-| Answer as | Sets New entry or Replace selection. |
-| Agent writes | Sets Off, Propose or Write. |
-| Effort | Sets Low, Medium, High or Max. |
-
-Click the plate to show the Answer whole in the pool. Click ⤢ to open it full in a pane.
-
-##### Whole
-
-Where: the pool under the browser. The whole Answer shows every parameter, in three groups.
-
-| Group | Parameters |
-|---|---|
-| Agent | Agent, Effort |
-| Answer | Answer as |
-| Writes | Agent writes |
-
-A change you make in the pool applies at once. It does not add Answer to your rack.
-
-##### Full
-
-Where: a pane. The full Answer shows the exchange: what you sent, the answer with its sources, and the receipts of what the agent wrote. Follow a source to land on its line. The controls stay in Device view, below the pane.
-
-In Clip view, Answer adds its entries to the document clip. It is the last device on the chain.
-
-##### Widget
-
-Where: the rail on the right. The widget shows the agent you talk to. It shows the last answer and a line for the next question. Write a question and press Enter to ask. The widget stays when you change mode.
-
-#### Transport
-
-| Control | Effect on Answer |
-|---|---|
-| Play | Sends the packet. The answer arrives as an entry. |
-| Stop | Stops an answer that is in progress. Press it twice to discard the answer. |
-| Overdub | On: the answer joins as a new entry. Off: the answer replaces the selected entry. |
-| Arm | On: Agent writes is Write. Off: Agent writes is Propose. Arm does not change Off. |
-| Re-enable | Lights when you change a passage that the agent wrote. Press it to hand the passage back. |
-
-#### To use Answer
-
-1. Select a passage in a pane.
-2. Choose To packet. Add any other passage that the agent needs.
-3. Choose the Agent and the Effort.
-4. Check the size of the packet.
-5. Press Play, or choose Answer this in the selection tool.
-6. Accept the proposal, or read the entry that arrives. Follow a source to check it.
-
-#### Rules
-
-- The agent does not write behind your back. Off, Propose and Write are your setting.
-- With Write, every change carries a receipt.
-- An agent entry shows its author on the page.
-- The agent reads the packet and the places that Context & world allows. It reads nothing else.
-- When you change a passage that the agent wrote, the hand-back light comes on. Press it to give the passage back.
-- An answer that you stop is not written. A discarded answer leaves the page unchanged.
-
-#### Tips
-
-- To keep the page clean while you test an agent, set Agent writes to Off.
-- To replace a weak entry, select it, set Answer as to Replace selection, and press Play.
-- To check a claim, follow its source back to the line.
-- To get a deeper answer on a hard passage, raise Effort.
-
-### 18.11 Search (@)
+### 18.10 Search (@)
 
 **Product:** Central · **Kind:** instrument · **Pane:** a pane (⌘F), or the line that opens where you type @ in a document
 
@@ -4272,7 +4028,7 @@ Select a passage, type @, choose a result and press Enter. The passage goes to t
 | Target | What the tag does |
 |---|---|
 | Person | Sends a message that carries the passage and where it came from. A person in another world gets a request, which waits until they accept it. |
-| Agent | Starts the agent on the passage, through Answer. The agent reads the passage and the packet. |
+| Agent | Starts the agent on the passage. The agent reads the passage and the packet. |
 | Place | Files the passage on that spot of your world, with a link back to the page. |
 | Document | Adds the passage to the document with a link back. A Flow takes it as a new entry. Another document takes it as a quote at the end. |
 | Passage | Opens the passage. A tag does not send to a passage. |
@@ -4380,7 +4136,7 @@ Where: the rail on the right. The widget shows the search line, the last results
 - Search finds only what you can reach. A world shows only what its owner has shown.
 - To be found is not to be reachable. To be reachable is not to be in touch. Each step belongs to its owner.
 - A tag always shows what it sends, and its size, before it goes.
-- A tag to an agent follows the Agent writes setting of Answer.
+- A tag to an agent writes as Scope and Arm allow.
 - A message from another world arrives under the name of its sender. It stays theirs until you make it your own.
 - An alias is yours. Another person's alias does not run in your Search.
 
@@ -4391,7 +4147,7 @@ Where: the rail on the right. The widget shows the search line, the last results
 - To file a quote on the place it is about, tag the place.
 - To ask what could serve a task, type `@# @5` and the task. Then include the tools you want with `+`.
 
-### 18.12 Ground hygiene
+### 18.11 Ground hygiene
 
 **Product:** Central · **Kind:** effect · **Chain:** a workspace track whose folder holds code
 
@@ -4522,7 +4278,7 @@ Where: the rail on the right. The widget shows the number of findings and the fi
 - To keep disk free, watch the disk reading on each seat.
 - To check two machines, turn Link on and set Machine to the other one.
 
-### 18.13 Impact
+### 18.12 Impact
 
 **Product:** Central · **Kind:** effect · **Chain:** a folder or a note on a workspace track
 
@@ -4622,215 +4378,6 @@ Where: the rail on the right. The widget shows the subject, its three counts and
 - To find who works near a note, read Sessions.
 - To keep one view while you browse, turn Pin on.
 - To see only the notes that cite a subject, set Relation to that kind of link.
-
-### 18.14 Context & world
-
-**Product:** Central · **Kind:** effect · **Chain:** after the agent, on any track the agent works on
-
-Use Context & world to say what an agent may read and where it may write. It shows each place in your world, and each write with its receipt.
-
-#### Two colours
-
-Teal marks what the agent may read. Amber marks where the agent may write. A place can be both.
-
-#### Reach
-
-Reach is the widest area that the agent can read from. A place outside the Reach is closed to the agent, even when it is on the Reads list.
-
-| Reach | What the agent can read from |
-|---|---|
-| One object | The open document or item. |
-| Scene | The scene that holds the object. |
-| Expression | The whole Expression that holds the object. |
-| All of Central | Everything that you own. |
-
-#### Parameters
-
-| Parameter | Values | Default | What it does |
-|---|---|---|---|
-| Reach | One object · Scene · Expression · All of Central | One object | The widest area the agent can read from. |
-| Reads | A list of places | The open document and the packet | The places the agent may read inside its Reach. |
-| Writes to | A list of places | None | The places the agent may write. A place that is not on the list is read-only. |
-| Writes elsewhere | Off · Propose · Write | Propose | Off: the agent does not write. Propose: each change waits for your approval. Write: changes go in directly, each with a receipt. |
-| Knowledge search | On · Off | Off | Lets the agent search your knowledge for passages. |
-
-#### Views
-
-```ui
-device: central:context-world
-caption: Context & world, on a fixture of readings.
-```
-
-##### Folded
-
-Where: after the agent, on any track the agent works on. The folded Context & world shows the Reach, and the number of places read and written. Click the title to unfold it.
-
-##### Compact
-
-Where: after the agent, on any track the agent works on. The compact Context & world shows three rings for the Reach. A teal arc shows the reads. An amber arc shows the writes. It has three macros.
-
-| Macro | What it does |
-|---|---|
-| Reach | Sets One object, Scene, Expression or All of Central. |
-| Writes elsewhere | Sets Off, Propose or Write. |
-| Knowledge search | Sets On or Off. |
-
-Click the plate to show the Context & world whole in the pool. Click ⤢ to open it full in a pane.
-
-##### Whole
-
-Where: the pool under the browser. The whole Context & world shows every parameter, in four groups.
-
-| Group | Parameters |
-|---|---|
-| Reach | Reach |
-| Reads | Reads, Knowledge search |
-| Writes | Writes to, Writes elsewhere |
-| Receipts | None. The group shows the receipts of the agent's writes. |
-
-A change you make in the pool applies at once. It does not add Context & world to your rack.
-
-##### Full
-
-Where: a pane. The full Context & world shows your ground as a tree. Teal marks a place that the agent reads. Amber marks a place that the agent writes. A place can have both marks. The receipts of the agent's writes are below the tree. The controls stay in Device view, below the pane.
-
-In Clip view, Context & world sets what the agent may read and write around the clip. The open document follows the Agent writes value of Answer.
-
-##### Widget
-
-Where: the rail on the right. The widget shows the three rings, the counts of places and the last receipts. Click a receipt to read it in full. The widget stays when you change mode.
-
-#### Transport
-
-| Control | Effect on Context & world |
-|---|---|
-| Arm | On: Writes elsewhere is Write. Off: Writes elsewhere is Propose. Arm does not change Off. |
-| Re-enable | Lights when you change something that the agent wrote. Press it to hand it back. |
-| Key, root and scale | Shows what the agent will read: its size and scope. |
-
-#### To use Context & world
-
-1. Select the track of an agent.
-2. Select Context & world in Device view.
-3. Set Reach to the smallest area that does the job.
-4. Add places to Reads.
-5. Add a place to Writes to only if the agent must write there.
-6. Choose Writes elsewhere. After a run, read the receipts.
-
-#### Rules
-
-- The agent does not write behind your back. Off, Propose and Write are your setting.
-- Every write carries a receipt. The receipt names the agent, the time, the place and the change.
-- A place in the Reach is available to the agent. It is not loaded into every prompt.
-- The agent cannot widen its own Reach or its own Writes to list. Only you change them.
-- The open document follows the Agent writes setting of Answer. Context & world governs every other place.
-- A place that you do not allow stays closed. The device does not open it for one task.
-
-#### Tips
-
-- To keep an agent to one file, set Reach to One object and leave Writes to empty.
-- To let an agent edit one project only, add that project to Writes to and keep Writes elsewhere on Propose.
-- To let an agent search your notes, turn Knowledge search on.
-- To check what an agent changed, read the receipts.
-
-### 18.15 Agent identity
-
-**Product:** Central · **Kind:** effect · **Chain:** before the agent, on any track an agent works on
-
-Use Agent identity to know who an agent is before you give it work. It reads the agent from your own roster and shows its card.
-
-#### What the card shows
-
-| Part | What it shows |
-|---|---|
-| Name | The name of the agent and its colour. |
-| Character | One line that says who the agent is. |
-| Runs on | The program that runs the agent. |
-| Skills | The number of skills that the agent carries. |
-| World | The world where the agent stands. |
-| Standing | Accepted or proposed. |
-| Revision | The revision of your roster that the card comes from. |
-
-#### Parameters
-
-| Parameter | Values | Default | What it does |
-|---|---|---|---|
-| Agent | An agent from your roster | The agent you talk to | Whose identity the device shows. |
-| Roster | Accepted only · Accepted and proposed | Accepted only | Which agents the list holds. |
-| Detail | Name · Card · Full profile | Card | How much of the identity the device shows. |
-
-#### Views
-
-```ui
-device: central:agent-identity
-caption: Agent identity, on a fixture of readings.
-```
-
-##### Folded
-
-Where: before the agent, on any track an agent works on. The folded Agent identity shows the name of the agent and its standing. Click the title to unfold it.
-
-##### Compact
-
-Where: before the agent, on any track an agent works on. The compact Agent identity shows the face of the agent and its character line. It has three macros.
-
-| Macro | What it does |
-|---|---|
-| Agent | Chooses whose identity the device shows. |
-| Roster | Sets Accepted only or Accepted and proposed. |
-| Detail | Sets Name, Card or Full profile. |
-
-Click the plate to show the Agent identity whole in the pool. Click ⤢ to open it full in a pane.
-
-##### Whole
-
-Where: the pool under the browser. The whole Agent identity shows every parameter, in two groups.
-
-| Group | Parameters |
-|---|---|
-| Agent | Agent, Detail |
-| Roster | Roster |
-
-A change you make in the pool applies at once. It does not add Agent identity to your rack.
-
-##### Full
-
-Where: a pane. The full Agent identity shows the full profile of the agent, as your roster holds it. Read it here. You cannot edit it here. The controls stay in Device view, below the pane.
-
-In Clip view, Agent identity edits no clip. It shows who the agent is for the track.
-
-##### Widget
-
-Where: the rail on the right. The widget shows the card of the agent you talk to: its name, character, program, skills, world and standing. The widget stays when you change mode.
-
-#### Transport
-
-| Control | Effect on Agent identity |
-|---|---|
-| Rate | Shows which machine serves your roster. |
-
-#### To use Agent identity
-
-1. Open the Agents list in the browser.
-2. Select an agent.
-3. Read its card.
-4. To seat the agent, drag it onto an empty track.
-5. To see a proposed agent, set Roster to Accepted and proposed.
-6. Accept or reject a proposed agent in the changes that wait for your approval.
-
-#### Rules
-
-- The roster is yours. The device reads it. It does not add, change or invent an agent.
-- An agent enters the roster when you accept a profile that was proposed from your stated intent.
-- If the roster cannot be read, the device shows the reason word for word and lists no agents.
-- Identity gives an agent no right. What an agent may read and write comes from Context & world.
-- The Beings page of an agent reads its card from this device. The page keeps no copy.
-
-#### Tips
-
-- To pick the right agent for a task, read the character line on each card.
-- To find out who wrote an entry, select the name of its author.
-- To change who an agent is, say what you want changed and accept the new profile when it is proposed.
 
 ## 19. Factory and the agent chain
 
@@ -5022,106 +4569,167 @@ Where: the rail on the right. The widget shows one line for each chain, with its
 
 ### 19.3 Agent
 
-**Product:** Actuation · **Kind:** instrument · **Chain:** second device on a Factory session's chain
+**Product:** Actuation, with Software Factory and Central · **Kind:** instrument · **Chain:** on any track an agent works on: second on a Factory session's chain, after the gateway; last on a Central workspace's chain, after the packet
 
-You need an agent that works on your task at the pace, effort and budget you choose. The Agent device is that agent. It answers, it works through its tasks, and you can steer it while it runs.
+You need an agent that works for you at the pace, effort and budget you
+choose, that you can talk to while it works, and whose every act you can read
+back. The Agent is that agent, in every mode. In Factory it works through the
+tasks on its session's track. In Central it reads the packet and answers into
+the page you are writing. Wherever it sits, it is the same agent, with the
+same settings, the same custody and the same thread.
 
-#### One face, three owners
+#### One agent, three owners
 
-The Agent device shows one face and joins settings from three places. Actuation owns the model, effort, budget, heartbeat and input. Software Factory owns autonomy and the review gate. See Custody. Central owns who the agent is. The agent comes from your roster, so no crowd is fixed in advance.
+The Agent shows one face and joins settings from three places. Actuation owns
+how the agent runs: the model, effort, budget, heartbeat and input. Software
+Factory owns how much it decides alone: autonomy, the review gate and what it
+holds. Central owns who it is: the agent comes from your roster, so no crowd
+is fixed in advance. What the agent may read, and where its writes land,
+belongs to Scope (§19.13), the next device on the chain.
 
 #### Parameters
+
 | Parameter | Values | Default | What it does |
 |---|---|---|---|
 | Power | On · Benched | On | Benched keeps the agent on the chain but gives it no work. |
-| Agent | A name from your roster | The seated agent | Shows who the agent is. Drag another agent from the browser to replace it. |
-| Model | The models the harness offers | The harness default | The model for this session. A group can set another model for its subagents. |
+| Agent | A name from your roster | The seated agent | Who the agent is. Drag another agent from the browser to replace it. |
+| Model | The models the harness offers | The harness default | The model for this track. A group can set another model for its helpers. |
 | Harness | The harnesses found on this machine | The one the gateway uses | The program that runs the agent. |
 | Effort | Low · Medium · High · Max | Medium | How hard the agent thinks in each turn. A task can set its own effort. |
-| Budget | 1–40 turns | 12 | The turns allowed for one task. The device shows the turns used. |
+| Budget | 1–40 turns | 12 | The turns allowed for one task or one answer. The device shows the turns used. |
 | Heartbeat | On · Off, with a beat in seconds | On, 15 s | The agent checks in on each beat. Each check-in moves its needle. |
 | Input | Steer · Queue | Steer | Steer: what you send reaches the turn that runs. Queue: it waits as the next task. |
-| On stall | Ask · Retry once · Stop | Ask | What the device does when the session stalls. |
-| Autonomy | Suggest · Review · Auto | Review | Shown here. Custody sets it. |
+| On stall | Ask · Retry once · Stop | Ask | What the device does when the agent stalls. |
+| Autonomy | Suggest · Review · Auto | Review | Suggest: the agent proposes only. Review: it works and you check each result. Auto: it works and lands changes with receipts. |
+| Review gate | Diffs · Approvals · Both | Both | What waits for you before a change lands. |
+| Escalate to | A person | You | Who the agent asks when it needs a decision. |
+| Wait | 15 min–24 h | 4 h | How long a request waits before it counts as unanswered. |
+| On no answer | Hold · Deny | Hold | What the agent does when nobody answers. |
+| Held | A list (reading) | Read from the agent | What the agent holds now, such as a file or a setting. |
+| Hand back | Lit · Dark (reading) | Dark | Lit when you edited something the agent holds. |
+
+Identity is a reading of your roster: the agent's name and colour, its
+character in one line, the program that runs it, the skills it carries, the
+world it stands in, whether you accepted it or it is only proposed, and the
+revision of the roster the card comes from. The device reads the roster and
+never adds, changes or invents an agent. Identity gives an agent no right:
+what it may read and write comes from Scope.
+
+How a write arrives is not set here. Scope sets the most the agent may do in
+each part of the world, and Arm decides whether it writes directly or
+proposes.
+
+#### The thread
+
+The agent's material is its thread: one conversation and its tool use, full
+width, in the order things happened. Helpers the agent started each have a
+thread of their own, nested under it.
+
+| Item | What it shows |
+|---|---|
+| Task divider | The name of a task and how it stands. |
+| Message | What you said and what the agent said, each with its avatar. |
+| Tool row | One tool the agent used: a key chip and a summary. Click it to open the output. |
+| Spawn row | A helper the agent started, with a link to its thread and its live state. |
+| Steer line | Words you sent in the middle of a turn. It reads "heard at next tool" until the agent takes it. |
+| Proposal card | A change the agent proposes, with Approve, Changes and Diff. |
+| Stall card | A card with an orange border. It names the prompt the agent waits for, with Retry, Hard stop, Steer and Tell parent. |
+| Working line | A pulsing dot with what the agent is doing now. |
+
+The thread's head shows the chain of parent agents, the model and the turns
+used, and holds Stop and Retry. Retry lights only when the agent has stalled.
+The composer is at the bottom: Enter sends, Option and Enter steer the
+running turn, Esc stops, and the voice button turns speech into words. The
+thread can show tool rows collapsed, expanded or hidden, helpers linked or
+inline, and only your messages, the agent's, or its tools.
+
+In Central, the agent's answer joins the page as a new entry with its
+sources, or replaces the passage you selected: Overdub decides which. An
+answer carries its author, the packet it read and its size, the source of
+each claim, and a receipt when it wrote.
 
 #### Views
 
 ```ui
 device: actuation:harness-model
-caption: Agent device, on a fixture of readings.
+caption: Agent, on a fixture of readings.
 ```
 
-##### Folded
-
-Where: on a Factory session's chain, as the second device. The folded Agent shows the agent's name and a power light. The light is lit only when the harness reports that the agent is on. Click the title to unfold it.
-
-##### Compact
-
-Where: on a Factory session's chain. The compact Agent shows the agent's face. The face spins while the agent works. It also shows the turns used, the turns allowed and the state. It has four macros.
-
-| Macro | What it does |
+| View | Holds |
 |---|---|
-| Autonomy | Sets Suggest, Review or Auto. Custody owns this value. |
-| Effort | Sets how hard the agent thinks in each turn. |
-| Budget | Sets the turns allowed for one task. |
-| Input | Sets Steer or Queue. |
+| Folded | The agent's name and its power light. The light is lit only when the harness reports the agent is on. |
+| Compact | The agent's face, which turns while it works, with the turns used of the turns allowed and its state. A dot for each thing it holds. Macros: Autonomy, Effort, Budget, Input. A composer under the face: type a task or a question and press Enter. |
+| Whole | Pages Agent, Custody and Identity. Agent: Power, Agent, Model, Harness; Effort, Budget; Heartbeat, On stall; Input. Custody: Autonomy and Review gate; Escalate to, Wait, On no answer; the held items and Hand back. Identity: the roster card. |
+| Full | The thread. |
+| Pop-out | The thread with the agent's controls in one row under it: a window to watch and steer one agent from. |
+| Widget | The agent you are talking to: its face, its state, the last lines of its thread and a composer. It stays when you change mode. |
 
-Type a task in the composer and press Enter to run it. Click the plate to show the Agent whole in the pool. Click ⤢ to open the thread in a pane.
-
-##### Whole
-
-Where: the pool under the browser. The whole Agent shows every parameter, in four groups.
-
-| Group | Parameters |
-|---|---|
-| Identity | Power, Agent, Model, Harness |
-| Effort | Effort, Budget, Autonomy |
-| Liveness | Heartbeat, On stall |
-| Input | Input |
-
-Drag another agent from the browser onto the Agent parameter to replace the agent. A value that an agent moved shows that agent's name.
-
-##### Full
-
-Where: a pane. The full Agent is the thread. It fills the pane with your messages, the agent's messages, tool rows, steer lines, proposal cards and the stall card. The stall card names what the last tool waits for. The controls stay in Device view, below the pane.
-
-In Clip view, a task of this agent shows its log.
-
-##### Widget
-
-Where: the rail on the right. The widget is the agent you are talking to. It shows the agent's thread, its state and a composer. Type in the composer to send a message. The widget stays when you change mode.
+Drag another agent from the browser onto the Agent parameter to replace it. A
+value that an agent moved shows that agent's name.
 
 #### Transport
+
 | Control | Effect on the Agent |
 |---|---|
+| Play | Factory: runs the selected task, or every queued task. Central: sends the packet; the answer arrives as an entry. |
+| Stop | Pauses at the next safe point and keeps what the agent had in mind. Press twice to cancel the turn, or to discard an answer in progress. |
+| Record | Factory: speaks a new task onto the armed track. Central: dictates into the page. |
+| Overdub | Factory: steers the running turn. Central: the answer joins as a new entry, or replaces the selection. |
+| Arm | Lets the agent write directly, with receipts, where Scope allows. Off: every write is a proposal. |
+| Re-enable | Lights when you edited something the agent holds. Press it to hand it back. |
 | Tempo ‹ › | Sets the effort of the selected agent. |
 | Time signature | Shows turns used of turns allowed. |
 | Metronome | Turns the heartbeat on or off. |
 | Quantize | Sets when Stop and Steer land: now, at the next tool, or at the next turn. |
-| Play | Runs the selected task, or every queued task. |
-| Stop | Pauses at the next safe point and keeps what the agent has in mind. Press twice to cancel the turn. |
-| Record | Speaks a new task onto the armed track. |
-| Overdub | Switches Input between Steer and Queue. |
+| Tap | Asks the agent where it has got to. |
+| Loop and punch | Sets the window in which the agent may write. |
+| Key | Counts tokens in and out. |
 | Load | Shows how full the agent's context is. |
 
 #### To use the Agent
-1. Drag an agent from the browser onto an empty track. The agent takes the seat.
-2. Select the track. Open Device view.
+
+1. Drag an agent from the browser onto an empty track. The agent takes the
+   seat. In Central, the agent of the workspace answers on its pages.
+2. Select the track and open Device view. Read the agent's card on the
+   Identity page if you do not know it.
 3. Choose Effort and Budget. Use a low budget for a short task.
-4. Type the task in the composer. Press Enter to run it.
-5. To change course, type a note and press Option-Enter. The agent hears it at the next safe point.
-6. Click the arrow on the title to read the thread.
+4. For a new agent, set Autonomy to Suggest. Raise it to Review, and later
+   Auto, as you come to trust it.
+5. In Factory, type the task in the composer and press Enter. In Central,
+   select a passage, put it in the packet, and press Play.
+6. To change course, type a note and press Option and Enter. The agent hears
+   it at the next safe point.
+7. Open the thread in a pane to read everything the agent did, or pop it out
+   to keep it beside your work.
 
 #### Rules
-- The light on the title is a reading. It is lit only when the harness reports the agent is on.
-- Subagents get their own chains. They share the lead's gateway and git seat.
-- A stopped needle means a stall. The track lights Retry. The stall card names what the last tool waits for.
-- A value moved by an agent shows that agent's name.
+
+- The light on the head is a reading. It is lit only when the harness reports
+  the agent is on.
+- The agent does not write behind your back. With Arm off, each change
+  arrives as a proposal card; with Arm on, it lands directly with a receipt,
+  only where Scope lets it write.
+- Every write carries a receipt that names the agent, and every entry shows
+  its author.
+- Deny is always yours. No Autonomy value takes it away.
+- When you edit something the agent holds, the agent does not overwrite your
+  edit. Hand back stays lit until you press it.
+- The thread shows what happened and in what order. It does not edit the
+  record.
+- A stopped needle means a stall. The track lights Retry, and the stall card
+  names what the last tool waits for.
+- Helpers get their own chains. They share the lead's gateway and seat.
+- The thread is material for the Timeline.
 
 #### Tips
+
 - To cut cost on a simple task, lower Effort and Budget before you press Play.
-- To add a note without a break in the turn, set Input to Steer.
-- To queue several jobs for one agent, set Input to Queue and send each job as its own task.
+- To add a note without a break in the turn, set Input to Steer. To queue
+  several jobs, set it to Queue and send each as its own task.
+- To find why a run failed, show only the tools in the thread and read the
+  last rows.
+- To hand a stall back to its parent, choose Tell parent on the stall card.
+- To take over a file for an hour, edit it. Press Hand back when you finish.
 
 ### 19.4 Experiment
 
@@ -5277,7 +4885,7 @@ Where: a pane. The full monitor is the frame list. Each frame shows its session,
 
 ##### Widget
 
-Where: the rail on the right. The widget is the Frames widget. It shows the last frames of the selected session in a tile. The widget stays when you change mode.
+Where: the rail on the right. The widget shows the last eleven frames of the selected session, newest at the bottom. A frame is an event such as tool.start or approval.request. The widget only reads. It sends no frame. Click the open mark to open the monitor in a pane. The widget stays when you change mode.
 
 #### Transport
 | Control | Effect on the Frames monitor |
@@ -5995,114 +5603,37 @@ Where: the rail on the right. The widget shows the tasks of the selected session
 - To run a batch, queue a task on each session and launch the row.
 - To keep a long task from holding up others, set Launch quantize to Next turn.
 
-### 19.13 Custody
+### 19.13 Scope
 
-**Product:** Software Factory · **Kind:** effect · **Chain:** on the Agent device; the Agent's face shows it
+**Product:** Software Factory · **Kind:** effect · **Chain:** after the agent, on any track an agent works on: fourth on a Factory session's chain; last on a Central workspace's chain
 
-You need to decide how much an agent decides alone, what you must check, and who holds each thing the agent touches. Custody sets the agent's autonomy and the review gate. It also lights when you take hold of something the agent held.
-
-#### Parameters
-| Parameter | Values | Default | What it does |
-|---|---|---|---|
-| Autonomy | Suggest · Review · Auto | Review | Suggest: the agent proposes only. Review: the agent works and you check each result. Auto: the agent works and lands changes with receipts. |
-| Review gate | Diffs · Approvals · Both | Both | What waits for you before a change lands. |
-| Escalate to | A person | You | Who the agent asks when it needs a decision. |
-| Wait | 15 min–24 h | 4 h | How long a request waits before it counts as unanswered. |
-| On no answer | Hold · Deny | Hold | What the agent does when nobody answers. |
-| Write mode | Propose · Draft · Direct | Propose | The most the agent may do with a write. The Scope device sets the limit for each part of the world. The stricter value stands. |
-| Held | A list (reading) | Read from the agent | The things the agent holds now, such as a file or a setting. |
-| Hand back | Lit · Dark (reading) | Dark | Lit when you edited something an agent holds. |
-
-#### Views
-
-```ui
-device: software-factory:agent-custody
-caption: Custody, on a fixture of readings.
-```
-
-##### Folded
-
-Where: on the Agent device, in a Factory session's chain. The folded Custody shows the title "Custody" and the autonomy value. Click the title to unfold it.
-
-##### Compact
-
-Where: on the Agent device. The compact Custody shows the items that the agent holds, as dots. It has four macros.
-
-| Macro | What it does |
-|---|---|
-| Autonomy | Sets Suggest, Review or Auto. |
-| Review gate | Chooses Diffs, Approvals or Both. |
-| Write mode | Sets Propose, Draft or Direct. |
-| Hand back | Lights when you edited a held item. Press it to give control to the agent again. |
-
-Click the plate to show Custody whole in the pool. Click ⤢ to open the held items full in a pane.
-
-##### Whole
-
-Where: the pool under the browser. The whole Custody shows every parameter, in three groups.
-
-| Group | Parameters |
-|---|---|
-| Autonomy | Autonomy, Write mode |
-| Review | Review gate, Escalate to, Wait, On no answer |
-| Held | Held, Hand back |
-
-The Scope device sets a limit for each part of the world. The stricter Write mode stands.
-
-##### Full
-
-Where: a pane. The full Custody lists every item that the agent holds. Each item shows who last changed it, with its receipts. The controls stay in Device view, below the pane.
-
-##### Widget
-
-Where: the rail on the right. The widget shows the count of held items, the Hand back light and the Autonomy value. The widget stays when you change mode.
-
-#### Transport
-| Control | Effect on Custody |
-|---|---|
-| Arm | Lets the agent write directly, with receipts. Off: every write is a proposal. |
-| Re-enable | Gives back what the agent held. It is lit only when you edited a held item. |
-| Loop and punch | Sets the window in which the agent may write. |
-
-#### To use Custody
-1. Select a session. Open Device view.
-2. Turn Autonomy to Suggest for a new agent.
-3. Read the proposals in Approvals. Approve those you trust.
-4. When you trust the agent, set Autonomy to Review. Later, set it to Auto.
-5. To change what an agent holds, edit it. The Hand back light comes on.
-6. Press Hand back to give control to the agent again.
-
-#### Rules
-- Direct writes need Arm on. With Arm off, every write is a proposal.
-- Every write carries a receipt. The receipt names the agent.
-- Deny is always yours. No Autonomy value takes it away.
-- When you edit a held item, the agent does not overwrite your edit. The light stays on until you press Hand back.
-
-#### Tips
-- To try an unknown agent safely, set Autonomy to Suggest.
-- To review only the risky files, set the Review gate to Diffs and Auto for the rest.
-- To take over a file for an hour, edit it. Press Hand back when you finish.
-
-### 19.14 Scope
-
-**Product:** Software Factory · **Kind:** effect · **Chain:** fourth device on a Factory session's chain
-
-You need to limit the part of your world an agent may touch, and decide how its writes arrive. Scope is the world device. It sets the reach from one object up to everything you own. It also sets whether a write arrives as a proposal, a draft or a direct change.
+You need to limit the part of your world an agent may touch, and decide how
+its writes arrive, wherever the agent works. Scope is the world device, the
+same in every mode. It sets the reach from one object up to everything you
+own, lists the places the agent may read and write inside it, and sets
+whether a write arrives as a proposal, a draft or a direct change. The
+Knowledge route sits inside it and decides what the agent may look up.
 
 #### The rings
 
-The picture shows nested rings. The smallest ring is one object. The next rings are a scene, an Expression, and everything in Central. The teal arc shows the reach for reads. The amber arc shows the reach for writes. A basis readout shows the revision the agent works from and the revision of its edits, for example r15 to r17.
+The picture shows nested rings. The smallest ring is one object: the open
+page, item or symbol. The next rings are a scene, an Expression, and
+everything in Central. The teal arc shows the reach for reads. The amber arc
+shows the reach for writes. A place can be both. A basis readout shows the
+revision the agent works from and the revision of its edits, for example r15
+to r17.
 
 #### Parameters
+
 | Parameter | Values | Default | What it does |
 |---|---|---|---|
-| Reach | Object · Scene · Expression · Central | Scene | The widest part of the world the agent may touch. |
-| Reads | A list of places, each with a light | This scene and its registers | The places the agent may read. A teal light marks a place in reach. |
-| Writes | A list of places, each with a light | This scene's layers | The places the agent may write. An amber light marks a place in reach. |
-| Write mode | Propose · Draft · Direct | Propose | How a write arrives. Propose: as a proposal that waits. Draft: in a draft that you review. Direct: in the thing itself, with a receipt. |
+| Reach | Object · Scene · Expression · Central | Object in Central; Scene in Factory and Expressions | The widest part of the world the agent may touch. A place outside it is closed, even when it is on a list. |
+| Reads | A list of places, each with a light | The open object, the packet, and the scene's registers | The places the agent may read inside its Reach. A teal light marks a place in reach. |
+| Writes | A list of places, each with a light | None in Central; the scene's layers in Factory | The places the agent may write. A place not on the list is read-only. An amber light marks a place in reach. |
+| Write mode | Off · Propose · Draft · Direct | Propose | How a write arrives. Off: the agent writes nowhere. Propose: as a proposal that waits. Draft: in a draft that you review. Direct: in the thing itself, with a receipt. |
 | Knowledge | See Knowledge route | As Knowledge route | The knowledge sources and bounds. |
 | Basis | A revision pair (reading) | Read from the world | The revision the agent started from and the revision of its edits. |
-| Receipts | A list (reading) | Read from the agent | One receipt for each write. |
+| Receipts | A list (reading) | Read from the agent | One receipt for each write: the agent, the time, the place and the change. |
 
 #### Views
 
@@ -6111,73 +5642,53 @@ device: software-factory:context-write-mode
 caption: Scope, on a fixture of readings.
 ```
 
-##### Folded
-
-Where: on a Factory session's chain, as the fourth device. The folded Scope shows the title "Scope" and the Reach value. Click the title to unfold it.
-
-##### Compact
-
-Where: on a Factory session's chain. The compact Scope shows the nested rings. Teal marks what the agent may read. Amber marks what it may write. It has four macros.
-
-| Macro | What it does |
+| View | Holds |
 |---|---|
-| Reach | Sets Object, Scene, Expression or Central. |
-| Reads | Chooses the places the agent may read. |
-| Writes | Chooses the places the agent may write. |
-| Write mode | Sets Propose, Draft or Direct. |
-
-Click the Scope title to show it whole in the pool. Click ⤢ to open the world full in a pane.
-
-##### Whole
-
-Where: the pool under the browser. The whole Scope shows every parameter, in four groups.
-
-| Group | Parameters |
-|---|---|
-| Reach | Reach, Basis |
-| Reads and Writes | Reads, Writes, Write mode |
-| Knowledge | Knowledge |
-| Receipts | Receipts |
-
-A place that you raise into wider reach asks you first.
-
-##### Full
-
-Where: a pane. The full Scope shows the world that the agent may touch. The places show as they are, and the agent's receipts sit on them. The controls stay in Device view, below the pane.
-
-##### Widget
-
-Where: the rail on the right. The widget shows the Reach, the Write mode and the count of receipts. The widget stays when you change mode.
+| Folded | Scope and the Reach. |
+| Compact | The rings, teal over the top for reads and amber under the bottom for writes; the basis. Macros: Reach, Write mode, and the counts of read and write places. |
+| Whole | Band one: the rings with the reach handle, Reach with Confirm and Cancel, Write mode, the receipts. Band two: Reads, Writes, Knowledge and the basis. |
+| Full | The world the agent may touch, as a tree of your ground: teal on the places it reads, amber on the places it writes, its receipts on the places it wrote. |
+| Widget | Small rings, the Reach, the Write mode and the last receipts. Press a receipt to read it whole. |
 
 #### Transport
+
 | Control | Effect on Scope |
 |---|---|
-| Arm | Direct writes land only when Arm is on. With Arm off, Direct acts as Propose. |
+| Arm | Direct writes land only when Arm is on. With Arm off, Direct acts as Propose. Arm never changes Off. |
 | Loop and punch | Sets the window in which writes may land. |
-| Re-enable | Gives back what the agent held in this scope. |
+| Re-enable | Lights when you change something the agent wrote. Press it to hand it back. |
 | Draw | Marks a place or a tile as a reference for the agent. |
+| Key, root and scale | Shows what the agent will read: its size and its reach. |
 
 #### To use Scope
-1. Select a session. Open Device view.
-2. Turn Reach to the smallest part of the world the task needs.
-3. Open Scope whole in the pool. Check the lists of Reads and Writes.
+
+1. Select the track of an agent and open Device view.
+2. Turn Reach to the smallest part of the world the work needs.
+3. Open Scope whole. Check the lists of Reads and Writes. Add a place to
+   Writes only if the agent must write there.
 4. Choose a Write mode. Start with Propose.
-5. After you trust the result, choose Draft or Direct.
-6. Read the receipts in the Ledger.
+5. After you trust the result, choose Draft or Direct, and arm the track.
+6. Read the receipts here, or in the Ledger.
 
 #### Rules
-- Scope limits the agent. A place outside the Reach is not readable and not writable.
-- The agent does not write behind your back. Off, Propose and Write are your setting.
+
+- Scope limits the agent. A place outside the Reach is neither readable nor
+  writable.
+- The agent cannot widen its own Reach or its own lists. Only you change them.
+- A place that you raise into wider reach asks you first.
+- A place in the Reach is available to the agent. It is not loaded into every
+  prompt.
 - Every write carries a receipt.
 - Direct needs Arm on.
-- A place that you raise into wider reach asks you first.
 
 #### Tips
-- To keep an agent in one file, set Reach to Object.
-- To let an agent read widely but write little, raise Reach and keep Writes short.
+
+- To keep an agent to one file, set Reach to Object and leave Writes empty.
+- To let an agent read widely but write little, raise Reach and keep Writes
+  short.
 - To try a risky change, set Write mode to Draft and review the draft.
 
-### 19.15 Ledger
+### 19.14 Ledger
 
 **Product:** Software Factory · **Kind:** instrument · **Track:** Factory's Main track
 
@@ -6235,7 +5746,7 @@ Where: a pane. The full Ledger shows the list of tasks, with each receipt open b
 
 ##### Widget
 
-Where: the rail on the right. The widget shows the last receipts, for example "#212 re-plan port · landed". The widget stays when you change mode.
+Where: the rail on the right. The widget shows the last receipts. Each line is a task and its receipt, for example "#212 re-plan port · landed". Select a receipt to read it in full. Click the task to open its log. The widget stays when you change mode.
 
 #### Transport
 | Control | Effect on the Ledger |
@@ -6260,7 +5771,7 @@ Where: the rail on the right. The widget shows the last receipts, for example "#
 - To prepare the Day's face 2, read today's Ledger first.
 - To audit one agent, set Agent to that agent and Period to All.
 
-### 19.16 Approvals
+### 19.15 Approvals
 
 **Product:** Software Factory · **Kind:** effect · **Track:** Factory's Main track
 
@@ -6315,7 +5826,7 @@ Where: a pane. The full Approvals shows the queue. Beside it, the diff of the se
 
 ##### Widget
 
-Where: the rail on the right. The widget shows the proposal cards, each with Approve. The widget stays when you change mode.
+Where: the rail on the right. The widget shows the proposal cards. Each card names the agent and the change. Each card has Approve, Changes and Open. Click Open to read the diff. Click Approve to accept the proposal. Click Changes to ask for a different result. Nothing lands until you answer. The widget stays when you change mode.
 
 #### Transport
 | Control | Effect on Approvals |
@@ -6341,7 +5852,7 @@ Where: the rail on the right. The widget shows the proposal cards, each with App
 - To clear many proposals fast, set Order to By risk and read the risky ones first.
 - To stop a deploy from leaving at night, leave On no answer at Hold.
 
-### 19.17 Run
+### 19.16 Run
 
 **Product:** Software Factory · **Kind:** instrument · **Track:** one lane for each session in Arrangement view
 
@@ -6432,7 +5943,7 @@ Where: the rail on the right. The widget shows the session's state, its needle t
 - To watch only the sessions that matter, set Watch to Off on the others.
 - To keep a loud session out of the Ledger, set its Telemetry to Off.
 
-### 19.18 Agentset rack
+### 19.17 Agentset rack
 
 **Product:** Software Factory · **Kind:** rack · **Chain:** a group's chain in Factory
 
@@ -6525,7 +6036,7 @@ Where: the rail on the right. The widget shows the crew tree with a light on eac
 - To save cost, set Subagent model to a smaller model for the group.
 - To find the slow member, look for the orange outline.
 
-### 19.19 Git / landing
+### 19.18 Git / landing
 
 **Product:** Workcell · **Kind:** effect · **Chain:** last device on a Factory session's chain
 
@@ -6619,7 +6130,7 @@ Where: the rail on the right. The widget shows the branch, the changes, the chec
 - To test a change before anyone sees it, keep Push on Off and read the diff.
 - To get a second view, land as a draft merge request and ask a reviewer.
 
-### 19.20 Seat
+### 19.19 Seat
 
 **Product:** Workcell · **Kind:** effect · **Chain:** inside the Git / landing device; whole in the pool
 
@@ -6705,7 +6216,7 @@ Where: the rail on the right. The widget shows the seat name, the lane and the c
 - To work next to another agent, choose Attach.
 - To clear a seat after a merge, press Release.
 
-### 19.21 Remote carrier
+### 19.20 Remote carrier
 
 **Product:** Workcell · **Kind:** effect · **Chain:** the fourth chain of the Gateways rack
 
@@ -6787,7 +6298,7 @@ Where: the rail on the right. The widget shows the machine name, its dot and the
 - To run a long job away from your laptop, choose a connected machine and set Transport to Remote.
 - To find out why a carrier is refused, read its reason in the Standing row.
 
-### 19.22 Link
+### 19.21 Link
 
 **Product:** Workcell · **Kind:** effect · **Track:** Factory's Main track
 
@@ -10369,20 +9880,38 @@ Where: the rail on the right. The widget shows the small grid with the cell mark
 
 ## 23. Widgets
 
-The rail on the right keeps context at hand in every mode. Each widget is a device in its rail presentation.
+The rail on the right keeps context at hand in every mode. Each widget is a device in its widget view.
 
 ### 23.1 How widgets work
 
-**Product:** Central · **Kind:** rack · **Rail:** the widget rail on the right
+**Product:** Central · **Part of the window:** the widget rail on the right
 
-You need the context of your work at hand, in every kind of work. The widget rail holds small live views, and each view is a device. A widget stays on the rail when you change mode.
+You need the context of your work at hand, in every kind of work. The widget
+rail holds small live views. A widget is a view of a device: the agent you
+are talking to, the packet, the ledger, the approvals, the terminal, the
+frames, the graph around your selection, the sky. Its tile is the device's
+widget view, and the device's other views open from the tile. A widget with
+no device elsewhere, such as Files or Calendar, is a small device born on the
+rail; its entry follows below. A widget stays on the rail when you change
+mode.
 
 #### The rail
 
-Open tiles sit at the top of the rail. The launcher sits below them, as a grid of squares. Each square has a small preview of its widget, and a dot when the widget is open. A tile has a title, a pin and a close mark. The close mark closes the tile, and the widget stays in the launcher. Each widget holds a piece of context that belongs to your whole world. A terminal that you open in Factory is still there in Central.
+Open tiles sit at the top of the rail. The launcher sits below them, as a grid
+of squares. Each square has a small preview of its widget, and a dot when the
+widget is open. A tile has its device's light, its title, and the marks ▦ and
+↗ to open the device in a pane or in its own window, with a pin and a close
+mark. The close mark closes the tile, and the widget stays in the launcher.
+Each widget holds a piece of context that belongs to your whole world. A
+terminal that you open in Factory is still there in Central.
 
-#### Parameters
-| Parameter | Values | Default | What it does |
+Show or hide the rail with ⌘⌥R. Drag its edge to widen it; at 560 px and
+wider, tiles move into two columns. Fold the launcher to give the tiles the
+height.
+
+#### Settings
+
+| Setting | Values | Default | What it does |
 |---|---|---|---|
 | Open | The widgets in the launcher | By mode | The tiles shown at the top of the rail. |
 | Pin | On · Off, for each tile | Off | On: the tile keeps its subject while you select other things. Off: it follows your selection. |
@@ -10390,50 +9919,6 @@ Open tiles sit at the top of the rail. The launcher sits below them, as a grid o
 | Launcher | Open · Folded | Open | A folded launcher shows only its search field, and the tiles get the height. |
 | Search | Text | Empty | Filters the launcher by name. |
 | Preset | A named group of tiles | None | A saved group of open tiles. |
-
-#### Views
-
-```ui
-device: widgets:rail
-caption: Rail, on a fixture of readings.
-```
-
-##### Folded
-
-Where: the launcher on the rail, and on a chain. The folded rail shows as a launcher square with its search field. A dot marks an open tile. Click the square to open the tile on the rail.
-
-##### Compact
-
-Where: on a chain. The compact rail shows the launcher as a grid of squares. Each square has a small preview of its widget. A dot marks an open widget. It has four macros.
-
-| Macro | What it does |
-|---|---|
-| Width | Sets the width of the rail, from 260 to 900 px. |
-| Launcher | Sets Open or Folded. |
-| Search | Filters the launcher by name. |
-| Preset | Opens a saved group of tiles. |
-
-Click the plate to show the Rail whole in the pool. Click ⤢ to open it full in a pane.
-
-##### Whole
-
-Where: the pool under the browser. The whole rail shows every parameter, in three groups.
-
-| Group | Parameters |
-|---|---|
-| Tiles | Open, Pin |
-| Rail | Width, Launcher |
-| Find | Search, Preset |
-
-A change you make in the pool applies at once. Select the square of a widget in the browser to show the settings of that widget in the pool.
-
-##### Full
-
-Where: a pane. The full rail shows the open tiles in two columns at pane size. The launcher is below them, with the preview of each widget. A widget that has a full form opens it in a pane. The controls stay in Device view, below the pane.
-
-##### Widget
-
-Where: the rail on the right. The rail is on the right of the window in every mode. Open tiles sit at the top. Each tile has a title, a pin and a close mark. The launcher is below the tiles. Click a square to open or close a tile. Click the arrows to widen or narrow the rail. Click Save current tiles as preset to keep the group of open tiles. The rail stays when you change mode.
 
 #### Transport
 | Control | Effect on the rail |
@@ -10533,81 +10018,7 @@ Where: the rail on the right. The widget shows the tree of sessions. Three count
 #### Tips
 - To find a lost session, filter to Running and read the names.
 
-### 23.3 Terminal
-
-**Product:** Workcell · **Kind:** instrument · **Rail:** the widget rail on the right
-
-You need to see and use the shells of your sessions. Terminal shows the live shells. It follows the agent that you select.
-
-#### Parameters
-| Parameter | Values | Default | What it does |
-|---|---|---|---|
-| Follow | Selected agent · Pinned shell | Selected agent | Which shell the tile shows. |
-| Shell | A list of live shells | The agent's shell | Chooses the shell. |
-| Prompts | Show · Hide | Show | Marks a shell that waits for an answer, in the stall colour. |
-
-#### Views
-
-```ui
-device: widgets:terminal
-caption: Terminal, on a fixture of readings.
-```
-
-##### Folded
-
-Where: the launcher on the rail, and on a chain. The folded Terminal shows as a launcher square with the name Terminal. A dot marks an open tile. Click the square to open the tile on the rail.
-
-##### Compact
-
-Where: on a chain. The compact Terminal shows the last lines of the shell and its prompt. It has three macros.
-
-| Macro | What it does |
-|---|---|
-| Follow | Sets Selected agent or Pinned shell. |
-| Shell | Chooses a live shell. |
-| Prompts | Sets Show or Hide. |
-
-Click the plate to show the Terminal whole in the pool. Click ⤢ to open it full in a pane.
-
-##### Whole
-
-Where: the pool under the browser. The whole Terminal shows every parameter, in two groups.
-
-| Group | Parameters |
-|---|---|
-| Shell | Follow, Shell |
-| Prompts | Prompts |
-
-A change you make in the pool applies at once.
-
-##### Full
-
-Where: a pane. The full Terminal is a full terminal in a pane. It shows the shell that the tile follows. Type here. A shell that waits for an answer shows in the stall colour. The controls stay in Device view, below the pane.
-
-##### Widget
-
-Where: the rail on the right. The widget shows the live shell. A line below it says "following" and shows the name of the agent. It follows the agent that you select. A shell that waits for a yes or no shows in the stall colour. Type your answer in the shell. The widget stays when you change mode.
-
-#### Transport
-| Control | Effect on Terminal |
-|---|---|
-| Follow | Moves the tile to the shell of the selected agent. |
-| Stop | Pauses the agent. It does not close the shell. |
-
-#### To use Terminal
-1. Open Terminal from the launcher.
-2. Select an agent. The tile follows its shell.
-3. If a shell waits for an answer, read the prompt.
-4. Type your answer in the shell.
-
-#### Rules
-- A shell that waits for a yes or no shows in the stall colour.
-- A terminal stays on the rail when you change mode.
-
-#### Tips
-- To stop a stuck command, pin the shell and press Control-C.
-
-### 23.4 Files
+### 23.3 Files
 
 **Product:** Workcell · **Kind:** instrument · **Rail:** the widget rail on the right
 
@@ -10680,7 +10091,7 @@ Where: the rail on the right. The widget shows the tree of the files that the se
 #### Tips
 - To review a run fast, set Show to Changed only.
 
-### 23.5 Web
+### 23.4 Web
 
 **Product:** Central · **Kind:** instrument · **Rail:** the widget rail on the right
 
@@ -10748,75 +10159,7 @@ Where: the rail on the right. The widget shows the page that the selected agent 
 #### Tips
 - To check a claim, open the page and read the marked text.
 
-### 23.6 Graph
-
-**Product:** Central · **Kind:** instrument · **Rail:** the widget rail on the right
-
-You need to see what is linked to the thing in play. Graph shows the neighbourhood of the selected thing in your knowledge graph.
-
-#### Parameters
-| Parameter | Values | Default | What it does |
-|---|---|---|---|
-| Centre | The selection · A pinned node | The selection | The node at the middle. |
-| Depth | 0–3 links | 1 | How many links the tile draws from the centre. |
-| Kinds | All · Notes · Files · Agents | All | Which kinds of node to draw. |
-
-#### Views
-
-```ui
-device: widgets:graph
-caption: Graph, on a fixture of readings.
-```
-
-##### Folded
-
-Where: the launcher on the rail, and on a chain. The folded Graph shows as a launcher square with the name Graph. A dot marks an open tile. Click the square to open the tile on the rail.
-
-##### Compact
-
-Where: on a chain. The compact Graph shows the centre and the nodes around it. It has three macros.
-
-| Macro | What it does |
-|---|---|
-| Centre | Sets The selection or A pinned node. |
-| Depth | Sets how many links to draw, from 0 to 3. |
-| Kinds | Sets All, Notes, Files or Agents. |
-
-Click the plate to show the Graph whole in the pool. Click ⤢ to open it full in a pane.
-
-##### Whole
-
-Where: the pool under the browser. The whole Graph shows every parameter, in two groups.
-
-| Group | Parameters |
-|---|---|
-| Centre | Centre |
-| Reach | Depth, Kinds |
-
-A change you make in the pool applies at once.
-
-##### Full
-
-Where: a pane. The full Graph shows the Obsidian-style knowledge graph at pane size. It is the Knowledge graph instrument. Click a node to move the centre. The controls stay in Device view, below the pane.
-
-##### Widget
-
-Where: the rail on the right. The widget shows the neighbourhood of the selection. The centre is marked. A coloured node is a node that the agent touched. A link that does not resolve shows as a ghost node. Click a node to move the centre. Click the open mark to open the full graph in a pane. The widget stays when you change mode.
-
-#### To use Graph
-1. Open Graph from the launcher.
-2. Select a note or a file. It becomes the centre.
-3. Click a node to move the centre.
-4. Click the open mark to open the full graph in a pane.
-
-#### Rules
-- A node that the agent touched has a colour. A link that does not resolve shows as a ghost node.
-- The tile is small. The full graph is a separate instrument.
-
-#### Tips
-- To find what depends on a file, set Depth to 2 and read the links.
-
-### 23.7 Diff
+### 23.5 Diff
 
 **Product:** Software Factory · **Kind:** effect · **Rail:** the widget rail on the right
 
@@ -10889,216 +10232,7 @@ Where: the rail on the right. The widget lists the files that changed in the sel
 #### Tips
 - To review a big change, set Layout to Side by side.
 
-### 23.8 Frames
-
-**Product:** Actuation · **Kind:** effect · **Rail:** the widget rail on the right
-
-You need to read the live events between the shell and the harness. Frames is the Frames monitor on the rail.
-
-#### Parameters
-| Parameter | Values | Default | What it does |
-|---|---|---|---|
-| Session | All · One session | Selected session | Chooses whose frames to show. |
-| Kinds | Messages · Tools · Heartbeat · Approvals · Errors | All | Chooses the frames to show. |
-| Pause | On · Off | Off | Holds the list still. |
-
-#### Views
-
-```ui
-device: actuation:frames-monitor
-caption: Frames, on a fixture of readings.
-```
-
-##### Folded
-
-Where: the launcher on the rail, and on a chain. The folded Frames shows as a launcher square with the name Frames. A dot marks an open tile. Click the square to open the tile on the rail.
-
-##### Compact
-
-Where: on a chain. The compact Frames shows the last frames of the selected session. It has three macros.
-
-| Macro | What it does |
-|---|---|
-| Session | Sets Selected session, One session or All. |
-| Kinds | Turns Messages, Tools, Heartbeat, Approvals and Errors On or Off. |
-| Pause | Holds the list still. |
-
-Click the plate to show the Frames whole in the pool. Click ⤢ to open it full in a pane.
-
-##### Whole
-
-Where: the pool under the browser. The whole Frames shows every parameter, in two groups.
-
-| Group | Parameters |
-|---|---|
-| Source | Session |
-| Frames | Kinds, Pause |
-
-A change you make in the pool applies at once.
-
-##### Full
-
-Where: a pane. The full Frames is the Frames monitor in a pane. It shows the live events between the shell and the harness. The controls stay in Device view, below the pane.
-
-##### Widget
-
-Where: the rail on the right. The widget shows the last eleven frames of the selected session, newest at the bottom. A frame is an event such as tool.start or approval.request. The widget only reads. It sends no frame. Click the open mark to open the monitor in a pane. The widget stays when you change mode.
-
-#### To use Frames
-1. Open Frames from the launcher.
-2. Select a session. Read its last frames.
-3. Set Kinds to Errors to find a fault.
-4. Click the open mark to open the monitor in a pane.
-
-#### Rules
-- The tile only reads. It sends no frame.
-- The tile shows the same frames as the Frames monitor.
-
-#### Tips
-- To see why a session stalled, filter to Tools and read the last frame.
-
-### 23.9 Ledger
-
-**Product:** Software Factory · **Kind:** instrument · **Rail:** the widget rail on the right
-
-You need to see what each task produced. Ledger shows every task with its receipt.
-
-#### Parameters
-| Parameter | Values | Default | What it does |
-|---|---|---|---|
-| Period | This run · Today · All | Today | The span of tasks in the list. |
-| Outcome | All · Landed · Approved · Commented | All | Shows tasks with one outcome. |
-| Agent | All · One agent | All | Shows the tasks of one agent. |
-
-#### Views
-
-```ui
-device: software-factory:ledger
-caption: Ledger, on a fixture of readings.
-```
-
-##### Folded
-
-Where: the launcher on the rail, and on a chain. The folded Ledger shows as a launcher square with the name Ledger. A dot marks an open tile. Click the square to open the tile on the rail.
-
-##### Compact
-
-Where: on a chain. The compact Ledger shows one line for each task, with its number and outcome. It has three macros.
-
-| Macro | What it does |
-|---|---|
-| Period | Sets This run, Today or All. |
-| Outcome | Sets All, Landed, Approved or Commented. |
-| Agent | Sets All or One agent. |
-
-Click the plate to show the Ledger whole in the pool. Click ⤢ to open it full in a pane.
-
-##### Whole
-
-Where: the pool under the browser. The whole Ledger shows every parameter, in two groups.
-
-| Group | Parameters |
-|---|---|
-| Span | Period |
-| Filter | Outcome, Agent |
-
-A change you make in the pool applies at once.
-
-##### Full
-
-Where: a pane. The full Ledger shows the Ledger in a pane, with each receipt open. Read what each task produced. The controls stay in Device view, below the pane.
-
-##### Widget
-
-Where: the rail on the right. The widget shows the last receipts. Each line is a task and its receipt, for example "#212 re-plan port · landed". Select a receipt to read it in full. Click the task to open its log. The widget stays when you change mode.
-
-#### To use Ledger
-1. Open Ledger from the launcher.
-2. Read the last receipts.
-3. Select a receipt to read it in full.
-4. Click the task to open its log.
-
-#### Rules
-- Every write has a receipt. Every receipt is in the Ledger.
-- The Ledger changes no receipt.
-
-#### Tips
-- To see what an agent did today, set Agent to that agent.
-
-### 23.10 Approvals
-
-**Product:** Software Factory · **Kind:** effect · **Rail:** the widget rail on the right
-
-You need to answer the agents when they ask. Approvals shows the proposals that wait for you, each with a button to approve.
-
-#### Parameters
-| Parameter | Values | Default | What it does |
-|---|---|---|---|
-| Show | Proposals · Requests · Both | Both | Chooses what the tile lists. |
-| Order | Oldest first · By agent · By risk | Oldest first | The order of the queue. |
-| Wait | 15 min–24 h | 4 h | How long a request waits before it counts as unanswered. |
-
-#### Views
-
-```ui
-device: software-factory:approvals
-caption: Approvals, on a fixture of readings.
-```
-
-##### Folded
-
-Where: the launcher on the rail, and on a chain. The folded Approvals shows as a launcher square with the name Approvals. A dot marks an open tile. Click the square to open the tile on the rail.
-
-##### Compact
-
-Where: on a chain. The compact Approvals shows one line for each item, with a button. It has three macros.
-
-| Macro | What it does |
-|---|---|
-| Show | Sets Proposals, Requests or Both. |
-| Order | Sets Oldest first, By agent or By risk. |
-| Wait | Sets how long a request waits, from 15 minutes to 24 hours. |
-
-Click the plate to show the Approvals whole in the pool. Click ⤢ to open it full in a pane.
-
-##### Whole
-
-Where: the pool under the browser. The whole Approvals shows every parameter, in two groups.
-
-| Group | Parameters |
-|---|---|
-| Queue | Show, Order |
-| Time | Wait |
-
-A change you make in the pool applies at once.
-
-##### Full
-
-Where: a pane. The full Approvals shows the queue in a pane, with the diff of the selected item beside it. Approve, ask for changes or deny here. The controls stay in Device view, below the pane.
-
-##### Widget
-
-Where: the rail on the right. The widget shows the proposal cards. Each card names the agent and the change. Each card has Approve, Changes and Open. Click Open to read the diff. Click Approve to accept the proposal. Click Changes to ask for a different result. Nothing lands until you answer. The widget stays when you change mode.
-
-#### Transport
-| Control | Effect on Approvals |
-|---|---|
-| Arm | With Arm on, writes in scope land directly and do not enter the queue. |
-
-#### To use Approvals
-1. Open Approvals from the launcher.
-2. Read a card. Click Open to read its diff.
-3. Click Approve to accept it.
-4. Click Changes to ask for a different result.
-
-#### Rules
-- Deny is always yours.
-- Nothing in the queue lands until you answer.
-
-#### Tips
-- To clear the queue fast, order it by risk and read the risky items first.
-
-### 23.11 Agents
+### 23.6 Agents
 
 **Product:** Central and AIKit · **Kind:** instrument · **Rail:** the widget rail on the right
 
@@ -11172,81 +10306,7 @@ Where: the rail on the right. The widget shows the hive. Each agent has a statio
 #### Tips
 - To see who is stuck, look for the amber stations.
 
-### 23.12 Packet
-
-**Product:** Central · **Kind:** effect · **Rail:** the widget rail on the right
-
-You need to know exactly what the agent will read. Packet shows it whole, with its size, before anything is sent.
-
-#### Parameters
-| Parameter | Values | Default | What it does |
-|---|---|---|---|
-| Items | Selection · Entry · Document | Selection | What the packet holds. |
-| Size | Tokens (reading) | Read from the packet | The size of what the agent will read. |
-| Send | A button | — | Sends the packet. The answer arrives as an entry. |
-
-#### Views
-
-```ui
-device: central:packet
-caption: Packet, on a fixture of readings.
-```
-
-##### Folded
-
-Where: the launcher on the rail, and on a chain. The folded Packet shows as a launcher square with the name Packet. A dot marks an open tile. Click the square to open the tile on the rail.
-
-##### Compact
-
-Where: on a chain. The compact Packet shows the first lines of each item. It has two macros.
-
-| Macro | What it does |
-|---|---|
-| Items | Sets Selection, Entry or Document. |
-| Send | Sends the packet. The answer arrives as an entry. |
-
-Click the plate to show the Packet whole in the pool. Click ⤢ to open it full in a pane.
-
-##### Whole
-
-Where: the pool under the browser. The whole Packet shows every parameter, in three groups.
-
-| Group | Parameters |
-|---|---|
-| Contents | Items |
-| Size | Size |
-| Send | Send |
-
-A change you make in the pool applies at once.
-
-##### Full
-
-Where: a pane. The full Packet shows the packet in a pane. Each item shows its source, its text and its size. Remove an item you do not want to send. The controls stay in Device view, below the pane.
-
-##### Widget
-
-Where: the rail on the right. The widget shows the list of items. Each line names the source and the text. The size shows beside the Answer button. Press Capture to put the selection in the packet. Press Play to send it. The widget stays when you change mode.
-
-#### Transport
-| Control | Effect on Packet |
-|---|---|
-| Capture | Puts the selection in the packet. |
-| Play | Sends the packet. |
-
-#### To use Packet
-1. Open Packet from the launcher.
-2. Select a passage. Press Capture to put it in the packet.
-3. Read the list. Remove any item you do not want to send.
-4. Press Play. The agent answers.
-
-#### Rules
-- The packet is exactly what the agent receives. Nothing else goes with it.
-- You see the size before you send.
-
-#### Tips
-- To cut cost, remove the items that the question does not need.
-
-### 23.13 Trail
+### 23.7 Trail
 
 **Product:** Central · **Kind:** effect · **Rail:** the widget rail on the right
 
@@ -11318,7 +10378,7 @@ Where: the rail on the right. The widget shows the stops, newest first. Each sto
 #### Tips
 - To undo a wrong turn, select the stop before it.
 
-### 23.14 NOWs
+### 23.8 NOWs
 
 **Product:** Central · **Kind:** instrument · **Rail:** the widget rail on the right
 
@@ -11384,7 +10444,7 @@ Where: the rail on the right. The widget shows the day, the time and the open mo
 #### Tips
 - To end the day clean, close each open moment before the day closes.
 
-### 23.15 Results
+### 23.9 Results
 
 **Product:** Software Factory · **Kind:** instrument · **Rail:** the widget rail on the right
 
@@ -11452,7 +10512,7 @@ Where: the rail on the right. The widget shows the results and the diffs of the 
 #### Tips
 - To compare two attempts, open Runs and set Compare.
 
-### 23.16 Wiki
+### 23.10 Wiki
 
 **Product:** Central · **Kind:** instrument · **Rail:** the widget rail on the right
 
@@ -11520,7 +10580,7 @@ Where: the rail on the right. The widget shows the wiki page that the selected a
 #### Tips
 - To check what an agent knew, open the page it read.
 
-### 23.17 Calendar
+### 23.11 Calendar
 
 **Product:** a third party · **Kind:** instrument · **Rail:** the widget rail on the right
 
