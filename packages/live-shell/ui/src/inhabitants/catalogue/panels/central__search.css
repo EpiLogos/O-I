@@ -17,7 +17,7 @@
 .srch-read b { font-weight: 500; color: var(--text, #d4d7da); }
 .srch-read [data-bad="true"] { color: var(--stall, #ff9b4a); }
 .srch-full-body { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 290px; border-top: 1px solid var(--line, #24262a); }
-.srch-groups { padding: 6px 22px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 28px; align-content: start; min-height: 0; }
+.srch-groups { padding: 6px 22px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 28px; align-content: start; min-height: 0; overflow-y: auto; }
 .srch-group h4 { display: flex; align-items: center; gap: 7px; margin: 14px 0 4px; font-size: 9px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--text-dim, #a2a7ad); }
 .srch-group h4 small { font-weight: 400; color: var(--text-faint, #71767c); }
 .srch-group ul { list-style: none; margin: 0; padding: 0; }
