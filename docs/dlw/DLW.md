@@ -1341,7 +1341,8 @@ A panel uses these controls and no others.
 | Toggle | On or off | The name in a box, amber when on. | Auto Filter's Hz button. |
 | Radio | One of two to five | Buttons side by side or stacked; the chosen one amber. A choice the owner cannot take stands dimmed, and the status bar says why. | Auto Filter's filter types. |
 | Chooser | One of many | The value and ▾; a menu. A closed choice is dimmed in the menu, with its reason. | Wavetable's wavetable menu. |
-| Rows | A list: a rack's chains, a scope's places | One row each: your request as a square; the owner's answer as a light, or the member's kind mark in its state; the name; a short meter; a short note. A long list pages. | A rack's chain list. |
+| Swatch | A colour | The colour in a small square, then its value. Press it to pick another. | A clip's or a track's colour. |
+| Rows | A list: a rack's chains, a scope's places | One row each: your request as a square; the owner's answer as a light, or the member's kind mark in its state; the name; a short meter; a short note. A long list pages. Where the order is yours, the chosen row carries ▲ ▼, and ⌥↑ ⌥↓ move it. | A rack's chain list. |
 | Ladder | Evidence in steps | One tick for each step: lit where it is established, dark where it is not, hollow where nobody has observed it. | A level meter's segments. |
 | Readout | A reading | A short value over its name. A large readout is the count that the view is for. | Hybrid Reverb's "100 % / 285 ms". |
 | Action | Something done once | The name in an outlined box. | A momentary button. |
