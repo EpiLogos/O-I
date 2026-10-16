@@ -10,7 +10,7 @@
 // the one its source path names (central/daySurface.ts dateOfDayPath — Central's own `Control/user/day/<date>/day.md`).
 //
 // Each device's own Full is the page itself: ⤢ brings the document's own pane forward (centralDocuments.ts revealDocumentPane), the
-// material the Text, Highlight and Notes Full views name ("the open document at full size", DLW §18.6–§18.8).
+// material the Text, Highlight and Notes Full views name ("the open document at full size", DLW §18.1–§18.1).
 import {useCallback, useEffect, useMemo, useState, useSyncExternalStore} from 'react'
 import {readFlowInstance} from '../../../../../../desktop/cradle/src/flow/instances'
 import type {CentralLocation, KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'

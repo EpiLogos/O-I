@@ -1,4 +1,4 @@
-// Lane BF2: Tasks (software-factory:tasks, DLW §19.12) and Runs (software-factory:attempt-review, §19.11) on their owners —
+// Lane BF2: Tasks (software-factory:tasks, DLW §19.1) and Runs (software-factory:attempt-review, §19.11) on their owners —
 // src/agent/devices/taskBindings.ts, FactoryDeviceChain.tsx. Tasks reads the run model's tasks of the selected session (the
 // sessions provider's agency, task-record and temporal reading), the session list the Thread offers, and the task THE selection
 // names; its timing is the Agent's; a new task goes the Agent's way; Launch, Retry and Stop after address only the whole bound

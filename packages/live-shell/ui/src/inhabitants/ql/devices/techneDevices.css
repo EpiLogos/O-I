@@ -45,7 +45,7 @@
 .techne-source-note { margin-top: 4px; font: 9.5px var(--font-ui); color: var(--text-faint) }
 
 /* Inside an open instrument a family's devices stand side by side in its section, drawn flat: the device's own frame stands down so the
-   section reads as one group, one hairline between two devices (manual §16.8 "no box sits inside a box"). */
+   section reads as one group, one hairline between two devices (manual §16.9 "no box sits inside a box"). */
 .techne-section-devices { display: flex; gap: 0; align-items: stretch; min-height: 0; height: 100% }
 .inst-section .techne-device .device > .dp { background: transparent; border: 0 }
 .inst-section .techne-device .device > .dp > .dp-head { height: 18px; padding: 0; background: none; border-bottom: 0 }

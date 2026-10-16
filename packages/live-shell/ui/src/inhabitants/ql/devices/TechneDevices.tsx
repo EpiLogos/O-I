@@ -13,7 +13,7 @@
 // focused, the faces no Technē instrument holds (the QL field/PCM owner and its waiting kin) stand after the folds as they did before:
 // the admitted one open, the waiting ones folded.
 //
-// Every head is the panel kit's (inhabitants/sdk/panel.tsx; manual §16.8): a fold is the kit's Folded strip (its light, its name, its
+// Every head is the panel kit's (inhabitants/sdk/panel.tsx; manual §16.9): a fold is the kit's Folded strip (its light, its name, its
 // readings, read downward), the open plate's head carries ▾ (fold it to its title: every instrument then stands as its Compact or its
 // fold) and ⤢ (open it on the focused pane). The instrument standing open is published (standingInstrument.ts) so the Device side's head
 // names it, not the pane's.
@@ -260,7 +260,7 @@ function OpenDevice({entry}: {entry: TechneEntry}) {
   </div>
 }
 
-/** The kit's activator for a device's own light (manual §16.8: amber on, grey off, hollow while the owner has not said). */
+/** The kit's activator for a device's own light (manual §16.9: amber on, grey off, hollow while the owner has not said). */
 const kitLight = (light: 'on' | 'off' | 'unknown') => (light === 'on' ? 'lit' : light === 'off' ? 'dark' : 'unknown')
 
 /** A device folded to its title: the kit's Folded strip (manual §16.3 "Folded — the activator, the name, up to two short readings, read

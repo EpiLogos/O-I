@@ -1,4 +1,4 @@
-// World (manual §17.1): the Earth under its star, and the same material as a graph. Live's nearest: Simpler — one display whose
+// World (manual §17.2): the Earth under its star, and the same material as a graph. Live's nearest: Simpler — one display whose
 // picture changes with the mode (Space or Graph), a handle on its axis, a few columns round it. Space draws the body by the atlas's
 // own laws: an orthographic globe, the terminator from the Sun's subsolar point, each place by the precision grammar, and the deep-time
 // window (data/time.ts timeVisibility) that fades a place in as the cursor reaches its year. Graph draws the constellation by its four

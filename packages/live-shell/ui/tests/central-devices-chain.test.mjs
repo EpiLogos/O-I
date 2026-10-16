@@ -59,7 +59,7 @@ const html = (element) => renderToStaticMarkup(element)
 const transport = {kind: 'unavailable', reason: 'the test carrier is down'}
 const central = inhabitantManifest('central')
 assert.ok(central, 'the central family is admitted by the shell\'s own door')
-// Lane BC3 (DLW §18.11, §18.14, §18.15): the agent that answers stands with its identity before it and its Context & world after it,
+// Lane BC3 (DLW §18.4, §19.12, §19.4): the agent that answers stands with its identity before it and its Context & world after it,
 // then Search; the Packet stands only on a reached document's chain (central-agent-chain-binding.test.mjs).
 const FACES = ['day-die', 'agent-identity', 'nara-conversation', 'context-world', 'search', 'ground-hygiene', 'impact']
 const DAY_REF = 'central:day:control:root:2026-10-06'
@@ -95,7 +95,7 @@ test('the family\'s device faces are seven devices, in chain order, each its own
     assert.notEqual(declared.liveSemantic, 'clip', `${entry.id} is a device, not a clip`)
   }
   assert.equal(set.find(entry => entry.id === 'central:day-die').device.face.liveSemantic, 'device-instrument')
-  // MOVED (lane BC2): the Flow was declared a clip and stood on the Clip side (FlowClip.tsx, which nothing mounted). DLW §18.3 makes it
+  // MOVED (lane BC2): the Flow was declared a clip and stood on the Clip side (FlowClip.tsx, which nothing mounted). DLW §18.1 makes it
   // an instrument, first on a Flow document's chain: it stands there while a Flow is reached (central-page-family-binding.test.mjs).
   assert.equal(central.faces.find(face => face.id === 'flow-document').liveSemantic, 'device-instrument')
   assert.deepEqual(model.clipFaces(central.faces).map(face => face.id), [], 'the family declares no clip')
@@ -427,7 +427,7 @@ test('binding the conversation resolves the dialogue through the nara_dialogue o
 
 test('MOVED — the Flow is an instrument, no longer a clip: its states are a row read from the owner and the hosted form, and its next entry is the row it generates through', async () => {
   const flow = central.faces.find(face => face.id === 'flow-document')
-  assert.deepEqual(flow.invariant, {generates: 'kernel:file_operation'}, 'DLW §18.3: an instrument first on a Flow document\'s chain')
+  assert.deepEqual(flow.invariant, {generates: 'kernel:file_operation'}, 'DLW §18.1: an instrument first on a Flow document\'s chain')
   const instance = (reads, writers) => model.centralDevice(flow, reads, writers)
   const stateRow = instance({}).rows.find(row => row.key === 'state')
   assert.deepEqual([stateRow.type, stateRow.values, stateRow.writePath], ['enumerated', ['draft', 'saved', 'edited since save'], undefined], 'the states, as a reading')

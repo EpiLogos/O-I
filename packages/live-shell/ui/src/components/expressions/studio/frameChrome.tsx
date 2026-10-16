@@ -80,7 +80,7 @@ function ValueField({control, view, disabled}: {control: FrameChromeControl; vie
 }
 
 /** A number the frame bounds, swept: the kit's value box or dial (inhabitants/sdk/panel.tsx), the frame's value shown, the new value sent
- * as one press when the hand lets go (docs/dlw/DLW.md §16.9). */
+ * as one press when the hand lets go (docs/dlw/DLW.md §16.10). */
 function sweepable(control: FrameChromeControl): {min: number; max: number; step?: number} | null {
   const min = Number(control.min), max = Number(control.max)
   return control.min !== undefined && control.max !== undefined && Number.isFinite(min) && Number.isFinite(max) && max > min

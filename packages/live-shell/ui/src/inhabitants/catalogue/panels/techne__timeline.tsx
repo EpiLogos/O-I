@@ -1,4 +1,4 @@
-// The Timeline (manual §17.4): Technē's research instrument, time laid out. Live's nearest: Wavetable's oscillator beside its
+// The Timeline (manual §17.5): Technē's research instrument, time laid out. Live's nearest: Wavetable's oscillator beside its
 // envelope, a ruler with a bracket that you move. The owner is the research frame (field-studies-journeys: researchInstruments.tsx
 // m2Projection and the vendored TimelineLens toolbar, sharedTimeWindow.tsx, relationFieldView.tsx) and Technē's timeline model
 // (src/techne/m0m5/timeline: scale, timeAxis, relations, standing, lanes). The sample is the Archetypal Earth reading of Adam:

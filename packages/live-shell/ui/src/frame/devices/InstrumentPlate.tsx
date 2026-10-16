@@ -1,8 +1,8 @@
 // An instrument as one plate with its controls grouped in sections side by side (manual §10.4 "Whole — every setting, grouped"; the
 // mockup's `instFrame()` at world-shell-mockup.html:1411 and its CSS .inst/.insth/.isecs/.isec at :352-359; the device UI standard,
-// docs/dlw/DLW.md §16.8: "Sections are columns, ruled off from each other by a hairline and named in small capitals. The well is the
+// docs/dlw/DLW.md §16.9: "Sections are columns, ruled off from each other by a hairline and named in small capitals. The well is the
 // only inset surface … Nothing scrolls, and no box sits inside a box"). Its head is the panel kit's (inhabitants/sdk/panel.tsx PanelHead,
-// manual §16.8: the activator, ▾, the name, the held mark, the pages, ⤢), with the device's own acts after the pages (the Studio's Save,
+// manual §16.9: the activator, ▾, the name, the held mark, the pages, ⤢), with the device's own acts after the pages (the Studio's Save,
 // Undo, Redo) and the place's marks before ⤢; who owns the plate and where it stands is said on the status bar when you point at the head,
 // never drawn as a sentence (§1 "A sentence never appears in a panel"). Its body is one row of sections at the widths their controls take,
 // each headed in small capitals; a display section (§4.2 "The display stands in a section of its own, at the left") holds the well and
@@ -28,7 +28,7 @@ import type {HeldDevice} from './plateControls'
 import './plateControls.css'
 import './instrumentPlate.css'
 
-/** One control column of a section (manual §16.8 "Control column 56 wide"). */
+/** One control column of a section (manual §16.9 "Control column 56 wide"). */
 export const PLATE_COLUMN = 56
 
 export interface PlateSection {
@@ -39,11 +39,11 @@ export interface PlateSection {
   readonly note?: ReactNode
   /** The column's own width where the mockup gives one; absent, the column takes what it holds. */
   readonly width?: number
-  /** The section's controls stand in this many control columns (56 px each, manual §16.8): dials side by side, a radio, a list or
+  /** The section's controls stand in this many control columns (56 px each, manual §16.9): dials side by side, a radio, a list or
    * a field across them all. Absent, the controls stand one under the next. */
   readonly cols?: number
   readonly children: ReactNode
-  /** The display's own section (manual §16.8 "The display stands in a section of its own, at the left"; §7): the well alone, with no
+  /** The display's own section (manual §16.9 "The display stands in a section of its own, at the left"; §7): the well alone, with no
    * heading; it never folds for room. */
   readonly display?: boolean
   /** Folded to its title (manual §10.4 "A device can also fold down to its title. Click the title to open it again"; the
@@ -63,7 +63,7 @@ export interface PlateHeadMark {
 
 export interface InstrumentPlateProps {
   readonly presentation: FacePresentation
-  /** The instrument's light: a reading, hollow while unknown (manual §16.8 "A hollow ring: the owner has not said"). */
+  /** The instrument's light: a reading, hollow while unknown (manual §16.9 "A hollow ring: the owner has not said"). */
   readonly power?: PowerStanding
   readonly onPower?: () => void
   /** ▾ in the head: fold the instrument to its title (manual §16.3 "Press ▾ in the head to fold the device"). */
@@ -71,9 +71,9 @@ export interface InstrumentPlateProps {
   /** ⤢ at the head's right: open the instrument full in a pane, in the place's words. */
   readonly onFull?: () => void
   readonly fullLabel?: string
-  /** Who else holds values on this instrument, in the stall colour (manual §16.8 "Held mark"). */
+  /** Who else holds values on this instrument, in the stall colour (manual §16.9 "Held mark"). */
   readonly heldBy?: string
-  /** Pages in the head (manual §16.8 "When a panel holds more than fits, it gets pages in its head"). */
+  /** Pages in the head (manual §16.9 "When a panel holds more than fits, it gets pages in its head"). */
   readonly pages?: readonly Page[]
   readonly page?: string
   readonly onPage?: (id: string) => void
@@ -111,7 +111,7 @@ function HeadMarks({actions}: {actions: readonly PlateHeadMark[]}) {
 
 export function InstrumentPlate({presentation, power = 'unknown', onPower, onFold, onFull, fullLabel, heldBy, pages, page, onPage, head, actions, sections, fit, bodyClassName, onDragOver, onDrop, onDragLeave, dataAttributes, footer}: InstrumentPlateProps) {
   // The plate's own fit, standing down where the host fits it: the sections whose fold the host does not decide may fold, from the last.
-  // The display's section never folds: the picture is what the device is read by (manual §16.8 "The picture comes first").
+  // The display's section never folds: the picture is what the device is read by (manual §16.9 "The picture comes first").
   const free = sections.filter(section => !section.display && section.folded === undefined && section.onFold === undefined).map(section => section.id)
   const foldable = fit ? [] : free.slice(sections[0]?.display ? 0 : 1)
   const own = usePlateFit(sections.map(section => section.id).join('|'), [...foldable].reverse(), !foldable.length)
@@ -193,7 +193,7 @@ export function heldMarksOf(entries: readonly SectionDevice[]): HeldDevice[] {
 }
 
 /** A group whose owner discloses nothing here says so in one short line; its whole words are the status line's. With `word`, the line is
- * drawn as a light and that one word (manual §16.8 "A sentence never appears in a panel. What a control does is said in the status bar
+ * drawn as a light and that one word (manual §16.9 "A sentence never appears in a panel. What a control does is said in the status bar
  * when you point at it"): the sentence is only the status bar's. */
 export function SectionNote({children, word, light = 'unknown'}: {children: ReactNode; word?: string; light?: LightState}) {
   const words = typeof children === 'string' ? children : undefined

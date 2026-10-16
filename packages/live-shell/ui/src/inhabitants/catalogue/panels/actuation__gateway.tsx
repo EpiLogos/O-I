@@ -1,4 +1,4 @@
-// The Gateway device (manual §19.1, actuation:gateway): the way in to a Factory session, the first device on its chain. Live's nearest:
+// The Gateway device (manual §19.2, actuation:gateway): the way in to a Factory session, the first device on its chain. Live's nearest:
 // Utility — a small effect of few controls whose meaning is plain at a glance. The well is the link: the shell on the left, the
 // harness on the right, the line between them drawn by the transport, the frames in flight as dots, the replay ring as an arc
 // round the harness, the heartbeat as the outer ring, and the time since the last check-in on a scale that ends at 30 min.

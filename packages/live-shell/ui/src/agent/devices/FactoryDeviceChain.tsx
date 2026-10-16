@@ -491,7 +491,7 @@ export function FactoryDeviceChain({sessionRef}: {sessionRef: string | null}) {
         onDragLeave={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setGap(null) }}
         onDrop={onRowDrop}
       >
-        {/* Factory's Main track (DLW §16.2, §19.2): with no session selected, the Device side is the Main track's chain — the session
+        {/* Factory's Main track (DLW §16.2, §19.3): with no session selected, the Device side is the Main track's chain — the session
           grid's Main row is not yet a track you can select (proposed to its lane). A selected session shows its own chain. */}
         {sessionRef == null && <div className="factory-main" data-track="main" aria-label="Main track"
           data-i="Main track|Factory's Main track: every gateway the work can reach, the Experiment that compares sessions, the Ledger of what the agents did, the Approvals they wait on, and the Link to your other machines.">

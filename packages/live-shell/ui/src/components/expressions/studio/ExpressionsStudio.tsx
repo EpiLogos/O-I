@@ -7,7 +7,7 @@
 // (the Object select, Configure, Deep edit and ↻ of its header, and the rack strip, chosen controls and macro rack of its device view):
 //   • the field devices stand in their sections through the device runtime (DeviceView, the same devices the rack, the pool and a pane
 //     show: components/devices/ExpressionsDeviceView.tsx useFieldDevices), one shown at a time behind its mark;
-//   • Selected holds two pages in its head (manual §16.8 "When a panel holds more than fits, it gets pages in its head"): Object — the
+//   • Selected holds two pages in its head (manual §16.9 "When a panel holds more than fits, it gets pages in its head"): Object — the
 //     Object chooser (the old header's select), the Force card's modes (components/NativeDeviceStrip.tsx:9) and the object devices — and
 //     Glyph — the selected formation's sequence as kit controls (ported from GlyphSequenceEditor.tsx:296-301, its compose, clock, order,
 //     rate and phase, through the same `sequence-settings` change); its states open in the clip (States ⤢). The work has one Save, the

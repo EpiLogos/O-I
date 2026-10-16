@@ -100,7 +100,7 @@ function CentralClip() {
 function CentralChain() { const {transport, centralSubject, world} = useDetailReading(); return <BaseDevicesDetail transport={transport} world={world} subject={centralSubject} /> }
 /** The selected task: THE selection names it (`<session track>#task/<n>`, timeline/factoryTrackAdapter.ts), or a session track
  * whose first task it opens; its session is the agency reading's own track, its log the sessions provider's one temporal read. Beside
- * the log stands the task itself, the Tasks device the chain publishes (DLW §19.12 "In Clip view, the task is the clip"; lane BF3). */
+ * the log stands the task itself, the Tasks device the chain publishes (DLW §19.1 "In Clip view, the task is the clip"; lane BF3). */
 function FactoryClip() {
   const {factory} = useDetailReading()
   const selected = useSelectedClip()

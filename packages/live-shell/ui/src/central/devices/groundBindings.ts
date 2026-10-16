@@ -1,4 +1,4 @@
-// Ground hygiene (DLW §18.12) and Impact (§18.13) on Central's readings (lane BC2): the catalogue's designs
+// Ground hygiene (DLW §18.5) and Impact (§18.13) on Central's readings (lane BC2): the catalogue's designs
 // (inhabitants/catalogue/panels/central__ground-hygiene.tsx, central__impact.tsx) bound over the census and the neighbourhood their
 // owners give, classified by the shell's own models (inhabitants/centralHygieneModel.ts, centralImpactModel.ts — the device draws
 // what the model reports and classifies nothing itself). Pure: no React, no transport. The readers are groundDevices.ts.
@@ -59,7 +59,7 @@ export const IMPACT_WIRING: DesignWiring = {
   },
   writes: {},
   local: {
-    pin: 'Pin keeps the subject while you select elsewhere (the device holds it)', depth: 'how far the device walks the reading\'s links (2 by default, DLW §18.13)',
+    pin: 'Pin keeps the subject while you select elsewhere (the device holds it)', depth: 'how far the device walks the reading\'s links (2 by default, DLW §18.6)',
     relation: 'which kind of link the device lists', 'show:references': 'which lists the device draws', 'show:links': 'which lists the device draws',
     'show:sessions': 'which lists the device draws', closed: 'whether closed sessions are listed (Open only by default)',
   },
@@ -133,5 +133,5 @@ export function impactValues(id: string, reading: ImpactReading | null): Values 
   return values
 }
 
-/** Impact's binding: it reads, and changes nothing (DLW §18.13 "Impact reads. It changes nothing"). */
+/** Impact's binding: it reads, and changes nothing (DLW §18.6 "Impact reads. It changes nothing"). */
 export const impactBinding = (id: string, reading: ImpactReading | null): DesignBinding => pageBinding(id, IMPACT_WIRING, impactValues(id, reading), {})

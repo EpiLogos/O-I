@@ -462,7 +462,7 @@ export function agentChainDevices(input: AgentChainInput, write: ChainWrite, des
   return deriveAgentDeviceRows(allFamilyManifests()).map(slot => ({slot, device: agentChainDevice(slot, input, write, designed[slot.id])}))
 }
 
-/** One member of the rack as its own device (DLW §19.7: "one chain inside a Skillset rack"): AIKit's admitted skill-device face.
+/** One member of the rack as its own device (DLW §19.8: "one chain inside a Skillset rack"): AIKit's admitted skill-device face.
  * It declares no rows of the address table (none is addressed to it); its values are its design's, from the rack's binding. */
 export function rackMemberDevice(id: string): DeviceInstance | null {
   const face = allFamilyManifests().find(manifest => manifest.id === 'ai-kit')?.faces.find(candidate => candidate.id === 'skill-device')

@@ -1,4 +1,4 @@
-// Scope (manual §19.14): how far an agent may reach into your world, and how its writes arrive. Live's nearest: Utility — a small
+// Scope (manual §19.12): how far an agent may reach into your world, and how its writes arrive. Live's nearest: Utility — a small
 // effect of few controls whose meaning is plain at a glance. The rings are the picture: teal is what the agent may read, amber
 // what it may write. Raising the reach asks you first: the new reach waits, dashed, until you confirm it.
 import {useState} from 'react'

@@ -19,7 +19,7 @@ export type PanelView = 'compact' | 'whole'
 const said = (name: string | undefined, does: string | undefined) => (name || does ? [name ?? '', does ?? ''].filter(Boolean).join('|') : undefined)
 const clamp01 = (u: number) => Math.min(1, Math.max(0, u))
 
-/** What a control shows for a value the owner has not reported (manual §16.10 "No reading", §7 "Do not draw it as zero"). */
+/** What a control shows for a value the owner has not reported (manual §16.11 "No reading", §7 "Do not draw it as zero"). */
 export const NO_READING = '—'
 const NO_READING_SAID = 'No reading from the owner yet.'
 /** A value with no reading behind it: absent, or what a view's helpers make of an absent key (`Number(undefined)` is NaN,
@@ -167,7 +167,7 @@ const arc = (u0: number, u1: number, r: number) => {
 
 /** A dial (Live's knob): the name above, a 270° ring, the value below. */
 export function Dial({label, does, value, def, scale, format, onChange, bipolar, mod, ...standing}: ScalarProps) {
-  // No reading: the ring alone, no arc and no needle, and "—" under it; nothing to turn from (manual §16.10).
+  // No reading: the ring alone, no arc and no needle, and "—" under it; nothing to turn from (manual §16.11).
   const known = !unread(value)
   const u = known ? toUnit(scale, value) : 0, zero = bipolar ? toUnit(scale, 0) : 0
   const live = known && onChange && !standing.disabled ? onChange : undefined
@@ -188,7 +188,7 @@ export function Dial({label, does, value, def, scale, format, onChange, bipolar,
 
 /** A value box (Live's slider-number): the value in a field that fills to its place in the range. */
 export function ValueBox({label, does, value, def, scale, format, onChange, bipolar, wide, ...standing}: ScalarProps & {readonly wide?: boolean}) {
-  // No reading: an empty field and "—", nothing to move from (manual §16.10).
+  // No reading: an empty field and "—", nothing to move from (manual §16.11).
   const known = !unread(value)
   const u = known ? toUnit(scale, value) : 0, zero = known && bipolar ? toUnit(scale, 0) : 0
   const live = known && onChange && !standing.disabled ? onChange : undefined
@@ -252,7 +252,7 @@ export function TextField({label, does, value, onChange, placeholder, wide, ...s
 
 /** A reading: a name and a short value. `big` for a count that is the point of the view. */
 export function Readout({label, does, value, big, tone, onPress}: {readonly label: string; readonly does?: string; readonly value: ReactNode; readonly big?: boolean; readonly tone?: Tone; readonly onPress?: () => void}) {
-  // A reading the owner has not reported shows "—", never NaN, "undefined" or zero (manual §16.11).
+  // A reading the owner has not reported shows "—", never NaN, "undefined" or zero (manual §16.12).
   const known = !(typeof value === 'number' || typeof value === 'string' || value === undefined || value === null) || !unread(value)
   const body = <><output className="dp-readout-value" data-tone={known ? tone : undefined}>{known ? value : NO_READING}</output><span className="dp-label">{label}</span></>
   return <div className={`dp-cell dp-cell--readout${big ? ' dp-cell--big' : ''}`} data-i={said(label, known ? does : [does, NO_READING_SAID].filter(Boolean).join(' '))} data-unread={known ? undefined : 'true'}>
@@ -508,7 +508,7 @@ export interface PanelHeadProps {
 }
 
 /** The head of a device panel, for a plate the kit's Panel does not draw whole (an instrument's sections, a compact): the activator, ▾,
- * the name, the held mark, the pages, the device's own acts, the place's marks and ⤢ (manual §16.8). The Panel's own head, as one
+ * the name, the held mark, the pages, the device's own acts, the place's marks and ⤢ (manual §16.9). The Panel's own head, as one
  * part. */
 export function PanelHead({title, light: reported, onLight, onFold, mark, onName, nameDoes, heldBy, pages, page, onPage, acts, marks: ownMarks, onRail: ownRail, onFull, fullLabel, hint, selected, lightWhy}: PanelHeadProps) {
   const light = lightIn(reported), place = useContext(PlaceContext)

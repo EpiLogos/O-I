@@ -460,7 +460,7 @@
     ],
     "formats": {},
     "invariant": {
-      "generatesAbsent": "Search writes nothing: it reads AIKit's knowledge search (op knowledge search and resolve). A tag's send, the aliases and the shared fields have no owner yet (DLW §18.11)."
+      "generatesAbsent": "Search writes nothing: it reads AIKit's knowledge search (op knowledge search and resolve). A tag's send, the aliases and the shared fields have no owner yet (DLW §18.4)."
     },
     "writePaths": [],
     "heldBy": [],

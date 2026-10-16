@@ -1,4 +1,4 @@
-// Text (manual §18.6): an effect on a document's chain that sets how the words of a page are set — the style of the paragraph, the
+// Text (manual §18.1): an effect on a document's chain that sets how the words of a page are set — the style of the paragraph, the
 // emphasis of the selected words and the size of the type you read in — and leaves every word whole. Live's nearest: Utility, a small
 // effect whose meaning is plain at a glance.
 // The owner is the page. A Flow keeps each entry as HTML in an editable body: desktop/cradle/documents/ql-flow.html `clean()` (:848)
@@ -271,7 +271,7 @@ function TextPane({v, set}: {v: V; set: SetFn}) {
 
 // ---------------------------------------------------------------- the controls
 
-// The light reads the owner alone (manual §16.8): lit or dark when it reports, hollow when it has not.
+// The light reads the owner alone (manual §16.9): lit or dark when it reports, hollow when it has not.
 const light = (p: ViewProps) => (strOf(p.owner ?? p.v, 'light') ?? 'unknown') as LightState
 const head = (p: ViewProps) => ({light: light(p), onFold: p.nav.fold, onFull: p.nav.full})
 const NOTHING = 'Nothing is selected in the open document.'

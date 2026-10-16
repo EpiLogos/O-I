@@ -1,4 +1,4 @@
-// Contacts (manual §20.7, expressions:contacts): what happens when things touch — the walls of the letters, and particles against
+// Contacts (manual §20.8, expressions:contacts): what happens when things touch — the walls of the letters, and particles against
 // particles. Live's nearest: Auto Filter — a well that draws the law with handles on it, and dials ruled off beside it. The shell's own
 // diagram (components/NativeFieldFace.contacts.tsx) draws the same law and this panel hosts a diagram of it: on the left the glyph wall
 // (a stand-in ellipse, obstacle or vessel) with its contact band, the dashes that integrity opens in it and the bounce arrows; on the

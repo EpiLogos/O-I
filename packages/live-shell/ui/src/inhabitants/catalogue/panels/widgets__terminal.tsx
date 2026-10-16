@@ -1,4 +1,4 @@
-// Terminal (manual §17.11 and §23.3): a shell next to your work, in a pane or on the rail. Live's nearest: Utility, a small device
+// Terminal (manual §17.9 and §17.9): a shell next to your work, in a pane or on the rail. Live's nearest: Utility, a small device
 // whose few controls are plain at a glance. The owner is the shell host's terminal (desktop/cradle/src/terminal/TerminalSurface.tsx,
 // src-tauri/src/terminal.rs): an xterm over a real PTY, started in a folder with the login shell or a carried command. The picture
 // is the screen: the last lines of the shell at the text size, a ruler of columns whose handle sets that size, and a gauge of the

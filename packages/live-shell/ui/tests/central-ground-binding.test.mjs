@@ -1,4 +1,4 @@
-// Lane BC2: Ground hygiene (DLW §18.12) and Impact (§18.13) on their catalogue designs, bound over the census and the neighbourhood
+// Lane BC2: Ground hygiene (DLW §18.5) and Impact (§18.13) on their catalogue designs, bound over the census and the neighbourhood
 // the shell's models classify (central/devices/groundBindings.ts). The census fed here is the real seat reading's shape (the JSON of
 // `seat status --json`, 16 Oct 2026, trimmed; one landed seat a FIXTURE in the instrument's own shape — the ground held none that day).
 // Channel: SCRIPTED over the production bindings, and SSR of each design's views on them. Not a screen pass.

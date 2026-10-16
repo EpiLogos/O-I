@@ -1,4 +1,4 @@
-// A note device's live picture, in its well on the chain, whole in the pool, full in a pane and small on the rail (manual §16.11: "Draw
+// A note device's live picture, in its well on the chain, whole in the pool, full in a pane and small on the rail (manual §16.12: "Draw
 // every mark from the device's values or readings, by the device's own law"). The twelve pitch classes stand twice: along the top as
 // they are played, along the bottom as the device hands them to the torus, and a line runs from each class to the class it sounds as.
 // The mode in force lights the classes it holds (the owner's pitch set, modes.ts pitchMask, read through the Scale device's plan); the

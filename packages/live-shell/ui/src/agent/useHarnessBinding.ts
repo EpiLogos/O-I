@@ -18,7 +18,7 @@ export function useHarnessBinding(transport: KernelTransportStatus) {
   const [error, setError] = useState<string | null>(null)
   // Whether the owner has named the binding: until it has, 'cursor' is only the shell's default and nothing writes to it.
   const [resolved, setResolved] = useState(false)
-  // The harnesses the same answer finds here (the Agent's Harness chooser, DLW §19.3 "The harnesses found on this machine").
+  // The harnesses the same answer finds here (the Agent's Harness chooser, DLW §19.4 "The harnesses found on this machine").
   const [harnesses, setHarnesses] = useState<string[] | null>(null)
 
   useEffect(() => {

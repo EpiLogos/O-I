@@ -1,4 +1,4 @@
-// The Answer (manual §18.10, central:nara-conversation): the agent that answers in a Central workspace, last on a document's chain.
+// The Answer (manual §19.4, central:nara-conversation): the agent that answers in a Central workspace, last on a document's chain.
 // Live's nearest: Operator or Simpler — an instrument with a well that draws what it does and a short row of macros. The well
 // draws the exchange by the owner's own law: the turn against the native budget of 256 KiB (desktop/cradle/src/nara/nativeDialogue.ts:232),
 // the question and the answer in the conversation, and where the answer lands in the page (nara/nativeReturn.ts: a new entry through

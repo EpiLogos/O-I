@@ -1,4 +1,4 @@
-// Tasks (DLW §19.12, software-factory:tasks) and Runs (§19.11, software-factory:attempt-review) on their owners (lane BF2).
+// Tasks (DLW §19.1, software-factory:tasks) and Runs (§19.11, software-factory:attempt-review) on their owners (lane BF2).
 //
 // Tasks are the clips on a session's track: the run model's tasks of the selected session (agent/agentRunModel.ts TaskClip — n,
 // title, state running · queued · stalled · done, start and last activity — built by AgentSessionsProvider from agency_read, the

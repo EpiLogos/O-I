@@ -1,4 +1,4 @@
-// Agent identity (manual §18.15, central:agent-identity): who an agent is, read from Central's roster before you give it work. Live's
+// Agent identity (manual §19.4, central:agent-identity): who an agent is, read from Central's roster before you give it work. Live's
 // nearest: Utility or a small info device: a well that draws one thing and a short row of controls. The well draws the agent as the
 // roster holds it: its face (the shell's agent face, agent/maskFace.ts), its name, standing and revision, the one line that says who it
 // is, the practice it carries (the kind marks of §8.2), and two strips with handles: the roster, and the World the card is read in.
@@ -193,7 +193,7 @@ function model(v: V): Model {
 const standing = (a: Agent) => (a.ok === undefined ? undefined : a.ok ? 'accepted' : 'proposed')
 const standingText = (a: Agent) => standing(a) ?? NONE
 const ratifiedWords = (r: boolean | undefined) => (r === undefined ? NONE : r ? 'ratified' : 'not ratified')
-// The light reads the owner alone (manual §16.8): lit or dark when it reports, hollow when it has not.
+// The light reads the owner alone (manual §16.9): lit or dark when it reports, hollow when it has not.
 const light = (p: ViewProps) => (strOf(p.owner ?? p.v, 'light') ?? 'unknown') as LightState
 // The mark set is the person's choice for the whole shell (Settings), not the owner's: the blade until they choose.
 const marks = (v: V) => (strOf(v, 'marks') ?? 'blade') as WoodSet

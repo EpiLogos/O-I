@@ -1,4 +1,4 @@
-// Tasks (manual §19.12, software-factory:tasks): the clips on one Factory session's track — what the agent is asked to do, and how each
+// Tasks (manual §19.1, software-factory:tasks): the clips on one Factory session's track — what the agent is asked to do, and how each
 // task stands. Live's nearest: a column of clip slots in Session view, with the Launch and Follow boxes of Clip view. The picture is that
 // column: a clip draws its state by the shell's own law (agent/agentRunModel.ts: a running task draws no end, a queued task no length, a
 // stalled task is frozen where its output stopped), and the empty square after the last task stops the session after the current task.

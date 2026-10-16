@@ -1,4 +1,4 @@
-// The Gateways rack (manual §19.2, actuation:gateways-rack): every gateway the work can reach, as chains on the Main track. Live's
+// The Gateways rack (manual §19.3, actuation:gateways-rack): every gateway the work can reach, as chains on the Main track. Live's
 // nearest: an Audio Effect Rack and its chain list. A rack has no wave to draw, so the chain list is the picture: each gateway's
 // state light, its name and its transport. The square beside a chain chooses it (the shell holds that choice, as it does for the
 // Skillset rack's chain); Whole, Full and Open show the chosen gateway.

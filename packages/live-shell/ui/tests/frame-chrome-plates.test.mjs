@@ -1,5 +1,5 @@
 // T-FRAME-CHROME-ONTO-PLATES: the hosted frame draws only its field in a pane; every control its chrome drew there stands on a device —
-// the research canvas's, timeline's and journey's on the M1′, M2′ and M3′ plates in the manual's groups (DLW.md §17.3–§17.5), the
+// the research canvas's, timeline's and journey's on the M1′, M2′ and M3′ plates in the manual's groups (DLW.md §17.4–§17.6), the
 // Expressions stage's on the Studio — read from the frame's published chrome and pressed through its one runner. The shell declares the
 // presentation (a pane: 'devices'; the pane at full size, the pane grammar's maximise: 'frame') from the transport, which stands in
 // every mode. Rendered server-side with production modules in memory (the loader of atlas-places-plate.test.mjs).

@@ -92,7 +92,7 @@ const deviceMarkup = (markup, faceId) => {
 }
 
 test('no selected occasion: the chain is unchanged by a world with nothing retained', () => {
-  // Lane BC3: Search joins the agent's devices on the chain (DLW §18.11); the Packet stands only on a reached document's chain.
+  // Lane BC3: Search joins the agent's devices on the chain (DLW §18.4); the Packet stands only on a reached document's chain.
   assert.match(todayMarkup, /data-central-devices="7"/, 'the seven device faces of the Central family stand on the chain while no document is reached')
   const empty = worldWith([nowEvent], null)
   assert.equal(html(createElement(BaseDevicesDetail, {transport, world: empty, standing: null})), todayMarkup, 'a world with no retained occasion: unchanged')

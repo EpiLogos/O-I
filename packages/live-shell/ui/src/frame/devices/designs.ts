@@ -1,4 +1,4 @@
-// Which views draw a device (manual §16.12: "The device runtime draws a device's own views when it has them, and the generic
+// Which views draw a device (manual §16.13: "The device runtime draws a device's own views when it has them, and the generic
 // plate when it does not"). The catalogue is the registry (lead, 16 Oct): a device's own views are the design the catalogue holds
 // under `<family>:<face>` (inhabitants/catalogue/panels/index.ts loadDesign), loaded the first time a published device asks for
 // it; absent, or still loading, the generic plate draws. A design the shell alone needs can be registered here, over the

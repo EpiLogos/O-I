@@ -1,4 +1,4 @@
-// Factory's Main track readers of what the agents did and ask (lane BF3): the Ledger (DLW §19.15, its widget §23.9;
+// Factory's Main track readers of what the agents did and ask (lane BF3): the Ledger (DLW §19.13, its widget §23.9;
 // software-factory:ledger — "Factory's Main track") and Approvals (§19.16, its widget §23.10; software-factory:approvals).
 //
 // The Ledger's receipts are Central's source changes: the change horizon (projectcentral.change.horizon, ctrl/src/source_horizon.rs:118

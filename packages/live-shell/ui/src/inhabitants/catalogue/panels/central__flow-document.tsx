@@ -1,4 +1,4 @@
-// The Flow (manual §18.3): the 0/1 conversation or journal kept as one HTML document. Live's nearest: a MIDI clip's note editor —
+// The Flow (manual §18.1): the 0/1 conversation or journal kept as one HTML document. Live's nearest: a MIDI clip's note editor —
 // the entries are notes on lanes, one lane for each participant, and the line to the entry that a new one answers is the picture.
 // The map is drawn by the document's own law (desktop/cradle/src/flow/plural.ts buildThreads): an entry stands under the entry it
 // answers, branches from or corrects; a convergence names every entry it draws together; a source and an artifact are refs.
@@ -246,7 +246,7 @@ const mapDoes = (v: V) => { const title = strOf(v, 'title'); return title ? `${t
 
 // ---------------------------------------------------------------- controls
 
-// The light reads the owner alone (manual §16.8): lit or dark when it reports, hollow when it has not.
+// The light reads the owner alone (manual §16.9): lit or dark when it reports, hollow when it has not.
 const light = (p: ViewProps) => (strOf(p.owner ?? p.v, 'light') ?? 'unknown') as LightState
 const head = (p: ViewProps) => ({light: light(p), onFold: p.nav.fold, onFull: p.nav.full})
 

@@ -1,6 +1,6 @@
 // Your controls (the frame's toolbelt, Journey.shared.toolbelt, through the boundary's chosen controls): the parameters the person chose,
-// each a dial of the device panel kit (inhabitants/sdk/panel.tsx Dial; docs/dlw/DLW.md §16.9) standing in the section that holds them
-// — never a card, never a box of its own. The section never scrolls: the dials page, the pages in the row's head (manual §16.8 "When a
+// each a dial of the device panel kit (inhabitants/sdk/panel.tsx Dial; docs/dlw/DLW.md §16.10) standing in the section that holds them
+// — never a card, never a box of its own. The section never scrolls: the dials page, the pages in the row's head (manual §16.9 "When a
 // panel holds more than fits, it gets pages in its head"), as many to a page as the section's height and width hold. A change goes to the
 // owner when the hand lets go (§5.2): the dial shows the value you set while you drag, then the value waits in italics until the owner's
 // reading moves, and a refusal returns the owner's value with the owner's words on the status line. Configure adds each control's own
@@ -17,7 +17,7 @@ type Request = (request: NativeEditorRequest) => Promise<NativeEditorReply>
 const format = (value: number) => String(Number(value.toPrecision(4)))
 /** How long an accepted change waits for the owner's reading before the owner's value stands again (frame/devices/deviceHost.tsx). */
 const CONFIRM_GRACE_MS = 4000
-/** One dial's cell (manual §16.8: a control column 56 wide; the name, a 28 px ring, the value) and the head row above the dials. */
+/** One dial's cell (manual §16.9: a control column 56 wide; the name, a 28 px ring, the value) and the head row above the dials. */
 export const CHOSEN_COLUMN = 56, CHOSEN_CELL = 58, CHOSEN_HEAD = 20, CHOSEN_MANAGE = 38
 
 /** How many dials a page holds: the rows the section's height takes (each dial's cell, and in Configure its management under it), by the

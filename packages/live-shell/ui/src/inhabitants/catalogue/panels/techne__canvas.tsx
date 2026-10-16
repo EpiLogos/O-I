@@ -1,4 +1,4 @@
-// The Canvas (manual §17.3): Technē's research board — cards, sticky notes, shapes, frames and lines laid out as a mind map. Live's
+// The Canvas (manual §17.4): Technē's research board — cards, sticky notes, shapes, frames and lines laid out as a mind map. Live's
 // nearest: a device with a map in its well and pages (Hybrid Reverb), here Board and Lines. Its picture is the owner's own minimap
 // (expressions-app field-studies-journeys canvasNavigationOverview.tsx; src/shared/navigationMinimapGeometry.ts): every item as a
 // box, every line between box centres, the pane as a rectangle, all fitted with 8 px of padding. The Lines page draws one line by the
@@ -373,7 +373,7 @@ function World({v}: {v: V}) {
 
 // ---------------------------------------------------------------- readings and the head
 
-// The light reads the owner alone (manual §16.8): lit or dark when it reports, hollow when it has not.
+// The light reads the owner alone (manual §16.9): lit or dark when it reports, hollow when it has not.
 const light = (p: ViewProps) => (strOf(p.owner ?? p.v, 'light') ?? 'unknown') as LightState
 /** What the one selected item is, for the Colour control: a sticky note takes a palette colour, a shape takes a fill. */
 const pickedKind = (v: V): 'sticky' | 'shape' | undefined => {

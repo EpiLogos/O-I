@@ -1,7 +1,7 @@
 /* The device panel kit (panel.tsx; docs/dlw/DLW.md §16). Live's device language on the shell's tokens: a flat grey face, a
    lighter head, hairline rules between sections, one dark well per display, amber for what is on, teal for a value and its arc.
    Every colour resolves the shell's own tokens (styles.css :root, the mockup's palette) at :root, so a plate brings no colour of
-   its own anywhere it stands — the chain, the pool, a pane, the rail, the gallery (manual §16.8). The mockup's plate is the
+   its own anywhere it stands — the chain, the pool, a pane, the rail, the gallery (manual §16.9). The mockup's plate is the
    basis: the face bg-2 (.dev), the head bg-3 (.insth), the field and the well bg-0 (.tog .tg span, .vis). A raw value appears only
    as a token's own fallback. */
 :root {
@@ -169,7 +169,7 @@
 .dp-cell[data-pending="true"] .dp-value, .dp-cell[data-pending="true"] .dp-box > span { font-style: italic; opacity: .75; }
 .dp-cell[data-pending="true"] .dp-dial-value { stroke-dasharray: 2 2; }
 .dp-cell[data-pending="true"] .dp-radio button[aria-checked="true"] { background: transparent; color: var(--dp-on); outline: 1px dashed var(--dp-on); outline-offset: -2px; }
-/* Waiting on the owner (manual §16.9, §6): a toggle and a chooser as a radio — italics, the edge dashed. */
+/* Waiting on the owner (manual §16.10, §6): a toggle and a chooser as a radio — italics, the edge dashed. */
 .dp-cell[data-pending="true"] .dp-toggle, .dp-cell[data-pending="true"] .dp-chooser { font-style: italic; outline: 1px dashed var(--dp-on); outline-offset: -2px; }
 .dp-cell[data-pending="true"] .dp-toggle[aria-pressed="true"] { background: transparent; color: var(--dp-on); }
 .dp-cell[data-disabled="true"] { opacity: .42; }
@@ -177,12 +177,12 @@
 .dp-cell[data-refused="true"] > .dp-label { color: var(--stall, #ff9b4a); }
 /* A toggle the owner has not read: neither on nor off, a hollow face. */
 .dp-toggle[data-unknown="true"] { background: transparent; border-style: dashed; color: var(--text-faint, #71767c); }
-/* No reading (manual §16.10): the value is "—" in the faint ink, the ring or field empty — never NaN, never zero. */
+/* No reading (manual §16.11): the value is "—" in the faint ink, the ring or field empty — never NaN, never zero. */
 .dp-cell[data-unread="true"] .dp-value, .dp-cell[data-unread="true"] .dp-box > span, .dp-cell[data-unread="true"] .dp-readout-value { color: var(--text-faint, #71767c); }
 
 /* ---- folded: the head on its side, at chain height. */
 .dp-folded { flex: none; width: 22px; height: calc(var(--dp-head-h) + var(--dp-body) + 1px); display: flex; flex-direction: column; align-items: center; gap: 6px; padding-top: 5px; background: var(--dp-head); border: 1px solid var(--line, #24262a); }
-/* On a chain a plate is 191 high (manual §16.8: head 22, band 168, one rule): the plate's foot is the chain's own edge, so the
+/* On a chain a plate is 191 high (manual §16.9: head 22, band 168, one rule): the plate's foot is the chain's own edge, so the
    compact plate and the folded strip stand at one height, side by side. */
 .dp[data-view="compact"] { border-bottom-width: 0; }
 .dp-folded { border-bottom-width: 0; }
@@ -204,7 +204,7 @@
 .dp-toggle::after, .dp-radio button::after, .dp-action::after, .dp-box::after { content: ''; position: absolute; inset: -3px 0; }
 .dp-row-request::after { content: ''; position: absolute; inset: -6px; }
 .dp-radio[data-stack="true"] button::after { inset: -1px 0; }
-/* The head's marks (▾, ⤢, the rail's pin) are drawn 16 px and the activator 12 px; each answers over 22 (manual §16.8). */
+/* The head's marks (▾, ⤢, the rail's pin) are drawn 16 px and the activator 12 px; each answers over 22 (manual §16.9). */
 .dp-fold, .dp-full, .dp-activator { position: relative; }
 .dp-fold::after, .dp-full::after { content: ''; position: absolute; inset: -3px; }
 .dp-activator::after { content: ''; position: absolute; inset: -6px; border-radius: 50%; }

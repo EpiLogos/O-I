@@ -29,7 +29,7 @@
 .janko--plate .janko-note { font-size: 9px; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* In a device's well (the generic plate's .dv-picture centres its child at its widest content), the surface takes the well's own width
    so all six columns stand in it, and each key is a face you can see: the two whole-tone families, the torus's two helices, in two
-   greys (manual §16.11: the picture draws the device's own law). */
+   greys (manual §16.12: the picture draws the device's own law). */
 .dv-picture > .janko--plate { width: 100%; height: 100%; min-width: 0; }
 .janko--plate .janko-row[data-janko-family="0"] .janko-key { background: var(--bg-3); }
 .janko--plate .janko-row[data-janko-family="1"] .janko-key { background: var(--bg-1); }

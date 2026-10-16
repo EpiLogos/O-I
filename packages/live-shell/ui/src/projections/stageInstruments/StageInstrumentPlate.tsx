@@ -1,5 +1,5 @@
 // The plate of a Technē instrument the hosted stage draws — M1′ Canvas, M2′ Timeline or M3′ Journey — open on the rack
-// (T-FRAME-CHROME-ONTO-PLATES; lock §2.5; manual §17.3–§17.5; the mockup's M1/M2/M3 plates, world-shell-mockup.html:1457-1459). Beside
+// (T-FRAME-CHROME-ONTO-PLATES; lock §2.5; manual §17.4–§17.6; the mockup's M1/M2/M3 plates, world-shell-mockup.html:1457-1459). Beside
 // the atlas's M4′ and M5′ plates (projections/atlas/places/PlacesPlate.tsx, palaces/PalacePlate.tsx), registered the same way
 // (inhabitants/ql/devices/TechneDevices.tsx OWN_PLATES). The pane draws only the instrument's material; every control the frame drew
 // over it — the research tools dock, the canvas's zoom keys and minimap toggle, the selected card's panel, the scene bar, the masthead —
@@ -9,7 +9,7 @@
 // device craft (frameChrome.tsx on the panel kit, docs/dlw/DLW.md §16): keys lit by the frame's reading, bounded numbers swept, a
 // parameter the manual names that no owner carries drawn as its switch with nothing lit and its reason on the status line.
 // The plate's head is the panel kit's (InstrumentPlate.tsx), its display section the instrument's live well (inhabitants/ql/devices/
-// techneWells.tsx: the board, the ruler, the walk), and no sentence stands in it (docs/dlw/DLW.md §16.8): a frame reading that is a
+// techneWells.tsx: the board, the ruler, the walk), and no sentence stands in it (docs/dlw/DLW.md §16.9): a frame reading that is a
 // save state is a light, one that is a line of words is a light whose words are the status bar's, a group the frame places nothing in
 // says one word with its reason on the status bar, and a parameter no owner carries draws disabled with its reason (§6 Disabled).
 import type {ReactNode} from 'react'
@@ -39,7 +39,7 @@ const SAVE_STATE = /^(saved|saving|held)\b/i
 /** A reading of words longer than a value: a name or a status line, never drawn as a sentence here. */
 const isLine = (text: string) => text.length > 16 || text.split(/\s+/).length > 2
 
-/** One of the frame's readings, as the kit draws a reading (manual §16.9 Light: "A state that the owner reports"): the save state as a
+/** One of the frame's readings, as the kit draws a reading (manual §16.10 Light: "A state that the owner reports"): the save state as a
  * light (green saved, hollow saving, orange held); a line of words — the canvas's status line — as a light whose words are the status
  * bar's; a short value as the frame gives it. */
 export function FrameReading({control, view}: {control: FrameChromeControl; view: FrameChromeView}) {
@@ -67,7 +67,7 @@ export function PlateFrameControls({controls, view, label}: {controls: readonly 
 }
 
 /** A parameter the manual names that no owner carries: a dial with no reading where it is a quantity, else its switch with nothing lit —
- * disabled, its reason on the status bar (manual §16.10 "Disabled — The control at 40 % strength. The status bar says why"). */
+ * disabled, its reason on the status bar (manual §16.11 "Disabled — The control at 40 % strength. The status bar says why"). */
 function Waiting({parameter}: {parameter: WaitingParameter}) {
   return parameter.dial ? <WaitingDial label={parameter.name} why={parameter.why} unit={parameter.dial.unit} /> : <WaitingRow name={parameter.name} values={parameter.values} why={parameter.why} />
 }

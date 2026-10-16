@@ -1,4 +1,4 @@
-// Impact (manual §18.13): what a change to a folder or a note will touch. Live's nearest: Utility — a small effect whose meaning is
+// Impact (manual §18.6): what a change to a folder or a note will touch. Live's nearest: Utility — a small effect whose meaning is
 // plain at a glance — with the Scope pattern for a picture of reach on rings. The picture is the neighbourhood itself: the subject
 // at the centre and one ring for each link out. The device reads three owners and keeps no index: the knowledge graph (the nodes and
 // edges of `oi.cradle.graph-reading/v1`), the folder listing and file map, and the NOW register. The owner's cut of the graph is
@@ -237,7 +237,7 @@ function Neighbourhood({m, g, big = false, picked, onPick}: {m: Model; g: Geomet
   </g>
 }
 
-/** What the well says when a reading is missing (manual §16.11): the switch, the refusal, or the reading that has not come. */
+/** What the well says when a reading is missing (manual §16.12): the switch, the refusal, or the reading that has not come. */
 function Say({m, g}: {m: Model; g: Geometry}) {
   const words = m.gap === 'subject' ? gapWords(m) : m.status.links === 'off' ? 'links off' : m.refusal ? 'graph refused' : gapWords(m)
   const says = words !== undefined && words === gapWords(m)

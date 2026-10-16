@@ -1,5 +1,5 @@
 // Lane BF3: Workcell's devices on Factory's chains (src/agent/devices/workcellBindings.ts, FactoryDeviceChain.tsx) — Git / landing
-// (workcell:git-seat, DLW §19.19), the Seat (workcell:seat, §19.20, inside Git / landing), the Remote carrier (workcell:remote-carrier,
+// (workcell:git-seat, DLW §19.16), the Seat (workcell:seat, §19.20, inside Git / landing), the Remote carrier (workcell:remote-carrier,
 // §19.21, the Gateways rack's fourth chain) and the Link (workcell:link, §19.22, the Main track).
 //
 // Channels:

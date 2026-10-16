@@ -10,7 +10,7 @@ import {claimRailWidget, deviceWidget} from '../frame/widgets/deviceWidgets'
 import {FRAMES_ID} from './devices/mainTrackBindings'
 import {APPROVALS_ID, LEDGER_ID} from './devices/receiptBindings'
 
-// The rail's Frames is the Frames monitor's widget (DLW §23.8 "Frames is the Frames monitor on the rail"; §19.5): its tile draws the
+// The rail's Frames is the Frames monitor's widget (DLW §19.6 "Frames is the Frames monitor on the rail"; §19.5): its tile draws the
 // device's own Widget view on the binding the Gateway's Full and the pool read (agent/devices/mainTrackBindings.ts framesBinding),
 // bare, as the rail draws any device's widget. It replaced this tile's raw harness_agent_read receipt (MOVED, lane BF2).
 claimRailWidget('frames', FRAMES_ID)

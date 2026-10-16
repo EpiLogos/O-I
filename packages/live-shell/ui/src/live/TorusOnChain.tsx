@@ -2,7 +2,7 @@
 // in a pane — one device, its live settings the same in all three, and its picture drawn at each size (manual §10.4: a small
 // live picture on the rack, the device at full size in a pane). The picture is the torus's outline, tinted by the owner's
 // standing; the oscillation itself is only ever the simulation's own render on the stage (lock §0.2.2), never redrawn here.
-// Its own Full is the torus at the pane's size with the Jankó keyboard under it (manual §16.14 Full; DLW §21.1 Full): the pane is
+// Its own Full is the torus at the pane's size with the Jankó keyboard under it (manual §16.15 Full; DLW §21.2 Full): the pane is
 // the instrument you play.
 //
 // The plate is the catalogue's design of the Torus (inhabitants/catalogue/panels/torus.tsx, `quaternal-logic:torus`), drawn on the

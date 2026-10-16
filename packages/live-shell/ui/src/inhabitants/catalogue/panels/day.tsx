@@ -1,4 +1,4 @@
-// The Day (manual §18.1): an instrument with six faces, drawn as the die's net — the template's own flat fold round face 0
+// The Day (manual §18.2): an instrument with six faces, drawn as the die's net — the template's own flat fold round face 0
 // (desktop/cradle/documents/ql-daily-die.html setFold: 2 above, 4 · 0 · 1 · 5 across, 3 below; opposite faces add to five).
 // Live's nearest: a device with pages (Hybrid Reverb's Reverb · EQ) — here the pages are the two Days that stand at once.
 import {Action, Band, Chooser, Dial, Display, Folded, Panel, Radio, Readout, Section, Tile, Toggle, ValueBox, type LightState} from '../../sdk/panel'
@@ -49,7 +49,7 @@ function Net({v, set, cell, x0, y0, names}: {v: ViewProps['v']; set?: ViewProps[
   </g>
 }
 
-/** The owner's refusal, in its own words, across the well (manual §16.11): what stops the Day, drawn instead of guessing. */
+/** The owner's refusal, in its own words, across the well (manual §16.12): what stops the Day, drawn instead of guessing. */
 function Refusal({v, w, y}: {v: ViewProps['v']; w: number; y: number}) {
   const said = strOf(v, 'refusal')
   if (!said) return null
@@ -58,7 +58,7 @@ function Refusal({v, w, y}: {v: ViewProps['v']; w: number; y: number}) {
   </foreignObject>
 }
 
-// The light reads the owner alone (manual §16.8): lit or dark when it reports, hollow when it has not.
+// The light reads the owner alone (manual §16.9): lit or dark when it reports, hollow when it has not.
 const light = (p: ViewProps) => (strOf(p.owner ?? p.v, 'light') ?? 'unknown') as LightState
 const head = (p: ViewProps) => ({light: light(p), onFold: p.nav.fold, onFull: p.nav.full})
 const shortDate = (v: ViewProps['v'], key: string) => strOf(v, key)?.slice(0, 6) ?? NONE

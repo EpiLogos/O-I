@@ -4,7 +4,7 @@
 .factory-slot { display: flex; flex: none; min-width: 0; background: var(--bg-2) }
 .factory-slot[data-selected="true"] { outline: 1px solid var(--accent); outline-offset: -1px }
 .factory-slot > .device { min-width: 0 }
-/* The rack's chosen chain, its member device, stands inside the rack's slot (DLW §19.7). */
+/* The rack's chosen chain, its member device, stands inside the rack's slot (DLW §19.8). */
 .factory-slot__member { display: flex; flex: none; min-width: 0; border-left: 1px solid var(--line) }
 .factory-slot__rail { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 14px; flex: none; padding: 3px 0; background: var(--bg-0); border-right: 1px solid var(--line); color: var(--text-faint) }
 /* The chain's own drop receiver stands as the row's end (the mockup's .dropz, frame/detail/detail.css): it arms while a drag is held. */
@@ -50,11 +50,11 @@
 .fd-dirty { animation: fd-pulse 1.4s ease-in-out infinite }
 @keyframes fd-pulse { 50% { opacity: .35 } }
 
-/* Factory's Main track (DLW §16.2, §19.2): its devices stand first on the Device side, ruled off from the session's chain. */
+/* Factory's Main track (DLW §16.2, §19.3): its devices stand first on the Device side, ruled off from the session's chain. */
 .factory-main { display: flex; flex: none; gap: 6px; padding-right: 6px; border-right: 1px solid var(--line-strong) }
 .factory-main:empty { display: none }
 
-/* The task on the Clip side (DLW §19.12; TaskClipDevice.tsx): the Tasks device stands beside its log, as Live's clip box beside its
+/* The task on the Clip side (DLW §19.1; TaskClipDevice.tsx): the Tasks device stands beside its log, as Live's clip box beside its
    editor (lane BF3). */
 .factory-clip { display: flex; gap: 6px; height: 100%; min-width: 0; min-height: 0 }
 .factory-clip > :last-child { flex: 1 1 auto; min-width: 0 }

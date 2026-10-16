@@ -1,4 +1,4 @@
-// Context & world (manual §18.14, central:context-world): what an agent may read and where it may write, shown as the ground around
+// Context & world (manual §19.12, central:context-world): what an agent may read and where it may write, shown as the ground around
 // the open object. Live's nearest: EQ Eight — a scale with points on it and one handle that widens the band; here the scale is rings.
 // The owners are split, as the family declares (inhabitants/centralFamilyManifest.ts: a shared face). Reads: the places a world makes
 // available to an agent are its sources, each with `agent_retrieval_allowed` (Central ctrl source_horizon.rs:129, retrieval_allowed :375),
@@ -210,7 +210,7 @@ function Rings({v, set, w, h, labels, tile}: {v: V; set?: SetFn; w: number; h: n
 
 // ---------------------------------------------------------------- the controls
 
-// The light reads the owner alone (manual §16.8): lit or dark when it reports, hollow when it has not.
+// The light reads the owner alone (manual §16.9): lit or dark when it reports, hollow when it has not.
 const light = (p: ViewProps) => (strOf(p.owner ?? p.v, 'light') ?? 'unknown') as LightState
 const head = (p: ViewProps) => ({light: light(p), onFold: p.nav.fold, onFull: p.nav.full})
 const cornerOf = (v: V) => { const r = pending(v) ?? reach(v); return r === undefined ? NONE : `reach ${LEVELS[r]?.toLowerCase() ?? NONE}` }
