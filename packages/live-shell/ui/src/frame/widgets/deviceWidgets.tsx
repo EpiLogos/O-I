@@ -27,6 +27,17 @@ function deviceBody(deviceId: string): ComponentType<WidgetBodyProps> {
   return Body
 }
 
+/** A widget the rail registers under its own id that a device's widget draws (DLW §23.8: the rail's Frames is the Frames monitor's
+ * widget) — of the rail's own device kind, bare, its body the device's Widget view on the device's binding — under the registration's
+ * name and mark. A device's publisher claims it; the claim stays when the device leaves its chain (its body then says so). */
+const claims = new Map<string, string>()
+export function claimRailWidget(widgetId: string, deviceId: string): void { claims.set(widgetId, deviceId) }
+/** The registered widget as the rail draws it: the claiming device's widget, else itself. */
+export function claimedWidget(widget: WidgetDeclaration): WidgetDeclaration {
+  const deviceId = claims.get(widget.id)
+  return deviceId ? {...widget, bare: true, Body: deviceBody(deviceId)} : widget
+}
+
 /** The device widget for a rail id `device:<id>`: named and marked from the device the door holds now. */
 export function deviceWidget(widgetId: string): WidgetDeclaration {
   const deviceId = widgetId.slice(DEVICE_WIDGET_PREFIX.length)
@@ -39,8 +50,11 @@ export function deviceWidget(widgetId: string): WidgetDeclaration {
 export function deviceWidgets(open: readonly string[], query: string): {open: WidgetDeclaration[]; found: WidgetDeclaration[]} {
   const held = open.filter(isDeviceWidget).map(deviceWidget)
   const needle = query.trim().toLocaleLowerCase()
+  // A claimed device answers a search through the registration that claims it (one Frames in the launcher, not two).
+  const claimed = new Set(claims.values())
   const found = needle
-    ? publishedDevices().filter(entry => entry.device.face.title.toLocaleLowerCase().includes(needle) || entry.device.id.toLocaleLowerCase().includes(needle))
+    ? publishedDevices().filter(entry => !claimed.has(entry.device.id))
+      .filter(entry => entry.device.face.title.toLocaleLowerCase().includes(needle) || entry.device.id.toLocaleLowerCase().includes(needle))
       .map(entry => deviceWidget(`${DEVICE_WIDGET_PREFIX}${entry.device.id}`))
     : []
   return {open: held, found}

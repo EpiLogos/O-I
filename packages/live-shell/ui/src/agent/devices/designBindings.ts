@@ -105,11 +105,12 @@ const REFUSE = {
 const disabled = (reasons: Readonly<Record<string, string>>): Record<string, Standing> =>
   Object.fromEntries(Object.entries(reasons).map(([key, why]) => [key, {disabled: why}]))
 
-/** Each chain design's refused writes, by key (the refusals its binding's write gives, below). The Agent's light is not among them:
- * the kit's activator has no words for why it cannot be pressed (inhabitants/sdk/panel.tsx Panel `onLight`), so its press goes to
- * the binding and comes back as the owner's refusal (REFUSE.power) on the Info line. */
+/** Each chain design's refused writes, by key (the refusals its binding's write gives, below). The Agent's light is among them since
+ * the kit's activator says why it only reads (inhabitants/sdk/panel.tsx Panel `lightWhy`, c5afc4aa0): the design stands its activator
+ * disabled on the light's standing (actuation__harness-model.tsx head: `st(p, 'light').disabled`), so nothing is pressed only to be
+ * refused. */
 export const REFUSED_WRITES: Readonly<Record<string, Readonly<Record<string, string>>>> = {
-  [AGENT_DESIGN]: {cap: REFUSE.budget, heartbeat: REFUSE.heartbeat},
+  [AGENT_DESIGN]: {light: REFUSE.power, cap: REFUSE.budget, heartbeat: REFUSE.heartbeat},
   [RACK_DESIGN]: {set: REFUSE.set, exported: REFUSE.export},
   [MEMBER_DESIGN]: {reviewed: REFUSE.trust, run: REFUSE.run, proved: REFUSE.prove},
   [SCOPE_DESIGN]: {reach: REFUSE.reach, writeMode: REFUSE.writeMode, knowledge: REFUSE.knowledge},
@@ -138,9 +139,12 @@ export interface ChainHolds {
   readonly reachPending?: number
   /** The member device's asks: a review before Trust, a run after its preflight. */
   readonly member: {readonly reviewAsk?: boolean; readonly run?: 'asked'}
+  /** Each device's view-held keys, by device id (DesignBinding.local): what the person chose of a device's own view — the Thread's
+   * pin and filters, the rack's chosen chain, the Frames monitor's filters — never an owner reading and never sent to one. */
+  readonly views: Readonly<Record<string, Readonly<Record<string, Value>>>>
 }
 
-const EMPTY: ChainHolds = Object.freeze({composer: {}, compose: {requests: {}}, member: {}})
+const EMPTY: ChainHolds = Object.freeze({composer: {}, compose: {requests: {}}, member: {}, views: {}})
 let holds: ChainHolds = EMPTY
 const listeners = new Set<() => void>()
 
@@ -156,6 +160,18 @@ export function subscribeHolds(listener: () => void): () => void {
   return () => { listeners.delete(listener) }
 }
 export function resetHolds(): void { updateHolds(() => EMPTY) }
+/** Set (or drop, with undefined) one view-held key of one device. */
+export function holdView(id: string, key: string, value: Value | undefined): void {
+  updateHolds(was => {
+    const view = was.views[id] ?? {}
+    if (view[key] === value || (value === undefined && !(key in view))) return was
+    const next: Record<string, Value> = {...view}
+    if (value === undefined) delete next[key]; else next[key] = value
+    return {...was, views: {...was.views, [id]: next}}
+  })
+}
+/** One device's view-held keys. */
+export const viewHolds = (held: ChainHolds, id: string): Readonly<Record<string, Value>> => held.views[id] ?? {}
 export function useChainHolds(): ChainHolds {
   return useSyncExternalStore(subscribeHolds, chainHolds, chainHolds)
 }
@@ -246,6 +262,13 @@ export interface AgentInput {
    * the shell's default and is no reading). */
   readonly harness: {readonly binding: string; readonly resolved: boolean}
   readonly holds: ChainHolds
+  /** The session's thread as rows (threadBinding.ts threadRowsOf over AIKit's encounter view — the reading the thread pane draws),
+   * JSON; absent while unread. The Thread device reads the same rows (one binding feeds both). */
+  readonly thread?: string
+  /** The models AIKit's catalogue names (`aikit model-catalogue show --json` entries[].model, kernel model_catalogue). */
+  readonly models?: readonly string[] | null
+  /** The harnesses found on this machine (`aikit --json client status` clients[] detected, kernel harness_status). */
+  readonly harnesses?: readonly string[] | null
 }
 
 /** The Agent's values: each key from the owner that reports it, or absent. */
@@ -276,6 +299,11 @@ export function agentValues(input: AgentInput): Values {
   // shell learns of stands in the binding's heldBy.
   put(values, 'draft', held.composer.draft)
   put(values, 'sent', held.composer.sent)
+  // The owners' lists the choosers and the well draw (the design's `thread`, `models` and `harnesses`, actuation__harness-model.tsx:
+  // 20-21): each the owner's own, or absent.
+  if (sessionRef != null) put(values, 'thread', input.thread)
+  if (input.models) values.models = JSON.stringify(input.models)
+  if (input.harnesses) values.harnesses = JSON.stringify(input.harnesses)
   return values
 }
 

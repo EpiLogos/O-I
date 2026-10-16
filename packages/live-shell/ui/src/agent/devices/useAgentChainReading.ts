@@ -23,10 +23,12 @@ const isObj = (value: unknown): value is Record<string, unknown> => !!value && t
 /** What the gateway and the repository answered (read here); null while they are read. */
 interface OwnRead {gateway: Pick<AgentChainReading, 'gateway' | 'gatewayAdmitted' | 'gatewayDoc'>; gatewayWaiting: string | null; git: {doc: unknown; error: string | null} | null}
 
-export function useAgentChainReading(sessionRef: string | null): {reading: AgentChainReading; transport: KernelTransportStatus; binding: string; resolved: boolean} {
+export function useAgentChainReading(sessionRef: string | null): {reading: AgentChainReading; transport: KernelTransportStatus; binding: string; resolved: boolean
+  /** The harnesses found on this machine, from the same harness_status answer the binding is read from (null: not read). */
+  harnesses: string[] | null} {
   const {transport} = useWorkspace()
   // `resolved`: the owner named the binding (until it has, 'cursor' is only the shell's default — useHarnessBinding.ts:8).
-  const {binding, resolved} = useHarnessBinding(transport)
+  const {binding, resolved, harnesses} = useHarnessBinding(transport)
   const roster = useRosterAnswer(transport, null).reading
   const task = useTaskAnswer(transport, transport.kind === 'unavailable' ? null : sessionRef).reading
   const seat = useWorkcellAnswer(transport).reading
@@ -127,5 +129,5 @@ export function useAgentChainReading(sessionRef: string | null): {reading: Agent
     return next
   }, [transport, own, roster, task, seat, sessionRef])
 
-  return {reading, transport, binding, resolved}
+  return {reading, transport, binding, resolved, harnesses}
 }

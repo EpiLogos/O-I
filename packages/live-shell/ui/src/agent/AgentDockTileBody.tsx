@@ -5,8 +5,15 @@ import {NativeContextPanel} from '../components/NativeContextPanel'
 import {useWorkspace} from '../shell/workspaceContext'
 import {scalarEntries, safeJson} from './RefusalCard'
 import type {AgentTileId} from './AgentShellContext'
-import {useHarnessBinding} from './useHarnessBinding'
 import {useTaskAnswer} from '../owners/readers'
+import {DEVICE_WIDGET_PREFIX} from '../frame/devices/deviceDoor'
+import {claimRailWidget, deviceWidget} from '../frame/widgets/deviceWidgets'
+import {FRAMES_ID} from './devices/mainTrackBindings'
+
+// The rail's Frames is the Frames monitor's widget (DLW §23.8 "Frames is the Frames monitor on the rail"; §19.5): its tile draws the
+// device's own Widget view on the binding the Gateway's Full and the pool read (agent/devices/mainTrackBindings.ts framesBinding),
+// bare, as the rail draws any device's widget. It replaced this tile's raw harness_agent_read receipt (MOVED, lane BF2).
+claimRailWidget('frames', FRAMES_ID)
 
 /** Tile marks, every one from the icon cut through the SDK Icon (icon-cut.html; inhabitants/sdk/icons.ts): the rail draws
  * them in the tile's head and, at preview scale, in its launcher cell. */
@@ -83,7 +90,6 @@ function ReadingRows({label, text, loading}: {label: string; text: string | null
 
 export function AgentDockTileBody({id, sessionRef}: {id: AgentTileId; sessionRef: string | null}) {
   const {transport} = useWorkspace()
-  const {binding} = useHarnessBinding(transport)
   // The ledger is the selected session's task record — the window's shared answer (owners/readers.ts), read once between this
   // tile, the sessions provider, the Factory chain and the transport's metrics; only the ledger and approvals tiles subscribe.
   const ledgerTile = id === 'ledger' || id === 'approvals'
@@ -96,8 +102,6 @@ export function AgentDockTileBody({id, sessionRef}: {id: AgentTileId; sessionRef
   const ledgerLoading = ledgerTile && transport.kind !== 'unavailable' && !!sessionRef && task.status === 'reading'
   const [diff, setDiff] = useState<string | null>(null)
   const [diffLoading, setDiffLoading] = useState(false)
-  const [frames, setFrames] = useState<string | null>(null)
-  const [framesLoading, setFramesLoading] = useState(false)
   const [gitNote, setGitNote] = useState<string | null>(null)
 
   useEffect(() => {
@@ -142,30 +146,6 @@ export function AgentDockTileBody({id, sessionRef}: {id: AgentTileId; sessionRef
   }, [id, transport])
 
   useEffect(() => {
-    if (id !== 'frames') return
-    let live = true
-    setFramesLoading(true)
-    void (async () => {
-      if (transport.kind === 'unavailable') {
-        if (live) {
-          setFrames(transport.reason ?? 'Unavailable')
-          setFramesLoading(false)
-        }
-        return
-      }
-      const gateway = await kernelOp(transport, {op: 'harness_agent_read', binding})
-      if (!live) return
-      if (gateway.error || gateway.outcome?.result !== 'harness_agent_reading') {
-        setFrames(gateway.error ?? 'Harness gateway unavailable')
-      } else {
-        setFrames(safeJson(gateway.outcome.document))
-      }
-      setFramesLoading(false)
-    })()
-    return () => { live = false }
-  }, [id, transport, binding])
-
-  useEffect(() => {
     if (id !== 'files') return
     let live = true
     void (async () => {
@@ -185,7 +165,7 @@ export function AgentDockTileBody({id, sessionRef}: {id: AgentTileId; sessionRef
   if (id === 'ledger') return <ReadingRows label="Encounter task (ledger basis)" text={ledger} loading={ledgerLoading} />
   if (id === 'approvals') return <ReadingRows label="Task record (approval hooks)" text={ledger} loading={ledgerLoading} />
   if (id === 'diff') return <ReadingRows label="git_diff_read · seat" text={diff} loading={diffLoading} />
-  if (id === 'frames') return <ReadingRows label="Harness gateway (frame monitor basis)" text={frames} loading={framesLoading} />
+  if (id === 'frames') { const Frames = deviceWidget(`${DEVICE_WIDGET_PREFIX}${FRAMES_ID}`).Body; return <Frames subject={sessionRef} pinned={false} /> }
   if (id === 'files') return <ReadingRows label="git_repository_read · O-I" text={gitNote} />
   if (id === 'graph') return <ReadingRows label="Graph" text="Open Bimba / knowledge graph from the world browser; no kernel graph_read in this shell yet." />
   if (id === 'web') return <ReadingRows label="Web" text="Browser surfaces live in the workbench; agent shell exposes git and harness readings here." />
