@@ -5,12 +5,22 @@
 // count, so the size is the characters of the selected text, as the Packet widget and the transport's Key slot show it
 // (widgets/PacketWidget.tsx packetRows, shell/transports/transportReadings.ts packetReadouts). The owner holds at most 32 items
 // (nativeContext.ts assertPreparedContext) and 1 MiB (ai-kit crates/aikit-store/src/encounter_context.rs).
-// The readings are the Factory flow of Control/user/flows (flow-2026-10-03-1432.html) and a packet of three items, the same three that
-// the Document device holds (panels/central__document.tsx), so both say "3 items · 106 chars" as central/documentPayload.ts packetHead does.
 // The picture is the packet by its own law: a meter of characters (each step to the right is ten times more), the items laid along it
 // in order, and the Limit as the ceiling. An item that does not fit under the Limit waits, drawn dashed past the ceiling.
-import {Action, Band, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, Tile, Toggle, ValueBox, toUnit, type LightState, type RowItem, type Scale} from '../../sdk/panel'
-import {clampTo, num, on, str, type DesignedDevice, type ViewProps} from './design'
+//
+// Everything the packet holds is a value. `packet` is a JSON list of items, the same key and shape as the Document device's
+// (panels/central__document.tsx): {entry, scope, text}, with three optional fields that the Document ignores: `by` (the entry's
+// author, C or F), `chars` (the size of the whole entry when `text` is only how it opens) and `stale` (the item's source moved).
+// `flow` is the name of the Flow the packet is gathered from. The other readings: `scope` (session, or project when no Agent
+// conversation stands), `question` (written, or none, in the Agent's composer), `selection` (a passage stands selected on the page),
+// `hasPage` (the selection's journal page can be captured whole) and `sent` (the head of the last send). The parameters are `add`,
+// `limit` and `keep`; `rowsPage` is the page of the list. A key the owner does not report is absent, and the view draws "—" for it,
+// naming the missing reading in the well. The sample readings in `defaults` are the Factory flow of Control/user/flows
+// (flow-2026-10-03-1432.html) and a packet of three items, the same three the Document device holds, so both say "3 items · 106 chars"
+// as central/documentPayload.ts packetHead does.
+// The actions set their own keys: `capture`, `clear`, `answer`, and `takeOut` (the id of the item to take out).
+import {Action, Band, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, Tile, Toggle, ValueBox, toUnit, type LightState, type RowItem, type Scale, type Standing} from '../../sdk/panel'
+import {NONE, boolOf, clampTo, json, numOf, shown, st, strOf, type DesignedDevice, type ViewProps} from './design'
 import './central__packet.css'
 
 type V = ViewProps['v']
@@ -24,7 +34,6 @@ const AXIS: Scale = {min: 10, max: 1_000_000, log: true}
 /** The Limit, in characters. Off sits at the top: only the owner's own cap stands. */
 const LIMIT: Scale = {min: 1000, max: 1_000_000, log: true}
 const OFF = LIMIT.max
-const FLOW = 'Factory original development Run'
 const STALE_WHY = 'The source revision changed. Reselect it or review the captured snapshot.'
 
 const ADDS = [
@@ -37,93 +46,104 @@ const ADDS = [
 
 const chars = (text: string) => [...text].length
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
-const list = (text: string) => text.split(',').filter(Boolean)
 const limitText = (x: number) => (x >= OFF ? 'Off' : x >= 10_000 ? `${Math.round(x / 1000)}k` : x >= 1000 ? `${(x / 1000).toFixed(1)}k` : `${Math.round(x)}`)
+/** A reading that is a finite number, or undefined when it is absent or not a number. */
+const numeric = (v: V, key: string): number | undefined => { const x = numOf(v, key); return x !== undefined && Number.isFinite(x) ? x : undefined }
+const limitWords = (v: V) => { const x = numeric(v, 'limit'); return x === undefined ? NONE : limitText(x) }
+const obj = (x: unknown): x is Record<string, unknown> => x !== null && typeof x === 'object' && !Array.isArray(x)
 
-interface Item {readonly id: string; readonly entry: number; readonly by: 'C' | 'F'; readonly kind: Kind; readonly text: string; readonly chars: number}
-/** The packet's three items: the words the agent would read, as the Document device holds them (ql-flow.html `D.packet`). */
-const BASE: readonly Item[] = ([
-  {id: '3s', entry: 3, by: 'C', kind: 'selection', text: 'The original development Run remains incomplete'},
-  {id: '6e', entry: 6, by: 'C', kind: 'entry', text: 'The original Run remains incomplete'},
-  {id: '9s', entry: 9, by: 'F', kind: 'selection', text: 'Which unit starts first?'},
-] as const).map(item => ({...item, chars: chars(item.text)}))
-
-/** The passages that Capture can still take. `whole` is the size of the whole entry in the flow file; `lead` is how that entry opens. */
-const PASSAGES = [
-  {entry: 4, by: 'C', head: 'The requested two-machine development Run remains incomplete', whole: 1343,
-    lead: 'The requested two-machine development Run remains incomplete. The latest native owner reading at 17:57 UTC retained seven required units and no worker attempts or completed legs. A startup failure has not been counted as a worker result.'},
-  {entry: 7, by: 'C', head: 'The development Run has not started its workers', whole: 1175,
-    lead: 'The development Run has not started its workers. The installed Factory owner was checked again at 20:54 UTC: zero attempts, zero completed required units out of seven, and no independent verification or human decision recorded.'},
-  {entry: 8, by: 'C', head: 'The first worker can retain its coordinator', whole: 1134,
-    lead: 'The first worker can retain its coordinator. The installed Factory owner was reread at 21:52 UTC: zero attempts and zero completed required units out of seven. The same development Run remains open.'},
-  {entry: 5, by: 'C', head: 'The original development Run still has seven required units', whole: 1012,
-    lead: 'The original development Run still has seven required units and no worker attempts or completed legs in a fresh native owner reading. It remains incomplete.'},
-] as const
-
-/** An item added by Capture, from its code: the entry number, then s (a selection) or e (a whole entry). */
-function made(code: string): Item | undefined {
-  const entry = Number(code.slice(0, -1)), passage = PASSAGES.find(p => p.entry === entry)
-  if (!passage) return undefined
-  return code.endsWith('e')
-    ? {id: code, entry, by: passage.by, kind: 'entry', text: passage.lead, chars: passage.whole}
-    : {id: code, entry, by: passage.by, kind: 'selection', text: passage.head, chars: chars(passage.head)}
+interface Item {
+  /** Its place in the list and its entry: what a take-out names. */
+  readonly id: string
+  readonly entry: number
+  /** `C` (the coordinator) or `F` (the person), when the owner says who wrote the entry. */
+  readonly by: string | undefined
+  readonly kind: Kind
+  /** The scope it was added under, in the owner's words. */
+  readonly scope: string
+  readonly text: string
+  readonly chars: number
+  /** Its source moved after it was captured. */
+  readonly stale: boolean
 }
-
-const held = (v: V): Item[] => {
-  const gone = new Set(list(str(v, 'gone')))
-  return [...(on(v, 'cleared') ? [] : BASE), ...list(str(v, 'added')).map(made).filter((i): i is Item => !!i)].filter(i => !gone.has(i.id))
+const kindOfScope = (scope: string): Kind => (/page/i.test(scope) ? 'page' : /entry/i.test(scope) ? 'entry' : 'selection')
+function itemOf(x: unknown, at: number): Item | undefined {
+  if (!obj(x) || typeof x.entry !== 'number' || typeof x.scope !== 'string' || typeof x.text !== 'string') return undefined
+  const size = typeof x.chars === 'number' && Number.isFinite(x.chars) && x.chars >= 0 ? Math.round(x.chars) : chars(x.text)
+  return {id: `${at}:${x.entry}`, entry: x.entry, by: typeof x.by === 'string' && x.by ? x.by : undefined, kind: kindOfScope(x.scope), scope: x.scope, text: x.text, chars: size, stale: x.stale === true}
 }
-const stale = (v: V) => new Set(list(str(v, 'stale')))
-const labelOf = (i: Item) => `entry ${i.entry} (${i.by})`
+/** The packet's items, in order; undefined when the owner reports no list (a member that is not an item is left out). */
+function itemsOf(v: V): readonly Item[] | undefined {
+  const raw = json<unknown>(v, 'packet', undefined)
+  if (!Array.isArray(raw)) return undefined
+  return raw.flatMap((x, at) => { const item = itemOf(x, at); return item ? [item] : [] })
+}
+const labelOf = (i: Item) => `entry ${i.entry}${i.by ? ` (${i.by})` : ''}`
 const KIND_WORD: Record<Kind, string> = {selection: 'a selection', entry: 'a whole entry', page: 'a whole page'}
 
-/** What fits under the Limit, in the order added. An item that would pass it waits. */
-function fit(v: V) {
-  const limit = num(v, 'limit'), off = limit >= OFF
+interface Fit {
+  readonly items: readonly Item[]
+  readonly inn: readonly Item[]
+  readonly wait: readonly Item[]
+  readonly total: number
+  /** The Limit, in characters; undefined when it is not reported (then nothing waits). */
+  readonly limit: number | undefined
+  readonly off: boolean
+}
+/** What fits under the Limit, in the order added. An item that would pass it waits. Undefined without a reading of the packet. */
+function fit(v: V): Fit | undefined {
+  const items = itemsOf(v)
+  if (!items) return undefined
+  const limit = numeric(v, 'limit'), off = limit !== undefined && limit >= OFF
   const inn: Item[] = [], wait: Item[] = []
   let total = 0
-  for (const item of held(v)) {
-    if (off || total + item.chars <= limit) { inn.push(item); total += item.chars } else wait.push(item)
+  for (const item of items) {
+    if (limit === undefined || off || total + item.chars <= limit) { inn.push(item); total += item.chars } else wait.push(item)
   }
-  return {inn, wait, total, limit, off}
+  return {items, inn, wait, total, limit, off}
 }
+/** By how many characters a waiting item passes the Limit. */
+const overBy = (f: Fit, item: Item) => (f.limit === undefined ? undefined : f.total + item.chars - f.limit)
 const headWords = (n: number, total: number) => `${plural(n, 'item')} · ${total} chars`
+/** The items in the order drawn: those in the packet, then those that wait. */
+const placed = (f: Fit | undefined) => (f ? [...f.inn.map(item => ({item, waits: false})), ...f.wait.map(item => ({item, waits: true}))] : [])
 
-/** The packet is whole again: every item out, as the owner's clear does and as a send does. */
-function clear(p: ViewProps) {
-  p.set('cleared', true)
-  p.set('added', '')
-  p.set('gone', '')
+/** The standing of an action's key, with the reason that the packet's own state gives when the host gives none. */
+const act = (p: ViewProps, key: string, own?: string): Standing => {
+  const s = st(p, key)
+  return s.disabled === undefined && own !== undefined ? {...s, disabled: own} : s
 }
-function takeOut(p: ViewProps, id: string) {
-  p.set('gone', [...list(str(p.v, 'gone')), id].join(','))
+const takeOut = (p: ViewProps, id: string) => p.set('takeOut', id)
+/** Why Capture cannot press now; undefined when it can. */
+function captureRefusal(v: V): string | undefined {
+  const add = strOf(v, 'add')
+  if (add === undefined) return 'No reading of what Capture takes.'
+  if (add === 'page') {
+    const page = boolOf(v, 'hasPage')
+    if (page === undefined) return 'No reading of the journal page.'
+    if (!page) return 'This Flow holds no journal page.'
+  }
+  const selected = boolOf(v, 'selection')
+  if (selected === undefined) return 'No reading of the selection.'
+  return selected ? undefined : 'Nothing is selected.'
 }
-/** The next passage of the page that Capture would take, as Add sets it. */
-function nextCode(v: V): string | undefined {
-  const present = new Set(held(v).map(i => i.entry)), passage = PASSAGES.find(x => !present.has(x.entry))
-  return passage ? `${passage.entry}${str(v, 'add') === 'entry' ? 'e' : 's'}` : undefined
-}
-const captureRefusal = (v: V): string | undefined => (str(v, 'add') === 'page' ? 'This Flow holds no journal page.' : nextCode(v) ? undefined : 'Nothing is selected.')
-function capture(p: ViewProps) {
-  const code = nextCode(p.v)
-  if (!code) return
-  p.set('gone', list(str(p.v, 'gone')).filter(x => x !== code).join(','))
-  p.set('added', [...list(str(p.v, 'added')).filter(x => x !== code), code].join(','))
+/** Why Clear now cannot press now; undefined when it can. */
+function clearRefusal(v: V): string | undefined {
+  const f = fit(v)
+  return !f ? 'No reading of the packet.' : f.items.length ? undefined : 'The packet is empty.'
 }
 /** Why Answer this cannot press now, in the owners' words (widgets/PacketWidget.tsx answerRefusal); undefined when it can. */
 function answerRefusal(v: V): string | undefined {
-  const {inn} = fit(v)
-  if (str(v, 'scope') === 'project') return 'No Agent conversation stands, so nothing receives the packet yet.'
-  if (!inn.length) return 'The packet is empty: put a selection in it first.'
-  if (str(v, 'question') !== 'written') return "Write the question in the Agent's composer: Answer this sends it with exactly this packet."
-  if (inn.some(i => stale(v).has(i.id))) return STALE_WHY
+  const f = fit(v), scope = strOf(v, 'scope')
+  if (!f) return 'No reading of the packet.'
+  if (scope === undefined) return 'No reading of where the packet goes.'
+  if (scope === 'project') return 'No Agent conversation stands, so nothing receives the packet yet.'
+  if (!f.inn.length) return 'The packet is empty: put a selection in it first.'
+  const question = strOf(v, 'question')
+  if (question === undefined) return "No reading of the Agent's composer."
+  if (question !== 'written') return "Write the question in the Agent's composer: Answer this sends it with exactly this packet."
+  if (f.inn.some(i => i.stale)) return STALE_WHY
   return undefined
-}
-function answer(p: ViewProps) {
-  const {inn, total} = fit(p.v)
-  p.set('sent', headWords(inn.length, total))
-  p.set('question', 'none')
-  if (!on(p.v, 'keep')) clear(p)
 }
 
 // ---------------------------------------------------------------- the display: the meter, and the items along it
@@ -145,15 +165,16 @@ function Mark({kind, state}: {kind: Kind; state: MarkState}) {
 
 const sig2 = (x: number) => { const step = Math.pow(10, Math.floor(Math.log10(x)) - 1); return Math.round(x / step) * step }
 
-function Picture({v, set, w, h, tile}: {v: V; set?: SetFn; w: number; h: number; tile?: boolean}) {
-  const {inn, wait, total, limit, off} = fit(v), moved = stale(v)
+function Picture({v, set, why, w, h, tile}: {v: V; set?: SetFn; why?: string; w: number; h: number; tile?: boolean}) {
+  const pk = fit(v), inn = pk?.inn ?? [], wait = pk?.wait ?? [], total = pk?.total ?? 0
+  const limit = numeric(v, 'limit'), off = limit !== undefined && limit >= OFF
   const x0 = 8, x1 = w - 12, span = x1 - x0
   const at = (c: number) => x0 + toUnit(AXIS, Math.max(AXIS.min, c)) * span
   const my = tile ? 10 : 24, bh = 10, ty = my + bh + 11, top = ty + 7, pitch = tile ? 12 : 14
   const room = Math.max(1, Math.floor((h - top - 4) / pitch))
-  const all = [...inn.map(item => ({item, waits: false})), ...wait.map(item => ({item, waits: true}))]
-  const shown = all.length > room ? all.slice(0, room - 1) : all
-  const hx = at(off ? OFF : limit)
+  const all = placed(pk)
+  const drawn = all.length > room ? all.slice(0, room - 1) : all
+  const hx = limit === undefined ? undefined : at(off ? OFF : limit)
   const limitAt = (x: number) => {
     const c = AXIS.min * Math.pow(AXIS.max / AXIS.min, clampTo(0, 1, (x - x0) / span))
     return c >= LIMIT.max * .93 ? OFF : sig2(Math.max(LIMIT.min, c))
@@ -161,68 +182,80 @@ function Picture({v, set, w, h, tile}: {v: V; set?: SetFn; w: number; h: number;
   let run = 0
   const waitEnd = Math.min(x1, at(total + wait.reduce((n, i) => n + i.chars, 0)))
   const bx = x0 + 15
+  const sent = strOf(v, 'sent')
+  const noPacket = w < 130 ? ['No reading', 'of the packet'] : ['No reading of the packet']
   return <g>
-    {!tile && <text x={x0} y={12} className="dp-ink-dim">{w > 160 ? `Packet · ${headWords(inn.length, total)}` : `${plural(inn.length, 'item')} · ${total} ch`}</text>}
+    {!tile && <text x={x0} y={12} className="dp-ink-dim">{w > 160 ? `Packet · ${pk ? headWords(inn.length, total) : NONE}` : pk ? `${plural(inn.length, 'item')} · ${total} ch` : `${NONE} items · ${NONE} ch`}</text>}
     <rect x={x0} y={my} width={span} height={bh} className="dp-faint" />
     {inn.map((item, k) => {
       const a = at(run), b = at(run + item.chars)
       run += item.chars
-      return <rect key={item.id} x={a} y={my} width={Math.max(1, b - a - 1)} height={bh} fill={moved.has(item.id) ? 'var(--stall)' : 'var(--dp-value)'} opacity={k % 2 ? .5 : .8} />
+      return <rect key={`${item.id}`} x={a} y={my} width={Math.max(1, b - a - 1)} height={bh} fill={item.stale ? 'var(--stall)' : 'var(--dp-value)'} opacity={k % 2 ? .5 : .8} />
     })}
     {wait.length > 0 && waitEnd > at(total) && <rect x={at(total)} y={my} width={waitEnd - at(total)} height={bh} fill="none" stroke="var(--stall)" strokeDasharray="2 2" />}
     {[100, 1000, 10_000, 100_000].map(c => <g key={c}>
       <path d={`M${at(c)} ${my + bh}v3`} className="dp-faint" />
       {(!tile || c === 100 || c === 10_000) && <text x={at(c)} y={ty} className="dp-axis" textAnchor="middle">{c >= 1000 ? `${c / 1000}k` : c}</text>}
     </g>)}
-    {(!tile || !off) && <path d={`M${hx} ${my - 5}V${my + bh + 5}`} className="dp-curve-on" />}
-    {!tile && <Handle n={1} x={hx} y={my + bh / 2} label="Limit" does="Drag along the meter: the size at which the packet stops. Drag to the right end for Off."
+    {hx !== undefined && (!tile || !off) && <path d={`M${hx} ${my - 5}V${my + bh + 5}`} className="dp-curve-on" />}
+    {hx !== undefined && !tile && <Handle n={1} x={hx} y={my + bh / 2} label="Limit"
+      does={`Drag along the meter: the size at which the packet stops. Drag to the right end for Off.${why ? ` ${why}` : ''}`}
       onDrag={set && (x => set('limit', limitAt(x)))} onReset={set && (() => set('limit', OFF))} />}
-    {shown.map(({item, waits}, k) => {
+    {drawn.map(({item, waits}, k) => {
       const cy = top + k * pitch + pitch / 2
-      const state: MarkState = waits ? 'wait' : moved.has(item.id) ? 'review' : 'in'
+      const state: MarkState = waits ? 'wait' : item.stale ? 'review' : 'in'
       const len = Math.max(2, toUnit(AXIS, Math.max(AXIS.min, item.chars)) * (x1 - bx) * .8)
       const words = `${tile ? '' : `${labelOf(item)}${state === 'review' ? ' !' : ''}  `}${item.chars}`
       const inside = bx + len + 6 + words.length * 4 > w - 2
-      return <g key={item.id}>
+      return <g key={`${item.id}`}>
         <g transform={`translate(${x0} ${cy - 6}) scale(1.2)`}><path d={GLYPH[item.kind]} fill="none" stroke={TONE[state]} strokeWidth={.9} /></g>
         <rect x={bx} y={cy - 4} width={len} height={8} fill={waits ? 'none' : TONE[state]} fillOpacity={.28} stroke={TONE[state]} strokeDasharray={waits ? '2 2' : undefined} />
         <text x={inside ? bx + 3 : bx + len + 5} y={cy + 3} className="dp-ink"
           style={{fontSize: 8, fontVariantNumeric: 'tabular-nums', fill: waits ? 'var(--text-dim)' : undefined}}>{words}</text>
       </g>
     })}
-    {all.length > shown.length && <text x={x0} y={top + shown.length * pitch + pitch / 2 + 3} className="dp-axis">+{all.length - shown.length} more</text>}
-    {all.length === 0 && <text x={x0} y={top + 12} className="dp-ink-dim">{str(v, 'sent') ? `Sent ${str(v, 'sent')}` : 'Nothing in the packet'}</text>}
+    {all.length > drawn.length && <text x={x0} y={top + drawn.length * pitch + pitch / 2 + 3} className="dp-axis">+{all.length - drawn.length} more</text>}
+    {pk && all.length === 0 && (sent ? (w < 130 ? ['Sent', sent] : [`Sent ${sent}`]) : ['Nothing in the packet']).map((line, i) =>
+      <text key={line} x={x0} y={top + 12 + i * 11} className="dp-ink-dim">{line}</text>)}
+    {!pk && noPacket.map((line, i) => <text key={line} x={x0} y={top + 12 + i * 11} className="dp-ink-dim">{line}</text>)}
   </g>
 }
 
 // ---------------------------------------------------------------- the controls
 
-const light = (v: V) => str(v, 'light') as LightState
-const head = (p: ViewProps) => ({light: light(p.v), onFold: p.nav.fold, onFull: p.nav.full})
+const light = (p: ViewProps) => (strOf(p.owner ?? p.v, 'light') ?? 'unknown') as LightState
+const head = (p: ViewProps) => ({light: light(p), onFold: p.nav.fold, onFull: p.nav.full})
+/** The well's handle drags the Limit unless the host says the Limit cannot be set. */
+const limitSet = (p: ViewProps) => (st(p, 'limit').disabled ? undefined : p.set)
 
 const AddRadio = ({p}: {p: ViewProps}) =>
-  <Radio label="Add" does="What Capture takes from the page: the selection, its whole entry, or its whole journal page." value={str(p.v, 'add')} options={ADDS} stack onChange={x => p.set('add', x)} />
+  <Radio {...st(p, 'add')} label="Add" does="What Capture takes from the page: the selection, its whole entry, or its whole journal page." value={strOf(p.v, 'add') ?? ''} options={ADDS} stack onChange={x => p.set('add', x)} />
 const LimitBox = ({p}: {p: ViewProps}) =>
-  <ValueBox label="Limit" does="Stops the packet at this many characters. An item that does not fit waits. Off leaves only the owner's cap of 32 items."
-    value={num(p.v, 'limit')} def={OFF} scale={LIMIT} format={limitText} onChange={x => p.set('limit', x)} />
-const KeepToggle = ({p}: {p: ViewProps}) =>
-  <Toggle label="Keep" does="Keep the packet after you send it, to ask again with the same material. Off empties it when you send." on={on(p.v, 'keep')} onChange={x => p.set('keep', x)} />
+  <ValueBox {...st(p, 'limit')} label="Limit" does="Stops the packet at this many characters. An item that does not fit waits. Off leaves only the owner's cap of 32 items."
+    value={numeric(p.v, 'limit') ?? NaN} def={OFF} scale={LIMIT} format={limitText} onChange={x => p.set('limit', x)} />
+const KeepToggle = ({p}: {p: ViewProps}) => {
+  const now = boolOf(p.v, 'keep')
+  return <Toggle {...st(p, 'keep')} label="Keep" does="Keep the packet after you send it, to ask again with the same material. Off empties it when you send." on={now === true} unknown={now === undefined} onChange={x => p.set('keep', x)} />
+}
+const CaptureAction = ({p}: {p: ViewProps}) =>
+  <Action {...act(p, 'capture', captureRefusal(p.v))} label="Capture" does="Add the selection to the packet, as Add sets. Nothing is sent." onPress={() => p.set('capture', true)} />
 const ClearNow = ({p}: {p: ViewProps}) =>
-  <Action label="Clear now" does="Take every item out of the packet." onPress={() => clear(p)} disabled={held(p.v).length ? undefined : 'The packet is empty.'} />
+  <Action {...act(p, 'clear', clearRefusal(p.v))} label="Clear now" does="Take every item out of the packet." onPress={() => p.set('clear', true)} />
 const AnswerThis = ({p}: {p: ViewProps}) =>
-  <Action label="Answer this" does="Send your question with exactly this packet. The answer arrives as an entry." onPress={() => answer(p)} disabled={answerRefusal(p.v)} />
+  <Action {...act(p, 'answer', answerRefusal(p.v))} label="Answer this" does="Send your question with exactly this packet. The answer arrives as an entry." onPress={() => p.set('answer', true)} />
 
-function rowsOf(v: V): RowItem[] {
-  const {inn, wait, total, limit} = fit(v), moved = stale(v)
-  const rows = [...inn.map(item => ({item, waits: false})), ...wait.map(item => ({item, waits: true}))]
+function rowsOf(v: V, takeWhy: string | undefined): RowItem[] {
+  const pk = fit(v)
+  if (!pk) return [{id: 'none', name: 'No reading of the packet', light: 'unknown'}]
+  const rows = placed(pk)
   if (!rows.length) return [{id: 'none', name: 'Nothing in the packet', light: 'unknown'}]
   return rows.map(({item, waits}) => {
-    const review = !waits && moved.has(item.id)
+    const review = !waits && item.stale, by = overBy(pk, item)
     return {
-      id: item.id, name: labelOf(item), request: true, light: waits || review ? 'dark' : 'lit', tone: 'value',
+      id: item.id, name: labelOf(item), ...(takeWhy ? {} : {request: true}), light: waits || review ? 'dark' : 'lit', tone: 'value',
       mark: <Mark kind={item.kind} state={waits ? 'wait' : review ? 'review' : 'in'} />, note: `${item.chars}`,
-      why: waits ? `Passes the Limit by ${total + item.chars - limit} characters.` : review ? STALE_WHY : undefined,
-      does: `Added as ${KIND_WORD[item.kind]}: ${item.text.slice(0, 60)}${item.text.length > 60 ? '…' : ''}`,
+      why: waits ? (by === undefined ? 'Passes the Limit.' : `Passes the Limit by ${by} characters.`) : review ? STALE_WHY : undefined,
+      does: `Added as ${KIND_WORD[item.kind]}: ${item.text.slice(0, 60)}${item.text.length > 60 ? '…' : ''}${takeWhy ? ` ${takeWhy}` : ''}`,
     }
   })
 }
@@ -230,44 +263,45 @@ function rowsOf(v: V): RowItem[] {
 // ---------------------------------------------------------------- the pane: the packet in full
 
 function Pane({p}: {p: ViewProps}) {
-  const {inn, wait, total, limit, off} = fit(p.v), moved = stale(p.v)
-  const rows = [...inn.map(item => ({item, waits: false})), ...wait.map(item => ({item, waits: true}))]
+  const pk = fit(p.v), rows = placed(pk), take = st(p, 'takeOut'), sent = strOf(p.v, 'sent'), scope = strOf(p.v, 'scope')
   return <div className="ref-pane-body cpk-pane">
     <div className="ref-pane-tabs" role="tablist" aria-label="Packet">
-      <button type="button" role="tab" aria-selected="true">Packet · {plural(inn.length, 'item')}</button>
+      <button type="button" role="tab" aria-selected="true">Packet · {pk ? plural(pk.inn.length, 'item') : NONE}</button>
     </div>
     <div className="cpk-sheet">
       <header className="cpk-head">
-        <h3>Packet <small>{FLOW}</small></h3>
+        <h3>Packet <small>{shown(p.v, 'flow')}</small></h3>
         <p>Exactly what the agent will read. Nothing else of yours goes with it.</p>
       </header>
       <div className="cpk-body">
-        {rows.length === 0
-        ? <p className="cpk-empty">{str(p.v, 'sent') ? `Sent ${str(p.v, 'sent')}. The packet is empty.` : 'Nothing in the packet yet. Select a passage, then press Capture.'}</p>
+        {!pk
+        ? <p className="cpk-empty">No reading of the packet.</p>
+        : rows.length === 0
+        ? <p className="cpk-empty">{sent ? `Sent ${sent}. The packet is empty.` : 'Nothing in the packet yet. Select a passage, then press Capture.'}</p>
         : <ol className="cpk-list">
           {rows.map(({item, waits}) => {
-            const review = !waits && moved.has(item.id), state: MarkState = waits ? 'wait' : review ? 'review' : 'in'
+            const review = !waits && item.stale, state: MarkState = waits ? 'wait' : review ? 'review' : 'in', by = overBy(pk, item)
             return <li key={item.id} className="cpk-item" data-state={state}>
               <div className="cpk-meta">
                 <Mark kind={item.kind} state={state} />
                 <b>{labelOf(item)}</b>
-                <span>{item.kind === 'entry' ? 'whole entry' : item.kind}</span>
+                <span>{item.scope}</span>
                 <span className="cpk-size">{item.chars} chars</span>
-                <button type="button" className="cpk-x" aria-label={`Take ${labelOf(item)} out of the packet`} data-i="Take out|Take this item out of the packet."
-                  onClick={() => takeOut(p, item.id)}>×</button>
+                <button type="button" className="cpk-x" aria-label={`Take ${labelOf(item)} out of the packet`} data-i={`Take out|${take.disabled ?? 'Take this item out of the packet.'}`}
+                  disabled={!!take.disabled} onClick={() => takeOut(p, item.id)}>×</button>
               </div>
               <p className="cpk-text">{item.text}{item.kind === 'entry' && item.chars > item.text.length ? ' …' : ''}</p>
-              {waits && <p className="cpk-note">Waits. It passes the Limit by {total + item.chars - limit} characters. Take it out, or raise the Limit.</p>}
+              {waits && <p className="cpk-note">Waits. {by === undefined ? '' : `It passes the Limit by ${by} characters. `}Take it out, or raise the Limit.</p>}
               {review && <p className="cpk-note">{STALE_WHY}</p>}
             </li>
           })}
         </ol>}
       </div>
       <footer className="cpk-foot">
-        <span><b>{total}</b> characters</span>
-        <span><b>{inn.length}</b> of {CAP} items</span>
-        <span>Limit <b>{limitText(off ? OFF : limit)}</b></span>
-        <span>For the <b>{str(p.v, 'scope') === 'project' ? 'project' : 'conversation'}</b></span>
+        <span><b>{pk ? pk.total : NONE}</b> characters</span>
+        <span><b>{pk ? pk.inn.length : NONE}</b> of {CAP} items</span>
+        <span>Limit <b>{limitWords(p.v)}</b></span>
+        <span>For the <b>{scope === undefined ? NONE : scope === 'project' ? 'project' : 'conversation'}</b></span>
       </footer>
     </div>
   </div>
@@ -275,76 +309,95 @@ function Pane({p}: {p: ViewProps}) {
 
 // ---------------------------------------------------------------- the device
 
+const defaults = {
+  light: 'lit', add: 'selection', limit: OFF, keep: false,
+  // Readings and the state of the packet: what the owner reports. The packet's items are the words the agent would read, as the
+  // Document device holds them (ql-flow.html `D.packet`), each with the author of its entry.
+  flow: 'Factory original development Run',
+  packet: JSON.stringify([
+    {entry: 3, scope: 'selection', by: 'C', text: 'The original development Run remains incomplete'},
+    {entry: 6, scope: 'whole entry', by: 'C', text: 'The original Run remains incomplete'},
+    {entry: 9, scope: 'selection', by: 'F', text: 'Which unit starts first?'},
+  ]),
+  scope: 'session', question: 'written', selection: true, hasPage: false, sent: '', rowsPage: 0,
+} as const
+
+/** The packet of the default fixture, as a list to lay other items over. */
+const sample = (): Record<string, unknown>[] => JSON.parse(defaults.packet)
+
 export const design: DesignedDevice = {
   id: 'central:packet',
   title: 'Packet',
   kind: 'effect',
-  defaults: {
-    light: 'lit', add: 'selection', limit: OFF, keep: false,
-    // Readings and the state of the packet: what the owner reports, and what Capture, Clear and a send have done.
-    cleared: false, added: '', gone: '', stale: '', question: 'written', scope: 'session', sent: '', rowsPage: 0,
-  },
+  defaults,
   fixtures: {
     'Factory flow': {},
-    'Over the limit': {limit: 1000, added: '4e'},
-    'Source moved': {stale: '6e'},
+    // A whole entry of 1343 characters, captured after the three: past a Limit of 1.0k it waits (ql-flow.html entry 4).
+    'Over the limit': {
+      limit: 1000,
+      packet: JSON.stringify([...sample(), {entry: 4, scope: 'whole entry', by: 'C', chars: 1343,
+        text: 'The requested two-machine development Run remains incomplete. The latest native owner reading at 17:57 UTC retained seven required units and no worker attempts or completed legs. A startup failure has not been counted as a worker result.'}]),
+    },
+    'Source moved': {packet: JSON.stringify(sample().map(item => (item.entry === 6 ? {...item, stale: true} : item)))},
+    // Sent with Keep off: the packet is empty, and the send is the one reading left of it.
+    Sent: {packet: JSON.stringify([]), question: 'none', sent: '3 items · 106 chars'},
+    'No readings': Object.fromEntries(Object.keys(defaults).map(key => [key, undefined])),
   },
 
   folded: p => {
-    const {inn, total} = fit(p.v)
-    return <Folded title="Packet" light={light(p.v)} readings={[plural(inn.length, 'item'), `${total} ch`]} onUnfold={p.nav.unfold} />
+    const pk = fit(p.v)
+    return <Folded title="Packet" light={light(p)} readings={[pk ? plural(pk.inn.length, 'item') : `${NONE} items`, `${pk ? pk.total : NONE} ch`]} onUnfold={p.nav.unfold} />
   },
 
-  compact: p => {
-    const {limit} = fit(p.v)
-    return <Panel title="Packet" view="compact" {...head(p)} onSelect={p.nav.select}>
-      <Section width={152}>
-        <Display w={140} h={146} label="The packet" does="The packet's size on a meter of characters, and its items along it. Drag handle 1 to set the Limit." corner={`limit ${limitText(limit)}`}>
-          <Picture v={p.v} set={p.set} w={140} h={146} />
-        </Display>
-      </Section>
-      <Section label="Macros" cols={2} width={128}>
-        <AddRadio p={p} />
-        <LimitBox p={p} />
-        <KeepToggle p={p} />
-        <ClearNow p={p} />
-      </Section>
-    </Panel>
-  },
+  compact: p => <Panel title="Packet" view="compact" {...head(p)} onSelect={p.nav.select}>
+    <Section width={152}>
+      <Display w={140} h={146} label="The packet" does="The packet's size on a meter of characters, and its items along it. Drag handle 1 to set the Limit." corner={`limit ${limitWords(p.v)}`}>
+        <Picture v={p.v} set={limitSet(p)} why={st(p, 'limit').disabled} w={140} h={146} />
+      </Display>
+    </Section>
+    <Section label="Macros" cols={2} width={128}>
+      <AddRadio p={p} />
+      <LimitBox p={p} />
+      <KeepToggle p={p} />
+      <ClearNow p={p} />
+    </Section>
+  </Panel>,
 
   whole: p => {
-    const {inn, wait, total, limit, off} = fit(p.v)
+    const pk = fit(p.v), limit = numeric(p.v, 'limit'), question = strOf(p.v, 'question')
+    const room = pk && limit !== undefined ? (pk.off ? 'no limit' : Math.max(0, limit - pk.total)) : undefined
+    const waiting = pk && limit !== undefined ? pk.wait.length : undefined
     return <Panel title="Packet" view="whole" {...head(p)}>
       <Band>
         <Section width={206}>
-          <Display w={194} h={146} label="The packet" does="The packet's size on a meter of characters, and its items along it. Drag handle 1 to set the Limit." corner={`limit ${limitText(limit)}`}>
-            <Picture v={p.v} set={p.set} w={194} h={146} />
+          <Display w={194} h={146} label="The packet" does="The packet's size on a meter of characters, and its items along it. Drag handle 1 to set the Limit." corner={`limit ${limitWords(p.v)}`}>
+            <Picture v={p.v} set={limitSet(p)} why={st(p, 'limit').disabled} w={194} h={146} />
           </Display>
         </Section>
         <Section label="Add" width={74}>
           <AddRadio p={p} />
-          <Action label="Capture" does="Add the selection to the packet, as Add sets. Nothing is sent." onPress={() => capture(p)} disabled={captureRefusal(p.v)} />
+          <CaptureAction p={p} />
         </Section>
         <Section label="Limit" cols={2} grow>
-          <Dial label="Limit" does="Stops the packet at this many characters. An item that does not fit waits. Off leaves only the owner's cap of 32 items."
-            value={limit} def={OFF} scale={LIMIT} format={limitText} onChange={x => p.set('limit', x)} />
-          <Readout label="room" does="Characters that still fit under the Limit." value={off ? 'no limit' : Math.max(0, limit - total)} tone="value" />
-          <Readout label="waiting" does="Items that pass the Limit. Each waits until you take it out or raise the Limit." value={wait.length} tone={wait.length ? 'stall' : undefined} />
+          <Dial {...st(p, 'limit')} label="Limit" does="Stops the packet at this many characters. An item that does not fit waits. Off leaves only the owner's cap of 32 items."
+            value={limit ?? NaN} def={OFF} scale={LIMIT} format={limitText} onChange={x => p.set('limit', x)} />
+          <Readout label="room" does="Characters that still fit under the Limit." value={room} tone="value" />
+          <Readout label="waiting" does="Items that pass the Limit. Each waits until you take it out or raise the Limit." value={waiting} tone={waiting ? 'stall' : undefined} />
         </Section>
       </Band>
       <Band>
         <Section label="Items" width={172}>
-          <Rows does="Exactly what the agent receives. Press a square to take an item out." items={rowsOf(p.v)} size={6} page={num(p.v, 'rowsPage')}
+          <Rows does="Exactly what the agent receives. Press a square to take an item out." items={rowsOf(p.v, st(p, 'takeOut').disabled)} size={6} page={numeric(p.v, 'rowsPage') ?? 0}
             onPage={n => p.set('rowsPage', n)} onRequest={(id, now) => { if (!now) takeOut(p, id) }} />
         </Section>
         <Section label="Packet" width={62}>
-          <Readout label="items" does={`Items that the agent will read. The owner holds at most ${CAP}.`} value={inn.length} tone="value" />
-          <Readout label="size" does="The size of the text that the agent will read, in characters. The owner reports no token count." value={total} tone="value" />
-          <Readout label="scope" does="Who receives the packet: the conversation, or the project when no conversation stands." value={str(p.v, 'scope')} />
+          <Readout label="items" does={`Items that the agent will read. The owner holds at most ${CAP}.`} value={pk?.inn.length} tone="value" />
+          <Readout label="size" does="The size of the text that the agent will read, in characters. The owner reports no token count." value={pk?.total} tone="value" />
+          <Readout label="scope" does="Who receives the packet: the conversation, or the project when no conversation stands." value={strOf(p.v, 'scope')} />
         </Section>
         <Section label="Send" cols={2} grow>
           <KeepToggle p={p} />
-          <Readout label="question" does="Whether your question stands in the agent's composer." value={str(p.v, 'question') === 'written' ? 'written' : 'none'} tone={str(p.v, 'question') === 'written' ? 'green' : undefined} />
+          <Readout label="question" does="Whether your question stands in the agent's composer." value={question === undefined ? undefined : question === 'written' ? 'written' : 'none'} tone={question === 'written' ? 'green' : undefined} />
           <ClearNow p={p} />
           <AnswerThis p={p} />
         </Section>
@@ -355,14 +408,14 @@ export const design: DesignedDevice = {
   full: p => <Pane p={p} />,
 
   widget: p => {
-    const {inn, total} = fit(p.v)
-    return <Tile title="Packet" light={light(p.v)} span={2} onFull={p.nav.full}>
+    const pk = fit(p.v)
+    return <Tile title="Packet" light={light(p)} span={2} onFull={p.nav.full}>
       <Display w={112} h={104} label="The packet" does="The packet on its meter, with its first items. Click it to open the packet.">
         <Picture v={p.v} w={112} h={104} tile />
       </Display>
       <div className="ref-tile-side">
-        <Readout big label="items" does="Items that the agent will read. Press to open the packet." value={inn.length} tone="value" onPress={p.nav.full} />
-        <Readout label="size" does="The size of the text that the agent will read, in characters." value={total} />
+        <Readout big label="items" does="Items that the agent will read. Press to open the packet." value={pk?.inn.length} tone="value" onPress={p.nav.full} />
+        <Readout label="size" does="The size of the text that the agent will read, in characters." value={pk?.total} />
         <AnswerThis p={p} />
       </div>
     </Tile>
