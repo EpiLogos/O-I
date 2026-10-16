@@ -1,0 +1,23 @@
+/* The Workspace's pane: its clips, and what each mode opens with. No controls inside it; a click on a clip opens its document. Shell and panel tokens only. */
+.cws { position: absolute; inset: 0; display: flex; flex-direction: column; gap: 18px; padding: 20px 26px; overflow: hidden; background: var(--bg-1, #33363b); color: var(--text, #d4d7da); font: 12px/1.4 var(--font-ui, sans-serif); }
+.cws-head { display: flex; align-items: baseline; gap: 12px; }
+.cws-head h3 { margin: 0; font-size: 16px; font-weight: 600; }
+.cws-head span { font-size: 11px; color: var(--text-faint, #71767c); }
+.cws h4 { display: flex; align-items: baseline; gap: 8px; margin: 0 0 6px; font-size: 10px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--text-dim, #a2a7ad); }
+.cws h4 small { font-size: 10px; font-weight: 400; letter-spacing: 0; text-transform: none; color: var(--text-faint, #71767c); }
+.cws-empty { margin: 0; color: var(--text-dim, #a2a7ad); }
+.cws-list { list-style: none; margin: 0; padding: 0; max-width: 820px; }
+.cws-list li { border-bottom: 1px solid var(--line, #24262a); }
+.cws-list li[data-selected="true"] { background: color-mix(in srgb, var(--sel, #7ec3e6) 12%, transparent); }
+.cws-row { display: grid; grid-template-columns: 12px minmax(0, 1.2fr) minmax(0, 1.6fr) 90px minmax(0, 1.1fr) 44px; align-items: center; gap: 10px; width: 100%; height: 26px; padding: 0 6px; border: 0; background: none; color: inherit; font: inherit; text-align: left; }
+button.cws-row { cursor: pointer; }
+button.cws-row:hover, button.cws-row:focus-visible { background: color-mix(in srgb, var(--text, #d4d7da) 7%, transparent); outline: none; }
+.cws-row b { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cws-row span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-dim, #a2a7ad); }
+.cws-row .cws-path { color: var(--text-faint, #71767c); }
+.cws-row .cws-state[data-state="edited"] { color: var(--accent, #ffbe00); }
+.cws-row .cws-state[data-state="saved"] { color: var(--green, #7fbf6a); }
+.cws-row .cws-open { text-align: right; font-size: 10px; color: var(--text-faint, #71767c); }
+
+/* The Name field's label stands left, as the choosers' labels do (the kit centres a text field's label). */
+.dp[aria-label="Workspace"] .dp-cell--text .dp-label { text-align: left; }

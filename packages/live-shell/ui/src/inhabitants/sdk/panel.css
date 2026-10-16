@@ -60,7 +60,7 @@
 .dp-cell { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; max-width: 100%; }
 .dp-cell--wide, .dp-cell--rows, .dp-cell--chooser { align-self: stretch; justify-self: stretch; align-items: stretch; }
 .dp-label { max-width: 100%; font-size: 10px; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
-.dp-cell--wide .dp-label, .dp-cell--chooser .dp-label, .dp-cell--rows .dp-label { text-align: left; }
+.dp-cell--wide .dp-label, .dp-cell--chooser .dp-label, .dp-cell--rows .dp-label, .dp-cell--text .dp-label { text-align: left; }
 .dp-value { font-size: 10px; color: var(--text); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .dp [tabindex="0"]:focus-visible, .dp button:focus-visible, .dp select:focus-visible, .dp-tile button:focus-visible { outline: 1px solid var(--accent); outline-offset: 1px; }
 
