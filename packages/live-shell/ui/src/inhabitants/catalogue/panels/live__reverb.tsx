@@ -1,0 +1,125 @@
+// Reverb (manual §21.6): the effect after the torus that gives it a room. Live's nearest: Hybrid Reverb — one wide display of the
+// tail with its reading at the top right ("100 % / 285 ms"), Attack, Decay and Size under it, Dry/Wet at the right. The display law
+// is the room's own envelope: silence for the Pre-delay, a few early reflections spaced by the Size, then the tail falling 60 dB in
+// Decay seconds; Damping makes the bright part of the tail (the thin line) fall faster, to a fifth of the Decay at 100 %. Time runs
+// across on a log scale from 5 ms, so the early reflections and a long hall both read; level runs down in dB.
+//
+// Owner. None yet: the torus sounds through one gain stage to the output (native-field/ql/native-audio.mjs), so no reverb stands on
+// its sound. The value keys are the entry's: light, size, decay, damping, predelay, mix; `reason` names the absence in the well.
+// The Live set document's stored tables for Live's Reverb and Hybrid Reverb (packages/live-dynamics params.rs REVERB, HYBRID_REVERB)
+// edit a set's device, not the torus's sound.
+import {Band, Dial, Display, Folded, Handle, Panel, Readout, Section, Tile, type LightState} from '../../sdk/panel'
+import {NONE, clampTo, has, numOf, st, strOf, type DesignedDevice, type ViewProps} from './design'
+
+type V = ViewProps['v']
+
+const DECAY = {min: .2, max: 20, log: true} as const, FIRST = .005, SPAN = 30, FLOOR = -66
+const f1 = (x: number) => x.toFixed(1)
+const secs = (x: number) => (x < 1 ? `${Math.round(x * 1000)} ms` : `${x.toFixed(x < 10 ? 2 : 1)} s`)
+const pct = (x: number) => `${Math.round(x)} %`
+
+/** The tail: Pre-delay, early reflections by Size, the full tail in Decay and its bright part faster by Damping. Handle 1 the decay
+ * (where the tail meets −60 dB), 2 the pre-delay (where it starts), 3 the damping (where the bright part meets −60 dB). */
+function Tail({p, w, h, handles}: {p: ViewProps; w: number; h: number; handles: 0 | 1 | 3}) {
+  const v = p.v, size = numOf(v, 'size'), decay = numOf(v, 'decay'), damp = numOf(v, 'damping'), pre = numOf(v, 'predelay'), l = 6, r = w - 6, top = 16, bot = h - 14
+  const X = (s: number) => l + Math.log10(clampTo(FIRST, SPAN, s) / FIRST) / Math.log10(SPAN / FIRST) * (r - l), sOf = (x: number) => FIRST * (SPAN / FIRST) ** clampTo(0, 1, (x - l) / (r - l))
+  const Y = (db: number) => top + clampTo(0, 1, db / FLOOR) * (bot - top)
+  const ds = st(p, 'decay'), ps = st(p, 'predelay'), dms = st(p, 'damping')
+  if (size === undefined || decay === undefined || damp === undefined || pre === undefined) return <g>
+    <path d={`M${l} ${bot}H${r}`} className="dp-faint" />
+    <text x={w / 2} y={h / 2} textAnchor="middle" className="dp-ink-dim">{strOf(v, 'reason') ?? 'No reading of the room'}</text>
+  </g>
+  const t0 = pre / 1000, bright = decay * (1 - .8 * damp / 100), gap = (3 + size / 100 * 27) / 1000
+  const line = (len: number) => { let d = ''; for (let i = 0; i <= 80; i++) { const t = t0 + len * 1.1 * i / 80; d += `${i ? 'L' : 'M'}${f1(X(t))} ${f1(Y(-60 * (t - t0) / len))}` } return d }
+  const full = line(decay)
+  return <g>
+    {[.01, .1, 1, 10].map(g => <g key={g}><path d={`M${f1(X(g))} ${top}V${bot}`} className="dp-grid" />{w > 100 && <text x={X(g) + 2} y={h - 4} className="dp-axis">{g < 1 ? `${g * 1000} ms` : `${g} s`}</text>}</g>)}
+    <path d={`M${l} ${f1(Y(-60))}H${r}`} className="dp-grid" strokeDasharray="2 3" />
+    {Array.from({length: 6}, (_, i) => { const t = t0 + gap * (i + 1), db = -60 * gap * (i + 1) / decay - 3 * i
+      return <path key={i} d={`M${f1(X(t))} ${bot}V${f1(Y(db))}`} className="dp-curve-on" strokeWidth={1} opacity={.55} /> })}
+    <path d={`${full}L${f1(X(t0 + decay * 1.1))} ${bot}L${f1(X(t0))} ${bot}Z`} className="dp-fill" />
+    <path d={full} className="dp-curve" />
+    <path d={line(bright)} className="dp-curve" strokeWidth={.8} opacity={.6} strokeDasharray="3 2" />
+    {handles >= 1 && <Handle n={1} x={X(t0 + decay)} y={Y(-60)} label="Decay" does={`Drag across: the length of the tail.${ds.disabled ? ` ${ds.disabled}` : ''}`}
+      onDrag={ds.disabled ? undefined : x => p.set('decay', Math.round(clampTo(DECAY.min, DECAY.max, sOf(x) - t0) * 100) / 100)} onReset={ds.disabled ? undefined : () => p.set('decay', 2.4)} />}
+    {handles >= 3 && <Handle n={2} shape="square" x={X(t0)} y={Y(0)} label="Pre-delay" does={`Drag across: the gap before the tail starts.${ps.disabled ? ` ${ps.disabled}` : ''}`}
+      onDrag={ps.disabled ? undefined : x => p.set('predelay', Math.round(clampTo(0, 250, x <= l + 2 ? 0 : sOf(x) * 1000)))} onReset={ps.disabled ? undefined : () => p.set('predelay', 20)} />}
+    {handles >= 3 && <Handle n={3} shape="square" x={X(t0 + bright)} y={Y(-60)} label="Damping" does={`Drag across: how much sooner the bright part of the tail dies. Left is softer.${dms.disabled ? ` ${dms.disabled}` : ''}`}
+      onDrag={dms.disabled ? undefined : x => p.set('damping', Math.round(clampTo(0, 100, (1 - (sOf(x) - t0) / decay) / .8 * 100)))} onReset={dms.disabled ? undefined : () => p.set('damping', 40)} />}
+  </g>
+}
+
+const lightOf = (p: ViewProps): LightState => { const l = strOf(p.owner ?? p.v, 'light'); return l === 'lit' || l === 'dark' ? l : 'unknown' }
+const head = (p: ViewProps) => ({light: lightOf(p), lightWhy: st(p, 'light').disabled ?? (has(p.v, 'light') ? undefined : 'No reading of on or off: no reverb stands on the torus\'s sound.'),
+  onFold: p.nav.fold, onFull: p.nav.full, onLight: () => p.set('light', lightOf(p) === 'lit' ? 'dark' : 'lit')})
+const wide = (p: ViewProps) => (p.frame === 'flip' || p.frame === 'window') && p.room !== undefined
+const corner = (v: V) => (has(v, 'mix') && has(v, 'decay') ? `${pct(numOf(v, 'mix')!)} / ${secs(numOf(v, 'decay')!)}` : NONE)
+const DISPLAY_DOES = 'The room in time: the gap, the early reflections, then the tail falling to −60 dB. The thin line is the bright part of the tail.'
+
+function controls(p: ViewProps) {
+  const v = p.v
+  return {
+    size: <Dial {...st(p, 'size')} label="Size" does="The size of the room: the reflections spread wider." value={numOf(v, 'size') ?? NaN} def={50} scale={{min: 0, max: 100}} format={pct} onChange={x => p.set('size', Math.round(x))} />,
+    decay: <Dial {...st(p, 'decay')} label="Decay" does="The length of the tail, to −60 dB." value={numOf(v, 'decay') ?? NaN} def={2.4} scale={DECAY} format={secs} onChange={x => p.set('decay', Math.round(x * 100) / 100)} />,
+    damping: <Dial {...st(p, 'damping')} label="Damping" does="How soft the tail is: its bright part dies sooner." value={numOf(v, 'damping') ?? NaN} def={40} scale={{min: 0, max: 100}} format={pct} onChange={x => p.set('damping', Math.round(x))} />,
+    predelay: <Dial {...st(p, 'predelay')} label="Pre-delay" does="The gap before the tail starts." value={numOf(v, 'predelay') ?? NaN} def={20} scale={{min: 0, max: 250}} format={x => `${Math.round(x)} ms`} onChange={x => p.set('predelay', Math.round(x))} />,
+    mix: <Dial {...st(p, 'mix')} label="Dry/wet" does="How much of the tail you hear." value={numOf(v, 'mix') ?? NaN} def={22} scale={{min: 0, max: 100}} format={pct} onChange={x => p.set('mix', Math.round(x))} />,
+  }
+}
+
+export const design: DesignedDevice = {
+  id: 'live:reverb',
+  title: 'Reverb',
+  kind: 'effect',
+  defaults: {light: 'lit', size: 50, decay: 2.4, damping: 40, predelay: 20, mix: 22},
+  fixtures: {
+    'A room for the torus': {},
+    'A long bright hall': {size: 90, decay: 8, damping: 10, predelay: 60, mix: 35},
+    'As the torus has it': {light: undefined, size: undefined, decay: undefined, damping: undefined, predelay: undefined, mix: undefined, reason: 'No reverb on the torus\'s sound'},
+  },
+
+  folded: p => <Folded title="Reverb" light={lightOf(p)} readings={[has(p.v, 'decay') ? secs(numOf(p.v, 'decay')!) : NONE, has(p.v, 'mix') ? pct(numOf(p.v, 'mix')!) : NONE]} onUnfold={p.nav.unfold} />,
+
+  compact: p => { const c = controls(p)
+    return <Panel title="Reverb" view="compact" {...head(p)} onSelect={p.nav.select}>
+      <Section width={152}>
+        <Display w={140} h={146} label="Tail" does={`${DISPLAY_DOES} Drag handle 1 for the decay.`} corner={corner(p.v)}><Tail p={p} w={140} h={146} handles={1} /></Display>
+      </Section>
+      <Section label="Macros" cols={2}>{c.decay}{c.size}{c.damping}{c.mix}</Section>
+    </Panel> },
+
+  whole: p => { const c = controls(p), w = wide(p) ? Math.round(clampTo(186, p.room!.w - 260, 520)) : 186
+    return <Panel title="Reverb" view="whole" {...head(p)}>
+      <Band>
+        <Section width={w + 12}>
+          <Display w={w} h={146} label="Tail" does={`${DISPLAY_DOES} Drag handle 1 for the decay, 2 for the pre-delay, 3 for the damping.`} corner={corner(p.v)}>
+            <Tail p={p} w={w} h={146} handles={3} />
+          </Display>
+        </Section>
+        <Section label="Room" width={60}>{c.size}{c.decay}</Section>
+        <Section label="Tone" width={60}>{c.damping}{c.predelay}</Section>
+        <Section label="Output" grow>{c.mix}
+          <Readout label="bright" does="How long the bright part of the tail lasts, by the damping." value={has(p.v, 'decay') && has(p.v, 'damping') ? secs(numOf(p.v, 'decay')! * (1 - .8 * numOf(p.v, 'damping')! / 100)) : undefined} tone="value" />
+        </Section>
+      </Band>
+    </Panel> },
+
+  full: p => <div className="ref-pane-body ref-pane-body--dark">
+    <svg viewBox="0 0 760 420" width="100%" height="100%" preserveAspectRatio="xMidYMid meet" className="ref-pane-svg" aria-label="The reverb's tail">
+      <g className="dp-display" style={{background: 'none', border: 'none'}}>
+        <Tail p={{...p, set: () => {}}} w={760} h={392} handles={0} />
+        <text x={742} y={20} textAnchor="end" className="dp-ink">{corner(p.v)}</text>
+        <text x={18} y={410} className="dp-axis">no reading of the torus's sound reaches the reverb</text>
+      </g>
+    </svg>
+  </div>,
+
+  widget: p => <Tile title="Reverb" light={lightOf(p)} onLight={() => p.set('light', lightOf(p) === 'lit' ? 'dark' : 'lit')} lightWhy={head(p).lightWhy} onFull={p.nav.full}>
+    <Display w={70} h={100} label="Tail" does={DISPLAY_DOES}><Tail p={p} w={70} h={100} handles={0} /></Display>
+    <div className="ref-tile-side">
+      <Readout label="decay" value={has(p.v, 'decay') ? secs(numOf(p.v, 'decay')!) : undefined} tone="value" />
+      <Readout label="size" value={has(p.v, 'size') ? pct(numOf(p.v, 'size')!) : undefined} />
+      <Readout label="dry/wet" value={has(p.v, 'mix') ? pct(numOf(p.v, 'mix')!) : undefined} />
+    </div>
+  </Tile>,
+}
