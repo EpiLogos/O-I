@@ -38,3 +38,6 @@
 .hl-tool button { position: relative; z-index: 1; padding: 8px 11px; border: 0; border-radius: 2px; background: none; color: #fff; font: inherit; cursor: pointer; }
 .hl-tool button:hover, .hl-tool button:focus-visible { background: #333; outline: none; }
 .hl-tool button[data-act="highlight"]::before { content: ''; display: inline-block; width: 8px; height: 8px; margin-right: 6px; background: var(--c); vertical-align: -1px; }
+.hl-none { margin: 0 0 16px; font: 12px/1.4 var(--font-ui, sans-serif); color: #6E6E6A; }
+.hl-tool > span { display: flex; }
+.hl-tool button:disabled { opacity: .4; cursor: default; pointer-events: none; }
