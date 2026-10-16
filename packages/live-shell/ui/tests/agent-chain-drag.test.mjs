@@ -254,8 +254,12 @@ test('the browser names the owner that actually refused: Central for the roster,
   assert.doesNotMatch(refused[0].label, /ai-kit skillset registry.*refused/)
   const empty = browser.skillsetRowsFromRoster({result: 'agent_definition_reading', data: {profiles: []}}, null)
   assert.match(empty[0].label, /waiting on AIKit: AIKit builds agent-chain skillset admit/)
+  // The rack is drawn whole by the runtime's pool (lane BF): its old text card, and the roster admission that fed it, are gone;
+  // no shell default reaches the pool as a reading.
   const pool = await read('AgentDevicePool.tsx')
-  assert.match(pool, /waiting · \$\{skillsWaitingOn\}/, 'the pool rows name who they wait on')
+  assert.match(pool, /POOL_DRAWN_BY_RUNTIME: ReadonlySet<string> = new Set\(\['gateway', 'agent', 'skillset', 'world'\]\)/)
+  assert.match(pool, /if \(POOL_DRAWN_BY_RUNTIME\.has\(selected\.id\)\) return null/)
   const source = await read('AgentShellBrowser.tsx')
-  assert.match(source, /skillsAdmitted=\{skillAdmission\.count\}/, 'the pool receives the same roster admission, not a default')
+  assert.doesNotMatch(source, /budgetCap=\{12\}|budgetUsed=\{0\}|effort=\{shell\.effort\}|autonomy=\{shell\.steer/, 'the shell\'s defaults are not passed as readings')
+  assert.doesNotMatch(source, /op: 'harness_agent_read'/, 'nor is the gateway read a second time for a card the chain\'s Gateway replaces')
 })

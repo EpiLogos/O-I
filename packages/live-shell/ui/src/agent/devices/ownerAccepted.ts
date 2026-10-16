@@ -2,8 +2,10 @@
 // stays dark"; lock §0.4: owners write, faces read). The agent shell keeps effort and input as its own state with defaults it
 // starts with ('high', 'steer'); that state is a presentation of the press, not a reading of the harness, so the Factory devices
 // never read it. What they read instead is here: a value is recorded only when the owner answered the write with a receipt that
-// fired (shellSetterBridge.ts records it, after the owner accepts and not before). Heartbeat and the write arm have no entry:
-// the dispatcher calls both presentation-state (agentNativeDispatch.ts) and refuses them, so no owner has ever accepted one.
+// fired (shellSetterBridge.ts records it, after the owner accepts and not before). Interrupt timing is the harness carrier's
+// `quantize` (shellSetterBridge.ts:117 → configure {quantize}; agentNativeP0.ts:137 the row's three choices), read by the Agent
+// design's Interrupt. Heartbeat and the write arm have no entry: the dispatcher calls both presentation-state
+// (agentNativeDispatch.ts) and refuses them, so no owner has ever accepted one.
 //
 // Pure of views except the subscription hook; a snapshot is replaced, never mutated, so a subscriber sees a stable reference
 // until something is recorded.
@@ -14,7 +16,11 @@ import {agentAddress} from '../../inhabitants/agentParamAddresses'
 export interface OwnerAcceptedValues {
   readonly effort?: string
   readonly input?: 'steer' | 'queue'
+  readonly quantize?: 'now' | 'next tool' | 'next turn'
 }
+
+/** Where a Stop or a Steer lands: the carrier's three choices (harnessAgentControl.ts HarnessAgentControlValue.quantize). */
+const QUANTIZE: readonly string[] = ['now', 'next tool', 'next turn']
 
 const NONE: OwnerAcceptedValues = Object.freeze({})
 let held: Readonly<Record<string, OwnerAcceptedValues>> = {}
@@ -28,6 +34,7 @@ export function recordOwnerAccepted(binding: string, key: string, value: unknown
   let next: OwnerAcceptedValues
   if (key === 'effort' && typeof value === 'string' && (agentAddress('agent', 'effort')?.values ?? []).includes(value)) next = {...before, effort: value}
   else if (key === 'input' && (value === 'steer' || value === 'queue')) next = {...before, input: value}
+  else if (key === 'interrupt-quantize' && typeof value === 'string' && QUANTIZE.includes(value)) next = {...before, quantize: value as NonNullable<OwnerAcceptedValues['quantize']>}
   else return false
   held = {...held, [binding]: next}
   announce()

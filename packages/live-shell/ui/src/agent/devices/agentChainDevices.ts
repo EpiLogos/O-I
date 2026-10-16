@@ -342,10 +342,10 @@ const MARKS: Readonly<Record<string, IconName>> = {gateway: 'link', agent: 'form
  * When the apply path (WO-SF2) reports the write standing, the key goes here. */
 const LIGHT_KEY: Readonly<Record<string, string>> = {gateway: 'admitted', agent: 'attached', skillset: 'admitted', git: 'admitted'}
 
-/** The slot's declaration: its primary face from the admitted manifests, with that face's Live semantic and invariant. The
- * rack declares the chains it actually holds. */
-export function slotFace(slot: AgentDeviceRow, chains: readonly SkillChain[] | null): DeviceDeclaration {
-  const ref = slot.faces[0]!
+/** The slot's declaration: its primary face from the admitted manifests (or the admitted face named, where the device is drawn by
+ * that face's design — designBindings.ts SLOT_DESIGN_FACE), with that face's Live semantic and invariant. The rack declares the
+ * chains it actually holds. */
+export function slotFace(slot: AgentDeviceRow, chains: readonly SkillChain[] | null, ref: {family: string; faceId: string} = slot.faces[0]!): DeviceDeclaration {
   const face = allFamilyManifests().find(manifest => manifest.id === ref.family)?.faces.find(candidate => candidate.id === ref.faceId)
   if (!face) throw Error(`The ${slot.id} slot names a face the door has not admitted: ${ref.family}:${ref.faceId}`)
   const held = face.liveSemantic === 'rack' && chains && chains.length > 0 ? chains : null
@@ -433,14 +433,17 @@ export function chainSubmit(rows: readonly SdkParamRow[], write: ChainWrite): No
 
 /** One slot as a device of the runtime. A row that claims a macro without keeping it (no mapping, a mapping onto a row the device
  * does not have, a mapping with no range) refuses the device at admission, the fault named — the lock's gate, at the instance. */
-export function agentChainDevice(slot: AgentDeviceRow, input: AgentChainInput, write: ChainWrite): DeviceInstance {
+export function agentChainDevice(slot: AgentDeviceRow, input: AgentChainInput, write: ChainWrite, designed?: {family: string; faceId: string}): DeviceInstance {
   const rows = slotRows(slot.id)
   const faults = macroFaults(slot.id, rows)
   if (faults.length) throw Error(`The ${slot.id} device claims a macro it does not keep: ${faults.join('; ')}`)
+  // The face the device is drawn by: the slot's primary, or the admitted face whose design is bound to the owner (its
+  // designKey(family, face.id) is then that design's id). A face the slot does not carry is never borrowed.
+  const ref = designed && slot.faces.some(face => face.family === designed.family && face.faceId === designed.faceId) ? designed : slot.faces[0]!
   return {
     id: chainDeviceId(slot.id),
-    family: slot.family,
-    face: slotFace(slot, slot.id === 'skillset' ? input.reading.chains : null),
+    family: ref.family,
+    face: slotFace(slot, slot.id === 'skillset' ? input.reading.chains : null, ref),
     rows,
     values: slotValues(slot.id, input),
     ...(LIGHT_KEY[slot.id] ? {enabledKey: LIGHT_KEY[slot.id]} : {}),
@@ -449,7 +452,19 @@ export function agentChainDevice(slot: AgentDeviceRow, input: AgentChainInput, w
   }
 }
 
-/** The chain over the door's current admissions, in the declared order (a slot nothing admitted drops out). */
-export function agentChainDevices(input: AgentChainInput, write: ChainWrite): {slot: AgentDeviceRow; device: DeviceInstance}[] {
-  return deriveAgentDeviceRows(allFamilyManifests()).map(slot => ({slot, device: agentChainDevice(slot, input, write)}))
+/** The chain over the door's current admissions, in the declared order (a slot nothing admitted drops out). `designed` names, per
+ * slot, the admitted face whose design draws the device on its owner. */
+export function agentChainDevices(input: AgentChainInput, write: ChainWrite, designed: Readonly<Record<string, {family: string; faceId: string}>> = {}): {slot: AgentDeviceRow; device: DeviceInstance}[] {
+  return deriveAgentDeviceRows(allFamilyManifests()).map(slot => ({slot, device: agentChainDevice(slot, input, write, designed[slot.id])}))
+}
+
+/** One member of the rack as its own device (DLW §19.7: "one chain inside a Skillset rack"): AIKit's admitted skill-device face.
+ * It declares no rows of the address table (none is addressed to it); its values are its design's, from the rack's binding. */
+export function rackMemberDevice(id: string): DeviceInstance | null {
+  const face = allFamilyManifests().find(manifest => manifest.id === 'ai-kit')?.faces.find(candidate => candidate.id === 'skill-device')
+  if (!face) return null
+  return {
+    id, family: 'ai-kit', rows: [], values: {},
+    face: {id: face.id, title: 'Member', icon: 'lib', liveSemantic: face.liveSemantic, ...(face.invariant ? {invariant: face.invariant} : {}), ...(face.note ? {note: face.note} : {})},
+  }
 }
