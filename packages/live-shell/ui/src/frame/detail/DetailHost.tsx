@@ -12,6 +12,7 @@ import {ClipBox, useSelectedClip} from './ClipBox'
 import {ClipWaiting} from './ClipView'
 import {MODE_DETAILS, type ChainDrop} from '../../shell/modeDetails'
 import {InstrumentDeviceDetail} from '../../shell/ModeDetail'
+import {useStandingInstrument} from '../../inhabitants/ql/devices/standingInstrument'
 import type {SurfMode} from '../../shell/modeGrammar'
 import './detail.css'
 
@@ -24,7 +25,9 @@ export function DetailHost({side}: {side: 'clip' | 'device'}) {
   const waiting = side === 'clip' && !selected.ref && !registration.clipUngated
   const key = instrument ? `instrument` : `${reading.mode}:${side}`
   if (!waiting) visited.current.add(key)
-  const head = registration.head[side]({detail: reading, selected, instrument})
+  // The head names the instrument the rack stands open over the focused pane's (M4′ or M5′ over the Earth's M0′; lane BT), not the pane's.
+  const standing = useStandingInstrument(instrument)
+  const head = registration.head[side]({detail: reading, selected, instrument: standing === undefined ? instrument : (standing as typeof instrument)})
   return <div className="detail-host" data-detail-side={side} data-detail-mode={reading.mode}>
     <header className="detail-head" data-detail-head={side}><b>{head.name}</b>{head.line && <span className="detail-head-line"> — {head.line}</span>}</header>
     {waiting && <div className="detail-body detail-body--clip" data-detail-waiting="true"><ClipWaiting line={registration.clipWaits} /></div>}
