@@ -3,7 +3,8 @@
 // the reads and writes its panel made (panels/devices/DevicePanel.tsx: the descriptor table once, the stored values for this
 // track, each change posted to the Live document owner and the persisted value shown); any other device — and a faced one while
 // its table is read or refused — reads the deep document's parameters losslessly and read-only (was the chain's device tile,
-// components/DeviceChainPanel.tsx). Pressing a plate shows it whole in the pool, every parameter there.
+// components/DeviceChainPanel.tsx). Pressing a plate shows it whole in the pool, every parameter there. Its well holds its stored
+// values, each on its range (SetDevicePicture.tsx), in every place the device is drawn.
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import {DeviceView} from '../frame/devices/DeviceView'
 import {selectDevice} from '../frame/devices/deviceDoor'
@@ -13,6 +14,7 @@ import type {SetSummary} from '../shell/useSet'
 import {trackDeviceFaceTitle} from './liveChain'
 import {setDeviceFaced, setDeviceId, setDeviceReading} from './liveChainDevices'
 import {usePublishedDevice} from './usePublishedDevice'
+import {SetDevicePicture, setValueMarks} from './SetDevicePicture'
 
 interface FacedReading {
   descriptors: readonly ParamDescJson[] | null
@@ -63,8 +65,11 @@ export function SetDeviceOnChain({set, track, trackIndex, index, elementName, pa
     ? setDeviceFaced({id, elementName, title, descriptors: faced.descriptors, stored: faced.stored, fault: faced.fault, write: faced.write})
     : setDeviceReading({id, elementName, title, params, fault: faced.fault}),
   [id, elementName, title, faced.descriptors, faced.stored, faced.fault, faced.write, params])
-  usePublishedDevice(id, device)
+  const marks = useMemo(() => setValueMarks(device, params), [device, params])
+  const picture = useCallback((size: 'compact' | 'whole' | 'full') => <SetDevicePicture marks={marks} size={size} />, [marks])
+  usePublishedDevice(id, device, picture)
   return <div className="chain-side" data-chain-device={elementName} data-set-device={faced.descriptors ? 'owner-table' : 'reading'}>
-    <DeviceView device={device} size="compact" actions={[{icon: 'detail', label: 'Show every setting in the pool', onPress: () => selectDevice(id)}]} />
+    <DeviceView device={device} size="compact" picture={<SetDevicePicture marks={marks} size="compact" />}
+      actions={[{icon: 'detail', label: 'Show every setting in the pool', onPress: () => selectDevice(id)}]} />
   </div>
 }

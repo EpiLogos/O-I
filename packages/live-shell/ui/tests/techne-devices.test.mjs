@@ -346,7 +346,9 @@ test('the QL field/PCM owner is a device: its light is the owner\'s availability
 })
 
 test('a face declared waiting is a dark device with no control: its standing and the owner it waits for', () => {
-  for (const id of ['sky', 'torus', 'm3-clock', 'deck', 'chakra', 'm-prime-matrices']) {
+  // The sky is admitted (lane BL): it reads the kernel's nara_identity transit and draws the catalogue's Sky design.
+  assert.notEqual(faceOf('quaternal-logic', 'sky').admission, 'waiting', 'the sky draws on its owner')
+  for (const id of ['torus', 'm3-clock', 'deck', 'chakra', 'm-prime-matrices']) {
     const face = faceOf('quaternal-logic', id)
     assert.equal(face.admission, 'waiting')
     const device = chain.techneEntries(manifests('quaternal-logic'), readings()).find(entry => entry.face.id === id).device

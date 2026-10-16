@@ -72,13 +72,15 @@ test('one device draws in all three sizes with the same settings, and a held val
 
 test('the torus is a device of the runtime: its four macros are the owner\'s determinants, its light the owner\'s standing', () => {
   const absent = torusDevice(null)
-  assert.equal(absent.id, TORUS_DEVICE_ID); assert.equal(absent.rows.length, 4); assert.equal(lightOf(absent), 'unknown')
+  assert.equal(absent.id, TORUS_DEVICE_ID); assert.equal(absent.rows.filter(r => r.compact).length, 4); assert.equal(lightOf(absent), 'unknown')
   assert.ok(absent.rows.every(r => !r.writePath), 'no reading, no writes')
   const state = {ok: true, determinants: {lens: {lens12: 3, label: 'L1′'}, contextFrame: 2, harmonic: {selection: 'canonical-basis', index: 0}, m3: 'DNA'},
     value: {schema: 'ql.instrument-reading/v1', standing: 'following', identity: {event_ref: 'event:t'}}, parameters: null}
   const live = torusDevice(state)
   assert.equal(lightOf(live), 'on')
-  assert.ok(live.rows.every(r => r.writePath === 'stage:instrument'), 'a following instrument takes edits through the stage channel')
+  assert.ok(live.rows.filter(r => r.compact).every(r => r.writePath === 'stage:instrument'), 'a following instrument takes edits through the stage channel')
+  // A reading that carries no parameters reports none: no cadence and no scale to set, each says why.
+  assert.deepEqual(live.rows.filter(r => !r.writePath).map(r => [r.key, r.disclosure]), [['cadence', 'No scene is open, so there is no cadence to set.'], ['scale', 'The owner states no scale.']])
   assert.equal(live.values.lens, 'L1′', 'the owner\'s label, not its code')
 })
 

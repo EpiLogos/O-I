@@ -48,30 +48,53 @@ export function qlInstrumentEdit(key: string, value: ParamValue): InstrumentEdit
   }
 }
 
-/** The field/PCM owner as a device, over the owner's current reading (null while none is published). */
-export function qlInstrumentDevice(face: InhabitantFaceDeclaration, state: LiveTorusState | null): DeviceInstance {
+/** The owner's presentation parameters — sound, level, cadence, scale — as rows of one device and their readings: the controls the
+ * native field panel reads and writes (live/LiveInstrumentSection.tsx:74-105, "Play" and "See and hear"), each written through the
+ * stage channel (qlInstrumentEdit). The QL field/PCM face and the Live torus both carry them: one owner, one set of rows. A row the
+ * owner cannot take now carries the owner's reason and no write path. */
+export function qlPresentation(family: string, instance: string, state: LiveTorusState | null, compact: boolean): {rows: SdkParamRow[]; values: Record<string, ParamValue>} {
   const ok = state !== null && state.ok ? state : null
   const writable = liveInstrumentWritable(state)
   const write = (declared: SdkParamRow, why: string | null): SdkParamRow =>
     writable && why === null ? ({...declared, writePath: QL_WRITE_PATH} as SdkParamRow) : ({...declared, disclosure: why ?? (ok ? NOT_WRITABLE : ABSENT_OWNER)} as SdkParamRow)
-  const cadence = ok?.parameters.cadence ?? null
-  const scale = ok?.parameters.scale.unitsPerMetre ?? null
+  const at = (key: string, title: string, type: string, rest: Partial<SdkParamRow>): SdkParamRow =>
+    ({family, deviceInstance: instance, key, title, type, ...rest, ...(compact ? {compact: true} : {})}) as SdkParamRow
+  // A reading that carries no parameters reports none of them: each stays absent.
+  const parameters = ok?.parameters ?? null
+  const cadence = parameters?.cadence ?? null
+  const scale = parameters?.scale?.unitsPerMetre ?? null
   const rows: SdkParamRow[] = [
-    write(row(face.id, 'sound', 'Sound', 'boolean', {group: 'Sound', compact: true}), null),
-    write(row(face.id, 'level', 'Level', 'number', {group: 'Sound', compact: true, range: {min: 0, max: 4, unit: '×'}}), null),
-    write(row(face.id, 'cadence', 'Cadence', 'enumerated', {group: 'Play', compact: true, values: CADENCE_NAMES}), ok && cadence === null ? NO_SCENE : null),
-    write(row(face.id, 'scale', 'Scale', 'number', {group: 'Scale', compact: true, range: {min: 40, max: 400, unit: 'u/m'}}), ok && scale === null ? NO_SCALE : null),
+    write(at('sound', 'Sound', 'boolean', {group: 'Sound'}), null),
+    write(at('level', 'Level', 'number', {group: 'Sound', range: {min: 0, max: 4, unit: '×'}}), null),
+    write(at('cadence', 'Cadence', 'enumerated', {group: 'Play', values: CADENCE_NAMES}), ok && cadence === null ? NO_SCENE : null),
+    write(at('scale', 'Scale', 'number', {group: 'Scale', range: {min: 40, max: 400, unit: 'u/m'}}), ok && scale === null ? NO_SCALE : null),
+  ]
+  const values: Record<string, ParamValue> = {}
+  if (parameters) {
+    if (typeof parameters.muted === 'boolean') values.sound = !parameters.muted
+    if (typeof parameters.level === 'number') values.level = parameters.level
+    if (cadence !== null) values.cadence = cadence.playing ? (CADENCE_NAMES[LIVE_CADENCE_OPTIONS.findIndex(option => option.value === String(cadence.rate))] ?? CADENCE_NAMES[0]!) : CADENCE_NAMES[0]!
+    if (scale !== null) values.scale = scale
+  }
+  return {rows, values}
+}
+
+/** The keys qlPresentation carries: each is written through qlInstrumentEdit. */
+export const QL_PRESENTATION_KEYS: readonly string[] = Object.freeze(['sound', 'level', 'cadence', 'scale'])
+
+/** The field/PCM owner as a device, over the owner's current reading (null while none is published). */
+export function qlInstrumentDevice(face: InhabitantFaceDeclaration, state: LiveTorusState | null): DeviceInstance {
+  const ok = state !== null && state.ok ? state : null
+  const presentation = qlPresentation(QL_FAMILY, face.id, state, true)
+  const rows: SdkParamRow[] = [
+    ...presentation.rows,
     row(face.id, 'standing', 'Standing', 'string', {group: 'Reading', disclosure: ABSENT_OWNER}),
     row(face.id, 'scheduled', 'Scheduled blocks', 'number', {group: 'Reading'}),
     row(face.id, 'discarded', 'Discarded blocks', 'number', {group: 'Reading'}),
     row(face.id, 'queued', 'Queued blocks', 'number', {group: 'Reading'}),
   ]
-  const values: Record<string, ParamValue> = {}
+  const values: Record<string, ParamValue> = {...presentation.values}
   if (ok) {
-    values.sound = !ok.parameters.muted
-    if (typeof ok.parameters.level === 'number') values.level = ok.parameters.level
-    if (cadence !== null) values.cadence = cadence.playing ? (CADENCE_NAMES[LIVE_CADENCE_OPTIONS.findIndex(option => option.value === String(cadence.rate))] ?? CADENCE_NAMES[0]!) : CADENCE_NAMES[0]!
-    if (scale !== null) values.scale = scale
     values.standing = ok.value.standing
     if (ok.value.audio) {
       values.scheduled = ok.value.audio.scheduled_blocks
