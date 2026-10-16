@@ -1,0 +1,380 @@
+{
+ "_read": "16 Oct 2026, read-only, on workcell:mac: `seat status --json` (two workcells, the o-i and ql-mef seats, two zones each kept) and `workcell status --json` (whole). Lane BF3; and `aikit gateway who --project-world project:O-I --json` (the kernel's inhabitation_read population: its data, the remotes whole, the five occupied Positions and two vacant ones, each occupancy cut to state, observed_via, agent_ref, workcell_ref, since). Lane BF3.",
+ "seatStatus": {
+  "schema": "central.workcell-status/v1",
+  "recorded_at_unix_seconds": 1792121154,
+  "workcells": [
+   {
+    "name": "env-1",
+    "path": "/Users/admin/Central/worktrees/env-1",
+    "disk_free_gb": 38.3,
+    "min_free_gb": 20,
+    "hard_free_gb": null,
+    "last_tend": {
+     "at_unix_seconds": 1792108348,
+     "freed_mb": 0,
+     "removed": []
+    },
+    "drift": [
+     "o-i: register pose ('dlw/phase1-semantics-20261013', 'cc69e19fa') != live ('dlw/build', '26753ea3e')"
+    ],
+    "seats": [
+     {
+      "product": "o-i",
+      "state": "claimed",
+      "registered_branch": "dlw/phase1-semantics-20261013",
+      "registered_head": "cc69e19fa",
+      "claimed_by": "claude-code:dlw-lead",
+      "now_ref": "workcellenv1oi-seat-claimed-branch-2026-10-13-2",
+      "zones": [
+       {
+        "actor": "zcode:enrich-arguments-l1",
+        "regions": [
+         "desktop/cradle/expressions-app/collections/return-of-zero/arguments",
+         "desktop/cradle/expressions-app/collections/return-of-zero/conjugates"
+        ],
+        "since_unix_seconds": 1791282969
+       },
+       {
+        "actor": "zcode:enrich-matheme-l1",
+        "regions": [
+         "desktop/cradle/expressions-app/collections/return-of-zero/matheme"
+        ],
+        "since_unix_seconds": 1791282969
+       }
+      ],
+      "admission": null,
+      "live_branch": "dlw/build",
+      "live_head": "26753ea3e",
+      "tracked_changes": 29,
+      "untracked": 16,
+      "behind_main": 0,
+      "ahead_main": 254
+     },
+     {
+      "product": "ql-mef",
+      "state": "free",
+      "registered_branch": null,
+      "registered_head": "37e3085",
+      "claimed_by": null,
+      "now_ref": null,
+      "zones": [
+       {
+        "actor": "agent:distribution-finish",
+        "regions": [
+         "scripts/oi-source-install.sh",
+         "scripts/export-sky.py"
+        ],
+        "since_unix_seconds": 1791418597
+       },
+       {
+        "actor": "claude-code:dlw-conductor",
+        "regions": [
+         "ProjectCentral",
+         ".gitignore"
+        ],
+        "since_unix_seconds": 1791846085
+       }
+      ],
+      "admission": null,
+      "live_branch": null,
+      "live_head": "37e3085",
+      "tracked_changes": 0,
+      "untracked": 0,
+      "behind_main": 1,
+      "ahead_main": 0
+     }
+    ]
+   },
+   {
+    "name": "env-2",
+    "path": "/Users/admin/Central/worktrees/env-2",
+    "disk_free_gb": 38.3,
+    "min_free_gb": 20,
+    "hard_free_gb": null,
+    "last_tend": {
+     "at_unix_seconds": 1792108348,
+     "freed_mb": 0,
+     "removed": []
+    },
+    "drift": [
+     "o-i: register pose ('dlw/native-build', '2491a11b6') != live ('dlw/native-build', '9a1974d13')"
+    ],
+    "seats": [
+     {
+      "product": "o-i",
+      "state": "claimed",
+      "registered_branch": "dlw/native-build",
+      "registered_head": "2491a11b6",
+      "claimed_by": "claude-code:dlw-lead",
+      "now_ref": "workcellenv2oi-seat-claimed-branch-2026-10-14-2",
+      "zones": [
+       {
+        "actor": "codex:ci-repair-296",
+        "regions": [
+         "desktop/cradle/tests/search-overlay.mjs,desktop/cradle/kernel/src/bin/walk-bridge.rs"
+        ],
+        "since_unix_seconds": 1791288823
+       },
+       {
+        "actor": "agent:claude-central-field-lead",
+        "regions": [
+         "desktop/cradle/src",
+         "desktop/cradle/package-bundle.sh"
+        ],
+        "since_unix_seconds": 1791305114
+       }
+      ],
+      "admission": null,
+      "live_branch": "dlw/native-build",
+      "live_head": "9a1974d13",
+      "tracked_changes": 0,
+      "untracked": 1,
+      "behind_main": 0,
+      "ahead_main": 229
+     },
+     {
+      "product": "ql-mef",
+      "state": "free",
+      "registered_branch": null,
+      "registered_head": "0164e70",
+      "claimed_by": null,
+      "now_ref": null,
+      "zones": [
+       {
+        "actor": "claude-sonnet-5.5:281-replan",
+        "regions": [
+         "crates/ql-mef/src/continuous/scene_field.rs",
+         "crates/ql-mef/tests/scene_instrument.rs"
+        ],
+        "since_unix_seconds": 1791312302
+       }
+      ],
+      "admission": {
+       "free_gb": 17.4,
+       "soft_floor_gb": 20,
+       "hard_floor_gb": 5.0,
+       "tended_freed_mb": 0,
+       "standing": "admitted below the soft floor; breach recorded"
+      },
+      "live_branch": null,
+      "live_head": "73097be",
+      "tracked_changes": 0,
+      "untracked": 0,
+      "behind_main": 6,
+      "ahead_main": 0
+     }
+    ]
+   }
+  ]
+ },
+ "workcellStatus": {
+  "admission": {
+   "accounting": "unavailable: demands are not refused for capacity, and none are invented",
+   "available": false,
+   "reason": "unavailable: host observation: /proc/meminfo MemTotal unreadable"
+  },
+  "connection_grants": {
+   "active": 1,
+   "expired": 0,
+   "revoked": 0
+  },
+  "connections": [
+   {
+    "endpoint": "100.92.62.101:7777",
+    "expires_at_unix_ms": null,
+    "label": "omarchy",
+    "protocol": "workcell.control/v1",
+    "remote_workcell_ref": "workcell:omarchy",
+    "state": "connected"
+   },
+   {
+    "endpoint": "100.92.62.101:7777",
+    "expires_at_unix_ms": 1791419267453,
+    "label": "omarchy-improvement-lanes",
+    "protocol": "workcell.control/v1",
+    "remote_workcell_ref": "workcell:omarchy",
+    "state": "connected"
+   }
+  ],
+  "health": "healthy",
+  "offers": 9,
+  "ok": true,
+  "persisted_world_receipts": 0,
+  "providers": 5,
+  "state_root": "/Users/admin/.workcell",
+  "workcell_ref": "workcell:mac",
+  "workcell_ref_source": "declared"
+ },
+ "population": {
+  "schema": "aikit.population-reading/v1",
+  "project_world_ref": "project:O-I",
+  "local_world_ref": "control:root",
+  "local_workcell_ref": "workcell:mac",
+  "remotes": [
+   {
+    "detail": "connect gateway at 100.92.62.101:7788: connection timed out",
+    "gateway_ref": null,
+    "status": "unreachable",
+    "workcell_ref": "workcell:omarchy"
+   }
+  ],
+  "positions": [
+   {
+    "position_ref": "central:position:control:root:nara",
+    "handle": "@nara",
+    "label": "Nara (M4 domain agent)",
+    "occupancy": {
+     "state": "occupied",
+     "observed_via": "local",
+     "agent_ref": "agent/nara",
+     "workcell_ref": "workcell:mac",
+     "since_unix_ms": 1790613762399
+    }
+   },
+   {
+    "position_ref": "central:position:project:O-I:aletheia-5",
+    "handle": "@aletheia-5",
+    "label": "Aletheia 5 (M5 Epii × S5′ Aletheia)",
+    "occupancy": {
+     "state": "occupied",
+     "observed_via": "local",
+     "agent_ref": "agent/aletheia",
+     "workcell_ref": "workcell:mac",
+     "since_unix_ms": 1790283314240
+    }
+   },
+   {
+    "position_ref": "central:position:project:O-I:central-guardian",
+    "handle": "@central-guardian",
+    "label": "Central Product Guardian",
+    "occupancy": {
+     "state": "occupied",
+     "observed_via": "local",
+     "agent_ref": "agent/central-guardian",
+     "workcell_ref": "workcell:mac",
+     "since_unix_ms": 1790767788422
+    }
+   },
+   {
+    "position_ref": "central:position:project:O-I:factory-guardian",
+    "handle": "@factory-guardian",
+    "label": "Software Factory Guardian",
+    "occupancy": {
+     "state": "occupied",
+     "observed_via": "local",
+     "agent_ref": "agent/factory-guardian",
+     "workcell_ref": "workcell:mac",
+     "since_unix_ms": 1790767657980
+    }
+   },
+   {
+    "position_ref": "central:position:project:O-I:workcell-guardian",
+    "handle": "@workcell-guardian",
+    "label": "Workcell Product Guardian",
+    "occupancy": {
+     "state": "occupied",
+     "observed_via": "local",
+     "agent_ref": "agent/workcell-guardian",
+     "workcell_ref": "workcell:mac",
+     "since_unix_ms": 1790767770933
+    }
+   },
+   {
+    "position_ref": "central:position:control:root:anuttara",
+    "handle": "@anuttara",
+    "label": "Anuttara (M0 domain agent)",
+    "occupancy": {
+     "state": "vacant",
+     "observed_via": "local"
+    }
+   },
+   {
+    "position_ref": "central:position:control:root:epii",
+    "handle": "@epii",
+    "label": "Epii (M5 domain agent)",
+    "occupancy": {
+     "state": "vacant",
+     "observed_via": "local"
+    }
+   }
+  ],
+  "absences": [
+   {
+    "facet": "current_work:central:position:control:root:anuttara",
+    "reason": "no Factory project placement (.factory/project.json) was found at or above /private/tmp/claude-501/-Users-admin-Central/9b1ecf39-5816-4bbf-86d7-846b25368494/scratchpad/lanes/bf3/shapes",
+    "source": "factory development current-work --position central:position:control:root:anuttara --json"
+   },
+   {
+    "facet": "current_work:central:position:control:root:epii",
+    "reason": "no Factory project placement (.factory/project.json) was found at or above /private/tmp/claude-501/-Users-admin-Central/9b1ecf39-5816-4bbf-86d7-846b25368494/scratchpad/lanes/bf3/shapes",
+    "source": "factory development current-work --position central:position:control:root:epii --json"
+   },
+   {
+    "facet": "current_work:central:position:control:root:mahamaya",
+    "reason": "no Factory project placement (.factory/project.json) was found at or above /private/tmp/claude-501/-Users-admin-Central/9b1ecf39-5816-4bbf-86d7-846b25368494/scratchpad/lanes/bf3/shapes",
+    "source": "factory development current-work --position central:position:control:root:mahamaya --json"
+   },
+   {
+    "facet": "current_work:central:position:control:root:nara",
+    "reason": "no Factory project placement (.factory/project.json) was found at or above /private/tmp/claude-501/-Users-admin-Central/9b1ecf39-5816-4bbf-86d7-846b25368494/scratchpad/lanes/bf3/shapes",
+    "source": "factory development current-work --position central:position:control:root:nara --json"
+   },
+   {
+    "facet": "current_work:central:position:control:root:paramasiva",
+    "reason": "no Factory project placement (.factory/project.json) was found at or above /private/tmp/claude-501/-Users-admin-Central/9b1ecf39-5816-4bbf-86d7-846b25368494/scratchpad/lanes/bf3/shapes",
+    "source": "factory development current-work --position central:position:control:root:paramasiva --json"
+   },
+   {
+    "facet": "current_work:central:position:control:root:parashakti",
+    "reason": "no Factory project placement (.factory/project.json) was found at or above /private/tmp/claude-501/-Users-admin-Central/9b1ecf39-5816-4bbf-86d7-846b25368494/scratchpad/lanes/bf3/shapes",
+    "source": "factory development current-work --position central:position:control:root:parashakti --json"
+   },
+   {
+    "facet": "current_work:central:position:project:O-I:actuation-guardian",
+    "reason": "no Factory project placement (.factory/project.json) was found at or above /private/tmp/claude-501/-Users-admin-Central/9b1ecf39-5816-4bbf-86d7-846b25368494/scratchpad/lanes/bf3/shapes",
+    "source": "factory development current-work --position central:position:project:O-I:actuation-guardian --json"
+   },
+   {
+    "facet": "current_work:central:position:project:O-I:aikit-guardian",
+    "reason": "no Factory project placement (.factory/project.json) was found at or above /private/tmp/claude-501/-Users-admin-Central/9b1ecf39-5816-4bbf-86d7-846b25368494/scratchpad/lanes/bf3/shapes",
+    "source": "factory development current-work --position central:position:project:O-I:aikit-guardian --json"
+   },
+   {
+    "facet": "current_work:central:position:project:O-I:aletheia-5",
+    "reason": "no Factory project placement (.factory/project.json) was found at or above /private/tmp/claude-501/-Users-admin-Central/9b1ecf39-5816-4bbf-86d7-846b25368494/scratchpad/lanes/bf3/shapes",
+    "source": "factory development current-work --position central:position:project:O-I:aletheia-5 --json"
+   },
+   {
+    "facet": "current_work:central:position:project:O-I:anima-4",
+    "reason": "no Factory project placement (.factory/project.json) was found at or above /private/tmp/claude-501/-Users-admin-Central/9b1ecf39-5816-4bbf-86d7-846b25368494/scratchpad/lanes/bf3/shapes",
+    "source": "factory development current-work --position central:position:project:O-I:anima-4 --json"
+   },
+   {
+    "facet": "current_work:central:position:project:O-I:central-guardian",
+    "reason": "no Factory project placement (.factory/project.json) was found at or above /private/tmp/claude-501/-Users-admin-Central/9b1ecf39-5816-4bbf-86d7-846b25368494/scratchpad/lanes/bf3/shapes",
+    "source": "factory development current-work --position central:position:project:O-I:central-guardian --json"
+   },
+   {
+    "facet": "current_work:central:position:project:O-I:factory-guardian",
+    "reason": "no Factory project placement (.factory/project.json) was found at or above /private/tmp/claude-501/-Users-admin-Central/9b1ecf39-5816-4bbf-86d7-846b25368494/scratchpad/lanes/bf3/shapes",
+    "source": "factory development current-work --position central:position:project:O-I:factory-guardian --json"
+   },
+   {
+    "facet": "current_work:central:position:project:O-I:oi-root-agency",
+    "reason": "no Factory project placement (.factory/project.json) was found at or above /private/tmp/claude-501/-Users-admin-Central/9b1ecf39-5816-4bbf-86d7-846b25368494/scratchpad/lanes/bf3/shapes",
+    "source": "factory development current-work --position central:position:project:O-I:oi-root-agency --json"
+   },
+   {
+    "facet": "current_work:central:position:project:O-I:ql-guardian",
+    "reason": "no Factory project placement (.factory/project.json) was found at or above /private/tmp/claude-501/-Users-admin-Central/9b1ecf39-5816-4bbf-86d7-846b25368494/scratchpad/lanes/bf3/shapes",
+    "source": "factory development current-work --position central:position:project:O-I:ql-guardian --json"
+   },
+   {
+    "facet": "current_work:central:position:project:O-I:workcell-guardian",
+    "reason": "no Factory project placement (.factory/project.json) was found at or above /private/tmp/claude-501/-Users-admin-Central/9b1ecf39-5816-4bbf-86d7-846b25368494/scratchpad/lanes/bf3/shapes",
+    "source": "factory development current-work --position central:position:project:O-I:workcell-guardian --json"
+   }
+  ]
+ }
+}

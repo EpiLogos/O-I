@@ -19,18 +19,18 @@ import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
 import type {AgentSessionTrack} from '../agentRunModel'
 import {holdView, viewHolds, type ChainHolds} from './designBindings'
 import {sessionRowsOf} from './threadBinding'
+import {familyFaceDevice} from './mainTrackBindings'
 
 export const TASKS_DESIGN = 'software-factory:tasks'
 export const RUNS_DESIGN = 'software-factory:attempt-review'
 export const TASKS_ID = 'factory:tasks'
 export const RUNS_ID = 'factory:runs'
 
-/** Software Factory's tasks and runs as devices of the runtime (designKey is the design's id). The family manifest admits neither
- * face yet (softwareFactoryFamilyManifest.ts) — proposed to its lane. */
-export const tasksDevice = (): DeviceInstance => ({id: TASKS_ID, family: 'software-factory', rows: [], values: {},
-  face: {id: 'tasks', title: 'Tasks', icon: 'session', liveSemantic: 'track', note: 'The clips on one session\'s track (DLW §19.12).'}})
-export const runsDevice = (): DeviceInstance => ({id: RUNS_ID, family: 'software-factory', rows: [], values: {},
-  face: {id: 'attempt-review', title: 'Runs', icon: 'arrangement', liveSemantic: 'track', note: 'Every attempt on a piece of work, and which stands (DLW §19.11).'}})
+/** Software Factory's tasks and runs as devices of the runtime, of their admitted faces (designKey is the design's id): `tasks` is the
+ * family's own (softwareFactoryFamilyManifest.ts), `attempt-review` the extension declared onto it (worldShellFamilies.ts). Null when
+ * the family does not admit the face. */
+export const tasksDevice = (): DeviceInstance | null => familyFaceDevice(TASKS_ID, 'software-factory', 'tasks', 'Tasks', 'session')
+export const runsDevice = (): DeviceInstance | null => familyFaceDevice(RUNS_ID, 'software-factory', 'attempt-review', 'Runs', 'arrangement')
 
 const missing = (what: string, op: string, owner: string) => `${what}: no owner operation carries it yet — missing op: ${op} (${owner}).`
 const disabled = (reasons: Readonly<Record<string, string>>): Record<string, Standing> =>

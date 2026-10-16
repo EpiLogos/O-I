@@ -19,6 +19,7 @@ import {CentralClipChooser} from '../central/CentralClipChooser'
 import {centralSubjectName} from '../central/CentralClipDetail'
 import {BaseDevicesDetail, FactoryTaskLogDetail, TechneClipDetail, TechneInstrumentsDetail} from './ModeDetail'
 import {AgentShellDeviceDetail} from '../agent/AgentShellDeviceDetail'
+import {TaskClipDevice} from '../agent/devices/TaskClipDevice'
 import {WorldSubjectClip} from '../techne/subject/WorldSubjectClip'
 import {useAgentSessionsOptional} from '../agent/AgentSessionsProvider'
 import {eventsForSession, trackKey, type AgentSessionTrack} from '../agent/agentRunModel'
@@ -98,7 +99,8 @@ function CentralClip() {
 }
 function CentralChain() { const {transport, centralSubject, world} = useDetailReading(); return <BaseDevicesDetail transport={transport} world={world} subject={centralSubject} /> }
 /** The selected task: THE selection names it (`<session track>#task/<n>`, timeline/factoryTrackAdapter.ts), or a session track
- * whose first task it opens; its session is the agency reading's own track, its log the sessions provider's one temporal read. */
+ * whose first task it opens; its session is the agency reading's own track, its log the sessions provider's one temporal read. Beside
+ * the log stands the task itself, the Tasks device the chain publishes (DLW §19.12 "In Clip view, the task is the clip"; lane BF3). */
 function FactoryClip() {
   const {factory} = useDetailReading()
   const selected = useSelectedClip()
@@ -109,8 +111,9 @@ function FactoryClip() {
   if (!track) return <ClipWaiting line={MODE_DETAILS.factory.clipWaits} />
   const shown = selected.set?.tracks.find(item => item.id === trackId)
   const title = track.tasks.find(item => !item.softStop && (task ? item.n === task.n : true))?.title
-  return <FactoryTaskLogDetail track={track} n={task?.n ?? null} name={factorySessionName(track, title, shown?.name)} colour={shown?.color} box={clipBoxRows(selected)}
-    events={sessions ? eventsForSession(sessions.events, track.sessionRef) : null} />
+  return <div className="factory-clip"><TaskClipDevice />
+    <FactoryTaskLogDetail track={track} n={task?.n ?? null} name={factorySessionName(track, title, shown?.name)} colour={shown?.color} box={clipBoxRows(selected)}
+      events={sessions ? eventsForSession(sessions.events, track.sessionRef) : null} /></div>
 }
 function FactoryChain() { const {factory} = useDetailReading(); return <AgentShellDeviceDetail tracks={factory.tracks} /> }
 // An Expressions clip is a scene (lock §9.1). Beside its editor stand the Scene's own controls — the Scene selector, Saved scenes,
@@ -168,8 +171,11 @@ export const MODE_DETAILS: Readonly<Record<SurfMode, ModeDetail>> = {
         const trackId = selected.ref ? parseFactoryTaskRef(selected.ref)?.trackId ?? selected.ref : null
         const track = trackId ? detail.factory.tracks.find(item => trackKey(item) === trackId) : undefined
         const shown = selected.set?.tracks.find(item => item.id === trackId)?.name
-        return {name: track ? shown ?? factorySessionName(track, null, undefined) : 'No session selected',
-          line: 'the agent\'s path: gateway → agent → skills → world → git'}
+        // With no session selected the Device side is Factory's Main track (§16.2; agent/devices/FactoryDeviceChain.tsx), as Live
+        // shows the Main track's chain when no other track is chosen.
+        if (!track) return {name: 'Main', line: 'Factory\'s Main track: the gateways, the Experiment, the Ledger, Approvals and the Link'}
+        return {name: shown ?? factorySessionName(track, null, undefined),
+          line: track.group ? 'a group: the Agentset rack, then the path: gateway → agent → skills → world → git' : 'the agent\'s path: gateway → agent → skills → world → git'}
       },
     }},
   // The Studio receives a dragged field device itself (ExpressionsStudio.tsx, DEVICE_MIME), and the mockup's Expressions row

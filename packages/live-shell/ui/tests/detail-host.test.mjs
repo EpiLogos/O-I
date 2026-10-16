@@ -99,7 +99,9 @@ test('the Device side\'s head: the session\'s path in Factory, the focused instr
   const none = {ref: null, clip: null, track: null, set: null}
   assert.deepEqual(MODE_DETAILS.factory.head.device({detail: reading('factory'), selected: selectedClipOf(taskRef, set), instrument: null}),
     {name: 'correlate occurrences', line: 'the agent\'s path: gateway → agent → skills → world → git'}, 'the selected task\'s session, as the chain reads it')
-  assert.equal(MODE_DETAILS.factory.head.device({detail: reading('factory'), selected: none, instrument: null}).name, 'No session selected', 'no selection, no session — as the chain says')
+  // No session: the Device side is Factory's Main track, as the chain draws it (lane BF3; FactoryDeviceChain.tsx).
+  assert.deepEqual(MODE_DETAILS.factory.head.device({detail: reading('factory'), selected: none, instrument: null}),
+    {name: 'Main', line: 'Factory\'s Main track: the gateways, the Experiment, the Ledger, Approvals and the Link'}, 'no selection, no session — the Main track, as the chain says')
   assert.deepEqual(MODE_DETAILS.factory.head.device({detail: reading('factory'), selected: none, instrument: 'techne:m2'}),
     {name: 'Instruments', line: 'Timeline open on the focused pane; its controls are its own'})
   assert.deepEqual(MODE_DETAILS.base.head.device({detail: reading('base', {centralSubject: {kind: 'day', path: 'Control/agents/now/day/2026-10-08.md'}}), selected: none, instrument: null}),

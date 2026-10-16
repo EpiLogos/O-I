@@ -84,10 +84,11 @@ test('loadWorldShellFamilies admits the sixth family and composes the L2 extensi
   assert.deepEqual(central.faces.map(face => face.id),
     ['context-world', 'agent-identity', 'ground-hygiene', 'impact', 'day-die', 'flow-document', 'nara-conversation',
       'document', 'workspace', 'beings', 'things', 'text', 'highlight', 'notes'])
-  // Software-factory's composed manifest carries attempt-review after its base's own.
+  // Software-factory's composed manifest carries attempt-review after its base's own (the base admits the thread, tasks and the
+  // agentset rack since lane BF3).
   const factory = schema.inhabitantManifest('software-factory')
   assert.deepEqual(factory.faces.map(face => face.id),
-    ['agent-custody', 'context-write-mode', 'ledger', 'approvals', 'run-device', 'attempt-review'])
+    ['agent-custody', 'context-write-mode', 'ledger', 'approvals', 'run-device', 'thread', 'tasks', 'agentset-rack', 'attempt-review'])
   // Idempotent: a second load changes nothing.
   world.loadWorldShellFamilies()
   assert.equal(JSON.stringify(schema.inhabitantManifest('central')), JSON.stringify(central))
