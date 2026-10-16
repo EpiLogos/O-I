@@ -1,0 +1,48 @@
+/* The Gateway device's own layout: the frame monitor in the pane, and the dots that run on the link. Shell and panel tokens only. */
+
+/* Frames in flight run along the line, both ways. They stop for a reader who asks for reduced motion, and when nothing says how many turns run. */
+@keyframes gw-run { from { transform: translateX(0); } to { transform: translateX(var(--span)); } }
+.gw-dot { animation: gw-run var(--dur) linear infinite; animation-delay: var(--delay); }
+.gw-dot[data-back="true"] { animation-direction: reverse; }
+.gw-dot[data-still="true"] { animation: none; }
+@media (prefers-reduced-motion: reduce) { .gw-dot { animation: none; } }
+
+.gw-pane { position: absolute; inset: 0; display: flex; flex-direction: column; background: var(--bg-1); color: var(--text); font: 11px/1.45 var(--font-ui, sans-serif); overflow: hidden; }
+.gw-head { flex: none; display: flex; align-items: center; gap: 10px; height: 26px; padding: 0 14px; background: var(--bg-0); border-bottom: 1px solid var(--line); color: var(--text-dim); font-size: 10.5px; white-space: nowrap; }
+.gw-head b { font-weight: 600; color: var(--text); font-size: 11px; }
+.gw-head span + span::before { content: "·"; margin-right: 10px; color: var(--text-faint); }
+.gw-head [data-state="stalled"], .gw-head [data-state="refused"] { color: var(--stall); }
+.gw-body { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 232px; }
+
+.gw-frames { min-width: 0; min-height: 0; display: flex; flex-direction: column; border-right: 1px solid var(--line); }
+.gw-chips { flex: none; display: flex; gap: 4px; padding: 8px 14px; border-bottom: 1px solid var(--line); }
+.gw-chips button { height: 16px; padding: 0 8px; border: 1px solid var(--line); background: var(--dp-field); color: var(--text-dim); font: 10px var(--font-ui, sans-serif); cursor: pointer; }
+.gw-chips button[aria-pressed="true"] { background: var(--dp-on); border-color: var(--dp-on); color: var(--dp-on-text); }
+.gw-chips button:focus-visible { outline: 1px solid var(--accent); outline-offset: 1px; }
+.gw-list { flex: 1 1 auto; min-height: 0; margin: 0; padding: 6px 14px; list-style: none; display: flex; flex-direction: column; overflow: hidden; }
+.gw-frame { flex: none; display: grid; grid-template-columns: 44px 60px 16px 118px 88px minmax(0, 1fr); gap: 0 8px; align-items: baseline; height: 19px; font-size: 10.5px; }
+.gw-frame > * { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gw-seq, .gw-kind { font-family: var(--mono, ui-monospace, monospace); }
+.gw-seq { text-align: right; color: var(--text-faint); }
+.gw-at { color: var(--text-faint); font-variant-numeric: tabular-nums; }
+.gw-dir { color: var(--text-dim); text-align: center; }
+.gw-frame[data-dir="out"] .gw-dir { color: var(--dp-on); }
+.gw-frame[data-dir="in"] .gw-dir { color: var(--dp-value); }
+.gw-frame[data-kind="approval"] .gw-kind { color: var(--dp-on); }
+.gw-frame[data-kind="error"] .gw-kind { color: var(--stall); }
+.gw-frame[data-kind="tool"] .gw-kind { color: var(--text); }
+.gw-session { color: var(--text-dim); }
+.gw-note { color: var(--text-dim); }
+.gw-empty { margin: auto; color: var(--text-faint); }
+
+.gw-reads { min-width: 0; display: flex; flex-direction: column; background: var(--bg-0); overflow: hidden; }
+.gw-read { padding: 10px 14px 9px; border-bottom: 1px solid var(--line); }
+.gw-read h4 { margin: 0 0 3px; font-size: 9px; font-weight: 400; letter-spacing: .07em; text-transform: uppercase; color: var(--text-faint); }
+.gw-read strong { display: block; font-size: 17px; font-weight: 300; line-height: 1.2; color: var(--dp-value); font-variant-numeric: tabular-nums; }
+.gw-read strong[data-state="stalled"], .gw-read strong[data-state="refused"] { color: var(--stall); }
+.gw-read strong[data-state="none"] { color: var(--text-faint); }
+.gw-read p { margin: 2px 0 0; font-size: 10.5px; color: var(--text-dim); }
+.gw-read p b { font-weight: 400; color: var(--text); }
+
+/* The widget: the readings beside the small link. */
+.gw-tile-side { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; justify-content: space-around; align-items: center; }
