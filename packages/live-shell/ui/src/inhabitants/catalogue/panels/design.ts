@@ -78,6 +78,11 @@ export function json<T>(v: Values, key: string, fallback: T): T {
   if (!has(v, key)) return fallback
   try { return JSON.parse(String(v[key])) as T } catch { return fallback }
 }
+/** The standing the host reports for a key (waiting, held, disabled with the owner's reason, automated…), to spread into the
+ * control that draws it: `<Dial {...st(p, 'drive')} …/>`. An action takes its key's standing too, so an act the owner has no
+ * operation for stands disabled with the host's reason. */
+export const st = (p: ViewProps, key: string): Standing => p.standing?.[key] ?? {}
+
 /** Where the gallery serves the document templates, or undefined in the shell (which draws a template's Full itself). */
 export const cradleDocuments = (): string | undefined => (typeof __CRADLE_DOCUMENTS__ === 'string' ? __CRADLE_DOCUMENTS__ : undefined)
 
