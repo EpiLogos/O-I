@@ -38,7 +38,7 @@ function WikiPage({p, w, h, pager, size = 9}: {p: ViewProps; w: number; h: numbe
     {!body && <text x={6} y={32} className="dp-ink-dim">No reading of the page</text>}
     {body?.lines.slice(0, fit).map((line, i) => { const y = 30 + i * lh
       return <g key={i}>
-        <text x={6} y={y} className="dp-ink-dim" style={{fontSize: size, fontFamily: 'var(--font-mono, ui-monospace, Menlo, monospace)', whiteSpace: 'pre'}}>{line.slice(0, room)}</text>
+        <text x={6} y={y} className="dp-ink-dim dp-mono" style={{fontSize: size, whiteSpace: 'pre'}}>{line.slice(0, room)}</text>
         {body.links.filter(l => l.line === i && l.from < room).map((l, j) => { const resolved = l.state === 'resolved', x = 6 + l.from * cw, x2 = 6 + Math.min(l.to, room) * cw
           return <g key={j}>
             <path d={`M${x.toFixed(1)} ${y + 2}H${x2.toFixed(1)}`} stroke={resolved ? 'var(--dp-value)' : 'var(--text-faint, #71767c)'} strokeWidth={1} strokeDasharray={resolved ? undefined : '2 2'} />

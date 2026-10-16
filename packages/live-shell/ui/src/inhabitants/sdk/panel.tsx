@@ -244,6 +244,20 @@ export function Chooser<T extends string>({label, does, value, options, onChange
   </Cell>
 }
 
+/** A colour you choose (a palette stop, the paper behind a field): the swatch and its value; pressing it opens the system's colour
+ * picker. Absent, it shows "—" and no colour. */
+export function Swatch({label, does, value, onChange, ...standing}: Standing & {readonly label?: string; readonly does?: string; readonly value: string | undefined; readonly onChange?: (hex: string) => void}) {
+  const unknown = value === undefined || value === ''
+  return <Cell kind="swatch" label={label} does={does} standing={standing} unknown={unknown}>
+    {label && <span className="dp-label">{label}</span>}
+    <label className="dp-swatch" style={{'--swatch': unknown ? 'transparent' : value} as CSSProperties}>
+      <input type="color" value={unknown ? '#000000' : value} aria-label={label ?? 'Colour'} disabled={!onChange || !!standing.disabled}
+        onChange={event => onChange?.(event.target.value)} />
+      <span className="dp-swatch-value">{unknown ? NO_READING : value.toUpperCase()}</span>
+    </label>
+  </Cell>
+}
+
 /** A short line of text you type (a label, a name, a message): it sends on Enter or when you leave it; Escape restores it. */
 export function TextField({label, does, value, onChange, placeholder, wide, ...standing}: Standing & {readonly label?: string; readonly does?: string; readonly value: string; readonly onChange?: (v: string) => void; readonly placeholder?: string; readonly wide?: boolean}) {
   return <Cell kind="text" label={label} does={does} standing={standing} className={wide ? 'dp-cell--wide' : undefined}>
@@ -301,8 +315,9 @@ export interface RowItem {
 }
 
 /** Rows with lights (a rack's chains, a scope's places). A long list pages; it never scrolls. `onSelect`: pressing a row's name
- * chooses it (a rack's chain: Live's chain list selection); the chosen row is `selected`. */
-export function Rows({label, does, items, onRequest, onSelect, selected, size = 6, page = 0, onPage, columns = 1}: {readonly label?: string; readonly does?: string; readonly items: readonly RowItem[]; readonly onRequest?: (id: string, on: boolean) => void; readonly onSelect?: (id: string) => void; readonly selected?: string; readonly size?: number; readonly page?: number; readonly onPage?: (page: number) => void; readonly columns?: 1 | 2}) {
+ * chooses it (a rack's chain: Live's chain list selection); the chosen row is `selected`. `onMove`: the order is yours to change, as
+ * Live's chain list is — the chosen row carries ▲ ▼, and ⌥↑ ⌥↓ on a row's name move it one place. */
+export function Rows({label, does, items, onRequest, onSelect, selected, onMove, size = 6, page = 0, onPage, columns = 1}: {readonly label?: string; readonly does?: string; readonly items: readonly RowItem[]; readonly onRequest?: (id: string, on: boolean) => void; readonly onSelect?: (id: string) => void; readonly selected?: string; readonly onMove?: (id: string, by: -1 | 1) => void; readonly size?: number; readonly page?: number; readonly onPage?: (page: number) => void; readonly columns?: 1 | 2}) {
   const pages = Math.max(1, Math.ceil(items.length / size)), at = Math.min(page, pages - 1)
   const shown = items.slice(at * size, at * size + size)
   return <div className="dp-cell dp-cell--rows" data-i={said(label, does)}>
@@ -321,11 +336,18 @@ export function Rows({label, does, items, onRequest, onSelect, selected, size = 
           aria-label={`${item.request ? 'Withhold' : 'Request'} ${item.name}`} onClick={() => onRequest(item.id, !item.request)} />}
         {item.mark ?? <Lamp state={item.light} tone={item.tone} />}
         {onSelect
-          ? <button type="button" className="dp-row-name dp-row-select" aria-pressed={item.id === selected} onClick={() => onSelect(item.id)}>{item.name}</button>
+          ? <button type="button" className="dp-row-name dp-row-select" aria-pressed={item.id === selected} onClick={() => onSelect(item.id)}
+            onKeyDown={onMove ? event => { if (event.altKey && (event.key === 'ArrowUp' || event.key === 'ArrowDown')) { event.preventDefault(); onMove(item.id, event.key === 'ArrowUp' ? -1 : 1) } } : undefined}>{item.name}</button>
           : <span className="dp-row-name">{item.name}</span>}
         {item.meter}
         {item.why && <span className="dp-row-why" aria-label={item.why}>!</span>}
         {item.note && <span className="dp-row-note">{item.note}</span>}
+        {onMove && item.id === selected && <span className="dp-row-move">
+          <button type="button" aria-label={`Move ${item.name} earlier`} data-i={said('Earlier', 'Move this row one place earlier. ⌥↑ does the same.')}
+            disabled={items[0]?.id === item.id} onClick={() => onMove(item.id, -1)}>▲</button>
+          <button type="button" aria-label={`Move ${item.name} later`} data-i={said('Later', 'Move this row one place later. ⌥↓ does the same.')}
+            disabled={items[items.length - 1]?.id === item.id} onClick={() => onMove(item.id, 1)}>▼</button>
+        </span>}
       </li>)}
     </ul>
   </div>
@@ -563,13 +585,14 @@ export function Folded({title, light, readings = [], onUnfold}: {readonly title:
 }
 
 /** A widget tile on the rail: one square (1) or two side by side (2). `onClose` takes it off the rail. */
-export function Tile({title, light, span = 1, onFull, onClose: ownClose, onLight, lightWhy, children}: {readonly title: string; readonly light: LightState; readonly span?: 1 | 2; readonly onFull?: () => void; readonly onClose?: () => void; readonly onLight?: () => void; readonly lightWhy?: string; readonly children: ReactNode}) {
+export function Tile({title, light, span = 1, onFull, onClose: ownClose, onLight, lightWhy, badge, children}: {readonly title: string; readonly light: LightState; readonly span?: 1 | 2; readonly onFull?: () => void; readonly onClose?: () => void; readonly onLight?: () => void; readonly lightWhy?: string; readonly badge?: ReactNode; readonly children: ReactNode}) {
   const place = useContext(PlaceContext), onClose = ownClose ?? place.onClose, onPopout = place.onPopout
   return <section className="dp-tile" data-span={span} aria-label={title}>
     <header className="dp-tile-head">
       {/* The tile's light reads the owner; where the owner can turn the device on or off, pressing it asks, as the plate's activator does. */}
       {onLight || lightWhy ? <Activator title={title} light={lightIn(light)} onLight={onLight} why={lightWhy} /> : <Lamp state={light} />}
       <span className="dp-tile-title">{title}</span>
+      {badge !== undefined && badge !== null && <span className="dp-tile-badge">{badge}</span>}
       {onFull && <button type="button" className="dp-full" aria-label={`Open ${title} full in a pane`} data-i={said('Open in a pane', 'Open the device full size in the pane that has focus.')} onClick={onFull}><Icon name="pane" size={10} /></button>}
       {onPopout && <button type="button" className="dp-full dp-popout" aria-label={`Pop ${title} out into its own window`} data-i={said('Pop out', 'Open the device in its own window, its material with every control.')} onClick={onPopout}><PopOut size={10} /></button>}
       {onClose && <button type="button" className="dp-full" aria-label={`Take ${title} off the rail`} data-i={said('Close', 'Take the device off the rail. It stays on its chain.')} onClick={onClose}>✕</button>}
