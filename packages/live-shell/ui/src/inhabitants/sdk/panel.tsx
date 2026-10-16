@@ -279,8 +279,9 @@ export interface RowItem {
   readonly does?: string
 }
 
-/** Rows with lights (a rack's chains, a scope's places). A long list pages; it never scrolls. */
-export function Rows({label, does, items, onRequest, size = 6, page = 0, onPage, columns = 1}: {readonly label?: string; readonly does?: string; readonly items: readonly RowItem[]; readonly onRequest?: (id: string, on: boolean) => void; readonly size?: number; readonly page?: number; readonly onPage?: (page: number) => void; readonly columns?: 1 | 2}) {
+/** Rows with lights (a rack's chains, a scope's places). A long list pages; it never scrolls. `onSelect`: pressing a row's name
+ * chooses it (a rack's chain: Live's chain list selection); the chosen row is `selected`. */
+export function Rows({label, does, items, onRequest, onSelect, selected, size = 6, page = 0, onPage, columns = 1}: {readonly label?: string; readonly does?: string; readonly items: readonly RowItem[]; readonly onRequest?: (id: string, on: boolean) => void; readonly onSelect?: (id: string) => void; readonly selected?: string; readonly size?: number; readonly page?: number; readonly onPage?: (page: number) => void; readonly columns?: 1 | 2}) {
   const pages = Math.max(1, Math.ceil(items.length / size)), at = Math.min(page, pages - 1)
   const shown = items.slice(at * size, at * size + size)
   return <div className="dp-cell dp-cell--rows" data-i={said(label, does)}>
@@ -293,12 +294,14 @@ export function Rows({label, does, items, onRequest, size = 6, page = 0, onPage,
       </span>}
     </div>}
     <ul className="dp-rows" data-columns={columns} style={{'--rows': Math.ceil(size / columns)} as CSSProperties}>
-      {shown.map(item => <li key={item.id} className="dp-row" data-dim={item.light !== 'lit' ? 'true' : undefined}
+      {shown.map(item => <li key={item.id} className="dp-row" data-dim={item.light !== 'lit' ? 'true' : undefined} data-selected={item.id === selected ? 'true' : undefined}
         data-i={said(item.name, item.why ?? item.does ?? (item.light === 'unknown' ? 'No reading yet.' : undefined))}>
         {onRequest && item.request !== undefined && <button type="button" className="dp-row-request" aria-pressed={item.request}
           aria-label={`${item.request ? 'Withhold' : 'Request'} ${item.name}`} onClick={() => onRequest(item.id, !item.request)} />}
         {item.mark ?? <Lamp state={item.light} tone={item.tone} />}
-        <span className="dp-row-name">{item.name}</span>
+        {onSelect
+          ? <button type="button" className="dp-row-name dp-row-select" aria-pressed={item.id === selected} onClick={() => onSelect(item.id)}>{item.name}</button>
+          : <span className="dp-row-name">{item.name}</span>}
         {item.meter}
         {item.why && <span className="dp-row-why" aria-label={item.why}>!</span>}
         {item.note && <span className="dp-row-note">{item.note}</span>}
@@ -405,6 +408,67 @@ export function Panel({title, view, light: reported, onLight, pages, page, onPag
     </header>
     <div className="dp-body">{children}</div>
   </section>
+}
+
+export interface PanelHeadProps {
+  readonly title: string
+  /** The activator: a reading of the owner's on/off. Pressing it asks the owner; absent `onLight`, it only reads. */
+  readonly light: LightState
+  readonly onLight?: () => void
+  /** ▾: fold the device to its title. */
+  readonly onFold?: () => void
+  /** The device's kind mark before its name. */
+  readonly mark?: ReactNode
+  /** A press on the name (an instrument's name opens it where it plays). Absent, the name is only its name. */
+  readonly onName?: () => void
+  /** What a press on the name does, for the status bar. */
+  readonly nameDoes?: string
+  /** Someone else holds values on this device. */
+  readonly heldBy?: string
+  readonly pages?: readonly Page[]
+  readonly page?: string
+  readonly onPage?: (id: string) => void
+  /** The device's own acts, after the pages and before the place's marks (the Studio's Save, Undo, Redo). */
+  readonly acts?: ReactNode
+  /** Marks the place gives the head, before ⤢. */
+  readonly marks?: ReactNode
+  readonly onRail?: () => void
+  readonly onFull?: () => void
+  /** The place's own words for ⤢ (absent: "Open <title> full in a pane"). */
+  readonly fullLabel?: string
+  /** What the head says on the status bar when you point at it: the device's owner and its standing, never drawn as a sentence. */
+  readonly hint?: string
+  readonly selected?: boolean
+}
+
+/** The head of a device panel, for a plate the kit's Panel does not draw whole (an instrument's sections, a compact): the activator, ▾,
+ * the name, the held mark, the pages, the device's own acts, the place's marks and ⤢ (DEVICE-UI §4.1). The Panel's own head, as one
+ * part. */
+export function PanelHead({title, light: reported, onLight, onFold, mark, onName, nameDoes, heldBy, pages, page, onPage, acts, marks, onRail, onFull, fullLabel, hint, selected}: PanelHeadProps) {
+  const light = lightIn(reported)
+  return <header className="dp-head dp-head--plate" data-selected={selected ? 'true' : undefined} data-i={hint ? said(title, hint) : undefined}>
+    <button type="button" className="dp-activator" data-light={light} aria-pressed={light === 'lit'} disabled={!onLight}
+      aria-label={`${title}: ${light === 'unknown' ? 'no reading' : light === 'lit' ? 'on' : 'off'}`}
+      data-i={said('Device on/off', light === 'unknown' ? 'No reading from the owner yet.' : 'Asks the owner to turn the device on or off. The light shows what the owner reports.')}
+      onClick={onLight} />
+    {onFold && <button type="button" className="dp-fold" aria-label={`Fold ${title}`} data-i={said('Fold', 'Fold the device to its title.')} onClick={onFold}><ChevronFold size={10} /></button>}
+    {mark}
+    {onName
+      ? <button type="button" className="dp-title dp-title--press" onClick={onName} data-i={said(title, nameDoes ?? hint)}>{title}</button>
+      : <span className="dp-title">{title}</span>}
+    {heldBy && <span className="dp-head-held" data-i={said('Held', `${heldBy} holds values on this device.`)}>{heldBy}</span>}
+    {pages && <nav className="dp-pages" role="tablist" aria-label={`${title} pages`}>
+      {pages.map(p => <button key={p.id} type="button" role="tab" aria-selected={p.id === page} onClick={() => onPage?.(p.id)}>
+        {p.light && <Lamp state={p.light} />}{p.label}
+      </button>)}
+    </nav>}
+    {acts !== undefined && acts !== null && acts !== false && <span className="dp-head-acts">{acts}</span>}
+    <span className="dp-head-x">
+      {marks}
+      {onRail && <button type="button" className="dp-full dp-rail" aria-label={`Keep ${title} on the widget rail`} data-i={said('On the rail', 'Keep this device on the widget rail, in every mode.')} onClick={onRail}><Icon name="placed" size={10} /></button>}
+      {onFull && <button type="button" className="dp-full" aria-label={fullLabel ?? `Open ${title} full in a pane`} data-i={said('Open full', fullLabel ?? 'Open the device full size in a pane.')} onClick={onFull}><PopOut size={10} /></button>}
+    </span>
+  </header>
 }
 
 /** One band of the body: the fixed height every plate shares. */

@@ -232,3 +232,18 @@
 .dp-text::placeholder { color: var(--text-faint); }
 .dp-text:focus-visible { outline: 1px solid var(--accent); outline-offset: 1px; }
 .dp-cell[data-pending="true"] .dp-text { font-style: italic; }
+
+/* PanelHead (panel.tsx) on a plate the kit's Panel does not draw whole — an instrument's sections, a compact: the same head, carrying the
+   plate's type and colour itself, since no .dp stands round it. Its name can be a press (an instrument opens where it plays); the
+   device's own acts stand after the pages. Added; the Panel's head is unchanged. */
+.dp-head--plate { font: 10.5px/1.2 var(--font-ui, -apple-system, sans-serif); color: var(--text, #d4d7da); user-select: none; -webkit-user-select: none; }
+.dp-head--plate[data-selected="true"] { background: color-mix(in srgb, var(--dp-head) 72%, var(--sel, #7ec3e6) 28%); }
+.dp-title--press { padding: 0; background: none; border: 0; font-family: inherit; line-height: inherit; text-align: left; cursor: pointer; }
+.dp-title--press:hover { color: var(--dp-on); }
+.dp-title--press:focus-visible { outline: 1px solid var(--accent, #ffbe00); outline-offset: 1px; }
+.dp-head-acts { flex: none; display: flex; align-items: center; gap: 4px; margin-left: 8px; font-size: 10px; color: var(--text-dim); }
+
+/* A row you can choose (a rack's chain): its name is the press; the chosen row is ringed. */
+.dp-row-select { padding: 0; background: none; border: 0; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.dp-row-select:hover { color: var(--text); text-decoration: underline; text-decoration-color: var(--text-faint); }
+.dp-row[data-selected="true"] { background: color-mix(in srgb, var(--sel, #7ec3e6) 16%, transparent); box-shadow: inset 2px 0 0 var(--sel, #7ec3e6); }
