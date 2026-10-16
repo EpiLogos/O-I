@@ -59,9 +59,9 @@ function owner() {
   };
 }
 
-function host() {
+function host(answer) {
   const opened = [];
-  return {opened, bindingId: 'world.expressions', openExpression(ref, bindingId, options) { opened.push({ref, bindingId, ...options}); }, selectInstrument() {}};
+  return {opened, bindingId: 'world.expressions', openExpression(ref, bindingId, options) { opened.push({ref, bindingId, ...options}); return answer?.(ref); }, selectInstrument() {}};
 }
 
 const settle = () => new Promise(resolve => setTimeout(resolve, 0));
@@ -99,7 +99,7 @@ test('a taken request is settled: opened once the owner focused it and the host 
   assert.ok(fake.ops.includes('expression:edit'), 'the focus is the owner\'s edit');
 });
 
-test('a refused request is settled in the owner\'s words and reaches onError; nothing is posted again', async () => {
+test('a refused request is settled in the owner\'s words — its one report — and nothing is posted again', async () => {
   owner();
   await centralScene();
   const settled = [], errors = [];
@@ -109,8 +109,36 @@ test('a refused request is settled in the owner\'s words and reaches onError; no
   await until(() => settled.length === 1, 'settled');
   stop(); navigator.dispose();
   assert.deepEqual([settled[0].state, settled[0].reason], ['refused', 'This Wiki register is not disclosed by the native World']);
-  assert.deepEqual(errors, ['This Wiki register is not disclosed by the native World']);
+  // Lane D: the settlement is the refusal's one report — the stage says it where the ask belongs. Reported twice (onError too), it
+  // stood among the panel's own faults, which every Expressions pane in every mode draws.
+  assert.deepEqual(errors, [], 'not reported again through onError while onSettled takes it');
   assert.equal(getWikiProjectionState().request, null, 'a refusal is final: the seam stays empty');
+});
+
+test('with no settlement taker, a refusal still reaches onError', async () => {
+  owner();
+  await centralScene();
+  const errors = [];
+  const navigator = createNativeTechneNavigator({transport, host: host(), isPresented: () => true, onError: reason => errors.push(reason)});
+  const stop = navigator.connectSelectionRequests();
+  requestWikiSelection({registerKey: 'Nowhere', sceneRef: 'expression:x:scene:y', entityRef: null, subjectRef: null, origin: 'external'});
+  await until(() => errors.length === 1, 'reported');
+  stop(); navigator.dispose();
+  assert.deepEqual(errors, ['This Wiki register is not disclosed by the native World']);
+});
+
+test('an opened settlement carries the application\'s own answer to the host\'s open (lane D)', async () => {
+  owner();
+  const ask = await centralScene();
+  const refusal = {ok: false, error: 'revision_conflict: the native Expression changed; inspect its current basis before trying again'};
+  const settled = [];
+  const navigator = createNativeTechneNavigator({transport, host: host(async () => refusal), isPresented: () => true, onSettled: row => settled.push(row)});
+  const stop = navigator.connectSelectionRequests();
+  requestWikiSelection(ask);
+  await until(() => settled.length === 1, 'settled');
+  stop(); navigator.dispose();
+  assert.equal(settled[0].state, 'opened', 'the owner focused it and the host was told: the request is taken');
+  assert.deepEqual(await settled[0].answer, refusal, 'and the frame\'s refusal of the open travels with it, in its words');
 });
 
 test('a request taken while presented, then concealed before its open finished, goes back to the seam for the next stage', async () => {

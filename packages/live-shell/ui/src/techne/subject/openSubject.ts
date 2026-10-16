@@ -26,7 +26,8 @@ import {getWikiProjectionState, requestWikiSelection, wikiProjectionOf} from '..
 import {liveWikiStandingSource} from '../../native/wikiSubjectStanding'
 import {openInstrument} from '../../frame/instrumentDoor'
 import {openSubjectScene, resolveSubject, type SubjectAbsence, type SubjectScene, type SubjectSource, type WorldSubject} from './subjectScenes'
-import {followAsk, type AskAnswer, type AskEnv, type AskedScene} from './subjectAsks'
+import {createStageAnswers, followAsk, type AskAnswer, type AskEnv, type AskedScene} from './subjectAsks'
+import {framePlacement} from '../../projections/expressionsPaneHost'
 
 /** The window event the owner's hand-off dispatches to enter Technē (desktop/cradle/src/knowledge/techneHandoff.ts:43); the candidate answers
  * it in panels/expressions.tsx (`addEventListener('oi:epi-examine', examine)`). */
@@ -89,3 +90,11 @@ export const liveAskEnv: AskEnv = {
 /** Follow the stage's answer to an ask the door posted (subjectAsks.ts `followAsk` over the live seam). */
 export type AskFollower = (asked: AskedScene, title: string, onAnswer: (answer: AskAnswer) => void) => () => void
 export const followLiveAsk: AskFollower = (asked, title, onAnswer) => followAsk(asked, title, onAnswer, liveAskEnv)
+
+/** The stage's answers over the live stage (subjectAsks.ts `createStageAnswers`): the frame's own announced reading (the Expression
+ * it shows, the cut it stands in) as the stage's wiring reads it, the frame's placement for the pane an ask belongs to, and real
+ * timers. The stage's wiring makes one per mounted frame (panels/expressions.tsx). */
+export function createLiveStageAnswers(reading: () => {nativeScene?: {expression_ref: string}; hostMode?: string} | null | undefined) {
+  return createStageAnswers({shownRef: () => reading()?.nativeScene?.expression_ref, mode: () => reading()?.hostMode ?? null,
+    paneId: () => framePlacement()?.paneId ?? null, setTimer: liveAskEnv.setTimer, clearTimer: liveAskEnv.clearTimer})
+}

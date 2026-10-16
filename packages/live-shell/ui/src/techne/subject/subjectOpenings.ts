@@ -14,6 +14,7 @@
 import {useSyncExternalStore} from 'react'
 import {followLiveAsk, openChosenScene, openWorldSubject, type AskFollower, type SubjectOpen} from './openSubject'
 import type {SubjectScene, WorldSubject} from './subjectScenes'
+import {clearAskFault} from './askFault'
 
 /** The door's answer for one subject: being asked; asked, with the Scene asked for and every Scene that carries the subject (the
  * asked one among them), until the stage answers; shown, once the frame shows that Scene's Expression; refused, in the owner's
@@ -61,9 +62,11 @@ export function openingOf(answer: SubjectOpen): SubjectOpening {
     : {state: 'absent', reason: answer.reason}
 }
 
-/** Follow the stage's answer to the ask just posted for `ref`, holding it while that ask is still the subject's current one. */
+/** Follow the stage's answer to the ask just posted for `ref`, holding it while that ask is still the subject's current one. The
+ * older ask's fault line clears: the seam holds one ask, and this one replaces it (askFault.ts). */
 function follow(ref: string, asked: SceneOpening, title: string, follower: AskFollower): void {
   follows.get(ref)?.()
+  clearAskFault()
   const stop = follower({registerKey: asked.opened.registerKey, sceneRef: asked.opened.scene_ref}, title, answer => {
     const held = openings.get(ref)
     if (!hasScenes(held) || held.opened !== asked.opened) return

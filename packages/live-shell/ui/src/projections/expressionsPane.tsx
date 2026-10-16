@@ -9,7 +9,8 @@
 // Studio"; PATH §1: controls live in device UI, never as chrome inside a pane). The body is the slot only, edge to edge. Under the
 // frame it draws one line saying what it waits for (no work open, or the application not yet reporting), so an empty frame never
 // leaves a blank pane. When another Expressions pane holds the frame, this one says so; pressing it brings the frame here. The
-// frame's faults stand at the slot's foot. The stage's controls stand in the Studio's Tools and Capture sections
+// frame's faults stand at the slot's foot, with a Technē ask's refusal on the pane whose stage took it (techne/subject/askFault.ts).
+// The stage's controls stand in the Studio's Tools and Capture sections
 // (components/expressions/studio/StudioStage.tsx); orbit is a pointer drag on the stage, said in the pane's hover words.
 //
 // Lifecycle: the module mounts its React root into the pane element and admits the pane to the placement registry. Its handle's
@@ -21,9 +22,10 @@ import {useLayoutEffect, useRef, type CSSProperties} from 'react'
 import {createRoot} from 'react-dom/client'
 import {registerProjectionModule, type ProjectionModuleHandle} from '../../../../../desktop/cradle/src/surface/projectionModules'
 import {
-  attachExpressionsSlot, preferExpressionsPane, registerExpressionsPane, setExpressionsPanePresented,
+  attachExpressionsSlot, expressionsPaneAdmitted, preferExpressionsPane, registerExpressionsPane, setExpressionsPanePresented,
   unregisterExpressionsPane, useFramePlacement, useHostedChrome, useHostedExpressions, type ExpressionsPaneAdmission,
 } from './expressionsPaneHost'
+import {clearAskFault, useAskFault} from '../techne/subject/askFault'
 
 export const EXPRESSIONS_MODULE_ID = 'expressions-hosted-presenter'
 
@@ -69,7 +71,10 @@ export function ExpressionsPaneBody({paneId, admission}: {paneId: string; admiss
   }, [paneId, admission])
   const heading = expressionsHeading(reading)
   const waiting = elsewhere ? EXPRESSIONS_ELSEWHERE : expressionsWaiting(reading)
-  const faults = chrome?.faults ?? []
+  // The frame's own faults, and a Technē ask's refusal when this is the pane whose stage took the ask and the frame stands in the
+  // cut it took it in (askFault.ts): an ask's fault line is its pane's, never another mode's pane's.
+  const askFault = useAskFault(paneId, chrome?.state?.hostMode)
+  const faults = [...new Set([...(chrome?.faults ?? []), ...(askFault ? [askFault] : [])])]
   const words = elsewhere ? `${EXPRESSIONS_ELSEWHERE} Press this pane to bring the field here.` : `${heading}. ${ORBIT_WORDS}`
   return <div className="expressions-pane-body" data-expressions-presenter="true" data-frame-here={here ? 'true' : 'false'}
     data-i={`Expressions|${words}`} aria-label={heading} tabIndex={elsewhere ? 0 : undefined}
@@ -94,6 +99,9 @@ function mountExpressionsPane(element: HTMLElement, paneId: string): ProjectionM
   return {
     unmount: () => {
       unregisterExpressionsPane(paneId, admission)
+      // The pane leaves (its instrument changed, or it closed): an ask's fault it held leaves with it. A later instance of the same
+      // pane that took the record over (a remount in one commit) keeps it.
+      if (!expressionsPaneAdmitted(paneId)) clearAskFault(paneId)
       queueMicrotask(() => root.unmount())
     },
     setVisible: visible => setExpressionsPanePresented(paneId, visible, admission),

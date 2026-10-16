@@ -202,6 +202,24 @@ export function listOwnerQuarantine(expressionRef:string,scope:RecoveryScope):Pr
 /** Remove one kept draft from the owner's quarantine, on an explicit request only. Returns the entries that remain. */
 export function removeOwnerKeptDraft(expressionRef:string,scope:RecoveryScope,entryId:string):Promise<number>{return removeOwnerQuarantineEntry(ownerQuarantine,expressionRef,scope,entryId);}
 
+/** The working journey a checkpoint stands for when it holds no draft: its view as the frame reads the view's document (the
+ * re-conversion validateWorkingRecord makes), at the time the checkpoint stored. */
+export function checkpointJourney(raw:import('./nativeWorking').NativeWorkingRecord):Journey{
+ const stored=validateJourney(raw.view!.journey);
+ return {...validateWorkingRecord(raw,stored).view!.journey,updatedAt:stored.updatedAt};
+}
+/** One checkpoint read for its work: the record — its view re-converted from its document, at the time the checkpoint stored — and
+ * the working journey (the draft's, or the checkpoint's own). Every reading of the same checkpoint is then the same work: the saved
+ * copy a set-aside draft opens on compares equal to the checkpoint it came from (acceptWorkingRecoveryBasis). Seen headless (lane D,
+ * 16 Oct): each re-conversion stamped its own time, so a saved copy never matched its checkpoint, and opening a work whose unedited
+ * draft fell behind its owner was refused — "The recovered working material differs from its actual owner reading". */
+export function checkpointReading(raw:import('./nativeWorking').NativeWorkingRecord,draft?:{value?:unknown}|null){
+ const journey=draft?draftJourney(draft.value):checkpointJourney(raw);
+ const record=validateWorkingRecord(raw,journey);
+ if(record.view)record.view.journey.updatedAt=validateJourney(raw.view!.journey).updatedAt;
+ return {record,journey};
+}
+
 /** Read only the host-selected checkpoint address. A same-ref duplicate is
  * not permission to choose another scope, revision or authoring draft.
  * Undefined is the owner's "none yet" (T-RECOVERY-FOR-OPENED-WORKS): no
@@ -219,8 +237,7 @@ export async function readBoundWorkingDraft(binding:RecoveryBinding){
  }
  const draftId=acceptRecoveryDraft(binding,row),raw=row.value as import('./nativeWorking').NativeWorkingRecord;
  const draft=await nativeRead('draft',draftId,binding.scope);
- const journey=draft?draftJourney(draft.value):validateJourney(raw.view!.journey);
- const record=validateWorkingRecord(raw,journey);
+ const {record,journey}=checkpointReading(raw,draft);
  return {record,journey,recoveryRecords:[row,...(draft?[draft]:[])]};
 }
 /** Content and revisions are one explicit receiving act. Browsing the records
@@ -232,7 +249,7 @@ export function acceptWorkingRecoveryBasis(recovered:{record:unknown;journey:Jou
   if(checkpoints.length!==1||drafts.length>1)throw new Error('Recover one exact checkpoint and its acknowledged draft');
   const checkpoint=checkpoints[0],raw=checkpoint.value as import('./nativeWorking').NativeWorkingRecord,draft=drafts[0];
   if(draft&&(draft.scope!==checkpoint.scope||draft.id!==raw.draft_id))throw new Error('The recovered draft does not belong to its exact checkpoint');
-  const journey=draft?draftJourney(draft.value):validateJourney(raw.view!.journey);
+  const journey=draft?draftJourney(draft.value):checkpointJourney(raw);
   const acknowledged=validateWorkingRecord(raw,journey);
   // Conversion regenerates this projection timestamp; authored draft and
   // receipt bytes still compare exactly, including their own timestamps.

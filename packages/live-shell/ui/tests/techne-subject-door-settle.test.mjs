@@ -163,15 +163,15 @@ test('a subject asked reads asked until the stage answers: then shown, or the re
 
 test('source: the stage answers through the one seam — settled asks, the frame\'s announcement, refusals on the fault line — with no mode branch', async () => {
   const panel = await source('panels/expressions.tsx')
-  assert.match(panel, /onSettled: settlement => \{if \(live\) settleAsk\(settlement\)\}/, 'the navigator\'s settlements reach the answer')
-  assert.match(panel, /onState: state => \{\n\s+if \(!live\) return\n\s+sceneShown\(state\)/, 'the frame\'s own announcement is what shows an opened ask')
-  assert.match(panel, /answerAsk\(\{state: 'shown', registerKey: waiting\.registerKey, sceneRef: waiting\.sceneRef, expression_ref: waiting\.expression_ref\}\)/)
-  assert.match(panel, /if \(answer\.state === 'refused' && answer\.by === 'door'\) askFault\(answer\.reason\)/, 'the door\'s deadline stands on the pane\'s fault line')
-  assert.match(panel, /const reason = notShownWords\(waiting\.title, waiting\.expression_ref, mounted\?\.host\.getState\(\)\?\.nativeScene\?\.expression_ref\)\n\s+askFault\(reason\)/,
-    'a frame that does not show the focused Scene is a fault, by its deadline')
-  assert.match(panel, /live = false; setExpressionOwner\(null\); stopAskFaults\(\); if \(awaitingScene\) clearTimeout\(awaitingScene\.timer\)/, 'the wiring leaves with the panel')
+  // Lane D: the stage's answers live in techne/subject/subjectAsks.ts (createStageAnswers, behaviour in techne-ask-faults.test.mjs);
+  // the panel wires them, and no ask refusal enters the panel's own faults (every Expressions pane in every mode draws those).
+  assert.match(panel, /const stageAnswers = createLiveStageAnswers\(\(\) => mounted\?\.host\.getState\(\)\)/)
+  assert.match(panel, /onSettled: settlement => \{if \(live\) stageAnswers\.settle\(settlement\)\}/, 'the navigator\'s settlements reach the answer')
+  assert.match(panel, /onState: state => \{\n\s+if \(!live\) return\n\s+stageAnswers\.seen\(state\.nativeScene\?\.expression_ref\)/, 'the frame\'s own announcement is what shows an opened ask')
+  assert.doesNotMatch(panel, /\baskFault\(|notShownWords\(|answerAsk\(/, 'an ask\'s refusal stands on its own pane\'s fault line (askFault.ts), never in the panel\'s faults')
+  assert.match(panel, /live = false; setExpressionOwner\(null\); stageAnswers\.dispose\(\)/, 'the wiring leaves with the panel')
   const MODE = /[!=]==\s*'(?:live|base|central|factory|expressions|techne|audio)'|'(?:live|base|central|factory|expressions|techne|audio)'\s*[!=]==|\bis[A-Z]\w*Mode\(/
-  for (const file of ['techne/subject/subjectAsks.ts', 'techne/subject/subjectOpenings.ts', 'techne/subject/openSubject.ts', 'techne/subject/worldRows.ts', 'techne/subject/WorldSubjectClip.tsx']) {
+  for (const file of ['techne/subject/subjectAsks.ts', 'techne/subject/subjectOpenings.ts', 'techne/subject/openSubject.ts', 'techne/subject/worldRows.ts', 'techne/subject/WorldSubjectClip.tsx', 'techne/subject/askFault.ts']) {
     assert.doesNotMatch(await source(file), MODE, `${file} adds no mode branch`)
   }
   const door = await source('techne/subject/subjectOpenings.ts')
