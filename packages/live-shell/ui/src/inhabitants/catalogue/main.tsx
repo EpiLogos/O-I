@@ -103,7 +103,9 @@ function StatusLine() {
 function DesignedViews({design, views, fixture: first}: {design: DesignedDevice; views: readonly View[]; fixture?: string | null}) {
   const names = Object.keys(design.fixtures ?? {})
   const [fixture, setFixture] = useState(first && names.includes(first) ? first : names[0] ?? '')
-  const over = (name: string) => ({...design.defaults, ...(design.fixtures?.[name] ?? {})})
+  // A fixture lays its readings over the defaults; a key it sets to undefined is dropped, as an owner that reports nothing.
+  const over = (name: string) => Object.fromEntries(Object.entries({...design.defaults, ...(design.fixtures?.[name] ?? {})})
+    .filter(([, value]) => value !== undefined)) as Record<string, Value>
   const [values, setValues] = useState<Record<string, Value>>(over(fixture))
   const [page, setPage] = useState(design.firstPage ?? '')
   const [folded, setFolded] = useState(false)
