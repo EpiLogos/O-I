@@ -109,9 +109,12 @@ test('the host registers its stage channel for the instrument writes, and nothin
 
 test('the torus device offers the four owner choices while the owner is following, and disables them otherwise', () => {
   const live = torusDeviceModule.torusDevice(okState('following'))
-  assert.equal(live.rows.length, 4)
-  assert.ok(live.rows.every(row => row.type === 'enumerated' && row.writePath === 'stage:instrument'), 'each is an enumerated row written through the stage channel')
-  assert.deepEqual(live.rows.map(row => row.values.length), [12, 7, 9, 2], 'the choices are the owner\'s: twelve lenses, CF1–CF7, B1–B8 with Row, DNA or RNA')
+  const macros = live.rows.filter(row => row.compact)
+  assert.equal(macros.length, 4, 'the four determinants are the compact controls')
+  assert.ok(macros.every(row => row.type === 'enumerated' && row.writePath === 'stage:instrument'), 'each is an enumerated row written through the stage channel')
+  assert.deepEqual(macros.map(row => row.values.length), [12, 7, 9, 2], 'the choices are the owner\'s: twelve lenses, CF1–CF7, B1–B8 with Row, DNA or RNA')
+  // The owner's other parameters follow, as the native field panel groups them (LiveInstrumentSection.tsx), never compact.
+  assert.deepEqual(live.rows.filter(row => !row.compact).map(row => [row.key, row.group]), [['sound', 'Sound'], ['level', 'Sound'], ['cadence', 'Play'], ['scale', 'Scale']])
   const manual = torusDeviceModule.torusDevice(okState('manual'))
   assert.ok(manual.rows.every(row => !row.writePath && /only while the instrument follows or is held/.test(row.disclosure)), 'a manual instrument takes no edits, and says why')
 })

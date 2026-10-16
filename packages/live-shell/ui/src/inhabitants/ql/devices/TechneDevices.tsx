@@ -44,6 +44,8 @@ import {QlInstrumentBody, QlInstrumentControl, qlInstrumentStanding, type QlInst
 import {atlasDevice, atlasReading, ATLAS_FAMILY, type AtlasReading} from './atlasDevices'
 import {knowledgeDevice, KNOWLEDGE_FAMILY} from './knowledgeDevices'
 import {qlInstrumentDevice, waitingDevice, QL_FAMILY, QL_INSTRUMENT_FACE} from './qlDevices'
+import {qlSkyBinding, qlSkyDevice, useQlSky, QL_SKY_FACE, type QlSkyState} from './qlSky'
+import type {DesignBinding} from '../../../frame/devices/designed'
 import {startsExpanded, TECHNE_FACE_ICONS} from './faces'
 import {ProjectPlate} from './ProjectPlate'
 import {InstrumentCompact, hasCompact} from './techneCompacts'
@@ -57,6 +59,8 @@ export interface TechneReadings {
   readonly torus: LiveTorusState | null
   /** The QL owner's reading as the host received it (raw; the body parses it). */
   readonly instrumentReading: unknown
+  /** The dated sky the kernel read for the Sky (qlSky.ts), with the view's own date and choices. */
+  readonly sky?: QlSkyState
 }
 
 /** One face on the chain: its declaration, the device the runtime draws, and the device's own picture at each size. */
@@ -67,6 +71,8 @@ export interface TechneEntry {
   readonly picture: (size: DeviceSize) => ReactNode
   /** What a folded device still says on its title: the owner's standing, where the owner has one. */
   readonly status?: ReactNode
+  /** The wiring of the device's designed views to its owner, where the face has one (the Sky: qlSky.ts qlSkyBinding). */
+  readonly binding?: DesignBinding
 }
 
 function Picture({size, face, children}: {size: DeviceSize; face: string; children: ReactNode}) {
@@ -105,7 +111,7 @@ function WaitingPicture({size, face}: {size: DeviceSize; face: InhabitantFaceDec
 export function techneEntries(manifests: readonly InhabitantManifest[], readings: TechneReadings): TechneEntry[] {
   return manifests.flatMap(manifest => manifest.faces.map((face): TechneEntry => {
     const waiting = face.admission === 'waiting'
-    if (manifest.id === QL_FAMILY) return qlFaceEntry(face, readings.torus, readings.instrumentReading)
+    if (manifest.id === QL_FAMILY) return qlFaceEntry(face, readings.torus, readings.instrumentReading, readings.sky)
     if (!waiting && manifest.id === ATLAS_FAMILY && isAtlasFaceId(face.id)) {
       const faceId = face.id
       return {family: manifest.id, face, device: atlasDevice(face, readings.atlas), picture: size => <Picture size={size} face={faceId}><AtlasFaceBody faceId={faceId} /></Picture>}
@@ -120,7 +126,9 @@ export function techneEntries(manifests: readonly InhabitantManifest[], readings
 
 /** One Quaternal Logic face as a device: the field/PCM owner over its reading, any other face as the waiting device it is declared.
  * The Expressions Studio's Body · 3:3 holds two of them (sdk/semantics.ts STUDIO_SECTIONS) and draws them from here. */
-export function qlFaceEntry(face: InhabitantFaceDeclaration, torus: LiveTorusState | null, instrumentReading: unknown): TechneEntry {
+export function qlFaceEntry(face: InhabitantFaceDeclaration, torus: LiveTorusState | null, instrumentReading: unknown, sky?: QlSkyState): TechneEntry {
+  // The Sky draws its catalogue design on the dated sky the kernel reads (qlSky.ts); its picture is the design's own ring.
+  if (face.id === QL_SKY_FACE && sky) return {family: QL_FAMILY, face, device: qlSkyDevice(face, sky), binding: qlSkyBinding(sky), picture: () => null}
   if (face.admission !== 'waiting' && face.id === QL_INSTRUMENT_FACE) {
     return {family: QL_FAMILY, face, device: qlInstrumentDevice(face, torus), status: <StandingChip reading={instrumentReading} />,
       picture: size => <QlPicture size={size} face={face.id} reading={instrumentReading} torus={torus} />}
@@ -151,7 +159,7 @@ function useKnowledgeSurface(): KnowledgeGraphSurface | null {
 /** Publish each device to the door by id, remembering what this chain published. */
 export function publishTechneEntries(entries: readonly TechneEntry[], mine: Map<string, DeviceInstance>): void {
   for (const entry of entries) {
-    publishDevice(entry.device.id, {device: entry.device, picture: entry.picture})
+    publishDevice(entry.device.id, {device: entry.device, picture: entry.picture, ...(entry.binding ? {binding: entry.binding} : {})})
     mine.set(entry.device.id, entry.device)
   }
 }
@@ -245,7 +253,7 @@ function OpenDevice({entry}: {entry: TechneEntry}) {
   const {device, face} = entry
   const title = device.face.title
   return <div className="techne-device" data-face-id={face.id} data-expanded="true" data-family={device.family} data-device-id={device.id}>
-    <DeviceView device={device} size="compact" picture={entry.picture('compact')} actions={[
+    <DeviceView device={device} size="compact" binding={entry.binding} picture={entry.picture('compact')} actions={[
       {icon: 'detail', label: `Show every setting of ${title} in the pool`, onPress: () => selectDevice(device.id)},
       {icon: 'pane', label: `Open ${title} full size in a pane`, onPress: () => openInstrument(DEVICE_PANE_KIND, undefined, {ref: device.id, title})},
     ]} />
@@ -381,11 +389,12 @@ export function TechneDevices({manifests, focusInstrument = null, instrumentRead
   const atlas = useAtlasReading()
   const surface = useKnowledgeSurface()
   const torus = useLiveTorusReading()
+  const sky = useQlSky()
   const manifestKey = manifests.map(manifest => manifest.id).join('|')
   // The manifests are the door's, named by their ids; the QL reading the caller hands in is the one reader's own, derived from the same
   // `torus` state in the same render, so it changes exactly when `torus` does (its absent form is a new object each call, and would
   // otherwise re-publish every device on every render).
-  const entries = useMemo(() => techneEntries(manifests, {atlas, surface, torus, instrumentReading}), [manifestKey, atlas, surface, torus])
+  const entries = useMemo(() => techneEntries(manifests, {atlas, surface, torus, instrumentReading, sky}), [manifestKey, atlas, surface, torus, sky])
   usePublished(entries)
   // The instrument opened here (a fold pressed) holds until the focus changes; a new focus stands its own instrument open. While a palace
   // is entered the atlas stands at its palace scale, so the Earth pane's instrument stands as M5′ (atlasInstrumentNow).

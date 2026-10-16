@@ -44,9 +44,9 @@ const QUATERNAL_LOGIC_MANIFEST: InhabitantManifest = {
         id: 'sky',
         presentations: ['compact', 'expanded'],
         liveSemantic: 'device-instrument',
-        admission: 'waiting',
+        invariant: {generatesAbsent: 'The sky is read, never written: the kernel\'s nara_identity transit (ql.nara-transit/v1) answers a date the view asks for, and no owner operation takes a sky value back (lock §7).'},
         heldBy: ['techne:m4', 'techne:m2'],
-        note: 'Compact sky face over the landed QL kerykeion contract (ql.sky-request/v1 → ql.sky-snapshot/v1, ten bodies, Earth anchor, standing "calculated-ephemeris-not-observed-sky"). The shell-side envelope exists (skyProvider.requestQlSkySnapshot) and the family\'s Earth adapter places the stated subsolar point (qlSkyEarthAdapter.ts); the face body is the QL family\'s to land.',
+        note: 'The dated sky over the QL kerykeion contract (ql.sky-request/v1 → ql.sky-snapshot/v1, ten bodies, Earth anchor, standing "calculated-ephemeris-not-observed-sky"), read through the kernel\'s nara_identity transit (ql/devices/qlSky.ts) and drawn by the catalogue\'s Sky design.',
       },
       {
         id: 'torus',

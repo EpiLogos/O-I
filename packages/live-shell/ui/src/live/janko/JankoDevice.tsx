@@ -35,9 +35,13 @@ export interface JankoPlateProps {
   layout?: JankoLayout
   /** Drawn as a plate's picture: no head, no hint lines. */
   plate?: boolean
+  /** Whether this surface hears MIDI (default: it does). One keyboard hears the hardware: the chain's plate. A second surface of the
+   * same keyboard — its picture in the pool, a pane, the rail, the torus's Full — plays from the pointer and the computer keys only, so
+   * a MIDI note is struck once, never once for each surface drawn. */
+  midi?: boolean
 }
 
-export function JankoDevice({layout, plate}: JankoPlateProps = {}) {
+export function JankoDevice({layout, plate, midi = true}: JankoPlateProps = {}) {
   const windowState = useLiveJankoWindow()
   // The surface follows the instrument's acting lens (the owner's lens12 is ql's --lens index); read again only when it changes.
   const torus = useLiveTorusReading()
@@ -49,12 +53,12 @@ export function JankoDevice({layout, plate}: JankoPlateProps = {}) {
   // The note devices before the torus (T-LIVE-MODE-SCALES item 3): every act folds through the chain, under the mode in force, before its stage command.
   const chain = useNoteDeviceChain()
   const noteTransform = (pitchClasses: readonly number[]) => runNoteChain(chain, pitchClasses, {mode})
-  return <JankoDeviceView windowState={windowState} modeMask={mask} modeLine={mode.state === 'in-force' ? mode.line : null} noteTransform={noteTransform} layout={layout} plate={plate}/>
+  return <JankoDeviceView windowState={windowState} modeMask={mask} modeLine={mode.state === 'in-force' ? mode.line : null} noteTransform={noteTransform} layout={layout} plate={plate} midi={midi}/>
 }
 
 const KEYBOARD_HINT = 'Focus the keyboard to play it from the computer keyboard (A–J row). Typing in a text field never plays a note.'
 
-export function JankoDeviceView({windowState, initialLayout = 'janko', modeMask = null, modeLine = null, initialMidi = null, noteTransform = NO_NOTE_DEVICES, layout: plateLayout, plate = false}: {windowState: JankoWindowState | null; initialLayout?: JankoLayout; modeMask?: readonly boolean[] | null; modeLine?: string | null; initialMidi?: LiveMidiState | null; noteTransform?: (pitchClasses: readonly number[]) => readonly number[]} & JankoPlateProps) {
+export function JankoDeviceView({windowState, initialLayout = 'janko', modeMask = null, modeLine = null, initialMidi = null, noteTransform = NO_NOTE_DEVICES, layout: plateLayout, plate = false, midi: hears = true}: {windowState: JankoWindowState | null; initialLayout?: JankoLayout; modeMask?: readonly boolean[] | null; modeLine?: string | null; initialMidi?: LiveMidiState | null; noteTransform?: (pitchClasses: readonly number[]) => readonly number[]} & JankoPlateProps) {
   const [own, setLayout] = useState<JankoLayout>(initialLayout)
   const layout = plateLayout ?? own
   const [armed, setArmed] = useState(false)
@@ -71,8 +75,9 @@ export function JankoDeviceView({windowState, initialLayout = 'janko', modeMask 
     transform: classes => transformRef.current(classes),
   }), [])
   // MIDI joins the one input path. A hardware controller is explicit input, so it plays whether or not the keyboard holds focus; it is heard
-  // only while this device is mounted, and the unsubscribe on unmount releases the host's listeners.
-  useEffect(() => subscribeLiveMidi({
+  // only while this device is mounted, and the unsubscribe on unmount releases the host's listeners. A surface that does not hear MIDI
+  // (a second drawing of the keyboard) subscribes to nothing.
+  useEffect(() => hears ? subscribeLiveMidi({
     onState: setMidi,
     onNotes: notes => {
       setRefusal(null)
@@ -82,7 +87,7 @@ export function JankoDeviceView({windowState, initialLayout = 'janko', modeMask 
         else input.up(event)
       }
     },
-  }), [input])
+  }) : undefined, [input, hears])
   // `id` is the press's own identity (a pointer id), so two touch-points of one class release independently.
   const press = (pitchClass: number, source: NoteEvent['source'], pressure?: number | null, id?: string) => {
     setRefusal(null)
@@ -150,7 +155,7 @@ export function JankoDeviceView({windowState, initialLayout = 'janko', modeMask 
       </div>
       {!plate && <p className="janko-hint">{KEYBOARD_HINT}</p>}
       {!plate && <p className="janko-placement" data-janko-placement>{JANKO_PLACEMENT_NOTE}</p>}
-      <p className="janko-note" data-janko-midi={midi.kind}>{liveMidiLine(midi)}</p>
+      {hears && <p className="janko-note" data-janko-midi={midi.kind}>{liveMidiLine(midi)}</p>}
       {refusal !== null && <p className="janko-note is-fault" role="alert" data-janko-refusal>{`Not sounded: ${refusal}`}</p>}
     </section>
   )

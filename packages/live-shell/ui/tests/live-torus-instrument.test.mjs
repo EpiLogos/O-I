@@ -126,7 +126,8 @@ test('the handle is one store: readers see the same state object, a change notif
 
 test('a refused reading renders the refusal on the chain; an absent state is a dark device that writes nothing', () => {
   const absent = torusDeviceModule.torusDevice(null)
-  assert.equal(absent.rows.length, 4, 'the four macros stand even with no reading')
+  assert.equal(absent.rows.filter(row => row.compact).length, 4, 'the four macros stand even with no reading')
+  assert.equal(absent.rows.length, 8, 'and the owner\'s sound, level, cadence and scale after them')
   assert.ok(absent.rows.every(row => !row.writePath), 'no reading, no writes')
   assert.deepEqual(absent.values, {}, 'and no value is invented')
   const refused = renderToStaticMarkup(createElement(onChain.TorusOnChain, {state: {ok: false, fault: 'reading.schema: expected ql.instrument-reading/v1'}}))
