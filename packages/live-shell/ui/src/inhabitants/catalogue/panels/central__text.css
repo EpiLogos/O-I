@@ -31,3 +31,7 @@
 .ctext-pane .ctext-w { cursor: text; user-select: none; -webkit-user-select: none; }
 .ctext-new { grid-column: 2; min-height: 2.4em; outline: 0; line-height: 1.6; }
 .ctext-new:empty::before { content: attr(data-placeholder); color: var(--faint); font-style: italic; pointer-events: none; }
+
+/* The missing reading, in words, where the paragraph or the entries would be: in the well it is the panel's dim text, on the page the page's own mid ink. */
+.ctext-blank { margin: 0; padding: 2px 0; font: 9px/1.4 var(--font-ui, sans-serif); color: var(--text-dim); }
+.ctext-blank--pane { grid-column: 1 / -1; padding: 0; font-size: .8em; font-style: italic; color: var(--mid); }
