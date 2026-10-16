@@ -6748,7 +6748,7 @@ The Morph device moves the field between two forms along a torus. Use it to make
 |---|---|---|---|
 | On | On · Off | Off | Turns the morph on. The light shows this state. |
 | Oscillating drive | On · Off | On | On makes the morph run by itself. Off lets you scrub it by hand. |
-| Scrub | 0 to 1 | 0 | The blend from the first form to the second form. It acts only when Oscillating drive is off. |
+| Scrub | 0 to 1 | 0.5 | The blend from the first form to the second form. It acts only when Oscillating drive is off. |
 | Trajectory | Linear · Toroidal Hopf · Vortex spiral · Quantum interference | Toroidal Hopf | The path that the field follows between the forms. |
 | Drive shape | Sine · Triangle · Smooth · Pulse | Sine | The wave that drives the morph. |
 | Law | Theta · Product · Sum · Beat | Theta | How the two torus rates combine into one drive. |
@@ -6848,7 +6848,7 @@ The Focus device walks attention through the formations of a scene in order. Use
 | Parameter | Values | Default | What it does |
 |---|---|---|---|
 | Mode | Parallel · Travelling | Parallel | Parallel plays all formations at once. Travelling visits them one at a time. The light is on in Travelling. |
-| Route | An ordered list of the formations | The order of the scene | The formations that the focus visits. Drag a row to move it. Turn a formation off to skip it. |
+| Route | An ordered list of the formations | The order of the scene | The formations that the focus visits. Move a formation earlier or later. |
 | Order | Listed · Reverse · Ping-pong | Listed | The order of the visits. Ping-pong goes to the end and back. |
 | Dwell | 0 to 30 s | 1.4 | How long a formation holds the focus. |
 | Glide | 0.02 to 30 s | 2.4 | How long the focus takes to travel to the next formation. |
@@ -6889,7 +6889,7 @@ Where: the pool under the browser. The whole Focus device shows every parameter,
 | Timing and direction | Mode, Order, Dwell, Glide, Carry station |
 | Visible contributions | Focus tint, Entity tint, Carry tint |
 
-The route list shows above the groups. Drag a row to move it. Turn a formation off to skip it.
+The route list shows above the groups. Move a formation earlier or later.
 
 A change you make in the pool applies at once. It does not add the Focus device to a chain.
 
@@ -6947,7 +6947,7 @@ The Colour device paints the field. Use it to choose a palette, set how it moves
 |---|---|---|---|
 | On | On · Off | On | On paints with the palette. Off leaves single-colour ink. |
 | Distribution | Linear wave · Concentric rings · Conic sweep · Kinetic energy · Density depth · Interference · Iridescent · Monochrome tint | Linear wave | The pattern that the palette follows across the field. |
-| Palette | 2 to 8 colours, or a preset | The scene palette | The colours of the field. Pick a preset, or edit each colour. |
+| Palette | 2 to 8 colours, or a preset | The scene palette | The colours of the field. Add or remove a colour here; change a colour in the Studio's palette. |
 | Background | A colour, and a mode: Solid · Vignette · Ambient glow · Adaptive | Solid | The paper colour, and how the paper glows. |
 | Cycle speed | −10 to 10 | 1.2 | How fast the palette moves through the field. |
 | Hue shift speed | −6 to 6 | 0 | How fast the hues turn. |
@@ -7143,7 +7143,7 @@ The Depth device gives symbols a true three-dimensional body and sets the lens t
 |---|---|---|---|
 | 3D body | On · Off | Off | Gives each symbol thickness. The light shows this state. |
 | Profile | Slab · Bevel · Round · Dome · Taper | Round | The cross-section of the body. |
-| Body depth | 0 to 600 pixels | 90 | The thickness of the body. At 0 each symbol is a flat card. |
+| Body depth | 1 to 600 pixels | 90 | The thickness of the body. Turn the body off for flat cards. |
 | Flank share | 0 to 1 | 0.34 | How much of the body lies on the side walls. A high value looks solid when you turn the view. |
 | Face and fill | Face share 0 to 1 · Interior fill 0 to 1 | 0.55 · 0.25 | How much of the rest lies on the front and back sheets, and how far the inside fills. |
 | Sheet and band | Surface sheet 0 to 80 pixels · Contour band 1 to 80 pixels | 6 · 42 | The thickness of the front and back sheets, and the band at the edge where the side wall falls off. |
@@ -7251,7 +7251,7 @@ The Resonance device tunes the plate that the field sounds on. Use it to set the
 | Mode count | 1 to 64 | 64 | How many modes take part. |
 | Dimension | 2D · 3D | 2D | A flat plate or a chamber. |
 | Sweep | Auto sweep On · Off · Direction Ascent · Descent · Ping-pong | Off · Ascent | Steps the drive through the seven stations of the plate. |
-| Sweep time | Glide 0.1 to 30 s · Dwell 0 to 30 s | 2 · 1 | How long the sweep travels between stations, and how long it rests at each. |
+| Sweep time | Glide 0.1 to 30 s · Dwell 0 to 30 s | 8 · 2 | How long the sweep travels between stations, and how long it rests at each. |
 
 The device also has a Compatibility switch: Resonator · Template (default Resonator). Template keeps the older fixed pattern.
 
@@ -7709,14 +7709,17 @@ The planetary scales were composed to draw the quality of each planet into the p
 
 | Parameter | Values | Default | What it does |
 |---|---|---|---|
-| Follow | Mode in force · Own mode | Mode in force | Mode in force uses the clip's mode, or the set's mode when the clip has none. Own mode uses the mode below. |
-| Family | Lens mode · Source scale | Lens mode | Chooses an 84-mode lens mode or a source scale. |
-| Root | The twelve roots | C | The root of the lens mode. |
+| On | On · Off | On | Turns the device on. Off passes every note as you play it. |
+| Root | The twelve notes | C | The root of the mode in force. |
+| Family | Lens mode · Source scale | Lens mode | A lens mode, or a source scale with its own intervals. |
 | Mode name | The seven modes | Ionian | The mode of the root. |
-| Source scale | Ficino planet (seven) · Shem name (72) · Maqām (72) | Ficino: Sun | The source scale to use. |
-| Basis | Chromatic · Fifths | Chromatic | The basis that the mode is addressed in. |
-| Snap | Nearest · Up · Down · Off | Nearest | How a note outside the mode moves onto the mode. Off passes the note through. |
-| Show | Highlight · Fold · Off | Highlight | Highlight marks the notes of the mode. Fold hides the other notes in the roll and the keyboard. |
+| Basis | Chromatic · Fifths | Chromatic | The basis that the lens mode is addressed in. |
+| Source scale | The maqām (72) | — | A source scale. It has no set of the twelve notes, so the notes pass unchanged. |
+| Tie | Up · Down | Up | Where a note an equal way from the mode above and below goes. |
+
+The device has no mode of its own. Root, Family, Mode name, Basis and Source scale are the mode in force: the set's mode, or the open
+clip's own, which the roll and the keyboard show too. A note outside the mode always moves to the nearest note of the mode. The
+planetary scales of Ficino and the Shem names are not served yet; the device names them and offers none.
 
 #### Views
 
@@ -7739,8 +7742,8 @@ Where: on the chain of a Live part, before the torus. The compact Scale mapping 
 |---|---|
 | Root | Sets the root of the mode. |
 | Mode name | Sets the mode of the root. |
-| Snap | Sets how a note outside the mode moves onto the mode. |
-| Show | Sets how the roll and the keyboard show the mode: highlight, fold or off. |
+| Basis | Sets the basis the lens mode is addressed in. |
+| Tie | Sets where a note an equal way from the mode above and below goes. |
 
 Click the plate to show the Scale mapping device whole in the pool. Click ▦ to open it full in a pane.
 
@@ -7750,8 +7753,8 @@ Where: the pool under the browser. The whole Scale mapping device shows every pa
 
 | Group | Parameters |
 |---|---|
-| Mode | Follow, Family, Root, Mode name, Source scale, Basis |
-| Mapping | Snap, Show |
+| Mode in force | Root, Family, Basis, Mode name, Source scale |
+| Fold | Tie |
 
 A change you make in the pool applies at once. It does not add the Scale mapping device to a chain.
 
@@ -7774,11 +7777,10 @@ Where: the rail on the right. The widget shows the mode name and the ring. Click
 #### To use Scale mapping
 
 1. Drag the Scale mapping device onto the chain, before the torus.
-2. Set Follow to Mode in force.
-3. Set the root and the mode in the transport.
-4. Play any keys. The notes bend onto the mode.
-5. Open a clip and give it its own mode. The next phrase plays in the new mode.
-6. Set Show to Fold to see only the notes of the mode in the roll.
+2. Set the root and the mode in the transport.
+3. Play any keys. The notes bend onto the mode.
+4. Open a clip and give it its own scale in its Clip panel. The next phrase plays in the new mode.
+5. To see only the notes of the mode in the roll, turn on Fold to Scale in the clip's editor.
 
 #### Rules
 
@@ -7792,7 +7794,7 @@ Where: the rail on the right. The widget shows the mode name and the ring. Click
 
 - To change the mood of a phrase, give its clip a new mode.
 - To play a phrase in a planet's scale, set Family to Source scale and pick the planet.
-- To hear a mode without any wrong notes, set Snap to Nearest and play freely.
+- To hear a mode without any wrong notes, turn the device on and play freely.
 
 ### 21.4 Exact-ratio tuning
 
@@ -7814,7 +7816,7 @@ The Exact-ratio tuning device sets the pitch of every note as an exact ratio. Us
 | Export | Exact ratios · Nearest pitch bend · MPE | Exact ratios | How tuning leaves the device to MIDI. |
 | Bend range | 0 to 48 semitones | 2 | The range of the pitch bend for the Nearest and MPE exports. |
 
-Chromatic stack builds the notes from whole tones of 9:8. Fifths stack builds them from fifths of 3:2. Source ratios use the intervals of the source scale in force, such as the planetary just intervals.
+Chromatic stack builds the notes of the reference's whole-tone family from whole tones of 9:8. The other six notes have no ratio until their step is stated. Fifths stack builds them from fifths of 3:2. Source ratios use the planets' just intervals: Sun 1:1, Moon 4:3, Mercury 5:4, Venus 9:8, Mars 15:8, Jupiter 5:3, Saturn 3:2, Neptune 9:5, Pluto 9:4.
 
 #### Views
 
@@ -7891,232 +7893,139 @@ Where: the rail on the right. The widget shows the reference note and a short li
 - To tune to a planet, set Ratio set to Source ratios and choose its scale.
 - To send tuning to a hardware synth, choose MPE with a Bend range of 48.
 
-### 21.5 Sky modulation
-
-**Product:** Live · **Kind:** effect · **Chain:** A Live part's chain, before the torus
-
-The Sky modulation device hands parts of the sound to the planets overhead. Use it to let a planet move a parameter, so that the sound changes as the sky changes.
-
-#### Parameters
-
-| Parameter | Values | Default | What it does |
-|---|---|---|---|
-| Date | Now · A chosen date | Now | The sky that moves the sound. A chosen date plays the sky of that day. |
-| Observer | Shared · Private | Shared | Shared uses the sky as seen from Earth. Private uses your own place. |
-| Assignments | Up to 16 | None | The planets and the parameters they move. |
-| Planet | Sun · Moon · Mercury · Venus · Mars · Jupiter · Saturn · Uranus · Neptune · Pluto | None | The planet of one assignment. |
-| Target | Any parameter on the chain | None | The parameter that the planet moves. |
-| Use | Position · Own interval | Position | Position maps the planet's place in the sky to the range of the target. Own interval adds the planet's interval to a pitch target. |
-| Amount | −100 to 100% | 50% | How far the planet moves the target. A negative value reverses it. |
-| Scope | Per note · Global | Global | Per note moves each note separately. Global moves the whole sound. |
-| Smoothing | 0 to 10 s | 1 | How slowly the target follows the planet. |
-
-The planets have these intervals: Sun 1:1, Moon 4:3, Mercury 5:4, Venus 9:8, Mars 15:8, Jupiter 5:3, Saturn 3:2, Neptune 9:5, Pluto 9:4. Uranus has no interval, so it moves a target by position only.
-
-#### Views
-
-```ui
-device: live:sky-modulation
-caption: Sky modulation device, on a fixture of readings.
-```
-
-##### Folded
-
-Where: on the chain of a Live part, before the torus. The folded Sky modulation device shows the date and the number of assignments. Click the title to unfold it.
-
-##### Compact
-
-Where: on the chain of a Live part, before the torus. The compact Sky modulation device shows a small ring with the planets, and four macros.
-
-| Macro | What it does |
-|---|---|
-| Amount 1 | Sets how far the planet of the first assignment moves its target. |
-| Amount 2 | Sets the amount of the second assignment. |
-| Amount 3 | Sets the amount of the third assignment. |
-| Amount 4 | Sets the amount of the fourth assignment. |
-
-Click the plate to show the Sky modulation device whole in the pool. Click ▦ to open it full in a pane.
-
-##### Whole
-
-Where: the pool under the browser. The whole Sky modulation device shows every parameter, in two groups.
-
-| Group | Parameters |
-|---|---|
-| Sky | Date, Observer |
-| Assignments | Assignments, Planet, Target, Use, Amount, Scope, Smoothing |
-
-A change you make in the pool applies at once. It does not add the Sky modulation device to a chain.
-
-##### Full
-
-Where: a pane. The full Sky modulation device fills the pane with the sky ring. A line leads from each planet to the parameter that it moves. Play a note and watch the lines move with the planets. The controls stay in Device view, below the pane.
-
-##### Widget
-
-Where: the rail on the right. The widget shows the planets, with their degrees. Click a planet to open its assignment in Device view. The widget stays when you change mode.
-
-#### Transport
-
-| Control | Effect on Sky modulation |
-|---|---|
-| Tap | Returns the date to now. |
-| Arm | Records your moves as automation lanes. |
-| Re-enable | Gives a parameter back to its lane. |
-
-#### To use Sky modulation
-
-1. Drag the Sky modulation device onto the chain, before the torus.
-2. Press Add. Choose Venus as the planet.
-3. Choose the cutoff of a filter as the target.
-4. Set Amount to 40%. The cutoff now moves with Venus.
-5. Look at the cutoff control. It names Venus as the thing that moves it.
-6. Set Date to a day you remember. Listen to the sound of that sky.
-
-#### Rules
-
-- A parameter that the sky moves shows the planet on the control. It shows the base value and the value now.
-- To take hold of the parameter, move it. The hand-back light comes on. Press the light to give the control back.
-- The sky reaches the sound as a plan made before you play. The sky does not delay a note.
-- The sky is calculated. It is not an observed sky.
-- A planet that has no value for a date is shown as missing. The device does not guess.
-- The device clears or changes an assignment at once, and you can undo it.
-
-#### Tips
-
-- To make a slow drift, set Smoothing to 8 s.
-- To give each note its own colour, set Scope to Per note.
-- To compare two skies, set the date, record a phrase, then change the date and record again.
-- To remove a planet, clear its assignment.
-
-### 21.6 Effects
+### 21.5 Effects
 
 **Product:** Live · **Kind:** effect · **Chain:** A Live part's chain, after the torus
 
-The Effects are four effects for the torus: a filter, a dynamics effect, a delay and a reverb. Use them to shape the torus, to even out its level, to echo it, and to give it a room to sound in.
+Four effects shape the sound of the torus: a Filter, a Dynamics effect, a Delay and a Reverb. Each is a device of its own, with its own light. Put any of them on the chain, in any order. The sound passes through them from left to right, so a reverb before a filter sounds different from a filter before a reverb.
 
-#### The four effects
+The sky can move any parameter of an effect. The control shows the planet that moves it.
 
-Each effect is a separate device with its own light. Put any of them on the chain, in any order. The sound passes through them from left to right.
+#### Filter
 
-| Effect | What it does to the sound |
-|---|---|
-| Filter | Cuts or lifts a range of frequencies. |
-| Dynamics | Lowers loud parts and lifts quiet parts. |
-| Delay | Repeats the sound after a short time. |
-| Reverb | Adds the sound of a room. |
-
-#### Parameters
+Use the Filter to cut or lift a range of the torus's frequencies.
 
 | Parameter | Values | Default | What it does |
 |---|---|---|---|
-| Filter type | Low-pass · High-pass · Band-pass · Notch | Low-pass | The kind of cut. |
+| On | On · Off | On | Turns the filter on. The light shows this state. |
+| Type | Low-pass · High-pass · Band-pass · Notch | Low-pass | The kind of cut. |
 | Cutoff | 20 to 20000 Hz | 8000 | The frequency of the cut. |
-| Resonance and drive | Resonance 0 to 100% · Drive 0 to 24 dB | 20% · 0 | How much the cut rings, and how hard the filter is pushed. |
-| Threshold | −60 to 0 dB | −12 | The level above which the dynamics effect acts. |
-| Ratio | 1:1 to 20:1 | 4:1 | How much it lowers sound above the threshold. |
-| Attack and release | Attack 0.01 to 200 ms · Release 5 ms to 2 s | 1 ms · 100 ms | How fast it starts and stops. |
-| Makeup | 0 to 24 dB | 2 | The gain that it adds after it lowers the level. |
-| Delay time | 1 ms to 4 s, or a note length | 1/8 note | The time between repeats. |
-| Feedback | 0 to 95% | 35% | How much of each repeat returns. |
-| Delay tone and mix | Tone 200 Hz to 12 kHz · Mix 0 to 100% | 6 kHz · 25% | How dark the repeats are, and how loud. |
-| Reverb size and decay | Size 0 to 100% · Decay 0.2 to 20 s | 50% · 2.4 | The size of the room and the length of its tail. |
-| Reverb damping, pre-delay and mix | Damping 0 to 100% · Pre-delay 0 to 250 ms · Dry/wet 0 to 100% | 40% · 20 ms · 22% | How soft the tail is, the gap before it starts, and how much of it you hear. |
+| Resonance | 0 to 100% | 20% | How much the cut rings. |
+| Drive | 0 to 24 dB | 0 | How hard the filter is pushed. |
+| Mix | 0 to 100% | 100% | The share of filtered sound that you hear. |
 
-Each effect also has an On · Off light, default On.
-
-#### Views
-
-The Effects are four devices: a filter, a dynamics effect, a delay and a reverb.
+The display draws the filter's response: frequency across, level up. Drag the handle on the curve across to move the cutoff, and up to raise the resonance. The second handle sets the drive.
 
 ```ui
-device: live:effects
-caption: Effects, on a fixture of readings.
+device: live:filter
+caption: Filter, on a fixture of readings.
 ```
 
-##### Folded
+- Folded: the type and the cutoff.
+- Compact: the response, with the cutoff handle. Macros: Cutoff, Resonance, Drive, Mix.
+- Whole: the response with both handles; Type; Cutoff and Resonance; Drive and Mix.
+- Full: the response at pane size.
+- Widget: the response, the type, the cutoff and the resonance. Click the light to turn the filter on or off.
 
-Where: on the chain of a Live part, after the torus. The folded Effects show the names of the effects on the chain and their lights. Click the title to unfold it.
+#### Dynamics
 
-##### Compact
+Use the Dynamics effect to lower the loud parts of the torus and lift the whole.
 
-Where: on the chain of a Live part, after the torus. The compact Effects show one small picture for each effect, and four macros for each effect.
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| On | On · Off | On | Turns the effect on. |
+| Threshold | −60 to 0 dB | −12 | The level above which the effect acts. |
+| Ratio | 1:1 to 20:1 | 4:1 | How much it lowers sound above the threshold. |
+| Attack | 0.01 to 200 ms | 1 ms | How fast it starts. |
+| Release | 5 ms to 2 s | 100 ms | How fast it stops. |
+| Makeup | 0 to 24 dB | 2 | The gain that it adds after it lowers the level. |
 
-| Effect | Macro | What it does |
-|---|---|---|
-| Filter | Cutoff | Sets the frequency of the cut. |
-| Filter | Resonance | Sets how much the cut rings. |
-| Filter | Drive | Sets how hard the filter is pushed. |
-| Filter | Mix | Sets the share of filtered sound that you hear. |
-| Dynamics | Threshold | Sets the level above which the effect acts. |
-| Dynamics | Ratio | Sets how much it lowers sound above the threshold. |
-| Dynamics | Attack | Sets how fast the effect starts. |
-| Dynamics | Makeup | Sets the gain that it adds after it lowers the level. |
-| Delay | Time | Sets the time between repeats. |
-| Delay | Feedback | Sets how much of each repeat returns. |
-| Delay | Tone | Sets how dark the repeats are. |
-| Delay | Mix | Sets how loud the repeats are. |
-| Reverb | Decay | Sets the length of the tail. |
-| Reverb | Size | Sets the size of the room. |
-| Reverb | Damping | Sets how soft the tail is. |
-| Reverb | Dry/wet | Sets how much of the tail you hear. |
+Two displays show what it does. The curve shows the level out for each level in: under the threshold the sound passes, above it the sound rises more slowly. The second display shows how far the effect lowers a loud burst over time, and how it lets go.
 
-Click the plate to show the effects whole in the pool. Click ▦ to open them full in a pane.
+```ui
+device: live:dynamics
+caption: Dynamics, on a fixture of readings.
+```
 
-##### Whole
+- Folded: the threshold and the ratio.
+- Compact: the curve, with the threshold handle. Macros: Threshold, Ratio, Attack, Makeup.
+- Whole: the curve with handles for threshold, ratio and makeup; Threshold and Ratio; Makeup and the gain reduction now. A second band: the time display with handles for attack and release; Attack and Release; the depth at full level.
+- Full: both displays at pane size.
+- Widget: the curve, the threshold, the ratio and the gain reduction. Click the light to turn the effect on or off.
 
-Where: the pool under the browser. The whole Effects show every parameter, in four groups.
+#### Delay
 
-| Group | Parameters |
-|---|---|
-| Filter | Filter type, Cutoff, Resonance and drive |
-| Dynamics | Threshold, Ratio, Attack and release, Makeup |
-| Delay | Delay time, Feedback, Delay tone and mix |
-| Reverb | Reverb size and decay, Reverb damping, pre-delay and mix |
+Use the Delay to repeat the torus after a time.
 
-Each effect also has an On light.
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| On | On · Off | On | Turns the delay on. |
+| Sync | On · Off | On | On: the time is a note length at the set's tempo. Off: a time in milliseconds. |
+| Note length | 1/32 · 1/16 · 1/8 · 1/4 · 1/2 · 1 bar | 1/8 | The time between repeats while Sync is on. |
+| Time | 1 ms to 4 s | 250 ms | The time between repeats while Sync is off. |
+| Feedback | 0 to 95% | 35% | How much of each repeat returns. |
+| Tone | 200 Hz to 12 kHz | 6 kHz | How dark the repeats are. Lower is darker. |
+| Mix | 0 to 100% | 25% | How loud the repeats are. |
 
-A change you make in the pool applies at once. It does not add the effects to a chain.
+The display draws the dry sound and each repeat after it: its height is its level, and the bar inside it is its bright part, which fades faster as the tone darkens.
 
-##### Full
+```ui
+device: live:delay
+caption: Delay, on a fixture of readings.
+```
 
-Where: a pane. The full Effects fill the pane with the sound of the torus. Each effect on the chain draws its own mark: the curve of the filter, the level of the dynamics effect, the repeats of the delay and the tail of the reverb. Play the torus and watch each mark change. The controls stay in Device view, below the pane.
+- Folded: the time and the feedback.
+- Compact: the repeats, with the time handle. Macros: Time, Feedback, Tone, Mix.
+- Whole: the repeats with handles for time, feedback and mix; Sync, Note length and the time in milliseconds; Feedback and Tone; Mix and the tempo.
+- Full: the repeats at pane size.
+- Widget: the repeats, the time, the feedback and the mix. Click the light to turn the delay on or off.
 
-##### Widget
+#### Reverb
 
-Where: the rail on the right. The widget shows a meter and the lights of the four effects. Click a light to turn that effect on or off. The widget stays when you change mode.
+Use the Reverb to give the torus a room to sound in.
+
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| On | On · Off | On | Turns the reverb on. |
+| Size | 0 to 100% | 50% | The size of the room. The reflections spread wider. |
+| Decay | 0.2 to 20 s | 2.4 | The length of the tail. |
+| Damping | 0 to 100% | 40% | How soft the tail is. Its bright part dies sooner. |
+| Pre-delay | 0 to 250 ms | 20 ms | The gap before the tail starts. |
+| Dry/wet | 0 to 100% | 22% | How much of the tail you hear. |
+
+The display draws the room in time: the gap, the first reflections, then the tail falling away. A thin line shows the bright part of the tail. The reading at the top right is the dry/wet and the decay.
+
+```ui
+device: live:reverb
+caption: Reverb, on a fixture of readings.
+```
+
+- Folded: the decay and the dry/wet.
+- Compact: the tail, with the decay handle. Macros: Decay, Size, Damping, Dry/wet.
+- Whole: the tail with handles for decay, pre-delay and damping; Size and Decay; Damping and Pre-delay; Dry/wet and the length of the bright tail.
+- Full: the tail at pane size.
+- Widget: the tail, the decay, the size and the dry/wet. Click the light to turn the reverb on or off.
 
 #### Transport
 
-| Control | Effect on the Effects |
+| Control | Effect on the effects |
 |---|---|
 | Tempo | Sets the length of a synced delay time. |
 | Arm | Records your moves as automation lanes. |
 | Re-enable | Gives a parameter back to its lane, or to the sky that moves it. |
 
-#### To use the Effects
-
-1. Drag the Filter onto the chain, after the torus.
-2. Lower Cutoff while you play. The sound darkens.
-3. Drag the Dynamics effect onto the chain. Set Threshold to −18 dB.
-4. Drag the Delay onto the chain. Set Time to 1/8 note and Mix to 25%.
-5. Drag the Reverb onto the chain. Raise Decay to 4 s.
-6. Drag a device left or right to change the order of the chain.
-
 #### Rules
 
 - Each effect changes the sound and keeps the rest.
-- The order of the chain is the order of the sound. A reverb before a filter sounds different from a filter before a reverb.
+- The order of the chain is the order of the sound.
 - A tail goes on after you release a key.
-- The sky can move any effect parameter. The control shows the planet.
-- An effect has the five presentations. The values are the same in all of them.
 - You can stack, reorder and save the effects with the chain.
 
 #### Tips
 
-- To make the sound open and close with the sky, give the Cutoff to a planet.
+- To make the sound open and close with the sky, give the Filter's cutoff to a planet.
 - To keep a long chord clear, put the Dynamics effect before the Delay.
-- To thicken a sound, set the Delay Mix to 15% and Feedback to 20%.
+- To thicken a sound, set the Delay's mix to 15% and its feedback to 20%.
 - To keep a dry take, leave the Reverb off while you record.
 
 ## 22. Quaternal Logic: the sky and the clock
@@ -8240,7 +8149,105 @@ Where: the rail on the right. The widget shows each body with its degree. The Sk
 - To use the Sky as a clock for a walk, set Day clock to Run.
 - To tune the field to the sky, set Key source to Sky on the Field.
 
-### 22.2 M3 clock
+### 22.2 Sky modulation
+
+**Product:** Quaternal Logic · **Kind:** effect · **Chain:** Any track's chain. On a Live part, its targets are the torus and its effects.
+
+The Sky modulation device hands parts of the sound to the planets overhead. Use it to let a planet move a parameter, so that the sound changes as the sky changes.
+
+#### Parameters
+
+| Parameter | Values | Default | What it does |
+|---|---|---|---|
+| Date | Now · A chosen date | Now | The sky that moves the sound. A chosen date plays the sky of that day. |
+| Observer | Shared · Private | Shared | Shared uses the sky as seen from Earth. Private uses your own place, and needs a saved place. |
+| Assignments | Up to 16 | None | The planets and the parameters they move. |
+| Planet | Sun · Moon · Mercury · Venus · Mars · Jupiter · Saturn · Uranus · Neptune · Pluto | None | The planet of one assignment. |
+| Target | Any parameter on the chain | None | The parameter that the planet moves. |
+| Use | Position · Own interval | Position | Position maps the planet's place in the sky to the range of the target. Own interval moves a frequency, such as a filter's cutoff, by the planet's interval. Uranus has no interval. |
+| Amount | −100 to 100% | 50% | How far the planet moves the target. A negative value reverses it. |
+| Scope | Per note · Global | Global | Per note moves each note separately. Global moves the whole sound. |
+| Smoothing | 0 to 10 s | 1 | How slowly the target follows the planet. |
+
+The planets have these intervals: Sun 1:1, Moon 4:3, Mercury 5:4, Venus 9:8, Mars 15:8, Jupiter 5:3, Saturn 3:2, Neptune 9:5, Pluto 9:4. Uranus has no interval, so it moves a target by position only.
+
+#### Views
+
+```ui
+device: quaternal-logic:sky-modulation
+caption: Sky modulation device, on a fixture of readings.
+```
+
+##### Folded
+
+Where: on any track's chain. The folded Sky modulation device shows the date and the number of assignments. Click the title to unfold it.
+
+##### Compact
+
+Where: on any track's chain. The compact Sky modulation device shows a small ring with the planets, and four macros.
+
+| Macro | What it does |
+|---|---|
+| The first planet | Sets how far the planet of the first assignment moves its target. The macro takes the planet's name. |
+| The second planet | Sets the amount of the second assignment. |
+| The third planet | Sets the amount of the third assignment. |
+| The fourth planet | Sets the amount of the fourth assignment. |
+
+Click the plate to show the Sky modulation device whole in the pool. Click ▦ to open it full in a pane.
+
+##### Whole
+
+Where: the pool under the browser. The whole Sky modulation device shows every parameter, in two groups.
+
+| Group | Parameters |
+|---|---|
+| Sky | Date, Observer |
+| Assignments | Assignments, Planet, Target, Use, Amount, Scope, Smoothing |
+
+A change you make in the pool applies at once. It does not add the Sky modulation device to a chain.
+
+##### Full
+
+Where: a pane. The full Sky modulation device fills the pane with the sky ring. A line leads from each planet to the parameter that it moves. Play a note and watch the lines move with the planets. The controls stay in Device view, below the pane.
+
+##### Widget
+
+Where: the rail on the right. The widget shows the planets, with their degrees. Click a planet to open its assignment in Device view. The widget stays when you change mode.
+
+#### Transport
+
+| Control | Effect on Sky modulation |
+|---|---|
+| Tap | Returns the date to now. |
+| Arm | Records your moves as automation lanes. |
+| Re-enable | Gives a parameter back to its lane. |
+
+#### To use Sky modulation
+
+1. Drag the Sky modulation device onto a track's chain.
+2. Press Add. Choose Venus as the planet.
+3. Choose the cutoff of a filter as the target.
+4. Set Amount to 40%. The cutoff now moves with Venus.
+5. Look at the cutoff control. It names Venus as the thing that moves it.
+6. Set Date to a day you remember. Listen to the sound of that sky.
+
+#### Rules
+
+- A parameter that the sky moves shows the planet on the control. It shows the base value and the value now.
+- To take hold of the parameter, move it. The hand-back light comes on. Press the light to give the control back.
+- The sky reaches the sound as a plan made before you play. The sky does not delay a note.
+- The sky is calculated. It is not an observed sky.
+- A planet that has no value for a date is shown as missing. The device does not guess.
+- The device clears or changes an assignment at once, and you can undo it.
+
+#### Tips
+
+- To make a slow drift, set Smoothing to 8 s.
+- To give each note its own colour, set Scope to Per note.
+- To compare two skies, set the date, record a phrase, then change the date and record again.
+- To remove a planet, clear its assignment.
+
+### 22.3 M3 clock
 
 **Product:** Quaternal Logic · **Kind:** instrument · **Track:** Any track. It is a device in the chain of a reading and in the Body section of the Studio.
 
@@ -8265,12 +8272,11 @@ The wheel has two circles. The inscription circle carries what is written. The l
 
 | Parameter | Values | Default | What it does |
 |---|---|---|---|
-| Aperture | One of 16 even cuts, from 1° × 360 to 360° × 1 · Fibonacci ground (60 × 6°) · Void ring (16 × 22.5°) | 30° × 12 | How the wheel is cut. |
-| Reciprocal | Show · Hide | Hide | Shows the matching cut. The cuts come in pairs, such as 15° × 24 and 24° × 15. |
+| Aperture | One of the 16 even cuts, from 1° × 360 to 360° × 1 | 30° × 12 | How the wheel is cut. The Fibonacci ground (60 × 6°) and the Void ring (16 × 22.5°) are drawn, and are not a cut you choose. |
+| Reciprocal | Show · Hide | Hide | Shows the matching cut, dashed. The cuts come in pairs, such as 15° × 24 and 24° × 15. |
+| Swap | An action | — | Cuts the wheel by the matching cut. |
 | Turn | First · Second · Both | First | Which turn of the wheel to show. Second is the shadow. |
 | Position | 0 to 359 degrees | 0 | The degree to read. |
-| Run | Hold · Run | Hold | Hold keeps the position. Run turns the wheel. |
-| Rate | 0.1 to 12 steps per second | 1 | How fast the wheel runs. A step is 30 degrees. |
 | Open | Closed · Exploded | Closed | Exploded draws the parts of the wheel apart, like a flower with an eye at the centre. |
 | Readout | Quadrant · Governor · Hexagram and codon | Governor | What the position shows. |
 
@@ -8306,7 +8312,7 @@ Where: on the chain of a reading. The compact M3 clock shows the wheel with a ne
 |---|---|
 | Aperture | Sets how the wheel is cut. |
 | Position | Sets the degree to read. |
-| Rate | Sets how fast the wheel runs. |
+| Swap | Cuts the wheel by the matching cut. |
 | Turn | Sets which turn of the wheel to show: first, second or both. |
 
 Click the plate to show the M3 clock whole in the pool. Click ▦ to open it full in a pane.
@@ -8318,7 +8324,7 @@ Where: the pool under the browser. The whole M3 clock shows every parameter, in 
 | Group | Parameters |
 |---|---|
 | Cut | Aperture, Reciprocal, Turn, Open |
-| Position | Position, Run, Rate, Readout |
+| Position | Position, Readout, Swap |
 
 A change you make in the pool applies at once. It does not add the M3 clock to a chain.
 
@@ -8364,7 +8370,7 @@ Where: the rail on the right. The widget shows a small wheel with its position. 
 - To study one part, set Open to Exploded and select that part.
 - To read the shadow of a moment, set Turn to Second.
 
-### 22.3 Deck
+### 22.4 Deck
 
 **Product:** Quaternal Logic · **Kind:** instrument · **Track:** Any track. It is a device on a reading, and a pane when you open it full.
 
@@ -8483,7 +8489,7 @@ Where: the rail on the right. The widget shows the last spread, with its theme. 
 - To find a relation to your own writing, record the reading and link the entry.
 - To return to an old reading, open the journey and select the spread.
 
-### 22.4 Chakra
+### 22.5 Chakra
 
 **Product:** Quaternal Logic · **Kind:** instrument · **Track:** Any track. It is a device on a reading, and the personal layer of the Studio.
 
@@ -8515,7 +8521,6 @@ The centres rise from the Root to the Crown. The Crown dissolves into the source
 | Hits | One per route | One per route | How much each route counts. Every route counts once. |
 | Colour source | Element palette · Sky arc colour | Element palette | Where the colour of a centre comes from. |
 | Natal distribution | Off · On | Off | Shows how your birth sky spreads over the centres. Only you see it. |
-| Privacy | Private · Circle | Private | Who sees your personal layer. |
 | Detail | Element · Mantra · Yantra: each On · Off | Element On | What each row shows besides the centre name. |
 
 A route has a source for each centre. The own planet of each centre is in the table above. The decan ruler is the planet that rules the part of the sky where a body stands. The Sun reaches all seven centres.
@@ -8538,7 +8543,7 @@ Where: on the chain of a reading. The compact Chakra shows seven small discs, li
 | Macro | What it does |
 |---|---|
 | View | Sets Seven rows or Body figure. |
-| Routes | Sets which paths from the sky to the centres show. |
+| Decan route | Shows or hides the path through each decan's ruler. |
 | Colour source | Sets where the colour of a centre comes from. |
 | Natal distribution | Shows how your birth sky spreads over the centres. |
 
@@ -8551,7 +8556,7 @@ Where: the pool under the browser. The whole Chakra shows every parameter, in tw
 | Group | Parameters |
 |---|---|
 | Sky | View, Date, Routes, Hits, Colour source, Detail |
-| Personal | Natal distribution, Privacy |
+| Personal | Natal distribution |
 
 A change you make in the pool applies at once. It does not add the Chakra to a chain.
 
@@ -8578,7 +8583,6 @@ Where: the rail on the right. The widget shows seven discs with the planet of ea
 3. Turn one route off at a time. See which planets lit which centre.
 4. Set Natal distribution on. Compare your centres with the date.
 5. Select a centre to see its detail.
-6. Set Privacy to Circle only when you mean to share the layer.
 
 #### Rules
 
@@ -8593,10 +8597,10 @@ Where: the rail on the right. The widget shows seven discs with the planet of ea
 
 - To see why a centre is lit, turn the routes off one by one.
 - To compare two people under one sky, view each person's natal distribution separately.
-- To keep your layer to yourself, leave Privacy on Private.
+- Your personal layer stays private. Nothing shares it.
 - To read a past day, set the Sky to that day.
 
-### 22.5 M′ matrices
+### 22.6 M′ matrices
 
 **Product:** Quaternal Logic · **Kind:** instrument · **Track:** Any track. It opens in the pool and as a pane.
 
@@ -8611,7 +8615,7 @@ The four matrices are stacked. Each layer feeds the next. Only the first makes s
 | Oscillator | The field of source values that drives the torus. It has 12 rows and 12 positions. | Makes the sound. It is the only generator. |
 | Reading | The 12 lenses and the 7 modes: 84 modes in all. It also holds tuning and modulation. | Tunes and moves the oscillator. It does not make sound. |
 | Form | The 64 codons, the shape of the body, its material, its edge, and the points where it is struck and heard. | Gives the sound a body to ring in. |
-| Situation | The world that receives the sound, and the seven centres of the body. | Sets who and where the sound reaches. |
+| Situation | The world that receives the sound, and the seven centres of the body. | Sets who and where the sound reaches. The Situation matrix has no source yet. |
 
 #### Parameters
 
@@ -8622,8 +8626,8 @@ The four matrices are stacked. Each layer feeds the next. Only the first makes s
 | Lens | The twelve lenses | The first lens | The lens that anchors the reading. |
 | Context frame | 1 to 7 | 1 | The mode of the lens. |
 | Value form | Raw · Digital root · Decimal | Raw | How a source value shows. The three forms stay separate. |
-| Cell | Row and position | The cell for now | The cell to inspect. |
-| Follow | Notes · Sky · Off | Notes | Notes moves the cell with the notes you play. Sky moves it with the planets. Off pins the cell. |
+| Family | 0 to 5 | 0 | The family of the Oscillator's source values. The fifth has no single value. |
+| Cell | Row and position in the Oscillator; lens and mode in the Reading; the codon in the Form | The cell for now | The cell to inspect. |
 | Context | World · Personal · Shared | World | The occasion the Situation matrix shows. Each context keeps its own state. |
 
 #### Views
@@ -8646,7 +8650,7 @@ Where: on the chain of a reading. The compact M′ matrices show a small grid of
 | Matrix | Sets which of the four matrices to show. |
 | Basis | Sets the order of the twelve notes. |
 | Lens | Sets the lens that anchors the reading. |
-| Follow | Sets what moves the cell: the notes that you play, the sky, or nothing. |
+| Context frame | Sets the mode of the lens. |
 
 Click the plate to show the M′ matrices whole in the pool. Click ▦ to open them full in a pane.
 
@@ -8657,7 +8661,7 @@ Where: the pool under the browser. The whole M′ matrices show every parameter,
 | Group | Parameters |
 |---|---|
 | Matrix | Matrix, Basis, Lens, Context frame, Value form, Context |
-| Cell | Cell, Follow |
+| Cell | Family, Cell |
 
 The grid shows with every value.
 
@@ -8677,7 +8681,7 @@ Where: the rail on the right. The widget shows the small grid with the cell mark
 |---|---|
 | Key, root and scale | Sets the lens and the mode. The Reading matrix follows them. |
 | Position | Shows the cell that the tick reaches. |
-| Tap | Returns Follow to the notes you play. |
+| Tap | Returns the cell to now. |
 
 #### To use the M′ matrices
 
@@ -8995,7 +8999,7 @@ You need to go back to a place you were. Trail keeps every place you went, newes
 |---|---|---|---|
 | Stops | A list (reading) | Read from your moves | The places you went, with time and kind of work. |
 | Return | A stop | — | Returns to the same place, page and point in the reading. |
-| Limit | 8–100 stops | 8 | The stops shown in the tile. |
+| Limit | 8 to 24 stops | 8 | The stops shown in the tile. The trail keeps the last 24. |
 
 #### Views
 
@@ -9014,7 +9018,7 @@ Where: on a chain. The compact Trail shows the last stops. It has two macros.
 
 | Macro | What it does |
 |---|---|
-| Limit | Sets how many stops show, from 8 to 100. |
+| Limit | Sets how many stops show, from 8 to 24. |
 | Return | Returns to the stop that you select. |
 
 Click the plate to show the Trail whole in the pool. Click ▦ to open it full in a pane.
@@ -9132,7 +9136,6 @@ You need to read the wiki pages that an agent may use. Wiki shows the pages insi
 | Parameter | Values | Default | What it does |
 |---|---|---|---|
 | Page | A list of pages | The latest page | Chooses the page. |
-| Reads only | On · Off | On | Shows only pages inside the scope's reads. |
 | Follow | On · Off | On | Shows the page the selected agent read last. |
 
 #### Views
@@ -9153,7 +9156,6 @@ Where: on a chain. The compact Wiki shows the title and the first lines of a pag
 | Macro | What it does |
 |---|---|
 | Page | Chooses a page from the list. |
-| Reads only | Sets On or Off. |
 | Follow | Sets On or Off. |
 
 Click the plate to show the Wiki whole in the pool. Click ▦ to open it full in a pane.
@@ -9165,7 +9167,6 @@ Where: the pool under the browser. The whole Wiki shows every parameter, in two 
 | Group | Parameters |
 |---|---|
 | Page | Page, Follow |
-| Scope | Reads only |
 
 A change you make in the pool applies at once.
 
@@ -9194,7 +9195,7 @@ Where: the rail on the right. The widget shows the wiki page that the selected a
 
 **Product:** a third party · **Kind:** instrument · **Rail:** the widget rail on the right
 
-You need to see what is due around your work. Calendar is a widget from a third party. Its provider supplies the events.
+You need to see what is due around your work. Calendar is a widget from a third party. Its provider supplies the events. No provider is installed yet: the widget shows what is missing.
 
 #### Parameters
 | Parameter | Values | Default | What it does |

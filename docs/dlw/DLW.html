@@ -12674,7 +12674,7 @@ Contacts, Morph, Focus, Colour, Ink, Depth and Resonance.</p>
 <tr>
 <td>Scrub</td>
 <td>0 to 1</td>
-<td>0</td>
+<td>0.5</td>
 <td>The blend from the first form to the second form. It acts only when Oscillating drive is off.</td>
 </tr>
 <tr>
@@ -12866,7 +12866,7 @@ Contacts, Morph, Focus, Colour, Ink, Depth and Resonance.</p>
 <td>Route</td>
 <td>An ordered list of the formations</td>
 <td>The order of the scene</td>
-<td>The formations that the focus visits. Drag a row to move it. Turn a formation off to skip it.</td>
+<td>The formations that the focus visits. Move a formation earlier or later.</td>
 </tr>
 <tr>
 <td>Order</td>
@@ -12959,7 +12959,7 @@ Contacts, Morph, Focus, Colour, Ink, Depth and Resonance.</p>
 </tr>
 </tbody></table>
 </div>
-<p>The route list shows above the groups. Drag a row to move it. Turn a formation off to skip it.</p>
+<p>The route list shows above the groups. Move a formation earlier or later.</p>
 <p>A change you make in the pool applies at once. It does not add the Focus device to a chain.</p>
 <h5 id="full-36"><a class="anchor" href="#full-36" aria-hidden="true">#</a>Full</h5>
 <p>Where: a pane. The full Focus device fills the pane with the field. The route shows as a line from formation to formation. A mark shows the formation that holds the focus. Set Mode to Travelling and press Play. Watch the focus visit each formation. The controls stay in Device view, below the pane.</p>
@@ -13048,7 +13048,7 @@ Contacts, Morph, Focus, Colour, Ink, Depth and Resonance.</p>
 <td>Palette</td>
 <td>2 to 8 colours, or a preset</td>
 <td>The scene palette</td>
-<td>The colours of the field. Pick a preset, or edit each colour.</td>
+<td>The colours of the field. Add or remove a colour here; change a colour in the Studio&#39;s palette.</td>
 </tr>
 <tr>
 <td>Background</td>
@@ -13433,9 +13433,9 @@ Contacts, Morph, Focus, Colour, Ink, Depth and Resonance.</p>
 </tr>
 <tr>
 <td>Body depth</td>
-<td>0 to 600 pixels</td>
+<td>1 to 600 pixels</td>
 <td>90</td>
-<td>The thickness of the body. At 0 each symbol is a flat card.</td>
+<td>The thickness of the body. Turn the body off for flat cards.</td>
 </tr>
 <tr>
 <td>Flank share</td>
@@ -13677,7 +13677,7 @@ Contacts, Morph, Focus, Colour, Ink, Depth and Resonance.</p>
 <tr>
 <td>Sweep time</td>
 <td>Glide 0.1 to 30 s · Dwell 0 to 30 s</td>
-<td>2 · 1</td>
+<td>8 · 2</td>
 <td>How long the sweep travels between stations, and how long it rests at each.</td>
 </tr>
 </tbody></table>
@@ -14677,22 +14677,22 @@ Contacts, Morph, Focus, Colour, Ink, Depth and Resonance.</p>
 </tr>
 </thead>
 <tbody><tr>
-<td>Follow</td>
-<td>Mode in force · Own mode</td>
-<td>Mode in force</td>
-<td>Mode in force uses the clip&#39;s mode, or the set&#39;s mode when the clip has none. Own mode uses the mode below.</td>
+<td>On</td>
+<td>On · Off</td>
+<td>On</td>
+<td>Turns the device on. Off passes every note as you play it.</td>
+</tr>
+<tr>
+<td>Root</td>
+<td>The twelve notes</td>
+<td>C</td>
+<td>The root of the mode in force.</td>
 </tr>
 <tr>
 <td>Family</td>
 <td>Lens mode · Source scale</td>
 <td>Lens mode</td>
-<td>Chooses an 84-mode lens mode or a source scale.</td>
-</tr>
-<tr>
-<td>Root</td>
-<td>The twelve roots</td>
-<td>C</td>
-<td>The root of the lens mode.</td>
+<td>A lens mode, or a source scale with its own intervals.</td>
 </tr>
 <tr>
 <td>Mode name</td>
@@ -14701,31 +14701,28 @@ Contacts, Morph, Focus, Colour, Ink, Depth and Resonance.</p>
 <td>The mode of the root.</td>
 </tr>
 <tr>
-<td>Source scale</td>
-<td>Ficino planet (seven) · Shem name (72) · Maqām (72)</td>
-<td>Ficino: Sun</td>
-<td>The source scale to use.</td>
-</tr>
-<tr>
 <td>Basis</td>
 <td>Chromatic · Fifths</td>
 <td>Chromatic</td>
-<td>The basis that the mode is addressed in.</td>
+<td>The basis that the lens mode is addressed in.</td>
 </tr>
 <tr>
-<td>Snap</td>
-<td>Nearest · Up · Down · Off</td>
-<td>Nearest</td>
-<td>How a note outside the mode moves onto the mode. Off passes the note through.</td>
+<td>Source scale</td>
+<td>The maqām (72)</td>
+<td>—</td>
+<td>A source scale. It has no set of the twelve notes, so the notes pass unchanged.</td>
 </tr>
 <tr>
-<td>Show</td>
-<td>Highlight · Fold · Off</td>
-<td>Highlight</td>
-<td>Highlight marks the notes of the mode. Fold hides the other notes in the roll and the keyboard.</td>
+<td>Tie</td>
+<td>Up · Down</td>
+<td>Up</td>
+<td>Where a note an equal way from the mode above and below goes.</td>
 </tr>
 </tbody></table>
 </div>
+<p>The device has no mode of its own. Root, Family, Mode name, Basis and Source scale are the mode in force: the set&#39;s mode, or the open
+clip&#39;s own, which the roll and the keyboard show too. A note outside the mode always moves to the nearest note of the mode. The
+planetary scales of Ficino and the Shem names are not served yet; the device names them and offers none.</p>
 <h4 id="views-46"><a class="anchor" href="#views-46" aria-hidden="true">#</a>Views</h4>
 <figure class="ui"><div class="ui-stage" data-w="1100" data-h="760"><iframe src="http://127.0.0.1:5208/?device=live:scale-mapping&amp;view=all" loading="lazy" style="width:1100px;height:760px" sandbox="allow-scripts allow-same-origin" title="Scale mapping device, on a fixture of readings."></iframe></div><figcaption>Scale mapping device, on a fixture of readings. · <a href="http://127.0.0.1:5208/?device=live:scale-mapping&amp;view=all" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
 <p>In Clip view, the device follows the mode of the open clip. When the clip has no mode, it follows the mode of the set.</p>
@@ -14749,12 +14746,12 @@ Contacts, Morph, Focus, Colour, Ink, Depth and Resonance.</p>
 <td>Sets the mode of the root.</td>
 </tr>
 <tr>
-<td>Snap</td>
-<td>Sets how a note outside the mode moves onto the mode.</td>
+<td>Basis</td>
+<td>Sets the basis the lens mode is addressed in.</td>
 </tr>
 <tr>
-<td>Show</td>
-<td>Sets how the roll and the keyboard show the mode: highlight, fold or off.</td>
+<td>Tie</td>
+<td>Sets where a note an equal way from the mode above and below goes.</td>
 </tr>
 </tbody></table>
 </div>
@@ -14769,12 +14766,12 @@ Contacts, Morph, Focus, Colour, Ink, Depth and Resonance.</p>
 </tr>
 </thead>
 <tbody><tr>
-<td>Mode</td>
-<td>Follow, Family, Root, Mode name, Source scale, Basis</td>
+<td>Mode in force</td>
+<td>Root, Family, Basis, Mode name, Source scale</td>
 </tr>
 <tr>
-<td>Mapping</td>
-<td>Snap, Show</td>
+<td>Fold</td>
+<td>Tie</td>
 </tr>
 </tbody></table>
 </div>
@@ -14808,11 +14805,10 @@ Contacts, Morph, Focus, Colour, Ink, Depth and Resonance.</p>
 <h4 id="to-use-scale-mapping"><a class="anchor" href="#to-use-scale-mapping" aria-hidden="true">#</a>To use Scale mapping</h4>
 <ol>
 <li>Drag the Scale mapping device onto the chain, before the torus.</li>
-<li>Set Follow to Mode in force.</li>
 <li>Set the root and the mode in the transport.</li>
 <li>Play any keys. The notes bend onto the mode.</li>
-<li>Open a clip and give it its own mode. The next phrase plays in the new mode.</li>
-<li>Set Show to Fold to see only the notes of the mode in the roll.</li>
+<li>Open a clip and give it its own scale in its Clip panel. The next phrase plays in the new mode.</li>
+<li>To see only the notes of the mode in the roll, turn on Fold to Scale in the clip&#39;s editor.</li>
 </ol>
 <h4 id="rules-51"><a class="anchor" href="#rules-51" aria-hidden="true">#</a>Rules</h4>
 <ul>
@@ -14826,7 +14822,7 @@ Contacts, Morph, Focus, Colour, Ink, Depth and Resonance.</p>
 <ul>
 <li>To change the mood of a phrase, give its clip a new mode.</li>
 <li>To play a phrase in a planet&#39;s scale, set Family to Source scale and pick the planet.</li>
-<li>To hear a mode without any wrong notes, set Snap to Nearest and play freely.</li>
+<li>To hear a mode without any wrong notes, turn the device on and play freely.</li>
 </ul>
 <h3 id="21-4-exact-ratio-tuning"><a class="anchor" href="#21-4-exact-ratio-tuning" aria-hidden="true">#</a>21.4 Exact-ratio tuning</h3>
 <p><strong>Product:</strong> Live · <strong>Kind:</strong> effect · <strong>Chain:</strong> A Live part&#39;s chain, before the torus</p>
@@ -14897,7 +14893,7 @@ Contacts, Morph, Focus, Colour, Ink, Depth and Resonance.</p>
 </tr>
 </tbody></table>
 </div>
-<p>Chromatic stack builds the notes from whole tones of 9:8. Fifths stack builds them from fifths of 3:2. Source ratios use the intervals of the source scale in force, such as the planetary just intervals.</p>
+<p>Chromatic stack builds the notes of the reference&#39;s whole-tone family from whole tones of 9:8. The other six notes have no ratio until their step is stated. Fifths stack builds them from fifths of 3:2. Source ratios use the planets&#39; just intervals: Sun 1:1, Moon 4:3, Mercury 5:4, Venus 9:8, Mars 15:8, Jupiter 5:3, Saturn 3:2, Neptune 9:5, Pluto 9:4.</p>
 <h4 id="views-47"><a class="anchor" href="#views-47" aria-hidden="true">#</a>Views</h4>
 <figure class="ui"><div class="ui-stage" data-w="1100" data-h="760"><iframe src="http://127.0.0.1:5208/?device=live:exact-ratio&amp;view=all" loading="lazy" style="width:1100px;height:760px" sandbox="allow-scripts allow-same-origin" title="Exact-ratio tuning device, on a fixture of readings."></iframe></div><figcaption>Exact-ratio tuning device, on a fixture of readings. · <a href="http://127.0.0.1:5208/?device=live:exact-ratio&amp;view=all" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
 <h5 id="folded-43"><a class="anchor" href="#folded-43" aria-hidden="true">#</a>Folded</h5>
@@ -15000,210 +14996,12 @@ Contacts, Morph, Focus, Colour, Ink, Depth and Resonance.</p>
 <li>To tune to a planet, set Ratio set to Source ratios and choose its scale.</li>
 <li>To send tuning to a hardware synth, choose MPE with a Bend range of 48.</li>
 </ul>
-<h3 id="21-5-sky-modulation"><a class="anchor" href="#21-5-sky-modulation" aria-hidden="true">#</a>21.5 Sky modulation</h3>
-<p><strong>Product:</strong> Live · <strong>Kind:</strong> effect · <strong>Chain:</strong> A Live part&#39;s chain, before the torus</p>
-<p>The Sky modulation device hands parts of the sound to the planets overhead. Use it to let a planet move a parameter, so that the sound changes as the sky changes.</p>
-<h4 id="parameters-47"><a class="anchor" href="#parameters-47" aria-hidden="true">#</a>Parameters</h4>
-<div class="table-wrap"><table>
-<thead>
-<tr>
-<th>Parameter</th>
-<th>Values</th>
-<th>Default</th>
-<th>What it does</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>Date</td>
-<td>Now · A chosen date</td>
-<td>Now</td>
-<td>The sky that moves the sound. A chosen date plays the sky of that day.</td>
-</tr>
-<tr>
-<td>Observer</td>
-<td>Shared · Private</td>
-<td>Shared</td>
-<td>Shared uses the sky as seen from Earth. Private uses your own place.</td>
-</tr>
-<tr>
-<td>Assignments</td>
-<td>Up to 16</td>
-<td>None</td>
-<td>The planets and the parameters they move.</td>
-</tr>
-<tr>
-<td>Planet</td>
-<td>Sun · Moon · Mercury · Venus · Mars · Jupiter · Saturn · Uranus · Neptune · Pluto</td>
-<td>None</td>
-<td>The planet of one assignment.</td>
-</tr>
-<tr>
-<td>Target</td>
-<td>Any parameter on the chain</td>
-<td>None</td>
-<td>The parameter that the planet moves.</td>
-</tr>
-<tr>
-<td>Use</td>
-<td>Position · Own interval</td>
-<td>Position</td>
-<td>Position maps the planet&#39;s place in the sky to the range of the target. Own interval adds the planet&#39;s interval to a pitch target.</td>
-</tr>
-<tr>
-<td>Amount</td>
-<td>−100 to 100%</td>
-<td>50%</td>
-<td>How far the planet moves the target. A negative value reverses it.</td>
-</tr>
-<tr>
-<td>Scope</td>
-<td>Per note · Global</td>
-<td>Global</td>
-<td>Per note moves each note separately. Global moves the whole sound.</td>
-</tr>
-<tr>
-<td>Smoothing</td>
-<td>0 to 10 s</td>
-<td>1</td>
-<td>How slowly the target follows the planet.</td>
-</tr>
-</tbody></table>
-</div>
-<p>The planets have these intervals: Sun 1:1, Moon 4:3, Mercury 5:4, Venus 9:8, Mars 15:8, Jupiter 5:3, Saturn 3:2, Neptune 9:5, Pluto 9:4. Uranus has no interval, so it moves a target by position only.</p>
-<h4 id="views-48"><a class="anchor" href="#views-48" aria-hidden="true">#</a>Views</h4>
-<figure class="ui"><div class="ui-stage" data-w="1100" data-h="760"><iframe src="http://127.0.0.1:5208/?device=live:sky-modulation&amp;view=all" loading="lazy" style="width:1100px;height:760px" sandbox="allow-scripts allow-same-origin" title="Sky modulation device, on a fixture of readings."></iframe></div><figcaption>Sky modulation device, on a fixture of readings. · <a href="http://127.0.0.1:5208/?device=live:sky-modulation&amp;view=all" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
-<h5 id="folded-44"><a class="anchor" href="#folded-44" aria-hidden="true">#</a>Folded</h5>
-<p>Where: on the chain of a Live part, before the torus. The folded Sky modulation device shows the date and the number of assignments. Click the title to unfold it.</p>
-<h5 id="compact-44"><a class="anchor" href="#compact-44" aria-hidden="true">#</a>Compact</h5>
-<p>Where: on the chain of a Live part, before the torus. The compact Sky modulation device shows a small ring with the planets, and four macros.</p>
-<div class="table-wrap"><table>
-<thead>
-<tr>
-<th>Macro</th>
-<th>What it does</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>Amount 1</td>
-<td>Sets how far the planet of the first assignment moves its target.</td>
-</tr>
-<tr>
-<td>Amount 2</td>
-<td>Sets the amount of the second assignment.</td>
-</tr>
-<tr>
-<td>Amount 3</td>
-<td>Sets the amount of the third assignment.</td>
-</tr>
-<tr>
-<td>Amount 4</td>
-<td>Sets the amount of the fourth assignment.</td>
-</tr>
-</tbody></table>
-</div>
-<p>Click the plate to show the Sky modulation device whole in the pool. Click ▦ to open it full in a pane.</p>
-<h5 id="whole-44"><a class="anchor" href="#whole-44" aria-hidden="true">#</a>Whole</h5>
-<p>Where: the pool under the browser. The whole Sky modulation device shows every parameter, in two groups.</p>
-<div class="table-wrap"><table>
-<thead>
-<tr>
-<th>Group</th>
-<th>Parameters</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>Sky</td>
-<td>Date, Observer</td>
-</tr>
-<tr>
-<td>Assignments</td>
-<td>Assignments, Planet, Target, Use, Amount, Scope, Smoothing</td>
-</tr>
-</tbody></table>
-</div>
-<p>A change you make in the pool applies at once. It does not add the Sky modulation device to a chain.</p>
-<h5 id="full-44"><a class="anchor" href="#full-44" aria-hidden="true">#</a>Full</h5>
-<p>Where: a pane. The full Sky modulation device fills the pane with the sky ring. A line leads from each planet to the parameter that it moves. Play a note and watch the lines move with the planets. The controls stay in Device view, below the pane.</p>
-<h5 id="widget-44"><a class="anchor" href="#widget-44" aria-hidden="true">#</a>Widget</h5>
-<p>Where: the rail on the right. The widget shows the planets, with their degrees. Click a planet to open its assignment in Device view. The widget stays when you change mode.</p>
-<h4 id="transport-47"><a class="anchor" href="#transport-47" aria-hidden="true">#</a>Transport</h4>
-<div class="table-wrap"><table>
-<thead>
-<tr>
-<th>Control</th>
-<th>Effect on Sky modulation</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>Tap</td>
-<td>Returns the date to now.</td>
-</tr>
-<tr>
-<td>Arm</td>
-<td>Records your moves as automation lanes.</td>
-</tr>
-<tr>
-<td>Re-enable</td>
-<td>Gives a parameter back to its lane.</td>
-</tr>
-</tbody></table>
-</div>
-<h4 id="to-use-sky-modulation"><a class="anchor" href="#to-use-sky-modulation" aria-hidden="true">#</a>To use Sky modulation</h4>
-<ol>
-<li>Drag the Sky modulation device onto the chain, before the torus.</li>
-<li>Press Add. Choose Venus as the planet.</li>
-<li>Choose the cutoff of a filter as the target.</li>
-<li>Set Amount to 40%. The cutoff now moves with Venus.</li>
-<li>Look at the cutoff control. It names Venus as the thing that moves it.</li>
-<li>Set Date to a day you remember. Listen to the sound of that sky.</li>
-</ol>
-<h4 id="rules-53"><a class="anchor" href="#rules-53" aria-hidden="true">#</a>Rules</h4>
-<ul>
-<li>A parameter that the sky moves shows the planet on the control. It shows the base value and the value now.</li>
-<li>To take hold of the parameter, move it. The hand-back light comes on. Press the light to give the control back.</li>
-<li>The sky reaches the sound as a plan made before you play. The sky does not delay a note.</li>
-<li>The sky is calculated. It is not an observed sky.</li>
-<li>A planet that has no value for a date is shown as missing. The device does not guess.</li>
-<li>The device clears or changes an assignment at once, and you can undo it.</li>
-</ul>
-<h4 id="tips-52"><a class="anchor" href="#tips-52" aria-hidden="true">#</a>Tips</h4>
-<ul>
-<li>To make a slow drift, set Smoothing to 8 s.</li>
-<li>To give each note its own colour, set Scope to Per note.</li>
-<li>To compare two skies, set the date, record a phrase, then change the date and record again.</li>
-<li>To remove a planet, clear its assignment.</li>
-</ul>
-<h3 id="21-6-effects"><a class="anchor" href="#21-6-effects" aria-hidden="true">#</a>21.6 Effects</h3>
+<h3 id="21-5-effects"><a class="anchor" href="#21-5-effects" aria-hidden="true">#</a>21.5 Effects</h3>
 <p><strong>Product:</strong> Live · <strong>Kind:</strong> effect · <strong>Chain:</strong> A Live part&#39;s chain, after the torus</p>
-<p>The Effects are four effects for the torus: a filter, a dynamics effect, a delay and a reverb. Use them to shape the torus, to even out its level, to echo it, and to give it a room to sound in.</p>
-<h4 id="the-four-effects"><a class="anchor" href="#the-four-effects" aria-hidden="true">#</a>The four effects</h4>
-<p>Each effect is a separate device with its own light. Put any of them on the chain, in any order. The sound passes through them from left to right.</p>
-<div class="table-wrap"><table>
-<thead>
-<tr>
-<th>Effect</th>
-<th>What it does to the sound</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>Filter</td>
-<td>Cuts or lifts a range of frequencies.</td>
-</tr>
-<tr>
-<td>Dynamics</td>
-<td>Lowers loud parts and lifts quiet parts.</td>
-</tr>
-<tr>
-<td>Delay</td>
-<td>Repeats the sound after a short time.</td>
-</tr>
-<tr>
-<td>Reverb</td>
-<td>Adds the sound of a room.</td>
-</tr>
-</tbody></table>
-</div>
-<h4 id="parameters-48"><a class="anchor" href="#parameters-48" aria-hidden="true">#</a>Parameters</h4>
+<p>Four effects shape the sound of the torus: a Filter, a Dynamics effect, a Delay and a Reverb. Each is a device of its own, with its own light. Put any of them on the chain, in any order. The sound passes through them from left to right, so a reverb before a filter sounds different from a filter before a reverb.</p>
+<p>The sky can move any parameter of an effect. The control shows the planet that moves it.</p>
+<h4 id="filter"><a class="anchor" href="#filter" aria-hidden="true">#</a>Filter</h4>
+<p>Use the Filter to cut or lift a range of the torus&#39;s frequencies.</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -15214,7 +15012,13 @@ Contacts, Morph, Focus, Colour, Ink, Depth and Resonance.</p>
 </tr>
 </thead>
 <tbody><tr>
-<td>Filter type</td>
+<td>On</td>
+<td>On · Off</td>
+<td>On</td>
+<td>Turns the filter on. The light shows this state.</td>
+</tr>
+<tr>
+<td>Type</td>
 <td>Low-pass · High-pass · Band-pass · Notch</td>
 <td>Low-pass</td>
 <td>The kind of cut.</td>
@@ -15226,16 +15030,56 @@ Contacts, Morph, Focus, Colour, Ink, Depth and Resonance.</p>
 <td>The frequency of the cut.</td>
 </tr>
 <tr>
-<td>Resonance and drive</td>
-<td>Resonance 0 to 100% · Drive 0 to 24 dB</td>
-<td>20% · 0</td>
-<td>How much the cut rings, and how hard the filter is pushed.</td>
+<td>Resonance</td>
+<td>0 to 100%</td>
+<td>20%</td>
+<td>How much the cut rings.</td>
+</tr>
+<tr>
+<td>Drive</td>
+<td>0 to 24 dB</td>
+<td>0</td>
+<td>How hard the filter is pushed.</td>
+</tr>
+<tr>
+<td>Mix</td>
+<td>0 to 100%</td>
+<td>100%</td>
+<td>The share of filtered sound that you hear.</td>
+</tr>
+</tbody></table>
+</div>
+<p>The display draws the filter&#39;s response: frequency across, level up. Drag the handle on the curve across to move the cutoff, and up to raise the resonance. The second handle sets the drive.</p>
+<figure class="ui"><div class="ui-stage" data-w="1100" data-h="760"><iframe src="http://127.0.0.1:5208/?device=live:filter&amp;view=all" loading="lazy" style="width:1100px;height:760px" sandbox="allow-scripts allow-same-origin" title="Filter, on a fixture of readings."></iframe></div><figcaption>Filter, on a fixture of readings. · <a href="http://127.0.0.1:5208/?device=live:filter&amp;view=all" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<ul>
+<li>Folded: the type and the cutoff.</li>
+<li>Compact: the response, with the cutoff handle. Macros: Cutoff, Resonance, Drive, Mix.</li>
+<li>Whole: the response with both handles; Type; Cutoff and Resonance; Drive and Mix.</li>
+<li>Full: the response at pane size.</li>
+<li>Widget: the response, the type, the cutoff and the resonance. Click the light to turn the filter on or off.</li>
+</ul>
+<h4 id="dynamics"><a class="anchor" href="#dynamics" aria-hidden="true">#</a>Dynamics</h4>
+<p>Use the Dynamics effect to lower the loud parts of the torus and lift the whole.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>On</td>
+<td>On · Off</td>
+<td>On</td>
+<td>Turns the effect on.</td>
 </tr>
 <tr>
 <td>Threshold</td>
 <td>−60 to 0 dB</td>
 <td>−12</td>
-<td>The level above which the dynamics effect acts.</td>
+<td>The level above which the effect acts.</td>
 </tr>
 <tr>
 <td>Ratio</td>
@@ -15244,10 +15088,16 @@ Contacts, Morph, Focus, Colour, Ink, Depth and Resonance.</p>
 <td>How much it lowers sound above the threshold.</td>
 </tr>
 <tr>
-<td>Attack and release</td>
-<td>Attack 0.01 to 200 ms · Release 5 ms to 2 s</td>
-<td>1 ms · 100 ms</td>
-<td>How fast it starts and stops.</td>
+<td>Attack</td>
+<td>0.01 to 200 ms</td>
+<td>1 ms</td>
+<td>How fast it starts.</td>
+</tr>
+<tr>
+<td>Release</td>
+<td>5 ms to 2 s</td>
+<td>100 ms</td>
+<td>How fast it stops.</td>
 </tr>
 <tr>
 <td>Makeup</td>
@@ -15255,11 +15105,51 @@ Contacts, Morph, Focus, Colour, Ink, Depth and Resonance.</p>
 <td>2</td>
 <td>The gain that it adds after it lowers the level.</td>
 </tr>
+</tbody></table>
+</div>
+<p>Two displays show what it does. The curve shows the level out for each level in: under the threshold the sound passes, above it the sound rises more slowly. The second display shows how far the effect lowers a loud burst over time, and how it lets go.</p>
+<figure class="ui"><div class="ui-stage" data-w="1100" data-h="760"><iframe src="http://127.0.0.1:5208/?device=live:dynamics&amp;view=all" loading="lazy" style="width:1100px;height:760px" sandbox="allow-scripts allow-same-origin" title="Dynamics, on a fixture of readings."></iframe></div><figcaption>Dynamics, on a fixture of readings. · <a href="http://127.0.0.1:5208/?device=live:dynamics&amp;view=all" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<ul>
+<li>Folded: the threshold and the ratio.</li>
+<li>Compact: the curve, with the threshold handle. Macros: Threshold, Ratio, Attack, Makeup.</li>
+<li>Whole: the curve with handles for threshold, ratio and makeup; Threshold and Ratio; Makeup and the gain reduction now. A second band: the time display with handles for attack and release; Attack and Release; the depth at full level.</li>
+<li>Full: both displays at pane size.</li>
+<li>Widget: the curve, the threshold, the ratio and the gain reduction. Click the light to turn the effect on or off.</li>
+</ul>
+<h4 id="delay"><a class="anchor" href="#delay" aria-hidden="true">#</a>Delay</h4>
+<p>Use the Delay to repeat the torus after a time.</p>
+<div class="table-wrap"><table>
+<thead>
 <tr>
-<td>Delay time</td>
-<td>1 ms to 4 s, or a note length</td>
-<td>1/8 note</td>
-<td>The time between repeats.</td>
+<th>Parameter</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>On</td>
+<td>On · Off</td>
+<td>On</td>
+<td>Turns the delay on.</td>
+</tr>
+<tr>
+<td>Sync</td>
+<td>On · Off</td>
+<td>On</td>
+<td>On: the time is a note length at the set&#39;s tempo. Off: a time in milliseconds.</td>
+</tr>
+<tr>
+<td>Note length</td>
+<td>1/32 · 1/16 · 1/8 · 1/4 · 1/2 · 1 bar</td>
+<td>1/8</td>
+<td>The time between repeats while Sync is on.</td>
+</tr>
+<tr>
+<td>Time</td>
+<td>1 ms to 4 s</td>
+<td>250 ms</td>
+<td>The time between repeats while Sync is off.</td>
 </tr>
 <tr>
 <td>Feedback</td>
@@ -15268,163 +15158,92 @@ Contacts, Morph, Focus, Colour, Ink, Depth and Resonance.</p>
 <td>How much of each repeat returns.</td>
 </tr>
 <tr>
-<td>Delay tone and mix</td>
-<td>Tone 200 Hz to 12 kHz · Mix 0 to 100%</td>
-<td>6 kHz · 25%</td>
-<td>How dark the repeats are, and how loud.</td>
+<td>Tone</td>
+<td>200 Hz to 12 kHz</td>
+<td>6 kHz</td>
+<td>How dark the repeats are. Lower is darker.</td>
 </tr>
 <tr>
-<td>Reverb size and decay</td>
-<td>Size 0 to 100% · Decay 0.2 to 20 s</td>
-<td>50% · 2.4</td>
-<td>The size of the room and the length of its tail.</td>
-</tr>
-<tr>
-<td>Reverb damping, pre-delay and mix</td>
-<td>Damping 0 to 100% · Pre-delay 0 to 250 ms · Dry/wet 0 to 100%</td>
-<td>40% · 20 ms · 22%</td>
-<td>How soft the tail is, the gap before it starts, and how much of it you hear.</td>
+<td>Mix</td>
+<td>0 to 100%</td>
+<td>25%</td>
+<td>How loud the repeats are.</td>
 </tr>
 </tbody></table>
 </div>
-<p>Each effect also has an On · Off light, default On.</p>
-<h4 id="views-49"><a class="anchor" href="#views-49" aria-hidden="true">#</a>Views</h4>
-<p>The Effects are four devices: a filter, a dynamics effect, a delay and a reverb.</p>
-<figure class="ui"><div class="ui-stage" data-w="1100" data-h="760"><iframe src="http://127.0.0.1:5208/?device=live:effects&amp;view=all" loading="lazy" style="width:1100px;height:760px" sandbox="allow-scripts allow-same-origin" title="Effects, on a fixture of readings."></iframe></div><figcaption>Effects, on a fixture of readings. · <a href="http://127.0.0.1:5208/?device=live:effects&amp;view=all" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
-<h5 id="folded-45"><a class="anchor" href="#folded-45" aria-hidden="true">#</a>Folded</h5>
-<p>Where: on the chain of a Live part, after the torus. The folded Effects show the names of the effects on the chain and their lights. Click the title to unfold it.</p>
-<h5 id="compact-45"><a class="anchor" href="#compact-45" aria-hidden="true">#</a>Compact</h5>
-<p>Where: on the chain of a Live part, after the torus. The compact Effects show one small picture for each effect, and four macros for each effect.</p>
+<p>The display draws the dry sound and each repeat after it: its height is its level, and the bar inside it is its bright part, which fades faster as the tone darkens.</p>
+<figure class="ui"><div class="ui-stage" data-w="1100" data-h="760"><iframe src="http://127.0.0.1:5208/?device=live:delay&amp;view=all" loading="lazy" style="width:1100px;height:760px" sandbox="allow-scripts allow-same-origin" title="Delay, on a fixture of readings."></iframe></div><figcaption>Delay, on a fixture of readings. · <a href="http://127.0.0.1:5208/?device=live:delay&amp;view=all" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<ul>
+<li>Folded: the time and the feedback.</li>
+<li>Compact: the repeats, with the time handle. Macros: Time, Feedback, Tone, Mix.</li>
+<li>Whole: the repeats with handles for time, feedback and mix; Sync, Note length and the time in milliseconds; Feedback and Tone; Mix and the tempo.</li>
+<li>Full: the repeats at pane size.</li>
+<li>Widget: the repeats, the time, the feedback and the mix. Click the light to turn the delay on or off.</li>
+</ul>
+<h4 id="reverb"><a class="anchor" href="#reverb" aria-hidden="true">#</a>Reverb</h4>
+<p>Use the Reverb to give the torus a room to sound in.</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
-<th>Effect</th>
-<th>Macro</th>
+<th>Parameter</th>
+<th>Values</th>
+<th>Default</th>
 <th>What it does</th>
 </tr>
 </thead>
 <tbody><tr>
-<td>Filter</td>
-<td>Cutoff</td>
-<td>Sets the frequency of the cut.</td>
+<td>On</td>
+<td>On · Off</td>
+<td>On</td>
+<td>Turns the reverb on.</td>
 </tr>
 <tr>
-<td>Filter</td>
-<td>Resonance</td>
-<td>Sets how much the cut rings.</td>
-</tr>
-<tr>
-<td>Filter</td>
-<td>Drive</td>
-<td>Sets how hard the filter is pushed.</td>
-</tr>
-<tr>
-<td>Filter</td>
-<td>Mix</td>
-<td>Sets the share of filtered sound that you hear.</td>
-</tr>
-<tr>
-<td>Dynamics</td>
-<td>Threshold</td>
-<td>Sets the level above which the effect acts.</td>
-</tr>
-<tr>
-<td>Dynamics</td>
-<td>Ratio</td>
-<td>Sets how much it lowers sound above the threshold.</td>
-</tr>
-<tr>
-<td>Dynamics</td>
-<td>Attack</td>
-<td>Sets how fast the effect starts.</td>
-</tr>
-<tr>
-<td>Dynamics</td>
-<td>Makeup</td>
-<td>Sets the gain that it adds after it lowers the level.</td>
-</tr>
-<tr>
-<td>Delay</td>
-<td>Time</td>
-<td>Sets the time between repeats.</td>
-</tr>
-<tr>
-<td>Delay</td>
-<td>Feedback</td>
-<td>Sets how much of each repeat returns.</td>
-</tr>
-<tr>
-<td>Delay</td>
-<td>Tone</td>
-<td>Sets how dark the repeats are.</td>
-</tr>
-<tr>
-<td>Delay</td>
-<td>Mix</td>
-<td>Sets how loud the repeats are.</td>
-</tr>
-<tr>
-<td>Reverb</td>
-<td>Decay</td>
-<td>Sets the length of the tail.</td>
-</tr>
-<tr>
-<td>Reverb</td>
 <td>Size</td>
-<td>Sets the size of the room.</td>
+<td>0 to 100%</td>
+<td>50%</td>
+<td>The size of the room. The reflections spread wider.</td>
 </tr>
 <tr>
-<td>Reverb</td>
+<td>Decay</td>
+<td>0.2 to 20 s</td>
+<td>2.4</td>
+<td>The length of the tail.</td>
+</tr>
+<tr>
 <td>Damping</td>
-<td>Sets how soft the tail is.</td>
+<td>0 to 100%</td>
+<td>40%</td>
+<td>How soft the tail is. Its bright part dies sooner.</td>
 </tr>
 <tr>
-<td>Reverb</td>
+<td>Pre-delay</td>
+<td>0 to 250 ms</td>
+<td>20 ms</td>
+<td>The gap before the tail starts.</td>
+</tr>
+<tr>
 <td>Dry/wet</td>
-<td>Sets how much of the tail you hear.</td>
+<td>0 to 100%</td>
+<td>22%</td>
+<td>How much of the tail you hear.</td>
 </tr>
 </tbody></table>
 </div>
-<p>Click the plate to show the effects whole in the pool. Click ▦ to open them full in a pane.</p>
-<h5 id="whole-45"><a class="anchor" href="#whole-45" aria-hidden="true">#</a>Whole</h5>
-<p>Where: the pool under the browser. The whole Effects show every parameter, in four groups.</p>
-<div class="table-wrap"><table>
-<thead>
-<tr>
-<th>Group</th>
-<th>Parameters</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>Filter</td>
-<td>Filter type, Cutoff, Resonance and drive</td>
-</tr>
-<tr>
-<td>Dynamics</td>
-<td>Threshold, Ratio, Attack and release, Makeup</td>
-</tr>
-<tr>
-<td>Delay</td>
-<td>Delay time, Feedback, Delay tone and mix</td>
-</tr>
-<tr>
-<td>Reverb</td>
-<td>Reverb size and decay, Reverb damping, pre-delay and mix</td>
-</tr>
-</tbody></table>
-</div>
-<p>Each effect also has an On light.</p>
-<p>A change you make in the pool applies at once. It does not add the effects to a chain.</p>
-<h5 id="full-45"><a class="anchor" href="#full-45" aria-hidden="true">#</a>Full</h5>
-<p>Where: a pane. The full Effects fill the pane with the sound of the torus. Each effect on the chain draws its own mark: the curve of the filter, the level of the dynamics effect, the repeats of the delay and the tail of the reverb. Play the torus and watch each mark change. The controls stay in Device view, below the pane.</p>
-<h5 id="widget-45"><a class="anchor" href="#widget-45" aria-hidden="true">#</a>Widget</h5>
-<p>Where: the rail on the right. The widget shows a meter and the lights of the four effects. Click a light to turn that effect on or off. The widget stays when you change mode.</p>
-<h4 id="transport-48"><a class="anchor" href="#transport-48" aria-hidden="true">#</a>Transport</h4>
+<p>The display draws the room in time: the gap, the first reflections, then the tail falling away. A thin line shows the bright part of the tail. The reading at the top right is the dry/wet and the decay.</p>
+<figure class="ui"><div class="ui-stage" data-w="1100" data-h="760"><iframe src="http://127.0.0.1:5208/?device=live:reverb&amp;view=all" loading="lazy" style="width:1100px;height:760px" sandbox="allow-scripts allow-same-origin" title="Reverb, on a fixture of readings."></iframe></div><figcaption>Reverb, on a fixture of readings. · <a href="http://127.0.0.1:5208/?device=live:reverb&amp;view=all" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<ul>
+<li>Folded: the decay and the dry/wet.</li>
+<li>Compact: the tail, with the decay handle. Macros: Decay, Size, Damping, Dry/wet.</li>
+<li>Whole: the tail with handles for decay, pre-delay and damping; Size and Decay; Damping and Pre-delay; Dry/wet and the length of the bright tail.</li>
+<li>Full: the tail at pane size.</li>
+<li>Widget: the tail, the decay, the size and the dry/wet. Click the light to turn the reverb on or off.</li>
+</ul>
+<h4 id="transport-47"><a class="anchor" href="#transport-47" aria-hidden="true">#</a>Transport</h4>
 <div class="table-wrap"><table>
 <thead>
 <tr>
 <th>Control</th>
-<th>Effect on the Effects</th>
+<th>Effect on the effects</th>
 </tr>
 </thead>
 <tbody><tr>
@@ -15441,29 +15260,18 @@ Contacts, Morph, Focus, Colour, Ink, Depth and Resonance.</p>
 </tr>
 </tbody></table>
 </div>
-<h4 id="to-use-the-effects"><a class="anchor" href="#to-use-the-effects" aria-hidden="true">#</a>To use the Effects</h4>
-<ol>
-<li>Drag the Filter onto the chain, after the torus.</li>
-<li>Lower Cutoff while you play. The sound darkens.</li>
-<li>Drag the Dynamics effect onto the chain. Set Threshold to −18 dB.</li>
-<li>Drag the Delay onto the chain. Set Time to 1/8 note and Mix to 25%.</li>
-<li>Drag the Reverb onto the chain. Raise Decay to 4 s.</li>
-<li>Drag a device left or right to change the order of the chain.</li>
-</ol>
-<h4 id="rules-54"><a class="anchor" href="#rules-54" aria-hidden="true">#</a>Rules</h4>
+<h4 id="rules-53"><a class="anchor" href="#rules-53" aria-hidden="true">#</a>Rules</h4>
 <ul>
 <li>Each effect changes the sound and keeps the rest.</li>
-<li>The order of the chain is the order of the sound. A reverb before a filter sounds different from a filter before a reverb.</li>
+<li>The order of the chain is the order of the sound.</li>
 <li>A tail goes on after you release a key.</li>
-<li>The sky can move any effect parameter. The control shows the planet.</li>
-<li>An effect has the five presentations. The values are the same in all of them.</li>
 <li>You can stack, reorder and save the effects with the chain.</li>
 </ul>
-<h4 id="tips-53"><a class="anchor" href="#tips-53" aria-hidden="true">#</a>Tips</h4>
+<h4 id="tips-52"><a class="anchor" href="#tips-52" aria-hidden="true">#</a>Tips</h4>
 <ul>
-<li>To make the sound open and close with the sky, give the Cutoff to a planet.</li>
+<li>To make the sound open and close with the sky, give the Filter&#39;s cutoff to a planet.</li>
 <li>To keep a long chord clear, put the Dynamics effect before the Delay.</li>
-<li>To thicken a sound, set the Delay Mix to 15% and Feedback to 20%.</li>
+<li>To thicken a sound, set the Delay&#39;s mix to 15% and its feedback to 20%.</li>
 <li>To keep a dry take, leave the Reverb off while you record.</li>
 </ul>
 <h2 id="22-quaternal-logic-the-sky-and-the-clock"><a class="anchor" href="#22-quaternal-logic-the-sky-and-the-clock" aria-hidden="true">#</a>22. Quaternal Logic: the sky and the clock</h2>
@@ -15534,7 +15342,7 @@ Contacts, Morph, Focus, Colour, Ink, Depth and Resonance.</p>
 </tbody></table>
 </div>
 <p>The positions come from a calculated sky. They are not an observed sky. The sky is not a second clock.</p>
-<h4 id="parameters-49"><a class="anchor" href="#parameters-49" aria-hidden="true">#</a>Parameters</h4>
+<h4 id="parameters-47"><a class="anchor" href="#parameters-47" aria-hidden="true">#</a>Parameters</h4>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -15594,11 +15402,11 @@ Contacts, Morph, Focus, Colour, Ink, Depth and Resonance.</p>
 </tr>
 </tbody></table>
 </div>
-<h4 id="views-50"><a class="anchor" href="#views-50" aria-hidden="true">#</a>Views</h4>
+<h4 id="views-48"><a class="anchor" href="#views-48" aria-hidden="true">#</a>Views</h4>
 <figure class="ui"><div class="ui-stage" data-w="1100" data-h="760"><iframe src="http://127.0.0.1:5208/?device=quaternal-logic:sky&amp;view=all" loading="lazy" style="width:1100px;height:760px" sandbox="allow-scripts allow-same-origin" title="Sky, on a fixture of readings."></iframe></div><figcaption>Sky, on a fixture of readings. · <a href="http://127.0.0.1:5208/?device=quaternal-logic:sky&amp;view=all" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
-<h5 id="folded-46"><a class="anchor" href="#folded-46" aria-hidden="true">#</a>Folded</h5>
+<h5 id="folded-44"><a class="anchor" href="#folded-44" aria-hidden="true">#</a>Folded</h5>
 <p>Where: on the chain of a Technē reading. The folded Sky shows the date and the sky name. Click the title to unfold it.</p>
-<h5 id="compact-46"><a class="anchor" href="#compact-46" aria-hidden="true">#</a>Compact</h5>
+<h5 id="compact-44"><a class="anchor" href="#compact-44" aria-hidden="true">#</a>Compact</h5>
 <p>Where: on the chain of a Technē reading. The compact Sky shows a small ring with the bodies, and four macros.</p>
 <div class="table-wrap"><table>
 <thead>
@@ -15626,7 +15434,7 @@ Contacts, Morph, Focus, Colour, Ink, Depth and Resonance.</p>
 </tbody></table>
 </div>
 <p>Click the plate to show the Sky whole in the pool. Click ▦ to open it full in a pane.</p>
-<h5 id="whole-46"><a class="anchor" href="#whole-46" aria-hidden="true">#</a>Whole</h5>
+<h5 id="whole-44"><a class="anchor" href="#whole-44" aria-hidden="true">#</a>Whole</h5>
 <p>Where: the pool under the browser. The whole Sky shows every parameter, in three groups.</p>
 <div class="table-wrap"><table>
 <thead>
@@ -15651,11 +15459,11 @@ Contacts, Morph, Focus, Colour, Ink, Depth and Resonance.</p>
 </div>
 <p>The list of what each body moves shows below the groups.</p>
 <p>A change you make in the pool applies at once. It does not add the Sky to a chain.</p>
-<h5 id="full-46"><a class="anchor" href="#full-46" aria-hidden="true">#</a>Full</h5>
+<h5 id="full-44"><a class="anchor" href="#full-44" aria-hidden="true">#</a>Full</h5>
 <p>Where: a pane. The full Sky fills the pane. The Earth stands at the centre. The ten bodies stand on the ring, each at its degree. Set Day clock to Run in Device view and watch the bodies move. Set Aspects to On to draw the angles between bodies. The controls stay in Device view, below the pane.</p>
-<h5 id="widget-46"><a class="anchor" href="#widget-46" aria-hidden="true">#</a>Widget</h5>
+<h5 id="widget-44"><a class="anchor" href="#widget-44" aria-hidden="true">#</a>Widget</h5>
 <p>Where: the rail on the right. The widget shows each body with its degree. The Sky widget is on the rail in every mode. Tap the widget to return the date to now. The widget stays when you change mode.</p>
-<h4 id="transport-49"><a class="anchor" href="#transport-49" aria-hidden="true">#</a>Transport</h4>
+<h4 id="transport-48"><a class="anchor" href="#transport-48" aria-hidden="true">#</a>Transport</h4>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -15686,7 +15494,7 @@ Contacts, Morph, Focus, Colour, Ink, Depth and Resonance.</p>
 <li>Press Tap to return to now.</li>
 <li>Give a planet a parameter in Sky modulation. The control shows the planet name.</li>
 </ol>
-<h4 id="rules-55"><a class="anchor" href="#rules-55" aria-hidden="true">#</a>Rules</h4>
+<h4 id="rules-54"><a class="anchor" href="#rules-54" aria-hidden="true">#</a>Rules</h4>
 <ul>
 <li>The Sky belongs to the world. Two people under the same sky receive the same movements.</li>
 <li>Each person&#39;s sky differs, because each person is a sky as well.</li>
@@ -15695,14 +15503,187 @@ Contacts, Morph, Focus, Colour, Ink, Depth and Resonance.</p>
 <li>A shared view does not show a private observer&#39;s place.</li>
 <li>The Sky gives sources. It does not decide what a reading means.</li>
 </ul>
-<h4 id="tips-54"><a class="anchor" href="#tips-54" aria-hidden="true">#</a>Tips</h4>
+<h4 id="tips-53"><a class="anchor" href="#tips-53" aria-hidden="true">#</a>Tips</h4>
 <ul>
 <li>To see where everything stood on a day you cannot account for, set Date to that day.</li>
 <li>To compare today with your birth, turn the Natal ring on.</li>
 <li>To use the Sky as a clock for a walk, set Day clock to Run.</li>
 <li>To tune the field to the sky, set Key source to Sky on the Field.</li>
 </ul>
-<h3 id="22-2-m3-clock"><a class="anchor" href="#22-2-m3-clock" aria-hidden="true">#</a>22.2 M3 clock</h3>
+<h3 id="22-2-sky-modulation"><a class="anchor" href="#22-2-sky-modulation" aria-hidden="true">#</a>22.2 Sky modulation</h3>
+<p><strong>Product:</strong> Quaternal Logic · <strong>Kind:</strong> effect · <strong>Chain:</strong> Any track&#39;s chain. On a Live part, its targets are the torus and its effects.</p>
+<p>The Sky modulation device hands parts of the sound to the planets overhead. Use it to let a planet move a parameter, so that the sound changes as the sky changes.</p>
+<h4 id="parameters-48"><a class="anchor" href="#parameters-48" aria-hidden="true">#</a>Parameters</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Date</td>
+<td>Now · A chosen date</td>
+<td>Now</td>
+<td>The sky that moves the sound. A chosen date plays the sky of that day.</td>
+</tr>
+<tr>
+<td>Observer</td>
+<td>Shared · Private</td>
+<td>Shared</td>
+<td>Shared uses the sky as seen from Earth. Private uses your own place, and needs a saved place.</td>
+</tr>
+<tr>
+<td>Assignments</td>
+<td>Up to 16</td>
+<td>None</td>
+<td>The planets and the parameters they move.</td>
+</tr>
+<tr>
+<td>Planet</td>
+<td>Sun · Moon · Mercury · Venus · Mars · Jupiter · Saturn · Uranus · Neptune · Pluto</td>
+<td>None</td>
+<td>The planet of one assignment.</td>
+</tr>
+<tr>
+<td>Target</td>
+<td>Any parameter on the chain</td>
+<td>None</td>
+<td>The parameter that the planet moves.</td>
+</tr>
+<tr>
+<td>Use</td>
+<td>Position · Own interval</td>
+<td>Position</td>
+<td>Position maps the planet&#39;s place in the sky to the range of the target. Own interval moves a frequency, such as a filter&#39;s cutoff, by the planet&#39;s interval. Uranus has no interval.</td>
+</tr>
+<tr>
+<td>Amount</td>
+<td>−100 to 100%</td>
+<td>50%</td>
+<td>How far the planet moves the target. A negative value reverses it.</td>
+</tr>
+<tr>
+<td>Scope</td>
+<td>Per note · Global</td>
+<td>Global</td>
+<td>Per note moves each note separately. Global moves the whole sound.</td>
+</tr>
+<tr>
+<td>Smoothing</td>
+<td>0 to 10 s</td>
+<td>1</td>
+<td>How slowly the target follows the planet.</td>
+</tr>
+</tbody></table>
+</div>
+<p>The planets have these intervals: Sun 1:1, Moon 4:3, Mercury 5:4, Venus 9:8, Mars 15:8, Jupiter 5:3, Saturn 3:2, Neptune 9:5, Pluto 9:4. Uranus has no interval, so it moves a target by position only.</p>
+<h4 id="views-49"><a class="anchor" href="#views-49" aria-hidden="true">#</a>Views</h4>
+<figure class="ui"><div class="ui-stage" data-w="1100" data-h="760"><iframe src="http://127.0.0.1:5208/?device=quaternal-logic:sky-modulation&amp;view=all" loading="lazy" style="width:1100px;height:760px" sandbox="allow-scripts allow-same-origin" title="Sky modulation device, on a fixture of readings."></iframe></div><figcaption>Sky modulation device, on a fixture of readings. · <a href="http://127.0.0.1:5208/?device=quaternal-logic:sky-modulation&amp;view=all" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
+<h5 id="folded-45"><a class="anchor" href="#folded-45" aria-hidden="true">#</a>Folded</h5>
+<p>Where: on any track&#39;s chain. The folded Sky modulation device shows the date and the number of assignments. Click the title to unfold it.</p>
+<h5 id="compact-45"><a class="anchor" href="#compact-45" aria-hidden="true">#</a>Compact</h5>
+<p>Where: on any track&#39;s chain. The compact Sky modulation device shows a small ring with the planets, and four macros.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Macro</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>The first planet</td>
+<td>Sets how far the planet of the first assignment moves its target. The macro takes the planet&#39;s name.</td>
+</tr>
+<tr>
+<td>The second planet</td>
+<td>Sets the amount of the second assignment.</td>
+</tr>
+<tr>
+<td>The third planet</td>
+<td>Sets the amount of the third assignment.</td>
+</tr>
+<tr>
+<td>The fourth planet</td>
+<td>Sets the amount of the fourth assignment.</td>
+</tr>
+</tbody></table>
+</div>
+<p>Click the plate to show the Sky modulation device whole in the pool. Click ▦ to open it full in a pane.</p>
+<h5 id="whole-45"><a class="anchor" href="#whole-45" aria-hidden="true">#</a>Whole</h5>
+<p>Where: the pool under the browser. The whole Sky modulation device shows every parameter, in two groups.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Group</th>
+<th>Parameters</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Sky</td>
+<td>Date, Observer</td>
+</tr>
+<tr>
+<td>Assignments</td>
+<td>Assignments, Planet, Target, Use, Amount, Scope, Smoothing</td>
+</tr>
+</tbody></table>
+</div>
+<p>A change you make in the pool applies at once. It does not add the Sky modulation device to a chain.</p>
+<h5 id="full-45"><a class="anchor" href="#full-45" aria-hidden="true">#</a>Full</h5>
+<p>Where: a pane. The full Sky modulation device fills the pane with the sky ring. A line leads from each planet to the parameter that it moves. Play a note and watch the lines move with the planets. The controls stay in Device view, below the pane.</p>
+<h5 id="widget-45"><a class="anchor" href="#widget-45" aria-hidden="true">#</a>Widget</h5>
+<p>Where: the rail on the right. The widget shows the planets, with their degrees. Click a planet to open its assignment in Device view. The widget stays when you change mode.</p>
+<h4 id="transport-49"><a class="anchor" href="#transport-49" aria-hidden="true">#</a>Transport</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Control</th>
+<th>Effect on Sky modulation</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Tap</td>
+<td>Returns the date to now.</td>
+</tr>
+<tr>
+<td>Arm</td>
+<td>Records your moves as automation lanes.</td>
+</tr>
+<tr>
+<td>Re-enable</td>
+<td>Gives a parameter back to its lane.</td>
+</tr>
+</tbody></table>
+</div>
+<h4 id="to-use-sky-modulation"><a class="anchor" href="#to-use-sky-modulation" aria-hidden="true">#</a>To use Sky modulation</h4>
+<ol>
+<li>Drag the Sky modulation device onto a track&#39;s chain.</li>
+<li>Press Add. Choose Venus as the planet.</li>
+<li>Choose the cutoff of a filter as the target.</li>
+<li>Set Amount to 40%. The cutoff now moves with Venus.</li>
+<li>Look at the cutoff control. It names Venus as the thing that moves it.</li>
+<li>Set Date to a day you remember. Listen to the sound of that sky.</li>
+</ol>
+<h4 id="rules-55"><a class="anchor" href="#rules-55" aria-hidden="true">#</a>Rules</h4>
+<ul>
+<li>A parameter that the sky moves shows the planet on the control. It shows the base value and the value now.</li>
+<li>To take hold of the parameter, move it. The hand-back light comes on. Press the light to give the control back.</li>
+<li>The sky reaches the sound as a plan made before you play. The sky does not delay a note.</li>
+<li>The sky is calculated. It is not an observed sky.</li>
+<li>A planet that has no value for a date is shown as missing. The device does not guess.</li>
+<li>The device clears or changes an assignment at once, and you can undo it.</li>
+</ul>
+<h4 id="tips-54"><a class="anchor" href="#tips-54" aria-hidden="true">#</a>Tips</h4>
+<ul>
+<li>To make a slow drift, set Smoothing to 8 s.</li>
+<li>To give each note its own colour, set Scope to Per note.</li>
+<li>To compare two skies, set the date, record a phrase, then change the date and record again.</li>
+<li>To remove a planet, clear its assignment.</li>
+</ul>
+<h3 id="22-3-m3-clock"><a class="anchor" href="#22-3-m3-clock" aria-hidden="true">#</a>22.3 M3 clock</h3>
 <p><strong>Product:</strong> Quaternal Logic · <strong>Kind:</strong> instrument · <strong>Track:</strong> Any track. It is a device in the chain of a reading and in the Body section of the Studio.</p>
 <p>The M3 clock shows a turning wheel of 360 degrees that lenses can cut in many ways. Use it to read where a moment stands on the wheel, and to open the wheel to see what it is made of.</p>
 <h4 id="what-the-wheel-holds"><a class="anchor" href="#what-the-wheel-holds" aria-hidden="true">#</a>What the wheel holds</h4>
@@ -15741,7 +15722,7 @@ Contacts, Morph, Focus, Colour, Ink, Depth and Resonance.</p>
 </tbody></table>
 </div>
 <p>The wheel has two circles. The inscription circle carries what is written. The lensing circle carries how it is seen. The two together make the clock.</p>
-<h4 id="parameters-50"><a class="anchor" href="#parameters-50" aria-hidden="true">#</a>Parameters</h4>
+<h4 id="parameters-49"><a class="anchor" href="#parameters-49" aria-hidden="true">#</a>Parameters</h4>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -15753,15 +15734,21 @@ Contacts, Morph, Focus, Colour, Ink, Depth and Resonance.</p>
 </thead>
 <tbody><tr>
 <td>Aperture</td>
-<td>One of 16 even cuts, from 1° × 360 to 360° × 1 · Fibonacci ground (60 × 6°) · Void ring (16 × 22.5°)</td>
+<td>One of the 16 even cuts, from 1° × 360 to 360° × 1</td>
 <td>30° × 12</td>
-<td>How the wheel is cut.</td>
+<td>How the wheel is cut. The Fibonacci ground (60 × 6°) and the Void ring (16 × 22.5°) are drawn, and are not a cut you choose.</td>
 </tr>
 <tr>
 <td>Reciprocal</td>
 <td>Show · Hide</td>
 <td>Hide</td>
-<td>Shows the matching cut. The cuts come in pairs, such as 15° × 24 and 24° × 15.</td>
+<td>Shows the matching cut, dashed. The cuts come in pairs, such as 15° × 24 and 24° × 15.</td>
+</tr>
+<tr>
+<td>Swap</td>
+<td>An action</td>
+<td>—</td>
+<td>Cuts the wheel by the matching cut.</td>
 </tr>
 <tr>
 <td>Turn</td>
@@ -15774,18 +15761,6 @@ Contacts, Morph, Focus, Colour, Ink, Depth and Resonance.</p>
 <td>0 to 359 degrees</td>
 <td>0</td>
 <td>The degree to read.</td>
-</tr>
-<tr>
-<td>Run</td>
-<td>Hold · Run</td>
-<td>Hold</td>
-<td>Hold keeps the position. Run turns the wheel.</td>
-</tr>
-<tr>
-<td>Rate</td>
-<td>0.1 to 12 steps per second</td>
-<td>1</td>
-<td>How fast the wheel runs. A step is 30 degrees.</td>
 </tr>
 <tr>
 <td>Open</td>
@@ -15843,11 +15818,11 @@ Contacts, Morph, Focus, Colour, Ink, Depth and Resonance.</p>
 </tr>
 </tbody></table>
 </div>
-<h4 id="views-51"><a class="anchor" href="#views-51" aria-hidden="true">#</a>Views</h4>
+<h4 id="views-50"><a class="anchor" href="#views-50" aria-hidden="true">#</a>Views</h4>
 <figure class="ui"><div class="ui-stage" data-w="1100" data-h="760"><iframe src="http://127.0.0.1:5208/?device=quaternal-logic:m3-clock&amp;view=all" loading="lazy" style="width:1100px;height:760px" sandbox="allow-scripts allow-same-origin" title="M3 clock, on a fixture of readings."></iframe></div><figcaption>M3 clock, on a fixture of readings. · <a href="http://127.0.0.1:5208/?device=quaternal-logic:m3-clock&amp;view=all" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
-<h5 id="folded-47"><a class="anchor" href="#folded-47" aria-hidden="true">#</a>Folded</h5>
+<h5 id="folded-46"><a class="anchor" href="#folded-46" aria-hidden="true">#</a>Folded</h5>
 <p>Where: on the chain of a reading. The folded M3 clock shows the position and the aperture. Click the title to unfold it.</p>
-<h5 id="compact-47"><a class="anchor" href="#compact-47" aria-hidden="true">#</a>Compact</h5>
+<h5 id="compact-46"><a class="anchor" href="#compact-46" aria-hidden="true">#</a>Compact</h5>
 <p>Where: on the chain of a reading. The compact M3 clock shows the wheel with a needle, and four macros.</p>
 <div class="table-wrap"><table>
 <thead>
@@ -15865,8 +15840,8 @@ Contacts, Morph, Focus, Colour, Ink, Depth and Resonance.</p>
 <td>Sets the degree to read.</td>
 </tr>
 <tr>
-<td>Rate</td>
-<td>Sets how fast the wheel runs.</td>
+<td>Swap</td>
+<td>Cuts the wheel by the matching cut.</td>
 </tr>
 <tr>
 <td>Turn</td>
@@ -15875,7 +15850,7 @@ Contacts, Morph, Focus, Colour, Ink, Depth and Resonance.</p>
 </tbody></table>
 </div>
 <p>Click the plate to show the M3 clock whole in the pool. Click ▦ to open it full in a pane.</p>
-<h5 id="whole-47"><a class="anchor" href="#whole-47" aria-hidden="true">#</a>Whole</h5>
+<h5 id="whole-46"><a class="anchor" href="#whole-46" aria-hidden="true">#</a>Whole</h5>
 <p>Where: the pool under the browser. The whole M3 clock shows every parameter, in two groups.</p>
 <div class="table-wrap"><table>
 <thead>
@@ -15890,14 +15865,14 @@ Contacts, Morph, Focus, Colour, Ink, Depth and Resonance.</p>
 </tr>
 <tr>
 <td>Position</td>
-<td>Position, Run, Rate, Readout</td>
+<td>Position, Readout, Swap</td>
 </tr>
 </tbody></table>
 </div>
 <p>A change you make in the pool applies at once. It does not add the M3 clock to a chain.</p>
-<h5 id="full-47"><a class="anchor" href="#full-47" aria-hidden="true">#</a>Full</h5>
+<h5 id="full-46"><a class="anchor" href="#full-46" aria-hidden="true">#</a>Full</h5>
 <p>Where: a pane. The full M3 clock fills the pane with the wheel at full size. The four directions, the governors and the chambers show on the wheel. A needle marks the position. Set Open to Exploded in Device view. The parts of the wheel draw apart and the subject stays. The controls stay in Device view, below the pane.</p>
-<h5 id="widget-47"><a class="anchor" href="#widget-47" aria-hidden="true">#</a>Widget</h5>
+<h5 id="widget-46"><a class="anchor" href="#widget-46" aria-hidden="true">#</a>Widget</h5>
 <p>Where: the rail on the right. The widget shows a small wheel with its position. Click the wheel to open the M3 clock in the pane that has focus. The widget stays when you change mode.</p>
 <h4 id="transport-50"><a class="anchor" href="#transport-50" aria-hidden="true">#</a>Transport</h4>
 <div class="table-wrap"><table>
@@ -15950,7 +15925,7 @@ Contacts, Morph, Focus, Colour, Ink, Depth and Resonance.</p>
 <li>To study one part, set Open to Exploded and select that part.</li>
 <li>To read the shadow of a moment, set Turn to Second.</li>
 </ul>
-<h3 id="22-3-deck"><a class="anchor" href="#22-3-deck" aria-hidden="true">#</a>22.3 Deck</h3>
+<h3 id="22-4-deck"><a class="anchor" href="#22-4-deck" aria-hidden="true">#</a>22.4 Deck</h3>
 <p><strong>Product:</strong> Quaternal Logic · <strong>Kind:</strong> instrument · <strong>Track:</strong> Any track. It is a device on a reading, and a pane when you open it full.</p>
 <p>The Deck lays out a spread of cards or a hexagram for a concern that you carry. Use it to read the concern in six positions and to see how the positions answer one another. Keep the reading as part of your journey.</p>
 <h4 id="the-spreads"><a class="anchor" href="#the-spreads" aria-hidden="true">#</a>The spreads</h4>
@@ -16011,7 +15986,7 @@ Contacts, Morph, Focus, Colour, Ink, Depth and Resonance.</p>
 </tbody></table>
 </div>
 <p>For the I Ching, the Deck shows one hexagram, its six lines, the moving lines, the nuclear hexagram and the two compasses.</p>
-<h4 id="parameters-51"><a class="anchor" href="#parameters-51" aria-hidden="true">#</a>Parameters</h4>
+<h4 id="parameters-50"><a class="anchor" href="#parameters-50" aria-hidden="true">#</a>Parameters</h4>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -16077,11 +16052,11 @@ Contacts, Morph, Focus, Colour, Ink, Depth and Resonance.</p>
 </tr>
 </tbody></table>
 </div>
-<h4 id="views-52"><a class="anchor" href="#views-52" aria-hidden="true">#</a>Views</h4>
+<h4 id="views-51"><a class="anchor" href="#views-51" aria-hidden="true">#</a>Views</h4>
 <figure class="ui"><div class="ui-stage" data-w="1100" data-h="760"><iframe src="http://127.0.0.1:5208/?device=quaternal-logic:deck&amp;view=all" loading="lazy" style="width:1100px;height:760px" sandbox="allow-scripts allow-same-origin" title="Deck, on a fixture of readings."></iframe></div><figcaption>Deck, on a fixture of readings. · <a href="http://127.0.0.1:5208/?device=quaternal-logic:deck&amp;view=all" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
-<h5 id="folded-48"><a class="anchor" href="#folded-48" aria-hidden="true">#</a>Folded</h5>
+<h5 id="folded-47"><a class="anchor" href="#folded-47" aria-hidden="true">#</a>Folded</h5>
 <p>Where: on the chain of a reading. The folded Deck shows the deck and the spread. Click the title to unfold it.</p>
-<h5 id="compact-48"><a class="anchor" href="#compact-48" aria-hidden="true">#</a>Compact</h5>
+<h5 id="compact-47"><a class="anchor" href="#compact-47" aria-hidden="true">#</a>Compact</h5>
 <p>Where: on the chain of a reading. The compact Deck shows the positions as small cards, and four macros.</p>
 <div class="table-wrap"><table>
 <thead>
@@ -16109,7 +16084,7 @@ Contacts, Morph, Focus, Colour, Ink, Depth and Resonance.</p>
 </tbody></table>
 </div>
 <p>Click the plate to show the Deck whole in the pool. Click ▦ to open it full in a pane.</p>
-<h5 id="whole-48"><a class="anchor" href="#whole-48" aria-hidden="true">#</a>Whole</h5>
+<h5 id="whole-47"><a class="anchor" href="#whole-47" aria-hidden="true">#</a>Whole</h5>
 <p>Where: the pool under the browser. The whole Deck shows every parameter, in two groups.</p>
 <div class="table-wrap"><table>
 <thead>
@@ -16129,9 +16104,9 @@ Contacts, Morph, Focus, Colour, Ink, Depth and Resonance.</p>
 </tbody></table>
 </div>
 <p>A change you make in the pool applies at once. It does not add the Deck to a chain.</p>
-<h5 id="full-48"><a class="anchor" href="#full-48" aria-hidden="true">#</a>Full</h5>
+<h5 id="full-47"><a class="anchor" href="#full-47" aria-hidden="true">#</a>Full</h5>
 <p>Where: a pane. The full Deck fills the pane with the spread. The six positions P0 to P5 lie out, each with its question. The reading of each position shows under its card. Read the pairs: P0 with P5, P1 with P4, and P2 with P3. The controls stay in Device view, below the pane.</p>
-<h5 id="widget-48"><a class="anchor" href="#widget-48" aria-hidden="true">#</a>Widget</h5>
+<h5 id="widget-47"><a class="anchor" href="#widget-47" aria-hidden="true">#</a>Widget</h5>
 <p>Where: the rail on the right. The widget shows the last spread, with its theme. Click the spread to open the Deck in the pane that has focus. The widget stays when you change mode.</p>
 <h4 id="transport-51"><a class="anchor" href="#transport-51" aria-hidden="true">#</a>Transport</h4>
 <div class="table-wrap"><table>
@@ -16183,7 +16158,7 @@ Contacts, Morph, Focus, Colour, Ink, Depth and Resonance.</p>
 <li>To find a relation to your own writing, record the reading and link the entry.</li>
 <li>To return to an old reading, open the journey and select the spread.</li>
 </ul>
-<h3 id="22-4-chakra"><a class="anchor" href="#22-4-chakra" aria-hidden="true">#</a>22.4 Chakra</h3>
+<h3 id="22-5-chakra"><a class="anchor" href="#22-5-chakra" aria-hidden="true">#</a>22.5 Chakra</h3>
 <p><strong>Product:</strong> Quaternal Logic · <strong>Kind:</strong> instrument · <strong>Track:</strong> Any track. It is a device on a reading, and the personal layer of the Studio.</p>
 <p>The Chakra shows the seven centres of the body and what the sky does to each. Use it to see which planets reach which centre today, and how your own centres answer.</p>
 <h4 id="the-centres"><a class="anchor" href="#the-centres" aria-hidden="true">#</a>The centres</h4>
@@ -16234,7 +16209,7 @@ Contacts, Morph, Focus, Colour, Ink, Depth and Resonance.</p>
 </tbody></table>
 </div>
 <p>The centres rise from the Root to the Crown. The Crown dissolves into the source.</p>
-<h4 id="parameters-52"><a class="anchor" href="#parameters-52" aria-hidden="true">#</a>Parameters</h4>
+<h4 id="parameters-51"><a class="anchor" href="#parameters-51" aria-hidden="true">#</a>Parameters</h4>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -16281,12 +16256,6 @@ Contacts, Morph, Focus, Colour, Ink, Depth and Resonance.</p>
 <td>Shows how your birth sky spreads over the centres. Only you see it.</td>
 </tr>
 <tr>
-<td>Privacy</td>
-<td>Private · Circle</td>
-<td>Private</td>
-<td>Who sees your personal layer.</td>
-</tr>
-<tr>
 <td>Detail</td>
 <td>Element · Mantra · Yantra: each On · Off</td>
 <td>Element On</td>
@@ -16295,11 +16264,11 @@ Contacts, Morph, Focus, Colour, Ink, Depth and Resonance.</p>
 </tbody></table>
 </div>
 <p>A route has a source for each centre. The own planet of each centre is in the table above. The decan ruler is the planet that rules the part of the sky where a body stands. The Sun reaches all seven centres.</p>
-<h4 id="views-53"><a class="anchor" href="#views-53" aria-hidden="true">#</a>Views</h4>
+<h4 id="views-52"><a class="anchor" href="#views-52" aria-hidden="true">#</a>Views</h4>
 <figure class="ui"><div class="ui-stage" data-w="1100" data-h="760"><iframe src="http://127.0.0.1:5208/?device=quaternal-logic:chakra&amp;view=all" loading="lazy" style="width:1100px;height:760px" sandbox="allow-scripts allow-same-origin" title="Chakra, on a fixture of readings."></iframe></div><figcaption>Chakra, on a fixture of readings. · <a href="http://127.0.0.1:5208/?device=quaternal-logic:chakra&amp;view=all" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
-<h5 id="folded-49"><a class="anchor" href="#folded-49" aria-hidden="true">#</a>Folded</h5>
+<h5 id="folded-48"><a class="anchor" href="#folded-48" aria-hidden="true">#</a>Folded</h5>
 <p>Where: on the chain of a reading. The folded Chakra shows the centre that has the most hits today. Click the title to unfold it.</p>
-<h5 id="compact-49"><a class="anchor" href="#compact-49" aria-hidden="true">#</a>Compact</h5>
+<h5 id="compact-48"><a class="anchor" href="#compact-48" aria-hidden="true">#</a>Compact</h5>
 <p>Where: on the chain of a reading. The compact Chakra shows seven small discs, lit by their hits, and four macros.</p>
 <div class="table-wrap"><table>
 <thead>
@@ -16313,8 +16282,8 @@ Contacts, Morph, Focus, Colour, Ink, Depth and Resonance.</p>
 <td>Sets Seven rows or Body figure.</td>
 </tr>
 <tr>
-<td>Routes</td>
-<td>Sets which paths from the sky to the centres show.</td>
+<td>Decan route</td>
+<td>Shows or hides the path through each decan&#39;s ruler.</td>
 </tr>
 <tr>
 <td>Colour source</td>
@@ -16327,7 +16296,7 @@ Contacts, Morph, Focus, Colour, Ink, Depth and Resonance.</p>
 </tbody></table>
 </div>
 <p>Click the plate to show the Chakra whole in the pool. Click ▦ to open it full in a pane.</p>
-<h5 id="whole-49"><a class="anchor" href="#whole-49" aria-hidden="true">#</a>Whole</h5>
+<h5 id="whole-48"><a class="anchor" href="#whole-48" aria-hidden="true">#</a>Whole</h5>
 <p>Where: the pool under the browser. The whole Chakra shows every parameter, in two groups.</p>
 <div class="table-wrap"><table>
 <thead>
@@ -16342,14 +16311,14 @@ Contacts, Morph, Focus, Colour, Ink, Depth and Resonance.</p>
 </tr>
 <tr>
 <td>Personal</td>
-<td>Natal distribution, Privacy</td>
+<td>Natal distribution</td>
 </tr>
 </tbody></table>
 </div>
 <p>A change you make in the pool applies at once. It does not add the Chakra to a chain.</p>
-<h5 id="full-49"><a class="anchor" href="#full-49" aria-hidden="true">#</a>Full</h5>
+<h5 id="full-48"><a class="anchor" href="#full-48" aria-hidden="true">#</a>Full</h5>
 <p>Where: a pane. The full Chakra fills the pane with the seven centres at full size. Route lines run from the planets to the centres that they reach. The Earth stands under the Root. Follow a route line from a planet to its centre. The controls stay in Device view, below the pane.</p>
-<h5 id="widget-49"><a class="anchor" href="#widget-49" aria-hidden="true">#</a>Widget</h5>
+<h5 id="widget-48"><a class="anchor" href="#widget-48" aria-hidden="true">#</a>Widget</h5>
 <p>Where: the rail on the right. The widget shows seven discs with the planet of each. Click a disc to open its centre in the pane that has focus. The widget stays when you change mode.</p>
 <h4 id="transport-52"><a class="anchor" href="#transport-52" aria-hidden="true">#</a>Transport</h4>
 <div class="table-wrap"><table>
@@ -16380,7 +16349,6 @@ Contacts, Morph, Focus, Colour, Ink, Depth and Resonance.</p>
 <li>Turn one route off at a time. See which planets lit which centre.</li>
 <li>Set Natal distribution on. Compare your centres with the date.</li>
 <li>Select a centre to see its detail.</li>
-<li>Set Privacy to Circle only when you mean to share the layer.</li>
 </ol>
 <h4 id="rules-58"><a class="anchor" href="#rules-58" aria-hidden="true">#</a>Rules</h4>
 <ul>
@@ -16395,10 +16363,10 @@ Contacts, Morph, Focus, Colour, Ink, Depth and Resonance.</p>
 <ul>
 <li>To see why a centre is lit, turn the routes off one by one.</li>
 <li>To compare two people under one sky, view each person&#39;s natal distribution separately.</li>
-<li>To keep your layer to yourself, leave Privacy on Private.</li>
+<li>Your personal layer stays private. Nothing shares it.</li>
 <li>To read a past day, set the Sky to that day.</li>
 </ul>
-<h3 id="22-5-m-matrices"><a class="anchor" href="#22-5-m-matrices" aria-hidden="true">#</a>22.5 M′ matrices</h3>
+<h3 id="22-6-m-matrices"><a class="anchor" href="#22-6-m-matrices" aria-hidden="true">#</a>22.6 M′ matrices</h3>
 <p><strong>Product:</strong> Quaternal Logic · <strong>Kind:</strong> instrument · <strong>Track:</strong> Any track. It opens in the pool and as a pane.</p>
 <p>The M′ matrices show what the torus is made of, in four layers. Use them to see where a value comes from, and which parameter it moves.</p>
 <h4 id="the-four-matrices"><a class="anchor" href="#the-four-matrices" aria-hidden="true">#</a>The four matrices</h4>
@@ -16429,11 +16397,11 @@ Contacts, Morph, Focus, Colour, Ink, Depth and Resonance.</p>
 <tr>
 <td>Situation</td>
 <td>The world that receives the sound, and the seven centres of the body.</td>
-<td>Sets who and where the sound reaches.</td>
+<td>Sets who and where the sound reaches. The Situation matrix has no source yet.</td>
 </tr>
 </tbody></table>
 </div>
-<h4 id="parameters-53"><a class="anchor" href="#parameters-53" aria-hidden="true">#</a>Parameters</h4>
+<h4 id="parameters-52"><a class="anchor" href="#parameters-52" aria-hidden="true">#</a>Parameters</h4>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -16474,16 +16442,16 @@ Contacts, Morph, Focus, Colour, Ink, Depth and Resonance.</p>
 <td>How a source value shows. The three forms stay separate.</td>
 </tr>
 <tr>
-<td>Cell</td>
-<td>Row and position</td>
-<td>The cell for now</td>
-<td>The cell to inspect.</td>
+<td>Family</td>
+<td>0 to 5</td>
+<td>0</td>
+<td>The family of the Oscillator&#39;s source values. The fifth has no single value.</td>
 </tr>
 <tr>
-<td>Follow</td>
-<td>Notes · Sky · Off</td>
-<td>Notes</td>
-<td>Notes moves the cell with the notes you play. Sky moves it with the planets. Off pins the cell.</td>
+<td>Cell</td>
+<td>Row and position in the Oscillator; lens and mode in the Reading; the codon in the Form</td>
+<td>The cell for now</td>
+<td>The cell to inspect.</td>
 </tr>
 <tr>
 <td>Context</td>
@@ -16493,11 +16461,11 @@ Contacts, Morph, Focus, Colour, Ink, Depth and Resonance.</p>
 </tr>
 </tbody></table>
 </div>
-<h4 id="views-54"><a class="anchor" href="#views-54" aria-hidden="true">#</a>Views</h4>
+<h4 id="views-53"><a class="anchor" href="#views-53" aria-hidden="true">#</a>Views</h4>
 <figure class="ui"><div class="ui-stage" data-w="1100" data-h="760"><iframe src="http://127.0.0.1:5208/?device=quaternal-logic:m-prime-matrices&amp;view=all" loading="lazy" style="width:1100px;height:760px" sandbox="allow-scripts allow-same-origin" title="M′ matrices, on a fixture of readings."></iframe></div><figcaption>M′ matrices, on a fixture of readings. · <a href="http://127.0.0.1:5208/?device=quaternal-logic:m-prime-matrices&amp;view=all" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
-<h5 id="folded-50"><a class="anchor" href="#folded-50" aria-hidden="true">#</a>Folded</h5>
+<h5 id="folded-49"><a class="anchor" href="#folded-49" aria-hidden="true">#</a>Folded</h5>
 <p>Where: on the chain of a reading. The folded M′ matrices show the matrix name and the cell. Click the title to unfold it.</p>
-<h5 id="compact-50"><a class="anchor" href="#compact-50" aria-hidden="true">#</a>Compact</h5>
+<h5 id="compact-49"><a class="anchor" href="#compact-49" aria-hidden="true">#</a>Compact</h5>
 <p>Where: on the chain of a reading. The compact M′ matrices show a small grid of the matrix, and four macros.</p>
 <div class="table-wrap"><table>
 <thead>
@@ -16519,13 +16487,13 @@ Contacts, Morph, Focus, Colour, Ink, Depth and Resonance.</p>
 <td>Sets the lens that anchors the reading.</td>
 </tr>
 <tr>
-<td>Follow</td>
-<td>Sets what moves the cell: the notes that you play, the sky, or nothing.</td>
+<td>Context frame</td>
+<td>Sets the mode of the lens.</td>
 </tr>
 </tbody></table>
 </div>
 <p>Click the plate to show the M′ matrices whole in the pool. Click ▦ to open them full in a pane.</p>
-<h5 id="whole-50"><a class="anchor" href="#whole-50" aria-hidden="true">#</a>Whole</h5>
+<h5 id="whole-49"><a class="anchor" href="#whole-49" aria-hidden="true">#</a>Whole</h5>
 <p>Where: the pool under the browser. The whole M′ matrices show every parameter, in two groups.</p>
 <div class="table-wrap"><table>
 <thead>
@@ -16540,15 +16508,15 @@ Contacts, Morph, Focus, Colour, Ink, Depth and Resonance.</p>
 </tr>
 <tr>
 <td>Cell</td>
-<td>Cell, Follow</td>
+<td>Family, Cell</td>
 </tr>
 </tbody></table>
 </div>
 <p>The grid shows with every value.</p>
 <p>A change you make in the pool applies at once. It does not add the M′ matrices to a chain.</p>
-<h5 id="full-50"><a class="anchor" href="#full-50" aria-hidden="true">#</a>Full</h5>
+<h5 id="full-49"><a class="anchor" href="#full-49" aria-hidden="true">#</a>Full</h5>
 <p>Where: a pane. The full M′ matrices fill the pane with the matrix at full size. A line leads from a cell to the parameter that it moves. Follow the line from a cell to its parameter. The controls stay in Device view, below the pane.</p>
-<h5 id="widget-50"><a class="anchor" href="#widget-50" aria-hidden="true">#</a>Widget</h5>
+<h5 id="widget-49"><a class="anchor" href="#widget-49" aria-hidden="true">#</a>Widget</h5>
 <p>Where: the rail on the right. The widget shows the small grid with the cell marked. Click the grid to open the matrices in the pane that has focus. The widget stays when you change mode.</p>
 <h4 id="transport-53"><a class="anchor" href="#transport-53" aria-hidden="true">#</a>Transport</h4>
 <div class="table-wrap"><table>
@@ -16568,7 +16536,7 @@ Contacts, Morph, Focus, Colour, Ink, Depth and Resonance.</p>
 </tr>
 <tr>
 <td>Tap</td>
-<td>Returns Follow to the notes you play.</td>
+<td>Returns the cell to now.</td>
 </tr>
 </tbody></table>
 </div>
@@ -16710,7 +16678,7 @@ height.</p>
 <h3 id="23-2-files"><a class="anchor" href="#23-2-files" aria-hidden="true">#</a>23.2 Files</h3>
 <p><strong>Product:</strong> Workcell · <strong>Kind:</strong> instrument · <strong>Rail:</strong> the widget rail on the right</p>
 <p>You need to see which files an agent read and which it changed. Files shows them as a tree, with the lines added and removed.</p>
-<h4 id="parameters-54"><a class="anchor" href="#parameters-54" aria-hidden="true">#</a>Parameters</h4>
+<h4 id="parameters-53"><a class="anchor" href="#parameters-53" aria-hidden="true">#</a>Parameters</h4>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -16740,11 +16708,11 @@ height.</p>
 </tr>
 </tbody></table>
 </div>
-<h4 id="views-55"><a class="anchor" href="#views-55" aria-hidden="true">#</a>Views</h4>
+<h4 id="views-54"><a class="anchor" href="#views-54" aria-hidden="true">#</a>Views</h4>
 <figure class="ui"><div class="ui-stage" data-w="1100" data-h="760"><iframe src="http://127.0.0.1:5208/?device=widgets:files&amp;view=all" loading="lazy" style="width:1100px;height:760px" sandbox="allow-scripts allow-same-origin" title="Files, on a fixture of readings."></iframe></div><figcaption>Files, on a fixture of readings. · <a href="http://127.0.0.1:5208/?device=widgets:files&amp;view=all" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
-<h5 id="folded-51"><a class="anchor" href="#folded-51" aria-hidden="true">#</a>Folded</h5>
+<h5 id="folded-50"><a class="anchor" href="#folded-50" aria-hidden="true">#</a>Folded</h5>
 <p>Where: the launcher on the rail, and on a chain. The folded Files shows as a launcher square with the name Files. A dot marks an open tile. Click the square to open the tile on the rail.</p>
-<h5 id="compact-51"><a class="anchor" href="#compact-51" aria-hidden="true">#</a>Compact</h5>
+<h5 id="compact-50"><a class="anchor" href="#compact-50" aria-hidden="true">#</a>Compact</h5>
 <p>Where: on a chain. The compact Files shows the changed files. Each file shows the lines added and removed. It has three macros.</p>
 <div class="table-wrap"><table>
 <thead>
@@ -16768,7 +16736,7 @@ height.</p>
 </tbody></table>
 </div>
 <p>Click the plate to show the Files whole in the pool. Click ▦ to open it full in a pane.</p>
-<h5 id="whole-51"><a class="anchor" href="#whole-51" aria-hidden="true">#</a>Whole</h5>
+<h5 id="whole-50"><a class="anchor" href="#whole-50" aria-hidden="true">#</a>Whole</h5>
 <p>Where: the pool under the browser. The whole Files shows every parameter, in two groups.</p>
 <div class="table-wrap"><table>
 <thead>
@@ -16788,9 +16756,9 @@ height.</p>
 </tbody></table>
 </div>
 <p>A change you make in the pool applies at once.</p>
-<h5 id="full-51"><a class="anchor" href="#full-51" aria-hidden="true">#</a>Full</h5>
+<h5 id="full-50"><a class="anchor" href="#full-50" aria-hidden="true">#</a>Full</h5>
 <p>Where: a pane. The full Files shows one file at pane size: the file that you clicked in the tree. Read it here. The tree stays on the rail. The controls stay in Device view, below the pane.</p>
-<h5 id="widget-51"><a class="anchor" href="#widget-51" aria-hidden="true">#</a>Widget</h5>
+<h5 id="widget-50"><a class="anchor" href="#widget-50" aria-hidden="true">#</a>Widget</h5>
 <p>Where: the rail on the right. The widget shows the tree of the files that the selected agent touched. M marks a changed file, with the lines added and removed. An arrow marks a file that the agent read. A red line marks a blocked place. Click a file to open it in a pane. Click a blocked place to read why it is blocked. The widget stays when you change mode.</p>
 <h4 id="transport-55"><a class="anchor" href="#transport-55" aria-hidden="true">#</a>Transport</h4>
 <div class="table-wrap"><table>
@@ -16825,7 +16793,7 @@ height.</p>
 <h3 id="23-3-web"><a class="anchor" href="#23-3-web" aria-hidden="true">#</a>23.3 Web</h3>
 <p><strong>Product:</strong> Central · <strong>Kind:</strong> instrument · <strong>Rail:</strong> the widget rail on the right</p>
 <p>You need to see the pages an agent read, and the text it used. Web shows each page, with the used text marked.</p>
-<h4 id="parameters-55"><a class="anchor" href="#parameters-55" aria-hidden="true">#</a>Parameters</h4>
+<h4 id="parameters-54"><a class="anchor" href="#parameters-54" aria-hidden="true">#</a>Parameters</h4>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -16855,11 +16823,11 @@ height.</p>
 </tr>
 </tbody></table>
 </div>
-<h4 id="views-56"><a class="anchor" href="#views-56" aria-hidden="true">#</a>Views</h4>
+<h4 id="views-55"><a class="anchor" href="#views-55" aria-hidden="true">#</a>Views</h4>
 <figure class="ui"><div class="ui-stage" data-w="1100" data-h="760"><iframe src="http://127.0.0.1:5208/?device=widgets:web&amp;view=all" loading="lazy" style="width:1100px;height:760px" sandbox="allow-scripts allow-same-origin" title="Web, on a fixture of readings."></iframe></div><figcaption>Web, on a fixture of readings. · <a href="http://127.0.0.1:5208/?device=widgets:web&amp;view=all" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
-<h5 id="folded-52"><a class="anchor" href="#folded-52" aria-hidden="true">#</a>Folded</h5>
+<h5 id="folded-51"><a class="anchor" href="#folded-51" aria-hidden="true">#</a>Folded</h5>
 <p>Where: the launcher on the rail, and on a chain. The folded Web shows as a launcher square with the name Web. A dot marks an open tile. Click the square to open the tile on the rail.</p>
-<h5 id="compact-52"><a class="anchor" href="#compact-52" aria-hidden="true">#</a>Compact</h5>
+<h5 id="compact-51"><a class="anchor" href="#compact-51" aria-hidden="true">#</a>Compact</h5>
 <p>Where: on a chain. The compact Web shows the address and the first lines of the page. It has three macros.</p>
 <div class="table-wrap"><table>
 <thead>
@@ -16883,7 +16851,7 @@ height.</p>
 </tbody></table>
 </div>
 <p>Click the plate to show the Web whole in the pool. Click ▦ to open it full in a pane.</p>
-<h5 id="whole-52"><a class="anchor" href="#whole-52" aria-hidden="true">#</a>Whole</h5>
+<h5 id="whole-51"><a class="anchor" href="#whole-51" aria-hidden="true">#</a>Whole</h5>
 <p>Where: the pool under the browser. The whole Web shows every parameter, in two groups.</p>
 <div class="table-wrap"><table>
 <thead>
@@ -16903,9 +16871,9 @@ height.</p>
 </tbody></table>
 </div>
 <p>A change you make in the pool applies at once.</p>
-<h5 id="full-52"><a class="anchor" href="#full-52" aria-hidden="true">#</a>Full</h5>
+<h5 id="full-51"><a class="anchor" href="#full-51" aria-hidden="true">#</a>Full</h5>
 <p>Where: a pane. The full Web shows the page in a pane, as the agent got it. The text that the agent used is marked. The controls stay in Device view, below the pane.</p>
-<h5 id="widget-52"><a class="anchor" href="#widget-52" aria-hidden="true">#</a>Widget</h5>
+<h5 id="widget-51"><a class="anchor" href="#widget-51" aria-hidden="true">#</a>Widget</h5>
 <p>Where: the rail on the right. The widget shows the page that the selected agent read last. The text that the agent used is marked. Click the address to open the page in a pane. The widget stays when you change mode.</p>
 <h4 id="to-use-web"><a class="anchor" href="#to-use-web" aria-hidden="true">#</a>To use Web</h4>
 <ol>
@@ -16926,7 +16894,7 @@ height.</p>
 <h3 id="23-4-diff"><a class="anchor" href="#23-4-diff" aria-hidden="true">#</a>23.4 Diff</h3>
 <p><strong>Product:</strong> Software Factory · <strong>Kind:</strong> effect · <strong>Rail:</strong> the widget rail on the right</p>
 <p>You need to read what changed before you approve it. Diff shows the uncommitted changes and the changes that an agent proposes.</p>
-<h4 id="parameters-56"><a class="anchor" href="#parameters-56" aria-hidden="true">#</a>Parameters</h4>
+<h4 id="parameters-55"><a class="anchor" href="#parameters-55" aria-hidden="true">#</a>Parameters</h4>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -16956,11 +16924,11 @@ height.</p>
 </tr>
 </tbody></table>
 </div>
-<h4 id="views-57"><a class="anchor" href="#views-57" aria-hidden="true">#</a>Views</h4>
+<h4 id="views-56"><a class="anchor" href="#views-56" aria-hidden="true">#</a>Views</h4>
 <figure class="ui"><div class="ui-stage" data-w="1100" data-h="760"><iframe src="http://127.0.0.1:5208/?device=widgets:diff&amp;view=all" loading="lazy" style="width:1100px;height:760px" sandbox="allow-scripts allow-same-origin" title="Diff, on a fixture of readings."></iframe></div><figcaption>Diff, on a fixture of readings. · <a href="http://127.0.0.1:5208/?device=widgets:diff&amp;view=all" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
-<h5 id="folded-53"><a class="anchor" href="#folded-53" aria-hidden="true">#</a>Folded</h5>
+<h5 id="folded-52"><a class="anchor" href="#folded-52" aria-hidden="true">#</a>Folded</h5>
 <p>Where: the launcher on the rail, and on a chain. The folded Diff shows as a launcher square with the name Diff. A dot marks an open tile. Click the square to open the tile on the rail.</p>
-<h5 id="compact-53"><a class="anchor" href="#compact-53" aria-hidden="true">#</a>Compact</h5>
+<h5 id="compact-52"><a class="anchor" href="#compact-52" aria-hidden="true">#</a>Compact</h5>
 <p>Where: on a chain. The compact Diff shows the first lines of the diff. It has three macros.</p>
 <div class="table-wrap"><table>
 <thead>
@@ -16984,7 +16952,7 @@ height.</p>
 </tbody></table>
 </div>
 <p>Click the plate to show the Diff whole in the pool. Click ▦ to open it full in a pane.</p>
-<h5 id="whole-53"><a class="anchor" href="#whole-53" aria-hidden="true">#</a>Whole</h5>
+<h5 id="whole-52"><a class="anchor" href="#whole-52" aria-hidden="true">#</a>Whole</h5>
 <p>Where: the pool under the browser. The whole Diff shows every parameter, in two groups.</p>
 <div class="table-wrap"><table>
 <thead>
@@ -17004,9 +16972,9 @@ height.</p>
 </tbody></table>
 </div>
 <p>A change you make in the pool applies at once.</p>
-<h5 id="full-53"><a class="anchor" href="#full-53" aria-hidden="true">#</a>Full</h5>
+<h5 id="full-52"><a class="anchor" href="#full-52" aria-hidden="true">#</a>Full</h5>
 <p>Where: a pane. The full Diff shows the diff of one file in a pane. Lines added are green. Lines removed are red. A proposed change shows its author. The controls stay in Device view, below the pane.</p>
-<h5 id="widget-53"><a class="anchor" href="#widget-53" aria-hidden="true">#</a>Widget</h5>
+<h5 id="widget-52"><a class="anchor" href="#widget-52" aria-hidden="true">#</a>Widget</h5>
 <p>Where: the rail on the right. The widget lists the files that changed in the selected session. Each file shows its lines added in green and removed in red. Click a file to open its diff in a pane. Go to Approvals to accept a proposal. The widget stays when you change mode.</p>
 <h4 id="transport-56"><a class="anchor" href="#transport-56" aria-hidden="true">#</a>Transport</h4>
 <div class="table-wrap"><table>
@@ -17041,7 +17009,7 @@ height.</p>
 <h3 id="23-5-trail"><a class="anchor" href="#23-5-trail" aria-hidden="true">#</a>23.5 Trail</h3>
 <p><strong>Product:</strong> Central · <strong>Kind:</strong> effect · <strong>Rail:</strong> the widget rail on the right</p>
 <p>You need to go back to a place you were. Trail keeps every place you went, newest first. Select a stop to return to it.</p>
-<h4 id="parameters-57"><a class="anchor" href="#parameters-57" aria-hidden="true">#</a>Parameters</h4>
+<h4 id="parameters-56"><a class="anchor" href="#parameters-56" aria-hidden="true">#</a>Parameters</h4>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -17065,17 +17033,17 @@ height.</p>
 </tr>
 <tr>
 <td>Limit</td>
-<td>8–100 stops</td>
+<td>8 to 24 stops</td>
 <td>8</td>
-<td>The stops shown in the tile.</td>
+<td>The stops shown in the tile. The trail keeps the last 24.</td>
 </tr>
 </tbody></table>
 </div>
-<h4 id="views-58"><a class="anchor" href="#views-58" aria-hidden="true">#</a>Views</h4>
+<h4 id="views-57"><a class="anchor" href="#views-57" aria-hidden="true">#</a>Views</h4>
 <figure class="ui"><div class="ui-stage" data-w="1100" data-h="760"><iframe src="http://127.0.0.1:5208/?device=widgets:trail&amp;view=all" loading="lazy" style="width:1100px;height:760px" sandbox="allow-scripts allow-same-origin" title="Trail, on a fixture of readings."></iframe></div><figcaption>Trail, on a fixture of readings. · <a href="http://127.0.0.1:5208/?device=widgets:trail&amp;view=all" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
-<h5 id="folded-54"><a class="anchor" href="#folded-54" aria-hidden="true">#</a>Folded</h5>
+<h5 id="folded-53"><a class="anchor" href="#folded-53" aria-hidden="true">#</a>Folded</h5>
 <p>Where: the launcher on the rail, and on a chain. The folded Trail shows as a launcher square with the name Trail. A dot marks an open tile. Click the square to open the tile on the rail.</p>
-<h5 id="compact-54"><a class="anchor" href="#compact-54" aria-hidden="true">#</a>Compact</h5>
+<h5 id="compact-53"><a class="anchor" href="#compact-53" aria-hidden="true">#</a>Compact</h5>
 <p>Where: on a chain. The compact Trail shows the last stops. It has two macros.</p>
 <div class="table-wrap"><table>
 <thead>
@@ -17086,7 +17054,7 @@ height.</p>
 </thead>
 <tbody><tr>
 <td>Limit</td>
-<td>Sets how many stops show, from 8 to 100.</td>
+<td>Sets how many stops show, from 8 to 24.</td>
 </tr>
 <tr>
 <td>Return</td>
@@ -17095,7 +17063,7 @@ height.</p>
 </tbody></table>
 </div>
 <p>Click the plate to show the Trail whole in the pool. Click ▦ to open it full in a pane.</p>
-<h5 id="whole-54"><a class="anchor" href="#whole-54" aria-hidden="true">#</a>Whole</h5>
+<h5 id="whole-53"><a class="anchor" href="#whole-53" aria-hidden="true">#</a>Whole</h5>
 <p>Where: the pool under the browser. The whole Trail shows every parameter, in two groups.</p>
 <div class="table-wrap"><table>
 <thead>
@@ -17115,9 +17083,9 @@ height.</p>
 </tbody></table>
 </div>
 <p>A change you make in the pool applies at once.</p>
-<h5 id="full-54"><a class="anchor" href="#full-54" aria-hidden="true">#</a>Full</h5>
+<h5 id="full-53"><a class="anchor" href="#full-53" aria-hidden="true">#</a>Full</h5>
 <p>Where: a pane. The full Trail shows the trail in a pane. Each stop shows its time, the kind of work and the place. Select a stop to return to it. The controls stay in Device view, below the pane.</p>
-<h5 id="widget-54"><a class="anchor" href="#widget-54" aria-hidden="true">#</a>Widget</h5>
+<h5 id="widget-53"><a class="anchor" href="#widget-53" aria-hidden="true">#</a>Widget</h5>
 <p>Where: the rail on the right. The widget shows the stops, newest first. Each stop shows its time and the kind of work. Click a stop to return to the same place, the same page and the same point in the reading. The widget stays when you change mode.</p>
 <h4 id="transport-57"><a class="anchor" href="#transport-57" aria-hidden="true">#</a>Transport</h4>
 <div class="table-wrap"><table>
@@ -17152,7 +17120,7 @@ height.</p>
 <h3 id="23-6-nows"><a class="anchor" href="#23-6-nows" aria-hidden="true">#</a>23.6 NOWs</h3>
 <p><strong>Product:</strong> Central · <strong>Kind:</strong> instrument · <strong>Rail:</strong> the widget rail on the right</p>
 <p>You need to see the moments of today that are still open. NOWs shows the day and the present moment, with the open moments of each machine.</p>
-<h4 id="parameters-58"><a class="anchor" href="#parameters-58" aria-hidden="true">#</a>Parameters</h4>
+<h4 id="parameters-57"><a class="anchor" href="#parameters-57" aria-hidden="true">#</a>Parameters</h4>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -17182,11 +17150,11 @@ height.</p>
 </tr>
 </tbody></table>
 </div>
-<h4 id="views-59"><a class="anchor" href="#views-59" aria-hidden="true">#</a>Views</h4>
+<h4 id="views-58"><a class="anchor" href="#views-58" aria-hidden="true">#</a>Views</h4>
 <figure class="ui"><div class="ui-stage" data-w="1100" data-h="760"><iframe src="http://127.0.0.1:5208/?device=widgets:nows&amp;view=all" loading="lazy" style="width:1100px;height:760px" sandbox="allow-scripts allow-same-origin" title="NOWs, on a fixture of readings."></iframe></div><figcaption>NOWs, on a fixture of readings. · <a href="http://127.0.0.1:5208/?device=widgets:nows&amp;view=all" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
-<h5 id="folded-55"><a class="anchor" href="#folded-55" aria-hidden="true">#</a>Folded</h5>
+<h5 id="folded-54"><a class="anchor" href="#folded-54" aria-hidden="true">#</a>Folded</h5>
 <p>Where: the launcher on the rail, and on a chain. The folded NOWs shows as a launcher square with the name NOWs. A dot marks an open tile. Click the square to open the tile on the rail.</p>
-<h5 id="compact-55"><a class="anchor" href="#compact-55" aria-hidden="true">#</a>Compact</h5>
+<h5 id="compact-54"><a class="anchor" href="#compact-54" aria-hidden="true">#</a>Compact</h5>
 <p>Where: on a chain. The compact NOWs shows one line for each open moment, with its state. It has one macro.</p>
 <div class="table-wrap"><table>
 <thead>
@@ -17202,7 +17170,7 @@ height.</p>
 </tbody></table>
 </div>
 <p>Click the plate to show the NOWs whole in the pool. Click ▦ to open it full in a pane.</p>
-<h5 id="whole-55"><a class="anchor" href="#whole-55" aria-hidden="true">#</a>Whole</h5>
+<h5 id="whole-54"><a class="anchor" href="#whole-54" aria-hidden="true">#</a>Whole</h5>
 <p>Where: the pool under the browser. The whole NOWs shows every parameter, in two groups.</p>
 <div class="table-wrap"><table>
 <thead>
@@ -17222,9 +17190,9 @@ height.</p>
 </tbody></table>
 </div>
 <p>A change you make in the pool applies at once. Day and Now are readings. You cannot set them.</p>
-<h5 id="full-55"><a class="anchor" href="#full-55" aria-hidden="true">#</a>Full</h5>
+<h5 id="full-54"><a class="anchor" href="#full-54" aria-hidden="true">#</a>Full</h5>
 <p>Where: a pane. The full NOWs shows the moments of the day in a pane. Each moment shows its machine, the agent at work on it and its state. Click a moment to open it. The controls stay in Device view, below the pane.</p>
-<h5 id="widget-55"><a class="anchor" href="#widget-55" aria-hidden="true">#</a>Widget</h5>
+<h5 id="widget-54"><a class="anchor" href="#widget-54" aria-hidden="true">#</a>Widget</h5>
 <p>Where: the rail on the right. The widget shows the day, the time and the open moments. It lists the machines and the agent at work on each, with a state. Click a moment to open it. Close each moment that you have finished. The widget stays when you change mode.</p>
 <h4 id="to-use-nows"><a class="anchor" href="#to-use-nows" aria-hidden="true">#</a>To use NOWs</h4>
 <ol>
@@ -17245,7 +17213,7 @@ height.</p>
 <h3 id="23-7-wiki"><a class="anchor" href="#23-7-wiki" aria-hidden="true">#</a>23.7 Wiki</h3>
 <p><strong>Product:</strong> Central · <strong>Kind:</strong> instrument · <strong>Rail:</strong> the widget rail on the right</p>
 <p>You need to read the wiki pages that an agent may use. Wiki shows the pages inside the reads of the world.</p>
-<h4 id="parameters-59"><a class="anchor" href="#parameters-59" aria-hidden="true">#</a>Parameters</h4>
+<h4 id="parameters-58"><a class="anchor" href="#parameters-58" aria-hidden="true">#</a>Parameters</h4>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -17262,12 +17230,6 @@ height.</p>
 <td>Chooses the page.</td>
 </tr>
 <tr>
-<td>Reads only</td>
-<td>On · Off</td>
-<td>On</td>
-<td>Shows only pages inside the scope&#39;s reads.</td>
-</tr>
-<tr>
 <td>Follow</td>
 <td>On · Off</td>
 <td>On</td>
@@ -17275,11 +17237,11 @@ height.</p>
 </tr>
 </tbody></table>
 </div>
-<h4 id="views-60"><a class="anchor" href="#views-60" aria-hidden="true">#</a>Views</h4>
+<h4 id="views-59"><a class="anchor" href="#views-59" aria-hidden="true">#</a>Views</h4>
 <figure class="ui"><div class="ui-stage" data-w="1100" data-h="760"><iframe src="http://127.0.0.1:5208/?device=widgets:wiki&amp;view=all" loading="lazy" style="width:1100px;height:760px" sandbox="allow-scripts allow-same-origin" title="Wiki, on a fixture of readings."></iframe></div><figcaption>Wiki, on a fixture of readings. · <a href="http://127.0.0.1:5208/?device=widgets:wiki&amp;view=all" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
-<h5 id="folded-56"><a class="anchor" href="#folded-56" aria-hidden="true">#</a>Folded</h5>
+<h5 id="folded-55"><a class="anchor" href="#folded-55" aria-hidden="true">#</a>Folded</h5>
 <p>Where: the launcher on the rail, and on a chain. The folded Wiki shows as a launcher square with the name Wiki. A dot marks an open tile. Click the square to open the tile on the rail.</p>
-<h5 id="compact-56"><a class="anchor" href="#compact-56" aria-hidden="true">#</a>Compact</h5>
+<h5 id="compact-55"><a class="anchor" href="#compact-55" aria-hidden="true">#</a>Compact</h5>
 <p>Where: on a chain. The compact Wiki shows the title and the first lines of a page. It has three macros.</p>
 <div class="table-wrap"><table>
 <thead>
@@ -17293,17 +17255,13 @@ height.</p>
 <td>Chooses a page from the list.</td>
 </tr>
 <tr>
-<td>Reads only</td>
-<td>Sets On or Off.</td>
-</tr>
-<tr>
 <td>Follow</td>
 <td>Sets On or Off.</td>
 </tr>
 </tbody></table>
 </div>
 <p>Click the plate to show the Wiki whole in the pool. Click ▦ to open it full in a pane.</p>
-<h5 id="whole-56"><a class="anchor" href="#whole-56" aria-hidden="true">#</a>Whole</h5>
+<h5 id="whole-55"><a class="anchor" href="#whole-55" aria-hidden="true">#</a>Whole</h5>
 <p>Where: the pool under the browser. The whole Wiki shows every parameter, in two groups.</p>
 <div class="table-wrap"><table>
 <thead>
@@ -17316,16 +17274,12 @@ height.</p>
 <td>Page</td>
 <td>Page, Follow</td>
 </tr>
-<tr>
-<td>Scope</td>
-<td>Reads only</td>
-</tr>
 </tbody></table>
 </div>
 <p>A change you make in the pool applies at once.</p>
-<h5 id="full-56"><a class="anchor" href="#full-56" aria-hidden="true">#</a>Full</h5>
+<h5 id="full-55"><a class="anchor" href="#full-55" aria-hidden="true">#</a>Full</h5>
 <p>Where: a pane. The full Wiki shows the page in a pane, with its links. Read the page here. You cannot edit it. The controls stay in Device view, below the pane.</p>
-<h5 id="widget-56"><a class="anchor" href="#widget-56" aria-hidden="true">#</a>Widget</h5>
+<h5 id="widget-55"><a class="anchor" href="#widget-55" aria-hidden="true">#</a>Widget</h5>
 <p>Where: the rail on the right. The widget shows the wiki page that the selected agent read last, with its links. Click a link to follow it. A link that does not resolve shows as it is. Click the open mark to read the page in a pane. The widget stays when you change mode.</p>
 <h4 id="to-use-wiki"><a class="anchor" href="#to-use-wiki" aria-hidden="true">#</a>To use Wiki</h4>
 <ol>
@@ -17345,8 +17299,8 @@ height.</p>
 </ul>
 <h3 id="23-8-calendar"><a class="anchor" href="#23-8-calendar" aria-hidden="true">#</a>23.8 Calendar</h3>
 <p><strong>Product:</strong> a third party · <strong>Kind:</strong> instrument · <strong>Rail:</strong> the widget rail on the right</p>
-<p>You need to see what is due around your work. Calendar is a widget from a third party. Its provider supplies the events.</p>
-<h4 id="parameters-60"><a class="anchor" href="#parameters-60" aria-hidden="true">#</a>Parameters</h4>
+<p>You need to see what is due around your work. Calendar is a widget from a third party. Its provider supplies the events. No provider is installed yet: the widget shows what is missing.</p>
+<h4 id="parameters-59"><a class="anchor" href="#parameters-59" aria-hidden="true">#</a>Parameters</h4>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -17376,11 +17330,11 @@ height.</p>
 </tr>
 </tbody></table>
 </div>
-<h4 id="views-61"><a class="anchor" href="#views-61" aria-hidden="true">#</a>Views</h4>
+<h4 id="views-60"><a class="anchor" href="#views-60" aria-hidden="true">#</a>Views</h4>
 <figure class="ui"><div class="ui-stage" data-w="1100" data-h="760"><iframe src="http://127.0.0.1:5208/?device=widgets:calendar&amp;view=all" loading="lazy" style="width:1100px;height:760px" sandbox="allow-scripts allow-same-origin" title="Calendar, on a fixture of readings."></iframe></div><figcaption>Calendar, on a fixture of readings. · <a href="http://127.0.0.1:5208/?device=widgets:calendar&amp;view=all" target="_blank" rel="noopener">open on its own</a></figcaption></figure>
-<h5 id="folded-57"><a class="anchor" href="#folded-57" aria-hidden="true">#</a>Folded</h5>
+<h5 id="folded-56"><a class="anchor" href="#folded-56" aria-hidden="true">#</a>Folded</h5>
 <p>Where: the launcher on the rail, and on a chain. The folded Calendar shows as a launcher square with the name Calendar. A dot marks an open tile. A badge marks it as a widget from outside. Click the square to open the tile on the rail.</p>
-<h5 id="compact-57"><a class="anchor" href="#compact-57" aria-hidden="true">#</a>Compact</h5>
+<h5 id="compact-56"><a class="anchor" href="#compact-56" aria-hidden="true">#</a>Compact</h5>
 <p>Where: on a chain. The compact Calendar shows the next events. It has three macros.</p>
 <div class="table-wrap"><table>
 <thead>
@@ -17404,7 +17358,7 @@ height.</p>
 </tbody></table>
 </div>
 <p>Click the plate to show the Calendar whole in the pool. Click ▦ to open it full in a pane.</p>
-<h5 id="whole-57"><a class="anchor" href="#whole-57" aria-hidden="true">#</a>Whole</h5>
+<h5 id="whole-56"><a class="anchor" href="#whole-56" aria-hidden="true">#</a>Whole</h5>
 <p>Where: the pool under the browser. The whole Calendar shows every parameter, in two groups.</p>
 <div class="table-wrap"><table>
 <thead>
@@ -17424,9 +17378,9 @@ height.</p>
 </tbody></table>
 </div>
 <p>A change you make in the pool applies at once.</p>
-<h5 id="full-57"><a class="anchor" href="#full-57" aria-hidden="true">#</a>Full</h5>
+<h5 id="full-56"><a class="anchor" href="#full-56" aria-hidden="true">#</a>Full</h5>
 <p>Where: a pane. The full Calendar shows the calendar in a pane, if the provider supplies a full form. If the provider supplies none, Calendar has no Full view. The controls stay in Device view, below the pane.</p>
-<h5 id="widget-57"><a class="anchor" href="#widget-57" aria-hidden="true">#</a>Widget</h5>
+<h5 id="widget-56"><a class="anchor" href="#widget-56" aria-hidden="true">#</a>Widget</h5>
 <p>Where: the rail on the right. The widget shows the events that are due around this work. Click an event to read it. A badge on the widget marks it as supplied from outside. The widget shows only what its provider supplies. The widget stays when you change mode.</p>
 <h4 id="to-use-calendar"><a class="anchor" href="#to-use-calendar" aria-hidden="true">#</a>To use Calendar</h4>
 <ol>
