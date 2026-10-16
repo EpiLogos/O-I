@@ -23,7 +23,7 @@ import {DAY_INITIALISE_OP, DAY_OWNER, DAY_INITIALISE_REMEDY, type DayDocumentSta
 
 /** The value keys the Day design reads that an owner reports or takes (day.tsx `defaults`), and the two this binding adds for the
  * catalogue to draw (`refusal`, `canOpenToday`) and the one it takes (`openToday`). */
-export const DAY_KEYS = ['light', 'date', 'tomorrow', 'face', 'dayStart', 'rollover', 'c0', 'c1', 'c2done', 'refusal', 'canOpenToday'] as const
+export const DAY_KEYS = ['light', 'date', 'face', 'dayStart', 'rollover', 'c0', 'c1', 'c2done', 'refusal', 'canOpenToday'] as const
 
 /** Keys the owner takes a change of. Every other key of the design is a reading or has no owner (DEVICE-UI §8.1). */
 export const DAY_WRITES: ReadonlySet<string> = new Set(['face', 'openToday'])
@@ -32,6 +32,8 @@ export const DAY_WRITES: ReadonlySet<string> = new Set(['face', 'openToday'])
  * return names these; the views draw "—" where the kit draws them. */
 export const DAY_ABSENT: Readonly<Record<string, string>> = {
   view: 'Die or flat is a way of looking: no owner keeps it.',
+  tomorrow: 'Central reports one current Day; tomorrow\'s Day stands only after a rollover opens it, and no reading reports one (the design draws its page only when it is reported).',
+  tomorrowOpen: 'Central reports one current Day; no reading says whether tomorrow\'s Day is open.',
   closeRoutine: 'The close routine is the owner\'s automation; no reading of it reaches the shell (the scheduled rollover is off, 13 Oct, pending the owner\'s validation).',
   agentWrites: 'No owner holds how agent entries arrive on a Day.',
   template: 'The Day keeps the template it opened with (meta.template), but the design\'s choices are not the owner\'s templates.',
@@ -185,9 +187,7 @@ function refusalOf(standing: DayDocumentStanding | null, pointer: string | null,
 export function dayValuesOf(facts: DayFacts, document: {readonly face: number; readonly payload: unknown} | null): Record<string, Value> {
   const values: Record<string, Value> = {}
   const date = civilDayName(facts.civilDate)
-  const tomorrow = civilDayName(nextCivilDate(facts.civilDate))
   if (date) values.date = date
-  if (tomorrow) values.tomorrow = tomorrow
   if (facts.standing) values.light = facts.standing.state === 'ready' ? 'lit' : 'dark'
   // The policy's day boundary is when tomorrow becomes today (DLW §18.1 Day start); with automatic rollover the owner opens the next
   // Day at that boundary, and without it no Day opens by itself: Off (the design's step below midnight, day.tsx TIME).
