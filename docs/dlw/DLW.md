@@ -1051,13 +1051,13 @@ The graph view has its own controls. Set how many hops it reaches, how far nodes
 | Place kind | Place · Palace · Portal · Route | Place | Chooses what the next click on the body places. |
 | Earth layers | Imagery: Offline · Live. Terrain: Off · On. Day and night: Off · On. Place layers: each relation, On · Off | Offline, Off, Off, all On | Adds layers to Earth. Live imagery and terrain need your consent and show their source. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The World is one device with five views. All five show the same live settings.
+The World is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: atlas-earth:globe-engine
-caption: The World as the shell draws it now, in its five views. The readings are a fixture.
+caption: The World as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -1215,13 +1215,13 @@ Every filter you apply stays on screen as a chip. Remove a chip to remove the fi
 | Arrows | On · Off | Off | Shows the direction of each line. |
 | Minimap | On · Off | On | Shows the overview in the corner. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Knowledge graph is one device with five views. All five show the same live settings.
+The Knowledge graph is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: knowledge-graph:graph
-caption: The Knowledge graph as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Knowledge graph as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -1359,13 +1359,13 @@ The Canvas imports and exports a file that other note tools open. Presentation i
 | Autosave | On · Off | On | Saves a short time after a gesture, and at once after a delete. A small glyph shows saved, saving or held. |
 | View | A saved view, or none | None | Applies a saved view. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Canvas is one device with five views. All five show the same live settings.
+The Canvas is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: techne:canvas
-caption: The Canvas as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Canvas as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -1519,13 +1519,13 @@ Edges between events take the colour and line of their standing, with a legend t
 | Overview strip | On · Off | On | Shows the whole domain with the view marked. |
 | View | A saved view, or none | None | Applies a saved view. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Timeline is one device with five views. All five show the same live settings.
+The Timeline is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: techne:timeline
-caption: The Timeline as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Timeline as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -1671,13 +1671,13 @@ Press Record and go somewhere new. Each place, moment or thing you visit becomes
 | Narration | On · Off | On | Speaks or shows the words of each stop. |
 | Take | A recorded take | The latest take | Chooses the take that stands. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Journey is one device with five views. All five show the same live settings.
+The Journey is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: techne:journey
-caption: The Journey as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Journey as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -1823,13 +1823,13 @@ If the reading names no route, the Palace gives a receipt that says nothing was 
 | Return route | The routes that the reading names | The first route | Chooses where Return sends its proposal. |
 | Bookmark | A saved position, or none | None | Jumps to a saved position. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Palace is one device with five views. All five show the same live settings.
+The Palace is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: techne:palace
-caption: The Palace as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Palace as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -1974,13 +1974,13 @@ A save has one of five outcomes, and the Document names it: saved, unchanged, st
 | Pin | Follows · Pinned | Follows | A pinned pane keeps its page while you select elsewhere. |
 | Paper | Template default · Light · Dark | Template default | Sets the paper tone of the page. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Document is one device with five views. All five show the same live settings.
+The Document is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: central:document
-caption: The Document as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Document as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -2135,13 +2135,13 @@ Launch mode says how a clip plays: once, while you hold it, or in a loop. Launch
 | Main track | Shown · Hidden | Shown | Shows the Main track at the end of the grid. |
 | Row keys | On · Off | On | Lets the number keys launch rows. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Session grid is one device with five views. All five show the same live settings.
+The Session grid is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: dlw:session-grid
-caption: The Session grid as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Session grid as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -2298,13 +2298,13 @@ Snap pulls the playhead and the edges you drag to clip edges, markers, loop edge
 | Overview strip | On · Off | On | Shows the whole ruler with the view marked. |
 | Standing floor | Facts only · Plus claims · Plus inferences · Plus guesses · All | All | Hides clips that stand below the level. It applies in Technē. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Arrangement ruler is one device with five views. All five show the same live settings.
+The Arrangement ruler is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: dlw:arrangement-ruler
-caption: The Arrangement ruler as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Arrangement ruler as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -2437,13 +2437,13 @@ The agent does not write behind your back. With Arm off, each change arrives as 
 | Voice | On · Off | Off | Turns speech into words in the composer. |
 | Steer lines | Highlighted · Plain | Highlighted | Marks the words you sent in the middle of a turn. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Thread is one device with five views. All five show the same live settings.
+The Thread is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: software-factory:thread
-caption: The Thread as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Thread as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -2562,13 +2562,13 @@ The Terminal is a reading surface. It has no devices of its own. It holds no set
 | Font size | 10–18 points | 12 points | Sets the size of the text. |
 | Wrap | On · Off | On | Wraps long lines. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Terminal is one device with five views. All five show the same live settings.
+The Terminal is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: widgets:terminal
-caption: The Terminal as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Terminal as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -2689,13 +2689,13 @@ closes.
 | Sources | Per mode: On · Off | All On | Which modes send entries to faces 2 and 4. |
 | Template | A template, at a version | The standard Day | The page design. Each Day keeps the template version it opened with. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Day is one device with five views. All five show the same live settings.
+The Day is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: central:day-die
-caption: The Day device as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Day device as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -2831,13 +2831,13 @@ Use the Workspace to pick up a project, a book or a practice exactly where you l
 | Keep context | On change · On leave · Manual | On change | When the workspace stores your context. |
 | Send to Day | On · Off | On | Sends the work of the workspace to the Day. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Workspace is one device with five views. All five show the same live settings.
+The Workspace is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: central:workspace
-caption: The Workspace as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Workspace as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -2956,13 +2956,13 @@ A participant is a person or an agent. A person is drawn solid. An agent is draw
 | Media | Image, video or audio files, up to 12 MB each | None | Files attached to an entry. The page keeps them inside itself. |
 | Template | A template, at a version | The standard Flow | The page design. Each Flow keeps the template version it opened with. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Flow is one device with five views. All five show the same live settings.
+The Flow is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: central:flow-document
-caption: The Flow as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Flow as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -3083,13 +3083,13 @@ The page has a title, a line of introduction, an opening, numbered sections and 
 | Tone | Paper · Ink | Paper | The ground of the page: light or dark. |
 | Template | A template, at a version | The standard Beings page | The page design. Each page keeps the template version it opened with. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Beings is one device with five views. All five show the same live settings.
+The Beings is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: central:beings
-caption: The Beings as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Beings as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -3208,13 +3208,13 @@ The page has a title, a line of introduction, an opening, numbered sections and 
 | Tone | Paper · Ink | Paper | The ground of the page: light or dark. |
 | Template | A template, at a version | The standard Things page | The page design. Each page keeps the template version it opened with. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Things is one device with five views. All five show the same live settings.
+The Things is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: central:things
-caption: The Things as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Things as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -3312,13 +3312,13 @@ Use Text to shape the words on a page without leaving the page. It sets the styl
 | Emphasis | None · Bold · Italic · Strike | None | The emphasis of the selected words. |
 | Size | 13 to 22 pt | 15 pt | The type size in which you see the document. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Text is one device with five views. All five show the same live settings.
+The Text is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: central:text
-caption: The Text as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Text as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -3415,13 +3415,13 @@ Select a passage and four actions appear above it. Highlight, Notes, Packet and 
 | Pen | On · Off | Off | Makes a drag over text a highlight. |
 | Selection tool | On · Off | On | Shows the four actions when you select a passage. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Highlight is one device with five views. All five show the same live settings.
+The Highlight is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: central:highlight
-caption: The Highlight as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Highlight as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -3507,13 +3507,13 @@ Use Notes to keep your own thoughts beside a passage. Each note is anchored to t
 | Show | All notes · Open entry · Off | All notes | Which notes appear beside the document. |
 | Order | By place in the page · By time | By place in the page | The order of the list of notes. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Notes is one device with five views. All five show the same live settings.
+The Notes is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: central:notes
-caption: The Notes as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Notes as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -3603,13 +3603,13 @@ Each item in the packet shows three things: where it came from, a line of its te
 | Limit | Off, or a count of tokens | Off | Stops the packet at this size. An item that does not fit waits for your decision. |
 | After sending | Clear · Keep | Clear | Whether the packet empties when it is sent. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Packet is one device with five views. All five show the same live settings.
+The Packet is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: central:packet
-caption: The Packet as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Packet as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -3707,13 +3707,13 @@ Use Answer to ask an agent about a passage and get the reply in the page. The ag
 | Agent writes | Off · Propose · Write | Propose | Off: the answer shows in the conversation only. Propose: the answer waits in the page for you to accept it. Write: the answer goes in directly, with a receipt. |
 | Effort | Low · Medium · High · Max | Medium | How hard the agent thinks on each answer. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Answer is one device with five views. All five show the same live settings.
+The Answer is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: central:nara-conversation
-caption: The Answer as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Answer as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -3864,13 +3864,13 @@ use it, type `@name`. A `?` in the search is a gap that the next word fills.
 | On Enter | Send · Open | Send | What Enter does when text is selected. |
 | Aliases | A list. Each has a name and a search. | None | Your own short names for long searches. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Search is one device with five views. All five show the same live settings.
+The Search is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: central:search
-caption: The Search as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Search as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -3997,13 +3997,13 @@ Each tender returns a receipt.
 | Tending | Off · Propose · Write | Propose | Off: the device only reads. Propose: each tender waits for your approval. Write: an allowed tender runs when you press it, with a receipt. |
 | Allowed tenders | Release seat · Prune worktree · Sweep branch: each On or Off | All On | Which tenders the device may offer. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Ground hygiene is one device with five views. All five show the same live settings.
+The Ground hygiene is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: central:ground-hygiene
-caption: The Ground hygiene as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Ground hygiene as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -4103,13 +4103,13 @@ Use Impact to see what a change to a folder or a note will touch. It shows the n
 | Sessions | Open only · Open and closed | Open only | Which sessions the Sessions list holds. |
 | Relation | All · one kind of link | All | Limits the Links list to one kind of relation. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Impact is one device with five views. All five show the same live settings.
+The Impact is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: central:impact
-caption: The Impact as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Impact as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -4212,13 +4212,13 @@ Reach is the widest area that the agent can read from. A place outside the Reach
 | Writes elsewhere | Off · Propose · Write | Propose | Off: the agent does not write. Propose: each change waits for your approval. Write: changes go in directly, each with a receipt. |
 | Knowledge search | On · Off | Off | Lets the agent search your knowledge for passages. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Context & world is one device with five views. All five show the same live settings.
+The Context & world is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: central:context-world
-caption: The Context & world as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Context & world as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -4319,13 +4319,13 @@ Use Agent identity to know who an agent is before you give it work. It reads the
 | Roster | Accepted only · Accepted and proposed | Accepted only | Which agents the list holds. |
 | Detail | Name · Card · Full profile | Card | How much of the identity the device shows. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Agent identity is one device with five views. All five show the same live settings.
+The Agent identity is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: central:agent-identity
-caption: The Agent identity as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Agent identity as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -4422,13 +4422,13 @@ A child session shows a folded Gateway that reads "via lead". It uses the connec
 | Fan-out | 0–8 observers | 2 | The number of observers allowed per session. A slow observer loses only its own feed. |
 | Readiness | Ready · Composed · Refused (reading) | Read from the harness | Shows the state of the harness: its database, its settings, its model and its disk. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Gateway is one device with five views. All five show the same live settings.
+The Gateway is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: actuation:gateway
-caption: The Gateway as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Gateway as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -4523,13 +4523,13 @@ Each chain shows its transport and its state. The state comes from a reading. Th
 | Fan-out | 0–8 observers | 2 | The observers allowed per session. A slow observer loses only its own feed. |
 | Open | Per chain | — | Opens that gateway in a pane. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Gateways rack is one device with five views. All five show the same live settings.
+The Gateways rack is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: actuation:gateways-rack
-caption: The Gateways rack as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Gateways rack as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -4610,13 +4610,13 @@ The Agent device shows one face and joins settings from three places. Actuation 
 | On stall | Ask · Retry once · Stop | Ask | What the device does when the session stalls. |
 | Autonomy | Suggest · Review · Auto | Review | Shown here. Custody sets it. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Agent device is one device with five views. All five show the same live settings.
+The Agent device is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: actuation:harness-model
-caption: The Agent device as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Agent device as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -4714,13 +4714,13 @@ An Experiment holds five statements. The question says what you want to learn. T
 | Beat | 5 s–5 min | 15 s | How often a reading is taken. |
 | Compare with | None, or an earlier Experiment | None | Draws the earlier run beside this run. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Experiment is one device with five views. All five show the same live settings.
+The Experiment is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: actuation:experiment
-caption: The Experiment as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Experiment as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -4808,13 +4808,13 @@ You need to see exactly what passed between the shell and the harness. The Frame
 | Pause | On · Off | Off | Holds the list still. The gateway keeps the frames. |
 | Keep | 100–5000 frames | 1000 | The number of frames in the list. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Frames monitor is one device with five views. All five show the same live settings.
+The Frames monitor is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: actuation:frames-monitor
-caption: The Frames monitor as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Frames monitor as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -4940,9 +4940,9 @@ not make the agent use it.
 | Revision | A digest (reading) | Read from AIKit | The revision of the whole set. |
 | Unsupported | A count (reading) | Read from the receipt | The relations that the package target cannot carry. The receipt names each one. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Skillset rack is one device with five views. All five show the same live settings.
+The Skillset rack is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: ai-kit:skillset-rack
@@ -5061,9 +5061,9 @@ and its face changes with the form.
 | Instantiate | Needed · Not needed (reading), Methodology only | Read for each act | Whether the act in hand needs the Methodology, or the invoked skill carries enough. |
 | Reach | Harnesses (reading), Skill only | Read from AIKit | The harnesses that the skill is written into in this context. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The member device is one device with five views. All five show the same live settings.
+The member device is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: ai-kit:skill-device
@@ -5157,13 +5157,13 @@ You need to choose which knowledge an agent can look up, and how far it may foll
 | Read budget | 1–200 pages | 40 | The most pages the agent reads in one task. |
 | Route | Ready · Composed · Refused (reading) | Read from AIKit | Shows whether the route answers. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Knowledge route is one device with five views. All five show the same live settings.
+The Knowledge route is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: ai-kit:knowledge-route
-caption: The Knowledge route as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Knowledge route as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -5242,13 +5242,13 @@ You need messages to reach an agent from any surface you use, and from one agent
 | Inbox | A count (reading) | Read from the gateway | The messages that wait for an agent. |
 | State | Ready · Composed · Refused (reading) | Read from the gateway | Whether the gateway carries messages now. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Agency gateway is one device with five views. All five show the same live settings.
+The Agency gateway is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: ai-kit:agency-gateway
-caption: The Agency gateway as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Agency gateway as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -5324,13 +5324,13 @@ You need an agent to learn something you did by hand. Capture skill turns a work
 | Steps | A list (reading) | Read from the example | The steps the device found. You can remove a step. |
 | Lands as | Proposal | Proposal | Where the skill goes. It goes to Approvals. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Capture skill is one device with five views. All five show the same live settings.
+The Capture skill is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: ai-kit:capture-skill
-caption: The Capture skill as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Capture skill as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -5410,13 +5410,13 @@ You need to see every attempt made on a piece of work, and which one stands. Run
 | Compare | None, or a second attempt | None | Draws two attempts side by side. |
 | Stands | An attempt | None | The attempt you accept. When you choose it, you review it. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-Runs is one device with five views. All five show the same live settings.
+Runs is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: software-factory:attempt-review
-caption: Runs as the shell draws it now, in its five views. The readings are a fixture.
+caption: Runs as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -5510,13 +5510,13 @@ An empty square names what a click does: it stops the session after the current 
 | Effort | Inherit · Low · Medium · High · Max | Inherit | Sets the effort for this task only. |
 | Autonomy | Inherit · Suggest · Review · Auto | Inherit | Sets the autonomy for this task only. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-Tasks is one device with five views. All five show the same live settings.
+Tasks is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: software-factory:tasks
-caption: Tasks as the shell draws it now, in its five views. The readings are a fixture.
+caption: Tasks as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -5599,13 +5599,13 @@ You need to decide how much an agent decides alone, what you must check, and who
 | Held | A list (reading) | Read from the agent | The things the agent holds now, such as a file or a setting. |
 | Hand back | Lit · Dark (reading) | Dark | Lit when you edited something an agent holds. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Custody is one device with five views. All five show the same live settings.
+The Custody is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: software-factory:agent-custody
-caption: The Custody as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Custody as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -5692,13 +5692,13 @@ The picture shows nested rings. The smallest ring is one object. The next rings 
 | Basis | A revision pair (reading) | Read from the world | The revision the agent started from and the revision of its edits. |
 | Receipts | A list (reading) | Read from the agent | One receipt for each write. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Scope is one device with five views. All five show the same live settings.
+The Scope is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: software-factory:context-write-mode
-caption: The Scope as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Scope as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -5786,13 +5786,13 @@ You need a record of what the agents did and what came of it. The Ledger lists e
 
 A receipt holds the number of the task, its name, the agent, the outcome, the revision it started from and who accepted it. It also lists the files that changed. A receipt is made when the task writes. The Ledger does not edit a receipt.
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Ledger is one device with five views. All five show the same live settings.
+The Ledger is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: software-factory:ledger
-caption: The Ledger as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Ledger as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -5868,13 +5868,13 @@ You need one place to answer what the agents ask. Approvals holds every proposal
 | On no answer | Hold · Deny | Hold | What happens when nobody answers. |
 | Order | Oldest first · By agent · By risk | Oldest first | The order of the queue. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Approvals is one device with five views. All five show the same live settings.
+The Approvals is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: software-factory:approvals
-caption: The Approvals as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Approvals as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -5957,13 +5957,13 @@ A lane has task blocks. A done block is solid. A running block fades out at the 
 | Needle | A time (reading) | Read from the session | The time of the last check-in. |
 | Takes | A list of attempts | The latest | The attempts under the lane. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Run is one device with five views. All five show the same live settings.
+The Run is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: software-factory:run-device
-caption: The Run as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Run as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -6049,13 +6049,13 @@ Each chain is one agent. The lead is at the top. Its helpers sit below it, with 
 | Subagent model | A model | The lead's model | The default model for everything the group spawns. A member can set its own. |
 | Member state | Working · Idle · Stalled · Done (reading) | Read from each session | The state of each chain. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Agentset rack is one device with five views. All five show the same live settings.
+The Agentset rack is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: software-factory:agentset-rack
-caption: The Agentset rack as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Agentset rack as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -6146,13 +6146,13 @@ The line at the bottom is main. The branch leaves it and runs to the right. Each
 | Uncommitted | A count (reading) | Read from the seat | The files that have no commit. |
 | Land | A button | — | Lands the branch as set in Land as. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Git / landing is one device with five views. All five show the same live settings.
+The Git / landing is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: workcell:git-seat
-caption: The Git / landing as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Git / landing as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -6237,13 +6237,13 @@ You need a place where an agent can change a project without touching other work
 | Uncommitted | A count (reading) | Read from the seat | The files that have no commit. |
 | Release | A button | — | Releases the seat after the work has landed. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Seat is one device with five views. All five show the same live settings.
+The Seat is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: workcell:seat
-caption: The Seat as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Seat as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -6323,13 +6323,13 @@ You need to choose where a session runs. The Remote carrier moves a session from
 | Credential | Valid · Expired · Revoked (reading) | Read from the machine | Whether the machine accepts you. An expired credential is not the same as a revoked one. |
 | Round trip | Milliseconds (reading) | Read from the link | The time for a message to go and return. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Remote carrier is one device with five views. All five show the same live settings.
+The Remote carrier is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: workcell:remote-carrier
-caption: The Remote carrier as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Remote carrier as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -6406,13 +6406,13 @@ You need your sessions on several machines to keep one ledger and one clock. Lin
 | Peers | A count (reading) | Read from the link | The agents and machines that joined. |
 | Lag | Milliseconds (reading) | Read from the link | The time for a change to reach the others. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Link is one device with five views. All five show the same live settings.
+The Link is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: workcell:link
-caption: The Link as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Link as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -6510,13 +6510,13 @@ The pitch rides the lines where the plate stands still. A symbol with a voice so
 | Pulse | On · Off | Off | Pulses the field on the beat. |
 | Lights | Dim · Full | Full | Turns the lights down so that one symbol stands alone. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Field is one device with five views. All five show the same live settings.
+The Field is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: expressions:field
-caption: The Field as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Field as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 In Clip view, the Field plays the scene clip that you select. The clip sets how long the scene holds and how it changes to the next.
@@ -6637,13 +6637,13 @@ Behind the sections stand the devices that govern the field. Each is a whole dev
 | Nara | On · Off, then Private · Circle | On, Private | Shows your personal layer. Private keeps it to you. |
 | Capture | Still · Video | Still | The kind of take that Capture makes. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Studio is one device with five views. All five show the same live settings.
+The Studio is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: expressions:studio
-caption: The Studio as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Studio as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 In Clip view, the Capture section keeps your last gestures as a new scene clip.
@@ -6748,13 +6748,13 @@ The Physics device sets how the particles move: how they swirl, slow down, fall 
 
 The device also has a Medium plane switch (Vertical · Horizontal, default Vertical) and three actions: Pause, Disperse and Reset.
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Physics device is one device with five views. All five show the same live settings.
+The Physics device is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: expressions:physics
-caption: The Physics device as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Physics device as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -6846,13 +6846,13 @@ The Pointer device sets what your pointer does to the field. Use it to push, pul
 | Click radius | 20 to 800 pixels | 200 | The reach of a click. |
 | Scope | Global · Local | Global | Global shares the pointer parameters across scenes. Local keeps them in this scene. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Pointer device is one device with five views. All five show the same live settings.
+The Pointer device is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: expressions:pointer
-caption: The Pointer device as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Pointer device as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -6944,13 +6944,13 @@ The Relational device makes symbols pull on one another. Use it to set centres t
 | Swirl radius | 20 to 3000 pixels | 500 | The reach of the whirl. |
 | Chaos factor | 0 to 30 | 0.2 | How much turbulence the centres add. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Relational device is one device with five views. All five show the same live settings.
+The Relational device is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: expressions:relational
-caption: The Relational device as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Relational device as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -7042,13 +7042,13 @@ The Medium device gives the particles a shared fluid to move through. Use it whe
 | Extent | 200 to 5000 pixels | 1400 | The width of the world that the grid covers. |
 | Dimension | 2D · 3D | 2D | A flat fluid or a fluid with depth. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Medium device is one device with five views. All five show the same live settings.
+The Medium device is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: expressions:medium
-caption: The Medium device as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Medium device as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -7136,13 +7136,13 @@ The Contacts device sets what happens when things touch. Use it to make particle
 | Contact bounce | 0 to 1 | 0.12 | How much speed touching particles keep. |
 | Contact viscosity and extent | Viscosity 0 to 1 · Extent 200 to 5000 pixels | 0.06 · 1400 | The sliding drag between particles, and the width of the contact grid. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Contacts device is one device with five views. All five show the same live settings.
+The Contacts device is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: expressions:contacts
-caption: The Contacts device as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Contacts device as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -7233,13 +7233,13 @@ The Morph device moves the field between two forms along a torus. Use it to make
 | Winding | Toroidal p 0 to 48 · Poloidal q 0 to 48 · Fibre offset −12.56 to 12.56 · Chiral coupling −4 to 4 | 3 · 2 · 0 · 0.75 | How many times the path winds round each circle, and how the twist couples. |
 | Manifold | Radius 10 to 1200 pixels · Volumetric depth 0 to 6 | 180 · 1 | The size of the torus and its depth in the field. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Morph device is one device with five views. All five show the same live settings.
+The Morph device is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: expressions:morph
-caption: The Morph device as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Morph device as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -7333,13 +7333,13 @@ The Focus device walks attention through the formations of a scene in order. Use
 | Carry tint | On · Off | Off | Carries the tint of the focus along the route. |
 | Carry station | On · Off | Off | Links the focus to the stations of the resonator. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Focus device is one device with five views. All five show the same live settings.
+The Focus device is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: expressions:focus
-caption: The Focus device as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Focus device as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -7436,13 +7436,13 @@ The Colour device paints the field. Use it to choose a palette, set how it moves
 | Contrast | 0.1 to 5 | 1.0 | The contrast of the palette response. |
 | Glow and paper grain | Glow 0 to 3 · Paper grain 0 to 0.2 | 0.45 · 0 | The glow behind the field, and the grain of the paper. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Colour device is one device with five views. All five show the same live settings.
+The Colour device is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: expressions:colour
-caption: The Colour device as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Colour device as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -7538,13 +7538,13 @@ The Ink device shapes the marks that the particles make. Use it to set how many 
 | Density bands | Scale 0.1 to 3 · Phase 0 to 6.28 radians | 1 · 0.3 | The size and the offset of the bands in the density. |
 | Edge and halo | Edge emphasis 0 to 1 · Peripheral ink 0 to 0.6 | 0 · 0.13 | How strong the outline is, and how much faint source ink shows. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Ink device is one device with five views. All five show the same live settings.
+The Ink device is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: expressions:ink
-caption: The Ink device as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Ink device as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -7638,13 +7638,13 @@ The Depth device gives symbols a true three-dimensional body and sets the lens t
 
 The device has one more switch: Occlusion (On · Off, default Off). It has two more shares: Depth in the swirl and Depth in the bridge (0 to 1). The body sets these shares until you set them.
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Depth device is one device with five views. All five show the same live settings.
+The Depth device is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: expressions:depth
-caption: The Depth device as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Depth device as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -7739,13 +7739,13 @@ The Resonance device tunes the plate that the field sounds on. Use it to set the
 
 The device also has a Compatibility switch: Resonator · Template (default Resonator). Template keeps the older fixed pattern.
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Resonance device is one device with five views. All five show the same live settings.
+The Resonance device is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: expressions:resonance
-caption: The Resonance device as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Resonance device as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -7835,13 +7835,13 @@ The Force device sets how the selected symbol pushes or pulls the particles arou
 | Radius | 20 to 2000 pixels | 200 | The reach of the force. |
 | Centre | X, Y, Z in stage units | The place of the symbol | Where the force acts. Move it to pin the force away from the symbol. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Force device is one device with five views. All five show the same live settings.
+The Force device is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: expressions:force
-caption: The Force device as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Force device as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -7931,13 +7931,13 @@ The Formation device places and sizes the selected symbol, and sets how many par
 
 The shape and the stored colour show as read-only lines. Change the shape in the glyph editor.
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Formation device is one device with five views. All five show the same live settings.
+The Formation device is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: expressions:formation
-caption: The Formation device as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Formation device as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -8029,13 +8029,13 @@ The Sound device gives the selected symbol a voice. Use it to tune a symbol to i
 | Release | 0 to 30 s | 0.8 | How long the voice takes to fade. |
 | Pan | −1 to 1 | 0 | The place of the voice. −1 is left. 1 is right. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Sound device is one device with five views. All five show the same live settings.
+The Sound device is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: expressions:sound
-caption: The Sound device as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Sound device as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -8132,13 +8132,13 @@ The Meaning device ties the selected symbol to a centre of the body and lets tha
 
 A modulation takes one signal: Resonant affinity, Travelling focus, Carrier speed, Force strength or Force spin. It moves one target: Colour gain, Colour radius or Hue phase. It has an amount and an offset, each from −100 to 100.
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Meaning device is one device with five views. All five show the same live settings.
+The Meaning device is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: expressions:meaning
-caption: The Meaning device as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Meaning device as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -8221,13 +8221,13 @@ The Scene device names the scene and the Expression and sets how long a scene la
 | Expression title | Text, 1 to 160 characters | The Expression's title | The name of the whole Expression. |
 | Expression description | Text, up to 5000 characters | Empty | A note about the Expression. An empty note is a real value. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Scene device is one device with five views. All five show the same live settings.
+The Scene device is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: expressions:scene
-caption: The Scene device as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Scene device as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 The Scene device edits the scene clip that is open in Clip view: its name, its length and its change to the next scene.
@@ -8313,13 +8313,13 @@ The Text device lays words on the page of a scene. Use it to add a heading, a ti
 | Page position | X and Y: −0.5 to 1.5 | 0.07 · 0.24 | The place of the block on the page, as a share of the page. |
 | Alignment | Left · Centre · Right | Left | How lines line up in the block. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Text device is one device with five views. All five show the same live settings.
+The Text device is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: expressions:text
-caption: The Text device as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Text device as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 The layers belong to the scene clip that is open in Clip view.
@@ -8409,13 +8409,13 @@ The Automation device moves parameters over a scene. Use it to make a field devi
 
 A lane can follow another lane. The follower takes the type, the wave, the rate, the phase, the duration, the delay, the loop and the easing of the leader. It keeps its own enabled state, blend and range.
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Automation device is one device with five views. All five show the same live settings.
+The Automation device is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: expressions:automation
-caption: The Automation device as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Automation device as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 The lanes belong to the scene clip that is open in Clip view.
@@ -8500,13 +8500,13 @@ The Blueprint device ties the symbols of a scene into a sixfold constellation an
 | Rotation | X, Y, Z in degrees | 0 · 0 · 0 | Turns the whole figure. |
 | Relative size | 0.0001 to 14 | 1 | Scales the whole figure. A handle in the plan moves it. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Blueprint device is one device with five views. All five show the same live settings.
+The Blueprint device is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: expressions:blueprint
-caption: The Blueprint device as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Blueprint device as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 The figure belongs to the scene clip that is open in Clip view.
@@ -8591,13 +8591,13 @@ The Body & triggers device sets what a scene carries and what the scene does whe
 | Operation | Inspect · List · Export | Inspect | What a read trigger does. |
 | Triggers | Up to 8 | None | The triggers of the scene. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Body & triggers device is one device with five views. All five show the same live settings.
+The Body & triggers device is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: expressions:body-triggers
-caption: The Body & triggers device as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Body & triggers device as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 The body and the triggers belong to the scene clip that is open in Clip view.
@@ -8679,13 +8679,13 @@ The Arrange device sets the positions of the symbols of a scene by a rule. Use i
 
 The scene records the last arrangement that you applied.
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Arrange device is one device with five views. All five show the same live settings.
+The Arrange device is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: expressions:arrange
-caption: The Arrange device as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Arrange device as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 The arrangement belongs to the scene clip that is open in Clip view.
@@ -8793,13 +8793,13 @@ The torus has two helices, which wind round it. A full return takes two turns. A
 | Level and pan | Level −60 to 6 dB · Pan −1 to 1 | −6 dB · 0 | The loudness and the place of the sound. |
 | View | Surface · Wire · Both, and Receiver On · Off | Surface · Off | What the pane draws. Receiver On makes your camera the place where the torus is heard. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Torus is one device with five views. All five show the same live settings.
+The Torus is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: quaternal-logic:torus
-caption: The Torus as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Torus as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 In Clip view, the Torus plays the notes of the clip that you select. The piano roll edits those notes. A clip can carry its own mode.
@@ -8923,13 +8923,13 @@ The same note can have more than one key. Each key is a separate touch point.
 
 The Partition overlay shows the black and white colours of a traditional keyboard. The Pair family overlay marks the relations A, B and C. The Completion overlay marks the degrees D1 to D3.
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Jankó keyboard is one device with five views. All five show the same live settings.
+The Jankó keyboard is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: live:janko
-caption: The Jankó keyboard as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Jankó keyboard as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 In Clip view, the keyboard records the notes that you play into the clip that is open. The piano roll shows them.
@@ -9037,13 +9037,13 @@ The planetary scales were composed to draw the quality of each planet into the p
 | Snap | Nearest · Up · Down · Off | Nearest | How a note outside the mode moves onto the mode. Off passes the note through. |
 | Show | Highlight · Fold · Off | Highlight | Highlight marks the notes of the mode. Fold hides the other notes in the roll and the keyboard. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Scale mapping device is one device with five views. All five show the same live settings.
+The Scale mapping device is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: live:scale-mapping
-caption: The Scale mapping device as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Scale mapping device as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 In Clip view, the device follows the mode of the open clip. When the clip has no mode, it follows the mode of the set.
@@ -9137,13 +9137,13 @@ The Exact-ratio tuning device sets the pitch of every note as an exact ratio. Us
 
 Chromatic stack builds the notes from whole tones of 9:8. Fifths stack builds them from fifths of 3:2. Source ratios use the intervals of the source scale in force, such as the planetary just intervals.
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Exact-ratio tuning device is one device with five views. All five show the same live settings.
+The Exact-ratio tuning device is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: live:exact-ratio
-caption: The Exact-ratio tuning device as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Exact-ratio tuning device as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -9236,13 +9236,13 @@ The Sky modulation device hands parts of the sound to the planets overhead. Use 
 
 The planets have these intervals: Sun 1:1, Moon 4:3, Mercury 5:4, Venus 9:8, Mars 15:8, Jupiter 5:3, Saturn 3:2, Neptune 9:5, Pluto 9:4. Uranus has no interval, so it moves a target by position only.
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Sky modulation device is one device with five views. All five show the same live settings.
+The Sky modulation device is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: live:sky-modulation
-caption: The Sky modulation device as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Sky modulation device as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -9350,13 +9350,13 @@ Each effect is a separate device with its own light. Put any of them on the chai
 
 Each effect also has an On · Off light, default On.
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Effects are four devices: a filter, a dynamics effect, a delay and a reverb. Each has five views. All five show the same live settings.
+The Effects are four devices: a filter, a dynamics effect, a delay and a reverb. Each has the same five: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: live:effects
-caption: The Effects as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Effects as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -9486,13 +9486,13 @@ The positions come from a calculated sky. They are not an observed sky. The sky 
 | Natal ring | Off · On | Off | Draws the sky of your birth round the sky of the date. Only you see it. |
 | Moves | A list | Filled by use | The parameters that each body moves now. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Sky is one device with five views. All five show the same live settings.
+The Sky is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: quaternal-logic:sky
-caption: The Sky as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Sky as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -9614,13 +9614,13 @@ The 16 even cuts come in eight reciprocal pairs. In each pair, the size of one p
 | 7 | 12° × 30 and 30° × 12 |
 | 8 | 15° × 24 and 24° × 15 |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The M3 clock is one device with five views. All five show the same live settings.
+The M3 clock is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: quaternal-logic:m3-clock
-caption: The M3 clock as the shell draws it now, in its five views. The readings are a fixture.
+caption: The M3 clock as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -9736,13 +9736,13 @@ For the I Ching, the Deck shows one hexagram, its six lines, the moving lines, t
 | Agent reads | Off · Propose · Write | Propose | Off: the agent does not read. Propose: each reading waits for you to accept it. Write: readings go in directly, each with a receipt. |
 | Journey | The open journey | The open journey | The journey that the reading joins. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Deck is one device with five views. All five show the same live settings.
+The Deck is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: quaternal-logic:deck
-caption: The Deck as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Deck as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -9851,13 +9851,13 @@ The centres rise from the Root to the Crown. The Crown dissolves into the source
 
 A route has a source for each centre. The own planet of each centre is in the table above. The decan ruler is the planet that rules the part of the sky where a body stands. The Sun reaches all seven centres.
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Chakra is one device with five views. All five show the same live settings.
+The Chakra is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: quaternal-logic:chakra
-caption: The Chakra as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Chakra as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -9959,13 +9959,13 @@ The four matrices are stacked. Each layer feeds the next. Only the first makes s
 | Follow | Notes · Sky · Off | Notes | Notes moves the cell with the notes you play. Sky moves it with the planets. Off pins the cell. |
 | Context | World · Personal · Shared | World | The occasion the Situation matrix shows. Each context keeps its own state. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The M′ matrices are one device with five views. All five show the same live settings.
+The M′ matrices are one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: quaternal-logic:m-prime-matrices
-caption: The M′ matrices as the shell draws it now, in its five views. The readings are a fixture.
+caption: The M′ matrices as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -10063,13 +10063,13 @@ Open tiles sit at the top of the rail. The launcher sits below them, as a grid o
 | Search | Text | Empty | Filters the launcher by name. |
 | Preset | A named group of tiles | None | A saved group of open tiles. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Rail is one device with five views. All five show the same live settings.
+The Rail is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: widgets:rail
-caption: The Rail as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Rail as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -10146,13 +10146,13 @@ You need to find any session or helper and open its thread. Sessions lists every
 | Nest | On · Off | On | Shows helpers under the session that spawned them. |
 | Pin | On · Off | Off | Keeps the list on its subject. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Sessions is one device with five views. All five show the same live settings.
+The Sessions is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: widgets:sessions
-caption: The Sessions as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Sessions as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -10222,13 +10222,13 @@ You need to see and use the shells of your sessions. Terminal shows the live she
 | Shell | A list of live shells | The agent's shell | Chooses the shell. |
 | Prompts | Show · Hide | Show | Marks a shell that waits for an answer, in the stall colour. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Terminal is one device with five views. All five show the same live settings.
+The Terminal is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: widgets:terminal
-caption: The Terminal as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Terminal as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -10298,13 +10298,13 @@ You need to see which files an agent read and which it changed. Files shows them
 | Blocked | Show · Hide | Show | Marks places the agent may not reach. |
 | Follow | On · Off | On | Keeps the tree on the selected agent. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Files is one device with five views. All five show the same live settings.
+The Files is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: widgets:files
-caption: The Files as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Files as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -10373,13 +10373,13 @@ You need to see the pages an agent read, and the text it used. Web shows each pa
 | Mark used text | On · Off | On | Highlights the text the agent used. |
 | Follow | On · Off | On | Shows the page the selected agent read last. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Web is one device with five views. All five show the same live settings.
+The Web is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: widgets:web
-caption: The Web as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Web as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -10443,13 +10443,13 @@ You need to see what is linked to the thing in play. Graph shows the neighbourho
 | Depth | 0–3 links | 1 | How many links the tile draws from the centre. |
 | Kinds | All · Notes · Files · Agents | All | Which kinds of node to draw. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Graph is one device with five views. All five show the same live settings.
+The Graph is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: widgets:graph
-caption: The Graph as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Graph as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -10513,13 +10513,13 @@ You need to read what changed before you approve it. Diff shows the uncommitted 
 | Session | The selected session · All | The selected session | Chooses whose changes to show. |
 | Layout | Unified · Side by side | Unified | How the lines are set out. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Diff is one device with five views. All five show the same live settings.
+The Diff is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: widgets:diff
-caption: The Diff as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Diff as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -10588,13 +10588,13 @@ You need to read the live events between the shell and the harness. Frames is th
 | Kinds | Messages · Tools · Heartbeat · Approvals · Errors | All | Chooses the frames to show. |
 | Pause | On · Off | Off | Holds the list still. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Frames is one device with five views. All five show the same live settings.
+The Frames is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: actuation:frames-monitor
-caption: The Frames as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Frames as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -10658,13 +10658,13 @@ You need to see what each task produced. Ledger shows every task with its receip
 | Outcome | All · Landed · Approved · Commented | All | Shows tasks with one outcome. |
 | Agent | All · One agent | All | Shows the tasks of one agent. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Ledger is one device with five views. All five show the same live settings.
+The Ledger is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: software-factory:ledger
-caption: The Ledger as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Ledger as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -10728,13 +10728,13 @@ You need to answer the agents when they ask. Approvals shows the proposals that 
 | Order | Oldest first · By agent · By risk | Oldest first | The order of the queue. |
 | Wait | 15 min–24 h | 4 h | How long a request waits before it counts as unanswered. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Approvals is one device with five views. All five show the same live settings.
+The Approvals is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: software-factory:approvals
-caption: The Approvals as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Approvals as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -10803,13 +10803,13 @@ You need to see all your agents at once, and what each is doing. Agents is the h
 | Relations | Show · Hide | Show | Draws dashed lines from an agent to its helpers. |
 | Doing lines | Show · Hide | Show | Shows one line of text for each agent that says what it does. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Agents is one device with five views. All five show the same live settings.
+The Agents is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: widgets:agents
-caption: The Agents as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Agents as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -10879,13 +10879,13 @@ You need to know exactly what the agent will read. Packet shows it whole, with i
 | Size | Tokens (reading) | Read from the packet | The size of what the agent will read. |
 | Send | A button | — | Sends the packet. The answer arrives as an entry. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Packet is one device with five views. All five show the same live settings.
+The Packet is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: central:packet
-caption: The Packet as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Packet as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -10955,13 +10955,13 @@ You need to go back to a place you were. Trail keeps every place you went, newes
 | Return | A stop | — | Returns to the same place, page and point in the reading. |
 | Limit | 8–100 stops | 8 | The stops shown in the tile. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Trail is one device with five views. All five show the same live settings.
+The Trail is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: widgets:trail
-caption: The Trail as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Trail as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -11029,13 +11029,13 @@ You need to see the moments of today that are still open. NOWs shows the day and
 | Now | A time (reading) | The present | The present moment. |
 | Machines | All · One machine | All | Shows the open moments of one machine. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The NOWs is one device with five views. All five show the same live settings.
+The NOWs is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: widgets:nows
-caption: The NOWs as the shell draws it now, in its five views. The readings are a fixture.
+caption: The NOWs as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -11097,13 +11097,13 @@ You need to read what a run produced. Results shows the results and the diffs of
 | Show | Results · Diffs · Both | Both | Chooses what the tile lists. |
 | Accept | A button | — | Accepts the result. The result goes to review. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Results is one device with five views. All five show the same live settings.
+The Results is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: widgets:results
-caption: The Results as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Results as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -11167,13 +11167,13 @@ You need to read the wiki pages that an agent may use. Wiki shows the pages insi
 | Reads only | On · Off | On | Shows only pages inside the scope's reads. |
 | Follow | On · Off | On | Shows the page the selected agent read last. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Wiki is one device with five views. All five show the same live settings.
+The Wiki is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: widgets:wiki
-caption: The Wiki as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Wiki as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -11237,13 +11237,13 @@ You need to see what is due around your work. Calendar is a widget from a third 
 | Range | Day · Week | Day | The span the tile shows. |
 | This work only | On · Off | Off | Shows only events tied to the work in front of you. |
 
-#### Views
+#### Views: Folded · Compact · Whole · Full · Widget
 
-The Calendar is one device with five views. All five show the same live settings.
+The Calendar is one device: Folded and Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. All five show the same live settings.
 
 ```ui
 device: widgets:calendar
-caption: The Calendar as the shell draws it now, in its five views. The readings are a fixture.
+caption: The Calendar as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
