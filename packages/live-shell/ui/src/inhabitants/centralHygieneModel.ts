@@ -89,6 +89,10 @@ export interface HygieneCensus {
   readonly seats: readonly SeatReading[]
   /** The machine the readings stand on (`workcell:mac`), when disclosed. */
   readonly machineRef: string | null
+  /** Each product's primary checkout as the register names it (`products.<product>.primary` of
+   * Control/machines/workcells.register.json: `o-i` → `Work/O-I`), when the host disclosed the register. A seat's product name
+   * is not its primary's directory (`ql-mef` stands at `Work/Quaternal-Logic`), so nothing is derived from it. */
+  readonly primaries?: Readonly<Record<string, string>>
 }
 
 // ---------------------------------------------------------------------------
@@ -120,24 +124,23 @@ export interface HygieneFinding {
  * `agent/<product>-<date>-<time>`; named lanes like `feat/…`, `agent/oh-i`). */
 const LANE_BRANCH = /^(agent\/|feat\/|lane\/)/
 
-/** Branches no seat claim accounts for: lane-named, not checked out in any
- * registered seat, and not the product's main. Reading, not deletion — the
- * sweep stays a declared tender. */
+/** Branches no seat claim accounts for: lane-named, held by no checkout, and
+ * not the product's main. Reading, not deletion — the sweep stays a declared
+ * tender. Whether a checkout holds a branch is the branch row's own reading
+ * (`%(worktreepath)`, BranchRow.checkedOutAt): it does not depend on the
+ * worktree read being taken, so turning that read off (Look at: Worktrees
+ * off) never makes a held branch look stray. A seat's claim accounts for
+ * its branch as well. */
 export function strayBranches(census: HygieneCensus): readonly HygieneFinding[] {
   const claimedBranches = new Set(
     census.seats
       .map(seat => seat.branch)
       .filter((branch): branch is string => branch !== null),
   )
-  const checkedOut = new Set(
-    census.worktrees
-      .map(worktree => worktree.branch)
-      .filter((branch): branch is string => branch !== null),
-  )
   const findings: HygieneFinding[] = []
   for (const branch of census.branches) {
     if (!LANE_BRANCH.test(branch.name)) continue
-    if (claimedBranches.has(branch.name) || checkedOut.has(branch.name)) continue
+    if (branch.checkedOutAt !== null || claimedBranches.has(branch.name)) continue
     findings.push({
       kind: 'stray-branch',
       subject: branch.name,
@@ -150,10 +153,13 @@ export function strayBranches(census: HygieneCensus): readonly HygieneFinding[] 
 }
 
 /** The checkout paths the register admits, derived from the census's own
- * seat rows: each seat's workcell path + product, and each product's
- * primary checkout (`<ground>/Work/<product>` — the ground root is two
- * levels above a worktrees/ workcell path). The census carries its own
- * registration facts; the caller supplies no extra machine constants. */
+ * rows: each seat's workcell path + product, and each product's primary
+ * checkout where the register's own `primary` is disclosed (census.primaries,
+ * resolved under the ground root — two levels above a worktrees/ workcell
+ * path). A seat's product name is never turned into a primary path
+ * (`o-i` stands at `Work/O-I`, `ql-mef` at `Work/Quaternal-Logic`); without
+ * the register, the primary is still known as the main worktree git lists
+ * first (erroneousWorktrees). */
 export function registeredSeatPaths(census: HygieneCensus): readonly string[] {
   const paths = new Set<string>()
   let groundRoot: string | null = null
@@ -164,18 +170,20 @@ export function registeredSeatPaths(census: HygieneCensus): readonly string[] {
       if (candidate) groundRoot = candidate
     }
   }
-  if (groundRoot) {
-    for (const seat of census.seats) paths.add(`${groundRoot}/Work/${seat.product}`)
+  for (const primary of Object.values(census.primaries ?? {})) {
+    if (primary.startsWith('/')) paths.add(primary)
+    else if (groundRoot) paths.add(`${groundRoot}/${primary.replace(/^\.?\//, '')}`)
   }
   return [...paths]
 }
 
 /** Worktrees checked out outside every registered seat path — the shape the
- * 29 September owner ruling refuses (no per-lane worktrees). */
+ * 29 September owner ruling refuses (no per-lane worktrees). The main
+ * worktree (the primary checkout) is the register's by its own law. */
 export function erroneousWorktrees(census: HygieneCensus, seatPaths: readonly string[]): readonly HygieneFinding[] {
   const findings: HygieneFinding[] = []
   for (const worktree of census.worktrees) {
-    if (worktree.bare) continue
+    if (worktree.bare || worktree.main) continue
     const registered = seatPaths.some(path => worktree.path === path || worktree.path.startsWith(`${path}/`))
     if (registered) continue
     findings.push({
@@ -231,17 +239,27 @@ export function seatFindings(census: HygieneCensus): readonly HygieneFinding[] {
         tenderId: null,
       })
     }
-    if (seat.state === 'claimed' && seat.branch && /main$/.test(seat.branch) === false && seat.dirty === 0 && seat.untracked === 0) {
+    if (seatOnLanded(seat)) {
       findings.push({
         kind: 'occupied-by-landed',
         subject: `${seat.workcell}/${seat.product}`,
-        standing: `seat claims ${seat.branch} with a clean tree — if the lane landed, release the seat (the seat law: a landed lane releases its workcell)`,
+        standing: `seat claims ${seat.branch} with a clean tree and nothing main does not hold (0 ahead) — the lane landed: release the seat (the seat law: a landed lane releases its workcell)`,
         boundaryOps: ops,
         tenderId: 'release-seat',
       })
     }
   }
   return findings
+}
+
+/** A claimed seat standing on a landed lane: off main, a clean tree (no
+ * tracked change, nothing untracked), and no commit main does not hold
+ * (`ahead_main` 0). A clean seat ahead of main still holds unlanded work and
+ * is not landed; a seat whose counts the instrument did not disclose is not
+ * called landed. */
+export function seatOnLanded(seat: SeatReading): boolean {
+  return seat.state === 'claimed' && !!seat.branch && !/(^|\/)main$/.test(seat.branch)
+    && seat.dirty === 0 && seat.untracked === 0 && seat.ahead === 0
 }
 
 /** The census as claimed seats — occupancy is itself a reading (the ticket
@@ -324,6 +342,7 @@ export function assembleCensus(input: {
   branches?: readonly BranchRow[]
   seats?: readonly SeatReading[]
   machineRef?: string | null
+  primaries?: Readonly<Record<string, string>>
 }): HygieneCensus {
   for (const source of input.sources) {
     if (!source.boundaryOp) throw new Error('a hygiene reading without its boundary operation is not a reading')
@@ -334,17 +353,25 @@ export function assembleCensus(input: {
     branches: input.branches ?? [],
     seats: input.seats ?? [],
     machineRef: input.machineRef ?? null,
+    ...(input.primaries ? {primaries: input.primaries} : {}),
   }
 }
 
-/** Parse `git worktree list --porcelain` output (read-only machine read). */
+/** The machine a workcell status reading names: Workcell's own `workcell_ref` (`workcell status --json` → "workcell_ref":
+ * "workcell:mac"; the kernel's `workcell_status_read` carries that reading as it is). A key the owner does not print is not read. */
+export function workcellRefOf(reading: unknown): string | null {
+  const ref = reading && typeof reading === 'object' ? (reading as {workcell_ref?: unknown}).workcell_ref : undefined
+  return typeof ref === 'string' && ref ? ref : null
+}
+
+/** Parse `git worktree list --porcelain` output (read-only machine read). The first row is the main worktree (git's own order). */
 export function parseWorktreeList(stdout: string): readonly WorktreeRow[] {
   const rows: WorktreeRow[] = []
-  let current: {path: string; head: string | null; branch: string | null; bare: boolean; detached: boolean} | null = null
+  let current: {path: string; head: string | null; branch: string | null; bare: boolean; detached: boolean; main: boolean} | null = null
   for (const line of stdout.split('\n')) {
     if (line.startsWith('worktree ')) {
       if (current) rows.push(current)
-      current = {path: line.slice('worktree '.length), head: null, branch: null, bare: false, detached: false}
+      current = {path: line.slice('worktree '.length), head: null, branch: null, bare: false, detached: false, main: rows.length === 0}
     } else if (current && line.startsWith('HEAD ')) {
       current.head = line.slice('HEAD '.length)
     } else if (current && line.startsWith('branch ')) {
@@ -369,11 +396,20 @@ export function parseBranchRefs(stdout: string): readonly BranchRow[] {
 
 /** Parse the seat instrument's `seat status` output into seat rows. The
  * instrument's display format is the owner's; this parser reads only what
- * it actually prints (name, state, branch, dirty counts, actor, drift,
+ * it actually prints (name, state, pose, the change marks, actor, drift,
  * admission/floor notes) and leaves everything else as unknown — a parse
  * gap stays honest, never guessed. Continuation lines (floor-breach notes,
  * DRIFT rows) attach to the seat they follow; a DRIFT row names its own
- * product and attaches there. */
+ * product and attaches there.
+ *
+ * The pose is the first word after the state: the live branch, or
+ * `detached <head>` (any branch name — `dlw/build`, `fold/…`, `speed/…` —
+ * never a guessed prefix). The marks follow it, and the instrument prints a
+ * mark only when its count is not zero (Control/user/workcell/seat
+ * cmd_status: `N dirty`, `N untracked`, `+N` ahead of main, `-N` behind),
+ * so on an answered row an absent mark reads 0. Prefer the instrument's own
+ * JSON (`seat status --json`, parseSeatStatusJson), which states every
+ * count. */
 export function parseSeatStatus(stdout: string): readonly SeatReading[] {
   // The draft is mutable while the parser attaches continuation rows; the
   // returned rows are the readonly readings.
@@ -396,24 +432,32 @@ export function parseSeatStatus(stdout: string): readonly SeatReading[] {
     const seat = line.match(/^\s{2}(\S+)\s+(free|claimed|occupied-foreign-lane)\s+(.*)$/)
     if (seat && workcell) {
       const [, product, state, rest] = seat
-      const branch = rest.match(/(detached|((?:agent|feat|lane|main)[^\s]*))/)?.[1]
-      const head = rest.match(/(?:detached\s+)?([0-9a-f]{7,})/)?.[1] ?? null
-      const dirty = rest.match(/(\d+) dirty/)?.[1]
-      const untracked = rest.match(/(\d+) untracked/)?.[1]
-      const claimedBy = state === 'claimed' ? rest.match(/by (\S+)/)?.[1] ?? null : null
+      const claim = rest.match(/\sby (\S+)\s*$/)
+      const words = (claim ? rest.slice(0, claim.index) : rest).trim().split(/\s+/).filter(Boolean)
+      const detached = words[0] === 'detached'
+      const pose = detached ? words.slice(0, 2) : words.slice(0, 1)
+      const marks = words.slice(pose.length).join(' ')
+      const liveHead = detached ? words[1] ?? null : null
       // `detached None` — the checkout did not answer the live read. The
-      // row stays honest: unknown state, nothing invented.
-      const unanswered = head === null && /detached\s+None/.test(rest)
+      // row stays honest: unknown state, no counts, nothing invented.
+      const unanswered = detached && (liveHead === null || liveHead === 'None')
+      const count = (pattern: RegExp): number | null => {
+        if (unanswered) return null
+        const found = marks.match(pattern)?.[1]
+        return found !== undefined ? Number(found) : 0
+      }
       current = {
         workcell,
         workcellPath: workcellPaths.get(workcell) ?? null,
         product,
         state: unanswered ? 'unknown' : state as SeatReading['state'],
-        branch: branch === 'detached' ? null : branch ?? null,
-        head,
-        claimedBy,
-        dirty: dirty !== undefined ? Number(dirty) : null,
-        untracked: untracked !== undefined ? Number(untracked) : null,
+        branch: detached ? null : words[0] ?? null,
+        head: unanswered || !liveHead || !/^[0-9a-f]{7,}$/.test(liveHead) ? null : liveHead,
+        claimedBy: state === 'claimed' ? claim?.[1] ?? null : null,
+        dirty: count(/(\d+) dirty/),
+        untracked: count(/(\d+) untracked/),
+        ahead: count(/(?:^|\s)\+(\d+)(?:\s|$)/),
+        behind: count(/(?:^|\s)-(\d+)(?:\s|$)/),
         drift: null,
         admissionNote: null,
       }
@@ -430,6 +474,57 @@ export function parseSeatStatus(stdout: string): readonly SeatReading[] {
       const target = seats.find(candidate => candidate.workcell === workcell && candidate.product === drift[1])
         ?? current
       if (target) target.drift = drift[2].trim()
+    }
+  }
+  return seats
+}
+
+/** The seat instrument's own JSON (`seat status --json`, schema `central.workcell-status/v1`; Control/user/workcell/seat
+ * cmd_status), the reading to prefer over the text: every count is stated (`tracked_changes`, `untracked`, `ahead_main`,
+ * `behind_main`), the live pose is separate from the register's, and each workcell's drift lines name their product. Null when
+ * the text is not that reading (the caller falls back to the text parser). A workcell drift line `<product>: checkout missing`
+ * makes that seat unknown, as the text's `detached None` does. */
+export function parseSeatStatusJson(stdout: string): readonly SeatReading[] | null {
+  let report: unknown
+  try { report = JSON.parse(stdout) } catch { return null }
+  const record = (value: unknown): Record<string, unknown> | null => value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null
+  const doc = record(report)
+  if (!doc || doc.schema !== 'central.workcell-status/v1' || !Array.isArray(doc.workcells)) return null
+  const text = (value: unknown): string | null => typeof value === 'string' && value ? value : null
+  const count = (value: unknown): number | null => typeof value === 'number' && Number.isFinite(value) ? value : null
+  const seats: SeatReading[] = []
+  for (const cell of doc.workcells) {
+    const workcell = record(cell)
+    const name = text(workcell?.name)
+    if (!workcell || !name) continue
+    const drifts = (Array.isArray(workcell.drift) ? workcell.drift : []).filter((line): line is string => typeof line === 'string')
+    for (const row of Array.isArray(workcell.seats) ? workcell.seats : []) {
+      const seat = record(row)
+      const product = text(seat?.product)
+      if (!seat || !product) continue
+      const drift = drifts.find(line => line.startsWith(`${product}: `))?.slice(product.length + 2).trim() ?? null
+      const missing = drift === 'checkout missing'
+      const declared = seat.state === 'free' || seat.state === 'claimed' || seat.state === 'occupied-foreign-lane' ? seat.state : 'unknown'
+      const admission = record(seat.admission)
+      const free = count(admission?.free_gb), floor = count(admission?.soft_floor_gb)
+      const admissionNote = admission
+        ? `${text(admission.standing) ?? 'admission recorded'}${free !== null && floor !== null ? ` (${free} GB free < soft ${floor} GB)` : ''}`
+        : null
+      seats.push({
+        workcell: name,
+        workcellPath: text(workcell.path),
+        product,
+        state: missing ? 'unknown' : declared,
+        branch: missing ? null : text(seat.live_branch),
+        head: missing ? null : text(seat.live_head),
+        claimedBy: text(seat.claimed_by),
+        dirty: missing ? null : count(seat.tracked_changes),
+        untracked: missing ? null : count(seat.untracked),
+        ahead: missing ? null : count(seat.ahead_main),
+        behind: missing ? null : count(seat.behind_main),
+        drift: missing ? null : drift,
+        admissionNote,
+      })
     }
   }
   return seats

@@ -78,15 +78,14 @@ function declareCentralExtension(): void {
         note: 'The 4+2 Day die over the existing hosting path (sandboxed iframe, payload island, bounded postMessage; DayFormSession + receiving mutate-field). Native Save is explicit; the strip discloses the save router\'s named outcomes.',
       },
       {
+        // DLW §18.3: the Flow is an instrument, first on a Flow document's chain before the document effects — not a clip. It
+        // generates through the Flow's own revision-checked file write (an entry appended, flow/instance.ts appendEntry, then
+        // central.files.write — kernel op file_operation).
         id: 'flow-document',
         kind: 'document',
         presentations: ['compact', 'expanded'],
-        liveSemantic: 'clip',
-        invariant: {
-          material: 'the Flow document (Dialogue · Flow · Journal)',
-          revision: 'CAS revision (central.files.write)',
-          states: ['draft', 'saved', 'edited since save'],
-        },
+        liveSemantic: 'device-instrument',
+        invariant: {generates: 'kernel:file_operation'},
         dock: ['dock', 'expand', 'pop-out'],
         document: {
           kind: 'ql-flow',
@@ -95,7 +94,7 @@ function declareCentralExtension(): void {
           saveRouter: ['saved', 'unchanged', 'stale', 'conflict', 'refused'],
           messages: ['oi:document-host-request', 'oi:document-host-response'],
         },
-        note: 'The 0/1 Flow (Dialogue · Flow · Journal) over the existing hosting path: payload island read through the bounded host bridge, save as the document\'s own revision-checked CAS write (central.files.write). Conflict returns the owner\'s bytes verbatim; the strip discloses the named outcome.',
+        note: 'The 0/1 Flow (Dialogue · Flow · Journal) over the existing hosting path: payload island read through the bounded host bridge, save as the document\'s own revision-checked CAS write (central.files.write). Conflict returns the owner\'s bytes verbatim; the strip discloses the named outcome. On the chain it is the Flow document\'s instrument (DLW §18.3): its entries, people and pages, an entry appended through the same write.',
       },
       {
         id: 'nara-conversation',
@@ -110,6 +109,73 @@ function declareCentralExtension(): void {
     ],
     detachedKinds: ['flow', 'file', 'encounter', 'device'],
     note: 'L2 extension: central\'s clip-view craft — ground/hygiene, impact, and the document/conversation devices. Base manifest (context-world, agent-identity) untouched.',
+  })
+}
+
+/** Central's page family (DLW §17.7 Document, §18.2 Workspace, §18.4–§18.8): the faces a Central document's chain and a workspace
+ * track hold — the Document instrument (any page, drawn by its template), the Workspace instrument (the track of one project), the
+ * page instruments for a Being and a Thing, and the document effects Text, Highlight and Notes, each after the form device (§18.6–
+ * §18.8). Each face is the catalogue's design (inhabitants/catalogue/panels/central__<face>.tsx), wired to Central's readings by
+ * central/devices/pageBindings.ts and placed by central/devices/CentralDevices.tsx (§16.2: "the document effects, then the agent that
+ * answers"). An instrument names what it generates through, or the owner it waits for; an effect names what it transforms. */
+const CENTRAL_PAGE_FAMILY_EXTENSION_ID = 'central:page-family'
+
+function declareCentralPageFamily(): void {
+  declareFamilyExtension('central', {
+    id: CENTRAL_PAGE_FAMILY_EXTENSION_ID,
+    by: 'claude-code:dlw lane BC2 (DLW §17.7, §18.2–§18.8)',
+    faces: [
+      {
+        id: 'document',
+        presentations: ['compact', 'expanded'],
+        liveSemantic: 'device-instrument',
+        invariant: {generates: 'kernel:file_operation'},
+        note: 'Any Central page as its template draws it (DLW §17.7): the template, the title, the save state and what the page holds (entries, highlights, notes, packet), read from the document the hand reached (central/documents/documentDoor.ts) and the page\'s own file. Save and Re-read are the hosted face\'s own: a Flow\'s revision-checked file write (op file_operation), a Day\'s receiving write.',
+      },
+      {
+        id: 'workspace',
+        presentations: ['compact', 'expanded'],
+        liveSemantic: 'device-instrument',
+        invariant: {generatesAbsent: 'Launch and the remembered context belong to the workspace book (desktop/cradle/src/workspace/store.ts), the shell\'s own store; no owner operation carries a launch or a Keep setting yet.'},
+        note: 'The track of one project, book or practice (DLW §18.2): the workspace book\'s pane trees, its sets, its open mode and its project, read from the book the shell holds.',
+      },
+      {
+        id: 'beings',
+        presentations: ['compact', 'expanded'],
+        liveSemantic: 'device-instrument',
+        invariant: {generatesAbsent: 'the oi-beings form\'s owner has landed no page read or write (desktop/cradle/src/personal/page.mjs holds the page law; no kernel op carries it)'},
+        note: 'A page about a person or an agent (DLW §18.4): its ties — world, subject, offices, sources, place — read from its oi.page/v1 island when a Beings page is reached.',
+      },
+      {
+        id: 'things',
+        presentations: ['compact', 'expanded'],
+        liveSemantic: 'device-instrument',
+        invariant: {generatesAbsent: 'the oi-things form\'s owner has landed no page read or write (desktop/cradle/src/personal/page.mjs holds the page law; no kernel op carries it)'},
+        note: 'A page about an object in your work (DLW §18.5), on the Beings page\'s keys and shapes.',
+      },
+      {
+        id: 'text',
+        presentations: ['compact', 'expanded'],
+        liveSemantic: 'device-audio-fx',
+        invariant: {transforms: 'the open page\'s words — the paragraph style and the emphasis the page keeps as its own tags, read; the words pass whole'},
+        note: 'The style of each paragraph and the emphasis of each word, as the page keeps them in its entries\' html (ql-flow.html clean()). A style or an emphasis is set on the page itself.',
+      },
+      {
+        id: 'highlight',
+        presentations: ['compact', 'expanded'],
+        liveSemantic: 'device-audio-fx',
+        invariant: {transforms: 'the open page\'s passages — marked by the page\'s own <mark> spans, read; the words pass whole'},
+        note: 'The passages the page marks (ql-flow.html act(\'hl\'); central/documentPayload.ts markedPassages). A highlight is made on the page itself.',
+      },
+      {
+        id: 'notes',
+        presentations: ['compact', 'expanded'],
+        liveSemantic: 'device-audio-fx',
+        invariant: {transforms: 'the open page\'s notes — each anchored to its entry and passage, read; the page passes whole'},
+        note: 'The notes the page keeps beside its entries (ql-flow.html D.notes): the entry, the quoted passage, the timing, the words and the replies. A note is written on the page itself.',
+      },
+    ],
+    note: 'The page family: the Document and Workspace instruments, the Beings and Things pages, and the document effects Text, Highlight and Notes (DLW §16.2, §17.7, §18.2–§18.8). Additive: the base manifest and the L2 extension stay as declared.',
   })
 }
 
@@ -148,6 +214,7 @@ export function loadWorldShellFamilies(): void {
   admitKnowledgeGraphFamily()
   quaternalLogicFamilyManifest()
   declareCentralExtension()
+  declareCentralPageFamily()
   declareSoftwareFactoryExtension()
   // [L9 musical family] the QL instrument face — additive, idempotent.
   declareQlMusicalExtension()

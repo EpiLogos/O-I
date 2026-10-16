@@ -7,10 +7,12 @@
 //   - the roster: Central's accepted agents (the shared roster answer, owners/readers.ts; central.agent-profile-roster/v1; the
 //     first accepted agent is the identity, agent/AgentDeviceChain.tsx:38-46);
 //   - the workcell: `workcell_status_read` (the shared workcell answer, owners/readers.ts);
-//   - the Flow: the owner's revision of the selected flow document (`readFlowInstance`);
 //   - Central's ground: the `central` op `inspect` (readGround) — the civil-time policy and today's Day reading — held once for the
 //     window (owners/ownerReading.ts), as the Day's own answer is (owners/day.ts).
-import {useCallback, useEffect, useMemo, useState} from 'react'
+// Lane W3's receipts (owners/notices.ts): a receiving act or a Day write the kernel carried (`receiving_changed`, `day_changed`)
+// reads the Day document again, and a Day write reads the ground again — no timer, and nothing the kernel did not carry.
+import {useCallback, useContext, useEffect, useMemo, useRef, useState} from 'react'
+import type {KernelReceipt} from '../../../../../../desktop/cradle/src/kernel/types'
 import {receiving} from '../../../../../../desktop/cradle/src/receiving/client'
 import {readGround, type CentralGroundReading} from '../../../../../../desktop/cradle/src/central/client'
 import {validateDocumentBasis} from '../../../../../../desktop/cradle/src/central/dayForm'
@@ -18,13 +20,27 @@ import {onAttentionRegained} from '../../owners/attention'
 import {ownerReadings, useOwnerReading, type OwnerRead} from '../../owners/ownerReading'
 import {useSpineEpoch} from '../../owners/spine'
 import {useRosterAgents, useWorkcellAnswer} from '../../owners/readers'
-import {readFlowInstance} from '../../../../../../desktop/cradle/src/flow/instances'
+import {createReceiptCursor, receiptMovesDay, receiptMovesReceiving} from '../../owners/notices'
+import {Workspace} from '../../shell/workspaceContext'
 import {lookupNativeDialogue, type NativeDialogue} from '../../../../../../desktop/cradle/src/nara/nativeDialogue'
 import {currentIdentity} from '../../../../../../desktop/cradle/src/nara/identity/current'
-import type {CentralLocation, KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
+import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import {conversationGap} from '../centralVertical'
 import {dieFaceOf} from './dayDie'
 import type {CentralReads, NaraState} from './centralDeviceModel'
+
+const NO_RECEIPTS: readonly KernelReceipt[] = []
+
+/** Call `again` when the spine's receipts bring a new one that `moves` (each receipt once for this reader). Outside the shell's
+ * providers (a pane in a root of its own) no receipt arrives. */
+export function useReceiptsMove(moves: (receipt: KernelReceipt) => boolean, again: () => void): void {
+  const receipts = useContext(Workspace)?.receipts ?? NO_RECEIPTS
+  const fresh = useRef<ReturnType<typeof createReceiptCursor> | null>(null)
+  fresh.current ??= createReceiptCursor()
+  const live = useRef({moves, again})
+  live.current = {moves, again}
+  useEffect(() => { if (fresh.current!(receipts).some(live.current.moves)) live.current.again() }, [receipts])
+}
 
 export interface DayDieAperture {
   readonly project: string | null
@@ -61,6 +77,8 @@ export function useDayDieReading(transport: KernelTransportStatus, day: DayDieAp
   }, [transport, key, reread])
   // The owner is read again after a write the devices made (the die's open face), so the three sizes show what the owner holds.
   const refresh = useCallback(() => setReread(count => count + 1), [])
+  // …and when the kernel says a receiving act or a Day write moved it (a save in the Day's own pane, an ensure).
+  useReceiptsMove(receiptMovesReceiving, refresh)
   return held && held.key === key ? {face: held.face, revision: held.revision, payload: held.payload, refresh} : {face: null, revision: null, payload: null, refresh}
 }
 
@@ -99,6 +117,8 @@ export function useCentralGroundAnswer(transport: KernelTransportStatus): {readi
   const epoch = useSpineEpoch()
   const carried = transport.kind !== 'unavailable'
   const {reading, refresh, retry} = useOwnerReading(carried ? groundKey(transport) : null, readGroundOf(transport), epoch)
+  // A Day write the kernel carried moves today's Day reading: the ground is read again, a remembered refusal too.
+  useReceiptsMove(receiptMovesDay, retry)
   if (!carried) return {reading: null, error: `the kernel carrier is unavailable: ${transport.reason}`, refresh, retry}
   return {reading: reading.status === 'answered' ? reading.value : null, error: reading.status === 'refused' ? reading.error : null, refresh, retry}
 }
@@ -106,7 +126,7 @@ export function useCentralGroundAnswer(transport: KernelTransportStatus): {readi
 type NaraStanding = {readonly state: Exclude<NaraState, 'bound'>} | {readonly state: 'bound'; readonly dialogue: NativeDialogue}
 
 /** Where the conversation's binding stands, and its own fields once bound. */
-export function useNaraReading(transport: KernelTransportStatus, project: string | null, expressionRef: string | null, conversation: string | null): NonNullable<CentralReads['nara']> & {refresh: () => void} {
+export function useNaraReading(transport: KernelTransportStatus, project: string | null, expressionRef: string | null, conversation: string | null): NonNullable<CentralReads['nara']> & {refresh: () => void; space: string | null; resume: boolean | null} {
   // The identity is read as the face reads it (inhabitants/ConversationNaraFace.tsx:69, `currentIdentity()`): at render, with no
   // subscription, so a conversation device re-reads it whenever its chain does.
   const identity = currentIdentity()
@@ -131,6 +151,9 @@ export function useNaraReading(transport: KernelTransportStatus, project: string
     gap: conversation && !expressionRef ? conversationGap(conversation) : null,
     expression: dialogue ? dialogue.binding.expression_ref : null,
     session: dialogue ? dialogue.provisioning.agent_session : null,
+    // The session's space and whether it asks to resume: the Answer observes the session by them (answerBinding.ts).
+    space: dialogue ? dialogue.provisioning.space : null,
+    resume: dialogue && typeof dialogue.provisioning.resume_required === 'boolean' ? dialogue.provisioning.resume_required : null,
     refresh,
   }), [standing.state, conversation, expressionRef, dialogue, refresh])
 }
@@ -163,21 +186,4 @@ export function useWorkcellReading(transport: KernelTransportStatus): NonNullabl
       ok: typeof data.ok === 'boolean' ? data.ok : null,
     }
   }, [reading])
-}
-
-/** The owner's revision of the selected flow document, when an aperture selects one. */
-export function useFlowReading(transport: KernelTransportStatus, location: CentralLocation | null): {path: string; revision: string | null} | null {
-  const [held, setHeld] = useState<{path: string; revision: string} | null>(null)
-  const path = location?.path ?? null
-  useEffect(() => {
-    if (!location) return
-    let alive = true
-    readFlowInstance(transport, location)
-      .then(instance => { if (alive) setHeld({path: location.path, revision: instance.revision}) })
-      .catch(() => { if (alive) setHeld(null) })
-    return () => { alive = false }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- the path names the aperture
-  }, [transport, path])
-  const revision = location && held?.path === location.path ? held.revision : null
-  return useMemo(() => path ? {path, revision} : null, [path, revision])
 }
