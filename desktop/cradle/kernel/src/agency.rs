@@ -1913,17 +1913,40 @@ mod tests {
 
     /// The kernel-level exec race can still answer "Text file busy" (os error
     /// 26) under a loaded parallel run; the TEST retries a bounded number of
-    /// times rather than weakening what the client asserts.
-    pub(super) fn retry_busy<T>(mut call: impl FnMut() -> Result<T, String>) -> Result<T, String> {
+    /// times rather than weakening what the client asserts. A client that
+    /// turns a failed spawn into refused data (gateway_agent: an unreachable
+    /// owner is a refused answer) carries the same race inside an Ok — that
+    /// is retried too (CI, 16 Oct: the pass-through test read a busy exec's
+    /// refusal as the gateway's answer).
+    pub(super) fn retry_busy<T: BusyAnswer>(
+        mut call: impl FnMut() -> Result<T, String>,
+    ) -> Result<T, String> {
         let mut attempt = 0;
         loop {
-            match call() {
-                Err(message) if attempt < 20 && message.contains("os error 26") => {
-                    attempt += 1;
-                    std::thread::sleep(std::time::Duration::from_millis(25));
-                }
-                other => return other,
+            let result = call();
+            let busy = match &result {
+                Err(message) => message.contains("os error 26"),
+                Ok(answer) => answer.busy_exec(),
+            };
+            if busy && attempt < 20 {
+                attempt += 1;
+                std::thread::sleep(std::time::Duration::from_millis(25));
+                continue;
             }
+            return result;
+        }
+    }
+
+    /// Whether an Ok answer is a failed spawn's refusal for a busy executable.
+    pub(super) trait BusyAnswer {
+        fn busy_exec(&self) -> bool {
+            false
+        }
+    }
+    impl BusyAnswer for serde_json::Value {
+        fn busy_exec(&self) -> bool {
+            self.get("refused").and_then(serde_json::Value::as_bool) == Some(true)
+                && self.to_string().contains("os error 26")
         }
     }
 
