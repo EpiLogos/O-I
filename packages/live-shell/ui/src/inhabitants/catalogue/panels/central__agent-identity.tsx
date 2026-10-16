@@ -424,7 +424,8 @@ function Profile({m, v}: {m: Model; v: V}) {
 
 // ---------------------------------------------------------------- the whole view
 
-function IdentityWhole({p}: {p: ViewProps}) {
+/** Identity's two bands: the Whole of Agent identity, and the Identity page of the Agent, which carries it. */
+export function IdentityBands({p}: {p: ViewProps}) {
   const [page, setPage] = useState(0)
   const m = model(p.v), c = m.card
   const accepted = m.roster?.filter(x => x.ok === true).length
@@ -433,7 +434,7 @@ function IdentityWhole({p}: {p: ViewProps}) {
     : m.list.length === 0
       ? [{id: 'none', name: 'No agent on the roster', light: 'unknown', does: 'Central reports no accepted agent. Turn on Proposed to show the others.'}]
       : m.list.map(x => ({id: x.ref, name: x.label, light: x.ok === undefined ? 'unknown' : x.ok ? 'lit' : 'dark', tone: 'green', note: x.rev ?? NONE, does: `${roleOf(x)} · ${standingText(x)}`}))
-  return <Panel title="Agent identity" view="whole" {...head(p)}>
+  return <>
     <Band>
       <Section width={206}><IdentityWell m={m} v={p.v} set={p.set} w={194} h={146} size="whole" /></Section>
       <Section label="Read" grow>
@@ -458,7 +459,11 @@ function IdentityWhole({p}: {p: ViewProps}) {
           items={rows} size={6} page={page} onPage={setPage} />
       </Section>
     </Band>
-  </Panel>
+  </>
+}
+
+function IdentityWhole({p}: {p: ViewProps}) {
+  return <Panel title="Agent identity" view="whole" {...head(p)}><IdentityBands p={p} /></Panel>
 }
 
 // ---------------------------------------------------------------- the device
