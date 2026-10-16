@@ -1,0 +1,2 @@
+/* The Document's pane, inside the gallery's frame: the text that a page keeps. Shell and panel tokens only. */
+.cdoc-source { flex: 1 1 auto; margin: 0; padding: 14px 18px; overflow: auto; background: var(--bg-0, #26292d); color: var(--text-dim, #a2a7ad); font: 11px/1.5 var(--mono, ui-monospace, Menlo, monospace); white-space: pre; tab-size: 2; }
