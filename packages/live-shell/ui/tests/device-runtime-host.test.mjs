@@ -299,7 +299,8 @@ test('a view that throws is caught by its place\'s boundary, which stands the ge
 test('every view is drawn as its own component inside the boundary, never in the host\'s render', async () => {
   const source = await readFile(new URL('../src/frame/devices/deviceHost.tsx', import.meta.url), 'utf8')
   assert.doesNotMatch(source, /const draw = \(device: DesignedDevice\) => device\[view\]\(props\)/, 'the host no longer calls a view in its own render')
-  assert.match(source, /<ViewBoundary key=\{at\}[\s\S]*<DrawnView device=\{designed\} view=\{view\} props=\{props\} \/>/, 'own view, inside the boundary, for every view')
+  // (lane BL2: the design's view carries the place's wrap of its kit controls, deviceHost.tsx HostedDevice `wrap`)
+  assert.match(source, /<ViewBoundary key=\{at\}[\s\S]*<DrawnView device=\{designed\} view=\{view\} props=\{props\} wrap=\{wrap\} \/>/, 'own view, inside the boundary, for every view')
   const throwing = {...design, compact: () => { throw new Error('no reading') }}
   door.publishDevice('r:probe', {device: probe})
   designs.registerDesignedDevice(throwing)

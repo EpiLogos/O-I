@@ -105,7 +105,17 @@ export interface Standing {
   readonly refused?: string
   /** What moves the value (a modulator, the sky): the status bar names it. */
   readonly modulatedBy?: string
+  /** The value key this standing is for, named by the host only where the place wraps its controls (deviceHost.tsx): the control
+   * that spreads it is drawn inside the place's wrap by it (ControlWrapContext). Not a reading: nothing draws it. */
+  readonly valueKey?: string
 }
+
+/** The place's own wrap of a control, by the value key the control draws (Live maps a control to a MIDI control or a key through
+ * it; an Expressions rack draws the modulation line under it). A host provides it around a design's view, from the place's wrapRow;
+ * every kit control whose standing names its key (Standing.valueKey) is drawn inside it. A design is never edited for it: each of
+ * its controls already spreads its key's standing (`<Dial {...st(p, 'drive')} …/>`), and that is how the host names the key. */
+export type ControlWrap = (key: string, control: ReactNode) => ReactNode
+export const ControlWrapContext = createContext<ControlWrap | null>(null)
 
 /** The status bar's words for a control in its standing: what it does, then why it cannot act, who holds it, what moves it, or
  * the owner's refusal. */
@@ -117,7 +127,7 @@ const doesIn = (does: string | undefined, st: Standing): string | undefined => {
 
 function Cell({kind, label, does, standing, className, style, unknown, children}: {kind: string; label?: string; does?: string; standing?: Standing; className?: string; style?: CSSProperties; unknown?: boolean; children: ReactNode}) {
   const st = standing ?? {}
-  return <div className={`dp-cell dp-cell--${kind}${className ? ` ${className}` : ''}`} style={style}
+  const cell = <div className={`dp-cell dp-cell--${kind}${className ? ` ${className}` : ''}`} style={style}
     data-i={said(label, unknown ? [does, NO_READING_SAID, st.disabled].filter(Boolean).join(' ') : doesIn(does, st))} data-unread={unknown ? 'true' : undefined}
     data-automated={st.automated === true ? 'on' : st.automated === 'overridden' ? 'overridden' : undefined}
     data-held={st.heldBy ? 'true' : undefined} data-pending={st.pending ? 'true' : undefined} data-disabled={st.disabled ? 'true' : undefined}
@@ -126,6 +136,9 @@ function Cell({kind, label, does, standing, className, style, unknown, children}
     {st.heldBy && <button type="button" className="dp-handback" aria-label={`Give ${label ?? 'this value'} back to ${st.heldBy}`}
       data-i={said('Hand back', `Give this value back to ${st.heldBy}.`)} onClick={st.onHandBack} disabled={!st.onHandBack}>{st.heldBy}</button>}
   </div>
+  // The place's wrap, where the host named this control's key (ControlWrapContext); otherwise the cell as it is.
+  const wrap = useContext(ControlWrapContext)
+  return wrap && st.valueKey ? <>{wrap(st.valueKey, cell)}</> : cell
 }
 
 // ---------------------------------------------------------------- controls
