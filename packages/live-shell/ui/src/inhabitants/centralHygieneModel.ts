@@ -50,6 +50,11 @@ export interface SeatReading {
   readonly claimedBy: string | null
   readonly dirty: number | null
   readonly untracked: number | null
+  /** Commits on the seat's branch that the product's main does not hold (`ahead_main`; the text's `+N`), when disclosed. A seat
+   * whose branch main does not hold is no landed seat, however clean its tree. */
+  readonly ahead?: number | null
+  /** Commits on main the seat's branch does not hold (`behind_main`; the text's `-N`), when disclosed. */
+  readonly behind?: number | null
   /** Register-vs-live drift, in the instrument's own words (`seat status`). */
   readonly drift: string | null
   /** Disk admission standing, when the instrument disclosed one. */
@@ -63,6 +68,9 @@ export interface WorktreeRow {
   readonly branch: string | null
   readonly bare: boolean
   readonly detached: boolean
+  /** The repository's main worktree: git lists it first (git-worktree(1) "list": "The main worktree is listed first"). It is the
+   * product's primary checkout — a register seat by the register's own law (the primary stands on main), never a stray. */
+  readonly main?: boolean
 }
 
 /** One branch row from the audit (`git for-each-ref refs/heads`). */
