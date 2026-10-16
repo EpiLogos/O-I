@@ -100,11 +100,28 @@ objections verbatim and the full validation (`BRIEF-BUILDER.md`); the lead conve
 | Ticket | Who | Zone | Since |
 |---|---|---|---|
 | Native screen passes, convergence, PATH | lead | `App.tsx`, `shell/modeFrames.ts`, the book, the register, PATH | 14 Oct |
-| W2 — the door answers per register: AIKit's relations-batch streams each item as it finishes, the kernel publishes each to its ticket, the shell sends the door's 17 reads together, the graph's AIKit resolution stops dying at 20 s | builder | ai-kit `env-1` (`speed/relations-batch-per-item`): `crates/aikit-cli/src/main.rs`, `app/knowledge*`, `tests/**`; O-I `desktop/cradle/kernel/**` (knowledge, graph), `desktop/cradle/src/knowledge/requests.ts`, `native/wikiSubjectStanding.ts` | 16 Oct |
-| BL2 — the Torus on its design without losing MIDI mapping: a kit wrap seam so designed controls are map targets by key | builder | `live/**`, `inhabitants/sdk/panel.*` (additive), `frame/devices/{deviceHost,DeviceView}.tsx` | 16 Oct |
-| BF3 — Run, Agentset rack, Custody, Ledger and Approvals (+ widgets), Workcell's Seat and Remote carrier; Factory's Main track head and Clip side; the faces admitted | builder | `agent/**`, `shell/modeDetails.tsx`, `frame/tracks/SessionGrid.tsx`, `frame/widgets/**`, the Factory and Workcell manifests, the registry | 16 Oct |
-| BC3 — Central's last five: Packet, Answer, Search, Context & world, Agent identity; a reached Day's face; Impact's device; the seat read for Ground hygiene | builder | `central/**`, the Central inhabitants files, `useCentralTransport.tsx` (export only) | 16 Oct |
+| BC3 — Central's last five: Packet, Answer, Search, Context & world, Agent identity; a reached Day's face; Impact's device; the seat read for Ground hygiene | builder (resumed 16 Oct pm after the rate-limit stop) | `central/**`, the Central inhabitants files, `useCentralTransport.tsx` (export only) | 16 Oct |
+| S1 — the window's parts (browser, widget rail, detail/device rack) hide, grow and restore independently in every mode; a device moves between its presentation states (the six of `d18c911a3`) without losing itself | builder | `App.tsx` (state/wiring), `components/{TransportBar,StatusBar}.tsx`, `styles.css` layout rules, `shell/**` but modeDetails, `frame/devices/**` | 16 Oct |
+| T1 — the theme chosen in Settings › Appearance paints the shell: presentation read + `presentation_changed` → `data-oi-theme` on the shell root; the shell's tokens derive from the theme's `--oi-*` vocabulary, the DLW palette is a library theme, no-theme stays pixel-identical; frame chrome raw colours → tokens | builder | `shell/theme/**`, `main.tsx` mount, `styles.css` :root tokens + bridge, Settings appearance, chrome CSS, `oi-design-system/themes/**` | 16 Oct |
+| A1 — AIKit agent infrastructure (ai-kit `env-2`, `agent-infra/gateway-hooks-acp`): the Agency Gateway serves its unix socket when the tailnet listener cannot bind (launchd: 6,074 runs, exit 1); Claude Code is projected only hook events with work (PreToolUse ~100 ms per tool call for nothing); the ACP host keeps lifecycle payloads (usage, plan, compaction); adapters pinned, Codex resume declared | builder | ai-kit `crates/aikit-{adapters,cli,core}` | 16 Oct |
 | The catalogue of designed devices (owner, 16 Oct: "the parallel lanes are developing the high end device component specs in the documentation lane, you can directly work from its … catalogue of pre designed UI, the wiring and UX integration should be somewhat trivial wiring"): `catalogue/panels/design.ts` is the contract, `panels/<family>__<face>.tsx` (exporting `design`, loaded through `loadDesign`) the designs. The runtime hosts each published device's design when one exists, else the generic plate; a device lane writes the binding (owner readings and writes on the design's value keys), never a panel | the owner's documentation lane | `inhabitants/catalogue/**` — read-only for every builder | 16 Oct |
+
+Then: session 2 of the day took the build over from the rate-limit stop (16 Oct, afternoon). The four lanes running at 04:54
+(W2, BF3, BC3, BT2) had died on the weekly limit with their work uncommitted in the seat. W2 converged by the lead: ai-kit#511
+(relations-batch v2 streams each item; `central.world.here` once per Project) and `8e47fedc4` — the kernel answers each register
+as its item streams, the shell sends the door's reads together, the native graph read bounded at 90 s; measured kernel-direct at
+the same load, door A last register +10.8 → +4.0 s, door B +15.9 → +4.8 s, 17/17 within 8 s, one batch process per door; on the
+way the lead found the gathering's leader held its own read for the whole batch (the streamed test passed 1 in 3) and moved the
+batch onto its own thread (4/4). BF3 converged (`530cc683f`, registry 49 → 52; BC3's two faces land with BC3). BT2 had only read;
+it waits behind the foundation lanes. The owner's lane note for this session: core systems and foundations first (kernel, shell
+integration, agent infrastructure, operational reuse, RE adoptions), the documentation lane keeps the manual and the device
+design. A read-only RE investigator mapped what OpenRig, Kasetto, no-mistakes, Grok bot, Buzz, Codex and Claude Code offer
+against the suite's code (adopted vs not); its ranked adoptions are the next lanes: A1 (out), the kernel's slow-op record and the
+read ops BF3 proposed (seat status, source returns, gateway remotes), the kernel's decisions through `aikit decide` (the local
+Kev the suite already serves; today only the paid hosted Jev route exists), Actuation's harness-detection cache (`HarnessStatus`
+5.4 s on every agent device mount), Factory delivery's mergeability check and bounded watch, the AIKit registry as a pinned
+source (Kasetto's lock-then-update, so a pull no longer drops edited capsules to Unseen), and Search's aliases with an owner. The
+manual's 98 generic "Views" headings now name the views (`075037c22`, `a8ad21b1b`).
 
 Then: lanes BF2 and BC2 landed (16 Oct). BF2 (`516c9608a`): the Thread, the Gateways rack, the Agency gateway, Experiment, the
 Frames monitor (+ its rail widget), Tasks and Runs draw their designs on their owners — the Thread from the thread pane's own owner
