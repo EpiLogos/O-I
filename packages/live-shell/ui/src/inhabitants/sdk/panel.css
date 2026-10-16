@@ -258,3 +258,6 @@
 .dp-expand > svg { transform: rotate(-90deg); }
 .dp-expand[aria-pressed="true"] { color: var(--accent, #ffbe00); }
 .dp-expand[aria-pressed="true"] > svg { transform: none; }
+
+/* One closed choice in a radio: at 40 % strength, as a disabled control is; the status bar says why. */
+.dp-radio > button[data-why="true"] { opacity: .4; }
