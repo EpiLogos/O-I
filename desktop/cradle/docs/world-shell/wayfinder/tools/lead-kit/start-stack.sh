@@ -3,7 +3,11 @@
 # vite with the bridge baked in. Usage: start-stack.sh STACK_DIR BASE_PORT [FRAME_DIST]
 #   ports: bridge BASE, live-shell BASE+1, front BASE+2, vite BASE+3 (pick a BASE nobody uses: lanes used 4261…4771).
 #   FRAME_DIST: a built Expressions frame (…/stage/frontend/__application/expressions of a native build, or your own build).
-# The owner's real ~/Central ground is read; writes land under STACK_DIR/home (OI_HOME, OI_EXPRESSION_HOME). Every owner
+# The owner's real ~/Central ground is read; the kernel's own state lands under STACK_DIR/home (OI_HOME, OI_EXPRESSION_HOME) —
+# but a WORK is Central's: creating, forking or saving an Expression on a stack writes Control/user/flows in the owner's real
+# ground (the kernel's works home, desktop/cradle/kernel/src/expression_home.rs:24, through central.files.create). A stack never
+# creates, forks or saves a work unless that write is the ticket; a lane that does moves what it created out and names it.
+# (16 Oct: lane F's headless clicks wrote two o-i-the-mark-*.expression.json there.) Every owner
 # binary is pinned (native_shell.rs:40–50 names them), or every `oi` dispatch re-verifies the suite.
 # Build the walk-bridge first: (cd desktop/cradle/kernel && CARGO_TARGET_DIR=<seat>/target-kernel cargo build -j2 --bin walk-bridge)
 set -e
