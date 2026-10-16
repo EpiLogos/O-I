@@ -78,3 +78,6 @@
 .an-tile-composer::placeholder { color: var(--text-faint, #71767c); }
 .an-tile-composer:disabled { cursor: not-allowed; }
 .an-tile-composer:focus-visible { outline: 1px solid var(--accent, #ffbe00); outline-offset: 1px; }
+
+/* A control the owner has no operation for stays visible and does not act (its reason is on the status bar). */
+.an-cite:disabled, .an-sources button:disabled, .an-card-do button:disabled { cursor: not-allowed; opacity: .5; }

@@ -3,7 +3,7 @@
 // a global column of volume and voices. Every line drawn below is computed from the device's values.
 import type {CSSProperties} from 'react'
 import {Band, Dial, Display, Folded, Handle, Panel, Radio, Readout, Section, Tile, Toggle, ValueBox, type LightState} from '../../sdk/panel'
-import {clampTo, db, fixed, num, on, pct, secs, signed, str, type DesignedDevice, type ViewProps} from './design'
+import {NONE, boolOf, clampTo, db, fixed, has, num, on, pct, secs, shown, signed, strOf, type DesignedDevice, type ViewProps} from './design'
 
 type V = ViewProps['v']
 const DAMP = {min: .1, max: 40, log: true}, ATTACK = {min: .001, max: 10, log: true}, RELEASE = {min: .01, max: 30, log: true}
@@ -14,6 +14,15 @@ const wave = (m: number, th: number, agitation: number) =>
 
 /** The torus at a three-quarter view: the ring, its tube, the surface wave on the outer equator, the two helices. */
 function TorusPicture({v, w, h, cx, cy, R, notes = []}: {v: V; w: number; h: number; cx: number; cy: number; R: number; notes?: readonly number[]}) {
+  // The picture is the law the torus plays: without the pulses' readings there is no wave to draw, only the ring, and it says so.
+  if (!['pulseMix', 'helixBalance', 'drive', 'damping', 'agitation'].every(key => has(v, key))) {
+    const r = R * .4, k = .42
+    return <g>
+      <ellipse cx={cx} cy={cy} rx={R + r} ry={(R + r) * k + r * .25} className="dp-faint" />
+      <ellipse cx={cx} cy={cy - r * .2} rx={R - r} ry={(R - r) * k} className="dp-faint" />
+      {w > 90 && <text x={cx} y={cy + (R + r) * k + r * .25 + 14} className="dp-ink-dim" textAnchor="middle">No reading of the pulses</text>}
+    </g>
+  }
   const m = num(v, 'pulseMix') / 100, b = num(v, 'helixBalance') / 100, d = num(v, 'drive'), q = num(v, 'damping'), ag = num(v, 'agitation')
   const r = R * .4, k = .42, amp = r * .55 * Math.sqrt(d / 6)
   const P = (th: number, ph: number, lift = 0) => {
@@ -63,17 +72,17 @@ const crest = (v: V, cx: number, cy: number, R: number) => {
 
 function TorusDisplay({v, set, w, h, notes}: {v: V; set?: ViewProps['set']; w: number; h: number; notes?: readonly number[]}) {
   const cx = w / 2, cy = h * .44, R = w * .27, line = {x0: 14, x1: w - 14, y: h - 13}
-  const c = crest(v, cx, cy, R), m = num(v, 'pulseMix') / 100
+  const c = crest(v, cx, cy, R), m = num(v, 'pulseMix') / 100, mixRead = has(v, 'pulseMix'), driveRead = has(v, 'drive')
   return <Display w={w} h={h} label="The torus" does="The ring, its surface wave and its two helices, drawn from the device's values."
-    corner={`${num(v, 'notes')} notes`}>
+    corner={`${shown(v, 'notes')} notes`}>
     <TorusPicture v={v} w={w} h={h} cx={cx} cy={cy} R={R} notes={notes} />
     <path d={`M${line.x0} ${line.y}H${line.x1}`} className="dp-faint" />
     <text x={line.x0} y={line.y - 4} className="dp-axis">3·3</text>
     <text x={line.x1} y={line.y - 4} className="dp-axis" textAnchor="end">4·2</text>
-    <Handle n={1} x={line.x0 + m * (line.x1 - line.x0)} y={line.y} label="Pulse mix" does="Drag along the line: the balance of the two pulses."
-      onDrag={set && (x => set('pulseMix', Math.round(clampTo(0, 100, (x - line.x0) / (line.x1 - line.x0) * 100))))} onReset={set && (() => set('pulseMix', 50))} />
-    <Handle n={2} x={c.x} y={c.y} label="Drive" does="Drag out from the ring: how hard the pulses shake the body."
-      onDrag={set && (x => set('drive', Math.round(clampTo(0, 6, Math.pow(clampTo(0, 1, (x - c.base) / c.reach), 2) * 6) * 10) / 10))} onReset={set && (() => set('drive', 1))} />
+    {mixRead && <Handle n={1} x={line.x0 + m * (line.x1 - line.x0)} y={line.y} label="Pulse mix" does="Drag along the line: the balance of the two pulses."
+      onDrag={set && (x => set('pulseMix', Math.round(clampTo(0, 100, (x - line.x0) / (line.x1 - line.x0) * 100))))} onReset={set && (() => set('pulseMix', 50))} />}
+    {driveRead && <Handle n={2} x={c.x} y={c.y} label="Drive" does="Drag out from the ring: how hard the pulses shake the body."
+      onDrag={set && (x => set('drive', Math.round(clampTo(0, 6, Math.pow(clampTo(0, 1, (x - c.base) / c.reach), 2) * 6) * 10) / 10))} onReset={set && (() => set('drive', 1))} />}
   </Display>
 }
 
@@ -81,6 +90,9 @@ function TorusDisplay({v, set, w, h, notes}: {v: V; set?: ViewProps['set']; w: n
 function EnvelopeDisplay({v, set, w, h}: {v: V; set?: ViewProps['set']; w: number; h: number}) {
   const x0 = 8, x1 = w - 8, top = 14, base = h - 14
   const tx = (s: number) => x0 + (Math.log10(s / .001) / Math.log10(60 / .001)) * (x1 - x0)
+  if (!['attack', 'release', 'strike', 'damping'].every(key => has(v, key))) return <Display w={w} h={h} label="Envelope" does="How a note rises and fades.">
+    <text x={w / 2} y={h / 2} className="dp-ink-dim" textAnchor="middle">No reading of the envelope</text>
+  </Display>
   const a = num(v, 'attack'), rel = num(v, 'release'), peak = base - (base - top) * num(v, 'strike') / 100, q = num(v, 'damping')
   const ax = tx(a), rx = tx(a + rel)
   let d = `M${x0} ${base}L${ax.toFixed(1)} ${peak.toFixed(1)}`
@@ -114,7 +126,8 @@ function Janko({w, y, sounding}: {w: number; y: number; sounding: readonly numbe
   </g>
 }
 
-const light = (v: V) => str(v, 'light') as LightState
+// The light reads the owner alone; hollow while it has not said.
+const light = (v: V, owner?: V) => (strOf(owner ?? v, 'light') ?? 'unknown') as LightState
 const VIEWS = [{value: 'surface', label: 'Surface'}, {value: 'wire', label: 'Wire'}, {value: 'both', label: 'Both'}] as const
 
 const macros = (p: ViewProps) => <>
@@ -133,15 +146,19 @@ export const torus: DesignedDevice = {
     attack: .01, release: 1.2, voices: 16, level: -6, pan: 0, view: 'surface', receiver: false,
     notes: 3, meter: -14,
   },
+  fixtures: {
+    'Ringing': {},
+    'No readings': Object.fromEntries(['light', 'pulseMix', 'helixBalance', 'strike', 'damping', 'drive', 'modes', 'agitation', 'attack', 'release', 'voices', 'level', 'pan', 'view', 'receiver', 'notes', 'meter'].map(k => [k, undefined])),
+  },
 
-  folded: p => <Folded title="Torus" light={light(p.v)} readings={[db(num(p.v, 'level')), `${num(p.v, 'notes')} notes`]} onUnfold={p.nav.unfold} />,
+  folded: p => <Folded title="Torus" light={light(p.v, p.owner)} readings={[has(p.v, 'level') ? db(num(p.v, 'level')) : NONE, `${shown(p.v, 'notes')} notes`]} onUnfold={p.nav.unfold} />,
 
-  compact: p => <Panel title="Torus" view="compact" light={light(p.v)} onFold={p.nav.fold} onFull={p.nav.full} onSelect={p.nav.select}>
+  compact: p => <Panel title="Torus" view="compact" light={light(p.v, p.owner)} onFold={p.nav.fold} onFull={p.nav.full} onSelect={p.nav.select}>
     <Section width={152}><TorusDisplay v={p.v} set={p.set} w={140} h={146} /></Section>
     <Section label="Macros" cols={2}>{macros(p)}</Section>
   </Panel>,
 
-  whole: p => <Panel title="Torus" view="whole" light={light(p.v)} onFold={p.nav.fold} onFull={p.nav.full}>
+  whole: p => <Panel title="Torus" view="whole" light={light(p.v, p.owner)} onFold={p.nav.fold} onFull={p.nav.full}>
     <Band>
       <Section width={198}><TorusDisplay v={p.v} set={p.set} w={186} h={146} /></Section>
       <Section label="Pulses" cols={2}>
@@ -171,8 +188,8 @@ export const torus: DesignedDevice = {
       </Section>
       <Section label="Voices · view" grow>
         <ValueBox label="Voices" does="How many notes sound at once. The oldest makes way." value={num(p.v, 'voices')} def={16} scale={{min: 1, max: 32, step: 1}} format={x => `${x}`} onChange={x => p.set('voices', x)} />
-        <Radio does="What the pane draws." value={str(p.v, 'view')} options={VIEWS} stack onChange={x => p.set('view', x)} />
-        <Toggle label="Receiver" does="Your camera becomes the place where the torus is heard." on={on(p.v, 'receiver')} onChange={x => p.set('receiver', x)} />
+        <Radio does="What the pane draws." value={strOf(p.v, 'view') ?? ''} options={VIEWS} stack onChange={x => p.set('view', x)} />
+        <Toggle label="Receiver" does="Your camera becomes the place where the torus is heard." on={on(p.v, 'receiver')} unknown={boolOf(p.v, 'receiver') === undefined} onChange={x => p.set('receiver', x)} />
       </Section>
     </Band>
   </Panel>,
@@ -186,10 +203,10 @@ export const torus: DesignedDevice = {
     </svg>
   </div>,
 
-  widget: p => <Tile title="Torus" light={light(p.v)} onFull={p.nav.full}>
-    <Display w={98} h={100} label="The torus" does="Click ⤢ to open it full in the pane that has focus." corner={`${num(p.v, 'notes')}`}>
+  widget: p => <Tile title="Torus" light={light(p.v, p.owner)} onFull={p.nav.full}>
+    <Display w={98} h={100} label="The torus" does="Click ⤢ to open it full in the pane that has focus." corner={shown(p.v, 'notes')}>
       <TorusPicture v={p.v} w={98} h={100} cx={49} cy={48} R={27} />
     </Display>
-    <div className="ref-meter" data-i={`Level|${signed(0)(num(p.v, 'meter'))} dB now.`} style={{'--level': clampTo(0, 1, (num(p.v, 'meter') + 60) / 66)} as CSSProperties}><span /></div>
+    <div className="ref-meter" data-i={`Level|${has(p.v, 'meter') ? `${signed(0)(num(p.v, 'meter'))} dB now.` : 'No reading of the level.'}`} style={{'--level': has(p.v, 'meter') ? clampTo(0, 1, (num(p.v, 'meter') + 60) / 66) : 0} as CSSProperties}><span /></div>
   </Tile>,
 }
