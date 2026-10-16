@@ -1,0 +1,11 @@
+{
+  "seq": 1,
+  "schema": "oi.kernel-event/v1",
+  "version": 1,
+  "event": "now_changed",
+  "owner": "central",
+  "action": "projectcentral.now.return",
+  "project": "lived",
+  "ref": "central:now:lived:1",
+  "revision": "rev-now-1"
+}

@@ -317,10 +317,10 @@ pub(super) fn process_cwd(pid: u32) -> Result<String, String> {
         if !canonical.is_dir() {
             return Err("Observed terminal cwd is not a directory".into());
         }
-        return canonical
+        canonical
             .into_os_string()
             .into_string()
-            .map_err(|_| "Observed terminal cwd is not representable as UTF-8".into());
+            .map_err(|_| "Observed terminal cwd is not representable as UTF-8".into())
     }
     #[cfg(not(any(target_os = "macos", target_os = "linux")))]
     {

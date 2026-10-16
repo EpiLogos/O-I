@@ -198,6 +198,54 @@ pub enum KernelEvent {
         path: String,
         summary: String,
     },
+    /// An owner write the kernel carried finished and the owner answered it
+    /// (lane W3): the receipt names the owner, its action, the register
+    /// (`project`; absent is the root), the ref the owner's answer names
+    /// (else the one the request named) and the revision the owner gave, when
+    /// it gave one. It reports what the owner did — never state of its own —
+    /// so a reader of that owner (the temporal field, the Day) reads again.
+    /// A refused or failed write records nothing. One variant per ground that
+    /// moved: a NOW clearing or record (Central's NOW field), a Day
+    /// (Central's Day route), a receiving act (Central's receiving field and
+    /// the documents it includes into), a Factory Run (Factory's state).
+    NowChanged {
+        owner: String,
+        action: String,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        project: Option<String>,
+        #[serde(rename = "ref")]
+        reference: String,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        revision: Option<String>,
+    },
+    DayChanged {
+        owner: String,
+        action: String,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        project: Option<String>,
+        #[serde(rename = "ref")]
+        reference: String,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        revision: Option<String>,
+    },
+    ReceivingChanged {
+        owner: String,
+        action: String,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        project: Option<String>,
+        #[serde(rename = "ref")]
+        reference: String,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        revision: Option<String>,
+    },
+    FactoryRunChanged {
+        owner: String,
+        action: String,
+        #[serde(rename = "ref")]
+        reference: String,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        revision: Option<String>,
+    },
 }
 
 impl KernelEvent {
@@ -214,7 +262,11 @@ impl KernelEvent {
             | Self::ConfigurationChanged { .. }
             | Self::WorldChanged { .. }
             | Self::ExpressionChanged { .. }
-            | Self::FileChanged { .. } => None,
+            | Self::FileChanged { .. }
+            | Self::NowChanged { .. }
+            | Self::DayChanged { .. }
+            | Self::ReceivingChanged { .. }
+            | Self::FactoryRunChanged { .. } => None,
             Self::FocusChanged { focus } => focus.subject_ref(),
             Self::SurfaceChanged { surface_ref, .. } => surface_ref.as_ref(),
             Self::SourceOpened { source, .. }
@@ -244,6 +296,10 @@ impl KernelEvent {
             Self::SourceChanged { .. } => "source_changed",
             Self::SourceWriteConflict { .. } => "source_write_conflict",
             Self::FileChanged { .. } => "file_changed",
+            Self::NowChanged { .. } => "now_changed",
+            Self::DayChanged { .. } => "day_changed",
+            Self::ReceivingChanged { .. } => "receiving_changed",
+            Self::FactoryRunChanged { .. } => "factory_run_changed",
         }
     }
 
@@ -399,7 +455,65 @@ impl KernelEvent {
                 non_empty("FileChanged.path", path)?;
                 non_empty("FileChanged.summary", summary)
             }
+            Self::NowChanged {
+                owner,
+                action,
+                project,
+                reference,
+                revision,
+            }
+            | Self::DayChanged {
+                owner,
+                action,
+                project,
+                reference,
+                revision,
+            }
+            | Self::ReceivingChanged {
+                owner,
+                action,
+                project,
+                reference,
+                revision,
+            } => {
+                let at = self.tag();
+                owner_write(at, owner, action, reference, revision.as_deref())?;
+                match project {
+                    Some(project) => non_empty(&format!("{at}.project"), project),
+                    None => Ok(()),
+                }
+            }
+            Self::FactoryRunChanged {
+                owner,
+                action,
+                reference,
+                revision,
+            } => owner_write(
+                "factory_run_changed",
+                owner,
+                action,
+                reference,
+                revision.as_deref(),
+            ),
         }
+    }
+}
+
+/// An owner-write receipt names its owner, the owner's action and a ref, and
+/// a revision only when the owner gave one.
+fn owner_write(
+    at: &str,
+    owner: &str,
+    action: &str,
+    reference: &str,
+    revision: Option<&str>,
+) -> Result<(), String> {
+    non_empty(&format!("{at}.owner"), owner)?;
+    non_empty(&format!("{at}.action"), action)?;
+    non_empty(&format!("{at}.ref"), reference)?;
+    match revision {
+        Some(revision) => non_empty(&format!("{at}.revision"), revision),
+        None => Ok(()),
     }
 }
 

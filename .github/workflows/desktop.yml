@@ -258,5 +258,9 @@ jobs:
         run: |
           npm ci --prefix desktop/cradle --no-audit --no-fund
           cargo check --manifest-path desktop/cradle/src-tauri/Cargo.toml --locked --target aarch64-apple-darwin
+      - name: Native host clippy (everyday and candidate)
+        run: |
+          cargo clippy --manifest-path desktop/cradle/src-tauri/Cargo.toml --locked --target aarch64-apple-darwin --all-targets -- -D warnings
+          cargo clippy --manifest-path desktop/cradle/src-tauri/Cargo.toml --locked --target aarch64-apple-darwin --all-targets --features native_shell -- -D warnings
       - name: Prove the check did not rewrite locks
         run: git diff --exit-code -- desktop/cradle/src-tauri/Cargo.lock desktop/cradle/package-lock.json

@@ -107,6 +107,7 @@ pub mod native_owner_transport;
 mod native_wire;
 mod owner_process;
 pub mod owner_read;
+pub mod owner_write;
 pub mod presentation;
 pub mod protocol;
 pub mod ql_music;
@@ -1575,6 +1576,10 @@ impl Kernel {
             .lock()
             .unwrap_or_else(|poisoned| poisoned.into_inner())
             .clear();
+        // The temporal field's answers and the Factory locations it found
+        // belong to the ground they were read under (lane W3).
+        temporal_sources::retire_answers(&self.temporal_reads);
+        temporal_sources::forget_factory_locations();
     }
 
     pub fn discover() -> Self {
@@ -2923,7 +2928,7 @@ impl Kernel {
                 .ok_or("Cannot prepare the owner read")?
                 .execute(),
             // A Factory owner read or a SharedField read likewise; their
-            // writes stay ordered below.
+            // writes follow below (a host's dispatch prepares or frees them).
             op @ (KernelOp::FactoryOwner { .. } | KernelOp::SharedField { .. })
                 if owner_read::PreparedRead::reads_owner(&op) =>
             {
@@ -2932,22 +2937,9 @@ impl Kernel {
                     .execute()
             }
             // A Factory owner write — an action, a recognition, a commission,
-            // a Run's close — in order under the lock.
-            KernelOp::FactoryOwner { request } => {
-                let world = if request.needs_world() {
-                    Some(self.world_map(false)?)
-                } else {
-                    None
-                };
-                let data = factory::owner(request, world.as_ref()).map_err(|e| {
-                    serde_json::to_string(&e)
-                        .unwrap_or_else(|_| "factory owner request failed".into())
-                })?;
-                Ok(KernelOpOutcome {
-                    receipts: Vec::new(),
-                    result: KernelOpResult::FactoryDevelopmentReading { data },
-                })
-            }
+            // a Run's close: the prepared write's own steps (owner_write.rs),
+            // run under the lock.
+            op @ KernelOp::FactoryOwner { .. } => self.apply_owner_write(op),
             KernelOp::TemporalEventsRead { query } => {
                 let cwd = std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("."));
                 let answer = temporal_sources::read_field(
@@ -2980,43 +2972,29 @@ impl Kernel {
                     result: KernelOpResult::ChatDefaultDiscarded { document },
                 })
             }
-            KernelOp::CredentialSetup { .. }
+            // Owner writes: the prepared write's own steps (owner_write.rs),
+            // run under the lock.
+            op @ (KernelOp::CredentialSetup { .. }
             | KernelOp::CredentialRotate { .. }
             | KernelOp::CredentialVerify { .. }
             | KernelOp::CredentialRevoke { .. }
-            | KernelOp::ClientInstall { .. } => {
-                let root = self.world_map(false).ok();
-                let cwd = root
-                    .as_ref()
-                    .and_then(|value| value["root"].as_str())
-                    .map(std::path::PathBuf::from)
-                    .unwrap_or(std::env::current_dir().map_err(|e| e.to_string())?);
-                let result = credentials::apply(&cwd, op)?;
-                Ok(KernelOpOutcome {
-                    receipts: Vec::new(),
-                    result,
-                })
-            }
-            KernelOp::ProductActionRun {
-                product_id,
-                action_ref,
-            } => {
-                let root = self.world_map(false).ok();
-                let cwd = root
-                    .as_ref()
-                    .and_then(|value| value["root"].as_str())
-                    .map(std::path::PathBuf::from)
-                    .unwrap_or(std::env::current_dir().map_err(|e| e.to_string())?);
-                let data = system_composition::Client::discover().run_action(
-                    &cwd,
-                    &product_id,
-                    &action_ref,
-                )?;
-                Ok(KernelOpOutcome {
-                    receipts: Vec::new(),
-                    result: KernelOpResult::ProductActionRan { data },
-                })
-            }
+            | KernelOp::ClientInstall { .. }
+            | KernelOp::ProductActionRun { .. }
+            | KernelOp::ConfigDesiredHold { .. }
+            | KernelOp::ConfigDesiredDiscard { .. }
+            | KernelOp::ConfigPlan { .. }
+            | KernelOp::ConfigPlanReviewed { .. }
+            | KernelOp::ConfigReset { .. }
+            | KernelOp::ConfigApplyReviewed { .. }
+            | KernelOp::ConfigApply { .. }
+            | KernelOp::ProfileUsePlan { .. }
+            | KernelOp::ProfileUseApply { .. }
+            | KernelOp::ProfileCreate { .. }
+            | KernelOp::ProfileEdit { .. }
+            | KernelOp::InstanceCommission { .. }
+            | KernelOp::EncounterProvision { .. }
+            | KernelOp::FlowParticipantProvision { .. }
+            | KernelOp::HarnessAgentControl { .. }) => self.apply_owner_write(op),
             KernelOp::SettingsReveal { path } => Ok(KernelOpOutcome {
                 receipts: Vec::new(),
                 result: KernelOpResult::SettingsRevealed {
@@ -3038,77 +3016,6 @@ impl Kernel {
                 let answered = prepared.execute();
                 self.finish_ground(answered)
             }
-            KernelOp::ConfigDesiredHold { request } => {
-                let root = self.world_map(false).ok();
-                let cwd = root
-                    .as_ref()
-                    .and_then(|value| value["root"].as_str())
-                    .map(std::path::PathBuf::from)
-                    .unwrap_or(std::env::current_dir().map_err(|e| e.to_string())?);
-                let entry = configuration::Client::discover().desired_hold(&cwd, &request)?;
-                let receipt = self.log.record(KernelEvent::ConfigurationChanged {
-                    operation: "desired_hold".into(),
-                    references: vec![request.setting_ref],
-                });
-                Ok(KernelOpOutcome {
-                    receipts: vec![receipt],
-                    result: KernelOpResult::ConfigDesiredHeld { entry },
-                })
-            }
-            KernelOp::ConfigDesiredDiscard { setting_ref, scope } => {
-                let root = self.world_map(false).ok();
-                let cwd = root
-                    .as_ref()
-                    .and_then(|value| value["root"].as_str())
-                    .map(std::path::PathBuf::from)
-                    .unwrap_or(std::env::current_dir().map_err(|e| e.to_string())?);
-                let document = configuration::Client::discover().desired_discard(
-                    &cwd,
-                    &configuration::ConfigPair {
-                        setting_ref: setting_ref.clone(),
-                        scope,
-                    },
-                )?;
-                let receipts = if document["removed"].as_bool() == Some(true) {
-                    vec![self.log.record(KernelEvent::ConfigurationChanged {
-                        operation: "desired_discard".into(),
-                        references: vec![setting_ref],
-                    })]
-                } else {
-                    vec![]
-                };
-                Ok(KernelOpOutcome {
-                    receipts,
-                    result: KernelOpResult::ConfigDesiredDiscarded { document },
-                })
-            }
-            KernelOp::ConfigPlan { requests } => {
-                let root = self.world_map(false).ok();
-                let cwd = root
-                    .as_ref()
-                    .and_then(|value| value["root"].as_str())
-                    .map(std::path::PathBuf::from)
-                    .unwrap_or(std::env::current_dir().map_err(|e| e.to_string())?);
-                let (plans, errors) = configuration::Client::discover().plan(&cwd, &requests);
-                Ok(KernelOpOutcome {
-                    receipts: Vec::new(),
-                    result: KernelOpResult::ConfigPlanned { plans, errors },
-                })
-            }
-            KernelOp::ConfigPlanReviewed { requests } => {
-                let root = self.world_map(false).ok();
-                let cwd = root
-                    .as_ref()
-                    .and_then(|value| value["root"].as_str())
-                    .map(std::path::PathBuf::from)
-                    .unwrap_or(std::env::current_dir().map_err(|e| e.to_string())?);
-                let (changeset, plans) =
-                    configuration::Client::discover().plan_reviewed(&cwd, &requests)?;
-                Ok(KernelOpOutcome {
-                    receipts: Vec::new(),
-                    result: KernelOpResult::ConfigReviewedPlanned { changeset, plans },
-                })
-            }
             KernelOp::Setup { request } => {
                 // First installation must work before Central/root discovery.
                 let cwd = std::env::current_dir().map_err(|e| e.to_string())?;
@@ -3118,180 +3025,10 @@ impl Kernel {
                     result: KernelOpResult::SetupReading { data },
                 })
             }
-            KernelOp::ConfigReset { setting_ref, scope } => {
-                let root = self.world_map(false).ok();
-                let cwd = root
-                    .as_ref()
-                    .and_then(|value| value["root"].as_str())
-                    .map(std::path::PathBuf::from)
-                    .unwrap_or(std::env::current_dir().map_err(|e| e.to_string())?);
-                let (changeset, owner_receipts) =
-                    configuration::Client::discover().reset(&cwd, &setting_ref, &scope)?;
-                let receipt = self.log.record(KernelEvent::ConfigurationChanged {
-                    operation: "reset_completed".into(),
-                    references: vec![setting_ref],
-                });
-                Ok(KernelOpOutcome {
-                    receipts: vec![receipt],
-                    result: KernelOpResult::ConfigApplied {
-                        changeset,
-                        owner_receipts,
-                    },
-                })
-            }
-            KernelOp::ConfigApplyReviewed { changeset, plans } => {
-                let root = self.world_map(false).ok();
-                let cwd = root
-                    .as_ref()
-                    .and_then(|value| value["root"].as_str())
-                    .map(std::path::PathBuf::from)
-                    .unwrap_or(std::env::current_dir().map_err(|e| e.to_string())?);
-                let (changeset, owner_receipts) =
-                    configuration::Client::discover().apply_reviewed(&cwd, &changeset, &plans)?;
-                let receipt = self.log.record(KernelEvent::ConfigurationChanged {
-                    operation: "reviewed_apply_completed".into(),
-                    references: changeset["requested"]
-                        .as_array()
-                        .into_iter()
-                        .flatten()
-                        .filter_map(|request| request["setting_ref"].as_str().map(str::to_owned))
-                        .collect(),
-                });
-                Ok(KernelOpOutcome {
-                    receipts: vec![receipt],
-                    result: KernelOpResult::ConfigApplied {
-                        changeset,
-                        owner_receipts,
-                    },
-                })
-            }
-            KernelOp::ConfigApply { requests } => {
-                let root = self.world_map(false).ok();
-                let cwd = root
-                    .as_ref()
-                    .and_then(|value| value["root"].as_str())
-                    .map(std::path::PathBuf::from)
-                    .unwrap_or(std::env::current_dir().map_err(|e| e.to_string())?);
-                let (changeset, owner_receipts) =
-                    configuration::Client::discover().apply(&cwd, &requests)?;
-                let receipt = self.log.record(KernelEvent::ConfigurationChanged {
-                    operation: "apply_completed".into(),
-                    references: requests.iter().map(|r| r.setting_ref.clone()).collect(),
-                });
-                Ok(KernelOpOutcome {
-                    receipts: vec![receipt],
-                    result: KernelOpResult::ConfigApplied {
-                        changeset,
-                        owner_receipts,
-                    },
-                })
-            }
-            KernelOp::ProfileUsePlan { profile_ref } => {
-                let root = self.world_map(false).ok();
-                let cwd = root
-                    .as_ref()
-                    .and_then(|value| value["root"].as_str())
-                    .map(std::path::PathBuf::from)
-                    .unwrap_or(std::env::current_dir().map_err(|e| e.to_string())?);
-                let plan =
-                    configuration::Client::discover().profile_use_plan(&cwd, &profile_ref)?;
-                Ok(KernelOpOutcome {
-                    receipts: Vec::new(),
-                    result: KernelOpResult::ProfileUsePlanning { plan },
-                })
-            }
-            KernelOp::ProfileUseApply { profile_ref } => {
-                let root = self.world_map(false).ok();
-                let cwd = root
-                    .as_ref()
-                    .and_then(|value| value["root"].as_str())
-                    .map(std::path::PathBuf::from)
-                    .unwrap_or(std::env::current_dir().map_err(|e| e.to_string())?);
-                let activation =
-                    configuration::Client::discover().profile_use_apply(&cwd, &profile_ref)?;
-                Ok(KernelOpOutcome {
-                    receipts: Vec::new(),
-                    result: KernelOpResult::ProfileUsed { activation },
-                })
-            }
-            KernelOp::ProfileCreate { profile_ref, title } => {
-                let root = self.world_map(false).ok();
-                let cwd = root
-                    .as_ref()
-                    .and_then(|value| value["root"].as_str())
-                    .map(std::path::PathBuf::from)
-                    .unwrap_or(std::env::current_dir().map_err(|e| e.to_string())?);
-                let profile = configuration::Client::discover().profile_create(
-                    &cwd,
-                    &profile_ref,
-                    title.as_deref(),
-                )?;
-                Ok(KernelOpOutcome {
-                    receipts: Vec::new(),
-                    result: KernelOpResult::ProfileCreated { profile },
-                })
-            }
-            KernelOp::ProfileEdit {
-                profile_ref,
-                operations,
-            } => {
-                let root = self.world_map(false).ok();
-                let cwd = root
-                    .as_ref()
-                    .and_then(|value| value["root"].as_str())
-                    .map(std::path::PathBuf::from)
-                    .unwrap_or(std::env::current_dir().map_err(|e| e.to_string())?);
-                let document = configuration::Client::discover().profile_edit(
-                    &cwd,
-                    &profile_ref,
-                    &operations,
-                )?;
-                Ok(KernelOpOutcome {
-                    receipts: Vec::new(),
-                    result: KernelOpResult::ProfileEdited { document },
-                })
-            }
-            KernelOp::FileOperation { location, request } => {
-                let data = files::operate(&self.client, &location, &request)?;
-                // A write changed what a directory contains; the parent
-                // listing is the one cached reading it invalidates by name.
-                if matches!(
-                    request,
-                    files::Request::Write { .. } | files::Request::Restore { .. }
-                ) {
-                    self.reads
-                        .invalidate(&format!("dir:{}", files::parent_path(&location.path)));
-                    self.reads.invalidate_prefix("knowledge:");
-                    self.reads.invalidate_prefix("graph:");
-                    self.graph_reads.invalidate();
-                }
-                // One state change, one event (the seam's law): a write or
-                // restore the owner actually recorded (`created`/`written`)
-                // discloses FileChanged so retained listings — the file
-                // tree's workspace-keyed cache — invalidate by receipt, the
-                // same "look again" relation the expressions surfaces keep
-                // with `expression_changed`. An unchanged write mutated
-                // nothing and emits nothing.
-                let receipt = matches!(
-                    request,
-                    files::Request::Write { .. } | files::Request::Restore { .. }
-                )
-                .then(|| match data["outcome"].as_str() {
-                    Some("created") => Some(self.log.record(KernelEvent::FileChanged {
-                        path: location.path.clone(),
-                        summary: "A file was created through the owner's write.".into(),
-                    })),
-                    Some("written") => Some(self.log.record(KernelEvent::FileChanged {
-                        path: location.path.clone(),
-                        summary: "A file changed through the owner's write.".into(),
-                    })),
-                    _ => None,
-                })
-                .flatten();
-                Ok(KernelOpOutcome {
-                    receipts: receipt.into_iter().collect(),
-                    result: KernelOpResult::FileOperation { data },
-                })
+            // A file write and a routine's act: the prepared write's own
+            // steps (owner_write.rs), run under the lock.
+            op @ (KernelOp::FileOperation { .. } | KernelOp::Routine { .. }) => {
+                self.apply_owner_write(op)
             }
             KernelOp::FileResolve { reference } => Ok(KernelOpOutcome {
                 receipts: Vec::new(),
@@ -3333,43 +3070,6 @@ impl Kernel {
                     .ok_or("Cannot prepare the agent read")?;
                 let answered = prepared.execute();
                 self.finish_agent_read(answered)
-            }
-            KernelOp::EncounterProvision {
-                project,
-                preferred_body_ref,
-            } => {
-                // The same disclosure gate as every project-scoped op: the
-                // project must be inside Central's disclosed ground, and the
-                // canonical ProjectRef is Central's own, never the caller's.
-                let (cwd, project_ref) = self.project_ground(&project)?;
-                let data =
-                    self.agency
-                        .provision(&cwd, &project_ref, preferred_body_ref.as_deref())?;
-                Ok(KernelOpOutcome {
-                    receipts: Vec::new(),
-                    result: KernelOpResult::EncounterProvisioned { data },
-                })
-            }
-            KernelOp::FlowParticipantProvision {
-                project,
-                agent_ref,
-                flow_ref,
-                sender,
-                preferred_body_ref,
-            } => {
-                let (cwd, project_ref) = self.project_ground(&project)?;
-                let data = self.agency.provision_flow_participant(
-                    &cwd,
-                    &project_ref,
-                    &agent_ref,
-                    preferred_body_ref.as_deref(),
-                    &sender,
-                    &flow_ref,
-                )?;
-                Ok(KernelOpOutcome {
-                    receipts: Vec::new(),
-                    result: KernelOpResult::EncounterProvisioned { data },
-                })
             }
             KernelOp::BeingEncounter { request } => Ok(KernelOpOutcome {
                 receipts: Vec::new(),
@@ -3417,19 +3117,6 @@ impl Kernel {
                     result: KernelOpResult::WorkingSurfaceReading { document },
                 })
             }
-            KernelOp::HarnessAgentControl { binding, control } => {
-                let document = self
-                    .agency
-                    .gateway_agent(None, &binding, control.as_cli_verb())?;
-                Ok(KernelOpOutcome {
-                    receipts: vec![],
-                    result: KernelOpResult::HarnessAgentOutcome {
-                        binding,
-                        control,
-                        document,
-                    },
-                })
-            }
             KernelOp::ProtocolRead => Ok(KernelOpOutcome {
                 receipts: vec![],
                 result: KernelOpResult::Protocol {
@@ -3442,30 +3129,18 @@ impl Kernel {
                     document: working_surface::recording_capability(),
                 },
             }),
-            KernelOp::Receiving { project, request } => {
-                // Same disclosure gate as every project-scoped read: a named
-                // project must be inside Central's disclosed ground. `None`
-                // is the root register's own field — a Day document lives
-                // there, and its receiving field is the root's.
-                if let Some(project) = &project {
-                    let root = self.world_map(false).map_err(|e| e.to_string())?;
-                    root["work"]["projects"]
-                        .as_array()
-                        .and_then(|rows| {
-                            rows.iter()
-                                .find(|r| r["name"].as_str() == Some(project.as_str()))
-                        })
-                        .ok_or("Project is outside Central's disclosed ground")?;
+            // A receiving write's prepared steps (owner_write.rs), a read's
+            // (owner_read.rs `PreparedRead`), run under the lock.
+            op @ KernelOp::Receiving { .. } => match self.prepare_owner_write(&op) {
+                Some(prepared) => {
+                    let answered = prepared.execute();
+                    self.finish_owner_write(answered)
                 }
-                let data = self
-                    .client
-                    .receiving(project.as_deref(), &request)
-                    .map_err(|e| e.to_string())?;
-                Ok(KernelOpOutcome {
-                    receipts: Vec::new(),
-                    result: KernelOpResult::ReceivingReading { data },
-                })
-            }
+                None => self
+                    .prepare_owner_read(&op)
+                    .ok_or("Cannot prepare the receiving read")?
+                    .execute(),
+            },
             KernelOp::Now { project, request } => {
                 // Same disclosure gate as `Receiving`: a named project must be
                 // inside Central's disclosed ground; `None` is the root
@@ -3502,6 +3177,11 @@ impl Kernel {
                     receipts: Vec::new(),
                     result: KernelOpResult::DayReading { data },
                 })
+            }
+            // Central's Day writes: the prepared write's own steps
+            // (owner_write.rs), run under the lock.
+            KernelOp::Central { project, request } if owner_write::central_write(&request) => {
+                self.apply_owner_write(KernelOp::Central { project, request })
             }
             // Owner reads with nothing kernel-owned to record: the prepared
             // read's own execution (owner_read.rs `PreparedRead`).
@@ -3572,23 +3252,6 @@ impl Kernel {
                 Ok(KernelOpOutcome {
                     receipts: vec![receipt],
                     result: KernelOpResult::SourceOpened { buffer },
-                })
-            }
-            KernelOp::Routine { project, request } => {
-                let cwd = self.agent_location(project.as_deref())?;
-                let data = routine::call(&cwd, &request)?;
-                let receipts = if let Some((action, routine_ref)) = request.mutation() {
-                    vec![self.log.record(KernelEvent::RoutineActionReturned {
-                        action: action.into(),
-                        routine_ref: routine_ref.into(),
-                        data: data.clone(),
-                    })]
-                } else {
-                    Vec::new()
-                };
-                Ok(KernelOpOutcome {
-                    receipts,
-                    result: KernelOpResult::Routine { data },
                 })
             }
             KernelOp::Knowledge {
@@ -3718,7 +3381,7 @@ impl Kernel {
                 })
             }
             KernelOp::SharedField { request } => {
-                // A SharedField write, in order under the lock. The kernel
+                // A SharedField write (free in dispatch.rs). The kernel
                 // passes the request through on the desktop's own account;
                 // the client resolves its target and token from its own
                 // environment. Nothing is recorded, nothing is emitted.
@@ -3728,91 +3391,9 @@ impl Kernel {
                     result: KernelOpResult::SharedFieldReading { data },
                 })
             }
-            KernelOp::InvokeAction {
-                project,
-                invocation,
-            } => {
-                // Central discloses the scope, exactly as the Knowledge/Graph
-                // arms: renderer-supplied paths never become invocation context.
-                let root = self.world_map(false).map_err(|e| e.to_string())?;
-                let base = root["root"]
-                    .as_str()
-                    .ok_or("Central root location unavailable")?;
-                let cwd = if let Some(project) = project.as_ref() {
-                    let row = root["work"]["projects"]
-                        .as_array()
-                        .and_then(|rows| rows.iter().find(|r| r["name"].as_str() == Some(project)))
-                        .ok_or("Project is outside Central's disclosed ground")?;
-                    std::path::Path::new(base)
-                        .join(row["path"].as_str().ok_or("Project location unavailable")?)
-                } else {
-                    std::path::PathBuf::from(base)
-                };
-                let dispatch = action::invoke(&self.client, &cwd, project.as_deref(), &invocation);
-                self.reads.invalidate_prefix("knowledge:");
-                self.reads.invalidate_prefix("graph:");
-                self.graph_reads.invalidate();
-                let mut receipts = Vec::new();
-                if matches!(
-                    invocation.action.as_str(),
-                    construction::APPLY | construction::APPLY_FACTS
-                ) {
-                    if let action::ActionDispatch::Invoked { data, .. } = &dispatch {
-                        if data["persisted"] == true && data["state"] == "saved" {
-                            if let Some(path) = data["native_file"]["location"]["path"]
-                                .as_str()
-                                .or_else(|| {
-                                    invocation
-                                        .input
-                                        .as_ref()
-                                        .and_then(|i| i["location"]["path"].as_str())
-                                })
-                            {
-                                self.reads
-                                    .invalidate(&format!("dir:{}", files::parent_path(path)));
-                                receipts.push(self.log.record(KernelEvent::FileChanged {
-                                    path: path.into(),
-                                    summary: if invocation.action == construction::APPLY_FACTS {
-                                        "The native Wiki owner saved time and place facts.".into()
-                                    } else {
-                                        "The native Wiki owner saved a constructive whole.".into()
-                                    },
-                                }));
-                            }
-                        }
-                    }
-                }
-                Ok(KernelOpOutcome {
-                    receipts,
-                    result: KernelOpResult::ActionDispatched { dispatch },
-                })
-            }
-            KernelOp::InstanceCommission {
-                location,
-                expected_revision,
-                content,
-                agent_session_ref,
-            } => {
-                let outcome = commission::commission(
-                    &self.client,
-                    &location,
-                    &expected_revision,
-                    &content,
-                    agent_session_ref.as_deref(),
-                )
-                .map_err(|e| e.to_string())?;
-                // The commission landed as a file write: the parent listing
-                // it invalidates by name.
-                self.reads
-                    .invalidate(&format!("dir:{}", files::parent_path(&location.path)));
-                self.reads.invalidate_prefix("knowledge:");
-                self.reads.invalidate_prefix("graph:");
-                self.graph_reads.invalidate();
-                Ok(KernelOpOutcome {
-                    receipts: Vec::new(),
-                    result: KernelOpResult::InstanceCommissioned { outcome },
-                })
-            }
+            // An owner Action (the decision actions are answered above): the
+            // prepared write's own steps (owner_write.rs), run under the lock.
+            op @ KernelOp::InvokeAction { .. } => self.apply_owner_write(op),
             KernelOp::WorldRead => self.navigate(None, false, false),
             KernelOp::ProjectRead { project } => self.navigate(Some(&project), false, false),
             KernelOp::WorldBrowse { fresh } => self.navigate(None, true, fresh.unwrap_or(false)),
@@ -3947,6 +3528,16 @@ impl Kernel {
         agent_prepared::project_ref(&self.client, &self.agency, &self.agent_reads, project, cwd)
     }
 
+    /// An owner write's prepared steps (owner_write.rs), run under the lock
+    /// by a host that applies the op in order.
+    fn apply_owner_write(&mut self, op: KernelOp) -> Result<KernelOpOutcome, String> {
+        let prepared = self
+            .prepare_owner_write(&op)
+            .ok_or("Cannot prepare the owner write")?;
+        let answered = prepared.execute();
+        self.finish_owner_write(answered)
+    }
+
     fn world_map(&mut self, fresh: bool) -> Result<serde_json::Value, String> {
         if fresh {
             self.reads.invalidate("world");
@@ -3960,36 +3551,6 @@ impl Kernel {
         let reading = world::read_world(&self.client)?;
         self.reads.put("world".into(), reading.clone());
         Ok(reading)
-    }
-
-    /// The project-scoped ground every project-named op shares: the project
-    /// must be inside Central's disclosed ground, the cwd comes from that
-    /// disclosure, and the canonical ProjectRef is Central's own inspect
-    /// reading — never a caller-supplied path or ref.
-    fn project_ground(&mut self, project: &str) -> Result<(std::path::PathBuf, String), String> {
-        let root = self.world_map(false)?;
-        let row = root["work"]["projects"]
-            .as_array()
-            .and_then(|rows| rows.iter().find(|r| r["name"].as_str() == Some(project)))
-            .ok_or("Project is outside Central's disclosed ground")?;
-        let cwd = std::path::Path::new(
-            root["root"]
-                .as_str()
-                .ok_or("Central root location unavailable")?,
-        )
-        .join(row["path"].as_str().ok_or("Project location unavailable")?);
-        let inspection = self
-            .client
-            .run(
-                "projectcentral.inspect",
-                serde_json::json!({"project":project}),
-            )
-            .map_err(|e| e.to_string())?;
-        let project_ref = inspection["manifest"]["project_id"]
-            .as_str()
-            .ok_or("Central has not bound a canonical ProjectRef")?
-            .to_owned();
-        Ok((cwd, project_ref))
     }
 
     /// Horizon-served source listings only: a degraded reading is the error

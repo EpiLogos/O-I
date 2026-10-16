@@ -15,7 +15,7 @@
 use crate::{
     agent_prepared, decision, dictation, ground, knowledge_prepared, m3_reception, nara_current,
     nara_dialogue, nara_epii, nara_expressive_act, nara_identity, nara_presence, nara_voice,
-    native_expression, owner_read, working_surface, world_prepared, Kernel, KernelOp,
+    native_expression, owner_read, owner_write, working_surface, world_prepared, Kernel, KernelOp,
     KernelOpOutcome, KernelOpResult,
 };
 use std::sync::Mutex;
@@ -33,6 +33,102 @@ pub struct Timing {
     /// Which form served the op: `free` (no kernel state), a prepared
     /// form's name, or `ordered` (applied under the lock).
     pub form: &'static str,
+}
+
+/// An op's wire name — `KernelOp`'s serde tag (`rename_all = "snake_case"`)
+/// — read from its Debug form's leading identifier. Formatting stops at the
+/// identifier, so a large payload (a capture, a document) is never written.
+pub fn op_name(op: &KernelOp) -> String {
+    struct Leading(String);
+    impl std::fmt::Write for Leading {
+        fn write_str(&mut self, part: &str) -> std::fmt::Result {
+            for c in part.chars() {
+                if !c.is_alphanumeric() {
+                    return Err(std::fmt::Error);
+                }
+                self.0.push(c);
+            }
+            Ok(())
+        }
+    }
+    let mut leading = Leading(String::new());
+    let _ = std::fmt::write(&mut leading, format_args!("{op:?}"));
+    let mut name = String::with_capacity(leading.0.len() + 4);
+    for (index, c) in leading.0.chars().enumerate() {
+        if c.is_uppercase() {
+            if index > 0 {
+                name.push('_');
+            }
+            name.extend(c.to_lowercase());
+        } else {
+            name.push(c);
+        }
+    }
+    name
+}
+
+/// The host's timing trace (lane W3): one line per op, in the dev bridge's
+/// own format (walk-bridge.rs — when it was answered, how long it waited for
+/// the kernel lock, held it, and spent in owner work outside it), appended to
+/// the file `OI_KERNEL_TRACE_FILE` names. A Finder or Dock launch has no
+/// stderr; a file the environment names survives it. Without the variable
+/// nothing is written. `host` names the writer (`native`).
+pub fn trace_op(host: &str, name: &str, ok: bool, total: Duration, timing: &Timing) {
+    trace_line(|| {
+        format!(
+            "[{host}] {} op {name} {} total_ms={:.1} lock_wait_ms={:.1} lock_held_ms={:.1} owner_ms={:.1} form={}\n",
+            unix_ms(),
+            if ok { "ok" } else { "err" },
+            millis(total),
+            millis(timing.lock_wait),
+            millis(timing.lock_held),
+            millis(timing.owner),
+            timing.form,
+        )
+    });
+}
+
+/// The event replay's lock wait, as the dev bridge logs it.
+pub fn trace_replay(host: &str, lock_wait: Duration) {
+    trace_line(|| {
+        format!(
+            "[{host}] {} event-replay lock_wait_ms={:.1}\n",
+            unix_ms(),
+            millis(lock_wait)
+        )
+    });
+}
+
+/// Where one host's trace goes: the file `OI_KERNEL_TRACE_FILE` named when
+/// the first line was written, opened once for appending.
+fn trace_line(line: impl FnOnce() -> String) {
+    use std::io::Write;
+    static TRACE: std::sync::OnceLock<Option<Mutex<std::fs::File>>> = std::sync::OnceLock::new();
+    let file = TRACE.get_or_init(|| {
+        let path = std::env::var_os("OI_KERNEL_TRACE_FILE").filter(|path| !path.is_empty())?;
+        std::fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(path)
+            .ok()
+            .map(Mutex::new)
+    });
+    if let Some(file) = file {
+        if let Ok(mut file) = file.lock() {
+            let _ = file.write_all(line().as_bytes());
+        }
+    }
+}
+
+fn unix_ms() -> u128 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|elapsed| elapsed.as_millis())
+        .unwrap_or(0)
+}
+
+fn millis(duration: Duration) -> f64 {
+    duration.as_secs_f64() * 1000.0
 }
 
 /// The kernel lock, taken and timed.
@@ -83,6 +179,7 @@ enum Prepared {
     Knowledge(knowledge_prepared::Prepared),
     Working(working_surface::PreparedRead),
     Decision(decision::PreparedDecision, bool),
+    Write(owner_write::PreparedWrite),
     /// No prepared form: applied in order under the lock.
     Ordered,
 }
@@ -108,6 +205,7 @@ impl Prepared {
             Self::Knowledge(_) => "knowledge",
             Self::Working(_) => "working-surface",
             Self::Decision(..) => "decision",
+            Self::Write(_) => "owner-write",
             Self::Ordered => "ordered",
         }
     }
@@ -169,6 +267,11 @@ impl Kernel {
         if let Some(p) = self.prepare_knowledge(op)? {
             return Ok(Prepared::Knowledge(p));
         }
+        // An owner write runs outside the lock; what it recorded — its
+        // receipt, its invalidations — is recorded under it (lane W3).
+        if let Some(p) = self.prepare_owner_write(op) {
+            return Ok(Prepared::Write(p));
+        }
         match op {
             KernelOp::WorkingSurfaceRead {
                 project,
@@ -223,24 +326,65 @@ pub fn dispatch(kernel: &Mutex<Kernel>, op: KernelOp) -> (Result<KernelOpOutcome
     (result, seat.timing)
 }
 
-fn run(seat: &mut Seat<'_>, op: KernelOp) -> Result<KernelOpOutcome, String> {
-    // Owners with no kernel state at all.
+/// Whether an op touches no kernel state at all: it runs entirely outside
+/// the lock (`run`'s free arms).
+pub(crate) fn is_free(op: &KernelOp) -> bool {
     match op {
-        KernelOp::ExpressionRecovery { request } => {
-            seat.timing.form = "free";
-            seat.owner(|| crate::expression_recovery::execute(request))
-        }
-        KernelOp::NaraCoordinate { request } => {
-            seat.timing.form = "free";
-            seat.owner(|| crate::nara_coordinate::execute(request))
-        }
+        KernelOp::ExpressionRecovery { .. }
+        | KernelOp::NaraCoordinate { .. }
+        | KernelOp::WorldResolve { .. }
+        | KernelOp::A2aExchange { .. }
+        | KernelOp::Setup { .. } => true,
+        KernelOp::SharedField { request } => !crate::shared_field::is_read(request),
+        _ => false,
+    }
+}
+
+fn run(seat: &mut Seat<'_>, op: KernelOp) -> Result<KernelOpOutcome, String> {
+    if !is_free(&op) {
+        return run_prepared(seat, op);
+    }
+    seat.timing.form = "free";
+    seat.owner(|| free(op))
+}
+
+/// The owners with no kernel state at all (`is_free`), run without the lock.
+fn free(op: KernelOp) -> Result<KernelOpOutcome, String> {
+    match op {
+        KernelOp::ExpressionRecovery { request } => crate::expression_recovery::execute(request),
+        KernelOp::NaraCoordinate { request } => crate::nara_coordinate::execute(request),
         KernelOp::WorldResolve { world_id, verify } => {
-            seat.timing.form = "free";
-            seat.owner(|| {
-                crate::world_resolve::execute(crate::world_resolve::Request { world_id, verify })
+            crate::world_resolve::execute(crate::world_resolve::Request { world_id, verify })
+        }
+        // A SharedField write (a publish, a contribution, presence, a lease
+        // release, an observation's stop): the client's own registry and
+        // credential, never kernel state, and nothing recorded (lane W3).
+        KernelOp::SharedField { request } => Ok(KernelOpOutcome {
+            receipts: Vec::new(),
+            result: KernelOpResult::SharedFieldReading {
+                data: crate::shared_field::reading(&request)?,
+            },
+        }),
+        // An A2A exchange waits on the other agent's reply through Node's
+        // owner floor; it reads and records nothing of the kernel's.
+        KernelOp::A2aExchange { request } => Ok(KernelOpOutcome {
+            receipts: Vec::new(),
+            result: KernelOpResult::A2aExchangeDifference {
+                data: crate::shared_field::a2a_exchange(&request)?,
+            },
+        }),
+        // First installation runs before Central's root is known: its
+        // directory is this process's own, never the World's.
+        KernelOp::Setup { request } => {
+            let cwd = std::env::current_dir().map_err(|e| e.to_string())?;
+            Ok(KernelOpOutcome {
+                receipts: Vec::new(),
+                result: KernelOpResult::SetupReading {
+                    data: crate::setup::Client::discover().request(&cwd, &request)?,
+                },
             })
         }
-        op => run_prepared(seat, op),
+        _ => Err("This operation reads or records kernel state".into()),
     }
 }
 
@@ -306,6 +450,10 @@ fn run_prepared(seat: &mut Seat<'_>, op: KernelOp) -> Result<KernelOpOutcome, St
         Prepared::Decision(p, as_action) => {
             let receipt = seat.owner(|| p.execute())?;
             seat.hold(|kernel| kernel.finish_decision(receipt, as_action))?
+        }
+        Prepared::Write(p) => {
+            let done = seat.owner(|| p.execute());
+            seat.hold(|kernel| kernel.finish_owner_write(done))?
         }
         Prepared::Ordered => seat.hold(|kernel| kernel.apply(op))?,
     }
@@ -402,5 +550,125 @@ mod tests {
         ));
         assert_eq!(timing.form, "navigation");
         assert!(timing.lock_held < timing.owner);
+    }
+
+    /// The trace names an op by its wire tag, exactly as serde spells it.
+    #[test]
+    fn an_op_is_named_by_its_wire_tag() {
+        for op in [
+            serde_json::json!({"op": "a2a_exchange", "request": {}}),
+            serde_json::json!({"op": "state"}),
+            serde_json::json!({"op": "temporal_events_read", "query": {"window": {"window": "all"}}}),
+            serde_json::json!({"op": "invoke_action", "invocation": {"action": "a", "target_ref": "t"}}),
+        ] {
+            let parsed: KernelOp = serde_json::from_value(op.clone()).unwrap();
+            assert_eq!(op_name(&parsed), op["op"].as_str().unwrap());
+        }
+    }
+
+    /// Lane W3: every owner write the B0 investigator found applied under
+    /// the lock is free (it touches no kernel state) or prepared (its owner
+    /// runs outside the lock; its finish records what the owner did). None is
+    /// ordered. Preparing asks no owner.
+    #[test]
+    fn no_owner_write_is_applied_under_the_lock() {
+        use serde_json::json;
+        let owner = crate::tests::FakeOwner::spawn_counter("dispatch-writes");
+        let mut kernel = owner.kernel();
+        let mut form = |op: serde_json::Value| -> (String, &'static str) {
+            let name = op["op"].as_str().unwrap().to_owned();
+            let op: KernelOp = serde_json::from_value(op).unwrap();
+            let form = if is_free(&op) {
+                "free"
+            } else {
+                kernel.prepare_op(&op).unwrap().form()
+            };
+            (name, form)
+        };
+        let scope = json!({"scope_kind": "machine"});
+        let request = json!({"setting_ref": "oi:setting", "scope": scope});
+        let location =
+            json!({"schema": "central.path-ref/v1", "ref": "ref:a", "root": "R", "path": "a.md"});
+        let table = [
+            // Receiving acts (lib.rs Receiving → flow.rs receiving).
+            json!({"op": "receiving", "project": null, "request": {"Submit": {"producer_key": "p", "occurred_at_unix_seconds": 1}}}),
+            json!({"op": "receiving", "project": null, "request": {"Review": {"return_ref": "r", "expected_return_revision": "v", "disposition": "accepted"}}}),
+            json!({"op": "receiving", "project": null, "request": {"Include": {"return_ref": "r", "expected_return_revision": "v"}}}),
+            json!({"op": "receiving", "project": null, "request": {"Recover": {"return_ref": "r", "expected_return_revision": "v"}}}),
+            json!({"op": "receiving", "project": null, "request": {"MutateField": {"source_ref": "s", "document_id": "d", "expected_revision": "v", "request_id": "q", "field_id": "f", "value": 1}}}),
+            // SharedField writes, an observation's stop, an A2A exchange.
+            json!({"op": "shared_field", "request": {"kind": "publish"}}),
+            json!({"op": "shared_field", "request": {"kind": "observe-stop", "observer_ref": "o"}}),
+            json!({"op": "a2a_exchange", "request": {}}),
+            // Factory acts.
+            json!({"op": "factory_owner", "request": {"kind": "action-invoke", "state_path": "/s.json", "project_ref": "p", "run_ref": "run:1", "request": {}}}),
+            json!({"op": "factory_owner", "request": {"kind": "recognise", "state_path": "/s.json", "journey_ref": "j", "subject_ref": "s"}}),
+            json!({"op": "factory_owner", "request": {"kind": "development-commission", "state_path": "/s.json", "request": {}}}),
+            json!({"op": "factory_owner", "request": {"kind": "run-close", "state_path": "/s.json", "run_ref": "run:1", "recognition_ref": "r"}}),
+            // Credentials and a client install.
+            json!({"op": "credential_setup", "credential": "c"}),
+            json!({"op": "credential_rotate", "credential": "c"}),
+            json!({"op": "credential_verify", "credential": "c"}),
+            json!({"op": "credential_revoke", "credential": "c"}),
+            json!({"op": "client_install", "client": "c"}),
+            // A product action, first installation.
+            json!({"op": "product_action_run", "product_id": "p", "action_ref": "a"}),
+            json!({"op": "setup", "request": {}}),
+            // The configuration plane's writes.
+            json!({"op": "config_desired_hold", "request": request}),
+            json!({"op": "config_desired_discard", "setting_ref": "oi:setting", "scope": scope}),
+            json!({"op": "config_plan", "requests": [request]}),
+            json!({"op": "config_plan_reviewed", "requests": [request]}),
+            json!({"op": "config_reset", "setting_ref": "oi:setting", "scope": scope}),
+            json!({"op": "config_apply_reviewed", "changeset": {}, "plans": []}),
+            json!({"op": "config_apply", "requests": [request]}),
+            json!({"op": "profile_use_plan", "profile_ref": "p"}),
+            json!({"op": "profile_use_apply", "profile_ref": "p"}),
+            json!({"op": "profile_create", "profile_ref": "p"}),
+            json!({"op": "profile_edit", "profile_ref": "p", "operations": []}),
+            // An owner Action (a NOW return), a commission, provisioning, a
+            // harness control.
+            json!({"op": "invoke_action", "invocation": {"action": "projectcentral.now.return", "target_ref": "t"}}),
+            json!({"op": "instance_commission", "location": location, "expected_revision": "v", "content": "c"}),
+            json!({"op": "encounter_provision", "project": "p"}),
+            json!({"op": "flow_participant_provision", "project": "p", "agent_ref": "a", "flow_ref": "f", "sender": "s"}),
+            json!({"op": "harness_agent_control", "binding": "b", "control": "stop"}),
+            // Beside the table (lane W3): a file write and a routine's act.
+            json!({"op": "file_operation", "location": location, "request": {"action": "write", "expected_revision": "v", "content": "c"}}),
+            json!({"op": "routine", "request": {"action": "run_now", "routine_ref": "routine:r"}}),
+            // Central's Day writes.
+            json!({"op": "central", "project": null, "request": {"kind": "ensure-day", "expected_time_policy_revision": "v"}}),
+            json!({"op": "central", "project": null, "request": {"kind": "initialise-day", "day_ref": "d", "document_id": "x", "expected_revision": "v", "expected_policy_revision": "v", "form": location, "expected_form_revision": "v"}}),
+        ];
+        let ordered: Vec<String> = table
+            .into_iter()
+            .map(&mut form)
+            .filter(|(_, form)| *form == "ordered")
+            .map(|(name, _)| name)
+            .collect();
+        assert!(ordered.is_empty(), "applied under the lock: {ordered:?}");
+        // The reads beside them keep their forms; a decision Action keeps the
+        // decision form's ordered arm.
+        assert_eq!(
+            form(json!({"op": "receiving", "project": null, "request": {"List": {}}})).1,
+            "owner-read"
+        );
+        assert_eq!(
+            form(json!({"op": "central", "project": null, "request": {"kind": "inspect"}})).1,
+            "owner-read"
+        );
+        assert_eq!(
+            form(json!({"op": "shared_field", "request": {"kind": "snapshot"}})).1,
+            "owner-read"
+        );
+        assert_eq!(
+            form(json!({"op": "invoke_action", "invocation": {"action": "action:decision.preflight", "target_ref": "t"}})).1,
+            "ordered"
+        );
+        assert_eq!(
+            form(json!({"op": "invoke_action", "invocation": {"action": "projectcentral.now.return", "target_ref": "t"}})).1,
+            "owner-write"
+        );
+        assert_eq!(owner.spawns("central.world"), 0, "preparing asked no owner");
     }
 }

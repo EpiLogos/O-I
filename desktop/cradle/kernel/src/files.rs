@@ -220,25 +220,40 @@ pub fn read_material(
     base: &Location,
     relative: &[String],
 ) -> Result<(Location, Result<crate::KernelOpOutcome, String>), MaterialRouteError> {
+    read_material_observed(kernel, base, relative, &mut |_, _, _, _| {})
+}
+
+/// `read_material`, telling `observe` each op it dispatched — its wire name,
+/// whether it answered, its total time and where that time went — so a host
+/// can trace the route's ops as it traces its own (dispatch.rs `trace_op`).
+#[allow(clippy::type_complexity)]
+pub fn read_material_observed(
+    kernel: &std::sync::Mutex<crate::Kernel>,
+    base: &Location,
+    relative: &[String],
+    observe: &mut dyn FnMut(&str, bool, std::time::Duration, &crate::dispatch::Timing),
+) -> Result<(Location, Result<crate::KernelOpOutcome, String>), MaterialRouteError> {
+    let mut dispatch = |op: crate::KernelOp, name: &str| {
+        let started = std::time::Instant::now();
+        let (result, timing) = crate::dispatch::dispatch(kernel, op);
+        observe(name, result.is_ok(), started.elapsed(), &timing);
+        result
+    };
     let target = resolve_material_with(base, relative, |path| {
-        listed(
-            crate::dispatch::dispatch(
-                kernel,
-                crate::KernelOp::FilesList {
-                    path: path.to_owned(),
-                    fresh: None,
-                },
-            )
-            .0,
-        )
+        listed(dispatch(
+            crate::KernelOp::FilesList {
+                path: path.to_owned(),
+                fresh: None,
+            },
+            "files_list",
+        ))
     })?;
-    let bytes = crate::dispatch::dispatch(
-        kernel,
+    let bytes = dispatch(
         crate::KernelOp::FileBytes {
             location: target.clone(),
         },
-    )
-    .0;
+        "file_bytes",
+    );
     Ok((target, bytes))
 }
 

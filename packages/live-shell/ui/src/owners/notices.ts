@@ -9,8 +9,19 @@
 //      shared engine's acts (desktop/cradle) can raise it without importing the shell; the name is `OWNER_CHANGED_EVENT`.
 //   3. The window's attention (owners/attention.ts) — coming back to the window — and the spine's epoch (owners/spine.ts).
 //
-// The receipt kinds are the kernel's own (desktop/cradle/kernel/src/events.rs:94-200 `KernelEvent`); the instant rule is
+// The receipt kinds are the kernel's own (desktop/cradle/kernel/src/events.rs `KernelEvent`); the instant rule is
 // temporal_sources.rs `kernel_receipt_to_event` (only `observed_at_unix_ms` gives a kernel event a civil instant).
+//
+// Lane W3: when a NOW write, a Day write, a receiving act or a Factory Run act the kernel carried finishes and its owner
+// answered it, the kernel records a receipt naming the owner, its action, the ref that moved and the owner's revision
+// (`now_changed`, `day_changed`, `receiving_changed`, `factory_run_changed`; kernel/src/owner_write.rs). The temporal field and
+// the Day's standing read again on them, with no floor involved.
+//
+// What no receipt reaches — a write another process makes: another session's NOW return or thought, a Day ensured or closed
+// from a terminal, a receiving act from elsewhere, a Factory Run advancing in its own runner, AIKit history and sessions written
+// by other agents. The kernel sees none of them. Those, and only those, are what the floors stand for: the temporal field's
+// (timeline/temporalPoll.ts, five minutes while seen) and the agency reading's (owners/agency.ts, 30 s while seen — AIKit
+// discloses no session-change event at all, so no receipt can ever move it for a session another process started).
 //
 // Pure TypeScript: no view, no store.
 
@@ -77,14 +88,42 @@ function changedPath(receipt: KernelReceipt): string | null {
   return null
 }
 
+/** The kernel's owner-write receipts (kernel/src/events.rs `NowChanged`, `DayChanged`, `ReceivingChanged`,
+ * `FactoryRunChanged`): each says an owner the temporal field reads — Central's NOW field, its Day, its receiving field (whose
+ * answers go back to the producing NOW), Factory's runs — answered a write the kernel carried. */
+export const OWNER_WRITE_RECEIPTS: readonly string[] = ['now_changed', 'day_changed', 'receiving_changed', 'factory_run_changed']
+
 /** A receipt that can move the temporal field's answer. `working_surface_driving` is the one kernel event that carries an
  * instant (`observed_at_unix_ms`), so it lands inside a window on the kernel-event-log stream; a routine's returned action can
- * write NOW and Factory runs; a file or source change counts only under a ground the field reads. Every other receipt either
- * carries no instant (a window never answers it) or changes nothing the field reads. */
+ * write NOW and Factory runs; an owner write the kernel carried moved a stream the field reads; a file or source change counts
+ * only under a ground the field reads. Every other receipt either carries no instant (a window never answers it) or changes
+ * nothing the field reads. */
 export function receiptMovesTemporal(receipt: KernelReceipt): boolean {
   if (receipt.event === 'working_surface_driving' || receipt.event === 'routine_action_returned') return true
+  if (OWNER_WRITE_RECEIPTS.includes(receipt.event)) return true
   const path = changedPath(receipt)
   return !!path && TEMPORAL_GROUNDS.some(ground => ground.test(path))
+}
+
+/** A receipt that moves a Day's standing: the kernel carried a Day write (ensured, initialised, its lifecycle changed). The
+ * owner's earlier refusal of the Day (a stale today) no longer stands either: its premise moved. */
+export function receiptMovesDay(receipt: KernelReceipt): boolean {
+  return receipt.event === 'day_changed'
+}
+
+/** The receipts a reader has not yet taken, over the spine's receipts as they stand (the last 64): each receipt once, however
+ * many readers pass the same array. The first observation takes what stands as already read; a kernel that restarted numbers
+ * its receipts from 1 again. The agency driver and the temporal poll keep the same rule inline. */
+export function createReceiptCursor(): (receipts: readonly KernelReceipt[]) => KernelReceipt[] {
+  let lastSeq: number | null = null
+  return receipts => {
+    const highest = receipts.reduce((max, receipt) => Math.max(max, receipt.seq), 0)
+    if (lastSeq === null) { lastSeq = highest; return [] }
+    if (highest < lastSeq) lastSeq = 0
+    const fresh = receipts.filter(receipt => receipt.seq > (lastSeq ?? 0))
+    lastSeq = Math.max(lastSeq, highest)
+    return fresh
+  }
 }
 
 /** A receipt that can move the agency reading: a working surface attaching to or releasing an agent session, or a routine's

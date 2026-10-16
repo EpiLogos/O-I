@@ -387,7 +387,11 @@ fn attach_on_main(
         .map(|s| s.reading.clone())
         .ok_or("Browser was closed".into())
 }
+/// The renderer's IPC arguments are one named field each (the command's
+/// wire contract), so the command takes them as they arrive and hands the
+/// main thread one control.
 #[tauri::command]
+#[allow(clippy::too_many_arguments)]
 pub async fn browser_control(
     app: AppHandle,
     webview: Webview,
@@ -398,19 +402,22 @@ pub async fn browser_control(
     bounds: Option<Bounds>,
     zoom: Option<f64>,
 ) -> Result<bool, String> {
-    on_main(app.clone(), move || control_on_main(app, webview, id, attachment, action, address, bounds, zoom)).await
+    let control = Control { id, attachment, action, address, bounds, zoom };
+    on_main(app.clone(), move || control_on_main(app, webview, control)).await
 }
 
-fn control_on_main(
-    app: AppHandle,
-    webview: Webview,
+/// One browser control, as the renderer asked it.
+struct Control {
     id: String,
     attachment: u64,
     action: String,
     address: Option<String>,
     bounds: Option<Bounds>,
     zoom: Option<f64>,
-) -> Result<bool, String> {
+}
+
+fn control_on_main(app: AppHandle, webview: Webview, control: Control) -> Result<bool, String> {
+    let Control { id, attachment, action, address, bounds, zoom } = control;
     trusted(&webview)?;
     let label = {
         let state = app.state::<Browsers>();
