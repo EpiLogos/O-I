@@ -1,0 +1,30 @@
+/* The Medium's own marks: the solver grid and the flow arrows in the well, the splat arrow, the push and pull gauges, the widget's boxes, the pane's field. Shell and panel tokens only. */
+
+/* The picture: a window on the world at true scale, the grid cells drawn at their size, the flow one arrow to a lattice point. */
+.dp-display .me-win { fill: none; stroke: color-mix(in srgb, var(--text, #d4d7da) 30%, transparent); stroke-width: 1; }
+.dp-display .me-grid { fill: none; stroke: color-mix(in srgb, var(--text, #d4d7da) 15%, transparent); stroke-width: .6; }
+.dp-display .me-grid-back { fill: none; stroke: color-mix(in srgb, var(--text, #d4d7da) 9%, transparent); stroke-width: .6; stroke-dasharray: 2 2; }
+.dp-display .me-path { fill: none; stroke: color-mix(in srgb, var(--text, #d4d7da) 26%, transparent); stroke-width: .8; stroke-dasharray: 2 3; }
+.dp-display .me-flow { fill: none; stroke: var(--dp-value); stroke-width: 1.1; stroke-linecap: round; stroke-linejoin: round; }
+.dp-display .me-source { fill: var(--dp-on, #ffbe00); }
+.dp-display .me-splat { fill: none; stroke: var(--dp-on, #ffbe00); stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+.dp-display .me-push { fill: none; stroke: var(--text-dim, #a2a7ad); stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
+.dp-display .me-pull { fill: none; stroke: var(--dp-value); stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
+.dp-display .me-dot { fill: color-mix(in srgb, var(--text, #d4d7da) 70%, transparent); }
+.dp-display .me-note { font: 9px var(--font-ui, sans-serif); fill: var(--text-faint, #71767c); text-anchor: middle; }
+.dp-display .me-label { font: 8.5px var(--font-ui, sans-serif); fill: var(--text-faint, #71767c); text-anchor: middle; }
+
+/* The widget: the flow window and four boxes with the switch. */
+.me-tile-grid { flex: 1 1 auto; min-width: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 3px 6px; align-content: center; justify-items: stretch; }
+.me-tile-grid .me-tile-on { grid-column: 1 / span 2; }
+
+/* The pane: the grid and the flow the pointer leaves behind. */
+.me-pane { position: absolute; inset: 0; background: var(--dp-well); color: var(--text, #d4d7da); overflow: hidden; touch-action: none; cursor: crosshair; }
+.me-pane svg { display: block; width: 100%; height: 100%; }
+.me-pane .me-box { fill: none; stroke: color-mix(in srgb, var(--text, #d4d7da) 34%, transparent); stroke-width: 1.2; }
+.me-pane .me-line { stroke: color-mix(in srgb, var(--text, #d4d7da) 10%, transparent); stroke-width: .7; }
+.me-pane .me-arrow { fill: none; stroke: var(--dp-value); stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+.me-pane .me-pt { fill: color-mix(in srgb, var(--text, #d4d7da) 38%, transparent); }
+.me-pane .me-pt[data-moved="true"] { fill: var(--dp-on, #ffbe00); }
+.me-pane .me-text { font: 11px var(--font-ui, sans-serif); fill: var(--text-dim, #a2a7ad); font-variant-numeric: tabular-nums; }
+.me-pane .me-text[data-none="true"] { fill: var(--text-faint, #71767c); }
