@@ -61,13 +61,14 @@ export function HelixTorus({w, h, marks, root, caption}: {w: number; h: number; 
       </g>
     })}
     {marks.map((m, n) => {
-      const [x, y] = P(at(n), Math.PI / 2), [lx, ly] = label(n), family = n % 2
+      // On the far side of the ring the reading stands above the name, clear of the class's point.
+      const [x, y] = P(at(n), Math.PI / 2), [lx, ly] = label(n), family = n % 2, back = Math.sin(at(n)) < -.3
       return <g key={n}>
         {root === n && <circle cx={x} cy={y} r={11} fill="none" stroke="var(--dp-on)" strokeWidth={1.4} />}
         <circle cx={x} cy={y} r={m.lit === false ? 5.5 : 7} fill={m.lit === true ? (family ? 'var(--dp-on)' : 'var(--dp-value)') : 'var(--dp-well)'}
           stroke={m.lit === null ? 'var(--dp-value-dim)' : family ? 'var(--dp-on)' : 'var(--dp-value)'} strokeWidth={1.4} opacity={m.lit === false ? .5 : 1} />
-        <text x={lx} y={ly} textAnchor="middle" className={m.lit === false ? 'dp-ink-dim' : 'dp-ink'} style={{fontSize: 13}}>{m.name}</text>
-        {m.note !== undefined && <text x={lx} y={ly + 14} textAnchor="middle" className="dp-ink-dim"
+        <text x={lx} y={ly - (back && m.note !== undefined ? 13 : 0)} textAnchor="middle" className={m.lit === false ? 'dp-ink-dim' : 'dp-ink'} style={{fontSize: 13}}>{m.name}</text>
+        {m.note !== undefined && <text x={lx} y={back ? ly : ly + 14} textAnchor="middle" className="dp-ink-dim"
           style={{fontSize: 10.5, fill: m.noteTone === 'on' ? 'var(--dp-on)' : m.noteTone === 'value' ? 'var(--dp-value)' : undefined}}>{m.note}</text>}
       </g>
     })}
