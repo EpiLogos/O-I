@@ -123,7 +123,11 @@ export function rosterIdentity(data: unknown): string | null {
 export function gatewayLine(doc: unknown): string {
   if (isObj(doc)) {
     if ('refused' in doc) {
-      const reason = isObj(doc.refused) && typeof doc.refused.message === 'string' ? doc.refused.message : undefined
+      // The kernel passes the gateway's refusal as `{refused: true, error: {code, message}, message}` (agency.rs:144-176; real capture
+      // 16 Oct, lane BF2: cli.gateway_unreachable) — the owner's words sit beside the flag, not inside it.
+      const reason = isObj(doc.refused) && typeof doc.refused.message === 'string' ? doc.refused.message
+        : typeof doc.message === 'string' && doc.message ? doc.message
+          : isObj(doc.error) && typeof doc.error.message === 'string' ? doc.error.message : undefined
       return `the gateway refused the read${reason ? ` — ${reason}` : ''}`
     }
     const named = ['schema', 'binding', 'state', 'status', 'purpose', 'session_ref']

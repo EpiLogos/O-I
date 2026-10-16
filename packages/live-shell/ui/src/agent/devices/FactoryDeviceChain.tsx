@@ -15,6 +15,13 @@
 // writes (designBindings.ts), each published with its binding so the chain, the pool, a pane and the rail draw one device. A
 // design that still draws a list of its own where the owner's belongs waits (designBindings.ts designWaits), and the generic
 // plate draws the owner's rows; the slot names why (data-design-waits).
+//
+// Lane BF2: the Thread (software-factory:thread, §17.10) stands beside the Agent inside its slot and is the Agent's Full (§19.3), on
+// the session's own conversation (threadBinding.ts, the thread pane's encounter observer: EncounterObservers.tsx); the Gateway's Full
+// is the Frames monitor (§19.1 "The full Gateway is the frame monitor"; mainTrackBindings.ts). With no session selected the Device
+// side is Factory's Main track (§16.2; Live shows the Master's chain when no other track is chosen): the Gateways rack (§19.2) with
+// the Agency gateway as its chain (§19.9), and the Experiment (§19.4) — until the session grid's Main row is a track you select.
+// Every device is published whichever chain is drawn, so the pool, a pane and the rail keep them.
 import {Fragment, useCallback, useEffect, useMemo, useRef, useState, type DragEvent} from 'react'
 import {DeviceView} from '../../frame/devices/DeviceView'
 import {publishDevice, selectDevice} from '../../frame/devices/deviceDoor'
@@ -26,6 +33,10 @@ import {agentAddress} from '../../inhabitants/agentParamAddresses'
 import {useRosterAnswer} from '../../owners/readers'
 import {useAgentSessionsOptional} from '../AgentSessionsProvider'
 import {useAgentShell, type AgentDeviceId} from '../AgentShellContext'
+import {threadTrackOf} from '../threadTrack'
+import {trackKey} from '../agentRunModel'
+import {useOptionalContinuity} from '../../continuity/workspace'
+import {parseFactoryTaskRef} from '../../timeline/factoryTrackAdapter'
 import {
   AGENT_CHAIN_MIME, MISSING_OPS, activeChainDrag, chainDropDecision, chainInsertIndex, decodeChainDrag, dropZoneLine,
   encodeChainDrag, missingOpRemedy, setActiveChainDrag, type ActiveChainDrag, type AgentChainSlotId,
@@ -45,6 +56,14 @@ import {useOwnerAccepted} from './ownerAccepted'
 import {useSelectedSkillChain} from './skillRackSelection'
 import {useAgentChainReading} from './useAgentChainReading'
 import {RACK_PROJECT, composePorts, useRackReading} from './useRackReading'
+import {observedState, useEncounterSessions} from './EncounterObservers'
+import {
+  AGENCY_GATEWAY_DESIGN, AGENCY_GATEWAY_ID, EXPERIMENT_DESIGN, EXPERIMENT_ID, FRAMES_DESIGN, FRAMES_ID, GATEWAYS_RACK_DESIGN, GATEWAYS_RACK_ID, MAIN_DEVICE_IDS,
+  agencyBinding, experimentBinding, framesBinding, mainDevices, rackBinding as gatewaysRackBinding,
+} from './mainTrackBindings'
+import {THREAD_DESIGN, THREAD_DEVICE_ID, shownSession, threadBinding, threadDevice, threadJson} from './threadBinding'
+import {useModelCatalogue} from './useModelCatalogue'
+import {RUNS_ID, TASKS_ID, runsBinding, runsDevice, tasksBinding, tasksDevice} from './taskBindings'
 import '../agentShell.css'
 import './factoryDevices.css'
 
@@ -75,7 +94,7 @@ const SLOT_DESIGNS: Readonly<Record<string, string>> = {gateway: GATEWAY_DESIGN,
 
 export function FactoryDeviceChain({sessionRef}: {sessionRef: string | null}) {
   const shell = useAgentShell()
-  const {reading, transport, binding, resolved} = useAgentChainReading(sessionRef)
+  const {reading, transport, binding, resolved, harnesses} = useAgentChainReading(sessionRef)
   // The settings an owner accepted on this harness: the only readings effort and input have. The shell's own effort, steer,
   // heartbeat and write-arm flags are presentation, so they are not read here.
   const accepted = useOwnerAccepted(binding)
@@ -132,9 +151,77 @@ export function FactoryDeviceChain({sessionRef}: {sessionRef: string | null}) {
   }, [chain])
   const steering = useRef(shell.steer)
   steering.current = shell.steer
+  // The conversations: the session the Thread shows (the selection's, as the thread pane resolves it, or the one it is pinned to)
+  // and the chain's own, each through the one encounter observer the pane shares (EncounterObservers.tsx).
+  const tracks = sessions?.tracks ?? null
+  const selectedThread = useMemo(() => (tracks ? threadTrackOf(tracks, shell.selectedTrackId, shell.threadTrackId)?.sessionRef ?? null : null),
+    [tracks, shell.selectedTrackId, shell.threadTrackId])
+  const shown = shownSession({selected: selectedThread, holds})
+  const observed = useMemo(() => [...new Set([shown, sessionRef])].flatMap(ref => {
+    const held = ref ? tracks?.find(item => item.sessionRef === ref && !item.group) : undefined
+    return held ? [{ref: held.sessionRef, space: held.spaceRef}] : []
+  }), [shown, sessionRef, tracks])
+  const {handles, observers} = useEncounterSessions(observed)
+  const models = useModelCatalogue(transport, !waits.agent)
+  const agentThread = useMemo(() => (sessionRef ? threadJson(observedState(handles[sessionRef]), track?.agentName ?? null) : undefined), [handles, sessionRef, track?.agentName])
   const agentDesignBinding = useMemo(() => (waits.agent ? null : agentBinding(chainDeviceId('agent'), {
-    sessionRef, track, nowUnixMs: sessions?.nowUnixMs ?? 0, reading, accepted, harness: {binding, resolved}, holds,
-  }, agentRows, write, () => steering.current)), [waits.agent, sessionRef, track, sessions?.nowUnixMs, reading, accepted, binding, resolved, holds, agentRows, write])
+    sessionRef, track, nowUnixMs: sessions?.nowUnixMs ?? 0, reading, accepted, harness: {binding, resolved}, holds, thread: agentThread, models, harnesses,
+  }, agentRows, write, () => steering.current)), [waits.agent, sessionRef, track, sessions?.nowUnixMs, reading, accepted, binding, resolved, holds, agentRows, write, agentThread, models, harnesses])
+
+  // The Thread: the shown session's conversation; its composer, Input and timing the Agent's; Approve and Hard stop that session's
+  // own encounter verbs; choosing a session moves THE selection.
+  const threadDesign = useDesign(THREAD_DESIGN, true)
+  const thread = useMemo(() => threadDevice(), [])
+  const shownHandle = shown ? handles[shown] : undefined
+  const threadDesignBinding = useMemo(() => {
+    const state = observedState(shownHandle)
+    const actions = shownHandle && 'actions' in shownHandle ? shownHandle.actions : undefined
+    return threadBinding({selected: selectedThread, chainSession: sessionRef, tracks, nowUnixMs: sessions?.nowUnixMs ?? 0,
+      encounter: state ? {reading: state.reading, status: state.status} : null, agent: agentDesignBinding?.values ?? {}, holds}, agentDesignBinding, {
+      ...(actions ? {permission: (id: string, decision: Parameters<typeof actions.permission>[1]) => actions.permission(id, decision), cancel: async () => actions.cancel()} : {}),
+      select: ref => { const chosen = tracks?.find(item => item.sessionRef === ref && !item.group); if (chosen) shell.setSelectedTrackId(trackKey(chosen)) },
+    })
+  }, [shownHandle, selectedThread, sessionRef, tracks, sessions?.nowUnixMs, agentDesignBinding, holds, shell])
+
+  // Tasks (§19.12): the selected session's clips and the task THE selection names; a new task goes the Agent's way (its new-task
+  // row). Runs (§19.11): the session's work's attempts — none read, the agency reading names no run. Both published on the door
+  // (the pool, a pane, the rail); their own places — the Clip side, the browser's Runs — are other lanes' (proposed).
+  const continuity = useOptionalContinuity()
+  const selection = continuity?.current.context?.selection
+  const sessionTrack = track && !track.group ? track : null
+  const selectedTask = useMemo(() => {
+    // A clip of this session's track names the task (its ref is `<track>#task/<n>`, and its track is this session's own).
+    const named = selection?.kind === 'clip' ? parseFactoryTaskRef(selection.ref) : null
+    return named && sessionTrack && named.trackId === trackKey(sessionTrack) ? named.n : null
+  }, [selection, sessionTrack])
+  const tasks = useMemo(() => tasksDevice(), [])
+  const runs = useMemo(() => runsDevice(), [])
+  const tasksDesignBinding = useMemo(() => tasksBinding({session: sessionTrack, tracks, nowUnixMs: sessions?.nowUnixMs ?? 0, selectedTask, agent: agentDesignBinding?.values ?? {}},
+    agentDesignBinding, {
+      selectTask: n => {
+        if (!sessionTrack || !continuity) return
+        const title = sessionTrack.tasks.find(clip => clip.n === n)?.title ?? `Task ${n}`
+        continuity.select({mode: 'factory', kind: 'clip', ref: `${trackKey(sessionTrack)}#task/${n}`, title, track: trackKey(sessionTrack)})
+      },
+      queue: async text => { const receipt = await write(AGENT_P0_ROWS.newTask, text); if (receipt.kind === 'refused') throw Error(receipt.reason) },
+    }), [sessionTrack, tracks, sessions?.nowUnixMs, selectedTask, agentDesignBinding, continuity, write])
+  const runsDesignBinding = useMemo(() => runsBinding(sessionTrack?.sessionRef ?? null, holds), [sessionTrack, holds])
+
+  // Factory's Main track: the Gateways rack with the Agency gateway as its chain, and the Experiment; the Frames monitor the Gateway
+  // opens full and the rail keeps (§23.8).
+  const main = useMemo(() => mainDevices(), [])
+  const designsOf = {rack: useDesign(GATEWAYS_RACK_DESIGN, true), agency: useDesign(AGENCY_GATEWAY_DESIGN, true), experiment: useDesign(EXPERIMENT_DESIGN, true),
+    frames: useDesign(FRAMES_DESIGN, true), thread: threadDesign}
+  const showChain = useCallback((chain: string) => {
+    const shownDevice = chain === 'hermes' ? chainDeviceId('gateway') : chain === 'aikit-agency-gateway' ? AGENCY_GATEWAY_ID : null
+    if (shownDevice) selectDevice(shownDevice)
+  }, [])
+  const mainBindings = useMemo(() => ({
+    rack: gatewaysRackBinding({reading, holds}, {show: showChain}),
+    agency: agencyBinding(reading, holds),
+    experiment: experimentBinding(holds),
+    frames: framesBinding({reading, harness: {binding, resolved}}, holds),
+  }), [reading, holds, showChain, binding, resolved])
 
   // The rack: the seated agent's carried practice (its accepted profile in the roster, the sets AIKit replies for), and the
   // composition through the configuration plane. Read only while its design can draw it.
@@ -162,13 +249,24 @@ export function FactoryDeviceChain({sessionRef}: {sessionRef: string | null}) {
   // Publish each device to the door: the pool shows the chosen one whole, a pane shows it full, from these same devices — a
   // designed device with its binding, so every place draws the design on the same owner values.
   // The Agent's own Full is its session's thread (§19.3): every ⤢ — the chain's, the pool's, the rail's — opens it, never the design's Full.
+  // The Gateway's own Full is the Frames monitor (§19.1): its ⤢ opens the monitor's pane.
   const threadOpener = useRef<() => void>(() => {})
   useEffect(() => {
-    for (const {slot, device} of chain) publishDevice(device.id, {device, picture: size => chainPicture(slot.id, pictures, size), ...(bindings[slot.id] ? {binding: bindings[slot.id]!} : {}), ...(slot.id === 'agent' ? {full: {open: () => threadOpener.current()}} : {})})
+    for (const {slot, device} of chain) publishDevice(device.id, {device, picture: size => chainPicture(slot.id, pictures, size), ...(bindings[slot.id] ? {binding: bindings[slot.id]!} : {}), ...(slot.id === 'agent' ? {full: {open: () => threadOpener.current()}} : {}),
+      ...(slot.id === 'gateway' && main.frames ? {full: {open: () => openDevice(FRAMES_ID, 'Frames')}} : {})})
     if (memberDevice && memberDesignBinding) publishDevice(memberDevice.id, {device: memberDevice, binding: memberDesignBinding})
     else publishDevice(MEMBER_DEVICE_ID, null)
-  }, [chain, bindings, memberDevice, memberDesignBinding]) // the pictures read the reading `chain` is built from
-  useEffect(() => () => { for (const id of [...CHAIN_DEVICE_IDS, MEMBER_DEVICE_ID]) publishDevice(id, null) }, [])
+  }, [chain, bindings, memberDevice, memberDesignBinding, main.frames]) // the pictures read the reading `chain` is built from
+  useEffect(() => { publishDevice(THREAD_DEVICE_ID, {device: thread, binding: threadDesignBinding}) }, [thread, threadDesignBinding])
+  useEffect(() => { publishDevice(TASKS_ID, {device: tasks, binding: tasksDesignBinding}) }, [tasks, tasksDesignBinding])
+  useEffect(() => { publishDevice(RUNS_ID, {device: runs, binding: runsDesignBinding}) }, [runs, runsDesignBinding])
+  useEffect(() => {
+    if (main.rack) publishDevice(GATEWAYS_RACK_ID, {device: main.rack, binding: mainBindings.rack})
+    if (main.agency) publishDevice(AGENCY_GATEWAY_ID, {device: main.agency, binding: mainBindings.agency})
+    if (main.experiment) publishDevice(EXPERIMENT_ID, {device: main.experiment, binding: mainBindings.experiment})
+    if (main.frames) publishDevice(FRAMES_ID, {device: main.frames, binding: mainBindings.frames})
+  }, [main, mainBindings])
+  useEffect(() => () => { for (const id of [...CHAIN_DEVICE_IDS, MEMBER_DEVICE_ID, THREAD_DEVICE_ID, TASKS_ID, RUNS_ID, ...MAIN_DEVICE_IDS]) publishDevice(id, null) }, [])
 
   const choose = (slotId: string) => { shell.setExpandedDevice(slotId as AgentDeviceId); selectDevice(chainDeviceId(slotId)) }
   const openDevice = (id: string, title: string) => {
@@ -176,12 +274,10 @@ export function FactoryDeviceChain({sessionRef}: {sessionRef: string | null}) {
     catch (cause) { setNote({kind: 'refused', title: 'Open full', line: cause instanceof Error ? cause.message : String(cause), receipt: null}) }
   }
   const openFull = (slotId: string, title: string) => openDevice(chainDeviceId(slotId), title)
-  // The Agent's ⤢ opens its thread in a pane (§19.3 Compact: "Click ⤢ to open the thread in a pane") — the session's own thread,
-  // never a picture of one; with no session selected there is no thread to open.
-  const openAgentThread = () => {
-    if (sessionRef == null) { setNote({kind: 'refused', title: 'Open thread', line: 'No session is selected: the Agent\'s thread opens when one is.', receipt: null}); return }
-    shell.openThread(sessionRef)
-  }
+  // The Agent's ⤢ opens its thread in a pane (§19.3 Compact: "Click ⤢ to open the thread in a pane"; Full: "The full Agent is the
+  // thread") — the Thread device's own Full, on the session's own conversation, never a picture of one. The agent tab's conversation
+  // (shell.openThread, the chain picture's Thread ↗) stays where it was.
+  const openAgentThread = () => openDevice(THREAD_DEVICE_ID, 'Thread')
   threadOpener.current = openAgentThread
 
   // One drop, one owner operation (or one named refusal). The session drop rides the run model's own selection — the who slot
@@ -292,6 +388,7 @@ export function FactoryDeviceChain({sessionRef}: {sessionRef: string | null}) {
 
   return (
     <div className="agent-device-chain factory-devices">
+      {observers}
       {note && (note.kind === 'refused'
         ? <RefusalCard
             title={note.title}
@@ -308,7 +405,39 @@ export function FactoryDeviceChain({sessionRef}: {sessionRef: string | null}) {
         onDragLeave={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setGap(null) }}
         onDrop={onRowDrop}
       >
-        {chain.map(({slot, device}, index) => (
+        {/* Factory's Main track (DLW §16.2, §19.2): with no session selected, the Device side is the Main track's chain — the session
+          grid's Main row is not yet a track you can select (proposed to its lane). A selected session shows its own chain. */}
+        {sessionRef == null && <div className="factory-main" data-track="main" aria-label="Main track"
+          data-i="Main track|Factory's Main track: every gateway the work can reach, and the Experiment that compares sessions.">
+          {main.rack && (
+            <div className="factory-slot" data-main-slot="gateways" data-device={GATEWAYS_RACK_ID} data-design={designsOf.rack ? GATEWAYS_RACK_DESIGN : undefined}
+              onClick={() => selectDevice(GATEWAYS_RACK_ID)}>
+              <DeviceView device={main.rack} size="compact" binding={mainBindings.rack} actions={[
+                {icon: 'detail', label: 'Show the Gateways rack whole in the pool', onPress: () => selectDevice(GATEWAYS_RACK_ID)},
+                {icon: 'pane', label: 'Open the chosen gateway full size in a pane', onPress: () => openDevice(GATEWAYS_RACK_ID, 'Gateways')},
+              ]} />
+              {/* The AIKit agency gateway is one chain of the rack (§19.9): its device stands inside the rack's slot. */}
+              {main.agency && (
+                <div className="factory-slot__member" data-device={AGENCY_GATEWAY_ID} data-design={designsOf.agency ? AGENCY_GATEWAY_DESIGN : undefined} onClick={event => event.stopPropagation()}>
+                  <DeviceView device={main.agency} size="compact" binding={mainBindings.agency} actions={[
+                    {icon: 'detail', label: 'Show the Agency gateway whole in the pool', onPress: () => selectDevice(AGENCY_GATEWAY_ID)},
+                    {icon: 'pane', label: 'Open the Agency gateway full size in a pane', onPress: () => openDevice(AGENCY_GATEWAY_ID, 'Agency gateway')},
+                  ]} />
+                </div>
+              )}
+            </div>
+          )}
+          {main.experiment && (
+            <div className="factory-slot" data-main-slot="experiment" data-device={EXPERIMENT_ID} data-design={designsOf.experiment ? EXPERIMENT_DESIGN : undefined}
+              onClick={() => selectDevice(EXPERIMENT_ID)}>
+              <DeviceView device={main.experiment} size="compact" binding={mainBindings.experiment} actions={[
+                {icon: 'detail', label: 'Show the Experiment whole in the pool', onPress: () => selectDevice(EXPERIMENT_ID)},
+                {icon: 'pane', label: 'Open the Experiment\'s result full size in a pane', onPress: () => openDevice(EXPERIMENT_ID, 'Experiment')},
+              ]} />
+            </div>
+          )}
+        </div>}
+        {sessionRef != null && chain.map(({slot, device}, index) => (
           <Fragment key={slot.id}>
             {/* The visible drop slot while a card slides — it opens under the pointer and closes on release. It never lies:
               a slot is not a landing, the owner operation (here: the refusal naming the missing order op) is. */}
@@ -322,8 +451,19 @@ export function FactoryDeviceChain({sessionRef}: {sessionRef: string | null}) {
                 {icon: 'detail', label: 'Show every setting in the pool', onPress: () => choose(slot.id)},
                 slot.id === 'agent'
                   ? {icon: 'pane', label: 'Open the Agent\'s thread in a pane', onPress: openAgentThread}
-                  : {icon: 'pane', label: `Open ${slot.title} full size in a pane`, onPress: () => openFull(slot.id, slot.title)},
+                  : slot.id === 'gateway' && main.frames
+                    ? {icon: 'pane', label: 'Open the Frames monitor in a pane', onPress: () => openDevice(FRAMES_ID, 'Frames')}
+                    : {icon: 'pane', label: `Open ${slot.title} full size in a pane`, onPress: () => openFull(slot.id, slot.title)},
               ]} />
+              {/* The Agent's own Full, beside it (§19.3, §17.10): the Thread on the same session. Its press shows it whole in the pool. */}
+              {slot.id === 'agent' && (
+                <div className="factory-slot__member" data-device={THREAD_DEVICE_ID} data-design={designsOf.thread ? THREAD_DESIGN : undefined} onClick={event => event.stopPropagation()}>
+                  <DeviceView device={thread} size="compact" binding={threadDesignBinding} actions={[
+                    {icon: 'detail', label: 'Show the Thread whole in the pool', onPress: () => selectDevice(THREAD_DEVICE_ID)},
+                    {icon: 'pane', label: 'Open the Thread full size in a pane', onPress: openAgentThread},
+                  ]} />
+                </div>
+              )}
               {/* The rack's chosen chain, inside the rack (§19.7): the member device. Its press shows it whole in the pool. */}
               {slot.id === 'skillset' && memberDevice && memberDesignBinding && (
                 <div className="factory-slot__member" data-device={memberDevice.id} onClick={event => event.stopPropagation()}>
@@ -336,7 +476,7 @@ export function FactoryDeviceChain({sessionRef}: {sessionRef: string | null}) {
             </div>
           </Fragment>
         ))}
-        {held?.kind === 'reorder' && gap === chain.length && <span className="agent-chain-gap" aria-hidden="true" />}
+        {sessionRef != null && held?.kind === 'reorder' && gap === chain.length && <span className="agent-chain-gap" aria-hidden="true" />}
         <div className={'agent-dropz dropz' + (held ? ' armed' : '')} data-slot="zone" data-i={DROP_ZONE_DATA_I} title={DROP_ZONE_DATA_I.split('|')[1]}>
           {held ? dropZoneLine(held) : 'Drop gateways, agents, skillsets, worlds or git here'}
         </div>
