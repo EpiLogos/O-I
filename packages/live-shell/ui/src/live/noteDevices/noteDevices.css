@@ -4,3 +4,14 @@
 .note-plate { cursor: grab; outline: none }
 .note-plate:focus-visible > .device { outline: 1px solid var(--accent); outline-offset: -1px }
 .note-plate[data-note-device-power="off"] .device-controls { opacity: .6 }
+
+/* A note device's live picture (NoteFoldPicture.tsx): the twelve classes as played, as sounded, and the line between. The mode's
+   classes in the value colour; a class the device moves draws its line in amber, as a handle's reach is drawn (DEVICE-UI §4.3). */
+.note-fold .note-fold-name { font: 6.5px var(--font-ui, sans-serif); fill: var(--text-faint) }
+.note-fold .note-fold-played { fill: none; stroke: var(--text-faint); stroke-width: 1 }
+.note-fold .note-fold-line { stroke: color-mix(in srgb, var(--text) 22%, transparent); stroke-width: 1; fill: none }
+.note-fold .note-fold-line--moved { stroke: var(--dp-on); stroke-width: 1.2 }
+.note-fold .note-fold-sound { fill: none; stroke: var(--text-dim); stroke-width: 1 }
+.note-fold .note-fold-sound--held { fill: var(--dp-value); stroke: var(--dp-value) }
+.note-fold .note-fold-sound--out { stroke: var(--text-faint); opacity: .5 }
+.note-fold .note-fold-word { font: 8.5px var(--font-ui, sans-serif); fill: var(--text-dim) }

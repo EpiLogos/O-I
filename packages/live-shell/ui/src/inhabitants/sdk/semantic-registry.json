@@ -254,6 +254,22 @@
   },
   {
     "family": "central",
+    "face": "beings",
+    "kind": "parameter",
+    "liveSemantic": "device-instrument",
+    "modes": [
+      "base"
+    ],
+    "formats": {},
+    "invariant": {
+      "generatesAbsent": "the oi-beings form's owner has landed no page read or write (desktop/cradle/src/personal/page.mjs holds the page law; no kernel op carries it)"
+    },
+    "writePaths": [],
+    "heldBy": [],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/operator-voice.md"
+  },
+  {
+    "family": "central",
     "face": "context-world",
     "kind": "parameter",
     "liveSemantic": "device-audio-fx",
@@ -302,25 +318,39 @@
   },
   {
     "family": "central",
-    "face": "flow-document",
-    "kind": "document",
-    "liveSemantic": "clip",
+    "face": "document",
+    "kind": "parameter",
+    "liveSemantic": "device-instrument",
     "modes": [
       "base"
     ],
     "formats": {},
     "invariant": {
-      "material": "the Flow document (Dialogue · Flow · Journal)",
-      "revision": "CAS revision (central.files.write)",
-      "states": [
-        "draft",
-        "saved",
-        "edited since save"
-      ]
+      "generates": "kernel:file_operation"
     },
-    "writePaths": [],
+    "writePaths": [
+      "kernel:file_operation"
+    ],
     "heldBy": [],
-    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/session-model.md#5"
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/operator-voice.md"
+  },
+  {
+    "family": "central",
+    "face": "flow-document",
+    "kind": "document",
+    "liveSemantic": "device-instrument",
+    "modes": [
+      "base"
+    ],
+    "formats": {},
+    "invariant": {
+      "generates": "kernel:file_operation"
+    },
+    "writePaths": [
+      "kernel:file_operation"
+    ],
+    "heldBy": [],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/operator-voice.md"
   },
   {
     "family": "central",
@@ -333,6 +363,22 @@
     "formats": {},
     "invariant": {
       "transforms": "the ground in focus — analysed, passed unchanged"
+    },
+    "writePaths": [],
+    "heldBy": [],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/reverb.md"
+  },
+  {
+    "family": "central",
+    "face": "highlight",
+    "kind": "parameter",
+    "liveSemantic": "device-audio-fx",
+    "modes": [
+      "base"
+    ],
+    "formats": {},
+    "invariant": {
+      "transforms": "the open page's passages — marked by the page's own <mark> spans, read; the words pass whole"
     },
     "writePaths": [],
     "heldBy": [],
@@ -369,6 +415,70 @@
     "writePaths": [
       "kernel:nara_dialogue"
     ],
+    "heldBy": [],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/operator-voice.md"
+  },
+  {
+    "family": "central",
+    "face": "notes",
+    "kind": "parameter",
+    "liveSemantic": "device-audio-fx",
+    "modes": [
+      "base"
+    ],
+    "formats": {},
+    "invariant": {
+      "transforms": "the open page's notes — each anchored to its entry and passage, read; the page passes whole"
+    },
+    "writePaths": [],
+    "heldBy": [],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/reverb.md"
+  },
+  {
+    "family": "central",
+    "face": "text",
+    "kind": "parameter",
+    "liveSemantic": "device-audio-fx",
+    "modes": [
+      "base"
+    ],
+    "formats": {},
+    "invariant": {
+      "transforms": "the open page's words — the paragraph style and the emphasis the page keeps as its own tags, read; the words pass whole"
+    },
+    "writePaths": [],
+    "heldBy": [],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/reverb.md"
+  },
+  {
+    "family": "central",
+    "face": "things",
+    "kind": "parameter",
+    "liveSemantic": "device-instrument",
+    "modes": [
+      "base"
+    ],
+    "formats": {},
+    "invariant": {
+      "generatesAbsent": "the oi-things form's owner has landed no page read or write (desktop/cradle/src/personal/page.mjs holds the page law; no kernel op carries it)"
+    },
+    "writePaths": [],
+    "heldBy": [],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/operator-voice.md"
+  },
+  {
+    "family": "central",
+    "face": "workspace",
+    "kind": "parameter",
+    "liveSemantic": "device-instrument",
+    "modes": [
+      "base"
+    ],
+    "formats": {},
+    "invariant": {
+      "generatesAbsent": "Launch and the remembered context belong to the workspace book (desktop/cradle/src/workspace/store.ts), the shell's own store; no owner operation carries a launch or a Keep setting yet."
+    },
+    "writePaths": [],
     "heldBy": [],
     "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/operator-voice.md"
   },
@@ -502,7 +612,9 @@
       "techne"
     ],
     "formats": {},
-    "invariant": null,
+    "invariant": {
+      "generatesAbsent": "The sky is read, never written: the kernel's nara_identity transit (ql.nara-transit/v1) answers a date the view asks for, and no owner operation takes a sky value back (lock §7)."
+    },
     "writePaths": [],
     "heldBy": [
       "techne:m4",

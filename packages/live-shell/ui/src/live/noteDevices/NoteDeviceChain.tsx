@@ -1,10 +1,10 @@
 // The note devices in Live's device chain, before the torus (T-LIVE-MODE-SCALES item 3; lock §0.2.5), each a plate of the one
 // device runtime (FOUNDATION F5; live/liveChainDevices.ts noteDevice): its power ring and its tie rule write the session hold
-// (noteDeviceHold.ts), what it does to the notes is read from the mode in force, and the pool shows where it is kept. It moves
-// as a device moves in Live: drag it along the chain, or Alt+← / Alt+→; Delete takes it off. It is added from the browser's
-// Chain devices (components/BrowserPane.tsx). Faces read; the pitch set is the owner's (the mode in force).
+// (noteDeviceHold.ts), what it does to the notes is read from the mode in force and drawn in its well (NoteFoldPicture.tsx), and the
+// pool shows where it is kept. It moves as a device moves in Live: drag it along the chain, or Alt+← / Alt+→; Delete takes it off.
+// It is added from the browser's Chain devices (components/BrowserPane.tsx). Faces read; the pitch set is the owner's (the mode in force).
 
-import {useMemo, type DragEvent, type KeyboardEvent} from 'react'
+import {useCallback, useMemo, type DragEvent, type KeyboardEvent} from 'react'
 import type {ModeInForce} from '../modes'
 import {useLiveModeInForce} from '../../native/liveModeCatalogue'
 import {moveNoteDevice, removeNoteDevice, setNoteDevicePower, setScaleTie, useNoteDeviceChain} from './noteDeviceHold'
@@ -15,6 +15,7 @@ import {DeviceView} from '../../frame/devices/DeviceView'
 import {selectDevice} from '../../frame/devices/deviceDoor'
 import {usePublishedDevice} from '../usePublishedDevice'
 import {noteDevice, noteDeviceReading, type NoteDeviceHold} from '../liveChainDevices'
+import {NoteFoldPicture} from './NoteFoldPicture'
 import './noteDevices.css'
 
 /** The session hold, as the plates write it. A tie the face changes is an accepted write: any refusal the map named on it is stale. */
@@ -49,7 +50,9 @@ function moveTo(devices: readonly NoteDevice[], id: string, target: number): voi
 
 function NoteDevicePlate({device, index, devices, mode}: {device: NoteDevice; index: number; devices: readonly NoteDevice[]; mode: ModeInForce}) {
   const instance = useMemo(() => noteDevice(device, mode, HOLD), [device, mode])
-  usePublishedDevice(instance.id, instance)
+  // Its live picture, in its well wherever it is drawn: the fold it makes of the twelve classes under the mode in force.
+  const picture = useCallback(() => <NoteFoldPicture device={device} mode={mode}/>, [device, mode])
+  usePublishedDevice(instance.id, instance, picture)
   const name = NOTE_DEVICE_LABEL[device.kind]
   const reading = noteDeviceReading(device, mode)
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -72,7 +75,7 @@ function NoteDevicePlate({device, index, devices, mode}: {device: NoteDevice; in
     onDragStart={event => { event.dataTransfer.setData(DRAG_TYPE, device.id); event.dataTransfer.effectAllowed = 'move' }}
     onDragOver={event => { if (carries(event)) { event.preventDefault(); event.dataTransfer.dropEffect = 'move' } }}
     onDrop={event => { if (!carries(event)) return; event.preventDefault(); moveTo(devices, event.dataTransfer.getData(DRAG_TYPE), index) }}>
-    <DeviceView device={instance} size="compact"
+    <DeviceView device={instance} size="compact" picture={<NoteFoldPicture device={device} mode={mode}/>}
       actions={[{icon: 'detail', label: 'Show every setting in the pool', onPress: () => selectDevice(instance.id)}]}
       wrapRow={(row, control) => row.key === 'tie' ? <MidiMapTarget id={`note-device:${device.id}:tie`} writer="session">{control}</MidiMapTarget> : control}/>
   </div>
