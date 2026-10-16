@@ -1,4 +1,4 @@
-// Web (manual §23.4): the pages an agent read, each as the agent got it, with the text it used marked. A device born on the rail; Live's
+// Web (manual §23.3): the pages an agent read, each as the agent got it, with the text it used marked. A device born on the rail; Live's
 // nearest is the browser's preview, the file at the top and its contents under it. The display is the page: its address on the first
 // line, its text under it as the agent got it, each passage the agent used under a teal mark. The pages stand as dots down the right
 // edge, newest at the top; the handle sits on the page shown.

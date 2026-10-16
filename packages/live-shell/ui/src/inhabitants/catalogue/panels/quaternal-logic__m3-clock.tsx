@@ -1,4 +1,4 @@
-// M3 clock (manual §22.2): the wheel of 360 degrees, a full return in two turns of 720, that lenses cut in many ways. Live's nearest:
+// M3 clock (manual §22.3): the wheel of 360 degrees, a full return in two turns of 720, that lenses cut in many ways. Live's nearest:
 // a modulator whose display is its cycle with a needle (the LFO), and Wavetable's one large display with a handle on it. The display
 // is the wheel by its own law: North at the top and the degrees growing clockwise; an outer ring of 24 governors of 15° (six to a
 // quadrant), an inner ring of 9 chambers of 40°, the aperture's cut as spokes every division degrees from North, its reciprocal cut

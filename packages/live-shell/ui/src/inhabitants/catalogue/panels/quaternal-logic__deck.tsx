@@ -1,4 +1,4 @@
-// Deck (manual §22.3): a spread of cards, or a hexagram, for a concern you carry, read in six positions that answer one another.
+// Deck (manual §22.4): a spread of cards, or a hexagram, for a concern you carry, read in six positions that answer one another.
 // Live's nearest: Simpler in Slice mode — one display of the material cut into its parts, a few choosers beside it. The display
 // is the spread by its own law: the six positions laid in their pairs, P0 over P5, P1 over P4, P2 over P3 (a pair reads as one),
 // each card by its name and the codon it belongs to, a reversed card turned; the Sphere fills P0 and P1, the Torus all six, the

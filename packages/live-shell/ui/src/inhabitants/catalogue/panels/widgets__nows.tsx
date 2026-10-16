@@ -1,4 +1,4 @@
-// NOWs (manual §23.8): the day in force, the present moment, and the moments of the day still open, machine by machine. A device born on
+// NOWs (manual §23.6): the day in force, the present moment, and the moments of the day still open, machine by machine. A device born on
 // the rail; Live's nearest is the transport's position display beside the Session view's playing slots. The display is the ground's
 // reading as it stands: the day and the time large at the left, then each open moment as a row — its state as a light (lit while
 // active, dark while quiescent), what it is for, the machine it runs on and who works on it. In a pane the moments stand on the day's

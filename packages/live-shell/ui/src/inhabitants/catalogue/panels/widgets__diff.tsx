@@ -1,4 +1,4 @@
-// Diff (manual §23.5): the changes not yet committed, and the changes an agent proposes, read before you approve them. A device born on
+// Diff (manual §23.4): the changes not yet committed, and the changes an agent proposes, read before you approve them. A device born on
 // the rail; Live's nearest is the clip's Notes and Envelopes editor — the material line by line, what is added and what is taken out.
 // The display is the diff itself: the lines of a file's patch, an added line on a green ground, a removed line on a red one, a hunk's
 // head faint; side by side, the old lines at the left and the new at the right. On the rail it is the list of changed files, each with

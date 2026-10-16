@@ -1,4 +1,4 @@
-// Dynamics (manual §21.6): the effect after the torus that lowers its loud parts and lifts the whole by makeup. Live's nearest:
+// Dynamics (manual §21.5): the effect after the torus that lowers its loud parts and lifts the whole by makeup. Live's nearest:
 // Compressor, whose display shows its transfer curve with the threshold and ratio on it, and Glue Compressor's column of controls.
 // The display law is the compressor's own static curve: an input at or under the threshold passes; above it, it rises by 1/Ratio
 // of its rise; Makeup lifts the whole. The second display is the gain reduction in time for a burst at full level: it deepens

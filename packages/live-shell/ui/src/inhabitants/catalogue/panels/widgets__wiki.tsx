@@ -1,4 +1,4 @@
-// Wiki (manual §23.10): the wiki pages an agent may use, read here and never edited. A device born on the rail; Live's nearest is the
+// Wiki (manual §23.7): the wiki pages an agent may use, read here and never edited. A device born on the rail; Live's nearest is the
 // Info View — a page of text beside the work, with its links. The display is the page as its owner reads it: its title and kind, then
 // its lines, each link underlined in teal where it resolves and left as it is, faint and dashed, where it does not. The pages stand
 // as dots down the right edge; the one the agent read last is ringed in amber; the handle sits on the page shown.

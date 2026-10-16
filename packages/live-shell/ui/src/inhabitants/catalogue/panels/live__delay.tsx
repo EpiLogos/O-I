@@ -1,4 +1,4 @@
-// Delay (manual §21.6): the effect after the torus that repeats its sound after a time. Live's nearest: Delay — the time as sync
+// Delay (manual §21.5): the effect after the torus that repeats its sound after a time. Live's nearest: Delay — the time as sync
 // divisions or milliseconds at the left, a display in the middle, Feedback and Dry/Wet. The display law is the delay line itself:
 // the dry sound at zero, then a repeat every Time, the first at Mix and each next one Feedback times the one before; Tone darkens
 // each pass, so the bright part of a repeat (the inner bar) falls faster than its whole. Time runs across on a square-root scale,
