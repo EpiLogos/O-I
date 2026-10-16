@@ -1,4 +1,4 @@
-// Knowledge route (manual §19.8, ai-kit:knowledge-route): which knowledge an agent may look up, and how far it follows links.
+// Knowledge route (manual §19.9, ai-kit:knowledge-route): which knowledge an agent may look up, and how far it follows links.
 // Live's nearest: Auto Filter — a filter drawn across a scale with handles on it; here the scale is the ring of links round a hit.
 // The owner is AIKit's knowledge application (`aikit knowledge search|resolve|read|relations|history|status`, transported by the
 // cradle kernel: desktop/cradle/kernel/src/knowledge.rs). Grounded as follows.

@@ -1,4 +1,4 @@
-// The Thread (DLW §17.10, software-factory:thread) on its owners (lane BF2): the conversation of one session — the Agent's Full
+// The Thread (DLW §19.4, software-factory:thread) on its owners (lane BF2): the conversation of one session — the Agent's Full
 // (§19.3 "The full Agent is the thread") and a device of its own beside the Agent on the session's chain. Its stream is the reading
 // the shell's thread pane already draws: AIKit's encounter view of the session (shell.openThread → AgentThreadView →
 // AgentLayer → encounter/session.ts useEncounterSession, `aikit session-space encounter {action: view}`), one shared observer per

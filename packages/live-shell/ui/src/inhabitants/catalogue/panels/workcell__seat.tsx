@@ -1,4 +1,4 @@
-// Seat (manual §19.20): the place a session works in. A seat is one checkout of one product in env-1, env-2 or env-3; a lane holds it,
+// Seat (manual §19.17): the place a session works in. A seat is one checkout of one product in env-1, env-2 or env-3; a lane holds it,
 // and several agents work in one lane. Live's nearest: Utility, a small effect whose meaning is plain at a glance, with the Scope
 // pattern for an act that asks first. The picture is the product's three seats side by side: who holds each, what it carries
 // uncommitted, how far its lane is ahead of main; under them, the disk gauge of the chosen workcell with the Floor on it.

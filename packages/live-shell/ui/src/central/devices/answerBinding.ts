@@ -1,11 +1,11 @@
-// The Answer (DLW §18.10, central:nara-conversation) on Central's readings (lane BC2): the agent that answers, last on a document's
+// The Answer (DLW §19.4, central:nara-conversation) on Central's readings (lane BC2): the agent that answers, last on a document's
 // chain. Its binding is the owner's Nara dialogue binding (oi.nara-dialogue-binding/v1, looked up by useCentralReadings.ts
 // useNaraReading): bound, its session's conversation is the exchange — AIKit's encounter view of that session, observed by the ONE
 // shared observer every presenter of a session uses (agent/devices/EncounterObservers.tsx), its rows the Agent's and the Thread's own
 // (agent/devices/threadBinding.ts threadJson — lane BF2's read, reused, never read twice). The packet is the Packet's (lane BC3,
 // packetBinding.ts — AIKit's prepared context, the one read the Packet widget and the transport share), shown only when it is prepared
 // for this session: the encounter's Send carries its own session's prepared context (encounter/session.ts send → reviewedContext), so
-// "an answer shows the packet that it came from" (DLW §18.9 Rules) and never another's. Pure: no React, no transport.
+// "an answer shows the packet that it came from" (DLW §18.3 Rules) and never another's. Pure: no React, no transport.
 import type {DesignBinding, Value, Values} from '../../frame/devices/designed'
 import type {RosterAgent} from '../../../../../../desktop/cradle/src/agency/roster'
 import type {EncounterReading, EncounterStatus} from '../../../../../../desktop/cradle/src/encounter/client'

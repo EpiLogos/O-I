@@ -1,4 +1,4 @@
-// Arrangement ruler (manual §17.9): the shell's own Arrangement view as an instrument that opens in a pane. Live's nearest: Live's
+// Arrangement ruler (manual §16.6): the shell's own Arrangement view as an instrument that opens in a pane. Live's nearest: Live's
 // Arrangement view with its overview strip, its loop brace and its locators — here the tracks are the mode's, the clips are its
 // material, and the ruler is the mode's own (seconds of a run, the years of deep time).
 // The picture is the ruler itself, drawn by the ruler's own law (frame/tracks/ArrangementRuler.tsx): time across, tracks down; a clip

@@ -1,4 +1,4 @@
-// The Field (manual §20.1): Expressions' instrument — a plate that is tuned and sounds, particles that gather on the lines where
+// The Field (manual §20.2): Expressions' instrument — a plate that is tuned and sounds, particles that gather on the lines where
 // it stands still, and symbols that hold a place and may have a voice. Live's nearest: Operator and Wavetable — a large display
 // with handles, a global column of volume and time. The display draws the resonator's own law (cymaticResonator.ts: the mode
 // lattice f0·(m²+n²) on the plate, f0·√(m²+n²+p²) in the chamber; phi_mn and phi_mnp as the nodal figure); its readings are the

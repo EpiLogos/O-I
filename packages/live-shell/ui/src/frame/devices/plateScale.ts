@@ -1,4 +1,4 @@
-// The plate's scale (manual §16.8: "The plate does not reflow. When the detail area is shorter or taller, the whole plate scales
+// The plate's scale (manual §16.9: "The plate does not reflow. When the detail area is shorter or taller, the whole plate scales
 // between 80 % and 125 %, as Live's zoom scales its devices"). A plate on a chain is 191 px high at 100 %; its scale is the chain's
 // own height over that, held to the range. The pool scales its 400-wide plate to the pool's width the same way (never reflowed).
 // The scale is CSS `zoom`, so the plate's layout box scales with its drawing and the chain lays it out at its scaled width.

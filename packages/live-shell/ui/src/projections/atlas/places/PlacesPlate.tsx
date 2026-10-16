@@ -2,7 +2,7 @@
 // alone"; lock §2.5 M4′ "planet builder: body, landmass, climate, sky, locations, relations; scales system · body · region ·
 // palace"; the mockup's M4 plate, world-shell-mockup.html:1447-1461 `deviceDetail` k==='M4' and its controls :1385-1397 — knobs for
 // Sea level, Continents, Relief, Warmth, Moisture, Ice caps, Atmosphere, Clouds, Axial tilt; segmented Body, Coast, Kind, Relations;
-// Locations and Relations as tight lists; manual §17.1 World, Whole: "View, Body, Landmass, Climate, Sky, Locations, Earth layers").
+// Locations and Relations as tight lists; manual §17.2 World, Whole: "View, Body, Landmass, Climate, Sky, Locations, Earth layers").
 // One plate drawn in the device craft (docs/dlw/DLW.md §16; the panel kit, inhabitants/sdk/panel.tsx): a dial for a value you sweep,
 // a radio for one of a few, rows for places, the sections side by side and folded to fit; the atlas pane carries no chrome (owner,
 // 14 Oct: "controls live in device UI, never as chrome inside a pane").
@@ -17,9 +17,9 @@
 // (placeTool.ts) — the plate never writes a coordinate. The devices M4′ holds (the globe, the Earth ⇄ Graph switch, the QL sky) stand as
 // marks on the sections that draw their controls: a press shows one whole in the pool, ⤢ opens it in a pane.
 //
-// The plate's head is the panel kit's (InstrumentPlate.tsx; manual §16.8) and its display section is the Earth's live well
+// The plate's head is the panel kit's (InstrumentPlate.tsx; manual §16.9) and its display section is the Earth's live well
 // (inhabitants/ql/devices/techneWells.tsx: the body as the pane looks at it, its lit side, its located places at their presence; the scale
-// at the well's top right). No sentence stands in the plate (manual §16.8): what the owners returned stands as readouts and a light, the
+// at the well's top right). No sentence stands in the plate (manual §16.9): what the owners returned stands as readouts and a light, the
 // Place tool's state as a light and one word, a chosen place's source on the status bar — every sentence is the status bar's.
 import {useEffect, useMemo, useState, useSyncExternalStore} from 'react'
 import {InstrumentPlate, heldMarksOf, type PlateSection} from '../../../frame/devices/InstrumentPlate'
@@ -66,7 +66,7 @@ const LOCUS_WORDS: Partial<Record<LocusType, string>> = {
   'historical-event': 'events', 'myth-episode': 'myth', artifact: 'placed things', sky: 'sky',
 }
 
-/** Why the planet builder waits on Earth (manual §17.1 "Earth is given … Earth and other worlds are read-only"; the mockup's own Earth
+/** Why the planet builder waits on Earth (manual §17.2 "Earth is given … Earth and other worlds are read-only"; the mockup's own Earth
  * branch, world-shell-mockup.html:1449). */
 const EARTH_GIVEN = 'Earth is given — its land is not built. Place and name locations on it; anchor your body’s locations to it.'
 const EARTH_CLIMATE = 'You cannot reshape Earth: no owner builds a body’s climate in this suite.'
@@ -146,7 +146,7 @@ export function LensReadings({handle}: {handle: Pick<AtlasHandle, 'ctl'> | null}
   </div>
 }
 
-// ── View: how close, as what, through which lens (manual §17.1 Whole "View") ──
+// ── View: how close, as what, through which lens (manual §17.2 Whole "View") ──
 
 function ViewSection({handle}: {handle: AtlasHandle | null}) {
   const view = useAtlasView()
@@ -239,7 +239,7 @@ function OwnersReturned() {
   const {counts} = standing
   const words = describeStanding(standing) || 'Every owner answered.'
   const short = standing.phase === 'reading' ? 'reading' : standing.phase === 'unavailable' || standing.refused.length || Object.values(standing.inputs).some(input => input.state !== 'available') ? 'partial' : 'read'
-  // The light alone (manual §16.9 Light: "A small round light"): lit green while every owner answered, orange when one did not, hollow
+  // The light alone (manual §16.10 Light: "A small round light"): lit green while every owner answered, orange when one did not, hollow
   // while they are read; its words, and the undated count, are the status bar's.
   return <div className="plate-keys places-returned" data-places-standing={standing.phase} data-owners={short} data-i={said('What the owners returned', words)}>
     <Lamp state={short === 'reading' ? 'unknown' : 'lit'} tone={short === 'partial' ? 'stall' : 'green'} label={`The owners: ${short}`} />
@@ -285,7 +285,7 @@ function LocationsSection({handle}: {handle: AtlasHandle | null}) {
   const line = tool.phase === 'armed'
     ? `Click the Earth to place ${tool.subject.moving ? `${tool.subject.moving.name} anew` : 'a point'} for ${tool.subject.title}. Esc stops.`
     : tool.phase === 'offered' ? `${draftLine(tool.draft)}. ${tool.notice}` : tool.notice
-  // The tool's state in one word, its whole line the status bar's (manual §16.8).
+  // The tool's state in one word, its whole line the status bar's (manual §16.9).
   const toolWord = tool.phase === 'armed' ? 'armed' : tool.phase === 'offered' ? 'offered' : tool.tone === 'refused' ? 'refused' : 'placed'
   const placeDoes = (kind === 'palace' ? 'A palace stands where its rooms\' subjects are placed: placing a subject a room holds places that room. ' : '')
     + (subject ? `Place a point for ${subject.title}: the next click on the Earth is offered to its time-and-place editor, never written here.` : 'Choose a subject on the Earth first: a place is declared by a subject.')

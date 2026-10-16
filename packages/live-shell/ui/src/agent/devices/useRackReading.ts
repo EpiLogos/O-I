@@ -1,4 +1,4 @@
-// The Skillset rack's owner readings and the configuration plane's two acts (lane BF; DLW §19.6). Read through the kernel's own
+// The Skillset rack's owner readings and the configuration plane's two acts (lane BF; DLW §19.7). Read through the kernel's own
 // operations, each run against the installed owners on 16 Oct and its real shape kept in the lane's scratch (`shapes/`):
 //   agent_definition {skillset, name} — `aikit --json set show <name>`: projected[], withheld[{capability, reason}], child_refs[],
 //                                       revision (agent_definition.rs:294-297, agency.rs:234-280 set_reading);

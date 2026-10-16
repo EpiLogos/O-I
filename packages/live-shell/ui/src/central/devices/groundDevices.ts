@@ -1,6 +1,6 @@
-// Ground hygiene and Impact as designed devices on Central's chain (lane BC2; DLW §18.12, §18.13): the census and the
+// Ground hygiene and Impact as designed devices on Central's chain (lane BC2; DLW §18.5, §18.6): the census and the
 // neighbourhood read through the same owner ops the devices' earlier bodies read, and their bindings (groundBindings.ts).
-//   - Ground hygiene reads when it opens and when you press Read now (DLW §18.12 Refresh "On open"), through the one census reader
+//   - Ground hygiene reads when it opens and when you press Read now (DLW §18.5 Refresh "On open"), through the one census reader
 //     (inhabitants/CentralHygieneDevice.tsx readHygieneCensus);
 //   - Impact reads its subject's three legs when the subject changes — the knowledge graph (`op graph`, readGraph), a folder's
 //     listing (`op files_list`), the NOW register (`op now` kind:list) — ported from inhabitants/CentralImpactDevice.tsx's `read`

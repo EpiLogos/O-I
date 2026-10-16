@@ -1,4 +1,4 @@
-// The agent chain's designed devices on their owners (lane BF): the Agent (actuation:harness-model, DLW §19.3), the Skillset rack
+// The agent chain's designed devices on their owners (lane BF): the Agent (actuation:harness-model, DLW §19.4), the Skillset rack
 // (ai-kit:skillset-rack, §19.6), its member device (ai-kit:skill-device, §19.7) and Scope (software-factory:context-write-mode,
 // §19.14). Each design's value keys are filled from the owners' readings and each change goes to the owner's own write — the
 // binding the runtime hosts a design on (frame/devices/designed.ts DesignBinding; DEVICE-UI §8 "The shell brings the values, the
@@ -35,7 +35,7 @@ export const AGENT_DESIGN = 'actuation:harness-model'
 export const RACK_DESIGN = 'ai-kit:skillset-rack'
 export const MEMBER_DESIGN = 'ai-kit:skill-device'
 export const SCOPE_DESIGN = 'software-factory:context-write-mode'
-/** Git / landing, the chain's last device (DLW §19.19; its binding is workcellBindings.ts gitBinding, lane BF3). */
+/** Git / landing, the chain's last device (DLW §19.16; its binding is workcellBindings.ts gitBinding, lane BF3). */
 export const LANDING_DESIGN = 'workcell:git-seat'
 
 /** The face of each chain slot the catalogue designs (agentDeviceCatalogue.ts CHAIN_SLOTS: one of the slot's admitted faces), so the

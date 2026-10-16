@@ -1,7 +1,7 @@
 // lane E (ticket E, 15 Oct): the plate grammar every device stands on — sections side by side at the widths their controls take, folded to
 // their titles when the row is too narrow, never a scroller; no box inside a box; controls visual first (dials, switches, rows that page) —
 // and the Technē instruments' Compact presentation: a well drawn from the owners' readings and the four macros each instrument's manual
-// entry names (docs/dlw/DLW.md §16.1, §17.1–§17.6 Presentations; docs/dlw/DEVICE-UI.md §1–§3). Rendered server-side with the production
+// entry names (docs/dlw/DLW.md §16.1, §17.2–§17.7 Presentations; docs/dlw/DEVICE-UI.md §1–§3). Rendered server-side with the production
 // modules in memory (the loader of atlas-places-plate.test.mjs).
 import test from 'node:test'
 import assert from 'node:assert/strict'
@@ -95,7 +95,7 @@ test('the sheets: the row and its sections never scroll, a hairline between sect
   assert.doesNotMatch(controls, /\.plate-row[^{]*\{[^}]*background: var\(--bg-1\)/, 'a row is a line with a hairline under it, never a framed box')
 })
 
-/** The macros each instrument's manual entry names for its Compact (DLW.md §17.1–§17.6 Presentations; M0′ stands on §17.2's grammar). */
+/** The macros each instrument's manual entry names for its Compact (DLW.md §17.2–§17.7 Presentations; M0′ stands on §17.2's grammar). */
 const MACROS = {
   'techne:m0': ['Depth', 'Scope', 'Ghosts', 'Labels'], 'techne:m1': ['Tool', 'Snap', 'Relation', 'Standing'], 'techne:m2': ['Lens', 'Window', 'Floor', 'Readings'],
   'techne:m3': ['Pace', 'Arrival', 'Loop', 'Narration'], 'techne:m4': ['Scale', 'Aperture', 'View as', 'Occasion'], 'techne:m5': ['Path', 'Guide', 'Audience', 'Return'],

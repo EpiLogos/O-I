@@ -151,7 +151,7 @@ test('inside, the plate holds the palace\'s controls in the manual\'s groups —
   assert.ok(rooms.indexOf('>Central<') < rooms.indexOf('>The Stone<') && rooms.indexOf('>The Stone<') < rooms.indexOf('>Walk<'), 'the rooms, in path order')
   assert.match(rooms, /→ expression:walk/, 'a region says the Expression it holds')
   assert.match(rooms, /aria-label="Remove Walk"/, 'a hand-made region can be removed (on Save)')
-  assert.match(rooms, /role="radiogroup" aria-label="Guide"[\s\S]*?aria-checked="true"[^>]*>on</, 'the guide is on (manual §17.6: Rooms holds Room and Guide)')
+  assert.match(rooms, /role="radiogroup" aria-label="Guide"[\s\S]*?aria-checked="true"[^>]*>on</, 'the guide is on (manual §17.7: Rooms holds Room and Guide)')
   assert.match(rooms, /class="plate-line" role="status" data-tone="guide"/, 'the guide says why the room stands where it does')
   const path = out.slice(out.indexOf('data-section="path"'), out.indexOf('data-section="board"'))
   assert.match(path, /role="radiogroup" aria-label="Path"[\s\S]*?aria-checked="true"[^>]*>guided</, 'the path is guided')

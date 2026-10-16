@@ -1,4 +1,4 @@
-// Factory's Main track devices and the Frames monitor on their owners (lane BF2): the Gateways rack (DLW §19.2, actuation:
+// Factory's Main track devices and the Frames monitor on their owners (lane BF2): the Gateways rack (DLW §19.3, actuation:
 // gateways-rack — "Factory's Main track", first device), the Agency gateway (§19.9, ai-kit:agency-gateway — "one chain in the
 // Gateways rack"), the Experiment (§19.4, actuation:experiment — "any Factory track"; it compares sessions, so it stands on the Main
 // track) and the Frames monitor (§19.5 and its widget §23.8, actuation:frames-monitor — the Gateway's Full, and the rail's Frames).
@@ -91,7 +91,7 @@ export function gatewayAnswer(reading: Pick<AgentChainReading, 'gatewayAdmitted'
 
 // ---------------------------------------------------------------------------------------------------------------- the Gateways rack
 
-/** The chains of the rack: the Actuation family's declared gateways (actuationFamilyManifest.ts:15), by the manual's names (§19.2). */
+/** The chains of the rack: the Actuation family's declared gateways (actuationFamilyManifest.ts:15), by the manual's names (§19.3). */
 export const GATEWAY_CHAINS: readonly {readonly id: string; readonly name: string}[] = [
   {id: 'hermes', name: 'Hermes gateway'},
   {id: 'aikit-agency-gateway', name: 'AIKit agency gateway'},

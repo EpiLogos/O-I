@@ -1,4 +1,4 @@
-// The Agentset rack (manual §19.18, software-factory:agentset-rack): a team of agents as one unit, one chain for each member. Live's
+// The Agentset rack (manual §19.15, software-factory:agentset-rack): a team of agents as one unit, one chain for each member. Live's
 // nearest: an Instrument Rack and its chain list, with nested racks. A rack has no wave to draw, so the chain list is the picture: each
 // member's state light, its name stepped in by its level, its model as a chip and its tool calls. The name of a chain chooses it (the
 // shell holds that choice, as it does for the Skillset and Gateways racks); Whole, Full and Open show the chosen member. The faces are

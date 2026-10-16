@@ -1,4 +1,4 @@
-// Medium (manual §20.6, expressions:medium): the shared fluid the particles move through. Live's nearest: Hybrid Reverb — a well that draws
+// Medium (manual §20.7, expressions:medium): the shared fluid the particles move through. Live's nearest: Hybrid Reverb — a well that draws
 // what the device keeps (the flow, which fades by its persistence) with the small laws beside it, and dials ruled off round it. The shell's
 // own diagram (components/NativeFieldFace.medium.tsx) shows the coupling and the grid; this panel draws the engine's law (GPGPUSimulator.ts
 // stepMedium, mediumShaders.ts, simulationShaders.ts 7C):
@@ -92,7 +92,7 @@ const px = (x: number) => `${Math.round(x)} px`
 const cellText = (c: number) => `${c < 10 ? c.toFixed(1) : String(Math.round(c))} px`
 const d2 = fixed(2), d3 = fixed(3)
 
-/** The light reads the owner alone (manual §16.8). */
+/** The light reads the owner alone (manual §16.9). */
 const lightOf = (p: ViewProps): LightState => { const b = boolOf(p.owner ?? p.v, K.on); return b === undefined ? 'unknown' : b ? 'lit' : 'dark' }
 const head = (p: ViewProps) => ({
   light: lightOf(p), lightWhy: st(p, K.on).disabled, onLight: () => p.set(K.on, boolOf(p.owner ?? p.v, K.on) !== true), onFold: p.nav.fold, onFull: p.nav.full,

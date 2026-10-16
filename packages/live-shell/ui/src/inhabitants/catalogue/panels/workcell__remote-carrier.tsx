@@ -1,4 +1,4 @@
-// The Remote carrier (manual §19.21, workcell:remote-carrier): the device that moves a session to another machine of yours, the fourth chain
+// The Remote carrier (manual §19.18, workcell:remote-carrier): the device that moves a session to another machine of yours, the fourth chain
 // of the Gateways rack. Live's nearest: Utility, a small effect whose meaning is plain at a glance. The picture is the route: this machine
 // on the left, each machine you connected on the right, one line to each. The line is drawn by the machine's standing (solid ready, dashed
 // composed, crossed when refused or incompatible, dotted when disconnected). Handle 1 stands where the session runs and moves it: to this

@@ -1,4 +1,4 @@
-// Session grid (manual §17.8): the shell's own Session view as an instrument that opens in a pane. Live's nearest: the Session view's
+// Session grid (manual §16.6): the shell's own Session view as an instrument that opens in a pane. Live's nearest: the Session view's
 // clip grid (a clip launcher with its scene launchers) — here the tracks are the mode's, the clips are its material, and a row is a stop.
 // The picture is the grid itself, drawn by the grid's own law (frame/tracks/SessionGrid.tsx): a clip stands in its track's column and its
 // row; a clip shows its state (waiting, running with no end, stopped, recording, stalled, done); a group folds its members and rolls their

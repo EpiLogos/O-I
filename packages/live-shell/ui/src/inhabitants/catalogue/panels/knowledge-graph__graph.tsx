@@ -1,4 +1,4 @@
-// Knowledge graph (manual §17.2): the wiki read link by link. Live's nearest: Auto Filter — a well that draws what the device
+// Knowledge graph (manual §17.3): the wiki read link by link. Live's nearest: Auto Filter — a well that draws what the device
 // does, handles on the well, and a few stepped switches round it. The well is the graph's own law, run on a reading of the
 // root wiki: the cradle's filterGraph keeps, dims or drops each note by the scope, depth, direction, kinds, relations, find
 // text, ghosts and filter mode, and the canvas's own rules draw it (ghosts dashed and hollow, arrows on the lines, labels by
@@ -413,7 +413,7 @@ function chipsOf(v: V): string[] | undefined {
   return chips
 }
 
-// The light reads the owner alone (manual §16.8): lit or dark when it reports, hollow when it has not.
+// The light reads the owner alone (manual §16.9): lit or dark when it reports, hollow when it has not.
 const light = (p: ViewProps) => (strOf(p.owner ?? p.v, 'light') ?? 'unknown') as LightState
 
 export const design: DesignedDevice = {

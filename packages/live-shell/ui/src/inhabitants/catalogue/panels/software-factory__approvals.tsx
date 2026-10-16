@@ -1,4 +1,4 @@
-// Approvals (manual §19.16 and §23.10, software-factory:approvals): the agents' proposals and requests that wait for you, with the
+// Approvals (manual §19.14 and §19.14, software-factory:approvals): the agents' proposals and requests that wait for you, with the
 // settings that decide how long they wait and what happens when nobody answers. Live's nearest: Utility with a small display, as
 // Custody is. It shares the Gateway's `approvals` key (agentParamAddresses.ts: the Gateway writes it through harness_agent_control
 // `configure`; Hermes calls it approvals.mode) and the Thread's proposal cards (software-factory__thread.tsx: Approve, Changes, Diff).

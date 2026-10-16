@@ -1,4 +1,4 @@
-/* Search (manual §18.11): layout inside the gallery's frames for the parts the kit does not draw. Shell and panel tokens only. */
+/* Search (manual §18.4): layout inside the gallery's frames for the parts the kit does not draw. Shell and panel tokens only. */
 .srch-span { grid-column: 1 / -1; width: 100%; min-width: 0; }
 .srch-grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px 4px; width: 100%; justify-items: center; }
 .srch-none { margin: 0; font-size: 10px; color: var(--text-faint, #71767c); }

@@ -1,4 +1,4 @@
-// Physics (manual §20.3): the field's motion law — swirl, return, curl, gravity, drag, time. Live's nearest: Auto Filter and
+// Physics (manual §20.4): the field's motion law — swirl, return, curl, gravity, drag, time. Live's nearest: Auto Filter and
 // Corpus — a well that draws the law with handles, and columns of dials ruled off beside it. The shell's own diagram
 // (components/NativeFieldFace.physics.tsx) draws the same law from the engine's readings; this panel hosts a diagram of it.
 import {Action, Band, Readout, Dial, Display, Folded, Handle, Panel, Radio, Section, Tile, ValueBox, type LightState} from '../../sdk/panel'

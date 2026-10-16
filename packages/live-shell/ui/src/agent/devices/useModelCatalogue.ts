@@ -1,4 +1,4 @@
-// The models the Agent's Model chooser offers (DLW §19.3 "The models the harness offers"): AIKit's resolved model catalogue through
+// The models the Agent's Model chooser offers (DLW §19.4 "The models the harness offers"): AIKit's resolved model catalogue through
 // the kernel's own op (`model_catalogue` → `aikit model-catalogue show --json`, agency.rs:1373-1400). Read 16 Oct 2026 (scratch
 // lane-bf2/shapes/model-catalogue.json): {catalogued: 346, shown: 346, standing: "catalogue identity only — a catalogued Model is not
 // thereby available; see `aikit compose --json` for route availability", entries: [{model: "model:aion-2.0", name, source,

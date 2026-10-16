@@ -1,4 +1,4 @@
-/* A device on the rail draws its own tile (the kit's Tile, 136 × 136; manual §16.8): the rail's tile around it stands down — no
+/* A device on the rail draws its own tile (the kit's Tile, 136 × 136; manual §16.9): the rail's tile around it stands down — no
    ground, no edge, no head of its own. Shell tokens only. */
 .mode-dock-tile--bare { background: none; border: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; min-height: 0 }
 .mode-dock-tile--bare > .device-place { flex: none }

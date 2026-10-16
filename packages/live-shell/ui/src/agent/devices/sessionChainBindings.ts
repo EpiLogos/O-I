@@ -1,4 +1,4 @@
-// The session's own devices beside the chain on their owners (lane BF3): the Run (DLW §19.17, software-factory:run-device — "on the
+// The session's own devices beside the chain on their owners (lane BF3): the Run (DLW §19.1, software-factory:run-device — "on the
 // session's chain"), Custody (§19.13, software-factory:agent-custody — "on the Agent device; the Agent's face shows it") and the
 // Agentset rack (§19.18, software-factory:agentset-rack — "a group's chain in Factory").
 //

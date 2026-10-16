@@ -1,12 +1,12 @@
 /* An instrument as one plate, its controls grouped in sections side by side: the mockup's .inst / .insth / .isecs / .isec
    (world-shell-mockup.html:352-359) drawn on the SDK's plate (inhabitants/sdk/sdk.css) at the device UI standard's measures
-   (docs/dlw/DLW.md §16.8: a 22 px head, a band of sections, 56 px control columns, 9 px small capitals 13 px high; §1: "Sections are
+   (docs/dlw/DLW.md §16.9: a 22 px head, a band of sections, 56 px control columns, 9 px small capitals 13 px high; §1: "Sections are
    columns, ruled off from each other by a hairline … Nothing scrolls, and no box sits inside a box"). Shell and SDK tokens only. */
 .inst-plate { flex: none; display: flex; flex-direction: column; min-width: 0; min-height: 0; height: 100%; max-height: 100% }
-/* The plate's face (manual §16.8 Face): the panel kit's grey on a hairline, its head, its row of sections, what stands under them. */
+/* The plate's face (manual §16.9 Face): the panel kit's grey on a hairline, its head, its row of sections, what stands under them. */
 .inst-plate > .inst-face { flex: 1 1 auto; display: flex; flex-direction: column; min-width: 0; min-height: 0; background: var(--bg-2); border: 1px solid var(--line);
   font: 11px/1.35 var(--font-ui, sans-serif); color: var(--text) }
-/* The head is the panel kit's (panel.tsx PanelHead; manual §16.8): the activator, ▾, the mark, the name, the held mark, the pages, the
+/* The head is the panel kit's (panel.tsx PanelHead; manual §16.9): the activator, ▾, the mark, the name, the held mark, the pages, the
    device's own acts, the place's marks, ⤢. It never pushes the plate wider than its sections: what does not fit is cut at the right. */
 .inst-plate > .inst-face > .dp-head { overflow: hidden }
 .inst-plate > .inst-face > .dp-head > .inst-head-mark { flex: none; color: var(--accent) }
@@ -23,7 +23,7 @@
 /* The body never scrolls: a list pages (plateControls.tsx PlateRows), a section too wide folds. */
 .inst-section-body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 5px; overflow: hidden }
 .inst-section-body > * { flex: none }
-/* Control columns (manual §16.8 "Control column 56 wide"): dials and toggles side by side; a radio, a list, a chooser, a field or a line
+/* Control columns (manual §16.9 "Control column 56 wide"): dials and toggles side by side; a radio, a list, a chooser, a field or a line
    across the section. */
 .inst-section-body[data-cols] { display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); gap: 5px 0; align-content: start; justify-items: center }
 .inst-section-body[data-cols] > :is(.dp-cell--radio, .dp-cell--rows, .dp-cell--chooser, .dp-cell--wide, .plate-field, .plate-line, .plate-span, .inst-section-line, .frame-chrome, .inst-devices, p) { grid-column: 1 / -1; justify-self: stretch }
@@ -65,7 +65,7 @@
 .inst-device .dp-sec { padding: 4px 0 0 }
 .inst-device .dp-sec + .dp-sec { border-left: 0; padding-left: 6px }
 
-/* The display's section (InstrumentPlate.tsx `display`; manual §16.8, §7): the well alone at the plate's left, no heading, never
+/* The display's section (InstrumentPlate.tsx `display`; manual §16.9, §7): the well alone at the plate's left, no heading, never
    folded; the well is the plate's only inset surface. */
 .inst-section--display { flex: none; justify-content: center; align-items: center; padding: 5px 6px }
 /* A section whose owner discloses nothing, drawn as a light and one word (SectionNote `word`): its sentence is the status bar's. */

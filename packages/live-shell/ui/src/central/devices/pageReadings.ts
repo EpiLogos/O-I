@@ -1,4 +1,4 @@
-// What a Central page holds, read from its own payload for the page family's devices (DLW §17.7 Document, §18.3 Flow, §18.6 Text,
+// What a Central page holds, read from its own payload for the page family's devices (DLW §17.8 Document, §18.3 Flow, §18.6 Text,
 // §18.7 Highlight, §18.8 Notes): the entries and their words, the style of each paragraph and the emphasis and marks on each word,
 // the notes, the packet, the journal's pages and the people. Pure: no React, no transport, no store; it writes nothing.
 //

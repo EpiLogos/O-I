@@ -1,6 +1,6 @@
 // The plates of the Technē instruments the hosted stage draws — M1′ Canvas, M2′ Timeline, M3′ Journey (T-FRAME-CHROME-ONTO-PLATES; lock
 // §2.5 "drawn as one instrument frame with sections"; the mockup's deviceDetail k==='M1'/'M2'/'M3', world-shell-mockup.html:1457-1459).
-// Their sections are the manual's own groups for each — DLW.md §17.3 Canvas "Whole: All parameters, in five groups: Tools, Lines,
+// Their sections are the manual's own groups for each — DLW.md §17.4 Canvas "Whole: All parameters, in five groups: Tools, Lines,
 // Relation, Look, Views"; §17.4 Timeline "four groups: Lens, Readings, Standing, Window"; §17.5 Journey "four groups: Stops, Pace,
 // Transitions, Takes" — and each section stands the controls the frame's chrome places there (presentedChrome.ts homes), in the frame's
 // words. A parameter the manual names that no owner carries yet stands dim with why (the mockup's rule: shown waiting, never faked).
@@ -55,7 +55,7 @@ export const STAGE_PLATES: Readonly<Record<StageInstrumentId, readonly StageSect
   'techne:m2': [
     {id: 'lens', title: 'Lens', homes: ['timeline:lens'], width: 210},
     {id: 'readings', title: 'Readings', homes: ['timeline:readings'], width: 200, empty: 'The ruler’s reading discloses no layers or filters here.', waiting: [
-      // The mockup's Strata (world-shell-mockup.html:1406; manual §17.4 Your work: Days · Runs · Receipts): the relation field's Activity
+      // The mockup's Strata (world-shell-mockup.html:1406; manual §17.5 Your work: Days · Runs · Receipts): the relation field's Activity
       // projection draws Days, NOWs, sessions and runs together (field-studies-journeys relationFieldView.tsx:50-51), and no owner shows
       // one stratum alone.
       {name: 'Strata', values: 'Occurrence · Receipt · Day · NOW · Run', why: 'No owner shows one temporal stratum alone: the Relations lens’s Activity projection draws Days, NOWs, sessions and runs together.'},
@@ -64,7 +64,7 @@ export const STAGE_PLATES: Readonly<Record<StageInstrumentId, readonly StageSect
       {name: 'Standing floor', values: 'Facts · Claims · Inferences · Guesses · All', why: 'The chronology filters no event by standing: every event shows at its own standing. The Relations projection carries its own standing filter, which stands here while it is shown.'},
     ]},
     {id: 'window', title: 'Window', homes: ['timeline:window'], width: 170, waiting: [
-      // The mockup's Deep time (world-shell-mockup.html:1405, a 0–100 % dial; manual §17.4 Time scale): the ruler maps time by its own
+      // The mockup's Deep time (world-shell-mockup.html:1405, a 0–100 % dial; manual §17.5 Time scale): the ruler maps time by its own
       // scale (desktop/cradle/src/techne/m0m5/timeline/scale.ts) and no owner takes a stretch of deep time as a setting.
       {name: 'Deep time', values: '0–100 %', why: 'No owner stretches deep time on the ruler by a setting: the ruler maps time by its own scale.', dial: {unit: '%'}},
     ]},

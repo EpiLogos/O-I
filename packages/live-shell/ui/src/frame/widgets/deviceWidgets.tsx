@@ -27,7 +27,7 @@ function deviceBody(deviceId: string): ComponentType<WidgetBodyProps> {
   return Body
 }
 
-/** A widget the rail registers under its own id that a device's widget draws (DLW §23.8: the rail's Frames is the Frames monitor's
+/** A widget the rail registers under its own id that a device's widget draws (DLW §19.6: the rail's Frames is the Frames monitor's
  * widget) — of the rail's own device kind, bare, its body the device's Widget view on the device's binding — under the registration's
  * name and mark. A device's publisher claims it; the claim stays when the device leaves its chain (its body then says so). */
 const claims = new Map<string, string>()

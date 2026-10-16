@@ -94,7 +94,7 @@ export const editorDevice = (editor: SummonedEditor): DeviceInstance => ({id: ed
 let kernelForPanes: KernelApi | null = null
 
 /** An editor's plate on the kit, compact on a chain or whole in the pool: its controls in the frame's words, pressed through its one runner
- * (frameChrome.tsx), paged in the head when one band does not hold them (manual §16.8). The Library's plate opens its page (⤢). */
+ * (frameChrome.tsx), paged in the head when one band does not hold them (manual §16.9). The Library's plate opens its page (⤢). */
 function EditorPanel({editor, p, view}: {editor: SummonedEditor; p: ViewProps; view: 'compact' | 'whole'}) {
   const chrome = useHostedChrome()
   const frame = useFrameChromeOver(chrome?.state ?? null, chrome?.run ?? null)

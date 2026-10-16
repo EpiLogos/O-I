@@ -1,4 +1,4 @@
-// The Experiment device (manual §19.4, actuation:experiment): a declared run on a Factory track. Live's nearest: a clip's take lane
+// The Experiment device (manual §19.5, actuation:experiment): a declared run on a Factory track. Live's nearest: a clip's take lane
 // with a grid of takes — a device that plays a fixed number of runs and keeps what each one gave. The picture is the plan itself:
 // one group of bars for each level of the variable, one bar for each repeat, each bar one run's reading. Runs not yet played are
 // hollow, the run that plays is amber, a run that finished is a bar.

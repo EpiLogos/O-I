@@ -1,4 +1,4 @@
-// AIKit's population for the Link (DLW §19.22; lane BF3): `aikit gateway who --project-world W --json`, which the kernel runs as
+// AIKit's population for the Link (DLW §19.19; lane BF3): `aikit gateway who --project-world W --json`, which the kernel runs as
 // `inhabitation_read {kind: population}` (desktop/cradle/kernel/src/inhabitation.rs:33-38, :88), read with the cradle's own read
 // (desktop/cradle/src/contributions/factory/inhabitation/reads.ts readPopulation) and held once for the window under the spine's
 // epoch, as the shell holds every shared owner answer (owners/ownerReading.ts useOwnerReading). Its `remotes` are the declared

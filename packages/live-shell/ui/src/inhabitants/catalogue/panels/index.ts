@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 // The designed devices. The six reference devices load with the gallery: one instrument of Central, one of Live, a field
 // effect of Expressions, the Skillset rack and its member device, and an effect of the Factory chain — the pattern every
-// device's UI follows (docs/dlw/DLW.md §16.14). Every other device is its own module, `<family>__<face>.tsx`, exporting
+// device's UI follows (docs/dlw/DLW.md §16.15). Every other device is its own module, `<family>__<face>.tsx`, exporting
 // `design`, loaded only when the gallery asks for it, so one device that does not build never stops another from drawing.
 import type {DesignedDevice} from './design'
 import './panels.css'

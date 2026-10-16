@@ -1,5 +1,5 @@
 // Lane BF3: Factory's Main track readers (src/agent/devices/receiptBindings.ts, FactoryDeviceChain.tsx, AgentDockTileBody.tsx) — the
-// Ledger (software-factory:ledger, DLW §19.15, its widget §23.9) and Approvals (software-factory:approvals, §19.16, its widget §23.10).
+// Ledger (software-factory:ledger, DLW §19.13, its widget §23.9) and Approvals (software-factory:approvals, §19.16, its widget §23.10).
 //
 // Channels:
 // - REAL: two changes of the root register's change horizon as read on 16 Oct (Control/.central/source-change-control.json, the

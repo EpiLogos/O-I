@@ -1,4 +1,4 @@
-// The Packet (manual §18.9; its widget §23.12): what an agent reads from you, gathered from documents and shown whole, with its size,
+// The Packet (manual §18.3; its widget §23.12): what an agent reads from you, gathered from documents and shown whole, with its size,
 // before anything is sent. Live's nearest: Limiter — a level meter with a ceiling that you drag, here over a list of items.
 // The owner of the list is AIKit's prepared context (aikit.prepared-context/v1, read through desktop/cradle/src/context/nativeContext.ts):
 // read, add a selection, remove one, clear, and send it with the reviewed packet (the send empties it). The owner discloses no token

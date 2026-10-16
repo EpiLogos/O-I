@@ -1,4 +1,4 @@
-// The Palace (manual §17.6): a place on the World that you enter. Its rooms each hold a part of one register's wiki, a path leads
+// The Palace (manual §17.7): a place on the World that you enter. Its rooms each hold a part of one register's wiki, a path leads
 // through them, and a guide says why each room stands where it does. Live's nearest: a device with a map in its well (Hybrid Reverb)
 // and sections ruled off beside it. The picture is the owner's own floor (projections/atlas/palaces/PalaceFloor.tsx): rooms of
 // 220 × 150 board units at the board's own default points (palacesModel / board.ts defaultBoardPoint: three to a row, a 300 stride),

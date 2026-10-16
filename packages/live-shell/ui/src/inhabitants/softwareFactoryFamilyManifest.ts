@@ -19,11 +19,11 @@ export function softwareFactoryFamilyManifest(): FamilyManifest {
       {id: 'ledger', presentations: ['compact'], liveSemantic: 'track', invariant: {stream: 'the Factory ledger (main-track receipts)'}, note: 'Main-track ledger device and dock tile.'},
       {id: 'approvals', presentations: ['compact', 'full'], liveSemantic: 'return', invariant: {routesTo: 'kernel:harness_agent_control'}, note: 'Default approvals and approval queue tile.'},
       {id: 'run-device', presentations: ['expanded', 'full'], liveSemantic: 'track', invariant: {stream: 'the Factory run (one session\'s task stream)'}, note: 'Factory run on timeline when projected.'},
-      // The session's conversation, its clips and its crew (DLW §17.10, §19.12, §19.18), drawn on their owners by the Factory chain
+      // The session's conversation, its clips and its crew (DLW §19.4, §19.1, §19.15), drawn on their owners by the Factory chain
       // (agent/devices/threadBinding.ts, taskBindings.ts, sessionChainBindings.ts).
-      {id: 'thread', presentations: ['compact', 'expanded', 'full'], liveSemantic: 'device-instrument', invariant: {generates: 'kernel:harness_agent_control'}, note: 'One session\'s conversation: the Agent\'s Full (DLW §17.10, §19.3). Its words go the Agent\'s way (the steer line or the next task).'},
-      {id: 'tasks', presentations: ['compact', 'expanded', 'full'], liveSemantic: 'track', invariant: {stream: 'one session\'s tasks (agency_read, encounter_task_read, temporal_events_read)'}, note: 'The clips on one session\'s track (DLW §19.12).'},
-      {id: 'agentset-rack', presentations: ['compact', 'expanded', 'full'], liveSemantic: 'rack', invariant: {chains: ['agent-session'], chainSelector: 'member (state light)'}, note: 'A group\'s sessions as one unit, one chain for each member (DLW §19.18).'},
+      {id: 'thread', presentations: ['compact', 'expanded', 'full'], liveSemantic: 'device-instrument', invariant: {generates: 'kernel:harness_agent_control'}, note: 'One session\'s conversation: the Agent\'s Full (DLW §19.4, §19.4). Its words go the Agent\'s way (the steer line or the next task).'},
+      {id: 'tasks', presentations: ['compact', 'expanded', 'full'], liveSemantic: 'track', invariant: {stream: 'one session\'s tasks (agency_read, encounter_task_read, temporal_events_read)'}, note: 'The clips on one session\'s track (DLW §19.1).'},
+      {id: 'agentset-rack', presentations: ['compact', 'expanded', 'full'], liveSemantic: 'rack', invariant: {chains: ['agent-session'], chainSelector: 'member (state light)'}, note: 'A group\'s sessions as one unit, one chain for each member (DLW §19.15).'},
     ],
     params: {grammar: 'software-factory/parameter-address/v1'},
     projections: ['factory-run-track-adapter'],

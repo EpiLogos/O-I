@@ -1,4 +1,4 @@
-// The Beings (manual §18.4): a Central page about a person or an agent, tied to its world, its subject, its offices, its sources and
+// The Beings (manual §18.1): a Central page about a person or an agent, tied to its world, its subject, its offices, its sources and
 // its places. Live's nearest: a device that draws its material, as Simpler draws its sample. The picture is the page as the Beings
 // template draws it (desktop/cradle/documents/oi-beings.html): the same 12-column grid, the mark at the right (Portrait) or at the
 // left (Editorial), the paper or ink tokens, the Expression block between the opening and the sections, the side list In relation.

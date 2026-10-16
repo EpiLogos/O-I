@@ -1,4 +1,4 @@
-// The selected task on the Clip side (DLW §19.12: "In Clip view, the task is the clip"; lane BF3): the Tasks device the chain publishes
+// The selected task on the Clip side (DLW §19.1: "In Clip view, the task is the clip"; lane BF3): the Tasks device the chain publishes
 // (taskBindings.ts, factory:tasks — the same binding, so the clip and the chain move together), at its compact size beside the task's
 // log, as Live's clip box stands beside its editor. It reads the door: a Tasks device no chain has published draws nothing, and the
 // log stands alone as before.

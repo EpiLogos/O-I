@@ -1,10 +1,10 @@
-// The Highlight (manual §18.7): an effect on a Central document's chain, after Text. Live's nearest: Utility — a small effect with a few
+// The Highlight (manual §18.1): an effect on a Central document's chain, after Text. Live's nearest: Utility — a small effect with a few
 // states and one picture. It marks a passage and leaves the passage whole: a highlight is a <mark> span round the words, and the words
 // stay as they were (desktop/cradle/documents/ql-flow.html:1074 act('hl') wraps the selection; ql-daily-die.html:649 does the same in a
 // Day field). The selection tool is the template's own bar (ql-flow.html:1063): Highlight, Note, To packet, Answer this; a Day's bar has
 // the first three (ql-daily-die.html:643). The document reads its highlights back as passages with the entry that holds each
 // (central/documentPayload.ts markedPassages :99, entryPlace :117 — "C3"). The templates keep one marker colour, yellow
-// (--hl, #FFE97A); Colour, Show, Pen and the tool's Off switch are the operations that the templates take on (manual §18.7).
+// (--hl, #FFE97A); Colour, Show, Pen and the tool's Off switch are the operations that the templates take on (manual §18.1).
 //
 // Bindable: the page's material is value keys, never a constant here. `entries` is a JSON list of {n, by, text} (an entry's number,
 // its author's letter, its words); `marks` keeps one character for each word of each entry — a colour's letter, or "." — with the
