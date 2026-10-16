@@ -1,4 +1,4 @@
-// Renders a page of the manual (DLW.md by default, or the name given: `node docs/dlw/render.mjs DEVICE-UI`) into the
+// Renders a page of the manual (DLW.md by default, or the name of another page beside it) into the
 // standalone HTML beside it. The Markdown is the source; run this from the repo root after editing it (needs `npm ci` in
 // site/ for the marked parser).
 import {readFileSync, writeFileSync} from 'node:fs'
@@ -176,6 +176,8 @@ ${body}
   }
   const fit=()=>document.querySelectorAll('.ui-stage').forEach(st=>{const w=+st.dataset.w,h=+st.dataset.h,k=Math.min(1,st.clientWidth/w);st.style.height=(h*k)+'px';st.firstElementChild.style.transform='scale('+k+')'})
   fit();addEventListener('resize',fit)
+  // The device gallery tells the page its height: the embed grows to every view it draws.
+  addEventListener('message',e=>{const h=e.data&&e.data.dlwGallery&&+e.data.dlwGallery.h;if(!h)return;document.querySelectorAll('.ui-stage iframe').forEach(f=>{if(f.contentWindow===e.source){f.style.height=h+'px';f.parentElement.dataset.h=h;fit()}})})
   const nav=document.querySelector('nav')
   document.querySelector('.menu').onclick=()=>nav.classList.toggle('open')
   nav.addEventListener('click',e=>{if(e.target.closest('a'))nav.classList.remove('open')})

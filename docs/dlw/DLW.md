@@ -581,15 +581,22 @@ choose between them. An agent's skills sit in a rack, and so do the agents of
 a team. A macro is one knob that turns several settings at once, each within
 its own range.
 
-Every device comes in three sizes, and all three show the same live settings:
+Every device has six views, and all six show the same live settings:
 
-| Size | Where | What you get |
+| View | Where | What you get |
 |---|---|---|
-| Compact | Your rack, along the bottom | A small live picture and up to four controls |
-| Whole | The pool under the browser | Every setting, grouped |
-| Full | A pane | The device at full size, to work in |
+| Folded | Your chain, along the bottom | The device's name and a reading or two, in a narrow strip |
+| Compact | Your chain | A small live picture and up to four controls |
+| Whole | Flipped up over the chain, or in the pool under the browser | Every setting, grouped, round a larger picture |
+| Full | A pane | The device's material at full size, to work in |
+| Pop-out | Its own window, which can fill the screen | The material with every setting under it |
+| Widget | The rail on the right | A small picture and a few readings, in every mode |
 
-A device can also fold down to its title. Click the title to open it again.
+The marks on a device's head open it each way: ⌃ flips it up over the chain,
+as Live's expanded view does, ▦ opens it in a pane, and ↗ pops it out into a
+window, as Live opens a plug-in. ▾ folds it to its title. Select a device in
+the browser and it shows whole in the pool, where you can change it without
+adding it to a chain.
 
 A light on a device is a reading. It is on only when the device reports that
 it is on. If the state is not known, the light stays dark.
@@ -667,6 +674,9 @@ be linked to and opened again.
 | Switch between Session view and Arrangement view | Tab |
 | Show or hide the browser | ⌘⌥B |
 | Show or hide the detail area | ⌘⌥L |
+| Switch between Clip view and Device view | ⇧Tab |
+| Show or hide the widget rail | ⌘⌥R |
+| Fold a flipped-up device back onto its chain | Esc |
 | Play or stop | Space |
 | Launch a row | Its number key |
 | Turn a macro | Its letter key |
@@ -875,37 +885,69 @@ the Order to teach a single pupil.
 
 ## 16. How devices work
 
-Everything you work with in the DLW is a device. Live has one kind of object
-in its chains, and so does the DLW, in the same three kinds.
+You play a device while your attention is on the material. The agent runs, the
+field moves, the torus rings, and your eyes are there, not on the device. So a
+device must show its state at a glance, answer the hand at once, and never ask
+you to read. Live solved this. Every Live device is one panel of one height:
+a picture of what the device does, with handles on it, and the controls set
+round the picture. You learn one panel and you can read all of them. The DLW
+draws every device the same way.
 
-An **instrument** makes something. An agent answers, the field moves and
-sounds, the world draws its places, the timeline lays out time, the Day
-gathers the day, the torus rings. An **effect** changes what passes through it
-and keeps the rest: a highlight marks a passage and leaves it whole, a filter
-shapes the torus, a scope limits what an agent may touch. A **rack** holds
-several chains under one device: the skills an agent may use, the agents of a
-team, the rooms of a palace.
+Live has one kind of object in its chains, and so does the DLW, in the same
+three kinds. An **instrument** makes something. An agent answers, the field
+moves and sounds, the world draws its places, the timeline lays out time, the
+Day gathers the day, the torus rings. An **effect** changes what passes
+through it and keeps the rest: a scope limits what an agent may touch, a
+filter shapes the torus, the packet gathers what an agent will read. A
+**rack** holds several chains under one device: the skills an agent may use,
+the agents of a team, the field devices of the Studio.
 
-### 16.1 Five presentations
+### 16.1 What goes where
 
-Every device has one set of parameters and five ways to show them. All five
-show the same live values.
+A device is one kind of thing among five, and most of what the DLW does
+belongs to one of the other four. Live draws the lines, and the DLW keeps
+them.
 
-| Presentation | Where | Use it to |
+| Thing | What it is | What belongs to it |
 |---|---|---|
-| Folded | In a chain | Keep the device present in little space. |
-| Compact | In a chain | Play the device: a small live picture and up to four macros. |
-| Whole | The pool under the browser | Set the device up: every parameter, grouped. |
-| Full | A pane | Work in the device's body: the material in front of you. |
-| Widget | The rail on the right | Keep the device at hand in every mode. |
+| Track | One stream of material, and the chain that works on it. | Its name, colour, the I/O of its work, its mixer row, and its chain. In Central a workspace; in Factory a session; in Expressions an Expression; in Technē a reading; in Live a part. |
+| Clip | A piece of the material on a track. | Its name, colour and length, how it launches and what follows it, and its content. Everything that changes the clip itself belongs here: a highlight on a page, a symbol's place in a scene, a task's instruction. |
+| Clip view | The clip's editor, in the detail area. | Panels after Live's: Clip, Launch, the editor, and Envelopes. What each mode's editor holds is in §16.5. |
+| Device | Works on the material as it passes along the chain. | What changes how the material sounds, looks or acts, without rewriting the clip, for every clip on the track. |
+| View | A way of seeing tracks and clips. | Session view's grid, Arrangement view's ruler with its lanes and takes, the panes, the widget rail. |
 
-A pane is a device at full size. Its controls stay out of the pane and appear
-in Device view below it. A widget is a device on the rail. It stays when you
-change mode.
+So a capability lives in one place:
 
-Every device is drawn the same way, after Live's own: one head, one height, a
-picture with handles, and the same few controls round it. [Device UI](DEVICE-UI.html)
-sets out how each view looks and how it answers your hand.
+- **A thing that edits the clip is a tool of its editor.** Text, Highlight
+  and Notes shape and mark the page you are writing. They are the editing
+  tools of a Central page in Clip view, as Live's note tools are, and the
+  passage acts in the page reach them. A selected symbol's force, form,
+  voice and meaning are the selected object's controls in the scene's
+  editor.
+- **One job is one device, in every mode.** The agent that answers in a
+  Central page and the agent that runs a Factory task is one Agent (§19.3):
+  who it is, how it works, how much it decides alone, and its thread. What
+  an agent may read and where it may write is one Scope (§19.14), with the
+  Knowledge route inside it, on any track an agent works on.
+- **How a write arrives is set in two places only.** Scope sets the most an
+  agent may do in each part of the world: propose, draft or write. Arm, in
+  the transport, lets the agents of a track write directly with receipts
+  or keeps them proposing. Every proposal waits in Approvals on the Main
+  track, and in the page or scene it belongs to.
+- **A widget is a view of a device.** The ledger, the approvals, the packet,
+  the terminal and the frames on the rail are the widget views of their
+  devices. A widget with no device elsewhere, such as Files or Calendar, is
+  a small device born on the rail.
+- **The views are not devices.** Session view and Arrangement view hold the
+  tracks of every mode, and a pane can show either for any set of tracks.
+  The course of a run is its track in Arrangement view; its attempts are
+  takes; a task is a clip.
+- **A corpus is material, not an instrument.** A body of work such as the
+  Return of Zero or the Quaternal Logic is read, walked and played through
+  the universal instruments: the world, the timeline, the journey, the
+  palace, the graph. A device a corpus brings, such as the Deck or the M3
+  clock, is a lens on its material, and sits on a reading's chain like any
+  other.
 
 ### 16.2 Chains on tracks
 
@@ -914,24 +956,81 @@ material passes through, from left to right.
 
 | Mode | Track | Chain, left to right |
 |---|---|---|
-| Central | A workspace. The Day is the Main track. | The document effects, then the agent that answers. On the Main track: the Day. |
-| Factory | An agent session. | Gateway, agent, skills rack, scope, landing. |
-| Expressions | An Expression. | The field, then its field, entity and scene devices. |
+| Central | A workspace. The Day is the Main track. | The packet, the agent that answers, and its scope; on a workspace that holds code, Ground hygiene and Impact. On the Main track: the Day, then Approvals. |
+| Factory | An agent session. | Gateway, agent, skills rack, scope, landing. On the Main track: the gateways rack, Approvals, the ledger and Link. |
+| Expressions | An Expression. | The Studio: the field, then its field devices. |
 | Technē | A reading. | The instrument it plays through, then its lens and filter effects. |
-| Live | A part. | Note devices, the torus, then its effects. |
+| Live | A part. | The note devices, the torus, then its effects. |
 
 A device is not tied to a mode. It goes wherever its material is. An agent and
-its skills work on a Central document as well as on a Factory session. The
-world draws any track that has places. The sky can move a parameter in any
-mode.
+its skills work on a Central page as well as on a Factory session. The world
+draws any track that has places. The sky can move a parameter in any mode.
 
-### 16.3 Clip view and Device view
+### 16.3 Six views
 
-Select a clip and the area at the bottom of the window shows it. Clip view
-shows the clip itself and its editor. Device view shows the chain of the
-clip's track. Switch between them in the status bar.
+A device has one set of values and six views. A change in one view shows in
+the others at once.
 
-### 16.4 The browser
+| View | Where | What it holds | Live's nearest |
+|---|---|---|---|
+| Folded | The chain | The activator, the name and up to two short readings, read downward, in a strip 22 px wide. | A folded device. |
+| Compact | The chain | The display and up to four macros, at the chain's height. The width comes from the sections. | The device on its chain; a rack with only its macros showing. |
+| Whole | Flipped up over the chain, or in the pool under the browser | Every parameter, grouped, and the display with all its handles. Flipped up, the bands stand side by side across the detail area and the display grows into the room. In the pool they stack at the pool's width, with pages when more is needed. | The expanded view of EQ Eight or Wavetable. |
+| Full | A pane | The material itself: the page, the field, the torus, the world. No controls. | Wavetable's large display, without its controls. |
+| Pop-out | Its own window, which can fill the screen | The material with every control docked under it. | A plug-in's window. |
+| Widget | The rail | A small display and up to three readings or macros, in a tile of 136 × 136 px or 280 × 136 px. | Live has none. Push's display is the nearest. |
+
+- Whole flipped up and Whole in the pool are one view in two places. The
+  pool shows the device you select in the browser, and changes there apply
+  without adding it to a chain. Flipped up, it is the device you are
+  working on.
+- Most devices need no pop-out of their own. The window shows Full above
+  and Whole below it. A device writes its own only where its controls
+  belong beside the material rather than under it.
+- A pane holds no device controls. They stay in Device view under the pane,
+  or in the device's window.
+
+### 16.4 Opening, folding and hiding
+
+The window is modular: every part can be opened, folded and hidden, and the
+other parts take the space.
+
+On a device's head, from the right:
+
+| Mark | Does |
+|---|---|
+| ↗ Pop out | Opens the device in its own window. Press it in the window to close the window. |
+| ▦ Pane | Opens the device full in the pane that has focus. |
+| ⌃ Expand | Flips Whole up over the chain. Press it again, or press Esc, to fold it back. |
+| Rail | Keeps the device on the widget rail, in every mode. |
+| ▾ Fold | Folds the device to its title. Press the folded title to open it again. |
+
+Press the plate itself to show the device whole in the pool.
+
+One device stands flipped up at a time. It covers the lower part of the panes
+and leaves the transport, the browser and the rail where they are. Any number
+of windows can stay open. A window follows its device: when the device leaves
+the chain, its window closes.
+
+A rack's head has three more marks, as Live's do: show or hide the macros,
+the chain list, and the devices of the selected chain.
+
+| To show or hide | Do |
+|---|---|
+| The detail area | ⌘⌥L, or its toggle in the status bar. |
+| Clip view or Device view | ⇧Tab, or the switch in the status bar. |
+| The browser and its pool | ⌘⌥B. Drag the line between the browser and the pool to give either the height. |
+| The widget rail | ⌘⌥R. Drag its edge to widen it. Fold the launcher to give the tiles the height. |
+| A flipped-up device | Esc, or ⌃ on its head. |
+| A device's window | ↗ on its head, or the window's own close. |
+
+### 16.5 Clip view and Device view
+
+Select a clip and the detail area shows it. Clip view shows the clip and its
+editor. Device view shows the chain of the clip's track. Switch between them
+with ⇧Tab or in the status bar.
+
+### 16.6 The browser
 
 In every mode the browser holds four kinds of thing. Material comes from the
 mode's owners: workspaces and documents in Central, sessions in Factory,
@@ -940,7 +1039,7 @@ and widgets are the same in every mode, grouped by the product that makes
 them. Select a device to show it whole in the pool. Drag it onto a chain to
 add it. Drag an instrument into a pane to open it.
 
-### 16.5 Play, record and automation
+### 16.7 Play, record and automation
 
 Play launches clips. Each clip's track runs through its chain, and the
 instrument makes its part: the agent runs, the field plays, the walk walks.
@@ -950,15 +1049,406 @@ Arm, then move any parameter of any device, and the move is recorded as an
 automation lane on that track. You can automate an agent's effort over a run,
 the pace of a walk, a field device over a scene, the sky's pull on a filter.
 Arrangement view shows each track's clips, and under them the lanes of its
-devices. Re-enable gives a parameter back to its lane, or to the agent or
-instrument that held it. A modulated parameter shows what moves it.
+devices. A clip can carry envelopes of its own, which move a parameter over
+the clip's own time. Re-enable gives a parameter back to its lane, or to the
+agent or instrument that held it. A modulated parameter shows what moves it.
 
-### 16.6 The entries that follow
+### 16.8 How a device looks
+
+**A designed face, not a form.** A device's parameters are its contract with
+its owner. Its panel is drawn by hand for that device, as every Live device
+is. A list of parameters drawn one under the other is the fallback, and only
+for a device that ships no panel of its own. Live does the same for a plug-in
+that has no editor.
+
+**The picture comes first.** Most panels have a display: a dark well that
+draws the device's state from its live values. EQ Eight draws its curve,
+Auto Filter its filter, Wavetable its wave. Handles in the well are controls:
+drag the picture and the parameter moves. The other controls stand round the
+display, in sections.
+
+**One height, many widths.** On a chain, every device has the same height.
+The width comes from what the device holds. A small effect is narrow, and an
+instrument with two displays is wide.
+
+**Nothing scrolls, and no box sits inside a box.** Sections are columns,
+ruled off from each other by a hairline and named in small capitals. The well
+is the only inset surface. When a panel holds more than fits, it gets pages in
+its head, as Wavetable has Osc 1 and Osc 2.
+
+**Values are short.** A control shows a number, a unit or a word. A sentence
+never appears in a panel. What a control does is said in the status bar when
+you point at it.
+
+#### Measures
+
+All measures are in pixels at 100 %. The grid is 4 px.
+
+| Part | Measure |
+|---|---|
+| Head | 22 high |
+| Band (the body on a chain) | 168 high |
+| Plate on a chain | 191 high: head, band and borders |
+| Control column | 56 wide |
+| Dial | 28 square, a 270° ring |
+| Value box | 16 high, 50 wide or more |
+| Toggle, radio button, chooser, action | 16 high |
+| Hit area of any control | 22 or more in each direction |
+| Row of a list | 17 high |
+| Display on a compact plate | 140 × 146 |
+| Display on Whole in the pool | up to 194 × 146 |
+| Whole flipped up | The detail area's width. One band high, its bands side by side; a display may grow the panel up to half the height of the panes. |
+| Pop-out window | 1180 × 640 when it first opens, then the size you leave it at. Whole is docked under the material, one band high. |
+| Section label | 9 px capitals, 13 high |
+| Names and values | 10 to 11 px |
+| Folded strip | 22 wide |
+| Widget tile | 136 × 136, or 280 × 136 |
+| Pool | 400 wide |
+
+The plate does not reflow. When the detail area is shorter or taller, the
+whole plate scales between 80 % and 125 %, as Live's zoom scales its devices.
+
+#### The head
+
+From left to right:
+
+1. **Activator.** A round light. Amber: the owner reports the device on.
+   Grey: the owner reports it off. A hollow ring: the owner has not said. Press
+   it to ask the owner to turn the device on or off. The light changes only
+   when the owner answers.
+2. **Fold** ▾.
+3. **Name.** A rack shows its set's name: "Skills · build-lane".
+4. **Held mark.** The name of whoever holds values on this device, in the
+   stall colour.
+5. **Pages.** One tab for each page. The shown page joins the body's face. A
+   page can carry its own light, as Hybrid Reverb's EQ tab does.
+6. **The device's own acts**, such as the Studio's Save and Undo.
+7. **Rail, ⌃ Expand, ▦ Pane, ↗ Pop out**, at the right (§16.4).
+
+Right-click the head for Save as preset, Hot-swap, Show automation and Map.
+
+#### The body
+
+The body is one band on a chain. Whole in the pool stacks one or two bands;
+Whole flipped up and in a window sets them side by side. A band is a row of
+sections. A section is a column of controls with a label. The display stands
+in a section of its own, at the left.
+
+#### Colours
+
+| Colour | Means |
+|---|---|
+| Face | The body of the plate. |
+| Head | Lighter than the face. Tinted blue when the device is selected. |
+| Field | The ground of value boxes, toggles and choosers. |
+| Well | The display. Near black. |
+| Teal | A value: a dial's arc, a value box's fill, a curve, a reach for reading. |
+| Amber | On: a toggle, a chosen radio button, the activator, a handle, a reach for writing. |
+| Green | An owner's yes: a skill admitted, a task done. |
+| Orange | Someone else holds this value. |
+| Red | Automation, and the record button. |
+
+A device does not bring colours of its own. A colour inside a display carries
+a meaning of the material, as a track's colour does.
+
+### 16.9 Controls and the hand
+
+A panel uses these controls and no others.
+
+| Control | Use it for | It shows | Live's nearest |
+|---|---|---|---|
+| Dial | A number that you sweep | The name above, a 270° ring with a teal arc, the value below. A value that can turn either way starts its arc at zero. | A knob. |
+| Value box | A number where space is short, or one you set exactly | The value in a field that fills teal to its place in the range. | A slider, such as Wavetable's Volume. |
+| Toggle | On or off | The name in a box, amber when on. | Auto Filter's Hz button. |
+| Radio | One of two to five | Buttons side by side or stacked; the chosen one amber. | Auto Filter's filter types. |
+| Chooser | One of many | The value and ▾; a menu. | Wavetable's wavetable menu. |
+| Rows | A list: a rack's chains, a scope's places | One row each: your request as a square; the owner's answer as a light, or the member's kind mark in its state; the name; a short meter; a short note. A long list pages. | A rack's chain list. |
+| Ladder | Evidence in steps | One tick for each step: lit where it is established, dark where it is not, hollow where nobody has observed it. | A level meter's segments. |
+| Readout | A reading | A short value over its name. A large readout is the count that the view is for. | Hybrid Reverb's "100 % / 285 ms". |
+| Action | Something done once | The name in an outlined box. | A momentary button. |
+| Light | A state that the owner reports | A small round light. | A chain's activator. |
+| Handle | A parameter that you move on the picture | An amber ring, numbered in order of importance. | EQ Eight's band dots. |
+
+The same moves work on every control that holds a number.
+
+| Do | Result |
+|---|---|
+| Drag up or down | The value moves. The whole range is 160 px. A stepped value moves one step for each 14 px. |
+| Hold Shift while you drag | The value moves ten times more slowly. |
+| Double-click | The value returns to its default. |
+| Focus it and press ↑ ↓ or ← → | One step, or 1 % of the range. |
+| Page Up, Page Down | 10 % of the range. |
+| Home, End | The minimum, the maximum. |
+| Delete | The default. |
+| Point at it | The status bar says its name and what it does. |
+
+A handle moves in the directions that its picture shows. A handle for two
+parameters, such as gravity across and up, moves in two directions. The arrow
+keys move a focused handle 2 px, or 0.5 px with Shift.
+
+#### A change and its answer
+
+While you drag, the control shows the value you set. When you release it, the
+new value goes to the owner; a key press sends at once. Until the owner
+confirms the value, it shows in italics. If the owner refuses, the control
+returns to the owner's value, and the status bar gives the owner's reason.
+
+Some changes ask you first. When you raise a scope's reach, the new reach
+waits, drawn dashed, with Confirm and Cancel beside it. Nothing is sent until
+you confirm.
+
+### 16.10 Standing
+
+Besides its value, a control shows who moves it.
+
+| Standing | How it shows | What you do |
+|---|---|---|
+| Automated | A red dot at the control's top left. | Move it to override the lane. |
+| Overridden | A hollow red dot. The transport's Re-enable lights. | Press Re-enable to give the value back to its lane. |
+| Modulated | A thin outer arc on the dial: the range that the modulator moves the value through. The status bar names the modulator. | Set the centre of the range with the dial. |
+| Held | The arc or the fill in orange, and the holder's name under the control. | Press the name to give the value back. |
+| Waiting | The value in italics, the arc dashed. | Wait for the owner, or move it again. |
+| Disabled | The control at 40 % strength. The status bar says why. | Do what the reason says. |
+| No reading | A hollow light. | Nothing. The owner has not said. |
+
+### 16.11 The display
+
+- Draw every mark from the device's values or readings, by the device's own
+  law. Do not draw a likely picture.
+- When a reading is missing, say which one in the well. Do not draw it as zero.
+- Give a compact display at least one handle: the one parameter that you most
+  often move. Give a whole display a handle for each parameter that the
+  picture can show.
+- Number the handles 1, 2 and on, in order of importance.
+- Put axis labels inside the well, small and faint. Put one short reading at
+  the top right.
+- Flipped up and in a window, let the display take the room and keep the
+  controls at their size, as an expanded EQ Eight does.
+- Move the picture only when its readings move. Respect a request for reduced
+  motion.
+- A rack's picture is its chain list.
+
+### 16.12 What a device brings
+
+A device brings these to the shell:
+
+1. **Its parameters**, each declared under the device's own id: key, name,
+   kind, range or values, default, unit, group, whether it is a macro, and its
+   write path. A parameter without a write path is a reading.
+2. **Its views**, built from the panel kit: folded, compact, whole, full and
+   widget, and a pop-out where it needs its own.
+3. **Its displays and their handles.**
+
+The shell brings the values, the writes, the navigation between views, the
+room each view stands in, and the standing of each parameter: its automation,
+its modulator, its holder.
+
+The panel kit is `packages/live-shell/ui/src/inhabitants/sdk/panel.tsx`, and a
+designed device is a module of `inhabitants/catalogue/panels/`. A device
+without views of its own is drawn by the generic plate: its parameters,
+grouped, in the order the device declares them.
+
+#### A parameter earns its place
+
+A parameter stays on a device only when all of these are true:
+
+- An owner operation stands behind it: a write that the owner exposes, or a
+  reading that the owner reports. A word for a quality, such as thoroughness
+  or boldness, is not a parameter unless such an operation stands behind it.
+- Its control fits its values. Use a dial or a value box for a quantity that
+  varies smoothly. Use a stepped dial, a radio or a chooser for a few states,
+  and a toggle for two. Do not draw a range or a step that the owner does not
+  have.
+- When you move it, something that you can see or hear changes: the display,
+  the material or a reading.
+- Its default is the owner's default.
+- A macro moves real parameters, each within its own range.
+- It does not repeat another device's parameter. Where two devices would
+  hold the same setting, one holds it and the other shows it as a reading.
+
+A device whose owner has no smooth quantity has no dials. Its compact controls
+are its real discrete ones. A rack of skills has no risk knob: it has your
+requests, a scope, and a preview that you apply.
+
+#### Kind marks
+
+A device that holds things of several kinds shows each thing's kind, not a
+picture of its name. Carried practice has four kinds, each with its woodcut
+mark: a skill, a method, a methodology and a skillset (§19.6). The person
+chooses one of the two sets of marks, the blade or the pen, and the whole
+shell uses it. A mark has three states, and its drawing does not change: a
+full line for available, the line in orange for held back for a reason that
+you can clear, a dim line for withheld.
+
+### 16.13 When a device is done
+
+A device is done when all of these are true:
+
+- Its views draw in the device gallery on its declared parameters, and move
+  together.
+- Whole reads both in the pool and flipped up over the chain, and the
+  pop-out window shows the material with every control.
+- Every control says what it does in the status bar, and works from the
+  keyboard.
+- Nothing scrolls inside a plate, and no box sits inside a box.
+- The compact view has four macros or fewer.
+- The display draws from values, and its handles move the parameters they
+  show.
+- The views match the device's entry below.
+- Beside its Live nearest, the plate reads as a Live device.
+
+To see a device in the gallery, run the gallery from `packages/live-shell/ui`:
+
+```bash
+npx vite --config src/inhabitants/catalogue/vite.config.mjs
+```
+
+Then open `?device=<family>:<face>&view=all`, or name the views you want:
+`&view=flip,popout`. Add `&generic=1` to see the generic plate of the same
+device.
+
+### 16.14 Six reference devices
+
+Six devices show the whole pattern. Each runs on a labelled fixture. Move a
+control in one view and the others follow. Point at a control to read what it
+does, in the line under the views.
+
+| Device | Kind | It shows | Live's nearest |
+|---|---|---|---|
+| Day | Instrument | A display that you click. Pages that are two things at once: today's Day and tomorrow's. Macros of four kinds. | Hybrid Reverb |
+| Torus | Instrument | A picture drawn by the law that it plays. Handles on the picture. An envelope display. A modulation arc and an automation dot. | Wavetable |
+| Physics | Effect | A law drawn as a diagram with a two-way handle. Pages for a long set of parameters. Macros on the widget. | Auto Filter, Corpus |
+| Skillset rack | Rack | The chain list as the picture. Each member's kind mark and evidence. Your request beside the owner's answer. Preview, then apply. | Audio Effect Rack |
+| Skill, Method, Methodology | Effect | One device with three faces, one for each form. A Method's path as its display. A review that you confirm. | Simpler, whose panel changes with its mode |
+| Scope | Effect | A change that asks you first. Two reaches on one picture. A list where you request places. | Utility |
+
+#### Day
+
+```ui
+device: central:day-die
+width: 1500
+height: 1400
+caption: The Day. Click a face of the die, or turn the Face dial; press ⌃ to flip it up, ↗ to pop it out.
+```
+
+| View | Holds | Why |
+|---|---|---|
+| Folded | Day, the date, the open face. | The date and the face are what you look for. |
+| Compact | The die's net, the open face lit, a dot on a face where the agent waits for you. Macros: Face, Rollover, Agent, Close now. | The net is the die's own fold round face 0: 2 above, 4, 0, 1 and 5 across, 3 below. Opposite faces add to five. |
+| Whole | Pages Today and Tomorrow. Band one: the net with names and counts, Face, View, Template, the waiting and running counts. Band two: Time, Agent, Sources, Close. | A Day after rollover is two Days. The pages make that plain. |
+| Full | The template's page, with the pane's own tabs for the two Days. | The page is the Day's material. |
+| Pop-out | The page above, the Day's two bands below it. | The day at full size, with its clock and its close at hand. |
+| Widget | A small net and three counts: tasks, running, patterns. Press a count to open its face. | The three counts are the day's pulse. |
+
+Rollover and Day start are value boxes whose lowest step is Off. Close now is
+an action, because it runs once.
+
+#### Torus
+
+```ui
+device: quaternal-logic:torus
+width: 1500
+height: 1400
+caption: The Torus. Drag handle 1 along the line to mix the pulses; drag handle 2 out from the ring to drive the body.
+```
+
+| View | Holds | Why |
+|---|---|---|
+| Folded | Torus, the level, the notes that sound. | |
+| Compact | The torus: the ring, the surface wave and the two helices. Handle 1 on the pulse line, handle 2 on the wave's crest. Macros: Pulse mix, Damping, Drive, Release. | You hear what you see: the wave is the sound's pattern. |
+| Whole | Band one: the torus, Pulses, Output. Band two: Body, the Envelope display with its two squares, Voices and View. | Two displays, as Wavetable has its oscillator and its envelope. |
+| Full | The torus at pane size and the Jankó keyboard under it. A sounding note lights its key and its point on the ring. | The pane is the instrument that you play. |
+| Pop-out | The torus and the keyboard filling the screen, with the controls in one row under them. | The window to perform from. |
+| Widget | The small torus and a level meter. | |
+
+Drive carries a modulation arc: the sky moves it. Level carries an automation
+dot.
+
+#### Physics
+
+```ui
+device: expressions:physics
+width: 1500
+height: 1400
+caption: Physics. Drag handle 1 to set the swirl's reach and handle 2 to push the field. Turn to the Physics+ page for gravity in depth.
+```
+
+| View | Holds | Why |
+|---|---|---|
+| Folded | Physics, viscosity, vortex. | |
+| Compact | The swirl: stream lines stepped through the swirl and gravity, the reach ring, the gravity arrow. Macros: Viscosity, Vortex, Gravity Y, Time. | A stream line shows what the law does to a particle. |
+| Whole | Pages Fluid and Physics+. Fluid: the swirl, Swirl, Spring, Curl and stir, Field. Physics+: the gravity pad with depth, Gravity, Medium, Drag, Limit, Time. | Twenty parameters do not fit in two bands. Pages do not scroll. |
+| Full | The field's law at pane size. | In the shell, the pane is the field itself. |
+| Widget | The swirl and the four macros as value boxes. | A macro on the widget is the macro on the chain. |
+
+In the shell, the display is the field's own diagram, drawn from the engine's
+readings by the same law.
+
+#### Skillset rack
+
+```ui
+device: ai-kit:skillset-rack
+width: 1500
+height: 1400
+caption: The Skillset rack on Central's documentation set: one methodology, eight methods, nine skills and a child set. Turn a member off and Preview lights.
+```
+
+| View | Holds | Why |
+|---|---|---|
+| Folded | The set's name, the loaded count. | |
+| Compact | The members as a chain list: request, kind mark, name, ten ticks of evidence. Scope, Preview and Apply, the loaded count. | A rack has no wave to draw. Its members, and what each has done, are its picture. |
+| Whole | Band one: Set, Compose, Package. Band two: every member in two columns, paged. | Each control is an AIKit operation: enable through the profile, scope, preview and apply, export. |
+| Full | The set as a page, grouped by kind. | The set is a document that you read. |
+| Widget | The four marks with their counts; available, loaded, invoked. | Carried is not loaded, and loaded is not used. |
+
+A member that you turn off dims and its evidence goes dark. A member held back
+for an unreviewed revision draws in orange with a ! that gives the reason.
+
+#### Skill, Method, Methodology
+
+```ui
+device: ai-kit:skill-device
+width: 1500
+height: 1400
+caption: One member device in three forms. Switch the fixture: a Method and its path, a Methodology and its table, a Skill, and a Method whose revision nobody has reviewed.
+```
+
+| View | Holds | Why |
+|---|---|---|
+| Folded | The name, the form, the revision. | |
+| Compact | The mark large, the form and its question, the evidence. Enabled, Trust or Review, and the form's one control: Run, Instantiate or Reach. | The form decides what you most need: to run a Method, to know whether a Methodology applies. |
+| Whole | Band one: the mark with the ten steps named, Standing, the form's section. Band two: a Method's path, a Methodology's table, a Skill's purpose. | AIKit keeps one identity for all three forms. One device with three faces keeps it too. |
+| Full | The member's text. | The text is the member. |
+| Widget | The mark, the evidence, Run for a Method. | |
+
+A Method's path draws each step as a node and the members it uses as marks
+under it. The line between steps is dashed, because a step that the work does
+not touch is skipped.
+
+#### Scope
+
+```ui
+device: software-factory:context-write-mode
+width: 1500
+height: 1400
+caption: Scope. Raise the reach and it waits for you to confirm. Teal is what the agent may read; amber is what it may write.
+```
+
+| View | Holds | Why |
+|---|---|---|
+| Folded | Scope, the reach. | |
+| Compact | The rings, teal over the top for reads and amber under the bottom for writes; the basis. Macros: Reach, Writes, and the counts of read and write places. | Both reaches show even when they are on one ring. |
+| Whole | Band one: the rings with the reach handle, Reach with Confirm and Cancel, how writes arrive, the receipts. Band two: Reads, Writes, Knowledge and the basis. | |
+| Full | The world the agent may touch, with its receipts on the places it wrote. | |
+| Widget | Small rings, the reach, the write mode, the receipts. | |
+
+### 16.15 The entries that follow
 
 Each device below has the same parts: what it is for, where it lives, its
-parameters, its five presentations, what the transport does to it, how to use
-it, its rules, and tips. Where the device already has a working face, it is
-shown live beside its entry.
+parameters, its views, what the transport does to it, how to use it, its
+rules, and tips. A view that the device draws as every device does is not
+described again; Pop-out is described only where the device has its own.
+Where the device has a working face, it runs live beside its entry.
 
 ## 17. Instruments that open in any mode
 
@@ -1053,11 +1543,9 @@ The graph view has its own controls. Set how many hops it reaches, how far nodes
 
 #### Views
 
-The World is one device with five views. All five show the same live settings.
-
 ```ui
 device: atlas-earth:globe-engine
-caption: The World as the shell draws it now, in its five views. The readings are a fixture.
+caption: World, on a fixture of readings.
 ```
 
 ##### Folded
@@ -1217,11 +1705,9 @@ Every filter you apply stays on screen as a chip. Remove a chip to remove the fi
 
 #### Views
 
-The Knowledge graph is one device with five views. All five show the same live settings.
-
 ```ui
 device: knowledge-graph:graph
-caption: The Knowledge graph as the shell draws it now, in its five views. The readings are a fixture.
+caption: Knowledge graph, on a fixture of readings.
 ```
 
 ##### Folded
@@ -1361,11 +1847,9 @@ The Canvas imports and exports a file that other note tools open. Presentation i
 
 #### Views
 
-The Canvas is one device with five views. All five show the same live settings.
-
 ```ui
 device: techne:canvas
-caption: The Canvas as the shell draws it now, in its five views. The readings are a fixture.
+caption: Canvas, on a fixture of readings.
 ```
 
 ##### Folded
@@ -1521,11 +2005,9 @@ Edges between events take the colour and line of their standing, with a legend t
 
 #### Views
 
-The Timeline is one device with five views. All five show the same live settings.
-
 ```ui
 device: techne:timeline
-caption: The Timeline as the shell draws it now, in its five views. The readings are a fixture.
+caption: Timeline, on a fixture of readings.
 ```
 
 ##### Folded
@@ -1673,11 +2155,9 @@ Press Record and go somewhere new. Each place, moment or thing you visit becomes
 
 #### Views
 
-The Journey is one device with five views. All five show the same live settings.
-
 ```ui
 device: techne:journey
-caption: The Journey as the shell draws it now, in its five views. The readings are a fixture.
+caption: Journey, on a fixture of readings.
 ```
 
 ##### Folded
@@ -1825,11 +2305,9 @@ If the reading names no route, the Palace gives a receipt that says nothing was 
 
 #### Views
 
-The Palace is one device with five views. All five show the same live settings.
-
 ```ui
 device: techne:palace
-caption: The Palace as the shell draws it now, in its five views. The readings are a fixture.
+caption: Palace, on a fixture of readings.
 ```
 
 ##### Folded
@@ -1976,11 +2454,9 @@ A save has one of five outcomes, and the Document names it: saved, unchanged, st
 
 #### Views
 
-The Document is one device with five views. All five show the same live settings.
-
 ```ui
 device: central:document
-caption: The Document as the shell draws it now, in its five views. The readings are a fixture.
+caption: Document, on a fixture of readings.
 ```
 
 ##### Folded
@@ -2137,11 +2613,9 @@ Launch mode says how a clip plays: once, while you hold it, or in a loop. Launch
 
 #### Views
 
-The Session grid is one device with five views. All five show the same live settings.
-
 ```ui
 device: dlw:session-grid
-caption: The Session grid as the shell draws it now, in its five views. The readings are a fixture.
+caption: Session grid, on a fixture of readings.
 ```
 
 ##### Folded
@@ -2300,11 +2774,9 @@ Snap pulls the playhead and the edges you drag to clip edges, markers, loop edge
 
 #### Views
 
-The Arrangement ruler is one device with five views. All five show the same live settings.
-
 ```ui
 device: dlw:arrangement-ruler
-caption: The Arrangement ruler as the shell draws it now, in its five views. The readings are a fixture.
+caption: Arrangement ruler, on a fixture of readings.
 ```
 
 ##### Folded
@@ -2439,11 +2911,9 @@ The agent does not write behind your back. With Arm off, each change arrives as 
 
 #### Views
 
-The Thread is one device with five views. All five show the same live settings.
-
 ```ui
 device: software-factory:thread
-caption: The Thread as the shell draws it now, in its five views. The readings are a fixture.
+caption: Thread, on a fixture of readings.
 ```
 
 ##### Folded
@@ -2564,11 +3034,9 @@ The Terminal is a reading surface. It has no devices of its own. It holds no set
 
 #### Views
 
-The Terminal is one device with five views. All five show the same live settings.
-
 ```ui
 device: widgets:terminal
-caption: The Terminal as the shell draws it now, in its five views. The readings are a fixture.
+caption: Terminal, on a fixture of readings.
 ```
 
 ##### Folded
@@ -2691,11 +3159,9 @@ closes.
 
 #### Views
 
-The Day is one device with five views. All five show the same live settings.
-
 ```ui
 device: central:day-die
-caption: The Day device as the shell draws it now, in its five views. The readings are a fixture.
+caption: Day device, on a fixture of readings.
 ```
 
 ##### Folded
@@ -2833,11 +3299,9 @@ Use the Workspace to pick up a project, a book or a practice exactly where you l
 
 #### Views
 
-The Workspace is one device with five views. All five show the same live settings.
-
 ```ui
 device: central:workspace
-caption: The Workspace as the shell draws it now, in its five views. The readings are a fixture.
+caption: Workspace, on a fixture of readings.
 ```
 
 ##### Folded
@@ -2958,11 +3422,9 @@ A participant is a person or an agent. A person is drawn solid. An agent is draw
 
 #### Views
 
-The Flow is one device with five views. All five show the same live settings.
-
 ```ui
 device: central:flow-document
-caption: The Flow as the shell draws it now, in its five views. The readings are a fixture.
+caption: Flow, on a fixture of readings.
 ```
 
 ##### Folded
@@ -3085,11 +3547,9 @@ The page has a title, a line of introduction, an opening, numbered sections and 
 
 #### Views
 
-The Beings is one device with five views. All five show the same live settings.
-
 ```ui
 device: central:beings
-caption: The Beings as the shell draws it now, in its five views. The readings are a fixture.
+caption: Beings, on a fixture of readings.
 ```
 
 ##### Folded
@@ -3210,11 +3670,9 @@ The page has a title, a line of introduction, an opening, numbered sections and 
 
 #### Views
 
-The Things is one device with five views. All five show the same live settings.
-
 ```ui
 device: central:things
-caption: The Things as the shell draws it now, in its five views. The readings are a fixture.
+caption: Things, on a fixture of readings.
 ```
 
 ##### Folded
@@ -3314,11 +3772,9 @@ Use Text to shape the words on a page without leaving the page. It sets the styl
 
 #### Views
 
-The Text is one device with five views. All five show the same live settings.
-
 ```ui
 device: central:text
-caption: The Text as the shell draws it now, in its five views. The readings are a fixture.
+caption: Text, on a fixture of readings.
 ```
 
 ##### Folded
@@ -3417,11 +3873,9 @@ Select a passage and four actions appear above it. Highlight, Notes, Packet and 
 
 #### Views
 
-The Highlight is one device with five views. All five show the same live settings.
-
 ```ui
 device: central:highlight
-caption: The Highlight as the shell draws it now, in its five views. The readings are a fixture.
+caption: Highlight, on a fixture of readings.
 ```
 
 ##### Folded
@@ -3509,11 +3963,9 @@ Use Notes to keep your own thoughts beside a passage. Each note is anchored to t
 
 #### Views
 
-The Notes is one device with five views. All five show the same live settings.
-
 ```ui
 device: central:notes
-caption: The Notes as the shell draws it now, in its five views. The readings are a fixture.
+caption: Notes, on a fixture of readings.
 ```
 
 ##### Folded
@@ -3605,11 +4057,9 @@ Each item in the packet shows three things: where it came from, a line of its te
 
 #### Views
 
-The Packet is one device with five views. All five show the same live settings.
-
 ```ui
 device: central:packet
-caption: The Packet as the shell draws it now, in its five views. The readings are a fixture.
+caption: Packet, on a fixture of readings.
 ```
 
 ##### Folded
@@ -3709,11 +4159,9 @@ Use Answer to ask an agent about a passage and get the reply in the page. The ag
 
 #### Views
 
-The Answer is one device with five views. All five show the same live settings.
-
 ```ui
 device: central:nara-conversation
-caption: The Answer as the shell draws it now, in its five views. The readings are a fixture.
+caption: Answer, on a fixture of readings.
 ```
 
 ##### Folded
@@ -3866,11 +4314,9 @@ use it, type `@name`. A `?` in the search is a gap that the next word fills.
 
 #### Views
 
-The Search is one device with five views. All five show the same live settings.
-
 ```ui
 device: central:search
-caption: The Search as the shell draws it now, in its five views. The readings are a fixture.
+caption: Search, on a fixture of readings.
 ```
 
 ##### Folded
@@ -3999,11 +4445,9 @@ Each tender returns a receipt.
 
 #### Views
 
-The Ground hygiene is one device with five views. All five show the same live settings.
-
 ```ui
 device: central:ground-hygiene
-caption: The Ground hygiene as the shell draws it now, in its five views. The readings are a fixture.
+caption: Ground hygiene, on a fixture of readings.
 ```
 
 ##### Folded
@@ -4105,11 +4549,9 @@ Use Impact to see what a change to a folder or a note will touch. It shows the n
 
 #### Views
 
-The Impact is one device with five views. All five show the same live settings.
-
 ```ui
 device: central:impact
-caption: The Impact as the shell draws it now, in its five views. The readings are a fixture.
+caption: Impact, on a fixture of readings.
 ```
 
 ##### Folded
@@ -4214,11 +4656,9 @@ Reach is the widest area that the agent can read from. A place outside the Reach
 
 #### Views
 
-The Context & world is one device with five views. All five show the same live settings.
-
 ```ui
 device: central:context-world
-caption: The Context & world as the shell draws it now, in its five views. The readings are a fixture.
+caption: Context & world, on a fixture of readings.
 ```
 
 ##### Folded
@@ -4321,11 +4761,9 @@ Use Agent identity to know who an agent is before you give it work. It reads the
 
 #### Views
 
-The Agent identity is one device with five views. All five show the same live settings.
-
 ```ui
 device: central:agent-identity
-caption: The Agent identity as the shell draws it now, in its five views. The readings are a fixture.
+caption: Agent identity, on a fixture of readings.
 ```
 
 ##### Folded
@@ -4424,11 +4862,9 @@ A child session shows a folded Gateway that reads "via lead". It uses the connec
 
 #### Views
 
-The Gateway is one device with five views. All five show the same live settings.
-
 ```ui
 device: actuation:gateway
-caption: The Gateway as the shell draws it now, in its five views. The readings are a fixture.
+caption: Gateway, on a fixture of readings.
 ```
 
 ##### Folded
@@ -4525,11 +4961,9 @@ Each chain shows its transport and its state. The state comes from a reading. Th
 
 #### Views
 
-The Gateways rack is one device with five views. All five show the same live settings.
-
 ```ui
 device: actuation:gateways-rack
-caption: The Gateways rack as the shell draws it now, in its five views. The readings are a fixture.
+caption: Gateways rack, on a fixture of readings.
 ```
 
 ##### Folded
@@ -4612,11 +5046,9 @@ The Agent device shows one face and joins settings from three places. Actuation 
 
 #### Views
 
-The Agent device is one device with five views. All five show the same live settings.
-
 ```ui
 device: actuation:harness-model
-caption: The Agent device as the shell draws it now, in its five views. The readings are a fixture.
+caption: Agent device, on a fixture of readings.
 ```
 
 ##### Folded
@@ -4716,11 +5148,9 @@ An Experiment holds five statements. The question says what you want to learn. T
 
 #### Views
 
-The Experiment is one device with five views. All five show the same live settings.
-
 ```ui
 device: actuation:experiment
-caption: The Experiment as the shell draws it now, in its five views. The readings are a fixture.
+caption: Experiment, on a fixture of readings.
 ```
 
 ##### Folded
@@ -4810,11 +5240,9 @@ You need to see exactly what passed between the shell and the harness. The Frame
 
 #### Views
 
-The Frames monitor is one device with five views. All five show the same live settings.
-
 ```ui
 device: actuation:frames-monitor
-caption: The Frames monitor as the shell draws it now, in its five views. The readings are a fixture.
+caption: Frames monitor, on a fixture of readings.
 ```
 
 ##### Folded
@@ -4942,8 +5370,6 @@ not make the agent use it.
 
 #### Views
 
-The Skillset rack is one device with five views. All five show the same live settings.
-
 ```ui
 device: ai-kit:skillset-rack
 width: 1500
@@ -5063,8 +5489,6 @@ and its face changes with the form.
 
 #### Views
 
-The member device is one device with five views. All five show the same live settings.
-
 ```ui
 device: ai-kit:skill-device
 width: 1500
@@ -5159,11 +5583,9 @@ You need to choose which knowledge an agent can look up, and how far it may foll
 
 #### Views
 
-The Knowledge route is one device with five views. All five show the same live settings.
-
 ```ui
 device: ai-kit:knowledge-route
-caption: The Knowledge route as the shell draws it now, in its five views. The readings are a fixture.
+caption: Knowledge route, on a fixture of readings.
 ```
 
 ##### Folded
@@ -5244,11 +5666,9 @@ You need messages to reach an agent from any surface you use, and from one agent
 
 #### Views
 
-The Agency gateway is one device with five views. All five show the same live settings.
-
 ```ui
 device: ai-kit:agency-gateway
-caption: The Agency gateway as the shell draws it now, in its five views. The readings are a fixture.
+caption: Agency gateway, on a fixture of readings.
 ```
 
 ##### Folded
@@ -5326,11 +5746,9 @@ You need an agent to learn something you did by hand. Capture skill turns a work
 
 #### Views
 
-The Capture skill is one device with five views. All five show the same live settings.
-
 ```ui
 device: ai-kit:capture-skill
-caption: The Capture skill as the shell draws it now, in its five views. The readings are a fixture.
+caption: Capture skill, on a fixture of readings.
 ```
 
 ##### Folded
@@ -5412,11 +5830,9 @@ You need to see every attempt made on a piece of work, and which one stands. Run
 
 #### Views
 
-Runs is one device with five views. All five show the same live settings.
-
 ```ui
 device: software-factory:attempt-review
-caption: Runs as the shell draws it now, in its five views. The readings are a fixture.
+caption: Runs, on a fixture of readings.
 ```
 
 ##### Folded
@@ -5512,11 +5928,9 @@ An empty square names what a click does: it stops the session after the current 
 
 #### Views
 
-Tasks is one device with five views. All five show the same live settings.
-
 ```ui
 device: software-factory:tasks
-caption: Tasks as the shell draws it now, in its five views. The readings are a fixture.
+caption: Tasks, on a fixture of readings.
 ```
 
 ##### Folded
@@ -5601,11 +6015,9 @@ You need to decide how much an agent decides alone, what you must check, and who
 
 #### Views
 
-The Custody is one device with five views. All five show the same live settings.
-
 ```ui
 device: software-factory:agent-custody
-caption: The Custody as the shell draws it now, in its five views. The readings are a fixture.
+caption: Custody, on a fixture of readings.
 ```
 
 ##### Folded
@@ -5694,11 +6106,9 @@ The picture shows nested rings. The smallest ring is one object. The next rings 
 
 #### Views
 
-The Scope is one device with five views. All five show the same live settings.
-
 ```ui
 device: software-factory:context-write-mode
-caption: The Scope as the shell draws it now, in its five views. The readings are a fixture.
+caption: Scope, on a fixture of readings.
 ```
 
 ##### Folded
@@ -5788,11 +6198,9 @@ A receipt holds the number of the task, its name, the agent, the outcome, the re
 
 #### Views
 
-The Ledger is one device with five views. All five show the same live settings.
-
 ```ui
 device: software-factory:ledger
-caption: The Ledger as the shell draws it now, in its five views. The readings are a fixture.
+caption: Ledger, on a fixture of readings.
 ```
 
 ##### Folded
@@ -5870,11 +6278,9 @@ You need one place to answer what the agents ask. Approvals holds every proposal
 
 #### Views
 
-The Approvals is one device with five views. All five show the same live settings.
-
 ```ui
 device: software-factory:approvals
-caption: The Approvals as the shell draws it now, in its five views. The readings are a fixture.
+caption: Approvals, on a fixture of readings.
 ```
 
 ##### Folded
@@ -5959,11 +6365,9 @@ A lane has task blocks. A done block is solid. A running block fades out at the 
 
 #### Views
 
-The Run is one device with five views. All five show the same live settings.
-
 ```ui
 device: software-factory:run-device
-caption: The Run as the shell draws it now, in its five views. The readings are a fixture.
+caption: Run, on a fixture of readings.
 ```
 
 ##### Folded
@@ -6051,11 +6455,9 @@ Each chain is one agent. The lead is at the top. Its helpers sit below it, with 
 
 #### Views
 
-The Agentset rack is one device with five views. All five show the same live settings.
-
 ```ui
 device: software-factory:agentset-rack
-caption: The Agentset rack as the shell draws it now, in its five views. The readings are a fixture.
+caption: Agentset rack, on a fixture of readings.
 ```
 
 ##### Folded
@@ -6148,11 +6550,9 @@ The line at the bottom is main. The branch leaves it and runs to the right. Each
 
 #### Views
 
-The Git / landing is one device with five views. All five show the same live settings.
-
 ```ui
 device: workcell:git-seat
-caption: The Git / landing as the shell draws it now, in its five views. The readings are a fixture.
+caption: Git / landing, on a fixture of readings.
 ```
 
 ##### Folded
@@ -6239,11 +6639,9 @@ You need a place where an agent can change a project without touching other work
 
 #### Views
 
-The Seat is one device with five views. All five show the same live settings.
-
 ```ui
 device: workcell:seat
-caption: The Seat as the shell draws it now, in its five views. The readings are a fixture.
+caption: Seat, on a fixture of readings.
 ```
 
 ##### Folded
@@ -6325,11 +6723,9 @@ You need to choose where a session runs. The Remote carrier moves a session from
 
 #### Views
 
-The Remote carrier is one device with five views. All five show the same live settings.
-
 ```ui
 device: workcell:remote-carrier
-caption: The Remote carrier as the shell draws it now, in its five views. The readings are a fixture.
+caption: Remote carrier, on a fixture of readings.
 ```
 
 ##### Folded
@@ -6408,11 +6804,9 @@ You need your sessions on several machines to keep one ledger and one clock. Lin
 
 #### Views
 
-The Link is one device with five views. All five show the same live settings.
-
 ```ui
 device: workcell:link
-caption: The Link as the shell draws it now, in its five views. The readings are a fixture.
+caption: Link, on a fixture of readings.
 ```
 
 ##### Folded
@@ -6512,11 +6906,9 @@ The pitch rides the lines where the plate stands still. A symbol with a voice so
 
 #### Views
 
-The Field is one device with five views. All five show the same live settings.
-
 ```ui
 device: expressions:field
-caption: The Field as the shell draws it now, in its five views. The readings are a fixture.
+caption: Field, on a fixture of readings.
 ```
 
 In Clip view, the Field plays the scene clip that you select. The clip sets how long the scene holds and how it changes to the next.
@@ -6639,11 +7031,9 @@ Behind the sections stand the devices that govern the field. Each is a whole dev
 
 #### Views
 
-The Studio is one device with five views. All five show the same live settings.
-
 ```ui
 device: expressions:studio
-caption: The Studio as the shell draws it now, in its five views. The readings are a fixture.
+caption: Studio, on a fixture of readings.
 ```
 
 In Clip view, the Capture section keeps your last gestures as a new scene clip.
@@ -6750,11 +7140,9 @@ The device also has a Medium plane switch (Vertical · Horizontal, default Verti
 
 #### Views
 
-The Physics device is one device with five views. All five show the same live settings.
-
 ```ui
 device: expressions:physics
-caption: The Physics device as the shell draws it now, in its five views. The readings are a fixture.
+caption: Physics device, on a fixture of readings.
 ```
 
 ##### Folded
@@ -6848,11 +7236,9 @@ The Pointer device sets what your pointer does to the field. Use it to push, pul
 
 #### Views
 
-The Pointer device is one device with five views. All five show the same live settings.
-
 ```ui
 device: expressions:pointer
-caption: The Pointer device as the shell draws it now, in its five views. The readings are a fixture.
+caption: Pointer device, on a fixture of readings.
 ```
 
 ##### Folded
@@ -6946,11 +7332,9 @@ The Relational device makes symbols pull on one another. Use it to set centres t
 
 #### Views
 
-The Relational device is one device with five views. All five show the same live settings.
-
 ```ui
 device: expressions:relational
-caption: The Relational device as the shell draws it now, in its five views. The readings are a fixture.
+caption: Relational device, on a fixture of readings.
 ```
 
 ##### Folded
@@ -7044,11 +7428,9 @@ The Medium device gives the particles a shared fluid to move through. Use it whe
 
 #### Views
 
-The Medium device is one device with five views. All five show the same live settings.
-
 ```ui
 device: expressions:medium
-caption: The Medium device as the shell draws it now, in its five views. The readings are a fixture.
+caption: Medium device, on a fixture of readings.
 ```
 
 ##### Folded
@@ -7138,11 +7520,9 @@ The Contacts device sets what happens when things touch. Use it to make particle
 
 #### Views
 
-The Contacts device is one device with five views. All five show the same live settings.
-
 ```ui
 device: expressions:contacts
-caption: The Contacts device as the shell draws it now, in its five views. The readings are a fixture.
+caption: Contacts device, on a fixture of readings.
 ```
 
 ##### Folded
@@ -7235,11 +7615,9 @@ The Morph device moves the field between two forms along a torus. Use it to make
 
 #### Views
 
-The Morph device is one device with five views. All five show the same live settings.
-
 ```ui
 device: expressions:morph
-caption: The Morph device as the shell draws it now, in its five views. The readings are a fixture.
+caption: Morph device, on a fixture of readings.
 ```
 
 ##### Folded
@@ -7335,11 +7713,9 @@ The Focus device walks attention through the formations of a scene in order. Use
 
 #### Views
 
-The Focus device is one device with five views. All five show the same live settings.
-
 ```ui
 device: expressions:focus
-caption: The Focus device as the shell draws it now, in its five views. The readings are a fixture.
+caption: Focus device, on a fixture of readings.
 ```
 
 ##### Folded
@@ -7438,11 +7814,9 @@ The Colour device paints the field. Use it to choose a palette, set how it moves
 
 #### Views
 
-The Colour device is one device with five views. All five show the same live settings.
-
 ```ui
 device: expressions:colour
-caption: The Colour device as the shell draws it now, in its five views. The readings are a fixture.
+caption: Colour device, on a fixture of readings.
 ```
 
 ##### Folded
@@ -7540,11 +7914,9 @@ The Ink device shapes the marks that the particles make. Use it to set how many 
 
 #### Views
 
-The Ink device is one device with five views. All five show the same live settings.
-
 ```ui
 device: expressions:ink
-caption: The Ink device as the shell draws it now, in its five views. The readings are a fixture.
+caption: Ink device, on a fixture of readings.
 ```
 
 ##### Folded
@@ -7640,11 +8012,9 @@ The device has one more switch: Occlusion (On · Off, default Off). It has two m
 
 #### Views
 
-The Depth device is one device with five views. All five show the same live settings.
-
 ```ui
 device: expressions:depth
-caption: The Depth device as the shell draws it now, in its five views. The readings are a fixture.
+caption: Depth device, on a fixture of readings.
 ```
 
 ##### Folded
@@ -7741,11 +8111,9 @@ The device also has a Compatibility switch: Resonator · Template (default Reson
 
 #### Views
 
-The Resonance device is one device with five views. All five show the same live settings.
-
 ```ui
 device: expressions:resonance
-caption: The Resonance device as the shell draws it now, in its five views. The readings are a fixture.
+caption: Resonance device, on a fixture of readings.
 ```
 
 ##### Folded
@@ -7837,11 +8205,9 @@ The Force device sets how the selected symbol pushes or pulls the particles arou
 
 #### Views
 
-The Force device is one device with five views. All five show the same live settings.
-
 ```ui
 device: expressions:force
-caption: The Force device as the shell draws it now, in its five views. The readings are a fixture.
+caption: Force device, on a fixture of readings.
 ```
 
 ##### Folded
@@ -7933,11 +8299,9 @@ The shape and the stored colour show as read-only lines. Change the shape in the
 
 #### Views
 
-The Formation device is one device with five views. All five show the same live settings.
-
 ```ui
 device: expressions:formation
-caption: The Formation device as the shell draws it now, in its five views. The readings are a fixture.
+caption: Formation device, on a fixture of readings.
 ```
 
 ##### Folded
@@ -8031,11 +8395,9 @@ The Sound device gives the selected symbol a voice. Use it to tune a symbol to i
 
 #### Views
 
-The Sound device is one device with five views. All five show the same live settings.
-
 ```ui
 device: expressions:sound
-caption: The Sound device as the shell draws it now, in its five views. The readings are a fixture.
+caption: Sound device, on a fixture of readings.
 ```
 
 ##### Folded
@@ -8134,11 +8496,9 @@ A modulation takes one signal: Resonant affinity, Travelling focus, Carrier spee
 
 #### Views
 
-The Meaning device is one device with five views. All five show the same live settings.
-
 ```ui
 device: expressions:meaning
-caption: The Meaning device as the shell draws it now, in its five views. The readings are a fixture.
+caption: Meaning device, on a fixture of readings.
 ```
 
 ##### Folded
@@ -8223,11 +8583,9 @@ The Scene device names the scene and the Expression and sets how long a scene la
 
 #### Views
 
-The Scene device is one device with five views. All five show the same live settings.
-
 ```ui
 device: expressions:scene
-caption: The Scene device as the shell draws it now, in its five views. The readings are a fixture.
+caption: Scene device, on a fixture of readings.
 ```
 
 The Scene device edits the scene clip that is open in Clip view: its name, its length and its change to the next scene.
@@ -8315,11 +8673,9 @@ The Text device lays words on the page of a scene. Use it to add a heading, a ti
 
 #### Views
 
-The Text device is one device with five views. All five show the same live settings.
-
 ```ui
 device: expressions:text
-caption: The Text device as the shell draws it now, in its five views. The readings are a fixture.
+caption: Text device, on a fixture of readings.
 ```
 
 The layers belong to the scene clip that is open in Clip view.
@@ -8411,11 +8767,9 @@ A lane can follow another lane. The follower takes the type, the wave, the rate,
 
 #### Views
 
-The Automation device is one device with five views. All five show the same live settings.
-
 ```ui
 device: expressions:automation
-caption: The Automation device as the shell draws it now, in its five views. The readings are a fixture.
+caption: Automation device, on a fixture of readings.
 ```
 
 The lanes belong to the scene clip that is open in Clip view.
@@ -8502,11 +8856,9 @@ The Blueprint device ties the symbols of a scene into a sixfold constellation an
 
 #### Views
 
-The Blueprint device is one device with five views. All five show the same live settings.
-
 ```ui
 device: expressions:blueprint
-caption: The Blueprint device as the shell draws it now, in its five views. The readings are a fixture.
+caption: Blueprint device, on a fixture of readings.
 ```
 
 The figure belongs to the scene clip that is open in Clip view.
@@ -8593,11 +8945,9 @@ The Body & triggers device sets what a scene carries and what the scene does whe
 
 #### Views
 
-The Body & triggers device is one device with five views. All five show the same live settings.
-
 ```ui
 device: expressions:body-triggers
-caption: The Body & triggers device as the shell draws it now, in its five views. The readings are a fixture.
+caption: Body & triggers device, on a fixture of readings.
 ```
 
 The body and the triggers belong to the scene clip that is open in Clip view.
@@ -8681,11 +9031,9 @@ The scene records the last arrangement that you applied.
 
 #### Views
 
-The Arrange device is one device with five views. All five show the same live settings.
-
 ```ui
 device: expressions:arrange
-caption: The Arrange device as the shell draws it now, in its five views. The readings are a fixture.
+caption: Arrange device, on a fixture of readings.
 ```
 
 The arrangement belongs to the scene clip that is open in Clip view.
@@ -8795,11 +9143,9 @@ The torus has two helices, which wind round it. A full return takes two turns. A
 
 #### Views
 
-The Torus is one device with five views. All five show the same live settings.
-
 ```ui
 device: quaternal-logic:torus
-caption: The Torus as the shell draws it now, in its five views. The readings are a fixture.
+caption: Torus, on a fixture of readings.
 ```
 
 In Clip view, the Torus plays the notes of the clip that you select. The piano roll edits those notes. A clip can carry its own mode.
@@ -8925,11 +9271,9 @@ The Partition overlay shows the black and white colours of a traditional keyboar
 
 #### Views
 
-The Jankó keyboard is one device with five views. All five show the same live settings.
-
 ```ui
 device: live:janko
-caption: The Jankó keyboard as the shell draws it now, in its five views. The readings are a fixture.
+caption: Jankó keyboard, on a fixture of readings.
 ```
 
 In Clip view, the keyboard records the notes that you play into the clip that is open. The piano roll shows them.
@@ -9039,11 +9383,9 @@ The planetary scales were composed to draw the quality of each planet into the p
 
 #### Views
 
-The Scale mapping device is one device with five views. All five show the same live settings.
-
 ```ui
 device: live:scale-mapping
-caption: The Scale mapping device as the shell draws it now, in its five views. The readings are a fixture.
+caption: Scale mapping device, on a fixture of readings.
 ```
 
 In Clip view, the device follows the mode of the open clip. When the clip has no mode, it follows the mode of the set.
@@ -9139,11 +9481,9 @@ Chromatic stack builds the notes from whole tones of 9:8. Fifths stack builds th
 
 #### Views
 
-The Exact-ratio tuning device is one device with five views. All five show the same live settings.
-
 ```ui
 device: live:exact-ratio
-caption: The Exact-ratio tuning device as the shell draws it now, in its five views. The readings are a fixture.
+caption: Exact-ratio tuning device, on a fixture of readings.
 ```
 
 ##### Folded
@@ -9238,11 +9578,9 @@ The planets have these intervals: Sun 1:1, Moon 4:3, Mercury 5:4, Venus 9:8, Mar
 
 #### Views
 
-The Sky modulation device is one device with five views. All five show the same live settings.
-
 ```ui
 device: live:sky-modulation
-caption: The Sky modulation device as the shell draws it now, in its five views. The readings are a fixture.
+caption: Sky modulation device, on a fixture of readings.
 ```
 
 ##### Folded
@@ -9352,11 +9690,11 @@ Each effect also has an On · Off light, default On.
 
 #### Views
 
-The Effects are four devices: a filter, a dynamics effect, a delay and a reverb. Each has five views. All five show the same live settings.
+The Effects are four devices: a filter, a dynamics effect, a delay and a reverb.
 
 ```ui
 device: live:effects
-caption: The Effects as the shell draws it now, in its five views. The readings are a fixture.
+caption: Effects, on a fixture of readings.
 ```
 
 ##### Folded
@@ -9488,11 +9826,9 @@ The positions come from a calculated sky. They are not an observed sky. The sky 
 
 #### Views
 
-The Sky is one device with five views. All five show the same live settings.
-
 ```ui
 device: quaternal-logic:sky
-caption: The Sky as the shell draws it now, in its five views. The readings are a fixture.
+caption: Sky, on a fixture of readings.
 ```
 
 ##### Folded
@@ -9616,11 +9952,9 @@ The 16 even cuts come in eight reciprocal pairs. In each pair, the size of one p
 
 #### Views
 
-The M3 clock is one device with five views. All five show the same live settings.
-
 ```ui
 device: quaternal-logic:m3-clock
-caption: The M3 clock as the shell draws it now, in its five views. The readings are a fixture.
+caption: M3 clock, on a fixture of readings.
 ```
 
 ##### Folded
@@ -9738,11 +10072,9 @@ For the I Ching, the Deck shows one hexagram, its six lines, the moving lines, t
 
 #### Views
 
-The Deck is one device with five views. All five show the same live settings.
-
 ```ui
 device: quaternal-logic:deck
-caption: The Deck as the shell draws it now, in its five views. The readings are a fixture.
+caption: Deck, on a fixture of readings.
 ```
 
 ##### Folded
@@ -9853,11 +10185,9 @@ A route has a source for each centre. The own planet of each centre is in the ta
 
 #### Views
 
-The Chakra is one device with five views. All five show the same live settings.
-
 ```ui
 device: quaternal-logic:chakra
-caption: The Chakra as the shell draws it now, in its five views. The readings are a fixture.
+caption: Chakra, on a fixture of readings.
 ```
 
 ##### Folded
@@ -9961,11 +10291,9 @@ The four matrices are stacked. Each layer feeds the next. Only the first makes s
 
 #### Views
 
-The M′ matrices are one device with five views. All five show the same live settings.
-
 ```ui
 device: quaternal-logic:m-prime-matrices
-caption: The M′ matrices as the shell draws it now, in its five views. The readings are a fixture.
+caption: M′ matrices, on a fixture of readings.
 ```
 
 ##### Folded
@@ -10065,11 +10393,9 @@ Open tiles sit at the top of the rail. The launcher sits below them, as a grid o
 
 #### Views
 
-The Rail is one device with five views. All five show the same live settings.
-
 ```ui
 device: widgets:rail
-caption: The Rail as the shell draws it now, in its five views. The readings are a fixture.
+caption: Rail, on a fixture of readings.
 ```
 
 ##### Folded
@@ -10148,11 +10474,9 @@ You need to find any session or helper and open its thread. Sessions lists every
 
 #### Views
 
-The Sessions is one device with five views. All five show the same live settings.
-
 ```ui
 device: widgets:sessions
-caption: The Sessions as the shell draws it now, in its five views. The readings are a fixture.
+caption: Sessions, on a fixture of readings.
 ```
 
 ##### Folded
@@ -10224,11 +10548,9 @@ You need to see and use the shells of your sessions. Terminal shows the live she
 
 #### Views
 
-The Terminal is one device with five views. All five show the same live settings.
-
 ```ui
 device: widgets:terminal
-caption: The Terminal as the shell draws it now, in its five views. The readings are a fixture.
+caption: Terminal, on a fixture of readings.
 ```
 
 ##### Folded
@@ -10300,11 +10622,9 @@ You need to see which files an agent read and which it changed. Files shows them
 
 #### Views
 
-The Files is one device with five views. All five show the same live settings.
-
 ```ui
 device: widgets:files
-caption: The Files as the shell draws it now, in its five views. The readings are a fixture.
+caption: Files, on a fixture of readings.
 ```
 
 ##### Folded
@@ -10375,11 +10695,9 @@ You need to see the pages an agent read, and the text it used. Web shows each pa
 
 #### Views
 
-The Web is one device with five views. All five show the same live settings.
-
 ```ui
 device: widgets:web
-caption: The Web as the shell draws it now, in its five views. The readings are a fixture.
+caption: Web, on a fixture of readings.
 ```
 
 ##### Folded
@@ -10445,11 +10763,9 @@ You need to see what is linked to the thing in play. Graph shows the neighbourho
 
 #### Views
 
-The Graph is one device with five views. All five show the same live settings.
-
 ```ui
 device: widgets:graph
-caption: The Graph as the shell draws it now, in its five views. The readings are a fixture.
+caption: Graph, on a fixture of readings.
 ```
 
 ##### Folded
@@ -10515,11 +10831,9 @@ You need to read what changed before you approve it. Diff shows the uncommitted 
 
 #### Views
 
-The Diff is one device with five views. All five show the same live settings.
-
 ```ui
 device: widgets:diff
-caption: The Diff as the shell draws it now, in its five views. The readings are a fixture.
+caption: Diff, on a fixture of readings.
 ```
 
 ##### Folded
@@ -10590,11 +10904,9 @@ You need to read the live events between the shell and the harness. Frames is th
 
 #### Views
 
-The Frames is one device with five views. All five show the same live settings.
-
 ```ui
 device: actuation:frames-monitor
-caption: The Frames as the shell draws it now, in its five views. The readings are a fixture.
+caption: Frames, on a fixture of readings.
 ```
 
 ##### Folded
@@ -10660,11 +10972,9 @@ You need to see what each task produced. Ledger shows every task with its receip
 
 #### Views
 
-The Ledger is one device with five views. All five show the same live settings.
-
 ```ui
 device: software-factory:ledger
-caption: The Ledger as the shell draws it now, in its five views. The readings are a fixture.
+caption: Ledger, on a fixture of readings.
 ```
 
 ##### Folded
@@ -10730,11 +11040,9 @@ You need to answer the agents when they ask. Approvals shows the proposals that 
 
 #### Views
 
-The Approvals is one device with five views. All five show the same live settings.
-
 ```ui
 device: software-factory:approvals
-caption: The Approvals as the shell draws it now, in its five views. The readings are a fixture.
+caption: Approvals, on a fixture of readings.
 ```
 
 ##### Folded
@@ -10805,11 +11113,9 @@ You need to see all your agents at once, and what each is doing. Agents is the h
 
 #### Views
 
-The Agents is one device with five views. All five show the same live settings.
-
 ```ui
 device: widgets:agents
-caption: The Agents as the shell draws it now, in its five views. The readings are a fixture.
+caption: Agents, on a fixture of readings.
 ```
 
 ##### Folded
@@ -10881,11 +11187,9 @@ You need to know exactly what the agent will read. Packet shows it whole, with i
 
 #### Views
 
-The Packet is one device with five views. All five show the same live settings.
-
 ```ui
 device: central:packet
-caption: The Packet as the shell draws it now, in its five views. The readings are a fixture.
+caption: Packet, on a fixture of readings.
 ```
 
 ##### Folded
@@ -10957,11 +11261,9 @@ You need to go back to a place you were. Trail keeps every place you went, newes
 
 #### Views
 
-The Trail is one device with five views. All five show the same live settings.
-
 ```ui
 device: widgets:trail
-caption: The Trail as the shell draws it now, in its five views. The readings are a fixture.
+caption: Trail, on a fixture of readings.
 ```
 
 ##### Folded
@@ -11031,11 +11333,9 @@ You need to see the moments of today that are still open. NOWs shows the day and
 
 #### Views
 
-The NOWs is one device with five views. All five show the same live settings.
-
 ```ui
 device: widgets:nows
-caption: The NOWs as the shell draws it now, in its five views. The readings are a fixture.
+caption: NOWs, on a fixture of readings.
 ```
 
 ##### Folded
@@ -11099,11 +11399,9 @@ You need to read what a run produced. Results shows the results and the diffs of
 
 #### Views
 
-The Results is one device with five views. All five show the same live settings.
-
 ```ui
 device: widgets:results
-caption: The Results as the shell draws it now, in its five views. The readings are a fixture.
+caption: Results, on a fixture of readings.
 ```
 
 ##### Folded
@@ -11169,11 +11467,9 @@ You need to read the wiki pages that an agent may use. Wiki shows the pages insi
 
 #### Views
 
-The Wiki is one device with five views. All five show the same live settings.
-
 ```ui
 device: widgets:wiki
-caption: The Wiki as the shell draws it now, in its five views. The readings are a fixture.
+caption: Wiki, on a fixture of readings.
 ```
 
 ##### Folded
@@ -11239,11 +11535,9 @@ You need to see what is due around your work. Calendar is a widget from a third 
 
 #### Views
 
-The Calendar is one device with five views. All five show the same live settings.
-
 ```ui
 device: widgets:calendar
-caption: The Calendar as the shell draws it now, in its five views. The readings are a fixture.
+caption: Calendar, on a fixture of readings.
 ```
 
 ##### Folded
