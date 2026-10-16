@@ -1,0 +1,234 @@
+/* The Clip view kit (clipKit.tsx): Live 12's Clip View on the shell's tokens. Panels on the device face, fields in the well's
+   dark, the editor on the raised ground with its lanes ruled by bar and beat, the clip's own colour only on its title bar. Every
+   colour resolves a token of styles.css or the device kit (panel.css). */
+.clv { display: flex; flex: none; background: var(--bg-1, #33363b); border: 1px solid var(--line, #24262a); overflow: hidden;
+  font: 10.5px/1.2 var(--font-ui, -apple-system, sans-serif); color: var(--text, #d4d7da); user-select: none; -webkit-user-select: none; }
+
+/* ---- the panels: the head across them, then the groups side by side */
+.clv-panels { flex: none; display: flex; flex-direction: column; background: var(--dp-face); border-right: 1px solid var(--line, #24262a); }
+.clv-head { flex: none; height: 18px; display: flex; align-items: center; gap: 6px; padding: 0 6px; background: var(--clv-colour, var(--bg-3, #4a4e54));
+  color: var(--bg-0, #26292d); border-bottom: 1px solid var(--line, #24262a); }
+.clv-name { font-weight: 600; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.clv-activator { flex: none; width: 10px; height: 10px; padding: 0; border: 1px solid var(--bg-0, #26292d); background: transparent; cursor: pointer; }
+.clv-activator[aria-pressed="true"] { background: var(--accent, #ffbe00); }
+.clv-groups { flex: 1 1 auto; display: flex; min-height: 0; }
+.clv-group { flex: none; width: var(--clv-group); display: flex; flex-direction: column; min-height: 0; }
+.clv-group + .clv-group { border-left: 1px solid var(--line, #24262a); }
+.clv-body { flex: 1 1 auto; min-height: 0; overflow: hidden; padding: 6px 8px 6px; display: flex; flex-direction: column; gap: 5px; }
+
+/* ---- tabs: the panels' strips and the editor's */
+.clv-tabs { flex: none; height: 18px; display: flex; background: var(--bg-1, #33363b); border-bottom: 1px solid var(--line, #24262a); }
+.clv-tab { flex: 1 1 auto; min-width: max-content; height: 100%; padding: 0 3px; border: 0; border-right: 1px solid var(--line, #24262a); background: transparent;
+  color: var(--text-dim, #a2a7ad); font: inherit; font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+.clv-tab:last-child { border-right: 0; }
+.clv-tab[aria-selected="true"] { background: var(--dp-face); color: var(--text, #d4d7da); }
+.clv-tab:focus-visible { outline: 1px solid var(--accent, #ffbe00); outline-offset: -1px; }
+.clv-ehead .clv-tabs { flex: none; height: 16px; border: 1px solid var(--line, #24262a); background: var(--bg-1, #33363b); }
+.clv-ehead .clv-tab { flex: none; padding: 0 10px; }
+
+/* ---- a panel's body */
+.clv-fields { display: grid; gap: 4px 6px; align-items: end; }
+.clv-wide { grid-column: 1 / -1; display: flex; flex-direction: column; }
+.clv-fields > .dp-cell, .clv-wide > .dp-cell { align-self: stretch; justify-self: stretch; align-items: stretch; }
+.clv-fields > .dp-cell .dp-label { text-align: left; }
+.clv-fields > .dp-cell--toggle, .clv-fields > .dp-cell--action { justify-content: flex-end; }
+.clv-fields .dp-toggle, .clv-fields .dp-action, .clv-wide .dp-toggle, .clv-wide .dp-action { width: 100%; }
+.clv-rows { display: flex; flex-direction: column; gap: 3px; }
+.clv-row { display: grid; grid-template-columns: 56px minmax(0, 1fr); align-items: center; gap: 4px; min-height: 16px; }
+.clv-row-label { font-size: 10px; color: var(--text-dim, #a2a7ad); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.clv-row-control { min-width: 0; display: flex; gap: 3px; }
+.clv-row-control > .dp-cell { flex: 1 1 0; align-items: stretch; }
+.clv-row-control > .dp-cell > .dp-label { display: none; }
+.clv-row-control .dp-toggle, .clv-row-control .dp-action, .clv-row-control .dp-box { width: 100%; min-width: 0; }
+.clv-row-control .dp-radio button { padding: 0 3px; }
+.clv-rule { flex: none; width: 100%; height: 0; margin: 2px 0; border: 0; border-top: 1px solid var(--line, #24262a); }
+.clv-caption { display: flex; align-items: center; justify-content: space-between; height: 13px; font-size: 10px; color: var(--text-dim, #a2a7ad); }
+.clv-said { margin: 0; font-size: 10px; line-height: 1.35; color: var(--text-faint, #71767c); }
+.clv-fact { gap: 2px; }
+.clv-fact-value { min-height: 16px; display: flex; align-items: center; padding: 1px 5px; background: var(--dp-field); border: 1px solid var(--line, #24262a);
+  font-size: 10px; line-height: 12px; color: var(--text-dim, #a2a7ad); white-space: normal; overflow-wrap: anywhere; }
+.clv-fact-value[data-tone="accent"] { color: var(--accent, #ffbe00); }
+.clv-fact-value[data-tone="value"] { color: var(--fizz, #5cc6b4); }
+.clv-fact-value[data-tone="stall"] { color: var(--stall, #ff9b4a); }
+.clv-fact-value[data-tone="green"] { color: var(--green, #8fd0a8); }
+.clv-fact[data-unread="true"] .clv-fact-value { color: var(--text-faint, #71767c); }
+
+/* Live's place field: its name with Set beside it, then the bars.beats.sixteenths box (cap 02). */
+.clv-place { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.clv-place-head { display: flex; align-items: center; justify-content: space-between; height: 13px; font-size: 10px; color: var(--text-dim, #a2a7ad); }
+.clv-set { height: 12px; padding: 0 5px; border: 0; border-radius: 6px; background: var(--bg-1, #33363b); color: var(--text-dim, #a2a7ad); font: inherit; font-size: 9px; cursor: pointer; }
+.clv-set:disabled { opacity: .45; cursor: default; }
+.clv-place .dp-cell--box > .dp-label { display: none; }
+.clv-place .dp-box { width: 100%; min-width: 0; }
+
+/* A checklist of toggles (Arrange's objects). */
+.clv-checks { display: flex; flex-wrap: wrap; gap: 3px; }
+.clv-checks > .dp-cell { flex: 0 0 auto; }
+.clv-body .dp-label { text-align: left; align-self: flex-start; }
+
+/* ---- the editor */
+.clv-editor { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.clv-ehead { flex: none; height: 18px; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 6px; padding: 0 4px;
+  background: var(--bg-2, #3f4348); border-bottom: 1px solid var(--line, #24262a); }
+.clv-ebar { display: flex; align-items: center; gap: 3px; min-width: 0; overflow: hidden; }
+.clv-ecorner { display: flex; justify-content: flex-end; align-items: center; gap: 4px; min-width: 0; }
+.clv-ebar .dp-cell > .dp-label, .clv-ecorner .dp-cell > .dp-label { display: none; }
+.clv-ebar .dp-cell, .clv-ecorner .dp-cell { flex: none; }
+.clv-ecorner .dp-chooser { min-width: 72px; }
+.clv-ebody { position: relative; flex: 1 1 auto; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+
+/* The lanes: keys at the left, the ruler over them; only the lanes scroll. */
+.clv-grid { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
+.clv-ruler { flex: none; display: block; background: var(--bg-2, #3f4348); border-bottom: 1px solid var(--line, #24262a); }
+.clv-tick { stroke: var(--text-faint, #71767c); stroke-width: 1; }
+.clv-tick-label { font: 8.5px var(--font-ui, sans-serif); fill: var(--text-dim, #a2a7ad); }
+.clv-brace { fill: var(--sel, #7ec3e6); }
+.clv-lanes { flex: none; overflow-x: hidden; overflow-y: auto; scrollbar-width: thin; background: var(--bg-1, #33363b); }
+.clv-lanes > svg { display: block; }
+.clv-lane { fill: var(--bg-1, #33363b); }
+.clv-lane[data-key="black"], .clv-lane[data-key="b"] { fill: color-mix(in srgb, var(--bg-1, #33363b) 70%, var(--bg-0, #26292d)); }
+.clv-lane[data-marked="true"] { fill: color-mix(in srgb, var(--parasakti, #c79ae0) 16%, var(--bg-1, #33363b)); }
+.clv-lane[data-marked="true"][data-key="black"], .clv-lane[data-marked="true"][data-key="b"] { fill: color-mix(in srgb, var(--parasakti, #c79ae0) 12%, var(--bg-0, #26292d)); }
+.clv-bar { stroke: var(--line, #24262a); stroke-width: 1; }
+.clv-beat { stroke: color-mix(in srgb, var(--line, #24262a) 55%, transparent); stroke-width: 1; }
+.clv-key { stroke: var(--line, #24262a); stroke-width: .5; fill: var(--bg-2, #3f4348); }
+.clv-key[data-key="white"], .clv-key[data-key="a"] { fill: color-mix(in srgb, var(--text, #d4d7da) 78%, var(--bg-2, #3f4348)); }
+.clv-key[data-key="black"], .clv-key[data-key="b"] { fill: var(--bg-0, #26292d); }
+.clv-key[data-key="gutter"] { fill: var(--bg-2, #3f4348); stroke: none; }
+.clv-key[data-key="name"][data-marked="true"] { fill: color-mix(in srgb, var(--parasakti, #c79ae0) 22%, var(--bg-2, #3f4348)); }
+.clv-key-mark { fill: var(--parasakti, #c79ae0); }
+.clv-key-label { font: 8.5px var(--font-ui, sans-serif); fill: var(--text-dim, #a2a7ad); }
+.clv-axis { font: 8.5px var(--font-ui, sans-serif); fill: var(--text-faint, #71767c); }
+
+.clv-block { color: var(--sel, #7ec3e6); }
+.clv-block[data-tone="accent"] { color: var(--accent, #ffbe00); }
+.clv-block[data-tone="green"] { color: var(--green, #8fd0a8); }
+.clv-block[data-tone="stall"] { color: var(--stall, #ff9b4a); }
+.clv-block[data-tone="rec"] { color: var(--rec, #e0523f); }
+.clv-block[data-tone="value"] { color: var(--sel, #7ec3e6); }
+.clv-block-body { fill: currentColor; stroke: var(--bg-0, #26292d); stroke-width: 1; }
+.clv-block[data-selected="true"] .clv-block-body { stroke: var(--text, #d4d7da); stroke-width: 1.5; }
+.clv-glide { fill: currentColor; opacity: .45; }
+.clv-stripe { fill: var(--bg-0, #26292d); opacity: .55; }
+.clv-block-label { font: 8.5px var(--font-ui, sans-serif); fill: var(--bg-0, #26292d); pointer-events: none; }
+.clv-mark line { stroke: var(--accent, #ffbe00); stroke-width: 1; stroke-dasharray: 3 2; }
+.clv-mark rect { fill: var(--accent, #ffbe00); }
+.clv-mark[data-tone="stall"] line { stroke: var(--stall, #ff9b4a); }
+.clv-mark[data-tone="stall"] rect { fill: var(--stall, #ff9b4a); }
+.clv-mark[data-tone="value"] line { stroke: var(--fizz, #5cc6b4); }
+.clv-mark[data-tone="value"] rect { fill: var(--fizz, #5cc6b4); }
+
+/* The lane under the lanes (velocity, a sound), and the editor's foot (Live's Velocity · Randomize · Ramp row, cap 01). */
+.clv-under { flex: none; border-top: 1px solid var(--line, #24262a); background: var(--bg-1, #33363b); display: flex; flex-direction: column; }
+.clv-stems { display: block; flex: none; }
+.clv-stem line { stroke: var(--sel, #7ec3e6); stroke-width: 1; }
+.clv-stem circle { fill: var(--bg-1, #33363b); stroke: var(--sel, #7ec3e6); stroke-width: 1.2; }
+.clv-stem-len { stroke-opacity: .55; }
+.clv-foot { flex: none; height: 20px; display: flex; align-items: center; gap: 6px; padding: 0 4px; background: var(--bg-2, #3f4348); border-top: 1px solid var(--line, #24262a); }
+.clv-foot > .dp-cell { flex: none; flex-direction: row; align-items: center; gap: 4px; }
+.clv-foot > .dp-cell > .dp-label { display: none; }
+.clv-foot .dp-chooser { width: 120px; }
+.clv-foot .dp-toggle, .clv-foot .dp-action { min-width: 64px; }
+.clv-own { display: inline-flex; gap: 10px; font-size: 10px; color: var(--text-dim, #a2a7ad); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* The envelope editor. */
+.clv-env { display: flex; flex: 1 1 auto; min-height: 0; }
+.clv-env-main { display: flex; flex-direction: column; flex: none; }
+.clv-env-lane { display: block; flex: none; }
+.clv-env-field { fill: color-mix(in srgb, var(--green, #8fd0a8) 16%, var(--bg-1, #33363b)); cursor: crosshair; }
+.clv-env-field[data-mode="modulation"] { fill: color-mix(in srgb, var(--fizz, #5cc6b4) 18%, var(--bg-1, #33363b)); }
+.clv-env-line { fill: none; stroke-width: 1.5; stroke: var(--rec, #e0523f); pointer-events: none; }
+.clv-env-line[data-tone="value"] { stroke: var(--fizz, #5cc6b4); }
+.clv-env-unset { stroke: var(--rec, #e0523f); stroke-width: 1; stroke-dasharray: 3 3; pointer-events: none; }
+.clv-env-behind { fill: var(--bg-0, #26292d); opacity: .55; pointer-events: none; }
+.clv-env-side { flex: none; border-left: 1px solid var(--line, #24262a); background: var(--dp-face); padding: 6px 8px; display: flex; flex-direction: column; gap: 5px; overflow: hidden; }
+
+/* ---- a page, for a Central clip: the paper and its tone */
+.clv-page { flex: 1 1 auto; min-height: 0; display: flex; }
+.clv-paper { flex: 1 1 auto; min-width: 0; overflow-y: auto; scrollbar-width: thin; padding: 14px 22px 18px; background: var(--paper, #EFEFED); color: var(--ink, #111);
+  font: 12.5px/1.55 var(--serif, Georgia, serif); user-select: text; -webkit-user-select: text; }
+.clv-paper[data-tone="ink"] { background: var(--bg-0, #26292d); color: var(--text, #d4d7da); }
+.clv-paper h1 { margin: 0 0 2px; font-size: 19px; font-weight: 600; letter-spacing: -.01em; }
+.clv-paper h2 { margin: 12px 0 3px; font-size: 13px; font-weight: 600; }
+.clv-paper p { margin: 0 0 7px; }
+.clv-paper .clv-intro { color: var(--pmid, #6E6E6A); font-style: italic; margin-bottom: 9px; }
+.clv-paper mark { background: var(--hl, #FFE97A); color: inherit; padding: 0 1px; }
+.clv-paper mark[data-colour="green"] { background: color-mix(in srgb, var(--green, #8fd0a8) 70%, var(--paper, #EFEFED)); }
+.clv-paper mark[data-colour="blue"] { background: color-mix(in srgb, var(--sel, #7ec3e6) 60%, var(--paper, #EFEFED)); }
+.clv-paper mark[data-colour="pink"] { background: color-mix(in srgb, var(--bumble, #d985a6) 55%, var(--paper, #EFEFED)); }
+.clv-paper[data-show="highlights"] p > :not(mark), .clv-paper[data-show="highlights"] .clv-plain { opacity: .28; }
+.clv-paper .clv-selected { outline: 1px solid var(--accent, #ffbe00); background: var(--accent-soft, rgba(255,190,0,.13)); }
+.clv-paper .clv-anchor { border-bottom: 1px dotted var(--pmid, #6E6E6A); }
+.clv-paper .clv-quote { margin: 6px 0 9px; padding-left: 10px; border-left: 2px solid var(--pmid, #6E6E6A); font-style: italic; }
+.clv-paper ul { margin: 0 0 7px; padding-left: 18px; }
+.clv-source { flex: 1 1 auto; min-width: 0; overflow-y: auto; scrollbar-width: thin; margin: 0; padding: 10px 14px; background: var(--bg-0, #26292d); color: var(--text, #d4d7da);
+  font: 10.5px/1.5 var(--mono, ui-monospace, monospace); white-space: pre-wrap; user-select: text; -webkit-user-select: text; }
+.clv-margin { flex: none; width: 210px; overflow-y: auto; scrollbar-width: thin; border-left: 1px solid var(--line, #24262a); background: var(--bg-1, #33363b); padding: 6px 8px; display: flex; flex-direction: column; gap: 6px; }
+.clv-note { padding: 4px 6px; background: var(--bg-2, #3f4348); border-left: 2px solid var(--accent, #ffbe00); font-size: 10px; line-height: 1.35; color: var(--text, #d4d7da); }
+.clv-note small { display: block; margin-top: 2px; color: var(--text-faint, #71767c); font-size: 9px; }
+.clv-margin-head { font-size: 9px; letter-spacing: .07em; text-transform: uppercase; color: var(--text-faint, #71767c); }
+/* The selection tool: four acts over the selected passage. */
+.clv-acts { display: inline-flex; gap: 0; margin: 0 0 4px; border: 1px solid var(--line, #24262a); background: var(--bg-2, #3f4348); font: 10px var(--font-ui, sans-serif); }
+.clv-acts button { height: 18px; padding: 0 8px; border: 0; border-right: 1px solid var(--line, #24262a); background: transparent; color: var(--text, #d4d7da); font: inherit; cursor: pointer; }
+.clv-acts button:last-child { border-right: 0; }
+.clv-acts button:hover { background: var(--accent, #ffbe00); color: var(--bg-0, #26292d); }
+/* A Flow's entries. */
+.clv-entry { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 8px; margin: 0 0 9px; }
+.clv-entry[data-depth="1"] { margin-left: 26px; }
+.clv-entry[data-depth="2"] { margin-left: 52px; }
+.clv-avatar { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font: 600 9.5px var(--font-ui, sans-serif); background: var(--ink, #111); color: var(--paper, #EFEFED); }
+.clv-avatar[data-kind="agent"] { background: transparent; color: var(--ink, #111); border: 1.5px dotted var(--ink, #111); }
+.clv-paper[data-tone="ink"] .clv-avatar { background: var(--text, #d4d7da); color: var(--bg-0, #26292d); }
+.clv-entry-who { font: 600 10px var(--font-ui, sans-serif); color: var(--pmid, #6E6E6A); }
+.clv-entry-rel { margin-left: 6px; font: 9px var(--font-ui, sans-serif); color: var(--pmid, #6E6E6A); text-transform: uppercase; letter-spacing: .06em; }
+
+/* ---- lists an editor shows: a task's events, an event's relations */
+.clv-list { flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-width: thin; margin: 0; padding: 0; list-style: none; }
+.clv-list li { display: grid; grid-template-columns: 52px 78px minmax(0, 1fr) auto; align-items: center; gap: 8px; height: 19px; padding: 0 8px;
+  border-bottom: 1px solid color-mix(in srgb, var(--line, #24262a) 70%, transparent); font-size: 10.5px; }
+.clv-list li > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.clv-list .clv-at { color: var(--text-faint, #71767c); font-variant-numeric: tabular-nums; }
+.clv-list .clv-chip { font: 9.5px var(--mono, monospace); color: var(--fizz, #5cc6b4); }
+.clv-list .clv-tag { font-size: 9.5px; color: var(--text-faint, #71767c); }
+.clv-list li[data-tone="accent"] .clv-chip { color: var(--accent, #ffbe00); }
+.clv-list li[data-tone="stall"] .clv-chip, .clv-list li[data-tone="stall"] .clv-text { color: var(--stall, #ff9b4a); }
+.clv-list li[data-line="dashed"] .clv-chip { text-decoration: underline dashed; }
+.clv-list li[data-line="dotted"] .clv-chip { text-decoration: underline dotted; }
+
+/* ---- a pane of controls inside the editor (an Expression's selected symbol, a sound) */
+.clv-pages { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.clv-pagebar { flex: none; height: 20px; display: flex; align-items: center; gap: 8px; padding: 0 8px; background: var(--bg-2, #3f4348); border-bottom: 1px solid var(--line, #24262a); }
+.clv-pagebar .dp-cell > .dp-label { display: none; }
+.clv-pagebar .dp-radio button, .clv-pagebar .dp-action { height: 15px; }
+.clv-sections { flex: 1 1 auto; min-height: 0; display: flex; background: var(--dp-face); overflow: hidden; }
+.clv-sections > .dp-sec { padding: 6px 8px; }
+
+/* ---- a constellation, an event's whole */
+.clv-svg { display: block; flex: 1 1 auto; min-height: 0; background: var(--bg-1, #33363b); }
+.clv-node { fill: var(--bg-2, #3f4348); stroke: var(--text-dim, #a2a7ad); stroke-width: 1; }
+.clv-node[data-focus="true"] { fill: var(--accent, #ffbe00); stroke: var(--accent, #ffbe00); }
+.clv-node-label { font: 9.5px var(--font-ui, sans-serif); fill: var(--text, #d4d7da); }
+.clv-edge { stroke: var(--text-dim, #a2a7ad); stroke-width: 1.2; fill: none; }
+.clv-edge[data-standing="claim"] { stroke-opacity: .65; }
+.clv-edge[data-standing="inference"] { stroke-dasharray: 5 3; }
+.clv-edge[data-standing="guess"] { stroke-dasharray: 1.5 3; }
+.clv-edge[data-standing="dispute"] { stroke: var(--stall, #ff9b4a); stroke-dasharray: 6 2 1 2; }
+.clv-bound { fill: none; stroke: var(--sel, #7ec3e6); stroke-dasharray: 4 4; stroke-opacity: .6; }
+
+/* Two values under one name (Live's Signature 4 / 4, cap 02). */
+.clv-pair { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.clv-pair-label { height: 12px; font-size: 10px; color: var(--text-dim, #a2a7ad); white-space: nowrap; }
+.clv-pair-boxes { display: flex; align-items: center; gap: 3px; }
+.clv-pair-boxes > .dp-cell { flex: 1 1 0; min-width: 0; }
+.clv-pair-boxes > .dp-cell > .dp-label { display: none; }
+.clv-pair-boxes .dp-box { min-width: 0; width: 100%; }
+.clv-pair-sep { flex: none; font-size: 10px; color: var(--text-faint, #71767c); }
+
+/* A line the editor says when it has nothing to draw. */
+.clv-ebody > .clv-said { padding: 8px 10px; }
+/* A highlight on the dark tone keeps the paper's ink, so it reads. */
+.clv-paper[data-tone="ink"] mark { color: var(--bg-0, #26292d); }
+/* The line a relation is drawn in, by its standing. */
+.clv-line { display: inline-block; vertical-align: middle; margin-right: 6px; }
+.clv-range { height: 22px; display: grid; place-items: center; background: var(--bg-0, #26292d); border: 1px solid var(--line, #24262a); color: var(--accent, #ffbe00); font-size: 11px; font-weight: 600; }
+.clv-foot-label { font-size: 10px; color: var(--text-dim, #a2a7ad); white-space: nowrap; }

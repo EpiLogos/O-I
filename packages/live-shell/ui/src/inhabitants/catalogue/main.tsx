@@ -20,6 +20,7 @@ import {DESIGNED, DESIGNED_IDS, loadDesign, type DesignedDevice} from './panels'
 import type {Value} from './panels/design'
 import {flippedOf, popoutOf} from './panels/popout'
 import {PlaceContext} from '../sdk/panel'
+import {ClipGallery} from './clips/gallery'
 import './catalogue.css'
 import './panels/panels.css'
 
@@ -226,7 +227,9 @@ function Gallery() {
   </main>
 }
 
-createRoot(document.getElementById('root')!).render(<Gallery />)
+// ?clip=<mode>: Clip view in that mode, at the detail area's size and expanded (clips/gallery.tsx).
+const clipRoute = new URLSearchParams(location.search).get('clip')
+createRoot(document.getElementById('root')!).render(clipRoute !== null ? <ClipGallery mode={clipRoute} /> : <Gallery />)
 
 // Embedded in the manual, the gallery tells the page its height, so the frame fits every view it draws (docs/dlw/render.mjs).
 if (window.parent !== window) {
