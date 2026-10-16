@@ -161,8 +161,10 @@ export function FactoryDeviceChain({sessionRef}: {sessionRef: string | null}) {
 
   // Publish each device to the door: the pool shows the chosen one whole, a pane shows it full, from these same devices — a
   // designed device with its binding, so every place draws the design on the same owner values.
+  // The Agent's own Full is its session's thread (§19.3): every ⤢ — the chain's, the pool's, the rail's — opens it, never the design's Full.
+  const threadOpener = useRef<() => void>(() => {})
   useEffect(() => {
-    for (const {slot, device} of chain) publishDevice(device.id, {device, picture: size => chainPicture(slot.id, pictures, size), ...(bindings[slot.id] ? {binding: bindings[slot.id]!} : {})})
+    for (const {slot, device} of chain) publishDevice(device.id, {device, picture: size => chainPicture(slot.id, pictures, size), ...(bindings[slot.id] ? {binding: bindings[slot.id]!} : {}), ...(slot.id === 'agent' ? {full: {open: () => threadOpener.current()}} : {})})
     if (memberDevice && memberDesignBinding) publishDevice(memberDevice.id, {device: memberDevice, binding: memberDesignBinding})
     else publishDevice(MEMBER_DEVICE_ID, null)
   }, [chain, bindings, memberDevice, memberDesignBinding]) // the pictures read the reading `chain` is built from
@@ -180,6 +182,7 @@ export function FactoryDeviceChain({sessionRef}: {sessionRef: string | null}) {
     if (sessionRef == null) { setNote({kind: 'refused', title: 'Open thread', line: 'No session is selected: the Agent\'s thread opens when one is.', receipt: null}); return }
     shell.openThread(sessionRef)
   }
+  threadOpener.current = openAgentThread
 
   // One drop, one owner operation (or one named refusal). The session drop rides the run model's own selection — the who slot
   // then reads the new session's task record. The agent drop dispatches `harness_agent_control` (new) on the gateway binding and

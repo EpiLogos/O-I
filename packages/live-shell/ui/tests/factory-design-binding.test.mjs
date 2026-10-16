@@ -130,18 +130,16 @@ test('each published device is keyed to its design exactly: designKey(family, fa
   assert.deepEqual(set.map(entry => entry.device.face.liveSemantic), ['return', 'device-instrument', 'rack', 'return', 'return'], 'each designed face keeps its own Live semantic')
 })
 
-test('a design that draws a list of its own where the owner\'s belongs waits: the generic plate draws the owner\'s rows until it reads them', () => {
-  assert.match(bind.designWaits(bind.AGENT_DESIGN, agentDesign), /thread and models and harnesses/,
-    'actuation__harness-model.tsx draws its thread, models and harnesses from module constants: it waits (lead, 16 Oct)')
-  assert.equal(bind.designWaits(bind.AGENT_DESIGN, {...agentDesign, defaults: {...agentDesign.defaults, thread: '[]', models: '[]', harnesses: '[]'}}), null,
-    'once it reads them from its values it is hosted on the owner')
-  assert.match(bind.designWaits(bind.RACK_DESIGN, rackDesign), /members/, 'skills.tsx draws practice.ts DOCUMENTATION, not the owner\'s members')
-  assert.match(bind.designWaits(bind.MEMBER_DESIGN, memberDesign), /members/)
-  assert.match(bind.designWaits(bind.SCOPE_DESIGN, scopeDesign), /reads and writes/, 'scope.tsx draws its READS and WRITES')
+test('every chain design reads its owner lists from its values now, so it is hosted on its owner; one that drew its own list again would wait', () => {
+  // The documentation lane's retrofits (3a97afb10, 4a6c051b9): the Agent's thread, models and harnesses, the rack's and the member's
+  // members, Scope's reads and writes are value keys.
+  for (const design of [agentDesign, rackDesign, memberDesign, scopeDesign]) assert.equal(bind.designWaits(design.id, design), null, `${design.id} is hosted`)
+  const without = (design, keys) => ({...design, defaults: Object.fromEntries(Object.entries(design.defaults).filter(([key]) => !keys.includes(key)))})
+  assert.match(bind.designWaits(bind.AGENT_DESIGN, without(agentDesign, ['thread', 'models', 'harnesses'])), /thread and models and harnesses/)
+  assert.match(bind.designWaits(bind.RACK_DESIGN, without(rackDesign, ['members'])), /members/)
+  assert.match(bind.designWaits(bind.MEMBER_DESIGN, without(memberDesign, ['members'])), /members/)
+  assert.match(bind.designWaits(bind.SCOPE_DESIGN, without(scopeDesign, ['reads', 'writes'])), /reads and writes/)
   assert.match(bind.designWaits(bind.RACK_DESIGN, undefined), /has not loaded/)
-  // Once a design reads the list from its values, it is hosted on the owner.
-  assert.equal(bind.designWaits(bind.RACK_DESIGN, {...rackDesign, defaults: {...rackDesign.defaults, members: '[]'}}), null)
-  assert.equal(bind.designWaits(bind.SCOPE_DESIGN, {...scopeDesign, defaults: {...scopeDesign.defaults, reads: '[]', writes: '[]'}}), null)
 })
 
 // ---- the Gateway -------------------------------------------------------------------------------------------------------------
@@ -319,6 +317,13 @@ test('as the shell boots (families admitted, no kit rows adopted), the Agent\'s 
   accepted.resetOwnerAccepted()
   try {
     assert.equal(define.sdkParamRows('actuation').length, 0, 'the boot the app runs: no §14 rows in the kit registry (ModeDetail.tsx loads the families only)')
+    // Each setter's key is a declared row whose write path is that setter: the address table's, or the P0 batch's (Interrupt).
+    const {AGENT_SHELL_SETTERS} = await import('../src/agent/shellSetterBridge.ts')
+    const declared = [...(await import('../src/inhabitants/agentParamAddresses.ts')).AGENT_SHELL_ADDRESS_TABLE, ...Object.values(bind.AGENT_P0_ROWS)]
+    for (const [path, {family: familyId, key}] of Object.entries(AGENT_SHELL_SETTERS)) {
+      assert.ok(declared.some(row => row.family === familyId && row.key === key && row.writePath === path), `${path} is ${familyId}/${key}'s declared write path`)
+    }
+    assert.match(readFileSync(new URL('../src/agent/shellSetterBridge.ts', import.meta.url), 'utf8'), /^(?![\s\S]*No §14 row)/, 'no second look-up of the row before the dispatcher')
     const captured = []
     registerAgentShellSetters({
       transport: () => ({kind: 'bridge', url: 'http://fixture.invalid'}), binding: () => 'harness:fixture',
@@ -437,10 +442,16 @@ test('the member is the rack\'s chosen chain: Enabled is your request in the rac
   await member().write([{key: 'requested', value: false}])
   assert.equal(bind.rackValues(rackInput())['req:skill/aikit/knowledge-navigation'], false, 'the member\'s Enabled is the rack\'s request: one composition')
   assert.equal(bind.rackValues(rackInput()).compose, 'changed')
-  await member().write([{key: 'reviewAsk', value: true}])
+  // The ask is the view's own key (DesignBinding.local): the runtime hands each set of it to the hold at once — no draft, no owner.
+  assert.equal(host.setHosted(member(), 'reviewAsk', true), false, 'no draft: the hold takes it')
   assert.equal(member().values.reviewAsk, true, 'Review asks first: Trust and Cancel stand')
+  host.setHosted(member(), 'reviewAsk', undefined)
+  assert.equal(member().values.reviewAsk, undefined, 'Cancel drops the ask: it reaches the binding, not just the view')
+  assert.deepEqual(host.hostState(bind.MEMBER_DEVICE_ID).drafts, {}, 'nothing was drafted for an owner')
+  host.setHosted(member(), 'reviewAsk', true)
   await assert.rejects(() => member().write([{key: 'reviewed', value: true}]), /missing op: aikit trust record/)
   assert.equal(member().values.reviewAsk, undefined, 'the ask ends with the answer')
+  assert.equal(member().writes('reviewAsk'), false, 'the ask is never a write to an owner')
   await member().write([{key: 'run', value: 'asked'}])
   assert.equal(member().values.run, 'asked')
   await member().write([{key: 'run', value: 'idle'}])
@@ -460,11 +471,17 @@ test('Scope: no owner reports a reach, a write mode, places or receipts, so none
   const write = async (row, value) => { calls.push([row.writePath, value]); return {kind: 'refused', channel: 'kernel', writePath: row.writePath, reason: 'Write arm is presentation-state (WO-SF2)'} }
   const scope = () => bind.scopeBinding('factory:world', bind.chainHolds(), writeMode, write)
   assert.deepEqual(scope().values, {}, 'every Scope value is absent — never Scene, Propose, r15 → r17 or the fixture\'s places')
-  // Raise the reach through the runtime's own release path: held, drawn dashed, nothing sent to any owner.
-  host.setDraft('factory:world', 'reachPending', 2)
-  assert.equal(await host.flushDrafts(scope(), 0), null)
+  // Raise the reach through the runtime's own set: the view's own key (DesignBinding.local), held at once, nothing sent to any owner.
+  assert.equal(host.setHosted(scope(), 'reachPending', 2), false)
   assert.deepEqual(calls, [], 'nothing is sent before Confirm')
   assert.equal(scope().values.reachPending, 2, 'the raised reach waits, for the rings to draw dashed with Confirm and Cancel')
+  assert.equal(scope().writes('reachPending'), false, 'the raised reach is never a write to an owner')
+  // Cancel: the view drops the key, and the drop reaches the binding — the hold ends; nothing is sent.
+  host.setHosted(scope(), 'reachPending', undefined)
+  assert.equal(scope().values.reachPending, undefined, 'Cancel clears the raised reach')
+  assert.deepEqual(calls, [])
+  assert.deepEqual(host.hostState('factory:world').drafts, {}, 'nothing drafted for an owner')
+  host.setHosted(scope(), 'reachPending', 2)
   // Confirm: the reach goes to its owner, which has no operation for it yet — refused by name, and the wait ends.
   await assert.rejects(() => scope().write([{key: 'reach', value: 2}]), /Reach: no owner operation carries it yet — missing op: the scope reach write/)
   assert.equal(scope().values.reachPending, undefined)
@@ -479,11 +496,58 @@ test('Scope: no owner reports a reach, a write mode, places or receipts, so none
   bind.resetHolds()
 })
 
+// ---- the four on their owners: drawn, and what no owner carries stands disabled with its reason --------------------------------
+
+/** Text as the static render escapes it inside an attribute. */
+const escaped = text => text.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#x27;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
+test('the Agent, the rack, the member and Scope draw their designs on their bindings in all five views — no NaN, no undefined — and each refused write is a disabled control that says why', () => {
+  bind.resetHolds()
+  host.resetHost()
+  const write = async row => fired(row)
+  const agent = bind.agentBinding('factory:agent', agentInput({
+    track: {agentRef: 'agent:kite', agentName: 'Kite', needle: {atUnixMs: 1_000_000 - 12_000}, budget: {used: null, max: null}},
+    reading: {...model.INITIAL_READING, attached: true, budget: {used: 3, cap: 12}},
+  }), {}, write, () => true)
+  const rack = bind.rackBinding('factory:skillset', rackInput(), null, {project: 'O-I', sessionRef: 's'})
+  // A Method withheld for an unseen revision: its Review, Run and Prove stand.
+  const member = bind.memberBinding(bind.MEMBER_DEVICE_ID, rack.values, 'skill/aikit/wiki-inhabitation', bind.chainHolds())
+  bind.updateHolds(was => ({...was, reachPending: 2}))
+  const scope = bind.scopeBinding('factory:world', bind.chainHolds(), model.slotRows('world').find(row => row.key === 'write-mode'), write)
+  const cases = [[agentDesign, agent], [rackDesign, rack], [memberDesign, member], [scopeDesign, scope]]
+  for (const [design, binding] of cases) {
+    assert.equal(bind.designWaits(design.id, design), null)
+    const drawn = hosted(design, binding)
+    drawn.forEach((markup, index) => {
+      assert.match(markup, new RegExp(`data-device-view="${views[index]}"`), `${design.id} ${views[index]} draws`)
+      assert.doesNotMatch(markup, /\bNaN\b|undefined/, `${design.id} ${views[index]}: no absent key drawn as text`)
+      assert.doesNotMatch(markup, /data-device-fault/, `${design.id} ${views[index]}: its own view drew`)
+    })
+    const all = drawn.join('\n')
+    for (const [key, why] of Object.entries(bind.REFUSED_WRITES[design.id])) {
+      assert.equal(binding.standing[key].disabled, why, `${design.id}: ${key} stands disabled with the owner's missing operation`)
+      // An unread toggle (the Agent's heartbeat: nobody reports the beat) is drawn disabled, but the kit's cell says "no reading" in
+      // place of the reason (inhabitants/sdk/panel.tsx Cell: `unknown` replaces doesIn) — proposed to the kit's lane.
+      if (design.id === bind.AGENT_DESIGN && key === 'heartbeat') {
+        assert.match(all, /<div class="dp-cell dp-cell--toggle" data-i="Beat\|[^"]*" data-unread="true" data-disabled="true"><button[^>]*disabled=""/, 'the beat is drawn disabled')
+        continue
+      }
+      assert.ok(all.includes(escaped(why)), `${design.id}: the control of ${key} says why it cannot act (${why})`)
+    }
+    assert.match(all, /data-disabled="true"/, `${design.id}: a refused control is drawn disabled`)
+  }
+  // The rack's request squares stand: a member's request is its own req:<id> key, not the members reading.
+  assert.equal(rack.writes('members'), true)
+  assert.equal(host.hostedStanding(host.hostState('factory:skillset'), rack, []).members?.disabled, undefined)
+  bind.resetHolds()
+  host.resetHost()
+})
+
 // ---- the chain ---------------------------------------------------------------------------------------------------------------
 
 test('the chain publishes each designed device with its binding, draws the member inside the rack, and names why a design waits', () => {
   const view = read('devices/FactoryDeviceChain.tsx')
-  assert.match(view, /publishDevice\(device\.id, \{device, picture: size => chainPicture\(slot\.id, pictures, size\), \.\.\.\(bindings\[slot\.id\] \? \{binding: bindings\[slot\.id\]!\} : \{\}\)\}\)/,
+  assert.match(view, /publishDevice\(device\.id, \{device, picture: size => chainPicture\(slot\.id, pictures, size\), \.\.\.\(bindings\[slot\.id\] \? \{binding: bindings\[slot\.id\]!\} : \{\}\), \.\.\.\(slot\.id === 'agent' \? \{full: \{open: \(\) => threadOpener\.current\(\)\}\} : \{\}\)\}\)/,
     'the pool, a pane and the rail draw the same design on the same binding')
   assert.match(view, /<DeviceView device=\{device\} size="compact" picture=\{chainPicture\(slot\.id, pictures, 'compact'\)\} binding=\{bindings\[slot\.id\] \?\? undefined\}/)
   assert.match(view, /publishDevice\(memberDevice\.id, \{device: memberDevice, binding: memberDesignBinding\}\)/)

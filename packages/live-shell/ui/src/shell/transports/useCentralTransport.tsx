@@ -2,8 +2,9 @@
 // reading, and the one slot with a write path presses through it; every other slot stays drawn with its meaning and waits.
 // The readers are the ones the Central surfaces already make, ported, never recreated:
 //  - the Day, its die and its bounds: Central's ground reading (`central` inspect — desktop/cradle/src/central/client.ts:73
-//    `readGround`, the read CentralGround.tsx:28 makes): today's Day reading (its native document's open face, the record's
-//    opening) and the civil-time policy (its day boundary and timezone);
+//    `readGround`, the read CentralGround.tsx:28 makes), the one answer the window holds (central/devices/useCentralReadings.ts
+//    useCentralGroundAnswer — the Day device reads the same answer, so the ground is read once): today's Day reading (its native
+//    document's open face, the record's opening) and the civil-time policy (its day boundary and timezone);
 //  - the die's turn (Tempo ‹ ›): the die's own write route, central/devices/centralDeviceWrites.ts:42 `turnDieFace`;
 //  - the packet's size and scope (Key, Scale): AIKit's prepared context through the kernel's encounter op, the read the packet
 //    widget makes (widgets/PacketWidget.tsx:58-80, `nativeContext`), for the conversation the widget holds (agentConversation.ts
@@ -11,11 +12,11 @@
 //  - the machine serving the ground (Rate): the host's configuration (ShellConfigContext, native/application.ts ShellConfig).
 // The Day is read again when the window returns (focus, visibility) and after the die turns — never polled.
 import {useContext, useEffect, useState} from 'react'
-import {readGround, type CentralGroundReading} from '../../../../../../desktop/cradle/src/central/client'
 import {nativeContext, PREPARED_CONTEXT_CHANGED, type PreparedContext} from '../../../../../../desktop/cradle/src/context/nativeContext'
 import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import {turnDieFace} from '../../central/devices/centralDeviceWrites'
 import {dieFaceLabel} from '../../central/devices/dayDie'
+import {useCentralGroundAnswer} from '../../central/devices/useCentralReadings'
 import {useOptionalContinuity} from '../../continuity/workspace'
 import {useAgencySessions} from '../../agent/useAgencySessions'
 import {CONVERSATION_PROJECT, conversationOf} from '../../widgets/agentConversation'
@@ -40,27 +41,6 @@ function useWindowReturns(): number {
     return () => { window.removeEventListener('focus', again); document.removeEventListener('visibilitychange', again) }
   }, [])
   return count
-}
-
-/** Central's ground reading (readGround, desktop/cradle/src/central/client.ts:73) for the root register, or the owner's refusal. */
-export function useCentralGround(transport: KernelTransportStatus): {reading: CentralGroundReading | null; error: string | null; reread: () => void} {
-  const returns = useWindowReturns()
-  const [again, setAgain] = useState(0)
-  const key = JSON.stringify(transport)
-  const [held, setHeld] = useState<{key: string; reading: CentralGroundReading | null; error: string | null} | null>(null)
-  useEffect(() => {
-    if (transport.kind === 'unavailable') return
-    let alive = true
-    readGround(transport, null).then(
-      reading => { if (alive) setHeld({key, reading, error: null}) },
-      cause => { if (alive) setHeld({key, reading: null, error: message(cause)}) },
-    )
-    return () => { alive = false }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- the key names the carrier
-  }, [key, returns, again])
-  const reread = () => setAgain(value => value + 1)
-  if (transport.kind === 'unavailable') return {reading: null, error: `the carrier is unavailable: ${transport.reason}`, reread}
-  return held?.key === key ? {reading: held.reading, error: held.error, reread} : {reading: null, error: null, reread}
 }
 
 /** The packet the agent will read: AIKit's prepared context for the conversation the packet widget holds (PacketWidget.tsx:58-80). */
@@ -98,7 +78,7 @@ export const useCentralTransport: UseModeTransport = ({readouts}) => {
   const transport = useContext(Workspace)?.transport ?? NO_CARRIER
   const config = useContext(ShellConfigContext)
   const selection = useOptionalContinuity()?.current.context?.selection ?? null
-  const ground = useCentralGround(transport)
+  const ground = useCentralGroundAnswer(transport)
   const packet = usePacketReading(transport, selection?.ref ?? null)
   const [turning, setTurning] = useState(false)
   const [turned, setTurned] = useState<string | null>(null)
@@ -110,7 +90,7 @@ export const useCentralTransport: UseModeTransport = ({readouts}) => {
     turnDieFace(transport, die.aperture, face).then(
       () => setTurned(`↳ Turned to ${dieFaceLabel(face)}.`),
       cause => setTurned(`↳ Refused — ${message(cause)}`),
-    ).finally(() => { setTurning(false); ground.reread() })
+    ).finally(() => { setTurning(false); ground.refresh() })
   } : undefined
   const document = useReachedDocument()
   return centralBindings({ground: ground.reading, groundError: ground.error, packet, config, transport, readouts, turn, turned, document})

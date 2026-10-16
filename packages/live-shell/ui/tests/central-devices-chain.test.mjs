@@ -80,7 +80,7 @@ const deviceMarkup = (markup, faceId) => {
   const next = markup.indexOf('data-device="central:', start + 10)
   return markup.slice(start, next < 0 ? undefined : next)
 }
-function DeviceViewOf({entry, size}) { return createElement(DeviceView, {device: entry.device, size, picture: entry.picture(size)}) }
+function DeviceViewOf({entry, size}) { return createElement(DeviceView, {device: entry.device, size, picture: entry.picture(size), marks: entry.marks}) }
 
 test('the family\'s device faces are six devices, in chain order, each its own family\'s declaration; its clip is not one of them', () => {
   const set = entries()
@@ -215,11 +215,15 @@ test('the impact opens full over the subject the browser selected', () => {
   assert.match(html(entry.picture('full')), /data-central-device="impact"[^>]*data-subject="Work\/O-I"/)
 })
 
-test('pop-out is kept where the face declares it: offered with a host and an aperture, disabled without, redock when out', () => {
+test('pop-out is kept where the face declares it: offered with a host and an aperture, disabled without, redock when out — a mark of the head', () => {
   const calls = []
   const host = (popped = false) => ({popOut: identity => calls.push(['pop', identity.face]), redock: identity => calls.push(['redock', identity.face]), poppedOut: () => popped})
   const withHost = entries({deviceWindows: host(), day: DAY})
   assert.match(compact(withHost.find(entry => entry.id === 'central:day-die')), /data-action="pop-out"(?![^>]*disabled)/, 'the die pops out on its Day')
+  // MOVED: the pop-out stood in the picture's well; it is the place's mark in the head now, before ⤢ (DEVICE-UI §4.1).
+  assert.match(compact(withHost.find(entry => entry.id === 'central:nara-conversation')), /<span class="dp-head-x"><button type="button" class="dp-full" data-action="pop-out"/,
+    'in the head\'s marks, as the kit draws a place\'s mark')
+  assert.doesNotMatch(html(withHost.find(entry => entry.id === 'central:nara-conversation').picture('compact')), /pop-out|redock/, 'the picture is the picture alone')
   assert.match(compact(withHost.find(entry => entry.id === 'central:nara-conversation')), /data-action="pop-out"/)
   assert.doesNotMatch(compact(withHost.find(entry => entry.id === 'central:context-world')), /pop-out/, 'a parameter face does not pop out')
   assert.ok(!withHost.some(entry => entry.id === 'central:flow-document'), 'the Flow is a clip: its pop-out goes with it to the Clip side')
