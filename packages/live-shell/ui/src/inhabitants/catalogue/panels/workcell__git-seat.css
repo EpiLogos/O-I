@@ -1,0 +1,67 @@
+/* Git / landing: the pane's body (the wide branch, the commits, the checks, the files, the diff beside them) and the small helpers of the
+   plates. Shell and panel tokens only. */
+.gs-pane { position: absolute; inset: 0; display: flex; flex-direction: column; background: var(--bg-1); color: var(--text); font: 11px var(--font-ui, sans-serif); }
+.gs-top { flex: none; display: flex; flex-wrap: wrap; align-items: baseline; gap: 3px 18px; padding: 8px 16px 6px; background: var(--bg-0); border-bottom: 1px solid var(--line); }
+.gs-top h3 { margin: 0; font-size: 13px; font-weight: 600; }
+.gs-top h3 small { margin-left: 8px; font-size: 11px; font-weight: 400; color: var(--text-faint); }
+.gs-top-read { margin-left: auto; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.gs-wide.dp-display { flex: none; width: auto; max-width: 760px; height: 76px; margin: 8px 16px 0; }
+.gs-wide > svg { width: 100%; height: 76px; }
+
+.gs-cols { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: 340px minmax(0, 1fr); margin-top: 8px; border-top: 1px solid var(--line); }
+.gs-left { display: flex; flex-direction: column; min-width: 0; min-height: 0; border-right: 1px solid var(--line); }
+.gs-block { flex: none; display: flex; flex-direction: column; min-height: 0; }
+.gs-block[data-grow="true"] { flex: 1 1 0; }
+.gs-block:not([data-grow]) .gs-list { max-height: 96px; }
+.gs-block h4 { flex: none; display: flex; align-items: center; gap: 7px; margin: 0; padding: 8px 14px 4px; font-size: 10px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--text-dim); }
+.gs-block h4 b { margin-left: auto; font-weight: 400; letter-spacing: 0; text-transform: none; color: var(--text-faint); font-variant-numeric: tabular-nums; }
+.gs-list { list-style: none; margin: 0; padding: 0 8px 4px; min-height: 0; overflow: auto; }
+.gs-list li, .gs-file { display: grid; align-items: center; gap: 8px; height: 19px; padding: 0 6px; border-bottom: 1px solid color-mix(in srgb, var(--line) 70%, transparent); }
+.gs-commit { grid-template-columns: 54px minmax(0, 1fr); }
+.gs-commit code { font: 10.5px var(--font-mono, ui-monospace, monospace); color: var(--text-faint); }
+.gs-check { grid-template-columns: 8px minmax(0, 1fr) auto; }
+.gs-commit span, .gs-check span, .gs-file span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gs-check i { font-style: normal; font-size: 10px; color: var(--text-dim); }
+.gs-file { grid-template-columns: 12px minmax(0, 1fr) auto; width: 100%; border-top: 0; border-left: 0; border-right: 0; background: transparent; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.gs-file:hover { background: color-mix(in srgb, var(--text) 6%, transparent); }
+.gs-file[aria-pressed="true"] { background: color-mix(in srgb, var(--sel) 22%, transparent); }
+.gs-file em { font-style: normal; font-weight: 600; font-size: 10px; }
+.gs-file em[data-status="A"] { color: var(--green); }
+.gs-file em[data-status="M"] { color: var(--dp-value, var(--accent)); }
+.gs-file em[data-status="D"] { color: var(--rec); }
+.gs-file i { font-style: normal; font-size: 10px; color: var(--text-dim); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.gs-none { margin: 0; padding: 4px 14px 10px; color: var(--text-faint); }
+.gs-more { padding: 4px 14px; font-size: 10px; color: var(--text-faint); }
+.gs-add { color: var(--green); }
+.gs-del { color: var(--rec); }
+
+.gs-diff { display: flex; flex-direction: column; min-width: 0; min-height: 0; background: var(--bg-0); }
+.gs-diff-head { flex: none; display: flex; align-items: baseline; gap: 12px; padding: 9px 14px 7px; border-bottom: 1px solid var(--line); font-size: 11px; }
+.gs-diff-head b { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.gs-diff-head span { margin-left: auto; flex: none; font-variant-numeric: tabular-nums; }
+.gs-lines { flex: 1 1 auto; min-height: 0; overflow: auto; font: 11px/17px var(--font-mono, ui-monospace, monospace); }
+.gs-line { display: grid; grid-template-columns: 40px 40px 14px minmax(0, 1fr); white-space: pre; }
+.gs-line > span:nth-child(-n+2) { padding-right: 8px; text-align: right; color: var(--text-faint); font-variant-numeric: tabular-nums; user-select: none; }
+.gs-line[data-kind="add"] { background: color-mix(in srgb, var(--green) 14%, transparent); }
+.gs-line[data-kind="delete"] { background: color-mix(in srgb, var(--rec) 16%, transparent); }
+.gs-line[data-kind="hunk"] { color: var(--text-faint); background: color-mix(in srgb, var(--sel) 10%, transparent); }
+.gs-line[data-kind="hunk"] > span:nth-child(-n+3) { visibility: hidden; }
+.gs-line > span:last-child { overflow: hidden; text-overflow: ellipsis; }
+.gs-diff-none { margin: 0; padding: 14px; color: var(--text-faint); font: 11px var(--font-ui, sans-serif); }
+
+/* The plates. */
+.gs-tall { grid-row: span 2; display: flex; flex-direction: column; align-self: stretch; }
+.gs-stack { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.gs-ro { align-self: stretch; justify-self: stretch; min-width: 0; display: flex; justify-content: center; }
+.gs-ro .dp-readout-value { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.gs-ro .dp-cell { max-width: 100%; }
+.dp-readout-value[data-tone="rec"] { color: var(--rec); }
+
+.gs-tile-pic { flex: none; display: flex; flex-direction: column; gap: 4px; }
+.gs-tile-branch { max-width: 112px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 9.5px; color: var(--text-dim); }
+.gs-tile-side { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; justify-content: space-around; align-items: center; }
+
+/* Uncommitted work: a hollow dot that pulses while there is any. */
+.gs-pulse { animation: gs-pulse 1.8s ease-in-out infinite; }
+@keyframes gs-pulse { 50% { opacity: .3; } }
+@media (prefers-reduced-motion: reduce) { .gs-pulse { animation: none; } }
