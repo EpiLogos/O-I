@@ -40,6 +40,8 @@ import type {DispatchReceipt} from '../inhabitants/sdk/shellSetters.ts'
 import {registerShellSetter} from '../inhabitants/sdk/shellSetters.ts'
 import {fireHarnessControlByKey, familyParamRows} from './agentNativeDispatch.ts'
 import {recordOwnerAccepted} from './devices/ownerAccepted.ts'
+import {AGENT_P0_ROWS} from './devices/designBindings.ts'
+import {agentAddress} from '../inhabitants/agentParamAddresses.ts'
 import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
 import type {AgentShellState} from './AgentShellContext.tsx'
 import {atlasHandle, presentAtlasView} from '../projections/atlas/AtlasProjectionPanel.tsx'
@@ -60,10 +62,17 @@ import {
 
 /** The rows the bridge's setters dispatch through — resolved from the kit
  * registries by (family, deviceInstance, key), so the dispatch always
- * carries the row's own declared writePath. */
-function agentRow(family: string, key: string): ReturnType<typeof familyParamRows>[number] | undefined {
+ * carries the row's own declared writePath. The shell never adopts the
+ * kit's rows at boot (only tests call adoptVerifiedRows / loadAgentNativeP0;
+ * ql/devices/atlasDevices.ts:7-9), so where the registry holds none the
+ * grammar checked is the declared one itself: the verified address table
+ * (agentParamAddresses.ts) and the P0 rows the Agent design writes through
+ * (devices/designBindings.ts AGENT_P0_ROWS, drift-tested against the batch). */
+function agentRow(family: string, key: string): {readonly family: string; readonly key: string} | undefined {
   return familyParamRows(family).find(row => row.deviceInstance === 'agent' && row.key === key)
     ?? familyParamRows(family).find(row => row.key === key)
+    ?? [agentAddress('agent', key), agentAddress('world', key), ...Object.values(AGENT_P0_ROWS)]
+      .find(row => row !== undefined && row.family === family && row.key === key && !!row.writePath)
 }
 
 export interface ShellSetterBridgeConfig {

@@ -257,6 +257,15 @@ test('the agent\'s picture says "attached" only on the owner\'s word — a selec
   assert.equal(caption({reading: {attached: true}}), 'unselected', 'a record with no session selected is no record of this agent')
 })
 
+test('the world\'s rings draw no reach arc: no owner reports the reach, so the picture says it is not read', () => {
+  for (const size of ['compact', 'whole', 'full']) {
+    const markup = html(pictures.chainPicture('world', context(), size))
+    assert.match(markup, /data-reach="not-read"/)
+    assert.match(markup, /reach not read/)
+    assert.doesNotMatch(markup, /<path/, `${size}: no likely arc stands in for the owner's reach`)
+  }
+})
+
 test('what an owner accepted is the only reading effort and input have: recorded per binding, only inside the row\'s choices, replaced not mutated', () => {
   accepted.resetOwnerAccepted()
   try {
@@ -269,13 +278,16 @@ test('what an owner accepted is the only reading effort and input have: recorded
     assert.deepEqual(accepted.ownerAccepted('cursor'), {effort: 'max', input: 'queue'})
     assert.notEqual(accepted.ownerAccepted('cursor'), before, 'a new snapshot, never a mutated one')
     assert.deepEqual(accepted.ownerAccepted('hermes'), {}, 'the acceptance is the bound harness\'s, not every harness\'s')
-    for (const [key, value] of [['effort', 'turbo'], ['input', true], ['heartbeat', false], ['write-mode', 'direct'], ['interrupt-quantize', 'now']]) {
+    for (const [key, value] of [['effort', 'turbo'], ['input', true], ['heartbeat', false], ['write-mode', 'direct'], ['interrupt-quantize', 'soon']]) {
       assert.equal(accepted.recordOwnerAccepted('cursor', key, value), false, `${key}=${String(value)} is no acceptance of a row the devices read`)
     }
-    assert.equal(heard, 2, 'a subscriber hears each real acceptance and nothing else')
+    // Interrupt timing: the harness carrier's quantize, one of its three choices — the Agent design's Interrupt reads it (lane BF).
+    assert.equal(accepted.recordOwnerAccepted('cursor', 'interrupt-quantize', 'next tool'), true)
+    assert.deepEqual(accepted.ownerAccepted('cursor'), {effort: 'max', input: 'queue', quantize: 'next tool'})
+    assert.equal(heard, 3, 'a subscriber hears each real acceptance and nothing else')
     stop()
     accepted.recordOwnerAccepted('cursor', 'effort', 'low')
-    assert.equal(heard, 2, 'and stops hearing when it leaves')
+    assert.equal(heard, 3, 'and stops hearing when it leaves')
   } finally { accepted.resetOwnerAccepted() }
 })
 
@@ -346,7 +358,9 @@ test('the Device side is these devices, wired to the door, the pane and the owne
   assert.match(view, /publishDevice\(device\.id, \{device, picture:/, 'each device is published to the door')
   assert.match(view, /publishDevice\(id, null\)/, 'and withdrawn with the chain')
   assert.match(view, /selectDevice\(chainDeviceId\(slotId\)\)/, 'choosing one shows it whole in the pool')
-  assert.match(view, /openInstrument\(DEVICE_PANE_KIND, undefined, \{ref: chainDeviceId\(slotId\), title\}\)/, 'opening one full puts it in a pane')
+  assert.match(view, /openInstrument\(DEVICE_PANE_KIND, undefined, \{ref: id, title\}\)/, 'opening one full puts it in a pane')
+  assert.match(view, /const openFull = \(slotId: string, title: string\) => openDevice\(chainDeviceId\(slotId\), title\)/, 'by its chain id')
+  assert.match(view, /shell\.openThread\(sessionRef\)/, 'the Agent\'s ⤢ opens its thread (§19.3)')
   assert.match(view, /fireWritePath\(row, value, \{transport, binding\}\)/, 'a change goes to the row\'s own write path through the one resolver')
   assert.match(view, /chainDropDecision\(active\.drag\)/, 'the aperture law\'s drop receiver is kept')
   assert.match(view, /MISSING_OPS\.order/, 'and the slide\'s refusal by name')

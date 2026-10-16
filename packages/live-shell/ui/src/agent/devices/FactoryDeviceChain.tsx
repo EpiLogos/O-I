@@ -9,11 +9,22 @@
 // AgentDeviceChain.tsx:199-243), the slide grip and drop slot (NativeAgentDeviceRack.tsx:113-182), the card click that opens
 // the device in the pool (:119) and the owner-line notes. The fold to a title (:210-221) is the runtime's own (DeviceView's ▾,
 // its light read by deviceRuntime.ts lightOf); the chain draws no fold or light of its own.
+//
+// The designed devices (lane BF): the Gateway, the Agent, the Skillset rack, its member and Scope draw the catalogue's designs
+// (inhabitants/catalogue/panels: actuation__gateway.tsx, actuation__harness-model.tsx, skills.tsx, member.tsx, scope.tsx) on their owners' readings and
+// writes (designBindings.ts), each published with its binding so the chain, the pool, a pane and the rail draw one device. A
+// design that still draws a list of its own where the owner's belongs waits (designBindings.ts designWaits), and the generic
+// plate draws the owner's rows; the slot names why (data-design-waits).
 import {Fragment, useCallback, useEffect, useMemo, useRef, useState, type DragEvent} from 'react'
 import {DeviceView} from '../../frame/devices/DeviceView'
 import {publishDevice, selectDevice} from '../../frame/devices/deviceDoor'
 import {DEVICE_PANE_KIND} from '../../frame/devices/devicePane'
+import type {DesignBinding} from '../../frame/devices/designed'
+import {useDesign} from '../../frame/devices/designs'
 import {openInstrument} from '../../frame/instrumentDoor'
+import {agentAddress} from '../../inhabitants/agentParamAddresses'
+import {useRosterAnswer} from '../../owners/readers'
+import {useAgentSessionsOptional} from '../AgentSessionsProvider'
 import {useAgentShell, type AgentDeviceId} from '../AgentShellContext'
 import {
   AGENT_CHAIN_MIME, MISSING_OPS, activeChainDrag, chainDropDecision, chainInsertIndex, decodeChainDrag, dropZoneLine,
@@ -23,10 +34,17 @@ import {agentDataI} from '../agentFidelity'
 import {fireWritePath} from '../agentNativeDispatch'
 import {harnessAgentControl} from '../harnessAgentControl'
 import {RefusalCard, safeJson} from '../RefusalCard'
-import {CHAIN_DEVICE_IDS, agentChainDevices, chainDeviceId, type ChainWrite} from './agentChainDevices'
+import {CHAIN_DEVICE_IDS, agentChainDevices, chainDeviceId, rackMemberDevice, type ChainWrite} from './agentChainDevices'
 import {chainPicture, type PictureContext} from './AgentDevicePictures'
+import {
+  AGENT_DESIGN, AGENT_P0_ROWS, GATEWAY_DESIGN, MEMBER_DESIGN, MEMBER_DEVICE_ID, RACK_DESIGN, SCOPE_DESIGN, SLOT_DESIGN_FACE, agentBinding, designWaits,
+  gatewayBinding, memberBinding,
+  memberChains, rackBinding, scopeBinding, seatedProfile, useChainHolds, type AgentRows,
+} from './designBindings'
 import {useOwnerAccepted} from './ownerAccepted'
+import {useSelectedSkillChain} from './skillRackSelection'
 import {useAgentChainReading} from './useAgentChainReading'
+import {RACK_PROJECT, composePorts, useRackReading} from './useRackReading'
 import '../agentShell.css'
 import './factoryDevices.css'
 
@@ -52,12 +70,25 @@ interface ChainNote {
 /** Where a drop landed: the dashed zone or a named card. */
 type ChainDropTarget = {kind: 'zone'; label: string} | {kind: 'card'; id: string; label: string}
 
+/** The slots whose designs this chain binds, with the design each draws. */
+const SLOT_DESIGNS: Readonly<Record<string, string>> = {gateway: GATEWAY_DESIGN, agent: AGENT_DESIGN, skillset: RACK_DESIGN, world: SCOPE_DESIGN}
+
 export function FactoryDeviceChain({sessionRef}: {sessionRef: string | null}) {
   const shell = useAgentShell()
-  const {reading, transport, binding} = useAgentChainReading(sessionRef)
+  const {reading, transport, binding, resolved} = useAgentChainReading(sessionRef)
   // The settings an owner accepted on this harness: the only readings effort and input have. The shell's own effort, steer,
   // heartbeat and write-arm flags are presentation, so they are not read here.
   const accepted = useOwnerAccepted(binding)
+  const sessions = useAgentSessionsOptional()
+  const track = sessionRef != null ? sessions?.tracks.find(item => item.sessionRef === sessionRef) ?? null : null
+  const holds = useChainHolds()
+  // The catalogue's designs, and whether each can be hosted on its owner yet (designBindings.ts designWaits).
+  const gatewayDesign = useDesign(GATEWAY_DESIGN, true), agentDesign = useDesign(AGENT_DESIGN, true), rackDesign = useDesign(RACK_DESIGN, true)
+  const memberDesign = useDesign(MEMBER_DESIGN, true), scopeDesign = useDesign(SCOPE_DESIGN, true)
+  const waits: Readonly<Record<string, string | null>> = useMemo(() => ({
+    gateway: designWaits(GATEWAY_DESIGN, gatewayDesign), agent: designWaits(AGENT_DESIGN, agentDesign), skillset: designWaits(RACK_DESIGN, rackDesign),
+    world: designWaits(SCOPE_DESIGN, scopeDesign), member: designWaits(MEMBER_DESIGN, memberDesign),
+  }), [gatewayDesign, agentDesign, rackDesign, memberDesign, scopeDesign])
   const [note, setNote] = useState<ChainNote | null>(null)
   // The gesture-held drag, mirrored into state so the zone names what is held and a slide's drop slot opens.
   const [held, setHeld] = useState<ActiveChainDrag | null>(null)
@@ -73,19 +104,81 @@ export function FactoryDeviceChain({sessionRef}: {sessionRef: string | null}) {
     return receipt
   }, [transport, binding])
 
-  const chain = useMemo(() => agentChainDevices({sessionRef, reading, accepted}, write), [sessionRef, reading, accepted, write])
+  // A slot whose design is bound draws by that design's face (the world slot by Software Factory's Scope).
+  const designedFaces = useMemo(() => Object.fromEntries(Object.entries(SLOT_DESIGN_FACE).filter(([slot]) => !waits[slot])), [waits])
+  const chain = useMemo(() => agentChainDevices({sessionRef, reading, accepted}, write, designedFaces), [sessionRef, reading, accepted, write, designedFaces])
   const pictures: PictureContext = {reading, sessionRef, onFrames: () => shell.toggleTile('frames'), onThread: () => shell.openThread(sessionRef)}
 
-  // Publish each device to the door: the pool shows the chosen one whole, a pane shows it full, from these same devices.
+  // The Gateway: the harness reading's own fields; its settings through the address table's rows (stall-after with the design's
+  // stops as its domain — the device's generic row withholds it for want of one, agentChainDevices.ts GATEWAY_STALL).
+  const gatewayDesignBinding = useMemo(() => {
+    if (waits.gateway) return null
+    const rows = chain.find(entry => entry.slot.id === 'gateway')?.device.rows ?? []
+    const stall = agentAddress('gateway', 'stall-after')
+    return gatewayBinding(chainDeviceId('gateway'), {reading, harness: {binding, resolved}}, {
+      transport: rows.find(row => row.key === 'transport'), approvals: rows.find(row => row.key === 'approvals'), connect: rows.find(row => row.key === 'connect'),
+      ...(stall ? {stallAfter: {...stall, title: 'Stall after'}} : {}),
+    }, write)
+  }, [waits.gateway, chain, reading, binding, resolved, write])
+
+  // The Agent: its rows' own write paths — the address table's (effort, input, heartbeat) and the declared P0 rows
+  // (designBindings.ts AGENT_P0_ROWS: interrupt timing and the steer line on Actuation's face, the new task on Software Factory's).
+  const agentRows = useMemo((): AgentRows => {
+    const rows = chain.find(entry => entry.slot.id === 'agent')?.device.rows ?? []
+    return {
+      effort: rows.find(row => row.key === 'effort'), input: rows.find(row => row.key === 'input'), heartbeat: rows.find(row => row.key === 'heartbeat'),
+      ...AGENT_P0_ROWS,
+    }
+  }, [chain])
+  const steering = useRef(shell.steer)
+  steering.current = shell.steer
+  const agentDesignBinding = useMemo(() => (waits.agent ? null : agentBinding(chainDeviceId('agent'), {
+    sessionRef, track, nowUnixMs: sessions?.nowUnixMs ?? 0, reading, accepted, harness: {binding, resolved}, holds,
+  }, agentRows, write, () => steering.current)), [waits.agent, sessionRef, track, sessions?.nowUnixMs, reading, accepted, binding, resolved, holds, agentRows, write])
+
+  // The rack: the seated agent's carried practice (its accepted profile in the roster, the sets AIKit replies for), and the
+  // composition through the configuration plane. Read only while its design can draw it.
+  const roster = useRosterAnswer(transport, null).reading
+  const profile = useMemo(() => seatedProfile(roster.status === 'answered' ? roster.value : null, track?.agentRef ?? null), [roster, track?.agentRef])
+  const [planeEpoch, setPlaneEpoch] = useState(0)
+  const rackOn = !waits.skillset
+  const rackReading = useRackReading(transport, profile, holds.compose.scope, sessionRef, rackOn, planeEpoch)
+  const ports = useMemo(() => composePorts(transport, () => setPlaneEpoch(epoch => epoch + 1)), [transport])
+  const rackDesignBinding = useMemo(() => (rackOn ? rackBinding(chainDeviceId('skillset'), {profile, ...rackReading, holds}, ports, {project: RACK_PROJECT, sessionRef}) : null),
+    [rackOn, profile, rackReading, holds, ports, sessionRef])
+  // The member: the rack's chosen chain, one device inside the rack (§19.7).
+  const memberOn = rackOn && !waits.member
+  const chosen = useSelectedSkillChain(rackDesignBinding ? memberChains(rackDesignBinding.values) : null)
+  const memberDevice = useMemo(() => (memberOn ? rackMemberDevice(MEMBER_DEVICE_ID) : null), [memberOn])
+  const memberDesignBinding = useMemo(() => (memberDevice && rackDesignBinding ? memberBinding(MEMBER_DEVICE_ID, rackDesignBinding.values, chosen, holds) : null),
+    [memberDevice, rackDesignBinding, chosen, holds])
+  // Scope: the world row's write path for the write mode; a raised reach held until Confirm.
+  const writeModeRow = chain.find(entry => entry.slot.id === 'world')?.device.rows.find(row => row.key === 'write-mode')
+  const scopeDesignBinding = useMemo(() => (waits.world ? null : scopeBinding(chainDeviceId('world'), holds, writeModeRow, write)), [waits.world, holds, writeModeRow, write])
+  const bindings: Readonly<Record<string, DesignBinding | null>> = useMemo(() => ({
+    gateway: gatewayDesignBinding, agent: agentDesignBinding, skillset: rackDesignBinding, world: scopeDesignBinding,
+  }), [gatewayDesignBinding, agentDesignBinding, rackDesignBinding, scopeDesignBinding])
+
+  // Publish each device to the door: the pool shows the chosen one whole, a pane shows it full, from these same devices — a
+  // designed device with its binding, so every place draws the design on the same owner values.
   useEffect(() => {
-    for (const {slot, device} of chain) publishDevice(device.id, {device, picture: size => chainPicture(slot.id, pictures, size)})
-  }, [chain]) // the pictures read the reading `chain` is built from
-  useEffect(() => () => { for (const id of CHAIN_DEVICE_IDS) publishDevice(id, null) }, [])
+    for (const {slot, device} of chain) publishDevice(device.id, {device, picture: size => chainPicture(slot.id, pictures, size), ...(bindings[slot.id] ? {binding: bindings[slot.id]!} : {})})
+    if (memberDevice && memberDesignBinding) publishDevice(memberDevice.id, {device: memberDevice, binding: memberDesignBinding})
+    else publishDevice(MEMBER_DEVICE_ID, null)
+  }, [chain, bindings, memberDevice, memberDesignBinding]) // the pictures read the reading `chain` is built from
+  useEffect(() => () => { for (const id of [...CHAIN_DEVICE_IDS, MEMBER_DEVICE_ID]) publishDevice(id, null) }, [])
 
   const choose = (slotId: string) => { shell.setExpandedDevice(slotId as AgentDeviceId); selectDevice(chainDeviceId(slotId)) }
-  const openFull = (slotId: string, title: string) => {
-    try { openInstrument(DEVICE_PANE_KIND, undefined, {ref: chainDeviceId(slotId), title}) }
+  const openDevice = (id: string, title: string) => {
+    try { openInstrument(DEVICE_PANE_KIND, undefined, {ref: id, title}) }
     catch (cause) { setNote({kind: 'refused', title: 'Open full', line: cause instanceof Error ? cause.message : String(cause), receipt: null}) }
+  }
+  const openFull = (slotId: string, title: string) => openDevice(chainDeviceId(slotId), title)
+  // The Agent's ⤢ opens its thread in a pane (§19.3 Compact: "Click ⤢ to open the thread in a pane") — the session's own thread,
+  // never a picture of one; with no session selected there is no thread to open.
+  const openAgentThread = () => {
+    if (sessionRef == null) { setNote({kind: 'refused', title: 'Open thread', line: 'No session is selected: the Agent\'s thread opens when one is.', receipt: null}); return }
+    shell.openThread(sessionRef)
   }
 
   // One drop, one owner operation (or one named refusal). The session drop rides the run model's own selection — the who slot
@@ -218,12 +311,25 @@ export function FactoryDeviceChain({sessionRef}: {sessionRef: string | null}) {
               a slot is not a landing, the owner operation (here: the refusal naming the missing order op) is. */}
             {held?.kind === 'reorder' && gap === index && <span className="agent-chain-gap" aria-hidden="true" />}
             <div className="factory-slot" data-slot={slot.id} data-family={slot.family} data-device={slot.id}
-              data-selected={shell.expandedDevice === slot.id} data-i={SLOT_DATA_I[slot.id]} onClick={() => choose(slot.id)}>
+              data-selected={shell.expandedDevice === slot.id} data-i={SLOT_DATA_I[slot.id]} onClick={() => choose(slot.id)}
+              data-design={SLOT_DESIGNS[slot.id] && bindings[slot.id] ? SLOT_DESIGNS[slot.id] : undefined}
+              data-design-waits={SLOT_DESIGNS[slot.id] ? waits[slot.id] ?? undefined : undefined}>
               <div className="factory-slot__rail">{grip(slot.id, slot.title)}</div>
-              <DeviceView device={device} size="compact" picture={chainPicture(slot.id, pictures, 'compact')} actions={[
+              <DeviceView device={device} size="compact" picture={chainPicture(slot.id, pictures, 'compact')} binding={bindings[slot.id] ?? undefined} actions={[
                 {icon: 'detail', label: 'Show every setting in the pool', onPress: () => choose(slot.id)},
-                {icon: 'pane', label: `Open ${slot.title} full size in a pane`, onPress: () => openFull(slot.id, slot.title)},
+                slot.id === 'agent'
+                  ? {icon: 'pane', label: 'Open the Agent\'s thread in a pane', onPress: openAgentThread}
+                  : {icon: 'pane', label: `Open ${slot.title} full size in a pane`, onPress: () => openFull(slot.id, slot.title)},
               ]} />
+              {/* The rack's chosen chain, inside the rack (§19.7): the member device. Its press shows it whole in the pool. */}
+              {slot.id === 'skillset' && memberDevice && memberDesignBinding && (
+                <div className="factory-slot__member" data-device={memberDevice.id} onClick={event => event.stopPropagation()}>
+                  <DeviceView device={memberDevice} size="compact" binding={memberDesignBinding} actions={[
+                    {icon: 'detail', label: 'Show the member whole in the pool', onPress: () => selectDevice(memberDevice.id)},
+                    {icon: 'pane', label: 'Open the member full size in a pane', onPress: () => openDevice(memberDevice.id, 'Member')},
+                  ]} />
+                </div>
+              )}
             </div>
           </Fragment>
         ))}

@@ -27,6 +27,7 @@ export interface PictureContext {
 const PICTURE_DATA_I = {
   gateway: agentDataI('Gateway · hermes', 'Where the session runs: the harness connection (Hermes tui_gateway, JSON-RPC over stdio or WebSocket). Frames flow along the link; the ring is the replay buffer; the outer pulse is the heartbeat.'),
   thread: agentDataI('Open thread', 'Open this session’s thread in the main space.'),
+  world: agentDataI('Reach', 'What the session may read (teal) and write (amber). No owner reports the reach yet, so no arc is drawn.'),
 } as const
 
 /** One card's honest reason in one styled line (NativeAgentDeviceRack.tsx:20-24). */
@@ -163,18 +164,19 @@ function SkillRackPicture({ctx, size}: {ctx: PictureContext; size: DeviceSize}) 
   )
 }
 
+/** The world's rings: the places the session could reach. The reach arcs (teal reads, amber writes) are drawn only from an owner's
+ * reading of the reach, and no owner reports one yet (agentParamAddresses.ts world rows: readings with no source), so the rings
+ * stand empty and say so — never a likely arc (lane BF; Scope's design draws the reach once it is bound). */
 function WorldPicture({size}: {ctx: PictureContext; size: DeviceSize}) {
   return (
-    <div className="fd-pic fd-pic--world" data-size={size}>
+    <div className="fd-pic fd-pic--world" data-size={size} data-reach="not-read" data-i={PICTURE_DATA_I.world}>
       <div className="fd-pic__row">
         <svg className="fd-pic__svg" viewBox="0 0 84 84" aria-hidden>
           <circle cx="42" cy="42" r="34" fill="none" stroke="var(--line-strong)" strokeDasharray="2 3" />
           <circle cx="42" cy="42" r="23" fill="none" stroke="var(--text-faint)" />
           <circle cx="42" cy="42" r="12" fill="none" stroke="var(--text-dim)" />
-          <path d="M42 20A22 22 0 1 1 22 56" fill="none" stroke="var(--fizz)" strokeWidth="4" strokeOpacity=".75" />
-          <path d="M42 31A11 11 0 0 1 52 46" fill="none" stroke="var(--honey)" strokeWidth="4" />
         </svg>
-        {size !== 'compact' && <span className="fd-legend"><b className="fd-legend--reads">teal</b> reads · <b className="fd-legend--writes">amber</b> writes</span>}
+        <span className="fd-legend">reach not read</span>
       </div>
     </div>
   )
