@@ -1,0 +1,80 @@
+/* The Answer's own layout: the exchange in the pane, and the widget's last line and composer. Shell and panel tokens only. */
+.an-pane { position: absolute; inset: 0; display: flex; flex-direction: column; background: var(--bg-1, #33363b); color: var(--text, #d4d7da); font: 11px/1.45 var(--font-ui, sans-serif); overflow: hidden; }
+.an-pane-head { flex: none; display: flex; align-items: center; gap: 10px; height: 26px; padding: 0 14px; background: var(--bg-0, #26292d); border-bottom: 1px solid var(--line, #24262a); color: var(--text-dim, #a2a7ad); font-size: 10.5px; white-space: nowrap; overflow: hidden; }
+.an-pane-head b { font-weight: 600; color: var(--text, #d4d7da); font-size: 11px; }
+.an-pane-head span::before, .an-pane-head b + span::before { content: "·"; margin-right: 10px; color: var(--text-faint, #71767c); }
+.an-pane-head [data-state="busy"] { color: var(--dp-value, #5cc6b4); }
+.an-stream { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; justify-content: flex-end; gap: 7px; padding: 10px 20px 8px; overflow: hidden; -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 22px); mask-image: linear-gradient(to bottom, transparent 0, #000 22px); }
+
+.an-task { display: flex; align-items: center; gap: 10px; color: var(--text-faint, #71767c); font-size: 9px; letter-spacing: .07em; text-transform: uppercase; }
+.an-task i { flex: 1 1 auto; height: 1px; background: var(--line, #24262a); }
+.an-task small { font-size: 9px; color: var(--text-dim, #a2a7ad); letter-spacing: 0; text-transform: none; }
+
+.an-row { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 10px; align-items: start; }
+.an-row--note { align-items: center; }
+.an-av { width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; background: var(--bg-0, #26292d); border: 1px solid var(--line, #24262a); font-size: 9px; font-weight: 600; color: var(--text-dim, #a2a7ad); overflow: hidden; }
+.an-av[data-agent] { border-color: var(--dp-value, #5cc6b4); }
+.an-av--tool { width: 18px; height: 1px; border: 0; background: none; }
+.an-face { display: block; }
+.an-body { min-width: 0; line-height: 18px; }
+.an-who { display: inline-block; margin-right: 8px; font-size: 9px; letter-spacing: .07em; text-transform: uppercase; color: var(--text-faint, #71767c); }
+.an-who[data-agent] { color: var(--dp-value, #5cc6b4); }
+.an-text { display: block; margin: 0; max-width: 76ch; line-height: 1.5; }
+.an-note { margin: 0; color: var(--text-dim, #a2a7ad); }
+.an-caret { display: inline-block; width: 2px; height: 11px; margin-left: 2px; vertical-align: -1px; background: var(--dp-on, #ffbe00); }
+
+.an-packet { display: flex; flex-wrap: wrap; gap: 6px; margin: 5px 0 0; padding: 0; list-style: none; }
+.an-packet li { display: inline-flex; align-items: baseline; gap: 6px; padding: 0 7px; height: 17px; line-height: 17px; background: var(--dp-field, #26292d); border: 1px solid var(--line, #24262a); font-size: 10.5px; color: var(--text, #d4d7da); }
+.an-packet b { font-size: 9px; font-weight: 500; letter-spacing: .07em; text-transform: uppercase; color: var(--dp-value, #5cc6b4); }
+.an-packet small { font-size: 10px; color: var(--text-dim, #a2a7ad); }
+
+.an-cite { display: inline-grid; place-items: center; min-width: 14px; height: 14px; margin: 0 2px 0 3px; padding: 0 3px; vertical-align: 1px; background: none; border: 1px solid var(--dp-value, #5cc6b4); color: var(--dp-value, #5cc6b4); font: 600 9px/1 var(--font-ui, sans-serif); cursor: pointer; }
+.an-cite[aria-pressed="true"], .an-cite:hover, .an-cite:focus-visible { background: var(--dp-value, #5cc6b4); color: var(--bg-0, #26292d); outline: none; }
+
+.an-sources { display: flex; flex-wrap: wrap; gap: 6px; margin: 5px 0 0; padding: 0; list-style: none; }
+.an-sources button { display: inline-flex; align-items: baseline; gap: 6px; height: 17px; padding: 0 7px; background: none; border: 1px solid var(--line, #24262a); color: var(--text-dim, #a2a7ad); font: inherit; font-size: 10.5px; line-height: 15px; cursor: pointer; }
+.an-sources b { font-size: 9px; font-weight: 600; color: var(--dp-value, #5cc6b4); }
+.an-sources small { font-size: 10px; color: var(--text-faint, #71767c); }
+.an-sources button[aria-pressed="true"] { border-color: var(--dp-value, #5cc6b4); color: var(--text, #d4d7da); }
+.an-sources button:hover, .an-sources button:focus-visible { color: var(--text, #d4d7da); outline: none; border-color: var(--text-faint, #71767c); }
+
+.an-line-card { margin-top: 6px; max-width: 76ch; padding: 4px 0; background: color-mix(in srgb, var(--bg-0, #26292d) 55%, transparent); border-left: 2px solid var(--dp-value, #5cc6b4); font: 10.5px/1.45 var(--mono, ui-monospace, monospace); }
+.an-line-card > div { display: flex; align-items: baseline; gap: 10px; padding: 0 10px 2px; font-family: var(--font-ui, sans-serif); }
+.an-line-card > div b { font-weight: 600; color: var(--text, #d4d7da); }
+.an-line-card > div small { color: var(--text-faint, #71767c); font-size: 10px; }
+.an-line-card p { display: flex; gap: 10px; margin: 0; padding: 0 10px; color: var(--text-dim, #a2a7ad); }
+.an-line-card p i { flex: none; width: 18px; font-style: normal; text-align: right; color: var(--text-faint, #71767c); }
+.an-line-card p span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.an-line-card p[data-hit] { background: color-mix(in srgb, var(--dp-on, #ffbe00) 14%, transparent); color: var(--text, #d4d7da); }
+.an-line-card p[data-hit] i { color: var(--dp-on, #ffbe00); }
+
+.an-card { max-width: 76ch; padding: 5px 10px; line-height: 1.45; border-left: 2px solid var(--dp-on, #ffbe00); background: color-mix(in srgb, var(--bg-0, #26292d) 55%, transparent); }
+.an-card b { display: block; font-weight: 600; margin-bottom: 1px; }
+.an-card small { display: block; color: var(--text-dim, #a2a7ad); font-size: 10.5px; }
+.an-card[data-done] { border-left-color: var(--green, #8fd0a8); }
+.an-card[data-done] b { color: var(--text-dim, #a2a7ad); font-weight: 500; }
+.an-card-do { display: flex; gap: 6px; margin-top: 6px; }
+.an-card-do button { height: 16px; padding: 0 7px; background: var(--dp-field, #26292d); border: 1px solid var(--line, #24262a); color: var(--text-dim, #a2a7ad); font: inherit; font-size: 10px; cursor: pointer; }
+.an-card-do button:hover, .an-card-do button:focus-visible { color: var(--text, #d4d7da); border-color: var(--text-faint, #71767c); outline: none; }
+
+.an-work { display: flex; align-items: center; gap: 8px; margin: 0; color: var(--text-dim, #a2a7ad); }
+.an-work i { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--dp-value, #5cc6b4); animation: an-pulse 1.6s ease-in-out infinite; }
+@keyframes an-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+@media (prefers-reduced-motion: reduce) { .an-work i { animation: none; } }
+
+.an-composer { flex: none; display: flex; align-items: center; gap: 8px; margin: 0 20px 14px; padding: 0 8px; height: 26px; background: var(--dp-field, #26292d); border: 1px solid var(--line, #24262a); }
+.an-composer input { flex: 1 1 auto; min-width: 0; height: 100%; padding: 0; background: none; border: 0; color: var(--text, #d4d7da); font: inherit; outline: none; }
+.an-composer input::placeholder { color: var(--text-faint, #71767c); }
+.an-composer input:disabled { cursor: not-allowed; }
+.an-composer:focus-within { outline: 1px solid var(--accent, #ffbe00); outline-offset: 1px; }
+.an-composer small { flex: none; font-size: 9px; letter-spacing: .07em; text-transform: uppercase; color: var(--text-faint, #71767c); }
+
+/* The widget: the last line of the exchange, three readings, and the composer. */
+.an-tile-side { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; justify-content: space-between; }
+.an-last { margin: 0; font-size: 10.5px; line-height: 1.35; color: var(--text-dim, #a2a7ad); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.an-last b { font-weight: 500; color: var(--text, #d4d7da); }
+.an-tile-reads { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: end; }
+.an-tile-composer { box-sizing: border-box; width: 100%; height: 16px; padding: 0 5px; background: var(--dp-field, #26292d); border: 1px solid var(--line, #24262a); color: var(--text, #d4d7da); font: 10.5px var(--font-ui, sans-serif); }
+.an-tile-composer::placeholder { color: var(--text-faint, #71767c); }
+.an-tile-composer:disabled { cursor: not-allowed; }
+.an-tile-composer:focus-visible { outline: 1px solid var(--accent, #ffbe00); outline-offset: 1px; }
