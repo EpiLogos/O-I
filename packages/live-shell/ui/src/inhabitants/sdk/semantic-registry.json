@@ -436,6 +436,38 @@
   },
   {
     "family": "central",
+    "face": "packet",
+    "kind": "parameter",
+    "liveSemantic": "device-audio-fx",
+    "modes": [
+      "base"
+    ],
+    "formats": {},
+    "invariant": {
+      "transforms": "what the agent reads from you — AIKit's prepared context, shown whole with its size; an item taken out or the packet cleared through the owner's own edit (op encounter context), the material passed on unchanged"
+    },
+    "writePaths": [],
+    "heldBy": [],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/reverb.md"
+  },
+  {
+    "family": "central",
+    "face": "search",
+    "kind": "parameter",
+    "liveSemantic": "device-instrument",
+    "modes": [
+      "base"
+    ],
+    "formats": {},
+    "invariant": {
+      "generatesAbsent": "Search writes nothing: it reads AIKit's knowledge search (op knowledge search and resolve). A tag's send, the aliases and the shared fields have no owner yet (DLW §18.11)."
+    },
+    "writePaths": [],
+    "heldBy": [],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/operator-voice.md"
+  },
+  {
+    "family": "central",
     "face": "text",
     "kind": "parameter",
     "liveSemantic": "device-audio-fx",

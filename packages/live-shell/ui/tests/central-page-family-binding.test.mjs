@@ -369,9 +369,12 @@ test('the Workspace reads the book: its name, project, open mode, each mode\'s p
 
 test('placement (DLW §16.2): the Flow first on a reached Flow\'s chain, then the Document and the effects, before the agent that answers', () => {
   const ids = placement => chain.placedFaces(central.faces, placement).map(face => face.id)
-  assert.deepEqual(ids({form: 'Flow', book: true}), ['day-die', 'workspace', 'flow-document', 'document', 'text', 'highlight', 'notes', 'nara-conversation', 'context-world', 'agent-identity', 'ground-hygiene', 'impact'])
-  assert.deepEqual(ids({form: 'Day', book: false}), ['day-die', 'document', 'nara-conversation', 'context-world', 'agent-identity', 'ground-hygiene', 'impact'])
-  assert.deepEqual(ids({form: null, book: false}), ['day-die', 'nara-conversation', 'context-world', 'agent-identity', 'ground-hygiene', 'impact'])
+  // Lane BC3: the Packet ends a reached document's chain (§18.9 "after Notes"); the agent that answers stands with its identity before
+  // it (§18.15) and its Context & world after it (§18.14), then Search (§18.11).
+  const agent = ['agent-identity', 'nara-conversation', 'context-world', 'search', 'ground-hygiene', 'impact']
+  assert.deepEqual(ids({form: 'Flow', book: true}), ['day-die', 'workspace', 'flow-document', 'document', 'text', 'highlight', 'notes', 'packet', ...agent])
+  assert.deepEqual(ids({form: 'Day', book: false}), ['day-die', 'document', 'packet', ...agent])
+  assert.deepEqual(ids({form: null, book: false}), ['day-die', ...agent])
   assert.deepEqual(ids(undefined), ids({form: null, book: false}))
 })
 

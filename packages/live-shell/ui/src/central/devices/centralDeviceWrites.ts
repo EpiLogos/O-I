@@ -25,6 +25,7 @@ import {readFlowInstance, writeFlowInstance} from '../../../../../../desktop/cra
 import {isCurrentFormat, type PluralParticipant, type Relation} from '../../../../../../desktop/cradle/src/flow/plural'
 import type {CentralLocation} from '../../../../../../desktop/cradle/src/kernel/types'
 import {acquireNativeDialogue, type NativeDialogue} from '../../../../../../desktop/cradle/src/nara/nativeDialogue'
+import {announceContext, nativeContext, type ContextMutation, type PreparedContext} from '../../../../../../desktop/cradle/src/context/nativeContext'
 import {currentIdentity} from '../../../../../../desktop/cradle/src/nara/identity/current'
 import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import {conversationGap} from '../centralVertical'
@@ -117,6 +118,17 @@ export async function bindConversation(transport: KernelTransportStatus, convers
       : 'No expression is selected. A conversation binds to the encounter\'s subject: select one, and the binding resolves through its owner.')
   }
   return acquireNativeDialogue(transport, conversation.project ?? '', identity, conversation.expressionRef, 'nara')
+}
+
+/** Take one item out of the packet, or empty it: AIKit's prepared context edited at the revision the reading gave (op encounter,
+ * action context, operation edit — nativeContext.ts), in the scope the reading names, and the owner's answer announced so every reader
+ * of the packet (the Packet widget, the transport's Key slot, this device) holds the same items. Ported from the Context plane's own
+ * remove and clear (desktop/cradle/src/context/PreparedContextView.tsx:30 `perform`, :39-40). A stale basis is the owner's refusal. */
+export async function editPacket(transport: KernelTransportStatus, context: PreparedContext, mutation: Extract<ContextMutation, {operation: 'remove' | 'clear'}>): Promise<PreparedContext> {
+  const {project, agent_session: session} = context.scope
+  const next = await nativeContext(transport, project, session ?? undefined, {operation: 'edit', basis: context.revision, mutation})
+  announceContext(project, next)
+  return next
 }
 
 /** The Central devices' writers over the apertures they hold: one owner path per writable row, by face and row key. A device
