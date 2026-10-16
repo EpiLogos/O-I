@@ -385,9 +385,9 @@ export interface PanelProps {
   readonly mark?: ReactNode
   /** Keep the device on the widget rail (DEVICE-UI §2: a widget stays on the rail when you change mode). */
   readonly onRail?: () => void
-  /** Marks the place gives the head, before ⤢. */
+  /** Marks the place gives the head, before ⌃ ▦ ↗. */
   readonly marks?: ReactNode
-  /** The place's own words for ⤢ (absent: "Open <title> full in a pane"). */
+  /** The place's own words for ▦ (absent: "Open <title> full in a pane"). */
   readonly fullLabel?: string
   /** What pressing the plate does, said on the status bar when you point at its head ("Show every setting in the pool"). */
   readonly hint?: string
@@ -405,6 +405,12 @@ export interface Place {
   readonly marks?: ReactNode
   readonly onRail?: () => void
   readonly onClose?: () => void
+  /** ⌃: flip the device's whole panel up from the chain, over the panes (Live's expanded view); pressed again, it folds back. */
+  readonly onExpand?: () => void
+  /** The whole panel stands flipped up: ⌃ shows pressed. */
+  readonly expanded?: boolean
+  /** ↗: pop the device out into its own window, its material with every control (Live's plug-in window). */
+  readonly onPopout?: () => void
 }
 export const PlaceContext = createContext<Place>({})
 
@@ -414,6 +420,18 @@ function Activator({title, light, onLight, why}: {title: string; light: LightSta
     aria-label={`${title}: ${light === 'unknown' ? 'no reading' : light === 'lit' ? 'on' : 'off'}`}
     data-i={said('Device on/off', why ?? (light === 'unknown' ? 'No reading from the owner yet.' : 'Asks the owner to turn the device on or off. The light shows what the owner reports.'))}
     onClick={why ? undefined : onLight} />
+}
+
+/** The marks at the right of a device's head, in Live's order: the place's own marks, the rail, ⌃ expand (the whole panel flips up
+ * over the panes), ▦ full in a pane, ↗ pop out to a window. Each shows only where the place or the device gives its act. */
+function HeadMarks({title, marks, onRail, onFull, fullLabel, place}: {title: string; marks?: ReactNode; onRail?: () => void; onFull?: () => void; fullLabel?: string; place: Place}) {
+  return <span className="dp-head-x">
+    {marks}
+    {onRail && <button type="button" className="dp-full dp-rail" aria-label={`Keep ${title} on the widget rail`} data-i={said('On the rail', 'Keep this device on the widget rail, in every mode.')} onClick={onRail}><Icon name="placed" size={10} /></button>}
+    {place.onExpand && <button type="button" className="dp-full dp-expand" aria-pressed={place.expanded ? 'true' : 'false'} aria-label={place.expanded ? `Fold ${title} back onto the chain` : `Expand ${title} over the panes`} data-i={said(place.expanded ? 'Collapse' : 'Expand', place.expanded ? 'Fold the whole panel back onto the chain.' : 'Flip the whole panel up over the panes, with every control and a larger display.')} onClick={place.onExpand}><ChevronFold size={10} /></button>}
+    {onFull && <button type="button" className="dp-full" aria-label={fullLabel ?? `Open ${title} full in a pane`} data-i={said('Open in a pane', fullLabel ?? 'Open the device full size in the pane that has focus.')} onClick={onFull}><Icon name="pane" size={10} /></button>}
+    {place.onPopout && <button type="button" className="dp-full dp-popout" aria-label={`Pop ${title} out into its own window`} data-i={said('Pop out', 'Open the device in its own window, its material with every control. The window can fill the screen.')} onClick={place.onPopout}><PopOut size={10} /></button>}
+  </span>
 }
 
 /** One device panel: the head, then the body — one band on a chain, up to two bands in the pool. */
@@ -434,11 +452,7 @@ export function Panel({title, view, light: reported, onLight, pages, page, onPag
         </button>)}
       </nav>}
       {acts !== undefined && acts !== null && acts !== false && <span className="dp-head-acts">{acts}</span>}
-      <span className="dp-head-x">
-        {marks}
-        {onRail && <button type="button" className="dp-full dp-rail" aria-label={`Keep ${title} on the widget rail`} data-i={said('On the rail', 'Keep this device on the widget rail, in every mode.')} onClick={onRail}><Icon name="placed" size={10} /></button>}
-        {onFull && <button type="button" className="dp-full" aria-label={fullLabel ?? `Open ${title} full in a pane`} data-i={said('Open full', 'Open the device full size in a pane.')} onClick={onFull}><PopOut size={10} /></button>}
-      </span>
+      <HeadMarks title={title} marks={marks} onRail={onRail} onFull={onFull} fullLabel={fullLabel} place={place} />
     </header>
     <div className="dp-body">{children}</div>
   </section>
@@ -497,11 +511,7 @@ export function PanelHead({title, light: reported, onLight, onFold, mark, onName
       </button>)}
     </nav>}
     {acts !== undefined && acts !== null && acts !== false && <span className="dp-head-acts">{acts}</span>}
-    <span className="dp-head-x">
-      {marks}
-      {onRail && <button type="button" className="dp-full dp-rail" aria-label={`Keep ${title} on the widget rail`} data-i={said('On the rail', 'Keep this device on the widget rail, in every mode.')} onClick={onRail}><Icon name="placed" size={10} /></button>}
-      {onFull && <button type="button" className="dp-full" aria-label={fullLabel ?? `Open ${title} full in a pane`} data-i={said('Open full', fullLabel ?? 'Open the device full size in a pane.')} onClick={onFull}><PopOut size={10} /></button>}
-    </span>
+    <HeadMarks title={title} marks={marks} onRail={onRail} onFull={onFull} fullLabel={fullLabel} place={place} />
   </header>
 }
 
@@ -530,13 +540,14 @@ export function Folded({title, light, readings = [], onUnfold}: {readonly title:
 
 /** A widget tile on the rail: one square (1) or two side by side (2). `onClose` takes it off the rail. */
 export function Tile({title, light, span = 1, onFull, onClose: ownClose, onLight, lightWhy, children}: {readonly title: string; readonly light: LightState; readonly span?: 1 | 2; readonly onFull?: () => void; readonly onClose?: () => void; readonly onLight?: () => void; readonly lightWhy?: string; readonly children: ReactNode}) {
-  const onClose = ownClose ?? useContext(PlaceContext).onClose
+  const place = useContext(PlaceContext), onClose = ownClose ?? place.onClose, onPopout = place.onPopout
   return <section className="dp-tile" data-span={span} aria-label={title}>
     <header className="dp-tile-head">
       {/* The tile's light reads the owner; where the owner can turn the device on or off, pressing it asks, as the plate's activator does. */}
       {onLight || lightWhy ? <Activator title={title} light={lightIn(light)} onLight={onLight} why={lightWhy} /> : <Lamp state={light} />}
       <span className="dp-tile-title">{title}</span>
-      {onFull && <button type="button" className="dp-full" aria-label={`Open ${title} full in a pane`} data-i={said('Open full', 'Open the device full size in the pane that has focus.')} onClick={onFull}><PopOut size={10} /></button>}
+      {onFull && <button type="button" className="dp-full" aria-label={`Open ${title} full in a pane`} data-i={said('Open in a pane', 'Open the device full size in the pane that has focus.')} onClick={onFull}><Icon name="pane" size={10} /></button>}
+      {onPopout && <button type="button" className="dp-full dp-popout" aria-label={`Pop ${title} out into its own window`} data-i={said('Pop out', 'Open the device in its own window, its material with every control.')} onClick={onPopout}><PopOut size={10} /></button>}
       {onClose && <button type="button" className="dp-full" aria-label={`Take ${title} off the rail`} data-i={said('Close', 'Take the device off the rail. It stays on its chain.')} onClick={onClose}>✕</button>}
     </header>
     <div className="dp-tile-body">{children}</div>
