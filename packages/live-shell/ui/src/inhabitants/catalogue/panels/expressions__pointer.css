@@ -1,0 +1,27 @@
+/* The Pointer's own marks: the force arrows and the click ring in the well, the widget's boxes, the pane's field. Shell and panel tokens only. */
+
+/* The picture: a disc, its force arrows, the click ring, the falloff curve and the strength bar. */
+.dp-display .pt-disc { fill: color-mix(in srgb, var(--dp-value) 7%, transparent); stroke: color-mix(in srgb, var(--text, #d4d7da) 42%, transparent); stroke-width: 1; }
+.dp-display .pt-arrow { fill: none; stroke-width: 1.2; stroke-linecap: round; stroke-linejoin: round; }
+.dp-display .pt-arrow[data-sign="+"] { stroke: var(--dp-value); opacity: .85; }
+.dp-display .pt-arrow[data-sign="-"] { stroke: var(--text-dim, #a2a7ad); stroke-dasharray: 2 2; opacity: .85; }
+.dp-display .pt-ring { fill: none; stroke: var(--dp-value); stroke-dasharray: 3 3; stroke-linecap: round; opacity: .85; }
+.dp-display .pt-ring[data-off="true"] { opacity: .25; }
+.dp-display .pt-note { font: 9px var(--font-ui, sans-serif); fill: var(--text-faint, #71767c); text-anchor: middle; }
+
+/* A cell that stands beside two rows of a section. */
+.pt-span { grid-row: 1 / span 2; align-self: stretch; justify-self: stretch; display: flex; flex-direction: column; }
+
+/* The widget: the disc and four boxes. */
+.pt-tile-grid { flex: 1 1 auto; min-width: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 6px; align-content: center; justify-items: stretch; }
+
+/* The pane: the field, as sample points that answer the disc. */
+.pt-pane { position: absolute; inset: 0; background: var(--dp-well); color: var(--text, #d4d7da); overflow: hidden; touch-action: none; cursor: crosshair; }
+.pt-pane svg { display: block; width: 100%; height: 100%; }
+.pt-pane .pt-dot { fill: color-mix(in srgb, var(--text, #d4d7da) 38%, transparent); }
+.pt-pane .pt-dot[data-moved="true"] { fill: var(--dp-value); }
+.pt-pane .pt-reach { fill: none; stroke: color-mix(in srgb, var(--text, #d4d7da) 55%, transparent); stroke-width: 1.2; stroke-dasharray: 5 4; }
+.pt-pane .pt-weight { fill: none; stroke: color-mix(in srgb, var(--dp-value) 55%, transparent); stroke-width: 1; }
+.pt-pane .pt-wave { fill: none; stroke: var(--dp-on, #ffbe00); stroke-width: 1.6; }
+.pt-pane .pt-line { font: 11px var(--font-ui, sans-serif); fill: var(--text-dim, #a2a7ad); font-variant-numeric: tabular-nums; }
+.pt-pane .pt-line[data-none="true"] { fill: var(--text-faint, #71767c); }
