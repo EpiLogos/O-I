@@ -1,0 +1,28 @@
+/* The Contacts device's own marks: the glyph wall with its band and bounce arrows, the particle pair with its reach, spring and arrows,
+   the widget's boxes, the pane's field. Shell and panel tokens only. */
+
+/* The wall: the rim, the contact band round it, the bounce arrows. A half dims while its own enable is off. */
+.dp-display .ct-rim, .ct-pane .ct-rim { fill: none; stroke: var(--text, #d4d7da); stroke-width: 1.2; opacity: .85; }
+.dp-display .ct-band, .ct-pane .ct-band { fill: var(--dp-value); fill-opacity: .16; fill-rule: evenodd; stroke: none; }
+.dp-display .ct-arrow, .ct-pane .ct-arrow { fill: none; stroke: var(--dp-value); stroke-width: 1.2; stroke-linecap: round; stroke-linejoin: round; }
+.dp-display .ct-dot, .ct-pane .ct-dot { fill: var(--text, #d4d7da); }
+.dp-display .ct-reach, .ct-pane .ct-reach { fill: none; stroke: var(--text-dim, #a2a7ad); stroke-width: 1; stroke-dasharray: 2 3; }
+.dp-display .ct-spring, .ct-pane .ct-spring { fill: none; stroke: var(--dp-value); stroke-width: 1; stroke-linejoin: round; }
+.dp-display .ct-half[data-off="true"], .ct-pane .ct-half[data-off="true"] { opacity: .32; }
+.dp-display .ct-note { font: 9px var(--font-ui, sans-serif); fill: var(--text-faint, #71767c); }
+
+/* The widget: the two halves and four boxes. */
+.ct-tile-grid { flex: 1 1 auto; min-width: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 6px; align-content: center; justify-items: stretch; }
+.ct-tile-grid .dp-box { width: 100%; box-sizing: border-box; }
+
+/* The pane: the field's law at pane size. No control stands in it. */
+.ct-pane { position: absolute; inset: 0; background: var(--dp-well); color: var(--text, #d4d7da); overflow: hidden; }
+.ct-pane svg { display: block; width: 100%; height: 100%; }
+.ct-pane .ct-rim { stroke-width: 2.4; }
+.ct-pane .ct-arrow { stroke-width: 2.2; }
+.ct-pane .ct-spring { stroke-width: 1.8; }
+.ct-pane .ct-reach { stroke-width: 1.6; stroke-dasharray: 4 6; }
+.ct-pane .ct-rule { stroke: color-mix(in srgb, var(--text, #d4d7da) 18%, transparent); stroke-width: 1; fill: none; }
+.ct-pane .dp-axis { font: 13px var(--font-ui, sans-serif); fill: var(--text-dim, #a2a7ad); }
+.ct-pane .ct-note { font: 12px var(--font-ui, sans-serif); fill: var(--text-faint, #71767c); }
+.ct-pane .ct-line { font: 12px var(--font-ui, sans-serif); fill: var(--text-dim, #a2a7ad); font-variant-numeric: tabular-nums; }
