@@ -102,9 +102,18 @@ objections verbatim and the full validation (`BRIEF-BUILDER.md`); the lead conve
 | Native screen passes, convergence, PATH | lead | `App.tsx`, `shell/modeFrames.ts`, the book, the register, PATH | 14 Oct |
 | BC2 — Central's page family wired (Document, Flow, Workspace, Text, Highlight, Notes, Beings, Things); Ground hygiene's and Impact's model defects; Central receipts re-read | builder | `central/**`, the Central inhabitants models, `worldShellFamilies.ts`, `DocumentFlowFace.tsx`, the document door | 16 Oct |
 | BF2 — Thread, the Gateways rack, Experiment, Frames monitor (+ widget), the Agency gateway on their owners; the Agent's thread key | builder | `agent/**`, `frame/widgets/**` (the Frames widget) | 16 Oct |
-| BL — Live's and QL's devices (§21, §22): the Torus on its owner with the sky's modulation arc, the keyboard and note devices, the Sky and the clock | builder | `live/**`, the QL sky/clock/deck/chakra/matrix device files | 16 Oct |
-| W4 — `oi`: per-call checks on the cached receipt, sha256 in-process, an update under an older `oi` leaves no shadow | builder | `cli/src/**`, `cli/tests/**` | 16 Oct |
+| W2 — the door answers per register: AIKit's relations-batch streams each item as it finishes, the kernel publishes each to its ticket, the shell sends the door's 17 reads together, the graph's AIKit resolution stops dying at 20 s | builder | ai-kit `env-1` (`speed/relations-batch-per-item`): `crates/aikit-cli/src/main.rs`, `app/knowledge*`, `tests/**`; O-I `desktop/cradle/kernel/**` (knowledge, graph), `desktop/cradle/src/knowledge/requests.ts`, `native/wikiSubjectStanding.ts` | 16 Oct |
 | The catalogue of designed devices (owner, 16 Oct: "the parallel lanes are developing the high end device component specs in the documentation lane, you can directly work from its … catalogue of pre designed UI, the wiring and UX integration should be somewhat trivial wiring"): `catalogue/panels/design.ts` is the contract, `panels/<family>__<face>.tsx` (exporting `design`, loaded through `loadDesign`) the designs. The runtime hosts each published device's design when one exists, else the generic plate; a device lane writes the binding (owner readings and writes on the design's value keys), never a panel | the owner's documentation lane | `inhabitants/catalogue/**` — read-only for every builder | 16 Oct |
+
+Then: lanes W4 and BL landed; ai-kit #510 and Central #274 merged and installed (16 Oct). W4 (`ea15033ad`): `oi where` and the world
+heads read the cached suite verification and hash in-process — 711–832 ms / 6 shasum → 4–7 ms / 0 (366–375 ms on the first call
+after a suite change); an update that installs another `oi` has it reconcile the suite (`oi update --reconcile-suite`), so an older
+`oi` can no longer leave products shadowed. BL (`aba3ddaea`): the Sky draws its catalogue design on the kernel's nara_identity
+transit; Live's keyboard, note and set devices carry live wells; the Torus publishes its own Full (the torus with the Jankó keyboard
+under it) but keeps its generic plate — the catalogue's Torus does not draw the four determinants, so hosting it would remove working
+controls (keys proposed); the M3 clock, Deck, Chakra and M′ matrices stay waiting (no readable producer). Installed from main: ai-kit
+`51a98e6d`, Central `5b92994c` (receipt-exact, nothing shadowed); both seats released. The door natively after W1 and D (build n2,
+the old AIKit): Locations › O-I settled "in O I · +2" with the Scene open and saved, no conflict.
 
 Then: the native pass of build n2 (`9a1974d13`, 16 Oct 02:47–02:55; computer-use through the background app tools — the window
 stood on the stage, full-screen control unanswered three times). Seen working: the owner's resize report fixed — Technē's Earth
