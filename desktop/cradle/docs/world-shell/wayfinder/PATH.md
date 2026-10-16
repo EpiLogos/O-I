@@ -100,11 +100,23 @@ objections verbatim and the full validation (`BRIEF-BUILDER.md`); the lead conve
 | Ticket | Who | Zone | Since |
 |---|---|---|---|
 | Native screen passes, convergence, PATH | lead | `App.tsx`, `shell/modeFrames.ts`, the book, the register, PATH | 14 Oct |
-| R — the device runtime on the owner's panel kit: five views from one binding, release-to-send, the generic plate on the kit, own-view registration, the widget view on the rail, the kit's colours as shell tokens | builder | `frame/devices/**`, `frame/widgets/**`, `inhabitants/sdk/panel.*`, `controls.tsx`, `define.ts` (additive) | 16 Oct |
 | The catalogue of designed devices (owner, 16 Oct: "the parallel lanes are developing the high end device component specs in the documentation lane, you can directly work from its … catalogue of pre designed UI, the wiring and UX integration should be somewhat trivial wiring"): `catalogue/panels/design.ts` is the contract, `panels/<family>__<face>.tsx` (exporting `design`, loaded through `loadDesign`) the designs. The runtime hosts each published device's design when one exists, else the generic plate; a device lane writes the binding (owner readings and writes on the design's value keys), never a panel | the owner's documentation lane | `inhabitants/catalogue/**` — read-only for every builder | 16 Oct |
-| F — Wave 0's defects: pane content follows its pane (the owner's report), palace entry from a frame pane, Expressions' transport overflow, the status bar's info line, the panes' tab reveal | builder | `projections/atlas/**` (not the plates), `frame/transport/**`, `components/StatusBar.tsx`, `native/workbench.css`, `native/Workbench.tsx`, `projections/framePlacement.ts`, `shell/ModeBrowser.tsx`, `techne/subject/worldRows.ts`, `frame/instrumentDoor.ts` | 16 Oct |
+| BC — Central's designed devices wired to Central: the Day (with the owner's ensure as a press, never a timer), the Document, the Flow document | builder | `central/**` | 16 Oct |
+| BF — the agent chain's designed devices wired to AIKit, Factory and Actuation: the harness model, the Skillset rack, the member device, Scope | builder | `agent/**` | 16 Oct |
 | D — the door's revision_conflict the shell never hears; the Studio's false "edited since save"; a fault line that outlives its mode | builder | `desktop/cradle/expressions-app/**`, `techne/subject/**` (not `worldRows.ts`), `components/expressions/studio/**` | 16 Oct |
 | W1 — AIKit's root register stays warm: the generic walk skips the live NOW field, `.central` and any `CACHEDIR.TAG` directory; the wiki projection cache prunes; Central writes `source-change-control.json` only on change; git_diff's test repos get unique paths | builder | ai-kit `env-1` (`speed/root-register-stays-warm`): `crates/aikit-cli/src/app/knowledge.rs`, `knowledge/**`, `tests/**`; Central `env-2` (`speed/source-horizon-writes-on-change`): `ctrl/src/source_horizon.rs`, `connectors/git-sync/src/git_diff.rs`, `ctrl/tests/**` | 16 Oct |
+
+Then: lanes R and F landed. R (`f9792cac8`): every device draws on the owner's panel kit in five views from one binding — the
+catalogue's design where its family publishes a binding (`frame/devices/designs.ts` resolves `loadDesign('<family>:<face>')`), the
+generic plate on the kit otherwise; a change goes to the owner on release, waits in italics, and a refusal says the owner's words on
+the Info line (the Send bar is gone); Folded/Compact on the chain, Whole in the pool, Full in a pane, Widget on the rail. A design
+draws only once its family binds it: hosted on raw row keys the Day drew `NaN·NaN·NaN`. Open from R: the instrument plates (Studio,
+Places, Palace, Project) and Technē's folded devices still wear FacePlate heads (with the Technē and Expressions binding lanes). The
+switchboard tripwire leaves the catalogue's designs uncounted (a mode reaches a design as a value of its binding). F (`92ba218a7`):
+pane content follows its pane (the atlas observes its own boxes; every pane kind swept headless), palace entry brings the Earth into
+view, the transport folds owner slots to their mark, the Info line keeps its room, a pane's tabs reveal from its top edge and ⌘⌥\
+pins them. Seen during F: a private stack writes works into the owner's ground (the kernel's works home is Central's
+`Control/user/flows`); F moved its two files out; the kit says so now (`4c81aefbe`). Out: BC and BF, the first binding lanes.
 
 Then: B0, Wave B measured (read-only investigator, 16 Oct, installed suite, kernel-direct on its own bridge; raw in the lead's
 scratch `wave-b/`). The kernel lock is no longer the cost: per-op lock_wait p95 < 8 ms, lock_held < 3 ms, the lock probe p95 0 ms;
