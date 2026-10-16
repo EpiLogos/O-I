@@ -1,7 +1,11 @@
-/* Studio: the scope marks, the head's state, and the pane's body. Shell and panel tokens only. */
+/* Studio: the reach marks, the pair, the tile's side and the pane's body. Shell and panel tokens only. */
 .st-scope { flex: none; display: inline-block; }
 .st-scope rect, .st-scope circle { fill: none; stroke: var(--dp-value); stroke-width: 1.3; }
 .st-scope circle[data-fill="true"] { fill: var(--dp-value); }
+
+/* The pages and the work's acts stand closer together, so the name keeps its room in the pool's 400. */
+.st-studio > .dp-head > .dp-pages { margin-left: 4px; }
+.st-studio > .dp-head > .dp-head-acts { margin-left: 2px; }
 
 /* Two controls side by side across the width of their section. */
 .st-pair { display: flex; gap: 4px; align-self: stretch; justify-self: stretch; }
@@ -9,14 +13,14 @@
 
 /* A control that takes both columns of its section (the compact's + Parameter under the last dial). */
 .st-span2 { grid-column: span 2; display: flex; justify-content: center; }
-/* A control that stands the width of its section. */
-.st-wide { align-self: stretch; justify-self: stretch; }
-.st-wide .dp-action { width: 100%; }
 
 .st-tile-side { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; justify-content: space-between; align-items: stretch; gap: 4px; }
 .st-tile-side .dp-cell { align-items: stretch; }
 .st-tile-side .dp-box { width: 100%; box-sizing: border-box; }
 
-/* The pane: your controls as a sheet. No control stands in it. */
+/* The pane: the macros as ranges and the chains with their lights. No control stands in it. */
 .st-pane { position: absolute; inset: 0; display: flex; background: var(--dp-well); color: var(--text); }
 .st-pane > svg { display: block; flex: 1 1 auto; min-width: 0; min-height: 0; }
+.st-lamp { fill: none; stroke: color-mix(in srgb, var(--text, #d4d7da) 40%, transparent); stroke-width: 1; }
+.st-lamp[data-light="lit"] { fill: var(--dp-on); stroke: var(--dp-on); }
+.st-lamp[data-light="dark"] { fill: color-mix(in srgb, var(--text, #d4d7da) 28%, transparent); stroke: none; }
