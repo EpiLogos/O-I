@@ -1,0 +1,41 @@
+/* Search (manual §18.11): layout inside the gallery's frames for the parts the kit does not draw. Shell and panel tokens only. */
+.srch-span { grid-column: 1 / -1; width: 100%; min-width: 0; }
+.srch-grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px 4px; width: 100%; justify-items: center; }
+.srch-none { margin: 0; font-size: 10px; color: var(--text-faint, #71767c); }
+.srch-keep { display: flex; flex-direction: column; gap: 6px; width: 100%; min-width: 0; }
+
+/* The widget: the search line over the last results, the aliases beside them. */
+.srch-tile { flex: 1 1 auto; min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) 76px; grid-template-rows: auto minmax(0, 1fr); gap: 5px 8px; }
+.srch-tile > .srch-span { grid-column: 1 / -1; }
+.srch-aliases { display: flex; flex-direction: column; justify-content: center; gap: 4px; align-items: stretch; }
+
+/* The pane: the search line at the top, the results in groups by kind, the selected passage at the side. */
+.srch-full { color: var(--text, #d4d7da); font: 11px/1.4 var(--font-ui, sans-serif); }
+.srch-full-line { flex: none; padding: 14px 22px 6px; max-width: 720px; width: 100%; box-sizing: border-box; }
+.srch-read { flex: none; padding: 0 22px 10px; display: flex; gap: 14px; align-items: baseline; color: var(--text-dim, #a2a7ad); font-size: 10.5px; }
+.srch-read code { font: 11px var(--font-mono, ui-monospace, monospace); color: var(--dp-value, #5cc8bd); }
+.srch-read b { font-weight: 500; color: var(--text, #d4d7da); }
+.srch-read [data-bad="true"] { color: var(--stall, #ff9b4a); }
+.srch-full-body { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 290px; border-top: 1px solid var(--line, #24262a); }
+.srch-groups { padding: 6px 22px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 28px; align-content: start; min-height: 0; }
+.srch-group h4 { display: flex; align-items: center; gap: 7px; margin: 14px 0 4px; font-size: 9px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--text-dim, #a2a7ad); }
+.srch-group h4 small { font-weight: 400; color: var(--text-faint, #71767c); }
+.srch-group ul { list-style: none; margin: 0; padding: 0; }
+.srch-hit { display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; align-items: center; gap: 0 8px; width: 100%; height: 22px; padding: 0 4px; border: 0; border-bottom: 1px solid var(--line, #24262a); background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.srch-hit:hover { background: var(--bg-2, #3f4348); }
+.srch-hit[aria-pressed="true"] { background: var(--bg-2, #3f4348); box-shadow: inset 2px 0 0 var(--accent, #ffbe00); }
+.srch-hit:focus-visible { outline: 1px solid var(--accent, #ffbe00); outline-offset: -1px; }
+.srch-hit-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.srch-hit-name small { margin-left: 8px; color: var(--text-faint, #71767c); font-size: 10px; }
+.srch-hit-note { font-size: 10px; color: var(--text-dim, #a2a7ad); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.srch-empty { grid-column: 1 / -1; margin: 18px 0; color: var(--text-faint, #71767c); }
+.srch-side { padding: 14px 22px; border-left: 1px solid var(--line, #24262a); background: var(--bg-0, #26292d); display: flex; flex-direction: column; gap: 6px; min-height: 0; }
+.srch-side h4 { margin: 8px 0 2px; font-size: 9px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--text-dim, #a2a7ad); }
+.srch-side h4:first-child { margin-top: 0; }
+.srch-quote { margin: 0; padding: 8px 10px; border-left: 2px solid var(--accent, #ffbe00); background: var(--bg-1, #33363b); font-size: 12px; line-height: 1.5; }
+.srch-from { margin: 0; font-size: 10px; color: var(--text-faint, #71767c); }
+.srch-send { margin: 0; padding: 6px 8px; border: 1px solid var(--line, #24262a); background: var(--bg-1, #33363b); font-size: 11px; }
+.srch-targets { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px; }
+.srch-targets li { display: grid; grid-template-columns: 58px minmax(0, 1fr); gap: 8px; padding: 3px 6px; color: var(--text-faint, #71767c); font-size: 10.5px; }
+.srch-targets li b { font-weight: 500; }
+.srch-targets li[data-on="true"] { color: var(--text, #d4d7da); background: var(--bg-1, #33363b); box-shadow: inset 2px 0 0 var(--accent, #ffbe00); }
