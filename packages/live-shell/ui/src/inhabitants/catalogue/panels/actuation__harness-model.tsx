@@ -1,12 +1,28 @@
-// The Agent device (manual §19.3, actuation:harness-model): the agent seated on a Factory session's chain. Live's nearest: Simpler or
-// Operator — an instrument with a well that draws what it is doing, and a short row of macros. The well draws the agent's own
+// The Agent device (manual §19.3, actuation:harness-model): the agent on any track an agent works on — second on a Factory session's
+// chain, last on a Central workspace's, where it answers into the page. One agent in every mode (manual §16.1): it carries Custody
+// and Identity as pages of its Whole, and the Thread as its Full, each on its own keys under a prefix (design.ts `scoped`), so a
+// binding hosts them by prefixing their bindings. Live's nearest: Simpler or Operator — an instrument with a well that draws what
+// it is doing, a short row of macros, and pages for the rest. The well draws the agent's own
 // readings: its face (the shell's agent face, agent/maskFace.ts), the turns used against the budget as a ruler, the effort as four
 // rungs, where an interrupt lands, and the heartbeat needle on the shell's 90 s horizon (agent/agentRunModel.ts HEARTBEAT_HORIZON_MS).
 import {memo, useLayoutEffect, useMemo, useState} from 'react'
 import {Band, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Readout, Section, Tile, Toggle, ValueBox, type LightState} from '../../sdk/panel'
 import {maskStatic} from '../../../agent/maskFace'
-import {NONE, boolOf, clampTo, json, numOf, shown, st, strOf, type DesignedDevice, type ViewProps} from './design'
+import {NONE, boolOf, clampTo, json, numOf, prefixed, scoped, shown, st, strOf, type DesignedDevice, type ViewProps} from './design'
+import {CustodyBands, design as custody} from './software-factory__agent-custody'
+import {IdentityBands, design as identity} from './central__agent-identity'
+import {design as thread} from './software-factory__thread'
 import './actuation__harness-model.css'
+
+/** The keys the carried pages share with the Agent: its light, the autonomy both read, and the input the thread's composer sends. */
+const CUSTODY_SHARED = ['light', 'autonomy'] as const
+const IDENTITY_SHARED = ['light'] as const
+const THREAD_SHARED = ['light', 'input', 'quantize', 'draft', 'sent', 'age'] as const
+const PAGES = [{id: 'agent', label: 'Run'}, {id: 'custody', label: 'Custody'}, {id: 'identity', label: 'Identity'}] as const
+const custodyOf = (p: ViewProps) => scoped(p, 'custody.', CUSTODY_SHARED)
+const identityOf = (p: ViewProps) => scoped(p, 'id.', IDENTITY_SHARED)
+const threadOf = (p: ViewProps) => scoped(p, 'thread.', THREAD_SHARED)
+const NO_READINGS = (d: {fixtures?: DesignedDevice['fixtures']}) => d.fixtures?.['No readings'] ?? {}
 
 type V = ViewProps['v']
 const EFFORTS = ['low', 'medium', 'high', 'max'] as const
@@ -204,35 +220,6 @@ const interruptDial = (p: ViewProps) => <Dial {...st(p, 'quantize')} label="Inte
 /** The head: the light reads the owner alone, hollow when it reports none; pressing it asks, unless the host stands it disabled. */
 const head = (p: ViewProps) => ({light: lampOf(p), onLight: st(p, 'light').disabled ? undefined : () => p.set('light', lightOf(p) === 'lit' ? 'dark' : 'lit'), lightWhy: st(p, 'light').disabled, onFold: p.nav.fold, onFull: p.nav.full})
 
-// ---------------------------------------------------------------- the thread, in the pane
-
-/** One row of the thread: who spoke, then what — words, a tool call, the line you sent, a proposal, or the stall. */
-function Row({row, v}: {row: Line; v: V}) {
-  const {who, kind, text, tool, state} = row
-  const age = numOf(v, 'age')
-  return <div className="hm-row"><span className="hm-who" data-agent={kind === 'agent' || kind === 'proposal' ? 'true' : undefined}>{who}</span>
-    {kind === 'tool' ? <div className="hm-tool" data-state={state === 'runs' || state === 'waits' ? state : undefined}><i /><b>{tool ?? NONE}</b><span>{text}</span></div>
-      : kind === 'steer' || kind === 'queued' ? <div className="hm-steer"><span>{text || NONE}</span><small>{kind === 'steer' ? `steer · lands at ${shown(v, 'quantize')}` : 'queued · runs as the next task'}</small></div>
-      : kind === 'proposal' ? <div className="hm-card"><b>Proposal · {text || NONE}</b><small>{[tool, `autonomy ${shown(v, 'autonomy')}`].filter(Boolean).join(' · ')}</small></div>
-      : kind === 'stall' ? <div className="hm-card" data-kind="stall"><b>Stalled</b><small>{tool ? `${tool} · ` : ''}{text}{age !== undefined && age >= 0 ? ` The last check-in was ${age} s ago.` : ''}</small></div>
-      : <p className="hm-text">{text || NONE}</p>}
-  </div>
-}
-
-function Thread({v, lamp}: {v: V; lamp: string | undefined}) {
-  const rows = lines(v), stalled = needle(v) === 'stalled'
-  return <div className="hm-pane">
-    <div className="hm-pane-head" aria-label="The thread's agent">
-      <b>{shown(v, 'agent')}</b><span>{modelName(v)}</span><span>{shown(v, 'harness')}</span><span>effort {shown(v, 'effort')}</span><span>turn {usedOf(v) ?? NONE} of {numOf(v, 'cap') ?? NONE}</span>
-      <span data-state={stalled ? 'stalled' : undefined}>{stateWord(lamp, v) ?? NONE}</span>
-    </div>
-    <div className="hm-thread" role="log" aria-label="Thread">
-      {rows.length === 0 && <div className="hm-row"><span className="hm-who">thread</span><p className="hm-text">No reading of the thread.</p></div>}
-      {rows.map((row, i) => <Row key={i} row={row} v={v} />)}
-    </div>
-  </div>
-}
-
 /** The widget's last line: the last row of the thread, as one short sentence. */
 function Last({v}: {v: V}) {
   const rows = lines(v), last = rows[rows.length - 1]
@@ -242,46 +229,9 @@ function Last({v}: {v: V}) {
     : last.kind === 'proposal' ? <><b>{last.who}</b> Proposal · {text}</> : <><b>{last.who}</b> {text}</>
 }
 
-// ---------------------------------------------------------------- the device
-
-export const design: DesignedDevice = {
-  id: 'actuation:harness-model',
-  title: 'Agent',
-  kind: 'instrument',
-  defaults: {
-    light: 'lit', effort: 'high', effortHeld: '', cap: 12, input: 'steer', quantize: 'next tool', heartbeat: true,
-    model: 'model:claude-sonnet-4.6', harness: 'claude-code', draft: '',
-    // Readings: what the owners report, never set from here.
-    agent: 'Flint', autonomy: 'review', used: 7, age: 6,
-    // The owner's material: the thread, and the lists the choosers offer (JSON).
-    thread: sampleThread({bash: 'runs'}), models: JSON.stringify(SAMPLE_MODELS), harnesses: JSON.stringify(SAMPLE_HARNESSES),
-  },
-  fixtures: {
-    Working: {},
-    Stalled: {age: 140, thread: sampleThread({bash: 'waits', stalled: true})},
-    'Queued, no check-in': {input: 'queue', used: 0, age: -1, heartbeat: false, thread: sampleThread({queued: true})},
-    'Agent moved Effort': {effort: 'max', effortHeld: 'Flint'},
-    Benched: {light: 'dark', age: -1, thread: sampleThread({})},
-    'Not read': {light: 'unknown', used: -1, age: -1, thread: sampleThread({})},
-    'No readings': Object.fromEntries(['light', 'effort', 'effortHeld', 'cap', 'input', 'quantize', 'heartbeat', 'model', 'harness', 'draft', 'sent', 'agent', 'autonomy',
-      'used', 'age', 'thread', 'models', 'harnesses'].map(k => [k, undefined])),
-  },
-
-  folded: p => <Folded title="Agent" light={lampOf(p)} readings={[shown(p.v, 'agent'), (turnsLine(p.v) ?? NONE).replace(/ /g, '')]} onUnfold={p.nav.unfold} />,
-
-  compact: p => <Panel title="Agent" view="compact" {...head(p)} onSelect={p.nav.select}>
-    <Section width={152}>
-      <AgentWell v={p.v} set={p.set} standing={p.standing} lamp={lightOf(p)} w={140} h={146} size="compact" />
-    </Section>
-    <Section label="Macros" cols={2}>
-      {effortDial(p)}
-      {budgetBox(p)}
-      {inputRadio(p)}
-      {interruptDial(p)}
-    </Section>
-  </Panel>,
-
-  whole: p => <Panel title="Agent" view="whole" {...head(p)}>
+/** The Run page: how the agent runs — its well, effort and budget, input, what it runs on, and its heartbeat. */
+function AgentBands({p}: {p: ViewProps}) {
+  return <>
     <Band>
       <Section width={206}>
         <AgentWell v={p.v} set={p.set} standing={p.standing} lamp={lightOf(p)} w={194} h={146} size="whole" />
@@ -299,7 +249,7 @@ export const design: DesignedDevice = {
       </Section>
     </Band>
     <Band>
-      <Section label="Identity" width={198}>
+      <Section label="Runs on" width={198}>
         <Readout label="agent" does="Who the agent is. Drag another agent from the browser here to replace it." value={strOf(p.v, 'agent')} />
         <Chooser {...st(p, 'model')} label="Model" does="The model for this session." value={strOf(p.v, 'model') ?? ''} options={optionsOf(p.v, 'models', 'model', m => m.replace('model:', ''))} onChange={x => p.set('model', x)} />
         <Chooser {...st(p, 'harness')} label="Harness" does="The program that runs the agent." value={strOf(p.v, 'harness') ?? ''} options={optionsOf(p.v, 'harnesses', 'harness')} onChange={x => p.set('harness', x)} />
@@ -310,9 +260,63 @@ export const design: DesignedDevice = {
         <Readout label="check-in" does="The time since the agent's last check-in." value={checkIn(p.v)} />
       </Section>
     </Band>
+  </>
+}
+
+// ---------------------------------------------------------------- the device
+
+export const design: DesignedDevice = {
+  id: 'actuation:harness-model',
+  title: 'Agent',
+  kind: 'instrument',
+  defaults: {
+    light: 'lit', effort: 'high', effortHeld: '', cap: 12, input: 'steer', quantize: 'next tool', heartbeat: true,
+    model: 'model:claude-sonnet-4.6', harness: 'claude-code', draft: '',
+    // Readings: what the owners report, never set from here.
+    agent: 'Flint', autonomy: 'review', used: 7, age: 6,
+    // The owner's material: the thread, and the lists the choosers offer (JSON).
+    thread: sampleThread({bash: 'runs'}), models: JSON.stringify(SAMPLE_MODELS), harnesses: JSON.stringify(SAMPLE_HARNESSES),
+    // The carried pages' own values, under their prefixes.
+    ...prefixed('custody.', custody.defaults, CUSTODY_SHARED), ...prefixed('id.', identity.defaults, IDENTITY_SHARED),
+    ...prefixed('thread.', thread.defaults, THREAD_SHARED),
+  } as DesignedDevice['defaults'],
+  firstPage: 'agent',
+  fixtures: {
+    Working: {},
+    Stalled: {age: 140, thread: sampleThread({bash: 'waits', stalled: true})},
+    'Queued, no check-in': {input: 'queue', used: 0, age: -1, heartbeat: false, thread: sampleThread({queued: true})},
+    'Agent moved Effort': {effort: 'max', effortHeld: 'Flint'},
+    'You edited a held file': prefixed('custody.', custody.fixtures?.['You edited a file'] ?? {}, CUSTODY_SHARED),
+    'A proposed agent': prefixed('id.', identity.fixtures?.['A proposed team lead'] ?? {}, IDENTITY_SHARED),
+    Benched: {light: 'dark', age: -1, thread: sampleThread({})},
+    'Not read': {light: 'unknown', used: -1, age: -1, thread: sampleThread({})},
+    'No readings': {...Object.fromEntries(['light', 'effort', 'effortHeld', 'cap', 'input', 'quantize', 'heartbeat', 'model', 'harness', 'draft', 'sent', 'agent', 'autonomy',
+      'used', 'age', 'thread', 'models', 'harnesses'].map(k => [k, undefined])),
+      ...prefixed('custody.', NO_READINGS(custody), CUSTODY_SHARED), ...prefixed('id.', NO_READINGS(identity), IDENTITY_SHARED),
+      ...prefixed('thread.', NO_READINGS(thread), THREAD_SHARED)},
+  },
+
+  folded: p => <Folded title="Agent" light={lampOf(p)} readings={[shown(p.v, 'agent'), (turnsLine(p.v) ?? NONE).replace(/ /g, '')]} onUnfold={p.nav.unfold} />,
+
+  compact: p => <Panel title="Agent" view="compact" {...head(p)} onSelect={p.nav.select}>
+    <Section width={152}>
+      <AgentWell v={p.v} set={p.set} standing={p.standing} lamp={lightOf(p)} w={140} h={146} size="compact" />
+    </Section>
+    <Section label="Macros" cols={2}>
+      {effortDial(p)}
+      {budgetBox(p)}
+      {inputRadio(p)}
+      {interruptDial(p)}
+    </Section>
   </Panel>,
 
-  full: p => <Thread v={p.v} lamp={lightOf(p)} />,
+  whole: p => <Panel title="Agent" view="whole" {...head(p)} pages={PAGES} page={p.page || 'agent'} onPage={p.setPage}>
+    {p.page === 'custody' ? <CustodyBands p={custodyOf(p)} writes={false} />
+      : p.page === 'identity' ? <IdentityBands p={identityOf(p)} />
+      : <AgentBands p={p} />}
+  </Panel>,
+
+  full: p => thread.full(threadOf(p)),
 
   widget: p => {
     const send = st(p, 'sent'), draft = strOf(p.v, 'draft') ?? '', who = strOf(p.v, 'agent')

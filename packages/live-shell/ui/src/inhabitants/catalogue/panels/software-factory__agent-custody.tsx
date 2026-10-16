@@ -235,6 +235,40 @@ const sampleHeld = (edited?: boolean) => JSON.stringify([
   {id: 'file:harnessAgentControl', name: 'harnessAgentControl.ts', kind: 'file', state: 'blocked', by: 'Flint', receipts: 0, why: 'Waits for your approval.'},
 ])
 
+/** Custody's two bands: the Whole of Custody, and the Custody page of the Agent, which carries it. On the Agent, how a write arrives
+ * is Scope's (manual §16.1), so the page reads it instead of setting it. */
+export function CustodyBands({p, writes = true}: {p: ViewProps; writes?: boolean}) {
+  const items = heldItems(p.v), known = has(p.v, 'held')
+  const rows: RowItem[] = items.map(item => ({id: item.id, name: item.name, light: item.state === undefined ? 'unknown' : 'lit', note: item.kind ?? NONE, why: item.state === 'blocked' ? (item.why ?? 'Blocked.') : undefined,
+    does: itemTitle(item), mark: <svg width={10} height={10} viewBox="0 0 10 10" aria-hidden><Dot x={5} y={5} r={4} state={item.state} /></svg>}))
+  return <>
+    <Band>
+      <Section width={206}>
+        <CustodyWell v={p.v} set={p.set} standing={p.standing} w={194} h={146} size="whole" />
+      </Section>
+      <Section label="Autonomy" width={78}>
+        {radio(p, 'autonomy', undefined, SAYS.autonomy, LEVELS)}
+      </Section>
+      <Section label="Writes" grow>
+        {writes ? radio(p, 'writeMode', undefined, SAYS.write, MODES)
+          : <Readout label="writes" does="How a write arrives is set by Scope, the next device on the chain, and by Arm in the transport." value="as Scope allows" />}
+      </Section>
+    </Band>
+    <Band>
+      <Section width={176}>
+        <Rows label={known ? 'Held' : 'Held · no reading'} does="The things the agent holds now. An orange dot: the agent works on it. A red ring: you edited it." items={rows} size={7} />
+      </Section>
+      <Section label="Review gate" width={78}>
+        {radio(p, 'gate', undefined, `${SAYS.gate} Diffs, approvals or both.`, GATES)}
+      </Section>
+      <Section label="Hand back" grow>
+        {handBackToggle(p)}
+        <Chooser {...st(p, 'escalate')} label="Escalate to" does={SAYS.escalate} value={strOf(p.v, 'escalate') ?? ''} options={people(p.v)} onChange={x => p.set('escalate', x)} />
+      </Section>
+    </Band>
+  </>
+}
+
 export const design: DesignedDevice = {
   id: 'software-factory:agent-custody',
   title: 'Custody',
@@ -260,36 +294,7 @@ export const design: DesignedDevice = {
     </Section>
   </Panel>,
 
-  whole: p => {
-    const items = heldItems(p.v), known = has(p.v, 'held')
-    const rows: RowItem[] = items.map(item => ({id: item.id, name: item.name, light: item.state === undefined ? 'unknown' : 'lit', note: item.kind ?? NONE, why: item.state === 'blocked' ? (item.why ?? 'Blocked.') : undefined,
-      does: itemTitle(item), mark: <svg width={10} height={10} viewBox="0 0 10 10" aria-hidden><Dot x={5} y={5} r={4} state={item.state} /></svg>}))
-    return <Panel title="Custody" view="whole" light={lightOf(p)} onFold={p.nav.fold} onFull={p.nav.full}>
-      <Band>
-        <Section width={206}>
-          <CustodyWell v={p.v} set={p.set} standing={p.standing} w={194} h={146} size="whole" />
-        </Section>
-        <Section label="Autonomy" width={78}>
-          {radio(p, 'autonomy', undefined, SAYS.autonomy, LEVELS)}
-        </Section>
-        <Section label="Writes" grow>
-          {radio(p, 'writeMode', undefined, SAYS.write, MODES)}
-        </Section>
-      </Band>
-      <Band>
-        <Section width={176}>
-          <Rows label={known ? 'Held' : 'Held · no reading'} does="The things the agent holds now. An orange dot: the agent works on it. A red ring: you edited it." items={rows} size={7} />
-        </Section>
-        <Section label="Review gate" width={78}>
-          {radio(p, 'gate', undefined, `${SAYS.gate} Diffs, approvals or both.`, GATES)}
-        </Section>
-        <Section label="Hand back" grow>
-          {handBackToggle(p)}
-          <Chooser {...st(p, 'escalate')} label="Escalate to" does={SAYS.escalate} value={strOf(p.v, 'escalate') ?? ''} options={people(p.v)} onChange={x => p.set('escalate', x)} />
-        </Section>
-      </Band>
-    </Panel>
-  },
+  whole: p => <Panel title="Custody" view="whole" light={lightOf(p)} onFold={p.nav.fold} onFull={p.nav.full}><CustodyBands p={p} /></Panel>,
 
   full: p => <HeldPane v={p.v} />,
 

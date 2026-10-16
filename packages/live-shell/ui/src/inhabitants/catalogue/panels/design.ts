@@ -121,3 +121,19 @@ declare global {
   /** Where the gallery serves the cradle's document templates (vite.config.mjs `define`). */
   const __CRADLE_DOCUMENTS__: string
 }
+
+/** A view onto the values kept under a prefix, for a device that carries another's page — the Agent carries Custody's and
+ * Identity's as its own pages, and the Thread as its Full. Keys read and write as `prefix + key`; the shared keys are the
+ * device's own (its light, the autonomy both pages show). A binding hosts the carried page by prefixing that page's binding. */
+export function scoped(p: ViewProps, prefix: string, shared: readonly string[] = []): ViewProps {
+  const own = (key: string) => (shared.includes(key) ? key : prefix + key)
+  function pick<T>(all: Readonly<Record<string, T>>): Record<string, T> {
+    return Object.fromEntries(Object.entries(all).flatMap(([k, x]) => (shared.includes(k) ? [[k, x]] : k.startsWith(prefix) ? [[k.slice(prefix.length), x]] : [])))
+  }
+  return {...p, v: pick(p.v), owner: p.owner && pick(p.owner), standing: p.standing && pick(p.standing), set: (key, value) => p.set(own(key), value)}
+}
+
+/** A carried page's values, under its prefix (its defaults and fixtures, as the carrying device holds them). */
+export function prefixed(prefix: string, values: Readonly<Record<string, Value | undefined>>, shared: readonly string[] = []): Record<string, Value | undefined> {
+  return Object.fromEntries(Object.entries(values).filter(([k]) => !shared.includes(k)).map(([k, x]) => [prefix + k, x]))
+}
