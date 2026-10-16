@@ -54,13 +54,10 @@
 /* The device's light on its mark: lit only when the owner reports on (a reading, never a default). */
 .inst-selector-mark[data-device-light="on"]::after { content: ''; position: absolute; right: 2px; top: 2px; width: 4px; height: 4px; border-radius: 50%; background: var(--accent) }
 .inst-device { min-width: 0 }
-.inst-device > .device > .sdk-face { background: transparent; border: 0 }
-.inst-device > .device > .sdk-face > .sdk-face__head { height: 18px; padding: 0; border-bottom: 0 }
-.inst-device > .device .device-body { padding: 4px 0 0 }
-.inst-device > .device--compact { max-height: none }
-/* In a section the group's heading names it, so a device's owner line stands down and its name takes the head; its knobs are the
-   mockup's Studio size (.knob, :340) so two rows of them stand under the heading. */
-.inst-device .sdk-face__owner { display: none }
-.inst-device .sdk-knob { width: 24px; height: 24px }
-.inst-device .device-controls { gap: 4px 6px }
-.inst-device .device-row { gap: 1px }
+/* The kit's plate (panel.tsx Panel) stands flat in the column: no face, no edge, its head a line, its sections without their own
+   rules — the column's heading names the group, so the device reads as the column's controls (no box inside a box). */
+.inst-device .dp { background: transparent; border: 0 }
+.inst-device .dp > .dp-head { height: 18px; padding: 0; background: none; border-bottom: 0 }
+.inst-device .dp > .dp-body { height: auto }
+.inst-device .dp-sec { padding: 4px 0 0 }
+.inst-device .dp-sec + .dp-sec { border-left: 0; padding-left: 6px }

@@ -114,11 +114,11 @@ test('every device is compact on the chain: a picture, at most four readings, no
   for (const id of FACES) {
     const device = deviceMarkup(markup, id)
     assert.match(device, /data-device-size="compact"/, id)
-    assert.match(device, /class="device-picture"/, `${id} has its picture`)
+    assert.match(device, /class="dv-picture"/, `${id} has its picture, in the kit's well`)
     assert.match(device, /<svg[^>]*(?:role="img"|viewBox)/, `${id} draws a mark or a die`)
-    assert.ok((device.match(/class="device-row"/g) ?? []).length <= 4, `${id}: at most four rows drawn`)
-    assert.match(device, /Show every setting in the pool/, `${id} opens whole`)
-    assert.match(device, /full size in a pane/, `${id} opens full`)
+    assert.ok((device.match(/class="dv-param"/g) ?? []).length <= 4, `${id}: at most four controls drawn`)
+    assert.match(device, /Show every setting in the pool/, `${id} opens whole (the press on the plate, said on its head)`)
+    assert.match(device, /full size in a pane/, `${id} opens full (⤢)`)
   }
   for (const entry of entries()) assert.ok(compactRows(entry.device.rows).length <= 4, `${entry.id}: at most four`)
 })
@@ -188,14 +188,14 @@ test('the door shows the same device whole in the pool and full in a pane', () =
     assert.match(pool, /data-device-pool="central:day-die"/)
     assert.match(pool, /data-device-size="whole"/)
     assert.match(pool, /class="central-die-net"/, 'the die stands whole too')
-    assert.match(pool, /<legend>Die<\/legend>[\s\S]*<legend>Source<\/legend>/, 'every setting, grouped')
+    assert.match(pool, /class="dp-sec-label">Die<[\s\S]*class="dp-sec-label">Source</, 'every setting, grouped')
     assert.match(pool, /data-param="source"/, 'the whole size shows the rows the compact one folds')
     const pane = html(createElement(DeviceFullPane, {id: 'central:day-die'}))
     assert.match(pane, /data-device-size="full"/)
     assert.match(pane, /data-central-body="day-die"/)
     assert.match(pane, /data-document-device="ql-daily-die"/, 'the full size is the face\'s own hosted form, ported')
     assert.equal(set[0].device.values.face, '#3 Pattern — Observations', 'the same device, the same live settings')
-    assert.match(pane, /data-param="face"/)
+    assert.doesNotMatch(pane, /data-param=/, 'a pane holds the material; its controls stay in Device view (DLW §16.1)')
     door.selectDevice('central:nara-conversation')
     assert.match(html(createElement(DeviceFullPane, {id: 'central:nara-conversation'})), /data-conversation-device="nara"/)
     assert.match(html(createElement(DeviceFullPane, {id: 'central:ground-hygiene'})), /data-central-device="ground-hygiene"/)
@@ -240,14 +240,13 @@ const writes = await import('../src/central/devices/centralDeviceWrites.ts')
 const flowClip = await import('../src/central/devices/FlowClip.tsx')
 const identity = await import('../../../../desktop/cradle/src/nara/identity/current.ts')
 const bridge = {kind: 'bridge', url: 'http://owner.fixture'}
-// A row's control as the markup draws it: a control (`sdk-enum`, `sdk-bool`), not a reading chip. Under SSR the runtime's draft
-// custody has not adopted the owner's values (effects do not run), so every control stands dark here; whether it is live once
-// adopted is the runtime's own (frame/devices/DeviceView.tsx: disabled only without a `submit`, a write path, or a value) and
-// is a screen leg, owed the lead's pass.
-const control = (markup, key, kind) => {
-  const row = markup.match(new RegExp(`data-param="${key}">(?:(?!data-param=)[\\s\\S])*?<button type="button" class="sdk-${kind}`))
-  return row !== null
-}
+// A row's control as the markup draws it: one of the kit's controls (a chooser or radio for the die's faces, a toggle for the
+// binding), not a readout. The host reads the owner's values from its first paint, so the control is live wherever the owner
+// writes the row (frame/devices/deviceHost.tsx).
+const KIND = {enum: '(?:radio|radio-stack|chooser)', bool: 'toggle'}
+const control = (markup, key, kind) => new RegExp(`data-param="${key}"[^>]*data-control="${KIND[kind]}"`).test(markup)
+// The conversation's binding is its light (enabledKey `bound`): the plate's activator, pressed to ask the owner (DEVICE-UI §4.1).
+const activator = markup => /<button type="button" class="dp-activator" data-light="(?:dark|lit)"[^>]*>/.exec(markup)?.[0] ?? ''
 const NARA_UNBOUND = {state: 'unbound', conversation: null, gap: null, expression: null, session: null}
 
 test('the Day die and the conversation carry a generating control at every size — compact, whole and full — and the instance carries the door that writes it', () => {
@@ -258,19 +257,19 @@ test('the Day die and the conversation carry a generating control at every size 
     const die = set.find(entry => entry.id === 'central:day-die'), nara = set.find(entry => entry.id === 'central:nara-conversation')
     // compact: the chain's own markup
     assert.ok(control(compact(die), 'face', 'enum'), 'compact: the die turns')
-    assert.ok(control(compact(nara), 'bound', 'bool'), 'compact: the conversation binds')
+    assert.ok(activator(compact(nara)) && !activator(compact(nara)).includes('disabled'), 'compact: the conversation binds, by its activator')
     // whole: the pool
     door.selectDevice('central:day-die')
     assert.ok(control(html(createElement(DevicePool)), 'face', 'enum'), 'whole: the die turns')
     door.selectDevice('central:nara-conversation')
-    assert.ok(control(html(createElement(DevicePool)), 'bound', 'bool'), 'whole: the conversation binds')
-    // full: a pane, over the hosted body
+    const naraPool = html(createElement(DevicePool))
+    assert.ok(activator(naraPool) && !activator(naraPool).includes('disabled'), 'whole: the conversation binds, by its activator')
+    // full: a pane holds the hosted body itself; the controls stay in Device view under it (DLW §16.1)
     const diePane = html(createElement(DeviceFullPane, {id: 'central:day-die'}))
     assert.match(diePane, /data-document-device="ql-daily-die"/)
-    assert.ok(control(diePane, 'face', 'enum'), 'full: the die turns beside its hosted form')
+    assert.ok(!control(diePane, 'face', 'enum'), 'full: the die\'s own form, no plate controls over it')
     const naraPane = html(createElement(DeviceFullPane, {id: 'central:nara-conversation'}))
     assert.match(naraPane, /data-conversation-device="nara"/)
-    assert.ok(control(naraPane, 'bound', 'bool'), 'full: the conversation binds beside its hosted face')
     // one device: the three sizes read the same instance, so one `submit` writes all three
     assert.equal(typeof die.device.submit, 'function')
     assert.equal(typeof nara.device.submit, 'function')

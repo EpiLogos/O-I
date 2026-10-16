@@ -1,33 +1,10 @@
 /* The plate's controls (plateControls.tsx) and the device panel kit's controls (inhabitants/sdk/panel.css) as an instrument's plate and
-   a Compact instrument draw them: the kit's colour names resolved to the shell's tokens here (styles.css :root), so a plate brings no
-   colour of its own (docs/dlw/DEVICE-UI.md §4.3: teal a value, amber what is on, the well near black). Shell tokens only. */
-:is(.inst-plate, .techne-compact) {
-  --dp-face: var(--bg-2);
-  --dp-head: var(--bg-3);
-  --dp-field: var(--bg-0);
-  --dp-well: color-mix(in srgb, var(--bg-0) 55%, var(--line));
-  --dp-grid: color-mix(in srgb, var(--sel) 10%, transparent);
-  --dp-value: var(--fizz);
-  --dp-value-dim: color-mix(in srgb, var(--fizz) 42%, transparent);
-  --dp-on: var(--accent);
-  --dp-on-text: var(--bg-1);
-  font: 10.5px/1.2 var(--font-ui);
-}
-:is(.inst-plate, .techne-compact) .dp-dial-track { stroke: var(--line) }
-:is(.inst-plate, .techne-compact) .dp-lamp { background: var(--bg-0); border-color: var(--line) }
-:is(.inst-plate, .techne-compact) .dp-lamp[data-light="lit"] { background: var(--dp-on) }
-:is(.inst-plate, .techne-compact) .dp-lamp[data-light="lit"][data-tone="value"] { background: var(--dp-value) }
-:is(.inst-plate, .techne-compact) .dp-lamp[data-light="lit"][data-tone="green"] { background: var(--green) }
-:is(.inst-plate, .techne-compact) .dp-lamp[data-light="lit"][data-tone="stall"] { background: var(--stall) }
-:is(.inst-plate, .techne-compact) .dp-lamp[data-light="unknown"] { background: transparent; border-color: var(--text-faint) }
-:is(.inst-plate, .techne-compact) .dp-display { border-color: var(--line) }
-:is(.inst-plate, .techne-compact) .dp-display .dp-fill { fill: color-mix(in srgb, var(--dp-value) 14%, transparent) }
-:is(.inst-plate, .techne-compact) .dp-display .dp-fill-on { fill: color-mix(in srgb, var(--dp-on) 16%, transparent) }
-:is(.inst-plate, .techne-compact) .dp-display .dp-faint { stroke: color-mix(in srgb, var(--text) 22%, transparent) }
-:is(.inst-plate, .techne-compact) .dp-display .dp-axis { fill: var(--text-faint) }
-:is(.inst-plate, .techne-compact) .dp-row { border-bottom-color: color-mix(in srgb, var(--line) 70%, transparent) }
-:is(.inst-plate, .techne-compact) .dp-cell[data-automated]::before { background: var(--rec) }
-:is(.inst-plate, .techne-compact) .dp-cell[data-held="true"] .dp-box { --dp-value-dim: color-mix(in srgb, var(--stall) 40%, transparent) }
+   a Compact instrument draw them. The kit's colour names resolve the shell's tokens (styles.css :root) at :root in panel.css, so a
+   plate brings no colour of its own (docs/dlw/DEVICE-UI.md §4.3: teal a value, amber what is on, the well near black). Shell tokens
+   only. */
+/* The kit's colours resolve the shell's tokens at :root now (panel.css), on every plate; an instrument's plate and a Compact
+   instrument keep only the kit's type here. */
+:is(.inst-plate, .techne-compact) { font: 10.5px/1.2 var(--font-ui) }
 
 /* A wrap that only listens for the hand's release (the owner's write goes then); it adds no box. */
 .plate-wrap { display: contents }

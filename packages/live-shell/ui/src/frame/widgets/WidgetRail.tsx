@@ -6,9 +6,11 @@
 // `.launch`/`.lh`/`.lgrid`/`.lcell`/`.pv` 379–387): the open widgets as tiles under one head, each tile's head its mark, its
 // name, the count its owner disclosed and the pin and close marks; below, the launcher's two columns of cells, each a live
 // miniature of what the open widget read (its glance) or, with no reading standing, the widget's designed mark.
-import {useCallback, useRef, useState, type PointerEvent as ReactPointerEvent} from 'react'
+import {useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent} from 'react'
 import type {ReactNode} from 'react'
 import {Icon} from '../../inhabitants/sdk/Icon'
+import {publishRail} from '../devices/deviceDoor'
+import {deviceWidgets} from './deviceWidgets'
 import {sameGlance, type WidgetDeclaration, type WidgetGlance, type WidgetRailBook} from './widgets'
 
 export function WidgetRail({widgets, book, selectionRef}: {widgets: readonly WidgetDeclaration[]; book: WidgetRailBook; selectionRef: string | null}) {
@@ -29,10 +31,17 @@ export function WidgetRail({widgets, book, selectionRef}: {widgets: readonly Wid
     }
     return hand
   }, [])
-  const byId = new Map(widgets.map(widget => [widget.id, widget]))
+  // A device's head puts it on the rail through the door (deviceDoor.ts putOnRail): the rail hands the door its open set and its
+  // toggle. Its device widgets (deviceWidgets.tsx) are widgets of the rail's own kind, `device:<id>`, in the same open set.
+  const railOpen = book.rail.open, toggle = book.toggle
+  useEffect(() => { publishRail({open: railOpen, toggle}) }, [railOpen, toggle])
+  useEffect(() => () => publishRail(null), [])
+  const devices = deviceWidgets(book.rail.open, needle)
+  const byId = new Map([...widgets, ...devices.open].map(widget => [widget.id, widget]))
   const open = book.rail.open.map(id => byId.get(id)).filter((widget): widget is WidgetDeclaration => widget !== undefined)
   const query = needle.trim().toLocaleLowerCase()
-  const launcher = widgets.filter(widget => !query || widget.name.toLocaleLowerCase().includes(query) || widget.hint?.toLocaleLowerCase().includes(query))
+  const launcher = [...widgets.filter(widget => !query || widget.name.toLocaleLowerCase().includes(query) || widget.hint?.toLocaleLowerCase().includes(query)),
+    ...devices.found.filter(found => !widgets.some(widget => widget.id === found.id))]
   const drag = (event: ReactPointerEvent) => {
     const startX = event.clientX, startWidth = book.rail.width ?? 300
     const move = (moved: PointerEvent) => book.widen(startWidth + (startX - moved.clientX))
@@ -50,6 +59,10 @@ export function WidgetRail({widgets, book, selectionRef}: {widgets: readonly Wid
         const pinnedAt = book.rail.pinned?.[widget.id] ?? null
         const Body = widget.Body
         const count = glances[widget.id]?.count
+        // A bare widget draws its own tile (a device's: the kit's Tile, with its light, name, ⤢ and ✕).
+        if (widget.bare) return <section key={widget.id} className="mode-dock-tile mode-dock-tile--bare" data-widget={widget.id}>
+          <Body subject={pinnedAt !== null ? pinnedAt || null : selectionRef} pinned={pinnedAt !== null} glance={handOf(widget.id)} close={() => book.toggle(widget.id)} />
+        </section>
         return <section key={widget.id} className="mode-dock-tile" data-widget={widget.id} data-pinned={pinnedAt !== null || undefined}>
           <header className="mode-dock-tile-head">
             <span className="mode-dock-tile-mark">{markOf(widget, 11)}</span>

@@ -141,18 +141,19 @@ test('with the owner reading the chain shows its standing; each macro reads not 
   const markup = renderToStaticMarkup(createElement(onChain.TorusOnChain, {state: validState()}))
   assert.match(markup, /data-live-torus="following"/)
   assert.match(markup, /data-device-light="on"/, 'a following instrument is lit')
-  assert.match(markup, /<div class="device-picture"><div class="torus-picture" data-live-torus="following" data-torus-size="compact"/, 'the compact picture is the torus figure')
+  assert.match(markup, /<div class="dv-picture"><div class="torus-picture" data-live-torus="following" data-torus-size="compact"/, 'the compact picture is the torus figure, in the kit\'s well')
   assert.match(markup, /<svg role="img" aria-label="M1 torus, following"/, 'a drawing with a name, not a text label')
   assert.match(markup, /<path d="M[-\d. ML]+L[-\d. ML]+"[^>]*data-torus-side="far"/, 'the far side is drawn, fainter')
   assert.match(markup, /<path d="M[-\d. ML]+L[-\d. ML]+"[^>]*data-torus-side="near"/, 'the near side is drawn')
   assert.match(markup, /data-torus-tone="lit"/, 'the standing tints it')
   assert.doesNotMatch(markup, /<div class="torus-picture"[^>]*><b>/, 'no text-only card')
   assert.equal((markup.match(/data-param="/g) || []).length, 4)
-  // The long lists (lens, context frame, harmonic basis) step through one value box; the two-choice transcription is a
-  // segmented toggle (the mockup's .tog) — and with no determinant published, no box shows a value and no choice is lit.
-  assert.equal((markup.match(/class="sdk-enum"[^>]*>—<\/button>/g) || []).length, 3, 'the owner reading publishes no determinant yet, so no stepped macro carries a value')
-  assert.equal((markup.match(/class="sdk-seg"/g) || []).length, 1, 'the two-choice macro is a segmented toggle')
-  assert.doesNotMatch(markup, /sdk-seg__opt--on/, 'and none of its choices is lit')
+  // The long lists (lens, context frame, harmonic basis) are the kit's choosers; the two-choice transcription is a radio (DEVICE-UI
+  // §5) — and with no determinant published, no chooser shows a value and no choice is lit.
+  assert.equal((markup.match(/data-control="chooser"/g) || []).length, 3, 'the long lists are choosers')
+  assert.equal((markup.match(/<option value="" disabled=""[^>]*>—<\/option>/g) || []).length, 3, 'the owner reading publishes no determinant yet, so no chooser carries a value')
+  assert.equal((markup.match(/data-control="radio"/g) || []).length, 1, 'the two-choice macro is a radio')
+  assert.doesNotMatch(markup, /aria-checked="true"/, 'and none of its choices is lit')
   assert.deepEqual(torusDeviceModule.torusDevice(validState()).values, {enabled: true}, 'the device holds no macro value either')
   assert.doesNotMatch(markup, /<ellipse|<circle/, 'the outline is paths: no point or phase is drawn on it — the oscillation is the simulation render only')
 })

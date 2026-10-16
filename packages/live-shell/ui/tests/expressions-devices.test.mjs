@@ -41,6 +41,20 @@ const door = await import('../src/frame/devices/deviceDoor.ts')
 const instruments = await import('../src/frame/instrumentDoor.ts')
 const {DeviceView} = await import('../src/frame/devices/DeviceView.tsx')
 const {DeviceFullPane} = await import('../src/frame/devices/devicePane.tsx')
+const deviceHost = await import('../src/frame/devices/deviceHost.tsx')
+/** A whole plate on every one of its pages (DEVICE-UI §1: "When a panel holds more than fits, it gets pages in its head"): the host
+ * keeps the shown page per device, so each page is drawn by turning it there. */
+const everyPage = (id, draw) => {
+  const pages = []
+  for (let at = 1; at <= 8; at++) {
+    deviceHost.setHostPage(id, `p${at}`)
+    const html = draw()
+    pages.push(html)
+    if ((html.match(/role="tab"/g) ?? []).length <= at) break
+  }
+  deviceHost.setHostPage(id, 'p1')
+  return pages.join('\n')
+}
 const {EXPRESSIONS_FACE_SEMANTICS} = await import('../src/expressions/expressionsFamilyManifest.ts')
 const {isWritePath} = await import('../src/inhabitants/sdk/semantics.ts')
 const {ICON_NAMES} = await import('../src/inhabitants/sdk/icons.ts')
@@ -360,15 +374,16 @@ test('one device draws compact, whole and full over the same rows and the same l
     assert.match(html, new RegExp(`data-device-size="${sizes[index]}"`))
     assert.match(html, /data-device="expressions:medium"/)
     assert.match(html, /data-device-light="on"/)
-    assert.match(html, /data-param="medium.pressure"/, `${sizes[index]} carries the pressure row`)
+    if (sizes[index] === 'full') assert.doesNotMatch(html, /data-param=/, 'full is the material: its controls stay in Device view (DLW §16.1)')
+    else assert.match(html, /data-param="medium.pressure"/, `${sizes[index]} carries the pressure row`)
   })
   second.forEach(html => assert.match(html, /data-device-light="off"/))
   // The runtime adopts the owner's readings after it mounts, so the numbers are the device's `values`: one object, read by all three sizes.
   assert.equal(before.values['medium.pressure'], 3)
   assert.equal(after.values['medium.pressure'], 7)
-  assert.doesNotMatch(first[0], /<legend>/, 'compact draws no groups')
-  assert.match(first[1], /<legend>Shared collision medium<\/legend>/)
-  assert.match(first[1], /<legend>Settings<\/legend>/)
+  assert.doesNotMatch(first[0], /class="dp-sec-label">Shared collision medium</, 'compact draws no groups')
+  assert.match(first[1], /class="dp-sec-label">Shared collision medium</)
+  assert.match(first[1], /class="dp-sec-label">Settings</)
 })
 
 test('the device the rack publishes is the device the pool and the pane read: claimants share the door, and the last to let go withdraws it', () => {
@@ -397,7 +412,7 @@ test('a pane shows the published device full size, and says so when the device i
   assert.match(html, /data-device-size="full"/)
   assert.match(html, /data-device="expressions:relational"/)
   assert.match(html, /id="pic-full"/, 'the pane draws the picture at full size')
-  assert.match(html, /data-param="relational.attractorGravity"/)
+  assert.doesNotMatch(html, /data-param=/, 'and no controls: they stay in Device view under the pane')
   claim.release()
   assert.match(renderToStaticMarkup(createElement(DeviceFullPane, {id: device.id})), /not on any chain right now/)
 })
@@ -424,7 +439,7 @@ test('every field device on the rack is a compact DeviceView: its picture and no
     const card = cards.find(text => text.includes(`data-device="expressions:${family}"`))
     assert.ok(card, `${family} stands on the rack as expressions:${family}`)
     assert.match(card, /data-device-size="compact"/)
-    assert.match(card, /class="device-controls"/, `${family} has its controls`)
+    assert.match(card, /class="dv-param"/, `${family} has its controls`)
     const rows = card.match(/data-param="/g) ?? []
     assert.ok(rows.length >= 1 && rows.length <= 4, `${family}: ${rows.length} controls`)
     assert.match(card, /role="slider"/, `${family}: the controls are real`)
@@ -502,13 +517,13 @@ test('entity and scene widgets and an unavailable family keep the rack\'s own bo
 test('whole is every setting, grouped: the switches first, then the catalogue\'s own groups', () => {
   for (const family of FIELD) {
     const entry = entryOf(family)
-    const html = renderToStaticMarkup(createElement(views.ExpressionsFieldWhole, {reading: reading(), request: NEVER, family}))
+    const html = everyPage(model.expressionsDeviceId(family), () => renderToStaticMarkup(createElement(views.ExpressionsFieldWhole, {reading: reading(), request: NEVER, family})))
     assert.match(html, /data-device-size="whole"/)
     assert.match(html, new RegExp(`data-expr-whole="${family}"`))
-    for (const group of entry.groups.filter(item => item.paths.length)) assert.ok(html.includes(`<legend>${escapeHtml(group.title)}</legend>`), `${family}: ${group.title}`)
-    for (const path of entry.paths) assert.ok(html.includes(`data-param="${path}"`), `${family}: ${path}`)
-    assert.match(html, /aria-label="Open [^"]+ full size in a pane"/)
-    if (model.expressionsSettingKeys(family).length || entry.toggle) assert.match(html, /<legend>Settings<\/legend>/, `${family}: its switches`)
+    for (const group of entry.groups.filter(item => item.paths.length)) assert.ok(html.includes(`class="dp-sec-label">${escapeHtml(group.title)}`), `${family}: ${group.title}`)
+    for (const path of entry.paths) assert.ok(html.includes(`data-param="${path}"`), `${family}: ${path} (on one of its pages)`)
+    assert.match(html, /aria-label="Open [^"]+ full (size )?in a pane"/)
+    if (model.expressionsSettingKeys(family).length || entry.toggle) assert.match(html, /class="dp-sec-label">Settings</, `${family}: its switches`)
   }
   assert.match(renderToStaticMarkup(createElement(views.ExpressionsFieldWhole, {reading: null, request: NEVER, family: 'physics'})), /Open a native Expression to see this device\./)
   assert.match(renderToStaticMarkup(createElement(views.ExpressionsFieldWhole, {reading: reading(), request: NEVER, family: 'glyph'})), /not a field device of this shell/)
