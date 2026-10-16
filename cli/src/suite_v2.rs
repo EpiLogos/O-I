@@ -529,18 +529,10 @@ fn download_exact(url: &str, target: &Path) -> Result<(), String> {
     if status.success() { Ok(()) } else { Err(format!("artifact download failed: {url}")) }
 }
 
+/// A file's SHA-256 as lowercase hex — the digest `shasum -a 256` printed —
+/// hashed in process (`file_digest`), never by a spawned process.
 fn sha256_file(path: &Path) -> Result<String, String> {
-    let output = if let Some(shasum) = resolve_executable("shasum") {
-        Command::new(shasum).args(["-a", "256"]).arg(path).output()
-    } else if let Some(sum) = resolve_executable("sha256sum") {
-        Command::new(sum).arg(path).output()
-    } else {
-        return Err("neither shasum nor sha256sum is available for artifact verification".to_owned());
-    }.map_err(|error| format!("failed to calculate SHA-256: {error}"))?;
-    if !output.status.success() { return Err(format!("SHA-256 calculation failed for {}", path.display())); }
-    String::from_utf8(output.stdout).map_err(|e| e.to_string())?
-        .split_whitespace().next().map(str::to_owned)
-        .ok_or_else(|| "SHA-256 command returned no digest".to_owned())
+    file_digest(path)
 }
 
 fn verify_github_attestation_if_available(archive: &Path, product: &SuiteProduct) -> Result<bool, String> {
@@ -2274,6 +2266,31 @@ fn dev_receipt_json(product: &str, executable: Option<String>, sha256: Option<St
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// The in-process digest is the one the replaced `shasum -a 256` (or
+    /// `sha256sum`) process printed for the same file, byte for byte: an
+    /// empty file, a short one and one past the 1 MiB read buffer.
+    #[test]
+    fn sha256_file_matches_the_digest_tool_it_replaced() {
+        let dir = tempfile::tempdir().unwrap();
+        let (tool, args): (PathBuf, &[&str]) = match resolve_executable("shasum") {
+            Some(shasum) => (shasum, &["-a", "256"]),
+            None => (resolve_executable("sha256sum").expect("shasum or sha256sum"), &[]),
+        };
+        let large: Vec<u8> = (0..(1usize << 20) + 4099).map(|index| (index * 31 % 251) as u8).collect();
+        for (name, bytes) in [("empty", Vec::new()), ("abc", b"abc".to_vec()), ("large", large)] {
+            let path = dir.path().join(name);
+            fs::write(&path, &bytes).unwrap();
+            let printed = Command::new(&tool).args(args).arg(&path).output().unwrap();
+            assert!(printed.status.success(), "{name}");
+            let printed = String::from_utf8(printed.stdout).unwrap();
+            assert_eq!(printed.split_whitespace().next(), Some(sha256_file(&path).unwrap().as_str()), "{name}");
+        }
+        assert_eq!(
+            sha256_file(&dir.path().join("abc")).unwrap(),
+            "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+        );
+    }
 
     #[test]
     fn dev_source_path_maps_central_into_work_not_the_ground_itself() {
