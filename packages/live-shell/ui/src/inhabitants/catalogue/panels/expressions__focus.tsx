@@ -15,7 +15,7 @@
 //                                       focus tab; moved by its route-up and route-down actions)
 //   focus.at                            the formation that holds the focus now, by id
 // A key the owner has not reported is absent: the view draws "—" and names it in the well.
-import {Action, Band, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, Tile, Toggle, ValueBox, type LightState, type RowItem, type Scale} from '../../sdk/panel'
+import {Band, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, Tile, Toggle, ValueBox, type LightState, type RowItem, type Scale} from '../../sdk/panel'
 import {NONE, boolOf, clampTo, fixed, json, numOf, st, strOf, type DesignedDevice, type ViewProps} from './design'
 
 type V = ViewProps['v']
@@ -77,8 +77,8 @@ const head = (p: ViewProps) => ({light: lightOf(p), lightWhy: st(p, 'focus').dis
 const wide = (p: ViewProps) => (p.frame === 'flip' || p.frame === 'window') && p.room !== undefined
 const DISPLAY_DOES = 'The route: a row each formation. Travelling, the focus holds a row for the dwell and glides to the next. The ringed formation holds it now.'
 
-function move(p: ViewProps, by: -1 | 1) {
-  const route = routeOf(p.v), id = strOf(p.v, 'chosen'), i = route?.findIndex(f => f.id === id) ?? -1
+function move(p: ViewProps, by: -1 | 1, id = strOf(p.v, 'chosen')) {
+  const route = routeOf(p.v), i = route?.findIndex(f => f.id === id) ?? -1
   if (!route || i < 0 || i + by < 0 || i + by >= route.length) return
   const next = [...route]; [next[i], next[i + by]] = [next[i + by]!, next[i]!]
   p.set('route', JSON.stringify(next))
@@ -125,11 +125,9 @@ export const design: DesignedDevice = {
       </Band>
       <Band>
         <Section label="Route" width={128}>
-          <Rows does="The formations the focus visits, in order. Press one to choose it." items={rows} size={5} onSelect={id => p.set('chosen', id)} selected={strOf(p.v, 'chosen')} />
-          <div className="ref-pair">
-            <Action {...st(p, 'route')} label="Earlier" does="Move the chosen formation earlier on the route. No position changes." onPress={() => move(p, -1)} />
-            <Action {...st(p, 'route')} label="Later" does="Move the chosen formation later on the route." onPress={() => move(p, 1)} />
-          </div>
+          <Rows does="The formations the focus visits, in order. Press one to choose it; ▲ ▼ or ⌥↑ ⌥↓ move it along the route. No position changes."
+            items={rows} size={6} onSelect={id => p.set('chosen', id)} selected={strOf(p.v, 'chosen')}
+            onMove={st(p, 'route').disabled ? undefined : (id, by) => { p.set('chosen', id); move(p, by, id) }} />
         </Section>
         <Section label="Time" width={60}>{box(p, R.dwell)}{box(p, R.glide)}<Readout label="loop" does="One loop of the route." value={loopOf(p.v) === undefined ? undefined : secs(loopOf(p.v)!)} tone="value" /></Section>
         <Section label="Visible" cols={2} grow>{dial(p, R.focusTint)}{dial(p, R.entityTint)}

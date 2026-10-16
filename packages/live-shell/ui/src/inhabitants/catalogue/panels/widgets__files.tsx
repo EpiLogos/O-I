@@ -153,7 +153,7 @@ export const design: DesignedDevice = {
           <path d="M0 32H760" className="dp-faint" />
           {lines.length ? lines.slice(0, 28).map((l, i) => <g key={i}>
             <text x={40} y={52 + i * 13} textAnchor="end" className="dp-axis">{i + 1}</text>
-            <text x={50} y={52 + i * 13} className="dp-ink" style={{fontSize: 10.5, fontFamily: 'var(--font-mono, ui-monospace, Menlo, monospace)', whiteSpace: 'pre'}}>{l}</text>
+            <text x={50} y={52 + i * 13} className="dp-ink dp-mono" style={{fontSize: 10.5, whiteSpace: 'pre'}}>{l}</text>
           </g>) : <text x={16} y={60} className="dp-ink-dim">{path ? 'No reading of the file' : 'Click a file in the tree to read it here'}</text>}
         </g>
       </svg>

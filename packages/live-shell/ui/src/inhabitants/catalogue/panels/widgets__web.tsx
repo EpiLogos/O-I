@@ -41,7 +41,7 @@ function PageView({p, w, h, pager, size = 9, press}: {p: ViewProps; w: number; h
     {pg.lines.slice(0, fit).map((line, i) => { const y = 28 + i * lh, marks = mark ? (pg.used ?? []).filter(u => u[0] === i) : []
       return <g key={i}>
         {marks.map((m, j) => { const a = Math.min(m[1], room), b = Math.min(m[2], room); return b > a ? <rect key={j} x={6 + a * cw} y={y - size + 1} width={(b - a) * cw} height={size + 2} className="dp-fill" stroke="var(--dp-value)" strokeWidth={.6} /> : null })}
-        <text x={6} y={y} className="dp-ink-dim" style={{fontSize: size, fontFamily: 'var(--font-mono, ui-monospace, Menlo, monospace)', whiteSpace: 'pre'}}>{line.slice(0, room)}</text>
+        <text x={6} y={y} className="dp-ink-dim dp-mono" style={{fontSize: size, whiteSpace: 'pre'}}>{line.slice(0, room)}</text>
       </g> })}
     {mark && !pg.used && <text x={w - right - 2} y={h - 4} textAnchor="end" className="dp-axis">no reading of the used text</text>}
     {pager && pages!.map((x, i) => <circle key={x.url} cx={w - 8} cy={dotY(i)} r={2.2} fill={i === idx ? 'var(--dp-value)' : 'none'} className={i === idx ? undefined : 'dp-faint'} />)}

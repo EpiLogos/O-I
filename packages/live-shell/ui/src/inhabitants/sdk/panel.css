@@ -141,7 +141,7 @@
 /* A picture the device draws itself (Display raw): it fills the well and is clipped to it. */
 .dp-display[data-raw="true"] { display: grid; place-items: center; }
 .dp-display[data-raw="true"] > * { max-width: 100%; max-height: 100%; }
-.dp-display-corner { position: absolute; top: 3px; right: 5px; font-size: 9.5px; color: var(--text-dim); font-variant-numeric: tabular-nums; pointer-events: none; }
+.dp-display-corner { position: absolute; top: 3px; right: 5px; padding: 0 3px; border-radius: 2px; background: color-mix(in srgb, var(--dp-well, #121519) 72%, transparent); font-size: 9.5px; color: var(--text-dim); font-variant-numeric: tabular-nums; pointer-events: none; }
 .dp-display .dp-grid { stroke: var(--dp-grid); stroke-width: 1; fill: none; }
 .dp-display .dp-curve { stroke: var(--dp-value); stroke-width: 1.5; fill: none; }
 .dp-display .dp-curve-on { stroke: var(--dp-on); stroke-width: 1.5; fill: none; }
@@ -261,3 +261,17 @@
 
 /* One closed choice in a radio: at 40 % strength, as a disabled control is; the status bar says why. */
 .dp-radio > button[data-why="true"] { opacity: .4; }
+
+/* Rows you can reorder: the chosen row carries ▲ ▼. */
+.dp-row-move { flex: none; display: inline-flex; gap: 1px; }
+.dp-row-move > button { width: 13px; height: 13px; padding: 0; font-size: 7px; line-height: 13px; background: var(--dp-field, #2b2e33); border: 0; color: var(--text-dim); cursor: pointer; }
+.dp-row-move > button:disabled { opacity: .4; cursor: default; }
+/* A colour you choose: the swatch, then its value. */
+.dp-swatch { display: inline-flex; align-items: center; gap: 4px; height: 16px; cursor: pointer; }
+.dp-swatch > input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.dp-swatch::before { content: ''; width: 14px; height: 14px; border: 1px solid var(--line-strong, #3d4147); background: var(--swatch); }
+.dp-swatch-value { font-size: 10px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+/* A tile's badge, after its title: a mark the widget's place gives it (from outside, waiting). */
+.dp-tile-badge { flex: none; font-size: 9px; color: var(--text-faint); }
+/* Text in a well that is code, a path or a diff: the shell's monospace. */
+.dp-mono { font-family: var(--mono, ui-monospace, monospace); }
