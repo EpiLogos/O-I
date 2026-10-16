@@ -277,7 +277,7 @@ const SAYS = {
 }
 
 /** The head: the light reads the owner alone, hollow when it reports none; pressing it asks, unless the host stands it disabled. */
-const head = (p: ViewProps) => ({light: lampOf(p), onLight: st(p, 'light').disabled ? undefined : () => p.set('light', lightOf(p) === 'lit' ? 'dark' : 'lit'), onFold: p.nav.fold, onFull: p.nav.full})
+const head = (p: ViewProps) => ({light: lampOf(p), onLight: st(p, 'light').disabled ? undefined : () => p.set('light', lightOf(p) === 'lit' ? 'dark' : 'lit'), lightWhy: st(p, 'light').disabled, onFold: p.nav.fold, onFull: p.nav.full})
 
 /** What the status bar says of a control: what it does, then why it cannot act, then the owner's refusal. */
 const saysOf = (does: string, s: Standing) => [does, s.disabled, s.refused ? `The owner refused: ${s.refused}` : undefined].filter(Boolean).join(' ')
