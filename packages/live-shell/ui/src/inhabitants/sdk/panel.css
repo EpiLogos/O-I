@@ -252,3 +252,4 @@
    projections/atlas/src/style/main.css:244, draws its title in a 2–3 rem serif and is loaded after the kit): the same values as `.dp-title`,
    at the specificity of the head. */
 .dp-head .dp-title { margin: 0; font-family: inherit; font-size: 11px; font-weight: 600; line-height: inherit; letter-spacing: normal; }
+.dp-tile-head .dp-activator { width: 10px; height: 10px; }

@@ -529,11 +529,12 @@ export function Folded({title, light, readings = [], onUnfold}: {readonly title:
 }
 
 /** A widget tile on the rail: one square (1) or two side by side (2). `onClose` takes it off the rail. */
-export function Tile({title, light, span = 1, onFull, onClose: ownClose, children}: {readonly title: string; readonly light: LightState; readonly span?: 1 | 2; readonly onFull?: () => void; readonly onClose?: () => void; readonly children: ReactNode}) {
+export function Tile({title, light, span = 1, onFull, onClose: ownClose, onLight, lightWhy, children}: {readonly title: string; readonly light: LightState; readonly span?: 1 | 2; readonly onFull?: () => void; readonly onClose?: () => void; readonly onLight?: () => void; readonly lightWhy?: string; readonly children: ReactNode}) {
   const onClose = ownClose ?? useContext(PlaceContext).onClose
   return <section className="dp-tile" data-span={span} aria-label={title}>
     <header className="dp-tile-head">
-      <Lamp state={light} />
+      {/* The tile's light reads the owner; where the owner can turn the device on or off, pressing it asks, as the plate's activator does. */}
+      {onLight || lightWhy ? <Activator title={title} light={lightIn(light)} onLight={onLight} why={lightWhy} /> : <Lamp state={light} />}
       <span className="dp-tile-title">{title}</span>
       {onFull && <button type="button" className="dp-full" aria-label={`Open ${title} full in a pane`} data-i={said('Open full', 'Open the device full size in the pane that has focus.')} onClick={onFull}><PopOut size={10} /></button>}
       {onClose && <button type="button" className="dp-full" aria-label={`Take ${title} off the rail`} data-i={said('Close', 'Take the device off the rail. It stays on its chain.')} onClick={onClose}>✕</button>}
