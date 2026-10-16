@@ -15,7 +15,7 @@ pub fn handle<R: Runtime>(app: &AppHandle<R>, request: &Request<Vec<u8>>) -> Res
         }
         #[cfg(all(debug_assertions, not(feature = "native_shell")))]
         {
-            return oi_cradle_kernel::application_asset::read_development_asset(key).map(|bytes| (bytes, "development-build"));
+            oi_cradle_kernel::application_asset::read_development_asset(key).map(|bytes| (bytes, "development-build"))
         }
         #[cfg(any(not(debug_assertions), feature = "native_shell"))]
         None

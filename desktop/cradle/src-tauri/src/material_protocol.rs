@@ -84,7 +84,11 @@ fn handle<R: Runtime>(app_handle: &AppHandle<R>, request: &Request<Vec<u8>>) -> 
     // Through the kernel's one dispatch (files::read_material), as the dev bridge's /material route already reads: the listing and
     // the bytes are prepared owner reads, so a document's material never holds the kernel lock while Central answers.
     let host = app_handle.state::<KernelHost>();
-    let (target, bytes) = match oi_cradle_kernel::files::read_material(&host.0, &location, &relative) {
+    // Each op the route dispatches writes its timing line (kernel dispatch.rs `trace_op`).
+    let mut trace = |name: &str, ok: bool, total: std::time::Duration, timing: &oi_cradle_kernel::dispatch::Timing| {
+        oi_cradle_kernel::dispatch::trace_op("native", name, ok, total, timing)
+    };
+    let (target, bytes) = match oi_cradle_kernel::files::read_material_observed(&host.0, &location, &relative, &mut trace) {
         Ok(read) => read,
         Err(MaterialRouteError::Forbidden(message)) => return refuse(StatusCode::FORBIDDEN, &message),
         Err(MaterialRouteError::NotFound(message)) => return owner_error(&message),

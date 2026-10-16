@@ -129,7 +129,8 @@ fn development_repository() -> Option<PathBuf> {
 /// kernel-side observation lease) and changing nothing there: it may run
 /// outside the kernel lock (owner_read.rs `PreparedRead`). Named one by one:
 /// every other kind — a publish, a contribution, presence, a stage move, a
-/// grant, a lease release — is applied in order under the lock.
+/// grant, a lease release, an observation's stop — touches no kernel state
+/// and runs free of the lock (dispatch.rs, lane W3).
 pub fn is_read(request: &Value) -> bool {
     matches!(
         request["kind"].as_str(),

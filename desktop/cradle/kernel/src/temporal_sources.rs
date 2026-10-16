@@ -959,13 +959,7 @@ pub(crate) fn factory_runs_read(
         Ok(world) => world,
         Err(words) => return silent(AbsenceReason::OwnerUnreadable, words),
     };
-    let located = match crate::factory::owner(
-        OwnerRequest::Locate {
-            project: None,
-            all: true,
-        },
-        Some(&world),
-    ) {
+    let located = match locate_remembering(&world) {
         Ok(located) => located,
         Err(error) => return silent(owner_failure_reason(&error), error.message),
     };
@@ -1035,6 +1029,11 @@ pub(crate) fn factory_runs_read(
         ) {
             Ok(reading) => reading,
             Err(error) => {
+                // A located source whose day reading fails is located again
+                // on the next read: its remembered location may be stale.
+                if let Some(root) = row.get("root").and_then(Value::as_str) {
+                    forget_location(root);
+                }
                 failures.push(factory_absence(
                     owner_failure_reason(&error),
                     error.message,
@@ -1061,6 +1060,125 @@ pub(crate) fn factory_runs_read(
         absences.extend(absent_roots.into_iter().next());
     }
     FactoryReading { events, absences }
+}
+
+/// Factory's own locate answers, remembered per root for the World epoch
+/// (lane W3). Each temporal read used to ask `factory project locate` of the
+/// root and every Work project (17 processes against the real ground, 13 of
+/// them refused the same way every time: no `.factory` there). A root's
+/// answer is kept for the World that named it — the Central root and its Work
+/// projects, by name and path — and the Factory executable that gave it, and
+/// served while what the answer stood on still stands:
+///
+/// - `absent` while the root still has no `.factory` directory (the premise
+///   the row was classified on, factory.rs `locate_row`);
+/// - `located` while the state file it names is still there; a day reading
+///   that fails forgets it (`forget_location`), so the next read locates
+///   that root again;
+/// - `refused` while the root's `.factory` directory is still there.
+///
+/// A new World (a project added, moved or renamed), a new Factory executable
+/// or a ground bind (`forget_factory_locations`) asks again. Nothing here is
+/// the kernel's own answer: each row is the owner's, verbatim.
+type LocateKey = (crate::knowledge::AikitIdentity, String);
+static FACTORY_LOCATIONS: std::sync::OnceLock<
+    std::sync::Mutex<std::collections::HashMap<LocateKey, (String, Value)>>,
+> = std::sync::OnceLock::new();
+
+fn factory_locations(
+) -> std::sync::MutexGuard<'static, std::collections::HashMap<LocateKey, (String, Value)>> {
+    FACTORY_LOCATIONS
+        .get_or_init(Default::default)
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner())
+}
+
+/// The Factory executable a locate reaches, by path and file identity.
+fn factory_identity() -> crate::knowledge::AikitIdentity {
+    let (executable, _) = crate::factory::owner_executable();
+    crate::knowledge::AikitIdentity::pinned(executable.as_os_str(), None)
+}
+
+/// The World epoch a locate answer belongs to: the roots the World names.
+fn world_epoch(roots: &[(Option<String>, PathBuf)]) -> String {
+    use sha2::{Digest, Sha256};
+    let mut digest = Sha256::new();
+    for (project, root) in roots {
+        digest.update(project.as_deref().unwrap_or("").as_bytes());
+        digest.update([0]);
+        digest.update(root.as_os_str().as_encoded_bytes());
+        digest.update([0]);
+    }
+    format!("{:x}", digest.finalize())
+}
+
+/// A remembered row still stands on what it was answered on.
+fn still_stands(row: &Value, root: &std::path::Path) -> bool {
+    match row.get("state").and_then(Value::as_str) {
+        Some("absent") => !root.join(".factory").exists(),
+        Some("refused") => root.join(".factory").exists(),
+        Some("located") => row
+            .pointer("/location/statePath")
+            .and_then(Value::as_str)
+            .is_some_and(|state| std::path::Path::new(state).exists()),
+        _ => false,
+    }
+}
+
+/// Factory source discovery over every root the World names, asking the
+/// owner only for the roots whose answer this World epoch does not already
+/// hold. The answer is the discovery `factory::owner` gives
+/// (`oi.factory-source-discovery/v1`, one row per root in World order).
+pub(crate) fn locate_remembering(world: &Value) -> Result<Value, crate::material::Error> {
+    let roots = crate::factory::locate_roots(world, None, true)?;
+    let epoch = world_epoch(&roots);
+    let identity = factory_identity();
+    let key = |root: &std::path::Path| (identity.clone(), root.to_string_lossy().into_owned());
+    let mut rows: Vec<Option<Value>> = {
+        let held = factory_locations();
+        roots
+            .iter()
+            .map(|(_, root)| {
+                held.get(&key(root))
+                    .filter(|(at, row)| *at == epoch && still_stands(row, root))
+                    .map(|(_, row)| row.clone())
+            })
+            .collect()
+    };
+    let asked: Vec<(Option<String>, PathBuf)> = roots
+        .iter()
+        .zip(&rows)
+        .filter(|(_, held)| held.is_none())
+        .map(|(root, _)| root.clone())
+        .collect();
+    let mut answered = crate::factory::locate_each(asked.clone()).into_iter();
+    {
+        let mut held = factory_locations();
+        for ((_, root), row) in roots.iter().zip(rows.iter_mut()) {
+            if row.is_some() {
+                continue;
+            }
+            let answer = answered
+                .next()
+                .unwrap_or_else(|| json!({"state": "refused", "error": "locate worker failed"}));
+            held.insert(key(root), (epoch.clone(), answer.clone()));
+            *row = Some(answer);
+        }
+    }
+    Ok(json!({
+        "contract": "oi.factory-source-discovery/v1",
+        "locations": rows.into_iter().flatten().collect::<Vec<_>>(),
+    }))
+}
+
+/// Forget one root's remembered locate answer.
+fn forget_location(root: &str) {
+    factory_locations().retain(|(_, at), _| at != root);
+}
+
+/// Forget every remembered locate answer: a ground bind re-based every root.
+pub(crate) fn forget_factory_locations() {
+    factory_locations().clear();
 }
 
 /// One named absence for the Factory stream, with the source it names when the
@@ -1327,15 +1445,21 @@ pub fn read_field(
             reason: format!("temporal query serialisation failed: {error}"),
         })?
     );
-    if let Some(cached) = cache
-        .lock()
-        .expect("temporal read cache lock")
-        .get(&cache_key, crate::read_cache::HORIZON_TTL)
-    {
-        return serde_json::from_value(cached).map_err(|error| TemporalEventsError::CivilTime {
-            reason: format!("retained temporal answer unreadable: {error}"),
-        });
-    }
+    // The answer is retained under a ticket taken before its owners are
+    // asked: a write the kernel carried meanwhile (a NOW, Day, receiving or
+    // Factory receipt, `retire_answers`) withdraws it, so the answer read
+    // across the write is given to its caller and never retained.
+    let ticket = {
+        let mut held = cache.lock().expect("temporal read cache lock");
+        if let Some(cached) = held.get(&cache_key, crate::read_cache::HORIZON_TTL) {
+            return serde_json::from_value(cached).map_err(|error| {
+                TemporalEventsError::CivilTime {
+                    reason: format!("retained temporal answer unreadable: {error}"),
+                }
+            });
+        }
+        held.begin(cache_key.clone())
+    };
 
     let owner = client
         .owner_direct_from_env()
@@ -1469,15 +1593,27 @@ pub fn read_field(
             // Every stream that swallowed its failure names it here; the five
             // others fail the whole reading by name and never reach this list.
             answer.absences = factory_absences;
-            cache.lock().expect("temporal read cache lock").put(
-                cache_key,
+            let retained =
                 serde_json::to_value(&answer).map_err(|error| TemporalEventsError::CivilTime {
                     reason: format!("temporal answer serialisation failed: {error}"),
-                })?,
-            );
+                })?;
+            let mut held = cache.lock().expect("temporal read cache lock");
+            if held.finish(&cache_key, ticket) {
+                held.put(cache_key, retained);
+            }
             Ok(answer)
         },
     )
+}
+
+/// Retire the temporal field's retained answers and every read in flight
+/// (their tickets): a write the kernel carried moved a ground the field reads
+/// (owner_write.rs). The Factory locate memo is the World epoch's and stays.
+pub(crate) fn retire_answers(cache: &std::sync::Mutex<crate::read_cache::OwnerReadCache>) {
+    cache
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner())
+        .invalidate_prefix(TEMPORAL_CACHE_PREFIX);
 }
 
 /// The envelope's automatic-reading refusal flag — one check, shared by
@@ -2106,6 +2242,61 @@ mod read_field_tests {
                 source_ref: None,
             }]
         );
+    }
+
+    /// Lane W3: Factory's locate answers are remembered for the World epoch.
+    /// A later read (its answer not retained — a write retired it) asks no
+    /// locate while the root still stands as answered; a root that gains a
+    /// Factory state is asked again; a ground bind forgets every answer.
+    #[test]
+    fn factory_locations_are_remembered_for_the_world_epoch() {
+        let _env = owner_env();
+        let owner = FakeOwner::new("factory-memo", &nowlist(&["ref-a"]), THOUGHTS_REPLY);
+        let cache = Mutex::new(crate::read_cache::OwnerReadCache::default());
+        let read = || {
+            retire_answers(&cache);
+            read_field(
+                &owner.client(),
+                &cache,
+                &[],
+                owner.directory.clone(),
+                &span_window(),
+            )
+            .unwrap()
+        };
+        let locate = format!("project locate {} --json", owner.directory.display());
+        let located = |owner: &FakeOwner| {
+            owner
+                .factory_calls()
+                .iter()
+                .filter(|call| **call == locate)
+                .count()
+        };
+        let first = read();
+        assert_eq!(located(&owner), 1);
+        let second = read();
+        assert_eq!(located(&owner), 1, "the absent root is not asked again");
+        assert_eq!(
+            first.absences, second.absences,
+            "the remembered answer is the owner's own"
+        );
+        // The premise moved: the root has a `.factory` now.
+        std::fs::create_dir_all(owner.directory.join(".factory")).unwrap();
+        read();
+        assert_eq!(
+            located(&owner),
+            2,
+            "a root that gained a Factory state is asked"
+        );
+        read();
+        assert_eq!(
+            located(&owner),
+            2,
+            "its refusal is remembered while it stands"
+        );
+        forget_factory_locations();
+        read();
+        assert_eq!(located(&owner), 3, "a ground bind forgets every location");
     }
 
     #[test]

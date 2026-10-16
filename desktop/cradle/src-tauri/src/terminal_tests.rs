@@ -72,7 +72,7 @@ fn a_malformed_carried_command_is_refused_before_any_spawn() {
         vec![],
         vec!["-ls".into()],
         vec!["sh".into(), String::from("a\0b")],
-        vec!["sh".into(), String::from(" ".repeat(300))],
+        vec!["sh".into(), " ".repeat(300)],
     ] {
         assert!(
             start(cwd.clone(), dims, Some(bad)).is_err(),
