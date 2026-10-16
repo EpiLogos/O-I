@@ -53,3 +53,30 @@
 .mode-transport.one-transport .bar-tool-full { display: none }
 .mode-transport.one-transport .bar-tool-abbr { display: inline }
 .mode-transport.one-transport .bar-tools { padding: 0 }
+
+/* The fold (fold.ts, lane F; the lead saw it at 1372 px: "Repe", "Pulse", "Glob" and a "Running" over the Map slot and the mode
+   icons). A chooser is never cut short: an owner's chooser in the bar shows its whole choice (the shell's 54px cap is for the
+   old bars). The bar never draws past its box: short of room, an owner's control in a marked slot folds to the slot's mark — one
+   cell, the mockup's (the draw slot's ✎) — and the mark's press opens the control, whole, beneath it (it opens leftward from
+   the mark, inside the bar's width); open, the body lays its controls in the row as before. The x-clip is the last guard:
+   nothing of the bar ever lies over the mode icons. */
+.mode-transport.one-transport { min-width: 0; overflow-x: clip }
+/* a chooser is as wide as its current choice (field-sizing), never its longest option and never the old 54px cut; past 160px a
+   very long choice (a scale's full name) gives way, and the whole name stays its title */
+.mode-transport.one-transport .transport-slot select { field-sizing: content; max-width: 160px }
+.one-transport .transport-slot:has(> .transport-fold-body) { position: relative }
+.one-transport .transport-fold-body { display: contents }
+.mode-transport.one-transport .transport-fold-mark { display: none }
+.mode-transport.one-transport .transport-slot[data-fold] > .transport-fold-mark { display: inline-block }
+.one-transport .transport-slot[data-fold] > .transport-fold-body { display: none }
+.one-transport .transport-slot[data-fold=open] > .transport-fold-body { display: flex; position: absolute; top: calc(100% + 5px); right: -4px; z-index: 60;
+  align-items: center; gap: 2px; padding: 3px 4px; border: 1px solid var(--line-strong, var(--line)); background: var(--bg-1) }
+.mode-transport.one-transport .transport-slot[data-fold=open] > .transport-fold-mark { border-color: var(--accent) }
+/* opened beneath its mark, the owner's stage tool rail has the room for its own names */
+.mode-transport.one-transport .transport-slot[data-fold=open] .bar-tool-full { display: inline }
+.mode-transport.one-transport .transport-slot[data-fold=open] .bar-tool-abbr { display: none }
+/* an unread loop length is Live's empty "—", drawn at its own width: the 79px field is for a length the owner reads (it gave
+   the room the scale group's readings were squeezed out of at 1440 px) */
+.mode-transport.one-transport .position-field[data-slot=loop-length][data-unread] { min-width: 0 }
+/* the owner's stage tool rail lights the tool in force (its aria-pressed is the frame's reading) */
+.mode-transport.one-transport .bar-tool[aria-pressed=true] { color: var(--accent) }

@@ -130,12 +130,32 @@ export function nextFrame(run: (time: number) => void): Cancel {
   return cancel;
 }
 
-/** Observe a target with an observer the port created, disconnected on dispose. Observes nothing when no lifetime is live. */
-export function watch(observer: {observe(target: Element): void; disconnect(): void}, target: Element): void {
+/** Observe a target with an observer the port created, disconnected on dispose. Observes nothing when no lifetime is live.
+ * Returns the disconnection (a no-op when no lifetime is live), for an observer that retires before the atlas does. */
+export function watch(observer: {observe(target: Element): void; disconnect(): void}, target: Element): Cancel {
   const life = current;
-  if (!life) return;
+  if (!life) return noop;
   observer.observe(target);
-  life.releases.add(() => observer.disconnect());
+  const cancel: Cancel = () => {
+    observer.disconnect();
+    life.releases.delete(cancel);
+  };
+  life.releases.add(cancel);
+  return cancel;
+}
+
+/**
+ * Follow the size of the element the atlas lays out in (lane F, the owner, 16 Oct: "the resizing of the pane content per the
+ * changes to viewport size with sidebar toggle changes"). The found app was a page: its window was its viewport, so it
+ * re-measured on the window's resize alone. Hosted, the atlas is a pane in the shell's own document, and a pane changes size
+ * without the window changing (the browser, the widget rail or the detail area toggled, a split moved): only an observer of the
+ * pane sees that. `onSize` runs at once when the observation starts (the observer's first report), then on every change of
+ * the target's box, released with the atlas lifetime. Where the platform has no ResizeObserver nothing is observed (the
+ * window's resize stays the caller's own).
+ */
+export function followSize(target: Element, onSize: () => void): Cancel {
+  if (!current || typeof ResizeObserver === 'undefined') return noop;
+  return watch(new ResizeObserver(() => onSize()), target);
 }
 
 /** requestIdleCallback, cancelled on dispose; where the platform has none, a timer of `fallbackMs`. */

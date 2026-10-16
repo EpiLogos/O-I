@@ -248,8 +248,18 @@ input { min-width:0; border:1px solid var(--line); background:var(--bg-1); paddi
 .statusbar { padding:0 4px; gap:8px; border:none; font-size:10px }
 .statusbar-info { width:14px; height:14px; border-radius:50%; background:var(--bg-3); display:grid; place-items:center; font-weight:bold }
 /* The Info view (the mockup's .sb .info): what the pointer is over, read in the bar; idle, how to use it. */
-.statusbar-info-line { flex:1; min-width:0; height:20px; padding:2px 8px; line-height:16px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; background:var(--bg-0); color:var(--text-dim) }
+/* It has its room first (lane F; natively the run context's admission list crushed it to one letter, "C", "E", "L"…): it never
+   narrows below its floor and takes all the room left; the readings beside it give way to it, never the other way round. */
+.statusbar-info-line { flex:1 1 0; min-width:min(45%, 560px); height:20px; padding:2px 8px; line-height:16px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; background:var(--bg-0); color:var(--text-dim) }
 .statusbar-info-line b { color:var(--text); font-weight:500; margin-right:6px }
+/* The readings to its right shorten to what fits, each whole in its title (the Info line reads it on hover): the run context
+   ellipsizes; the owner readback shows its count and folds its admitted rows away (a failed owner stays in the bar, in --rec);
+   the aperture and the Clip | Device switch keep their size, the Scene's name its own 90–140px. */
+.statusbar > :is(.statusbar-counts, .statusbar-error) { flex:0 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis }
+.statusbar > :is(.statusbar-aperture, .status-detail-views) { flex:none }
+.statusbar > .owner-readback { flex-shrink:4 }
+.statusbar .owner-readback-row:not([data-owner-state="failed"]) { display:none }
+.statusbar .owner-readback-summary { min-width:0; overflow:hidden; text-overflow:ellipsis }
 .statusbar-track { min-width:90px; max-width:140px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; color:var(--text-dim) }
 .statusbar-mini-meter { color:var(--accent); font-size:17px; line-height:18px }
 .browser-resizer { position:absolute; left:calc(var(--browser-w) + 2px); top:var(--transport-h); bottom:calc(var(--detail-h) + 28px); width:6px; cursor:col-resize; z-index:3; touch-action:none }

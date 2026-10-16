@@ -201,7 +201,8 @@ test('the focused Factory tab routes the Device side through the existing device
 
 test('an instrument opens as a pane inside the tree, never by leaving the centre (the browser\'s Instruments, FOUNDATION F2)', () => {
   assert.doesNotMatch(app, /TechneLensBar/, 'the lens bar is gone; its instruments are in the browser')
-  assert.match(nativeWorkbench, /publishInstrumentOpener\(\(kind, at, subject\) => latest\.current\.book\.setLayout\(layout => openInstrumentAt\(layout, kind, at, subject\)\)\)/, 'the presented tree is the one door an instrument opens through')
+  // lane F (F2): the same door also answers 'in-view' (a palace entered brings the Earth into view: instrumentDoor.ts instrumentInView)
+  assert.match(nativeWorkbench, /publishInstrumentOpener\(\(kind, at, subject\) => latest\.current\.book\.setLayout\(layout => at === 'in-view' \? instrumentInView\(layout, kind, subject\) : openInstrumentAt\(layout, kind, at, subject\)\)\)/, 'the presented tree is the one door an instrument opens through')
 })
 
 test('the Workbench tree mounts the agent surface from the tree conversation, and admits no kernel surface for it', () => {

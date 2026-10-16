@@ -25,7 +25,7 @@ import { FocusLabel, type LabelContent } from '../ui/focus-label';
 import { DeepSheet, type DeepTarget } from '../ui/deep';
 import { Floats, type FloatItem, type FloatTarget } from '../ui/floats';
 import { HoverLabel } from '../ui/hover-label';
-import { hostOrigin, hostSize } from '../ui/hostSize';
+import { hostElement, hostOrigin, hostSize } from '../ui/hostSize';
 import { Reveal } from '../ui/reveal';
 import { SearchUI } from '../ui/search';
 import { Strip } from '../ui/strip';
@@ -55,7 +55,7 @@ import { dataWithWindow } from '../sky/sidecar';
 import type { CuratedPerson } from '../astro/charts';
 import { loadLensData } from '../lenses/ui';
 import { SkyTies } from '../sky/ties';
-import { later, listen, whenIdle } from '../ui/lifetime';
+import { followSize, later, listen, whenIdle } from '../ui/lifetime';
 import { systemViewLatLon } from '../sky/frames';
 import { approachDist, EARTH_FIELD_EXIT, isSkyApproachBody, skyMaxDist, SETTLE, STAGE_EDGES, SKY_ENTER, SKY_EXIT, SYSTEM_VIEW_ELEVATION, systemHomeDist, systemViewLongitude } from '../sky/stages';
 import { BODY_KEYS, type BodyKey } from '../types/sky';
@@ -296,7 +296,12 @@ export class Controller {
     // window listeners are released with the atlas lifetime (ui/lifetime.ts): a closed pane leaves none of them bound
     listen(window, 'keydown', this.onKey);
     listen(window, 'hashchange', this.onHash);
-    listen(window, 'resize', () => { this.syncRig(); this.syncShift(); this.strip.recenter(); this.measureLabel(); this.syncGraphInsets(); });
+    const relayout = () => { this.syncRig(); this.syncShift(); this.strip.recenter(); this.measureLabel(); this.syncGraphInsets(); };
+    listen(window, 'resize', relayout);
+    // hosted, the pane changes size without the window (a browser, rail or detail toggle, a split): the same handlers follow the
+    // pane's box (ui/lifetime.ts followSize). The engine observed its own parent first, so its size is current when these read it
+    // (resize observers report in the order they were made).
+    followSize(hostElement(this.root) ?? this.root, relayout);
     engine.onFrame((dt) => this.tick(dt));
     // the sky's data is fetched at idle, so the first pull-back never waits on it (audit S3 (d)); never on the boot path
     whenIdle(() => this.requestSky(), 4000, 1500);
