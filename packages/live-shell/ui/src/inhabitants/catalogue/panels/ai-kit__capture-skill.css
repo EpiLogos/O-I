@@ -1,0 +1,45 @@
+/* Capture skill: the proposed skill as a page with the example beside it, and the widget's tile. Shell and panel tokens only. */
+.cs-mark { width: 44px; height: 44px; display: grid; place-items: center; color: var(--text, #d4d7da); }
+.cs-stack { display: flex; flex-direction: column; gap: 3px; width: 100%; }
+.cs-stack > * { width: 100%; }
+.cs-stack .dp-cell { align-self: stretch; align-items: stretch; }
+.cs-stack .dp-action { width: 100%; }
+
+/* The pane: the proposed skill on the left, the example it came from on the right. */
+.cs-full { flex-direction: row; color: var(--text, #d4d7da); font: 12px/1.5 var(--font-ui, sans-serif); }
+.cs-page { flex: 1 1 58%; min-width: 0; padding: 14px 22px; overflow: hidden; }
+.cs-example { flex: 1 1 42%; min-width: 0; padding: 14px 22px; overflow: hidden; background: var(--bg-0, #26292d); border-left: 1px solid var(--line, #24262a); }
+.cs-page h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 6px; font-size: 14px; font-weight: 600; }
+.cs-page h3 small { font-size: 11px; font-weight: 400; color: var(--text-faint, #71767c); }
+.cs-page h3 .wood { color: var(--text, #d4d7da); }
+.cs-page h4, .cs-example h4 { margin: 12px 0 4px; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--text-dim, #a2a7ad); }
+.cs-example h4 { margin-top: 0; }
+.cs-lead { max-width: 64ch; margin: 0; font-size: 11.5px; color: var(--text-dim, #a2a7ad); }
+.cs-lead b { font-weight: 600; color: var(--text, #d4d7da); }
+.cs-none { margin: 0; color: var(--text-faint, #71767c); font-style: italic; }
+.cs-steps { margin: 0; padding-left: 20px; }
+.cs-steps li { padding: 2px 0; border-bottom: 1px solid color-mix(in srgb, var(--line, #24262a) 70%, transparent); }
+.cs-steps li b { font-weight: 500; }
+.cs-steps li span { margin-left: 10px; font-size: 10.5px; color: var(--text-faint, #71767c); font-variant-numeric: tabular-nums; }
+.cs-steps li i { display: inline-flex; align-items: center; gap: 4px; margin-left: 10px; font-style: normal; font-size: 10.5px; color: var(--text-dim, #a2a7ad); vertical-align: middle; }
+.cs-find, .cs-like { list-style: none; margin: 0; padding: 0; }
+.cs-find li { display: flex; gap: 10px; padding: 3px 0; color: var(--stall, #ff9b4a); }
+.cs-find li span { color: var(--text-dim, #a2a7ad); }
+.cs-like li { display: grid; grid-template-columns: 16px auto minmax(0, 1fr); align-items: center; gap: 0 8px; padding: 2px 0; border-bottom: 1px solid color-mix(in srgb, var(--line, #24262a) 70%, transparent); }
+.cs-like li b { font-weight: 500; white-space: nowrap; }
+.cs-like li em { font-style: normal; font-size: 10.5px; color: var(--dp-value, #5cc6b4); font-variant-numeric: tabular-nums; }
+.cs-like li span { grid-column: 2 / -1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10.5px; line-height: 1.35; color: var(--text-faint, #71767c); }
+.cs-beats { list-style: none; margin: 0; padding: 0; }
+.cs-beats li { display: grid; grid-template-columns: 34px 56px minmax(0, 1fr) 14px; align-items: baseline; gap: 8px; padding: 3px 0; border-bottom: 1px solid color-mix(in srgb, var(--line, #24262a) 70%, transparent); }
+.cs-beats li[data-dim="true"] { opacity: .4; }
+.cs-beats time { font-size: 10.5px; color: var(--text-faint, #71767c); font-variant-numeric: tabular-nums; }
+.cs-kind { font-size: 9px; letter-spacing: .07em; text-transform: uppercase; color: var(--text-faint, #71767c); }
+.cs-beats code { overflow-wrap: anywhere; font: 11px var(--font-mono, ui-monospace, monospace); color: var(--text, #d4d7da); }
+.cs-beats em { font-style: normal; font-size: 10px; text-align: center; color: var(--dp-on, #ffbe00); }
+
+/* The widget: the mark, the name and the state on the left, the answers on the right. */
+.cs-tile { flex: 1 1 auto; min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) 104px; gap: 8px; align-items: center; }
+.cs-tile-mark { display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 0; color: var(--text, #d4d7da); }
+.cs-tile-mark b { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10.5px; font-weight: 500; }
+.cs-tile-mark small { font-size: 9.5px; color: var(--text-dim, #a2a7ad); }
+.cs-tile-none { height: 44px; display: grid; place-items: center; color: var(--text-faint, #71767c); }
