@@ -116,7 +116,7 @@ function tableRows(deviceInstance: string, group: string, extra: Readonly<Record
     .map(row => ({...row, title: humanise(row.key), group, ...extra[row.key]}) as SdkParamRow)
 }
 
-const DAY_ABSENT = 'No Day is selected. Select one in the browser\'s ground.'
+const DAY_ABSENT = 'No Day reading yet: Central\'s ground answers for today, or select a Day in the browser\'s ground.'
 
 function dayRows(face: InhabitantFaceDeclaration, standing: DayDocumentStanding | null | undefined): SdkParamRow[] {
   const absent = standing?.state === 'uninitialised'
@@ -279,16 +279,16 @@ export const clipFaces = (faces: readonly InhabitantFaceDeclaration[]): Inhabita
 // ---------------------------------------------------------------------------
 // pictures
 
-/** What each device draws as its small live picture: the Day die its die; every other the mark its card carried in the rack
- * (inhabitants/inhabitantRack.tsx:113-119), and the one-line standing the owner's reading gives it. */
+/** What each device draws as its small live picture: the mark its card carried in the rack (inhabitants/inhabitantRack.tsx:113-119),
+ * and the one-line standing the owner's reading gives it. The Day draws none of these: its picture is its design's net (day.tsx,
+ * hosted by CentralDevices.tsx), and its Full is its page. */
 export interface CentralPicture {
-  readonly kind: KindShapeName | 'die'
+  readonly kind: KindShapeName
   readonly caption: string
 }
 
 export function centralPicture(faceId: string, reads: CentralReads): CentralPicture {
   switch (faceId) {
-    case 'day-die': return {kind: 'die', caption: reads.day?.face != null ? dieFaceLabel(reads.day.face) : reads.day?.standing ? `Day ${reads.day.standing.civilDate} · ${reads.day.standing.state}` : 'no Day stands'}
     case 'flow-document': return {kind: reads.flow ? 'doc' : 'ghost', caption: reads.flow ? reads.flow.path : 'no flow selected'}
     case 'nara-conversation': {
       const state = reads.nara?.state ?? 'no-expression'

@@ -114,8 +114,12 @@ test('every device is compact on the chain: a picture, at most four readings, no
   for (const id of FACES) {
     const device = deviceMarkup(markup, id)
     assert.match(device, /data-device-size="compact"/, id)
-    assert.match(device, /class="dv-picture"/, `${id} has its picture, in the kit's well`)
-    assert.match(device, /<svg[^>]*(?:role="img"|viewBox)/, `${id} draws a mark or a die`)
+    // The Day's picture is its design's net (lane BC, central-day-binding.test.mjs); with no ground read here its generic plate stands,
+    // its rows alone.
+    if (id === 'day-die') { assert.match(device, /data-device-design="generic"/); assert.doesNotMatch(device, /central-die-net/) } else {
+      assert.match(device, /class="dv-picture"/, `${id} has its picture, in the kit's well`)
+      assert.match(device, /<svg[^>]*(?:role="img"|viewBox)/, `${id} draws a mark`)
+    }
     assert.ok((device.match(/class="dv-param"/g) ?? []).length <= 4, `${id}: at most four controls drawn`)
     assert.match(device, /Show every setting in the pool/, `${id} opens whole (the press on the plate, said on its head)`)
     assert.match(device, /full size in a pane/, `${id} opens full (⤢)`)
@@ -123,14 +127,13 @@ test('every device is compact on the chain: a picture, at most four readings, no
   for (const entry of entries()) assert.ok(compactRows(entry.device.rows).length <= 4, `${entry.id}: at most four`)
 })
 
-test('the Day die\'s picture is the die: its net, the open face the owner\'s payload holds, no face inked when no Day stands', () => {
+test('the Day die\'s chain picture is its design\'s now (MOVED: the net and the face list → day.tsx\'s net and Face dial); its rows read the owner\'s face', () => {
   const bare = entries().find(entry => entry.id === 'central:day-die')
-  assert.match(compact(bare), /class="central-die-net" data-die-face=""/, 'no Day: no face inked')
+  assert.equal(bare.picture('compact'), null, 'no pop-out host: the generic plate keeps no picture of its own')
+  assert.doesNotMatch(compact(bare), /central-die-net|data-die-faces/)
   const reads = {day: {standing: ready, face: 3, revision: REVISION}}
   const lit = entries({reads, day: DAY}).find(entry => entry.id === 'central:day-die')
-  const markup = compact(lit)
-  assert.match(markup, /data-die-face="3"/, 'the open face is the payload\'s')
-  assert.match(markup, /fill="var\(--inh-ink\)"/, 'the open face is inked')
+  assert.doesNotMatch(compact(lit), /central-die-net|data-die-faces/)
   assert.equal(lit.device.values.face, '#3 Pattern — Observations', 'the face reads in the owners\' names')
   assert.equal(dayDie.dieFaceOf({meta: {face: 4}}), 4)
   assert.equal(dayDie.dieFaceOf({meta: {face: 9}}), 0, 'a face outside the die is no face')
@@ -187,7 +190,6 @@ test('the door shows the same device whole in the pool and full in a pane', () =
     const pool = html(createElement(DevicePool))
     assert.match(pool, /data-device-pool="central:day-die"/)
     assert.match(pool, /data-device-size="whole"/)
-    assert.match(pool, /class="central-die-net"/, 'the die stands whole too')
     assert.match(pool, /class="dp-sec-label">Die<[\s\S]*class="dp-sec-label">Source</, 'every setting, grouped')
     assert.match(pool, /data-param="source"/, 'the whole size shows the rows the compact one folds')
     const pane = html(createElement(DeviceFullPane, {id: 'central:day-die'}))
@@ -448,21 +450,15 @@ test('the Flow clip draws its material, revision and state over the hosted form,
   assert.doesNotMatch(html(createElement(flowClip.CentralFlowClip, {transport, location})), /pop-out/, 'no host door: no pop-out')
 })
 
-test('the Day die at whole and full is its net over the mockup\'s face list — index, name, role, the open face lit; the compact rack keeps the net alone', () => {
+test('MOVED — the die\'s face list no longer stands over its page: whole and compact draw no die picture, and full is the hosted form alone', () => {
   const reads = {day: {standing: ready, face: 3, revision: REVISION}}
   const die = entries({reads, day: DAY}).find(entry => entry.id === 'central:day-die')
-  const faces = markup => [...markup.matchAll(/<button[^>]*data-face="(\d)"[^>]*>/g)].map(match => match[0])
-  assert.doesNotMatch(html(die.picture('compact')), /data-die-faces/, 'compact: the net, no list')
-  const whole = html(die.picture('whole'))
-  assert.equal(faces(whole).length, 6, 'whole: six faces')
-  assert.deepEqual(faces(whole).filter(face => face.includes('data-open="true"')).map(face => face.match(/data-face="(\d)"/)[1]), ['3'], 'the open face is the owner\'s: #3, lit')
-  assert.match(whole, /<span class="d">3<\/span><span class="n">Pattern<\/span><span class="d">Observations<\/span>/, 'index · name · role, as the mockup\'s .dli')
-  assert.match(whole, /class="central-die-net"/, 'the net stays')
-  // full, over the hosted form: the list stands above the body
+  assert.equal(die.picture('compact'), null)
+  assert.equal(die.picture('whole'), null)
   const full = html(die.picture('full'))
-  assert.ok(full.indexOf('data-die-faces') > 0 && full.indexOf('data-die-faces') < full.indexOf('data-document-device="ql-daily-die"'), 'full: the face list above the hosted form')
-  // with no Day nothing is lit and no face is pressable
-  const bare = html(entries().find(entry => entry.id === 'central:day-die').picture('whole'))
-  assert.doesNotMatch(bare, /data-open="true"/)
-  assert.equal(faces(bare).filter(face => !face.includes('disabled')).length, 0, 'no Day: every face is dark')
+  assert.match(full, /data-document-device="ql-daily-die"/, 'the Day die\'s hosted form')
+  assert.doesNotMatch(full, /data-die-faces/, 'no plate controls in the pane: the design\'s Face dial and net turn the die in Device view')
+  // No Day document: the Day pane's own absence, in the owner's words (central/documents/CentralDocumentPane.tsx DayView).
+  const none = entries({reads: {day: {standing: uninitialised, face: null, revision: null}}, dayStanding: uninitialised}).find(entry => entry.id === 'central:day-die')
+  assert.match(html(none.picture('full')), /data-central-absence="uninitialised"[\s\S]*no native document yet/)
 })
