@@ -43,6 +43,11 @@ const {designKey} = await import('../src/frame/devices/designs.ts')
 const host = await import('../src/frame/devices/deviceHost.tsx')
 const bind = await import('../src/agent/devices/designBindings.ts')
 const tasks = await import('../src/agent/devices/taskBindings.ts')
+// The devices are of the families' admitted faces (lane BF3: the thread, tasks and attempt-review faces are admitted).
+const familyDoor = await import('../src/inhabitants/familyManifest.ts')
+familyDoor.resetFamilyManifestsForTest()
+;(await import('../src/inhabitants/loadAgentShellFamilies.ts')).loadAgentShellFamilies()
+;(await import('../src/inhabitants/worldShellFamilies.ts')).loadWorldShellFamilies()
 const {design: tasksDesign} = await import('../src/inhabitants/catalogue/panels/software-factory__tasks.tsx')
 const {design: runsDesign} = await import('../src/inhabitants/catalogue/panels/software-factory__attempt-review.tsx')
 
@@ -147,8 +152,8 @@ test('Tasks and Runs draw their designs on their bindings in all five views — 
 
 test('the chain publishes Tasks and Runs with their bindings, on the selected session and the task THE selection names', () => {
   const view = readFileSync(new URL('../src/agent/devices/FactoryDeviceChain.tsx', import.meta.url), 'utf8')
-  assert.match(view, /publishDevice\(TASKS_ID, \{device: tasks, binding: tasksDesignBinding\}\)/)
-  assert.match(view, /publishDevice\(RUNS_ID, \{device: runs, binding: runsDesignBinding\}\)/)
+  assert.match(view, /publishDevice\(TASKS_ID, tasks \? \{device: tasks, binding: tasksDesignBinding\} : null\)/)
+  assert.match(view, /publishDevice\(RUNS_ID, runs \? \{device: runs, binding: runsDesignBinding\} : null\)/)
   assert.match(view, /parseFactoryTaskRef\(selection\.ref\)/, 'the selected task is THE selection\'s clip')
   assert.match(view, /queue: async text => \{ const receipt = await write\(AGENT_P0_ROWS\.newTask, text\)/, 'a new task goes the Agent\'s new-task row')
   assert.deepEqual(readFileSync(new URL('../src/agent/devices/taskBindings.ts', import.meta.url), 'utf8').match(/#[0-9a-fA-F]{3,8}\b/g) ?? [], [], 'shell tokens only')

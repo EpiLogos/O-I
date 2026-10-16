@@ -225,7 +225,7 @@ test('with no session selected the chain draws the Main track, the Agency gatewa
   for (const [id, key] of [['GATEWAYS_RACK_ID', 'rack'], ['AGENCY_GATEWAY_ID', 'agency'], ['EXPERIMENT_ID', 'experiment'], ['FRAMES_ID', 'frames']]) {
     assert.match(view, new RegExp(`publishDevice\\(${id}, \\{device: main\\.${key}, binding: mainBindings\\.${key}\\}\\)`), `${key} is published with its binding`)
   }
-  assert.match(view, /\.\.\.MAIN_DEVICE_IDS\]\) publishDevice\(id, null\)/, 'and withdrawn with the chain')
+  assert.match(view, /\.\.\.MAIN_DEVICE_IDS, \.\.\.SESSION_DEVICE_IDS, \.\.\.RECEIPT_DEVICE_IDS,\s+\.\.\.WORKCELL_DEVICE_IDS\]\) publishDevice\(id, null\)/, 'and withdrawn with the chain')
   assert.doesNotMatch(read('agent/devices/mainTrackBindings.ts'), /\.defaults\[|\.fixtures|catalogue\/panels\//, 'the bindings read no design default or fixture')
   for (const file of ['agent/devices/mainTrackBindings.ts', 'agent/devices/factoryDevices.css', 'frame/widgets/deviceWidgets.tsx']) {
     assert.deepEqual(read(file).match(/#[0-9a-fA-F]{3,8}\b/g) ?? [], [], `${file}: shell tokens only`)

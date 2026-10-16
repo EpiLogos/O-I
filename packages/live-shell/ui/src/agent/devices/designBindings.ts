@@ -35,6 +35,8 @@ export const AGENT_DESIGN = 'actuation:harness-model'
 export const RACK_DESIGN = 'ai-kit:skillset-rack'
 export const MEMBER_DESIGN = 'ai-kit:skill-device'
 export const SCOPE_DESIGN = 'software-factory:context-write-mode'
+/** Git / landing, the chain's last device (DLW §19.19; its binding is workcellBindings.ts gitBinding, lane BF3). */
+export const LANDING_DESIGN = 'workcell:git-seat'
 
 /** The face of each chain slot the catalogue designs (agentDeviceCatalogue.ts CHAIN_SLOTS: one of the slot's admitted faces), so the
  * published device's `designKey(family, face.id)` is the design's id. The world slot's Scope is Software Factory's face (§19.14). */
@@ -43,6 +45,7 @@ export const SLOT_DESIGN_FACE: Readonly<Record<string, {family: string; faceId: 
   agent: {family: 'actuation', faceId: 'harness-model'},
   skillset: {family: 'ai-kit', faceId: 'skillset-rack'},
   world: {family: 'software-factory', faceId: 'context-write-mode'},
+  git: {family: 'workcell', faceId: 'git-seat'},
 }
 
 /** The member device: one chain inside the rack (§19.7), published under its own id. */
@@ -60,6 +63,7 @@ export const OWNER_LISTS: Readonly<Record<string, readonly string[]>> = {
   [RACK_DESIGN]: ['members'],
   [MEMBER_DESIGN]: ['members'],
   [SCOPE_DESIGN]: ['reads', 'writes'],
+  [LANDING_DESIGN]: ['commits', 'diff', 'checks'],
 }
 
 /** Why a design cannot be hosted on its owner yet (null: it can): not loaded, or it draws its own fixture where an owner list

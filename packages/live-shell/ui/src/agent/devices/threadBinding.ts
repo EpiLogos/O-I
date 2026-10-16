@@ -25,6 +25,7 @@ import type {EncounterAction, EncounterReading, EncounterStatus, NativePermissio
 import {describePermission} from '../../../../../../desktop/cradle/src/agent/chat/PermissionCard'
 import type {AgentSessionTrack} from '../agentRunModel'
 import {holdView, viewHolds, type ChainHolds} from './designBindings'
+import {familyFaceDevice} from './mainTrackBindings'
 
 type Obj = Record<string, unknown>
 const isObj = (value: unknown): value is Obj => !!value && typeof value === 'object' && !Array.isArray(value)
@@ -34,12 +35,11 @@ export const THREAD_DESIGN = 'software-factory:thread'
 /** The Thread's id on the door: one Thread for the session chain, the Agent's Full and the rail. */
 export const THREAD_DEVICE_ID = 'factory:thread'
 
-/** The Thread as a device of the runtime: Software Factory's thread face (designKey('software-factory', 'thread') is the design's id).
- * Its values are its design's, from the binding below; it declares no rows of the address table (none is addressed to it). The
- * family manifest admits no `thread` face yet (softwareFactoryFamilyManifest.ts) — proposed to its lane. */
-export function threadDevice(): DeviceInstance {
-  return {id: THREAD_DEVICE_ID, family: 'software-factory', rows: [], values: {},
-    face: {id: 'thread', title: 'Thread', icon: 'session', liveSemantic: 'device-instrument', note: 'One session\'s conversation: the Agent\'s Full (DLW §17.10, §19.3).'}}
+/** The Thread as a device of the runtime: Software Factory's admitted thread face (softwareFactoryFamilyManifest.ts; designKey(
+ * 'software-factory', 'thread') is the design's id). Its values are its design's, from the binding below; it declares no rows of the
+ * address table (none is addressed to it). Null when the family does not admit the face. */
+export function threadDevice(): DeviceInstance | null {
+  return familyFaceDevice(THREAD_DEVICE_ID, 'software-factory', 'thread', 'Thread', 'session')
 }
 
 // ---------------------------------------------------------------------------------------------------------------- the rows

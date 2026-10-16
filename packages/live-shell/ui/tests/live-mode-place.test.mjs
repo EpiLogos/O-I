@@ -97,7 +97,8 @@ test('Live · Session with no set: the framed grid — the stops down the right 
   assert.match(html, /data-tracks-view="session" data-empty="true"/)
   assert.match(html, /role="grid" aria-label="Session"/, 'the grid frame stands')
   assert.ok(dropReason(html), 'a reason stands inside the frame, where the tracks will stand')
-  assert.match(html, /aria-label="Stops"><div class="thd">Main<\/div>/, 'the Main stop column is drawn')
+  // The Main head is a track's head: a button that selects the Main track (lane BF3; SessionGrid.tsx MainHead).
+  assert.match(html, /aria-label="Stops"><button type="button" class="thd" aria-pressed="false" data-track-head="main"[^>]*>Main<\/button>/, 'the Main stop column is drawn, its head selecting the Main track')
   assert.equal((html.match(/class="stop-launch" disabled=""/g) ?? []).length, 8, 'eight stops, as a new Live set has, none launchable')
   assert.doesNotMatch(html, /view-empty/, 'the sparse float is gone')
 })

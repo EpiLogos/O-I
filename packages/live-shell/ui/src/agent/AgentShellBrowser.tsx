@@ -16,6 +16,10 @@ import {kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
 import {refusalLine, safeJson} from './RefusalCard'
 import {AGENT_CHAIN_MIME, encodeChainDrag, setActiveChainDrag, type AgentChainDrag} from './agentChainDrag'
 import {missingOpRemedy, OWNER_BINDINGS, ownerRefusalLine} from './agentChainDrag'
+import {DEVICE_PANE_KIND, selectDevice, useIsPublished} from '../frame/devices/deviceDoor'
+import {openInstrument} from '../frame/instrumentDoor'
+import {RUNS_ID} from './devices/taskBindings'
+import {RUN_ID} from './devices/sessionChainBindings'
 import './agentShell.css'
 
 const CATEGORIES = [
@@ -24,6 +28,15 @@ const CATEGORIES = [
   {id: 'agents', label: 'Agents'},
   {id: 'skillsets', label: 'Skillsets'},
   {id: 'git', label: 'Git'},
+  {id: 'runs', label: 'Runs'},
+] as const
+
+/** The Runs category (softwareFactoryFamilyManifest.ts factory-runs, lane BF3): the selected session's Run (DLW §19.17) and its Runs
+ * (§19.11), each a device the chain publishes. A press shows it whole in the pool (§16.4 "Select a device to show it whole in the
+ * pool"); a double-click opens it full in a pane. */
+const RUN_DEVICES = [
+  {id: RUN_ID, name: 'Run', says: 'the selected session\'s lane along the clock'},
+  {id: RUNS_ID, name: 'Runs', says: 'every attempt on the session\'s work, and which stands'},
 ] as const
 
 const CONTEXT_TILES = [
@@ -41,18 +54,18 @@ const CONTEXT_TILES = [
 
 /** Each Factory category's kind in the one browser (F6): sessions and agents are running things (an agent dragged onto an
  * empty track is seated); the context tiles open in a pane; skillsets go on the agent chain; the git seat is material. */
-const AGENT_KINDS: Record<(typeof CATEGORIES)[number]['id'], BrowserKind> = {sess: 'running', agents: 'running', context: 'instruments', skillsets: 'devices', git: 'material'}
+const AGENT_KINDS: Record<(typeof CATEGORIES)[number]['id'], BrowserKind> = {sess: 'running', agents: 'running', context: 'instruments', skillsets: 'devices', git: 'material', runs: 'devices'}
 /** Each category's mark from the icon cut (the agents wear the cut's agent kind). */
 const AGENT_MARKS: Record<(typeof CATEGORIES)[number]['id'], ReactNode> = {
   sess: <CutIcon name="session" size={12} />, context: <CutIcon name="pane" size={12} />, agents: <KindMark kind="agent" size={12} />,
-  skillsets: <CutIcon name="chain" size={12} />, git: <CutIcon name="lib" size={12} />,
+  skillsets: <CutIcon name="chain" size={12} />, git: <CutIcon name="lib" size={12} />, runs: <CutIcon name="arrangement" size={12} />,
 }
 export const AGENT_BROWSER_CATEGORIES: readonly BrowserCategory[] = CATEGORIES.map(category => ({id: category.id, label: category.label, kind: AGENT_KINDS[category.id], mark: AGENT_MARKS[category.id]}))
 
 /** Each category's row mark, from the cut (the mockup's bee for sessions and agents is the cut's agent kind). */
 const ROW_MARKS: Record<(typeof CATEGORIES)[number]['id'], ReactNode> = {
   sess: <KindMark kind="agent" size={12} />, agents: <KindMark kind="agent" size={12} />, context: <CutIcon name="pane" size={12} />,
-  skillsets: <WoodMark kind="skillset" size={12} />, git: <CutIcon name="lib" size={12} />,
+  skillsets: <WoodMark kind="skillset" size={12} />, git: <CutIcon name="lib" size={12} />, runs: <CutIcon name="arrangement" size={12} />,
 }
 
 /** A skillset or git row's standing, by the row its reading gave (skillsetRowsFromRoster, gitRowsFromWorkcell): what was admitted
@@ -69,6 +82,7 @@ const RESULT_HEADER: Record<(typeof CATEGORIES)[number]['id'], string> = {
   agents: 'State',
   skillsets: 'Admitted',
   git: 'Seat',
+  runs: 'Chain',
 }
 
 export interface BrowserRow {
@@ -224,6 +238,9 @@ export function AgentShellBrowser({rows, error, loading, controlled}: {rows: Age
   const category = (controlled?.category as (typeof CATEGORIES)[number]['id'] | undefined) ?? ownCategory
   const needle = controlled?.query.trim().toLowerCase() ?? ''
   const shell = useAgentShell()
+  // Whether the chain publishes the Run and the Runs now (re-read only when one comes onto the door or leaves it).
+  const runOn = useIsPublished(RUN_ID), runsOn = useIsPublished(RUNS_ID)
+  const published = (id: string) => (id === RUN_ID ? runOn : id === RUNS_ID ? runsOn : false)
   // The sessions' states and the agents' names, from the one agent-sessions provider (its task reads, its needles, its roster).
   const sessions = useAgentSessionsOptional()
   const {transport} = useWorkspace()
@@ -286,8 +303,13 @@ export function AgentShellBrowser({rows, error, loading, controlled}: {rows: Age
           : {...row, standing: READING_STANDING[row.key] ?? row.meta})
     }
     if (category === 'agents') return agentBrowserRows(rows, sessions, loading)
+    if (category === 'runs') return RUN_DEVICES.map((device): BrowserRow => {
+      const on = published(device.id)
+      return {key: device.id, label: device.name, meta: device.says, standing: on ? 'on chain' : 'no chain',
+        hover: `${device.name} · ${device.says}. ${on ? 'Press: show it whole in the pool. Double-click: open it full in a pane.' : 'No Factory chain is drawn: open Device view in Factory.'}`}
+    })
     return [{key: 'empty', label: loading ? 'Reading…' : 'Nothing disclosed for this category yet.', meta: '', standing: ''}]
-  }, [category, rows, shell.openTiles, loading, rosterOutcome, rosterError, seatOutcome, seatError, sessions])
+  }, [category, rows, shell.openTiles, loading, rosterOutcome, rosterError, seatOutcome, seatError, sessions, runOn, runsOn])
 
   const shown = needle ? list.filter(item => item.label.toLowerCase().includes(needle) || item.meta.toLowerCase().includes(needle)) : list
   const results = <>
@@ -315,11 +337,13 @@ export function AgentShellBrowser({rows, error, loading, controlled}: {rows: Age
               onClick={() => {
                 if (category === 'context') shell.toggleTile(item.key as typeof CONTEXT_TILES[number]['id'])
                 if (category === 'git') shell.toggleTile('diff')
+                if (category === 'runs' && published(item.key)) selectDevice(item.key)
                 if (category === 'sess') {
                   shell.setSelectedTrackId(item.key, item.label)
                   shell.openThread(item.key)
                 }
               }}
+              onDoubleClick={category === 'runs' && published(item.key) ? () => openInstrument(DEVICE_PANE_KIND, undefined, {ref: item.key, title: item.label}) : undefined}
             >
               {item.key.startsWith('empty') ? null : <span aria-hidden="true">{ROW_MARKS[category]}</span>}
               <span style={{overflow: 'hidden', textOverflow: 'ellipsis'}}>{item.label}</span>

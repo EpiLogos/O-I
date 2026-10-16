@@ -15,12 +15,15 @@
 //   Actuation's research comparison (comparison.rs run_with) and the gateway's frame ring have no kernel op at all: the Experiment's
 //     declaration and runs, and the monitor's frames, are absent.
 // The chains of the rack are the four the Actuation family declares (actuationFamilyManifest.ts:15 invariant.chains) — the
-// registered gateways — each with the state its reading earns: Ready (it answered), Refused (its owner's words), or none read.
+// registered gateways — each with the state its reading earns: Ready (it answered), Refused (its owner's words), or none read. The
+// Remote carrier's chain reads Workcell's own status (lane BF3, workcellBindings.ts carrierChainState: Composed while a machine is
+// connected, since nothing has carried a session through it).
 // Pure, apart from the view holds (designBindings.ts holdView).
 import type {DesignBinding, Standing, Value, Values} from '../../frame/devices/designed'
 import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
 import type {IconName} from '../../inhabitants/sdk/icons'
 import {allFamilyManifests} from '../../inhabitants/familyManifest'
+import {inhabitantManifest} from '../../inhabitants/manifest'
 import {gatewayDisclosed, type AgentChainReading} from './agentChainDevices'
 import {gatewayValues, holdView, viewHolds, type ChainHolds, type GatewayInput} from './designBindings'
 
@@ -40,9 +43,10 @@ export const FRAMES_ID = 'factory:frames'
 export const MAIN_DEVICE_IDS: readonly string[] = [GATEWAYS_RACK_ID, AGENCY_GATEWAY_ID, EXPERIMENT_ID, FRAMES_ID]
 
 /** A device of an admitted family face (designKey(family, face.id) is its design's id), its values its design's from the binding;
- * null when the family does not admit the face. */
+ * null when the family does not admit the face. The family as composed (inhabitants/manifest.ts inhabitantManifest: its base and the
+ * extensions declared onto it, Software Factory's attempt-review among them). */
 export function familyFaceDevice(id: string, family: string, faceId: string, title: string, icon: IconName): DeviceInstance | null {
-  const face = allFamilyManifests().find(manifest => manifest.id === family)?.faces.find(candidate => candidate.id === faceId)
+  const face = (inhabitantManifest(family)?.faces ?? allFamilyManifests().find(manifest => manifest.id === family)?.faces)?.find(candidate => candidate.id === faceId)
   if (!face) return null
   return {id, family, rows: [], values: {},
     face: {id: face.id, title, icon, liveSemantic: face.liveSemantic, ...(face.invariant ? {invariant: face.invariant} : {}), ...(face.note ? {note: face.note} : {})}}
@@ -109,13 +113,19 @@ export const RACK_REFUSE = {
 export interface RackInput {
   readonly reading: Pick<AgentChainReading, 'gatewayAdmitted' | 'gatewayDoc'>
   readonly holds: ChainHolds
+  /** The Remote carrier's standing as a chain (workcellBindings.ts carrierChainState), where Workcell's status was read. */
+  readonly carrier?: {readonly state?: 'ready' | 'composed' | 'refused'; readonly why?: string}
 }
 
 /** One chain's row (actuation__gateways-rack.tsx:7-10): its state from the reading that reaches it, the refusal in the owner's words.
- * The Hermes harness is read through AIKit's gateway, so with that gateway down it is not read at all; the Actuation gateway and the
- * Remote carrier have no reading a kernel op reaches. */
-function chainRow(id: string, name: string, answer: GatewayAnswer, doc: unknown): Record<string, Value> {
+ * The Hermes harness is read through AIKit's gateway, so with that gateway down it is not read at all; the Actuation gateway has no
+ * reading a kernel op reaches; the Remote carrier's is Workcell's status. */
+function chainRow(id: string, name: string, answer: GatewayAnswer, doc: unknown, carrier: RackInput['carrier']): Record<string, Value> {
   const row: Record<string, Value> = {id, name}
+  if (id === 'remote-carrier') {
+    if (carrier?.state) row.state = carrier.state
+    if (carrier?.why) row.why = carrier.why
+  }
   if (id === 'aikit-agency-gateway') {
     if (answer.kind === 'answered' || answer.kind === 'refused') row.state = 'ready'
     if (answer.kind === 'unreachable') { row.state = 'refused'; row.why = answer.words }
@@ -135,11 +145,11 @@ export function rackValues(input: RackInput): Values {
   const values: Record<string, Value> = {}
   const answer = gatewayAnswer(input.reading)
   const names = new Map(GATEWAY_CHAINS.map(chain => [chain.id, chain.name]))
-  const rows = registeredChains().map(id => chainRow(id, names.get(id) ?? id, answer, input.reading.gatewayDoc))
+  const rows = registeredChains().map(id => chainRow(id, names.get(id) ?? id, answer, input.reading.gatewayDoc, input.carrier))
   if (rows.length) values.chains = JSON.stringify(rows)
-  // The rack's light: on when a chain is ready, off when the chains read are all refused, unread otherwise.
+  // The rack's light: on when a chain is ready, off when the chains read are all refused or only composed, unread otherwise.
   if (rows.some(row => row.state === 'ready')) values.light = 'lit'
-  else if (rows.some(row => row.state === 'refused')) values.light = 'dark'
+  else if (rows.some(row => row.state === 'refused' || row.state === 'composed')) values.light = 'dark'
   put(values, 'chain', viewHolds(input.holds, GATEWAYS_RACK_ID).chain)
   return values
 }
