@@ -1,0 +1,53 @@
+/* Agent identity's own layout: the practice marks in the well, the profile in the pane, the widget's readings. Shell and panel tokens only. */
+.ai-kinds { display: flex; align-items: center; gap: 12px; height: 16px; color: var(--text-dim, #a2a7ad); font: 10px var(--font-ui, sans-serif); font-variant-numeric: tabular-nums; }
+.ai-kinds span { display: inline-flex; align-items: center; gap: 4px; }
+.ai-kinds b { font-weight: 500; color: var(--text, #d4d7da); }
+.ai-kinds span[data-zero="true"] { opacity: .45; }
+
+.ai-pair { display: flex; align-items: flex-end; justify-content: space-between; gap: 4px; width: 100%; }
+.ai-pair > * { flex: 1 1 0; min-width: 0; }
+
+.ai-tile-side { flex: 1 1 auto; min-width: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: space-around; justify-items: center; }
+
+.ai-pane { position: absolute; inset: 0; display: flex; flex-direction: column; gap: 18px; padding: 22px 28px; background: var(--bg-1, #33363b); color: var(--text, #d4d7da); font: 12px/1.5 var(--font-ui, sans-serif); overflow: hidden; }
+.ai-pane-head { flex: none; display: flex; align-items: center; gap: 18px; padding-bottom: 16px; border-bottom: 1px solid var(--line, #24262a); }
+.ai-face { flex: none; display: flex; align-items: center; }
+.ai-who { flex: 1 1 auto; min-width: 0; }
+.ai-who h3 { margin: 0; font-size: 17px; font-weight: 600; }
+.ai-who p { margin: 2px 0 0; color: var(--text-dim, #a2a7ad); }
+.ai-who p b { font-weight: 500; }
+.ai-who p b[data-ok="true"] { color: var(--green, #8fd0a8); }
+.ai-who small { display: block; margin-top: 2px; color: var(--text-faint, #71767c); font: 10.5px var(--mono, ui-monospace, monospace); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ai-facts { flex: none; display: flex; gap: 24px; margin: 0; }
+.ai-facts div { display: flex; flex-direction: column; gap: 1px; }
+.ai-facts dt { font-size: 9px; letter-spacing: .07em; text-transform: uppercase; color: var(--text-faint, #71767c); }
+.ai-facts dd { margin: 0; font-size: 12px; }
+.ai-facts dd[data-unread="true"] { color: var(--text-faint, #71767c); }
+.ai-facts dd[data-ok="true"] { color: var(--green, #8fd0a8); }
+.ai-facts dd[data-ok="false"] { color: var(--text-dim, #a2a7ad); }
+
+.ai-cols { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.5fr) minmax(0, 1fr); gap: 32px; }
+.ai-cols section { min-width: 0; }
+.ai-cols h4 { margin: 0 0 8px; font-size: 10px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--text-dim, #a2a7ad); }
+.ai-cols h4:not(:first-child) { margin-top: 20px; }
+.ai-purpose { margin: 0; max-width: 46ch; }
+.ai-note { margin: 12px 0 0; color: var(--text-dim, #a2a7ad); }
+.ai-cols blockquote { margin: 0; padding: 2px 0 2px 12px; border-left: 2px solid var(--dp-value, #5cc6b4); max-width: 46ch; color: var(--text-dim, #a2a7ad); }
+.ai-src { display: block; margin-top: 6px; color: var(--text-faint, #71767c); font: 10px var(--mono, ui-monospace, monospace); }
+
+.ai-carry { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.ai-carry li { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 2px 10px; align-items: center; color: var(--text, #d4d7da); }
+.ai-carry li[data-zero="true"] { color: var(--text-dim, #a2a7ad); }
+.ai-carry-name b { font-weight: 600; margin-right: 8px; }
+.ai-carry-name i { font-style: normal; font-size: 10.5px; color: var(--text-faint, #71767c); }
+.ai-carry em { font-style: normal; font-size: 15px; font-variant-numeric: tabular-nums; }
+.ai-carry p { grid-column: 2 / -1; margin: 0; font-size: 10.5px; color: var(--text-dim, #a2a7ad); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.ai-worlds { list-style: none; margin: 0; padding: 0; display: grid; }
+.ai-worlds li { display: flex; justify-content: space-between; gap: 12px; height: 22px; align-items: center; border-bottom: 1px solid var(--line, #24262a); color: var(--text-dim, #a2a7ad); }
+.ai-worlds li[data-here="true"] { color: var(--text, #d4d7da); box-shadow: inset 2px 0 0 var(--accent, #ffbe00); padding-left: 8px; }
+.ai-worlds em { font-style: normal; font-size: 10.5px; color: var(--text-faint, #71767c); }
+
+.ai-empty { margin: auto; text-align: center; max-width: 44ch; }
+.ai-empty b { display: block; margin-bottom: 4px; font-weight: 600; }
+.ai-empty p { margin: 0; color: var(--text-dim, #a2a7ad); }
