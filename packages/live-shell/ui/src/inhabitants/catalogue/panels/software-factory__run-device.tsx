@@ -1,4 +1,4 @@
-// Run (manual §19.17, software-factory:run-device): one session's stream of tasks along the clock, with the needle at its last
+// Run (manual §19.1, software-factory:run-device): one session's stream of tasks along the clock, with the needle at its last
 // check-in. Live's nearest: a clip lane in Arrangement view, with its takes stacked under it. The picture is the shell's own law
 // (agent/agentRunModel.ts): tracks are agent sessions and clips are atomic tasks; a running task draws no end, a queued task no
 // length, and a stalled task is frozen where its output stopped; the needle sits at the last check-in and is stalled once that is

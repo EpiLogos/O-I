@@ -1,4 +1,4 @@
-// The Things (manual §18.5): a Central page about an object in your work — a stone, a book, a collection — tied to its world, its
+// The Things (manual §18.1): a Central page about an object in your work — a stone, a book, a collection — tied to its world, its
 // subject, its offices, its sources, its place in your world and the real place on Earth where it stands. Live's nearest: a device that
 // draws its material, as Simpler draws its sample. The picture is the page as the Things template draws it
 // (desktop/cradle/documents/oi-things.html): the same 12-column grid, the mark at the left (Editorial, the Things default) or at the

@@ -1,4 +1,4 @@
-// The Journey (manual §17.5): Technē's walk through scenes, stop by stop. Live's nearest: Simpler's Slice mode — a ruler cut into
+// The Journey (manual §17.6): Technē's walk through scenes, stop by stop. Live's nearest: Simpler's Slice mode — a ruler cut into
 // slices, a playhead through them, and a length and a join for each. The owner is the research frame (field-studies-journeys:
 // journeyInstrument.tsx, journeyPath.ts walkJourney / edgeRows, transitions.ts, journeyPace.ts, model.ts Scene.duration and
 // Scene.transition) and the engine's transition law (src/engine/transitionMath.ts). The fixture is the frame's own "Field studies"

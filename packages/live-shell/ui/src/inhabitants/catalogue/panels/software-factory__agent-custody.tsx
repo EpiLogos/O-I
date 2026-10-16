@@ -1,4 +1,4 @@
-// Custody (manual §19.13, software-factory:agent-custody): how much an agent decides alone, what waits for you before a change lands,
+// Custody (manual §19.4, software-factory:agent-custody): how much an agent decides alone, what waits for you before a change lands,
 // how a write arrives, and what the agent holds now. Live's nearest: Utility with a small display — a few plain settings whose meaning
 // shows at a glance. It shares the Agent's chain slot (agentDeviceCatalogue.ts) and its `autonomy` key (agentParamAddresses.ts: the
 // Agent shows it, Custody sets it), and it shares Scope's `writeMode` row (shell.setWriteArm; the transport's Arm).

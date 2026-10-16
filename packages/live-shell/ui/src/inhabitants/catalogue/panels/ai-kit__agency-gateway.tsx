@@ -1,4 +1,4 @@
-// The Agency gateway (manual §19.9, ai-kit:agency-gateway): the service that carries messages to agents from the surfaces you use,
+// The Agency gateway (manual §19.10, ai-kit:agency-gateway): the service that carries messages to agents from the surfaces you use,
 // and from one agent to another, under rules you set. Live's nearest: Utility — a small effect of few controls whose meaning is
 // plain at a glance. The well is the gateway's own ecology: the surfaces (connectors) on the left, the gateway in the middle, the
 // agents on the right. A dot beside an agent is a message that waits for it; the rung that joins the agents is the rule for a call

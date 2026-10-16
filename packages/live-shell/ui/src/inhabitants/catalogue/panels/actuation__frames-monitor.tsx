@@ -1,4 +1,4 @@
-// The Frames monitor (manual §19.5 and its widget entry §23.8, actuation:frames-monitor): what passed between the shell and the
+// The Frames monitor (manual §19.6 and its widget entry §23.8, actuation:frames-monitor): what passed between the shell and the
 // harness, per session, in order. Live's nearest: a MIDI monitor (a tape of events) — here a small effect whose picture is the tape:
 // five kind lanes, one tick for each frame, the last frames under them, and the Keep scale at the foot.
 //

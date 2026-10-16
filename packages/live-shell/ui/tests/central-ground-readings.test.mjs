@@ -1,4 +1,4 @@
-// Lane BC2: Ground hygiene and Impact on the owners' real output shapes (DLW §18.12, §18.13), and the kernel receipts Central's
+// Lane BC2: Ground hygiene and Impact on the owners' real output shapes (DLW §18.5, §18.6), and the kernel receipts Central's
 // readers re-read on (owners/notices.ts, lane W3).
 // The fixtures are the real outputs of the read-only owner reads, run on workcell:mac on 16 Oct 2026 and trimmed to the rows the
 // rules turn on (the seat instrument's `seat status` and `seat status --json`, Control/user/workcell/seat cmd_status; `workcell

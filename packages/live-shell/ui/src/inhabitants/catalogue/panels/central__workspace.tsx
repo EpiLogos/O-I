@@ -1,4 +1,4 @@
-// The Workspace (manual §18.2): the track of one project, book or practice, and what it remembers for each mode. Live's nearest:
+// The Workspace (manual §18.1): the track of one project, book or practice, and what it remembers for each mode. Live's nearest:
 // Hybrid Reverb or Simpler's pages — a device of choosers and switches round one picture; it has no smooth quantity, so no dials.
 // The picture is the workspace book's own memory (desktop/cradle/src/workspace/store.ts): the open mode's pane tree — splits
 // with weights, tab groups with pinned tabs (surface/types.ts Pane) — the side regions, the widget rail, and a mark on each mode
@@ -137,7 +137,7 @@ const groupsIn = (n: Node): number => (n.t === 'g' ? 1 : n.kids.reduce((a, k) =>
 const paneCount = (p: Panes): number | undefined => (p.kind === 'unread' ? undefined : p.kind === 'tree' ? groupsIn(p.node) : 0)
 const paneText = (n: number | undefined) => (n === undefined ? NONE : `${n} ${n === 1 ? 'pane' : 'panes'}`)
 const cut = (s: string, n: number) => (s.length > n ? `${s.slice(0, Math.max(1, n - 1))}…` : s)
-/** The head light reads the owner alone (manual §16.8): lit or dark when it reports, hollow when it has not. */
+/** The head light reads the owner alone (manual §16.9): lit or dark when it reports, hollow when it has not. */
 const light = (p: ViewProps) => (strOf(p.owner ?? p.v, 'light') ?? 'unknown') as LightState
 /** The options of a chooser, with the value the owner reports among them when it is not a listed one. */
 const withCurrent = (options: readonly Option<string>[], value: string | undefined): readonly Option<string>[] =>

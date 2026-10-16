@@ -1,4 +1,4 @@
-// Studio (manual §20.2): the Expressions toolbar the person curates. Live's nearest: a rack with only its macros showing — the
+// Studio (manual §20.3): the Expressions toolbar the person curates. Live's nearest: a rack with only its macros showing — the
 // Instrument Rack's Macros section, whose knobs the person chose. The rack's chain is "Your controls" (the frame's toolbelt,
 // Journey.shared.toolbelt, read as the boundary's chosen controls: chosenControls.ts readNativeChosenControls). Each is one real
 // parameter of the field (a Field property) or of an object (Follow the selection, or Bind a named object). The compact takes its

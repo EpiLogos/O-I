@@ -1,7 +1,7 @@
 // Central's page family on Central's readings and writes (lane BC2): the catalogue's designs — Document (§17.7), Flow (§18.3),
 // Text (§18.6), Highlight (§18.7), Notes (§18.8), Beings and Things (§18.4, §18.5), Workspace (§18.2) — each a DesignBinding
 // (frame/devices/designed.ts) over the owners that hold its material. Owners write, faces read (lock §0.4): a key an owner reports
-// is a reading; a key no owner reports is absent, never the design's default (manual §16.11); a key is written only where an owner
+// is a reading; a key no owner reports is absent, never the design's default (manual §16.12); a key is written only where an owner
 // op stands behind it (§8.1); a control whose write no owner takes stands disabled with the reason (DesignBinding.standing, §6). A
 // key the view holds itself — how the device shows the page, the entry the next one answers — is the view's (DesignBinding.local).
 // Pure: no React, no transport. The readers are pageReadings.ts; the places are CentralDevices.tsx and pageDevices.tsx.

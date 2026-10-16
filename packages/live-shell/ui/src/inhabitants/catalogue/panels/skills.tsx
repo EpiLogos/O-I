@@ -1,4 +1,4 @@
-// The Skillset rack (manual §19.6): a SkillSet is the repertoire an agent carries — Methodologies, Methods, Skills and child
+// The Skillset rack (manual §19.7): a SkillSet is the repertoire an agent carries — Methodologies, Methods, Skills and child
 // sets, each wearing its kind's woodcut mark in the set in use (icon-cut.html §7: the blade or the pen). Live's nearest: a rack
 // and its chain list, with nested racks for child sets. Membership grants no trust, authority or loading, so the picture is
 // the chain list with each member's evidence ladder: carried is not loaded, and loaded is not used. Every control here is an

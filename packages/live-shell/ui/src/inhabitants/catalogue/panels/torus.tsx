@@ -1,4 +1,4 @@
-// The Torus (manual §21.1): Live's one instrument, a ring with a tube driven by two pulses (3·3 and 4·2) and wound by two helices
+// The Torus (manual §21.2): Live's one instrument, a ring with a tube driven by two pulses (3·3 and 4·2) and wound by two helices
 // (the two whole-tone families). Live's nearest: Wavetable — a large display of the oscillator with handles, an envelope display,
 // a global column of volume and voices. Every line drawn below is computed from the device's values.
 import type {CSSProperties} from 'react'

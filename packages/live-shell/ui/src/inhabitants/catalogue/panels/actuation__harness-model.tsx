@@ -1,4 +1,4 @@
-// The Agent device (manual §19.3, actuation:harness-model): the agent on any track an agent works on — second on a Factory session's
+// The Agent device (manual §19.4, actuation:harness-model): the agent on any track an agent works on — second on a Factory session's
 // chain, last on a Central workspace's, where it answers into the page. One agent in every mode (manual §16.1): it carries Custody
 // and Identity as pages of its Whole, and the Thread as its Full, each on its own keys under a prefix (design.ts `scoped`), so a
 // binding hosts them by prefixing their bindings. Live's nearest: Simpler or Operator — an instrument with a well that draws what

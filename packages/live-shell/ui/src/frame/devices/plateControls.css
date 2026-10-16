@@ -1,6 +1,6 @@
 /* The plate's controls (plateControls.tsx) and the device panel kit's controls (inhabitants/sdk/panel.css) as an instrument's plate and
    a Compact instrument draw them. The kit's colour names resolve the shell's tokens (styles.css :root) at :root in panel.css, so a
-   plate brings no colour of its own (docs/dlw/DLW.md §16.8: teal a value, amber what is on, the well near black). Shell tokens
+   plate brings no colour of its own (docs/dlw/DLW.md §16.9: teal a value, amber what is on, the well near black). Shell tokens
    only. */
 /* The kit's colours resolve the shell's tokens at :root now (panel.css), on every plate; an instrument's plate and a Compact
    instrument keep only the kit's type here. */
@@ -70,7 +70,7 @@ button.plate-row-press:disabled { color: var(--text-faint) }
 .dp-cell.plate-reading > .dp-label { flex: none; width: 52px; text-align: left }
 .dp-cell.plate-reading > .dp-value { min-width: 0; overflow: hidden; text-overflow: ellipsis; color: var(--text) }
 
-/* A state the owner reports, drawn as the kit's light and one word (manual §16.9 Light): a save state, a tool armed, a line of the owner's
+/* A state the owner reports, drawn as the kit's light and one word (manual §16.10 Light): a save state, a tool armed, a line of the owner's
    words that is only the status bar's (PlateLine `word`, StageInstrumentPlate.tsx FrameReading). */
 .dp-cell.plate-light { flex-direction: row; align-items: center; gap: 5px; height: 16px; min-width: 0; white-space: nowrap }
 .dp-cell.plate-light > .dp-label { margin: 0; color: var(--text-dim) }

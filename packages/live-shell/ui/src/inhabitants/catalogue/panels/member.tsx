@@ -1,4 +1,4 @@
-// A member of a Skillset rack (manual §19.7): one Skill identity in three forms (ai-kit docs/PRAXIS-ARCHITECTURE.md §2), so one
+// A member of a Skillset rack (manual §19.8): one Skill identity in three forms (ai-kit docs/PRAXIS-ARCHITECTURE.md §2), so one
 // device with three faces. Every form is trusted, enabled and projected alike and climbs the same ladder of evidence; the face
 // changes with what the form is for. A Skill shows where it reaches. A Method shows the path it composes, from claim to Return,
 // and runs and proves through AIKit. A Methodology shows its field and which Method applies when. The fixtures are Central's

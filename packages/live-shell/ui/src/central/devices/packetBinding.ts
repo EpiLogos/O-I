@@ -1,4 +1,4 @@
-// The Packet (DLW §18.9, central:packet) on its owner (lane BC3): exactly what the agent reads from you, on a document's chain after
+// The Packet (DLW §18.3, central:packet) on its owner (lane BC3): exactly what the agent reads from you, on a document's chain after
 // Notes. The owner is AIKit's prepared context (aikit.prepared-context/v1), read once for the shell by the reader the Packet widget and
 // the transport's Key slot already share (shell/transports/useCentralTransport.tsx:47 usePacketReading — the conversation the Agent
 // widget holds, else the project), so the device, the widget and the transport show the same items (§18.9 Rules). An item is taken out,

@@ -1,4 +1,4 @@
-// Ground hygiene (manual §18.12): the ground as readings — the seats of each workcell, the worktrees of the project, its branches —
+// Ground hygiene (manual §18.5): the ground as readings — the seats of each workcell, the worktrees of the project, its branches —
 // and three tenders that clear what no work needs. Live's nearest: Utility, a small effect whose meaning is plain at a glance, with
 // the Scope pattern for a change that asks first (Tend: Off, Propose, Write). The picture is the ground itself: one ring for each
 // reading, one tick for each thing read, a dot beside a tick that has a finding. The owner's classification is

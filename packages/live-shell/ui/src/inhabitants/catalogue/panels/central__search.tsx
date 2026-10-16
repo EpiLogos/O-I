@@ -1,4 +1,4 @@
-// Search (manual §18.11): Central's "@" language. A query is read by the one operative grammar of AIKit (aikit-core resource/operative.rs:
+// Search (manual §18.4): Central's "@" language. A query is read by the one operative grammar of AIKit (aikit-core resource/operative.rs:
 // lex, parse, render): `@` and `@0`–`@5` address a horizon, `@# - +` are prefixes, `x`, `/` and `=` join two terms, `( )` frame, `: project`
 // scopes, and plain text lowers to `@# @ text` (parse_or_search_expression). Input that does not parse is refused by the owner's CLI
 // (`aikit knowledge search -- '( + @0 a + @4 b )'` answers "operative Resolve frame is not closed"). The evaluator keeps a hit only when its kind belongs to the addressed horizon
@@ -313,7 +313,7 @@ function read(v: Values): Reading {
     hits: raw === undefined || (asked && !owned) ? undefined : hits, ghosts: asked && owned ? owned.filter(h => !hits.includes(h)) : []}
 }
 
-// The light reads the owner alone (manual §16.8): lit or dark when it reports, hollow when it has not.
+// The light reads the owner alone (manual §16.9): lit or dark when it reports, hollow when it has not.
 const light = (p: ViewProps) => (strOf(p.owner ?? p.v, 'light') ?? 'unknown') as LightState
 const commit = (p: ViewProps) => (text: string) => {
   const m = DEFINE.exec(text.trim())

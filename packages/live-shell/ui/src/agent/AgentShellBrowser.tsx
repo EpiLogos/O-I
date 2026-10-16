@@ -31,7 +31,7 @@ const CATEGORIES = [
   {id: 'runs', label: 'Runs'},
 ] as const
 
-/** The Runs category (softwareFactoryFamilyManifest.ts factory-runs, lane BF3): the selected session's Run (DLW §19.17) and its Runs
+/** The Runs category (softwareFactoryFamilyManifest.ts factory-runs, lane BF3): the selected session's Run (DLW §19.1) and its Runs
  * (§19.11), each a device the chain publishes. A press shows it whole in the pool (§16.4 "Select a device to show it whole in the
  * pool"); a double-click opens it full in a pane. */
 const RUN_DEVICES = [

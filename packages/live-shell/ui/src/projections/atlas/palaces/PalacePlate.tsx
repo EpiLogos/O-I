@@ -1,6 +1,6 @@
 // The M5′ Palace / Integral Whole instrument, open on the rack (T-PALACES-ONTO-ATLAS; FOUNDATION §3 N4; lock §2.5 "M5′ Palace (rooms, path,
 // guide, portals)"; the mockup's M5 plate, world-shell-mockup.html:1461 — Rooms, Path (guided · free, the guide), Portals — and its
-// device row's folded "M5 Palace / Integral Whole"; manual §17.6 Palace, Whole: "Rooms, Path, Board, Return"). Drawn in the device craft
+// device row's folded "M5 Palace / Integral Whole"; manual §17.7 Palace, Whole: "Rooms, Path, Board, Return"). Drawn in the device craft
 // (docs/dlw/DLW.md §16; the panel kit and frame/devices/plateControls.tsx): the rooms and the bookmarks as rows that page, the path,
 // the guide and the board as switches, a choice no owner takes yet waiting with why. One plate whose sections carry every control the
 // frame's Palace lens had
@@ -13,7 +13,7 @@
 // (palacesModel.ts) — and the doors the Earth's selection stands at; a press turns the Earth to a palace's door, Enter goes in.
 // Every act goes through palaceSession.ts to its owner; this plate writes nothing itself.
 //
-// The head is the panel kit's (InstrumentPlate.tsx; manual §16.8), and the display section is the palace's live well
+// The head is the panel kit's (InstrumentPlate.tsx; manual §16.9), and the display section is the palace's live well
 // (inhabitants/ql/devices/techneWells.tsx: the floor — the rooms where the board stands them, the path between their doors, the room the
 // walk stands in; outside a palace, the well says none is entered).
 

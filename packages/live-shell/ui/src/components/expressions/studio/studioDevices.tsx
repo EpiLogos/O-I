@@ -1,4 +1,4 @@
-// The devices a Studio section holds, fitted to the section's band (manual §16.8 "Nothing scrolls … no box sits inside a box"; §3 "The plate
+// The devices a Studio section holds, fitted to the section's band (manual §16.9 "Nothing scrolls … no box sits inside a box"; §3 "The plate
 // does not reflow … the whole plate scales between 80 % and 125 %"). Ported from the runtime's section devices (frame/devices/
 // InstrumentPlate.tsx:120-140 at 1e2d6db89 SectionDevices: one device at a time, drawn by DeviceView at its compact size, the others behind their marks)
 // with two moves so a held device fits the band instead of being cut at the plate's foot:
@@ -12,7 +12,7 @@ import {lightOf} from '../../../frame/devices/deviceRuntime'
 import type {SectionDevice} from '../../../frame/devices/InstrumentPlate'
 import {Icon} from '../../../inhabitants/sdk/Icon'
 
-/** The plate's own bounds (manual §16.8). */
+/** The plate's own bounds (manual §16.9). */
 export const STUDIO_SCALE_MIN = 0.8, STUDIO_SCALE_MAX = 1
 
 /** The scale a held device stands at in a band of `band` px when it is `natural` px high at 100 %, or null when even the least scale

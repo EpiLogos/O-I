@@ -1,4 +1,4 @@
-// Lane BF2: the Thread (software-factory:thread, DLW §17.10) on its owners — the session's own conversation, read from AIKit's
+// Lane BF2: the Thread (software-factory:thread, DLW §19.4) on its owners — the session's own conversation, read from AIKit's
 // encounter view (the reading the thread pane draws), the Agent's shared keys, the agency tracks as its sessions — and the Agent's
 // `thread`, `models` and `harnesses` filled from the same readings (src/agent/devices/threadBinding.ts, designBindings.ts,
 // FactoryDeviceChain.tsx). Owners write, faces read: Approve and Hard stop go to the session's encounter verbs, the composer and Input

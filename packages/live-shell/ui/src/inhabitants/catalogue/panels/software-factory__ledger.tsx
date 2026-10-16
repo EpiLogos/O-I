@@ -1,4 +1,4 @@
-// The Ledger (manual §19.15 and §23.9, software-factory:ledger): the record of what an agent session did and what came of it. Live's
+// The Ledger (manual §19.13 and §19.13, software-factory:ledger): the record of what an agent session did and what came of it. Live's
 // nearest: an Audio Effect Rack's chain list, a list whose rows each carry a reading. The picture is the list itself: one line for
 // each receipt, its outcome as a coloured tick, and the selected receipt marked. The Full view opens the receipt beside the list.
 //

@@ -1,4 +1,4 @@
-// Pointer (manual §20.4, expressions:pointer): what the pointer does to the field — the disc it acts on, the force it adds, and what a
+// Pointer (manual §20.5, expressions:pointer): what the pointer does to the field — the disc it acts on, the force it adds, and what a
 // click does. Live's nearest: Auto Filter — a well that draws the law with handles, and dials ruled off beside it. The shell's own
 // diagram (components/NativeFieldFace.pointer.tsx) draws the same law and this panel hosts a diagram of it: the disc on a scale of the
 // radius's range, the force arrows (attract adds -radial, repel +radial, vortex the tangent, scaled by strength x pow(1 - d, falloff):

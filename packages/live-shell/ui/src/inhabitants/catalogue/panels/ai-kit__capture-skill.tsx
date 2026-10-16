@@ -1,4 +1,4 @@
-// Capture skill (manual §19.10, ai-kit:capture-skill): what you did by hand, turned into a proposal for a new member of a set — most
+// Capture skill (manual §19.11, ai-kit:capture-skill): what you did by hand, turned into a proposal for a new member of a set — most
 // often a Method, otherwise a Skill. Live's nearest: Capture MIDI on a device that then offers what it kept. The owner is AIKit's
 // capture pipeline (ai-kit crates/aikit-store/src/inbox.rs: normalize → scan → redact-or-quarantine → classify → exact dedup →
 // similarity → file) with the transport's Capture as the source of the example. Grounded as follows.

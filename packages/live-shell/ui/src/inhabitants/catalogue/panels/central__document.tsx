@@ -1,4 +1,4 @@
-// The Document (manual §17.7): any Central page, drawn by its template, in a pane. Live's nearest: a device whose panel follows its
+// The Document (manual §17.8): any Central page, drawn by its template, in a pane. Live's nearest: a device whose panel follows its
 // mode, as Simpler's Classic, One-Shot and Slice do — the page kind decides the picture and which controls are live.
 // The picture is the page's own structure, drawn from the values: a Flow as its entries or as one page or as its journal
 // (documents/ql-flow.html `meta.view`), a Day as the die's net (ql-daily-die.html), a Being or a Thing as its oi.page/v1 sheet with
@@ -368,7 +368,7 @@ function DocumentPane({v}: {v: V}) {
 
 // ---------------------------------------------------------------- the controls
 
-// The light reads the owner alone (manual §16.8): lit or dark when it reports, hollow when it has not.
+// The light reads the owner alone (manual §16.9): lit or dark when it reports, hollow when it has not.
 const light = (p: ViewProps) => (strOf(p.owner ?? p.v, 'light') ?? 'unknown') as LightState
 const head = (p: ViewProps) => ({light: light(p), onFold: p.nav.fold, onFull: p.nav.full})
 const span = (n: number, child: ReactNode) => <div style={{gridColumn: `span ${n}`, width: '100%'}}>{child}</div>

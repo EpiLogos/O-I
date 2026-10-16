@@ -1,4 +1,4 @@
-// Runs (manual §19.11, software-factory:attempt-review): every attempt made on a piece of work, the task tree of each, and which
+// Runs (manual §19.1, software-factory:attempt-review): every attempt made on a piece of work, the task tree of each, and which
 // attempt stands. Live's nearest: a device whose well draws clips on a ruler (Arrangement), with a list under it.
 // The owner's material: the attempts come from the Factory owner (kernel op factory_attempt_read, addressed by run_ref; each record is
 // attempt_ref, task_ref, recorded-at, participant agent, readable Return), and each attempt's tasks from the shell's run model

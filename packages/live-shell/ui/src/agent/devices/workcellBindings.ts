@@ -1,4 +1,4 @@
-// Workcell's devices on Factory's chains, on their owners (lane BF3): Git / landing (DLW §19.19, workcell:git-seat — "last device on
+// Workcell's devices on Factory's chains, on their owners (lane BF3): Git / landing (DLW §19.16, workcell:git-seat — "last device on
 // a Factory session's chain"), the Seat (§19.20, workcell:seat — "inside the Git / landing device"), the Remote carrier (§19.21,
 // workcell:remote-carrier — "the fourth chain of the Gateways rack") and the Link (§19.22, workcell:link — "Factory's Main track").
 //

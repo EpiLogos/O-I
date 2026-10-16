@@ -1,4 +1,4 @@
-// Context & world (DLW §18.14, central:context-world) on its owners (lane BC3). Where it stands: "after the agent, on any track the agent
+// Context & world (DLW §19.12, central:context-world) on its owners (lane BC3). Where it stands: "after the agent, on any track the agent
 // works on" — on Central's workspace track the agent is the Answer, the last of a document's chain (§16.2 "the document effects, then the
 // agent that answers"; §18.10), so Context & world stands after the Answer and reads the scope of the Answer's session: the session the
 // Nara dialogue binding holds (useCentralReadings.ts useNaraReading). Unbound, no agent works on the track and its light is dark.

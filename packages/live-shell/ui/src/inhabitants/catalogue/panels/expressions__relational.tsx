@@ -1,4 +1,4 @@
-// Relational (manual §20.5): the field's attractor law — centres that pull, orbit, swirl and wander. Live's nearest: Auto Filter and
+// Relational (manual §20.6): the field's attractor law — centres that pull, orbit, swirl and wander. Live's nearest: Auto Filter and
 // Corpus — a well that draws the law with handles on it, and columns of dials ruled off beside it.
 //
 // The picture is the owner's own diagram (components/NativeFieldFace.relational.tsx), drawn at the well's size from the device's values:

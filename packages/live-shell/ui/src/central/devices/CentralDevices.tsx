@@ -8,7 +8,7 @@
 // the Day die's hosted form (DocumentDayDieFace), the Nara conversation (NaraConversationFace), the ground hygiene and the impact
 // readings (CentralHygieneDevice, CentralImpactDevice) — under the same owners, none reimplemented. The instruments (the die, the
 // conversation) keep their Live semantic at every size: their write rows go through the owner paths their bodies already use
-// (centralDeviceWrites.ts). The Flow is an instrument on its document's chain (DLW §18.3; it was a clip on the Clip side,
+// (centralDeviceWrites.ts). The Flow is an instrument on its document's chain (DLW §18.1; it was a clip on the Clip side,
 // FlowClip.tsx, which nothing mounted). A device whose aperture is not standing says so in its rows and keeps its light dark; no
 // device is a text card.
 //
@@ -26,7 +26,7 @@
 // design on Central's readings (pageBindings.ts, gathered by pageDevices.ts), each Full the page's own pane. They stand while a
 // document is reached and leave the chain, the pool and the rail's door when none is.
 //
-// The agent's devices (lane BC3; DLW §16.2, §18.9–§18.11, §18.14, §18.15) close the workspace track's chain: the Packet ends a reached
+// The agent's devices (lane BC3; DLW §16.2, §18.3–§18.4, §19.12, §19.4) close the workspace track's chain: the Packet ends a reached
 // document's chain (§18.9 "after Notes"), then the agent that answers — its identity before it (§18.15), the Answer, its Context & world
 // after it (§18.14) — then Search (§18.11), each the catalogue's design on its owner (agentChainDevices.ts). The Packet and the Answer
 // share the encounter observers mounted here: one per session (lane BF2's EncounterObservers.tsx), never a session read twice.

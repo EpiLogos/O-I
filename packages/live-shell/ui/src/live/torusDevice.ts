@@ -4,7 +4,7 @@
 // own instrument edit through the hosted stage channel (torusInstrument.ts), and a refusal comes back in the owner's words.
 // The whole view adds the owner's other parameters — sound, level, cadence and scale, as the native field panel groups them
 // (ported from live/LiveInstrumentSection.tsx:74-105 through inhabitants/ql/devices/qlDevices.ts qlPresentation, the rows the QL
-// field/PCM face carries) — so the pool holds every parameter the owner exposes (DLW §21.1 Whole).
+// field/PCM face carries) — so the pool holds every parameter the owner exposes (DLW §21.2 Whole).
 // Its light reads the owner's standing: on while the instrument follows or is held, off otherwise, dark with no reading.
 import type {DeviceDeclaration, SdkParamRow} from '../inhabitants/sdk/define'
 import type {DeviceInstance, ParamValue} from '../frame/devices/deviceRuntime'
@@ -15,7 +15,7 @@ import {commitLiveInstrumentEdit, liveInstrumentWritable, liveTorusMacroRows, LI
 export const TORUS_DEVICE_ID = 'live:m1-torus'
 
 /** The torus's family and face are the catalogue's (`quaternal-logic:torus`, inhabitants/catalogue/panels/torus.tsx): the M1 torus is
- * Quaternal Logic's instrument, and Live plays it (DLW §21.1). designKey(family, face.id) is the design's id, so the runtime draws
+ * Quaternal Logic's instrument, and Live plays it (DLW §21.2). designKey(family, face.id) is the design's id, so the runtime draws
  * the design on the binding this module writes. */
 export const TORUS_FAMILY = 'quaternal-logic'
 
@@ -63,7 +63,7 @@ export function torusDevice(state: LiveTorusState | null): DeviceInstance {
 // ── the Torus design's binding ───────────────────────────────────────────────
 // The catalogue's Torus (inhabitants/catalogue/panels/torus.tsx, `quaternal-logic:torus`) drawn on the owner's readings and writes
 // (frame/devices/designed.ts DesignBinding; the pattern of central/devices/dayBinding.ts). Owners write, faces read: a design key is
-// given a value only where the owner reports one, and a change only where the owner takes one (manual §16.11, §8.1). The owner is the
+// given a value only where the owner reports one, and a change only where the owner takes one (manual §16.12, §8.1). The owner is the
 // native field in the hosted Expressions frame; what it announces is its standing, its four determinants and its presentation
 // parameters (packages/expressions-boundary/src/protocol.ts readHostedDeterminants, readHostedParameters), and what it takes is the
 // stage channel's instrument edits (desktop/cradle/expressions-app/field-studies-journeys/src/stageCommands.ts InstrumentEdit).
@@ -79,7 +79,7 @@ export const TORUS_DETERMINANT_KEYS: Readonly<Record<string, string>> = {'lens':
 
 const NO_FIELD_PARAMETER = 'the native field announces only its lens, context frame, harmonic basis, M3 transcription, sound, level, cadence and scale, and takes only those through the stage channel (stageCommands.ts InstrumentEdit)'
 
-/** Why each design key the binding leaves absent has no reading (manual §16.11: "When a reading is missing, say which one"). */
+/** Why each design key the binding leaves absent has no reading (manual §16.12: "When a reading is missing, say which one"). */
 export const TORUS_ABSENT: Readonly<Record<string, string>> = {
   pulseMix: `No pulse mix: ${NO_FIELD_PARAMETER}.`,
   helixBalance: `No helix balance: ${NO_FIELD_PARAMETER}.`,

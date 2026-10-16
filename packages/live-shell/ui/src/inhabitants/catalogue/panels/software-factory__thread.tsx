@@ -1,4 +1,4 @@
-// The Thread (manual §17.10, software-factory:thread): the conversation with one session's agent — turns, tool rows, spawn rows,
+// The Thread (manual §19.4, software-factory:thread): the conversation with one session's agent — turns, tool rows, spawn rows,
 // steer lines, proposals and stalls, in the order they happened. Live's nearest: a device whose well draws a time-ordered stream,
 // as Arrangement draws clips. Its Full view is the same thread the Agent device (actuation:harness-model) draws in its pane.
 // The well draws the stream itself, newest at the bottom, from the same items the pane lists: the session (agent/AgentThreadView.tsx

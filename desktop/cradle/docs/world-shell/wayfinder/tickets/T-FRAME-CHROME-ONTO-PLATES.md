@@ -81,7 +81,7 @@ carried by it. The toolbelt's other header controls are carried too: Record prop
 Arm, Record and Overdub (`useExpressionsTransport.tsx` take start/stop, `overdub`), Pointer effects by the Draw slot's pointer group.
 
 **Compact.** The Studio's Compact presentation takes its four macros from that curation: the first four of Your controls, in the
-person's order (manual §20.2 names Density, Glow, Speed, Turbulence; those are what a person's curation starts from, never imposed over
+person's order (manual §20.3 names Density, Glow, Speed, Turbulence; those are what a person's curation starts from, never imposed over
 it). No Compact Studio is drawn in the shell yet — OPEN below: where it stands (a chain in another mode's Device view, or the widget
 rail) is a placement the lock does not yet give.
 
@@ -111,7 +111,7 @@ key them (`data-chrome`). **Carried** names the device that already carried the 
 
 | Control (frame's words) | Does | Carried already | Home now |
 |---|---|---|---|
-| Interact, Select, Pin, Formation sequence, Edit page text (T) — `rail/a:tool-*` | the rail's tools (`app.ts` activateRail) | transport Draw slot, `BarTools` (`useExpressionsTransport.tsx` `draw`) | also Studio › Tools (manual §20.2 "Tools") — the frame's own keys, lit by its own reading |
+| Interact, Select, Pin, Formation sequence, Edit page text (T) — `rail/a:tool-*` | the rail's tools (`app.ts` activateRail) | transport Draw slot, `BarTools` (`useExpressionsTransport.tsx` `draw`) | also Studio › Tools (manual §20.3 "Tools") — the frame's own keys, lit by its own reading |
 | Pointer effects — `rail/a:pointer-options` | the pointer's context panel | transport Draw slot pointer group (`BarPointerGroup`) | carried |
 | Objects in this scene — `rail/a:objects` | the objects panel | Studio › Selected, the Object chooser (`ExpressionsStudio.tsx` SelectedGlyph) | carried |
 | Preview the live field — `rail/a:research-preview` (Technē) | shows the field under a research instrument (`app.ts:1728`) | — | stage plate › Expression |
@@ -154,7 +154,7 @@ key them (`data-chrome`). **Carried** names the device that already carried the 
 | Recording badge, Stop recording — `recording/a:stop-record` | the take's time and its stop | Studio › Capture Stop | carried |
 | Return to journey — `crossing/…` | leaves a journey crossing (T11) | — | Studio › Tools (Expressions, where the crossing stands) |
 
-### M1′ Canvas (`fsj/src/researchInstruments.tsx`; manual §17.3, Whole "Tools, Lines, Relation, Look, Views")
+### M1′ Canvas (`fsj/src/researchInstruments.tsx`; manual §17.4, Whole "Tools, Lines, Relation, Look, Views")
 
 | Control (frame's words) | Does | Home |
 |---|---|---|
@@ -167,7 +167,7 @@ key them (`data-chrome`). **Carried** names the device that already carried the 
 | The status line, the save glyph `:419`, `:426` | the instrument's standing; saved · saving · held | Tools, readings |
 | Stroke colour `:884` | the stroke's colour | Look |
 | Zoom out, Zoom in, Fit all, Fit selection `:1041-1046` | the camera | Look |
-| Hide / show overview (`fsj/src/canvasNavigationOverview.tsx:21`) | the minimap | Look — **the minimap itself stays in the pane**: manual §17.3 Full "The Canvas in the pane, with the minimap"; Parameters "Minimap On · Off" |
+| Hide / show overview (`fsj/src/canvasNavigationOverview.tsx:21`) | the minimap | Look — **the minimap itself stays in the pane**: manual §17.4 Full "The Canvas in the pane, with the minimap"; Parameters "Minimap On · Off" |
 | Zoom readout (`:485`) | the zoom percentage | Look, a reading |
 | Export selection as PNG, Present frames, Previous / Next members `:891-897` | a frame as an image; present the frames; page the loaded members | Views |
 | Focus a source, Save view, Save view as…, Saved views, Export / Import Obsidian canvas, Frames (Canvas section, `:901-928`) | the canvas's views, exchange and frames | Views — read from the Canvas section even while the frame's Studio is closed |
@@ -177,7 +177,7 @@ key them (`data-chrome`). **Carried** names the device that already carried the 
 | Selected line: Record as constellation relationship (`RelateKnowledgeAction`) | promotes the drawn line to its owner | Relation — the mockup's "Promote… (native Action)" |
 | The panel's own close | dismisses the panel | not carried: the panel is not drawn in a pane; selection is the canvas's |
 | React Flow attribution | the library's credit | stands down; its licence travels in the bundle's notices (`scripts/build.mjs` `legalComments: 'inline'`) |
-| *Waiting* — Tool (Select · Frame · Relate · Note · Shape · Text), Layout (Free · Radial · Form), Line kind for the next line, Relation type for the next line, Standing | manual §17.3 Parameters | dim with why (`stageInstrumentModel.ts`): no owner carries them |
+| *Waiting* — Tool (Select · Frame · Relate · Note · Shape · Text), Layout (Free · Radial · Form), Line kind for the next line, Relation type for the next line, Standing | manual §17.4 Parameters | dim with why (`stageInstrumentModel.ts`): no owner carries them |
 
 ### M2′ Timeline (`fsj/src/researchInstruments.tsx:1354-1367`, the vendored `TimelineLens.tsx:831` toolbar, `fsj/src/sharedTimeWindow.tsx`)
 
@@ -204,7 +204,7 @@ key them (`data-chrome`). **Carried** names the device that already carried the 
 
 The reading panel is a floating list of controls over the field (`journeyInstrument.css` `.journey-reading-home`), so it stands down
 whole. The walk's rows stay: in the journey lens the frame opens its scenes panel inside the scene bar (`app.ts` activateInstrument
-`timelineOpen=true`), the scenes as clips the person reorders and trims — manual §17.5 Full, "The walk as rows of stops … In a pane, you
+`timelineOpen=true`), the scenes as clips the person reorders and trims — manual §17.6 Full, "The walk as rows of stops … In a pane, you
 reorder stops, trim them and play the walk" — so it stands in the pane while the bar around it stands down; its toolbar (frame steps,
 shuttle, Snap to points: `app.ts` transportBarHTML), its save row (Scene name, Hold, Transition, Save scene, Save & next, Restore,
 Split, Still scene, Move, Delete, Collapse) and its curve and seam choosers fold out of the way and stand on M3′ › Pace, Stops and

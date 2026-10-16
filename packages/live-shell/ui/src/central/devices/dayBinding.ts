@@ -1,7 +1,7 @@
 // The Day's binding (lane BC): the catalogue's Day design (inhabitants/catalogue/panels/day.tsx, id `central:day-die`) drawn on
 // Central's own readings and writes (frame/devices/designed.ts DesignBinding). Owners write, faces read (lock §0.4): a key the owner
-// reports is a reading; a key no owner reports is absent, never the design's default (manual §16.11); a key is written only where an
-// owner op stands behind it (manual §16.12). Pure: no React, no transport.
+// reports is a reading; a key no owner reports is absent, never the design's default (manual §16.12); a key is written only where an
+// owner op stands behind it (manual §16.13). Pure: no React, no transport.
 //
 // The readings, each from the owner that holds it:
 //   - Central's ground (`central` op `inspect`, desktop/cradle/src/central/client.ts readGround): the civil-time policy — civil today,
@@ -25,10 +25,10 @@ import {DAY_INITIALISE_OP, DAY_OWNER, DAY_INITIALISE_REMEDY, type DayDocumentSta
  * catalogue to draw (`refusal`, `canOpenToday`) and the one it takes (`openToday`). */
 export const DAY_KEYS = ['light', 'date', 'face', 'dayStart', 'rollover', 'c0', 'c1', 'c2done', 'refusal', 'canOpenToday'] as const
 
-/** Keys the owner takes a change of. Every other key of the design is a reading or has no owner (manual §16.12). */
+/** Keys the owner takes a change of. Every other key of the design is a reading or has no owner (manual §16.13). */
 export const DAY_WRITES: ReadonlySet<string> = new Set(['face', 'openToday'])
 
-/** Why each design key this binding leaves absent has no reading (manual §16.11: "When a reading is missing, say which one"). The
+/** Why each design key this binding leaves absent has no reading (manual §16.12: "When a reading is missing, say which one"). The
  * return names these; the views draw "—" where the kit draws them. */
 export const DAY_ABSENT: Readonly<Record<string, string>> = {
   view: 'Die or flat is a way of looking: no owner keeps it.',
@@ -189,7 +189,7 @@ export function dayValuesOf(facts: DayFacts, document: {readonly face: number; r
   const date = civilDayName(facts.civilDate)
   if (date) values.date = date
   if (facts.standing) values.light = facts.standing.state === 'ready' ? 'lit' : 'dark'
-  // The policy's day boundary is when tomorrow becomes today (DLW §18.1 Day start); with automatic rollover the owner opens the next
+  // The policy's day boundary is when tomorrow becomes today (DLW §18.2 Day start); with automatic rollover the owner opens the next
   // Day at that boundary, and without it no Day opens by itself: Off (the design's step below midnight, day.tsx TIME).
   if (facts.boundary !== null) {
     values.dayStart = facts.boundary

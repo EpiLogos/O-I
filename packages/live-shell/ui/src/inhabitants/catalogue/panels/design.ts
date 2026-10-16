@@ -43,7 +43,7 @@ export interface ViewProps {
   /** The page shown in the head, where the device has pages. */
   readonly page: string
   readonly setPage: (page: string) => void
-  /** The standing of each value by key (manual §16.10: waiting, refused, held, automated, modulated, disabled). */
+  /** The standing of each value by key (manual §16.11: waiting, refused, held, automated, modulated, disabled). */
   readonly standing?: Readonly<Record<string, Standing>>
   /** The owner's readings alone, without what the hand holds or what waits on the owner: a light reads these. */
   readonly owner?: Values

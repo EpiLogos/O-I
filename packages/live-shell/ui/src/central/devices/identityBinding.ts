@@ -1,4 +1,4 @@
-// Agent identity (DLW §18.15, central:agent-identity) on its owners (lane BC3): who an agent is, read from your own roster, before the
+// Agent identity (DLW §19.4, central:agent-identity) on its owners (lane BC3): who an agent is, read from your own roster, before the
 // agent on the track it works on — on Central's workspace track, before the Answer (§16.2, §18.10). The owners, each one the shell
 // already reads:
 //   - the roster: Central's agent profiles (central.agent-profile-roster/v1, op agent_definition roster), the window's one shared roster

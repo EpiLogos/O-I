@@ -1,4 +1,4 @@
-// The Link (manual §19.22, workcell:link): the device that joins this machine to the machines you connected, so that sessions and agents
+// The Link (manual §19.19, workcell:link): the device that joins this machine to the machines you connected, so that sessions and agents
 // on other machines and in other harnesses keep one ledger and one clock beside your own. Live's nearest: Link, the toggle with its peer
 // count, drawn here as a small effect like Utility. The picture is the link itself: this machine on the left, each machine you connected on
 // the right, and two lines to each. The upper line is the ledger, the lower line is the clock. Share decides which of the two the link

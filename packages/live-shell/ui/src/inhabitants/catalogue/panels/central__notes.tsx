@@ -1,4 +1,4 @@
-// Notes (manual §18.8): your own thoughts kept against a passage of a document. Live's nearest: the Locators of the Arrangement view — a
+// Notes (manual §18.1): your own thoughts kept against a passage of a document. Live's nearest: the Locators of the Arrangement view — a
 // mark with words, kept at a place and listed in order — at the size of Utility. The picture is the document and its notes: one bar for
 // each entry of the page, each note as a card beside it, and a line from the card to the place it stands on (a passage, an entry or the
 // whole document). A card with a solid edge was written during the reading, a hollow edge after it. A note keeps the form's own fields
@@ -437,7 +437,7 @@ function NotesPane({p}: {p: ViewProps}) {
 
 // ---------------------------------------------------------------- the controls
 
-// The light reads the owner alone (manual §16.8): lit or dark when it reports, hollow when it has not.
+// The light reads the owner alone (manual §16.9): lit or dark when it reports, hollow when it has not.
 const light = (p: ViewProps) => (strOf(p.owner ?? p.v, 'light') ?? 'unknown') as LightState
 const head = (p: ViewProps) => ({light: light(p), onFold: p.nav.fold, onFull: p.nav.full})
 

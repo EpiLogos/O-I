@@ -1,7 +1,7 @@
-// The plate's controls over the device panel kit (inhabitants/sdk/panel.tsx; docs/dlw/DLW.md §16.9): the kit's dial, value box,
+// The plate's controls over the device panel kit (inhabitants/sdk/panel.tsx; docs/dlw/DLW.md §16.10): the kit's dial, value box,
 // toggle, radio, chooser, readout, action and light are used as they are; this module adds only what an instrument's plate needs and the
 // kit does not carry, drawn on the kit's own classes so it reads as one panel:
-//   • a value sent to its owner on release (manual §16.9 "While you drag, the control shows the value you set. When you release it,
+//   • a value sent to its owner on release (manual §16.10 "While you drag, the control shows the value you set. When you release it,
 //     the new value goes to the owner; a key press sends at once"), shown in italics until the owner's reading returns;
 //   • a dial with no reading (§6 "No reading … The owner has not said"): the ring with no arc and no needle, "—" under it — a parameter
 //     the manual names that no owner carries yet stands so, its reason on the status line, never a fake value (the mockup's waiting rule);
@@ -128,7 +128,7 @@ export function PlateRows({label, rows, size = 5, onPress, onOpen, active, empty
   readonly active?: string | readonly string[] | null
   /** Said in place of the rows when there are none. */
   readonly empty?: string
-  /** With it, the empty list is a light and this one word, and `empty` is the status bar's words (manual §16.8: no sentence in a panel). */
+  /** With it, the empty list is a light and this one word, and `empty` is the status bar's words (manual §16.9: no sentence in a panel). */
   readonly emptyWord?: string
   readonly columns?: 1 | 2
 }) {
@@ -217,7 +217,7 @@ export function PlateReading({label, value, does, light}: {readonly label: strin
 }
 
 /** One short line under the controls (a tool's state, the owner's last answer). Its whole words are the status line's. With `word`, the
- * line is a light and that one word (manual §16.8 "A sentence never appears in a panel. What a control does is said in the status bar"):
+ * line is a light and that one word (manual §16.9 "A sentence never appears in a panel. What a control does is said in the status bar"):
  * the sentence is only the status bar's, under `name`. */
 export function PlateLine({text, tone, children, word, name, light = 'lit'}: {readonly text: string | null | undefined; readonly tone?: string | null; readonly children?: ReactNode
   readonly word?: string; readonly name?: string; readonly light?: 'lit' | 'dark' | 'unknown'}) {

@@ -1,4 +1,4 @@
-// Search (DLW §18.11, central:search) on its owner (lane BC3): Central's "@" language, answered by AIKit's knowledge search. The search
+// Search (DLW §18.4, central:search) on its owner (lane BC3): Central's "@" language, answered by AIKit's knowledge search. The search
 // line is the view's own; the owner answers it as typed — the kernel hands the whole query to `aikit knowledge search|resolve --limit 50
 // -- <query>` (desktop/cradle/kernel/src/knowledge.rs:600 request_args), read through the cradle's own client (knowledge/client.ts
 // `knowledge`) and its progressive pair (knowledge/searchProgress.ts progressiveSearch: the search and the resolution publish
@@ -20,7 +20,7 @@ export const SEARCH_ROOT = 'control:root'
 const DEFINE = /^@([A-Za-z][\w-]*)\s+=\s+(\S.*)$/
 
 const NO_SELECTION = 'The page\'s selection does not cross the host bridge (desktop/cradle/src/document/frame.ts useDocumentHostRead reads the island only): no passage is selected for a tag.'
-const NO_TAG = 'A tag sends nothing yet: no owner takes a passage sent to a person, an agent, a place or a document (DLW §18.11 What a tag sends).'
+const NO_TAG = 'A tag sends nothing yet: no owner takes a passage sent to a person, an agent, a place or a document (DLW §18.4 What a tag sends).'
 
 export const SEARCH_WIRING: DesignWiring = {
   design: SEARCH_DESIGN,
@@ -43,7 +43,7 @@ export const SEARCH_WIRING: DesignWiring = {
     fields: 'No owner searches the shared or joined fields from here: op knowledge reads your own world.',
     limit: `The kernel asks AIKit for ${SEARCH_LIMIT} results: no owner takes another number.`,
     enter: NO_TAG,
-    aliases: 'No owner keeps an alias: it would live only in this view, and an alias is yours to keep (DLW §18.11 Rules).',
+    aliases: 'No owner keeps an alias: it would live only in this view, and an alias is yours to keep (DLW §18.4 Rules).',
   },
   absent: {
     fields: 'No owner reports the fields a search looks in beside your world.',

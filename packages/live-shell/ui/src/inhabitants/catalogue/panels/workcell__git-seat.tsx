@@ -1,4 +1,4 @@
-// Git / landing (manual §19.19): the landing device, last on a Factory session's chain — where an agent's work lands as git. Live's nearest:
+// Git / landing (manual §19.16): the landing device, last on a Factory session's chain — where an agent's work lands as git. Live's nearest:
 // Utility, a small effect whose meaning is plain at a glance. The picture is the branch: main along the bottom, the branch leaving it, one
 // dot for each commit it holds that main does not, a pulsing hollow dot for work that has no commit, and — drawn from Land as — where
 // Land will take it. Handle 1 sets Land as.

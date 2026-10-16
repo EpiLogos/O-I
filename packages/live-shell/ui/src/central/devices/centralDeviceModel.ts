@@ -1,6 +1,6 @@
 // The Central family's devices as devices of the runtime (FOUNDATION F5; manual §10.4): the Day die, the Nara conversation,
 // and the Context-world, Agent identity, Ground hygiene and Impact readings, each a `DeviceInstance` the three sizes draw; and the
-// page family (lane BC2; DLW §17.7, §18.2–§18.8): the Workspace, the Document, the Flow (an instrument first on a Flow document's
+// page family (lane BC2; DLW §17.8, §18.1–§18.1): the Workspace, the Document, the Flow (an instrument first on a Flow document's
 // chain, §18.3 — no longer a clip), the Beings and Things pages and the document effects Text, Highlight and Notes, whose designs
 // draw on central/devices/pageBindings.ts and whose rows here are what the generic plate draws until a design does, and what the
 // declaration gate reads. Pure: no React, no transport. The
@@ -181,7 +181,7 @@ function naraRows(face: InhabitantFaceDeclaration, reads: CentralReads['nara']):
   ]
 }
 
-/** The Flow's rows (DLW §18.3, an instrument first on a Flow document's chain): the document and its revision, its save state, and
+/** The Flow's rows (DLW §18.1, an instrument first on a Flow document's chain): the document and its revision, its save state, and
  * the next entry, which it generates through the Flow's own write (`invariant.generates`). */
 export const FLOW_STATES = ['draft', 'saved', 'edited since save'] as const
 function flowRows(face: InhabitantFaceDeclaration): SdkParamRow[] {

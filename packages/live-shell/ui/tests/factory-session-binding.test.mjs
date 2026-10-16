@@ -1,5 +1,5 @@
 // Lane BF3: the session's own devices on their owners (src/agent/devices/sessionChainBindings.ts, FactoryDeviceChain.tsx) — the Run
-// (software-factory:run-device, DLW §19.17, on the session's chain), Custody (software-factory:agent-custody, §19.13, in the Agent's
+// (software-factory:run-device, DLW §19.1, on the session's chain), Custody (software-factory:agent-custody, §19.13, in the Agent's
 // slot) and the Agentset rack (software-factory:agentset-rack, §19.18, a group's chain).
 //
 // Channels:
