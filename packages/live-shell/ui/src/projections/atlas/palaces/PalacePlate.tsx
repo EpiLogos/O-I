@@ -12,9 +12,13 @@
 // Outside, the plate lists the world's palaces — each a register's Expression standing where its rooms' subjects are placed
 // (palacesModel.ts) — and the doors the Earth's selection stands at; a press turns the Earth to a palace's door, Enter goes in.
 // Every act goes through palaceSession.ts to its owner; this plate writes nothing itself.
+//
+// The head is the panel kit's (InstrumentPlate.tsx; DEVICE-UI §4.1), and the display section is the palace's live well
+// (inhabitants/ql/devices/techneWells.tsx: the floor — the rooms where the board stands them, the path between their doors, the room the
+// walk stands in; outside a palace, the well says none is entered).
 
 import {useEffect, useMemo, useState, useSyncExternalStore} from 'react'
-import {InstrumentPlate, heldMarksOf, type PlateSection, type SectionDevice} from '../../../frame/devices/InstrumentPlate'
+import {InstrumentPlate, heldMarksOf, type PlateSection} from '../../../frame/devices/InstrumentPlate'
 import {usePlateFit} from '../../../frame/devices/plateFit'
 import {HeldMarks, PlateField, PlateLine, PlateRadio, PlateReading, PlateRows, said, type PlateRow} from '../../../frame/devices/plateControls'
 import {Action} from '../../../inhabitants/sdk/panel'
@@ -35,6 +39,8 @@ import {
   returnToGround, revert, roomsNow, save, selectRooms, setGuide, setPath, setSnap, stepWalk, subscribePalace, walkOf, walkToStart,
   type PalaceInside,
 } from './palaceSession'
+import {wellSection} from '../../../inhabitants/ql/devices/techneWells'
+import type {OwnPlateProps} from '../../../inhabitants/ql/devices/TechneDevices'
 import '../places/placesPlate.css'
 import './palaces.css'
 
@@ -288,25 +294,28 @@ const OUTSIDE = ['rooms', 'path', 'board', 'portals']
 
 /** The M5′ Palace / Integral Whole plate. `held` are the devices the families declare this instrument holds: their marks stand on the
  * plate's first section. Entering or leaving a palace stands the plate anew, with that side's sections folded as they start. */
-export function PalacePlate({held, focused, startFolded}: {held: readonly (SectionDevice & {face: string})[]; focused: boolean; startFolded?: readonly string[]}) {
+type PalacePlateProps = Pick<OwnPlateProps, 'held' | 'focused' | 'onFold' | 'onFull'> & {startFolded?: readonly string[]}
+
+export function PalacePlate({held, focused, startFolded, onFold, onFull}: PalacePlateProps) {
   const here = inside()
-  return <PalacePlateAt key={here ? `inside:${here.palace.key}` : 'outside'} held={held} focused={focused} startFolded={startFolded} />
+  return <PalacePlateAt key={here ? `inside:${here.palace.key}` : 'outside'} held={held} focused={focused} startFolded={startFolded} onFold={onFold} onFull={onFull} />
 }
 
-function PalacePlateAt({held, focused, startFolded}: {held: readonly (SectionDevice & {face: string})[]; focused: boolean; startFolded?: readonly string[]}) {
+function PalacePlateAt({held, focused, startFolded, onFold, onFull}: PalacePlateProps) {
   const handle = useAtlasLive()
   const {rows} = usePalaces()
   const state = usePalace()
   const here = inside()
   useEffect(() => { readPalaces() }, [])
-  const ids = here ? ['rooms', 'path', 'board', 'return', 'bookmarks', 'portals', 'whole', 'compose'] : ['palaces', ...OUTSIDE]
+  const well = wellSection('techne:m5')
+  const ids = [...(well ? [well.id] : []), ...(here ? ['rooms', 'path', 'board', 'return', 'bookmarks', 'portals', 'whole', 'compose'] : ['palaces', ...OUTSIDE])]
   const fit = usePlateFit(ids.join('|'), here ? FOLD_ORDER_INSIDE : [...OUTSIDE].reverse(), false, startFolded ?? (here ? START_FOLDED_INSIDE : OUTSIDE))
   const fold = (section: Omit<PlateSection, 'folded' | 'onFold'>): PlateSection => ({...section, folded: fit.folded.has(section.id), onFold: () => fit.press(section.id)})
-  const outsideNote = (what: string) => <PlateLine text={`Enter a palace: ${what}`} />
+  const outsideNote = (what: string) => <PlateLine text={`Enter a palace: ${what}`} word="enter" name="Palace" light="unknown" />
   const marks = <HeldMarks devices={heldMarksOf(held)} />
   const presentation: FacePresentation = {family: 'techne', faceId: 'techne:m5', title: 'Palace / Integral Whole', icon: 'palace',
     owner: ['M5′', 'Technē', here ? `${here.palace.title} r${here.doc.revision}` : 'the palaces of your world', focused ? 'open on the focused pane' : 'opened here'].filter(Boolean).join(' · ')}
-  const sections: PlateSection[] = here ? [
+  const sections: PlateSection[] = [...(well ? [well] : []), ...(here ? [
     fold({id: 'rooms', title: 'Rooms', width: 236, note: <>{`${roomsNow(here).length} along the path`}{marks}</>, children: <RoomsSection here={here} />}),
     fold({id: 'path', title: 'Path', width: 200, note: here.walking ? 'walking' : undefined, children: <PathSection here={here} />}),
     fold({id: 'board', title: 'Board', width: 196, children: <BoardSection here={here} />}),
@@ -321,10 +330,9 @@ function PalacePlateAt({held, focused, startFolded}: {held: readonly (SectionDev
     fold({id: 'path', title: 'Path', width: 170, children: outsideNote('its walk and its guide stand here; the transport walks it.')}),
     fold({id: 'board', title: 'Board', width: 170, children: outsideNote('its board, its snap and its audience stand here.')}),
     fold({id: 'portals', title: 'Portals', width: 170, children: outsideNote('its doors out — to other palaces and to places — stand here.')}),
-  ]
+  ])]
   // the palace's one status line (palaceInstrument.tsx:622 message) stands under the sections, in the owner's words
   const footer = here?.line ? <p className="plate-line palace-plate-line" role="status" data-i={said('Palace', here.line)}>{here.line}</p> : null
-  return <InstrumentPlate presentation={presentation} sections={sections} footer={footer} fit={fit}
-    head={here ? <span className="inst-head-reading" data-i="Scale|The atlas stands inside the palace.">scale <b>palace</b></span> : undefined}
+  return <InstrumentPlate presentation={presentation} sections={sections} footer={footer} fit={fit} onFold={onFold} onFull={onFull} fullLabel="Open Palace / Integral Whole on the focused pane"
     dataAttributes={{'data-instrument': 'techne:m5', 'data-expanded': 'true', 'data-palace-plate': 'true', 'data-palace': here ? here.palace.key : undefined, 'data-palace-phase': state.phase}} />
 }

@@ -77,7 +77,7 @@ test('the fold law: the person\'s folds first, then as few of the order as bring
 test('the head carries the device\'s own acts before its marks (the mockup\'s Studio head: Save)', () => {
   const out = html(createElement(Plate.InstrumentPlate, {presentation, head: createElement('button', {type: 'button'}, 'Save'), actions: [{icon: 'cmd', label: 'Configure'}],
     sections: [{id: 'a', title: 'A', children: 'a'}]}))
-  assert.match(out, /<span class="sdk-face__extra"><button type="button">Save<\/button><\/span><span class="sdk-face__x">/, 'the acts, then the marks')
+  assert.match(out, /<span class="dp-head-acts"><button type="button">Save<\/button><\/span><span class="dp-head-x"><button type="button" class="dp-full" data-plate-mark="cmd" title="Configure"/, 'the acts, then the marks (the kit\'s head)')
 })
 
 test('the sheets: the row and its sections never scroll, a hairline between sections, no box framed inside a section, shell tokens only', async () => {
@@ -105,7 +105,7 @@ test('each Technē instrument has its Compact: a head that opens it on the focus
   for (const holder of TECHNE_INSTRUMENTS) {
     const out = html(createElement(InstrumentCompact, {holder, mark: 'techne', light: 'unknown', onOpen() {}}))
     assert.match(out, new RegExp(`class="techne-compact" data-instrument="${holder.id}" data-expanded="compact" data-rack="compact"`), `${holder.id} stands compact on the rack`)
-    assert.match(out, new RegExp(`class="techne-compact-title"[^>]*>${holder.title}<`), `${holder.id}: its name is the press that opens it`)
+    assert.match(out, new RegExp(`<header class="dp-head dp-head--plate"[^>]*>.*?class="dp-title dp-title--press"[^>]*>${holder.title}<`), `${holder.id}: the kit's head; its name is the press that opens it`)
     assert.match(out, /<div class="dp-display" style="width:96px;height:96px"[^>]*><svg/, `${holder.id}: one well, the only inset surface`)
     const macros = out.slice(out.indexOf('class="techne-compact-macros"'))
     for (const name of MACROS[holder.id]) assert.match(macros, new RegExp(`(class="dp-label">|>)${name}<`), `${holder.id}: the macro ${name}`)

@@ -8,7 +8,13 @@
 // bar, which every lens drew in the pane. Pure: no React.
 import type {FrameChromeHome} from '@epilogos/expressions-boundary'
 
-export interface WaitingParameter {readonly name: string; readonly values: string; readonly why: string}
+export interface WaitingParameter {
+  readonly name: string
+  readonly values: string
+  readonly why: string
+  /** A quantity the mockup sweeps (a dial), drawn as a dial with no reading. */
+  readonly dial?: {readonly unit?: string}
+}
 export interface StageSection {
   readonly id: string
   readonly title: string
@@ -48,11 +54,20 @@ export const STAGE_PLATES: Readonly<Record<StageInstrumentId, readonly StageSect
   ],
   'techne:m2': [
     {id: 'lens', title: 'Lens', homes: ['timeline:lens'], width: 210},
-    {id: 'readings', title: 'Readings', homes: ['timeline:readings'], width: 200, empty: 'The ruler’s reading discloses no layers or filters here.'},
+    {id: 'readings', title: 'Readings', homes: ['timeline:readings'], width: 200, empty: 'The ruler’s reading discloses no layers or filters here.', waiting: [
+      // The mockup's Strata (world-shell-mockup.html:1406; manual §17.4 Your work: Days · Runs · Receipts): the relation field's Activity
+      // projection draws Days, NOWs, sessions and runs together (field-studies-journeys relationFieldView.tsx:50-51), and no owner shows
+      // one stratum alone.
+      {name: 'Strata', values: 'Occurrence · Receipt · Day · NOW · Run', why: 'No owner shows one temporal stratum alone: the Relations lens’s Activity projection draws Days, NOWs, sessions and runs together.'},
+    ]},
     {id: 'standing', title: 'Standing', homes: ['timeline:standing'], width: 140, waitingWhenEmpty: true, waiting: [
       {name: 'Standing floor', values: 'Facts · Claims · Inferences · Guesses · All', why: 'The chronology filters no event by standing: every event shows at its own standing. The Relations projection carries its own standing filter, which stands here while it is shown.'},
     ]},
-    {id: 'window', title: 'Window', homes: ['timeline:window'], width: 170},
+    {id: 'window', title: 'Window', homes: ['timeline:window'], width: 170, waiting: [
+      // The mockup's Deep time (world-shell-mockup.html:1405, a 0–100 % dial; manual §17.4 Time scale): the ruler maps time by its own
+      // scale (desktop/cradle/src/techne/m0m5/timeline/scale.ts) and no owner takes a stretch of deep time as a setting.
+      {name: 'Deep time', values: '0–100 %', why: 'No owner stretches deep time on the ruler by a setting: the ruler maps time by its own scale.', dial: {unit: '%'}},
+    ]},
   ],
   'techne:m3': [
     {id: 'stops', title: 'Stops', homes: ['journey:stops']},

@@ -84,7 +84,7 @@ test('the address in words: the Scene\'s name, the time, the marker\'s name — 
 test('the Studio\'s head says where the work stands and its link mark copies the whole address in the frame\'s own form', () => {
   Door.publishHostedChrome({state: {...READY, address: {scene: 'scene:one', t: 12.5, marker: 'm1', markerName: 'Arrival'}}, run: async () => ({ok: true}), faults: []})
   const html = studio()
-  assert.match(html, /<span class="sdk-face__owner">Expressions engine · “the stone” at 0:12\.5 · marker “Arrival”<\/span>/)
+  assert.match(html, /<header class="dp-head dp-head--plate" data-i="Studio\|Expressions engine · “the stone” at 0:12\.5 · marker “Arrival”">/, 'where the work stands: the head\'s status-bar words (lane BT: the kit\'s head)')
   assert.match(html, /data-plate-mark="link" title="Copy address: \?expression=expression%3Akept&amp;scene=scene%3Aone&amp;t=12\.5&amp;marker=m1"/)
   Door.publishHostedChrome({state: READY, run: async () => ({ok: true}), faults: []})
   const quiet = studio()

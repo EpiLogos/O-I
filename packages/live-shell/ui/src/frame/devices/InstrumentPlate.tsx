@@ -1,19 +1,24 @@
 // An instrument as one plate with its controls grouped in sections side by side (manual §10.4 "Whole — every setting, grouped"; the
 // mockup's `instFrame()` at world-shell-mockup.html:1411 and its CSS .inst/.insth/.isecs/.isec at :352-359; the device UI standard,
 // docs/dlw/DEVICE-UI.md §1: "Sections are columns, ruled off from each other by a hairline and named in small capitals. The well is the
-// only inset surface … Nothing scrolls, and no box sits inside a box"). The plate is the SDK's own (inhabitants/sdk/controls.tsx
-// FacePlate: the power ring, the mark, the name, the owner, the device's own acts, the head's marks); its body is one row of sections at
-// the widths their controls take, each headed in small capitals. A row too narrow for every section folds sections to their titles —
-// the runtime's strip, pressed to open (manual §10.4 "A device can also fold down to its title") — never a scroller: the host's own fit
-// when it gives one (the Studio's, the stage plates'), else the plate's, from the last section back. The controls are the device panel
-// kit's (inhabitants/sdk/panel.tsx) and plateControls.tsx: a dial for a value you sweep, a radio for one of a few, rows for items.
+// only inset surface … Nothing scrolls, and no box sits inside a box"). Its head is the panel kit's (inhabitants/sdk/panel.tsx PanelHead,
+// DEVICE-UI §4.1: the activator, ▾, the name, the held mark, the pages, ⤢), with the device's own acts after the pages (the Studio's Save,
+// Undo, Redo) and the place's marks before ⤢; who owns the plate and where it stands is said on the status bar when you point at the head,
+// never drawn as a sentence (§1 "A sentence never appears in a panel"). Its body is one row of sections at the widths their controls take,
+// each headed in small capitals; a display section (§4.2 "The display stands in a section of its own, at the left") holds the well and
+// never folds. A row too narrow for every section folds sections to their titles — the runtime's strip, pressed to open (manual §10.4 "A
+// device can also fold down to its title") — never a scroller: the host's own fit when it gives one (the Studio's, the stage plates'), else
+// the plate's, from the last section back. The controls are the device panel kit's (inhabitants/sdk/panel.tsx) and plateControls.tsx: a
+// dial for a value you sweep, a radio for one of a few, rows for items.
 //
 // A section can still hold devices of the runtime (`SectionDevices`): one device at a time, chosen by its mark when the section holds
 // several (Live's rack: "several chains side by side under one device, with a selector to choose between them", manual §10.4), each
 // drawn by DeviceView at its compact size, its own frame stood down so it reads as the section's controls.
 import {useState, type CSSProperties, type DragEvent, type ReactNode} from 'react'
-import {FacePlate, type PlateMark, type PowerStanding} from '../../inhabitants/sdk/controls'
+import type {PlateMark, PowerStanding} from '../../inhabitants/sdk/controls'
 import {Icon} from '../../inhabitants/sdk/Icon'
+import {ChevronFold, PopOut} from '../../inhabitants/sdk/marks'
+import {Lamp, PanelHead, type LightState, type Page} from '../../inhabitants/sdk/panel'
 import type {FacePresentation} from '../../inhabitants/sdk/define'
 import type {IconName} from '../../inhabitants/sdk/icons'
 import {DeviceView} from './DeviceView'
@@ -28,7 +33,7 @@ export const PLATE_COLUMN = 56
 
 export interface PlateSection {
   readonly id: string
-  /** The group's name, as the head of its column (the mockup's `.isec h5`). */
+  /** The group's name, as the head of its column (the mockup's `.isec h5`). A display section draws none. */
   readonly title: string
   /** What stands at the right of the heading (the mockup's `h5 span`: a provenance, a count, a scale, the marks of held devices). */
   readonly note?: ReactNode
@@ -38,6 +43,9 @@ export interface PlateSection {
    * a field across them all. Absent, the controls stand one under the next. */
   readonly cols?: number
   readonly children: ReactNode
+  /** The display's own section (DEVICE-UI §4.2 "The display stands in a section of its own, at the left"; §7): the well alone, with no
+   * heading; it never folds for room. */
+  readonly display?: boolean
   /** Folded to its title (manual §10.4 "A device can also fold down to its title. Click the title to open it again"; the
    * mockup's folded strip .ifold, :153): the column stands as the runtime's fold strip, its name read upward. Absent on every
    * section, the plate folds what does not fit by its own fit. */
@@ -46,15 +54,33 @@ export interface PlateSection {
   readonly onFold?: () => void
 }
 
+/** A mark on the plate's head: its icon, its words (the status bar's, and its title), its press. */
+export interface PlateHeadMark {
+  readonly icon: PlateMark
+  readonly label: string
+  readonly onPress?: () => void
+}
+
 export interface InstrumentPlateProps {
   readonly presentation: FacePresentation
-  /** The instrument's light: a reading, dark while unknown. */
+  /** The instrument's light: a reading, hollow while unknown (DEVICE-UI §4.1 "A hollow ring: the owner has not said"). */
   readonly power?: PowerStanding
   readonly onPower?: () => void
-  /** The device's own acts in its head, before its marks (the mockup's Studio head: "edited since save" and Save, :1432). */
+  /** ▾ in the head: fold the instrument to its title (DEVICE-UI §2 "Press ▾ in the head to fold the device"). */
+  readonly onFold?: () => void
+  /** ⤢ at the head's right: open the instrument full in a pane, in the place's words. */
+  readonly onFull?: () => void
+  readonly fullLabel?: string
+  /** Who else holds values on this instrument, in the stall colour (DEVICE-UI §4.1 "Held mark"). */
+  readonly heldBy?: string
+  /** Pages in the head (DEVICE-UI §1 "When a panel holds more than fits, it gets pages in its head"). */
+  readonly pages?: readonly Page[]
+  readonly page?: string
+  readonly onPage?: (id: string) => void
+  /** The device's own acts in its head, after the pages and before its marks (the mockup's Studio head: Save, Undo, Redo, :1432). */
   readonly head?: ReactNode
-  /** The marks on the plate's head (settings, open full, read again …), each with its label. */
-  readonly actions?: readonly {readonly icon: PlateMark; readonly label: string; readonly onPress?: () => void}[]
+  /** The marks on the plate's head (settings, read again, copy the address …), each with its label, before ⤢. */
+  readonly actions?: readonly PlateHeadMark[]
   readonly sections: readonly PlateSection[]
   /** The host's own fit (plateFit.ts usePlateFit), where the host decides what folds (its own order, sections that wait folded). Absent,
    * the plate fits itself: sections fold from the last back to the second while the row is too narrow; a press holds. */
@@ -70,19 +96,39 @@ export interface InstrumentPlateProps {
   readonly footer?: ReactNode
 }
 
-export function InstrumentPlate({presentation, power = 'unknown', onPower, head, actions, sections, fit, bodyClassName, onDragOver, onDrop, onDragLeave, dataAttributes, footer}: InstrumentPlateProps) {
+/** The owner's on/off as the kit's activator reads it. */
+export const lightOfPower = (power: PowerStanding): LightState => (power === 'on' ? 'lit' : power === 'off' ? 'dark' : 'unknown')
+
+function MarkView({mark}: {mark: PlateMark}) {
+  return mark === 'fold' ? <ChevronFold size={10} /> : mark === 'full' ? <PopOut size={10} /> : <Icon name={mark} size={11} />
+}
+
+/** The place's marks on the head, drawn as the kit draws its own (▾, ⤢): each names what it does on the status bar. */
+function HeadMarks({actions}: {actions: readonly PlateHeadMark[]}) {
+  return <>{actions.map((action, index) => <button key={`${action.icon}:${index}`} type="button" className="dp-full" data-plate-mark={action.icon} title={action.label} aria-label={action.label}
+    data-i={`${action.label.split(':')[0]}|${action.label}.`} disabled={!action.onPress} onClick={action.onPress}><MarkView mark={action.icon} /></button>)}</>
+}
+
+export function InstrumentPlate({presentation, power = 'unknown', onPower, onFold, onFull, fullLabel, heldBy, pages, page, onPage, head, actions, sections, fit, bodyClassName, onDragOver, onDrop, onDragLeave, dataAttributes, footer}: InstrumentPlateProps) {
   // The plate's own fit, standing down where the host fits it: the sections whose fold the host does not decide may fold, from the last.
-  const free = sections.filter(section => section.folded === undefined && section.onFold === undefined).map(section => section.id)
-  const foldable = fit ? [] : free.slice(1)
+  // The display's section never folds: the picture is what the device is read by (DEVICE-UI §1 "The picture comes first").
+  const free = sections.filter(section => !section.display && section.folded === undefined && section.onFold === undefined).map(section => section.id)
+  const foldable = fit ? [] : free.slice(sections[0]?.display ? 0 : 1)
   const own = usePlateFit(sections.map(section => section.id).join('|'), [...foldable].reverse(), !foldable.length)
   const fitted = fit ?? own
   const shown = sections.map(section => foldable.includes(section.id) ? {...section, folded: own.folded.has(section.id), onFold: () => own.press(section.id)} : section)
   return <div className="inst-plate" {...dataAttributes} data-studio-fit={dataAttributes?.['data-studio-fit'] ?? fitted.fitId}
     data-natural-width={fitted.natural ?? undefined} onDragOver={onDragOver} onDrop={onDrop} onDragLeave={onDragLeave}>
-    <FacePlate presentation={presentation} power={power} onPower={onPower} actions={actions} extra={head}>
+    <section className="inst-face" aria-label={presentation.title}>
+      <PanelHead title={presentation.title} light={lightOfPower(power)} onLight={onPower} onFold={onFold}
+        mark={<Icon name={presentation.icon} size={11} className="inst-head-mark" />} heldBy={heldBy} pages={pages} page={page} onPage={onPage}
+        acts={head} marks={actions?.length ? <HeadMarks actions={actions} /> : undefined} onFull={onFull} fullLabel={fullLabel} hint={presentation.owner} />
       <div className={`inst-sections${bodyClassName ? ` ${bodyClassName}` : ''}`}>
-        {shown.map(section => section.folded
-          // The runtime's fold strip (inhabitants/sdk/controls.tsx FacePlate folded: .sdk-face__unfold), pressed to open.
+        {shown.map(section => section.display
+          ? <section key={section.id} className="inst-section inst-section--display" data-section={section.id} aria-label={section.title}
+              style={section.width ? {'--section-w': `${section.width}px`} as CSSProperties : undefined}>{section.children}</section>
+          : section.folded
+          // The runtime's fold strip (sdk.css .sdk-face__unfold), pressed to open.
           ? <section key={section.id} className="inst-section inst-section--folded" data-section={section.id} data-folded="true" aria-label={section.title}>
               <button type="button" className="sdk-face__unfold" aria-expanded={false} aria-label={`Open ${section.title}`} title={`${section.title} — open`}
                 data-i={`${section.title}|Folded to its title. Click to open it.`} onClick={section.onFold}><span className="sdk-face__fold-title">{section.title}</span></button>
@@ -97,7 +143,7 @@ export function InstrumentPlate({presentation, power = 'unknown', onPower, head,
             </section>)}
       </div>
       {footer}
-    </FacePlate>
+    </section>
   </div>
 }
 
@@ -146,7 +192,12 @@ export function heldMarksOf(entries: readonly SectionDevice[]): HeldDevice[] {
   return entries.map(entry => ({id: entry.device.id, title: entry.device.face.title, mark: entry.mark, light: lightOf(entry.device), onPool: act(entry, 'detail'), onPane: act(entry, 'pane')}))
 }
 
-/** A group whose owner discloses nothing here says so in one short line; its whole words are the status line's. */
-export function SectionNote({children}: {children: ReactNode}) {
-  return <p className="inst-section-line" data-i={typeof children === 'string' ? `|${children}` : undefined}>{children}</p>
+/** A group whose owner discloses nothing here says so in one short line; its whole words are the status line's. With `word`, the line is
+ * drawn as a light and that one word (DEVICE-UI §1 "A sentence never appears in a panel. What a control does is said in the status bar
+ * when you point at it"): the sentence is only the status bar's. */
+export function SectionNote({children, word, light = 'unknown'}: {children: ReactNode; word?: string; light?: LightState}) {
+  const words = typeof children === 'string' ? children : undefined
+  if (word) return <p className="inst-section-line inst-section-word" data-i={words ? `${word}|${words}` : undefined} aria-label={words ?? word}>
+    <Lamp state={light} /><span>{word}</span></p>
+  return <p className="inst-section-line" data-i={words ? `|${words}` : undefined}>{children}</p>
 }

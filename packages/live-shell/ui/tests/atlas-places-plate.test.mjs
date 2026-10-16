@@ -78,8 +78,11 @@ test('the focused M4′ stands as one plate in the mockup\'s six sections; the o
   assert.ok(order.every(at => at > 0), 'every section stands')
   assert.deepEqual([...order].sort((a, b) => a - b), order, 'in the mockup\'s order')
   assert.match(out, />World \/ Places</)
-  assert.match(out, /M4′ · Technē · Earth · root anchor · open on the focused pane/, 'the head names the body')
-  assert.match(out, /class="inst-head-reading"[^>]*>scale <b>—<\/b>/, 'the scale stands in the head\'s slot (no atlas mounted: no scale)')
+  assert.match(out, /<header class="dp-head dp-head--plate" data-i="World \/ Places\|M4′ · Technē · Earth · root anchor · open on the focused pane">/, 'the kit\'s head; who owns it is the status bar\'s words')
+  // lane BT: the Earth's own well stands first (DEVICE-UI §7), and says which reading is missing — no atlas mounted, no likely planet
+  assert.match(out, /data-section="display"[^>]*><div class="dp-display"[^>]*><svg[^>]*><text[^>]*>the Earth<\/text><text[^>]*>not mounted<\/text><\/svg><\/div>/, 'the well names the missing Earth')
+  assert.ok(out.indexOf('data-section="display"') < out.indexOf('data-section="body"'), 'the well at the plate\'s left')
+  assert.doesNotMatch(out, /inst-head-reading/, 'no reading in the head: the scale is the well\'s corner')
   for (const id of ['techne:m0', 'techne:m1', 'techne:m2', 'techne:m3', 'techne:m5']) assert.match(out, new RegExp(`data-instrument="${id}" data-expanded="false"`), `${id} folds`)
   // each device M4′ holds stands as its mark on the section that draws its controls: every setting in the pool, full size in a pane
   const body = out.slice(out.indexOf('data-section="body"'), out.indexOf('data-section="landmass"'))
@@ -97,7 +100,7 @@ test('the focused M4′ stands as one plate in the mockup\'s six sections; the o
   assert.match(out, /aria-label="Coast"[^>]*>(<button[^>]*aria-checked="false"[^>]*disabled=""[^>]*>[a-z]+<\/button>){3}/, 'Coast is a switch with nothing lit')
   assert.match(body, /role="radio" aria-checked="true"[^>]*>Earth</, 'the body is Earth, the one world nobody built')
   assert.match(body, /data-i="Central\|Your own body has no builder in this suite yet: the atlas draws Earth\." disabled="">Central</, 'Central waits, and says why')
-  assert.match(out, /No owner declares a place yet\./, 'no standing read: no place, said')
+  assert.match(out, /data-i="[^"]*\|No owner declares a place yet\."[^>]*><span class="dp-lamp" data-light="unknown"><\/span><span class="dp-label">none<\/span>/, 'no standing read: no place, a light and a word; the sentence is the status bar\'s')
   assert.match(out, /Choose a subject on the Earth first/, 'Place waits for a subject')
   assert.match(out, /<select class="dp-chooser" aria-label="Lens"[^>]*disabled=""/, 'the atlas\'s lens chooser stands on the plate, waiting for the Earth')
   assert.doesNotMatch(out, /overflow: ?(auto|scroll)|places-list/, 'no list scrolls inside the plate')
@@ -107,7 +110,13 @@ test('Locations and Relations read the owners\' places: precision marks, the myt
   publishSuiteStanding(standing)
   try {
     const out = M4()
-    assert.match(out, /data-section="locations"[^>]*>.*2 on the Earth · 1 not/s, 'the section counts what the Earth draws and what it cannot')
+    assert.match(out, /data-section="locations"[^>]*>.*2 placed · 1/s, 'the section counts what the Earth draws and what it cannot')
+    // lane BT (DEVICE-UI §1 "A sentence never appears in a panel"): what the owners returned stands as a light and readouts
+    const locations = out.slice(out.indexOf('data-section="locations"'), out.indexOf('data-section="relations"'))
+    assert.match(locations, /class="plate-keys places-returned" data-places-standing="ready" data-owners="[a-z]+" data-i="What the owners returned\|[^"]+"/, 'the owners\' sentence is the status bar\'s')
+    for (const label of ['subjects', 'placed', 'unplaced']) assert.match(locations, new RegExp(`<span class="dp-label">${label}</span>`), `${label}: a readout`)
+    assert.match(locations, /data-owners="(read|partial)"[^>]*><span class="dp-lamp" data-light="lit"/, 'the owners\' answer as a light')
+    assert.doesNotMatch(locations, /<p class="plate-line"|>[^<]*read from their owners/, 'no sentence drawn in Locations: the owners\' words are only an attribute the status bar reads')
     assert.match(out, /data-marker="solid"[^>]*><\/span><span class="dp-row-name">Tower Coast/, 'an exact place is a solid mark')
     assert.match(out, /data-marker="halo"[^>]*><\/span><span class="dp-row-name">Folio Isles<\/span><span class="places-tag" data-standing="mythic"/, 'approximate is a halo; the mythic is named')
     assert.match(out, /data-row="wiki:place:nowhere" data-dim="true" data-i="Nowhere\|[^"]*the owner declares a polygon; the Earth draws points/, 'the owner\'s reason, verbatim')
