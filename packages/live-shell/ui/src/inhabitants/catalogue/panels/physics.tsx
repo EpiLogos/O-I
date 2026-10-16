@@ -1,8 +1,8 @@
 // Physics (manual §20.3): the field's motion law — swirl, return, curl, gravity, drag, time. Live's nearest: Auto Filter and
 // Corpus — a well that draws the law with handles, and columns of dials ruled off beside it. The shell's own diagram
 // (components/NativeFieldFace.physics.tsx) draws the same law from the engine's readings; this panel hosts a diagram of it.
-import {Action, Band, Dial, Display, Folded, Handle, Panel, Radio, Section, Tile, Toggle, ValueBox, type LightState} from '../../sdk/panel'
-import {clampTo, fixed, num, on, signed, str, type DesignedDevice, type ViewProps} from './design'
+import {Action, Band, Readout, Dial, Display, Folded, Handle, Panel, Radio, Section, Tile, ValueBox, type LightState} from '../../sdk/panel'
+import {boolOf, clampTo, fixed, num, on, signed, st, str, type DesignedDevice, type ViewProps} from './design'
 
 type V = ViewProps['v']
 const RADIUS = {min: 20, max: 2000, log: true}, CURL = {min: .02, max: 16, log: true}, SPEED = {min: 50, max: 60000, log: true}
@@ -124,9 +124,14 @@ export const physics: DesignedDevice = {
           {DIAL(p, 'dispersion', 'Dispersion', 'How far the particles spread when you disperse them.', .65, {min: 0, max: 20}, d2)}
         </Section>
         <Section label="Field" grow>
-          <Toggle label="Pause" does="Holds the field still." on={on(p.v, 'paused')} onChange={x => p.set('paused', x)} />
-          <Action label="Disperse" does="Spreads the particles out." onPress={() => {}} />
-          <Action label="Reset" does="Returns every particle to its shape." onPress={() => {}} />
+          <Readout label="motion" does="Whether the field moves. The engine reports it; Play and Stop move it." value={boolOf(p.v, 'paused') === undefined ? undefined : on(p.v, 'paused') ? 'held' : 'moving'} />
+          <Action {...st(p, 'disperse')} label="Disperse" does="Spreads the particles out." onPress={() => p.set('disperse', true)} />
+          {p.v.resetAsk === true
+            ? <div className="ref-pair">
+                <Action {...st(p, 'reset')} label="Reset" does="Return every particle to its shape. The field's motion is lost." onPress={() => { p.set('reset', 'confirmed'); p.set('resetAsk', undefined) }} />
+                <Action label="Cancel" does="Keep the field as it is." onPress={() => p.set('resetAsk', undefined)} />
+              </div>
+            : <Action {...st(p, 'reset')} label="Reset…" does="Returns every particle to its shape. Asks you first." onPress={() => p.set('resetAsk', true)} />}
         </Section>
       </Band>
     </> : <>
@@ -152,7 +157,7 @@ export const physics: DesignedDevice = {
         </Section>
         <Section label="Time" grow>
           {DIAL(p, 'timeScale', 'Time scale', 'The pace of the whole simulation. 0 holds the field.', 1, {min: 0, max: 4}, x => `${x.toFixed(2)}×`)}
-          <Toggle label="Pause" does="Holds the field still." on={on(p.v, 'paused')} onChange={x => p.set('paused', x)} />
+          <Readout label="motion" does="Whether the field moves. The engine reports it; Play and Stop move it." value={boolOf(p.v, 'paused') === undefined ? undefined : on(p.v, 'paused') ? 'held' : 'moving'} />
         </Section>
       </Band>
     </>}
