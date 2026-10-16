@@ -210,7 +210,14 @@ export function Toggle({label, does, on, onChange, tone = 'accent', unknown, ...
   </Cell>
 }
 
-export interface Option<T extends string> {readonly value: T; readonly label: string; readonly does?: string}
+export interface Option<T extends string> {
+  readonly value: T
+  readonly label: string
+  readonly does?: string
+  /** Why this one choice is closed (the owner has no operation for it, or it waits on a reading): the option stands disabled and
+   * says this, while the others stay open. */
+  readonly why?: string
+}
 
 /** One of a few, side by side or stacked (Live's radio buttons: filter types, quantize). */
 export function Radio<T extends string>({label, does, value, options, onChange, stack, ...standing}: Standing & {readonly label?: string; readonly does?: string; readonly value: T; readonly options: readonly Option<T>[]; readonly onChange?: (v: T) => void; readonly stack?: boolean}) {
@@ -218,7 +225,8 @@ export function Radio<T extends string>({label, does, value, options, onChange, 
     {label && <span className="dp-label">{label}</span>}
     <div className="dp-radio" role="radiogroup" aria-label={label} data-stack={stack ? 'true' : undefined}>
       {options.map(option => <button key={option.value} type="button" role="radio" aria-checked={option.value === value}
-        data-i={option.does ? said(option.label, option.does) : undefined} disabled={!onChange || !!standing.disabled}
+        data-i={option.does || option.why ? said(option.label, [option.does, option.why].filter(Boolean).join(' ')) : undefined}
+        disabled={!onChange || !!standing.disabled || !!option.why} data-why={option.why ? 'true' : undefined}
         onClick={() => onChange?.(option.value)}>{option.label}</button>)}
     </div>
   </Cell>
@@ -231,7 +239,7 @@ export function Chooser<T extends string>({label, does, value, options, onChange
     <select className="dp-chooser" aria-label={label} value={options.some(option => option.value === value) ? value : ''} disabled={!onChange || !!standing.disabled}
       onChange={event => onChange?.(event.target.value as T)}>
       {!options.some(option => option.value === value) && <option value="" disabled>—</option>}
-      {options.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+      {options.map(option => <option key={option.value} value={option.value} disabled={!!option.why} title={option.why}>{option.label}</option>)}
     </select>
   </Cell>
 }
