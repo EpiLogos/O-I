@@ -22,5 +22,8 @@ Lessons the numbers taught (15 Oct):
   in dev may not exist natively — and may still reveal a real lifecycle bug (lane D).
 - **`pgrep -f` patterns**: match the exact argument you started with, or you will conclude a live run died.
 - **Memory**: one headless browser at a time, close it, stop your own pids. The machine runs swap-near-full.
+- **A stack writes works into the owner's ground**: OI_HOME holds the kernel's state, but an Expression created, forked or
+  saved goes to Central's `Control/user/flows` (the works home, `kernel/src/expression_home.rs:24`). Never create or save a work
+  on a stack unless that write is the ticket; move out and name anything you created.
 - **The native candidate under Stage Manager** parks in the strip until clicked onto its stage; background screenshots of its web
   view can be stale — the screen pass needs full-screen control (FOUNDATION §5).
