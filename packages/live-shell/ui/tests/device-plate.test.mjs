@@ -86,7 +86,7 @@ const probe = device({
   values: {on: true, size: 15, style: 'Body', bound: false, count: '3 highlights'}, enabledKey: 'on', submit: async () => {},
 })
 
-test('compact is the kit\'s plate: activator, ▾, name and ⤢ on the head; the picture in its 140 × 146 well beside the controls; no Send', () => {
+test('compact is the kit\'s plate: activator, name and the pane mark on the head (Live folds a device by double-clicking its head); the picture in its 140 × 146 well beside the controls; no Send', () => {
   const out = html(createElement(DeviceView, {device: probe, size: 'compact', picture: createElement('i', {id: 'pic'}), actions}))
   assert.match(out, /<div class="device device--compact" data-device="f:probe" data-device-size="compact" data-device-light="on"/)
   const head = out.match(/<header class="dp-head"[^>]*>[\s\S]*?<\/header>/)[0]
@@ -94,7 +94,8 @@ test('compact is the kit\'s plate: activator, ▾, name and ⤢ on the head; the
     'the head says what pressing the plate does; the activator leads it, lit')
   assert.doesNotMatch(head.match(/<button type="button" class="dp-activator"[^>]*>/)[0], /disabled/, 'and a switch, since the owner writes it')
   assert.match(head, /<span class="dp-title">Probe<\/span>/)
-  assert.ok(head.indexOf('aria-label="Fold Probe"') > 0 && head.indexOf('aria-label="Fold Probe"') < head.indexOf('aria-label="Open Probe full size in a pane"'), '▾ then ⤢, in the place\'s own words')
+  assert.doesNotMatch(head, /aria-label="Fold Probe"/, 'no fold button: a double-click on the head folds it, as in Live (manual §16.4)')
+  assert.ok(head.indexOf('aria-label="Open Probe full size in a pane"') > head.indexOf('class="dp-title"'), 'the pane mark after the name, in the place\'s own words')
   assert.match(out, /<div class="dp-display" data-raw="true" style="width:140px;height:146px"[^>]*><div class="dv-picture"><i id="pic"><\/i><\/div><\/div>/, 'the picture in the well')
   assert.doesNotMatch(out, />Send<|>Cancel<|device-commit/, 'no Send button: a change goes when you let go (§5.2, §11)')
 })
@@ -134,7 +135,7 @@ test('a held value shows who holds it in the head and under the control, with th
   assert.match(moved, /data-i="Turns\|[^"]*Mars moves this value\.[^"]*"[^>]*data-modulated="true"/, 'the status bar names the modulator')
 })
 
-test('the plate the pool shows is marked selected on the chain; ▾ folds every chain view of the device to its strip', () => {
+test('the plate the pool shows is marked selected on the chain; folding folds every chain view of the device to its strip', () => {
   door.selectDevice('f:probe')
   try {
     assert.match(html(createElement(DeviceView, {device: probe, size: 'compact', picture: null, actions})), /data-device-selected="true"/)

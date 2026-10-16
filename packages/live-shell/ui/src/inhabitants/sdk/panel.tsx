@@ -4,7 +4,7 @@
 // toggle, radio, chooser, rows, readout, action, light. Every control is controlled (value in, change out), names what it does
 // for the status bar (data-i, "Name|What it does"), and shows its standing: automated, modulated, held by someone else,
 // waiting for the owner, or disabled with the reason. No control scrolls; no box sits inside a box; the only inset is the well.
-import {createContext, useContext, useRef, type CSSProperties, type KeyboardEvent, type PointerEvent, type ReactNode} from 'react'
+import {createContext, useContext, useRef, type CSSProperties, type KeyboardEvent, type MouseEvent, type PointerEvent, type ReactNode} from 'react'
 import {ChevronFold, PopOut} from './marks'
 import {Icon} from './Icon'
 import './panel.css'
@@ -385,7 +385,7 @@ export interface PanelProps {
   readonly mark?: ReactNode
   /** Keep the device on the widget rail (manual §16.3: a widget stays on the rail when you change mode). */
   readonly onRail?: () => void
-  /** Marks the place gives the head, before ⌃ ▦ ↗. */
+  /** Marks the place gives the head, before ▦ ↗. */
   readonly marks?: ReactNode
   /** The place's own words for ▦ (absent: "Open <title> full in a pane"). */
   readonly fullLabel?: string
@@ -405,9 +405,9 @@ export interface Place {
   readonly marks?: ReactNode
   readonly onRail?: () => void
   readonly onClose?: () => void
-  /** ⌃: flip the device's whole panel up from the chain, over the panes (Live's expanded view); pressed again, it folds back. */
+  /** ▸ beside the activator: show the device's expanded view, a band above the chain (Live's Toggle Expanded View). */
   readonly onExpand?: () => void
-  /** The whole panel stands flipped up: ⌃ shows pressed. */
+  /** The expanded view stands: ▸ shows ▾, pressed. */
   readonly expanded?: boolean
   /** ↗: pop the device out into its own window, its material with every control (Live's plug-in window). */
   readonly onPopout?: () => void
@@ -422,13 +422,29 @@ function Activator({title, light, onLight, why}: {title: string; light: LightSta
     onClick={why ? undefined : onLight} />
 }
 
-/** The marks at the right of a device's head, in Live's order: the place's own marks, the rail, ⌃ expand (the whole panel flips up
- * over the panes), ▦ full in a pane, ↗ pop out to a window. Each shows only where the place or the device gives its act. */
+/** Live's Toggle Expanded View, beside the activator: ▸ shows the device's whole panel as a band across the detail area, above the
+ * chain; ▾ while it stands there folds it back. */
+function ExpandToggle({title, place}: {title: string; place: Place}) {
+  if (!place.onExpand) return null
+  return <button type="button" className="dp-fold dp-expand" aria-pressed={place.expanded ? 'true' : 'false'}
+    aria-label={place.expanded ? `Fold ${title}'s expanded view` : `Expand ${title}`}
+    data-i={said('Expanded view', place.expanded ? 'Hides the device\'s expanded view.' : 'Shows the device\'s expanded view: every setting and a larger picture, in a band above the chain.')}
+    onClick={place.onExpand}><ChevronFold size={10} /></button>
+}
+
+/** Live folds a device from its head: a double-click on the head (or Fold in its context menu) folds it to its title. A press on a
+ * control inside the head is that control's own. */
+const foldOnDoubleClick = (onFold?: () => void) => onFold && ((event: MouseEvent<HTMLElement>) => {
+  if ((event.target as Element).closest('button, input, select, [role="tab"]')) return
+  onFold()
+})
+
+/** The marks at the right of a device's head: the place's own marks, the rail, ▦ full in a pane, ↗ pop out to a window. Each shows
+ * only where the place or the device gives its act. Live's own marks sit at the left: the activator, then the expand toggle. */
 function HeadMarks({title, marks, onRail, onFull, fullLabel, place}: {title: string; marks?: ReactNode; onRail?: () => void; onFull?: () => void; fullLabel?: string; place: Place}) {
   return <span className="dp-head-x">
     {marks}
     {onRail && <button type="button" className="dp-full dp-rail" aria-label={`Keep ${title} on the widget rail`} data-i={said('On the rail', 'Keep this device on the widget rail, in every mode.')} onClick={onRail}><Icon name="placed" size={10} /></button>}
-    {place.onExpand && <button type="button" className="dp-full dp-expand" aria-pressed={place.expanded ? 'true' : 'false'} aria-label={place.expanded ? `Fold ${title} back onto the chain` : `Expand ${title} over the panes`} data-i={said(place.expanded ? 'Collapse' : 'Expand', place.expanded ? 'Fold the whole panel back onto the chain.' : 'Flip the whole panel up over the panes, with every control and a larger display.')} onClick={place.onExpand}><ChevronFold size={10} /></button>}
     {onFull && <button type="button" className="dp-full" aria-label={fullLabel ?? `Open ${title} full in a pane`} data-i={said('Open in a pane', fullLabel ?? 'Open the device full size in the pane that has focus.')} onClick={onFull}><Icon name="pane" size={10} /></button>}
     {place.onPopout && <button type="button" className="dp-full dp-popout" aria-label={`Pop ${title} out into its own window`} data-i={said('Pop out', 'Open the device in its own window, its material with every control. The window can fill the screen.')} onClick={place.onPopout}><PopOut size={10} /></button>}
   </span>
@@ -440,9 +456,9 @@ export function Panel({title, view, light: reported, onLight, pages, page, onPag
   const marks = ownMarks ?? place.marks, onRail = ownRail ?? place.onRail
   return <section className="dp" data-view={view} data-selected={selected ? 'true' : undefined} aria-label={title}
     onPointerDownCapture={onSelect}>
-    <header className="dp-head" data-i={hint ? said(title, hint) : undefined}>
+    <header className="dp-head" data-i={hint ? said(title, hint) : undefined} onDoubleClick={foldOnDoubleClick(onFold)}>
       <Activator title={title} light={light} onLight={onLight} why={lightWhy} />
-      {onFold && <button type="button" className="dp-fold" aria-label={`Fold ${title}`} data-i={said('Fold', 'Fold the device to its title.')} onClick={onFold}><ChevronFold size={10} /></button>}
+      <ExpandToggle title={title} place={place} />
       {mark}
       <span className="dp-title">{title}</span>
       {heldBy && <span className="dp-head-held" data-i={said('Held', `${heldBy} holds values on this device.`)}>{heldBy}</span>}
@@ -463,7 +479,7 @@ export interface PanelHeadProps {
   /** The activator: a reading of the owner's on/off. Pressing it asks the owner; absent `onLight`, it only reads. */
   readonly light: LightState
   readonly onLight?: () => void
-  /** ▾: fold the device to its title. */
+  /** Fold the device to its title: a double-click on the head, as in Live. */
   readonly onFold?: () => void
   /** The device's kind mark before its name. */
   readonly mark?: ReactNode
@@ -497,9 +513,9 @@ export interface PanelHeadProps {
 export function PanelHead({title, light: reported, onLight, onFold, mark, onName, nameDoes, heldBy, pages, page, onPage, acts, marks: ownMarks, onRail: ownRail, onFull, fullLabel, hint, selected, lightWhy}: PanelHeadProps) {
   const light = lightIn(reported), place = useContext(PlaceContext)
   const marks = ownMarks ?? place.marks, onRail = ownRail ?? place.onRail
-  return <header className="dp-head dp-head--plate" data-selected={selected ? 'true' : undefined} data-i={hint ? said(title, hint) : undefined}>
+  return <header className="dp-head dp-head--plate" data-selected={selected ? 'true' : undefined} data-i={hint ? said(title, hint) : undefined} onDoubleClick={foldOnDoubleClick(onFold)}>
     <Activator title={title} light={light} onLight={onLight} why={lightWhy} />
-    {onFold && <button type="button" className="dp-fold" aria-label={`Fold ${title}`} data-i={said('Fold', 'Fold the device to its title.')} onClick={onFold}><ChevronFold size={10} /></button>}
+    <ExpandToggle title={title} place={place} />
     {mark}
     {onName
       ? <button type="button" className="dp-title dp-title--press" onClick={onName} data-i={said(title, nameDoes ?? hint)}>{title}</button>

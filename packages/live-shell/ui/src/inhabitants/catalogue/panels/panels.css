@@ -58,7 +58,7 @@
 .ref-refusal { margin: 0; padding: 2px 5px; font-size: 9px; line-height: 1.25; color: var(--rec, #e0523f); background: rgba(18, 26, 32, .88); border-left: 2px solid var(--rec, #e0523f);
   display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden; }
 
-/* Whole in a wide frame — flipped up over the chain, or docked under the material in a pop-out window: its bands stand side by
+/* Whole in a wide frame — expanded above the chain, or docked under the material in a pop-out window: its bands stand side by
    side at one band's height, as Live lays an expanded device or a plug-in's controls in one row. */
 .dp-wide .dp[data-view="whole"] > .dp-body { flex-direction: row; }
 .dp-wide .dp[data-view="whole"] > .dp-body > .dp-band + .dp-band { border-top: 0; border-left: 1px solid var(--line, #24262a); }
