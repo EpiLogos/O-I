@@ -18,17 +18,23 @@
 // section, projections/stageInstruments/stageInstrumentModel.ts EXPRESSION_SECTION) and whatever the frame places in its project view —
 // read from the frame's published chrome and pressed through its one runner (components/expressions/studio/frameChrome.tsx), so the stage
 // is never left without its controls while M0′ is its instrument (lane Y's open, T-FRAME-CHROME-ONTO-PLATES).
-import {useEffect, useState, useSyncExternalStore} from 'react'
-import {InstrumentPlate, heldMarksOf, SectionNote, type PlateSection, type SectionDevice} from '../../../frame/devices/InstrumentPlate'
+//
+// The head is the panel kit's (InstrumentPlate.tsx; DEVICE-UI §4.1); the display section is M0′'s live well (techneWells.tsx): the Earth as
+// the pane looks at it, or on its Graph side the graph's own picture.
+import {useState, useSyncExternalStore} from 'react'
+import {InstrumentPlate, heldMarksOf, SectionNote, type PlateSection} from '../../../frame/devices/InstrumentPlate'
 import {HeldMarks, OwnerDial, OwnerValueBox, PlateLine, PlateRadio, PlateReading} from '../../../frame/devices/plateControls'
 import {Action, Toggle} from '../../sdk/panel'
 import type {FacePresentation} from '../../sdk/define'
-import {presentAtlasView, useAtlasHandle, useAtlasView} from '../../../projections/atlas/AtlasProjectionPanel'
+import {presentAtlasView, useAtlasView} from '../../../projections/atlas/AtlasProjectionPanel'
 import type {AtlasHandle} from '../../../projections/atlas/mount'
 import {DEFAULT_FORCES, FORCE_ROWS, forceMultiple} from '../../../projections/atlas/src/graph/forces'
 import {formatYear} from '../../../projections/atlas/src/data/time'
 import {atlasScale, subscribeAtlasScale} from '../../../projections/atlas/places/placesHost'
-import {FrameControls, controlsAt, useFrameChrome} from '../../../components/expressions/studio/frameChrome'
+import {controlsAt, useFrameChrome} from '../../../components/expressions/studio/frameChrome'
+import {PlateFrameControls} from '../../../projections/stageInstruments/StageInstrumentPlate'
+import {useAtlasLive, wellSection} from './techneWells'
+import type {OwnPlateProps} from './TechneDevices'
 import {EXPRESSION_SECTION} from '../../../projections/stageInstruments/stageInstrumentModel'
 import {useFramePlacement} from '../../../projections/expressionsPaneHost'
 import {allTime, playOrPause, resetForces, scrubClock, setForce, setWholeField, toggleCumulative, toggleKind, toggleOccurrences, toggleSky, toggleTie} from '../../atlasFaceActions'
@@ -41,19 +47,8 @@ const NO_SCOPE = 'No mode’s set is set aside on the globe, so there is no whol
 
 const KIND_KEYS = [['archetype', 'Archetypes'], ['theoretic', 'Theoretics'], ['family', 'Families']] as const
 
-/** The mounted atlas, re-read on its own notices: the clock's and the controller's (the graph's controls, its first opening, the scope). */
-export function useAtlasLive(): AtlasHandle | null {
-  const handle = useAtlasHandle()
-  const [, setTick] = useState(0)
-  useEffect(() => {
-    if (!handle) return
-    const bump = () => setTick(n => n + 1)
-    const offClock = handle.time.subscribe(bump)
-    const offFaces = handle.ctl.subscribeFaces(bump)
-    return () => { offClock(); offFaces() }
-  }, [handle])
-  return handle
-}
+/** The mounted atlas, re-read on its own notices (techneWells.tsx useAtlasLive, where the wells read it too). */
+export {useAtlasLive}
 
 /** View: Space or Graph, how close, and what the globe draws (the mode-switch and globe-engine faces). */
 function ViewSection({handle}: {handle: AtlasHandle | null}) {
@@ -134,7 +129,7 @@ function TimeSection({handle}: {handle: AtlasHandle | null}) {
 
 /** The M0′ Project plate. `held` are the devices the families declare M0′ holds (the globe, Graph tools, Earth ⇄ Graph, Deep time): each
  * stands as a mark on the section that draws its controls. */
-export function ProjectPlate({held, focused}: {held: readonly (SectionDevice & {face: string})[]; focused: boolean}) {
+export function ProjectPlate({held, focused, onFold, onFull}: Pick<OwnPlateProps, 'held' | 'focused' | 'onFold' | 'onFull'>) {
   const handle = useAtlasLive()
   const view = useFrameChrome()
   const marks = (faces: readonly string[]) => <HeldMarks devices={heldMarksOf(held.filter(entry => faces.includes(entry.face)))} />
@@ -145,16 +140,18 @@ export function ProjectPlate({held, focused}: {held: readonly (SectionDevice & {
   const stageControls = stage ? controlsAt(view.reading, [...EXPRESSION_SECTION.homes, 'project:view']) : []
   const presentation: FacePresentation = {family: 'techne', faceId: 'techne:m0', title: 'Project', icon: 'lib',
     owner: ['M0′', 'Technē', 'the Earth and its graph', stage ? 'the stage in its project lens' : null, focused ? 'open on the focused pane' : 'opened here'].filter(Boolean).join(' · ')}
+  const well = wellSection('techne:m0')
   const sections: PlateSection[] = [
+    ...(well ? [well] : []),
     ...(stage ? [{id: 'expression', title: 'Expression', note: 'the stage',
-      children: stageControls.length ? <FrameControls controls={stageControls} view={view} label="Expression" /> : <SectionNote>{view.reason ?? 'The stage places no control in its project lens.'}</SectionNote>}] : []),
+      children: stageControls.length ? <PlateFrameControls controls={stageControls} view={view} label="Expression" /> : <SectionNote word="none">{view.reason ?? 'The stage places no control in its project lens.'}</SectionNote>}] : []),
     {id: 'view', title: 'View', width: 196, note: marks(['mode-switch', 'globe-engine']), children: <ViewSection handle={handle} />},
     {id: 'graph', title: 'Graph', width: 236, note: marks(['graph-tools']), children: <GraphSection handle={handle} />},
     {id: 'forces', title: 'Forces', cols: 4, children: <ForcesSection handle={handle} />},
     {id: 'time', title: 'Deep time', width: 196, note: marks(['time-control']), children: <TimeSection handle={handle} />},
     ...(others.length ? [{id: 'held', title: 'Also held', children: <HeldMarks devices={heldMarksOf(others)} />}] : []),
   ]
-  return <InstrumentPlate presentation={presentation} sections={sections}
+  return <InstrumentPlate presentation={presentation} sections={sections} onFold={onFold} onFull={onFull} fullLabel="Open Project on the focused pane"
     footer={stage && view.refusal ? <PlateLine text={view.refusal} tone="refused" /> : undefined}
     dataAttributes={{'data-instrument': 'techne:m0', 'data-expanded': 'true', 'data-project-plate': 'true', 'data-stage-lens': stage ? 'project' : undefined}} />
 }

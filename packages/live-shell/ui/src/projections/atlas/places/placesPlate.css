@@ -1,11 +1,11 @@
 /* The M4′ World / Places plate (T-PLACES-ONTO-ATLAS): the mockup's M4 sections (world-shell-mockup.html:1447-1461) on the instrument
    plate (frame/devices/instrumentPlate.css), drawn with the device panel kit and the plate's controls (frame/devices/plateControls.css):
-   dials, radios, rows. What stays here is only what a place has: its precision mark, the mythic tag, a relation's swatch, the head's
-   scale. Shell tokens only (styles.css :root). */
+   dials, radios, rows. What stays here is only what a place has: its precision mark, the mythic tag, a relation's swatch, the owners'
+   return. Shell tokens only (styles.css :root). */
 
-/* the scale the atlas stands at, in the head (the mockup's `scale system`, :1461) */
-.inst-head-reading { font-size: 10px; color: var(--text-faint); white-space: nowrap }
-.inst-head-reading b { font-weight: 500; color: var(--text) }
+/* what the owners returned, as readouts and a light (PlacesPlate.tsx OwnersReturned); a chosen place's source and its Window */
+.places-returned, .places-chosen { align-items: center; gap: 2px 8px }
+.places-returned > .dp-cell--readout { flex-direction: row; align-items: baseline; gap: 3px }
 
 /* the precision grammar's marks (desktop/cradle/src/techne/m0m5/place/project.ts precisionMarker): solid, halo, outline, no coordinate */
 .places-prec { flex: none; display: inline-block; width: 8px; height: 8px; border-radius: 50%; box-sizing: border-box }

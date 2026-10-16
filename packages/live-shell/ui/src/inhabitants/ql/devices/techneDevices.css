@@ -1,17 +1,16 @@
 /* The Technē instruments rack (T-DEVICES-TECHNE; the mockup's Technē device side, world-shell-mockup.html:153 .ifold and :352-359 .inst):
-   the instruments folded to their titles by the runtime's own fold (the SDK's vertical strip, inhabitants/sdk/sdk.css .sdk-face--folded)
+   the instruments folded to their titles by the kit's fold (the panel kit's vertical strip, inhabitants/sdk/panel.css .dp-folded)
    around the one open instrument, a plate whose columns are the families whose devices it holds. Shell tokens only. The runtime's own
    sheet (frame/devices/devices.css) sizes a device's picture for a small drawing; these faces' pictures are their bodies, so the sheet
    below lets a body show as itself: what fits the compact well, whole at its own height in the pool, at the pane's size in a pane. */
 .techne-devices { flex: 1; min-width: 0; min-height: 0; display: flex; gap: 6px; align-items: stretch; padding: 4px; overflow: hidden }
 .techne-family { display: contents }
 .techne-instrument { flex: none; display: flex; min-height: 0 }
-.techne-instrument > .sdk-face--folded { height: 100% }
-/* The instrument's mark takes the accent the mockup's strip gives its M′ prefix (.ifold b); the strip reads the plain name (lock §9.4:
-   the name, never the M′ address — the address is the strip's title text on hover). */
-.techne-instrument .sdk-face__mark { color: var(--accent) }
+.techne-instrument > .dp-folded { height: 100%; box-sizing: border-box }
+/* The strip reads the plain name, then the M′ address in the accent the mockup's strip gives its prefix (.ifold b). */
+.techne-instrument .dp-folded-reading { color: var(--accent) }
 .techne-device { position: relative; flex: none; display: flex; min-height: 0 }
-.techne-device > .sdk-face--folded { height: 100% }
+.techne-device > .dp-folded { height: 100%; box-sizing: border-box }
 .techne-picture { width: 100%; box-sizing: border-box; align-self: stretch; text-align: left; font-size: 10.5px; color: var(--text-dim) }
 .techne-standing { display: inline-block; margin: 0 0 3px; padding: 0 5px; font-size: 9.5px; color: var(--text-dim); border: 1px solid var(--line) }
 .techne-standing[data-ql-standing="following"] { color: var(--text); border-color: var(--accent) }
@@ -48,8 +47,8 @@
 /* Inside an open instrument a family's devices stand side by side in its section, drawn flat: the device's own frame stands down so the
    section reads as one group, one hairline between two devices (DEVICE-UI.md §1 "no box sits inside a box"). */
 .techne-section-devices { display: flex; gap: 0; align-items: stretch; min-height: 0; height: 100% }
-.inst-section .techne-device > .device > .sdk-face { background: transparent; border: 0 }
-.inst-section .techne-device > .device > .sdk-face > .sdk-face__head { height: 18px; padding: 0; border-bottom: 0 }
+.inst-section .techne-device .device > .dp { background: transparent; border: 0 }
+.inst-section .techne-device .device > .dp > .dp-head { height: 18px; padding: 0; background: none; border-bottom: 0 }
 .inst-section .techne-device > .device .device-body { padding: 4px 0 0 }
 .inst-section .techne-device + .techne-device { margin-left: 8px; padding-left: 8px; border-left: 1px solid var(--line) }
 
@@ -60,19 +59,16 @@
 .detail-chain .mode-detail:has(> .techne-devices) { flex: 1 1 auto; min-width: 0 }
 .detail-chain .techne-devices[data-techne-devices] { flex: 1 1 auto; min-width: 0; overflow: hidden }
 .techne-devices > .inst-plate { flex: 1 1 auto; min-width: 0 }
+/* On the rack the plate's last section takes only what it holds (the plate's face runs on after it), so the width the plate asks of the
+   row (plateFit.ts `natural`) is its sections' own and the Compacts beside it get what is truly left (TechneDevices.tsx useRackFit). */
+.techne-devices > .inst-plate .inst-section:last-child { flex: none }
 
 /* An instrument at its Compact size (techneCompacts.tsx; manual §16.1 "a small live picture and up to four macros"; DEVICE-UI.md §2–§3):
-   a 22 px head — its light, its mark, its name (pressed, it opens on the focused pane), its M′ address, ⤢ — over one band: the well that
-   draws it, and its four macros in two control columns. One fixed width; no box inside it but the well. */
+   the kit's 22 px head — its light, its mark, its name (pressed, it opens on the focused pane), ⤢ — over one band: the well that draws it,
+   and its four macros in two control columns. One fixed width; no box inside it but the well. */
 .techne-compact { flex: none; width: 228px; display: flex; flex-direction: column; min-height: 0; background: var(--bg-2); border: 1px solid var(--line) }
-.techne-compact-head { flex: none; height: 22px; display: flex; align-items: center; gap: 6px; padding: 0 6px; background: linear-gradient(var(--bg-3), var(--surface)); border-bottom: 1px solid var(--line); white-space: nowrap; min-width: 0 }
+.techne-compact > .dp-head { overflow: hidden }
 .techne-compact-mark { flex: none; color: var(--accent) }
-.techne-compact-title { min-width: 0; padding: 0; background: none; border: 0; color: var(--text); font: inherit; font-size: 11px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; cursor: pointer }
-.techne-compact-title:hover { color: var(--accent) }
-.techne-compact-k { flex: none; font-size: 9.5px; color: var(--text-faint) }
-.techne-compact-open { margin-left: auto; flex: none; width: 14px; height: 14px; padding: 0; background: none; border: 0; color: var(--text-faint); font-size: 10px; cursor: pointer }
-.techne-compact-open:hover { color: var(--accent) }
-.techne-compact-title:focus-visible, .techne-compact-open:focus-visible { outline: 1px solid var(--accent); outline-offset: 1px }
 .techne-compact-body { flex: 1 1 auto; min-height: 0; display: flex; align-items: flex-start; gap: 6px; padding: 6px; overflow: hidden }
 .techne-compact-macros { flex: none; width: 112px; display: grid; grid-template-columns: repeat(2, 56px); grid-auto-rows: min-content; gap: 6px 0; justify-items: center }
 .techne-compact-macros > :is(.dp-cell--chooser, .dp-cell--radio) { width: 52px; justify-self: center }

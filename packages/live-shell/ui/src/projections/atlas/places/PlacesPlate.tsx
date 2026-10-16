@@ -16,11 +16,16 @@
 // find chooses through the field's own search (data/search.ts), and Place offers a draft to the subject's time-and-place editor
 // (placeTool.ts) — the plate never writes a coordinate. The devices M4′ holds (the globe, the Earth ⇄ Graph switch, the QL sky) stand as
 // marks on the sections that draw their controls: a press shows one whole in the pool, ⤢ opens it in a pane.
+//
+// The plate's head is the panel kit's (InstrumentPlate.tsx; DEVICE-UI §4.1) and its display section is the Earth's live well
+// (inhabitants/ql/devices/techneWells.tsx: the body as the pane looks at it, its lit side, its located places at their presence; the scale
+// at the well's top right). No sentence stands in the plate (DEVICE-UI §1): what the owners returned stands as readouts and a light, the
+// Place tool's state as a light and one word, a chosen place's source on the status bar — every sentence is the status bar's.
 import {useEffect, useMemo, useState, useSyncExternalStore} from 'react'
-import {InstrumentPlate, heldMarksOf, type PlateSection, type SectionDevice} from '../../../frame/devices/InstrumentPlate'
+import {InstrumentPlate, heldMarksOf, type PlateSection} from '../../../frame/devices/InstrumentPlate'
 import {usePlateFit} from '../../../frame/devices/plateFit'
 import {HeldMarks, PlateField, PlateLine, PlateRadio, PlateReading, PlateRows, WaitingDial, said, type PlateRow} from '../../../frame/devices/plateControls'
-import {Action, Chooser, Toggle, type Option} from '../../../inhabitants/sdk/panel'
+import {Action, Chooser, Lamp, Readout, Toggle, type Option} from '../../../inhabitants/sdk/panel'
 import {Icon} from '../../../inhabitants/sdk/Icon'
 import type {IconName} from '../../../inhabitants/sdk/icons'
 import type {FacePresentation} from '../../../inhabitants/sdk/define'
@@ -40,6 +45,8 @@ import {armPlaceTool, disarmPlaceTool, draftLine, openOfferedEditor, placeToolSt
 import {palaceLocationRows} from '../palaces/palacesModel'
 import {palacesWaiting, readPalaces, usePalaces} from '../palaces/palacesWorld'
 import {enterPalace} from '../palaces/palaceSession'
+import {wellSection} from '../../../inhabitants/ql/devices/techneWells'
+import type {OwnPlateProps} from '../../../inhabitants/ql/devices/TechneDevices'
 import './placesPlate.css'
 
 /** The QL family's Sun is drawn on the Earth but is no subject a place can be declared for. */
@@ -216,11 +223,30 @@ function PalaceLocations({handle, query}: {handle: AtlasHandle | null; query: st
   const words = query.toLocaleLowerCase().split(/\s+/).filter(Boolean)
   const shown = palaceLocationRows(rows, standing.places).filter(row => words.every(word => row.name.toLocaleLowerCase().includes(word)))
   const waiting = palacesWaiting(load, rows.length)
-  return <PlateRows label="Palaces" size={4} active={chosen} empty={waiting ?? 'No palace of your world matches.'}
+  return <PlateRows label="Palaces" size={4} active={chosen} empty={waiting ?? 'No palace of your world matches.'} emptyWord={waiting ? 'reading' : 'none'}
     rows={shown.map(row => ({id: row.key, name: row.name, mark: <Icon name="palace" size={10} />, note: row.door ? `↧ ${row.door.place.name}` : 'not on the Earth', dim: !row.door,
       does: `${row.line}. Press to turn the Earth to its door; double-click to enter it.`}))}
     onPress={key => { setChosen(key); const row = shown.find(candidate => candidate.key === key); if (handle && row?.door) turnAtlasTo(handle, row.door.place) }}
     onOpen={key => { const palace = rows.find(candidate => candidate.key === key); if (palace) void enterPalace(palace) }} />
+}
+
+/** What the owners returned for the Earth (provider/suiteStanding.ts SuiteStanding), as readouts and a light: the subjects read, those on
+ * the Earth, those no owner places, those undated; the light is the owners' inputs — lit while every one answered, orange when one did
+ * not, hollow while they are read. Its sentence (describeStanding) is the status bar's. */
+function OwnersReturned() {
+  const standing = useSuiteStanding()
+  if (standing.phase === 'idle') return null
+  const {counts} = standing
+  const words = describeStanding(standing) || 'Every owner answered.'
+  const short = standing.phase === 'reading' ? 'reading' : standing.phase === 'unavailable' || standing.refused.length || Object.values(standing.inputs).some(input => input.state !== 'available') ? 'partial' : 'read'
+  // The light alone (DEVICE-UI §5 Light: "A small round light"): lit green while every owner answered, orange when one did not, hollow
+  // while they are read; its words, and the undated count, are the status bar's.
+  return <div className="plate-keys places-returned" data-places-standing={standing.phase} data-owners={short} data-i={said('What the owners returned', words)}>
+    <Lamp state={short === 'reading' ? 'unknown' : 'lit'} tone={short === 'partial' ? 'stall' : 'green'} label={`The owners: ${short}`} />
+    <Readout label="subjects" value={counts.subjects} does="Subjects read from their owners." />
+    <Readout label="placed" value={counts.located} does="Subjects an owner places on the Earth." />
+    <Readout label="unplaced" value={counts.unlocated} does="Subjects no owner places: the Earth draws them nowhere." />
+  </div>
 }
 
 function LocationsSection({handle}: {handle: AtlasHandle | null}) {
@@ -259,6 +285,8 @@ function LocationsSection({handle}: {handle: AtlasHandle | null}) {
   const line = tool.phase === 'armed'
     ? `Click the Earth to place ${tool.subject.moving ? `${tool.subject.moving.name} anew` : 'a point'} for ${tool.subject.title}. Esc stops.`
     : tool.phase === 'offered' ? `${draftLine(tool.draft)}. ${tool.notice}` : tool.notice
+  // The tool's state in one word, its whole line the status bar's (DEVICE-UI §1).
+  const toolWord = tool.phase === 'armed' ? 'armed' : tool.phase === 'offered' ? 'offered' : tool.tone === 'refused' ? 'refused' : 'placed'
   const placeDoes = (kind === 'palace' ? 'A palace stands where its rooms\' subjects are placed: placing a subject a room holds places that room. ' : '')
     + (subject ? `Place a point for ${subject.title}: the next click on the Earth is offered to its time-and-place editor, never written here.` : 'Choose a subject on the Earth first: a place is declared by a subject.')
   const placeRowsShown: PlateRow[] = [
@@ -277,17 +305,20 @@ function LocationsSection({handle}: {handle: AtlasHandle | null}) {
       <PlateField label="Find a place or anything in the field" does="Narrows the list as you type; the field's own search answers below the places." value={query}
         placeholder={kind === 'palace' ? 'Find a palace…' : 'Find a place…'} onChange={setQuery} />
     </div>
-    <PlateLine text={line} tone={tool.phase === 'idle' ? tool.tone ?? undefined : tool.phase}>{tool.phase === 'offered' && <button type="button" onClick={openOfferedEditor}>Open the editor</button>}</PlateLine>
+    <PlateLine text={line} word={toolWord} name="Place" tone={tool.phase === 'idle' ? tool.tone ?? undefined : tool.phase}>{tool.phase === 'offered' && <button type="button" data-i="Open the editor|Open the subject's time-and-place editor with the offered point." onClick={openOfferedEditor}>editor</button>}</PlateLine>
     {kind === 'palace' ? <PalaceLocations handle={handle} query={query} />
       : <PlateRows label={counts.length ? counts.map(entry => `${entry.precision} ${entry.count}`).join(' · ') : undefined} size={4} active={chosen} rows={placeRowsShown}
           empty={rows.length ? 'No place of your world matches.' : standing.phase === 'reading' ? 'Reading your world…' : 'No owner declares a place yet.'}
+          emptyWord={rows.length ? 'no match' : standing.phase === 'reading' ? 'reading' : 'none'}
           onPress={id => { if (id.startsWith('field:')) { const result = field.find(entry => `field:${entry.key}` === id); if (result) handle?.ctl.chooseResult(result) } else turn(id) }} />}
     {chosenRow
-      ? <PlateLine text={`${chosenRow.provenance}${chosenRow.validity ? ` · valid ${chosenRow.validity}` : ''}${chosenRow.reason ? ` · ${chosenRow.reason}` : ''}${windowSaid ? ` · ${windowSaid}` : ''}`}>
-          {chosenRow.validity && <button type="button" data-i="Window to its validity|Set this work's shared window to the place's own validity: the Timeline and the Earth stand in it (lane-4 T23)."
-            onClick={() => setWindowSaid(writeSharedWindow(disclosureSession, {from: chosenRow.valid_from ?? null, to: chosenRow.valid_to ?? null}) ?? 'The shared window is the place\'s validity now.')}>Window to its validity</button>}
-        </PlateLine>
-      : standing.phase !== 'idle' && describeStanding(standing) ? <p className="plate-line" data-places-standing data-i={said('What the owners returned', describeStanding(standing) ?? '')}>{describeStanding(standing)}</p> : null}
+      ? <div className="plate-keys places-chosen">
+          <PlateLine text={`${chosenRow.provenance}${chosenRow.validity ? ` · valid ${chosenRow.validity}` : ''}${chosenRow.reason ? ` · ${chosenRow.reason}` : ''}${windowSaid ? ` · ${windowSaid}` : ''}`}
+            word="source" name={chosenRow.name} tone={windowSaid ? 'saved' : undefined} />
+          {chosenRow.validity && <Action label="Window" does="Set this work's shared window to the place's own validity: the Timeline and the Earth stand in it (lane-4 T23)."
+            onPress={() => setWindowSaid(writeSharedWindow(disclosureSession, {from: chosenRow.valid_from ?? null, to: chosenRow.valid_to ?? null}) ?? 'The shared window is the place\'s validity now.')} />}
+        </div>
+      : <OwnersReturned />}
   </>
 }
 
@@ -363,7 +394,7 @@ const FOLD_ORDER = ['frames', 'layers', 'view', 'relations', 'climate', 'sky', '
 
 /** The M4′ World / Places plate over the open atlas. `held` are the devices the families declare this instrument holds (the globe,
  * the Earth ⇄ Graph switch, the QL sky): each stands as a mark on the section that draws its controls — none is dropped. */
-export function PlacesPlate({held, focused}: {held: readonly (SectionDevice & {face: string})[]; focused: boolean}) {
+export function PlacesPlate({held, focused, onFold, onFull}: Pick<OwnPlateProps, 'held' | 'focused' | 'onFold' | 'onFull'>) {
   const handle = useAtlasLive()
   const scale = useSyncExternalStore(subscribeAtlasScale, atlasScale, atlasScale)
   const standing = useSuiteStanding()
@@ -373,20 +404,20 @@ export function PlacesPlate({held, focused}: {held: readonly (SectionDevice & {f
   const located = standing.counts.located, unlocated = standing.places.filter(place => !place.located).length
   const presentation: FacePresentation = {family: 'techne', faceId: 'techne:m4', title: 'World / Places', icon: 'placed',
     owner: ['M4′', 'Technē', 'Earth · root anchor', focused ? 'open on the focused pane' : 'opened here'].join(' · ')}
+  const well = wellSection('techne:m4')
   const sections: PlateSection[] = [
     {id: 'body', title: 'Body', cols: 2, note: <HeldMarks devices={[...inSection(['globe-engine', 'mode-switch']), ...others]} />, children: <BodySection />},
     {id: 'landmass', title: 'Landmass', cols: 3, children: <LandmassSection />},
     {id: 'climate', title: 'Climate', cols: 2, children: <ClimateSection />},
     {id: 'sky', title: 'Sky', cols: 3, note: <HeldMarks devices={inSection(['sky'])} />, children: <SkySection handle={handle} />},
-    {id: 'locations', title: 'Locations', width: 264, note: standing.phase === 'idle' ? 'not read' : `${located} on the Earth · ${unlocated} not`, children: <LocationsSection handle={handle} />},
+    {id: 'locations', title: 'Locations', width: 264, note: standing.phase === 'idle' ? '—' : `${located} placed · ${unlocated}`, children: <LocationsSection handle={handle} />},
     {id: 'relations', title: 'Relations', width: 224, children: <RelationsSection handle={handle} />},
     {id: 'view', title: 'View', width: 196, children: <ViewSection handle={handle} />},
     {id: 'layers', title: 'Earth layers', width: 178, children: <LayersSection handle={handle} />},
     {id: 'frames', title: 'Frames', width: 220, children: <FramesSection handle={handle} />},
   ]
-  const fit = usePlateFit(sections.map(section => section.id).join('|'), FOLD_ORDER)
-  return <InstrumentPlate presentation={presentation} fit={fit}
-    head={<span className="inst-head-reading" data-i="Scale|How close you look, as the atlas stands: system, body, region or palace.">scale <b>{scale ?? '—'}</b></span>}
-    sections={sections.map(section => ({...section, folded: fit.folded.has(section.id), onFold: () => fit.press(section.id)}))}
+  const fit = usePlateFit([...(well ? [well.id] : []), ...sections.map(section => section.id)].join('|'), FOLD_ORDER)
+  return <InstrumentPlate presentation={presentation} fit={fit} onFold={onFold} onFull={onFull} fullLabel="Open World / Places on the focused pane"
+    sections={[...(well ? [well] : []), ...sections.map(section => ({...section, folded: fit.folded.has(section.id), onFold: () => fit.press(section.id)}))]}
     dataAttributes={{'data-instrument': 'techne:m4', 'data-expanded': 'true', 'data-places-plate': 'true', 'data-scale': scale ?? undefined}} />
 }
