@@ -41,6 +41,7 @@
 .th-spawn em { font-style: normal; color: var(--text-faint, #71767c); text-decoration: underline; text-underline-offset: 2px; }
 .th-spawn:hover em, .th-spawn:focus-visible em { color: var(--accent, #ffbe00); }
 .th-spawn:focus-visible { outline: 1px solid var(--accent, #ffbe00); outline-offset: 2px; }
+.th-spawn:disabled { cursor: default; }
 .th-inline { display: flex; flex-direction: column; gap: 5px; margin: 5px 0 0 3px; padding-left: 12px; border-left: 1px solid var(--dp-value-dim, #3b6b64); }
 
 .th-steer, .th-queued { display: inline-flex; align-items: baseline; gap: 8px; vertical-align: top; }
@@ -59,6 +60,8 @@
 .th-card-do { display: flex; gap: 6px; margin-top: 6px; }
 .th-card-do button { height: 16px; padding: 0 7px; background: var(--dp-field, #26292d); border: 1px solid var(--line, #24262a); color: var(--text-dim, #a2a7ad); font: inherit; font-size: 10px; cursor: pointer; }
 .th-card-do button:hover, .th-card-do button:focus-visible { color: var(--text, #d4d7da); border-color: var(--text-faint, #71767c); outline: none; }
+.th-card-do button:disabled { opacity: .45; cursor: default; }
+.th-card-do button:disabled:hover { color: var(--text-dim, #a2a7ad); border-color: var(--line, #24262a); }
 
 .th-work { display: flex; align-items: center; gap: 8px; margin: 0; color: var(--text-dim, #a2a7ad); }
 .th-work i { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--dp-value, #5cc6b4); animation: th-pulse 1.6s ease-in-out infinite; }
@@ -68,6 +71,7 @@
 .th-composer { flex: none; display: flex; align-items: center; gap: 8px; margin: 0 20px 14px; padding: 0 8px; height: 26px; background: var(--dp-field, #26292d); border: 1px solid var(--line, #24262a); }
 .th-composer input { flex: 1 1 auto; min-width: 0; height: 100%; padding: 0; background: none; border: 0; color: var(--text, #d4d7da); font: inherit; outline: none; }
 .th-composer input::placeholder { color: var(--text-faint, #71767c); }
+.th-composer input:disabled { opacity: .55; }
 .th-composer:focus-within { outline: 1px solid var(--accent, #ffbe00); outline-offset: 1px; }
 .th-composer small { flex: none; font-size: 9px; letter-spacing: .07em; text-transform: uppercase; color: var(--dp-on, #ffbe00); }
 .th-wave { flex: 1 1 auto; display: flex; align-items: center; gap: 2px; min-width: 0; }
@@ -81,4 +85,5 @@
 .th-tile-reads { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: end; }
 .th-tile-composer { box-sizing: border-box; width: 100%; height: 16px; padding: 0 5px; background: var(--dp-field, #26292d); border: 1px solid var(--line, #24262a); color: var(--text, #d4d7da); font: 10.5px var(--font-ui, sans-serif); }
 .th-tile-composer::placeholder { color: var(--text-faint, #71767c); }
+.th-tile-composer:disabled { opacity: .55; }
 .th-tile-composer:focus-visible { outline: 1px solid var(--accent, #ffbe00); outline-offset: 1px; }
