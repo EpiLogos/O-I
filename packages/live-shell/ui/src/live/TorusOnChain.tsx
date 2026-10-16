@@ -5,17 +5,21 @@
 // Its own Full is the torus at the pane's size with the Jankó keyboard under it (DEVICE-UI §9.2 Full; DLW §21.1 Full): the pane is
 // the instrument you play.
 //
-// The plate stays the generic plate of the device's rows — the four determinants (lens, context frame, harmonic basis, M3
-// transcription) and the presentation parameters, each MIDI-mappable — until the catalogue's design of the Torus
-// (inhabitants/catalogue/panels/torus.tsx, `quaternal-logic:torus`) draws those keys: hosting the design today would take the
-// four working determinant controls off the chain (lead, 16 Oct: an established behaviour is never removed for an adjacent one).
-// Its binding is ready (torusDevice.ts torusDesignBinding); publish it with the device once the design carries them.
-import {useEffect, useMemo} from 'react'
+// The plate is the catalogue's design of the Torus (inhabitants/catalogue/panels/torus.tsx, `quaternal-logic:torus`), drawn on the
+// owner's readings and writes (torusDevice.ts torusDesignBinding), published with the device so the pool, a pane and the rail draw it
+// too. The design draws the owner's four determinants (lens, context frame, harmonic basis, M3 transcription) on the compact and its
+// See and hear (sound, cadence, scale, level, standing) on the whole; what the owner does not announce stands absent with its reason.
+// Every control the chain framed for the MIDI map stays framed, by the same id (lead, 16 Oct: an established behaviour is never
+// removed for an adjacent one): the chain's wrap reaches a design's kit controls by their value keys (DeviceView.tsx useHosting →
+// deviceHost.tsx → sdk/panel.tsx ControlWrapContext) as it reaches the generic plate's rows (torusMapWrap); a place that wraps the
+// whole frames its See and hear by the ids the instrument section uses (midiMap/midiMapTargets.ts).
+import {useEffect, useMemo, type ReactNode} from 'react'
+import type {SdkParamRow} from '../inhabitants/sdk/define'
 import {DeviceView} from '../frame/devices/DeviceView'
 import {publishDevice, selectDevice} from '../frame/devices/deviceDoor'
 import {DEVICE_PANE_KIND} from '../frame/devices/devicePane'
 import {openInstrument} from '../frame/instrumentDoor'
-import {TORUS_DEVICE, TORUS_DEVICE_ID, torusDevice, torusFigure, torusTone, type TorusFigureSize} from './torusDevice'
+import {TORUS_DEVICE, TORUS_DEVICE_ID, torusDesignBinding, torusDevice, torusFigure, torusTone, type TorusFigureSize} from './torusDevice'
 import {LIVE_TORUS_ABSENT_REASON, useLiveTorusReading, type LiveTorusState} from './torusInstrument'
 import {JankoDevice} from './janko/JankoDevice'
 import {useKeyboardLayout} from './keyboardLayout'
@@ -60,16 +64,21 @@ export function TorusFull() {
 /** A row's map target: the owner's scale is mapped as its units per metre (midiMap/midiMapTargets.ts `scale-units`). */
 const mapId = (key: string) => (key === 'scale' ? 'scale-units' : key)
 
+/** The chain's wrap of a torus control, by its row: the control inside its MIDI-map target. The generic plate wraps its rows with it,
+ * and the design's kit controls are wrapped with it by their value keys. */
+export const torusMapWrap = (row: SdkParamRow, control: ReactNode): ReactNode => <MidiMapTarget id={mapId(row.key)}>{control}</MidiMapTarget>
+
 export function TorusOnChain({state}: {state: LiveTorusState}) {
   const device = useMemo(() => torusDevice(state), [state])
+  const binding = useMemo(() => torusDesignBinding(state, device), [state, device])
   useEffect(() => {
-    publishDevice(TORUS_DEVICE_ID, {device, picture: size => <TorusPicture state={state} size={size} />, full: {draw: () => <TorusFull />}})
-  }, [device, state])
+    publishDevice(TORUS_DEVICE_ID, {device, binding, picture: size => <TorusPicture state={state} size={size} />, full: {draw: () => <TorusFull />}})
+  }, [device, binding, state])
   useEffect(() => () => publishDevice(TORUS_DEVICE_ID, null), [])
   return <div className="chain-side" data-chain-instrument={TORUS_DEVICE_ID} data-live-torus={state.ok ? state.value.standing : 'refused'}>
-    <DeviceView device={device} size="compact" picture={<TorusPicture state={state} size="compact" />} actions={[
+    <DeviceView device={device} binding={binding} size="compact" picture={<TorusPicture state={state} size="compact" />} actions={[
       {icon: 'detail', label: 'Show every setting in the pool', onPress: () => selectDevice(TORUS_DEVICE_ID)},
       {icon: 'pane', label: 'Open the torus full size in a pane', onPress: () => openInstrument(DEVICE_PANE_KIND, undefined, {ref: TORUS_DEVICE_ID, title: TORUS_DEVICE.title})},
-    ]} wrapRow={(row, control) => <MidiMapTarget id={mapId(row.key)}>{control}</MidiMapTarget>} />
+    ]} wrapRow={torusMapWrap} />
   </div>
 }

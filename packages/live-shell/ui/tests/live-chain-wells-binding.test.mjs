@@ -128,13 +128,16 @@ test('published with its picture, a device draws it whole in the pool, full in a
   } finally { door.publishDevice(device.id, null) }
 })
 
-test('code reading: the keyboard, each note device and each set device publish their pictures; the torus publishes its own Full and keeps its generic plate', async () => {
+test('code reading: the keyboard, each note device and each set device publish their pictures; the torus publishes its binding and its own Full, and draws its design', async () => {
   assert.match(await read('live/KeyboardOnChain.tsx'), /usePublishedDevice\(KEYBOARD_DEVICE_ID, device, picture\)/)
   assert.match(await read('live/KeyboardOnChain.tsx'), /<JankoDevice plate layout=\{layout\} midi=\{false\} \/>/, 'the published surface is deaf to MIDI')
   assert.match(await read('live/noteDevices/NoteDeviceChain.tsx'), /usePublishedDevice\(instance\.id, instance, picture\)/)
   assert.match(await read('live/SetDeviceOnChain.tsx'), /usePublishedDevice\(id, device, picture\)/)
   const torus = await read('live/TorusOnChain.tsx')
-  assert.match(torus, /publishDevice\(TORUS_DEVICE_ID, \{device, picture: .*, full: \{draw: \(\) => <TorusFull \/>\}\}\)/)
-  // The design does not draw the four determinants yet: hosting it would take them off the chain, so the binding is held back.
-  assert.doesNotMatch(torus, /binding=\{binding\}/, 'the chain keeps the generic plate with the determinant controls')
+  assert.match(torus, /publishDevice\(TORUS_DEVICE_ID, \{device, binding, picture: .*, full: \{draw: \(\) => <TorusFull \/>\}\}\)/)
+  // Lane BL2 (inverting lane BL's hold-back): the design now draws the four determinants and its See and hear, and the chain's wrap
+  // reaches a design's kit controls by value key (sdk/panel.tsx ControlWrapContext), so hosting it takes no MIDI-mappable control off
+  // the chain. The chain passes the binding and keeps its wrap (proved by render in live-torus-binding.test.mjs).
+  assert.match(torus, /<DeviceView device=\{device\} binding=\{binding\}/, 'the chain draws the design on the owner\'s binding')
+  assert.match(torus, /wrapRow=\{torusMapWrap\}/, 'and keeps the MIDI-map wrap')
 })
