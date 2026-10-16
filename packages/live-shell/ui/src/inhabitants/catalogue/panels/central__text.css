@@ -1,0 +1,33 @@
+/* Text (manual §18.6): the page sample in the well and the document in the pane. The paper and the ink are the template's own
+ * (desktop/cradle/documents/ql-flow.html), because a colour inside a display carries a meaning of the material. Everything else is
+ * the shell's and the panel's tokens. */
+.ctext-sample, .ctext-pane {
+  --paper: #EFEFED; --ink: #1a1a18; --mid: #6E6E6A; --faint: #A3A39E; --rule: #C9C9C4;
+  background: var(--paper); color: var(--ink); font-family: Charter, Georgia, 'Times New Roman', serif;
+}
+
+/* A paragraph as the page sets it: ql-flow.html `.body p`, `.body blockquote`; the head after oi-beings.html `h2` (1.5 times the body). */
+.ctext-sample { position: relative; box-sizing: border-box; width: 100%; height: 100%; overflow: hidden; padding: .7em .8em; }
+/* The paper goes on below the well: a page that is longer than the well fades out at its foot. */
+.ctext-sample::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 2.4em; background: linear-gradient(to bottom, transparent, var(--paper)); pointer-events: none; }
+.ctext-sample[data-dim="true"] { opacity: .5; }
+.ctext-body, .ctext-quote, .ctext-list { margin: 0; line-height: 1.6; }
+.ctext-head { margin: 0; font-size: 1.5em; font-weight: 400; line-height: 1.25; }
+.ctext-quote { padding-left: .7em; border-left: 2px solid var(--rule); color: var(--mid); }
+.ctext-list { padding-left: 1.3em; }
+.ctext-w[data-b="true"] { font-weight: 700; }
+.ctext-w[data-i="true"] { font-style: italic; }
+.ctext-w[data-s="true"] { text-decoration: line-through; }
+.ctext-w[data-sel="true"] { background: color-mix(in srgb, var(--accent, #ffbe00) 42%, transparent); }
+
+/* The pane: the open document at full size, one entry after another. It scrolls by the wheel and shows no scroller. */
+.ctext-pane { flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-width: none; }
+.ctext-pane::-webkit-scrollbar { display: none; }
+.ctext-doc { box-sizing: border-box; max-width: min(70ch, 100%); margin: 0 auto; padding: 22px 28px 40px; }
+.ctext-entry { display: grid; grid-template-columns: 34px minmax(0, 1fr); column-gap: 12px; margin-bottom: .8em; }
+.ctext-num { align-self: start; margin-top: .55em; padding: 0; border: 0; background: none; color: var(--faint); font: 11px/1.2 var(--font-ui, sans-serif); text-align: right; cursor: pointer; }
+.ctext-num small { display: block; font-size: 9px; letter-spacing: .06em; }
+.ctext-entry[data-selected="true"] .ctext-num { color: var(--ink); font-weight: 700; }
+.ctext-pane .ctext-w { cursor: text; user-select: none; -webkit-user-select: none; }
+.ctext-new { grid-column: 2; min-height: 2.4em; outline: 0; line-height: 1.6; }
+.ctext-new:empty::before { content: attr(data-placeholder); color: var(--faint); font-style: italic; pointer-events: none; }
