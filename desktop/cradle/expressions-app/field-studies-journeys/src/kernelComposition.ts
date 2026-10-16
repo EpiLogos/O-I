@@ -7,6 +7,7 @@ import {kernelDocumentToJourney,nativeSceneMaterial, type KernelConversion, type
 import {mapSceneOccurrences, mergeScenePage, validateSceneData, sameSceneData} from './sceneCorrespondence.js';
 import {validateEntitySound} from './native-field/entitySound.js';
 import type {JourneyMarker,LoopRegion} from './journeyMarkers.js';
+import {initialiseShared} from './sharedSettings.js';
 
 export type CompositionChange =
   | {change:'rename';title:string}
@@ -79,6 +80,11 @@ export function prepareCompositionEdit(
   const finalMembers=new Map<string,string[]>();
   if (edited.name!==view.journey.name) changes.push({change:'rename',title:edited.name});
   const properties=compositionProperties(edited);
+  // The shared settings the frame gives a loaded work whose owner holds none (app.ts initialiseBelts → initialiseShared) are not an
+  // edit on their own: such a work, untouched, reads saved. With any real change they travel in the same edit, so the owner's
+  // document holds them from then on (lane D, 16 Oct: an opened, untouched work read "edited since save", its draft was kept as
+  // edited, and a switch back to it after its owner moved was refused as a revision conflict instead of reading the owner's basis).
+  const frameDefaultsOnly=!view.journey.shared&&!!edited.shared&&same(properties,compositionProperties(initialiseShared(clone(view.journey))));
   if (!same(properties,compositionProperties(view.journey))) {
     if(properties.shared)properties.shared.toolbelt=properties.shared.toolbelt.map(entry=>entry.entityId?{...entry,entityId:entityRefs.get(entry.entityId)??entry.entityId}:entry);
     changes.push({change:'composition_set',presentation:properties});
@@ -171,6 +177,7 @@ export function prepareCompositionEdit(
   if (changes.length>256) {
     throw new Error('This native edit exceeds the 256-operation budget; no work was truncated or submitted');
   }
+  if (frameDefaultsOnly&&changes.length===1&&changes[0].change==='composition_set') changes.length=0;
   return {operation:'edit',expression_ref:doc.expression_ref,expected_revision:doc.revision,
     actor:options.actor??'human:expressions-app',changes};
 }

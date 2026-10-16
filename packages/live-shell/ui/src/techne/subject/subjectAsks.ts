@@ -17,10 +17,12 @@
 export interface AskedScene {registerKey: string; sceneRef: string}
 
 /** The stage's answer, or the door's when the stage gave none: `shown` once the frame announces the Scene's Expression,
- * `refused` with the owner's words (or, from the door, the words of a deadline). */
+ * `refused` with the owner's words (or, from the door, the words of a deadline). A stage's refusal names the pane that presented
+ * the stage when it took the ask (`paneId`; null when none held the frame) and the cut the frame stood in then (`mode`, the frame's
+ * own announced host mode): its fault line is that pane's, in that cut (askFault.ts). */
 export type AskAnswer =
   | {state: 'shown'; registerKey: string; sceneRef: string; expression_ref: string}
-  | {state: 'refused'; registerKey: string; sceneRef: string; reason: string; by: 'stage' | 'door'}
+  | {state: 'refused'; registerKey: string; sceneRef: string; reason: string; by: 'stage' | 'door'; paneId?: string | null; mode?: string | null}
 
 const listeners = new Set<(answer: AskAnswer) => void>()
 
@@ -49,6 +51,71 @@ export function notTakenWords(title: string, seconds = ASK_TAKEN_WITHIN_MS / 100
 /** The stage's words when the owner focused the Scene but the frame did not show it by the deadline. */
 export function notShownWords(sceneTitle: string, expressionRef: string, shownRef: string | null | undefined, seconds = SCENE_SHOWN_WITHIN_MS / 1000): string {
   return `Technē focused ${sceneTitle} in ${expressionRef}, but the Expressions frame has not shown it after ${seconds} s: ${shownRef ? `it still shows ${shownRef}` : 'it reports no Scene'}, and it gave the shell no reason.`
+}
+
+/** The stage's words when the frame refused to show the Scene the owner focused, in the frame's own reason (its answer to the
+ * host's open: the owner's refusal it was given, or its own hold). */
+export function refusedWords(sceneTitle: string, expressionRef: string, reason: string): string {
+  return `Technē focused ${sceneTitle} in ${expressionRef}, but the Expressions frame refused to show it: ${reason}`
+}
+
+/** A settlement of an ask the stage's navigator took (packages/expressions-boundary/src/techne.ts NativeTechneSettlement), by the
+ * fields this module reads. */
+export type StageSettlement =
+  | {state: 'opened'; request: AskedScene & {title?: string}; open: {expression_ref: string}; answer?: Promise<{ok: true} | {ok: false; error: string}>}
+  | {state: 'refused'; request: AskedScene; reason: string}
+
+/** What the stage's answers read of the live stage, injectable for the tests. */
+export interface StageEnv {
+  /** The Expression the frame announces it shows (its own state announcement), if any. */
+  shownRef(): string | null | undefined
+  /** The pane presenting the stage now (the frame's placement): the pane an ask the stage takes now belongs to. */
+  paneId(): string | null
+  /** The cut the frame stands in now (its announced host mode): the mode an ask the stage takes now belongs to. */
+  mode(): string | null
+  setTimer(run: () => void, ms: number): unknown
+  clearTimer(timer: unknown): void
+}
+
+/** The stage's answer to a Technē selection ask (ticket S; ported from panels/expressions.tsx, where it was written inline): the
+ * navigator settles each ask it takes; an opened one is answered `shown` when the frame announces the owner's Expression (`seen`),
+ * refused in the frame's own words when the frame answers the open with a refusal (lane D), and refused by its deadline when the
+ * frame says nothing (`notShownWords`, the 30 s honesty line). Every refusal names the pane that presented the stage when the ask
+ * was taken and the cut the frame stood in, so it stands on that pane's fault line in that cut alone (askFault.ts) — never on
+ * another mode's pane, though the modes' trees may hold the same stage pane. One answer per ask. */
+export function createStageAnswers(env: StageEnv) {
+  let awaiting: {asked: AskedScene; title: string; expression_ref: string; paneId: string | null; mode: string | null; timer: unknown} | null = null
+  const finish = (waiting: NonNullable<typeof awaiting>) => {env.clearTimer(waiting.timer); if (awaiting === waiting) awaiting = null}
+  const refuse = (waiting: NonNullable<typeof awaiting>, reason: string) => {
+    finish(waiting)
+    answerAsk({state: 'refused', ...waiting.asked, reason, by: 'stage', paneId: waiting.paneId, mode: waiting.mode})
+  }
+  /** The frame's own announcement: an awaited ask is shown once the frame stands on its Expression. */
+  const seen = (shownRef: string | null | undefined) => {
+    const waiting = awaiting
+    if (!waiting || shownRef !== waiting.expression_ref) return
+    finish(waiting)
+    answerAsk({state: 'shown', ...waiting.asked, expression_ref: waiting.expression_ref})
+  }
+  const settle = (settlement: StageSettlement) => {
+    const asked: AskedScene = {registerKey: settlement.request.registerKey, sceneRef: settlement.request.sceneRef}
+    if (settlement.state === 'refused') {
+      answerAsk({state: 'refused', ...asked, reason: settlement.reason, by: 'stage', paneId: env.paneId(), mode: env.mode()})
+      return
+    }
+    if (awaiting) env.clearTimer(awaiting.timer)
+    const waiting: NonNullable<typeof awaiting> = {asked, title: settlement.request.title ?? settlement.request.sceneRef,
+      expression_ref: settlement.open.expression_ref, paneId: env.paneId(), mode: env.mode(), timer: undefined}
+    waiting.timer = env.setTimer(() => {
+      if (awaiting !== waiting) return
+      refuse(waiting, notShownWords(waiting.title, waiting.expression_ref, env.shownRef()))
+    }, SCENE_SHOWN_WITHIN_MS)
+    awaiting = waiting
+    // The frame's own answer to the open: a refusal ends the ask in its words; an answer that comes after the ask ended changes nothing.
+    void settlement.answer?.then(result => {if (!result.ok && awaiting === waiting) refuse(waiting, refusedWords(waiting.title, waiting.expression_ref, result.error))}, () => {})
+    seen(env.shownRef())
+  }
+  return {settle, seen, dispose: () => {if (awaiting) finish(awaiting)}}
 }
 
 /** What a follower reads of the live seam, injectable for the tests. */

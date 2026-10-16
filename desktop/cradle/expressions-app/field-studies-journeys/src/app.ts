@@ -1403,9 +1403,10 @@ function kernelOriginFor(journey:Journey):LibraryOrigin|undefined{
  return {kind:'kernel-ref',ref:view.document.expression_ref};
 }
 /** Opens a kernel copy through the boot's own follow path. A refusal is named, and `fallback` (the browser copy) then opens. */
-function openKernelCopy(ref:string,fallback?:()=>void,recovery?:unknown){
- const refused=()=>{toast(kernelCopyRefusalMessage(!!fallback),7000);fallback?.();};
- void Promise.resolve(nativeWorkspace?.follow(ref,recovery)).then(applied=>{if(applied!==true)refused();},refused);
+/** Resolves whether the frame now stands on the kernel's document (a refusal is toasted and its reason stays on the native status line). */
+function openKernelCopy(ref:string,fallback?:()=>void,recovery?:unknown):Promise<boolean>{
+ const refused=()=>{toast(kernelCopyRefusalMessage(!!fallback),7000);fallback?.();return false;};
+ return Promise.resolve(nativeWorkspace?.follow(ref,recovery)).then(applied=>applied===true?true:refused(),refused);
 }
 /** The browser copy a kernel ref falls back to when the kernel refuses it: the Library entry that holds the ref (libraryCards.localCopyIdFor). */
 function localCopyFallbackFor(ref:string):(()=>void)|undefined{
@@ -2195,18 +2196,40 @@ function setHostMode(mode:'expressions'|'techne'|'live'){
 // previous field. If the kernel channel has not been announced yet it opens on
 // that announce, exactly as the boot ?expression= deep link does. Refs only —
 // the kernel document is the store, and a bad ref is refused by the owner.
-let pendingHostOpen:{ref:string;recovery?:unknown}|null=null,hostOpenArmed=false;
+let pendingHostOpen:{ref:string;recovery?:unknown;settle:(opened:boolean|string)=>void}|null=null,hostOpenArmed=false;
 let hostThemeReadingKey='';
-function openHostExpression(ref:string,recovery?:unknown){
- if(typeof ref!=='string'||!ref.startsWith('expression:'))return;
- if(kernelExpressionsAvailable()){openKernelCopy(ref,localCopyFallbackFor(ref),recovery);return;}
+/** Resolves whether the frame now stands on the Expression, or why not when no status line says it (answerHostOpen carries that to the host). */
+function openHostExpression(ref:string,recovery?:unknown):Promise<boolean|string>{
+ if(typeof ref!=='string'||!ref.startsWith('expression:'))return Promise.resolve(false);
+ if(kernelExpressionsAvailable())return openKernelCopy(ref,localCopyFallbackFor(ref),recovery);
  // Buffer the LATEST ref and arm exactly one announce listener (not one per
  // pre-ready call), so repeated posts before the channel is up converge to a
- // single last-wins open and no message listeners accumulate.
- pendingHostOpen={ref,recovery};
- if(hostOpenArmed)return;
+ // single last-wins open and no message listeners accumulate. A superseded
+ // buffered open resolves unopened.
+ const answer=new Promise<boolean|string>(settle=>{pendingHostOpen?.settle('A newer open superseded this one before the kernel channel was announced.');pendingHostOpen={ref,recovery,settle};});
+ if(hostOpenArmed)return answer;
  hostOpenArmed=true;
- window.addEventListener('message',function ready(event){if(event.source===window.parent&&event.data?.v===1&&event.data?.kind==='oi-kernel-channel'){window.removeEventListener('message',ready);hostOpenArmed=false;const r=pendingHostOpen;pendingHostOpen=null;if(r)openKernelCopy(r.ref,localCopyFallbackFor(r.ref),r.recovery);}});
+ window.addEventListener('message',function ready(event){if(event.source===window.parent&&event.data?.v===1&&event.data?.kind==='oi-kernel-channel'){window.removeEventListener('message',ready);hostOpenArmed=false;const r=pendingHostOpen;pendingHostOpen=null;if(r)void openKernelCopy(r.ref,localCopyFallbackFor(r.ref),r.recovery).then(r.settle);}});
+ return answer;
+}
+/** The host's re-read of an Expression it focused (nativeWorkspace.refreshReference): resolves whether the frame stands on it. */
+function refreshHostExpression(ref:string,recovery?:unknown):Promise<boolean>{
+ return Promise.resolve(nativeWorkspace?.refreshReference(ref,recovery)??false).catch(()=>false);
+}
+/** Lane D: the frame's answer to the host's open (open-expression / refresh-expression carrying `req`), as a stage command is answered
+ * (stageReplyMessage): ok once the frame stands on the Expression, or refused in the words its native status line holds — the owner's
+ * refusal (a revision conflict, an absent work) or the host's own hold. Seen headless and natively (16 Oct): the frame refused the door's
+ * Scene with a toast alone, and the shell's ask waited 30 s and then said the frame "gave the shell no reason". An open without `req`
+ * (an older host) is answered by the toast alone, as before. */
+function answerHostOpen(req:unknown,opened:Promise<boolean|string>){
+ if(!Number.isSafeInteger(req)||Number(req)<1||window.parent===window)return;
+ void opened.then(outcome=>{
+  const ok=outcome===true;
+  // A refusal in words of its own (a superseded open), or the status line's: every other unopened path sets it first — run()'s
+  // catch (the owner's refusal) or refusedByHost (the host's own hold).
+  const reason=typeof outcome==='string'?outcome:nativeState?.text||'The Expressions frame did not open this Expression; it named no reason.';
+  try{window.parent.postMessage(stageReplyMessage(Number(req),ok?{ok:true}:{ok:false,error:reason}),'*');}catch{/* nothing is sent rather than a wrong-channel throw */}
+ });
 }
 // Stage controls the shell drives (stageCommands.ts). Each runs the application's
 // own action body; the file download or picker stays here, in the frame's gesture.
@@ -2332,7 +2355,7 @@ window.addEventListener('message',ev=>{if(ev.source!==window.parent)return;const
  if(d&&d.v===1&&d.kind==='host-mode'&&(d.mode==='expressions'||d.mode==='techne'||d.mode==='live')){const world=(d as {world?:unknown}).world;if(typeof world==='string'&&world.length<=64)worldLens=world;setHostMode(d.mode);announceHostState();return;}
  if(d&&d.v===1&&d.kind==='host-command'){
   if(d.command==='interact'||d.command==='select')activateRail(d.command);
-  else if(d.command==='open-expression'&&typeof d.ref==='string'){if((d as {refresh?:unknown}).refresh===true&&kernelExpressionsAvailable())void nativeWorkspace?.refreshReference(d.ref,d.recovery);else openHostExpression(d.ref,d.recovery);}
+  else if(d.command==='open-expression'&&typeof d.ref==='string')answerHostOpen(d.req,(d as {refresh?:unknown}).refresh===true&&kernelExpressionsAvailable()?refreshHostExpression(d.ref,d.recovery):openHostExpression(d.ref,d.recovery));
   else if(d.command==='open-local-draft'&&typeof (d as {id?:unknown}).id==='string')void openBrowserDraft((d as {id:string}).id);
   else if(d.command==='lens'&&typeof (d as {lens?:unknown}).lens==='string'&&['project','canvas','timeline','journey','place','palace'].includes((d as {lens:string}).lens)){
    const lens=(d as {lens:LensId}).lens,ref=(d as {ref?:unknown}).ref;
@@ -2344,7 +2367,7 @@ window.addEventListener('message',ev=>{if(ev.source!==window.parent)return;const
     try{lensStudio.select(lens);}finally{carriedFocus=null;}
    }else lensStudio.select(lens);
   }
-  else if(d.command==='refresh-expression'&&typeof d.ref==='string')void nativeWorkspace?.refreshReference(d.ref,d.recovery);
+  else if(d.command==='refresh-expression'&&typeof d.ref==='string')answerHostOpen(d.req,refreshHostExpression(d.ref,d.recovery));
   else if(d.command==='insert-source'&&typeof d.req==='string'){
    const req=d.req,target=d.target as {expression_ref?:unknown;revision?:unknown;scene_ref?:unknown}|undefined,source=d.source as {title?:unknown;binding?:unknown}|undefined;
    void (async()=>{

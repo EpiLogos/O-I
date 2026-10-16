@@ -144,6 +144,11 @@ export function unregisterExpressionsPane(paneId: string, admission?: Expression
   settle()
 }
 
+/** Whether an instance of the pane still holds its record (a later instance may have taken it over before the earlier left). */
+export function expressionsPaneAdmitted(paneId: string): boolean {
+  return panes.has(paneId)
+}
+
 /** The pane's rectangle for the frame: its slot element, or null when the pane has none (its body is leaving). */
 export function attachExpressionsSlot(paneId: string, slot: HTMLElement | null, admission?: ExpressionsPaneAdmission): void {
   const record = heldBy(paneId, admission)

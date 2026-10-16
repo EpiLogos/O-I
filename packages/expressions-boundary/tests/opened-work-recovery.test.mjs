@@ -110,7 +110,7 @@ function frameRecovery(nativeRecoveryRequest) {
   const native = load(sources.nativeRecovery, ['qualifyRecoveryBinding', 'bindNativeRecovery', 'recoveryBinding', 'selectedRecovery',
     'acceptRecoveryDraft', 'acceptAbsentRecoveryCheckpoint', 'selectNativeRecovery', 'draftRecoveryAddress', 'key', 'rememberReading',
     'nativeRead', 'nativeWrite', 'serial'], {...state, nativeRecoveryRequest, hostedRecovery: () => true, hostedScope: () => 'techne'});
-  const recovery = load(sources.recovery, ['readBoundWorkingDraft', 'writeWorkingCheckpoint', 'writeDraft'],
+  const recovery = load(sources.recovery, ['checkpointReading', 'readBoundWorkingDraft', 'writeWorkingCheckpoint', 'writeDraft'],
     {...native, hostedRecovery: () => true, validateJourney, draftJourney, validateWorkingRecord, draftValue,
       recoveryStore: () => assert.fail('A hosted frame never uses the browser checkpoint store')});
   const checkpoint = execute(inner('checkpoint'), {draftRecoveryAddress: native.draftRecoveryAddress, writeWorkingCheckpoint: recovery.writeWorkingCheckpoint});
