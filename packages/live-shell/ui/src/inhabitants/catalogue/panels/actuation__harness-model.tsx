@@ -202,7 +202,7 @@ const inputRadio = (p: ViewProps, label?: string) => <Radio {...st(p, 'input')} 
 const interruptDial = (p: ViewProps) => <Dial {...st(p, 'quantize')} label="Interrupt" does={SAYS.interrupt} value={quantizeAt(p.v) ?? NaN} def={1} scale={{min: 0, max: 2, step: 1}}
   format={i => QUANTIZE_SHORT[Math.round(i)] ?? NONE} onChange={i => p.set('quantize', QUANTIZE[Math.round(i)]!)} />
 /** The head: the light reads the owner alone, hollow when it reports none; pressing it asks, unless the host stands it disabled. */
-const head = (p: ViewProps) => ({light: lampOf(p), onLight: st(p, 'light').disabled ? undefined : () => p.set('light', lightOf(p) === 'lit' ? 'dark' : 'lit'), onFold: p.nav.fold, onFull: p.nav.full})
+const head = (p: ViewProps) => ({light: lampOf(p), onLight: st(p, 'light').disabled ? undefined : () => p.set('light', lightOf(p) === 'lit' ? 'dark' : 'lit'), lightWhy: st(p, 'light').disabled, onFold: p.nav.fold, onFull: p.nav.full})
 
 // ---------------------------------------------------------------- the thread, in the pane
 
