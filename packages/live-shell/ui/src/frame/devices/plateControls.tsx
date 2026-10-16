@@ -119,7 +119,7 @@ export interface PlateRow {
 
 /** Rows (the kit's rows, panel.tsx Rows): one line each, 17 px, a hairline under; the lit row in the accent; a long list pages, never
  * scrolls. A press chooses a row, a double-click opens it. */
-export function PlateRows({label, rows, size = 5, onPress, onOpen, active, empty, columns = 1}: {
+export function PlateRows({label, rows, size = 5, onPress, onOpen, active, empty, emptyWord, columns = 1}: {
   readonly label?: string
   readonly rows: readonly PlateRow[]
   readonly size?: number
@@ -128,6 +128,8 @@ export function PlateRows({label, rows, size = 5, onPress, onOpen, active, empty
   readonly active?: string | readonly string[] | null
   /** Said in place of the rows when there are none. */
   readonly empty?: string
+  /** With it, the empty list is a light and this one word, and `empty` is the status bar's words (DEVICE-UI §1: no sentence in a panel). */
+  readonly emptyWord?: string
   readonly columns?: 1 | 2
 }) {
   const [page, setPage] = useState(0)
@@ -154,7 +156,8 @@ export function PlateRows({label, rows, size = 5, onPress, onOpen, active, empty
           {row.acts && <span className="plate-row-acts">{row.acts}</span>}
         </li>
       })}
-    </ul> : empty ? <p className="plate-empty" data-i={said(label, empty)}>{empty}</p> : null}
+    </ul> : empty && emptyWord ? <span className="dp-cell plate-light plate-empty" data-i={said(label ?? emptyWord, empty)} aria-label={empty}><span className="dp-lamp" data-light="unknown" /><span className="dp-label">{emptyWord}</span></span>
+      : empty ? <p className="plate-empty" data-i={said(label, empty)}>{empty}</p> : null}
   </div>
 }
 
@@ -213,9 +216,16 @@ export function PlateReading({label, value, does, light}: {readonly label: strin
   </div>
 }
 
-/** One short line under the controls (a tool's state, the owner's last answer). Its whole words are the status line's. */
-export function PlateLine({text, tone, children}: {readonly text: string | null | undefined; readonly tone?: string | null; readonly children?: ReactNode}) {
+/** One short line under the controls (a tool's state, the owner's last answer). Its whole words are the status line's. With `word`, the
+ * line is a light and that one word (DEVICE-UI §1 "A sentence never appears in a panel. What a control does is said in the status bar"):
+ * the sentence is only the status bar's, under `name`. */
+export function PlateLine({text, tone, children, word, name, light = 'lit'}: {readonly text: string | null | undefined; readonly tone?: string | null; readonly children?: ReactNode
+  readonly word?: string; readonly name?: string; readonly light?: 'lit' | 'dark' | 'unknown'}) {
   if (!text) return null
+  if (word) return <span className="dp-cell plate-light" role="status" data-tone={tone ?? undefined} data-i={said(name ?? word, text)} aria-label={text}>
+    <span className="dp-lamp" data-light={light} data-tone={tone === 'refused' ? 'stall' : tone === 'saved' ? 'green' : tone === 'armed' ? undefined : 'value'} />
+    <span className="dp-label">{word}</span>{children}
+  </span>
   return <p className="plate-line" role="status" data-tone={tone ?? undefined} data-i={said('', text)} title={text}>{text}{children}</p>
 }
 

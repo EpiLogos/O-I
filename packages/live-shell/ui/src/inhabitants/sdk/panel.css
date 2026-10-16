@@ -247,3 +247,8 @@
 .dp-row-select { padding: 0; background: none; border: 0; color: inherit; font: inherit; text-align: left; cursor: pointer; }
 .dp-row-select:hover { color: var(--text); text-decoration: underline; text-decoration-color: var(--text-faint); }
 .dp-row[data-selected="true"] { background: color-mix(in srgb, var(--sel, #7ec3e6) 16%, transparent); box-shadow: inset 2px 0 0 var(--sel, #7ec3e6); }
+
+/* The kit's name in its head holds its own measures wherever a page's own sheet also names a `.dp-title` (the atlas's detail panel,
+   projections/atlas/src/style/main.css:244, draws its title in a 2–3 rem serif and is loaded after the kit): the same values as `.dp-title`,
+   at the specificity of the head. */
+.dp-head .dp-title { margin: 0; font-family: inherit; font-size: 11px; font-weight: 600; line-height: inherit; letter-spacing: normal; }

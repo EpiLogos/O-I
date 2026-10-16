@@ -364,7 +364,9 @@ test('the focused 0 instrument stands open as one plate of the faces it holds, t
   assert.match(out, /data-focus-instrument="techne:m0"/)
   assert.match(out, /data-open-instrument="techne:m0"/)
   assert.match(out, /class="inst-plate" data-instrument="techne:m0" data-expanded="true" data-project-plate="true"/, 'the open instrument is one plate')
-  assert.match(out, /<h3 class="sdk-face__title">Project<\/h3>/, 'its plain name, never its M′ address (lock §9.4)')
+  assert.match(out, /<header class="dp-head dp-head--plate"[^>]*>.*?<span class="dp-title">Project<\/span>/, 'the kit\'s head, its plain name, never its M′ address (lock §9.4)')
+  assert.match(out, /aria-label="Fold Project"/, 'its ▾ folds it to its title (DEVICE-UI §4.1)')
+  assert.match(out, /data-section="display"[^>]*><div class="dp-display"/, 'its well stands first, in a section of its own (DEVICE-UI §4.2, §7)')
   // lane E: the globe, Graph tools, Earth ⇄ Graph and Deep time are its sections' controls, not three boxed sub-devices
   const sections = ['view', 'graph', 'forces', 'time'].map(id => out.indexOf(`data-section="${id}"`))
   assert.ok(sections.every((at, index) => at > 0 && (index === 0 || at > sections[index - 1])), 'View, Graph, Forces, Deep time, in order')
@@ -377,7 +379,7 @@ test('the focused 0 instrument stands open as one plate of the faces it holds, t
   for (const id of ['techne:m1', 'techne:m2', 'techne:m3', 'techne:m4', 'techne:m5']) {
     assert.match(out, new RegExp(`data-instrument="${id}" data-expanded="false"`), `${id} folds`)
   }
-  assert.equal((out.match(/class="sdk-face sdk-face--folded"/g) ?? []).length, 5, 'each fold is the runtime\'s own (FacePlate folded), not a private strip')
+  assert.equal((out.match(/data-rack="strip"[^>]*><section class="dp-folded"/g) ?? []).length, 5, 'each fold is the kit\'s own (panel.tsx Folded), not a private strip')
   assert.doesNotMatch(out, /techne-device-unfold/, 'no private fold is drawn')
   assert.doesNotMatch(out, /data-face-id="sky"/, 'a face another instrument holds stands inside that instrument\'s fold')
   assert.doesNotMatch(out, /inhabitant-card|data-inhabitant-rack|docks when its material is selected/, 'no rack card is drawn')
@@ -391,7 +393,7 @@ test('with no focus the six fold and the faces no instrument holds stand after t
   assert.match(out, /data-device="quaternal-logic:ql-instrument" data-device-size="compact"/)
   assert.match(out, /data-ql-instrument/, 'the owner\'s body is its picture')
   assert.match(out, /data-face-id="deck"[^>]*data-expanded="false"/)
-  assert.match(out, /class="sdk-face__unfold"[^>]*aria-label="Open Deck"/, 'a folded device opens from its title, by the runtime\'s fold')
+  assert.match(out, /class="dp-folded-title"[^>]*aria-label="Unfold Deck"/, 'a folded device opens from its title, by the kit\'s fold')
   assert.doesNotMatch(out, /data-face-id="graph-tools"/)
   assert.doesNotMatch(out, /data-face-id="sky"/, 'the sky is the Timeline\'s and the World\'s, inside their folds')
 })
