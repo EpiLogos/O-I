@@ -1,0 +1,35 @@
+/* The Journey's own layout: the pane's rows of stops and the widget's words. Shell and panel tokens only. */
+.jn-pane { position: absolute; inset: 0; display: flex; flex-direction: column; background: var(--bg-1, #33363b); color: var(--text, #d4d7da); font: 11px/1.35 var(--font-ui, sans-serif); overflow: hidden; }
+.jn-head { flex: none; display: flex; align-items: center; gap: 10px; height: 26px; padding: 0 14px; background: var(--bg-0, #26292d); border-bottom: 1px solid var(--line, #24262a); color: var(--text-dim, #a2a7ad); font-size: 10.5px; white-space: nowrap; }
+.jn-head b { font-weight: 600; color: var(--text, #d4d7da); font-size: 11px; }
+.jn-head span + span::before { content: "·"; margin-right: 10px; color: var(--text-faint, #71767c); }
+.jn-cols, .jn-stop { display: grid; grid-template-columns: 22px 92px 74px 82px 70px minmax(0, 1fr) 58px; align-items: center; gap: 0 10px; padding: 0 14px; }
+.jn-cols { flex: none; height: 20px; border-bottom: 1px solid var(--line, #24262a); font-size: 9px; letter-spacing: .07em; text-transform: uppercase; color: var(--text-faint, #71767c); }
+.jn-cols span:last-child { text-align: right; }
+.jn-rows { flex: 1 1 auto; min-height: 0; list-style: none; margin: 0; padding: 4px 0; display: flex; flex-direction: column; justify-content: space-between; }
+.jn-stop { flex: none; position: relative; height: 30px; }
+.jn-stop[data-current="true"] { background: color-mix(in srgb, var(--dp-on, #ffbe00) 10%, transparent); }
+.jn-stop[data-current="true"]::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--dp-on, #ffbe00); }
+.jn-stop[data-passed="true"] .jn-scene, .jn-stop[data-passed="true"] .jn-words { color: var(--text-dim, #a2a7ad); }
+.jn-n { font-variant-numeric: tabular-nums; color: var(--text-faint, #71767c); }
+.jn-scene { display: flex; align-items: baseline; gap: 6px; font-weight: 600; white-space: nowrap; }
+.jn-tag { font-weight: 400; font-size: 8.5px; letter-spacing: .07em; text-transform: uppercase; color: var(--dp-on, #ffbe00); }
+.jn-none { color: var(--text-faint, #71767c); font-size: 10px; white-space: nowrap; }
+.jn-words { color: var(--text, #d4d7da); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.jn-hold { text-align: right; font-variant-numeric: tabular-nums; color: var(--text-dim, #a2a7ad); }
+.jn-seam { flex: none; height: 15px; margin: 0 14px 0 46px; display: flex; align-items: center; gap: 10px; color: var(--text-faint, #71767c); font-size: 9.5px; white-space: nowrap; }
+.jn-seam[data-live="true"] { color: var(--text, #d4d7da); }
+.jn-seam-bar { position: relative; flex: none; width: 90px; height: 3px; background: color-mix(in srgb, var(--text, #d4d7da) 14%, transparent); }
+.jn-seam-bar > i { position: absolute; inset: 0 auto 0 0; width: calc(var(--p, 0) * 100%); background: var(--dp-on, #ffbe00); }
+.jn-seam b { font-weight: 500; font-variant-numeric: tabular-nums; color: var(--dp-on, #ffbe00); }
+.jn-foot { flex: none; display: flex; align-items: center; gap: 10px; height: 24px; padding: 0 14px; border-top: 1px solid var(--line, #24262a); color: var(--text-dim, #a2a7ad); font-size: 10.5px; white-space: nowrap; }
+
+/* The widget: the stop you are on, its words, and the play button. */
+.jn-tile-side { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; justify-content: space-between; }
+.jn-tile-name { display: block; font-size: 11px; font-weight: 600; color: var(--text, #d4d7da); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.jn-tile-words { margin: 2px 0 0; font-size: 10px; line-height: 1.35; color: var(--text-dim, #a2a7ad); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.jn-tile-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.jn-tile-row .dp-cell--action { flex: none; }
+
+/* A stop's row in the pool: how it is arrived at, after its name. */
+.jn-row-arrival { flex: none; margin-left: auto; padding-right: 6px; font-size: 9.5px; color: var(--text-faint, #71767c); white-space: nowrap; }
