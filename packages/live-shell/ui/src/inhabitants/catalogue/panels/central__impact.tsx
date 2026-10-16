@@ -3,114 +3,112 @@
 // at the centre and one ring for each link out. The device reads three owners and keeps no index: the knowledge graph (the nodes and
 // edges of `oi.cradle.graph-reading/v1`), the folder listing and file map, and the NOW register. The owner's cut of the graph is
 // inhabitants/centralImpactModel.ts (projectNeighbourhood, projectSessions); this panel draws the same roles (node, source, other)
-// and the same split of direct and indirect links, and walks the reading's edges to Depth. The readings are real: the wiki register's
-// own relations around a wayfinder note, the real directory of Work/Quaternal-Logic/schemas, and the real NOW register's work refs.
+// and the same split of direct and indirect links, and walks the reading's edges to Depth.
+//
+// Bindable: the material is value keys, each a JSON string shaped as centralImpactModel.ts shapes it. `subject` is
+// {kind, path, ref}; `nodes` is [{ref, role}]; `edges` is [{fromRef, toRef, relation, provenance, direct}]; `references` is the
+// directory entries [{name, kind, byte_len, location:{path}}]; `sessions` is the touching NOW records [{nowRef, purpose, lifecycle,
+// work:["repo @ branch"]}]. The Links list is the edges inside the reach of Depth, so it has no key of its own. `refusal:graph` is
+// the graph owner's own words when it refuses. A key the owner does not report is drawn "—", and the well names the reading that is
+// missing. The sample readings sit in the defaults and the fixtures: the wiki register's own relations around a wayfinder note,
+// the real directory of Work/Quaternal-Logic/schemas, and the real NOW register's work refs.
 import {useState, type ReactNode} from 'react'
 import {Band, Chooser, Dial, Display, Folded, Handle, Panel, Readout, Rows, Section, Tile, Toggle, type LightState, type RowItem} from '../../sdk/panel'
-import {clampTo, num, on, str, type DesignedDevice, type ViewProps} from './design'
+import {NONE, boolOf, clampTo, json, numOf, st, strOf, type DesignedDevice, type ViewProps} from './design'
 import './central__impact.css'
 
 type V = ViewProps['v']
 
-// ------------------------------------------------------------------------------------------------ the readings
+// ------------------------------------------------------------------------------------------------ the vocabulary
 
 type Role = 'node' | 'source' | 'unknown'
-type Lifecycle = 'active' | 'quiescent' | 'closed' | 'archived'
-
-interface Edge {readonly from: string; readonly to: string; readonly relation: string; readonly provenance: string}
-interface FileRow {readonly name: string; readonly path: string; readonly kind: 'file' | 'directory'; readonly size?: string; readonly how: 'holds' | 'mentions'}
-interface Session {readonly id: string; readonly purpose: string; readonly lifecycle: Lifecycle; readonly branch: string}
-interface Reading {readonly kind: string; readonly path: string; readonly ref: string; readonly edges: readonly Edge[]; readonly files: readonly FileRow[]; readonly sessions: readonly Session[]}
 
 /** The owner's relation names, in the words the Relation chooser shows. */
 const REL: Readonly<Record<string, string>> = {'node-source': 'Source', 'node-space': 'Space', 'space-child-space': 'Child space', 'wiki-link': 'Link', references: 'Reference'}
-const relName = (r: string) => REL[r] ?? r
+const relName = (r: string) => (r === '' ? NONE : REL[r] ?? r)
 
 /** The owner's three sources, as the lists name them. */
 const SOURCE = {links: 'knowledge graph', folder: 'folder listing', mentions: 'file map', sessions: 'NOW register'} as const
 
-const NOTE_PATH = 'Work/O-I/.wayfinder/maps/command-encounter-convergence.md'
-const NOTE_REF = `central:source:control:root:${NOTE_PATH}`
-const WIKI = 'central wiki'
-const e = (from: string, to: string, relation: string): Edge => ({from, to, relation, provenance: WIKI})
-
-const LANE = 'wiki:node:delivered-lane-loses-install'
-const ROOT = 'central:wiki:root'
-const OTHER_NODES: readonly {readonly ref: string; readonly sources: readonly string[]}[] = [
-  {ref: 'wiki:node:place-provider-reconciles-like-the-floor', sources: [
-    'central:source:control:root:Control/agents/now/flows/herdr-world-entry-20260927/IMPLEMENTATION-PACKET.md',
-    'central:source:control:root:Control/agents/now/flows/herdr-world-entry-20260927/omarchy-packet/findings.md']},
-  {ref: 'wiki:node:identity', sources: ['Control/user/identity.md']},
-  {ref: 'wiki:node:staged/propose-not-write', sources: ['staging/propose-not-write']},
-  {ref: 'wiki:node:root/ta-onta-and-the-thought-stream', sources: ['central:source:control:root:Control/agents/wiki/returns/ta-onta-and-the-thought-stream-2026-09-16.md']},
-]
-const CHILD_SPACES = ['Actuation', 'Central', 'Epi-Prime', 'Factory', 'O-I', 'Point-Cloud-Demo', 'Workcell', 'ai-kit', 'personal', 'projects',
-  'Archetypal-Earth', 'Quaternal-I-Ching', 'Quaternal-Tarot', 'ProjectCentral', 'face-rig'].map(n => `central:wiki:project:${n}`)
-
-/** The wiki register's relations around the note: the lane node cites it, and the register's space holds the other notes. */
-const NOTE_EDGES: readonly Edge[] = [
-  e(LANE, NOTE_REF, 'node-source'), e(LANE, ROOT, 'node-space'),
-  e(LANE, 'git:ai-kit@convergence/command-encounter-20260926', 'node-source'), e(LANE, 'git:ai-kit@guidance/development-world-shape', 'node-source'),
-  ...OTHER_NODES.map(n => e(n.ref, ROOT, 'node-space')),
-  ...CHILD_SPACES.map(s => e(ROOT, s, 'space-child-space')),
-  ...OTHER_NODES.flatMap(n => n.sources.map(s => e(n.ref, s, 'node-source'))),
-]
-
-const dirent = (name: string, size?: string): FileRow => ({name, path: `Work/Quaternal-Logic/schemas/${name}`, kind: size ? 'file' : 'directory', size, how: 'holds'})
-const FOLDER_PATH = 'Work/Quaternal-Logic/schemas'
-
-const READINGS: Readonly<Record<string, Reading>> = {
-  [NOTE_PATH]: {
-    kind: 'note', path: NOTE_PATH, ref: NOTE_REF, edges: NOTE_EDGES,
-    files: [
-      {name: 'wiki.json', path: 'Control/agents/wiki/wiki.json', kind: 'file', how: 'mentions'},
-      {name: 'README.md', path: 'Control/agents/now/flows/development-entry-2026-09-30/README.md', kind: 'file', how: 'mentions'},
-      {name: 'command-encounter-classification.md', path: 'Work/O-I/.wayfinder/maps/command-encounter-classification.md', kind: 'file', how: 'mentions'},
-    ],
-    sessions: [
-      {id: 's1', purpose: 'Recovered the delivered Nara, personal and Epii identity path', lifecycle: 'archived', branch: 'agent/nara-integration-20260921'},
-      {id: 's2', purpose: 'Mac Track 2 self-inhabitation loop: harden the root NOW record law', lifecycle: 'archived', branch: 'agent/factory-run-expressions-20260919'},
-      {id: 's3', purpose: 'Suite git cleanup session (root register, interactive)', lifecycle: 'archived', branch: 'agent/expression-world-convergence-20260917'},
-      {id: 's4', purpose: 'Cradle Wiki-constellation feature integrated, reviewed, tested and merged', lifecycle: 'archived', branch: 'main'},
-    ],
-  },
-  [FOLDER_PATH]: {
-    kind: 'folder', path: FOLDER_PATH, ref: `central:source:project:Quaternal-Logic:schemas`, edges: [],
-    files: [dirent('epi-vak-registry-v1.schema.json', '6.2k'), dirent('oi.config-error-v1.schema.json', '1.3k'), dirent('oi.config-validation-v1.schema.json', '2.0k'),
-      dirent('oi.configuration-contribution-v1.schema.json', '7.6k'), dirent('q2'), dirent('q3'), dirent('q4'), dirent('ql-agent-contracts-v1.schema.json', '11k'),
-      dirent('ql-mef-meta-binding-v1.schema.json', '1.6k'), dirent('ql-mef-meta-portal-v1.schema.json', '5.4k'), dirent('ql-mef-meta-recognition-v1.schema.json', '2.9k'),
-      dirent('ql-mef-wiki-refraction-v1.schema.json', '4.4k'), dirent('techne')],
-    sessions: [
-      {id: 'q1', purpose: 'Accountable QL native primitive, formal and domain fidelity, architectural review', lifecycle: 'active', branch: 'main'},
-      {id: 'q2', purpose: 'Recovered the delivered Nara, personal and Epii identity path', lifecycle: 'archived', branch: 'agent/nara-ql-integration-20260921'},
-      {id: 'q3', purpose: 'Suite git cleanup session (root register, interactive)', lifecycle: 'archived', branch: 'techne/t9-integrated-field'},
-    ],
-  },
-}
-
-// ------------------------------------------------------------------------------------------------ the law of the picture
-
 /** The owner's roles for a graph ref (centralImpactModel.ts projectNeighbourhood). */
-const roleOf = (ref: string): Role => (ref.startsWith('wiki:node:') ? 'node' : ref.startsWith('central:source:') ? 'source' : 'unknown')
+const roleIn = (ref: string): Role => (ref.startsWith('wiki:node:') ? 'node' : ref.startsWith('central:source:') ? 'source' : 'unknown')
 const tailOf = (s: string) => s.split('/').filter(Boolean).pop() ?? s
 const labelOf = (ref: string): string => {
   if (ref.startsWith('wiki:node:')) return tailOf(ref.slice('wiki:node:'.length))
-  if (ref === ROOT) return 'root space'
+  if (ref === 'central:wiki:root') return 'root space'
   if (ref.startsWith('central:wiki:project:')) return ref.slice('central:wiki:project:'.length)
   return tailOf(ref)
 }
 const clip = (s: string, n: number) => (s.length > n ? `${s.slice(0, n - 1)}…` : s)
 const MAX_DEPTH = 4
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
+const sizeText = (bytes: number) => (bytes < 1000 ? `${bytes} B` : bytes < 10000 ? `${(bytes / 1000).toFixed(1)}k` : `${Math.round(bytes / 1000)}k`)
+const isOpen = (s: Session) => s.lifecycle === 'active' || s.lifecycle === 'quiescent'
+
+// ------------------------------------------------------------------------------------------------ the readings, as the owner reports them
+
+interface Subject {readonly kind: string | undefined; readonly path: string; readonly ref: string | undefined}
+interface Edge {readonly from: string; readonly to: string; readonly relation: string; readonly provenance: string | null; readonly direct: boolean | undefined}
+interface FileRow {readonly name: string; readonly path: string | undefined; readonly directory: boolean; readonly bytes: number | undefined}
+interface Session {readonly id: string; readonly purpose: string; readonly lifecycle: string; readonly branch: string | undefined}
+
+const rec = (x: unknown): Record<string, unknown> | undefined => (x && typeof x === 'object' && !Array.isArray(x) ? x as Record<string, unknown> : undefined)
+const text = (x: unknown): string | undefined => (typeof x === 'string' && x !== '' ? x : undefined)
+/** A JSON list of objects, or undefined when the owner reports none (or what it reports is not a list). */
+function listOf(v: V, key: string): Record<string, unknown>[] | undefined {
+  const raw = json<unknown>(v, key, undefined)
+  return Array.isArray(raw) ? raw.flatMap(x => { const o = rec(x); return o ? [o] : [] }) : undefined
+}
+
+function subjectOf(v: V): Subject | undefined {
+  const o = rec(json<unknown>(v, 'subject', undefined)), path = text(o?.path)
+  return o && path ? {kind: text(o.kind), path, ref: text(o.ref)} : undefined
+}
+function edgesOf(v: V): Edge[] | undefined {
+  return listOf(v, 'edges')?.flatMap((o): Edge[] => {
+    const from = text(o.fromRef), to = text(o.toRef)
+    return from && to ? [{from, to, relation: text(o.relation) ?? '', provenance: text(o.provenance) ?? null, direct: typeof o.direct === 'boolean' ? o.direct : undefined}] : []
+  })
+}
+/** The role the owner gives each ref of the neighbourhood; a ref it does not list takes the owner's rule by its prefix. */
+function rolesOf(v: V): ReadonlyMap<string, Role> {
+  const out = new Map<string, Role>()
+  for (const o of listOf(v, 'nodes') ?? []) { const ref = text(o.ref); if (ref) out.set(ref, o.role === 'node' || o.role === 'source' ? o.role : 'unknown') }
+  return out
+}
+function filesOf(v: V): FileRow[] | undefined {
+  return listOf(v, 'references')?.flatMap((o): FileRow[] => {
+    const name = text(o.name), where = rec(o.location)
+    return name ? [{name, path: text(where?.path) ?? text(where?.ref), directory: o.kind === 'directory', bytes: typeof o.byte_len === 'number' && Number.isFinite(o.byte_len) ? o.byte_len : undefined}] : []
+  })
+}
+function sessionsOf(v: V): Session[] | undefined {
+  return listOf(v, 'sessions')?.flatMap((o, i): Session[] => {
+    const nowRef = text(o.nowRef), purpose = text(o.purpose) ?? nowRef
+    const work = Array.isArray(o.work) ? o.work.find((x): x is string => typeof x === 'string') : undefined
+    return purpose ? [{id: `${i}:${nowRef ?? purpose}`, purpose, lifecycle: text(o.lifecycle) ?? '', branch: work?.match(/ @ (\S+)/)?.[1]}] : []
+  })
+}
+
+// ------------------------------------------------------------------------------------------------ the law of the picture
 
 interface Walk {readonly hop: ReadonlyMap<string, number>; readonly parent: ReadonlyMap<string, string>; readonly angle: ReadonlyMap<string, number>; readonly edges: readonly Edge[]}
 
-/** Walk the reading's edges from the subject, outward, to four links; only edges of the chosen relation carry the walk. Every node keeps its
- * place whatever Depth is, so the picture moves only when a reading moves. */
-function walk(r: Reading, relation: string): Walk {
-  const edges = r.edges.filter(x => relation === 'all' || x.relation === relation)
+/** The graph ref that stands for the subject: its own ref when the graph holds it, else the endpoint that cites its path (the owner's rule). */
+function rootOf(s: Subject, edges: readonly Edge[]): string {
+  const ends = new Set(edges.flatMap(x => [x.from, x.to]))
+  if (s.ref && ends.has(s.ref)) return s.ref
+  const tail = tailOf(s.path), byTail = (s.kind === 'note' || s.kind === 'day') && tail.length > 4
+  return [...ends].find(ref => ref.includes(s.path) || (byTail && ref.includes(tail))) ?? s.ref ?? s.path
+}
+
+/** Walk the reading's edges from the subject, outward, to four links; only edges of the chosen relation carry the walk (no relation
+ * reported: every edge does). Every node keeps its place whatever Depth is, so the picture moves only when a reading moves. */
+function walk(root: string, all: readonly Edge[], relation: string | undefined): Walk {
+  const edges = all.filter(x => relation === undefined || relation === 'all' || x.relation === relation)
   const near = new Map<string, string[]>()
   for (const x of edges) { near.set(x.from, [...(near.get(x.from) ?? []), x.to]); near.set(x.to, [...(near.get(x.to) ?? []), x.from]) }
-  const hop = new Map<string, number>([[r.ref, 0]]), parent = new Map<string, string>(), order = [r.ref]
+  const hop = new Map<string, number>([[root, 0]]), parent = new Map<string, string>(), order = [root]
   for (let i = 0; i < order.length; i++) {
     const at = order[i]!, h = hop.get(at)!
     if (h >= MAX_DEPTH) continue
@@ -126,56 +124,73 @@ function walk(r: Reading, relation: string): Walk {
     let at = a0
     for (const c of k) { const span = (a1 - a0) * leaves(c) / total; place(c, at, at + span); at += span }
   }
-  place(r.ref, 0, Math.PI * 2)
+  place(root, 0, Math.PI * 2)
   return {hop, parent, angle, edges: edges.filter(x => hop.has(x.from) && hop.has(x.to))}
 }
 
 interface LinkRow {readonly edge: Edge; readonly direct: boolean; readonly hop: number}
+/** Where a list stands: switched off, not reported, refused by its owner, or read. */
+type Status = 'off' | 'unread' | 'refused' | 'read'
 
 interface Model {
-  readonly r: Reading; readonly kind: string; readonly path: string
-  readonly depth: number; readonly relation: string
-  readonly showLinks: boolean; readonly showRefs: boolean; readonly showSessions: boolean; readonly closed: boolean
-  readonly refusal: string | null
+  readonly subject: Subject | undefined; readonly kind: string | undefined; readonly path: string | undefined; readonly root: string
+  readonly depth: number | undefined; readonly relation: string | undefined
+  readonly refusal: string | undefined
+  /** The reading the graph picture lacks, if any: the subject, the graph, the depth. */
+  readonly gap: 'subject' | 'graph' | 'depth' | undefined
+  readonly status: {readonly links: Status; readonly refs: Status; readonly sessions: Status}
   readonly walk: Walk | null
+  readonly roles: ReadonlyMap<string, Role>
   readonly kinds: readonly string[]
   readonly shown: readonly string[]; readonly ghost: readonly string[]
   readonly drawn: readonly Edge[]; readonly drawnGhost: readonly Edge[]
   readonly links: readonly LinkRow[]
   readonly files: readonly FileRow[]
+  /** How the references stand to the subject: held by a folder, or mentioning a note; undefined when there is no subject. */
+  readonly how: 'holds' | 'mentions' | undefined
   readonly sessions: readonly Session[]; readonly closedHidden: number
 }
 
-const EMPTY: Reading = {kind: 'note', path: '', ref: '', edges: [], files: [], sessions: []}
-
-/** Everything the five views draw, from the one set of values. */
+/** Everything the five views draw, from the one set of values. A list the owner has not reported stays unread, never empty. */
 function model(v: V): Model {
-  const [kind = 'note', ...rest] = str(v, 'subject').split(' · ')
-  const path = rest.join(' · '), r = READINGS[path] ?? {...EMPTY, kind, path, ref: path}
-  const depth = num(v, 'depth'), relation = str(v, 'relation')
-  const showLinks = on(v, 'show:links'), showRefs = on(v, 'show:references'), showSessions = on(v, 'show:sessions'), closed = on(v, 'closed')
-  const refusal = typeof v['refusal:graph'] === 'string' ? String(v['refusal:graph']) : null
-  const reads = showLinks && !refusal
-  const w = reads ? walk(r, relation) : null
-  const kinds = reads ? [...new Set(walk(r, 'all').edges.map(x => x.relation))] : []
+  const subject = subjectOf(v), edges = edgesOf(v), files = filesOf(v), sessions = sessionsOf(v), roles = rolesOf(v)
+  const rawDepth = numOf(v, 'depth'), depth = rawDepth === undefined ? undefined : clampTo(1, MAX_DEPTH, Math.round(rawDepth))
+  const relation = strOf(v, 'relation'), refusal = strOf(v, 'refusal:graph')
+  const off = {links: boolOf(v, 'show:links') === false, refs: boolOf(v, 'show:references') === false, sessions: boolOf(v, 'show:sessions') === false}
+  const closedOff = boolOf(v, 'closed') === false
+  const gap = !subject ? 'subject' : edges === undefined ? 'graph' : depth === undefined ? 'depth' : undefined
+  const status = {
+    links: off.links ? 'off' : refusal ? 'refused' : gap ? 'unread' : 'read',
+    refs: off.refs ? 'off' : files ? 'read' : 'unread',
+    sessions: off.sessions ? 'off' : sessions ? 'read' : 'unread',
+  } as const
+  const root = subject ? rootOf(subject, edges ?? []) : ''
+  const w = status.links === 'read' ? walk(root, edges ?? [], relation) : null
+  const kinds = w ? [...new Set(walk(root, edges ?? [], undefined).edges.map(x => x.relation))] : []
   const hopOf = (ref: string) => w?.hop.get(ref) ?? Infinity
-  const shown = w ? [...w.hop].filter(([, h]) => h <= depth).map(([ref]) => ref) : [r.ref]
-  const ghost = w ? [...w.hop].filter(([, h]) => h === depth + 1).map(([ref]) => ref) : []
-  const drawn = w ? w.edges.filter(x => hopOf(x.from) <= depth && hopOf(x.to) <= depth) : []
-  const drawnGhost = w ? w.edges.filter(x => Math.max(hopOf(x.from), hopOf(x.to)) === depth + 1) : []
-  const links = drawn.map(edge => ({edge, direct: edge.from === r.ref || edge.to === r.ref, hop: Math.max(hopOf(edge.from), hopOf(edge.to))}))
+  const reach = depth ?? 0
+  const shown = w ? [...w.hop].filter(([, h]) => h <= reach).map(([ref]) => ref) : subject ? [root] : []
+  const ghost = w ? [...w.hop].filter(([, h]) => h === reach + 1).map(([ref]) => ref) : []
+  const drawn = w ? w.edges.filter(x => hopOf(x.from) <= reach && hopOf(x.to) <= reach) : []
+  const drawnGhost = w ? w.edges.filter(x => Math.max(hopOf(x.from), hopOf(x.to)) === reach + 1) : []
+  const links = drawn.map(edge => ({edge, direct: edge.direct ?? (edge.from === root || edge.to === root), hop: Math.max(hopOf(edge.from), hopOf(edge.to))}))
     .sort((a, b) => Number(b.direct) - Number(a.direct) || a.hop - b.hop)
-  const open = (s: Session) => s.lifecycle === 'active' || s.lifecycle === 'quiescent'
-  const sessions = showSessions ? r.sessions.filter(s => closed || open(s)) : []
-  return {r, kind, path, depth, relation, showLinks, showRefs, showSessions, closed, refusal, walk: w, kinds, shown, ghost, drawn, drawnGhost, links,
-    files: showRefs ? r.files : [], sessions, closedHidden: showSessions && !closed ? r.sessions.filter(s => !open(s)).length : 0}
+  const heard = status.sessions === 'read' ? sessions ?? [] : []
+  return {subject, kind: subject?.kind, path: subject?.path, root, depth, relation, refusal, gap, status, walk: w, roles, kinds, shown, ghost, drawn, drawnGhost, links,
+    files: status.refs === 'read' ? files ?? [] : [], how: subject ? (subject.kind === 'folder' ? 'holds' : 'mentions') : undefined,
+    sessions: closedOff ? heard.filter(isOpen) : heard, closedHidden: closedOff ? heard.filter(s => !isOpen(s)).length : 0}
 }
 
-const countOf = (m: Model, list: 'refs' | 'links' | 'sessions'): number | string =>
-  list === 'refs' ? (m.showRefs ? m.files.length : 'off')
-    : list === 'links' ? (!m.showLinks ? 'off' : m.refusal ? 'refused' : m.links.length)
-      : (m.showSessions ? m.sessions.length : 'off')
-const items = (m: Model) => m.files.length + m.links.length + m.sessions.length
+const roleOf = (m: Model, ref: string): Role => m.roles.get(ref) ?? roleIn(ref)
+const gapWords = (m: Model) => (m.gap ? `No reading of the ${m.gap}` : undefined)
+
+/** What a list counts: a number, "off", "refused", or undefined (drawn "—") when the owner has not reported it. */
+const countOf = (m: Model, list: 'refs' | 'links' | 'sessions'): number | string | undefined => {
+  const s = m.status[list]
+  return s === 'read' ? (list === 'refs' ? m.files.length : list === 'links' ? m.links.length : m.sessions.length) : s === 'off' || s === 'refused' ? s : undefined
+}
+/** Every item the lists hold, or undefined when none of the three is reported. */
+const items = (m: Model): number | undefined => (Object.values(m.status).every(s => s === 'unread') ? undefined : m.files.length + m.links.length + m.sessions.length)
 
 // ------------------------------------------------------------------------------------------------ the picture
 
@@ -196,14 +211,14 @@ function Neighbourhood({m, g, big = false, picked, onPick}: {m: Model; g: Geomet
   }
   const labelled = (ref: string) => (m.walk?.hop.get(ref) ?? 9) <= 2 || m.shown.length <= 12 || ref === picked
   return <g>
-    <circle cx={cx} cy={cy} r={step * m.depth} className="im-reach" />
+    {m.depth !== undefined && <circle cx={cx} cy={cy} r={step * m.depth} className="im-reach" />}
     {Array.from({length: MAX_DEPTH}, (_, i) => <circle key={i} cx={cx} cy={cy} r={step * (i + 1)} className="im-ring" data-reach={i + 1 === m.depth ? 'true' : undefined} />)}
     {big && Array.from({length: MAX_DEPTH}, (_, i) => <text key={i} x={cx + 4} y={cy - step * (i + 1) - 3} className="dp-axis">{i + 1}</text>)}
     {m.drawnGhost.map((x, i) => { const [x1, y1] = at(x.from), [x2, y2] = at(x.to); return <line key={`g${i}`} x1={x1} y1={y1} x2={x2} y2={y2} className="im-edge" data-ghost="true" /> })}
-    {m.drawn.map((x, i) => { const [x1, y1] = at(x.from), [x2, y2] = at(x.to); return <line key={`e${i}`} x1={x1} y1={y1} x2={x2} y2={y2} className="im-edge" data-direct={x.from === m.r.ref || x.to === m.r.ref ? 'true' : undefined} /> })}
+    {m.drawn.map((x, i) => { const [x1, y1] = at(x.from), [x2, y2] = at(x.to); return <line key={`e${i}`} x1={x1} y1={y1} x2={x2} y2={y2} className="im-edge" data-direct={x.from === m.root || x.to === m.root ? 'true' : undefined} /> })}
     {m.ghost.map(ref => { const [x, y] = at(ref); return <circle key={ref} cx={x} cy={y} r={dot} className="im-node" data-ghost="true" /> })}
-    {m.shown.filter(ref => ref !== m.r.ref).map(ref => {
-      const [x, y] = at(ref), role = roleOf(ref), a = m.walk?.angle.get(ref) ?? 0, h = m.walk?.hop.get(ref) ?? 1
+    {m.shown.filter(ref => ref !== m.root).map(ref => {
+      const [x, y] = at(ref), role = roleOf(m, ref), a = m.walk?.angle.get(ref) ?? 0, h = m.walk?.hop.get(ref) ?? 1
       const right = Math.cos(a) >= 0
       return <g key={ref} data-i={big ? `${labelOf(ref)}|${role === 'node' ? 'A note of the wiki register.' : role === 'source' ? 'A source file.' : 'A space, a branch or another source.'} ${h} ${h === 1 ? 'link' : 'links'} from the subject.` : undefined}>
         {role === 'source' ? <rect x={x - dot} y={y - dot} width={dot * 2} height={dot * 2} className="im-node" data-role="source" />
@@ -213,61 +228,74 @@ function Neighbourhood({m, g, big = false, picked, onPick}: {m: Model; g: Geomet
         {onPick && <circle cx={x} cy={y} r={dot + 6} className="im-hit" onClick={() => onPick(ref)} />}
       </g>
     })}
-    <circle cx={cx} cy={cy} r={hub + 3} className="im-subject-ring" />
-    <circle cx={cx} cy={cy} r={hub} className="im-subject" />
-    {onPick && <circle cx={cx} cy={cy} r={hub + 6} className="im-hit" onClick={() => onPick(m.r.ref)} />}
-    {big && <text x={cx} y={cy + hub + 14} textAnchor="middle" className="im-label" data-hop="1">{clip(tailOf(m.path), 40)}</text>}
+    {m.subject && <>
+      <circle cx={cx} cy={cy} r={hub + 3} className="im-subject-ring" />
+      <circle cx={cx} cy={cy} r={hub} className="im-subject" />
+      {onPick && <circle cx={cx} cy={cy} r={hub + 6} className="im-hit" onClick={() => onPick(m.root)} />}
+      {big && <text x={cx} y={cy + hub + 14} textAnchor="middle" className="im-label" data-hop="1">{clip(tailOf(m.subject.path), 40)}</text>}
+    </>}
   </g>
 }
 
-/** What the well says when a reading is missing (DEVICE-UI §7). */
+/** What the well says when a reading is missing (DEVICE-UI §7): the switch, the refusal, or the reading that has not come. */
 function Say({m, g}: {m: Model; g: Geometry}) {
-  const text = !m.showLinks ? 'links off' : m.refusal ? 'graph refused' : null
-  return text ? <text x={g.cx} y={g.cy + 20} textAnchor="middle" className="im-say" data-tone={m.refusal ? 'refused' : undefined}>{text}</text> : null
+  const words = m.gap === 'subject' ? gapWords(m) : m.status.links === 'off' ? 'links off' : m.refusal ? 'graph refused' : gapWords(m)
+  const says = words !== undefined && words === gapWords(m)
+  return words ? <text x={g.cx} y={g.cy + 20} textAnchor="middle" className="im-say" data-tone={m.refusal && !says ? 'refused' : undefined}>{says && g.w < 100 ? NONE : words}</text> : null
 }
 
 /** The display: the neighbourhood, the handle that sets Depth, the subject along the foot. */
-function Picture({v, set, w, h, size}: {v: V; set?: ViewProps['set']; w: number; h: number; size: 'compact' | 'whole' | 'tile'}) {
-  const m = model(v), g = geometry(w, h, size === 'tile'), pinned = on(v, 'pin')
-  const hx = g.cx + g.step * m.depth * Math.cos(ANGLE_HANDLE), hy = g.cy + g.step * m.depth * Math.sin(ANGLE_HANDLE)
-  const corner = size === 'tile' ? undefined : !m.showLinks ? 'links off' : m.refusal ? 'refused' : `depth ${m.depth}${m.ghost.length ? ` · +${m.ghost.length}` : ''}`
+function Picture({p, w, h, size}: {p: ViewProps; w: number; h: number; size: 'compact' | 'whole' | 'tile'}) {
+  const m = model(p.v), g = geometry(w, h, size === 'tile'), pinned = boolOf(p.v, 'pin') === true
+  const reach = m.depth ?? 0, hx = g.cx + g.step * reach * Math.cos(ANGLE_HANDLE), hy = g.cy + g.step * reach * Math.sin(ANGLE_HANDLE)
+  const corner = size === 'tile' ? undefined : m.status.links === 'off' ? 'links off' : m.refusal ? 'refused' : m.depth === undefined ? NONE : `depth ${m.depth}${m.ghost.length ? ` · +${m.ghost.length}` : ''}`
   return <Display w={w} h={h} label="Neighbourhood" corner={corner}
     does="The subject at the centre, one ring for each link out. Solid dots are reached. Hollow dots are the next ring. Drag handle 1 to set Depth.">
     <Neighbourhood m={m} g={g} />
     <Say m={m} g={g} />
-    {size !== 'tile' && <text x={5} y={h - 5} className="dp-axis">{`${pinned ? 'pinned · ' : ''}${m.kind} · ${clip(tailOf(m.path), size === 'whole' ? 30 : 20)}`}</text>}
-    {set && m.showLinks && !m.refusal && <Handle x={hx} y={hy} n={1} label="Depth" does="Drag out or in: how many links away the neighbourhood reaches, from 1 to 4." shape="ring"
-      onDrag={(x, y) => set('depth', clampTo(1, MAX_DEPTH, Math.round(Math.hypot(x - g.cx, y - g.cy) / g.step)))} onReset={() => set('depth', 1)} />}
+    {size !== 'tile' && <text x={5} y={h - 5} className="dp-axis">{m.subject ? `${pinned ? 'pinned · ' : ''}${m.kind ?? NONE} · ${clip(tailOf(m.subject.path), size === 'whole' ? 30 : 20)}` : NONE}</text>}
+    {size !== 'tile' && m.status.links === 'read' && m.depth !== undefined && <Handle x={hx} y={hy} n={1} label="Depth" does="Drag out or in: how many links away the neighbourhood reaches, from 1 to 4." shape="ring"
+      onDrag={st(p, 'depth').disabled ? undefined : (x, y) => p.set('depth', clampTo(1, MAX_DEPTH, Math.round(Math.hypot(x - g.cx, y - g.cy) / g.step)))} onReset={st(p, 'depth').disabled ? undefined : () => p.set('depth', 1)} />}
   </Display>
 }
 
 // ------------------------------------------------------------------------------------------------ the controls
 
-const light = (_: V): LightState => 'lit'
-const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
+/** The head light reads the owner alone: lit or dark when it reports, hollow when it has not. */
+const light = (p: ViewProps) => (strOf(p.owner ?? p.v, 'light') ?? 'unknown') as LightState
+/** The host's standing for a key, with this view's own reason laid over it when the host gives none. */
+const stand = (p: ViewProps, key: string, why?: string) => { const s = st(p, key); return why && !s.disabled ? {...s, disabled: why} : s }
 
 function DepthDial({p}: {p: ViewProps}) {
   const m = model(p.v)
-  return <Dial label="Depth" does="How many links away the neighbourhood reaches, from 1 to 4. Each step adds one ring." value={m.depth} def={1}
+  return <Dial label="Depth" does="How many links away the neighbourhood reaches, from 1 to 4. Each step adds one ring." value={numOf(p.v, 'depth') ?? NaN} def={1}
     scale={{min: 1, max: MAX_DEPTH, step: 1}} format={x => plural(x, 'link')} onChange={x => p.set('depth', x)}
-    disabled={m.showLinks ? undefined : 'Links is off. Turn it on to read the graph.'} />
+    {...stand(p, 'depth', m.status.links === 'off' ? 'Links is off. Turn it on to read the graph.' : undefined)} />
 }
 
 function RelationChooser({p}: {p: ViewProps}) {
   const m = model(p.v)
-  return <Chooser label="Relation" wide does="Limit the graph and the Links list to one kind of link. The chooser lists the kinds that the graph holds near the subject." value={m.relation}
+  return <Chooser label="Relation" wide does="Limit the graph and the Links list to one kind of link. The chooser lists the kinds that the graph holds near the subject." value={strOf(p.v, 'relation') ?? ''}
     options={[{value: 'all', label: 'All'}, ...m.kinds.map(k => ({value: k, label: relName(k)}))]} onChange={x => p.set('relation', x)}
-    disabled={m.showLinks ? undefined : 'Links is off. Turn it on to read the graph.'} />
+    {...stand(p, 'relation', m.status.links === 'off' ? 'Links is off. Turn it on to read the graph.' : undefined)} />
 }
 
 function PinToggle({p}: {p: ViewProps}) {
-  return <Toggle label="Pin" does="Keep the subject when you select something else. Off: Impact follows your selection." on={on(p.v, 'pin')} onChange={x => p.set('pin', x)} />
+  const now = boolOf(p.v, 'pin')
+  return <Toggle label="Pin" does="Keep the subject when you select something else. Off: Impact follows your selection." on={now === true} unknown={now === undefined}
+    onChange={x => p.set('pin', x)} {...st(p, 'pin')} />
 }
 
 function ClosedToggle({p}: {p: ViewProps}) {
-  const m = model(p.v)
+  const m = model(p.v), now = boolOf(p.v, 'closed')
   return <Toggle label="Closed" does="Add closed and archived sessions to the Sessions list. Off: only active and quiescent sessions show."
-    on={on(p.v, 'closed')} onChange={x => p.set('closed', x)} disabled={m.showSessions ? undefined : 'Sessions is off. Turn it on to read the register.'} />
+    on={now === true} unknown={now === undefined} onChange={x => p.set('closed', x)}
+    {...stand(p, 'closed', m.status.sessions === 'off' ? 'Sessions is off. Turn it on to read the register.' : undefined)} />
+}
+
+function ListToggle({p, keyName, label, does}: {p: ViewProps; keyName: string; label: string; does: string}) {
+  const now = boolOf(p.v, keyName)
+  return <Toggle label={label} does={does} on={now === true} unknown={now === undefined} onChange={x => p.set(keyName, x)} {...st(p, keyName)} />
 }
 
 function Counts({p, tone = 'value'}: {p: ViewProps; tone?: 'value' | 'accent'}) {
@@ -291,25 +319,31 @@ function Glyph({kind}: {kind: 'file' | 'folder' | 'link' | 'session' | 'warn'}) 
   </svg>
 }
 
-const glyphOf = (f: FileRow): ReactNode => <Glyph kind={f.kind === 'directory' ? 'folder' : 'file'} />
+const glyphOf = (f: FileRow): ReactNode => <Glyph kind={f.directory ? 'folder' : 'file'} />
 /** The far end of a link: the end that stands further out from the subject. */
 const farEnd = (m: Model, x: LinkRow) => ((m.walk?.hop.get(x.edge.from) ?? 0) > (m.walk?.hop.get(x.edge.to) ?? 0) ? x.edge.from : x.edge.to)
 /** A direct link is named by the note at its far end; an indirect link by both ends. */
 const linkName = (m: Model, x: LinkRow) => (x.direct ? labelOf(farEnd(m, x)) : `${labelOf(x.edge.from)} → ${labelOf(x.edge.to)}`)
 const linkNote = (x: LinkRow) => relName(x.edge.relation)
-const isOpen = (s: Session) => s.lifecycle === 'active' || s.lifecycle === 'quiescent'
+const linkWords = (x: LinkRow) => `${x.direct ? 'A direct link' : `A link ${x.hop} links out`}, ${relName(x.edge.relation).toLowerCase()}`
+const fromOwner = (x: LinkRow) => (x.edge.provenance ? `, from the ${x.edge.provenance}` : '')
+/** The note at a file row's right: a folder, a size, or the word a mention carries when the owner gives no size. */
+const fileNote = (m: Model, f: FileRow) => (f.directory ? 'dir' : f.bytes !== undefined ? sizeText(f.bytes) : m.how === 'mentions' ? 'mention' : NONE)
+const fileWords = (m: Model, f: FileRow) => (m.how === 'holds' ? `A ${f.directory ? 'directory' : 'file'} that the folder holds.` : m.how === 'mentions' ? 'A file that mentions the subject.' : 'A file of the reading.')
+const sessionWords = (s: Session) => `${s.lifecycle ? `${s.lifecycle[0]!.toUpperCase()}${s.lifecycle.slice(1)} session` : 'Session'}${s.branch ? ` on ${s.branch}` : ''}.`
 
 function itemRows(m: Model): RowItem[] {
   const out: RowItem[] = []
-  if (m.showLinks) {
-    if (m.refusal) out.push({id: 'refused', name: 'Links: the graph refused', light: 'dark', mark: <Glyph kind="warn" />, why: m.refusal})
-    for (const [i, x] of m.links.entries()) out.push({id: `l${i}`, name: linkName(m, x), light: x.direct ? 'lit' : 'dark', tone: 'value', mark: <Glyph kind="link" />, note: linkNote(x),
-      does: `${x.direct ? 'A direct link' : `A link ${x.hop} links out`}, ${relName(x.edge.relation).toLowerCase()}, from the ${x.edge.provenance}.`})
-  }
-  for (const f of m.files) out.push({id: `f${f.path}`, name: f.name, light: 'lit', tone: 'value', mark: glyphOf(f), note: f.size ?? (f.kind === 'directory' ? 'dir' : 'mention'),
-    does: f.how === 'holds' ? `A ${f.kind} that the folder holds. Source: the ${SOURCE.folder}.` : `A file that mentions the subject. Source: the ${SOURCE.mentions}.`})
-  for (const s of m.sessions) out.push({id: s.id, name: s.purpose, light: isOpen(s) ? 'lit' : 'dark', tone: 'accent', mark: <Glyph kind="session" />, note: clip(s.branch.replace(/^agent\//, ''), 13),
-    does: `${s.lifecycle[0]!.toUpperCase()}${s.lifecycle.slice(1)} session on ${s.branch}.`})
+  if (m.status.links === 'refused') out.push({id: 'refused', name: 'Links: the graph refused', light: 'dark', mark: <Glyph kind="warn" />, why: m.refusal})
+  else if (m.status.links === 'unread') out.push({id: 'unread-links', name: gapWords(m) ?? NONE, light: 'unknown', mark: <Glyph kind="link" />, does: 'The owner has not reported what the links need.'})
+  for (const [i, x] of m.links.entries()) out.push({id: `l${i}`, name: linkName(m, x), light: x.direct ? 'lit' : 'dark', tone: 'value', mark: <Glyph kind="link" />, note: linkNote(x),
+    does: `${linkWords(x)}${fromOwner(x)}.`})
+  if (m.status.refs === 'unread') out.push({id: 'unread-refs', name: 'No reading of the references', light: 'unknown', mark: <Glyph kind="file" />, does: 'The owner has not reported the references.'})
+  for (const [i, f] of m.files.entries()) out.push({id: `f${i}`, name: f.name, light: 'lit', tone: 'value', mark: glyphOf(f), note: fileNote(m, f),
+    does: `${fileWords(m, f)} Source: the ${m.how === 'holds' ? SOURCE.folder : SOURCE.mentions}.`})
+  if (m.status.sessions === 'unread') out.push({id: 'unread-sessions', name: 'No reading of the sessions', light: 'unknown', mark: <Glyph kind="session" />, does: 'The owner has not reported the sessions.'})
+  for (const s of m.sessions) out.push({id: s.id, name: s.purpose, light: isOpen(s) ? 'lit' : 'dark', tone: 'accent', mark: <Glyph kind="session" />,
+    note: s.branch ? clip(s.branch.replace(/^agent\//, ''), 13) : undefined, does: sessionWords(s)})
   if (m.closedHidden > 0) out.push({id: 'closed-hidden', name: `${m.closedHidden} closed ${m.closedHidden === 1 ? 'session' : 'sessions'} hidden`, light: 'dark', mark: <Glyph kind="session" />,
     does: 'Closed and archived sessions are hidden. Turn on Closed to list them.'})
   return out
@@ -319,10 +353,9 @@ function itemRows(m: Model): RowItem[] {
 
 function ImpactWhole({p}: {p: ViewProps}) {
   const [page, setPage] = useState(0), m = model(p.v)
-  const next = m.ghost.length
-  return <Panel title="Impact" view="whole" light={light(p.v)} onFold={p.nav.fold} onFull={p.nav.full}>
+  return <Panel title="Impact" view="whole" light={light(p)} onFold={p.nav.fold} onFull={p.nav.full}>
     <Band>
-      <Section width={206}><Picture v={p.v} set={p.set} w={194} h={146} size="whole" /></Section>
+      <Section width={206}><Picture p={p} w={194} h={146} size="whole" /></Section>
       <Section label="Reach" width={100}>
         <DepthDial p={p} />
         <RelationChooser p={p} />
@@ -330,14 +363,14 @@ function ImpactWhole({p}: {p: ViewProps}) {
       <Section label="Subject" grow>
         <Readout label="subject" does="What the browser has selected. You set it by selecting a folder, a note or a Day." value={m.kind} tone="accent" />
         <PinToggle p={p} />
-        <Readout label="next ring" does="The dots that one more link of Depth adds." value={m.showLinks && !m.refusal ? `+${next}` : undefined} />
+        <Readout label="next ring" does="The dots that one more link of Depth adds." value={m.status.links === 'read' ? `+${m.ghost.length}` : undefined} />
       </Section>
     </Band>
     <Band>
       <Section label="Lists" width={84}>
-        <Toggle label="References" does="Read the files that the folder holds or that mention the subject. Off: the device does not read them." on={m.showRefs} onChange={x => p.set('show:references', x)} />
-        <Toggle label="Links" does="Read the knowledge graph. Off: the device does not read it, and the picture holds the subject alone." on={m.showLinks} onChange={x => p.set('show:links', x)} />
-        <Toggle label="Sessions" does="Read the NOW register. Off: the device does not read it." on={m.showSessions} onChange={x => p.set('show:sessions', x)} />
+        <ListToggle p={p} keyName="show:references" label="References" does="Read the files that the folder holds or that mention the subject. Off: the device does not read them." />
+        <ListToggle p={p} keyName="show:links" label="Links" does="Read the knowledge graph. Off: the device does not read it, and the picture holds the subject alone." />
+        <ListToggle p={p} keyName="show:sessions" label="Sessions" does="Read the NOW register. Off: the device does not read it." />
         <ClosedToggle p={p} />
       </Section>
       <Section label="Items" grow>
@@ -353,40 +386,47 @@ function ImpactFull({p}: {p: ViewProps}) {
   const m = model(p.v), [picked, setPicked] = useState<string | null>(null), [pickedItem, setPickedItem] = useState<string | null>(null)
   const big: Geometry = {w: 460, h: 364, cx: 230, cy: 180, step: 40}
   const pick = (ref: string | null, item: string | null) => { setPicked(ref); setPickedItem(item) }
-  const linkRows = m.links, cap = (n: number, all: number) => (all > n ? n - 1 : n)
+  const cap = (n: number, all: number) => (all > n ? n - 1 : n)
   const detail = (() => {
     if (pickedItem?.startsWith('l')) {
-      const x = linkRows[Number(pickedItem.slice(1))]
-      if (x) return {title: `${labelOf(x.edge.from)} → ${labelOf(x.edge.to)}`, line: <>{relName(x.edge.relation)} · from the {x.edge.provenance} · {x.direct ? 'direct' : `${x.hop} links out`} · <code>{x.edge.to}</code></>}
+      const x = m.links[Number(pickedItem.slice(1))]
+      if (x) return {title: `${labelOf(x.edge.from)} → ${labelOf(x.edge.to)}`, line: <>{relName(x.edge.relation)}{x.edge.provenance ? ` · from the ${x.edge.provenance}` : ''} · {x.direct ? 'direct' : `${x.hop} links out`} · <code>{x.edge.to}</code></>}
     }
-    const f = m.files.find(y => `f${y.path}` === pickedItem)
-    if (f) return {title: f.name, line: <>{f.how === 'holds' ? 'Held by the folder' : 'Mentions the subject'} · <code>{f.path}</code>{f.size ? ` · ${f.size}` : ''}</>}
+    const f = pickedItem?.startsWith('f') ? m.files[Number(pickedItem.slice(1))] : undefined
+    if (f) return {title: f.name, line: <>{m.how === 'holds' ? 'Held by the folder' : m.how === 'mentions' ? 'Mentions the subject' : 'A file of the reading'} · <code>{f.path ?? NONE}</code>{f.bytes !== undefined && !f.directory ? ` · ${sizeText(f.bytes)}` : ''}</>}
     const s = m.sessions.find(y => y.id === pickedItem)
-    if (s) return {title: s.purpose, line: <>{s.lifecycle} · <code>{s.branch}</code></>}
-    if (picked && picked !== m.r.ref) return {title: labelOf(picked), line: <>{roleOf(picked) === 'node' ? 'A note of the wiki register' : roleOf(picked) === 'source' ? 'A source file' : 'A space, a branch or another source'} · {m.walk?.hop.get(picked)} links out · <code>{picked}</code></>}
-    return {title: `${m.kind} · ${m.path}`, line: <>{on(p.v, 'pin') ? 'Pinned. ' : ''}Pick a dot or an item to read it. Depth {m.depth}{m.relation === 'all' ? '' : ` · ${relName(m.relation)} links only`}.</>}
+    if (s) return {title: s.purpose, line: <>{s.lifecycle || NONE} · <code>{s.branch ?? NONE}</code></>}
+    if (picked && picked !== m.root) {
+      const hop = m.walk?.hop.get(picked)
+      return {title: labelOf(picked), line: <>{roleOf(m, picked) === 'node' ? 'A note of the wiki register' : roleOf(m, picked) === 'source' ? 'A source file' : 'A space, a branch or another source'} · {hop === undefined ? NONE : `${hop} links out`} · <code>{picked}</code></>}
+    }
+    if (!m.subject) return {title: NONE, line: <>No reading of the subject.</>}
+    return {title: `${m.kind ?? NONE} · ${m.path}`, line: <>{boolOf(p.v, 'pin') === true ? 'Pinned. ' : ''}Pick a dot or an item to read it. Depth {m.depth ?? NONE}{m.relation && m.relation !== 'all' ? ` · ${relName(m.relation)} links only` : ''}.</>}
   })()
-  const Head = ({title, count, source}: {title: string; count: number | string; source: string}) =>
-    <h4>{title} <b>{count}</b><small>{source}</small></h4>
+  const Head = ({title, count, source}: {title: string; count: number | string | undefined; source: string}) =>
+    <h4>{title} <b>{count ?? NONE}</b><small>{source}</small></h4>
+  const corner = m.refusal ? 'graph refused' : m.status.links === 'off' ? 'links off' : m.depth === undefined ? NONE : `depth ${m.depth}${m.ghost.length ? ` · +${m.ghost.length} at ${m.depth + 1}` : ''}`
+  const linksCount = m.status.links === 'refused' ? undefined : countOf(m, 'links')
   return <div className="im-pane">
     <div className="im-graph">
       <svg viewBox="0 0 460 364" preserveAspectRatio="xMidYMid meet" role="group" aria-label="The neighbourhood of the subject" className="dp-display" style={{background: 'none', border: 0}}>
-        <Neighbourhood m={m} g={big} big picked={picked} onPick={ref => pick(ref === m.r.ref ? null : ref, null)} />
+        <Neighbourhood m={m} g={big} big picked={picked} onPick={ref => pick(ref === m.root ? null : ref, null)} />
         <Say m={m} g={{...big, cy: big.cy + 6}} />
       </svg>
-      <span className="im-corner">{m.showLinks && !m.refusal ? `depth ${m.depth}${m.ghost.length ? ` · +${m.ghost.length} at ${m.depth + 1}` : ''}` : m.refusal ? 'graph refused' : 'links off'}</span>
+      <span className="im-corner">{corner}</span>
       <div className="im-legend"><span><i data-role="node" /> note</span><span><i data-role="source" /> source</span><span><i data-role="unknown" /> space or other</span></div>
     </div>
     <div className="im-lists">
       <section className="im-list">
-        <Head title="Links" count={m.showLinks ? (m.refusal ? '—' : m.links.length) : 'off'} source={SOURCE.links} />
+        <Head title="Links" count={linksCount} source={SOURCE.links} />
         <ul className="im-rows">
           {m.refusal && <li className="im-refusal" data-i={`Links|The graph owner refused: ${m.refusal}`}>{m.refusal}</li>}
-          {!m.showLinks && <li className="im-none">Links is off.</li>}
-          {m.showLinks && !m.refusal && m.links.length === 0 && <li className="im-none">The graph holds no link here.</li>}
+          {m.status.links === 'off' && <li className="im-none">Links is off.</li>}
+          {m.status.links === 'unread' && <li className="im-none">{gapWords(m)}</li>}
+          {m.status.links === 'read' && m.links.length === 0 && <li className="im-none">The graph holds no link here.</li>}
           {m.links.slice(0, cap(6, m.links.length)).map((x, i) => <li key={i}>
             <button type="button" className="im-row" aria-pressed={pickedItem === `l${i}`} data-dim={x.direct ? undefined : 'true'}
-              data-i={`${linkName(m, x)}|${x.direct ? 'A direct link' : `A link ${x.hop} links out`}, ${relName(x.edge.relation).toLowerCase()}. Click to read it.`}
+              data-i={`${linkName(m, x)}|${linkWords(x)}. Click to read it.`}
               onClick={() => pick(farEnd(m, x), `l${i}`)}>
               <Glyph kind="link" /><span className="im-row-name">{linkName(m, x)}</span><span className="im-row-note">{linkNote(x)}</span>
             </button></li>)}
@@ -394,26 +434,28 @@ function ImpactFull({p}: {p: ViewProps}) {
         </ul>
       </section>
       <section className="im-list">
-        <Head title="References" count={m.showRefs ? m.files.length : 'off'} source={m.r.kind === 'folder' ? SOURCE.folder : SOURCE.mentions} />
+        <Head title="References" count={countOf(m, 'refs')} source={m.how === 'holds' ? SOURCE.folder : m.how === 'mentions' ? SOURCE.mentions : NONE} />
         <ul className="im-rows">
-          {!m.showRefs && <li className="im-none">References is off.</li>}
-          {m.showRefs && m.files.length === 0 && <li className="im-none">No file mentions the subject.</li>}
-          {m.files.slice(0, cap(5, m.files.length)).map(f => <li key={f.path}>
-            <button type="button" className="im-row" aria-pressed={pickedItem === `f${f.path}`}
-              data-i={`${f.name}|${f.how === 'holds' ? 'Held by the folder.' : 'Mentions the subject.'} Click to read it.`} onClick={() => pick(null, `f${f.path}`)}>
-              {glyphOf(f)}<span className="im-row-name">{f.name}</span><span className="im-row-note">{f.size ?? (f.kind === 'directory' ? 'dir' : 'mention')}</span>
+          {m.status.refs === 'off' && <li className="im-none">References is off.</li>}
+          {m.status.refs === 'unread' && <li className="im-none">No reading of the references</li>}
+          {m.status.refs === 'read' && m.files.length === 0 && <li className="im-none">No file mentions the subject.</li>}
+          {m.files.slice(0, cap(5, m.files.length)).map((f, i) => <li key={i}>
+            <button type="button" className="im-row" aria-pressed={pickedItem === `f${i}`}
+              data-i={`${f.name}|${m.how === 'holds' ? 'Held by the folder.' : m.how === 'mentions' ? 'Mentions the subject.' : 'A file of the reading.'} Click to read it.`} onClick={() => pick(null, `f${i}`)}>
+              {glyphOf(f)}<span className="im-row-name">{f.name}</span><span className="im-row-note">{fileNote(m, f)}</span>
             </button></li>)}
           {m.files.length > 5 && <li className="im-more">+{m.files.length - 4} more files</li>}
         </ul>
       </section>
       <section className="im-list">
-        <Head title="Sessions" count={m.showSessions ? m.sessions.length : 'off'} source={SOURCE.sessions} />
+        <Head title="Sessions" count={countOf(m, 'sessions')} source={SOURCE.sessions} />
         <ul className="im-rows">
-          {!m.showSessions && <li className="im-none">Sessions is off.</li>}
-          {m.showSessions && m.sessions.length === 0 && <li className="im-none">{m.closedHidden ? `No open session. ${m.closedHidden} closed.` : 'No session names this project.'}</li>}
+          {m.status.sessions === 'off' && <li className="im-none">Sessions is off.</li>}
+          {m.status.sessions === 'unread' && <li className="im-none">No reading of the sessions</li>}
+          {m.status.sessions === 'read' && m.sessions.length === 0 && <li className="im-none">{m.closedHidden ? `No open session. ${m.closedHidden} closed.` : 'No session names this project.'}</li>}
           {m.sessions.slice(0, cap(4, m.sessions.length)).map(s => <li key={s.id}>
-            <button type="button" className="im-row" aria-pressed={pickedItem === s.id} data-i={`${s.purpose}|${s.lifecycle} on ${s.branch}. Click to read it.`} onClick={() => pick(null, s.id)}>
-              <span className="im-row-state" data-open={isOpen(s) ? 'true' : 'false'} /><span className="im-row-name">{s.purpose}</span><span className="im-row-note">{s.lifecycle}</span>
+            <button type="button" className="im-row" aria-pressed={pickedItem === s.id} data-i={`${s.purpose}|${sessionWords(s)} Click to read it.`} onClick={() => pick(null, s.id)}>
+              <span className="im-row-state" data-open={isOpen(s) ? 'true' : 'false'} /><span className="im-row-name">{s.purpose}</span><span className="im-row-note">{s.lifecycle || NONE}</span>
             </button></li>)}
           {m.sessions.length > 4 && <li className="im-more">+{m.sessions.length - 3} more sessions</li>}
         </ul>
@@ -423,27 +465,99 @@ function ImpactFull({p}: {p: ViewProps}) {
   </div>
 }
 
+// ------------------------------------------------------------------------------------------------ the sample readings (defaults and fixtures only)
+
+/** The wiki register's relations around a wayfinder note: the lane node cites it, and the register's space holds the other notes. */
+function noteSample(): Record<string, string> {
+  const path = 'Work/O-I/.wayfinder/maps/command-encounter-convergence.md', ref = `central:source:control:root:${path}`
+  const lane = 'wiki:node:delivered-lane-loses-install', root = 'central:wiki:root'
+  const edge = (from: string, to: string, relation: string) => ({fromRef: from, toRef: to, relation, provenance: 'central wiki', direct: from === ref || to === ref})
+  const others: readonly {readonly ref: string; readonly sources: readonly string[]}[] = [
+    {ref: 'wiki:node:place-provider-reconciles-like-the-floor', sources: [
+      'central:source:control:root:Control/agents/now/flows/herdr-world-entry-20260927/IMPLEMENTATION-PACKET.md',
+      'central:source:control:root:Control/agents/now/flows/herdr-world-entry-20260927/omarchy-packet/findings.md']},
+    {ref: 'wiki:node:identity', sources: ['Control/user/identity.md']},
+    {ref: 'wiki:node:staged/propose-not-write', sources: ['staging/propose-not-write']},
+    {ref: 'wiki:node:root/ta-onta-and-the-thought-stream', sources: ['central:source:control:root:Control/agents/wiki/returns/ta-onta-and-the-thought-stream-2026-09-16.md']},
+  ]
+  const spaces = ['Actuation', 'Central', 'Epi-Prime', 'Factory', 'O-I', 'Point-Cloud-Demo', 'Workcell', 'ai-kit', 'personal', 'projects',
+    'Archetypal-Earth', 'Quaternal-I-Ching', 'Quaternal-Tarot', 'ProjectCentral', 'face-rig'].map(n => `central:wiki:project:${n}`)
+  const edges = [
+    edge(lane, ref, 'node-source'), edge(lane, root, 'node-space'),
+    edge(lane, 'git:ai-kit@convergence/command-encounter-20260926', 'node-source'), edge(lane, 'git:ai-kit@guidance/development-world-shape', 'node-source'),
+    ...others.map(n => edge(n.ref, root, 'node-space')),
+    ...spaces.map(s => edge(root, s, 'space-child-space')),
+    ...others.flatMap(n => n.sources.map(s => edge(n.ref, s, 'node-source'))),
+  ]
+  const nodes = [...new Set(edges.flatMap(x => [x.fromRef, x.toRef]))].map(r => ({ref: r, role: roleIn(r)}))
+  const mention = (name: string, where: string) => ({name, kind: 'file', location: {path: where}})
+  const session = (nowRef: string, purpose: string, lifecycle: string, branch: string) => ({nowRef, purpose, lifecycle, work: [`Work/O-I @ ${branch}`], boundaryOp: 'now'})
+  return {
+    subject: JSON.stringify({kind: 'note', path, ref}),
+    nodes: JSON.stringify(nodes),
+    edges: JSON.stringify(edges),
+    references: JSON.stringify([
+      mention('wiki.json', 'Control/agents/wiki/wiki.json'),
+      mention('README.md', 'Control/agents/now/flows/development-entry-2026-09-30/README.md'),
+      mention('command-encounter-classification.md', 'Work/O-I/.wayfinder/maps/command-encounter-classification.md'),
+    ]),
+    sessions: JSON.stringify([
+      session('s1', 'Recovered the delivered Nara, personal and Epii identity path', 'archived', 'agent/nara-integration-20260921'),
+      session('s2', 'Mac Track 2 self-inhabitation loop: harden the root NOW record law', 'archived', 'agent/factory-run-expressions-20260919'),
+      session('s3', 'Suite git cleanup session (root register, interactive)', 'archived', 'agent/expression-world-convergence-20260917'),
+      session('s4', 'Cradle Wiki-constellation feature integrated, reviewed, tested and merged', 'archived', 'main'),
+    ]),
+  }
+}
+
+/** The real directory of Work/Quaternal-Logic/schemas, and the sessions the register ties to that project. The graph holds no reading of it. */
+function folderSample(): Record<string, string> {
+  const path = 'Work/Quaternal-Logic/schemas'
+  const entry = (name: string, bytes?: number) => ({name, kind: bytes === undefined ? 'directory' : 'file', byte_len: bytes ?? 0, location: {path: `${path}/${name}`}})
+  const session = (nowRef: string, purpose: string, lifecycle: string, branch: string) => ({nowRef, purpose, lifecycle, work: [`Work/Quaternal-Logic @ ${branch}`], boundaryOp: 'now'})
+  return {
+    subject: JSON.stringify({kind: 'folder', path, ref: 'central:source:project:Quaternal-Logic:schemas'}),
+    nodes: '[]',
+    edges: '[]',
+    references: JSON.stringify([
+      entry('epi-vak-registry-v1.schema.json', 6200), entry('oi.config-error-v1.schema.json', 1300), entry('oi.config-validation-v1.schema.json', 2000),
+      entry('oi.configuration-contribution-v1.schema.json', 7600), entry('q2'), entry('q3'), entry('q4'), entry('ql-agent-contracts-v1.schema.json', 11000),
+      entry('ql-mef-meta-binding-v1.schema.json', 1600), entry('ql-mef-meta-portal-v1.schema.json', 5400), entry('ql-mef-meta-recognition-v1.schema.json', 2900),
+      entry('ql-mef-wiki-refraction-v1.schema.json', 4400), entry('techne'),
+    ]),
+    sessions: JSON.stringify([
+      session('q1', 'Accountable QL native primitive, formal and domain fidelity, architectural review', 'active', 'main'),
+      session('q2', 'Recovered the delivered Nara, personal and Epii identity path', 'archived', 'agent/nara-ql-integration-20260921'),
+      session('q3', 'Suite git cleanup session (root register, interactive)', 'archived', 'techne/t9-integrated-field'),
+    ]),
+  }
+}
+
 export const design: DesignedDevice = {
   id: 'central:impact',
   title: 'Impact',
   kind: 'effect',
   defaults: {
-    subject: `note · ${NOTE_PATH}`, pin: false, depth: 1, relation: 'all',
+    light: 'lit', pin: false, depth: 1, relation: 'all',
     'show:references': true, 'show:links': true, 'show:sessions': true, closed: false,
+    // Readings: the subject, the graph around it, its references and the sessions that touch it.
+    ...noteSample(),
   },
   fixtures: {
     'A note': {},
-    'A folder, graph refused': {subject: `folder · ${FOLDER_PATH}`, 'refusal:graph': 'The graph reading is unavailable'},
+    'A folder, graph refused': {...folderSample(), 'refusal:graph': 'The graph reading is unavailable'},
     'Three links out': {depth: 3},
+    'No readings': Object.fromEntries(['light', 'pin', 'depth', 'relation', 'show:references', 'show:links', 'show:sessions', 'closed', 'subject', 'nodes', 'edges', 'references',
+      'sessions', 'refusal:graph'].map(k => [k, undefined])),
   },
 
   folded: p => {
-    const m = model(p.v)
-    return <Folded title="Impact" light={light(p.v)} readings={[clip(tailOf(m.path), 10), plural(items(m), 'item')]} onUnfold={p.nav.unfold} />
+    const m = model(p.v), n = items(m)
+    return <Folded title="Impact" light={light(p)} readings={[m.path ? clip(tailOf(m.path), 10) : NONE, n === undefined ? NONE : plural(n, 'item')]} onUnfold={p.nav.unfold} />
   },
 
-  compact: p => <Panel title="Impact" view="compact" light={light(p.v)} onFold={p.nav.fold} onFull={p.nav.full} onSelect={p.nav.select}>
-    <Section width={152}><Picture v={p.v} set={p.set} w={140} h={146} size="compact" /></Section>
+  compact: p => <Panel title="Impact" view="compact" light={light(p)} onFold={p.nav.fold} onFull={p.nav.full} onSelect={p.nav.select}>
+    <Section width={152}><Picture p={p} w={140} h={146} size="compact" /></Section>
     <Section label="Macros" cols={2}>
       <DepthDial p={p} />
       <PinToggle p={p} />
@@ -459,14 +573,15 @@ export const design: DesignedDevice = {
 
   widget: p => {
     const m = model(p.v), first = m.sessions.find(isOpen)
-    return <Tile title="Impact" light={light(p.v)} span={2} onFull={p.nav.full}>
-      <Picture v={p.v} w={76} h={76} size="tile" />
+    const side = first ? first.purpose : m.status.sessions === 'off' ? 'sessions off' : m.status.sessions === 'unread' ? NONE : 'no open session'
+    return <Tile title="Impact" light={light(p)} span={2} onFull={p.nav.full}>
+      <Picture p={p} w={76} h={76} size="tile" />
       <div className="im-tile-side">
-        <div className="im-tile-subject" data-i={`Subject|The ${m.kind} that Impact reads: ${m.path}`}>{clip(tailOf(m.path), 22)}<small>{m.kind}</small></div>
+        <div className="im-tile-subject" data-i={m.subject ? `Subject|The ${m.kind ?? 'subject'} that Impact reads: ${m.path}` : 'Subject|No reading of the subject.'}>{m.path ? clip(tailOf(m.path), 22) : NONE}<small>{m.kind ?? NONE}</small></div>
         <div className="im-tile-counts"><Counts p={p} /></div>
         <button type="button" className="im-first" data-none={first ? undefined : 'true'} disabled={!first}
-          data-i={first ? `${first.purpose}|${first.lifecycle} on ${first.branch}. Click to open it in a pane.` : 'Sessions|No open session works in this project.'} onClick={p.nav.full}>
-          <Glyph kind="session" /><span>{first ? first.purpose : m.showSessions ? 'no open session' : 'sessions off'}</span>
+          data-i={first ? `${first.purpose}|${sessionWords(first)} Click to open it in a pane.` : m.status.sessions === 'unread' ? 'Sessions|No reading of the sessions.' : 'Sessions|No open session works in this project.'} onClick={p.nav.full}>
+          <Glyph kind="session" /><span>{side}</span>
         </button>
       </div>
     </Tile>
