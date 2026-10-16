@@ -393,6 +393,8 @@ export interface PanelProps {
   readonly hint?: string
   /** Why the activator only reads (the owner has no on/off operation): it stands disabled and says this. */
   readonly lightWhy?: string
+  /** The device's own acts in the head, after the pages and before the place's marks (the Studio's Save, Undo, Redo). */
+  readonly acts?: ReactNode
   readonly children: ReactNode
 }
 
@@ -415,7 +417,7 @@ function Activator({title, light, onLight, why}: {title: string; light: LightSta
 }
 
 /** One device panel: the head, then the body — one band on a chain, up to two bands in the pool. */
-export function Panel({title, view, light: reported, onLight, pages, page, onPage, onFold, onFull, onSelect, selected, heldBy, mark, onRail: ownRail, marks: ownMarks, fullLabel, hint, lightWhy, children}: PanelProps) {
+export function Panel({title, view, light: reported, onLight, pages, page, onPage, onFold, onFull, onSelect, selected, heldBy, mark, onRail: ownRail, marks: ownMarks, fullLabel, hint, lightWhy, acts, children}: PanelProps) {
   const light = lightIn(reported), place = useContext(PlaceContext)
   const marks = ownMarks ?? place.marks, onRail = ownRail ?? place.onRail
   return <section className="dp" data-view={view} data-selected={selected ? 'true' : undefined} aria-label={title}
@@ -431,6 +433,7 @@ export function Panel({title, view, light: reported, onLight, pages, page, onPag
           {p.light && <Lamp state={p.light} />}{p.label}
         </button>)}
       </nav>}
+      {acts !== undefined && acts !== null && acts !== false && <span className="dp-head-acts">{acts}</span>}
       <span className="dp-head-x">
         {marks}
         {onRail && <button type="button" className="dp-full dp-rail" aria-label={`Keep ${title} on the widget rail`} data-i={said('On the rail', 'Keep this device on the widget rail, in every mode.')} onClick={onRail}><Icon name="placed" size={10} /></button>}
