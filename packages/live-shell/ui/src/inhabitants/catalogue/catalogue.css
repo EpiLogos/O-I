@@ -35,7 +35,7 @@ html, body { height: auto; overflow: auto; background: var(--bg-0, #26292d); }
 .cat-fixtures button { height: 20px; padding: 0 9px; border: 1px solid var(--line-strong, #3d4147); background: var(--bg-1, #33363b); color: var(--text-dim, #a2a7ad); font: inherit; cursor: pointer; }
 .cat-fixtures button[aria-pressed="true"] { background: var(--accent, #ffbe00); color: #1c1d1f; border-color: var(--accent, #ffbe00); }
 
-/* Whole flipped up over the chain (Live's expanded view): the lower panes give way, the chain stays under it. */
+/* Whole expanded above the chain (Live's expanded view): a band across the detail area; the panes above shrink, the chain stays under it. */
 .cat-flip { width: min(1180px, calc(100vw - 24px)); display: flex; flex-direction: column; border: 1px solid var(--line-strong, #3d4147); background: var(--bg-0, #26292d); }
 .cat-flip-panes { height: 64px; display: grid; place-items: center; color: var(--text-faint, #71767c); font-size: 11px; background: var(--bg-1, #33363b); border-bottom: 1px solid var(--line, #24262a); }
 .cat-flip > .dp-flip { padding: 4px; border-bottom: 2px solid var(--line-strong, #3d4147); box-shadow: 0 -6px 14px rgba(0, 0, 0, .35); }

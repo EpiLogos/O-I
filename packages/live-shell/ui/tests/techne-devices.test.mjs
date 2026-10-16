@@ -367,7 +367,7 @@ test('the focused 0 instrument stands open as one plate of the faces it holds, t
   assert.match(out, /data-open-instrument="techne:m0"/)
   assert.match(out, /class="inst-plate" data-instrument="techne:m0" data-expanded="true" data-project-plate="true"/, 'the open instrument is one plate')
   assert.match(out, /<header class="dp-head dp-head--plate"[^>]*>.*?<span class="dp-title">Project<\/span>/, 'the kit\'s head, its plain name, never its M′ address (lock §9.4)')
-  assert.match(out, /aria-label="Fold Project"/, 'its ▾ folds it to its title (DEVICE-UI §4.1)')
+  assert.doesNotMatch(out, /aria-label="Fold Project"/, 'a double-click on its head folds it to its title, as in Live (manual §16.4); the head has no fold button')
   assert.match(out, /data-section="display"[^>]*><div class="dp-display"/, 'its well stands first, in a section of its own (DEVICE-UI §4.2, §7)')
   // lane E: the globe, Graph tools, Earth ⇄ Graph and Deep time are its sections' controls, not three boxed sub-devices
   const sections = ['view', 'graph', 'forces', 'time'].map(id => out.indexOf(`data-section="${id}"`))
