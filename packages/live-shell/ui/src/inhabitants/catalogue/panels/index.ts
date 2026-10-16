@@ -4,6 +4,7 @@
 // device's UI follows (docs/dlw/DEVICE-UI.md §9). Every other device is its own module, `<family>__<face>.tsx`, exporting
 // `design`, loaded only when the gallery asks for it, so one device that does not build never stops another from drawing.
 import type {DesignedDevice} from './design'
+import './panels.css'
 import {day} from './day'
 import {memberDevice} from './member'
 import {physics} from './physics'

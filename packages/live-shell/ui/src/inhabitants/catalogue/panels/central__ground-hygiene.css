@@ -1,0 +1,48 @@
+/* Ground hygiene: the pane's body (sources, three lists, the detail of a finding) and the widget's side. Shell and panel tokens only. */
+.hy-pane { position: absolute; inset: 0; display: flex; flex-direction: column; background: var(--bg-1); color: var(--text); font: 11px var(--font-ui, sans-serif); }
+.hy-top { flex: none; display: flex; flex-wrap: wrap; align-items: baseline; gap: 3px 18px; padding: 8px 16px 6px; background: var(--bg-0); border-bottom: 1px solid var(--line); }
+.hy-top h3 { margin: 0; font-size: 13px; font-weight: 600; }
+.hy-top h3 small { margin-left: 8px; font-size: 11px; font-weight: 400; color: var(--text-faint); }
+.hy-disk { margin-left: auto; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.hy-sources { list-style: none; margin: 0; padding: 0; width: 100%; display: flex; flex-wrap: wrap; gap: 3px 22px; }
+.hy-source { display: inline-flex; align-items: center; gap: 6px; color: var(--text-dim); font-size: 10.5px; }
+.hy-source code { font: inherit; color: var(--text); }
+.hy-source[data-refused="true"] em { color: var(--stall); font-style: normal; }
+.hy-source em { font-style: normal; color: var(--text-faint); }
+
+.hy-cols { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: 1.1fr 1fr 1.1fr; }
+.hy-col { display: flex; flex-direction: column; min-width: 0; min-height: 0; border-right: 1px solid var(--line); }
+.hy-col:last-child { border-right: 0; }
+.hy-col h4 { flex: none; display: flex; align-items: center; gap: 7px; margin: 0; padding: 10px 14px 6px; font-size: 10px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--text-dim); }
+.hy-col h4 b { margin-left: auto; flex: none; white-space: nowrap; font-weight: 400; color: var(--text-faint); font-variant-numeric: tabular-nums; }
+.hy-pager { flex: none; display: inline-flex; align-items: center; gap: 3px; color: var(--text-dim); font-weight: 400; letter-spacing: 0; text-transform: none; font-variant-numeric: tabular-nums; }
+.hy-pager button { width: 16px; height: 16px; padding: 0; border: 1px solid var(--line); background: var(--bg-0); color: var(--text-dim); font: inherit; cursor: pointer; }
+.hy-pager button:disabled { opacity: .4; cursor: default; }
+.hy-list { list-style: none; margin: 0; padding: 0 8px 8px; flex: 1 1 auto; min-height: 0; overflow: auto; }
+.hy-row { display: grid; grid-template-columns: 8px minmax(0, 1fr) auto; align-items: center; gap: 8px; width: 100%; height: 21px; padding: 0 6px; border: 0; border-bottom: 1px solid color-mix(in srgb, var(--line) 70%, transparent); background: transparent; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.hy-row:hover { background: color-mix(in srgb, var(--text) 6%, transparent); }
+.hy-row[aria-pressed="true"] { background: color-mix(in srgb, var(--sel) 22%, transparent); }
+.hy-row b { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+.hy-row i { font-style: normal; color: var(--text-dim); font-size: 10px; white-space: nowrap; }
+.hy-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--stall); }
+.hy-dot[data-fault="false"] { background: var(--dp-value, var(--accent)); }
+.hy-dot[data-tender="true"] { box-shadow: 0 0 0 2px var(--bg-1), 0 0 0 3px var(--accent); }
+.hy-none { margin: 0; padding: 10px 14px; color: var(--text-faint); }
+
+.hy-detail { flex: none; height: 96px; display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 4px 28px; padding: 10px 16px; border-top: 1px solid var(--line); background: var(--bg-0); box-sizing: border-box; overflow: hidden; }
+.hy-detail h5 { margin: 0 0 4px; font-size: 12px; font-weight: 600; }
+.hy-detail h5 small { margin-left: 8px; font-size: 10.5px; font-weight: 400; color: var(--text-dim); }
+.hy-detail p { margin: 0 0 4px; color: var(--text-dim); line-height: 1.45; }
+.hy-detail .hy-rests { color: var(--text-faint); font-size: 10.5px; }
+.hy-detail .hy-rests code { font: inherit; color: var(--text-dim); }
+.hy-tend { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
+.hy-tend .dp-cell { width: auto; }
+.hy-tend .dp-action { min-width: 96px; }
+.hy-tend small { color: var(--text-dim); line-height: 1.4; }
+.hy-receipt { color: var(--green); }
+
+.hy-tile-side { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; justify-content: space-between; }
+.hy-tile-list { cursor: pointer; }
+
+/* A macro that takes two columns of the compact section. */
+.hy-span2 { grid-column: span 2; display: flex; flex-direction: column; align-self: stretch; }
