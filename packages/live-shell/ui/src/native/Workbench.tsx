@@ -10,7 +10,7 @@ import {ContextMenu, type MenuState} from '../../../../../desktop/cradle/src/sur
 import {bindingDisclosures, frameDisclosures, executeFrameAction} from '../../../../../desktop/cradle/src/surface/registry'
 import {activeBindingId, detachBinding, focusedGroup, groupsOf, makeSourceBinding, openBinding} from '../../../../../desktop/cradle/src/surface/engine'
 import {frameActionForKey} from '../../../../../desktop/cradle/src/surface/keys'
-import type {ActionArg, LayoutState, RestorePoint, SurfaceBinding} from '../../../../../desktop/cradle/src/surface/types'
+import type {ActionArg, LayoutState, Pane, RestorePoint, SurfaceBinding} from '../../../../../desktop/cradle/src/surface/types'
 import {useKernel} from '../../../../../desktop/cradle/src/kernel/KernelProvider'
 import type {ListedSource, CentralLocation} from '../../../../../desktop/cradle/src/kernel/types'
 import {acquireFileReading, acquireFileBytes} from '../../../../../desktop/cradle/src/files/resources'
@@ -49,7 +49,7 @@ import {AgentShellCentre} from '../agent/AgentShellRoot'
 import {AGENT_SHELL_KIND} from '../agent/factoryCentre'
 import {MODE_TREE_SEEDS} from '../shell/modeFrames'
 import {openInstrumentAt} from '../frame/openInstrument'
-import {openInstrument, publishInstrumentOpener} from '../frame/instrumentDoor'
+import {instrumentInView, openInstrument, publishInstrumentOpener} from '../frame/instrumentDoor'
 import {Icon} from '../inhabitants/sdk/Icon'
 import '../frame/paneGrammar.css'
 import type {AgentSubject,AgentAccompanying} from '../../../../../desktop/cradle/src/agent/AgentLayer'
@@ -75,6 +75,51 @@ export function workbenchMembership(book: CandidateWorkspace): Map<string, Surfa
   }
   return found
 }
+
+// lane F (F5): the pane tabs' pin, read against the candidate's own grammar.
+/** The candidate's pane grammar for tabs (the mockup's panes, world-shell-mockup.html .trail, #375): a compact rail on the pane's
+ * left edge, folded until pointed at — no control sits on a pane's face. A pane's own pin state stands over it. */
+export const PANE_TABS = {presentation: 'unpinned', orientation: 'vertical'} as const
+
+/** ⌘⌥\ (desktop/cradle/src/surface/keys.ts: frame.tabs-pin) pins or unpins the focused pane's tabs in their orientation,
+ * frame.tabs-orient turns them, and the frame menu's Pin tabs horizontally / vertically / Unpin tabs (frame.tabs:…) set every
+ * pane. The cradle's registry reads an absent presentation as pinned-horizontal and stores a pin as the
+ * absent default, so under this grammar (absent = unpinned) its pin unpinned an unpinned pane (no visible change) and its next
+ * press stored "absent" again, which is unpinned here: the strips could never be pinned (seen natively by the lead, 16 Oct).
+ * Here the pane's state is read through the grammar and every state is stored explicitly. Pure. */
+export type PaneTabsRef = 'frame.tabs-pin' | 'frame.tabs-orient' | 'frame.tabs:pinned-horizontal' | 'frame.tabs:pinned-vertical' | 'frame.tabs:unpinned'
+const PANE_TABS_REFS: readonly string[] = ['frame.tabs-pin', 'frame.tabs-orient', 'frame.tabs:pinned-horizontal', 'frame.tabs:pinned-vertical', 'frame.tabs:unpinned']
+export const isPaneTabsRef = (ref: string): ref is PaneTabsRef => PANE_TABS_REFS.includes(ref)
+
+/** A pane's tabs as they stand: its own state, else the grammar's. */
+export function paneTabsOf(group: Extract<Pane, {type: 'group'}> | undefined): {presentation: 'pinned-horizontal' | 'pinned-vertical' | 'unpinned'; orientation: 'horizontal' | 'vertical'} {
+  const presentation = group?.tabPresentation ?? PANE_TABS.presentation
+  const orientation = group?.tabPinOrientation ?? (presentation === 'pinned-vertical' ? 'vertical' : presentation === 'pinned-horizontal' ? 'horizontal' : PANE_TABS.orientation)
+  return {presentation, orientation}
+}
+
+export function paneTabsAction(layout: LayoutState, ref: PaneTabsRef, groupId: string | null | undefined = layout.focusedGroupId): LayoutState {
+  if (!layout.root) return layout
+  const pinned = (to: 'horizontal' | 'vertical') => to === 'vertical' ? 'pinned-vertical' as const : 'pinned-horizontal' as const
+  const turn = (group: Extract<Pane, {type: 'group'}>): Pane => {
+    const {presentation, orientation} = paneTabsOf(group)
+    if (ref.startsWith('frame.tabs:')) {
+      // the frame menu's choice: every pane moves together (the registry's bulk control), each stored as itself
+      const chosen = ref.slice('frame.tabs:'.length) as 'pinned-horizontal' | 'pinned-vertical' | 'unpinned'
+      return {...group, tabPresentation: chosen, tabPinOrientation: chosen === 'unpinned' ? orientation : chosen === 'pinned-vertical' ? 'vertical' : 'horizontal'}
+    }
+    if (ref === 'frame.tabs-pin') return presentation === 'unpinned'
+      ? {...group, tabPresentation: pinned(orientation), tabPinOrientation: orientation}
+      : {...group, tabPresentation: 'unpinned', tabPinOrientation: orientation}
+    const next = orientation === 'vertical' ? 'horizontal' : 'vertical'
+    return {...group, tabPresentation: presentation === 'unpinned' ? 'unpinned' : pinned(next), tabPinOrientation: next}
+  }
+  const bulk = ref.startsWith('frame.tabs:')
+  if (!bulk && !groupId) return layout
+  const walk = (pane: Pane): Pane => pane.type === 'split' ? {...pane, children: pane.children.map(walk)} : bulk || pane.id === groupId ? turn(pane) : pane
+  return {...layout, root: walk(layout.root), focusedTabId: undefined}
+}
+// end lane F (F5)
 
 export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}) {
   const book = useContinuity(), workspace = useWorkspace(), kernel = useKernel()
@@ -163,7 +208,7 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
   }, [book.current.id, book.current.layout])
   // The one door the browser's instruments open through: the presented tree, in the focused pane or where asked.
   useEffect(() => {
-    publishInstrumentOpener((kind, at, subject) => latest.current.book.setLayout(layout => openInstrumentAt(layout, kind, at, subject)))
+    publishInstrumentOpener((kind, at, subject) => latest.current.book.setLayout(layout => at === 'in-view' ? instrumentInView(layout, kind, subject) : openInstrumentAt(layout, kind, at, subject)))
     return () => publishInstrumentOpener(null)
   }, [])
   useEffect(() => {
@@ -392,6 +437,8 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
     if (ref === 'surface.detach') {void detach(arg?.surfaceId ?? activeBindingId(latest.current.book.current.layout) ?? '').catch(report); return}
     if (ref === 'surface.open') {insert({id: crypto.randomUUID(), kind: 'blank', title: 'New tab', project: latest.current.book.current.project}); return}
     if (ref === 'surface.open-sources' || ref === 'frame.world') {insert({id: crypto.randomUUID(), kind: 'sources', title: 'Sources', project: latest.current.book.current.project}); return}
+    // ⌘⌥\ and the orientation toggle, read through the candidate's pane grammar (paneTabsAction, above)
+    if (isPaneTabsRef(ref)) {latest.current.book.setLayout(layout => paneTabsAction(layout, ref, arg?.groupId)); return}
     const mayRelease = ['surface.close', 'surface.split-right', 'surface.split-down', 'surface.tile', 'surface.restore-layout', 'surface.drop', 'surface.move'].includes(ref) || ref.startsWith('surface.move-to:')
     if (mayRelease) {
       const origin = latest.current.book, workspaceId = origin.current.id, mode = origin.current.layout.mode, token = ++intent.current
@@ -437,6 +484,13 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
     const state = side && layout.sidePane ? {...layout, root: layout.sidePane, sidePane: undefined, focusedGroupId: layout.sidePane.id} : layout
     const context = {state, snapshot: side ? checkpoint(state) : restore.current}
     const items = id ? bindingDisclosures(context, id) : frameDisclosures(context)
+    // the menu's tab entries disclose the focused pane's tabs as they stand under the grammar (paneTabsOf), not the cradle's default
+    const standing = paneTabsOf(focusedGroup(state)).presentation
+    for (const item of items) if (item.action_ref.startsWith('frame.tabs:')) {
+      const current = item.action_ref.slice('frame.tabs:'.length) === standing, base = item.title.replace(/ \(current\)$/, '')
+      item.title = current ? `${base} (current)` : base
+      item.enabled = !current
+    }
     if (side) for (const item of items) if (['surface.split-right', 'surface.split-down', 'surface.tile'].includes(item.action_ref)) item.enabled = false
     if (!side && id && kernel.transport.kind === 'tauri') items.push({action_ref: 'surface.detach', title: 'Detach into native window', enabled: !!book.current.layout.surfaces[id] && nativeDetachedBodySupported(book.current.layout.surfaces[id].kind)})
     if (items.length) setMenu({x, y, items, surfaceId: id})
@@ -888,8 +942,8 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
           selectionRef: owner.context?.selection?.ref,
           mark: name => <Icon name={name === 'pin' ? 'placed' : 'follow'} size={12}/>,
           // The mockup's panes (world-shell-mockup.html .trail, #375): tabs a compact rail on the pane's left edge, folded until
-          // hovered — no control sits on a pane's face.
-          tabs: {presentation: 'unpinned', orientation: 'vertical'},
+          // hovered — no control sits on a pane's face (PANE_TABS; its pin through paneTabsAction).
+          tabs: PANE_TABS,
         },
         host: {project:factoryScope?.project,sourceWorldRef:factoryScope?.sourceWorldRef,current:factoryCurrent,unavailable:factoryUnavailable,accompanying:tree.layout.accompanying,openEncounter:row=>factoryCurrent()?chooseFactory(row):Promise.reject(Error(factoryUnavailable??'The originating Factory owner is concealed or retired.')),onMessage:report}, subject: owner.context?.subject,
       }

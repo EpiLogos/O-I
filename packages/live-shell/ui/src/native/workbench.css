@@ -1177,6 +1177,13 @@
  * height of the drawer's edge — one narrow invisible band, not a pocket at
  * the foot. When the drawer stands open the strip (z 26) covers the band. */
 :where(.candidate-workbench) .pane.group > .tab-reveal-zone[data-orientation="vertical"] { left: 0; top: 0; bottom: 0; width: 14px; height: auto; }
+/* lane F (F5): …and along the pane's top edge too. Natively the lead pointed at the top edge of Technē's frame pane, Expressions'
+ * field and Central's Day and Flow and nothing opened: the rail answered only on the left band. The zone is one L — the left
+ * band and an 8px top band — cut by clip-path, which also cuts its hit area, so the pane's face stays live everywhere else. It
+ * stands above the hosted frame (z 25 over the placed frame's 20; no ancestor of the zone makes a stacking context). Pointing
+ * at either edge opens the rail with its tabs and, at its foot, the pane tools (⊞). */
+:where(.candidate-workbench) .pane.group[data-tab-presentation="unpinned"] > .tab-reveal-zone[data-orientation="vertical"] { right: 0; width: auto;
+  clip-path: polygon(0 0, 100% 0, 100% 8px, 14px 8px, 14px 100%, 0 100%); }
 
 /* The vertical list's width separator (the .region-resizer grammar,
  * shell.css): a transparent hit area on the strip's inner edge whose

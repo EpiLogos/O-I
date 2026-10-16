@@ -94,7 +94,8 @@ test('the pending note is never drawn over the status bar: the foundation publis
   assert.match(foundation, /publishFoundationPending\(pending\)/)
   const css = await source('styles.css')
   assert.doesNotMatch(css, /native-foundation-pending/)
-  assert.match(css, /\.statusbar-info-line \{ flex:1; min-width:0; height:20px;[^}]*background:var\(--bg-0\)/, 'the line is the mockup\'s .sb .info')
+  // lane F (F4): the line keeps a floor (min-width:0 left it one letter natively); status-info-room.test.mjs holds the room rules
+  assert.match(css, /\.statusbar-info-line \{ flex:1 1 0; min-width:min\(45%, 560px\); height:20px;[^}]*background:var\(--bg-0\)/, 'the line is the mockup\'s .sb .info')
 })
 
 test('the status bar reads the aperture the panes stand in (the mockup\'s "aperture shared · 2 panes"), as the Workbench publishes it', async () => {

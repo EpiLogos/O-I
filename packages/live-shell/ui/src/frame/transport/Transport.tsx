@@ -5,9 +5,10 @@
 // .nc cells, .fld readouts, .tbtn play row; transport.css): the controls the mockup names with a word wear the mode's word
 // (Link, Ground, Stamp, Tap, Map — `SlotWords.face`), and a marked slot whose owner gives it a reading shows the reading
 // where the mockup draws a field (the day's opening and close on the punch slots).
-import type {ReactNode} from 'react'
+import {useEffect, useLayoutEffect, useRef, useState, type ReactNode} from 'react'
 import {Icon as CutIcon, type IconName} from '../../inhabitants/sdk/Icon'
 import type {SlotBinding, SlotWords, TransportBindings, TransportSlotId} from './slots'
+import {nextFold, type FoldState} from './fold'
 import './transport.css'
 
 /** Each pressable slot's specimen mark (icon-cut.html); the slots without one are readouts or wear a word. */
@@ -28,9 +29,52 @@ const PLAY_ROW = new Set<TransportSlotId>(['play', 'stop', 'record'])
 /** The slots that only show a value; the other unmarked slots (quantize, key) are controls whose face is text. */
 const READOUTS = new Set<TransportSlotId>(['tempo', 'signature', 'root', 'scale', 'position', 'loop-length', 'rate', 'cpu'])
 
+/** The slots that fold to their mark when the bar is short of room: an owner's control in a slot that has a specimen mark
+ * (fold.ts). The key changes when the mode in front of you binds other controls, and the fold starts open again. */
+const foldableKey = (bindings: TransportBindings): string =>
+  (Object.keys(bindings) as TransportSlotId[]).filter(id => MARKS[id] && bindings[id]?.control).sort().join(' ')
+
 export function Transport({bindings, words}: {bindings: TransportBindings; words: (id: TransportSlotId) => SlotWords}) {
-  const slot = (id: TransportSlotId): ReactNode => <Slot key={id} id={id} binding={bindings[id]} words={words(id)} />
-  return <div className="mode-transport one-transport" role="group" aria-label="Transport">
+  const bar = useRef<HTMLDivElement>(null)
+  const foldable = foldableKey(bindings)
+  const [fold, setFold] = useState<FoldState & {key: string}>({folded: false, need: 0, key: foldable})
+  const [open, setOpen] = useState<TransportSlotId | null>(null)
+  const folded = fold.folded && fold.key === foldable
+  // The bar measures its own room: its box (the window, the toggles beside it) and its groups' widths (an owner's control
+  // that appears, a reading that grows). Short of room, the foldable slots fold to their marks; the room back, they open.
+  useLayoutEffect(() => {
+    const el = bar.current
+    if (!el || typeof ResizeObserver === 'undefined') return
+    const measure = () => {
+      const scale = el.querySelector<HTMLElement>(':scope > .transport-scale')
+      const standing = scale && scale.getClientRects().length > 0
+      setFold(state => {
+        const base = state.key === foldable ? state : {folded: false, need: 0, key: foldable}
+        const next = nextFold(base, {scroll: el.scrollWidth, client: el.clientWidth,
+          ...(standing ? {scaleScroll: scale.scrollWidth, scaleClient: scale.clientWidth} : {})})
+        return next === base ? base : {...next, key: foldable}
+      })
+    }
+    const observer = new ResizeObserver(measure)
+    observer.observe(el)
+    for (const group of el.children) observer.observe(group)
+    measure()
+    return () => observer.disconnect()
+  }, [foldable])
+  // An opened fold closes on a press outside it, or Escape; and when the slot opens in the row again.
+  useEffect(() => {if (!folded) setOpen(null)}, [folded])
+  useEffect(() => {
+    if (!open) return
+    const outside = (event: PointerEvent) => {if (!(event.target instanceof Element) || !event.target.closest(`[data-slot="${open}"]`)) setOpen(null)}
+    const escape = (event: KeyboardEvent) => {if (event.key === 'Escape') setOpen(null)}
+    document.addEventListener('pointerdown', outside, true)
+    document.addEventListener('keydown', escape)
+    return () => {document.removeEventListener('pointerdown', outside, true); document.removeEventListener('keydown', escape)}
+  }, [open])
+  const foldOf = (id: TransportSlotId) => folded && MARKS[id] && bindings[id]?.control
+    ? {open: open === id, toggle: () => setOpen(current => current === id ? null : id)} : undefined
+  const slot = (id: TransportSlotId): ReactNode => <Slot key={id} id={id} binding={bindings[id]} words={words(id)} fold={foldOf(id)} />
+  return <div ref={bar} className="mode-transport one-transport" role="group" aria-label="Transport" data-fold={folded ? 'marks' : undefined}>
     {/* Link and Tap lead the tempo cells as one group, as the mockup's first group does. */}
     <div className="transport-group transport-lead">{slot('link')}{slot('tap')}
       <div className="transport-group transport-tempo">{slot('tempo')}{slot('signature')}{slot('metro')}{slot('quantize')}</div></div>
@@ -43,12 +87,23 @@ export function Transport({bindings, words}: {bindings: TransportBindings; words
   </div>
 }
 
-function Slot({id, binding, words}: {id: TransportSlotId; binding: SlotBinding | undefined; words: SlotWords}) {
+function Slot({id, binding, words, fold}: {id: TransportSlotId; binding: SlotBinding | undefined; words: SlotWords; fold?: {open: boolean; toggle: () => void}}) {
   const title = binding?.refused ? `${words.label} — ${words.fn}. ${binding.refused}` : binding?.title ?? binding?.readout?.title ?? words.waiting
   const common = {'data-slot': id, 'data-i': words.dataI, title, 'aria-label': words.label}
   const light = binding?.lit === undefined ? undefined : binding.lit ? 'on' : 'off'
-  if (binding?.control) return <span className="transport-slot" {...common} data-light={light}>{binding.control}</span>
   const mark = MARKS[id]
+  if (binding?.control && mark) {
+    // An owner's control in a marked slot can fold to its mark (fold.ts): one cell whose press opens the control, whole,
+    // beneath it. The structure is the same open or folded (the mark drawn only while folded, the body laid in the row while
+    // open: transport.css), so folding never remounts the owner's control — its state and pending writes are kept.
+    return <span className="transport-slot" {...common} data-light={light} data-fold={fold ? fold.open ? 'open' : 'folded' : undefined}>
+      <button type="button" className="native-control transport-fold-mark" data-i={words.dataI} title={title} aria-label={words.label}
+        aria-haspopup="true" aria-expanded={fold?.open ?? false} data-light={light} onClick={fold?.toggle}>
+        <CutIcon name={mark} size={13} /></button>
+      <span className="transport-fold-body">{binding.control}</span>
+    </span>
+  }
+  if (binding?.control) return <span className="transport-slot" {...common} data-light={light}>{binding.control}</span>
   const enabled = !binding?.refused && (binding?.press !== undefined)
   const stepper = binding?.step && !binding.refused
   if (WORDS.has(id)) {
