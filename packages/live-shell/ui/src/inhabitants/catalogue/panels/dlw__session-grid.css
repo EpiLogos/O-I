@@ -1,0 +1,67 @@
+/* The Session grid's own layout: the pane body (the grid at pane size) and the widget's side readings. Shell and panel tokens only.
+   A track's colour is its identity and arrives inline as --tc. The grammar follows frame/tracks/tracks.css (.sg/.trk/.cs). */
+.dp-display .sgd-hit { cursor: pointer; }
+.dp-display .sgd-hit:focus-visible { outline: 1px solid var(--accent, #ffbe00); outline-offset: 1px; }
+
+.sgd-tile-side { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; justify-content: space-around; align-items: center; }
+
+/* The pane. */
+.sgd-pane { position: absolute; inset: 0; display: flex; flex-direction: column; background: var(--bg-1, #33363b); color: var(--text, #d4d7da); font: 10px var(--font-ui, sans-serif); overflow: hidden; }
+.sgd { flex: 1 1 auto; min-height: 0; display: flex; gap: 2px; padding: 14px 16px; align-items: flex-start; }
+.sgd-trk { flex: 1 1 0; min-width: 0; max-width: 190px; display: flex; flex-direction: column; background: var(--bg-2, #3f4348); border-top: 3px solid var(--tc, var(--bg-3)); }
+.sgd-trk[data-silent="true"] { opacity: .35; }
+.sgd-main { flex: 0 0 96px; --tc: var(--bg-3, #4a4e54); }
+.sgd-head { flex: none; height: 24px; display: flex; align-items: center; gap: 5px; padding: 0 6px; background: var(--bg-3, #4a4e54); border-bottom: 1px solid var(--line, #24262a); white-space: nowrap; overflow: hidden; }
+.sgd-head b { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; font-weight: 500; font-size: 10.5px; }
+.sgd-rail { flex: none; align-self: stretch; width: 3px; margin-left: -6px; margin-right: 3px; }
+.sgd-rail + .sgd-rail { margin-left: 0; }
+.sgd-fold { flex: none; font-size: 8px; color: var(--text-dim, #a2a7ad); }
+.sgd-arm { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--rec, #e5484d); }
+
+.sgd-cell { flex: none; height: 52px; position: relative; box-sizing: border-box; display: flex; align-items: center; gap: 6px; padding: 0 7px; border-bottom: 1px solid var(--line, #24262a); overflow: hidden; white-space: nowrap; color: var(--bg-0, #26292d); background: var(--tc); }
+.sgd-text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.sgd-label { overflow: hidden; text-overflow: ellipsis; }
+.sgd-cell small { font-size: 9px; opacity: .8; overflow: hidden; text-overflow: ellipsis; }
+.sgd-tri { flex: none; width: 0; height: 0; border-left: 7px solid currentColor; border-top: 4px solid transparent; border-bottom: 4px solid transparent; }
+.sgd-cell[data-status="done"] { opacity: .55; }
+.sgd-cell[data-status="waiting"] { background: color-mix(in srgb, var(--tc) 30%, var(--bg-2, #3f4348)); color: var(--text, #d4d7da); outline: 1px dashed var(--tc); outline-offset: -2px; }
+.sgd-cell[data-status="waiting"] .sgd-tri { color: var(--tc); animation: sgd-blink .35s steps(2) infinite; }
+.sgd-cell[data-status="running"] { background: linear-gradient(90deg, var(--tc) 0, var(--tc) calc(var(--p, 50) * 1%), color-mix(in srgb, var(--tc) 40%, var(--bg-2, #3f4348)) calc(var(--p, 50) * 1% + 24px)); }
+.sgd-cell[data-status="running"] .sgd-tri { animation: sgd-blink 1s steps(2) infinite; }
+.sgd-cell[data-status="stalled"] { background: repeating-linear-gradient(135deg, var(--tc) 0 7px, color-mix(in srgb, var(--stall, #ff9b4a) 45%, transparent) 7px 9px); }
+.sgd-cell[data-status="stalled"] .sgd-tri { color: var(--stall, #ff9b4a); }
+.sgd-cell[data-status="recording"] { box-shadow: inset 3px 0 0 var(--rec, #e5484d); }
+.sgd-cell[data-sel="true"] { box-shadow: inset 0 0 0 1px var(--accent, #ffbe00); }
+.sgd-cell[data-empty="true"] { background: transparent; color: var(--text-faint, #71767c); justify-content: center; }
+.sgd-stopsq { width: 8px; height: 8px; border: 1px solid var(--text-faint, #71767c); }
+.sgd-roll { gap: 2px; padding: 4px; background: var(--bg-1, #33363b); }
+.sgd-roll i { flex: 1 1 0; align-self: stretch; background: var(--tc); }
+.sgd-roll i[data-status="done"] { opacity: .45; }
+.sgd-roll i[data-status="waiting"] { background: none; outline: 1px dashed var(--tc); outline-offset: -1px; }
+.sgd-roll i[data-status="stalled"] { background: var(--stall, #ff9b4a); }
+.sgd-takes { margin-left: 4px; }
+.sgd-ticks { display: inline-flex; gap: 1px; margin-left: 4px; vertical-align: middle; }
+.sgd-ticks i { width: 3px; height: 8px; background: currentColor; opacity: .45; }
+.sgd-ticks i[data-standing="true"] { background: var(--accent, #ffbe00); opacity: 1; }
+
+.sgd-stops { background: var(--bg-2, #3f4348); color: var(--text-dim, #a2a7ad); }
+.sgd-stops kbd { flex: none; min-width: 12px; padding: 0 3px; text-align: center; font: inherit; font-size: 9.5px; color: var(--text, #d4d7da); border: 1px solid var(--text-faint, #71767c); }
+.sgd-launch { flex: none; font-size: 9px; }
+.sgd-foot { flex: none; height: 22px; display: flex; align-items: center; justify-content: center; border-bottom: 1px solid var(--line, #24262a); }
+.sgd-retry { display: inline-grid; place-items: center; width: 16px; height: 14px; font-size: 10px; color: var(--text-faint, #71767c); border: 1px solid var(--line-strong, var(--line, #24262a)); }
+.sgd-retry[data-lit="true"] { background: var(--stall, #ff9b4a); color: var(--bg-0, #26292d); border-color: var(--stall, #ff9b4a); animation: sgd-blink 1.2s steps(2) infinite; }
+
+.sgd-bar { flex: none; display: flex; align-items: center; gap: 14px; height: 26px; padding: 0 16px; background: var(--bg-0, #26292d); border-top: 1px solid var(--line, #24262a); color: var(--text-dim, #a2a7ad); white-space: nowrap; overflow: hidden; }
+.sgd-key { display: inline-flex; align-items: center; gap: 5px; }
+.sgd-key i { display: inline-block; width: 14px; height: 9px; background: var(--text-dim, #a2a7ad); }
+.sgd-key i[data-status="done"] { opacity: .45; }
+.sgd-key i[data-status="waiting"] { background: none; outline: 1px dashed var(--text-dim, #a2a7ad); outline-offset: -1px; }
+.sgd-key i[data-status="running"] { background: linear-gradient(90deg, var(--text-dim, #a2a7ad) 55%, color-mix(in srgb, var(--text-dim, #a2a7ad) 35%, transparent)); }
+.sgd-key i[data-status="recording"] { background: var(--rec, #e5484d); }
+.sgd-key i[data-status="stalled"] { background: repeating-linear-gradient(135deg, var(--text-dim, #a2a7ad) 0 3px, var(--stall, #ff9b4a) 3px 5px); }
+.sgd-says { margin-left: auto; overflow: hidden; text-overflow: ellipsis; color: var(--text, #d4d7da); }
+
+@keyframes sgd-blink { 50% { opacity: .3; } }
+@media (prefers-reduced-motion: reduce) {
+  .sgd-cell .sgd-tri, .sgd-retry { animation: none !important; }
+}
