@@ -1,4 +1,4 @@
-// The Studio's band (DEVICE-UI §3: "Band (the body on a chain) 168 high"; §1 "Nothing scrolls"): the height a section's controls stand in,
+// The Studio's band (manual §16.8: "Band (the body on a chain) 168 high"; §1 "Nothing scrolls"): the height a section's controls stand in,
 // measured where the plate stands (the detail row's height decides it: styles.css --detail-h). Every section lays its controls out to it —
 // the frame's keys flow down that many rows and then across (frameChrome.css --chrome-rows), a held device scales to it (studioDevices.tsx)
 // — so nothing is cut at the plate's foot. Read from the plate's own row (plateFit.ts names it by `data-studio-fit`).

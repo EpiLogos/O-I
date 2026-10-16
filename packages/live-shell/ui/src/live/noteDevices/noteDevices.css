@@ -6,7 +6,7 @@
 .note-plate[data-note-device-power="off"] .device-controls { opacity: .6 }
 
 /* A note device's live picture (NoteFoldPicture.tsx): the twelve classes as played, as sounded, and the line between. The mode's
-   classes in the value colour; a class the device moves draws its line in amber, as a handle's reach is drawn (DEVICE-UI §4.3). */
+   classes in the value colour; a class the device moves draws its line in amber, as a handle's reach is drawn (manual §16.8). */
 .note-fold .note-fold-name { font: 6.5px var(--font-ui, sans-serif); fill: var(--text-faint) }
 .note-fold .note-fold-played { fill: none; stroke: var(--text-faint); stroke-width: 1 }
 .note-fold .note-fold-line { stroke: color-mix(in srgb, var(--text) 22%, transparent); stroke-width: 1; fill: none }

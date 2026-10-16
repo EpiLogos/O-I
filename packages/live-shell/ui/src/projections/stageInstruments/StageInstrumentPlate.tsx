@@ -6,10 +6,10 @@
 // stands here in the manual's groups (stageInstrumentModel.ts), read from the frame's published chrome and pressed through its one
 // runner (components/expressions/studio/frameChrome.tsx). Ported, not recreated: each key is the frame's own control
 // (expressions-app field-studies-journeys/src/researchInstruments.tsx, journeyInstrument.tsx, shell.ts, app.ts), pressed. Drawn in the
-// device craft (frameChrome.tsx on the panel kit, docs/dlw/DEVICE-UI.md): keys lit by the frame's reading, bounded numbers swept, a
+// device craft (frameChrome.tsx on the panel kit, docs/dlw/DLW.md §16): keys lit by the frame's reading, bounded numbers swept, a
 // parameter the manual names that no owner carries drawn as its switch with nothing lit and its reason on the status line.
 // The plate's head is the panel kit's (InstrumentPlate.tsx), its display section the instrument's live well (inhabitants/ql/devices/
-// techneWells.tsx: the board, the ruler, the walk), and no sentence stands in it (docs/dlw/DEVICE-UI.md §1): a frame reading that is a
+// techneWells.tsx: the board, the ruler, the walk), and no sentence stands in it (docs/dlw/DLW.md §16.8): a frame reading that is a
 // save state is a light, one that is a line of words is a light whose words are the status bar's, a group the frame places nothing in
 // says one word with its reason on the status bar, and a parameter no owner carries draws disabled with its reason (§6 Disabled).
 import type {ReactNode} from 'react'
@@ -39,7 +39,7 @@ const SAVE_STATE = /^(saved|saving|held)\b/i
 /** A reading of words longer than a value: a name or a status line, never drawn as a sentence here. */
 const isLine = (text: string) => text.length > 16 || text.split(/\s+/).length > 2
 
-/** One of the frame's readings, as the kit draws a reading (DEVICE-UI §5 Light: "A state that the owner reports"): the save state as a
+/** One of the frame's readings, as the kit draws a reading (manual §16.9 Light: "A state that the owner reports"): the save state as a
  * light (green saved, hollow saving, orange held); a line of words — the canvas's status line — as a light whose words are the status
  * bar's; a short value as the frame gives it. */
 export function FrameReading({control, view}: {control: FrameChromeControl; view: FrameChromeView}) {
@@ -67,7 +67,7 @@ export function PlateFrameControls({controls, view, label}: {controls: readonly 
 }
 
 /** A parameter the manual names that no owner carries: a dial with no reading where it is a quantity, else its switch with nothing lit —
- * disabled, its reason on the status bar (DEVICE-UI §6 "Disabled — The control at 40 % strength. The status bar says why"). */
+ * disabled, its reason on the status bar (manual §16.10 "Disabled — The control at 40 % strength. The status bar says why"). */
 function Waiting({parameter}: {parameter: WaitingParameter}) {
   return parameter.dial ? <WaitingDial label={parameter.name} why={parameter.why} unit={parameter.dial.unit} /> : <WaitingRow name={parameter.name} values={parameter.values} why={parameter.why} />
 }

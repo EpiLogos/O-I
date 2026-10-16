@@ -141,7 +141,7 @@ Locations a "0 placed · 15" readout with no sentence, the detail head "World op
 folded to their titles); Factory's chain draws the Gateway ("refused", "No readings", "—"; Connect disabled), the Agent ("turns not
 read", "check-in not read", Budget disabled) and the Skillset rack ("Members · no reading") from their designs. Small, open: the Day's
 refusal clips at the well's foot (the design); M4′'s Locations shows a fifth row cut at the plate's foot; the Pointer's value "0.23
-stage un…" overflows its cell (values are short, DEVICE-UI §1).
+stage un…" overflows its cell (values are short, manual §16.8).
 
 Then: lanes D, BC, BF, W1, W3, BT, BE and R2 converged (16 Oct). D (`533ac32f8`): an opened work reads saved until edited (the
 frame had written its own shared settings into every loaded work), a conflict reads the owner's current revision and the frame's
@@ -241,20 +241,20 @@ registry's prior bytes kept) — `oi workcell status` answers (exit 7 → 0), `a
 `thoughts.read-batch` answer through `oi`. The old native build stamps under
 Work/O-I/target/p0-r1 removed (30 stamps; m4, the build at `2de90416e`, kept for the screen pass — its space returns as Time
 Machine thins tonight's two local snapshots). The measuring tools moved into the repo (`tools/lead-kit/`, `69824a5df`). Next
-waves (owner): devices — DEVICE-UI.md across the plates, Live's density and a live picture at each device's heart, the five
+waves (owner): devices — manual §16 across the plates, Live's density and a live picture at each device's heart, the five
 presentations — and a more performant, robust core and kernel. Open for them: the native screen pass of lanes Y, E, K, K2, Q
 and D (never seen natively); the door natively after the install; the writes still ordered under the kernel lock; kernel
 receipts for NOW/receiving/Day writes and an AIKit session change event (so the shell's floors can go); AIKit streaming or
 splitting a cold batch (35–58 s); Central's Day "today pointer stale"; ten lane-5 rows' evidence beside their homes.
 
-Then: lane E landed (`1f40feefe`), drawn to docs/dlw/DEVICE-UI.md — the owner's device standard, which landed on main the same
+Then: lane E landed (`1f40feefe`), drawn to docs/dlw/DLW.md §16 — the owner's device standard, which landed on main the same
 evening with its panel kit and five reference devices (`2fdfe6606`, `79d5b4c36`, committed in this seat by the owner's session): the
 plate grammar fits or folds, never scrolls, one hairline between sections, no box in a box, a head slot (the Studio's Save, Undo,
 Redo); M4′ Body/Landmass/Climate/Sky as dials and switches drawn waiting with Earth's reason, Locations and Relations as paged rows;
 M5′ Rooms, Path, Board, Return; M1′–M3′ on the kit's styling; M0′ one plate (View, Graph, Forces, Deep time) and the stage's
 Expression controls while its project lens stands; Compact devices (a live well and four manual-named macros) where the row has room.
 Headless, GPU on: no overflow and no scrolling element in the device row in 20 shots. Beside Live's Operator the plates are closer,
-not there: fewer, larger controls and no live picture at their heart — the next pass, to DEVICE-UI.md. Lane R3 (`a113536f3`): the
+not there: fewer, larger controls and no live picture at their heart — the next pass, to manual §16. Lane R3 (`a113536f3`): the
 register follows Y and E — every cited home resolves at HEAD (9 re-quoted, 8 moved), implemented 105 holds. The native build at
 `2de90416e` (stamp 20261015T-m4) waits for the owner's screen approval (three requests timed out today).
 

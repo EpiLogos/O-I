@@ -1,5 +1,5 @@
 // The pool under the browser (manual §10.3: "The pool under the browser shows the selected device in full. Changes you
-// make in the pool apply at once and do not add the device to your rack."; DEVICE-UI §2 Whole: "Every parameter, grouped, and the
+// make in the pool apply at once and do not add the device to your rack."; manual §16.3 Whole: "Every parameter, grouped, and the
 // display with all its handles"): the device last chosen on a chain, whole, on the same binding its chain plate reads — a value
 // moved here moves there. The plate is 400 wide and scales to the pool's width; it never scrolls (pages stand in its head).
 import {useDeviceDoor} from './deviceDoor'

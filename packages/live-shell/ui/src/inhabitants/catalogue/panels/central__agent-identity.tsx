@@ -193,7 +193,7 @@ function model(v: V): Model {
 const standing = (a: Agent) => (a.ok === undefined ? undefined : a.ok ? 'accepted' : 'proposed')
 const standingText = (a: Agent) => standing(a) ?? NONE
 const ratifiedWords = (r: boolean | undefined) => (r === undefined ? NONE : r ? 'ratified' : 'not ratified')
-// The light reads the owner alone (DEVICE-UI §4.1): lit or dark when it reports, hollow when it has not.
+// The light reads the owner alone (manual §16.8): lit or dark when it reports, hollow when it has not.
 const light = (p: ViewProps) => (strOf(p.owner ?? p.v, 'light') ?? 'unknown') as LightState
 // The mark set is the person's choice for the whole shell (Settings), not the owner's: the blade until they choose.
 const marks = (v: V) => (strOf(v, 'marks') ?? 'blade') as WoodSet

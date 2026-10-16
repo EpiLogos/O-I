@@ -1,7 +1,7 @@
 // The keyboard at the head of Live's chain, through the device runtime (FOUNDATION F5): the notes start here, pass the note
 // devices and reach the torus (manual §10.4: "the material always passes through them in that order"). Its picture is the
 // playing surface itself (live/janko/JankoDevice.tsx: one input path, the owner's window), in every place it is drawn: on the chain,
-// whole in the pool, full in a pane, small on the rail (DEVICE-UI §2). Its one control is the layout, held in the shell
+// whole in the pool, full in a pane, small on the rail (manual §16.3). Its one control is the layout, held in the shell
 // (keyboardLayout.ts) so every place draws the same one. One keyboard hears MIDI — the chain's plate; every other drawing of it plays
 // from the pointer and the computer keys only, so a hardware note is struck once.
 import {useCallback, useMemo} from 'react'

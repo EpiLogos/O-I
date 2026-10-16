@@ -1,4 +1,4 @@
-// The designed-device contract as the shell hosts it (docs/dlw/DEVICE-UI.md §2, §8, §11). The contract's one source is the
+// The designed-device contract as the shell hosts it (docs/dlw/DLW.md §16.3, §8, §11). The contract's one source is the
 // catalogue's (inhabitants/catalogue/panels/design.ts: DesignedDevice, ViewProps, Values, Nav — "The host owns the values and the
 // navigation; a view only reads them and asks for changes"); this module re-exports it for the shell's callers and adds what the
 // shell brings a view (§8 "The shell brings the values, the writes, the navigation between views, and the standing of each
@@ -10,24 +10,24 @@ import type {DeviceInstance, ParamValue} from './deviceRuntime'
 
 export type {DesignedDevice, Nav, Value, Values, ViewProps, Standing}
 
-/** The five views of one device (DEVICE-UI §2). */
+/** The five views of one device (manual §16.3). */
 export type DeviceViewName = 'folded' | 'compact' | 'whole' | 'full' | 'widget'
 export const DEVICE_VIEWS: readonly DeviceViewName[] = ['folded', 'compact', 'whole', 'full', 'widget']
 
 /** The navigation a place gives a view: the catalogue's Nav (select, full, fold, unfold, rail, close), and the place's own marks. */
 export interface HostNav extends Nav {
-  /** The marks the place gives the device's head, before ⤢ (a pop-out, a redock; DEVICE-UI §4.1): the generic plate draws them in its
+  /** The marks the place gives the device's head, before ⤢ (a pop-out, a redock; manual §16.8): the generic plate draws them in its
    * head, and the host hands them to a design's kit head when the design draws none of its own (deviceHost.tsx withPlaceMarks). */
   readonly marks?: ReactNode
 }
 
-/** What the host hands a view: the catalogue's ViewProps, the standing of each value (DEVICE-UI §6: waiting, refused, held,
+/** What the host hands a view: the catalogue's ViewProps, the standing of each value (manual §16.10: waiting, refused, held,
  * automated, modulated, disabled), and the extended navigation. A view written to ViewProps alone reads it unchanged. */
 export interface HostedViewProps extends ViewProps {
   readonly nav: HostNav
   /** The standing of each value by key; a key with nothing to show has none. */
   readonly standing?: Readonly<Record<string, Standing>>
-  /** The owner's readings alone, without what the hand holds or what waits on the owner: a light reads these (DEVICE-UI §4.1 "The
+  /** The owner's readings alone, without what the hand holds or what waits on the owner: a light reads these (manual §16.8 "The
    * light changes only when the owner answers"). */
   readonly owner?: Values
   /** Why this view stands in for the device's own: its design's view did not draw (deviceHost.tsx ViewBoundary). The generic plate
@@ -46,7 +46,7 @@ export interface ValueChange {
 export interface DesignBinding {
   /** The device's id on its chain. */
   readonly id: string
-  /** The owner's readings by value key. A key with no reading is unknown — absent here, never a default (DEVICE-UI §7). */
+  /** The owner's readings by value key. A key with no reading is unknown — absent here, never a default (manual §16.11). */
   readonly values: Values
   /** Send changes to the owner. Absent: nothing here writes, and every value is a reading. A refusal rejects with the owner's
    * own words. */

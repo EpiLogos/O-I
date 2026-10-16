@@ -36,13 +36,13 @@ html, body { height: auto; overflow: auto; background: var(--bg-0, #26292d); }
 .cat-fixtures button[aria-pressed="true"] { background: var(--accent, #ffbe00); color: #1c1d1f; border-color: var(--accent, #ffbe00); }
 
 /* Whole flipped up over the chain (Live's expanded view): the lower panes give way, the chain stays under it. */
-.cat-flip { width: 1180px; display: flex; flex-direction: column; border: 1px solid var(--line-strong, #3d4147); background: var(--bg-0, #26292d); }
+.cat-flip { width: min(1180px, calc(100vw - 24px)); display: flex; flex-direction: column; border: 1px solid var(--line-strong, #3d4147); background: var(--bg-0, #26292d); }
 .cat-flip-panes { height: 64px; display: grid; place-items: center; color: var(--text-faint, #71767c); font-size: 11px; background: var(--bg-1, #33363b); border-bottom: 1px solid var(--line, #24262a); }
 .cat-flip > .dp-flip { padding: 4px; border-bottom: 2px solid var(--line-strong, #3d4147); box-shadow: 0 -6px 14px rgba(0, 0, 0, .35); }
 .cat-flip-chain { padding: 4px; display: flex; background: var(--bg-0, #26292d); }
 /* Pop-out: the device's own window. */
-.cat-window { width: 1180px; border: 1px solid var(--line-strong, #3d4147); border-radius: 8px; overflow: hidden; box-shadow: 0 10px 30px rgba(0, 0, 0, .45); }
+.cat-window { width: min(1180px, calc(100vw - 24px)); border: 1px solid var(--line-strong, #3d4147); border-radius: 8px; overflow: hidden; box-shadow: 0 10px 30px rgba(0, 0, 0, .45); }
 .cat-window-bar { height: 26px; display: flex; align-items: center; gap: 7px; padding: 0 10px; background: var(--bg-2, #3f4348); font-size: 11px; color: var(--text-dim, #a2a7ad); }
 .cat-window-bar > i { width: 11px; height: 11px; border-radius: 50%; background: var(--bg-3, #4a4e54); }
 .cat-window-bar > span { margin-left: 8px; }
-.cat-window-room { width: 1180px; height: 620px; }
+.cat-window-room { width: 100%; height: 620px; }

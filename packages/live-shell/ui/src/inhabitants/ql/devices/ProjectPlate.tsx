@@ -2,7 +2,7 @@
 // instrument … carries its full native controls on the Device side"; the mockup's M0 plate, world-shell-mockup.html:1456 — Whole (depth,
 // budget), View (list · tree · graph · form, kinds, ghosts), Source; manual §17.2's grammar, Whole: "Reach, Filters, Display, Groups").
 // Before, M0′ stood as its families' plate: three boxed sub-devices (the globe, Graph tools, Earth ⇄ Graph) and the deep-time clock, each
-// its own plate inside a column. Here their parameters are the plate's own sections, drawn in the device craft (docs/dlw/DEVICE-UI.md;
+// its own plate inside a column. Here their parameters are the plate's own sections, drawn in the device craft (docs/dlw/DLW.md §16;
 // the panel kit, inhabitants/sdk/panel.tsx, and frame/devices/plateControls.tsx): the view and the scope as switches, the graph's reach
 // and what it draws as switches, its four forces as dials, the clock as a value box with its keys.
 //
@@ -19,7 +19,7 @@
 // read from the frame's published chrome and pressed through its one runner (components/expressions/studio/frameChrome.tsx), so the stage
 // is never left without its controls while M0′ is its instrument (lane Y's open, T-FRAME-CHROME-ONTO-PLATES).
 //
-// The head is the panel kit's (InstrumentPlate.tsx; DEVICE-UI §4.1); the display section is M0′'s live well (techneWells.tsx): the Earth as
+// The head is the panel kit's (InstrumentPlate.tsx; manual §16.8); the display section is M0′'s live well (techneWells.tsx): the Earth as
 // the pane looks at it, or on its Graph side the graph's own picture.
 import {useState, useSyncExternalStore} from 'react'
 import {InstrumentPlate, heldMarksOf, SectionNote, type PlateSection} from '../../../frame/devices/InstrumentPlate'

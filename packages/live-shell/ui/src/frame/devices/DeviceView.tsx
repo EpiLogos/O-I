@@ -1,4 +1,4 @@
-// One device in its places (DEVICE-UI §2, §11; manual §16.1): every view drawn by the panel kit through the host
+// One device in its places (manual §16.3, §11; manual §16.1): every view drawn by the panel kit through the host
 // (deviceHost.tsx), on one binding, so a change in one view shows in the others at once. The device's own views when the catalogue
 // holds a design for its `<family>:<face>` and the device is published (designs.ts), else the generic plate of its rows
 // (genericDevice.tsx). A change goes to the owner when you let go of the control (§5.2); no plate has a Send button.
@@ -129,7 +129,7 @@ function useNav(device: DeviceInstance, actions: readonly DeviceAction[] | undef
 
 const sizeOf = (view: DeviceViewName): DeviceSize => (view === 'whole' ? 'whole' : view === 'full' ? 'full' : 'compact')
 
-/** A device on a chain: compact, or folded; scaled with the detail area's height (DEVICE-UI §3). */
+/** A device on a chain: compact, or folded; scaled with the detail area's height (manual §16.8). */
 export function ChainDevice({device, picture, actions, wrapRow, binding, generic, marks}: Omit<DeviceViewProps, 'size'>) {
   const root = useRef<HTMLDivElement>(null)
   const selected = useSelectedDeviceId() === device.id

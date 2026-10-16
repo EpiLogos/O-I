@@ -29,7 +29,7 @@ export const PHYSICS_KEYS: Readonly<Record<string, string>> = {
 const PLANE = 'plane', PLANE_SETTING = 'mediumPlane'
 /** The engine's runtime actions the design's Field section presses (stageCommands.ts STAGE_ENGINE_ACTIONS; app.ts:1636-1639): Disperse
  * spreads the particles (a press, `true`); Reset reseeds every particle onto its shape and resets the morph phases, a change that asks
- * first (DEVICE-UI §5.2), so it runs only on the value `confirmed` — the shell's own two-step (NativeEngineActions.tsx) is the gesture. */
+ * first (manual §16.9), so it runs only on the value `confirmed` — the shell's own two-step (NativeEngineActions.tsx) is the gesture. */
 export type PhysicsAction = 'disperse' | 'reset'
 export const PHYSICS_PRESSES: Readonly<Record<string, {action: PhysicsAction; value: Value}>> = {
   disperse: {action: 'disperse', value: true}, reset: {action: 'reset', value: 'confirmed'},
@@ -38,7 +38,7 @@ export const PHYSICS_PRESSES: Readonly<Record<string, {action: PhysicsAction; va
 /** Keys a change goes to the engine for. `paused` is a reading: the engine reports it, and exposes no pause to write. */
 export const PHYSICS_WRITES: ReadonlySet<string> = new Set([...Object.keys(PHYSICS_KEYS), PLANE, ...Object.keys(PHYSICS_PRESSES)])
 
-/** Why each design key this binding leaves absent, or reads only, has no write (DEVICE-UI §7 "say which one"). */
+/** Why each design key this binding leaves absent, or reads only, has no write (manual §16.11 "say which one"). */
 export const PHYSICS_ABSENT: Readonly<Record<string, string>> = {
   light: 'Physics has no on or off: the engine gates no fluid term by an enable (nativeFieldFace.physics.ts:12), so its light has no reading.',
   paused: 'A reading: the engine reports whether the field is held (observation.fieldPaused); it exposes no pause to write.',

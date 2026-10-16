@@ -1,4 +1,4 @@
-// The generic plate's layout (DEVICE-UI §8: "A device without views of its own is drawn by the generic plate: its parameters,
+// The generic plate's layout (manual §16.12: "A device without views of its own is drawn by the generic plate: its parameters,
 // grouped, in the order the device declares them"). Pure: which kit control a row takes (§5), how tall and wide it stands, and how
 // a device's rows fill its bands — sections by declared group in declared order, bands of fixed height, pages in the head when two
 // bands are not enough (§1 "Nothing scrolls … When a panel holds more than fits, it gets pages in its head"). The measures are

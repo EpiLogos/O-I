@@ -1,8 +1,8 @@
 // The catalogue gallery (npx vite --config src/inhabitants/catalogue/vite.config.mjs, port 5208). It draws every device the
 // families declare at the door, through the shell's own runtime (frame/devices/DeviceView.tsx), in each view the manual names
-// (docs/dlw/DLW.md §16.1): folded, compact, whole (in the pool, and flipped up over the chain), full, pop-out and widget. The
+// (docs/dlw/DLW.md §16.3): folded, compact, whole (in the pool, and flipped up over the chain), full, pop-out and widget. The
 // DLW manual embeds it beside each device's spec:
-//   ?device=<family>:<face>&view=all|folded|compact|whole|flip|full|popout|widget   one device
+//   ?device=<family>:<face>&view=all|folded|compact|whole|flip|full|popout|widget   one device (or a comma list of views)
 //   (no device)                                                          the index of every declared device
 // Readings are a labelled fixture (?values=none shows the owner-less state): the gallery writes no owner.
 import {createRoot} from 'react-dom/client'
@@ -29,6 +29,13 @@ const VIEWS = ['folded', 'compact', 'whole', 'flip', 'full', 'popout', 'widget']
 /** What each frame shows, as its title: the view, and where it stands when that is not the view's only place. */
 const FRAME_TITLE: Readonly<Record<View, string>> = {folded: 'folded', compact: 'compact', whole: 'whole · the pool', flip: 'whole · flipped up over the chain', full: 'full · a pane', popout: 'pop-out · its own window', widget: 'widget · the rail'}
 type View = typeof VIEWS[number]
+
+/** The views a query names: all, one, or a comma list (?view=flip,popout). */
+const viewsOf = (param: string): readonly View[] => {
+  if (param === 'all') return VIEWS
+  const named = param.split(',').filter((name): name is View => (VIEWS as readonly string[]).includes(name))
+  return named.length ? named : VIEWS
+}
 
 const humanise = (key: string): string => key.split(/[-_]/).map(part => (part ? part[0]!.toUpperCase() + part.slice(1) : '')).join(' ')
 
@@ -119,6 +126,8 @@ function DesignedViews({design, views, fixture: first}: {design: DesignedDevice;
   const [folded, setFolded] = useState(false)
   const pane = useRef<HTMLDivElement>(null), flip = useRef<HTMLDivElement>(null), win = useRef<HTMLDivElement>(null)
   const [expanded, setExpanded] = useState(false)
+  // The wide frames (flipped up, its own window) take the page's width, up to a window's.
+  const wide = Math.min(1180, Math.max(640, window.innerWidth - 24))
   const show = (at: {current: HTMLElement | null}) => at.current?.scrollIntoView({block: 'nearest', behavior: 'smooth'})
   const set = (key: string, value: Value | undefined) => setValues(was => {
     const next = {...was}
@@ -136,14 +145,14 @@ function DesignedViews({design, views, fixture: first}: {design: DesignedDevice;
       // Live's expanded view: the whole panel rises from the chain over the lower panes; the chain stays under it.
       case 'flip': return <div className="cat-flip" ref={flip}>
         <div className="cat-flip-panes" aria-hidden="true">Panes</div>
-        {flippedOf(design, {...props, room: undefined}, {w: 1180, h: 192})}
+        {flippedOf(design, {...props, room: undefined}, {w: wide, h: 192})}
         <div className="cat-flip-chain"><PlaceContext.Provider value={{...place, expanded: true}}>{design.compact(props)}</PlaceContext.Provider></div>
       </div>
       case 'full': return <div className="cat-pane cat-pane--ref" ref={pane}>{design.full({...props, frame: 'pane', room: {w: 760, h: 420}})}</div>
       // Live's plug-in window: the device's own window, the material over every control.
       case 'popout': return <div className="cat-window" ref={win}>
         <div className="cat-window-bar"><i /><i /><i /><span>{design.title}</span></div>
-        <div className="cat-window-room">{popoutOf(design, props, {w: 1180, h: 620})}</div>
+        <div className="cat-window-room">{popoutOf(design, props, {w: wide, h: 620})}</div>
       </div>
       case 'widget': return <div className="cat-rail cat-rail--ref"><div className="cat-rail-head">Rail</div><div className="cat-rail-tiles">{design.widget(props)}</div></div>
     }
@@ -205,12 +214,12 @@ function Gallery() {
   if (!id) return <Index />
   if (design === 'loading') return <main className="cat-missing"><p>Loading <b>{id}</b>…</p></main>
   if (design && query.get('generic') !== '1') {
-    const views = viewParam === 'all' ? VIEWS : (VIEWS as readonly string[]).includes(viewParam) ? [viewParam as View] : VIEWS
+    const views = viewsOf(viewParam)
     return <main className="cat-device"><DesignedViews design={design} views={views} fixture={query.get('fixture')} /><StatusLine /></main>
   }
   if (loadError) return <main className="cat-missing"><p><b>{id}</b>: its designed views did not load.</p><pre>{loadError}</pre></main>
   if (!found) return <main className="cat-missing"><p><b>{id}</b> is not declared at the door.</p><p>Its catalogue entry is the specification for its declaration.</p></main>
-  const views = viewParam === 'all' ? VIEWS : (VIEWS as readonly string[]).includes(viewParam) ? [viewParam as View] : VIEWS
+  const views = viewsOf(viewParam)
   return <main className="cat-device">
     <DeviceViews device={found} views={views} />
     {fixture && <p className="cat-note">Fixture readings — the gallery writes no owner.</p>}
@@ -218,3 +227,10 @@ function Gallery() {
 }
 
 createRoot(document.getElementById('root')!).render(<Gallery />)
+
+// Embedded in the manual, the gallery tells the page its height, so the frame fits every view it draws (docs/dlw/render.mjs).
+if (window.parent !== window) {
+  const tell = () => window.parent.postMessage({dlwGallery: {h: Math.ceil(document.documentElement.scrollHeight)}}, '*')
+  new ResizeObserver(tell).observe(document.body)
+  tell()
+}

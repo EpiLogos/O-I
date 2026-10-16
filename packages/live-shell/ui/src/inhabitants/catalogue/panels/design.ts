@@ -1,4 +1,4 @@
-// A designed device: its six views, each drawn from one set of values (manual §16.1). The host owns the values, the navigation
+// A designed device: its six views, each drawn from one set of values (manual §16.3). The host owns the values, the navigation
 // and the room each view stands in; a view only reads them and asks for changes. The gallery hosts the reference devices on a
 // labelled fixture; the shell hosts the same views on the owner's values and writes (frame/devices/designed.ts, the
 // DesignBinding).
@@ -42,7 +42,7 @@ export interface ViewProps {
   /** The page shown in the head, where the device has pages. */
   readonly page: string
   readonly setPage: (page: string) => void
-  /** The standing of each value by key (DEVICE-UI §6: waiting, refused, held, automated, modulated, disabled). */
+  /** The standing of each value by key (manual §16.10: waiting, refused, held, automated, modulated, disabled). */
   readonly standing?: Readonly<Record<string, Standing>>
   /** The owner's readings alone, without what the hand holds or what waits on the owner: a light reads these. */
   readonly owner?: Values
@@ -56,7 +56,7 @@ export interface ViewProps {
 
 export interface Room {readonly w: number; readonly h: number}
 export type Frame = 'chain' | 'pool' | 'flip' | 'pane' | 'window' | 'rail'
-/** The six views (manual §16.1). */
+/** The six views (manual §16.3). */
 export type ViewName = 'folded' | 'compact' | 'whole' | 'full' | 'popout' | 'widget'
 
 export interface DesignedDevice {

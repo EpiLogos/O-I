@@ -1,4 +1,4 @@
-// A device at full size in a pane (DEVICE-UI §2 Full: "The material itself … No controls"; DLW §16.1: "A pane is a device at full
+// A device at full size in a pane (manual §16.3 Full: "The material itself … No controls"; DLW §16.1: "A pane is a device at full
 // size. Its controls stay out of the pane and appear in Device view below it"). The pane kind `projection.device` holds one device
 // by id (the binding's subject); it draws the device's Full view — its own, or its live picture at pane size — read through the
 // device door on the same binding the chain and the pool read.
