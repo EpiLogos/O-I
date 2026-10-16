@@ -46,3 +46,36 @@ test('the frame sets the class only from the shell\'s declaration, answers both 
  assert.match(door,/new Event\('change', \{bubbles: true\}\)/);
  assert.match(door,/new FocusEvent\('focusout', \{bubbles: true\}\)/);
 });
+
+// Lane BE: the editors the frame summons over its field (Acts, the Nara instrument, Find on Canvas, the Library) are given device homes in
+// the shell while it presents the frame on its devices; standalone and at full size the frame opens them as it always has.
+test('the summoned editors stand as homes of their own, and the Library\'s summon is a count the shell answers once', () => {
+ for(const home of ['acts','nara:instrument','canvas:find'])assert.ok(FRAME_CHROME_HOMES.includes(home),`${home} is a home of the chrome`);
+ const control={id:'acts/l:Roles',home:'acts',kind:'button',label:'Roles'};
+ assert.deepEqual(readFrameChrome({lens:'expressions',controls:[control],summons:{library:2}}),{lens:'expressions',controls:[control],summons:{library:2}});
+ assert.deepEqual(readFrameChrome({lens:'expressions',controls:[]}),{lens:'expressions',controls:[]},'no summon yet: none is read');
+ assert.equal(readFrameChrome({lens:'expressions',controls:[],summons:{library:-1}}),null,'a count is never negative');
+ assert.equal(readFrameChrome({lens:'expressions',controls:[],summons:{library:1.5}}),null,'nor a fraction');
+ assert.equal(readFrameChrome({lens:'expressions',controls:[],summons:{acts:1}}),null,'only the Library is handed over by count');
+ assert.equal(readFrameChrome({lens:'expressions',controls:[],summons:[]}),null);
+});
+
+test('presented on the devices the editors stand down over the field, are read as chrome, and the Library is handed to the shell', async () => {
+ const css=await source('../src/workspace.css');
+ const rule=css.slice(css.indexOf('body.oi-chrome-devices #app>.masthead,'));
+ const block=rule.slice(0,rule.indexOf('}')+1);
+ for(const editor of ['#act-panel','#nara-instrument','.canvas-find-overlay'])assert.ok(block.includes(editor),`${editor} stands down: concealed, never removed`);
+ assert.match(css,/body\.oi-chrome-devices \.canvas-find-overlay::backdrop\{display:none\}/,'a Find never dims the field');
+ const door=await source('../src/presentedChrome.ts');
+ for(const [region,home] of [['#act-panel','acts'],['#nara-instrument','nara:instrument'],['.canvas-find-overlay','canvas:find']]){
+  assert.ok(door.includes(`root: one('${region}'), home: () => '${home}'`),`${region} is read under ${home}`);
+  assert.ok(door.match(/const CHROME_ROOTS = '([^']*)'/)[1].split(',').includes(region),`a change inside ${region} is announced`);
+ }
+ assert.match(door,/summon\(kind\) \{\n\s*if \(presentation !== 'devices'\) return false/,'only on the devices: in its own presentation the frame opens the editor itself');
+ const app=await source('../src/app.ts');
+ assert.match(app,/function openLibrary\([^)]*\)\{[^\n]*if\(section==='collection'&&presentedChrome\?\.summon\('library'\)\)return;/,'the Library is handed over before anything of the field changes');
+ const nara=await source('../src/naraInstrument.tsx');
+ assert.match(nara,/if\(app&&!document\.body\.classList\.contains\('oi-chrome-devices'\)\)app\.inert=true;/,'on the devices the field stays live under the Nara instrument');
+ const find=await source('../src/canvasFindOverlay.tsx');
+ assert.match(find,/if\(document\.body\.classList\.contains\('oi-chrome-devices'\)\)dialog\.current\?\.show\(\);else dialog\.current\?\.showModal\(\);/,'on the devices Find is not modal over the canvas');
+});

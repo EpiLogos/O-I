@@ -15,9 +15,12 @@ export type FramePresentation = (typeof FRAME_PRESENTATIONS)[number];
 /** Where a control of the frame's chrome belongs, in the manual's own groups (DLW.md §17.3 Canvas "Tools, Lines, Relation, Look,
  * Views", §17.4 Timeline "Lens, Readings, Standing, Window", §17.5 Journey "Stops, Pace, Transitions, Takes"), and for the stage-wide
  * chrome the masthead's and scene bar's own clusters: work (Save, Undo, Redo), tools (the rail and the workspace menu), capture, nara,
- * scene (the scene bar), side (the toolbelt handle), lens (the M0′–M3′ chooser). One closed list for frame, boundary and shell. */
-export const FRAME_CHROME_HOMES = ['work', 'tools', 'capture', 'nara', 'scene', 'side', 'lens',
-  'canvas:tools', 'canvas:lines', 'canvas:relation', 'canvas:look', 'canvas:views',
+ * scene (the scene bar), side (the toolbelt handle), lens (the M0′–M3′ chooser). The editors the frame summons over its field stand as
+ * homes of their own while they are open (lane BE: in the 'devices' presentation they stand down over the field and stand on a device in
+ * the shell's pool instead): acts (the scene bar's Acts, actPanel.ts), nara:instrument (the personal Nara instrument, naraInstrument.tsx)
+ * and canvas:find (Find on Canvas, canvasFindOverlay.tsx). One closed list for frame, boundary and shell. */
+export const FRAME_CHROME_HOMES = ['work', 'tools', 'capture', 'nara', 'scene', 'side', 'lens', 'acts', 'nara:instrument',
+  'canvas:tools', 'canvas:lines', 'canvas:relation', 'canvas:look', 'canvas:views', 'canvas:find',
   'timeline:lens', 'timeline:readings', 'timeline:standing', 'timeline:window',
   'journey:stops', 'journey:pace', 'journey:transitions', 'journey:takes',
   'project:view'] as const;
@@ -34,8 +37,13 @@ export interface FrameChromeControl {
   short?: string; title?: string; pressed?: boolean; disabled?: boolean; value?: string
   options?: FrameChromeOption[]; min?: number; max?: number; step?: number
 }
-/** The frame's chrome as it stands: the cut and lens it is drawn for, and every control, in the frame's order. */
-export interface FrameChromeReading {lens: string; controls: FrameChromeControl[]}
+/** The editors the frame hands to the shell to open in their own device home, in the 'devices' presentation (lane BE): the Library, which
+ * the shell opens full in a pane on its own page (library.html) instead of over the field. */
+export const FRAME_SUMMONS = ['library'] as const;
+export type FrameSummon = (typeof FRAME_SUMMONS)[number];
+/** The frame's chrome as it stands: the cut and lens it is drawn for, and every control, in the frame's order; and how many times since it
+ * started the frame has handed each summon to the shell (a count, so a reading never replays a summon the shell has answered). */
+export interface FrameChromeReading {lens: string; controls: FrameChromeControl[]; summons?: Partial<Record<FrameSummon, number>>}
 export const FRAME_CHROME_LIMITS = {controls: 400, options: 200, text: 512, id: 200} as const;
 const chromeText = (value: unknown, max: number = FRAME_CHROME_LIMITS.text): value is string => typeof value === 'string' && value.length <= max && !/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/.test(value);
 /** A value the frame's own control holds (a choice's value, a field's text): bounded, and carried as it is — the frame's choices join
@@ -44,7 +52,18 @@ const chromeValue = (value: unknown): value is string => typeof value === 'strin
 const finite = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value);
 /** The chrome reading, exact or refused (null): every key is closed and every string bounded. */
 export function readFrameChrome(raw: unknown): FrameChromeReading | null {
-  if (!plain(raw) || !closed(raw, ['lens', 'controls']) || !chromeText(raw.lens, 64) || !Array.isArray(raw.controls) || raw.controls.length > FRAME_CHROME_LIMITS.controls) return null;
+  if (!plain(raw) || !closed(raw, ['lens', 'controls', 'summons']) || !chromeText(raw.lens, 64) || !Array.isArray(raw.controls) || raw.controls.length > FRAME_CHROME_LIMITS.controls) return null;
+  let summons: Partial<Record<FrameSummon, number>> | undefined;
+  if (raw.summons !== undefined) {
+    if (!plain(raw.summons) || !closed(raw.summons, FRAME_SUMMONS)) return null;
+    summons = {};
+    for (const key of FRAME_SUMMONS) {
+      const count = raw.summons[key];
+      if (count === undefined) continue;
+      if (!Number.isSafeInteger(count) || (count as number) < 0) return null;
+      summons[key] = count as number;
+    }
+  }
   const controls: FrameChromeControl[] = [];
   const ids = new Set<string>();
   for (const item of raw.controls) {
@@ -78,7 +97,7 @@ export function readFrameChrome(raw: unknown): FrameChromeReading | null {
     }
     controls.push(control);
   }
-  return {lens: raw.lens, controls};
+  return {lens: raw.lens, controls, ...(summons ? {summons} : {})};
 }
 /** Rail tools the shell may choose. Text and formation open their panels; pin is a placement mode. Orbit is a stage pointer gesture, never a command. */
 export const STAGE_TOOLS = ['select', 'interact', 'pin', 'text', 'formation'] as const;

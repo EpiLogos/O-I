@@ -8,7 +8,9 @@ export function CanvasFindOverlay({canvasKey,targets,tools,onChoose}:{canvasKey:
  const dialog=useRef<HTMLDialogElement>(null),input=useRef<HTMLInputElement>(null),trigger=useRef<HTMLButtonElement>(null);
  const hits=useMemo(()=>findCanvasTargets(targets,query),[targets,query]),current=hits.find(hit=>hit.key===selected)??hits[0];
  const choose=(target:CanvasFindTarget)=>{try{onChoose(target);setSelected(target.key);setError('');}catch(cause){setError(cause instanceof Error?cause.message:String(cause));}};
- useEffect(()=>{if(!open)return;dialog.current?.showModal();input.current?.focus();return()=>dialog.current?.close();},[open]);
+ // Lane BE: presented on the shell's devices (presentedChrome.ts 'devices'), Find stands on a device in the pool and the canvas stays live
+ // under the pane's pointer, so it opens without a modal; in the frame's own presentation it opens modal, as it always has.
+ useEffect(()=>{if(!open)return;if(document.body.classList.contains('oi-chrome-devices'))dialog.current?.show();else dialog.current?.showModal();input.current?.focus();return()=>dialog.current?.close();},[open]);
  useEffect(()=>{setOpen(false);setQuery('');setSelected(undefined);setError('');},[canvasKey]);
  useEffect(()=>{const key=(event:KeyboardEvent)=>{const focused=document.activeElement as HTMLElement|null;if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='f'&&focused?.closest('.research-canvas')){event.preventDefault();setOpen(true);}};document.addEventListener('keydown',key);return()=>document.removeEventListener('keydown',key);},[]);
  const close=()=>{setOpen(false);trigger.current?.focus();};

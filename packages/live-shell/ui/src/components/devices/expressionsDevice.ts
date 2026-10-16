@@ -52,7 +52,7 @@ export function expressionsFieldEntry(family: string): RackDevice | null {
 // ---------------------------------------------------------------------------
 // the discrete settings: each is a write the editor admits and a reading the scene holds
 
-type Choice = {readonly value: string; readonly label: string}
+export type Choice = {readonly value: string; readonly label: string}
 type SettingKind = 'field-setting' | 'panel-setting' | 'morph-setting' | 'colour-setting'
 interface SettingSpec {
   /** The owner's own key for the setting (the change's `key`). */
@@ -151,6 +151,12 @@ const SETTINGS: Readonly<Record<string, readonly SettingSpec[]>> = {
 /** The settings a family's whole device carries as rows (for the tests and the notes that name what stays out). */
 export function expressionsSettingKeys(family: string): readonly string[] {
   return (SETTINGS[family] ?? []).map(spec => spec.key)
+}
+
+/** A setting's choices as the owner writes them (the value) and the row shows them (the label); undefined for a switch or an unknown
+ * setting. A designed device draws the owner's values, so its binding maps the row's label back to the value (physicsBinding.ts). */
+export function expressionsSettingChoices(family: string, key: string): readonly Choice[] | undefined {
+  return (SETTINGS[family] ?? []).find(spec => spec.key === key)?.choices
 }
 
 /** A setting's value as the row shows it: the owner's label for a choice, the boolean for a switch; unknown when the scene does not say. */

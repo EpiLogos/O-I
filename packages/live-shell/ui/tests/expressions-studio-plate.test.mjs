@@ -101,7 +101,8 @@ test('the Device side is one Studio plate: its head the owner\'s standing and th
   const html = studio(reading({selection: ['e-stone'], devices: [{id: 'colour-1', family: 'colour'}, {id: 'sound-1', family: 'sound'}], dirty: true}))
   assert.equal((html.match(/class="inst-plate"/g) ?? []).length, 1, 'one plate')
   assert.match(html, /data-studio="sections"/)
-  assert.match(html, /<h3 class="sdk-face__title">Studio<\/h3><span class="sdk-face__owner">Expressions engine · the stone · edited since save<\/span>/, 'the owner\'s standing, in its words')
+  // lane BT: the head is the panel kit's (DEVICE-UI §4.1); who owns the plate and where the work stands is the status bar's words
+  assert.match(html, /<header class="dp-head dp-head--plate" data-i="Studio\|Expressions engine · the stone · edited since save">.*?<span class="dp-title">Studio<\/span>/, 'the owner\'s standing, in its words')
   for (const label of ['Configure: your rack, chosen controls, macros and the Scene', 'Deep edit: the Studio at full height', 'Read the retained editor again']) {
     assert.match(html, new RegExp(`aria-label="${label}"`), `${label}: a mark on the plate's head`)
   }
@@ -112,8 +113,9 @@ test('the Device side is one Studio plate: its head the owner\'s standing and th
   // settings and macros"): the chosen controls — the frame's toolbelt — always stand, as the Studio's own Your controls, with + Parameter.
   const yours = html.slice(html.indexOf('data-section="chosen"'))
   assert.ok(html.indexOf('data-section="chosen"') > html.indexOf('data-section="studio:capture"'), 'Your controls stand after the eight sections')
-  assert.match(yours, /<strong>Chosen controls<\/strong><button[^>]*>\+ Parameter<\/button>/, 'the curation stands on the Studio, its browse one press away')
-  assert.equal((html.match(/Chosen controls<\/strong>/g) ?? []).length, 1, 'once')
+  assert.match(yours, /<button type="button" class="dp-action"[^>]*>\+ Parameter<\/button>/, 'the curation stands on the Studio, its browse one press away: the kit\'s action')
+  assert.equal((html.match(/aria-label="Chosen native controls"/g) ?? []).length, 1, 'once')
+  assert.doesNotMatch(yours, /<strong>Chosen controls<\/strong>|native-chosen-editor/, 'no box of its own in the section (lane BE): the section\'s title names it')
 })
 
 test('a field section stands its devices through the runtime, one shown behind its mark, the one on the rack first', () => {
@@ -135,7 +137,7 @@ test('a field section stands its devices through the runtime, one shown behind i
 
 test('Selected · the glyph holds the Object chooser, the Force card\'s modes for the one object, and its object devices', () => {
   const none = sectionOf(studio(reading()), 'studio:selected')
-  assert.match(none, /<select aria-label="Native editor selection">/)
+  assert.match(none, /<select class="dp-chooser" aria-label="Native editor selection">/, 'the kit\'s chooser')
   assert.match(none, /Choose one object to act on it\./)
   const one = sectionOf(studio(reading({selection: ['e-stone'], devices: [{id: 'sound-1', family: 'sound'}]})), 'studio:selected')
   assert.match(one, /<option value="e-stone" selected="">the stone<\/option>/)

@@ -1338,7 +1338,7 @@ function renderLibrary(){coverObserver?.disconnect();const {read:library,origins
  if(typeof IntersectionObserver==='undefined')images.forEach(paint);
  else{coverObserver=new IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting){paint(entry.target as HTMLImageElement);coverObserver?.unobserve(entry.target);}},{root:$('library-page'),rootMargin:'160px'});images.forEach(image=>coverObserver!.observe(image));}
 }
-function openLibrary(section:'collection'|'about'='collection',navigate=true){if(propertyTake)finishPropertyTake();
+function openLibrary(section:'collection'|'about'='collection',navigate=true){/* Lane BE: presented on the shell's devices, the Library opens in its own device home — full in a pane, its own page (library.html) — never over this field: the frame hands the summon to the shell (presentedChrome.ts summon) and its field plays on. */if(section==='collection'&&presentedChrome?.summon('library'))return;if(propertyTake)finishPropertyTake();
  wikiStanding.begin(); // E21: a refusal is not kept across opens; each subject is asked once more in this open.
  if(!libraryOpen)rememberCover();
  pointer.active=false;modesOpen=false;captureOpen=false;librarySection=section;libraryOpen=true;refreshQuarantine();refreshOwnerQuarantine();refreshCollections();

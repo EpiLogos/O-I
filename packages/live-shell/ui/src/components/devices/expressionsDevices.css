@@ -6,7 +6,8 @@
 .native-rack-body .expr-device .device--compact { width: 100% }
 .native-rack-body .expr-device .sdk-face { padding: 0; border: 0; background: transparent; min-width: 0 }
 .native-rack-body .expr-device .sdk-face__head,
-.native-rack-body .expr-device .sdk-face__owner { display: none }
+.native-rack-body .expr-device .sdk-face__owner,
+.native-rack-body .expr-device .dp > .dp-head { display: none }
 
 /* A folded card keeps its device mounted (an unsent change survives the fold) and shows only its head. */
 .native-rack-card.is-folded .native-rack-body { display: none }

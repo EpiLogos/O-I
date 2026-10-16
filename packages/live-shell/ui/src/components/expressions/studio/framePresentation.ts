@@ -13,6 +13,7 @@
 import {useEffect, useRef, useState} from 'react'
 import type {FramePresentation} from '@epilogos/expressions-boundary'
 import {useFramePlacement, useHostedChrome} from '../../../projections/expressionsPaneHost'
+import {useSummonedEditors} from '../../devices/summonedEditors'
 
 /** The presentation a placement asks for: the frame's own controls only in a pane at full size. Pure. */
 export function wantedPresentation(maximised: boolean): FramePresentation {
@@ -40,6 +41,8 @@ function useHolderMaximised(slot: HTMLElement | null): boolean {
  * that predates the door reads none and is left as it stands). A declaration the host refuses — the frame concealed, or a new frame not
  * yet answering — is asked again on the frame's next reading, or after a wait that grows to ten seconds. */
 export function useFramePresentation(): void {
+  // The editors the frame summons stand in their device homes while it stands on the devices (lane BE, summonedEditors.tsx).
+  useSummonedEditors()
   const chrome = useHostedChrome()
   const placement = useFramePlacement()
   const want = wantedPresentation(useHolderMaximised(placement?.slot ?? null))

@@ -309,7 +309,9 @@ export function installNaraInstrument(host:NaraInstrumentHost){
  const app=document.getElementById('app'),wasInert=app?.inert??false;
  const render=()=>root.render(<NaraInstrument host={host} close={close} visible={visible}/>);
  const close=()=>{visible=false;container.hidden=true;if(app)app.inert=wasInert;trigger.setAttribute('aria-expanded','false');document.body.classList.remove('nara-depth-open');render();trigger.focus();};
- const open=()=>{visible=true;container.hidden=false;if(app)app.inert=true;trigger.setAttribute('aria-expanded','true');document.body.classList.add('nara-depth-open');render();requestAnimationFrame(()=>container.querySelector<HTMLElement>('select,button')?.focus());};
+ // Lane BE: presented on the shell's devices (presentedChrome.ts 'devices'), the instrument stands on a device in the pool and the field
+ // stays live in its pane, so the application is not made inert behind it; in the frame's own presentation it is, as it always was.
+ const open=()=>{visible=true;container.hidden=false;if(app&&!document.body.classList.contains('oi-chrome-devices'))app.inert=true;trigger.setAttribute('aria-expanded','true');document.body.classList.add('nara-depth-open');render();requestAnimationFrame(()=>container.querySelector<HTMLElement>('select,button')?.focus());};
  render();trigger.addEventListener('click',()=>visible?close():open());
  const key=(e:KeyboardEvent)=>{if(e.key==='Escape'&&visible){e.preventDefault();e.stopPropagation();close();}};container.addEventListener('keydown',key);
  return {open,close,destroy(){root.unmount();host.presentForm?.(null);if(app)app.inert=wasInert;container.remove();trigger.remove();document.body.classList.remove('nara-depth-open');}};
