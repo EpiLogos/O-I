@@ -202,9 +202,13 @@ fn command_development_suite_check_s0(args: &[std::ffi::OsString]) -> Result<i32
     Ok(0)
 }
 
+/// The active product a locator resolves (`oi where`, the world heads), under
+/// the dispatch verification (`verify_active_suite_receipt`): an unmoved
+/// suite is not hashed again on every call. `oi suite status|check` and the
+/// supersede publish keep the full check (`s0_check_active_suite_receipt`).
 fn active_suite_executable_s0(product_id: &str) -> Result<Option<PathBuf>, String> {
     let Some(receipt) = load_active_suite_receipt()? else { return Ok(None) };
-    s0_check_active_suite_receipt(&receipt)?;
+    verify_active_suite_receipt(&receipt)?;
     let product = receipt.products.get(product_id).ok_or_else(|| format!("active suite {} has no product {product_id}", receipt.receipt_ref))?;
     Ok(Some(PathBuf::from(product.executable.as_deref().ok_or("active product has no executable")?)))
 }

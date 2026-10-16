@@ -268,6 +268,54 @@ fn reconcile_suite_with_current(data_root: &Path, current: &[String], json_mode:
     Ok(0)
 }
 
+/// The `oi` this update installed, when it is not the binary running the
+/// update. An update installs `oi` itself, so the `oi` running it can be
+/// older than the one it leaves behind — on 15 October an `oi` without the
+/// supersede step left the suite receipt shadowing every product. The suite
+/// reconcile is then the installed `oi`'s step, so the newest supersede law
+/// decides what the active suite receipt pins, whichever `oi` ran the update.
+fn installed_oi_other_than_running(
+    managed: &BTreeMap<String, ManagedProduct>,
+    updated: &[String],
+) -> Option<PathBuf> {
+    if !updated.iter().any(|id| id == "oi") {
+        return None;
+    }
+    let installed = fs::canonicalize(&managed.get("oi")?.managed).ok()?;
+    let running = env::current_exe().and_then(fs::canonicalize).ok();
+    (running.as_ref() != Some(&installed)).then_some(installed)
+}
+
+/// Run the suite reconcile under the installed `oi` (`oi update
+/// --reconcile-suite PRODUCT...`). An installed `oi` that cannot — one older
+/// than this step, or one that fails — leaves the reconcile to this `oi`, so
+/// the update never ends with the suite left unreconciled.
+fn hand_suite_reconcile_to(
+    installed: &Path,
+    data_root: &Path,
+    ids: &[String],
+    json_mode: bool,
+) -> Result<(), String> {
+    let mut command = Command::new(installed);
+    command.args(["update", "--reconcile-suite"]);
+    if json_mode {
+        command.arg("--json");
+    }
+    let outcome = command.args(ids).status();
+    if matches!(&outcome, Ok(status) if status.success()) {
+        return Ok(());
+    }
+    eprintln!(
+        "oi: the installed oi {} did not reconcile the active suite receipt ({}); this oi reconciles it",
+        installed.display(),
+        match outcome {
+            Ok(status) => status.to_string(),
+            Err(error) => error.to_string(),
+        },
+    );
+    reconcile_suite_with_current(data_root, ids, json_mode).map(|_| ())
+}
+
 fn report_suite_supersession(supersession: Option<&SuiteSupersession>, json_mode: bool) -> Result<(), String> {
     let Some(supersession) = supersession else { return Ok(()) };
     if json_mode {

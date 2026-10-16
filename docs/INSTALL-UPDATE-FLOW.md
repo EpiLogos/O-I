@@ -98,6 +98,15 @@ are undone and the replaced suite receipt becomes active again.
 `oi update --rollback` brings the suite receipt to the restored set the same
 way.
 
+When an apply installs an `oi` other than the one running it, the supersede
+runs under the newly installed `oi` (`oi update --reconcile-suite PRODUCT…`,
+after the update receipts are written), with the running `oi` as the fallback:
+an update started by an older `oi` never leaves the suite receipt pinned to the
+old hashes (16 October 2026: an apply under an older `oi` had shadowed every
+product until a second apply under the new one). `oi where` and the world heads
+resolve through the cached dispatch verification; `oi suite status`,
+`oi suite check` and the supersede itself keep the full check.
+
 Only a developer-source suite is superseded. When the active suite is on any
 other channel, an apply of a product it pins is refused before anything
 builds, and the whole suite moves through `oi suite update`.
