@@ -100,11 +100,33 @@ objections verbatim and the full validation (`BRIEF-BUILDER.md`); the lead conve
 | Ticket | Who | Zone | Since |
 |---|---|---|---|
 | Native screen passes, convergence, PATH | lead | `App.tsx`, `shell/modeFrames.ts`, the book, the register, PATH | 14 Oct |
+| BC2 — Central's page family wired (Document, Flow, Workspace, Text, Highlight, Notes, Beings, Things); Ground hygiene's and Impact's model defects; Central receipts re-read | builder | `central/**`, the Central inhabitants models, `worldShellFamilies.ts`, `DocumentFlowFace.tsx`, the document door | 16 Oct |
+| BF2 — Thread, the Gateways rack, Experiment, Frames monitor (+ widget), the Agency gateway on their owners; the Agent's thread key | builder | `agent/**`, `frame/widgets/**` (the Frames widget) | 16 Oct |
+| BL — Live's and QL's devices (§21, §22): the Torus on its owner with the sky's modulation arc, the keyboard and note devices, the Sky and the clock | builder | `live/**`, the QL sky/clock/deck/chakra/matrix device files | 16 Oct |
+| W4 — `oi`: per-call checks on the cached receipt, sha256 in-process, an update under an older `oi` leaves no shadow | builder | `cli/src/**`, `cli/tests/**` | 16 Oct |
 | The catalogue of designed devices (owner, 16 Oct: "the parallel lanes are developing the high end device component specs in the documentation lane, you can directly work from its … catalogue of pre designed UI, the wiring and UX integration should be somewhat trivial wiring"): `catalogue/panels/design.ts` is the contract, `panels/<family>__<face>.tsx` (exporting `design`, loaded through `loadDesign`) the designs. The runtime hosts each published device's design when one exists, else the generic plate; a device lane writes the binding (owner readings and writes on the design's value keys), never a panel | the owner's documentation lane | `inhabitants/catalogue/**` — read-only for every builder | 16 Oct |
-| BC — Central's designed devices wired to Central: the Day (with the owner's ensure as a press, never a timer), the Document, the Flow document | builder | `central/**` | 16 Oct |
-| BF — the agent chain's designed devices wired to AIKit, Factory and Actuation: the harness model, the Skillset rack, the member device, Scope | builder | `agent/**` | 16 Oct |
-| D — the door's revision_conflict the shell never hears; the Studio's false "edited since save"; a fault line that outlives its mode | builder | `desktop/cradle/expressions-app/**`, `techne/subject/**` (not `worldRows.ts`), `components/expressions/studio/**` | 16 Oct |
-| W1 — AIKit's root register stays warm: the generic walk skips the live NOW field, `.central` and any `CACHEDIR.TAG` directory; the wiki projection cache prunes; Central writes `source-change-control.json` only on change; git_diff's test repos get unique paths | builder | ai-kit `env-1` (`speed/root-register-stays-warm`): `crates/aikit-cli/src/app/knowledge.rs`, `knowledge/**`, `tests/**`; Central `env-2` (`speed/source-horizon-writes-on-change`): `ctrl/src/source_horizon.rs`, `connectors/git-sync/src/git_diff.rs`, `ctrl/tests/**` | 16 Oct |
+
+Then: lanes D, BC, BF, W1, W3, BT, BE and R2 converged (16 Oct). D (`533ac32f8`): an opened work reads saved until edited (the
+frame had written its own shared settings into every loaded work), a conflict reads the owner's current revision and the frame's
+refusal reaches the shell's ask in the owner's words, a fault stands only on the pane that raised it. BC (`9184ae9f2`, `1c59a1a79`):
+the Day draws its catalogue design on Central's readings; Open today is the person's press through Central's ensure-day — the
+documentation lane's Day (21249d7b9) draws the refusal in its well and the press. BF (`b04124a93`) and R2 (`9a1974d13`): the agent
+chain's Gateway, Agent, Skillset rack, member device and Scope draw their designs on AIKit/Factory/Actuation, every refused write
+disabled with its owner-op reason; the runtime gained a fault boundary per view, a device's own Full (the Day's page, the Agent's
+thread), place marks on designed heads, view-held keys (Cancel reaches the binding); the setter bridge's existence check retired.
+W1 (ai-kit #510, Central #274): the root register stays warm — ledger 7,566 → 565 observations, 0 changes in 600 s, a cold root
+walk 7–11 s → 0.8–1.8 s, a root-cold door batch 14 → 8 s, relations byte-equal 17/17; Central writes its state only on change.
+W3 (`aba029db5`): every write B0 found ordered under the lock is prepared or free — a 60 s owner write's lock_held 60,380 → 1.4 ms,
+lock-probe p95 60 s → 6.7 ms; receipts now_changed/day_changed/receiving_changed/factory_run_changed, the temporal field re-reads on
+them (its floor kept only for other processes' writes; agency's 30 s floor kept — AIKit has no session event, proposed); a temporal
+read 27 → 10 processes; the native host writes a timing line per op (OI_KERNEL_TRACE_FILE); src-tauri clippy clean and gated.
+BT (`1f6ff5d42`, `b8bb75051`): M0′–M5′ carry a live picture in their wells and stand on the kit's head, no sentence in a plate,
+ownerless controls disabled with their reason, Compacts follow the open plate's width, the detail head names the standing
+instrument. BE (`108634cf3`): the Studio fits its band with one Save at 1280/1372/1440, Your controls page as kit dials, Physics draws
+on the field engine, Acts/Nara/Find/the Library open as devices, not over the field. Not yet bound (designs still on module
+constants, keys proposed to the documentation lane): the six Technē designs and the Expressions Field. A CI red fixed on the way:
+the kernel gateway test read a busy exec's refusal-as-data (`842ff3aa3`). Native: build n1 (`1e2d6db89`) launched; the screen pass
+waits on the owner's full-screen approval (two requests timed out); build n2 at `9a1974d13` is next.
 
 Then: lanes R and F landed. R (`f9792cac8`): every device draws on the owner's panel kit in five views from one binding — the
 catalogue's design where its family publishes a binding (`frame/devices/designs.ts` resolves `loadDesign('<family>:<face>')`), the
