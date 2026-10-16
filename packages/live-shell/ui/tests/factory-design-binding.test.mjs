@@ -526,10 +526,11 @@ test('the Agent, the rack, the member and Scope draw their designs on their bind
     const all = drawn.join('\n')
     for (const [key, why] of Object.entries(bind.REFUSED_WRITES[design.id])) {
       assert.equal(binding.standing[key].disabled, why, `${design.id}: ${key} stands disabled with the owner's missing operation`)
-      // An unread toggle (the Agent's heartbeat: nobody reports the beat) is drawn disabled, but the kit's cell says "no reading" in
-      // place of the reason (inhabitants/sdk/panel.tsx Cell: `unknown` replaces doesIn) — proposed to the kit's lane.
-      if (design.id === bind.AGENT_DESIGN && key === 'heartbeat') {
-        assert.match(all, /<div class="dp-cell dp-cell--toggle" data-i="Beat\|[^"]*" data-unread="true" data-disabled="true"><button[^>]*disabled=""/, 'the beat is drawn disabled')
+      // The Agent's power light only reads (lane BF2): its standing stands the design's activator disabled (actuation__harness-model.tsx
+      // head: `st(p, 'light').disabled`). The kit's `lightWhy` would say why on the activator; the design's head does not pass it yet
+      // (proposed to the documentation lane), so the reason is the light's standing, and the activator is drawn disabled.
+      if (design.id === bind.AGENT_DESIGN && key === 'light') {
+        assert.match(all, /<button type="button" class="dp-activator"[^>]*disabled=""/, 'the power light only reads: its activator stands disabled')
         continue
       }
       assert.ok(all.includes(escaped(why)), `${design.id}: the control of ${key} says why it cannot act (${why})`)
@@ -547,8 +548,10 @@ test('the Agent, the rack, the member and Scope draw their designs on their bind
 
 test('the chain publishes each designed device with its binding, draws the member inside the rack, and names why a design waits', () => {
   const view = read('devices/FactoryDeviceChain.tsx')
-  assert.match(view, /publishDevice\(device\.id, \{device, picture: size => chainPicture\(slot\.id, pictures, size\), \.\.\.\(bindings\[slot\.id\] \? \{binding: bindings\[slot\.id\]!\} : \{\}\), \.\.\.\(slot\.id === 'agent' \? \{full: \{open: \(\) => threadOpener\.current\(\)\}\} : \{\}\)\}\)/,
+  assert.match(view, /publishDevice\(device\.id, \{device, picture: size => chainPicture\(slot\.id, pictures, size\), \.\.\.\(bindings\[slot\.id\] \? \{binding: bindings\[slot\.id\]!\} : \{\}\), \.\.\.\(slot\.id === 'agent' \? \{full: \{open: \(\) => threadOpener\.current\(\)\}\} : \{\}\),/,
     'the pool, a pane and the rail draw the same design on the same binding')
+  assert.match(view, /\.\.\.\(slot\.id === 'gateway' && main\.frames \? \{full: \{open: \(\) => openDevice\(FRAMES_ID, 'Frames'\)\}\} : \{\}\)\}\)/,
+    'the Gateway\'s own Full is the Frames monitor (§19.1, lane BF2)')
   assert.match(view, /<DeviceView device=\{device\} size="compact" picture=\{chainPicture\(slot\.id, pictures, 'compact'\)\} binding=\{bindings\[slot\.id\] \?\? undefined\}/)
   assert.match(view, /publishDevice\(memberDevice\.id, \{device: memberDevice, binding: memberDesignBinding\}\)/)
   assert.match(view, /slot\.id === 'skillset' && memberDevice && memberDesignBinding/, 'one chain inside the rack')

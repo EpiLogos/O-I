@@ -10,7 +10,7 @@ import {useCallback, useEffect, useRef, useState, type PointerEvent as ReactPoin
 import type {ReactNode} from 'react'
 import {Icon} from '../../inhabitants/sdk/Icon'
 import {publishRail} from '../devices/deviceDoor'
-import {deviceWidgets} from './deviceWidgets'
+import {claimedWidget, deviceWidgets} from './deviceWidgets'
 import {sameGlance, type WidgetDeclaration, type WidgetGlance, type WidgetRailBook} from './widgets'
 
 export function WidgetRail({widgets, book, selectionRef}: {widgets: readonly WidgetDeclaration[]; book: WidgetRailBook; selectionRef: string | null}) {
@@ -37,7 +37,8 @@ export function WidgetRail({widgets, book, selectionRef}: {widgets: readonly Wid
   useEffect(() => { publishRail({open: railOpen, toggle}) }, [railOpen, toggle])
   useEffect(() => () => publishRail(null), [])
   const devices = deviceWidgets(book.rail.open, needle)
-  const byId = new Map([...widgets, ...devices.open].map(widget => [widget.id, widget]))
+  // A registered widget a device claims draws as that device's widget (deviceWidgets.tsx claimRailWidget: the Frames monitor, §23.8).
+  const byId = new Map([...widgets.map(claimedWidget), ...devices.open].map(widget => [widget.id, widget]))
   const open = book.rail.open.map(id => byId.get(id)).filter((widget): widget is WidgetDeclaration => widget !== undefined)
   const query = needle.trim().toLocaleLowerCase()
   const launcher = [...widgets.filter(widget => !query || widget.name.toLocaleLowerCase().includes(query) || widget.hint?.toLocaleLowerCase().includes(query)),

@@ -49,3 +49,7 @@
 .fd-git__branch { font-family: var(--mono); font-size: 9.5px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
 .fd-dirty { animation: fd-pulse 1.4s ease-in-out infinite }
 @keyframes fd-pulse { 50% { opacity: .35 } }
+
+/* Factory's Main track (DLW §16.2, §19.2): its devices stand first on the Device side, ruled off from the session's chain. */
+.factory-main { display: flex; flex: none; gap: 6px; padding-right: 6px; border-right: 1px solid var(--line-strong) }
+.factory-main:empty { display: none }
