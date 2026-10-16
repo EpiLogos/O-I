@@ -115,6 +115,14 @@ export function openCentralDocumentAt(layout: LayoutState, target: CentralDocume
   return openBinding(at ? focusGroup(layout, at.groupId) : layout, binding)
 }
 
+/** Bring a document's own pane forward: its tab in front in its group, and its group focused (the engine's own activation). The
+ * pane is the one the document is held in (documentDoor.ts DocumentInPane.paneId); a Flow whose pane is gone opens again where the
+ * focused pane is, as the browser opens one. A Day whose pane is gone is not re-opened: which Day it was is its pane's subject. */
+export function revealDocumentPane(layout: LayoutState, paneId: string | undefined, flow?: CentralLocation | null): LayoutState {
+  if (paneId && groupOf(layout, paneId)) return activateSurface(layout, paneId)
+  return flow ? openCentralDocumentAt(layout, {form: 'flow', location: flow}) : layout
+}
+
 // ── Central's first tree ─────────────────────────────────────────────────
 
 export interface CentralSeedOptions {

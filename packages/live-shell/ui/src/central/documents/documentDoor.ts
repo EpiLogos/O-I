@@ -4,6 +4,7 @@
 // it — a press or focus anywhere in the pane, its hosted form included — and withdraws when it unmounts. The aperture reads
 // the last one reached. No React state is held here: one value and its listeners.
 import {createContext, useSyncExternalStore} from 'react'
+import type {CentralLocation} from '../../../../../../desktop/cradle/src/kernel/types'
 import {outcomeLabel, type SaveRouterReading} from '../../inhabitants/documentDeviceModel'
 
 /** The pane binding a document face is hosted in (CentralDocumentPane provides it): the aperture matches the focused pane
@@ -27,6 +28,14 @@ export interface DocumentInPane {
   reread?: () => void
   /** The re-read's own name in this form (the Day reviews its native source; the Flow re-reads). */
   rereadLabel?: string
+  /** A Flow's owner location: the file the page family's devices read (central/devices/pageReadings.ts), the same the face reads. */
+  location?: CentralLocation
+  /** Whether the hosted form holds edits the owner does not (the face's own draft fact, `data-dirty`). */
+  dirty?: boolean
+  /** The last save's named outcome (the save router's five: saved, unchanged, stale, conflict, refused); absent before a save. */
+  outcome?: SaveRouterReading['outcome']
+  /** A Day's document, as the owner names it, when the face publishes it (the Day's devices read its document by it). */
+  day?: {readonly project: string | null; readonly sourceRef: string; readonly documentId: string}
 }
 
 let reached: DocumentInPane | null = null

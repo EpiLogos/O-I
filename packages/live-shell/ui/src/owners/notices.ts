@@ -111,6 +111,19 @@ export function receiptMovesDay(receipt: KernelReceipt): boolean {
   return receipt.event === 'day_changed'
 }
 
+/** A receipt that moves a receiving reading: the kernel carried a receiving act (a Day document's field mutated, a contribution
+ * included or declined — `receiving_changed`), or a Day write (`day_changed`) that stood a Day document up. Central's readers of a
+ * Day document through `receiving` kind:document (central/devices/useCentralReadings.ts useDayDieReading) read it again on it. */
+export function receiptMovesReceiving(receipt: KernelReceipt): boolean {
+  return receipt.event === 'receiving_changed' || receipt.event === 'day_changed'
+}
+
+/** A receipt that moves a NOW reading: the kernel carried a NOW write (a return, a lifecycle change — `now_changed`). Central's
+ * readers of the NOW field (the root listing, `op now` kind:list) read it again on it. */
+export function receiptMovesNow(receipt: KernelReceipt): boolean {
+  return receipt.event === 'now_changed'
+}
+
 /** The receipts a reader has not yet taken, over the spine's receipts as they stand (the last 64): each receipt once, however
  * many readers pass the same array. The first observation takes what stands as already read; a kernel that restarted numbers
  * its receipts from 1 again. The agency driver and the temporal poll keep the same rule inline. */

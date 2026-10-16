@@ -156,18 +156,35 @@ export function projectNeighbourhood(reading: GraphReading, subject: ImpactSubje
 
 /** The sessions touching the subject: NOW records whose work references
  * name the subject's project — the work ref's repo is (or ends with) the
- * `Work/<Name>` segment, or its worktree path serves that product. The rows
- * are the register's own; the match is declared projection over them. */
-export function projectSessions(listing: readonly NowListRow[], subject: ImpactSubject, boundaryOp: string): ImpactSessionTouch[] {
+ * `Work/<Name>` segment, or its worktree path serves that product — or name
+ * a seat checkout of that project. A seat checkout is
+ * `worktrees/<env>/<product>` (the repo a NOW record carries for a seat,
+ * `worktrees/env-2/o-i`, and its worktree path
+ * `<ground>/worktrees/env-2/o-i`); its product is the project's seat name.
+ * Where the register's own map is given (`seatProjects`: product → its
+ * `primary`, `o-i` → `Work/O-I`, `ql-mef` → `Work/Quaternal-Logic`),
+ * it decides; without it a seat product names the project whose directory
+ * it is, letter case aside (`o-i` ↔ `O-I`) — the register's naming for every
+ * product whose primary is `Work/<the product, capitalised>`; a product
+ * whose primary is named otherwise matches only through the register. The
+ * rows are the register's own; the match is declared projection over them. */
+export function projectSessions(listing: readonly NowListRow[], subject: ImpactSubject, boundaryOp: string, seatProjects?: Readonly<Record<string, string>>): ImpactSessionTouch[] {
   const product = centralProductForPath(subject.path)
   const touches: ImpactSessionTouch[] = []
+  if (product === null) return touches
+  const seatServes = (seatProduct: string): boolean => {
+    const named = seatProjects?.[seatProduct]
+    return named !== undefined ? leafOf(named) === product : seatProduct.toLowerCase() === product.toLowerCase()
+  }
   for (const row of listing) {
     const works = row.work_refs ?? []
-    const matched = works.filter(work =>
-      (product !== null && (work.repo === product || work.repo.endsWith(`/${product}`))) ||
-      (product !== null && work.worktree_path !== null && work.worktree_path !== undefined
-        && (work.worktree_path.endsWith(`/${product}`) || work.worktree_path.includes(`/${product}/`))),
-    )
+    const matched = works.filter(work => {
+      if (work.repo === product || work.repo.endsWith(`/${product}`)) return true
+      const path = work.worktree_path ?? null
+      if (path !== null && (path.endsWith(`/${product}`) || path.includes(`/${product}/`))) return true
+      const seat = seatProductOf(work.repo) ?? (path !== null ? seatProductOf(path) : null)
+      return seat !== null && seatServes(seat)
+    })
     if (!matched.length) continue
     touches.push({
       nowRef: row.now_ref,
@@ -179,6 +196,15 @@ export function projectSessions(listing: readonly NowListRow[], subject: ImpactS
   }
   return touches
 }
+
+/** The seat product a seat checkout names (`worktrees/env-2/o-i`, `/Users/admin/Central/worktrees/env-2/o-i/…` → `o-i`). Null for
+ * any other path. */
+export function seatProductOf(path: string): string | null {
+  return path.match(/(?:^|\/)worktrees\/[^/]+\/([^/]+)/)?.[1] ?? null
+}
+
+/** The last segment of a register `primary` (`Work/O-I` → `O-I`). */
+const leafOf = (path: string): string => path.split('/').filter(Boolean).pop() ?? path
 
 /** The Central project (`Work/<Name>`) a path belongs to — the repo name a
  * NOW work ref would carry. Null outside Work/. */
@@ -195,6 +221,8 @@ export function assembleImpact(input: {
   graph: {reading: GraphReading; boundaryOp: string; at: string; refusal: string | null}
   files?: {entries: readonly DirectoryEntryRow[]; boundaryOp: string; at: string; refusal: string | null}
   now?: {records: readonly NowListRow[]; boundaryOp: string; at: string; refusal: string | null}
+  /** Each seat product's primary as the register names it (`products.<product>.primary`: `o-i` → `Work/O-I`), when the host read it. */
+  seatProjects?: Readonly<Record<string, string>>
 }): ImpactReading {
   const legs: ImpactLeg[] = []
   const neighbourhood = input.graph.refusal
@@ -212,7 +240,7 @@ export function assembleImpact(input: {
     legs.push({name: 'references', boundaryOp: input.files.boundaryOp, channel: 'kernel-op', at: input.files.at, refusal: input.files.refusal})
   }
   const sessions = input.now && !input.now.refusal
-    ? projectSessions(input.now.records, input.subject, input.now.boundaryOp)
+    ? projectSessions(input.now.records, input.subject, input.now.boundaryOp, input.seatProjects)
     : []
   if (input.now) {
     legs.push({name: 'sessions', boundaryOp: input.now.boundaryOp, channel: 'kernel-op', at: input.now.at, refusal: input.now.refusal})

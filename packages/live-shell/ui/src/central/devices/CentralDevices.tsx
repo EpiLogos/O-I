@@ -8,8 +8,9 @@
 // the Day die's hosted form (DocumentDayDieFace), the Nara conversation (NaraConversationFace), the ground hygiene and the impact
 // readings (CentralHygieneDevice, CentralImpactDevice) — under the same owners, none reimplemented. The instruments (the die, the
 // conversation) keep their Live semantic at every size: their write rows go through the owner paths their bodies already use
-// (centralDeviceWrites.ts). The Flow is a clip, not a device: it stands on the Clip side (FlowClip.tsx), off this chain. A device
-// whose aperture is not standing says so in its rows and keeps its light dark; no device is a text card.
+// (centralDeviceWrites.ts). The Flow is an instrument on its document's chain (DLW §18.3; it was a clip on the Clip side,
+// FlowClip.tsx, which nothing mounted). A device whose aperture is not standing says so in its rows and keeps its light dark; no
+// device is a text card.
 //
 // The Day (lane BC; DLW §16.2 "On the Main track: the Day"; §18.1) is the catalogue's designed device (`central:day-die`,
 // inhabitants/catalogue/panels/day.tsx) on Central's own readings and writes (dayBinding.ts): the Day the person selected, else
@@ -18,10 +19,16 @@
 // owner stands it — the hosted form, or the Day pane's DayView — published as the device's own Full (deviceDoor.ts PublishedDevice
 // `full`), which the pane draws over the design's; its chain picture — the net and the face list it drew before — is the design's.
 // A device's pop-out (or redock) is a mark of its place: it stands in the device's head, the generic plate's and the design's alike.
-import {useEffect, useMemo, type ReactNode} from 'react'
+//
+// The page family (lane BC2; DLW §16.2 "Central — A workspace … the document effects, then the agent that answers"; §17.7, §18.2–
+// §18.8) stands after the Day: the Workspace (the workspace track's instrument, while the workspace book is mounted), then the
+// reached document's chain — its form device first (the Flow), the Document, then Text, Highlight and Notes — each the catalogue's
+// design on Central's readings (pageBindings.ts, gathered by pageDevices.ts), each Full the page's own pane. They stand while a
+// document is reached and leave the chain, the pool and the rail's door when none is.
+import {useEffect, useMemo, useRef, type ReactNode} from 'react'
 import type {CentralLocation, KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import {DeviceView} from '../../frame/devices/DeviceView'
-import {publishDevice, selectDevice, type PublishedDevice} from '../../frame/devices/deviceDoor'
+import {publishDevice, selectDevice, type OwnFull, type PublishedDevice} from '../../frame/devices/deviceDoor'
 import {DEVICE_PANE_KIND} from '../../frame/devices/devicePane'
 import type {DesignBinding} from '../../frame/devices/designed'
 import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
@@ -40,10 +47,16 @@ import {dayStandingKey} from '../../owners/day'
 import {useSpineEpoch} from '../../owners/spine'
 import type {DayDocumentStanding} from '../centralVertical'
 import {DayView} from '../documents/CentralDocumentPane'
-import {CENTRAL_FAMILY, centralDevice, centralDeviceId, centralPicture, chainFaces, type CentralReads, type CentralWriters} from './centralDeviceModel'
+import {CENTRAL_FAMILY, PAGE_CHAIN_FACES, PAGE_FACES, centralDevice, centralDeviceId, centralPicture, chainFaces, type CentralReads, type CentralWriters} from './centralDeviceModel'
 import {centralWriters, openToday, turnDieFace} from './centralDeviceWrites'
 import {dayDesignBinding, dayFactsOf, dayValuesOf, type DayFacts} from './dayBinding'
 import {useCentralGroundAnswer, useDayDieReading, useNaraReading, useRosterReading, useWorkcellReading, type DayDieAperture} from './useCentralReadings'
+import {usePageDevices} from './pageDevices'
+import {HYGIENE_DEVICE_ID, IMPACT_DEVICE_ID, useHygieneDevice, useImpactDevice} from './groundDevices'
+import {answerBinding} from './answerBinding'
+import {observedState, useEncounterSessions} from '../../agent/devices/EncounterObservers'
+import {useRosterAgents} from '../../owners/readers'
+import {bindConversation} from './centralDeviceWrites'
 import './centralDevices.css'
 
 export interface CentralConversationAperture {
@@ -68,9 +81,14 @@ export interface CentralDeviceInput {
   /** The owners' write paths the devices hold; absent, they are built over the apertures (centralDeviceWrites.ts). */
   readonly writers?: CentralWriters
   /** Read the owner again after a device wrote (the chain's hooks hand these in). */
-  readonly afterWrite?: {readonly day?: () => void; readonly conversation?: () => void}
+  readonly afterWrite?: {readonly day?: () => void; readonly conversation?: () => void; readonly page?: () => void}
   /** The Day's standing when no aperture stands (today's Day with no document, the stale pointer): its Full is the owner's words. */
   readonly dayStanding?: DayDocumentStanding | null
+  /** What stands for the page family (placedFaces): the reached document's form (null: none is reached) and whether a workspace book
+   * is mounted. Absent: neither — the page family stands nowhere. */
+  readonly placement?: {readonly form: 'Day' | 'Flow' | 'Being' | 'Thing' | null; readonly book: boolean}
+  /** The reached document, for the Document's Save and the Flow's next entry (centralDeviceWrites.ts centralWriters). */
+  readonly page?: {readonly save?: () => void; readonly location?: CentralLocation | null; readonly dirty?: boolean | null} | null
 }
 
 type Size = 'compact' | 'whole' | 'full'
@@ -86,15 +104,24 @@ export interface CentralDeviceEntry {
 /** The Day device's id on the chain (its design is `central:day-die`, inhabitants/catalogue/panels/day.tsx). */
 export const DAY_DEVICE_ID = centralDeviceId('day-die')
 
-/** What the chain publishes for one device (deviceDoor.ts PublishedDevice): its picture and marks; the Day its binding, where one
- * stands, and its page as its own Full — the Day the owner stands, never the design's template. */
-export function centralPublication(entry: CentralDeviceEntry, binding: DesignBinding | null): PublishedDevice {
+/** What the chain publishes for one device (deviceDoor.ts PublishedDevice): its picture and marks; its binding, where one stands; the
+ * Day its page as its own Full — the Day the owner stands, never the design's template — and a page device the page's own pane
+ * (`full`, pageDevices.ts). */
+export function centralPublication(entry: CentralDeviceEntry, binding: DesignBinding | null, full?: OwnFull): PublishedDevice {
   return {
     device: entry.device, picture: entry.picture,
     ...(entry.marks ? {marks: entry.marks} : {}),
     ...(binding ? {binding} : {}),
-    ...(entry.id === DAY_DEVICE_ID ? {full: {draw: () => entry.picture('full')}} : {}),
+    ...(entry.id === DAY_DEVICE_ID ? {full: {draw: () => entry.picture('full')}} : full ? {full} : {}),
   }
+}
+
+/** The faces that stand on the chain now (DLW §16.2): every device face the family declares, but a page face only where its place
+ * stands — the Workspace while a workspace book is mounted, a document's chain while a document is reached (PAGE_CHAIN_FACES by the
+ * page's form). */
+export function placedFaces(faces: readonly InhabitantFaceDeclaration[], placement: CentralDeviceInput['placement']): InhabitantFaceDeclaration[] {
+  const chain = new Set(placement?.form ? PAGE_CHAIN_FACES[placement.form] : [])
+  return chainFaces(faces).filter(face => face.id === 'workspace' ? !!placement?.book : PAGE_FACES.has(face.id) ? chain.has(face.id) : true)
 }
 
 /** The device's pop-out, where its face declares one: the native device window the host offers (seam 8). Its identity is the
@@ -139,8 +166,8 @@ function SmallPicture({faceId, reads, size}: {faceId: string; reads: CentralRead
 /** The devices of the Central family as the runtime draws them: one entry per device face the family declares (its clips
  * stand on the Clip side). Each carries the write door its declaration names. */
 export function centralDeviceEntries(input: CentralDeviceInput): CentralDeviceEntry[] {
-  const writers = input.writers ?? centralWriters({transport: input.transport, day: input.day, conversation: input.conversation, afterWrite: input.afterWrite})
-  return chainFaces(input.faces).map(face => {
+  const writers = input.writers ?? centralWriters({transport: input.transport, day: input.day, conversation: input.conversation, afterWrite: input.afterWrite, page: input.page})
+  return placedFaces(input.faces, input.placement).map(face => {
     const popOut = popOutOf(face, input)
     const device = centralDevice(face, input.reads, writers)
     // The Day's chain picture is its design's (day.tsx: the net, the face dial); the generic plate that stands while no Day binding
@@ -217,41 +244,81 @@ export function useDayDevice(transport: KernelTransportStatus, selected: {standi
 }
 
 /** Central's chain: every device the family declares, compact, each published so the pool and a pane show the same device. The Day
- * stands first — the Main track's device (DLW §16.2) — on its design when its binding stands. */
+ * stands first — the Main track's device (DLW §16.2) — on its design when its binding stands; the page family after it, on theirs. */
 export function CentralDevicesChain({transport, dayStanding, day = null, conversation = null, flow = null, impact = null, projects, deviceWindows = null}: CentralDevicesProps) {
   const manifest = inhabitantManifest(CENTRAL_FAMILY)
   const dayDevice = useDayDevice(transport, dayStanding ? {standing: dayStanding, aperture: day} : null)
   const dayBinding = dayDevice.binding
   const dayAperture = dayDevice.facts.aperture
+  const pages = usePageDevices(transport, {aperture: dayAperture, face: dayDevice.document.face, payload: dayDevice.document.payload, civilDate: dayDevice.facts.civilDate})
+  // Ground hygiene and Impact on their designs (groundDevices.ts): the census read when the chain opens, the neighbourhood of the
+  // browser's selection when it changes.
+  const hygiene = useHygieneDevice(transport, true)
+  const impactDesign = useImpactDevice(transport, impact)
   const nara = useNaraReading(transport, conversation?.project ?? null, conversation?.expressionRef ?? null, conversation?.conversation ?? null)
+  // The Answer (answerBinding.ts): the bound session's exchange through the ONE shared encounter observer (lane BF2's), the roster's
+  // accepted agents, the reached page's title and packet.
+  const answerSessions = useMemo(() => (nara.state === 'bound' && nara.session && nara.space ? [{ref: nara.session, space: nara.space}] : []), [nara.state, nara.session, nara.space])
+  const encounters = useEncounterSessions(answerSessions)
+  const answerHandle = nara.session ? encounters.handles[nara.session] : undefined
+  const answerObserved = observedState(answerHandle)
+  const answerRoster = useRosterAgents(transport)
   const roster = useRosterReading(transport)
   const workcell = useWorkcellReading(transport)
   const impactKind = impact?.kind, impactPath = impact?.path
-  const refreshDay = dayDevice.document.refresh, refreshConversation = nara.refresh
-  const afterWrite = useMemo(() => ({day: refreshDay, conversation: refreshConversation}), [refreshDay, refreshConversation])
+  const refreshDay = dayDevice.document.refresh, refreshConversation = nara.refresh, refreshPage = pages.refresh
+  const afterWrite = useMemo(() => ({day: refreshDay, conversation: refreshConversation, page: refreshPage}), [refreshDay, refreshConversation, refreshPage])
   const reads = useMemo<CentralReads>(() => ({
     day: {standing: dayDevice.facts.standing, face: dayDevice.document.face, revision: dayDevice.document.revision},
     nara, roster, workcell,
     impact: impactPath ? {kind: impactKind!, path: impactPath} : null,
-  }), [dayDevice.facts.standing, dayDevice.document.face, dayDevice.document.revision, nara, roster, workcell, impactKind, impactPath])
+    page: pages.reads.page, workspace: pages.reads.workspace, flow: pages.reads.flow,
+  }), [dayDevice.facts.standing, dayDevice.document.face, dayDevice.document.revision, nara, roster, workcell, impactKind, impactPath, pages.reads])
+  const placement = useMemo(() => ({form: pages.form, book: pages.book}), [pages.form, pages.book])
+  const pageWrite = pages.page
   const entries = useMemo(
     () => centralDeviceEntries({transport, faces: manifest?.faces ?? [], manifest, reads, day: dayAperture, conversation, flow, impact, projects, deviceWindows, afterWrite,
-      dayStanding: dayDevice.facts.standing}),
+      dayStanding: dayDevice.facts.standing, placement, page: pageWrite}),
     // The apertures are identity: a fresh object with the same parts is the same device.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [transport, manifest, reads, afterWrite, dayAperture?.sourceRef, dayAperture?.documentId, dayAperture?.project, conversation?.conversation, conversation?.expressionRef, conversation?.project, flow?.location.ref, impact?.path, impact?.kind, projects, deviceWindows],
+    [transport, manifest, reads, afterWrite, dayAperture?.sourceRef, dayAperture?.documentId, dayAperture?.project, conversation?.conversation, conversation?.expressionRef, conversation?.project, flow?.location.ref, impact?.path, impact?.kind, projects, deviceWindows, placement, pageWrite],
   )
+  const documentPacket = pages.bindings[centralDeviceId('document')]?.values.packet
+  const answerPage = pages.reads.page ? {title: pages.reads.page.title, ...(typeof documentPacket === 'string' ? {packet: documentPacket} : {})} : null
+  const answerAgents = answerRoster.state === 'ready' ? answerRoster.agents : null
+  const refreshNara = nara.refresh
+  const answer = useMemo(() => answerBinding(centralDeviceId('nara-conversation'),
+    {nara: {state: nara.state, session: nara.session, resume: nara.resume}, observed: answerObserved, roster: answerAgents, page: answerPage},
+    {
+      bind: conversation ? async () => { await bindConversation(transport, conversation); refreshNara() } : null,
+      send: answerHandle && 'actions' in answerHandle ? async text => { answerHandle.actions.change(text); await answerHandle.actions.send() } : null,
+    }),
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- the page is its title and packet; the conversation its parts
+  [nara.state, nara.session, nara.resume, answerObserved, answerAgents, answerPage?.title, answerPage?.packet, answerHandle, transport, refreshNara,
+    conversation?.project, conversation?.expressionRef, conversation?.conversation, pages.bindings])
+  const bindingOf = (id: string): DesignBinding | null => id === centralDeviceId('nara-conversation') ? answer : (id === DAY_DEVICE_ID ? dayBinding : id === HYGIENE_DEVICE_ID ? hygiene : id === IMPACT_DEVICE_ID ? impactDesign : pages.bindings[id] ?? null)
+  // What stands on the door now; a device that left the chain (no document reached) leaves the door too.
+  const published = useRef(new Set<string>())
   useEffect(() => {
-    for (const entry of entries) publishDevice(entry.id, centralPublication(entry, entry.id === DAY_DEVICE_ID ? dayBinding : null))
-  }, [entries, dayBinding])
+    const now = new Set(entries.map(entry => entry.id))
+    for (const id of published.current) if (!now.has(id)) publishDevice(id, null)
+    for (const entry of entries) publishDevice(entry.id, centralPublication(entry, bindingOf(entry.id), pages.fulls[entry.id]))
+    published.current = now
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- bindingOf reads the bindings named here
+  }, [entries, dayBinding, pages.bindings, pages.fulls, hygiene, impactDesign, answer])
   useEffect(() => () => {
     for (const face of manifest?.faces ?? []) publishDevice(centralDeviceId(face.id), null)
   }, [manifest])
-  return <div className="central-devices-chain" data-central-devices={entries.length}>
+  return <div className="central-devices-chain" data-central-devices={entries.length} data-central-page={pages.form ?? ''}>
+    {encounters.observers}
     {entries.map(entry => <div key={entry.id} className="central-device-slot" data-face-id={entry.id.slice(CENTRAL_FAMILY.length + 1)}><DeviceView device={entry.device} size="compact" picture={entry.picture('compact')}
-      marks={entry.marks} binding={entry.id === DAY_DEVICE_ID ? dayBinding ?? undefined : undefined} actions={[
+      marks={entry.marks} binding={bindingOf(entry.id) ?? undefined} actions={[
         {icon: 'detail', label: 'Show every setting in the pool', onPress: () => selectDevice(entry.id)},
-        {icon: 'pane', label: `Open ${entry.device.face.title} full size in a pane`, onPress: () => openInstrument(DEVICE_PANE_KIND, undefined, {ref: entry.id, title: entry.device.face.title})},
+        {icon: 'pane', label: `Open ${entry.device.face.title} full size in a pane`, onPress: () => {
+          const own = pages.fulls[entry.id]
+          if (own && 'open' in own) own.open()
+          else openInstrument(DEVICE_PANE_KIND, undefined, {ref: entry.id, title: entry.device.face.title})
+        }},
       ]} /></div>)}
   </div>
 }
