@@ -15,7 +15,7 @@
  * atlas's header door's move (projections/atlas/src/shell/shell.ts headerReading, 6f8c25dc5: "each press is the header's own button
  * pressed, so the lens acts as it always has; the plate keeps no copy") made for the frame's whole chrome. Nothing here re-implements a
  * control, and the shell never reaches into this document. */
-import {FRAME_CHROME_LIMITS, type FrameChromeControl, type FrameChromeHome, type FrameChromeKind, type FrameChromeOption, type FrameChromeReading, type FramePresentation} from './stageCommands.js';
+import {FRAME_CHROME_LIMITS, type FrameChromeControl, type FrameChromeHome, type FrameChromeKind, type FrameChromeOption, type FrameChromeReading, type FramePresentation, type FrameSummon} from './stageCommands.js';
 
 /** A part of the chrome: where it is in this document, and where each of its controls belongs. `lens` is the instrument the research
  * regions draw for (the frame's chooser: project, canvas, timeline, journey) or 'expressions' outside Technē. */
@@ -125,6 +125,13 @@ export function frameChromeRegions(held: {canvasHome?: HTMLElement | null} = {})
     {name: 'standing', root: one('.relation-field-filters'), home: () => 'timeline:standing'},
     // The return from a journey crossing (app.ts crossingReturnNode, T11), drawn over the field while the crossing stands.
     {name: 'crossing', root: one('.crossing-return'), home: () => 'scene'},
+    // The editors the frame summons over its field (lane BE), read only while they are open (a closed one is [hidden] or unmounted): the
+    // scene bar's Acts panel (actPanel.ts #act-panel), the personal Nara instrument (naraInstrument.tsx #nara-instrument) and Find on
+    // Canvas (canvasFindOverlay.tsx). In the 'devices' presentation each stands down over the field (workspace.css) and the shell draws
+    // its controls on a device in its pool; its own handlers and state stay the frame's.
+    {name: 'acts', root: one('#act-panel'), home: () => 'acts'},
+    {name: 'nara-instrument', root: one('#nara-instrument'), home: () => 'nara:instrument'},
+    {name: 'find', root: one('.canvas-find-overlay'), home: () => 'canvas:find'},
   ]
 }
 
@@ -135,7 +142,7 @@ const CONTROLS = 'button,select,input,textarea,[role="status"],output,.pending-s
 const SKIPPED = 'input[type=file],input[type=hidden],.header-menu-toggle,.card-close'
 /** Where the chrome stands, for the change watch; and the readouts that tick with the field, never read for it (the scene time, its
  * progress, the transport readouts). The scene time is the clock's, not the chrome's: the shell reads the scene from the state. */
-const CHROME_ROOTS = '.relation-field-modes,.relation-field-filters,#view-controls,#tool-hint,#present-return,#recording-badge,#app>.masthead,#instrument-tools-dock,nav.instrument,#research-inspector,.canvas-home,.canvas-zoom-controls,.research-minimap-toggle,.canvas-zoom-readout-host,#toolbelt-button,.journey-reading-home,.crossing-return'
+const CHROME_ROOTS = '#act-panel,#nara-instrument,.canvas-find-overlay,.relation-field-modes,.relation-field-filters,#view-controls,#tool-hint,#present-return,#recording-badge,#app>.masthead,#instrument-tools-dock,nav.instrument,#research-inspector,.canvas-home,.canvas-zoom-controls,.research-minimap-toggle,.canvas-zoom-readout-host,#toolbelt-button,.journey-reading-home,.crossing-return'
 const TICKING = '#record-time,#record-size,#global-time,.time-progress,[data-transport-readout],[data-scene-progress],.journey-path-clock,.journey-path-next'
 
 /** Whether the frame draws it where it stands: in the document, under no hidden ancestor, and laid out — a control the frame's own rules
@@ -263,6 +270,9 @@ export interface PresentedChrome {
   /** Press one control by the id the reading gives it: the frame's own control, pressed. Refused by name when the reading holds no such
    * control, when the frame draws it off, or when a choice names an option the frame does not offer. */
   press(id: string, value?: string): void
+  /** Hand an editor to the shell (lane BE): in the 'devices' presentation the frame does not open it over its field; the reading counts the
+   * summon and the shell opens the editor in its own device home. Refused (false) in the 'frame' presentation, where the frame opens it. */
+  summon(kind: FrameSummon): boolean
   dispose(): void
 }
 
@@ -271,8 +281,9 @@ export interface PresentedChrome {
 export function installPresentedChrome({lens, changed, regions = () => frameChromeRegions()}: {lens: () => string; changed: () => void; regions?: () => ChromeRegion[]}): PresentedChrome {
   let presentation: FramePresentation = 'frame'
   let queued = 0, last = ''
+  const summons: Partial<Record<FrameSummon, number>> = {}
   const read = (): Located[] => locate(regions(), lens())
-  const reading = (): FrameChromeReading => ({lens: lens(), controls: read().map(item => item.control)})
+  const reading = (): FrameChromeReading => ({lens: lens(), controls: read().map(item => item.control), ...(Object.keys(summons).length ? {summons: {...summons}} : {})})
   // The chrome changes by the frame's own hand (React redraws, delegated toggles, a card selected, a menu opened): a change inside a
   // chrome region is read again a moment later, and announced only when the reading differs from the last one announced. The field,
   // the canvas's cards and the ticking time readouts are never read for it.
@@ -311,6 +322,13 @@ export function installPresentedChrome({lens, changed, regions = () => frameChro
         element.click()
       }
       soon()
+    },
+    summon(kind) {
+      if (presentation !== 'devices') return false
+      summons[kind] = (summons[kind] ?? 0) + 1
+      // Announced at once: the person's press is waiting for its answer.
+      check()
+      return true
     },
     dispose() {observer.disconnect(); window.clearTimeout(queued)},
   }
