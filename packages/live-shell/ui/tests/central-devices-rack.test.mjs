@@ -108,11 +108,11 @@ test('a browser subject stands in the Document row: it shadows the occasion, the
   assert.match(deviceMarkup(markup, 'impact'), /data-central-picture="impact"[\s\S]*<small>Control\/agents\/now\/day\/2026-09-12\.md<\/small>/, 'the Impact reads the selected subject')
 })
 
-test('a selected Day occasion with a ready Day: the Day die stands lit on its Day, its die the picture, its body a pane away', () => {
+test('a selected Day occasion with a ready Day: the Day die stands lit on its Day, its body a pane away (its picture is its design\'s)', () => {
   const markup = html(createElement(BaseDevicesDetail, {transport, world: worldWith([nowEvent], nowEvent), standing: readyStanding}))
   const die = deviceMarkup(markup, 'day-die')
   assert.match(die, /data-device-light="on"/, 'the owner reports the Day ready, so the light is on')
-  assert.match(die, /class="central-die-net"/, 'the die is the picture')
+  assert.doesNotMatch(die, /class="central-die-net"/, 'MOVED: the net is the design\'s (day.tsx), drawn once the Day\'s binding is published (central-day-binding.test.mjs)')
   assert.doesNotMatch(markup, /data-document-device="ql-daily-die"/, 'the hosted form is the full size\'s body, not the compact device\'s')
   assert.doesNotMatch(markup, /No Day is selected\. Select one in the browser[^<]*docks here/, 'the empty-slot copy does not claim there is no Day')
 })
