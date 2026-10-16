@@ -59,7 +59,9 @@ const html = (element) => renderToStaticMarkup(element)
 const transport = {kind: 'unavailable', reason: 'the test carrier is down'}
 const central = inhabitantManifest('central')
 assert.ok(central, 'the central family is admitted by the shell\'s own door')
-const FACES = ['day-die', 'nara-conversation', 'context-world', 'agent-identity', 'ground-hygiene', 'impact']
+// Lane BC3 (DLW §18.11, §18.14, §18.15): the agent that answers stands with its identity before it and its Context & world after it,
+// then Search; the Packet stands only on a reached document's chain (central-agent-chain-binding.test.mjs).
+const FACES = ['day-die', 'agent-identity', 'nara-conversation', 'context-world', 'search', 'ground-hygiene', 'impact']
 const DAY_REF = 'central:day:control:root:2026-10-06'
 const ready = vertical.interpretDayOpen(DAY_REF, {data: {schema: 'oi.central-day-open/v1', project: null, day: {
   document_state: 'ready', source: {ref: 'central:source:control:root:Control/user/day/2026-10-06/day.md'},
@@ -82,7 +84,7 @@ const deviceMarkup = (markup, faceId) => {
 }
 function DeviceViewOf({entry, size}) { return createElement(DeviceView, {device: entry.device, size, picture: entry.picture(size), marks: entry.marks}) }
 
-test('the family\'s device faces are six devices, in chain order, each its own family\'s declaration, while no document is reached and no workspace book stands', () => {
+test('the family\'s device faces are seven devices, in chain order, each its own family\'s declaration, while no document is reached and no workspace book stands', () => {
   const set = entries()
   assert.deepEqual(set.map(entry => entry.id), FACES.map(id => `central:${id}`))
   for (const entry of set) {
@@ -104,7 +106,7 @@ test('the family\'s device faces are six devices, in chain order, each its own f
 test('a face the family declares but this chain does not know is drawn generically, never dropped', () => {
   const extra = {id: 'day-now', presentations: ['compact'], liveSemantic: 'transport-slot', note: 'The civil stratum.'}
   const set = entries({faces: [...central.faces, extra]})
-  assert.equal(set.length, 7)
+  assert.equal(set.length, FACES.length + 1)
   assert.equal(set.at(-1).id, 'central:day-now')
   assert.equal(set.at(-1).device.face.title, 'Day Now')
   assert.match(compact(set.at(-1)), /data-central-picture="day-now"/, 'a picture, not a card of text')
@@ -150,7 +152,7 @@ test('the rows are the family\'s declared rows; a row is a reading unless the fa
   // The two instruments declare `generates`; their write row goes through exactly that path. Every other row is a reading.
   const writing = Object.fromEntries(set.map(entry => [entry.id.slice('central:'.length), entry.device.rows.filter(row => row.writePath).map(row => [row.key, row.writePath])]))
   assert.deepEqual(writing, {'day-die': [['face', 'kernel:receiving']], 'nara-conversation': [['bound', 'kernel:nara_dialogue']],
-    'context-world': [], 'agent-identity': [], 'ground-hygiene': [], 'impact': []})
+    'context-world': [], 'agent-identity': [], 'search': [], 'ground-hygiene': [], 'impact': []})
   for (const entry of set) {
     const declaredPath = entry.device.face.invariant?.generates
     assert.equal(typeof entry.device.submit, declaredPath ? 'function' : 'undefined', `${entry.id}: a write door exactly where the declaration names a generating path`)

@@ -80,10 +80,11 @@ test('loadWorldShellFamilies admits the sixth family and composes the L2 extensi
   }
   // Central's composed manifest carries the L2 faces after its base's own.
   const central = schema.inhabitantManifest('central')
-  // …and the page family after them (lane BC2: DLW §17.7 Document, §18.2 Workspace, §18.4–§18.8).
+  // …and the page family after them (lane BC2: DLW §17.7 Document, §18.2 Workspace, §18.4–§18.8), then the agent chain's Packet and
+  // Search (lane BC3: DLW §18.9, §18.11).
   assert.deepEqual(central.faces.map(face => face.id),
     ['context-world', 'agent-identity', 'ground-hygiene', 'impact', 'day-die', 'flow-document', 'nara-conversation',
-      'document', 'workspace', 'beings', 'things', 'text', 'highlight', 'notes'])
+      'document', 'workspace', 'beings', 'things', 'text', 'highlight', 'notes', 'packet', 'search'])
   // Software-factory's composed manifest carries attempt-review after its base's own (the base admits the thread, tasks and the
   // agentset rack since lane BF3).
   const factory = schema.inhabitantManifest('software-factory')

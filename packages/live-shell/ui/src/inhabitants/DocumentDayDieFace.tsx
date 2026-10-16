@@ -264,7 +264,10 @@ export function DocumentDayDieFace({transport, project, sourceRef, documentId, p
   const standing: DocumentInPane = {key, paneId, form: 'Day', title: documentId, revision: revision || undefined,
     state: documentStateWords({pending, dirty, save, blocked: session.blocked}),
     save: face && !pending && !blocked ? () => void saveToNative() : undefined,
-    reread: pending || !face ? undefined : () => void reviewNative(), rereadLabel: 'Review the native source'}
+    reread: pending || !face ? undefined : () => void reviewNative(), rereadLabel: 'Review the native source',
+    // The Day's document as the owner names it, the face's draft fact and the save router's last outcome (lane BC3): any reached Day's
+    // devices read its document, its face and its date by them (central/devices/pageDevices.ts), not only the Day device's own.
+    day: {project, sourceRef, documentId}, dirty, ...(save?.outcome ? {outcome: save.outcome} : {})}
   // The aperture follows the document the hand reached (the first one standing until then); a change of standing reaches it.
   useEffect(() => { if (inPane) publishDocument(standing, !reachedDocument()) })
   useEffect(() => () => withdrawDocument(key), [key])

@@ -179,6 +179,36 @@ function declareCentralPageFamily(): void {
   })
 }
 
+/** Central's agent chain (DLW §18.9 Packet, §18.11 Search): the two faces of the agent's devices the family did not yet declare — the
+ * Packet, the effect that ends a document's chain (what the agent reads from you), and Search, Central's "@" language on a chain. Each
+ * is the catalogue's design (inhabitants/catalogue/panels/central__packet.tsx, central__search.tsx), wired to its owner by
+ * central/devices/packetBinding.ts and searchBinding.ts and placed by central/devices/CentralDevices.tsx. */
+const CENTRAL_AGENT_CHAIN_EXTENSION_ID = 'central:agent-chain'
+
+function declareCentralAgentChain(): void {
+  declareFamilyExtension('central', {
+    id: CENTRAL_AGENT_CHAIN_EXTENSION_ID,
+    by: 'claude-code:dlw lane BC3 (DLW §18.9, §18.11)',
+    faces: [
+      {
+        id: 'packet',
+        presentations: ['compact', 'expanded'],
+        liveSemantic: 'device-audio-fx',
+        invariant: {transforms: 'what the agent reads from you — AIKit\'s prepared context, shown whole with its size; an item taken out or the packet cleared through the owner\'s own edit (op encounter context), the material passed on unchanged'},
+        note: 'The packet the agent reads (DLW §18.9): AIKit\'s prepared context (aikit.prepared-context/v1, op encounter context), the read the Packet widget and the transport share. Take out and Clear now edit it; Answer this is the Agent conversation\'s own Send with exactly this packet. Capture waits: the page\'s selection does not cross the host bridge.',
+      },
+      {
+        id: 'search',
+        presentations: ['compact', 'expanded'],
+        liveSemantic: 'device-instrument',
+        invariant: {generatesAbsent: 'Search writes nothing: it reads AIKit\'s knowledge search (op knowledge search and resolve). A tag\'s send, the aliases and the shared fields have no owner yet (DLW §18.11).'},
+        note: 'Central\'s "@" language (DLW §18.11): the search line answered by AIKit\'s knowledge search (op knowledge search and resolve, as the cradle\'s search overlay asks them), in your world or one project.',
+      },
+    ],
+    note: 'The agent chain: the Packet and Search (DLW §18.9, §18.11). Additive: the base manifest and the earlier extensions stay as declared.',
+  })
+}
+
 /** Software Factory's L2 extension: the attempt faces where the owner admits
  * (§12 "run devices, attempt review, artifact inspection, Return"). The
  * kernel's factory attempt owner exists today as reads (op
@@ -215,6 +245,7 @@ export function loadWorldShellFamilies(): void {
   quaternalLogicFamilyManifest()
   declareCentralExtension()
   declareCentralPageFamily()
+  declareCentralAgentChain()
   declareSoftwareFactoryExtension()
   // [L9 musical family] the QL instrument face — additive, idempotent.
   declareQlMusicalExtension()

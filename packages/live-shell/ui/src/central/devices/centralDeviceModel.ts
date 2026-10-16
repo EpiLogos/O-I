@@ -31,21 +31,23 @@ export const CENTRAL_FAMILY = 'central'
  * track. The document effects, then the agent that answers. On the Main track: the Day"): the Day (the Main track's device), the
  * Workspace (the workspace track's instrument), the reached document's chain — its form device first (§18.3 Flow, §18.4 Beings,
  * §18.5 Things: "first on a … document's chain, before the document effects"), the Document, then Text, Highlight and Notes, each
- * after the one before (§18.6–§18.8) — then the agent that answers (the conversation), then the ground's readings. A device face
- * the family declares that is not named here is still drawn, generically, after these. A face the family declares a `clip` is not
- * a device: it stands on the Clip side (`clipFaces`). */
-export const CENTRAL_DEVICE_FACES = ['day-die', 'workspace', 'flow-document', 'beings', 'things', 'document', 'text', 'highlight', 'notes',
-  'nara-conversation', 'context-world', 'agent-identity', 'ground-hygiene', 'impact'] as const
+ * after the one before (§18.6–§18.8), then the Packet (§18.9 "a document's chain, after Notes") — then the agent that answers, with
+ * its identity before it (§18.15 "before the agent") and its Context & world after it (§18.14 "after the agent"; lane BC3), then Search
+ * (§18.11, on a chain), then the ground's readings. A device face the family declares that is not named here is still drawn,
+ * generically, after these. A face the family declares a `clip` is not a device: it stands on the Clip side (`clipFaces`). */
+export const CENTRAL_DEVICE_FACES = ['day-die', 'workspace', 'flow-document', 'beings', 'things', 'document', 'text', 'highlight', 'notes', 'packet',
+  'agent-identity', 'nara-conversation', 'context-world', 'search', 'ground-hygiene', 'impact'] as const
 
 /** The faces a reached document's chain holds (they stand only while a document is reached; central/devices/CentralDevices.tsx
  * placedFaces), by the page's form: its form device and the effects that read its material. */
 export const PAGE_CHAIN_FACES: Readonly<Record<'Day' | 'Flow' | 'Being' | 'Thing', readonly string[]>> = {
   // A Day's form device is the die, the Main track's device; its fields are no entries, so the effects that read entries do not
   // stand on it (the Document reads its marks, notes and packet).
-  Day: ['document'],
-  Flow: ['flow-document', 'document', 'text', 'highlight', 'notes'],
-  Being: ['beings', 'document'],
-  Thing: ['things', 'document'],
+  // The Packet ends every document's chain (§18.9 "a document's chain, after Notes"): what the agent that answers reads from you.
+  Day: ['document', 'packet'],
+  Flow: ['flow-document', 'document', 'text', 'highlight', 'notes', 'packet'],
+  Being: ['beings', 'document', 'packet'],
+  Thing: ['things', 'document', 'packet'],
 }
 /** Every face that stands only on a reached document's chain. */
 export const PAGE_FACES: ReadonlySet<string> = new Set(Object.values(PAGE_CHAIN_FACES).flat())
@@ -69,6 +71,8 @@ const FACES: Readonly<Record<string, {title: string; icon: IconName}>> = {
   'text': {title: 'Text', icon: 'select'},
   'highlight': {title: 'Highlight', icon: 'draw'},
   'notes': {title: 'Notes', icon: 'cap'},
+  'packet': {title: 'Packet', icon: 'bind'},
+  'search': {title: 'Search', icon: 'search'},
 }
 
 const humanise = (key: string): string => key.split('-').map(part => (part ? part[0]!.toUpperCase() + part.slice(1) : '')).join(' ')
@@ -388,6 +392,8 @@ export function centralPicture(faceId: string, reads: CentralReads): CentralPict
       return {kind: state === 'bound' ? 'agent' : 'ghost', caption: naraStandingLabel(state)}
     }
     case 'context-world': return {kind: 'world', caption: 'Central ground reads · context writes'}
+    case 'packet': return {kind: 'doc', caption: 'the prepared context'}
+    case 'search': return {kind: 'expression', caption: 'AIKit knowledge search'}
     case 'agent-identity': return {kind: 'agent', caption: reads.roster?.answer === 'read' ? (reads.roster.identity ?? 'no accepted agent') : reads.roster?.answer === 'refused' ? 'roster refused' : 'reading the roster…'}
     case 'ground-hygiene': return {kind: 'location', caption: reads.workcell?.answer === 'read' ? (reads.workcell.ref ?? 'workcell answered') : reads.workcell?.answer === 'refused' ? 'workcell refused' : 'reading the workcell…'}
     case 'impact': return {kind: 'expression', caption: reads.impact ? reads.impact.path : 'select a folder or note'}
