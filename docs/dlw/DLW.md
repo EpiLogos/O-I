@@ -174,7 +174,7 @@ document, writing.
 
 Device view shows the chain: the things working on the material, left to
 right, in the order the material passes through them. In Central that means
-the tools at work on the open document. In Factory it is the agent's whole
+the packet, the agent that answers you, and what it may touch. In Factory it is the agent's whole
 path — the way in, the agent, its skills, the part of the world it may touch,
 and the place its work lands. In Expressions it is the studio that shapes the
 field. Wherever you are, the instrument in the focused pane brings its own
@@ -300,9 +300,9 @@ terminal, the pages it read; click any of them and it opens beside you.
 Select a session and its chain shows the road the work travels, left to right.
 In through a gateway, which decides what the agent must ask your permission
 for. Then the agent itself: its model, how much it decides alone, how hard it
-thinks, how many turns it gets. Then its skills, racked with a light each, on
-or off, with a few knobs that turn several at once — how thorough to be, how
-deep to test, how far to reach, how much risk to take. Then the part of the
+thinks, how many turns it gets. Then its skills, racked with a light each: you
+ask for a skill on or off, the rack shows whether it is loaded and what it has
+done, and a preview shows the change before you apply it. Then the part of the
 world it may touch, from one object up to everything you own, and whether what
 it writes there arrives as a proposal, a draft or a change. Last, the place its
 work lands: commits, and a request to merge with the checks that tested it.
@@ -352,17 +352,19 @@ Add a voice, pin its force, turn the plate on and sweep it until the figure
 says what you meant. Take the swell, layer the next section over it, capture
 the figure as a new scene, and save.
 
-The studio sits in the device area: the field's tools; what you can do with the
-symbol you have selected — bind it, set it to follow another, give it an exact
-value, duplicate it, go to its source; then formation, material, motion, the
-body of the field, a personal layer that stays yours however the scene is
-shared, and capture. Behind the studio stand the devices that govern the field
-itself — physics, the pointer, how symbols relate, the medium they move
-through, what happens when they touch, morph, focus, colour, ink, depth,
-resonance — each a whole device with every setting it needs. Put one on your
-rack as a small widget with its four most-played controls, open it whole in the
-browser, or bring it up full size in the studio. Its settings stay live
-whether or not the widget is showing.
+What belongs to one scene is in the scene itself, open below the field: its
+length and what it carries, what follows it, the tools that draw a form, bind
+a symbol, arrange several or tie six into one figure, and the symbol you have
+selected, with its place, its force, its voice and its meaning. What shapes
+every scene is in the device area. The studio holds how the particles gather,
+the material, the motion, the layers that join the field, and a personal layer
+that stays yours however the scene is shared. Behind it stand the devices that
+govern the field itself — physics, the pointer, how symbols relate, the medium
+they move through, what happens when they touch, morph, focus, colour, ink,
+depth, resonance — each a whole device with every setting it needs. Read one at
+a glance on its chain, open it as a band above the chain with every setting,
+let it fill a pane or a window of its own, or keep it as a tile on the rail.
+Its settings stay live whichever you look at.
 
 The transport turns in this case to the field. Tempo is the speed it forms and
 breathes at, and the time signature is the scene's ratio of hold to change. Key
@@ -528,8 +530,8 @@ working on it.
 | Browser | Find material, instruments and devices, and bring them in. |
 | Panes | Hold your work. Each pane holds one instrument. |
 | Widget rail | Keep context at hand in every kind of work: the agent you are talking to, the packet, the trail, a terminal, the sky. |
-| Detail | See the selected clip, or the chain of devices that works on it. |
-| Status bar | Read what any control does. Switch the detail area between Clip and Device. |
+| Detail | See the selected clip, and the chain of devices that works on it, one above the other. |
+| Status bar | Read what any control does. Show Clip view, Device view, or both. |
 
 To hide a part, click its toggle. The other parts grow to fill the space.
 
@@ -958,7 +960,7 @@ material passes through, from left to right.
 | Mode | Track | Chain, left to right |
 |---|---|---|
 | Central | A workspace. The Day is the Main track. | The packet, the agent that answers, and its scope; on a workspace that holds code, Ground hygiene and Impact. On the Main track: the Day, then Approvals. |
-| Factory | An agent session. | Gateway, agent, skills rack, scope, landing. On the Main track: the gateways rack, Approvals, the ledger and Link. |
+| Factory | An agent session. | Gateway, agent, skills rack, scope, landing. On the Main track: the gateways rack, the experiments, Approvals, the ledger and Link. |
 | Expressions | An Expression. | The Studio: the field, then its field devices. |
 | Technē | A reading. | The instrument it plays through, then its lens and filter effects. |
 | Live | A part. | The note devices, the torus, then its effects. |
