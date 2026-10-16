@@ -1,4 +1,4 @@
-// Renders a page of the manual (DLW.md by default, or the name given: `node docs/dlw/render.mjs DEVICE-UI`) into the
+// Renders a page of the manual (DLW.md by default, or the name of another page beside it) into the
 // standalone HTML beside it. The Markdown is the source; run this from the repo root after editing it (needs `npm ci` in
 // site/ for the marked parser).
 import {readFileSync, writeFileSync} from 'node:fs'
@@ -41,12 +41,14 @@ const marked = new Marked({
       return `<div class="table-wrap">${this.constructor.prototype.table.call(this, token)}</div>\n`
     },
     // A ```ui block embeds the device's real UI beside its spec:
-    //   src: path relative to this folder · height: px · caption: text
+    //   src: path relative to this folder · device: <family>:<face> · clip: <mode> · height: px · caption: text
     code({text, lang}) {
       if (lang !== 'ui') return false
       const f = Object.fromEntries(text.split('\n').map(l => l.split(/:\s*/)).filter(([k, v]) => k && v).map(([k, ...v]) => [k.trim(), v.join(':').trim()]))
       // device: <family>:<face> embeds the device gallery (the shell's own runtime, every view) instead of a page.
       if (f.device) Object.assign(f, {src: `${GALLERY}?device=${f.device}&view=${f.view || 'all'}`, width: f.width || '1100', height: f.height || '760'})
+      // clip: <mode> embeds the mode's Clip view, drawn by the gallery at the detail area's size and expanded.
+      if (f.clip) Object.assign(f, {src: `${GALLERY}?clip=${f.clip.replace(/^clip:/, '')}`, width: f.width || '1240', height: f.height || '1000'})
       const esc = v => String(v ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')
       // Drawn at its design width (default 1440 px), scaled to fit the column.
       const w = parseInt(f.width || '1440', 10), h = parseInt(f.height || '560', 10)
@@ -176,6 +178,8 @@ ${body}
   }
   const fit=()=>document.querySelectorAll('.ui-stage').forEach(st=>{const w=+st.dataset.w,h=+st.dataset.h,k=Math.min(1,st.clientWidth/w);st.style.height=(h*k)+'px';st.firstElementChild.style.transform='scale('+k+')'})
   fit();addEventListener('resize',fit)
+  // The device gallery tells the page its height: the embed grows to every view it draws.
+  addEventListener('message',e=>{const h=e.data&&e.data.dlwGallery&&+e.data.dlwGallery.h;if(!h)return;document.querySelectorAll('.ui-stage iframe').forEach(f=>{if(f.contentWindow===e.source){f.style.height=h+'px';f.parentElement.dataset.h=h;fit()}})})
   const nav=document.querySelector('nav')
   document.querySelector('.menu').onclick=()=>nav.classList.toggle('open')
   nav.addEventListener('click',e=>{if(e.target.closest('a'))nav.classList.remove('open')})
