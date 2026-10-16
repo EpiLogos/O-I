@@ -1,0 +1,24 @@
+/* The Packet's pane, inside the gallery's frame: the items in full, one card each. Shell and panel tokens only. */
+.cpk-mark { flex: none; color: var(--dp-value); }
+.cpk-mark[data-state="wait"] { color: var(--text-faint, #71767c); }
+.cpk-mark[data-state="review"] { color: var(--stall, #ff9b4a); }
+.cpk-pane { color: var(--text, #d4d7da); font: 12px/1.5 var(--font-ui, sans-serif); }
+.cpk-sheet { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; padding: 14px 24px 10px; }
+.cpk-body { flex: 1 1 auto; min-height: 0; overflow: auto; }
+.cpk-head h3 { display: flex; align-items: baseline; gap: 8px; margin: 0 0 4px; font-size: 15px; font-weight: 600; }
+.cpk-head h3 small { font-size: 11px; font-weight: 400; color: var(--text-faint, #71767c); }
+.cpk-head p { margin: 0 0 10px; color: var(--text-dim, #a2a7ad); }
+.cpk-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; max-width: 760px; }
+.cpk-item { display: grid; gap: 4px; padding: 6px 8px 8px 12px; background: var(--bg-0, #26292d); border-left: 2px solid var(--dp-value); }
+.cpk-item[data-state="wait"] { border-left: 2px dashed var(--stall, #ff9b4a); opacity: .85; }
+.cpk-item[data-state="review"] { border-left-color: var(--stall, #ff9b4a); }
+.cpk-meta { display: flex; align-items: center; gap: 8px; min-height: 22px; font-size: 11px; color: var(--text-dim, #a2a7ad); }
+.cpk-meta b { font-weight: 500; color: var(--text, #d4d7da); }
+.cpk-size { margin-left: auto; font-variant-numeric: tabular-nums; }
+.cpk-x { width: 22px; height: 22px; padding: 0; border: 0; background: transparent; color: var(--text-faint, #71767c); font-size: 16px; line-height: 1; cursor: pointer; }
+.cpk-x:hover, .cpk-x:focus-visible { color: var(--text, #d4d7da); outline: none; }
+.cpk-text { margin: 0; font: 13.5px/1.5 Charter, Georgia, serif; color: var(--text, #d4d7da); }
+.cpk-note { margin: 0; font-size: 11px; color: var(--stall, #ff9b4a); }
+.cpk-empty { margin: 0; font: italic 13.5px/1.55 Charter, Georgia, serif; color: var(--text-faint, #71767c); }
+.cpk-foot { display: flex; gap: 18px; flex: none; margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--line, #24262a); font-size: 11px; color: var(--text-dim, #a2a7ad); font-variant-numeric: tabular-nums; }
+.cpk-foot b { font-weight: 500; color: var(--text, #d4d7da); }
