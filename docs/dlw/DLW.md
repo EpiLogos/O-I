@@ -1060,7 +1060,7 @@ holds changes with the kind of clip.
 
 | Mode | The clip | Its editor's tabs | Launch | Envelopes |
 |---|---|---|---|---|
-| Technē (§17.1) | An event or a walk's stop | Relations, Constellation, Source | Arrival, and the walk's next stop | None |
+| Technē (§17.1) | An event or a walk's stop | Material, Relations, Constellation, Source | Arrival, and the walk's next stop | None |
 | Central (§18.1) | A page | Page and Source; a Flow's Dialogue, Flow and Journal | None | None |
 | Factory (§19.1) | A task | The log | Mode, Then, Quantize | The Agent's Effort and Autonomy for this task |
 | Expressions (§20.1) | A scene | Sequence, Envelopes, Expression, Sound | Quantize, the next scene, Jump | The scene's automation |
@@ -1337,8 +1337,8 @@ A panel uses these controls and no others.
 | Dial | A number that you sweep | The name above, a 270° ring with a teal arc, the value below. A value that can turn either way starts its arc at zero. | A knob. |
 | Value box | A number where space is short, or one you set exactly | The value in a field that fills teal to its place in the range. | A slider, such as Wavetable's Volume. |
 | Toggle | On or off | The name in a box, amber when on. | Auto Filter's Hz button. |
-| Radio | One of two to five | Buttons side by side or stacked; the chosen one amber. | Auto Filter's filter types. |
-| Chooser | One of many | The value and ▾; a menu. | Wavetable's wavetable menu. |
+| Radio | One of two to five | Buttons side by side or stacked; the chosen one amber. A choice the owner cannot take stands dimmed, and the status bar says why. | Auto Filter's filter types. |
+| Chooser | One of many | The value and ▾; a menu. A closed choice is dimmed in the menu, with its reason. | Wavetable's wavetable menu. |
 | Rows | A list: a rack's chains, a scope's places | One row each: your request as a square; the owner's answer as a light, or the member's kind mark in its state; the name; a short meter; a short note. A long list pages. | A rack's chain list. |
 | Ladder | Evidence in steps | One tick for each step: lit where it is established, dark where it is not, hollow where nobody has observed it. | A level meter's segments. |
 | Readout | A reading | A short value over its name. A large readout is the count that the view is for. | Hybrid Reverb's "100 % / 285 ms". |
@@ -1680,6 +1680,12 @@ The editor shows what the clip gathered: its passages and occurrences, how it re
 #### Clip view
 
 Clip view shows first how sure anyone is of the event, its span, and what it gathered.
+
+```ui
+clip: clip:techne
+caption: Clip view in Technē: an event, or a stop of a walk, on a fixture of readings. Both sizes, the detail area and expanded.
+height: 1120
+```
 
 ##### The Clip panel
 
@@ -3037,6 +3043,12 @@ A clip shows its state on the grid and on the ruler: Draft, Saved or Edited sinc
 
 Clip view shows the page as you write it: the same editor as the page in a pane. Its facts stand in the Clip panel on the left, the tools beside them, and the page fills the rest.
 
+```ui
+clip: clip:central
+caption: Clip view in Central: a page, with its ties or its participants, its tools and its readings, on a fixture of readings.
+height: 1120
+```
+
 ##### The Clip panel
 
 | Field | Values | Default | What it does |
@@ -3893,6 +3905,12 @@ An empty square on a track names what a click does: it stops the session after t
 #### Clip view
 
 A running task is watched, so Clip view puts how it launches and what follows it beside the log.
+
+```ui
+clip: clip:factory
+caption: Clip view in Factory: a task, its launch and what follows it, its log along the task's time, and the Agent's effort and autonomy for it.
+height: 1120
+```
 
 ##### The Clip panel
 
@@ -5797,6 +5815,12 @@ A clip is a scene. Its editor edits the scene's sequence: each symbol in its own
 
 Clip view shows the sequence first, with the sound beneath it, so that you shape both sides of the scene together.
 
+```ui
+clip: clip:expressions
+caption: Clip view in Expressions: a scene, its body and triggers, its tools, and its sequence, automation, symbols and sound.
+height: 1120
+```
+
 ##### The Clip panel
 
 | Field | Values | Default | What it does |
@@ -5888,6 +5912,7 @@ The tools act on the scene in the editor. Each writes into the scene.
 | Sequence | The scene's roll: one lane for each symbol, its states as steps, each step's hold and change drawn like a note's length and glide. The scene's sound lies beneath it. |
 | Envelopes | The scene's automation lanes. |
 | Expression | The selected symbol's own controls, in four pages: Formation, Force, Sound and Meaning. |
+| Sound | The scene's sound at full height: what the plate sounds, the pitch riding the plate, and each symbol's voice, as Live's audio editor shows a sample. |
 
 The Expression tab is to a symbol what Live's MPE tab is to a note: the values that belong to that one object. Select exactly one symbol. A locked symbol refuses edits until you unlock it.
 
@@ -7392,6 +7417,12 @@ A clip is a MIDI clip or an audio clip. A MIDI clip's editor edits its notes, wh
 #### Clip view
 
 Clip view is Live's, panel for panel. A MIDI clip opens on its notes, folded to or highlighting its own mode.
+
+```ui
+clip: clip:live
+caption: Clip view in Live: a MIDI clip with its own scale, Live's launch and tools, and its notes on the Jankó key column.
+height: 1120
+```
 
 ##### The Clip panel
 
