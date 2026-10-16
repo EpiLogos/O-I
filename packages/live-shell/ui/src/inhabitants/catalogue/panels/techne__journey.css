@@ -33,3 +33,6 @@
 
 /* A stop's row in the pool: how it is arrived at, after its name. */
 .jn-row-arrival { flex: none; margin-left: auto; padding-right: 6px; font-size: 9.5px; color: var(--text-faint, #71767c); white-space: nowrap; }
+
+/* A reading the pane needs and the owner has not reported. */
+.jn-unread { flex: none; padding: 8px 14px; color: var(--text-faint, #71767c); }
