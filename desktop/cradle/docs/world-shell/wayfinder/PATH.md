@@ -100,10 +100,24 @@ objections verbatim and the full validation (`BRIEF-BUILDER.md`); the lead conve
 | Ticket | Who | Zone | Since |
 |---|---|---|---|
 | Native screen passes, convergence, PATH | lead | `App.tsx`, `shell/modeFrames.ts`, the book, the register, PATH | 14 Oct |
-| BC2 — Central's page family wired (Document, Flow, Workspace, Text, Highlight, Notes, Beings, Things); Ground hygiene's and Impact's model defects; Central receipts re-read | builder | `central/**`, the Central inhabitants models, `worldShellFamilies.ts`, `DocumentFlowFace.tsx`, the document door | 16 Oct |
-| BF2 — Thread, the Gateways rack, Experiment, Frames monitor (+ widget), the Agency gateway on their owners; the Agent's thread key | builder | `agent/**`, `frame/widgets/**` (the Frames widget) | 16 Oct |
 | W2 — the door answers per register: AIKit's relations-batch streams each item as it finishes, the kernel publishes each to its ticket, the shell sends the door's 17 reads together, the graph's AIKit resolution stops dying at 20 s | builder | ai-kit `env-1` (`speed/relations-batch-per-item`): `crates/aikit-cli/src/main.rs`, `app/knowledge*`, `tests/**`; O-I `desktop/cradle/kernel/**` (knowledge, graph), `desktop/cradle/src/knowledge/requests.ts`, `native/wikiSubjectStanding.ts` | 16 Oct |
+| BL2 — the Torus on its design without losing MIDI mapping: a kit wrap seam so designed controls are map targets by key | builder | `live/**`, `inhabitants/sdk/panel.*` (additive), `frame/devices/{deviceHost,DeviceView}.tsx` | 16 Oct |
+| BF3 — Run, Agentset rack, Custody, Ledger and Approvals (+ widgets), Workcell's Seat and Remote carrier; Factory's Main track head and Clip side; the faces admitted | builder | `agent/**`, `shell/modeDetails.tsx`, `frame/tracks/SessionGrid.tsx`, `frame/widgets/**`, the Factory and Workcell manifests, the registry | 16 Oct |
+| BC3 — Central's last five: Packet, Answer, Search, Context & world, Agent identity; a reached Day's face; Impact's device; the seat read for Ground hygiene | builder | `central/**`, the Central inhabitants files, `useCentralTransport.tsx` (export only) | 16 Oct |
 | The catalogue of designed devices (owner, 16 Oct: "the parallel lanes are developing the high end device component specs in the documentation lane, you can directly work from its … catalogue of pre designed UI, the wiring and UX integration should be somewhat trivial wiring"): `catalogue/panels/design.ts` is the contract, `panels/<family>__<face>.tsx` (exporting `design`, loaded through `loadDesign`) the designs. The runtime hosts each published device's design when one exists, else the generic plate; a device lane writes the binding (owner readings and writes on the design's value keys), never a panel | the owner's documentation lane | `inhabitants/catalogue/**` — read-only for every builder | 16 Oct |
+
+Then: lanes BF2 and BC2 landed (16 Oct). BF2 (`516c9608a`): the Thread, the Gateways rack, the Agency gateway, Experiment, the
+Frames monitor (+ its rail widget), Tasks and Runs draw their designs on their owners — the Thread from the thread pane's own owner
+read (one poll), the Agent's `thread`, `models` (AIKit's catalogue) and `harnesses` filled, its light disabled as a reading; with no
+session selected the Device side is Factory's Main track. BC2 (`4608ae324`): Central's page family (Document, Flow, Workspace, Text,
+Highlight, Notes; Beings/Things bound but unplaced) draws on Central — a Flow's entries append through the Flow file's CAS write;
+flow-document is an instrument on a reached Flow's chain and a document face is declared; Ground hygiene reads a clean landed seat as
+landed and a clean seat ahead of main as not, its seats from the register's primaries; Impact matches seat sessions; Central's
+devices re-read on lane W3's receipts. On the way: the documentation lane's Ground hygiene design type-checked only against BC2's
+uncommitted model, failing #677's candidate tsc — the two fields landed first (inside the documentation lane's 0b5361847, which swept
+the staged entry); the shared seat now commits by explicit path. The landing tier's one red (browser-canvas-editor, 69 s, once) was a
+load flake: the same contract passes locally and in the same run's candidate job. The Torus: the documentation lane's design now draws
+the four determinants (adbe6978e); lane BL2 hosts it once designed controls can be MIDI-map targets.
 
 Then: lanes W4 and BL landed; ai-kit #510 and Central #274 merged and installed (16 Oct). W4 (`ea15033ad`): `oi where` and the world
 heads read the cached suite verification and hash in-process — 711–832 ms / 6 shasum → 4–7 ms / 0 (366–375 ms on the first call
