@@ -1,0 +1,66 @@
+/* The Agentset rack's own layout: the nested member chains, the model chip, the stalled outline, the chosen member, and the pane. Shell and panel tokens only. */
+
+/* A member's chain: the state light, stepped in by its level. */
+.as-mark { flex: none; display: inline-flex; align-items: center; padding-left: calc(var(--d, 0) * 9px); }
+.as-mark[data-nested="true"]::before { content: ''; width: 4px; height: 6px; margin: -5px 3px 0 0; border-left: 1px solid var(--text-faint, #71767c); border-bottom: 1px solid var(--text-faint, #71767c); }
+.dp-row:has(> .as-mark[data-state="stalled"]) { outline: 1px solid color-mix(in srgb, var(--stall, #ff9b4a) 75%, transparent); outline-offset: -1px; }
+
+/* The member's model, as a chip after its name. */
+.as-chip { flex: none; max-width: 68px; padding: 0 3px; height: 12px; line-height: 11px; font-size: 9px; color: var(--text-dim, #a2a7ad); border: 1px solid var(--line, #24262a); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.as-none { margin: 0; justify-self: stretch; font-size: 10px; color: var(--text-faint, #71767c); }
+.as-span { grid-column: 1 / -1; align-self: stretch; justify-self: stretch; display: flex; flex-direction: column; align-items: stretch; min-width: 0; }
+
+/* The chosen member, in Whole. */
+.as-who { grid-column: 1 / -1; justify-self: stretch; display: flex; align-items: center; gap: 7px; min-width: 0; }
+.as-face { flex: none; display: block; line-height: 0; }
+.as-who-text { min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.as-who-text b { font-size: 11px; font-weight: 600; color: var(--text, #d4d7da); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.as-who-text span { font-size: 10px; color: var(--text-dim, #a2a7ad); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.as-who-text [data-state="stalled"] { color: var(--stall, #ff9b4a); }
+.as-who-text [data-state="done"] { color: var(--green, #8fd0a8); }
+.as-who-text [data-state="working"] { color: var(--dp-on, #ffbe00); }
+.as-goal { grid-column: 1 / -1; justify-self: stretch; margin: 0; font-size: 10px; line-height: 12px; color: var(--text-dim, #a2a7ad); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.as-goal[data-none="true"] { color: var(--text-faint, #71767c); }
+
+/* The widget. */
+.as-tile-list { flex: 1 1 auto; min-width: 0; display: flex; }
+.as-tile-list > .dp-cell { flex: 1 1 auto; }
+.as-tile-side { flex: none; width: 62px; display: flex; flex-direction: column; justify-content: space-around; align-items: center; }
+
+/* The pane: the crew as a tree, and the chosen member's thread. */
+.as-pane { position: absolute; inset: 0; display: flex; flex-direction: column; background: var(--bg-1, #33363b); color: var(--text, #d4d7da); font: 11px/1.45 var(--font-ui, sans-serif); overflow: hidden; }
+.as-strip { flex: none; display: flex; align-items: center; gap: 18px; height: 26px; padding: 0 14px; background: var(--bg-0, #26292d); border-bottom: 1px solid var(--line, #24262a); color: var(--text-dim, #a2a7ad); font-size: 10.5px; white-space: nowrap; }
+.as-strip b { font-weight: 600; color: var(--text, #d4d7da); font-size: 11px; }
+.as-strip span { display: inline-flex; align-items: center; gap: 6px; }
+.as-body { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 360px; }
+.as-body[data-none="true"] { grid-template-columns: minmax(0, 1fr); }
+
+.as-tree { min-width: 0; min-height: 0; margin: 0; padding: 8px 0; list-style: none; border-right: 1px solid var(--line, #24262a); overflow: hidden; }
+.as-tree li { position: relative; }
+.as-node { position: relative; width: 100%; height: 40px; display: grid; grid-template-columns: 30px minmax(0, 1fr) auto 14px; gap: 10px; align-items: center; padding: 0 14px 0 calc(14px + var(--d, 0) * 24px); background: none; border: 0; border-bottom: 1px solid color-mix(in srgb, var(--line, #24262a) 70%, transparent); color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.as-node:hover { background: color-mix(in srgb, var(--text, #d4d7da) 5%, transparent); }
+.as-node[aria-pressed="true"] { background: color-mix(in srgb, var(--sel, #7ec3e6) 16%, transparent); box-shadow: inset 2px 0 0 var(--sel, #7ec3e6); }
+.as-node[data-state="stalled"] { outline: 1px solid color-mix(in srgb, var(--stall, #ff9b4a) 75%, transparent); outline-offset: -1px; }
+.as-node[data-nested="true"]::before { content: ''; position: absolute; left: calc(14px + var(--d, 0) * 24px - 14px); top: 0; height: 50%; width: 9px; border-left: 1px solid var(--text-faint, #71767c); border-bottom: 1px solid var(--text-faint, #71767c); }
+.as-node-main { min-width: 0; display: flex; flex-direction: column; }
+.as-node-main b { font-size: 11px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.as-node-main span { font-size: 10px; color: var(--text-dim, #a2a7ad); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.as-node[data-state="idle"] .as-node-main b, .as-node[data-state="failed"] .as-node-main b, .as-node[data-state="none"] .as-node-main b { color: var(--text-faint, #71767c); }
+.as-node .as-face { opacity: 1; }
+.as-node[data-state="idle"] .as-face, .as-node[data-state="done"] .as-face, .as-node[data-state="failed"] .as-face, .as-node[data-state="none"] .as-face { opacity: .5; }
+
+.as-thread { min-width: 0; min-height: 0; display: flex; flex-direction: column; background: var(--bg-0, #26292d); overflow: hidden; }
+.as-thread-head { flex: none; display: flex; gap: 8px; align-items: baseline; padding: 9px 14px 7px; border-bottom: 1px solid var(--line, #24262a); white-space: nowrap; overflow: hidden; }
+.as-thread-head b { font-size: 11px; font-weight: 600; }
+.as-thread-head span { font-size: 10px; color: var(--text-dim, #a2a7ad); }
+.as-thread-head [data-state="stalled"] { color: var(--stall, #ff9b4a); }
+.as-thread-head [data-state="done"] { color: var(--green, #8fd0a8); }
+.as-thread-head [data-state="working"] { color: var(--dp-on, #ffbe00); }
+.as-thread h4, .as-files h4 { margin: 0; padding: 8px 14px 3px; font-size: 9px; font-weight: 400; letter-spacing: .07em; text-transform: uppercase; color: var(--text-faint, #71767c); }
+.as-tail { flex: 1 1 auto; min-height: 0; margin: 0; padding: 0 14px 8px; display: flex; flex-direction: column; justify-content: flex-start; overflow: hidden; font: 10.5px/15px var(--mono, ui-monospace, monospace); color: var(--text-dim, #a2a7ad); white-space: pre-wrap; word-break: break-word; }
+.as-files { flex: none; border-top: 1px solid var(--line, #24262a); padding-bottom: 8px; }
+.as-files ul { margin: 0; padding: 0 14px; list-style: none; }
+.as-files li { height: 16px; font: 10.5px/16px var(--mono, ui-monospace, monospace); color: var(--text, #d4d7da); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.as-files p, .as-thread-empty { margin: 0; padding: 0 14px; font-size: 10.5px; color: var(--text-faint, #71767c); }
+.as-empty { margin: auto; color: var(--text-faint, #71767c); }
