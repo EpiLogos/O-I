@@ -167,7 +167,7 @@ function assignmentControls(p: ViewProps) {
     target: <Chooser {...routeSt} label="Target" does="The parameter on the chain that the planet moves." value={rt?.target ?? ''} options={targets.map(x => ({value: x.id, label: `${x.device} · ${x.label}`}))}
       onChange={x => { if (rt) writeRoutes(p, routes.map(r => r.id === rt.id ? {...r, target: x} : r)) }} disabled={routeSt.disabled ?? none ?? (targets.length ? undefined : 'No parameter on the chain is reported.')} />,
     use: <Radio {...(rt ? st(p, `use:${rt.id}`) : {})} label="Use" does="How the planet moves the target." value={rt ? strOf(v, `use:${rt.id}`) ?? '' : ''} stack
-      options={USES} onChange={x => { if (rt) p.set(`use:${rt.id}`, x) }} disabled={none ?? (rt && strOf(v, `use:${rt.id}`) !== 'interval' ? intervalWhy : undefined)} />,
+      options={USES.map(u => (u.value === 'interval' && intervalWhy ? {...u, why: intervalWhy} : u))} onChange={x => { if (rt) p.set(`use:${rt.id}`, x) }} disabled={none} />,
     amount: <Dial {...(rt ? st(p, `amount:${rt.id}`) : {})} label="Amount" does="How far the planet moves the target. Below zero it reverses." value={rt ? numOf(v, `amount:${rt.id}`) ?? NaN : NaN} def={50}
       scale={{min: -100, max: 100}} bipolar format={pctSigned} onChange={x => { if (rt) p.set(`amount:${rt.id}`, Math.round(x)) }} disabled={none} />,
     scope: <Radio {...(rt ? st(p, `scope:${rt.id}`) : {})} label="Scope" does="Whether the planet moves the whole sound or each note." value={rt ? strOf(v, `scope:${rt.id}`) ?? '' : ''} stack
@@ -290,8 +290,8 @@ export const design: DesignedDevice = {
         </Section>
         <Section label="Move" cols={2} width={124}>{c.use}{c.amount}{c.scope}{c.smoothing}</Section>
         <Section label="Observer" grow>
-          <Radio {...observer} does="Whose view of the sky moves the sound." value={strOf(v, 'observer') ?? ''} options={OBSERVERS} stack onChange={x => p.set('observer', x)}
-            disabled={observer.disabled ?? (boolOf(v, 'havePlace') === true ? undefined : 'No place is saved, so only the shared sky can be asked.')} />
+          <Radio {...observer} does="Whose view of the sky moves the sound." value={strOf(v, 'observer') ?? ''} stack onChange={x => p.set('observer', x)} disabled={observer.disabled}
+            options={OBSERVERS.map(o => (o.value === 'private' && boolOf(v, 'havePlace') !== true ? {...o, why: 'No place is saved, so only the shared sky can be asked.'} : o))} />
           <Readout label="now" does="Where the planet puts the target now." value={c.rt && c.t ? (() => { const m = moveOf(v, c.rt, c.t, bodiesOf(v)?.[c.rt.planet]?.lon); return m?.now === undefined ? undefined : fmt(c.t, fromU(c.t, m.now)) })() : undefined} tone="value" />
         </Section>
       </Band>
