@@ -25,6 +25,11 @@
 // reached document's chain — its form device first (the Flow), the Document, then Text, Highlight and Notes — each the catalogue's
 // design on Central's readings (pageBindings.ts, gathered by pageDevices.ts), each Full the page's own pane. They stand while a
 // document is reached and leave the chain, the pool and the rail's door when none is.
+//
+// The agent's devices (lane BC3; DLW §16.2, §18.9–§18.11, §18.14, §18.15) close the workspace track's chain: the Packet ends a reached
+// document's chain (§18.9 "after Notes"), then the agent that answers — its identity before it (§18.15), the Answer, its Context & world
+// after it (§18.14) — then Search (§18.11), each the catalogue's design on its owner (agentChainDevices.ts). The Packet and the Answer
+// share the encounter observers mounted here: one per session (lane BF2's EncounterObservers.tsx), never a session read twice.
 import {useEffect, useMemo, useRef, type ReactNode} from 'react'
 import type {CentralLocation, KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import {DeviceView} from '../../frame/devices/DeviceView'
@@ -54,9 +59,16 @@ import {useCentralGroundAnswer, useDayDieReading, useNaraReading, useRosterReadi
 import {usePageDevices} from './pageDevices'
 import {HYGIENE_DEVICE_ID, IMPACT_DEVICE_ID, useHygieneDevice, useImpactDevice} from './groundDevices'
 import {answerBinding} from './answerBinding'
-import {observedState, useEncounterSessions} from '../../agent/devices/EncounterObservers'
+import {observedState, useEncounterSessions, type ObservedSession} from '../../agent/devices/EncounterObservers'
 import {useRosterAgents} from '../../owners/readers'
 import {bindConversation} from './centralDeviceWrites'
+import {useAgencySessions} from '../../agent/useAgencySessions'
+import {useOptionalContinuity} from '../../continuity/workspace'
+import {COMPANIONS} from '../../shell/ModeContextDock'
+import {usePacketReading} from '../../shell/transports/useCentralTransport'
+import {conversationOf} from '../../widgets/agentConversation'
+import {CONTEXT_WORLD_DEVICE_ID, IDENTITY_DEVICE_ID, PACKET_DEVICE_ID, SEARCH_DEVICE_ID, useContextWorldDevice, useIdentityDevice, usePacketDevice, useSearchDevice} from './agentChainDevices'
+import type {ChangeHorizon} from './contextWorldBinding'
 import './centralDevices.css'
 
 export interface CentralConversationAperture {
@@ -258,8 +270,23 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
   const nara = useNaraReading(transport, conversation?.project ?? null, conversation?.expressionRef ?? null, conversation?.conversation ?? null)
   // The Answer (answerBinding.ts): the bound session's exchange through the ONE shared encounter observer (lane BF2's), the roster's
   // accepted agents, the reached page's title and packet.
-  const answerSessions = useMemo(() => (nara.state === 'bound' && nara.session && nara.space ? [{ref: nara.session, space: nara.space}] : []), [nara.state, nara.session, nara.space])
-  const encounters = useEncounterSessions(answerSessions)
+  // The Packet goes with the conversation the Agent widget holds (THE selection's session, else the companion's own: the read the Packet
+  // widget and the transport's Key slot make, useCentralTransport.tsx usePacketReading).
+  const selectionRef = useOptionalContinuity()?.current.context?.selection?.ref ?? null
+  const packetReading = usePacketReading(transport, selectionRef)
+  const agency = useAgencySessions(transport)
+  const companion = COMPANIONS.base.name
+  const packetTrack = conversationOf(agency.tracks, companion, selectionRef).track
+  const packetSessionRef = packetTrack?.sessionRef ?? null, packetSpaceRef = packetTrack?.spaceRef ?? null
+  const observedSessions = useMemo(() => {
+    const list: ObservedSession[] = nara.state === 'bound' && nara.session && nara.space ? [{ref: nara.session, space: nara.space}] : []
+    if (packetSessionRef && packetSpaceRef && !list.some(session => session.ref === packetSessionRef)) list.push({ref: packetSessionRef, space: packetSpaceRef})
+    return list
+  }, [nara.state, nara.session, nara.space, packetSessionRef, packetSpaceRef])
+  const encounters = useEncounterSessions(observedSessions)
+  const packet = usePacketDevice(transport, packetReading, {companion, bound: !!packetTrack, handle: packetSessionRef ? encounters.handles[packetSessionRef] : undefined})
+  const packetItems = typeof packet.values.packet === 'string' ? packet.values.packet : null
+  const packetSession = packetReading?.context ? packetReading.context.scope.agent_session : null
   const answerHandle = nara.session ? encounters.handles[nara.session] : undefined
   const answerObserved = observedState(answerHandle)
   const answerRoster = useRosterAgents(transport)
@@ -283,20 +310,33 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [transport, manifest, reads, afterWrite, dayAperture?.sourceRef, dayAperture?.documentId, dayAperture?.project, conversation?.conversation, conversation?.expressionRef, conversation?.project, flow?.location.ref, impact?.path, impact?.kind, projects, deviceWindows, placement, pageWrite],
   )
-  const documentPacket = pages.bindings[centralDeviceId('document')]?.values.packet
-  const answerPage = pages.reads.page ? {title: pages.reads.page.title, ...(typeof documentPacket === 'string' ? {packet: documentPacket} : {})} : null
+  const answerPage = pages.reads.page ? {title: pages.reads.page.title} : null
   const answerAgents = answerRoster.state === 'ready' ? answerRoster.agents : null
   const refreshNara = nara.refresh
   const answer = useMemo(() => answerBinding(centralDeviceId('nara-conversation'),
-    {nara: {state: nara.state, session: nara.session, resume: nara.resume}, observed: answerObserved, roster: answerAgents, page: answerPage},
+    {nara: {state: nara.state, session: nara.session, resume: nara.resume}, observed: answerObserved, roster: answerAgents, page: answerPage,
+      packet: packetItems !== null ? {items: packetItems, session: packetSession} : null},
     {
       bind: conversation ? async () => { await bindConversation(transport, conversation); refreshNara() } : null,
       send: answerHandle && 'actions' in answerHandle ? async text => { answerHandle.actions.change(text); await answerHandle.actions.send() } : null,
     }),
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- the page is its title and packet; the conversation its parts
-  [nara.state, nara.session, nara.resume, answerObserved, answerAgents, answerPage?.title, answerPage?.packet, answerHandle, transport, refreshNara,
-    conversation?.project, conversation?.expressionRef, conversation?.conversation, pages.bindings])
-  const bindingOf = (id: string): DesignBinding | null => id === centralDeviceId('nara-conversation') ? answer : (id === DAY_DEVICE_ID ? dayBinding : id === HYGIENE_DEVICE_ID ? hygiene : id === IMPACT_DEVICE_ID ? impactDesign : pages.bindings[id] ?? null)
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- the page is its title; the packet its items and session; the conversation its parts
+  [nara.state, nara.session, nara.resume, answerObserved, answerAgents, answerPage?.title, packetItems, packetSession, answerHandle, transport, refreshNara,
+    conversation?.project, conversation?.expressionRef, conversation?.conversation])
+  // Agent identity reads the agent you talk to (the Answer's) until you choose another; Search asks AIKit in your world or a project;
+  // Context & world reads the Answer's session's scope over Central's ground (the one ground answer the Day reads) and the Packet.
+  const identity = useIdentityDevice(transport, typeof answer.values.agent === 'string' ? answer.values.agent : null)
+  const projectNames = useMemo(() => (projects ? projects.flatMap(project => (project.name ? [project.name] : [])) : null), [projects])
+  const search = useSearchDevice(transport, projectNames)
+  const ground = useCentralGroundAnswer(transport)
+  const contextWorld = useContextWorldDevice({
+    answer: {bound: nara.state === 'bound', session: nara.session},
+    horizon: (ground.reading?.sources ?? null) as ChangeHorizon | null, groundError: ground.error,
+    document: pages.reads.page?.title ?? null,
+    packet: packetReading?.context ? {items: packetReading.context.items.length, session: packetSession} : null,
+  })
+  const agentChain: Readonly<Record<string, DesignBinding>> = {[PACKET_DEVICE_ID]: packet, [SEARCH_DEVICE_ID]: search, [IDENTITY_DEVICE_ID]: identity, [CONTEXT_WORLD_DEVICE_ID]: contextWorld}
+  const bindingOf = (id: string): DesignBinding | null => id === centralDeviceId('nara-conversation') ? answer : (id === DAY_DEVICE_ID ? dayBinding : id === HYGIENE_DEVICE_ID ? hygiene : id === IMPACT_DEVICE_ID ? impactDesign : agentChain[id] ?? pages.bindings[id] ?? null)
   // What stands on the door now; a device that left the chain (no document reached) leaves the door too.
   const published = useRef(new Set<string>())
   useEffect(() => {
@@ -305,7 +345,7 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
     for (const entry of entries) publishDevice(entry.id, centralPublication(entry, bindingOf(entry.id), pages.fulls[entry.id]))
     published.current = now
     // eslint-disable-next-line react-hooks/exhaustive-deps -- bindingOf reads the bindings named here
-  }, [entries, dayBinding, pages.bindings, pages.fulls, hygiene, impactDesign, answer])
+  }, [entries, dayBinding, pages.bindings, pages.fulls, hygiene, impactDesign, answer, packet, search, identity, contextWorld])
   useEffect(() => () => {
     for (const face of manifest?.faces ?? []) publishDevice(centralDeviceId(face.id), null)
   }, [manifest])

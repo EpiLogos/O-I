@@ -3,8 +3,9 @@
 //   - Ground hygiene reads when it opens and when you press Read now (DLW §18.12 Refresh "On open"), through the one census reader
 //     (inhabitants/CentralHygieneDevice.tsx readHygieneCensus);
 //   - Impact reads its subject's three legs when the subject changes — the knowledge graph (`op graph`, readGraph), a folder's
-//     listing (`op files_list`), the NOW register (`op now` kind:list) — ported from inhabitants/CentralImpactDevice.tsx:45-98 (its
-//     `read`), and the NOW leg again when the kernel says a NOW write landed (owners/notices.ts receiptMovesNow, lane W3).
+//     listing (`op files_list`), the NOW register (`op now` kind:list) — ported from inhabitants/CentralImpactDevice.tsx's `read`
+//     (which reads through these three since lane BC3: one implementation of each leg), and the NOW leg again when the kernel says
+//     a NOW write landed (owners/notices.ts receiptMovesNow, lane W3).
 import {useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore} from 'react'
 import {kernelOp} from '../../../../../../desktop/cradle/src/kernel/bridge'
 import {readGraph, type GraphReading} from '../../../../../../desktop/cradle/src/knowledge/graph'

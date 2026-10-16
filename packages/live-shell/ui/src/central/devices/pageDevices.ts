@@ -5,8 +5,9 @@
 // The reached document is the one the hand last reached in a pane (central/documents/documentDoor.ts): a Flow's face publishes its
 // location, draft fact and save outcome there (inhabitants/DocumentFlowFace.tsx), and its file is read again here through the Flow's
 // own route (flow/instances.ts readFlowInstance) — keyed by the revision the face holds, so a save in the pane reads the page anew.
-// A Day's page is the Day device's document (useCentralReadings.ts useDayDieReading) when the reached Day is that document; the Day
-// face does not publish its source on the door, so another Day reads as its door words alone.
+// A Day's page is the Day device's document (useCentralReadings.ts useDayDieReading) when the reached Day is that document; any other
+// reached Day is read the same way by the document the Day face publishes on the door (lane BC3: DocumentDayDieFace.tsx `day`), its date
+// the one its source path names (central/daySurface.ts dateOfDayPath — Central's own `Control/user/day/<date>/day.md`).
 //
 // Each device's own Full is the page itself: ⤢ brings the document's own pane forward (centralDocuments.ts revealDocumentPane), the
 // material the Text, Highlight and Notes Full views name ("the open document at full size", DLW §18.6–§18.8).
@@ -26,6 +27,8 @@ import {civilDayName, type DayAperture} from './dayBinding'
 import {documentBinding, flowBinding, highlightBinding, holdsVersion, notesBinding, subscribeHolds, textBinding, workspaceBinding, type BookWorkspace,
   type PageMaterial, type ReachedPage} from './pageBindings'
 import {readDayPage, readFlowPage, wordsOfHtml, type FlowPage} from './pageReadings'
+import {dateOfDayPath} from '../daySurface'
+import {useDayDieReading} from './useCentralReadings'
 
 /** The Day device's document, as useDayDevice reads it (CentralDevices.tsx). */
 export interface DayDocumentReading {
@@ -64,6 +67,34 @@ export function reachedPageOf(doc: DocumentInPane, date: string | null): Reached
     ...(doc.save ? {save: doc.save} : {}),
     ...(doc.reread ? {reread: doc.reread} : {}),
   }
+}
+
+/** Whether the reached Day is the Day device's own document: by the document the face names on the door, else (a face that names
+ * none) by its title. */
+export function isDayDevicesDocument(doc: DocumentInPane, day: DayDocumentReading): boolean {
+  if (doc.form !== 'Day' || !day.aperture) return false
+  return doc.day ? doc.day.sourceRef === day.aperture.sourceRef && doc.day.documentId === day.aperture.documentId : day.aperture.documentId === doc.title
+}
+
+/** Another Day the face named on the door (DocumentDayDieFace.tsx `day`, lane BC3): the one the page family reads by that name; null
+ * when the reached Day is the Day device's own document, or the face names none. */
+export function namedDayOf(doc: DocumentInPane, day: DayDocumentReading): DayAperture | null {
+  return doc.form === 'Day' && doc.day && !isDayDevicesDocument(doc, day) ? doc.day : null
+}
+
+/** The reached Day's civil date and material: the Day device's own document as that device reads it; another named Day as its own
+ * document read by that name (`other`: useDayDieReading's answer — no face until the owner answered), its date the one its source
+ * path names (Central's own `Control/user/day/<date>/day.md`, daySurface.ts dateOfDayPath); a Day face that names none reads as its
+ * door words alone. */
+export function dayPageOf(doc: DocumentInPane, day: DayDocumentReading, other: {readonly face: number | null; readonly payload: unknown} | null): {date: string | null; material: PageMaterial} {
+  if (isDayDevicesDocument(doc, day)) {
+    return {date: day.civilDate, material: {form: 'day', page: readDayPage(day.payload), face: day.face, date: civilDayName(day.civilDate), refusal: null}}
+  }
+  const named = namedDayOf(doc, day)
+  if (!named) return {date: null, material: {form: 'day', page: null, face: null, date: null, refusal: null}}
+  const date = dateOfDayPath(named.sourceRef)
+  const face = other?.face ?? null
+  return {date, material: {form: 'day', page: face === null ? null : readDayPage(other?.payload), face, date: civilDayName(date), refusal: null}}
 }
 
 /** The reached Flow's page, read through the Flow's own route; read again when the revision the face holds moves, or on `refresh`. */
@@ -119,16 +150,23 @@ export function usePageDevices(transport: KernelTransportStatus, day: DayDocumen
   const version = holdsVersion()
   const location = doc?.form === 'Flow' ? doc.location ?? null : null
   const flow = useFlowPage(transport, location, doc?.revision ?? null)
-  const sameDay = doc?.form === 'Day' && !!day.aperture && day.aperture.documentId === doc.title
-  const date = sameDay ? day.civilDate : null
+  // The reached Day: the Day device's own document, or another the Day face named on the door (read here by that name).
+  const named = doc ? namedDayOf(doc, day) : null
+  const otherProject = named?.project ?? null, otherSource = named?.sourceRef ?? null, otherDocument = named?.documentId ?? null
+  // The Day is its parts: the face publishes a fresh object on each render.
+  const otherDay = useMemo(() => (otherSource && otherDocument ? {project: otherProject, sourceRef: otherSource, documentId: otherDocument} : null), [otherProject, otherSource, otherDocument])
+  const other = useDayDieReading(transport, otherDay)
+  const dayPage = useMemo(() => (doc?.form === 'Day' ? dayPageOf(doc, day, otherDay ? {face: other.face, payload: other.payload} : null) : null),
+    // The Day device's document is its parts; the door's document its identity.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [doc, day.aperture?.sourceRef, day.aperture?.documentId, day.face, day.payload, day.civilDate, otherDay, other.face, other.payload])
+  const date = dayPage?.date ?? null
   const reached = useMemo(() => (doc ? reachedPageOf(doc, date) : null), [doc, date])
   const material = useMemo((): PageMaterial | null => {
     if (!doc) return null
     if (doc.form === 'Flow') return {form: 'flow', page: flow.page, refusal: flow.refusal}
-    return sameDay
-      ? {form: 'day', page: readDayPage(day.payload), face: day.face, date: civilDayName(day.civilDate), refusal: null}
-      : {form: 'day', page: null, face: null, date: null, refusal: null}
-  }, [doc, flow.page, flow.refusal, sameDay, day.payload, day.face, day.civilDate])
+    return dayPage?.material ?? {form: 'day', page: null, face: null, date: null, refusal: null}
+  }, [doc, flow.page, flow.refusal, dayPage])
   const agents = roster.state === 'ready' ? roster.agents : null
   const refreshFlow = flow.refresh
   const current = book?.current as unknown as BookWorkspace | undefined

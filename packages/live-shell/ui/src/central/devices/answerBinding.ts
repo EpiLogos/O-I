@@ -2,8 +2,10 @@
 // chain. Its binding is the owner's Nara dialogue binding (oi.nara-dialogue-binding/v1, looked up by useCentralReadings.ts
 // useNaraReading): bound, its session's conversation is the exchange — AIKit's encounter view of that session, observed by the ONE
 // shared observer every presenter of a session uses (agent/devices/EncounterObservers.tsx), its rows the Agent's and the Thread's own
-// (agent/devices/threadBinding.ts threadJson — lane BF2's read, reused, never read twice). The packet is the reached page's own
-// (pageBindings.ts documentValues). Pure: no React, no transport.
+// (agent/devices/threadBinding.ts threadJson — lane BF2's read, reused, never read twice). The packet is the Packet's (lane BC3,
+// packetBinding.ts — AIKit's prepared context, the one read the Packet widget and the transport share), shown only when it is prepared
+// for this session: the encounter's Send carries its own session's prepared context (encounter/session.ts send → reviewedContext), so
+// "an answer shows the packet that it came from" (DLW §18.9 Rules) and never another's. Pure: no React, no transport.
 import type {DesignBinding, Value, Values} from '../../frame/devices/designed'
 import type {RosterAgent} from '../../../../../../desktop/cradle/src/agency/roster'
 import type {EncounterReading, EncounterStatus} from '../../../../../../desktop/cradle/src/encounter/client'
@@ -24,7 +26,7 @@ export const ANSWER_WIRING: DesignWiring = {
     agent: 'the accepted agent whose role is the binding\'s role (nara)', agents: 'Central\'s accepted agents (owners/readers.ts useRosterAgents; roster.ts shape)',
     state: 'the session\'s connection: idle while resident, answering while a turn is in flight (encounter status)',
     document: 'the reached page\'s tab title', resume: 'whether the binding asks for its session to resume (provisioning.resume_required)',
-    packet: 'the reached page\'s own packet (its {entry, scope, text} items)',
+    packet: 'the Packet\'s items (AIKit\'s prepared context, packetBinding.ts packetItemOf), when the packet is prepared for this session: the packet its Send carries',
     thread: 'the bound session\'s exchange, as the Agent and the Thread draw it (threadBinding.ts threadJson over the shared encounter observer)',
   },
   writes: {
@@ -43,6 +45,7 @@ export const ANSWER_WIRING: DesignWiring = {
     context: 'The dialogue reading discloses no size of the identity and Expression a turn carries.',
     entry: 'The page\'s selection does not cross the host bridge (it reads the island only), so no entry is the one asked about.',
     sources: 'The encounter view carries no list of what an answer cites.',
+    packet: 'The packet the shell holds is prepared for another conversation (or none is read): this session\'s turn carries its own session\'s prepared context, which no reader here holds.',
   },
 }
 
@@ -51,8 +54,10 @@ export interface AnswerInput {
   /** The bound session's observed conversation (EncounterObservers.tsx observedState), when one is observed. */
   readonly observed?: {readonly reading?: EncounterReading; readonly status?: EncounterStatus}
   readonly roster: readonly Pick<RosterAgent, 'ref' | 'name' | 'accepted' | 'purpose' | 'role'>[] | null
-  /** The reached page: its tab title and its packet (pageBindings.ts documentValues `packet`). */
-  readonly page: {readonly title: string; readonly packet?: string} | null
+  /** The reached page: its tab title. */
+  readonly page: {readonly title: string} | null
+  /** The Packet's items (packetBinding.ts packetValues `packet`) and the session its prepared context is for. */
+  readonly packet?: {readonly items: string; readonly session: string | null} | null
 }
 
 const ROLE = 'nara'
@@ -75,10 +80,9 @@ export function answerValues(id: string, input: AnswerInput): Values {
     if (thread !== undefined) values.thread = thread
     if (typeof input.nara?.resume === 'boolean') values.resume = input.nara.resume
   }
-  if (input.page) {
-    values.document = input.page.title
-    if (input.page.packet !== undefined) values.packet = input.page.packet
-  }
+  if (input.page) values.document = input.page.title
+  // The packet the Send carries: the Packet's, when it is prepared for this very session.
+  if (state === 'bound' && input.nara?.session && input.packet && input.packet.session === input.nara.session) values.packet = input.packet.items
   const held = heldOf(id)
   const defaults: Record<string, Value> = {draft: '', source: '1'}
   for (const key of Object.keys(ANSWER_WIRING.local)) { const value = held[key] ?? defaults[key]; if (value !== undefined) values[key] = value }
