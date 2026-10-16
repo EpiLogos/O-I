@@ -4,6 +4,8 @@
 .factory-slot { display: flex; flex: none; min-width: 0; background: var(--bg-2) }
 .factory-slot[data-selected="true"] { outline: 1px solid var(--accent); outline-offset: -1px }
 .factory-slot > .device { min-width: 0 }
+/* The rack's chosen chain, its member device, stands inside the rack's slot (DLW §19.7). */
+.factory-slot__member { display: flex; flex: none; min-width: 0; border-left: 1px solid var(--line) }
 .factory-slot__rail { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 14px; flex: none; padding: 3px 0; background: var(--bg-0); border-right: 1px solid var(--line); color: var(--text-faint) }
 /* The chain's own drop receiver stands as the row's end (the mockup's .dropz, frame/detail/detail.css): it arms while a drag is held. */
 .factory-devices .agent-dropz { width: 140px; font-size: 10.5px }
@@ -44,9 +46,6 @@
 
 /* The world's legend and the git seat's branch. */
 .fd-legend { font-size: 9.5px; color: var(--text-faint) }
-.fd-legend b { font-weight: 500 }
-.fd-legend--reads { color: var(--fizz) }
-.fd-legend--writes { color: var(--honey) }
 .fd-git__branch { font-family: var(--mono); font-size: 9.5px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
 .fd-dirty { animation: fd-pulse 1.4s ease-in-out infinite }
 @keyframes fd-pulse { 50% { opacity: .35 } }

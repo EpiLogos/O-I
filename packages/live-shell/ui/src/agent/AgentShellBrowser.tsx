@@ -11,7 +11,6 @@ import {useAgentShell} from './AgentShellContext'
 import {useAgentSessionsOptional, type AgentSessionsValue} from './AgentSessionsProvider'
 import {agentState, sessionState, type SessionWord} from '../frame/browser/rowWords'
 import {useWorkspace} from '../shell/workspaceContext'
-import {useHarnessBinding} from './useHarnessBinding'
 import {useRosterAnswer, useWorkcellAnswer} from '../owners/readers'
 import {kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
 import {refusalLine, safeJson} from './RefusalCard'
@@ -228,8 +227,8 @@ export function AgentShellBrowser({rows, error, loading, controlled}: {rows: Age
   // The sessions' states and the agents' names, from the one agent-sessions provider (its task reads, its needles, its roster).
   const sessions = useAgentSessionsOptional()
   const {transport} = useWorkspace()
-  const {binding} = useHarnessBinding(transport)
-  const [gateway, setGateway] = useState<{line: string; receipt: string | null; refused: boolean}>({line: 'Reading gateway…', receipt: null, refused: false})
+  // The gateway is no longer read here: its card in the pool is gone, and the Gateway on the chain reads harness_agent_read
+  // itself (devices/useAgentChainReading.ts), drawn whole in the runtime's pool (lane BF).
   const [git, setGit] = useState<{line: string; receipt: string | null; refused: boolean}>({line: 'Reading seat…', receipt: null, refused: false})
   // The roster and the seat are the window's shared answers (owners/readers.ts): the same ones the Factory chain, the sessions
   // provider and the Central devices read — one owner read between them, a refusal remembered for its epoch.
@@ -247,17 +246,9 @@ export function AgentShellBrowser({rows, error, loading, controlled}: {rows: Age
       if (transport.kind === 'unavailable') {
         if (live) {
           const reason = transport.reason ?? 'Transport unavailable'
-          setGateway({line: ownerRefusalLine('gateway', reason, 'not-reached'), receipt: null, refused: true})
           setGit({line: ownerRefusalLine('workcell', reason, 'not-reached'), receipt: null, refused: true})
         }
         return
-      }
-      const gatewayOp = await kernelOp(transport, {op: 'harness_agent_read', binding})
-      if (live) {
-        const reading = !gatewayOp.error && gatewayOp.outcome?.result === 'harness_agent_reading' ? gatewayOp.outcome : null
-        setGateway(reading
-          ? {line: `binding ${reading.binding} answered — receipt holds the document`, receipt: safeJson(reading.document), refused: false}
-          : {line: ownerRefusalLine('gateway', refusalLine(gatewayOp.error, 'Harness gateway reading unavailable')), receipt: gatewayOp.error ? safeJson(gatewayOp.error) : null, refused: true})
       }
       // The Skillsets rows' admitted source (the roster reading the chain's skillset admit light consumes) and the Git rows'
       // (the workcell family's seat reading) are the shared answers above.
@@ -270,7 +261,7 @@ export function AgentShellBrowser({rows, error, loading, controlled}: {rows: Age
       }
     })()
     return () => { live = false }
-  }, [transport, binding])
+  }, [transport])
 
   // Rows that carry a drag payload are exactly the rows a real owner reading
   // disclosed: sessions (the track key), agents (the roster/session ref),
@@ -297,22 +288,6 @@ export function AgentShellBrowser({rows, error, loading, controlled}: {rows: Age
     if (category === 'agents') return agentBrowserRows(rows, sessions, loading)
     return [{key: 'empty', label: loading ? 'Reading…' : 'Nothing disclosed for this category yet.', meta: '', standing: ''}]
   }, [category, rows, shell.openTiles, loading, rosterOutcome, rosterError, seatOutcome, seatError, sessions])
-
-  // The pool's skillset rows read the same roster the Skillsets rows do —
-  // admitted when accepted profiles carry skill refs, else waiting on the
-  // owner of whichever reading left them dark (Central refused; AIKit empty).
-  const skillAdmission = useMemo(() => {
-    if (!rosterOutcome && !rosterError) return {count: null, note: null, waiting: null}
-    const rows = skillsetRowsFromRoster(rosterOutcome, rosterError)
-    const count = rows.filter(row => row.meta === 'skillset').length
-    if (count > 0) return {count, note: `${count} skill ref${count === 1 ? '' : 's'} on accepted roster profiles.`, waiting: null}
-    const refused = rows[0]?.key === 'skillsets-unadmitted'
-    return {
-      count: 0,
-      note: rows[0]?.label ?? null,
-      waiting: refused ? OWNER_BINDINGS.roster.owner : OWNER_BINDINGS.skillset.owner,
-    }
-  }, [rosterOutcome, rosterError])
 
   const shown = needle ? list.filter(item => item.label.toLowerCase().includes(needle) || item.meta.toLowerCase().includes(needle)) : list
   const results = <>
@@ -355,19 +330,9 @@ export function AgentShellBrowser({rows, error, loading, controlled}: {rows: Age
   </>
   const pool = (
       <AgentDevicePool
-        gatewayLine={gateway.line}
-        gatewayReceipt={gateway.receipt}
-        gatewayRefused={gateway.refused}
         gitLine={git.line}
         gitReceipt={git.receipt}
         gitRefused={git.refused}
-        effort={shell.effort}
-        autonomy={shell.steer ? 'steer' : 'review'}
-        budgetUsed={0}
-        budgetCap={12}
-        skillsAdmitted={skillAdmission.count}
-        skillsNote={skillAdmission.note}
-        skillsWaitingOn={skillAdmission.waiting}
       />
   )
   if (controlled) return <div className="agent-browser-body">{results}{controlled.poolHost && createPortal(pool, controlled.poolHost)}</div>
