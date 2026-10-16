@@ -1,4 +1,4 @@
-// Trail (manual §23.7): every place you went, newest first; select a stop to return to it. A device born on the rail; Live's nearest is
+// Trail (manual §23.5): every place you went, newest first; select a stop to return to it. A device born on the rail; Live's nearest is
 // the Arrangement's locators and the browser's history — places in time that you jump back to. The display is the trail as the book
 // keeps it: one row a stop, newest at the top, its time, its kind of work and its place; the stop you stand on is ringed. In a pane
 // the stops stand in time across, one lane for each kind of work.

@@ -1,4 +1,4 @@
-// M′ matrices (manual §22.5): what the torus is made of, in four stacked layers — the Oscillator that makes the sound, the Reading that
+// M′ matrices (manual §22.6): what the torus is made of, in four stacked layers — the Oscillator that makes the sound, the Reading that
 // tunes and moves it, the Form that gives it a body, the Situation it reaches. Live's nearest: Drum Rack's pad grid and the
 // modulation matrix — one grid of cells, one selected, its value read beside it. The display is the chosen matrix as its owner
 // states it, cell by cell: the Oscillator's 12 rows by 12 positions of source values (raw, digital root or decimal: three forms that

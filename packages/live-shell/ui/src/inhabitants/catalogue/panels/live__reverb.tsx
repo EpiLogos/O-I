@@ -1,4 +1,4 @@
-// Reverb (manual §21.6): the effect after the torus that gives it a room. Live's nearest: Hybrid Reverb — one wide display of the
+// Reverb (manual §21.5): the effect after the torus that gives it a room. Live's nearest: Hybrid Reverb — one wide display of the
 // tail with its reading at the top right ("100 % / 285 ms"), Attack, Decay and Size under it, Dry/Wet at the right. The display law
 // is the room's own envelope: silence for the Pre-delay, a few early reflections spaced by the Size, then the tail falling 60 dB in
 // Decay seconds; Damping makes the bright part of the tail (the thin line) fall faster, to a fifth of the Decay at 100 %. Time runs
