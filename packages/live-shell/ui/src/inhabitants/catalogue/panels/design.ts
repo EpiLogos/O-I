@@ -18,7 +18,8 @@ export type Values = Readonly<Record<string, Value>>
 export interface Nav {
   /** Show the device whole in the pool (the press on a chain plate). */
   readonly select?: () => void
-  /** Flip the device's whole panel up from the chain, over the panes (Live's expanded view); pressed again, it folds back. */
+  /** Show the device's expanded view: Whole as a band across the detail area, above the chain (Live's Toggle Expanded View);
+   * pressed again, it hides. The panes above shrink to make room. The frame is 'flip'. */
   readonly expand?: () => void
   /** Open the device full size in a pane. */
   readonly full?: () => void
@@ -46,11 +47,11 @@ export interface ViewProps {
   readonly standing?: Readonly<Record<string, Standing>>
   /** The owner's readings alone, without what the hand holds or what waits on the owner: a light reads these. */
   readonly owner?: Values
-  /** The room the host gives this view, in px at 100 %. Whole stands in the pool (400 wide) or flipped up over the chain (the
+  /** The room the host gives this view, in px at 100 %. Whole stands in the pool (400 wide) or expanded above the chain (the
    * detail area's width, up to the panes' height); Full in a pane; Pop-out in its window. A view may grow its display into the
    * room; its controls keep their size. Absent: draw at the standard measures. */
   readonly room?: Room
-  /** Where this view stands, for a view that arranges itself differently in each (Whole in the pool or flipped up). */
+  /** Where this view stands, for a view that arranges itself differently in each (Whole in the pool or expanded: frame 'flip'). */
   readonly frame?: Frame
 }
 

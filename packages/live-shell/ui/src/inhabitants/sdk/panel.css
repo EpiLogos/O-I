@@ -254,7 +254,7 @@
 .dp-head .dp-title { margin: 0; font-family: inherit; font-size: 11px; font-weight: 600; line-height: inherit; letter-spacing: normal; }
 .dp-tile-head .dp-activator { width: 10px; height: 10px; }
 
-/* ⌃ expand: the fold chevron turned up; pressed while the whole panel stands flipped up over the panes. */
-.dp-expand > svg { transform: rotate(180deg); }
+/* Live's Toggle Expanded View, beside the activator: ▸ closed, ▾ while the device's expanded view stands above the chain. */
+.dp-expand > svg { transform: rotate(-90deg); }
 .dp-expand[aria-pressed="true"] { color: var(--accent, #ffbe00); }
 .dp-expand[aria-pressed="true"] > svg { transform: none; }

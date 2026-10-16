@@ -1,6 +1,6 @@
 // The catalogue gallery (npx vite --config src/inhabitants/catalogue/vite.config.mjs, port 5208). It draws every device the
 // families declare at the door, through the shell's own runtime (frame/devices/DeviceView.tsx), in each view the manual names
-// (docs/dlw/DLW.md §16.3): folded, compact, whole (in the pool, and flipped up over the chain), full, pop-out and widget. The
+// (docs/dlw/DLW.md §16.3): folded, compact, whole (in the pool, and expanded above the chain), full, pop-out and widget. The
 // DLW manual embeds it beside each device's spec:
 //   ?device=<family>:<face>&view=all|folded|compact|whole|flip|full|popout|widget   one device (or a comma list of views)
 //   (no device)                                                          the index of every declared device
@@ -27,7 +27,7 @@ loadWorldShellFamilies()
 
 const VIEWS = ['folded', 'compact', 'whole', 'flip', 'full', 'popout', 'widget'] as const
 /** What each frame shows, as its title: the view, and where it stands when that is not the view's only place. */
-const FRAME_TITLE: Readonly<Record<View, string>> = {folded: 'folded', compact: 'compact', whole: 'whole · the pool', flip: 'whole · flipped up over the chain', full: 'full · a pane', popout: 'pop-out · its own window', widget: 'widget · the rail'}
+const FRAME_TITLE: Readonly<Record<View, string>> = {folded: 'folded', compact: 'compact', whole: 'whole · the pool', flip: 'whole · expanded above the chain', full: 'full · a pane', popout: 'pop-out · its own window', widget: 'widget · the rail'}
 type View = typeof VIEWS[number]
 
 /** The views a query names: all, one, or a comma list (?view=flip,popout). */
@@ -113,7 +113,7 @@ function StatusLine() {
   return <div className="cat-status" role="status">{said || 'Point at a control to read what it does.'}</div>
 }
 
-/** A designed device in its six views, all on one set of values: move a macro on the chain and the pool, the flipped-up panel,
+/** A designed device in its six views, all on one set of values: move a macro on the chain and the pool, the expanded band,
  * the pane, the window and the rail move with it. */
 function DesignedViews({design, views, fixture: first}: {design: DesignedDevice; views: readonly View[]; fixture?: string | null}) {
   const names = Object.keys(design.fixtures ?? {})
@@ -126,7 +126,7 @@ function DesignedViews({design, views, fixture: first}: {design: DesignedDevice;
   const [folded, setFolded] = useState(false)
   const pane = useRef<HTMLDivElement>(null), flip = useRef<HTMLDivElement>(null), win = useRef<HTMLDivElement>(null)
   const [expanded, setExpanded] = useState(false)
-  // The wide frames (flipped up, its own window) take the page's width, up to a window's.
+  // The wide frames (expanded, its own window) take the page's width, up to a window's.
   const wide = Math.min(1180, Math.max(640, window.innerWidth - 24))
   const show = (at: {current: HTMLElement | null}) => at.current?.scrollIntoView({block: 'nearest', behavior: 'smooth'})
   const set = (key: string, value: Value | undefined) => setValues(was => {
@@ -142,7 +142,7 @@ function DesignedViews({design, views, fixture: first}: {design: DesignedDevice;
       case 'folded': return design.folded({...props, nav: {}})
       case 'compact': return folded ? design.folded(props) : design.compact(props)
       case 'whole': return <div className="cat-pool">{design.whole({...props, frame: 'pool', room: {w: 400, h: 360}})}</div>
-      // Live's expanded view: the whole panel rises from the chain over the lower panes; the chain stays under it.
+      // Live's expanded view: a band as wide as the detail area, above the chain; the panes above shrink to make room.
       case 'flip': return <div className="cat-flip" ref={flip}>
         <div className="cat-flip-panes" aria-hidden="true">Panes</div>
         {flippedOf(design, {...props, room: undefined}, {w: wide, h: 192})}

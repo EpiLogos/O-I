@@ -1,5 +1,5 @@
 // Lane BT (16 Oct): Technē's instruments are devices on the owner's panel kit. Every M0′–M5′ plate stands on the kit's head (inhabitants/
-// sdk/panel.tsx PanelHead: the activator, ▾, the name, the held mark, the pages, the device's own acts, the place's marks, ⤢ —
+// sdk/panel.tsx PanelHead: the activator, the expand toggle, the name, the held mark, the pages, the device's own acts, the place's marks, ▦ —
 // docs/dlw/DEVICE-UI.md §4.1), its display section first with a well drawn from its owner's readings, a missing reading said in the well
 // (§7); no sentence stands in a plate (§1): the frame's save state and status line are lights, a group with nothing says one word; a
 // parameter no owner carries draws disabled with its reason on the status bar (§6). The rack publishes the instrument it stands open so the
@@ -61,12 +61,13 @@ const section = (out, id) => out.slice(out.indexOf(`data-section="${id}"`), out.
 /** Text nodes drawn in markup (outside attributes), longer than four words: the sentences a person would read in the plate. */
 const sentences = markup => (markup.replace(/<svg[\s\S]*?<\/svg>/g, '').match(/>[^<>]+</g) ?? []).map(text => text.slice(1, -1).trim()).filter(text => text.split(/\s+/).length > 4)
 
-test('the kit\'s head, as one part: the activator, ▾, the mark, the name, the held mark, the pages, the acts, the marks, ⤢ — in that order', () => {
+test('the kit\'s head, as one part: the activator, the mark, the name, the held mark, the pages, the acts, the marks, ▦ — in that order; a double-click on the head folds it, as in Live', () => {
   const out = html(createElement(PanelHead, {title: 'World', light: 'lit', onFold() {}, mark: createElement('i', {className: 'm'}), heldBy: 'the sky',
     pages: [{id: 'a', label: 'Earth'}, {id: 'b', label: 'Graph'}], page: 'a', acts: createElement('button', {type: 'button'}, 'Save'),
     marks: createElement('button', {type: 'button', className: 'mk'}), onFull() {}, hint: 'M4′ · Technē · Earth'}))
-  const order = ['dp-activator', 'dp-fold', 'class="m"', 'dp-title', 'dp-head-held', 'dp-pages', 'dp-head-acts', 'class="mk"', 'aria-label="Open World full in a pane"'].map(part => out.indexOf(part))
-  assert.ok(order.every((at, index) => at > 0 && (index === 0 || at > order[index - 1])), `the head's parts in DEVICE-UI §4.1's order: ${order}`)
+  const order = ['dp-activator', 'class="m"', 'dp-title', 'dp-head-held', 'dp-pages', 'dp-head-acts', 'class="mk"', 'aria-label="Open World full in a pane"'].map(part => out.indexOf(part))
+  assert.ok(order.every((at, index) => at > 0 && (index === 0 || at > order[index - 1])), `the head's parts in the manual's §16.8 order: ${order}`)
+  assert.doesNotMatch(out, /aria-label="Fold World"/, 'no fold button: Live folds a device from its head (manual §16.4)')
   assert.match(out, /^<header class="dp-head dp-head--plate" data-i="World\|M4′ · Technē · Earth">/, 'who owns it is the status bar\'s words, never drawn')
   assert.match(out, /class="dp-activator" data-light="lit" aria-pressed="true" disabled=""/, 'the owner\'s light; with no owner write it only reads')
   const named = html(createElement(PanelHead, {title: 'Canvas', light: 'unknown', onName() {}, nameDoes: 'Open Canvas on the focused pane.'}))
@@ -82,7 +83,7 @@ test('an instrument plate stands on the kit\'s head; its display section is firs
   assert.match(out, /<section class="inst-section inst-section--display" data-section="display" aria-label="Display" style="--section-w:164px">well<\/section>/, 'the well alone, no heading')
   assert.doesNotMatch(out, /Fold Display/, 'the display never folds')
   for (const title of ['First', 'Second']) assert.match(out, new RegExp(`aria-label="Fold ${title} to its title"`), `${title} folds for room, the display first`)
-  assert.match(out, /aria-label="Fold Probe"/, 'its ▾')
+  assert.doesNotMatch(out, /aria-label="Fold Probe"/, 'no fold button on the head: a double-click on it folds the plate')
 })
 
 test('every Technē instrument\'s open plate has its well first, drawn from its owner, a missing reading said in the well', () => {
