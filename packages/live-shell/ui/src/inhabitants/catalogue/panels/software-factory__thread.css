@@ -1,0 +1,84 @@
+/* The Thread's own layout: the pane's stream and composer, and the widget's last line and composer. Shell and panel tokens only. */
+.th-pane { position: absolute; inset: 0; display: flex; flex-direction: column; background: var(--bg-1, #33363b); color: var(--text, #d4d7da); font: 11px/1.45 var(--font-ui, sans-serif); overflow: hidden; }
+.th-pane-head { flex: none; display: flex; align-items: center; gap: 10px; height: 26px; padding: 0 14px; background: var(--bg-0, #26292d); border-bottom: 1px solid var(--line, #24262a); color: var(--text-dim, #a2a7ad); font-size: 10.5px; white-space: nowrap; overflow: hidden; }
+.th-pane-head b { font-weight: 600; color: var(--text, #d4d7da); font-size: 11px; }
+.th-pane-head span + span::before, .th-pane-head span + b::before { content: "›"; margin-right: 10px; color: var(--text-faint, #71767c); }
+.th-pane-head b + span::before, .th-pane-head span[data-state]::before { content: "·"; margin-right: 10px; color: var(--text-faint, #71767c); }
+.th-pane-head [data-state="stalled"] { color: var(--stall, #ff9b4a); }
+.th-stream { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; justify-content: flex-end; gap: 5px; padding: 10px 20px 8px; overflow: hidden; -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 22px); mask-image: linear-gradient(to bottom, transparent 0, #000 22px); }
+
+.th-task { display: flex; align-items: center; gap: 10px; color: var(--text-faint, #71767c); font-size: 9px; letter-spacing: .07em; text-transform: uppercase; }
+.th-task i { flex: 1 1 auto; height: 1px; background: var(--line, #24262a); }
+.th-task small { font-size: 9px; color: var(--text-dim, #a2a7ad); }
+.th-task small[data-state="stalled"] { color: var(--stall, #ff9b4a); }
+
+.th-row { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 10px; align-items: start; }
+.th-row--tool { align-items: center; }
+.th-av { width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; background: var(--bg-0, #26292d); border: 1px solid var(--line, #24262a); font-size: 9px; font-weight: 600; color: var(--text-dim, #a2a7ad); overflow: hidden; }
+.th-av[data-agent] { border-color: var(--dp-value, #5cc6b4); }
+.th-av--tool { width: 18px; height: 1px; border: 0; background: none; }
+.th-face { display: block; }
+.th-body { min-width: 0; line-height: 18px; }
+.th-who { display: inline-block; margin-right: 8px; font-size: 9px; letter-spacing: .07em; text-transform: uppercase; color: var(--text-faint, #71767c); }
+.th-who[data-agent] { color: var(--dp-value, #5cc6b4); }
+.th-text { display: inline; margin: 0; }
+.th-text b { font-weight: 600; color: var(--dp-value, #5cc6b4); }
+
+.th-tool { min-width: 0; font: 10.5px var(--mono, ui-monospace, monospace); color: var(--text-dim, #a2a7ad); }
+.th-tool summary { display: flex; align-items: center; gap: 8px; min-width: 0; cursor: pointer; list-style: none; }
+.th-tool summary::-webkit-details-marker { display: none; }
+.th-tool summary b { flex: none; font-weight: 500; color: var(--text, #d4d7da); padding: 0 5px; border: 1px solid var(--line, #24262a); }
+.th-tool summary span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.th-tool i { flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--green, #8fd0a8); }
+.th-tool i[data-state="running"] { background: var(--dp-value, #5cc6b4); }
+.th-tool i[data-state="waits"] { background: var(--stall, #ff9b4a); }
+.th-out { margin: 3px 0 0 14px; padding: 0; font: inherit; color: var(--text-faint, #71767c); white-space: pre-wrap; }
+
+.th-spawnbox { min-width: 0; }
+.th-spawn { display: flex; align-items: baseline; gap: 8px; max-width: 100%; padding: 0; background: none; border: 0; color: var(--text-dim, #a2a7ad); font: inherit; font-size: 10.5px; cursor: pointer; }
+.th-spawn b { font-weight: 600; color: var(--dp-value, #5cc6b4); }
+.th-spawn small { color: var(--text-faint, #71767c); }
+.th-spawn em { font-style: normal; color: var(--text-faint, #71767c); text-decoration: underline; text-underline-offset: 2px; }
+.th-spawn:hover em, .th-spawn:focus-visible em { color: var(--accent, #ffbe00); }
+.th-spawn:focus-visible { outline: 1px solid var(--accent, #ffbe00); outline-offset: 2px; }
+.th-inline { display: flex; flex-direction: column; gap: 5px; margin: 5px 0 0 3px; padding-left: 12px; border-left: 1px solid var(--dp-value-dim, #3b6b64); }
+
+.th-steer, .th-queued { display: inline-flex; align-items: baseline; gap: 8px; vertical-align: top; }
+.th-steer { color: var(--dp-on, #ffbe00); }
+.th-steer[data-heard] { color: var(--text-dim, #a2a7ad); }
+.th-steer small, .th-queued small { font-size: 10px; color: var(--text-dim, #a2a7ad); }
+.th-queued { padding: 1px 6px; border: 1px dashed var(--text-faint, #71767c); color: var(--text-dim, #a2a7ad); width: fit-content; max-width: 100%; }
+
+.th-card { max-width: 76ch; padding: 5px 10px; line-height: 1.45; border-left: 2px solid var(--dp-value, #5cc6b4); background: color-mix(in srgb, var(--bg-0, #26292d) 55%, transparent); }
+.th-card b { display: block; font-weight: 600; margin-bottom: 1px; }
+.th-card small { display: block; color: var(--text-dim, #a2a7ad); font-size: 10.5px; }
+.th-card[data-kind="stall"] { border-left-color: var(--stall, #ff9b4a); outline: 1px solid var(--stall, #ff9b4a); outline-offset: -1px; border-left-width: 2px; }
+.th-card[data-kind="stall"] b { color: var(--stall, #ff9b4a); }
+.th-card[data-done] { border-left-color: var(--green, #8fd0a8); outline: 0; }
+.th-card[data-done] b { color: var(--text-dim, #a2a7ad); font-weight: 500; margin: 0; }
+.th-card-do { display: flex; gap: 6px; margin-top: 6px; }
+.th-card-do button { height: 16px; padding: 0 7px; background: var(--dp-field, #26292d); border: 1px solid var(--line, #24262a); color: var(--text-dim, #a2a7ad); font: inherit; font-size: 10px; cursor: pointer; }
+.th-card-do button:hover, .th-card-do button:focus-visible { color: var(--text, #d4d7da); border-color: var(--text-faint, #71767c); outline: none; }
+
+.th-work { display: flex; align-items: center; gap: 8px; margin: 0; color: var(--text-dim, #a2a7ad); }
+.th-work i { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--dp-value, #5cc6b4); animation: th-pulse 1.6s ease-in-out infinite; }
+@keyframes th-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+@media (prefers-reduced-motion: reduce) { .th-work i { animation: none; } }
+
+.th-composer { flex: none; display: flex; align-items: center; gap: 8px; margin: 0 20px 14px; padding: 0 8px; height: 26px; background: var(--dp-field, #26292d); border: 1px solid var(--line, #24262a); }
+.th-composer input { flex: 1 1 auto; min-width: 0; height: 100%; padding: 0; background: none; border: 0; color: var(--text, #d4d7da); font: inherit; outline: none; }
+.th-composer input::placeholder { color: var(--text-faint, #71767c); }
+.th-composer:focus-within { outline: 1px solid var(--accent, #ffbe00); outline-offset: 1px; }
+.th-composer small { flex: none; font-size: 9px; letter-spacing: .07em; text-transform: uppercase; color: var(--dp-on, #ffbe00); }
+.th-wave { flex: 1 1 auto; display: flex; align-items: center; gap: 2px; min-width: 0; }
+.th-wave i { flex: none; width: 2px; background: var(--rec, #e5484d); opacity: .8; }
+.th-wave small { margin-left: 8px; color: var(--text-dim, #a2a7ad); letter-spacing: 0; text-transform: none; font-size: 10px; }
+
+/* The widget: the last line of the thread, three readings, and the composer. */
+.th-tile-side { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; justify-content: space-between; }
+.th-last { margin: 0; font-size: 10.5px; line-height: 1.35; color: var(--text-dim, #a2a7ad); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.th-last b { font-weight: 500; color: var(--text, #d4d7da); }
+.th-tile-reads { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: end; }
+.th-tile-composer { box-sizing: border-box; width: 100%; height: 16px; padding: 0 5px; background: var(--dp-field, #26292d); border: 1px solid var(--line, #24262a); color: var(--text, #d4d7da); font: 10.5px var(--font-ui, sans-serif); }
+.th-tile-composer::placeholder { color: var(--text-faint, #71767c); }
+.th-tile-composer:focus-visible { outline: 1px solid var(--accent, #ffbe00); outline-offset: 1px; }
