@@ -106,6 +106,20 @@ objections verbatim and the full validation (`BRIEF-BUILDER.md`); the lead conve
 | W4 — `oi`: per-call checks on the cached receipt, sha256 in-process, an update under an older `oi` leaves no shadow | builder | `cli/src/**`, `cli/tests/**` | 16 Oct |
 | The catalogue of designed devices (owner, 16 Oct: "the parallel lanes are developing the high end device component specs in the documentation lane, you can directly work from its … catalogue of pre designed UI, the wiring and UX integration should be somewhat trivial wiring"): `catalogue/panels/design.ts` is the contract, `panels/<family>__<face>.tsx` (exporting `design`, loaded through `loadDesign`) the designs. The runtime hosts each published device's design when one exists, else the generic plate; a device lane writes the binding (owner readings and writes on the design's value keys), never a panel | the owner's documentation lane | `inhabitants/catalogue/**` — read-only for every builder | 16 Oct |
 
+Then: the native pass of build n2 (`9a1974d13`, 16 Oct 02:47–02:55; computer-use through the background app tools — the window
+stood on the stage, full-screen control unanswered three times). Seen working: the owner's resize report fixed — Technē's Earth
+stays round when the browser or the detail area toggles (the pane narrows, widens and grows; no window resize); the status bar's
+Info line names what the pointer is over ("Toggle browser · ⌘⌥B", "Central — the day and its documents"); Central's Day draws its
+catalogue design on the chain — "Fri 16", "—" on the net, the owner's stale-pointer refusal in the well, the Today press (Central's
+ensure, left for the owner), the kit head's marks; Technē's M0′ and M4′ on the kit's head with live wells ("the Earth not mounted"
+until it mounts, then the disc with "no place located", "sky not loaded"), the folds as kit strips with their accent addresses, M4′'s
+Locations a "0 placed · 15" readout with no sentence, the detail head "World open on the focused pane"; Expressions' Studio reads
+"saved" (lane D's false dirty gone), fits its band at a 1261×820 window with one Save (TOOLS whole, Pointer as kit dials, sections
+folded to their titles); Factory's chain draws the Gateway ("refused", "No readings", "—"; Connect disabled), the Agent ("turns not
+read", "check-in not read", Budget disabled) and the Skillset rack ("Members · no reading") from their designs. Small, open: the Day's
+refusal clips at the well's foot (the design); M4′'s Locations shows a fifth row cut at the plate's foot; the Pointer's value "0.23
+stage un…" overflows its cell (values are short, DEVICE-UI §1).
+
 Then: lanes D, BC, BF, W1, W3, BT, BE and R2 converged (16 Oct). D (`533ac32f8`): an opened work reads saved until edited (the
 frame had written its own shared settings into every loaded work), a conflict reads the owner's current revision and the frame's
 refusal reaches the shell's ask in the owner's words, a fault stands only on the pane that raised it. BC (`9184ae9f2`, `1c59a1a79`):
