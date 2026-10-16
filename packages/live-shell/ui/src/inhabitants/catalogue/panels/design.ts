@@ -25,6 +25,9 @@ export interface Nav {
   readonly rail?: () => void
   /** Take the device off the rail (its tile's ✕). */
   readonly close?: () => void
+  /** The place's own marks for the head, before ⤢. The host also gives these, with rail and close, through the kit's
+   * PlaceContext, so a view need not pass them on. */
+  readonly marks?: ReactNode
 }
 
 export interface ViewProps {

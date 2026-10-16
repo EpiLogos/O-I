@@ -4,7 +4,7 @@
 // toggle, radio, chooser, rows, readout, action, light. Every control is controlled (value in, change out), names what it does
 // for the status bar (data-i, "Name|What it does"), and shows its standing: automated, modulated, held by someone else,
 // waiting for the owner, or disabled with the reason. No control scrolls; no box sits inside a box; the only inset is the well.
-import {useRef, type CSSProperties, type KeyboardEvent, type PointerEvent, type ReactNode} from 'react'
+import {createContext, useContext, useRef, type CSSProperties, type KeyboardEvent, type PointerEvent, type ReactNode} from 'react'
 import {ChevronFold, PopOut} from './marks'
 import {Icon} from './Icon'
 import './panel.css'
@@ -118,7 +118,7 @@ const doesIn = (does: string | undefined, st: Standing): string | undefined => {
 function Cell({kind, label, does, standing, className, style, unknown, children}: {kind: string; label?: string; does?: string; standing?: Standing; className?: string; style?: CSSProperties; unknown?: boolean; children: ReactNode}) {
   const st = standing ?? {}
   return <div className={`dp-cell dp-cell--${kind}${className ? ` ${className}` : ''}`} style={style}
-    data-i={said(label, unknown ? [does, NO_READING_SAID].filter(Boolean).join(' ') : doesIn(does, st))} data-unread={unknown ? 'true' : undefined}
+    data-i={said(label, unknown ? [does, NO_READING_SAID, st.disabled].filter(Boolean).join(' ') : doesIn(does, st))} data-unread={unknown ? 'true' : undefined}
     data-automated={st.automated === true ? 'on' : st.automated === 'overridden' ? 'overridden' : undefined}
     data-held={st.heldBy ? 'true' : undefined} data-pending={st.pending ? 'true' : undefined} data-disabled={st.disabled ? 'true' : undefined}
     data-refused={st.refused ? 'true' : undefined} data-modulated={st.modulatedBy ? 'true' : undefined}>
@@ -378,19 +378,37 @@ export interface PanelProps {
   readonly fullLabel?: string
   /** What pressing the plate does, said on the status bar when you point at its head ("Show every setting in the pool"). */
   readonly hint?: string
+  /** Why the activator only reads (the owner has no on/off operation): it stands disabled and says this. */
+  readonly lightWhy?: string
   readonly children: ReactNode
 }
 
+/** What the place a device stands in gives every Panel, PanelHead and Tile inside it: the place's marks, the rail mark and the
+ * tile's close. A host provides it around a design's view; a prop on the part itself wins. It reaches views whose root is a
+ * component as well as plain ones. */
+export interface Place {
+  readonly marks?: ReactNode
+  readonly onRail?: () => void
+  readonly onClose?: () => void
+}
+export const PlaceContext = createContext<Place>({})
+
+/** The activator, the same in Panel and PanelHead: a reading of the owner's on/off, pressable only where the owner can turn it. */
+function Activator({title, light, onLight, why}: {title: string; light: LightState; onLight?: () => void; why?: string}) {
+  return <button type="button" className="dp-activator" data-light={light} aria-pressed={light === 'lit'} disabled={!onLight || !!why}
+    aria-label={`${title}: ${light === 'unknown' ? 'no reading' : light === 'lit' ? 'on' : 'off'}`}
+    data-i={said('Device on/off', why ?? (light === 'unknown' ? 'No reading from the owner yet.' : 'Asks the owner to turn the device on or off. The light shows what the owner reports.'))}
+    onClick={why ? undefined : onLight} />
+}
+
 /** One device panel: the head, then the body — one band on a chain, up to two bands in the pool. */
-export function Panel({title, view, light: reported, onLight, pages, page, onPage, onFold, onFull, onSelect, selected, heldBy, mark, onRail, marks, fullLabel, hint, children}: PanelProps) {
-  const light = lightIn(reported)
+export function Panel({title, view, light: reported, onLight, pages, page, onPage, onFold, onFull, onSelect, selected, heldBy, mark, onRail: ownRail, marks: ownMarks, fullLabel, hint, lightWhy, children}: PanelProps) {
+  const light = lightIn(reported), place = useContext(PlaceContext)
+  const marks = ownMarks ?? place.marks, onRail = ownRail ?? place.onRail
   return <section className="dp" data-view={view} data-selected={selected ? 'true' : undefined} aria-label={title}
     onPointerDownCapture={onSelect}>
     <header className="dp-head" data-i={hint ? said(title, hint) : undefined}>
-      <button type="button" className="dp-activator" data-light={light} aria-pressed={light === 'lit'} disabled={!onLight}
-        aria-label={`${title}: ${light === 'unknown' ? 'no reading' : light === 'lit' ? 'on' : 'off'}`}
-        data-i={said('Device on/off', light === 'unknown' ? 'No reading from the owner yet.' : 'Asks the owner to turn the device on or off. The light shows what the owner reports.')}
-        onClick={onLight} />
+      <Activator title={title} light={light} onLight={onLight} why={lightWhy} />
       {onFold && <button type="button" className="dp-fold" aria-label={`Fold ${title}`} data-i={said('Fold', 'Fold the device to its title.')} onClick={onFold}><ChevronFold size={10} /></button>}
       {mark}
       <span className="dp-title">{title}</span>
@@ -439,18 +457,18 @@ export interface PanelHeadProps {
   /** What the head says on the status bar when you point at it: the device's owner and its standing, never drawn as a sentence. */
   readonly hint?: string
   readonly selected?: boolean
+  /** Why the activator only reads: it stands disabled and says this. */
+  readonly lightWhy?: string
 }
 
 /** The head of a device panel, for a plate the kit's Panel does not draw whole (an instrument's sections, a compact): the activator, ▾,
  * the name, the held mark, the pages, the device's own acts, the place's marks and ⤢ (DEVICE-UI §4.1). The Panel's own head, as one
  * part. */
-export function PanelHead({title, light: reported, onLight, onFold, mark, onName, nameDoes, heldBy, pages, page, onPage, acts, marks, onRail, onFull, fullLabel, hint, selected}: PanelHeadProps) {
-  const light = lightIn(reported)
+export function PanelHead({title, light: reported, onLight, onFold, mark, onName, nameDoes, heldBy, pages, page, onPage, acts, marks: ownMarks, onRail: ownRail, onFull, fullLabel, hint, selected, lightWhy}: PanelHeadProps) {
+  const light = lightIn(reported), place = useContext(PlaceContext)
+  const marks = ownMarks ?? place.marks, onRail = ownRail ?? place.onRail
   return <header className="dp-head dp-head--plate" data-selected={selected ? 'true' : undefined} data-i={hint ? said(title, hint) : undefined}>
-    <button type="button" className="dp-activator" data-light={light} aria-pressed={light === 'lit'} disabled={!onLight}
-      aria-label={`${title}: ${light === 'unknown' ? 'no reading' : light === 'lit' ? 'on' : 'off'}`}
-      data-i={said('Device on/off', light === 'unknown' ? 'No reading from the owner yet.' : 'Asks the owner to turn the device on or off. The light shows what the owner reports.')}
-      onClick={onLight} />
+    <Activator title={title} light={light} onLight={onLight} why={lightWhy} />
     {onFold && <button type="button" className="dp-fold" aria-label={`Fold ${title}`} data-i={said('Fold', 'Fold the device to its title.')} onClick={onFold}><ChevronFold size={10} /></button>}
     {mark}
     {onName
@@ -495,7 +513,8 @@ export function Folded({title, light, readings = [], onUnfold}: {readonly title:
 }
 
 /** A widget tile on the rail: one square (1) or two side by side (2). `onClose` takes it off the rail. */
-export function Tile({title, light, span = 1, onFull, onClose, children}: {readonly title: string; readonly light: LightState; readonly span?: 1 | 2; readonly onFull?: () => void; readonly onClose?: () => void; readonly children: ReactNode}) {
+export function Tile({title, light, span = 1, onFull, onClose: ownClose, children}: {readonly title: string; readonly light: LightState; readonly span?: 1 | 2; readonly onFull?: () => void; readonly onClose?: () => void; readonly children: ReactNode}) {
+  const onClose = ownClose ?? useContext(PlaceContext).onClose
   return <section className="dp-tile" data-span={span} aria-label={title}>
     <header className="dp-tile-head">
       <Lamp state={light} />
