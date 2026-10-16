@@ -4,15 +4,19 @@
 // (`aikit knowledge search -- '( + @0 a + @4 b )'` answers "operative Resolve frame is not closed"). The evaluator keeps a hit only when its kind belongs to the addressed horizon
 // (horizons_for_kind, operative.rs:1063). So the picture is the six horizons as lanes, with each hit stacked in every lane its kind belongs
 // to, the query's own horizons tinted, and the hits that a narrowing cut drawn as outlines. Live's nearest: Auto Filter, a filter drawn
-// across a scale with a handle on it. The fixture is real: the governance statements, the four agents of Control/self/agents, AIKit's
-// skills, the projects, and a participant of the shared field (shared-field tests: participant:public:parasakti).
+// across a scale with a handle on it.
+// The grammar above is this device's vocabulary and stays here. The material is the owner's, and it arrives on value keys: `query` (the
+// search line), `results` (the hits that the owner returns: kind, horizon, ref, title, and optionally says, owner, project, form), `aliases`
+// (the short names kept, as {name, search}) and `projects` (the projects that a search can reach), each a JSON string. The fixtures carry
+// real material: the governance statements, the four agents of Control/self/agents, AIKit's skills, the projects, and a participant of the
+// shared field (shared-field tests: participant:public:parasakti).
 // Grounded in the cradle: the search line and results are desktop/cradle/src/knowledge/SearchOverlay.tsx; the kernel sends the full query
 // to `aikit knowledge search|resolve --limit 50 -- <query>` (kernel/src/knowledge.rs:487). Tagging a passage, aliases, the kind filter
 // and the limit as a setting have no code yet; the manual specifies them.
 import {useState} from 'react'
 import {KindMark, type KindShapeName} from '../../sdk/marks'
 import {Band, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, TextField, Tile, Toggle, Action, type LightState, type Option, type RowItem} from '../../sdk/panel'
-import {num, on, str, type DesignedDevice, type Values, type ViewProps} from './design'
+import {NONE, boolOf, json, numOf, st, strOf, type DesignedDevice, type Values, type ViewProps} from './design'
 import './central__search.css'
 
 // ---------------------------------------------------------------- the grammar (a port of aikit-core resource/operative.rs)
@@ -168,11 +172,19 @@ function aimQuery(q: string, h: Horizon | null): string {
   return h === null ? rest : `@${h} ${rest}`
 }
 
-// ---------------------------------------------------------------- what is findable
 
-type RKind = 'knowledge-source' | 'knowledge-node' | 'knowledge-frame' | 'agent' | 'project' | 'capability' | 'participant' | 'place'
+const scopesIn = (e: Node, out = new Set<string>()): Set<string> => {
+  if (e.n === 'scope') out.add(e.project.toLowerCase())
+  if (e.n === 'binary') { scopesIn(e.l, out); scopesIn(e.r, out) } else if (e.n !== 'subject') scopesIn(e.e, out)
+  return out
+}
+
+// ---------------------------------------------------------------- what is findable (the owner returns it; the view draws it)
+
 type Group = 'person' | 'agent' | 'place' | 'document' | 'passage' | 'power'
-interface Item {readonly id: string; readonly label: string; readonly ref: string; readonly says: string; readonly kind: RKind; readonly form?: 'method' | 'methodology'; readonly project: string; readonly owner: string}
+/** One result as the owner returns it: what it is (kind, and form for a skill), where it stands (horizon), what it is called and where
+ * it lives (title, ref). `horizon` is one horizon or a list; where the owner gives none, the kind's own horizons stand. */
+interface Hit {readonly ref: string; readonly title: string; readonly kind: string; readonly horizons: readonly Horizon[]; readonly says?: string; readonly owner?: string; readonly project?: string}
 
 const GROUPS: readonly {id: Group; name: string; shape: KindShapeName; verb: string; effect: string}[] = [
   {id: 'person', name: 'People', shape: 'occurrence', verb: 'message', effect: 'Sends a message with the passage.'},
@@ -182,92 +194,84 @@ const GROUPS: readonly {id: Group; name: string; shape: KindShapeName; verb: str
   {id: 'passage', name: 'Passages', shape: 'source', verb: 'opens', effect: 'Opens the passage.'},
   {id: 'power', name: 'Powers', shape: 'run', verb: 'opens', effect: 'Opens the skill or method.'},
 ]
-const GROUP_OF: Record<RKind, Group> = {'knowledge-source': 'document', 'knowledge-node': 'document', 'knowledge-frame': 'passage', agent: 'agent', project: 'place', place: 'place', capability: 'power', participant: 'person'}
+/** The owner's kinds and the group each is shown in. A kind this table does not know is shown with the documents. */
+const GROUP_OF = new Map<string, Group>([['knowledge-source', 'document'], ['knowledge-node', 'document'], ['knowledge-frame', 'passage'], ['agent', 'agent'], ['project', 'place'], ['place', 'place'], ['capability', 'power'], ['participant', 'person']])
 const G = Object.fromEntries(GROUPS.map(g => [g.id, g])) as Record<Group, (typeof GROUPS)[number]>
-
-const GOV = 'source:Control/agents/governance'
-const CORPUS: readonly Item[] = [
-  {id: 'doc-ground', label: 'Consult authored ground', ref: `${GOV}/attention/consult-authored-ground.md`, says: 'Read the authored ground before the code.', kind: 'knowledge-source', project: 'control', owner: 'Central'},
-  {id: 'doc-gaps', label: 'Own the gaps', ref: `${GOV}/authorship-and-return/own-the-gaps.md`, says: 'A hole that you find is yours to fix.', kind: 'knowledge-source', project: 'control', owner: 'Central'},
-  {id: 'doc-recognition', label: 'Recognition', ref: `${GOV}/authorship-and-return/recognition.md`, says: 'When returned reality needs the owner.', kind: 'knowledge-node', project: 'control', owner: 'Central'},
-  {id: 'doc-completion', label: 'Completion', ref: `${GOV}/evidence/completion.md`, says: 'A claim of done needs executed evidence.', kind: 'knowledge-node', project: 'control', owner: 'Central'},
-  {id: 'psg-completion', label: 'Completion · line 1', ref: `${GOV}/evidence/completion.md#1`, says: 'A completion claim without executed evidence is only tone.', kind: 'knowledge-frame', project: 'control', owner: 'Central'},
-  {id: 'agent-cairn', label: 'Cairn', ref: 'agent:cairn', says: 'A patient interpreter.', kind: 'agent', project: 'control', owner: 'Central'},
-  {id: 'agent-flint', label: 'Flint', ref: 'agent:flint', says: 'A grounded investigator.', kind: 'agent', project: 'control', owner: 'Central'},
-  {id: 'agent-kite', label: 'Kite', ref: 'agent:kite', says: 'An exploratory maker.', kind: 'agent', project: 'control', owner: 'Central'},
-  {id: 'agent-lilt', label: 'Lilt', ref: 'agent:lilt', says: 'An associative companion.', kind: 'agent', project: 'control', owner: 'Central'},
-  {id: 'cap-orient', label: 'central-orient', ref: 'capability:central-orient', says: 'Orient a session and resume canonical work.', kind: 'capability', form: 'method', project: 'control', owner: 'AIKit'},
-  {id: 'cap-ground', label: 'central-ground-keeping', ref: 'capability:central-ground-keeping', says: "The ground laws of Central's source model.", kind: 'capability', project: 'control', owner: 'AIKit'},
-  {id: 'cap-wayfinder', label: 'wayfinder', ref: 'capability:wayfinder', says: 'Plan a huge chunk of work as a shared map.', kind: 'capability', form: 'methodology', project: 'control', owner: 'AIKit'},
-  {id: 'prj-oi', label: 'O-I', ref: 'project:O-I', says: 'The O:I suite.', kind: 'project', project: 'O-I', owner: 'Central'},
-  {id: 'prj-earth', label: 'Archetypal-Earth', ref: 'project:Archetypal-Earth', says: 'The field of places and archetypes.', kind: 'project', project: 'Archetypal-Earth', owner: 'Central'},
-  {id: 'plc-bollingen', label: 'Bollingen', ref: 'place:bollingen', says: 'The tower and the stone of 1950.', kind: 'place', project: 'Archetypal-Earth', owner: 'Central'},
-  {id: 'doc-stone', label: 'The Bollingen stone', ref: 'wiki:bollingen-stone', says: 'The Things page of the stone.', kind: 'knowledge-node', project: 'Archetypal-Earth', owner: 'Central'},
-  {id: 'ppl-parasakti', label: 'parasakti', ref: 'participant:public:parasakti', says: 'A participant of the shared field.', kind: 'participant', project: 'control', owner: 'Shared field'},
-]
+const groupOf = (h: Hit): Group => GROUP_OF.get(h.kind) ?? 'document'
 
 /** The owner's horizon table (horizons_for_kind / horizons_for_resource). The resolver has no kind for a participant or a basemap place:
  * both read as world and context here. */
-const HORIZONS: Record<RKind, readonly Horizon[]> = {
-  'knowledge-source': [0], 'knowledge-node': [0, 2], 'knowledge-frame': [0, 2], agent: [2, 4, 5], project: [4], capability: [5], participant: [4], place: [4],
-}
-const horizonsOf = (it: Item): readonly Horizon[] => {
-  const base = [...HORIZONS[it.kind]]
-  if (it.form === 'method') base.push(2)
-  if (it.form === 'methodology') base.push(3)
-  return base.sort() as Horizon[]
+const HORIZONS = new Map<string, readonly Horizon[]>([['knowledge-source', [0]], ['knowledge-node', [0, 2]], ['knowledge-frame', [0, 2]], ['agent', [2, 4, 5]], ['project', [4]], ['capability', [5]], ['participant', [4]], ['place', [4]]])
+const isHorizon = (x: unknown): x is Horizon => typeof x === 'number' && Number.isInteger(x) && x >= 0 && x <= 5
+const horizonsFrom = (kind: string, form: unknown): Horizon[] => {
+  const base = [...(HORIZONS.get(kind) ?? [])]
+  if (form === 'method') base.push(2)
+  if (form === 'methodology') base.push(3)
+  return [...new Set(base)].sort((a, b) => a - b)
 }
 /** AddressHorizon::meaning (operative.rs:44). */
 const HORIZON_MEANING = ['ground, knowing, available knowledge', 'original, determining structure', 'reflection, meaning', 'language, form', 'world, context, story', 'power, techne, praxis']
 
-// ---------------------------------------------------------------- the owner's evaluation, on that corpus
-
-interface Hit {readonly item: Item; readonly score: number}
-
-/** direct_handle_score and the all-terms fallback of text_score (operative.rs). */
-function score(q: string, it: Item): number | null {
-  if (!q) return 0
-  const label = it.label.toLowerCase(), ref = it.ref.toLowerCase(), says = it.says.toLowerCase()
-  const handle = (value: string) => (value === q ? 90000 : value.startsWith(q) ? 20000 - q.length : value.endsWith(q) ? 15000 - q.length : value.includes(q) ? 10000 - q.length : null)
-  const direct = Math.max(handle(label) ?? -1, handle(ref) ?? -1)
-  if (direct >= 0) return direct
-  if (says.includes(q)) return 5000 - q.length
-  const terms = q.split(/\s+/).filter(Boolean)
-  return terms.length && terms.every(t => label.includes(t) || ref.includes(t) || says.includes(t)) ? 1000 - terms.length : null
+const textOf = (x: unknown): string | undefined => (typeof x === 'string' && x ? x : undefined)
+function hitOf(x: unknown): Hit | undefined {
+  if (!x || typeof x !== 'object') return undefined
+  const o = x as Record<string, unknown>, ref = textOf(o.ref)
+  if (ref === undefined) return undefined
+  const kind = typeof o.kind === 'string' ? o.kind : ''
+  const given = (Array.isArray(o.horizon) ? o.horizon : o.horizon === undefined ? [] : [o.horizon]).filter(isHorizon)
+  return {ref, title: textOf(o.title) ?? ref, kind, horizons: given.length ? [...new Set(given)].sort((a, b) => a - b) : horizonsFrom(kind, o.form),
+    says: textOf(o.says), owner: textOf(o.owner), project: textOf(o.project)}
 }
-
-function evaluate(e: Node, narrow: boolean): Hit[] {
-  switch (e.n) {
-    case 'subject': return CORPUS.flatMap(item => { const s = score(e.v.trim().toLowerCase(), item); return s === null ? [] : [{item, score: s}] })
-    case 'address': { const hits = evaluate(e.e, narrow); return narrow && e.h !== null ? hits.filter(h => horizonsOf(h.item).includes(e.h as Horizon)) : hits }
-    case 'scope': { const hits = evaluate(e.e, narrow); return narrow ? hits.filter(h => h.item.project.toLowerCase() === e.project.toLowerCase()) : hits }
-    case 'unary': case 'frame': return evaluate(e.e, narrow)
-    case 'binary': {
-      const by = new Map<string, Hit>()
-      for (const h of [...evaluate(e.l, narrow), ...evaluate(e.r, narrow)]) { const had = by.get(h.item.id); if (!had || had.score < h.score) by.set(h.item.id, h) }
-      return [...by.values()]
-    }
-  }
+/** The results the owner returned for the query, or undefined when it reports none. */
+function hitsOf(v: Values): Hit[] | undefined {
+  const raw = json<unknown>(v, 'results', undefined)
+  if (!Array.isArray(raw)) return undefined
+  const seen = new Set<string>()
+  return raw.flatMap(x => { const h = hitOf(x); if (!h || seen.has(h.ref)) return []; seen.add(h.ref); return [h] })
 }
+const horizonNote = (h: Hit) => h.horizons.map(z => `@${z}`).join(' ')
+const saysOf = (h: Hit) => `${h.owner ? `${h.owner}. ` : ''}${h.says ?? h.ref}`
+const describe = (h: Hit) => `${G[groupOf(h)].name}${h.owner ? ` · ${h.owner}` : ''}. ${h.says ?? h.ref}`
 
 // ---------------------------------------------------------------- the values and what they make
 
 const DEFINE = /^@([A-Za-z][\w-]*)\s+=\s+(\S.*)$/
-const ALIAS_KEY = 'alias:'
-const aliasesOf = (v: Values) => Object.keys(v).filter(k => k.startsWith(ALIAS_KEY) && typeof v[k] === 'string').map(k => ({name: k.slice(ALIAS_KEY.length), search: String(v[k])}))
+const ALIAS_NAME = /^[A-Za-z][\w-]*$/
+interface Alias {readonly name: string; readonly search: string}
+/** The aliases the owner keeps, or undefined when it reports none. */
+function aliasesOf(v: Values): Alias[] | undefined {
+  const raw = json<unknown>(v, 'aliases', undefined)
+  if (!Array.isArray(raw)) return undefined
+  return raw.flatMap((x): Alias[] => {
+    const a = (x && typeof x === 'object' ? x : {}) as Record<string, unknown>
+    return typeof a.name === 'string' && ALIAS_NAME.test(a.name) && typeof a.search === 'string' ? [{name: a.name, search: a.search}] : []
+  })
+}
+/** The projects a search can reach, or undefined when the owner reports none. */
+function projectsOf(v: Values): string[] | undefined {
+  const raw = json<unknown>(v, 'projects', undefined)
+  if (!Array.isArray(raw)) return undefined
+  return raw.flatMap((x): string[] => {
+    const name = typeof x === 'string' ? x : x && typeof x === 'object' ? (x as Record<string, unknown>).name : undefined
+    return typeof name === 'string' && name ? [name] : []
+  })
+}
 
 /** `@name` runs the alias; a `?` in it is a gap that the words after the name fill. */
-function expandAlias(raw: string, v: Values): {text: string; alias?: string} {
+function expandAlias(raw: string, aliases: readonly Alias[] | undefined): {text: string; alias?: string} {
   const m = /^\s*@([A-Za-z][\w-]*)(?:\s+(\S.*))?$/.exec(raw)
-  const found = m && typeof v[ALIAS_KEY + m[1]] === 'string' ? String(v[ALIAS_KEY + m[1]]) : undefined
+  const found = m ? aliases?.find(a => a.name === m[1])?.search : undefined
   if (!m || found === undefined) return {text: raw}
   return {text: m[2] ? found.replace('?', m[2]) : found, alias: m[1]}
 }
 
-const WORLDS: readonly Option<string>[] = [
-  {value: 'control:root', label: 'Your world'}, {value: 'project:Archetypal-Earth', label: 'Archetypal-Earth'}, {value: 'project:O-I', label: 'O-I'},
-  {value: 'project:face-rig', label: 'face-rig'}, {value: 'project:ai-kit', label: 'ai-kit'},
-]
+const ROOT = 'control:root'
+/** Your world, then each project the owner reaches. The reach in force always stands in the list. */
+function worldsOf(reach: string | undefined, projects: readonly string[] | undefined): Option<string>[] {
+  const options: Option<string>[] = [{value: ROOT, label: 'Your world'}, ...(projects ?? []).map(name => ({value: `project:${name}`, label: name}))]
+  if (reach?.startsWith('project:') && !options.some(o => o.value === reach)) options.push({value: reach, label: reach.slice('project:'.length)})
+  return options
+}
 const FIELDS: readonly Option<'mine' | 'shared' | 'joined'>[] = [
   {value: 'mine', label: 'Mine', does: 'Your own world only.'}, {value: 'shared', label: 'Shared', does: 'Your world and the shared field.'}, {value: 'joined', label: 'Joined', does: 'Your world, the shared field and the fields that you joined.'},
 ]
@@ -276,45 +280,57 @@ const ENTER: readonly Option<'send' | 'open'>[] = [
 ]
 
 interface Reading {
-  readonly raw: string
+  /** The query as typed; undefined when the owner reports none. */
+  readonly raw: string | undefined
   readonly expr: Node
   readonly error?: string
   readonly alias?: string
   readonly defining?: string
-  readonly hits: readonly Hit[]
+  /** What the search finds in reach; undefined when there is a search to answer and the owner reports no results. */
+  readonly hits: readonly Hit[] | undefined
+  /** Results that the horizon, reach or kinds cut. */
   readonly ghosts: readonly Hit[]
   readonly aimed: ReadonlySet<Horizon>
   readonly lead: Horizon | null
 }
 
 function read(v: Values): Reading {
-  const raw = str(v, 'query'), def = DEFINE.exec(raw.trim()), ex = expandAlias(raw, v)
+  const raw = strOf(v, 'query'), def = raw === undefined ? null : DEFINE.exec(raw.trim()), ex = raw === undefined ? {text: '', alias: undefined} : expandAlias(raw, aliasesOf(v))
   let expr: Node, error: string | undefined
   try { expr = parseOrSearch(ex.text) } catch (e) { error = e instanceof Error ? e.message : String(e); expr = ordinary(ex.text.trim()) }
-  const empty = !raw.trim() || !!def || !!error
-  const world = str(v, 'reach'), fields = str(v, 'fields')
-  const kept = (it: Item) => on(v, `k:${GROUP_OF[it.kind]}`)
-    && (world === 'control:root' || world === `project:${it.project}`)
-    && (it.owner !== 'Shared field' || fields !== 'mine')
-  const sorted = empty ? [] : evaluate(expr, true).filter(h => kept(h.item)).sort((a, b) => b.score - a.score || a.item.label.localeCompare(b.item.label))
-  const hits = sorted.slice(0, num(v, 'limit'))
-  const ghosts = empty ? [] : evaluate(expr, false).filter(h => !hits.some(x => x.item.id === h.item.id))
-  return {raw, expr, error, alias: ex.alias, defining: def?.[1], hits, ghosts, aimed: horizonsIn(expr), lead: lead(expr)}
+  const owned = hitsOf(v), reach = strOf(v, 'reach'), fields = strOf(v, 'fields'), limit = numOf(v, 'limit'), aimed = horizonsIn(expr), scopes = scopesIn(expr)
+  // The owner answers the text and has applied the query's own operators. What the view cuts on top is the horizon, the reach
+  // and the kinds: the outlines in the well.
+  const kept = (h: Hit) => (!aimed.size || h.horizons.some(z => aimed.has(z)))
+    && (!scopes.size || h.project === undefined || scopes.has(h.project.toLowerCase()))
+    && boolOf(v, `k:${groupOf(h)}`) !== false
+    && (reach === undefined || reach === ROOT || h.project === undefined || reach === `project:${h.project}`)
+    && !(fields === 'mine' && h.owner === 'Shared field')
+  const asked = raw !== undefined && !!raw.trim() && !def && !error
+  const cut = asked && owned ? owned.filter(kept) : []
+  const hits = limit === undefined || !Number.isFinite(limit) ? cut : cut.slice(0, Math.max(0, limit))
+  return {raw, expr, error, alias: ex.alias, defining: def?.[1], aimed, lead: lead(expr),
+    hits: raw === undefined || (asked && !owned) ? undefined : hits, ghosts: asked && owned ? owned.filter(h => !hits.includes(h)) : []}
 }
 
-const light = (v: Values) => str(v, 'light') as LightState
+// The light reads the owner alone (DEVICE-UI §4.1): lit or dark when it reports, hollow when it has not.
+const light = (p: ViewProps) => (strOf(p.owner ?? p.v, 'light') ?? 'unknown') as LightState
 const commit = (p: ViewProps) => (text: string) => {
   const m = DEFINE.exec(text.trim())
-  if (m) { p.set(`${ALIAS_KEY}${m[1]}`, m[2]!); p.set('query', `@${m[1]}`) } else p.set('query', text)
+  if (!m) { p.set('query', text); return }
+  if (st(p, 'aliases').disabled) return
+  p.set('aliases', JSON.stringify([...(aliasesOf(p.v) ?? []).filter(a => a.name !== m[1]), {name: m[1]!, search: m[2]!}]))
+  p.set('query', `@${m[1]}`)
 }
 const trunc = (s: string, n: number) => (s.length > n ? `${s.slice(0, n - 1)}…` : s)
-const horizonNote = (it: Item) => horizonsOf(it).map(h => `@${h}`).join(' ')
-const found = (r: Reading) => (r.defining ? 'keeps' : r.raw.trim() ? `${r.hits.length} found` : 'no query')
+const found = (r: Reading) => (r.raw === undefined ? NONE : r.defining ? 'keeps' : !r.raw.trim() ? 'no query' : r.hits === undefined ? NONE : `${r.hits.length} found`)
+/** The well's words where there is nothing to draw: the missing reading named, or what to do. */
+const said = (r: Reading) => r.raw === undefined ? 'No reading of the query.' : r.error ? '' : !r.raw.trim() ? 'Type @ and a word.' : r.defining ? `Enter keeps @${r.defining}.`
+  : r.hits === undefined ? 'No reading of the results.' : !r.hits.length ? 'No result in reach.' : ''
 
 function rowsOf(r: Reading): RowItem[] {
-  return r.hits.map(h => ({id: h.item.id, name: h.item.label, light: 'lit' as LightState, tone: 'value' as const, note: horizonNote(h.item),
-    mark: <KindMark kind={G[GROUP_OF[h.item.kind]].shape} size={14} title={G[GROUP_OF[h.item.kind]].name} />,
-    does: `${G[GROUP_OF[h.item.kind]].name} · ${h.item.owner}. ${h.item.says}`}))
+  return (r.hits ?? []).map(h => ({id: h.ref, name: h.title, light: 'lit' as LightState, tone: 'value' as const, note: horizonNote(h),
+    mark: <KindMark kind={G[groupOf(h)].shape} size={14} title={G[groupOf(h)].name} />, does: describe(h)}))
 }
 
 // ---------------------------------------------------------------- the display: six horizons as lanes
@@ -322,15 +338,16 @@ function rowsOf(r: Reading): RowItem[] {
 function Lanes({r, p, w, h, compact}: {r: Reading; p: ViewProps; w: number; h: number; compact: boolean}) {
   const pad = 14, step = (w - 2 * pad) / 6, x = (stop: number) => pad + stop * step, top = 24, base = h - 40, axis = h - 24
   const stack = new Array<number>(6).fill(0)
-  const place = (hit: Hit) => horizonsOf(hit.item).map(hz => ({hz, i: stack[hz]!++}))
-  const real = r.hits.flatMap(hit => place(hit).map(c => ({...c, id: hit.item.id})))
-  const ghost = r.ghosts.flatMap(hit => place(hit).map(c => ({...c, id: hit.item.id})))
-  const aim = (stop: number) => p.set('query', aimQuery(str(p.v, 'query'), stop <= 0 ? null : (stop - 1) as Horizon))
+  const place = (hit: Hit) => hit.horizons.map(hz => ({hz, i: stack[hz]!++}))
+  const real = (r.hits ?? []).flatMap(hit => place(hit).map(c => ({...c, id: hit.ref})))
+  const ghost = r.ghosts.flatMap(hit => place(hit).map(c => ({...c, id: hit.ref})))
+  const aim = (stop: number) => p.set('query', aimQuery(strOf(p.v, 'query') ?? '', stop <= 0 ? null : (stop - 1) as Horizon))
   const stop = r.lead === null ? 0 : r.lead + 1
-  const message = r.error ? '' : !r.raw.trim() ? 'Type @ and a word.' : r.defining ? `Enter keeps @${r.defining}.` : !r.hits.length ? 'No result in reach.' : ''
+  const off = st(p, 'query').disabled
+  const message = said(r)
   return <g>
     {Array.from(r.aimed).map(hz => <rect key={hz} x={x(hz + 1) - 9} y={top - 4} width={18} height={base - top + 8} fill="rgba(92,200,189,.10)" />)}
-    <text x={4} y={11} style={{font: '8.5px var(--font-ui)', fill: 'var(--text-dim)'}}>{r.error ? 'does not parse' : trunc(render(r.expr), compact ? 17 : 22)}</text>
+    <text x={4} y={11} style={{font: '8.5px var(--font-ui)', fill: 'var(--text-dim)'}}>{r.raw === undefined ? NONE : r.error ? 'does not parse' : trunc(render(r.expr), compact ? 17 : 22)}</text>
     {[0, 1, 2, 3, 4, 5, 6].map(s => <line key={s} x1={x(s)} y1={top} x2={x(s)} y2={axis} className="dp-faint" />)}
     <line x1={x(0)} y1={axis} x2={x(6)} y2={axis} stroke="var(--dp-value)" strokeOpacity={0.5} />
     {ghost.map(c => <rect key={`g${c.id}${c.hz}`} x={x(c.hz + 1) - 6} y={base - (c.i + 1) * 8} width={12} height={6} fill="none" stroke="var(--text-faint)" strokeDasharray="2 2" />)}
@@ -338,9 +355,9 @@ function Lanes({r, p, w, h, compact}: {r: Reading; p: ViewProps; w: number; h: n
     {['@', '0', '1', '2', '3', '4', '5'].map((t, s) => <text key={t} x={x(s)} y={h - 6} textAnchor="middle" className="dp-axis">{t}</text>)}
     {message && <text x={w / 2} y={top + (base - top) / 2} textAnchor="middle" className="dp-axis">{message}</text>}
     {r.error && <text x={w / 2} y={top + (base - top) / 2} textAnchor="middle" style={{font: '8.5px var(--font-ui)', fill: 'var(--stall)'}}>{trunc(r.error.replace('operative Resolve ', ''), compact ? 26 : 34)}</text>}
-    <Handle x={x(stop)} y={axis} n={1} shape="ring" label="Aim"
-      does="Drag along the line to put a horizon, @0 to @5, in front of the search. Drag to the left end to search all horizons."
-      onDrag={(px) => aim(Math.round(Math.min(6, Math.max(0, (px - pad) / step))))} onReset={() => aim(0)} />
+    {r.raw !== undefined && <Handle x={x(stop)} y={axis} n={1} shape="ring" label="Aim"
+      does={`Drag along the line to put a horizon, @0 to @5, in front of the search. Drag to the left end to search all horizons.${off ? ` ${off}` : ''}`}
+      onDrag={off ? undefined : (px) => aim(Math.round(Math.min(6, Math.max(0, (px - pad) / step))))} onReset={off ? undefined : () => aim(0)} />}
   </g>
 }
 
@@ -354,21 +371,26 @@ function Well({r, p, w, h, compact}: {r: Reading; p: ViewProps; w: number; h: nu
 // ---------------------------------------------------------------- controls shared by the views
 
 const QueryLine = ({p, label}: {p: ViewProps; label?: string}) =>
-  <div className="srch-span"><TextField wide label={label} does="Type @ and a word. Press Enter to search. Type @name = search to keep an alias." placeholder="@ a word" value={str(p.v, 'query')} onChange={commit(p)} /></div>
+  <div className="srch-span"><TextField {...st(p, 'query')} wide label={label} placeholder="@ a word" value={strOf(p.v, 'query') ?? ''} onChange={commit(p)}
+    does={`Type @ and a word. Press Enter to search.${st(p, 'aliases').disabled ? '' : ' Type @name = search to keep an alias.'}`} /></div>
 
-const ReachChooser = ({p}: {p: ViewProps}) =>
-  <Chooser wide label="Reach" does="The world a search looks in: your whole world, or one project." value={str(p.v, 'reach')} options={WORLDS} onChange={x => p.set('reach', x)} />
+const ReachChooser = ({p}: {p: ViewProps}) => {
+  const projects = projectsOf(p.v)
+  return <Chooser {...st(p, 'reach')} wide label="Reach" does={`The world a search looks in: your whole world, or one project.${projects === undefined ? ' No reading of the projects.' : ''}`}
+    value={strOf(p.v, 'reach') ?? ''} options={worldsOf(strOf(p.v, 'reach'), projects)} onChange={x => p.set('reach', x)} />
+}
 const ShownDial = ({p}: {p: ViewProps}) =>
-  <Dial label="Shown" does="The most results that a search returns." value={num(p.v, 'limit')} def={50} scale={{min: 10, max: 100, step: 10}} format={x => `${x}`} onChange={x => p.set('limit', x)} />
+  <Dial {...st(p, 'limit')} label="Shown" does="The most results that a search returns." value={numOf(p.v, 'limit') ?? NaN} def={50} scale={{min: 10, max: 100, step: 10}} format={x => `${x}`} onChange={x => p.set('limit', x)} />
 const EnterRadio = ({p}: {p: ViewProps}) =>
-  <Radio label="Enter" does="What Enter does when a passage is selected." value={str(p.v, 'enter') as 'send' | 'open'} options={ENTER} stack onChange={x => p.set('enter', x)} />
+  <Radio {...st(p, 'enter')} label="Enter" does="What Enter does when a passage is selected." value={(strOf(p.v, 'enter') ?? '') as 'send' | 'open'} options={ENTER} stack onChange={x => p.set('enter', x)} />
 
 function AliasRows({p, size, columns}: {p: ViewProps; size: number; columns: 1 | 2}) {
-  const list = aliasesOf(p.v)
+  const list = aliasesOf(p.v), off = st(p, 'aliases').disabled
+  if (list === undefined) return <><Rows label="Aliases · —" does="Your own short names for long searches." items={[]} size={size} columns={columns} /><p className="srch-none">No reading of the aliases</p></>
   if (!list.length) return <><Rows label="Aliases · 0" does="Your own short names for long searches." items={[]} size={size} columns={columns} /><p className="srch-none">No aliases</p></>
-  const items: RowItem[] = list.map(a => ({id: a.name, name: `@${a.name}`, light: 'lit', tone: 'value', request: true, note: trunc(a.search, 24), does: a.search}))
-  return <Rows label={`Aliases · ${list.length}`} does="Your own short names for long searches. Turn a square off to remove an alias." items={items}
-    onRequest={(id, keep) => { if (!keep) p.set(`${ALIAS_KEY}${id}`, undefined) }} size={size} columns={columns} />
+  const items: RowItem[] = list.map(a => ({id: a.name, name: `@${a.name}`, light: 'lit', tone: 'value', request: off ? undefined : true, note: trunc(a.search, 24), does: a.search}))
+  return <Rows label={`Aliases · ${list.length}`} does={`Your own short names for long searches.${off ? ` ${off}` : ' Turn a square off to remove an alias.'}`} items={items}
+    onRequest={off ? undefined : (id, keep) => { if (!keep) p.set('aliases', JSON.stringify(list.filter(a => a.name !== id))) }} size={size} columns={columns} />
 }
 
 // ---------------------------------------------------------------- the whole view
@@ -378,16 +400,19 @@ const PAGES = [{id: 'find', label: 'Find'}, {id: 'keep', label: 'Keep'}] as cons
 function SearchWhole({p}: {p: ViewProps}) {
   const [at, setAt] = useState(0)
   const r = read(p.v)
-  const aimed = r.lead === null ? 'all' : `@${r.lead}`
-  return <Panel title="Search" view="whole" light={light(p.v)} pages={PAGES} page={p.page} onPage={p.setPage} onFold={p.nav.fold} onFull={p.nav.full}>
+  const aimed = r.raw === undefined ? undefined : r.lead === null ? 'all' : `@${r.lead}`
+  return <Panel title="Search" view="whole" light={light(p)} pages={PAGES} page={p.page} onPage={p.setPage} onFold={p.nav.fold} onFull={p.nav.full}>
     {p.page === 'keep' ? <>
       <Band>
         <Section label="Reach" width={124}>
           <ReachChooser p={p} />
-          <Radio label="Fields" does="Which fields a search looks in beside your world." value={str(p.v, 'fields') as 'mine' | 'shared' | 'joined'} options={FIELDS} stack onChange={x => p.set('fields', x)} />
+          <Radio {...st(p, 'fields')} label="Fields" does="Which fields a search looks in beside your world." value={(strOf(p.v, 'fields') ?? '') as 'mine' | 'shared' | 'joined'} options={FIELDS} stack onChange={x => p.set('fields', x)} />
         </Section>
         <Section label="Kinds" cols={2}>
-          {GROUPS.map(g => <Toggle key={g.id} label={g.name} does={`Show ${g.name.toLowerCase()} in the results.`} on={on(p.v, `k:${g.id}`)} onChange={x => p.set(`k:${g.id}`, x)} />)}
+          {GROUPS.map(g => {
+            const now = boolOf(p.v, `k:${g.id}`)
+            return <Toggle {...st(p, `k:${g.id}`)} key={g.id} label={g.name} does={`Show ${g.name.toLowerCase()} in the results.`} on={now === true} unknown={now === undefined} onChange={x => p.set(`k:${g.id}`, x)} />
+          })}
         </Section>
         <Section label="Results" cols={2}>
           <ShownDial p={p} />
@@ -398,7 +423,7 @@ function SearchWhole({p}: {p: ViewProps}) {
         <Section label="Aliases" grow>
           <div className="srch-keep">
             <AliasRows p={p} size={8} columns={2} />
-            <TextField wide label="New alias" does="Type @name = search and press Enter. Use ? for a gap that the next word fills." placeholder="@name = search" value="" onChange={commit(p)} />
+            <TextField {...st(p, 'aliases')} wide label="New alias" does="Type @name = search and press Enter. Use ? for a gap that the next word fills." placeholder="@name = search" value="" onChange={commit(p)} />
           </div>
         </Section>
       </Band>
@@ -408,15 +433,18 @@ function SearchWhole({p}: {p: ViewProps}) {
         <Section label="Query" grow>
          <div className="srch-grid4">
           <QueryLine p={p} />
-          <Readout big label="found" does="Results that the search returns." value={r.hits.length} tone="value" />
-          <Readout label="aimed" does={r.lead === null ? 'The search looks in all horizons.' : `@${r.lead}: ${HORIZON_MEANING[r.lead]}.`} value={aimed} />
-          <Readout label="shown" does="The most results that a search returns." value={num(p.v, 'limit')} />
-          <Readout label={r.alias && !r.error ? 'alias' : 'owner'} does={r.error ? `The owner refuses the search: ${r.error}.` : 'The owner parsed the search.'} value={r.error ? 'refused' : r.alias ? `@${r.alias}` : 'parsed'} tone={r.error ? 'stall' : undefined} />
+          <Readout big label="found" does="Results that the search returns." value={r.hits?.length} tone="value" />
+          <Readout label="aimed" does={r.lead === null ? 'The search looks in all horizons.' : `@${r.lead}: ${HORIZON_MEANING[r.lead] ?? ''}.`} value={aimed} />
+          <Readout label="shown" does="The most results that a search returns." value={numOf(p.v, 'limit')} />
+          <Readout label={r.alias && !r.error ? 'alias' : 'owner'} does={r.error ? `The owner refuses the search: ${r.error}.` : 'The owner parsed the search.'}
+            value={r.raw === undefined ? undefined : r.error ? 'refused' : r.alias ? `@${r.alias}` : r.hits === undefined ? undefined : 'parsed'} tone={r.error ? 'stall' : undefined} />
          </div>
         </Section>
       </Band>
       <Band>
-        <Section grow><Rows label={`Results · ${r.hits.length}`} does="The square is not used here. The mark is the kind, the note is the horizons that the kind belongs to." items={rowsOf(r)} size={10} columns={2} page={at} onPage={setAt} /></Section>
+        <Section grow>{r.hits === undefined
+          ? <div className="srch-keep"><Rows label="Results · —" does="The results of the search." items={[]} size={10} columns={2} /><p className="srch-none">{r.raw === undefined ? 'No reading of the query' : 'No reading of the results'}</p></div>
+          : <Rows label={`Results · ${r.hits.length}`} does="The square is not used here. The mark is the kind, the note is the horizons that the kind belongs to." items={rowsOf(r)} size={10} columns={2} page={at} onPage={setAt} />}</Section>
       </Band>
     </>}
   </Panel>
@@ -425,41 +453,45 @@ function SearchWhole({p}: {p: ViewProps}) {
 // ---------------------------------------------------------------- the pane
 
 function SearchFull({p}: {p: ViewProps}) {
-  const r = read(p.v)
-  const picked = r.hits.find(h => h.item.id === str(p.v, 'pick')) ?? r.hits[0]
-  const gid = picked ? GROUP_OF[picked.item.kind] : undefined
-  const size = str(p.v, 'selection').length
-  const sends = picked && str(p.v, 'enter') === 'send' && gid && (gid === 'person' || gid === 'agent' || gid === 'place' || gid === 'document')
+  const r = read(p.v), hits = r.hits ?? []
+  const pick = strOf(p.v, 'pick'), picked = hits.find(h => h.ref === pick) ?? hits[0]
+  const gid = picked ? groupOf(picked) : undefined
+  const selection = strOf(p.v, 'selection'), from = strOf(p.v, 'from'), enter = strOf(p.v, 'enter'), size = selection?.length
+  const pickOff = st(p, 'pick').disabled
+  const canSend = gid === 'person' || gid === 'agent' || gid === 'place' || gid === 'document'
+  const verdict = r.hits === undefined ? 'No reading of the results.' : !picked ? 'Nothing to send.' : enter === undefined ? 'No reading of what Enter does.'
+    : enter === 'send' && canSend ? (selection === undefined ? 'No reading of the selection.' : `Enter sends ${size} characters from ${from ?? NONE} to ${picked.title}.`) : `Enter opens ${picked.title}.`
   return <div className="ref-pane-body srch-full">
     <div className="srch-full-line"><QueryLine p={p} /></div>
     <div className="srch-read">
-      <span>Read as <code>{render(r.expr)}</code></span>
-      <span><b>{r.hits.length}</b> found</span>
+      <span>{r.raw === undefined ? 'No reading of the query' : <>Read as <code>{render(r.expr)}</code></>}</span>
+      <span><b>{r.hits?.length ?? NONE}</b> found</span>
       {r.alias && <span>alias <b>@{r.alias}</b></span>}
       {r.error && <span data-bad="true">The owner refuses it: {r.error}.</span>}
     </div>
     <div className="srch-full-body">
       <div className="srch-groups">
-        {!r.hits.length && <p className="srch-empty">{r.error ? 'Change the search so that it parses.' : r.raw.trim() ? 'No result in reach.' : 'Type @ and a word.'}</p>}
-        {GROUPS.filter(g => r.hits.some(h => GROUP_OF[h.item.kind] === g.id)).map(g => <section key={g.id} className="srch-group">
-          <h4><KindMark kind={g.shape} size={16} /> {g.name} <small>{r.hits.filter(h => GROUP_OF[h.item.kind] === g.id).length}</small></h4>
-          <ul>{r.hits.filter(h => GROUP_OF[h.item.kind] === g.id).map(h => <li key={h.item.id}>
-            <button type="button" className="srch-hit" aria-pressed={picked?.item.id === h.item.id} onClick={() => p.set('pick', h.item.id)}
-              data-i={`${h.item.label}|${h.item.owner}. ${h.item.says}`}>
+        {!hits.length && <p className="srch-empty">{r.raw === undefined ? 'No reading of the query.' : r.error ? 'Change the search so that it parses.' : !r.raw.trim() ? 'Type @ and a word.'
+          : r.hits === undefined ? 'No reading of the results.' : 'No result in reach.'}</p>}
+        {GROUPS.filter(g => hits.some(h => groupOf(h) === g.id)).map(g => <section key={g.id} className="srch-group">
+          <h4><KindMark kind={g.shape} size={16} /> {g.name} <small>{hits.filter(h => groupOf(h) === g.id).length}</small></h4>
+          <ul>{hits.filter(h => groupOf(h) === g.id).map(h => <li key={h.ref}>
+            <button type="button" className="srch-hit" aria-pressed={picked?.ref === h.ref} disabled={!!pickOff} onClick={() => p.set('pick', h.ref)}
+              data-i={`${h.title}|${saysOf(h)}${pickOff ? ` ${pickOff}` : ''}`}>
               <KindMark kind={g.shape} size={12} />
-              <span className="srch-hit-name">{h.item.label}</span>
-              <span className="srch-hit-note">{horizonNote(h.item)} · {g.verb}</span>
+              <span className="srch-hit-name">{h.title}</span>
+              <span className="srch-hit-note">{horizonNote(h)} · {g.verb}</span>
             </button>
           </li>)}</ul>
         </section>)}
       </div>
       <aside className="srch-side">
         <h4>Selected passage</h4>
-        <blockquote className="srch-quote">{str(p.v, 'selection')}</blockquote>
-        <p className="srch-from">from {str(p.v, 'from')} · {size} characters</p>
+        <blockquote className="srch-quote">{selection ?? NONE}</blockquote>
+        <p className="srch-from">from {from ?? NONE} · {size ?? NONE} characters</p>
         <h4>Where a tag would send it</h4>
         <ul className="srch-targets">{GROUPS.filter(g => g.id !== 'power').map(g => <li key={g.id} data-on={gid === g.id ? 'true' : undefined}><b>{g.name.replace(/s$/, '')}</b><span>{g.effect}</span></li>)}</ul>
-        <p className="srch-send">{!picked ? 'Nothing to send.' : sends ? `Enter sends ${size} characters from ${str(p.v, 'from')} to ${picked.item.label}.` : `Enter opens ${picked.item.label}.`}</p>
+        <p className="srch-send">{verdict}</p>
       </aside>
     </div>
   </div>
@@ -472,25 +504,59 @@ export const design: DesignedDevice = {
   title: 'Search',
   kind: 'instrument',
   defaults: {
-    light: 'lit', query: 'ground', reach: 'control:root', fields: 'mine', limit: 50, enter: 'send',
+    light: 'lit', query: 'ground', reach: ROOT, fields: 'mine', limit: 50, enter: 'send',
     'k:person': true, 'k:agent': true, 'k:place': true, 'k:document': true, 'k:passage': true, 'k:power': true,
-    selection: 'A completion claim without executed evidence is only tone.', from: 'Completion', pick: 'agent-flint',
+    selection: 'A completion claim without executed evidence is only tone.', from: 'Completion', pick: 'agent:flint',
+    // Readings: what the owner returns for the query, the aliases it keeps, the projects a search can reach.
+    results: JSON.stringify([
+      {ref: 'source:Control/agents/governance/attention/consult-authored-ground.md', title: 'Consult authored ground', says: 'Read the authored ground before the code.', kind: 'knowledge-source', horizon: [0], project: 'control', owner: 'Central'},
+      {ref: 'capability:central-ground-keeping', title: 'central-ground-keeping', says: "The ground laws of Central's source model.", kind: 'capability', horizon: [5], project: 'control', owner: 'AIKit'},
+      {ref: 'agent:flint', title: 'Flint', says: 'A grounded investigator.', kind: 'agent', horizon: [2, 4, 5], project: 'control', owner: 'Central'},
+    ]),
+    aliases: JSON.stringify([]),
+    projects: JSON.stringify(['Archetypal-Earth', 'O-I', 'face-rig', 'ai-kit']),
   },
   fixtures: {
     'Aimed at @2': {query: '@2 ground'},
-    'Your aliases': {query: '@team', 'alias:team': '@ cairn / @ flint', 'alias:stone': ': Archetypal-Earth bollingen', 'alias:why': '@# ( ? x @1 ground )'},
-    'Does not parse': {query: '( + @0 ground + @4 world )'},
+    'Your aliases': {query: '@team', aliases: JSON.stringify([{name: 'team', search: '@ cairn / @ flint'}, {name: 'stone', search: ': Archetypal-Earth bollingen'}, {name: 'why', search: '@# ( ? x @1 ground )'}]),
+      results: JSON.stringify([
+        {ref: 'agent:cairn', title: 'Cairn', says: 'A patient interpreter.', kind: 'agent', horizon: [2, 4, 5], project: 'control', owner: 'Central'},
+        {ref: 'agent:flint', title: 'Flint', says: 'A grounded investigator.', kind: 'agent', horizon: [2, 4, 5], project: 'control', owner: 'Central'},
+      ])},
+    'Does not parse': {query: '( + @0 ground + @4 world )', results: JSON.stringify([])},
+    // One result of every kind the owner returns, for the pane's groups and the list's pages.
+    'Every kind': {query: 'e', results: JSON.stringify([
+      {ref: 'source:Control/agents/governance/attention/consult-authored-ground.md', title: 'Consult authored ground', says: 'Read the authored ground before the code.', kind: 'knowledge-source', horizon: [0], project: 'control', owner: 'Central'},
+      {ref: 'source:Control/agents/governance/authorship-and-return/own-the-gaps.md', title: 'Own the gaps', says: 'A hole that you find is yours to fix.', kind: 'knowledge-source', horizon: [0], project: 'control', owner: 'Central'},
+      {ref: 'source:Control/agents/governance/authorship-and-return/recognition.md', title: 'Recognition', says: 'When returned reality needs the owner.', kind: 'knowledge-node', horizon: [0, 2], project: 'control', owner: 'Central'},
+      {ref: 'source:Control/agents/governance/evidence/completion.md', title: 'Completion', says: 'A claim of done needs executed evidence.', kind: 'knowledge-node', horizon: [0, 2], project: 'control', owner: 'Central'},
+      {ref: 'source:Control/agents/governance/evidence/completion.md#1', title: 'Completion · line 1', says: 'A completion claim without executed evidence is only tone.', kind: 'knowledge-frame', horizon: [0, 2], project: 'control', owner: 'Central'},
+      {ref: 'agent:cairn', title: 'Cairn', says: 'A patient interpreter.', kind: 'agent', horizon: [2, 4, 5], project: 'control', owner: 'Central'},
+      {ref: 'agent:flint', title: 'Flint', says: 'A grounded investigator.', kind: 'agent', horizon: [2, 4, 5], project: 'control', owner: 'Central'},
+      {ref: 'agent:kite', title: 'Kite', says: 'An exploratory maker.', kind: 'agent', horizon: [2, 4, 5], project: 'control', owner: 'Central'},
+      {ref: 'agent:lilt', title: 'Lilt', says: 'An associative companion.', kind: 'agent', horizon: [2, 4, 5], project: 'control', owner: 'Central'},
+      {ref: 'capability:central-orient', title: 'central-orient', says: 'Orient a session and resume canonical work.', kind: 'capability', form: 'method', horizon: [2, 5], project: 'control', owner: 'AIKit'},
+      {ref: 'capability:central-ground-keeping', title: 'central-ground-keeping', says: "The ground laws of Central's source model.", kind: 'capability', horizon: [5], project: 'control', owner: 'AIKit'},
+      {ref: 'capability:wayfinder', title: 'wayfinder', says: 'Plan a huge chunk of work as a shared map.', kind: 'capability', form: 'methodology', horizon: [3, 5], project: 'control', owner: 'AIKit'},
+      {ref: 'project:O-I', title: 'O-I', says: 'The O:I suite.', kind: 'project', horizon: [4], project: 'O-I', owner: 'Central'},
+      {ref: 'project:Archetypal-Earth', title: 'Archetypal-Earth', says: 'The field of places and archetypes.', kind: 'project', horizon: [4], project: 'Archetypal-Earth', owner: 'Central'},
+      {ref: 'place:bollingen', title: 'Bollingen', says: 'The tower and the stone of 1950.', kind: 'place', horizon: [4], project: 'Archetypal-Earth', owner: 'Central'},
+      {ref: 'wiki:bollingen-stone', title: 'The Bollingen stone', says: 'The Things page of the stone.', kind: 'knowledge-node', horizon: [0, 2], project: 'Archetypal-Earth', owner: 'Central'},
+      {ref: 'participant:public:parasakti', title: 'parasakti', says: 'A participant of the shared field.', kind: 'participant', horizon: [4], project: 'control', owner: 'Shared field'},
+    ]), fields: 'shared'},
+    'No readings': Object.fromEntries(['light', 'query', 'reach', 'fields', 'limit', 'enter', 'k:person', 'k:agent', 'k:place', 'k:document', 'k:passage', 'k:power',
+      'selection', 'from', 'pick', 'results', 'aliases', 'projects'].map(k => [k, undefined])),
   },
   firstPage: 'find',
 
   folded: p => {
     const r = read(p.v)
-    return <Folded title="Search" light={light(p.v)} readings={[`@ ${trunc(str(p.v, 'query'), 10)}`, `${r.hits.length} found`]} onUnfold={p.nav.unfold} />
+    return <Folded title="Search" light={light(p)} readings={[r.raw === undefined ? NONE : `@ ${trunc(r.raw, 10)}`, r.hits === undefined ? NONE : `${r.hits.length} found`]} onUnfold={p.nav.unfold} />
   },
 
   compact: p => {
     const r = read(p.v)
-    return <Panel title="Search" view="compact" light={light(p.v)} onFold={p.nav.fold} onFull={p.nav.full} onSelect={p.nav.select}>
+    return <Panel title="Search" view="compact" light={light(p)} onFold={p.nav.fold} onFull={p.nav.full} onSelect={p.nav.select}>
       <Section width={152}><Well r={r} p={p} w={140} h={146} compact /></Section>
       <Section cols={2}>
         <QueryLine p={p} label="Search" />
@@ -506,15 +572,15 @@ export const design: DesignedDevice = {
   full: p => <SearchFull p={p} />,
 
   widget: p => {
-    const r = read(p.v), list = aliasesOf(p.v).slice(0, 3)
-    return <Tile title="Search" light={light(p.v)} span={2} onFull={p.nav.full}>
+    const r = read(p.v), list = (aliasesOf(p.v) ?? []).slice(0, 3)
+    return <Tile title="Search" light={light(p)} span={2} onFull={p.nav.full}>
       <div className="srch-tile">
         <QueryLine p={p} />
         <Rows does="The last results of the search." items={rowsOf(r)} size={3} />
         <div className="srch-aliases">
           {list.length
-            ? list.map(a => <Action key={a.name} label={`@${a.name}`} does={`Run ${a.search}`} onPress={() => p.set('query', `@${a.name}`)} />)
-            : <Readout big label="found" value={r.hits.length} tone="value" />}
+            ? list.map(a => <Action {...st(p, 'query')} key={a.name} label={`@${a.name}`} does={`Run ${a.search}`} onPress={() => p.set('query', `@${a.name}`)} />)
+            : <Readout big label="found" value={r.hits?.length} tone="value" />}
         </div>
       </div>
     </Tile>
