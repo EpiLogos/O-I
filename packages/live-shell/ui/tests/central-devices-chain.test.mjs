@@ -82,7 +82,7 @@ const deviceMarkup = (markup, faceId) => {
 }
 function DeviceViewOf({entry, size}) { return createElement(DeviceView, {device: entry.device, size, picture: entry.picture(size), marks: entry.marks}) }
 
-test('the family\'s device faces are six devices, in chain order, each its own family\'s declaration; its clip is not one of them', () => {
+test('the family\'s device faces are six devices, in chain order, each its own family\'s declaration, while no document is reached and no workspace book stands', () => {
   const set = entries()
   assert.deepEqual(set.map(entry => entry.id), FACES.map(id => `central:${id}`))
   for (const entry of set) {
@@ -93,11 +93,12 @@ test('the family\'s device faces are six devices, in chain order, each its own f
     assert.notEqual(declared.liveSemantic, 'clip', `${entry.id} is a device, not a clip`)
   }
   assert.equal(set.find(entry => entry.id === 'central:day-die').device.face.liveSemantic, 'device-instrument')
-  // The Flow is declared a clip (worldShellFamilies.ts): it stands on the Clip side, not on the Device chain.
-  assert.equal(central.faces.find(face => face.id === 'flow-document').liveSemantic, 'clip')
-  assert.ok(!set.some(entry => entry.id === 'central:flow-document'), 'no clip stands on the Device chain')
-  assert.deepEqual(model.clipFaces(central.faces).map(face => face.id), ['flow-document'])
-  assert.deepEqual(model.chainFaces(central.faces).map(face => face.id), FACES)
+  // MOVED (lane BC2): the Flow was declared a clip and stood on the Clip side (FlowClip.tsx, which nothing mounted). DLW §18.3 makes it
+  // an instrument, first on a Flow document's chain: it stands there while a Flow is reached (central-page-family-binding.test.mjs).
+  assert.equal(central.faces.find(face => face.id === 'flow-document').liveSemantic, 'device-instrument')
+  assert.deepEqual(model.clipFaces(central.faces).map(face => face.id), [], 'the family declares no clip')
+  assert.ok(!set.some(entry => model.PAGE_FACES.has(entry.id.slice('central:'.length))), 'with no document reached, no page device stands')
+  assert.ok(!set.some(entry => entry.id === 'central:workspace'), 'with no workspace book, the Workspace does not stand')
 })
 
 test('a face the family declares but this chain does not know is drawn generically, never dropped', () => {
@@ -226,7 +227,12 @@ test('pop-out is kept where the face declares it: offered with a host and an ape
   assert.doesNotMatch(html(withHost.find(entry => entry.id === 'central:nara-conversation').picture('compact')), /pop-out|redock/, 'the picture is the picture alone')
   assert.match(compact(withHost.find(entry => entry.id === 'central:nara-conversation')), /data-action="pop-out"/)
   assert.doesNotMatch(compact(withHost.find(entry => entry.id === 'central:context-world')), /pop-out/, 'a parameter face does not pop out')
-  assert.ok(!withHost.some(entry => entry.id === 'central:flow-document'), 'the Flow is a clip: its pop-out goes with it to the Clip side')
+  // MOVED (lane BC2): the Flow was a clip whose pop-out went with it to the Clip side; it is the Flow document's instrument now, on
+  // the chain while a Flow is reached, and keeps the pop-out its face declares.
+  assert.ok(!withHost.some(entry => entry.id === 'central:flow-document'), 'no Flow reached: the Flow does not stand')
+  const flowLocation = {schema: 'central.path-ref/v1', ref: 'central:path:/ground:Control/user/flows/mercurius.html', root: '/ground', path: 'Control/user/flows/mercurius.html'}
+  const withFlow = entries({deviceWindows: host(), flow: {location: flowLocation}, placement: {form: 'Flow', book: false}})
+  assert.match(compact(withFlow.find(entry => entry.id === 'central:flow-document')), /data-action="pop-out"(?![^>]*disabled)/, 'the Flow pops out on its document')
   assert.doesNotMatch(compact(entries({day: DAY}).find(entry => entry.id === 'central:day-die')), /pop-out/, 'no host door: no pop-out')
   const out = entries({deviceWindows: host(true), day: DAY}).find(entry => entry.id === 'central:day-die')
   assert.match(compact(out), /data-action="redock"/)
@@ -243,7 +249,6 @@ test('the Devices chain no longer renders the rack\'s text cards', async () => {
 // ── the instruments keep their Live semantic at every size (R2 objection 9) ─────────────────────────────────────────────────
 
 const writes = await import('../src/central/devices/centralDeviceWrites.ts')
-const flowClip = await import('../src/central/devices/FlowClip.tsx')
 const identity = await import('../../../../desktop/cradle/src/nara/identity/current.ts')
 const bridge = {kind: 'bridge', url: 'http://owner.fixture'}
 // A row's control as the markup draws it: one of the kit's controls (a chooser or radio for the die's faces, a toggle for the
@@ -418,40 +423,23 @@ test('binding the conversation resolves the dialogue through the nara_dialogue o
   }
 })
 
-test('the Flow is a clip on the Clip side: its states are a row, read from the owner and the hosted form, never defaulted', () => {
+test('MOVED — the Flow is an instrument, no longer a clip: its states are a row read from the owner and the hosted form, and its next entry is the row it generates through', async () => {
   const flow = central.faces.find(face => face.id === 'flow-document')
-  const states = flow.invariant.states
-  assert.deepEqual(states, ['draft', 'saved', 'edited since save'])
-  const instance = reads => model.centralDevice(flow, reads)
+  assert.deepEqual(flow.invariant, {generates: 'kernel:file_operation'}, 'DLW §18.3: an instrument first on a Flow document\'s chain')
+  const instance = (reads, writers) => model.centralDevice(flow, reads, writers)
   const stateRow = instance({}).rows.find(row => row.key === 'state')
-  assert.deepEqual([stateRow.type, stateRow.values, stateRow.writePath], ['enumerated', states, undefined], 'the declared states, as a reading')
-  assert.deepEqual(instance({}).rows.map(row => row.key), ['document', 'revision', 'state'])
+  assert.deepEqual([stateRow.type, stateRow.values, stateRow.writePath], ['enumerated', ['draft', 'saved', 'edited since save'], undefined], 'the states, as a reading')
+  assert.deepEqual(instance({}).rows.map(row => [row.key, row.writePath]), [['document', undefined], ['revision', undefined], ['state', undefined], ['entry', 'kernel:file_operation']])
   assert.equal(instance({}).values.state, undefined, 'no flow, no state')
   assert.equal(instance({flow: {path: 'Control/user/flows/a.html', revision: REVISION, state: 'saved'}}).values.state, 'saved')
-  assert.equal(instance({flow: {path: 'Control/user/flows/a.html', revision: null, state: null}}).values.state, undefined, 'an unknown state is not a value')
-  assert.equal(instance({}).submit, undefined, 'a clip has no generating write')
-  // the state, from the owner\'s revision and the form\'s own dirty disclosure
-  assert.equal(flowClip.flowStateOf(states, null, null), null, 'the owner has not answered: nothing is saved')
-  assert.equal(flowClip.flowStateOf(states, REVISION, null), 'saved')
-  assert.equal(flowClip.flowStateOf(states, REVISION, 'false'), 'saved')
-  assert.equal(flowClip.flowStateOf(states, REVISION, 'true'), 'edited since save')
-  assert.equal(flowClip.flowStateOf(['draft'], REVISION, 'true'), null, 'a state the family did not declare is never invented')
-  assert.equal(flowClip.flowStateOf(undefined, REVISION, 'true'), null)
-})
-
-test('the Flow clip draws its material, revision and state over the hosted form, and keeps the pop-out the device had', () => {
-  const location = {schema: 'central.path-ref/v1', ref: 'central:path:/ground:Control/user/flows/mercurius.html', root: '/ground', path: 'Control/user/flows/mercurius.html'}
-  const calls = []
-  const host = (popped = false) => ({popOut: identity => calls.push(['pop', identity.face]), redock: identity => calls.push(['redock', identity.face]), poppedOut: () => popped})
-  const markup = html(createElement(flowClip.CentralFlowClip, {transport, location, deviceWindows: host()}))
-  assert.match(markup, /data-central-clip="flow"/)
-  for (const key of ['document', 'revision', 'state']) assert.match(markup, new RegExp(`data-param="${key}"|sdk-row__name">${key[0].toUpperCase()}${key.slice(1)}<`), `the ${key} row`)
-  assert.match(markup, /data-flow-clip-rows/)
-  assert.match(markup, /data-flow-clip-body/)
-  assert.match(markup, /Reading the flow instance|Flow document unavailable/, 'the hosted FlowFace is the body, under the same owner')
-  assert.match(markup, /data-action="pop-out"(?![^>]*disabled)/, 'the flow is in the aperture, so its pop-out stands')
-  assert.match(html(createElement(flowClip.CentralFlowClip, {transport, location, deviceWindows: host(true)})), /data-action="redock"[\s\S]*Popped out/)
-  assert.doesNotMatch(html(createElement(flowClip.CentralFlowClip, {transport, location})), /pop-out/, 'no host door: no pop-out')
+  assert.equal(instance({flow: {path: 'Control/user/flows/a.html', revision: REVISION, state: 'draft?'}}).values.state, undefined, 'a state the family does not name is never drawn')
+  assert.equal(typeof instance({}).submit, 'function', 'the generating row has its door')
+  // The door refuses in words where no Flow is reached, and while the page holds a draft — nothing is written behind the hosted form.
+  const none = writes.centralWriters({transport, day: null, conversation: null, page: null})
+  await assert.rejects(() => instance({}, none).submit([{key: 'entry', value: 'a line'}]), /No Flow document is reached/)
+  const location = {schema: 'central.path-ref/v1', ref: 'central:path:/ground:Control/user/flows/a.html', root: '/ground', path: 'Control/user/flows/a.html'}
+  const dirty = writes.centralWriters({transport, day: null, conversation: null, page: {location, dirty: true}})
+  await assert.rejects(() => instance({}, dirty).submit([{key: 'entry', value: 'a line'}]), /holds edits its owner does not/)
 })
 
 test('MOVED — the die\'s face list no longer stands over its page: whole and compact draw no die picture, and full is the hosted form alone', () => {

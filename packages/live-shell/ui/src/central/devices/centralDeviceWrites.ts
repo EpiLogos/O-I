@@ -11,11 +11,19 @@
 //   - the Day's "Open today" ensures the current Day the way the ground panel and the cradle's Today do: Central's ground read
 //     again, then the `central` op `ensure-day` with the civil-time policy's revision (desktop/cradle/src/CradleFrame.tsx:734-740
 //     `openToday`; desktop/cradle/src/central/CentralGround.tsx:49,75 `canEnsure` and its press). It is the person's press: nothing
-//     calls it on a timer, and it neither closes an old Day nor initialises the new Day's document.
+//     calls it on a timer, and it neither closes an old Day nor initialises the new Day's document;
+//   - the Flow takes the person's next entry the way the Flow's own surface writes one: the owner's file read again, the entry
+//     appended through the template's own contract (flow/instance.ts appendEntry, relations and the composing basis on the current
+//     form), and the Flow's revision-checked file write (flow/instances.ts writeFlowInstance — central.files.write, op
+//     file_operation), whose conflict keeps the words and says so (desktop/cradle/src/flow/FlowSurface.tsx:153-165 `save`).
 // A refusal is the owner's own words, thrown as they came; the device keeps the change and says so. Pure of React.
 import {central, readGround} from '../../../../../../desktop/cradle/src/central/client'
 import {DayFormSession, isObject, unmappedChanges, validateDocumentBasis} from '../../../../../../desktop/cradle/src/central/dayForm'
 import {receiving} from '../../../../../../desktop/cradle/src/receiving/client'
+import {appendEntry} from '../../../../../../desktop/cradle/src/flow/instance'
+import {readFlowInstance, writeFlowInstance} from '../../../../../../desktop/cradle/src/flow/instances'
+import {isCurrentFormat, type PluralParticipant, type Relation} from '../../../../../../desktop/cradle/src/flow/plural'
+import type {CentralLocation} from '../../../../../../desktop/cradle/src/kernel/types'
 import {acquireNativeDialogue, type NativeDialogue} from '../../../../../../desktop/cradle/src/nara/nativeDialogue'
 import {currentIdentity} from '../../../../../../desktop/cradle/src/nara/identity/current'
 import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
@@ -78,6 +86,27 @@ export async function openToday(transport: KernelTransportStatus): Promise<{ensu
   return {ensured: true}
 }
 
+/** Append the person's entry to a Flow: read the file again (the revision the write is checked against), append the entry as the
+ * person through the template's contract — connected to an earlier entry by its relation on the current form — and write it with
+ * the owner's revision check. Resolves with the owner's new revision; a conflict is refused in words (the entry is not lost: the
+ * hand still holds it). The person is the Flow's person participant who has not left (FlowSurface.tsx writerOf); a Flow with none
+ * is refused by the template's own words. */
+export async function appendFlowEntry(transport: KernelTransportStatus, location: CentralLocation, entry: {readonly text: string; readonly speaker?: string;
+  readonly relation: {readonly type: 'reply' | 'branch' | 'correct'; readonly entryId: string} | null}): Promise<{revision: string | null}> {
+  const text = entry.text.trim()
+  if (!text) throw new Error('The entry has no words.')
+  const instance = await readFlowInstance(transport, location)
+  const plural = isCurrentFormat(instance.doc)
+  const people = ((instance.doc.meta.participants ?? []) as PluralParticipant[]).filter(person => person.kind === 'person' && !person.left)
+  const writer = people.find(person => person.initial === entry.speaker) ?? people[0]
+  if (entry.relation && !instance.doc.entries.some(candidate => candidate.id === entry.relation!.entryId)) throw new Error('The entry this one connects to is no longer in the Flow.')
+  const relations: Relation[] = plural && entry.relation ? [{type: entry.relation.type, entryId: entry.relation.entryId, revision: instance.doc.meta.revision, anchor: null}] : []
+  const {html} = appendEntry(instance.html, text, plural ? {participant: writer, relations, basisRevision: instance.doc.meta.revision} : undefined)
+  const result = await writeFlowInstance(transport, instance.location, instance.revision, html)
+  if (result.outcome === 'conflict') throw new Error(`The Flow moved while the entry was written (the owner holds ${result.current?.revision ?? 'a newer revision'}): nothing was overwritten. Re-read the Flow and write the entry again.`)
+  return {revision: result.revision ?? null}
+}
+
 /** Bind the conversation: resolve (create or return) the dialogue binding for the current Nara identity and the aperture's
  * expression. The absences are the face's own words (inhabitants/ConversationNaraFace.tsx), so a refusal reads as the face reads. */
 export async function bindConversation(transport: KernelTransportStatus, conversation: ConversationWriteAperture): Promise<NativeDialogue> {
@@ -96,10 +125,28 @@ export function centralWriters(input: {
   readonly transport: KernelTransportStatus
   readonly day: DayDieWriteAperture | null
   readonly conversation: ConversationWriteAperture | null
-  readonly afterWrite?: {readonly day?: () => void; readonly conversation?: () => void}
+  readonly afterWrite?: {readonly day?: () => void; readonly conversation?: () => void; readonly page?: () => void}
+  /** The document the hand reached: its face's own Save, and a Flow's location (documentDoor.ts DocumentInPane). */
+  readonly page?: {readonly save?: () => void; readonly location?: CentralLocation | null; readonly dirty?: boolean | null} | null
 }): CentralWriters {
-  const {transport, day, conversation, afterWrite} = input
+  const {transport, day, conversation, afterWrite, page} = input
   return {
+    'document': {
+      save: async value => {
+        if (value !== true) throw new Error('Save is a press: it sends the page to its owner.')
+        if (!page) throw new Error('No document is reached: open one from the browser, or press in its pane.')
+        if (!page.save) throw new Error('The page\'s face has not answered its first read yet, or is waiting for its owner.')
+        page.save()
+      },
+    },
+    'flow-document': {
+      entry: async value => {
+        if (!page?.location) throw new Error('No Flow document is reached: open one from the browser, or press in its pane.')
+        if (page.dirty) throw new Error('The page holds edits its owner does not: save or re-read them first, so the entry joins the revision you read.')
+        await appendFlowEntry(transport, page.location, {text: String(value ?? ''), relation: null})
+        afterWrite?.page?.()
+      },
+    },
     'day-die': {
       face: async value => {
         if (!day) throw new Error('No Day is selected. Select one in the browser\'s ground, and the die turns on its document.')

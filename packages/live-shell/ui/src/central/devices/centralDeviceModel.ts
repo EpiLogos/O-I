@@ -1,7 +1,9 @@
 // The Central family's devices as devices of the runtime (FOUNDATION F5; manual §10.4): the Day die, the Nara conversation,
-// and the Context-world, Agent identity, Ground hygiene and Impact readings, each a `DeviceInstance` the three sizes draw;
-// and the Flow, which the family declares a `clip` (worldShellFamilies.ts) and so stands on the Clip side with its states as
-// a row (`centralDevice` builds its instance too, so one gate reads every declared face). Pure: no React, no transport. The
+// and the Context-world, Agent identity, Ground hygiene and Impact readings, each a `DeviceInstance` the three sizes draw; and the
+// page family (lane BC2; DLW §17.7, §18.2–§18.8): the Workspace, the Document, the Flow (an instrument first on a Flow document's
+// chain, §18.3 — no longer a clip), the Beings and Things pages and the document effects Text, Highlight and Notes, whose designs
+// draw on central/devices/pageBindings.ts and whose rows here are what the generic plate draws until a design does, and what the
+// declaration gate reads. Pure: no React, no transport. The
 // family declares the faces (inhabitants/worldShellFamilies.ts, centralFamilyManifest.ts); this module reads them from the
 // door, adds nothing the family did not declare, and turns the owners' readings (passed in) into the instance's values.
 //
@@ -9,7 +11,9 @@
 // show the same live settings"). A `device-instrument` declares the owner op that generates (`invariant.generates`), so its
 // instance carries a write row on that path and a `submit`, and the compact, whole and full sizes all draw it:
 //   - the Day die: the open face, written through `kernel:receiving` (mutate-field on the Day document; centralDeviceWrites.ts);
-//   - the Nara conversation: the binding, resolved through `kernel:nara_dialogue` (centralDeviceWrites.ts).
+//   - the Nara conversation: the binding, resolved through `kernel:nara_dialogue` (centralDeviceWrites.ts);
+//   - the Document: the reached page's Save, the hosted face's own (`kernel:file_operation` for a Flow);
+//   - the Flow: the person's next entry, appended through the Flow's own write (`kernel:file_operation`; centralDeviceWrites.ts).
 // Every other row is a reading. A light is the owner's reading and stays dark when the owner has not answered. A row whose
 // writer has no aperture refuses by name, and the draft is kept (the runtime's own law).
 import type {DeviceDeclaration, SdkParamRow} from '../../inhabitants/sdk/define'
@@ -23,10 +27,28 @@ import {DIE_POSITIONS, dieFaceLabel} from './dayDie'
 
 export const CENTRAL_FAMILY = 'central'
 
-/** The device faces this module knows, in the order the chain draws them: the Day and the conversation (the work), then the
- * readings. A device face the family declares that is not named here is still drawn, generically, after these. A face the
- * family declares a `clip` (the Flow) is not a device: it stands on the Clip side (`clipFaces`). */
-export const CENTRAL_DEVICE_FACES = ['day-die', 'nara-conversation', 'context-world', 'agent-identity', 'ground-hygiene', 'impact'] as const
+/** The device faces this module knows, in the order the chain draws them (DLW §16.2, Central: "A workspace. The Day is the Main
+ * track. The document effects, then the agent that answers. On the Main track: the Day"): the Day (the Main track's device), the
+ * Workspace (the workspace track's instrument), the reached document's chain — its form device first (§18.3 Flow, §18.4 Beings,
+ * §18.5 Things: "first on a … document's chain, before the document effects"), the Document, then Text, Highlight and Notes, each
+ * after the one before (§18.6–§18.8) — then the agent that answers (the conversation), then the ground's readings. A device face
+ * the family declares that is not named here is still drawn, generically, after these. A face the family declares a `clip` is not
+ * a device: it stands on the Clip side (`clipFaces`). */
+export const CENTRAL_DEVICE_FACES = ['day-die', 'workspace', 'flow-document', 'beings', 'things', 'document', 'text', 'highlight', 'notes',
+  'nara-conversation', 'context-world', 'agent-identity', 'ground-hygiene', 'impact'] as const
+
+/** The faces a reached document's chain holds (they stand only while a document is reached; central/devices/CentralDevices.tsx
+ * placedFaces), by the page's form: its form device and the effects that read its material. */
+export const PAGE_CHAIN_FACES: Readonly<Record<'Day' | 'Flow' | 'Being' | 'Thing', readonly string[]>> = {
+  // A Day's form device is the die, the Main track's device; its fields are no entries, so the effects that read entries do not
+  // stand on it (the Document reads its marks, notes and packet).
+  Day: ['document'],
+  Flow: ['flow-document', 'document', 'text', 'highlight', 'notes'],
+  Being: ['beings', 'document'],
+  Thing: ['things', 'document'],
+}
+/** Every face that stands only on a reached document's chain. */
+export const PAGE_FACES: ReadonlySet<string> = new Set(Object.values(PAGE_CHAIN_FACES).flat())
 
 export const centralDeviceId = (faceId: string): string => `${CENTRAL_FAMILY}:${faceId}`
 
@@ -40,6 +62,13 @@ const FACES: Readonly<Record<string, {title: string; icon: IconName}>> = {
   'agent-identity': {title: 'Agent identity', icon: 'contact'},
   'ground-hygiene': {title: 'Ground hygiene', icon: 'placed'},
   'impact': {title: 'Impact', icon: 'map'},
+  'document': {title: 'Document', icon: 'form'},
+  'workspace': {title: 'Workspace', icon: 'session'},
+  'beings': {title: 'Beings', icon: 'contact'},
+  'things': {title: 'Things', icon: 'hex'},
+  'text': {title: 'Text', icon: 'select'},
+  'highlight': {title: 'Highlight', icon: 'draw'},
+  'notes': {title: 'Notes', icon: 'cap'},
 }
 
 const humanise = (key: string): string => key.split('-').map(part => (part ? part[0]!.toUpperCase() + part.slice(1) : '')).join(' ')
@@ -73,6 +102,11 @@ export interface CentralReads {
   readonly workcell?: {readonly answer: Answer; readonly ref: string | null; readonly health: string | null; readonly ok: boolean | null; readonly fault: string | null}
   /** The subject the Impact reads: the browser's selected folder, note or day. */
   readonly impact?: {readonly kind: string; readonly path: string} | null
+  /** The document the hand reached (central/documents/documentDoor.ts): its form, title, save state and what its page holds. */
+  readonly page?: {readonly form: 'Day' | 'Flow'; readonly title: string; readonly state: string; readonly entries: number | null; readonly highlights: number | null;
+    readonly notes: number | null} | null
+  /** The workspace book's current workspace: its name and open mode. */
+  readonly workspace?: {readonly name: string; readonly mode: string} | null
 }
 
 /** One owner write: the value the row carries in, the owner's own refusal thrown out (centralDeviceWrites.ts). */
@@ -143,18 +177,48 @@ function naraRows(face: InhabitantFaceDeclaration, reads: CentralReads['nara']):
   ]
 }
 
-/** The Flow clip's rows: the material and its revision, and the clip's states as a row (lock §5.3: a clip binds material at a
- * revision with a state). The row names the states the family declared and reads the one the hosted form discloses. */
+/** The Flow's rows (DLW §18.3, an instrument first on a Flow document's chain): the document and its revision, its save state, and
+ * the next entry, which it generates through the Flow's own write (`invariant.generates`). */
+export const FLOW_STATES = ['draft', 'saved', 'edited since save'] as const
 function flowRows(face: InhabitantFaceDeclaration): SdkParamRow[] {
-  const states = face.invariant?.states
   return [
-    reading(face.id, 'document', 'Document', 'Flow', 'string', {compact: true, disclosure: 'No flow document is selected.'}),
+    reading(face.id, 'document', 'Document', 'Flow', 'string', {compact: true, disclosure: 'No Flow document is reached: open one from the browser, or press in its pane.'}),
     reading(face.id, 'revision', 'Revision', 'Flow', 'string', {compact: true, disclosure: 'The owner\'s CAS revision (central.files.write).'}),
     reading(face.id, 'state', 'State', 'Flow', 'enumerated', {
-      compact: true, ...(states ? {values: [...states]} : {}),
+      compact: true, values: [...FLOW_STATES],
       disclosure: 'Saved: the owner holds this revision and the hosted form holds nothing it has not. Edited since save: the form holds edits the owner has not. Draft: a Flow not yet written has no owner revision, and no route here makes one.',
     }),
+    writing(face, 'entry', 'Next entry', 'Flow', 'string', {compact: true, disclosure: 'Your next entry, appended as the person through the Flow\'s own revision-checked write.'}),
   ]
+}
+
+/** The page family's rows: what the generic plate draws until the design does. */
+function pageRows(face: InhabitantFaceDeclaration): SdkParamRow[] {
+  const none = 'No document is reached: open one from the browser, or press in its pane.'
+  switch (face.id) {
+    case 'document': return [
+      reading(face.id, 'template', 'Template', 'Page', 'string', {compact: true, disclosure: none}),
+      reading(face.id, 'title', 'Title', 'Page', 'string', {compact: true, disclosure: none}),
+      reading(face.id, 'state', 'State', 'Save', 'string', {compact: true, disclosure: 'Saved, edited since save, or the save router\'s named outcome.'}),
+      writing(face, 'save', 'Save', 'Save', 'boolean', {compact: true, disclosure: 'The hosted face\'s own Save: the page\'s revision-checked write.'}),
+    ]
+    case 'workspace': return [
+      reading(face.id, 'name', 'Name', 'Identity', 'string', {compact: true, disclosure: 'No workspace book is mounted here.'}),
+      reading(face.id, 'mode', 'Mode', 'Identity', 'string', {compact: true, disclosure: 'The open mode of the workspace book.'}),
+    ]
+    case 'beings':
+    case 'things': return [reading(face.id, 'page', 'Page', 'Page', 'string', {compact: true, disclosure: 'No Beings or Things page is reached: the shell opens Days and Flows only.'})]
+    case 'text': return [reading(face.id, 'document', 'Document', 'Text', 'string', {compact: true, disclosure: none})]
+    case 'highlight': return [
+      reading(face.id, 'document', 'Document', 'Highlight', 'string', {compact: true, disclosure: none}),
+      reading(face.id, 'highlights', 'Highlights', 'Highlight', 'number', {compact: true, disclosure: 'The passages the page marks.'}),
+    ]
+    case 'notes': return [
+      reading(face.id, 'document', 'Document', 'Notes', 'string', {compact: true, disclosure: none}),
+      reading(face.id, 'notes', 'Notes', 'Notes', 'number', {compact: true, disclosure: 'The notes the page keeps.'}),
+    ]
+    default: return []
+  }
 }
 
 function rowsFor(face: InhabitantFaceDeclaration, reads: CentralReads): SdkParamRow[] {
@@ -179,7 +243,7 @@ function rowsFor(face: InhabitantFaceDeclaration, reads: CentralReads): SdkParam
       reading(faceId, 'subject', 'Subject', 'Neighbourhood', 'string', {compact: true, disclosure: 'Select a folder or note in the browser.'}),
       reading(faceId, 'neighbourhood', 'Neighbourhood', 'Neighbourhood', 'string', {compact: true, disclosure: 'Read when the Impact opens full: the graph, files and NOW legs each name their owner op.'}),
     ]
-    default: return []
+    default: return pageRows(face)
   }
 }
 
@@ -199,7 +263,7 @@ function valuesFor(faceId: string, reads: CentralReads): {values: Record<string,
       if (reads.flow) {
         values.document = reads.flow.path
         if (reads.flow.revision) values.revision = casShort(reads.flow.revision)
-        if (reads.flow.state) values.state = reads.flow.state
+        if (reads.flow.state && (FLOW_STATES as readonly string[]).includes(reads.flow.state)) values.state = reads.flow.state
       }
       return {values}
     }
@@ -231,6 +295,28 @@ function valuesFor(faceId: string, reads: CentralReads): {values: Record<string,
     }
     case 'impact': {
       if (reads.impact) values.subject = `${reads.impact.kind} · ${reads.impact.path}`
+      return {values}
+    }
+    case 'document': {
+      const page = reads.page
+      if (!page) return {values}
+      values.template = page.form
+      values.title = page.title
+      values.state = page.state
+      return {values}
+    }
+    case 'workspace': {
+      if (reads.workspace) { values.name = reads.workspace.name; values.mode = reads.workspace.mode }
+      return {values}
+    }
+    case 'text':
+    case 'highlight':
+    case 'notes': {
+      const page = reads.page
+      if (!page) return {values}
+      values.document = page.title
+      if (faceId === 'highlight' && page.highlights !== null) values.highlights = page.highlights
+      if (faceId === 'notes' && page.notes !== null) values.notes = page.notes
       return {values}
     }
     default: return {values}
@@ -289,7 +375,14 @@ export interface CentralPicture {
 
 export function centralPicture(faceId: string, reads: CentralReads): CentralPicture {
   switch (faceId) {
-    case 'flow-document': return {kind: reads.flow ? 'doc' : 'ghost', caption: reads.flow ? reads.flow.path : 'no flow selected'}
+    case 'flow-document': return {kind: reads.flow ? 'doc' : 'ghost', caption: reads.flow ? reads.flow.path : 'no flow reached'}
+    case 'document': return {kind: reads.page ? 'doc' : 'ghost', caption: reads.page ? reads.page.title || reads.page.form : 'no document reached'}
+    case 'workspace': return {kind: 'world', caption: reads.workspace?.name ?? 'no workspace book'}
+    case 'beings':
+    case 'things': return {kind: 'ghost', caption: 'no page reached'}
+    case 'text':
+    case 'highlight':
+    case 'notes': return {kind: reads.page ? 'doc' : 'ghost', caption: reads.page ? reads.page.title || reads.page.form : 'no document reached'}
     case 'nara-conversation': {
       const state = reads.nara?.state ?? 'no-expression'
       return {kind: state === 'bound' ? 'agent' : 'ghost', caption: naraStandingLabel(state)}

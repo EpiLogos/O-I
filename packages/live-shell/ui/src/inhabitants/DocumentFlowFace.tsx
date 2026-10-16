@@ -188,9 +188,12 @@ export function FlowFace({transport, location, presentation = 'device'}: Documen
   const inPane = presentation === 'pane'
   const key = useRef(`flow:${Math.random().toString(36).slice(2)}`).current
   const paneId = useContext(DocumentPaneContext) ?? undefined
+  // The door carries the Flow's own location, draft fact and last save outcome, so the page family's devices read the reached
+  // Flow's file and its save standing from the face that holds it (central/devices/pageDevices.tsx), never a second copy.
   const standing: DocumentInPane = {key, paneId, form: 'Flow', title: documentLabel, revision: revision || undefined,
     state: face && !baselined && !save ? 'form not answered yet' : documentStateWords({pending, dirty, save}), save: face && !pending ? () => void saveToOwner() : undefined,
-    reread: pending ? undefined : () => void load(), rereadLabel: 'Re-read'}
+    reread: pending ? undefined : () => void load(), rereadLabel: 'Re-read', location: instance?.location ?? location, dirty,
+    ...(save ? {outcome: save.outcome} : {})}
   // The aperture follows the document the hand reached (the first one standing until then); a change of standing reaches it.
   useEffect(() => { if (inPane) publishDocument(standing, !reachedDocument()) })
   useEffect(() => () => withdrawDocument(key), [key])

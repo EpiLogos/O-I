@@ -113,8 +113,9 @@ test('the L9 extension composes additively: the base manifest stays verbatim, th
   assert.equal(schema.faceKind(face), 'instrument')
   assert.equal(face.admission, 'admitted')
   assert.ok(face.note.length > 80)
-  // The base's six faces keep their waiting standing untouched.
+  // The base's faces keep their standing untouched: the sky admitted on its transit read (lane BL), the other five waiting.
   for (const kept of composed.faces.filter(face => face.id !== 'ql-instrument')) {
+    if (kept.id === 'sky') { assert.notEqual(kept.admission, 'waiting', 'sky stays admitted'); continue }
     assert.equal(kept.admission, 'waiting', `${kept.id} stays waiting`)
   }
   // The composed manifest validates through the generalised validators.
