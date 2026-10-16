@@ -1,4 +1,4 @@
-// Calendar (manual §23.11): what is due around your work, from a third party's provider. A device born on the rail, marked as from
+// Calendar (manual §23.8): what is due around your work, from a third party's provider. A device born on the rail, marked as from
 // outside; Live's nearest is the Arrangement's time ruler with its clips laid along it. The display is the span the provider covers:
 // the day's hours across (or the week's days), each event a bar from its start to its end, an event tied to this work in amber, the
 // present a line. It shows only what its provider supplies.

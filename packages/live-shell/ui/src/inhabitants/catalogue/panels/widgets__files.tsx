@@ -1,4 +1,4 @@
-// Files (manual §23.3): the files an agent read and the files it changed, as a tree, with the lines added and removed. A device born on
+// Files (manual §23.2): the files an agent read and the files it changed, as a tree, with the lines added and removed. A device born on
 // the rail; Live's nearest is the browser's file list, folders and files in one column with a mark at the right. The display is the
 // tree as the owners state it: each folder once, its files under it; a changed file marked M with its lines added (green) and removed
 // (red), a file the agent read marked with an arrow, a place the agent may not reach struck through in red with its reason.

@@ -1,4 +1,4 @@
-// Filter (manual §21.6): the effect after the torus that cuts or lifts a range of its frequencies. Live's nearest: Auto Filter — a well
+// Filter (manual §21.5): the effect after the torus that cuts or lifts a range of its frequencies. Live's nearest: Auto Filter — a well
 // that draws the filter's response with one handle at the cutoff, the filter types under it, Frequency and Resonance beside it. The
 // display law is the filter's own response: a two-pole filter (the RBJ biquad, at 48 kHz) of the chosen type at the cutoff, its Q
 // rising with Resonance so that a low- or high-pass rings to −3 dB at 0 % and +21 dB at 100 %; Drive lifts the signal before the

@@ -1,4 +1,4 @@
-// Sky modulation (manual §21.5, and §16.2: "The sky can move a parameter in any mode"): a modulator that hands parameters of the
+// Sky modulation (manual §22.2, and §16.2: "The sky can move a parameter in any mode"): a modulator that hands parameters of the
 // devices on its chain to the planets overhead. It sits on any track's chain; on a Live part its targets are the torus's and its
 // effects'. Live's nearest: the LFO and Shaper modulators, which map any parameter on the chain and draw the depth on it. The
 // display: the ecliptic ring, each planet at its longitude, and a line from each assigned planet to the parameter it moves, the
@@ -215,7 +215,7 @@ export const design: DesignedDevice = {
     // fixtures/kernel/sky-snapshot-world-2026-09-28-v2.json (Moshier, shared geocentric), as the Sky device carries it.
     bodies: bodiesJson({Sun: [185.3841, false], Moon: [28.4415, false], Mercury: [207.3048, false], Venus: [218.0566, false], Mars: [120.2251, false],
       Jupiter: [139.1394, false], Saturn: [11.7737, true], Uranus: [65.5651, true], Neptune: [2.9311, true], Pluto: [303.1411, true]}),
-    // A Live part's chain: the torus's announced level and scale, and the four effects after it (manual §21.6).
+    // A Live part's chain: the torus's announced level and scale, and the four effects after it (manual §21.5).
     targets: JSON.stringify([
       {id: 'quaternal-logic:torus/level', device: 'Torus', label: 'Level', min: -60, max: 12, unit: 'dB', base: -6},
       {id: 'quaternal-logic:torus/scale', device: 'Torus', label: 'Scale', min: 40, max: 400, unit: 'u/m', base: 100},
@@ -244,7 +244,7 @@ export const design: DesignedDevice = {
 
   compact: p => {
     const v = p.v, routes = routesOf(v) ?? [], targets = targetsOf(v) ?? []
-    // The four macros are the first four assignments' amounts (manual §21.5 Compact).
+    // The four macros are the first four assignments' amounts (manual §22.2 Compact).
     const amount = (i: number) => { const rt = routes[i], t = targets.find(x => x.id === rt?.target)
       return <Dial key={i} {...(rt ? st(p, `amount:${rt.id}`) : {})} label={rt ? rt.planet : `Amount ${i + 1}`} does={rt ? `How far ${rt.planet} moves ${t?.label ?? 'its target'}. Below zero it reverses.` : 'No assignment here: add one in the pool.'}
         value={rt ? numOf(v, `amount:${rt.id}`) ?? NaN : NaN} def={50} scale={{min: -100, max: 100}} bipolar format={pctSigned} onChange={rt ? x => p.set(`amount:${rt.id}`, Math.round(x)) : undefined} /> }

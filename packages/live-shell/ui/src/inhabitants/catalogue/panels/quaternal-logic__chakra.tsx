@@ -1,4 +1,4 @@
-// Chakra (manual §22.4): the seven centres of the body and what the sky does to each, counted by route. Live's nearest: a rack's
+// Chakra (manual §22.5): the seven centres of the body and what the sky does to each, counted by route. Live's nearest: a rack's
 // chain list, its picture its rows; here the seven centres stand as a column from the Root to the Crown with the Earth under the Root.
 // The display law is the count: a centre's hits are its routes, each counted once — its own planets (the owner's planet-to-centre
 // route), the decan rulers that reach it, the Sun (which reaches all seven), and the Earth (which grounds the Root). Each hit stands
