@@ -26,8 +26,6 @@ export interface GenericSource {
   readonly picture?: (size: 'compact' | 'whole' | 'full') => ReactNode
   /** The place's own wrap for a control (Live maps a macro to a key or a MIDI control through it). */
   readonly wrapRow?: (row: SdkParamRow, control: ReactNode) => ReactNode
-  /** Marks the place gives the head, before ⤢. */
-  readonly marks?: ReactNode
   /** The plate the pool shows (its head tinted, DEVICE-UI §4.3). */
   readonly selected?: boolean
   /** The place's own words for ⤢ and for the press on the plate. */
@@ -99,8 +97,11 @@ export function genericDevice(src: GenericSource): DesignedDevice {
   }
   const readings = (p: ViewProps, count: number) => [...compactCells(rows, src.enabledKey).map(cell => cell.row), ...rows.filter(row => !row.writePath)]
     .filter(row => p.v[row.key] !== undefined).slice(0, count).map(row => formatValue(row, p.v[row.key]).slice(0, 14))
-  const head = (p: ViewProps) => ({title: src.title, light: light(p), onLight: onLight(p), heldBy: holders(p), marks: src.marks, onRail: hosted(p).nav.rail,
+  // The place's marks and the rail mark come through the navigation, as a design's head receives them (deviceHost.tsx withPlaceMarks).
+  const head = (p: ViewProps) => ({title: src.title, light: light(p), onLight: onLight(p), heldBy: holders(p), marks: hosted(p).nav.marks, onRail: hosted(p).nav.rail,
     onFull: hosted(p).nav.full, fullLabel: src.fullLabel})
+  // Standing in for a design's view that did not draw, the plate says why where its head would say what a press does.
+  const hint = (p: ViewProps, does: string | undefined) => hosted(p).fault ?? does
   const params = (cells: readonly Cell[], p: ViewProps, place: Place) => cells.map(cell => <Param key={cell.row.key} cell={cell} p={hosted(p)} place={place} wrapRow={src.wrapRow} />)
 
   return {
@@ -117,7 +118,7 @@ export function genericDevice(src: GenericSource): DesignedDevice {
       const cells = compactCells(rows, src.enabledKey)
       const plan = planCompact(cells)
       const macros = cells.length > 0 && cells.every(cell => (cell.row.macro?.maps.length ?? 0) > 0)
-      return <Panel view="compact" {...head(p)} onFold={p.nav.fold} onSelect={p.nav.select} selected={src.selected} hint={p.nav.select ? src.hint ?? 'Show every setting in the pool.' : undefined}>
+      return <Panel view="compact" {...head(p)} onFold={p.nav.fold} onSelect={p.nav.select} selected={src.selected} hint={hint(p, p.nav.select ? src.hint ?? 'Show every setting in the pool.' : undefined)}>
         {src.picture && <Section width={MEASURE.compactDisplay[0] + 12}>
           <Display raw w={MEASURE.compactDisplay[0]} h={MEASURE.compactDisplay[1]} label={src.title} does={`${src.title}: its live picture. Press the plate to see every setting in the pool.`}>
             <div className="dv-picture">{src.picture('compact')}</div>
@@ -131,7 +132,7 @@ export function genericDevice(src: GenericSource): DesignedDevice {
     whole: p => {
       const pages = planWhole(rows, src.title, {picture: !!src.picture, values: row => formatValue(row, p.v[row.key])})
       const page = pages.find(candidate => candidate.id === p.page) ?? pages[0]!
-      return <Panel view="whole" {...head(p)} pages={pages.length > 1 ? pages.map(({id, label}) => ({id, label})) : undefined} page={page.id} onPage={p.setPage}>
+      return <Panel view="whole" {...head(p)} hint={hint(p, undefined)} pages={pages.length > 1 ? pages.map(({id, label}) => ({id, label})) : undefined} page={page.id} onPage={p.setPage}>
         {page.bands.map((band, index) => <Band key={index}>
           {band.picture && src.picture && <Section width={MEASURE.wholeDisplay[0] + 12}>
             <Display raw w={MEASURE.wholeDisplay[0]} h={MEASURE.wholeDisplay[1]} label={src.title} does={`${src.title}: its live picture.`}>
@@ -146,7 +147,7 @@ export function genericDevice(src: GenericSource): DesignedDevice {
       </Panel>
     },
 
-    full: () => <div className="dv-full" data-i={`${src.title}|The device at pane size. Its controls stay in Device view.`}>
+    full: p => <div className="dv-full" data-i={`${src.title}|${hint(p, 'The device at pane size. Its controls stay in Device view.')}`}>
       {src.picture ? src.picture('full') : <p className="dv-full-none">{src.title} draws no material of its own. Its settings are in Device view.</p>}
     </div>,
 

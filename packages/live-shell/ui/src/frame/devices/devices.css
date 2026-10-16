@@ -37,3 +37,6 @@
 .dv-tile-controls .dp-cell { align-items: stretch; align-self: stretch }
 .dv-tile-controls .dp-cell--readout { align-items: flex-start }
 .device-widget-away { margin: 0; padding: 8px; font-size: 10px; line-height: 1.4; color: var(--text-faint) }
+
+/* A view that did not draw, where no generic plate stands in for it: its reason, in the place (deviceHost.tsx). */
+.device-fault { margin: 0; padding: 8px; max-width: 220px; font-size: 10px; line-height: 1.4; color: var(--text-faint) }

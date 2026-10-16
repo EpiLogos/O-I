@@ -277,3 +277,98 @@ test('the binding of a runtime device: its rows are its keys, a row with no writ
   assert.equal(designed.lightOfBinding(binding), 'lit')
   assert.equal(designed.lightOfBinding({enabledKey: 'on', values: {}}), 'unknown', 'no reading: hollow')
 })
+
+// ── lane R2: the seams the first binding lanes found ───────────────────────────────────────────────────────────────────────
+// SCRIPTED (static render and the host's own functions). A static render runs no error boundary, so the boundary's catch is shown
+// here on the class itself; the headless walk (tests/device-runtime-seams.browser.mjs) shows it in a browser.
+
+test('a view that throws is caught by its place\'s boundary, which stands the generic plate in with the reason — never a blank place', () => {
+  const faults = []
+  const boundary = new host.ViewBoundary({id: 'r:probe', onFault: cause => faults.push(cause), fallback: cause => createElement('i', {'data-i': host.faultWords('full', cause, true)}, cause), children: null})
+  boundary.state = host.ViewBoundary.getDerivedStateFromError(new Error('__CRADLE_DOCUMENTS__ is not defined.'))
+  assert.equal(html(boundary.render()), '<i data-i="Its own full view did not draw: __CRADLE_DOCUMENTS__ is not defined. The generic plate stands in.">__CRADLE_DOCUMENTS__ is not defined</i>')
+  boundary.componentDidCatch(new Error('boom'))
+  assert.deepEqual(faults, ['boom'], 'the place learns the reason, for the status bar')
+  // The generic plate standing in says why where its head would say what a press does, and in its full view.
+  const plain = genericDevice({id: 'r:probe', title: 'Probe', rows: probe.rows, enabledKey: 'on'})
+  const props = {v: {}, set() {}, nav: {select() {}}, page: 'p1', setPage() {}, fault: 'Its own compact view did not draw: x. The generic plate stands in.'}
+  assert.match(html(plain.compact(props)), /<header class="dp-head" data-i="Probe\|Its own compact view did not draw: x\. The generic plate stands in\.">/)
+  assert.match(html(plain.full({...props, fault: 'Its own full view did not draw: y. The generic plate stands in.'})), /class="dv-full" data-i="Probe\|Its own full view did not draw: y\./)
+})
+
+test('every view is drawn as its own component inside the boundary, never in the host\'s render', async () => {
+  const source = await readFile(new URL('../src/frame/devices/deviceHost.tsx', import.meta.url), 'utf8')
+  assert.doesNotMatch(source, /const draw = \(device: DesignedDevice\) => device\[view\]\(props\)/, 'the host no longer calls a view in its own render')
+  assert.match(source, /<ViewBoundary key=\{at\}[\s\S]*<DrawnView device=\{designed\} view=\{view\} props=\{props\} \/>/, 'own view, inside the boundary, for every view')
+  const throwing = {...design, compact: () => { throw new Error('no reading') }}
+  door.publishDevice('r:probe', {device: probe})
+  designs.registerDesignedDevice(throwing)
+  try {
+    // A static render has no boundaries: the throw reaches the renderer from inside the boundary's subtree (a component), which in
+    // a browser the boundary catches; it is not thrown by HostedDevice's own render any more.
+    assert.throws(() => html(createElement(DeviceView, {device: probe, size: 'compact'})), /no reading/)
+  } finally { designs.unregisterDesignedDevice('r:probe'); door.publishDevice('r:probe', null) }
+})
+
+test('the place\'s marks reach a design\'s kit head as the generic plate gets them: marks and the rail mark on a Panel, ✕ on a Tile', () => {
+  const nav = {marks: createElement('button', {'data-action': 'pop-out'}), rail() {}, close() {}}
+  const panel = createElement(kit.Panel, {title: 'Day', view: 'compact', light: 'lit'}, null)
+  const filled = host.withPlaceMarks(panel, nav)
+  assert.equal(filled.props.marks, nav.marks); assert.equal(filled.props.onRail, nav.rail)
+  assert.match(html(filled), /<span class="dp-head-x"><button data-action="pop-out"><\/button><button type="button" class="dp-full dp-rail"/)
+  const own = createElement(kit.Panel, {title: 'Day', view: 'compact', light: 'lit', marks: 'mine', onRail: () => {}}, null)
+  assert.equal(host.withPlaceMarks(own, nav), own, 'a design that draws its own marks is left as it is')
+  const tile = host.withPlaceMarks(createElement(kit.Tile, {title: 'Day', light: 'lit'}, null), nav)
+  assert.equal(tile.props.onClose, nav.close, 'the rail\'s ✕ reaches a design\'s tile')
+  assert.equal(host.withPlaceMarks('text', nav), 'text')
+  // On a chain: a design's head carries the place's marks; the generic plate's carries the same marks the same way.
+  const headed = {...design, compact: p => createElement(kit.Panel, {title: 'Probe', view: 'compact', light: 'lit', onFull: p.nav.full}, null)}
+  door.publishDevice('r:probe', {device: probe, marks: createElement('button', {'data-action': 'redock'})})
+  try {
+    assert.match(html(createElement(DeviceView, {device: probe, size: 'compact'})), /data-device-design="generic"[\s\S]*<span class="dp-head-x"><button data-action="redock">/, 'the generic plate')
+    designs.registerDesignedDevice(headed)
+    assert.match(html(createElement(DeviceView, {device: probe, size: 'compact'})), /data-device-design="r:probe"[\s\S]*<span class="dp-head-x"><button data-action="redock"><\/button><button type="button" class="dp-full dp-rail"/, 'the design')
+    assert.match(html(createElement(DeviceView, {device: probe, size: 'compact', marks: createElement('button', {'data-action': 'pop-out'})})), /data-action="pop-out"/, 'a place\'s own marks stand over the published ones')
+  } finally { designs.unregisterDesignedDevice('r:probe'); door.publishDevice('r:probe', null) }
+})
+
+test('a device published with its own Full: its material is the Full view over its design\'s, or its act is every ⤢', () => {
+  door.publishDevice('r:probe', {device: probe, full: {draw: () => createElement('b', {id: 'the-page'})}})
+  designs.registerDesignedDevice(design)
+  try {
+    const pane = html(createElement(PlacedDevice, {device: probe, view: 'full'}))
+    assert.match(pane, /data-device-design="r:probe"/); assert.match(pane, /<b id="the-page"><\/b>/); assert.doesNotMatch(pane, /own-full/, 'the design\'s Full stands down')
+    assert.match(html(createElement(DeviceView, {device: probe, size: 'compact'})), /own-compact/, 'the other views stay the design\'s')
+    // The act: every place's ⤢ — the chain's, the pool's, the rail's — is the device's own.
+    const opened = []
+    const acts = []
+    const seeing = {...design, compact: p => (acts.push(p.nav.full), 'c'), whole: p => (acts.push(p.nav.full), 'w'), widget: p => (acts.push(p.nav.full), 't')}
+    designs.registerDesignedDevice(seeing)
+    door.publishDevice('r:probe', {device: probe, full: {open: () => opened.push('thread')}})
+    html(createElement(DeviceView, {device: probe, size: 'compact'}))
+    html(createElement(PlacedDevice, {device: probe, view: 'whole'}))
+    html(createElement(PlacedDevice, {device: probe, view: 'widget'}))
+    for (const act of acts) act()
+    assert.deepEqual(opened, ['thread', 'thread', 'thread'], 'chain, pool and rail open the device\'s own material')
+    const place = []
+    acts.length = 0
+    html(createElement(DeviceView, {device: probe, size: 'compact', actions: [{icon: 'pane', label: 'Open here', onPress: () => place.push('place')}]}))
+    acts[0]()
+    assert.deepEqual(place, ['place'], 'a place\'s own ⤢ act stands over it')
+  } finally { designs.unregisterDesignedDevice('r:probe'); door.publishDevice('r:probe', null) }
+})
+
+test('a key the view holds goes to the binding\'s own hand at once — its drop (a Cancel) too — never drafted, never sent, never a reading', async () => {
+  const held = []
+  const sent = []
+  const binding = {id: 'r:local', values: {}, write: async changes => { sent.push(changes) }, writes: key => key === 'reach', local: {ask: value => held.push(value)}}
+  assert.equal(host.setHosted(binding, 'ask', 2), false)
+  assert.equal(host.setHosted(binding, 'ask', undefined), false)
+  assert.deepEqual(held, [2, undefined], 'the value, then its drop, reach the binding')
+  assert.deepEqual(host.hostState('r:local').drafts, {})
+  assert.equal(await host.flushDrafts(binding, 0), null); assert.deepEqual(sent, [], 'nothing went to the owner')
+  assert.equal(host.hostedStanding(host.hostState('r:local'), {...binding, values: {ask: 2}}, []).ask, undefined, 'the held key is no reading and never waits')
+  assert.equal(host.setHosted(binding, 'reach', 3), true, 'any other key is a draft until the hand lets go')
+  assert.deepEqual(host.hostState('r:local').drafts, {reach: 3})
+  host.resetHost('r:local')
+})
