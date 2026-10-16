@@ -135,6 +135,14 @@ goes where, §16.3–§16.6 the views, Clip view and the tracks, and each mode's
   drawing source for those panels until the Clip view designs land in the catalogue (this lane, next).
 - Search (@) opens in a pane and on the line where you type; it is not a device on Central's chain (BC3 placed it there).
 - Studio (§20.3) keeps the field-wide sections: Particles (was Formation), Material, Motion, Body, Nara.
+- Clip view has designs to host (`426365377`): `catalogue/clips/` — the kit (`clipKit.tsx`), the contract (`clips/design.ts`: a
+  `DesignedClip` per mode with its panel, tools and editor tabs, drawn at the detail size and expanded), and `clip:techne`,
+  `clip:central`, `clip:factory`, `clip:expressions`, `clip:live`. The Clip side hosts these on the mode's owners, as the Device side
+  hosts designed devices; TaskClipDevice, CentralClipDetail, LiveClip and the Expressions clip column are what they replace.
+- The device run's findings (`devices` RETURN): the torus's sound has no filter, dynamics, delay or reverb yet (native-audio.mjs is
+  one gain to the output), so the four effects' designs name the absence; the family manifest's "waits for its owner" notes for the
+  M3 clock (`m3_reception` has landed) and Chakra (`ql.scene/v1` readings exist) are stale; `TrailWidget.tsx:6-7` says the book
+  records no time, and the store now writes `at`.
 
 Then: session 2 of the day took the build over from the rate-limit stop (16 Oct, afternoon). The four lanes running at 04:54
 (W2, BF3, BC3, BT2) had died on the weekly limit with their work uncommitted in the seat. W2 converged by the lead: ai-kit#511
