@@ -40,7 +40,7 @@
 .studio-toggle button[aria-pressed="true"] { background: var(--accent); color: var(--bg-1) }
 .studio-toggle button:disabled { cursor: default; opacity: .55 }
 .studio-summary { margin: 0; max-width: 168px; font: 9.5px/1.35 var(--mono); color: var(--text-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
-/* Selected · Glyph: the sequence's controls in control columns (DEVICE-UI §3), never the glyph editor's own box. */
+/* Selected · Glyph: the sequence's controls in control columns (manual §16.8), never the glyph editor's own box. */
 .studio-sequence { display: flex; flex-direction: row; align-items: flex-start; gap: 10px; min-width: 0 }
 .studio-sequence > .dp-cell--radio, .studio-sequence-col { flex: none; display: flex; flex-direction: column; align-items: stretch; gap: 5px; width: 64px }
 .studio-sequence .dp-cell--radio .dp-label { text-align: left }

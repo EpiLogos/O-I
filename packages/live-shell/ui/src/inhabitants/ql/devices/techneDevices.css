@@ -45,7 +45,7 @@
 .techne-source-note { margin-top: 4px; font: 9.5px var(--font-ui); color: var(--text-faint) }
 
 /* Inside an open instrument a family's devices stand side by side in its section, drawn flat: the device's own frame stands down so the
-   section reads as one group, one hairline between two devices (DEVICE-UI.md §1 "no box sits inside a box"). */
+   section reads as one group, one hairline between two devices (manual §16.8 "no box sits inside a box"). */
 .techne-section-devices { display: flex; gap: 0; align-items: stretch; min-height: 0; height: 100% }
 .inst-section .techne-device .device > .dp { background: transparent; border: 0 }
 .inst-section .techne-device .device > .dp > .dp-head { height: 18px; padding: 0; background: none; border-bottom: 0 }
@@ -63,7 +63,7 @@
    row (plateFit.ts `natural`) is its sections' own and the Compacts beside it get what is truly left (TechneDevices.tsx useRackFit). */
 .techne-devices > .inst-plate .inst-section:last-child { flex: none }
 
-/* An instrument at its Compact size (techneCompacts.tsx; manual §16.1 "a small live picture and up to four macros"; DEVICE-UI.md §2–§3):
+/* An instrument at its Compact size (techneCompacts.tsx; manual §16.1 "a small live picture and up to four macros"; manual §16.3–§3):
    the kit's 22 px head — its light, its mark, its name (pressed, it opens on the focused pane), ⤢ — over one band: the well that draws it,
    and its four macros in two control columns. One fixed width; no box inside it but the well. */
 .techne-compact { flex: none; width: 228px; display: flex; flex-direction: column; min-height: 0; background: var(--bg-2); border: 1px solid var(--line) }

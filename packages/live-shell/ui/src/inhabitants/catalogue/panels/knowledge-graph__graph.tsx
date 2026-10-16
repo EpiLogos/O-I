@@ -413,7 +413,7 @@ function chipsOf(v: V): string[] | undefined {
   return chips
 }
 
-// The light reads the owner alone (DEVICE-UI §4.1): lit or dark when it reports, hollow when it has not.
+// The light reads the owner alone (manual §16.8): lit or dark when it reports, hollow when it has not.
 const light = (p: ViewProps) => (strOf(p.owner ?? p.v, 'light') ?? 'unknown') as LightState
 
 export const design: DesignedDevice = {

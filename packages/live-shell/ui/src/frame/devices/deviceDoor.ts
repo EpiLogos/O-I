@@ -1,7 +1,7 @@
 // The device door (FOUNDATION F5): the places that hold live devices — a track's chain, an instrument's rack — publish
 // each one here by id, with its live picture, and the other places read it by id: the pool under the browser shows the
 // selected device whole, a pane shows a device full, the rail keeps a device's widget. One device, one set of live settings,
-// five views (DEVICE-UI §2). A device can carry its own Full — its material, or the act that opens it — over its design's.
+// five views (manual §16.3). A device can carry its own Full — its material, or the act that opens it — over its design's.
 import {useSyncExternalStore, type ReactNode} from 'react'
 import type {DesignBinding} from './designed'
 import type {DeviceInstance} from './deviceRuntime'
@@ -18,7 +18,7 @@ export interface PublishedDevice {
   binding?: DesignBinding
   /** The marks its place gives the device's head, before ⤢ (a pop-out, a redock): the pool's head carries them as the chain's does. */
   marks?: ReactNode
-  /** The device's own Full, over its design's (DEVICE-UI §2 Full: "The material itself"). `draw`: the material, drawn as the Full
+  /** The device's own Full, over its design's (manual §16.3 Full: "The material itself"). `draw`: the material, drawn as the Full
    * view in the device's pane (the Day's page as its owner stands it). `open`: the act that opens the material where it lives (the
    * Agent's thread), which every ⤢ — the chain's, the pool's, the rail's — does in place of opening the device's pane. */
   full?: OwnFull

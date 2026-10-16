@@ -63,7 +63,7 @@ export function torusDevice(state: LiveTorusState | null): DeviceInstance {
 // ── the Torus design's binding ───────────────────────────────────────────────
 // The catalogue's Torus (inhabitants/catalogue/panels/torus.tsx, `quaternal-logic:torus`) drawn on the owner's readings and writes
 // (frame/devices/designed.ts DesignBinding; the pattern of central/devices/dayBinding.ts). Owners write, faces read: a design key is
-// given a value only where the owner reports one, and a change only where the owner takes one (DEVICE-UI §7, §8.1). The owner is the
+// given a value only where the owner reports one, and a change only where the owner takes one (manual §16.11, §8.1). The owner is the
 // native field in the hosted Expressions frame; what it announces is its standing, its four determinants and its presentation
 // parameters (packages/expressions-boundary/src/protocol.ts readHostedDeterminants, readHostedParameters), and what it takes is the
 // stage channel's instrument edits (desktop/cradle/expressions-app/field-studies-journeys/src/stageCommands.ts InstrumentEdit).
@@ -79,7 +79,7 @@ export const TORUS_DETERMINANT_KEYS: Readonly<Record<string, string>> = {'lens':
 
 const NO_FIELD_PARAMETER = 'the native field announces only its lens, context frame, harmonic basis, M3 transcription, sound, level, cadence and scale, and takes only those through the stage channel (stageCommands.ts InstrumentEdit)'
 
-/** Why each design key the binding leaves absent has no reading (DEVICE-UI §7: "When a reading is missing, say which one"). */
+/** Why each design key the binding leaves absent has no reading (manual §16.11: "When a reading is missing, say which one"). */
 export const TORUS_ABSENT: Readonly<Record<string, string>> = {
   pulseMix: `No pulse mix: ${NO_FIELD_PARAMETER}.`,
   helixBalance: `No helix balance: ${NO_FIELD_PARAMETER}.`,

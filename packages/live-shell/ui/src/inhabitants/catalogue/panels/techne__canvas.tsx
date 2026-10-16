@@ -373,7 +373,7 @@ function World({v}: {v: V}) {
 
 // ---------------------------------------------------------------- readings and the head
 
-// The light reads the owner alone (DEVICE-UI §4.1): lit or dark when it reports, hollow when it has not.
+// The light reads the owner alone (manual §16.8): lit or dark when it reports, hollow when it has not.
 const light = (p: ViewProps) => (strOf(p.owner ?? p.v, 'light') ?? 'unknown') as LightState
 /** What the one selected item is, for the Colour control: a sticky note takes a palette colour, a shape takes a fill. */
 const pickedKind = (v: V): 'sticky' | 'shape' | undefined => {

@@ -313,7 +313,7 @@ function read(v: Values): Reading {
     hits: raw === undefined || (asked && !owned) ? undefined : hits, ghosts: asked && owned ? owned.filter(h => !hits.includes(h)) : []}
 }
 
-// The light reads the owner alone (DEVICE-UI §4.1): lit or dark when it reports, hollow when it has not.
+// The light reads the owner alone (manual §16.8): lit or dark when it reports, hollow when it has not.
 const light = (p: ViewProps) => (strOf(p.owner ?? p.v, 'light') ?? 'unknown') as LightState
 const commit = (p: ViewProps) => (text: string) => {
   const m = DEFINE.exec(text.trim())

@@ -32,7 +32,7 @@
 .live-roll-row[data-in-mode="no"] .live-roll-key { color: var(--text-faint) }
 .live-roll-row[data-in-mode="no"] .live-roll-lane { background: var(--bg-0) }
 
-/* The torus's own Full (live/TorusOnChain.tsx TorusFull; DEVICE-UI §9.2 Full): the ring at the pane's size over the well's ground,
+/* The torus's own Full (live/TorusOnChain.tsx TorusFull; manual §16.14 Full): the ring at the pane's size over the well's ground,
    the keyboard under it at a size the hand can play. Nothing scrolls: the ring takes what the keys leave. */
 .torus-full { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px 12px; background: var(--dp-well); min-height: 0 }
 .torus-full-ring { flex: 1 1 auto; min-height: 0; display: flex }

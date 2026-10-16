@@ -210,7 +210,7 @@ function Rings({v, set, w, h, labels, tile}: {v: V; set?: SetFn; w: number; h: n
 
 // ---------------------------------------------------------------- the controls
 
-// The light reads the owner alone (DEVICE-UI §4.1): lit or dark when it reports, hollow when it has not.
+// The light reads the owner alone (manual §16.8): lit or dark when it reports, hollow when it has not.
 const light = (p: ViewProps) => (strOf(p.owner ?? p.v, 'light') ?? 'unknown') as LightState
 const head = (p: ViewProps) => ({light: light(p), onFold: p.nav.fold, onFull: p.nav.full})
 const cornerOf = (v: V) => { const r = pending(v) ?? reach(v); return r === undefined ? NONE : `reach ${LEVELS[r]?.toLowerCase() ?? NONE}` }
