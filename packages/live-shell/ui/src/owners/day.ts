@@ -7,16 +7,23 @@
 //     so coming back to the window reads it again (as each reader did on its own before);
 //   - a refusal — e.g. the owner's stale-today refusal, refused on every boot and asked again on every focus before. It is
 //     remembered for its epoch: the owner is not asked the same read again until the spine's epoch or world context moves,
-//     or the person asks; the refusal stays shown in the owner's words meanwhile.
+//     the person asks, or the kernel says the Day moved; the refusal stays shown in the owner's words meanwhile.
+//
+// Lane W3: a Day write the kernel carried (an ensure, an initialisation, a lifecycle change) records a `day_changed` receipt
+// (owners/notices.ts `receiptMovesDay`). Every held Day is read again on it — a remembered refusal too, since what it refused
+// on moved. A Day moved by another process (a terminal's ensure) reaches no receipt: the window's return reads it.
 
 // Ported from central/useCentralDayStanding.ts at 98385f92d :11-30 (the read, and the read again on the window's return) and
 // central/documents/CentralDocumentPane.tsx at 98385f92d :49-60 (`useDayStanding`), over documentReadings.ts:23 `readDayStanding`.
-import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
+import {useContext, useEffect} from 'react'
+import type {KernelReceipt, KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
 import {interpretDayOpen, type DayDocumentStanding} from '../central/centralVertical'
 import {readDayStanding} from '../central/documents/documentReadings'
-import {ownerReadings, useOwnerReading, type OwnerRead} from './ownerReading'
+import {ownerReadings, useOwnerReading, type OwnerRead, type OwnerReadings} from './ownerReading'
 import {onAttentionRegained} from './attention'
+import {createReceiptCursor, receiptMovesDay} from './notices'
 import {useSpineEpoch} from './spine'
+import {Workspace} from '../shell/workspaceContext'
 
 export const DAY_OP = 'central open-day'
 /** Focus and visibility arrive together on a return: one read for both. */
@@ -48,11 +55,35 @@ function installNotices() {
   })
 }
 
+/** Read every held Day again — a remembered refusal too — because the kernel says a Day moved. Returns how many it asked. */
+export function retryHeldDays(registry: OwnerReadings, epoch: string): number {
+  let asked = 0
+  for (const entry of registry.entries()) {
+    if (!entry.key.startsWith(`["${DAY_OP}"`) || entry.readers === 0) continue
+    void entry.retry(entry.snapshot().epoch ?? epoch)
+    asked++
+  }
+  return asked
+}
+
+/** The window's Day receipts: each new `day_changed` receipt on the spine reads every held Day again, once however many readers
+ * pass the same receipts. Exported for a test with its own registry. */
+export function createDayReceiptObserver(registry: OwnerReadings = ownerReadings): (receipts: readonly KernelReceipt[], epoch: string) => number {
+  const fresh = createReceiptCursor()
+  return (receipts, epoch) => fresh(receipts).some(receiptMovesDay) ? retryHeldDays(registry, epoch) : 0
+}
+
+const observeDayReceipts = createDayReceiptObserver()
+const NO_RECEIPTS: readonly KernelReceipt[] = []
+
 /** One Day's standing (`dayRef` null: the current Day), shared; null while the owner answers. `enabled` false reads nothing. */
 export function useDayAnswer(transport: KernelTransportStatus, dayRef: string | null, enabled = true): {standing: DayDocumentStanding | null; retry: () => void} {
   installNotices()
   const epoch = useSpineEpoch()
   const {reading, retry} = useOwnerReading(enabled ? dayStandingKey(transport, dayRef) : null, readDayOf(transport, dayRef), epoch)
+  // Outside the shell's providers (a pane in a root of its own) no receipt arrives; the window's return still reads.
+  const receipts = useContext(Workspace)?.receipts ?? NO_RECEIPTS
+  useEffect(() => { observeDayReceipts(receipts, epoch) }, [receipts, epoch])
   const standing = reading.status === 'answered' ? reading.value
     : reading.status === 'refused' ? interpretDayOpen(dayRef ?? 'today', {error: reading.error ?? 'The owner refused the Day'})
       : null

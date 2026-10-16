@@ -442,8 +442,8 @@ impl PreparedRead {
             | KernelOp::LiveDeviceParamWrite { .. }
             | KernelOp::CompositionRead { .. }
             // Central's own route and Workcell's status record nothing in the
-            // kernel; their owners order their own writes.
-            | KernelOp::Central { .. }
+            // kernel. Central's Day writes are prepared writes (owner_write.rs):
+            // their finish records what the owner did.
             | KernelOp::WorkcellStatusRead
             // Central's Day and NOW readings, through its guarded readers.
             | KernelOp::DayRead { .. }
@@ -451,6 +451,13 @@ impl PreparedRead {
             // The bounded telemetry follow waits on the owner for its whole
             // window; it reads only the owner's state file, never the kernel's.
             | KernelOp::FactoryOwner { request: crate::factory::OwnerRequest::TelemetryWatch { .. } } => Some(Self {
+                client: client.clone(),
+                world,
+                op: op.clone(),
+                temporal: None,
+                graph: None,
+            }),
+            KernelOp::Central { request, .. } if !crate::owner_write::central_write(request) => Some(Self {
                 client: client.clone(),
                 world,
                 op: op.clone(),
@@ -470,8 +477,9 @@ impl PreparedRead {
 
     /// The owner reads lane K left under the lock, now prepared (lane K2):
     /// each records nothing in the kernel. Their owners' writes — a Factory
-    /// action, recognition, commission or close; a SharedField write; a
-    /// credential change — stay ordered under it.
+    /// action, recognition, commission or close; a credential change — are
+    /// prepared writes (owner_write.rs); a SharedField write is free
+    /// (dispatch.rs, lane W3).
     pub(crate) fn reads_owner(op: &KernelOp) -> bool {
         match op {
             KernelOp::MaterialRead { .. }
@@ -562,7 +570,7 @@ impl PreparedRead {
         }
         // Inbox reads may fan out across many project registers at startup.
         // They do not alter kernel state and must not hold up native editing.
-        // Review/include/recovery retain the ordered mutation path.
+        // Submit/review/include/recover are prepared writes (owner_write.rs).
         if let KernelOp::Receiving { project, request } = &self.op {
             if let Some(project) = project {
                 disclosed(&self.world.read()?, project)?;
@@ -1057,7 +1065,7 @@ impl PreparedRead {
 
 /// A named Project must be inside Central's disclosed ground — the gate
 /// every project-scoped op shares.
-fn disclosed(world: &Value, project: &str) -> Result<(), String> {
+pub(crate) fn disclosed(world: &Value, project: &str) -> Result<(), String> {
     world["work"]["projects"]
         .as_array()
         .and_then(|rows| {
@@ -1070,7 +1078,7 @@ fn disclosed(world: &Value, project: &str) -> Result<(), String> {
 
 /// A Project's working directory from the World and its canonical
 /// ProjectRef from Central's own inspect reading (lib.rs `project_ground`).
-fn project_ground(
+pub(crate) fn project_ground(
     client: &CentralClient,
     world: &Value,
     project: &str,
@@ -1153,11 +1161,12 @@ mod tests {
 
     /// A Factory owner read — the telemetry follow, a status, a locate — is
     /// a prepared read (outside the kernel lock), and so is a SharedField
-    /// read; a Factory write and a SharedField write keep the ordered path,
-    /// as does a credential change. The machine-level reads lane K left
-    /// under the lock are prepared.
+    /// read; a Factory write, a SharedField write and a credential change are
+    /// not prepared reads (they are prepared writes, owner_write.rs, or free,
+    /// dispatch.rs). The machine-level reads lane K left under the lock are
+    /// prepared.
     #[test]
-    fn owner_reads_are_prepared_and_owner_writes_stay_ordered() {
+    fn owner_reads_are_prepared_and_owner_writes_are_not_reads() {
         use serde_json::json;
         let client = CentralClient::discover();
         let prepared = |value: &Value| {
@@ -1187,7 +1196,7 @@ mod tests {
             json!({"op": "credential_revoke", "credential": "credential:x"}),
             json!({"op": "chat_default_discard"}),
         ] {
-            assert!(!prepared(&write), "{write} stays ordered");
+            assert!(!prepared(&write), "{write} is not a prepared read");
         }
     }
 

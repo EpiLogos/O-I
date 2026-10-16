@@ -71,6 +71,22 @@ impl std::fmt::Display for OwnerCallError {
 
 impl std::error::Error for OwnerCallError {}
 
+impl ReceivingRequest {
+    /// The Central Action that serves the request (`CentralClient::receiving`).
+    pub fn action(&self) -> &'static str {
+        match self {
+            Self::List { .. } => "central.receiving.list",
+            Self::Read { .. } => "central.receiving.read",
+            Self::Submit { .. } => "central.receiving.submit",
+            Self::Document { .. } => "central.document.read",
+            Self::Review { .. } => "central.receiving.review",
+            Self::Include { .. } => "central.receiving.include",
+            Self::Recover { .. } => "central.receiving.recover",
+            Self::MutateField { .. } => "central.document.mutate",
+        }
+    }
+}
+
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum ReceivingRequest {
     List {

@@ -2,8 +2,11 @@
 //! before owner discovery; installed functional acceptance remains a separate gate.
 use serde::Deserialize;
 
+// Only the shell candidate reads a Live document; the everyday host refuses
+// the request whole, so its paths are read in the candidate build alone.
 #[derive(Deserialize)]
 #[serde(tag = "kind", rename_all = "lowercase", deny_unknown_fields)]
+#[cfg_attr(not(feature = "native_shell"), allow(dead_code))]
 pub enum ReadRequest {
     Summary { path: String },
     Document { path: String },
@@ -16,8 +19,13 @@ mod api;
 #[cfg(feature = "native_shell")]
 #[path = "../../../../packages/live-shell/src/inhabitants.rs"]
 mod inhabitants;
+// Shared source: the live-shell crate (packages/live-shell/src/main.rs) reads
+// every field of the qualified payload and the World's product ids; this host
+// reads the subset it binds, so what only the live-shell crate reads is dead
+// here and alive there.
 #[cfg(feature = "native_shell")]
 #[path = "../../../../packages/live-shell/src/runtime.rs"]
+#[allow(dead_code)]
 pub mod runtime;
 #[cfg(feature = "native_shell")]
 #[path = "continuity_admission.rs"]
@@ -823,7 +831,12 @@ pub async fn live_shell_read(
 
 // Candidate application release: local document acknowledgements precede the
 // stock process exit/restart. The everyday Cradle has no close coordinator.
+// The close-reply tests sit where they are on purpose: the standalone
+// regression (packages/live-shell/tests/application_close_state_native.py)
+// compiles the state between its markers with the test module that follows
+// them, up to `static NEXT`.
 #[cfg(feature = "native_shell")]
+#[allow(clippy::items_after_test_module)]
 mod application_close {
     use std::{collections::{BTreeMap,BTreeSet},sync::{atomic::{AtomicU64,Ordering},Mutex},time::{Duration,Instant}};
     use tauri::{AppHandle,Emitter,Manager};

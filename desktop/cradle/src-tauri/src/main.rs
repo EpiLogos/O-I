@@ -42,7 +42,12 @@ async fn kernel_op(app: AppHandle, op: KernelOp) -> Result<KernelOpOutcome, Stri
     // runs outside the kernel lock wherever the op has a prepared form.
     tauri::async_runtime::spawn_blocking(move || {
         let host = app.state::<KernelHost>();
-        let (result, _timing) = oi_cradle_kernel::dispatch::dispatch(&host.0, op);
+        // One timing line per op, in the dev bridge's format, to the file
+        // OI_KERNEL_TRACE_FILE names (a Finder launch has no stderr).
+        let name = oi_cradle_kernel::dispatch::op_name(&op);
+        let started = std::time::Instant::now();
+        let (result, timing) = oi_cradle_kernel::dispatch::dispatch(&host.0, op);
+        oi_cradle_kernel::dispatch::trace_op("native", &name, result.is_ok(), started.elapsed(), &timing);
         let outcome = result?;
         for receipt in &outcome.receipts {
             if let oi_cradle_kernel::events::KernelEvent::PresentationChanged { theme, .. } = &receipt.envelope.event {
@@ -81,8 +86,13 @@ async fn kernel_event_log(app: AppHandle, cursor: u64, generation: Option<String
     // kernel_op itself correctly runs on the blocking pool.
     tauri::async_runtime::spawn_blocking(move || {
         let host = app.state::<KernelHost>();
+        let asked = std::time::Instant::now();
         let kernel = host.0.lock().map_err(|_| "kernel lock unavailable".to_owned())?;
-        Ok(kernel.event_log().replay(generation.as_deref(), cursor, limit))
+        let waited = asked.elapsed();
+        let replay = kernel.event_log().replay(generation.as_deref(), cursor, limit);
+        drop(kernel);
+        oi_cradle_kernel::dispatch::trace_replay("native", waited);
+        Ok(replay)
     }).await.map_err(|error| error.to_string())?
 }
 
@@ -261,14 +271,12 @@ fn main() {
                     api.prevent_close();
                     if let Err(error)=native_shell::request_close(app,0,false){native_shell::report_close_failure(app,error);}
                 }
-                tauri::RunEvent::ExitRequested {code,api,..} => {
-                    if !native_shell::close_approved(app,code) {
-                        // Pinned Tauri cannot prevent its direct restart API;
-                        // candidate Restart calls request_close before using it.
-                        api.prevent_exit();
-                        if code!=Some(tauri::RESTART_EXIT_CODE) {
-                            if let Err(error)=native_shell::request_close(app,code.unwrap_or(0),false){native_shell::report_close_failure(app,error);}
-                        }
+                tauri::RunEvent::ExitRequested {code,api,..} if !native_shell::close_approved(app,code) => {
+                    // Pinned Tauri cannot prevent its direct restart API;
+                    // candidate Restart calls request_close before using it.
+                    api.prevent_exit();
+                    if code!=Some(tauri::RESTART_EXIT_CODE) {
+                        if let Err(error)=native_shell::request_close(app,code.unwrap_or(0),false){native_shell::report_close_failure(app,error);}
                     }
                 }
                 _=>{}

@@ -152,6 +152,29 @@ function qualifyReplay(value: unknown, cursor: number, generation?: string): Ker
 /** The transport serves no retained-history route: distinct from a
  * refusal, so the subscription ends instead of retrying forever. */
 export class ReplayServiceAbsent extends Error {}
+
+/** One replay pull's own time bound over the dev bridge. */
+export const REPLAY_TIMEOUT_MS = 10000;
+
+/** The pull was aborted — by its own time bound or by its caller (a page
+ * hidden, a subscription ended) — before the kernel's answer was read. It is
+ * not the kernel's refusal: the kernel answered nothing the client could read,
+ * and the subscription retries at its cursor as for any failed pull. */
+export class ReplayAborted extends Error {
+  readonly origin: "timeout" | "caller";
+  constructor(origin: "timeout" | "caller") {
+    super(origin === "timeout"
+      ? `Kernel replay aborted: no answer read within ${REPLAY_TIMEOUT_MS} ms`
+      : "Kernel replay aborted by its caller");
+    this.origin = origin;
+    this.name = "ReplayAborted";
+  }
+}
+
+export function replayAborted(request: AbortSignal, timeout: AbortSignal, caller?: AbortSignal): ReplayAborted | null {
+  if (!request.aborted) return null;
+  return new ReplayAborted(caller?.aborted ? "caller" : timeout.aborted ? "timeout" : "caller");
+}
 export async function eventReplay(
   transport: KernelTransportStatus,
   cursor = 1,
@@ -171,9 +194,25 @@ export async function eventReplay(
   if (transport.kind === "bridge") {
     const query = new URLSearchParams({ cursor: String(cursor), limit: String(limit) });
     if (generation !== undefined) query.set("generation", generation);
-    const requestSignal = signal ? AbortSignal.any([signal, AbortSignal.timeout(10000)]) : AbortSignal.timeout(10000);
-    const response = await fetch(`${transport.url}/event-replay?${query}`, { signal: requestSignal });
-    const body = (await response.json().catch(() => ({}))) as { ok: boolean; replay?: unknown; error?: string };
+    const timeout = AbortSignal.timeout(REPLAY_TIMEOUT_MS);
+    const requestSignal = signal ? AbortSignal.any([signal, timeout]) : timeout;
+    let response: Response;
+    try {
+      response = await fetch(`${transport.url}/event-replay?${query}`, { signal: requestSignal });
+    } catch (error) {
+      throw replayAborted(requestSignal, timeout, signal) ?? error;
+    }
+    // The body is read under the same signal: an abort while it streams is the
+    // pull's own abort (its time bound or its caller), never the kernel's refusal.
+    let body: { ok: boolean; replay?: unknown; error?: string };
+    try {
+      body = (await response.json()) as typeof body;
+    } catch (error) {
+      const aborted = replayAborted(requestSignal, timeout, signal);
+      if (aborted) throw aborted;
+      if (response.status === 404) throw new ReplayServiceAbsent("Kernel replay route absent on this transport");
+      throw new Error(`Kernel replay unreadable (${response.status}): ${String(error)}`);
+    }
     if (response.status === 404) {
       // This transport serves no retained-history route at all (embedded
       // hosts, controlled harnesses). Retrying would only spam its console:

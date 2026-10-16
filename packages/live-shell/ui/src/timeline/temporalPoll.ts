@@ -12,7 +12,8 @@
 //   - when its first reader subscribes;
 //   - when the kernel pushes a receipt that can move the field (`receiptMovesTemporal`: a working surface driving an agent
 //     session — the one kernel event with an instant —, a routine's returned action, a file or source change under the NOW
-//     field, the wiki's returns or the civil time policy);
+//     field, the wiki's returns, the civil time policy, or an owner write the kernel carried (now_changed, day_changed,
+//     receiving_changed, factory_run_changed));
 //   - when the shell's own acts tell it (`tellOwnerChanged({topic: 'temporal'})` — the agency reading moving is one: a
 //     session started or ended changes the run streams);
 //   - when the spine's epoch moves (a new native access or World: the standing reading belongs to the old one);
@@ -36,7 +37,9 @@ import {onOwnerChanged, receiptMovesTemporal} from '../owners/notices'
 import {useSpineEpoch} from '../owners/spine'
 import {Workspace} from '../shell/workspaceContext'
 
-/** The floor for writers the shell is never told about: five minutes after the last completed read, while visible. */
+/** The floor for writes no kernel receipt reaches — another process's NOW return or thought, Day ensure or close, receiving act,
+ * Factory run, AIKit history or wiki return (owners/notices.ts); a write the kernel carried reads at once on its receipt. Five
+ * minutes after the last completed read, while visible. */
 export const TEMPORAL_FLOOR_MS = 300_000
 
 /** Coming back to the window reads again only when the standing reading is older than this. */
