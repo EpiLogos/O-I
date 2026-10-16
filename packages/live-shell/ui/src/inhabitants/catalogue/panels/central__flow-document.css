@@ -12,3 +12,4 @@
 .flw-compose input::placeholder { color: var(--text-faint, #71767c); }
 .flw-compose input:focus-visible { outline: 1px solid var(--accent, #ffbe00); outline-offset: 0; }
 .flw-mark { flex: none; display: inline-block; vertical-align: middle; }
+.flw-compose input:disabled { opacity: .6; cursor: not-allowed; }
