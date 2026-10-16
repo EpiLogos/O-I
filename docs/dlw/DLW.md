@@ -587,16 +587,16 @@ Every device has six views, and all six show the same live settings:
 |---|---|---|
 | Folded | Your chain, along the bottom | The device's name and a reading or two, in a narrow strip |
 | Compact | Your chain | A small live picture and up to four controls |
-| Whole | Flipped up over the chain, or in the pool under the browser | Every setting, grouped, round a larger picture |
+| Whole | Expanded above the chain, or in the pool under the browser | Every setting, grouped, round a larger picture |
 | Full | A pane | The device's material at full size, to work in |
 | Pop-out | Its own window, which can fill the screen | The material with every setting under it |
 | Widget | The rail on the right | A small picture and a few readings, in every mode |
 
-The marks on a device's head open it each way: ⌃ flips it up over the chain,
-as Live's expanded view does, ▦ opens it in a pane, and ↗ pops it out into a
-window, as Live opens a plug-in. ▾ folds it to its title. Select a device in
-the browser and it shows whole in the pool, where you can change it without
-adding it to a chain.
+The head opens a device each way. ▸ beside its light shows its expanded
+view, a band above the chain, as Live's does; ▦ opens it in a pane, and ↗ pops
+it out into a window, as Live opens a plug-in. Double-click the head to fold
+the device to its title. Select a device in the browser and it shows whole in
+the pool, where you can change it without adding it to a chain.
 
 A light on a device is a reading. It is on only when the device reports that
 it is on. If the state is not known, the light stays dark.
@@ -676,7 +676,8 @@ be linked to and opened again.
 | Show or hide the detail area | ⌘⌥L |
 | Switch between Clip view and Device view | ⇧Tab |
 | Show or hide the widget rail | ⌘⌥R |
-| Fold a flipped-up device back onto its chain | Esc |
+| Hide a device's expanded view | Esc |
+| Expand Clip view into the main area | ⌥⌘E |
 | Play or stop | Space |
 | Launch a row | Its number key |
 | Turn a macro | Its letter key |
@@ -925,9 +926,9 @@ So a capability lives in one place:
   voice and meaning are the selected object's controls in the scene's
   editor.
 - **One job is one device, in every mode.** The agent that answers in a
-  Central page and the agent that runs a Factory task is one Agent (§19.3):
+  Central page and the agent that runs a Factory task is one Agent (§19.4):
   who it is, how it works, how much it decides alone, and its thread. What
-  an agent may read and where it may write is one Scope (§19.13), with the
+  an agent may read and where it may write is one Scope (§19.12), with the
   Knowledge route inside it, on any track an agent works on.
 - **How a write arrives is set in two places only.** Scope sets the most an
   agent may do in each part of the world: propose, draft or write. Arm, in
@@ -975,15 +976,15 @@ the others at once.
 |---|---|---|---|
 | Folded | The chain | The activator, the name and up to two short readings, read downward, in a strip 22 px wide. | A folded device. |
 | Compact | The chain | The display and up to four macros, at the chain's height. The width comes from the sections. | The device on its chain; a rack with only its macros showing. |
-| Whole | Flipped up over the chain, or in the pool under the browser | Every parameter, grouped, and the display with all its handles. Flipped up, the bands stand side by side across the detail area and the display grows into the room. In the pool they stack at the pool's width, with pages when more is needed. | The expanded view of EQ Eight or Wavetable. |
+| Whole | Expanded above the chain, or in the pool under the browser | Every parameter, grouped, and the display with all its handles. Expanded, it is a band as wide as the detail area: the bands stand side by side and the display grows into the room. In the pool they stack at the pool's width, with pages when more is needed. | The expanded view of EQ Eight or Wavetable. |
 | Full | A pane | The material itself: the page, the field, the torus, the world. No controls. | Wavetable's large display, without its controls. |
 | Pop-out | Its own window, which can fill the screen | The material with every control docked under it. | A plug-in's window. |
 | Widget | The rail | A small display and up to three readings or macros, in a tile of 136 × 136 px or 280 × 136 px. | Live has none. Push's display is the nearest. |
 
-- Whole flipped up and Whole in the pool are one view in two places. The
-  pool shows the device you select in the browser, and changes there apply
-  without adding it to a chain. Flipped up, it is the device you are
-  working on.
+- Whole expanded and Whole in the pool are one view in two places. The pool
+  shows the device you select in the browser, and changes there apply
+  without adding it to a chain. Expanded, it is the device you are working
+  on.
 - Most devices need no pop-out of their own. The window shows Full above
   and Whole below it. A device writes its own only where its controls
   belong beside the material rather than under it.
@@ -992,45 +993,220 @@ the others at once.
 
 ### 16.4 Opening, folding and hiding
 
-The window is modular: every part can be opened, folded and hidden, and the
-other parts take the space.
+The window is modular: every part opens, folds and hides, and the other parts
+take the space.
 
-On a device's head, from the right:
+A device's head reads as Live's does, from the left:
 
-| Mark | Does |
+| Part | Does |
 |---|---|
-| ↗ Pop out | Opens the device in its own window. Press it in the window to close the window. |
-| ▦ Pane | Opens the device full in the pane that has focus. |
-| ⌃ Expand | Flips Whole up over the chain. Press it again, or press Esc, to fold it back. |
-| Rail | Keeps the device on the widget rail, in every mode. |
-| ▾ Fold | Folds the device to its title. Press the folded title to open it again. |
+| Activator | Asks the owner to turn the device on or off. The light shows what the owner reports. |
+| ▸ Expanded view | Shows the device's expanded view: Whole, as a band above the chain. ▾ while it stands; press it again to hide it. |
+| Name | Double-click the head to fold the device to its title, or choose Fold from its context menu. Press the folded title to open it again. |
+| Rail, ▦ Pane, ↗ Pop out | At the right. Keep the device on the widget rail; open it full in the pane that has focus; open it in its own window. Press ↗ in the window to close it. |
 
-Press the plate itself to show the device whole in the pool.
+Press the plate to show the device whole in the pool. Right-click the head for
+Fold, Rename, Group, Save as preset, Hot-swap, Show automation and Map. A
+rack's head has three more marks, as Live's do: show or hide the macros, the
+chain list, and the devices of the selected chain.
 
-One device stands flipped up at a time. It covers the lower part of the panes
-and leaves the transport, the browser and the rail where they are. Any number
-of windows can stay open. A window follows its device: when the device leaves
-the chain, its window closes.
+The expanded view is a band as wide as the detail area, between Clip view and
+the chain. The panes above it shrink to make room; nothing is covered. One
+device stands expanded at a time, and it stays on the chain under its band.
+Any number of windows can stay open. A window follows its device: when the
+device leaves the chain, its window closes.
 
-A rack's head has three more marks, as Live's do: show or hide the macros,
-the chain list, and the devices of the selected chain.
+The detail area holds Clip view above Device view, both at once when there is
+room, as Live 12 does. Hide either one, or switch between them when only one
+shows.
 
 | To show or hide | Do |
 |---|---|
 | The detail area | ⌘⌥L, or its toggle in the status bar. |
-| Clip view or Device view | ⇧Tab, or the switch in the status bar. |
+| Clip view or Device view | ⇧Tab, or the switches in the status bar. |
+| Clip view in the main area | ⌥⌘E. The clip's editor takes the space of the panes; press again to return. |
 | The browser and its pool | ⌘⌥B. Drag the line between the browser and the pool to give either the height. |
 | The widget rail | ⌘⌥R. Drag its edge to widen it. Fold the launcher to give the tiles the height. |
-| A flipped-up device | Esc, or ⌃ on its head. |
+| A device's expanded view | ▸ on its head, or Esc. |
 | A device's window | ↗ on its head, or the window's own close. |
 
 ### 16.5 Clip view and Device view
 
 Select a clip and the detail area shows it. Clip view shows the clip and its
-editor. Device view shows the chain of the clip's track. Switch between them
-with ⇧Tab or in the status bar.
+editor. Device view shows the chain of the clip's track.
 
-### 16.6 The browser
+Clip view is laid out as Live lays it out, in every mode. Only what each part
+holds changes with the kind of clip.
+
+| Part | Where | What it holds | Live's |
+|---|---|---|---|
+| Head | Across the top | The clip's activator, its name on its colour. | The clip's title bar. |
+| Clip | The first panel, first tab | Where the clip starts and ends, whether it loops, its length, its signature and its scale, and the facts that belong to the clip alone. | Start, End, Loop, Position, Length, Signature, Groove, Scale. |
+| Launch | The first panel, second tab | How the clip launches, when the launch lands, and what follows it, with what chance. | Launch mode, Legato, Quantize, Velocity, Follow Action. |
+| Tools | The second panel, in tabs | Tools that change the clip's content as a whole. A transform reshapes what is there; a generator proposes new content. A tool shows its few controls and one button that applies it, or applies as you turn it. | Pitch and Time, Transform, Generate. |
+| Editor | The rest of the area, in tabs | The content itself. The first tab is the clip's own material. Envelopes moves a parameter over the clip's own time. A third tab holds what each element of the content carries on its own, lane by lane. | Notes or Sample, Envelopes, MPE. |
+
+- The editor folds and highlights as Live's does: Fold keeps only the rows
+  that hold content, and a scale or a set of kinds highlights what belongs.
+- An envelope picks its device and its parameter. On a device's parameter it
+  is Automation, which sets the value over the clip, or Modulation, which
+  moves the track's own value up and down. Linked, it runs with the clip;
+  unlinked, it has its own length and loop.
+- A clip on Arrangement view's ruler has no Launch tab, as in Live. A clip
+  that is placed rather than launched, such as a Central page, never has one.
+- A change in the editor changes the clip. A device on the chain changes what
+  passes through it and leaves the clip as it is (§16.1).
+- What a clip lacks, Clip view leaves out.
+
+| Mode | The clip | Its editor's tabs | Launch | Envelopes |
+|---|---|---|---|---|
+| Technē (§17.1) | An event or a walk's stop | Relations, Constellation, Source | Arrival, and the walk's next stop | None |
+| Central (§18.1) | A page | Page and Source; a Flow's Dialogue, Flow and Journal | None | None |
+| Factory (§19.1) | A task | The log | Mode, Then, Quantize | The Agent's Effort and Autonomy for this task |
+| Expressions (§20.1) | A scene | Sequence, Envelopes, Expression, Sound | Quantize, the next scene, Jump | The scene's automation |
+| Live (§21.1) | A note clip or an audio clip | Notes, Envelopes, MPE; or Sample, Envelopes | Live's own | Live's own |
+
+### 16.6 Tracks, Session view and Arrangement view
+
+Every mode draws its tracks the same way, and a pane can show either view for
+any set of tracks.
+
+| Mode | Track | Clip | Stop (a row) | Takes |
+|---|---|---|---|---|
+| Central | A workspace. The Day is the Main track. | A page. | The face of the Day, which stands its entries together. | Revisions: draft, saved, edited since save. |
+| Factory | An agent session. | A task. | A batch of tasks that launch together. | Attempts. You choose the attempt that lands. |
+| Expressions | An Expression. | A scene. | A moment across several Expressions. | Captured takes of a scene. |
+| Technē | A reading, a journey or the occurrences of a subject. | An event, an occurrence or a revision at its time and place. | A stop of a walk: it stands its event and launches the scenes it carries. | Readings that extend a reading. |
+| Live | A part. | A note clip or an audio clip. | A row of clips. | Take lanes. |
+
+The word scene always means an Expression's scene. A row of clips is a stop.
+
+#### The track
+
+A track's head shows its colour, its name and, in Factory, its agent. Groups
+fold under one header; the members of a group step in below it, with one
+coloured rail for each level, and a row in a group launches all its children
+at once.
+
+Under the head is the track's mixer row, after Live's. What each control means
+follows the mode; the mode's own section says how (§17.1–§21.1).
+
+| Control | Live's meaning |
+|---|---|
+| Activator | The track's work reaches the Main track, or runs silent. |
+| Solo | Only the soloed tracks run, or show. |
+| Arm | The track records, and its agent writes directly, with receipts. |
+| Monitor | In, Auto or Off: when you watch the track's input. |
+| Input and output | Where the track's material comes from, and where it goes: to the Main track by default. |
+
+The Main track sits at the end, where Live keeps it. It carries each row's
+launch button, Stop All, and Back to Arrangement, which lights when what plays
+differs from the ruler. Its own chain holds what works on the whole: the Day
+and Approvals in Central; the gateways, the experiments, Approvals, the ledger
+and Link in Factory.
+
+#### Session view
+
+Session view is the grid: tracks across, rows down, everything launchable,
+nothing in a fixed order.
+
+| A clip that is | Looks |
+|---|---|
+| Waiting | A fast blink. It has no length, because nobody knows how long it will take. |
+| Running | A slow blink and a fill that grows. It has no end drawn. |
+| Stopped | Ready, in full colour. |
+| Recording | Marked with the record light. |
+| Stalled | Striped and frozen where its output stopped. The track lights a retry. |
+| Done | Dimmed and settled. |
+
+An empty slot is a place to write: double-click it to start a clip there. Each
+track has a stop button in its empty slots. In Factory, a track whose clip has
+stalled lights a retry, which starts again from the last good step on the same
+basis. How a clip launches, when it lands and what follows it are the clip's
+own, in its Launch tab. The transport's Quantize is the launch quantize for
+every clip set to Global. The number keys launch rows.
+
+#### Arrangement view
+
+Arrangement view lays the same tracks along one ruler.
+
+| Mode | The ruler measures |
+|---|---|
+| Central | Today, from first entry to last. |
+| Factory | The time of the run. Each session has a needle at its last check-in. |
+| Expressions | The scenes in order, in seconds, with each Expression's picture lane over its sound lane. |
+| Technē | Time from deep time to today, with readings as layers of tracks. |
+| Live | Bars and beats. |
+
+Under each track lie its lanes:
+
+- **Automation lanes**, one for each parameter that moves: an agent's effort
+  over a run, a field device over a scene, the sky's pull on a filter. Each
+  names its device and its parameter. Arm the track and move the parameter,
+  and the move becomes a lane. A modulated parameter shows what moves it. A
+  value you override gives control back only when you press Re-enable.
+- **Take lanes**, one for each take, as Live's are. Audition a take from its
+  lane. Select a stretch of a take and press Return to copy it into the main
+  lane: that is how you choose the attempt that lands, the capture that
+  stands, or the revision you keep. The main lane shows which take each
+  stretch came from.
+- **Event lanes**, in Factory: each session's messages, files, terminal and
+  pages read. Click an event and it opens beside the ruler.
+
+A needle jumps each time its agent checks in, and a needle that does not move
+marks a stall: the thread freezes where its output stopped. A line marks now,
+and Follow keeps it in view.
+
+Named sections run along the top; in Technē they are epochs, they nest, and
+the narrowest colours the clips inside it. A marker is a named, coloured
+point. A loop region has an in point and an out point: the transport plays,
+and repeats, only between them. In Factory the same brace is the window in
+which agents may write.
+
+A clip stays the same thing wherever you move it. A move changes only where
+it stands in time.
+
+| Edit | What it does |
+|---|---|
+| Move, insert | Moves the clip and shifts the clips after it. |
+| Move, overwrite | Moves the clip and replaces what was there. |
+| Trim | Drags an edge to change the length. |
+| Roll | Moves the seam between two clips. One grows by what the other loses. |
+| Slip | Changes where the clip starts inside its own content. |
+| Slide | Moves a clip between fixed neighbours. |
+| Split | Cuts the clip in two at the playhead. The lengths add up to the original. |
+
+A void is a still clip, not a gap. Every edit is one labelled step in the
+undo list; a split or a roll is one step, not three. Snap pulls the playhead
+and the edges you drag to clip edges, markers, loop edges and the playhead;
+hold Alt to turn it off while you drag.
+
+| Setting | Values | Default | What it does |
+|---|---|---|---|
+| Tracks shown | Any set of the mode's tracks | All | The tracks in view. |
+| Lanes | Takes, Automation, Events, each On · Off | Takes On, Automation On, Events Off | The lanes under the tracks. |
+| Time scale | Even · Stretched | Even | Stretched keeps deep time readable beside today. |
+| Zoom | Any span | Fit all | The span in view. |
+| Snap | On · Off | On | Aligns dragged items to edges, markers and the playhead. |
+| Move mode | Insert · Overwrite | Insert | What a move does to its neighbours. |
+| Trim mode | Trim · Roll · Slip · Slide | Trim | What an edge drag does. |
+| Overview strip | On · Off | On | The whole ruler, with the view marked. |
+| Standing floor | Facts only · Plus claims · Plus inferences · Plus guesses · All | All | In Technē, hides clips that stand below the level. |
+
+#### Rules
+
+- A track holds the material of its owner. The views show it and never copy
+  it.
+- A clip that is running shows no end. A waiting clip shows no length. A
+  stalled clip shows where it stopped and does not look done.
+- A row launches only what is in it. Stop pressed twice cancels at once;
+  launch quantize does not delay it.
+- A move does not change what a clip is. Placement does not raise a claim to
+  a fact.
+- Every edit is one labelled step that can be undone alone.
+- Every mode uses the same states, the same stop buttons and the same keys.
+
+### 16.7 The browser
 
 In every mode the browser holds four kinds of thing. Material comes from the
 mode's owners: workspaces and documents in Central, sessions in Factory,
@@ -1039,7 +1215,7 @@ and widgets are the same in every mode, grouped by the product that makes
 them. Select a device to show it whole in the pool. Drag it onto a chain to
 add it. Drag an instrument into a pane to open it.
 
-### 16.7 Play, record and automation
+### 16.8 Play, record and automation
 
 Play launches clips. Each clip's track runs through its chain, and the
 instrument makes its part: the agent runs, the field plays, the walk walks.
@@ -1053,7 +1229,7 @@ devices. A clip can carry envelopes of its own, which move a parameter over
 the clip's own time. Re-enable gives a parameter back to its lane, or to the
 agent or instrument that held it. A modulated parameter shows what moves it.
 
-### 16.8 How a device looks
+### 16.9 How a device looks
 
 **A designed face, not a form.** A device's parameters are its contract with
 its owner. Its panel is drawn by hand for that device, as every Live device
@@ -1097,7 +1273,7 @@ All measures are in pixels at 100 %. The grid is 4 px.
 | Row of a list | 17 high |
 | Display on a compact plate | 140 × 146 |
 | Display on Whole in the pool | up to 194 × 146 |
-| Whole flipped up | The detail area's width. One band high, its bands side by side; a display may grow the panel up to half the height of the panes. |
+| Whole expanded | The detail area's width. One band high, its bands side by side; a display may grow the band up to half the height of the panes. |
 | Pop-out window | 1180 × 640 when it first opens, then the size you leave it at. Whole is docked under the material, one band high. |
 | Section label | 9 px capitals, 13 high |
 | Names and values | 10 to 11 px |
@@ -1116,21 +1292,22 @@ From left to right:
    Grey: the owner reports it off. A hollow ring: the owner has not said. Press
    it to ask the owner to turn the device on or off. The light changes only
    when the owner answers.
-2. **Fold** ▾.
+2. **Expanded view** ▸, Live's toggle. Double-click the head to fold the
+   device to its title.
 3. **Name.** A rack shows its set's name: "Skills · build-lane".
 4. **Held mark.** The name of whoever holds values on this device, in the
    stall colour.
 5. **Pages.** One tab for each page. The shown page joins the body's face. A
    page can carry its own light, as Hybrid Reverb's EQ tab does.
 6. **The device's own acts**, such as the Studio's Save and Undo.
-7. **Rail, ⌃ Expand, ▦ Pane, ↗ Pop out**, at the right (§16.4).
+7. **Rail, ▦ Pane, ↗ Pop out**, at the right (§16.4).
 
 Right-click the head for Save as preset, Hot-swap, Show automation and Map.
 
 #### The body
 
 The body is one band on a chain. Whole in the pool stacks one or two bands;
-Whole flipped up and in a window sets them side by side. A band is a row of
+Whole expanded and in a window sets them side by side. A band is a row of
 sections. A section is a column of controls with a label. The display stands
 in a section of its own, at the left.
 
@@ -1151,7 +1328,7 @@ in a section of its own, at the left.
 A device does not bring colours of its own. A colour inside a display carries
 a meaning of the material, as a track's colour does.
 
-### 16.9 Controls and the hand
+### 16.10 Controls and the hand
 
 A panel uses these controls and no others.
 
@@ -1197,7 +1374,7 @@ Some changes ask you first. When you raise a scope's reach, the new reach
 waits, drawn dashed, with Confirm and Cancel beside it. Nothing is sent until
 you confirm.
 
-### 16.10 Standing
+### 16.11 Standing
 
 Besides its value, a control shows who moves it.
 
@@ -1211,7 +1388,7 @@ Besides its value, a control shows who moves it.
 | Disabled | The control at 40 % strength. The status bar says why. | Do what the reason says. |
 | No reading | A hollow light. | Nothing. The owner has not said. |
 
-### 16.11 The display
+### 16.12 The display
 
 - Draw every mark from the device's values or readings, by the device's own
   law. Do not draw a likely picture.
@@ -1222,13 +1399,13 @@ Besides its value, a control shows who moves it.
 - Number the handles 1, 2 and on, in order of importance.
 - Put axis labels inside the well, small and faint. Put one short reading at
   the top right.
-- Flipped up and in a window, let the display take the room and keep the
+- Expanded and in a window, let the display take the room and keep the
   controls at their size, as an expanded EQ Eight does.
 - Move the picture only when its readings move. Respect a request for reduced
   motion.
 - A rack's picture is its chain list.
 
-### 16.12 What a device brings
+### 16.13 What a device brings
 
 A device brings these to the shell:
 
@@ -1274,19 +1451,19 @@ requests, a scope, and a preview that you apply.
 
 A device that holds things of several kinds shows each thing's kind, not a
 picture of its name. Carried practice has four kinds, each with its woodcut
-mark: a skill, a method, a methodology and a skillset (§19.6). The person
+mark: a skill, a method, a methodology and a skillset (§19.7). The person
 chooses one of the two sets of marks, the blade or the pen, and the whole
 shell uses it. A mark has three states, and its drawing does not change: a
 full line for available, the line in orange for held back for a reason that
 you can clear, a dim line for withheld.
 
-### 16.13 When a device is done
+### 16.14 When a device is done
 
 A device is done when all of these are true:
 
 - Its views draw in the device gallery on its declared parameters, and move
   together.
-- Whole reads both in the pool and flipped up over the chain, and the
+- Whole reads both in the pool and expanded above the chain, and the
   pop-out window shows the material with every control.
 - Every control says what it does in the status bar, and works from the
   keyboard.
@@ -1307,7 +1484,7 @@ Then open `?device=<family>:<face>&view=all`, or name the views you want:
 `&view=flip,popout`. Add `&generic=1` to see the generic plate of the same
 device.
 
-### 16.14 Six reference devices
+### 16.15 Six reference devices
 
 Six devices show the whole pattern. Each runs on a labelled fixture. Move a
 control in one view and the others follow. Point at a control to read what it
@@ -1328,7 +1505,7 @@ does, in the line under the views.
 device: central:day-die
 width: 1500
 height: 1400
-caption: The Day. Click a face of the die, or turn the Face dial; press ⌃ to flip it up, ↗ to pop it out.
+caption: The Day. Click a face of the die, or turn the Face dial; press ▸ to expand it, ↗ to pop it out.
 ```
 
 | View | Holds | Why |
@@ -1442,7 +1619,7 @@ caption: Scope. Raise the reach and it waits for you to confirm. Teal is what th
 | Full | The world the agent may touch, with its receipts on the places it wrote. | |
 | Widget | Small rings, the reach, the write mode, the receipts. | |
 
-### 16.15 The entries that follow
+### 16.16 The entries that follow
 
 Each device below has the same parts: what it is for, where it lives, its
 parameters, its views, what the transport does to it, how to use it, its
@@ -1450,11 +1627,158 @@ rules, and tips. A view that the device draws as every device does is not
 described again; Pop-out is described only where the device has its own.
 Where the device has a working face, it runs live beside its entry.
 
-## 17. Instruments that open in any mode
+## 17. Technē, and the instruments that open in any mode
 
-These instruments are the panes of the DLW. Each one is a way to look at your material. You get a world to stand on, a graph of linked notes and a table to think on. You get a ruler of time, a walk and a palace. You also get a page, a grid of launchable clips, a thread and a terminal. They belong to no single mode. Drag one into any pane, in any mode, and it brings its own controls to Device view.
+Technē works with readings, events and walks, and it makes knowledge with the
+instruments every mode shares. These instruments are the panes of the DLW.
+Each one is a way to look at your material: a world to stand on, a graph of
+linked notes and a table to think on, a ruler of time, a walk and a palace, a
+page and a terminal. They belong to no single mode. Drag one into any pane, in
+any mode, and it brings its own controls to Device view. Session view and
+Arrangement view are not among them: they are the window's own two views
+(§16.6), and a pane can show either.
 
-### 17.1 World
+### 17.1 Technē: tracks and clips
+
+**Product:** Technē · **Track:** a reading, a journey or the occurrences of a subject · **Clip:** an event, or a stop of a walk · **Main track:** the stops
+
+You need to set what you know at its time and place, keep how sure anyone is of it, and walk someone through it in an order that makes sense. In Technē a reading is a track, and its events are its clips. Select an event and Clip view shows its span, its place, its standing and what it gathered. Device view below shows the instrument the track plays through, then its lens and filter effects.
+
+#### The track
+
+A track is one of three streams:
+
+| Track | What it is |
+|---|---|
+| Reading | One author's view of time, drawn as a layer of tracks. A later reading extends an earlier one and lies over it. It does not erase it. |
+| Journey | A walk of stops, in order. |
+| Occurrences | Every place a subject turned up, in order. |
+
+The track head shows the stream's name and colour, and the author of a reading. A reading's tracks fold under its head.
+
+##### The mixer row
+
+| Live's control | What it does here |
+|---|---|
+| Activator | Shows or hides the reading on the ruler and in the instruments. |
+| Solo | Shows only the soloed readings. |
+| Arm | Lets the instrument write into the track: a recorded walk, or a stop you place. |
+| Monitor | None. |
+
+A track's material comes from its sources, each at its revision. Its output is the instrument it plays through: the World, the Timeline, the Journey, the Palace or the graph.
+
+#### The clip
+
+A clip is an event or a stop.
+
+An event is something at its year and place. It carries the passages and the material it gathers. A parent event holds child events, and zooming out folds them into the parent.
+
+A stop is one stop of a walk. It stands several things together: when the walk reaches it, the clock goes to its moment, the World goes to its place, and the scenes it carries launch.
+
+The editor shows what the clip gathered: its passages and occurrences, how it relates to other events, and its source.
+
+#### Clip view
+
+Clip view shows first how sure anyone is of the event, its span, and what it gathered.
+
+##### The Clip panel
+
+For an event:
+
+| Field | Values | What it does |
+|---|---|---|
+| Name | Text | The event's name, as its source gives it. |
+| Kind | The kinds its stream names | What sort of event it is. |
+| Colour | The reading's colour | The colour of the clip. The standing sets its line. |
+| Standing | Fact · Claim · Inference · Guess · Dispute · Gap (reading) | How sure anyone is of it. A fact is solid. A claim is solid in a lighter tone. An inference has a dashed outline, a guess a dotted one. A dispute is hatched, with each side named. A gap is an empty slot with an honest label. Placement does not raise it. |
+| Date | A point, a year, a band or a relative step (reading) | When it happened, at the precision its source states, in the source's words, such as "12th c." or "1963". A date marked "circa" draws as a hatched band. |
+| Span | A start and an end | The life of the event on the ruler. Start and End are its edges, and the loop brace over it is the occasion window. |
+| Place | A place, or none | Where it happened. An empty place stays empty. |
+| Source | A source ref at a revision | Where the reading took it from. |
+| Parent | An event, or none | The event that holds it. |
+
+For a stop:
+
+| Field | Values | What it does |
+|---|---|---|
+| Place | A place, or none | Where the World goes. |
+| Moment | A year or a date, or none | Where the clock goes. The sky and the Timeline go there too. |
+| Thing | A note, a source or a person, or none | What the stop is about. |
+| Scene | An Expression scene, or none | The scene that launches at the stop, such as an image, a film or a living field. |
+| Narration | Text | The words the guide speaks at this stop. |
+
+A stop with no place, no moment or no scene shows that it holds none. Nothing invents one.
+
+##### The Launch panel
+
+Launching an event or a stop stands it: the clock goes to its moment, the World to its place, and the scenes it carries launch.
+
+| Field | Values | Default | What it does |
+|---|---|---|---|
+| Arrival | Global · Fly · Cut · Fade | Global | How the walk reaches this stop. Global follows the transport's Quantize. |
+| Follow action | Next stop · Stay · Return to start | Next stop | What happens when the stop ends. |
+| Transition time | 0 to 10 seconds | 1 second | The length of the change into the next stop. |
+| Curve | Linear · Ease in · Ease out · Ease both | Linear | The shape of that change. |
+| Switch | At once · In step · At end of scene | At once | When the next stop's scene takes over. |
+
+Next stop on one track steps down the clips of that track, as Live's clip follow actions do. A walk through several Expressions steps from row to row, as Live's scene follow actions do. A walk may mix the two.
+
+##### Tools
+
+An event has no editing tools. Its material belongs to its sources. To relate two things, draw a line on the Canvas, where it stays a suggestion until the owner of that relation agrees to it.
+
+##### Editor tabs
+
+| Tab | What it shows |
+|---|---|
+| Material | The passages and occurrences the event gathers, by time. Follow one back and you land on the line it came from. |
+| Relations | The event's typed relations, each in the colour and line of its standing. |
+| Constellation | The bounded whole the event belongs to, drawn round it. |
+| Source | The source at its revision, and how it was admitted. |
+
+##### Envelopes
+
+An event and a stop have no envelopes.
+
+#### Takes and Arrangement lanes
+
+A reading that extends another is a take of it: it lies as a layer over the earlier reading and never rewrites it. A recorded walk keeps its takes too. Press Record and go somewhere new: each place, moment or thing you visit becomes a stop, and the walk lies along the ruler. Choose the take that stands.
+
+In Arrangement view the ruler runs from deep time to this morning. Readings lie as layers of tracks, epochs run as named sections along the top, and the narrowest epoch colours the events inside it. A walk's stops run as a rail under the track that holds them, numbered in walk order.
+
+| Setting | Values | Default | What it does |
+|---|---|---|---|
+| Time scale | Stretched · Even · Relative | Stretched | How the ruler maps time. Stretched keeps deep time readable beside today. Relative shows only when a source gives a starting point. |
+| Standing floor | Facts only · Plus claims · Plus inferences · Plus guesses · All | All | Hides the events that stand below the chosen level. |
+
+#### The Main track
+
+The Main track holds the stops. In Session view its row launchers stand at the end of the grid. Each row is a stop of a walk: launch it and the stop stands, with its event and the scenes it carries.
+
+#### On the rail
+
+| Tile | What it shows |
+|---|---|
+| Journey | The stop you are on, its narration and a play button that walks the stops. |
+| Timeline | A thin ruler with a marker at the present window. |
+| Trail | Every place you went, newest first. Select one to return to it. |
+
+#### Rules
+
+- Every event keeps the weight it has. Placing two events side by side draws no edge and turns no coincidence into a cause.
+- A later reading lies over an earlier one. It does not erase it.
+- An empty place stays empty, and a stop with nothing to stand says so.
+- Launch stands a stop. It does not change the event.
+- An event's material belongs to its sources. Follow a passage back and you land on the line it came from.
+
+#### Tips
+
+- To read only what is established, set Standing floor to Facts only.
+- To walk one Expression scene by scene, leave every stop's follow action on Next stop on one track.
+- To make a slow arrival, set Arrival to Fade and raise Transition time.
+- To record a walk, press Record and go from place to place. Stop recording and the walk lies along the ruler, ready to edit and give away.
+
+### 17.2 World
 
 **Product:** Technē · **Kind:** instrument · **Pane:** any pane, in every mode
 
@@ -1563,7 +1887,7 @@ Where: on a chain. The compact World shows a small live picture of the body, wit
 | View as | Shows your world as Me, Field or Public sees it. |
 | Occasion | Sets the moment: Now, a date or a stop. |
 
-Set a macro and the picture changes at once. Click the plate to show the World whole in the pool. Click ⤢ to open it full in a pane.
+Set a macro and the picture changes at once. Click the plate to show the World whole in the pool. Click ▦ to open it full in a pane.
 
 ##### Whole
 
@@ -1579,7 +1903,7 @@ Where: the pool under the browser. The whole World shows every parameter, in sev
 | Locations | Place kind |
 | Earth layers | Earth layers |
 
-A change you make in the pool applies at once. It does not add the World to your rack. Click ⤢ to open the World full in a pane.
+A change you make in the pool applies at once. It does not add the World to your rack. Click ▦ to open the World full in a pane.
 
 ##### Full
 
@@ -1648,7 +1972,7 @@ Where: the rail on the right. The widget shows your planet, small, with its phas
 - To find a place in a source, select the place in Place scale and open its source.
 - To keep a view for a walk, press Capture.
 
-### 17.2 Knowledge graph
+### 17.3 Knowledge graph
 
 **Product:** Technē · **Kind:** instrument · **Pane:** any pane, in every mode
 
@@ -1725,7 +2049,7 @@ Where: on a chain. The compact Knowledge graph shows the graph of the selected n
 | Ghosts | Shows or hides links that have no target. |
 | Labels | Sets Automatic, All or Focus. |
 
-Click the plate to show the Knowledge graph whole in the pool. Click ⤢ to open it full in a pane.
+Click the plate to show the Knowledge graph whole in the pool. Click ▦ to open it full in a pane.
 
 ##### Whole
 
@@ -1738,7 +2062,7 @@ Where: the pool under the browser. The whole Knowledge graph shows every paramet
 | Display | View, Ghosts, Labels, Arrows, Minimap |
 | Groups | The highlighted groups that you coloured |
 
-A change you make in the pool applies at once. It does not add the Knowledge graph to your rack. Click ⤢ to open it full in a pane.
+A change you make in the pool applies at once. It does not add the Knowledge graph to your rack. Click ▦ to open it full in a pane.
 
 ##### Full
 
@@ -1787,7 +2111,7 @@ Where: the rail on the right. The widget shows the neighbourhood of the selectio
 - To see how two notes connect, select one and raise Depth until the other appears.
 - To follow a line of thought, turn Arrows on and read along the lines.
 
-### 17.3 Canvas
+### 17.4 Canvas
 
 **Product:** Technē · **Kind:** instrument · **Pane:** any pane, in every mode
 
@@ -1867,7 +2191,7 @@ Where: on a chain. The compact Canvas shows a small live map of the Canvas and f
 | Relation type | Sets Echo, Influence, Cause or Transform for the next line. |
 | Standing | Sets Fact, Claim, Inference or Guess for the next line. |
 
-Click the plate to show the Canvas whole in the pool. Click ⤢ to open it full in a pane.
+Click the plate to show the Canvas whole in the pool. Click ▦ to open it full in a pane.
 
 ##### Whole
 
@@ -1881,7 +2205,7 @@ Where: the pool under the browser. The whole Canvas shows every parameter, in fi
 | Look | Layout, Minimap |
 | Views | View, Autosave |
 
-A change you make in the pool applies at once. It does not add the Canvas to your rack. Click ⤢ to open the Canvas full in a pane.
+A change you make in the pool applies at once. It does not add the Canvas to your rack. Click ▦ to open the Canvas full in a pane.
 
 ##### Full
 
@@ -1933,7 +2257,7 @@ Where: the rail on the right. The widget shows the map of the Canvas you hold an
 - To share a map with someone who uses another tool, export the file.
 - To find a card in a large map, use Find, then Fit.
 
-### 17.4 Timeline
+### 17.5 Timeline
 
 **Product:** Technē · **Kind:** instrument · **Pane:** any pane, in every mode
 
@@ -2025,7 +2349,7 @@ Where: on a chain. The compact Timeline shows the ruler in miniature, with the d
 | Standing floor | Hides events that stand below the chosen level. |
 | Readings | Shows or hides each layer. |
 
-Click the plate to show the Timeline whole in the pool. Click ⤢ to open it full in a pane.
+Click the plate to show the Timeline whole in the pool. Click ▦ to open it full in a pane.
 
 ##### Whole
 
@@ -2038,7 +2362,7 @@ Where: the pool under the browser. The whole Timeline shows every parameter, in 
 | Standing | Standing floor |
 | Window | Window, Time scale, Overview strip, View |
 
-A change you make in the pool applies at once. It does not add the Timeline to your rack. Click ⤢ to open the Timeline full in a pane.
+A change you make in the pool applies at once. It does not add the Timeline to your rack. Click ▦ to open the Timeline full in a pane.
 
 ##### Full
 
@@ -2098,7 +2422,7 @@ Where: the rail on the right. The widget shows a thin ruler with a marker at the
 - To see what you did on the day a book was written, set Your work to Days and zoom to that year.
 - To read in peace, press F for focus mode and Esc to return.
 
-### 17.5 Journey
+### 17.6 Journey
 
 **Product:** Technē · **Kind:** instrument · **Pane:** any pane, in every mode
 
@@ -2175,7 +2499,7 @@ Where: on a chain. The compact Journey shows the stops as small cells, with the 
 | Loop | Sets Off, On, or On with leave at end of scene. |
 | Narration | Speaks or shows the words of each stop, or not. |
 
-Click the plate to show the Journey whole in the pool. Click ⤢ to open it full in a pane.
+Click the plate to show the Journey whole in the pool. Click ▦ to open it full in a pane.
 
 ##### Whole
 
@@ -2188,7 +2512,7 @@ Where: the pool under the browser. The whole Journey shows every parameter, in f
 | Transitions | Transition time, Curve, Switch |
 | Takes | Take |
 
-A change you make in the pool applies at once. It does not add the Journey to your rack. Click ⤢ to open the Journey full in a pane.
+A change you make in the pool applies at once. It does not add the Journey to your rack. Click ▦ to open the Journey full in a pane.
 
 ##### Full
 
@@ -2249,7 +2573,7 @@ Where: the rail on the right. The widget shows the stop you are on, its narratio
 - To show a source, open it from its stop and choose Return to scene when you finish.
 - To compare two tellings, record both and keep each as a take.
 
-### 17.6 Palace
+### 17.7 Palace
 
 **Product:** Technē · **Kind:** instrument · **Pane:** any pane, in every mode
 
@@ -2325,7 +2649,7 @@ Where: on a chain. The compact Palace shows the plan of the rooms, with the path
 | Audience | Shows the Palace as Me, Field or Public sees it. |
 | Return | Chooses the route that receives the proposal of Return. |
 
-Click the plate to show the Palace whole in the pool. Click ⤢ to open it full in a pane.
+Click the plate to show the Palace whole in the pool. Click ▦ to open it full in a pane.
 
 ##### Whole
 
@@ -2338,7 +2662,7 @@ Where: the pool under the browser. The whole Palace shows every parameter, in fo
 | Board | Arrangement, Snap, Connections, Audience |
 | Return | Return route |
 
-A change you make in the pool applies at once. It does not add the Palace to your rack. Click ⤢ to open the Palace full in a pane.
+A change you make in the pool applies at once. It does not add the Palace to your rack. Click ▦ to open the Palace full in a pane.
 
 ##### Full
 
@@ -2396,7 +2720,7 @@ Where: the rail on the right. The widget shows the plan of the Palace you hold, 
 - To bring a reader to a related place, add a portal from the room that mentions it.
 - To report a finding, arrange the objects in the order of your argument and choose Return.
 
-### 17.7 Document
+### 17.8 Document
 
 **Product:** Central · **Kind:** instrument · **Pane:** any pane, in every mode
 
@@ -2406,7 +2730,7 @@ You need to read and write a page, and keep it tied to the thing it is about. Th
 
 Every page starts from a template, and every template is yours to change. The template draws the page. It holds no logic. Turning, filling, agent intake and saving are functions of the instrument.
 
-| Page | What it is | What the form device shows |
+| Page | What it is | What the page adds in its Clip panel |
 |---|---|---|
 | Day | The page of one day, a die with six faces. | The six faces. Click a face to turn the die to it. |
 | Flow | A running conversation or journal. The people and agents in it are named at the top. | The participants, and the view: Dialogue, Flow or Journal. |
@@ -2474,7 +2798,7 @@ Where: on a chain. The compact Document shows a small preview of the page, the s
 | Packet scope | Sets Selection, Page, or Page and linked. |
 | Selection act | Sets what a plain selection does: Highlight, Note, To packet or Answer this. |
 
-Click the plate to show the Document whole in the pool. Click ⤢ to open it full in a pane.
+Click the plate to show the Document whole in the pool. Click ▦ to open it full in a pane.
 
 ##### Whole
 
@@ -2487,13 +2811,13 @@ Where: the pool under the browser. The whole Document shows every parameter, in 
 | Agent | Agent writes, Overdub |
 | Save | Autosave |
 
-A change you make in the pool applies at once. It does not add the Document to your rack. Click ⤢ to open the Document full in a pane.
+A change you make in the pool applies at once. It does not add the Document to your rack. Click ▦ to open the Document full in a pane.
 
 ##### Full
 
 Where: a pane. The full Document shows the page as its template draws it. Read and write here. The controls stay in Device view, below the pane.
 
-The page may be a Day, a Flow, a Being or a Thing. A Day shows its six faces. Use the form device to turn the die. A Flow names its people and agents at the top. Choose Dialogue, Flow or Journal to change how it reads. A Being or a Thing shows the bindings that tie it to its world, its sources and its place.
+The page may be a Day, a Flow, a Being or a Thing. A Day shows its six faces; the Day on the Main track turns the die. A Flow names its people and agents at the top. Choose Dialogue, Flow or Journal to change how it reads. A Being or a Thing shows the bindings that tie it to its world, its sources and its place.
 
 Select a passage. Highlight, Note, To packet and Answer this are close at hand. The answer arrives as a new entry, with its author and its sources. Follow a source and you land on the line it came from.
 
@@ -2532,7 +2856,7 @@ Where: the rail on the right. The widget shows the page you hold, small, with it
 4. Check the packet and its size in Device view.
 5. Press Play. The agent answers into the page as a new entry with its sources.
 6. Accept or remove each entry that the agent proposes.
-7. To turn a Day, use the form device. To change the view of a Flow, choose Dialogue, Flow or Journal.
+7. To turn a Day, use the Day on the Main track. To change the view of a Flow, choose its Dialogue, Flow or Journal tab.
 8. Save the page.
 
 #### Rules
@@ -2552,323 +2876,7 @@ Where: the rail on the right. The widget shows the page you hold, small, with it
 - To draft by voice, press Record, talk, and set Overdub to New entry.
 - To redesign your Things, change the template once. Every Thing then follows it.
 
-### 17.8 Session grid
-
-**Product:** DLW, every mode · **Kind:** instrument · **Pane:** any pane, in every mode
-
-You need to try things, fire them, and put this beside that without a fixed order. The Session grid shows the tracks of the mode across the pane and their clips in rows below. Every clip can launch, and a row launches one clip on every track.
-
-#### What the grid holds in each mode
-
-The grid is the same in every mode. Only the material changes.
-
-| Mode | Track | Clip | Stop (a row) | Takes under a clip |
-|---|---|---|---|---|
-| Central | A stream: the Day, Flows, Beings, Things, Goals. | An entry or a document. | The face of the Day, which stands its entries together. | Revisions: draft, saved, edited since save. |
-| Factory | An agent session. | A task. | A batch of tasks that launch together. | Attempts. You choose the attempt that lands. |
-| Expressions | An Expression. | A scene. | A moment across several Expressions. | Captured takes of a scene. |
-| Technē | A reading, a journey or the occurrences of a subject. | An event, an occurrence or a revision at its time and place. | A stop of a walk: it stands its event and launches the scenes it carries. | Readings that extend a reading. |
-| Live | A part. | A note clip or an audio clip. | A row of clips. | Take lanes. |
-
-The word scene always means an Expression's scene. A row of clips is a stop.
-
-#### How a clip is drawn
-
-| State | How it looks |
-|---|---|
-| Waiting | A fast blink. It has no length, because nobody knows how long it will take. |
-| Running | A slow blink and a fill that grows. It has no end drawn. |
-| Stopped | Ready, in full colour. |
-| Recording | Marked with the record light. |
-| Stalled | Striped and frozen where its output stopped. The track lights a retry. |
-| Done | Dimmed and settled. |
-
-An empty slot is a place to write. Double-click it to start a clip there.
-
-#### Tracks and groups
-
-A track header shows the identity colour, the name and, in Factory, the agent. Groups fold under one header. The members of a group step in below it, with one coloured rail for each level. A row in a group launches all its children at once.
-
-Each track has a stop button. In Factory, the track also lights a retry when one of its clips has stalled. The retry starts again from the last good step on the same basis.
-
-The Main track sits at the end of the grid, where Live keeps the Main track. In Central, the Day is the Main track. Each workspace sends its work there.
-
-#### Launch, follow and take
-
-Launch mode says how a clip plays: once, while you hold it, or in a loop. Launch quantize says when a launch lands: at once, at the next bar, or after the agent finishes its current step. A follow action says what comes after a clip: the next clip, the first clip, or nothing. Takes stack under a clip. Choose the one that stands.
-
-#### Parameters
-| Parameter | Values | Default | What it does |
-|---|---|---|---|
-| Tracks shown | Any set of the mode's tracks | All | Chooses the tracks that fill the grid. |
-| Groups | Each group, Open · Folded | Open | Folds a group under its header. |
-| Launch mode | Once · Hold · Loop | Once | Sets how a clip plays. |
-| Launch quantize | Now · Next bar · After the current step | Now | Sets when a launch lands. |
-| Follow action | None · Next · First · Stop | None | Sets what comes after a clip. |
-| Armed track | One track, or none | None | Sets the track that voice and the composer address. |
-| Solo | Each track, On · Off | All Off | Lets only the soloed tracks run. |
-| Takes | Hidden · Shown | Hidden | Shows the takes under each clip. |
-| Main track | Shown · Hidden | Shown | Shows the Main track at the end of the grid. |
-| Row keys | On · Off | On | Lets the number keys launch rows. |
-
-#### Views
-
-```ui
-device: dlw:session-grid
-caption: Session grid, on a fixture of readings.
-```
-
-##### Folded
-
-Where: on a chain. The folded Session grid shows the mode and the number of tracks. Click the title to unfold it.
-
-##### Compact
-
-Where: on a chain. The compact Session grid shows a small grid of coloured cells, one for each clip state, and four macros.
-
-| Macro | What it does |
-|---|---|
-| Launch quantize | Sets when a launch lands: Now, Next bar, or After the current step. |
-| Follow action | Sets what comes after a clip: None, Next, First or Stop. |
-| Launch mode | Sets how a clip plays: Once, Hold or Loop. |
-| Armed track | Sets the track that voice and the composer address. |
-
-Click the plate to show the Session grid whole in the pool. Click ⤢ to open it full in a pane.
-
-##### Whole
-
-Where: the pool under the browser. The whole Session grid shows every parameter, in four groups.
-
-| Group | Parameters |
-|---|---|
-| Tracks | Tracks shown, Groups, Solo, Main track |
-| Launch | Launch mode, Launch quantize, Armed track, Row keys |
-| Follow | Follow action |
-| Takes | Takes |
-
-A change you make in the pool applies at once. It does not add the Session grid to your rack. Click ⤢ to open the grid full in a pane.
-
-##### Full
-
-Where: a pane. The full Session grid shows the tracks of the mode across the pane and their clips in rows below. The controls stay in Device view, below the pane.
-
-A track header shows the identity colour and the name. In Factory, it also shows the agent. Each track has a stop button. Groups fold under one header, with one coloured rail for each level.
-
-Each clip shows its state: waiting, running, stopped, recording, stalled or done. An empty slot is a place to write. Each row has a launcher. The Main track sits at the end of the grid.
-
-Select a clip. Press Play to launch it. Press a row's number key to launch the row. Press a track's stop button to stop it. Double-click an empty slot to start a clip. When a track lights a retry, press retry.
-
-Select a clip, and its editor opens in Clip view.
-
-##### Widget
-
-Where: the rail on the right. The widget shows the grid of the mode in small cells. Click a cell to select the clip. A lit retry opens its track. The widget stays when you change mode.
-
-#### Transport
-| Control | Effect on the Session grid |
-|---|---|
-| Play | Launches the selected clip, or every queued clip in the selected row. |
-| Stop | Stops the playing clips at the next safe point. Press again to cancel. |
-| Record | Lays what plays into Arrangement view as clips, with takes under them. |
-| Overdub | Adds to what is recorded, or steers a running clip. |
-| Arm | Records the moves of any parameter as an automation lane on that track. |
-| Re-enable | Gives a parameter back to its lane, or to the agent or instrument that held it. |
-| Capture | Keeps what you did by hand as a new clip. |
-| Quantize | Sets Launch quantize. |
-| Follow | Keeps views on the clip that runs. |
-| Position | Shows the place in the running clip. |
-| Tap | Asks what each running clip has done. In Central, it stamps the moment. |
-
-#### To use the Session grid
-1. Open the Session grid in a pane, or press Tab from Arrangement view.
-2. Read the states of the clips.
-3. Select a clip. Press Play to launch it.
-4. To launch a row, press its number key.
-5. To try one thing against another, launch clips on two tracks together.
-6. To order work, set a follow action on a clip.
-7. When a track lights a retry, select the track and press retry.
-8. Press Record while clips play. Press Tab to see the result in Arrangement view.
-
-#### Rules
-- A track holds the stream of its owner. The grid shows it and does not copy it.
-- A clip that is running shows no end. A waiting clip shows no length.
-- A stalled clip shows where it stopped. It does not look done.
-- A row launches only what is in it. It adds nothing.
-- Stop pressed twice cancels at once. Launch quantize does not delay it.
-- The grid in every mode uses the same states, the same stop buttons and the same keys.
-
-#### Tips
-- To start a batch of tasks together, put them in one row and press its number key.
-- To test two ideas, put each on its own track and launch the row.
-- To keep the best attempt, show Takes and choose the attempt that lands.
-- To keep a run off your list of work, leave it in the grid and out of the Day's tasks.
-- To clear a stall, select the track and press retry.
-
-### 17.9 Arrangement ruler
-
-**Product:** DLW, every mode · **Kind:** instrument · **Pane:** any pane, in every mode
-
-You need to see the course of your material over time. The Arrangement ruler lays the tracks of the mode along one ruler. You see today from first entry to last, or each thread of agent work with a needle. You see an Expression's scenes in order, or history from deep time to this morning.
-
-#### What the ruler holds in each mode
-
-| Mode | Tracks along the ruler | The ruler measures |
-|---|---|---|
-| Central | The streams of the day: the Day, Flows, Beings, Things. | Today, from first entry to last. |
-| Factory | One thread for each agent session. Each thread has a needle. | Time of the run. |
-| Expressions | One track for each Expression, with the picture lane over the sound lane. | The scenes in order, in seconds. |
-| Technē | Readings, as layers of tracks. | Time from deep time to today. |
-| Live | The parts of the set. | Bars and beats. |
-
-The ruler shows each track's clips. Under the clips lie the lanes of the track's devices, such as an agent's effort or a field device's value.
-
-#### Needles and lanes
-
-In Factory, each thread has one needle at its last check-in. The needle jumps each time its agent checks in. A needle that does not move marks a stall, and the thread freezes where its output stopped. A line marks now. Follow keeps now in view.
-
-Under a thread run its events: messages, files, terminal, and pages read. Click an event and it opens beside the ruler.
-
-Under any track, a lane shows the recorded moves of one parameter. Arm a track and move a parameter. The move becomes a lane. A lane that is modulated shows the source that moves it.
-
-Record in Session view and the clips lay out here, with their takes under them.
-
-#### Sections, markers and loop
-
-Named sections run along the top. In Technē they are epochs. They nest, and the narrowest colours the clips inside it. A marker is a named, coloured point. Jump from marker to marker with the next and previous keys.
-
-A loop region has an in point and an out point. The transport plays, and repeats, only between them. In Factory, the same brace is the window in which agents may write.
-
-#### Edit clips on the ruler
-
-A clip stays the same thing wherever you move it. A move changes only when it stands in time.
-
-| Edit | What it does |
-|---|---|
-| Move, insert | Moves the clip and shifts the clips after it. |
-| Move, overwrite | Moves the clip and replaces what was there. |
-| Trim | Drags an edge to change the length. |
-| Roll | Moves the seam between two clips. One grows by what the other loses. |
-| Slip | Changes where the clip starts inside its own content. |
-| Slide | Moves a clip between fixed neighbours. |
-| Split | Cuts the clip in two at the playhead. The lengths add up to the original. |
-
-A void is a still clip, not a gap. Every edit is one step in the undo list, with a label. A split or a roll is one step, not three.
-
-Snap pulls the playhead and the edges you drag to clip edges, markers, loop edges and the playhead. Hold Alt to turn snap off while you drag.
-
-#### Parameters
-| Parameter | Values | Default | What it does |
-|---|---|---|---|
-| Tracks shown | Any set of the mode's tracks | All | Chooses the tracks on the ruler. |
-| Lanes | Takes, Automation, Events, each On · Off | Takes On, Automation On, Events Off | Shows the lanes under the tracks. |
-| Time scale | Even · Stretched | Even | Stretched keeps deep time readable beside today. |
-| Zoom | Any span | Fit all | Sets the span in view. |
-| Snap | On · Off | On | Aligns dragged items to edges, markers and the playhead. |
-| Move mode | Insert · Overwrite | Insert | Sets what a move does to its neighbours. |
-| Trim mode | Trim · Roll · Slip · Slide | Trim | Sets what an edge drag does. |
-| Markers | Any set | None | Shows named points. Add one at the playhead. |
-| Loop region | Off · In to out | Off | Plays and repeats only between the points. |
-| Needles | On · Off | On | Shows the needle of each thread. It applies in Factory. |
-| Overview strip | On · Off | On | Shows the whole ruler with the view marked. |
-| Standing floor | Facts only · Plus claims · Plus inferences · Plus guesses · All | All | Hides clips that stand below the level. It applies in Technē. |
-
-#### Views
-
-```ui
-device: dlw:arrangement-ruler
-caption: Arrangement ruler, on a fixture of readings.
-```
-
-##### Folded
-
-Where: on a chain. The folded Arrangement ruler shows the mode and the span in view. Click the title to unfold it.
-
-##### Compact
-
-Where: on a chain. The compact Arrangement ruler shows a small ruler, with the clips as bars and the playhead, and four macros.
-
-| Macro | What it does |
-|---|---|
-| Zoom | Sets the span in view. |
-| Snap | Aligns dragged items to edges, markers and the playhead, or not. |
-| Move mode | Sets Insert or Overwrite. |
-| Lanes | Shows or hides Takes, Automation and Events under the tracks. |
-
-Click the plate to show the Arrangement ruler whole in the pool. Click ⤢ to open it full in a pane.
-
-##### Whole
-
-Where: the pool under the browser. The whole Arrangement ruler shows every parameter, in four groups.
-
-| Group | Parameters |
-|---|---|
-| Tracks | Tracks shown, Time scale, Zoom, Needles, Overview strip, Standing floor |
-| Lanes | Lanes |
-| Edit | Snap, Move mode, Trim mode |
-| Loop | Markers, Loop region |
-
-A change you make in the pool applies at once. It does not add the Arrangement ruler to your rack. Click ⤢ to open the ruler full in a pane.
-
-##### Full
-
-Where: a pane. The full Arrangement ruler shows the tracks of the mode along one ruler, with their clips, lanes, needles and sections. The controls stay in Device view, below the pane.
-
-Named sections run along the top. A marker is a named, coloured point. The loop region shows between its in point and its out point. The playhead shows where you are. Under the clips of a track lie the lanes of its devices. In Factory, each thread shows a needle at its last check-in. A needle that does not move marks a stall.
-
-Select a clip. Drag it to move it. Drag an edge to change its length. Choose a Trim mode to roll, slip or slide. Split a clip at the playhead. Drag the playhead to scrub.
-
-Drag the overview strip to move the view. Resize it to zoom. Press Play to play from the playhead.
-
-Select a clip, and its editor opens in Clip view.
-
-##### Widget
-
-Where: the rail on the right. The widget shows a thin ruler with the playhead and the loop region. Click it to open the ruler at that moment. The widget stays when you change mode.
-
-#### Transport
-| Control | Effect on the Arrangement ruler |
-|---|---|
-| Play | Plays from the playhead. Each clip's track runs through its chain. |
-| Stop | Stops at the playhead. Press again to return to the start. |
-| Record | Lays the take into the ruler. |
-| Overdub | Adds to the take on the ruler. |
-| Arm | Records the moves of any parameter as a lane. |
-| Re-enable | Gives a parameter back to its lane, or to the agent that held it. |
-| Loop and punch | Sets the loop region and the window of the take. |
-| Follow | Keeps now or the playhead in view. |
-| Position | Shows the playhead. |
-| Quantize | Sets how the playhead and edits align. |
-| Capture | Keeps the span in view as a new clip. |
-
-The playhead can also scrub: drag it and the material follows. Shuttle plays back or forward at a chosen speed. Frame stepping moves by one step.
-
-#### To use the Arrangement ruler
-1. Press Tab to change from Session view to Arrangement view, or open the ruler in a pane.
-2. Drag the overview strip to move. Resize it to zoom.
-3. Select a clip. Its editor opens in Clip view.
-4. To change a length, drag an edge. To move a clip, drag it.
-5. To mark a moment, add a marker at the playhead and name it.
-6. To repeat a span, set the loop region and press Play.
-7. To record a parameter, press Arm, play, and move the parameter. Read the new lane under the track.
-8. To give a parameter back, press Re-enable.
-
-#### Rules
-- The ruler shows the material of its owner. It does not copy it.
-- A move does not change what a clip is. It changes only where the clip stands.
-- Placement does not raise a claim to a fact.
-- A needle that stops is a stall. The ruler shows it and does not hide it.
-- Every edit is one labelled step. The step can be undone alone.
-- A modulated parameter shows what moves it.
-- A recorded lane gives control back only when you press Re-enable.
-
-#### Tips
-- To find where an agent got stuck, look for the needle that stopped, then open its last events.
-- To rehearse a section, set the loop region around it and press Play.
-- To cut a scene in two, put the playhead where you want the cut and split.
-- To make a smooth change, record the move of one parameter over a scene with Arm.
-- To compare two days, show both in one view and look for the same shape.
-
-### 17.10 Terminal
+### 17.9 Terminal
 
 **Product:** Central · **Kind:** instrument · **Pane:** any pane, in every mode
 
@@ -2915,7 +2923,7 @@ Where: on a chain. The compact Terminal shows the last lines of output and four 
 | Font size | Sets the size of the text: 10 to 18 points. |
 | Wrap | Wraps long lines, or not. |
 
-Click the plate to show the Terminal whole in the pool. Click ⤢ to open it full in a pane.
+Click the plate to show the Terminal whole in the pool. Click ▦ to open it full in a pane.
 
 ##### Whole
 
@@ -2927,7 +2935,7 @@ Where: the pool under the browser. The whole Terminal shows every parameter, in 
 | Input | Input |
 | Display | Scrollback, Font size, Wrap |
 
-A change you make in the pool applies at once. It does not add the Terminal to your rack. Click ⤢ to open the Terminal full in a pane.
+A change you make in the pool applies at once. It does not add the Terminal to your rack. Click ▦ to open the Terminal full in a pane.
 
 ##### Full
 
@@ -2976,7 +2984,245 @@ Where: the rail on the right. The widget shows the live shell. A line below it s
 
 Central keeps the day's work, your documents and your ground in one place. It works like a code editor: your files down the left, documents side by side, and the day as one of the documents. Everything you do in the other modes leaves a mark here, so the evening does not have to rebuild the morning. Agents read only what you give them and write only where you allow.
 
-### 18.1 Day
+### 18.1 Central: tracks and clips
+
+**Product:** Central · **Track:** a workspace · **Clip:** a page · **Main track:** the Day
+
+You need to pick up a project, a book or a practice where you left it, and to write in its pages without leaving the work. In Central each workspace is a track, and its pages are its clips. Select a page and Clip view opens it for writing, with its facts and its tools beside it. Device view below shows what works on it: the packet, the agent that answers and its scope.
+
+#### The track
+
+A track is a workspace: a project, a book, a practice or another body of work. It holds the documents and files of that work as clips. It remembers how you like to work on it in every mode, and it sends its work to the Day.
+
+To make a workspace, drag a folder from the browser onto an empty track. The track becomes a workspace, and the files of the folder show as its clips.
+
+The track head shows the workspace's name and colour. Its settings stand on the head:
+
+| Setting | Values | Default | What it does |
+|---|---|---|---|
+| Name | Text | New workspace | The name on the track and in the browser. |
+| Kind | Project · Book · Practice · Other | Project | Chooses the starting set of a new workspace. |
+| Folder | A folder of your ground, or none | None | The folder whose files show as clips. |
+| Place | A place on your world, or none | Its own place | Where the workspace stands on your planet. A new project gets its own place. |
+
+A workspace keeps your context: the panes and how they are split and pinned, the instrument in each pane and its build, the widgets on the rail and their preset, and the set each mode opens with. Launch the workspace and that context comes back.
+
+| Setting | Values | Default | What it does |
+|---|---|---|---|
+| Remember | Panes · Instruments · Widgets · Sets: each On or Off | All On | Which parts of your context the workspace keeps. |
+| Remember in | Every mode · Open mode only | Every mode | Keeps context for all five modes, or only for the mode that is open. |
+| On launch | Restore all modes · Restore open mode · Restore nothing | Restore all modes | What comes back when you launch the workspace. |
+| Open in | Last mode · Central · Factory · Expressions · Technē · Live | Last mode | The mode that comes forward after a launch. |
+| Keep context | On change · On leave · Manual | On change | When the workspace stores your context. |
+
+##### The mixer row
+
+| Live's control | What it does here |
+|---|---|
+| Output | The Day. Every workspace sends its work to the Day, the Main track. |
+| Activator | Send to Day. On, the work of the workspace reaches the Day. Off, it stays out of the Day. On by default. |
+| Arm | Lets the agent of the workspace write into its pages directly, each write with a receipt. Off, every agent write arrives as a proposal. |
+| Solo | None. A workspace does not run, so nothing is soloed. |
+| Monitor | None. |
+
+The input of a workspace is its Folder. A file you add to the folder shows as a clip. A file you change in any editor shows the change on its clip.
+
+#### The clip
+
+A clip is a page: a Flow, a Being, a Thing, a Day, or a page of a kind you made. Every page starts from a template, and the template draws it. The editor edits the page itself: its words, its marks and the notes beside it.
+
+A clip shows its state on the grid and on the ruler: Draft, Saved or Edited since save.
+
+#### Clip view
+
+Clip view shows the page as you write it: the same editor as the page in a pane. Its facts stand in the Clip panel on the left, the tools beside them, and the page fills the rest.
+
+##### The Clip panel
+
+| Field | Values | Default | What it does |
+|---|---|---|---|
+| Title | Text | From the template | The page's title, on the clip's colour. |
+| Colour | The palette | The workspace's colour | The colour of the clip on the grid and the ruler. |
+| Kind | Flow · Being · Thing · Day · a kind you made | The template's | What sort of page it is. The kind sets the form fields below. |
+| Template | A template, at a version | The kind's standard template | The design that draws the page. A page keeps the version it opened with. A new version of the template does not change an old page. |
+| Revision | A revision (reading) | Read from the owner | The saved revision the page stands on. |
+| Save state | Saved · Unchanged · Stale · Conflict · Refused (reading) | Read from the last save | The outcome of the last save. A stale or conflicting save keeps your draft and shows what changed. |
+
+A Flow adds its participants:
+
+| Field | Values | Default | What it does |
+|---|---|---|---|
+| Participants | A list of names. Each is a Person or an Agent. | You | Who is in the exchange. Each has a name and an initial. A person is drawn solid, an agent as points. An agent can be tied to a session. |
+
+A Being or a Thing adds its ties. The ties belong to the page, not to its design.
+
+| Field | Values | Default | What it does |
+|---|---|---|---|
+| World | A world | Your world | The world that the page belongs to. |
+| Subject | A being or a subject in the world, or none | None | What the page is about: a person or an agent for a Being, an object for a Thing. |
+| Kind of being | Person · Agent | Person | A Being only. Says what sort of being the page holds. |
+| Office | One or more of 1 to 4 | 2 | The subject offices that the page takes up. |
+| Sources | A list. Each source is at a revision. | None | Where the claims of the page come from. |
+| Place | A place in your world, or none | None | Where the being or object stands in your world. |
+| Anchor | A real place on Earth, or none | None | The real place the page is tied to. |
+| Expression | An Expression, or none | None | The Expression that the page shows. |
+| Layout | Portrait · Editorial | Portrait for a Being, Editorial for a Thing | How the page is composed. |
+| Tone | Paper · Ink | Paper | The ground of the page: light or dark. |
+
+A Being or a Thing page has a title, a line of introduction, an opening, numbered sections, and a side list named In relation. A Day's faces are turned by the Day on the Main track.
+
+##### The Launch panel
+
+A page has no Launch panel. Pages are read and written, not launched. Like a clip laid on Live's Arrangement view, a page stands where it is in the day.
+
+##### Tools
+
+The tools shape and mark the page you are writing. Each leaves the words whole.
+
+Select a passage and four acts appear above it. They are the selection tool.
+
+| Act | What it does |
+|---|---|
+| Highlight | Marks the passage in the chosen colour. Choose it again on a highlight to remove it. |
+| Note | Opens a note anchored to the passage. |
+| To packet | Adds the passage to the packet. |
+| Answer this | Sends the packet and the passage to the agent on the workspace's chain. The answer arrives as a new entry, with its sources. Overdub in the transport decides whether it joins as a new entry or replaces the passage. |
+
+**Text** sets how the words are set: the paragraph style, the emphasis and the size you read at.
+
+| Control | Values | Default | What it does |
+|---|---|---|---|
+| Style | Body · Head · Quote · List | Body | The paragraph style of the selection. |
+| Emphasis | None · Bold · Italic · Strike | None | The emphasis of the selected words. |
+| Size | 13 to 22 pt | 15 pt | The type size you see the page in. It changes only your view. |
+
+**Highlight** marks the passages that matter as you read.
+
+| Control | Values | Default | What it does |
+|---|---|---|---|
+| Colour | Yellow · Green · Blue · Pink | Yellow | The colour of the next highlight. |
+| Show | All · Highlights only | All | Fades everything except the highlights. |
+| Pen | On · Off | Off | Makes a drag over text a highlight. Draw in the transport turns it on. |
+| Selection tool | On · Off | On | Shows the acts when you select a passage. |
+
+**Notes** keeps your own thoughts beside a passage. Each note is anchored to the place it is about, and shows that anchor, such as an entry, or a face and a paragraph.
+
+| Control | Values | Default | What it does |
+|---|---|---|---|
+| Timing | During reading · After reading | During reading | Records whether you wrote the note while you read or afterwards. |
+| Anchor to | Selection · Entry · Document | Selection | The part of the page that the next note is about. |
+| Show | All notes · Open entry · Off | All notes | Which notes appear beside the page. |
+| Order | By place in the page · By time | By place in the page | The order of the list of notes. |
+
+##### Editor tabs
+
+The editor's tabs are the ways the page can be read.
+
+| Tab | What it shows |
+|---|---|
+| Page | The page as its template draws it. |
+| Source | The page's source text. |
+
+A Flow reads in three ways instead of Page:
+
+| Tab | What it shows |
+|---|---|
+| Dialogue | The exchange between the participants, entry by entry, in order. |
+| Flow | The same entries as threads, with the relations drawn between them. |
+| Journal | One person, one page at a time. Earlier pages are listed below the page. |
+
+In a Flow, the controls for the next entry stand at the head of the editor:
+
+| Control | Values | Default | What it does |
+|---|---|---|---|
+| Speak as | A participant | You | Who the next entry belongs to. |
+| Relation | Reply · Branch · Converge · Correct · Source · Artifact | Reply | How the next entry connects to the entry you select. |
+| Journal page | A date | Today | The page of the Journal that you read. |
+| Media | Image, video or audio files, up to 12 MB each | None | Files attached to an entry. The page keeps them inside itself. |
+
+A relation says how a new entry connects:
+
+| Relation | What it says |
+|---|---|
+| Reply | The entry answers the selected entry. |
+| Branch | The entry starts a second line of talk from the selected entry. |
+| Converge | The entry joins two lines into one. |
+| Correct | The entry says what an earlier entry should have said. The earlier entry stays. |
+| Source | The entry names where a statement comes from. |
+| Artifact | The entry names something that the talk made. |
+
+##### Envelopes
+
+A page has no envelopes. Nothing in a page moves over the page's own time.
+
+#### Takes and Arrangement lanes
+
+A page's revisions are its takes. In Arrangement view they lie as take lanes under the workspace's track: each saved revision, and the draft when it differs from the last save. Select a range in an earlier revision and press Enter to bring it back into the page, as comping does in Live. Saving the page makes its state a new revision.
+
+In Arrangement view the ruler measures today, from the first entry to the last. Each workspace is a track along it, with its pages where you worked on them, and the Day is the Main track below them. Under a track, an automation lane shows the recorded moves of one parameter of its chain.
+
+#### The Main track
+
+The Day is Central's Main track. It collects the work of the day from every workspace and every mode into one page, and its chain holds the Day, then Approvals. Every proposal an agent makes in a page waits in Approvals, and in the page it belongs to. The Day has no workspace of its own.
+
+In Session view the Main track's row launchers stand at the end of the grid. In Central a row is a face of the Day, and it stands the entries you made while that face was turned up.
+
+#### On the rail
+
+| Tile | What it shows |
+|---|---|
+| Agent | The agent of the workspace: its face, its state, the last lines of its thread and a composer. |
+| Packet | Exactly what the agent will read, and its size. |
+| Approvals | The proposals that wait for you, from every workspace. |
+
+#### Rules
+
+- A workspace stores context. It does not store content. The files stay in the folder as ordinary files.
+- A launch restores context. It does not change a page.
+- A set that you save in a mode belongs to the workspace that is open.
+- Every workspace sends to the Day. The Day is the Main track and has no workspace of its own.
+- A page keeps the template version it opened with.
+- The ties of a page belong to the page. A page you redesign keeps its ties and still knows where it stands on the map.
+- An empty Place stays empty. Nothing guesses a place.
+- Anchoring a page to Earth does not change Earth. You place the page; the place stays as it is.
+- A relation in a page's side list shows its standing (fact, claim, inferred or hypothesis) and who stated it.
+- A Being page of an agent reads the agent's card from your roster, as the Agent device does. The page keeps no copy.
+- Each Flow entry shows its author. An agent entry shows the agent's name and, when it is known, the session.
+- A participant you add to a Flow does not start. It is not proof of who wrote.
+- A correction is a new entry with the relation Correct. The old entry stays.
+- Media stays inside the page. It does not leave your ground.
+- Agent entries land as Scope and Arm allow: as proposals that wait on the page, or directly with receipts.
+- Text does not change a word. It changes only how the words are set. Style and emphasis are kept in the page; Size changes only your view.
+- A highlight marks a passage and leaves it whole. Highlights stay in the page, not only in an export.
+- A highlight or a note enters the packet only when you add it with To packet.
+- A colour has only the meaning that you give it.
+- A note is yours. An agent does not read it unless you add it to the packet. A note stays with the place it is anchored to.
+- Keys do not act as controls while you type in a page.
+
+#### Tips
+
+- To resume a book after a month, launch its workspace.
+- To keep a side project out of the Day, turn off its track's activator.
+- To work on one project on two machines, turn Link on.
+- To start a new project in your usual layout, copy a workspace and change its Folder.
+- To keep a thinking journal, choose the Journal tab and set Speak as to you.
+- To follow a second idea without losing the first, select the entry and set Relation to Branch.
+- To correct an agent, write a Correct entry. The agent's text stays on the page.
+- To prepare for a meeting, choose the Flow tab and read the threads that have no reply.
+- To see where a person stands, set the Place and open the world instrument.
+- To keep a claim honest, add its source and the revision that you read.
+- To show an object as a form, set Expression to an Expression of it.
+- To read a page at night, set Tone to Ink.
+- To read a long page with less strain, raise Size.
+- To mark a pull quote, select the passage and set Style to Quote. To turn lines into a list, set Style to List.
+- To skim a long entry, set Show to Highlights only.
+- To mark passages as you read, turn on the pen with Draw.
+- To keep two readings apart, use one colour for each reading.
+- To keep ideas that come after a reading, set Timing to After reading.
+- To find a thought again, anchor the note to the passage and not to the page.
+- To read the page without distraction, set the notes' Show to Off.
+
+### 18.2 Day
 
 **Product:** Central · **Kind:** instrument · **Track:** Central's Main track
 
@@ -3042,7 +3288,7 @@ with the open face filled, and four macros.
 | Rollover | Sets the rollover time, or Off. |
 | Close now | Runs the close routine. |
 
-Click the plate to show the Day whole in the pool. Click ⤢ to open it full in a
+Click the plate to show the Day whole in the pool. Click ▦ to open it full in a
 pane.
 
 ##### Whole
@@ -3119,785 +3365,7 @@ in the pane that has focus. The widget stays when you change mode.
 - To keep a long run off your list of tasks, let it show on face 2 only. Face 1
   holds what you decided to do.
 
-### 18.2 Workspace
-
-**Product:** Central · **Kind:** instrument · **Track:** a workspace, in Central
-
-Use the Workspace to pick up a project, a book or a practice exactly where you left it, in every mode. It holds the documents and files of that work as clips, and it sends its work to the Day.
-
-#### What a workspace holds
-
-| Part | What it holds |
-|---|---|
-| Clips | One clip for each document and file. Each clip shows its state: Draft, Saved or Edited since save. |
-| Context | The panes, instruments, widgets and set that you used, kept for each mode. |
-| Place | The place on your world where the workspace stands. |
-| Route to the Day | The link that sends the work of the workspace to the Day, the Main track. |
-
-#### What the workspace remembers
-
-| Item | What it keeps |
-|---|---|
-| Panes | Which panes are open, how they are split and which are pinned. |
-| Instruments | Which instrument each pane holds, and its build. |
-| Widgets | Which widgets are open on the rail, which are pinned and which preset is in use. |
-| Sets | The saved set that each mode opens with. |
-
-#### Parameters
-
-| Parameter | Values | Default | What it does |
-|---|---|---|---|
-| Name | Text | New workspace | The name on the track and in the browser. |
-| Kind | Project · Book · Practice · Other | Project | Chooses the starting set of a new workspace. |
-| Folder | A folder of your ground, or none | None | The folder whose files show as clips. |
-| Place | A place on your world, or none | Its own place | The place where the workspace stands on your planet. A new project gets its own place. |
-| Remember | Panes · Instruments · Widgets · Sets: each On or Off | All On | Which parts of your context the workspace keeps. |
-| Remember in | Every mode · Open mode only | Every mode | Keeps context for all five modes, or only for the mode that is open. |
-| On launch | Restore all modes · Restore open mode · Restore nothing | Restore all modes | What comes back when you launch the workspace. |
-| Open in | Last mode · Central · Factory · Expressions · Technē · Live | Last mode | The mode that comes forward after a launch. |
-| Keep context | On change · On leave · Manual | On change | When the workspace stores your context. |
-| Send to Day | On · Off | On | Sends the work of the workspace to the Day. |
-
-#### Views
-
-```ui
-device: central:workspace
-caption: Workspace, on a fixture of readings.
-```
-
-##### Folded
-
-Where: on a workspace track's chain. The folded Workspace shows the name of the workspace and the number of open documents. Click the title to unfold it.
-
-##### Compact
-
-Where: on a workspace track's chain. The compact Workspace shows the panes of the open mode as small boxes. A mark shows each mode that has a remembered set. It has four macros.
-
-| Macro | What it does |
-|---|---|
-| Launch | Restores the remembered context of the workspace. |
-| On launch | Sets Restore all modes, Restore open mode or Restore nothing. |
-| Keep context | Sets On change, On leave or Manual. |
-| Send to Day | Sets On or Off. |
-
-Click the plate to show the Workspace whole in the pool. Click ⤢ to open it full in a pane.
-
-##### Whole
-
-Where: the pool under the browser. The whole Workspace shows every parameter, in four groups.
-
-| Group | Parameters |
-|---|---|
-| Identity | Name, Kind, Folder, Place |
-| Remember | Remember, Remember in, Keep context |
-| Launch | On launch, Open in |
-| Day | Send to Day |
-
-A change you make in the pool applies at once. It does not add the Workspace to your rack.
-
-##### Full
-
-Where: a pane. The full Workspace shows the clips of the workspace, one row for each document and file. Each row shows the state of its clip: Draft, Saved or Edited since save. One more row for each mode shows the set that the mode opens with. Click a clip to open its document in a pane. The controls stay in Device view, below the pane.
-
-In Clip view, each clip of the workspace is a document or a file. The Workspace does not edit it. The clip shows its state.
-
-##### Widget
-
-Where: the rail on the right. The widget shows the name of the workspace, its open documents and a Launch button. Click Launch to restore the remembered context of the workspace. The widget stays when you change mode.
-
-#### Transport
-
-| Control | Effect on the Workspace |
-|---|---|
-| Link | Keeps the workspace and its remembered context in step on your other machines. |
-| Rate | Shows which machine serves the files of the workspace. |
-| Keys and maps | Binds a key or a phrase to Launch. |
-
-#### To use the Workspace
-
-1. Drag a folder from the browser onto an empty track. The track becomes a workspace.
-2. Set the Name. Choose the Kind and the Place.
-3. Arrange the panes, instruments and widgets in any mode.
-4. Select another workspace. Your arrangement stays with the first workspace.
-5. Launch the first workspace. Every mode returns as you left it.
-6. To keep the work out of the Day, set Send to Day to Off.
-
-#### Rules
-
-- The workspace stores context. It does not store content. The files stay in the folder as ordinary files.
-- You can change the files in any editor. The clips show the change.
-- A launch restores context. It does not change a document.
-- A set that you save in a mode belongs to the workspace that is open.
-- Every workspace routes to the Day. The Day is the Main track and has no workspace of its own.
-- A clip shows its state on the clip: Draft, Saved or Edited since save.
-
-#### Tips
-
-- To resume a book after a month, launch its workspace.
-- To keep a side project out of the Day, set Send to Day to Off.
-- To work on one project on two machines, turn Link on.
-- To start a new project in your usual layout, copy a workspace and change its Folder.
-
-### 18.3 Flow
-
-**Product:** Central · **Kind:** instrument · **Chain:** first on a Flow document, before the document effects
-
-Use a Flow for a running conversation or journal that keeps who said what. The page names its participants, people and agents, at the top.
-
-#### Three views
-
-| View | What it shows |
-|---|---|
-| Dialogue | The exchange between the participants, entry by entry, in order. |
-| Flow | The same entries as threads, with the relations drawn between them. |
-| Journal | One person, one page at a time. Earlier pages are listed below the page. |
-
-#### Relations
-
-A new entry connects to the entry that you select. The relation says how.
-
-| Relation | What it says |
-|---|---|
-| Reply | The entry answers the selected entry. |
-| Branch | The entry starts a second line of talk from the selected entry. |
-| Converge | The entry joins two lines into one. |
-| Correct | The entry says what an earlier entry should have said. The earlier entry stays. |
-| Source | The entry names where a statement comes from. |
-| Artifact | The entry names something that the talk made. |
-
-#### Participants
-
-A participant is a person or an agent. A person is drawn solid. An agent is drawn as points. An agent can be tied to a session. A participant that you add does not start. It is not proof of who wrote.
-
-#### Parameters
-
-| Parameter | Values | Default | What it does |
-|---|---|---|---|
-| View | Dialogue · Flow · Journal | Dialogue | How the page shows the entries. |
-| Participants | A list of names. Each is a Person or an Agent. | You | Who is in the exchange. Each has a name and an initial. |
-| Speak as | A participant | You | Who the next entry belongs to. |
-| Relation | Reply · Branch · Converge · Correct · Source · Artifact | Reply | How the next entry connects to the selected entry. |
-| Journal page | A date | Today | The page of the Journal that you read. |
-| Media | Image, video or audio files, up to 12 MB each | None | Files attached to an entry. The page keeps them inside itself. |
-| Template | A template, at a version | The standard Flow | The page design. Each Flow keeps the template version it opened with. |
-
-#### Views
-
-```ui
-device: central:flow-document
-caption: Flow, on a fixture of readings.
-```
-
-##### Folded
-
-Where: first on a Flow document's chain, before the document effects. The folded Flow shows the name of the Flow and the initials of its participants. Click the title to unfold it.
-
-##### Compact
-
-Where: first on a Flow document's chain, before the document effects. The compact Flow shows a strip of small bars, one for each entry. Each bar has the colour of its participant. It has four macros.
-
-| Macro | What it does |
-|---|---|
-| View | Sets Dialogue, Flow or Journal. |
-| Speak as | Chooses who the next entry belongs to. |
-| Relation | Sets how the next entry connects to the selected entry. |
-| Journal page | Chooses the date of the page to read. |
-
-Click the plate to show the Flow whole in the pool. Click ⤢ to open it full in a pane.
-
-##### Whole
-
-Where: the pool under the browser. The whole Flow shows every parameter, in three groups.
-
-| Group | Parameters |
-|---|---|
-| Page | View, Journal page, Template |
-| People | Participants, Speak as |
-| Entries | Relation, Media |
-
-A change you make in the pool applies at once. It does not add the Flow to your rack.
-
-##### Full
-
-Where: a pane. The full Flow shows the open view as the template draws it: the Dialogue, the threads of the Flow, or a page of the Journal. The participants are at the top of the page. A person is drawn solid. An agent is drawn as points. Read and write here. The controls stay in Device view, below the pane.
-
-```ui
-src: ../../desktop/cradle/documents/ql-flow.html
-width: 1100
-height: 760
-caption: The Flow template, blank. Add a participant, write an entry, then switch the view.
-```
-
-In Clip view, the clip is the Flow document. The Flow is first on its chain.
-
-##### Widget
-
-Where: the rail on the right. The widget shows the last entries of the Flow you work in. Under them, a line takes the next entry. The entry uses the Speak as and Relation values. The widget stays when you change mode.
-
-#### Transport
-
-| Control | Effect on the Flow |
-|---|---|
-| Tap | Stamps the moment as a dated line in the Flow. |
-| Record | Dictates into the open entry. |
-| Overdub | Adds your words as a new entry, or replaces the selected entry. |
-| Quantize | Sets when a save lands: on pause, or by hand. |
-| Position | Shows the entry and the paragraph that you are in. |
-| Load | Shows whether the Flow is saved. |
-
-#### To use the Flow
-
-1. Open a Flow from the browser, or make a new Flow from the template.
-2. Add the participants. Mark each one as a person or an agent.
-3. Choose who speaks. Write the entry.
-4. To answer an earlier entry, select it and choose a relation. Then write.
-5. Set the View to Journal to read one person's page at a time.
-6. To ask an agent about a passage, select the passage and choose Answer this.
-
-#### Rules
-
-- Each entry shows its author. An agent entry shows the name of the agent and, when it is known, the session.
-- A correction is a new entry with the relation Correct. The old entry is not deleted.
-- A save names its outcome: saved, unchanged, stale, conflict or refused. After a conflict, the device shows the file as it now stands.
-- Agent entries land as Scope and Arm allow: as proposals that wait on the page, or directly with receipts.
-- Media stays inside the page. It does not leave your ground.
-- A Flow keeps the template version it opened with. A new template version does not change an old Flow.
-
-#### Tips
-
-- To keep a thinking journal, set the View to Journal and Speak as to you.
-- To follow a second idea without losing the first, select the entry and set Relation to Branch.
-- To correct an agent, write a Correct entry. The text of the agent stays on the page.
-- To prepare for a meeting, set the View to Flow and read the threads that have no reply.
-
-### 18.4 Beings
-
-**Product:** Central · **Kind:** instrument · **Chain:** first on a Beings document, before the document effects
-
-Use Beings for a page about a person in your work, or an agent you work with. The page is tied to its world, its subject, its sources and a real place.
-
-#### The page and its ties
-
-The page has a title, a line of introduction, an opening, numbered sections and a side list named In relation. The ties belong to the page, not to the design.
-
-| Tie | What it says |
-|---|---|
-| World | The world that the being belongs to. |
-| Subject | The person or agent that the page is about. |
-| Office | Which of the four subject offices the page takes up. |
-| Sources | Where the claims of the page come from. Each source is at a revision. |
-| Place | Where the being stands in your world. |
-| Anchor | The real place on Earth that the page is tied to. |
-| Expression | An Expression that the page shows. |
-
-#### Parameters
-
-| Parameter | Values | Default | What it does |
-|---|---|---|---|
-| World | A world | Your world | The world that the page belongs to. |
-| Subject | A person or an agent in the world, or none | None | The being that the page is about. |
-| Kind | Person · Agent | Person | Says what sort of being the page holds. |
-| Office | One or more of 1 to 4 | 2 | Chooses the subject offices that the page takes up. |
-| Sources | A list. Each source is at a revision. | None | The sources that the page rests on. |
-| Place | A place in your world, or none | None | Where the being stands in your world. |
-| Anchor | A real place on Earth, or none | None | Ties the page to a real place. |
-| Expression | An Expression, or none | None | The Expression that the page shows. |
-| Layout | Portrait · Editorial | Portrait | How the page is composed. |
-| Tone | Paper · Ink | Paper | The ground of the page: light or dark. |
-| Template | A template, at a version | The standard Beings page | The page design. Each page keeps the template version it opened with. |
-
-#### Views
-
-```ui
-device: central:beings
-caption: Beings, on a fixture of readings.
-```
-
-##### Folded
-
-Where: first on a Beings document's chain, before the document effects. The folded Beings shows the title of the page and the name of its world. Click the title to unfold it.
-
-##### Compact
-
-Where: first on a Beings document's chain, before the document effects. The compact Beings shows the mark of the page. A pin shows when the page has a place. It has four macros.
-
-| Macro | What it does |
-|---|---|
-| Office | Chooses the subject offices that the page takes up. |
-| Layout | Sets Portrait or Editorial. |
-| Tone | Sets Paper or Ink. |
-| Place | Sets where the being stands in your world. |
-
-Click the plate to show the Beings whole in the pool. Click ⤢ to open it full in a pane.
-
-##### Whole
-
-Where: the pool under the browser. The whole Beings shows every parameter, in four groups.
-
-| Group | Parameters |
-|---|---|
-| Page | World, Kind, Template |
-| Ties | Subject, Office, Sources, Expression |
-| Place | Place, Anchor |
-| Look | Layout, Tone |
-
-A change you make in the pool applies at once. It does not add Beings to your rack.
-
-##### Full
-
-Where: a pane. The full Beings shows the page as the template draws it. It has a title, an introduction, an opening, numbered sections and the side list In relation. Read and write here. The controls stay in Device view, below the pane.
-
-```ui
-src: ../../desktop/cradle/documents/oi-beings.html
-width: 1100
-height: 760
-caption: The Beings template, blank. Press Edit, then open Source & form to see the ties that the page keeps.
-```
-
-In Clip view, the clip is the Beings page. Beings is first on its chain.
-
-##### Widget
-
-Where: the rail on the right. The widget shows the card of the selected being: its title, its world and its place. Click the card to open the page in the pane that has focus. The widget stays when you change mode.
-
-#### Transport
-
-| Control | Effect on Beings |
-|---|---|
-| Tap | Stamps the moment as a dated line in the page. |
-| Record | Dictates into the open section. |
-| Capture | Puts the selected passage in the packet. |
-| Draw | Turns on the highlight pen. |
-| Load | Shows whether the page is saved. |
-
-#### To use Beings
-
-1. Make a new Beings page from the template.
-2. Write the title and the opening.
-3. Set the World and the Subject.
-4. Add the sources that the page rests on.
-5. Choose the Place. Then choose the Anchor, a real place on Earth.
-6. To describe an agent, set Kind to Agent and set the Subject to that agent.
-
-#### Rules
-
-- The ties belong to the page. A page that you redesign keeps its ties.
-- An empty Place stays empty. The device does not guess a place.
-- A relation in the side list shows its standing (fact, claim, inferred or hypothesis) and who stated it.
-- The page of an agent reads its card from your roster, as the Agent device does. The page does not keep a copy.
-- Each page keeps the template version it opened with.
-
-#### Tips
-
-- To see where a person stands, set the Place and open the world instrument.
-- To read a page at night, set Tone to Ink.
-- To keep a claim honest, add its source and the revision that you read.
-- To give each colleague a page in one world, set the same World on every page.
-
-### 18.5 Things
-
-**Product:** Central · **Kind:** instrument · **Chain:** first on a Things document, before the document effects
-
-Use Things for a page about an object in your work: a stone, a book, a collection. The page is tied to its world, its subject, its sources and a real place.
-
-#### The page and its ties
-
-The page has a title, a line of introduction, an opening, numbered sections and a side list named In relation. The ties belong to the page, not to the design.
-
-| Tie | What it says |
-|---|---|
-| World | The world that the object belongs to. |
-| Subject | The subject that the page describes. |
-| Office | Which of the four subject offices the page takes up. |
-| Sources | Where the claims of the page come from. Each source is at a revision. |
-| Place | Where the object stands in your world. |
-| Anchor | The real place on Earth where the object stands. |
-| Expression | An Expression that the page shows. |
-
-#### Parameters
-
-| Parameter | Values | Default | What it does |
-|---|---|---|---|
-| World | A world | Your world | The world that the page belongs to. |
-| Subject | A subject in the world, or none | None | The object that the page describes. |
-| Office | One or more of 1 to 4 | 2 | Chooses the subject offices that the page takes up. |
-| Sources | A list. Each source is at a revision. | None | The sources that the page rests on. |
-| Place | A place in your world, or none | None | Where the object stands in your world. |
-| Anchor | A real place on Earth, or none | None | Ties the object to a real place. |
-| Expression | An Expression, or none | None | The Expression that the page shows. |
-| Layout | Portrait · Editorial | Editorial | How the page is composed. |
-| Tone | Paper · Ink | Paper | The ground of the page: light or dark. |
-| Template | A template, at a version | The standard Things page | The page design. Each page keeps the template version it opened with. |
-
-#### Views
-
-```ui
-device: central:things
-caption: Things, on a fixture of readings.
-```
-
-##### Folded
-
-Where: first on a Things document's chain, before the document effects. The folded Things shows the title of the page and the name of its world. Click the title to unfold it.
-
-##### Compact
-
-Where: first on a Things document's chain, before the document effects. The compact Things shows the mark of the page. A pin shows when the page has a place. It has four macros.
-
-| Macro | What it does |
-|---|---|
-| Office | Chooses the subject offices that the page takes up. |
-| Layout | Sets Portrait or Editorial. |
-| Tone | Sets Paper or Ink. |
-| Place | Sets where the object stands in your world. |
-
-Click the plate to show the Things whole in the pool. Click ⤢ to open it full in a pane.
-
-##### Whole
-
-Where: the pool under the browser. The whole Things shows every parameter, in four groups.
-
-| Group | Parameters |
-|---|---|
-| Page | World, Template |
-| Ties | Subject, Office, Sources, Expression |
-| Place | Place, Anchor |
-| Look | Layout, Tone |
-
-A change you make in the pool applies at once. It does not add Things to your rack.
-
-##### Full
-
-Where: a pane. The full Things shows the page as the template draws it. It has a title, an introduction, an opening, numbered sections and the side list In relation. Read and write here. The controls stay in Device view, below the pane.
-
-```ui
-src: ../../desktop/cradle/documents/oi-things.html
-width: 1100
-height: 760
-caption: The Things template, blank. Press Edit, then open Source & form to see the ties that the page keeps.
-```
-
-In Clip view, the clip is the Things page. Things is first on its chain.
-
-##### Widget
-
-Where: the rail on the right. The widget shows the card of the selected object: its title, its world and its place. Click the card to open the page in the pane that has focus. The widget stays when you change mode.
-
-#### Transport
-
-| Control | Effect on Things |
-|---|---|
-| Tap | Stamps the moment as a dated line in the page. |
-| Record | Dictates into the open section. |
-| Capture | Puts the selected passage in the packet. |
-| Draw | Turns on the highlight pen. |
-| Load | Shows whether the page is saved. |
-
-#### To use Things
-
-1. Make a new Things page from the template.
-2. Write the title and the opening.
-3. Set the World and the Subject.
-4. Add the sources that the page rests on.
-5. Choose the Place. Then choose the Anchor, the real place on Earth where the object stands.
-6. Add a section for each part of the object that you want to describe.
-
-#### Rules
-
-- The ties belong to the page. A page that you redesign keeps its ties and still knows where it stands on the map.
-- Earth does not change when you anchor an object to it. You place the object. The place stays as it is.
-- An empty Place stays empty. The device does not guess a place.
-- A relation in the side list shows its standing (fact, claim, inferred or hypothesis) and who stated it.
-- Each page keeps the template version it opened with.
-
-#### Tips
-
-- To record where an object stands, set the Place. Then set the Anchor to the real place.
-- To keep a claim honest, add its source and the revision that you read.
-- To show an object as a form, set Expression to an Expression of it.
-- To read a page at night, set Tone to Ink.
-
-### 18.6 Text
-
-**Product:** Central · **Kind:** effect · **Chain:** a document's chain, after the form device
-
-Use Text to shape the words on a page without leaving the page. It sets the style, the emphasis and the size, and it leaves the words whole.
-
-#### Parameters
-
-| Parameter | Values | Default | What it does |
-|---|---|---|---|
-| Style | Body · Head · Quote · List | Body | The paragraph style of the selection. |
-| Emphasis | None · Bold · Italic · Strike | None | The emphasis of the selected words. |
-| Size | 13 to 22 pt | 15 pt | The type size in which you see the document. |
-
-#### Views
-
-```ui
-device: central:text
-caption: Text, on a fixture of readings.
-```
-
-##### Folded
-
-Where: a document's chain, after the form device. The folded Text shows the name Text and the style of the selection. Click the title to unfold it.
-
-##### Compact
-
-Where: a document's chain, after the form device. The compact Text shows a sample of type in the chosen style, emphasis and size. It has three macros.
-
-| Macro | What it does |
-|---|---|
-| Style | Sets Body, Head, Quote or List. |
-| Emphasis | Sets None, Bold, Italic or Strike. |
-| Size | Sets the type size, from 13 to 22 pt. |
-
-Click the plate to show the Text whole in the pool. Click ⤢ to open it full in a pane.
-
-##### Whole
-
-Where: the pool under the browser. The whole Text shows every parameter, in three groups.
-
-| Group | Parameters |
-|---|---|
-| Paragraph | Style |
-| Emphasis | Emphasis |
-| View | Size |
-
-A change you make in the pool applies at once. It does not add Text to your rack.
-
-##### Full
-
-Where: a pane. The full Text shows the text of the open document at full size, with its styles showing. Write here. Select a passage to change its style. The controls stay in Device view, below the pane.
-
-In Clip view, Text sets the words of the document clip. It does not change a word.
-
-##### Widget
-
-Where: the rail on the right. The widget shows Style, Emphasis and Size as three small controls. Change a control to set the selection. The widget stays when you change mode.
-
-#### Transport
-
-| Control | Effect on Text |
-|---|---|
-| Record | Dictates text into the open document at the cursor. |
-| Keys and maps | Binds a key to a style or an emphasis. |
-| Load | Shows whether the document is saved. |
-
-#### To use Text
-
-1. Open a document.
-2. Select a paragraph or a few words.
-3. Select Text in Device view.
-4. Choose a Style for the paragraph.
-5. Choose an Emphasis for the selected words.
-6. Move Size to change the type size of the view.
-
-#### Rules
-
-- Text does not change a word. It changes only how the words are set.
-- Style and emphasis are kept in the page. Size changes only how you see the page.
-- The editor stays in the pane. The controls are in Device view.
-- Keys do not act as controls while you type in a document.
-
-#### Tips
-
-- To read a long page with less strain, raise Size.
-- To mark a pull quote, select the passage and set Style to Quote.
-- To turn lines into a list, select them and set Style to List.
-
-### 18.7 Highlight
-
-**Product:** Central · **Kind:** effect · **Chain:** a document's chain, after Text
-
-Use Highlight to mark the passages that matter as you read. It marks a passage and leaves the passage whole.
-
-#### The selection tool
-
-Select a passage and four actions appear above it. Highlight, Notes, the packet and the agent share this tool.
-
-| Action | What it does |
-|---|---|
-| Highlight | Marks the passage in the chosen colour. |
-| Note | Opens a note anchored to the passage. |
-| To packet | Adds the passage to the packet. |
-| Answer this | Sends the packet to the agent and asks about the passage. |
-
-#### Parameters
-
-| Parameter | Values | Default | What it does |
-|---|---|---|---|
-| Colour | Yellow · Green · Blue · Pink | Yellow | The colour of the next highlight. |
-| Show | All · Highlights only | All | Fades everything except the highlights. |
-| Pen | On · Off | Off | Makes a drag over text a highlight. |
-| Selection tool | On · Off | On | Shows the four actions when you select a passage. |
-
-#### Views
-
-```ui
-device: central:highlight
-caption: Highlight, on a fixture of readings.
-```
-
-##### Folded
-
-Where: a document's chain, after Text. The folded Highlight shows a dot in the chosen colour and the number of highlights. Click the title to unfold it.
-
-##### Compact
-
-Where: a document's chain, after Text. The compact Highlight shows lines of text. The highlighted lines are marked. It has four macros.
-
-| Macro | What it does |
-|---|---|
-| Colour | Sets Yellow, Green, Blue or Pink. |
-| Show | Sets All or Highlights only. |
-| Pen | Turns the pen On or Off. |
-| Selection tool | Turns the four actions On or Off. |
-
-Click the plate to show the Highlight whole in the pool. Click ⤢ to open it full in a pane.
-
-##### Whole
-
-Where: the pool under the browser. The whole Highlight shows every parameter, in three groups.
-
-| Group | Parameters |
-|---|---|
-| Colour | Colour |
-| View | Show, Selection tool |
-| Pen | Pen |
-
-A change you make in the pool applies at once. It does not add Highlight to your rack.
-
-##### Full
-
-Where: a pane. The full Highlight shows the open document at full size, with its highlights showing. Read and mark here. The selection tool stands above a selected passage. The controls stay in Device view, below the pane.
-
-In Clip view, Highlight marks the passages of the document clip. It leaves the words whole.
-
-##### Widget
-
-Where: the rail on the right. The widget shows the list of highlights in the open document. Each line shows the marked passage in its colour. Click a line to go to its passage. The widget stays when you change mode.
-
-#### Transport
-
-| Control | Effect on Highlight |
-|---|---|
-| Draw | Turns the pen on. Drag over text to highlight it. |
-| Keys and maps | Binds a key to a colour, or a phrase to the highlight action. |
-
-#### To use Highlight
-
-1. Select Highlight in Device view.
-2. Choose a Colour.
-3. Select a passage in a pane.
-4. Choose Highlight in the selection tool.
-5. To read only your marks, set Show to Highlights only.
-6. To remove a highlight, select it and choose Highlight again.
-
-#### Rules
-
-- A highlight marks a passage and leaves the passage whole.
-- Highlights stay in the document. They are not only in an export.
-- A highlight does not enter the packet unless you add it with To packet.
-- A colour has only the meaning that you give it.
-
-#### Tips
-
-- To skim a long entry, set Show to Highlights only.
-- To mark passages as you read, turn on the pen with Draw.
-- To keep two readings apart, use one colour for each reading.
-
-### 18.8 Notes
-
-**Product:** Central · **Kind:** effect · **Chain:** a document's chain, after Highlight
-
-Use Notes to keep your own thoughts beside a passage. Each note is anchored to the place it is about.
-
-#### Parameters
-
-| Parameter | Values | Default | What it does |
-|---|---|---|---|
-| Timing | During reading · After reading | During reading | Records whether you wrote the note while you read or afterwards. |
-| Anchor to | Selection · Entry · Document | Selection | The part of the document that the next note is about. |
-| Show | All notes · Open entry · Off | All notes | Which notes appear beside the document. |
-| Order | By place in the page · By time | By place in the page | The order of the list of notes. |
-
-#### Views
-
-```ui
-device: central:notes
-caption: Notes, on a fixture of readings.
-```
-
-##### Folded
-
-Where: a document's chain, after Highlight. The folded Notes shows the name Notes and the number of notes. Click the title to unfold it.
-
-##### Compact
-
-Where: a document's chain, after Highlight. The compact Notes shows the first notes. Each note shows its anchor. It has four macros.
-
-| Macro | What it does |
-|---|---|
-| Timing | Sets During reading or After reading. |
-| Anchor to | Sets Selection, Entry or Document. |
-| Show | Sets All notes, Open entry or Off. |
-| Order | Sets By place in the page or By time. |
-
-Click the plate to show the Notes whole in the pool. Click ⤢ to open it full in a pane.
-
-##### Whole
-
-Where: the pool under the browser. The whole Notes shows every parameter, in three groups.
-
-| Group | Parameters |
-|---|---|
-| Write | Timing |
-| Place | Anchor to |
-| View | Show, Order |
-
-A change you make in the pool applies at once. It does not add Notes to your rack.
-
-##### Full
-
-Where: a pane. The full Notes shows the notes beside the open document. Each note shows its anchor, its time and its text. Write and edit a note here. The controls stay in Device view, below the pane.
-
-In Clip view, Notes keeps your thoughts beside the document clip. Each note stays with its anchor.
-
-##### Widget
-
-Where: the rail on the right. The widget shows the notes of the open document. Click a note to go to its anchor. The widget stays when you change mode.
-
-#### Transport
-
-| Control | Effect on Notes |
-|---|---|
-| Record | Dictates into the open note. |
-| Keys and maps | Binds a key to a new note. |
-
-#### To use Notes
-
-1. Select a passage in a pane.
-2. Choose Note in the selection tool.
-3. Write the note.
-4. Set Timing if you wrote the note after you read.
-5. To find a note later, open the list in Device view.
-6. To give a note to an agent, add it to the packet.
-
-#### Rules
-
-- A note is yours. An agent does not read it unless you add it to the packet.
-- A note stays with the place that it is anchored to.
-- A note shows its anchor, for example an entry or a face and a paragraph.
-- Notes stay in the document.
-
-#### Tips
-
-- To keep ideas that come after a reading, set Timing to After reading.
-- To find a thought again, anchor the note to the passage and not to the document.
-- To read the page without distraction, set Show to Off.
-
-### 18.9 Packet
+### 18.3 Packet
 
 **Product:** Central · **Kind:** effect · **Chain:** a document's chain, after Notes
 
@@ -3938,7 +3406,7 @@ Where: a document's chain, after Notes. The compact Packet shows the items as sh
 | After sending | Sets Clear or Keep. |
 | Clear now | Empties the packet. |
 
-Click the plate to show the Packet whole in the pool. Click ⤢ to open it full in a pane.
+Click the plate to show the Packet whole in the pool. Click ▦ to open it full in a pane.
 
 ##### Whole
 
@@ -3994,7 +3462,7 @@ Where: the rail on the right. The widget shows the list of items. Each line name
 - To keep a cost low, set a Limit before you add long entries.
 - To ask again with the same material, set After sending to Keep.
 
-### 18.10 Search (@)
+### 18.4 Search (@)
 
 **Product:** Central · **Kind:** instrument · **Pane:** a pane (⌘F), or the line that opens where you type @ in a document
 
@@ -4090,7 +3558,7 @@ Where: on a chain. The compact Search shows the search line, a chip for each kin
 | Order | Sets Best match, Newest or Name. |
 | On Enter | Sets Send or Open. |
 
-Click the plate to show the Search whole in the pool. Click ⤢ to open it full in a pane.
+Click the plate to show the Search whole in the pool. Click ▦ to open it full in a pane.
 
 ##### Whole
 
@@ -4147,7 +3615,7 @@ Where: the rail on the right. The widget shows the search line, the last results
 - To file a quote on the place it is about, tag the place.
 - To ask what could serve a task, type `@# @5` and the task. Then include the tools you want with `+`.
 
-### 18.11 Ground hygiene
+### 18.5 Ground hygiene
 
 **Product:** Central · **Kind:** effect · **Chain:** a workspace track whose folder holds code
 
@@ -4221,7 +3689,7 @@ Where: on the chain of a workspace track whose folder holds code. The compact Gr
 | Tending | Sets Off, Propose or Write. |
 | Refresh | Sets Manual, On open or Every 5 minutes. |
 
-Click the plate to show the Ground hygiene whole in the pool. Click ⤢ to open it full in a pane.
+Click the plate to show the Ground hygiene whole in the pool. Click ▦ to open it full in a pane.
 
 ##### Whole
 
@@ -4278,7 +3746,7 @@ Where: the rail on the right. The widget shows the number of findings and the fi
 - To keep disk free, watch the disk reading on each seat.
 - To check two machines, turn Link on and set Machine to the other one.
 
-### 18.12 Impact
+### 18.6 Impact
 
 **Product:** Central · **Kind:** effect · **Chain:** a folder or a note on a workspace track
 
@@ -4325,7 +3793,7 @@ Where: on the chain of a folder or a note on a workspace track. The compact Impa
 | Sessions | Sets Open only or Open and closed. |
 | Pin | Keeps the subject when you select something else. |
 
-Click the plate to show the Impact whole in the pool. Click ⤢ to open it full in a pane.
+Click the plate to show the Impact whole in the pool. Click ▦ to open it full in a pane.
 
 ##### Whole
 
@@ -4383,7 +3851,192 @@ Where: the rail on the right. The widget shows the subject, its three counts and
 
 Factory is where you work with AI agents. Each agent session is a track. Its chain is the road the work travels: in through a gateway, to the agent, through its skills, into the part of the world it may touch, and out where its work lands. You set how much an agent decides alone, what it may read and write, and what waits for your approval. The agent does not write behind your back, and every write carries a receipt.
 
-### 19.1 Gateway
+### 19.1 Factory: tracks and clips
+
+**Product:** Software Factory, with Actuation · **Track:** an agent session · **Clip:** a task · **Main track:** the gateways, the Experiment, Approvals, the Ledger and the Link
+
+You need to set agents to work, watch how each task stands, and step in where you are needed. In Factory each agent session is a track, and its tasks are its clips. Select a task and Clip view shows how it launches, what follows it, the effort the agent gives it, and its log. Device view below shows the session's chain: the gateway, the agent, its skills, its scope and the landing.
+
+#### The track
+
+A track is an agent session. To seat an agent, drag it from the browser onto an empty track. The agent takes the seat, and the track carries its tasks.
+
+The track head shows the session's name and colour, and the agent who works it. Each track has a stop button. A group of agents folds under one header, and each agent's helpers step in beneath it, with one coloured rail for each level, so three layers of delegation read at a glance. When a task on the track stalls, the track lights a retry. Retry starts again from the last good step, on the same basis.
+
+##### The mixer row
+
+| Live's control | What it does here |
+|---|---|
+| Monitor | Watch: In · Auto · Off. In streams the session into the widgets always. Auto streams it when it is armed or selected. Off does not stream it. Auto by default. |
+| Activator | Telemetry. On, the session feeds the widgets, the Ledger and other agents. Off, the session is muted: it keeps working, in silence, and stops sending to the tiles. On by default. |
+| Solo | Only soloed sessions may run. Off by default. |
+| Arm | Lets the session's agent write directly, with receipts, where Scope allows. Off, every write is a proposal. Arm the track and press Record to speak a new task onto it. |
+
+The way in is the gateway at the head of the chain: it decides what the agent must ask your permission for. The way out is the landing at the end of the chain: commits, and a request to merge with the checks that tested it.
+
+#### The clip
+
+A clip is a task: one thing the agent is asked to do. Its editor shows the task's log: each tool the agent used, laid along the task's time like notes on a bar, with your steers marked.
+
+A task is drawn by how it stands:
+
+| State | Drawn as |
+|---|---|
+| Queued | A fast blink and no length, because nobody knows yet how long it will take. |
+| Running | A blinking triangle and a fill that has no end. |
+| Stalled | A striped bar and an orange triangle, frozen where the output stopped. The track lights a retry. |
+| Stopped | Ready, in full colour. |
+| Done | Dim and settled. |
+
+An empty square on a track names what a click does: it stops the session after the current task. Double-click an empty square to write a task.
+
+#### Clip view
+
+A running task is watched, so Clip view puts how it launches and what follows it beside the log.
+
+##### The Clip panel
+
+| Field | Values | Default | What it does |
+|---|---|---|---|
+| Name | Text | From the first message | The task's name. |
+| Colour | The palette | The session's colour | The colour of the clip on the grid and the ruler. |
+| State | Queued · Running · Stalled · Stopped · Done (reading) | Read from the session | How the task stands. |
+| Turns | Used of allowed (reading) | Read from the agent | The turns the task has used of the turns the agent's budget allows. The transport's time signature shows the same reading. |
+| Output style | Plain, warm or terse · Technical, narrative or list | Plain, technical | How the agent writes for this task. |
+
+##### The Launch panel
+
+| Field | Values | Default | What it does |
+|---|---|---|---|
+| Launch | Once · Hold · Loop | Once | Once runs the task one time. Hold keeps it ready while you hold the launch. Loop runs it again after each finish, until its stop condition or the cap. |
+| Then | Next task · Hand off · Stop | Next task | What follows the task. This is its follow action. |
+| Hand off to | Another session | None | The session that continues when Then is Hand off. |
+| Quantize | Global · Now · Next tool · Next turn | Global | When a launch or a steer lands. Global follows the transport's Quantize. |
+
+Next task and Stop are Live's follow actions. Hand off has no counterpart in Live: a Live follow action stays on its own track, and Hand off moves the work to another session's track.
+
+A task has no legato and no launch velocity.
+
+##### Tools
+
+A task has no editing tools. Its log is a record. To change what the agent does, write a new task, steer the running turn, or change the task's panels.
+
+##### Editor tabs
+
+| Tab | What it shows |
+|---|---|
+| Log | Each tool the agent used, along the task's time. Tool rows, your messages and the agent's, steer lines, proposal cards and the stall card, in the order they happened. Click a tool row to open its output. |
+| Envelopes | The agent's settings for this task. |
+
+##### Envelopes
+
+A task's envelopes set how the agent works for this task only. The Device chooser holds the Agent; the Control chooser holds Effort and Autonomy.
+
+| Control | Values | Default | What it does |
+|---|---|---|---|
+| Effort | Inherit · Low · Medium · High · Max | Inherit | How hard the agent thinks in each turn of this task. |
+| Autonomy | Inherit · Suggest · Review · Auto | Inherit | How much the agent decides alone in this task. |
+| Mode | Automation · Modulation | Automation | Automation sets the value for the task. Modulation raises or lowers the session's own value by steps, and follows it when it changes. |
+
+Inherit takes the session's value from the Agent.
+
+#### Takes and Arrangement lanes
+
+In Arrangement view each session is a track along the clock of the run, with a needle at its last check-in. The needle jumps each time the agent checks in. A needle that stops marks a stall, and its readout says how long the track has stalled. A line marks the present moment, and Follow keeps it in view.
+
+On the track, a done task is a solid block. A running task fades out at the right and has no end. A stalled task is striped, and the needle stops where the output stopped. A queued task is dashed and has no length.
+
+Under each track lie its lanes:
+
+| Lane | What it holds |
+|---|---|
+| Event lanes | Messages, Files, Terminal, Web and Graph. Each event sits at its time. Click an event to open it in its widget. |
+| Automation | The recorded moves of one parameter of the chain, such as the agent's effort over a run. |
+| Takes | The attempts. |
+
+| Setting | Values | Default | What it does |
+|---|---|---|---|
+| Event lanes | Messages · Files · Terminal · Web · Graph | Messages | The event lanes shown under the track. |
+| Overview | On · Off | On | Shows the strip of the whole run above the ruler. |
+
+A retry is a new attempt. It lies as a new take lane under the same track, and the earlier attempt stays. Choose the attempt that stands: select it, or select a range in a take and press Enter to bring that range into the main lane, as comping does in Live. Choosing an attempt sends it to review.
+
+The takes open full in a pane as the tree of each attempt: its tasks as nested rows, or its attempts along one ruler.
+
+| Setting | Values | Default | What it does |
+|---|---|---|---|
+| Work | A piece of work | The selected session's work | The request whose attempts are shown. |
+| Attempt | A list of attempts | The latest | The attempt you read. |
+| Show | All · Running · Stalled · Done | All | Filters the tasks in the tree. |
+| Group by | Attempt · Agent · Day | Attempt | How the attempts are grouped. |
+| View | Tree · Ruler | Tree | Tree: tasks as nested rows. Ruler: attempts along one ruler. |
+| Compare | None, or a second attempt | None | Draws two attempts side by side. |
+| Stands | An attempt | None | The attempt you accept. When you choose it, you review it. |
+
+Press Record and what the sessions do lays out on the ruler as clips, with their takes under them.
+
+#### The Main track
+
+Factory's Main track carries what serves every session: the Gateways rack with the Agency gateway, the Experiment, Approvals, the Ledger and the Link. When no session is selected, Device view shows the Main track's chain.
+
+In Session view the Main track's row launchers stand at the end of the grid. In Factory a row is a batch: launch it and one task starts on each session in the row. Press a row's number key to launch it.
+
+#### On the rail
+
+| Tile | What it shows |
+|---|---|
+| Sessions | The tracks of the work as a tree: each session with its state, its helpers nested under it one step of indent for each level. Three counts show the sessions, the running ones and the stalled ones, with buttons for All, Running and Stalled. For the selected session, its needle time and the task it is on. Click a session to select its track. Double-click it to open its thread. |
+| Agents | The agents of the tracks as a hive: each agent at a station, its helpers round it, joined by dashed lines, with a line saying what each does. An amber station marks an agent that is stuck. Each station carries its track's Telemetry: a muted agent works in silence. Click an agent to select its session. Double-click it to open its thread. Tap in the transport asks every running agent for a status line, and the answers arrive here. |
+| Results | The takes of the selected run: each result with its author and its diff. Open a diff to read it. Press Accept to send a result to review. |
+| Frames | What passed between the shell and the harness, frame by frame. |
+| Ledger | Every task with its receipt. |
+| Approvals | Every proposal and request that waits for you. |
+| Terminal | The sessions' shells. |
+
+The tiles take these settings:
+
+| Tile | Setting | Values | Default | What it does |
+|---|---|---|---|---|
+| Sessions | Filter | All · Running · Stalled | All | Shows the sessions in one state. |
+| Sessions | Nest | On · Off | On | Shows helpers under the session that spawned them, or in one flat list. |
+| Sessions | Pin | On · Off | Off | Keeps the list on its subject. |
+| Agents | Relations | Show · Hide | Show | Draws dashed lines from an agent to its helpers. |
+| Agents | Doing lines | Show · Hide | Show | Shows one line for each agent that says what it does. |
+| Results | Run | A run | The selected run | The run whose results show. |
+| Results | Show | Results · Diffs · Both | Both | Chooses what the tile lists. |
+
+#### Rules
+
+- A row across sessions is a batch. Launching it starts one task on each session in the row. A row launches only what is in it.
+- A loop ends at its stop condition or its cap.
+- A stalled task keeps its place. Retry restarts it from its last good step.
+- A running task shows no end. A queued task shows no length. A stalled task shows where it stopped and does not look done.
+- The needle shows the last check-in. It does not predict the end. A stalled needle freezes where the output stopped.
+- An attempt is a record. A retry makes a new attempt, as a new take, and the earlier take stays.
+- You choose the attempt that stands. Nothing chooses for you.
+- Accept sends a result to review. It does not decide the review. A result shows its author.
+- A muted session keeps working. It stops sending to the tiles, the Ledger and other agents.
+- A helper shows one step of indent for each level.
+- A session in the tiles is the same session as its track.
+- The roster comes from your agents. No agent is fixed in advance.
+- Stop pressed twice cancels at once. Quantize does not delay it.
+
+#### Tips
+
+- To run a batch, queue a task on each session and launch the row.
+- To keep a long task from holding up others, set its Quantize to Next turn.
+- To let another agent continue, set Then to Hand off and choose the session.
+- To cut cost on one simple task, set its Effort envelope to Low.
+- To watch only the sessions that matter, set the others' Watch to Off.
+- To keep a loud session out of the Ledger, turn off its activator.
+- To find the first failure of a long run, open the takes in a pane, set Show to Stalled and read the top row.
+- To keep a good attempt, set Stands before you launch another.
+- To compare two attempts, set Compare.
+- To find the sessions that need you, set Sessions' Filter to Stalled.
+- To find a lost session, set Sessions' Filter to Running and read the names.
+- To see who is stuck, look for the amber stations in Agents.
+
+### 19.2 Gateway
 
 **Product:** Actuation · **Kind:** effect · **Chain:** first device on a Factory session's chain
 
@@ -4429,7 +4082,7 @@ Where: on a Factory session's chain. The compact Gateway shows the link diagram,
 | Stall after | Sets the time without progress after which the session counts as stalled. |
 | Connect | Attaches or detaches the session. |
 
-Click a Transport or Approvals value to change it. Click the plate to show the Gateway whole in the pool. Click ⤢ to open it full in a pane.
+Click a Transport or Approvals value to change it. Click the plate to show the Gateway whole in the pool. Click ▦ to open it full in a pane.
 
 ##### Whole
 
@@ -4479,7 +4132,7 @@ Where: the rail on the right. The widget shows the link diagram, the readiness s
 - To see what a stalled session did last, open the Frames monitor and filter to that session.
 - To let a trusted agent work without prompts, set Approvals to Session before you press Play.
 
-### 19.2 Gateways rack
+### 19.3 Gateways rack
 
 **Product:** Actuation · **Kind:** rack · **Track:** Factory's Main track
 
@@ -4525,7 +4178,7 @@ Where: on the Main track's chain. The compact rack shows the four chains, each w
 |---|---|
 | Fan-out | Sets the observers allowed for each session, from 0 to 8. |
 
-Click a chain to show its gateway whole in the pool. Click ⤢ to open the selected gateway full in a pane.
+Click a chain to show its gateway whole in the pool. Click ▦ to open the selected gateway full in a pane.
 
 ##### Whole
 
@@ -4567,7 +4220,7 @@ Where: the rail on the right. The widget shows one line for each chain, with its
 - To find out why a remote session does not start, read the state of the Remote carrier chain first.
 - To check that two machines share one ledger, turn Link on and look for the second gateway in the rack.
 
-### 19.3 Agent
+### 19.4 Agent
 
 **Product:** Actuation, with Software Factory and Central · **Kind:** instrument · **Chain:** on any track an agent works on: second on a Factory session's chain, after the gateway; last on a Central workspace's chain, after the packet
 
@@ -4585,7 +4238,7 @@ how the agent runs: the model, effort, budget, heartbeat and input. Software
 Factory owns how much it decides alone: autonomy, the review gate and what it
 holds. Central owns who it is: the agent comes from your roster, so no crowd
 is fixed in advance. What the agent may read, and where its writes land,
-belongs to Scope (§19.13), the next device on the chain.
+belongs to Scope (§19.12), the next device on the chain.
 
 #### Parameters
 
@@ -4731,7 +4384,7 @@ value that an agent moved shows that agent's name.
 - To hand a stall back to its parent, choose Tell parent on the stall card.
 - To take over a file for an hour, edit it. Press Hand back when you finish.
 
-### 19.4 Experiment
+### 19.5 Experiment
 
 **Product:** Actuation · **Kind:** instrument · **Track:** any Factory track; Arrangement view draws it as a track of its own
 
@@ -4776,7 +4429,7 @@ Where: on any Factory track's chain. The compact Experiment shows a small plot o
 | Repeats | Sets the number of runs for each level. |
 | Stop when | Sets the condition that ends each run. |
 
-Click the plate to show the Experiment whole in the pool. Click ⤢ to open the result full in a pane.
+Click the plate to show the Experiment whole in the pool. Click ▦ to open the result full in a pane.
 
 ##### Whole
 
@@ -4830,7 +4483,7 @@ Where: the rail on the right. The widget shows the question, the runs finished a
 - To check a new skill, run the same task with the Skillset on and then off.
 - To stop a run that costs too much, set Stop when to a Time cap.
 
-### 19.5 Frames monitor
+### 19.6 Frames monitor
 
 **Product:** Actuation · **Kind:** effect · **Pane:** a pane in Factory; also the Frames widget
 
@@ -4868,7 +4521,7 @@ Where: in a pane of Factory. The compact monitor shows the last four frames of t
 | Direction | Chooses Both, Sent or Received. |
 | Pause | Holds the list still. The gateway keeps the frames. |
 
-Click the plate to show the monitor whole in the pool. Click ⤢ to open the full frame list in a pane.
+Click the plate to show the monitor whole in the pool. Click ▦ to open the full frame list in a pane.
 
 ##### Whole
 
@@ -4910,7 +4563,7 @@ Where: the rail on the right. The widget shows the last eleven frames of the sel
 - To find the tool that stalled a session, filter to Tools and read the last frame.
 - To check that a note reached the agent, filter to Messages and look for the steer line.
 
-### 19.6 Skillset rack
+### 19.7 Skillset rack
 
 **Product:** AIKit · **Kind:** rack · **Chain:** third device on a Factory session's chain
 
@@ -5004,7 +4657,7 @@ and child sets. A long list pages.
 | Loaded | Shows how many members are loaded, of all that the set carries. |
 
 Click a square to turn a member on or off. Click the plate to show the rack
-whole in the pool. Click ⤢ to open the set full in a pane.
+whole in the pool. Click ▦ to open the set full in a pane.
 
 ##### Whole
 
@@ -5015,7 +4668,7 @@ Where: the pool under the browser. The whole rack has two bands.
 | One | Set: the set, its members by kind, the revision, the author. Compose: Scope, Preview and Apply, Profile. Package: the target, Export, the unsupported count. |
 | Two | Every member, in two columns, with its square, mark, evidence and revision. |
 
-Select a member to show it whole in the pool (see §19.7).
+Select a member to show it whole in the pool (see §19.8).
 
 ##### Full
 
@@ -5064,7 +4717,7 @@ when you change mode.
 - To share a set with a team on another harness, read the unsupported count
   before you export it.
 
-### 19.7 Skill, Method, Methodology
+### 19.8 Skill, Method, Methodology
 
 **Product:** AIKit · **Kind:** effect · **Chain:** one chain inside a Skillset rack
 
@@ -5089,7 +4742,7 @@ and its face changes with the form.
 | Trust | Trusted · Unseen (reading) | Read from AIKit | AIKit does not deliver an unseen revision until you review it. |
 | Review | An action | — | Records that you reviewed the revision. You confirm it first. |
 | Revision | A number (reading) | Read from AIKit | The revision in use. |
-| Evidence | Ten steps (reading) | Read from AIKit | What the member has done in this session. See §19.6. |
+| Evidence | Ten steps (reading) | Read from AIKit | What the member has done in this session. See §19.7. |
 | Run | An action, Method only | — | Runs the Method once and keeps a receipt. A preflight checks first: a missing condition refuses the run before any effect and names itself. |
 | Prove | An action, Method only | — | Checks the receipt of the last run. A run that did not verify is refused. |
 | Instantiate | Needed · Not needed (reading), Methodology only | Read for each act | Whether the act in hand needs the Methodology, or the invoked skill carries enough. |
@@ -5173,7 +4826,7 @@ for a Method. The widget stays when you change mode.
 - To find a Method that nobody runs, read the evidence: carried, never
   selected.
 
-### 19.8 Knowledge route
+### 19.9 Knowledge route
 
 **Product:** AIKit · **Kind:** effect · **Chain:** inside the Scope device, in a Factory session's chain
 
@@ -5211,7 +4864,7 @@ Where: inside the Scope device. The compact route shows a small graph of the sou
 | Link depth | Sets the number of links the agent follows from a hit. |
 | Read budget | Sets the most pages the agent reads in one task. |
 
-Click the Scope title to open its reads and writes whole in the pool. Click ⤢ to open the knowledge full in a pane.
+Click the Scope title to open its reads and writes whole in the pool. Click ▦ to open the knowledge full in a pane.
 
 ##### Whole
 
@@ -5256,7 +4909,7 @@ Where: the rail on the right. The widget shows the pages that the agent read in 
 - To keep the agent on topic, lower Link depth.
 - To let an agent check the wiki first, keep Search first on.
 
-### 19.9 Agency gateway
+### 19.10 Agency gateway
 
 **Product:** AIKit · **Kind:** effect · **Chain:** one chain in the Gateways rack
 
@@ -5294,7 +4947,7 @@ Where: as one chain in the Gateways rack. The compact gateway shows the surfaces
 | Agent to agent | Sets Allow, Ask or Deny for a call from one agent to another. |
 | State | Shows Ready, Composed or Refused. |
 
-Click the row to read its state. Click the plate to show the gateway whole in the pool. Click ⤢ to open it full in a pane.
+Click the row to read its state. Click the plate to show the gateway whole in the pool. Click ▦ to open it full in a pane.
 
 ##### Whole
 
@@ -5336,7 +4989,7 @@ Where: the rail on the right. The widget shows the count of messages that wait, 
 - To let a planner agent hand work to a builder, set Agent to agent to Allow for that pair.
 - To keep a session private, turn off all Surfaces except this window.
 
-### 19.10 Capture skill
+### 19.11 Capture skill
 
 **Product:** AIKit · **Kind:** instrument · **Chain:** on the armed Factory track
 
@@ -5374,7 +5027,7 @@ Where: on the armed Factory track's chain. The compact device shows the steps fo
 | Scope | Sets This project or All my work. |
 | Name | Sets the skill's name. |
 
-Remove a step that does not belong. Click the plate to show the device whole in the pool. Click ⤢ to open the proposed skill full in a pane.
+Remove a step that does not belong. Click the plate to show the device whole in the pool. Click ▦ to open the proposed skill full in a pane.
 
 ##### Whole
 
@@ -5419,191 +5072,7 @@ Where: the rail on the right. The widget shows the proposal that waits, with Acc
 - To teach a release routine, do one release by hand with Capture on.
 - To make a safe skill, choose Exact for the first revision. Widen it later.
 
-### 19.11 Runs
-
-**Product:** Software Factory · **Kind:** instrument · **Pane:** a pane in Factory; also the Runs category in the browser
-
-You need to see every attempt made on a piece of work, and which one stands. Runs lists the attempts and the task tree of each. A retry is a new attempt. It does not replace the old one.
-
-#### Parameters
-| Parameter | Values | Default | What it does |
-|---|---|---|---|
-| Work | A piece of work | The selected session's work | The request whose attempts the device lists. |
-| Attempt | A list of attempts | The latest | The attempt you read. |
-| Show | All · Running · Stalled · Done | All | Filters the tasks in the tree. |
-| Group by | Attempt · Agent · Day | Attempt | How the list is grouped. |
-| View | Tree · Ruler | Tree | Tree: tasks as nested rows. Ruler: attempts along one ruler. |
-| Compare | None, or a second attempt | None | Draws two attempts side by side. |
-| Stands | An attempt | None | The attempt you accept. When you choose it, you review it. |
-
-#### Views
-
-```ui
-device: software-factory:attempt-review
-caption: Runs, on a fixture of readings.
-```
-
-##### Folded
-
-Where: in a pane of Factory, and in the Runs category of the browser. The folded Runs shows the work name and the number of attempts. Click the title to unfold it.
-
-##### Compact
-
-Where: in a pane of Factory. The compact Runs shows one bar for each attempt, coloured by state. It has four macros.
-
-| Macro | What it does |
-|---|---|
-| Attempt | Chooses the attempt you read. |
-| Show | Filters the tasks to All, Running, Stalled or Done. |
-| Group by | Groups the list by Attempt, Agent or Day. |
-| Compare | Draws a second attempt beside the first. |
-
-Click the plate to show Runs whole in the pool. Click ⤢ to open the attempts full in a pane.
-
-##### Whole
-
-Where: the pool under the browser. The whole Runs shows every parameter, in three groups.
-
-| Group | Parameters |
-|---|---|
-| Work | Work, Attempt |
-| Display | Show, Group by, View |
-| Review | Compare, Stands |
-
-Set Stands to the attempt you accept. The device does not choose for you.
-
-##### Full
-
-Where: a pane. The full Runs shows the attempts and the task tree of each, as a tree or along one ruler. Select a task to open its log in Clip view. The controls stay in Device view, below the pane.
-
-##### Widget
-
-Where: the rail on the right. The widget shows the latest attempt and its tasks, with a state light on each. The widget stays when you change mode.
-
-#### Transport
-| Control | Effect on Runs |
-|---|---|
-| Position | Shows the task, turn and step of the selected attempt. |
-| Follow | Keeps the view on the needle of the running attempt. |
-| Loop and punch | Sets the write window for the attempt you launch. |
-| Play | Launches a new attempt of the selected task. |
-
-#### To use Runs
-1. Select a session. Open Runs from the browser.
-2. Read the tree of the latest attempt.
-3. Set Show to Stalled to find the task that stopped.
-4. Set Compare to an earlier attempt. Read what changed.
-5. Set Stands to the attempt you accept.
-
-#### Rules
-- An attempt is a record. A retry makes a new attempt.
-- You choose the attempt that stands. The device does not choose for you.
-- A running task has no drawn end, because nobody knows how long it takes.
-
-#### Tips
-- To find the first failure of a long run, set Show to Stalled and read the top row.
-- To keep a good attempt, set Stands before you launch another.
-
-### 19.12 Tasks
-
-**Product:** Software Factory · **Kind:** instrument · **Track:** each Factory session; tasks are its clips
-
-You need a list of what an agent is asked to do, with the state of each task. Tasks are the clips on a session's track. Each task shows how it stands, and Clip view shows its log.
-
-#### How a task is drawn
-
-| State | Drawn as |
-|---|---|
-| Done | Dim and settled. |
-| Running | A blinking triangle and a fill that has no end. |
-| Queued | A fast blink and no length. |
-| Stopped | Ready, in full colour. |
-| Stalled | A striped bar and an orange triangle, frozen where the output stopped. |
-
-An empty square names what a click does: it stops the session after the current task. Double-click an empty square to write a task. Arm the track and press Record to speak one.
-
-#### Parameters
-| Parameter | Values | Default | What it does |
-|---|---|---|---|
-| Name | Text | From the first message | The task's name. |
-| State | Queued · Running · Stalled · Stopped · Done (reading) | Read from the session | Shows how the task stands. |
-| Launch | Once · Hold · Loop | Once | Once: run one time. Hold: stay ready. Loop: repeat until the stop condition or the cap. |
-| Then | Next task · Hand off to an agent · Stop | Next task | What follows the task. This is the follow action. |
-| Launch quantize | Now · Next tool · Next turn | Next tool | When a launch or a steer lands. |
-| Output style | Plain, warm or terse · Technical, narrative or list | Plain, technical | How the agent writes for this task. |
-| Effort | Inherit · Low · Medium · High · Max | Inherit | Sets the effort for this task only. |
-| Autonomy | Inherit · Suggest · Review · Auto | Inherit | Sets the autonomy for this task only. |
-
-#### Views
-
-```ui
-device: software-factory:tasks
-caption: Tasks, on a fixture of readings.
-```
-
-##### Folded
-
-Where: on a Factory session's track, as a clip. The folded Tasks shows the task name and its state. Click the title to unfold it.
-
-##### Compact
-
-Where: on a Factory session's track. The compact Tasks shows the task square with its progress. It has four macros.
-
-| Macro | What it does |
-|---|---|
-| Launch | Sets Once, Hold or Loop. |
-| Then | Sets what follows the task: Next task, Hand off to an agent or Stop. |
-| Effort | Sets the effort for this task only. |
-| Autonomy | Sets the autonomy for this task only. |
-
-Click the task to read its log in Clip view. Click the plate to show the task whole in the pool. Click ⤢ to open the task log full in a pane.
-
-##### Whole
-
-Where: the pool under the browser. The whole Tasks shows every parameter, in three groups.
-
-| Group | Parameters |
-|---|---|
-| Task | Name, State |
-| Launch | Launch, Then, Launch quantize |
-| Style | Output style, Effort, Autonomy |
-
-##### Full
-
-Where: a pane. The full Tasks is the task log. It lays each tool that the agent used along the task's time, and marks the steers. The controls stay in Device view, below the pane.
-
-In Clip view, the task is the clip. Its log shows there. Session view draws each task as a square in the column of its session.
-
-##### Widget
-
-Where: the rail on the right. The widget shows the tasks of the selected session, with a state light on each. The widget stays when you change mode.
-
-#### Transport
-| Control | Effect on Tasks |
-|---|---|
-| Play | Launches the selected task, or every queued task. |
-| Stop | Pauses at the next safe point. Press twice to cancel. |
-| Record | Speaks a new task onto the armed track. |
-| Loop and punch | Repeats the task, and sets the window in which the agent may write. |
-| Keys and maps | Number keys launch rows. You can bind a word to a task. |
-
-#### To use Tasks
-1. Select a session. Double-click an empty square.
-2. Write the task. Press Enter.
-3. Set Then to Hand off if another agent should continue.
-4. Press the number key of the row to launch the task.
-5. Click the task. Read the log in Clip view.
-
-#### Rules
-- A row across sessions is a stop. A launch of a stop starts one task on each session.
-- A loop ends at its stop condition or its cap.
-- A stalled task keeps its place. Retry restarts it from its last good step.
-
-#### Tips
-- To run a batch, queue a task on each session and launch the row.
-- To keep a long task from holding up others, set Launch quantize to Next turn.
-
-### 19.13 Scope
+### 19.12 Scope
 
 **Product:** Software Factory · **Kind:** effect · **Chain:** after the agent, on any track an agent works on: fourth on a Factory session's chain; last on a Central workspace's chain
 
@@ -5688,7 +5157,7 @@ caption: Scope, on a fixture of readings.
   short.
 - To try a risky change, set Write mode to Draft and review the draft.
 
-### 19.14 Ledger
+### 19.13 Ledger
 
 **Product:** Software Factory · **Kind:** instrument · **Track:** Factory's Main track
 
@@ -5729,7 +5198,7 @@ Where: on the Main track's chain. The compact Ledger shows one line for each tas
 | Outcome | Shows tasks with one outcome. |
 | Order | Sets Newest first, By agent or By task. |
 
-Click a task to open its log in Clip view. Click the plate to show the Ledger whole in the pool. Click ⤢ to open it full in a pane.
+Click a task to open its log in Clip view. Click the plate to show the Ledger whole in the pool. Click ▦ to open it full in a pane.
 
 ##### Whole
 
@@ -5771,7 +5240,7 @@ Where: the rail on the right. The widget shows the last receipts. Each line is a
 - To prepare the Day's face 2, read today's Ledger first.
 - To audit one agent, set Agent to that agent and Period to All.
 
-### 19.15 Approvals
+### 19.14 Approvals
 
 **Product:** Software Factory · **Kind:** effect · **Track:** Factory's Main track
 
@@ -5809,7 +5278,7 @@ Where: on the Main track's chain. The compact Approvals shows one line for each 
 | Wait | Sets how long a request waits before it counts as unanswered. |
 | On no answer | Sets Hold or Deny. |
 
-Click Open to read an item. Click Approve to accept it. Click the plate to show Approvals whole in the pool. Click ⤢ to open the queue full in a pane.
+Click Open to read an item. Click Approve to accept it. Click the plate to show Approvals whole in the pool. Click ▦ to open the queue full in a pane.
 
 ##### Whole
 
@@ -5852,98 +5321,7 @@ Where: the rail on the right. The widget shows the proposal cards. Each card nam
 - To clear many proposals fast, set Order to By risk and read the risky ones first.
 - To stop a deploy from leaving at night, leave On no answer at Hold.
 
-### 19.16 Run
-
-**Product:** Software Factory · **Kind:** instrument · **Track:** one lane for each session in Arrangement view
-
-You need to see the course of one session along the clock. A Run is one session's stream of tasks, drawn on a ruler. A needle shows where the session has got to.
-
-#### The lanes
-
-A lane has task blocks. A done block is solid. A running block fades out at the right and has no end. A stalled block is striped, and the needle stops where the output stopped. A queued block is dashed and has no length. Under each lane, the event lanes show Messages, Files, Terminal, Web and Graph. Click an event to open it in the matching widget. A line marks the present moment.
-
-#### Parameters
-| Parameter | Values | Default | What it does |
-|---|---|---|---|
-| Session | A session | The selected session | The session the lane shows. |
-| Watch | In · Auto · Off | Auto | In: always stream this session into the widgets. Auto: stream it when it is armed or selected. Off: do not stream it. |
-| Telemetry | On · Off | On | On: the session feeds the widgets, the Ledger and other agents. Off: it works in silence. |
-| Solo | On · Off | Off | Only soloed sessions may run. |
-| Event lanes | Messages · Files · Terminal · Web · Graph | Messages | The event lanes under the thread. |
-| Overview | On · Off | On | Shows the strip above the ruler. |
-| Needle | A time (reading) | Read from the session | The time of the last check-in. |
-| Takes | A list of attempts | The latest | The attempts under the lane. |
-
-#### Views
-
-```ui
-device: software-factory:run-device
-caption: Run, on a fixture of readings.
-```
-
-##### Folded
-
-Where: as one lane of the Run track in Arrangement view, and on the session's chain. The folded Run shows the session name and the needle time. Click the title to unfold it.
-
-##### Compact
-
-Where: on the session's chain. The compact Run shows the lane, with a needle and a state light. It has four macros.
-
-| Macro | What it does |
-|---|---|
-| Watch | Sets In, Auto or Off for the stream into the widgets. |
-| Telemetry | Turns on or off the feed to the widgets, the Ledger and other agents. |
-| Solo | Lets only soloed sessions run. |
-| Event lanes | Chooses the lanes under the thread. |
-
-Click the plate to show the Run whole in the pool. Click ⤢ to open the thread full in a pane.
-
-##### Whole
-
-Where: the pool under the browser. The whole Run shows every parameter, in three groups.
-
-| Group | Parameters |
-|---|---|
-| Feed | Session, Watch, Telemetry, Solo |
-| Lanes | Event lanes, Overview, Needle |
-| Takes | Takes |
-
-##### Full
-
-Where: a pane. The full Run is the thread. It shows tasks, tool rows, steer lines, proposal cards and the stall card. The needle shows the last check-in. The controls stay in Device view, below the pane.
-
-In Clip view, the lane holds the clips of the session. A new attempt is a take under the same lane.
-
-##### Widget
-
-Where: the rail on the right. The widget shows the session's state, its needle time and its task now. The widget stays when you change mode.
-
-#### Transport
-| Control | Effect on the Run |
-|---|---|
-| Record | Lays what the session did into Arrangement view as clips, with takes under them. |
-| Follow | Scrolls the ruler with the needles. |
-| Position | Shows the task, turn and step of the needle. |
-| Metronome | Sets how often the needle moves. |
-| Arm | Records your moves of the agent's settings as lanes under the track. |
-
-#### To use the Run
-1. Press Tab to open Arrangement view.
-2. Find the lane of the session. Read its needle.
-3. If the needle has stopped, read the stall readout. It names how long the lane has stalled.
-4. Expand the lane. Click an event to open it in its widget.
-5. Press Retry on the track to restart a stalled task from its last good step.
-
-#### Rules
-- The needle shows the last check-in. It does not predict the end.
-- A stalled needle freezes where the output stopped.
-- A new attempt is a take under the same lane. The earlier take stays.
-
-#### Tips
-- To watch only the sessions that matter, set Watch to Off on the others.
-- To keep a loud session out of the Ledger, set its Telemetry to Off.
-
-### 19.17 Agentset rack
+### 19.15 Agentset rack
 
 **Product:** Software Factory · **Kind:** rack · **Chain:** a group's chain in Factory
 
@@ -5986,7 +5364,7 @@ Where: on a group's chain. The compact rack shows the member chains, nested as t
 | Hand-back | Sets Raw, Digest or Summary for what a helper returns. |
 | Subagent model | Sets the default model for everything the group spawns. |
 
-With many members, the chains group by state, and each group shows its count. Click a member to open its thread. Click the plate to show the rack whole in the pool. Click ⤢ to open the crew full in a pane.
+With many members, the chains group by state, and each group shows its count. Click a member to open its thread. Click the plate to show the rack whole in the pool. Click ▦ to open the crew full in a pane.
 
 ##### Whole
 
@@ -6036,7 +5414,7 @@ Where: the rail on the right. The widget shows the crew tree with a light on eac
 - To save cost, set Subagent model to a smaller model for the group.
 - To find the slow member, look for the orange outline.
 
-### 19.18 Git / landing
+### 19.16 Git / landing
 
 **Product:** Workcell · **Kind:** effect · **Chain:** last device on a Factory session's chain
 
@@ -6081,7 +5459,7 @@ Where: on a Factory session's chain. The compact device shows the branch diagram
 | Land as | Sets Draft merge request, Merge request or Merge. |
 | Land | Lands the branch as set in Land as. |
 
-Click the plate to show the device whole in the pool. Click ⤢ to open the branch full in a pane.
+Click the plate to show the device whole in the pool. Click ▦ to open the branch full in a pane.
 
 ##### Whole
 
@@ -6130,7 +5508,7 @@ Where: the rail on the right. The widget shows the branch, the changes, the chec
 - To test a change before anyone sees it, keep Push on Off and read the diff.
 - To get a second view, land as a draft merge request and ask a reviewer.
 
-### 19.19 Seat
+### 19.17 Seat
 
 **Product:** Workcell · **Kind:** effect · **Chain:** inside the Git / landing device; whole in the pool
 
@@ -6170,7 +5548,7 @@ Where: inside the Git / landing device. The compact Seat shows the seat name, th
 | Lane | Sets the branch name of the line of work. |
 | Release | Releases the seat after the work has landed. |
 
-Click the Git title to show the Seat whole in the pool. Click ⤢ to open the seats full in a pane.
+Click the Git title to show the Seat whole in the pool. Click ▦ to open the seats full in a pane.
 
 ##### Whole
 
@@ -6216,7 +5594,7 @@ Where: the rail on the right. The widget shows the seat name, the lane and the c
 - To work next to another agent, choose Attach.
 - To clear a seat after a merge, press Release.
 
-### 19.20 Remote carrier
+### 19.18 Remote carrier
 
 **Product:** Workcell · **Kind:** effect · **Chain:** the fourth chain of the Gateways rack
 
@@ -6254,7 +5632,7 @@ Where: as the fourth chain of the Gateways rack. The compact carrier shows the m
 | Standing | Shows Ready, Composed or Refused. |
 | Round trip | Shows the time for a message to go and return. |
 
-Click the row to read its Standing. Click the plate to show the carrier whole in the pool. Click ⤢ to open the machine full in a pane.
+Click the row to read its Standing. Click the plate to show the carrier whole in the pool. Click ▦ to open the machine full in a pane.
 
 ##### Whole
 
@@ -6298,7 +5676,7 @@ Where: the rail on the right. The widget shows the machine name, its dot and the
 - To run a long job away from your laptop, choose a connected machine and set Transport to Remote.
 - To find out why a carrier is refused, read its reason in the Standing row.
 
-### 19.21 Link
+### 19.19 Link
 
 **Product:** Workcell · **Kind:** effect · **Track:** Factory's Main track
 
@@ -6335,7 +5713,7 @@ Where: on the Main track's chain. The compact Link shows the machines as dots jo
 | Machines | Chooses the machines in the link. |
 | Lag | Shows the time for a change to reach the others. |
 
-Click the plate to show the Link whole in the pool. Click ⤢ to open the machines full in a pane.
+Click the plate to show the Link whole in the pool. Click ▦ to open the machines full in a pane.
 
 ##### Whole
 
@@ -6382,7 +5760,298 @@ Where: the rail on the right. The widget shows the peers and the link state. The
 
 Expressions is where the DLW makes things you can see and hear. Particles and symbols move on a plate, and the plate sounds.
 
-### 20.1 Field
+### 20.1 Expressions: tracks and clips
+
+**Product:** Expressions · **Track:** an Expression · **Clip:** a scene · **Main track:** the stops, and the sound of every Expression together
+
+You need to build a scene, step by step, until the figure says what you meant, and hear it as you go. In Expressions each Expression is a track, and its scenes are its clips. Select a scene and Clip view opens its sequence, with each symbol in its own lane and the scene's sound beneath it. Device view below holds the Studio, which shapes the field for every scene of the Expression.
+
+#### The track
+
+A track is an Expression. It has two sides, one state: the picture lane, which is the form in the field, and the sound lane, which is the plate and the voices sounding. Edit one and the other follows. The two lanes fold under the track's head.
+
+The track head shows the Expression's title and colour. Its settings stand on the head:
+
+| Setting | Values | Default | What it does |
+|---|---|---|---|
+| Title | Text, 1 to 160 characters | The Expression's title | The name of the whole Expression, on the track and in the browser. |
+| Description | Text, up to 5000 characters | Empty | A note about the Expression for a reader. An empty note is a real value. |
+
+##### The mixer row
+
+| Live's control | What it does here |
+|---|---|
+| Volume | The level of the Expression's sound. |
+| Activator | Silences the Expression's sound. The picture still plays. |
+| Solo | Lets you hear only this Expression's sound. |
+| Arm | Arms the Expression for a take. With Arm on, Play records the studio as a take. |
+| Monitor | None. |
+
+The Expression's picture goes to the stage. Its sound goes to the Main track.
+
+#### The clip
+
+A clip is a scene. Its editor edits the scene's sequence: each symbol in its own lane, each step's hold and change set like a note's length and glide. Beneath the sequence lies the scene's sound: what the plate sounds, the pitch riding the plate, and the voices of the symbols.
+
+#### Clip view
+
+Clip view shows the sequence first, with the sound beneath it, so that you shape both sides of the scene together.
+
+##### The Clip panel
+
+| Field | Values | Default | What it does |
+|---|---|---|---|
+| Scene name | Text | Scene | The name of the clip. Press Enter to keep a change, Escape to undo one you have not kept. |
+| Colour | The palette | The Expression's colour | The colour of the clip on the grid and the ruler. |
+| Duration | 0 to 3600 s | 8 | How long the scene holds before it changes. This is the clip's length. |
+| Transition | 0 to 3600 s | 2 | How long the change to the next scene takes. |
+| Signature | A ratio of hold to change | 5:3 | The scene's ratio of hold to change. The transport's time signature shows it for the scene that plays. |
+| Start | 0 s or later | 0 | Where the scene starts inside its own evolution. Slip on the ruler sets it. |
+| Locked | On · Off | Off | A locked scene refuses edits. |
+
+What the scene carries as its body also belongs to the clip, as a sample belongs to a Live audio clip:
+
+| Field | Values | Default | What it does |
+|---|---|---|---|
+| Carrier | Engine composition · Text source · Glyph form · Image · File · Knowledge whole · HTML surface · Agent surface · Another Expression | None | What the scene carries as its body. |
+| Presentation | Live · Inline · Preview · Degraded | Inline | How the body shows. A presentation that the carrier cannot show is refused. |
+| Reference | A file reference or a path | Empty | Where the body comes from. |
+| Span | Start and end, 0 to 8000000; 0 to 0 is the whole file | 0 · 0 | The part of the file to use. |
+
+##### The Launch panel
+
+| Field | Values | Default | What it does |
+|---|---|---|---|
+| Quantize | Global, or one of the transport's values | Global | When the scene's launch lands. Global follows the transport's Quantize. |
+| Follow action | Next scene · Jump to a scene · Stop | Next scene | What comes after the scene. Jump to a scene is Live's follow action Jump. |
+| Jump to | A scene | None | The scene that Jump to a scene launches. |
+
+A scene can also act when something happens to it. These triggers have no counterpart in Live: a Live clip does nothing when it is entered, left or touched, beyond its follow action.
+
+| Field | Values | Default | What it does |
+|---|---|---|---|
+| Triggers | Up to 8 | None | The triggers of the scene. Each needs a name of 1 to 128 letters, digits, dots, dashes or underscores. |
+| Occasion | Scene enters · Scene leaves · Activated · Selected · Sequence moves on | Scene enters | When a trigger runs. |
+| Target | Read this Expression · Open a portal · Run a native Action · Jump to a scene | Jump to a scene | What a trigger does. |
+| Portal placement | Preview · Overlay · Beside · Full · Detached · Re-dock | Beside | Where a portal opens. |
+| Operation | Inspect · List · Export | Inspect | What a read trigger does. |
+
+##### Tools
+
+The tools act on the scene in the editor. Each writes into the scene.
+
+**The pointer tools** set what the pointer does in the field. The Library opens from the same row.
+
+| Tool | What it does |
+|---|---|
+| Select | Selects a symbol. Its controls open on the Expression tab. |
+| Orbit | Turns the view of the field round its centre. |
+| Form | Draws a form in the field. |
+| Bind | Ties the selected symbol to a source. |
+
+**Text** lays words on the page of the scene: a small heading, a title and a line of text over the field.
+
+| Control | Values | Default | What it does |
+|---|---|---|---|
+| Layers | Up to 16 | One layer when you add | The text blocks of the scene. Add and remove them. |
+| Visible | On · Off | On | Shows or hides the layer. |
+| Small heading | Text, up to 300 characters | A moment in the field | The first line, in small capitals. |
+| Title | Text, up to 300 characters | Your words, | The main line. |
+| Italic line | Text, up to 300 characters | in this space. | The line in italics. |
+| Supporting text | Text, up to 5000 characters | Empty | The body text. It can have several lines. |
+| Type size | 14 to 150 | 38 | The size of the title. |
+| Block width | 60 to 1000 | 240 | The width of the block. |
+| Page position | X and Y: −0.5 to 1.5 | 0.07 · 0.24 | The place of the block on the page, as a share of the page. Drag the layer box to move it. |
+| Alignment | Left · Centre · Right | Left | How lines line up in the block. |
+
+**Blueprint** ties six symbols of the scene into a sixfold constellation and moves them as one. The figure belongs to the scene.
+
+| Control | Values | Default | What it does |
+|---|---|---|---|
+| Binding | Bound · Not bound | Not bound | Bind assigns the six roles to the six symbols placed in the scene, one to six. Release frees them. |
+| Position | X, Y, Z: −4 to 4 stage units | The centre of the figure | Where the whole figure stands. The centre handle in the plan moves X and Y. |
+| Rotation | X, Y, Z in degrees | 0 · 0 · 0 | Turns the whole figure. |
+| Relative size | 0.0001 to 14 | 1 | Scales the whole figure. The outer handle in the plan moves it. |
+
+**Arrange** sets the positions of chosen symbols by a rule, as Live's transform tools rewrite the chosen notes. The plan shows where each symbol will stand before you apply it, and the scene records the last arrangement you applied.
+
+| Control | Values | Default | What it does |
+|---|---|---|---|
+| Objects | A checklist of the symbols that can move | None selected | The symbols that Arrange moves. Quick selects fill the list. |
+| Arrangement | Line · Column · Ring · Grid · Spiral · Align X · Align Y · Distribute X · Distribute Y · Laminate | None | The rule that sets the positions. Press it to apply. |
+| Plane | XY · XZ · YZ | XY | The plane that the rule works in. |
+
+##### Editor tabs
+
+| Tab | What it shows |
+|---|---|
+| Sequence | The scene's roll: one lane for each symbol, its states as steps, each step's hold and change drawn like a note's length and glide. The scene's sound lies beneath it. |
+| Envelopes | The scene's automation lanes. |
+| Expression | The selected symbol's own controls, in four pages: Formation, Force, Sound and Meaning. |
+
+The Expression tab is to a symbol what Live's MPE tab is to a note: the values that belong to that one object. Select exactly one symbol. A locked symbol refuses edits until you unlock it.
+
+Above the four pages stand the acts on the selected symbol:
+
+| Act | What it does |
+|---|---|
+| Bind | Ties the symbol to a source. |
+| Follow | Sets the symbol to follow another. |
+| Exact | Gives the symbol an exact value. |
+| Duplicate | Makes a copy of the symbol. |
+| Source | Opens where the symbol came from. |
+
+**Formation** places and sizes the symbol and sets how many particles it gets.
+
+| Control | Values | Default | What it does |
+|---|---|---|---|
+| Position | X, Y, Z: −4 to 4 stage units | Where you placed it | Where the symbol stands. Drag the box handle to move it. |
+| Width and height | 0.01 to 4 stage units each | 0.65 · 0.86 | The size of the symbol's box. |
+| Scale | 0.01 to 10 | 1 | Scales the symbol about its centre. |
+| Rotation | −360 to 360 degrees | 0 | Turns the symbol. |
+| Particle share | 0 to 10 | 1 | The weight of this formation when the particles are shared. |
+| Tint weight | 0 to 1 | 0 | How strongly the symbol shows its own colour. |
+| Name | Text, 1 to 160 characters | The symbol's name | The name of the symbol. |
+| Enabled | On · Off | On | An off symbol takes no particles and stays in the scene. |
+| Locked | On · Off | Off | A locked symbol refuses edits. |
+
+The symbol's shape and stored colour show as read-only lines. Change the shape in the glyph editor.
+
+**Force** sets how the symbol pushes or pulls the particles around it.
+
+| Control | Values | Default | What it does |
+|---|---|---|---|
+| Kind | None · Attract · Repel · Vortex | Attract | The kind of force. None switches the force off. |
+| Strength | −20 to 20 | 0 | The amount of force. A negative value reverses it. |
+| Spin | −20 to 20 | 0 | A whirl around the symbol. It works with any kind. |
+| Radius | 20 to 2000 pixels | 200 | The reach of the force. |
+| Centre | X, Y, Z in stage units | The place of the symbol | Where the force acts. Drag the disc handle to pin the force away from the symbol. |
+
+**Sound** gives the symbol a voice.
+
+| Control | Values | Default | What it does |
+|---|---|---|---|
+| Voice | On · Off | Off | Lets the symbol sound. Add sound gives it a voice; Remove sound takes it away. |
+| Follow plate | On · Off | On | On makes the voice follow the pitch of the plate. Off keeps the pitch you set. |
+| Frequency | 1 to 20000 Hz | 220 | The pitch of the voice. When you set it, Follow plate turns off. |
+| Gain | 0 to 1 | 0.2 | The loudness of the voice. 0 is silent. |
+| Waveform | Sine · Triangle · Square · Sawtooth | Sine | The tone of the voice. |
+| Attack | 0 to 10 s | 0.08 | How long the voice takes to rise. |
+| Release | 0 to 30 s | 0.8 | How long the voice takes to fade. |
+| Pan | −1 to 1 | 0 | The place of the voice. −1 is left. 1 is right. |
+
+Drag the envelope handles to set Attack, Gain and Release.
+
+**Meaning** ties the symbol to a centre of the body and lets that centre colour the field.
+
+| Control | Values | Default | What it does |
+|---|---|---|---|
+| Meaning | None · Root · Sacral · Solar plexus · Heart · Throat · Third eye · Crown | None | The centre that the symbol stands for. |
+| Colour source | Canonical · Entity tint · Override | Canonical | Where the colour of the centre comes from. |
+| Colour gain | 0 to 100 | 1 | How strongly the centre colours the field. |
+| Resonance gain | 0 to 100 | 1 | How strongly the centre answers the plate. |
+| Activation | Constant · Live resonant affinity · Travelling focus | Constant | What switches the centre on. |
+| Radius source | Follow force radius · Independent | Follow force radius | The reach of the colour. |
+| Independent radius | 1 to 100000 pixels | 220 | The reach when Radius source is Independent. |
+| Falloff | Gaussian · Compact | Gaussian | How the colour fades with distance. |
+| Metric | Composition plane · World 3D | Composition plane | How distance is measured. |
+| Blend | Weighted · Additive | Weighted | How the colours of several centres mix. Weighted does not depend on order. |
+| Global colour gain | 0 to 100 | 1 | The colour gain for the whole scene. |
+| Modulations | A list: signal, target, amount, offset | Empty | Moves the colour with a signal. |
+
+A modulation takes one signal: Resonant affinity, Travelling focus, Carrier speed, Force strength or Force spin. It moves one target: Colour gain, Colour radius or Hue phase. It has an amount and an offset, each from −100 to 100.
+
+##### Envelopes
+
+A scene's envelopes move parameters over the scene by themselves, with a wave or a ramp. Each lane moves one target: a parameter of a field device, or a parameter of one symbol. The parameter shows the lane that moves it.
+
+| Control | Values | Default | What it does |
+|---|---|---|---|
+| Lanes | Up to 64 | None | The lanes of the scene. Add a lane to move one target. Drag a lane to change the order. |
+| Target | A field parameter, or a parameter of one symbol | None | The parameter that the lane moves. Each target has one lane. |
+| Type | Oscillator · One-shot or repeating ramp | Oscillator | A wave that repeats, or a ramp from the minimum to the maximum. |
+| Wave | Sine · Triangle · Square · Saw · Random step · Smooth random · Morph drive | Sine | The shape of an oscillator. Morph drive follows the Morph device. |
+| Rate | 0 to 2 | 0.5 | How fast the wave cycles. |
+| Phase | 0 to 1 | 0 | Where in the cycle the lane starts. |
+| Minimum and maximum | Inside the range of the target | The range of the target | The lowest and the highest value the lane writes. |
+| Blend | Replace · Add to base · Multiply base | Replace | How the lane combines with the value you set. Replace is Live's Automation. Add to base and Multiply base are Live's Modulation. |
+| Duration and delay | Duration 0.01 to 30 s · Delay 0 to 10 s | 4 · 0 | The length of a ramp, and the wait before it starts. |
+| Loop | Once · Loop (restart) · Ping-pong | Loop | What a ramp does at its end. |
+| Easing | Linear · Smooth · Ease in · Ease out · Elastic · Bounce | Smooth | The curve of a ramp. |
+| Enabled | On · Off | On | Turns the lane on or off. |
+
+A lane can follow another lane. The follower takes the leader's type, wave, rate, phase, duration, delay, loop and easing. It keeps its own enabled state, blend and range.
+
+#### Takes and Arrangement lanes
+
+Arm the Expression and press Play, and Play records a take of the scene. Takes lie as take lanes under the Expression's track in Arrangement view. Choose the take that stands: select a range in a take and press Enter to bring it into the main lane, as comping does in Live. Capture in the transport keeps your last gestures as a new scene.
+
+In Arrangement view each Expression is a track, with its picture lane over its sound lane, and its scenes in order along a ruler in seconds. Under a track, an automation lane shows the recorded moves of one parameter of the Studio, such as a field device over the course of several scenes.
+
+#### The Main track
+
+The Main track holds the stops. In Session view its row launchers stand at the end of the grid, and each row is a moment across several Expressions: launch it and the scene in that row plays on every Expression in it. The Main track's mixer row sets the level of every Expression's sound together.
+
+Device view for an Expression holds the Studio, with its sections Particles, Material, Motion, Body and Nara. The pointer tools, the selected symbol's controls and Capture are not in the Studio: the tools and the symbol's controls are in Clip view, and Capture is the transport's.
+
+#### On the rail
+
+| Tile | What it shows |
+|---|---|
+| A field device | Any field device of the Studio can keep its tile on the rail: a small picture and its most-played controls. Its settings stay live whether or not the tile shows. |
+| Agent | The agent composing in the Expression, when one is: its face, its state and a composer. |
+
+#### Rules
+
+- In the DLW, "scene" means an Expression's scene, a clip. A row across tracks is a stop.
+- A locked scene, or a locked symbol, refuses edits.
+- Press Enter to keep a change. Press Escape to undo a change that you have not kept. Press Shift and Enter in a description to start a new line.
+- Sound and picture are two sides of one state. Edit one and the other follows.
+- The Expression tab acts on one symbol. Select exactly one.
+- A symbol held by a Blueprint takes its place from the figure. Its position, size and rotation show as read only. Use the Blueprint to move it.
+- A bound figure has six members, in a fixed order. Bind and Release are separate acts. Release before you bind again.
+- The share of one formation is its Particle share divided by the total of all enabled formations. When the total is 0, the divisor is 1.
+- The forces of a symbol belong to its Force page. The steps of its sequence belong to the Sequence tab.
+- When you set Frequency, Follow plate turns off. When you turn Follow plate on, the plate sets the pitch again.
+- Every change to a symbol's sound or meaning writes its whole sound or binding in one step.
+- A symbol with no sound has no voice. Remove sound returns it to this state.
+- Centre identity is not a plate station. A starter diagram of seven centres is not a live reading of a person.
+- Meaning does not change the stored colour of the symbol.
+- With Radius source on Follow force radius, the colour uses the symbol's Force radius. A symbol with no force uses 220 pixels.
+- An envelope's curve is the shape set in the lane. It is not a record of the live output. A random wave holds one value for each whole cycle.
+- A parameter shows what moves it. When you take hold of a value a lane holds, the hand-back light comes on. Press it to give the value back.
+- A scene has at most 64 lanes, one for each target. A target that is no longer in the scene is named, and its lane stays.
+- A scene has at most 8 triggers and at most 16 body actions. A trigger acts only on a target that the host discloses.
+- A carrier that the host cannot open shows its reason and stays unavailable. A resolved text or image body shows in full, so Degraded is refused for it.
+- A scene has at most 16 text layers. A layer box shows the width of its block, whatever the alignment. On a wide page, a block can take at most 45% of the page width.
+- Single-line text fields refuse control characters. Supporting text also allows new lines and tabs.
+- One Arrange apply is one undo step and moves at most 256 symbols. Arrange does not move a locked symbol or one held by a Blueprint, and the list says why.
+- The Arrange plan shows the two axes of its plane. Depth that the plane does not draw still moves, and the list shows it.
+- A value outside its range is refused, and the range is named.
+- Each change is one request. When the owner refuses it, the form stays and the reason shows.
+- The Studio's controls stay out of the field pane. The field pane shows only the field.
+
+#### Tips
+
+- To make a slow swell, raise Transition above Duration.
+- To find a scene fast in Session view, give it a clear name.
+- To make a story, set each scene's follow action to Jump to a scene.
+- To bring a document into a scene, set Carrier to File and set its Span.
+- To show a second Expression beside this one, add a trigger that opens a portal Beside.
+- To title a scene, use one text layer with a small heading and a title. To keep text off the field, move the block to the edge of the page.
+- To test a layout, turn each text layer off and on.
+- To rotate a whole figure, set the Blueprint's rotation and leave the members alone. An arrow key moves the figure a small step; Shift and an arrow key moves it ten times as far.
+- To space symbols evenly on a line, use Distribute X. To set symbols in the plane of depth, set Plane to XZ before you apply a rule.
+- To compare two layouts, apply one, capture it, then apply the other.
+- To make a symbol the sun of the scene, set Force to Attract with Spin and a wide Radius. To clear space round a symbol, set Repel. To keep particles out of a hole, pin a Repel force on the hole.
+- To give a symbol more weight in the scene, raise Particle share. To make it leave the scene without deleting it, turn Enabled off.
+- To make a drone, set Attack to 4 s and Release to 10 s. To make a chord, give three symbols three frequencies in the ratio 4:5:6. To place a voice at the left, set Pan to −0.8.
+- To see a centre without a force, set Radius source to Independent. To make the colour pulse with the voice, add a modulation from Force strength to Colour gain. To make centres add up, set Blend to Additive.
+- To make the field breathe, put a slow sine on the viscosity. To fade a colour in, use a ramp with Ease in. To move several parameters as one, make one leader and follow it.
+- To try a form fast, draw it with the Form tool, then press Capture.
+- To work on one symbol, select it and open the Expression tab.
+
+### 20.2 Field
 
 **Product:** Expressions · **Kind:** instrument · **Track:** An Expression
 
@@ -6439,7 +6108,7 @@ Where: on the chain of an Expression, as its first device. The compact Field sho
 | Resonance | Sets the frequency that the field is tuned to. |
 | Hold to change | Sets how long a scene holds a figure compared with how long it changes. |
 
-Click the plate to show the Field whole in the pool. Click ⤢ to open it full in a pane.
+Click the plate to show the Field whole in the pool. Click ▦ to open it full in a pane.
 
 ##### Whole
 
@@ -6483,7 +6152,7 @@ Where: the rail on the right. The widget shows a small copy of the field and a l
 2. Press Play. The particles gather and the plate sounds.
 3. Open the Studio in Device view. Add a formation, or select a symbol.
 4. Sweep the Resonance parameter. Watch the pattern form on the plate.
-5. Give a symbol a voice in the Sound device. Listen to it in the field.
+5. Give a symbol a voice on the Sound page of the scene's Expression tab (§20.1). Listen to it in the field.
 6. Press Capture to keep the figure as a scene. Save the Expression.
 
 #### Rules
@@ -6500,35 +6169,42 @@ Where: the rail on the right. The widget shows a small copy of the field and a l
 - To study one symbol, set Lights to Dim and select the symbol.
 - To follow the planets, set Key source to Sky.
 
-### 20.2 Studio
+### 20.3 Studio
 
 **Product:** Expressions · **Kind:** rack · **Track:** An Expression. It fills Device view in Expressions.
 
-The Studio holds the controls that shape the field. Use it to pick a tool, act on the symbol you selected, and shape the form, the material and the motion.
+The Studio holds what shapes the whole field, for every scene on the track:
+how the particles gather, the material they are made of, how they move, which
+layers join the field, and your personal layer. It is the rack in front of
+the field devices, as an Instrument Rack stands in front of its chains, and
+its macros are the controls you play most.
+
+What belongs to one scene or one symbol is in the scene's editor in Clip view
+(§20.1): the pointer's tools (Select, Orbit, Form, Bind), what you can do to
+the selected symbol, and its force, form, voice and meaning. Capture is the
+transport's.
 
 #### The sections
 
-The Studio has eight sections. Each section is one chain of controls. Select a section to open it in the pane.
+The Studio has five sections. Each section is one chain of controls. Select a
+section to open it in the pane.
 
 | Section | What it holds |
 |---|---|
-| Tools | Select, Orbit, Form, Bind and Capture. The Library opens from here. |
-| Selected | The actions for the symbol you selected: Bind, Follow, Exact, Duplicate and Source. |
-| Formation | How the particles gather: how many points, how many folds, and the shape. |
+| Particles | How the particles gather: how many points, how many folds, and the shape. |
 | Material | The palette, the glow and the grain. |
 | Motion | The speed, the turbulence and how symbols follow. |
 | Body | Which layers join the field: the torus, the sky and the clock. The graph and Epii also switch here. |
 | Nara | Your personal layer. It stays yours however the scene is shared. |
-| Capture | Keeps the field as a still or a video. |
 
-Behind the sections stand the devices that govern the field. Each is a whole device with every parameter it needs.
+Behind the sections stand the devices that govern the field, each a whole
+device with every parameter it needs: Physics, Pointer, Relational, Medium,
+Contacts, Morph, Focus, Colour, Ink, Depth and Resonance.
 
 #### Parameters
 
 | Parameter | Values | Default | What it does |
 |---|---|---|---|
-| Tool | Select · Orbit · Form · Bind · Capture | Select | The tool that the pointer uses. |
-| Selected action | Bind · Follow · Exact · Duplicate · Source | None | Acts on the selected symbol. Source opens where the symbol came from. |
 | Density | 60 to 220 points | 160 | How many points make the formation. |
 | Symmetry | 3 to 9 folds | 5 | How many times the formation repeats around its centre. |
 | Shape | Ring · Spiral · Lattice | Ring | The form that points gather into. |
@@ -6538,7 +6214,6 @@ Behind the sections stand the devices that govern the field. Each is a whole dev
 | Follow | Free · Bind | Bind | Free symbols move alone. Bind makes them follow their binding. |
 | Body | Torus, Sky, Clock, Graph, Epii: On · Off | Torus, Sky and Clock On | Adds or removes each layer. |
 | Nara | On · Off, then Private · Circle | On, Private | Shows your personal layer. Private keeps it to you. |
-| Capture | Still · Video | Still | The kind of take that Capture makes. |
 
 #### Views
 
@@ -6547,84 +6222,44 @@ device: expressions:studio
 caption: Studio, on a fixture of readings.
 ```
 
-In Clip view, the Capture section keeps your last gestures as a new scene clip.
-
-##### Folded
-
-Where: in Device view, in Expressions. The folded Studio shows its name, the open section and the save state: Draft, Saved, or Edited since save. Click the title to unfold it.
-
-##### Compact
-
-Where: in Device view, in Expressions. The compact Studio shows a strip of the eight section names, with the open one marked, and four macros.
-
-| Macro | What it does |
+| View | Holds |
 |---|---|
-| Density | Sets how many points make the formation. |
-| Glow | Sets how bright the marks shine. |
-| Speed | Sets how fast the field moves. |
-| Turbulence | Sets how much the field stirs. |
-
-Click the plate to show the Studio whole in the pool. Click ⤢ to open it full in a pane.
-
-##### Whole
-
-Where: the pool under the browser. The whole Studio shows every parameter, in eight groups, one for each section.
-
-| Group | Parameters |
-|---|---|
-| Tools | Tool |
-| Selected | Selected action |
-| Formation | Density, Symmetry, Shape |
-| Material | Glow and grain |
-| Motion | Speed, Turbulence, Follow |
-| Body | Body |
-| Nara | Nara |
-| Capture | Capture |
-
-A change you make in the pool applies at once. It does not add the Studio to a chain.
-
-##### Full
-
-Where: a pane. The full Studio shows the open section at full size, as a surface to work on. Formation shows the form, Material the palette, Motion the flow, and Body the layers of the field. Select a section name to open that section in the pane. The controls stay in Device view, below the pane.
-
-##### Widget
-
-Where: the rail on the right. The widget shows the tool that you hold and the selected symbol. Click the symbol to open the Selected section in Device view. The widget stays when you change mode.
+| Folded | Its name, the open section and the save state: Draft, Saved, or Edited since save. |
+| Compact | A strip of the five section names, the open one marked. Macros: Density, Glow, Speed, Turbulence. |
+| Whole | Every parameter, in five groups, one for each section. |
+| Full | The open section at full size, as a surface to work on: Particles shows the form, Material the palette, Motion the flow, Body the layers of the field. |
+| Widget | The four macros and the open section. |
 
 #### Transport
 
 | Control | Effect on the Studio |
 |---|---|
-| Arm | Records every Studio move as a take. |
+| Arm | Records every Studio move as an automation lane. |
 | Re-enable | Gives back the values that you hold. |
-| Capture | Keeps your last gestures as a scene. |
-| Draw | Draws a form into the field with the Form tool. |
 | Keys and maps | Maps keys and gestures to Studio controls. |
 
 #### To use the Studio
 
 1. Open an Expression and look at Device view.
-2. Select the Form tool. Draw a form in the field.
-3. Open Formation. Set Density and Symmetry until the form reads.
-4. Select a symbol. Press Bind to tie it to a source.
-5. Open Material and Motion. Set Glow, Speed and Turbulence.
-6. Press Capture, then press Save.
+2. Open Particles. Set Density and Symmetry until the form reads.
+3. Open Material and Motion. Set Glow, Speed and Turbulence.
+4. Open Body and choose the layers that join the field.
+5. To change one symbol, select it in the scene's editor in Clip view.
 
 #### Rules
 
 - The Studio controls stay out of the field pane. The field pane shows only the field.
+- What the Studio sets holds for every scene on the track. A scene's own changes are its envelopes, in Clip view.
 - Your personal layer does not become portable because it is drawn. Private keeps it to you.
 - The save state shows Draft, Saved and Edited since save as three separate states.
 - A control that you hold shows the hand-back light. Press the light to give control back.
 
 #### Tips
 
-- To work on one symbol, select it and open the Selected section.
 - To share a scene without your personal layer, set Nara to Private before you save.
-- To try a form fast, draw it with the Form tool, then press Capture.
 - To open a device at full size, select its section name.
 
-### 20.3 Physics
+### 20.4 Physics
 
 **Product:** Expressions · **Kind:** effect · **Chain:** An Expression's chain, after the Field
 
@@ -6671,7 +6306,7 @@ Where: on the chain of an Expression, after the Field. The compact Physics devic
 | Gravity Y | Sets the vertical push on every particle. |
 | Time scale | Sets the pace of the whole simulation. 0 holds the field. |
 
-Click the plate to show the Physics device whole in the pool. Click ⤢ to open it full in a pane.
+Click the plate to show the Physics device whole in the pool. Click ▦ to open it full in a pane.
 
 ##### Whole
 
@@ -6725,7 +6360,7 @@ Where: the rail on the right. The widget shows the swirl picture and the four ma
 - To freeze the field for a still, set Time scale to 0, then capture.
 - To make a calm field, set Turbulence and Thermal jitter to 0.
 
-### 20.4 Pointer
+### 20.5 Pointer
 
 **Product:** Expressions · **Kind:** effect · **Chain:** An Expression's chain, after the Field
 
@@ -6767,7 +6402,7 @@ Where: on the chain of an Expression, after the Field. The compact Pointer devic
 | Falloff | Sets how fast the force fades from the centre of the disc to its edge. |
 | Click strength | Sets the punch of a click. |
 
-Click the plate to show the Pointer device whole in the pool. Click ⤢ to open it full in a pane.
+Click the plate to show the Pointer device whole in the pool. Click ▦ to open it full in a pane.
 
 ##### Whole
 
@@ -6819,7 +6454,7 @@ Where: the rail on the right. The widget shows the disc and the four macros. Tur
 - To clear a space, click with Shove.
 - To keep one scene's pointer feel, set Scope to Local.
 
-### 20.5 Relational
+### 20.6 Relational
 
 **Product:** Expressions · **Kind:** effect · **Chain:** An Expression's chain, after the Field
 
@@ -6863,7 +6498,7 @@ Where: on the chain of an Expression, after the Field. The compact Relational de
 | Spin | Sets the strength of the whirl around each centre. |
 | Chaos factor | Sets how much turbulence the centres add. |
 
-Click the plate to show the Relational device whole in the pool. Click ⤢ to open it full in a pane.
+Click the plate to show the Relational device whole in the pool. Click ▦ to open it full in a pane.
 
 ##### Whole
 
@@ -6917,7 +6552,7 @@ Where: the rail on the right. The widget shows the centres, the four macros and 
 - To keep a swirl tight, lower Swirl radius.
 - To make the centres push, set Gravity pull below 0.
 
-### 20.6 Medium
+### 20.7 Medium
 
 **Product:** Expressions · **Kind:** effect · **Chain:** An Expression's chain, after the Field
 
@@ -6959,7 +6594,7 @@ Where: on the chain of an Expression, after the Field. The compact Medium device
 | Persistence | Sets the share of the flow that remains each frame. |
 | Splat gain | Sets how much motion the particles give to the flow. |
 
-Click the plate to show the Medium device whole in the pool. Click ⤢ to open it full in a pane.
+Click the plate to show the Medium device whole in the pool. Click ▦ to open it full in a pane.
 
 ##### Whole
 
@@ -7006,7 +6641,7 @@ Where: the rail on the right. The widget shows the flow picture, the four macros
 - To keep the field fast on a small computer, lower Grid to 128.
 - To let particles drift with a gesture, raise Coupling.
 
-### 20.7 Contacts
+### 20.8 Contacts
 
 **Product:** Expressions · **Kind:** effect · **Chain:** An Expression's chain, after the Field
 
@@ -7051,7 +6686,7 @@ Where: on the chain of an Expression, after the Field. The compact Contacts devi
 | Contact radius | Sets how close two particles must be to touch. |
 | Contact stiffness | Sets the spring that pushes touching particles apart. |
 
-Click the plate to show the Contacts device whole in the pool. Click ⤢ to open it full in a pane.
+Click the plate to show the Contacts device whole in the pool. Click ▦ to open it full in a pane.
 
 ##### Whole
 
@@ -7101,7 +6736,7 @@ Where: the rail on the right. The widget shows the two pictures, the four macros
 - To make the particles flow like grains, raise Contact viscosity.
 - To stop a wall from breaking, set Wall integrity to 0.
 
-### 20.8 Morph
+### 20.9 Morph
 
 **Product:** Expressions · **Kind:** effect · **Chain:** An Expression's chain, after the Field
 
@@ -7148,7 +6783,7 @@ Where: on the chain of an Expression, after the Field. The compact Morph device 
 
 Drag the phase handle to set both phases.
 
-Click the plate to show the Morph device whole in the pool. Click ⤢ to open it full in a pane.
+Click the plate to show the Morph device whole in the pool. Click ▦ to open it full in a pane.
 
 ##### Whole
 
@@ -7202,7 +6837,7 @@ Where: the rail on the right. The widget shows the drive curve, the four macros 
 - To make a beating morph, set Law to Beat and make the two rates close.
 - To rest at each form, raise Dwell ratio.
 
-### 20.9 Focus
+### 20.10 Focus
 
 **Product:** Expressions · **Kind:** effect · **Chain:** An Expression's chain, after the Field
 
@@ -7243,7 +6878,7 @@ Where: on the chain of an Expression, after the Field. The compact Focus device 
 | Glide | Sets how long the focus takes to travel to the next formation. |
 | Focus tint | Sets how strongly the focus colours the formation that it holds. |
 
-Click the plate to show the Focus device whole in the pool. Click ⤢ to open it full in a pane.
+Click the plate to show the Focus device whole in the pool. Click ▦ to open it full in a pane.
 
 ##### Whole
 
@@ -7300,7 +6935,7 @@ Where: the rail on the right. The widget shows the route and the three macros. T
 - To skip a formation without deleting it, turn it off on the route.
 - To make a slow loop, raise Glide to 8 s.
 
-### 20.10 Colour
+### 20.11 Colour
 
 **Product:** Expressions · **Kind:** effect · **Chain:** An Expression's chain, after the Field
 
@@ -7345,7 +6980,7 @@ Where: on the chain of an Expression, after the Field. The compact Colour device
 | Wave frequency | Sets how many bands of the palette cross the field. |
 | Contrast | Sets the contrast of the palette response. |
 
-Click the plate to show the Colour device whole in the pool. Click ⤢ to open it full in a pane.
+Click the plate to show the Colour device whole in the pool. Click ▦ to open it full in a pane.
 
 ##### Whole
 
@@ -7391,7 +7026,7 @@ Where: the rail on the right. The widget shows the palette strip, the four macro
 - The colours build in this order: field palette, then entity tint, then focus tint, then the colour of the meaning. The layers stay separate.
 - A palette needs 2 to 8 colours. The device refuses a palette outside this range.
 - The device does not change the stored colour of any symbol.
-- Colour from a symbol's meaning is set in the Meaning device.
+- Colour from a symbol's meaning is set on the Meaning page of the scene's Expression tab (§20.1).
 
 #### Tips
 
@@ -7400,7 +7035,7 @@ Where: the rail on the right. The widget shows the palette strip, the four macro
 - To make a dark field, set the Background mode to Vignette and lower Glow.
 - To match the paper to the palette, choose Harmonize paper.
 
-### 20.11 Ink
+### 20.12 Ink
 
 **Product:** Expressions · **Kind:** effect · **Chain:** An Expression's chain, after the Field
 
@@ -7445,7 +7080,7 @@ Where: on the chain of an Expression, after the Field. The compact Ink device sh
 | Softness | Sets how soft the edge of a mark is. |
 | Max size | Sets the size of the largest mark. |
 
-Click the plate to show the Ink device whole in the pool. Click ⤢ to open it full in a pane.
+Click the plate to show the Ink device whole in the pool. Click ▦ to open it full in a pane.
 
 ##### Whole
 
@@ -7496,7 +7131,7 @@ Where: the rail on the right. The widget shows the patch of marks and the four m
 - To keep a slow computer fast, lower Particle count first.
 - To make fine writing, lower Min size and Max size together.
 
-### 20.12 Depth
+### 20.13 Depth
 
 **Product:** Expressions · **Kind:** effect · **Chain:** An Expression's chain, after the Field
 
@@ -7543,7 +7178,7 @@ Where: on the chain of an Expression, after the Field. The compact Depth device 
 | Aerial fade | Sets how far distance dims the ink. |
 | Field of view | Sets the width of the lens. |
 
-Click the plate to show the Depth device whole in the pool. Click ⤢ to open it full in a pane.
+Click the plate to show the Depth device whole in the pool. Click ▦ to open it full in a pane.
 
 ##### Whole
 
@@ -7595,7 +7230,7 @@ Where: the rail on the right. The widget shows the cross-section, the four macro
 - To make a flat plan again, set Projection to Orthographic.
 - To show distance only, leave the body off and use Aerial fade.
 
-### 20.13 Resonance
+### 20.14 Resonance
 
 **Product:** Expressions · **Kind:** effect · **Chain:** An Expression's chain, after the Field
 
@@ -7642,7 +7277,7 @@ Where: on the chain of an Expression, after the Field. The compact Resonance dev
 | Drive strength | Sets how hard the drive shakes the plate. |
 | Dominance | Sets how far the plate takes over from the formation springs. |
 
-Click the plate to show the Resonance device whole in the pool. Click ⤢ to open it full in a pane.
+Click the plate to show the Resonance device whole in the pool. Click ▦ to open it full in a pane.
 
 ##### Whole
 
@@ -7698,922 +7333,232 @@ Where: the rail on the right. The widget shows the plate picture, the four macro
 - To tune the field to the sky, set Key source to Sky on the Field.
 - To see the lines better, raise Transport gain.
 
-### 20.14 Force
-
-**Product:** Expressions · **Kind:** effect · **Chain:** The selected symbol, in an Expression's chain
-
-The Force device sets how the selected symbol pushes or pulls the particles around it. Use it to make a symbol attract, repel or whirl, and to pin the force at a place.
-
-#### Parameters
-
-| Parameter | Values | Default | What it does |
-|---|---|---|---|
-| Kind | None · Attract · Repel · Vortex | Attract | The kind of force. None switches the force off. |
-| Strength | −20 to 20 | 0 | The amount of force. A negative value reverses it. |
-| Spin | −20 to 20 | 0 | A whirl around the symbol. It works with any kind. |
-| Radius | 20 to 2000 pixels | 200 | The reach of the force. |
-| Centre | X, Y, Z in stage units | The place of the symbol | Where the force acts. Move it to pin the force away from the symbol. |
-
-#### Views
-
-```ui
-device: expressions:force
-caption: Force device, on a fixture of readings.
-```
-
-##### Folded
-
-Where: on the chain of the selected symbol, in an Expression. The folded Force device shows the kind, the strength and the radius of the selected symbol. With no symbol selected, it asks you to select one. Click the title to unfold it.
-
-##### Compact
-
-Where: on the chain of the selected symbol, in an Expression. The compact Force device shows the symbol with its force disc, and three macros.
-
-| Macro | What it does |
-|---|---|
-| Strength | Sets the amount of force. A negative value reverses it. |
-| Radius | Sets the reach of the force. |
-| Spin | Sets the whirl around the symbol. |
-
-Click the plate to show the Force device whole in the pool. Click ⤢ to open it full in a pane.
-
-##### Whole
-
-Where: the pool under the browser. The whole Force device shows every parameter, in two groups.
-
-| Group | Parameters |
-|---|---|
-| Force | Kind, Strength, Spin, Radius |
-| Centre | Centre |
-
-A change you make in the pool applies at once. It does not add the Force device to a chain.
-
-##### Full
-
-Where: a pane. The full Force device fills the pane with the field. The force disc shows on the selected symbol, with the size of its radius. Select another symbol to show the force of that symbol. The controls stay in Device view, below the pane.
-
-##### Widget
-
-Where: the rail on the right. The widget shows the force disc and the three macros. Turn a macro on the widget to set the same value as the macro on the chain. The widget stays when you change mode.
-
-#### Transport
-
-| Control | Effect on Force |
-|---|---|
-| Arm | Records your moves as automation lanes. |
-| Re-enable | Gives back a parameter that you hold. |
-| Capture | Keeps your last gestures as a scene. |
-
-#### To use Force
-
-1. Select one symbol in the field.
-2. Open the Force device.
-3. Set Kind to Attract and Strength to 5. The particles gather round the symbol.
-4. Raise Radius to widen the pull.
-5. Set Spin to 3. The particles circle the symbol.
-6. Drag the disc handle to pin the force at a new place.
-
-#### Rules
-
-- The Force device acts on one symbol. Select exactly one.
-- The light is on when the symbol is on and has a kind other than None, or a spin other than 0.
-- A locked symbol refuses edits. Unlock it first.
-- A symbol held by a Blueprint keeps its place. Use the Blueprint to move it.
-
-#### Tips
-
-- To make a symbol the sun of the scene, set Attract with Spin and a wide Radius.
-- To clear space round a symbol, set Repel.
-- To keep particles out of a hole, pin a Repel force on the hole.
-
-### 20.15 Formation
-
-**Product:** Expressions · **Kind:** effect · **Chain:** The selected symbol, in an Expression's chain
-
-The Formation device places and sizes the selected symbol, and sets how many particles it gets. Use it to set where a formation stands and how much of the field it takes.
-
-#### Parameters
-
-| Parameter | Values | Default | What it does |
-|---|---|---|---|
-| Position | X, Y, Z: −4 to 4 stage units | Where you placed it | Where the symbol stands. |
-| Width and height | 0.01 to 4 stage units each | 0.65 · 0.86 | The size of the symbol's box. |
-| Scale | 0.01 to 10 | 1 | Scales the symbol about its centre. |
-| Rotation | −360 to 360 degrees | 0 | Turns the symbol. |
-| Particle share | 0 to 10 | 1 | The weight of this formation when the particles are shared. |
-| Tint weight | 0 to 1 | 0 | How strongly the symbol shows its own colour. |
-| Name | Text, 1 to 160 characters | The symbol's name | The name of the symbol. |
-| Enabled | On · Off | On | An off symbol takes no particles. |
-| Locked | On · Off | Off | A locked symbol refuses device edits. |
-
-The shape and the stored colour show as read-only lines. Change the shape in the glyph editor.
-
-#### Views
-
-```ui
-device: expressions:formation
-caption: Formation device, on a fixture of readings.
-```
-
-##### Folded
-
-Where: on the chain of the selected symbol, in an Expression. The folded Formation device shows the name, the position and the particle share. Click the title to unfold it.
-
-##### Compact
-
-Where: on the chain of the selected symbol, in an Expression. The compact Formation device shows the box of the symbol on the field, with handles, and four macros.
-
-| Macro | What it does |
-|---|---|
-| X | Sets the horizontal place of the symbol. |
-| Y | Sets the vertical place of the symbol. |
-| Scale | Scales the symbol about its centre. |
-| Particle share | Sets the weight of this formation when the particles are shared. |
-
-Click the plate to show the Formation device whole in the pool. Click ⤢ to open it full in a pane.
-
-##### Whole
-
-Where: the pool under the browser. The whole Formation device shows every parameter, in three groups.
-
-| Group | Parameters |
-|---|---|
-| Placement | Position, Rotation |
-| Size and share | Width and height, Scale, Particle share |
-| Appearance | Tint weight, Name, Enabled, Locked |
-
-The list of formations shows above the groups. The shape and the stored colour show as read-only lines.
-
-A change you make in the pool applies at once. It does not add the Formation device to a chain.
-
-##### Full
-
-Where: a pane. The full Formation device fills the pane with the field. The box of the selected formation shows on the field, with its handles. Drag a handle to move or scale the box. The controls stay in Device view, below the pane.
-
-##### Widget
-
-Where: the rail on the right. The widget shows the box picture and the four macros. Turn a macro on the widget to set the same value as the macro on the chain. The widget stays when you change mode.
-
-#### Transport
-
-| Control | Effect on Formation |
-|---|---|
-| Draw | Draws a new form into the field. |
-| Arm | Records your moves as automation lanes. |
-| Re-enable | Gives back a parameter that you hold. |
-| Capture | Keeps your last gestures as a scene. |
-
-#### To use Formation
-
-1. Select a symbol in the field.
-2. Open the Formation device.
-3. Drag the box handle, or set X and Y.
-4. Set Scale to 1.5. The symbol grows.
-5. Set Particle share to 2. The symbol takes twice the particles of a symbol with share 1.
-6. Turn Enabled off to hide the symbol and keep it.
-
-#### Rules
-
-- The share of one formation is its Particle share divided by the total of all enabled formations.
-- When the total is 0, the divisor is 1.
-- A symbol held by a Blueprint shows its position, size and rotation as read only. The device says: use the Blueprint to move this shape.
-- The forces of the symbol belong to the Force device. The steps of its sequence belong to the glyph editor.
-
-#### Tips
-
-- To give a symbol more weight in the scene, raise Particle share.
-- To compare two forms, turn one formation off and on.
-- To make a symbol leave the scene without deleting it, turn Enabled off.
-
-### 20.16 Sound
-
-**Product:** Expressions · **Kind:** effect · **Chain:** The selected symbol, in an Expression's chain
-
-The Sound device gives the selected symbol a voice. Use it to tune a symbol to its own frequency, or to let it follow the plate.
-
-#### Parameters
-
-| Parameter | Values | Default | What it does |
-|---|---|---|---|
-| Voice | On · Off | Off | Lets the symbol sound. The light shows this state. |
-| Follow plate | On · Off | On | On makes the voice follow the pitch of the plate. Off keeps the pitch you set. |
-| Frequency | 1 to 20000 Hz | 220 | The pitch of the voice. When you set it, Follow plate turns off. |
-| Gain | 0 to 1 | 0.2 | The loudness of the voice. 0 is silent. |
-| Waveform | Sine · Triangle · Square · Sawtooth | Sine | The tone of the voice. |
-| Attack | 0 to 10 s | 0.08 | How long the voice takes to rise. |
-| Release | 0 to 30 s | 0.8 | How long the voice takes to fade. |
-| Pan | −1 to 1 | 0 | The place of the voice. −1 is left. 1 is right. |
-
-#### Views
-
-```ui
-device: expressions:sound
-caption: Sound device, on a fixture of readings.
-```
-
-##### Folded
-
-Where: on the chain of the selected symbol, in an Expression. The folded Sound device shows the frequency or "follows plate", and the gain. Click the title to unfold it.
-
-##### Compact
-
-Where: on the chain of the selected symbol, in an Expression. The compact Sound device shows the envelope curve with three handles, and three macros.
-
-| Macro | What it does |
-|---|---|
-| Gain | Sets the loudness of the voice. |
-| Frequency | Sets the pitch of the voice. Follow plate turns off. |
-| Waveform | Sets the tone of the voice. |
-
-Click the plate to show the Sound device whole in the pool. Click ⤢ to open it full in a pane.
-
-##### Whole
-
-Where: the pool under the browser. The whole Sound device shows every parameter, in three groups.
-
-| Group | Parameters |
-|---|---|
-| Voice | Voice, Follow plate, Frequency, Gain, Waveform |
-| Envelope | Attack, Release |
-| Placement | Pan |
-
-A change you make in the pool applies at once. It does not add the Sound device to a chain.
-
-##### Full
-
-Where: a pane. The full Sound device fills the pane with the field. A mark on the selected symbol shows its voice, with its gain. Press Play and listen to the voice of the symbol in the field. The controls stay in Device view, below the pane.
-
-##### Widget
-
-Where: the rail on the right. The widget shows the envelope curve and the three macros. Turn a macro on the widget to set the same value as the macro on the chain. The widget stays when you change mode.
-
-#### Transport
-
-| Control | Effect on Sound |
-|---|---|
-| Play | Plays the scene. The voice sounds when the symbol is in it. |
-| Key, root and scale | Tunes a voice that follows the plate. |
-| Arm | Records your moves as automation lanes. |
-| Re-enable | Gives back a parameter that you hold. |
-
-#### To use Sound
-
-1. Select a symbol in the field.
-2. Open the Sound device. Choose Add sound.
-3. Set Gain to 0.3.
-4. Press Play. The voice follows the plate.
-5. Set Frequency to 330. The voice holds its own pitch.
-6. Drag the envelope handles to set Attack, Gain and Release.
-
-#### Rules
-
-- Every change writes the whole sound of the symbol in one step.
-- When you set Frequency, Follow plate turns off. When you turn Follow plate on, the plate sets the pitch again.
-- A locked symbol refuses edits. The device says: unlock this symbol to change its sound.
-- A symbol with no sound has no voice. Remove sound returns it to this state.
-- The device refuses a value outside its range and names the range.
-
-#### Tips
-
-- To make a drone, set Attack to 4 s and Release to 10 s.
-- To make a chord, give three symbols three frequencies in the ratio 4:5:6.
-- To let a voice move with the plate, leave Follow plate on.
-- To place a voice at the left of the room, set Pan to −0.8.
-
-### 20.17 Meaning
-
-**Product:** Expressions · **Kind:** effect · **Chain:** The selected symbol, in an Expression's chain
-
-The Meaning device ties the selected symbol to a centre of the body and lets that centre colour the field. Use it when a symbol stands for a centre, and you want the field to show it.
-
-#### Parameters
-
-| Parameter | Values | Default | What it does |
-|---|---|---|---|
-| Meaning | None · Root · Sacral · Solar plexus · Heart · Throat · Third eye · Crown | None | The centre that the symbol stands for. |
-| Colour source | Canonical · Entity tint · Override | Canonical | Where the colour of the centre comes from. |
-| Colour gain | 0 to 100 | 1 | How strongly the centre colours the field. |
-| Resonance gain | 0 to 100 | 1 | How strongly the centre answers the plate. |
-| Activation | Constant · Live resonant affinity · Travelling focus | Constant | What switches the centre on. |
-| Radius source | Follow force radius · Independent | Follow force radius | The reach of the colour. |
-| Independent radius | 1 to 100000 pixels | 220 | The reach when Radius source is Independent. |
-| Falloff | Gaussian · Compact | Gaussian | How the colour fades with distance. |
-| Metric | Composition plane · World 3D | Composition plane | How distance is measured. |
-| Blend | Weighted · Additive | Weighted | How the colours of several centres mix. Weighted does not depend on order. |
-| Global colour gain | 0 to 100 | 1 | The colour gain for the whole scene. |
-| Modulations | A list: signal, target, amount, offset | Empty | Moves the colour with a signal. |
-
-A modulation takes one signal: Resonant affinity, Travelling focus, Carrier speed, Force strength or Force spin. It moves one target: Colour gain, Colour radius or Hue phase. It has an amount and an offset, each from −100 to 100.
-
-#### Views
-
-```ui
-device: expressions:meaning
-caption: Meaning device, on a fixture of readings.
-```
-
-##### Folded
-
-Where: on the chain of the selected symbol, in an Expression. The folded Meaning device shows the centre and the activation. Click the title to unfold it.
-
-##### Compact
-
-Where: on the chain of the selected symbol, in an Expression. The compact Meaning device shows the symbol with its colour disc. It has no macros. A summary line shows the centre and the activation.
-
-Click the plate to show the Meaning device whole in the pool. Click ⤢ to open it full in a pane.
-
-##### Whole
-
-Where: the pool under the browser. The whole Meaning device shows every parameter, in five groups.
-
-| Group | Parameters |
-|---|---|
-| Binding | Meaning |
-| Colour | Colour source, Colour gain, Resonance gain, Global colour gain, Blend |
-| Activation | Activation |
-| Radius | Radius source, Independent radius, Falloff, Metric |
-| Modulations | Modulations |
-
-Each modulation has a signal, a target, an amount and an offset.
-
-A change you make in the pool applies at once. It does not add the Meaning device to a chain.
-
-##### Full
-
-Where: a pane. The full Meaning device fills the pane with the field. The colour disc of each bound symbol shows on the field. Its colour is the colour of its centre. Press Play and watch the discs change with their activation. The controls stay in Device view, below the pane.
-
-##### Widget
-
-Where: the rail on the right. The widget shows the colour disc and the summary line. Click the disc to select the symbol that it belongs to. The widget stays when you change mode.
-
-#### Transport
-
-| Control | Effect on Meaning |
-|---|---|
-| Arm | Records your moves as automation lanes. |
-| Re-enable | Gives back a parameter that you hold. |
-
-#### To use Meaning
-
-1. Select a symbol that stands for a centre.
-2. Open the Meaning device. Choose the centre.
-3. Leave Colour source on Canonical.
-4. Set Activation to Live resonant affinity.
-5. Press Play. The colour rises as the plate answers the centre.
-6. Add a modulation if you want the colour to follow the force.
-
-#### Rules
-
-- Centre identity is not a plate station. The device does not treat them as the same thing.
-- A starter diagram of seven centres is not a live reading of a person.
-- With Radius source on Follow force radius, the colour uses the Force radius of the symbol. A symbol with no force uses 220 pixels.
-- Each write sends the whole binding of the symbol.
-- The Meaning device does not change the stored colour of the symbol.
-
-#### Tips
-
-- To see a centre without a force, set Radius source to Independent.
-- To make the colour pulse with the voice, add a modulation from Force strength to Colour gain.
-- To make centres add up, set Blend to Additive.
-
-### 20.18 Scene
-
-**Product:** Expressions · **Kind:** effect · **Chain:** The open scene and its Expression, in an Expression's chain
-
-The Scene device names the scene and the Expression and sets how long a scene lasts. Use it to give a clip its name, its length and the time it takes to change to the next.
-
-#### Parameters
-
-| Parameter | Values | Default | What it does |
-|---|---|---|---|
-| Scene name | Text | Scene | The name of the clip. |
-| Duration | 0 to 3600 s | 8 | How long the scene holds before it changes. |
-| Transition | 0 to 3600 s | 2 | How long the change to the next scene takes. |
-| Expression title | Text, 1 to 160 characters | The Expression's title | The name of the whole Expression. |
-| Expression description | Text, up to 5000 characters | Empty | A note about the Expression. An empty note is a real value. |
-
-#### Views
-
-```ui
-device: expressions:scene
-caption: Scene device, on a fixture of readings.
-```
-
-The Scene device edits the scene clip that is open in Clip view: its name, its length and its change to the next scene.
-
-##### Folded
-
-Where: on the chain of the open scene, in an Expression. The folded Scene device shows the scene name, the duration and the transition. Click the title to unfold it.
-
-##### Compact
-
-Where: on the chain of the open scene, in an Expression. The compact Scene device shows one summary line: the name, the duration and the transition. It has no macros.
-
-Click the plate to show the Scene device whole in the pool. Click ⤢ to open it full in a pane.
-
-##### Whole
-
-Where: the pool under the browser. The whole Scene device shows every parameter, in two groups.
-
-| Group | Parameters |
-|---|---|
-| Scene | Scene name, Duration, Transition |
-| Expression | Expression title, Expression description |
-
-A change you make in the pool applies at once. It does not add the Scene device to a chain.
-
-##### Full
-
-Where: a pane. The full Scene device fills the pane with the scene, as the field plays it. The scene holds for its duration. Then it changes to the next scene over the transition time. Press Play and watch the scene from its start to its change. The controls stay in Device view, below the pane.
-
-##### Widget
-
-Where: the rail on the right. The widget shows the scene name and the clock. Click the clock to open the scene in the pane that has focus. The widget stays when you change mode.
-
-#### Transport
-
-| Control | Effect on Scene |
-|---|---|
-| Play | Plays the scene for its duration, then changes by the transition. |
-| Stop | Stops the scene and rewinds it. |
-| Quantize | Sets when a scene launch lands. |
-| Loop | Loops the scene. |
-| Time signature | Sets the ratio of hold to change for the scene. |
-
-#### To use Scene
-
-1. Select a scene in Session view.
-2. Open the Scene device in Device view.
-3. Type a name. Press Enter to keep it. Press Escape to undo.
-4. Set Duration to 12 and Transition to 3.
-5. Type a title and a note for the Expression.
-
-#### Rules
-
-- Press Enter to keep a change. Press Escape to undo a change that you have not kept.
-- Press Shift and Enter in the description to start a new line.
-- A locked scene refuses edits.
-- In the DLW, "scene" means an Expression's scene. A row across tracks is a stop.
-
-#### Tips
-
-- To make a slow swell, raise Transition above Duration.
-- To find a scene fast in Session view, give it a clear name.
-- To describe the Expression to a reader, write the description.
-
-### 20.19 Text
-
-**Product:** Expressions · **Kind:** effect · **Chain:** The open scene, in an Expression's chain
-
-The Text device lays words on the page of a scene. Use it to add a heading, a title and a line of text over the field, and to place them.
-
-#### Parameters
-
-| Parameter | Values | Default | What it does |
-|---|---|---|---|
-| Layers | Up to 16 | One layer when you add | The text blocks of the scene. Add and remove them. |
-| Visible | On · Off | On | Shows or hides the layer. |
-| Small heading | Text, up to 300 characters | A moment in the field | The first line, in small capitals. |
-| Title | Text, up to 300 characters | Your words, | The main line. |
-| Italic line | Text, up to 300 characters | in this space. | The line in italics. |
-| Supporting text | Text, up to 5000 characters | Empty | The body text. It can have several lines. |
-| Type size | 14 to 150 | 38 | The size of the title. |
-| Block width | 60 to 1000 | 240 | The width of the block. |
-| Page position | X and Y: −0.5 to 1.5 | 0.07 · 0.24 | The place of the block on the page, as a share of the page. |
-| Alignment | Left · Centre · Right | Left | How lines line up in the block. |
-
-#### Views
-
-```ui
-device: expressions:text
-caption: Text device, on a fixture of readings.
-```
-
-The layers belong to the scene clip that is open in Clip view.
-
-##### Folded
-
-Where: on the chain of the open scene, in an Expression. The folded Text device shows the number of layers and the first title. Click the title to unfold it.
-
-##### Compact
-
-Where: on the chain of the open scene, in an Expression. The compact Text device shows the page with the layer boxes. It has one action: Add layer.
-
-Click the plate to show the Text device whole in the pool. Click ⤢ to open it full in a pane.
-
-##### Whole
-
-Where: the pool under the browser. The whole Text device shows every parameter, in two groups.
-
-| Group | Parameters |
-|---|---|
-| Text layers | Layers, Visible |
-| Selected layer | Small heading, Title, Italic line, Supporting text, Type size, Block width, Page position, Alignment |
-
-A change you make in the pool applies at once. It does not add the Text device to a chain.
-
-##### Full
-
-Where: a pane. The full Text device fills the pane with the page of the scene. Each layer shows as a box where its block stands, over the field. Select a box to select its layer in Device view. The controls stay in Device view, below the pane.
-
-##### Widget
-
-Where: the rail on the right. The widget shows the page with the layer boxes. Click a box to select its layer. The widget stays when you change mode.
-
-#### Transport
-
-| Control | Effect on Text |
-|---|---|
-| Play | Plays the scene with its text on the page. |
-| Capture | Keeps the page as a scene. |
-| Arm | Records your moves as a take. |
-
-#### To use Text
-
-1. Select a scene.
-2. Open the Text device. Press Add layer.
-3. Type a title and a line.
-4. Drag the layer box on the page, or set Page position.
-5. Set Type size and Block width until the text reads.
-6. Turn Visible off to hide a layer without deleting it.
-
-#### Rules
-
-- Single-line fields refuse control characters. The body also allows new lines and tabs.
-- A layer box shows the width of the block, whatever the alignment.
-- On a wide page, a block can take at most 45% of the page width.
-- An arrow key moves the box by 0.01. Shift and an arrow key move it by 0.1.
-- The device refuses a new layer after 16, and says so.
-
-#### Tips
-
-- To title a scene, use one layer with a small heading and a title.
-- To keep text off the field, move the block to the edge of the page.
-- To test a layout, turn each layer off and on.
-
-### 20.20 Automation
-
-**Product:** Expressions · **Kind:** effect · **Chain:** The open scene, in an Expression's chain
-
-The Automation device moves parameters over a scene. Use it to make a field device or a symbol change by itself with a wave or a ramp.
-
-#### Parameters
-
-| Parameter | Values | Default | What it does |
-|---|---|---|---|
-| Lanes | Up to 64 | None | The lanes of the scene. Add a lane to move one target. |
-| Target | A field parameter, or a parameter of one symbol | None | The parameter that the lane moves. Each target has one lane. |
-| Type | Oscillator · One-shot or repeating ramp | Oscillator | A wave that repeats, or a ramp from the minimum to the maximum. |
-| Wave | Sine · Triangle · Square · Saw · Random step · Smooth random · Morph drive | Sine | The shape of an oscillator. Morph drive follows the Morph device. |
-| Rate | 0 to 2 | 0.5 | How fast the wave cycles. |
-| Phase | 0 to 1 | 0 | Where in the cycle the lane starts. |
-| Minimum and maximum | Inside the range of the target | The range of the target | The lowest and the highest value the lane writes. |
-| Blend | Replace · Add to base · Multiply base | Replace | How the lane combines with the value you set. |
-| Duration and delay | Duration 0.01 to 30 s · Delay 0 to 10 s | 4 · 0 | The length of a ramp, and the wait before it starts. |
-| Loop | Once · Loop (restart) · Ping-pong | Loop | What a ramp does at its end. |
-| Easing | Linear · Smooth · Ease in · Ease out · Elastic · Bounce | Smooth | The curve of a ramp. |
-| Enabled | On · Off | On | Turns the lane on or off. |
-
-A lane can follow another lane. The follower takes the type, the wave, the rate, the phase, the duration, the delay, the loop and the easing of the leader. It keeps its own enabled state, blend and range.
-
-#### Views
-
-```ui
-device: expressions:automation
-caption: Automation device, on a fixture of readings.
-```
-
-The lanes belong to the scene clip that is open in Clip view.
-
-##### Folded
-
-Where: on the chain of the open scene, in an Expression. The folded Automation device shows the number of lanes and the number that run. Click the title to unfold it.
-
-##### Compact
-
-Where: on the chain of the open scene, in an Expression. The compact Automation device shows one summary line. It has no macros. The lanes show in the whole view.
-
-Click the plate to show the Automation device whole in the pool. Click ⤢ to open it full in a pane.
-
-##### Whole
-
-Where: the pool under the browser. The whole Automation device shows every parameter, in two groups.
-
-| Group | Parameters |
-|---|---|
-| Lanes | Lanes, Target, Enabled |
-| Selected lane | Type, Wave, Rate, Phase, Minimum and maximum, Blend, Duration and delay, Loop, Easing |
-
-A curve shows the shape of the selected lane.
-
-A change you make in the pool applies at once. It does not add the Automation device to a chain.
-
-##### Full
-
-Where: a pane. The full Automation device fills the pane with the scene. A curve for each lane shows on the field, next to the parameter that the lane moves. Press Play and watch each parameter follow its curve. The controls stay in Device view, below the pane.
-
-##### Widget
-
-Where: the rail on the right. The widget shows the count of lanes and a curve of the selected lane. Click the curve to open the lane in Device view. The widget stays when you change mode.
-
-#### Transport
-
-| Control | Effect on Automation |
-|---|---|
-| Play | Runs the lanes. A ramp runs from its delay. |
-| Loop | Loops the scene and its lanes. |
-| Arm | Makes a lane from each parameter that you move. |
-| Re-enable | Gives a parameter back to its lane. |
-
-#### To use Automation
-
-1. Select a scene.
-2. Open the Automation device. Press Add lane.
-3. Pick a target, such as the viscosity of the Physics device.
-4. Set Type to Oscillator and Wave to Sine.
-5. Set the minimum and the maximum.
-6. Press Play. The parameter moves, and its control shows the lane that moves it.
-
-#### Rules
-
-- The curve is the shape set in the lane. It is not a record of the live output.
-- A random wave holds one value for each whole cycle.
-- A parameter shows what moves it. A lane is named on the control.
-- When you take hold of a value that a lane holds, the hand-back light comes on. Press it to give the value back.
-- The device refuses a new lane after 64, and a second lane for the same target.
-- A target that is no longer in the scene is named, and the lane stays.
-
-#### Tips
-
-- To make the field breathe, put a slow sine on the viscosity.
-- To fade a colour in, use a ramp with Ease in.
-- To move several parameters as one, make one leader and follow it.
-- To change the order of lanes, drag a lane up or down.
-
-### 20.21 Blueprint
-
-**Product:** Expressions · **Kind:** effect · **Chain:** The open scene, in an Expression's chain
-
-The Blueprint device ties the symbols of a scene into a sixfold constellation and moves them as one. Use it to keep six symbols in their roles and to place the whole figure.
-
-#### Parameters
-
-| Parameter | Values | Default | What it does |
-|---|---|---|---|
-| Binding | Bound · Not bound | Not bound | Bind assigns the roles to the six symbols that are placed in the scene. Release frees them. |
-| Position | X, Y, Z: −4 to 4 stage units | The centre of the figure | Where the whole figure stands. A handle in the plan moves X and Y. |
-| Rotation | X, Y, Z in degrees | 0 · 0 · 0 | Turns the whole figure. |
-| Relative size | 0.0001 to 14 | 1 | Scales the whole figure. A handle in the plan moves it. |
-
-#### Views
-
-```ui
-device: expressions:blueprint
-caption: Blueprint device, on a fixture of readings.
-```
-
-The figure belongs to the scene clip that is open in Clip view.
-
-##### Folded
-
-Where: on the chain of the open scene, in an Expression. The folded Blueprint device shows "Bound" with the number of members, or "not bound". Click the title to unfold it.
-
-##### Compact
-
-Where: on the chain of the open scene, in an Expression. The compact Blueprint device shows one summary line. It has no macros.
-
-Click the plate to show the Blueprint device whole in the pool. Click ⤢ to open it full in a pane.
-
-##### Whole
-
-Where: the pool under the browser. The whole Blueprint device shows every parameter, in two groups.
-
-| Group | Parameters |
-|---|---|
-| Sixfold roles | Binding |
-| Whole transform | Position, Rotation, Relative size |
-
-The plan view shows between the two groups.
-
-A change you make in the pool applies at once. It does not add the Blueprint device to a chain.
-
-##### Full
-
-Where: a pane. The full Blueprint device fills the pane with the scene. The plan of the sixfold figure shows on the field, with its six symbols in their roles. Drag a handle in the plan to move the figure. Drag another handle to scale the figure. The controls stay in Device view, below the pane.
-
-##### Widget
-
-Where: the rail on the right. The widget shows the plan of the figure. Click the plan to open the Blueprint device in Device view. The widget stays when you change mode.
-
-#### Transport
-
-| Control | Effect on Blueprint |
-|---|---|
-| Arm | Records your moves as a take. |
-| Capture | Keeps the figure as a scene. |
-
-#### To use Blueprint
-
-1. Place six symbols in the scene, one for each role.
-2. Open the Blueprint device. Press Bind sixfold roles.
-3. Check the list. Each member shows its place, one to six.
-4. Drag the centre handle in the plan. The six symbols move together.
-5. Drag the outer handle to change the size.
-6. Press Release to free the symbols.
-
-#### Rules
-
-- A bound figure has six members, in a fixed order.
-- A bound symbol takes its place from the figure. Use the Blueprint to move it, not the Formation device.
-- The device refuses a value outside its range.
-- Bind and Release are separate acts. Release before you bind again.
-
-#### Tips
-
-- To rotate a whole figure, set one rotation and leave the members alone.
-- To compare two figures, keep one scene for each and play them in turn.
-- To move the figure by a small step, use an arrow key. Shift and an arrow key moves it ten times as far.
-
-### 20.22 Body & triggers
-
-**Product:** Expressions · **Kind:** effect · **Chain:** The open scene, in an Expression's chain
-
-The Body & triggers device sets what a scene carries and what the scene does when something happens. Use it to put a text, a file or another Expression in a scene. Use it to jump, open or read when the scene enters, leaves or is touched.
-
-#### Parameters
-
-| Parameter | Values | Default | What it does |
-|---|---|---|---|
-| Carrier | Engine composition · Text source · Glyph form · Image · File · Knowledge whole · HTML surface · Agent surface · Another Expression | None | What the scene carries as its body. |
-| Presentation | Live · Inline · Preview · Degraded | Inline | How the body shows. The device refuses a presentation that the carrier cannot show. |
-| Reference | A file reference or a path | Empty | Where the body comes from. |
-| Span | Start and end, 0 to 8000000; 0 to 0 is the whole file | 0 · 0 | The part of the file to use. |
-| Occasion | Scene enters · Scene leaves · Activated · Selected · Sequence moves on | Scene enters | When a trigger runs. |
-| Target | Read this Expression · Open a portal · Run a native Action · Jump to a scene | Jump to a scene | What a trigger does. |
-| Portal placement | Preview · Overlay · Beside · Full · Detached · Re-dock | Beside | Where a portal opens. |
-| Operation | Inspect · List · Export | Inspect | What a read trigger does. |
-| Triggers | Up to 8 | None | The triggers of the scene. |
-
-#### Views
-
-```ui
-device: expressions:body-triggers
-caption: Body & triggers device, on a fixture of readings.
-```
-
-The body and the triggers belong to the scene clip that is open in Clip view.
-
-##### Folded
-
-Where: on the chain of the open scene, in an Expression. The folded Body & triggers device shows the carrier and the number of triggers. Click the title to unfold it.
-
-##### Compact
-
-Where: on the chain of the open scene, in an Expression. The compact Body & triggers device shows one summary line: the body, and the number of triggers. It has no macros.
-
-Click the plate to show the Body & triggers device whole in the pool. Click ⤢ to open it full in a pane.
-
-##### Whole
-
-Where: the pool under the browser. The whole Body & triggers device shows every parameter, in two groups.
-
-| Group | Parameters |
-|---|---|
-| Scene body | Carrier, Presentation, Reference, Span |
-| Jump triggers | Occasion, Target, Portal placement, Operation, Triggers |
-
-A change you make in the pool applies at once. It does not add the Body & triggers device to a chain.
-
-##### Full
-
-Where: a pane. The full Body & triggers device fills the pane with the scene. The body that the scene carries shows on the field. A mark shows each trigger. Press Play and watch the triggers run when the scene enters or leaves. The controls stay in Device view, below the pane.
-
-##### Widget
-
-Where: the rail on the right. The widget shows the carrier and the list of triggers. Click a trigger to open it in Device view. The widget stays when you change mode.
-
-#### Transport
-
-| Control | Effect on Body & triggers |
-|---|---|
-| Play | Plays the scene. Its triggers run on their occasions. |
-| Quantize | Sets when a jump lands. |
-| Arm | Lets a trigger that you attach write directly. |
-
-#### To use Body & triggers
-
-1. Select a scene.
-2. Open the Body & triggers device.
-3. Choose a Carrier, such as Text source, and enter the Reference.
-4. Choose a Presentation. The device checks it against the carrier.
-5. Add a trigger. Choose an Occasion and a Target.
-6. For a jump, choose the scene to jump to. Press Play.
-
-#### Rules
-
-- A carrier that the host cannot open shows its reason and stays unavailable.
-- A resolved text or image body shows in full, so Degraded is refused for it.
-- A trigger needs a name of 1 to 128 letters, digits, dots, dashes or underscores.
-- A scene has at most 8 triggers and at most 16 body actions.
-- A trigger acts only on a target that the host discloses.
-- Each change is one request. When the owner refuses it, the form stays, and the reason shows.
-
-#### Tips
-
-- To make a story, jump from the end of one scene to the next scene.
-- To bring a document into a scene, use File and set its span.
-- To show a second Expression beside this one, use a portal with Beside.
-
-### 20.23 Arrange
-
-**Product:** Expressions · **Kind:** effect · **Chain:** The open scene, in an Expression's chain
-
-The Arrange device sets the positions of the symbols of a scene by a rule. Use it to line symbols up, space them evenly, or set them on a ring, a grid or a spiral.
-
-#### Parameters
-
-| Parameter | Values | Default | What it does |
-|---|---|---|---|
-| Objects | A checklist of the symbols that can move | None selected | The symbols that Arrange moves. Quick selects fill the list. |
-| Arrangement | Line · Column · Ring · Grid · Spiral · Align X · Align Y · Distribute X · Distribute Y · Laminate | None | The rule that sets the positions. |
-| Plane | XY · XZ · YZ | XY | The plane that the rule works in. |
-
-The scene records the last arrangement that you applied.
-
-#### Views
-
-```ui
-device: expressions:arrange
-caption: Arrange device, on a fixture of readings.
-```
-
-The arrangement belongs to the scene clip that is open in Clip view.
-
-##### Folded
-
-Where: on the chain of the open scene, in an Expression. The folded Arrange device shows the number of objects and the plane. Click the title to unfold it.
-
-##### Compact
-
-Where: on the chain of the open scene, in an Expression. The compact Arrange device shows one summary line: the number of objects, and the plane. It has no macros.
-
-Click the plate to show the Arrange device whole in the pool. Click ⤢ to open it full in a pane.
-
-##### Whole
-
-Where: the pool under the browser. The whole Arrange device shows every parameter, in two groups.
-
-| Group | Parameters |
-|---|---|
-| Objects | Objects |
-| Arrangement | Arrangement, Plane |
-
-A plan shows the symbols and the places that they will take.
-
-A change you make in the pool applies at once. It does not add the Arrange device to a chain.
-
-##### Full
-
-Where: a pane. The full Arrange device fills the pane with the scene. The new places show as ghosts, one for each object, next to the symbols. Compare each ghost with its symbol before you apply the arrangement. The controls stay in Device view, below the pane.
-
-##### Widget
-
-Where: the rail on the right. The widget shows the plan with the ghosts. Click the plan to open the Arrange device in Device view. The widget stays when you change mode.
-
-#### Transport
-
-| Control | Effect on Arrange |
-|---|---|
-| Capture | Keeps the arranged scene as a new scene. |
-| Arm | Records the move as a take. |
-
-#### To use Arrange
-
-1. Select a scene with several symbols.
-2. Open the Arrange device.
-3. Select the objects in the list.
-4. Choose Ring. The plan shows where each symbol will stand.
-5. Check the list of moves. Press the arrangement to apply it.
-6. Undo it if the ring does not read.
-
-#### Rules
-
-- One apply is one undo step. It moves at most 256 symbols.
-- Arrange does not move a locked symbol or a symbol held by a Blueprint. The list says why.
-- The plan shows the two axes of the plane. Depth that the plane does not draw still moves, and the list shows it.
-- The device does not change your input. It computes the new places, then applies them.
-
-#### Tips
-
-- To space symbols evenly on a line, use Distribute X.
-- To set symbols in the plane of depth, set Plane to XZ before you apply a rule.
-- To compare two layouts, apply one, capture it, then apply the other.
-
 ## 21. Live
 
 Live holds one instrument. A torus makes the sound, and you play it from a keyboard that is the torus laid flat.
 
-### 21.1 Torus
+### 21.1 Live: tracks and clips
+
+**Product:** Live · **Track:** a part · **Clip:** a MIDI clip or an audio clip · **Main track:** Live's Main track
+
+You need to play, record and shape a piece on the one instrument. In Live mode each part is a track, and its clips are its phrases and its sounds. Select a clip and Clip view opens it as Live does, with its own mode. Device view below shows the part's chain: the note devices, the Torus, then its effects.
+
+#### The track
+
+A track is a part of the set. A MIDI track's notes play the Torus. An audio track plays its samples. A group track folds its members under one head, and a return track takes what the parts send to it.
+
+The track head shows the part's name and colour, and a fold for a group.
+
+##### The mixer row
+
+| Live's control | What it does here |
+|---|---|
+| Activator | Turns the part on or off. Off, the part makes no sound. |
+| Solo | Lets you hear only the soloed parts. |
+| Arm | Arms the part for recording. Press Record, or a clip slot's record button, to record what you play into a clip. |
+| Monitor | In · Auto · Off. In always passes what you play through the chain. Auto passes it when the part is armed. Off passes only the clips. |
+| Volume and pan | The level and the place of the part. |
+| Sends | How much of the part goes to each return track. |
+| Output | Where the part goes: the Main track, a group, or another part. |
+
+##### The input
+
+You play a MIDI part from the playing surface: the Jankó keyboard, six rows of two interleaved whole-tone families, so that every semitone is a short step across the rows and a chord has the same fingering in every key. Each key is a point on the Torus: the two row families are its two helices. The surface sits under the Torus in the Torus's Full view and its window. Pointer, touch, the computer keys and MIDI all play the part through the same path.
+
+| Setting | Values | Default | What it does |
+|---|---|---|---|
+| Layout | Jankó · Piano | Jankó | Shows the Jankó rows, or an ordinary piano. |
+| Input | Pointer and touch · Computer keys · MIDI: each On · Off | All On | The ways you can play the part. |
+| Range | 2 to 8 octaves | 5 | The size of the playing surface. |
+| Transpose | −24 to 24 semitones | 0 | Moves every key. The fingering stays. |
+| Velocity | Pointer height · Pressure · Fixed | Pointer height | Where the strength of a note comes from. |
+| Pressure | On · Off | On | Lets pressure on a held key move the sound. Pressure records into the clip's MPE tab. |
+| Sustain | On · Off | Off | Holds notes after you lift the key. |
+| Repeat touch | One note · Each key | One note | Whether one note holds when you press two keys with the same pitch. The same note can have more than one key, and each key is a separate touch point. |
+
+| On the surface | On the Torus |
+|---|---|
+| A key | A point on its helix. |
+| A semitone step across the rows | A step from one helix to the other. |
+| The same fingering moved to another key | A move along the helix. The figure does not change. |
+| A chord | Several points excited together. They draw the figure of the chord. |
+
+An audio part takes its input from your audio interface, as a Live audio track does.
+
+#### The clip
+
+A clip is a MIDI clip or an audio clip. A MIDI clip's editor edits its notes, which play the Torus. An audio clip's editor edits its sample.
+
+#### Clip view
+
+Clip view is Live's, panel for panel. A MIDI clip opens on its notes, folded to or highlighting its own mode.
+
+##### The Clip panel
+
+| Field | Values | What it does |
+|---|---|---|
+| Name and colour | Text · the palette | The clip's name, on its colour. |
+| Start and End | Bars, beats and sixteenths, each with Set | Where the clip starts and ends. Set takes the playhead's place. |
+| Loop | On · Off | Loops the clip between its loop markers. |
+| Position and Length | Bars, beats and sixteenths, each with Set | Where the loop starts and how long it is. |
+| Signature | A numerator and a denominator | The clip's own metre. |
+| Groove | A groove, or None | The groove applied to the clip. Hot-swap tries another; Commit writes it into the notes. |
+| Scale | Off · a root and a mode | The clip's own mode. MIDI clips only. Off follows the set's mode in force. |
+| Duplicate | A button | Doubles the clip's loop and its notes. MIDI clips only. |
+
+The clip's mode is chosen as the transport's is:
+
+| Part | Values |
+|---|---|
+| Root | Twelve roots, one for each lens. |
+| Mode | Ionian · Dorian · Phrygian · Lydian · Mixolydian · Aeolian · Locrian |
+| Source scale | A Ficino planet (seven) · a Shem name (72) · a maqām (72), each with its own intervals |
+
+A clip with a mode of its own lets a piece move from mode to mode phrase by phrase. The Scale mapping device on the chain follows the clip's mode, or the set's when the clip has none.
+
+##### The Launch panel
+
+| Field | Values | Default | What it does |
+|---|---|---|---|
+| Follow action | On · Off | Off | Turns the clip's follow actions on. |
+| Action A and action B | No Action · Stop · Play Again · Previous · Next · First · Last · Any · Other · Jump | Next · No Action | What comes after the clip. Jump goes to a clip you choose. |
+| Chance | A share between A and B | 100% · 0% | How often each action is taken. |
+| Linked | Linked · Unlinked, with a multiplier | Linked, 1x | Linked takes the action at the end of the clip's loop, after the number of loops set. Unlinked takes it after a time you set. |
+| Launch mode | Trigger · Gate · Toggle · Repeat | Trigger | Trigger plays on a press. Gate plays while you hold. Toggle starts and stops on each press. Repeat retriggers at the quantize rate while held. |
+| Legato | On · Off | Off | The clip takes over the play position of the clip it replaces. |
+| Quantize | Global · None · 8 Bars · 4 Bars · 2 Bars · 1 Bar · 1/2 · 1/2T · 1/4 · 1/4T · 1/8 · 1/8T · 1/16 · 1/16T · 1/32 | Global | When a launch lands. Global follows the transport's Quantize. |
+| Velocity | 0 to 100% | 0% | How much the launch's velocity sets the clip's volume. |
+
+A clip laid on Arrangement view's ruler is not launched. Its Launch panel is empty.
+
+##### Tools
+
+The tools rewrite the notes or the sample of the clip. A transform or a generator writes when you press it, or at once while its auto-apply is on.
+
+**Pitch and time** (MIDI):
+
+| Control | What it does |
+|---|---|
+| Fit to Scale | Moves the notes onto the clip's mode. |
+| Invert | Turns the notes upside down within their range. |
+| Add Interval | Adds a note at the interval set beside it, in scale degrees. |
+| Stretch, ×2 and /2 | Stretches the notes in time. |
+| Grid and Set Length | Sets the length of the notes to the grid. |
+| Humanize | Shifts the notes in time at random, by the amount set. |
+| Reverse | Plays the notes backwards. |
+| Legato | Lengthens each note to the next. |
+
+**Transform** (MIDI): choose a tool, set it, then press Transform.
+
+| Tool | What it does |
+|---|---|
+| Arpeggiate | Breaks chords into runs: Style, Steps, Distance, Rate and Gate. |
+| Connect | Adds notes that join one note to the next. |
+| Ornament | Adds grace notes and flams. |
+| Quantize | Moves notes onto the grid. |
+| Recombine | Reorders the notes' pitches, lengths or velocities. |
+| Span | Sets how notes join: legato, tenuto or staccato. |
+| Strum | Spreads the notes of a chord in time. |
+| Time Warp | Bends the timing of the notes along a curve. |
+
+**Generate** (MIDI): choose a generator, set it, then press Generate.
+
+| Tool | What it does |
+|---|---|
+| Rhythm | Writes a rhythm on one pitch: Steps, Pattern, Density, Step Duration, Split, Shift and a velocity range. |
+| Seed | Writes notes at random within a range. |
+| Shape | Writes a melody that follows a drawn shape. |
+| Stacks | Writes chords. |
+
+**Audio utilities** (audio):
+
+| Control | Values | What it does |
+|---|---|---|
+| Warp | On · Off | Fits the sample to the tempo. |
+| Warp mode | Beats · Tones · Texture · Re-Pitch · Complex · Complex Pro | How the sample is stretched. |
+| BPM, /2 and ×2 | A tempo | The sample's own tempo. |
+| Reverse | A button | Plays the sample backwards. |
+| Fade · RAM · HiQ | On · Off each | Short fades at the clip's edges; loads the sample into memory; high-quality resampling when the sample is transposed. |
+| Gain | −70 to 24 dB | The level of the sample. |
+| Pitch | Semitones and cents | Transposes the sample. |
+
+**Quantize** (audio):
+
+| Control | Values | What it does |
+|---|---|---|
+| Grid | Grid · 1/4 · 1/8 · 1/16 · 1/32, and Triplets | The grid that the transients move to. |
+| Amount | 0 to 100% | How far they move. |
+| Apply | A button | Moves them. |
+
+##### Editor tabs
+
+| Tab | What it shows |
+|---|---|
+| Notes | The piano roll. Its key column is the playing surface, in its layout and colours. Fold shows only the rows that hold notes. Fold to Scale shows only the clip's mode. Highlight Scale tints the mode's rows. A lane below shows velocity or chance. |
+| Envelopes | The clip's envelopes. |
+| MPE | Each note's own expression: its pitch drawn on the note, and lanes for slide, pressure, velocity and release velocity. Pressure from the playing surface records here. |
+| Sample | For an audio clip, instead of Notes and MPE: its waveform with its transients and warp markers. |
+
+The key column takes two settings from the playing surface:
+
+| Setting | Values | Default | What it does |
+|---|---|---|---|
+| Overlay | Mode · Direct · Partition · Pair family · Completion · Basis | Mode | What the key colours show. Mode colours the notes of the mode in force. Partition shows the black and white of a traditional keyboard. Pair family marks the relations A, B and C. Completion marks the degrees D1 to D3. |
+| Basis | Chromatic · Fifths | Chromatic | The order in which the overlay addresses the twelve notes. |
+
+Play the surface while a clip is open in Clip view and the notes you play record into it. The piano roll shows them.
+
+##### Envelopes
+
+A clip's envelopes move a parameter over the clip's own time. The Device chooser names a device on the part's chain, or the mixer. The Control chooser names its parameter.
+
+| Control | Values | What it does |
+|---|---|---|
+| Device | The part's note devices, the Torus, its effects · Mixer | Where the parameter lives. |
+| Control | The device's parameters | The parameter the envelope moves. |
+| Mode | Automation · Modulation | Automation sets the value over the clip. Modulation moves it relative to the part's own value or automation. |
+| Linked | Linked · Unlinked | Linked follows the clip's loop. Unlinked gives the envelope its own start, end, length and loop. |
+
+An audio clip also has envelopes of its own controls: Gain, Transposition and Sample Offset, and the controls of its warp mode, such as Transient Envelope, Grain Size, Flux, Pro Formants and Pro Envelope. These have no Automation or Modulation switch.
+
+The sky is a modulator, not an envelope. It shows on the parameter it moves.
+
+#### Takes and Arrangement lanes
+
+Record a part and each pass lies as a take lane under its track. Select a range in a take and press Enter to bring it into the main lane. This is comping, and the take lane marks the range it gave.
+
+Under a track, an automation lane shows the recorded moves of one parameter, with its device and parameter named on the lane's head. Arm in the transport, move a parameter, and the move becomes a lane.
+
+#### The Main track
+
+Live's Main track carries the scenes. Each row has a launch button with the scene's name, and can carry its own tempo and signature. The Main track holds Stop All Clips, the switch that turns follow actions on for the whole set, and Back to Arrangement, which lights when the Session differs from the Arrangement. Its mixer row sets the cue and main outputs, the level and the place of the whole piece. Its chain works on everything you hear.
+
+#### On the rail
+
+| Tile | What it shows |
+|---|---|
+| Torus | The small live torus with a level meter, and a short keyboard beneath it that you can play with the pointer, with the notes that sound. Click the torus to open it full in the pane that has focus. |
+
+#### Rules
+
+- Pointer, touch, computer keys and MIDI all use one path.
+- Keys do not play notes while you type in a document.
+- Release a key and the note is released. Lose focus or lose a device, and all held notes are released. Panic releases all notes at once.
+- A direct strike, a route preview and a generated walk look different on the playing surface.
+- The playing surface does not draw a relation between neighbouring keys.
+- A mode folds or highlights the keys and the rows. Changing the overlay does not change the tuning.
+- A clip with no mode of its own follows the set's mode in force.
+
+#### Tips
+
+- To learn a chord once, play it at one key, then move the shape.
+- To find the notes of a mode fast, set the overlay to Mode.
+- To play with one hand, use Sustain and play the next shape.
+- To see the two helices, set the overlay to Partition.
+- To move a piece from one mode to another, give each clip its own mode.
+- To keep the best pass of a phrase, record several, then comp the takes.
+
+### 21.2 Torus
 
 **Product:** Live · **Kind:** instrument · **Track:** A Live part. It is the one instrument of Live. The same torus turns at the centre of every Expression.
 
@@ -8676,7 +7621,7 @@ Where: on the chain of a Live part, after the note devices. The compact Torus sh
 | Drive | Sets how hard the pulses shake the body. |
 | Release | Sets how long a note takes to fade. |
 
-Click the plate to show the Torus whole in the pool. Click ⤢ to open it full in a pane.
+Click the plate to show the Torus whole in the pool. Click ▦ to open it full in a pane.
 
 ##### Whole
 
@@ -8742,125 +7687,6 @@ Where: the rail on the right. The widget shows the small live torus with a level
 - To make the pulses beat, move Pulse mix away from the middle.
 - To share a sound, save the state as a preset and give the preset to a friend.
 
-### 21.2 Jankó keyboard
-
-**Product:** Live · **Kind:** instrument · **Track:** A Live part. It plays the torus of the part.
-
-The Jankó keyboard is the playing surface of the torus. Use it to play any chord with the same fingering in every key, and to see where each key stands on the torus.
-
-#### How the keyboard is laid out
-
-The keyboard has six rows. Two families of whole tones are interleaved on the rows. Every semitone is a short step across the rows. A chord has the same shape in every key.
-
-Each key is an excitation point on the torus. The two row families are the two helices of the torus.
-
-| On the keyboard | On the torus |
-|---|---|
-| A key | A point on its helix. |
-| A semitone step across the rows | A step from one helix to the other. |
-| A move of the same fingering to another key | A move along the helix. The figure does not change. |
-| A chord | Several points that are excited together. They draw the figure of the chord. |
-
-The same note can have more than one key. Each key is a separate touch point.
-
-#### Parameters
-
-| Parameter | Values | Default | What it does |
-|---|---|---|---|
-| Layout | Jankó · Piano | Jankó | Shows the Jankó rows or an ordinary piano. |
-| Overlay | Mode · Direct · Partition · Pair family · Completion · Basis | Mode | What the key colours show. Mode colours the notes of the mode in force. |
-| Basis | Chromatic · Fifths | Chromatic | The order in which the overlay addresses the twelve notes. |
-| Range | 2 to 8 octaves | 5 | The size of the keyboard. |
-| Transpose | −24 to 24 semitones | 0 | Moves every key. The fingering stays. |
-| Input | Pointer and touch · Computer keys · MIDI: each On · Off | All On | The ways that you can play. All use the same path. |
-| Velocity | Pointer height · Pressure · Fixed | Pointer height | Where the strength of a note comes from. |
-| Pressure | On · Off | On | Lets pressure on a held key move the sound. |
-| Sustain | On · Off | Off | Holds notes after you lift the key. |
-| Repeat touch | One note · Each key | One note | Whether one note holds when you press two keys with the same pitch. |
-
-The Partition overlay shows the black and white colours of a traditional keyboard. The Pair family overlay marks the relations A, B and C. The Completion overlay marks the degrees D1 to D3.
-
-#### Views
-
-```ui
-device: live:janko
-caption: Jankó keyboard, on a fixture of readings.
-```
-
-In Clip view, the keyboard records the notes that you play into the clip that is open. The piano roll shows them.
-
-##### Folded
-
-Where: on the chain of a Live part, before the torus. The folded Jankó keyboard shows its name and the number of notes that sound. Click the title to unfold it.
-
-##### Compact
-
-Where: on the chain of a Live part, before the torus. The compact Jankó keyboard shows six short rows, and four macros.
-
-| Macro | What it does |
-|---|---|
-| Transpose | Moves every key. The fingering stays. |
-| Range | Sets the size of the keyboard in octaves. |
-| Velocity | Sets where the strength of a note comes from. |
-| Sustain | Holds notes after you lift the key. |
-
-Click the plate to show the Jankó keyboard whole in the pool. Click ⤢ to open it full in a pane.
-
-##### Whole
-
-Where: the pool under the browser. The whole Jankó keyboard shows every parameter, in three groups.
-
-| Group | Parameters |
-|---|---|
-| Layout | Layout, Range, Transpose |
-| Overlay | Overlay, Basis |
-| Input | Input, Velocity, Pressure, Sustain, Repeat touch |
-
-A change you make in the pool applies at once. It does not add the Jankó keyboard to a chain.
-
-##### Full
-
-Where: a pane. The full Jankó keyboard fills the pane with the six rows at full size. The overlay colours the keys. The torus lights at each key that you press. Play a chord with the pointer, the computer keys or a MIDI controller. Move the same fingering to another key. The controls stay in Device view, below the pane.
-
-##### Widget
-
-Where: the rail on the right. The widget shows a short keyboard and the notes that sound. Play the short keyboard with the pointer. The widget stays when you change mode.
-
-#### Transport
-
-| Control | Effect on the Jankó keyboard |
-|---|---|
-| Key, root and scale | Sets the mode in force. The keyboard recolours to it. |
-| Record | Records the notes that you play. |
-| Capture | Keeps the phrase that you just played. |
-| Keys and maps | Maps computer keys and MIDI controls to keys of the keyboard. |
-
-#### To use the Jankó keyboard
-
-1. Open Live mode. The keyboard shows under the torus.
-2. Press a key with the pointer, with your finger or on the computer keyboard. A point lights on the torus.
-3. Press three keys together. The surface draws the figure of the chord.
-4. Move the same shape to another key. The figure is the same.
-5. Set the mode in the transport. The keyboard marks the notes that belong and dims the rest.
-6. Set Layout to Piano if you want an ordinary keyboard.
-
-#### Rules
-
-- Pointer, touch, computer keys and MIDI all use one path.
-- Keys do not play notes while you type in a document.
-- Release a key and the note is released. Lose focus or lose a device, and all held notes are released.
-- Panic releases all notes at once.
-- A direct strike, a route preview and a generated walk look different on the keyboard.
-- The keyboard does not draw a relation between neighbouring keys.
-- The mode folds or highlights the keys. The tuning does not change when you change the overlay.
-
-#### Tips
-
-- To learn a chord once, play it at one key, then move the shape.
-- To find the notes of a mode fast, set the overlay to Mode.
-- To play with one hand, use Sustain and play the next shape.
-- To see the two helices, set the overlay to Partition.
-
 ### 21.3 Scale mapping
 
 **Product:** Live · **Kind:** effect · **Chain:** A Live part's chain, before the torus
@@ -8916,7 +7742,7 @@ Where: on the chain of a Live part, before the torus. The compact Scale mapping 
 | Snap | Sets how a note outside the mode moves onto the mode. |
 | Show | Sets how the roll and the keyboard show the mode: highlight, fold or off. |
 
-Click the plate to show the Scale mapping device whole in the pool. Click ⤢ to open it full in a pane.
+Click the plate to show the Scale mapping device whole in the pool. Click ▦ to open it full in a pane.
 
 ##### Whole
 
@@ -9012,7 +7838,7 @@ Where: on the chain of a Live part, before the torus. The compact Exact-ratio tu
 | Comma | Keeps the gap that twelve fifths leave open, or folds it into the octave. |
 | Readout | Sets how the tuning of a note shows: ratio, cents or hertz. |
 
-Click the plate to show the Exact-ratio tuning device whole in the pool. Click ⤢ to open it full in a pane.
+Click the plate to show the Exact-ratio tuning device whole in the pool. Click ▦ to open it full in a pane.
 
 ##### Whole
 
@@ -9109,7 +7935,7 @@ Where: on the chain of a Live part, before the torus. The compact Sky modulation
 | Amount 3 | Sets the amount of the third assignment. |
 | Amount 4 | Sets the amount of the fourth assignment. |
 
-Click the plate to show the Sky modulation device whole in the pool. Click ⤢ to open it full in a pane.
+Click the plate to show the Sky modulation device whole in the pool. Click ▦ to open it full in a pane.
 
 ##### Whole
 
@@ -9235,7 +8061,7 @@ Where: on the chain of a Live part, after the torus. The compact Effects show on
 | Reverb | Damping | Sets how soft the tail is. |
 | Reverb | Dry/wet | Sets how much of the tail you hear. |
 
-Click the plate to show the effects whole in the pool. Click ⤢ to open them full in a pane.
+Click the plate to show the effects whole in the pool. Click ▦ to open them full in a pane.
 
 ##### Whole
 
@@ -9357,7 +8183,7 @@ Where: on the chain of a Technē reading. The compact Sky shows a small ring wit
 | Run speed | Sets how fast the sky moves when the clock runs. |
 | Natal ring | Draws the sky of your birth round the sky of the date. |
 
-Click the plate to show the Sky whole in the pool. Click ⤢ to open it full in a pane.
+Click the plate to show the Sky whole in the pool. Click ▦ to open it full in a pane.
 
 ##### Whole
 
@@ -9483,7 +8309,7 @@ Where: on the chain of a reading. The compact M3 clock shows the wheel with a ne
 | Rate | Sets how fast the wheel runs. |
 | Turn | Sets which turn of the wheel to show: first, second or both. |
 
-Click the plate to show the M3 clock whole in the pool. Click ⤢ to open it full in a pane.
+Click the plate to show the M3 clock whole in the pool. Click ▦ to open it full in a pane.
 
 ##### Whole
 
@@ -9603,7 +8429,7 @@ Where: on the chain of a reading. The compact Deck shows the positions as small 
 | Draw | Sets how the cards or the lines come: random or by hand. |
 | Agent reads | Sets Off, Propose or Write. |
 
-Click the plate to show the Deck whole in the pool. Click ⤢ to open it full in a pane.
+Click the plate to show the Deck whole in the pool. Click ▦ to open it full in a pane.
 
 ##### Whole
 
@@ -9716,7 +8542,7 @@ Where: on the chain of a reading. The compact Chakra shows seven small discs, li
 | Colour source | Sets where the colour of a centre comes from. |
 | Natal distribution | Shows how your birth sky spreads over the centres. |
 
-Click the plate to show the Chakra whole in the pool. Click ⤢ to open it full in a pane.
+Click the plate to show the Chakra whole in the pool. Click ▦ to open it full in a pane.
 
 ##### Whole
 
@@ -9822,7 +8648,7 @@ Where: on the chain of a reading. The compact M′ matrices show a small grid of
 | Lens | Sets the lens that anchors the reading. |
 | Follow | Sets what moves the cell: the notes that you play, the sky, or nothing. |
 
-Click the plate to show the M′ matrices whole in the pool. Click ⤢ to open them full in a pane.
+Click the plate to show the M′ matrices whole in the pool. Click ▦ to open them full in a pane.
 
 ##### Whole
 
@@ -9944,81 +8770,7 @@ height.
 - To compare two sessions, pin one tile on the first and open a second tile on the other.
 - To start a day with the same tiles, save them as a preset.
 
-### 23.2 Sessions
-
-**Product:** AIKit and Central · **Kind:** instrument · **Rail:** the widget rail on the right
-
-You need to find any session or helper and open its thread. Sessions lists every session, with its helpers nested as they were spawned.
-
-#### Parameters
-| Parameter | Values | Default | What it does |
-|---|---|---|---|
-| Filter | All · Running · Stalled | All | Shows the sessions in one state. |
-| Nest | On · Off | On | Shows helpers under the session that spawned them. |
-| Pin | On · Off | Off | Keeps the list on its subject. |
-
-#### Views
-
-```ui
-device: widgets:sessions
-caption: Sessions, on a fixture of readings.
-```
-
-##### Folded
-
-Where: the launcher on the rail, and on a chain. The folded Sessions shows as a launcher square with the name Sessions. A dot marks an open tile. Click the square to open the tile on the rail.
-
-##### Compact
-
-Where: on a chain. The compact Sessions shows each session with its state. Helpers are indented below the session that spawned them. It has three macros.
-
-| Macro | What it does |
-|---|---|
-| Filter | Sets All, Running or Stalled. |
-| Nest | Shows helpers under their parent, or in one flat list. |
-| Pin | Keeps the list on its subject. |
-
-Click the plate to show the Sessions whole in the pool. Click ⤢ to open it full in a pane.
-
-##### Whole
-
-Where: the pool under the browser. The whole Sessions shows every parameter, in two groups.
-
-| Group | Parameters |
-|---|---|
-| List | Filter, Nest |
-| Subject | Pin |
-
-A change you make in the pool applies at once.
-
-##### Full
-
-Where: a pane. The full Sessions shows the tree of sessions at pane size. Each row shows the name of the session, its state and its helpers. A helper has one step of indent for each level. Double-click a row to open its thread. The controls stay in Device view, below the pane.
-
-##### Widget
-
-Where: the rail on the right. The widget shows the tree of sessions. Three counts show the sessions, the running sessions and the stalled sessions. Three filter buttons show All, Running or Stalled. Click a session to select its track. Double-click a session to open its thread. The widget stays when you change mode.
-
-#### Transport
-| Control | Effect on Sessions |
-|---|---|
-| Follow | Keeps the list on the selected session. |
-| Position | Shows the task, turn and step of the selected session. |
-
-#### To use Sessions
-1. Open Sessions from the launcher.
-2. Set the Filter to Stalled to find the sessions that need you.
-3. Click a session to select its track.
-4. Double-click a session to open its thread.
-
-#### Rules
-- A helper shows one step of indent for each level.
-- A session in the list is the same session as its track.
-
-#### Tips
-- To find a lost session, filter to Running and read the names.
-
-### 23.3 Files
+### 23.2 Files
 
 **Product:** Workcell · **Kind:** instrument · **Rail:** the widget rail on the right
 
@@ -10052,7 +8804,7 @@ Where: on a chain. The compact Files shows the changed files. Each file shows th
 | Blocked | Sets Show or Hide. |
 | Follow | Sets On or Off. |
 
-Click the plate to show the Files whole in the pool. Click ⤢ to open it full in a pane.
+Click the plate to show the Files whole in the pool. Click ▦ to open it full in a pane.
 
 ##### Whole
 
@@ -10091,7 +8843,7 @@ Where: the rail on the right. The widget shows the tree of the files that the se
 #### Tips
 - To review a run fast, set Show to Changed only.
 
-### 23.4 Web
+### 23.3 Web
 
 **Product:** Central · **Kind:** instrument · **Rail:** the widget rail on the right
 
@@ -10125,7 +8877,7 @@ Where: on a chain. The compact Web shows the address and the first lines of the 
 | Mark used text | Sets On or Off. |
 | Follow | Sets On or Off. |
 
-Click the plate to show the Web whole in the pool. Click ⤢ to open it full in a pane.
+Click the plate to show the Web whole in the pool. Click ▦ to open it full in a pane.
 
 ##### Whole
 
@@ -10159,7 +8911,7 @@ Where: the rail on the right. The widget shows the page that the selected agent 
 #### Tips
 - To check a claim, open the page and read the marked text.
 
-### 23.5 Diff
+### 23.4 Diff
 
 **Product:** Software Factory · **Kind:** effect · **Rail:** the widget rail on the right
 
@@ -10193,7 +8945,7 @@ Where: on a chain. The compact Diff shows the first lines of the diff. It has th
 | Session | Sets The selected session or All. |
 | Layout | Sets Unified or Side by side. |
 
-Click the plate to show the Diff whole in the pool. Click ⤢ to open it full in a pane.
+Click the plate to show the Diff whole in the pool. Click ▦ to open it full in a pane.
 
 ##### Whole
 
@@ -10232,81 +8984,7 @@ Where: the rail on the right. The widget lists the files that changed in the sel
 #### Tips
 - To review a big change, set Layout to Side by side.
 
-### 23.6 Agents
-
-**Product:** Central and AIKit · **Kind:** instrument · **Rail:** the widget rail on the right
-
-You need to see all your agents at once, and what each is doing. Agents is the hive: each agent sits at a station, with its helpers around it.
-
-#### Parameters
-| Parameter | Values | Default | What it does |
-|---|---|---|---|
-| Telemetry | On · Off, for each agent | On | An agent with telemetry Off is muted. It works in silence. |
-| Relations | Show · Hide | Show | Draws dashed lines from an agent to its helpers. |
-| Doing lines | Show · Hide | Show | Shows one line of text for each agent that says what it does. |
-
-#### Views
-
-```ui
-device: widgets:agents
-caption: Agents, on a fixture of readings.
-```
-
-##### Folded
-
-Where: the launcher on the rail, and on a chain. The folded Agents shows as a launcher square with the name Agents. A dot marks an open tile. Click the square to open the tile on the rail.
-
-##### Compact
-
-Where: on a chain. The compact Agents shows each agent at a station. It has three macros.
-
-| Macro | What it does |
-|---|---|
-| Telemetry | Sets On or Off for each agent. |
-| Relations | Sets Show or Hide. |
-| Doing lines | Sets Show or Hide. |
-
-Click the plate to show the Agents whole in the pool. Click ⤢ to open it full in a pane.
-
-##### Whole
-
-Where: the pool under the browser. The whole Agents shows every parameter, in two groups.
-
-| Group | Parameters |
-|---|---|
-| Agents | Telemetry |
-| Hive | Relations, Doing lines |
-
-A change you make in the pool applies at once.
-
-##### Full
-
-Where: a pane. The full Agents shows the hive in a pane. Each agent sits at a station, with its helpers around it. Dashed lines join an agent to its helpers. A doing line under the hive says what each agent does. The controls stay in Device view, below the pane.
-
-##### Widget
-
-Where: the rail on the right. The widget shows the hive. Each agent has a station. An amber station marks an agent that is stuck. Click an agent to select its session. Double-click an agent to open its thread. The widget stays when you change mode.
-
-#### Transport
-| Control | Effect on Agents |
-|---|---|
-| Tap | Asks every running agent for a status line. The answers arrive here. |
-| Link | Adds the agents of other machines. |
-
-#### To use Agents
-1. Open Agents from the launcher.
-2. Read the doing line of each agent.
-3. Click an agent to select its session.
-4. Press Tap in the transport to ask for a status line from each.
-
-#### Rules
-- A muted agent keeps working. It stops sending to the tiles.
-- The roster comes from your agents. No agent is fixed in advance.
-
-#### Tips
-- To see who is stuck, look for the amber stations.
-
-### 23.7 Trail
+### 23.5 Trail
 
 **Product:** Central · **Kind:** effect · **Rail:** the widget rail on the right
 
@@ -10339,7 +9017,7 @@ Where: on a chain. The compact Trail shows the last stops. It has two macros.
 | Limit | Sets how many stops show, from 8 to 100. |
 | Return | Returns to the stop that you select. |
 
-Click the plate to show the Trail whole in the pool. Click ⤢ to open it full in a pane.
+Click the plate to show the Trail whole in the pool. Click ▦ to open it full in a pane.
 
 ##### Whole
 
@@ -10378,7 +9056,7 @@ Where: the rail on the right. The widget shows the stops, newest first. Each sto
 #### Tips
 - To undo a wrong turn, select the stop before it.
 
-### 23.8 NOWs
+### 23.6 NOWs
 
 **Product:** Central · **Kind:** instrument · **Rail:** the widget rail on the right
 
@@ -10410,7 +9088,7 @@ Where: on a chain. The compact NOWs shows one line for each open moment, with it
 |---|---|
 | Machines | Sets All or One machine. |
 
-Click the plate to show the NOWs whole in the pool. Click ⤢ to open it full in a pane.
+Click the plate to show the NOWs whole in the pool. Click ▦ to open it full in a pane.
 
 ##### Whole
 
@@ -10444,75 +9122,7 @@ Where: the rail on the right. The widget shows the day, the time and the open mo
 #### Tips
 - To end the day clean, close each open moment before the day closes.
 
-### 23.9 Results
-
-**Product:** Software Factory · **Kind:** instrument · **Rail:** the widget rail on the right
-
-You need to read what a run produced. Results shows the results and the diffs of the selected run.
-
-#### Parameters
-| Parameter | Values | Default | What it does |
-|---|---|---|---|
-| Run | A run | The selected run | The run whose results show. |
-| Show | Results · Diffs · Both | Both | Chooses what the tile lists. |
-| Accept | A button | — | Accepts the result. The result goes to review. |
-
-#### Views
-
-```ui
-device: widgets:results
-caption: Results, on a fixture of readings.
-```
-
-##### Folded
-
-Where: the launcher on the rail, and on a chain. The folded Results shows as a launcher square with the name Results. A dot marks an open tile. Click the square to open the tile on the rail.
-
-##### Compact
-
-Where: on a chain. The compact Results shows the latest result and its state. It has three macros.
-
-| Macro | What it does |
-|---|---|
-| Run | Chooses the run whose results show. |
-| Show | Sets Results, Diffs or Both. |
-| Accept | Accepts the result. The result goes to review. |
-
-Click the plate to show the Results whole in the pool. Click ⤢ to open it full in a pane.
-
-##### Whole
-
-Where: the pool under the browser. The whole Results shows every parameter, in two groups.
-
-| Group | Parameters |
-|---|---|
-| Run | Run, Show |
-| Review | Accept |
-
-A change you make in the pool applies at once.
-
-##### Full
-
-Where: a pane. The full Results shows the results of the run in a pane. Each result shows its author and its diff. Accept a result or ask for changes. The controls stay in Device view, below the pane.
-
-##### Widget
-
-Where: the rail on the right. The widget shows the results and the diffs of the selected run. Each result shows its author. Open a diff to read it. Press Accept to send a result to review. The widget stays when you change mode.
-
-#### To use Results
-1. Open Results from the launcher.
-2. Read the result.
-3. Open the diff if it has one.
-4. Press Accept, or ask for changes.
-
-#### Rules
-- Accept sends the result to review. It does not decide the review.
-- A result shows its author.
-
-#### Tips
-- To compare two attempts, open Runs and set Compare.
-
-### 23.10 Wiki
+### 23.7 Wiki
 
 **Product:** Central · **Kind:** instrument · **Rail:** the widget rail on the right
 
@@ -10546,7 +9156,7 @@ Where: on a chain. The compact Wiki shows the title and the first lines of a pag
 | Reads only | Sets On or Off. |
 | Follow | Sets On or Off. |
 
-Click the plate to show the Wiki whole in the pool. Click ⤢ to open it full in a pane.
+Click the plate to show the Wiki whole in the pool. Click ▦ to open it full in a pane.
 
 ##### Whole
 
@@ -10580,7 +9190,7 @@ Where: the rail on the right. The widget shows the wiki page that the selected a
 #### Tips
 - To check what an agent knew, open the page it read.
 
-### 23.11 Calendar
+### 23.8 Calendar
 
 **Product:** a third party · **Kind:** instrument · **Rail:** the widget rail on the right
 
@@ -10614,7 +9224,7 @@ Where: on a chain. The compact Calendar shows the next events. It has three macr
 | Range | Sets Day or Week. |
 | This work only | Sets On or Off. |
 
-Click the plate to show the Calendar whole in the pool. Click ⤢ to open it full in a pane.
+Click the plate to show the Calendar whole in the pool. Click ▦ to open it full in a pane.
 
 ##### Whole
 
