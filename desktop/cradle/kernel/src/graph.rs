@@ -1105,6 +1105,15 @@ pub fn assemble_shared_field(reading: &mut GraphReading, data: &Value) {
     }
 }
 
+/// The native knowledge graph's limit. Its question is the whole world, not
+/// one register: measured 9.7–15.6 s alone at the Central root (16 Oct,
+/// installed AIKit, warm) and stopped at a single read's 20 s in every door
+/// of 16 Oct's first measure (wave B0), its input then reported unavailable.
+/// Like the relations batch's, this limit is for an owner that never answers;
+/// the prepared Graph read runs outside the kernel lock and holds nothing but
+/// this input.
+const NATIVE_GRAPH_LIMIT: std::time::Duration = std::time::Duration::from_secs(90);
+
 /// Consume the native metadata graph, retaining typed addresses, occurrence
 /// identity and constellation membership instead of inventing them in React.
 fn assemble_native_knowledge(
@@ -1115,7 +1124,7 @@ fn assemble_native_knowledge(
 ) {
     let nodes = options.max_nodes.to_string();
     let edges = options.max_edges.to_string();
-    let data = knowledge::run(
+    let data = knowledge::run_bounded(
         cwd,
         &[
             "knowledge",
@@ -1127,6 +1136,7 @@ fn assemble_native_knowledge(
             "--",
             query,
         ],
+        NATIVE_GRAPH_LIMIT,
     );
     match data {
         Ok(data) => {

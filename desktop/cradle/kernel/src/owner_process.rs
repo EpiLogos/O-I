@@ -7,7 +7,7 @@
 //! an honest refusal naming the owner, the operation and the limit; for an
 //! operation that may write, that its effect is uncertain. The owner's own
 //! stdout and stderr are kept exactly: callers read its diagnostics.
-use std::io::{Read, Write};
+use std::io::{BufRead, Read, Write};
 use std::process::{Child, Command, Output, Stdio};
 use std::sync::mpsc;
 use std::time::{Duration, Instant};
@@ -128,6 +128,32 @@ pub(crate) fn output(
     input: Option<Vec<u8>>,
     bound: Bound<'_>,
 ) -> Result<Output, Failure> {
+    observed(command, input, bound, None)
+}
+
+/// What an owner's stdout says while it runs: each whole line (without its
+/// newline), in order, the moment the owner writes it. The answer still keeps
+/// stdout exactly.
+pub(crate) type LineObserver = Box<dyn FnMut(&[u8]) + Send>;
+
+/// `output`, with each whole stdout line handed to `on_line` as it arrives —
+/// an owner that answers in parts (a streamed batch) is heard part by part,
+/// under the same one limit on the whole run.
+pub(crate) fn output_lines(
+    command: &mut Command,
+    input: Option<Vec<u8>>,
+    bound: Bound<'_>,
+    on_line: LineObserver,
+) -> Result<Output, Failure> {
+    observed(command, input, bound, Some(on_line))
+}
+
+fn observed(
+    command: &mut Command,
+    input: Option<Vec<u8>>,
+    bound: Bound<'_>,
+    on_line: Option<LineObserver>,
+) -> Result<Output, Failure> {
     group(command);
     command
         .stdin(if input.is_some() {
@@ -150,7 +176,7 @@ pub(crate) fn output(
         let mut stdin = child.stdin.take().expect("stdin is piped");
         std::thread::spawn(move || stdin.write_all(&bytes))
     });
-    let output = wait(child, bound)?;
+    let output = wait_observed(child, bound, on_line)?;
     if let Some(writer) = writer {
         match writer.join() {
             Ok(Err(error)) if output.status.success() => {
@@ -177,9 +203,17 @@ pub(crate) fn output(
 /// Wait for a spawned owner (stdout and stderr piped, in its own group —
 /// `group`) to answer within `bound.limit`; stop it, and what it started,
 /// when it does not.
-pub(crate) fn wait(mut child: Child, bound: Bound<'_>) -> Result<Output, Failure> {
-    let stdout = drain(child.stdout.take().expect("stdout is piped"));
-    let stderr = drain(child.stderr.take().expect("stderr is piped"));
+pub(crate) fn wait(child: Child, bound: Bound<'_>) -> Result<Output, Failure> {
+    wait_observed(child, bound, None)
+}
+
+fn wait_observed(
+    mut child: Child,
+    bound: Bound<'_>,
+    on_line: Option<LineObserver>,
+) -> Result<Output, Failure> {
+    let stdout = drain(child.stdout.take().expect("stdout is piped"), on_line);
+    let stderr = drain(child.stderr.take().expect("stderr is piped"), None);
     let deadline = Instant::now() + bound.limit;
     let status = loop {
         match child.try_wait() {
@@ -228,12 +262,34 @@ pub(crate) fn wait(mut child: Child, bound: Bound<'_>) -> Result<Output, Failure
     })
 }
 
-/// Read one pipe to its end on its own thread.
-fn drain(mut pipe: impl Read + Send + 'static) -> mpsc::Receiver<Vec<u8>> {
+/// Read one pipe to its end on its own thread, handing each whole line to
+/// `on_line` as it arrives when one is given.
+fn drain(
+    mut pipe: impl Read + Send + 'static,
+    on_line: Option<LineObserver>,
+) -> mpsc::Receiver<Vec<u8>> {
     let (sent, received) = mpsc::channel();
     std::thread::spawn(move || {
         let mut bytes = Vec::new();
-        let _ = pipe.read_to_end(&mut bytes);
+        match on_line {
+            None => {
+                let _ = pipe.read_to_end(&mut bytes);
+            }
+            Some(mut on_line) => {
+                let mut pipe = std::io::BufReader::new(pipe);
+                loop {
+                    let start = bytes.len();
+                    match pipe.read_until(b'\n', &mut bytes) {
+                        Ok(0) | Err(_) => break,
+                        Ok(_) => {
+                            if let Some(line) = bytes[start..].strip_suffix(b"\n") {
+                                on_line(line);
+                            }
+                        }
+                    }
+                }
+            }
+        }
         let _ = sent.send(bytes);
     });
     received
@@ -295,6 +351,50 @@ mod tests {
             .unwrap_err()
             .message,
             "Central central.day.ensure did not answer within 1 s; its effect is uncertain — read the owner's state before retrying"
+        );
+    }
+
+    /// An owner that answers in lines is heard line by line while it runs,
+    /// and its answer still keeps stdout exactly.
+    #[test]
+    fn each_whole_line_is_heard_as_the_owner_writes_it() {
+        let heard = std::sync::Arc::new(std::sync::Mutex::new(Vec::<(String, Duration)>::new()));
+        let started = Instant::now();
+        let mut command = Command::new("/bin/sh");
+        command
+            .arg("-c")
+            .arg("echo one; sleep 1; echo two; sleep 1; printf tail");
+        let lines = std::sync::Arc::clone(&heard);
+        let answered = output_lines(
+            &mut command,
+            None,
+            Bound::read(
+                "AIKit",
+                "knowledge relations-batch",
+                Duration::from_secs(10),
+            ),
+            Box::new(move |line| {
+                lines.lock().unwrap().push((
+                    String::from_utf8_lossy(line).into_owned(),
+                    started.elapsed(),
+                ));
+            }),
+        )
+        .unwrap();
+        assert_eq!(answered.stdout, b"one\ntwo\ntail");
+        let heard = heard.lock().unwrap().clone();
+        assert_eq!(
+            heard
+                .iter()
+                .map(|(line, _)| line.as_str())
+                .collect::<Vec<_>>(),
+            ["one", "two"],
+            "whole lines only; the unterminated tail stays in the answer"
+        );
+        assert!(
+            heard[0].1 < Duration::from_millis(900),
+            "the first line is heard before the owner finishes: {:?}",
+            heard[0].1
         );
     }
 
