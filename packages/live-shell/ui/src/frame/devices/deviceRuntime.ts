@@ -1,4 +1,4 @@
-// The device runtime's model (manual §10.4, FOUNDATION F5; DEVICE-UI §2): one device, one set of live settings in every view.
+// The device runtime's model (manual §10.4, FOUNDATION F5; manual §16.3): one device, one set of live settings in every view.
 // Pure: the device as its publishers build it, which rows the compact view shows, how the whole view groups them, and what a light
 // reads. The plate itself is the panel kit's (genericDevice.tsx, genericLayout.ts); the light's press is designed.ts
 // activatorChange.

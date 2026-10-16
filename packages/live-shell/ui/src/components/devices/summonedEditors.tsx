@@ -1,4 +1,4 @@
-// The editors the hosted frame summons, each in its device home (lane BE; DEVICE-UI §2: "Whole — the pool … Every parameter, grouped";
+// The editors the hosted frame summons, each in its device home (lane BE; manual §16.3: "Whole — the pool … Every parameter, grouped";
 // "Full — a pane … The material itself"; owner, via the lead, 16 Oct: "summoned editors (Acts, Nara, library, Find) still open over the
 // field — each needs its device home"). While the shell presents the frame in a pane ('devices', framePresentation.ts) the frame no longer
 // draws these over its field (expressions-app presentedChrome.ts, workspace.css):
@@ -94,7 +94,7 @@ export const editorDevice = (editor: SummonedEditor): DeviceInstance => ({id: ed
 let kernelForPanes: KernelApi | null = null
 
 /** An editor's plate on the kit, compact on a chain or whole in the pool: its controls in the frame's words, pressed through its one runner
- * (frameChrome.tsx), paged in the head when one band does not hold them (DEVICE-UI §1). The Library's plate opens its page (⤢). */
+ * (frameChrome.tsx), paged in the head when one band does not hold them (manual §16.8). The Library's plate opens its page (⤢). */
 function EditorPanel({editor, p, view}: {editor: SummonedEditor; p: ViewProps; view: 'compact' | 'whole'}) {
   const chrome = useHostedChrome()
   const frame = useFrameChromeOver(chrome?.state ?? null, chrome?.run ?? null)
@@ -123,7 +123,7 @@ function EditorTile({editor, p}: {editor: SummonedEditor; p: ViewProps}) {
   </Tile>
 }
 
-/** An editor's five views (DEVICE-UI §2) on the kit: compact and whole its controls; the Library's Full its own page in a pane; the rail's
+/** An editor's five views (manual §16.3) on the kit: compact and whole its controls; the Library's Full its own page in a pane; the rail's
  * tile its first controls. */
 export function editorDesign(editor: SummonedEditor): DesignedDevice {
   return {
@@ -131,7 +131,7 @@ export function editorDesign(editor: SummonedEditor): DesignedDevice {
     folded: p => <Folded title={editor.title} light="unknown" onUnfold={p.nav.unfold} />,
     compact: p => <EditorPanel editor={editor} p={p} view="compact" />,
     whole: p => <EditorPanel editor={editor} p={p} view="whole" />,
-    // Full holds the material (DEVICE-UI §2): the Library's own page. An editor whose material is the field has no Full of its own.
+    // Full holds the material (manual §16.3): the Library's own page. An editor whose material is the field has no Full of its own.
     full: () => editor.home ? <p className="source-note" role="status">{editor.title} stands in the pool under the browser.</p>
       : kernelForPanes ? <KernelApiProvider value={kernelForPanes}><div className="summoned-library"><LibraryHost /></div></KernelApiProvider>
       : <p className="source-note" role="status">The Library needs the shell's kernel; open it again from the Studio.</p>,

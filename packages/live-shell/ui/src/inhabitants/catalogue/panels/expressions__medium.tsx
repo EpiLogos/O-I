@@ -92,7 +92,7 @@ const px = (x: number) => `${Math.round(x)} px`
 const cellText = (c: number) => `${c < 10 ? c.toFixed(1) : String(Math.round(c))} px`
 const d2 = fixed(2), d3 = fixed(3)
 
-/** The light reads the owner alone (DEVICE-UI §4.1). */
+/** The light reads the owner alone (manual §16.8). */
 const lightOf = (p: ViewProps): LightState => { const b = boolOf(p.owner ?? p.v, K.on); return b === undefined ? 'unknown' : b ? 'lit' : 'dark' }
 const head = (p: ViewProps) => ({
   light: lightOf(p), lightWhy: st(p, K.on).disabled, onLight: () => p.set(K.on, boolOf(p.owner ?? p.v, K.on) !== true), onFold: p.nav.fold, onFull: p.nav.full,

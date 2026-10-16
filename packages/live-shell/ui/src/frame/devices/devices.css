@@ -1,4 +1,4 @@
-/* One device in its places (DEVICE-UI §2, §3): the panel kit draws every plate (inhabitants/sdk/panel.css); this sheet only places
+/* One device in its places (manual §16.3, §3): the panel kit draws every plate (inhabitants/sdk/panel.css); this sheet only places
    it — on a chain at its own width and the chain's one height, whole in the pool at 400 wide, full in a pane, a tile on the rail —
    and lays a generic plate's controls into the kit's sections. Nothing here scrolls; shell and kit tokens only. */
 

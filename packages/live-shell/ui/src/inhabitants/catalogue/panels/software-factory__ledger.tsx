@@ -283,7 +283,7 @@ const SAMPLE_RECEIPTS = [
   {n: 211, name: 'survey the widget tree', agent: 'Cairn', outcome: 'refused', run: 'run:2', day: '2026-10-16', time: '08:30',
     files: [{path: 'Control/user/flows/flow-2026-10-03-1432.md', kind: 'modified', from: 'b3:6e07f3', to: 'b3:c4a5d2'}]},
   {n: 209, name: 'review #482 notes', agent: 'Cairn', outcome: 'commented', run: 'run:1', day: '2026-10-15', time: '17:52',
-    files: [{path: 'Work/O-I/docs/dlw/DEVICE-UI.md', kind: 'modified', from: 'b3:08bb91', to: 'b3:e3f764'}]},
+    files: [{path: 'Work/O-I/docs/dlw/DLW.md §16', kind: 'modified', from: 'b3:08bb91', to: 'b3:e3f764'}]},
   {n: 205, name: 'generate fixtures', agent: 'Kite', outcome: 'landed', run: 'run:1', day: '2026-10-15', time: '16:10',
     files: [{path: 'fixtures/handoff.json', kind: 'added', to: 'b3:77d3a0'}, {path: 'fixtures/old-handoff.json', kind: 'removed', from: 'b3:31c8e5'}]},
 ]

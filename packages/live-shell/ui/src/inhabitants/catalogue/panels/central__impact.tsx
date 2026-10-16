@@ -237,7 +237,7 @@ function Neighbourhood({m, g, big = false, picked, onPick}: {m: Model; g: Geomet
   </g>
 }
 
-/** What the well says when a reading is missing (DEVICE-UI §7): the switch, the refusal, or the reading that has not come. */
+/** What the well says when a reading is missing (manual §16.11): the switch, the refusal, or the reading that has not come. */
 function Say({m, g}: {m: Model; g: Geometry}) {
   const words = m.gap === 'subject' ? gapWords(m) : m.status.links === 'off' ? 'links off' : m.refusal ? 'graph refused' : gapWords(m)
   const says = words !== undefined && words === gapWords(m)

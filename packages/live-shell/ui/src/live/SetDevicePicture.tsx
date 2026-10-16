@@ -1,5 +1,5 @@
 // A set device's live picture, in its well on the chain, whole in the pool, full in a pane and small on the rail. Its owner states
-// no curve of what the effect does to the sound, so the picture draws nothing of the kind (DEVICE-UI §7: "Do not draw a likely
+// no curve of what the effect does to the sound, so the picture draws nothing of the kind (manual §16.11: "Do not draw a likely
 // picture"): it draws the device's stored values themselves, each on its own range — a bar for a quantity, a lamp for a switch, a
 // step for a choice — from the same readings its plate draws (the owner's stored-parameter table and stored values, or the deep
 // document's parameters with their disclosed ranges where no table stands; live/liveChainDevices.ts setDeviceFaced, setDeviceReading).

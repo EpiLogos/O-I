@@ -289,7 +289,7 @@ function MovesDisplay({v, w, h}: {v: V; w: number; h: number}) {
 
 // ---------------------------------------------------------------- the parts shared by the views
 
-// The light reads the owner alone (DEVICE-UI §4.1): lit or dark when it reports, hollow when it has not.
+// The light reads the owner alone (manual §16.8): lit or dark when it reports, hollow when it has not.
 const light = (p: ViewProps) => (strOf(p.owner ?? p.v, 'light') ?? 'unknown') as LightState
 const OBSERVERS = [{value: 'shared', label: 'Shared', does: 'The sky as seen from the centre of the Earth.'}, {value: 'private', label: 'Private', does: 'The sky as seen from your place. Only you see it.'}] as const
 const SPEED = {min: 1, max: 86400, log: true}

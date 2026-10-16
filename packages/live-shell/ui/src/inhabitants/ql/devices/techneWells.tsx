@@ -1,4 +1,4 @@
-// The live picture at the heart of each Technē instrument (docs/dlw/DEVICE-UI.md §1 "The picture comes first"; §7 the display: "Draw every
+// The live picture at the heart of each Technē instrument (docs/dlw/DLW.md §16.8 "The picture comes first"; §7 the display: "Draw every
 // mark from the device's values or readings, by the device's own law. Do not draw a likely picture. When a reading is missing, say which
 // one in the well"), one well per instrument, drawn at any size: the Compact's on the rack (techneCompacts.tsx) and the open plate's display
 // section (ProjectPlate.tsx, StageInstrumentPlate.tsx, PlacesPlate.tsx, PalacePlate.tsx). Each reads only what its owner reports:
@@ -41,7 +41,7 @@ export interface Well {
 /** The size a well is drawn at, in its own pixels. */
 export interface WellSize {readonly w: number; readonly h: number}
 
-/** Words in the well where a reading is missing (DEVICE-UI §7 "say which one in the well"), centred, a line each. */
+/** Words in the well where a reading is missing (manual §16.11 "say which one in the well"), centred, a line each. */
 export function Missing({lines, w, h}: {lines: readonly string[]; w: number; h: number}) {
   return <>{lines.map((line, index) => <text key={`${index}:${line}`} x={w / 2} y={h / 2 - (lines.length - 1) * 6 + index * 12} textAnchor="middle" className="dp-ink-dim">{line}</text>)}</>
 }
@@ -328,7 +328,7 @@ export function WellDisplay({well, w, h}: {well: Well & {raw?: boolean}; w: numb
   return <Display w={w} h={h} label={well.label.split(':')[0]} does={well.label} corner={well.corner} raw={well.raw}>{well.picture}</Display>
 }
 
-/** The measures of the well on an open plate (DEVICE-UI §3 "Display on a whole plate up to 194 × 146"). */
+/** The measures of the well on an open plate (manual §16.8 "Display on a whole plate up to 194 × 146"). */
 export const PLATE_WELL: WellSize = {w: 150, h: 146}
 /** The display section's width: the well and the section's padding. */
 export const PLATE_WELL_SECTION = PLATE_WELL.w + 14

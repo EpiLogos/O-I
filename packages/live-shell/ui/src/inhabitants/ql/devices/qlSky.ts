@@ -1,7 +1,7 @@
 // The Sky on its owner (DLW §22.1): the dated sky read from Quaternal Logic, and the binding the catalogue's Sky design is drawn on
 // (inhabitants/catalogue/panels/quaternal-logic__sky.tsx, `quaternal-logic:sky`; frame/devices/designed.ts DesignBinding; the pattern of
 // central/devices/dayBinding.ts). Owners write, faces read: every value the design draws is the owner's reading or the view's own
-// choice, and a key no owner reports stays absent with its reason (DEVICE-UI §7).
+// choice, and a key no owner reports stays absent with its reason (manual §16.11).
 //
 // The producer. The kernel's `nara_identity` op, operation `transit` (desktop/cradle/kernel/src/nara_identity.rs:352-357), runs the
 // installed `oi ql nara transit - --json` on a `ql.sky-request/v1` and passes QL's `ql.nara-transit/v1` back; its `sky` is the
@@ -214,7 +214,7 @@ const partsOf = (ms: number) => {
 }
 const fromParts = (year: number, day: number, time: number) => Date.UTC(year, 0, 1) + (day - 1) * MS_DAY + time * 6e4
 
-/** Why each design key the binding leaves absent, or does not take, has no owner (DEVICE-UI §7: "say which one"). */
+/** Why each design key the binding leaves absent, or does not take, has no owner (manual §16.11: "say which one"). */
 export const QL_SKY_ABSENT: Readonly<Record<string, string>> = {
   run: 'No clock runs the sky here: each date is one read of the owner, asked when you change it. A running sky would ask the owner again and again.',
   speed: 'No clock runs the sky here, so it has no speed.',

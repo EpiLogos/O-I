@@ -1,4 +1,4 @@
-// A device on the rail (DEVICE-UI §2 Widget: "A tile of 136 × 136 px … A small display and up to three readings or macros"; "A
+// A device on the rail (manual §16.3 Widget: "A tile of 136 × 136 px … A small display and up to three readings or macros"; "A
 // widget stays on the rail when you change mode"). A widget of the rail's own kind (widgets.ts WidgetDeclaration) whose id is
 // `device:<device id>` (deviceDoor.ts deviceWidgetId): it stands in the rail's open set — the workspace book's, so it stays across
 // modes — and its body draws the published device's Widget view on the same binding the chain, the pool and the pane read. The

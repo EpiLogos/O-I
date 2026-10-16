@@ -1,4 +1,4 @@
-// The generic plate (DEVICE-UI §8, §11: "The panel kit draws the head, the sections and the controls of every plate, generic plates
+// The generic plate (manual §16.12, §11: "The panel kit draws the head, the sections and the controls of every plate, generic plates
 // included"): a designed device built from a device's declared rows, drawn only with the kit (inhabitants/sdk/panel.tsx). It is
 // what DeviceView drew before, moved onto the kit (ported from frame/devices/DeviceView.tsx:30-108 — the compact rows, the grouped
 // whole, the light as a reading, the holder's hand-back — and deviceRuntime.ts compactRows/groupRows):
@@ -26,7 +26,7 @@ export interface GenericSource {
   readonly picture?: (size: 'compact' | 'whole' | 'full') => ReactNode
   /** The place's own wrap for a control (Live maps a macro to a key or a MIDI control through it). */
   readonly wrapRow?: (row: SdkParamRow, control: ReactNode) => ReactNode
-  /** The plate the pool shows (its head tinted, DEVICE-UI §4.3). */
+  /** The plate the pool shows (its head tinted, manual §16.8). */
   readonly selected?: boolean
   /** The place's own words for ⤢ and for the press on the plate. */
   readonly fullLabel?: string

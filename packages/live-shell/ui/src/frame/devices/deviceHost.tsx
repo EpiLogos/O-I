@@ -1,4 +1,4 @@
-// The host: one device's views on one binding (DEVICE-UI §2 "A device has one set of values and five views … A change in one view
+// The host: one device's views on one binding (manual §16.3 "A device has one set of values and five views … A change in one view
 // shows in the other four at once"; §5.2 "A change and its answer"). Ported from the gallery's host (inhabitants/catalogue/
 // main.tsx:103-134 DesignedViews: one set of values, a set that writes a key or drops it, the page and the fold the host owns) onto
 // the owner's values and writes, and from the plate's release law (frame/devices/plateControls.tsx:56-81 useOwnerDraft: a draft
@@ -84,7 +84,7 @@ export function hostedValues(state: HostState, owner: Values): Values {
   return shown
 }
 
-/** The standing of each value (DEVICE-UI §6) from the host's state and the binding. Pure. */
+/** The standing of each value (manual §16.10) from the host's state and the binding. Pure. */
 export function hostedStanding(state: HostState, binding: DesignBinding, keys: Iterable<string>): Record<string, Standing> {
   const all = new Set<string>([...keys, ...Object.keys(binding.values), ...Object.keys(state.sent), ...Object.keys(state.refused),
     ...Object.keys(binding.heldBy ?? {}), ...Object.keys(binding.standing ?? {})])
