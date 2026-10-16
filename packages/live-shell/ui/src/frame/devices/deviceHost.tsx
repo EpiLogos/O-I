@@ -19,7 +19,7 @@
 // of the same device, which says why on the status bar's Info line — never a blank place.
 import {Component, cloneElement, isValidElement, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ComponentProps,
   type CSSProperties, type ReactElement, type ReactNode} from 'react'
-import {Panel, PlaceContext, Tile, type PanelProps, type Standing} from '../../inhabitants/sdk/panel'
+import {ControlWrapContext, Panel, PlaceContext, Tile, type ControlWrap, type PanelProps, type Standing} from '../../inhabitants/sdk/panel'
 import type {DesignBinding, DesignedDevice, DeviceViewName, HostNav, HostedViewProps, Value, ValueChange, Values} from './designed'
 
 // ---------------------------------------------------------------------------------------------------------------- the host's state
@@ -104,6 +104,14 @@ export function hostedStanding(state: HostState, binding: DesignBinding, keys: I
     }
     if (Object.keys(standing).length) out[key] = standing
   }
+  return out
+}
+
+/** The standing of each key the place wraps, naming its key (sdk/panel.tsx Standing.valueKey): the kit control that spreads it is
+ * drawn inside the place's wrap (ControlWrapContext). A key with no other standing gets one that only names it. Pure. */
+export function namedStanding(standing: Readonly<Record<string, Standing>>, keys: Iterable<string>): Record<string, Standing> {
+  const out: Record<string, Standing> = {...standing}
+  for (const key of keys) out[key] = {...standing[key], valueKey: key}
   return out
 }
 
@@ -243,11 +251,15 @@ export function withPlaceMarks(node: ReactNode, nav: HostNav): ReactNode {
 
 /** One view of a device, drawn as its own component: what it throws is caught by the boundary around it, never in the host's
  * render. */
-function DrawnView({device, view, props}: {device: DesignedDevice; view: DeviceViewName; props: HostedViewProps}) {
+function DrawnView({device, view, props, wrap}: {device: DesignedDevice; view: DeviceViewName; props: HostedViewProps; wrap?: ControlWrap}) {
   // The place reaches every Panel, PanelHead and Tile inside the view through the kit's PlaceContext (sdk/panel.tsx, the
-  // documentation lane's c5afc4aa0) — a view whose root is a component too; a part's own props still win.
+  // documentation lane's c5afc4aa0) — a view whose root is a component too; a part's own props still win. The place's wrap reaches
+  // every kit control whose standing names its key through ControlWrapContext; a view drawn without one (the generic plate, which
+  // wraps its rows itself) gets none, even inside another's.
   const {nav} = props
-  return <PlaceContext.Provider value={{marks: nav.marks ?? undefined, onRail: nav.rail, onClose: nav.close}}>{withPlaceMarks(device[view](props), nav)}</PlaceContext.Provider>
+  return <PlaceContext.Provider value={{marks: nav.marks ?? undefined, onRail: nav.rail, onClose: nav.close}}>
+    <ControlWrapContext.Provider value={wrap ?? null}>{withPlaceMarks(device[view](props), nav)}</ControlWrapContext.Provider>
+  </PlaceContext.Provider>
 }
 
 export interface HostedDeviceProps {
@@ -267,17 +279,21 @@ export interface HostedDeviceProps {
   /** On a chain: the compact view folds to its strip by ▾ and opens by its title (the host keeps the fold, so every chain place of
    * the device folds together). */
   readonly chain?: boolean
+  /** The place's wrap of `designed`'s kit controls, by value key (DeviceView fills it from the place's wrapRow): the controls of
+   * `keys` are drawn inside it. Never the fallback's: the generic plate wraps its rows itself. */
+  readonly wrap?: ControlWrap
 }
 
 /** One view of one device on its binding. The element it draws listens for the hand's release (a pointer let go anywhere, a key, a
  * click, a menu's change) and sends what the hand set. */
-export function HostedDevice({designed, fallback, binding, view: asked, nav: given, keys, className, style, data, title, chain}: HostedDeviceProps) {
+export function HostedDevice({designed, fallback, binding, view: asked, nav: given, keys, className, style, data, title, chain, wrap}: HostedDeviceProps) {
   const id = binding.id
   const state = useHostState(id)
   const view: DeviceViewName = chain && asked === 'compact' && state.folded ? 'folded' : asked
   const nav: HostNav = useMemo(() => (chain ? {...given, fold: () => setHostFolded(id, true), unfold: () => setHostFolded(id, false)} : given), [chain, given, id])
   const root = useRef<HTMLDivElement>(null)
   const dragging = useRef(false)
+  const wraps = !!wrap
   const live = useRef(binding)
   live.current = binding
   // The owner's new reading ends what it answers.
@@ -303,9 +319,10 @@ export function HostedDevice({designed, fallback, binding, view: asked, nav: giv
     nav,
     page: state.page ?? designed.firstPage ?? '',
     setPage: page => setHostPage(id, page),
-    standing: hostedStanding(state, binding, keys ?? []),
+    // Where the place wraps the design's controls, each key's standing names its key, so the control that spreads it is wrapped.
+    standing: wraps ? namedStanding(hostedStanding(state, binding, keys ?? []), keys ?? []) : hostedStanding(state, binding, keys ?? []),
     owner: binding.values,
-  }), [state, binding, set, nav, designed.firstPage, id, keys])
+  }), [state, binding, set, nav, designed.firstPage, id, keys, wraps])
   const release = () => { if (!dragging.current) return; dragging.current = false; send() }
   // The place's boundary: the device's own view, else the generic plate's with the reason, else the reason alone.
   const plain = fallback && fallback !== designed ? fallback : null
@@ -331,7 +348,7 @@ export function HostedDevice({designed, fallback, binding, view: asked, nav: giv
           <DrawnView device={plain} view={view} props={{...props, fault: faultWords(view, cause, true)}} />
         </ViewBoundary>
         : note(faultWords(view, cause, false))}>
-      <DrawnView device={designed} view={view} props={props} />
+      <DrawnView device={designed} view={view} props={props} wrap={wrap} />
     </ViewBoundary>
   </div>
 }

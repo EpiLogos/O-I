@@ -9,6 +9,9 @@
 .midi-map-target.is-map-open { cursor: pointer; }
 .midi-map-target.is-map-open::after { content: ''; position: absolute; inset: 0; border: 1px dashed var(--midi-map-line); border-radius: 3px; background: var(--midi-map-soft); }
 .midi-map-target.is-map-open.is-armed::after { border-style: solid; border-color: var(--midi-map); }
+/* A designed plate's control in its target (sdk/panel.tsx ControlWrapContext): the target takes the grid cell the control stood in, and
+   holds the control as the section's grid did — a dial or a radio centred, a chooser or a wide box across the column. */
+.dp-sec-body > .midi-map-target { justify-self: stretch; align-items: center; }
 
 .midi-map-mark { align-self: flex-start; color: var(--midi-map); font-size: 9.5px; line-height: 1.4; border: 1px solid var(--midi-map-line); border-radius: 3px; padding: 0 4px; }
 .midi-map-refusal { color: var(--rec); font-size: 9.5px; line-height: 1.4; }

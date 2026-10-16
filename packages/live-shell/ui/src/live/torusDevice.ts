@@ -72,8 +72,9 @@ export function torusDevice(state: LiveTorusState | null): DeviceInstance {
 export const TORUS_DESIGN_ID = 'quaternal-logic:torus'
 
 /** The owner's determinants by the value key the binding gives them — the macro row's own key (torusInstrument.ts LIVE_TORUS_MACROS),
- * so the generic plate that stands in for a view reads them too. The design draws none of them yet; they are given so a control
- * drawn for them reads and writes at once. */
+ * so the generic plate that stands in for a view reads them too. The design draws them as its compact four and its Determinants
+ * (catalogue/panels/torus.tsx `determinants`), by the labels of the owner's choices; a design key that is a row key is wrapped as that
+ * row is on the chain (MIDI map, DeviceView.tsx useHosting). */
 export const TORUS_DETERMINANT_KEYS: Readonly<Record<string, string>> = {'lens': 'lens', 'context-frame': 'context-frame', 'harmonic-basis': 'harmonic-basis', 'm3-transcription': 'm3-transcription'}
 
 const NO_FIELD_PARAMETER = 'the native field announces only its lens, context frame, harmonic basis, M3 transcription, sound, level, cadence and scale, and takes only those through the stage channel (stageCommands.ts InstrumentEdit)'
@@ -95,6 +96,8 @@ export const TORUS_ABSENT: Readonly<Record<string, string>> = {
   receiver: 'No owner takes the camera as the place where the torus is heard.',
   notes: 'The owner counts no sounding notes: a struck chord is one act through the stage channel, answered yes or no, never counted back.',
   meter: 'The owner reports no level meter: its audio receipt carries the presentation gain and its block counts, not a level.',
+  sounding: 'The owner reports no sounding keys: a struck key is one act through the stage channel, answered yes or no, never reported back as sounding.',
+  driveMod: 'Nothing moves the drive: the owner announces no drive, and no compiled modulation plan runs in the shell, so no range is drawn round it.',
 }
 
 const NOT_WRITABLE = 'The owner takes edits only while the instrument follows or is held.'

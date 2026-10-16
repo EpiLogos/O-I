@@ -16,6 +16,7 @@
 // design's, or whose act every ⤢ does.
 import {useMemo, useRef, type ReactNode, type RefObject} from 'react'
 import {Icon} from '../../inhabitants/sdk/Icon'
+import type {ControlWrap} from '../../inhabitants/sdk/panel'
 import type {SdkParamRow} from '../../inhabitants/sdk/define'
 import {openInstrument} from '../instrumentDoor'
 import {DEVICE_PANE_KIND, publishedDevice, putOnRail, selectDevice, takeOffRail, useIsPublished, useSelectedDeviceId} from './deviceDoor'
@@ -64,10 +65,13 @@ interface Hosting {
   generic: boolean
   binding: DesignBinding
   keys: readonly string[]
+  /** The place's wrapRow for a design's kit controls, by value key; absent where the generic plate draws (it wraps its rows itself). */
+  wrap?: ControlWrap
 }
 
 /** The views that draw a device and the binding they read: its design where one stands for a published device, else its generic
- * plate; the place's wrap reaches the generic plate. A device published with its own Full draws that as Full, over either. */
+ * plate; the place's wrap reaches the generic plate by its rows, and a design's kit controls by their value keys (a design key that is
+ * one of the device's rows is wrapped as that row is). A device published with its own Full draws that as Full, over either. */
 function useHosting(device: DeviceInstance, picture: ((size: 'compact' | 'whole' | 'full') => ReactNode) | undefined, actions: readonly DeviceAction[] | undefined,
   wrapRow: DeviceViewProps['wrapRow'], given: DesignBinding | undefined, generic: boolean | undefined, selected: boolean): Hosting {
   const published = useIsPublished(device.id)
@@ -89,7 +93,13 @@ function useHosting(device: DeviceInstance, picture: ((size: 'compact' | 'whole'
   const withOwnFull = (views: DesignedDevice): DesignedDevice => (draw ? {...views, full: () => <div className="dv-full"
     data-i={`${device.face.title}|The device at pane size, as its owner draws it. Its controls stay in Device view.`}>{draw()}</div>} : views)
   const shownPlain = withOwnFull(plain)
-  return {designed: designed === plain ? shownPlain : withOwnFull(designed), plain: shownPlain, generic: designed === plain, binding, keys: device.rows.map(row => row.key)}
+  // The place's wrap, keyed by value key, for a design's controls (deviceHost.tsx HostedDevice `wrap`; sdk/panel.tsx ControlWrapContext).
+  const wrap = useMemo<ControlWrap | undefined>(() => (wrapRow ? (valueKey, control) => {
+    const row = device.rows.find(candidate => candidate.key === valueKey)
+    return row ? wrapRow(row, control) : control
+  } : undefined), [wrapRow, device.rows])
+  return {designed: designed === plain ? shownPlain : withOwnFull(designed), plain: shownPlain, generic: designed === plain, binding, keys: device.rows.map(row => row.key),
+    ...(designed !== plain && wrap ? {wrap} : {})}
 }
 
 /** The navigation every place shares: the press shows the device whole in the pool; ⤢ opens it full — the device's own act where it
@@ -129,7 +139,7 @@ export function ChainDevice({device, picture, actions, wrapRow, binding, generic
   const scale = useContainerScale(root, '.detail-chain', box => chainScale(box.height))
   return <div ref={root} className="device-place device-place--chain" style={scale !== 1 ? {zoom: scale} : undefined} data-plate-scale={scale}>
     <HostedDevice designed={hosting.designed} fallback={hosting.plain} binding={hosting.binding} view="compact" chain keys={hosting.keys} title={device.face.title}
-      nav={nav} className="device device--compact"
+      wrap={hosting.wrap} nav={nav} className="device device--compact"
       data={{'data-device': device.id, 'data-device-size': 'compact', 'data-device-light': lightOf(device), 'data-device-selected': selected ? 'true' : undefined,
         'data-device-design': hosting.generic ? 'generic' : hosting.designed.id}} />
   </div>
@@ -153,7 +163,7 @@ export function PlacedDevice({device, view, picture, actions, wrapRow, binding, 
   const zoom = view === 'whole' && scale !== 1 ? scale : undefined
   return <div ref={root} className={`device-place device-place--${view}`} style={zoom ? {zoom} : undefined} data-plate-scale={view === 'whole' ? scale : undefined}>
     <HostedDevice designed={hosting.designed} fallback={hosting.plain} binding={hosting.binding} view={view} keys={hosting.keys} title={device.face.title}
-      nav={view === 'widget' ? {full: nav.full, select: nav.select, close: onClose ?? (() => takeOffRail(device.id))} : view === 'full' ? {} : {full: nav.full, rail: nav.rail, marks: nav.marks}}
+      wrap={hosting.wrap} nav={view === 'widget' ? {full: nav.full, select: nav.select, close: onClose ?? (() => takeOffRail(device.id))} : view === 'full' ? {} : {full: nav.full, rail: nav.rail, marks: nav.marks}}
       className={`device device--${view}`}
       data={{'data-device': device.id, 'data-device-size': view === 'widget' ? 'widget' : sizeOf(view), 'data-device-light': lightOf(device),
         'data-device-design': hosting.generic ? 'generic' : hosting.designed.id}} />
