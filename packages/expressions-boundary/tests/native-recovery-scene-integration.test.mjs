@@ -39,7 +39,7 @@ function recovery(beforeRead=async()=>{}) {
  const native=functions(files.nativeRecovery,['nativeRead','rememberReading','collectNativeRecoveryBasis','validateNativeRecoveryBasis','acceptNativeRecoveryBasis','acceptRecoveryDraft'],{...state,key:(scope,kind,id)=>`${scope}:${kind}:${id}`,nativeRecoveryRequest:async request=>{
   requests.push(request);await beforeRead(request);const input=inputs.find(row=>JSON.stringify(row.request.request)===JSON.stringify(request));assert.ok(input,'only genuine archived owner reads are admitted');return structuredClone(input.response.outcome.data);
  }});
- const receiving=functions(files.recovery,['readBoundWorkingDraft','acceptWorkingRecoveryBasis'],{...native,hostedRecovery:()=>true,validateJourney,draftJourney,validateWorkingRecord,sameSceneData,preserveRecoveryLibraryCopies});
+ const receiving=functions(files.recovery,['checkpointReading','readBoundWorkingDraft','acceptWorkingRecoveryBasis'],{...native,hostedRecovery:()=>true,validateJourney,draftJourney,validateWorkingRecord,sameSceneData,preserveRecoveryLibraryCopies});
  return {...state,...native,...receiving,requests};
 }
 test('actual bound recovery read carries original owner records without accepting newer CAS and explicit validated adoption couples them',async()=>{

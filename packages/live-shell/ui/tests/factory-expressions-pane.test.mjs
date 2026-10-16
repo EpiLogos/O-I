@@ -268,8 +268,8 @@ test('the pane module and the frame placement hold no frame, owner, lease or re-
     assert.doesNotMatch(text, /createElement\('iframe'\)|appendChild|insertBefore|removeChild|replaceChild|\.remove\(\)|\.src\s*=/, 'no structural change, no iframe creation, no src write')
     assert.doesNotMatch(text, /from '\.\.\/panels\//, 'the pane never imports the centre panel that owns the frame')
   }
-  assert.match(sources[0], /unmount: \(\) => \{\s*unregisterExpressionsPane\(paneId, admission\)\s*queueMicrotask\(\(\) => root\.unmount\(\)\)/,
-    'closing the pane releases its claim at once and unmounts only its own root, after the commit that asked for it')
+  assert.match(sources[0], /unmount: \(\) => \{\s*unregisterExpressionsPane\(paneId, admission\)\s*(?:\/\/[^\n]*\n\s*)*if \(!expressionsPaneAdmitted\(paneId\)\) clearAskFault\(paneId\)\s*queueMicrotask\(\(\) => root\.unmount\(\)\)/,
+    'closing the pane releases its claim at once — and a Technē ask\'s fault it held, when no later instance took the pane over (lane D) — and unmounts only its own root, after the commit that asked for it')
 })
 
 test('the centre frame keeps its mount and its container element; the placement moves only the container\'s style (source reading)', async () => {
