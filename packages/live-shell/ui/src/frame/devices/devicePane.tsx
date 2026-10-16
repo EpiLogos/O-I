@@ -1,18 +1,19 @@
-// A device at full size in a pane (manual §10.4: "Full — a pane — the device at full size, to work in"). The pane kind
-// `projection.device` holds one device by id (the binding's subject); its settings are the same live settings the rack and
-// the pool show, read through the device door.
+// A device at full size in a pane (DEVICE-UI §2 Full: "The material itself … No controls"; DLW §16.1: "A pane is a device at full
+// size. Its controls stay out of the pane and appear in Device view below it"). The pane kind `projection.device` holds one device
+// by id (the binding's subject); it draws the device's Full view — its own, or its live picture at pane size — read through the
+// device door on the same binding the chain and the pool read.
 import {createRoot} from 'react-dom/client'
 import {registerProjectionModule} from '../../../../../../desktop/cradle/src/surface/projectionModules'
-import {useDeviceDoor} from './deviceDoor'
-import {DeviceView} from './DeviceView'
+import {DEVICE_PANE_KIND, useDeviceDoor} from './deviceDoor'
+import {PlacedDevice} from './DeviceView'
 
-export const DEVICE_PANE_KIND = 'projection.device'
+export {DEVICE_PANE_KIND}
 
 export function DeviceFullPane({id}: {id: string | undefined}) {
   const door = useDeviceDoor()
   const held = id ? door.device(id) : undefined
   if (!held) return <p role="status" className="source-note">This device is not on any chain right now. It returns when its chain does.</p>
-  return <DeviceView device={held.device} size="full" picture={held.picture?.('full')} />
+  return <PlacedDevice device={held.device} view="full" picture={held.picture} binding={held.binding} />
 }
 
 let registered = false

@@ -36,6 +36,12 @@ const TABLES = [
   'src/shell/modeStatus.ts',
 ]
 
+/** The designed devices (the owner's documentation lane, 16 Oct: "the high end device component specs … catalogue of pre
+ * designed UI"): a design draws one device from the values its binding hands it. Where its material differs by mode, the mode
+ * reaches it as one of those values, from the family's registration, so it is not a branch in the frame; and its own words
+ * ('live' for a harness that is working) are the device's vocabulary. The frame that hosts designs (frame/devices) stays at zero. */
+const DESIGNS = 'src/inhabitants/catalogue/'
+
 // The ceilings. Lower them as the switchboard is taken apart; never raise them.
 const CEILING = {
   // Mode comparisons per file under src/, outside the tables. A file not named here holds none.
@@ -107,7 +113,7 @@ function sourceFiles(dir) {
 }
 
 const rel = path => relative(ui, path)
-const isTable = path => TABLES.includes(rel(path))
+const isTable = path => TABLES.includes(rel(path)) || rel(path).startsWith(DESIGNS)
 const app = readFileSync(APP, 'utf8')
 /** Every counted source file under src/ with its mode-branch count. */
 const counted = new Map(sourceFiles(SRC).filter(path => !isTable(path)).map(path => [rel(path), modeBranches(readFileSync(path, 'utf8'))]))

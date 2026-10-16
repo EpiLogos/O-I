@@ -1,13 +1,21 @@
 // The device door (FOUNDATION F5): the places that hold live devices — a track's chain, an instrument's rack — publish
-// each one here by id, with its live picture, and the other two sizes read it by id: the pool under the browser shows the
-// selected device whole, and a pane shows a device full. One device, one set of live settings, three places to see it.
+// each one here by id, with its live picture, and the other places read it by id: the pool under the browser shows the
+// selected device whole, a pane shows a device full, the rail keeps a device's widget. One device, one set of live settings,
+// five views (DEVICE-UI §2).
 import {useSyncExternalStore, type ReactNode} from 'react'
+import type {DesignBinding} from './designed'
 import type {DeviceInstance} from './deviceRuntime'
+
+/** The pane kind that holds one device full (devicePane.tsx registers it). */
+export const DEVICE_PANE_KIND = 'projection.device'
 
 export interface PublishedDevice {
   device: DeviceInstance
   /** The device's own live picture, drawn at the size it is shown. */
   picture?: (size: 'compact' | 'whole' | 'full') => ReactNode
+  /** The wiring of the device's designed views to its owner (the design's value keys to owner readings), where its family has
+   * written one; absent, the device's rows are its value keys (designed.ts bindingOf). */
+  binding?: DesignBinding
 }
 
 const devices = new Map<string, PublishedDevice>()
@@ -24,6 +32,11 @@ export function publishDevice(id: string, entry: PublishedDevice | null): void {
 
 export function publishedDevice(id: string): PublishedDevice | undefined {
   return devices.get(id)
+}
+
+/** Every device published now, in the order they were first published. */
+export function publishedDevices(): readonly PublishedDevice[] {
+  return [...devices.values()]
 }
 
 /** The device the pool shows whole: the one last chosen on a chain. */
@@ -49,4 +62,51 @@ export function useDeviceDoor(): {device: (id: string) => PublishedDevice | unde
  * a publish: a chain of plates does not redraw each time one of its devices reads anew. */
 export function useSelectedDeviceId(): string | null {
   return useSyncExternalStore(subscribe, selectedDeviceId, selectedDeviceId)
+}
+
+/** Re-render only when this device comes onto the door or leaves it. */
+export function useIsPublished(id: string): boolean {
+  return useSyncExternalStore(subscribe, () => devices.has(id), () => devices.has(id))
+}
+
+// ---------------------------------------------------------------------------------------------------------------- the rail's hand
+// A device's widget stands on the one rail (frame/widgets/WidgetRail.tsx) under the widget id `device:<id>`, in the rail's own
+// open set (the workspace book's, so it stays when you change mode). The rail hands its open set and its toggle here when it draws;
+// a device's head asks through them.
+
+export const DEVICE_WIDGET_PREFIX = 'device:'
+export const deviceWidgetId = (deviceId: string): string => `${DEVICE_WIDGET_PREFIX}${deviceId}`
+
+let rail: {open: readonly string[]; toggle: (id: string) => void} | null = null
+const railListeners = new Set<() => void>()
+
+/** The rail hands its open set and its toggle (or withdraws them, with null). */
+export function publishRail(next: {open: readonly string[]; toggle: (id: string) => void} | null): void {
+  const was = rail
+  rail = next
+  if (was?.open.join('\n') !== next?.open.join('\n') || !was !== !next) for (const listener of railListeners) listener()
+}
+
+/** Whether the device stands on the rail now. */
+export function onRail(deviceId: string): boolean {
+  return !!rail?.open.includes(deviceWidgetId(deviceId))
+}
+
+/** Put the device on the rail; a device already there stays. Refuses in words when no rail is drawn. */
+export function putOnRail(deviceId: string): string | null {
+  if (!rail) return 'The widget rail is not open. Open it from the transport, then press the mark again.'
+  if (!onRail(deviceId)) rail.toggle(deviceWidgetId(deviceId))
+  return null
+}
+
+/** Take the device off the rail. */
+export function takeOffRail(deviceId: string): void {
+  if (rail && onRail(deviceId)) rail.toggle(deviceWidgetId(deviceId))
+}
+
+const subscribeRail = (listener: () => void) => { railListeners.add(listener); return () => { railListeners.delete(listener) } }
+
+/** Re-render when the rail's open set changes. */
+export function useOnRail(deviceId: string): boolean {
+  return useSyncExternalStore(subscribeRail, () => onRail(deviceId), () => onRail(deviceId))
 }

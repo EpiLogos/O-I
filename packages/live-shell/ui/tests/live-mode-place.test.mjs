@@ -154,7 +154,7 @@ test('Device face: the document\'s own names, lossless values, disclosed ranges 
   // live/SetDeviceOnChain.tsx: a device with no stored-parameter table reads the deep document (was the read-only tile).
   assert.match(html, /data-chain-device="DrumRack" data-set-device="reading"/)
   assert.match(html, /data-param="Device Params\/Drum Decay"/, 'the parameter keeps the document\'s own name — never a prettified fake label')
-  assert.match(html, /<span class="sdk-chip">400 ms<\/span>/, 'the lossless reading is the value shown')
+  assert.match(html, /<output class="dp-readout-value">400 ms<\/output>/, 'the lossless reading is the value shown (the kit\'s readout)')
   assert.match(html, /disclosed range 25 ms – 2 s/, 'the range shows only because the document discloses it')
   assert.match(html, /lossless document reading[^"]*editing awaits the native device owner/, 'the read-only law in the face')
   assert.doesNotMatch(html, /<input/, 'a reading is a reading row, never a text field')

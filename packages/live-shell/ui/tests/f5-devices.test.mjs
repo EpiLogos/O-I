@@ -30,7 +30,7 @@ export async function load(url,context,next){
 globalThis.document = {getElementById: () => null, createElement: () => ({}), head: {appendChild: () => {}}}
 const React = await import('react')
 const {renderToStaticMarkup} = await import('react-dom/server')
-const {compactRows, groupRows, lightOf, heldRows} = await import('../src/frame/devices/deviceRuntime.ts')
+const {compactRows, groupRows, lightOf} = await import('../src/frame/devices/deviceRuntime.ts')
 const {DeviceView} = await import('../src/frame/devices/DeviceView.tsx')
 const {torusDevice, TORUS_DEVICE_ID} = await import('../src/live/torusDevice.ts')
 
@@ -54,20 +54,20 @@ test('a light is a reading: on or off only as the owner reports, dark when unkno
   assert.equal(lightOf({enabledKey: 'on', values: {}}), 'unknown')
   assert.equal(lightOf({enabledKey: 'on', values: {on: true}}), 'on')
   assert.equal(lightOf({enabledKey: 'on', values: {on: false}}), 'off')
-  assert.deepEqual(heldRows({heldBy: {a: 'Mars'}}), ['a'])
 })
 
-test('one device draws in all three sizes with the same settings, and a held value shows who holds it', () => {
+test('one device draws in all three sizes with the same settings, and a held value shows who holds it where its controls stand', () => {
   const device = {id: 'd', family: 'f', face, rows: [row('a', {group: 'Tone'}), row('b'), row('c', {writePath: undefined})], values: {a: 0.5, c: 'read'}, heldBy: {a: 'Mars'}}
   const sizes = ['compact', 'whole', 'full'].map(size => renderToStaticMarkup(React.createElement(DeviceView, {device, size, picture: React.createElement('i', {id: 'pic'})})))
   sizes.forEach((markup, index) => {
     assert.match(markup, new RegExp(`data-device-size="${['compact', 'whole', 'full'][index]}"`))
     assert.match(markup, /id="pic"/, 'the picture stands in every size')
     assert.match(markup, /data-device-light="unknown"/)
-    assert.match(markup, /data-held-by="Mars"/, 'who holds the value shows in every size')
   })
-  assert.doesNotMatch(sizes[0], /<legend>/, 'compact draws no groups')
-  assert.match(sizes[1], /<legend>Tone<\/legend>/); assert.match(sizes[1], /<legend>Probe<\/legend>/)
+  for (const markup of sizes.slice(0, 2)) assert.match(markup, /data-held-by="Mars"/, 'who holds the value shows wherever its control stands')
+  assert.doesNotMatch(sizes[2], /data-param=/, 'full is the material: its controls stay in Device view (DLW §16.1)')
+  assert.doesNotMatch(sizes[0], /class="dp-sec-label">Tone</, 'compact draws no groups')
+  assert.match(sizes[1], /class="dp-sec-label">Tone</); assert.match(sizes[1], /class="dp-sec-label">Probe</)
 })
 
 test('the torus is a device of the runtime: its four macros are the owner\'s determinants, its light the owner\'s standing', () => {
@@ -93,13 +93,14 @@ test('a control that drafts and commits in one handler (a toggle, a typed value)
   assert.deepEqual(sent, [[{key: 'enabled', value: true}]], 'the commit in the same handler sees the draft')
 })
 
-test('a refused change shows the owner\'s own words, and keeps the drafts', async () => {
-  const {useFaceDrafts} = await import('../src/inhabitants/sdk/controls.tsx')
-  let held
-  const Probe = () => { held = useFaceDrafts(async () => { throw new Error('The Day is closed; open it to turn its face.') }); return null }
-  renderToStaticMarkup(React.createElement(Probe))
-  held.setDraft('face', 'Learning')
-  await held.commit()
-  const source = await (await import('node:fs/promises')).readFile(new URL('../src/frame/devices/DeviceView.tsx', import.meta.url), 'utf8')
-  assert.match(source, /drafts\.refusal \?/, 'the plate shows the refusal it was given')
+test('a refused change returns the control to the owner\'s value and keeps the owner\'s own words for the status bar', async () => {
+  const host = await import('../src/frame/devices/deviceHost.tsx')
+  const binding = {id: 'f5:refuse', values: {face: 'Ground'}, write: async () => { throw new Error('The Day is closed; open it to turn its face.') }}
+  host.setDraft(binding.id, 'face', 'Learning')
+  const reason = await host.flushDrafts(binding)
+  assert.equal(reason, 'The Day is closed; open it to turn its face.', 'the owner\'s own words')
+  const state = host.hostState(binding.id)
+  assert.equal(host.hostedValues(state, binding.values).face, 'Ground', 'the control shows the owner\'s value again')
+  assert.equal(host.hostedStanding(state, binding, ['face']).face.refused, 'The Day is closed; open it to turn its face.', 'and says why')
+  host.resetHost(binding.id)
 })

@@ -64,6 +64,19 @@ const chain = (over = {}) => model.agentChainDevices({
 const slotOf = (set, id) => set.find(entry => entry.slot.id === id)
 const context = (over = {}) => ({reading: {...model.INITIAL_READING, ...over.reading}, sessionRef: over.sessionRef ?? null, onFrames() {}, onThread() {}})
 const params = markup => [...markup.matchAll(/data-param="([^"]+)"/g)].map(match => match[1])
+const deviceHost = await import('../src/frame/devices/deviceHost.tsx')
+/** A whole plate on every one of its pages (DEVICE-UI §1: pages in its head, never a scroller), turned through the host. */
+const everyPage = (id, draw) => {
+  const pages = []
+  for (let at = 1; at <= 8; at++) {
+    deviceHost.setHostPage(id, `p${at}`)
+    const markup = draw()
+    pages.push(markup)
+    if ((markup.match(/role="tab"/g) ?? []).length <= at) break
+  }
+  deviceHost.setHostPage(id, 'p1')
+  return pages.join('\n')
+}
 const read = path => readFileSync(new URL(`../src/agent/${path}`, import.meta.url), 'utf8')
 
 test('the chain is the admitted slots in the declared order, each a device over the address table\'s rows — none invented, none dropped', () => {
@@ -269,34 +282,35 @@ test('what an owner accepted is the only reading effort and input have: recorded
 test('one device in three sizes: the same live rows, a picture in each — no text-only card', () => {
   const set = chain({sessionRef: 's', reading: {chains: model.rosterChains(ROSTER), gatewayAdmitted: true, gitRepo: {branch: 'dlw/build', uncommitted: 1}}})
   for (const {slot, device} of set) {
-    const compact = compactRows(device.rows).map(row => row.key)
-    const markups = ['compact', 'whole', 'full'].map(size => html(createElement(DeviceView, {device, size, picture: pictures.chainPicture(slot.id, context({sessionRef: 's', reading: {chains: model.rosterChains(ROSTER)}}), size)})))
+    // The light's own row is the plate's activator, not one of its controls (DEVICE-UI §4.1).
+    const rows = device.rows.filter(row => row.key !== device.enabledKey)
+    const compact = compactRows(rows).map(row => row.key)
+    const draw = size => html(createElement(DeviceView, {device, size, picture: pictures.chainPicture(slot.id, context({sessionRef: 's', reading: {chains: model.rosterChains(ROSTER)}}), size)}))
+    const markups = [draw('compact'), everyPage(device.id, () => draw('whole')), draw('full')]
     markups.forEach((markup, index) => {
       assert.match(markup, new RegExp(`data-device="factory:${slot.id}" data-device-size="${['compact', 'whole', 'full'][index]}"`))
-      assert.match(markup, /class="device-picture"/, `${slot.id}: the picture stands in every size`)
+      assert.match(markup, /class="dv-picture"|class="dv-full"/, `${slot.id}: the picture stands in every size`)
       assert.match(markup, new RegExp(`fd-pic--${slot.id === 'skillset' ? 'rack' : slot.id}`), `${slot.id}: the device's own picture`)
     })
     assert.deepEqual(params(markups[0]), compact, `${slot.id}: compact draws exactly its compact rows`)
-    assert.deepEqual([...params(markups[1])].sort(), device.rows.map(row => row.key).sort(), `${slot.id}: whole draws every row`)
-    assert.deepEqual(params(markups[2]), params(markups[1]), `${slot.id}: full draws the same rows as whole`)
-    assert.doesNotMatch(markups[0], /<legend>/, 'compact folds the groups')
-    assert.match(markups[1], /<legend>/)
+    assert.deepEqual([...params(markups[1])].sort(), rows.map(row => row.key).sort(), `${slot.id}: whole draws every row, on its pages`)
+    assert.deepEqual(params(markups[2]), [], `${slot.id}: full is the material; its controls stay in Device view`)
+    assert.doesNotMatch(markups[0], /class="dp-sec-label">(?!Macros)/, 'compact folds the groups')
+    assert.match(markups[1], /class="dp-sec-label"/)
   }
   const rack = html(createElement(DeviceView, {device: slotOf(set, 'skillset').device, size: 'compact', picture: null}))
   assert.equal((rack.match(/data-param=/g) ?? []).length, 0, 'the compact rack draws no badge for settings it cannot map as macros')
   const rackWhole = html(createElement(DeviceView, {device: slotOf(set, 'skillset').device, size: 'whole', picture: null}))
-  assert.equal((rackWhole.match(/sdk-row--reading/g) ?? []).length, 4, 'the whole rack keeps ai-kit\'s four settings as readings: no control without an owner write')
-  assert.doesNotMatch(rackWhole, /sdk-enum|sdk-bool|role="slider"|<legend>Macros<\/legend>/)
-  assert.match(rackWhole, /<legend>Settings<\/legend>/)
+  assert.equal((rackWhole.match(/data-control="readout"/g) ?? []).length, 4, 'the whole rack keeps ai-kit\'s four settings as readings: no control without an owner write')
+  assert.doesNotMatch(rackWhole, /data-control="(?:radio|radio-stack|chooser|toggle|dial|box|field)"|role="slider"|class="dp-sec-label">Macros</)
+  assert.match(rackWhole, /class="dp-sec-label">Settings</)
   const agent = html(createElement(DeviceView, {device: slotOf(set, 'agent').device, size: 'compact', picture: null}))
-  // Effort (four short choices) and input (two) stand as the plate's segmented toggles (the mockup's .tog).
-  assert.equal((agent.match(/class="sdk-seg" role="radiogroup"/g) ?? []).length, 2, 'effort and input are the rows with an owner write')
-  assert.equal((agent.match(/class="sdk-seg__opt"/g) ?? []).length, 6, 'their choices are the owner\'s own: low · medium · high · max, steer · queue')
-  assert.equal((agent.match(/class="sdk-seg__opt" disabled=""/g) ?? []).length, 6, 'and, unread, every choice stands inert')
-  assert.doesNotMatch(agent, /sdk-seg__opt--on/, 'and dark, rather than lighting the shell\'s defaults')
-  // A segmented toggle names every choice; none is drawn as the value until the owner reads one.
+  // Effort (four short choices) and input (two) stand as the kit's radios (DEVICE-UI §5 Radio: one of two to five).
+  assert.equal((agent.match(/class="dp-radio" role="radiogroup"/g) ?? []).length, 2, 'effort and input are the rows with an owner write')
+  assert.equal((agent.match(/role="radio" aria-checked/g) ?? []).length, 6, 'their choices are the owner\'s own: low · medium · high · max, steer · queue')
+  // A radio names every choice; none is drawn as the value until the owner reads one.
   assert.doesNotMatch(agent, /aria-checked="true"|aria-pressed="true"/, 'no default is drawn as a value')
-  assert.match(agent, /sdk-row--reading"[^>]*><span class="sdk-row__name">Autonomy<\/span>/, 'autonomy is a reading until the task record discloses it')
+  assert.match(agent, /data-param="autonomy"[^>]*data-control="readout"[\s\S]*?<span class="dp-label">Autonomy<\/span>/, 'autonomy is a reading until the task record discloses it')
 })
 
 test('the door shows the chosen device whole in the pool and full in a pane — the same device, the same live settings', () => {
@@ -308,12 +322,13 @@ test('the door shows the chosen device whole in the pool and full in a pane — 
     const pool = html(createElement(DevicePool))
     assert.match(pool, /data-device-pool="factory:skillset"/)
     assert.match(pool, /data-device-size="whole"/)
-    assert.match(pool, /<legend>Settings<\/legend>/)
-    assert.doesNotMatch(pool, /<legend>Macros<\/legend>/, 'the rack\'s settings are not offered as macros')
+    assert.match(pool, /class="dp-sec-label">Settings</)
+    assert.doesNotMatch(pool, /class="dp-sec-label">Macros</, 'the rack\'s settings are not offered as macros')
     assert.match(pool, /fd-pic--rack/)
     const pane = html(createElement(DeviceFullPane, {id: 'factory:skillset'}))
     assert.match(pane, /data-device-size="full"/)
-    assert.deepEqual(params(pane), params(pool), 'the pool and the pane show the same rows')
+    assert.match(pane, /fd-pic--rack/, 'the pane is the device\'s own material')
+    assert.deepEqual(params(pane), [], 'and holds no controls: they stay in Device view, read from the same device')
     for (const slot of SLOTS) assert.match(html(createElement(DeviceFullPane, {id: `factory:${slot}`})), /data-device-size="full"/, `${slot} opens full`)
   } finally {
     for (const {device} of set) door.publishDevice(device.id, null)
