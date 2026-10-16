@@ -19,6 +19,9 @@ import {expressionsDeviceId, expressionsFieldDevice, expressionsFieldEntry, inCo
 import {fieldDeviceSend} from './fieldDeviceSend'
 import {ExpressionsPicture, hasPicture} from './ExpressionsPicture'
 import {ModulationLine} from './ModulationLine'
+import {physicsDesignBinding, type PhysicsPress} from './physicsBinding'
+import type {DesignBinding} from '../../frame/devices/designed'
+import {dispatchNativeEngineCommand, engineCommandReason, readNativeEngineMounted} from '../../native/engineCommand'
 import './expressionsDevices.css'
 
 /** What a place that holds a field device gives it: the reading, the editor's one apply, and whether the work is taking edits now. */
@@ -89,18 +92,35 @@ export function useFieldDevices(families: readonly string[], host: Omit<FieldHos
     return now.host.reading ? <ExpressionsPicture family={family} size={size} reading={now.host.reading} apply={now.host.apply} captureCurrent={now.host.captureCurrent}
       disabled={now.host.locked} aperture={now.aperture} /> : null
   }])), [key])
-  // No reading, no device: a field device is the owner's reading of the open work, never a default.
-  const devices = useMemo(() => families.map(family => ({family, id: expressionsDeviceId(family),
-    device: host.reading ? hostedFieldDevice(family, {reading: host.reading, locked: host.locked}, sends.get(family)!) : null, picture: pictures.get(family)!})),
-  [host.reading, host.locked, sends, pictures])
+  // No reading, no device: a field device is the owner's reading of the open work, never a default. A family whose catalogue design
+  // draws on value keys the engine reports publishes its binding with it (fieldDesignBinding), and the design draws in every place.
+  const devices = useMemo(() => families.map(family => {
+    const device = host.reading ? hostedFieldDevice(family, {reading: host.reading, locked: host.locked}, sends.get(family)!) : null
+    const binding = device ? fieldDesignBinding(family, device, host.reading) : undefined
+    return {family, id: expressionsDeviceId(family), device, picture: pictures.get(family)!, ...(binding ? {binding} : {})}
+  }), [host.reading, host.locked, sends, pictures])
   const claims = useRef(new Map<string, DeviceClaim>())
   useEffect(() => {
     const held = new Map(families.map(family => [family, claimDevice(expressionsDeviceId(family))]))
     claims.current = held
     return () => { for (const claim of held.values()) claim.release(); claims.current = new Map() }
   }, [key])
-  useEffect(() => { for (const entry of devices) if (entry.device) claims.current.get(entry.family)?.publish({device: entry.device, picture: entry.picture}) }, [devices])
+  useEffect(() => { for (const entry of devices) if (entry.device) claims.current.get(entry.family)?.publish({device: entry.device, picture: entry.picture, ...(entry.binding ? {binding: entry.binding} : {})}) }, [devices])
   return devices
+}
+
+/** The engine's runtime action, run by the mounted Expressions panel as one engine command (native/engineCommand.ts); refused in words
+ * while no native Expression is mounted. */
+const enginePress: PhysicsPress = action => {
+  const reason = engineCommandReason({mounted: readNativeEngineMounted(), busy: false})
+  if (reason) throw new Error(reason)
+  dispatchNativeEngineCommand(action === 'reset' ? {action: 'reset', confirmed: true} : {action})
+}
+
+/** The binding of a field family's catalogue design, where the design draws on the engine's own readings (lane BE): Physics. The Field
+ * (`expressions:field`) is not a device of this shell, and its picture draws the module's own symbols: it publishes nothing yet. */
+export function fieldDesignBinding(family: string, device: DeviceInstance, reading: NativeEditorReading | null): DesignBinding | undefined {
+  return family === 'physics' ? physicsDesignBinding(device, reading, enginePress) : undefined
 }
 
 /** The field device on the rack: compact, with its summary line above and the modulation lines under the controls it moves. The card's

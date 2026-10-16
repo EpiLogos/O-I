@@ -627,7 +627,14 @@ body.oi-chrome-devices #tool-hint,
 body.oi-chrome-devices #coordinates,
 body.oi-chrome-devices #present-return,
 body.oi-chrome-devices #recording-badge,
-body.oi-chrome-devices .react-flow__attribution{visibility:hidden!important;pointer-events:none!important}
+body.oi-chrome-devices .react-flow__attribution,
+body.oi-chrome-devices #act-panel,
+body.oi-chrome-devices #nara-instrument,
+body.oi-chrome-devices .canvas-find-overlay{visibility:hidden!important;pointer-events:none!important}
+/* The editors the frame summons over its field (lane BE): in the 'devices' presentation each stands down here — mounted, read and pressed
+   through the chrome door — and stands on a device in the shell's pool (Acts, Nara, Find); the Library opens full in a pane of its own.
+   A modal Find never dims the field behind it. */
+body.oi-chrome-devices .canvas-find-overlay::backdrop{display:none}
 body.oi-chrome-devices #app>.masthead .header-menu{display:flex!important;position:static!important;animation:none!important}
 body.oi-chrome-devices #research-workspace{inset:0}
 /* The journey's rows: in the journey lens the scenes panel is the walk (manual §17.5 Full), so it stands in the pane while the scene

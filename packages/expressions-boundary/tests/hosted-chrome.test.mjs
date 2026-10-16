@@ -66,5 +66,6 @@ test('the shell declares the presentation and presses a control through the clos
 })
 
 test('every home names a group the manual or the frame\'s chrome gives', () => {
-  for (const home of FRAME_CHROME_HOMES) assert.match(home, /^(work|tools|capture|nara|scene|side|lens|canvas:(tools|lines|relation|look|views)|timeline:(lens|readings|standing|window)|journey:(stops|pace|transitions|takes)|project:view)$/)
+  // Lane BE: the editors the frame summons over its field (Acts, the Nara instrument, Find on Canvas) are homes of their own while open.
+  for (const home of FRAME_CHROME_HOMES) assert.match(home, /^(work|tools|capture|nara|scene|side|lens|acts|nara:instrument|canvas:(tools|lines|relation|look|views|find)|timeline:(lens|readings|standing|window)|journey:(stops|pace|transitions|takes)|project:view)$/)
 })

@@ -6,7 +6,7 @@
    does not fit (frame/devices/plateFit.ts). */
 .frame-chrome { display: grid; grid-auto-flow: column; grid-template-rows: repeat(var(--chrome-rows, 6), 16px); grid-auto-columns: max-content; gap: 3px 4px; align-content: start; min-width: 0 }
 .frame-chrome > :is(.frame-chrome-choice, .frame-chrome-sweep, [data-chrome]:has(> .frame-chrome-field)) { grid-row: span 2 }
-.sdk-face__extra .frame-chrome { display: flex; gap: 3px }
+.sdk-face__extra .frame-chrome, .dp-head-acts .frame-chrome { display: flex; gap: 3px }
 .frame-chrome-key { max-width: 132px; overflow: hidden; text-overflow: ellipsis }
 .frame-chrome-key.dp-toggle[aria-pressed="true"] { border-color: var(--accent) }
 .frame-chrome-key:hover:not(:disabled) { color: var(--text); border-color: var(--text-faint) }
