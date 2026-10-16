@@ -106,6 +106,27 @@ objections verbatim and the full validation (`BRIEF-BUILDER.md`); the lead conve
 | A1 — AIKit agent infrastructure (ai-kit `env-2`, `agent-infra/gateway-hooks-acp`): the Agency Gateway serves its unix socket when the tailnet listener cannot bind (launchd: 6,074 runs, exit 1); Claude Code is projected only hook events with work (PreToolUse ~100 ms per tool call for nothing); the ACP host keeps lifecycle payloads (usage, plan, compaction); adapters pinned, Codex resume declared | builder | ai-kit `crates/aikit-{adapters,cli,core}` | 16 Oct |
 | The catalogue of designed devices (owner, 16 Oct: "the parallel lanes are developing the high end device component specs in the documentation lane, you can directly work from its … catalogue of pre designed UI, the wiring and UX integration should be somewhat trivial wiring"): `catalogue/panels/design.ts` is the contract, `panels/<family>__<face>.tsx` (exporting `design`, loaded through `loadDesign`) the designs. The runtime hosts each published device's design when one exists, else the generic plate; a device lane writes the binding (owner readings and writes on the design's value keys), never a panel | the owner's documentation lane | `inhabitants/catalogue/**` — read-only for every builder | 16 Oct |
 
+
+From the documentation lane (16 Oct, afternoon), for the next tranche; the manual's §16 is the source (O-I main `5aa83926d`, and the
+merges below land there next):
+- Six views, after Live (`d18c911a3`, `3010324b2`): Whole flips up over the chain (Live's expanded view) and still shows in the pool;
+  Pop-out opens the device in its own window, Full over Whole by default (`catalogue/panels/popout.tsx`). The host gives the kit's
+  `PlaceContext` `onExpand`, `expanded` and `onPopout`, and a view its `room` and `frame` (design.ts) — the head draws ⌃ ▦ ↗ itself.
+  S1's six states are these. Show and hide: ⌘⌥L detail, ⇧Tab Clip ⇄ Device, ⌘⌥B browser, ⌘⌥R rail, Esc folds a flipped-up device.
+- One Agent in every mode (`3679a9ceb`): `actuation:harness-model` carries Custody (keys `custody.*`), Identity (`id.*`) and the
+  Thread as its Full (`thread.*`), via design.ts `scoped`/`prefixed`. Answer, Agent identity, Custody and Thread are no longer
+  separate devices: their bindings (answerBinding, identityBinding, the custody and thread bindings) host on the Agent by prefixing
+  their keys. How a write arrives is Scope's and Arm's only (Custody's and Answer's write settings go).
+- One Scope in every mode: `software-factory:context-write-mode` is the reach device on Central's chain too; contextWorldBinding
+  becomes Scope's binding on Central. Central's workspace chain: Packet, Agent, Scope (Ground hygiene and Impact on a code
+  workspace); the Main track: the Day, then Approvals.
+- A widget is a device's view: the rail's Terminal, Graph, Frames, Ledger, Approvals and Packet are the widget views of their
+  devices, not entries of their own.
+- Next from this lane: Clip view per mode after Live's real Clip View (Live 12 captures under
+  `Work/reverse-engineering/ableton-live-12.0.25/evidence/ui/clip-view/`); which entries become Clip view panels or editor tools
+  (Text, Highlight and Notes are a Central page's editing tools; Expressions' per-symbol and per-scene devices), track furniture,
+  or Session and Arrangement behaviour.
+
 Then: session 2 of the day took the build over from the rate-limit stop (16 Oct, afternoon). The four lanes running at 04:54
 (W2, BF3, BC3, BT2) had died on the weekly limit with their work uncommitted in the seat. W2 converged by the lead: ai-kit#511
 (relations-batch v2 streams each item; `central.world.here` once per Project) and `8e47fedc4` — the kernel answers each register
