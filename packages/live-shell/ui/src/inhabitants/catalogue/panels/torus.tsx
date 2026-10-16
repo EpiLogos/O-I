@@ -2,8 +2,9 @@
 // (the two whole-tone families). Live's nearest: Wavetable — a large display of the oscillator with handles, an envelope display,
 // a global column of volume and voices. Every line drawn below is computed from the device's values.
 import type {CSSProperties} from 'react'
-import {Band, Dial, Display, Folded, Handle, Panel, Radio, Readout, Section, Tile, Toggle, ValueBox, type LightState} from '../../sdk/panel'
-import {NONE, boolOf, clampTo, db, fixed, has, num, on, pct, secs, shown, signed, strOf, type DesignedDevice, type ViewProps} from './design'
+import {Band, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Readout, Section, Tile, Toggle, ValueBox, type LightState} from '../../sdk/panel'
+import {LIVE_CADENCE_OPTIONS, LIVE_CONTEXT_FRAME_OPTIONS, LIVE_HARMONIC_OPTIONS, LIVE_LENS_OPTIONS} from '../../../live/torusInstrument'
+import {NONE, boolOf, clampTo, db, fixed, has, json, num, numOf, on, pct, secs, shown, signed, st, strOf, type DesignedDevice, type ViewProps} from './design'
 
 type V = ViewProps['v']
 const DAMP = {min: .1, max: 40, log: true}, ATTACK = {min: .001, max: 10, log: true}, RELEASE = {min: .01, max: 30, log: true}
@@ -130,12 +131,31 @@ function Janko({w, y, sounding}: {w: number; y: number; sounding: readonly numbe
 const light = (v: V, owner?: V) => (strOf(owner ?? v, 'light') ?? 'unknown') as LightState
 const VIEWS = [{value: 'surface', label: 'Surface'}, {value: 'wire', label: 'Wire'}, {value: 'both', label: 'Both'}] as const
 
-const macros = (p: ViewProps) => <>
-  <Dial label="Pulse mix" does="The balance of the two pulses." value={num(p.v, 'pulseMix')} def={50} scale={{min: 0, max: 100}} format={pct} onChange={x => p.set('pulseMix', x)} />
-  <Dial label="Damping" does="How sharply the body rings. A high value rings longer." value={num(p.v, 'damping')} def={4.5} scale={DAMP} format={fixed(1)} onChange={x => p.set('damping', x)} />
-  <Dial label="Drive" does="How hard the pulses shake the body." value={num(p.v, 'drive')} def={1} scale={{min: 0, max: 6}} format={fixed(1)} onChange={x => p.set('drive', x)} mod={[.6, 2.2]} />
-  <Dial label="Release" does="How long a note takes to fade." value={num(p.v, 'release')} def={1.2} scale={RELEASE} format={secs} onChange={x => p.set('release', x)} />
+/** The owner's own choices for the field's four determinants and its cadence (live/torusInstrument.ts), by the labels the binding
+ * reads and writes. The pulses, body and envelope below are the instrument as the manual specifies it; the field announces none
+ * of them yet, so they draw their gaps. */
+const asOptions = (list: readonly {label: string}[]) => list.map(option => ({value: option.label, label: option.label}))
+const LENSES = asOptions(LIVE_LENS_OPTIONS), FRAMES = asOptions(LIVE_CONTEXT_FRAME_OPTIONS), BASES = asOptions(LIVE_HARMONIC_OPTIONS)
+const CADENCES = asOptions(LIVE_CADENCE_OPTIONS)
+const M3 = [{value: 'DNA', label: 'DNA', does: 'Transcribe the M3 clock as DNA.'}, {value: 'RNA', label: 'RNA', does: 'Transcribe the M3 clock as RNA.'}]
+
+/** The field's determinants: lens, context frame, harmonic basis, M3 transcription. These are the field's real, mappable controls. */
+const determinants = (p: ViewProps) => <>
+  <Chooser {...st(p, 'lens')} label="Lens" does="The lens the field reads through, L0 to L5′." value={strOf(p.v, 'lens') ?? ''} options={LENSES} onChange={x => p.set('lens', x)} />
+  <Chooser {...st(p, 'context-frame')} label="Frame" does="The context frame, CF1 to CF7." value={strOf(p.v, 'context-frame') ?? ''} options={FRAMES} onChange={x => p.set('context-frame', x)} />
+  <Chooser {...st(p, 'harmonic-basis')} label="Basis" does="The harmonic basis: one of B1 to B8, or the selected row." value={strOf(p.v, 'harmonic-basis') ?? ''} options={BASES} onChange={x => p.set('harmonic-basis', x)} />
+  <Radio {...st(p, 'm3-transcription')} label="M3" does="How the M3 clock is transcribed." value={strOf(p.v, 'm3-transcription') ?? ''} options={M3} stack onChange={x => p.set('m3-transcription', x)} />
 </>
+
+/** What you see and hear of the field: its sound, its cadence, its scale, its level, and the owner's standing. */
+const seeAndHear = (p: ViewProps) => <>
+  <Toggle {...st(p, 'sound')} label="Sound" does="Whether the field sounds." on={on(p.v, 'sound')} unknown={boolOf(p.v, 'sound') === undefined} onChange={x => p.set('sound', x)} />
+  <Radio {...st(p, 'cadence')} label="Cadence" does="How fast the field ticks: held, 1 or 12 ticks a second." value={strOf(p.v, 'cadence') ?? ''} options={CADENCES} stack onChange={x => p.set('cadence', x)} />
+  <ValueBox {...st(p, 'scale')} label="Scale" does="The field's scale, in units a metre." value={numOf(p.v, 'scale') ?? NaN} def={100} scale={{min: 40, max: 400}} format={x => `${Math.round(x)} u/m`} onChange={x => p.set('scale', x)} />
+  <ValueBox {...st(p, 'level')} label="Level" does="The loudness of the sound." value={numOf(p.v, 'level') ?? NaN} def={-6} scale={{min: -60, max: 12}} format={db} onChange={x => p.set('level', x)} />
+  <Readout label="standing" does="The owner's standing: following, held, or another state the owner names." value={strOf(p.v, 'standing')} />
+</>
+
 
 export const torus: DesignedDevice = {
   id: 'quaternal-logic:torus',
@@ -145,60 +165,76 @@ export const torus: DesignedDevice = {
     light: 'lit', pulseMix: 50, helixBalance: 50, strike: 70, damping: 4.5, drive: 1, modes: 64, agitation: .3,
     attack: .01, release: 1.2, voices: 16, level: -6, pan: 0, view: 'surface', receiver: false,
     notes: 3, meter: -14,
+    // The field's own controls, as the binding reads them (labels of the owner's choices).
+    lens: 'L0', 'context-frame': 'CF1', 'harmonic-basis': 'B1', 'm3-transcription': 'DNA', sound: true, cadence: 'Hold', scale: 100, standing: 'following',
+    sounding: JSON.stringify([0, 4, 8]), driveMod: JSON.stringify([.6, 2.2]),
   },
+  firstPage: 'field',
   fixtures: {
     'Ringing': {},
-    'No readings': Object.fromEntries(['light', 'pulseMix', 'helixBalance', 'strike', 'damping', 'drive', 'modes', 'agitation', 'attack', 'release', 'voices', 'level', 'pan', 'view', 'receiver', 'notes', 'meter'].map(k => [k, undefined])),
+    'No readings': Object.fromEntries(['light', 'pulseMix', 'helixBalance', 'strike', 'damping', 'drive', 'modes', 'agitation', 'attack', 'release', 'voices', 'level', 'pan', 'view', 'receiver', 'notes', 'meter', 'lens', 'context-frame', 'harmonic-basis', 'm3-transcription', 'sound', 'cadence', 'scale', 'standing', 'sounding', 'driveMod'].map(k => [k, undefined])),
+    'As the field reports it': {pulseMix: undefined, helixBalance: undefined, strike: undefined, damping: undefined, drive: undefined, modes: undefined, agitation: undefined, attack: undefined, release: undefined, voices: undefined, pan: undefined, view: undefined, receiver: undefined, notes: undefined, meter: undefined, driveMod: undefined},
   },
 
   folded: p => <Folded title="Torus" light={light(p.v, p.owner)} readings={[has(p.v, 'level') ? db(num(p.v, 'level')) : NONE, `${shown(p.v, 'notes')} notes`]} onUnfold={p.nav.unfold} />,
 
   compact: p => <Panel title="Torus" view="compact" light={light(p.v, p.owner)} onFold={p.nav.fold} onFull={p.nav.full} onSelect={p.nav.select}>
     <Section width={152}><TorusDisplay v={p.v} set={p.set} w={140} h={146} /></Section>
-    <Section label="Macros" cols={2}>{macros(p)}</Section>
+    <Section label="Field" cols={2}>{determinants(p)}</Section>
   </Panel>,
 
-  whole: p => <Panel title="Torus" view="whole" light={light(p.v, p.owner)} onFold={p.nav.fold} onFull={p.nav.full}>
+  whole: p => <Panel title="Torus" view="whole" light={light(p.v, p.owner)} onFold={p.nav.fold} onFull={p.nav.full}
+    pages={[{id: 'field', label: 'Field'}, {id: 'body', label: 'Body'}]} page={p.page} onPage={p.setPage}>
+    {p.page !== 'body' ? <>
+    <Band>
+      <Section width={198}><TorusDisplay v={p.v} set={p.set} w={186} h={146} /></Section>
+      <Section label="Determinants" cols={2} grow>{determinants(p)}</Section>
+    </Band>
+    <Band>
+      <Section label="See and hear" cols={3} grow>{seeAndHear(p)}</Section>
+    </Band>
+    </> : <>
     <Band>
       <Section width={198}><TorusDisplay v={p.v} set={p.set} w={186} h={146} /></Section>
       <Section label="Pulses" cols={2}>
-        <Dial label="Pulse mix" does="The balance of the two pulses. 0 % is the first only, 100 % the second only." value={num(p.v, 'pulseMix')} def={50} scale={{min: 0, max: 100}} format={pct} onChange={x => p.set('pulseMix', x)} />
-        <Dial label="Helices" does="The balance of the two helices." value={num(p.v, 'helixBalance')} def={50} scale={{min: 0, max: 100}} format={pct} onChange={x => p.set('helixBalance', x)} />
-        <Dial label="Drive" does="How hard the pulses shake the body. The outer ring shows what the sky moves it through." value={num(p.v, 'drive')} def={1} scale={{min: 0, max: 6}} format={fixed(1)} onChange={x => p.set('drive', x)} mod={[.6, 2.2]} />
+        <Dial {...st(p, 'pulseMix')} label="Pulse mix" does="The balance of the two pulses. 0 % is the first only, 100 % the second only." value={num(p.v, 'pulseMix')} def={50} scale={{min: 0, max: 100}} format={pct} onChange={x => p.set('pulseMix', x)} />
+        <Dial {...st(p, 'helixBalance')} label="Helices" does="The balance of the two helices." value={num(p.v, 'helixBalance')} def={50} scale={{min: 0, max: 100}} format={pct} onChange={x => p.set('helixBalance', x)} />
+        <Dial {...st(p, 'drive')} label="Drive" does="How hard the pulses shake the body. The outer ring shows what the sky moves it through." value={num(p.v, 'drive')} def={1} scale={{min: 0, max: 6}} format={fixed(1)} onChange={x => p.set('drive', x)} mod={json<[number, number] | null>(p.v, 'driveMod', null) ?? undefined} />
         <Readout label="notes" does="Notes that sound now." value={num(p.v, 'notes')} tone="accent" />
       </Section>
       <Section label="Output" grow>
-        <ValueBox label="Level" does="The loudness of the sound." value={num(p.v, 'level')} def={-6} scale={{min: -60, max: 6}} format={db} onChange={x => p.set('level', x)} automated />
-        <Dial label="Pan" does="The place of the sound, left to right." value={num(p.v, 'pan')} def={0} scale={{min: -1, max: 1}} format={x => (Math.abs(x) < .005 ? 'C' : `${Math.round(Math.abs(x) * 50)}${x < 0 ? 'L' : 'R'}`)} bipolar onChange={x => p.set('pan', x)} />
+        <ValueBox {...st(p, 'level')} label="Level" does="The loudness of the sound." value={num(p.v, 'level')} def={-6} scale={{min: -60, max: 12}} format={db} onChange={x => p.set('level', x)} />
+        <Dial {...st(p, 'pan')} label="Pan" does="The place of the sound, left to right." value={num(p.v, 'pan')} def={0} scale={{min: -1, max: 1}} format={x => (Math.abs(x) < .005 ? 'C' : `${Math.round(Math.abs(x) * 50)}${x < 0 ? 'L' : 'R'}`)} bipolar onChange={x => p.set('pan', x)} />
       </Section>
     </Band>
     <Band>
       <Section label="Body" cols={2}>
-        <Dial label="Strike" does="How strongly velocity excites the body." value={num(p.v, 'strike')} def={70} scale={{min: 0, max: 100}} format={pct} onChange={x => p.set('strike', x)} />
-        <Dial label="Damping" does="How sharply the body rings. A high value rings longer." value={num(p.v, 'damping')} def={4.5} scale={DAMP} format={fixed(1)} onChange={x => p.set('damping', x)} />
-        <Dial label="Modes" does="How many modes of the body take part." value={num(p.v, 'modes')} def={64} scale={{min: 1, max: 64, step: 1}} format={x => `${x}`} onChange={x => p.set('modes', x)} />
-        <Dial label="Agitation" does="How much the surface is kicked about." value={num(p.v, 'agitation')} def={.3} scale={{min: 0, max: 5}} format={fixed(2)} onChange={x => p.set('agitation', x)} />
+        <Dial {...st(p, 'strike')} label="Strike" does="How strongly velocity excites the body." value={num(p.v, 'strike')} def={70} scale={{min: 0, max: 100}} format={pct} onChange={x => p.set('strike', x)} />
+        <Dial {...st(p, 'damping')} label="Damping" does="How sharply the body rings. A high value rings longer." value={num(p.v, 'damping')} def={4.5} scale={DAMP} format={fixed(1)} onChange={x => p.set('damping', x)} />
+        <Dial {...st(p, 'modes')} label="Modes" does="How many modes of the body take part." value={num(p.v, 'modes')} def={64} scale={{min: 1, max: 64, step: 1}} format={x => `${x}`} onChange={x => p.set('modes', x)} />
+        <Dial {...st(p, 'agitation')} label="Agitation" does="How much the surface is kicked about." value={num(p.v, 'agitation')} def={.3} scale={{min: 0, max: 5}} format={fixed(2)} onChange={x => p.set('agitation', x)} />
       </Section>
       <Section label="Envelope" width={150}>
         <EnvelopeDisplay v={p.v} set={p.set} w={136} h={96} />
         <div className="ref-pair">
-          <ValueBox does="How long a note takes to rise." value={num(p.v, 'attack')} def={.01} scale={ATTACK} format={secs} onChange={x => p.set('attack', x)} />
-          <ValueBox does="How long a note takes to fade." value={num(p.v, 'release')} def={1.2} scale={RELEASE} format={secs} onChange={x => p.set('release', x)} />
+          <ValueBox {...st(p, 'attack')} does="How long a note takes to rise." value={num(p.v, 'attack')} def={.01} scale={ATTACK} format={secs} onChange={x => p.set('attack', x)} />
+          <ValueBox {...st(p, 'release')} does="How long a note takes to fade." value={num(p.v, 'release')} def={1.2} scale={RELEASE} format={secs} onChange={x => p.set('release', x)} />
         </div>
       </Section>
       <Section label="Voices · view" grow>
-        <ValueBox label="Voices" does="How many notes sound at once. The oldest makes way." value={num(p.v, 'voices')} def={16} scale={{min: 1, max: 32, step: 1}} format={x => `${x}`} onChange={x => p.set('voices', x)} />
-        <Radio does="What the pane draws." value={strOf(p.v, 'view') ?? ''} options={VIEWS} stack onChange={x => p.set('view', x)} />
-        <Toggle label="Receiver" does="Your camera becomes the place where the torus is heard." on={on(p.v, 'receiver')} unknown={boolOf(p.v, 'receiver') === undefined} onChange={x => p.set('receiver', x)} />
+        <ValueBox {...st(p, 'voices')} label="Voices" does="How many notes sound at once. The oldest makes way." value={num(p.v, 'voices')} def={16} scale={{min: 1, max: 32, step: 1}} format={x => `${x}`} onChange={x => p.set('voices', x)} />
+        <Radio {...st(p, 'view')} does="What the pane draws." value={strOf(p.v, 'view') ?? ''} options={VIEWS} stack onChange={x => p.set('view', x)} />
+        <Toggle {...st(p, 'receiver')} label="Receiver" does="Your camera becomes the place where the torus is heard." on={on(p.v, 'receiver')} unknown={boolOf(p.v, 'receiver') === undefined} onChange={x => p.set('receiver', x)} />
       </Section>
     </Band>
+    </>}
   </Panel>,
 
   full: p => <div className="ref-pane-body ref-pane-body--dark">
     <svg viewBox="0 0 760 420" width="100%" height="100%" preserveAspectRatio="xMidYMid meet" className="ref-pane-svg" aria-label="The playable torus and the Jankó keyboard">
       <g className="dp-display" style={{background: 'none'}}>
-        <TorusPicture v={p.v} w={760} h={300} cx={380} cy={140} R={190} notes={[0, 4, 8]} />
-        <Janko w={760} y={300} sounding={[0, 8, 16]} />
+        <TorusPicture v={p.v} w={760} h={300} cx={380} cy={140} R={190} notes={json<number[]>(p.v, 'sounding', [])} />
+        <Janko w={760} y={300} sounding={json<number[]>(p.v, 'sounding', []).map(n => n * 2)} />
       </g>
     </svg>
   </div>,
