@@ -17,6 +17,8 @@
 .cpk-size { margin-left: auto; font-variant-numeric: tabular-nums; }
 .cpk-x { width: 22px; height: 22px; padding: 0; border: 0; background: transparent; color: var(--text-faint, #71767c); font-size: 16px; line-height: 1; cursor: pointer; }
 .cpk-x:hover, .cpk-x:focus-visible { color: var(--text, #d4d7da); outline: none; }
+.cpk-x:disabled { opacity: .35; cursor: default; }
+.cpk-x:disabled:hover { color: var(--text-faint, #71767c); }
 .cpk-text { margin: 0; font: 13.5px/1.5 Charter, Georgia, serif; color: var(--text, #d4d7da); }
 .cpk-note { margin: 0; font-size: 11px; color: var(--stall, #ff9b4a); }
 .cpk-empty { margin: 0; font: italic 13.5px/1.55 Charter, Georgia, serif; color: var(--text-faint, #71767c); }
