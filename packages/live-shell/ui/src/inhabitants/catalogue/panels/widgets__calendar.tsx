@@ -124,7 +124,7 @@ export const design: DesignedDevice = {
         </g></svg>
       </div>,
 
-  widget: p => <Tile title="Calendar" light={lightOf(p.v)} span={2} onFull={strOf(p.v, 'fullForm') === 'yes' || boolOf(p.v, 'fullForm') === true ? p.nav.full : undefined}>
-    <Display w={266} h={104} label="Due" does={`${DISPLAY_DOES} Supplied from outside.`} corner="outside"><Span p={p} w={266} h={104} handle={false} size={8.5} /></Display>
+  widget: p => <Tile title="Calendar" light={lightOf(p.v)} span={2} badge={<Outside v={p.v} />} onFull={strOf(p.v, 'fullForm') === 'yes' || boolOf(p.v, 'fullForm') === true ? p.nav.full : undefined}>
+    <Display w={266} h={104} label="Due" does={`${DISPLAY_DOES} Supplied from outside.`}><Span p={p} w={266} h={104} handle={false} size={8.5} /></Display>
   </Tile>,
 }

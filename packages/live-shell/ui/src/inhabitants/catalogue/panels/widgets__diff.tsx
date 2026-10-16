@@ -47,7 +47,7 @@ function Patch({p, w, h, size = 8.5, divider}: {p: ViewProps; w: number; h: numb
     : all.map(x => ({l: x}))
   const line = (x: {kind: string; text: string} | undefined, x0: number, y: number, k: string) => x && <g key={k}>
     {(x.kind === 'add' || x.kind === 'del') && <rect x={x0} y={y - size} width={col} height={lh} fill={x.kind === 'add' ? 'var(--green)' : 'var(--rec)'} opacity={.18} />}
-    <text x={x0 + 3} y={y} className={x.kind === 'hunk' ? 'dp-axis' : 'dp-ink'} style={{fontSize: size, fontFamily: 'var(--font-mono, ui-monospace, Menlo, monospace)', whiteSpace: 'pre',
+    <text x={x0 + 3} y={y} className={`${x.kind === 'hunk' ? 'dp-axis' : 'dp-ink'} dp-mono`} style={{fontSize: size, whiteSpace: 'pre',
       fill: x.kind === 'add' ? 'var(--green)' : x.kind === 'del' ? 'var(--rec)' : undefined}}>{(x.kind === 'add' ? '+' : x.kind === 'del' ? '−' : x.kind === 'hunk' ? '' : ' ') + x.text.slice(0, room)}</text>
   </g>
   const dx = split ? 4 + col : 4

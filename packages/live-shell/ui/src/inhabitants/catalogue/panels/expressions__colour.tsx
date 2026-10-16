@@ -16,8 +16,9 @@
 //   color.fieldCenterOffset.0 and .1  −3..3 (0)   color.speedReactiveIntensity 0..5 (0.6)   color.turbulenceModulation 0..3 (0.35)
 //   color.densityWeight 0..3 (0.5)   color.contrast 0.1..5 log (1)   backgroundGlowIntensity 0..3 (0.45)   paperGrain 0..0.2 (0)
 //                                                                                      (fieldDefaults.ts DEFAULT_COLOR_CONFIG)
-// The kit has no colour control, so a stop's colour is edited in the Studio's own palette; here stops are added and removed.
-import {Action, Band, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Section, Tile, Toggle, ValueBox, type LightState, type Scale} from '../../sdk/panel'
+// A stop's colour is chosen on its swatch (the kit's Swatch): choose the stop, then its colour; stops are added and removed here too,
+// and the paper's colour beside the way it glows.
+import {Action, Band, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Section, Swatch, Tile, Toggle, ValueBox, type LightState, type Scale} from '../../sdk/panel'
 import {NONE, boolOf, clampTo, fixed, json, numOf, st, strOf, type DesignedDevice, type ViewProps} from './design'
 
 type V = ViewProps['v']
@@ -93,12 +94,20 @@ const wide = (p: ViewProps) => (p.frame === 'flip' || p.frame === 'window') && p
 const modeWord = (v: V) => MODES.find(m => m.value === strOf(v, 'colorMode'))?.label
 const DISPLAY_DOES = 'The field painted by the distribution, from the palette\'s stops; the stops along the foot.'
 
+/** The stop the swatch sets: the host's choice, inside the palette. */
+const stopAt = (v: ViewProps['v'], pal: readonly string[] | undefined) => Math.max(0, Math.min((pal?.length ?? 1) - 1, numOf(v, 'stop') ?? 0))
+
 function controls(p: ViewProps) {
   const v = p.v, pal = paletteOf(v)
   return {
     mode: <Chooser {...st(p, 'colorMode')} wide label="Distribution" does="The pattern the palette follows across the field." value={strOf(v, 'colorMode') ?? ''} options={MODES} onChange={x => p.set('colorMode', x)} />,
     add: <Action {...st(p, 'palette')} label="+ stop" does="Add a stop to the palette: up to eight." onPress={pal && pal.length < 8 ? () => p.set('palette', JSON.stringify([...pal, pal[pal.length - 1]!])) : undefined} />,
     remove: <Action {...st(p, 'palette')} label="− stop" does="Take the last stop off the palette: two stay." onPress={pal && pal.length > 2 ? () => p.set('palette', JSON.stringify(pal.slice(0, -1))) : undefined} />,
+    stop: <Chooser {...st(p, 'palette')} label="Stop" does="The stop whose colour the swatch sets." value={String(stopAt(v, pal))}
+      options={(pal ?? []).map((c, i) => ({value: String(i), label: `Stop ${i + 1}`, does: c}))} onChange={x => p.set('stop', Number(x))} />,
+    colour: <Swatch {...st(p, 'palette')} label="Colour" does="The colour of the chosen stop. Press it to pick another." value={pal?.[stopAt(v, pal)]}
+      onChange={pal ? hex => p.set('palette', JSON.stringify(pal.map((c, i) => (i === stopAt(v, pal) ? hex : c)))) : undefined} />,
+    paper: <Swatch {...st(p, 'background')} label="Colour" does="The colour of the paper behind the field." value={strOf(v, 'background')} onChange={x => p.set('background', x)} />,
     background: <Radio {...st(p, 'backgroundMode')} label="Paper" does="How the paper glows." value={strOf(v, 'backgroundMode') ?? ''} options={BACKGROUNDS} stack onChange={x => p.set('backgroundMode', x)} />,
     on: <Toggle {...st(p, 'colorEnabled')} label="Palette" does="On: the palette paints the field. Off: one ink." on={boolOf(v, 'colorEnabled') === true} unknown={boolOf(v, 'colorEnabled') === undefined} onChange={x => p.set('colorEnabled', x)} />,
   }
@@ -133,12 +142,12 @@ export const design: DesignedDevice = {
     return <Panel title="Colour" view="whole" {...head(p)}>
       <Band>
         <Section width={w + 12}><Display w={w} h={146} label="Field" does={`${DISPLAY_DOES} Drag handle 1 for the centre and handle 2 for the angle.`}><Field p={p} w={w} h={146} handles={2} /></Display></Section>
-        <Section label="Palette" width={100}>{c.on}{c.mode}<div className="ref-pair">{c.add}{c.remove}</div></Section>
+        <Section label="Palette" width={100}>{c.on}{c.mode}{c.stop}{c.colour}<div className="ref-pair">{c.add}{c.remove}</div></Section>
         <Section label="Geometry" cols={2} grow>{dial(p, R.wave)}{dial(p, R.angle)}{box(p, R.cx)}{box(p, R.cy)}</Section>
       </Band>
       <Band>
         <Section label="Dynamics" cols={3} width={168}>{dial(p, R.cycle)}{dial(p, R.hue)}{dial(p, R.contrast)}{box(p, R.speed)}{box(p, R.turb)}{box(p, R.density)}</Section>
-        <Section label="Paper" width={72}>{c.background}</Section>
+        <Section label="Paper" width={72}>{c.background}{c.paper}</Section>
         <Section label="Atmosphere" grow>{dial(p, R.glow)}{box(p, R.grain)}</Section>
       </Band>
     </Panel> },
