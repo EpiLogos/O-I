@@ -1057,7 +1057,7 @@ The World is one device: Folded and Compact on the chain, Whole in the pool, Ful
 
 ```ui
 device: atlas-earth:globe-engine
-caption: The World as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The World as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -1221,7 +1221,7 @@ The Knowledge graph is one device: Folded and Compact on the chain, Whole in the
 
 ```ui
 device: knowledge-graph:graph
-caption: The Knowledge graph as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Knowledge graph as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -1525,7 +1525,7 @@ The Timeline is one device: Folded and Compact on the chain, Whole in the pool, 
 
 ```ui
 device: techne:timeline
-caption: The Timeline as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Timeline as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -1677,7 +1677,7 @@ The Journey is one device: Folded and Compact on the chain, Whole in the pool, F
 
 ```ui
 device: techne:journey
-caption: The Journey as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Journey as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -1829,7 +1829,7 @@ The Palace is one device: Folded and Compact on the chain, Whole in the pool, Fu
 
 ```ui
 device: techne:palace
-caption: The Palace as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Palace as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -1980,7 +1980,7 @@ The Document is one device: Folded and Compact on the chain, Whole in the pool, 
 
 ```ui
 device: central:document
-caption: The Document as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Document as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -2141,7 +2141,7 @@ The Session grid is one device: Folded and Compact on the chain, Whole in the po
 
 ```ui
 device: dlw:session-grid
-caption: The Session grid as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Session grid as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -2304,7 +2304,7 @@ The Arrangement ruler is one device: Folded and Compact on the chain, Whole in t
 
 ```ui
 device: dlw:arrangement-ruler
-caption: The Arrangement ruler as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Arrangement ruler as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -2443,7 +2443,7 @@ The Thread is one device: Folded and Compact on the chain, Whole in the pool, Fu
 
 ```ui
 device: software-factory:thread
-caption: The Thread as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Thread as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -2568,7 +2568,7 @@ The Terminal is one device: Folded and Compact on the chain, Whole in the pool, 
 
 ```ui
 device: widgets:terminal
-caption: The Terminal as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Terminal as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -2695,7 +2695,7 @@ The Day is one device: Folded and Compact on the chain, Whole in the pool, Full 
 
 ```ui
 device: central:day-die
-caption: The Day device as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Day device as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -2837,7 +2837,7 @@ The Workspace is one device: Folded and Compact on the chain, Whole in the pool,
 
 ```ui
 device: central:workspace
-caption: The Workspace as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Workspace as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -2962,7 +2962,7 @@ The Flow is one device: Folded and Compact on the chain, Whole in the pool, Full
 
 ```ui
 device: central:flow-document
-caption: The Flow as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Flow as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -3089,7 +3089,7 @@ The Beings is one device: Folded and Compact on the chain, Whole in the pool, Fu
 
 ```ui
 device: central:beings
-caption: The Beings as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Beings as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -3214,7 +3214,7 @@ The Things is one device: Folded and Compact on the chain, Whole in the pool, Fu
 
 ```ui
 device: central:things
-caption: The Things as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Things as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -3318,7 +3318,7 @@ The Text is one device: Folded and Compact on the chain, Whole in the pool, Full
 
 ```ui
 device: central:text
-caption: The Text as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Text as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -3421,7 +3421,7 @@ The Highlight is one device: Folded and Compact on the chain, Whole in the pool,
 
 ```ui
 device: central:highlight
-caption: The Highlight as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Highlight as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -3513,7 +3513,7 @@ The Notes is one device: Folded and Compact on the chain, Whole in the pool, Ful
 
 ```ui
 device: central:notes
-caption: The Notes as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Notes as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -3609,7 +3609,7 @@ The Packet is one device: Folded and Compact on the chain, Whole in the pool, Fu
 
 ```ui
 device: central:packet
-caption: The Packet as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Packet as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -3713,7 +3713,7 @@ The Answer is one device: Folded and Compact on the chain, Whole in the pool, Fu
 
 ```ui
 device: central:nara-conversation
-caption: The Answer as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Answer as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -3870,7 +3870,7 @@ The Search is one device: Folded and Compact on the chain, Whole in the pool, Fu
 
 ```ui
 device: central:search
-caption: The Search as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Search as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -4003,7 +4003,7 @@ The Ground hygiene is one device: Folded and Compact on the chain, Whole in the 
 
 ```ui
 device: central:ground-hygiene
-caption: The Ground hygiene as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Ground hygiene as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -4109,7 +4109,7 @@ The Impact is one device: Folded and Compact on the chain, Whole in the pool, Fu
 
 ```ui
 device: central:impact
-caption: The Impact as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Impact as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -4218,7 +4218,7 @@ The Context & world is one device: Folded and Compact on the chain, Whole in the
 
 ```ui
 device: central:context-world
-caption: The Context & world as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Context & world as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -4325,7 +4325,7 @@ The Agent identity is one device: Folded and Compact on the chain, Whole in the 
 
 ```ui
 device: central:agent-identity
-caption: The Agent identity as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Agent identity as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -4428,7 +4428,7 @@ The Gateway is one device: Folded and Compact on the chain, Whole in the pool, F
 
 ```ui
 device: actuation:gateway
-caption: The Gateway as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Gateway as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -4529,7 +4529,7 @@ The Gateways rack is one device: Folded and Compact on the chain, Whole in the p
 
 ```ui
 device: actuation:gateways-rack
-caption: The Gateways rack as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Gateways rack as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -4616,7 +4616,7 @@ The Agent device is one device: Folded and Compact on the chain, Whole in the po
 
 ```ui
 device: actuation:harness-model
-caption: The Agent device as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Agent device as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -4720,7 +4720,7 @@ The Experiment is one device: Folded and Compact on the chain, Whole in the pool
 
 ```ui
 device: actuation:experiment
-caption: The Experiment as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Experiment as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -4814,7 +4814,7 @@ The Frames monitor is one device: Folded and Compact on the chain, Whole in the 
 
 ```ui
 device: actuation:frames-monitor
-caption: The Frames monitor as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Frames monitor as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -5163,7 +5163,7 @@ The Knowledge route is one device: Folded and Compact on the chain, Whole in the
 
 ```ui
 device: ai-kit:knowledge-route
-caption: The Knowledge route as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Knowledge route as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -5248,7 +5248,7 @@ The Agency gateway is one device: Folded and Compact on the chain, Whole in the 
 
 ```ui
 device: ai-kit:agency-gateway
-caption: The Agency gateway as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Agency gateway as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -5330,7 +5330,7 @@ The Capture skill is one device: Folded and Compact on the chain, Whole in the p
 
 ```ui
 device: ai-kit:capture-skill
-caption: The Capture skill as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Capture skill as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -5416,7 +5416,7 @@ Runs is one device: Folded and Compact on the chain, Whole in the pool, Full in 
 
 ```ui
 device: software-factory:attempt-review
-caption: Runs as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: Runs as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -5516,7 +5516,7 @@ Tasks is one device: Folded and Compact on the chain, Whole in the pool, Full in
 
 ```ui
 device: software-factory:tasks
-caption: Tasks as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: Tasks as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -5605,7 +5605,7 @@ The Custody is one device: Folded and Compact on the chain, Whole in the pool, F
 
 ```ui
 device: software-factory:agent-custody
-caption: The Custody as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Custody as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -5698,7 +5698,7 @@ The Scope is one device: Folded and Compact on the chain, Whole in the pool, Ful
 
 ```ui
 device: software-factory:context-write-mode
-caption: The Scope as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Scope as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -5792,7 +5792,7 @@ The Ledger is one device: Folded and Compact on the chain, Whole in the pool, Fu
 
 ```ui
 device: software-factory:ledger
-caption: The Ledger as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Ledger as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -5874,7 +5874,7 @@ The Approvals is one device: Folded and Compact on the chain, Whole in the pool,
 
 ```ui
 device: software-factory:approvals
-caption: The Approvals as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Approvals as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -5963,7 +5963,7 @@ The Run is one device: Folded and Compact on the chain, Whole in the pool, Full 
 
 ```ui
 device: software-factory:run-device
-caption: The Run as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Run as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -6055,7 +6055,7 @@ The Agentset rack is one device: Folded and Compact on the chain, Whole in the p
 
 ```ui
 device: software-factory:agentset-rack
-caption: The Agentset rack as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Agentset rack as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -6152,7 +6152,7 @@ The Git / landing is one device: Folded and Compact on the chain, Whole in the p
 
 ```ui
 device: workcell:git-seat
-caption: The Git / landing as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Git / landing as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -6243,7 +6243,7 @@ The Seat is one device: Folded and Compact on the chain, Whole in the pool, Full
 
 ```ui
 device: workcell:seat
-caption: The Seat as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Seat as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -6329,7 +6329,7 @@ The Remote carrier is one device: Folded and Compact on the chain, Whole in the 
 
 ```ui
 device: workcell:remote-carrier
-caption: The Remote carrier as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Remote carrier as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -6412,7 +6412,7 @@ The Link is one device: Folded and Compact on the chain, Whole in the pool, Full
 
 ```ui
 device: workcell:link
-caption: The Link as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Link as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -6516,7 +6516,7 @@ The Field is one device: Folded and Compact on the chain, Whole in the pool, Ful
 
 ```ui
 device: expressions:field
-caption: The Field as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Field as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 In Clip view, the Field plays the scene clip that you select. The clip sets how long the scene holds and how it changes to the next.
@@ -6643,7 +6643,7 @@ The Studio is one device: Folded and Compact on the chain, Whole in the pool, Fu
 
 ```ui
 device: expressions:studio
-caption: The Studio as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Studio as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 In Clip view, the Capture section keeps your last gestures as a new scene clip.
@@ -6754,7 +6754,7 @@ The Physics device is one device: Folded and Compact on the chain, Whole in the 
 
 ```ui
 device: expressions:physics
-caption: The Physics device as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Physics device as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -6852,7 +6852,7 @@ The Pointer device is one device: Folded and Compact on the chain, Whole in the 
 
 ```ui
 device: expressions:pointer
-caption: The Pointer device as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Pointer device as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -6950,7 +6950,7 @@ The Relational device is one device: Folded and Compact on the chain, Whole in t
 
 ```ui
 device: expressions:relational
-caption: The Relational device as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Relational device as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -7048,7 +7048,7 @@ The Medium device is one device: Folded and Compact on the chain, Whole in the p
 
 ```ui
 device: expressions:medium
-caption: The Medium device as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Medium device as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -7142,7 +7142,7 @@ The Contacts device is one device: Folded and Compact on the chain, Whole in the
 
 ```ui
 device: expressions:contacts
-caption: The Contacts device as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Contacts device as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -7239,7 +7239,7 @@ The Morph device is one device: Folded and Compact on the chain, Whole in the po
 
 ```ui
 device: expressions:morph
-caption: The Morph device as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Morph device as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -7339,7 +7339,7 @@ The Focus device is one device: Folded and Compact on the chain, Whole in the po
 
 ```ui
 device: expressions:focus
-caption: The Focus device as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Focus device as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -7442,7 +7442,7 @@ The Colour device is one device: Folded and Compact on the chain, Whole in the p
 
 ```ui
 device: expressions:colour
-caption: The Colour device as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Colour device as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -7544,7 +7544,7 @@ The Ink device is one device: Folded and Compact on the chain, Whole in the pool
 
 ```ui
 device: expressions:ink
-caption: The Ink device as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Ink device as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -7644,7 +7644,7 @@ The Depth device is one device: Folded and Compact on the chain, Whole in the po
 
 ```ui
 device: expressions:depth
-caption: The Depth device as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Depth device as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -7745,7 +7745,7 @@ The Resonance device is one device: Folded and Compact on the chain, Whole in th
 
 ```ui
 device: expressions:resonance
-caption: The Resonance device as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Resonance device as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -7841,7 +7841,7 @@ The Force device is one device: Folded and Compact on the chain, Whole in the po
 
 ```ui
 device: expressions:force
-caption: The Force device as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Force device as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -7937,7 +7937,7 @@ The Formation device is one device: Folded and Compact on the chain, Whole in th
 
 ```ui
 device: expressions:formation
-caption: The Formation device as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Formation device as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -8035,7 +8035,7 @@ The Sound device is one device: Folded and Compact on the chain, Whole in the po
 
 ```ui
 device: expressions:sound
-caption: The Sound device as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Sound device as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -8138,7 +8138,7 @@ The Meaning device is one device: Folded and Compact on the chain, Whole in the 
 
 ```ui
 device: expressions:meaning
-caption: The Meaning device as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Meaning device as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -8227,7 +8227,7 @@ The Scene device is one device: Folded and Compact on the chain, Whole in the po
 
 ```ui
 device: expressions:scene
-caption: The Scene device as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Scene device as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 The Scene device edits the scene clip that is open in Clip view: its name, its length and its change to the next scene.
@@ -8319,7 +8319,7 @@ The Text device is one device: Folded and Compact on the chain, Whole in the poo
 
 ```ui
 device: expressions:text
-caption: The Text device as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Text device as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 The layers belong to the scene clip that is open in Clip view.
@@ -8415,7 +8415,7 @@ The Automation device is one device: Folded and Compact on the chain, Whole in t
 
 ```ui
 device: expressions:automation
-caption: The Automation device as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Automation device as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 The lanes belong to the scene clip that is open in Clip view.
@@ -8506,7 +8506,7 @@ The Blueprint device is one device: Folded and Compact on the chain, Whole in th
 
 ```ui
 device: expressions:blueprint
-caption: The Blueprint device as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Blueprint device as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 The figure belongs to the scene clip that is open in Clip view.
@@ -8597,7 +8597,7 @@ The Body & triggers device is one device: Folded and Compact on the chain, Whole
 
 ```ui
 device: expressions:body-triggers
-caption: The Body & triggers device as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Body & triggers device as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 The body and the triggers belong to the scene clip that is open in Clip view.
@@ -8685,7 +8685,7 @@ The Arrange device is one device: Folded and Compact on the chain, Whole in the 
 
 ```ui
 device: expressions:arrange
-caption: The Arrange device as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Arrange device as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 The arrangement belongs to the scene clip that is open in Clip view.
@@ -8799,7 +8799,7 @@ The Torus is one device: Folded and Compact on the chain, Whole in the pool, Ful
 
 ```ui
 device: quaternal-logic:torus
-caption: The Torus as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Torus as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 In Clip view, the Torus plays the notes of the clip that you select. The piano roll edits those notes. A clip can carry its own mode.
@@ -8929,7 +8929,7 @@ The Jankó keyboard is one device: Folded and Compact on the chain, Whole in the
 
 ```ui
 device: live:janko
-caption: The Jankó keyboard as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Jankó keyboard as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 In Clip view, the keyboard records the notes that you play into the clip that is open. The piano roll shows them.
@@ -9043,7 +9043,7 @@ The Scale mapping device is one device: Folded and Compact on the chain, Whole i
 
 ```ui
 device: live:scale-mapping
-caption: The Scale mapping device as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Scale mapping device as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 In Clip view, the device follows the mode of the open clip. When the clip has no mode, it follows the mode of the set.
@@ -9143,7 +9143,7 @@ The Exact-ratio tuning device is one device: Folded and Compact on the chain, Wh
 
 ```ui
 device: live:exact-ratio
-caption: The Exact-ratio tuning device as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Exact-ratio tuning device as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -9242,7 +9242,7 @@ The Sky modulation device is one device: Folded and Compact on the chain, Whole 
 
 ```ui
 device: live:sky-modulation
-caption: The Sky modulation device as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Sky modulation device as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -9356,7 +9356,7 @@ The Effects are four devices: a filter, a dynamics effect, a delay and a reverb.
 
 ```ui
 device: live:effects
-caption: The Effects as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Effects as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -9492,7 +9492,7 @@ The Sky is one device: Folded and Compact on the chain, Whole in the pool, Full 
 
 ```ui
 device: quaternal-logic:sky
-caption: The Sky as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Sky as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -9620,7 +9620,7 @@ The M3 clock is one device: Folded and Compact on the chain, Whole in the pool, 
 
 ```ui
 device: quaternal-logic:m3-clock
-caption: The M3 clock as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The M3 clock as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -9742,7 +9742,7 @@ The Deck is one device: Folded and Compact on the chain, Whole in the pool, Full
 
 ```ui
 device: quaternal-logic:deck
-caption: The Deck as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Deck as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -9857,7 +9857,7 @@ The Chakra is one device: Folded and Compact on the chain, Whole in the pool, Fu
 
 ```ui
 device: quaternal-logic:chakra
-caption: The Chakra as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Chakra as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -9965,7 +9965,7 @@ The M′ matrices are one device: Folded and Compact on the chain, Whole in the 
 
 ```ui
 device: quaternal-logic:m-prime-matrices
-caption: The M′ matrices as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The M′ matrices as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -10069,7 +10069,7 @@ The Rail is one device: Folded and Compact on the chain, Whole in the pool, Full
 
 ```ui
 device: widgets:rail
-caption: The Rail as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Rail as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -10152,7 +10152,7 @@ The Sessions is one device: Folded and Compact on the chain, Whole in the pool, 
 
 ```ui
 device: widgets:sessions
-caption: The Sessions as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Sessions as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -10228,7 +10228,7 @@ The Terminal is one device: Folded and Compact on the chain, Whole in the pool, 
 
 ```ui
 device: widgets:terminal
-caption: The Terminal as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Terminal as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -10304,7 +10304,7 @@ The Files is one device: Folded and Compact on the chain, Whole in the pool, Ful
 
 ```ui
 device: widgets:files
-caption: The Files as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Files as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -10379,7 +10379,7 @@ The Web is one device: Folded and Compact on the chain, Whole in the pool, Full 
 
 ```ui
 device: widgets:web
-caption: The Web as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Web as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -10449,7 +10449,7 @@ The Graph is one device: Folded and Compact on the chain, Whole in the pool, Ful
 
 ```ui
 device: widgets:graph
-caption: The Graph as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Graph as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -10519,7 +10519,7 @@ The Diff is one device: Folded and Compact on the chain, Whole in the pool, Full
 
 ```ui
 device: widgets:diff
-caption: The Diff as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Diff as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -10594,7 +10594,7 @@ The Frames is one device: Folded and Compact on the chain, Whole in the pool, Fu
 
 ```ui
 device: actuation:frames-monitor
-caption: The Frames as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Frames as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -10664,7 +10664,7 @@ The Ledger is one device: Folded and Compact on the chain, Whole in the pool, Fu
 
 ```ui
 device: software-factory:ledger
-caption: The Ledger as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Ledger as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -10734,7 +10734,7 @@ The Approvals is one device: Folded and Compact on the chain, Whole in the pool,
 
 ```ui
 device: software-factory:approvals
-caption: The Approvals as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Approvals as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -10809,7 +10809,7 @@ The Agents is one device: Folded and Compact on the chain, Whole in the pool, Fu
 
 ```ui
 device: widgets:agents
-caption: The Agents as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Agents as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -10885,7 +10885,7 @@ The Packet is one device: Folded and Compact on the chain, Whole in the pool, Fu
 
 ```ui
 device: central:packet
-caption: The Packet as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Packet as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -10961,7 +10961,7 @@ The Trail is one device: Folded and Compact on the chain, Whole in the pool, Ful
 
 ```ui
 device: widgets:trail
-caption: The Trail as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Trail as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -11035,7 +11035,7 @@ The NOWs is one device: Folded and Compact on the chain, Whole in the pool, Full
 
 ```ui
 device: widgets:nows
-caption: The NOWs as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The NOWs as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -11103,7 +11103,7 @@ The Results is one device: Folded and Compact on the chain, Whole in the pool, F
 
 ```ui
 device: widgets:results
-caption: The Results as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Results as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -11173,7 +11173,7 @@ The Wiki is one device: Folded and Compact on the chain, Whole in the pool, Full
 
 ```ui
 device: widgets:wiki
-caption: The Wiki as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Wiki as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
@@ -11243,7 +11243,7 @@ The Calendar is one device: Folded and Compact on the chain, Whole in the pool, 
 
 ```ui
 device: widgets:calendar
-caption: The Calendar as the shell draws it now,: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
+caption: The Calendar as the shell draws it now: Folded, Compact, Whole, Full and Widget. The readings are a fixture.
 ```
 
 ##### Folded
