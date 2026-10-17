@@ -1,7 +1,8 @@
 // The device door (FOUNDATION F5): the places that hold live devices — a track's chain, an instrument's rack — publish
 // each one here by id, with its live picture, and the other places read it by id: the pool under the browser shows the
-// selected device whole, a pane shows a device full, the rail keeps a device's widget. One device, one set of live settings,
-// five views (manual §16.3). A device can carry its own Full — its material, or the act that opens it — over its design's.
+// selected device whole, a pane shows a device full, the rail keeps a device's widget, its own window shows it popped out. One device,
+// one set of live settings, six views (manual §16.3). A device can carry its own Full — its material, or the act that opens it —
+// over its design's.
 import {useSyncExternalStore, type ReactNode} from 'react'
 import type {DesignBinding} from './designed'
 import type {DeviceInstance} from './deviceRuntime'
@@ -22,10 +23,17 @@ export interface PublishedDevice {
    * view in the device's pane (the Day's page as its owner stands it). `open`: the act that opens the material where it lives (the
    * Agent's thread), which every ⤢ — the chain's, the pool's, the rail's — does in place of opening the device's pane. */
   full?: OwnFull
-  /** The act that pops the device out into its own window (manual §16.1 Pop-out; seam 8), offered by its publisher only while the
-   * device stands docked and its face declares a window (central/devices/CentralDevices.tsx popOutOf). The head's ↗ does it. */
+  /** A publisher's own pop-out, over the door's (manual §16.3 Pop-out): the act the head's ↗ does in place of opening the device's
+   * window here (openDeviceWindow). Absent — every device the door holds today — ↗ opens the device's own window. */
   popout?: () => void
+  /** The head's context-menu acts its chain's owner carries (manual §16.4: "Right-click the head for Fold, Rename, Group, Save as
+   * preset, Hot-swap, Show automation and Map"). Fold is the host's own; an act absent here stands in the menu disabled, with the
+   * owner operation it waits for (DeviceMenu.tsx headMenu). */
+  acts?: Partial<Readonly<Record<HeadAct, () => void>>>
 }
+
+/** The head's context-menu acts beyond Fold, in Live's order (manual §16.4). */
+export type HeadAct = 'rename' | 'group' | 'save-preset' | 'hot-swap' | 'show-automation' | 'map'
 
 export type OwnFull = {readonly draw: () => ReactNode} | {readonly open: () => void}
 
@@ -35,10 +43,12 @@ const listeners = new Set<() => void>()
 let version = 0
 const notify = () => { version++; for (const listener of listeners) listener() }
 
-/** Publish (or withdraw, with null) one live device by its id. */
+/** Publish (or withdraw, with null) one live device by its id. A device withdrawn while its window stands closes that window once
+ * it stays withdrawn past WINDOW_GRACE_MS (a chain that republishes in the same breath keeps it). */
 export function publishDevice(id: string, entry: PublishedDevice | null): void {
   if (entry) devices.set(id, entry); else devices.delete(id)
   notify()
+  if (!entry && windows.some(open => open.id === id)) setTimeout(sweepDeviceWindows, WINDOW_GRACE_MS)
 }
 
 export function publishedDevice(id: string): PublishedDevice | undefined {
@@ -50,11 +60,19 @@ export function publishedDevices(): readonly PublishedDevice[] {
   return [...devices.values()]
 }
 
-/** The device the pool shows whole: the one last chosen on a chain. */
+/** The device the pool shows whole: the one last chosen on a chain, or in the browser. */
 export function selectDevice(id: string | null): void {
   if (selected === id) return
   selected = id
   notify()
+}
+
+/** A device chosen in the browser (manual §16.3: "The pool shows the device you select in the browser, and changes there apply
+ * without adding it to a chain"): the row hands the device on its own owner's binding, and the pool shows it whole. Held here it
+ * stands on no chain — no chain draws from the door. Null lets it go, and the pool shows nothing of it. */
+export function holdInPool(id: string, entry: PublishedDevice | null): void {
+  publishDevice(id, entry)
+  if (entry) selectDevice(id); else if (selected === id) selectDevice(null)
 }
 
 export function selectedDeviceId(): string | null {
@@ -157,4 +175,82 @@ const subscribeRail = (listener: () => void) => { railListeners.add(listener); r
 /** Re-render when the rail's open set changes. */
 export function useOnRail(deviceId: string): boolean {
   return useSyncExternalStore(subscribeRail, () => onRail(deviceId), () => onRail(deviceId))
+}
+
+// ---------------------------------------------------------------------------------------------------------------- the device's window
+// Pop-out (manual §16.3: "Its own window, which can fill the screen — The material with every control docked under it"; §16.4:
+// "Any number of windows can stay open. A window follows its device: when the device leaves the chain, its window closes"). The
+// head's ↗ opens the device's window, or brings it to the front where it stands; ↗ in the window, or the window's own close, closes
+// it. The windows are drawn by the frame's window layer (DeviceWindows.tsx), in the order they stand, the last on top. Their boxes
+// live here, with listeners of their own, so moving a window never redraws what reads the door.
+
+export interface DeviceWindowBox {readonly x: number; readonly y: number; readonly w: number; readonly h: number}
+
+export interface DeviceWindowState {
+  readonly id: string
+  /** Where the window stands; null until the layer first places it (deviceWindow.ts openedWindowBox). */
+  readonly box: DeviceWindowBox | null
+  /** The window fills the shell's window (the native window itself can then fill the screen). */
+  readonly filled: boolean
+  /** The window is rolled up to its bar. */
+  readonly shaded: boolean
+}
+
+/** How long a withdrawn device keeps its window before it closes: a chain republishing its devices keeps them. */
+export const WINDOW_GRACE_MS = 300
+
+let windows: readonly DeviceWindowState[] = []
+const windowListeners = new Set<() => void>()
+const setWindows = (next: readonly DeviceWindowState[]) => {
+  if (next === windows) return
+  windows = next
+  for (const listener of windowListeners) listener()
+}
+
+/** Open a device's own window, or bring it to the front where it already stands. */
+export function openDeviceWindow(id: string): void {
+  const at = windows.findIndex(open => open.id === id)
+  if (at === windows.length - 1 && at >= 0) return
+  setWindows(at >= 0 ? [...windows.filter(open => open.id !== id), windows[at]!] : [...windows, {id, box: null, filled: false, shaded: false}])
+}
+
+/** Close a device's window (↗ in the window, or its close). */
+export function closeDeviceWindow(id: string): void {
+  if (windows.some(open => open.id === id)) setWindows(windows.filter(open => open.id !== id))
+}
+
+/** Bring a window to the front (a press anywhere on it). */
+export function raiseDeviceWindow(id: string): void {
+  const at = windows.findIndex(open => open.id === id)
+  if (at >= 0 && at < windows.length - 1) setWindows([...windows.filter(open => open.id !== id), windows[at]!])
+}
+
+/** Move, size, fill or roll up a window. */
+export function setDeviceWindow(id: string, change: Partial<Omit<DeviceWindowState, 'id'>>): void {
+  if (!windows.some(open => open.id === id)) return
+  setWindows(windows.map(open => (open.id === id ? {...open, ...change} : open)))
+}
+
+/** The windows standing now, the front one last. */
+export function deviceWindows(): readonly DeviceWindowState[] {
+  return windows
+}
+
+/** Close every window whose device is no longer on the door (its chain unmounted for good, the device removed). */
+export function sweepDeviceWindows(): void {
+  const kept = windows.filter(open => devices.has(open.id))
+  if (kept.length !== windows.length) setWindows(kept)
+}
+
+const subscribeWindows = (listener: () => void) => { windowListeners.add(listener); return () => { windowListeners.delete(listener) } }
+
+/** Re-render when a window opens, closes, moves or comes to the front. */
+export function useDeviceWindows(): readonly DeviceWindowState[] {
+  return useSyncExternalStore(subscribeWindows, deviceWindows, deviceWindows)
+}
+
+/** Whether the device's window stands now. */
+export function useDeviceWindowOpen(id: string): boolean {
+  const open = () => windows.some(entry => entry.id === id)
+  return useSyncExternalStore(subscribeWindows, open, open)
 }

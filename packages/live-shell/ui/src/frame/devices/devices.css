@@ -46,3 +46,38 @@
 
 /* A view that did not draw, where no generic plate stands in for it: its reason, in the place (deviceHost.tsx). */
 .device-fault { margin: 0; padding: 8px; max-width: 220px; font-size: 10px; line-height: 1.4; color: var(--text-faint) }
+
+/* Pop-out, in its own window (manual §16.3; DeviceWindows.tsx): Live's plug-in window, as the gallery draws it (catalogue.css
+   .cat-window: a 26 px bar with three marks and the name, the room under it). The layer passes the pointer through; each window takes
+   it. A filled window covers the shell's window; a rolled-up one is its bar. The room holds the Pop-out view at its size. */
+.device-window-layer { position: fixed; inset: 0; z-index: 50; pointer-events: none }
+.device-window { position: absolute; display: flex; flex-direction: column; min-width: 0; pointer-events: auto; overflow: hidden;
+  background: var(--bg-1); border: 1px solid var(--line-strong); border-radius: 8px; box-shadow: var(--oi-shadow-overlay) }
+.device-window[data-front="true"] { border-color: var(--text-faint) }
+.device-window[data-filled="true"] { inset: 0; border-radius: 0 }
+.device-window-bar { flex: none; height: 26px; display: flex; align-items: center; gap: 7px; padding: 0 10px; background: var(--bg-2);
+  color: var(--text-dim); font-size: 11px; cursor: default; user-select: none; touch-action: none }
+.device-window-mark { flex: none; width: 11px; height: 11px; border-radius: 50%; background: var(--bg-3) }
+.device-window-mark:hover, .device-window-mark[aria-pressed="true"] { background: var(--text-faint) }
+.device-window-mark[data-act="close"]:hover { background: var(--rec) }
+.device-window-title { margin-left: 8px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.device-window[data-front="true"] .device-window-title { color: var(--text) }
+.device-window-room { position: relative; flex: 1 1 auto; min-height: 0; overflow: hidden }
+.device-place--popout, .device--popout { position: absolute; inset: 0 }
+.device--popout > * { flex: 1 1 auto; min-width: 0 }
+.device-window-size { position: absolute; right: 0; bottom: 0; width: 14px; height: 14px; cursor: nwse-resize; touch-action: none;
+  background: linear-gradient(135deg, transparent 50%, var(--line-strong) 50%) }
+.device-window-size:focus-visible { outline: 1px solid var(--accent); outline-offset: -1px }
+
+/* The head's context menu (manual §16.4: "Right-click the head for Fold, Rename, Group, Save as preset, Hot-swap, Show automation
+   and Map"; DeviceMenu.tsx): the device's name, then its acts; an act no owner carries yet stands dimmed, its reason on the Info
+   line. Above the windows. */
+.device-menu { position: fixed; z-index: 90; min-width: 180px; padding: 3px 0; background: var(--bg-2); border: 1px solid var(--line-strong);
+  box-shadow: var(--oi-shadow-overlay); font-size: 11px; color: var(--text) }
+.device-menu:focus-visible { outline: none }
+.device-menu-subject { display: block; padding: 3px 10px 4px; font-size: 9.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--text-faint);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.device-menu hr { border: 0; border-top: 1px solid var(--line); margin: 3px 0 }
+.device-menu-item { display: flex; width: 100%; padding: 3px 10px; text-align: left; color: var(--text) }
+.device-menu-item:not([disabled]):hover, .device-menu-item:not([disabled]):focus-visible { background: var(--sel); color: var(--bg-0); outline: none }
+.device-menu-item[disabled] { color: var(--text-faint); pointer-events: none }
