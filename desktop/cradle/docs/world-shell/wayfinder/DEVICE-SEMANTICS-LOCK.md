@@ -121,6 +121,38 @@ PR #655 (`docs/dlw/DLW.md` §9).
 6. **To build**: tickets T-LIVE-TORUS-INSTRUMENT, T-LIVE-JANKO-DEVICE,
    T-LIVE-MODE-SCALES, T-LIVE-MIDI (wayfinder `tickets/`).
 
+### 0.3 The realignment — what goes where, six views, Clip view after Live (owner ruling, 16–17 Oct 2026)
+
+The owner commissioned a realignment of the designs against Live and the grown device list; the manual carries it (O-I main
+`docs/dlw/DLW.md` §16–§23, `1c70fefa3` or later; evidence `Work/reverse-engineering/ableton-live-12.0.25/ui/CLIP-VIEW-EVIDENCE.md`;
+the run: `tickets/T-REALIGN-the-next-run-after-the-design-realignment.md`). Where a row below in this lock says otherwise, this
+section stands.
+
+1. **What goes where** (manual §16.1). A track is a stream with its chain; a clip is a piece of material; what changes the clip is
+   its editor's (Clip view); a device works on material passing through, for every clip on the track; Session view and
+   Arrangement view are views, not devices; a widget is a device's view. One job is one device in every mode.
+2. **Six views, not three** (§16.3–§16.4): Folded, Compact, Whole, Full, Pop-out, Widget. Whole stands in the pool for a browser
+   selection and, expanded, as Live's expanded view: a full-width band between Clip view and the chain, the panes shrinking. Pop-out
+   is the device's own window, the material with every control. The head is Live's: activator, ▸ expand, name; a double-click folds;
+   ▦ pane and ↗ pop-out at the right. Supersedes "three presentations" in §0.2 item 3 and §2.4's field-device row.
+3. **Clip view after Live 12, every mode** (§16.5, §17.1–§21.1): Clip and Launch tabs, Tools, the editor's tabs, Envelopes
+   (Automation or Modulation, linked or unlinked); launch is per clip; Clip view stacks over Device view. Takes are Arrangement take
+   lanes with comping; every track has Live's mixer row; the Main track carries the row launchers, Stop All and Back to Arrangement.
+4. **Central** (§18.1): the tracks are workspaces and the Day is the Main track. The chain is the Packet, the Agent and Scope (Ground
+   hygiene and Impact on a code workspace). Text, Highlight and Notes are a page's tools in Clip view; Flow, Beings and Things are a
+   page's Clip panel and editor tabs. Supersedes §2.2's device-chain row.
+5. **One Agent, one Scope** (§19.4, §19.12): the Agent carries Custody, Identity and the Thread (as its Full); Answer is the Agent on
+   a page's chain; Context & world is Scope. How a write arrives is set by Scope and Arm only.
+6. **The keyboard is the part's input, not a chain device** (§21.1): Jankó or piano layout, computer keys or MIDI, as Live's MIDI
+   From; the key column of the Notes editor; pressure in the MPE tab; the playing surface in the Torus's Full and Pop-out. Supersedes
+   §0.2 item 6's T-LIVE-JANKO-DEVICE and §2.1's keyboard row; item 4's law (each key an excitation point on its helix) stands.
+7. **The Studio** (§20.3) is the Expression's rack: your chosen controls are its macros, the field devices stand in its chains. The
+   pointer tools, the selected symbol's controls (Formation, Force, Sound, Meaning) and the scene's tools (Text, Blueprint, Arrange)
+   are in the scene's Clip view; Capture is the transport's; Scene, Automation and Body & triggers are the scene clip's panels.
+   Supersedes §2.4's Studio row and §4 item 8.
+8. **The torus's effects** are four devices after the torus (§21.5: Filter, Dynamics, Delay, Reverb); Sky modulation is Quaternal
+   Logic's modulator for any chain (§22.2).
+
 ---
 
 ## 1. The ontology — Live semantic → DLW meaning → the Game
