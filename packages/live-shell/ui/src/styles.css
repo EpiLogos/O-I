@@ -30,11 +30,17 @@ input { min-width:0; border:1px solid var(--line); background:var(--bg-1); paddi
 .frame.dock-open { --frame-rail:var(--dock-w, var(--rail-default)) }
 .frame.detail-hidden { --frame-detail:0px }
 /* The expanded view's band: the head and one band of Whole, its bands side by side (catalogue/panels/popout.tsx WIDE_WHOLE_H 192),
-   and the band's 4px padding above and below. */
+   and the band's 4px padding above and below. It stands inside the detail area, under the device side's head line and directly over
+   the chain (manual §16.4: "between Clip view and the chain"): set down by the head's line (frame/detail/detail.css .detail-head,
+   22px) and, where Clip view stands over Device view, by Clip view's height (frame/detail/DetailHost.tsx publishes --clip-stack-h);
+   the device side's head leaves the band's height free under it, so the chain moves down by the band and the panes above shrink. */
 .frame:has(> .device-flip-host > *):not(.detail-hidden) { --frame-band:200px }
-.device-flip-host { grid-row:3; grid-column:1 / 3; align-self:start; height:var(--frame-band); min-width:0; overflow:hidden; z-index:2 }
+.frame { --detail-head-h:22px }
+.device-flip-host { grid-row:3; grid-column:1 / 3; align-self:start; margin-top:calc(var(--clip-stack-h, 0px) + var(--detail-head-h)); height:var(--frame-band); min-width:0; overflow:hidden; z-index:2 }
 .device-flip-host:empty, .frame.detail-hidden > .device-flip-host { display:none }
-.frame .detail-residence > .detail-host { margin-top:var(--frame-band); height:auto; min-height:0 }
+.frame:has(> .device-flip-host > *):not(.detail-hidden) .detail-head[data-detail-head="device"] { margin-bottom:var(--frame-band) }
+/* Factory's frame sets its chain row at 300px (agent/agentShell.css): the band grows it as the other modes' row grows. */
+.frame.agent-shell-frame:has(> .device-flip-host > *):not(.detail-hidden) { grid-template-rows:var(--transport-h) minmax(0, 1fr) calc(300px + var(--frame-band)) 28px }
 .transport { grid-area:transport; display:flex; flex-direction:column }
 .set-title { height:14px; line-height:14px; text-align:center; color:var(--text-dim); font-size:11px; font-weight:400; overflow:hidden; white-space:nowrap; text-overflow:ellipsis }
 .set-title b { color:var(--text); font-weight:500 }

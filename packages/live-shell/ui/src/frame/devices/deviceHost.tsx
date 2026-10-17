@@ -1,5 +1,5 @@
-// The host: one device's views on one binding (manual §16.3 "A device has one set of values and five views … A change in one view
-// shows in the other four at once"; §5.2 "A change and its answer"). Ported from the gallery's host (inhabitants/catalogue/
+// The host: one device's views on one binding (manual §16.3 "A device has one set of values and six views. A change in one view
+// shows in the others at once"; §5.2 "A change and its answer"). Ported from the gallery's host (inhabitants/catalogue/
 // main.tsx:103-134 DesignedViews: one set of values, a set that writes a key or drops it, the page and the fold the host owns) onto
 // the owner's values and writes, and from the plate's release law (frame/devices/plateControls.tsx:56-81 useOwnerDraft: a draft
 // while the hand moves, sent on release or on a key, pending until the owner's reading changes).
@@ -18,8 +18,11 @@
 // Each view is drawn as its own component inside the place's boundary: a view that throws stands down for the generic plate's view
 // of the same device, which says why on the status bar's Info line — never a blank place.
 import {Component, cloneElement, isValidElement, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ComponentProps,
-  type CSSProperties, type ReactElement, type ReactNode} from 'react'
+  type CSSProperties, type MouseEvent, type ReactElement, type ReactNode} from 'react'
+import {createPortal} from 'react-dom'
 import {ControlWrapContext, Panel, PlaceContext, Tile, type ControlWrap, type PanelProps, type Standing} from '../../inhabitants/sdk/panel'
+import type {PublishedDevice} from './deviceDoor'
+import {DeviceMenu, headMenu, type DeviceMenuState, type HeadMenuItem} from './DeviceMenu'
 import type {DesignBinding, DesignedDevice, DeviceViewName, HostNav, HostedViewProps, Value, ValueChange, Values} from './designed'
 import type {Frame, Room} from '../../inhabitants/catalogue/panels/design'
 import {popoutOf} from '../../inhabitants/catalogue/panels/popout'
@@ -296,11 +299,16 @@ export interface HostedDeviceProps {
   readonly frame?: Frame
   /** The room the place gives the view, in px at 100 % (design.ts ViewProps.room). */
   readonly room?: Room
+  /** The head's context-menu acts the device's chain owner carries (deviceDoor.ts PublishedDevice.acts); Fold is the host's own. */
+  readonly acts?: PublishedDevice['acts']
 }
+
+/** Where a right-click opens the device's menu: its head, its folded strip, its tile's head (manual §16.4 "Right-click the head"). */
+const HEAD_SELECTOR = '.dp-head, .dp-folded, .dp-tile-head'
 
 /** One view of one device on its binding. The element it draws listens for the hand's release (a pointer let go anywhere, a key, a
  * click, a menu's change) and sends what the hand set. */
-export function HostedDevice({designed, fallback, binding, view: asked, nav: given, keys, className, style, data, title, chain, wrap, frame, room}: HostedDeviceProps) {
+export function HostedDevice({designed, fallback, binding, view: asked, nav: given, keys, className, style, data, title, chain, wrap, frame, room, acts}: HostedDeviceProps) {
   const id = binding.id
   const state = useHostState(id)
   const view: DeviceViewName = chain && asked === 'compact' && state.folded ? 'folded' : asked
@@ -348,8 +356,22 @@ export function HostedDevice({designed, fallback, binding, view: asked, nav: giv
   const name = title ?? designed.title
   const note = (words: string) => <p className="device-fault" data-i={`${name}|${words}`}>{name}: {words}</p>
   const shown = fault?.at === at ? fault.words : undefined
+  // The head's context menu: Fold where the device stands on its chain, then its chain owner's acts (DeviceMenu.tsx headMenu).
+  const [menu, setMenu] = useState<DeviceMenuState | null>(null)
+  const closeMenu = useCallback(() => setMenu(null), [])
+  const openMenu = (event: MouseEvent<HTMLDivElement>) => {
+    const head = (event.target as Element).closest(HEAD_SELECTOR)
+    if (!head || !root.current?.contains(head)) return
+    event.preventDefault()
+    event.stopPropagation()
+    setMenu({x: event.clientX, y: event.clientY, subject: name, items: headMenu({onChain: !!chain, folded: state.folded, acts})})
+  }
+  const invoke = (id: HeadMenuItem['id']) => {
+    if (id === 'fold') (state.folded ? nav.unfold : nav.fold)?.()
+    else acts?.[id]?.()
+  }
   return <div ref={root} className={`${className ?? ''}${view === 'folded' ? ' device--folded' : ''}`} style={style} {...data} data-device-view={view}
-    data-device-fault={shown} data-i={shown ? `${name}|${shown}` : undefined}
+    data-device-fault={shown} data-i={shown ? `${name}|${shown}` : undefined} onContextMenu={openMenu}
     onPointerDownCapture={event => {
       if (event.button !== 0) return
       dragging.current = true
@@ -366,5 +388,6 @@ export function HostedDevice({designed, fallback, binding, view: asked, nav: giv
         : note(faultWords(view, cause, false))}>
       <DrawnView device={designed} view={view} props={props} wrap={wrap} />
     </ViewBoundary>
+    {menu && typeof document !== 'undefined' && createPortal(<DeviceMenu menu={menu} onInvoke={invoke} onClose={closeMenu} />, document.body)}
   </div>
 }

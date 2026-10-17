@@ -16,18 +16,25 @@
 // design's, or whose act every ⤢ does; and its pop-out, which the head's ↗ does.
 //
 // The six views (d18c911a3, d75e5aa0c): a chain plate's ▸ shows its expanded view, Whole as a band above the chain (ChainDevice draws
-// it into the frame's host, DeviceFlip.tsx, while its own plate stands shown), and the device's own window draws Pop-out (PlacedDevice view="popout": the
-// design's own, or Full over Whole).
+// it into the frame's host, DeviceFlip.tsx, while its own plate stands shown), and ↗ opens the device's own window, where Pop-out
+// draws (DeviceWindows.tsx; PlacedDevice view="popout": the design's own, or Full over Whole).
+//
+// Every view gets its frame and its room (design.ts ViewProps; manual §16.3): Compact on the chain ('chain', the chain row's box),
+// Whole in the pool ('pool', the pool's box) or expanded ('flip', the band), Full in a pane ('pane', the pane's box), Pop-out in its
+// window ('window', the window's room), Widget on the rail ('rail', the tile's box) — each measured where it stands (useHolderRoom),
+// at 100 %, never a fixed guess where a box exists.
 import {useLayoutEffect, useMemo, useRef, useState, type ReactNode, type RefObject} from 'react'
 import {createPortal} from 'react-dom'
 import {Icon} from '../../inhabitants/sdk/Icon'
 import type {ControlWrap} from '../../inhabitants/sdk/panel'
 import type {SdkParamRow} from '../../inhabitants/sdk/define'
 import {openInstrument} from '../instrumentDoor'
-import {DEVICE_PANE_KIND, flipDevice, flippedDeviceId, publishedDevice, putOnRail, selectDevice, takeOffRail, useFlipHost, useFlippedDeviceId, useIsPublished,
-  useSelectedDeviceId} from './deviceDoor'
+import {DEVICE_PANE_KIND, flipDevice, flippedDeviceId, openDeviceWindow, publishedDevice, putOnRail, selectDevice, takeOffRail, useFlipHost, useFlippedDeviceId,
+  useIsPublished, useSelectedDeviceId, type PublishedDevice} from './deviceDoor'
 import type {Frame, Room} from '../../inhabitants/catalogue/panels/design'
-import {WIDE_WHOLE_H} from '../../inhabitants/catalogue/panels/popout'
+// The wide frame and the window's body (popout.tsx's `dp-wide`, `dp-window-*`): the designs' own layout sheet, which designsLoad.ts
+// loads with a design; the band and the window need it for a generic plate too.
+import '../../inhabitants/catalogue/panels/panels.css'
 import {bindingOf, type DesignBinding, type DesignedDevice, type DeviceViewName, type HostNav} from './designed'
 import {designKey, isRegisteredDesign, useDesign} from './designs'
 import {genericDevice} from './genericDevice'
@@ -75,6 +82,8 @@ interface Hosting {
   keys: readonly string[]
   /** The place's wrapRow for a design's kit controls, by value key; absent where the generic plate draws (it wraps its rows itself). */
   wrap?: ControlWrap
+  /** The head menu's acts the device's chain owner carries (deviceDoor.ts PublishedDevice.acts). */
+  acts?: PublishedDevice['acts']
 }
 
 /** The views that draw a device and the binding they read: its design where one stands for a published device, else its generic
@@ -107,7 +116,7 @@ function useHosting(device: DeviceInstance, picture: ((size: 'compact' | 'whole'
     return row ? wrapRow(row, control) : control
   } : undefined), [wrapRow, device.rows])
   return {designed: designed === plain ? shownPlain : withOwnFull(designed), plain: shownPlain, generic: designed === plain, binding, keys: device.rows.map(row => row.key),
-    ...(designed !== plain && wrap ? {wrap} : {})}
+    ...(designed !== plain && wrap ? {wrap} : {}), ...(entry?.acts ? {acts: entry.acts} : {})}
 }
 
 /** The navigation every place shares: the press shows the device whole in the pool; ⤢ opens it full — the device's own act where it
@@ -130,7 +139,8 @@ function useNav(device: DeviceInstance, actions: readonly DeviceAction[] | undef
     expand: published ? () => flipDevice(flippedDeviceId() === device.id ? null : device.id) : undefined,
     expanded: flipped,
     full: pane?.onPress ?? open ?? (published ? () => say(openDeviceFull(device.id, device.face.title)) : undefined),
-    ...(entry?.popout ? {popout: entry.popout} : {}),
+    // ↗ at the right: the device's own window (its publisher's own pop-out, where it gives one); any number stand at once.
+    ...(entry?.popout ? {popout: entry.popout} : published ? {popout: () => openDeviceWindow(device.id)} : {}),
     rail: published ? () => say(putOnRail(device.id)) : undefined,
     ...(shown ? {marks: <>
       {acts?.map(action => <button key={action.icon} type="button" className="dp-full" aria-label={action.label}
@@ -150,25 +160,76 @@ export function ChainDevice({device, picture, actions, wrapRow, binding, generic
   const hosting = useHosting(device, draw, actions, wrapRow, binding, generic, selected)
   const nav = useNav(device, actions, root, marks)
   const scale = useContainerScale(root, '.detail-chain', box => chainScale(box.height))
+  // The chain's room: the chain row's box at 100 % (Compact stands at the chain's height; its width comes from its sections).
+  const chainRoom = useHolderRoom(root, 'chain', scale)
   // Expanded (▸), the device's Whole stands as a band above the chain while this plate stands shown (a concealed chain expands
   // nothing); the band claims Esc, which folds it (DeviceFlip.tsx).
   const host = useFlipHost()
   const shown = useShownBox(root)
-  const room = useShownBox(nav.expanded ? host : null)
   return <div ref={root} className="device-place device-place--chain" style={scale !== 1 ? {zoom: scale} : undefined} data-plate-scale={scale}>
     <HostedDevice designed={hosting.designed} fallback={hosting.plain} binding={hosting.binding} view="compact" chain keys={hosting.keys} title={device.face.title}
-      wrap={hosting.wrap} nav={nav} className="device device--compact"
+      wrap={hosting.wrap} nav={nav} className="device device--compact" frame="chain" room={chainRoom ?? undefined} acts={hosting.acts}
       data={{'data-device': device.id, 'data-device-size': 'compact', 'data-device-light': lightOf(device), 'data-device-selected': selected ? 'true' : undefined,
         'data-device-design': hosting.generic ? 'generic' : hosting.designed.id, 'data-device-flipped': nav.expanded ? 'true' : undefined}} />
-    {nav.expanded && host && shown && createPortal(<div className="dp-wide dp-flip device-flip" data-device-flip={device.id} data-claims-keys="escape">
-      <PlacedDevice device={device} view="whole" frame="flip" room={{w: Math.round(room?.width ?? 0) || 1180, h: WIDE_WHOLE_H}} picture={draw} actions={actions}
+    {/* The band's Whole reads the band's own room: its content box, as wide as the detail area (PlacedDevice measures the 'flip'
+      holder), so a design grows its display into it (design.ts ViewProps.room; popout.tsx flippedOf). */}
+    {bandStands(nav.expanded, host, shown) && createPortal(<div className="dp-wide dp-flip device-flip" data-device-flip={device.id} data-claims-keys="escape">
+      <PlacedDevice device={device} view="whole" frame="flip" picture={draw} actions={actions}
         wrapRow={wrapRow} binding={binding} generic={generic} marks={marks} />
-    </div>, host)}
+    </div>, host!)}
   </div>
 }
 
+/** Whether a chain plate draws its expanded band now: ▸ pressed for it, the frame's band host standing, and the plate itself shown —
+ * a concealed chain (another mode's, a hidden detail area) expands nothing. Pure. */
+export function bandStands(expanded: boolean | undefined, host: HTMLElement | null, shown: {width: number; height: number} | null): boolean {
+  return !!expanded && !!host && !!shown
+}
+
+/** Where each place's room is read: the element the place stands in. The chain row, the pool, the window's room and the band (its
+ * content box: as wide as the detail area, one wide Whole high — popout.tsx WIDE_WHOLE_H) are holders above the plate; a pane's Full
+ * stands inset in its pane, and a widget's tile is the place itself, so those read their own box. */
+const HOLDERS: Readonly<Record<Frame, (place: HTMLElement) => Element | null>> = {
+  chain: place => place.parentElement?.closest('.detail-chain') ?? null,
+  pool: place => place.parentElement?.closest('.device-pool') ?? null,
+  flip: place => place.parentElement?.closest('.device-flip') ?? null,
+  window: place => place.parentElement?.closest('.device-window-room') ?? null,
+  pane: place => place,
+  rail: place => place,
+}
+
+/** The room a place gives its view (design.ts ViewProps.room): the content box of the element it stands in, at 100 % — over the zoom
+ * the plate stands at. Null until measured, and while the place stands concealed. */
+export function useHolderRoom(root: RefObject<HTMLElement | null>, frame: Frame, zoom = 1): Room | null {
+  const [box, setBox] = useState<{w: number; h: number} | null>(null)
+  useIsoLayoutEffect(() => {
+    const place = root.current
+    const holder = place ? HOLDERS[frame](place) : null
+    if (!holder || typeof ResizeObserver === 'undefined') { setBox(null); return }
+    const read = () => {
+      const style = getComputedStyle(holder)
+      const w = holder.clientWidth - parseFloat(style.paddingLeft || '0') - parseFloat(style.paddingRight || '0')
+      const h = holder.clientHeight - parseFloat(style.paddingTop || '0') - parseFloat(style.paddingBottom || '0')
+      const next = w > 0 && h > 0 ? {w, h} : null
+      setBox(was => (was === next || (was && next && Math.abs(was.w - next.w) < 1 && Math.abs(was.h - next.h) < 1) ? was : next))
+    }
+    read()
+    const observer = new ResizeObserver(read)
+    observer.observe(holder)
+    return () => observer.disconnect()
+  }, [root, frame])
+  return useMemo(() => roomAt(box, zoom), [box, zoom])
+}
+
+/** A holder's box at 100 %: its size over the zoom the plate stands at, in whole px. Pure. */
+export function roomAt(box: {w: number; h: number} | null, zoom = 1): Room | null {
+  if (!box) return null
+  const z = zoom > 0 ? zoom : 1
+  return {w: Math.round(box.w / z), h: Math.round(box.h / z)}
+}
+
 /** The element's box while it is shown, null while it stands concealed (display none, or no element). */
-function useShownBox(element: RefObject<HTMLElement | null> | HTMLElement | null): {width: number; height: number} | null {
+export function useShownBox(element: RefObject<HTMLElement | null> | HTMLElement | null): {width: number; height: number} | null {
   const [box, setBox] = useState<{width: number; height: number} | null>(null)
   useIsoLayoutEffect(() => {
     const target = element && 'current' in element ? element.current : element
@@ -195,22 +256,43 @@ export function DeviceView({device, size, picture, actions, wrapRow, binding, ge
 }
 
 /** A device whole (the pool, or its expanded view above the chain), full (a pane), in its own window (pop-out) or as its widget (the rail).
- * The pool's plate is 400 wide, scaled to the pool's width. */
+ * The pool's plate is 400 wide, scaled to the pool's width. The place's frame is the view's own place unless the caller names another
+ * (Whole expanded is 'flip'); its room is the caller's, else the box it stands in (useHolderRoom). */
 export function PlacedDevice({device, view, picture, actions, wrapRow, binding, generic, marks, onClose, frame, room}: {device: DeviceInstance;
   view: 'whole' | 'full' | 'popout' | 'widget'; picture?: (size: 'compact' | 'whole' | 'full') => ReactNode; actions?: readonly DeviceAction[]
-  wrapRow?: DeviceViewProps['wrapRow']; binding?: DesignBinding; generic?: boolean; marks?: ReactNode; onClose?: () => void; frame?: Frame; room?: Room}) {
+  wrapRow?: DeviceViewProps['wrapRow']; binding?: DesignBinding; generic?: boolean; marks?: ReactNode
+  /** Widget: take it off the rail (its tile's ✕). Pop-out: close its window (↗ in the window). */
+  onClose?: () => void; frame?: Frame; room?: Room}) {
   const root = useRef<HTMLDivElement>(null)
   const hosting = useHosting(device, picture, actions, wrapRow, binding, generic, false)
   const nav = useNav(device, actions, root, marks)
   const scale = useContainerScale(root, '.device-pool', (box, natural) => poolScale(box.width, box.height, natural.height || undefined))
   const zoom = view === 'whole' && scale !== 1 ? scale : undefined
-  return <div ref={root} className={`device-place device-place--${view}`} style={zoom ? {zoom} : undefined} data-plate-scale={view === 'whole' ? scale : undefined}>
+  const place = frame ?? FRAME_OF_VIEW[view]
+  const measured = useHolderRoom(root, place, zoom ?? 1)
+  return <div ref={root} className={`device-place device-place--${view}`} style={zoom ? {zoom} : undefined} data-plate-scale={view === 'whole' ? scale : undefined}
+    data-device-frame={place}>
     <HostedDevice designed={hosting.designed} fallback={hosting.plain} binding={hosting.binding} view={view} keys={hosting.keys} title={device.face.title}
-      wrap={hosting.wrap} frame={frame} room={room}
-      nav={view === 'widget' ? {full: nav.full, select: nav.select, close: onClose ?? (() => takeOffRail(device.id))} : view === 'full' || view === 'popout' ? {}
-        : {full: nav.full, rail: nav.rail, marks: nav.marks, ...(frame === 'flip' ? {expand: nav.expand, expanded: nav.expanded} : {})}}
+      wrap={hosting.wrap} frame={place} room={room ?? measured ?? undefined} nav={placedNav(view, nav, device.id, onClose)} acts={hosting.acts}
       className={`device device--${view}`}
       data={{'data-device': device.id, 'data-device-size': view === 'widget' || view === 'popout' ? view : sizeOf(view), 'data-device-light': lightOf(device),
         'data-device-design': hosting.generic ? 'generic' : hosting.designed.id}} />
   </div>
+}
+
+/** Each view's own place (design.ts Frame): Whole in the pool, Full in a pane, Pop-out in its window, Widget on the rail. */
+export const FRAME_OF_VIEW: Readonly<Record<'whole' | 'full' | 'popout' | 'widget', Frame>> = {whole: 'pool', full: 'pane', popout: 'window', widget: 'rail'}
+
+/** What the head offers in each place (manual §16.4: activator, ▸, name; the rail, ▦ and ↗ at the right). Whole — in the pool, expanded,
+ * docked in the window — carries ▸, the rail, ▦ and ↗; in its window ↗ closes the window. A widget opens full, pops out, and leaves
+ * the rail by its ✕; Full holds no controls. Pure. */
+export function placedNav(view: 'whole' | 'full' | 'popout' | 'widget', nav: HostNav, deviceId: string, onClose?: () => void): HostNav {
+  const popout = view === 'popout' && onClose ? onClose : nav.popout
+  const expand = nav.expand ? {expand: nav.expand, expanded: nav.expanded} : {}
+  switch (view) {
+    case 'full': return {}
+    case 'widget': return {full: nav.full, select: nav.select, close: onClose ?? (() => takeOffRail(deviceId)), ...(popout ? {popout} : {})}
+    case 'popout': return {full: nav.full, ...expand, ...(popout ? {popout} : {})}
+    case 'whole': return {full: nav.full, rail: nav.rail, marks: nav.marks, ...expand, ...(popout ? {popout} : {})}
+  }
 }
