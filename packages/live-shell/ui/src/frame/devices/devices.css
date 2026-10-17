@@ -26,6 +26,12 @@
 .device-pool { height: 100%; padding: 6px; overflow: hidden }
 .device-pool-empty { margin: 6px; font-size: 10.5px; color: var(--text-faint) }
 
+/* Whole as the expanded view (manual §16.4; DeviceFlip.tsx): a band across the detail area above the chain, the plate as wide as
+   the band with its bands side by side (the wide frame, catalogue/panels/panels.css .dp-wide). Nothing in it scrolls. */
+.device-flip { height: 100%; padding: 4px; display: flex; align-items: flex-start; overflow: hidden; background: var(--bg-0); border: 1px solid var(--line-strong); border-bottom: 0 }
+.device-flip > .device-place--whole, .device-flip .device--whole { flex: 1 1 auto; min-width: 0 }
+.device-flip .device--whole > .dp { width: auto; flex: 1 1 auto; min-width: 0 }
+
 /* Full, in a pane: the material at the pane's size, no controls (DLW §16.1). */
 .device-place--full, .device--full { position: absolute; inset: 0 }
 .dv-full { position: absolute; inset: 0; display: flex; align-items: stretch; justify-content: stretch; overflow: hidden; background: var(--bg-1) }

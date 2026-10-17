@@ -21,6 +21,8 @@ import {Component, cloneElement, isValidElement, useCallback, useEffect, useMemo
   type CSSProperties, type ReactElement, type ReactNode} from 'react'
 import {ControlWrapContext, Panel, PlaceContext, Tile, type ControlWrap, type PanelProps, type Standing} from '../../inhabitants/sdk/panel'
 import type {DesignBinding, DesignedDevice, DeviceViewName, HostNav, HostedViewProps, Value, ValueChange, Values} from './designed'
+import type {Frame, Room} from '../../inhabitants/catalogue/panels/design'
+import {popoutOf} from '../../inhabitants/catalogue/panels/popout'
 
 // ---------------------------------------------------------------------------------------------------------------- the host's state
 
@@ -249,6 +251,9 @@ export function withPlaceMarks(node: ReactNode, nav: HostNav): ReactNode {
   return node
 }
 
+/** The room a window gives Pop-out when its host names none (the gallery's window, catalogue/main.tsx). */
+const POPOUT_ROOM: Room = {w: 1180, h: 620}
+
 /** One view of a device, drawn as its own component: what it throws is caught by the boundary around it, never in the host's
  * render. */
 function DrawnView({device, view, props, wrap}: {device: DesignedDevice; view: DeviceViewName; props: HostedViewProps; wrap?: ControlWrap}) {
@@ -256,9 +261,14 @@ function DrawnView({device, view, props, wrap}: {device: DesignedDevice; view: D
   // documentation lane's c5afc4aa0) — a view whose root is a component too; a part's own props still win. The place's wrap reaches
   // every kit control whose standing names its key through ControlWrapContext; a view drawn without one (the generic plate, which
   // wraps its rows itself) gets none, even inside another's.
+  // The place's ▸ (the expanded view, Whole above the chain) and ↗ (the device's own window) reach the kit's head the same way (d18c911a3:
+  // "The kit's Place carries onExpand, expanded and onPopout, so no design passes them").
   const {nav} = props
-  return <PlaceContext.Provider value={{marks: nav.marks ?? undefined, onRail: nav.rail, onClose: nav.close}}>
-    <ControlWrapContext.Provider value={wrap ?? null}>{withPlaceMarks(device[view](props), nav)}</ControlWrapContext.Provider>
+  // Pop-out is composed by the host where the design writes none of its own: Full over Whole (catalogue/panels/popout.tsx).
+  const drawn = view === 'popout' ? popoutOf(device, props, props.room ?? POPOUT_ROOM) : device[view](props)
+  return <PlaceContext.Provider value={{marks: nav.marks ?? undefined, onRail: nav.rail, onClose: nav.close, onExpand: nav.expand, expanded: nav.expanded,
+    onPopout: nav.popout}}>
+    <ControlWrapContext.Provider value={wrap ?? null}>{withPlaceMarks(drawn, nav)}</ControlWrapContext.Provider>
   </PlaceContext.Provider>
 }
 
@@ -282,11 +292,15 @@ export interface HostedDeviceProps {
   /** The place's wrap of `designed`'s kit controls, by value key (DeviceView fills it from the place's wrapRow): the controls of
    * `keys` are drawn inside it. Never the fallback's: the generic plate wraps its rows itself. */
   readonly wrap?: ControlWrap
+  /** Where the view stands, for a design that arranges Whole differently in the pool and expanded (design.ts ViewProps.frame). */
+  readonly frame?: Frame
+  /** The room the place gives the view, in px at 100 % (design.ts ViewProps.room). */
+  readonly room?: Room
 }
 
 /** One view of one device on its binding. The element it draws listens for the hand's release (a pointer let go anywhere, a key, a
  * click, a menu's change) and sends what the hand set. */
-export function HostedDevice({designed, fallback, binding, view: asked, nav: given, keys, className, style, data, title, chain, wrap}: HostedDeviceProps) {
+export function HostedDevice({designed, fallback, binding, view: asked, nav: given, keys, className, style, data, title, chain, wrap, frame, room}: HostedDeviceProps) {
   const id = binding.id
   const state = useHostState(id)
   const view: DeviceViewName = chain && asked === 'compact' && state.folded ? 'folded' : asked
@@ -322,7 +336,9 @@ export function HostedDevice({designed, fallback, binding, view: asked, nav: giv
     // Where the place wraps the design's controls, each key's standing names its key, so the control that spreads it is wrapped.
     standing: wraps ? namedStanding(hostedStanding(state, binding, keys ?? []), keys ?? []) : hostedStanding(state, binding, keys ?? []),
     owner: binding.values,
-  }), [state, binding, set, nav, designed.firstPage, id, keys, wraps])
+    ...(frame ? {frame} : {}),
+    ...(room ? {room} : {}),
+  }), [state, binding, set, nav, designed.firstPage, id, keys, wraps, frame, room])
   const release = () => { if (!dragging.current) return; dragging.current = false; send() }
   // The place's boundary: the device's own view, else the generic plate's with the reason, else the reason alone.
   const plain = fallback && fallback !== designed ? fallback : null

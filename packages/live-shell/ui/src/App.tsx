@@ -60,6 +60,10 @@ import {deviceInstrumentFor, factoryFocusedPane, type HostedLens} from './shell/
 import {focusedSurfaceKind, isFactoryMode} from './agent/factoryCentre'
 import {subjectWords} from './central/daySurface'
 import {worldSubjectOf} from './techne/subject/worldRows'
+import {clampBrowserWidth, clampDetailHeight, clampRailWidth, collapseDetail, drawnSizes, draggedSize, enteredDetailHeight, expandDetail,
+  expandedDetailHeight, frameToggleOf, keptDetailHeight, RESIZE_STEP, switchesDetailSide, type AreaDrag, type DetailExpansions} from './shell/workspaceAreas'
+import {useSelectedDeviceId} from './frame/devices/deviceDoor'
+import {DeviceFlipHost} from './frame/devices/DeviceFlip'
 registerAtlasHost()
 registerTimelineHost()
 registerCentralDocumentPane()
@@ -136,8 +140,11 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   const [browserCategory, chooseBrowserCategory] = useState<string | undefined>(restored?.browserCategory)
   const [nativeEditorReturn,setNativeEditorReturn]=useState<{workspaceId:string;accessEpoch:number;bindingId:string;expression_ref:string;scene_ref:string;centerPanel:string;detail:boolean;detailMode:DetailMode;editor:'source'|'layers'|'placement';owner:NativeEditorController|null;mode:'expressions'|'techne';focus:HTMLElement|null}|null>(null)
   useEffect(()=>setNativeEditorReturn(null),[workspace.workspaceId,workspace.accessEpoch])
-  const detailExpansionReturn=useRef<{height:number|null;workspaceId:string;accessEpoch:number}|null>(null)
-  useEffect(()=>{detailExpansionReturn.current=null},[workspace.workspaceId,workspace.accessEpoch])
+  // Each frame's detail expansion and the height it returns to (shell/workspaceAreas.ts), dropped with the workspace or lease.
+  const detailExpansions=useRef<DetailExpansions>({})
+  useEffect(()=>{detailExpansions.current={}},[workspace.workspaceId,workspace.accessEpoch])
+  // A resizer under the hand: where the drag began, so the part keeps the offset at which it was taken.
+  const areaDrag=useRef<AreaDrag|null>(null)
   const [viewport, setViewport] = useState([window.innerWidth, window.innerHeight])
   useEffect(() => { const read = () => setViewport([window.innerWidth, window.innerHeight]); window.addEventListener('resize', read); return () => window.removeEventListener('resize', read) }, [])
   const [tab, setTab] = useState(restored?.tab ?? opening.tab)
@@ -230,6 +237,10 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   const [browser, setBrowser] = useState(restored?.browser ?? opening.browser)
   // An open device request shows the Browser: the expanded panel lives in its pool, not on the bottom rack.
   useEffect(() => {const openDevice = () => {if (workspace.mode !== 'audio') setBrowser(true)}; window.addEventListener(OPEN_DEVICE_EVENT, openDevice); return () => window.removeEventListener(OPEN_DEVICE_EVENT, openDevice)}, [workspace.mode])
+  // A device chosen for the pool (a press on its plate: "Press a plate on a chain to show its device whole in the pool") shows the
+  // browser the pool stands under, so Whole is never chosen out of sight.
+  const poolDevice = useSelectedDeviceId()
+  useEffect(() => { if (poolDevice) setBrowser(true) }, [poolDevice])
   useEffect(() => {
     const browseParameters = () => {
       if (workspace.mode === 'audio') return
@@ -383,7 +394,7 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
     // the pane never disagree.
     const presentation = intent?.tab ?? view?.tab ?? opening.tab
     setTab(presentation); setTimelinePanePresentation(presentation); setCenterPanel(intent?.panel ?? workbenchCentre(view?.centerPanel) ?? opening.centerPanel)
-    changeDetailMode(view?.detailMode ?? opening.detailMode); resizeBrowser(view?.browserWidth ?? null); resizeDetail(view?.detailHeight ?? null)
+    changeDetailMode(view?.detailMode ?? opening.detailMode); resizeBrowser(view?.browserWidth ?? null); resizeDetail(enteredDetailHeight(detailExpansions.current, frameKey, view?.detailHeight ?? null, viewport[1]))
     chooseBrowserCategory(view?.browserCategory)
     setBrowser(view?.browser ?? opening.browser); setDetail(view?.detail ?? opening.detail); setDock(view?.rail ? view.dock ?? opening.dock : opening.dock)
     holdLive(view?.selection ?? {track: 0, scene: null}); presentSettings(view?.settingsPresented ?? false)
@@ -393,8 +404,23 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   useEffect(() => {
     if (restoredKey !== restoreKey) return
     continuity.checkpointApplicationView({alsPath: state.path ?? restored?.alsPath ?? undefined, rail: true, tab, selection: liveHeld, browserCategory,
-      browser, detail:nativeEditorPresented?nativeEditorReturn!.detail:detail, dock, browserWidth, detailHeight:detailExpansionReturn.current?detailExpansionReturn.current.height:detailHeight, centerPanel:nativeEditorPresented?nativeEditorReturn!.centerPanel:centerPanel, detailMode:nativeEditorPresented?nativeEditorReturn!.detailMode:detailMode, settingsPresented, settingsReturn: workspace.mode === 'expressions' || workspace.mode === 'techne' ? workspace.mode : undefined})
+      browser, detail:nativeEditorPresented?nativeEditorReturn!.detail:detail, dock, browserWidth, detailHeight:keptDetailHeight(detailExpansions.current,frameKey,detailHeight), centerPanel:nativeEditorPresented?nativeEditorReturn!.centerPanel:centerPanel, detailMode:nativeEditorPresented?nativeEditorReturn!.detailMode:detailMode, settingsPresented, settingsReturn: workspace.mode === 'expressions' || workspace.mode === 'techne' ? workspace.mode : undefined})
   }, [restoredKey, restoreKey, state.path, tab, liveHeld, browserCategory, browser, detail, dock, browserWidth, detailHeight, centerPanel, detailMode, nativeEditorReturn, nativeEditorPresented, settingsPresented, workspace.mode, continuity.checkpointApplicationView])
+  // ⌘⌥B, ⌘⌥L and ⌘⌥R show and hide the browser, the detail area and the rail (shell/workspaceAreas.ts frameToggleOf: by the key as well
+  // as its character — macOS gives ⌥L as "¬"). They are the window's: taken before any pane's own keys (the Workbench's keymap binds
+  // ⌘⌥R to its layout restore, desktop/cradle/src/surface/keys.ts:94), wherever the focus stands.
+  useEffect(() => {
+    const onChord = (event: KeyboardEvent) => {
+      const part = frameToggleOf(event)
+      if (!part || event.repeat) return
+      event.preventDefault()
+      if (part === 'detail') setDetail(current => !current)
+      if (part === 'browser') setBrowser(current => !current)
+      if (part === 'rail') setDock(current => !current)
+    }
+    window.addEventListener('keydown', onChord, true)
+    return () => window.removeEventListener('keydown', onChord, true)
+  }, [])
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key === ',') {
@@ -408,8 +434,8 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
       if (event.key === 'Tab' && !event.ctrlKey && !event.altKey && !event.metaKey && !event.shiftKey && !settingsPresented) {
         event.preventDefault(); chooseView(tab === 'session' ? 'arrangement' : 'session')
       }
-      if (event.key.toLowerCase() === 'l' && event.metaKey && event.altKey) { event.preventDefault(); setDetail(current => !current) }
-      if (event.key.toLowerCase() === 'b' && event.metaKey && event.altKey) { event.preventDefault(); setBrowser(current => !current) }
+      // ⇧Tab: Clip view ⇄ Device view (shell/workspaceAreas.ts), unless a control below already took it.
+      if (switchesDetailSide(event) && !event.defaultPrevented && !settingsPresented) { event.preventDefault(); changeDetailMode(side => side === 'clip' ? 'device' : 'clip'); setDetail(true) }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
@@ -499,8 +525,14 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
     continuity.select(next)
   }
   // The widget rail's book: the world's one open set, pins, presets and width (desktop/cradle/src/workspace/store.ts).
+  // What the window draws now, read where a resize starts or a part's bound depends on another (the parts' own boxes).
+  const shownBox = (selector: string) => document.querySelector(selector)?.getBoundingClientRect()
+  const shownBrowserWidth = () => shownBox('.browser-residence:not([hidden]) .one-browser')?.width ?? browserWidth ?? 430
+  const shownRailWidth = () => shownBox('.dock-residence:not([hidden]) .widget-rail')?.width ?? 0
+  const shownDetailHeight = () => shownBox('.detail-residence:not([hidden]) > .detail-host')?.height ?? detailHeight ?? 330
+  // The rail widens and narrows by its edge within its bounds and what the browser and the panes leave (shell/workspaceAreas.ts).
   const widgetBook: WidgetRailBook = {rail: continuity.current.widgets ?? {open: DEFAULT_WIDGETS}, toggle: id => continuity.toggleWidgetOpen(id, DEFAULT_WIDGETS),
-    pin: continuity.pinWidgetAt, savePreset: name => continuity.saveWidgets(name, DEFAULT_WIDGETS), applyPreset: continuity.applyWidgets, widen: continuity.widenWidgets}
+    pin: continuity.pinWidgetAt, savePreset: name => continuity.saveWidgets(name, DEFAULT_WIDGETS), applyPreset: continuity.applyWidgets, widen: width => continuity.widenWidgets(clampRailWidth(width, viewport[0], browser ? shownBrowserWidth() : 0))}
   // The one browser's row sources (shell/modeBrowsers.tsx) and what their bodies read.
   const browserSources = useMemo(() => browserSourcesOf(frameMode), [frameMode])
   const browserReading: BrowserReading = {mode: frameMode, ctx, defaultSet: config?.default_set ?? '', selectSubject: selectCentralSubject,
@@ -515,12 +547,13 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   const framePlacement = useFramePlacement()
   // The one stage frame is placed over the pane that holds it, in every mode — unless the large native editor holds the centre.
   const expressionsPlaced = framePlacement !== null && centerPanel !== 'world.expressions'
+  const detailFrame = () => ({frame: frameKey, workspaceId: workspace.workspaceId, accessEpoch: workspace.accessEpoch})
   const detailReading: DetailReading = {
     mode: frameMode, transport: workspace.transport, world: worldView, worldCut, centralSubject, worldSubject: worldSubjectOf(worldSelection), focusedInstrument,
     live: {ctx, document: deep.document, selection},
     native: {configurationIntent: detailConfiguration, presentMode: mode => {changeDetailMode(mode); setDetail(true)}, presentNativeEditor,
-      expand: () => {if(!detailExpansionReturn.current)detailExpansionReturn.current={height:detailHeight,workspaceId:workspace.workspaceId,accessEpoch:workspace.accessEpoch};resizeDetail(Math.max(120,viewport[1]-156))},
-      collapse: () => {const previous=detailExpansionReturn.current;detailExpansionReturn.current=null;if(previous&&previous.workspaceId===workspace.workspaceId&&previous.accessEpoch===workspace.accessEpoch)resizeDetail(previous.height)}},
+      expand: () => {detailExpansions.current=expandDetail(detailExpansions.current,detailFrame(),detailHeight);resizeDetail(expandedDetailHeight(viewport[1]))},
+      collapse: () => {const {held,restore}=collapseDetail(detailExpansions.current,detailFrame());detailExpansions.current=held;if(restore)resizeDetail(restore.height)}},
     factory: {tracks: agency.tracks},
   }
   const frameBody = (<>
@@ -529,7 +562,7 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
     {<TransportBar tempoBpm={state.set?.tempo_bpm ?? null} name={state.set?.path.split('/').pop()?.replace(/\.als$/i, '') ?? ''} mode={frameMode} view={tab} setView={chooseView} chooseMode={chooseMode} presentedView={presentedView} modeReadouts={modeReadouts} timeSpine={worldView.spine} focusedInstrument={focusedInstrument} centerPanels={panels.filter(panel => panel.id !== 'world.expressions' && panel.id !== 'native.agent' && panel.navigation !== false)} activeCenter={settingsPresented ? 'world.settings' : frameMode === 'live' ? null : centerPanel} openCenter={openCenterPanel} workName={workspace.reading?.document?.name} sceneName={workspace.reading?.sceneName} nativeTransport={nativeView('expressions')} browser={browser} detail={detail} dock={dock} toggleBrowser={() => setBrowser(!browser)} toggleDetail={() => setDetail(!detail)} toggleDock={() => setDock(!dock)} />}
     {/* The one browser (F6): the mode's row sources and the shared ones, under one search, grouped by the four kinds. */}
     <NativeInputRetentionProvider><div className="browser-residence" hidden={!browser}><BrowserReadingProvider value={browserReading}><Browser key={frameMode} sources={browserSources} category={browserCategory} onCategory={chooseBrowserCategory} /></BrowserReadingProvider></div>
-    {browser && <div className="browser-resizer" role="separator" aria-label="Resize browser" aria-orientation="vertical" tabIndex={0} onKeyDown={event => { if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {event.preventDefault(); resizeBrowser(Math.max(120, Math.min(viewport[0] - 320, (browserWidth ?? document.querySelector('.browser-residence:not([hidden]) .browser,.browser-residence:not([hidden]) .world-browser')?.getBoundingClientRect().width ?? 430) + (event.key === 'ArrowRight' ? 10 : -10))))} }} onPointerDown={event => event.currentTarget.setPointerCapture(event.pointerId)} onPointerMove={event => { if (event.currentTarget.hasPointerCapture(event.pointerId)) resizeBrowser(Math.max(120, Math.min(viewport[0] - 320, event.clientX))) }} />}
+    {browser && <div className="browser-resizer" role="separator" aria-label="Resize browser" aria-orientation="vertical" tabIndex={0} onKeyDown={event => { if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {event.preventDefault(); resizeBrowser(clampBrowserWidth(shownBrowserWidth() + (event.key === 'ArrowRight' ? RESIZE_STEP : -RESIZE_STEP), viewport[0], shownRailWidth()))} }} onPointerDown={event => { event.currentTarget.setPointerCapture(event.pointerId); areaDrag.current = {at: event.clientX, size: shownBrowserWidth()} }} onPointerMove={event => { if (event.currentTarget.hasPointerCapture(event.pointerId) && areaDrag.current) resizeBrowser(clampBrowserWidth(draggedSize(areaDrag.current, event.clientX, 1), viewport[0], shownRailWidth())) }} onPointerUp={() => { areaDrag.current = null }} />}
     <main className="center"><div className={`center-body${nativeEditorReturn&&centerPanel==='world.expressions'&&!settingsPresented?' native-editor-residence':''}`}>
       {nativeEditorReturn&&centerPanel==='world.expressions'&&!settingsPresented&&<div className="native-editor-return"><span>{nativeEditorReturn.editor==='source'?'Source':nativeEditorReturn.editor==='layers'?'Layers':'State placement'}</span><button onClick={returnNativeEditor}>Return to {nativeEditorReturn.centerPanel==='native.arrangement'?'Arrangement':nativeEditorReturn.centerPanel==='native.session'?'Session':'Glyph editor'}</button></div>}
       {tracks === 'native' && !settingsPresented && nativeProjection.error && <div className="native-composition-fault" role="alert">{nativeProjection.error}</div>}
@@ -541,13 +574,17 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
     {/* The one widget rail (F8): every widget of the world, one open set in the book, pins and presets. */}
     <div className="dock-residence" hidden={!dock}><WidgetReadingProvider value={{mode: frameMode, world: worldView, transport: workspace.transport, subject: centralSubject, panel: ctx}}>
       <WidgetRail widgets={worldWidgets()} book={widgetBook} selectionRef={worldSelection?.ref ?? null} /></WidgetReadingProvider></div>
-    {detail && <div className="detail-resizer" role="separator" aria-label="Resize detail" aria-orientation="horizontal" tabIndex={0} onKeyDown={event => { if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {event.preventDefault(); resizeDetail(Math.max(120, Math.min(viewport[1] - 240, (detailHeight ?? document.querySelector('.detail-residence:not([hidden]) .chain,.detail-residence:not([hidden]) .native-world-detail')?.getBoundingClientRect().height ?? 330) + (event.key === 'ArrowUp' ? 10 : -10))))} }} onPointerDown={event => event.currentTarget.setPointerCapture(event.pointerId)} onPointerMove={event => { if (event.currentTarget.hasPointerCapture(event.pointerId)) resizeDetail(Math.max(120, Math.min(viewport[1] - 240, viewport[1] - 28 - event.clientY))) }} />}
+    {detail && <div className="detail-resizer" role="separator" aria-label="Resize detail" aria-orientation="horizontal" tabIndex={0} onKeyDown={event => { if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {event.preventDefault(); resizeDetail(clampDetailHeight(shownDetailHeight() + (event.key === 'ArrowUp' ? RESIZE_STEP : -RESIZE_STEP), viewport[1]))} }} onPointerDown={event => { event.currentTarget.setPointerCapture(event.pointerId); areaDrag.current = {at: event.clientY, size: shownDetailHeight()} }} onPointerMove={event => { if (event.currentTarget.hasPointerCapture(event.pointerId) && areaDrag.current) resizeDetail(clampDetailHeight(draggedSize(areaDrag.current, event.clientY, -1), viewport[1])) }} onPointerUp={() => { areaDrag.current = null }} />}
     {/* The detail row (manual §3, §10.1; FOUNDATION F4): one host for every mode. The mode's clip editor and chain come from
       its registration (shell/modeDetails.tsx); a pane holding an instrument takes the Device side in every mode but Live. */}
     <div className="detail-residence" hidden={!detail}><DetailContext.Provider value={detailReading}><DetailHost side={detailMode} /></DetailContext.Provider></div></NativeInputRetentionProvider>
+    {/* A device's expanded view: a band across the detail area above the chain (frame/devices/DeviceFlip.tsx). */}
+    <DeviceFlipHost />
     {agentShell ? <AgentStatusBarBridge detailMode={detailMode} changeDetailMode={mode => {changeDetailMode(mode); setDetail(true)}} audio={frameMode === 'live'} mode={frameMode} reading={workspace.reading} state={state} documentError={deep.error} viewport={viewport} selectedTrack={agency.tracks[0]?.purpose ?? undefined} presentedView={presentedView} subjectLabel={frameMode === 'base' && centralSubject ? centralSubject.path : undefined} /> : <StatusBar detailMode={detailMode} changeDetailMode={mode => {changeDetailMode(mode); setDetail(true)}} audio={frameMode === 'live'} mode={frameMode} reading={workspace.reading} state={state} documentError={deep.error} viewport={viewport} selectedTrack={state.set?.tracks[selection.track]?.name} presentedView={presentedView} subjectLabel={frameMode === 'base' && centralSubject ? centralSubject.path : undefined} />}
   </>)
-  return <div ref={frameRef} style={{ ...(browserWidth === null ? {} : { '--browser-w': `${browserWidth}px` }), ...(detailHeight === null ? {} : { '--detail-h': `${detailHeight}px` }), ...(continuity.current.widgets?.width ? {'--dock-w': `${continuity.current.widgets.width}px`} : {}) } as CSSProperties} className={`frame mode-${workspace.mode}${browser ? '' : ' browser-hidden'}${detail ? '' : ' detail-hidden'}${dock ? ' dock-open' : agentShell ? ' no-dock' : ''}${agentShell ? ' agent-shell-frame' : ''}`} data-agent-shell={agentShell ? 'true' : undefined}>{frameBody}{unlinkedSubject && <p role="status" data-region="encounter-link" style={{position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 10000, margin: 0, padding: '8px 16px', font: '13px system-ui, sans-serif', background: 'Canvas', color: 'CanvasText', borderTop: '1px solid GrayText'}}>The linked subject {unlinkedSubject} could not be opened here; the rest of the link is applied. <button type="button" onClick={() => setUnlinkedSubject(null)}>Dismiss</button></p>}</div>
+  // Each part at the size chosen for it, held inside the window as it stands (a smaller window never pushes the rail off its edge).
+  const drawn = drawnSizes({browserW: browserWidth, railW: continuity.current.widgets?.width ?? null, detailH: detailHeight}, {browser, rail: dock}, [viewport[0], viewport[1]], 300)
+  return <div ref={frameRef} style={{ ...(drawn.browserW === null ? {} : { '--browser-w': `${drawn.browserW}px` }), ...(drawn.detailH === null ? {} : { '--detail-h': `${drawn.detailH}px` }), ...(drawn.railW === null ? {} : {'--dock-w': `${drawn.railW}px`}) } as CSSProperties} className={`frame mode-${workspace.mode}${browser ? '' : ' browser-hidden'}${detail ? '' : ' detail-hidden'}${dock ? ' dock-open' : agentShell ? ' no-dock' : ''}${agentShell ? ' agent-shell-frame' : ''}`} data-agent-shell={agentShell ? 'true' : undefined}>{frameBody}{unlinkedSubject && <p role="status" data-region="encounter-link" style={{position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 10000, margin: 0, padding: '8px 16px', font: '13px system-ui, sans-serif', background: 'Canvas', color: 'CanvasText', borderTop: '1px solid GrayText'}}>The linked subject {unlinkedSubject} could not be opened here; the rest of the link is applied. <button type="button" onClick={() => setUnlinkedSubject(null)}>Dismiss</button></p>}</div>
 }
 
 function AgentStatusBarBridge(props: ComponentProps<typeof StatusBar>) {
